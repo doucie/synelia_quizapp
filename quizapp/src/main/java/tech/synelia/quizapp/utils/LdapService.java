@@ -1,0 +1,67 @@
+package tech.synelia.quizapp.utils;
+
+import java.util.HashMap;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
+import org.springframework.ldap.core.LdapTemplate;
+import org.springframework.ldap.core.support.LdapContextSource;
+import org.springframework.ldap.filter.AndFilter;
+import org.springframework.ldap.filter.EqualsFilter;
+import org.springframework.ldap.filter.LikeFilter;
+import org.springframework.stereotype.Component;
+
+import jakarta.annotation.PostConstruct;
+
+//import tech.synelia.templatespring2.utils.dto.UserDto;
+
+/**
+ * UTIL
+ *
+ * @author IKOUA
+ */
+@Component
+public class LdapService {
+
+    @Autowired
+    private Environment environment;
+
+    private LdapContextSource ldapContextSource;
+    private LdapTemplate ldapTemplate;
+
+    private static final Logger log = LoggerFactory.getLogger(LdapService.class);
+
+    @PostConstruct
+    public void initializeLdapContextSource() {
+        HashMap<String, Object> env = new HashMap<>();
+        env.put("com.sun.jndi.ldap.read.timeout", "5000");
+
+        ldapContextSource = new LdapContextSource();
+        ldapContextSource.setUrl(environment.getProperty("ldap.url"));
+        ldapContextSource.setBase(environment.getProperty("ldap.base"));
+        ldapContextSource.setUserDn(environment.getProperty("ldap.userdn"));
+        ldapContextSource.setPassword(environment.getProperty("ldap.password"));
+        ldapContextSource.setBaseEnvironmentProperties(env);
+        ldapContextSource.afterPropertiesSet();
+
+        ldapTemplate = new LdapTemplate(ldapContextSource);
+    }
+
+    public boolean authenticateUser(String login, String password) {
+        log.info("Debut authenticateUser VIA Ldap");
+        boolean t = false;
+        try {
+            AndFilter andFilter = new AndFilter();
+            andFilter.and(new EqualsFilter("sAMAccountName", login));
+            t = ldapTemplate.authenticate("", andFilter.encode(), password);
+        } catch (Exception e) {
+            log.error("Error authenticating user", e);
+        }
+        log.info("Fin authenticateUser VIA Ldap");
+        log.info("Response authenticateUser Ldap: {}", t);
+        return t;
+    }
+}

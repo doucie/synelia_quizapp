@@ -1,0 +1,27 @@
+<div class="quiz-detail" *ngIf="quiz">
+  <div class="quiz-header">
+    <h1>{{ quiz.title }}</h1>
+    <p class="quiz-description">{{ quiz.description }}</p>
+    <div class="quiz-info">
+      <span class="info-item">
+        <strong>Duration:</strong> {{ quiz.duration }} minutes
+      </span>
+      <span class="info-item">
+        <strong>Questions:</strong> {{ quiz.questions.length }}
+      </span>
+    </div>
+  </div>
+
+  <div class="quiz-actions">
+    <button class="btn btn--primary" (click)="startQuiz()">
+      Start Quiz
+    </button>
+    <button class="btn btn--secondary" routerLink="/quiz">
+      Back to List
+    </button>
+  </div>
+</div>
+
+<div class="loading" *ngIf="!quiz">
+  Loading quiz details...
+</div>

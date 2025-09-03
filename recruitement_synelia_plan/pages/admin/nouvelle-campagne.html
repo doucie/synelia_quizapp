@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nouvelle Campagne - Admin Synelia</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../styles/style.css">
+    <link rel="stylesheet" href="../../styles/rectangles.css">
+    <link rel="stylesheet" href="../../styles/buttons.css">
+</head>
+<body>
+    <header style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background: var(--mono-bg); border-bottom: 1px solid var(--mono-borders);">
+        <nav>
+            <h1>📋 Administration - Nouvelle Campagne</h1>
+        </nav>
+        <div class="user-info">
+            <div class="user-avatar" onclick="toggleProfileMenu()">
+                <div class="avatar-circle">MD</div>
+                <span>Admin - Marie Dubois</span>
+                <div class="profile-menu" id="profile-menu" style="display: none;">
+                    <a href="profil.html">🏷️ Mon Profil</a>
+                    <a href="#" onclick="alert('Préférences')">⚙️ Préférences</a>
+                    <a href="../login.html">🚪 Déconnexion</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Menu latéral -->
+        <aside style="position: fixed; left: 0; top: 60px; width: 250px; height: calc(100vh - 60px); background: var(--mono-bg-secondary); padding: 1rem; overflow-y: auto;">
+            <nav>
+                <ul style="list-style: none; padding: 0; margin: 0;">
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="../dashboard-admin.html" style="display: block; padding: 0.8rem; color: var(--text-primary); text-decoration: none; border-radius: 6px;">📊 Dashboard</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="campagnes.html" style="display: block; padding: 0.8rem; color: var(--text-primary); text-decoration: none; background: var(--mono-borders); border-radius: 6px;">📋 Campagnes</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="utilisateurs.html" style="display: block; padding: 0.8rem; color: var(--text-primary); text-decoration: none; border-radius: 6px;">👥 Utilisateurs</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="questions.html" style="display: block; padding: 0.8rem; color: var(--text-primary); text-decoration: none; border-radius: 6px;">❓ Questions</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="departements.html" style="display: block; padding: 0.8rem; color: var(--text-primary); text-decoration: none; border-radius: 6px;">🏢 Départements</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="candidatures.html" style="display: block; padding: 0.8rem; color: var(--text-primary); text-decoration: none; border-radius: 6px;">📄 Candidatures</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="rapports.html" style="display: block; padding: 0.8rem; color: var(--text-primary); text-decoration: none; border-radius: 6px;">📈 Rapports</a>
+                    </li>
+                    <hr style="border: none; border-top: 1px solid var(--mono-borders); margin: 1rem 0;">
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="entretiens.html" style="display: block; padding: 0.8rem; color: var(--text-primary); text-decoration: none; border-radius: 6px;">🤝 Entretiens</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="evaluations.html" style="display: block; padding: 0.8rem; color: var(--text-primary); text-decoration: none; border-radius: 6px;">⭐ Évaluations</a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Contenu principal -->
+        <section style="margin-left: 270px; padding: 2rem;">
+            <div class="rounded_rectangle mono-charcoal">
+                <h2>🎯 Créer une nouvelle campagne</h2>
+                <p>Configurez une nouvelle campagne de recrutement avec tous les paramètres nécessaires.</p>
+            </div>
+
+            <!-- Formulaire de création -->
+            <div class="rounded_rectangle mono-charcoal" style="margin-top: 2rem;">
+                <h3>Informations générales</h3>
+                
+                <form style="display: grid; gap: 1.5rem; margin-top: 1rem;">
+                    <div>
+                        <label for="nom" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Nom de la campagne *</label>
+                        <input type="text" id="nom" name="nom" required 
+                               style="width: 100%; padding: 0.8rem; border: 1px solid var(--mono-borders); border-radius: 6px; background: var(--mono-bg-primary); color: var(--text-primary);"
+                               placeholder="Ex: Recrutement Développeur Frontend">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <label for="departement" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Département *</label>
+                            <select id="departement" name="departement" required
+                                    style="width: 100%; padding: 0.8rem; border: 1px solid var(--mono-borders); border-radius: 6px; background: var(--mono-bg-primary); color: var(--text-primary);">
+                                <option value="">Sélectionner un département</option>
+                                <option value="tech">Technologies</option>
+                                <option value="marketing">Marketing</option>
+                                <option value="ventes">Ventes</option>
+                                <option value="rh">Ressources Humaines</option>
+                                <option value="finance">Finance</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="poste" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Poste à pourvoir *</label>
+                            <input type="text" id="poste" name="poste" required
+                                   style="width: 100%; padding: 0.8rem; border: 1px solid var(--mono-borders); border-radius: 6px; background: var(--mono-bg-primary); color: var(--text-primary);"
+                                   placeholder="Ex: Développeur Frontend Senior">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="description" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Description du poste</label>
+                        <textarea id="description" name="description" rows="4"
+                                  style="width: 100%; padding: 0.8rem; border: 1px solid var(--mono-borders); border-radius: 6px; background: var(--mono-bg-primary); color: var(--text-primary); resize: vertical;"
+                                  placeholder="Décrivez les missions, responsabilités et exigences du poste..."></textarea>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <label for="date_debut" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Date de début *</label>
+                            <input type="date" id="date_debut" name="date_debut" required
+                                   style="width: 100%; padding: 0.8rem; border: 1px solid var(--mono-borders); border-radius: 6px; background: var(--mono-bg-primary); color: var(--text-primary);">
+                        </div>
+                        <div>
+                            <label for="date_fin" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Date de fin *</label>
+                            <input type="date" id="date_fin" name="date_fin" required
+                                   style="width: 100%; padding: 0.8rem; border: 1px solid var(--mono-borders); border-radius: 6px; background: var(--mono-bg-primary); color: var(--text-primary);">
+                        </div>
+                        <div>
+                            <label for="postes_ouverts" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Postes ouverts *</label>
+                            <input type="number" id="postes_ouverts" name="postes_ouverts" min="1" required
+                                   style="width: 100%; padding: 0.8rem; border: 1px solid var(--mono-borders); border-radius: 6px; background: var(--mono-bg-primary); color: var(--text-primary);"
+                                   placeholder="1">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="recruteur" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Recruteur responsable *</label>
+                        <select id="recruteur" name="recruteur" required
+                                style="width: 100%; padding: 0.8rem; border: 1px solid var(--mono-borders); border-radius: 6px; background: var(--mono-bg-primary); color: var(--text-primary);">
+                            <option value="">Sélectionner un recruteur</option>
+                            <option value="marie.dubois">Marie Dubois</option>
+                            <option value="paul.martin">Paul Martin</option>
+                            <option value="sophie.bernard">Sophie Bernard</option>
+                            <option value="lucas.petit">Lucas Petit</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Statut initial</label>
+                        <div style="display: flex; gap: 1rem;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem;">
+                                <input type="radio" name="statut" value="brouillon" checked>
+                                <span>Brouillon</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem;">
+                                <input type="radio" name="statut" value="active">
+                                <span>Active immédiatement</span>
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Configuration des tests -->
+            <div class="rounded_rectangle mono-charcoal" style="margin-top: 2rem;">
+                <h3>Configuration des tests et questionnaires</h3>
+                
+                <div style="margin-top: 1rem;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                        <input type="checkbox" id="activer_tests">
+                        <span>Inclure des tests techniques</span>
+                    </label>
+                    
+                    <div id="config_tests" style="display: none; padding: 1rem; background: var(--mono-bg-secondary); border-radius: 6px;">
+                        <label for="questions_tech" style="display: block; margin-bottom: 0.5rem;">Questions techniques :</label>
+                        <select multiple id="questions_tech" style="width: 100%; height: 120px; padding: 0.5rem; border: 1px solid var(--mono-borders); border-radius: 6px; background: var(--mono-bg-primary);">
+                            <option value="js_basics">JavaScript - Bases</option>
+                            <option value="react_adv">React - Avancé</option>
+                            <option value="css_layout">CSS - Layouts</option>
+                            <option value="node_api">Node.js - APIs</option>
+                            <option value="sql_queries">SQL - Requêtes</option>
+                        </select>
+                        <p style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.5rem;">
+                            Maintenez Ctrl pour sélectionner plusieurs questions
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 3rem;">
+                <a href="campagnes.html" class="btn-start-alt">Annuler</a>
+                <button type="submit" class="btn-start" onclick="alert('Campagne créée avec succès !'); window.location.href='campagnes.html';">
+                    Créer la campagne
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        function toggleProfileMenu() {
+            const menu = document.getElementById('profile-menu');
+            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // Fermer le menu quand on clique ailleurs
+        document.addEventListener('click', function(event) {
+            const menu = document.getElementById('profile-menu');
+            const profileButton = event.target.closest('[onclick="toggleProfileMenu()"]');
+            
+            if (!profileButton && menu.style.display === 'block') {
+                menu.style.display = 'none';
+            }
+        });
+
+        // Activer/désactiver la section tests
+        document.getElementById('activer_tests').addEventListener('change', function() {
+            const configTests = document.getElementById('config_tests');
+            configTests.style.display = this.checked ? 'block' : 'none';
+        });
+
+        // Validation des dates
+        document.getElementById('date_debut').addEventListener('change', function() {
+            const dateDebut = new Date(this.value);
+            const dateFin = document.getElementById('date_fin');
+            dateFin.min = this.value;
+        });
+    </script>
+
+    <footer>
+        <p>&copy; 2025 Synelia - Administration</p>
+    </footer>
+</body>
+</html>

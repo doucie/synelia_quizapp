@@ -1,0 +1,27 @@
+
+/*
+ * Created on $today.date ( Time $today.time )
+ * Generator tool : $generator.name ( version $generator.version )
+ * Copyright 2018 Geo. All Rights Reserved.
+ */
+
+package ${target.javaPackageFromFolder(${SRC})};
+
+import org.springframework.dao.DataAccessException;
+
+import lombok.Getter;
+
+
+@Getter
+public class CustomDataAccessException extends DataAccessException {
+    private static final long serialVersionUID = 1L;
+	private final String errorCode;
+    private final String additionalInfo;
+
+    public CustomDataAccessException(String msg, String errorCode, String additionalInfo, Throwable cause) {
+        super(msg, cause);
+        this.errorCode = errorCode;
+        this.additionalInfo = additionalInfo;
+    }
+
+}

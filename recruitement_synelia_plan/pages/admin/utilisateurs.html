@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Utilisateurs - Admin Synelia</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- CSS Files in order: Variables first, then components -->
+    <link rel="stylesheet" href="../../styles/style.css">
+    <link rel="stylesheet" href="../../styles/rectangles.css">
+    <link rel="stylesheet" href="../../styles/buttons.css">
+</head>
+<body>
+    <div style="display: flex; min-height: 100vh;">
+        <!-- Menu latéral -->
+        <aside style="width: 250px; background: var(--mono-bg); border-right: 1px solid var(--mono-borders); padding: 1rem;">
+            <div style="margin-bottom: 2rem;">
+                <h2 style="color: var(--text-primary); font-size: 1.2rem; margin-bottom: 0.5rem;">👑 Admin</h2>
+                <p style="color: var(--text-secondary); font-size: 0.9rem;">Gestion des utilisateurs</p>
+            </div>
+            
+            <nav>
+                <ul style="list-style: none; margin: 0; padding: 0;">
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="../dashboard-admin.html" style="display: block; padding: 0.8rem; color: var(--text-secondary); text-decoration: none; border-radius: 6px; transition: all 0.2s;">📊 Dashboard</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="campagnes.html" style="display: block; padding: 0.8rem; color: var(--text-secondary); text-decoration: none; border-radius: 6px; transition: all 0.2s;">📋 Campagnes</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="utilisateurs.html" style="display: block; padding: 0.8rem; color: var(--text-primary); text-decoration: none; background: var(--mono-borders); border-radius: 6px;">👥 Utilisateurs</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="questions.html" style="display: block; padding: 0.8rem; color: var(--text-secondary); text-decoration: none; border-radius: 6px; transition: all 0.2s;">❓ Questions</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="departements.html" style="display: block; padding: 0.8rem; color: var(--text-secondary); text-decoration: none; border-radius: 6px; transition: all 0.2s;">🏢 Départements</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="candidatures.html" style="display: block; padding: 0.8rem; color: var(--text-secondary); text-decoration: none; border-radius: 6px; transition: all 0.2s;">🎯 Candidatures</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="rapports.html" style="display: block; padding: 0.8rem; color: var(--text-secondary); text-decoration: none; border-radius: 6px; transition: all 0.2s;">📈 Rapports</a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div style="margin-top: 2rem; border-top: 1px solid var(--mono-borders); padding-top: 1rem;">
+                <ul style="list-style: none; margin: 0 0 1rem 0; padding: 0;">
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="entretiens.html" style="display: block; padding: 0.8rem; color: var(--text-secondary); text-decoration: none; border-radius: 6px; transition: all 0.2s;">💬 Entretiens</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="evaluations.html" style="display: block; padding: 0.8rem; color: var(--text-secondary); text-decoration: none; border-radius: 6px; transition: all 0.2s;">⭐ Évaluations</a>
+                    </li>
+                </ul>
+                <div class="btn-container">
+                    <a href="../start.html" class="btn-start-alt" style="font-size: 0.9rem;">Déconnexion</a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Contenu principal -->
+        <main style="flex: 1; padding: 2rem; background: var(--bg-primary);">
+            <header style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1 style="color: var(--text-primary); margin-bottom: 0.5rem;">👥 Gestion des Utilisateurs</h1>
+                    <p style="color: var(--text-secondary);">Gérer les comptes recruteurs et administrateurs</p>
+                </div>
+                <div class="user-info">
+                    <div class="user-avatar" onclick="toggleProfileMenu()">
+                        <div class="avatar-circle">MD</div>
+                        <span>Admin - Marie Dubois</span>
+                        <div class="profile-menu" id="profile-menu" style="display: none;">
+                            <a href="profil.html">🏷️ Mon Profil</a>
+                            <a href="#" onclick="alert('Préférences')">⚙️ Préférences</a>
+                            <a href="../login.html">🚪 Déconnexion</a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Actions rapides -->
+            <section style="margin-bottom: 2rem;">
+                <div class="btn-container" style="display: inline-block; margin-right: 1rem;">
+                    <a href="nouvel-utilisateur.html" class="btn-start">Nouvel utilisateur</a>
+                </div>
+                <div class="btn-container" style="display: inline-block;">
+                    <a href="#" class="btn-start-alt">Inviter par email</a>
+                </div>
+            </section>
+
+            <!-- Statistiques rapides -->
+            <section style="margin-bottom: 2rem;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    <div class="rounded_rectangle mono-charcoal" style="text-align: center;">
+                        <h3 style="color: #00FF85; font-size: 2rem; margin-bottom: 0.5rem;">8</h3>
+                        <p style="color: var(--text-secondary);">Total utilisateurs</p>
+                    </div>
+                    <div class="rounded_rectangle mono-charcoal" style="text-align: center;">
+                        <h3 style="color: #1E90FF; font-size: 2rem; margin-bottom: 0.5rem;">5</h3>
+                        <p style="color: var(--text-secondary);">Recruteurs actifs</p>
+                    </div>
+                    <div class="rounded_rectangle mono-charcoal" style="text-align: center;">
+                        <h3 style="color: #FF6F61; font-size: 2rem; margin-bottom: 0.5rem;">2</h3>
+                        <p style="color: var(--text-secondary);">Administrateurs</p>
+                    </div>
+                    <div class="rounded_rectangle mono-charcoal" style="text-align: center;">
+                        <h3 style="color: #DAA520; font-size: 2rem; margin-bottom: 0.5rem;">1</h3>
+                        <p style="color: var(--text-secondary);">En attente</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Filtres et recherche -->
+            <section style="margin-bottom: 2rem;">
+                <div class="rounded_rectangle mono-charcoal">
+                    <h3 style="margin-bottom: 1rem;">🔍 Filtres et recherche</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 1rem; align-items: end;">
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem;">Rechercher :</label>
+                            <input type="text" placeholder="Nom, email..." style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--mono-borders); background: var(--muted-bg); color: var(--text-primary);">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem;">Rôle :</label>
+                            <select style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--mono-borders); background: var(--muted-bg); color: var(--text-primary);">
+                                <option>Tous</option>
+                                <option>Administrateur</option>
+                                <option>Recruteur</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem;">Statut :</label>
+                            <select style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--mono-borders); background: var(--muted-bg); color: var(--text-primary);">
+                                <option>Tous</option>
+                                <option>Actif</option>
+                                <option>Inactif</option>
+                                <option>En attente</option>
+                            </select>
+                        </div>
+                        <div class="btn-container">
+                            <a href="#" class="btn-start">Filtrer</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Liste des utilisateurs -->
+            <section>
+                <div class="rounded_rectangle mono-charcoal">
+                    <h3 style="margin-bottom: 1.5rem;">👥 Tous les utilisateurs (8)</h3>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid var(--mono-borders);">
+                                    <th style="text-align: left; padding: 1rem; color: var(--text-secondary);">Utilisateur</th>
+                                    <th style="text-align: left; padding: 1rem; color: var(--text-secondary);">Email</th>
+                                    <th style="text-align: left; padding: 1rem; color: var(--text-secondary);">Rôle</th>
+                                    <th style="text-align: left; padding: 1rem; color: var(--text-secondary);">Département</th>
+                                    <th style="text-align: left; padding: 1rem; color: var(--text-secondary);">Statut</th>
+                                    <th style="text-align: left; padding: 1rem; color: var(--text-secondary);">Dernière connexion</th>
+                                    <th style="text-align: center; padding: 1rem; color: var(--text-secondary);">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr style="border-bottom: 1px solid var(--mono-borders);">
+                                    <td style="padding: 1rem;">
+                                        <div style="display: flex; align-items: center;">
+                                            <div style="width: 40px; height: 40px; background: #00FF85; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 1rem; color: #000; font-weight: bold;">MA</div>
+                                            <div>
+                                                <div style="font-weight: bold;">Marie Dubois</div>
+                                                <div style="color: var(--text-secondary); font-size: 0.9rem;">Admin principal</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 1rem;">marie.dubois@synelia.com</td>
+                                    <td style="padding: 1rem;"><span style="background: #FF6F61; color: #fff; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">Administrateur</span></td>
+                                    <td style="padding: 1rem;">Direction</td>
+                                    <td style="padding: 1rem;"><span style="background: #00FF85; color: #000; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">Actif</span></td>
+                                    <td style="padding: 1rem;">Il y a 2h</td>
+                                    <td style="padding: 1rem; text-align: center;">
+                                        <a href="#" style="color: #1E90FF; margin-right: 1rem;">Modifier</a>
+                                        <a href="#" style="color: #FF6F61;">Suspendre</a>
+                                    </td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid var(--mono-borders);">
+                                    <td style="padding: 1rem;">
+                                        <div style="display: flex; align-items: center;">
+                                            <div style="width: 40px; height: 40px; background: #1E90FF; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 1rem; color: #fff; font-weight: bold;">PM</div>
+                                            <div>
+                                                <div style="font-weight: bold;">Pierre Martin</div>
+                                                <div style="color: var(--text-secondary); font-size: 0.9rem;">Recruteur senior</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 1rem;">pierre.martin@synelia.com</td>
+                                    <td style="padding: 1rem;"><span style="background: #1E90FF; color: #fff; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">Recruteur</span></td>
+                                    <td style="padding: 1rem;">IT</td>
+                                    <td style="padding: 1rem;"><span style="background: #00FF85; color: #000; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">Actif</span></td>
+                                    <td style="padding: 1rem;">Il y a 1 jour</td>
+                                    <td style="padding: 1rem; text-align: center;">
+                                        <a href="#" style="color: #1E90FF; margin-right: 1rem;">Modifier</a>
+                                        <a href="#" style="color: #FF6F61;">Suspendre</a>
+                                    </td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid var(--mono-borders);">
+                                    <td style="padding: 1rem;">
+                                        <div style="display: flex; align-items: center;">
+                                            <div style="width: 40px; height: 40px; background: #DA70D6; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 1rem; color: #fff; font-weight: bold;">SL</div>
+                                            <div>
+                                                <div style="font-weight: bold;">Sophie Leclerc</div>
+                                                <div style="color: var(--text-secondary); font-size: 0.9rem;">Recruteur</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 1rem;">sophie.leclerc@synelia.com</td>
+                                    <td style="padding: 1rem;"><span style="background: #1E90FF; color: #fff; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">Recruteur</span></td>
+                                    <td style="padding: 1rem;">Marketing</td>
+                                    <td style="padding: 1rem;"><span style="background: #00FF85; color: #000; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">Actif</span></td>
+                                    <td style="padding: 1rem;">Il y a 3h</td>
+                                    <td style="padding: 1rem; text-align: center;">
+                                        <a href="#" style="color: #1E90FF; margin-right: 1rem;">Modifier</a>
+                                        <a href="#" style="color: #FF6F61;">Suspendre</a>
+                                    </td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid var(--mono-borders);">
+                                    <td style="padding: 1rem;">
+                                        <div style="display: flex; align-items: center;">
+                                            <div style="width: 40px; height: 40px; background: #DAA520; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 1rem; color: #000; font-weight: bold;">JD</div>
+                                            <div>
+                                                <div style="font-weight: bold;">Julien Dupont</div>
+                                                <div style="color: var(--text-secondary); font-size: 0.9rem;">Recruteur junior</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 1rem;">julien.dupont@synelia.com</td>
+                                    <td style="padding: 1rem;"><span style="background: #1E90FF; color: #fff; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">Recruteur</span></td>
+                                    <td style="padding: 1rem;">RH</td>
+                                    <td style="padding: 1rem;"><span style="background: #DAA520; color: #000; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">En attente</span></td>
+                                    <td style="padding: 1rem;">Jamais connecté</td>
+                                    <td style="padding: 1rem; text-align: center;">
+                                        <a href="#" style="color: #00FF85; margin-right: 1rem;">Activer</a>
+                                        <a href="#" style="color: #FF6F61;">Supprimer</a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 1rem;">
+                                        <div style="display: flex; align-items: center;">
+                                            <div style="width: 40px; height: 40px; background: #888888; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 1rem; color: #fff; font-weight: bold;">AL</div>
+                                            <div>
+                                                <div style="font-weight: bold;">Alice Moreau</div>
+                                                <div style="color: var(--text-secondary); font-size: 0.9rem;">Ex-recruteur</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 1rem;">alice.moreau@synelia.com</td>
+                                    <td style="padding: 1rem;"><span style="background: #1E90FF; color: #fff; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">Recruteur</span></td>
+                                    <td style="padding: 1rem;">IT</td>
+                                    <td style="padding: 1rem;"><span style="background: #888888; color: #fff; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">Inactif</span></td>
+                                    <td style="padding: 1rem;">Il y a 2 mois</td>
+                                    <td style="padding: 1rem; text-align: center;">
+                                        <a href="#" style="color: #00FF85; margin-right: 1rem;">Réactiver</a>
+                                        <a href="#" style="color: #FF6F61;">Supprimer</a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <style>
+        /* Hover effects pour le menu */
+        aside nav a:hover,
+        aside div ul a:hover {
+            background: var(--mono-borders) !important;
+            color: var(--text-primary) !important;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            body > div {
+                flex-direction: column !important;
+            }
+            aside {
+                width: 100% !important;
+            }
+            main {
+                padding: 1rem !important;
+            }
+            div[style*="grid-template-columns: 1fr 1fr 1fr auto"] {
+                grid-template-columns: 1fr !important;
+            }
+        }
+    </style>
+    
+    <script>
+        function toggleProfileMenu() {
+            const menu = document.getElementById('profile-menu');
+            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // Fermer le menu quand on clique ailleurs
+        document.addEventListener('click', function(event) {
+            const menu = document.getElementById('profile-menu');
+            const profileButton = event.target.closest('[onclick="toggleProfileMenu()"]');
+            
+            if (!profileButton && menu.style.display === 'block') {
+                menu.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

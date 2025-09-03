@@ -1,0 +1,232 @@
+.home {
+  overflow-x: hidden;
+}
+
+// Hero Section
+.hero {
+  padding: 6rem 0 4rem;
+  background: linear-gradient(135deg, 
+    var(--surface) 0%, 
+    var(--surface-variant) 100%);
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(circle at 20% 80%, var(--primary) 0%, transparent 30%),
+      radial-gradient(circle at 80% 20%, var(--secondary) 0%, transparent 30%);
+    opacity: 0.1;
+    pointer-events: none;
+  }
+
+  &__content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  &__title {
+    font-size: 3.5rem;
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+    color: var(--text-primary);
+  }
+
+  &__description {
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    margin-bottom: 2.5rem;
+    line-height: 1.6;
+  }
+
+  &__actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  &__visual {
+    position: relative;
+    height: 500px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__illustration {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.btn--large {
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  gap: 0.5rem;
+
+  svg {
+    transition: transform 0.2s ease;
+  }
+
+  &:hover svg {
+    transform: translateX(4px);
+  }
+}
+
+// Floating Cards Animation
+.floating-card {
+  position: absolute;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 10px 25px var(--shadow-medium);
+  animation: float 6s ease-in-out infinite;
+
+  &.card--quiz {
+    top: 20%;
+    left: 10%;
+    width: 280px;
+    animation-delay: 0s;
+  }
+
+  &.card--stats {
+    bottom: 20%;
+    right: 10%;
+    width: 240px;
+    animation-delay: 3s;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+
+    h3 {
+      margin: 0;
+      font-size: 1.1rem;
+      color: var(--text-primary);
+    }
+  }
+
+  .card-icon {
+    font-size: 1.5rem;
+  }
+
+  .progress-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    border-radius: 4px;
+    transition: width 0.3s ease;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .stat {
+    text-align: center;
+
+    &-value {
+      display: block;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    &-label {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+  }
+
+  p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .hero {
+    padding: 4rem 0 2rem;
+    
+    &__content {
+      grid-template-columns: 1fr;
+      gap: 3rem;
+      text-align: center;
+    }
+
+    &__title {
+      font-size: 2.5rem;
+    }
+
+    &__visual {
+      height: 300px;
+    }
+
+    &__actions {
+      justify-content: center;
+    }
+  }
+
+  .floating-card {
+    position: static;
+    margin: 1rem auto;
+    max-width: 280px;
+    animation: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero {
+    &__title {
+      font-size: 2rem;
+    }
+
+    &__actions {
+      flex-direction: column;
+      width: 100%;
+
+      .btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  }
+}

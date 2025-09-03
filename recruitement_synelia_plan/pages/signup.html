@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscription - Synelia Recrutement</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- CSS Files in order: Variables first, then components -->
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/rectangles.css">
+    <link rel="stylesheet" href="../styles/buttons.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <h1>Inscription Recruteur</h1>
+        </nav>
+    </header>
+
+    <main>
+        <section>
+            <div class="rounded_rectangle mono-charcoal">
+                <h2>📝 Créer un compte recruteur</h2>
+                <p>Demandez l'accès à la plateforme de recrutement Synelia.</p>
+                
+                <form style="margin-top: 2rem;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div>
+                            <label for="prenom" style="display: block; margin-bottom: 0.5rem;">Prénom :</label>
+                            <input type="text" id="prenom" name="prenom" required style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--mono-borders); background: var(--muted-bg); color: var(--text-primary);">
+                        </div>
+                        <div>
+                            <label for="nom" style="display: block; margin-bottom: 0.5rem;">Nom :</label>
+                            <input type="text" id="nom" name="nom" required style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--mono-borders); background: var(--muted-bg); color: var(--text-primary);">
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <label for="email" style="display: block; margin-bottom: 0.5rem;">Email professionnel :</label>
+                        <input type="email" id="email" name="email" required style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--mono-borders); background: var(--muted-bg); color: var(--text-primary);">
+                    </div>
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <label for="telephone" style="display: block; margin-bottom: 0.5rem;">Téléphone :</label>
+                        <input type="tel" id="telephone" name="telephone" required style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--mono-borders); background: var(--muted-bg); color: var(--text-primary);">
+                    </div>
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <label for="departement" style="display: block; margin-bottom: 0.5rem;">Département :</label>
+                        <select id="departement" name="departement" required style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--mono-borders); background: var(--muted-bg); color: var(--text-primary);">
+                            <option value="">Sélectionnez un département</option>
+                            <option value="rh">Ressources Humaines</option>
+                            <option value="it">Technologies</option>
+                            <option value="marketing">Marketing</option>
+                            <option value="commercial">Commercial</option>
+                            <option value="finance">Finance</option>
+                        </select>
+                    </div>
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <label for="password" style="display: block; margin-bottom: 0.5rem;">Mot de passe :</label>
+                        <input type="password" id="password" name="password" required style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--mono-borders); background: var(--muted-bg); color: var(--text-primary);">
+                    </div>
+                    
+                    <div style="margin-bottom: 2rem;">
+                        <label for="confirm-password" style="display: block; margin-bottom: 0.5rem;">Confirmer le mot de passe :</label>
+                        <input type="password" id="confirm-password" name="confirm-password" required style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--mono-borders); background: var(--muted-bg); color: var(--text-primary);">
+                    </div>
+                    
+                    <div class="btn-container">
+                        <button type="submit" class="btn-start">Demander l'accès</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="rounded_rectangle mono-charcoal">
+                <h3>ℹ️ Processus d'inscription</h3>
+                <p>Après soumission de votre demande :</p>
+                <ol style="margin-top: 1rem;">
+                    <li style="margin-bottom: 0.5rem;">Vérification de votre email professionnel</li>
+                    <li style="margin-bottom: 0.5rem;">Validation par l'administrateur</li>
+                    <li style="margin-bottom: 0.5rem;">Réception des accès par email</li>
+                    <li>Première connexion et configuration du profil</li>
+                </ol>
+            </div>
+        </section>
+
+        <section style="margin-top: 2rem;">
+            <div class="btn-container">
+                <a href="login.html" class="btn-start-alt">Retour à la connexion</a>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Synelia - Inscription recruteur</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,131 @@
+<div class="entities-container">
+  <!-- En-tête de la page -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-icon">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M4 7v10c0 2.21 1.79 4 4 4h8c2.21 0 4-1.79 4-4V7c0-2.21-1.79-4-4-4H8c-2.21 0-4 1.79-4 4zm0 0V5a2 2 0 012-2h1m1 0h8a2 2 0 012 2v2M9 7h6m-6 4h6m-3 4h3"/>
+        </svg>
+      </div>
+      <h1 class="page-title">Gestion des Entités</h1>
+      <p class="page-description">
+        Administration centralisée de toutes les données du système
+      </p>
+    </div>
+  </div>
+
+  <!-- Barre de recherche -->
+  <div class="search-section">
+    <div class="search-container">
+      <div class="search-input-wrapper">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <input 
+          type="text" 
+          class="search-input"
+          placeholder="Rechercher une entité..."
+          (input)="onSearchChange($event)"
+          [value]="searchTerm()"
+        />
+      </div>
+    </div>
+  </div>
+
+  <!-- Grille des entités -->
+  <div class="entities-grid">
+    @if (loading()) {
+      <!-- État de chargement -->
+      <div class="loading-state">
+        <div class="loading-spinner">
+          <svg class="animate-spin" viewBox="0 0 24 24" fill="currentColor">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+          </svg>
+        </div>
+        <p>Chargement des entités...</p>
+      </div>
+    } @else if (filteredEntities().length === 0) {
+      <!-- État vide -->
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M20 6L9 17l-5-5"/>
+          </svg>
+        </div>
+        <h3>Aucune entité trouvée</h3>
+        <p>Essayez de modifier votre recherche</p>
+      </div>
+    } @else {
+      <!-- Cards des entités -->
+      @for (entity of filteredEntities(); track entity.name) {
+        <div class="entity-card" (click)="navigateToEntity(entity)">
+          <div class="card-header">
+            <div class="entity-icon" [style.background-color]="entity.color + '15'" [style.color]="entity.color">
+              <div [innerHTML]="entity.icon"></div>
+            </div>
+            <div class="entity-count" [class.loading]="!entity.count">
+              {{ entity.count || '...' }}
+            </div>
+          </div>
+          
+          <div class="card-content">
+            <h3 class="entity-name">{{ entity.displayName }}</h3>
+            <p class="entity-description">{{ entity.description }}</p>
+          </div>
+          
+          <div class="card-footer">
+            <button class="manage-button" [routerLink]="entity.route">
+              <svg class="button-icon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+              Gérer
+            </button>
+          </div>
+        </div>
+      }
+    }
+  </div>
+
+  <!-- Statistiques générales -->
+  <div class="stats-section">
+    <div class="stats-container">
+      <div class="stats-card">
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2h4a1 1 0 011 1v2a1 1 0 01-1 1h-1v11a2 2 0 01-2 2H6a2 2 0 01-2-2V8H3a1 1 0 01-1-1V5a1 1 0 011-1h4z"/>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ entities.length }}</div>
+          <div class="stat-label">Entités disponibles</div>
+        </div>
+      </div>
+      
+      <div class="stats-card">
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ filteredEntities().length }}</div>
+          <div class="stat-label">Entités affichées</div>
+        </div>
+      </div>
+      
+      <div class="stats-card">
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M9 17v-2.25A2.25 2.25 0 0011.25 12h1.5A2.25 2.25 0 0015 14.75V17m-6 0h6m-6 0H3m12 0h6M9 7h6m0 10v-5a2 2 0 00-2-2H11a2 2 0 00-2 2v5"/>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ getTotalRecords() }}</div>
+          <div class="stat-label">Enregistrements totaux</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

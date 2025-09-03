@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nouvel Utilisateur - Admin Synelia</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../styles/style.css">
+    <link rel="stylesheet" href="../../styles/rectangles.css">
+    <link rel="stylesheet" href="../../styles/buttons.css">
+</head>
+<body>
+    <header>
+        <nav style="display: flex; justify-content: space-between; align-items: center;">
+            <h1>Administration - Nouvel Utilisateur</h1>
+            <div style="position: relative; display: flex; align-items: center; gap: 1rem;">
+                <div class="notifications-bell" onclick="toggleNotifications()">
+                    <div class="bell-icon">🔔</div>
+                    <div class="notification-badge">2</div>
+                    <div class="notifications-menu" id="notifications-menu" style="display: none;">
+                        <div class="notification-item unread">
+                            <div class="notification-icon">👥</div>
+                            <div class="notification-content">
+                                <div class="notification-title">Nouveau candidat inscrit</div>
+                                <div class="notification-time">Il y a 1h</div>
+                            </div>
+                        </div>
+                        <div class="notification-item unread">
+                            <div class="notification-icon">📋</div>
+                            <div class="notification-content">
+                                <div class="notification-title">Validation utilisateur en attente</div>
+                                <div class="notification-time">Il y a 2h</div>
+                            </div>
+                        </div>
+                        <div class="notification-footer">
+                            <a href="#" onclick="markAllAsRead()">Marquer tout comme lu</a>
+                            <a href="#">Voir toutes les notifications</a>
+                        </div>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;" onclick="toggleProfileMenu()">
+                    <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                        SA
+                    </div>
+                    <span style="color: var(--text-primary);">Sophie Admin</span>
+                    <span style="color: var(--text-secondary); font-size: 0.8rem;">▼</span>
+                </div>
+                
+                <div id="profile-menu" style="position: absolute; top: 50px; right: 0; background: var(--mono-bg-primary); border: 1px solid var(--mono-borders); border-radius: 8px; padding: 0.5rem; min-width: 180px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: none; z-index: 1000;">
+                    <a href="profil.html" style="display: block; padding: 0.8rem 1rem; color: var(--text-primary); text-decoration: none; border-radius: 6px; transition: background 0.2s;" onmouseover="this.style.background='var(--mono-bg-secondary)'" onmouseout="this.style.background='transparent'">
+                        👤 Mon Profil
+                    </a>
+                    <a href="../user.html" style="display: block; padding: 0.8rem 1rem; color: var(--text-primary); text-decoration: none; border-radius: 6px; transition: background 0.2s;" onmouseover="this.style.background='var(--mono-bg-secondary)'" onmouseout="this.style.background='transparent'">
+                        ⚙️ Préférences
+                    </a>
+                    <hr style="border: none; border-top: 1px solid var(--mono-borders); margin: 0.5rem 0;">
+                    <a href="../start.html" style="display: block; padding: 0.8rem 1rem; color: #FF6F61; text-decoration: none; border-radius: 6px; transition: background 0.2s;" onmouseover="this.style.background='var(--mono-bg-secondary)'" onmouseout="this.style.background='transparent'">
+                        🚪 Déconnexion
+                    </a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Menu latéral -->
+        <aside style="position: fixed; left: 0; top: 60px; width: 250px; height: calc(100vh - 60px); background: var(--mono-bg-secondary); padding: 1rem; overflow-y: auto;">
+            <nav>
+                <ul style="list-style: none; padding: 0; margin: 0;">
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="../dashboard-admin.html" style="display: block; padding: 0.8rem; color: var(--text-primary); text-decoration: none; border-radius: 6px;">📊 Dashboard</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="campagnes.html" style="display: block; padding: 0.8rem; color: var(--text-primary); text-decoration: none; border-radius: 6px;">📋 Campagnes</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="utilisateurs.html" style="display: block; padding: 0.8rem; color: var(--text-primary); text-decoration: none; background: var(--mono-borders); border-radius: 6px;">👥 Utilisateurs</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="questions.html" style="display: block; padding: 0.8rem; color: var(--text-primary); text-decoration: none; border-radius: 6px;">❓ Questions</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="departements.html" style="display: block; padding: 0.8rem; color: var(--text-primary); text-decoration: none; border-radius: 6px;">🏢 Départements</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="candidatures.html" style="display: block; padding: 0.8rem; color: var(--text-primary); text-decoration: none; border-radius: 6px;">📄 Candidatures</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="rapports.html" style="display: block; padding: 0.8rem; color: var(--text-primary); text-decoration: none; border-radius: 6px;">📈 Rapports</a>
+                    </li>
+                    <hr style="border: none; border-top: 1px solid var(--mono-borders); margin: 1rem 0;">
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="entretiens.html" style="display: block; padding: 0.8rem; color: var(--text-primary); text-decoration: none; border-radius: 6px;">🤝 Entretiens</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="evaluations.html" style="display: block; padding: 0.8rem; color: var(--text-primary); text-decoration: none; border-radius: 6px;">⭐ Évaluations</a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Contenu principal -->
+        <section style="margin-left: 270px; padding: 2rem;">
+            <div class="rounded_rectangle mono-charcoal">
+                <h2>👤 Créer un nouvel utilisateur</h2>
+                <p>Ajoutez un nouveau membre à l'équipe avec les permissions appropriées.</p>
+            </div>
+
+            <!-- Formulaire de création -->
+            <div class="rounded_rectangle mono-charcoal" style="margin-top: 2rem;">
+                <h3>Informations personnelles</h3>
+                
+                <form style="display: grid; gap: 1.5rem; margin-top: 1rem;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <label for="prenom" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Prénom *</label>
+                            <input type="text" id="prenom" name="prenom" required 
+                                   style="width: 100%; padding: 0.8rem; border: 1px solid var(--mono-borders); border-radius: 6px; background: var(--mono-bg-primary); color: var(--text-primary);"
+                                   placeholder="Jean">
+                        </div>
+                        <div>
+                            <label for="nom" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Nom *</label>
+                            <input type="text" id="nom" name="nom" required 
+                                   style="width: 100%; padding: 0.8rem; border: 1px solid var(--mono-borders); border-radius: 6px; background: var(--mono-bg-primary); color: var(--text-primary);"
+                                   placeholder="Dupont">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="email" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Email professionnel *</label>
+                        <input type="email" id="email" name="email" required 
+                               style="width: 100%; padding: 0.8rem; border: 1px solid var(--mono-borders); border-radius: 6px; background: var(--mono-bg-primary); color: var(--text-primary);"
+                               placeholder="jean.dupont@synelia.com">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <label for="telephone" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Téléphone</label>
+                            <input type="tel" id="telephone" name="telephone"
+                                   style="width: 100%; padding: 0.8rem; border: 1px solid var(--mono-borders); border-radius: 6px; background: var(--mono-bg-primary); color: var(--text-primary);"
+                                   placeholder="+33 1 23 45 67 89">
+                        </div>
+                        <div>
+                            <label for="poste" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Poste *</label>
+                            <input type="text" id="poste" name="poste" required
+                                   style="width: 100%; padding: 0.8rem; border: 1px solid var(--mono-borders); border-radius: 6px; background: var(--mono-bg-primary); color: var(--text-primary);"
+                                   placeholder="Recruteur Senior">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="departement" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Département *</label>
+                        <select id="departement" name="departement" required
+                                style="width: 100%; padding: 0.8rem; border: 1px solid var(--mono-borders); border-radius: 6px; background: var(--mono-bg-primary); color: var(--text-primary);">
+                            <option value="">Sélectionner un département</option>
+                            <option value="rh">Ressources Humaines</option>
+                            <option value="tech">Technologies</option>
+                            <option value="marketing">Marketing</option>
+                            <option value="ventes">Ventes</option>
+                            <option value="finance">Finance</option>
+                            <option value="direction">Direction</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Rôle et permissions -->
+            <div class="rounded_rectangle mono-charcoal" style="margin-top: 2rem;">
+                <h3>Rôle et permissions</h3>
+                
+                <div style="margin-top: 1rem;">
+                    <label for="role" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Rôle *</label>
+                    <select id="role" name="role" required onchange="updatePermissions()"
+                            style="width: 100%; padding: 0.8rem; border: 1px solid var(--mono-borders); border-radius: 6px; background: var(--mono-bg-primary); color: var(--text-primary);">
+                        <option value="">Sélectionner un rôle</option>
+                        <option value="admin">Administrateur</option>
+                        <option value="recruteur">Recruteur</option>
+                        <option value="manager">Manager</option>
+                        <option value="rh">RH</option>
+                    </select>
+                </div>
+
+                <div id="permissions" style="margin-top: 1.5rem; display: none;">
+                    <h4 style="margin-bottom: 1rem;">Permissions spécifiques :</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" name="permissions" value="gerer_campagnes">
+                            <span>Gérer les campagnes</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" name="permissions" value="gerer_utilisateurs">
+                            <span>Gérer les utilisateurs</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" name="permissions" value="voir_candidatures">
+                            <span>Voir toutes les candidatures</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" name="permissions" value="evaluer_candidats">
+                            <span>Évaluer les candidats</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" name="permissions" value="planifier_entretiens">
+                            <span>Planifier les entretiens</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" name="permissions" value="generer_rapports">
+                            <span>Générer des rapports</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configuration du compte -->
+            <div class="rounded_rectangle mono-charcoal" style="margin-top: 2rem;">
+                <h3>Configuration du compte</h3>
+                
+                <div style="display: grid; gap: 1.5rem; margin-top: 1rem;">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Méthode d'activation</label>
+                        <div style="display: flex; gap: 1rem;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem;">
+                                <input type="radio" name="activation" value="email" checked>
+                                <span>Envoyer invitation par email</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem;">
+                                <input type="radio" name="activation" value="manuel">
+                                <span>Activation manuelle</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="config_email" style="padding: 1rem; background: var(--mono-bg-secondary); border-radius: 6px;">
+                        <label for="message_invitation" style="display: block; margin-bottom: 0.5rem;">Message d'invitation personnalisé :</label>
+                        <textarea id="message_invitation" name="message_invitation" rows="3"
+                                  style="width: 100%; padding: 0.8rem; border: 1px solid var(--mono-borders); border-radius: 6px; background: var(--mono-bg-primary); color: var(--text-primary); resize: vertical;"
+                                  placeholder="Bienvenue dans l'équipe ! Vous recevrez vos identifiants de connexion par email séparé."></textarea>
+                    </div>
+
+                    <div>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" name="notification_manager" checked>
+                            <span>Notifier le manager du département</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 3rem;">
+                <a href="utilisateurs.html" class="btn-start-alt">Annuler</a>
+                <button type="submit" class="btn-start" onclick="createUser()">
+                    Créer l'utilisateur
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        function toggleProfileMenu() {
+            const menu = document.getElementById('profile-menu');
+            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+            // Fermer le menu des notifications
+            const notificationsMenu = document.getElementById('notifications-menu');
+            if (notificationsMenu) {
+                notificationsMenu.style.display = 'none';
+            }
+        }
+
+        function toggleNotifications() {
+            const menu = document.getElementById('notifications-menu');
+            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+            // Fermer le menu profil
+            const profileMenu = document.getElementById('profile-menu');
+            if (profileMenu) {
+                profileMenu.style.display = 'none';
+            }
+        }
+
+        function markAllAsRead() {
+            const badge = document.querySelector('.notification-badge');
+            const unreadItems = document.querySelectorAll('.notification-item.unread');
+            
+            if (badge) badge.style.display = 'none';
+            unreadItems.forEach(item => {
+                item.classList.remove('unread');
+            });
+            
+            alert('Toutes les notifications ont été marquées comme lues');
+        }
+
+        // Fermer le menu quand on clique ailleurs
+        document.addEventListener('click', function(event) {
+            const menu = document.getElementById('profile-menu');
+            const profileButton = event.target.closest('[onclick="toggleProfileMenu()"]');
+            const notificationsMenu = document.getElementById('notifications-menu');
+            const notificationsButton = event.target.closest('[onclick="toggleNotifications()"]');
+            
+            if (!profileButton && menu && menu.style.display === 'block') {
+                menu.style.display = 'none';
+            }
+            
+            if (!notificationsButton && notificationsMenu && notificationsMenu.style.display === 'block') {
+                notificationsMenu.style.display = 'none';
+            }
+        });
+
+        function updatePermissions() {
+            const role = document.getElementById('role').value;
+            const permissionsDiv = document.getElementById('permissions');
+            const checkboxes = document.querySelectorAll('input[name="permissions"]');
+            
+            if (role) {
+                permissionsDiv.style.display = 'block';
+                
+                // Décocher toutes les permissions
+                checkboxes.forEach(cb => cb.checked = false);
+                
+                // Cocher les permissions selon le rôle
+                switch(role) {
+                    case 'admin':
+                        checkboxes.forEach(cb => cb.checked = true);
+                        break;
+                    case 'recruteur':
+                        document.querySelector('input[value="voir_candidatures"]').checked = true;
+                        document.querySelector('input[value="evaluer_candidats"]').checked = true;
+                        document.querySelector('input[value="planifier_entretiens"]').checked = true;
+                        break;
+                    case 'manager':
+                        document.querySelector('input[value="gerer_campagnes"]').checked = true;
+                        document.querySelector('input[value="voir_candidatures"]').checked = true;
+                        document.querySelector('input[value="generer_rapports"]').checked = true;
+                        break;
+                    case 'rh':
+                        document.querySelector('input[value="gerer_campagnes"]').checked = true;
+                        document.querySelector('input[value="voir_candidatures"]').checked = true;
+                        document.querySelector('input[value="evaluer_candidats"]').checked = true;
+                        break;
+                }
+            } else {
+                permissionsDiv.style.display = 'none';
+            }
+        }
+
+        function createUser() {
+            const form = document.querySelector('form');
+            const formData = new FormData(form);
+            
+            // Validation basique
+            if (!formData.get('prenom') || !formData.get('nom') || !formData.get('email')) {
+                alert('Veuillez remplir tous les champs obligatoires.');
+                return;
+            }
+            
+            alert('Utilisateur créé avec succès ! Un email d\'invitation a été envoyé.');
+            window.location.href = 'utilisateurs.html';
+        }
+
+        // Gérer l'affichage de la configuration email
+        document.querySelectorAll('input[name="activation"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const configEmail = document.getElementById('config_email');
+                configEmail.style.display = this.value === 'email' ? 'block' : 'none';
+            });
+        });
+    </script>
+
+    <footer>
+        <p>&copy; 2025 Synelia - Administration</p>
+    </footer>
+</body>
+</html>

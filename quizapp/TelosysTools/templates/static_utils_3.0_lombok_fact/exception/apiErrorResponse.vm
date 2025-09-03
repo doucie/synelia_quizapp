@@ -1,0 +1,23 @@
+/*
+ * Created on $today.date ( Time $today.time )
+ * Generator tool : $generator.name ( version $generator.version )
+ * Copyright 2023 O-sey. All Rights Reserved.
+ */
+
+package ${target.javaPackageFromFolder(${SRC})};
+
+import lombok.Builder;
+import lombok.Data;
+import java.time.LocalDateTime;
+
+import ${ROOT_PKG}.utils.Status;
+
+
+@Builder
+@Data
+public class ApiErrorResponse {
+    private   Status            status;
+    private   Integer           httpCode;
+    protected boolean           hasError;
+    protected LocalDateTime     timestamp;
+}

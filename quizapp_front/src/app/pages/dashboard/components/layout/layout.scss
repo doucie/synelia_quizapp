@@ -1,0 +1,29 @@
+/* Layout Principal Dashboard */
+.dashboard-layout {
+  display: flex;
+  min-height: 100vh;
+  background: var(--background);
+  transition: var(--transition);
+
+  &.sidebar-collapsed {
+    .sidebar { width: var(--sidebar-collapsed-width); }
+    .main-content { margin-left: var(--sidebar-collapsed-width); }
+  }
+}
+
+.main-content {
+  flex: 1;
+  margin-left: var(--sidebar-width);
+  transition: var(--transition);
+  background: var(--background);
+}
+
+.dashboard-content {
+  padding: var(--spacing-2xl);
+  min-height: calc(100vh - var(--header-height));
+}
+
+@media (max-width: 768px) {
+  .main-content { margin-left: 0; }
+  .dashboard-content { padding: var(--spacing-lg); }
+}

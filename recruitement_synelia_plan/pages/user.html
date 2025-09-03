@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Choix du profil - Synelia Recrutement</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- CSS Files in order: Variables first, then components -->
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/rectangles.css">
+    <link rel="stylesheet" href="../styles/buttons.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <h1>Espace Utilisateur</h1>
+        </nav>
+    </header>
+
+    <main>
+        <section>
+            <h2>Sélectionnez votre profil</h2>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 3rem 0; max-width: 800px; margin-left: auto; margin-right: auto;">
+                
+                <!-- Rectangle Admin -->
+                <a href="dashboard-admin.html" style="text-decoration: none;">
+                    <div class="rounded_rectangle jewel-teal" style="text-align: center; padding: 3rem 2rem; cursor: pointer; transition: transform 0.3s ease, box-shadow 0.3s ease;">
+                        <h3 style="font-size: 2rem; margin-bottom: 1rem;">👑</h3>
+                        <h3 style="margin-bottom: 1rem;">Administrateur</h3>
+                        <p>Gestion complète de l'application</p>
+                        <p style="font-size: 0.9rem; margin-top: 1rem; opacity: 0.8;">Campagnes, utilisateurs, questions, évaluations</p>
+                    </div>
+                </a>
+
+                <!-- Rectangle Recruteur -->
+                <a href="dashboard-recruiter.html" style="text-decoration: none;">
+                    <div class="rounded_rectangle warm-coral" style="text-align: center; padding: 3rem 2rem; cursor: pointer; transition: transform 0.3s ease, box-shadow 0.3s ease;">
+                        <h3 style="font-size: 2rem; margin-bottom: 1rem;">🎯</h3>
+                        <h3 style="margin-bottom: 1rem;">Recruteur</h3>
+                        <p>Gestion des campagnes et candidats</p>
+                        <p style="font-size: 0.9rem; margin-top: 1rem; opacity: 0.8;">Interviews, évaluations, suivi candidatures</p>
+                    </div>
+                </a>
+
+            </div>
+        </section>
+
+        <section style="margin-top: 3rem;">
+            <div class="btn-container">
+                <a href="login.html" class="btn-start-alt">Retour à la connexion</a>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Synelia - Sélection du profil utilisateur</p>
+    </footer>
+
+    <style>
+        /* Effet hover pour les rectangles */
+        .rounded_rectangle:hover {
+            transform: translateY(-5px);
+            box-shadow: 
+                0 0 30px rgba(0, 0, 0, 0.8),
+                0 15px 35px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Responsive pour mobile */
+        @media (max-width: 768px) {
+            div[style*="grid-template-columns: 1fr 1fr"] {
+                grid-template-columns: 1fr !important;
+            }
+        }
+    </style>
+</body>
+</html>

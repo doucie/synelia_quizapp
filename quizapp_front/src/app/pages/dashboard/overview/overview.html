@@ -1,0 +1,62 @@
+<div class="dashboard-welcome">
+  <div class="welcome-card">
+    <div class="welcome-header">
+      <h2>Bienvenue, {{ currentUser()?.firstName }} !</h2>
+      <p>Tableau de bord Synelia - Rôle : <strong>{{ userRole() }}</strong></p>
+    </div>
+    
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-content">
+          <div class="stat-number">24</div>
+          <div class="stat-label">Candidats actifs</div>
+        </div>
+        <div class="stat-trend positive">+12%</div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            <line x1="12" x2="12" y1="19" y2="22"/>
+            <line x1="8" x2="16" y1="22" y2="22"/>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">8</div>
+          <div class="stat-label">Entretiens prévus</div>
+        </div>
+        <div class="stat-trend neutral">=</div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">15</div>
+          <div class="stat-label">Évaluations</div>
+        </div>
+        <div class="stat-trend positive">+3</div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20,6 9,17 4,12"/>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">6</div>
+          <div class="stat-label">Recrutements finalisés</div>
+        </div>
+        <div class="stat-trend positive">+2</div>
+      </div>
+    </div>
+  </div>
+</div>

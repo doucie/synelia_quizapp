@@ -1,0 +1,137 @@
+/* Rounded Rectangle Base Class */
+.rounded_rectangle {
+    padding: 30px;
+    border-radius: 12px;
+    border: 1px solid;
+    box-sizing: border-box;
+    transition: all 0.3s ease;
+    margin: 1rem 0;
+}
+
+/* Force tous les éléments dans les rectangles à hériter de la couleur du rectangle */
+.rounded_rectangle h1,
+.rounded_rectangle h2,
+.rounded_rectangle h3,
+.rounded_rectangle h4,
+.rounded_rectangle h5,
+.rounded_rectangle h6,
+.rounded_rectangle p,
+.rounded_rectangle span,
+.rounded_rectangle div {
+    color: inherit !important;
+}
+
+/* Responsive padding */
+@media (max-width: 768px) {
+    .rounded_rectangle {
+        padding: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .rounded_rectangle {
+        padding: 15px;
+    }
+}
+
+/* Monochromatic variants */
+.rounded_rectangle.mono {
+    background-color: var(--mono-accent);
+    border-color: var(--mono-border1);
+    color: var(--mono-bg);
+}
+
+.rounded_rectangle.mono-alt {
+    background-color: var(--mono-border1);
+    border-color: var(--mono-border2);
+    color: var(--mono-text-primary);
+}
+
+.rounded_rectangle.mono-charcoal {
+    background-color: var(--bg-primary);
+    border-color: var(--text-primary);
+    color: var(--text-primary);
+}
+
+/* Neon variants */
+.rounded_rectangle.neon-green {
+    background-color: var(--neon-accent1);
+    border-color: var(--neon-border1);
+    color: var(--neon-bg);
+}
+
+.rounded_rectangle.neon-blue {
+    background-color: var(--neon-accent2);
+    border-color: var(--neon-border2);
+    color: var(--neon-bg);
+}
+
+/* Warm variants */
+.rounded_rectangle.warm-coral {
+    background-color: var(--warm-accent1);
+    border-color: var(--warm-border1);
+    color: var(--warm-bg);
+}
+
+.rounded_rectangle.warm-golden {
+    background-color: var(--warm-accent2);
+    border-color: var(--warm-border2);
+    color: var(--warm-bg);
+}
+
+/* Pastel variants */
+.rounded_rectangle.pastel-cyan {
+    background-color: var(--pastel-accent1);
+    border-color: var(--pastel-border1);
+    color: var(--pastel-bg);
+}
+
+.rounded_rectangle.pastel-pink {
+    background-color: var(--pastel-accent2);
+    border-color: var(--pastel-border2);
+    color: var(--pastel-bg);
+}
+
+.rounded_rectangle.pastel-button {
+    background-color: var(--pastel-button);
+    border-color: var(--pastel-border1);
+    color: var(--pastel-bg);
+}
+
+/* Jewel variants */
+.rounded_rectangle.jewel-teal {
+    background-color: var(--jewel-accent1);
+    border-color: var(--jewel-border1);
+    color: var(--jewel-text-primary);
+}
+
+.rounded_rectangle.jewel-ruby {
+    background-color: var(--jewel-accent2);
+    border-color: var(--jewel-border2);
+    color: var(--jewel-text-primary);
+}
+
+.rounded_rectangle.jewel-forest {
+    background-color: var(--jewel-button);
+    border-color: var(--jewel-border1);
+    color: var(--jewel-text-primary);
+}
+
+/* Vibrant variants */
+.rounded_rectangle.vibrant-orange {
+    background-color: var(--vibrant-accent1);
+    border-color: var(--vibrant-border1);
+    color: var(--vibrant-bg);
+}
+
+.rounded_rectangle.vibrant-purple {
+    background-color: var(--vibrant-accent2);
+    border-color: var(--vibrant-border2);
+    color: var(--vibrant-bg);
+}
+
+/* Hover effects */
+.rounded_rectangle:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}

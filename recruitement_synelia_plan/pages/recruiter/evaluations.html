@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta ch            <header style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1 style="color: var(--text-primary); margin-bottom: 0.5rem;">⭐ Mes Évaluations</h1>
+                    <p style="color: var(--text-secondary);">Évaluer et noter les candidats de mes campagnes</p>
+                </div>
+                <div class="user-info">
+                    <div class="user-avatar" onclick="toggleProfileMenu()">
+                        <div class="avatar-circle">PG</div>
+                        <span>Recruteur - Paul Giraud</span>
+                        <div class="profile-menu" id="profile-menu" style="display: none;">
+                            <a href="profil.html">🏷️ Mon Profil</a>
+                            <a href="#" onclick="alert('Préférences')">⚙️ Préférences</a>
+                            <a href="../login.html">🚪 Déconnexion</a>
+                        </div>
+                    </div>
+                </div>
+            </header>t="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes Évaluations - Recruteur Synelia</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- CSS Files in order: Variables first, then components -->
+    <link rel="stylesheet" href="../../styles/style.css">
+    <link rel="stylesheet" href="../../styles/rectangles.css">
+    <link rel="stylesheet" href="../../styles/buttons.css">
+</head>
+<body>
+    <div style="display: flex; min-height: 100vh;">
+        <!-- Menu latéral -->
+        <aside style="width: 250px; background: var(--mono-bg); border-right: 1px solid var(--mono-borders); padding: 1rem;">
+            <div style="margin-bottom: 2rem;">
+                <h2 style="color: var(--text-primary); font-size: 1.2rem; margin-bottom: 0.5rem;">🎯 Recruteur</h2>
+                <p style="color: var(--text-secondary); font-size: 0.9rem;">Évaluations candidats</p>
+            </div>
+            
+            <nav>
+                <ul style="list-style: none; margin: 0; padding: 0;">
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="../dashboard-recruiter.html" style="display: block; padding: 0.8rem; color: var(--text-secondary); text-decoration: none; border-radius: 6px; transition: all 0.2s;">📊 Dashboard</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="campagnes.html" style="display: block; padding: 0.8rem; color: var(--text-secondary); text-decoration: none; border-radius: 6px; transition: all 0.2s;">📋 Mes Campagnes</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="candidatures.html" style="display: block; padding: 0.8rem; color: var(--text-secondary); text-decoration: none; border-radius: 6px; transition: all 0.2s;">🎯 Candidatures</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="entretiens.html" style="display: block; padding: 0.8rem; color: var(--text-secondary); text-decoration: none; border-radius: 6px; transition: all 0.2s;">💬 Entretiens</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="evaluations.html" style="display: block; padding: 0.8rem; color: var(--text-primary); text-decoration: none; background: var(--mono-borders); border-radius: 6px;">⭐ Évaluations</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="questions.html" style="display: block; padding: 0.8rem; color: var(--text-secondary); text-decoration: none; border-radius: 6px; transition: all 0.2s;">❓ Questions</a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div style="margin-top: 2rem; border-top: 1px solid var(--mono-borders); padding-top: 1rem;">
+                <div class="btn-container">
+                    <a href="../start.html" class="btn-start-alt" style="font-size: 0.9rem;">Déconnexion</a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Contenu principal -->
+        <main style="flex: 1; padding: 2rem; background: var(--bg-primary);">
+            <header style="margin-bottom: 2rem;">
+                <h1 style="color: var(--text-primary); margin-bottom: 0.5rem;">Mes Évaluations</h1>
+                <p style="color: var(--text-secondary);">Noter et évaluer les candidats de mes campagnes</p>
+            </header>
+
+            <!-- Actions rapides -->
+            <section style="margin-bottom: 2rem;">
+                <div class="btn-container" style="display: inline-block; margin-right: 1rem;">
+                    <a href="#" class="btn-start">Nouvelle évaluation</a>
+                </div>
+                <div class="btn-container" style="display: inline-block; margin-right: 1rem;">
+                    <a href="#" class="btn-start-alt">Modèles d'évaluation</a>
+                </div>
+                <div class="btn-container" style="display: inline-block;">
+                    <a href="#" class="btn-start-alt">Export des notes</a>
+                </div>
+            </section>
+
+            <!-- Statistiques d'évaluation -->
+            <section style="margin-bottom: 2rem;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    <div class="rounded_rectangle mono-charcoal" style="text-align: center;">
+                        <h3 style="color: #00FF85; font-size: 2rem; margin-bottom: 0.5rem;">23</h3>
+                        <p style="color: var(--text-secondary);">Candidats évalués</p>
+                    </div>
+                    <div class="rounded_rectangle mono-charcoal" style="text-align: center;">
+                        <h3 style="color: #1E90FF; font-size: 2rem; margin-bottom: 0.5rem;">8</h3>
+                        <p style="color: var(--text-secondary);">En attente d'évaluation</p>
+                    </div>
+                    <div class="rounded_rectangle mono-charcoal" style="text-align: center;">
+                        <h3 style="color: #DAA520; font-size: 2rem; margin-bottom: 0.5rem;">78%</h3>
+                        <p style="color: var(--text-secondary);">Score moyen</p>
+                    </div>
+                    <div class="rounded_rectangle mono-charcoal" style="text-align: center;">
+                        <h3 style="color: #DA70D6; font-size: 2rem; margin-bottom: 0.5rem;">12</h3>
+                        <p style="color: var(--text-secondary);">Candidats recommandés</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Évaluations en attente -->
+            <section style="margin-bottom: 2rem;">
+                <div class="rounded_rectangle mono-charcoal">
+                    <h3 style="margin-bottom: 1.5rem;">⏳ Évaluations en attente (8)</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
+                        <div style="background: var(--mono-borders); border-radius: 8px; padding: 1.5rem;">
+                            <div style="display: flex; align-items: center; margin-bottom: 1rem;">
+                                <div style="width: 50px; height: 50px; background: #00FF85; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 1rem; color: #000; font-weight: bold;">LC</div>
+                                <div>
+                                    <div style="font-weight: bold; font-size: 1.1rem;">Lucas Chen</div>
+                                    <div style="color: var(--text-secondary); font-size: 0.9rem;">Développeur Frontend React</div>
+                                </div>
+                            </div>
+                            <div style="margin-bottom: 1rem;">
+                                <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.3rem;">Entretien terminé :</div>
+                                <div>Lundi 3 mars - 10:00</div>
+                            </div>
+                            <div class="btn-container" style="text-align: center;">
+                                <a href="#" class="btn-start" style="font-size: 0.9rem;">Évaluer maintenant</a>
+                            </div>
+                        </div>
+
+                        <div style="background: var(--mono-borders); border-radius: 8px; padding: 1.5rem;">
+                            <div style="display: flex; align-items: center; margin-bottom: 1rem;">
+                                <div style="width: 50px; height: 50px; background: #DA70D6; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 1rem; color: #fff; font-weight: bold;">SL</div>
+                                <div>
+                                    <div style="font-weight: bold; font-size: 1.1rem;">Sarah Lambert</div>
+                                    <div style="color: var(--text-secondary); font-size: 0.9rem;">UX/UI Designer</div>
+                                </div>
+                            </div>
+                            <div style="margin-bottom: 1rem;">
+                                <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.3rem;">Entretien terminé :</div>
+                                <div>Lundi 3 mars - 15:30</div>
+                            </div>
+                            <div class="btn-container" style="text-align: center;">
+                                <a href="#" class="btn-start" style="font-size: 0.9rem;">Évaluer maintenant</a>
+                            </div>
+                        </div>
+
+                        <div style="background: var(--mono-borders); border-radius: 8px; padding: 1.5rem;">
+                            <div style="display: flex; align-items: center; margin-bottom: 1rem;">
+                                <div style="width: 50px; height: 50px; background: #1E90FF; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 1rem; color: #fff; font-weight: bold;">TB</div>
+                                <div>
+                                    <div style="font-weight: bold; font-size: 1.1rem;">Thomas Bernard</div>
+                                    <div style="color: var(--text-secondary); font-size: 0.9rem;">Data Analyst Senior</div>
+                                </div>
+                            </div>
+                            <div style="margin-bottom: 1rem;">
+                                <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.3rem;">Test technique terminé :</div>
+                                <div>Hier - 14:30</div>
+                            </div>
+                            <div class="btn-container" style="text-align: center;">
+                                <a href="#" class="btn-start" style="font-size: 0.9rem;">Évaluer maintenant</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Filtres pour les évaluations -->
+            <section style="margin-bottom: 2rem;">
+                <div class="rounded_rectangle mono-charcoal">
+                    <h3 style="margin-bottom: 1rem;">🔍 Filtrer les évaluations</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 1rem; align-items: end;">
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem;">Candidat :</label>
+                            <input type="text" placeholder="Nom du candidat..." style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--mono-borders); background: var(--muted-bg); color: var(--text-primary);">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem;">Campagne :</label>
+                            <select style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--mono-borders); background: var(--muted-bg); color: var(--text-primary);">
+                                <option>Toutes</option>
+                                <option>Frontend React</option>
+                                <option>Data Analyst</option>
+                                <option>UX Designer</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem;">Statut :</label>
+                            <select style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--mono-borders); background: var(--muted-bg); color: var(--text-primary);">
+                                <option>Toutes</option>
+                                <option>Évaluées</option>
+                                <option>En attente</option>
+                                <option>Validées</option>
+                                <option>Refusées</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem;">Période :</label>
+                            <select style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--mono-borders); background: var(--muted-bg); color: var(--text-primary);">
+                                <option>Cette semaine</option>
+                                <option>Ce mois</option>
+                                <option>3 derniers mois</option>
+                                <option>Tout</option>
+                            </select>
+                        </div>
+                        <div class="btn-container">
+                            <a href="#" class="btn-start">Filtrer</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Historique des évaluations -->
+            <section>
+                <div class="rounded_rectangle mono-charcoal">
+                    <h3 style="margin-bottom: 1.5rem;">⭐ Historique des évaluations (23)</h3>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid var(--mono-borders);">
+                                    <th style="text-align: left; padding: 1rem; color: var(--text-secondary);">Candidat</th>
+                                    <th style="text-align: left; padding: 1rem; color: var(--text-secondary);">Poste</th>
+                                    <th style="text-align: left; padding: 1rem; color: var(--text-secondary);">Score global</th>
+                                    <th style="text-align: left; padding: 1rem; color: var(--text-secondary);">Technique</th>
+                                    <th style="text-align: left; padding: 1rem; color: var(--text-secondary);">Soft Skills</th>
+                                    <th style="text-align: left; padding: 1rem; color: var(--text-secondary);">Motivation</th>
+                                    <th style="text-align: left; padding: 1rem; color: var(--text-secondary);">Recommandation</th>
+                                    <th style="text-align: center; padding: 1rem; color: var(--text-secondary);">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr style="border-bottom: 1px solid var(--mono-borders);">
+                                    <td style="padding: 1rem;">
+                                        <div style="display: flex; align-items: center;">
+                                            <div style="width: 40px; height: 40px; background: #00FF85; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 1rem; color: #000; font-weight: bold;">MR</div>
+                                            <div>
+                                                <div style="font-weight: bold;">Marie Rousseau</div>
+                                                <div style="color: var(--text-secondary); font-size: 0.9rem;">28 février 2025</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 1rem;">Product Manager</td>
+                                    <td style="padding: 1rem;">
+                                        <div style="display: flex; align-items: center;">
+                                            <span style="color: #00FF85; font-weight: bold; font-size: 1.2rem; margin-right: 0.5rem;">95</span>
+                                            <span style="color: var(--text-secondary);">/100</span>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 1rem;"><span style="color: #00FF85;">★★★★★</span></td>
+                                    <td style="padding: 1rem;"><span style="color: #00FF85;">★★★★★</span></td>
+                                    <td style="padding: 1rem;"><span style="color: #00FF85;">★★★★★</span></td>
+                                    <td style="padding: 1rem;"><span style="background: #00FF85; color: #000; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">Fortement recommandé</span></td>
+                                    <td style="padding: 1rem; text-align: center;">
+                                        <a href="#" style="color: #1E90FF; margin-right: 1rem;">Voir détails</a>
+                                        <a href="#" style="color: #00FF85;">Valider</a>
+                                    </td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid var(--mono-borders);">
+                                    <td style="padding: 1rem;">
+                                        <div style="display: flex; align-items: center;">
+                                            <div style="width: 40px; height: 40px; background: #1E90FF; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 1rem; color: #fff; font-weight: bold;">AD</div>
+                                            <div>
+                                                <div style="font-weight: bold;">Antoine Dubois</div>
+                                                <div style="color: var(--text-secondary); font-size: 0.9rem;">26 février 2025</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 1rem;">Data Analyst Senior</td>
+                                    <td style="padding: 1rem;">
+                                        <div style="display: flex; align-items: center;">
+                                            <span style="color: #1E90FF; font-weight: bold; font-size: 1.2rem; margin-right: 0.5rem;">87</span>
+                                            <span style="color: var(--text-secondary);">/100</span>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 1rem;"><span style="color: #00FF85;">★★★★☆</span></td>
+                                    <td style="padding: 1rem;"><span style="color: #DAA520;">★★★☆☆</span></td>
+                                    <td style="padding: 1rem;"><span style="color: #00FF85;">★★★★★</span></td>
+                                    <td style="padding: 1rem;"><span style="background: #1E90FF; color: #fff; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">Recommandé</span></td>
+                                    <td style="padding: 1rem; text-align: center;">
+                                        <a href="#" style="color: #1E90FF; margin-right: 1rem;">Voir détails</a>
+                                        <a href="#" style="color: #00FF85;">Valider</a>
+                                    </td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid var(--mono-borders);">
+                                    <td style="padding: 1rem;">
+                                        <div style="display: flex; align-items: center;">
+                                            <div style="width: 40px; height: 40px; background: #DA70D6; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 1rem; color: #fff; font-weight: bold;">CL</div>
+                                            <div>
+                                                <div style="font-weight: bold;">Claire Lemoine</div>
+                                                <div style="color: var(--text-secondary); font-size: 0.9rem;">24 février 2025</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 1rem;">UX/UI Designer</td>
+                                    <td style="padding: 1rem;">
+                                        <div style="display: flex; align-items: center;">
+                                            <span style="color: #DAA520; font-weight: bold; font-size: 1.2rem; margin-right: 0.5rem;">73</span>
+                                            <span style="color: var(--text-secondary);">/100</span>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 1rem;"><span style="color: #DAA520;">★★★☆☆</span></td>
+                                    <td style="padding: 1rem;"><span style="color: #00FF85;">★★★★☆</span></td>
+                                    <td style="padding: 1rem;"><span style="color: #DAA520;">★★★☆☆</span></td>
+                                    <td style="padding: 1rem;"><span style="background: #DAA520; color: #000; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">À considérer</span></td>
+                                    <td style="padding: 1rem; text-align: center;">
+                                        <a href="#" style="color: #1E90FF; margin-right: 1rem;">Voir détails</a>
+                                        <a href="#" style="color: #DAA520;">En attente</a>
+                                    </td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid var(--mono-borders);">
+                                    <td style="padding: 1rem;">
+                                        <div style="display: flex; align-items: center;">
+                                            <div style="width: 40px; height: 40px; background: #FF6F61; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 1rem; color: #fff; font-weight: bold;">JM</div>
+                                            <div>
+                                                <div style="font-weight: bold;">Julien Moreau</div>
+                                                <div style="color: var(--text-secondary); font-size: 0.9rem;">22 février 2025</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 1rem;">Développeur Backend</td>
+                                    <td style="padding: 1rem;">
+                                        <div style="display: flex; align-items: center;">
+                                            <span style="color: #FF6F61; font-weight: bold; font-size: 1.2rem; margin-right: 0.5rem;">45</span>
+                                            <span style="color: var(--text-secondary);">/100</span>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 1rem;"><span style="color: #FF6F61;">★★☆☆☆</span></td>
+                                    <td style="padding: 1rem;"><span style="color: #DAA520;">★★★☆☆</span></td>
+                                    <td style="padding: 1rem;"><span style="color: #FF6F61;">★★☆☆☆</span></td>
+                                    <td style="padding: 1rem;"><span style="background: #FF6F61; color: #fff; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">Non recommandé</span></td>
+                                    <td style="padding: 1rem; text-align: center;">
+                                        <a href="#" style="color: #1E90FF; margin-right: 1rem;">Voir détails</a>
+                                        <a href="#" style="color: #FF6F61;">Refuser</a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 1rem;">
+                                        <div style="display: flex; align-items: center;">
+                                            <div style="width: 40px; height: 40px; background: #DAA520; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 1rem; color: #000; font-weight: bold;">EB</div>
+                                            <div>
+                                                <div style="font-weight: bold;">Emma Bernard</div>
+                                                <div style="color: var(--text-secondary); font-size: 0.9rem;">20 février 2025</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 1rem;">Développeur Frontend</td>
+                                    <td style="padding: 1rem;">
+                                        <div style="display: flex; align-items: center;">
+                                            <span style="color: #1E90FF; font-weight: bold; font-size: 1.2rem; margin-right: 0.5rem;">82</span>
+                                            <span style="color: var(--text-secondary);">/100</span>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 1rem;"><span style="color: #00FF85;">★★★★☆</span></td>
+                                    <td style="padding: 1rem;"><span style="color: #00FF85;">★★★★☆</span></td>
+                                    <td style="padding: 1rem;"><span style="color: #DAA520;">★★★☆☆</span></td>
+                                    <td style="padding: 1rem;"><span style="background: #1E90FF; color: #fff; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">Recommandé</span></td>
+                                    <td style="padding: 1rem; text-align: center;">
+                                        <a href="#" style="color: #1E90FF; margin-right: 1rem;">Voir détails</a>
+                                        <a href="#" style="color: #00FF85;">Valider</a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <style>
+        /* Hover effects pour le menu */
+        aside nav a:hover {
+            background: var(--mono-borders) !important;
+            color: var(--text-primary) !important;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            body > div {
+                flex-direction: column !important;
+            }
+            aside {
+                width: 100% !important;
+            }
+            main {
+                padding: 1rem !important;
+            }
+            div[style*="grid-template-columns: 1fr 1fr 1fr 1fr auto"] {
+                grid-template-columns: 1fr !important;
+            }
+            div[style*="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr))"] {
+                grid-template-columns: 1fr !important;
+            }
+        }
+    </style>
+    
+    <script>
+        function toggleProfileMenu() {
+            const menu = document.getElementById('profile-menu');
+            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // Fermer le menu quand on clique ailleurs
+        document.addEventListener('click', function(event) {
+            const menu = document.getElementById('profile-menu');
+            const profileButton = event.target.closest('[onclick="toggleProfileMenu()"]');
+            
+            if (!profileButton && menu.style.display === 'block') {
+                menu.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

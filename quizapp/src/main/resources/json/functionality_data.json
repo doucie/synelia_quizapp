@@ -1,0 +1,462 @@
+{
+	"user": 1,
+	"datas": [
+		{
+			"code": "ANSWERS",
+			"name": "ANSWERS"
+		},
+		{
+			"code": "VIEW_ANSWERS",
+			"parentCode": "ANSWERS",
+			"name": "VIEW ANSWERS"
+		},
+		{
+			"code": "CREATE_ANSWERS",
+			"parentCode": "ANSWERS",
+			"name": "CREATE ANSWERS"
+		},
+		{
+			"code": "UPDATE_ANSWERS",
+			"parentCode": "ANSWERS",
+			"name": "UPDATE ANSWERS"
+		},
+		{
+			"code": "DELETE_ANSWERS",
+			"parentCode": "ANSWERS",
+			"name": "DELETE ANSWERS"
+		},
+		{
+			"code": "APPLICATIONS",
+			"name": "APPLICATIONS"
+		},
+		{
+			"code": "VIEW_APPLICATIONS",
+			"parentCode": "APPLICATIONS",
+			"name": "VIEW APPLICATIONS"
+		},
+		{
+			"code": "CREATE_APPLICATIONS",
+			"parentCode": "APPLICATIONS",
+			"name": "CREATE APPLICATIONS"
+		},
+		{
+			"code": "UPDATE_APPLICATIONS",
+			"parentCode": "APPLICATIONS",
+			"name": "UPDATE APPLICATIONS"
+		},
+		{
+			"code": "DELETE_APPLICATIONS",
+			"parentCode": "APPLICATIONS",
+			"name": "DELETE APPLICATIONS"
+		},
+		{
+			"code": "CAMPAIGN_CRUD",
+			"name": "CAMPAIGN_CRUD"
+		},
+		{
+			"code": "VIEW_CAMPAIGN_CRUD",
+			"parentCode": "CAMPAIGN_CRUD",
+			"name": "VIEW CAMPAIGN_CRUD"
+		},
+		{
+			"code": "CREATE_CAMPAIGN_CRUD",
+			"parentCode": "CAMPAIGN_CRUD",
+			"name": "CREATE CAMPAIGN_CRUD"
+		},
+		{
+			"code": "UPDATE_CAMPAIGN_CRUD",
+			"parentCode": "CAMPAIGN_CRUD",
+			"name": "UPDATE CAMPAIGN_CRUD"
+		},
+		{
+			"code": "DELETE_CAMPAIGN_CRUD",
+			"parentCode": "CAMPAIGN_CRUD",
+			"name": "DELETE CAMPAIGN_CRUD"
+		},
+		{
+			"code": "CAMPAIGN_QUESTIONS",
+			"name": "CAMPAIGN_QUESTIONS"
+		},
+		{
+			"code": "VIEW_CAMPAIGN_QUESTIONS",
+			"parentCode": "CAMPAIGN_QUESTIONS",
+			"name": "VIEW CAMPAIGN_QUESTIONS"
+		},
+		{
+			"code": "CREATE_CAMPAIGN_QUESTIONS",
+			"parentCode": "CAMPAIGN_QUESTIONS",
+			"name": "CREATE CAMPAIGN_QUESTIONS"
+		},
+		{
+			"code": "UPDATE_CAMPAIGN_QUESTIONS",
+			"parentCode": "CAMPAIGN_QUESTIONS",
+			"name": "UPDATE CAMPAIGN_QUESTIONS"
+		},
+		{
+			"code": "DELETE_CAMPAIGN_QUESTIONS",
+			"parentCode": "CAMPAIGN_QUESTIONS",
+			"name": "DELETE CAMPAIGN_QUESTIONS"
+		},
+		{
+			"code": "CAMPAIGNS",
+			"name": "CAMPAIGNS"
+		},
+		{
+			"code": "VIEW_CAMPAIGNS",
+			"parentCode": "CAMPAIGNS",
+			"name": "VIEW CAMPAIGNS"
+		},
+		{
+			"code": "CREATE_CAMPAIGNS",
+			"parentCode": "CAMPAIGNS",
+			"name": "CREATE CAMPAIGNS"
+		},
+		{
+			"code": "UPDATE_CAMPAIGNS",
+			"parentCode": "CAMPAIGNS",
+			"name": "UPDATE CAMPAIGNS"
+		},
+		{
+			"code": "DELETE_CAMPAIGNS",
+			"parentCode": "CAMPAIGNS",
+			"name": "DELETE CAMPAIGNS"
+		},
+		{
+			"code": "CANDIDATE_ANSWERS",
+			"name": "CANDIDATE_ANSWERS"
+		},
+		{
+			"code": "VIEW_CANDIDATE_ANSWERS",
+			"parentCode": "CANDIDATE_ANSWERS",
+			"name": "VIEW CANDIDATE_ANSWERS"
+		},
+		{
+			"code": "CREATE_CANDIDATE_ANSWERS",
+			"parentCode": "CANDIDATE_ANSWERS",
+			"name": "CREATE CANDIDATE_ANSWERS"
+		},
+		{
+			"code": "UPDATE_CANDIDATE_ANSWERS",
+			"parentCode": "CANDIDATE_ANSWERS",
+			"name": "UPDATE CANDIDATE_ANSWERS"
+		},
+		{
+			"code": "DELETE_CANDIDATE_ANSWERS",
+			"parentCode": "CANDIDATE_ANSWERS",
+			"name": "DELETE CANDIDATE_ANSWERS"
+		},
+		{
+			"code": "CANDIDATE_ASK",
+			"name": "CANDIDATE_ASK"
+		},
+		{
+			"code": "VIEW_CANDIDATE_ASK",
+			"parentCode": "CANDIDATE_ASK",
+			"name": "VIEW CANDIDATE_ASK"
+		},
+		{
+			"code": "CREATE_CANDIDATE_ASK",
+			"parentCode": "CANDIDATE_ASK",
+			"name": "CREATE CANDIDATE_ASK"
+		},
+		{
+			"code": "UPDATE_CANDIDATE_ASK",
+			"parentCode": "CANDIDATE_ASK",
+			"name": "UPDATE CANDIDATE_ASK"
+		},
+		{
+			"code": "DELETE_CANDIDATE_ASK",
+			"parentCode": "CANDIDATE_ASK",
+			"name": "DELETE CANDIDATE_ASK"
+		},
+		{
+			"code": "CANDIDATE_INTERVIEW",
+			"name": "CANDIDATE_INTERVIEW"
+		},
+		{
+			"code": "VIEW_CANDIDATE_INTERVIEW",
+			"parentCode": "CANDIDATE_INTERVIEW",
+			"name": "VIEW CANDIDATE_INTERVIEW"
+		},
+		{
+			"code": "CREATE_CANDIDATE_INTERVIEW",
+			"parentCode": "CANDIDATE_INTERVIEW",
+			"name": "CREATE CANDIDATE_INTERVIEW"
+		},
+		{
+			"code": "UPDATE_CANDIDATE_INTERVIEW",
+			"parentCode": "CANDIDATE_INTERVIEW",
+			"name": "UPDATE CANDIDATE_INTERVIEW"
+		},
+		{
+			"code": "DELETE_CANDIDATE_INTERVIEW",
+			"parentCode": "CANDIDATE_INTERVIEW",
+			"name": "DELETE CANDIDATE_INTERVIEW"
+		},
+		{
+			"code": "CANDIDATE_TOKEN",
+			"name": "CANDIDATE_TOKEN"
+		},
+		{
+			"code": "VIEW_CANDIDATE_TOKEN",
+			"parentCode": "CANDIDATE_TOKEN",
+			"name": "VIEW CANDIDATE_TOKEN"
+		},
+		{
+			"code": "CREATE_CANDIDATE_TOKEN",
+			"parentCode": "CANDIDATE_TOKEN",
+			"name": "CREATE CANDIDATE_TOKEN"
+		},
+		{
+			"code": "UPDATE_CANDIDATE_TOKEN",
+			"parentCode": "CANDIDATE_TOKEN",
+			"name": "UPDATE CANDIDATE_TOKEN"
+		},
+		{
+			"code": "DELETE_CANDIDATE_TOKEN",
+			"parentCode": "CANDIDATE_TOKEN",
+			"name": "DELETE CANDIDATE_TOKEN"
+		},
+		{
+			"code": "DEPARTMENTS",
+			"name": "DEPARTMENTS"
+		},
+		{
+			"code": "VIEW_DEPARTMENTS",
+			"parentCode": "DEPARTMENTS",
+			"name": "VIEW DEPARTMENTS"
+		},
+		{
+			"code": "CREATE_DEPARTMENTS",
+			"parentCode": "DEPARTMENTS",
+			"name": "CREATE DEPARTMENTS"
+		},
+		{
+			"code": "UPDATE_DEPARTMENTS",
+			"parentCode": "DEPARTMENTS",
+			"name": "UPDATE DEPARTMENTS"
+		},
+		{
+			"code": "DELETE_DEPARTMENTS",
+			"parentCode": "DEPARTMENTS",
+			"name": "DELETE DEPARTMENTS"
+		},
+		{
+			"code": "EVALUATIONS",
+			"name": "EVALUATIONS"
+		},
+		{
+			"code": "VIEW_EVALUATIONS",
+			"parentCode": "EVALUATIONS",
+			"name": "VIEW EVALUATIONS"
+		},
+		{
+			"code": "CREATE_EVALUATIONS",
+			"parentCode": "EVALUATIONS",
+			"name": "CREATE EVALUATIONS"
+		},
+		{
+			"code": "UPDATE_EVALUATIONS",
+			"parentCode": "EVALUATIONS",
+			"name": "UPDATE EVALUATIONS"
+		},
+		{
+			"code": "DELETE_EVALUATIONS",
+			"parentCode": "EVALUATIONS",
+			"name": "DELETE EVALUATIONS"
+		},
+		{
+			"code": "INTERVIEW_CRUD",
+			"name": "INTERVIEW_CRUD"
+		},
+		{
+			"code": "VIEW_INTERVIEW_CRUD",
+			"parentCode": "INTERVIEW_CRUD",
+			"name": "VIEW INTERVIEW_CRUD"
+		},
+		{
+			"code": "CREATE_INTERVIEW_CRUD",
+			"parentCode": "INTERVIEW_CRUD",
+			"name": "CREATE INTERVIEW_CRUD"
+		},
+		{
+			"code": "UPDATE_INTERVIEW_CRUD",
+			"parentCode": "INTERVIEW_CRUD",
+			"name": "UPDATE INTERVIEW_CRUD"
+		},
+		{
+			"code": "DELETE_INTERVIEW_CRUD",
+			"parentCode": "INTERVIEW_CRUD",
+			"name": "DELETE INTERVIEW_CRUD"
+		},
+		{
+			"code": "INTERVIEWS",
+			"name": "INTERVIEWS"
+		},
+		{
+			"code": "VIEW_INTERVIEWS",
+			"parentCode": "INTERVIEWS",
+			"name": "VIEW INTERVIEWS"
+		},
+		{
+			"code": "CREATE_INTERVIEWS",
+			"parentCode": "INTERVIEWS",
+			"name": "CREATE INTERVIEWS"
+		},
+		{
+			"code": "UPDATE_INTERVIEWS",
+			"parentCode": "INTERVIEWS",
+			"name": "UPDATE INTERVIEWS"
+		},
+		{
+			"code": "DELETE_INTERVIEWS",
+			"parentCode": "INTERVIEWS",
+			"name": "DELETE INTERVIEWS"
+		},
+		{
+			"code": "NOTIFICATIONS",
+			"name": "NOTIFICATIONS"
+		},
+		{
+			"code": "VIEW_NOTIFICATIONS",
+			"parentCode": "NOTIFICATIONS",
+			"name": "VIEW NOTIFICATIONS"
+		},
+		{
+			"code": "CREATE_NOTIFICATIONS",
+			"parentCode": "NOTIFICATIONS",
+			"name": "CREATE NOTIFICATIONS"
+		},
+		{
+			"code": "UPDATE_NOTIFICATIONS",
+			"parentCode": "NOTIFICATIONS",
+			"name": "UPDATE NOTIFICATIONS"
+		},
+		{
+			"code": "DELETE_NOTIFICATIONS",
+			"parentCode": "NOTIFICATIONS",
+			"name": "DELETE NOTIFICATIONS"
+		},
+		{
+			"code": "QUESTIONS",
+			"name": "QUESTIONS"
+		},
+		{
+			"code": "VIEW_QUESTIONS",
+			"parentCode": "QUESTIONS",
+			"name": "VIEW QUESTIONS"
+		},
+		{
+			"code": "CREATE_QUESTIONS",
+			"parentCode": "QUESTIONS",
+			"name": "CREATE QUESTIONS"
+		},
+		{
+			"code": "UPDATE_QUESTIONS",
+			"parentCode": "QUESTIONS",
+			"name": "UPDATE QUESTIONS"
+		},
+		{
+			"code": "DELETE_QUESTIONS",
+			"parentCode": "QUESTIONS",
+			"name": "DELETE QUESTIONS"
+		},
+		{
+			"code": "QUESTIONS_ANSWERS",
+			"name": "QUESTIONS_ANSWERS"
+		},
+		{
+			"code": "VIEW_QUESTIONS_ANSWERS",
+			"parentCode": "QUESTIONS_ANSWERS",
+			"name": "VIEW QUESTIONS_ANSWERS"
+		},
+		{
+			"code": "CREATE_QUESTIONS_ANSWERS",
+			"parentCode": "QUESTIONS_ANSWERS",
+			"name": "CREATE QUESTIONS_ANSWERS"
+		},
+		{
+			"code": "UPDATE_QUESTIONS_ANSWERS",
+			"parentCode": "QUESTIONS_ANSWERS",
+			"name": "UPDATE QUESTIONS_ANSWERS"
+		},
+		{
+			"code": "DELETE_QUESTIONS_ANSWERS",
+			"parentCode": "QUESTIONS_ANSWERS",
+			"name": "DELETE QUESTIONS_ANSWERS"
+		},
+		{
+			"code": "SOURCE_TOKEN",
+			"name": "SOURCE_TOKEN"
+		},
+		{
+			"code": "VIEW_SOURCE_TOKEN",
+			"parentCode": "SOURCE_TOKEN",
+			"name": "VIEW SOURCE_TOKEN"
+		},
+		{
+			"code": "CREATE_SOURCE_TOKEN",
+			"parentCode": "SOURCE_TOKEN",
+			"name": "CREATE SOURCE_TOKEN"
+		},
+		{
+			"code": "UPDATE_SOURCE_TOKEN",
+			"parentCode": "SOURCE_TOKEN",
+			"name": "UPDATE SOURCE_TOKEN"
+		},
+		{
+			"code": "DELETE_SOURCE_TOKEN",
+			"parentCode": "SOURCE_TOKEN",
+			"name": "DELETE SOURCE_TOKEN"
+		},
+		{
+			"code": "SPECIALITIES",
+			"name": "SPECIALITIES"
+		},
+		{
+			"code": "VIEW_SPECIALITIES",
+			"parentCode": "SPECIALITIES",
+			"name": "VIEW SPECIALITIES"
+		},
+		{
+			"code": "CREATE_SPECIALITIES",
+			"parentCode": "SPECIALITIES",
+			"name": "CREATE SPECIALITIES"
+		},
+		{
+			"code": "UPDATE_SPECIALITIES",
+			"parentCode": "SPECIALITIES",
+			"name": "UPDATE SPECIALITIES"
+		},
+		{
+			"code": "DELETE_SPECIALITIES",
+			"parentCode": "SPECIALITIES",
+			"name": "DELETE SPECIALITIES"
+		},
+		{
+			"code": "USER",
+			"name": "USER"
+		},
+		{
+			"code": "VIEW_USER",
+			"parentCode": "USER",
+			"name": "VIEW USER"
+		},
+		{
+			"code": "CREATE_USER",
+			"parentCode": "USER",
+			"name": "CREATE USER"
+		},
+		{
+			"code": "UPDATE_USER",
+			"parentCode": "USER",
+			"name": "UPDATE USER"
+		},
+		{
+			"code": "DELETE_USER",
+			"parentCode": "USER",
+			"name": "DELETE USER"
+		}
+
+	]
+}

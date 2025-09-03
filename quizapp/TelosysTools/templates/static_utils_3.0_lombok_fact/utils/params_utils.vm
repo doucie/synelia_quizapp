@@ -1,0 +1,93 @@
+package ${target.javaPackageFromFolder(${SRC})};
+#set( $D = '$' )
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import java.util.List;
+import lombok.Data;
+
+/**
+ * BUSINESS factory
+ *
+ * @author Diomande Souleymane
+ */
+ 
+@Data
+@Component
+public class ParamsUtils {
+
+	@Value("${D}{url.appl}")
+	private String urlAppl;
+
+	@Value("${D}{smtp.mail.adresse}")
+	private String smtpLogin;
+	//
+	@Value("${D}{url.admin}")
+	private String urlAdmin;
+	//
+	@Value("${D}{smtp.mail.host}")
+	private String smtpHost;
+	//
+	@Value("${D}{smtp.mail.port}")
+	private Integer smtpPort;
+	//
+	@Value("${D}{smtp.mail.adresse}")
+	private String smtpMailAdresse;
+	//
+	@Value("${D}{smtp.mail.password}")
+	private String smtpPassword;
+	//
+	@Value("${D}{api.sms.senderAddress}")
+	private String smsSenderAddress;
+	//
+	@Value("${D}{api.sms.contentType.key}")
+	private String smsContentTypeKey;
+	//
+	@Value("${D}{api.sms.contentType.value}")
+	private String smsContentTypeValue;
+	//
+	@Value("${D}{api.sms.header.authorization}")
+	private String smsHeaderAuthorization;
+	//
+	@Value("${D}{api.sms.bearer}")
+	private String smsBearer;
+	//
+	@Value("${D}{api.sms.token}")
+	private String smsToken;
+	//
+	@Value("${D}{api.sms.url}")
+	private String smsUrl;
+	//
+	@Value("${D}{parametre.dossier}")
+	private String pathDossier;
+	//
+	@Value("${D}{url.root}")
+	private String rootFilesUrl;
+	//
+	@Value("${D}{image.directory}")
+	private String imageDirectory;
+	//
+	@Value("${D}{textfile.directory}")
+	private String textfileDirectory;
+	//
+	@Value("${D}{video.directory}")
+	private String videoDirectory;
+	//
+	@Value("${D}{otherfile.directory}")
+	private String otherfileDirectory;
+	//
+	@Value("${D}{url.root}")
+	private String urlRoot;
+	//
+	//
+	@Value("${D}{minio.bucket.name}")
+	private String defaultBucketName;
+	//
+	@Value("${D}{minio.default.folder}")
+	private String defaultBaseFolder;
+
+	@Value("${D}{login.type}")
+	private String loginType;
+
+	@Value("${D}{use.otp}")
+	private String useOtp;
+}

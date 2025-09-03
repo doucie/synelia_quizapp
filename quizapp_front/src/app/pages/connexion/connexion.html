@@ -1,0 +1,65 @@
+<div class="connexion">
+  <div class="connexion__container">
+    <div class="connexion__header">
+      <h1 class="connexion__title">Connexion Personnel</h1>
+      <p class="connexion__subtitle">Accès réservé au personnel de Synelia</p>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="connexion__form">
+      <div class="connexion__field">
+        <label for="email" class="connexion__label">Email professionnel</label>
+        <input 
+          type="email" 
+          id="email" 
+          formControlName="email"
+          class="connexion__input"
+          [class.connexion__input--error]="getFieldError('email')"
+          placeholder="votre.nom@synelia.com">
+        <div class="connexion__error" *ngIf="getFieldError('email')">
+          {{ getFieldError('email') }}
+        </div>
+      </div>
+
+      <div class="connexion__field">
+        <label for="password" class="connexion__label">Mot de passe</label>
+        <input 
+          type="password" 
+          id="password" 
+          formControlName="password"
+          class="connexion__input"
+          [class.connexion__input--error]="getFieldError('password')"
+          placeholder="••••••••">
+        <div class="connexion__error" *ngIf="getFieldError('password')">
+          {{ getFieldError('password') }}
+        </div>
+      </div>
+
+      <div class="connexion__error connexion__error--global" *ngIf="error$ | async">
+        {{ error$ | async }}
+      </div>
+
+      <button 
+        type="submit" 
+        class="connexion__submit"
+        [disabled]="loading$ | async">
+        <span *ngIf="!(loading$ | async)">Se connecter</span>
+        <span *ngIf="loading$ | async">Connexion en cours...</span>
+      </button>
+    </form>
+
+    <div class="connexion__links">
+      <a routerLink="/inscription" class="connexion__link">
+        Première connexion ? Créer un compte
+      </a>
+      <a routerLink="/mot-de-passe-oublie" class="connexion__link">
+        Mot de passe oublié ?
+      </a>
+    </div>
+
+    <div class="connexion__footer">
+      <a routerLink="/" class="connexion__home-link">
+        ← Retour à l'accueil
+      </a>
+    </div>
+  </div>
+</div>

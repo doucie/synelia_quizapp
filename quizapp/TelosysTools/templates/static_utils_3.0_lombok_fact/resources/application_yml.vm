@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: $fn.get("PROJECT_NAME","to.be.defined")
+  cloud:
+    consul:
+      host: localhost
+      port: 8500
+      config:
+        enabled: true
+        profile-separator: '-'
+        format: properties
+      discovery:
+        hostname: $fn.get("HOSTAME","to.be.defined")
+        healthCheckUrl: $fn.get("HEALTHCHECKURL","to.be.defined")
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 10000
+        readTimeout: 120000

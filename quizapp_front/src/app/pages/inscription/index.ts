@@ -1,0 +1,1 @@
+export { InscriptionComponent } from './inscription';

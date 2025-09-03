@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: quizapp
+  cloud:
+    consul:
+      host: localhost
+      port: 8500
+      config:
+        enabled: true
+        profile-separator: '-'
+        format: properties
+      discovery:
+        hostname: to.be.defined
+        healthCheckUrl: to.be.defined
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 10000
+        readTimeout: 120000

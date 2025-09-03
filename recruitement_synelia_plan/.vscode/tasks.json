@@ -1,0 +1,17 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Open with Live Server",
+			"type": "shell",
+			"command": "code",
+			"args": [
+				"--command",
+				"extension.liveServer.goLive"
+			],
+			"group": "build",
+			"isBackground": false,
+			"problemMatcher": []
+		}
+	]
+}

@@ -1,0 +1,2522 @@
+
+{
+	"id": "project.id",
+	"name": "tech_synelia_quizapp",
+	"description": "",
+	"order": [],
+	"timestamp": 1497267117086,
+	"owner": "1151918",
+	"public": false,
+	"folders": [
+		{
+			"id": "answers.id",
+			"name": "answers",
+			"description": "",
+			"order": [
+				"answers.getByCriteria",
+				"answers.create",
+				"answers.update",
+				"answers.delete"
+			],
+			"owner": "1151918"
+		},
+		{
+			"id": "applications.id",
+			"name": "applications",
+			"description": "",
+			"order": [
+				"applications.getByCriteria",
+				"applications.create",
+				"applications.update",
+				"applications.delete"
+			],
+			"owner": "1151918"
+		},
+		{
+			"id": "campaignCrud.id",
+			"name": "campaignCrud",
+			"description": "",
+			"order": [
+				"campaignCrud.getByCriteria",
+				"campaignCrud.create",
+				"campaignCrud.update",
+				"campaignCrud.delete"
+			],
+			"owner": "1151918"
+		},
+		{
+			"id": "campaignQuestions.id",
+			"name": "campaignQuestions",
+			"description": "",
+			"order": [
+				"campaignQuestions.getByCriteria",
+				"campaignQuestions.create",
+				"campaignQuestions.update",
+				"campaignQuestions.delete"
+			],
+			"owner": "1151918"
+		},
+		{
+			"id": "campaigns.id",
+			"name": "campaigns",
+			"description": "",
+			"order": [
+				"campaigns.getByCriteria",
+				"campaigns.create",
+				"campaigns.update",
+				"campaigns.delete"
+			],
+			"owner": "1151918"
+		},
+		{
+			"id": "candidateAnswers.id",
+			"name": "candidateAnswers",
+			"description": "",
+			"order": [
+				"candidateAnswers.getByCriteria",
+				"candidateAnswers.create",
+				"candidateAnswers.update",
+				"candidateAnswers.delete"
+			],
+			"owner": "1151918"
+		},
+		{
+			"id": "candidateAsk.id",
+			"name": "candidateAsk",
+			"description": "",
+			"order": [
+				"candidateAsk.getByCriteria",
+				"candidateAsk.create",
+				"candidateAsk.update",
+				"candidateAsk.delete"
+			],
+			"owner": "1151918"
+		},
+		{
+			"id": "candidateInterview.id",
+			"name": "candidateInterview",
+			"description": "",
+			"order": [
+				"candidateInterview.getByCriteria",
+				"candidateInterview.create",
+				"candidateInterview.update",
+				"candidateInterview.delete"
+			],
+			"owner": "1151918"
+		},
+		{
+			"id": "candidateToken.id",
+			"name": "candidateToken",
+			"description": "",
+			"order": [
+				"candidateToken.getByCriteria",
+				"candidateToken.create",
+				"candidateToken.update",
+				"candidateToken.delete"
+			],
+			"owner": "1151918"
+		},
+		{
+			"id": "departments.id",
+			"name": "departments",
+			"description": "",
+			"order": [
+				"departments.getByCriteria",
+				"departments.create",
+				"departments.update",
+				"departments.delete"
+			],
+			"owner": "1151918"
+		},
+		{
+			"id": "evaluations.id",
+			"name": "evaluations",
+			"description": "",
+			"order": [
+				"evaluations.getByCriteria",
+				"evaluations.create",
+				"evaluations.update",
+				"evaluations.delete"
+			],
+			"owner": "1151918"
+		},
+		{
+			"id": "interviewCrud.id",
+			"name": "interviewCrud",
+			"description": "",
+			"order": [
+				"interviewCrud.getByCriteria",
+				"interviewCrud.create",
+				"interviewCrud.update",
+				"interviewCrud.delete"
+			],
+			"owner": "1151918"
+		},
+		{
+			"id": "interviews.id",
+			"name": "interviews",
+			"description": "",
+			"order": [
+				"interviews.getByCriteria",
+				"interviews.create",
+				"interviews.update",
+				"interviews.delete"
+			],
+			"owner": "1151918"
+		},
+		{
+			"id": "notifications.id",
+			"name": "notifications",
+			"description": "",
+			"order": [
+				"notifications.getByCriteria",
+				"notifications.create",
+				"notifications.update",
+				"notifications.delete"
+			],
+			"owner": "1151918"
+		},
+		{
+			"id": "questions.id",
+			"name": "questions",
+			"description": "",
+			"order": [
+				"questions.getByCriteria",
+				"questions.create",
+				"questions.update",
+				"questions.delete"
+			],
+			"owner": "1151918"
+		},
+		{
+			"id": "questionsAnswers.id",
+			"name": "questionsAnswers",
+			"description": "",
+			"order": [
+				"questionsAnswers.getByCriteria",
+				"questionsAnswers.create",
+				"questionsAnswers.update",
+				"questionsAnswers.delete"
+			],
+			"owner": "1151918"
+		},
+		{
+			"id": "sourceToken.id",
+			"name": "sourceToken",
+			"description": "",
+			"order": [
+				"sourceToken.getByCriteria",
+				"sourceToken.create",
+				"sourceToken.update",
+				"sourceToken.delete"
+			],
+			"owner": "1151918"
+		},
+		{
+			"id": "specialities.id",
+			"name": "specialities",
+			"description": "",
+			"order": [
+				"specialities.getByCriteria",
+				"specialities.create",
+				"specialities.update",
+				"specialities.delete"
+			],
+			"owner": "1151918"
+		},
+		{
+			"id": "user.id",
+			"name": "user",
+			"description": "",
+			"order": [
+				"user.getByCriteria",
+				"user.create",
+				"user.update",
+				"user.delete"
+			],
+			"owner": "1151918"
+		}
+	],
+	"requests": [
+		{
+			"id": "answers.create",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/answers/create",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "answers-create",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"answerContent\": \"\",\n\t\t\t\"searchString\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "answers.update",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/answers/update",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "answers-update",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"answerContent\": \"\",\n\t\t\t\"searchString\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "answers.delete",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/answers/delete",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "answers-delete",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "answers.getByCriteria",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/answers/getByCriteria",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439015040,
+			"name": "answers-getByCriteria",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"answerContent\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\"\n\t}  \n}"
+		},
+		{
+			"id": "applications.create",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/applications/create",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "applications-create",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"candidateFirstName\": \"\",\n\t\t\t\"candidateLastName\": \"\",\n\t\t\t\"candidateEmail\": \"\",\n\t\t\t\"candidatePhone\": \"\",\n\t\t\t\"candidateCvPath\": \"\",\n\t\t\t\"emailVerified\": \"\",\n\t\t\t\"quizScore\": \"\",\n\t\t\t\"evaluationScore\": \"\",\n\t\t\t\"applicationStatus\": \"\",\n\t\t\t\"visitToken\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"sourceTokenId\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "applications.update",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/applications/update",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "applications-update",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"candidateFirstName\": \"\",\n\t\t\t\"candidateLastName\": \"\",\n\t\t\t\"candidateEmail\": \"\",\n\t\t\t\"candidatePhone\": \"\",\n\t\t\t\"candidateCvPath\": \"\",\n\t\t\t\"emailVerified\": \"\",\n\t\t\t\"quizScore\": \"\",\n\t\t\t\"evaluationScore\": \"\",\n\t\t\t\"applicationStatus\": \"\",\n\t\t\t\"visitToken\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"sourceTokenId\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "applications.delete",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/applications/delete",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "applications-delete",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "applications.getByCriteria",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/applications/getByCriteria",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439015040,
+			"name": "applications-getByCriteria",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"candidateFirstName\": \"\",\n\t\t\"candidateLastName\": \"\",\n\t\t\"candidateEmail\": \"\",\n\t\t\"candidatePhone\": \"\",\n\t\t\"candidateCvPath\": \"\",\n\t\t\"emailVerified\": \"\",\n\t\t\"quizScore\": \"\",\n\t\t\"evaluationScore\": \"\",\n\t\t\"applicationStatus\": \"\",\n\t\t\"visitToken\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"sourceTokenId\": \"\"\n\t}  \n}"
+		},
+		{
+			"id": "campaignCrud.create",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/campaignCrud/create",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "campaignCrud-create",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"canUpdate\": \"\",\n\t\t\t\"canDelete\": \"\",\n\t\t\t\"canEvaluate\": \"\",\n\t\t\t\"follow\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"campaignId\": \"\",\n\t\t\t\"userId\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "campaignCrud.update",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/campaignCrud/update",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "campaignCrud-update",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"canUpdate\": \"\",\n\t\t\t\"canDelete\": \"\",\n\t\t\t\"canEvaluate\": \"\",\n\t\t\t\"follow\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"campaignId\": \"\",\n\t\t\t\"userId\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "campaignCrud.delete",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/campaignCrud/delete",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "campaignCrud-delete",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "campaignCrud.getByCriteria",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/campaignCrud/getByCriteria",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439015040,
+			"name": "campaignCrud-getByCriteria",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"canUpdate\": \"\",\n\t\t\"canDelete\": \"\",\n\t\t\"canEvaluate\": \"\",\n\t\t\"follow\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"campaignId\": \"\",\n\t\t\"userId\": \"\"\n\t}  \n}"
+		},
+		{
+			"id": "campaignQuestions.create",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/campaignQuestions/create",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "campaignQuestions-create",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"searchString\": \"\",\n\t\t\t\"campaignId\": \"\",\n\t\t\t\"questionId\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "campaignQuestions.update",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/campaignQuestions/update",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "campaignQuestions-update",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"campaignId\": \"\",\n\t\t\t\"questionId\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "campaignQuestions.delete",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/campaignQuestions/delete",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "campaignQuestions-delete",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "campaignQuestions.getByCriteria",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/campaignQuestions/getByCriteria",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439015040,
+			"name": "campaignQuestions-getByCriteria",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"campaignId\": \"\",\n\t\t\"questionId\": \"\"\n\t}  \n}"
+		},
+		{
+			"id": "campaigns.create",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/campaigns/create",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "campaigns-create",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"campaignTitle\": \"\",\n\t\t\t\"campaignDesc\": \"\",\n\t\t\t\"campaignStatus\": \"\",\n\t\t\t\"campaignStart\": \"\",\n\t\t\t\"campaignEnd\": \"\",\n\t\t\t\"maxApply\": \"\",\n\t\t\t\"allCanUpdate\": \"\",\n\t\t\t\"markedOutOf\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"specialityId\": \"\",\n\t\t\t\"creatorId\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "campaigns.update",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/campaigns/update",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "campaigns-update",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"campaignTitle\": \"\",\n\t\t\t\"campaignDesc\": \"\",\n\t\t\t\"campaignStatus\": \"\",\n\t\t\t\"campaignStart\": \"\",\n\t\t\t\"campaignEnd\": \"\",\n\t\t\t\"maxApply\": \"\",\n\t\t\t\"allCanUpdate\": \"\",\n\t\t\t\"markedOutOf\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"specialityId\": \"\",\n\t\t\t\"creatorId\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "campaigns.delete",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/campaigns/delete",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "campaigns-delete",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "campaigns.getByCriteria",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/campaigns/getByCriteria",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439015040,
+			"name": "campaigns-getByCriteria",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"campaignTitle\": \"\",\n\t\t\"campaignDesc\": \"\",\n\t\t\"campaignStatus\": \"\",\n\t\t\"campaignStart\": \"\",\n\t\t\"campaignEnd\": \"\",\n\t\t\"maxApply\": \"\",\n\t\t\"allCanUpdate\": \"\",\n\t\t\"markedOutOf\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"specialityId\": \"\",\n\t\t\"creatorId\": \"\"\n\t}  \n}"
+		},
+		{
+			"id": "candidateAnswers.create",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/candidateAnswers/create",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "candidateAnswers-create",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"searchString\": \"\",\n\t\t\t\"questionsAnswersId\": \"\",\n\t\t\t\"applicationId\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "candidateAnswers.update",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/candidateAnswers/update",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "candidateAnswers-update",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"questionsAnswersId\": \"\",\n\t\t\t\"applicationId\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "candidateAnswers.delete",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/candidateAnswers/delete",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "candidateAnswers-delete",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "candidateAnswers.getByCriteria",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/candidateAnswers/getByCriteria",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439015040,
+			"name": "candidateAnswers-getByCriteria",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"questionsAnswersId\": \"\",\n\t\t\"applicationId\": \"\"\n\t}  \n}"
+		},
+		{
+			"id": "candidateAsk.create",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/candidateAsk/create",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "candidateAsk-create",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"requestType\": \"\",\n\t\t\t\"isVerified\": \"\",\n\t\t\t\"firstName\": \"\",\n\t\t\t\"lastName\": \"\",\n\t\t\t\"newEmail\": \"\",\n\t\t\t\"newPhone\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"applicationId\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "candidateAsk.update",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/candidateAsk/update",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "candidateAsk-update",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"requestType\": \"\",\n\t\t\t\"isVerified\": \"\",\n\t\t\t\"firstName\": \"\",\n\t\t\t\"lastName\": \"\",\n\t\t\t\"newEmail\": \"\",\n\t\t\t\"newPhone\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"applicationId\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "candidateAsk.delete",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/candidateAsk/delete",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "candidateAsk-delete",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "candidateAsk.getByCriteria",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/candidateAsk/getByCriteria",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439015040,
+			"name": "candidateAsk-getByCriteria",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"requestType\": \"\",\n\t\t\"isVerified\": \"\",\n\t\t\"firstName\": \"\",\n\t\t\"lastName\": \"\",\n\t\t\"newEmail\": \"\",\n\t\t\"newPhone\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"applicationId\": \"\"\n\t}  \n}"
+		},
+		{
+			"id": "candidateInterview.create",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/candidateInterview/create",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "candidateInterview-create",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"interviewStart\": \"\",\n\t\t\t\"interviewDuration\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"applicationId\": \"\",\n\t\t\t\"interviewId\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "candidateInterview.update",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/candidateInterview/update",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "candidateInterview-update",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"interviewStart\": \"\",\n\t\t\t\"interviewDuration\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"applicationId\": \"\",\n\t\t\t\"interviewId\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "candidateInterview.delete",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/candidateInterview/delete",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "candidateInterview-delete",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "candidateInterview.getByCriteria",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/candidateInterview/getByCriteria",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439015040,
+			"name": "candidateInterview-getByCriteria",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"interviewStart\": \"\",\n\t\t\"interviewDuration\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"applicationId\": \"\",\n\t\t\"interviewId\": \"\"\n\t}  \n}"
+		},
+		{
+			"id": "candidateToken.create",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/candidateToken/create",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "candidateToken-create",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"tokenString\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"applicationId\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "candidateToken.update",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/candidateToken/update",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "candidateToken-update",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"tokenString\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"applicationId\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "candidateToken.delete",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/candidateToken/delete",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "candidateToken-delete",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "candidateToken.getByCriteria",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/candidateToken/getByCriteria",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439015040,
+			"name": "candidateToken-getByCriteria",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"tokenString\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"applicationId\": \"\"\n\t}  \n}"
+		},
+		{
+			"id": "departments.create",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/departments/create",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "departments-create",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"departmentName\": \"\",\n\t\t\t\"departmentDesc\": \"\",\n\t\t\t\"searchString\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "departments.update",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/departments/update",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "departments-update",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"departmentName\": \"\",\n\t\t\t\"departmentDesc\": \"\",\n\t\t\t\"searchString\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "departments.delete",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/departments/delete",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "departments-delete",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "departments.getByCriteria",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/departments/getByCriteria",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439015040,
+			"name": "departments-getByCriteria",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"departmentName\": \"\",\n\t\t\"departmentDesc\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\"\n\t}  \n}"
+		},
+		{
+			"id": "evaluations.create",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/evaluations/create",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "evaluations-create",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"candidateMark\": \"\",\n\t\t\t\"recruiterComment\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"candidateInterviewId\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "evaluations.update",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/evaluations/update",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "evaluations-update",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"candidateMark\": \"\",\n\t\t\t\"recruiterComment\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"candidateInterviewId\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "evaluations.delete",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/evaluations/delete",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "evaluations-delete",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "evaluations.getByCriteria",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/evaluations/getByCriteria",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439015040,
+			"name": "evaluations-getByCriteria",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"candidateMark\": \"\",\n\t\t\"recruiterComment\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"candidateInterviewId\": \"\"\n\t}  \n}"
+		},
+		{
+			"id": "interviewCrud.create",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/interviewCrud/create",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "interviewCrud-create",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"canCreate\": \"\",\n\t\t\t\"canUpdate\": \"\",\n\t\t\t\"canDelete\": \"\",\n\t\t\t\"follow\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"interviewId\": \"\",\n\t\t\t\"userId\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "interviewCrud.update",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/interviewCrud/update",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "interviewCrud-update",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"canCreate\": \"\",\n\t\t\t\"canUpdate\": \"\",\n\t\t\t\"canDelete\": \"\",\n\t\t\t\"follow\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"interviewId\": \"\",\n\t\t\t\"userId\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "interviewCrud.delete",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/interviewCrud/delete",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "interviewCrud-delete",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "interviewCrud.getByCriteria",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/interviewCrud/getByCriteria",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439015040,
+			"name": "interviewCrud-getByCriteria",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"canCreate\": \"\",\n\t\t\"canUpdate\": \"\",\n\t\t\"canDelete\": \"\",\n\t\t\"follow\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"interviewId\": \"\",\n\t\t\"userId\": \"\"\n\t}  \n}"
+		},
+		{
+			"id": "interviews.create",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/interviews/create",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "interviews-create",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"interviewLocation\": \"\",\n\t\t\t\"interviewStart\": \"\",\n\t\t\t\"interviewEnd\": \"\",\n\t\t\t\"interviewType\": \"\",\n\t\t\t\"markedOutOf\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"campaignId\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "interviews.update",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/interviews/update",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "interviews-update",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"interviewLocation\": \"\",\n\t\t\t\"interviewStart\": \"\",\n\t\t\t\"interviewEnd\": \"\",\n\t\t\t\"interviewType\": \"\",\n\t\t\t\"markedOutOf\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"campaignId\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "interviews.delete",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/interviews/delete",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "interviews-delete",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "interviews.getByCriteria",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/interviews/getByCriteria",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439015040,
+			"name": "interviews-getByCriteria",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"interviewLocation\": \"\",\n\t\t\"interviewStart\": \"\",\n\t\t\"interviewEnd\": \"\",\n\t\t\"interviewType\": \"\",\n\t\t\"markedOutOf\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"campaignId\": \"\"\n\t}  \n}"
+		},
+		{
+			"id": "notifications.create",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/notifications/create",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "notifications-create",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"notifType\": \"\",\n\t\t\t\"notifActor\": \"\",\n\t\t\t\"notifLink\": \"\",\n\t\t\t\"isRead\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"userId\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "notifications.update",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/notifications/update",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "notifications-update",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"notifType\": \"\",\n\t\t\t\"notifActor\": \"\",\n\t\t\t\"notifLink\": \"\",\n\t\t\t\"isRead\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"userId\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "notifications.delete",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/notifications/delete",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "notifications-delete",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "notifications.getByCriteria",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/notifications/getByCriteria",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439015040,
+			"name": "notifications-getByCriteria",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"notifType\": \"\",\n\t\t\"notifActor\": \"\",\n\t\t\"notifLink\": \"\",\n\t\t\"isRead\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"userId\": \"\"\n\t}  \n}"
+		},
+		{
+			"id": "questions.create",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/questions/create",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "questions-create",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"questionContent\": \"\",\n\t\t\t\"questionChrono\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"specialityId\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "questions.update",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/questions/update",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "questions-update",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"questionContent\": \"\",\n\t\t\t\"questionChrono\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"specialityId\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "questions.delete",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/questions/delete",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "questions-delete",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "questions.getByCriteria",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/questions/getByCriteria",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439015040,
+			"name": "questions-getByCriteria",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"questionContent\": \"\",\n\t\t\"questionChrono\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"specialityId\": \"\"\n\t}  \n}"
+		},
+		{
+			"id": "questionsAnswers.create",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/questionsAnswers/create",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "questionsAnswers-create",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"isCorrect\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"questionId\": \"\",\n\t\t\t\"answerId\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "questionsAnswers.update",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/questionsAnswers/update",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "questionsAnswers-update",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"isCorrect\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"questionId\": \"\",\n\t\t\t\"answerId\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "questionsAnswers.delete",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/questionsAnswers/delete",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "questionsAnswers-delete",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "questionsAnswers.getByCriteria",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/questionsAnswers/getByCriteria",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439015040,
+			"name": "questionsAnswers-getByCriteria",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"isCorrect\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"questionId\": \"\",\n\t\t\"answerId\": \"\"\n\t}  \n}"
+		},
+		{
+			"id": "sourceToken.create",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/sourceToken/create",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "sourceToken-create",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"tokenString\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"campaignId\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "sourceToken.update",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/sourceToken/update",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "sourceToken-update",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"tokenString\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"campaignId\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "sourceToken.delete",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/sourceToken/delete",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "sourceToken-delete",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "sourceToken.getByCriteria",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/sourceToken/getByCriteria",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439015040,
+			"name": "sourceToken-getByCriteria",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"tokenString\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"campaignId\": \"\"\n\t}  \n}"
+		},
+		{
+			"id": "specialities.create",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/specialities/create",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "specialities-create",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"specialityName\": \"\",\n\t\t\t\"specialityDesc\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"departmentId\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "specialities.update",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/specialities/update",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "specialities-update",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"specialityName\": \"\",\n\t\t\t\"specialityDesc\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"departmentId\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "specialities.delete",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/specialities/delete",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "specialities-delete",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "specialities.getByCriteria",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/specialities/getByCriteria",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439015040,
+			"name": "specialities-getByCriteria",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"specialityName\": \"\",\n\t\t\"specialityDesc\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"departmentId\": \"\"\n\t}  \n}"
+		},
+		{
+			"id": "user.create",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/user/create",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "user-create",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"firstName\": \"\",\n\t\t\t\"lastName\": \"\",\n\t\t\t\"username\": \"\",\n\t\t\t\"email\": \"\",\n\t\t\t\"phone\": \"\",\n\t\t\t\"password\": \"\",\n\t\t\t\"isDefaultPassword\": \"\",\n\t\t\t\"userRole\": \"\",\n\t\t\t\"isOnline\": \"\",\n\t\t\t\"isLocked\": \"\",\n\t\t\t\"lastConnectionDate\": \"\",\n\t\t\t\"searchString\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "user.update",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/user/update",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "user-update",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"firstName\": \"\",\n\t\t\t\"lastName\": \"\",\n\t\t\t\"username\": \"\",\n\t\t\t\"email\": \"\",\n\t\t\t\"phone\": \"\",\n\t\t\t\"password\": \"\",\n\t\t\t\"isDefaultPassword\": \"\",\n\t\t\t\"userRole\": \"\",\n\t\t\t\"isOnline\": \"\",\n\t\t\t\"isLocked\": \"\",\n\t\t\t\"lastConnectionDate\": \"\",\n\t\t\t\"searchString\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "user.delete",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/user/delete",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439012859,
+			"name": "user-delete",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "user.getByCriteria",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/user/getByCriteria",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439015040,
+			"name": "user-getByCriteria",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"firstName\": \"\",\n\t\t\"lastName\": \"\",\n\t\t\"username\": \"\",\n\t\t\"email\": \"\",\n\t\t\"phone\": \"\",\n\t\t\"password\": \"\",\n\t\t\"isDefaultPassword\": \"\",\n\t\t\"userRole\": \"\",\n\t\t\"isOnline\": \"\",\n\t\t\"isLocked\": \"\",\n\t\t\"lastConnectionDate\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\"\n\t}  \n}"
+		}
+	]
+}

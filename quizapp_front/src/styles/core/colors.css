@@ -1,0 +1,96 @@
+/* Colors System for Synelia Quiz App */
+
+:root {
+  /* Brand Primary Colors */
+  --primary: #6B46C1;
+  --primary-dark: #553C9A;
+  --primary-light: #8B5CF6;
+  
+  /* Secondary Colors */
+  --secondary: #EC4899;
+  --secondary-dark: #BE185D;
+  --secondary-light: #F472B6;
+  
+  /* Accent Colors */
+  --accent: #10B981;
+  --accent-dark: #059669;
+  --accent-light: #34D399;
+  
+  /* Neutral Light Mode */
+  --background: #FFFFFF;
+  --surface: #F8FAFC;
+  --surface-variant: #F1F5F9;
+  --on-background: #1E293B;
+  --on-surface: #334155;
+  --on-surface-variant: #64748B;
+  
+  /* Border & Divider */
+  --border: #E2E8F0;
+  --border-variant: #CBD5E1;
+  --divider: #F1F5F9;
+  
+  /* Status Colors */
+  --success: #10B981;
+  --warning: #F59E0B;
+  --error: #EF4444;
+  --info: #3B82F6;
+  
+  /* Text Colors */
+  --text-primary: #1E293B;
+  --text-secondary: #64748B;
+  --text-disabled: #94A3B8;
+  --text-on-primary: #FFFFFF;
+  
+  /* Shadow */
+  --shadow-light: rgba(0, 0, 0, 0.1);
+  --shadow-medium: rgba(0, 0, 0, 0.15);
+  --shadow-heavy: rgba(0, 0, 0, 0.25);
+}
+
+/* Dark Mode Variables */
+.dark-mode {
+  --background: #0F172A;
+  --surface: #1E293B;
+  --surface-variant: #334155;
+  --on-background: #F8FAFC;
+  --on-surface: #E2E8F0;
+  --on-surface-variant: #CBD5E1;
+  
+  /* Border & Divider Dark */
+  --border: #334155;
+  --border-variant: #475569;
+  --divider: #1E293B;
+  
+  /* Text Colors Dark */
+  --text-primary: #F8FAFC;
+  --text-secondary: #CBD5E1;
+  --text-disabled: #64748B;
+  
+  /* Shadow Dark */
+  --shadow-light: rgba(0, 0, 0, 0.3);
+  --shadow-medium: rgba(0, 0, 0, 0.4);
+  --shadow-heavy: rgba(0, 0, 0, 0.6);
+}
+
+/* Java Syntax Highlighting Colors */
+:root {
+  /* Java Keywords */
+  --java-keyword: #8B5CF6; /* purple */
+  --java-type: #10B981; /* green */
+  --java-string: #F59E0B; /* amber */
+  --java-comment: #64748B; /* gray */
+  --java-annotation: #EC4899; /* pink */
+  --java-number: #3B82F6; /* blue */
+  --java-method: #06B6D4; /* cyan */
+  --java-variable: var(--text-primary);
+}
+
+.dark-mode {
+  --java-keyword: #A78BFA;
+  --java-type: #34D399;
+  --java-string: #FBBF24;
+  --java-comment: #94A3B8;
+  --java-annotation: #F472B6;
+  --java-number: #60A5FA;
+  --java-method: #22D3EE;
+}

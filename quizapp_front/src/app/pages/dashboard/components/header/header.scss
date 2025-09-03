@@ -1,0 +1,32 @@
+/* Header Principal */
+.top-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 var(--spacing-2xl) 0 0;
+  height: var(--header-height);
+  background: rgba(var(--surface-rgb), 0.95);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+  padding-left: var(--spacing-2xl);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+@media (max-width: 768px) {
+  .top-header { padding: 0 var(--spacing-lg); }
+  .header-left { padding-left: var(--spacing-lg); }
+}

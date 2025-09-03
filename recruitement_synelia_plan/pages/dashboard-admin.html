@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Administrateur - Synelia</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- CSS Files in order: Variables first, then components -->
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/rectangles.css">
+    <link rel="stylesheet" href="../styles/buttons.css">
+</head>
+<body>
+    <div style="display: flex; min-height: 100vh;">
+        <!-- Menu latéral -->
+        <aside style="width: 250px; background: var(--mono-bg); border-right: 1px solid var(--mono-borders); padding: 1rem;">
+            <div style="margin-bottom: 2rem;">
+                <h2 style="color: var(--text-primary); font-size: 1.2rem; margin-bottom: 0.5rem;">👑 Admin</h2>
+                <p style="color: var(--text-secondary); font-size: 0.9rem;">Tableau de bord</p>
+            </div>
+            
+            <nav>
+                <ul style="list-style: none; margin: 0; padding: 0;">
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="dashboard-admin.html" style="display: block; padding: 0.8rem; color: var(--text-primary); text-decoration: none; background: var(--mono-borders); border-radius: 6px;">📊 Dashboard</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="admin/campagnes.html" style="display: block; padding: 0.8rem; color: var(--text-secondary); text-decoration: none; border-radius: 6px; transition: all 0.2s;">📋 Campagnes</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="admin/utilisateurs.html" style="display: block; padding: 0.8rem; color: var(--text-secondary); text-decoration: none; border-radius: 6px; transition: all 0.2s;">👥 Utilisateurs</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="admin/questions.html" style="display: block; padding: 0.8rem; color: var(--text-secondary); text-decoration: none; border-radius: 6px; transition: all 0.2s;">❓ Questions</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="admin/departements.html" style="display: block; padding: 0.8rem; color: var(--text-secondary); text-decoration: none; border-radius: 6px; transition: all 0.2s;">🏢 Départements</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="admin/candidatures.html" style="display: block; padding: 0.8rem; color: var(--text-secondary); text-decoration: none; border-radius: 6px; transition: all 0.2s;">🎯 Candidatures</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="admin/rapports.html" style="display: block; padding: 0.8rem; color: var(--text-secondary); text-decoration: none; border-radius: 6px; transition: all 0.2s;">📈 Rapports</a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div style="margin-top: 2rem; border-top: 1px solid var(--mono-borders); padding-top: 1rem;">
+                <ul style="list-style: none; margin: 0 0 1rem 0; padding: 0;">
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="admin/entretiens.html" style="display: block; padding: 0.8rem; color: var(--text-secondary); text-decoration: none; border-radius: 6px; transition: all 0.2s;">💬 Entretiens</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="admin/evaluations.html" style="display: block; padding: 0.8rem; color: var(--text-secondary); text-decoration: none; border-radius: 6px; transition: all 0.2s;">⭐ Évaluations</a>
+                    </li>
+                </ul>
+                <div class="btn-container">
+                    <a href="start.html" class="btn-start-alt" style="font-size: 0.9rem;">Déconnexion</a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Contenu principal -->
+        <main style="flex: 1; padding: 2rem; background: var(--bg-primary);">
+            <header style="margin-bottom: 2rem;">
+                <h1 style="color: var(--text-primary); margin-bottom: 0.5rem;">Dashboard Administrateur</h1>
+                <p style="color: var(--text-secondary);">Vue d'ensemble de la plateforme Synelia</p>
+            </header>
+
+            <!-- Statistiques rapides -->
+            <section style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;">
+                <div class="rounded_rectangle mono-charcoal" style="text-align: center; padding: 1.5rem;">
+                    <h3 style="font-size: 2rem; margin-bottom: 0.5rem; color: #00FF85;">127</h3>
+                    <p style="margin: 0; font-size: 0.9rem;">Candidatures totales</p>
+                </div>
+                
+                <div class="rounded_rectangle mono-charcoal" style="text-align: center; padding: 1.5rem;">
+                    <h3 style="font-size: 2rem; margin-bottom: 0.5rem; color: #FF6F61;">8</h3>
+                    <p style="margin: 0; font-size: 0.9rem;">Campagnes actives</p>
+                </div>
+                
+                <div class="rounded_rectangle mono-charcoal" style="text-align: center; padding: 1.5rem;">
+                    <h3 style="font-size: 2rem; margin-bottom: 0.5rem; color: #1E90FF;">23</h3>
+                    <p style="margin: 0; font-size: 0.9rem;">Interviews planifiés</p>
+                </div>
+                
+                <div class="rounded_rectangle mono-charcoal" style="text-align: center; padding: 1.5rem;">
+                    <h3 style="font-size: 2rem; margin-bottom: 0.5rem; color: #DAA520;">5</h3>
+                    <p style="margin: 0; font-size: 0.9rem;">Recruteurs actifs</p>
+                </div>
+            </section>
+
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+                <!-- Dernières candidatures -->
+                <section>
+                    <div class="rounded_rectangle mono-charcoal">
+                        <h3 style="margin-bottom: 1.5rem;">📋 Dernières candidatures</h3>
+                        <div style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="border-bottom: 1px solid var(--mono-borders);">
+                                        <th style="text-align: left; padding: 0.8rem; color: var(--text-secondary);">Candidat</th>
+                                        <th style="text-align: left; padding: 0.8rem; color: var(--text-secondary);">Campagne</th>
+                                        <th style="text-align: left; padding: 0.8rem; color: var(--text-secondary);">Score</th>
+                                        <th style="text-align: left; padding: 0.8rem; color: var(--text-secondary);">Statut</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr style="border-bottom: 1px solid var(--mono-borders);">
+                                        <td style="padding: 0.8rem;">Marie Dupont</td>
+                                        <td style="padding: 0.8rem;">Dev Frontend</td>
+                                        <td style="padding: 0.8rem;">85%</td>
+                                        <td style="padding: 0.8rem;"><span style="background: #00FF85; color: #000; padding: 0.2rem 0.5rem; border-radius: 12px; font-size: 0.8rem;">Acceptée</span></td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid var(--mono-borders);">
+                                        <td style="padding: 0.8rem;">Jean Martin</td>
+                                        <td style="padding: 0.8rem;">Data Analyst</td>
+                                        <td style="padding: 0.8rem;">72%</td>
+                                        <td style="padding: 0.8rem;"><span style="background: #DAA520; color: #000; padding: 0.2rem 0.5rem; border-radius: 12px; font-size: 0.8rem;">En attente</span></td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid var(--mono-borders);">
+                                        <td style="padding: 0.8rem;">Sophie Chen</td>
+                                        <td style="padding: 0.8rem;">UX Designer</td>
+                                        <td style="padding: 0.8rem;">91%</td>
+                                        <td style="padding: 0.8rem;"><span style="background: #00FF85; color: #000; padding: 0.2rem 0.5rem; border-radius: 12px; font-size: 0.8rem;">Acceptée</span></td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid var(--mono-borders);">
+                                        <td style="padding: 0.8rem;">Lucas Bernard</td>
+                                        <td style="padding: 0.8rem;">Backend Dev</td>
+                                        <td style="padding: 0.8rem;">58%</td>
+                                        <td style="padding: 0.8rem;"><span style="background: #FF6F61; color: #000; padding: 0.2rem 0.5rem; border-radius: 12px; font-size: 0.8rem;">Rejetée</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 0.8rem;">Emma Wilson</td>
+                                        <td style="padding: 0.8rem;">Product Manager</td>
+                                        <td style="padding: 0.8rem;">79%</td>
+                                        <td style="padding: 0.8rem;"><span style="background: #DAA520; color: #000; padding: 0.2rem 0.5rem; border-radius: 12px; font-size: 0.8rem;">En attente</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="btn-container" style="margin-top: 1rem;">
+                            <a href="admin/candidatures.html" class="btn-start">Voir toutes les candidatures</a>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Graphiques et stats -->
+                <section>
+                    <div class="rounded_rectangle mono-charcoal" style="margin-bottom: 1.5rem;">
+                        <h3 style="margin-bottom: 1rem;">📊 Taux de réussite</h3>
+                        <div style="height: 150px; background: linear-gradient(45deg, #00FF85 0%, #1E90FF 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #000; font-size: 2rem; font-weight: bold;">
+                            73%
+                        </div>
+                        <p style="text-align: center; margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">Moyenne générale</p>
+                    </div>
+
+                    <div class="rounded_rectangle mono-charcoal">
+                        <h3 style="margin-bottom: 1rem;">🔥 Campagnes populaires</h3>
+                        <div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.8rem;">
+                                <span>Dev Frontend</span>
+                                <span style="color: #00FF85;">34 candidats</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.8rem;">
+                                <span>Data Analyst</span>
+                                <span style="color: #1E90FF;">28 candidats</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.8rem;">
+                                <span>UX Designer</span>
+                                <span style="color: #DAA520;">22 candidats</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Product Manager</span>
+                                <span style="color: #FF6F61;">19 candidats</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <style>
+        /* Hover effects pour le menu */
+        aside nav a:hover {
+            background: var(--mono-borders) !important;
+            color: var(--text-primary) !important;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            body > div {
+                flex-direction: column !important;
+            }
+            aside {
+                width: 100% !important;
+            }
+            main {
+                padding: 1rem !important;
+            }
+            div[style*="grid-template-columns: 2fr 1fr"] {
+                grid-template-columns: 1fr !important;
+            }
+        }
+    </style>
+</body>
+</html>

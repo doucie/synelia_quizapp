@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Départements - Admin Synelia</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- CSS Files in order: Variables first, then components -->
+    <link rel="stylesheet" href="../../styles/style.css">
+    <link rel="stylesheet" href="../../styles/rectangles.css">
+    <link rel="stylesheet" href="../../styles/buttons.css">
+</head>
+<body>
+    <div style="display: flex; min-height: 100vh;">
+        <!-- Menu latéral -->
+        <aside style="width: 250px; background: var(--mono-bg); border-right: 1px solid var(--mono-borders); padding: 1rem;">
+            <div style="margin-bottom: 2rem;">
+                <h2 style="color: var(--text-primary); font-size: 1.2rem; margin-bottom: 0.5rem;">👑 Admin</h2>
+                <p style="color: var(--text-secondary); font-size: 0.9rem;">Structure organisationnelle</p>
+            </div>
+            
+            <nav>
+                <ul style="list-style: none; margin: 0; padding: 0;">
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="../dashboard-admin.html" style="display: block; padding: 0.8rem; color: var(--text-secondary); text-decoration: none; border-radius: 6px; transition: all 0.2s;">📊 Dashboard</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="campagnes.html" style="display: block; padding: 0.8rem; color: var(--text-secondary); text-decoration: none; border-radius: 6px; transition: all 0.2s;">📋 Campagnes</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="utilisateurs.html" style="display: block; padding: 0.8rem; color: var(--text-secondary); text-decoration: none; border-radius: 6px; transition: all 0.2s;">👥 Utilisateurs</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="questions.html" style="display: block; padding: 0.8rem; color: var(--text-secondary); text-decoration: none; border-radius: 6px; transition: all 0.2s;">❓ Questions</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="departements.html" style="display: block; padding: 0.8rem; color: var(--text-primary); text-decoration: none; background: var(--mono-borders); border-radius: 6px;">🏢 Départements</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="candidatures.html" style="display: block; padding: 0.8rem; color: var(--text-secondary); text-decoration: none; border-radius: 6px; transition: all 0.2s;">🎯 Candidatures</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="rapports.html" style="display: block; padding: 0.8rem; color: var(--text-secondary); text-decoration: none; border-radius: 6px; transition: all 0.2s;">📈 Rapports</a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div style="margin-top: 2rem; border-top: 1px solid var(--mono-borders); padding-top: 1rem;">
+                <ul style="list-style: none; margin: 0 0 1rem 0; padding: 0;">
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="entretiens.html" style="display: block; padding: 0.8rem; color: var(--text-secondary); text-decoration: none; border-radius: 6px; transition: all 0.2s;">💬 Entretiens</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="evaluations.html" style="display: block; padding: 0.8rem; color: var(--text-secondary); text-decoration: none; border-radius: 6px; transition: all 0.2s;">⭐ Évaluations</a>
+                    </li>
+                </ul>
+                <div class="btn-container">
+                    <a href="../start.html" class="btn-start-alt" style="font-size: 0.9rem;">Déconnexion</a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Contenu principal -->
+        <main style="flex: 1; padding: 2rem; background: var(--bg-primary);">
+            <header style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1 style="color: var(--text-primary); margin-bottom: 0.5rem;">🏢 Gestion des Départements</h1>
+                    <p style="color: var(--text-secondary);">Organiser la structure des équipes et départements</p>
+                </div>
+                <div class="user-info">
+                    <div class="user-avatar" onclick="toggleProfileMenu()">
+                        <div class="avatar-circle">MD</div>
+                        <span>Admin - Marie Dubois</span>
+                        <div class="profile-menu" id="profile-menu" style="display: none;">
+                            <a href="profil.html">🏷️ Mon Profil</a>
+                            <a href="#" onclick="alert('Préférences')">⚙️ Préférences</a>
+                            <a href="../login.html">🚪 Déconnexion</a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Actions rapides -->
+            <section style="margin-bottom: 2rem;">
+                <div class="btn-container" style="display: inline-block; margin-right: 1rem;">
+                    <a href="#" class="btn-start">Nouveau département</a>
+                </div>
+                <div class="btn-container" style="display: inline-block;">
+                    <a href="#" class="btn-start-alt">Réorganiser structure</a>
+                </div>
+            </section>
+
+            <!-- Vue d'ensemble -->
+            <section style="margin-bottom: 2rem;">
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+                    <!-- Organigramme -->
+                    <div class="rounded_rectangle mono-charcoal">
+                        <h3 style="margin-bottom: 1.5rem;">🏢 Structure organisationnelle</h3>
+                        <div style="display: flex; flex-direction: column; gap: 1rem;">
+                            <!-- Direction -->
+                            <div style="text-align: center;">
+                                <div style="background: #FF6F61; color: #fff; padding: 1rem; border-radius: 8px; display: inline-block; margin-bottom: 1rem;">
+                                    <strong>Direction Générale</strong><br>
+                                    <small>1 administrateur</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Départements niveau 1 -->
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                                <div style="background: #1E90FF; color: #fff; padding: 1rem; border-radius: 8px; text-align: center;">
+                                    <strong>IT</strong><br>
+                                    <small>3 recruteurs, 34 postes</small>
+                                </div>
+                                <div style="background: #DA70D6; color: #fff; padding: 1rem; border-radius: 8px; text-align: center;">
+                                    <strong>Marketing</strong><br>
+                                    <small>1 recruteur, 8 postes</small>
+                                </div>
+                                <div style="background: #00FF85; color: #000; padding: 1rem; border-radius: 8px; text-align: center;">
+                                    <strong>RH</strong><br>
+                                    <small>1 recruteur, 5 postes</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Sous-départements IT -->
+                            <div style="margin-left: 2rem;">
+                                <p style="color: var(--text-secondary); margin-bottom: 0.5rem;">Équipes IT :</p>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.5rem;">
+                                    <div style="background: var(--mono-borders); padding: 0.8rem; border-radius: 6px; text-align: center; font-size: 0.9rem;">
+                                        Frontend<br><small>12 postes</small>
+                                    </div>
+                                    <div style="background: var(--mono-borders); padding: 0.8rem; border-radius: 6px; text-align: center; font-size: 0.9rem;">
+                                        Backend<br><small>15 postes</small>
+                                    </div>
+                                    <div style="background: var(--mono-borders); padding: 0.8rem; border-radius: 6px; text-align: center; font-size: 0.9rem;">
+                                        DevOps<br><small>7 postes</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Statistiques -->
+                    <div>
+                        <div class="rounded_rectangle mono-charcoal" style="margin-bottom: 1rem;">
+                            <h4 style="margin-bottom: 1rem;">📊 Statistiques</h4>
+                            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span>Départements :</span>
+                                    <span style="color: #00FF85; font-weight: bold;">6</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span>Sous-équipes :</span>
+                                    <span style="color: #1E90FF; font-weight: bold;">3</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span>Total postes :</span>
+                                    <span style="color: #DA70D6; font-weight: bold;">47</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span>Recruteurs :</span>
+                                    <span style="color: #DAA520; font-weight: bold;">5</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="rounded_rectangle mono-charcoal">
+                            <h4 style="margin-bottom: 1rem;">🎯 Activité récente</h4>
+                            <div style="font-size: 0.9rem; color: var(--text-secondary);">
+                                <p style="margin-bottom: 0.5rem;">• Équipe DevOps créée</p>
+                                <p style="margin-bottom: 0.5rem;">• 3 nouveaux postes en Marketing</p>
+                                <p style="margin-bottom: 0.5rem;">• Recruteur assigné au département RH</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Liste détaillée des départements -->
+            <section>
+                <div class="rounded_rectangle mono-charcoal">
+                    <h3 style="margin-bottom: 1.5rem;">🏢 Tous les départements (6)</h3>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid var(--mono-borders);">
+                                    <th style="text-align: left; padding: 1rem; color: var(--text-secondary);">Département</th>
+                                    <th style="text-align: left; padding: 1rem; color: var(--text-secondary);">Responsable</th>
+                                    <th style="text-align: left; padding: 1rem; color: var(--text-secondary);">Recruteurs</th>
+                                    <th style="text-align: left; padding: 1rem; color: var(--text-secondary);">Postes ouverts</th>
+                                    <th style="text-align: left; padding: 1rem; color: var(--text-secondary);">Candidatures</th>
+                                    <th style="text-align: left; padding: 1rem; color: var(--text-secondary);">Budget</th>
+                                    <th style="text-align: center; padding: 1rem; color: var(--text-secondary);">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr style="border-bottom: 1px solid var(--mono-borders);">
+                                    <td style="padding: 1rem;">
+                                        <div style="display: flex; align-items: center;">
+                                            <div style="width: 40px; height: 40px; background: #1E90FF; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 1rem; color: #fff; font-weight: bold;">IT</div>
+                                            <div>
+                                                <div style="font-weight: bold;">Technologies</div>
+                                                <div style="color: var(--text-secondary); font-size: 0.9rem;">Développement & Infrastructure</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 1rem;">Pierre Martin</td>
+                                    <td style="padding: 1rem;">3 recruteurs</td>
+                                    <td style="padding: 1rem;"><span style="background: #00FF85; color: #000; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">34 postes</span></td>
+                                    <td style="padding: 1rem;">89 candidatures</td>
+                                    <td style="padding: 1rem;">€850K</td>
+                                    <td style="padding: 1rem; text-align: center;">
+                                        <a href="#" style="color: #1E90FF; margin-right: 1rem;">Modifier</a>
+                                        <a href="#" style="color: #00FF85;">Voir détails</a>
+                                    </td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid var(--mono-borders);">
+                                    <td style="padding: 1rem;">
+                                        <div style="display: flex; align-items: center;">
+                                            <div style="width: 40px; height: 40px; background: #DA70D6; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 1rem; color: #fff; font-weight: bold;">MK</div>
+                                            <div>
+                                                <div style="font-weight: bold;">Marketing</div>
+                                                <div style="color: var(--text-secondary); font-size: 0.9rem;">Communication & Digital</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 1rem;">Sophie Leclerc</td>
+                                    <td style="padding: 1rem;">1 recruteur</td>
+                                    <td style="padding: 1rem;"><span style="background: #DAA520; color: #000; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">8 postes</span></td>
+                                    <td style="padding: 1rem;">22 candidatures</td>
+                                    <td style="padding: 1rem;">€320K</td>
+                                    <td style="padding: 1rem; text-align: center;">
+                                        <a href="#" style="color: #1E90FF; margin-right: 1rem;">Modifier</a>
+                                        <a href="#" style="color: #00FF85;">Voir détails</a>
+                                    </td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid var(--mono-borders);">
+                                    <td style="padding: 1rem;">
+                                        <div style="display: flex; align-items: center;">
+                                            <div style="width: 40px; height: 40px; background: #00FF85; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 1rem; color: #000; font-weight: bold;">RH</div>
+                                            <div>
+                                                <div style="font-weight: bold;">Ressources Humaines</div>
+                                                <div style="color: var(--text-secondary); font-size: 0.9rem;">Gestion du personnel</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 1rem;">Julien Dupont</td>
+                                    <td style="padding: 1rem;">1 recruteur</td>
+                                    <td style="padding: 1rem;"><span style="background: #1E90FF; color: #fff; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">5 postes</span></td>
+                                    <td style="padding: 1rem;">16 candidatures</td>
+                                    <td style="padding: 1rem;">€180K</td>
+                                    <td style="padding: 1rem; text-align: center;">
+                                        <a href="#" style="color: #1E90FF; margin-right: 1rem;">Modifier</a>
+                                        <a href="#" style="color: #00FF85;">Voir détails</a>
+                                    </td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid var(--mono-borders);">
+                                    <td style="padding: 1rem;">
+                                        <div style="display: flex; align-items: center;">
+                                            <div style="width: 40px; height: 40px; background: #FF6F61; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 1rem; color: #fff; font-weight: bold;">FI</div>
+                                            <div>
+                                                <div style="font-weight: bold;">Finance</div>
+                                                <div style="color: var(--text-secondary); font-size: 0.9rem;">Comptabilité & Contrôle</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 1rem;">-</td>
+                                    <td style="padding: 1rem;">0 recruteur</td>
+                                    <td style="padding: 1rem;"><span style="background: #888888; color: #fff; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">0 postes</span></td>
+                                    <td style="padding: 1rem;">0 candidatures</td>
+                                    <td style="padding: 1rem;">€0</td>
+                                    <td style="padding: 1rem; text-align: center;">
+                                        <a href="#" style="color: #1E90FF; margin-right: 1rem;">Configurer</a>
+                                        <a href="#" style="color: #FF6F61;">Supprimer</a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 1rem;">
+                                        <div style="display: flex; align-items: center;">
+                                            <div style="width: 40px; height: 40px; background: #DAA520; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 1rem; color: #000; font-weight: bold;">OP</div>
+                                            <div>
+                                                <div style="font-weight: bold;">Opérations</div>
+                                                <div style="color: var(--text-secondary); font-size: 0.9rem;">Logistique & Production</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 1rem;">-</td>
+                                    <td style="padding: 1rem;">0 recruteur</td>
+                                    <td style="padding: 1rem;"><span style="background: #888888; color: #fff; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">0 postes</span></td>
+                                    <td style="padding: 1rem;">0 candidatures</td>
+                                    <td style="padding: 1rem;">€0</td>
+                                    <td style="padding: 1rem; text-align: center;">
+                                        <a href="#" style="color: #1E90FF; margin-right: 1rem;">Configurer</a>
+                                        <a href="#" style="color: #FF6F61;">Supprimer</a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <style>
+        /* Hover effects pour le menu */
+        aside nav a:hover,
+        aside div ul a:hover {
+            background: var(--mono-borders) !important;
+            color: var(--text-primary) !important;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            body > div {
+                flex-direction: column !important;
+            }
+            aside {
+                width: 100% !important;
+            }
+            main {
+                padding: 1rem !important;
+            }
+            div[style*="grid-template-columns: 2fr 1fr"] {
+                grid-template-columns: 1fr !important;
+            }
+        }
+    </style>
+    
+    <script>
+        function toggleProfileMenu() {
+            const menu = document.getElementById('profile-menu');
+            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // Fermer le menu quand on clique ailleurs
+        document.addEventListener('click', function(event) {
+            const menu = document.getElementById('profile-menu');
+            const profileButton = event.target.closest('[onclick="toggleProfileMenu()"]');
+            
+            if (!profileButton && menu.style.display === 'block') {
+                menu.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

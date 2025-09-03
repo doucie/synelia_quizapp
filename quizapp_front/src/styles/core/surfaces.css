@@ -1,0 +1,40 @@
+/* Surface Variables for Synelia Quiz App */
+
+:root {
+  /* Surface Colors */
+  --surface-primary: var(--background);
+  --surface-secondary: var(--surface);
+  --surface-tertiary: var(--surface-variant);
+  
+  /* Surface Elevations */
+  --elevation-1: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  --elevation-2: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
+  --elevation-3: 0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23);
+  --elevation-4: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
+  --elevation-5: 0 19px 38px rgba(0, 0, 0, 0.30), 0 15px 12px rgba(0, 0, 0, 0.22);
+  
+  /* Surface Overlays */
+  --overlay-light: rgba(255, 255, 255, 0.05);
+  --overlay-medium: rgba(255, 255, 255, 0.10);
+  --overlay-heavy: rgba(255, 255, 255, 0.15);
+  
+  /* Surface States */
+  --surface-hover: rgba(0, 0, 0, 0.04);
+  --surface-pressed: rgba(0, 0, 0, 0.08);
+  --surface-focus: rgba(0, 0, 0, 0.12);
+  --surface-selected: rgba(0, 0, 0, 0.16);
+  --surface-disabled: rgba(0, 0, 0, 0.12);
+}
+
+/* Dark Mode Surfaces */
+.dark-mode {
+  --surface-hover: rgba(255, 255, 255, 0.04);
+  --surface-pressed: rgba(255, 255, 255, 0.08);
+  --surface-focus: rgba(255, 255, 255, 0.12);
+  --surface-selected: rgba(255, 255, 255, 0.16);
+  --surface-disabled: rgba(255, 255, 255, 0.12);
+  
+  --overlay-light: rgba(0, 0, 0, 0.05);
+  --overlay-medium: rgba(0, 0, 0, 0.10);
+  --overlay-heavy: rgba(0, 0, 0, 0.15);
+}

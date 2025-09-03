@@ -1,0 +1,129 @@
+/* Les variables CSS sont maintenant disponibles globalement via styles.scss */
+
+.dashboard-welcome {
+  max-width: 1200px;
+}
+
+.welcome-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 4px 20px var(--shadow-light);
+}
+
+.welcome-header {
+  margin-bottom: 2rem;
+  
+  h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 0.5rem 0;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  p {
+    color: var(--text-secondary);
+    margin: 0;
+    font-size: 1.125rem;
+  }
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.stat-card {
+  background: var(--surface-variant);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: var(--transition);
+  
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px var(--shadow-medium);
+  }
+}
+
+.stat-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  flex-shrink: 0;
+  color: var(--primary);
+}
+
+.stat-content {
+  flex: 1;
+  
+  .stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    line-height: 1;
+  }
+  
+  .stat-label {
+    color: var(--text-secondary);
+    margin: 0.25rem 0 0 0;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+}
+
+.stat-trend {
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  
+  &.positive {
+    color: var(--success);
+    background: rgba(var(--success-rgb), 0.1);
+  }
+  
+  &.neutral {
+    color: var(--text-secondary);
+    background: var(--surface);
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .dashboard-welcome {
+    .welcome-card {
+      padding: 1.5rem;
+
+      .welcome-header {
+        margin-bottom: 1.5rem;
+
+        h2 {
+          font-size: 1.75rem;
+        }
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+
+        .stat-card {
+          padding: 1.25rem;
+
+          .stat-content .stat-number {
+            font-size: 1.75rem;
+          }
+        }
+      }
+    }
+  }
+}

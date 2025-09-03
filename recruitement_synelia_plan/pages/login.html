@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion - Synelia Recrutement</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- CSS Files in order: Variables first, then components -->
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/rectangles.css">
+    <link rel="stylesheet" href="../styles/buttons.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <h1>Connexion Recruteur/Admin</h1>
+        </nav>
+    </header>
+
+    <main>
+        <section>
+            <div class="rounded_rectangle mono-charcoal">
+                <h2>🔐 Espace Recruteur/Administrateur</h2>
+                <p>Connectez-vous pour accéder à votre tableau de bord de recrutement.</p>
+                
+                <form style="margin-top: 2rem;" action="user.html">
+                    <div style="margin-bottom: 1rem;">
+                        <label for="email" style="display: block; margin-bottom: 0.5rem;">Email :</label>
+                        <input type="email" id="email" name="email" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--mono-borders); background: var(--muted-bg); color: var(--text-primary);">
+                    </div>
+                    
+                    <div style="margin-bottom: 2rem;">
+                        <label for="password" style="display: block; margin-bottom: 0.5rem;">Mot de passe :</label>
+                        <input type="password" id="password" name="password" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--mono-borders); background: var(--muted-bg); color: var(--text-primary);">
+                    </div>
+                    
+                    <div class="btn-container">
+                        <button type="submit" class="btn-start">Se connecter</button>
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem; flex-wrap: wrap;">
+                        <div class="btn-container">
+                            <a href="signup.html" class="btn-start-alt">Inscription</a>
+                        </div>
+                        <div class="btn-container">
+                            <a href="recuperation.html" class="btn-start-alt">Mot de passe oublié</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <section style="margin-top: 2rem;">
+            <div class="btn-container">
+                <a href="start.html" class="btn-start-alt">Retour</a>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Synelia - Gestion du recrutement</p>
+    </footer>
+</body>
+</html>

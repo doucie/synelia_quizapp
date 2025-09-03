@@ -1,0 +1,56 @@
+<header class="header">
+  <nav class="navbar container">
+    <!-- Logo/Brand -->
+    <div class="navbar__brand">
+      <a routerLink="/" class="brand-link">
+        <div class="logo">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+            <rect width="32" height="32" rx="8" fill="url(#gradient)" />
+            <path d="M16 8L20 12H12L16 8Z" fill="white" opacity="0.9" />
+            <path d="M16 24L12 20H20L16 24Z" fill="white" opacity="0.7" />
+            <circle cx="16" cy="16" r="3" fill="white" />
+            <defs>
+              <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="var(--primary)" />
+                <stop offset="100%" stop-color="var(--secondary)" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <span class="brand-text">Synelia Quiz</span>
+      </a>
+    </div>
+
+    <!-- Desktop Navigation -->
+    <div class="navbar__menu">
+      <ul class="nav-links">
+        <li><a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Accueil</a></li>
+        <li><a routerLink="/suivre-candidature" routerLinkActive="active">Suivre ma Candidature</a></li>
+      </ul>
+    </div>
+
+    <!-- Right side actions -->
+    <div class="navbar__actions">
+      <app-theme-toggle></app-theme-toggle>
+      
+      <!-- Mobile menu button -->
+      <button 
+        class="mobile-menu-btn" 
+        (click)="toggleMenu()"
+        [class.active]="isMenuOpen"
+        aria-label="Toggle menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+
+    <!-- Mobile Navigation -->
+    <div class="mobile-menu" [class.active]="isMenuOpen">
+      <ul class="mobile-nav-links">
+        <li><a routerLink="/" (click)="closeMenu()" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Accueil</a></li>
+        <li><a routerLink="/suivre-candidature" (click)="closeMenu()" routerLinkActive="active">Suivre ma Candidature</a></li>
+      </ul>
+    </div>
+  </nav>
+</header>

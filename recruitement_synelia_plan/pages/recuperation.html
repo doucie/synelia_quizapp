@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Récupération de mot de passe - Synelia Recrutement</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- CSS Files in order: Variables first, then components -->
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/rectangles.css">
+    <link rel="stylesheet" href="../styles/buttons.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <h1>Récupération de mot de passe</h1>
+        </nav>
+    </header>
+
+    <main>
+        <section>
+            <div class="rounded_rectangle mono-charcoal">
+                <h2>🔑 Réinitialiser votre mot de passe</h2>
+                <p>Saisissez votre adresse email pour recevoir un lien de réinitialisation.</p>
+                
+                <form style="margin-top: 2rem;">
+                    <div style="margin-bottom: 2rem;">
+                        <label for="email" style="display: block; margin-bottom: 0.5rem;">Email :</label>
+                        <input type="email" id="email" name="email" required placeholder="votre.email@synelia.com" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--mono-borders); background: var(--muted-bg); color: var(--text-primary);">
+                    </div>
+                    
+                    <div class="btn-container">
+                        <button type="submit" class="btn-start">Envoyer le lien</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="rounded_rectangle mono-charcoal">
+                <h3>📧 Instructions</h3>
+                <p>Après avoir cliqué sur "Envoyer le lien" :</p>
+                <ol style="margin-top: 1rem;">
+                    <li style="margin-bottom: 0.5rem;">Vérifiez votre boîte de réception</li>
+                    <li style="margin-bottom: 0.5rem;">Cliquez sur le lien dans l'email</li>
+                    <li style="margin-bottom: 0.5rem;">Saisissez votre nouveau mot de passe</li>
+                    <li>Connectez-vous avec vos nouveaux identifiants</li>
+                </ol>
+                
+                <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                    <p style="font-size: 0.9rem;"><strong>Note :</strong> Le lien de réinitialisation est valide pendant 24 heures. Si vous ne recevez pas l'email, vérifiez vos spams ou contactez l'administrateur.</p>
+                </div>
+            </div>
+        </section>
+
+        <section style="margin-top: 2rem;">
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <div class="btn-container">
+                    <a href="login.html" class="btn-start-alt">Retour à la connexion</a>
+                </div>
+                <div class="btn-container">
+                    <a href="signup.html" class="btn-start-alt">Créer un compte</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Synelia - Récupération de mot de passe</p>
+    </footer>
+</body>
+</html>

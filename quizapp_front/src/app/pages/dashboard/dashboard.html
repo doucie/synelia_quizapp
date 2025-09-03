@@ -1,0 +1,207 @@
+<!-- Modern Dashboard - Pas de navbar, design épuré -->
+<div class="dashboard-layout" [class.sidebar-collapsed]="sidebarCollapsed()" (click)="closeAllPanels()">
+  
+  <!-- Sidebar moderne -->
+  <aside class="sidebar">
+    <!-- Header de la sidebar -->
+    <div class="sidebar-header">
+      <div class="brand" [class.collapsed]="sidebarCollapsed()">
+        <div class="brand-text" *ngIf="!sidebarCollapsed()">
+          <h1>Synelia</h1>
+          <span>RH Dashboard</span>
+        </div>
+      </div>
+      
+      <button 
+        class="sidebar-toggle" 
+        (click)="toggleSidebar(); $event.stopPropagation()"
+        [attr.title]="sidebarCollapsed() ? 'Développer' : 'Réduire'">
+        <span class="toggle-icon">{{ sidebarCollapsed() ? '→' : '←' }}</span>
+      </button>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title" *ngIf="!sidebarCollapsed()">Navigation</div>
+        <ul class="nav-list">
+          @for (item of filteredMenuItems(); track item.id) {
+            <li class="nav-item">
+              <a 
+                class="nav-link"
+                [routerLink]="item.route"
+                routerLinkActive="active"
+                [attr.title]="sidebarCollapsed() ? item.label : ''">
+                <span class="nav-icon" [innerHTML]="item.icon"></span>
+                <span class="nav-label" *ngIf="!sidebarCollapsed()">{{ item.label }}</span>
+              </a>
+            </li>
+          }
+        </ul>
+      </div>
+    </nav>
+
+    <!-- User info en bas de la sidebar -->
+    <div class="sidebar-footer">
+      <div class="user-card" [class.collapsed]="sidebarCollapsed()">
+        <div class="user-avatar">
+          <span class="avatar-text">{{ currentUser()?.firstName?.[0] }}{{ currentUser()?.lastName?.[0] }}</span>
+        </div>
+        <div class="user-info" *ngIf="!sidebarCollapsed()">
+          <div class="user-name">{{ currentUser()?.firstName }} {{ currentUser()?.lastName }}</div>
+          <div class="user-role">{{ userRole() }}</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Contenu principal -->
+  <main class="main-content">
+    
+    <!-- Header moderne avec controles -->
+    <header class="top-header">
+      <div class="header-left">
+        <h2 class="page-title">Tableau de bord</h2>
+        <div class="breadcrumb">
+          <span class="breadcrumb-item">Synelia</span>
+          <span class="breadcrumb-separator">/</span>
+          <span class="breadcrumb-item current">Dashboard</span>
+        </div>
+      </div>
+      
+      <div class="header-controls">
+        <!-- Theme Toggle -->
+        <button 
+          class="control-btn theme-toggle"
+          (click)="toggleTheme(); $event.stopPropagation()"
+          [class.dark]="isDarkMode()"
+          [attr.title]="isDarkMode() ? 'Mode clair' : 'Mode sombre'">
+          <span class="theme-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" *ngIf="isDarkMode()">
+              <circle cx="12" cy="12" r="5"/>
+              <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+            </svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" *ngIf="!isDarkMode()">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+          </span>
+        </button>
+
+        <!-- Notifications -->
+        <div class="notifications-container">
+          <button 
+            class="control-btn notification-btn"
+            (click)="toggleNotifications(); $event.stopPropagation()"
+            [class.has-unread]="unreadNotificationsCount() > 0">
+            <span class="notification-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+              </svg>
+            </span>
+            @if (unreadNotificationsCount() > 0) {
+              <span class="notification-badge">{{ unreadNotificationsCount() }}</span>
+            }
+          </button>
+
+          <!-- Panel de notifications -->
+          @if (showNotifications()) {
+            <div class="notifications-panel" (click)="$event.stopPropagation()">
+              <div class="panel-header">
+                <h3>Notifications</h3>
+                @if (unreadNotificationsCount() > 0) {
+                  <button 
+                    class="mark-all-btn"
+                    (click)="markAllNotificationsAsRead()">
+                    Tout marquer
+                  </button>
+                }
+              </div>
+              
+              <div class="notifications-list">
+                @if (notifications().length === 0) {
+                  <div class="empty-state">
+                    <span class="empty-icon">📭</span>
+                    <p>Aucune notification</p>
+                  </div>
+                } @else {
+                  @for (notification of notifications(); track notification.id) {
+                    <div 
+                      class="notification-item"
+                      [class.unread]="!notification.read"
+                      [class]="'type-' + notification.type"
+                      (click)="markNotificationAsRead(notification.id)">
+                      <div class="notification-content">
+                        <h4>{{ notification.title }}</h4>
+                        <p>{{ notification.message }}</p>
+                        <span class="timestamp">{{ formatNotificationTime(notification.timestamp) }}</span>
+                      </div>
+                      @if (!notification.read) {
+                        <div class="unread-indicator"></div>
+                      }
+                    </div>
+                  }
+                }
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- User Menu -->
+        <div class="user-menu-container">
+          <button 
+            class="control-btn user-btn"
+            (click)="toggleUserMenu(); $event.stopPropagation()">
+            <div class="user-avatar-small">
+              <span>{{ currentUser()?.firstName?.[0] }}{{ currentUser()?.lastName?.[0] }}</span>
+            </div>
+            <span class="chevron">{{ showUserMenu() ? '↑' : '↓' }}</span>
+          </button>
+
+          @if (showUserMenu()) {
+            <div class="user-menu-panel" (click)="$event.stopPropagation()">
+              <div class="user-menu-header">
+                <div class="user-info-full">
+                  <div class="name">{{ currentUser()?.firstName }} {{ currentUser()?.lastName }}</div>
+                  <div class="email">{{ currentUser()?.email }}</div>
+                  <div class="role-badge">{{ userRole() }}</div>
+                </div>
+              </div>
+              <div class="user-menu-actions">
+                <button class="menu-action" (click)="navigateTo('/dashboard/profile')">
+                  <span class="action-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                      <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                  </span>
+                  <span>Profil</span>
+                </button>
+                <button class="menu-action" (click)="navigateTo('/dashboard/settings')">
+                  <span class="action-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="3"/>
+                      <path d="M12 1v6m0 6v6"/>
+                      <path d="M1 12h6m6 0h6"/>
+                    </svg>
+                  </span>
+                  <span>Paramètres</span>
+                </button>
+                <div class="menu-divider"></div>
+                <button class="menu-action logout-action" (click)="logout()">
+                  <span class="action-icon">�</span>
+                  <span>Déconnexion</span>
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </header>
+
+    <!-- Zone de contenu -->
+    <div class="content-area">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+</div>

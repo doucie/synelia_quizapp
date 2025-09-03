@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta ch            <header style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1 style="color: var(--text-primary); margin-bottom: 0.5rem;">📋 Mes Campagnes</h1>
+                    <p style="color: var(--text-secondary);">Gérer mes campagnes de recrutement assignées</p>
+                </div>
+                <div class="user-info">
+                    <div class="notifications-bell" onclick="toggleNotifications()">
+                        <div class="bell-icon">🔔</div>
+                        <div class="notification-badge">5</div>
+                        <div class="notifications-menu" id="notifications-menu" style="display: none;">
+                            <div class="notification-item unread">
+                                <div class="notification-icon">🎯</div>
+                                <div class="notification-content">
+                                    <div class="notification-title">Nouveau candidat pour Marketing Digital</div>
+                                    <div class="notification-time">Il y a 30min</div>
+                                </div>
+                            </div>
+                            <div class="notification-item unread">
+                                <div class="notification-icon">💬</div>
+                                <div class="notification-content">
+                                    <div class="notification-title">Entretien confirmé pour demain 14h</div>
+                                    <div class="notification-time">Il y a 1h</div>
+                                </div>
+                            </div>
+                            <div class="notification-item unread">
+                                <div class="notification-icon">⭐</div>
+                                <div class="notification-content">
+                                    <div class="notification-title">Évaluation à compléter (3 candidats)</div>
+                                    <div class="notification-time">Il y a 2h</div>
+                                </div>
+                            </div>
+                            <div class="notification-item">
+                                <div class="notification-icon">📋</div>
+                                <div class="notification-content">
+                                    <div class="notification-title">Campagne IT clôturée avec succès</div>
+                                    <div class="notification-time">Hier</div>
+                                </div>
+                            </div>
+                            <div class="notification-footer">
+                                <a href="#" onclick="markAllAsRead()">Marquer tout comme lu</a>
+                                <a href="#">Voir toutes les notifications</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="user-avatar" onclick="toggleProfileMenu()">
+                        <div class="avatar-circle">PG</div>
+                        <span>Recruteur - Paul Giraud</span>
+                        <div class="profile-menu" id="profile-menu" style="display: none;">
+                            <a href="profil.html">🏷️ Mon Profil</a>
+                            <a href="#" onclick="alert('Préférences')">⚙️ Préférences</a>
+                            <a href="../login.html">🚪 Déconnexion</a>
+                        </div>
+                    </div>
+                </div>
+            </header>t="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes Campagnes - Recruteur Synelia</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- CSS Files in order: Variables first, then components -->
+    <link rel="stylesheet" href="../../styles/style.css">
+    <link rel="stylesheet" href="../../styles/rectangles.css">
+    <link rel="stylesheet" href="../../styles/buttons.css">
+</head>
+<body>
+    <div style="display: flex; min-height: 100vh;">
+        <!-- Menu latéral -->
+        <aside style="width: 250px; background: var(--mono-bg); border-right: 1px solid var(--mono-borders); padding: 1rem;">
+            <div style="margin-bottom: 2rem;">
+                <h2 style="color: var(--text-primary); font-size: 1.2rem; margin-bottom: 0.5rem;">🎯 Recruteur</h2>
+                <p style="color: var(--text-secondary); font-size: 0.9rem;">Mes campagnes</p>
+            </div>
+            
+            <nav>
+                <ul style="list-style: none; margin: 0; padding: 0;">
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="../dashboard-recruiter.html" style="display: block; padding: 0.8rem; color: var(--text-secondary); text-decoration: none; border-radius: 6px; transition: all 0.2s;">📊 Dashboard</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="campagnes.html" style="display: block; padding: 0.8rem; color: var(--text-primary); text-decoration: none; background: var(--mono-borders); border-radius: 6px;">📋 Mes Campagnes</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="candidatures.html" style="display: block; padding: 0.8rem; color: var(--text-secondary); text-decoration: none; border-radius: 6px; transition: all 0.2s;">🎯 Candidatures</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="entretiens.html" style="display: block; padding: 0.8rem; color: var(--text-secondary); text-decoration: none; border-radius: 6px; transition: all 0.2s;">💬 Entretiens</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="evaluations.html" style="display: block; padding: 0.8rem; color: var(--text-secondary); text-decoration: none; border-radius: 6px; transition: all 0.2s;">⭐ Évaluations</a>
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="questions.html" style="display: block; padding: 0.8rem; color: var(--text-secondary); text-decoration: none; border-radius: 6px; transition: all 0.2s;">❓ Questions</a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div style="margin-top: 2rem; border-top: 1px solid var(--mono-borders); padding-top: 1rem;">
+                <div class="btn-container">
+                    <a href="../start.html" class="btn-start-alt" style="font-size: 0.9rem;">Déconnexion</a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Contenu principal -->
+        <main style="flex: 1; padding: 2rem; background: var(--bg-primary);">
+            <header style="margin-bottom: 2rem;">
+                <h1 style="color: var(--text-primary); margin-bottom: 0.5rem;">Mes Campagnes</h1>
+                <p style="color: var(--text-secondary);">Gérer les campagnes qui me sont assignées</p>
+            </header>
+
+            <!-- Actions rapides -->
+            <section style="margin-bottom: 2rem;">
+                <div class="btn-container" style="display: inline-block; margin-right: 1rem;">
+                    <a href="#" class="btn-start">Demander nouvelle campagne</a>
+                </div>
+                <div class="btn-container" style="display: inline-block;">
+                    <a href="#" class="btn-start-alt">Exporter mes données</a>
+                </div>
+            </section>
+
+            <!-- Statistiques personnelles -->
+            <section style="margin-bottom: 2rem;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    <div class="rounded_rectangle mono-charcoal" style="text-align: center;">
+                        <h3 style="color: #00FF85; font-size: 2rem; margin-bottom: 0.5rem;">3</h3>
+                        <p style="color: var(--text-secondary);">Campagnes actives</p>
+                    </div>
+                    <div class="rounded_rectangle mono-charcoal" style="text-align: center;">
+                        <h3 style="color: #1E90FF; font-size: 2rem; margin-bottom: 0.5rem;">42</h3>
+                        <p style="color: var(--text-secondary);">Candidatures reçues</p>
+                    </div>
+                    <div class="rounded_rectangle mono-charcoal" style="text-align: center;">
+                        <h3 style="color: #DAA520; font-size: 2rem; margin-bottom: 0.5rem;">7</h3>
+                        <p style="color: var(--text-secondary);">Entretiens planifiés</p>
+                    </div>
+                    <div class="rounded_rectangle mono-charcoal" style="text-align: center;">
+                        <h3 style="color: #DA70D6; font-size: 2rem; margin-bottom: 0.5rem;">5</h3>
+                        <p style="color: var(--text-secondary);">Validés ce mois</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Filtres et recherche -->
+            <section style="margin-bottom: 2rem;">
+                <div class="rounded_rectangle mono-charcoal">
+                    <h3 style="margin-bottom: 1rem;">🔍 Filtres</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 1rem; align-items: end;">
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem;">Rechercher :</label>
+                            <input type="text" placeholder="Nom de campagne..." style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--mono-borders); background: var(--muted-bg); color: var(--text-primary);">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem;">Statut :</label>
+                            <select style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--mono-borders); background: var(--muted-bg); color: var(--text-primary);">
+                                <option>Toutes</option>
+                                <option>Actives</option>
+                                <option>En pause</option>
+                                <option>Terminées</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem;">Priorité :</label>
+                            <select style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--mono-borders); background: var(--muted-bg); color: var(--text-primary);">
+                                <option>Toutes</option>
+                                <option>Urgente</option>
+                                <option>Haute</option>
+                                <option>Normale</option>
+                            </select>
+                        </div>
+                        <div class="btn-container">
+                            <a href="#" class="btn-start">Filtrer</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Liste des campagnes assignées -->
+            <section>
+                <div class="rounded_rectangle mono-charcoal">
+                    <h3 style="margin-bottom: 1.5rem;">📋 Mes campagnes assignées (5)</h3>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid var(--mono-borders);">
+                                    <th style="text-align: left; padding: 1rem; color: var(--text-secondary);">Campagne</th>
+                                    <th style="text-align: left; padding: 1rem; color: var(--text-secondary);">Priorité</th>
+                                    <th style="text-align: left; padding: 1rem; color: var(--text-secondary);">Candidatures</th>
+                                    <th style="text-align: left; padding: 1rem; color: var(--text-secondary);">Statut</th>
+                                    <th style="text-align: left; padding: 1rem; color: var(--text-secondary);">Date limite</th>
+                                    <th style="text-align: left; padding: 1rem; color: var(--text-secondary);">Progression</th>
+                                    <th style="text-align: center; padding: 1rem; color: var(--text-secondary);">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr style="border-bottom: 1px solid var(--mono-borders);">
+                                    <td style="padding: 1rem;">
+                                        <div>
+                                            <div style="font-weight: bold;">Développeur Frontend React</div>
+                                            <div style="color: var(--text-secondary); font-size: 0.9rem;">Département IT - CDI</div>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 1rem;"><span style="background: #FF6F61; color: #fff; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">Urgente</span></td>
+                                    <td style="padding: 1rem;">
+                                        <div>
+                                            <div style="font-weight: bold;">18 candidats</div>
+                                            <div style="color: var(--text-secondary); font-size: 0.9rem;">+3 cette semaine</div>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 1rem;"><span style="background: #00FF85; color: #000; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">Active</span></td>
+                                    <td style="padding: 1rem;">
+                                        <div>
+                                            <div style="font-weight: bold;">15 mars 2025</div>
+                                            <div style="color: #FF6F61; font-size: 0.9rem;">Dans 12 jours</div>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 1rem;">
+                                        <div style="background: var(--mono-borders); border-radius: 10px; height: 8px; width: 100px; overflow: hidden;">
+                                            <div style="background: #00FF85; height: 100%; width: 65%;"></div>
+                                        </div>
+                                        <small style="color: var(--text-secondary);">65% complétée</small>
+                                    </td>
+                                    <td style="padding: 1rem; text-align: center;">
+                                        <a href="candidatures.html?campaign=frontend" style="color: #1E90FF; margin-right: 1rem;">Voir candidats</a>
+                                        <a href="entretiens.html?campaign=frontend" style="color: #00FF85;">Planifier</a>
+                                    </td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid var(--mono-borders);">
+                                    <td style="padding: 1rem;">
+                                        <div>
+                                            <div style="font-weight: bold;">Data Analyst Senior</div>
+                                            <div style="color: var(--text-secondary); font-size: 0.9rem;">Département IT - CDI</div>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 1rem;"><span style="background: #DAA520; color: #000; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">Haute</span></td>
+                                    <td style="padding: 1rem;">
+                                        <div>
+                                            <div style="font-weight: bold;">14 candidats</div>
+                                            <div style="color: var(--text-secondary); font-size: 0.9rem;">+1 cette semaine</div>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 1rem;"><span style="background: #00FF85; color: #000; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">Active</span></td>
+                                    <td style="padding: 1rem;">
+                                        <div>
+                                            <div style="font-weight: bold;">20 mars 2025</div>
+                                            <div style="color: #DAA520; font-size: 0.9rem;">Dans 17 jours</div>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 1rem;">
+                                        <div style="background: var(--mono-borders); border-radius: 10px; height: 8px; width: 100px; overflow: hidden;">
+                                            <div style="background: #1E90FF; height: 100%; width: 45%;"></div>
+                                        </div>
+                                        <small style="color: var(--text-secondary);">45% complétée</small>
+                                    </td>
+                                    <td style="padding: 1rem; text-align: center;">
+                                        <a href="candidatures.html?campaign=data" style="color: #1E90FF; margin-right: 1rem;">Voir candidats</a>
+                                        <a href="entretiens.html?campaign=data" style="color: #00FF85;">Planifier</a>
+                                    </td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid var(--mono-borders);">
+                                    <td style="padding: 1rem;">
+                                        <div>
+                                            <div style="font-weight: bold;">UX/UI Designer</div>
+                                            <div style="color: var(--text-secondary); font-size: 0.9rem;">Département Marketing - CDI</div>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 1rem;"><span style="background: #1E90FF; color: #fff; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">Normale</span></td>
+                                    <td style="padding: 1rem;">
+                                        <div>
+                                            <div style="font-weight: bold;">10 candidats</div>
+                                            <div style="color: var(--text-secondary); font-size: 0.9rem;">Aucun nouveau</div>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 1rem;"><span style="background: #DAA520; color: #000; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">En pause</span></td>
+                                    <td style="padding: 1rem;">
+                                        <div>
+                                            <div style="font-weight: bold;">25 mars 2025</div>
+                                            <div style="color: #00FF85; font-size: 0.9rem;">Dans 22 jours</div>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 1rem;">
+                                        <div style="background: var(--mono-borders); border-radius: 10px; height: 8px; width: 100px; overflow: hidden;">
+                                            <div style="background: #DAA520; height: 100%; width: 30%;"></div>
+                                        </div>
+                                        <small style="color: var(--text-secondary);">30% complétée</small>
+                                    </td>
+                                    <td style="padding: 1rem; text-align: center;">
+                                        <a href="candidatures.html?campaign=ux" style="color: #1E90FF; margin-right: 1rem;">Voir candidats</a>
+                                        <a href="#" style="color: #DAA520;">Reprendre</a>
+                                    </td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid var(--mono-borders);">
+                                    <td style="padding: 1rem;">
+                                        <div>
+                                            <div style="font-weight: bold;">Responsable Marketing Digital</div>
+                                            <div style="color: var(--text-secondary); font-size: 0.9rem;">Département Marketing - CDI</div>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 1rem;"><span style="background: #1E90FF; color: #fff; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">Normale</span></td>
+                                    <td style="padding: 1rem;">
+                                        <div>
+                                            <div style="font-weight: bold;">15 candidats</div>
+                                            <div style="color: var(--text-secondary); font-size: 0.9rem;">Terminée</div>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 1rem;"><span style="background: #888888; color: #fff; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">Terminée</span></td>
+                                    <td style="padding: 1rem;">
+                                        <div>
+                                            <div style="font-weight: bold;">10 février 2025</div>
+                                            <div style="color: #888888; font-size: 0.9rem;">Terminée</div>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 1rem;">
+                                        <div style="background: var(--mono-borders); border-radius: 10px; height: 8px; width: 100px; overflow: hidden;">
+                                            <div style="background: #00FF85; height: 100%; width: 100%;"></div>
+                                        </div>
+                                        <small style="color: var(--text-secondary);">100% complétée</small>
+                                    </td>
+                                    <td style="padding: 1rem; text-align: center;">
+                                        <a href="#" style="color: #888888; margin-right: 1rem;">Archivé</a>
+                                        <a href="#" style="color: #1E90FF;">Rapport final</a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 1rem;">
+                                        <div>
+                                            <div style="font-weight: bold;">Assistant RH</div>
+                                            <div style="color: var(--text-secondary); font-size: 0.9rem;">Département RH - CDD 6 mois</div>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 1rem;"><span style="background: #1E90FF; color: #fff; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">Normale</span></td>
+                                    <td style="padding: 1rem;">
+                                        <div>
+                                            <div style="font-weight: bold;">0 candidats</div>
+                                            <div style="color: var(--text-secondary); font-size: 0.9rem;">Nouvelle campagne</div>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 1rem;"><span style="background: #DAA520; color: #000; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">Brouillon</span></td>
+                                    <td style="padding: 1rem;">
+                                        <div>
+                                            <div style="font-weight: bold;">30 avril 2025</div>
+                                            <div style="color: #00FF85; font-size: 0.9rem;">Dans 58 jours</div>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 1rem;">
+                                        <div style="background: var(--mono-borders); border-radius: 10px; height: 8px; width: 100px; overflow: hidden;">
+                                            <div style="background: #888888; height: 100%; width: 5%;"></div>
+                                        </div>
+                                        <small style="color: var(--text-secondary);">5% complétée</small>
+                                    </td>
+                                    <td style="padding: 1rem; text-align: center;">
+                                        <a href="#" style="color: #00FF85; margin-right: 1rem;">Activer</a>
+                                        <a href="#" style="color: #1E90FF;">Configurer</a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <style>
+        /* Hover effects pour le menu */
+        aside nav a:hover {
+            background: var(--mono-borders) !important;
+            color: var(--text-primary) !important;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            body > div {
+                flex-direction: column !important;
+            }
+            aside {
+                width: 100% !important;
+            }
+            main {
+                padding: 1rem !important;
+            }
+            div[style*="grid-template-columns: 1fr 1fr 1fr auto"] {
+                grid-template-columns: 1fr !important;
+            }
+        }
+    </style>
+    
+    <script>
+        function toggleProfileMenu() {
+            const menu = document.getElementById('profile-menu');
+            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+            // Fermer le menu des notifications
+            const notificationsMenu = document.getElementById('notifications-menu');
+            if (notificationsMenu) {
+                notificationsMenu.style.display = 'none';
+            }
+        }
+
+        function toggleNotifications() {
+            const menu = document.getElementById('notifications-menu');
+            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+            // Fermer le menu profil
+            const profileMenu = document.getElementById('profile-menu');
+            if (profileMenu) {
+                profileMenu.style.display = 'none';
+            }
+        }
+
+        function markAllAsRead() {
+            const badge = document.querySelector('.notification-badge');
+            const unreadItems = document.querySelectorAll('.notification-item.unread');
+            
+            if (badge) badge.style.display = 'none';
+            unreadItems.forEach(item => {
+                item.classList.remove('unread');
+            });
+            
+            alert('Toutes les notifications ont été marquées comme lues');
+        }
+
+        // Fermer le menu quand on clique ailleurs
+        document.addEventListener('click', function(event) {
+            const menu = document.getElementById('profile-menu');
+            const profileButton = event.target.closest('[onclick="toggleProfileMenu()"]');
+            const notificationsMenu = document.getElementById('notifications-menu');
+            const notificationsButton = event.target.closest('[onclick="toggleNotifications()"]');
+            
+            if (!profileButton && menu && menu.style.display === 'block') {
+                menu.style.display = 'none';
+            }
+            
+            if (!notificationsButton && notificationsMenu && notificationsMenu.style.display === 'block') {
+                notificationsMenu.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

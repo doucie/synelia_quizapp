@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test API Spring Boot</title>
+</head>
+<body>
+    <h1>Test de connexion API Spring Boot</h1>
+    
+    <div>
+        <h2>Tester l'API /userManager/connexion</h2>
+        <button onclick="testLogin()">Tester avec emissah@none.com / 123456</button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        async function testLogin() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Test en cours...';
+            
+            try {
+                const response = await fetch('http://localhost:8081/userManager/connexion', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        data: {
+                            email: 'emissah@none.com',
+                            password: '123456'
+                        }
+                    })
+                });
+                
+                const result = await response.json();
+                resultDiv.innerHTML = `
+                    <h3>Résultat:</h3>
+                    <pre>${JSON.stringify(result, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <h3 style="color: red;">Erreur:</h3>
+                    <p>${error.message}</p>
+                    <p>Vérifiez que le backend Spring Boot est démarré sur le port 8081</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

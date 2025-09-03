@@ -1,0 +1,1478 @@
+{
+    "info": {
+        "_postman_id": "project.id",
+        "name": "tech_synelia_quizapp",
+        "schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "answers",
+            "item": [
+                {
+                    "name": "answers-getByCriteria",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"answerContent\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\"\n\t}  \n}"
+                        },
+                        "url": "{{main_url}}/answers/getByCriteria"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "answers-create",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"answerContent\": \"\",\n\t\t\t\"searchString\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/answers/create"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "answers-update",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"answerContent\": \"\",\n\t\t\t\"searchString\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/answers/update"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "answers-delete",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/answers/delete"
+                    },
+                    "response": []
+                }
+            ]
+     		},
+        {
+            "name": "applications",
+            "item": [
+                {
+                    "name": "applications-getByCriteria",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"candidateFirstName\": \"\",\n\t\t\"candidateLastName\": \"\",\n\t\t\"candidateEmail\": \"\",\n\t\t\"candidatePhone\": \"\",\n\t\t\"candidateCvPath\": \"\",\n\t\t\"emailVerified\": \"\",\n\t\t\"quizScore\": \"\",\n\t\t\"evaluationScore\": \"\",\n\t\t\"applicationStatus\": \"\",\n\t\t\"visitToken\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"sourceTokenId\": \"\"\n\t}  \n}"
+                        },
+                        "url": "{{main_url}}/applications/getByCriteria"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "applications-create",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"candidateFirstName\": \"\",\n\t\t\t\"candidateLastName\": \"\",\n\t\t\t\"candidateEmail\": \"\",\n\t\t\t\"candidatePhone\": \"\",\n\t\t\t\"candidateCvPath\": \"\",\n\t\t\t\"emailVerified\": \"\",\n\t\t\t\"quizScore\": \"\",\n\t\t\t\"evaluationScore\": \"\",\n\t\t\t\"applicationStatus\": \"\",\n\t\t\t\"visitToken\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"sourceTokenId\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/applications/create"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "applications-update",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"candidateFirstName\": \"\",\n\t\t\t\"candidateLastName\": \"\",\n\t\t\t\"candidateEmail\": \"\",\n\t\t\t\"candidatePhone\": \"\",\n\t\t\t\"candidateCvPath\": \"\",\n\t\t\t\"emailVerified\": \"\",\n\t\t\t\"quizScore\": \"\",\n\t\t\t\"evaluationScore\": \"\",\n\t\t\t\"applicationStatus\": \"\",\n\t\t\t\"visitToken\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"sourceTokenId\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/applications/update"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "applications-delete",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/applications/delete"
+                    },
+                    "response": []
+                }
+            ]
+     		},
+        {
+            "name": "campaignCrud",
+            "item": [
+                {
+                    "name": "campaignCrud-getByCriteria",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"canUpdate\": \"\",\n\t\t\"canDelete\": \"\",\n\t\t\"canEvaluate\": \"\",\n\t\t\"follow\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"campaignId\": \"\",\n\t\t\"userId\": \"\"\n\t}  \n}"
+                        },
+                        "url": "{{main_url}}/campaignCrud/getByCriteria"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "campaignCrud-create",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"canUpdate\": \"\",\n\t\t\t\"canDelete\": \"\",\n\t\t\t\"canEvaluate\": \"\",\n\t\t\t\"follow\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"campaignId\": \"\",\n\t\t\t\"userId\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/campaignCrud/create"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "campaignCrud-update",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"canUpdate\": \"\",\n\t\t\t\"canDelete\": \"\",\n\t\t\t\"canEvaluate\": \"\",\n\t\t\t\"follow\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"campaignId\": \"\",\n\t\t\t\"userId\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/campaignCrud/update"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "campaignCrud-delete",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/campaignCrud/delete"
+                    },
+                    "response": []
+                }
+            ]
+     		},
+        {
+            "name": "campaignQuestions",
+            "item": [
+                {
+                    "name": "campaignQuestions-getByCriteria",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"campaignId\": \"\",\n\t\t\"questionId\": \"\"\n\t}  \n}"
+                        },
+                        "url": "{{main_url}}/campaignQuestions/getByCriteria"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "campaignQuestions-create",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"searchString\": \"\",\n\t\t\t\"campaignId\": \"\",\n\t\t\t\"questionId\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/campaignQuestions/create"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "campaignQuestions-update",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"campaignId\": \"\",\n\t\t\t\"questionId\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/campaignQuestions/update"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "campaignQuestions-delete",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/campaignQuestions/delete"
+                    },
+                    "response": []
+                }
+            ]
+     		},
+        {
+            "name": "campaigns",
+            "item": [
+                {
+                    "name": "campaigns-getByCriteria",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"campaignTitle\": \"\",\n\t\t\"campaignDesc\": \"\",\n\t\t\"campaignStatus\": \"\",\n\t\t\"campaignStart\": \"\",\n\t\t\"campaignEnd\": \"\",\n\t\t\"maxApply\": \"\",\n\t\t\"allCanUpdate\": \"\",\n\t\t\"markedOutOf\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"specialityId\": \"\",\n\t\t\"creatorId\": \"\"\n\t}  \n}"
+                        },
+                        "url": "{{main_url}}/campaigns/getByCriteria"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "campaigns-create",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"campaignTitle\": \"\",\n\t\t\t\"campaignDesc\": \"\",\n\t\t\t\"campaignStatus\": \"\",\n\t\t\t\"campaignStart\": \"\",\n\t\t\t\"campaignEnd\": \"\",\n\t\t\t\"maxApply\": \"\",\n\t\t\t\"allCanUpdate\": \"\",\n\t\t\t\"markedOutOf\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"specialityId\": \"\",\n\t\t\t\"creatorId\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/campaigns/create"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "campaigns-update",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"campaignTitle\": \"\",\n\t\t\t\"campaignDesc\": \"\",\n\t\t\t\"campaignStatus\": \"\",\n\t\t\t\"campaignStart\": \"\",\n\t\t\t\"campaignEnd\": \"\",\n\t\t\t\"maxApply\": \"\",\n\t\t\t\"allCanUpdate\": \"\",\n\t\t\t\"markedOutOf\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"specialityId\": \"\",\n\t\t\t\"creatorId\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/campaigns/update"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "campaigns-delete",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/campaigns/delete"
+                    },
+                    "response": []
+                }
+            ]
+     		},
+        {
+            "name": "candidateAnswers",
+            "item": [
+                {
+                    "name": "candidateAnswers-getByCriteria",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"questionsAnswersId\": \"\",\n\t\t\"applicationId\": \"\"\n\t}  \n}"
+                        },
+                        "url": "{{main_url}}/candidateAnswers/getByCriteria"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "candidateAnswers-create",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"searchString\": \"\",\n\t\t\t\"questionsAnswersId\": \"\",\n\t\t\t\"applicationId\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/candidateAnswers/create"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "candidateAnswers-update",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"questionsAnswersId\": \"\",\n\t\t\t\"applicationId\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/candidateAnswers/update"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "candidateAnswers-delete",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/candidateAnswers/delete"
+                    },
+                    "response": []
+                }
+            ]
+     		},
+        {
+            "name": "candidateAsk",
+            "item": [
+                {
+                    "name": "candidateAsk-getByCriteria",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"requestType\": \"\",\n\t\t\"isVerified\": \"\",\n\t\t\"firstName\": \"\",\n\t\t\"lastName\": \"\",\n\t\t\"newEmail\": \"\",\n\t\t\"newPhone\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"applicationId\": \"\"\n\t}  \n}"
+                        },
+                        "url": "{{main_url}}/candidateAsk/getByCriteria"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "candidateAsk-create",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"requestType\": \"\",\n\t\t\t\"isVerified\": \"\",\n\t\t\t\"firstName\": \"\",\n\t\t\t\"lastName\": \"\",\n\t\t\t\"newEmail\": \"\",\n\t\t\t\"newPhone\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"applicationId\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/candidateAsk/create"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "candidateAsk-update",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"requestType\": \"\",\n\t\t\t\"isVerified\": \"\",\n\t\t\t\"firstName\": \"\",\n\t\t\t\"lastName\": \"\",\n\t\t\t\"newEmail\": \"\",\n\t\t\t\"newPhone\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"applicationId\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/candidateAsk/update"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "candidateAsk-delete",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/candidateAsk/delete"
+                    },
+                    "response": []
+                }
+            ]
+     		},
+        {
+            "name": "candidateInterview",
+            "item": [
+                {
+                    "name": "candidateInterview-getByCriteria",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"interviewStart\": \"\",\n\t\t\"interviewDuration\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"applicationId\": \"\",\n\t\t\"interviewId\": \"\"\n\t}  \n}"
+                        },
+                        "url": "{{main_url}}/candidateInterview/getByCriteria"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "candidateInterview-create",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"interviewStart\": \"\",\n\t\t\t\"interviewDuration\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"applicationId\": \"\",\n\t\t\t\"interviewId\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/candidateInterview/create"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "candidateInterview-update",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"interviewStart\": \"\",\n\t\t\t\"interviewDuration\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"applicationId\": \"\",\n\t\t\t\"interviewId\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/candidateInterview/update"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "candidateInterview-delete",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/candidateInterview/delete"
+                    },
+                    "response": []
+                }
+            ]
+     		},
+        {
+            "name": "candidateToken",
+            "item": [
+                {
+                    "name": "candidateToken-getByCriteria",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"tokenString\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"applicationId\": \"\"\n\t}  \n}"
+                        },
+                        "url": "{{main_url}}/candidateToken/getByCriteria"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "candidateToken-create",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"tokenString\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"applicationId\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/candidateToken/create"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "candidateToken-update",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"tokenString\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"applicationId\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/candidateToken/update"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "candidateToken-delete",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/candidateToken/delete"
+                    },
+                    "response": []
+                }
+            ]
+     		},
+        {
+            "name": "departments",
+            "item": [
+                {
+                    "name": "departments-getByCriteria",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"departmentName\": \"\",\n\t\t\"departmentDesc\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\"\n\t}  \n}"
+                        },
+                        "url": "{{main_url}}/departments/getByCriteria"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "departments-create",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"departmentName\": \"\",\n\t\t\t\"departmentDesc\": \"\",\n\t\t\t\"searchString\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/departments/create"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "departments-update",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"departmentName\": \"\",\n\t\t\t\"departmentDesc\": \"\",\n\t\t\t\"searchString\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/departments/update"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "departments-delete",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/departments/delete"
+                    },
+                    "response": []
+                }
+            ]
+     		},
+        {
+            "name": "evaluations",
+            "item": [
+                {
+                    "name": "evaluations-getByCriteria",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"candidateMark\": \"\",\n\t\t\"recruiterComment\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"candidateInterviewId\": \"\"\n\t}  \n}"
+                        },
+                        "url": "{{main_url}}/evaluations/getByCriteria"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "evaluations-create",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"candidateMark\": \"\",\n\t\t\t\"recruiterComment\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"candidateInterviewId\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/evaluations/create"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "evaluations-update",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"candidateMark\": \"\",\n\t\t\t\"recruiterComment\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"candidateInterviewId\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/evaluations/update"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "evaluations-delete",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/evaluations/delete"
+                    },
+                    "response": []
+                }
+            ]
+     		},
+        {
+            "name": "interviewCrud",
+            "item": [
+                {
+                    "name": "interviewCrud-getByCriteria",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"canCreate\": \"\",\n\t\t\"canUpdate\": \"\",\n\t\t\"canDelete\": \"\",\n\t\t\"follow\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"interviewId\": \"\",\n\t\t\"userId\": \"\"\n\t}  \n}"
+                        },
+                        "url": "{{main_url}}/interviewCrud/getByCriteria"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "interviewCrud-create",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"canCreate\": \"\",\n\t\t\t\"canUpdate\": \"\",\n\t\t\t\"canDelete\": \"\",\n\t\t\t\"follow\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"interviewId\": \"\",\n\t\t\t\"userId\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/interviewCrud/create"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "interviewCrud-update",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"canCreate\": \"\",\n\t\t\t\"canUpdate\": \"\",\n\t\t\t\"canDelete\": \"\",\n\t\t\t\"follow\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"interviewId\": \"\",\n\t\t\t\"userId\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/interviewCrud/update"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "interviewCrud-delete",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/interviewCrud/delete"
+                    },
+                    "response": []
+                }
+            ]
+     		},
+        {
+            "name": "interviews",
+            "item": [
+                {
+                    "name": "interviews-getByCriteria",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"interviewLocation\": \"\",\n\t\t\"interviewStart\": \"\",\n\t\t\"interviewEnd\": \"\",\n\t\t\"interviewType\": \"\",\n\t\t\"markedOutOf\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"campaignId\": \"\"\n\t}  \n}"
+                        },
+                        "url": "{{main_url}}/interviews/getByCriteria"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "interviews-create",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"interviewLocation\": \"\",\n\t\t\t\"interviewStart\": \"\",\n\t\t\t\"interviewEnd\": \"\",\n\t\t\t\"interviewType\": \"\",\n\t\t\t\"markedOutOf\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"campaignId\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/interviews/create"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "interviews-update",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"interviewLocation\": \"\",\n\t\t\t\"interviewStart\": \"\",\n\t\t\t\"interviewEnd\": \"\",\n\t\t\t\"interviewType\": \"\",\n\t\t\t\"markedOutOf\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"campaignId\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/interviews/update"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "interviews-delete",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/interviews/delete"
+                    },
+                    "response": []
+                }
+            ]
+     		},
+        {
+            "name": "notifications",
+            "item": [
+                {
+                    "name": "notifications-getByCriteria",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"notifType\": \"\",\n\t\t\"notifActor\": \"\",\n\t\t\"notifLink\": \"\",\n\t\t\"isRead\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"userId\": \"\"\n\t}  \n}"
+                        },
+                        "url": "{{main_url}}/notifications/getByCriteria"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "notifications-create",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"notifType\": \"\",\n\t\t\t\"notifActor\": \"\",\n\t\t\t\"notifLink\": \"\",\n\t\t\t\"isRead\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"userId\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/notifications/create"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "notifications-update",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"notifType\": \"\",\n\t\t\t\"notifActor\": \"\",\n\t\t\t\"notifLink\": \"\",\n\t\t\t\"isRead\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"userId\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/notifications/update"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "notifications-delete",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/notifications/delete"
+                    },
+                    "response": []
+                }
+            ]
+     		},
+        {
+            "name": "questions",
+            "item": [
+                {
+                    "name": "questions-getByCriteria",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"questionContent\": \"\",\n\t\t\"questionChrono\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"specialityId\": \"\"\n\t}  \n}"
+                        },
+                        "url": "{{main_url}}/questions/getByCriteria"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "questions-create",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"questionContent\": \"\",\n\t\t\t\"questionChrono\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"specialityId\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/questions/create"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "questions-update",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"questionContent\": \"\",\n\t\t\t\"questionChrono\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"specialityId\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/questions/update"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "questions-delete",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/questions/delete"
+                    },
+                    "response": []
+                }
+            ]
+     		},
+        {
+            "name": "questionsAnswers",
+            "item": [
+                {
+                    "name": "questionsAnswers-getByCriteria",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"isCorrect\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"questionId\": \"\",\n\t\t\"answerId\": \"\"\n\t}  \n}"
+                        },
+                        "url": "{{main_url}}/questionsAnswers/getByCriteria"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "questionsAnswers-create",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"isCorrect\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"questionId\": \"\",\n\t\t\t\"answerId\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/questionsAnswers/create"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "questionsAnswers-update",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"isCorrect\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"questionId\": \"\",\n\t\t\t\"answerId\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/questionsAnswers/update"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "questionsAnswers-delete",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/questionsAnswers/delete"
+                    },
+                    "response": []
+                }
+            ]
+     		},
+        {
+            "name": "sourceToken",
+            "item": [
+                {
+                    "name": "sourceToken-getByCriteria",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"tokenString\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"campaignId\": \"\"\n\t}  \n}"
+                        },
+                        "url": "{{main_url}}/sourceToken/getByCriteria"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "sourceToken-create",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"tokenString\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"campaignId\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/sourceToken/create"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "sourceToken-update",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"tokenString\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"campaignId\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/sourceToken/update"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "sourceToken-delete",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/sourceToken/delete"
+                    },
+                    "response": []
+                }
+            ]
+     		},
+        {
+            "name": "specialities",
+            "item": [
+                {
+                    "name": "specialities-getByCriteria",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"specialityName\": \"\",\n\t\t\"specialityDesc\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"departmentId\": \"\"\n\t}  \n}"
+                        },
+                        "url": "{{main_url}}/specialities/getByCriteria"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "specialities-create",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"specialityName\": \"\",\n\t\t\t\"specialityDesc\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"departmentId\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/specialities/create"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "specialities-update",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"specialityName\": \"\",\n\t\t\t\"specialityDesc\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"departmentId\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/specialities/update"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "specialities-delete",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/specialities/delete"
+                    },
+                    "response": []
+                }
+            ]
+     		},
+        {
+            "name": "user",
+            "item": [
+                {
+                    "name": "user-getByCriteria",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"firstName\": \"\",\n\t\t\"lastName\": \"\",\n\t\t\"username\": \"\",\n\t\t\"email\": \"\",\n\t\t\"phone\": \"\",\n\t\t\"password\": \"\",\n\t\t\"isDefaultPassword\": \"\",\n\t\t\"userRole\": \"\",\n\t\t\"isOnline\": \"\",\n\t\t\"isLocked\": \"\",\n\t\t\"lastConnectionDate\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\"\n\t}  \n}"
+                        },
+                        "url": "{{main_url}}/user/getByCriteria"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "user-create",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"firstName\": \"\",\n\t\t\t\"lastName\": \"\",\n\t\t\t\"username\": \"\",\n\t\t\t\"email\": \"\",\n\t\t\t\"phone\": \"\",\n\t\t\t\"password\": \"\",\n\t\t\t\"isDefaultPassword\": \"\",\n\t\t\t\"userRole\": \"\",\n\t\t\t\"isOnline\": \"\",\n\t\t\t\"isLocked\": \"\",\n\t\t\t\"lastConnectionDate\": \"\",\n\t\t\t\"searchString\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/user/create"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "user-update",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"firstName\": \"\",\n\t\t\t\"lastName\": \"\",\n\t\t\t\"username\": \"\",\n\t\t\t\"email\": \"\",\n\t\t\t\"phone\": \"\",\n\t\t\t\"password\": \"\",\n\t\t\t\"isDefaultPassword\": \"\",\n\t\t\t\"userRole\": \"\",\n\t\t\t\"isOnline\": \"\",\n\t\t\t\"isLocked\": \"\",\n\t\t\t\"lastConnectionDate\": \"\",\n\t\t\t\"searchString\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/user/update"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "user-delete",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/user/delete"
+                    },
+                    "response": []
+                }
+            ]
+     		}
+    ],
+     "variable": [
+        {
+            "key": "main_url",
+            "value": "http://localhost:8080"
+        }
+    ]
+}
