@@ -23,6 +23,68 @@ body {
   transition: var(--transition);
 }
 
+/* Modern Scrollbar for the entire app */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #6B46C1 #F1F5F9; /* Fallback couleurs par défaut */
+}
+
+/* Light Mode Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  background: #F1F5F9;
+}
+
+::-webkit-scrollbar-track {
+  background: #F1F5F9;
+  border-radius: 1rem;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #6B46C1;
+  border-radius: 1rem;
+  border: 2px solid #E2E8F0;
+  transition: background 0.2s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #553C9A;
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: #EC4899;
+}
+
+/* Dark Mode Scrollbar */
+.dark-mode ::-webkit-scrollbar {
+  background: #334155;
+}
+
+.dark-mode ::-webkit-scrollbar-track {
+  background: #334155;
+  border-radius: 1rem;
+}
+
+.dark-mode ::-webkit-scrollbar-thumb {
+  background: #6B46C1;
+  border-radius: 1rem;
+  border: 2px solid #334155;
+  transition: background 0.2s;
+}
+
+.dark-mode ::-webkit-scrollbar-thumb:hover {
+  background: #8B5CF6;
+}
+
+.dark-mode ::-webkit-scrollbar-thumb:active {
+  background: #EC4899;
+}
+
+/* Scrollbar pour conteneurs spécifiques */
+.dark-mode * {
+  scrollbar-color: #6B46C1 #334155;
+}
+
 /* Utility Classes */
 .container {
   max-width: var(--container-max-width);

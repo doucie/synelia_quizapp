@@ -46,6 +46,12 @@
   --shadow-light: rgba(0, 0, 0, 0.1);
   --shadow-medium: rgba(0, 0, 0, 0.15);
   --shadow-heavy: rgba(0, 0, 0, 0.25);
+    /* Scrollbar Colors */
+    --scrollbar-bg: var(--surface-variant);
+    --scrollbar-thumb: var(--primary);
+    --scrollbar-thumb-hover: var(--primary-dark);
+    --scrollbar-thumb-active: var(--secondary);
+    --scrollbar-border: var(--border);
 }
 
 /* Dark Mode Variables */
@@ -71,6 +77,12 @@
   --shadow-light: rgba(0, 0, 0, 0.3);
   --shadow-medium: rgba(0, 0, 0, 0.4);
   --shadow-heavy: rgba(0, 0, 0, 0.6);
+    /* Scrollbar Colors Dark */
+    --scrollbar-bg: var(--surface-variant);
+    --scrollbar-thumb: var(--primary);
+    --scrollbar-thumb-hover: var(--primary-light);
+    --scrollbar-thumb-active: var(--secondary);
+    --scrollbar-border: var(--border);
 }
 
 /* Java Syntax Highlighting Colors */

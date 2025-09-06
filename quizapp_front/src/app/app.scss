@@ -1,10 +1,13 @@
 .main-content {
-  min-height: calc(100vh - 80px - 200px); // 80px header + 200px footer approx
-  padding-top: 0;
+  height: calc(100vh - 80px); // 100vh - hauteur header
+  overflow-y: auto; // Scrollbar quand le contenu dépasse
+  display: flex;
+  flex-direction: column;
   
-  // Layout spécialisé pour le dashboard
+  // Layout spécialisé pour le dashboard (pas de header)
   &.dashboard-main {
-    min-height: 100vh;
+    height: 100vh;
+    overflow-y: scroll;
     padding: 0;
     margin: 0;
   }
@@ -14,7 +17,7 @@
   background-color: var(--surface);
   border-top: 1px solid var(--border);
   padding: 3rem 0 1rem;
-  margin-top: auto;
+  margin-top: auto; // Pousse le footer en bas
 
   &__content {
     display: grid;

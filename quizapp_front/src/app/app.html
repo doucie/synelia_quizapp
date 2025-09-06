@@ -5,27 +5,27 @@
 
 <main class="main-content" [class.dashboard-main]="isDashboardRoute()">
   <router-outlet></router-outlet>
+  
+  <!-- Footer uniquement pour les routes non-dashboard -->
+  @if (!isDashboardRoute()) {
+    <footer class="footer">
+      <div class="container">
+        <div class="footer__content">
+          <div class="footer__brand">
+            <span class="brand-text">Synelia Quiz</span>
+            <p>Modern quiz platform for recruitment and training</p>
+          </div>
+          <div class="footer__links">
+            <a routerLink="/about">About</a>
+            <a routerLink="/contact">Contact</a>
+            <a routerLink="/privacy">Privacy</a>
+            <a routerLink="/terms">Terms</a>
+          </div>
+        </div>
+        <div class="footer__bottom">
+          <p>&copy; 2024 Synelia. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+  }
 </main>
-
-<!-- Footer uniquement pour les routes non-dashboard -->
-@if (!isDashboardRoute()) {
-  <footer class="footer">
-    <div class="container">
-      <div class="footer__content">
-        <div class="footer__brand">
-          <span class="brand-text">Synelia Quiz</span>
-          <p>Modern quiz platform for recruitment and training</p>
-        </div>
-        <div class="footer__links">
-          <a routerLink="/about">About</a>
-          <a routerLink="/contact">Contact</a>
-          <a routerLink="/privacy">Privacy</a>
-          <a routerLink="/terms">Terms</a>
-        </div>
-      </div>
-      <div class="footer__bottom">
-        <p>&copy; 2024 Synelia. All rights reserved.</p>
-      </div>
-    </div>
-  </footer>
-}
