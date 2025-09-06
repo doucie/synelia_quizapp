@@ -168,11 +168,22 @@
 }
 
 .nav-icon {
-  font-size: 1.25rem;
   width: 1.5rem;
-  text-align: center;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
   transition: var(--transition);
+  
+  // Support pour les SVG injectés
+  ::ng-deep svg {
+    width: 20px !important;
+    height: 20px !important;
+    fill: currentColor !important;
+    color: inherit !important;
+    display: block !important;
+  }
 }
 
 .nav-label {

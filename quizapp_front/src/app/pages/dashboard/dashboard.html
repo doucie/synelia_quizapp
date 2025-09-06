@@ -32,7 +32,7 @@
                 [routerLink]="item.route"
                 routerLinkActive="active"
                 [attr.title]="sidebarCollapsed() ? item.label : ''">
-                <span class="nav-icon" [innerHTML]="item.icon"></span>
+                <span class="nav-icon" [innerHTML]="item.safeIcon"></span>
                 <span class="nav-label" *ngIf="!sidebarCollapsed()">{{ item.label }}</span>
               </a>
             </li>

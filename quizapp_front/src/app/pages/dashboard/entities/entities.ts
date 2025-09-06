@@ -1,6 +1,7 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 interface EntityInfo {
   name: string;
@@ -11,6 +12,7 @@ interface EntityInfo {
   route: string;
   count?: number;
   color?: string; // Couleur thématique pour chaque entité
+  safeIcon?: SafeHtml; // HTML sécurisé pour l'affichage
 }
 
 @Component({
@@ -25,6 +27,8 @@ export class EntitiesComponent implements OnInit {
   // État réactif
   loading = signal(false);
   searchTerm = signal('');
+
+  constructor(private sanitizer: DomSanitizer) {}
 
   // Liste des entités disponibles dans la base de données
   entities: EntityInfo[] = [
@@ -150,6 +154,12 @@ export class EntitiesComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    // Convertir les icônes SVG en HTML sécurisé
+    this.entities = this.entities.map(entity => ({
+      ...entity,
+      safeIcon: this.sanitizer.bypassSecurityTrustHtml(entity.icon)
+    }));
+    
     this.loadEntityCounts();
   }
 
