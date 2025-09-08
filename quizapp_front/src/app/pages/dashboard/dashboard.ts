@@ -12,6 +12,14 @@ interface MenuItem {
   roles: string[];
   children?: MenuItem[];
   safeIcon?: SafeHtml; // HTML sécurisé pour l'affichage
+  hasDropdown?: boolean; // Indique si l'item a un dropdown
+}
+
+interface EntityItem {
+  id: string;
+  label: string;
+  icon: string;
+  safeIcon?: SafeHtml; // HTML sécurisé pour l'affichage
 }
 
 interface Notification {
@@ -64,51 +72,147 @@ export class DashboardComponent implements OnInit {
       label: 'Entités',
       icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 7v10c0 2.21 1.79 4 4 4h8c2.21 0 4-1.79 4-4V7c0-2.21-1.79-4-4-4H8c-2.21 0-4 1.79-4 4zm0 0V5a2 2 0 012-2h1m1 0h8a2 2 0 012 2v2M9 7h6m-6 4h6m-3 4h3"/></svg>',
       route: '/dashboard/entities',
-      roles: ['super']
+      roles: ['super'],
+      hasDropdown: true
     },
     {
       id: 'users',
       label: 'Utilisateurs',
-      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1V3H9V1L3 7V9H21ZM15 21C15 19.9 14.1 19 13 19H11C9.9 19 9 19.9 9 21H15Z"/></svg>',
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>',
       route: '/dashboard/users',
-      roles: ['super', 'admin']
+      roles: ['admin', 'recruiter']
+    },
+    {
+      id: 'departments',
+      label: 'Départements',
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3v18h8v-8h2v8h8V3H3zm6 16H5v-2h4v2zm0-4H5v-2h4v2zm0-4H5V9h4v2zm0-4H5V5h4v2zm6 12h-4v-2h4v2zm0-4h-4v-2h4v2zm0-4h-4V9h4v2zm0-4h-4V5h4v2zm6 12h-4v-2h4v2zm0-4h-4v-2h4v2z"/></svg>',
+      route: '/dashboard/departments',
+      roles: ['admin']
+    },
+    {
+      id: 'specialities',
+      label: 'Spécialités',
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>',
+      route: '/dashboard/specialities',
+      roles: ['admin']
+    },
+    {
+      id: 'questions',
+      label: 'Questions',
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"/></svg>',
+      route: '/dashboard/questions',
+      roles: ['admin']
+    },
+    {
+      id: 'answers',
+      label: 'Réponses',
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>',
+      route: '/dashboard/answers',
+      roles: ['admin']
+    },
+    {
+      id: 'campaigns',
+      label: 'Campagnes',
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 5h-2V3h2v2zm-2 2h2v2h-2V7zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2zm-2 0h-2v2h2v-2zm-4 0H7v2h2v-2zm0-4H7v2h2V9zm0-4H7v2h2V7zm0-2H7V3h2v2zm10-1v18H3V2h2v2h2V2h2v2h6V2h2v2h2z"/></svg>',
+      route: '/dashboard/campaigns',
+      roles: ['admin', 'recruiter']
     },
     {
       id: 'candidates',
-      label: 'Candidats',
-      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>',
+      label: 'Candidatures',
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>',
       route: '/dashboard/candidates',
-      roles: ['super', 'admin', 'recruiter']
+      roles: ['admin', 'recruiter']
     },
     {
       id: 'interviews',
       label: 'Entretiens',
       icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1c-4.97 0-9 4.03-9 9v7c0 1.66 1.34 3 3 3h3v-8H5v-2c0-3.87 3.13-7 7-7s7 3.13 7 7v2h-4v8h3c1.66 0 3-1.34 3-3v-7c0-4.97-4.03-9-9-9z"/></svg>',
       route: '/dashboard/interviews',
-      roles: ['super', 'admin', 'recruiter']
+      roles: ['admin', 'recruiter']
     },
     {
       id: 'evaluations',
       label: 'Évaluations',
       icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>',
       route: '/dashboard/evaluations',
-      roles: ['super', 'admin', 'recruiter']
-    },
-    {
-      id: 'reports',
-      label: 'Rapports',
-      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3v18h18v-2H5V3H3zm4 12h2v4h-2v-4zm4-4h2v8h-2v-8zm4-4h2v12h-2V7z"/></svg>',
-      route: '/dashboard/reports',
-      roles: ['super', 'admin']
+      roles: ['admin', 'recruiter']
     },
     {
       id: 'settings',
       label: 'Paramètres',
       icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.82,11.69,4.82,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>',
       route: '/dashboard/settings',
-      roles: ['super']
+      roles: ['super', 'admin', 'recruiter']
     }
   ];
+
+  // Liste des entités pour l'accès rapide
+  entitiesList: EntityItem[] = [
+    { 
+      id: 'users', 
+      label: 'Utilisateurs', 
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>' 
+    },
+    { 
+      id: 'departments', 
+      label: 'Départements', 
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3v18h8v-8h2v8h8V3H3zm6 16H5v-2h4v2zm0-4H5v-2h4v2zm0-4H5V9h4v2zm0-4H5V5h4v2zm6 12h-4v-2h4v2zm0-4h-4v-2h4v2zm0-4h-4V9h4v2zm0-4h-4V5h4v2zm6 12h-4v-2h4v2zm0-4h-4v-2h4v2z"/></svg>' 
+    },
+    { 
+      id: 'specialities', 
+      label: 'Spécialités', 
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' 
+    },
+    { 
+      id: 'questions', 
+      label: 'Questions', 
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"/></svg>' 
+    },
+    { 
+      id: 'answers', 
+      label: 'Réponses', 
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>' 
+    },
+    { 
+      id: 'campaigns', 
+      label: 'Campagnes', 
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 5h-2V3h2v2zm-2 2h2v2h-2V7zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2zm-2 0h-2v2h2v-2zm-4 0H7v2h2v-2zm0-4H7v2h2V9zm0-4H7v2h2V7zm0-2H7V3h2v2zm10-1v18H3V2h2v2h2V2h2v2h6V2h2v2h2z"/></svg>' 
+    },
+    { 
+      id: 'applications', 
+      label: 'Candidatures', 
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>' 
+    },
+    { 
+      id: 'interviews', 
+      label: 'Entretiens', 
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1c-4.97 0-9 4.03-9 9v7c0 1.66 1.34 3 3 3h3v-8H5v-2c0-3.87 3.13-7 7-7s7 3.13 7 7v2h-4v8h3c1.66 0 3-1.34 3-3v-7c0-4.97-4.03-9-9-9z"/></svg>' 
+    },
+    { 
+      id: 'evaluations', 
+      label: 'Évaluations', 
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>' 
+    },
+    { 
+      id: 'notifications', 
+      label: 'Notifications', 
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>' 
+    },
+    { 
+      id: 'source-tokens', 
+      label: 'Tokens Source', 
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>' 
+    },
+    { 
+      id: 'roles', 
+      label: 'Rôles', 
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2V9h-2V7h8v12z"/></svg>' 
+    }
+  ];
+
+  // État pour le dropdown des entités
+  showEntitiesDropdown = signal(false);
 
   // Menu filtré basé sur le rôle
   filteredMenuItems = computed(() => {
@@ -142,10 +246,16 @@ export class DashboardComponent implements OnInit {
     this.loadNotifications();
     this.initializeTheme();
     
-    // Sanitiser les icônes SVG
+    // Sanitiser les icônes SVG des menus
     this.menuItems = this.menuItems.map(item => ({
       ...item,
       safeIcon: this.domSanitizer.bypassSecurityTrustHtml(item.icon)
+    }));
+    
+    // Sanitiser les icônes SVG des entités
+    this.entitiesList = this.entitiesList.map(entity => ({
+      ...entity,
+      safeIcon: this.domSanitizer.bypassSecurityTrustHtml(entity.icon)
     }));
     
     // Vérifier si l'utilisateur est connecté
@@ -201,6 +311,21 @@ export class DashboardComponent implements OnInit {
     if (this.showUserMenu()) {
       this.showNotifications.set(false);
     }
+  }
+
+  /**
+   * Toggle entities dropdown
+   */
+  toggleEntitiesDropdown(): void {
+    this.showEntitiesDropdown.update(show => !show);
+  }
+
+  /**
+   * Navigate to specific entity
+   */
+  navigateToEntity(entityId: string): void {
+    this.router.navigate(['/dashboard/entities'], { fragment: entityId });
+    this.showEntitiesDropdown.set(false);
   }
 
   /**
@@ -278,6 +403,7 @@ export class DashboardComponent implements OnInit {
   closeAllPanels(): void {
     this.showNotifications.set(false);
     this.showUserMenu.set(false);
+    this.showEntitiesDropdown.set(false);
   }
 
   /**

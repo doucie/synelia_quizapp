@@ -27,6 +27,7 @@
         <ul class="nav-list">
           @for (item of filteredMenuItems(); track item.id) {
             <li class="nav-item">
+              <!-- Lien principal -->
               <a 
                 class="nav-link"
                 [routerLink]="item.route"
@@ -35,6 +36,35 @@
                 <span class="nav-icon" [innerHTML]="item.safeIcon"></span>
                 <span class="nav-label" *ngIf="!sidebarCollapsed()">{{ item.label }}</span>
               </a>
+              
+              <!-- Bouton dropdown pour les entités (en bas du nav-item) -->
+              @if (item.hasDropdown && !sidebarCollapsed()) {
+                <button 
+                  class="dropdown-toggle-bottom"
+                  (click)="toggleEntitiesDropdown(); $event.stopPropagation()"
+                  [class.active]="showEntitiesDropdown()"
+                  title="Accès rapide aux entités">
+                  <svg viewBox="0 0 24 24" fill="currentColor" class="chevron-icon" [class.rotated]="showEntitiesDropdown()">
+                    <path d="M7 10l5 5 5-5z"/>
+                  </svg>
+                  <span class="dropdown-label">Accès rapide</span>
+                </button>
+              }
+              
+              <!-- Dropdown des entités -->
+              @if (item.hasDropdown && showEntitiesDropdown() && !sidebarCollapsed()) {
+                <div class="entities-dropdown">
+                  @for (entity of entitiesList; track entity.id) {
+                    <button 
+                      class="entity-item"
+                      (click)="navigateToEntity(entity.id)"
+                      [title]="entity.label">
+                      <span class="entity-icon" [innerHTML]="entity.safeIcon"></span>
+                      <span class="entity-label">{{ entity.label }}</span>
+                    </button>
+                  }
+                </div>
+              }
             </li>
           }
         </ul>
