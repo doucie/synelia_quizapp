@@ -208,16 +208,11 @@ public class QuestionsBusiness implements IBasicBusiness<Request<QuestionsDto>, 
 			if (Utilities.notBlank(dto.getSearchString())) {
 				entityToSave.setSearchString(dto.getSearchString());
 			}
-			entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(dto)));
-			entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(dto)));
-			entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(dto)));
-			entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(dto)));
+			// Après toutes les mises à jour conditionnelles...
 			entityToSave.setUpdatedAt(Utilities.getCurrentDate());
-			entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(dto)));
 			entityToSave.setUpdatedBy(request.getUser());
-			entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(dto)));
-			entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(dto)));
-			entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(dto)));
+			// Générer le searchString à partir de l'entité finale
+			entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(entityToSave)));
 			items.add(entityToSave);
 		}
 

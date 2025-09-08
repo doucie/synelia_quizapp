@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { LoginResponse } from '../../../shared/models/interfaces';
 import { SpringBootResponse, UserApiData } from '../../models/spring-boot.interfaces';
+import { OnlineStatusService } from '../online-status.service';
 
 export interface User {
   id: string;
@@ -21,7 +22,7 @@ export class AuthService {
   readonly isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
   readonly currentUser$ = this.currentUserSubject.asObservable();
 
-  constructor() {
+  constructor(private onlineStatusService: OnlineStatusService) {
     // Vérifier si un utilisateur est déjà connecté au démarrage
     this.initializeAuthState();
   }
@@ -59,15 +60,21 @@ export class AuthService {
     // Stocker les données d'authentification
     this.setAuthData(loginResponse);
     
+    // Démarrer le suivi du statut en ligne pour l'utilisateur connecté
+    this.onlineStatusService.startOnlineTracking(parseInt(user.id));
+    
     console.log('✅ Authentication successful:', user.email);
     return of(loginResponse);
   }
 
   /**
-   * Déconnecte l'utilisateur
+   * Déconnecte l'utilisateur et arrête le suivi du statut en ligne
    */
   logout(): void {
     console.log('🚪 AuthService.logout()');
+    
+    // Arrêter le suivi du statut en ligne avant de déconnecter
+    this.onlineStatusService.stopOnlineTracking();
     
     localStorage.removeItem('authToken');
     localStorage.removeItem('user');
@@ -106,6 +113,10 @@ export class AuthService {
         console.log('🔍 User role from localStorage:', user.role);
         this.currentUserSubject.next(user);
         this.isAuthenticatedSubject.next(true);
+        
+        // Redémarrer le suivi du statut en ligne si l'utilisateur était déjà connecté
+        this.onlineStatusService.startOnlineTracking(parseInt(user.id));
+        
         console.log('🔄 Auth state restored for:', user.email);
       } catch (error) {
         console.error('❌ Failed to restore auth state:', error);

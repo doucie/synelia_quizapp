@@ -46,6 +46,10 @@
   --shadow-light: rgba(0, 0, 0, 0.1);
   --shadow-medium: rgba(0, 0, 0, 0.15);
   --shadow-heavy: rgba(0, 0, 0, 0.25);
+  
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, var(--primary), var(--secondary));
+  
     /* Scrollbar Colors */
     --scrollbar-bg: var(--surface-variant);
     --scrollbar-thumb: var(--primary);
@@ -106,4 +110,41 @@
   --java-annotation: #F472B6;
   --java-number: #60A5FA;
   --java-method: #22D3EE;
+}
+
+/* QEEL (Qui Est En Ligne) Specific Colors */
+:root {
+  /* QEEL Status Colors */
+  --qeel-online: var(--success);
+  --qeel-online-bg: rgba(16, 185, 129, 0.1);
+  --qeel-offline: var(--text-disabled);
+  --qeel-offline-bg: rgba(148, 163, 184, 0.1);
+  
+  /* QEEL Role Colors */
+  --qeel-users: var(--info);
+  --qeel-users-bg: rgba(59, 130, 246, 0.1);
+  --qeel-admins: var(--error);
+  --qeel-admins-bg: rgba(239, 68, 68, 0.1);
+  --qeel-recruiters: var(--accent);
+  --qeel-recruiters-bg: rgba(16, 185, 129, 0.1);
+  
+  /* QEEL Percentage Colors */
+  --qeel-percentage-high: var(--success);
+  --qeel-percentage-high-bg: rgba(16, 185, 129, 0.15);
+  --qeel-percentage-medium: var(--warning);
+  --qeel-percentage-medium-bg: rgba(245, 158, 11, 0.15);
+  --qeel-percentage-low: var(--error);
+  --qeel-percentage-low-bg: rgba(239, 68, 68, 0.15);
+}
+
+.dark-mode {
+  /* QEEL Dark Mode Adjustments */
+  --qeel-online-bg: rgba(52, 211, 153, 0.15);
+  --qeel-offline-bg: rgba(100, 116, 139, 0.15);
+  --qeel-users-bg: rgba(96, 165, 250, 0.15);
+  --qeel-admins-bg: rgba(248, 113, 113, 0.15);
+  --qeel-recruiters-bg: rgba(52, 211, 153, 0.15);
+  --qeel-percentage-high-bg: rgba(52, 211, 153, 0.2);
+  --qeel-percentage-medium-bg: rgba(251, 191, 36, 0.2);
+  --qeel-percentage-low-bg: rgba(248, 113, 113, 0.2);
 }

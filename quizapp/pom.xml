@@ -45,6 +45,12 @@
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 
+		<!-- Spring Boot Starter WebSocket: Support des WebSockets pour les communications en temps réel -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-websocket</artifactId>
+		</dependency>
+
 		<!-- Spring Boot Starter Security: Fournit les fonctionnalités de sécurité 
 		incluant BCrypt pour le hachage des mots de passe -->
 		<dependency>

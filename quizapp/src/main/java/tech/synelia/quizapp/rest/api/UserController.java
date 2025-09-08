@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.http.ResponseEntity;
 
@@ -31,11 +33,14 @@ import java.util.Locale;
 
 import tech.synelia.quizapp.utils.*;
 import tech.synelia.quizapp.utils.dto.*;
+import tech.synelia.quizapp.utils.dto.OnlineStatsDto;
 // import tech.synelia.quizapp.utils.contract.*;
 import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.enums.FunctionalityEnum;
 import tech.synelia.quizapp.business.*;
+import tech.synelia.quizapp.business.OnlineStatsBusiness;
+import tech.synelia.quizapp.dao.repository.UserRepository;
 import tech.synelia.quizapp.rest.fact.ControllerFactory;
 
 /**
@@ -63,6 +68,10 @@ public class UserController {
     private ControllerFactory<UserDto> controllerFactory;
 	@Autowired
 	private UserBusiness userBusiness;
+	@Autowired
+	private OnlineStatsBusiness onlineStatsBusiness;
+	@Autowired
+	private UserRepository userRepository;
 
 	@RequestMapping(value="/create",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
     public ResponseEntity<Response<UserDto>> create(@RequestBody Request<UserDto> request) throws Exception {
@@ -131,4 +140,144 @@ public class UserController {
 	  slf4jLogger.info("end method /UserDto/custom");
 	  return response;
 	 }
+
+	/**
+	 * Endpoint pour mettre à jour le statut en ligne d'un utilisateur
+	 * Permet de marquer un utilisateur comme connecté (true) ou déconnecté (false)
+	 * 
+	 * @param id l'identifiant de l'utilisateur
+	 * @param isOnline le nouveau statut en ligne (true = connecté, false = déconnecté)
+	 * @param request la requête HTTP
+	 * @param locale la locale pour l'internationalisation
+	 * @return ResponseEntity avec le statut de l'opération
+	 */
+	@RequestMapping(value="/{id}/online-status", method=RequestMethod.PUT, produces={"application/json"})
+	public ResponseEntity<String> updateOnlineStatus(
+			@PathVariable Integer id, 
+			@RequestParam Boolean isOnline, 
+			HttpServletRequest request, 
+			Locale locale) {
+		
+		slf4jLogger.info("start method updateOnlineStatus - user id: {}, isOnline: {}", id, isOnline);
+		
+		// Mise à jour réelle du statut en ligne
+		userRepository.findById(id).ifPresent(user -> {
+			user.setIsOnline(isOnline);
+			userRepository.save(user);
+			slf4jLogger.info("Utilisateur {} statut en ligne mis à jour en base: {}", id, isOnline);
+		});
+		
+		slf4jLogger.info("Statut en ligne mis à jour pour l'utilisateur {} : {}", id, isOnline);
+		return ResponseEntity.ok("{\"status\":\"success\",\"message\":\"Online status updated\"}");
+	}
+
+	@RequestMapping(value="/set-users-online", method=RequestMethod.POST, produces={"application/json"})
+	public ResponseEntity<String> setUsersOnline(HttpServletRequest request, Locale locale) {
+		slf4jLogger.info("DEBUG - Mise en ligne de quelques utilisateurs pour test");
+		
+		// Mettre 3 utilisateurs en ligne pour tester
+		userRepository.findAll().stream()
+			.filter(user -> !Boolean.TRUE.equals(user.getIsDeleted()))
+			.limit(3)
+			.forEach(user -> {
+				user.setIsOnline(true);
+				userRepository.save(user);
+				slf4jLogger.info("Utilisateur {} ({}) mis en ligne", user.getId(), user.getUsername());
+			});
+		
+		return ResponseEntity.ok("{\"status\":\"success\",\"message\":\"3 utilisateurs mis en ligne pour test\"}");
+	}
+
+	/**
+	 * Endpoint temporaire pour diagnostiquer les rôles des utilisateurs
+	 */
+	@RequestMapping(value="/roles-debug", method=RequestMethod.GET, produces={"application/json"})
+	public ResponseEntity<String> debugRoles() {
+		slf4jLogger.info("🔍 Debug des rôles utilisateurs");
+		
+		StringBuilder debug = new StringBuilder();
+		debug.append("=== ANALYSE DES ROLES UTILISATEURS ===\n");
+		
+		// Récupérer tous les utilisateurs non supprimés
+		userRepository.findAll().stream()
+			.filter(user -> !Boolean.TRUE.equals(user.getIsDeleted()))
+			.forEach(user -> {
+				debug.append("User ").append(user.getId())
+					 .append(" - ").append(user.getUsername())
+					 .append(" - Role: '").append(user.getUserRole()).append("'")
+					 .append(" - Online: ").append(user.getIsOnline())
+					 .append("\n");
+			});
+		
+		// Compter par rôle exact
+		debug.append("\n=== COMPTAGE PAR ROLE EXACT ===\n");
+		userRepository.findAll().stream()
+			.filter(user -> !Boolean.TRUE.equals(user.getIsDeleted()))
+			.collect(java.util.stream.Collectors.groupingBy(
+				user -> user.getUserRole(),
+				java.util.stream.Collectors.counting()
+			))
+			.forEach((role, count) -> {
+				debug.append("Role '").append(role).append("': ").append(count).append(" utilisateurs\n");
+			});
+		
+		slf4jLogger.info("Debug des rôles:\n{}", debug.toString());
+		return ResponseEntity.ok(debug.toString());
+	}
+
+	/**
+	 * Récupère les statistiques complètes des utilisateurs en ligne (QEEL)
+	 * Retourne le nombre d'utilisateurs connectés par rôle et les totaux
+	 * 
+	 * @param request la requête HTTP
+	 * @param locale la locale pour l'internationalisation
+	 * @return ResponseEntity avec les statistiques QEEL
+	 */
+	@RequestMapping(value="/online-stats", method=RequestMethod.GET, produces={"application/json"})
+	public ResponseEntity<OnlineStatsDto> getOnlineStats(HttpServletRequest request, Locale locale) {
+		
+		slf4jLogger.info("start method getOnlineStats - récupération des statistiques utilisateurs en ligne");
+		
+		try {
+			// Récupération des vraies statistiques depuis la base de données
+			OnlineStatsDto stats = onlineStatsBusiness.getOnlineStats();
+			
+			slf4jLogger.info("Statistiques QEEL retournées avec succès: {} utilisateurs total, {} en ligne", 
+							stats.getTotalUsers(), stats.getOnlineUsers());
+			
+			return ResponseEntity.ok(stats);
+			
+		} catch (Exception e) {
+			slf4jLogger.error("Erreur lors de la récupération des statistiques QEEL", e);
+			
+			// En cas d'erreur, retourner des statistiques vides plutôt que des données factices
+			OnlineStatsDto fallbackStats = new OnlineStatsDto(0L, 0L, 0.0, 0L, 0L, 0.0, 0L, 0L, 0.0);
+			return ResponseEntity.ok(fallbackStats);
+		}
+	}
+
+	/**
+	 * Endpoint pour récupérer uniquement le nombre d'utilisateurs en ligne
+	 * 
+	 * @param request la requête HTTP
+	 * @param locale la locale pour l'internationalisation  
+	 * @return ResponseEntity avec le nombre d'utilisateurs connectés
+	 */
+	@RequestMapping(value="/online-count", method=RequestMethod.GET, produces={"application/json"})
+	public ResponseEntity<Long> getOnlineUsersCount(HttpServletRequest request, Locale locale) {
+		
+		slf4jLogger.info("start method getOnlineUsersCount");
+		
+		try {
+			// Récupération du vrai nombre d'utilisateurs en ligne depuis la base de données
+			Long count = onlineStatsBusiness.getOnlineUsersCount();
+			
+			slf4jLogger.info("Nombre d'utilisateurs en ligne retourné: {}", count);
+			return ResponseEntity.ok(count);
+			
+		} catch (Exception e) {
+			slf4jLogger.error("Erreur lors de la récupération du nombre d'utilisateurs en ligne", e);
+			return ResponseEntity.ok(0L); // Retourner 0 en cas d'erreur
+		}
+	}
 }

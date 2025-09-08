@@ -1,11 +1,12 @@
 import { Component, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../core/services/auth/auth.service';
+import { QeelModernComponent } from '../../../components/qeel/qeel-modern.component';
 
 @Component({
   selector: 'app-overview',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, QeelModernComponent],
   templateUrl: './overview.html',
   styleUrls: ['./overview.scss']
 })
