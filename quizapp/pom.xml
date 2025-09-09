@@ -341,6 +341,9 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<version>3.4.0</version>
+				<configuration>
+					<mainClass>tech.synelia.quizapp.QuizappApplication</mainClass>
+				</configuration>
 			</plugin>
 
 			<plugin>

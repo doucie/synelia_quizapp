@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { OnlineStats } from '../../core/services/online-stats.service';
 import { QeelWebSocketService } from '../../services/qeel-websocket.service';
@@ -36,10 +36,12 @@ import { Subscription } from 'rxjs';
         </div>
       </div>
 
-      <!-- Message de chargement -->
-      <div *ngIf="!stats" class="loading-container">
-        <div class="loading-spinner"></div>
-        <p>Connexion en cours...</p>
+      <!-- Message de chargement ou erreur -->
+      <div *ngIf="isConnecting || error" class="loading-container">
+        <div *ngIf="isConnecting" class="loading-spinner"></div>
+        <p *ngIf="isConnecting && !error">Connexion en cours...</p>
+        <p *ngIf="error" class="error-message">{{ error }}</p>
+        <button *ngIf="error" class="retry-button" (click)="retryConnection()">Réessayer</button>
       </div>
 
       <!-- Stats Grid -->
@@ -188,6 +190,28 @@ import { Subscription } from 'rxjs';
       justify-content: center;
       padding: 3rem;
       color: var(--text-secondary);
+    }
+
+    .error-message {
+      color: var(--error);
+      margin: 1rem 0;
+      text-align: center;
+    }
+
+    .retry-button {
+      padding: 0.5rem 1rem;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    .retry-button:hover {
+      background: var(--primary-dark);
+      transform: translateY(-1px);
     }
 
     .loading-spinner {
@@ -546,16 +570,23 @@ import { Subscription } from 'rxjs';
 export class QeelModernComponent implements OnInit, OnDestroy {
   // Statistiques des utilisateurs en ligne (via WebSocket)
   stats: OnlineStats | null = null;
+  error: string | null = null;
+  isConnecting = true;
 
   currentTime = new Date();
   private subscription: Subscription = new Subscription();
   private timeInterval: any;
 
-  constructor(private qeelWebSocketService: QeelWebSocketService) {}
+  constructor(
+    private qeelWebSocketService: QeelWebSocketService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
-    // S'abonner aux statistiques en temps réel via WebSocket et HTTP initial
-    this.loadStats();
+    // Attendre un moment pour que le service WebSocket s'initialise
+    setTimeout(() => {
+      this.loadStats();
+    }, 500);
     
     // Mettre à jour l'heure en temps réel
     this.timeInterval = setInterval(() => {
@@ -574,24 +605,65 @@ export class QeelModernComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Réessaye la connexion WebSocket
+   */
+  retryConnection(): void {
+    this.error = null;
+    this.isConnecting = true;
+    this.cdr.detectChanges();
+    this.qeelWebSocketService.reconnect();
+    this.loadStats();
+  }
+
+  /**
    * S'abonne aux statistiques en temps réel via WebSocket
    */
   private loadStats(): void {
     console.log('🔄 Connexion WebSocket QEEL...');
+    this.isConnecting = true;
+    this.error = null;
     
     // S'abonner au flux WebSocket pour recevoir les mises à jour automatiques en temps réel
     const statsSubscription = this.qeelWebSocketService.getOnlineStats().subscribe({
       next: (stats: OnlineStats | null) => {
         if (stats) {
-          this.stats = stats;
           console.log('✅ Statistiques QEEL mises à jour via WebSocket:', stats);
+          this.stats = stats;
+          this.isConnecting = false;
+          this.error = null;
+          // Déclencher manuellement la détection de changements
+          this.cdr.detectChanges();
         }
       },
       error: (error: any) => {
         console.error('❌ Erreur WebSocket QEEL:', error);
+        this.error = "Une erreur est survenue lors de la connexion";
+        this.isConnecting = false;
+        this.cdr.detectChanges();
       }
     });
 
     this.subscription.add(statsSubscription);
+    
+    // Vérifier après un délai si nous avons reçu des données
+    setTimeout(() => {
+      if (!this.stats && this.isConnecting) {
+        console.log('⚠️ Aucune donnée reçue après 3 secondes, vérification de l\'état...');
+        // Ne pas marquer comme erreur immédiatement, laisser plus de temps
+        if (!this.qeelWebSocketService.isWebSocketConnected()) {
+          console.log('⚠️ WebSocket non connecté, tentative de reconnexion...');
+          this.qeelWebSocketService.reconnect();
+        }
+      }
+    }, 3000);
+    
+    // Timeout final après 10 secondes
+    setTimeout(() => {
+      if (!this.stats && this.isConnecting) {
+        this.error = "Impossible de se connecter au serveur WebSocket";
+        this.isConnecting = false;
+        this.cdr.detectChanges();
+      }
+    }, 10000);
   }
 }

@@ -19,13 +19,15 @@ export class QeelWebSocketService {
   private reconnectInterval = 5000; // 5 secondes
 
   constructor(private http: HttpClient) {
-    // Démarrer la connexion WebSocket
-    this.connect();
+    // Démarrer la connexion WebSocket après un court délai
+    setTimeout(() => {
+      this.connect();
+    }, 100);
     
-    // Charger les données initiales après un court délai
+    // Charger les données initiales après un délai plus long
     setTimeout(() => {
       this.loadInitialDataDirectly();
-    }, 100);
+    }, 500);
   }
 
   /**
@@ -182,9 +184,18 @@ export class QeelWebSocketService {
    * Force une reconnexion manuelle
    */
   reconnect(): void {
+    console.log('🔄 [QEEL] Reconnexion manuelle demandée');
     this.disconnect();
     this.reconnectAttempts = 0;
-    this.connect();
+    
+    // Attendre un peu avant de se reconnecter
+    setTimeout(() => {
+      this.connect();
+      // Charger les données initiales après reconnexion
+      setTimeout(() => {
+        this.loadInitialDataDirectly();
+      }, 200);
+    }, 100);
   }
 
   /**
