@@ -21,6 +21,7 @@ import org.apache.commons.lang.time.DateUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.thymeleaf.context.Context;
@@ -586,6 +587,45 @@ public class UserManagmentBusiness {
 		log.info("----end déverrouiller User-----");
 
 		return response;
+	}
+
+	/**
+	 * Tâche programmée qui marque automatiquement les utilisateurs comme hors ligne
+	 * si ils n'ont pas eu d'activité depuis plus de 2 minutes
+	 * S'exécute toutes les minutes
+	 */
+	@Scheduled(fixedRate = 60000) // Toutes les minutes (60 secondes)
+	public void cleanupInactiveUsers() {
+		try {
+			log.info("🧹 [CLEANUP] Début du nettoyage des utilisateurs inactifs");
+			
+			// Calculer la date limite (2 minutes dans le passé)
+			Date timeoutThreshold = new Date(System.currentTimeMillis() - (2 * 60 * 1000)); // 2 minutes
+			
+			// Trouver tous les utilisateurs marqués comme en ligne mais inactifs
+			List<User> inactiveUsers = userRepository.findInactiveOnlineUsers(timeoutThreshold);
+			
+			if (inactiveUsers != null && !inactiveUsers.isEmpty()) {
+				log.info("🧹 [CLEANUP] " + inactiveUsers.size() + " utilisateurs inactifs détectés");
+				
+				// Marquer ces utilisateurs comme hors ligne
+				for (User user : inactiveUsers) {
+					user.setIsOnline(false);
+					user.setUpdatedAt(new Date());
+					log.info("🧹 [CLEANUP] Utilisateur " + user.getId() + " (" + user.getUsername() + ") marqué hors ligne (inactif depuis " + user.getLastConnectionDate() + ")");
+				}
+				
+				// Sauvegarder les modifications
+				userRepository.saveAll(inactiveUsers);
+				log.info("✅ [CLEANUP] " + inactiveUsers.size() + " utilisateurs marqués comme hors ligne");
+			} else {
+				log.info("ℹ️ [CLEANUP] Aucun utilisateur inactif détecté");
+			}
+			
+		} catch (Exception e) {
+			log.severe("❌ [CLEANUP] Erreur lors du nettoyage des utilisateurs inactifs: " + e.getMessage());
+			e.printStackTrace();
+		}
 	}
 
 }

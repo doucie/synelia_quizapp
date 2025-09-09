@@ -29,6 +29,7 @@ import org.springframework.transaction.CannotCreateTransactionException;
 import org.springframework.transaction.TransactionSystemException;
 
 import java.net.URI;
+import java.util.Date;
 import java.util.Locale;
 
 import tech.synelia.quizapp.utils.*;
@@ -163,8 +164,14 @@ public class UserController {
 		// Mise à jour réelle du statut en ligne
 		userRepository.findById(id).ifPresent(user -> {
 			user.setIsOnline(isOnline);
+			// Mettre à jour la date de dernière connexion si l'utilisateur est marqué comme en ligne
+			if (Boolean.TRUE.equals(isOnline)) {
+				user.setLastConnectionDate(new Date());
+			}
+			user.setUpdatedAt(new Date());
 			userRepository.save(user);
-			slf4jLogger.info("Utilisateur {} statut en ligne mis à jour en base: {}", id, isOnline);
+			slf4jLogger.info("Utilisateur {} statut en ligne mis à jour en base: {} (lastConnection: {})", 
+				id, isOnline, user.getLastConnectionDate());
 		});
 		
 		slf4jLogger.info("Statut en ligne mis à jour pour l'utilisateur {} : {}", id, isOnline);

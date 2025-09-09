@@ -379,4 +379,12 @@ public interface UserRepository extends JpaRepository<User, Integer>, _UserRepos
 	 */
 	@Query("select count(e) from User e where e.isDeleted = false and e.isOnline = true and e.userRole = :userRole")
 	Long countOnlineUsersByRole(@Param("userRole") String userRole);
+
+	/**
+	 * Trouve les utilisateurs marqués comme en ligne mais inactifs (sans heartbeat récent)
+	 * @param timeoutThreshold La date limite - les utilisateurs sans activité depuis cette date sont considérés inactifs
+	 * @return Liste des utilisateurs inactifs à marquer comme hors ligne
+	 */
+	@Query("select e from User e where e.isDeleted = false and e.isOnline = true and (e.lastConnectionDate is null or e.lastConnectionDate < :timeoutThreshold)")
+	List<User> findInactiveOnlineUsers(@Param("timeoutThreshold") Date timeoutThreshold);
 }
