@@ -419,6 +419,9 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
 		Response<UserDto> response = new Response<UserDto>();
 		List<User> items 			 = userRepository.getByCriteria(request, em, locale);
+		
+		// Compter le nombre total d'utilisateurs actifs avec les mêmes critères (pour pagination)
+		Long totalCount = userRepository.count(request, em, locale);
 
 		if (items != null && !items.isEmpty()) {
 			List<UserDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading())) ? UserTransformer.INSTANCE.toLiteDtos(items) : UserTransformer.INSTANCE.toDtos(items);
@@ -445,15 +448,74 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 			response.setHasError(false);
 			response.setHttpCode(HttpStatus.OK.value());
 			response.setStatus(status);
-			response.setCount(userRepository.count(request, em, locale));
+			response.setCount(Long.valueOf(itemsDto.size())); // Nombre d'éléments dans cette page
+			response.setTotalCount(totalCount); // Nombre total d'éléments dans la base
 			response.setHasError(false);
 		} else {
 			response.setStatus(functionalError.DATA_EMPTY("user", locale));
+			response.setTotalCount(totalCount); // Même si aucun résultat, renvoyer le total
 			response.setHasError(false);
 			return response;
 		}
 		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
 		log.info("----end get User-----");
+		return response;
+	}
+
+	/**
+	 * Récupère TOUS les utilisateurs selon les critères (y compris les supprimés)
+	 * 
+	 * @param request
+	 * @param locale
+	 * @return response
+	 * @throws Exception
+	 */
+	public Response<UserDto> getAllByCriteria(Request<UserDto> request, Locale locale) throws Exception {
+		log.info("----begin getAllByCriteria User (INCLUDING DELETED)-----");
+		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
+		Response<UserDto> response = new Response<UserDto>();
+		
+		// Utiliser une requête directe sans filtrage automatique des supprimés
+		List<User> items = userRepository.getAllByCriteriaIncludingDeleted(request, em, locale);
+
+		// Compter le nombre total d'utilisateurs avec les mêmes critères (pour pagination)
+		Long totalCount = userRepository.countAllByCriteriaIncludingDeleted(request, em, locale);
+
+		if (items != null && !items.isEmpty()) {
+			List<UserDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading())) ? UserTransformer.INSTANCE.toLiteDtos(items) : UserTransformer.INSTANCE.toDtos(items);
+
+			final int size = items.size();
+			List<String> listOfError = Collections.synchronizedList(new ArrayList<String>());
+			itemsDto.parallelStream().forEach(dto -> {
+				try {
+					dto = getFullInfos(dto, size, request.getIsSimpleLoading(), locale);
+				} catch (Exception e) {
+					listOfError.add(e.getMessage());
+					e.printStackTrace();
+				}
+			});
+			if (Utilities.isNotEmpty(listOfError)) {
+				Object[] objArray = listOfError.stream().distinct().toArray();
+				throw new RuntimeException(StringUtils.join(objArray, ", "));
+			}
+			Status status = new Status();
+			status.setCode(StatusCode.SUCCESS);
+			status.setMessage(StatusMessage.SUCCESS);
+
+			response.setHttpCode(HttpStatus.OK.value());
+			response.setStatus(status);
+			response.setItems(itemsDto);
+			response.setCount(Long.valueOf(itemsDto.size())); // Nombre d'éléments dans cette page
+			response.setTotalCount(totalCount); // Nombre total d'éléments dans la base
+			response.setHasError(false);
+		} else {
+			response.setStatus(functionalError.DATA_EMPTY("users", locale));
+			response.setTotalCount(totalCount); // Même si aucun résultat, renvoyer le total
+			response.setHasError(false);
+		}
+
+		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
+		log.info("----end getAllByCriteria User-----");
 		return response;
 	}
 

@@ -110,6 +110,16 @@ public class UserController {
         return response;
     }
 
+    @RequestMapping(value="/getAllByCriteria",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
+    public Response<UserDto> getAllByCriteria(@RequestBody Request<UserDto> request) throws Exception{
+    	log.info("start method /user/getAllByCriteria (including deleted users)");
+    	String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
+    	Locale locale = Locale.of(languageID, "");
+        Response<UserDto> response = userBusiness.getAllByCriteria(request, locale);
+		log.info("end method /user/getAllByCriteria");
+        return response;
+    }
+
     @RequestMapping(value = "/custom", method = RequestMethod.POST, consumes = {
 	   "application/json" }, produces = { "application/json" })
 	 public Response<UserDto> custom(@RequestBody Request<UserDto> request) throws Exception{

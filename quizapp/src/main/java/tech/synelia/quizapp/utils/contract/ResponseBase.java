@@ -24,6 +24,7 @@ public class ResponseBase {
 	protected  Status	 status = new Status();
 	protected  boolean	 hasError;
 	protected  String	 sessionUser;
-	protected  Long		 count;
+	protected  Long		 count; // Nombre d'éléments dans cette page
+	protected  Long		 totalCount; // Nombre total d'éléments dans la base de données (pour pagination)
 	protected  int       httpCode;
 }

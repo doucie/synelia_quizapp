@@ -1,7 +1,8 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { AuthService } from '../../../core/services/auth/auth.service';
 
 interface EntityInfo {
   name: string;
@@ -28,7 +29,12 @@ export class EntitiesComponent implements OnInit {
   loading = signal(false);
   searchTerm = signal('');
 
-  constructor(private sanitizer: DomSanitizer) {}
+  constructor(
+    private sanitizer: DomSanitizer,
+    private router: Router,
+    private route: ActivatedRoute,
+    private authService: AuthService
+  ) {}
 
   // Liste des entités disponibles dans la base de données
   entities: EntityInfo[] = [
@@ -38,7 +44,7 @@ export class EntitiesComponent implements OnInit {
       description: 'Gestion des utilisateurs du système (admins, recruteurs, etc.)',
       icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>',
       iconType: 'svg',
-      route: '/dashboard/users',
+      route: '/dashboard/entities/users',
       color: '#3B82F6'
     },
     {
@@ -161,6 +167,8 @@ export class EntitiesComponent implements OnInit {
     }));
     
     this.loadEntityCounts();
+    
+    // Navigation par fragments supprimée - utilisation directe des routes
   }
 
   /**
@@ -185,6 +193,75 @@ export class EntitiesComponent implements OnInit {
   }
 
   /**
+   * Gère la navigation basée sur le fragment de l'URL
+   */
+  private handleFragmentNavigation(fragment: string): void {
+    console.log('🔗 Fragment détecté:', fragment);
+    
+    const currentUser = this.authService.getCurrentUser();
+    const userRole = currentUser?.role || '';
+    
+    // Vérifier les permissions spécifiques selon le fragment
+    switch (fragment) {
+      case 'users':
+        if (userRole === 'super') {
+          console.log('✅ Redirection vers /dashboard/entities/users (rôle super autorisé)');
+          this.router.navigate(['/dashboard/entities/users']);
+        } else {
+          console.log('❌ Accès refusé à /dashboard/entities/users (rôle insuffisant)');
+          this.router.navigate(['/dashboard'], {
+            queryParams: {
+              error: 'access_denied',
+              message: 'Accès réservé aux super administrateurs.'
+            }
+          });
+        }
+        break;
+        
+      case 'departments':
+      case 'specialities':
+      case 'questions':
+      case 'answers':
+        if (userRole === 'super' || userRole === 'admin') {
+          console.log(`✅ Redirection vers /dashboard/${fragment}`);
+          this.router.navigate([`/dashboard/${fragment}`]);
+        } else {
+          console.log(`❌ Accès refusé à /dashboard/${fragment}`);
+          this.router.navigate(['/dashboard'], {
+            queryParams: {
+              error: 'access_denied',
+              message: 'Accès réservé aux administrateurs.'
+            }
+          });
+        }
+        break;
+        
+      case 'campaigns':
+      case 'candidates':
+      case 'applications':
+      case 'interviews':
+      case 'evaluations':
+        if (userRole === 'super' || userRole === 'admin' || userRole === 'recruiter') {
+          console.log(`✅ Redirection vers /dashboard/${fragment}`);
+          this.router.navigate([`/dashboard/${fragment}`]);
+        } else {
+          console.log(`❌ Accès refusé à /dashboard/${fragment}`);
+          this.router.navigate(['/dashboard'], {
+            queryParams: {
+              error: 'access_denied',
+              message: 'Accès insuffisant pour cette fonctionnalité.'
+            }
+          });
+        }
+        break;
+        
+      default:
+        console.log('⚠️ Fragment non reconnu:', fragment);
+        break;
+    }
+  }
+
+  /**
    * Met à jour le terme de recherche
    */
   onSearchChange(event: Event): void {
@@ -197,7 +274,28 @@ export class EntitiesComponent implements OnInit {
    */
   navigateToEntity(entity: EntityInfo): void {
     console.log('Navigation vers:', entity.name, entity.route);
-    // La navigation sera gérée par routerLink dans le template
+    
+    const currentUser = this.authService.getCurrentUser();
+    const userRole = currentUser?.role || '';
+    
+    // Vérifier les permissions spécifiques selon l'entité
+    if (entity.name === 'users') {
+      if (userRole === 'super') {
+        console.log('✅ Redirection vers', entity.route, '(rôle super autorisé)');
+        this.router.navigate([entity.route]);
+      } else {
+        console.log('❌ Accès refusé à', entity.route, '(rôle insuffisant)');
+        this.router.navigate(['/dashboard'], {
+          queryParams: {
+            error: 'access_denied',
+            message: 'Accès réservé aux super administrateurs.'
+          }
+        });
+      }
+    } else {
+      // Pour les autres entités, navigation directe (on peut ajouter des vérifications plus tard)
+      this.router.navigate([entity.route]);
+    }
   }
 
   /**

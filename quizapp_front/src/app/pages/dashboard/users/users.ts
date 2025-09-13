@@ -34,7 +34,7 @@ export class UsersComponent implements OnInit, OnDestroy {
   userForm: FormGroup;
   
   // Rôles disponibles
-  availableRoles = ['ADMIN', 'RECRUITER', 'USER'];
+  availableRoles = ['super', 'admin', 'recruiter'];
 
   constructor(
     private userService: UserService,
@@ -46,7 +46,7 @@ export class UsersComponent implements OnInit, OnDestroy {
       pseudo: ['', [Validators.required, Validators.minLength(3)]],
       email: ['', [Validators.required, Validators.email]],
       telephone: [''],
-      role: ['USER', Validators.required]
+      role: ['recruiter', Validators.required]
     });
   }
 
@@ -120,7 +120,7 @@ export class UsersComponent implements OnInit, OnDestroy {
   openCreateModal(): void {
     this.selectedUser = null;
     this.userForm.reset();
-    this.userForm.patchValue({ role: 'USER' });
+    this.userForm.patchValue({ role: 'recruiter' });
     this.showCreateModal = true;
   }
 
@@ -255,9 +255,9 @@ export class UsersComponent implements OnInit, OnDestroy {
    */
   getRoleLabel(role: string): string {
     switch(role) {
-      case 'ADMIN': return 'Administrateur';
-      case 'RECRUITER': return 'Recruteur';
-      case 'USER': return 'Utilisateur';
+      case 'super': return 'Super Admin';
+      case 'admin': return 'Administrateur';
+      case 'recruiter': return 'Recruteur';
       default: return role;
     }
   }

@@ -1,7 +1,9 @@
 import { Component, OnInit, signal, computed, effect, Renderer2, Inject } from '@angular/core';
 import { CommonModule, DOCUMENT } from '@angular/common';
-import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
+import { RouterOutlet, RouterLink, RouterLinkActive, Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../core/services/auth/auth.service';
+import { NotificationService } from '../../core/services/notification.service';
+import { NotificationsComponent } from '../../components/notifications/notifications.component';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 interface MenuItem {
@@ -34,7 +36,7 @@ interface Notification {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, NotificationsComponent],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss']
 })
@@ -228,6 +230,8 @@ export class DashboardComponent implements OnInit {
   constructor(
     private authService: AuthService,
     private router: Router,
+    private route: ActivatedRoute,
+    private notificationService: NotificationService,
     private renderer: Renderer2,
     @Inject(DOCUMENT) private document: Document,
     private domSanitizer: DomSanitizer
@@ -245,6 +249,19 @@ export class DashboardComponent implements OnInit {
   ngOnInit(): void {
     this.loadNotifications();
     this.initializeTheme();
+    
+    // Écouter les paramètres d'erreur d'accès
+    this.route.queryParams.subscribe(params => {
+      if (params['error'] === 'access_denied' && params['message']) {
+        this.notificationService.error(
+          'Accès refusé',
+          params['message'],
+          8000
+        );
+        // Nettoyer les paramètres de l'URL
+        this.router.navigate(['/dashboard'], { queryParams: {} });
+      }
+    });
     
     // Sanitiser les icônes SVG des menus
     this.menuItems = this.menuItems.map(item => ({

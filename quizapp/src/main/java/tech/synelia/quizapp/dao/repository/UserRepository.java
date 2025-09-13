@@ -348,6 +348,80 @@ public interface UserRepository extends JpaRepository<User, Integer>, _UserRepos
 		return CriteriaUtils.getCriteriaByListOfQuery(listOfQuery);
 	}
 
+	/**
+	 * Requête pour récupérer tous les utilisateurs (y compris les supprimés)
+	 */
+	default List<User> getAllByCriteriaIncludingDeleted(Request<UserDto> request, EntityManager em, Locale locale) throws Exception {
+		String req = "select e from User e where e IS NOT NULL";
+		HashMap<String, java.lang.Object> param = new HashMap<String, java.lang.Object>();
+		req += getWhereExpressionIncludingDeleted(request, param, locale);
+		req += " order by e.id desc";
+		
+		TypedQuery<User> query = em.createQuery(req, User.class);
+		for (Map.Entry<String, java.lang.Object> entry : param.entrySet()) {
+			query.setParameter(entry.getKey(), entry.getValue());
+		}
+		if (request.getIndex() != null && request.getSize() != null) {
+			query.setFirstResult(request.getIndex() * request.getSize());
+			query.setMaxResults(request.getSize());
+		}
+		return query.getResultList();
+	}
+
+	/**
+	 * Compte le nombre total d'utilisateurs correspondant aux critères (y compris les supprimés)
+	 */
+	default Long countAllByCriteriaIncludingDeleted(Request<UserDto> request, EntityManager em, Locale locale) throws Exception {
+		String req = "select count(e.id) from User e where e IS NOT NULL";
+		HashMap<String, java.lang.Object> param = new HashMap<String, java.lang.Object>();
+		req += getWhereExpressionIncludingDeleted(request, param, locale);
+		
+		TypedQuery<Long> query = em.createQuery(req, Long.class);
+		for (Map.Entry<String, java.lang.Object> entry : param.entrySet()) {
+			query.setParameter(entry.getKey(), entry.getValue());
+		}
+		return query.getSingleResult();
+	}
+
+	/**
+	 * Expression WHERE sans filtrage automatique des supprimés
+	 */
+	default String getWhereExpressionIncludingDeleted(Request<UserDto> request, HashMap<String, java.lang.Object> param, Locale locale) throws Exception {
+		// main query
+		UserDto dto = request.getData() != null ? request.getData() : new UserDto();
+		// Ne pas forcer isDeleted = false ici !
+		String mainReq = generateCriteriaIncludingDeleted(dto, param, 0, locale);
+		// others query
+		String othersReq = "";
+		if (request.getDatas() != null && !request.getDatas().isEmpty()) {
+			Integer index = 1;
+			for (UserDto elt : request.getDatas()) {
+				// Ne pas forcer isDeleted = false ici !
+				String eltReq = generateCriteriaIncludingDeleted(elt, param, index, locale);
+				if (request.getIsAnd() != null && request.getIsAnd()) {
+					othersReq += "and (" + eltReq + ") ";
+				} else {
+					othersReq += "or (" + eltReq + ") ";
+				}
+				index++;
+			}
+		}
+		String req = "";
+		if (!mainReq.isEmpty()) {
+			req += " and (" + mainReq + ") ";
+		}
+		req += othersReq;
+		return req;
+	}
+
+	/**
+	 * Génération des critères sans forcer isDeleted = false
+	 */
+	default String generateCriteriaIncludingDeleted(UserDto dto, HashMap<String, java.lang.Object> param, Integer index, Locale locale) throws Exception{
+		// Utiliser la méthode generateCriteria existante, elle n'altère pas isDeleted
+		return generateCriteria(dto, param, index, locale);
+	}
+
 	// ==================== MÉTHODES POUR STATISTIQUES QEEL ====================
 
 	/**

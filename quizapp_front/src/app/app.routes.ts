@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard, noAuthGuard } from './core/guards/auth.guard';
+import { superRoleGuard } from './core/guards/role.guard';
 
 export const routes: Routes = [
   { 
@@ -45,8 +46,14 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/dashboard/entities/entities').then(m => m.EntitiesComponent)
       },
       { 
+        path: 'entities/users', 
+        loadComponent: () => import('./pages/dashboard/entities/users/entities-users').then(m => m.EntitiesUsersComponent),
+        canActivate: [superRoleGuard]
+      },
+      { 
         path: 'users', 
-        loadComponent: () => import('./pages/dashboard/users/users').then(m => m.UsersComponent)
+        loadComponent: () => import('./pages/dashboard/users/users').then(m => m.UsersComponent),
+        canActivate: [superRoleGuard]
       },
       { 
         path: 'departments', 

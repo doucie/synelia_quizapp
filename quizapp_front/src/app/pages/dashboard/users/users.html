@@ -53,9 +53,9 @@
       <div class="filter-group">
         <select [(ngModel)]="searchCriteria.role" class="form-select">
           <option value="">Tous les rôles</option>
-          <option value="ADMIN">Administrateur</option>
-          <option value="RECRUITER">Recruteur</option>
-          <option value="USER">Utilisateur</option>
+          <option value="super">Super Admin</option>
+          <option value="admin">Administrateur</option>
+          <option value="recruiter">Recruteur</option>
         </select>
       </div>
       <div class="filter-group">
@@ -300,9 +300,9 @@
               class="form-select"
               [class.error]="userForm.get('role')?.invalid && userForm.get('role')?.touched"
             >
-              <option value="USER">Utilisateur</option>
-              <option value="RECRUITER">Recruteur</option>
-              <option value="ADMIN">Administrateur</option>
+              <option value="recruiter">Recruteur</option>
+              <option value="admin">Administrateur</option>
+              <option value="super">Super Admin</option>
             </select>
           </div>
         </div>
