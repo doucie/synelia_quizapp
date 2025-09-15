@@ -341,7 +341,7 @@ export class DashboardComponent implements OnInit {
    * Navigate to specific entity
    */
   navigateToEntity(entityId: string): void {
-    this.router.navigate(['/dashboard/entities'], { fragment: entityId });
+    this.router.navigate([`/dashboard/entities/${entityId}`]);
     this.showEntitiesDropdown.set(false);
   }
 
