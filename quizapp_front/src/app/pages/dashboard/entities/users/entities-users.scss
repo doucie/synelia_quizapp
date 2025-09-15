@@ -1035,6 +1035,17 @@
   border-color: var(--error);
 }
 
+.action-btn.success {
+  color: var(--success);
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.action-btn.success:hover {
+  background: rgba(34, 197, 94, 0.1);
+  color: var(--success);
+  border-color: var(--success);
+}
+
 /* =================================================================
    BOUTONS PROFESSIONNELS
    ================================================================= */
@@ -2172,6 +2183,11 @@
   .action-btn {
     opacity: 0.5;
     pointer-events: none;
+    
+    &.success {
+      opacity: 1;
+      pointer-events: auto;
+    }
   }
   
   .status-badge {
@@ -2229,6 +2245,11 @@
       &.danger {
         background: rgba(239, 68, 68, 0.1);
         color: var(--error);
+      }
+      
+      &.success {
+        background: rgba(34, 197, 94, 0.1);
+        color: var(--success);
       }
       
       svg {
@@ -2319,6 +2340,24 @@
         flex-shrink: 0;
       }
     }
+    
+    .info-message {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-sm) var(--spacing-md);
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: var(--border-radius);
+      color: rgb(30, 64, 175);
+      font-size: var(--font-size-sm);
+      
+      svg {
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+      }
+    }
   }
   
   .modal-actions {
@@ -2376,6 +2415,31 @@
       &:hover {
         background: rgb(185, 28, 28);
         border-color: rgb(185, 28, 28);
+      }
+    }
+    
+    .btn-confirm-success {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-sm) var(--spacing-lg);
+      background: var(--success);
+      color: white;
+      border: 1px solid var(--success);
+      border-radius: var(--border-radius);
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-medium);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      
+      svg {
+        width: 16px;
+        height: 16px;
+      }
+      
+      &:hover {
+        background: rgb(21, 128, 61);
+        border-color: rgb(21, 128, 61);
       }
     }
   }

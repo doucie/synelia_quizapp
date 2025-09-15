@@ -251,6 +251,9 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 			if (dto.getIsLocked() != null) {
 				entityToSave.setIsLocked(dto.getIsLocked());
 			}
+			if (dto.getIsDeleted() != null) {
+				entityToSave.setIsDeleted(dto.getIsDeleted());
+			}
 			if (Utilities.notBlank(dto.getLastConnectionDate())) {
 				entityToSave.setLastConnectionDate(dateFormat.parse(dto.getLastConnectionDate()));
 			}
@@ -327,6 +330,134 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 		}
 		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
 		log.info("----end update User-----");
+		return response;
+	}
+
+	/**
+	 * updateAll User by using UserDto as object (including deleted users).
+	 * 
+	 * @param request
+	 * @return response
+	 */
+	public Response<UserDto> updateAll(Request<UserDto> request, Locale locale)  throws ParseException, JsonProcessingException {
+		log.info("----begin updateAll User-----");
+		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
+		Response<UserDto> response = new Response<UserDto>();
+		List<User>        items    = new ArrayList<User>();
+			
+		for (UserDto dto : request.getDatas()) {
+			// Definir les parametres obligatoires
+			Map<String, Object> fieldsToVerify = new HashMap<String, Object>();
+			fieldsToVerify.put("id", dto.getId());
+			if (!Validate.RequiredValue(fieldsToVerify).isGood()) {
+				throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
+			}
+
+			// Verifier si la donnee existe
+			User existingEntity = null;
+			// Pour updateAll, on cherche même les utilisateurs supprimés
+			existingEntity = userRepository.findOne(dto.getId(), true);
+			if (existingEntity == null) {
+				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("user id -> " + dto.getId(), locale));
+			}
+
+			// -----------------------------------------------------------------------
+			// ----------- CHECK IF DATA IS USED
+			// -----------------------------------------------------------------------
+
+			// -----------------------------------------------------------------------
+			// ----------- GENERATION KEY
+			// -----------------------------------------------------------------------
+			//String userKey = existingEntity.getFirstName() + dto.getFirstName(); // Business key
+
+			// -----------------------------------------------------------------------
+			// ----------- PREPARATION DE L'OBJET
+			// -----------------------------------------------------------------------
+			// Garder les données existantes de base
+			User entityToSave = existingEntity;
+			
+			// Mise à jour conditionnelle des champs
+			if (Utilities.notBlank(dto.getFirstName())) {
+				entityToSave.setFirstName(dto.getFirstName());
+			}
+			if (Utilities.notBlank(dto.getLastName())) {
+				entityToSave.setLastName(dto.getLastName());
+			}
+			if (Utilities.notBlank(dto.getUsername())) {
+				entityToSave.setUsername(dto.getUsername());
+			}
+			if (Utilities.notBlank(dto.getEmail())) {
+				entityToSave.setEmail(dto.getEmail());
+			}
+			if (Utilities.notBlank(dto.getPhone())) {
+				entityToSave.setPhone(dto.getPhone());
+			}
+			if (Utilities.notBlank(dto.getPassword())) {
+				entityToSave.setPassword(dto.getPassword());
+			}
+			if (dto.getIsDefaultPassword() != null) {
+				entityToSave.setIsDefaultPassword(dto.getIsDefaultPassword());
+			}
+			if (Utilities.notBlank(dto.getUserRole())) {
+				entityToSave.setUserRole(dto.getUserRole());
+			}
+			if (dto.getIsOnline() != null) {
+				entityToSave.setIsOnline(dto.getIsOnline());
+			}
+			if (dto.getIsLocked() != null) {
+				entityToSave.setIsLocked(dto.getIsLocked());
+			}
+			// IMPORTANT: Gestion du champ isDeleted pour updateAll
+			if (dto.getIsDeleted() != null) {
+				entityToSave.setIsDeleted(dto.getIsDeleted());
+			}
+			if (Utilities.notBlank(dto.getLastConnectionDate())) {
+				entityToSave.setLastConnectionDate(dateFormat.parse(dto.getLastConnectionDate()));
+			}
+			if (dto.getCreatedBy() != null && dto.getCreatedBy() > 0) {
+				entityToSave.setCreatedBy(dto.getCreatedBy());
+			}
+			if (dto.getUpdatedBy() != null && dto.getUpdatedBy() > 0) {
+				entityToSave.setUpdatedBy(dto.getUpdatedBy());
+			}
+			if (Utilities.notBlank(dto.getSearchString())) {
+				entityToSave.setSearchString(dto.getSearchString());
+			}
+
+			entityToSave.setUpdatedAt(Utilities.getCurrentDate());
+			entityToSave.setUpdatedBy(request.getUser());
+			items.add(entityToSave);
+		}
+
+		if (!items.isEmpty()) {
+			List<User> itemsSaved = null;
+			// inserer les donnees en base de donnees
+			itemsSaved = userRepository.saveAll((Iterable<User>) items);
+			if (itemsSaved == null) {
+				throw new InternalErrorException(functionalError.SAVE_FAIL("user", locale));
+			}
+			List<UserDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading())) ? UserTransformer.INSTANCE.toLiteDtos(itemsSaved) : UserTransformer.INSTANCE.toDtos(itemsSaved);
+
+			final int size = itemsSaved.size();
+			List<String>  listOfError      = Collections.synchronizedList(new ArrayList<String>());
+			itemsDto.parallelStream().forEach(dto -> {
+				try {
+					dto = getFullInfos(dto, size, request.getIsSimpleLoading(), locale);
+				} catch (Exception e) {
+					listOfError.add(e.getMessage());
+					e.printStackTrace();
+				}
+			});
+			if (Utilities.isNotEmpty(listOfError)) {
+				Object[] objArray = listOfError.stream().distinct().toArray();
+				throw new RuntimeException(StringUtils.join(objArray, ", "));
+			}
+			response.setItems(itemsDto);
+			response.setHasError(false);
+		}
+
+		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
+		log.info("----end updateAll User-----");
 		return response;
 	}
 

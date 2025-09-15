@@ -57,6 +57,10 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
   showDeleteConfirmation = false;
   userToDelete: User | null = null;
   
+  // État de la popup de restauration
+  showRestoreConfirmation = signal<boolean>(false);
+  userToRestore = signal<User | null>(null);
+  
   // Critères de recherche avancée
   advancedCriteria: UserSearchCriteria = {
     idDe: '',
@@ -296,6 +300,47 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
   cancelDeleteUser() {
     this.showDeleteConfirmation = false;
     this.userToDelete = null;
+  }
+
+  /**
+   * Affiche la popup de confirmation pour restaurer un utilisateur supprimé
+   */
+  restoreUser(user: User) {
+    this.userToRestore.set(user);
+    this.showRestoreConfirmation.set(true);
+  }
+
+  /**
+   * Confirme la restauration d'un utilisateur
+   */
+  confirmRestoreUser() {
+    const userToRestore = this.userToRestore();
+    if (!userToRestore) return;
+    
+    this.userService.restore(userToRestore.id).subscribe({
+      next: (response) => {
+        this.notificationService.success('Succès', `Utilisateur ${userToRestore?.pseudo || userToRestore?.nom} restauré avec succès`);
+        
+        // Marquer l'utilisateur comme restauré dans la liste locale
+        userToRestore.isDeleted = false;
+        
+        this.cancelRestoreUser();
+        // Recharger la liste pour refléter les changements
+        this.loadUsers();
+      },
+      error: (error: any) => {
+        this.notificationService.error('Erreur', 'Erreur lors de la restauration de l\'utilisateur');
+        this.cancelRestoreUser();
+      }
+    });
+  }
+
+  /**
+   * Annule la restauration d'un utilisateur
+   */
+  cancelRestoreUser() {
+    this.showRestoreConfirmation.set(false);
+    this.userToRestore.set(null);
   }
 
   /**

@@ -5,6 +5,7 @@
   --primary: #6B46C1;
   --primary-dark: #553C9A;
   --primary-light: #8B5CF6;
+  --primary-600: #553C9A; /* Darker shade for hover states */
   
   /* Secondary Colors */
   --secondary: #EC4899;
@@ -28,7 +29,13 @@
   /* Border & Divider */
   --border: #E2E8F0;
   --border-variant: #CBD5E1;
+  --border-hover: #CBD5E1;
   --divider: #F1F5F9;
+  
+  /* Mono/Notifications Colors */
+  --mono-bg: #FFFFFF;
+  --mono-bg-secondary: #F8FAFC;
+  --mono-borders: #E2E8F0;
   
   /* Status Colors */
   --success: #10B981;
@@ -36,9 +43,14 @@
   --error: #EF4444;
   --info: #3B82F6;
   
+  /* Disabled States */
+  --disabled: #E2E8F0;
+  --disabled-text: #94A3B8;
+  
   /* Text Colors */
   --text-primary: #1E293B;
   --text-secondary: #64748B;
+  --text-tertiary: #94A3B8;
   --text-disabled: #94A3B8;
   --text-on-primary: #FFFFFF;
   
@@ -67,15 +79,29 @@
   --on-surface: #E2E8F0;
   --on-surface-variant: #CBD5E1;
   
+  /* Primary Colors Dark Mode */
+  --primary-600: #8B5CF6; /* Lighter shade for hover in dark mode */
+  
   /* Border & Divider Dark */
   --border: #334155;
   --border-variant: #475569;
+  --border-hover: #64748B;
   --divider: #1E293B;
+  
+  /* Mono/Notifications Colors Dark */
+  --mono-bg: #1E293B;
+  --mono-bg-secondary: #334155;
+  --mono-borders: #475569;
 
   /* Text Colors Dark */
   --text-primary: #F8FAFC;
   --text-secondary: #CBD5E1;
+  --text-tertiary: #94A3B8;
   --text-disabled: #64748B;
+  
+  /* Disabled States Dark */
+  --disabled: #334155;
+  --disabled-text: #64748B;
   
   /* Shadow Dark */
   --shadow-light: rgba(0, 0, 0, 0.3);

@@ -382,8 +382,16 @@ export class UserService {
       username: user.pseudo,
       email: user.email,
       phone: user.telephone,
-      userRole: user.role
+      userRole: user.role,
+      isDeleted: user.isDeleted !== undefined ? user.isDeleted : undefined
     };
+
+    // Retirer les champs undefined pour éviter d'envoyer null
+    Object.keys(backendUser).forEach(key => {
+      if (backendUser[key as keyof typeof backendUser] === undefined) {
+        delete backendUser[key as keyof typeof backendUser];
+      }
+    });
 
     const request = {
       data: backendUser,
@@ -454,5 +462,52 @@ export class UserService {
    */
   setUserOffline(userId: number): Observable<any> {
     return this.updateOnlineStatus(userId, false);
+  }
+
+  /**
+   * Restaure un utilisateur supprimé (remet isDeleted à false)
+   * @param userId l'identifiant de l'utilisateur à restaurer
+   * @returns Observable de l'utilisateur restauré
+   */
+  restore(userId: number): Observable<User> {
+    // Construction des données au format attendu par updateAll (plus simple)
+    const userData = {
+      id: userId,
+      isDeleted: false
+    };
+    
+    return this.updateAll([userData]).pipe(
+      map(response => {
+        return response;
+      }),
+      catchError(error => {
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Met à jour tous les utilisateurs (y compris supprimés) - utilise l'API updateAll
+   * @param usersData - Tableau des données utilisateurs à mettre à jour
+   * @returns Observable de la réponse
+   */
+  updateAll(usersData: any[]): Observable<any> {
+    // Récupération de l'ID utilisateur depuis localStorage ou valeur par défaut
+    const currentUserId = localStorage.getItem('user')?.includes('id') ? 
+      JSON.parse(localStorage.getItem('user')!)?.id?.toString() : '1';
+      
+    const payload = {
+      user: currentUserId,
+      datas: usersData
+    };
+    
+    return this.http.post(`${this.apiUrl}/updateAll`, payload).pipe(
+      map(response => {
+        return response;
+      }),
+      catchError(error => {
+        return throwError(() => error);
+      })
+    );
   }
 }

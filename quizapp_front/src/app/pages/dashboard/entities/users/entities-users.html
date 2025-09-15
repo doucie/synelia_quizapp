@@ -334,26 +334,45 @@
             </td>
             <td class="actions-cell">
               <div class="actions-menu">
-                <button 
-                  class="action-btn primary" 
-                  (click)="editUser(user)"
-                  title="Modifier l'utilisateur">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 20H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M16.5 3.5A2.12 2.12 0 0 1 19 6L7 18L3 19L4 15L16.5 3.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                </button>
-                <button 
-                  class="action-btn danger" 
-                  (click)="deleteUser(user)"
-                  title="Supprimer l'utilisateur">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M10 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M14 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                </button>
+                <!-- Boutons normaux pour les utilisateurs non supprimés -->
+                <ng-container *ngIf="!user.isDeleted">
+                  <button 
+                    class="action-btn primary" 
+                    (click)="editUser(user)"
+                    title="Modifier l'utilisateur">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 20H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M16.5 3.5A2.12 2.12 0 0 1 19 6L7 18L3 19L4 15L16.5 3.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                  <button 
+                    class="action-btn danger" 
+                    (click)="deleteUser(user)"
+                    title="Supprimer l'utilisateur">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M10 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M14 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                </ng-container>
+                
+                <!-- Bouton de restauration pour les utilisateurs supprimés -->
+                <ng-container *ngIf="user.isDeleted">
+                  <button 
+                    class="action-btn success" 
+                    (click)="restoreUser(user); $event.stopPropagation()"
+                    title="Restaurer l'utilisateur"
+                    style="z-index: 10; position: relative;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M3 12A9 9 0 1 0 12 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M12 3L8 7L12 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                  <!-- Debug temporaire -->
+                  <span style="font-size: 10px; color: red; margin-left: 5px;">SUPPRIMÉ</span>
+                </ng-container>
               </div>
             </td>
           </tr>
@@ -494,6 +513,62 @@
           <path d="M14 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         Supprimer définitivement
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Popup de confirmation de restauration -->
+<div class="confirmation-overlay" *ngIf="showRestoreConfirmation()" (click)="cancelRestoreUser()">
+  <div class="confirmation-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-icon success">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 12A9 9 0 1 0 12 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M12 3L8 7L12 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h3>Confirmer la restauration</h3>
+    </div>
+    
+    <div class="modal-body">
+      <p>Êtes-vous certain de vouloir restaurer cet utilisateur ?</p>
+      <div class="user-info" *ngIf="userToRestore()">
+        <div class="user-avatar">
+          {{ (userToRestore()?.prenom || userToRestore()?.firstName)?.[0] }}{{ (userToRestore()?.nom || userToRestore()?.lastName)?.[0] }}
+        </div>
+        <div class="user-details">
+          <strong>{{ userToRestore()?.prenom || userToRestore()?.firstName }} {{ userToRestore()?.nom || userToRestore()?.lastName }}</strong>
+          <span class="user-pseudo" *ngIf="userToRestore()?.pseudo || userToRestore()?.username">
+            @{{ userToRestore()?.pseudo || userToRestore()?.username }}
+          </span>
+          <span class="user-email">{{ userToRestore()?.email }}</span>
+        </div>
+      </div>
+      <div class="info-message">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+          <path d="M12 8V12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M12 16H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        L'utilisateur sera réactivé et pourra à nouveau se connecter.
+      </div>
+    </div>
+    
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="cancelRestoreUser()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Annuler
+      </button>
+      <button class="btn-confirm-success" (click)="confirmRestoreUser()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 12A9 9 0 1 0 12 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M12 3L8 7L12 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Restaurer l'utilisateur
       </button>
     </div>
   </div>

@@ -94,6 +94,16 @@ public class UserController {
         return response;
     }
 
+	@RequestMapping(value="/updateAll",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
+    public Response<UserDto> updateAll(@RequestBody Request<UserDto> request) throws Exception{
+    	log.info("start method /user/updateAll");
+    	String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
+    	Locale locale = Locale.of(languageID, "");
+        Response<UserDto> response = userBusiness.updateAll(request, locale);
+		log.info("end method /user/updateAll");
+        return response;
+    }
+
 	@RequestMapping(value="/delete",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
     public Response<UserDto> delete(@RequestBody Request<UserDto> request) throws Exception{
     	log.info("start method /user/delete");
