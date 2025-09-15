@@ -61,6 +61,19 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
   showRestoreConfirmation = signal<boolean>(false);
   userToRestore = signal<User | null>(null);
   
+  // État de la popup d'édition
+  showEditDialog = signal<boolean>(false);
+  userToEdit = signal<User | null>(null);
+  editFormData = {
+    id: 0,
+    nom: '',
+    prenom: '',
+    pseudo: '',
+    email: '',
+    telephone: '',
+    role: ''
+  };
+  
   // Critères de recherche avancée
   advancedCriteria: UserSearchCriteria = {
     idDe: '',
@@ -252,8 +265,137 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
    * Édite un utilisateur
    */
   editUser(user: User) {
-    // TODO: Implémenter l'édition d'utilisateur
-    this.notificationService.info('Information', `Édition de l'utilisateur ${user.pseudo} en cours de développement`);
+    this.userToEdit.set(user);
+    this.editFormData = {
+      id: user.id,
+      nom: user.nom || '',
+      prenom: user.prenom || '',
+      pseudo: user.pseudo || '',
+      email: user.email || '',
+      telephone: user.telephone || '',
+      role: user.role || ''
+    };
+    this.showEditDialog.set(true);
+  }
+
+  /**
+   * Ferme la popup d'édition
+   */
+  closeEditDialog() {
+    this.showEditDialog.set(false);
+    this.userToEdit.set(null);
+    this.editFormData = {
+      id: 0,
+      nom: '',
+      prenom: '',
+      pseudo: '',
+      email: '',
+      telephone: '',
+      role: ''
+    };
+  }
+
+  /**
+   * Valide et sauvegarde les modifications
+   */
+  async validateUserEdit() {
+    const formData = this.editFormData;
+    const currentUser = this.userToEdit();
+    
+    console.log('🔧 Début validation - formData:', formData);
+    console.log('🔧 Début validation - currentUser:', currentUser);
+    
+    if (!currentUser) {
+      this.notificationService.error('Erreur', 'Aucun utilisateur sélectionné pour modification');
+      return;
+    }
+
+    // Validation des champs requis
+    if (!formData.nom.trim()) {
+      this.notificationService.warning('Attention', 'Le nom est requis');
+      return;
+    }
+    if (!formData.prenom.trim()) {
+      this.notificationService.warning('Attention', 'Le prénom est requis');
+      return;
+    }
+    if (!formData.pseudo.trim()) {
+      this.notificationService.warning('Attention', 'Le pseudo est requis');
+      return;
+    }
+    if (!formData.email.trim()) {
+      this.notificationService.warning('Attention', 'L\'email est requis');
+      return;
+    }
+    if (!formData.role.trim()) {
+      this.notificationService.warning('Attention', 'Le rôle est requis');
+      return;
+    }
+
+    // Validation format email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      this.notificationService.warning('Attention', 'Format d\'email invalide');
+      return;
+    }
+
+    try {
+      // Appel de l'API pour mettre à jour un utilisateur unique avec update
+      console.log('🔧 Utilisation de update pour un utilisateur unique');
+      
+      const updatedUser: any = await this.userService.update(currentUser.id, {
+        nom: formData.nom.trim(),
+        prenom: formData.prenom.trim(),
+        pseudo: formData.pseudo.trim(),
+        email: formData.email.trim(),
+        telephone: formData.telephone.trim(),
+        role: formData.role
+      }).toPromise();
+
+      console.log('✅ Utilisateur mis à jour:', updatedUser);
+      console.log('✅ Response hasError:', updatedUser?.hasError);
+      console.log('✅ Response httpCode:', updatedUser?.httpCode);
+      console.log('✅ Response status:', updatedUser?.status);
+
+      // Vérifier si la réponse indique une erreur
+      if (updatedUser && updatedUser.hasError) {
+        console.error('❌ Erreur détectée dans la réponse:', updatedUser);
+        console.error('❌ Status object:', updatedUser.status);
+        console.error('❌ Status message:', updatedUser.status?.message);
+        console.error('❌ Status code:', updatedUser.status?.code);
+        console.error('❌ HTTP Code:', updatedUser.httpCode);
+        
+        const errorMessage = updatedUser.status?.message || updatedUser.status?.code || 'Erreur lors de la mise à jour';
+        this.notificationService.error('Erreur', errorMessage);
+        return;
+      }
+
+      // Vérifier le httpCode seulement s'il existe
+      if (updatedUser && updatedUser.httpCode && updatedUser.httpCode !== 200) {
+        console.error('❌ Code HTTP d\'erreur:', updatedUser.httpCode);
+        this.notificationService.error('Erreur', `Erreur HTTP: ${updatedUser.httpCode}`);
+        return;
+      }
+
+      this.notificationService.success('Succès', `Utilisateur ${formData.pseudo} modifié avec succès`);
+      this.closeEditDialog();
+      this.loadUsers(); // Recharger la liste
+    } catch (error: any) {
+      console.error('❌ Erreur lors de la modification:', error);
+      console.error('❌ Détail de l\'erreur:', error?.error);
+      this.notificationService.error('Erreur', `Erreur lors de la modification: ${error?.error?.message || error?.message || 'Erreur inconnue'}`);
+    }
+  }
+
+  /**
+   * Supprime l'utilisateur depuis la popup d'édition
+   */
+  deleteUserFromEdit() {
+    const user = this.userToEdit();
+    if (user) {
+      this.closeEditDialog();
+      this.deleteUser(user);
+    }
   }
 
   /**

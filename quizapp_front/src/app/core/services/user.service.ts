@@ -374,6 +374,10 @@ export class UserService {
    * @returns Observable de l'utilisateur mis à jour
    */
   update(id: number, user: Partial<User>): Observable<User> {
+    // Récupération de l'ID utilisateur depuis localStorage ou valeur par défaut
+    const currentUserId = localStorage.getItem('user')?.includes('id') ? 
+      JSON.parse(localStorage.getItem('user')!)?.id?.toString() : '1';
+      
     // Mapper les champs frontend vers backend
     const backendUser = {
       id: id,
@@ -394,18 +398,13 @@ export class UserService {
     });
 
     const request = {
-      data: backendUser,
-      datas: null,
-      size: null,
-      index: null,
-      lang: 'fr',
-      sessionUser: null,
-      businessLineCode: null,
-      caseEngine: null,
-      isAnd: true,
-      user: null,
-      isSimpleLoading: false
+      datas: [backendUser],  // Array avec l'objet utilisateur à mettre à jour
+      user: currentUserId    // ID utilisateur connecté
     };
+
+    console.log('🔧 Update request payload:', request);
+    console.log('🔧 Update request datas:', request.datas);
+    console.log('🔧 Update request user:', request.user);
 
     return this.http.post<any>(`${this.apiUrl}/update`, request).pipe(
       map(response => response.items?.[0] || response)
@@ -492,15 +491,28 @@ export class UserService {
       JSON.parse(localStorage.getItem('user')!)?.id?.toString() : '1';
       
     const payload = {
+      data: null, // Pas de data unique pour updateAll
+      datas: usersData, // Tableau des utilisateurs à mettre à jour
+      size: null,
+      index: null,
+      lang: 'fr',
+      sessionUser: null,
+      businessLineCode: null,
+      caseEngine: null,
+      isAnd: true,
       user: currentUserId,
-      datas: usersData
+      isSimpleLoading: false
     };
+    
+    console.log('🔧 UpdateAll payload:', payload);
     
     return this.http.post(`${this.apiUrl}/updateAll`, payload).pipe(
       map(response => {
+        console.log('✅ UpdateAll response:', response);
         return response;
       }),
       catchError(error => {
+        console.error('❌ UpdateAll error:', error);
         return throwError(() => error);
       })
     );
