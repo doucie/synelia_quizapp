@@ -418,18 +418,13 @@ export class UserService {
    * @returns Observable de la confirmation de suppression
    */
   delete(id: number): Observable<any> {
+    // Récupération de l'ID utilisateur depuis localStorage ou valeur par défaut
+    const currentUserId = localStorage.getItem('user')?.includes('id') ? 
+      JSON.parse(localStorage.getItem('user')!)?.id?.toString() : '1';
+      
     const request = {
-      data: { id: id },
-      datas: null,
-      size: null,
-      index: null,
-      lang: 'fr',
-      sessionUser: null,
-      businessLineCode: null,
-      caseEngine: null,
-      isAnd: true,
-      user: null,
-      isSimpleLoading: false
+      datas: [{ id: id }],  // Array avec l'objet contenant l'ID
+      user: currentUserId   // ID utilisateur connecté
     };
 
     return this.http.post<any>(`${this.apiUrl}/delete`, request);

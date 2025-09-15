@@ -269,18 +269,18 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
    */
   confirmDeleteUser() {
     if (!this.userToDelete) return;
-
-    console.log('🗑️ Suppression utilisateur:', this.userToDelete);
     
     this.userService.delete(this.userToDelete.id).subscribe({
       next: () => {
-        console.log('✅ Utilisateur supprimé avec succès');
         this.notificationService.success('Succès', `Utilisateur ${this.userToDelete?.pseudo || this.userToDelete?.nom} supprimé avec succès`);
         
         // Marquer l'utilisateur comme supprimé dans la liste locale
         if (this.userToDelete) {
           this.userToDelete.isDeleted = true;
         }
+        
+        // Activer automatiquement l'affichage des utilisateurs supprimés
+        this.showDeletedUsers = true;
         
         this.cancelDeleteUser();
         // Recharger la liste pour refléter les changements
