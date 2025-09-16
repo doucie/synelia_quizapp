@@ -416,6 +416,11 @@ public class SpecialitiesBusiness implements IBasicBusiness<Request<Specialities
 		log.info("----begin getAll Specialities (including deleted)-----");
 		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
 		Response<SpecialitiesDto> response = new Response<SpecialitiesDto>();
+
+		// Get total count for pagination
+		Long totalCount = specialitiesRepository.countAllByCriteria(request, em, locale);
+		log.info("Total count of specialities: " + totalCount);
+
 		List<Specialities> items = specialitiesRepository.getAllByCriteria(request, em, locale);
 
 		if (items != null && !items.isEmpty()) {
@@ -443,7 +448,7 @@ public class SpecialitiesBusiness implements IBasicBusiness<Request<Specialities
 			response.setHasError(false);
 			response.setHttpCode(HttpStatus.OK.value());
 			response.setStatus(status);
-			response.setCount((long) itemsDto.size());
+			response.setCount(totalCount); // Use total count instead of current page size
 		} else {
 			Status status = new Status();
 			status.setCode(StatusCode.SUCCESS);
@@ -453,7 +458,7 @@ public class SpecialitiesBusiness implements IBasicBusiness<Request<Specialities
 			response.setHasError(false);
 			response.setHttpCode(HttpStatus.OK.value());
 			response.setStatus(status);
-			response.setCount(0L);
+			response.setCount(totalCount); // Use total count even when no items
 		}
 
 		log.info("Response return --:> " + Utilities.convertObjectToJson(response));

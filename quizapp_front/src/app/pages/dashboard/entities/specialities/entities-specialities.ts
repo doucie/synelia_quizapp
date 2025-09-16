@@ -108,6 +108,8 @@ export class EntitiesSpecialitiesComponent implements OnInit, OnDestroy {
 
   // Chargement des spécialités
   loadSpecialities(): void {
+    console.log('🔄 loadSpecialities appelée');
+    console.log('📊 État de pagination - currentPage:', this.currentPage(), 'pageSize:', this.pageSize(), 'totalElements:', this.totalElements());
     this.isLoading.set(true);
 
     // Appliquer les critères de recherche
@@ -115,14 +117,20 @@ export class EntitiesSpecialitiesComponent implements OnInit, OnDestroy {
       ...this.searchCriteria,
       page: this.currentPage(),
       size: this.pageSize(),
-      isDeleted: this.showDeletedSpecialities ? true : false
+      // Ne pas envoyer isDeleted pour getAllByCriteria (qui inclut déjà tous les spécialités)
+      // isDeleted: this.showDeletedSpecialities ? true : false
     };
+
+    console.log('📤 Critères envoyés au service:', criteria);
 
     this.specialityService.getAll(criteria).subscribe({
       next: (response: PagedResponse<Speciality>) => {
+        console.log('✅ Réponse reçue du service:', response);
+        console.log('📊 Données de pagination - items:', response.items?.length, 'totalElements:', response.totalElements);
         this.specialities.set(response.items);
         this.totalElements.set(response.totalElements);
         this.isLoading.set(false);
+        console.log('🔄 État mis à jour - specialities:', this.specialities().length, 'totalElements:', this.totalElements());
       },
       error: (error) => {
         console.error('Erreur lors du chargement des spécialités:', error);
@@ -218,6 +226,60 @@ export class EntitiesSpecialitiesComponent implements OnInit, OnDestroy {
   // Fermeture popup recherche avancée
   closeAdvancedSearch(): void {
     this.showAdvancedSearch = false;
+  }
+
+  // Génère les numéros de pages pour la pagination
+  getPageNumbers(): number[] {
+    const totalPages = this.totalPages();
+    const pages: number[] = [];
+    const currentPage = this.currentPage();
+
+    // Afficher au maximum 5 pages autour de la page courante
+    const start = Math.max(0, currentPage - 2);
+    const end = Math.min(totalPages, start + 5);
+
+    for (let i = start; i < end; i++) {
+      pages.push(i);
+    }
+
+    return pages;
+  }
+
+  // Vérifie s'il y a une page précédente
+  hasPreviousPage(): boolean {
+    return this.currentPage() > 0;
+  }
+
+  // Vérifie s'il y a une page suivante
+  hasNextPage(): boolean {
+    return this.currentPage() < this.totalPages() - 1;
+  }
+
+  // Va à une page spécifique
+  goToPage(page: number): void {
+    console.log('📄 goToPage appelée avec page:', page);
+    console.log('📊 État actuel - currentPage:', this.currentPage(), 'totalPages:', this.totalPages());
+    if (page >= 0 && page < this.totalPages()) {
+      console.log('✅ Navigation vers page:', page);
+      this.currentPage.set(page);
+      this.loadSpecialities();
+    } else {
+      console.log('❌ Page invalide:', page, 'totalPages:', this.totalPages());
+    }
+  }
+
+  // Va à la page précédente
+  previousPage(): void {
+    if (this.hasPreviousPage()) {
+      this.goToPage(this.currentPage() - 1);
+    }
+  }
+
+  // Va à la page suivante
+  nextPage(): void {
+    if (this.hasNextPage()) {
+      this.goToPage(this.currentPage() + 1);
+    }
   }
 
   // Ouverture popup d'édition
@@ -425,13 +487,13 @@ export class EntitiesSpecialitiesComponent implements OnInit, OnDestroy {
   }
 
   // Calcul du nombre total de pages
-  get totalPages(): number {
+  totalPages(): number {
     return Math.ceil(this.totalElements() / this.pageSize());
   }
 
   // Vérification si on peut aller à la page suivante
   get canGoNext(): boolean {
-    return this.currentPage() < this.totalPages - 1;
+    return this.currentPage() < this.totalPages() - 1;
   }
 
   // Vérification si on peut aller à la page précédente

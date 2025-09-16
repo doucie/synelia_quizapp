@@ -327,13 +327,17 @@
       </div>
 
       <!-- Contrôles de pagination -->
-      <div class="pagination-controls" *ngIf="totalElements() > pageSize()">
+      <div class="pagination-controls" *ngIf="totalElements() > pageSize(); else noPagination">
+        <!-- Debug: Afficher les valeurs pour le debug -->
+        <div style="display: none;">
+          totalElements: {{ totalElements() }}, pageSize: {{ pageSize() }}, condition: {{ totalElements() > pageSize() }}
+        </div>
         <!-- Bouton Précédent -->
         <button
           class="pagination-btn"
-          [class.disabled]="!canGoPrevious"
-          (click)="onPageChange(currentPage() - 1)"
-          [disabled]="!canGoPrevious"
+          [class.disabled]="!hasPreviousPage()"
+          (click)="previousPage()"
+          [disabled]="!hasPreviousPage()"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -344,21 +348,21 @@
         <!-- Numéros de pages -->
         <div class="page-numbers">
           <button
-            *ngFor="let page of [].constructor(Math.min(5, totalPages)); let i = index"
+            *ngFor="let page of getPageNumbers()"
             class="page-number-btn"
-            [class.active]="i === currentPage()"
-            (click)="onPageChange(i)"
+            [class.active]="page === currentPage()"
+            (click)="goToPage(page)"
           >
-            {{ i + 1 }}
+            {{ page + 1 }}
           </button>
         </div>
 
         <!-- Bouton Suivant -->
         <button
           class="pagination-btn"
-          [class.disabled]="!canGoNext"
-          (click)="onPageChange(currentPage() + 1)"
-          [disabled]="!canGoNext"
+          [class.disabled]="!hasNextPage()"
+          (click)="nextPage()"
+          [disabled]="!hasNextPage()"
         >
           Suivant
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -367,6 +371,13 @@
         </button>
       </div>
     </div>
+
+    <!-- Template pour quand la pagination n'est pas affichée -->
+    <ng-template #noPagination>
+      <div style="padding: 10px; background: #f0f0f0; border-radius: 4px; margin-top: 10px;">
+        🔍 Debug: Pagination masquée - totalElements: {{ totalElements() }}, pageSize: {{ pageSize() }}
+      </div>
+    </ng-template>
   </div>
 
   <!-- Sections cachées (ancien design) -->

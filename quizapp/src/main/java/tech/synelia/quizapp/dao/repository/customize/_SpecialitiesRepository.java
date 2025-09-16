@@ -38,10 +38,28 @@ public interface _SpecialitiesRepository {
 	}
 
 	/**
-	 * Finds all Specialities by using criteria (including deleted ones).
+	 * Counts all Specialities by using criteria (including deleted ones).
 	 *
 	 * @param request, em
-	 * @return A List of all Specialities
+	 * @return The count of all Specialities matching the criteria
+	 * @throws DataAccessException,Exception
+	 */
+	default Long countAllByCriteria(Request<SpecialitiesDto> request, EntityManager em, Locale locale) throws DataAccessException, Exception {
+		String req = "select count(e) from Specialities e where e IS NOT NULL";
+		HashMap<String, java.lang.Object> param = new HashMap<String, java.lang.Object>();
+		req += getAllWhereExpression(request, param, locale);
+		TypedQuery<Long> query = em.createQuery(req, Long.class);
+		for (Map.Entry<String, java.lang.Object> entry : param.entrySet()) {
+			query.setParameter(entry.getKey(), entry.getValue());
+		}
+		return query.getSingleResult();
+	}
+
+	/**
+	 * Get all Specialities by using criteria (including deleted ones).
+	 *
+	 * @param request, em
+	 * @return List of Specialities matching the criteria
 	 * @throws DataAccessException,Exception
 	 */
 	default List<Specialities> getAllByCriteria(Request<SpecialitiesDto> request, EntityManager em, Locale locale) throws DataAccessException, Exception {

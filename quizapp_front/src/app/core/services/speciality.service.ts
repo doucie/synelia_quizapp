@@ -73,40 +73,113 @@ export class SpecialityService {
    * @returns Observable de la réponse paginée
    */
   getAll(criteria: SpecialitySearchCriteria = {}): Observable<PagedResponse<Speciality>> {
-    // Structure de requête attendue par l'API Spring Boot
-    const requestBody = {
-      user: 1,
-      size: criteria.size || 20,
-      index: criteria.page || 0,
-      datas: [],
-      data: {}
+    // Récupération de l'ID utilisateur depuis localStorage ou valeur par défaut
+    const currentUserId = localStorage.getItem('user')?.includes('id') ?
+      JSON.parse(localStorage.getItem('user')!)?.id?.toString() : '1';
+
+    // Construction de la requête
+    const rawData = {
+      idDe: criteria.idDe || '',
+      idA: criteria.idA || '',
+      specialityName: criteria.nom || '',
+      specialityDesc: criteria.description || '',
+      // Ne pas envoyer isDeleted si on veut tous les spécialités (incluant supprimés)
+      // isDeleted: criteria.isDeleted !== undefined ? criteria.isDeleted : false,
+      dateCreationDe: criteria.dateCreationDe || '',
+      dateCreationA: criteria.dateCreationA || '',
+      dateModificationDe: criteria.dateModificationDe || '',
+      dateModificationA: criteria.dateModificationA || '',
+      search_string: criteria.search_string || ''
     };
 
-    // Choisir l'endpoint selon si on veut inclure les éléments supprimés
-    const endpoint = criteria.isDeleted === true
-      ? `${this.apiUrl}/getAllByCriteria`  // Inclut les supprimés
-      : `${this.apiUrl}/getByCriteria`;    // Exclut les supprimés
+    console.log('🔧 Données brutes spécialités avant nettoyage:', rawData);
 
-    return this.http.post<any>(endpoint, requestBody).pipe(
+    const cleanedData = this.cleanEmptyFields(rawData);
+    console.log('🔧 Données spécialités après nettoyage:', cleanedData);
+
+    const request = {
+      user: currentUserId,
+      size: criteria.size || 10,
+      index: criteria.page || 0,
+      isSimpleLoading: false,
+      data: cleanedData
+    };
+
+    console.log('🚀 Envoi de la requête getAll spécialités:', request);
+    console.log('📊 PARAMÈTRES DE PAGINATION:');
+    console.log('  - criteria.page:', criteria.page);
+    console.log('  - criteria.size:', criteria.size);
+    console.log('  - request.index:', request.index);
+    console.log('  - request.size:', request.size);
+
+    // Utiliser toujours getAllByCriteria pour inclure les spécialités supprimés
+    const endpoint = `${this.apiUrl}/getAllByCriteria`;
+
+    console.log('🌐 URL complète appelée:', endpoint);
+    console.log('📡 Méthode HTTP: POST');
+    console.log('📦 Corps de la requête:', JSON.stringify(request, null, 2));
+
+    return this.http.post<any>(endpoint, request).pipe(
       map(response => {
-        // Transformation de la réponse backend vers le format frontend
-        const items = response.items?.map((item: any) => this.mapBackendToFrontend(item)) || [];
-        const totalElements = response.count || 0;
-        const pageSize = criteria.size || 20;
-        const currentPage = criteria.page || 0;
+        console.log('🔍 Raw API Response (SPECIALITIES):', response);
+        console.log('🔍 Response keys:', Object.keys(response));
+        console.log('🔍 Response.count:', response.count);
+        console.log('🔍 Response.totalCount:', response.totalCount);
+        console.log('🔍 Response.items.length:', response.items?.length);
+        console.log('🔍 Premier item (si existe):', response.items?.[0]);
+        console.log('🔍 TOUS LES CHAMPS DE LA RÉPONSE:', response);
+
+        // Vérifier si la réponse contient des données
+        if (!response || (!response.items && !response.item)) {
+          console.warn('⚠️ Aucune donnée dans la réponse spécialités');
+          return {
+            items: [],
+            totalElements: 0,
+            totalPages: 0,
+            currentPage: criteria.page || 0,
+            pageSize: criteria.size || 10,
+            hasNext: false,
+            hasPrevious: false
+          };
+        }
+
+        // Traiter les éléments (items ou item unique)
+        const rawSpecialities = response.items || (response.item ? [response.item] : []);
+
+        // Transformer la réponse du backend vers le format frontend
+        const transformedSpecialities: Speciality[] = rawSpecialities.map((spec: any) => ({
+          id: spec.id,
+          nom: spec.nom || spec.name || spec.specialityName || '',
+          description: spec.description || spec.specialityDesc || '',
+          isDeleted: spec.isDeleted || false,
+          dateCreation: spec.dateCreation || spec.createdAt,
+          dateModification: spec.dateModification || spec.updatedAt,
+
+          // Champs backend
+          name: spec.name || spec.specialityName,
+          createdAt: spec.createdAt,
+          updatedAt: spec.updatedAt
+        }));
 
         return {
-          items,
-          totalElements,
-          totalPages: Math.ceil(totalElements / pageSize),
-          currentPage,
-          pageSize,
-          hasNext: (currentPage + 1) * pageSize < totalElements,
-          hasPrevious: currentPage > 0
+          items: transformedSpecialities,
+          totalElements: response.totalCount || response.count || rawSpecialities.length,
+          totalPages: Math.ceil((response.totalCount || response.count || rawSpecialities.length) / (criteria.size || 10)),
+          currentPage: criteria.page || 0,
+          pageSize: criteria.size || 10,
+          hasNext: ((criteria.page || 0) + 1) * (criteria.size || 10) < (response.totalCount || response.count || rawSpecialities.length),
+          hasPrevious: (criteria.page || 0) > 0
         };
       }),
       catchError(error => {
-        console.error('Erreur lors de la récupération des spécialités:', error);
+        console.error('❌ Erreur lors de la récupération des spécialités:', error);
+        console.error('❌ Détails de l\'erreur:', {
+          message: error.message,
+          status: error.status,
+          statusText: error.statusText,
+          url: error.url,
+          error: error.error
+        });
         return throwError(() => error);
       })
     );
@@ -288,5 +361,33 @@ export class SpecialityService {
       createdAt: backendData.createdAt,
       updatedAt: backendData.updatedAt
     };
+  }
+
+  /**
+   * Nettoie les champs vides d'un objet pour éviter les erreurs de parsing côté backend
+   * @param obj L'objet à nettoyer
+   * @returns L'objet nettoyé
+   */
+  private cleanEmptyFields(obj: any): any {
+    const cleaned: any = {};
+
+    for (const key in obj) {
+      if (obj.hasOwnProperty(key)) {
+        const value = obj[key];
+
+        // Ne pas inclure les chaînes vides pour les champs non-String (dates, nombres)
+        // Mais garder les chaînes vides pour les champs String (pour la recherche)
+        if (typeof value === 'string' && value.trim() === '' &&
+            (key.includes('At') || key.includes('By') || key.includes('Id'))) {
+          // Ne pas ajouter le champ s'il est vide et concerne une date ou un ID
+          continue;
+        }
+
+        // Pour les autres types, garder la valeur
+        cleaned[key] = value;
+      }
+    }
+
+    return cleaned;
   }
 }
