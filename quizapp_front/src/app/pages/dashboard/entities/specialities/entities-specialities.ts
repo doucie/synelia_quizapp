@@ -115,7 +115,7 @@ export class EntitiesSpecialitiesComponent implements OnInit, OnDestroy {
       ...this.searchCriteria,
       page: this.currentPage(),
       size: this.pageSize(),
-      isDeleted: this.showDeletedSpecialities ? undefined : false
+      isDeleted: this.showDeletedSpecialities ? true : false
     };
 
     this.specialityService.getAll(criteria).subscribe({

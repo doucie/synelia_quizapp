@@ -405,4 +405,59 @@ public class SpecialitiesBusiness implements IBasicBusiness<Request<Specialities
 		log.info("----end custom SpecialitiesDto-----");
 		return response;
 	}
+
+	/**
+	 * Get all specialities by criteria (including deleted ones)
+	 * @param request
+	 * @param locale
+	 * @return response
+	 */
+	public Response<SpecialitiesDto> getAllByCriteria(Request<SpecialitiesDto> request, Locale locale) throws Exception {
+		log.info("----begin getAll Specialities (including deleted)-----");
+		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
+		Response<SpecialitiesDto> response = new Response<SpecialitiesDto>();
+		List<Specialities> items = specialitiesRepository.getAllByCriteria(request, em, locale);
+
+		if (items != null && !items.isEmpty()) {
+			List<SpecialitiesDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading())) ? SpecialitiesTransformer.INSTANCE.toLiteDtos(items) : SpecialitiesTransformer.INSTANCE.toDtos(items);
+
+			final int size = items.size();
+			List<String> listOfError = Collections.synchronizedList(new ArrayList<String>());
+			itemsDto.parallelStream().forEach(dto -> {
+				try {
+					dto = getFullInfos(dto, size, request.getIsSimpleLoading(), locale);
+				} catch (Exception e) {
+					listOfError.add(e.getMessage());
+					e.printStackTrace();
+				}
+			});
+			if (Utilities.isNotEmpty(listOfError)) {
+				Object[] objArray = listOfError.stream().distinct().toArray();
+				throw new RuntimeException(StringUtils.join(objArray, ", "));
+			}
+			Status status = new Status();
+			status.setCode(StatusCode.SUCCESS);
+			status.setMessage(StatusMessage.SUCCESS);
+
+			response.setItems(itemsDto);
+			response.setHasError(false);
+			response.setHttpCode(HttpStatus.OK.value());
+			response.setStatus(status);
+			response.setCount((long) itemsDto.size());
+		} else {
+			Status status = new Status();
+			status.setCode(StatusCode.SUCCESS);
+			status.setMessage(StatusMessage.SUCCESS);
+
+			response.setItems(new ArrayList<SpecialitiesDto>());
+			response.setHasError(false);
+			response.setHttpCode(HttpStatus.OK.value());
+			response.setStatus(status);
+			response.setCount(0L);
+		}
+
+		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
+		log.info("----end getAll Specialities-----");
+		return response;
+	}
 }

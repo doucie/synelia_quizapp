@@ -82,7 +82,12 @@ export class SpecialityService {
       data: {}
     };
 
-    return this.http.post<any>(`${this.apiUrl}/getByCriteria`, requestBody).pipe(
+    // Choisir l'endpoint selon si on veut inclure les éléments supprimés
+    const endpoint = criteria.isDeleted === true
+      ? `${this.apiUrl}/getAllByCriteria`  // Inclut les supprimés
+      : `${this.apiUrl}/getByCriteria`;    // Exclut les supprimés
+
+    return this.http.post<any>(endpoint, requestBody).pipe(
       map(response => {
         // Transformation de la réponse backend vers le format frontend
         const items = response.items?.map((item: any) => this.mapBackendToFrontend(item)) || [];

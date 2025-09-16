@@ -100,6 +100,16 @@ public class SpecialitiesController {
         return response;
     }
 
+    @RequestMapping(value="/getAllByCriteria",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
+    public Response<SpecialitiesDto> getAllByCriteria(@RequestBody Request<SpecialitiesDto> request) throws Exception{
+    	log.info("start method /specialities/getAllByCriteria (including deleted specialities)");
+    	String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
+    	Locale locale = Locale.of(languageID, "");
+        Response<SpecialitiesDto> response = specialitiesBusiness.getAllByCriteria(request, locale);
+		log.info("end method /specialities/getAllByCriteria");
+        return response;
+    }
+
     @RequestMapping(value = "/custom", method = RequestMethod.POST, consumes = {
 	   "application/json" }, produces = { "application/json" })
 	 public Response<SpecialitiesDto> custom(@RequestBody Request<SpecialitiesDto> request) throws Exception{
