@@ -42,8 +42,8 @@ export interface SpecialitySearchCriteria {
   search_string?: string;
 
   // Pagination
-  size?: number;
   page?: number;
+  size?: number;
 }
 
 /**
@@ -76,8 +76,8 @@ export class SpecialityService {
     // Structure de requête attendue par l'API Spring Boot
     const requestBody = {
       user: 1,
-      size: 20,
-      index: 0,
+      size: criteria.size || 20,
+      index: criteria.page || 0,
       datas: [],
       data: {}
     };
@@ -87,8 +87,8 @@ export class SpecialityService {
         // Transformation de la réponse backend vers le format frontend
         const items = response.items?.map((item: any) => this.mapBackendToFrontend(item)) || [];
         const totalElements = response.count || 0;
-        const pageSize = 20;
-        const currentPage = 0;
+        const pageSize = criteria.size || 20;
+        const currentPage = criteria.page || 0;
 
         return {
           items,
