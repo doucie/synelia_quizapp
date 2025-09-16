@@ -378,4 +378,167 @@ public class DepartmentsBusiness implements IBasicBusiness<Request<DepartmentsDt
 		log.info("----end custom DepartmentsDto-----");
 		return response;
 	}
+
+	/**
+	 * Get all departments by criteria (including deleted ones)
+	 * @param request
+	 * @param locale
+	 * @return response
+	 */
+	public Response<DepartmentsDto> getAllByCriteria(Request<DepartmentsDto> request, Locale locale) throws Exception {
+		log.info("----begin getAll Departments (including deleted)-----");
+		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
+		Response<DepartmentsDto> response = new Response<DepartmentsDto>();
+		List<Departments> items = departmentsRepository.getAllByCriteria(request, em, locale);
+
+		if (items != null && !items.isEmpty()) {
+			List<DepartmentsDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading())) ? DepartmentsTransformer.INSTANCE.toLiteDtos(items) : DepartmentsTransformer.INSTANCE.toDtos(items);
+
+			final int size = items.size();
+			List<String> listOfError = Collections.synchronizedList(new ArrayList<String>());
+			itemsDto.parallelStream().forEach(dto -> {
+				try {
+					dto = getFullInfos(dto, size, request.getIsSimpleLoading(), locale);
+				} catch (Exception e) {
+					listOfError.add(e.getMessage());
+					e.printStackTrace();
+				}
+			});
+			if (Utilities.isNotEmpty(listOfError)) {
+				Object[] objArray = listOfError.stream().distinct().toArray();
+				throw new RuntimeException(StringUtils.join(objArray, ", "));
+			}
+			Status status = new Status();
+			status.setCode(StatusCode.SUCCESS);
+			status.setMessage(StatusMessage.SUCCESS);
+
+			response.setItems(itemsDto);
+			response.setHasError(false);
+			response.setHttpCode(HttpStatus.OK.value());
+			response.setStatus(status);
+			response.setCount((long) itemsDto.size());
+		} else {
+			Status status = new Status();
+			status.setCode(StatusCode.SUCCESS);
+			status.setMessage(StatusMessage.SUCCESS);
+
+			response.setItems(new ArrayList<DepartmentsDto>());
+			response.setHasError(false);
+			response.setHttpCode(HttpStatus.OK.value());
+			response.setStatus(status);
+			response.setCount(0L);
+		}
+
+		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
+		log.info("----end getAll Departments-----");
+		return response;
+	}
+
+	/**
+	 * updateAll Departments by using DepartmentsDto as object (including deleted departments).
+	 *
+	 * @param request
+	 * @return response
+	 */
+	public Response<DepartmentsDto> updateAll(Request<DepartmentsDto> request, Locale locale)  throws ParseException, JsonProcessingException {
+		log.info("----begin updateAll Departments-----");
+		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
+		Response<DepartmentsDto> response = new Response<DepartmentsDto>();
+		List<Departments>        items    = new ArrayList<Departments>();
+
+		for (DepartmentsDto dto : request.getDatas()) {
+			// Definir les parametres obligatoires
+			Map<String, Object> fieldsToVerify = new HashMap<String, Object>();
+			fieldsToVerify.put("id", dto.getId());
+			if (!Validate.RequiredValue(fieldsToVerify).isGood()) {
+				throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
+			}
+
+			// Verifier si la donnee existe
+			Departments existingEntity = null;
+			// Pour updateAll, chercher d'abord les départements actifs, puis les supprimés
+			existingEntity = departmentsRepository.findOne(dto.getId(), false); // Chercher d'abord les actifs
+			if (existingEntity == null) {
+				existingEntity = departmentsRepository.findOne(dto.getId(), true); // Puis les supprimés si pas trouvé
+			}
+			if (existingEntity == null) {
+				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("departments id -> " + dto.getId(), locale));
+			}
+
+			// -----------------------------------------------------------------------
+			// ----------- CHECK IF DATA IS USED
+			// -----------------------------------------------------------------------
+
+			// -----------------------------------------------------------------------
+			// ----------- GENERATION KEY
+			// -----------------------------------------------------------------------
+
+			// -----------------------------------------------------------------------
+			// ----------- PREPARATION DE L'OBJET
+			// -----------------------------------------------------------------------
+			// Garder les données existantes de base
+			Departments entityToSave = existingEntity;
+
+			// Mise à jour conditionnelle des champs
+			if (Utilities.notBlank(dto.getDepartmentName())) {
+				entityToSave.setDepartmentName(dto.getDepartmentName());
+			}
+			if (Utilities.notBlank(dto.getDepartmentDesc())) {
+				entityToSave.setDepartmentDesc(dto.getDepartmentDesc());
+			}
+			if (dto.getIsDeleted() != null) {
+				entityToSave.setIsDeleted(dto.getIsDeleted());
+			}
+			if (dto.getCreatedBy() != null && dto.getCreatedBy() > 0) {
+				entityToSave.setCreatedBy(dto.getCreatedBy());
+			}
+			if (dto.getUpdatedBy() != null && dto.getUpdatedBy() > 0) {
+				entityToSave.setUpdatedBy(dto.getUpdatedBy());
+			}
+			if (Utilities.notBlank(dto.getCreatedAt())) {
+				entityToSave.setCreatedAt(dateFormat.parse(dto.getCreatedAt()));
+			}
+			if (Utilities.notBlank(dto.getUpdatedAt())) {
+				entityToSave.setUpdatedAt(dateFormat.parse(dto.getUpdatedAt()));
+			}
+
+			// -----------------------------------------------------------------------
+			// ----------- SAVE DEPARTMENTS
+			// -----------------------------------------------------------------------
+			Departments entity = departmentsRepository.save(entityToSave);
+			items.add(entity);
+		}
+
+		if (Utilities.isNotEmpty(items)) {
+			List<DepartmentsDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading())) ? DepartmentsTransformer.INSTANCE.toLiteDtos(items) : DepartmentsTransformer.INSTANCE.toDtos(items);
+
+			final int size = items.size();
+			List<String> listOfError = Collections.synchronizedList(new ArrayList<String>());
+			itemsDto.parallelStream().forEach(dto -> {
+				try {
+					dto = getFullInfos(dto, size, request.getIsSimpleLoading(), locale);
+				} catch (Exception e) {
+					listOfError.add(e.getMessage());
+					e.printStackTrace();
+				}
+			});
+			if (Utilities.isNotEmpty(listOfError)) {
+				Object[] objArray = listOfError.stream().distinct().toArray();
+				throw new RuntimeException(StringUtils.join(objArray, ", "));
+			}
+			Status status = new Status();
+			status.setCode(StatusCode.SUCCESS);
+			status.setMessage(StatusMessage.SUCCESS);
+
+			response.setItems(itemsDto);
+			response.setHasError(false);
+			response.setHttpCode(HttpStatus.OK.value());
+			response.setStatus(status);
+			response.setCount((long) itemsDto.size());
+		}
+
+		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
+		log.info("----end updateAll Departments-----");
+		return response;
+	}
 }

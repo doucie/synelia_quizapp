@@ -355,8 +355,11 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 
 			// Verifier si la donnee existe
 			User existingEntity = null;
-			// Pour updateAll, on cherche même les utilisateurs supprimés
-			existingEntity = userRepository.findOne(dto.getId(), true);
+			// Pour updateAll, chercher d'abord les utilisateurs actifs, puis les supprimés
+			existingEntity = userRepository.findOne(dto.getId(), false); // Chercher d'abord les actifs
+			if (existingEntity == null) {
+				existingEntity = userRepository.findOne(dto.getId(), true); // Puis les supprimés si pas trouvé
+			}
 			if (existingEntity == null) {
 				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("user id -> " + dto.getId(), locale));
 			}

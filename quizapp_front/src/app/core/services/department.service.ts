@@ -64,7 +64,7 @@ export interface PagedResponse<T> {
   providedIn: 'root'
 })
 export class DepartmentService {
-  private apiUrl = `${environment.apiUrl}/department`;
+  private apiUrl = `${environment.apiUrl}/departments`;
 
   constructor(
     private http: HttpClient
@@ -81,23 +81,31 @@ export class DepartmentService {
       JSON.parse(localStorage.getItem('user')!)?.id?.toString() : '1';
 
     // Construction de la requête
+    const rawData = {
+      idDe: criteria.idDe || '',
+      idA: criteria.idA || '',
+      departmentName: criteria.nom || '',
+      departmentDesc: criteria.description || '',
+      // Ne pas envoyer isDeleted si on veut tous les départements (incluant supprimés)
+      // isDeleted: criteria.isDeleted !== undefined ? criteria.isDeleted : false,
+      dateCreationDe: criteria.dateCreationDe || '',
+      dateCreationA: criteria.dateCreationA || '',
+      dateModificationDe: criteria.dateModificationDe || '',
+      dateModificationA: criteria.dateModificationA || '',
+      search_string: criteria.search_string || ''
+    };
+
+    console.log('🔧 Données brutes avant nettoyage:', rawData);
+
+    const cleanedData = this.cleanEmptyFields(rawData);
+    console.log('🔧 Données après nettoyage:', cleanedData);
+
     const request = {
       user: currentUserId,
       size: criteria.size || 10,
       index: criteria.page || 0,
       isSimpleLoading: false,
-      data: {
-        idDe: criteria.idDe || '',
-        idA: criteria.idA || '',
-        name: criteria.nom || '',
-        description: criteria.description || '',
-        isDeleted: criteria.isDeleted !== undefined ? criteria.isDeleted : '',
-        dateCreationDe: criteria.dateCreationDe || '',
-        dateCreationA: criteria.dateCreationA || '',
-        dateModificationDe: criteria.dateModificationDe || '',
-        dateModificationA: criteria.dateModificationA || '',
-        search_string: criteria.search_string || ''
-      }
+      data: cleanedData
     };
 
     console.log('🚀 Envoi de la requête getAllDepartmentsByCriteria:', request);
@@ -105,17 +113,25 @@ export class DepartmentService {
     console.log('  - user (ID connecté):', request.user);
     console.log('  - size (taille page):', request.size);
     console.log('  - index (page):', request.index);
-    console.log('  - data.nom:', request.data.name);
-    console.log('  - data.description:', request.data.description);
+    console.log('  - data.departmentName:', request.data.departmentName);
+    console.log('  - data.departmentDesc:', request.data.departmentDesc);
     console.log('  - data complet:', request.data);
 
-    return this.http.post<any>(`${this.apiUrl}/getByCriteria`, request).pipe(
+    // Utiliser toujours getAllByCriteria pour inclure les départements supprimés
+    const endpoint = `${this.apiUrl}/getAllByCriteria`;
+
+    console.log('🌐 URL complète appelée:', endpoint);
+    console.log('📡 Méthode HTTP: POST');
+    console.log('📦 Corps de la requête:', JSON.stringify(request, null, 2));
+
+    return this.http.post<any>(endpoint, request).pipe(
       map(response => {
         console.log('🔍 Raw API Response (DEPARTMENTS):', response);
         console.log('🔍 Response keys:', Object.keys(response));
         console.log('🔍 Response.count:', response.count);
         console.log('🔍 Response.totalCount:', response.totalCount);
         console.log('🔍 Response.items.length:', response.items?.length);
+        console.log('🔍 Premier item (si existe):', response.items?.[0]);
 
         // Vérifier si la réponse contient des données
         if (!response || (!response.items && !response.item)) {
@@ -135,14 +151,14 @@ export class DepartmentService {
         // Transformer la réponse du backend vers le format frontend
         const transformedDepartments: Department[] = rawDepartments.map((dept: any) => ({
           id: dept.id,
-          nom: dept.nom || dept.name || '',
-          description: dept.description || '',
+          nom: dept.nom || dept.name || dept.departmentName || '',
+          description: dept.description || dept.departmentDesc || '',
           isDeleted: dept.isDeleted || false,
           dateCreation: dept.dateCreation || dept.createdAt,
           dateModification: dept.dateModification || dept.updatedAt,
 
           // Champs backend
-          name: dept.name,
+          name: dept.name || dept.departmentName,
           createdAt: dept.createdAt,
           updatedAt: dept.updatedAt
         }));
@@ -157,6 +173,13 @@ export class DepartmentService {
       }),
       catchError(error => {
         console.error('❌ Erreur lors de la récupération des départements:', error);
+        console.error('❌ Détails de l\'erreur:', {
+          message: error.message,
+          status: error.status,
+          statusText: error.statusText,
+          url: error.url,
+          error: error.error
+        });
         return throwError(() => error);
       })
     );
@@ -176,8 +199,8 @@ export class DepartmentService {
     // Mapper les champs frontend vers backend
     const backendDepartment = {
       id: id,
-      name: department.nom,
-      description: department.description,
+      departmentName: department.nom,
+      departmentDesc: department.description,
       isDeleted: department.isDeleted !== undefined ? department.isDeleted : undefined
     };
 
@@ -243,25 +266,30 @@ export class DepartmentService {
   }
 
   /**
-   * Met à jour le statut en ligne d'un département (si applicable)
-   * @param departmentId l'identifiant du département
-   * @param isOnline true si le département est en ligne, false sinon
-   * @returns Observable de la réponse de l'API
+   * Nettoie les champs vides d'un objet pour éviter les erreurs de parsing côté backend
+   * @param obj L'objet à nettoyer
+   * @returns L'objet nettoyé
    */
-  updateOnlineStatus(departmentId: number, isOnline: boolean): Observable<any> {
-    console.log(`Mise à jour du statut département ${departmentId}: ${isOnline ? 'en ligne' : 'hors ligne'}`);
+  private cleanEmptyFields(obj: any): any {
+    const cleaned: any = {};
 
-    const currentUserId = localStorage.getItem('user')?.includes('id') ?
-      JSON.parse(localStorage.getItem('user')!)?.id?.toString() : '1';
+    for (const key in obj) {
+      if (obj.hasOwnProperty(key)) {
+        const value = obj[key];
 
-    const request = {
-      datas: [{
-        id: departmentId,
-        isOnline: isOnline
-      }],
-      user: currentUserId
-    };
+        // Ne pas inclure les chaînes vides pour les champs non-String (dates, nombres)
+        // Mais garder les chaînes vides pour les champs String (pour la recherche)
+        if (typeof value === 'string' && value.trim() === '' &&
+            (key.includes('At') || key.includes('By') || key.includes('Id'))) {
+          // Ne pas ajouter le champ s'il est vide et concerne une date ou un ID
+          continue;
+        }
 
-    return this.http.post(`${this.apiUrl}/updateOnlineStatus`, request);
+        // Pour les autres types, garder la valeur
+        cleaned[key] = value;
+      }
+    }
+
+    return cleaned;
   }
 }

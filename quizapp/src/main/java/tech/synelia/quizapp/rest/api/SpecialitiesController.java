@@ -84,6 +84,16 @@ public class SpecialitiesController {
         return response;
     }
 
+	@RequestMapping(value="/updateAll",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
+    public Response<SpecialitiesDto> updateAll(@RequestBody Request<SpecialitiesDto> request) throws Exception{
+    	log.info("start method /specialities/updateAll");
+    	String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
+    	Locale locale = Locale.of(languageID, "");
+        Response<SpecialitiesDto> response = specialitiesBusiness.updateAll(request, locale);
+		log.info("end method /specialities/updateAll");
+        return response;
+    }
+
 	@RequestMapping(value="/delete",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
     public Response<SpecialitiesDto> delete(@RequestBody Request<SpecialitiesDto> request) throws Exception{
     	log.info("start method /specialities/delete");

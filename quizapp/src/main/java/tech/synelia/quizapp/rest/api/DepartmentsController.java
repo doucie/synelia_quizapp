@@ -100,6 +100,26 @@ public class DepartmentsController {
         return response;
     }
 
+    @RequestMapping(value="/getAllByCriteria",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
+    public Response<DepartmentsDto> getAllByCriteria(@RequestBody Request<DepartmentsDto> request) throws Exception{
+    	log.info("start method /departments/getAllByCriteria (including deleted departments)");
+    	String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
+    	Locale locale = Locale.of(languageID, "");
+        Response<DepartmentsDto> response = departmentsBusiness.getAllByCriteria(request, locale);
+		log.info("end method /departments/getAllByCriteria");
+        return response;
+    }
+
+    @RequestMapping(value="/updateAll",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
+    public Response<DepartmentsDto> updateAll(@RequestBody Request<DepartmentsDto> request) throws Exception{
+    	log.info("start method /departments/updateAll");
+    	String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
+    	Locale locale = Locale.of(languageID, "");
+        Response<DepartmentsDto> response = departmentsBusiness.updateAll(request, locale);
+		log.info("end method /departments/updateAll");
+        return response;
+    }
+
     @RequestMapping(value = "/custom", method = RequestMethod.POST, consumes = {
 	   "application/json" }, produces = { "application/json" })
 	 public Response<DepartmentsDto> custom(@RequestBody Request<DepartmentsDto> request) throws Exception{

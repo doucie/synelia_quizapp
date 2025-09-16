@@ -195,6 +195,44 @@ export class SpecialityService {
   }
 
   /**
+   * Met à jour plusieurs spécialités en une seule requête (y compris les supprimées)
+   * @param specialities tableau des spécialités à mettre à jour
+   * @returns Observable du tableau des spécialités mises à jour
+   */
+  updateAll(specialities: Partial<Speciality>[]): Observable<Speciality[]> {
+    // Récupération de l'ID utilisateur depuis localStorage ou valeur par défaut
+    const currentUserId = localStorage.getItem('user')?.includes('id') ?
+      JSON.parse(localStorage.getItem('user')!)?.id?.toString() : '1';
+
+    const request = {
+      datas: specialities.map(speciality => ({
+        id: speciality.id,
+        specialityName: speciality.nom || speciality.name,
+        specialityDesc: speciality.description,
+        isDeleted: speciality.isDeleted,
+        createdBy: (speciality as any).createdBy,
+        updatedBy: (speciality as any).updatedBy,
+        createdAt: (speciality as any).createdAt,
+        updatedAt: (speciality as any).updatedAt
+      })),
+      user: currentUserId
+    };
+
+    return this.http.post<any>(`${this.apiUrl}/updateAll`, request).pipe(
+      map(response => {
+        if (response.items && Array.isArray(response.items)) {
+          return response.items.map((item: any) => this.mapBackendToFrontend(item));
+        }
+        return [];
+      }),
+      catchError(error => {
+        console.error('Erreur lors de la mise à jour en masse des spécialités:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
    * Supprime une spécialité
    * @param id l'identifiant de la spécialité à supprimer
    * @returns Observable de la confirmation de suppression

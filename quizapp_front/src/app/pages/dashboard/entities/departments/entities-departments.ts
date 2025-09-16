@@ -4,30 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
 import { UserService, User, UserSearchCriteria, PagedResponse } from '../../../../core/services/user.service';
+import { DepartmentService, Department, DepartmentSearchCriteria } from '../../../../core/services/department.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 
 // Interface pour les départements (utilisant temporairement UserService)
-interface Department {
-  id: number;
-  nom: string;
-  description: string;
-  isDeleted?: boolean;
-  dateCreation?: string;
-  dateModification?: string;
-}
-
-interface DepartmentSearchCriteria {
-  idDe?: string;
-  idA?: string;
-  nom?: string;
-  description?: string;
-  isDeleted?: boolean;
-  dateCreationDe?: string;
-  dateCreationA?: string;
-  dateModificationDe?: string;
-  dateModificationA?: string;
-  search_string?: string;
-}
+// REMOVED: Interface Department moved to service
+// REMOVED: Interface DepartmentSearchCriteria moved to service
 
 @Component({
   selector: 'app-entities-departments',
@@ -100,6 +82,7 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
 
   constructor(
     private userService: UserService,
+    private departmentService: DepartmentService,
     private notificationService: NotificationService,
     private router: Router
   ) {}
@@ -179,76 +162,47 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
    */
   private performLoadDepartments() {
     this.isLoading.set(true);
-    const serviceMethod = this.showDeletedDepartments ? 'incluant supprimés' : 'actifs seulement';
-    console.log(`📥 Chargement des départements (${serviceMethod})...`);
+    console.log(`📥 Chargement de tous les départements (incluant supprimés)...`);
     console.log('🔍 Critères de recherche utilisés:', this.searchCriteria);
 
-    const criteria = {
+    // Appliquer les critères de recherche
+    const criteria: DepartmentSearchCriteria = {
       ...this.searchCriteria,
       page: this.currentPage(),
-      size: this.pageSize()
+      size: this.pageSize(),
+      // Ne pas envoyer isDeleted pour getAllByCriteria (qui inclut déjà tous les départements)
+      // isDeleted: this.showDeletedDepartments ? true : false
     };
 
     console.log('📤 Requête envoyée avec critères:', criteria);
 
-    // Simulation de chargement des départements (à remplacer par un vrai service)
-    // Pour l'instant, on utilise des données fictives
-    setTimeout(() => {
-      const mockDepartments: Department[] = [
-        { id: 1, nom: 'Ressources Humaines', description: 'Gestion du personnel et recrutement', isDeleted: false },
-        { id: 2, nom: 'Informatique', description: 'Développement et maintenance des systèmes', isDeleted: false },
-        { id: 3, nom: 'Comptabilité', description: 'Gestion financière et comptable', isDeleted: false },
-        { id: 4, nom: 'Marketing', description: 'Promotion et communication', isDeleted: false },
-        { id: 5, nom: 'Commercial', description: 'Ventes et relations clients', isDeleted: false },
-        { id: 6, nom: 'Qualité', description: 'Contrôle qualité et assurance', isDeleted: false },
-        { id: 7, nom: 'Logistique', description: 'Gestion des stocks et livraisons', isDeleted: false },
-        { id: 8, nom: 'Juridique', description: 'Conseil juridique et conformité', isDeleted: false },
-        { id: 9, nom: 'Communication', description: 'Relations publiques et médias', isDeleted: false },
-        { id: 10, nom: 'Recherche & Développement', description: 'Innovation et développement produits', isDeleted: false },
-        { id: 11, nom: 'Sécurité', description: 'Sécurité informatique et physique', isDeleted: false },
-        { id: 12, nom: 'Formation', description: 'Formation et développement des compétences', isDeleted: false },
-        { id: 13, nom: 'Achats', description: 'Gestion des achats et fournisseurs', isDeleted: false },
-        { id: 14, nom: 'Maintenance', description: 'Maintenance technique et équipements', isDeleted: false },
-        { id: 15, nom: 'Direction Générale', description: 'Direction stratégique et management', isDeleted: false },
-        { id: 16, nom: 'Support Client', description: 'Service client et assistance', isDeleted: false },
-        { id: 17, nom: 'Production', description: 'Production et fabrication', isDeleted: false },
-        { id: 18, nom: 'Contrôle de Gestion', description: 'Analyse financière et budgétaire', isDeleted: false },
-        { id: 19, nom: 'Systèmes d\'Information', description: 'Architecture et gestion SI', isDeleted: false },
-        { id: 20, nom: 'Ressources Techniques', description: 'Gestion des ressources techniques', isDeleted: false },
-        { id: 21, nom: 'Innovation', description: 'Veille technologique et innovation', isDeleted: false },
-        { id: 22, nom: 'Audit Interne', description: 'Contrôle interne et audit', isDeleted: true }
-      ];
+    // Utiliser le vrai service DepartmentService
+    this.departmentService.getAllDepartmentsByCriteria(criteria).subscribe({
+      next: (response) => {
+        console.log(`✅ RÉPONSE COMPLÈTE reçue (incluant supprimés):`, response);
+        console.log('📊 Nombre total de départements (totalElements):', response.totalElements);
+        console.log('📊 Nombre de départements dans cette page:', response.content.length);
 
-      const filteredDepartments = mockDepartments.filter(dept =>
-        !this.searchCriteria.nom || dept.nom.toLowerCase().includes(this.searchCriteria.nom!.toLowerCase())
-      );
+        this.departments.set(response.content);
+        this.totalElements.set(response.totalElements);
+        this.isLoading.set(false);
 
-      const startIndex = this.currentPage() * this.pageSize();
-      const endIndex = startIndex + this.pageSize();
-      const pageContent = filteredDepartments.slice(startIndex, endIndex);
-
-      const response: PagedResponse<Department> = {
-        content: pageContent,
-        totalElements: filteredDepartments.length,
-        totalPages: Math.ceil(filteredDepartments.length / this.pageSize()),
-        size: this.pageSize(),
-        number: this.currentPage()
-      };
-
-      console.log(`✅ RÉPONSE COMPLÈTE reçue (${serviceMethod}):`, response);
-      console.log('📊 Nombre total de départements (totalElements):', response.totalElements);
-      console.log('📊 Nombre de départements dans cette page:', response.content.length);
-
-      this.departments.set(response.content);
-      this.totalElements.set(response.totalElements);
-      this.isLoading.set(false);
-
-      console.log('🎯 État final après chargement:');
-      console.log('- Nombre de départements affichés:', this.departments().length);
-      console.log('- Total des départements:', this.totalElements());
-      console.log('- Page actuelle:', this.currentPage());
-      console.log('- Taille de page:', this.pageSize());
-    }, 500); // Simulation d'un délai réseau
+        console.log('🎯 État final après chargement:');
+        console.log('- Nombre de départements affichés:', this.departments().length);
+        console.log('- Total des départements:', this.totalElements());
+        console.log('- Page actuelle:', this.currentPage());
+        console.log('- Taille de page:', this.pageSize());
+      },
+      error: (error) => {
+        console.error('❌ Erreur lors du chargement des départements:', error);
+        this.notificationService.show({
+          type: 'error',
+          title: 'Erreur',
+          message: 'Erreur lors du chargement des départements'
+        });
+        this.isLoading.set(false);
+      }
+    });
   }
 
   /**
@@ -452,7 +406,7 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
   saveDepartment() {
     console.log('💾 Sauvegarde département:', this.currentDepartment);
 
-    if (!this.currentDepartment.nom.trim()) {
+    if (!this.currentDepartment.nom?.trim()) {
       console.error('Le nom du département est requis');
       return;
     }

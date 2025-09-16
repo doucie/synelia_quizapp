@@ -460,4 +460,112 @@ public class SpecialitiesBusiness implements IBasicBusiness<Request<Specialities
 		log.info("----end getAll Specialities-----");
 		return response;
 	}
+
+	/**
+	 * updateAll Specialities by using SpecialitiesDto as object (including deleted specialities).
+	 *
+	 * @param request
+	 * @return response
+	 */
+	public Response<SpecialitiesDto> updateAll(Request<SpecialitiesDto> request, Locale locale)  throws ParseException, JsonProcessingException {
+		log.info("----begin updateAll Specialities-----");
+		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
+		Response<SpecialitiesDto> response = new Response<SpecialitiesDto>();
+		List<Specialities>        items    = new ArrayList<Specialities>();
+
+		for (SpecialitiesDto dto : request.getDatas()) {
+			// Definir les parametres obligatoires
+			Map<String, Object> fieldsToVerify = new HashMap<String, Object>();
+			fieldsToVerify.put("id", dto.getId());
+			if (!Validate.RequiredValue(fieldsToVerify).isGood()) {
+				throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
+			}
+
+			// Verifier si la donnee existe
+			Specialities existingEntity = null;
+			// Pour updateAll, chercher d'abord les spécialités actives, puis les supprimées
+			existingEntity = specialitiesRepository.findOne(dto.getId(), false); // Chercher d'abord les actives
+			if (existingEntity == null) {
+				existingEntity = specialitiesRepository.findOne(dto.getId(), true); // Puis les supprimées si pas trouvé
+			}
+			if (existingEntity == null) {
+				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("specialities id -> " + dto.getId(), locale));
+			}
+
+			// -----------------------------------------------------------------------
+			// ----------- CHECK IF DATA IS USED
+			// -----------------------------------------------------------------------
+
+			// -----------------------------------------------------------------------
+			// ----------- GENERATION KEY
+			// -----------------------------------------------------------------------
+
+			// -----------------------------------------------------------------------
+			// ----------- PREPARATION DE L'OBJET
+			// -----------------------------------------------------------------------
+			// Garder les données existantes de base
+			Specialities entityToSave = existingEntity;
+
+			// Mise à jour conditionnelle des champs
+			if (Utilities.notBlank(dto.getSpecialityName())) {
+				entityToSave.setSpecialityName(dto.getSpecialityName());
+			}
+			if (Utilities.notBlank(dto.getSpecialityDesc())) {
+				entityToSave.setSpecialityDesc(dto.getSpecialityDesc());
+			}
+			if (dto.getIsDeleted() != null) {
+				entityToSave.setIsDeleted(dto.getIsDeleted());
+			}
+			if (dto.getCreatedBy() != null && dto.getCreatedBy() > 0) {
+				entityToSave.setCreatedBy(dto.getCreatedBy());
+			}
+			if (dto.getUpdatedBy() != null && dto.getUpdatedBy() > 0) {
+				entityToSave.setUpdatedBy(dto.getUpdatedBy());
+			}
+			if (Utilities.notBlank(dto.getCreatedAt())) {
+				entityToSave.setCreatedAt(dateFormat.parse(dto.getCreatedAt()));
+			}
+			if (Utilities.notBlank(dto.getUpdatedAt())) {
+				entityToSave.setUpdatedAt(dateFormat.parse(dto.getUpdatedAt()));
+			}
+
+			// -----------------------------------------------------------------------
+			// ----------- SAVE SPECIALITIES
+			// -----------------------------------------------------------------------
+			Specialities entity = specialitiesRepository.save(entityToSave);
+			items.add(entity);
+		}
+
+		if (Utilities.isNotEmpty(items)) {
+			List<SpecialitiesDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading())) ? SpecialitiesTransformer.INSTANCE.toLiteDtos(items) : SpecialitiesTransformer.INSTANCE.toDtos(items);
+
+			final int size = items.size();
+			List<String> listOfError = Collections.synchronizedList(new ArrayList<String>());
+			itemsDto.parallelStream().forEach(dto -> {
+				try {
+					dto = getFullInfos(dto, size, request.getIsSimpleLoading(), locale);
+				} catch (Exception e) {
+					listOfError.add(e.getMessage());
+					e.printStackTrace();
+				}
+			});
+			if (Utilities.isNotEmpty(listOfError)) {
+				Object[] objArray = listOfError.stream().distinct().toArray();
+				throw new RuntimeException(StringUtils.join(objArray, ", "));
+			}
+			Status status = new Status();
+			status.setCode(StatusCode.SUCCESS);
+			status.setMessage(StatusMessage.SUCCESS);
+
+			response.setItems(itemsDto);
+			response.setHasError(false);
+			response.setHttpCode(HttpStatus.OK.value());
+			response.setStatus(status);
+			response.setCount((long) itemsDto.size());
+		}
+
+		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
+		log.info("----end updateAll Specialities-----");
+		return response;
+	}
 }

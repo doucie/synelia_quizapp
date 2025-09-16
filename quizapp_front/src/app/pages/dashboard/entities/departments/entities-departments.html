@@ -468,12 +468,12 @@
       <p>Êtes-vous certain de vouloir supprimer ce département ?</p>
       <div class="user-info" *ngIf="currentDepartment">
         <div class="user-avatar">
-          {{ currentDepartment.nom[0].toUpperCase() }}
+          {{ currentDepartment.nom?.[0]?.toUpperCase() || '?' }}
         </div>
         <div class="user-details">
-          <strong>{{ currentDepartment.nom }}</strong>
+          <strong>{{ currentDepartment.nom || 'N/A' }}</strong>
           <span class="user-pseudo" *ngIf="currentDepartment.description">
-            {{ currentDepartment.description }}
+            {{ currentDepartment.description || 'N/A' }}
           </span>
         </div>
       </div>
@@ -532,12 +532,12 @@
       </div>
       <div class="user-info" *ngIf="currentDepartment">
         <div class="user-avatar">
-          {{ currentDepartment.nom[0].toUpperCase() }}
+          {{ currentDepartment.nom?.[0]?.toUpperCase() || '?' }}
         </div>
         <div class="user-details">
-          <strong>{{ currentDepartment.nom }}</strong>
+          <strong>{{ currentDepartment.nom || 'N/A' }}</strong>
           <span class="user-pseudo" *ngIf="currentDepartment.description">
-            {{ currentDepartment.description }}
+            {{ currentDepartment.description || 'N/A' }}
           </span>
         </div>
       </div>
