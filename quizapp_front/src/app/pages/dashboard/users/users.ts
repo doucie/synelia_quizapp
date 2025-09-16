@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { UserService, UserManagement as User, UserSearchCriteria, PagedResponse } from '../../../core/services';
+import { AuthService } from '../../../core/services/auth/auth.service';
 
 @Component({
   selector: 'app-users',
@@ -38,6 +39,7 @@ export class UsersComponent implements OnInit, OnDestroy {
 
   constructor(
     private userService: UserService,
+    private authService: AuthService,
     private fb: FormBuilder
   ) {
     this.userForm = this.fb.group({
@@ -180,7 +182,8 @@ export class UsersComponent implements OnInit, OnDestroy {
           });
       } else {
         // Création
-        this.userService.create(userData)
+        const currentUser = this.authService.getCurrentUser();
+        this.userService.create(userData, currentUser?.id ? parseInt(currentUser.id.toString()) : undefined)
           .pipe(takeUntil(this.destroy$))
           .subscribe({
             next: () => {

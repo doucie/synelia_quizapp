@@ -334,9 +334,10 @@ export class UserService {
   /**
    * Crée un nouvel utilisateur
    * @param user les données de l'utilisateur à créer
+   * @param currentUserId l'ID de l'utilisateur connecté qui crée le nouvel utilisateur
    * @returns Observable de l'utilisateur créé
    */
-  create(user: Partial<User>): Observable<User> {
+  create(user: Partial<User>, currentUserId?: number): Observable<User> {
     // Mapper les champs frontend vers backend
     const backendUser = {
       firstName: user.prenom,
@@ -349,8 +350,8 @@ export class UserService {
     };
 
     const request = {
-      data: backendUser,
-      datas: null,
+      data: null,
+      datas: [backendUser], // Le backend attend 'datas' (pluriel) avec un tableau
       size: null,
       index: null,
       lang: 'fr',
@@ -358,7 +359,7 @@ export class UserService {
       businessLineCode: null,
       caseEngine: null,
       isAnd: true,
-      user: null,
+      user: currentUserId || null, // ID de l'utilisateur connecté
       isSimpleLoading: false
     };
 

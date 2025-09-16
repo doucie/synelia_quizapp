@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 
 import { UserService, User, UserSearchCriteria, PagedResponse } from '../../../../core/services/user.service';
 import { NotificationService } from '../../../../core/services/notification.service';
+import { AuthService } from '../../../../core/services/auth/auth.service';
 
 @Component({
   selector: 'app-entities-users',
@@ -73,6 +74,17 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
     telephone: '',
     role: ''
   };
+
+  // État de la popup de création
+  showCreateDialog = signal<boolean>(false);
+  createFormData = {
+    nom: '',
+    prenom: '',
+    pseudo: '',
+    email: '',
+    telephone: '',
+    role: ''
+  };
   
   // Critères de recherche avancée
   advancedCriteria: UserSearchCriteria = {
@@ -98,6 +110,7 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
   constructor(
     private userService: UserService,
     private notificationService: NotificationService,
+    private authService: AuthService,
     private router: Router
   ) {}
 
@@ -257,8 +270,120 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
    * Crée un nouvel utilisateur
    */
   createUser() {
-    // TODO: Implémenter la création d'utilisateur
-    this.notificationService.info('Information', 'Fonctionnalité de création en cours de développement');
+    // Réinitialiser le formulaire
+    this.createFormData = {
+      nom: '',
+      prenom: '',
+      pseudo: '',
+      email: '',
+      telephone: '',
+      role: ''
+    };
+    this.showCreateDialog.set(true);
+  }
+
+  /**
+   * Ferme la popup de création
+   */
+  closeCreateDialog() {
+    this.showCreateDialog.set(false);
+    this.createFormData = {
+      nom: '',
+      prenom: '',
+      pseudo: '',
+      email: '',
+      telephone: '',
+      role: ''
+    };
+  }
+
+  /**
+   * Valide et crée un nouvel utilisateur
+   */
+  async validateUserCreation() {
+    const formData = this.createFormData;
+
+    console.log('🔧 Début validation création - formData:', formData);
+
+    // Validation des champs requis
+    if (!formData.nom.trim()) {
+      this.notificationService.warning('Attention', 'Le nom est requis');
+      return;
+    }
+    if (!formData.prenom.trim()) {
+      this.notificationService.warning('Attention', 'Le prénom est requis');
+      return;
+    }
+    if (!formData.pseudo.trim()) {
+      this.notificationService.warning('Attention', 'Le pseudo est requis');
+      return;
+    }
+    if (!formData.email.trim()) {
+      this.notificationService.warning('Attention', 'L\'email est requis');
+      return;
+    }
+    if (!formData.role.trim()) {
+      this.notificationService.warning('Attention', 'Le rôle est requis');
+      return;
+    }
+
+    // Validation format email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      this.notificationService.warning('Attention', 'Format d\'email invalide');
+      return;
+    }
+
+    try {
+      // Appel de l'API pour créer un nouvel utilisateur
+      console.log('🔧 Création d\'un nouvel utilisateur');
+
+      // Récupérer l'utilisateur connecté
+      const currentUser = this.authService.getCurrentUser();
+      console.log('👤 Utilisateur connecté:', currentUser);
+
+      const newUser: any = await this.userService.create({
+        nom: formData.nom.trim(),
+        prenom: formData.prenom.trim(),
+        pseudo: formData.pseudo.trim(),
+        email: formData.email.trim(),
+        telephone: formData.telephone.trim(),
+        role: formData.role
+      }, currentUser?.id ? parseInt(currentUser.id.toString()) : undefined).toPromise();
+
+      console.log('✅ Utilisateur créé:', newUser);
+      console.log('✅ Response hasError:', newUser?.hasError);
+      console.log('✅ Response httpCode:', newUser?.httpCode);
+      console.log('✅ Response status:', newUser?.status);
+
+      // Vérifier si la réponse indique une erreur
+      if (newUser && newUser.hasError) {
+        console.error('❌ Erreur détectée dans la réponse:', newUser);
+        console.error('❌ Status object:', newUser.status);
+        console.error('❌ Status message:', newUser.status?.message);
+        console.error('❌ Status code:', newUser.status?.code);
+        console.error('❌ HTTP Code:', newUser.httpCode);
+
+        const errorMessage = newUser.status?.message || newUser.status?.code || 'Erreur lors de la création';
+        this.notificationService.error('Erreur', errorMessage);
+        return;
+      }
+
+      // Vérifier le httpCode seulement s'il existe
+      if (newUser && newUser.httpCode && newUser.httpCode !== 201) {
+        console.error('❌ Code HTTP d\'erreur:', newUser.httpCode);
+        this.notificationService.error('Erreur', `Erreur HTTP: ${newUser.httpCode}`);
+        return;
+      }
+
+      this.notificationService.success('Succès', `Utilisateur ${formData.pseudo} créé avec succès`);
+      this.closeCreateDialog();
+      this.loadUsers(); // Recharger la liste
+    } catch (error: any) {
+      console.error('❌ Erreur lors de la création:', error);
+      console.error('❌ Détail de l\'erreur:', error?.error);
+      this.notificationService.error('Erreur', `Erreur lors de la création: ${error?.error?.message || error?.message || 'Erreur inconnue'}`);
+    }
   }
 
   /**
