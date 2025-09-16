@@ -75,6 +75,7 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
   // État des modals
   showModal = false;
   showDeleteModal = false;
+  showRestoreModal = false;
   isEditing = false;
 
   // Données du formulaire
@@ -215,7 +216,7 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
         { id: 19, nom: 'Systèmes d\'Information', description: 'Architecture et gestion SI', isDeleted: false },
         { id: 20, nom: 'Ressources Techniques', description: 'Gestion des ressources techniques', isDeleted: false },
         { id: 21, nom: 'Innovation', description: 'Veille technologique et innovation', isDeleted: false },
-        { id: 22, nom: 'Audit Interne', description: 'Contrôle interne et audit', isDeleted: false }
+        { id: 22, nom: 'Audit Interne', description: 'Contrôle interne et audit', isDeleted: true }
       ];
 
       const filteredDepartments = mockDepartments.filter(dept =>
@@ -470,6 +471,17 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Supprime le département depuis la popup d'édition
+   */
+  deleteDepartmentFromEdit() {
+    const department = this.currentDepartment;
+    if (department && department.id > 0) {
+      this.closeModal();
+      this.deleteDepartment(department);
+    }
+  }
+
+  /**
    * Ouvre le modal de confirmation de suppression
    */
   deleteDepartment(department: Department) {
@@ -505,15 +517,38 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Restaure un département supprimé
+   * Ferme le modal de restauration
    */
-  restoreDepartment(department: Department) {
-    console.log('♻️ Restauration département:', department);
+  closeRestoreModal() {
+    console.log('❌ Fermeture modal restauration');
+    this.showRestoreModal = false;
+    this.currentDepartment = {
+      id: 0,
+      nom: '',
+      description: ''
+    };
+  }
+
+  /**
+   * Confirme la restauration
+   */
+  confirmRestore() {
+    console.log('✅ Confirmation restauration département:', this.currentDepartment);
 
     // Simulation de restauration
     console.log('Département restauré avec succès');
 
+    this.closeRestoreModal();
     this.loadDepartments();
+  }
+
+  /**
+   * Restaure un département supprimé
+   */
+  restoreDepartment(department: Department) {
+    console.log('♻️ Ouverture modal restauration pour:', department);
+    this.currentDepartment = { ...department };
+    this.showRestoreModal = true;
   }
 
   /**
