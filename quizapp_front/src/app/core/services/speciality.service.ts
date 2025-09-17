@@ -4,13 +4,12 @@ import { Observable, throwError } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
-/**
- * Interface pour les données d'une spécialité
- */
 export interface Speciality {
   id: number;
   nom?: string;           // Backend utilise name
   description?: string;   // Backend utilise description
+  departmentId?: number;  // ID du département
+  departmentName?: string; // Nom du département
   isDeleted?: boolean;    // Indicateur si la spécialité est supprimée
   dateCreation?: string;  // Backend utilise createdAt
   dateModification?: string; // Backend utilise updatedAt
@@ -151,6 +150,8 @@ export class SpecialityService {
           id: spec.id,
           nom: spec.nom || spec.name || spec.specialityName || '',
           description: spec.description || spec.specialityDesc || '',
+          departmentId: spec.departmentId,
+          departmentName: spec.departmentName,
           isDeleted: spec.isDeleted || false,
           dateCreation: spec.dateCreation || spec.createdAt,
           dateModification: spec.dateModification || spec.updatedAt,
@@ -329,14 +330,30 @@ export class SpecialityService {
    * @returns Observable de la spécialité restaurée
    */
   restore(specialityId: number): Observable<Speciality> {
-    const specialityData = {
-      id: specialityId,
-      isDeleted: false
+    // Récupération de l'ID utilisateur depuis localStorage ou valeur par défaut
+    const currentUserId = localStorage.getItem('user')?.includes('id') ?
+      JSON.parse(localStorage.getItem('user')!)?.id?.toString() : '1';
+
+    // Pour la restauration, on utilise updateAll avec isDeleted: false
+    const request = {
+      user: currentUserId,
+      datas: [{
+        id: specialityId,
+        isDeleted: false  // Champ explicite pour la restauration
+      }]
     };
 
-    return this.update(specialityId, specialityData).pipe(
-      map(response => response),
+    console.log('🔧 Restore speciality request payload:', request);
+    console.log('🔧 Restore request datas:', request.datas);
+    console.log('🔧 Restore request user:', request.user);
+
+    return this.http.post<any>(`${this.apiUrl}/updateAll`, request).pipe(
+      map(response => {
+        console.log('✅ Speciality restored successfully:', response);
+        return response;
+      }),
       catchError(error => {
+        console.error('❌ Error restoring speciality:', error);
         return throwError(() => error);
       })
     );

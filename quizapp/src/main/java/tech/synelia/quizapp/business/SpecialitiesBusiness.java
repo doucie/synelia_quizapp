@@ -178,9 +178,14 @@ public class SpecialitiesBusiness implements IBasicBusiness<Request<Specialities
 				throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
 			}
 
-			// Verifier si la specialities existe
+			// Verifier si la specialities existe (incluant les supprimées pour permettre la restauration)
 			Specialities entityToSave = null;
+			// Chercher d'abord parmi les spécialités actives
 			entityToSave = specialitiesRepository.findOne(dto.getId(), false);
+			// Si pas trouvée, chercher parmi les spécialités supprimées (pour restauration)
+			if (entityToSave == null) {
+				entityToSave = specialitiesRepository.findOne(dto.getId(), true);
+			}
 			if (entityToSave == null) {
 				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("specialities id -> " + dto.getId(), locale));
 			}
@@ -198,6 +203,9 @@ public class SpecialitiesBusiness implements IBasicBusiness<Request<Specialities
 			}
 			if (Utilities.notBlank(dto.getSpecialityDesc())) {
 				entityToSave.setSpecialityDesc(dto.getSpecialityDesc());
+			}
+			if (dto.getIsDeleted() != null) {
+				entityToSave.setIsDeleted(dto.getIsDeleted());
 			}
 			if (dto.getCreatedBy() != null && dto.getCreatedBy() > 0) {
 				entityToSave.setCreatedBy(dto.getCreatedBy());

@@ -164,9 +164,14 @@ public class DepartmentsBusiness implements IBasicBusiness<Request<DepartmentsDt
 				throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
 			}
 
-			// Verifier si la departments existe
+			// Verifier si la departments existe (incluant les supprimées pour permettre la restauration)
 			Departments entityToSave = null;
+			// Chercher d'abord parmi les départements actifs
 			entityToSave = departmentsRepository.findOne(dto.getId(), false);
+			// Si pas trouvée, chercher parmi les départements supprimés (pour restauration)
+			if (entityToSave == null) {
+				entityToSave = departmentsRepository.findOne(dto.getId(), true);
+			}
 			if (entityToSave == null) {
 				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("departments id -> " + dto.getId(), locale));
 			}
@@ -176,6 +181,9 @@ public class DepartmentsBusiness implements IBasicBusiness<Request<DepartmentsDt
 			}
 			if (Utilities.notBlank(dto.getDepartmentDesc())) {
 				entityToSave.setDepartmentDesc(dto.getDepartmentDesc());
+			}
+			if (dto.getIsDeleted() != null) {
+				entityToSave.setIsDeleted(dto.getIsDeleted());
 			}
 			if (dto.getCreatedBy() != null && dto.getCreatedBy() > 0) {
 				entityToSave.setCreatedBy(dto.getCreatedBy());

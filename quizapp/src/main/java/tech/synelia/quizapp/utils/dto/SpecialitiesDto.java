@@ -42,6 +42,7 @@ public class SpecialitiesDto extends _SpecialitiesDto implements Cloneable{
     private Boolean    isDeleted            ;
     private String     searchString         ;
     private Integer    departmentId         ;
+    private String     departmentName       ;
 
     //----------------------------------------------------------------------
     // ENTITY LINKS FIELD ( RELATIONSHIP )
@@ -58,6 +59,7 @@ public class SpecialitiesDto extends _SpecialitiesDto implements Cloneable{
 	private SearchParam<Boolean>  isDeletedParam        ;                     
 	private SearchParam<String>   searchStringParam     ;                     
 	private SearchParam<Integer>  departmentIdParam     ;                     
+	private SearchParam<String>   departmentNameParam   ;                     
     /**
      * Default constructor
      */

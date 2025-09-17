@@ -127,10 +127,30 @@ export class EntitiesSpecialitiesComponent implements OnInit, OnDestroy {
       next: (response: PagedResponse<Speciality>) => {
         console.log('✅ Réponse reçue du service:', response);
         console.log('📊 Données de pagination - items:', response.items?.length, 'totalElements:', response.totalElements);
-        this.specialities.set(response.items);
+
+        // Filtrer les spécialités selon la préférence utilisateur
+        let filteredSpecialities = response.items;
+        if (!this.showDeletedSpecialities) {
+          // Ne montrer que les spécialités actives
+          filteredSpecialities = response.items.filter(spec => !spec.isDeleted);
+          console.log('🔍 Filtrage appliqué - spécialités actives seulement:', filteredSpecialities.length);
+        } else {
+          console.log('🔍 Aucun filtrage - toutes les spécialités affichées:', filteredSpecialities.length);
+        }
+
+        // Analyser les spécialités reçues
+        const deletedSpecialities = response.items.filter(spec => spec.isDeleted);
+        const activeSpecialities = response.items.filter(spec => !spec.isDeleted);
+
+        console.log('📊 Spécialités supprimées dans cette page:', deletedSpecialities.length, deletedSpecialities);
+        console.log('📊 Spécialités actives dans cette page:', activeSpecialities.length, activeSpecialities);
+        console.log('📊 Spécialités affichées après filtrage:', filteredSpecialities.length, filteredSpecialities);
+
+        this.specialities.set(filteredSpecialities);
         this.totalElements.set(response.totalElements);
         this.isLoading.set(false);
         console.log('🔄 État mis à jour - specialities:', this.specialities().length, 'totalElements:', this.totalElements());
+        console.log('🔄 Affichage des supprimés:', this.showDeletedSpecialities);
       },
       error: (error) => {
         console.error('Erreur lors du chargement des spécialités:', error);
@@ -357,10 +377,21 @@ export class EntitiesSpecialitiesComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Erreur lors de la suppression:', error);
+        
+        // Extract the specific error message from backend response
+        let errorMessage = 'Erreur lors de la suppression de la spécialité';
+        if (error?.error?.status?.message) {
+          errorMessage = error.error.status.message;
+        } else if (error?.error?.message) {
+          errorMessage = error.error.message;
+        } else if (error?.message) {
+          errorMessage = error.message;
+        }
+        
         this.notificationService.show({
           type: 'error',
           title: 'Erreur',
-          message: 'Erreur lors de la suppression de la spécialité'
+          message: errorMessage
         });
       }
     });

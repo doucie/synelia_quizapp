@@ -583,7 +583,18 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('❌ Erreur lors de la suppression du département:', error);
-        this.notificationService.error('Erreur', 'Erreur lors de la suppression du département');
+        
+        // Extract the specific error message from backend response
+        let errorMessage = 'Erreur lors de la suppression du département';
+        if (error?.error?.status?.message) {
+          errorMessage = error.error.status.message;
+        } else if (error?.error?.message) {
+          errorMessage = error.error.message;
+        } else if (error?.message) {
+          errorMessage = error.message;
+        }
+        
+        this.notificationService.error('Erreur', errorMessage);
         this.isLoading.set(false);
       },
       complete: () => {

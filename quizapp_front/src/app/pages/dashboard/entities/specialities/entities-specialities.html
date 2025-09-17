@@ -235,6 +235,7 @@
             <th>ID</th>
             <th>Nom</th>
             <th>Description</th>
+            <th>Département</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -250,6 +251,10 @@
             <td>
               <span class="cell-description" *ngIf="speciality.description">{{ speciality.description }}</span>
               <span *ngIf="!speciality.description" style="color: var(--text-secondary);">-</span>
+            </td>
+            <td>
+              <span class="cell-department" *ngIf="speciality.departmentName">{{ speciality.departmentName }}</span>
+              <span *ngIf="!speciality.departmentName" style="color: var(--text-secondary);">-</span>
             </td>
             <td class="actions-cell">
               <div class="actions-menu">

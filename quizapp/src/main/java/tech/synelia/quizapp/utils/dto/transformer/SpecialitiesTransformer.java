@@ -42,6 +42,7 @@ public interface SpecialitiesTransformer {
 		@Mapping(source="entity.createdAt", dateFormat="dd/MM/yyyy", target="createdAt"),
 		@Mapping(source="entity.updatedAt", dateFormat="dd/MM/yyyy", target="updatedAt"),
 		@Mapping(source="entity.departments.id", target="departmentId"),
+		@Mapping(source="entity.departments.departmentName", target="departmentName"),
 	})
 	SpecialitiesDto toDto(Specialities entity) throws ParseException;
 

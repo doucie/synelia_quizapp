@@ -23,6 +23,13 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
       
       if (error.status === 500) {
         console.error('❌ Erreur serveur - Vérifiez les logs du backend Spring Boot');
+        
+        // Vérifier si c'est une erreur métier avec un message spécifique
+        if (error.error?.status?.message) {
+          console.log('📋 Erreur métier détectée, transmission du message spécifique:', error.error.status.message);
+          return throwError(() => error);
+        }
+        
         return throwError(() => new Error('Erreur serveur. Vérifiez les logs du backend.'));
       }
       
