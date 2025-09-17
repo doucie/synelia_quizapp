@@ -186,7 +186,25 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
         console.log('📊 Nombre total de départements (totalElements):', response.totalElements);
         console.log('📊 Nombre de départements dans cette page:', response.content.length);
 
-        this.departments.set(response.content);
+        // Filtrer les départements selon la préférence utilisateur
+        let filteredDepartments = response.content;
+        if (!this.showDeletedDepartments) {
+          // Ne montrer que les départements actifs
+          filteredDepartments = response.content.filter(dept => !dept.isDeleted);
+          console.log('🔍 Filtrage appliqué - départements actifs seulement:', filteredDepartments.length);
+        } else {
+          console.log('🔍 Aucun filtrage - tous les départements affichés:', filteredDepartments.length);
+        }
+
+        // Analyser les départements reçus
+        const deletedDepartments = response.content.filter(dept => dept.isDeleted);
+        const activeDepartments = response.content.filter(dept => !dept.isDeleted);
+
+        console.log('📊 Départements supprimés dans cette page:', deletedDepartments.length, deletedDepartments);
+        console.log('📊 Départements actifs dans cette page:', activeDepartments.length, activeDepartments);
+        console.log('📊 Départements affichés après filtrage:', filteredDepartments.length, filteredDepartments);
+
+        this.departments.set(filteredDepartments);
         this.totalElements.set(response.totalElements);
         this.isLoading.set(false);
 
@@ -195,6 +213,7 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
         console.log('- Total des départements:', this.totalElements());
         console.log('- Page actuelle:', this.currentPage());
         console.log('- Taille de page:', this.pageSize());
+        console.log('- Affichage des supprimés:', this.showDeletedDepartments);
       },
       error: (error) => {
         console.error('❌ Erreur lors du chargement des départements:', error);
