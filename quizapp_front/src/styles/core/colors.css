@@ -39,6 +39,7 @@
   
   /* Status Colors */
   --success: #10B981;
+  --success-dark: #059669;
   --warning: #F59E0B;
   --error: #EF4444;
   --info: #3B82F6;
@@ -107,6 +108,10 @@
   --shadow-light: rgba(0, 0, 0, 0.3);
   --shadow-medium: rgba(0, 0, 0, 0.4);
   --shadow-heavy: rgba(0, 0, 0, 0.6);
+  
+  /* Status Colors Dark */
+  /* --success-dark: #10B981; */
+  
     /* Scrollbar Colors Dark */
     --scrollbar-bg: var(--surface-variant);
     --scrollbar-thumb: var(--primary);

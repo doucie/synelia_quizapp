@@ -92,13 +92,21 @@ export class DepartmentService {
       dateCreationA: criteria.dateCreationA || '',
       dateModificationDe: criteria.dateModificationDe || '',
       dateModificationA: criteria.dateModificationA || '',
-      search_string: criteria.search_string || ''
+      searchString: criteria.search_string || ''
     };
 
     console.log('🔧 Données brutes avant nettoyage:', rawData);
 
+    console.log('🔍 Recherche rapide - searchString:', criteria.search_string);
+    console.log('🔍 Recherche rapide - quickSearch value:', criteria.search_string?.trim());
+    console.log('🔍 Recherche rapide - searchString length:', criteria.search_string?.length);
+    console.log('🔍 Recherche rapide - searchString is empty?', !criteria.search_string?.trim());
+
     const cleanedData = this.cleanEmptyFields(rawData);
     console.log('🔧 Données après nettoyage:', cleanedData);
+    console.log('🔍 Données nettoyées - searchString:', cleanedData.searchString);
+    console.log('🔍 Données nettoyées - searchString existe?', 'searchString' in cleanedData);
+    console.log('🔍 Données nettoyées - clés:', Object.keys(cleanedData));
 
     const request = {
       user: currentUserId,
@@ -186,6 +194,51 @@ export class DepartmentService {
   }
 
   /**
+   * Crée un nouveau département
+   * @param department les données du nouveau département
+   * @returns Observable du département créé
+   */
+  create(department: Partial<Department>): Observable<Department> {
+    // Récupération de l'ID utilisateur depuis localStorage ou valeur par défaut
+    const currentUserId = localStorage.getItem('user')?.includes('id') ?
+      JSON.parse(localStorage.getItem('user')!)?.id?.toString() : '1';
+
+    // Mapper les champs frontend vers backend
+    const backendDepartment = {
+      departmentName: department.nom,
+      departmentDesc: department.description,
+      isDeleted: false  // Nouveau département n'est pas supprimé
+    };
+
+    // Retirer les champs undefined pour éviter d'envoyer null
+    Object.keys(backendDepartment).forEach(key => {
+      if (backendDepartment[key as keyof typeof backendDepartment] === undefined) {
+        delete backendDepartment[key as keyof typeof backendDepartment];
+      }
+    });
+
+    const request = {
+      user: currentUserId,
+      datas: [backendDepartment]  // Format spécifique pour create : datas au pluriel
+    };
+
+    console.log('🔧 Create department request payload:', request);
+    console.log('🔧 Create request datas:', request.datas);
+    console.log('🔧 Create request user:', request.user);
+
+    return this.http.post<any>(`${this.apiUrl}/create`, request).pipe(
+      map(response => {
+        console.log('✅ Department created successfully:', response);
+        return response.items?.[0] || response;
+      }),
+      catchError(error => {
+        console.error('❌ Error creating department:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
    * Met à jour un département
    * @param id l'identifiant du département
    * @param department les nouvelles données du département
@@ -212,16 +265,51 @@ export class DepartmentService {
     });
 
     const request = {
-      datas: [backendDepartment],  // Array avec l'objet département à mettre à jour
-      user: currentUserId    // ID utilisateur connecté
+      user: currentUserId,
+      data: backendDepartment  // Format générique : data au singulier, pas datas
     };
 
     console.log('🔧 Update department request payload:', request);
-    console.log('🔧 Update request datas:', request.datas);
+    console.log('🔧 Update request data:', request.data);
     console.log('🔧 Update request user:', request.user);
 
     return this.http.post<any>(`${this.apiUrl}/update`, request).pipe(
       map(response => response.items?.[0] || response)
+    );
+  }
+
+  /**
+   * Restaure un département supprimé
+   * @param departmentId l'identifiant du département à restaurer
+   * @returns Observable du département restauré
+   */
+  restore(departmentId: number): Observable<Department> {
+    // Récupération de l'ID utilisateur depuis localStorage ou valeur par défaut
+    const currentUserId = localStorage.getItem('user')?.includes('id') ?
+      JSON.parse(localStorage.getItem('user')!)?.id?.toString() : '1';
+
+    // Pour la restauration, on utilise updateAll avec isDeleted: false
+    const request = {
+      user: currentUserId,
+      datas: [{
+        id: departmentId,
+        isDeleted: false  // Champ explicite pour la restauration
+      }]
+    };
+
+    console.log('🔧 Restore department request payload:', request);
+    console.log('🔧 Restore request datas:', request.datas);
+    console.log('🔧 Restore request user:', request.user);
+
+    return this.http.post<any>(`${this.apiUrl}/updateAll`, request).pipe(
+      map(response => {
+        console.log('✅ Department restored successfully:', response);
+        return response;
+      }),
+      catchError(error => {
+        console.error('❌ Error restoring department:', error);
+        return throwError(() => error);
+      })
     );
   }
 
@@ -236,33 +324,15 @@ export class DepartmentService {
       JSON.parse(localStorage.getItem('user')!)?.id?.toString() : '1';
 
     const request = {
-      datas: [{ id: id }],  // Array avec l'objet contenant l'ID
-      user: currentUserId   // ID utilisateur connecté
+      user: currentUserId,
+      datas: [{ id: id }]  // Format avec datas au pluriel comme pour create
     };
+
+    console.log('🗑️ Delete department request payload:', request);
+    console.log('🗑️ Delete request datas:', request.datas);
+    console.log('🗑️ Delete request user:', request.user);
 
     return this.http.post<any>(`${this.apiUrl}/delete`, request);
-  }
-
-  /**
-   * Restaure un département supprimé
-   * @param departmentId l'identifiant du département à restaurer
-   * @returns Observable du département restauré
-   */
-  restore(departmentId: number): Observable<Department> {
-    // Construction des données au format attendu par update
-    const departmentData = {
-      id: departmentId,
-      isDeleted: false
-    };
-
-    return this.update(departmentId, departmentData).pipe(
-      map(response => {
-        return response;
-      }),
-      catchError(error => {
-        return throwError(() => error);
-      })
-    );
   }
 
   /**

@@ -164,6 +164,8 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
     this.isLoading.set(true);
     console.log(`📥 Chargement de tous les départements (incluant supprimés)...`);
     console.log('🔍 Critères de recherche utilisés:', this.searchCriteria);
+    console.log('🔍 Valeur de search_string dans searchCriteria:', this.searchCriteria.search_string);
+    console.log('🔍 search_string est vide?', !this.searchCriteria.search_string?.trim());
 
     // Appliquer les critères de recherche
     const criteria: DepartmentSearchCriteria = {
@@ -175,6 +177,7 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
     };
 
     console.log('📤 Requête envoyée avec critères:', criteria);
+    console.log('📤 Valeur de search_string dans criteria:', criteria.search_string);
 
     // Utiliser le vrai service DepartmentService
     this.departmentService.getAllDepartmentsByCriteria(criteria).subscribe({
@@ -206,13 +209,41 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Recherche rapide
+   * Recherche rapide utilisant search_string
    */
   onQuickSearch() {
-    console.log('🔍 Recherche rapide:', this.quickSearch);
-    this.searchCriteria.search_string = this.quickSearch;
-    this.currentPage.set(0); // Remettre à la première page
-    this.loadDepartments();
+    console.log('🔍 onQuickSearch appelée');
+    console.log('🔍 Valeur de quickSearch AVANT trim:', this.quickSearch);
+    console.log('🔍 Valeur de quickSearch APRÈS trim:', this.quickSearch.trim());
+    console.log('🔍 Longueur de quickSearch:', this.quickSearch.length);
+
+    // Réinitialiser les critères de recherche individuels
+    this.searchCriteria.idDe = '';
+    this.searchCriteria.idA = '';
+    this.searchCriteria.nom = '';
+    this.searchCriteria.description = '';
+    this.searchCriteria.isDeleted = undefined;
+    this.searchCriteria.dateCreationDe = '';
+    this.searchCriteria.dateCreationA = '';
+    this.searchCriteria.dateModificationDe = '';
+    this.searchCriteria.dateModificationA = '';
+
+    // Utiliser search_string pour la recherche globale
+    this.searchCriteria.search_string = this.quickSearch.trim();
+
+    console.log('🔍 Valeur assignée à searchCriteria.search_string:', this.searchCriteria.search_string);
+    console.log('🔍 searchCriteria complet:', this.searchCriteria);
+
+    // Fermer la recherche avancée si elle était ouverte
+    this.showAdvancedSearch = false;
+
+    // Remettre à la première page
+    this.currentPage.set(0);
+
+    // Débounce pour éviter trop de requêtes
+    setTimeout(() => {
+      this.loadDepartments();
+    }, 300);
   }
 
   /**
@@ -239,9 +270,31 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
   applyAdvancedSearch() {
     console.log('🎯 Application des filtres avancés:', this.advancedCriteria);
     this.searchCriteria = { ...this.advancedCriteria };
+
+    // Vider la recherche rapide quand on applique les filtres avancés
+    this.quickSearch = '';
+
     this.currentPage.set(0); // Remettre à la première page
     this.loadDepartments();
     this.showAdvancedSearch = false;
+  }
+
+  /**
+   * Réinitialise tous les filtres de recherche
+   */
+  clearSearch() {
+    this.searchCriteria = {
+      idDe: '',
+      idA: '',
+      nom: '',
+      description: '',
+      search_string: ''
+    };
+    this.quickSearch = '';
+    this.showAdvancedSearch = false;
+    this.resetAdvancedSearch();
+    this.currentPage.set(0);
+    this.loadDepartments();
   }
 
   /**
@@ -408,20 +461,50 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
 
     if (!this.currentDepartment.nom?.trim()) {
       console.error('Le nom du département est requis');
+      this.notificationService.error('Erreur de validation', 'Le nom du département est requis');
       return;
     }
 
-    // Simulation de sauvegarde
-    if (this.isEditing) {
-      // Mise à jour
-      console.log('Département modifié avec succès');
-    } else {
-      // Création
-      console.log('Département créé avec succès');
-    }
+    // Désactiver le bouton de sauvegarde pendant le traitement
+    this.isLoading.set(true);
 
-    this.closeModal();
-    this.loadDepartments();
+    if (this.isEditing) {
+      // Mise à jour d'un département existant
+      console.log('🔄 Mise à jour du département:', this.currentDepartment.id);
+      this.departmentService.update(this.currentDepartment.id!, this.currentDepartment).subscribe({
+        next: (updatedDepartment) => {
+          console.log('✅ Département mis à jour avec succès:', updatedDepartment);
+          this.notificationService.success('Succès', 'Département mis à jour avec succès');
+          this.closeModal();
+          this.loadDepartments();
+        },
+        error: (error) => {
+          console.error('❌ Erreur lors de la mise à jour du département:', error);
+          this.notificationService.error('Erreur', 'Erreur lors de la mise à jour du département');
+        },
+        complete: () => {
+          this.isLoading.set(false);
+        }
+      });
+    } else {
+      // Création d'un nouveau département
+      console.log('➕ Création d\'un nouveau département');
+      this.departmentService.create(this.currentDepartment).subscribe({
+        next: (createdDepartment) => {
+          console.log('✅ Département créé avec succès:', createdDepartment);
+          this.notificationService.success('Succès', 'Département créé avec succès');
+          this.closeModal();
+          this.loadDepartments();
+        },
+        error: (error) => {
+          console.error('❌ Erreur lors de la création du département:', error);
+          this.notificationService.error('Erreur', 'Erreur lors de la création du département');
+        },
+        complete: () => {
+          this.isLoading.set(false);
+        }
+      });
+    }
   }
 
   /**
@@ -463,11 +546,31 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
   confirmDelete() {
     console.log('✅ Confirmation suppression département:', this.currentDepartment);
 
-    // Simulation de suppression
-    console.log('Département supprimé avec succès');
+    if (!this.currentDepartment || !this.currentDepartment.id) {
+      console.error('❌ Aucun département sélectionné pour la suppression');
+      this.notificationService.error('Erreur', 'Aucun département sélectionné');
+      return;
+    }
 
-    this.closeDeleteModal();
-    this.loadDepartments();
+    // Désactiver le bouton pendant la suppression
+    this.isLoading.set(true);
+
+    this.departmentService.delete(this.currentDepartment.id).subscribe({
+      next: (response) => {
+        console.log('✅ Département supprimé avec succès:', response);
+        this.notificationService.success('Succès', 'Département supprimé avec succès');
+        this.closeDeleteModal();
+        this.loadDepartments();
+      },
+      error: (error) => {
+        console.error('❌ Erreur lors de la suppression du département:', error);
+        this.notificationService.error('Erreur', 'Erreur lors de la suppression du département');
+        this.isLoading.set(false);
+      },
+      complete: () => {
+        this.isLoading.set(false);
+      }
+    });
   }
 
   /**
@@ -489,11 +592,31 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
   confirmRestore() {
     console.log('✅ Confirmation restauration département:', this.currentDepartment);
 
-    // Simulation de restauration
-    console.log('Département restauré avec succès');
+    if (!this.currentDepartment || !this.currentDepartment.id) {
+      console.error('❌ Aucun département sélectionné pour la restauration');
+      this.notificationService.error('Erreur', 'Aucun département sélectionné');
+      return;
+    }
 
-    this.closeRestoreModal();
-    this.loadDepartments();
+    // Désactiver le bouton pendant la restauration
+    this.isLoading.set(true);
+
+    this.departmentService.restore(this.currentDepartment.id).subscribe({
+      next: (response) => {
+        console.log('✅ Département restauré avec succès:', response);
+        this.notificationService.success('Succès', 'Département restauré avec succès');
+        this.closeRestoreModal();
+        this.loadDepartments();
+      },
+      error: (error) => {
+        console.error('❌ Erreur lors de la restauration du département:', error);
+        this.notificationService.error('Erreur', 'Erreur lors de la restauration du département');
+        this.isLoading.set(false);
+      },
+      complete: () => {
+        this.isLoading.set(false);
+      }
+    });
   }
 
   /**

@@ -26,7 +26,7 @@
         class="search-input"
         placeholder="Rechercher un département..."
         [(ngModel)]="quickSearch"
-        (input)="onQuickSearch()"
+        (ngModelChange)="onQuickSearch()"
       />
 
       <!-- Checkbox pour afficher les départements supprimés -->
