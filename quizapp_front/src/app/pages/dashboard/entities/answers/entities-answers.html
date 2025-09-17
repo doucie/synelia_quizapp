@@ -1,0 +1,412 @@
+<div class="entities-answers-container">
+  <!-- En-tête -->
+  <div class="entities-answers-header">
+    <div class="header-content">
+      <h1 class="entities-answers-title">Gestion des Réponses</h1>
+      <p class="entities-answers-subtitle">Administration des réponses aux questions du quiz</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-secondary" (click)="goBackToEntities()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Retour aux entités
+      </button>
+      <button class="btn-primary" (click)="createAnswer()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 4V20M4 12H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Nouvelle réponse
+      </button>
+    </div>
+  </div>
+
+  <!-- Section de recherche -->
+  <div class="search-section">
+    <div class="search-row">
+      <div class="search-input-wrapper">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Rechercher une réponse..."
+          [(ngModel)]="quickSearch"
+          (input)="onQuickSearch()"
+        />
+      </div>
+      <button class="btn-secondary" (click)="openAdvancedSearch()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+        </svg>
+        Filtres avancés
+      </button>
+      <button class="btn-outline" (click)="clearSearch()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6 18L18 6M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Effacer
+      </button>
+    </div>
+
+    <!-- Recherche avancée -->
+    <div class="advanced-search" *ngIf="showAdvancedSearch">
+      <div class="advanced-search-grid">
+        <div class="form-group">
+          <label class="form-label">ID Réponse</label>
+          <input type="text" class="form-input" [(ngModel)]="advancedCriteria.idDe" placeholder="De..." />
+        </div>
+        <div class="form-group">
+          <label class="form-label">À</label>
+          <input type="text" class="form-input" [(ngModel)]="advancedCriteria.idA" placeholder="À..." />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Texte de la réponse</label>
+          <input type="text" class="form-input" [(ngModel)]="advancedCriteria.answerText" placeholder="Contient..." />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Question</label>
+          <select class="form-select" [(ngModel)]="advancedCriteria.questionId">
+            <option value="">Toutes les questions</option>
+            <option *ngFor="let question of questions()" [value]="question.id">
+              {{ question.questionText | slice:0:50 }}{{ (question.questionText?.length || 0) > 50 ? '...' : '' }}
+            </option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Est correcte</label>
+          <select class="form-select" [(ngModel)]="advancedCriteria.isCorrect">
+            <option value="">Tous</option>
+            <option value="true">Correcte</option>
+            <option value="false">Incorrecte</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Statut</label>
+          <select class="form-select" [(ngModel)]="advancedCriteria.isDeleted">
+            <option value="">Tous</option>
+            <option value="false">Active</option>
+            <option value="true">Supprimée</option>
+          </select>
+        </div>
+      </div>
+      <div class="advanced-search-actions">
+        <button class="btn-secondary" (click)="resetAdvancedSearch()">Réinitialiser</button>
+        <button class="btn-primary" (click)="applyAdvancedSearch()">Appliquer les filtres</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistiques -->
+  <div class="stats-section">
+    <div class="stat-card">
+      <div class="stat-icon">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+        </svg>
+      </div>
+      <div class="stat-content">
+        <div class="stat-number">{{ totalElementsValue }}</div>
+        <div class="stat-label">Total des réponses</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M9 12l2 2 4-4m6-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <div class="stat-content">
+        <div class="stat-number">{{ getCorrectAnswersCount() }}</div>
+        <div class="stat-label">Réponses correctes</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <div class="stat-content">
+        <div class="stat-number">{{ getIncorrectAnswersCount() }}</div>
+        <div class="stat-label">Réponses incorrectes</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table des réponses -->
+  <div class="table-container">
+    <div class="table-responsive">
+      <table class="answers-table">
+        <thead>
+          <tr>
+            <th class="col-id">ID</th>
+            <th class="col-text">Texte de la réponse</th>
+            <th class="col-question">Question associée</th>
+            <th class="col-correct">Correcte</th>
+            <th class="col-order">Ordre</th>
+            <th class="col-status">Statut</th>
+            <th class="col-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let answer of answers(); trackBy: trackByAnswerId"
+              [class.deleted-row]="answer.isDeleted">
+            <td class="col-id">{{ answer.id }}</td>
+            <td class="col-text">
+              <div class="answer-text" [title]="answer.answerText">
+                {{ answer.answerText | slice:0:100 }}{{ getAnswerTextLength(answer) > 100 ? '...' : '' }}
+              </div>
+            </td>
+            <td class="col-question">
+              <div class="question-text" [title]="getQuestionText(answer)">
+                {{ getQuestionText(answer) | slice:0:80 }}{{ getQuestionText(answer)!.length > 80 ? '...' : '' }}
+              </div>
+            </td>
+            <td class="col-correct">
+              <span class="correct-badge" [class.correct]="answer.isCorrect" [class.incorrect]="!answer.isCorrect">
+                {{ answer.isCorrect ? '✓ Correcte' : '✗ Incorrecte' }}
+              </span>
+            </td>
+            <td class="col-order">{{ answer.displayOrder || 'N/A' }}</td>
+            <td class="col-status">
+              <span class="status-indicator" [class.status-active]="!answer.isDeleted" [class.status-deleted]="answer.isDeleted">
+                {{ answer.isDeleted ? 'Supprimée' : 'Active' }}
+              </span>
+            </td>
+            <td class="col-actions">
+              <div class="table-actions">
+                <button class="btn-icon edit" (click)="editAnswer(answer)" title="Modifier">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                  </svg>
+                </button>
+                <button class="btn-icon delete" (click)="deleteAnswer(answer)" title="Supprimer" *ngIf="!answer.isDeleted">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                </button>
+                <button class="btn-icon restore" (click)="restoreAnswer(answer)" title="Restaurer" *ngIf="answer.isDeleted">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- État vide -->
+    <div class="empty-state" *ngIf="answers().length === 0 && !isLoading()">
+      <div class="empty-state-icon">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+        </svg>
+      </div>
+      <h3 class="empty-state-title">Aucune réponse trouvée</h3>
+      <p class="empty-state-message">
+        {{ quickSearch ? 'Aucune réponse ne correspond à votre recherche.' : 'Il n\'y a encore aucune réponse dans le système.' }}
+      </p>
+      <button class="btn-primary" (click)="createAnswer()" *ngIf="!quickSearch">
+        Créer la première réponse
+      </button>
+    </div>
+
+    <!-- État de chargement -->
+    <div class="loading-state" *ngIf="isLoading()">
+      <div class="loading-spinner">
+        <svg class="animate-spin" viewBox="0 0 24 24" fill="currentColor">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+        </svg>
+      </div>
+      <p>Chargement des réponses...</p>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination-section">
+    <div class="pagination-info">
+      <div class="page-info">
+        <span>{{ paginationStartIndex }}-{{ paginationEndIndex }} sur {{ totalElementsValue }}</span>
+      </div>
+      <div class="page-size-selector">
+        <label>Éléments par page:</label>
+        <select class="page-size-select" [(ngModel)]="pageSize" (ngModelChange)="onPageSizeChange($event)">
+          <option *ngFor="let size of pageSizeOptions" [value]="size">{{ size }}</option>
+        </select>
+      </div>
+    </div>
+    <div class="pagination-controls">
+      <button class="btn-page" [class.disabled]="!hasPreviousPage()" (click)="previousPage()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Précédent
+      </button>
+
+      <div class="page-numbers">
+        <button
+          *ngFor="let page of getPageNumbers()"
+          class="btn-page"
+          [class.active]="page === currentPageValue"
+          (click)="goToPage(page)">
+          {{ page + 1 }}
+        </button>
+      </div>
+
+      <button class="btn-page" [class.disabled]="!hasNextPage()" (click)="nextPage()">
+        Suivant
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 6L15 12L9 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de création/modification -->
+<div class="modal-overlay" *ngIf="showModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">{{ isEditing ? 'Modifier la réponse' : 'Nouvelle réponse' }}</h2>
+      <button class="modal-close" (click)="closeModal()">&times;</button>
+    </div>
+
+    <form class="modal-body" (ngSubmit)="saveAnswer()" #answerForm="ngForm">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Question associée *</label>
+          <select class="form-select" [(ngModel)]="currentAnswer.questionId" name="questionId" required>
+            <option value="">Sélectionner une question</option>
+            <option *ngFor="let question of questions()" [value]="question.id">
+              {{ question.questionText | slice:0:60 }}{{ (question.questionText?.length || 0) > 60 ? '...' : '' }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Texte de la réponse *</label>
+          <textarea
+            class="form-textarea"
+            [(ngModel)]="currentAnswer.answerText"
+            name="answerText"
+            placeholder="Saisir le texte de la réponse..."
+            required
+            rows="3">
+          </textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Est correcte *</label>
+          <div class="radio-group">
+            <label class="radio-label">
+              <input type="radio" [(ngModel)]="currentAnswer.isCorrect" name="isCorrect" [value]="true" required />
+              <span class="radio-text">Correcte</span>
+            </label>
+            <label class="radio-label">
+              <input type="radio" [(ngModel)]="currentAnswer.isCorrect" name="isCorrect" [value]="false" required />
+              <span class="radio-text">Incorrecte</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Ordre d'affichage</label>
+          <input
+            type="number"
+            class="form-input"
+            [(ngModel)]="currentAnswer.displayOrder"
+            name="displayOrder"
+            placeholder="1"
+            min="1"
+          />
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" (click)="closeModal()">Annuler</button>
+        <button type="submit" class="btn-primary" [disabled]="!answerForm.valid">
+          {{ isEditing ? 'Modifier' : 'Créer' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal-overlay" *ngIf="showDeleteModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">Confirmer la suppression</h2>
+      <button class="modal-close" (click)="closeDeleteModal()">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      <p>Êtes-vous certain de vouloir supprimer cette réponse ?</p>
+      <div class="user-info" *ngIf="currentAnswer">
+        <div class="user-avatar">
+          {{ currentAnswer.answerText?.[0]?.toUpperCase() || '?' }}
+        </div>
+        <div class="user-details">
+          <strong>{{ currentAnswer.answerText | slice:0:50 }}{{ getCurrentAnswerTextLength() > 50 ? '...' : '' }}</strong>
+          <span class="user-pseudo" *ngIf="getCurrentQuestionText()">
+            {{ getCurrentQuestionText() | slice:0:40 }}{{ getCurrentQuestionText()!.length > 40 ? '...' : '' }}
+          </span>
+        </div>
+      </div>
+      <div class="warning-message">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 9V13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M12 17H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M10.29 3.86L1.82 18A2 2 0 0 0 3.55 21H20.45A2 2 0 0 0 22.18 18L13.71 3.86A2 2 0 0 0 10.29 3.86Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Cette action est définitive et ne peut pas être annulée.
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeDeleteModal()">Annuler</button>
+      <button class="btn-danger" (click)="confirmDelete()">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de restauration -->
+<div class="modal-overlay" *ngIf="showRestoreModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">Confirmer la restauration</h2>
+      <button class="modal-close" (click)="closeRestoreModal()">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      <p>Êtes-vous certain de vouloir restaurer cette réponse ?</p>
+      <div class="user-info" *ngIf="currentAnswer">
+        <div class="user-avatar">
+          {{ currentAnswer.answerText?.[0]?.toUpperCase() || '?' }}
+        </div>
+        <div class="user-details">
+          <strong>{{ currentAnswer.answerText | slice:0:50 }}{{ getCurrentAnswerTextLength() > 50 ? '...' : '' }}</strong>
+          <span class="user-pseudo" *ngIf="getCurrentQuestionText()">
+            {{ getCurrentQuestionText() | slice:0:40 }}{{ getCurrentQuestionText()!.length > 40 ? '...' : '' }}
+          </span>
+        </div>
+      </div>
+      <div class="success-message">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 12l2 2 4-4m6-2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        La réponse sera réactivée et redeviendra visible dans la liste.
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeRestoreModal()">Annuler</button>
+      <button class="btn-success" (click)="confirmRestore()">Restaurer</button>
+    </div>
+  </div>
+</div>

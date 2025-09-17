@@ -120,6 +120,16 @@ public class DepartmentsController {
         return response;
     }
 
+    @RequestMapping(value="/checkAssociatedSpecialities",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
+    public Response<DepartmentsDto> checkAssociatedSpecialities(@RequestBody Request<DepartmentsDto> request) throws Exception{
+    	log.info("start method /departments/checkAssociatedSpecialities");
+    	String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
+    	Locale locale = Locale.of(languageID, "");
+        Response<DepartmentsDto> response = departmentsBusiness.checkAssociatedSpecialities(request, locale);
+		log.info("end method /departments/checkAssociatedSpecialities");
+        return response;
+    }
+
     @RequestMapping(value = "/custom", method = RequestMethod.POST, consumes = {
 	   "application/json" }, produces = { "application/json" })
 	 public Response<DepartmentsDto> custom(@RequestBody Request<DepartmentsDto> request) throws Exception{

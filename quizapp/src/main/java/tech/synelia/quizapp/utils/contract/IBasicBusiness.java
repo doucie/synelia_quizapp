@@ -46,7 +46,7 @@ public interface IBasicBusiness<T, K> {
 	 * @return K
 	 * 
 	 */
-	K delete(T request, Locale locale) throws JsonProcessingException;
+	K delete(T request, Locale locale) throws ParseException, JsonProcessingException;
 
 	/**
 	 * get a List of Object by using T as criteria object.

@@ -10,6 +10,7 @@ package tech.synelia.quizapp.utils.dto;
 
 import java.util.Date;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Date;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -41,6 +42,11 @@ public class DepartmentsDto extends _DepartmentsDto implements Cloneable{
     private Integer    updatedBy            ;
     private Boolean    isDeleted            ;
     private String     searchString         ;
+    
+    // Champs pour la suppression en cascade
+    private Boolean    cascadeDelete        ; // Indique si on veut supprimer en cascade
+    private Integer    associatedSpecialitiesCount; // Nombre de spécialités associées
+    private List<String> associatedSpecialitiesNames; // Noms des spécialités associées
 
     //----------------------------------------------------------------------
     // ENTITY LINKS FIELD ( RELATIONSHIP )

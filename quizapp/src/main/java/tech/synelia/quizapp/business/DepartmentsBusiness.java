@@ -246,12 +246,12 @@ public class DepartmentsBusiness implements IBasicBusiness<Request<DepartmentsDt
 	 * @return response
 	 * 
 	 */
-	@Override
-	public Response<DepartmentsDto> delete(Request<DepartmentsDto> request, Locale locale) throws JsonProcessingException {
+	public Response<DepartmentsDto> delete(Request<DepartmentsDto> request, Locale locale) throws ParseException, JsonProcessingException {
 		log.info("----begin delete Departments-----");
 		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
 		Response<DepartmentsDto> response = new Response<DepartmentsDto>();
 		List<Departments>        items    = new ArrayList<Departments>();
+		List<DepartmentsDto>     notDeletedItems = new ArrayList<DepartmentsDto>();
 			
 		for (DepartmentsDto dto : request.getDatas()) {
 			// Definir les parametres obligatoires
@@ -269,17 +269,41 @@ public class DepartmentsBusiness implements IBasicBusiness<Request<DepartmentsDt
 			}
 
 			// -----------------------------------------------------------------------
-			// ----------- CHECK IF DATA IS USED
+			// ----------- CHECK IF DATA IS USED AND HANDLE CASCADE DELETE
 			// -----------------------------------------------------------------------
 
 			// specialities
 			List<Specialities> listOfSpecialities = specialitiesRepository.findByDepartmentId(existingEntity.getId(), false);
 			if (listOfSpecialities != null && !listOfSpecialities.isEmpty()){
-				throw new InternalErrorException(functionalError.DATA_NOT_DELETABLE("(" + listOfSpecialities.size() + ")", locale));
+				// Si cascadeDelete est true, on supprime aussi les spécialités
+				if (dto.getCascadeDelete() != null && dto.getCascadeDelete()) {
+					log.info("Suppression en cascade activée - suppression de " + listOfSpecialities.size() + " spécialités associées");
+					// Marquer toutes les spécialités comme supprimées
+					for (Specialities speciality : listOfSpecialities) {
+						speciality.setIsDeleted(true);
+						speciality.setUpdatedAt(Utilities.getCurrentDate());
+						speciality.setUpdatedBy(request.getUser());
+					}
+					specialitiesRepository.saveAll(listOfSpecialities);
+					log.info("Spécialités supprimées avec succès");
+				} else {
+					// Sinon, retourner les informations sur les spécialités associées
+					dto.setAssociatedSpecialitiesCount(listOfSpecialities.size());
+					List<String> specialityNames = new ArrayList<>();
+					for (Specialities speciality : listOfSpecialities) {
+						specialityNames.add(speciality.getSpecialityName());
+					}
+					dto.setAssociatedSpecialitiesNames(specialityNames);
+					
+					// Ajouter à la liste des éléments non supprimés
+					notDeletedItems.add(dto);
+					continue;
+				}
 			}
 
-
 			existingEntity.setIsDeleted(true);
+			existingEntity.setUpdatedAt(Utilities.getCurrentDate());
+			existingEntity.setUpdatedBy(request.getUser());
 			items.add(existingEntity);
 		}
 
@@ -294,7 +318,28 @@ public class DepartmentsBusiness implements IBasicBusiness<Request<DepartmentsDt
 			response.setHasError(false);
 			response.setHttpCode(HttpStatus.OK.value());
 			response.setStatus(status);
+			response.setItems(DepartmentsTransformer.INSTANCE.toDtos(items));
 		}
+		
+		// Si certains éléments n'ont pas pu être supprimés, les retourner aussi
+		if (!notDeletedItems.isEmpty()) {
+			if (response.getItems() == null) {
+				response.setItems(notDeletedItems);
+			} else {
+				response.getItems().addAll(notDeletedItems);
+			}
+			
+			// Modifier le statut si certains éléments n'ont pas été supprimés
+			if (response.getStatus() == null) {
+				Status status = new Status();
+				status.setCode(StatusCode.SUCCESS);
+				status.setMessage("Certains départements n'ont pas pu être supprimés car ils contiennent des spécialités.");
+				response.setStatus(status);
+			} else {
+				response.getStatus().setMessage(response.getStatus().getMessage() + " Certains départements n'ont pas pu être supprimés car ils contiennent des spécialités.");
+			}
+		}
+		
 		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
 		log.info("----end delete Departments-----");
 		return response;
@@ -547,6 +592,65 @@ public class DepartmentsBusiness implements IBasicBusiness<Request<DepartmentsDt
 
 		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
 		log.info("----end updateAll Departments-----");
+		return response;
+	}
+
+	/**
+	 * Check associated specialities for a department (without deleting it)
+	 * Used by frontend to determine which modal to show
+	 * @param request
+	 * @param locale
+	 * @return response with associated specialities info
+	 */
+	public Response<DepartmentsDto> checkAssociatedSpecialities(Request<DepartmentsDto> request, Locale locale) throws JsonProcessingException {
+		log.info("----begin checkAssociatedSpecialities-----");
+		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
+		Response<DepartmentsDto> response = new Response<DepartmentsDto>();
+		List<DepartmentsDto> resultItems = new ArrayList<DepartmentsDto>();
+
+		for (DepartmentsDto dto : request.getDatas()) {
+			// Definir les parametres obligatoires
+			Map<String, java.lang.Object> fieldsToVerify = new HashMap<String, java.lang.Object>();
+			fieldsToVerify.put("id", dto.getId());
+			if (!Validate.RequiredValue(fieldsToVerify).isGood()) {
+				throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
+			}
+
+			// Verifier si la departments existe
+			Departments existingEntity = null;
+			existingEntity = departmentsRepository.findOne(dto.getId(), false);
+			if (existingEntity == null) {
+				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("departments -> " + dto.getId(), locale));
+			}
+
+			// Compter les spécialités associées (sans les supprimer)
+			List<Specialities> listOfSpecialities = specialitiesRepository.findByDepartmentId(existingEntity.getId(), false);
+			if (listOfSpecialities != null && !listOfSpecialities.isEmpty()) {
+				dto.setAssociatedSpecialitiesCount(listOfSpecialities.size());
+				List<String> specialityNames = new ArrayList<>();
+				for (Specialities speciality : listOfSpecialities) {
+					specialityNames.add(speciality.getSpecialityName());
+				}
+				dto.setAssociatedSpecialitiesNames(specialityNames);
+			} else {
+				dto.setAssociatedSpecialitiesCount(0);
+				dto.setAssociatedSpecialitiesNames(new ArrayList<>());
+			}
+
+			resultItems.add(dto);
+		}
+
+		Status status = new Status();
+		status.setCode(StatusCode.SUCCESS);
+		status.setMessage(StatusMessage.SUCCESS);
+
+		response.setHasError(false);
+		response.setHttpCode(HttpStatus.OK.value());
+		response.setStatus(status);
+		response.setItems(resultItems);
+
+		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
+		log.info("----end checkAssociatedSpecialities-----");
 		return response;
 	}
 }

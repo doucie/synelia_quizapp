@@ -58,6 +58,7 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
   showModal = false;
   showDeleteModal = false;
   showRestoreModal = false;
+  showCascadeDeleteModal = false; // Modal pour confirmation de suppression en cascade
   isEditing = false;
 
   // Données du formulaire
@@ -66,6 +67,10 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
     nom: '',
     description: ''
   };
+
+  // Informations sur les spécialités associées (pour la confirmation en cascade)
+  associatedSpecialitiesCount = 0;
+  associatedSpecialitiesNames: string[] = [];
 
   // Critères de recherche avancée
   advancedCriteria: DepartmentSearchCriteria = {
@@ -543,7 +548,49 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
   deleteDepartment(department: Department) {
     console.log('🗑️ Ouverture modal suppression département:', department);
     this.currentDepartment = department;
-    this.showDeleteModal = true;
+
+    // D'abord, vérifier si le département a des spécialités associées
+    this.checkAssociatedSpecialities(department.id);
+  }
+
+  /**
+   * Vérifie les spécialités associées à un département
+   */
+  private checkAssociatedSpecialities(departmentId: number) {
+    // Faire un appel de test pour voir les spécialités associées
+    this.isLoading.set(true);
+
+    // Utiliser la nouvelle méthode qui ne supprime pas le département
+    this.departmentService.checkAssociatedSpecialities(departmentId).subscribe({
+      next: (response) => {
+        console.log('🔍 Vérification des spécialités associées:', response);
+
+        // Vérifier si la réponse contient les informations sur les spécialités associées
+        if (response && response.associatedSpecialitiesCount && response.associatedSpecialitiesCount > 0) {
+          // Le département a des spécialités associées - afficher le modal cascade
+          this.associatedSpecialitiesCount = response.associatedSpecialitiesCount;
+          this.associatedSpecialitiesNames = response.associatedSpecialitiesNames || [];
+          this.showCascadeDeleteModal = true;
+        } else {
+          // Pas de spécialités associées - afficher le modal de suppression simple
+          this.associatedSpecialitiesCount = 0;
+          this.associatedSpecialitiesNames = [];
+          this.showDeleteModal = true;
+        }
+
+        this.isLoading.set(false);
+      },
+      error: (error) => {
+        console.error('❌ Erreur lors de la vérification des spécialités associées:', error);
+
+        // En cas d'erreur, on considère qu'il pourrait y avoir des spécialités
+        // et on affiche le modal de suppression en cascade
+        this.associatedSpecialitiesCount = 0;
+        this.associatedSpecialitiesNames = [];
+        this.showCascadeDeleteModal = true;
+        this.isLoading.set(false);
+      }
+    });
   }
 
   /**
@@ -557,6 +604,65 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
       nom: '',
       description: ''
     };
+  }
+
+  /**
+   * Ferme le modal de suppression en cascade
+   */
+  closeCascadeDeleteModal() {
+    console.log('❌ Fermeture modal suppression en cascade');
+    this.showCascadeDeleteModal = false;
+    this.associatedSpecialitiesCount = 0;
+    this.associatedSpecialitiesNames = [];
+    this.currentDepartment = {
+      id: 0,
+      nom: '',
+      description: ''
+    };
+  }
+
+  /**
+   * Confirme la suppression en cascade (département + spécialités)
+   */
+  confirmCascadeDelete() {
+    console.log('✅ Confirmation suppression en cascade département:', this.currentDepartment);
+
+    if (!this.currentDepartment || !this.currentDepartment.id) {
+      console.error('❌ Aucun département sélectionné pour la suppression');
+      this.notificationService.error('Erreur', 'Aucun département sélectionné');
+      return;
+    }
+
+    // Désactiver le bouton pendant la suppression
+    this.isLoading.set(true);
+
+    this.departmentService.deleteWithCascade(this.currentDepartment.id).subscribe({
+      next: (response) => {
+        console.log('✅ Département et spécialités supprimés avec succès:', response);
+        this.notificationService.success('Succès', `Département et ${this.associatedSpecialitiesCount} spécialité(s) supprimé(s) avec succès`);
+        this.closeCascadeDeleteModal();
+        this.loadDepartments();
+      },
+      error: (error) => {
+        console.error('❌ Erreur lors de la suppression en cascade:', error);
+
+        // Extract the specific error message from backend response
+        let errorMessage = 'Erreur lors de la suppression en cascade';
+        if (error?.error?.status?.message) {
+          errorMessage = error.error.status.message;
+        } else if (error?.error?.message) {
+          errorMessage = error.error.message;
+        } else if (error?.message) {
+          errorMessage = error.message;
+        }
+
+        this.notificationService.error('Erreur', errorMessage);
+        this.isLoading.set(false);
+      },
+      complete: () => {
+        this.isLoading.set(false);
+      }
+    });
   }
 
   /**

@@ -2435,3 +2435,65 @@
     }
   }
 }
+
+/* Styles pour la liste des spécialités dans le modal de suppression en cascade */
+.specialities-list {
+  margin-top: var(--spacing-lg);
+
+  h4 {
+    margin: 0 0 var(--spacing-sm) 0;
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+  }
+
+  .specialities-scroll-container {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--border-radius-md);
+    background: var(--surface-subtle);
+    padding: var(--spacing-sm);
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+
+      li {
+        padding: var(--spacing-xs) var(--spacing-sm);
+        border-bottom: 1px solid var(--border-subtle);
+        color: var(--text-secondary);
+        font-size: var(--font-size-sm);
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        &:hover {
+          background: var(--surface);
+          color: var(--text-primary);
+        }
+      }
+    }
+
+    /* Style de la scrollbar */
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: var(--surface-subtle);
+      border-radius: var(--border-radius-sm);
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: var(--border-radius-sm);
+
+      &:hover {
+        background: var(--border-hover);
+      }
+    }
+  }
+}

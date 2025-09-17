@@ -15,6 +15,11 @@ export interface Department {
   dateCreation?: string;  // Backend utilise createdAt
   dateModification?: string; // Backend utilise updatedAt
 
+  // Champs pour la suppression en cascade
+  cascadeDelete?: boolean; // Indique si on veut supprimer en cascade
+  associatedSpecialitiesCount?: number; // Nombre de spécialités associées
+  associatedSpecialitiesNames?: string[]; // Noms des spécialités associées
+
   // Champs du backend pour mapping
   name?: string;
   createdAt?: string;
@@ -314,25 +319,65 @@ export class DepartmentService {
   }
 
   /**
-   * Supprime un département
-   * @param id l'identifiant du département à supprimer
-   * @returns Observable de la confirmation de suppression
+   * Vérifie les spécialités associées à un département (sans le supprimer)
+   * @param id l'identifiant du département à vérifier
+   * @returns Observable avec les informations sur les spécialités associées
    */
-  delete(id: number): Observable<any> {
+  checkAssociatedSpecialities(id: number): Observable<Department> {
     // Récupération de l'ID utilisateur depuis localStorage ou valeur par défaut
     const currentUserId = localStorage.getItem('user')?.includes('id') ?
       JSON.parse(localStorage.getItem('user')!)?.id?.toString() : '1';
 
     const request = {
       user: currentUserId,
-      datas: [{ id: id }]  // Format avec datas au pluriel comme pour create
+      datas: [{ id: id }]
+    };
+
+    console.log('🔍 Check associated specialities request payload:', request);
+
+    return this.http.post<any>(`${this.apiUrl}/checkAssociatedSpecialities`, request).pipe(
+      map(response => {
+        console.log('✅ Associated specialities checked successfully:', response);
+        return response.items?.[0] || response;
+      }),
+      catchError(error => {
+        console.error('❌ Error checking associated specialities:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Supprime un département
+   * @param id l'identifiant du département à supprimer
+   * @param cascadeDelete indique si on veut supprimer en cascade (défaut: false)
+   * @returns Observable de la confirmation de suppression
+   */
+  delete(id: number, cascadeDelete: boolean = false): Observable<any> {
+    // Récupération de l'ID utilisateur depuis localStorage ou valeur par défaut
+    const currentUserId = localStorage.getItem('user')?.includes('id') ?
+      JSON.parse(localStorage.getItem('user')!)?.id?.toString() : '1';
+
+    const request = {
+      user: currentUserId,
+      datas: [{ id: id, cascadeDelete: cascadeDelete }]  // Format avec datas au pluriel comme pour create
     };
 
     console.log('🗑️ Delete department request payload:', request);
     console.log('🗑️ Delete request datas:', request.datas);
     console.log('🗑️ Delete request user:', request.user);
+    console.log('🗑️ Cascade delete:', cascadeDelete);
 
     return this.http.post<any>(`${this.apiUrl}/delete`, request);
+  }
+
+  /**
+   * Supprime un département avec toutes ses spécialités associées
+   * @param id l'identifiant du département à supprimer
+   * @returns Observable de la confirmation de suppression
+   */
+  deleteWithCascade(id: number): Observable<any> {
+    return this.delete(id, true);
   }
 
   /**
