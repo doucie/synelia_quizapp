@@ -843,4 +843,45 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
       this.goToPage(this.currentPage() + 1);
     }
   }
+
+  /**
+   * Convertit une date française (jj/mm/aaaa) en objet Date
+   */
+  parseFrenchDate(dateString: string): Date | null {
+    if (!dateString) return null;
+
+    // Format attendu: "16/09/2025" ou "16/09/2025 14:30"
+    const parts = dateString.split(' ');
+    const datePart = parts[0]; // "16/09/2025"
+    const timePart = parts[1] || '00:00'; // "14:30" ou "00:00" par défaut
+
+    const [day, month, year] = datePart.split('/').map(Number);
+    const [hours, minutes] = timePart.split(':').map(Number);
+
+    // Validation basique
+    if (isNaN(day) || isNaN(month) || isNaN(year) || isNaN(hours) || isNaN(minutes)) {
+      return null;
+    }
+
+    // Créer la date (les mois commencent à 0 en JavaScript)
+    return new Date(year, month - 1, day, hours, minutes);
+  }
+
+  /**
+   * Formate la date de création pour l'affichage
+   */
+  formatCreationDate(user: User): string {
+    if (!user.dateCreation) return '-';
+
+    const date = this.parseFrenchDate(user.dateCreation);
+    if (!date) return user.dateCreation; // Retourner la chaîne originale si parsing échoue
+
+    return date.toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
 }

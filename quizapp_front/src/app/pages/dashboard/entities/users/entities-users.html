@@ -297,6 +297,7 @@
             <th>Pseudo</th>
             <th>Rôle</th>
             <th>Statut</th>
+            <th>Créé le</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -331,6 +332,14 @@
                 <span class="status-indicator"></span>
                 {{ user.isOnline ? 'En ligne' : 'Hors ligne' }}
               </button>
+            </td>
+            <td>
+              <span class="cell-date" *ngIf="user.dateCreation; else noDate">
+                {{ formatCreationDate(user) }}
+              </span>
+              <ng-template #noDate>
+                <span style="color: var(--text-secondary);">-</span>
+              </ng-template>
             </td>
             <td class="actions-cell">
               <div class="actions-menu">
