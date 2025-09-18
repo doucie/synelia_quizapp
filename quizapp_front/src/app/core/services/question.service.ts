@@ -54,7 +54,7 @@ export interface PagedResponse<T> {
 })
 export class QuestionService {
 
-  private readonly apiUrl = `${environment.apiUrl}/questions`;
+  private readonly apiUrl = '/api/questions';
 
   constructor(private http: HttpClient) {
     console.log('🚀 Initialisation QuestionService');

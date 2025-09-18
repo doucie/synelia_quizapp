@@ -210,7 +210,7 @@
 
     <!-- État vide -->
     <div *ngIf="!isLoading() && questions().length === 0" class="empty-state">
-      <div class="empty-icon">
+      <div class="empty-state-icon">
         <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2"/>
@@ -220,107 +220,49 @@
         </svg>
       </div>
       <h3>Aucune question trouvée</h3>
-      <p>Il n'y a pas encore de questions dans le système.</p>
-      <button class="btn-primary" (click)="createQuestion()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 5V19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        Créer la première question
-      </button>
+      <p>Aucune question ne correspond aux critères de recherche actuels.</p>
     </div>
 
-    <!-- Table des questions -->
+    <!-- Tableau de données professionnel -->
     <div *ngIf="!isLoading() && questions().length > 0" class="data-table-container">
-      <!-- Pagination supérieure -->
-      <div class="pagination-container">
-        <div class="pagination-info">
-          <div class="page-size-selector">
-            <label>Afficher</label>
-            <select class="page-size-select" [(ngModel)]="pageSize" (ngModelChange)="onPageSizeChange($event)">
-              <option *ngFor="let size of pageSizeOptions" [value]="size">{{ size }}</option>
-            </select>
-            <span>éléments par page</span>
-          </div>
-          <div class="page-info">
-            <span>{{ paginationStartIndex }}-{{ paginationEndIndex }} sur {{ totalElementsValue }}</span>
-          </div>
-        </div>
-        <div class="pagination-controls">
-          <button class="pagination-btn" [class.disabled]="!hasPreviousPage()" (click)="previousPage()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            Précédent
-          </button>
-
-          <div class="page-numbers">
-            <button
-              *ngFor="let page of getPageNumbers()"
-              class="page-number-btn"
-              [class.active]="page === currentPage()"
-              (click)="goToPage(page)">
-              {{ page + 1 }}
-            </button>
-          </div>
-
-          <button class="pagination-btn" [class.disabled]="!hasNextPage()" (click)="nextPage()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            Suivant
-          </button>
-        </div>
-      </div>
-
-      <!-- Table -->
-      <div class="questions-table-container">
-        <table class="questions-table">
-          <thead>
-            <tr>
-              <th class="col-id">ID</th>
-              <th class="col-text">Question</th>
-              <th class="col-speciality">Spécialité</th>
-              <th class="col-type">Type</th>
-              <th class="col-difficulty">Difficulté</th>
-              <th class="col-status">Statut</th>
-              <th class="col-actions">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let question of questions(); trackBy: trackByQuestionId"
-                [class.deleted-row]="question.isDeleted">
-              <td class="col-id">{{ question.id }}</td>
-              <td class="col-text">
-                <div class="question-text" [title]="question.questionText">
-                  {{ question.questionText | slice:0:100 }}{{ getQuestionTextLength(question) > 100 ? '...' : '' }}
-                </div>
-              </td>
-              <td class="col-speciality">{{ question.specialityName || 'N/A' }}</td>
-              <td class="col-type">
-                <span class="type-badge" [class]="'type-' + question.questionType?.toLowerCase()">
-                  {{ getQuestionTypeLabel(question.questionType) }}
-                </span>
-              </td>
-              <td class="col-difficulty">
-                <span class="difficulty-badge" [class]="'difficulty-' + question.difficultyLevel?.toLowerCase()">
-                  {{ getDifficultyLabel(question.difficultyLevel) }}
-                </span>
-              </td>
-              <td class="col-status">
-                <span class="status-badge" [class]="question.isDeleted ? 'deleted' : 'active'">
-                  {{ question.isDeleted ? 'Supprimé' : 'Actif' }}
-                </span>
-              </td>
-              <td class="col-actions">
-                <div class="action-buttons">
-                  <button class="btn-icon" (click)="editQuestion(question)" title="Modifier">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Question</th>
+            <th>Spécialité</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let question of questions(); trackBy: trackByQuestionId"
+              [class.question-deleted]="question.isDeleted">
+            <td>
+              <span class="cell-id">#{{ question.id }}</span>
+            </td>
+            <td>
+              <span class="cell-name">{{ question.questionText | slice:0:50 }}{{ question.questionText && question.questionText.length > 50 ? '...' : '' }}</span>
+            </td>
+            <td>
+              <span class="cell-description">{{ question.specialityName || '-' }}</span>
+            </td>
+            <td class="actions-cell">
+              <div class="actions-menu">
+                <!-- Boutons normaux pour les questions non supprimées -->
+                <ng-container *ngIf="!question.isDeleted">
+                  <button
+                    class="action-btn primary"
+                    (click)="editQuestion(question)"
+                    title="Modifier la question">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                      <path d="M18.5 2.5C18.8978 2.10217 19.4374 1.87868 20 1.87868C20.5626 1.87868 21.1022 2.10217 21.5 2.5C21.8978 2.89782 22.1213 3.43739 22.1213 4C22.1213 4.56261 21.8978 5.10217 21.5 5.5L12 15L8 16L9 12L18.5 2.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M12 20H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M16.5 3.5A2.12 2.12 0 0 1 19 6L7 18L3 19L4 15L16.5 3.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                   </button>
-                  <button class="btn-icon" (click)="deleteQuestion(question)" title="Supprimer">
+                  <button
+                    class="action-btn danger"
+                    (click)="deleteQuestion(question)"
+                    title="Supprimer la question">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                       <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -328,23 +270,27 @@
                       <path d="M14 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                   </button>
+                </ng-container>
+
+                <!-- Bouton de restauration pour les questions supprimées -->
+                <ng-container *ngIf="question.isDeleted">
                   <button
-                    *ngIf="question.isDeleted"
-                    class="btn-icon"
-                    (click)="restoreQuestion(question)"
-                    title="Restaurer">
+                    class="action-btn success"
+                    (click)="restoreQuestion(question); $event.stopPropagation()"
+                    title="Restaurer la question"
+                    style="z-index: 10; position: relative;">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M3 12C3 16.9706 7.02944 21 12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3C9.5 3 7.5 4 6 5.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                      <path d="M8 12L12 8L16 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                      <path d="M12 8V16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M3 12A9 9 0 1 0 12 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M12 3L8 7L12 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                   </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+                </ng-container>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
       <!-- Pagination inférieure -->
       <div class="pagination-container">
@@ -380,20 +326,19 @@
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Modal de création/édition -->
-  <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h3>{{ isEditing ? 'Modifier la question' : 'Nouvelle question' }}</h3>
-        <button class="btn-close" (click)="closeModal()">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
-      </div>
+    <!-- Modal de création/édition -->
+    <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>{{ isEditing ? 'Modifier la question' : 'Nouvelle question' }}</h3>
+          <button class="btn-close" (click)="closeModal()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
 
       <div class="modal-body">
         <form class="question-form">
