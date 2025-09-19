@@ -87,7 +87,7 @@ export interface PagedResponse<T> {
   providedIn: 'root'
 })
 export class UserService {
-  private apiUrl = `${environment.apiUrl}/user`;
+  private apiUrl = '/user';
 
   constructor(
     private http: HttpClient

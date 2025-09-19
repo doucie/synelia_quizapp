@@ -69,7 +69,7 @@ export interface PagedResponse<T> {
   providedIn: 'root'
 })
 export class DepartmentService {
-  private apiUrl = `${environment.apiUrl}/departments`;
+  private apiUrl = '/departments';
 
   constructor(
     private http: HttpClient

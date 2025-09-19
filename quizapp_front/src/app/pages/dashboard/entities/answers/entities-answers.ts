@@ -41,7 +41,6 @@ export class EntitiesAnswersComponent implements OnInit, OnDestroy {
     idA: '',
     answerText: '',
     questionId: undefined,
-    isCorrect: undefined,
     search_string: ''
   };
 
@@ -69,7 +68,6 @@ export class EntitiesAnswersComponent implements OnInit, OnDestroy {
     id: 0,
     answerText: '',
     questionId: undefined,
-    isCorrect: false,
     displayOrder: 1
   };
 
@@ -79,7 +77,6 @@ export class EntitiesAnswersComponent implements OnInit, OnDestroy {
     idA: '',
     answerText: '',
     questionId: undefined,
-    isCorrect: undefined,
     isDeleted: undefined,
     search_string: ''
   };
@@ -231,7 +228,6 @@ export class EntitiesAnswersComponent implements OnInit, OnDestroy {
     this.searchCriteria.idA = '';
     this.searchCriteria.answerText = '';
     this.searchCriteria.questionId = undefined;
-    this.searchCriteria.isCorrect = undefined;
     this.searchCriteria.isDeleted = undefined;
 
     // Utiliser search_string pour la recherche globale
@@ -302,7 +298,6 @@ export class EntitiesAnswersComponent implements OnInit, OnDestroy {
       idA: '',
       answerText: '',
       questionId: undefined,
-      isCorrect: undefined,
       search_string: ''
     };
     this.quickSearch = '';
@@ -322,7 +317,6 @@ export class EntitiesAnswersComponent implements OnInit, OnDestroy {
       idA: '',
       answerText: '',
       questionId: undefined,
-      isCorrect: undefined,
       isDeleted: undefined,
       search_string: ''
     };
@@ -439,7 +433,6 @@ export class EntitiesAnswersComponent implements OnInit, OnDestroy {
       id: 0,
       answerText: '',
       questionId: undefined,
-      isCorrect: false,
       displayOrder: 1
     };
     this.showModal = true;
@@ -465,7 +458,6 @@ export class EntitiesAnswersComponent implements OnInit, OnDestroy {
       id: 0,
       answerText: '',
       questionId: undefined,
-      isCorrect: false,
       displayOrder: 1
     };
   }
@@ -485,12 +477,6 @@ export class EntitiesAnswersComponent implements OnInit, OnDestroy {
     if (!this.currentAnswer.questionId) {
       console.error('La question associée est requise');
       this.notificationService.error('Erreur de validation', 'La question associée est requise');
-      return;
-    }
-
-    if (this.currentAnswer.isCorrect === undefined) {
-      console.error('Le statut correct/incorrect est requis');
-      this.notificationService.error('Erreur de validation', 'Le statut correct/incorrect est requis');
       return;
     }
 
@@ -564,7 +550,6 @@ export class EntitiesAnswersComponent implements OnInit, OnDestroy {
       id: 0,
       answerText: '',
       questionId: undefined,
-      isCorrect: false,
       displayOrder: 1
     };
   }
@@ -628,7 +613,6 @@ export class EntitiesAnswersComponent implements OnInit, OnDestroy {
       id: 0,
       answerText: '',
       questionId: undefined,
-      isCorrect: false,
       displayOrder: 1
     };
   }
@@ -736,19 +720,5 @@ export class EntitiesAnswersComponent implements OnInit, OnDestroy {
    */
   get paginationEndIndex(): number {
     return Math.min((this.currentPageValue + 1) * this.pageSizeValue, this.totalElementsValue);
-  }
-
-  /**
-   * Obtient le nombre de réponses correctes
-   */
-  getCorrectAnswersCount(): number {
-    return this.answers().filter(answer => answer.isCorrect).length;
-  }
-
-  /**
-   * Obtient le nombre de réponses incorrectes
-   */
-  getIncorrectAnswersCount(): number {
-    return this.answers().filter(answer => !answer.isCorrect).length;
   }
 }

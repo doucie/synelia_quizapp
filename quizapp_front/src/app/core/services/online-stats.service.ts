@@ -28,7 +28,7 @@ export interface OnlineStats {
   providedIn: 'root'
 })
 export class OnlineStatsService {
-  private apiUrl = `${environment.apiUrl}/user`;
+  private apiUrl = '/user';
   private readonly TIMEOUT_MS = 2000; // 2 secondes max
   private readonly CACHE_DURATION = 30000; // Cache de 30 secondes
   

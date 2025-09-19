@@ -92,7 +92,7 @@ export class OnlineStatusService implements OnDestroy {
         console.log('🚪 Détection fermeture navigateur - marquage hors ligne');
         // Envoi synchrone pour s'assurer que la requête est envoyée avant la fermeture
         navigator.sendBeacon(
-          `http://localhost:8081/api/user/${this.currentUserId}/online-status?isOnline=false`,
+          `http://localhost:8081/user/${this.currentUserId}/online-status?isOnline=false`,
           ''
         );
       }
@@ -103,7 +103,7 @@ export class OnlineStatusService implements OnDestroy {
       if (this.currentUserId) {
         console.log('🚪 Détection déchargement page - marquage hors ligne');
         navigator.sendBeacon(
-          `http://localhost:8081/api/user/${this.currentUserId}/online-status?isOnline=false`,
+          `http://localhost:8081/user/${this.currentUserId}/online-status?isOnline=false`,
           ''
         );
       }

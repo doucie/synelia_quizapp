@@ -54,7 +54,7 @@ export interface PagedResponse<T> {
 })
 export class QuestionService {
 
-  private readonly apiUrl = '/api/questions';
+  private readonly apiUrl = '/questions';
 
   constructor(private http: HttpClient) {
     console.log('🚀 Initialisation QuestionService');
@@ -269,8 +269,8 @@ export class QuestionService {
 
     return this.http.post<PagedResponse<Question>>(`${this.apiUrl}/getByCriteria`, requestBody).pipe(
       map(response => {
-        console.log('✅ Toutes les questions récupérées:', response.content.length);
-        return response.content;
+        console.log('✅ Toutes les questions récupérées:', response?.content?.length || 0);
+        return response?.content || [];
       })
     );
   }

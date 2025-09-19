@@ -9,7 +9,6 @@ export interface Answer {
   answerText?: string;
   questionId?: number;
   questionText?: string;
-  isCorrect?: boolean;
   displayOrder?: number;
   isDeleted?: boolean;
   dateCreation?: string;
@@ -23,7 +22,6 @@ export interface AnswerSearchCriteria {
   idA?: string;
   answerText?: string;
   questionId?: number;
-  isCorrect?: boolean;
   isDeleted?: boolean;
 
   // Recherche générale
@@ -51,7 +49,7 @@ export interface PagedResponse<T> {
 })
 export class AnswerService {
 
-  private readonly apiUrl = `${environment.apiUrl}/answers`;
+  private readonly apiUrl = '/answers';
 
   constructor(private http: HttpClient) {
     console.log('🚀 Initialisation AnswerService');
@@ -64,37 +62,37 @@ export class AnswerService {
   getAllAnswersByCriteria(criteria: AnswerSearchCriteria): Observable<PagedResponse<Answer>> {
     console.log('📥 Récupération des réponses avec critères:', criteria);
 
-    let params = new HttpParams();
+    // Préparer le corps de la requête selon le format attendu par l'API backend
+    const requestBody = {
+      user: "1",
+      size: criteria.size || 10,
+      index: criteria.page || 0,
+      data: {
+        idDe: criteria.idDe,
+        idA: criteria.idA,
+        answerText: criteria.answerText,
+        questionId: criteria.questionId,
+        isDeleted: criteria.isDeleted,
+        search_string: criteria.search_string
+      }
+    };
 
-    // Ajouter les paramètres de recherche
-    if (criteria.idDe) params = params.set('idDe', criteria.idDe);
-    if (criteria.idA) params = params.set('idA', criteria.idA);
-    if (criteria.answerText) params = params.set('answerText', criteria.answerText);
-    if (criteria.questionId) params = params.set('questionId', criteria.questionId.toString());
-    if (criteria.isCorrect !== undefined) params = params.set('isCorrect', criteria.isCorrect.toString());
-    if (criteria.isDeleted !== undefined) params = params.set('isDeleted', criteria.isDeleted.toString());
-    if (criteria.search_string) params = params.set('search_string', criteria.search_string);
+    console.log('🔍 Corps de la requête:', JSON.stringify(requestBody, null, 2));
 
-    // Paramètres de pagination
-    if (criteria.size) params = params.set('size', criteria.size.toString());
-    if (criteria.page !== undefined) params = params.set('page', criteria.page.toString());
-
-    console.log('🔍 Paramètres HTTP:', params.toString());
-
-    return this.http.get<PagedResponse<Answer>>(this.apiUrl, { params }).pipe(
+    return this.http.post<PagedResponse<Answer>>(`${this.apiUrl}/getByCriteria`, requestBody).pipe(
       map((response: any) => {
         console.log('🔍 Raw API Response (ANSWERS):', response);
         console.log('🔍 Response keys:', Object.keys(response));
-        console.log('🔍 Response.content exists:', !!response.content);
-        console.log('🔍 Response.content length:', response.content?.length);
+        console.log('🔍 Response.items exists:', !!response.items);
+        console.log('🔍 Response.items length:', response.items?.length);
 
         // Transformer la réponse pour correspondre au format attendu par le frontend
-        if (!response || !response.content) {
+        if (!response || !response.items) {
           console.warn('⚠️ Erreur dans la réponse API ou aucune donnée');
           return {
             content: [],
             totalElements: 0,
-            totalPages: 0,
+            totalPages: 1,
             size: criteria.size || 10,
             number: criteria.page || 0,
             first: true,
@@ -104,12 +102,11 @@ export class AnswerService {
         }
 
         // Transformer les données pour correspondre au format attendu par le frontend
-        const answers = response.content.map((a: any) => ({
+        const answers = response.items.map((a: any) => ({
           id: a.id,
-          answerText: a.answerContent || a.answerText, // API peut retourner 'answerContent', frontend attend 'answerText'
+          answerText: a.answerContent || a.answerText, // API retourne 'answerContent', frontend attend 'answerText'
           questionId: a.questionId,
           questionText: a.questionText || `Question ${a.questionId}`, // Placeholder si pas fourni
-          isCorrect: a.isCorrect,
           displayOrder: a.displayOrder,
           isDeleted: a.isDeleted,
           dateCreation: a.createdAt || a.dateCreation,
@@ -121,13 +118,13 @@ export class AnswerService {
 
         return {
           content: answers,
-          totalElements: response.totalElements,
-          totalPages: response.totalPages,
-          size: response.size,
-          number: response.number,
-          first: response.first,
-          last: response.last,
-          empty: response.empty
+          totalElements: response.count || response.items.length,
+          totalPages: Math.ceil((response.count || response.items.length) / (criteria.size || 10)),
+          size: criteria.size || 10,
+          number: criteria.page || 0,
+          first: (criteria.page || 0) === 0,
+          last: (criteria.page || 0) >= Math.ceil((response.count || response.items.length) / (criteria.size || 10)) - 1,
+          empty: response.items.length === 0
         };
       })
     );
@@ -171,7 +168,6 @@ export class AnswerService {
     const answerData = {
       answerText: answer.answerText, // Frontend utilise 'answerText', API peut attendre 'answerContent'
       questionId: answer.questionId,
-      isCorrect: answer.isCorrect || false,
       displayOrder: answer.displayOrder || 1
     };
 
@@ -208,7 +204,6 @@ export class AnswerService {
     const answerData = {
       answerText: answer.answerText, // Frontend utilise 'answerText', API peut attendre 'answerContent'
       questionId: answer.questionId,
-      isCorrect: answer.isCorrect || false,
       displayOrder: answer.displayOrder || 1
     };
 
@@ -370,7 +365,6 @@ export class AnswerService {
     if (criteria) {
       if (criteria.answerText) params = params.set('answerText', criteria.answerText);
       if (criteria.questionId) params = params.set('questionId', criteria.questionId.toString());
-      if (criteria.isCorrect !== undefined) params = params.set('isCorrect', criteria.isCorrect.toString());
       if (criteria.isDeleted !== undefined) params = params.set('isDeleted', criteria.isDeleted.toString());
     }
 
@@ -470,10 +464,6 @@ export class AnswerService {
 
     if (!answer.questionId) {
       errors.push('La question associée est requise');
-    }
-
-    if (answer.isCorrect === undefined) {
-      errors.push('Le statut correct/incorrect doit être défini');
     }
 
     if (answer.displayOrder !== undefined && answer.displayOrder < 1) {

@@ -127,18 +127,6 @@
           </div>
         </div>
 
-        <!-- Ligne 4 : Est correcte -->
-        <div class="form-row-half">
-          <div class="form-group">
-            <label>Statut de correction</label>
-            <select class="form-select" [(ngModel)]="advancedCriteria.isCorrect">
-              <option value="">Tous</option>
-              <option value="true">Correcte</option>
-              <option value="false">Incorrecte</option>
-            </select>
-          </div>
-        </div>
-
         <!-- Ligne 5 : Statut -->
         <div class="form-row-half">
           <div class="form-group">
@@ -203,8 +191,6 @@
           <tr>
             <th>ID</th>
             <th>Réponse</th>
-            <th>Question</th>
-            <th>Correcte</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -216,14 +202,6 @@
             </td>
             <td>
               <span class="cell-name">{{ answer.answerText | slice:0:50 }}{{ answer.answerText && answer.answerText.length > 50 ? '...' : '' }}</span>
-            </td>
-            <td>
-              <span class="cell-description">{{ answer.questionText || '-' }}</span>
-            </td>
-            <td>
-              <span class="cell-status" [class.correct]="answer.isCorrect" [class.incorrect]="!answer.isCorrect">
-                {{ answer.isCorrect ? '✓ Correcte' : '✗ Incorrecte' }}
-              </span>
             </td>
             <td class="actions-cell">
               <div class="actions-menu">
@@ -345,20 +323,6 @@
                 name="answerText"
                 placeholder="Entrez le texte de la réponse..."
                 rows="3"></textarea>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label class="checkbox-label">
-                <input
-                  type="checkbox"
-                  [(ngModel)]="currentAnswer.isCorrect"
-                  name="isCorrect"
-                  class="checkbox-input" />
-                <span class="checkmark"></span>
-                Cette réponse est correcte
-              </label>
             </div>
           </div>
 
@@ -497,14 +461,6 @@
         </select>
       </div>
       <div class="form-group">
-        <label class="form-label">Est correcte</label>
-        <select class="form-select" [(ngModel)]="advancedCriteria.isCorrect">
-          <option value="">Tous</option>
-          <option value="true">Correcte</option>
-          <option value="false">Incorrecte</option>
-        </select>
-      </div>
-      <div class="form-group">
         <label class="form-label">Statut</label>
         <select class="form-select" [(ngModel)]="advancedCriteria.isDeleted">
           <option value="">Tous</option>
@@ -550,20 +506,6 @@
             required
             rows="3">
           </textarea>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Est correcte *</label>
-          <div class="radio-group">
-            <label class="radio-label">
-              <input type="radio" [(ngModel)]="currentAnswer.isCorrect" name="isCorrect" [value]="true" required />
-              <span class="radio-text">Correcte</span>
-            </label>
-            <label class="radio-label">
-              <input type="radio" [(ngModel)]="currentAnswer.isCorrect" name="isCorrect" [value]="false" required />
-              <span class="radio-text">Incorrecte</span>
-            </label>
-          </div>
         </div>
 
         <div class="form-group">

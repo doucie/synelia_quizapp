@@ -9,7 +9,7 @@ import { SpringBootRequest, SpringBootResponse, UserApiData } from '../../models
   providedIn: 'root'
 })
 export class ConnexionService {
-  private readonly apiUrl = `${environment.apiUrl}/userManager`;
+  private readonly apiUrl = '/userManager';
 
   constructor(private http: HttpClient) {}
 

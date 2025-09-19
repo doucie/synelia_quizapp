@@ -62,7 +62,7 @@ export interface PagedResponse<T> {
   providedIn: 'root'
 })
 export class SpecialityService {
-  private apiUrl = `${environment.apiUrl}/specialities`;
+  private apiUrl = '/specialities';
 
   constructor(private http: HttpClient) {}
 
