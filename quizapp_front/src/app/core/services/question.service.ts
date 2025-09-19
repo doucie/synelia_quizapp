@@ -67,28 +67,76 @@ export class QuestionService {
   getAllQuestionsByCriteria(criteria: QuestionSearchCriteria): Observable<PagedResponse<Question>> {
     console.log('📥 Récupération des questions avec critères:', criteria);
 
-    let params = new HttpParams();
+    // Préparer le corps de la requête selon le format API backend
+    const requestBody = {
+      user: "1", // ID utilisateur par défaut
+      size: criteria.size || 10,
+      index: criteria.page || 0,
+      data: criteria // Les critères de recherche dans data
+    };
 
-    // Ajouter les paramètres de recherche
-    if (criteria.idDe) params = params.set('idDe', criteria.idDe);
-    if (criteria.idA) params = params.set('idA', criteria.idA);
-    if (criteria.questionText) params = params.set('questionText', criteria.questionText);
-    if (criteria.specialityId) params = params.set('specialityId', criteria.specialityId.toString());
-    if (criteria.questionType) params = params.set('questionType', criteria.questionType);
-    if (criteria.difficultyLevel) params = params.set('difficultyLevel', criteria.difficultyLevel);
-    if (criteria.isDeleted !== undefined) params = params.set('isDeleted', criteria.isDeleted.toString());
-    if (criteria.search_string) params = params.set('search_string', criteria.search_string);
+    console.log('🔍 Corps de la requête:', requestBody);
 
-    // Paramètres de pagination
-    if (criteria.size) params = params.set('size', criteria.size.toString());
-    if (criteria.page !== undefined) params = params.set('page', criteria.page.toString());
-
-    console.log('🔍 Paramètres HTTP:', params.toString());
-
-    return this.http.get<PagedResponse<Question>>(this.apiUrl, { params }).pipe(
-      map(response => {
+    return this.http.post<any>(`${this.apiUrl}/getByCriteria`, requestBody).pipe(
+      map((response: any) => {
+        console.log('🔍 Raw API Response (QUESTIONS):', response);
+        console.log('🔍 Response keys:', Object.keys(response));
+        console.log('🔍 Response.hasError:', response.hasError);
+        console.log('🔍 Response.status:', response.status);
+        console.log('🔍 Response.items exists:', !!response.items);
+        console.log('🔍 Response.items length:', response.items?.length);
+        console.log('🔍 Response.content exists:', !!response.content);
+        console.log('🔍 Response.content length:', response.content?.length);
         console.log('✅ Réponse reçue:', response);
-        return response;
+
+        // Transformer la réponse backend vers le format frontend attendu
+        if (!response || response.hasError) {
+          console.warn('⚠️ Erreur dans la réponse API ou aucune donnée');
+          return {
+            content: [],
+            totalElements: 0,
+            totalPages: 0,
+            size: criteria.size || 10,
+            number: criteria.page || 0,
+            first: true,
+            last: true,
+            empty: true
+          };
+        }
+
+        // L'API retourne 'items', mais le frontend attend 'content'
+        const rawQuestions = response.items || response.content || [];
+
+        // Transformer les données pour correspondre au format attendu par le frontend
+        const questions = rawQuestions.map((q: any) => ({
+          id: q.id,
+          questionText: q.questionContent, // API retourne 'questionContent', frontend attend 'questionText'
+          specialityId: q.specialityId,
+          specialityName: q.specialityName || `Spécialité ${q.specialityId}`, // Placeholder temporaire
+          questionType: q.questionType,
+          difficultyLevel: q.difficultyLevel,
+          points: q.points,
+          timeLimit: q.timeLimit,
+          isDeleted: q.isDeleted,
+          dateCreation: q.createdAt,
+          dateModification: q.updatedAt,
+          questionChrono: q.questionChrono
+        }));
+
+        console.log('🔍 Premier élément des questions transformées:', questions[0]);
+        console.log('🔍 Propriétés du premier élément transformé:', questions[0] ? Object.keys(questions[0]) : 'Aucun élément');
+        console.log('🔍 Valeurs du premier élément transformé:', questions[0] ? JSON.stringify(questions[0], null, 2) : 'Aucun élément');
+
+        return {
+          content: questions,
+          totalElements: response.count || response.totalElements || questions.length,
+          totalPages: response.totalPages || Math.ceil((response.count || questions.length) / (criteria.size || 10)),
+          size: criteria.size || 10,
+          number: criteria.page || 0,
+          first: (criteria.page || 0) === 0,
+          last: (criteria.page || 0) >= Math.ceil((response.count || questions.length) / (criteria.size || 10)) - 1,
+          empty: questions.length === 0
+        };
       })
     );
   }
@@ -98,10 +146,23 @@ export class QuestionService {
    */
   getQuestionById(id: number): Observable<Question> {
     console.log('📥 Récupération de la question ID:', id);
-    return this.http.get<Question>(`${this.apiUrl}/${id}`).pipe(
+
+    // Préparer le corps de la requête pour récupérer une question spécifique
+    const requestBody = {
+      user: "1",
+      size: 1,
+      index: 0,
+      data: { id: id }
+    };
+
+    return this.http.post<PagedResponse<Question>>(`${this.apiUrl}/getByCriteria`, requestBody).pipe(
       map(response => {
         console.log('✅ Question récupérée:', response);
-        return response;
+        if (response.content && response.content.length > 0) {
+          return response.content[0];
+        } else {
+          throw new Error('Question not found');
+        }
       })
     );
   }
@@ -197,10 +258,19 @@ export class QuestionService {
    */
   getAllQuestions(): Observable<Question[]> {
     console.log('📥 Récupération de toutes les questions');
-    return this.http.get<Question[]>(`${this.apiUrl}/all`).pipe(
+
+    // Préparer le corps de la requête pour récupérer toutes les questions
+    const requestBody = {
+      user: "1",
+      size: 1000, // Grande taille pour récupérer toutes les questions
+      index: 0,
+      data: {}
+    };
+
+    return this.http.post<PagedResponse<Question>>(`${this.apiUrl}/getByCriteria`, requestBody).pipe(
       map(response => {
-        console.log('✅ Toutes les questions récupérées:', response.length);
-        return response;
+        console.log('✅ Toutes les questions récupérées:', response.content.length);
+        return response.content;
       })
     );
   }
@@ -210,10 +280,19 @@ export class QuestionService {
    */
   getQuestionsBySpeciality(specialityId: number): Observable<Question[]> {
     console.log('📥 Récupération des questions pour la spécialité ID:', specialityId);
-    return this.http.get<Question[]>(`${this.apiUrl}/speciality/${specialityId}`).pipe(
+
+    // Préparer le corps de la requête pour récupérer les questions d'une spécialité
+    const requestBody = {
+      user: "1",
+      size: 1000,
+      index: 0,
+      data: { specialityId: specialityId }
+    };
+
+    return this.http.post<PagedResponse<Question>>(`${this.apiUrl}/getByCriteria`, requestBody).pipe(
       map(response => {
-        console.log('✅ Questions de la spécialité récupérées:', response.length);
-        return response;
+        console.log('✅ Questions de la spécialité récupérées:', response.content.length);
+        return response.content;
       })
     );
   }
@@ -223,10 +302,19 @@ export class QuestionService {
    */
   getQuestionsByType(questionType: string): Observable<Question[]> {
     console.log('📥 Récupération des questions de type:', questionType);
-    return this.http.get<Question[]>(`${this.apiUrl}/type/${questionType}`).pipe(
+
+    // Préparer le corps de la requête pour récupérer les questions d'un type
+    const requestBody = {
+      user: "1",
+      size: 1000,
+      index: 0,
+      data: { questionType: questionType }
+    };
+
+    return this.http.post<PagedResponse<Question>>(`${this.apiUrl}/getByCriteria`, requestBody).pipe(
       map(response => {
-        console.log('✅ Questions du type récupérées:', response.length);
-        return response;
+        console.log('✅ Questions du type récupérées:', response.content.length);
+        return response.content;
       })
     );
   }
@@ -236,10 +324,19 @@ export class QuestionService {
    */
   getQuestionsByDifficulty(difficultyLevel: string): Observable<Question[]> {
     console.log('📥 Récupération des questions de difficulté:', difficultyLevel);
-    return this.http.get<Question[]>(`${this.apiUrl}/difficulty/${difficultyLevel}`).pipe(
+
+    // Préparer le corps de la requête pour récupérer les questions d'un niveau de difficulté
+    const requestBody = {
+      user: "1",
+      size: 1000,
+      index: 0,
+      data: { difficultyLevel: difficultyLevel }
+    };
+
+    return this.http.post<PagedResponse<Question>>(`${this.apiUrl}/getByCriteria`, requestBody).pipe(
       map(response => {
-        console.log('✅ Questions de difficulté récupérées:', response.length);
-        return response;
+        console.log('✅ Questions de difficulté récupérées:', response.content.length);
+        return response.content;
       })
     );
   }
@@ -249,11 +346,19 @@ export class QuestionService {
    */
   searchQuestions(searchText: string): Observable<Question[]> {
     console.log('🔍 Recherche de questions avec le texte:', searchText);
-    const params = new HttpParams().set('search', searchText);
-    return this.http.get<Question[]>(`${this.apiUrl}/search`, { params }).pipe(
+
+    // Préparer le corps de la requête pour rechercher des questions
+    const requestBody = {
+      user: "1",
+      size: 1000,
+      index: 0,
+      data: { search_string: searchText }
+    };
+
+    return this.http.post<PagedResponse<Question>>(`${this.apiUrl}/getByCriteria`, requestBody).pipe(
       map(response => {
-        console.log('✅ Résultats de recherche:', response.length);
-        return response;
+        console.log('✅ Résultats de recherche:', response.content.length);
+        return response.content;
       })
     );
   }
@@ -264,17 +369,15 @@ export class QuestionService {
   exportQuestions(criteria?: QuestionSearchCriteria): Observable<Blob> {
     console.log('📤 Export des questions');
 
-    let params = new HttpParams();
-    if (criteria) {
-      if (criteria.questionText) params = params.set('questionText', criteria.questionText);
-      if (criteria.specialityId) params = params.set('specialityId', criteria.specialityId.toString());
-      if (criteria.questionType) params = params.set('questionType', criteria.questionType);
-      if (criteria.difficultyLevel) params = params.set('difficultyLevel', criteria.difficultyLevel);
-      if (criteria.isDeleted !== undefined) params = params.set('isDeleted', criteria.isDeleted.toString());
-    }
+    // Préparer le corps de la requête pour l'export
+    const requestBody = {
+      data: criteria || {},
+      size: 10000, // Grande taille pour l'export
+      page: 0,
+      export: true
+    };
 
-    return this.http.get(`${this.apiUrl}/export`, {
-      params,
+    return this.http.post(`${this.apiUrl}/getByCriteria`, requestBody, {
       responseType: 'blob'
     }).pipe(
       map(response => {

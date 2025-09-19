@@ -201,6 +201,11 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
     this.questionService.getAllQuestionsByCriteria(criteria).subscribe({
       next: (response) => {
         console.log('✅ Questions chargées:', response.content.length);
+        console.log('🔍 Contenu de response.content:', response.content);
+        console.log('🔍 Première question:', response.content[0]);
+        console.log('🔍 Propriétés de la première question:', response.content[0] ? Object.keys(response.content[0]) : 'Aucune question');
+        console.log('🔍 Valeurs de la première question:', response.content[0] ? JSON.stringify(response.content[0], null, 2) : 'Aucune question');
+
         this.questions.set(response.content);
         this.totalElements.set(response.totalElements);
         this.isLoading.set(false);
@@ -210,6 +215,7 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
         console.log('- Total des questions:', this.totalElements());
         console.log('- Page actuelle:', this.currentPage());
         console.log('- Taille de page:', this.pageSize());
+        console.log('- Questions dans le signal:', this.questions());
       },
       error: (error) => {
         console.error('❌ Erreur lors du chargement des questions:', error);
