@@ -1,197 +1,269 @@
 <div class="entities-answers-container">
-  <!-- En-tête -->
-  <div class="entities-answers-header">
-    <div class="header-content">
-      <h1 class="entities-answers-title">Gestion des Réponses</h1>
-      <p class="entities-answers-subtitle">Administration des réponses aux questions du quiz</p>
-    </div>
-    <div class="header-actions">
-      <button class="btn-secondary" (click)="goBackToEntities()">
+  <!-- Header professionnel -->
+  <div class="page-header">
+    <div class="breadcrumb">
+      <button class="btn-back" (click)="goBackToEntities()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M19 12H5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M12 19L5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        Retour aux entités
+        Retour aux Entités
       </button>
-      <button class="btn-primary" (click)="createAnswer()">
+      <span class="breadcrumb-separator">/</span>
+      <span class="current-page">Gestion des Réponses</span>
+    </div>
+    <h1>Gestion des Réponses</h1>
+    <p class="page-description">
+      Administration complète des réponses du système de quiz - création, modification et organisation
+    </p>
+  </div>
+
+  <!-- Barre d'outils -->
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Rechercher une réponse..."
+        [(ngModel)]="quickSearch"
+        (ngModelChange)="onQuickSearch()"
+      />
+
+      <!-- Checkbox pour afficher les réponses supprimées -->
+      <div class="checkbox-container">
+        <input
+          type="checkbox"
+          id="showDeleted"
+          class="checkbox-input"
+          [checked]="showDeletedAnswers"
+          (click)="toggleDeletedAnswers()"
+        />
+        <label for="showDeleted" class="checkbox-label">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Afficher les réponses supprimées
+        </label>
+      </div>
+    </div>
+    <div class="toolbar-right">
+      <button class="btn-secondary-pro" (click)="openAdvancedSearch()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 4V20M4 12H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M3 6H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M7 12H17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M10 18H14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Filtres avancés
+      </button>
+      <button class="btn-primary-pro" (click)="createAnswer()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 5V19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         Nouvelle réponse
       </button>
     </div>
   </div>
 
-  <!-- Section de recherche -->
-  <div class="search-section">
-    <div class="search-row">
-      <div class="search-input-wrapper">
-        <svg class="search-icon" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-        </svg>
-        <input
-          type="text"
-          class="search-input"
-          placeholder="Rechercher une réponse..."
-          [(ngModel)]="quickSearch"
-          (input)="onQuickSearch()"
-        />
-      </div>
-      <button class="btn-secondary" (click)="openAdvancedSearch()">
+  <!-- Panneau de filtres avancés -->
+  <div class="advanced-search-panel" *ngIf="showAdvancedSearch">
+    <div class="panel-header">
+      <h3>Filtres avancés</h3>
+      <button class="btn-close" (click)="openAdvancedSearch()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+          <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        Filtres avancés
-      </button>
-      <button class="btn-outline" (click)="clearSearch()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M6 18L18 6M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        Effacer
       </button>
     </div>
 
-    <!-- Recherche avancée -->
-    <div class="advanced-search" *ngIf="showAdvancedSearch">
-      <div class="advanced-search-grid">
-        <div class="form-group">
-          <label class="form-label">ID Réponse</label>
-          <input type="text" class="form-input" [(ngModel)]="advancedCriteria.idDe" placeholder="De..." />
+    <div class="panel-content">
+      <div class="form-grid">
+        <!-- Ligne 1 : Intervalle d'ID -->
+        <div class="form-row-full">
+          <div class="form-group-inline">
+            <label>ID de</label>
+            <input
+              type="text"
+              class="form-input-inline"
+              [(ngModel)]="advancedCriteria.idDe"
+              placeholder="ID minimum"
+            />
+          </div>
+          <span class="range-separator">à</span>
+          <div class="form-group-inline">
+            <input
+              type="text"
+              class="form-input-inline"
+              [(ngModel)]="advancedCriteria.idA"
+              placeholder="ID maximum"
+            />
+          </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">À</label>
-          <input type="text" class="form-input" [(ngModel)]="advancedCriteria.idA" placeholder="À..." />
+
+        <!-- Ligne 2 : Texte de la réponse -->
+        <div class="form-row-full">
+          <div class="form-group">
+            <label>Texte de la réponse</label>
+            <input
+              type="text"
+              class="form-input"
+              [(ngModel)]="advancedCriteria.answerText"
+              placeholder="Contient..."
+            />
+          </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Texte de la réponse</label>
-          <input type="text" class="form-input" [(ngModel)]="advancedCriteria.answerText" placeholder="Contient..." />
+
+        <!-- Ligne 3 : Question associée -->
+        <div class="form-row-half">
+          <div class="form-group">
+            <label>Question associée</label>
+            <select class="form-select" [(ngModel)]="advancedCriteria.questionId">
+              <option value="">Toutes les questions</option>
+              <option *ngFor="let question of questions()" [value]="question.id">
+                {{ question.questionText | slice:0:30 }}{{ question.questionText && question.questionText.length > 30 ? '...' : '' }}
+              </option>
+            </select>
+          </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Question</label>
-          <select class="form-select" [(ngModel)]="advancedCriteria.questionId">
-            <option value="">Toutes les questions</option>
-            <option *ngFor="let question of questions()" [value]="question.id">
-              {{ question.questionText | slice:0:50 }}{{ (question.questionText?.length || 0) > 50 ? '...' : '' }}
-            </option>
-          </select>
+
+        <!-- Ligne 4 : Est correcte -->
+        <div class="form-row-half">
+          <div class="form-group">
+            <label>Statut de correction</label>
+            <select class="form-select" [(ngModel)]="advancedCriteria.isCorrect">
+              <option value="">Tous</option>
+              <option value="true">Correcte</option>
+              <option value="false">Incorrecte</option>
+            </select>
+          </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Est correcte</label>
-          <select class="form-select" [(ngModel)]="advancedCriteria.isCorrect">
-            <option value="">Tous</option>
-            <option value="true">Correcte</option>
-            <option value="false">Incorrecte</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Statut</label>
-          <select class="form-select" [(ngModel)]="advancedCriteria.isDeleted">
-            <option value="">Tous</option>
-            <option value="false">Active</option>
-            <option value="true">Supprimée</option>
-          </select>
+
+        <!-- Ligne 5 : Statut -->
+        <div class="form-row-half">
+          <div class="form-group">
+            <label>Statut</label>
+            <select class="form-select" [(ngModel)]="advancedCriteria.isDeleted">
+              <option value="">Tous</option>
+              <option value="false">Actif</option>
+              <option value="true">Supprimé</option>
+            </select>
+          </div>
         </div>
       </div>
-      <div class="advanced-search-actions">
-        <button class="btn-secondary" (click)="resetAdvancedSearch()">Réinitialiser</button>
-        <button class="btn-primary" (click)="applyAdvancedSearch()">Appliquer les filtres</button>
+
+      <div class="panel-actions">
+        <button class="btn-secondary" (click)="clearSearch()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M10 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M14 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Réinitialiser
+        </button>
+        <button class="btn-primary" (click)="applyAdvancedSearch()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+            <path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Appliquer les filtres
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- Statistiques -->
-  <div class="stats-section">
-    <div class="stat-card">
-      <div class="stat-icon">
-        <svg viewBox="0 0 24 24" fill="currentColor">
-          <path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
-        </svg>
-      </div>
-      <div class="stat-content">
-        <div class="stat-number">{{ totalElementsValue }}</div>
-        <div class="stat-label">Total des réponses</div>
-      </div>
+  <!-- Section principale -->
+  <div class="answers-section">
+    <!-- État de chargement -->
+    <div *ngIf="isLoading()" class="loading-state">
+      <div class="loading-spinner"></div>
+      <p>Chargement des réponses...</p>
     </div>
-    <div class="stat-card">
-      <div class="stat-icon">
-        <svg viewBox="0 0 24 24" fill="currentColor">
-          <path d="M9 12l2 2 4-4m6-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-        </svg>
-      </div>
-      <div class="stat-content">
-        <div class="stat-number">{{ getCorrectAnswersCount() }}</div>
-        <div class="stat-label">Réponses correctes</div>
-      </div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-icon">
-        <svg viewBox="0 0 24 24" fill="currentColor">
-          <path d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-        </svg>
-      </div>
-      <div class="stat-content">
-        <div class="stat-number">{{ getIncorrectAnswersCount() }}</div>
-        <div class="stat-label">Réponses incorrectes</div>
-      </div>
-    </div>
-  </div>
 
-  <!-- Table des réponses -->
-  <div class="table-container">
-    <div class="table-responsive">
-      <table class="answers-table">
+    <!-- État vide -->
+    <div *ngIf="!isLoading() && answers().length === 0" class="empty-state">
+      <div class="empty-state-icon">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2"/>
+          <path d="M9 9L9.01 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M15 9L15.01 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M9 15C9 15 10 16 12 16C14 16 15 15 15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h3>Aucune réponse trouvée</h3>
+      <p>Aucune réponse ne correspond aux critères de recherche actuels.</p>
+    </div>
+
+    <!-- Tableau de données professionnel -->
+    <div *ngIf="!isLoading() && answers().length > 0" class="data-table-container">
+      <table class="data-table">
         <thead>
           <tr>
-            <th class="col-id">ID</th>
-            <th class="col-text">Texte de la réponse</th>
-            <th class="col-question">Question associée</th>
-            <th class="col-correct">Correcte</th>
-            <th class="col-order">Ordre</th>
-            <th class="col-status">Statut</th>
-            <th class="col-actions">Actions</th>
+            <th>ID</th>
+            <th>Réponse</th>
+            <th>Question</th>
+            <th>Correcte</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let answer of answers(); trackBy: trackByAnswerId"
-              [class.deleted-row]="answer.isDeleted">
-            <td class="col-id">{{ answer.id }}</td>
-            <td class="col-text">
-              <div class="answer-text" [title]="answer.answerText">
-                {{ answer.answerText | slice:0:100 }}{{ getAnswerTextLength(answer) > 100 ? '...' : '' }}
-              </div>
+              [class.answer-deleted]="answer.isDeleted">
+            <td>
+              <span class="cell-id">#{{ answer.id }}</span>
             </td>
-            <td class="col-question">
-              <div class="question-text" [title]="getQuestionText(answer)">
-                {{ getQuestionText(answer) | slice:0:80 }}{{ getQuestionText(answer)!.length > 80 ? '...' : '' }}
-              </div>
+            <td>
+              <span class="cell-name">{{ answer.answerText | slice:0:50 }}{{ answer.answerText && answer.answerText.length > 50 ? '...' : '' }}</span>
             </td>
-            <td class="col-correct">
-              <span class="correct-badge" [class.correct]="answer.isCorrect" [class.incorrect]="!answer.isCorrect">
+            <td>
+              <span class="cell-description">{{ answer.questionText || '-' }}</span>
+            </td>
+            <td>
+              <span class="cell-status" [class.correct]="answer.isCorrect" [class.incorrect]="!answer.isCorrect">
                 {{ answer.isCorrect ? '✓ Correcte' : '✗ Incorrecte' }}
               </span>
             </td>
-            <td class="col-order">{{ answer.displayOrder || 'N/A' }}</td>
-            <td class="col-status">
-              <span class="status-indicator" [class.status-active]="!answer.isDeleted" [class.status-deleted]="answer.isDeleted">
-                {{ answer.isDeleted ? 'Supprimée' : 'Active' }}
-              </span>
-            </td>
-            <td class="col-actions">
-              <div class="table-actions">
-                <button class="btn-icon edit" (click)="editAnswer(answer)" title="Modifier">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                  </svg>
-                </button>
-                <button class="btn-icon delete" (click)="deleteAnswer(answer)" title="Supprimer" *ngIf="!answer.isDeleted">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                  </svg>
-                </button>
-                <button class="btn-icon restore" (click)="restoreAnswer(answer)" title="Restaurer" *ngIf="answer.isDeleted">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                  </svg>
-                </button>
+            <td class="actions-cell">
+              <div class="actions-menu">
+                <!-- Boutons normaux pour les réponses non supprimées -->
+                <ng-container *ngIf="!answer.isDeleted">
+                  <button
+                    class="action-btn primary"
+                    (click)="editAnswer(answer)"
+                    title="Modifier la réponse">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 20H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M16.5 3.5A2.12 2.12 0 0 1 19 6L7 18L3 19L4 15L16.5 3.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                  <button
+                    class="action-btn danger"
+                    (click)="deleteAnswer(answer)"
+                    title="Supprimer la réponse">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M10 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M14 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                </ng-container>
+
+                <!-- Bouton de restauration pour les réponses supprimées -->
+                <ng-container *ngIf="answer.isDeleted">
+                  <button
+                    class="action-btn success"
+                    (click)="restoreAnswer(answer); $event.stopPropagation()"
+                    title="Restaurer la réponse"
+                    style="z-index: 10; position: relative;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M3 12A9 9 0 1 0 12 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M12 3L8 7L12 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                </ng-container>
               </div>
             </td>
           </tr>
@@ -199,71 +271,251 @@
       </table>
     </div>
 
-    <!-- État vide -->
-    <div class="empty-state" *ngIf="answers().length === 0 && !isLoading()">
-      <div class="empty-state-icon">
-        <svg viewBox="0 0 24 24" fill="currentColor">
-          <path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
-        </svg>
+      <!-- Pagination inférieure -->
+      <div class="pagination-container">
+        <div class="pagination-info">
+          <div class="page-info">
+            <span>{{ paginationStartIndex }}-{{ paginationEndIndex }} sur {{ totalElementsValue }}</span>
+          </div>
+        </div>
+        <div class="pagination-controls">
+          <button class="pagination-btn" [class.disabled]="!hasPreviousPage()" (click)="previousPage()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Précédent
+          </button>
+
+          <div class="page-numbers">
+            <button
+              *ngFor="let page of getPageNumbers()"
+              class="page-number-btn"
+              [class.active]="page === currentPage()"
+              (click)="goToPage(page)">
+              {{ page + 1 }}
+            </button>
+          </div>
+
+          <button class="pagination-btn" [class.disabled]="!hasNextPage()" (click)="nextPage()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Suivant
+          </button>
+        </div>
       </div>
-      <h3 class="empty-state-title">Aucune réponse trouvée</h3>
-      <p class="empty-state-message">
-        {{ quickSearch ? 'Aucune réponse ne correspond à votre recherche.' : 'Il n\'y a encore aucune réponse dans le système.' }}
-      </p>
-      <button class="btn-primary" (click)="createAnswer()" *ngIf="!quickSearch">
-        Créer la première réponse
-      </button>
     </div>
 
-    <!-- État de chargement -->
-    <div class="loading-state" *ngIf="isLoading()">
-      <div class="loading-spinner">
-        <svg class="animate-spin" viewBox="0 0 24 24" fill="currentColor">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
-        </svg>
+    <!-- Modal de création/édition -->
+    <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>{{ isEditing ? 'Modifier la réponse' : 'Nouvelle réponse' }}</h3>
+          <button class="btn-close" (click)="closeModal()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+
+      <div class="modal-body">
+        <form class="answer-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Question associée *</label>
+              <select
+                class="form-select"
+                [(ngModel)]="currentAnswer.questionId"
+                name="questionId">
+                <option value="">Sélectionnez une question</option>
+                <option *ngFor="let question of questions()" [value]="question.id">
+                  {{ question.questionText | slice:0:50 }}{{ question.questionText && question.questionText.length > 50 ? '...' : '' }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Texte de la réponse *</label>
+              <textarea
+                class="form-textarea"
+                [(ngModel)]="currentAnswer.answerText"
+                name="answerText"
+                placeholder="Entrez le texte de la réponse..."
+                rows="3"></textarea>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input
+                  type="checkbox"
+                  [(ngModel)]="currentAnswer.isCorrect"
+                  name="isCorrect"
+                  class="checkbox-input" />
+                <span class="checkmark"></span>
+                Cette réponse est correcte
+              </label>
+            </div>
+          </div>
+
+        </form>
       </div>
-      <p>Chargement des réponses...</p>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" (click)="closeModal()">Annuler</button>
+        <button class="btn-confirm" (click)="saveAnswer()">
+          {{ isEditing ? 'Modifier' : 'Créer' }}
+        </button>
+      </div>
     </div>
   </div>
 
-  <!-- Pagination -->
-  <div class="pagination-section">
-    <div class="pagination-info">
-      <div class="page-info">
-        <span>{{ paginationStartIndex }}-{{ paginationEndIndex }} sur {{ totalElementsValue }}</span>
+  <!-- Modal de confirmation de suppression -->
+  <div class="confirmation-overlay" *ngIf="showDeleteModal" (click)="closeDeleteModal()">
+    <div class="confirmation-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-icon danger">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 9V13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 17H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+          </svg>
+        </div>
+        <h3>Confirmer la suppression</h3>
       </div>
-      <div class="page-size-selector">
-        <label>Éléments par page:</label>
-        <select class="page-size-select" [(ngModel)]="pageSize" (ngModelChange)="onPageSizeChange($event)">
-          <option *ngFor="let size of pageSizeOptions" [value]="size">{{ size }}</option>
+
+      <div class="modal-body">
+        <p>Êtes-vous certain de vouloir supprimer cette réponse ?</p>
+        <div class="user-info" *ngIf="currentAnswer">
+          <div class="user-avatar">
+            {{ currentAnswer.answerText?.[0]?.toUpperCase() || '?' }}
+          </div>
+          <div class="user-details">
+            <strong>{{ currentAnswer.answerText | slice:0:50 }}{{ getCurrentAnswerTextLength() > 50 ? '...' : '' }}</strong>
+            <span class="user-pseudo" *ngIf="currentAnswer.questionText">
+              {{ currentAnswer.questionText }}
+            </span>
+          </div>
+        </div>
+        <div class="warning-message">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 9V13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 17H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M10.29 3.86L1.82 18A2 2 0 0 0 3.55 21H20.45A2 2 0 0 0 22.18 18L13.71 3.86A2 2 0 0 0 10.29 3.86Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Cette action est définitive et ne peut pas être annulée.
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" (click)="closeDeleteModal()">Annuler</button>
+        <button class="btn-confirm-danger" (click)="confirmDelete()">Supprimer définitivement</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de restauration -->
+  <div class="confirmation-overlay" *ngIf="showRestoreModal" (click)="closeRestoreModal()">
+    <div class="confirmation-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-icon success">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M22 11.08V12C21.9988 14.1564 21.3005 16.2547 20.0093 17.9818C18.7182 19.7089 16.9033 20.9725 14.8354 21.5839C12.7674 22.1953 10.5573 22.1219 8.53447 21.3746C6.51168 20.6273 4.78465 19.2461 3.61096 17.4371C2.43727 15.628 1.87979 13.4881 2.02168 11.3363C2.16356 9.18455 2.99721 7.13631 4.39828 5.49706C5.79935 3.85781 7.69279 2.71537 9.79619 2.24013C11.8996 1.7649 14.1003 1.98232 16.07 2.85999" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M22 4L12 14.01L9 11.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h3>Restaurer la réponse</h3>
+      </div>
+
+      <div class="modal-body">
+        <div class="info-message">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+            <path d="M12 16V12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 8H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          La réponse sera réactivée et redeviendra visible dans la liste.
+        </div>
+        <div class="user-info" *ngIf="currentAnswer">
+          <div class="user-avatar">
+            {{ currentAnswer.answerText?.[0]?.toUpperCase() || '?' }}
+          </div>
+          <div class="user-details">
+            <strong>{{ currentAnswer.answerText | slice:0:50 }}{{ getCurrentAnswerTextLength() > 50 ? '...' : '' }}</strong>
+            <span class="user-pseudo" *ngIf="currentAnswer.questionText">
+              {{ currentAnswer.questionText }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" (click)="closeRestoreModal()">Annuler</button>
+        <button class="btn-confirm-success" (click)="confirmRestore()">Restaurer la réponse</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Panneau de recherche avancée -->
+<div class="advanced-search-panel" *ngIf="showAdvancedSearch">
+  <div class="panel-header">
+    <h3>Recherche avancée</h3>
+    <button class="btn-close" (click)="closeAdvancedSearch()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="panel-content">
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">ID Réponse</label>
+        <input type="text" class="form-input" [(ngModel)]="advancedCriteria.idDe" placeholder="De..." />
+      </div>
+      <div class="form-group">
+        <label class="form-label">À</label>
+        <input type="text" class="form-input" [(ngModel)]="advancedCriteria.idA" placeholder="À..." />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Texte de la réponse</label>
+        <input type="text" class="form-input" [(ngModel)]="advancedCriteria.answerText" placeholder="Contient..." />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Question</label>
+        <select class="form-select" [(ngModel)]="advancedCriteria.questionId">
+          <option value="">Toutes les questions</option>
+          <option *ngFor="let question of questions()" [value]="question.id">
+            {{ question.questionText | slice:0:50 }}{{ (question.questionText?.length || 0) > 50 ? '...' : '' }}
+          </option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Est correcte</label>
+        <select class="form-select" [(ngModel)]="advancedCriteria.isCorrect">
+          <option value="">Tous</option>
+          <option value="true">Correcte</option>
+          <option value="false">Incorrecte</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Statut</label>
+        <select class="form-select" [(ngModel)]="advancedCriteria.isDeleted">
+          <option value="">Tous</option>
+          <option value="false">Active</option>
+          <option value="true">Supprimée</option>
         </select>
       </div>
     </div>
-    <div class="pagination-controls">
-      <button class="btn-page" [class.disabled]="!hasPreviousPage()" (click)="previousPage()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        Précédent
-      </button>
-
-      <div class="page-numbers">
-        <button
-          *ngFor="let page of getPageNumbers()"
-          class="btn-page"
-          [class.active]="page === currentPageValue"
-          (click)="goToPage(page)">
-          {{ page + 1 }}
-        </button>
-      </div>
-
-      <button class="btn-page" [class.disabled]="!hasNextPage()" (click)="nextPage()">
-        Suivant
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M9 6L15 12L9 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </button>
+    <div class="panel-actions">
+      <button class="btn-secondary-pro" (click)="resetAdvancedSearch()">Réinitialiser</button>
+      <button class="btn-primary-pro" (click)="applyAdvancedSearch()">Appliquer les filtres</button>
     </div>
   </div>
 </div>

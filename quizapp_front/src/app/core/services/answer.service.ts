@@ -82,9 +82,53 @@ export class AnswerService {
     console.log('🔍 Paramètres HTTP:', params.toString());
 
     return this.http.get<PagedResponse<Answer>>(this.apiUrl, { params }).pipe(
-      map(response => {
-        console.log('✅ Réponse reçue:', response);
-        return response;
+      map((response: any) => {
+        console.log('🔍 Raw API Response (ANSWERS):', response);
+        console.log('🔍 Response keys:', Object.keys(response));
+        console.log('🔍 Response.content exists:', !!response.content);
+        console.log('🔍 Response.content length:', response.content?.length);
+
+        // Transformer la réponse pour correspondre au format attendu par le frontend
+        if (!response || !response.content) {
+          console.warn('⚠️ Erreur dans la réponse API ou aucune donnée');
+          return {
+            content: [],
+            totalElements: 0,
+            totalPages: 0,
+            size: criteria.size || 10,
+            number: criteria.page || 0,
+            first: true,
+            last: true,
+            empty: true
+          };
+        }
+
+        // Transformer les données pour correspondre au format attendu par le frontend
+        const answers = response.content.map((a: any) => ({
+          id: a.id,
+          answerText: a.answerContent || a.answerText, // API peut retourner 'answerContent', frontend attend 'answerText'
+          questionId: a.questionId,
+          questionText: a.questionText || `Question ${a.questionId}`, // Placeholder si pas fourni
+          isCorrect: a.isCorrect,
+          displayOrder: a.displayOrder,
+          isDeleted: a.isDeleted,
+          dateCreation: a.createdAt || a.dateCreation,
+          dateModification: a.updatedAt || a.dateModification
+        }));
+
+        console.log('🔍 Premier élément des réponses transformées:', answers[0]);
+        console.log('🔍 Propriétés du premier élément transformé:', answers[0] ? Object.keys(answers[0]) : 'Aucun élément');
+
+        return {
+          content: answers,
+          totalElements: response.totalElements,
+          totalPages: response.totalPages,
+          size: response.size,
+          number: response.number,
+          first: response.first,
+          last: response.last,
+          empty: response.empty
+        };
       })
     );
   }
@@ -95,9 +139,24 @@ export class AnswerService {
   getAnswerById(id: number): Observable<Answer> {
     console.log('📥 Récupération de la réponse ID:', id);
     return this.http.get<Answer>(`${this.apiUrl}/${id}`).pipe(
-      map(response => {
-        console.log('✅ Réponse récupérée:', response);
-        return response;
+      map((response: any) => {
+        console.log('🔍 Raw API Response (SINGLE ANSWER):', response);
+
+        // Transformer les données pour correspondre au format attendu par le frontend
+        const answer = {
+          id: response.id,
+          answerText: response.answerContent || response.answerText, // API peut retourner 'answerContent', frontend attend 'answerText'
+          questionId: response.questionId,
+          questionText: response.questionText || `Question ${response.questionId}`, // Placeholder si pas fourni
+          isCorrect: response.isCorrect,
+          displayOrder: response.displayOrder,
+          isDeleted: response.isDeleted,
+          dateCreation: response.createdAt || response.dateCreation,
+          dateModification: response.updatedAt || response.dateModification
+        };
+
+        console.log('✅ Réponse transformée:', answer);
+        return answer;
       })
     );
   }
@@ -108,18 +167,33 @@ export class AnswerService {
   createAnswer(answer: Answer): Observable<Answer> {
     console.log('➕ Création d\'une nouvelle réponse:', answer);
 
-    // Préparer les données pour l'API
+    // Préparer les données pour l'API - utiliser le format attendu par l'API
     const answerData = {
-      answerText: answer.answerText,
+      answerText: answer.answerText, // Frontend utilise 'answerText', API peut attendre 'answerContent'
       questionId: answer.questionId,
       isCorrect: answer.isCorrect || false,
       displayOrder: answer.displayOrder || 1
     };
 
     return this.http.post<Answer>(this.apiUrl, answerData).pipe(
-      map(response => {
-        console.log('✅ Réponse créée:', response);
-        return response;
+      map((response: any) => {
+        console.log('🔍 Raw API Response (CREATE ANSWER):', response);
+
+        // Transformer la réponse pour correspondre au format frontend
+        const createdAnswer = {
+          id: response.id,
+          answerText: response.answerContent || response.answerText,
+          questionId: response.questionId,
+          questionText: response.questionText || `Question ${response.questionId}`,
+          isCorrect: response.isCorrect,
+          displayOrder: response.displayOrder,
+          isDeleted: response.isDeleted,
+          dateCreation: response.createdAt || response.dateCreation,
+          dateModification: response.updatedAt || response.dateModification
+        };
+
+        console.log('✅ Réponse créée et transformée:', createdAnswer);
+        return createdAnswer;
       })
     );
   }
@@ -130,18 +204,33 @@ export class AnswerService {
   updateAnswer(id: number, answer: Answer): Observable<Answer> {
     console.log('✏️ Mise à jour de la réponse ID:', id, answer);
 
-    // Préparer les données pour l'API
+    // Préparer les données pour l'API - utiliser le format attendu par l'API
     const answerData = {
-      answerText: answer.answerText,
+      answerText: answer.answerText, // Frontend utilise 'answerText', API peut attendre 'answerContent'
       questionId: answer.questionId,
       isCorrect: answer.isCorrect || false,
       displayOrder: answer.displayOrder || 1
     };
 
     return this.http.put<Answer>(`${this.apiUrl}/${id}`, answerData).pipe(
-      map(response => {
-        console.log('✅ Réponse mise à jour:', response);
-        return response;
+      map((response: any) => {
+        console.log('🔍 Raw API Response (UPDATE ANSWER):', response);
+
+        // Transformer la réponse pour correspondre au format frontend
+        const updatedAnswer = {
+          id: response.id,
+          answerText: response.answerContent || response.answerText,
+          questionId: response.questionId,
+          questionText: response.questionText || `Question ${response.questionId}`,
+          isCorrect: response.isCorrect,
+          displayOrder: response.displayOrder,
+          isDeleted: response.isDeleted,
+          dateCreation: response.createdAt || response.dateCreation,
+          dateModification: response.updatedAt || response.dateModification
+        };
+
+        console.log('✅ Réponse mise à jour et transformée:', updatedAnswer);
+        return updatedAnswer;
       })
     );
   }
@@ -164,9 +253,24 @@ export class AnswerService {
   restoreAnswer(id: number): Observable<Answer> {
     console.log('♻️ Restauration de la réponse ID:', id);
     return this.http.patch<Answer>(`${this.apiUrl}/${id}/restore`, {}).pipe(
-      map(response => {
-        console.log('✅ Réponse restaurée:', response);
-        return response;
+      map((response: any) => {
+        console.log('🔍 Raw API Response (RESTORE ANSWER):', response);
+
+        // Transformer la réponse pour correspondre au format frontend
+        const restoredAnswer = {
+          id: response.id,
+          answerText: response.answerContent || response.answerText,
+          questionId: response.questionId,
+          questionText: response.questionText || `Question ${response.questionId}`,
+          isCorrect: response.isCorrect,
+          displayOrder: response.displayOrder,
+          isDeleted: response.isDeleted,
+          dateCreation: response.createdAt || response.dateCreation,
+          dateModification: response.updatedAt || response.dateModification
+        };
+
+        console.log('✅ Réponse restaurée et transformée:', restoredAnswer);
+        return restoredAnswer;
       })
     );
   }
@@ -177,9 +281,24 @@ export class AnswerService {
   getAllAnswers(): Observable<Answer[]> {
     console.log('📥 Récupération de toutes les réponses');
     return this.http.get<Answer[]>(`${this.apiUrl}/all`).pipe(
-      map(response => {
-        console.log('✅ Toutes les réponses récupérées:', response.length);
-        return response;
+      map((response: any[]) => {
+        console.log('🔍 Raw API Response (ALL ANSWERS):', response);
+
+        // Transformer les données pour correspondre au format attendu par le frontend
+        const answers = response.map((a: any) => ({
+          id: a.id,
+          answerText: a.answerContent || a.answerText,
+          questionId: a.questionId,
+          questionText: a.questionText || `Question ${a.questionId}`,
+          isCorrect: a.isCorrect,
+          displayOrder: a.displayOrder,
+          isDeleted: a.isDeleted,
+          dateCreation: a.createdAt || a.dateCreation,
+          dateModification: a.updatedAt || a.dateModification
+        }));
+
+        console.log('✅ Toutes les réponses transformées:', answers.length);
+        return answers;
       })
     );
   }
@@ -190,9 +309,24 @@ export class AnswerService {
   getAnswersByQuestion(questionId: number): Observable<Answer[]> {
     console.log('📥 Récupération des réponses pour la question ID:', questionId);
     return this.http.get<Answer[]>(`${this.apiUrl}/question/${questionId}`).pipe(
-      map(response => {
-        console.log('✅ Réponses de la question récupérées:', response.length);
-        return response;
+      map((response: any[]) => {
+        console.log('🔍 Raw API Response (ANSWERS BY QUESTION):', response);
+
+        // Transformer les données pour correspondre au format attendu par le frontend
+        const answers = response.map((a: any) => ({
+          id: a.id,
+          answerText: a.answerContent || a.answerText,
+          questionId: a.questionId,
+          questionText: a.questionText || `Question ${a.questionId}`,
+          isCorrect: a.isCorrect,
+          displayOrder: a.displayOrder,
+          isDeleted: a.isDeleted,
+          dateCreation: a.createdAt || a.dateCreation,
+          dateModification: a.updatedAt || a.dateModification
+        }));
+
+        console.log('✅ Réponses de la question transformées:', answers.length);
+        return answers;
       })
     );
   }
@@ -204,9 +338,24 @@ export class AnswerService {
     console.log('🔍 Recherche de réponses avec le texte:', searchText);
     const params = new HttpParams().set('search', searchText);
     return this.http.get<Answer[]>(`${this.apiUrl}/search`, { params }).pipe(
-      map(response => {
-        console.log('✅ Résultats de recherche:', response.length);
-        return response;
+      map((response: any[]) => {
+        console.log('🔍 Raw API Response (SEARCH ANSWERS):', response);
+
+        // Transformer les données pour correspondre au format attendu par le frontend
+        const answers = response.map((a: any) => ({
+          id: a.id,
+          answerText: a.answerContent || a.answerText,
+          questionId: a.questionId,
+          questionText: a.questionText || `Question ${a.questionId}`,
+          isCorrect: a.isCorrect,
+          displayOrder: a.displayOrder,
+          isDeleted: a.isDeleted,
+          dateCreation: a.createdAt || a.dateCreation,
+          dateModification: a.updatedAt || a.dateModification
+        }));
+
+        console.log('✅ Résultats de recherche transformés:', answers.length);
+        return answers;
       })
     );
   }
@@ -259,9 +408,24 @@ export class AnswerService {
   duplicateAnswer(id: number): Observable<Answer> {
     console.log('📋 Duplication de la réponse ID:', id);
     return this.http.post<Answer>(`${this.apiUrl}/${id}/duplicate`, {}).pipe(
-      map(response => {
-        console.log('✅ Réponse dupliquée:', response);
-        return response;
+      map((response: any) => {
+        console.log('🔍 Raw API Response (DUPLICATE ANSWER):', response);
+
+        // Transformer la réponse pour correspondre au format frontend
+        const duplicatedAnswer = {
+          id: response.id,
+          answerText: response.answerContent || response.answerText,
+          questionId: response.questionId,
+          questionText: response.questionText || `Question ${response.questionId}`,
+          isCorrect: response.isCorrect,
+          displayOrder: response.displayOrder,
+          isDeleted: response.isDeleted,
+          dateCreation: response.createdAt || response.dateCreation,
+          dateModification: response.updatedAt || response.dateModification
+        };
+
+        console.log('✅ Réponse dupliquée et transformée:', duplicatedAnswer);
+        return duplicatedAnswer;
       })
     );
   }
@@ -272,9 +436,24 @@ export class AnswerService {
   updateAnswerStatus(id: number, isActive: boolean): Observable<Answer> {
     console.log('🔄 Mise à jour du statut de la réponse ID:', id, 'actif:', isActive);
     return this.http.patch<Answer>(`${this.apiUrl}/${id}/status`, { isActive }).pipe(
-      map(response => {
-        console.log('✅ Statut mis à jour:', response);
-        return response;
+      map((response: any) => {
+        console.log('🔍 Raw API Response (UPDATE STATUS):', response);
+
+        // Transformer la réponse pour correspondre au format frontend
+        const updatedAnswer = {
+          id: response.id,
+          answerText: response.answerContent || response.answerText,
+          questionId: response.questionId,
+          questionText: response.questionText || `Question ${response.questionId}`,
+          isCorrect: response.isCorrect,
+          displayOrder: response.displayOrder,
+          isDeleted: response.isDeleted,
+          dateCreation: response.createdAt || response.dateCreation,
+          dateModification: response.updatedAt || response.dateModification
+        };
+
+        console.log('✅ Statut mis à jour et réponse transformée:', updatedAnswer);
+        return updatedAnswer;
       })
     );
   }

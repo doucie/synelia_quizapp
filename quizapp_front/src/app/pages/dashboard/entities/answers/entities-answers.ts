@@ -271,6 +271,14 @@ export class EntitiesAnswersComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Ferme la recherche avancée
+   */
+  closeAdvancedSearch() {
+    this.showAdvancedSearch = false;
+    console.log('🔍 Recherche avancée fermée');
+  }
+
+  /**
    * Applique les filtres avancés
    */
   applyAdvancedSearch() {
