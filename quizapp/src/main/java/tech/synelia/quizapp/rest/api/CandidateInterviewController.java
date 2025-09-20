@@ -100,6 +100,14 @@ public class CandidateInterviewController {
         return response;
     }
 
+	@RequestMapping(value="/getAllByCriteria",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
+    public Response<CandidateInterviewDto> getAllByCriteria(@RequestBody Request<CandidateInterviewDto> request) throws Exception{
+    	log.info("start method /candidateInterview/getAllByCriteria");
+        Response<CandidateInterviewDto> response = candidateInterviewBusiness.getAllByCriteria(request, Locale.of((String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER"), ""));
+		log.info("end method /candidateInterview/getAllByCriteria");
+        return response;
+    }
+
     @RequestMapping(value = "/custom", method = RequestMethod.POST, consumes = {
 	   "application/json" }, produces = { "application/json" })
 	 public Response<CandidateInterviewDto> custom(@RequestBody Request<CandidateInterviewDto> request) throws Exception{

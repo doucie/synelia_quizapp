@@ -100,6 +100,16 @@ public class CampaignCrudController {
         return response;
     }
 
+	@RequestMapping(value="/getAllByCriteria",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
+    public Response<CampaignCrudDto> getAllByCriteria(@RequestBody Request<CampaignCrudDto> request) throws Exception{
+    	log.info("start method /campaignCrud/getAllByCriteria (including deleted)");
+    	String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
+    	Locale locale = Locale.of(languageID, "");
+        Response<CampaignCrudDto> response = campaignCrudBusiness.getAllByCriteria(request, locale);
+		log.info("end method /campaignCrud/getAllByCriteria");
+        return response;
+    }
+
     @RequestMapping(value = "/custom", method = RequestMethod.POST, consumes = {
 	   "application/json" }, produces = { "application/json" })
 	 public Response<CampaignCrudDto> custom(@RequestBody Request<CampaignCrudDto> request) throws Exception{

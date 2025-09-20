@@ -365,6 +365,56 @@ public class NotificationsBusiness implements IBasicBusiness<Request<Notificatio
 	}
 
 	/**
+	 * get ALL Notifications by using NotificationsDto as object (including deleted).
+	 *
+	 * @param request
+	 * @return response
+	 *
+	 */
+	public Response<NotificationsDto> getAllByCriteria(Request<NotificationsDto> request, Locale locale)  throws Exception {
+		log.info("----begin get ALL Notifications (including deleted)-----");
+		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
+		Response<NotificationsDto> response = new Response<NotificationsDto>();
+		List<Notifications> items 			 = notificationsRepository.getAllByCriteria(request, em, locale);
+
+		if (items != null && !items.isEmpty()) {
+			List<NotificationsDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading())) ? NotificationsTransformer.INSTANCE.toLiteDtos(items) : NotificationsTransformer.INSTANCE.toDtos(items);
+
+			final int size = items.size();
+			List<String>  listOfError      = Collections.synchronizedList(new ArrayList<String>());
+			itemsDto.parallelStream().forEach(dto -> {
+				try {
+					dto = getFullInfos(dto, size, request.getIsSimpleLoading(), locale);
+				} catch (Exception e) {
+					listOfError.add(e.getMessage());
+					e.printStackTrace();
+				}
+			});
+			if (Utilities.isNotEmpty(listOfError)) {
+				Object[] objArray = listOfError.stream().distinct().toArray();
+				throw new RuntimeException(StringUtils.join(objArray, ", "));
+			}
+			Status status = new Status();
+			status.setCode(StatusCode.SUCCESS);
+			status.setMessage(StatusMessage.SUCCESS);
+
+			response.setItems(itemsDto);
+			response.setHasError(false);
+			response.setHttpCode(HttpStatus.OK.value());
+			response.setStatus(status);
+			response.setCount(notificationsRepository.countAll(request, em, locale));
+			response.setHasError(false);
+		} else {
+			response.setStatus(functionalError.DATA_EMPTY("notifications", locale));
+			response.setHasError(false);
+			return response;
+		}
+		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
+		log.info("----end get ALL Notifications-----");
+		return response;
+	}
+
+	/**
 	 * get full NotificationsDto by using Notifications as object.
 	 * 
 	 * @param dto

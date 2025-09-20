@@ -392,6 +392,56 @@ public class InterviewCrudBusiness implements IBasicBusiness<Request<InterviewCr
 	}
 
 	/**
+	 * get ALL InterviewCrud by using InterviewCrudDto as object (including deleted).
+	 *
+	 * @param request
+	 * @return response
+	 *
+	 */
+	public Response<InterviewCrudDto> getAllByCriteria(Request<InterviewCrudDto> request, Locale locale)  throws Exception {
+		log.info("----begin get ALL InterviewCrud (including deleted)-----");
+		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
+		Response<InterviewCrudDto> response = new Response<InterviewCrudDto>();
+		List<InterviewCrud> items 			 = interviewCrudRepository.getAllByCriteria(request, em, locale);
+
+		if (items != null && !items.isEmpty()) {
+			List<InterviewCrudDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading())) ? InterviewCrudTransformer.INSTANCE.toLiteDtos(items) : InterviewCrudTransformer.INSTANCE.toDtos(items);
+
+			final int size = items.size();
+			List<String>  listOfError      = Collections.synchronizedList(new ArrayList<String>());
+			itemsDto.parallelStream().forEach(dto -> {
+				try {
+					dto = getFullInfos(dto, size, request.getIsSimpleLoading(), locale);
+				} catch (Exception e) {
+					listOfError.add(e.getMessage());
+					e.printStackTrace();
+				}
+			});
+			if (Utilities.isNotEmpty(listOfError)) {
+				Object[] objArray = listOfError.stream().distinct().toArray();
+				throw new RuntimeException(StringUtils.join(objArray, ", "));
+			}
+			Status status = new Status();
+			status.setCode(StatusCode.SUCCESS);
+			status.setMessage(StatusMessage.SUCCESS);
+
+			response.setItems(itemsDto);
+			response.setHasError(false);
+			response.setHttpCode(HttpStatus.OK.value());
+			response.setStatus(status);
+			response.setCount(interviewCrudRepository.countAll(request, em, locale));
+			response.setHasError(false);
+		} else {
+			response.setStatus(functionalError.DATA_EMPTY("interviewCrud", locale));
+			response.setHasError(false);
+			return response;
+		}
+		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
+		log.info("----end get ALL InterviewCrud-----");
+		return response;
+	}
+
+	/**
 	 * get full InterviewCrudDto by using InterviewCrud as object.
 	 * 
 	 * @param dto

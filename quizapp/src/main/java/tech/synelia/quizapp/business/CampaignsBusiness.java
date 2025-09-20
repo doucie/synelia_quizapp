@@ -429,6 +429,56 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 	}
 
 	/**
+	 * get ALL Campaigns by using CampaignsDto as object (including deleted).
+	 *
+	 * @param request
+	 * @return response
+	 *
+	 */
+	public Response<CampaignsDto> getAllByCriteria(Request<CampaignsDto> request, Locale locale)  throws Exception {
+		log.info("----begin get ALL Campaigns (including deleted)-----");
+		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
+		Response<CampaignsDto> response = new Response<CampaignsDto>();
+		List<Campaigns> items 			 = campaignsRepository.getAllByCriteria(request, em, locale);
+
+		if (items != null && !items.isEmpty()) {
+			List<CampaignsDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading())) ? CampaignsTransformer.INSTANCE.toLiteDtos(items) : CampaignsTransformer.INSTANCE.toDtos(items);
+
+			final int size = items.size();
+			List<String>  listOfError      = Collections.synchronizedList(new ArrayList<String>());
+			itemsDto.parallelStream().forEach(dto -> {
+				try {
+					dto = getFullInfos(dto, size, request.getIsSimpleLoading(), locale);
+				} catch (Exception e) {
+					listOfError.add(e.getMessage());
+					e.printStackTrace();
+				}
+			});
+			if (Utilities.isNotEmpty(listOfError)) {
+				Object[] objArray = listOfError.stream().distinct().toArray();
+				throw new RuntimeException(StringUtils.join(objArray, ", "));
+			}
+			Status status = new Status();
+			status.setCode(StatusCode.SUCCESS);
+			status.setMessage(StatusMessage.SUCCESS);
+
+			response.setItems(itemsDto);
+			response.setHasError(false);
+			response.setHttpCode(HttpStatus.OK.value());
+			response.setStatus(status);
+			response.setCount(campaignsRepository.countAll(request, em, locale));
+			response.setHasError(false);
+		} else {
+			response.setStatus(functionalError.DATA_EMPTY("campaigns", locale));
+			response.setHasError(false);
+			return response;
+		}
+		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
+		log.info("----end get ALL Campaigns-----");
+		return response;
+	}
+
+	/**
 	 * get full CampaignsDto by using Campaigns as object.
 	 * 
 	 * @param dto

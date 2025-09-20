@@ -340,6 +340,164 @@ public class AnswersBusiness implements IBasicBusiness<Request<AnswersDto>, Resp
 	}
 
 	/**
+	 * get ALL Answers by using AnswersDto as object (including deleted).
+	 *
+	 * @param request
+	 * @return response
+	 *
+	 */
+	public Response<AnswersDto> getAllByCriteria(Request<AnswersDto> request, Locale locale)  throws Exception {
+		log.info("----begin get ALL Answers (including deleted)-----");
+		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
+		Response<AnswersDto> response = new Response<AnswersDto>();
+		List<Answers> items 			 = answersRepository.getAllByCriteria(request, em, locale);
+
+		if (items != null && !items.isEmpty()) {
+			List<AnswersDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading())) ? AnswersTransformer.INSTANCE.toLiteDtos(items) : AnswersTransformer.INSTANCE.toDtos(items);
+
+			final int size = items.size();
+			List<String>  listOfError      = Collections.synchronizedList(new ArrayList<String>());
+			itemsDto.parallelStream().forEach(dto -> {
+				try {
+					dto = getFullInfos(dto, size, request.getIsSimpleLoading(), locale);
+				} catch (Exception e) {
+					listOfError.add(e.getMessage());
+					e.printStackTrace();
+				}
+			});
+			if (Utilities.isNotEmpty(listOfError)) {
+				Object[] objArray = listOfError.stream().distinct().toArray();
+				throw new RuntimeException(StringUtils.join(objArray, ", "));
+			}
+			Status status = new Status();
+			status.setCode(StatusCode.SUCCESS);
+			status.setMessage(StatusMessage.SUCCESS);
+
+			response.setItems(itemsDto);
+			response.setHasError(false);
+			response.setHttpCode(HttpStatus.OK.value());
+			response.setStatus(status);
+			response.setCount(answersRepository.countAll(request, em, locale));
+			response.setHasError(false);
+		} else {
+			response.setStatus(functionalError.DATA_EMPTY("answers", locale));
+			response.setHasError(false);
+			return response;
+		}
+		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
+		log.info("----end get ALL Answers-----");
+		return response;
+	}
+
+	/**
+	 * updateAll Answers by using AnswersDto as object (including deleted answers).
+	 *
+	 * @param request
+	 * @return response
+	 */
+	public Response<AnswersDto> updateAll(Request<AnswersDto> request, Locale locale)  throws ParseException, JsonProcessingException {
+		log.info("----begin updateAll Answers-----");
+		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
+		Response<AnswersDto> response = new Response<AnswersDto>();
+		List<Answers>        items    = new ArrayList<Answers>();
+
+		for (AnswersDto dto : request.getDatas()) {
+			// Definir les parametres obligatoires
+			Map<String, Object> fieldsToVerify = new HashMap<String, Object>();
+			fieldsToVerify.put("id", dto.getId());
+			if (!Validate.RequiredValue(fieldsToVerify).isGood()) {
+				throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
+			}
+
+			// Verifier si la donnee existe
+			Answers existingEntity = null;
+			// Pour updateAll, chercher d'abord les réponses actives, puis les supprimées
+			existingEntity = answersRepository.findOne(dto.getId(), false); // Chercher d'abord les actives
+			if (existingEntity == null) {
+				existingEntity = answersRepository.findOne(dto.getId(), true); // Puis les supprimées si pas trouvé
+			}
+			if (existingEntity == null) {
+				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("answers id -> " + dto.getId(), locale));
+			}
+
+			// -----------------------------------------------------------------------
+			// ----------- CHECK IF DATA IS USED
+			// -----------------------------------------------------------------------
+
+			// -----------------------------------------------------------------------
+			// ----------- GENERATION KEY
+			// -----------------------------------------------------------------------
+
+			// -----------------------------------------------------------------------
+			// ----------- PREPARATION DE L'OBJET
+			// -----------------------------------------------------------------------
+			// Garder les données existantes de base
+			Answers entityToSave = existingEntity;
+
+			// Mise à jour conditionnelle des champs
+			if (Utilities.notBlank(dto.getAnswerContent())) {
+				entityToSave.setAnswerContent(dto.getAnswerContent());
+			}
+			if (dto.getIsDeleted() != null) {
+				entityToSave.setIsDeleted(dto.getIsDeleted());
+			}
+			if (dto.getCreatedBy() != null && dto.getCreatedBy() > 0) {
+				entityToSave.setCreatedBy(dto.getCreatedBy());
+			}
+			if (dto.getUpdatedBy() != null && dto.getUpdatedBy() > 0) {
+				entityToSave.setUpdatedBy(dto.getUpdatedBy());
+			}
+			if (Utilities.notBlank(dto.getCreatedAt())) {
+				entityToSave.setCreatedAt(dateFormat.parse(dto.getCreatedAt()));
+			}
+			if (Utilities.notBlank(dto.getUpdatedAt())) {
+				entityToSave.setUpdatedAt(dateFormat.parse(dto.getUpdatedAt()));
+			}
+			if (Utilities.notBlank(dto.getSearchString())) {
+				entityToSave.setSearchString(dto.getSearchString());
+			}
+
+			// -----------------------------------------------------------------------
+			// ----------- SAVE ANSWERS
+			// -----------------------------------------------------------------------
+			Answers entity = answersRepository.save(entityToSave);
+			items.add(entity);
+		}
+
+		if (Utilities.isNotEmpty(items)) {
+			List<AnswersDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading())) ? AnswersTransformer.INSTANCE.toLiteDtos(items) : AnswersTransformer.INSTANCE.toDtos(items);
+
+			final int size = items.size();
+			List<String> listOfError = Collections.synchronizedList(new ArrayList<String>());
+			itemsDto.parallelStream().forEach(dto -> {
+				try {
+					dto = getFullInfos(dto, size, request.getIsSimpleLoading(), locale);
+				} catch (Exception e) {
+					listOfError.add(e.getMessage());
+					e.printStackTrace();
+				}
+			});
+			if (Utilities.isNotEmpty(listOfError)) {
+				Object[] objArray = listOfError.stream().distinct().toArray();
+				throw new RuntimeException(StringUtils.join(objArray, ", "));
+			}
+			Status status = new Status();
+			status.setCode(StatusCode.SUCCESS);
+			status.setMessage(StatusMessage.SUCCESS);
+
+			response.setItems(itemsDto);
+			response.setHasError(false);
+			response.setHttpCode(HttpStatus.OK.value());
+			response.setStatus(status);
+			response.setCount((long) itemsDto.size());
+		}
+
+		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
+		log.info("----end updateAll Answers-----");
+		return response;
+	}
+
+	/**
 	 * get full AnswersDto by using Answers as object.
 	 * 
 	 * @param dto

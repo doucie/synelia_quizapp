@@ -49,7 +49,7 @@ public interface SourceTokenRepository extends JpaRepository<SourceToken, Intege
 	 *         no SourceToken is found, this method returns null.
 	 */
 	@Query("select e from SourceToken e where e.tokenString = :tokenString and e.isDeleted = :isDeleted")
-	List<SourceToken> findByTokenString(@Param("tokenString")String tokenString, @Param("isDeleted")Boolean isDeleted);
+	SourceToken findByTokenString(@Param("tokenString")String tokenString, @Param("isDeleted")Boolean isDeleted);
 	/**
 	 * Finds SourceToken by using createdAt as a search criteria.
 	 * 
@@ -239,5 +239,84 @@ public interface SourceTokenRepository extends JpaRepository<SourceToken, Intege
 			}
 		}
 		return CriteriaUtils.getCriteriaByListOfQuery(listOfQuery);
+	}
+
+	/**
+	 * Finds SourceToken by using sourceTokenDto as a search ALL criteria (including deleted).
+	 * 
+	 * @param request, em
+	 * @return A List of SourceToken (including deleted)
+	 * @throws DataAccessException,ParseException
+	 */
+	default List<SourceToken> getAllByCriteria(Request<SourceTokenDto> request, EntityManager em, Locale locale) throws DataAccessException, Exception {
+		String req = "select e from SourceToken e where e IS NOT NULL";
+		HashMap<String, java.lang.Object> param = new HashMap<String, java.lang.Object>();
+		req += getAllWhereExpression(request, param, locale);
+		req += " order by e.id desc";
+		TypedQuery<SourceToken> query = em.createQuery(req, SourceToken.class);
+		for (Map.Entry<String, java.lang.Object> entry : param.entrySet()) {
+			query.setParameter(entry.getKey(), entry.getValue());
+		}
+		if (request.getIndex() != null && request.getSize() != null) {
+			query.setFirstResult(request.getIndex() * request.getSize());
+			query.setMaxResults(request.getSize());
+		}
+		return query.getResultList();
+	}
+
+	/**
+	 * Finds count of ALL SourceToken by using sourceTokenDto as a search criteria (including deleted).
+	 * 
+	 * @param request, em
+	 * @return Number of SourceToken (including deleted)
+	 * 
+	 */
+	default Long countAll(Request<SourceTokenDto> request, EntityManager em, Locale locale) throws DataAccessException, Exception  {
+		String req = "select count(e.id) from SourceToken e where e IS NOT NULL";
+		HashMap<String, java.lang.Object> param = new HashMap<String, java.lang.Object>();
+		req += getAllWhereExpression(request, param, locale);
+		req += " order by  e.id desc";
+		jakarta.persistence.Query query = em.createQuery(req);
+		for (Map.Entry<String, java.lang.Object> entry : param.entrySet()) {
+			query.setParameter(entry.getKey(), entry.getValue());
+		}
+		Long count = (Long) query.getResultList().get(0);
+		return count;
+	}
+
+	/**
+	 * get where expression for ALL (including deleted)
+	 * @param request
+	 * @param param
+	 * @param locale
+	 * @return
+	 * @throws Exception
+	 */
+	default String getAllWhereExpression(Request<SourceTokenDto> request, HashMap<String, java.lang.Object> param, Locale locale) throws Exception {
+		// main query
+		SourceTokenDto dto = request.getData() != null ? request.getData() : new SourceTokenDto();
+		// NOTE: We DON'T force isDeleted = false here, allowing to include deleted records
+		String mainReq = generateCriteria(dto, param, 0, locale);
+		// others query
+		String othersReq = "";
+		if (request.getDatas() != null && !request.getDatas().isEmpty()) {
+			Integer index = 1;
+			for (SourceTokenDto elt : request.getDatas()) {
+				// NOTE: We DON'T force isDeleted = false here either
+				String eltReq = generateCriteria(elt, param, index, locale);
+				if (request.getIsAnd() != null && request.getIsAnd()) {
+					othersReq += "and (" + eltReq + ") ";
+				} else {
+					othersReq += "or (" + eltReq + ") ";
+				}
+				index++;
+			}
+		}
+		String req = "";
+		if (!mainReq.isEmpty()) {
+			req += " and (" + mainReq + ") ";
+		}
+		req += othersReq;
+		return req;
 	}
 }

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, map } from 'rxjs';
+import { Observable, map, catchError, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 // Interface pour les questions (même que dans le composant)
@@ -426,6 +426,111 @@ export class QuestionService {
       map(response => {
         console.log('✅ Statut mis à jour:', response);
         return response;
+      })
+    );
+  }
+
+  /**
+   * Récupère TOUTES les questions selon des critères (y compris les supprimées)
+   * @param criteria critères de recherche optionnels
+   * @returns Observable de la liste paginée de questions incluant les supprimées
+   */
+  getAllQuestionsIncludingDeleted(criteria: QuestionSearchCriteria = {}): Observable<PagedResponse<Question>> {
+    // Récupérer l'ID de l'utilisateur connecté depuis localStorage pour éviter la dépendance circulaire
+    const currentUserData = localStorage.getItem('currentUser');
+    const currentUserId = currentUserData ? JSON.parse(currentUserData).id?.toString() || "1" : "1";
+
+    // Construction de la requête selon le format backend attendu
+    const request = {
+      // ID de l'utilisateur connecté (requis)
+      user: currentUserId,
+      size: criteria.size || 10,
+      index: criteria.page || 0,
+      isSimpleLoading: false,
+      // Données de critères avec tous les champs QuestionDto
+      data: {
+        id: criteria.idDe || "",  // On utilise idDe comme critère principal pour l'ID
+        questionText: criteria.questionText || "",
+        specialityId: criteria.specialityId?.toString() || "",
+        questionType: criteria.questionType || "",
+        difficultyLevel: criteria.difficultyLevel || "",
+        isDeleted: criteria.isDeleted !== undefined ? criteria.isDeleted.toString() : "",
+        searchString: criteria.search_string || "",
+
+        // Intervalles d'ID (champs supplémentaires pour le backend)
+        idStart: criteria.idDe || "",
+        idEnd: criteria.idA || ""
+      }
+    };
+
+    console.log('🚀 Envoi de la requête getAllQuestionsIncludingDeleted (including deleted):', request);
+    console.log('🔍 DÉTAIL de la requête:');
+    console.log('  - user (ID connecté):', request.user);
+    console.log('  - size (taille page):', request.size);
+    console.log('  - index (page):', request.index);
+    console.log('  - data.isDeleted:', request.data.isDeleted);
+    console.log('  - data complet:', request.data);
+
+    return this.http.post<any>(`${this.apiUrl}/getAllByCriteria`, request).pipe(
+      map(response => {
+        console.log('🔍 Raw API Response (ALL QUESTIONS):', response);
+        console.log('🔍 Response keys:', Object.keys(response));
+        console.log('🔍 Response.count:', response.count);
+        console.log('🔍 Response.totalCount:', response.totalCount); // ← Nouveau champ !
+        console.log('🔍 Response.totalElements:', response.totalElements);
+        console.log('🔍 Response.total:', response.total);
+        console.log('🔍 Response.items.length:', response.items?.length);
+
+        // Vérifier si la réponse contient des données
+        if (!response || (!response.items && !response.item)) {
+          console.warn('⚠️ Aucune donnée dans la réponse');
+          return {
+            content: [],
+            totalElements: 0,
+            totalPages: 0,
+            size: criteria.size || 10,
+            number: criteria.page || 0,
+            first: true,
+            last: true,
+            empty: true
+          };
+        }
+
+        // Traiter les éléments (items ou item unique)
+        const rawQuestions = response.items || (response.item ? [response.item] : []);
+
+        // Transformer la réponse du backend vers le format frontend
+        const transformedQuestions: Question[] = rawQuestions.map((q: any) => ({
+          id: q.id,
+          questionText: q.questionContent || q.questionText || '',
+          specialityId: q.specialityId,
+          specialityName: q.specialityName || `Spécialité ${q.specialityId}`,
+          questionType: q.questionType,
+          difficultyLevel: q.difficultyLevel,
+          points: q.points,
+          timeLimit: q.timeLimit,
+          isDeleted: q.isDeleted || false, // ← Important : inclure le statut de suppression
+          dateCreation: q.createdAt || q.dateCreation,
+          dateModification: q.updatedAt || q.dateModification
+        }));
+
+        console.log('📊 Questions transformées (including deleted):', transformedQuestions);
+
+        return {
+          content: transformedQuestions,
+          totalElements: response.totalCount || response.count || rawQuestions.length, // Utiliser totalCount en priorité
+          totalPages: Math.ceil((response.totalCount || response.count || rawQuestions.length) / (criteria.size || 10)),
+          size: criteria.size || 10,
+          number: criteria.page || 0,
+          first: (criteria.page || 0) === 0,
+          last: (criteria.page || 0) >= Math.ceil((response.totalCount || response.count || rawQuestions.length) / (criteria.size || 10)) - 1,
+          empty: transformedQuestions.length === 0
+        };
+      }),
+      catchError((error: any) => {
+        console.error('❌ Erreur lors de la récupération de TOUTES les questions:', error);
+        console.error('❌ Détails de l\'erreur:', error.error);
+        return throwError(() => error);
       })
     );
   }

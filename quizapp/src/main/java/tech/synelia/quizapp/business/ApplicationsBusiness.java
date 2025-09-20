@@ -430,6 +430,56 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 	}
 
 	/**
+	 * get ALL Applications by using ApplicationsDto as object (including deleted).
+	 *
+	 * @param request
+	 * @return response
+	 *
+	 */
+	public Response<ApplicationsDto> getAllByCriteria(Request<ApplicationsDto> request, Locale locale)  throws Exception {
+		log.info("----begin get ALL Applications (including deleted)-----");
+		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
+		Response<ApplicationsDto> response = new Response<ApplicationsDto>();
+		List<Applications> items 			 = applicationsRepository.getAllByCriteria(request, em, locale);
+
+		if (items != null && !items.isEmpty()) {
+			List<ApplicationsDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading())) ? ApplicationsTransformer.INSTANCE.toLiteDtos(items) : ApplicationsTransformer.INSTANCE.toDtos(items);
+
+			final int size = items.size();
+			List<String>  listOfError      = Collections.synchronizedList(new ArrayList<String>());
+			itemsDto.parallelStream().forEach(dto -> {
+				try {
+					dto = getFullInfos(dto, size, request.getIsSimpleLoading(), locale);
+				} catch (Exception e) {
+					listOfError.add(e.getMessage());
+					e.printStackTrace();
+				}
+			});
+			if (Utilities.isNotEmpty(listOfError)) {
+				Object[] objArray = listOfError.stream().distinct().toArray();
+				throw new RuntimeException(StringUtils.join(objArray, ", "));
+			}
+			Status status = new Status();
+			status.setCode(StatusCode.SUCCESS);
+			status.setMessage(StatusMessage.SUCCESS);
+
+			response.setItems(itemsDto);
+			response.setHasError(false);
+			response.setHttpCode(HttpStatus.OK.value());
+			response.setStatus(status);
+			response.setCount(applicationsRepository.countAll(request, em, locale));
+			response.setHasError(false);
+		} else {
+			response.setStatus(functionalError.DATA_EMPTY("applications", locale));
+			response.setHasError(false);
+			return response;
+		}
+		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
+		log.info("----end get ALL Applications-----");
+		return response;
+	}
+
+	/**
 	 * get full ApplicationsDto by using Applications as object.
 	 * 
 	 * @param dto

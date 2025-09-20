@@ -372,6 +372,56 @@ public class CandidateAnswersBusiness implements IBasicBusiness<Request<Candidat
 	}
 
 	/**
+	 * get ALL CandidateAnswers by using CandidateAnswersDto as object (including deleted).
+	 *
+	 * @param request
+	 * @return response
+	 *
+	 */
+	public Response<CandidateAnswersDto> getAllByCriteria(Request<CandidateAnswersDto> request, Locale locale)  throws Exception {
+		log.info("----begin get ALL CandidateAnswers (including deleted)-----");
+		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
+		Response<CandidateAnswersDto> response = new Response<CandidateAnswersDto>();
+		List<CandidateAnswers> items 			 = candidateAnswersRepository.getAllByCriteria(request, em, locale);
+
+		if (items != null && !items.isEmpty()) {
+			List<CandidateAnswersDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading())) ? CandidateAnswersTransformer.INSTANCE.toLiteDtos(items) : CandidateAnswersTransformer.INSTANCE.toDtos(items);
+
+			final int size = items.size();
+			List<String>  listOfError      = Collections.synchronizedList(new ArrayList<String>());
+			itemsDto.parallelStream().forEach(dto -> {
+				try {
+					dto = getFullInfos(dto, size, request.getIsSimpleLoading(), locale);
+				} catch (Exception e) {
+					listOfError.add(e.getMessage());
+					e.printStackTrace();
+				}
+			});
+			if (Utilities.isNotEmpty(listOfError)) {
+				Object[] objArray = listOfError.stream().distinct().toArray();
+				throw new RuntimeException(StringUtils.join(objArray, ", "));
+			}
+			Status status = new Status();
+			status.setCode(StatusCode.SUCCESS);
+			status.setMessage(StatusMessage.SUCCESS);
+
+			response.setItems(itemsDto);
+			response.setHasError(false);
+			response.setHttpCode(HttpStatus.OK.value());
+			response.setStatus(status);
+			response.setCount(candidateAnswersRepository.countAll(request, em, locale));
+			response.setHasError(false);
+		} else {
+			response.setStatus(functionalError.DATA_EMPTY("candidateAnswers", locale));
+			response.setHasError(false);
+			return response;
+		}
+		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
+		log.info("----end get ALL CandidateAnswers-----");
+		return response;
+	}
+
+	/**
 	 * get full CandidateAnswersDto by using CandidateAnswers as object.
 	 * 
 	 * @param dto

@@ -389,6 +389,56 @@ public class CandidateInterviewBusiness implements IBasicBusiness<Request<Candid
 	}
 
 	/**
+	 * get ALL CandidateInterview by using CandidateInterviewDto as object (including deleted).
+	 *
+	 * @param request
+	 * @return response
+	 *
+	 */
+	public Response<CandidateInterviewDto> getAllByCriteria(Request<CandidateInterviewDto> request, Locale locale)  throws Exception {
+		log.info("----begin get ALL CandidateInterview (including deleted)-----");
+		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
+		Response<CandidateInterviewDto> response = new Response<CandidateInterviewDto>();
+		List<CandidateInterview> items 			 = candidateInterviewRepository.getAllByCriteria(request, em, locale);
+
+		if (items != null && !items.isEmpty()) {
+			List<CandidateInterviewDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading())) ? CandidateInterviewTransformer.INSTANCE.toLiteDtos(items) : CandidateInterviewTransformer.INSTANCE.toDtos(items);
+
+			final int size = items.size();
+			List<String>  listOfError      = Collections.synchronizedList(new ArrayList<String>());
+			itemsDto.parallelStream().forEach(dto -> {
+				try {
+					dto = getFullInfos(dto, size, request.getIsSimpleLoading(), locale);
+				} catch (Exception e) {
+					listOfError.add(e.getMessage());
+					e.printStackTrace();
+				}
+			});
+			if (Utilities.isNotEmpty(listOfError)) {
+				Object[] objArray = listOfError.stream().distinct().toArray();
+				throw new RuntimeException(StringUtils.join(objArray, ", "));
+			}
+			Status status = new Status();
+			status.setCode(StatusCode.SUCCESS);
+			status.setMessage(StatusMessage.SUCCESS);
+
+			response.setItems(itemsDto);
+			response.setHasError(false);
+			response.setHttpCode(HttpStatus.OK.value());
+			response.setStatus(status);
+			response.setCount(candidateInterviewRepository.countAll(request, em, locale));
+			response.setHasError(false);
+		} else {
+			response.setStatus(functionalError.DATA_EMPTY("candidateInterview", locale));
+			response.setHasError(false);
+			return response;
+		}
+		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
+		log.info("----end get ALL CandidateInterview-----");
+		return response;
+	}
+
+	/**
 	 * get full CandidateInterviewDto by using CandidateInterview as object.
 	 * 
 	 * @param dto

@@ -100,6 +100,14 @@ public class NotificationsController {
         return response;
     }
 
+	@RequestMapping(value="/getAllByCriteria",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
+    public Response<NotificationsDto> getAllByCriteria(@RequestBody Request<NotificationsDto> request) throws Exception{
+    	log.info("start method /notifications/getAllByCriteria");
+        Response<NotificationsDto> response = notificationsBusiness.getAllByCriteria(request, Locale.of((String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER"), ""));
+		log.info("end method /notifications/getAllByCriteria");
+        return response;
+    }
+
     @RequestMapping(value = "/custom", method = RequestMethod.POST, consumes = {
 	   "application/json" }, produces = { "application/json" })
 	 public Response<NotificationsDto> custom(@RequestBody Request<NotificationsDto> request) throws Exception{

@@ -163,6 +163,19 @@
 
   <!-- Section principale -->
   <div class="answers-section">
+    <!-- Stats et informations -->
+    <div class="section-stats">
+      <div class="stats-row">
+        <h2 class="section-title">Réponses</h2>
+        <div class="stats-info" *ngIf="!isLoading()">
+          <div class="stat-item">
+            <span>Total:</span>
+            <span class="stat-number">{{ totalElements() }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- État de chargement -->
     <div *ngIf="isLoading()" class="loading-state">
       <div class="loading-spinner"></div>
@@ -254,6 +267,26 @@
         <div class="pagination-info">
           <div class="page-info">
             <span>{{ paginationStartIndex }}-{{ paginationEndIndex }} sur {{ totalElementsValue }}</span>
+          </div>
+
+          <!-- Sélecteur de taille de page -->
+          <div class="page-size-selector">
+            <label for="pageSize" title="Préférence sauvegardée automatiquement">Par page:</label>
+            <div class="select-wrapper">
+              <select
+                id="pageSize"
+                class="page-size-select"
+                title="Nombre de réponses par page - sauvegardé automatiquement"
+                [value]="pageSize()"
+                (change)="onPageSizeChange($event)"
+              >
+                <option [value]="5" [selected]="pageSize() === 5">5</option>
+                <option [value]="10" [selected]="pageSize() === 10">10</option>
+                <option [value]="20" [selected]="pageSize() === 20">20</option>
+                <option [value]="50" [selected]="pageSize() === 50">50</option>
+                <option [value]="100" [selected]="pageSize() === 100">100</option>
+              </select>
+            </div>
           </div>
         </div>
         <div class="pagination-controls">

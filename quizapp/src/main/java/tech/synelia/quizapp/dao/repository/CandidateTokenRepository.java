@@ -239,4 +239,83 @@ public interface CandidateTokenRepository extends JpaRepository<CandidateToken, 
 		}
 		return CriteriaUtils.getCriteriaByListOfQuery(listOfQuery);
 	}
+
+	/**
+	 * Finds CandidateToken by using candidateTokenDto as a search ALL criteria (including deleted).
+	 * 
+	 * @param request, em
+	 * @return A List of CandidateToken (including deleted)
+	 * @throws DataAccessException,ParseException
+	 */
+	default List<CandidateToken> getAllByCriteria(Request<CandidateTokenDto> request, EntityManager em, Locale locale) throws DataAccessException, Exception {
+		String req = "select e from CandidateToken e where e IS NOT NULL";
+		HashMap<String, java.lang.Object> param = new HashMap<String, java.lang.Object>();
+		req += getAllWhereExpression(request, param, locale);
+		req += " order by e.id desc";
+		TypedQuery<CandidateToken> query = em.createQuery(req, CandidateToken.class);
+		for (Map.Entry<String, java.lang.Object> entry : param.entrySet()) {
+			query.setParameter(entry.getKey(), entry.getValue());
+		}
+		if (request.getIndex() != null && request.getSize() != null) {
+			query.setFirstResult(request.getIndex() * request.getSize());
+			query.setMaxResults(request.getSize());
+		}
+		return query.getResultList();
+	}
+
+	/**
+	 * Finds count of ALL CandidateToken by using candidateTokenDto as a search criteria (including deleted).
+	 * 
+	 * @param request, em
+	 * @return Number of CandidateToken (including deleted)
+	 * 
+	 */
+	default Long countAll(Request<CandidateTokenDto> request, EntityManager em, Locale locale) throws DataAccessException, Exception  {
+		String req = "select count(e.id) from CandidateToken e where e IS NOT NULL";
+		HashMap<String, java.lang.Object> param = new HashMap<String, java.lang.Object>();
+		req += getAllWhereExpression(request, param, locale);
+		req += " order by  e.id desc";
+		jakarta.persistence.Query query = em.createQuery(req);
+		for (Map.Entry<String, java.lang.Object> entry : param.entrySet()) {
+			query.setParameter(entry.getKey(), entry.getValue());
+		}
+		Long count = (Long) query.getResultList().get(0);
+		return count;
+	}
+
+	/**
+	 * get where expression for ALL (including deleted)
+	 * @param request
+	 * @param param
+	 * @param locale
+	 * @return
+	 * @throws Exception
+	 */
+	default String getAllWhereExpression(Request<CandidateTokenDto> request, HashMap<String, java.lang.Object> param, Locale locale) throws Exception {
+		// main query
+		CandidateTokenDto dto = request.getData() != null ? request.getData() : new CandidateTokenDto();
+		// NOTE: We DON'T force isDeleted = false here, allowing to include deleted records
+		String mainReq = generateCriteria(dto, param, 0, locale);
+		// others query
+		String othersReq = "";
+		if (request.getDatas() != null && !request.getDatas().isEmpty()) {
+			Integer index = 1;
+			for (CandidateTokenDto elt : request.getDatas()) {
+				// NOTE: We DON'T force isDeleted = false here either
+				String eltReq = generateCriteria(elt, param, index, locale);
+				if (request.getIsAnd() != null && request.getIsAnd()) {
+					othersReq += "and (" + eltReq + ") ";
+				} else {
+					othersReq += "or (" + eltReq + ") ";
+				}
+				index++;
+			}
+		}
+		String req = "";
+		if (!mainReq.isEmpty()) {
+			req += " and (" + mainReq + ") ";
+		}
+		req += othersReq;
+		return req;
+	}
 }

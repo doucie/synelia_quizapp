@@ -372,6 +372,56 @@ public class CampaignQuestionsBusiness implements IBasicBusiness<Request<Campaig
 	}
 
 	/**
+	 * get ALL CampaignQuestions by using CampaignQuestionsDto as object (including deleted).
+	 *
+	 * @param request
+	 * @return response
+	 *
+	 */
+	public Response<CampaignQuestionsDto> getAllByCriteria(Request<CampaignQuestionsDto> request, Locale locale)  throws Exception {
+		log.info("----begin get ALL CampaignQuestions (including deleted)-----");
+		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
+		Response<CampaignQuestionsDto> response = new Response<CampaignQuestionsDto>();
+		List<CampaignQuestions> items 			 = campaignQuestionsRepository.getAllByCriteria(request, em, locale);
+
+		if (items != null && !items.isEmpty()) {
+			List<CampaignQuestionsDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading())) ? CampaignQuestionsTransformer.INSTANCE.toLiteDtos(items) : CampaignQuestionsTransformer.INSTANCE.toDtos(items);
+
+			final int size = items.size();
+			List<String>  listOfError      = Collections.synchronizedList(new ArrayList<String>());
+			itemsDto.parallelStream().forEach(dto -> {
+				try {
+					dto = getFullInfos(dto, size, request.getIsSimpleLoading(), locale);
+				} catch (Exception e) {
+					listOfError.add(e.getMessage());
+					e.printStackTrace();
+				}
+			});
+			if (Utilities.isNotEmpty(listOfError)) {
+				Object[] objArray = listOfError.stream().distinct().toArray();
+				throw new RuntimeException(StringUtils.join(objArray, ", "));
+			}
+			Status status = new Status();
+			status.setCode(StatusCode.SUCCESS);
+			status.setMessage(StatusMessage.SUCCESS);
+
+			response.setItems(itemsDto);
+			response.setHasError(false);
+			response.setHttpCode(HttpStatus.OK.value());
+			response.setStatus(status);
+			response.setCount(campaignQuestionsRepository.countAll(request, em, locale));
+			response.setHasError(false);
+		} else {
+			response.setStatus(functionalError.DATA_EMPTY("campaignQuestions", locale));
+			response.setHasError(false);
+			return response;
+		}
+		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
+		log.info("----end get ALL CampaignQuestions-----");
+		return response;
+	}
+
+	/**
 	 * get full CampaignQuestionsDto by using CampaignQuestions as object.
 	 * 
 	 * @param dto

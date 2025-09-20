@@ -357,6 +357,56 @@ public class CandidateTokenBusiness implements IBasicBusiness<Request<CandidateT
 	}
 
 	/**
+	 * get ALL CandidateToken by using CandidateTokenDto as object (including deleted).
+	 *
+	 * @param request
+	 * @return response
+	 *
+	 */
+	public Response<CandidateTokenDto> getAllByCriteria(Request<CandidateTokenDto> request, Locale locale)  throws Exception {
+		log.info("----begin get ALL CandidateToken (including deleted)-----");
+		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
+		Response<CandidateTokenDto> response = new Response<CandidateTokenDto>();
+		List<CandidateToken> items 			 = candidateTokenRepository.getAllByCriteria(request, em, locale);
+
+		if (items != null && !items.isEmpty()) {
+			List<CandidateTokenDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading())) ? CandidateTokenTransformer.INSTANCE.toLiteDtos(items) : CandidateTokenTransformer.INSTANCE.toDtos(items);
+
+			final int size = items.size();
+			List<String>  listOfError      = Collections.synchronizedList(new ArrayList<String>());
+			itemsDto.parallelStream().forEach(dto -> {
+				try {
+					dto = getFullInfos(dto, size, request.getIsSimpleLoading(), locale);
+				} catch (Exception e) {
+					listOfError.add(e.getMessage());
+					e.printStackTrace();
+				}
+			});
+			if (Utilities.isNotEmpty(listOfError)) {
+				Object[] objArray = listOfError.stream().distinct().toArray();
+				throw new RuntimeException(StringUtils.join(objArray, ", "));
+			}
+			Status status = new Status();
+			status.setCode(StatusCode.SUCCESS);
+			status.setMessage(StatusMessage.SUCCESS);
+
+			response.setItems(itemsDto);
+			response.setHasError(false);
+			response.setHttpCode(HttpStatus.OK.value());
+			response.setStatus(status);
+			response.setCount(candidateTokenRepository.countAll(request, em, locale));
+			response.setHasError(false);
+		} else {
+			response.setStatus(functionalError.DATA_EMPTY("candidateToken", locale));
+			response.setHasError(false);
+			return response;
+		}
+		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
+		log.info("----end get ALL CandidateToken-----");
+		return response;
+	}
+
+	/**
 	 * get full CandidateTokenDto by using CandidateToken as object.
 	 * 
 	 * @param dto

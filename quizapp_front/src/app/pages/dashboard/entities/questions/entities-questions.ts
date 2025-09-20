@@ -198,7 +198,12 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
       isDeleted: this.showDeletedQuestions ? undefined : false
     };
 
-    this.questionService.getAllQuestionsByCriteria(criteria).subscribe({
+    // Choisir la méthode appropriée selon si on veut voir les questions supprimées ou non
+    const serviceMethod = this.showDeletedQuestions
+      ? this.questionService.getAllQuestionsIncludingDeleted(criteria)
+      : this.questionService.getAllQuestionsByCriteria(criteria);
+
+    serviceMethod.subscribe({
       next: (response) => {
         console.log('✅ Questions chargées:', response.content.length);
         console.log('🔍 Contenu de response.content:', response.content);

@@ -100,6 +100,14 @@ public class SourceTokenController {
         return response;
     }
 
+	@RequestMapping(value="/getAllByCriteria",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
+    public Response<SourceTokenDto> getAllByCriteria(@RequestBody Request<SourceTokenDto> request) throws Exception{
+    	log.info("start method /sourceToken/getAllByCriteria");
+        Response<SourceTokenDto> response = sourceTokenBusiness.getAllByCriteria(request, Locale.of((String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER"), ""));
+		log.info("end method /sourceToken/getAllByCriteria");
+        return response;
+    }
+
     @RequestMapping(value = "/custom", method = RequestMethod.POST, consumes = {
 	   "application/json" }, produces = { "application/json" })
 	 public Response<SourceTokenDto> custom(@RequestBody Request<SourceTokenDto> request) throws Exception{

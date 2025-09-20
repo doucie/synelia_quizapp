@@ -392,6 +392,56 @@ public class CampaignCrudBusiness implements IBasicBusiness<Request<CampaignCrud
 	}
 
 	/**
+	 * get ALL CampaignCrud by using CampaignCrudDto as object (including deleted).
+	 *
+	 * @param request
+	 * @return response
+	 *
+	 */
+	public Response<CampaignCrudDto> getAllByCriteria(Request<CampaignCrudDto> request, Locale locale)  throws Exception {
+		log.info("----begin get ALL CampaignCrud (including deleted)-----");
+		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
+		Response<CampaignCrudDto> response = new Response<CampaignCrudDto>();
+		List<CampaignCrud> items 			 = campaignCrudRepository.getAllByCriteria(request, em, locale);
+
+		if (items != null && !items.isEmpty()) {
+			List<CampaignCrudDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading())) ? CampaignCrudTransformer.INSTANCE.toLiteDtos(items) : CampaignCrudTransformer.INSTANCE.toDtos(items);
+
+			final int size = items.size();
+			List<String>  listOfError      = Collections.synchronizedList(new ArrayList<String>());
+			itemsDto.parallelStream().forEach(dto -> {
+				try {
+					dto = getFullInfos(dto, size, request.getIsSimpleLoading(), locale);
+				} catch (Exception e) {
+					listOfError.add(e.getMessage());
+					e.printStackTrace();
+				}
+			});
+			if (Utilities.isNotEmpty(listOfError)) {
+				Object[] objArray = listOfError.stream().distinct().toArray();
+				throw new RuntimeException(StringUtils.join(objArray, ", "));
+			}
+			Status status = new Status();
+			status.setCode(StatusCode.SUCCESS);
+			status.setMessage(StatusMessage.SUCCESS);
+
+			response.setItems(itemsDto);
+			response.setHasError(false);
+			response.setHttpCode(HttpStatus.OK.value());
+			response.setStatus(status);
+			response.setCount(campaignCrudRepository.countAll(request, em, locale));
+			response.setHasError(false);
+		} else {
+			response.setStatus(functionalError.DATA_EMPTY("campaignCrud", locale));
+			response.setHasError(false);
+			return response;
+		}
+		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
+		log.info("----end get ALL CampaignCrud-----");
+		return response;
+	}
+
+	/**
 	 * get full CampaignCrudDto by using CampaignCrud as object.
 	 * 
 	 * @param dto

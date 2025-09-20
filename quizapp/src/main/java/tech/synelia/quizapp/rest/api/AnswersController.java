@@ -100,6 +100,26 @@ public class AnswersController {
         return response;
     }
 
+	@RequestMapping(value="/getAllByCriteria",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
+    public Response<AnswersDto> getAllByCriteria(@RequestBody Request<AnswersDto> request) throws Exception{
+    	log.info("start method /answers/getAllByCriteria (including deleted)");
+    	String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
+    	Locale locale = Locale.of(languageID, "");
+        Response<AnswersDto> response = answersBusiness.getAllByCriteria(request, locale);
+		log.info("end method /answers/getAllByCriteria");
+        return response;
+    }
+
+	@RequestMapping(value="/updateAll",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
+    public Response<AnswersDto> updateAll(@RequestBody Request<AnswersDto> request) throws Exception{
+    	log.info("start method /answers/updateAll");
+    	String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
+    	Locale locale = Locale.of(languageID, "");
+        Response<AnswersDto> response = answersBusiness.updateAll(request, locale);
+		log.info("end method /answers/updateAll");
+        return response;
+    }
+
     @RequestMapping(value = "/custom", method = RequestMethod.POST, consumes = {
 	   "application/json" }, produces = { "application/json" })
 	 public Response<AnswersDto> custom(@RequestBody Request<AnswersDto> request) throws Exception{

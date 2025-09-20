@@ -232,6 +232,85 @@ public interface CampaignsRepository extends JpaRepository<Campaigns, Integer>, 
 	}
 
 	/**
+	 * Finds Campaigns by using campaignsDto as a search ALL criteria (including deleted).
+	 * 
+	 * @param request, em
+	 * @return A List of Campaigns (including deleted)
+	 * @throws DataAccessException,ParseException
+	 */
+	default List<Campaigns> getAllByCriteria(Request<CampaignsDto> request, EntityManager em, Locale locale) throws DataAccessException, Exception {
+		String req = "select e from Campaigns e where e IS NOT NULL";
+		HashMap<String, java.lang.Object> param = new HashMap<String, java.lang.Object>();
+		req += getAllWhereExpression(request, param, locale);
+		req += " order by e.id desc";
+		TypedQuery<Campaigns> query = em.createQuery(req, Campaigns.class);
+		for (Map.Entry<String, java.lang.Object> entry : param.entrySet()) {
+			query.setParameter(entry.getKey(), entry.getValue());
+		}
+		if (request.getIndex() != null && request.getSize() != null) {
+			query.setFirstResult(request.getIndex() * request.getSize());
+			query.setMaxResults(request.getSize());
+		}
+		return query.getResultList();
+	}
+
+	/**
+	 * Finds count of ALL Campaigns by using campaignsDto as a search criteria (including deleted).
+	 * 
+	 * @param request, em
+	 * @return Number of Campaigns (including deleted)
+	 * 
+	 */
+	default Long countAll(Request<CampaignsDto> request, EntityManager em, Locale locale) throws DataAccessException, Exception  {
+		String req = "select count(e.id) from Campaigns e where e IS NOT NULL";
+		HashMap<String, java.lang.Object> param = new HashMap<String, java.lang.Object>();
+		req += getAllWhereExpression(request, param, locale);
+		req += " order by  e.id desc";
+		jakarta.persistence.Query query = em.createQuery(req);
+		for (Map.Entry<String, java.lang.Object> entry : param.entrySet()) {
+			query.setParameter(entry.getKey(), entry.getValue());
+		}
+		Long count = (Long) query.getResultList().get(0);
+		return count;
+	}
+
+	/**
+	 * get where expression for ALL (including deleted)
+	 * @param request
+	 * @param param
+	 * @param locale
+	 * @return
+	 * @throws Exception
+	 */
+	default String getAllWhereExpression(Request<CampaignsDto> request, HashMap<String, java.lang.Object> param, Locale locale) throws Exception {
+		// main query
+		CampaignsDto dto = request.getData() != null ? request.getData() : new CampaignsDto();
+		// NOTE: We DON'T force isDeleted = false here, allowing to include deleted records
+		String mainReq = generateCriteria(dto, param, 0, locale);
+		// others query
+		String othersReq = "";
+		if (request.getDatas() != null && !request.getDatas().isEmpty()) {
+			Integer index = 1;
+			for (CampaignsDto elt : request.getDatas()) {
+				// NOTE: We DON'T force isDeleted = false here either
+				String eltReq = generateCriteria(elt, param, index, locale);
+				if (request.getIsAnd() != null && request.getIsAnd()) {
+					othersReq += "and (" + eltReq + ") ";
+				} else {
+					othersReq += "or (" + eltReq + ") ";
+				}
+				index++;
+			}
+		}
+		String req = "";
+		if (!mainReq.isEmpty()) {
+			req += " and (" + mainReq + ") ";
+		}
+		req += othersReq;
+		return req;
+	}
+
+	/**
 	 * get where expression
 	 * @param request
 	 * @param param

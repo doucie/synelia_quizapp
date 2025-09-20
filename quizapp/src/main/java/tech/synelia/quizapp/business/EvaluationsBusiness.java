@@ -362,6 +362,56 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 	}
 
 	/**
+	 * get ALL Evaluations by using EvaluationsDto as object (including deleted).
+	 *
+	 * @param request
+	 * @return response
+	 *
+	 */
+	public Response<EvaluationsDto> getAllByCriteria(Request<EvaluationsDto> request, Locale locale)  throws Exception {
+		log.info("----begin get ALL Evaluations (including deleted)-----");
+		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
+		Response<EvaluationsDto> response = new Response<EvaluationsDto>();
+		List<Evaluations> items 			 = evaluationsRepository.getAllByCriteria(request, em, locale);
+
+		if (items != null && !items.isEmpty()) {
+			List<EvaluationsDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading())) ? EvaluationsTransformer.INSTANCE.toLiteDtos(items) : EvaluationsTransformer.INSTANCE.toDtos(items);
+
+			final int size = items.size();
+			List<String>  listOfError      = Collections.synchronizedList(new ArrayList<String>());
+			itemsDto.parallelStream().forEach(dto -> {
+				try {
+					dto = getFullInfos(dto, size, request.getIsSimpleLoading(), locale);
+				} catch (Exception e) {
+					listOfError.add(e.getMessage());
+					e.printStackTrace();
+				}
+			});
+			if (Utilities.isNotEmpty(listOfError)) {
+				Object[] objArray = listOfError.stream().distinct().toArray();
+				throw new RuntimeException(StringUtils.join(objArray, ", "));
+			}
+			Status status = new Status();
+			status.setCode(StatusCode.SUCCESS);
+			status.setMessage(StatusMessage.SUCCESS);
+
+			response.setItems(itemsDto);
+			response.setHasError(false);
+			response.setHttpCode(HttpStatus.OK.value());
+			response.setStatus(status);
+			response.setCount(evaluationsRepository.countAll(request, em, locale));
+			response.setHasError(false);
+		} else {
+			response.setStatus(functionalError.DATA_EMPTY("evaluations", locale));
+			response.setHasError(false);
+			return response;
+		}
+		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
+		log.info("----end get ALL Evaluations-----");
+		return response;
+	}
+
+	/**
 	 * get full EvaluationsDto by using Evaluations as object.
 	 * 
 	 * @param dto
