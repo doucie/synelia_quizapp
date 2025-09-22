@@ -1,0 +1,77 @@
+<div class="entities-container" [ngClass]="pageClass">
+    <!-- ==================
+     Header
+     ================== -->
+    <div class="page-header">
+        <div class="breadcrumb" *ngIf="showBreadcrumb">
+            <button class="btn-back" (click)="goBack()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19 12H5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M12 19L5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Retour aux Entités
+            </button>
+            <span class="breadcrumb-separator">/</span>
+            <span class="current-page">{{ breadcrumbCurrent }}</span>
+        </div>
+        <h1>{{ headerTitle }}</h1>
+        <p class="page-description">{{ headerDescription }}</p>
+    </div>
+
+    <!-- ==================
+     Barre d'outils
+     ================== -->
+    <div class="toolbar" *ngIf="showToolbar">
+        <div class="toolbar-left">
+            <input
+                *ngIf="showQuickSearch"
+                type="text"
+                class="search-input"
+                placeholder="{{ quickSearchPlaceholder }}"
+                [(ngModel)]="quickSearch"
+                (input)="onQuickSearch($event.target.value)"
+            />
+
+            <!-- Checkbox pour afficher les éléments supprimés -->
+            <div class="checkbox-container" *ngIf="showDeletedToggle">
+                <input
+                    type="checkbox"
+                    id="showDeleted"
+                    class="checkbox-input"
+                    [checked]="showDeletedUsers"
+                    (click)="onToggleDeleted()"
+                />
+                <label for="showDeleted" class="checkbox-label">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    {{ deletedToggleLabel }}
+                </label>
+            </div>
+        </div>
+
+        <div class="toolbar-right">
+            <button
+                *ngIf="showAdvancedSearchButton"
+                class="btn-secondary-pro"
+                (click)="onOpenAdvancedSearch()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 6H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M7 12H17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M10 18H14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                {{ advancedSearchButtonLabel }}
+            </button>
+            <button
+                *ngIf="showCreateButton"
+                class="btn-primary-pro"
+                (click)="onCreateItem()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 5V19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                {{ createButtonLabel }}
+            </button>
+        </div>
+    </div>
+</div>

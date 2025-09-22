@@ -3,51 +3,7 @@
   <!-- éffacé car inclus dans le component parent -->
 
   <!-- Barre d'outils -->
-  <div class="toolbar">
-    <div class="toolbar-left">
-      <input 
-        type="text" 
-        class="search-input"
-        placeholder="Rechercher un utilisateur..."
-        [(ngModel)]="quickSearch"
-        (input)="onQuickSearch()"
-      />
-      
-      <!-- Checkbox pour afficher les utilisateurs supprimés -->
-      <div class="checkbox-container">
-        <input 
-          type="checkbox" 
-          id="showDeleted" 
-          class="checkbox-input"
-          [checked]="showDeletedUsers"
-          (click)="toggleDeletedUsers()"
-        />
-        <label for="showDeleted" class="checkbox-label">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          Afficher les utilisateurs supprimés
-        </label>
-      </div>
-    </div>
-    <div class="toolbar-right">
-      <button class="btn-secondary-pro" (click)="openAdvancedSearch()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M3 6H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M7 12H17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M10 18H14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        Filtres avancés
-      </button>
-      <button class="btn-primary-pro" (click)="createUser()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 5V19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        Nouvel utilisateur
-      </button>
-    </div>
-  </div>
+  <!-- éffacé car inclus dans le component parent -->
 
   <!-- Panneau de filtres avancés -->
   <div class="advanced-search-panel" *ngIf="showAdvancedSearch">

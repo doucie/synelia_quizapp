@@ -1,0 +1,26 @@
+<div class="entities-campaigns-container">
+  <!-- Utilise le template générique avec config pour campagnes -->
+  <app-entity-template
+    [pageClass]="'campaigns-page'"
+    [headerTitle]="'Gestion des Campagnes'"
+    [headerDescription]="'Administration complète des campagnes de recrutement'"
+    [breadcrumbCurrent]="'Campagnes'"
+    [showBreadcrumb]="true"
+    [showToolbar]="true"
+    [showQuickSearch]="true"
+    [quickSearchPlaceholder]="'Rechercher une campagne...'"
+    [showDeletedToggle]="true"
+    [deletedToggleLabel]="'Afficher les campagnes supprimées'"
+    [showAdvancedSearchButton]="true"
+    [advancedSearchButtonLabel]="'Filtres avancés'"
+    [showCreateButton]="true"
+    [createButtonLabel]="'Nouvelle campagne'"
+    [quickSearch]="quickSearch"
+    [showDeletedUsers]="showDeletedUsers"
+    (quickSearchChange)="onQuickSearch($event)"
+    (deletedToggleChange)="toggleDeletedUsers()"
+    (openAdvancedSearch)="openAdvancedSearch()"
+    (createItem)="createUser()">
+  </app-entity-template>
+
+</div>

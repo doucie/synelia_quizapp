@@ -70,6 +70,11 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/dashboard/entities/answers/entities-answers').then(m => m.EntitiesAnswersComponent),
         canActivate: [superRoleGuard]
       },
+      {
+        path: 'entities/campaigns',
+        loadComponent: () => import('./pages/dashboard/entities/campaigns/entities-campaigns/entities-campaigns').then(m => m.EntitiesCampaignsComponent),
+        canActivate: [superRoleGuard]
+      },
       { 
         path: 'users', 
         loadComponent: () => import('./pages/dashboard/users/users').then(m => m.UsersComponent),
