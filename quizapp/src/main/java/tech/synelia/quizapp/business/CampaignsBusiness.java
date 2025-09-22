@@ -29,9 +29,6 @@ import tech.synelia.quizapp.utils.contract.IBasicBusiness;
 import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.dto.transformer.*;
-import tech.synelia.quizapp.dao.entity.Campaigns;
-import tech.synelia.quizapp.dao.entity.User;
-import tech.synelia.quizapp.dao.entity.Specialities;
 import tech.synelia.quizapp.dao.entity.*;
 import tech.synelia.quizapp.dao.repository.*;
 
@@ -95,14 +92,14 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			// Definir les parametres obligatoires
 			Map<String, java.lang.Object> fieldsToVerify = new HashMap<String, java.lang.Object>();
 			fieldsToVerify.put("campaignTitle", dto.getCampaignTitle());
-			fieldsToVerify.put("campaignDesc", dto.getCampaignDesc());
+			// fieldsToVerify.put("campaignDesc", dto.getCampaignDesc());
 			fieldsToVerify.put("campaignStatus", dto.getCampaignStatus());
-			fieldsToVerify.put("campaignStart", dto.getCampaignStart());
-			fieldsToVerify.put("campaignEnd", dto.getCampaignEnd());
-			fieldsToVerify.put("maxApply", dto.getMaxApply());
+			// fieldsToVerify.put("campaignStart", dto.getCampaignStart());
+			// fieldsToVerify.put("campaignEnd", dto.getCampaignEnd());
+			// fieldsToVerify.put("maxApply", dto.getMaxApply());
 			fieldsToVerify.put("allCanUpdate", dto.getAllCanUpdate());
 			fieldsToVerify.put("markedOutOf", dto.getMarkedOutOf());
-			fieldsToVerify.put("searchString", dto.getSearchString());
+			// fieldsToVerify.put("searchString", dto.getSearchString());
 			fieldsToVerify.put("specialityId", dto.getSpecialityId());
 			fieldsToVerify.put("creatorId", dto.getCreatorId());
 			if (!Validate.RequiredValue(fieldsToVerify).isGood()) {
@@ -475,6 +472,133 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 		}
 		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
 		log.info("----end get ALL Campaigns-----");
+		return response;
+	}
+
+
+
+	/**
+	 * update deleted Campaigns by using CampaignsDto as object.
+	 * 
+	 * @param request
+	 * @return response
+	 * 
+	 */
+	public Response<CampaignsDto> updateDeleted(Request<CampaignsDto> request, Locale locale)  throws ParseException, JsonProcessingException {
+		log.info("----begin updateDeleted Campaigns (including deleted)-----");
+		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
+		Response<CampaignsDto> response = new Response<CampaignsDto>();
+		List<Campaigns>        items    = new ArrayList<Campaigns>();
+        
+		for (CampaignsDto dto : request.getDatas()) {
+			// Definir les parametres obligatoires
+			Map<String, java.lang.Object> fieldsToVerify = new HashMap<String, java.lang.Object>();
+			fieldsToVerify.put("id", dto.getId());
+			if (!Validate.RequiredValue(fieldsToVerify).isGood()) {
+				throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
+			}
+
+			// Verifier si la campaigns existe (incluant les supprimés)
+			Campaigns entityToSave = null;
+			entityToSave = campaignsRepository.findOne(dto.getId(), true);  // true pour inclure les supprimés
+			if (entityToSave == null) {
+				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("campaigns id -> " + dto.getId(), locale));
+			}
+
+			// Verify if user exist
+			if (dto.getCreatorId() != null && dto.getCreatorId() > 0){
+				User existingUser = userRepository.findOne(dto.getCreatorId(), false);
+				if (existingUser == null) {
+					throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("user creatorId -> " + dto.getCreatorId(), locale));
+				}
+				entityToSave.setUser(existingUser);
+			}
+			// Verify if specialities exist
+			if (dto.getSpecialityId() != null && dto.getSpecialityId() > 0){
+				Specialities existingSpecialities = specialitiesRepository.findOne(dto.getSpecialityId(), false);
+				if (existingSpecialities == null) {
+					throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("specialities specialityId -> " + dto.getSpecialityId(), locale));
+				}
+				entityToSave.setSpecialities(existingSpecialities);
+			}
+			if (Utilities.notBlank(dto.getCampaignTitle())) {
+				entityToSave.setCampaignTitle(dto.getCampaignTitle());
+			}
+			if (Utilities.notBlank(dto.getCampaignDesc())) {
+				entityToSave.setCampaignDesc(dto.getCampaignDesc());
+			}
+			if (Utilities.notBlank(dto.getCampaignStatus())) {
+				entityToSave.setCampaignStatus(dto.getCampaignStatus());
+			}
+			if (Utilities.notBlank(dto.getCampaignStart())) {
+				entityToSave.setCampaignStart(dateFormat.parse(dto.getCampaignStart()));
+			}
+			if (Utilities.notBlank(dto.getCampaignEnd())) {
+				entityToSave.setCampaignEnd(dateFormat.parse(dto.getCampaignEnd()));
+			}
+			if (dto.getIsDeleted() != null) {
+				entityToSave.setIsDeleted(dto.getIsDeleted());
+			}
+			if (dto.getMaxApply() != null && dto.getMaxApply() > 0) {
+				entityToSave.setMaxApply(dto.getMaxApply());
+			}
+			if (dto.getAllCanUpdate() != null) {
+				entityToSave.setAllCanUpdate(dto.getAllCanUpdate());
+			}
+			if (dto.getMarkedOutOf() != null && dto.getMarkedOutOf() > 0) {
+				entityToSave.setMarkedOutOf(dto.getMarkedOutOf());
+			}
+			if (dto.getCreatedBy() != null && dto.getCreatedBy() > 0) {
+				entityToSave.setCreatedBy(dto.getCreatedBy());
+			}
+			if (dto.getUpdatedBy() != null && dto.getUpdatedBy() > 0) {
+				entityToSave.setUpdatedBy(dto.getUpdatedBy());
+			}
+			if (Utilities.notBlank(dto.getSearchString())) {
+				entityToSave.setSearchString(dto.getSearchString());
+			}
+			// Après toutes les mises à jour conditionnelles...
+			entityToSave.setUpdatedAt(Utilities.getCurrentDate());
+			entityToSave.setUpdatedBy(request.getUser());
+			// Générer le searchString à partir de l'entité finale
+			entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(entityToSave)));
+			items.add(entityToSave);
+		}
+
+		if (!items.isEmpty()) {
+			List<Campaigns> itemsSaved = null;
+			// maj les donnees en base
+			itemsSaved = campaignsRepository.saveAll((Iterable<Campaigns>) items);
+			if (itemsSaved == null) {
+				throw new InternalErrorException(functionalError.SAVE_FAIL("campaigns", locale));
+			}
+			List<CampaignsDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading())) ? CampaignsTransformer.INSTANCE.toLiteDtos(itemsSaved) : CampaignsTransformer.INSTANCE.toDtos(itemsSaved);
+
+			final int size = itemsSaved.size();
+			List<String>  listOfError      = Collections.synchronizedList(new ArrayList<String>());
+			itemsDto.parallelStream().forEach(dto -> {
+				try {
+					dto = getFullInfos(dto, size, request.getIsSimpleLoading(), locale);
+				} catch (Exception e) {
+					listOfError.add(e.getMessage());
+					e.printStackTrace();
+				}
+			});
+			if (Utilities.isNotEmpty(listOfError)) {
+				Object[] objArray = listOfError.stream().distinct().toArray();
+				throw new RuntimeException(StringUtils.join(objArray, ", "));
+			}
+			Status status = new Status();
+			status.setCode(StatusCode.SUCCESS);
+			status.setMessage(StatusMessage.SUCCESS);
+
+			response.setItems(itemsDto);
+			response.setHasError(false);
+			response.setHttpCode(HttpStatus.OK.value());
+			response.setStatus(status);
+		}
+		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
+		log.info("----end updateDeleted Campaigns-----");
 		return response;
 	}
 

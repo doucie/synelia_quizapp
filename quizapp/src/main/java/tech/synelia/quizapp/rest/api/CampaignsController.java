@@ -84,6 +84,16 @@ public class CampaignsController {
         return response;
     }
 
+	@RequestMapping(value="/updateDeleted",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
+	public Response<CampaignsDto> updateDeleted(@RequestBody Request<CampaignsDto> request) throws Exception{
+		log.info("start method /campaigns/updateDeleted");
+		String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
+    	Locale locale = Locale.of(languageID, "");
+		Response<CampaignsDto> response = campaignsBusiness.updateDeleted(request, locale);
+		log.info("end method /campaigns/updateDeleted");
+		return response;
+	}
+
 	@RequestMapping(value="/delete",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
     public Response<CampaignsDto> delete(@RequestBody Request<CampaignsDto> request) throws Exception{
     	log.info("start method /campaigns/delete");

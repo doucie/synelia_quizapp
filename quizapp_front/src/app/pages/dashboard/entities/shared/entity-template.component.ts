@@ -2,6 +2,7 @@ import { Component, Input, Output } from '@angular/core';
 import { EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { SearchField, SearchCriteria } from './models/search.model';
 
 @Component({
     selector: 'app-entity-template',
@@ -67,5 +68,31 @@ export class EntityTemplateComponent {
 
     onCreateItem() {
         this.createItem.emit();
+    }
+
+    /* =================
+     Advanced Search Panel
+    ================= */
+    @Input() showAdvancedSearchPanel: boolean = false;
+    @Input() advancedSearchFields: SearchField[] = [];
+    @Input() advancedSearchCriteria: SearchCriteria = {};
+    @Input() showAdvancedSearch: boolean = false;
+
+    // advanced search events
+    @Output() advancedSearchApply = new EventEmitter<SearchCriteria>();
+    @Output() advancedSearchReset = new EventEmitter<void>();
+
+    // Gestion du panneau de recherche avancée
+    onAdvancedSearchToggle() {
+    this.showAdvancedSearch = !this.showAdvancedSearch;
+    }
+
+    onAdvancedSearchApply() {
+    this.advancedSearchApply.emit(this.advancedSearchCriteria);
+    }
+
+    onAdvancedSearchReset() {
+    this.advancedSearchCriteria = {};
+    this.advancedSearchReset.emit();
     }
 }
