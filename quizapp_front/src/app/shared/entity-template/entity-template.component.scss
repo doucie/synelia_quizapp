@@ -1,0 +1,96 @@
+.entities-container {
+  padding: 0;
+  max-width: 100%;
+  margin: 0;
+  background: var(--background);
+  min-height: 100vh;
+}
+
+/* =================================================================
+   HEADER
+   ================================================================= */
+.page-header {
+    margin-bottom: 0;
+    padding: 2rem;
+    background: linear-gradient(135deg, var(--surface) 0%, var(--surface-variant) 100%);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+
+  .breadcrumb {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    
+    .btn-back {
+        font-weight: var(--font-weight-medium);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: transparent;
+        color: var(--text-secondary);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      
+      svg {
+        width: 16px;
+        height: 16px;
+        stroke-width: 2;
+        transition: transform 0.2s ease;
+      }
+      
+      &:hover {
+        transform: translateX(-2px);
+        background: var(--surface);
+        color: var(--text-primary);
+        border-color: var(--text-secondary);
+        
+        svg {
+          transform: translateX(-3px);
+        }
+      }
+    }
+    
+    .breadcrumb-separator {
+      margin: 0 var(--spacing-xs);
+      opacity: 0.5;
+      color: var(--text-secondary);
+      font-weight: 300;
+    }
+    
+    .current-page {
+      font-weight: var(--font-weight-semibold);
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+  }
+  
+  h1 {
+    background: var(--gradient-primary);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: var(--spacing-sm);
+    font-weight: var(--font-weight-bold);
+    margin: 0 0 0.5rem 0;
+    font-size: 2.25rem;
+    color: var(--text-primary);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+  }
+  
+  .page-description {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 1rem;
+    line-height: 1.5;
+    font-weight: 400;
+  }
+}
