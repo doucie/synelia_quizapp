@@ -73,18 +73,18 @@ export class EntityTemplateComponent {
     /* =================
      Advanced Search Panel
     ================= */
-    @Input() showAdvancedSearchPanel: boolean = false;
+    @Input() showAdvancedSearch: boolean = false;
     @Input() advancedSearchFields: SearchField[] = [];
     @Input() advancedSearchCriteria: SearchCriteria = {};
-    @Input() showAdvancedSearch: boolean = false;
 
     // advanced search events
+    @Output() advancedSearchToggle = new EventEmitter<void>();
     @Output() advancedSearchApply = new EventEmitter<SearchCriteria>();
     @Output() advancedSearchReset = new EventEmitter<void>();
 
     // Gestion du panneau de recherche avancée
     onAdvancedSearchToggle() {
-    this.showAdvancedSearch = !this.showAdvancedSearch;
+    this.advancedSearchToggle.emit();
     }
 
     onAdvancedSearchApply() {
