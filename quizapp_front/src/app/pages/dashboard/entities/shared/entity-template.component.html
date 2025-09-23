@@ -129,29 +129,27 @@
             </div>
         
             <!-- Champ range (deux inputs) -->
-            <div class="form-row-full" *ngIf="field.type === 'range'">
-                <div class="form-group-inline">
-                    <label>{{ field.label }} de</label>
+            <div class="form-group form-row-full range-group" *ngIf="field.type === 'range'">
+                <label>{{ field.label }}</label>
+                <div class="date-range">
                     <input 
                         type="text"
-                        class="form-input-inline"
+                        class="form-input"
                         [(ngModel)]="advancedSearchCriteria[field.key + 'De']"
-                        [placeholder]="field.placeholder || 'Min'"
+                        placeholder="min"
                     />
-                </div>
-                <span class="range-separator">à</span>
-                <div class="form-group-inline">
+                    <span>à</span>
                     <input 
                         type="text"
-                        class="form-input-inline"
+                        class="form-input"
                         [(ngModel)]="advancedSearchCriteria[field.key + 'A']"
-                        [placeholder]="field.placeholder || 'Max'"
+                        placeholder="max"
                     />
                 </div>
             </div>
 
             <!-- Type date_range -->
-            <div class="form-group form-row-full date-range-group" *ngIf="field.type === 'date_range'">
+            <div class="form-group form-row-full range-group" *ngIf="field.type === 'date_range'">
                 <label>{{ field.label }}</label>
                 <div class="date-range">
                     <input 
@@ -170,7 +168,7 @@
 
         </ng-container>
         
-        <div class="panel-actions">
+        <div class="panel-actions form-row-full">
             <button class="btn-secondary-pro" (click)="onAdvancedSearchReset()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M1 4V10H7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>

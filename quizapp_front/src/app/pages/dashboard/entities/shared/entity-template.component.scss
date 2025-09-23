@@ -309,6 +309,7 @@
       
       &::placeholder {
         color: var(--text-muted);
+        opacity: 0.8;
       }
     }
     
@@ -365,6 +366,7 @@
       
       &::placeholder {
         color: var(--text-muted);
+        opacity: 0.8;
       }
     }
   }
@@ -407,7 +409,8 @@
 .date-range {
   display: flex;
   align-items: center;
-    
+  gap: var(--spacing-md);
+
   input[type="date"] {
     flex: 1;
     padding: var(--spacing-sm);
@@ -423,7 +426,7 @@
   
 }
 
-.date-range-group {
-  align-items: normal!important;  // Override pour date-range
+.range-group {
+  align-items: normal!important;
 }
 
