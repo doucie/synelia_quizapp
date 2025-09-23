@@ -84,15 +84,17 @@ export class EntityTemplateComponent {
 
     // Gestion du panneau de recherche avancée
     onAdvancedSearchToggle() {
-    this.advancedSearchToggle.emit();
+        this.advancedSearchToggle.emit();
+        this.showAdvancedSearch = !this.showAdvancedSearch;
+        this.advancedSearchToggle.emit();  // Émettre l'événement vers le parent
     }
 
     onAdvancedSearchApply() {
-    this.advancedSearchApply.emit(this.advancedSearchCriteria);
+        this.advancedSearchApply.emit(this.advancedSearchCriteria);
     }
 
     onAdvancedSearchReset() {
-    this.advancedSearchCriteria = {};
-    this.advancedSearchReset.emit();
+        this.advancedSearchCriteria = {};
+        this.advancedSearchReset.emit();
     }
 }

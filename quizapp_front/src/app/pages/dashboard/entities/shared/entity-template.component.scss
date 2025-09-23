@@ -1,3 +1,5 @@
+@import './template-buttons';
+
 .entities-container {
   padding: 0;
   max-width: 100%;
@@ -278,7 +280,7 @@
   .form-group {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-xs);
+    // gap: var(--spacing-xs);
     
     label {
       font-size: var(--font-size-sm);
@@ -326,8 +328,6 @@
     grid-column: 1 / -1;
     display: flex;
     align-items: end;
-    gap: var(--spacing-md);
-    padding: var(--spacing-md);
     background: var(--surface-subtle);
     border-radius: var(--border-radius);
     border: 1px solid var(--border-subtle);
@@ -400,3 +400,30 @@
     max-height: 1000px;
   }
 }
+
+// ...existing code...
+
+/* Styles pour les plages de dates */
+.date-range {
+  display: flex;
+  align-items: center;
+    
+  input[type="date"] {
+    flex: 1;
+    padding: var(--spacing-sm);
+    border: 1px solid var(--text-secondary);
+    border-radius: 4px;
+    font-size: var(--font-size-sm);
+  }
+  
+  span {
+    color: var(--text-secondary);
+    font-weight: var(--font-weight-semibold);
+  }
+  
+}
+
+.date-range-group {
+  align-items: normal!important;  // Override pour date-range
+}
+

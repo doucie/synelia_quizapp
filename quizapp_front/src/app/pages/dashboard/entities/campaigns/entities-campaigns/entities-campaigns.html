@@ -19,8 +19,13 @@
     [showDeletedUsers]="showDeletedUsers"
     (quickSearchChange)="onQuickSearch($event)"
     (deletedToggleChange)="toggleDeletedUsers()"
-    (openAdvancedSearch)="openAdvancedSearch()"
-    (createItem)="createUser()">
+    (createItem)="createCampaign()"
+    [showAdvancedSearch]="showAdvancedSearch"
+    [advancedSearchFields]="campaignSearchFields"
+    [advancedSearchCriteria]="advancedSearchCriteria"
+    (advancedSearchToggle)="onAdvancedSearchToggle()"
+    (advancedSearchApply)="onAdvancedSearchApply($event)"
+    (advancedSearchReset)="onAdvancedSearchReset()">
   </app-entity-template>
 
 </div>

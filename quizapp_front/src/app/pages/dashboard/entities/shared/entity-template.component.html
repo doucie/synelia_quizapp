@@ -54,7 +54,7 @@
             <button
                 *ngIf="showAdvancedSearchButton"
                 class="btn-secondary-pro"
-                (click)="onOpenAdvancedSearch()">
+                (click)="onAdvancedSearchToggle()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M3 6H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     <path d="M7 12H17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -147,6 +147,24 @@
                         [(ngModel)]="advancedSearchCriteria[field.key + 'A']"
                         [placeholder]="field.placeholder || 'Max'"
                     />
+                </div>
+            </div>
+
+            <!-- Type date_range -->
+            <div class="form-group form-row-full date-range-group" *ngIf="field.type === 'date_range'">
+                <label>{{ field.label }}</label>
+                <div class="date-range">
+                    <input 
+                        type="date" 
+                        class="form-input"
+                        placeholder="De" 
+                        [(ngModel)]="advancedSearchCriteria[field.key + 'De']">
+                    <span>à</span>
+                    <input 
+                        type="date" 
+                        class="form-input"
+                        placeholder="À" 
+                        [(ngModel)]="advancedSearchCriteria[field.key + 'A']">
                 </div>
             </div>
 
