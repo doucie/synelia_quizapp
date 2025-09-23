@@ -29,7 +29,7 @@
     "changeOrigin": true,
     "logLevel": "debug"
   },
-  "/userManager/**": {
+  "/campaigns/**": {
     "target": "http://localhost:8081",
     "secure": false,
     "changeOrigin": true,

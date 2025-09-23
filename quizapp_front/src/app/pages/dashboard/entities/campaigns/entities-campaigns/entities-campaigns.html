@@ -1,4 +1,19 @@
 <div class="entities-campaigns-container">
+  <!-- DEBUG: Test temporaire pour vérifier les données -->
+  <div class="p-4 bg-yellow-100 border border-yellow-300 rounded mb-4">
+    <h3 class="font-bold">DEBUG - Données des campagnes</h3>
+    <div *ngIf="isLoading()">Chargement...</div>
+    <div *ngIf="!isLoading() && campaigns().length === 0" class="text-red-600">❌ Aucune campagne trouvée</div>
+    <div *ngIf="!isLoading() && campaigns().length > 0" class="text-green-600">
+      ✅ Nombre de campagnes: {{ campaigns().length }}
+      <ul class="mt-2">
+        <li *ngFor="let campaign of campaigns()" class="text-sm">
+          ID: {{ campaign.id }} - Titre: {{ campaign.campaignTitle }} (Statut: {{ campaign.campaignStatus }}, Supprimé: {{ campaign.isDeleted }})
+        </li>
+      </ul>
+    </div>
+  </div>
+
   <!-- Utilise le template générique avec config pour campagnes -->
   <app-entity-template
     [pageClass]="'campaigns-page'"
@@ -38,7 +53,7 @@
     (pageChange)="onPageChange($event)"
     (pageSizeChange)="onPageSizeChange($event)"
     [showModal]="showModal"
-    [modalConfig]="modalConfig"
+    [modalConfig]="safeModalConfig"
     [modalFormData]="modalFormData"
     (modalClose)="onModalClose()"
     (modalSubmit)="onModalSubmit($event)"
