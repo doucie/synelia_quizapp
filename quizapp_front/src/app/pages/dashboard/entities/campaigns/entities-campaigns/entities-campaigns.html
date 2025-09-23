@@ -25,7 +25,23 @@
     [advancedSearchCriteria]="advancedSearchCriteria"
     (advancedSearchToggle)="onAdvancedSearchToggle()"
     (advancedSearchApply)="onAdvancedSearchApply($event)"
-    (advancedSearchReset)="onAdvancedSearchReset()">
+    (advancedSearchReset)="onAdvancedSearchReset()"
+    [showTable]="true"
+    [tableConfig]="campaignTableConfig"
+    [tableData]="campaigns()"
+    [isLoading]="isLoading()"
+    [showStats]="true"
+    [statsInfo]="statsInfo"
+    [showPagination]="true"
+    [paginationInfo]="paginationInfo"
+    (tableAction)="onTableAction($event)"
+    (pageChange)="onPageChange($event)"
+    (pageSizeChange)="onPageSizeChange($event)"
+    [showModal]="showModal"
+    [modalConfig]="modalConfig"
+    [modalFormData]="modalFormData"
+    (modalClose)="onModalClose()"
+    (modalSubmit)="onModalSubmit($event)"
+    (modalDelete)="onModalDelete()">
   </app-entity-template>
-
 </div>

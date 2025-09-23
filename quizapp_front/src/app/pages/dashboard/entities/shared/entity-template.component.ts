@@ -2,7 +2,16 @@ import { Component, Input, Output } from '@angular/core';
 import { EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { SearchField, SearchCriteria } from './models/search.model';
+import { 
+  SearchField, 
+  SearchCriteria, 
+  TableColumn, 
+  TableAction, 
+  TableConfig, 
+  PaginationInfo, 
+  StatsInfo, 
+  ModalConfig 
+} from './models/search.model';
 
 @Component({
     selector: 'app-entity-template',
@@ -96,5 +105,119 @@ export class EntityTemplateComponent {
     onAdvancedSearchReset() {
         this.advancedSearchCriteria = {};
         this.advancedSearchReset.emit();
+    }
+
+
+
+
+    /* =================
+    Table Configuration
+    ================== */
+    @Input() showTable: boolean = true;
+    @Input() tableConfig: TableConfig = { columns: [], actions: [], trackBy: 'id', emptyState: { title: '', message: '', icon: '' } };
+    @Input() tableData: any[] = [];
+    @Input() isLoading: boolean = false;
+
+    /* =================
+    Stats Configuration
+    ================== */
+    @Input() showStats: boolean = true;
+    @Input() statsInfo: StatsInfo = { total: 0 };
+
+    /* =================
+    Pagination Configuration
+    ================== */
+    @Input() showPagination: boolean = true;
+    @Input() paginationInfo: PaginationInfo = { currentPage: 0, totalElements: 0, pageSize: 10, totalPages: 0 };
+    @Input() pageSizeOptions: number[] = [5, 10, 20, 50, 100];
+
+    /* =================
+    Table Events
+    ================== */
+    @Output() tableAction = new EventEmitter<{ action: string; item: any }>();
+    @Output() pageChange = new EventEmitter<number>();
+    @Output() pageSizeChange = new EventEmitter<number>();
+
+    // ...existing code...
+
+    // Méthodes pour le tableau
+    onTableAction(action: string, item: any) {
+        this.tableAction.emit({ action, item });
+    }
+
+    onPageChange(page: number) {
+        this.pageChange.emit(page);
+    }
+
+    onPageSizeChange(event: Event) {
+        const target = event.target as HTMLSelectElement;
+        const size = +target.value || 10;
+        this.pageSizeChange.emit(size);
+    }
+
+    // Méthodes utilitaires pour le template
+    trackByFn(index: number, item: any): any {
+        return item[this.tableConfig.trackBy];
+    }
+
+    getPageNumbers(): number[] {
+        const totalPages = this.paginationInfo.totalPages;
+        const currentPage = this.paginationInfo.currentPage;
+        const pages: number[] = [];
+        
+        if (totalPages <= 7) {
+            for (let i = 0; i < totalPages; i++) {
+                pages.push(i);
+        }
+        } else {
+            pages.push(0);
+            if (currentPage > 3) pages.push(-1); // ...
+            const start = Math.max(1, currentPage - 2);
+            const end = Math.min(totalPages - 2, currentPage + 2);
+            for (let i = start; i <= end; i++) {
+                pages.push(i);
+            }
+            if (currentPage < totalPages - 4) pages.push(-1);
+            pages.push(totalPages - 1);
+        }
+        
+        return pages;
+    }
+
+    hasPreviousPage(): boolean {
+        return this.paginationInfo.currentPage > 0;
+    }
+
+    hasNextPage(): boolean {
+        return this.paginationInfo.currentPage < this.paginationInfo.totalPages - 1;
+    }
+
+    /* =================
+    Modal Configuration
+    ================= */
+    @Input() showModal: boolean = false;
+    @Input() modalConfig: ModalConfig = { title: '', fields: [], submitLabel: '', cancelLabel: '' };
+    @Input() modalFormData: any = {};
+    @Output() modalClose = new EventEmitter<void>();
+    @Output() modalSubmit = new EventEmitter<any>();
+    @Output() modalDelete = new EventEmitter<void>();
+
+
+    // Méthodes utilitaires
+
+    min(a: number, b: number): number {
+        return Math.min(a, b);
+    }
+
+    onModalClose() {
+        this.modalClose.emit();
+    }
+
+    onModalSubmit() {
+        this.modalSubmit.emit(this.modalFormData);
+    }
+
+    onModalDelete() {
+        this.modalDelete.emit();
     }
 }
