@@ -270,12 +270,12 @@ export class DepartmentService {
     });
 
     const request = {
-      user: currentUserId,
-      data: backendDepartment  // Format générique : data au singulier, pas datas
+      datas: [backendDepartment],  // Array avec l'objet département à mettre à jour
+      user: currentUserId    // ID utilisateur connecté
     };
 
     console.log('🔧 Update department request payload:', request);
-    console.log('🔧 Update request data:', request.data);
+    console.log('🔧 Update request datas:', request.datas);
     console.log('🔧 Update request user:', request.user);
 
     return this.http.post<any>(`${this.apiUrl}/update`, request).pipe(
