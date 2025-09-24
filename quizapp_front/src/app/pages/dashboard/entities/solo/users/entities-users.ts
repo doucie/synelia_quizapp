@@ -3,9 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
-import { UserService, User, UserSearchCriteria, PagedResponse } from '../../../../core/services/user.service';
-import { NotificationService } from '../../../../core/services/notification.service';
-import { AuthService } from '../../../../core/services/auth/auth.service';
+import { UserService, User, UserSearchCriteria, PagedResponse } from '../../../../../core/services/user.service';
+import { NotificationService } from '../../../../../core/services/notification.service';
+import { AuthService } from '../../../../../core/services/auth/auth.service';
 
 @Component({
   selector: 'app-entities-users',
