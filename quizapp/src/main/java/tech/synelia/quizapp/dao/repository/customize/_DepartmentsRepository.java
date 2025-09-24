@@ -63,7 +63,7 @@ public interface _DepartmentsRepository {
 	default Long count(Request<DepartmentsDto> request, EntityManager em, Locale locale) throws DataAccessException, Exception  {
 		String req = "select count(e.id) from Departments e where e IS NOT NULL";
 		HashMap<String, java.lang.Object> param = new HashMap<String, java.lang.Object>();
-		req += getWhereExpression(request, param, locale);
+		req += getAllWhereExpression(request, param, locale); // Use same logic as getAllByCriteria to include deleted items
 		req += " order by  e.id desc";
 		jakarta.persistence.Query query = em.createQuery(req);
 		for (Map.Entry<String, java.lang.Object> entry : param.entrySet()) {

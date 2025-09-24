@@ -158,6 +158,25 @@ public interface DepartmentsRepository extends JpaRepository<Departments, Intege
 	}
 
 	/**
+	 * Finds count of Departments by using departmentsDto as a search criteria (including deleted).
+	 *
+	 * @param request, em
+	 * @return Number of Departments
+	 *
+	 */
+	default Long countAllByCriteriaIncludingDeleted(Request<DepartmentsDto> request, EntityManager em, Locale locale) throws DataAccessException, Exception  {
+		String req = "select count(e.id) from Departments e where e IS NOT NULL";
+		HashMap<String, java.lang.Object> param = new HashMap<String, java.lang.Object>();
+		req += getAllWhereExpression(request, param, locale);
+		jakarta.persistence.Query query = em.createQuery(req);
+		for (Map.Entry<String, java.lang.Object> entry : param.entrySet()) {
+			query.setParameter(entry.getKey(), entry.getValue());
+		}
+		Long count = (Long) query.getResultList().get(0);
+		return count;
+	}
+
+	/**
 	 * get where expression
 	 * @param request
 	 * @param param

@@ -444,6 +444,9 @@ public class DepartmentsBusiness implements IBasicBusiness<Request<DepartmentsDt
 		Response<DepartmentsDto> response = new Response<DepartmentsDto>();
 		List<Departments> items = departmentsRepository.getAllByCriteria(request, em, locale);
 
+		// Compter le nombre total de départements avec les mêmes critères (pour pagination)
+		Long totalCount = departmentsRepository.countAllByCriteriaIncludingDeleted(request, em, locale);
+
 		if (items != null && !items.isEmpty()) {
 			List<DepartmentsDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading())) ? DepartmentsTransformer.INSTANCE.toLiteDtos(items) : DepartmentsTransformer.INSTANCE.toDtos(items);
 
@@ -470,6 +473,7 @@ public class DepartmentsBusiness implements IBasicBusiness<Request<DepartmentsDt
 			response.setHttpCode(HttpStatus.OK.value());
 			response.setStatus(status);
 			response.setCount((long) itemsDto.size());
+			response.setTotalCount(totalCount);
 		} else {
 			Status status = new Status();
 			status.setCode(StatusCode.SUCCESS);
@@ -480,6 +484,7 @@ public class DepartmentsBusiness implements IBasicBusiness<Request<DepartmentsDt
 			response.setHttpCode(HttpStatus.OK.value());
 			response.setStatus(status);
 			response.setCount(0L);
+			response.setTotalCount(totalCount);
 		}
 
 		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
