@@ -51,6 +51,11 @@ export const routes: Routes = [
         canActivate: [superRoleGuard]
       },
       { 
+        path: 'entities/departments', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/departments/entities-departments').then(m => m.EntitiesDepartmentsComponent),
+        canActivate: [superRoleGuard]
+      },
+      { 
         path: 'users', 
         loadComponent: () => import('./pages/dashboard/users/users').then(m => m.UsersComponent),
         canActivate: [superRoleGuard]
