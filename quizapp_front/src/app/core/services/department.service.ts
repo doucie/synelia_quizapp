@@ -93,14 +93,20 @@ export class DepartmentService {
       departmentDesc: criteria.description || '',
       // Ne pas envoyer isDeleted si on veut tous les départements (incluant supprimés)
       // isDeleted: criteria.isDeleted !== undefined ? criteria.isDeleted : false,
-      dateCreationDe: criteria.dateCreationDe || '',
-      dateCreationA: criteria.dateCreationA || '',
-      dateModificationDe: criteria.dateModificationDe || '',
-      dateModificationA: criteria.dateModificationA || '',
+      ...(criteria.dateCreationDe && criteria.dateCreationDe.trim() && { dateCreationDe: criteria.dateCreationDe }),
+      ...(criteria.dateCreationA && criteria.dateCreationA.trim() && { dateCreationA: criteria.dateCreationA }),
+      ...(criteria.dateModificationDe && criteria.dateModificationDe.trim() && { dateModificationDe: criteria.dateModificationDe }),
+      ...(criteria.dateModificationA && criteria.dateModificationA.trim() && { dateModificationA: criteria.dateModificationA }),
       searchString: criteria.search_string || ''
     };
 
     console.log('🔧 Données brutes avant nettoyage:', rawData);
+    console.log('🔍 Dates dans rawData:', {
+      dateCreationDe: rawData.dateCreationDe,
+      dateCreationA: rawData.dateCreationA,
+      dateModificationDe: rawData.dateModificationDe,
+      dateModificationA: rawData.dateModificationA
+    });
 
     console.log('🔍 Recherche rapide - searchString:', criteria.search_string);
     console.log('🔍 Recherche rapide - quickSearch value:', criteria.search_string?.trim());
@@ -109,6 +115,12 @@ export class DepartmentService {
 
     const cleanedData = this.cleanEmptyFields(rawData);
     console.log('🔧 Données après nettoyage:', cleanedData);
+    console.log('🔍 Données nettoyées - dates:', {
+      dateCreationDe: cleanedData.dateCreationDe,
+      dateCreationA: cleanedData.dateCreationA,
+      dateModificationDe: cleanedData.dateModificationDe,
+      dateModificationA: cleanedData.dateModificationA
+    });
     console.log('🔍 Données nettoyées - searchString:', cleanedData.searchString);
     console.log('🔍 Données nettoyées - searchString existe?', 'searchString' in cleanedData);
     console.log('🔍 Données nettoyées - clés:', Object.keys(cleanedData));
@@ -394,9 +406,11 @@ export class DepartmentService {
 
         // Ne pas inclure les chaînes vides pour les champs non-String (dates, nombres)
         // Mais garder les chaînes vides pour les champs String (pour la recherche)
+        // Exception pour les champs de date qui commencent par "date"
         if (typeof value === 'string' && value.trim() === '' &&
-            (key.includes('At') || key.includes('By') || key.includes('Id'))) {
-          // Ne pas ajouter le champ s'il est vide et concerne une date ou un ID
+            (key.includes('At') || key.includes('By') || key.includes('Id')) &&
+            !key.startsWith('date')) {
+          // Ne pas ajouter le champ s'il est vide et concerne une date ou un ID (mais pas les champs de recherche de date)
           continue;
         }
 

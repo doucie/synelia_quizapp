@@ -43,6 +43,12 @@ public class DepartmentsDto extends _DepartmentsDto implements Cloneable{
     private Boolean    isDeleted            ;
     private String     searchString         ;
     
+    // Champs pour les intervalles de dates (recherche avancée)
+    private String     dateCreationDe       ; // Date de création - début
+    private String     dateCreationA        ; // Date de création - fin
+    private String     dateModificationDe   ; // Date de modification - début
+    private String     dateModificationA    ; // Date de modification - fin
+    
     // Champs pour la suppression en cascade
     private Boolean    cascadeDelete        ; // Indique si on veut supprimer en cascade
     private Integer    associatedSpecialitiesCount; // Nombre de spécialités associées

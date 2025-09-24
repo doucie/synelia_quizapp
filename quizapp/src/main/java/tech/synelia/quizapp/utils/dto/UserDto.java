@@ -52,6 +52,12 @@ public class UserDto extends _UserDto implements Cloneable{
     private Boolean    isDeleted            ;
     private String     searchString         ;
 
+    // Champs pour les intervalles de dates (recherche avancée)
+    private String     dateCreationDe       ; // Date de création - début
+    private String     dateCreationA        ; // Date de création - fin
+    private String     dateModificationDe   ; // Date de modification - début
+    private String     dateModificationA    ; // Date de modification - fin
+
     //----------------------------------------------------------------------
     // ENTITY LINKS FIELD ( RELATIONSHIP )
     //----------------------------------------------------------------------

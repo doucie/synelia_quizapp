@@ -191,7 +191,7 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
     this.isLoading.set(true);
     const serviceMethod = this.showDeletedUsers ? 'incluant supprimés' : 'actifs seulement';
     console.log(`📥 Chargement des utilisateurs (${serviceMethod})...`);
-    console.log('🔍 Critères de recherche utilisés:', this.searchCriteria);
+    console.log('🔍 Critères de recherche utilisés:', JSON.stringify(this.searchCriteria, null, 2));
 
     const criteria = {
       ...this.searchCriteria,
@@ -199,7 +199,7 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
       size: this.pageSize()
     };
 
-    console.log('📤 Requête envoyée avec critères:', criteria);
+    console.log('📤 Requête envoyée avec critères:', JSON.stringify(criteria, null, 2));
 
     // Utiliser le bon service selon la checkbox
     const serviceCall = this.showDeletedUsers 
@@ -873,8 +873,21 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
   formatCreationDate(user: User): string {
     if (!user.dateCreation) return '-';
 
+    // Si la date ne contient pas d'heures (format "jj/mm/aaaa"), afficher seulement la date
+    if (!user.dateCreation.includes(' ')) {
+      const date = this.parseFrenchDate(user.dateCreation);
+      if (!date) return user.dateCreation;
+      
+      return date.toLocaleDateString('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    }
+
+    // Si la date contient des heures, les afficher
     const date = this.parseFrenchDate(user.dateCreation);
-    if (!date) return user.dateCreation; // Retourner la chaîne originale si parsing échoue
+    if (!date) return user.dateCreation;
 
     return date.toLocaleDateString('fr-FR', {
       day: '2-digit',

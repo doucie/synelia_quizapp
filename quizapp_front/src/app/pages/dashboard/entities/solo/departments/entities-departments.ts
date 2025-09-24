@@ -573,7 +573,7 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
     
     // Débounce pour éviter trop de requêtes
     setTimeout(() => {
-      this.searchDepartments();
+      this.loadDepartments();
     }, 300);
   }
 
@@ -596,7 +596,7 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
     this.searchCriteria.search_string = '';
     
     // Lancer la recherche
-    this.searchDepartments();
+    this.loadDepartments();
   }
 
   /**
@@ -700,8 +700,21 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
   formatCreationDate(department: Department): string {
     if (!department.dateCreation) return '-';
 
+    // Si la date ne contient pas d'heures (format "jj/mm/aaaa"), afficher seulement la date
+    if (!department.dateCreation.includes(' ')) {
+      const date = this.parseFrenchDate(department.dateCreation);
+      if (!date) return department.dateCreation;
+      
+      return date.toLocaleDateString('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    }
+
+    // Si la date contient des heures, les afficher
     const date = this.parseFrenchDate(department.dateCreation);
-    if (!date) return department.dateCreation; // Retourner la chaîne originale si parsing échoue
+    if (!date) return department.dateCreation;
 
     return date.toLocaleDateString('fr-FR', {
       day: '2-digit',

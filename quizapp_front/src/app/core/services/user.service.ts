@@ -132,15 +132,15 @@ export class UserService {
         isDeleted: criteria.isDeleted !== undefined ? criteria.isDeleted.toString() : "",
         searchString: criteria.search_string || "",
         
-        // Critères de dates et intervalles
-        createdAtStart: criteria.dateCreationDe || "",
-        createdAtEnd: criteria.dateCreationA || "",
-        updatedAtStart: criteria.dateModificationDe || "",
-        updatedAtEnd: criteria.dateModificationA || "",
+        // Critères de dates et intervalles (uniquement si non vides)
+        ...(criteria.dateCreationDe && criteria.dateCreationDe.trim() && { dateCreationDe: criteria.dateCreationDe }),
+        ...(criteria.dateCreationA && criteria.dateCreationA.trim() && { dateCreationA: criteria.dateCreationA }),
+        ...(criteria.dateModificationDe && criteria.dateModificationDe.trim() && { dateModificationDe: criteria.dateModificationDe }),
+        ...(criteria.dateModificationA && criteria.dateModificationA.trim() && { dateModificationA: criteria.dateModificationA }),
         
         // Intervalles d'ID (champs supplémentaires pour le backend)
-        idStart: criteria.idDe || "",
-        idEnd: criteria.idA || ""
+        ...(criteria.idDe && criteria.idDe.trim() && { idStart: criteria.idDe }),
+        ...(criteria.idA && criteria.idA.trim() && { idEnd: criteria.idA })
       }
     };
 
@@ -149,6 +149,10 @@ export class UserService {
     console.log('  - user (ID connecté):', currentUserId);
     console.log('  - size (taille page):', criteria.size);
     console.log('  - index (page):', criteria.page);
+    console.log('  - data.dateCreationDe:', request.data.dateCreationDe);
+    console.log('  - data.dateCreationA:', request.data.dateCreationA);
+    console.log('  - data.dateModificationDe:', request.data.dateModificationDe);
+    console.log('  - data.dateModificationA:', request.data.dateModificationA);
     console.log('  - data complet:', request.data);
 
     return this.http.post<any>(`${this.apiUrl}/getByCriteria`, request).pipe(
@@ -212,6 +216,12 @@ export class UserService {
    * @returns Observable de la liste paginée d'utilisateurs incluant les supprimés
    */
   getAllUsersByCriteria(criteria: UserSearchCriteria = {}): Observable<PagedResponse<User>> {
+    console.log('🔍 [DEBUG] getAllUsersByCriteria - Critères reçus:', criteria);
+    console.log('🔍 [DEBUG] dateCreationDe:', criteria.dateCreationDe, 'type:', typeof criteria.dateCreationDe);
+    console.log('🔍 [DEBUG] dateCreationA:', criteria.dateCreationA, 'type:', typeof criteria.dateCreationA);
+    console.log('🔍 [DEBUG] dateModificationDe:', criteria.dateModificationDe, 'type:', typeof criteria.dateModificationDe);
+    console.log('🔍 [DEBUG] dateModificationA:', criteria.dateModificationA, 'type:', typeof criteria.dateModificationA);
+    
     // Récupérer l'ID de l'utilisateur connecté depuis localStorage pour éviter la dépendance circulaire
     const currentUserData = localStorage.getItem('currentUser');
     const currentUserId = currentUserData ? JSON.parse(currentUserData).id?.toString() || "1" : "1";
@@ -244,15 +254,15 @@ export class UserService {
         isDeleted: criteria.isDeleted !== undefined ? criteria.isDeleted.toString() : "",
         searchString: criteria.search_string || "",
         
-        // Critères de dates et intervalles
-        createdAtStart: criteria.dateCreationDe || "",
-        createdAtEnd: criteria.dateCreationA || "",
-        updatedAtStart: criteria.dateModificationDe || "",
-        updatedAtEnd: criteria.dateModificationA || "",
+        // Critères de dates et intervalles (uniquement si non vides)
+        ...(criteria.dateCreationDe && criteria.dateCreationDe.trim() && { dateCreationDe: criteria.dateCreationDe }),
+        ...(criteria.dateCreationA && criteria.dateCreationA.trim() && { dateCreationA: criteria.dateCreationA }),
+        ...(criteria.dateModificationDe && criteria.dateModificationDe.trim() && { dateModificationDe: criteria.dateModificationDe }),
+        ...(criteria.dateModificationA && criteria.dateModificationA.trim() && { dateModificationA: criteria.dateModificationA }),
         
         // Intervalles d'ID (champs supplémentaires pour le backend)
-        idStart: criteria.idDe || "",
-        idEnd: criteria.idA || ""
+        ...(criteria.idDe && criteria.idDe.trim() && { idStart: criteria.idDe }),
+        ...(criteria.idA && criteria.idA.trim() && { idEnd: criteria.idA })
       }
     };
 
@@ -262,6 +272,10 @@ export class UserService {
     console.log('  - size (taille page):', request.size);
     console.log('  - index (page):', request.index);
     console.log('  - data.isDeleted:', request.data.isDeleted);
+    console.log('  - data.dateCreationDe:', request.data.dateCreationDe);
+    console.log('  - data.dateCreationA:', request.data.dateCreationA);
+    console.log('  - data.dateModificationDe:', request.data.dateModificationDe);
+    console.log('  - data.dateModificationA:', request.data.dateModificationA);
     console.log('  - data complet:', request.data);
 
     return this.http.post<any>(`${this.apiUrl}/getAllByCriteria`, request).pipe(
