@@ -96,6 +96,9 @@ public class User implements Serializable, Cloneable {
     @Column(name="search_string", length=65535)
     private String     searchString ;
 
+    @Column(name="page_size_preference")
+    private Integer    pageSizePreference = 10 ;
+
 
     //----------------------------------------------------------------------
     // ENTITY LINKS ( RELATIONSHIP )

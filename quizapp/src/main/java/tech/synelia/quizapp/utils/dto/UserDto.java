@@ -51,6 +51,7 @@ public class UserDto extends _UserDto implements Cloneable{
     private Integer    updatedBy            ;
     private Boolean    isDeleted            ;
     private String     searchString         ;
+    private Integer    pageSizePreference   ;
 
     // Champs pour les intervalles de dates (recherche avancée)
     private String     dateCreationDe       ; // Date de création - début
@@ -81,6 +82,7 @@ public class UserDto extends _UserDto implements Cloneable{
 	private SearchParam<Integer>  updatedByParam        ;                     
 	private SearchParam<Boolean>  isDeletedParam        ;                     
 	private SearchParam<String>   searchStringParam     ;                     
+	private SearchParam<Integer>  pageSizePreferenceParam;                     
     /**
      * Default constructor
      */

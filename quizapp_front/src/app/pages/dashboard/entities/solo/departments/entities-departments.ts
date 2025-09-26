@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
 import { DepartmentService, Department, DepartmentSearchCriteria, PagedResponse } from '../../../../../core/services/department.service';
+import { UserService } from '../../../../../core/services/user.service';
 import { NotificationService } from '../../../../../core/services/notification.service';
 import { AuthService } from '../../../../../core/services/auth/auth.service';
 
@@ -92,6 +93,7 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
 
   constructor(
     private departmentService: DepartmentService,
+    private userService: UserService,
     private notificationService: NotificationService,
     private authService: AuthService,
     private router: Router
@@ -523,6 +525,18 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
     
     this.pageSize.set(newSize);
     this.storePageSize(newSize); // Sauvegarder dans le cache
+    
+    // Sauvegarder la préférence dans la base de données
+    this.userService.updatePageSizePreference(newSize).subscribe({
+      next: (response) => {
+        console.log('💾 Préférence de taille de page sauvegardée en BD:', response);
+      },
+      error: (error) => {
+        console.error('❌ Erreur lors de la sauvegarde de la préférence de taille de page:', error);
+        // Ne pas bloquer l'interface si la sauvegarde échoue
+      }
+    });
+    
     this.currentPage.set(0);
     this.loadDepartments();
     

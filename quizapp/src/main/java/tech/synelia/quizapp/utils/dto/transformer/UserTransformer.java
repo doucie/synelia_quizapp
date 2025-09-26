@@ -42,6 +42,7 @@ public interface UserTransformer {
 		@Mapping(source="entity.lastConnectionDate", dateFormat="dd/MM/yyyy", target="lastConnectionDate"),
 		@Mapping(source="entity.createdAt", dateFormat="dd/MM/yyyy", target="createdAt"),
 		@Mapping(source="entity.updatedAt", dateFormat="dd/MM/yyyy", target="updatedAt"),
+		@Mapping(source="entity.pageSizePreference", target="pageSizePreference"),
 	})
 	UserDto toDto(User entity) throws ParseException;
 
@@ -56,6 +57,7 @@ public interface UserTransformer {
 										dto.setLastName( entity.getLastName() );
 										dto.setEmail( entity.getEmail() );
 										dto.setUserRole( entity.getUserRole() );
+										dto.setPageSizePreference( entity.getPageSizePreference() );
 																																																																		return dto;
     }
 
@@ -93,6 +95,7 @@ public interface UserTransformer {
 		@Mapping(source="dto.updatedBy", target="updatedBy"),
 		@Mapping(source="dto.isDeleted", target="isDeleted"),
 		@Mapping(source="dto.searchString", target="searchString"),
+		@Mapping(source="dto.pageSizePreference", target="pageSizePreference"),
 	})
     User toEntity(UserDto dto) throws ParseException;
 }

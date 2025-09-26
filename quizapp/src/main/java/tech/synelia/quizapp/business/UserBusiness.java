@@ -608,7 +608,10 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 		log.info("----begin getAllByCriteria User (INCLUDING DELETED)-----");
 		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
 		Response<UserDto> response = new Response<UserDto>();
-		
+
+		// Ajuster la taille de page selon les préférences utilisateur
+		Utilities.adjustPageSizeFromUserPreference(request, userRepository);
+
 		// Utiliser une requête directe sans filtrage automatique des supprimés
 		List<User> items = userRepository.getAllByCriteriaIncludingDeleted(request, em, locale);
 
@@ -686,6 +689,65 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 		response.setItems(Arrays.asList(new UserDto()));
 		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
 		log.info("----end custom UserDto-----");
+		return response;
+	}
+
+	/**
+	 * Met à jour uniquement la préférence de taille de page pour un utilisateur
+	 *
+	 * @param request
+	 * @param locale
+	 * @return response
+	 * @throws Exception
+	 */
+	public Response<UserDto> updatePageSizePreference(Request<UserDto> request, Locale locale) throws Exception {
+		log.info("----begin updatePageSizePreference-----");
+		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
+		Response<UserDto> response = new Response<UserDto>();
+
+		for (UserDto dto : request.getDatas()) {
+			// Vérifier que l'ID utilisateur est fourni
+			if (dto.getId() == null) {
+				throw new InvalidEntityException(functionalError.FIELD_EMPTY("user id", locale));
+			}
+
+			// Vérifier que la pageSizePreference est fournie
+			if (dto.getPageSizePreference() == null) {
+				throw new InvalidEntityException(functionalError.FIELD_EMPTY("pageSizePreference", locale));
+			}
+
+			// Récupérer l'utilisateur
+			User existingUser = userRepository.findOne(dto.getId(), false);
+			if (existingUser == null) {
+				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("user id -> " + dto.getId(), locale));
+			}
+
+			// Mettre à jour uniquement la préférence de taille de page
+			existingUser.setPageSizePreference(dto.getPageSizePreference());
+			existingUser.setUpdatedAt(Utilities.getCurrentDate());
+			existingUser.setUpdatedBy(request.getUser());
+
+			// Sauvegarder
+			User savedUser = userRepository.save(existingUser);
+			if (savedUser == null) {
+				throw new InternalErrorException(functionalError.SAVE_FAIL("user pageSizePreference", locale));
+			}
+
+			// Retourner le DTO mis à jour
+			UserDto updatedDto = UserTransformer.INSTANCE.toDto(savedUser);
+
+			Status status = new Status();
+			status.setCode(StatusCode.SUCCESS);
+			status.setMessage(StatusMessage.SUCCESS);
+
+			response.setItems(Arrays.asList(updatedDto));
+			response.setHasError(false);
+			response.setHttpCode(HttpStatus.OK.value());
+			response.setStatus(status);
+		}
+
+		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
+		log.info("----end updatePageSizePreference-----");
 		return response;
 	}
 }

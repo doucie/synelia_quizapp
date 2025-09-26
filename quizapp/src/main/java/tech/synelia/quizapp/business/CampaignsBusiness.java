@@ -436,6 +436,10 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 		log.info("----begin get ALL Campaigns (including deleted)-----");
 		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
 		Response<CampaignsDto> response = new Response<CampaignsDto>();
+
+		// Ajuster la taille de page selon les préférences utilisateur
+		Utilities.adjustPageSizeFromUserPreference(request, userRepository);
+
 		List<Campaigns> items 			 = campaignsRepository.getAllByCriteria(request, em, locale);
 
 		if (items != null && !items.isEmpty()) {

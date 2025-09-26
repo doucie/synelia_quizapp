@@ -26,7 +26,7 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
   isLoading = signal<boolean>(false);
   totalElements = signal<number>(0);
   currentPage = signal<number>(0);
-  pageSize = signal<number>(this.getStoredPageSize()); // Utiliser la taille stockée ou 10 par défaut
+  pageSize = signal<number>(10); // Valeur par défaut temporaire, sera mise à jour dans ngOnInit
   
   // Critères de recherche
   searchCriteria: UserSearchCriteria = {
@@ -116,8 +116,7 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     console.log('🚀 Initialisation EntitiesUsersComponent');
-    console.log('📦 Taille de page au démarrage:', this.pageSize());
-    this.loadUsers();
+    this.initializePageSizePreference();
   }
 
   ngOnDestroy() {
@@ -125,6 +124,38 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
     if (this.loadingTimeout) {
       clearTimeout(this.loadingTimeout);
     }
+  }
+
+  /**
+   * Initialise la préférence de taille de page de l'utilisateur
+   */
+  private async initializePageSizePreference(): Promise<void> {
+    try {
+      // Récupérer l'utilisateur connecté depuis AuthService
+      const currentUser = this.authService.getCurrentUser();
+      if (currentUser && currentUser.id) {
+        console.log('👤 Utilisateur connecté trouvé:', currentUser.id);
+        
+        // Récupérer les détails complets de l'utilisateur depuis l'API
+        const userDetails = await this.userService.getById(parseInt(currentUser.id)).toPromise();
+        if (userDetails && userDetails.pageSizePreference) {
+          console.log('📏 Préférence de taille de page récupérée:', userDetails.pageSizePreference);
+          this.pageSize.set(userDetails.pageSizePreference);
+        } else {
+          console.log('📋 Aucune préférence trouvée, utilisation de la valeur par défaut');
+          this.pageSize.set(this.getStoredPageSize());
+        }
+      } else {
+        console.log('⚠️ Aucun utilisateur connecté trouvé, utilisation de la valeur par défaut');
+        this.pageSize.set(this.getStoredPageSize());
+      }
+    } catch (error) {
+      console.error('❌ Erreur lors de la récupération de la préférence de taille de page:', error);
+      this.pageSize.set(this.getStoredPageSize());
+    }
+
+    console.log('📦 Taille de page finale:', this.pageSize());
+    this.loadUsers();
   }
 
   /**
@@ -674,6 +705,18 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
     
     this.pageSize.set(newSize);
     this.storePageSize(newSize); // Sauvegarder dans le cache
+    
+    // Sauvegarder la préférence dans la base de données
+    this.userService.updatePageSizePreference(newSize).subscribe({
+      next: (response) => {
+        console.log('💾 Préférence de taille de page sauvegardée en BD:', response);
+      },
+      error: (error) => {
+        console.error('❌ Erreur lors de la sauvegarde de la préférence de taille de page:', error);
+        // Ne pas bloquer l'interface si la sauvegarde échoue
+      }
+    });
+    
     this.currentPage.set(0);
     this.loadUsers();
     

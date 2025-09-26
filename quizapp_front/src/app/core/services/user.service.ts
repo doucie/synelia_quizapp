@@ -19,6 +19,7 @@ export interface User {
   isDeleted?: boolean;    // Indicateur si l'utilisateur est supprimé
   dateCreation?: string;  // Backend utilise createdAt
   derniereConnexion?: string;
+  pageSizePreference?: number; // Préférence de taille de page
   
   // Champs du backend pour mapping
   firstName?: string;
@@ -342,7 +343,22 @@ export class UserService {
    * @returns Observable de l'utilisateur
    */
   getById(id: number): Observable<User> {
-    return this.http.get<User>(`${this.apiUrl}/${id}`);
+    // Utiliser getByCriteria avec l'ID comme critère
+    const criteria: UserSearchCriteria = {
+      idDe: id.toString(),
+      size: 1,
+      page: 0
+    };
+
+    return this.getByCriteria(criteria).pipe(
+      map(response => {
+        if (response.content && response.content.length > 0) {
+          return response.content[0];
+        } else {
+          throw new Error(`Utilisateur avec l'ID ${id} non trouvé`);
+        }
+      })
+    );
   }
 
   /**
@@ -528,6 +544,38 @@ export class UserService {
       }),
       catchError(error => {
         console.error('❌ UpdateAll error:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Met à jour la préférence de taille de page de l'utilisateur connecté
+   * @param pageSizePreference la nouvelle taille de page préférée
+   * @returns Observable de la réponse
+   */
+  updatePageSizePreference(pageSizePreference: number): Observable<any> {
+    // Récupération de l'ID utilisateur depuis localStorage
+    const currentUserData = localStorage.getItem('currentUser');
+    const currentUserId = currentUserData ? JSON.parse(currentUserData).id?.toString() : '1';
+
+    const request = {
+      user: currentUserId,
+      datas: [{
+        id: parseInt(currentUserId),
+        pageSizePreference: pageSizePreference
+      }]
+    };
+
+    console.log('💾 Mise à jour de la préférence de taille de page:', request);
+
+    return this.http.put(`${this.apiUrl}/update-page-size-preference`, request).pipe(
+      map(response => {
+        console.log('✅ Préférence de taille de page mise à jour:', response);
+        return response;
+      }),
+      catchError(error => {
+        console.error('❌ Erreur lors de la mise à jour de la préférence de taille de page:', error);
         return throwError(() => error);
       })
     );

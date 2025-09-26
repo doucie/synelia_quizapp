@@ -49,6 +49,8 @@ public class DepartmentsBusiness implements IBasicBusiness<Request<DepartmentsDt
 	@Autowired
 	private SpecialitiesRepository specialitiesRepository;
 	@Autowired
+	private UserRepository userRepository;
+	@Autowired
 	private FunctionalError functionalError;
 	@Autowired
 	private TechnicalError technicalError;
@@ -442,6 +444,10 @@ public class DepartmentsBusiness implements IBasicBusiness<Request<DepartmentsDt
 		log.info("----begin getAll Departments (including deleted)-----");
 		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
 		Response<DepartmentsDto> response = new Response<DepartmentsDto>();
+
+		// Ajuster la taille de page selon les préférences utilisateur
+		Utilities.adjustPageSizeFromUserPreference(request, userRepository);
+
 		List<Departments> items = departmentsRepository.getAllByCriteria(request, em, locale);
 
 		// Compter le nombre total de départements avec les mêmes critères (pour pagination)

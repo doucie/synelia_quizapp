@@ -63,6 +63,8 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thymeleaf.context.Context;
 import tech.synelia.quizapp.dao.entity.User;
+import tech.synelia.quizapp.dao.repository.UserRepository;
+import tech.synelia.quizapp.utils.contract.Request;
 
 /**
  * Utilities
@@ -847,6 +849,29 @@ public class Utilities {
         } catch (Exception e) {
             e.printStackTrace();
             return "";
+        }
+    }
+
+    /**
+     * Ajuste la taille de page dans la requête selon les préférences de l'utilisateur
+     * @param request La requête à ajuster
+     * @param userRepository Le repository pour accéder aux utilisateurs
+     */
+    public static void adjustPageSizeFromUserPreference(Request<?> request, UserRepository userRepository) {
+        // Si la taille de page n'est pas définie ou est null, utiliser la préférence utilisateur
+        if (request.getSize() == null && request.getUser() != null) {
+            try {
+                User user = userRepository.findOne(request.getUser(), false);
+                if (user != null && user.getPageSizePreference() != null) {
+                    request.setSize(user.getPageSizePreference());
+                } else {
+                    // Valeur par défaut si pas de préférence utilisateur
+                    request.setSize(10);
+                }
+            } catch (Exception e) {
+                // Valeur par défaut en cas d'erreur
+                request.setSize(10);
+            }
         }
     }
 }

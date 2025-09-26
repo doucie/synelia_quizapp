@@ -307,4 +307,33 @@ public class UserController {
 			return ResponseEntity.ok(0L); // Retourner 0 en cas d'erreur
 		}
 	}
+
+	/**
+	 * Endpoint pour mettre à jour la préférence de taille de page d'un utilisateur
+	 *
+	 * @param request la requête contenant les données utilisateur
+	 * @param locale la locale pour l'internationalisation
+	 * @return ResponseEntity avec la réponse
+	 */
+	@RequestMapping(value="/update-page-size-preference", method=RequestMethod.PUT, consumes = {"application/json"}, produces={"application/json"})
+	public ResponseEntity<Response<UserDto>> updatePageSizePreference(@RequestBody Request<UserDto> request, Locale locale) {
+
+		slf4jLogger.info("start method updatePageSizePreference");
+
+		try {
+			Response<UserDto> response = userBusiness.updatePageSizePreference(request, locale);
+			slf4jLogger.info("Response: {}", Utilities.convertObjectToJson(response));
+			return ResponseEntity.ok(response);
+
+		} catch (CannotCreateTransactionException e) {
+			slf4jLogger.error("CannotCreateTransactionException -> {}", e.getMessage());
+			return ResponseEntity.status(500).body(null);
+		} catch (TransactionSystemException e) {
+			slf4jLogger.error("TransactionSystemException -> {}", e.getMessage());
+			return ResponseEntity.status(500).body(null);
+		} catch (Exception e) {
+			slf4jLogger.error("Exception -> {}", e.getMessage());
+			return ResponseEntity.status(500).body(null);
+		}
+	}
 }

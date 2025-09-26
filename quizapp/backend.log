@@ -1,0 +1,321 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] --------------------< group.to.be.defined:quizapp >---------------------
+[INFO] Building quizapp 0.1
+[INFO]   from pom.xml
+[INFO] --------------------------------[ war ]---------------------------------
+[WARNING] Parameter 'propertiesEncoding' is unknown for plugin 'maven-resources-plugin:3.1.0:resources (default-resources)'
+[WARNING] Parameter 'propertiesEncoding' is unknown for plugin 'maven-resources-plugin:3.1.0:testResources (default-testResources)'
+[INFO] 
+[INFO] >>> spring-boot:3.5.6:run (default-cli) > test-compile @ quizapp >>>
+[INFO] 
+[INFO] --- resources:3.1.0:resources (default-resources) @ quizapp ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] Copying 20 resources
+[INFO] Copying 5 resources
+[INFO] 
+[INFO] --- compiler:3.10.1:compile (default-compile) @ quizapp ---
+[INFO] Changes detected - recompiling the module!
+[INFO] Compiling 207 source files to c:\Users\kokoe\Documents\work\synelia\projects\quiz\codes\quizapp_full\quizapp\target\classes
+[INFO] /c:/Users/kokoe/Documents/work/synelia/projects/quiz/codes/quizapp_full/quizapp/src/main/java/tech/synelia/quizapp/security/SecurityUtils.java: Some input files use or override a deprecated API.
+[INFO] /c:/Users/kokoe/Documents/work/synelia/projects/quiz/codes/quizapp_full/quizapp/src/main/java/tech/synelia/quizapp/security/SecurityUtils.java: Recompile with -Xlint:deprecation for details.
+[INFO] /c:/Users/kokoe/Documents/work/synelia/projects/quiz/codes/quizapp_full/quizapp/src/main/java/tech/synelia/quizapp/rest/fact/ControllerFactory.java: Some input files use unchecked or unsafe operations.
+[INFO] /c:/Users/kokoe/Documents/work/synelia/projects/quiz/codes/quizapp_full/quizapp/src/main/java/tech/synelia/quizapp/rest/fact/ControllerFactory.java: Recompile with -Xlint:unchecked for details.
+[INFO] 
+[INFO] --- resources:3.1.0:testResources (default-testResources) @ quizapp ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] skip non existing resourceDirectory c:\Users\kokoe\Documents\work\synelia\projects\quiz\codes\quizapp_full\quizapp\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.10.1:testCompile (default-testCompile) @ quizapp ---
+[INFO] Changes detected - recompiling the module!
+[INFO] Compiling 1 source file to c:\Users\kokoe\Documents\work\synelia\projects\quiz\codes\quizapp_full\quizapp\target\test-classes
+[INFO] 
+[INFO] <<< spring-boot:3.5.6:run (default-cli) < test-compile @ quizapp <<<
+[INFO] 
+[INFO] 
+[INFO] --- spring-boot:3.5.6:run (default-cli) @ quizapp ---
+[INFO] Attaching agents: []
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+[32m :: Spring Boot :: [39m              [2m (v3.5.6)[0;39m
+
+[2m2025-09-26T11:14:06.783Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36mt.synelia.quizapp.QuizappApplication    [0;39m [2m:[0;39m Starting QuizappApplication using Java 21.0.7 with PID 12952 (C:\Users\kokoe\Documents\work\synelia\projects\quiz\codes\quizapp_full\quizapp\target\classes started by kokoe in c:\Users\kokoe\Documents\work\synelia\projects\quiz\codes\quizapp_full\quizapp)
+[2m2025-09-26T11:14:06.788Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36mt.synelia.quizapp.QuizappApplication    [0;39m [2m:[0;39m The following 1 profile is active: "local"
+[2m2025-09-26T11:14:09.118Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36m.s.d.r.c.RepositoryConfigurationDelegate[0;39m [2m:[0;39m Multiple Spring Data modules found, entering strict repository configuration mode
+[2m2025-09-26T11:14:09.123Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36m.s.d.r.c.RepositoryConfigurationDelegate[0;39m [2m:[0;39m Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+[2m2025-09-26T11:14:10.111Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36m.s.d.r.c.RepositoryConfigurationDelegate[0;39m [2m:[0;39m Finished Spring Data repository scanning in 956 ms. Found 20 JPA repository interfaces.
+[2m2025-09-26T11:14:10.251Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36m.s.d.r.c.RepositoryConfigurationDelegate[0;39m [2m:[0;39m Multiple Spring Data modules found, entering strict repository configuration mode
+[2m2025-09-26T11:14:10.253Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36m.s.d.r.c.RepositoryConfigurationDelegate[0;39m [2m:[0;39m Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+[2m2025-09-26T11:14:10.287Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36m.RepositoryConfigurationExtensionSupport[0;39m [2m:[0;39m Spring Data Redis - Could not safely identify store assignment for repository candidate interface tech.synelia.quizapp.dao.repository.AnswersRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+[2m2025-09-26T11:14:10.288Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36m.RepositoryConfigurationExtensionSupport[0;39m [2m:[0;39m Spring Data Redis - Could not safely identify store assignment for repository candidate interface tech.synelia.quizapp.dao.repository.ApplicationsRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+[2m2025-09-26T11:14:10.288Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36m.RepositoryConfigurationExtensionSupport[0;39m [2m:[0;39m Spring Data Redis - Could not safely identify store assignment for repository candidate interface tech.synelia.quizapp.dao.repository.CampaignCrudRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+[2m2025-09-26T11:14:10.289Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36m.RepositoryConfigurationExtensionSupport[0;39m [2m:[0;39m Spring Data Redis - Could not safely identify store assignment for repository candidate interface tech.synelia.quizapp.dao.repository.CampaignQuestionsRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+[2m2025-09-26T11:14:10.289Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36m.RepositoryConfigurationExtensionSupport[0;39m [2m:[0;39m Spring Data Redis - Could not safely identify store assignment for repository candidate interface tech.synelia.quizapp.dao.repository.CampaignsRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+[2m2025-09-26T11:14:10.289Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36m.RepositoryConfigurationExtensionSupport[0;39m [2m:[0;39m Spring Data Redis - Could not safely identify store assignment for repository candidate interface tech.synelia.quizapp.dao.repository.CandidateAnswersRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+[2m2025-09-26T11:14:10.289Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36m.RepositoryConfigurationExtensionSupport[0;39m [2m:[0;39m Spring Data Redis - Could not safely identify store assignment for repository candidate interface tech.synelia.quizapp.dao.repository.CandidateAskRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+[2m2025-09-26T11:14:10.290Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36m.RepositoryConfigurationExtensionSupport[0;39m [2m:[0;39m Spring Data Redis - Could not safely identify store assignment for repository candidate interface tech.synelia.quizapp.dao.repository.CandidateInterviewRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+[2m2025-09-26T11:14:10.290Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36m.RepositoryConfigurationExtensionSupport[0;39m [2m:[0;39m Spring Data Redis - Could not safely identify store assignment for repository candidate interface tech.synelia.quizapp.dao.repository.CandidateTokenRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+[2m2025-09-26T11:14:10.290Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36m.RepositoryConfigurationExtensionSupport[0;39m [2m:[0;39m Spring Data Redis - Could not safely identify store assignment for repository candidate interface tech.synelia.quizapp.dao.repository.DepartmentsRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+[2m2025-09-26T11:14:10.291Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36m.RepositoryConfigurationExtensionSupport[0;39m [2m:[0;39m Spring Data Redis - Could not safely identify store assignment for repository candidate interface tech.synelia.quizapp.dao.repository.EvaluationsRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+[2m2025-09-26T11:14:10.294Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36m.RepositoryConfigurationExtensionSupport[0;39m [2m:[0;39m Spring Data Redis - Could not safely identify store assignment for repository candidate interface tech.synelia.quizapp.dao.repository.InterviewCrudRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+[2m2025-09-26T11:14:10.295Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36m.RepositoryConfigurationExtensionSupport[0;39m [2m:[0;39m Spring Data Redis - Could not safely identify store assignment for repository candidate interface tech.synelia.quizapp.dao.repository.InterviewsRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+[2m2025-09-26T11:14:10.295Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36m.RepositoryConfigurationExtensionSupport[0;39m [2m:[0;39m Spring Data Redis - Could not safely identify store assignment for repository candidate interface tech.synelia.quizapp.dao.repository.NotificationsRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+[2m2025-09-26T11:14:10.295Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36m.RepositoryConfigurationExtensionSupport[0;39m [2m:[0;39m Spring Data Redis - Could not safely identify store assignment for repository candidate interface tech.synelia.quizapp.dao.repository.QuestionsAnswersRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+[2m2025-09-26T11:14:10.296Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36m.RepositoryConfigurationExtensionSupport[0;39m [2m:[0;39m Spring Data Redis - Could not safely identify store assignment for repository candidate interface tech.synelia.quizapp.dao.repository.QuestionsRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+[2m2025-09-26T11:14:10.296Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36m.RepositoryConfigurationExtensionSupport[0;39m [2m:[0;39m Spring Data Redis - Could not safely identify store assignment for repository candidate interface tech.synelia.quizapp.dao.repository.SourceTokenRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+[2m2025-09-26T11:14:10.296Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36m.RepositoryConfigurationExtensionSupport[0;39m [2m:[0;39m Spring Data Redis - Could not safely identify store assignment for repository candidate interface tech.synelia.quizapp.dao.repository.SpecialitiesRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+[2m2025-09-26T11:14:10.296Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36m.RepositoryConfigurationExtensionSupport[0;39m [2m:[0;39m Spring Data Redis - Could not safely identify store assignment for repository candidate interface tech.synelia.quizapp.dao.repository.UserRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+[2m2025-09-26T11:14:10.296Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36m.RepositoryConfigurationExtensionSupport[0;39m [2m:[0;39m Spring Data Redis - Could not safely identify store assignment for repository candidate interface tech.synelia.quizapp.user.managment.UserManagmentRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+[2m2025-09-26T11:14:10.297Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36m.s.d.r.c.RepositoryConfigurationDelegate[0;39m [2m:[0;39m Finished Spring Data repository scanning in 26 ms. Found 0 Redis repository interfaces.
+[2m2025-09-26T11:14:11.200Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36mo.s.b.w.embedded.tomcat.TomcatWebServer [0;39m [2m:[0;39m Tomcat initialized with port 8081 (http)
+[2m2025-09-26T11:14:11.441Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36mo.apache.catalina.core.StandardService  [0;39m [2m:[0;39m Starting service [Tomcat]
+[2m2025-09-26T11:14:11.442Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36mo.apache.catalina.core.StandardEngine   [0;39m [2m:[0;39m Starting Servlet engine: [Apache Tomcat/10.1.35]
+[2m2025-09-26T11:14:11.561Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36mo.a.c.c.C.[Tomcat].[localhost].[/]      [0;39m [2m:[0;39m Initializing Spring embedded WebApplicationContext
+[2m2025-09-26T11:14:11.562Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36mw.s.c.ServletWebServerApplicationContext[0;39m [2m:[0;39m Root WebApplicationContext: initialization completed in 4657 ms
+[2m2025-09-26T11:14:11.818Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36mo.hibernate.jpa.internal.util.LogHelper [0;39m [2m:[0;39m HHH000204: Processing PersistenceUnitInfo [name: default]
+[2m2025-09-26T11:14:11.886Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36morg.hibernate.Version                   [0;39m [2m:[0;39m HHH000412: Hibernate ORM core version 6.6.29.Final
+[2m2025-09-26T11:14:11.937Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36mo.h.c.internal.RegionFactoryInitiator   [0;39m [2m:[0;39m HHH000026: Second-level cache disabled
+[2m2025-09-26T11:14:12.496Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36mo.s.o.j.p.SpringPersistenceUnitInfo     [0;39m [2m:[0;39m No LoadTimeWeaver setup: ignoring JPA class transformer
+[2m2025-09-26T11:14:12.849Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36mcom.zaxxer.hikari.HikariDataSource      [0;39m [2m:[0;39m dataSourcequizapp - Starting...
+[2m2025-09-26T11:14:13.054Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36mcom.zaxxer.hikari.pool.HikariPool       [0;39m [2m:[0;39m dataSourcequizapp - Added connection com.mysql.cj.jdbc.ConnectionImpl@70700b8a
+[2m2025-09-26T11:14:13.056Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36mcom.zaxxer.hikari.HikariDataSource      [0;39m [2m:[0;39m dataSourcequizapp - Start completed.
+[2m2025-09-26T11:14:13.126Z[0;39m [33m WARN[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36morg.hibernate.orm.deprecation           [0;39m [2m:[0;39m HHH90000025: MySQL8Dialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+[2m2025-09-26T11:14:13.127Z[0;39m [33m WARN[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36morg.hibernate.orm.deprecation           [0;39m [2m:[0;39m HHH90000026: MySQL8Dialect has been deprecated; use org.hibernate.dialect.MySQLDialect instead
+[2m2025-09-26T11:14:13.149Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36morg.hibernate.orm.connections.pooling   [0;39m [2m:[0;39m HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (dataSourcequizapp)']
+	Database driver: undefined/unknown
+	Database version: 8.0
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+[2m2025-09-26T11:14:15.262Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36mo.h.e.t.j.p.i.JtaPlatformInitiator      [0;39m [2m:[0;39m HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+[2m2025-09-26T11:14:15.649Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36mj.LocalContainerEntityManagerFactoryBean[0;39m [2m:[0;39m Initialized JPA EntityManagerFactory for persistence unit 'default'
+[2m2025-09-26T11:14:16.053Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36mo.s.d.j.r.query.QueryEnhancerFactory    [0;39m [2m:[0;39m Hibernate is in classpath; If applicable, HQL parser will be used.
+[2m2025-09-26T11:14:18.630Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36mo.s.l.c.support.AbstractContextSource   [0;39m [2m:[0;39m Property 'userDn' not set - anonymous context will be used for read-only operations
+[2m2025-09-26T11:14:19.326Z[0;39m [33m WARN[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36mJpaBaseConfiguration$JpaWebConfiguration[0;39m [2m:[0;39m spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+[2m2025-09-26T11:14:19.802Z[0;39m [33m WARN[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36m.s.s.UserDetailsServiceAutoConfiguration[0;39m [2m:[0;39m 
+
+Using generated security password: fb8e13d7-7819-4c4b-b725-d2b1f41857c1
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+[2m2025-09-26T11:14:19.816Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36mr$InitializeUserDetailsManagerConfigurer[0;39m [2m:[0;39m Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+[2m2025-09-26T11:14:20.010Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36mo.s.v.b.OptionalValidatorFactoryBean    [0;39m [2m:[0;39m Failed to set up a Bean Validation provider: jakarta.validation.NoProviderFoundException: Unable to create a Configuration, because no Jakarta Bean Validation provider could be found. Add a provider like Hibernate Validator (RI) to your classpath.
+[2m2025-09-26T11:14:20.870Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36mo.s.b.w.embedded.tomcat.TomcatWebServer [0;39m [2m:[0;39m Tomcat started on port 8081 (http) with context path '/'
+[2m2025-09-26T11:14:20.903Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [           main] [0;39m[36mt.synelia.quizapp.QuizappApplication    [0;39m [2m:[0;39m Started QuizappApplication in 15.09 seconds (process running for 15.761)
+[2m2025-09-26T11:14:20.911Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [   scheduling-1] [0;39m[36mt.s.q.u.managment.UserManagmentBusiness [0;39m [2m:[0;39m 🧹 [CLEANUP] Début du nettoyage des utilisateurs inactifs
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.created_at,
+        u1_0.created_by,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.is_default_password,
+        u1_0.is_deleted,
+        u1_0.is_locked,
+        u1_0.is_online,
+        u1_0.last_connection_date,
+        u1_0.last_name,
+        u1_0.page_size_preference,
+        u1_0.password,
+        u1_0.phone,
+        u1_0.search_string,
+        u1_0.updated_at,
+        u1_0.updated_by,
+        u1_0.user_role,
+        u1_0.username 
+    from
+        user u1_0 
+    where
+        u1_0.is_deleted=0 
+        and u1_0.is_online=1 
+        and (
+            u1_0.last_connection_date is null 
+            or u1_0.last_connection_date<?
+        )
+[2m2025-09-26T11:14:21.089Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [   scheduling-1] [0;39m[36mt.s.q.u.managment.UserManagmentBusiness [0;39m [2m:[0;39m ℹ️ [CLEANUP] Aucun utilisateur inactif détecté
+[2m2025-09-26T11:14:33.290Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [nio-8081-exec-1] [0;39m[36mo.a.c.c.C.[Tomcat].[localhost].[/]      [0;39m [2m:[0;39m Initializing Spring DispatcherServlet 'dispatcherServlet'
+[2m2025-09-26T11:14:33.291Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [nio-8081-exec-1] [0;39m[36mo.s.web.servlet.DispatcherServlet       [0;39m [2m:[0;39m Initializing Servlet 'dispatcherServlet'
+[2m2025-09-26T11:14:33.295Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [nio-8081-exec-1] [0;39m[36mo.s.web.servlet.DispatcherServlet       [0;39m [2m:[0;39m Completed initialization in 4 ms
+[2m2025-09-26T11:15:02.187Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [io-8081-exec-10] [0;39m[36mt.s.quizapp.rest.api.UserController     [0;39m [2m:[0;39m start method updatePageSizePreference
+[2m2025-09-26T11:15:02.187Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [io-8081-exec-10] [0;39m[36mt.synelia.quizapp.business.UserBusiness [0;39m [2m:[0;39m ----begin updatePageSizePreference-----
+[2m2025-09-26T11:15:02.201Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [io-8081-exec-10] [0;39m[36mt.synelia.quizapp.business.UserBusiness [0;39m [2m:[0;39m Request send --:> {"user":1,"datas":[{"id":1,"pageSizePreference":20}]}
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.created_at,
+        u1_0.created_by,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.is_default_password,
+        u1_0.is_deleted,
+        u1_0.is_locked,
+        u1_0.is_online,
+        u1_0.last_connection_date,
+        u1_0.last_name,
+        u1_0.page_size_preference,
+        u1_0.password,
+        u1_0.phone,
+        u1_0.search_string,
+        u1_0.updated_at,
+        u1_0.updated_by,
+        u1_0.user_role,
+        u1_0.username 
+    from
+        user u1_0 
+    where
+        u1_0.id=? 
+        and u1_0.is_deleted=?
+Hibernate: 
+    update
+        user 
+    set
+        created_at=?,
+        created_by=?,
+        email=?,
+        first_name=?,
+        is_default_password=?,
+        is_deleted=?,
+        is_locked=?,
+        is_online=?,
+        last_connection_date=?,
+        last_name=?,
+        page_size_preference=?,
+        password=?,
+        phone=?,
+        search_string=?,
+        updated_at=?,
+        updated_by=?,
+        user_role=?,
+        username=? 
+    where
+        id=?
+[2m2025-09-26T11:15:02.483Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [io-8081-exec-10] [0;39m[36mt.synelia.quizapp.business.UserBusiness [0;39m [2m:[0;39m Response return --:> {"status":{"code":"800","message":"Opération effectuée avec succès"},"hasError":false,"httpCode":200,"items":[{"createdAt":"22/08/2025","createdBy":1,"email":"emissah@none.com","firstName":"emissah","id":1,"isDefaultPassword":false,"isDeleted":false,"isLocked":false,"isOnline":false,"lastConnectionDate":"26/09/2025","lastName":"kouassi","pageSizePreference":20,"password":"$2a$12$afog3yRXwdr7zVGewDpoluDKKPW3G/FZFE14yWwCQhrFP.uvsvvka","phone":"+2250407012162","searchString":"1,emissah,kouassi,emkou,emissah@none.com,+2250407012162,false,super,false,1756832680000,1755869197000,1,1756833946271,1,false","updatedAt":"26/09/2025","updatedBy":1,"userRole":"super","username":"emkou"}]}
+[2m2025-09-26T11:15:02.483Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [io-8081-exec-10] [0;39m[36mt.synelia.quizapp.business.UserBusiness [0;39m [2m:[0;39m ----end updatePageSizePreference-----
+[2m2025-09-26T11:15:02.487Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [io-8081-exec-10] [0;39m[36mt.s.quizapp.rest.api.UserController     [0;39m [2m:[0;39m Response: {"status":{"code":"800","message":"Opération effectuée avec succès"},"hasError":false,"httpCode":200,"items":[{"createdAt":"22/08/2025","createdBy":1,"email":"emissah@none.com","firstName":"emissah","id":1,"isDefaultPassword":false,"isDeleted":false,"isLocked":false,"isOnline":false,"lastConnectionDate":"26/09/2025","lastName":"kouassi","pageSizePreference":20,"password":"$2a$12$afog3yRXwdr7zVGewDpoluDKKPW3G/FZFE14yWwCQhrFP.uvsvvka","phone":"+2250407012162","searchString":"1,emissah,kouassi,emkou,emissah@none.com,+2250407012162,false,super,false,1756832680000,1755869197000,1,1756833946271,1,false","updatedAt":"26/09/2025","updatedBy":1,"userRole":"super","username":"emkou"}]}
+[2m2025-09-26T11:15:02.502Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [io-8081-exec-10] [0;39m[36mt.s.quizapp.rest.ConnectionInterceptor  [0;39m [2m:[0;39m -- Connexion dormantes fermées après l'appel du service. --
+[2m2025-09-26T11:15:20.897Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [   scheduling-1] [0;39m[36mt.s.q.u.managment.UserManagmentBusiness [0;39m [2m:[0;39m 🧹 [CLEANUP] Début du nettoyage des utilisateurs inactifs
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.created_at,
+        u1_0.created_by,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.is_default_password,
+        u1_0.is_deleted,
+        u1_0.is_locked,
+        u1_0.is_online,
+        u1_0.last_connection_date,
+        u1_0.last_name,
+        u1_0.page_size_preference,
+        u1_0.password,
+        u1_0.phone,
+        u1_0.search_string,
+        u1_0.updated_at,
+        u1_0.updated_by,
+        u1_0.user_role,
+        u1_0.username 
+    from
+        user u1_0 
+    where
+        u1_0.is_deleted=0 
+        and u1_0.is_online=1 
+        and (
+            u1_0.last_connection_date is null 
+            or u1_0.last_connection_date<?
+        )
+[2m2025-09-26T11:15:20.903Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [   scheduling-1] [0;39m[36mt.s.q.u.managment.UserManagmentBusiness [0;39m [2m:[0;39m ℹ️ [CLEANUP] Aucun utilisateur inactif détecté
+[2m2025-09-26T11:16:20.889Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [   scheduling-1] [0;39m[36mt.s.q.u.managment.UserManagmentBusiness [0;39m [2m:[0;39m 🧹 [CLEANUP] Début du nettoyage des utilisateurs inactifs
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.created_at,
+        u1_0.created_by,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.is_default_password,
+        u1_0.is_deleted,
+        u1_0.is_locked,
+        u1_0.is_online,
+        u1_0.last_connection_date,
+        u1_0.last_name,
+        u1_0.page_size_preference,
+        u1_0.password,
+        u1_0.phone,
+        u1_0.search_string,
+        u1_0.updated_at,
+        u1_0.updated_by,
+        u1_0.user_role,
+        u1_0.username 
+    from
+        user u1_0 
+    where
+        u1_0.is_deleted=0 
+        and u1_0.is_online=1 
+        and (
+            u1_0.last_connection_date is null 
+            or u1_0.last_connection_date<?
+        )
+[2m2025-09-26T11:16:20.895Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [   scheduling-1] [0;39m[36mt.s.q.u.managment.UserManagmentBusiness [0;39m [2m:[0;39m ℹ️ [CLEANUP] Aucun utilisateur inactif détecté
+[2m2025-09-26T11:17:20.893Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [   scheduling-1] [0;39m[36mt.s.q.u.managment.UserManagmentBusiness [0;39m [2m:[0;39m 🧹 [CLEANUP] Début du nettoyage des utilisateurs inactifs
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.created_at,
+        u1_0.created_by,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.is_default_password,
+        u1_0.is_deleted,
+        u1_0.is_locked,
+        u1_0.is_online,
+        u1_0.last_connection_date,
+        u1_0.last_name,
+        u1_0.page_size_preference,
+        u1_0.password,
+        u1_0.phone,
+        u1_0.search_string,
+        u1_0.updated_at,
+        u1_0.updated_by,
+        u1_0.user_role,
+        u1_0.username 
+    from
+        user u1_0 
+    where
+        u1_0.is_deleted=0 
+        and u1_0.is_online=1 
+        and (
+            u1_0.last_connection_date is null 
+            or u1_0.last_connection_date<?
+        )
+[2m2025-09-26T11:17:20.899Z[0;39m [32m INFO[0;39m [35m12952[0;39m [2m--- [quizapp] [   scheduling-1] [0;39m[36mt.s.q.u.managment.UserManagmentBusiness [0;39m [2m:[0;39m ℹ️ [CLEANUP] Aucun utilisateur inactif détecté
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  04:20 min
+[INFO] Finished at: 2025-09-26T11:17:44Z
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.springframework.boot:spring-boot-maven-plugin:3.5.6:run (default-cli) on project quizapp: Process terminated with exit code: 1 -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException
+
+c:\Users\kokoe\Documents\work\synelia\projects\quiz\codes\quizapp_full\quizapp>La syntaxe de la commande n’est pas correcte.
+
+c:\Users\kokoe\Documents\work\synelia\projects\quiz\codes\quizapp_full\quizapp>
+
+c:\Users\kokoe\Documents\work\synelia\projects\quiz\codes\quizapp_full\quizapp>
+
+c:\Users\kokoe\Documents\work\synelia\projects\quiz\codes\quizapp_full\quizapp>

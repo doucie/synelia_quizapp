@@ -347,6 +347,24 @@
 			</plugin>
 
 			<plugin>
+				<groupId>org.flywaydb</groupId>
+				<artifactId>flyway-maven-plugin</artifactId>
+				<version>11.7.2</version>
+				<configuration>
+					<url>jdbc:mysql://localhost:3306/quizapp_db?useSSL=false&amp;serverTimezone=UTC&amp;allowPublicKeyRetrieval=true&amp;useUnicode=true&amp;characterEncoding=UTF-8</url>
+					<user>dev</user>
+					<password>dev</password>
+				</configuration>
+				<dependencies>
+					<dependency>
+						<groupId>mysql</groupId>
+						<artifactId>mysql-connector-java</artifactId>
+						<version>8.0.33</version>
+					</dependency>
+				</dependencies>
+			</plugin>
+
+			<plugin>
 				<!-- Plugin Maven utilisé pour compiler le code source Java -->
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>

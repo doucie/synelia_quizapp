@@ -375,6 +375,10 @@ public class NotificationsBusiness implements IBasicBusiness<Request<Notificatio
 		log.info("----begin get ALL Notifications (including deleted)-----");
 		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
 		Response<NotificationsDto> response = new Response<NotificationsDto>();
+
+		// Ajuster la taille de page selon les préférences utilisateur
+		Utilities.adjustPageSizeFromUserPreference(request, userRepository);
+
 		List<Notifications> items 			 = notificationsRepository.getAllByCriteria(request, em, locale);
 
 		if (items != null && !items.isEmpty()) {
