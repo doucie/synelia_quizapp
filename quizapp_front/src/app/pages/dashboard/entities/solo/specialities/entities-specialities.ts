@@ -3,18 +3,18 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
-import { UserService, User, UserSearchCriteria, PagedResponse } from '../../../../../core/services/user.service';
+import { SpecialityService, Speciality, SpecialitySearchCriteria, PagedResponse } from '../../../../../core/services/speciality.service';
 import { NotificationService } from '../../../../../core/services/notification.service';
 import { AuthService } from '../../../../../core/services/auth/auth.service';
 
 @Component({
-  selector: 'app-entities-users',
+  selector: 'app-entities-specialities',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './entities-users.html',
-  styleUrl: './entities-users.scss'
+  templateUrl: './entities-specialities.html',
+  styleUrl: './entities-specialities.scss'
 })
-export class EntitiesUsersComponent implements OnInit, OnDestroy {
+export class EntitiesSpecialitiesComponent implements OnInit, OnDestroy {
   // Exposer Math pour utilisation dans le template
   Math = Math;
   
@@ -22,22 +22,18 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
   private loadingTimeout: any;
   
   // Signaux pour la réactivité
-  users = signal<User[]>([]);
+  specialities = signal<Speciality[]>([]);
   isLoading = signal<boolean>(false);
   totalElements = signal<number>(0);
   currentPage = signal<number>(0);
   pageSize = signal<number>(10); // Valeur par défaut temporaire, sera mise à jour dans ngOnInit
   
   // Critères de recherche
-  searchCriteria: UserSearchCriteria = {
+  searchCriteria: SpecialitySearchCriteria = {
     idDe: '',
     idA: '',
     nom: '',
-    prenom: '',
-    pseudo: '',
-    email: '',
-    telephone: '',
-    role: '',
+    description: '',
     search_string: ''
   };
 
@@ -47,56 +43,45 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
   // État de la recherche avancée
   showAdvancedSearch = false;
   
-  // Contrôle d'affichage des utilisateurs supprimés
-  showDeletedUsers = true; // Par défaut, afficher tous les utilisateurs
+  // Contrôle d'affichage des spécialités supprimées
+  showDeletedSpecialities = true; // Par défaut, afficher toutes les spécialités
   
   // Options de pagination avec 10 par défaut
   pageSizeOptions = [5, 10, 20, 50, 100];
-  private readonly PAGE_SIZE_STORAGE_KEY = 'entities-users-page-size';
+  private readonly PAGE_SIZE_STORAGE_KEY = 'entities-specialities-page-size';
   
   // État de la popup de confirmation
   showDeleteConfirmation = false;
-  userToDelete: User | null = null;
+  specialityToDelete: Speciality | null = null;
   
   // État de la popup de restauration
   showRestoreConfirmation = signal<boolean>(false);
-  userToRestore = signal<User | null>(null);
+  specialityToRestore = signal<Speciality | null>(null);
   
   // État de la popup d'édition
   showEditDialog = signal<boolean>(false);
-  userToEdit = signal<User | null>(null);
+  specialityToEdit = signal<Speciality | null>(null);
   editFormData = {
     id: 0,
-    nom: '',
-    prenom: '',
-    pseudo: '',
-    email: '',
-    telephone: '',
-    role: ''
+    specialityName: '',
+    specialityDesc: '',
+    departmentId: 0
   };
 
   // État de la popup de création
   showCreateDialog = signal<boolean>(false);
   createFormData = {
-    nom: '',
-    prenom: '',
-    pseudo: '',
-    email: '',
-    telephone: '',
-    role: ''
+    specialityName: '',
+    specialityDesc: '',
+    departmentId: 0
   };
   
   // Critères de recherche avancée
-  advancedCriteria: UserSearchCriteria = {
+  advancedCriteria: SpecialitySearchCriteria = {
     idDe: '',
     idA: '',
     nom: '',
-    prenom: '',
-    pseudo: '',
-    email: '',
-    telephone: '',
-    role: '',
-    isOnline: undefined,
+    description: '',
     isDeleted: undefined,
     dateCreationDe: '',
     dateCreationA: '',
@@ -108,14 +93,14 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
   availableRoles = ['super', 'admin', 'recruiter'];
 
   constructor(
-    private userService: UserService,
+    private specialityService: SpecialityService,
     private notificationService: NotificationService,
     private authService: AuthService,
     private router: Router
   ) {}
 
   ngOnInit() {
-    console.log('🚀 Initialisation EntitiesUsersComponent');
+    console.log('🚀 Initialisation EntitiesSpecialitiesComponent');
     this.initializePageSizePreference();
   }
 
@@ -131,31 +116,15 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
    */
   private async initializePageSizePreference(): Promise<void> {
     try {
-      // Récupérer l'utilisateur connecté depuis AuthService
-      const currentUser = this.authService.getCurrentUser();
-      if (currentUser && currentUser.id) {
-        console.log('👤 Utilisateur connecté trouvé:', currentUser.id);
-        
-        // Récupérer les détails complets de l'utilisateur depuis l'API
-        const userDetails = await this.userService.getById(parseInt(currentUser.id)).toPromise();
-        if (userDetails && userDetails.pageSizePreference) {
-          console.log('📏 Préférence de taille de page récupérée:', userDetails.pageSizePreference);
-          this.pageSize.set(userDetails.pageSizePreference);
-        } else {
-          console.log('📋 Aucune préférence trouvée, utilisation de la valeur par défaut');
-          this.pageSize.set(this.getStoredPageSize());
-        }
-      } else {
-        console.log('⚠️ Aucun utilisateur connecté trouvé, utilisation de la valeur par défaut');
-        this.pageSize.set(this.getStoredPageSize());
-      }
-    } catch (error) {
-      console.error('❌ Erreur lors de la récupération de la préférence de taille de page:', error);
+      // Pour les spécialités, utiliser simplement la valeur stockée ou la valeur par défaut
       this.pageSize.set(this.getStoredPageSize());
+      console.log('📦 Taille de page finale:', this.pageSize());
+      this.loadSpecialities();
+    } catch (error) {
+      console.error('❌ Erreur lors de l\'initialisation de la préférence de taille de page:', error);
+      this.pageSize.set(this.getStoredPageSize());
+      this.loadSpecialities();
     }
-
-    console.log('📦 Taille de page finale:', this.pageSize());
-    this.loadUsers();
   }
 
   /**
@@ -201,9 +170,9 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Charge la liste des utilisateurs
+   * Charge la liste des spécialités
    */
-  loadUsers() {
+  loadSpecialities() {
     // Annuler le timeout précédent s'il existe
     if (this.loadingTimeout) {
       clearTimeout(this.loadingTimeout);
@@ -211,17 +180,17 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
     
     // Débounce pour éviter les appels multiples rapides
     this.loadingTimeout = setTimeout(() => {
-      this.performLoadUsers();
+      this.performLoadSpecialities();
     }, 100);
   }
 
   /**
-   * Exécute réellement le chargement des utilisateurs
+   * Exécute réellement le chargement des spécialités
    */
-  private performLoadUsers() {
+  private performLoadSpecialities() {
     this.isLoading.set(true);
-    const serviceMethod = this.showDeletedUsers ? 'incluant supprimés' : 'actifs seulement';
-    console.log(`📥 Chargement des utilisateurs (${serviceMethod})...`);
+    const serviceMethod = this.showDeletedSpecialities ? 'incluant supprimés' : 'actifs seulement';
+    console.log(`📥 Chargement des spécialités (${serviceMethod})...`);
     console.log('🔍 Critères de recherche utilisés:', JSON.stringify(this.searchCriteria, null, 2));
 
     const criteria = {
@@ -233,47 +202,45 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
     console.log('📤 Requête envoyée avec critères:', JSON.stringify(criteria, null, 2));
 
     // Utiliser le bon service selon la checkbox
-    const serviceCall = this.showDeletedUsers 
-      ? this.userService.getAllUsersByCriteria(criteria)
-      : this.userService.getByCriteria(criteria);
+    const serviceCall = this.showDeletedSpecialities 
+      ? this.specialityService.getAll(criteria)
+      : this.specialityService.getAll(criteria); // Pour l'instant, utilisons getAll qui gère les critères
 
     serviceCall.subscribe({
-      next: (response: PagedResponse<User>) => {
+      next: (response: PagedResponse<Speciality>) => {
         console.log(`✅ RÉPONSE COMPLÈTE reçue (${serviceMethod}):`, response);
-        console.log('📊 Nombre total d\'utilisateurs (totalElements):', response.totalElements);
-        console.log('📊 Nombre d\'utilisateurs dans cette page:', response.content.length);
-        console.log('📊 Page courante (number):', response.number || 'non défini');
-        console.log('📊 Taille de page (size):', response.size || 'non défini');
+        console.log('📊 Nombre total de spécialités (totalElements):', response.totalElements);
+        console.log('📊 Nombre de spécialités dans cette page:', response.items.length);
+        console.log('📊 Page courante:', response.currentPage || 'non défini');
+        console.log('📊 Taille de page:', response.pageSize || 'non défini');
         console.log('📊 Nombre total de pages:', response.totalPages || 'non défini');
         
-        // Analyser les utilisateurs reçus
-        const deletedUsers = response.content.filter(u => u.isDeleted);
-        const activeUsers = response.content.filter(u => !u.isDeleted);
-        const onlineUsers = response.content.filter(u => u.isOnline);
+        // Analyser les spécialités reçus
+        const deletedSpecialities = response.items.filter(s => s.isDeleted);
+        const activeSpecialities = response.items.filter(s => !s.isDeleted);
         
-        console.log('📊 Utilisateurs supprimés dans cette page:', deletedUsers.length, deletedUsers);
-        console.log('📊 Utilisateurs actifs dans cette page:', activeUsers.length, activeUsers);
-        console.log('📊 Utilisateurs en ligne dans cette page:', onlineUsers.length, onlineUsers);
+        console.log('📊 Spécialités supprimées dans cette page:', deletedSpecialities.length, deletedSpecialities);
+        console.log('📊 Spécialités actives dans cette page:', activeSpecialities.length, activeSpecialities);
         
-        this.users.set(response.content);
+        this.specialities.set(response.items);
         this.totalElements.set(response.totalElements);
         this.isLoading.set(false);
       },
       error: (error) => {
-        console.error('❌ Erreur lors du chargement des utilisateurs:', error);
-        this.notificationService.error('Erreur', 'Erreur lors du chargement des utilisateurs');
+        console.error('❌ Erreur lors du chargement des spécialités:', error);
+        this.notificationService.error('Erreur', 'Erreur lors du chargement des spécialités');
         this.isLoading.set(false);
       }
     });
   }
 
   /**
-   * Recherche des utilisateurs selon les critères
+   * Recherche des spécialités selon les critères
    */
-  searchUsers() {
+  searchSpecialities() {
     console.log('🔍 Recherche avec critères:', this.searchCriteria);
     this.currentPage.set(0);
-    this.loadUsers();
+    this.loadSpecialities();
   }
 
   /**
@@ -284,31 +251,24 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
       idDe: '',
       idA: '',
       nom: '',
-      prenom: '',
-      pseudo: '',
-      email: '',
-      telephone: '',
-      role: '',
+      description: '',
       search_string: ''
     };
     this.quickSearch = '';
     this.showAdvancedSearch = false;
     this.resetAdvancedSearch();
-    this.searchUsers();
+    this.searchSpecialities();
   }
 
   /**
-   * Crée un nouvel utilisateur
+   * Crée une nouvelle spécialité
    */
-  createUser() {
+  createSpeciality() {
     // Réinitialiser le formulaire
     this.createFormData = {
-      nom: '',
-      prenom: '',
-      pseudo: '',
-      email: '',
-      telephone: '',
-      role: ''
+      specialityName: '',
+      specialityDesc: '',
+      departmentId: 0
     };
     this.showCreateDialog.set(true);
   }
@@ -319,97 +279,72 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
   closeCreateDialog() {
     this.showCreateDialog.set(false);
     this.createFormData = {
-      nom: '',
-      prenom: '',
-      pseudo: '',
-      email: '',
-      telephone: '',
-      role: ''
+      specialityName: '',
+      specialityDesc: '',
+      departmentId: 0
     };
   }
 
   /**
-   * Valide et crée un nouvel utilisateur
+   * Valide et crée une nouvelle spécialité
    */
-  async validateUserCreation() {
+  async validateSpecialityCreation() {
     const formData = this.createFormData;
 
     console.log('🔧 Début validation création - formData:', formData);
 
     // Validation des champs requis
-    if (!formData.nom.trim()) {
-      this.notificationService.warning('Attention', 'Le nom est requis');
+    if (!formData.specialityName.trim()) {
+      this.notificationService.warning('Attention', 'Le nom de la spécialité est requis');
       return;
     }
-    if (!formData.prenom.trim()) {
-      this.notificationService.warning('Attention', 'Le prénom est requis');
+    if (!formData.specialityDesc.trim()) {
+      this.notificationService.warning('Attention', 'La description de la spécialité est requise');
       return;
     }
-    if (!formData.pseudo.trim()) {
-      this.notificationService.warning('Attention', 'Le pseudo est requis');
-      return;
-    }
-    if (!formData.email.trim()) {
-      this.notificationService.warning('Attention', 'L\'email est requis');
-      return;
-    }
-    if (!formData.role.trim()) {
-      this.notificationService.warning('Attention', 'Le rôle est requis');
-      return;
-    }
-
-    // Validation format email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      this.notificationService.warning('Attention', 'Format d\'email invalide');
+    if (!formData.departmentId || formData.departmentId <= 0) {
+      this.notificationService.warning('Attention', 'Le département est requis');
       return;
     }
 
     try {
-      // Appel de l'API pour créer un nouvel utilisateur
-      console.log('🔧 Création d\'un nouvel utilisateur');
+      // Appel de l'API pour créer une nouvelle spécialité
+      console.log('🔧 Création d\'une nouvelle spécialité');
 
-      // Récupérer l'utilisateur connecté
-      const currentUser = this.authService.getCurrentUser();
-      console.log('👤 Utilisateur connecté:', currentUser);
+      const newSpeciality: any = await this.specialityService.create({
+        nom: formData.specialityName.trim(),
+        description: formData.specialityDesc.trim(),
+        departmentId: formData.departmentId
+      }).toPromise();
 
-      const newUser: any = await this.userService.create({
-        nom: formData.nom.trim(),
-        prenom: formData.prenom.trim(),
-        pseudo: formData.pseudo.trim(),
-        email: formData.email.trim(),
-        telephone: formData.telephone.trim(),
-        role: formData.role
-      }, currentUser?.id ? parseInt(currentUser.id.toString()) : undefined).toPromise();
-
-      console.log('✅ Utilisateur créé:', newUser);
-      console.log('✅ Response hasError:', newUser?.hasError);
-      console.log('✅ Response httpCode:', newUser?.httpCode);
-      console.log('✅ Response status:', newUser?.status);
+      console.log('✅ Spécialité créée:', newSpeciality);
+      console.log('✅ Response hasError:', newSpeciality?.hasError);
+      console.log('✅ Response httpCode:', newSpeciality?.httpCode);
+      console.log('✅ Response status:', newSpeciality?.status);
 
       // Vérifier si la réponse indique une erreur
-      if (newUser && newUser.hasError) {
-        console.error('❌ Erreur détectée dans la réponse:', newUser);
-        console.error('❌ Status object:', newUser.status);
-        console.error('❌ Status message:', newUser.status?.message);
-        console.error('❌ Status code:', newUser.status?.code);
-        console.error('❌ HTTP Code:', newUser.httpCode);
+      if (newSpeciality && newSpeciality.hasError) {
+        console.error('❌ Erreur détectée dans la réponse:', newSpeciality);
+        console.error('❌ Status object:', newSpeciality.status);
+        console.error('❌ Status message:', newSpeciality.status?.message);
+        console.error('❌ Status code:', newSpeciality.status?.code);
+        console.error('❌ HTTP Code:', newSpeciality.httpCode);
 
-        const errorMessage = newUser.status?.message || newUser.status?.code || 'Erreur lors de la création';
+        const errorMessage = newSpeciality.status?.message || newSpeciality.status?.code || 'Erreur lors de la création';
         this.notificationService.error('Erreur', errorMessage);
         return;
       }
 
       // Vérifier le httpCode seulement s'il existe
-      if (newUser && newUser.httpCode && newUser.httpCode !== 201) {
-        console.error('❌ Code HTTP d\'erreur:', newUser.httpCode);
-        this.notificationService.error('Erreur', `Erreur HTTP: ${newUser.httpCode}`);
+      if (newSpeciality && newSpeciality.httpCode && newSpeciality.httpCode !== 201) {
+        console.error('❌ Code HTTP d\'erreur:', newSpeciality.httpCode);
+        this.notificationService.error('Erreur', `Erreur HTTP: ${newSpeciality.httpCode}`);
         return;
       }
 
-      this.notificationService.success('Succès', `Utilisateur ${formData.pseudo} créé avec succès`);
+      this.notificationService.success('Succès', `Spécialité ${formData.specialityName} créée avec succès`);
       this.closeCreateDialog();
-      this.loadUsers(); // Recharger la liste
+      this.loadSpecialities(); // Recharger la liste
     } catch (error: any) {
       console.error('❌ Erreur lors de la création:', error);
       console.error('❌ Détail de l\'erreur:', error?.error);
@@ -418,18 +353,15 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Édite un utilisateur
+   * Édite une spécialité
    */
-  editUser(user: User) {
-    this.userToEdit.set(user);
+  editSpeciality(speciality: Speciality) {
+    this.specialityToEdit.set(speciality);
     this.editFormData = {
-      id: user.id,
-      nom: user.nom || '',
-      prenom: user.prenom || '',
-      pseudo: user.pseudo || '',
-      email: user.email || '',
-      telephone: user.telephone || '',
-      role: user.role || ''
+      id: speciality.id,
+      specialityName: speciality.nom || '',
+      specialityDesc: speciality.description || '',
+      departmentId: speciality.departmentId || 0
     };
     this.showEditDialog.set(true);
   }
@@ -439,103 +371,82 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
    */
   closeEditDialog() {
     this.showEditDialog.set(false);
-    this.userToEdit.set(null);
+    this.specialityToEdit.set(null);
     this.editFormData = {
       id: 0,
-      nom: '',
-      prenom: '',
-      pseudo: '',
-      email: '',
-      telephone: '',
-      role: ''
+      specialityName: '',
+      specialityDesc: '',
+      departmentId: 0
     };
   }
 
   /**
    * Valide et sauvegarde les modifications
    */
-  async validateUserEdit() {
+  async validateSpecialityEdit() {
     const formData = this.editFormData;
-    const currentUser = this.userToEdit();
-    
+    const currentSpeciality = this.specialityToEdit();
+
     console.log('🔧 Début validation - formData:', formData);
-    console.log('🔧 Début validation - currentUser:', currentUser);
-    
-    if (!currentUser) {
-      this.notificationService.error('Erreur', 'Aucun utilisateur sélectionné pour modification');
+    console.log('🔧 Début validation - currentSpeciality:', currentSpeciality);
+
+    if (!currentSpeciality) {
+      this.notificationService.error('Erreur', 'Aucune spécialité sélectionnée pour modification');
       return;
     }
 
     // Validation des champs requis
-    if (!formData.nom.trim()) {
-      this.notificationService.warning('Attention', 'Le nom est requis');
+    if (!formData.specialityName.trim()) {
+      this.notificationService.warning('Attention', 'Le nom de la spécialité est requis');
       return;
     }
-    if (!formData.prenom.trim()) {
-      this.notificationService.warning('Attention', 'Le prénom est requis');
+    if (!formData.specialityDesc.trim()) {
+      this.notificationService.warning('Attention', 'La description de la spécialité est requise');
       return;
     }
-    if (!formData.pseudo.trim()) {
-      this.notificationService.warning('Attention', 'Le pseudo est requis');
-      return;
-    }
-    if (!formData.email.trim()) {
-      this.notificationService.warning('Attention', 'L\'email est requis');
-      return;
-    }
-    if (!formData.role.trim()) {
-      this.notificationService.warning('Attention', 'Le rôle est requis');
-      return;
-    }
-
-    // Validation format email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      this.notificationService.warning('Attention', 'Format d\'email invalide');
+    if (!formData.departmentId || formData.departmentId <= 0) {
+      this.notificationService.warning('Attention', 'Le département est requis');
       return;
     }
 
     try {
-      // Appel de l'API pour mettre à jour un utilisateur unique avec update
-      console.log('🔧 Utilisation de update pour un utilisateur unique');
-      
-      const updatedUser: any = await this.userService.update(currentUser.id, {
-        nom: formData.nom.trim(),
-        prenom: formData.prenom.trim(),
-        pseudo: formData.pseudo.trim(),
-        email: formData.email.trim(),
-        telephone: formData.telephone.trim(),
-        role: formData.role
+      // Appel de l'API pour mettre à jour une spécialité
+      console.log('🔧 Mise à jour de la spécialité');
+
+      const updatedSpeciality: any = await this.specialityService.update(currentSpeciality.id, {
+        nom: formData.specialityName.trim(),
+        description: formData.specialityDesc.trim(),
+        departmentId: formData.departmentId
       }).toPromise();
 
-      console.log('✅ Utilisateur mis à jour:', updatedUser);
-      console.log('✅ Response hasError:', updatedUser?.hasError);
-      console.log('✅ Response httpCode:', updatedUser?.httpCode);
-      console.log('✅ Response status:', updatedUser?.status);
+      console.log('✅ Spécialité mise à jour:', updatedSpeciality);
+      console.log('✅ Response hasError:', updatedSpeciality?.hasError);
+      console.log('✅ Response httpCode:', updatedSpeciality?.httpCode);
+      console.log('✅ Response status:', updatedSpeciality?.status);
 
       // Vérifier si la réponse indique une erreur
-      if (updatedUser && updatedUser.hasError) {
-        console.error('❌ Erreur détectée dans la réponse:', updatedUser);
-        console.error('❌ Status object:', updatedUser.status);
-        console.error('❌ Status message:', updatedUser.status?.message);
-        console.error('❌ Status code:', updatedUser.status?.code);
-        console.error('❌ HTTP Code:', updatedUser.httpCode);
-        
-        const errorMessage = updatedUser.status?.message || updatedUser.status?.code || 'Erreur lors de la mise à jour';
+      if (updatedSpeciality && updatedSpeciality.hasError) {
+        console.error('❌ Erreur détectée dans la réponse:', updatedSpeciality);
+        console.error('❌ Status object:', updatedSpeciality.status);
+        console.error('❌ Status message:', updatedSpeciality.status?.message);
+        console.error('❌ Status code:', updatedSpeciality.status?.code);
+        console.error('❌ HTTP Code:', updatedSpeciality.httpCode);
+
+        const errorMessage = updatedSpeciality.status?.message || updatedSpeciality.status?.code || 'Erreur lors de la mise à jour';
         this.notificationService.error('Erreur', errorMessage);
         return;
       }
 
       // Vérifier le httpCode seulement s'il existe
-      if (updatedUser && updatedUser.httpCode && updatedUser.httpCode !== 200) {
-        console.error('❌ Code HTTP d\'erreur:', updatedUser.httpCode);
-        this.notificationService.error('Erreur', `Erreur HTTP: ${updatedUser.httpCode}`);
+      if (updatedSpeciality && updatedSpeciality.httpCode && updatedSpeciality.httpCode !== 200) {
+        console.error('❌ Code HTTP d\'erreur:', updatedSpeciality.httpCode);
+        this.notificationService.error('Erreur', `Erreur HTTP: ${updatedSpeciality.httpCode}`);
         return;
       }
 
-      this.notificationService.success('Succès', `Utilisateur ${formData.pseudo} modifié avec succès`);
+      this.notificationService.success('Succès', `Spécialité ${formData.specialityName} modifiée avec succès`);
       this.closeEditDialog();
-      this.loadUsers(); // Recharger la liste
+      this.loadSpecialities(); // Recharger la liste
     } catch (error: any) {
       console.error('❌ Erreur lors de la modification:', error);
       console.error('❌ Détail de l\'erreur:', error?.error);
@@ -544,121 +455,111 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Supprime l'utilisateur depuis la popup d'édition
+   * Supprime la spécialité depuis la popup d'édition
    */
-  deleteUserFromEdit() {
-    const user = this.userToEdit();
-    if (user) {
+  deleteSpecialityFromEdit() {
+    const speciality = this.specialityToEdit();
+    if (speciality) {
       this.closeEditDialog();
-      this.deleteUser(user);
+      this.deleteSpeciality(speciality);
     }
   }
 
   /**
-   * Affiche la popup de confirmation pour supprimer un utilisateur
+   * Affiche la popup de confirmation pour supprimer une spécialité
    */
-  deleteUser(user: User) {
-    this.userToDelete = user;
+  deleteSpeciality(speciality: Speciality) {
+    this.specialityToDelete = speciality;
     this.showDeleteConfirmation = true;
   }
 
   /**
-   * Confirme la suppression d'un utilisateur
+   * Confirme la suppression d'une spécialité
    */
-  confirmDeleteUser() {
-    if (!this.userToDelete) return;
-    
-    this.userService.delete(this.userToDelete.id).subscribe({
-      next: () => {
-        this.notificationService.success('Succès', `Utilisateur ${this.userToDelete?.pseudo || this.userToDelete?.nom} supprimé avec succès`);
-        
-        // Marquer l'utilisateur comme supprimé dans la liste locale
-        if (this.userToDelete) {
-          this.userToDelete.isDeleted = true;
-        }
-        
-        // Activer automatiquement l'affichage des utilisateurs supprimés
-        this.showDeletedUsers = true;
-        
-        this.cancelDeleteUser();
-        // Recharger la liste pour refléter les changements
-        this.loadUsers();
-      },
-      error: (error) => {
-        console.error('❌ Erreur lors de la suppression:', error);
-        this.notificationService.error('Erreur', 'Erreur lors de la suppression de l\'utilisateur');
-        this.cancelDeleteUser();
+  async confirmDeleteSpeciality() {
+    if (!this.specialityToDelete) return;
+
+    try {
+      // Marquer la spécialité comme supprimée via update
+      await this.specialityService.update(this.specialityToDelete.id, {
+        ...this.specialityToDelete,
+        isDeleted: true
+      }).toPromise();
+
+      this.notificationService.success('Succès', `Spécialité ${this.specialityToDelete?.nom || this.specialityToDelete?.name} supprimée avec succès`);
+
+      // Marquer la spécialité comme supprimée dans la liste locale
+      if (this.specialityToDelete) {
+        this.specialityToDelete.isDeleted = true;
       }
-    });
+
+      // Activer automatiquement l'affichage des spécialités supprimées
+      this.showDeletedSpecialities = true;
+
+      this.cancelDeleteSpeciality();
+      // Recharger la liste pour refléter les changements
+      this.loadSpecialities();
+    } catch (error) {
+      console.error('❌ Erreur lors de la suppression:', error);
+      this.notificationService.error('Erreur', 'Erreur lors de la suppression de la spécialité');
+      this.cancelDeleteSpeciality();
+    }
   }
 
   /**
-   * Annule la suppression d'un utilisateur
+   * Annule la suppression d'une spécialité
    */
-  cancelDeleteUser() {
+  cancelDeleteSpeciality() {
     this.showDeleteConfirmation = false;
-    this.userToDelete = null;
+    this.specialityToDelete = null;
   }
 
   /**
-   * Affiche la popup de confirmation pour restaurer un utilisateur supprimé
+   * Affiche la popup de confirmation pour restaurer une spécialité supprimée
    */
-  restoreUser(user: User) {
-    this.userToRestore.set(user);
+  restoreSpeciality(speciality: Speciality) {
+    this.specialityToRestore.set(speciality);
     this.showRestoreConfirmation.set(true);
   }
 
   /**
-   * Confirme la restauration d'un utilisateur
+   * Confirme la restauration d'une spécialité
    */
-  confirmRestoreUser() {
-    const userToRestore = this.userToRestore();
-    if (!userToRestore) return;
-    
-    this.userService.restore(userToRestore.id).subscribe({
-      next: (response) => {
-        this.notificationService.success('Succès', `Utilisateur ${userToRestore?.pseudo || userToRestore?.nom} restauré avec succès`);
-        
-        // Marquer l'utilisateur comme restauré dans la liste locale
-        userToRestore.isDeleted = false;
-        
-        this.cancelRestoreUser();
-        // Recharger la liste pour refléter les changements
-        this.loadUsers();
-      },
-      error: (error: any) => {
-        this.notificationService.error('Erreur', 'Erreur lors de la restauration de l\'utilisateur');
-        this.cancelRestoreUser();
-      }
-    });
+  async confirmRestoreSpeciality() {
+    const specialityToRestore = this.specialityToRestore();
+    if (!specialityToRestore) return;
+
+    try {
+      // Restaurer la spécialité via update
+      await this.specialityService.update(specialityToRestore.id, {
+        ...specialityToRestore,
+        isDeleted: false
+      }).toPromise();
+
+      this.notificationService.success('Succès', `Spécialité ${specialityToRestore?.nom || specialityToRestore?.name} restaurée avec succès`);
+
+      // Marquer la spécialité comme restaurée dans la liste locale
+      specialityToRestore.isDeleted = false;
+
+      this.cancelRestoreSpeciality();
+      // Recharger la liste pour refléter les changements
+      this.loadSpecialities();
+    } catch (error) {
+      console.error('❌ Erreur lors de la restauration:', error);
+      this.notificationService.error('Erreur', 'Erreur lors de la restauration de la spécialité');
+      this.cancelRestoreSpeciality();
+    }
   }
 
   /**
-   * Annule la restauration d'un utilisateur
+   * Annule la restauration d'une spécialité
    */
-  cancelRestoreUser() {
+  cancelRestoreSpeciality() {
     this.showRestoreConfirmation.set(false);
-    this.userToRestore.set(null);
+    this.specialityToRestore.set(null);
   }
 
-  /**
-   * Met à jour le statut en ligne d'un utilisateur
-   */
-  toggleUserOnlineStatus(user: User) {
-    const newStatus = !user.isOnline;
-    
-    this.userService.updateOnlineStatus(user.id, newStatus).subscribe({
-      next: () => {
-        user.isOnline = newStatus;
-        const status = newStatus ? 'en ligne' : 'hors ligne';
-        this.notificationService.success('Succès', `Utilisateur ${user.pseudo} marqué comme ${status}`);
-      },
-      error: (error) => {
-        console.error('❌ Erreur lors de la mise à jour du statut:', error);
-        this.notificationService.error('Erreur', 'Erreur lors de la mise à jour du statut');
-      }
-    });
-  }
+
 
   /**
    * Retourne le libellé français du rôle
@@ -677,7 +578,7 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
    */
   goToPage(page: number) {
     this.currentPage.set(page);
-    this.loadUsers();
+    this.loadSpecialities();
   }
 
   /**
@@ -705,34 +606,23 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
     
     this.pageSize.set(newSize);
     this.storePageSize(newSize); // Sauvegarder dans le cache
-    
-    // Sauvegarder la préférence dans la base de données
-    this.userService.updatePageSizePreference(newSize).subscribe({
-      next: (response) => {
-        console.log('💾 Préférence de taille de page sauvegardée en BD:', response);
-      },
-      error: (error) => {
-        console.error('❌ Erreur lors de la sauvegarde de la préférence de taille de page:', error);
-        // Ne pas bloquer l'interface si la sauvegarde échoue
-      }
-    });
-    
+
     this.currentPage.set(0);
-    this.loadUsers();
-    
+    this.loadSpecialities();
+
     console.log('✅ FIN changePageSize - nouvelle valeur stockée');
   }
 
   /**
-   * Toggle l'affichage des utilisateurs supprimés
+   * Toggle l'affichage des spécialités supprimées
    */
-  toggleDeletedUsers() {
-    this.showDeletedUsers = !this.showDeletedUsers;
-    console.log('🔄 Toggle utilisateurs supprimés:', this.showDeletedUsers ? 'ACTIVÉ' : 'DÉSACTIVÉ');
+  toggleDeletedSpecialities() {
+    this.showDeletedSpecialities = !this.showDeletedSpecialities;
+    console.log('🔄 Toggle spécialités supprimées:', this.showDeletedSpecialities ? 'ACTIVÉ' : 'DÉSACTIVÉ');
     console.log('📦 Taille de page actuelle avant toggle:', this.pageSize());
     this.currentPage.set(0); // Revenir à la première page
     console.log('📦 Taille de page actuelle après toggle:', this.pageSize());
-    this.loadUsers();
+    this.loadSpecialities();
   }
 
   /**
@@ -745,8 +635,8 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
   /**
    * TrackBy function pour optimiser les performances de rendu de la liste
    */
-  trackByUserId(index: number, user: User): number {
-    return user.id;
+  trackBySpecialityId(index: number, speciality: Speciality): number {
+    return speciality.id;
   }
 
   /**
@@ -757,23 +647,18 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
     this.searchCriteria.idDe = '';
     this.searchCriteria.idA = '';
     this.searchCriteria.nom = '';
-    this.searchCriteria.prenom = '';
-    this.searchCriteria.email = '';
-    this.searchCriteria.pseudo = '';
-    this.searchCriteria.telephone = '';
-    this.searchCriteria.role = '';
-    this.searchCriteria.isOnline = undefined;
+    this.searchCriteria.description = '';
     this.searchCriteria.isDeleted = undefined;
-    
+
     // Utiliser search_string pour la recherche globale
     this.searchCriteria.search_string = this.quickSearch.trim();
-    
+
     // Fermer la recherche avancée si elle était ouverte
     this.showAdvancedSearch = false;
-    
+
     // Débounce pour éviter trop de requêtes
     setTimeout(() => {
-      this.searchUsers();
+      this.searchSpecialities();
     }, 300);
   }
 
@@ -796,7 +681,7 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
     this.searchCriteria.search_string = '';
     
     // Lancer la recherche
-    this.searchUsers();
+    this.searchSpecialities();
   }
 
   /**
@@ -807,12 +692,7 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
       idDe: '',
       idA: '',
       nom: '',
-      prenom: '',
-      pseudo: '',
-      email: '',
-      telephone: '',
-      role: '',
-      isOnline: undefined,
+      description: '',
       isDeleted: undefined,
       dateCreationDe: '',
       dateCreationA: '',
@@ -822,19 +702,7 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
     this.applyAdvancedSearch();
   }
 
-  /**
-   * Compte les utilisateurs en ligne
-   */
-  getOnlineUsersCount(): number {
-    return this.users().filter(user => user.isOnline).length;
-  }
 
-  /**
-   * Compte les utilisateurs hors ligne
-   */
-  getOfflineUsersCount(): number {
-    return this.users().filter(user => !user.isOnline).length;
-  }
 
   /**
    * Génère les numéros de pages pour la pagination
@@ -913,14 +781,14 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
   /**
    * Formate la date de création pour l'affichage
    */
-  formatCreationDate(user: User): string {
-    if (!user.dateCreation) return '-';
+  formatCreationDate(speciality: Speciality): string {
+    if (!speciality.dateCreation) return '-';
 
     // Si la date ne contient pas d'heures (format "jj/mm/aaaa"), afficher seulement la date
-    if (!user.dateCreation.includes(' ')) {
-      const date = this.parseFrenchDate(user.dateCreation);
-      if (!date) return user.dateCreation;
-      
+    if (!speciality.dateCreation.includes(' ')) {
+      const date = this.parseFrenchDate(speciality.dateCreation);
+      if (!date) return speciality.dateCreation;
+
       return date.toLocaleDateString('fr-FR', {
         day: '2-digit',
         month: '2-digit',
@@ -929,8 +797,8 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
     }
 
     // Si la date contient des heures, les afficher
-    const date = this.parseFrenchDate(user.dateCreation);
-    if (!date) return user.dateCreation;
+    const date = this.parseFrenchDate(speciality.dateCreation);
+    if (!date) return speciality.dateCreation;
 
     return date.toLocaleDateString('fr-FR', {
       day: '2-digit',

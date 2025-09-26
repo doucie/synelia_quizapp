@@ -1,6 +1,6 @@
 @use '../shared/entities-solo.scss' as *;
 
-.entities-users-container {
+.entities-specialities-container {
   padding: var(--spacing-lg);
   max-width: 1400px;
   margin: 0 auto;
@@ -232,7 +232,7 @@
 
 /* Responsive design moderne */
 @media (max-width: 1024px) {
-  .entities-users-container {
+  .entities-specialities-container {
     padding: var(--spacing-md);
   }
   
@@ -251,7 +251,7 @@
 }
 
 @media (max-width: 768px) {
-  .entities-users-container {
+  .entities-specialities-container {
     padding: var(--spacing-sm);
   }
   
@@ -288,7 +288,7 @@
    Style moderne et épuré avec focus sur la lisibilité
    ================================================================= */
 
-.entities-users-container {
+.entities-specialities-container {
   padding: 0;
   max-width: 100%;
   margin: 0;
@@ -590,7 +590,7 @@
 
 /* Tablettes et plus (768px+) */
 @media (min-width: 768px) {
-  .entities-users-container {
+  .entities-specialities-container {
     padding: 2rem;
   }
   
@@ -815,7 +815,7 @@
 
 /* Grands écrans (1280px+) */
 @media (min-width: 1280px) {
-  .entities-users-container {
+  .entities-specialities-container {
     padding: 3rem;
     max-width: 1400px;
   }
@@ -865,7 +865,7 @@
 
 /* Mobile très petit */
 @media (max-width: 480px) {
-  .entities-users-container {
+  .entities-specialities-container {
     padding: 0.5rem;
   }
   
