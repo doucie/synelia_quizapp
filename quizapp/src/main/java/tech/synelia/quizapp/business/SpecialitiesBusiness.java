@@ -178,14 +178,10 @@ public class SpecialitiesBusiness implements IBasicBusiness<Request<Specialities
 				throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
 			}
 
-			// Verifier si la specialities existe (incluant les supprimées pour permettre la restauration)
+			// Verifier si la specialities existe (uniquement les actives pour update)
 			Specialities entityToSave = null;
-			// Chercher d'abord parmi les spécialités actives
+			// Pour update, chercher uniquement parmi les spécialités actives
 			entityToSave = specialitiesRepository.findOne(dto.getId(), false);
-			// Si pas trouvée, chercher parmi les spécialités supprimées (pour restauration)
-			if (entityToSave == null) {
-				entityToSave = specialitiesRepository.findOne(dto.getId(), true);
-			}
 			if (entityToSave == null) {
 				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("specialities id -> " + dto.getId(), locale));
 			}
@@ -425,11 +421,11 @@ public class SpecialitiesBusiness implements IBasicBusiness<Request<Specialities
 		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
 		Response<SpecialitiesDto> response = new Response<SpecialitiesDto>();
 
-		// Get total count for pagination
-		Long totalCount = specialitiesRepository.countAllByCriteria(request, em, locale);
-		log.info("Total count of specialities: " + totalCount);
+		// Utiliser une requête directe sans filtrage automatique des supprimés
+		List<Specialities> items = specialitiesRepository.getAllByCriteriaIncludingDeleted(request, em, locale);
 
-		List<Specialities> items = specialitiesRepository.getAllByCriteria(request, em, locale);
+		// Compter le nombre total d'utilisateurs avec les mêmes critères (pour pagination)
+		Long totalCount = specialitiesRepository.countAllByCriteriaIncludingDeleted(request, em, locale);
 
 		if (items != null && !items.isEmpty()) {
 			List<SpecialitiesDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading())) ? SpecialitiesTransformer.INSTANCE.toLiteDtos(items) : SpecialitiesTransformer.INSTANCE.toDtos(items);
@@ -452,21 +448,16 @@ public class SpecialitiesBusiness implements IBasicBusiness<Request<Specialities
 			status.setCode(StatusCode.SUCCESS);
 			status.setMessage(StatusMessage.SUCCESS);
 
+			response.setHttpCode(HttpStatus.OK.value());
+			response.setStatus(status);
 			response.setItems(itemsDto);
+			response.setCount(Long.valueOf(itemsDto.size())); // Nombre d'éléments dans cette page
+			response.setTotalCount(totalCount); // Nombre total d'éléments dans la base
 			response.setHasError(false);
-			response.setHttpCode(HttpStatus.OK.value());
-			response.setStatus(status);
-			response.setCount(totalCount); // Use total count instead of current page size
 		} else {
-			Status status = new Status();
-			status.setCode(StatusCode.SUCCESS);
-			status.setMessage(StatusMessage.SUCCESS);
-
-			response.setItems(new ArrayList<SpecialitiesDto>());
+			response.setStatus(functionalError.DATA_EMPTY("specialities", locale));
+			response.setTotalCount(totalCount); // Même si aucun résultat, renvoyer le total
 			response.setHasError(false);
-			response.setHttpCode(HttpStatus.OK.value());
-			response.setStatus(status);
-			response.setCount(totalCount); // Use total count even when no items
 		}
 
 		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
