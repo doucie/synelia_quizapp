@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 
 import { SpecialityService, Speciality, SpecialitySearchCriteria, PagedResponse } from '../../../../../core/services/speciality.service';
 import { NotificationService } from '../../../../../core/services/notification.service';
@@ -100,12 +100,23 @@ export class EntitiesSpecialitiesComponent implements OnInit, OnDestroy {
     private specialityService: SpecialityService,
     private notificationService: NotificationService,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {}
 
-  ngOnInit() {
+  async ngOnInit() {
     console.log('🚀 Initialisation EntitiesSpecialitiesComponent');
-    this.initializePageSizePreference();
+    await this.initializePageSizePreference();
+    
+    // Lire le paramètre page depuis l'URL (1-based) et convertir en 0-based
+    this.route.params.subscribe(params => {
+      const pageParam = params['page'];
+      if (pageParam && !isNaN(+pageParam) && +pageParam > 0) {
+        this.currentPage.set(+pageParam - 1); // Convertir 1-based en 0-based
+      } else {
+        this.currentPage.set(0);
+      }
+    });
   }
 
   ngOnDestroy() {
@@ -584,6 +595,8 @@ export class EntitiesSpecialitiesComponent implements OnInit, OnDestroy {
    */
   goToPage(page: number) {
     this.currentPage.set(page);
+    // Mettre à jour l'URL avec le numéro de page (convertir 0-based en 1-based)
+    this.router.navigate(['/dashboard/entities/specialities', page + 1]);
     this.loadSpecialities();
   }
 

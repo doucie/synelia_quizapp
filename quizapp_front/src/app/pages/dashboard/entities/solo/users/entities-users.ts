@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 
 import { UserService, User, UserSearchCriteria, PagedResponse } from '../../../../../core/services/user.service';
 import { DepartmentService } from '../../../../../core/services/department.service';
@@ -116,12 +116,26 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
     private userService: UserService,
     private notificationService: NotificationService,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {}
 
-  ngOnInit() {
+  async ngOnInit() {
     console.log('🚀 Initialisation EntitiesUsersComponent');
-    this.initializePageSizePreference();
+    await this.initializePageSizePreference();
+    
+    // Lire le paramètre page depuis l'URL (1-based) et convertir en 0-based
+    this.route.params.subscribe(params => {
+      const pageParam = params['page'];
+      if (pageParam && !isNaN(+pageParam) && +pageParam > 0) {
+        this.currentPage.set(+pageParam - 1); // Convertir 1-based en 0-based
+      } else {
+        this.currentPage.set(0);
+      }
+    });
+    
+    console.log('📦 Taille de page finale:', this.pageSize());
+    this.loadUsers();
   }
 
   ngOnDestroy() {
@@ -685,6 +699,8 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
    */
   goToPage(page: number) {
     this.currentPage.set(page);
+    // Mettre à jour l'URL avec le numéro de page (convertir 0-based en 1-based)
+    this.router.navigate(['/dashboard/entities/users', page + 1]);
     this.loadUsers();
   }
 

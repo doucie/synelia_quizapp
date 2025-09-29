@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 
 import { DepartmentService, Department, DepartmentSearchCriteria, PagedResponse } from '../../../../../core/services/department.service';
 import { UserService } from '../../../../../core/services/user.service';
@@ -100,7 +100,8 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
     private userService: UserService,
     private notificationService: NotificationService,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit() {
@@ -108,6 +109,17 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
     // Initialiser la taille de page avec la valeur stockée
     this.pageSize.set(this.getStoredPageSize());
     console.log('📦 Taille de page au démarrage:', this.pageSize());
+    
+    // Lire le paramètre page depuis l'URL (1-based) et convertir en 0-based
+    this.route.params.subscribe(params => {
+      const pageParam = params['page'];
+      if (pageParam && !isNaN(+pageParam) && +pageParam > 0) {
+        this.currentPage.set(+pageParam - 1); // Convertir 1-based en 0-based
+      } else {
+        this.currentPage.set(0);
+      }
+    });
+    
     this.loadDepartments();
   }
 
@@ -503,6 +515,8 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
    */
   goToPage(page: number) {
     this.currentPage.set(page);
+    // Mettre à jour l'URL avec le numéro de page (convertir 0-based en 1-based)
+    this.router.navigate(['/dashboard/entities/departments', page + 1]);
     this.loadDepartments();
   }
 
