@@ -5,6 +5,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 
 import { DepartmentService, Department, DepartmentSearchCriteria, PagedResponse } from '../../../../../core/services/department.service';
 import { UserService } from '../../../../../core/services/user.service';
+import { SpecialityService, Speciality } from '../../../../../core/services/speciality.service';
 import { NotificationService } from '../../../../../core/services/notification.service';
 import { AuthService } from '../../../../../core/services/auth/auth.service';
 
@@ -28,6 +29,11 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
   totalElements = signal<number>(0);
   currentPage = signal<number>(0);
   pageSize = signal<number>(10); // Valeur par défaut, sera mise à jour dans ngOnInit
+  
+  // Signaux pour l'expansion des départements
+  expandedDepartments = signal<Set<number>>(new Set());
+  departmentSpecialities = signal<{[departmentId: number]: Speciality[]}>({});
+  loadingSpecialities = signal<{[departmentId: number]: boolean}>({});
   
   // Critères de recherche
   searchCriteria: DepartmentSearchCriteria = {
@@ -98,6 +104,7 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
   constructor(
     private departmentService: DepartmentService,
     private userService: UserService,
+    private specialityService: SpecialityService,
     private notificationService: NotificationService,
     private authService: AuthService,
     private router: Router,
@@ -590,6 +597,13 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * TrackBy function pour optimiser les performances de rendu des spécialités
+   */
+  trackBySpecialityId(index: number, speciality: any): number {
+    return speciality.id;
+  }
+
+  /**
    * Recherche rapide utilisant search_string
    */
   onQuickSearch() {
@@ -799,5 +813,102 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
       },
       error: (error) => console.error('Erreur lors du comptage total des départements:', error)
     });
+  }
+
+  /**
+   * Bascule l'expansion d'un département
+   */
+  toggleDepartmentExpansion(departmentId: number) {
+    const currentExpanded = this.expandedDepartments();
+    const newExpanded = new Set(currentExpanded);
+    
+    if (newExpanded.has(departmentId)) {
+      // Réduire
+      newExpanded.delete(departmentId);
+      this.expandedDepartments.set(newExpanded);
+    } else {
+      // Étendre et charger les spécialités
+      newExpanded.add(departmentId);
+      this.expandedDepartments.set(newExpanded);
+      this.loadDepartmentSpecialities(departmentId);
+    }
+  }
+
+  /**
+   * Vérifie si un département est expandé
+   */
+  isDepartmentExpanded(departmentId: number): boolean {
+    return this.expandedDepartments().has(departmentId);
+  }
+
+  /**
+   * Charge les spécialités d'un département
+   */
+  loadDepartmentSpecialities(departmentId: number) {
+    // Éviter les appels multiples
+    if (this.loadingSpecialities()[departmentId]) {
+      return;
+    }
+
+    // Activer le loading pour ce département
+    this.loadingSpecialities.set({
+      ...this.loadingSpecialities(),
+      [departmentId]: true
+    });
+
+    console.log(`🔍 Chargement des spécialités pour le département ${departmentId}...`);
+
+    // Charger TOUTES les spécialités et filtrer côté frontend par departmentId
+    this.specialityService.getAll({
+      page: 0,
+      size: 10000 // Charger beaucoup pour avoir toutes les spécialités
+    }).subscribe({
+      next: (response) => {
+        console.log(`✅ Toutes les spécialités chargées:`, response.items);
+        
+        // Filtrer les spécialités qui appartiennent à ce département
+        const departmentSpecialities = response.items.filter(speciality => 
+          speciality.departmentId === departmentId
+        );
+        
+        console.log(`✅ Spécialités filtrées pour le département ${departmentId}:`, departmentSpecialities);
+        
+        // Mettre à jour les spécialités du département
+        this.departmentSpecialities.set({
+          ...this.departmentSpecialities(),
+          [departmentId]: departmentSpecialities
+        });
+
+        // Désactiver le loading
+        this.loadingSpecialities.set({
+          ...this.loadingSpecialities(),
+          [departmentId]: false
+        });
+      },
+      error: (error) => {
+        console.error(`❌ Erreur lors du chargement des spécialités du département ${departmentId}:`, error);
+        this.notificationService.error('Erreur', `Erreur lors du chargement des spécialités du département ${departmentId}`);
+        
+        // Désactiver le loading même en cas d'erreur
+        this.loadingSpecialities.set({
+          ...this.loadingSpecialities(),
+          [departmentId]: false
+        });
+      }
+    });
+  }
+
+  /**
+   * Vérifie si les spécialités d'un département sont en cours de chargement
+   */
+  isLoadingSpecialities(departmentId: number): boolean {
+    return this.loadingSpecialities()[departmentId] || false;
+  }
+
+  /**
+   * Récupère les spécialités d'un département
+   */
+  getDepartmentSpecialities(departmentId: number): Speciality[] {
+    return this.departmentSpecialities()[departmentId] || [];
   }
 }

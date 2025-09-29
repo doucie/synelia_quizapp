@@ -252,67 +252,128 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let department of departments(); trackBy: trackByDepartmentId" 
-              [class.user-deleted]="department.isDeleted">
-            <td>
-              <span class="cell-id">#{{ department.id }}</span>
-            </td>
-            <td>
-              <span class="cell-name">{{ department.nom || '-' }}</span>
-            </td>
-            <td>
-              <span class="cell-description">{{ department.description || '-' }}</span>
-            </td>
-            <td>
-              <span class="cell-date" *ngIf="department.dateCreation; else noDate">
-                {{ formatCreationDate(department) }}
-              </span>
-              <ng-template #noDate>
-                <span style="color: var(--text-secondary);">-</span>
-              </ng-template>
-            </td>
-            <td class="actions-cell">
-              <div class="actions-menu">
-                <!-- Boutons normaux pour les départements non supprimés -->
-                <ng-container *ngIf="!department.isDeleted">
-                  <button 
-                    class="action-btn primary" 
-                    (click)="editDepartment(department)"
-                    title="Modifier le département">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 20H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                      <path d="M16.5 3.5A2.12 2.12 0 0 1 19 6L7 18L3 19L4 15L16.5 3.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <ng-container *ngFor="let department of departments(); trackBy: trackByDepartmentId">
+            <tr [class.user-deleted]="department.isDeleted">
+              <td>
+                <span class="cell-id">#{{ department.id }}</span>
+              </td>
+              <td>
+                <span class="cell-name">{{ department.nom || '-' }}</span>
+              </td>
+              <td>
+                <span class="cell-description">{{ department.description || '-' }}</span>
+              </td>
+              <td>
+                <span class="cell-date" *ngIf="department.dateCreation; else noDate">
+                  {{ formatCreationDate(department) }}
+                </span>
+                <ng-template #noDate>
+                  <span style="color: var(--text-secondary);">-</span>
+                </ng-template>
+              </td>
+              <td class="actions-cell">
+                <div class="actions-menu">
+                  <!-- Boutons normaux pour les départements non supprimés -->
+                  <ng-container *ngIf="!department.isDeleted">
+                    <button 
+                      class="action-btn primary" 
+                      (click)="editDepartment(department)"
+                      title="Modifier le département">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 20H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M16.5 3.5A2.12 2.12 0 0 1 19 6L7 18L3 19L4 15L16.5 3.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                    <button 
+                      class="action-btn danger" 
+                      (click)="deleteDepartment(department)"
+                      title="Supprimer le département">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M10 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M14 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                    <!-- Bouton d'expansion pour afficher les spécialités -->
+                    <button 
+                      class="action-btn secondary" 
+                      (click)="toggleDepartmentExpansion(department.id)"
+                      [class.expanded]="isDepartmentExpanded(department.id)"
+                      title="Afficher les spécialités">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path 
+                          d="M6 9L12 15L18 9" 
+                          stroke="currentColor" 
+                          stroke-width="2" 
+                          stroke-linecap="round" 
+                          stroke-linejoin="round"
+                          [attr.transform]="isDepartmentExpanded(department.id) ? 'rotate(180 12 12)' : ''"/>
+                      </svg>
+                    </button>
+                  </ng-container>
+                  
+                  <!-- Bouton de restauration pour les départements supprimés -->
+                  <ng-container *ngIf="department.isDeleted">
+                    <button 
+                      class="action-btn success" 
+                      (click)="restoreDepartment(department); $event.stopPropagation()"
+                      title="Restaurer le département"
+                      style="z-index: 10; position: relative;">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 12A9 9 0 1 0 12 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M12 3L8 7L12 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                  </ng-container>
+                </div>
+              </td>
+            </tr>
+            
+            <!-- Ligne d'expansion pour afficher les spécialités -->
+            <tr *ngIf="isDepartmentExpanded(department.id)" class="expansion-row">
+              <td colspan="5" class="expansion-content">
+                <div class="specialities-container">
+                  <div class="expansion-header">
+                    <h4>Spécialités du département "{{ department.nom }}"</h4>
+                    <span class="specialities-count">
+                      {{ getDepartmentSpecialities(department.id).length || 0 }} spécialité(s)
+                    </span>
+                  </div>
+                  
+                  <!-- État de chargement des spécialités -->
+                  <div *ngIf="isLoadingSpecialities(department.id)" class="loading-specialities">
+                    <div class="loading-spinner-small"></div>
+                    <span>Chargement des spécialités...</span>
+                  </div>
+                  
+                  <!-- Liste des spécialités -->
+                  <div *ngIf="!isLoadingSpecialities(department.id) && getDepartmentSpecialities(department.id).length > 0" class="specialities-list">
+                    <div 
+                      *ngFor="let speciality of getDepartmentSpecialities(department.id); trackBy: trackBySpecialityId" 
+                      class="speciality-item">
+                      <div class="speciality-info">
+                        <span class="speciality-id">#{{ speciality.id }}</span>
+                        <span class="speciality-name">{{ speciality.nom }}</span>
+                        <span class="speciality-description" *ngIf="speciality.description">
+                          - {{ speciality.description }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- État vide pour les spécialités -->
+                  <div *ngIf="!isLoadingSpecialities(department.id) && !getDepartmentSpecialities(department.id).length" class="no-specialities">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
                     </svg>
-                  </button>
-                  <button 
-                    class="action-btn danger" 
-                    (click)="deleteDepartment(department)"
-                    title="Supprimer le département">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                      <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                      <path d="M10 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                      <path d="M14 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                  </button>
-                </ng-container>
-                
-                <!-- Bouton de restauration pour les départements supprimés -->
-                <ng-container *ngIf="department.isDeleted">
-                  <button 
-                    class="action-btn success" 
-                    (click)="restoreDepartment(department); $event.stopPropagation()"
-                    title="Restaurer le département"
-                    style="z-index: 10; position: relative;">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M3 12A9 9 0 1 0 12 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                      <path d="M12 3L8 7L12 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                  </button>
-                </ng-container>
-              </div>
-            </td>
-          </tr>
+                    <span>Aucune spécialité trouvée pour ce département</span>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </ng-container>
         </tbody>
       </table>
     </div>
