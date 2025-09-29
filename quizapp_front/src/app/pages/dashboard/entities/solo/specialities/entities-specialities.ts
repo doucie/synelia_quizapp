@@ -46,6 +46,10 @@ export class EntitiesSpecialitiesComponent implements OnInit, OnDestroy {
   // Contrôle d'affichage des spécialités supprimées
   showDeletedSpecialities = true; // Par défaut, afficher toutes les spécialités
   
+  // Compteurs réels (total dans la BD)
+  totalActiveSpecialities = signal<number>(0);
+  totalDeletedSpecialities = signal<number>(0);
+  
   // Options de pagination avec 10 par défaut
   pageSizeOptions = [5, 10, 20, 50, 100];
   private readonly PAGE_SIZE_STORAGE_KEY = 'entities-specialities-page-size';
@@ -196,15 +200,14 @@ export class EntitiesSpecialitiesComponent implements OnInit, OnDestroy {
     const criteria = {
       ...this.searchCriteria,
       page: this.currentPage(),
-      size: this.pageSize()
+      size: this.pageSize(),
+      isDeleted: this.showDeletedSpecialities ? undefined : false // undefined = tous, false = actifs seulement
     };
 
     console.log('📤 Requête envoyée avec critères:', JSON.stringify(criteria, null, 2));
 
-    // Utiliser le bon service selon la checkbox
-    const serviceCall = this.showDeletedSpecialities 
-      ? this.specialityService.getAll(criteria)
-      : this.specialityService.getAll(criteria); // Pour l'instant, utilisons getAll qui gère les critères
+    // Utiliser toujours la même méthode mais avec le critère isDeleted approprié
+    const serviceCall = this.specialityService.getAll(criteria);
 
     serviceCall.subscribe({
       next: (response: PagedResponse<Speciality>) => {
@@ -225,6 +228,9 @@ export class EntitiesSpecialitiesComponent implements OnInit, OnDestroy {
         this.specialities.set(response.items);
         this.totalElements.set(response.totalElements);
         this.isLoading.set(false);
+        
+        // Mettre à jour les vrais compteurs d'actifs et supprimés
+        this.updateRealCounts();
       },
       error: (error) => {
         console.error('❌ Erreur lors du chargement des spécialités:', error);
@@ -806,6 +812,48 @@ export class EntitiesSpecialitiesComponent implements OnInit, OnDestroy {
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
+    });
+  }
+
+  /**
+   * Compte les spécialités actives (total réel dans la BD)
+   */
+  getActiveSpecialitiesCount(): number {
+    return this.totalActiveSpecialities();
+  }
+
+  /**
+   * Compte les spécialités supprimées (total réel dans la BD)
+   */
+  getDeletedSpecialitiesCount(): number {
+    return this.totalDeletedSpecialities();
+  }
+
+  /**
+   * Met à jour les vrais compteurs d'actifs et supprimés
+   */
+  private updateRealCounts() {
+    // Compter les actifs (isDeleted = false) - appel léger avec size=1
+    const activeCriteria = { ...this.searchCriteria, isDeleted: false, page: 0, size: 1 };
+    this.specialityService.getAll(activeCriteria).subscribe({
+      next: (response) => {
+        this.totalActiveSpecialities.set(response.totalElements);
+      },
+      error: (error) => console.error('Erreur lors du comptage des spécialités actives:', error)
+    });
+
+    // Compter tous (isDeleted = undefined) pour calculer les supprimés
+    const allCriteria = { ...this.searchCriteria, isDeleted: undefined, page: 0, size: 1 };
+    this.specialityService.getAll(allCriteria).subscribe({
+      next: (response) => {
+        const totalAll = response.totalElements;
+        // Petite attente pour s'assurer que totalActive est mis à jour
+        setTimeout(() => {
+          const totalActive = this.totalActiveSpecialities();
+          this.totalDeletedSpecialities.set(totalAll - totalActive);
+        }, 100);
+      },
+      error: (error) => console.error('Erreur lors du comptage total des spécialités:', error)
     });
   }
 }

@@ -92,7 +92,7 @@ export class DepartmentService {
       departmentName: criteria.nom || '',
       departmentDesc: criteria.description || '',
       // Ne pas envoyer isDeleted si on veut tous les départements (incluant supprimés)
-      // isDeleted: criteria.isDeleted !== undefined ? criteria.isDeleted : false,
+      isDeleted: criteria.isDeleted !== undefined ? criteria.isDeleted : undefined, // undefined = tous, false = actifs seulement
       ...(criteria.dateCreationDe && criteria.dateCreationDe.trim() && { dateCreationDe: criteria.dateCreationDe }),
       ...(criteria.dateCreationA && criteria.dateCreationA.trim() && { dateCreationA: criteria.dateCreationA }),
       ...(criteria.dateModificationDe && criteria.dateModificationDe.trim() && { dateModificationDe: criteria.dateModificationDe }),

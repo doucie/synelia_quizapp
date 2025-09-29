@@ -82,19 +82,24 @@ export class SpecialityService {
       idA: criteria.idA || '',
       specialityName: criteria.nom || '',
       specialityDesc: criteria.description || '',
-      // Ne pas envoyer isDeleted si on veut tous les spécialités (incluant supprimés)
-      // isDeleted: criteria.isDeleted !== undefined ? criteria.isDeleted : false,
+      isDeleted: criteria.isDeleted !== undefined ? criteria.isDeleted : undefined, // undefined = tous, false = actifs seulement
       dateCreationDe: criteria.dateCreationDe || '',
       dateCreationA: criteria.dateCreationA || '',
       dateModificationDe: criteria.dateModificationDe || '',
       dateModificationA: criteria.dateModificationA || '',
-      search_string: criteria.search_string || ''
+      searchString: criteria.search_string || ''
     };
 
     console.log('🔧 Données brutes spécialités avant nettoyage:', rawData);
+    console.log('🔍 Recherche rapide - searchString:', criteria.search_string);
+    console.log('🔍 Recherche rapide - quickSearch value:', criteria.search_string?.trim());
+    console.log('🔍 Recherche rapide - searchString length:', criteria.search_string?.length);
+    console.log('🔍 Recherche rapide - searchString is empty?', !criteria.search_string?.trim());
 
     const cleanedData = this.cleanEmptyFields(rawData);
     console.log('🔧 Données spécialités après nettoyage:', cleanedData);
+    console.log('🔍 Données nettoyées - searchString:', cleanedData.searchString);
+    console.log('🔍 Données nettoyées - searchString existe?', 'searchString' in cleanedData);
 
     const request = {
       user: currentUserId,
@@ -394,9 +399,11 @@ export class SpecialityService {
 
         // Ne pas inclure les chaînes vides pour les champs non-String (dates, nombres)
         // Mais garder les chaînes vides pour les champs String (pour la recherche)
+        // Exception pour les champs de date qui commencent par "date"
         if (typeof value === 'string' && value.trim() === '' &&
-            (key.includes('At') || key.includes('By') || key.includes('Id'))) {
-          // Ne pas ajouter le champ s'il est vide et concerne une date ou un ID
+            (key.includes('At') || key.includes('By') || key.includes('Id')) &&
+            !key.startsWith('date')) {
+          // Ne pas ajouter le champ s'il est vide et concerne une date ou un ID (mais pas les champs de recherche de date)
           continue;
         }
 

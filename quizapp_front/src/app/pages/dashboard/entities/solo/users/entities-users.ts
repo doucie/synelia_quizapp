@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
 import { UserService, User, UserSearchCriteria, PagedResponse } from '../../../../../core/services/user.service';
+import { DepartmentService } from '../../../../../core/services/department.service';
 import { NotificationService } from '../../../../../core/services/notification.service';
 import { AuthService } from '../../../../../core/services/auth/auth.service';
 
@@ -49,6 +50,10 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
   
   // Contrôle d'affichage des utilisateurs supprimés
   showDeletedUsers = true; // Par défaut, afficher tous les utilisateurs
+  
+  // Compteurs réels (total dans la BD)
+  totalOnlineUsers = signal<number>(0);
+  totalOfflineUsers = signal<number>(0);
   
   // Options de pagination avec 10 par défaut
   pageSizeOptions = [5, 10, 20, 50, 100];
@@ -258,6 +263,9 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
         this.users.set(response.content);
         this.totalElements.set(response.totalElements);
         this.isLoading.set(false);
+        
+        // Mettre à jour les vrais compteurs d'utilisateurs en ligne/hors ligne
+        this.updateRealCounts();
       },
       error: (error) => {
         console.error('❌ Erreur lors du chargement des utilisateurs:', error);
@@ -823,17 +831,45 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Compte les utilisateurs en ligne
+   * Compte les utilisateurs en ligne (total réel dans la BD)
    */
   getOnlineUsersCount(): number {
-    return this.users().filter(user => user.isOnline).length;
+    return this.totalOnlineUsers();
   }
 
   /**
-   * Compte les utilisateurs hors ligne
+   * Compte les utilisateurs hors ligne (total réel dans la BD)
    */
   getOfflineUsersCount(): number {
-    return this.users().filter(user => !user.isOnline).length;
+    return this.totalOfflineUsers();
+  }
+
+  /**
+   * Met à jour les vrais compteurs d'utilisateurs en ligne/hors ligne
+   */
+  private updateRealCounts() {
+    // Compter les utilisateurs en ligne (isOnline = true) - appel léger avec size=1
+    const onlineCriteria = { ...this.searchCriteria, isOnline: true, page: 0, size: 1 };
+    this.userService.getByCriteria(onlineCriteria).subscribe({
+      next: (response) => {
+        this.totalOnlineUsers.set(response.totalElements);
+      },
+      error: (error) => console.error('Erreur lors du comptage des utilisateurs en ligne:', error)
+    });
+
+    // Compter tous les utilisateurs actifs (isDeleted = false) pour calculer hors ligne
+    const allActiveCriteria = { ...this.searchCriteria, isDeleted: false, page: 0, size: 1 };
+    this.userService.getByCriteria(allActiveCriteria).subscribe({
+      next: (response) => {
+        const totalActive = response.totalElements;
+        // Petite attente pour s'assurer que totalOnline est mis à jour
+        setTimeout(() => {
+          const totalOnline = this.totalOnlineUsers();
+          this.totalOfflineUsers.set(totalActive - totalOnline);
+        }, 100);
+      },
+      error: (error) => console.error('Erreur lors du comptage total des utilisateurs actifs:', error)
+    });
   }
 
   /**

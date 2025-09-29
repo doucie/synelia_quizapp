@@ -47,6 +47,10 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
   // Contrôle d'affichage des départements supprimés
   showDeletedDepartments = true; // Par défaut, afficher tous les départements
   
+  // Compteurs réels (total dans la BD)
+  totalActiveDepartments = signal<number>(0);
+  totalDeletedDepartments = signal<number>(0);
+  
   // Options de pagination avec 10 par défaut
   pageSizeOptions = [5, 10, 20, 50, 100];
   private readonly PAGE_SIZE_STORAGE_KEY = 'entities-departments-page-size';
@@ -183,15 +187,14 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
     const criteria = {
       ...this.searchCriteria,
       page: this.currentPage(),
-      size: this.pageSize()
+      size: this.pageSize(),
+      isDeleted: this.showDeletedDepartments ? undefined : false // undefined = tous, false = actifs seulement
     };
 
     console.log('📤 Requête envoyée avec critères:', criteria);
 
-    // Utiliser le bon service selon la checkbox
-    const serviceCall = this.showDeletedDepartments 
-      ? this.departmentService.getAllDepartmentsByCriteria(criteria)
-      : this.departmentService.getAllDepartmentsByCriteria(criteria);
+    // Utiliser toujours la même méthode mais avec le critère isDeleted approprié
+    const serviceCall = this.departmentService.getAllDepartmentsByCriteria(criteria);
 
     serviceCall.subscribe({
       next: (response: PagedResponse<Department>) => {
@@ -212,6 +215,9 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
         this.departments.set(response.content);
         this.totalElements.set(response.totalElements);
         this.isLoading.set(false);
+        
+        // Mettre à jour les vrais compteurs d'actifs et supprimés
+        this.updateRealCounts();
       },
       error: (error) => {
         console.error('❌ Erreur lors du chargement des départements:', error);
@@ -740,16 +746,44 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Retourne le nombre de départements actifs (non supprimés)
+   * Retourne le nombre de départements actifs (total réel dans la BD)
    */
   getActiveDepartmentsCount(): number {
-    return this.departments().filter(dept => !dept.isDeleted).length;
+    return this.totalActiveDepartments();
   }
 
   /**
-   * Retourne le nombre de départements supprimés
+   * Retourne le nombre de départements supprimés (total réel dans la BD)
    */
   getDeletedDepartmentsCount(): number {
-    return this.departments().filter(dept => dept.isDeleted).length;
+    return this.totalDeletedDepartments();
+  }
+
+  /**
+   * Met à jour les vrais compteurs d'actifs et supprimés
+   */
+  private updateRealCounts() {
+    // Compter les actifs (isDeleted = false) - appel léger avec size=1
+    const activeCriteria = { ...this.searchCriteria, isDeleted: false, page: 0, size: 1 };
+    this.departmentService.getAllDepartmentsByCriteria(activeCriteria).subscribe({
+      next: (response) => {
+        this.totalActiveDepartments.set(response.totalElements);
+      },
+      error: (error) => console.error('Erreur lors du comptage des départements actifs:', error)
+    });
+
+    // Compter tous (isDeleted = undefined) pour calculer les supprimés
+    const allCriteria = { ...this.searchCriteria, isDeleted: undefined, page: 0, size: 1 };
+    this.departmentService.getAllDepartmentsByCriteria(allCriteria).subscribe({
+      next: (response) => {
+        const totalAll = response.totalElements;
+        // Petite attente pour s'assurer que totalActive est mis à jour
+        setTimeout(() => {
+          const totalActive = this.totalActiveDepartments();
+          this.totalDeletedDepartments.set(totalAll - totalActive);
+        }, 100);
+      },
+      error: (error) => console.error('Erreur lors du comptage total des départements:', error)
+    });
   }
 }

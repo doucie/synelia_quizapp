@@ -374,6 +374,14 @@ public interface SpecialitiesRepository extends JpaRepository<Specialities, Inte
 				System.out.println("DEBUG: Adding departmentId criteria");
 				listOfQuery.add(CriteriaUtils.generateCriteria("departmentId", dto.getDepartmentId(), "e.departmentId", "Integer", dto.getDepartmentIdParam(), param, index, locale));
 			}
+			System.out.println("DEBUG: dto.searchString = '" + dto.getSearchString() + "'");
+			if (Utilities.notBlank(dto.getSearchString())) {
+				System.out.println("DEBUG: Adding searchString criteria - searching in specialityName, specialityDesc, and searchString");
+				// Pour la recherche rapide, rechercher dans les champs principaux
+				String searchValue = dto.getSearchString();
+				listOfQuery.add(" (e.specialityName LIKE :searchString_" + index + " OR e.specialityDesc LIKE :searchString_" + index + " OR e.searchString LIKE :searchString_" + index + ") ");
+				param.put("searchString_" + index, "%" + searchValue + "%");
+			}
 
 			System.out.println("DEBUG: Calling _generateCriteria");
 			List<String> listOfCustomQuery = _generateCriteria(dto, param, index, locale);

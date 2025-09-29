@@ -207,6 +207,14 @@
             <span>Total:</span>
             <span class="stat-number">{{ totalElements() }}</span>
           </div>
+          <div class="stat-item">
+            <span>Actives total:</span>
+            <span class="stat-number">{{ getActiveSpecialitiesCount() }}</span>
+          </div>
+          <div class="stat-item">
+            <span>Supprimées total:</span>
+            <span class="stat-number">{{ getDeletedSpecialitiesCount() }}</span>
+          </div>
         </div>
       </div>
     </div>

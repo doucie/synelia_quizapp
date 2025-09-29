@@ -642,3 +642,48 @@
     }
   }
 }
+
+/* Responsive table - masquer certaines colonnes sur mobile */
+@media (max-width: 1300px) {
+  .entities-users-container {
+    .data-table {
+      th:nth-child(4), /* Pseudo */
+      td:nth-child(4) {
+        display: none;
+      }
+    }
+  }
+}
+
+@media (max-width: 1250px) {
+  .entities-users-container {
+    .data-table {
+      th:nth-child(6), /* Statut */
+      td:nth-child(6) {
+        display: none;
+      }
+    }
+  }
+}
+
+@media (max-width: 1100px) {
+  .entities-users-container {
+    .data-table {
+      th:nth-child(3), /* Prénom */
+      td:nth-child(3) {
+        display: none;
+      }
+    }
+  }
+}
+
+@media (max-width: 1100px) {
+  .entities-users-container {
+    .data-table {
+      th:nth-child(7), /* Créé le */
+      td:nth-child(7) {
+        display: none;
+      }
+    }
+  }
+}
