@@ -647,6 +647,8 @@
         gap: var(--spacing-md);
         
         .speciality-item {
+          display: flex;
+          flex-direction: column;
           background: var(--background);
           border: 1px solid var(--border);
           border-radius: 12px;
@@ -658,16 +660,31 @@
             box-shadow: 0 2px 8px var(--shadow-light);
           }
           
+          .speciality-header {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            justify-content: space-between;
+            
+            .speciality-actions {
+              display: flex;
+              align-items: center;
+              gap: var(--spacing-xs);
+            }
+            
+            .speciality-id-wrapper {
+              .speciality-id {
+                font-size: var(--font-size-sm);
+                color: var(--text-secondary);
+                font-weight: var(--font-weight-medium);
+              }
+            }
+          }
+          
           .speciality-info {
             display: flex;
             flex-direction: column;
             gap: var(--spacing-xs);
-            
-            .speciality-id {
-              font-size: var(--font-size-sm);
-              color: var(--text-secondary);
-              font-weight: var(--font-weight-medium);
-            }
             
             .speciality-name {
               font-weight: var(--font-weight-semibold);
@@ -707,6 +724,264 @@
           font-size: var(--font-size-sm);
         }
       }
+    }
+  }
+}
+
+/* === STYLES POUR LES SPÉCIALITÉS === */
+
+/* Conteneur des spécialités */
+.specialities-container {
+  padding: var(--spacing-lg);
+  background: var(--surface-variant);
+  border-radius: 12px;
+  margin-top: var(--spacing-md);
+}
+
+.expansion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+  
+  h4 {
+    color: var(--text-primary);
+    margin: 0;
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    
+    svg {
+      color: var(--primary);
+    }
+  }
+  
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+  }
+  
+  .specialities-count {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    background: var(--surface);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+  }
+  
+  .btn-add-speciality {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    background: var(--primary);
+    color: var(--text-on-primary);
+    border: none;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: 8px;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(var(--primary), 0.3);
+    }
+    
+    svg {
+      width: 14px;
+      height: 14px;
+    }
+  }
+}
+
+/* État de chargement des spécialités */
+.loading-specialities {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-xl);
+  color: var(--text-secondary);
+  
+  .loading-spinner-small {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border);
+    border-top: 2px solid var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+}
+
+/* Liste des spécialités */
+.specialities-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.speciality-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    border-color: var(--primary);
+    box-shadow: 0 2px 8px rgba(var(--primary), 0.1);
+  }
+  
+  &.deleted {
+    opacity: 0.6;
+    background: var(--error-light);
+    border-color: var(--error);
+  }
+}
+
+.speciality-info {
+  flex: 1;
+  
+  .speciality-id {
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    margin-bottom: var(--spacing-xs);
+  }
+  
+  .speciality-name {
+    color: var(--text-primary);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: var(--spacing-xs);
+  }
+  
+  .speciality-description {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    margin: 0;
+  }
+}
+
+.speciality-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.btn-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  
+  svg {
+    width: 16px;
+    height: 16px;
+    stroke-width: 2;
+    transition: all 0.15s ease;
+  }
+}
+
+.btn-action:hover {
+  background: var(--surface-variant);
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
+
+.btn-action.btn-edit {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+.btn-action.btn-edit:hover {
+  background: var(--secondary);
+  border-color: var(--secondary);
+}
+
+.btn-action.btn-delete {
+  color: var(--error);
+  border-color: rgba(var(--error-rgb, 239, 68, 68), 0.3);
+}
+
+.btn-action.btn-delete:hover {
+  background: rgba(var(--error-rgb, 239, 68, 68), 0.1);
+  color: var(--error);
+  border-color: var(--error);
+}
+
+.btn-action.btn-restore {
+  color: var(--success);
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.btn-action.btn-restore:hover {
+  background: rgba(34, 197, 94, 0.1);
+  color: var(--success);
+  border-color: var(--success);
+}
+
+/* État vide pour les spécialités */
+.no-specialities {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-2xl);
+  color: var(--text-secondary);
+  text-align: center;
+  
+  svg {
+    width: 48px;
+    height: 48px;
+    margin-bottom: var(--spacing-md);
+    opacity: 0.5;
+  }
+  
+  span {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+  }
+}
+
+/* Responsive pour les spécialités */
+@media (max-width: 768px) {
+  .speciality-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+  
+  .speciality-actions {
+    align-self: flex-end;
+  }
+  
+  .expansion-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+    
+    .header-actions {
+      width: 100%;
+      justify-content: space-between;
     }
   }
 }

@@ -351,9 +351,21 @@
                 <div class="specialities-container">
                   <div class="expansion-header">
                     <h4>Spécialités du département "{{ department.nom }}"</h4>
-                    <span class="specialities-count">
-                      {{ getDepartmentSpecialities(department.id).length || 0 }} spécialité(s)
-                    </span>
+                    <div class="header-actions">
+                      <span class="specialities-count">
+                        {{ getDepartmentSpecialities(department.id).length || 0 }} spécialité(s)
+                      </span>
+                      <button 
+                        class="btn-add-speciality" 
+                        (click)="createSpecialityInDepartment(department)"
+                        title="Ajouter une spécialité">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M12 5V19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          <path d="M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Ajouter une spécialité
+                      </button>
+                    </div>
                   </div>
                   
                   <!-- État de chargement des spécialités -->
@@ -368,8 +380,45 @@
                       *ngFor="let speciality of getDepartmentSpecialities(department.id); trackBy: trackBySpecialityId" 
                       class="speciality-item"
                       [class.deleted]="speciality.isDeleted">
+                      <div class="speciality-header">
+                        <div class="speciality-id-wrapper">
+                          <span class="speciality-id">#{{ speciality.id }}</span>
+                        </div>
+                        <div class="speciality-actions">
+                          <button 
+                            class="btn-action btn-edit" 
+                            (click)="editSpecialityInDepartment(speciality, department)"
+                            title="Modifier la spécialité">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M12 20H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                              <path d="M16.5 3.5A2.12 2.12 0 0 1 19 6L7 18L3 19L4 15L16.5 3.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                          </button>
+                        <button 
+                          *ngIf="!speciality.isDeleted"
+                          class="btn-action btn-delete" 
+                          (click)="deleteSpecialityInDepartment(speciality, department)"
+                          title="Supprimer la spécialité">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M10 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M14 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          </svg>
+                        </button>
+                        <button 
+                          *ngIf="speciality.isDeleted"
+                          class="btn-action btn-restore" 
+                          (click)="restoreSpecialityInDepartment(speciality, department)"
+                          title="Restaurer la spécialité">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M3 12A9 9 0 1 0 12 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M12 3L8 7L12 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          </svg>
+                        </button>
+                      </div>
+                      </div>
                       <div class="speciality-info">
-                        <span class="speciality-id">#{{ speciality.id }}</span>
                         <span class="speciality-name">{{ speciality.nom }}</span>
                         <span class="speciality-description" *ngIf="speciality.description">
                           - {{ speciality.description }}
@@ -729,6 +778,217 @@
           Créer le département
         </button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de création de spécialité -->
+<div class="confirmation-overlay" *ngIf="showSpecialityCreateDialog()" (click)="cancelCreateSpeciality()">
+  <div class="edit-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Ajouter une spécialité</h3>
+      <button class="btn-close" (click)="cancelCreateSpeciality()" aria-label="Fermer">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-content">
+      <form class="edit-form">
+        <!-- Nom -->
+        <div class="form-group">
+          <label for="specialityCreateName" class="form-label required">Nom de la spécialité</label>
+          <input
+            id="specialityCreateName"
+            type="text"
+            class="form-input"
+            [(ngModel)]="specialityCreateFormData.nom"
+            placeholder="Entrez le nom de la spécialité"
+            required
+          />
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <label for="specialityCreateDescription" class="form-label">Description</label>
+          <textarea
+            id="specialityCreateDescription"
+            class="form-textarea"
+            [(ngModel)]="specialityCreateFormData.description"
+            placeholder="Entrez une description (optionnel)"
+            rows="3"
+          ></textarea>
+        </div>
+
+        <!-- Département -->
+        <div class="form-group">
+          <label class="form-label">Département</label>
+          <div class="form-input-readonly">
+            {{ currentDepartmentForSpeciality()?.nom }}
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-confirm-secondary" (click)="cancelCreateSpeciality()">
+        Annuler
+      </button>
+      <button class="btn-confirm-success" (click)="confirmCreateSpeciality()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Créer la spécialité
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de modification de spécialité -->
+<div class="confirmation-overlay" *ngIf="showSpecialityEditDialog()" (click)="cancelEditSpeciality()">
+  <div class="edit-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Modifier la spécialité</h3>
+      <button class="btn-close" (click)="cancelEditSpeciality()" aria-label="Fermer">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-content">
+      <form class="edit-form">
+        <!-- Nom -->
+        <div class="form-group">
+          <label for="specialityEditName" class="form-label required">Nom de la spécialité</label>
+          <input
+            id="specialityEditName"
+            type="text"
+            class="form-input"
+            [(ngModel)]="specialityEditFormData.nom"
+            placeholder="Entrez le nom de la spécialité"
+            required
+          />
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <label for="specialityEditDescription" class="form-label">Description</label>
+          <textarea
+            id="specialityEditDescription"
+            class="form-textarea"
+            [(ngModel)]="specialityEditFormData.description"
+            placeholder="Entrez une description (optionnel)"
+            rows="3"
+          ></textarea>
+        </div>
+
+        <!-- Département -->
+        <div class="form-group">
+          <label class="form-label">Département</label>
+          <div class="form-input-readonly">
+            {{ currentDepartmentForSpeciality()?.nom }}
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-confirm-secondary" (click)="cancelEditSpeciality()">
+        Annuler
+      </button>
+      <button class="btn-confirm-success" (click)="confirmEditSpeciality()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Modifier la spécialité
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de confirmation de suppression de spécialité -->
+<div class="confirmation-overlay" *ngIf="showSpecialityDeleteConfirmation()" (click)="cancelDeleteSpeciality()">
+  <div class="confirmation-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Confirmer la suppression</h3>
+      <button class="btn-close" (click)="cancelDeleteSpeciality()" aria-label="Fermer">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-content">
+      <div class="confirmation-message">
+        <div class="confirmation-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 9V11M12 15H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <p>Êtes-vous sûr de vouloir supprimer la spécialité <strong>"{{ specialityToDelete()?.nom }}"</strong> ?</p>
+        <p class="confirmation-warning">Cette action peut être annulée en restaurant la spécialité ultérieurement.</p>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-confirm-secondary" (click)="cancelDeleteSpeciality()">
+        Annuler
+      </button>
+      <button class="btn-confirm-danger" (click)="confirmDeleteSpeciality()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M19 7L5 21M21 21H5L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Supprimer
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de confirmation de restauration de spécialité -->
+<div class="confirmation-overlay" *ngIf="showSpecialityRestoreConfirmation()" (click)="cancelRestoreSpeciality()">
+  <div class="confirmation-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Confirmer la restauration</h3>
+      <button class="btn-close" (click)="cancelRestoreSpeciality()" aria-label="Fermer">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-content">
+      <div class="confirmation-message">
+        <div class="confirmation-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M21 3v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M8 16H3v5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        <p>Êtes-vous sûr de vouloir restaurer la spécialité <strong>"{{ specialityToRestore()?.nom }}"</strong> ?</p>
+        <p class="confirmation-info">La spécialité redeviendra active et visible dans les listes.</p>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-confirm-secondary" (click)="cancelRestoreSpeciality()">
+        Annuler
+      </button>
+      <button class="btn-confirm-success" (click)="confirmRestoreSpeciality()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M21 3v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M8 16H3v5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Restaurer
+      </button>
     </div>
   </div>
 </div>

@@ -85,6 +85,28 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
     description: ''
   };
   
+  // États pour la gestion des spécialités
+  showSpecialityCreateDialog = signal<boolean>(false);
+  showSpecialityEditDialog = signal<boolean>(false);
+  showSpecialityDeleteConfirmation = signal<boolean>(false);
+  showSpecialityRestoreConfirmation = signal<boolean>(false);
+  
+  specialityToEdit = signal<Speciality | null>(null);
+  specialityToDelete = signal<Speciality | null>(null);
+  specialityToRestore = signal<Speciality | null>(null);
+  currentDepartmentForSpeciality = signal<Department | null>(null);
+  
+  specialityCreateFormData = {
+    nom: '',
+    description: ''
+  };
+  
+  specialityEditFormData = {
+    id: 0,
+    nom: '',
+    description: ''
+  };
+  
   // Critères de recherche avancée
   advancedCriteria: DepartmentSearchCriteria = {
     idDe: '',
@@ -788,6 +810,13 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Retourne les spécialités d'un département donné
+   */
+  getDepartmentSpecialities(departmentId: number): Speciality[] {
+    return this.departmentSpecialities()[departmentId] || [];
+  }
+
+  /**
    * Met à jour les vrais compteurs d'actifs et supprimés
    */
   private updateRealCounts() {
@@ -906,9 +935,225 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Récupère les spécialités d'un département
+   * Crée une nouvelle spécialité dans un département
    */
-  getDepartmentSpecialities(departmentId: number): Speciality[] {
-    return this.departmentSpecialities()[departmentId] || [];
+  createSpecialityInDepartment(department: Department) {
+    console.log('🆕 Création d\'une spécialité dans le département:', department.nom);
+    this.currentDepartmentForSpeciality.set(department);
+    this.specialityCreateFormData = {
+      nom: '',
+      description: ''
+    };
+    this.showSpecialityCreateDialog.set(true);
+  }
+
+  /**
+   * Modifie une spécialité
+   */
+  editSpecialityInDepartment(speciality: Speciality, department: Department) {
+    console.log('✏️ Modification de la spécialité:', speciality.nom, 'dans le département:', department.nom);
+    this.currentDepartmentForSpeciality.set(department);
+    this.specialityToEdit.set(speciality);
+    this.specialityEditFormData = {
+      id: speciality.id,
+      nom: speciality.nom || '',
+      description: speciality.description || ''
+    };
+    this.showSpecialityEditDialog.set(true);
+  }
+
+  /**
+   * Supprime une spécialité
+   */
+  deleteSpecialityInDepartment(speciality: Speciality, department: Department) {
+    console.log('🗑️ Suppression de la spécialité:', speciality.nom, 'dans le département:', department.nom);
+    this.currentDepartmentForSpeciality.set(department);
+    this.specialityToDelete.set(speciality);
+    this.showSpecialityDeleteConfirmation.set(true);
+  }
+
+  /**
+   * Restaure une spécialité supprimée
+   */
+  restoreSpecialityInDepartment(speciality: Speciality, department: Department) {
+    console.log('♻️ Restauration de la spécialité:', speciality.nom, 'dans le département:', department.nom);
+    this.currentDepartmentForSpeciality.set(department);
+    this.specialityToRestore.set(speciality);
+    this.showSpecialityRestoreConfirmation.set(true);
+  }
+
+  /**
+   * Confirme la création d'une spécialité
+   */
+  async confirmCreateSpeciality() {
+    if (!this.currentDepartmentForSpeciality()) {
+      this.notificationService.error('Erreur', 'Département non trouvé');
+      return;
+    }
+
+    const department = this.currentDepartmentForSpeciality()!;
+    const specialityData = {
+      nom: this.specialityCreateFormData.nom.trim(),
+      description: this.specialityCreateFormData.description.trim(),
+      departmentId: department.id
+    };
+
+    if (!specialityData.nom) {
+      this.notificationService.error('Erreur', 'Le nom de la spécialité est obligatoire');
+      return;
+    }
+
+    try {
+      console.log('🚀 Création de la spécialité:', specialityData);
+      const newSpeciality: any = await this.specialityService.create(specialityData);
+      console.log('✅ Spécialité créée:', newSpeciality);
+
+      // Recharger les spécialités du département
+      this.loadDepartmentSpecialities(department.id);
+
+      this.notificationService.success('Succès', 'Spécialité créée avec succès');
+      this.cancelCreateSpeciality();
+    } catch (error: any) {
+      console.error('❌ Erreur lors de la création de la spécialité:', error);
+      this.notificationService.error('Erreur', 'Erreur lors de la création de la spécialité');
+    }
+  }
+
+  /**
+   * Annule la création d'une spécialité
+   */
+  cancelCreateSpeciality() {
+    this.showSpecialityCreateDialog.set(false);
+    this.currentDepartmentForSpeciality.set(null);
+    this.specialityCreateFormData = {
+      nom: '',
+      description: ''
+    };
+  }
+
+  /**
+   * Confirme la modification d'une spécialité
+   */
+  async confirmEditSpeciality() {
+    if (!this.specialityToEdit() || !this.currentDepartmentForSpeciality()) {
+      this.notificationService.error('Erreur', 'Spécialité ou département non trouvé');
+      return;
+    }
+
+    const speciality = this.specialityToEdit()!;
+    const department = this.currentDepartmentForSpeciality()!;
+    const specialityData = {
+      nom: this.specialityEditFormData.nom.trim(),
+      description: this.specialityEditFormData.description.trim(),
+      departmentId: department.id
+    };
+
+    if (!specialityData.nom) {
+      this.notificationService.error('Erreur', 'Le nom de la spécialité est obligatoire');
+      return;
+    }
+
+    try {
+      console.log('🚀 Modification de la spécialité:', speciality.id, specialityData);
+      const updatedSpeciality: any = await this.specialityService.update(speciality.id, specialityData);
+      console.log('✅ Spécialité modifiée:', updatedSpeciality);
+
+      // Recharger les spécialités du département
+      this.loadDepartmentSpecialities(department.id);
+
+      this.notificationService.success('Succès', 'Spécialité modifiée avec succès');
+      this.cancelEditSpeciality();
+    } catch (error: any) {
+      console.error('❌ Erreur lors de la modification de la spécialité:', error);
+      this.notificationService.error('Erreur', 'Erreur lors de la modification de la spécialité');
+    }
+  }
+
+  /**
+   * Annule la modification d'une spécialité
+   */
+  cancelEditSpeciality() {
+    this.showSpecialityEditDialog.set(false);
+    this.specialityToEdit.set(null);
+    this.currentDepartmentForSpeciality.set(null);
+    this.specialityEditFormData = {
+      id: 0,
+      nom: '',
+      description: ''
+    };
+  }
+
+  /**
+   * Confirme la suppression d'une spécialité
+   */
+  async confirmDeleteSpeciality() {
+    if (!this.specialityToDelete() || !this.currentDepartmentForSpeciality()) {
+      this.notificationService.error('Erreur', 'Spécialité ou département non trouvé');
+      return;
+    }
+
+    const speciality = this.specialityToDelete()!;
+    const department = this.currentDepartmentForSpeciality()!;
+
+    try {
+      console.log('🚀 Suppression de la spécialité:', speciality.id);
+      await this.specialityService.delete(speciality.id);
+      console.log('✅ Spécialité supprimée');
+
+      // Recharger les spécialités du département
+      this.loadDepartmentSpecialities(department.id);
+
+      this.notificationService.success('Succès', 'Spécialité supprimée avec succès');
+      this.cancelDeleteSpeciality();
+    } catch (error: any) {
+      console.error('❌ Erreur lors de la suppression de la spécialité:', error);
+      this.notificationService.error('Erreur', 'Erreur lors de la suppression de la spécialité');
+    }
+  }
+
+  /**
+   * Annule la suppression d'une spécialité
+   */
+  cancelDeleteSpeciality() {
+    this.showSpecialityDeleteConfirmation.set(false);
+    this.specialityToDelete.set(null);
+    this.currentDepartmentForSpeciality.set(null);
+  }
+
+  /**
+   * Confirme la restauration d'une spécialité
+   */
+  async confirmRestoreSpeciality() {
+    if (!this.specialityToRestore() || !this.currentDepartmentForSpeciality()) {
+      this.notificationService.error('Erreur', 'Spécialité ou département non trouvé');
+      return;
+    }
+
+    const speciality = this.specialityToRestore()!;
+    const department = this.currentDepartmentForSpeciality()!;
+
+    try {
+      console.log('🚀 Restauration de la spécialité:', speciality.id);
+      await this.specialityService.restore(speciality.id);
+      console.log('✅ Spécialité restaurée');
+
+      // Recharger les spécialités du département
+      this.loadDepartmentSpecialities(department.id);
+
+      this.notificationService.success('Succès', 'Spécialité restaurée avec succès');
+      this.cancelRestoreSpeciality();
+    } catch (error: any) {
+      console.error('❌ Erreur lors de la restauration de la spécialité:', error);
+      this.notificationService.error('Erreur', 'Erreur lors de la restauration de la spécialité');
+    }
+  }
+
+  /**
+   * Annule la restauration d'une spécialité
+   */
+  cancelRestoreSpeciality() {
+    this.showSpecialityRestoreConfirmation.set(false);
+    this.specialityToRestore.set(null);
+    this.currentDepartmentForSpeciality.set(null);
   }
 }
