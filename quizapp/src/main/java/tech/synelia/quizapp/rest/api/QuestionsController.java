@@ -110,6 +110,16 @@ public class QuestionsController {
         return response;
     }
 
+	@RequestMapping(value="/updateAll",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
+    public Response<QuestionsDto> updateAll(@RequestBody Request<QuestionsDto> request) throws Exception{
+    	log.info("start method /questions/updateAll");
+    	String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
+    	Locale locale = Locale.of(languageID, "");
+        Response<QuestionsDto> response = questionsBusiness.updateAll(request, locale);
+		log.info("end method /questions/updateAll");
+        return response;
+    }
+
     @RequestMapping(value = "/custom", method = RequestMethod.POST, consumes = {
 	   "application/json" }, produces = { "application/json" })
 	 public Response<QuestionsDto> custom(@RequestBody Request<QuestionsDto> request) throws Exception{

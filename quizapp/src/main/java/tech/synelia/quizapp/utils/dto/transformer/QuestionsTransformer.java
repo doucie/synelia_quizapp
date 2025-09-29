@@ -42,6 +42,7 @@ public interface QuestionsTransformer {
 		@Mapping(source="entity.createdAt", dateFormat="dd/MM/yyyy", target="createdAt"),
 		@Mapping(source="entity.updatedAt", dateFormat="dd/MM/yyyy", target="updatedAt"),
 		@Mapping(source="entity.specialities.id", target="specialityId"),
+		@Mapping(source="entity.searchString", target="searchString"),
 	})
 	QuestionsDto toDto(Questions entity) throws ParseException;
 
