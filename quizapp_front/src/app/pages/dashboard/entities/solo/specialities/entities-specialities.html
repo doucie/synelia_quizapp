@@ -574,15 +574,28 @@
         <!-- Département -->
         <div class="form-group">
           <label for="edit-departmentId" class="form-label">Département *</label>
-          <input 
-            type="number" 
-            id="edit-departmentId"
-            class="form-input"
-            [(ngModel)]="editFormData.departmentId"
-            name="departmentId"
-            placeholder="ID du département"
-            required
-          />
+          <div class="dropdown-container">
+            <div class="dropdown-input" (click)="toggleDepartmentDropdown()">
+              <span class="selected-text" [class.placeholder]="!selectedDepartmentName()">
+                {{ selectedDepartmentName() || 'Sélectionner un département' }}
+              </span>
+              <svg class="dropdown-icon" [class.rotated]="showDepartmentDropdown()" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="dropdown-list" *ngIf="showDepartmentDropdown()">
+              <div
+                class="dropdown-item"
+                *ngFor="let department of departments()"
+                (click)="selectDepartment(department, 'edit')"
+              >
+                {{ department.name }}
+              </div>
+              <div class="dropdown-item no-results" *ngIf="departments().length === 0">
+                Aucun département disponible
+              </div>
+            </div>
+          </div>
         </div>
 
       </form>
@@ -661,15 +674,28 @@
         <!-- Département -->
         <div class="form-group">
           <label for="create-departmentId" class="form-label">Département *</label>
-          <input
-            type="number"
-            id="create-departmentId"
-            class="form-input"
-            [(ngModel)]="createFormData.departmentId"
-            name="departmentId"
-            placeholder="ID du département"
-            required
-          />
+          <div class="dropdown-container">
+            <div class="dropdown-input" (click)="toggleDepartmentDropdown()">
+              <span class="selected-text" [class.placeholder]="!selectedDepartmentName()">
+                {{ selectedDepartmentName() || 'Sélectionner un département' }}
+              </span>
+              <svg class="dropdown-icon" [class.rotated]="showDepartmentDropdown()" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="dropdown-list" *ngIf="showDepartmentDropdown()">
+              <div
+                class="dropdown-item"
+                *ngFor="let department of departments()"
+                (click)="selectDepartment(department, 'create')"
+              >
+                {{ department.name }}
+              </div>
+              <div class="dropdown-item no-results" *ngIf="departments().length === 0">
+                Aucun département disponible
+              </div>
+            </div>
+          </div>
         </div>
       </form>
     </div>

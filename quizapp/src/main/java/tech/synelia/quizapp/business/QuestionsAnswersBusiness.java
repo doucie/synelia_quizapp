@@ -89,7 +89,7 @@ public class QuestionsAnswersBusiness implements IBasicBusiness<Request<Question
 			// Definir les parametres obligatoires
 			Map<String, java.lang.Object> fieldsToVerify = new HashMap<String, java.lang.Object>();
 			fieldsToVerify.put("isCorrect", dto.getIsCorrect());
-			fieldsToVerify.put("searchString", dto.getSearchString());
+			// fieldsToVerify.put("searchString", dto.getSearchString());
 			fieldsToVerify.put("questionId", dto.getQuestionId());
 			fieldsToVerify.put("answerId", dto.getAnswerId());
 			if (!Validate.RequiredValue(fieldsToVerify).isGood()) {

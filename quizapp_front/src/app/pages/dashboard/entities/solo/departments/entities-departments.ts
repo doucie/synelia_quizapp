@@ -219,19 +219,19 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
       next: (response: PagedResponse<Department>) => {
         console.log(`✅ RÉPONSE COMPLÈTE reçue (${serviceMethod}):`, response);
         console.log('📊 Nombre total de départements (totalElements):', response.totalElements);
-        console.log('📊 Nombre de départements dans cette page:', response.content.length);
-        console.log('📊 Page courante (number):', response.number || 'non défini');
-        console.log('📊 Taille de page (size):', response.size || 'non défini');
+        console.log('📊 Nombre de départements dans cette page:', response.items.length);
+        console.log('📊 Page courante (currentPage):', response.currentPage || 'non défini');
+        console.log('📊 Taille de page (pageSize):', response.pageSize || 'non défini');
         console.log('📊 Nombre total de pages:', response.totalPages || 'non défini');
         
         // Analyser les départements reçus
-        const deletedDepartments = response.content.filter(d => d.isDeleted);
-        const activeDepartments = response.content.filter(d => !d.isDeleted);
+        const deletedDepartments = response.items.filter((d: Department) => d.isDeleted);
+        const activeDepartments = response.items.filter((d: Department) => !d.isDeleted);
         
         console.log('📊 Départements supprimés dans cette page:', deletedDepartments.length, deletedDepartments);
         console.log('📊 Départements actifs dans cette page:', activeDepartments.length, activeDepartments);
         
-        this.departments.set(response.content);
+        this.departments.set(response.items);
         this.totalElements.set(response.totalElements);
         this.isLoading.set(false);
         

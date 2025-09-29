@@ -89,7 +89,7 @@ public class QuestionsBusiness implements IBasicBusiness<Request<QuestionsDto>, 
 			Map<String, java.lang.Object> fieldsToVerify = new HashMap<String, java.lang.Object>();
 			fieldsToVerify.put("questionContent", dto.getQuestionContent());
 			fieldsToVerify.put("questionChrono", dto.getQuestionChrono());
-			fieldsToVerify.put("searchString", dto.getSearchString());
+			// fieldsToVerify.put("searchString", dto.getSearchString());
 			fieldsToVerify.put("specialityId", dto.getSpecialityId());
 			if (!Validate.RequiredValue(fieldsToVerify).isGood()) {
 				throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));

@@ -41,8 +41,11 @@
   --success: #10B981;
   --success-dark: #059669;
   --warning: #F59E0B;
+  --warning-dark: #B45309;
   --error: #EF4444;
+  --error-dark: #B91C1C;
   --info: #3B82F6;
+  --info-dark: #1E40AF;
   
   /* Disabled States */
   --disabled: #E2E8F0;

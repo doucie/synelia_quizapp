@@ -55,11 +55,13 @@ export interface DepartmentSearchCriteria {
  * Interface pour la réponse paginée
  */
 export interface PagedResponse<T> {
-  content: T[];
+  items: T[];
   totalElements: number;
   totalPages: number;
-  size: number;
-  number: number;
+  currentPage: number;
+  pageSize: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
 }
 
 /**
@@ -162,11 +164,13 @@ export class DepartmentService {
         if (!response || (!response.items && !response.item)) {
           console.warn('⚠️ Aucune donnée dans la réponse');
           return {
-            content: [],
+            items: [],
             totalElements: 0,
             totalPages: 0,
-            size: criteria.size || 10,
-            number: criteria.page || 0
+            currentPage: criteria.page || 0,
+            pageSize: criteria.size || 10,
+            hasNext: false,
+            hasPrevious: false
           };
         }
 
@@ -189,11 +193,13 @@ export class DepartmentService {
         }));
 
         return {
-          content: transformedDepartments,
+          items: transformedDepartments,
           totalElements: response.totalCount || response.count || rawDepartments.length,
           totalPages: Math.ceil((response.totalCount || response.count || rawDepartments.length) / (criteria.size || 10)),
-          size: criteria.size || 10,
-          number: criteria.page || 0
+          currentPage: criteria.page || 0,
+          pageSize: criteria.size || 10,
+          hasNext: (criteria.page || 0) < Math.ceil((response.totalCount || response.count || rawDepartments.length) / (criteria.size || 10)) - 1,
+          hasPrevious: (criteria.page || 0) > 0
         };
       }),
       catchError(error => {

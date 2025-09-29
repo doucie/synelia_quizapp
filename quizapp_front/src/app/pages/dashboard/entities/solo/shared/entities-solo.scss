@@ -1718,3 +1718,108 @@
     }
   }
 }
+
+
+/* ==================== STYLES POUR LA LISTE DÉROULANTE ==================== */
+
+.dropdown-container {
+  position: relative;
+  width: 100%;
+}
+
+.dropdown-input {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 48px;
+
+  &:hover {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(var(--primary), 0.1);
+  }
+
+  &:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(var(--primary), 0.1);
+  }
+
+  .selected-text {
+    color: var(--text-primary);
+    font-size: var(--font-size-base);
+    flex: 1;
+
+    &.placeholder {
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+  }
+
+  .dropdown-icon {
+    color: var(--text-secondary);
+    transition: transform 0.2s ease;
+    margin-left: var(--spacing-md);
+
+    &.rotated {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+.dropdown-list {
+  margin-top: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px var(--shadow);
+  z-index: 1000;
+  max-height: 200px;
+  overflow-y: auto;
+
+  .dropdown-item {
+    padding: var(--spacing-md) var(--spacing-lg);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    border-bottom: 1px solid var(--divider);
+
+    &:hover {
+      background: var(--surface-variant);
+    }
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &.no-results {
+      color: var(--text-secondary);
+      font-style: italic;
+      cursor: default;
+
+      &:hover {
+        background: transparent;
+      }
+    }
+  }
+}
+
+/* Animation d'ouverture/fermeture */
+.dropdown-list {
+  animation: dropdownSlideIn 0.2s ease-out;
+}
+
+@keyframes dropdownSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 
 import { SpecialityService, Speciality, SpecialitySearchCriteria, PagedResponse } from '../../../../../core/services/speciality.service';
+import { DepartmentService, Department, DepartmentSearchCriteria } from '../../../../../core/services/department.service';
 import { NotificationService } from '../../../../../core/services/notification.service';
 import { AuthService } from '../../../../../core/services/auth/auth.service';
 
@@ -96,8 +97,14 @@ export class EntitiesSpecialitiesComponent implements OnInit, OnDestroy {
   // Rôles disponibles
   availableRoles = ['super', 'admin', 'recruiter'];
 
+  // Gestion des départements pour la liste déroulante
+  departments = signal<Department[]>([]);
+  showDepartmentDropdown = signal<boolean>(false);
+  selectedDepartmentName = signal<string>('');
+
   constructor(
     private specialityService: SpecialityService,
+    private departmentService: DepartmentService,
     private notificationService: NotificationService,
     private authService: AuthService,
     private router: Router,
@@ -107,6 +114,9 @@ export class EntitiesSpecialitiesComponent implements OnInit, OnDestroy {
   async ngOnInit() {
     console.log('🚀 Initialisation EntitiesSpecialitiesComponent');
     await this.initializePageSizePreference();
+    
+    // Charger les départements pour la liste déroulante
+    this.loadDepartments();
     
     // Lire le paramètre page depuis l'URL (1-based) et convertir en 0-based
     this.route.params.subscribe(params => {
@@ -287,6 +297,7 @@ export class EntitiesSpecialitiesComponent implements OnInit, OnDestroy {
       specialityDesc: '',
       departmentId: 0
     };
+    this.selectedDepartmentName.set('');
     this.showCreateDialog.set(true);
   }
 
@@ -380,6 +391,7 @@ export class EntitiesSpecialitiesComponent implements OnInit, OnDestroy {
       specialityDesc: speciality.description || '',
       departmentId: speciality.departmentId || 0
     };
+    this.updateSelectedDepartmentName(speciality.departmentId || 0);
     this.showEditDialog.set(true);
   }
 
@@ -395,6 +407,65 @@ export class EntitiesSpecialitiesComponent implements OnInit, OnDestroy {
       specialityDesc: '',
       departmentId: 0
     };
+  }
+
+  // ==================== GESTION DES DÉPARTEMENTS ====================
+
+  /**
+   * Charge la liste des départements actifs
+   */
+  private loadDepartments(): void {
+    console.log('📥 Chargement des départements...');
+    this.departmentService.getAllDepartmentsByCriteria({ isDeleted: false }).subscribe({
+      next: (response: any) => {
+        console.log('✅ Départements chargés:', response.items);
+        this.departments.set(response.items);
+      },
+      error: (error: any) => {
+        console.error('❌ Erreur lors du chargement des départements:', error);
+        this.notificationService.error('Erreur', 'Impossible de charger la liste des départements');
+      }
+    });
+  }
+
+  /**
+   * Bascule l'affichage de la liste déroulante des départements
+   */
+  toggleDepartmentDropdown(): void {
+    this.showDepartmentDropdown.set(!this.showDepartmentDropdown());
+  }
+
+  /**
+   * Ferme la liste déroulante des départements
+   */
+  closeDepartmentDropdown(): void {
+    this.showDepartmentDropdown.set(false);
+  }
+
+  /**
+   * Sélectionne un département depuis la liste déroulante
+   */
+  selectDepartment(department: Department, formType: 'edit' | 'create'): void {
+    if (formType === 'edit') {
+      this.editFormData.departmentId = department.id;
+      this.selectedDepartmentName.set(department.name || '');
+    } else {
+      this.createFormData.departmentId = department.id;
+      this.selectedDepartmentName.set(department.name || '');
+    }
+    this.closeDepartmentDropdown();
+  }
+
+  /**
+   * Met à jour le nom du département affiché selon l'ID sélectionné
+   */
+  updateSelectedDepartmentName(departmentId: number): void {
+    const department = this.departments().find(d => d.id === departmentId);
+    if (department) {
+      this.selectedDepartmentName.set(department.name || '');
+    } else {
+      this.selectedDepartmentName.set('');
+    }
   }
 
   /**
