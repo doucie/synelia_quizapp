@@ -317,12 +317,27 @@
                   <ng-container *ngIf="department.isDeleted">
                     <button 
                       class="action-btn success" 
-                      (click)="restoreDepartment(department); $event.stopPropagation()"
-                      title="Restaurer le département"
-                      style="z-index: 10; position: relative;">
+                      (click)="restoreDepartment(department)"
+                      title="Restaurer le département">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M3 12A9 9 0 1 0 12 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         <path d="M12 3L8 7L12 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                    <!-- Bouton d'expansion pour afficher les spécialités -->
+                    <button 
+                      class="action-btn secondary" 
+                      (click)="toggleDepartmentExpansion(department.id)"
+                      [class.expanded]="isDepartmentExpanded(department.id)"
+                      title="Afficher les spécialités">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path 
+                          d="M6 9L12 15L18 9" 
+                          stroke="currentColor" 
+                          stroke-width="2" 
+                          stroke-linecap="round" 
+                          stroke-linejoin="round"
+                          [attr.transform]="isDepartmentExpanded(department.id) ? 'rotate(180 12 12)' : ''"/>
                       </svg>
                     </button>
                   </ng-container>
@@ -351,7 +366,8 @@
                   <div *ngIf="!isLoadingSpecialities(department.id) && getDepartmentSpecialities(department.id).length > 0" class="specialities-list">
                     <div 
                       *ngFor="let speciality of getDepartmentSpecialities(department.id); trackBy: trackBySpecialityId" 
-                      class="speciality-item">
+                      class="speciality-item"
+                      [class.deleted]="speciality.isDeleted">
                       <div class="speciality-info">
                         <span class="speciality-id">#{{ speciality.id }}</span>
                         <span class="speciality-name">{{ speciality.nom }}</span>

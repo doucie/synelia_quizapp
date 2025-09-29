@@ -250,6 +250,10 @@
       opacity: 1;
       pointer-events: auto;
     }
+    
+    &.secondary {
+      pointer-events: auto;
+    }
   }
   
   .status-badge {
@@ -675,6 +679,12 @@
               color: var(--text-secondary);
               font-style: italic;
             }
+          }
+          
+          // Styles pour les spécialités supprimées
+          &.deleted {
+            position: relative;
+            opacity: 0.6;
           }
         }
       }
