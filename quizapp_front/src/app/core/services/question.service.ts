@@ -14,8 +14,9 @@ export interface Question {
   points?: number;
   timeLimit?: number;
   isDeleted?: boolean;
-  dateCreation?: string;
-  dateModification?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  updatedBy?: number;
 }
 
 // Interface pour les critères de recherche des questions
@@ -116,7 +117,7 @@ export class QuestionService {
           questionType: q.questionType,
           difficultyLevel: q.difficultyLevel,
           points: q.points,
-          timeLimit: q.timeLimit,
+          timeLimit: q.questionChrono, // API retourne 'questionChrono', interface utilise 'timeLimit'
           isDeleted: q.isDeleted,
           dateCreation: q.createdAt,
           dateModification: q.updatedAt,
@@ -508,7 +509,7 @@ export class QuestionService {
           questionType: q.questionType,
           difficultyLevel: q.difficultyLevel,
           points: q.points,
-          timeLimit: q.timeLimit,
+          timeLimit: q.questionChrono || q.timeLimit, // API retourne 'questionChrono', interface utilise 'timeLimit'
           isDeleted: q.isDeleted || false, // ← Important : inclure le statut de suppression
           dateCreation: q.createdAt || q.dateCreation,
           dateModification: q.updatedAt || q.dateModification

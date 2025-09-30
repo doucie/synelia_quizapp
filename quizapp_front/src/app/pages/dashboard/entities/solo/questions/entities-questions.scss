@@ -1,6 +1,6 @@
 @use '../shared/entities-solo.scss' as *;
 
-.entities-departments-container {
+.entities-questions-container {
   padding: var(--spacing-lg);
   max-width: 1400px;
   margin: 0 auto;
@@ -9,7 +9,7 @@
 }
 
 /* Section utilisateurs avec design card moderne */
-.users-section {
+.questions-section {
   background: var(--surface);
   border-radius: 20px;
   box-shadow: 0 10px 40px var(--shadow-light);
@@ -105,7 +105,7 @@
 /* =================================================================
    SECTION PRINCIPALE - STYLE DATA TABLE PRO
    ================================================================= */
-.users-section {
+.questions-section {
   background: var(--surface);
   margin: 0;
   border-radius: 0;
@@ -156,7 +156,7 @@
 /* =================================================================
    SECTION UTILISATEURS - DESIGN CARDS
    ================================================================= */
-.users-section {
+.questions-section {
   background: var(--surface);
   border-radius: 16px;
   border: 1px solid var(--border);
@@ -604,7 +604,7 @@
   .expansion-content {
     padding: var(--spacing-lg);
     
-    .specialities-container {
+    .answers-container {
       .expansion-header {
         display: flex;
         justify-content: space-between;
@@ -620,7 +620,7 @@
           font-weight: var(--font-weight-semibold);
         }
         
-        .specialities-count {
+        .answers-count {
           color: var(--text-secondary);
           font-size: var(--font-size-sm);
           background: var(--background);
@@ -630,7 +630,7 @@
         }
       }
       
-      .loading-specialities {
+      .loading-answers {
         display: flex;
         align-items: center;
         justify-content: center;
@@ -648,12 +648,12 @@
         }
       }
       
-      .specialities-list {
+      .answers-list {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
         gap: var(--spacing-md);
         
-        .speciality-item {
+        .answer-item {
           display: flex;
           flex-direction: column;
           background: var(--background);
@@ -667,20 +667,20 @@
             box-shadow: 0 2px 8px var(--shadow-light);
           }
           
-          .speciality-header {
+          .answer-header {
             display: flex;
             align-items: center;
             width: 100%;
             justify-content: space-between;
             
-            .speciality-actions {
+            .answer-actions {
               display: flex;
               align-items: center;
               gap: var(--spacing-xs);
             }
             
-            .speciality-id-wrapper {
-              .speciality-id {
+            .answer-id-wrapper {
+              .answer-id {
                 font-size: var(--font-size-sm);
                 color: var(--text-secondary);
                 font-weight: var(--font-weight-medium);
@@ -688,17 +688,17 @@
             }
           }
           
-          .speciality-info {
+          .answer-info {
             display: flex;
             flex-direction: column;
             gap: var(--spacing-xs);
             
-            .speciality-name {
+            .answer-name {
               font-weight: var(--font-weight-semibold);
               color: var(--text-primary);
             }
             
-            .speciality-description {
+            .answer-description {
               font-size: var(--font-size-sm);
               color: var(--text-secondary);
               font-style: italic;
@@ -714,7 +714,7 @@
         }
       }
       
-      .no-specialities {
+      .no-answers {
         // gap: var(--spacing-md);
         
         svg {
@@ -732,7 +732,7 @@
 /* === STYLES POUR LES SPÉCIALITÉS === */
 
 /* Conteneur des spécialités */
-.specialities-container {
+.answers-container {
   padding: var(--spacing-lg);
   background: var(--surface-variant);
   border-radius: 12px;
@@ -765,7 +765,7 @@
     gap: var(--spacing-md);
   }
   
-  .specialities-count {
+  .answers-count {
     color: var(--text-secondary);
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-medium);
@@ -775,7 +775,7 @@
     border: 1px solid var(--border);
   }
   
-  .btn-add-speciality {
+  .btn-add-answer {
     display: flex;
     align-items: center;
     gap: var(--spacing-xs);
@@ -803,7 +803,7 @@
 }
 
 /* État de chargement des spécialités */
-.loading-specialities {
+.loading-answers {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -822,13 +822,13 @@
 }
 
 /* Liste des spécialités */
-.specialities-list {
+.answers-list {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
 }
 
-.speciality-item {
+.answer-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -850,31 +850,31 @@
   }
 }
 
-.speciality-info {
+.answer-info {
   flex: 1;
   
-  .speciality-id {
+  .answer-id {
     color: var(--text-secondary);
     font-size: var(--font-size-xs);
     font-weight: var(--font-weight-medium);
     margin-bottom: var(--spacing-xs);
   }
   
-  .speciality-name {
+  .answer-name {
     color: var(--text-primary);
     font-size: var(--font-size-base);
     font-weight: var(--font-weight-semibold);
     margin-bottom: var(--spacing-xs);
   }
   
-  .speciality-description {
+  .answer-description {
     color: var(--text-secondary);
     font-size: var(--font-size-sm);
     margin: 0;
   }
 }
 
-.speciality-actions {
+.answer-actions {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
@@ -942,7 +942,7 @@
 }
 
 /* État vide pour les spécialités */
-.no-specialities {
+.no-answers {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -967,13 +967,13 @@
 
 /* Responsive pour les spécialités */
 @media (max-width: 768px) {
-  .speciality-item {
+  .answer-item {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--spacing-sm);
   }
   
-  .speciality-actions {
+  .answer-actions {
     align-self: flex-end;
   }
   

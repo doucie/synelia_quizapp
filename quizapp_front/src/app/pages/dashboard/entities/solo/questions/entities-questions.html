@@ -1,4 +1,4 @@
-<div class="entities-departments-container">
+<div class="entities-questions-container">
   <!-- Conteneur header et toolbar avec border-radius -->
   <div class="header-toolbar-container">
     <!-- Header -->
@@ -12,11 +12,11 @@
           Retour aux Entités
         </button>
         <span class="breadcrumb-separator">/</span>
-        <span class="current-page">Gestion des Départements</span>
+        <span class="current-page">Gestion des Questions</span>
       </div>
-      <h1>Gestion des Départements</h1>
+      <h1>Gestion des Questions</h1>
       <p class="page-description">
-        Administration complète des départements - création, modification et gestion des structures
+        Administration complète des questions et de leurs réponses - création, modification et gestion des structures de quiz
       </p>
     </div>
 
@@ -26,25 +26,25 @@
         <input 
           type="text" 
           class="search-input"
-          placeholder="Rechercher un département..."
+          placeholder="Rechercher une question..."
           [(ngModel)]="quickSearch"
           (input)="onQuickSearch()"
         />
         
-        <!-- Checkbox pour afficher les départements supprimés -->
+        <!-- Checkbox pour afficher les questions supprimés -->
         <div class="checkbox-container">
           <input 
             type="checkbox" 
             id="showDeleted" 
             class="checkbox-input"
-            [checked]="showDeletedDepartments"
-            (click)="toggleDeletedDepartments()"
+            [checked]="showDeletedQuestions"
+            (click)="toggleDeletedQuestions()"
           />
           <label for="showDeleted" class="checkbox-label">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-            Afficher les départements supprimés
+            Afficher les questions supprimés
           </label>
         </div>
       </div>
@@ -62,7 +62,7 @@
             <path d="M12 5V19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             <path d="M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          Nouveau département
+          Nouveau question
         </button>
       </div>
     </div>
@@ -104,24 +104,24 @@
           </div>
         </div>
         
-        <!-- Ligne 2 : Nom, Description -->
+        <!-- Ligne 2 : Texte de la question, Spécialité -->
         <div class="form-group">
-          <label>Nom</label>
+          <label>Texte de la question</label>
           <input
             type="text"
             class="form-input"
-            [(ngModel)]="advancedCriteria.nom"
-            placeholder="Nom du département"
+            [(ngModel)]="advancedCriteria.questionText"
+            placeholder="Texte de la question"
           />
         </div>
 
         <div class="form-group">
-          <label>Description</label>
+          <label>Spécialité</label>
           <input
-            type="text"
+            type="number"
             class="form-input"
-            [(ngModel)]="advancedCriteria.description"
-            placeholder="Description du département"
+            [(ngModel)]="advancedCriteria.specialityId"
+            placeholder="ID de la spécialité"
           />
         </div>
         
@@ -135,45 +135,8 @@
           </select>
         </div>
         
-        <!-- Ligne 5 : Date de création -->
-        <div class="form-row-full">
-          <div class="form-group-inline">
-            <label>Date de création de</label>
-            <input 
-              type="date" 
-              class="form-input-inline"
-              [(ngModel)]="advancedCriteria.dateCreationDe"
-            />
-          </div>
-          <span class="range-separator">à</span>
-          <div class="form-group-inline">
-            <input 
-              type="date" 
-              class="form-input-inline"
-              [(ngModel)]="advancedCriteria.dateCreationA"
-            />
-          </div>
         </div>
         
-        <!-- Ligne 6 : Date de modification -->
-        <div class="form-row-full">
-          <div class="form-group-inline">
-            <label>Date de modification de</label>
-            <input 
-              type="date" 
-              class="form-input-inline"
-              [(ngModel)]="advancedCriteria.dateModificationDe"
-            />
-          </div>
-          <span class="range-separator">à</span>
-          <div class="form-group-inline">
-            <input 
-              type="date" 
-              class="form-input-inline"
-              [(ngModel)]="advancedCriteria.dateModificationA"
-            />
-          </div>
-        </div>
       </div>
       
       <div class="panel-actions">
@@ -194,10 +157,10 @@
         </button>
       </div>
     </div>
-  </div>
+
 
   <!-- Section principale -->
-  <div class="users-section">
+  <div class="questions-section">
     <!-- Stats et informations -->
     <div class="section-stats">
       <div class="stats-row">
@@ -209,11 +172,11 @@
           </div>
           <div class="stat-item">
             <span>Actifs total:</span>
-            <span class="stat-number">{{ getActiveDepartmentsCount() }}</span>
+            <span class="stat-number">{{ getActiveQuestionsCount() }}</span>
           </div>
           <div class="stat-item">
             <span>Supprimés total:</span>
-            <span class="stat-number">{{ getDeletedDepartmentsCount() }}</span>
+            <span class="stat-number">{{ getDeletedQuestionsCount() }}</span>
           </div>
         </div>
       </div>
@@ -226,7 +189,7 @@
     </div>
 
     <!-- État vide -->
-    <div *ngIf="!isLoading() && departments().length === 0" class="empty-state">
+    <div *ngIf="!isLoading() && questions().length === 0" class="empty-state">
       <div class="empty-state-icon">
         <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M17 21V19C17 17.9391 16.5786 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -240,45 +203,40 @@
     </div>
 
     <!-- Tableau de données professionnel -->
-    <div *ngIf="!isLoading() && departments().length > 0" class="data-table-container">
+    <div *ngIf="!isLoading() && questions().length > 0" class="data-table-container">
       <table class="data-table">
         <thead>
           <tr>
             <th>ID</th>
-            <th>Nom</th>
-            <th>Description</th>
-            <th>Créé le</th>
+            <th>Question</th>
+            <th>Spécialité</th>
+            <th>Chrono</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          <ng-container *ngFor="let department of departments(); trackBy: trackByDepartmentId">
-            <tr [class.user-deleted]="department.isDeleted">
+          <ng-container *ngFor="let question of questions(); trackBy: trackByQuestionId">
+            <tr [class.user-deleted]="question.isDeleted">
               <td>
-                <span class="cell-id">#{{ department.id }}</span>
+                <span class="cell-id">#{{ question.id }}</span>
               </td>
               <td>
-                <span class="cell-name">{{ department.nom || '-' }}</span>
+                <span class="cell-name">{{ question.questionText || '-' }}</span>
               </td>
               <td>
-                <span class="cell-description">{{ department.description || '-' }}</span>
+                <span class="cell-description">{{ question.specialityName || '-' }}</span>
               </td>
               <td>
-                <span class="cell-date" *ngIf="department.dateCreation; else noDate">
-                  {{ formatCreationDate(department) }}
-                </span>
-                <ng-template #noDate>
-                  <span style="color: var(--text-secondary);">-</span>
-                </ng-template>
+                <span class="cell-chrono">{{ question.timeLimit || '-' }}</span>
               </td>
               <td class="actions-cell">
                 <div class="actions-menu">
-                  <!-- Boutons normaux pour les départements non supprimés -->
-                  <ng-container *ngIf="!department.isDeleted">
+                  <!-- Boutons normaux pour les questions non supprimés -->
+                  <ng-container *ngIf="!question.isDeleted">
                     <button 
                       class="action-btn primary" 
-                      (click)="editDepartment(department)"
-                      title="Modifier le département">
+                      (click)="editQuestion(question)"
+                      title="Modifier la question">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M12 20H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         <path d="M16.5 3.5A2.12 2.12 0 0 1 19 6L7 18L3 19L4 15L16.5 3.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -286,7 +244,7 @@
                     </button>
                     <button 
                       class="action-btn danger" 
-                      (click)="deleteDepartment(department)"
+                      (click)="deleteQuestion(question)"
                       title="Supprimer le département">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -298,8 +256,8 @@
                     <!-- Bouton d'expansion pour afficher les spécialités -->
                     <button 
                       class="action-btn secondary" 
-                      (click)="toggleDepartmentExpansion(department.id)"
-                      [class.expanded]="isDepartmentExpanded(department.id)"
+                      (click)="toggleQuestionExpansion(question.id)"
+                      [class.expanded]="isQuestionExpanded(question.id)"
                       title="Afficher les spécialités">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path 
@@ -308,16 +266,16 @@
                           stroke-width="2" 
                           stroke-linecap="round" 
                           stroke-linejoin="round"
-                          [attr.transform]="isDepartmentExpanded(department.id) ? 'rotate(180 12 12)' : ''"/>
+                          [attr.transform]="isQuestionExpanded(question.id) ? 'rotate(180 12 12)' : ''"/>
                       </svg>
                     </button>
                   </ng-container>
                   
                   <!-- Bouton de restauration pour les départements supprimés -->
-                  <ng-container *ngIf="department.isDeleted">
+                  <ng-container *ngIf="question.isDeleted">
                     <button 
                       class="action-btn success" 
-                      (click)="restoreDepartment(department)"
+                      (click)="restoreQuestion(question)"
                       title="Restaurer le département">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M3 12A9 9 0 1 0 12 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -327,8 +285,8 @@
                     <!-- Bouton d'expansion pour afficher les spécialités -->
                     <button 
                       class="action-btn secondary" 
-                      (click)="toggleDepartmentExpansion(department.id)"
-                      [class.expanded]="isDepartmentExpanded(department.id)"
+                      (click)="toggleQuestionExpansion(question.id)"
+                      [class.expanded]="isQuestionExpanded(question.id)"
                       title="Afficher les spécialités">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path 
@@ -337,7 +295,7 @@
                           stroke-width="2" 
                           stroke-linecap="round" 
                           stroke-linejoin="round"
-                          [attr.transform]="isDepartmentExpanded(department.id) ? 'rotate(180 12 12)' : ''"/>
+                          [attr.transform]="isQuestionExpanded(question.id) ? 'rotate(180 12 12)' : ''"/>
                       </svg>
                     </button>
                   </ng-container>
@@ -345,60 +303,60 @@
               </td>
             </tr>
             
-            <!-- Ligne d'expansion pour afficher les spécialités -->
-            <tr *ngIf="isDepartmentExpanded(department.id)" class="expansion-row">
-              <td colspan="5" class="expansion-content">
-                <div class="specialities-container">
+            <!-- Ligne d'expansion pour afficher les réponses -->
+            <tr *ngIf="isQuestionExpanded(question.id)" class="expansion-row">
+              <td colspan="6" class="expansion-content">
+                <div class="answers-container">
                   <div class="expansion-header">
-                    <h4>Spécialités du département "{{ department.nom }}"</h4>
+                    <h4>Réponses de la question "{{ question.questionText }}"</h4>
                     <div class="header-actions">
-                      <span class="specialities-count">
-                        {{ getDepartmentSpecialities(department.id).length || 0 }} spécialité(s)
+                      <span class="answers-count">
+                        {{ getQuestionAnswers(question.id).length || 0 }} réponse(s)
                       </span>
                       <button 
-                        class="btn-add-speciality" 
-                        (click)="createSpecialityInDepartment(department)"
-                        title="Ajouter une spécialité">
+                        class="btn-add-answer" 
+                        (click)="createAnswerInQuestion(question)"
+                        title="Ajouter une réponse">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                           <path d="M12 5V19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                           <path d="M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
-                        Ajouter une spécialité
+                        Ajouter une réponse
                       </button>
                     </div>
                   </div>
                   
-                  <!-- État de chargement des spécialités -->
-                  <div *ngIf="isLoadingSpecialities(department.id)" class="loading-specialities">
+                  <!-- État de chargement des réponses -->
+                  <div *ngIf="isLoadingAnswers(question.id)" class="loading-answers">
                     <div class="loading-spinner-small"></div>
-                    <span>Chargement des spécialités...</span>
+                    <span>Chargement des réponses...</span>
                   </div>
                   
-                  <!-- Liste des spécialités -->
-                  <div *ngIf="!isLoadingSpecialities(department.id) && getDepartmentSpecialities(department.id).length > 0" class="specialities-list">
+                  <!-- Liste des réponses -->
+                  <div *ngIf="!isLoadingAnswers(question.id) && getQuestionAnswers(question.id).length > 0" class="answers-list">
                     <div 
-                      *ngFor="let speciality of getDepartmentSpecialities(department.id); trackBy: trackBySpecialityId" 
-                      class="speciality-item"
-                      [class.deleted]="speciality.isDeleted">
-                      <div class="speciality-header">
-                        <div class="speciality-id-wrapper">
-                          <span class="speciality-id">#{{ speciality.id }}</span>
+                      *ngFor="let answer of getQuestionAnswers(question.id); trackBy: trackByAnswerId" 
+                      class="answer-item"
+                      [class.deleted]="answer.isDeleted">
+                      <div class="answer-header">
+                        <div class="answer-id-wrapper">
+                          <span class="answer-id">#{{ answer.id }}</span>
                         </div>
-                        <div class="speciality-actions">
+                        <div class="answer-actions">
                           <button 
                             class="btn-action btn-edit" 
-                            (click)="editSpecialityInDepartment(speciality, department)"
-                            title="Modifier la spécialité">
+                            (click)="editAnswerInQuestion(answer, question)"
+                            title="Modifier la réponse">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                               <path d="M12 20H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                               <path d="M16.5 3.5A2.12 2.12 0 0 1 19 6L7 18L3 19L4 15L16.5 3.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
                           </button>
                         <button 
-                          *ngIf="!speciality.isDeleted"
+                          *ngIf="!answer.isDeleted"
                           class="btn-action btn-delete" 
-                          (click)="deleteSpecialityInDepartment(speciality, department)"
-                          title="Supprimer la spécialité">
+                          (click)="deleteAnswerInQuestion(answer, question)"
+                          title="Supprimer la réponse">
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                             <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -407,10 +365,10 @@
                           </svg>
                         </button>
                         <button 
-                          *ngIf="speciality.isDeleted"
+                          *ngIf="answer.isDeleted"
                           class="btn-action btn-restore" 
-                          (click)="restoreSpecialityInDepartment(speciality, department)"
-                          title="Restaurer la spécialité">
+                          (click)="restoreAnswerInQuestion(answer, question)"
+                          title="Restaurer la réponse">
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M3 12A9 9 0 1 0 12 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                             <path d="M12 3L8 7L12 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -418,22 +376,22 @@
                         </button>
                       </div>
                       </div>
-                      <div class="speciality-info">
-                        <span class="speciality-name">{{ speciality.nom }}</span>
-                        <span class="speciality-description" *ngIf="speciality.description">
-                          - {{ speciality.description }}
+                      <div class="answer-info">
+                        <span class="answer-text">{{ answer.answerText }}</span>
+                        <span class="answer-order" *ngIf="answer.displayOrder">
+                          - Ordre: {{ answer.displayOrder }}
                         </span>
                       </div>
                     </div>
                   </div>
                   
-                  <!-- État vide pour les spécialités -->
-                  <div *ngIf="!isLoadingSpecialities(department.id) && !getDepartmentSpecialities(department.id).length" class="no-specialities">
+                  <!-- État vide pour les réponses -->
+                  <div *ngIf="!isLoadingAnswers(question.id) && !getQuestionAnswers(question.id).length" class="no-answers">
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                       <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
                     </svg>
-                    <span>Aucune spécialité trouvée pour ce département</span>
+                    <span>Aucune réponse trouvée pour cette question</span>
                   </div>
                 </div>
               </td>
@@ -448,7 +406,7 @@
       <div class="pagination-info">
         <span class="results-info">
           Affichage {{ currentPage() * pageSize() + 1 }} - {{ Math.min((currentPage() + 1) * pageSize(), totalElements()) }} 
-          sur {{ totalElements() }} utilisateurs
+          sur {{ totalElements() }} questions
         </span>
         
         <!-- Sélecteur de taille de page -->
@@ -458,7 +416,7 @@
             <select 
               id="pageSize" 
               class="page-size-select"
-              title="Nombre d'utilisateurs par page - sauvegardé automatiquement"
+              title="Nombre d'questions par page - sauvegardé automatiquement"
               [value]="pageSize()"
               (change)="onPageSizeChange($event)"
             >
@@ -520,10 +478,9 @@
   <div class="main-actions" style="display: none;"></div>
   <div class="users-cards" style="display: none;"></div>
   <div class="users-table-container" style="display: none;"></div>
-</div>
 
 <!-- Popup de confirmation de suppression -->
-<div class="confirmation-overlay" *ngIf="showDeleteConfirmation" (click)="cancelDeleteDepartment()">
+<div class="confirmation-overlay" *ngIf="showDeleteConfirmation" (click)="canceldeleteQuestion()">
   <div class="confirmation-modal" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <div class="modal-icon danger">
@@ -538,14 +495,14 @@
     
     <div class="modal-body">
       <p>Êtes-vous certain de vouloir supprimer ce département ?</p>
-      <div class="user-info" *ngIf="departmentToDelete">
+      <div class="user-info" *ngIf="questionToDelete">
         <div class="user-avatar">
-          {{ departmentToDelete.nom?.[0] }}
+          {{ questionToDelete.questionText?.[0] }}
         </div>
         <div class="user-details">
-          <strong>{{ departmentToDelete.nom }}</strong>
-          <span class="user-pseudo" *ngIf="departmentToDelete.description">
-            {{ departmentToDelete.description }}
+          <strong>{{ questionToDelete.questionText }}</strong>
+          <span class="user-pseudo" *ngIf="questionToDelete.questionText">
+            {{ questionToDelete.questionText }}
           </span>
         </div>
       </div>
@@ -560,14 +517,14 @@
     </div>
     
     <div class="modal-actions">
-      <button class="btn-cancel" (click)="cancelDeleteDepartment()">
+      <button class="btn-cancel" (click)="canceldeleteQuestion()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         Annuler
       </button>
-      <button class="btn-confirm-danger" (click)="confirmDeleteDepartment()">
+      <button class="btn-confirm-danger" (click)="confirmdeleteQuestion()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -581,7 +538,7 @@
 </div>
 
 <!-- Popup de confirmation de restauration -->
-<div class="confirmation-overlay" *ngIf="showRestoreConfirmation()" (click)="cancelRestoreDepartment()">
+<div class="confirmation-overlay" *ngIf="showRestoreConfirmation()" (click)="cancelrestoreQuestion()">
   <div class="confirmation-modal" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <div class="modal-icon success">
@@ -595,14 +552,14 @@
     
     <div class="modal-body">
       <p>Êtes-vous certain de vouloir restaurer ce département ?</p>
-      <div class="user-info" *ngIf="departmentToRestore()">
+      <div class="user-info" *ngIf="questionToRestore()">
         <div class="user-avatar">
-          {{ departmentToRestore()?.nom?.[0] }}
+          {{ questionToRestore()?.questionText?.[0] }}
         </div>
         <div class="user-details">
-          <strong>{{ departmentToRestore()?.nom }}</strong>
-          <span class="user-pseudo" *ngIf="departmentToRestore()?.description">
-            {{ departmentToRestore()?.description }}
+          <strong>{{ questionToRestore()?.questionText }}</strong>
+          <span class="user-pseudo" *ngIf="questionToRestore()?.questionText">
+            {{ questionToRestore()?.questionText }}
           </span>
         </div>
       </div>
@@ -617,19 +574,19 @@
     </div>
     
     <div class="modal-actions">
-      <button class="btn-cancel" (click)="cancelRestoreDepartment()">
+      <button class="btn-cancel" (click)="cancelrestoreQuestion()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         Annuler
       </button>
-      <button class="btn-confirm-success" (click)="confirmRestoreDepartment()">
+      <button class="btn-confirm-success" (click)="confirmrestoreQuestion()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M3 12A9 9 0 1 0 12 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           <path d="M12 3L8 7L12 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        Restaurer l'utilisateur
+        Restaurer la question
       </button>
     </div>
   </div>
@@ -639,7 +596,7 @@
 <div class="confirmation-overlay" *ngIf="showEditDialog()" (click)="closeEditDialog()">
   <div class="edit-modal" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h3>Modification d'utilisateur</h3>
+      <h3>Modification de question</h3>
       <button class="btn-close" (click)="closeEditDialog()" aria-label="Fermer">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -662,37 +619,54 @@
           />
         </div>
 
-        <!-- Nom -->
+        <!-- Question -->
         <div class="form-group">
-          <label for="edit-nom" class="form-label">Nom *</label>
-          <input 
-            type="text" 
-            id="edit-nom"
-            class="form-input"
-            [(ngModel)]="editFormData.nom"
-            name="nom"
-            placeholder="Nom de l'utilisateur"
+          <label for="edit-question" class="form-label">Question *</label>
+          <textarea 
+            id="edit-question"
+            class="form-textarea"
+            [(ngModel)]="editFormData.questionText"
+            name="questionText"
+            placeholder="Texte de la question"
+            rows="3"
             required
-          />
+          ></textarea>
         </div>
 
-        <!-- Description -->
+        <!-- Spécialité -->
         <div class="form-group">
-          <label for="edit-description" class="form-label">Description</label>
-          <textarea 
-            id="edit-description"
-            class="form-textarea"
-            [(ngModel)]="editFormData.description"
-            name="description"
-            placeholder="Description du département"
-            rows="3"
-          ></textarea>
+          <label for="edit-speciality" class="form-label">Spécialité</label>
+          <select
+            id="edit-speciality"
+            class="form-select"
+            [(ngModel)]="editFormData.specialityId"
+            name="specialityId"
+          >
+            <option value="">Sélectionner une spécialité</option>
+            <option value="1">Informatique</option>
+            <option value="2">Mathématiques</option>
+            <option value="3">Physique</option>
+          </select>
+        </div>
+
+        <!-- Chrono (Time Limit) -->
+        <div class="form-group">
+          <label for="edit-chrono" class="form-label">Chrono (secondes)</label>
+          <input
+            type="number"
+            id="edit-chrono"
+            class="form-input"
+            [(ngModel)]="editFormData.timeLimit"
+            name="timeLimit"
+            placeholder="Temps limite en secondes"
+            min="0"
+          />
         </div>
       </form>
     </div>
     
     <div class="modal-actions">
-      <button class="btn-danger" (click)="deleteDepartmentFromEdit()">
+      <button class="btn-danger" (click)="deleteQuestionFromEdit()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <polyline points="3,6 5,6 21,6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           <path d="M19,6 L19,20 C19,21 18,22 17,22 L7,22 C6,22 5,21 5,20 L5,6 M8,6 L8,4 C8,3 9,2 10,2 L14,2 C15,2 16,3 16,4 L16,6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -707,7 +681,7 @@
           </svg>
           Annuler
         </button>
-        <button class="btn-confirm-success" (click)="validateDepartmentEdit()">
+        <button class="btn-confirm-success" (click)="validateQuestionEdit()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
@@ -722,7 +696,7 @@
 <div class="confirmation-overlay" *ngIf="showCreateDialog()" (click)="closeCreateDialog()">
   <div class="edit-modal" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h3>Création d'utilisateur</h3>
+      <h3>Création de question</h3>
       <button class="btn-close" (click)="closeCreateDialog()" aria-label="Fermer">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -733,31 +707,48 @@
 
     <div class="modal-content">
       <form class="edit-form">
-        <!-- Nom -->
+        <!-- Question -->
         <div class="form-group">
-          <label for="create-nom" class="form-label">Nom *</label>
-          <input
-            type="text"
-            id="create-nom"
-            class="form-input"
-            [(ngModel)]="createFormData.nom"
-            name="nom"
-            placeholder="Nom du département"
+          <label for="create-question" class="form-label">Question *</label>
+          <textarea
+            id="create-question"
+            class="form-textarea"
+            [(ngModel)]="createFormData.questionText"
+            name="questionText"
+            placeholder="Texte de la question"
+            rows="3"
             required
-          />
+          ></textarea>
         </div>
 
-        <!-- Description -->
+        <!-- Spécialité -->
         <div class="form-group">
-          <label for="create-description" class="form-label">Description</label>
-          <textarea
-            id="create-description"
-            class="form-textarea"
-            [(ngModel)]="createFormData.description"
-            name="description"
-            placeholder="Description du département"
-            rows="3"
-          ></textarea>
+          <label for="create-speciality" class="form-label">Spécialité</label>
+          <select
+            id="create-speciality"
+            class="form-select"
+            [(ngModel)]="createFormData.specialityId"
+            name="specialityId"
+          >
+            <option value="">Sélectionner une spécialité</option>
+            <option value="1">Informatique</option>
+            <option value="2">Mathématiques</option>
+            <option value="3">Physique</option>
+          </select>
+        </div>
+
+        <!-- Chrono (Time Limit) -->
+        <div class="form-group">
+          <label for="create-chrono" class="form-label">Chrono (secondes)</label>
+          <input
+            type="number"
+            id="create-chrono"
+            class="form-input"
+            [(ngModel)]="createFormData.timeLimit"
+            name="timeLimit"
+            placeholder="Temps limite en secondes"
+            min="0"
+          />
         </div>
       </form>
     </div>
@@ -771,11 +762,11 @@
           </svg>
           Annuler
         </button>
-        <button class="btn-confirm-success" (click)="validateDepartmentCreation()">
+        <button class="btn-confirm-success" (click)="validateQuestionCreation()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          Créer le département
+          Créer la question
         </button>
       </div>
     </div>
@@ -783,11 +774,11 @@
 </div>
 
 <!-- Modal de création de spécialité -->
-<div class="confirmation-overlay" *ngIf="showSpecialityCreateDialog()" (click)="cancelCreateSpeciality()">
+<div class="confirmation-overlay" *ngIf="showAnswerCreateDialog()" (click)="cancelCreateAnswer()">
   <div class="edit-modal" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <h3>Ajouter une spécialité</h3>
-      <button class="btn-close" (click)="cancelCreateSpeciality()" aria-label="Fermer">
+      <button class="btn-close" (click)="cancelCreateAnswer()" aria-label="Fermer">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -804,7 +795,7 @@
             id="specialityCreateName"
             type="text"
             class="form-input"
-            [(ngModel)]="specialityCreateFormData.nom"
+            [(ngModel)]="answerCreateFormData.answerText"
             placeholder="Entrez le nom de la spécialité"
             required
           />
@@ -816,7 +807,7 @@
           <textarea
             id="specialityCreateDescription"
             class="form-textarea"
-            [(ngModel)]="specialityCreateFormData.description"
+            [(ngModel)]="answerCreateFormData.answerText"
             placeholder="Entrez une description (optionnel)"
             rows="3"
           ></textarea>
@@ -826,17 +817,17 @@
         <div class="form-group">
           <label class="form-label">Département</label>
           <div class="form-input-readonly">
-            {{ currentDepartmentForSpeciality()?.nom }}
+            {{ currentQuestionForAnswer()?.questionText }}
           </div>
         </div>
       </form>
     </div>
 
     <div class="modal-footer">
-      <button class="btn-confirm-secondary" (click)="cancelCreateSpeciality()">
+      <button class="btn-confirm-secondary" (click)="cancelCreateAnswer()">
         Annuler
       </button>
-      <button class="btn-confirm-success" (click)="confirmCreateSpeciality()">
+      <button class="btn-confirm-success" (click)="confirmCreateAnswer()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
@@ -847,11 +838,11 @@
 </div>
 
 <!-- Modal de modification de spécialité -->
-<div class="confirmation-overlay" *ngIf="showSpecialityEditDialog()" (click)="cancelEditSpeciality()">
+<div class="confirmation-overlay" *ngIf="showAnswerEditDialog()" (click)="cancelEditAnswer()">
   <div class="edit-modal" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <h3>Modifier la spécialité</h3>
-      <button class="btn-close" (click)="cancelEditSpeciality()" aria-label="Fermer">
+      <button class="btn-close" (click)="cancelEditAnswer()" aria-label="Fermer">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -868,7 +859,7 @@
             id="specialityEditName"
             type="text"
             class="form-input"
-            [(ngModel)]="specialityEditFormData.nom"
+            [(ngModel)]="answerEditFormData.answerText"
             placeholder="Entrez le nom de la spécialité"
             required
           />
@@ -880,7 +871,7 @@
           <textarea
             id="specialityEditDescription"
             class="form-textarea"
-            [(ngModel)]="specialityEditFormData.description"
+            [(ngModel)]="answerEditFormData.answerText"
             placeholder="Entrez une description (optionnel)"
             rows="3"
           ></textarea>
@@ -890,17 +881,17 @@
         <div class="form-group">
           <label class="form-label">Département</label>
           <div class="form-input-readonly">
-            {{ currentDepartmentForSpeciality()?.nom }}
+            {{ currentQuestionForAnswer()?.questionText }}
           </div>
         </div>
       </form>
     </div>
 
     <div class="modal-footer">
-      <button class="btn-confirm-secondary" (click)="cancelEditSpeciality()">
+      <button class="btn-confirm-secondary" (click)="cancelEditAnswer()">
         Annuler
       </button>
-      <button class="btn-confirm-success" (click)="confirmEditSpeciality()">
+      <button class="btn-confirm-success" (click)="confirmEditAnswer()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
@@ -911,11 +902,11 @@
 </div>
 
 <!-- Modal de confirmation de suppression de spécialité -->
-<div class="confirmation-overlay" *ngIf="showSpecialityDeleteConfirmation()" (click)="cancelDeleteSpeciality()">
+<div class="confirmation-overlay" *ngIf="showAnswerDeleteConfirmation()" (click)="cancelDeleteAnswer()">
   <div class="confirmation-modal" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <h3>Confirmer la suppression</h3>
-      <button class="btn-close" (click)="cancelDeleteSpeciality()" aria-label="Fermer">
+      <button class="btn-close" (click)="cancelDeleteAnswer()" aria-label="Fermer">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -930,16 +921,16 @@
             <path d="M12 9V11M12 15H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </div>
-        <p>Êtes-vous sûr de vouloir supprimer la spécialité <strong>"{{ specialityToDelete()?.nom }}"</strong> ?</p>
+        <p>Êtes-vous sûr de vouloir supprimer la spécialité <strong>"{{ answerToDelete()?.questionText }}"</strong> ?</p>
         <p class="confirmation-warning">Cette action peut être annulée en restaurant la spécialité ultérieurement.</p>
       </div>
     </div>
 
     <div class="modal-footer">
-      <button class="btn-confirm-secondary" (click)="cancelDeleteSpeciality()">
+      <button class="btn-confirm-secondary" (click)="cancelDeleteAnswer()">
         Annuler
       </button>
-      <button class="btn-confirm-danger" (click)="confirmDeleteSpeciality()">
+      <button class="btn-confirm-danger" (click)="confirmDeleteAnswer()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M19 7L5 21M21 21H5L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
@@ -950,11 +941,11 @@
 </div>
 
 <!-- Modal de confirmation de restauration de spécialité -->
-<div class="confirmation-overlay" *ngIf="showSpecialityRestoreConfirmation()" (click)="cancelRestoreSpeciality()">
+<div class="confirmation-overlay" *ngIf="showAnswerRestoreConfirmation()" (click)="cancelRestoreAnswer()">
   <div class="confirmation-modal" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <h3>Confirmer la restauration</h3>
-      <button class="btn-close" (click)="cancelRestoreSpeciality()" aria-label="Fermer">
+      <button class="btn-close" (click)="cancelRestoreAnswer()" aria-label="Fermer">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -971,16 +962,16 @@
             <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             <path d="M8 16H3v5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-        <p>Êtes-vous sûr de vouloir restaurer la spécialité <strong>"{{ specialityToRestore()?.nom }}"</strong> ?</p>
+        <p>Êtes-vous sûr de vouloir restaurer la spécialité <strong>"{{ answerToRestore()?.questionText }}"</strong> ?</p>
         <p class="confirmation-info">La spécialité redeviendra active et visible dans les listes.</p>
       </div>
     </div>
 
     <div class="modal-footer">
-      <button class="btn-confirm-secondary" (click)="cancelRestoreSpeciality()">
+      <button class="btn-confirm-secondary" (click)="cancelRestoreAnswer()">
         Annuler
       </button>
-      <button class="btn-confirm-success" (click)="confirmRestoreSpeciality()">
+      <button class="btn-confirm-success" (click)="confirmRestoreAnswer()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           <path d="M21 3v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -991,4 +982,5 @@
       </button>
     </div>
   </div>
+</div>
 </div>
