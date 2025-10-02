@@ -6,6 +6,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { CampaignService, Campaign, CampaignSearchCriteria, PagedResponse } from '../../../../../core/services/campaign.service';
 import { UserService } from '../../../../../core/services/user.service';
 import { SpecialityService, Speciality } from '../../../../../core/services/speciality.service';
+import { QuestionService, Question } from '../../../../../core/services/question.service';
 import { NotificationService } from '../../../../../core/services/notification.service';
 import { AuthService } from '../../../../../core/services/auth/auth.service';
 
@@ -32,8 +33,8 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
   
   // Signaux pour l'expansion des campagnes
   expandedCampaigns = signal<Set<number>>(new Set());
-  campaignSpecialities = signal<{[campaignId: number]: Speciality[]}>({});
-  loadingSpecialities = signal<{[campaignId: number]: boolean}>({});
+  campaignQuestions = signal<{[campaignId: number]: Question[]}>({});
+  loadingQuestions = signal<{[campaignId: number]: boolean}>({});
   
   // Critères de recherche
   searchCriteria: CampaignSearchCriteria = {
@@ -631,6 +632,13 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * TrackBy function pour optimiser les performances de rendu des questions
+   */
+  trackByQuestionId(index: number, question: any): number {
+    return question.id;
+  }
+
+  /**
    * Recherche rapide utilisant search_string
    */
   onQuickSearch() {
@@ -828,10 +836,10 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
 
 
   /**
-   * Retourne les spécialités d'une campagne donnée
+   * Retourne les questions d'une campagne donnée
    */
-  getCampaignSpecialities(campaignId: number): Speciality[] {
-    return this.campaignSpecialities()[campaignId] || [];
+  getCampaignQuestions(campaignId: number): Question[] {
+    return this.campaignQuestions()[campaignId] || [];
   }
 
   /**
@@ -877,7 +885,7 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
       // Étendre et charger les spécialités
       newExpanded.add(campaignId);
       this.expandedCampaigns.set(newExpanded);
-      this.loadCampaignSpecialities(campaignId);
+      this.loadCampaignQuestions(campaignId);
     }
   }
 
@@ -889,67 +897,46 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Charge les spécialités d'une campagne
+   * Charge les questions d'une campagne
    */
-  loadCampaignSpecialities(campaignId: number) {
+  loadCampaignQuestions(campaignId: number) {
     // Éviter les appels multiples
-    if (this.loadingSpecialities()[campaignId]) {
+    if (this.loadingQuestions()[campaignId]) {
       return;
     }
 
     // Activer le loading pour cette campagne
-    this.loadingSpecialities.set({
-      ...this.loadingSpecialities(),
+    this.loadingQuestions.set({
+      ...this.loadingQuestions(),
       [campaignId]: true
     });
 
-    console.log(`🔍 Chargement des spécialités pour la campagne ${campaignId}...`);
+    console.log(`🔍 Chargement des questions pour la campagne ${campaignId}...`);
 
-    // Trouver la campagne pour obtenir son specialitiesId
-    const campaign = this.campaigns().find(c => c.id === campaignId);
-    if (!campaign || !campaign.specialitiesId) {
-      console.warn(`⚠️ Campagne ${campaignId} non trouvée ou sans spécialité`);
-      this.loadingSpecialities.set({
-        ...this.loadingSpecialities(),
-        [campaignId]: false
-      });
-      return;
-    }
-
-    // Charger la spécialité spécifique de la campagne
-    this.specialityService.getAll({
-      idDe: campaign.specialitiesId.toString(),
-      idA: campaign.specialitiesId.toString(),
-      page: 0,
-      size: 1 // On ne veut qu'une seule spécialité
-    }).subscribe({
-      next: (response) => {
-        console.log(`✅ Spécialités chargées pour la campagne ${campaignId}:`, response.items);
+    // Charger les questions de la campagne
+    this.campaignService.getCampaignQuestions(campaignId).subscribe({
+      next: (questions: Question[]) => {
+        console.log(`✅ Questions chargées pour la campagne ${campaignId}:`, questions);
         
-        // Utiliser la spécialité trouvée (devrait être unique)
-        const campaignSpecialities = response.items;
-        
-        console.log(`✅ Spécialité de la campagne ${campaignId}:`, campaignSpecialities);
-        
-        // Mettre à jour les spécialités de la campagne
-        this.campaignSpecialities.set({
-          ...this.campaignSpecialities(),
-          [campaignId]: campaignSpecialities
+        // Mettre à jour les questions de la campagne
+        this.campaignQuestions.set({
+          ...this.campaignQuestions(),
+          [campaignId]: questions
         });
 
         // Désactiver le loading
-        this.loadingSpecialities.set({
-          ...this.loadingSpecialities(),
+        this.loadingQuestions.set({
+          ...this.loadingQuestions(),
           [campaignId]: false
         });
       },
       error: (error) => {
-        console.error(`❌ Erreur lors du chargement des spécialités de la campagne ${campaignId}:`, error);
-        this.notificationService.error('Erreur', `Erreur lors du chargement des spécialités de la campagne ${campaignId}`);
+        console.error(`❌ Erreur lors du chargement des questions de la campagne ${campaignId}:`, error);
+        this.notificationService.error('Erreur', `Erreur lors du chargement des questions de la campagne ${campaignId}`);
         
         // Désactiver le loading même en cas d'erreur
-        this.loadingSpecialities.set({
-          ...this.loadingSpecialities(),
+        this.loadingQuestions.set({
+          ...this.loadingQuestions(),
           [campaignId]: false
         });
       }
@@ -960,7 +947,7 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
    * Vérifie si les spécialités d'une campagne sont en cours de chargement
    */
   isLoadingSpecialities(campaignId: number): boolean {
-    return this.loadingSpecialities()[campaignId] || false;
+    return this.loadingQuestions()[campaignId] || false;
   }
 
   /**
@@ -1038,7 +1025,7 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
       console.log('✅ Spécialité créée:', newSpeciality);
 
       // Recharger les spécialités de la campagne
-      this.loadCampaignSpecialities(campaign.id);
+      this.loadCampaignQuestions(campaign.id);
 
       this.notificationService.success('Succès', 'Spécialité créée avec succès');
       this.cancelCreateSpeciality();
@@ -1088,7 +1075,7 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
       console.log('✅ Spécialité modifiée:', updatedSpeciality);
 
       // Recharger les spécialités de la campagne
-      this.loadCampaignSpecialities(campaign.id);
+      this.loadCampaignQuestions(campaign.id);
 
       this.notificationService.success('Succès', 'Spécialité modifiée avec succès');
       this.cancelEditSpeciality();
@@ -1130,7 +1117,7 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
       console.log('✅ Spécialité supprimée');
 
       // Recharger les spécialités de la campagne
-      this.loadCampaignSpecialities(campaign.id);
+      this.loadCampaignQuestions(campaign.id);
 
       this.notificationService.success('Succès', 'Spécialité supprimée avec succès');
       this.cancelDeleteSpeciality();
@@ -1167,7 +1154,7 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
       console.log('✅ Spécialité restaurée');
 
       // Recharger les spécialités de la campagne
-      this.loadCampaignSpecialities(campaign.id);
+      this.loadCampaignQuestions(campaign.id);
 
       this.notificationService.success('Succès', 'Spécialité restaurée avec succès');
       this.cancelRestoreSpeciality();
@@ -1184,6 +1171,38 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
     this.showSpecialityRestoreConfirmation.set(false);
     this.specialityToRestore.set(null);
     this.currentCampaignForSpeciality.set(null);
+  }
+
+  /**
+   * Édite une question dans une campagne
+   */
+  editQuestionInCampaign(question: Question, campaign: Campaign) {
+    console.log('✏️ Modification de la question:', question.questionText, 'dans la campagne:', campaign.campaignName);
+    // TODO: Implémenter l'édition d'une question dans une campagne
+  }
+
+  /**
+   * Crée une nouvelle question dans une campagne
+   */
+  createQuestionInCampaign(campaign: Campaign) {
+    console.log('🆕 Création d\'une question dans la campagne:', campaign.campaignName);
+    // TODO: Implémenter la création d'une question dans une campagne
+  }
+
+  /**
+   * Supprime une question d'une campagne
+   */
+  deleteQuestionInCampaign(question: Question, campaign: Campaign) {
+    console.log('🗑️ Suppression de la question:', question.questionText, 'dans la campagne:', campaign.campaignName);
+    // TODO: Implémenter la suppression d'une question d'une campagne
+  }
+
+  /**
+   * Restaure une question supprimée dans une campagne
+   */
+  restoreQuestionInCampaign(question: Question, campaign: Campaign) {
+    console.log('♻️ Restauration de la question:', question.questionText, 'dans la campagne:', campaign.campaignName);
+    // TODO: Implémenter la restauration d'une question dans une campagne
   }
 
   /**

@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { Observable, throwError, of } from 'rxjs';
+import { map, catchError, switchMap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+import { QuestionService, Question } from './question.service';
 
 /**
  * Interface pour les données d'une campagne
@@ -22,6 +23,18 @@ export interface Campaign {
   isDeleted?: boolean;
   createdAt?: string;
   updatedAt?: string;
+}
+
+/**
+ * Interface pour les données de liaison campagne-questions
+ */
+export interface CampaignQuestions {
+  id: number;
+  campaignId: number;
+  questionId: number;
+  createdAt?: string;
+  createdBy?: number;
+  isDeleted?: boolean;
 }
 
 /**
@@ -73,7 +86,7 @@ export class CampaignService {
 
   private readonly apiUrl = '/campaigns';
 
-  constructor(private http: HttpClient) {
+  constructor(private http: HttpClient, private questionService: QuestionService) {
     console.log('🚀 Initialisation CampaignService');
     console.log('📡 URL de l\'API:', this.apiUrl);
   }
@@ -316,6 +329,62 @@ export class CampaignService {
       }),
       catchError(error => {
         console.error('❌ Erreur lors de la restauration de la campagne:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Récupère les questions liées à une campagne
+   */
+  getCampaignQuestions(campaignId: number): Observable<Question[]> {
+    console.log('📥 Récupération des questions de la campagne:', campaignId);
+
+    // D'abord récupérer les CampaignQuestions pour cette campagne
+    const requestBody = {
+      user: "1",
+      data: {
+        campaignId: campaignId.toString()
+      },
+      size: 1000, // Récupérer toutes les questions
+      index: 0
+    };
+
+    return this.http.post<any>(`${environment.apiUrl}/campaignQuestions/getAllByCriteria`, requestBody).pipe(
+      switchMap((response: any) => {
+        console.log('🔍 CampaignQuestions reçues:', response);
+
+        if (!response || response.hasError || !response.items || response.items.length === 0) {
+          console.log('⚠️ Aucune question trouvée pour cette campagne');
+          return of([]);
+        }
+
+        // Extraire les questionIds
+        const questionIds = response.items.map((cq: any) => cq.questionId);
+        console.log('📋 IDs des questions à récupérer:', questionIds);
+
+        if (questionIds.length === 0) {
+          return of([]);
+        }
+
+        // Maintenant récupérer les détails des questions
+        // Pour simplifier, on va récupérer toutes les questions et filtrer côté client
+        return this.questionService.getAllQuestionsByCriteria({
+          size: 1000,
+          page: 0
+        }).pipe(
+          map(questionResponse => {
+            // Filtrer les questions qui appartiennent à cette campagne
+            const campaignQuestions = questionResponse.content.filter((q: Question) =>
+              questionIds.includes(q.id)
+            );
+            console.log('✅ Questions de la campagne récupérées:', campaignQuestions);
+            return campaignQuestions;
+          })
+        );
+      }),
+      catchError(error => {
+        console.error('❌ Erreur lors de la récupération des questions de la campagne:', error);
         return throwError(() => error);
       })
     );

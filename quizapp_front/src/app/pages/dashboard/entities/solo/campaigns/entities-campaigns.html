@@ -350,55 +350,55 @@
               <td colspan="5" class="expansion-content">
                 <div class="specialities-container">
                   <div class="expansion-header">
-                    <h4>Spécialités de la campagne "{{ campaign.campaignName }}"</h4>
+                    <h4>Questions de la campagne "{{ campaign.campaignName }}"</h4>
                     <div class="header-actions">
                       <span class="specialities-count">
-                        {{ getCampaignSpecialities(campaign.id).length || 0 }} spécialité(s)
+                        {{ getCampaignQuestions(campaign.id).length || 0 }} question(s)
                       </span>
                       <button 
                         class="btn-add-speciality" 
-                        (click)="createSpecialityInCampaign(campaign)"
-                        title="Ajouter une spécialité">
+                        (click)="createQuestionInCampaign(campaign)"
+                        title="Ajouter une question">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                           <path d="M12 5V19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                           <path d="M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
-                        Ajouter une spécialité
+                        Ajouter une question
                       </button>
                     </div>
                   </div>
                   
-                  <!-- État de chargement des spécialités -->
+                  <!-- État de chargement des questions -->
                   <div *ngIf="isLoadingSpecialities(campaign.id)" class="loading-specialities">
                     <div class="loading-spinner-small"></div>
-                    <span>Chargement des spécialités...</span>
+                    <span>Chargement des questions...</span>
                   </div>
                   
-                  <!-- Liste des spécialités -->
-                  <div *ngIf="!isLoadingSpecialities(campaign.id) && getCampaignSpecialities(campaign.id).length > 0" class="specialities-list">
+                  <!-- Liste des questions -->
+                  <div *ngIf="!isLoadingSpecialities(campaign.id) && getCampaignQuestions(campaign.id).length > 0" class="specialities-list">
                     <div 
-                      *ngFor="let speciality of getCampaignSpecialities(campaign.id); trackBy: trackBySpecialityId" 
+                      *ngFor="let question of getCampaignQuestions(campaign.id); trackBy: trackByQuestionId" 
                       class="speciality-item"
-                      [class.deleted]="speciality.isDeleted">
+                      [class.deleted]="question.isDeleted">
                       <div class="speciality-header">
                         <div class="speciality-id-wrapper">
-                          <span class="speciality-id">#{{ speciality.id }}</span>
+                          <span class="speciality-id">#{{ question.id }}</span>
                         </div>
                         <div class="speciality-actions">
                           <button 
                             class="btn-action btn-edit" 
-                            (click)="editSpecialityInCampaign(speciality, campaign)"
-                            title="Modifier la spécialité">
+                            (click)="editQuestionInCampaign(question, campaign)"
+                            title="Modifier la question">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                               <path d="M12 20H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                               <path d="M16.5 3.5A2.12 2.12 0 0 1 19 6L7 18L3 19L4 15L16.5 3.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
                           </button>
                         <button 
-                          *ngIf="!speciality.isDeleted"
+                          *ngIf="!question.isDeleted"
                           class="btn-action btn-delete" 
-                          (click)="deleteSpecialityInCampaign(speciality, campaign)"
-                          title="Supprimer la spécialité">
+                          (click)="deleteQuestionInCampaign(question, campaign)"
+                          title="Supprimer la question">
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                             <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -407,10 +407,10 @@
                           </svg>
                         </button>
                         <button 
-                          *ngIf="speciality.isDeleted"
+                          *ngIf="question.isDeleted"
                           class="btn-action btn-restore" 
-                          (click)="restoreSpecialityInCampaign(speciality, campaign)"
-                          title="Restaurer la spécialité">
+                          (click)="restoreQuestionInCampaign(question, campaign)"
+                          title="Restaurer la question">
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M3 12A9 9 0 1 0 12 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                             <path d="M12 3L8 7L12 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -419,21 +419,21 @@
                       </div>
                       </div>
                       <div class="speciality-info">
-                        <span class="speciality-name">{{ speciality.nom }}</span>
-                        <span class="speciality-description" *ngIf="speciality.description">
-                          - {{ speciality.description }}
+                        <span class="speciality-name">{{ question.questionText }}</span>
+                        <span class="speciality-description" *ngIf="question.questionType">
+                          - Type: {{ question.questionType }}
                         </span>
                       </div>
                     </div>
                   </div>
                   
-                  <!-- État vide pour les spécialités -->
-                  <div *ngIf="!isLoadingSpecialities(campaign.id) && !getCampaignSpecialities(campaign.id).length" class="no-specialities">
+                  <!-- État vide pour les questions -->
+                  <div *ngIf="!isLoadingSpecialities(campaign.id) && !getCampaignQuestions(campaign.id).length" class="no-specialities">
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                       <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
                     </svg>
-                    <span>Aucune spécialité trouvée pour cette campagne</span>
+                    <span>Aucune question trouvée pour cette campagne</span>
                   </div>
                 </div>
               </td>
