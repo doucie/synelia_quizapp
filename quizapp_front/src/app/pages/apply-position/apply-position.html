@@ -1,0 +1,377 @@
+<div class="apply-position">
+  <div class="apply-container">
+    <!-- En-tête -->
+    <div class="apply-header">
+      <h1 class="apply-title">Postuler chez <span class="gradient-text">Synelia</span></h1>
+      <p class="apply-subtitle">
+        Rejoignez notre équipe et contribuez à des projets innovants. 
+        Complétez le formulaire ci-dessous pour soumettre votre candidature.
+      </p>
+    </div>
+
+    <!-- Message de succès -->
+    @if (submitSuccess()) {
+      <div class="success-message">
+        <div class="success-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+        </div>
+        <h2>Candidature envoyée avec succès !</h2>
+        <p>Nous avons bien reçu votre candidature. Notre équipe RH l'examinera dans les plus brefs délais.</p>
+        <p class="success-info">Vous recevrez un email de confirmation à <strong>{{ formData().email }}</strong></p>
+        <div class="success-actions">
+          <button type="button" class="btn btn--primary" (click)="resetForm()">
+            Soumettre une autre candidature
+          </button>
+          <a routerLink="/" class="btn btn--secondary">
+            Retour à l'accueil
+          </a>
+        </div>
+      </div>
+    }
+
+    <!-- Formulaire -->
+    @if (!submitSuccess()) {
+      <form class="apply-form" (ngSubmit)="onSubmit()" #applicationForm="ngForm">
+        
+        <!-- Section 1: Informations personnelles -->
+        <section class="form-section">
+          <h2 class="section-title">
+            <span class="section-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            </span>
+            Informations personnelles
+          </h2>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="firstName" class="form-label">
+                Prénom <span class="required">*</span>
+              </label>
+              <input
+                type="text"
+                id="firstName"
+                name="firstName"
+                class="form-control"
+                [(ngModel)]="formData().firstName"
+                required
+                placeholder="Entrez votre prénom"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="lastName" class="form-label">
+                Nom <span class="required">*</span>
+              </label>
+              <input
+                type="text"
+                id="lastName"
+                name="lastName"
+                class="form-control"
+                [(ngModel)]="formData().lastName"
+                required
+                placeholder="Entrez votre nom"
+              />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="email" class="form-label">
+                Email <span class="required">*</span>
+              </label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                class="form-control"
+                [(ngModel)]="formData().email"
+                required
+                placeholder="votre.email@exemple.com"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="phone" class="form-label">
+                Téléphone <span class="required">*</span>
+              </label>
+              <input
+                type="tel"
+                id="phone"
+                name="phone"
+                class="form-control"
+                [(ngModel)]="formData().phone"
+                required
+                placeholder="+33 6 12 34 56 78"
+              />
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 2: Informations professionnelles -->
+        <section class="form-section">
+          <h2 class="section-title">
+            <span class="section-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+              </svg>
+            </span>
+            Informations professionnelles
+          </h2>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="position" class="form-label">
+                Poste souhaité <span class="required">*</span>
+              </label>
+              <select
+                id="position"
+                name="position"
+                class="form-control"
+                [(ngModel)]="formData().position"
+                required
+              >
+                <option value="">Sélectionnez un poste</option>
+                @for (position of availablePositions(); track position) {
+                  <option [value]="position">{{ position }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="department" class="form-label">
+                Département <span class="required">*</span>
+              </label>
+              <select
+                id="department"
+                name="department"
+                class="form-control"
+                [(ngModel)]="formData().department"
+                required
+              >
+                <option value="">Sélectionnez un département</option>
+                @for (dept of availableDepartments(); track dept) {
+                  <option [value]="dept">{{ dept }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="experience" class="form-label">
+                Années d'expérience
+              </label>
+              <select
+                id="experience"
+                name="experience"
+                class="form-control"
+                [(ngModel)]="formData().experience"
+              >
+                <option value="">Sélectionnez votre expérience</option>
+                <option value="0-1">Moins d'1 an</option>
+                <option value="1-3">1 à 3 ans</option>
+                <option value="3-5">3 à 5 ans</option>
+                <option value="5-10">5 à 10 ans</option>
+                <option value="10+">Plus de 10 ans</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="availability" class="form-label">
+                Disponibilité
+              </label>
+              <select
+                id="availability"
+                name="availability"
+                class="form-control"
+                [(ngModel)]="formData().availability"
+              >
+                <option value="">Sélectionnez votre disponibilité</option>
+                <option value="immediate">Immédiate</option>
+                <option value="1-month">Dans 1 mois</option>
+                <option value="2-months">Dans 2 mois</option>
+                <option value="3-months">Dans 3 mois</option>
+                <option value="flexible">Flexible</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 3: Documents et motivation -->
+        <section class="form-section">
+          <h2 class="section-title">
+            <span class="section-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
+            </span>
+            Documents et motivation
+          </h2>
+
+          <div class="form-group">
+            <label for="cv" class="form-label">
+              Curriculum Vitae (CV) <span class="required">*</span>
+            </label>
+            <div class="file-upload">
+              <input
+                type="file"
+                id="cv"
+                name="cv"
+                class="file-input"
+                (change)="onFileSelected($event)"
+                accept=".pdf,.doc,.docx"
+                required
+              />
+              <label for="cv" class="file-label">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <span>
+                  @if (fileName()) {
+                    {{ fileName() }}
+                  } @else {
+                    Choisir un fichier ou glisser-déposer
+                  }
+                </span>
+              </label>
+            </div>
+            <p class="form-hint">Formats acceptés: PDF, DOC, DOCX (Max: 5 Mo)</p>
+          </div>
+
+          <div class="form-group">
+            <label for="motivation" class="form-label">
+              Lettre de motivation
+            </label>
+            <textarea
+              id="motivation"
+              name="motivation"
+              class="form-control"
+              [(ngModel)]="formData().motivationLetter"
+              rows="6"
+              placeholder="Expliquez-nous pourquoi vous souhaitez rejoindre Synelia et ce que vous pouvez apporter à notre équipe..."
+            ></textarea>
+            <p class="form-hint">Minimum 100 caractères recommandés</p>
+          </div>
+        </section>
+
+        <!-- Section 4: Préférences -->
+        <section class="form-section">
+          <h2 class="section-title">
+            <span class="section-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M12 1v6m0 6v6m9-9h-6m-6 0H3"></path>
+                <path d="M16.24 7.76l-4.24 4.24m0 0l-4.24 4.24m4.24-4.24l-4.24-4.24m4.24 4.24l4.24 4.24"></path>
+              </svg>
+            </span>
+            Préférences
+          </h2>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                name="remoteWork"
+                [(ngModel)]="formData().remoteWork"
+                class="checkbox-input"
+              />
+              <span class="checkbox-custom"></span>
+              <span class="checkbox-text">
+                Je suis intéressé(e) par le télétravail
+              </span>
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                name="relocate"
+                [(ngModel)]="formData().relocate"
+                class="checkbox-input"
+              />
+              <span class="checkbox-custom"></span>
+              <span class="checkbox-text">
+                Je suis prêt(e) à déménager si nécessaire
+              </span>
+            </label>
+          </div>
+        </section>
+
+        <!-- Section 5: Consentement -->
+        <section class="form-section">
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                name="consent"
+                [(ngModel)]="formData().consent"
+                class="checkbox-input"
+                required
+              />
+              <span class="checkbox-custom"></span>
+              <span class="checkbox-text">
+                J'accepte que mes données personnelles soient traitées par Synelia dans le cadre de ma candidature. 
+                <a href="#" class="link">En savoir plus</a> <span class="required">*</span>
+              </span>
+            </label>
+          </div>
+        </section>
+
+        <!-- Message d'erreur -->
+        @if (submitError()) {
+          <div class="error-message">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            {{ submitError() }}
+          </div>
+        }
+
+        <!-- Actions -->
+        <div class="form-actions">
+          <button
+            type="submit"
+            class="btn btn--primary btn--large"
+            [disabled]="isSubmitting() || !applicationForm.valid"
+          >
+            @if (isSubmitting()) {
+              <span class="spinner"></span>
+              Envoi en cours...
+            } @else {
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 2L11 13"></path>
+                <path d="M22 2L15 22L11 13L2 9L22 2Z"></path>
+              </svg>
+              Envoyer ma candidature
+            }
+          </button>
+          
+          <button
+            type="button"
+            class="btn btn--secondary btn--large"
+            (click)="resetForm()"
+            [disabled]="isSubmitting()"
+          >
+            Réinitialiser
+          </button>
+        </div>
+      </form>
+    }
+  </div>
+</div>

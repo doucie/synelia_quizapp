@@ -17,6 +17,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/track-application/track-application').then(m => m.TrackApplicationComponent)
   },
   {
+    path: 'postuler',
+    loadComponent: () => import('./pages/apply-position').then(m => m.ApplyPositionComponent)
+  },
+  {
     path: 'connexion',
     loadComponent: () => import('./pages/connexion').then(m => m.ConnexionComponent),
     canActivate: [noAuthGuard]

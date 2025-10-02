@@ -25,6 +25,7 @@
     <div class="navbar__menu">
       <ul class="nav-links">
         <li><a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Accueil</a></li>
+        <li><a routerLink="/postuler" routerLinkActive="active">Postuler</a></li>
         <li><a routerLink="/suivre-candidature" routerLinkActive="active">Suivre ma Candidature</a></li>
       </ul>
     </div>
@@ -49,6 +50,7 @@
     <div class="mobile-menu" [class.active]="isMenuOpen">
       <ul class="mobile-nav-links">
         <li><a routerLink="/" (click)="closeMenu()" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Accueil</a></li>
+        <li><a routerLink="/postuler" (click)="closeMenu()" routerLinkActive="active">Postuler</a></li>
         <li><a routerLink="/suivre-candidature" (click)="closeMenu()" routerLinkActive="active">Suivre ma Candidature</a></li>
       </ul>
     </div>
