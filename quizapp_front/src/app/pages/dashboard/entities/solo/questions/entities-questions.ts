@@ -909,39 +909,40 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
       [questionId]: true
     });
 
-    console.log(`🔍 Chargement des spécialités pour le département ${questionId}...`);
+    console.log(`🔍 Chargement des liaisons question-réponse pour la question ${questionId}...`);
 
-    // Charger TOUTES les spécialités et filtrer côté frontend par questionId
-    this.answerService.getAllAnswersByCriteria({
+    // Charger les liaisons question-réponse pour cette question
+    this.answerService.getQuestionAnswersByCriteria({
       page: 0,
-      size: 10000, // Charger beaucoup pour avoir toutes les spécialités
+      size: 10000, // Charger beaucoup pour avoir toutes les liaisons
       questionId: questionId
     }).subscribe({
       next: (response) => {
-        console.log(`✅ Toutes les spécialités chargées:`, response.content);
-        
-        // Filtrer les spécialités qui appartiennent à ce département
-        const questionAnswers = response.content.filter((answer: Answer) => 
-          answer.questionId === questionId
-        );
-        
-        console.log(`✅ Spécialités filtrées pour le département ${questionId}:`, questionAnswers);
-        
-        // Mettre à jour les spécialités du département
-        this.questionAnswers.set({
-          ...this.questionAnswers(),
-          [questionId]: questionAnswers
-        });
+        console.log(`✅ Liaisons question-réponse chargées:`, response.content);
 
-        // Désactiver le loading
-        this.loadingAnswers.set({
-          ...this.loadingAnswers(),
-          [questionId]: false
-        });
+        if (response.content.length === 0) {
+          // Aucune liaison trouvée, pas de réponses
+          this.questionAnswers.set({
+            ...this.questionAnswers(),
+            [questionId]: []
+          });
+          this.loadingAnswers.set({
+            ...this.loadingAnswers(),
+            [questionId]: false
+          });
+          return;
+        }
+
+        // Récupérer les IDs des réponses liées
+        const answerIds = response.content.map(qa => qa.answerId);
+        console.log(`🔍 IDs des réponses à charger:`, answerIds);
+
+        // Charger les détails des réponses
+        this.loadAnswersByIds(answerIds, response.content, questionId);
       },
       error: (error) => {
-        console.error(`❌ Erreur lors du chargement des spécialités du département ${questionId}:`, error);
-        this.notificationService.error('Erreur', `Erreur lors du chargement des spécialités du département ${questionId}`);
+        console.error(`❌ Erreur lors du chargement des liaisons question-réponse de la question ${questionId}:`, error);
+        this.notificationService.error('Erreur', `Erreur lors du chargement des réponses de la question ${questionId}`);
         
         // Désactiver le loading même en cas d'erreur
         this.loadingAnswers.set({
@@ -949,6 +950,56 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
           [questionId]: false
         });
       }
+    });
+  }
+
+  /**
+   * Charge les détails des réponses par leurs IDs et les combine avec les liaisons
+   */
+  loadAnswersByIds(answerIds: number[], questionAnswers: any[], questionId: number) {
+    // Pour chaque ID de réponse, charger ses détails
+    const answerPromises = answerIds.map(answerId =>
+      this.answerService.getAnswerById(answerId).toPromise()
+    );
+
+    Promise.all(answerPromises).then(answers => {
+      console.log(`✅ Détails des réponses chargés:`, answers);
+
+      // Filtrer les réponses valides (non null/undefined)
+      const validAnswers = answers.filter(answer => answer != null);
+
+      // Combiner les réponses avec les informations de liaison (isCorrect, etc.)
+      const combinedAnswers: Answer[] = validAnswers.map(answer => {
+        const qa = questionAnswers.find(qa => qa.answerId === answer.id);
+        return {
+          ...answer,
+          isCorrect: qa ? qa.isCorrect : false,
+          displayOrder: qa ? qa.displayOrder : undefined
+        };
+      });
+
+      console.log(`✅ Réponses combinées pour la question ${questionId}:`, combinedAnswers);
+
+      // Mettre à jour les réponses de la question
+      this.questionAnswers.set({
+        ...this.questionAnswers(),
+        [questionId]: combinedAnswers
+      });
+
+      // Désactiver le loading
+      this.loadingAnswers.set({
+        ...this.loadingAnswers(),
+        [questionId]: false
+      });
+    }).catch(error => {
+      console.error(`❌ Erreur lors du chargement des détails des réponses:`, error);
+      this.notificationService.error('Erreur', `Erreur lors du chargement des détails des réponses`);
+      
+      // Désactiver le loading même en cas d'erreur
+      this.loadingAnswers.set({
+        ...this.loadingAnswers(),
+        [questionId]: false
+      });
     });
   }
 

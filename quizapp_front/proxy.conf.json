@@ -11,6 +11,12 @@
     "changeOrigin": true,
     "logLevel": "debug"
   },
+  "/questionsAnswers/**": {
+    "target": "http://localhost:8081",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
   "/user/**": {
     "target": "http://localhost:8081",
     "secure": false,

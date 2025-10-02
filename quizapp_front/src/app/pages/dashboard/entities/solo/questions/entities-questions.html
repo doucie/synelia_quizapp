@@ -337,7 +337,8 @@
                     <div 
                       *ngFor="let answer of getQuestionAnswers(question.id); trackBy: trackByAnswerId" 
                       class="answer-item"
-                      [class.deleted]="answer.isDeleted">
+                      [class.deleted]="answer.isDeleted"
+                      [class.correct]="answer.isCorrect">
                       <div class="answer-header">
                         <div class="answer-id-wrapper">
                           <span class="answer-id">#{{ answer.id }}</span>
@@ -378,6 +379,12 @@
                       </div>
                       <div class="answer-info">
                         <span class="answer-text">{{ answer.answerText }}</span>
+                        <span class="answer-correct" *ngIf="answer.isCorrect">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          </svg>
+                          Correct
+                        </span>
                         <span class="answer-order" *ngIf="answer.displayOrder">
                           - Ordre: {{ answer.displayOrder }}
                         </span>
