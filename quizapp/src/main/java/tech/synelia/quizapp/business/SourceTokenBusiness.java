@@ -28,7 +28,9 @@ import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.dto.transformer.*;
 import tech.synelia.quizapp.dao.entity.SourceToken;
+import tech.synelia.quizapp.dao.entity.Campaigns;
 import tech.synelia.quizapp.dao.repository.SourceTokenRepository;
+import tech.synelia.quizapp.dao.repository.CampaignsRepository;
 
 /**
 BUSINESS for table "source_token"
@@ -42,6 +44,8 @@ public class SourceTokenBusiness implements IBasicBusiness<Request<SourceTokenDt
 
 	@Autowired
 	private SourceTokenRepository sourceTokenRepository;
+	@Autowired
+	private CampaignsRepository campaignsRepository;
 	@Autowired
 	private FunctionalError functionalError;
 	@PersistenceContext
@@ -64,31 +68,57 @@ public class SourceTokenBusiness implements IBasicBusiness<Request<SourceTokenDt
 		for (SourceTokenDto dto : request.getDatas()) {
 			// Definir les parametres obligatoires
 			Map<String, java.lang.Object> fieldsToVerify = new HashMap<String, java.lang.Object>();
-			fieldsToVerify.put("tokenString", dto.getTokenString());
+			//fieldsToVerify.put("tokenString", dto.getTokenString());
 			if (!Validate.RequiredValue(fieldsToVerify).isGood()) {
 				throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
 			}
 
-			// Verify if sourceToken to insert do not exist
-			SourceToken existingEntity = null;
-			if (existingEntity != null) {
-				throw new InternalErrorException(functionalError.DATA_EXIST("sourceToken id -> " + dto.getId(), locale));
-			}
-
-			// verif unique tokenString in db
-			existingEntity = sourceTokenRepository.findByTokenString(dto.getTokenString(), false);
-			if (existingEntity != null) {
-				throw new InternalErrorException(functionalError.DATA_EXIST("sourceToken tokenString -> " + dto.getTokenString(), locale));
-			}
-			// verif unique tokenString in items to save
-			if (items.stream().anyMatch(a -> a.getTokenString().equals(dto.getTokenString()))) {
-				throw new InternalErrorException(functionalError.DATA_DUPLICATE(" tokenString ", locale));
+			// Verify if campaign exists
+			Campaigns existingCampaign = null;
+			if (dto.getCampaignId() != null && dto.getCampaignId() > 0){
+				existingCampaign = campaignsRepository.findOne(dto.getCampaignId(), false);
+				if (existingCampaign == null) {
+					throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("campaign campaignId -> " + dto.getCampaignId(), locale));
+				}
 			}
 
 			dto.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(dto)));
 
-			SourceToken entityToSave = null;
-			entityToSave = SourceTokenTransformer.INSTANCE.toEntity(dto, null);
+			SourceToken entityToSave = SourceTokenTransformer.INSTANCE.toEntity(dto, existingCampaign);
+
+			// Générer automatiquement le tokenString s'il n'est pas fourni
+			if (StringUtils.isBlank(entityToSave.getTokenString())) {
+				entityToSave.setTokenString(generateUniqueTokenString());
+			} else {
+				// Si le tokenString est fourni, vérifier son unicité
+				SourceToken existingEntity = sourceTokenRepository.findByTokenString(entityToSave.getTokenString(), false);
+				if (existingEntity != null) {
+					throw new InternalErrorException(functionalError.DATA_EXIST("sourceToken tokenString -> " + entityToSave.getTokenString(), locale));
+				}
+				// verif unique tokenString in items to save
+				String tokenToCheck = entityToSave.getTokenString();
+				if (items.stream().anyMatch(a -> a.getTokenString().equals(tokenToCheck))) {
+					throw new InternalErrorException(functionalError.DATA_DUPLICATE(" tokenString ", locale));
+				}
+			}
+
+			// Vérifier l'unicité du sourceTokenName par campagne si fourni
+			if (StringUtils.isNotBlank(entityToSave.getSourceTokenName()) && existingCampaign != null) {
+				SourceToken existingByName = sourceTokenRepository.findBySourceTokenNameAndCampaignId(
+					entityToSave.getSourceTokenName(), existingCampaign.getId(), false);
+				if (existingByName != null) {
+					throw new InternalErrorException(functionalError.DATA_EXIST("sourceToken sourceTokenName -> " + entityToSave.getSourceTokenName() + " for campaign " + existingCampaign.getId(), locale));
+				}
+				// Vérifier l'unicité dans les items à sauvegarder pour cette campagne
+				String nameToCheck = entityToSave.getSourceTokenName();
+				Integer campaignIdToCheck = existingCampaign.getId();
+				if (items.stream().anyMatch(a -> a.getSourceTokenName() != null && 
+					a.getSourceTokenName().equals(nameToCheck) && 
+					a.getCampaigns() != null && 
+					a.getCampaigns().getId().equals(campaignIdToCheck))) {
+					throw new InternalErrorException(functionalError.DATA_DUPLICATE(" sourceTokenName ", locale));
+				}
+			}
 			
 			entityToSave.setCreatedAt(Utilities.getCurrentDate());
 			entityToSave.setCreatedBy(request.getUser());
@@ -103,7 +133,32 @@ public class SourceTokenBusiness implements IBasicBusiness<Request<SourceTokenDt
 			if (itemsSaved == null) {
 				throw new InternalErrorException(functionalError.SAVE_FAIL("sourceToken", locale));
 			}
+
+			// Générer automatiquement les source_token_name si nécessaire
+			Map<Integer, String> generatedNames = new HashMap<>();
+			List<SourceToken> itemsToUpdate = new ArrayList<>();
+			for (SourceToken savedItem : itemsSaved) {
+				if (StringUtils.isBlank(savedItem.getSourceTokenName())) {
+					String generatedName = "token#" + savedItem.getId();
+					savedItem.setSourceTokenName(generatedName);
+					generatedNames.put(savedItem.getId(), generatedName);
+					itemsToUpdate.add(savedItem);
+				}
+			}
+
+			// Mettre à jour les entités avec les noms générés
+			if (!itemsToUpdate.isEmpty()) {
+				sourceTokenRepository.saveAll(itemsToUpdate);
+			}
+
 			List<SourceTokenDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading())) ? SourceTokenTransformer.INSTANCE.toLiteDtos(itemsSaved) : SourceTokenTransformer.INSTANCE.toDtos(itemsSaved);
+
+			// Mettre à jour les DTOs avec les noms générés
+			for (SourceTokenDto dto : itemsDto) {
+				if (generatedNames.containsKey(dto.getId())) {
+					dto.setSourceTokenName(generatedNames.get(dto.getId()));
+				}
+			}
 
 			final int size = itemsSaved.size();
 			List<String>  listOfError      = Collections.synchronizedList(new ArrayList<String>());
@@ -162,8 +217,34 @@ public class SourceTokenBusiness implements IBasicBusiness<Request<SourceTokenDt
 				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("sourceToken id -> " + dto.getId(), locale));
 			}
 
+			// Handle campaign update
+			if (dto.getCampaignId() != null) {
+				if (dto.getCampaignId() > 0) {
+					Campaigns existingCampaign = campaignsRepository.findOne(dto.getCampaignId(), false);
+					if (existingCampaign == null) {
+						throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("campaign campaignId -> " + dto.getCampaignId(), locale));
+					}
+					entityToSave.setCampaigns(existingCampaign);
+				} else {
+					entityToSave.setCampaigns(null);
+				}
+			}
+
+			// Vérifier l'unicité du sourceTokenName par campagne si on met à jour le nom
+			if (Utilities.notBlank(dto.getSourceTokenName()) && entityToSave.getCampaigns() != null) {
+				SourceToken existingByName = sourceTokenRepository.findBySourceTokenNameAndCampaignId(
+					dto.getSourceTokenName(), entityToSave.getCampaigns().getId(), false);
+				// Vérifier que ce n'est pas le même enregistrement
+				if (existingByName != null && !existingByName.getId().equals(entityToSave.getId())) {
+					throw new InternalErrorException(functionalError.DATA_EXIST("sourceToken sourceTokenName -> " + dto.getSourceTokenName() + " for campaign " + entityToSave.getCampaigns().getId(), locale));
+				}
+			}
+
 			if (Utilities.notBlank(dto.getTokenString())) {
 				entityToSave.setTokenString(dto.getTokenString());
+			}
+			if (Utilities.notBlank(dto.getSourceTokenName())) {
+				entityToSave.setSourceTokenName(dto.getSourceTokenName());
 			}
 			if (dto.getIsDeleted() != null) {
 				entityToSave.setIsDeleted(dto.getIsDeleted());
@@ -268,9 +349,35 @@ public class SourceTokenBusiness implements IBasicBusiness<Request<SourceTokenDt
 			// Garder les données existantes de base
 			SourceToken entityToSave = existingEntity;
 			
+			// Handle campaign update
+			if (dto.getCampaignId() != null) {
+				if (dto.getCampaignId() > 0) {
+					Campaigns existingCampaign = campaignsRepository.findOne(dto.getCampaignId(), false);
+					if (existingCampaign == null) {
+						throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("campaign campaignId -> " + dto.getCampaignId(), locale));
+					}
+					entityToSave.setCampaigns(existingCampaign);
+				} else {
+					entityToSave.setCampaigns(null);
+				}
+			}
+			
+			// Vérifier l'unicité du sourceTokenName par campagne si on met à jour le nom
+			if (Utilities.notBlank(dto.getSourceTokenName()) && entityToSave.getCampaigns() != null) {
+				SourceToken existingByName = sourceTokenRepository.findBySourceTokenNameAndCampaignId(
+					dto.getSourceTokenName(), entityToSave.getCampaigns().getId(), false);
+				// Vérifier que ce n'est pas le même enregistrement
+				if (existingByName != null && !existingByName.getId().equals(entityToSave.getId())) {
+					throw new InternalErrorException(functionalError.DATA_EXIST("sourceToken sourceTokenName -> " + dto.getSourceTokenName() + " for campaign " + entityToSave.getCampaigns().getId(), locale));
+				}
+			}
+			
 			// Mise à jour conditionnelle des champs
 			if (Utilities.notBlank(dto.getTokenString())) {
 				entityToSave.setTokenString(dto.getTokenString());
+			}
+			if (Utilities.notBlank(dto.getSourceTokenName())) {
+				entityToSave.setSourceTokenName(dto.getSourceTokenName());
 			}
 			// IMPORTANT: Gestion du champ isDeleted pour updateAll
 			if (dto.getIsDeleted() != null) {
@@ -529,6 +636,32 @@ public class SourceTokenBusiness implements IBasicBusiness<Request<SourceTokenDt
 		}
 
 		return dto;
+	}
+
+	/**
+	 * Génère un token alphanumérique unique de 6 caractères
+	 * @return token unique
+	 */
+	private String generateUniqueTokenString() {
+		String chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+		StringBuilder token = new StringBuilder();
+		Random random = new Random();
+
+		// Générer un token de 6 caractères
+		for (int i = 0; i < 6; i++) {
+			token.append(chars.charAt(random.nextInt(chars.length())));
+		}
+
+		String tokenString = token.toString();
+
+		// Vérifier l'unicité en base de données
+		SourceToken existingToken = sourceTokenRepository.findByTokenString(tokenString, false);
+		if (existingToken != null) {
+			// Si le token existe déjà, générer un nouveau
+			return generateUniqueTokenString();
+		}
+
+		return tokenString;
 	}
 
 	public Response<SourceTokenDto> custom(Request<SourceTokenDto> request, Locale locale) throws JsonProcessingException {

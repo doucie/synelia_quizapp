@@ -18,6 +18,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 import org.mapstruct.Named;
+import org.mapstruct.ReportingPolicy;
 import org.mapstruct.factory.Mappers;
 
 import tech.synelia.quizapp.dao.entity.*;
@@ -31,7 +32,7 @@ import tech.synelia.quizapp.utils.dto.*;
  * @author Geo
  *
  */
-@Mapper
+@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface SourceTokenTransformer {
 
 	SourceTokenTransformer INSTANCE = Mappers.getMapper(SourceTokenTransformer.class);
@@ -42,6 +43,7 @@ public interface SourceTokenTransformer {
 		@Mapping(source="entity.createdAt", dateFormat="dd/MM/yyyy", target="createdAt"),
 		@Mapping(source="entity.updatedAt", dateFormat="dd/MM/yyyy", target="updatedAt"),
 		@Mapping(source="entity.campaigns.id", target="campaignId"),
+		@Mapping(source="entity.sourceTokenName", target="sourceTokenName"),
 	})
 	SourceTokenDto toDto(SourceToken entity) throws ParseException;
 
@@ -73,6 +75,7 @@ public interface SourceTokenTransformer {
 	@Mappings({
 		@Mapping(source="dto.id", target="id"),
 		@Mapping(source="dto.tokenString", target="tokenString"),
+		@Mapping(source="dto.sourceTokenName", target="sourceTokenName"),
 		@Mapping(source="dto.createdAt", dateFormat="dd/MM/yyyy",target="createdAt"),
 		@Mapping(source="dto.createdBy", target="createdBy"),
 		@Mapping(source="dto.updatedAt", dateFormat="dd/MM/yyyy",target="updatedAt"),

@@ -42,8 +42,11 @@ public class SourceToken implements Serializable, Cloneable {
     //----------------------------------------------------------------------
     // ENTITY DATA FIELDS 
     //----------------------------------------------------------------------    
-    @Column(name="token_string", nullable=false, length=255)
+    @Column(name="token_string", nullable=false, length=6)
     private String     tokenString  ;
+
+    @Column(name="source_token_name", length=100)
+    private String     sourceTokenName ;
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name="created_at")

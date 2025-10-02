@@ -41,7 +41,7 @@ public class CandidateToken implements Serializable, Cloneable {
     //----------------------------------------------------------------------
     // ENTITY DATA FIELDS 
     //----------------------------------------------------------------------    
-    @Column(name="token_string", length=255)
+    @Column(name="token_string", length=6)
     private String     tokenString  ;
 
     @Temporal(TemporalType.TIMESTAMP)

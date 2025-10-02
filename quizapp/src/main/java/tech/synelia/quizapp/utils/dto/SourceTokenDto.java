@@ -34,6 +34,7 @@ public class SourceTokenDto extends _SourceTokenDto implements Cloneable{
     private Integer    id                   ; // Primary Key
 
     private String     tokenString          ;
+    private String     sourceTokenName      ;
 	private String     createdAt            ;
     private Integer    createdBy            ;
 	private String     updatedAt            ;

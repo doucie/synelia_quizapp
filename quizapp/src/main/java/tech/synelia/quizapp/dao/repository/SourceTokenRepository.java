@@ -116,6 +116,17 @@ public interface SourceTokenRepository extends JpaRepository<SourceToken, Intege
 	List<SourceToken> findByCampaignId(@Param("campaignId")Integer campaignId, @Param("isDeleted")Boolean isDeleted);
 
 	/**
+	 * Finds SourceToken by using sourceTokenName and campaignId as search criteria.
+	 * 
+	 * @param sourceTokenName
+	 * @param campaignId
+	 * @return An Object SourceToken whose sourceTokenName and campaignId match. If
+	 *         no SourceToken is found, this method returns null.
+	 */
+	@Query("select e from SourceToken e where e.sourceTokenName = :sourceTokenName and e.campaigns.id = :campaignId and e.isDeleted = :isDeleted")
+	SourceToken findBySourceTokenNameAndCampaignId(@Param("sourceTokenName")String sourceTokenName, @Param("campaignId")Integer campaignId, @Param("isDeleted")Boolean isDeleted);
+
+	/**
 	 * Finds List of SourceToken by using sourceTokenDto as a search criteria.
 	 * 
 	 * @param request, em
