@@ -86,7 +86,7 @@ public class CampaignQuestionsBusiness implements IBasicBusiness<Request<Campaig
 		for (CampaignQuestionsDto dto : request.getDatas()) {
 			// Definir les parametres obligatoires
 			Map<String, java.lang.Object> fieldsToVerify = new HashMap<String, java.lang.Object>();
-			fieldsToVerify.put("searchString", dto.getSearchString());
+			//fieldsToVerify.put("searchString", dto.getSearchString());
 			fieldsToVerify.put("campaignId", dto.getCampaignId());
 			fieldsToVerify.put("questionId", dto.getQuestionId());
 			if (!Validate.RequiredValue(fieldsToVerify).isGood()) {

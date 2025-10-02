@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgIf, NgFor } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 
@@ -11,7 +11,7 @@ import { AuthService } from '../../../../../core/services/auth/auth.service';
 @Component({
   selector: 'app-entities-users',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, NgIf, NgFor, FormsModule],
   templateUrl: './entities-users.html',
   styleUrl: './entities-users.scss'
 })

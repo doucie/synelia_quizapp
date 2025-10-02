@@ -46,6 +46,16 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/dashboard/entities/entities').then(m => m.EntitiesComponent)
       },
       { 
+        path: 'entities/campaigns/:page', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/campaigns/entities-campaigns').then(m => m.EntitiesCampaignsComponent),
+        canActivate: [superRoleGuard]
+      },
+      { 
+        path: 'entities/campaigns', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/campaigns/entities-campaigns').then(m => m.EntitiesCampaignsComponent),
+        canActivate: [superRoleGuard]
+      },
+      { 
         path: 'entities/users/:page', 
         loadComponent: () => import('./pages/dashboard/entities/solo/users/entities-users').then(m => m.EntitiesUsersComponent),
         canActivate: [superRoleGuard]

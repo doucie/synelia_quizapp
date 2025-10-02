@@ -1,4 +1,4 @@
-<div class="entities-departments-container">
+<div class="entities-campaigns-container">
   <!-- Conteneur header et toolbar avec border-radius -->
   <div class="header-toolbar-container">
     <!-- Header -->
@@ -12,11 +12,11 @@
           Retour aux Entités
         </button>
         <span class="breadcrumb-separator">/</span>
-        <span class="current-page">Gestion des Départements</span>
+        <span class="current-page">Gestion des Campagnes</span>
       </div>
-      <h1>Gestion des Départements</h1>
+      <h1>Gestion des Campagnes</h1>
       <p class="page-description">
-        Administration complète des départements - création, modification et gestion des structures
+        Administration complète des campagnes - création, modification et gestion des structures
       </p>
     </div>
 
@@ -26,25 +26,25 @@
         <input 
           type="text" 
           class="search-input"
-          placeholder="Rechercher un département..."
+          placeholder="Rechercher une campagne..."
           [(ngModel)]="quickSearch"
           (input)="onQuickSearch()"
         />
         
-        <!-- Checkbox pour afficher les départements supprimés -->
+        <!-- Checkbox pour afficher les campagnes supprimés -->
         <div class="checkbox-container">
           <input 
             type="checkbox" 
             id="showDeleted" 
             class="checkbox-input"
-            [checked]="showDeletedDepartments"
-            (click)="toggleDeletedDepartments()"
+            [checked]="showDeletedCampaigns"
+            (click)="toggleDeletedCampaigns()"
           />
           <label for="showDeleted" class="checkbox-label">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-            Afficher les départements supprimés
+            Afficher les campagnes supprimés
           </label>
         </div>
       </div>
@@ -57,12 +57,12 @@
           </svg>
           Filtres avancés
         </button>
-        <button class="btn-primary-pro" (click)="createDepartment()">
+        <button class="btn-primary-pro" (click)="createCampaign()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 5V19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             <path d="M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          Nouveau département
+          Nouveau campagne
         </button>
       </div>
     </div>
@@ -110,8 +110,8 @@
           <input
             type="text"
             class="form-input"
-            [(ngModel)]="advancedCriteria.nom"
-            placeholder="Nom du département"
+            [(ngModel)]="advancedCriteria.campaignName"
+            placeholder="Nom de la campagne"
           />
         </div>
 
@@ -120,8 +120,8 @@
           <input
             type="text"
             class="form-input"
-            [(ngModel)]="advancedCriteria.description"
-            placeholder="Description du département"
+            [(ngModel)]="advancedCriteria.campaignDesc"
+            placeholder="Description de la campagne"
           />
         </div>
         
@@ -142,7 +142,7 @@
             <input 
               type="date" 
               class="form-input-inline"
-              [(ngModel)]="advancedCriteria.dateCreationDe"
+              [(ngModel)]="advancedCriteria.campaignStartDe"
             />
           </div>
           <span class="range-separator">à</span>
@@ -150,19 +150,19 @@
             <input 
               type="date" 
               class="form-input-inline"
-              [(ngModel)]="advancedCriteria.dateCreationA"
+              [(ngModel)]="advancedCriteria.campaignStartA"
             />
           </div>
         </div>
         
-        <!-- Ligne 6 : Date de modification -->
+        <!-- Ligne 6 : Date de fin -->
         <div class="form-row-full">
           <div class="form-group-inline">
-            <label>Date de modification de</label>
+            <label>Date de fin de</label>
             <input 
               type="date" 
               class="form-input-inline"
-              [(ngModel)]="advancedCriteria.dateModificationDe"
+              [(ngModel)]="advancedCriteria.campaignEndDe"
             />
           </div>
           <span class="range-separator">à</span>
@@ -170,7 +170,7 @@
             <input 
               type="date" 
               class="form-input-inline"
-              [(ngModel)]="advancedCriteria.dateModificationA"
+              [(ngModel)]="advancedCriteria.campaignEndA"
             />
           </div>
         </div>
@@ -201,7 +201,7 @@
     <!-- Stats et informations -->
     <div class="section-stats">
       <div class="stats-row">
-        <h2 class="section-title">Départements</h2>
+        <h2 class="section-title">Campagnes</h2>
         <div class="stats-info" *ngIf="!isLoading()">
           <div class="stat-item">
             <span>Total:</span>
@@ -209,11 +209,11 @@
           </div>
           <div class="stat-item">
             <span>Actifs total:</span>
-            <span class="stat-number">{{ getActiveDepartmentsCount() }}</span>
+            <span class="stat-number">{{ getActiveCampaignsCount() }}</span>
           </div>
           <div class="stat-item">
             <span>Supprimés total:</span>
-            <span class="stat-number">{{ getDeletedDepartmentsCount() }}</span>
+            <span class="stat-number">{{ getDeletedCampaignsCount() }}</span>
           </div>
         </div>
       </div>
@@ -222,25 +222,25 @@
     <!-- État de chargement -->
     <div *ngIf="isLoading()" class="loading-state">
       <div class="loading-spinner"></div>
-      <p>Chargement des départements...</p>
+      <p>Chargement des campagnes...</p>
     </div>
 
     <!-- État vide -->
-    <div *ngIf="!isLoading() && departments().length === 0" class="empty-state">
+    <div *ngIf="!isLoading() && campaigns().length === 0" class="empty-state">
       <div class="empty-state-icon">
         <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M17 21V19C17 17.9391 16.5786 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M17 21V19C17 17.9391 16.5786 16.9217 15.0783 16.1716C13.578 15.4214 11.0609 15 9 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
           <path d="M23 21V19C23 18.1645 22.7155 17.3541 22.2094 16.6977C21.7033 16.0414 20.9994 15.5752 20.2 15.3742" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           <path d="M16 3.13C16.8604 3.35031 17.623 3.85071 18.1676 4.55332C18.7122 5.25594 19.0078 6.11684 19.0078 7.005C19.0078 7.89316 18.7122 8.75406 18.1676 9.45668C17.623 10.1593 16.8604 10.6597 16 10.88" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </div>
-      <h3>Aucun département trouvé</h3>
-      <p>Aucun département ne correspond aux critères de recherche actuels.</p>
+      <h3>Aucune campagne trouvée</h3>
+      <p>Aucune campagne ne correspond aux critères de recherche actuels.</p>
     </div>
 
     <!-- Tableau de données professionnel -->
-    <div *ngIf="!isLoading() && departments().length > 0" class="data-table-container">
+    <div *ngIf="!isLoading() && campaigns().length > 0" class="data-table-container">
       <table class="data-table">
         <thead>
           <tr>
@@ -252,20 +252,20 @@
           </tr>
         </thead>
         <tbody>
-          <ng-container *ngFor="let department of departments(); trackBy: trackByDepartmentId">
-            <tr [class.user-deleted]="department.isDeleted">
+          <ng-container *ngFor="let campaign of campaigns(); trackBy: trackByCampaignId">
+            <tr [class.user-deleted]="campaign.isDeleted">
               <td>
-                <span class="cell-id">#{{ department.id }}</span>
+                <span class="cell-id">#{{ campaign.id }}</span>
               </td>
               <td>
-                <span class="cell-name">{{ department.nom || '-' }}</span>
+                <span class="cell-name">{{ campaign.campaignName || '-' }}</span>
               </td>
               <td>
-                <span class="cell-description">{{ department.description || '-' }}</span>
+                <span class="cell-description">{{ campaign.campaignDesc || '-' }}</span>
               </td>
               <td>
-                <span class="cell-date" *ngIf="department.dateCreation; else noDate">
-                  {{ formatCreationDate(department) }}
+                <span class="cell-date" *ngIf="campaign.createdAt; else noDate">
+                  {{ formatCreationDate(campaign) }}
                 </span>
                 <ng-template #noDate>
                   <span style="color: var(--text-secondary);">-</span>
@@ -273,12 +273,12 @@
               </td>
               <td class="actions-cell">
                 <div class="actions-menu">
-                  <!-- Boutons normaux pour les départements non supprimés -->
-                  <ng-container *ngIf="!department.isDeleted">
+                  <!-- Boutons normaux pour les campagnes non supprimés -->
+                  <ng-container *ngIf="!campaign.isDeleted">
                     <button 
                       class="action-btn primary" 
-                      (click)="editDepartment(department)"
-                      title="Modifier le département">
+                      (click)="editCampaign(campaign)"
+                      title="Modifier la campagne">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M12 20H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         <path d="M16.5 3.5A2.12 2.12 0 0 1 19 6L7 18L3 19L4 15L16.5 3.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -286,8 +286,8 @@
                     </button>
                     <button 
                       class="action-btn danger" 
-                      (click)="deleteDepartment(department)"
-                      title="Supprimer le département">
+                      (click)="deleteCampaign(campaign)"
+                      title="Supprimer la campagne">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -298,8 +298,8 @@
                     <!-- Bouton d'expansion pour afficher les spécialités -->
                     <button 
                       class="action-btn secondary" 
-                      (click)="toggleDepartmentExpansion(department.id)"
-                      [class.expanded]="isDepartmentExpanded(department.id)"
+                      (click)="toggleCampaignExpansion(campaign.id)"
+                      [class.expanded]="isCampaignExpanded(campaign.id)"
                       title="Afficher les spécialités">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path 
@@ -308,16 +308,16 @@
                           stroke-width="2" 
                           stroke-linecap="round" 
                           stroke-linejoin="round"
-                          [attr.transform]="isDepartmentExpanded(department.id) ? 'rotate(180 12 12)' : ''"/>
+                          [attr.transform]="isCampaignExpanded(campaign.id) ? 'rotate(180 12 12)' : ''"/>
                       </svg>
                     </button>
                   </ng-container>
                   
-                  <!-- Bouton de restauration pour les départements supprimés -->
-                  <ng-container *ngIf="department.isDeleted">
+                  <!-- Bouton de restauration pour les campagnes supprimés -->
+                  <ng-container *ngIf="campaign.isDeleted">
                     <button 
                       class="action-btn success" 
-                      (click)="restoreDepartment(department)"
+                      (click)="restoreCampaign(campaign)"
                       title="Restaurer le département">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M3 12A9 9 0 1 0 12 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -327,8 +327,8 @@
                     <!-- Bouton d'expansion pour afficher les spécialités -->
                     <button 
                       class="action-btn secondary" 
-                      (click)="toggleDepartmentExpansion(department.id)"
-                      [class.expanded]="isDepartmentExpanded(department.id)"
+                      (click)="toggleCampaignExpansion(campaign.id)"
+                      [class.expanded]="isCampaignExpanded(campaign.id)"
                       title="Afficher les spécialités">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path 
@@ -337,7 +337,7 @@
                           stroke-width="2" 
                           stroke-linecap="round" 
                           stroke-linejoin="round"
-                          [attr.transform]="isDepartmentExpanded(department.id) ? 'rotate(180 12 12)' : ''"/>
+                          [attr.transform]="isCampaignExpanded(campaign.id) ? 'rotate(180 12 12)' : ''"/>
                       </svg>
                     </button>
                   </ng-container>
@@ -346,18 +346,18 @@
             </tr>
             
             <!-- Ligne d'expansion pour afficher les spécialités -->
-            <tr *ngIf="isDepartmentExpanded(department.id)" class="expansion-row">
+            <tr *ngIf="isCampaignExpanded(campaign.id)" class="expansion-row">
               <td colspan="5" class="expansion-content">
                 <div class="specialities-container">
                   <div class="expansion-header">
-                    <h4>Spécialités du département "{{ department.nom }}"</h4>
+                    <h4>Spécialités de la campagne "{{ campaign.campaignName }}"</h4>
                     <div class="header-actions">
                       <span class="specialities-count">
-                        {{ getDepartmentSpecialities(department.id).length || 0 }} spécialité(s)
+                        {{ getCampaignSpecialities(campaign.id).length || 0 }} spécialité(s)
                       </span>
                       <button 
                         class="btn-add-speciality" 
-                        (click)="createSpecialityInDepartment(department)"
+                        (click)="createSpecialityInCampaign(campaign)"
                         title="Ajouter une spécialité">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                           <path d="M12 5V19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -369,15 +369,15 @@
                   </div>
                   
                   <!-- État de chargement des spécialités -->
-                  <div *ngIf="isLoadingSpecialities(department.id)" class="loading-specialities">
+                  <div *ngIf="isLoadingSpecialities(campaign.id)" class="loading-specialities">
                     <div class="loading-spinner-small"></div>
                     <span>Chargement des spécialités...</span>
                   </div>
                   
                   <!-- Liste des spécialités -->
-                  <div *ngIf="!isLoadingSpecialities(department.id) && getDepartmentSpecialities(department.id).length > 0" class="specialities-list">
+                  <div *ngIf="!isLoadingSpecialities(campaign.id) && getCampaignSpecialities(campaign.id).length > 0" class="specialities-list">
                     <div 
-                      *ngFor="let speciality of getDepartmentSpecialities(department.id); trackBy: trackBySpecialityId" 
+                      *ngFor="let speciality of getCampaignSpecialities(campaign.id); trackBy: trackBySpecialityId" 
                       class="speciality-item"
                       [class.deleted]="speciality.isDeleted">
                       <div class="speciality-header">
@@ -387,7 +387,7 @@
                         <div class="speciality-actions">
                           <button 
                             class="btn-action btn-edit" 
-                            (click)="editSpecialityInDepartment(speciality, department)"
+                            (click)="editSpecialityInCampaign(speciality, campaign)"
                             title="Modifier la spécialité">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                               <path d="M12 20H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -397,7 +397,7 @@
                         <button 
                           *ngIf="!speciality.isDeleted"
                           class="btn-action btn-delete" 
-                          (click)="deleteSpecialityInDepartment(speciality, department)"
+                          (click)="deleteSpecialityInCampaign(speciality, campaign)"
                           title="Supprimer la spécialité">
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -409,7 +409,7 @@
                         <button 
                           *ngIf="speciality.isDeleted"
                           class="btn-action btn-restore" 
-                          (click)="restoreSpecialityInDepartment(speciality, department)"
+                          (click)="restoreSpecialityInCampaign(speciality, campaign)"
                           title="Restaurer la spécialité">
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M3 12A9 9 0 1 0 12 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -428,12 +428,12 @@
                   </div>
                   
                   <!-- État vide pour les spécialités -->
-                  <div *ngIf="!isLoadingSpecialities(department.id) && !getDepartmentSpecialities(department.id).length" class="no-specialities">
+                  <div *ngIf="!isLoadingSpecialities(campaign.id) && !getCampaignSpecialities(campaign.id).length" class="no-specialities">
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                       <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
                     </svg>
-                    <span>Aucune spécialité trouvée pour ce département</span>
+                    <span>Aucune spécialité trouvée pour cette campagne</span>
                   </div>
                 </div>
               </td>
@@ -448,7 +448,7 @@
       <div class="pagination-info">
         <span class="results-info">
           Affichage {{ currentPage() * pageSize() + 1 }} - {{ Math.min((currentPage() + 1) * pageSize(), totalElements()) }} 
-          sur {{ totalElements() }} utilisateurs
+          sur {{ totalElements() }} campagnes
         </span>
         
         <!-- Sélecteur de taille de page -->
@@ -458,7 +458,7 @@
             <select 
               id="pageSize" 
               class="page-size-select"
-              title="Nombre d'utilisateurs par page - sauvegardé automatiquement"
+              title="Nombre de campagnes par page - sauvegardé automatiquement"
               [value]="pageSize()"
               (change)="onPageSizeChange($event)"
             >
@@ -523,7 +523,7 @@
 </div>
 
 <!-- Popup de confirmation de suppression -->
-<div class="confirmation-overlay" *ngIf="showDeleteConfirmation" (click)="cancelDeleteDepartment()">
+<div class="confirmation-overlay" *ngIf="showDeleteConfirmation" (click)="cancelDeleteCampaign()">
   <div class="confirmation-modal" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <div class="modal-icon danger">
@@ -537,15 +537,15 @@
     </div>
     
     <div class="modal-body">
-      <p>Êtes-vous certain de vouloir supprimer ce département ?</p>
-      <div class="user-info" *ngIf="departmentToDelete">
+      <p>Êtes-vous certain de vouloir supprimer cette campagne ?</p>
+      <div class="user-info" *ngIf="campaignToDelete">
         <div class="user-avatar">
-          {{ departmentToDelete.nom?.[0] }}
+          {{ campaignToDelete.campaignName?.[0] }}
         </div>
         <div class="user-details">
-          <strong>{{ departmentToDelete.nom }}</strong>
-          <span class="user-pseudo" *ngIf="departmentToDelete.description">
-            {{ departmentToDelete.description }}
+          <strong>{{ campaignToDelete.campaignName }}</strong>
+          <span class="user-pseudo" *ngIf="campaignToDelete.campaignDesc">
+            {{ campaignToDelete.campaignDesc }}
           </span>
         </div>
       </div>
@@ -560,14 +560,14 @@
     </div>
     
     <div class="modal-actions">
-      <button class="btn-cancel" (click)="cancelDeleteDepartment()">
+      <button class="btn-cancel" (click)="cancelDeleteCampaign()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         Annuler
       </button>
-      <button class="btn-confirm-danger" (click)="confirmDeleteDepartment()">
+      <button class="btn-confirm-danger" (click)="confirmDeleteCampaign()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -581,7 +581,7 @@
 </div>
 
 <!-- Popup de confirmation de restauration -->
-<div class="confirmation-overlay" *ngIf="showRestoreConfirmation()" (click)="cancelRestoreDepartment()">
+<div class="confirmation-overlay" *ngIf="showRestoreConfirmation()" (click)="cancelRestoreCampaign()">
   <div class="confirmation-modal" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <div class="modal-icon success">
@@ -594,15 +594,15 @@
     </div>
     
     <div class="modal-body">
-      <p>Êtes-vous certain de vouloir restaurer ce département ?</p>
-      <div class="user-info" *ngIf="departmentToRestore()">
+      <p>Êtes-vous certain de vouloir restaurer cette campagne ?</p>
+      <div class="user-info" *ngIf="campaignToRestore()">
         <div class="user-avatar">
-          {{ departmentToRestore()?.nom?.[0] }}
+          {{ campaignToRestore()?.campaignName?.[0] }}
         </div>
         <div class="user-details">
-          <strong>{{ departmentToRestore()?.nom }}</strong>
-          <span class="user-pseudo" *ngIf="departmentToRestore()?.description">
-            {{ departmentToRestore()?.description }}
+          <strong>{{ campaignToRestore()?.campaignName }}</strong>
+          <span class="user-pseudo" *ngIf="campaignToRestore()?.campaignDesc">
+            {{ campaignToRestore()?.campaignDesc }}
           </span>
         </div>
       </div>
@@ -612,24 +612,24 @@
           <path d="M12 8V12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           <path d="M12 16H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        Le département sera réactivé et pourra à nouveau être utilisé.
+        La campagne sera réactivée et pourra à nouveau être utilisée.
       </div>
     </div>
     
     <div class="modal-actions">
-      <button class="btn-cancel" (click)="cancelRestoreDepartment()">
+      <button class="btn-cancel" (click)="cancelRestoreCampaign()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         Annuler
       </button>
-      <button class="btn-confirm-success" (click)="confirmRestoreDepartment()">
+      <button class="btn-confirm-success" (click)="confirmRestoreCampaign()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M3 12A9 9 0 1 0 12 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           <path d="M12 3L8 7L12 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        Restaurer l'utilisateur
+        Restaurer la campagne
       </button>
     </div>
   </div>
@@ -669,9 +669,9 @@
             type="text" 
             id="edit-nom"
             class="form-input"
-            [(ngModel)]="editFormData.nom"
-            name="nom"
-            placeholder="Nom de l'utilisateur"
+            [(ngModel)]="editFormData.campaignName"
+            name="campaignName"
+            placeholder="Nom de la campagne"
             required
           />
         </div>
@@ -682,9 +682,9 @@
           <textarea 
             id="edit-description"
             class="form-textarea"
-            [(ngModel)]="editFormData.description"
-            name="description"
-            placeholder="Description du département"
+            [(ngModel)]="editFormData.campaignDesc"
+            name="campaignDesc"
+            placeholder="Description de la campagne"
             rows="3"
           ></textarea>
         </div>
@@ -692,7 +692,7 @@
     </div>
     
     <div class="modal-actions">
-      <button class="btn-danger" (click)="deleteDepartmentFromEdit()">
+      <button class="btn-danger" (click)="deleteCampaignFromEdit()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <polyline points="3,6 5,6 21,6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           <path d="M19,6 L19,20 C19,21 18,22 17,22 L7,22 C6,22 5,21 5,20 L5,6 M8,6 L8,4 C8,3 9,2 10,2 L14,2 C15,2 16,3 16,4 L16,6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -707,7 +707,7 @@
           </svg>
           Annuler
         </button>
-        <button class="btn-confirm-success" (click)="validateDepartmentEdit()">
+        <button class="btn-confirm-success" (click)="validateCampaignEdit()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
@@ -740,9 +740,9 @@
             type="text"
             id="create-nom"
             class="form-input"
-            [(ngModel)]="createFormData.nom"
-            name="nom"
-            placeholder="Nom du département"
+            [(ngModel)]="createFormData.campaignName"
+            name="campaignName"
+            placeholder="Nom de la campagne"
             required
           />
         </div>
@@ -753,9 +753,9 @@
           <textarea
             id="create-description"
             class="form-textarea"
-            [(ngModel)]="createFormData.description"
-            name="description"
-            placeholder="Description du département"
+            [(ngModel)]="createFormData.campaignDesc"
+            name="campaignDesc"
+            placeholder="Description de la campagne"
             rows="3"
           ></textarea>
         </div>
@@ -771,11 +771,11 @@
           </svg>
           Annuler
         </button>
-        <button class="btn-confirm-success" (click)="validateDepartmentCreation()">
+        <button class="btn-confirm-success" (click)="validateCampaignCreation()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          Créer le département
+          Créer la campagne
         </button>
       </div>
     </div>
@@ -822,11 +822,11 @@
           ></textarea>
         </div>
 
-        <!-- Département -->
+        <!-- Campagne -->
         <div class="form-group">
-          <label class="form-label">Département</label>
+          <label class="form-label">Campagne</label>
           <div class="form-input-readonly">
-            {{ currentDepartmentForSpeciality()?.nom }}
+            {{ currentCampaignForSpeciality()?.campaignName }}
           </div>
         </div>
       </form>
@@ -886,11 +886,11 @@
           ></textarea>
         </div>
 
-        <!-- Département -->
+        <!-- Campagne -->
         <div class="form-group">
-          <label class="form-label">Département</label>
+          <label class="form-label">Campagne</label>
           <div class="form-input-readonly">
-            {{ currentDepartmentForSpeciality()?.nom }}
+            {{ currentCampaignForSpeciality()?.campaignName }}
           </div>
         </div>
       </form>

@@ -1,22 +1,22 @@
 import { Component, OnInit, OnDestroy, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgIf, NgFor } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 
-import { DepartmentService, Department, DepartmentSearchCriteria, PagedResponse } from '../../../../../core/services/department.service';
+import { CampaignService, Campaign, CampaignSearchCriteria, PagedResponse } from '../../../../../core/services/campaign.service';
 import { UserService } from '../../../../../core/services/user.service';
 import { SpecialityService, Speciality } from '../../../../../core/services/speciality.service';
 import { NotificationService } from '../../../../../core/services/notification.service';
 import { AuthService } from '../../../../../core/services/auth/auth.service';
 
 @Component({
-  selector: 'app-entities-departments',
+  selector: 'app-entities-campaigns',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, NgIf, NgFor, FormsModule],
   templateUrl: './entities-campaigns.html',
   styleUrl: './entities-campaigns.scss'
 })
-export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
+export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
   // Exposer Math pour utilisation dans le template
   Math = Math;
   
@@ -24,23 +24,23 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
   private loadingTimeout: any;
   
   // Signaux pour la réactivité
-  departments = signal<Department[]>([]);
+  campaigns = signal<Campaign[]>([]);
   isLoading = signal<boolean>(false);
   totalElements = signal<number>(0);
   currentPage = signal<number>(0);
   pageSize = signal<number>(10); // Valeur par défaut, sera mise à jour dans ngOnInit
   
-  // Signaux pour l'expansion des départements
-  expandedDepartments = signal<Set<number>>(new Set());
-  departmentSpecialities = signal<{[departmentId: number]: Speciality[]}>({});
-  loadingSpecialities = signal<{[departmentId: number]: boolean}>({});
+  // Signaux pour l'expansion des campagnes
+  expandedCampaigns = signal<Set<number>>(new Set());
+  campaignSpecialities = signal<{[campaignId: number]: Speciality[]}>({});
+  loadingSpecialities = signal<{[campaignId: number]: boolean}>({});
   
   // Critères de recherche
-  searchCriteria: DepartmentSearchCriteria = {
+  searchCriteria: CampaignSearchCriteria = {
     idDe: '',
     idA: '',
-    nom: '',
-    description: '',
+    campaignName: '',
+    campaignDesc: '',
     search_string: ''
   };
 
@@ -50,39 +50,39 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
   // État de la recherche avancée
   showAdvancedSearch = false;
   
-  // Contrôle d'affichage des départements supprimés
-  showDeletedDepartments = true; // Par défaut, afficher tous les départements
+  // Contrôle d'affichage des campagnes supprimés
+  showDeletedCampaigns = true; // Par défaut, afficher toutes les campagnes
   
   // Compteurs réels (total dans la BD)
-  totalActiveDepartments = signal<number>(0);
-  totalDeletedDepartments = signal<number>(0);
+  totalActiveCampaigns = signal<number>(0);
+  totalDeletedCampaigns = signal<number>(0);
   
   // Options de pagination avec 10 par défaut
   pageSizeOptions = [5, 10, 20, 50, 100];
-  private readonly PAGE_SIZE_STORAGE_KEY = 'entities-departments-page-size';
+  private readonly PAGE_SIZE_STORAGE_KEY = 'entities-campaigns-page-size';
   
   // État de la popup de confirmation
   showDeleteConfirmation = false;
-  departmentToDelete: Department | null = null;
+  campaignToDelete: Campaign | null = null;
   
   // État de la popup de restauration
   showRestoreConfirmation = signal<boolean>(false);
-  departmentToRestore = signal<Department | null>(null);
+  campaignToRestore = signal<Campaign | null>(null);
   
   // État de la popup d'édition
   showEditDialog = signal<boolean>(false);
-  departmentToEdit = signal<Department | null>(null);
+  campaignToEdit = signal<Campaign | null>(null);
   editFormData = {
     id: 0,
-    nom: '',
-    description: ''
+    campaignName: '',
+    campaignDesc: ''
   };
 
   // État de la popup de création
   showCreateDialog = signal<boolean>(false);
   createFormData = {
-    nom: '',
-    description: ''
+    campaignName: '',
+    campaignDesc: ''
   };
   
   // États pour la gestion des spécialités
@@ -94,7 +94,7 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
   specialityToEdit = signal<Speciality | null>(null);
   specialityToDelete = signal<Speciality | null>(null);
   specialityToRestore = signal<Speciality | null>(null);
-  currentDepartmentForSpeciality = signal<Department | null>(null);
+  currentCampaignForSpeciality = signal<Campaign | null>(null);
   
   specialityCreateFormData = {
     nom: '',
@@ -108,23 +108,23 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
   };
   
   // Critères de recherche avancée
-  advancedCriteria: DepartmentSearchCriteria = {
+  advancedCriteria: CampaignSearchCriteria = {
     idDe: '',
     idA: '',
-    nom: '',
-    description: '',
+    campaignName: '',
+    campaignDesc: '',
     isDeleted: undefined,
-    dateCreationDe: '',
-    dateCreationA: '',
-    dateModificationDe: '',
-    dateModificationA: '',
+    campaignStartDe: '',
+    campaignStartA: '',
+    campaignEndDe: '',
+    campaignEndA: '',
     search_string: ''
   };
 
 
 
   constructor(
-    private departmentService: DepartmentService,
+    private campaignService: CampaignService,
     private userService: UserService,
     private specialityService: SpecialityService,
     private notificationService: NotificationService,
@@ -134,7 +134,7 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    console.log('🚀 Initialisation EntitiesDepartmentsComponent');
+    console.log('🚀 Initialisation EntitiesCampaignsComponent');
     // Initialiser la taille de page avec la valeur stockée
     this.pageSize.set(this.getStoredPageSize());
     console.log('📦 Taille de page au démarrage:', this.pageSize());
@@ -149,7 +149,7 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
       }
     });
     
-    this.loadDepartments();
+    this.loadCampaigns();
   }
 
   ngOnDestroy() {
@@ -202,9 +202,9 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Charge la liste des départements
+   * Charge la liste des campagnes
    */
-  loadDepartments() {
+  loadCampaigns() {
     // Annuler le timeout précédent s'il existe
     if (this.loadingTimeout) {
       clearTimeout(this.loadingTimeout);
@@ -212,48 +212,59 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
     
     // Débounce pour éviter les appels multiples rapides
     this.loadingTimeout = setTimeout(() => {
-      this.performLoadDepartments();
+      this.performLoadCampaigns();
     }, 100);
   }
 
   /**
-   * Exécute réellement le chargement des départements
+   * Exécute réellement le chargement des campagnes
    */
-  private performLoadDepartments() {
+  private performLoadCampaigns() {
     this.isLoading.set(true);
-    const serviceMethod = this.showDeletedDepartments ? 'incluant supprimés' : 'actifs seulement';
-    console.log(`📥 Chargement des départements (${serviceMethod})...`);
+    const serviceMethod = this.showDeletedCampaigns ? 'incluant supprimés' : 'actifs seulement';
+    console.log(`📥 Chargement des campagnes (${serviceMethod})...`);
     console.log('🔍 Critères de recherche utilisés:', this.searchCriteria);
 
     const criteria = {
       ...this.searchCriteria,
       page: this.currentPage(),
       size: this.pageSize(),
-      isDeleted: this.showDeletedDepartments ? undefined : false // undefined = tous, false = actifs seulement
+      isDeleted: this.showDeletedCampaigns ? undefined : false // undefined = tous, false = actifs seulement
     };
 
     console.log('📤 Requête envoyée avec critères:', criteria);
 
     // Utiliser toujours la même méthode mais avec le critère isDeleted approprié
-    const serviceCall = this.departmentService.getAllDepartmentsByCriteria(criteria);
+    const serviceCall = this.campaignService.getAllCampaignsByCriteria(criteria);
 
     serviceCall.subscribe({
-      next: (response: PagedResponse<Department>) => {
+      next: (response: PagedResponse<Campaign>) => {
         console.log(`✅ RÉPONSE COMPLÈTE reçue (${serviceMethod}):`, response);
-        console.log('📊 Nombre total de départements (totalElements):', response.totalElements);
-        console.log('📊 Nombre de départements dans cette page:', response.items.length);
-        console.log('📊 Page courante (currentPage):', response.currentPage || 'non défini');
-        console.log('📊 Taille de page (pageSize):', response.pageSize || 'non défini');
+        console.log('📊 Nombre total de campagnes (totalElements):', response.totalElements);
+        console.log('📊 Nombre de campagnes dans cette page:', response.content.length);
+        console.log('📊 Page courante (number):', response.number || 'non défini');
+        console.log('📊 Taille de page (size):', response.size || 'non défini');
         console.log('📊 Nombre total de pages:', response.totalPages || 'non défini');
         
-        // Analyser les départements reçus
-        const deletedDepartments = response.items.filter((d: Department) => d.isDeleted);
-        const activeDepartments = response.items.filter((d: Department) => !d.isDeleted);
+        // Analyser les campagnes reçues
+        const deletedCampaigns = response.content.filter((c: Campaign) => c.isDeleted);
+        const activeCampaigns = response.content.filter((c: Campaign) => !c.isDeleted);
         
-        console.log('📊 Départements supprimés dans cette page:', deletedDepartments.length, deletedDepartments);
-        console.log('📊 Départements actifs dans cette page:', activeDepartments.length, activeDepartments);
+        console.log('📊 Campagnes supprimées dans cette page:', deletedCampaigns.length, deletedCampaigns);
+        console.log('📊 Campagnes actives dans cette page:', activeCampaigns.length, activeCampaigns);
         
-        this.departments.set(response.items);
+        // DEBUG: Afficher la structure des premières campagnes
+        if (response.content.length > 0) {
+          console.log('🔍 STRUCTURE de la première campagne:', response.content[0]);
+          console.log('🔍 Propriétés de la première campagne:', Object.keys(response.content[0]));
+          console.log('🔍 Valeurs de campaignName/campaignDesc/createdAt:', {
+            campaignName: response.content[0].campaignName,
+            campaignDesc: response.content[0].campaignDesc,
+            createdAt: response.content[0].createdAt
+          });
+        }
+        
+        this.campaigns.set(response.content);
         this.totalElements.set(response.totalElements);
         this.isLoading.set(false);
         
@@ -271,10 +282,10 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
   /**
    * Recherche des départements selon les critères
    */
-  searchDepartments() {
+  searchCampaigns() {
     console.log('🔍 Recherche avec critères:', this.searchCriteria);
     this.currentPage.set(0);
-    this.loadDepartments();
+    this.loadCampaigns();
   }
 
   /**
@@ -285,24 +296,24 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
     this.searchCriteria = {
       idDe: '',
       idA: '',
-      nom: '',
-      description: '',
+      campaignName: '',
+      campaignDesc: '',
       search_string: ''
     };
     this.quickSearch = '';
     this.showAdvancedSearch = false;
     this.resetAdvancedSearch();
-    this.searchDepartments();
+    this.searchCampaigns();
   }
 
   /**
-   * Crée un nouveau département
+   * Crée une nouvelle campagne
    */
-  createDepartment() {
+  createCampaign() {
     // Réinitialiser le formulaire
     this.createFormData = {
-      nom: '',
-      description: ''
+      campaignName: '',
+      campaignDesc: ''
     };
     this.showCreateDialog.set(true);
   }
@@ -313,22 +324,22 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
   closeCreateDialog() {
     this.showCreateDialog.set(false);
     this.createFormData = {
-      nom: '',
-      description: ''
+      campaignName: '',
+      campaignDesc: ''
     };
   }
 
   /**
-   * Valide et crée un nouveau département
+   * Valide et crée une nouvelle campagne
    */
-  async validateDepartmentCreation() {
+  async validateCampaignCreation() {
     const formData = this.createFormData;
 
     console.log('🔧 Début validation création - formData:', formData);
 
     // Validation des champs requis
-    if (!formData.nom.trim()) {
-      this.notificationService.warning('Attention', 'Le nom est requis');
+    if (!formData.campaignName.trim()) {
+      this.notificationService.warning('Attention', 'Le nom de la campagne est requis');
       return;
     }
 
@@ -336,24 +347,24 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
       // Appel de l'API pour créer un nouveau département
       console.log('🔧 Création d\'un nouveau département');
 
-      const newDepartment: any = await this.departmentService.create({
-        nom: formData.nom.trim(),
-        description: formData.description.trim()
+      const newCampaign: any = await this.campaignService.createCampaign({
+        campaignName: formData.campaignName.trim(),
+        campaignDesc: formData.campaignDesc.trim()
       }).toPromise();
 
-      console.log('✅ Département créé:', newDepartment);
+      console.log('✅ Campagne créée:', newCampaign);
 
       // Vérifier si la réponse indique une erreur
-      if (newDepartment && newDepartment.hasError) {
-        console.error('❌ Erreur détectée dans la réponse:', newDepartment);
-        const errorMessage = newDepartment.status?.message || newDepartment.status?.code || 'Erreur lors de la création';
+      if (newCampaign && newCampaign.hasError) {
+        console.error('❌ Erreur détectée dans la réponse:', newCampaign);
+        const errorMessage = newCampaign.status?.message || newCampaign.status?.code || 'Erreur lors de la création';
         this.notificationService.error('Erreur', errorMessage);
         return;
       }
 
-      this.notificationService.success('Succès', `Département ${formData.nom} créé avec succès`);
+      this.notificationService.success('Succès', `Campagne ${formData.campaignName} créée avec succès`);
       this.closeCreateDialog();
-      this.loadDepartments(); // Recharger la liste
+      this.loadCampaigns(); // Recharger la liste
     } catch (error: any) {
       console.error('❌ Erreur lors de la création:', error);
       console.error('❌ Détail de l\'erreur:', error?.error);
@@ -362,14 +373,14 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Édite un département
+   * Édite une campagne
    */
-  editDepartment(department: Department) {
-    this.departmentToEdit.set(department);
+  editCampaign(campaign: Campaign) {
+    this.campaignToEdit.set(campaign);
     this.editFormData = {
-      id: department.id,
-      nom: department.nom || '',
-      description: department.description || ''
+      id: campaign.id,
+      campaignName: campaign.campaignName || '',
+      campaignDesc: campaign.campaignDesc || ''
     };
     this.showEditDialog.set(true);
   }
@@ -379,57 +390,57 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
    */
   closeEditDialog() {
     this.showEditDialog.set(false);
-    this.departmentToEdit.set(null);
+    this.campaignToEdit.set(null);
     this.editFormData = {
       id: 0,
-      nom: '',
-      description: ''
+      campaignName: '',
+      campaignDesc: ''
     };
   }
 
   /**
    * Valide et sauvegarde les modifications
    */
-  async validateDepartmentEdit() {
+  async validateCampaignEdit() {
     const formData = this.editFormData;
-    const currentDepartment = this.departmentToEdit();
+    const currentCampaign = this.campaignToEdit();
     
     console.log('🔧 Début validation - formData:', formData);
-    console.log('🔧 Début validation - currentDepartment:', currentDepartment);
+    console.log('🔧 Début validation - currentCampaign:', currentCampaign);
     
-    if (!currentDepartment) {
-      this.notificationService.error('Erreur', 'Aucun département sélectionné pour modification');
+    if (!currentCampaign) {
+      this.notificationService.error('Erreur', 'Aucune campagne sélectionnée pour modification');
       return;
     }
 
     // Validation des champs requis
-    if (!formData.nom.trim()) {
-      this.notificationService.warning('Attention', 'Le nom est requis');
+    if (!formData.campaignName.trim()) {
+      this.notificationService.warning('Attention', 'Le nom de la campagne est requis');
       return;
     }
 
     try {
-      // Appel de l'API pour mettre à jour un département
-      console.log('🔧 Mise à jour d\'un département');
+      // Appel de l'API pour mettre à jour une campagne
+      console.log('🔧 Mise à jour d\'une campagne');
       
-      const updatedDepartment: any = await this.departmentService.update(currentDepartment.id, {
-        nom: formData.nom.trim(),
-        description: formData.description.trim()
+      const updatedCampaign: any = await this.campaignService.updateCampaign(currentCampaign.id, {
+        campaignName: formData.campaignName.trim(),
+        campaignDesc: formData.campaignDesc.trim()
       }).toPromise();
 
-      console.log('✅ Département mis à jour:', updatedDepartment);
+      console.log('✅ Campagne mise à jour:', updatedCampaign);
 
       // Vérifier si la réponse indique une erreur
-      if (updatedDepartment && updatedDepartment.hasError) {
-        console.error('❌ Erreur détectée dans la réponse:', updatedDepartment);
-        const errorMessage = updatedDepartment.status?.message || updatedDepartment.status?.code || 'Erreur lors de la mise à jour';
+      if (updatedCampaign && updatedCampaign.hasError) {
+        console.error('❌ Erreur détectée dans la réponse:', updatedCampaign);
+        const errorMessage = updatedCampaign.status?.message || updatedCampaign.status?.code || 'Erreur lors de la mise à jour';
         this.notificationService.error('Erreur', errorMessage);
         return;
       }
 
-      this.notificationService.success('Succès', `Département ${formData.nom} modifié avec succès`);
+      this.notificationService.success('Succès', `Campagne ${formData.campaignName} modifié avec succès`);
       this.closeEditDialog();
-      this.loadDepartments(); // Recharger la liste
+      this.loadCampaigns(); // Recharger la liste
     } catch (error: any) {
       console.error('❌ Erreur lors de la modification:', error);
       console.error('❌ Détail de l\'erreur:', error?.error);
@@ -438,101 +449,101 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Supprime le département depuis la popup d'édition
+   * Supprime la campagne depuis la popup d'édition
    */
-  deleteDepartmentFromEdit() {
-    const department = this.departmentToEdit();
-    if (department) {
+  deleteCampaignFromEdit() {
+    const campaign = this.campaignToEdit();
+    if (campaign) {
       this.closeEditDialog();
-      this.deleteDepartment(department);
+      this.deleteCampaign(campaign);
     }
   }
 
   /**
-   * Affiche la popup de confirmation pour supprimer un département
+   * Affiche la popup de confirmation pour supprimer une campagne
    */
-  deleteDepartment(department: Department) {
-    this.departmentToDelete = department;
+  deleteCampaign(campaign: Campaign) {
+    this.campaignToDelete = campaign;
     this.showDeleteConfirmation = true;
   }
 
   /**
-   * Confirme la suppression d'un département
+   * Confirme la suppression d'une campagne
    */
-  confirmDeleteDepartment() {
-    if (!this.departmentToDelete) return;
+  confirmDeleteCampaign() {
+    if (!this.campaignToDelete) return;
     
-    this.departmentService.delete(this.departmentToDelete.id).subscribe({
+    this.campaignService.deleteCampaign(this.campaignToDelete.id).subscribe({
       next: () => {
-        this.notificationService.success('Succès', `Département ${this.departmentToDelete?.nom} supprimé avec succès`);
+        this.notificationService.success('Succès', `Campagne ${this.campaignToDelete?.campaignName} supprimée avec succès`);
         
-        // Marquer le département comme supprimé dans la liste locale
-        if (this.departmentToDelete) {
-          this.departmentToDelete.isDeleted = true;
+        // Marquer la campagne comme supprimée dans la liste locale
+        if (this.campaignToDelete) {
+          this.campaignToDelete.isDeleted = true;
         }
         
-        // Activer automatiquement l'affichage des départements supprimés
-        this.showDeletedDepartments = true;
+        // Activer automatiquement l'affichage des campagnes supprimés
+        this.showDeletedCampaigns = true;
         
-        this.cancelDeleteDepartment();
+        this.cancelDeleteCampaign();
         // Recharger la liste pour refléter les changements
-        this.loadDepartments();
+        this.loadCampaigns();
       },
       error: (error: any) => {
         console.error('❌ Erreur lors de la suppression:', error);
-        this.notificationService.error('Erreur', 'Erreur lors de la suppression du département');
-        this.cancelDeleteDepartment();
+        this.notificationService.error('Erreur', 'Erreur lors de la suppression de la campagne');
+        this.cancelDeleteCampaign();
       }
     });
   }
 
   /**
-   * Annule la suppression d'un département
+   * Annule la suppression d'une campagne
    */
-  cancelDeleteDepartment() {
+  cancelDeleteCampaign() {
     this.showDeleteConfirmation = false;
-    this.departmentToDelete = null;
+    this.campaignToDelete = null;
   }
 
   /**
-   * Affiche la popup de confirmation pour restaurer un département supprimé
+   * Affiche la popup de confirmation pour restaurer une campagne supprimée
    */
-  restoreDepartment(department: Department) {
-    this.departmentToRestore.set(department);
+  restoreCampaign(campaign: Campaign) {
+    this.campaignToRestore.set(campaign);
     this.showRestoreConfirmation.set(true);
   }
 
   /**
-   * Confirme la restauration d'un département
+   * Confirme la restauration d'une campagne
    */
-  confirmRestoreDepartment() {
-    const departmentToRestore = this.departmentToRestore();
-    if (!departmentToRestore) return;
+  confirmRestoreCampaign() {
+    const campaignToRestore = this.campaignToRestore();
+    if (!campaignToRestore) return;
     
-    this.departmentService.restore(departmentToRestore.id).subscribe({
+    this.campaignService.restoreCampaign(campaignToRestore.id).subscribe({
       next: (response: any) => {
-        this.notificationService.success('Succès', `Département ${departmentToRestore.nom} restauré avec succès`);
+        this.notificationService.success('Succès', `Campagne ${campaignToRestore.campaignName} restaurée avec succès`);
         
-        // Marquer le département comme restauré dans la liste locale
-        departmentToRestore.isDeleted = false;
+        // Marquer la campagne comme restaurée dans la liste locale
+        campaignToRestore.isDeleted = false;
         
-        this.cancelRestoreDepartment();
+        this.cancelRestoreCampaign();
         // Recharger la liste pour refléter les changements
-        this.loadDepartments();
+        this.loadCampaigns();
       },
       error: (error: any) => {
-        this.notificationService.error('Erreur', 'Erreur lors de la restauration du département');
-        this.cancelRestoreDepartment();
+        this.notificationService.error('Erreur', 'Erreur lors de la restauration de la campagne');
+        this.cancelRestoreCampaign();
       }
     });
   }
 
   /**
-   * Annule la restauration d'un département
+   * Annule la restauration d'une campagne
    */
-  cancelRestoreDepartment() {
+  cancelRestoreCampaign() {
     this.showRestoreConfirmation.set(false);
-    this.departmentToRestore.set(null);
+    this.campaignToRestore.set(null);
   }
 
 
@@ -545,8 +556,8 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
   goToPage(page: number) {
     this.currentPage.set(page);
     // Mettre à jour l'URL avec le numéro de page (convertir 0-based en 1-based)
-    this.router.navigate(['/dashboard/entities/departments', page + 1]);
-    this.loadDepartments();
+    this.router.navigate(['/dashboard/entities/campaigns', page + 1]);
+    this.loadCampaigns();
   }
 
   /**
@@ -587,21 +598,21 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
     });
     
     this.currentPage.set(0);
-    this.loadDepartments();
+    this.loadCampaigns();
     
     console.log('✅ FIN changePageSize - nouvelle valeur stockée');
   }
 
   /**
-   * Toggle l'affichage des départements supprimés
+   * Toggle l'affichage des campagnes supprimés
    */
-  toggleDeletedDepartments() {
-    this.showDeletedDepartments = !this.showDeletedDepartments;
-    console.log('🔄 Toggle départements supprimés:', this.showDeletedDepartments ? 'ACTIVÉ' : 'DÉSACTIVÉ');
+  toggleDeletedCampaigns() {
+    this.showDeletedCampaigns = !this.showDeletedCampaigns;
+    console.log('🔄 Toggle campagnes supprimés:', this.showDeletedCampaigns ? 'ACTIVÉ' : 'DÉSACTIVÉ');
     console.log('📦 Taille de page actuelle avant toggle:', this.pageSize());
     this.currentPage.set(0); // Revenir à la première page
     console.log('📦 Taille de page actuelle après toggle:', this.pageSize());
-    this.loadDepartments();
+    this.loadCampaigns();
   }
 
   /**
@@ -611,12 +622,6 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
     this.router.navigate(['/dashboard/entities']);
   }
 
-  /**
-   * TrackBy function pour optimiser les performances de rendu de la liste
-   */
-  trackByDepartmentId(index: number, department: Department): number {
-    return department.id;
-  }
 
   /**
    * TrackBy function pour optimiser les performances de rendu des spécialités
@@ -632,8 +637,8 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
     // Réinitialiser les critères de recherche individuels
     this.searchCriteria.idDe = '';
     this.searchCriteria.idA = '';
-    this.searchCriteria.nom = '';
-    this.searchCriteria.description = '';
+    this.searchCriteria.campaignName = '';
+    this.searchCriteria.campaignDesc = '';
     
     // Utiliser search_string pour la recherche globale
     this.searchCriteria.search_string = this.quickSearch.trim();
@@ -643,7 +648,7 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
     
     // Débounce pour éviter trop de requêtes
     setTimeout(() => {
-      this.loadDepartments();
+      this.loadCampaigns();
     }, 300);
   }
 
@@ -666,7 +671,7 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
     this.searchCriteria.search_string = '';
     
     // Lancer la recherche
-    this.loadDepartments();
+    this.loadCampaigns();
   }
 
   /**
@@ -676,13 +681,13 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
     this.advancedCriteria = {
       idDe: '',
       idA: '',
-      nom: '',
-      description: '',
+      campaignName: '',
+      campaignDesc: '',
       isDeleted: undefined,
-      dateCreationDe: '',
-      dateCreationA: '',
-      dateModificationDe: '',
-      dateModificationA: '',
+      campaignStartDe: '',
+      campaignStartA: '',
+      campaignEndDe: '',
+      campaignEndA: '',
       search_string: ''
     };
     this.applyAdvancedSearch();
@@ -767,53 +772,66 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
   /**
    * Formate la date de création pour l'affichage
    */
-  formatCreationDate(department: Department): string {
-    if (!department.dateCreation) return '-';
+  formatCreationDate(campaign: Campaign): string {
+    console.log('📅 formatCreationDate appelée pour campagne:', campaign.id, 'createdAt:', campaign.createdAt);
+    if (!campaign.createdAt) {
+      console.log('📅 createdAt est undefined/null pour campagne:', campaign.id);
+      return '-';
+    }
 
-    // Si la date ne contient pas d'heures (format "jj/mm/aaaa"), afficher seulement la date
-    if (!department.dateCreation.includes(' ')) {
-      const date = this.parseFrenchDate(department.dateCreation);
-      if (!date) return department.dateCreation;
-      
-      return date.toLocaleDateString('fr-FR', {
+    // Le backend envoie les dates au format dd/MM/yyyy
+    // On doit parser ce format manuellement
+    const dateStr = campaign.createdAt.trim();
+    console.log('📅 Date string reçue:', dateStr);
+
+    // Vérifier si c'est déjà au format dd/MM/yyyy
+    const ddMMyyyyRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+    const match = dateStr.match(ddMMyyyyRegex);
+
+    if (match) {
+      const [, day, month, year] = match;
+      // Créer la date en format ISO (YYYY-MM-DD) pour que JavaScript puisse la parser
+      const isoDateStr = `${year}-${month}-${day}`;
+      const date = new Date(isoDateStr);
+      console.log('📅 Date parsée depuis dd/MM/yyyy:', date, 'isValid:', !isNaN(date.getTime()));
+
+      if (isNaN(date.getTime())) {
+        console.log('📅 Date invalide pour campagne:', campaign.id, 'valeur brute:', campaign.createdAt);
+        return 'Invalid Date';
+      }
+
+      const formatted = date.toLocaleDateString('fr-FR', {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric'
       });
+      console.log('📅 Date formatée:', formatted);
+      return formatted;
     }
 
-    // Si la date contient des heures, les afficher
-    const date = this.parseFrenchDate(department.dateCreation);
-    if (!date) return department.dateCreation;
+    // Essayer de parser comme une date ISO standard au cas où
+    const date = new Date(campaign.createdAt);
+    console.log('📅 Date parsée (fallback):', date, 'isValid:', !isNaN(date.getTime()));
+    if (isNaN(date.getTime())) {
+      console.log('📅 Date invalide pour campagne:', campaign.id, 'valeur brute:', campaign.createdAt);
+      return 'Invalid Date';
+    }
 
-    return date.toLocaleDateString('fr-FR', {
+    const formatted = date.toLocaleDateString('fr-FR', {
       day: '2-digit',
       month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      year: 'numeric'
     });
+    console.log('📅 Date formatée (fallback):', formatted);
+    return formatted;
   }
 
-  /**
-   * Retourne le nombre de départements actifs (total réel dans la BD)
-   */
-  getActiveDepartmentsCount(): number {
-    return this.totalActiveDepartments();
-  }
 
   /**
-   * Retourne le nombre de départements supprimés (total réel dans la BD)
+   * Retourne les spécialités d'une campagne donnée
    */
-  getDeletedDepartmentsCount(): number {
-    return this.totalDeletedDepartments();
-  }
-
-  /**
-   * Retourne les spécialités d'un département donné
-   */
-  getDepartmentSpecialities(departmentId: number): Speciality[] {
-    return this.departmentSpecialities()[departmentId] || [];
+  getCampaignSpecialities(campaignId: number): Speciality[] {
+    return this.campaignSpecialities()[campaignId] || [];
   }
 
   /**
@@ -822,124 +840,135 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
   private updateRealCounts() {
     // Compter les actifs (isDeleted = false) - appel léger avec size=1
     const activeCriteria = { ...this.searchCriteria, isDeleted: false, page: 0, size: 1 };
-    this.departmentService.getAllDepartmentsByCriteria(activeCriteria).subscribe({
-      next: (response) => {
-        this.totalActiveDepartments.set(response.totalElements);
+    this.campaignService.getAllCampaignsByCriteria(activeCriteria).subscribe({
+      next: (response: PagedResponse<Campaign>) => {
+        this.totalActiveCampaigns.set(response.totalElements);
       },
-      error: (error) => console.error('Erreur lors du comptage des départements actifs:', error)
+      error: (error: any) => console.error('Erreur lors du comptage des campagnes actives:', error)
     });
 
     // Compter tous (isDeleted = undefined) pour calculer les supprimés
     const allCriteria = { ...this.searchCriteria, isDeleted: undefined, page: 0, size: 1 };
-    this.departmentService.getAllDepartmentsByCriteria(allCriteria).subscribe({
-      next: (response) => {
+    this.campaignService.getAllCampaignsByCriteria(allCriteria).subscribe({
+      next: (response: PagedResponse<Campaign>) => {
         const totalAll = response.totalElements;
         // Petite attente pour s'assurer que totalActive est mis à jour
         setTimeout(() => {
-          const totalActive = this.totalActiveDepartments();
-          this.totalDeletedDepartments.set(totalAll - totalActive);
+          const totalActive = this.totalActiveCampaigns();
+          this.totalDeletedCampaigns.set(totalAll - totalActive);
         }, 100);
       },
-      error: (error) => console.error('Erreur lors du comptage total des départements:', error)
+      error: (error: any) => console.error('Erreur lors du comptage total des campagnes:', error)
     });
   }
 
   /**
-   * Bascule l'expansion d'un département
+   * Bascule l'expansion d'une campagne
    */
-  toggleDepartmentExpansion(departmentId: number) {
-    const currentExpanded = this.expandedDepartments();
+  toggleCampaignExpansion(campaignId: number) {
+    const currentExpanded = this.expandedCampaigns();
     const newExpanded = new Set(currentExpanded);
     
-    if (newExpanded.has(departmentId)) {
+    if (newExpanded.has(campaignId)) {
       // Réduire
-      newExpanded.delete(departmentId);
-      this.expandedDepartments.set(newExpanded);
+      newExpanded.delete(campaignId);
+      this.expandedCampaigns.set(newExpanded);
     } else {
       // Étendre et charger les spécialités
-      newExpanded.add(departmentId);
-      this.expandedDepartments.set(newExpanded);
-      this.loadDepartmentSpecialities(departmentId);
+      newExpanded.add(campaignId);
+      this.expandedCampaigns.set(newExpanded);
+      this.loadCampaignSpecialities(campaignId);
     }
   }
 
   /**
-   * Vérifie si un département est expandé
+   * Vérifie si une campagne est expandée
    */
-  isDepartmentExpanded(departmentId: number): boolean {
-    return this.expandedDepartments().has(departmentId);
+  isCampaignExpanded(campaignId: number): boolean {
+    return this.expandedCampaigns().has(campaignId);
   }
 
   /**
-   * Charge les spécialités d'un département
+   * Charge les spécialités d'une campagne
    */
-  loadDepartmentSpecialities(departmentId: number) {
+  loadCampaignSpecialities(campaignId: number) {
     // Éviter les appels multiples
-    if (this.loadingSpecialities()[departmentId]) {
+    if (this.loadingSpecialities()[campaignId]) {
       return;
     }
 
-    // Activer le loading pour ce département
+    // Activer le loading pour cette campagne
     this.loadingSpecialities.set({
       ...this.loadingSpecialities(),
-      [departmentId]: true
+      [campaignId]: true
     });
 
-    console.log(`🔍 Chargement des spécialités pour le département ${departmentId}...`);
+    console.log(`🔍 Chargement des spécialités pour la campagne ${campaignId}...`);
 
-    // Charger TOUTES les spécialités et filtrer côté frontend par departmentId
+    // Trouver la campagne pour obtenir son specialitiesId
+    const campaign = this.campaigns().find(c => c.id === campaignId);
+    if (!campaign || !campaign.specialitiesId) {
+      console.warn(`⚠️ Campagne ${campaignId} non trouvée ou sans spécialité`);
+      this.loadingSpecialities.set({
+        ...this.loadingSpecialities(),
+        [campaignId]: false
+      });
+      return;
+    }
+
+    // Charger la spécialité spécifique de la campagne
     this.specialityService.getAll({
+      idDe: campaign.specialitiesId.toString(),
+      idA: campaign.specialitiesId.toString(),
       page: 0,
-      size: 10000 // Charger beaucoup pour avoir toutes les spécialités
+      size: 1 // On ne veut qu'une seule spécialité
     }).subscribe({
       next: (response) => {
-        console.log(`✅ Toutes les spécialités chargées:`, response.items);
+        console.log(`✅ Spécialités chargées pour la campagne ${campaignId}:`, response.items);
         
-        // Filtrer les spécialités qui appartiennent à ce département
-        const departmentSpecialities = response.items.filter(speciality => 
-          speciality.departmentId === departmentId
-        );
+        // Utiliser la spécialité trouvée (devrait être unique)
+        const campaignSpecialities = response.items;
         
-        console.log(`✅ Spécialités filtrées pour le département ${departmentId}:`, departmentSpecialities);
+        console.log(`✅ Spécialité de la campagne ${campaignId}:`, campaignSpecialities);
         
-        // Mettre à jour les spécialités du département
-        this.departmentSpecialities.set({
-          ...this.departmentSpecialities(),
-          [departmentId]: departmentSpecialities
+        // Mettre à jour les spécialités de la campagne
+        this.campaignSpecialities.set({
+          ...this.campaignSpecialities(),
+          [campaignId]: campaignSpecialities
         });
 
         // Désactiver le loading
         this.loadingSpecialities.set({
           ...this.loadingSpecialities(),
-          [departmentId]: false
+          [campaignId]: false
         });
       },
       error: (error) => {
-        console.error(`❌ Erreur lors du chargement des spécialités du département ${departmentId}:`, error);
-        this.notificationService.error('Erreur', `Erreur lors du chargement des spécialités du département ${departmentId}`);
+        console.error(`❌ Erreur lors du chargement des spécialités de la campagne ${campaignId}:`, error);
+        this.notificationService.error('Erreur', `Erreur lors du chargement des spécialités de la campagne ${campaignId}`);
         
         // Désactiver le loading même en cas d'erreur
         this.loadingSpecialities.set({
           ...this.loadingSpecialities(),
-          [departmentId]: false
+          [campaignId]: false
         });
       }
     });
   }
 
   /**
-   * Vérifie si les spécialités d'un département sont en cours de chargement
+   * Vérifie si les spécialités d'une campagne sont en cours de chargement
    */
-  isLoadingSpecialities(departmentId: number): boolean {
-    return this.loadingSpecialities()[departmentId] || false;
+  isLoadingSpecialities(campaignId: number): boolean {
+    return this.loadingSpecialities()[campaignId] || false;
   }
 
   /**
-   * Crée une nouvelle spécialité dans un département
+   * Crée une nouvelle spécialité dans une campagne
    */
-  createSpecialityInDepartment(department: Department) {
-    console.log('🆕 Création d\'une spécialité dans le département:', department.nom);
-    this.currentDepartmentForSpeciality.set(department);
+  createSpecialityInCampaign(campaign: Campaign) {
+    console.log('🆕 Création d\'une spécialité dans la campagne:', campaign.campaignName);
+    this.currentCampaignForSpeciality.set(campaign);
     this.specialityCreateFormData = {
       nom: '',
       description: ''
@@ -950,9 +979,9 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
   /**
    * Modifie une spécialité
    */
-  editSpecialityInDepartment(speciality: Speciality, department: Department) {
-    console.log('✏️ Modification de la spécialité:', speciality.nom, 'dans le département:', department.nom);
-    this.currentDepartmentForSpeciality.set(department);
+  editSpecialityInCampaign(speciality: Speciality, campaign: Campaign) {
+    console.log('✏️ Modification de la spécialité:', speciality.nom, 'dans la campagne:', campaign.campaignName);
+    this.currentCampaignForSpeciality.set(campaign);
     this.specialityToEdit.set(speciality);
     this.specialityEditFormData = {
       id: speciality.id,
@@ -965,9 +994,9 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
   /**
    * Supprime une spécialité
    */
-  deleteSpecialityInDepartment(speciality: Speciality, department: Department) {
-    console.log('🗑️ Suppression de la spécialité:', speciality.nom, 'dans le département:', department.nom);
-    this.currentDepartmentForSpeciality.set(department);
+  deleteSpecialityInCampaign(speciality: Speciality, campaign: Campaign) {
+    console.log('🗑️ Suppression de la spécialité:', speciality.nom, 'dans la campagne:', campaign.campaignName);
+    this.currentCampaignForSpeciality.set(campaign);
     this.specialityToDelete.set(speciality);
     this.showSpecialityDeleteConfirmation.set(true);
   }
@@ -975,9 +1004,9 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
   /**
    * Restaure une spécialité supprimée
    */
-  restoreSpecialityInDepartment(speciality: Speciality, department: Department) {
-    console.log('♻️ Restauration de la spécialité:', speciality.nom, 'dans le département:', department.nom);
-    this.currentDepartmentForSpeciality.set(department);
+  restoreSpecialityInCampaign(speciality: Speciality, campaign: Campaign) {
+    console.log('♻️ Restauration de la spécialité:', speciality.nom, 'dans la campagne:', campaign.campaignName);
+    this.currentCampaignForSpeciality.set(campaign);
     this.specialityToRestore.set(speciality);
     this.showSpecialityRestoreConfirmation.set(true);
   }
@@ -986,16 +1015,16 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
    * Confirme la création d'une spécialité
    */
   async confirmCreateSpeciality() {
-    if (!this.currentDepartmentForSpeciality()) {
-      this.notificationService.error('Erreur', 'Département non trouvé');
+    if (!this.currentCampaignForSpeciality()) {
+      this.notificationService.error('Erreur', 'Campagne non trouvée');
       return;
     }
 
-    const department = this.currentDepartmentForSpeciality()!;
+    const campaign = this.currentCampaignForSpeciality()!;
     const specialityData = {
       nom: this.specialityCreateFormData.nom.trim(),
       description: this.specialityCreateFormData.description.trim(),
-      departmentId: department.id
+      campaignId: campaign.id
     };
 
     if (!specialityData.nom) {
@@ -1008,8 +1037,8 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
       const newSpeciality: any = await this.specialityService.create(specialityData);
       console.log('✅ Spécialité créée:', newSpeciality);
 
-      // Recharger les spécialités du département
-      this.loadDepartmentSpecialities(department.id);
+      // Recharger les spécialités de la campagne
+      this.loadCampaignSpecialities(campaign.id);
 
       this.notificationService.success('Succès', 'Spécialité créée avec succès');
       this.cancelCreateSpeciality();
@@ -1024,7 +1053,7 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
    */
   cancelCreateSpeciality() {
     this.showSpecialityCreateDialog.set(false);
-    this.currentDepartmentForSpeciality.set(null);
+    this.currentCampaignForSpeciality.set(null);
     this.specialityCreateFormData = {
       nom: '',
       description: ''
@@ -1035,17 +1064,17 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
    * Confirme la modification d'une spécialité
    */
   async confirmEditSpeciality() {
-    if (!this.specialityToEdit() || !this.currentDepartmentForSpeciality()) {
-      this.notificationService.error('Erreur', 'Spécialité ou département non trouvé');
+    if (!this.specialityToEdit() || !this.currentCampaignForSpeciality()) {
+      this.notificationService.error('Erreur', 'Spécialité ou campagne non trouvée');
       return;
     }
 
     const speciality = this.specialityToEdit()!;
-    const department = this.currentDepartmentForSpeciality()!;
+    const campaign = this.currentCampaignForSpeciality()!;
     const specialityData = {
       nom: this.specialityEditFormData.nom.trim(),
       description: this.specialityEditFormData.description.trim(),
-      departmentId: department.id
+      campaignId: campaign.id
     };
 
     if (!specialityData.nom) {
@@ -1058,8 +1087,8 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
       const updatedSpeciality: any = await this.specialityService.update(speciality.id, specialityData);
       console.log('✅ Spécialité modifiée:', updatedSpeciality);
 
-      // Recharger les spécialités du département
-      this.loadDepartmentSpecialities(department.id);
+      // Recharger les spécialités de la campagne
+      this.loadCampaignSpecialities(campaign.id);
 
       this.notificationService.success('Succès', 'Spécialité modifiée avec succès');
       this.cancelEditSpeciality();
@@ -1075,7 +1104,7 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
   cancelEditSpeciality() {
     this.showSpecialityEditDialog.set(false);
     this.specialityToEdit.set(null);
-    this.currentDepartmentForSpeciality.set(null);
+    this.currentCampaignForSpeciality.set(null);
     this.specialityEditFormData = {
       id: 0,
       nom: '',
@@ -1087,21 +1116,21 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
    * Confirme la suppression d'une spécialité
    */
   async confirmDeleteSpeciality() {
-    if (!this.specialityToDelete() || !this.currentDepartmentForSpeciality()) {
-      this.notificationService.error('Erreur', 'Spécialité ou département non trouvé');
+    if (!this.specialityToDelete() || !this.currentCampaignForSpeciality()) {
+      this.notificationService.error('Erreur', 'Spécialité ou campagne non trouvée');
       return;
     }
 
     const speciality = this.specialityToDelete()!;
-    const department = this.currentDepartmentForSpeciality()!;
+    const campaign = this.currentCampaignForSpeciality()!;
 
     try {
       console.log('🚀 Suppression de la spécialité:', speciality.id);
       await this.specialityService.delete(speciality.id);
       console.log('✅ Spécialité supprimée');
 
-      // Recharger les spécialités du département
-      this.loadDepartmentSpecialities(department.id);
+      // Recharger les spécialités de la campagne
+      this.loadCampaignSpecialities(campaign.id);
 
       this.notificationService.success('Succès', 'Spécialité supprimée avec succès');
       this.cancelDeleteSpeciality();
@@ -1117,28 +1146,28 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
   cancelDeleteSpeciality() {
     this.showSpecialityDeleteConfirmation.set(false);
     this.specialityToDelete.set(null);
-    this.currentDepartmentForSpeciality.set(null);
+    this.currentCampaignForSpeciality.set(null);
   }
 
   /**
    * Confirme la restauration d'une spécialité
    */
   async confirmRestoreSpeciality() {
-    if (!this.specialityToRestore() || !this.currentDepartmentForSpeciality()) {
-      this.notificationService.error('Erreur', 'Spécialité ou département non trouvé');
+    if (!this.specialityToRestore() || !this.currentCampaignForSpeciality()) {
+      this.notificationService.error('Erreur', 'Spécialité ou campagne non trouvée');
       return;
     }
 
     const speciality = this.specialityToRestore()!;
-    const department = this.currentDepartmentForSpeciality()!;
+    const campaign = this.currentCampaignForSpeciality()!;
 
     try {
       console.log('🚀 Restauration de la spécialité:', speciality.id);
       await this.specialityService.restore(speciality.id);
       console.log('✅ Spécialité restaurée');
 
-      // Recharger les spécialités du département
-      this.loadDepartmentSpecialities(department.id);
+      // Recharger les spécialités de la campagne
+      this.loadCampaignSpecialities(campaign.id);
 
       this.notificationService.success('Succès', 'Spécialité restaurée avec succès');
       this.cancelRestoreSpeciality();
@@ -1154,6 +1183,27 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
   cancelRestoreSpeciality() {
     this.showSpecialityRestoreConfirmation.set(false);
     this.specialityToRestore.set(null);
-    this.currentDepartmentForSpeciality.set(null);
+    this.currentCampaignForSpeciality.set(null);
+  }
+
+  /**
+   * Fonction de tracking pour les campagnes dans ngFor
+   */
+  trackByCampaignId(index: number, campaign: Campaign): number {
+    return campaign.id;
+  }
+
+  /**
+   * Retourne le nombre de campagnes actives
+   */
+  getActiveCampaignsCount(): number {
+    return this.totalActiveCampaigns();
+  }
+
+  /**
+   * Retourne le nombre de campagnes supprimées
+   */
+  getDeletedCampaignsCount(): number {
+    return this.totalDeletedCampaigns();
   }
 }
