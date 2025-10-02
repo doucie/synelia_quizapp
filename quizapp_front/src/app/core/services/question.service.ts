@@ -78,7 +78,7 @@ export class QuestionService {
 
     console.log('🔍 Corps de la requête:', requestBody);
 
-    return this.http.post<any>(`${this.apiUrl}/getByCriteria`, requestBody).pipe(
+    return this.http.post<any>(`${this.apiUrl}/getAllByCriteria`, requestBody).pipe(
       map((response: any) => {
         console.log('🔍 Raw API Response (QUESTIONS):', response);
         console.log('🔍 Response keys:', Object.keys(response));
@@ -156,7 +156,7 @@ export class QuestionService {
       data: { id: id }
     };
 
-    return this.http.post<PagedResponse<Question>>(`${this.apiUrl}/getByCriteria`, requestBody).pipe(
+    return this.http.post<PagedResponse<Question>>(`${this.apiUrl}/getAllByCriteria`, requestBody).pipe(
       map(response => {
         console.log('✅ Question récupérée:', response);
         if (response.content && response.content.length > 0) {
@@ -268,7 +268,7 @@ export class QuestionService {
       data: {}
     };
 
-    return this.http.post<PagedResponse<Question>>(`${this.apiUrl}/getByCriteria`, requestBody).pipe(
+    return this.http.post<PagedResponse<Question>>(`${this.apiUrl}/getAllByCriteria`, requestBody).pipe(
       map(response => {
         console.log('✅ Toutes les questions récupérées:', response?.content?.length || 0);
         return response?.content || [];
@@ -290,7 +290,7 @@ export class QuestionService {
       data: { specialityId: specialityId }
     };
 
-    return this.http.post<PagedResponse<Question>>(`${this.apiUrl}/getByCriteria`, requestBody).pipe(
+    return this.http.post<PagedResponse<Question>>(`${this.apiUrl}/getAllByCriteria`, requestBody).pipe(
       map(response => {
         console.log('✅ Questions de la spécialité récupérées:', response.content.length);
         return response.content;
@@ -312,7 +312,7 @@ export class QuestionService {
       data: { questionType: questionType }
     };
 
-    return this.http.post<PagedResponse<Question>>(`${this.apiUrl}/getByCriteria`, requestBody).pipe(
+    return this.http.post<PagedResponse<Question>>(`${this.apiUrl}/getAllByCriteria`, requestBody).pipe(
       map(response => {
         console.log('✅ Questions du type récupérées:', response.content.length);
         return response.content;
@@ -334,7 +334,7 @@ export class QuestionService {
       data: { difficultyLevel: difficultyLevel }
     };
 
-    return this.http.post<PagedResponse<Question>>(`${this.apiUrl}/getByCriteria`, requestBody).pipe(
+    return this.http.post<PagedResponse<Question>>(`${this.apiUrl}/getAllByCriteria`, requestBody).pipe(
       map(response => {
         console.log('✅ Questions de difficulté récupérées:', response.content.length);
         return response.content;
@@ -356,7 +356,7 @@ export class QuestionService {
       data: { search_string: searchText }
     };
 
-    return this.http.post<PagedResponse<Question>>(`${this.apiUrl}/getByCriteria`, requestBody).pipe(
+    return this.http.post<PagedResponse<Question>>(`${this.apiUrl}/getAllByCriteria`, requestBody).pipe(
       map(response => {
         console.log('✅ Résultats de recherche:', response.content.length);
         return response.content;
@@ -378,7 +378,7 @@ export class QuestionService {
       export: true
     };
 
-    return this.http.post(`${this.apiUrl}/getByCriteria`, requestBody, {
+    return this.http.post(`${this.apiUrl}/getAllByCriteria`, requestBody, {
       responseType: 'blob'
     }).pipe(
       map(response => {
