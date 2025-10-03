@@ -42,7 +42,7 @@ export class ApplyPositionComponent implements OnInit {
   isLoadingToken = signal(true);
 
   // Formulaire
-  formData = signal<ApplicationForm>({
+  formData: ApplicationForm = {
     firstName: '',
     lastName: '',
     email: '',
@@ -53,7 +53,7 @@ export class ApplyPositionComponent implements OnInit {
     remoteWork: false,
     relocate: false,
     consent: false
-  });
+  };
 
   // États
   isSubmitting = signal(false);
@@ -93,14 +93,14 @@ export class ApplyPositionComponent implements OnInit {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
       const file = input.files[0];
-      this.formData.update(data => ({ ...data, cvFile: file }));
+      this.formData.cvFile = file;
       this.fileName.set(file.name);
     }
   }
 
   onSubmit(): void {
     // Validation basique
-    const data = this.formData();
+    const data = this.formData;
     
     if (!data.firstName || !data.lastName || !data.email || !data.phone || !data.birthDate) {
       this.submitError.set('Veuillez remplir tous les champs obligatoires');
@@ -136,7 +136,7 @@ export class ApplyPositionComponent implements OnInit {
   }
 
   resetForm(): void {
-    this.formData.set({
+    this.formData = {
       firstName: '',
       lastName: '',
       email: '',
@@ -147,7 +147,7 @@ export class ApplyPositionComponent implements OnInit {
       remoteWork: false,
       relocate: false,
       consent: false
-    });
+    };
     this.fileName.set('');
     this.submitSuccess.set(false);
     this.submitError.set(null);

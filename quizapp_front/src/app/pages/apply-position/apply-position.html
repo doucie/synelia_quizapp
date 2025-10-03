@@ -20,7 +20,7 @@
         </div>
         <h2>Candidature envoyée avec succès !</h2>
         <p>Nous avons bien reçu votre candidature. Notre équipe RH l'examinera dans les plus brefs délais.</p>
-        <p class="success-info">Vous recevrez un email de confirmation à <strong>{{ formData().email }}</strong></p>
+        <p class="success-info">Vous recevrez un email de confirmation à <strong>{{ formData.email }}</strong></p>
         <div class="success-actions">
           <button type="button" class="btn btn--primary" (click)="resetForm()">
             Soumettre une autre candidature
@@ -63,7 +63,7 @@
                 id="firstName"
                 name="firstName"
                 class="form-control"
-                [(ngModel)]="formData().firstName"
+                [(ngModel)]="formData.firstName"
                 required
                 placeholder="Entrez votre prénom"
               />
@@ -78,7 +78,7 @@
                 id="lastName"
                 name="lastName"
                 class="form-control"
-                [(ngModel)]="formData().lastName"
+                [(ngModel)]="formData.lastName"
                 required
                 placeholder="Entrez votre nom"
               />
@@ -95,7 +95,7 @@
                 id="email"
                 name="email"
                 class="form-control"
-                [(ngModel)]="formData().email"
+                [(ngModel)]="formData.email"
                 required
                 placeholder="votre.email@exemple.com"
               />
@@ -110,7 +110,7 @@
                 id="phone"
                 name="phone"
                 class="form-control"
-                [(ngModel)]="formData().phone"
+                [(ngModel)]="formData.phone"
                 required
                 placeholder="+33 6 12 34 56 78"
               />
@@ -127,7 +127,7 @@
                 id="birthDate"
                 name="birthDate"
                 class="form-control"
-                [(ngModel)]="formData().birthDate"
+                [(ngModel)]="formData.birthDate"
                 required
               />
             </div>
@@ -189,7 +189,7 @@
               id="motivation"
               name="motivation"
               class="form-control"
-              [(ngModel)]="formData().motivationLetter"
+              [(ngModel)]="formData.motivationLetter"
               rows="6"
               placeholder="Expliquez-nous pourquoi vous souhaitez rejoindre Synelia et ce que vous pouvez apporter à notre équipe..."
             ></textarea>
@@ -215,7 +215,7 @@
               <input
                 type="checkbox"
                 name="remoteWork"
-                [(ngModel)]="formData().remoteWork"
+                [(ngModel)]="formData.remoteWork"
                 class="checkbox-input"
               />
               <span class="checkbox-custom"></span>
@@ -230,7 +230,7 @@
               <input
                 type="checkbox"
                 name="relocate"
-                [(ngModel)]="formData().relocate"
+                [(ngModel)]="formData.relocate"
                 class="checkbox-input"
               />
               <span class="checkbox-custom"></span>
@@ -248,7 +248,7 @@
               <input
                 type="checkbox"
                 name="consent"
-                [(ngModel)]="formData().consent"
+                [(ngModel)]="formData.consent"
                 class="checkbox-input"
                 required
               />
