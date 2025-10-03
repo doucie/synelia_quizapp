@@ -77,6 +77,7 @@ public interface ApplicationsTransformer {
 		@Mapping(source="dto.candidateEmail", target="candidateEmail"),
 		@Mapping(source="dto.candidatePhone", target="candidatePhone"),
 		@Mapping(source="dto.candidateCvPath", target="candidateCvPath"),
+		@Mapping(source="dto.motivationLetter", target="motivationLetter"),
 		@Mapping(source="dto.emailVerified", target="emailVerified"),
 		@Mapping(source="dto.quizScore", target="quizScore"),
 		@Mapping(source="dto.evaluationScore", target="evaluationScore"),

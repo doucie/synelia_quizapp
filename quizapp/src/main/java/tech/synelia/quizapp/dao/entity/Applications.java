@@ -57,6 +57,13 @@ public class Applications implements Serializable, Cloneable {
     @Column(name="candidate_cv_path", length=1000)
     private String     candidateCvPath ;
 
+    @Temporal(TemporalType.DATE)
+    @Column(name="candidate_birth_date")
+    private Date       candidateBirthDate ;
+
+    @Column(name="motivation_letter", columnDefinition="TEXT")
+    private String     motivationLetter ;
+
     @Column(name="email_verified", nullable=false)
     private Boolean    emailVerified ;
 

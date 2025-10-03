@@ -10,12 +10,7 @@ interface ApplicationForm {
   lastName: string;
   email: string;
   phone: string;
-  
-  // Informations professionnelles
-  position: string;
-  department: string;
-  experience: string;
-  availability: string;
+  birthDate: string;
   
   // Documents et motivation
   cvFile: File | null;
@@ -52,10 +47,7 @@ export class ApplyPositionComponent implements OnInit {
     lastName: '',
     email: '',
     phone: '',
-    position: '',
-    department: '',
-    experience: '',
-    availability: '',
+    birthDate: '',
     cvFile: null,
     motivationLetter: '',
     remoteWork: false,
@@ -68,28 +60,6 @@ export class ApplyPositionComponent implements OnInit {
   submitSuccess = signal(false);
   submitError = signal<string | null>(null);
   fileName = signal<string>('');
-
-  // Positions disponibles (à remplacer par un appel API)
-  availablePositions = signal([
-    'Développeur Frontend',
-    'Développeur Backend',
-    'Développeur Full Stack',
-    'Data Scientist',
-    'DevOps Engineer',
-    'Product Manager',
-    'UI/UX Designer',
-    'QA Engineer'
-  ]);
-
-  // Départements disponibles (à remplacer par un appel API)
-  availableDepartments = signal([
-    'Développement',
-    'Data & IA',
-    'Infrastructure',
-    'Product',
-    'Design',
-    'Quality Assurance'
-  ]);
 
   ngOnInit(): void {
     // Récupérer le token depuis les paramètres de route
@@ -132,13 +102,8 @@ export class ApplyPositionComponent implements OnInit {
     // Validation basique
     const data = this.formData();
     
-    if (!data.firstName || !data.lastName || !data.email || !data.phone) {
+    if (!data.firstName || !data.lastName || !data.email || !data.phone || !data.birthDate) {
       this.submitError.set('Veuillez remplir tous les champs obligatoires');
-      return;
-    }
-
-    if (!data.position || !data.department) {
-      this.submitError.set('Veuillez sélectionner un poste et un département');
       return;
     }
 
@@ -176,10 +141,7 @@ export class ApplyPositionComponent implements OnInit {
       lastName: '',
       email: '',
       phone: '',
-      position: '',
-      department: '',
-      experience: '',
-      availability: '',
+      birthDate: '',
       cvFile: null,
       motivationLetter: '',
       remoteWork: false,

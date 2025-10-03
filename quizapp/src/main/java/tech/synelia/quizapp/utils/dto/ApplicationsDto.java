@@ -38,6 +38,8 @@ public class ApplicationsDto extends _ApplicationsDto implements Cloneable{
     private String     candidateEmail       ;
     private String     candidatePhone       ;
     private String     candidateCvPath      ;
+    private String     candidateBirthDate   ; // Date de naissance du candidat
+    private String     motivationLetter     ; // Lettre de motivation du candidat
     private Boolean    emailVerified        ;
     private Integer    quizScore            ;
     private Float      evaluationScore      ;
@@ -62,6 +64,8 @@ public class ApplicationsDto extends _ApplicationsDto implements Cloneable{
 	private SearchParam<String>   candidateEmailParam   ;                     
 	private SearchParam<String>   candidatePhoneParam   ;                     
 	private SearchParam<String>   candidateCvPathParam  ;                     
+	private SearchParam<String>   candidateBirthDateParam;                     
+	private SearchParam<String>   motivationLetterParam ;                     
 	private SearchParam<Boolean>  emailVerifiedParam    ;                     
 	private SearchParam<Integer>  quizScoreParam        ;                     
 	private SearchParam<Float>    evaluationScoreParam  ;                     

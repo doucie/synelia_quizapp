@@ -34,6 +34,11 @@
 
     <!-- Formulaire -->
     @if (!submitSuccess()) {
+      @if (campaignName()) {
+        <p class="campaign-info">
+          ( {{ campaignName() }} )
+        </p>
+      }
       <form class="apply-form" (ngSubmit)="onSubmit()" #applicationForm="ngForm">
         
         <!-- Section 1: Informations personnelles -->
@@ -111,100 +116,25 @@
               />
             </div>
           </div>
-        </section>
-
-        <!-- Section 2: Informations professionnelles -->
-        <section class="form-section">
-          <h2 class="section-title">
-            <span class="section-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
-                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
-              </svg>
-            </span>
-            Informations professionnelles
-          </h2>
 
           <div class="form-row">
             <div class="form-group">
-              <label for="position" class="form-label">
-                Poste souhaité <span class="required">*</span>
+              <label for="birthDate" class="form-label">
+                Date de naissance <span class="required">*</span>
               </label>
-              <select
-                id="position"
-                name="position"
+              <input
+                type="date"
+                id="birthDate"
+                name="birthDate"
                 class="form-control"
-                [(ngModel)]="formData().position"
+                [(ngModel)]="formData().birthDate"
                 required
-              >
-                <option value="">Sélectionnez un poste</option>
-                @for (position of availablePositions(); track position) {
-                  <option [value]="position">{{ position }}</option>
-                }
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label for="department" class="form-label">
-                Département <span class="required">*</span>
-              </label>
-              <select
-                id="department"
-                name="department"
-                class="form-control"
-                [(ngModel)]="formData().department"
-                required
-              >
-                <option value="">Sélectionnez un département</option>
-                @for (dept of availableDepartments(); track dept) {
-                  <option [value]="dept">{{ dept }}</option>
-                }
-              </select>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="experience" class="form-label">
-                Années d'expérience
-              </label>
-              <select
-                id="experience"
-                name="experience"
-                class="form-control"
-                [(ngModel)]="formData().experience"
-              >
-                <option value="">Sélectionnez votre expérience</option>
-                <option value="0-1">Moins d'1 an</option>
-                <option value="1-3">1 à 3 ans</option>
-                <option value="3-5">3 à 5 ans</option>
-                <option value="5-10">5 à 10 ans</option>
-                <option value="10+">Plus de 10 ans</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label for="availability" class="form-label">
-                Disponibilité
-              </label>
-              <select
-                id="availability"
-                name="availability"
-                class="form-control"
-                [(ngModel)]="formData().availability"
-              >
-                <option value="">Sélectionnez votre disponibilité</option>
-                <option value="immediate">Immédiate</option>
-                <option value="1-month">Dans 1 mois</option>
-                <option value="2-months">Dans 2 mois</option>
-                <option value="3-months">Dans 3 mois</option>
-                <option value="flexible">Flexible</option>
-              </select>
+              />
             </div>
           </div>
         </section>
 
-        <!-- Section 3: Documents et motivation -->
+        <!-- Section 2: Documents et motivation -->
         <section class="form-section">
           <h2 class="section-title">
             <span class="section-icon">
