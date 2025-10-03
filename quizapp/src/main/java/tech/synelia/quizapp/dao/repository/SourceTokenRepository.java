@@ -50,6 +50,28 @@ public interface SourceTokenRepository extends JpaRepository<SourceToken, Intege
 	 */
 	@Query("select e from SourceToken e where e.tokenString = :tokenString and e.isDeleted = :isDeleted")
 	SourceToken findByTokenString(@Param("tokenString")String tokenString, @Param("isDeleted")Boolean isDeleted);
+	
+	/**
+	 * Finds a valid SourceToken by checking:
+	 * - Token exists and matches the tokenString
+	 * - Token is not deleted
+	 * - Token is not expired (expirationDate > current date or expirationDate is null)
+	 * - Associated campaign status is 'active'
+	 * 
+	 * @param tokenString The token string to validate
+	 * @param isDeleted Should be false to exclude deleted tokens
+	 * @param currentDate Current date to check expiration
+	 * @return A valid SourceToken or null if not found or invalid
+	 */
+	@Query("select e from SourceToken e " +
+	       "where e.tokenString = :tokenString " +
+	       "and e.isDeleted = :isDeleted " +
+	       "and (e.expirationDate is null or e.expirationDate > :currentDate) " +
+	       "and e.campaigns.campaignStatus = 'active'")
+	SourceToken findValidToken(@Param("tokenString")String tokenString, 
+	                           @Param("isDeleted")Boolean isDeleted,
+	                           @Param("currentDate")Date currentDate);
+	
 	/**
 	 * Finds SourceToken by using createdAt as a search criteria.
 	 * 

@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard, noAuthGuard } from './core/guards/auth.guard';
 import { superRoleGuard } from './core/guards/role.guard';
+import { sourceTokenGuard } from './core/guards/source-token.guard';
 
 export const routes: Routes = [
   { 
@@ -15,10 +16,6 @@ export const routes: Routes = [
   {
     path: 'suivre-candidature',
     loadComponent: () => import('./pages/track-application/track-application').then(m => m.TrackApplicationComponent)
-  },
-  {
-    path: 'postuler',
-    loadComponent: () => import('./pages/apply-position').then(m => m.ApplyPositionComponent)
   },
   {
     path: 'connexion',
@@ -105,6 +102,12 @@ export const routes: Routes = [
         canActivate: [superRoleGuard]
       }
     ]
+  },
+  {
+    // Route pour postuler avec un source token
+    path: 'postuler/:sourceToken',
+    loadComponent: () => import('./pages/apply-position').then(m => m.ApplyPositionComponent),
+    canActivate: [sourceTokenGuard]
   },
   { 
     path: '**', 

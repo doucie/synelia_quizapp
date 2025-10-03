@@ -18,6 +18,8 @@ body {
   color: var(--text-primary);
   background: var(--background);
   transition: var(--transition);
+  max-height: 100vh;
+  overflow: hidden; // Empêche le scroll global
 }
 
 /* Modern Scrollbar for the entire app */

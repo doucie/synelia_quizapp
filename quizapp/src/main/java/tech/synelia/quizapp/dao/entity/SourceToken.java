@@ -49,6 +49,10 @@ public class SourceToken implements Serializable, Cloneable {
     private String     sourceTokenName ;
 
     @Temporal(TemporalType.TIMESTAMP)
+    @Column(name="expiration_date")
+    private Date       expirationDate ;
+
+    @Temporal(TemporalType.TIMESTAMP)
     @Column(name="created_at")
     private Date       createdAt    ;
 

@@ -1,6 +1,6 @@
 <!-- Header uniquement pour les routes non-dashboard -->
 @if (!isDashboardRoute()) {
-  <app-header></app-header>
+  <app-header #headerElement></app-header>
 }
 
 <main class="main-content" [class.dashboard-main]="isDashboardRoute()">

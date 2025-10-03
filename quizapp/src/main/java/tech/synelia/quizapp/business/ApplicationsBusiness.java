@@ -96,13 +96,13 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			fieldsToVerify.put("candidateEmail", dto.getCandidateEmail());
 			fieldsToVerify.put("candidatePhone", dto.getCandidatePhone());
 			fieldsToVerify.put("candidateCvPath", dto.getCandidateCvPath());
-			fieldsToVerify.put("emailVerified", dto.getEmailVerified());
-			fieldsToVerify.put("quizScore", dto.getQuizScore());
-			fieldsToVerify.put("evaluationScore", dto.getEvaluationScore());
-			fieldsToVerify.put("applicationStatus", dto.getApplicationStatus());
-			fieldsToVerify.put("visitToken", dto.getVisitToken());
-			fieldsToVerify.put("searchString", dto.getSearchString());
-			fieldsToVerify.put("sourceTokenId", dto.getSourceTokenId());
+			// fieldsToVerify.put("emailVerified", dto.getEmailVerified());
+			// fieldsToVerify.put("quizScore", dto.getQuizScore());
+			// fieldsToVerify.put("evaluationScore", dto.getEvaluationScore());
+			// fieldsToVerify.put("applicationStatus", dto.getApplicationStatus());
+			// fieldsToVerify.put("visitToken", dto.getVisitToken());
+			// fieldsToVerify.put("searchString", dto.getSearchString());
+			// fieldsToVerify.put("sourceTokenId", dto.getSourceTokenId());
 			if (!Validate.RequiredValue(fieldsToVerify).isGood()) {
 				throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
 			}

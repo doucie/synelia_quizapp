@@ -27,6 +27,7 @@ import org.springframework.transaction.CannotCreateTransactionException;
 import org.springframework.transaction.TransactionSystemException;
 
 import java.net.URI;
+import java.util.Collections;
 import java.util.Locale;
 
 import tech.synelia.quizapp.utils.*;
@@ -35,7 +36,10 @@ import tech.synelia.quizapp.utils.dto.*;
 import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.enums.FunctionalityEnum;
+import tech.synelia.quizapp.utils.dto.transformer.SourceTokenTransformer;
 import tech.synelia.quizapp.business.*;
+import tech.synelia.quizapp.dao.entity.SourceToken;
+import tech.synelia.quizapp.dao.repository.SourceTokenRepository;
 import tech.synelia.quizapp.rest.fact.ControllerFactory;
 
 /**
@@ -63,6 +67,8 @@ public class SourceTokenController {
     private ControllerFactory<SourceTokenDto> controllerFactory;
 	@Autowired
 	private SourceTokenBusiness sourceTokenBusiness;
+	@Autowired
+	private SourceTokenRepository sourceTokenRepository;
 
 	@RequestMapping(value="/create",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
     public ResponseEntity<Response<SourceTokenDto>> create(@RequestBody Request<SourceTokenDto> request) throws Exception {
@@ -139,4 +145,120 @@ public class SourceTokenController {
 	  slf4jLogger.info("end method /SourceTokenDto/custom");
 	  return response;
 	 }
+
+	/**
+	 * Valide l'existence et la validité d'un source token par son token string
+	 * Utilisé pour vérifier qu'un lien de candidature est valide
+	 * 
+	 * Vérifie :
+	 * - Le token existe
+	 * - Le token n'est pas supprimé
+	 * - Le token n'est pas expiré (expiration_date > NOW() ou NULL)
+	 * - La campagne associée a le statut 'active'
+	 * 
+	 * @param tokenString Le token string à valider (6 caractères)
+	 * @return Response avec isValid et les informations de la campagne
+	 */
+	@RequestMapping(value="/validate/{tokenString}", method=RequestMethod.GET, produces={"application/json"})
+	public Response<SourceTokenDto> validateToken(@org.springframework.web.bind.annotation.PathVariable("tokenString") String tokenString) {
+		log.info("start method /sourceToken/validate/" + tokenString);
+		Response<SourceTokenDto> response = new Response<>();
+		String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
+		Locale locale = Locale.of(languageID != null ? languageID : "fr", "");
+		
+		try {
+			// Validation du format
+			if (tokenString == null || tokenString.length() != 6) {
+				response.setStatus(functionalError.DATA_NOT_EXIST("Token invalide - format incorrect", locale));
+				response.setHasError(true);
+				return response;
+			}
+			
+			// Rechercher le token valide (non supprimé, non expiré, campagne active)
+			SourceToken sourceToken = sourceTokenRepository.findValidToken(
+				tokenString.toLowerCase(), 
+				false, 
+				new java.util.Date()
+			);
+			
+			if (sourceToken == null) {
+				response.setStatus(functionalError.DATA_NOT_EXIST("Token introuvable, expiré ou campagne inactive", locale));
+				response.setHasError(true);
+				return response;
+			}
+			
+			// Transformer en DTO
+			SourceTokenDto dto = SourceTokenTransformer.INSTANCE.toDto(sourceToken);
+			
+			// Ajouter les infos de la campagne si disponible
+			if (sourceToken.getCampaigns() != null) {
+				dto.setCampaignId(sourceToken.getCampaigns().getId());
+				dto.setCampaignName(sourceToken.getCampaigns().getCampaignTitle());
+			}
+			
+			response.setItems(Collections.singletonList(dto));
+			response.setHasError(false);
+			response.setStatus(functionalError.SUCCESS("Token valide", locale));
+			
+			log.info("end method /sourceToken/validate/" + tokenString);
+			return response;
+			
+		} catch (Exception e) {
+			slf4jLogger.error("Erreur validation token: " + tokenString, e);
+			response.setStatus(functionalError.REQUEST_FAIL("Erreur technique lors de la validation", locale));
+			response.setHasError(true);
+			return response;
+		}
+	}
+
+	/**
+	 * Récupère les informations détaillées d'un source token
+	 * Même validation que validateToken mais retourne plus d'informations
+	 * 
+	 * @param tokenString Le token string
+	 * @return Response avec les données complètes du token
+	 */
+	@RequestMapping(value="/info/{tokenString}", method=RequestMethod.GET, produces={"application/json"})
+	public Response<SourceTokenDto> getTokenInfo(@org.springframework.web.bind.annotation.PathVariable("tokenString") String tokenString) {
+		log.info("start method /sourceToken/info/" + tokenString);
+		Response<SourceTokenDto> response = new Response<>();
+		String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
+		Locale locale = Locale.of(languageID != null ? languageID : "fr", "");
+		
+		try {
+			// Rechercher le token valide (non supprimé, non expiré, campagne active)
+			SourceToken sourceToken = sourceTokenRepository.findValidToken(
+				tokenString.toLowerCase(), 
+				false, 
+				new java.util.Date()
+			);
+			
+			if (sourceToken == null) {
+				response.setStatus(functionalError.DATA_NOT_EXIST("Token introuvable, expiré ou campagne inactive", locale));
+				response.setHasError(true);
+				return response;
+			}
+			
+			// Transformer en DTO avec toutes les infos
+			SourceTokenDto dto = SourceTokenTransformer.INSTANCE.toDto(sourceToken);
+			
+			if (sourceToken.getCampaigns() != null) {
+				dto.setCampaignId(sourceToken.getCampaigns().getId());
+				dto.setCampaignName(sourceToken.getCampaigns().getCampaignTitle());
+			}
+			
+			response.setItems(Collections.singletonList(dto));
+			response.setHasError(false);
+			response.setStatus(functionalError.SUCCESS("Informations récupérées", locale));
+			
+			log.info("end method /sourceToken/info/" + tokenString);
+			return response;
+			
+		} catch (Exception e) {
+			slf4jLogger.error("Erreur récupération info token: " + tokenString, e);
+			response.setStatus(functionalError.REQUEST_FAIL("Erreur technique", locale));
+			response.setHasError(true);
+			return response;
+		}
+	}
 }

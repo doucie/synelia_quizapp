@@ -1,4 +1,4 @@
-import { Component, signal, ChangeDetectionStrategy, computed } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy, computed, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { HeaderComponent } from './components/header/header';
 import { CommonModule } from '@angular/common';
@@ -11,7 +11,7 @@ import { filter } from 'rxjs/operators';
   styleUrl: './app.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AppComponent {
+export class AppComponent implements AfterViewInit, OnDestroy {
   protected readonly title = signal('Synelia Quiz App');
   
   // Signal pour tracker l'URL actuelle
@@ -21,6 +21,12 @@ export class AppComponent {
   protected readonly isDashboardRoute = computed(() => {
     return this.currentUrl().startsWith('/dashboard');
   });
+
+  // Hauteur du header
+  private readonly headerHeight = signal(0);
+  private resizeObserver: ResizeObserver | null = null;
+
+  @ViewChild('headerElement', { static: false }) headerElement!: ElementRef<HTMLElement>;
 
   constructor(private router: Router) {
     // Écouter les changements de route
@@ -32,5 +38,34 @@ export class AppComponent {
     
     // Initialiser avec l'URL actuelle
     this.currentUrl.set(this.router.url);
+  }
+
+  ngAfterViewInit() {
+    if (this.headerElement) {
+      // Calculer la hauteur initiale
+      this.updateHeaderHeight();
+      
+      // Observer les changements de taille
+      this.resizeObserver = new ResizeObserver(() => {
+        this.updateHeaderHeight();
+      });
+      this.resizeObserver.observe(this.headerElement.nativeElement);
+    }
+  }
+
+  ngOnDestroy() {
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+    }
+  }
+
+  private updateHeaderHeight() {
+    if (this.headerElement) {
+      const height = this.headerElement.nativeElement.offsetHeight;
+      this.headerHeight.set(height);
+      
+      // Mettre à jour la variable CSS
+      document.documentElement.style.setProperty('--header-height', `${height}px`);
+    }
   }
 }

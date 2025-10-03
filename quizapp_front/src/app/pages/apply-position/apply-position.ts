@@ -1,7 +1,8 @@
-import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { SourceTokenService } from '../../services/source-token.service';
 
 interface ApplicationForm {
   // Informations personnelles
@@ -35,7 +36,16 @@ interface ApplicationForm {
   styleUrl: './apply-position.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ApplyPositionComponent {
+export class ApplyPositionComponent implements OnInit {
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly sourceTokenService = inject(SourceTokenService);
+
+  // Token source et informations de campagne
+  sourceToken = signal<string>('');
+  campaignName = signal<string>('');
+  isLoadingToken = signal(true);
+
   // Formulaire
   formData = signal<ApplicationForm>({
     firstName: '',
@@ -81,6 +91,34 @@ export class ApplyPositionComponent {
     'Quality Assurance'
   ]);
 
+  ngOnInit(): void {
+    // Récupérer le token depuis les paramètres de route
+    const tokenString = this.route.snapshot.paramMap.get('sourceToken');
+    
+    if (tokenString) {
+      this.sourceToken.set(tokenString);
+      
+      // Charger les informations du token
+      this.sourceTokenService.getTokenInfo(tokenString).subscribe({
+        next: (response) => {
+          if (response.items && response.items.length > 0) {
+            const tokenData = response.items[0];
+            this.campaignName.set(tokenData.campaignName || 'Campagne de recrutement');
+          }
+          this.isLoadingToken.set(false);
+        },
+        error: (error) => {
+          console.error('Erreur chargement token:', error);
+          this.campaignName.set('Campagne de recrutement Synelia');
+          this.isLoadingToken.set(false);
+        }
+      });
+    } else {
+      // Pas de token, rediriger
+      this.router.navigate(['/']);
+    }
+  }
+
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
@@ -125,7 +163,9 @@ export class ApplyPositionComponent {
       
       console.log('Candidature soumise:', {
         ...data,
-        cvFileName: data.cvFile?.name
+        cvFileName: data.cvFile?.name,
+        sourceToken: this.sourceToken(), // Inclure le token dans la soumission
+        campaignName: this.campaignName()
       });
     }, 2000);
   }
