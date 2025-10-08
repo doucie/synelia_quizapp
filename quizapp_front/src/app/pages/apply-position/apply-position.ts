@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { SourceTokenService } from '../../services/source-token.service';
+import { ApplicationService, Application } from '../../core/services/application.service';
+import { FileService } from '../../core/services/file.service';
 
 interface ApplicationForm {
   // Informations personnelles
@@ -35,9 +37,12 @@ export class ApplyPositionComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly sourceTokenService = inject(SourceTokenService);
+  private readonly applicationService = inject(ApplicationService);
+  private readonly fileService = inject(FileService);
 
   // Token source et informations de campagne
   sourceToken = signal<string>('');
+  sourceTokenId = signal<number | null>(null);
   campaignName = signal<string>('');
   isLoadingToken = signal(true);
 
@@ -57,9 +62,11 @@ export class ApplyPositionComponent implements OnInit {
 
   // États
   isSubmitting = signal(false);
+  isUploadingCv = signal(false);
   submitSuccess = signal(false);
   submitError = signal<string | null>(null);
   fileName = signal<string>('');
+  cvFilePath = signal<string>('');
 
   ngOnInit(): void {
     // Récupérer le token depuis les paramètres de route
@@ -74,6 +81,7 @@ export class ApplyPositionComponent implements OnInit {
           if (response.items && response.items.length > 0) {
             const tokenData = response.items[0];
             this.campaignName.set(tokenData.campaignName || 'Campagne de recrutement');
+            this.sourceTokenId.set(tokenData.id || null);
           }
           this.isLoadingToken.set(false);
         },
@@ -93,12 +101,25 @@ export class ApplyPositionComponent implements OnInit {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
       const file = input.files[0];
+      
+      // Validation du fichier
+      const validation = this.fileService.validateCvFile(file);
+      if (!validation.isValid) {
+        this.submitError.set(validation.errorMessage || 'Fichier invalide');
+        input.value = ''; // Reset input
+        return;
+      }
+
+      // Clear previous errors
+      this.submitError.set(null);
+      
+      // Update form data and file name
       this.formData.update(data => ({ ...data, cvFile: file }));
       this.fileName.set(file.name);
     }
   }
 
-  onSubmit(): void {
+  async onSubmit(): Promise<void> {
     // Validation basique
     const data = this.formData();
     
@@ -117,22 +138,73 @@ export class ApplyPositionComponent implements OnInit {
       return;
     }
 
-    // Simulation de soumission (à remplacer par un appel API)
     this.isSubmitting.set(true);
     this.submitError.set(null);
 
-    // Simuler un délai réseau
-    setTimeout(() => {
-      this.isSubmitting.set(false);
-      this.submitSuccess.set(true);
+    try {
+      // Étape 1 : Upload du CV
+      this.isUploadingCv.set(true);
       
-      console.log('Candidature soumise:', {
-        ...data,
-        cvFileName: data.cvFile?.name,
-        sourceToken: this.sourceToken(), // Inclure le token dans la soumission
-        campaignName: this.campaignName()
+      // Utilisation de la simulation d'upload pour l'instant
+      // TODO: Remplacer par this.fileService.uploadCvFile quand l'endpoint sera prêt
+      const uploadResult = await this.fileService.simulateUpload(data.cvFile, data.email);
+      
+      this.isUploadingCv.set(false);
+
+      if (!uploadResult.success) {
+        throw new Error(uploadResult.error || 'Erreur lors de l\'upload du CV');
+      }
+
+      this.cvFilePath.set(uploadResult.filePath || '');
+
+      // Étape 2 : Créer l'application
+      const application: Application = {
+        candidateFirstName: data.firstName,
+        candidateLastName: data.lastName,
+        candidateEmail: data.email,
+        candidatePhone: data.phone,
+        candidateBirthDate: data.birthDate,
+        candidateCvPath: uploadResult.filePath,
+        motivationLetter: data.motivationLetter || '',
+        emailVerified: false,
+        applicationStatus: 'PENDING',
+        sourceTokenId: this.sourceTokenId() || undefined,
+        isDeleted: false,
+        createdAt: new Date().toISOString()
+      };
+
+      // Appel à l'API backend
+      this.applicationService.createApplication(application).subscribe({
+        next: (response) => {
+          this.isSubmitting.set(false);
+          
+          if (response.hasError || !response.items || response.items.length === 0) {
+            throw new Error('Erreur lors de la création de la candidature');
+          }
+
+          this.submitSuccess.set(true);
+          console.log('Candidature créée avec succès:', response.items[0]);
+        },
+        error: (error) => {
+          this.isSubmitting.set(false);
+          console.error('Erreur lors de la soumission:', error);
+          this.submitError.set(
+            'Une erreur est survenue lors de l\'envoi de votre candidature. Veuillez réessayer plus tard.'
+          );
+        }
       });
-    }, 2000);
+
+    } catch (error) {
+      this.isSubmitting.set(false);
+      this.isUploadingCv.set(false);
+      console.error('Erreur:', error);
+      
+      if (error instanceof Error) {
+        this.submitError.set(error.message);
+      } else {
+        this.submitError.set('Une erreur inattendue s\'est produite. Veuillez réessayer.');
+      }
+    }
   }
 
   resetForm(): void {
@@ -149,7 +221,9 @@ export class ApplyPositionComponent implements OnInit {
       consent: false
     });
     this.fileName.set('');
+    this.cvFilePath.set('');
     this.submitSuccess.set(false);
     this.submitError.set(null);
+    this.isUploadingCv.set(false);
   }
 }

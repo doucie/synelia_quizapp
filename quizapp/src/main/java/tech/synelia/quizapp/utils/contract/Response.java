@@ -31,4 +31,13 @@ public class Response<T> extends ResponseBase {
 	// Reponse avec une liste d'objets ou avec un seul objet
 	protected List<T> items;
 	protected T item;
+	
+	// Getters publics pour accéder aux champs protected
+	public List<T> getItems() {
+		return items;
+	}
+	
+	public T getItem() {
+		return item;
+	}
 }
