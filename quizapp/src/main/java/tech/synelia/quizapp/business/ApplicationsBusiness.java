@@ -95,7 +95,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			fieldsToVerify.put("candidateLastName", dto.getCandidateLastName());
 			fieldsToVerify.put("candidateEmail", dto.getCandidateEmail());
 			fieldsToVerify.put("candidatePhone", dto.getCandidatePhone());
-			fieldsToVerify.put("candidateCvPath", dto.getCandidateCvPath());
+			// fieldsToVerify.put("candidateCvPath", dto.getCandidateCvPath()); // CV optionnel pour le moment
 			// fieldsToVerify.put("emailVerified", dto.getEmailVerified());
 			// fieldsToVerify.put("quizScore", dto.getQuizScore());
 			// fieldsToVerify.put("evaluationScore", dto.getEvaluationScore());

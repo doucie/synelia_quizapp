@@ -21,9 +21,9 @@ export interface Application {
   evaluationScore?: number;
   applicationStatus?: string;
   visitToken?: string;
-  createdAt?: string;
+  // createdAt?: string; // Let backend set this
   createdBy?: number;
-  updatedAt?: string;
+  // updatedAt?: string; // Let backend set this
   updatedBy?: number;
   isDeleted?: boolean;
   searchString?: string;
@@ -31,11 +31,12 @@ export interface Application {
 }
 
 /**
- * Interface pour la structure de requête du backend
+ * Interface pour la structure de requête du backend (basée sur le pattern existant)
  */
 export interface ApplicationRequest {
-  data: Application[];
-  lang: string;
+  user?: number;
+  datas?: Application[];
+  data?: Application;
 }
 
 /**
@@ -64,8 +65,8 @@ export class ApplicationService {
    */
   createApplication(application: Application): Observable<ApplicationResponse> {
     const request: ApplicationRequest = {
-      data: [application],
-      lang: 'fr'
+      user: 1,
+      datas: [application]
     };
 
     const headers = new HttpHeaders({
@@ -83,8 +84,8 @@ export class ApplicationService {
    */
   getApplicationsByCriteria(criteria: Partial<Application>): Observable<ApplicationResponse> {
     const request: ApplicationRequest = {
-      data: [criteria as Application],
-      lang: 'fr'
+      user: 1,
+      data: criteria as Application
     };
 
     const headers = new HttpHeaders({
@@ -102,8 +103,8 @@ export class ApplicationService {
    */
   updateApplication(application: Application): Observable<ApplicationResponse> {
     const request: ApplicationRequest = {
-      data: [application],
-      lang: 'fr'
+      user: 1,
+      datas: [application]
     };
 
     const headers = new HttpHeaders({
@@ -121,15 +122,15 @@ export class ApplicationService {
    */
   deleteApplication(applicationId: number): Observable<ApplicationResponse> {
     const request: ApplicationRequest = {
-      data: [{ 
+      user: 1,
+      datas: [{ 
         id: applicationId,
         candidateFirstName: '',
         candidateLastName: '',
         candidateEmail: '',
         candidatePhone: '',
         candidateBirthDate: ''
-      }],
-      lang: 'fr'
+      }]
     };
 
     const headers = new HttpHeaders({

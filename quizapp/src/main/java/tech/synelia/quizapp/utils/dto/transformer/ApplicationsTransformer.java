@@ -77,15 +77,16 @@ public interface ApplicationsTransformer {
 		@Mapping(source="dto.candidateEmail", target="candidateEmail"),
 		@Mapping(source="dto.candidatePhone", target="candidatePhone"),
 		@Mapping(source="dto.candidateCvPath", target="candidateCvPath"),
+		@Mapping(source="dto.candidateBirthDate", dateFormat="yyyy-MM-dd", target="candidateBirthDate"),
 		@Mapping(source="dto.motivationLetter", target="motivationLetter"),
 		@Mapping(source="dto.emailVerified", target="emailVerified"),
 		@Mapping(source="dto.quizScore", target="quizScore"),
 		@Mapping(source="dto.evaluationScore", target="evaluationScore"),
 		@Mapping(source="dto.applicationStatus", target="applicationStatus"),
 		@Mapping(source="dto.visitToken", target="visitToken"),
-		@Mapping(source="dto.createdAt", dateFormat="dd/MM/yyyy",target="createdAt"),
+		@Mapping(target="createdAt", ignore=true), // Backend sets this
 		@Mapping(source="dto.createdBy", target="createdBy"),
-		@Mapping(source="dto.updatedAt", dateFormat="dd/MM/yyyy",target="updatedAt"),
+		@Mapping(target="updatedAt", ignore=true), // Backend sets this
 		@Mapping(source="dto.updatedBy", target="updatedBy"),
 		@Mapping(source="dto.isDeleted", target="isDeleted"),
 		@Mapping(source="dto.searchString", target="searchString"),

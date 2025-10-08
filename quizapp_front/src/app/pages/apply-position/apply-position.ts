@@ -164,13 +164,13 @@ export class ApplyPositionComponent implements OnInit {
         candidateEmail: data.email,
         candidatePhone: data.phone,
         candidateBirthDate: data.birthDate,
-        candidateCvPath: uploadResult.filePath,
+        candidateCvPath: uploadResult.filePath || undefined,
         motivationLetter: data.motivationLetter || '',
         emailVerified: false,
         applicationStatus: 'PENDING',
         sourceTokenId: this.sourceTokenId() || undefined,
         isDeleted: false,
-        createdAt: new Date().toISOString()
+        // createdAt: new Date().toISOString() // Let backend set this
       };
 
       // Appel à l'API backend

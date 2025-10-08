@@ -41,16 +41,19 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit() {
-    if (this.headerElement) {
-      // Calculer la hauteur initiale
-      this.updateHeaderHeight();
-      
-      // Observer les changements de taille
-      this.resizeObserver = new ResizeObserver(() => {
+    // Attendre que le composant soit rendu
+    setTimeout(() => {
+      if (this.headerElement && this.headerElement.nativeElement) {
+        // Calculer la hauteur initiale
         this.updateHeaderHeight();
-      });
-      this.resizeObserver.observe(this.headerElement.nativeElement);
-    }
+
+        // Observer les changements de taille
+        this.resizeObserver = new ResizeObserver(() => {
+          this.updateHeaderHeight();
+        });
+        this.resizeObserver.observe(this.headerElement.nativeElement);
+      }
+    });
   }
 
   ngOnDestroy() {
@@ -60,12 +63,16 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   }
 
   private updateHeaderHeight() {
-    if (this.headerElement) {
+    if (this.headerElement && this.headerElement.nativeElement) {
       const height = this.headerElement.nativeElement.offsetHeight;
       this.headerHeight.set(height);
-      
+
       // Mettre à jour la variable CSS
       document.documentElement.style.setProperty('--header-height', `${height}px`);
+    } else {
+      // Valeur par défaut si le header n'est pas disponible
+      this.headerHeight.set(0);
+      document.documentElement.style.setProperty('--header-height', '0px');
     }
   }
 }
