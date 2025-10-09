@@ -1,0 +1,42 @@
+<div class="verify-email-container">
+  <div class="verify-email-card">
+    <!-- Loader pendant la vérification -->
+    @if (isVerifying()) {
+      <div class="verification-loading">
+        <div class="spinner"></div>
+        <h2>Vérification en cours...</h2>
+        <p>Veuillez patienter pendant que nous vérifions votre adresse email.</p>
+      </div>
+    }
+
+    <!-- Succès de la vérification -->
+    @if (verificationSuccess() && !isVerifying()) {
+      <div class="verification-success">
+        <div class="success-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+          </svg>
+        </div>
+        <h2>Email vérifié avec succès !</h2>
+        <p>Votre adresse email a été confirmée.</p>
+        <p class="redirect-message">Vous allez être redirigé vers le questionnaire dans quelques instants...</p>
+      </div>
+    }
+
+    <!-- Erreur de vérification -->
+    @if (verificationError() && !isVerifying()) {
+      <div class="verification-error">
+        <div class="error-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+          </svg>
+        </div>
+        <h2>Erreur de vérification</h2>
+        <p class="error-message">{{ verificationError() }}</p>
+        <button (click)="goHome()" class="btn-home">
+          Retour à l'accueil
+        </button>
+      </div>
+    }
+  </div>
+</div>

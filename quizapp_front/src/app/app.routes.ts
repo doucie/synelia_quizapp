@@ -109,6 +109,11 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/apply-position').then(m => m.ApplyPositionComponent),
     canActivate: [sourceTokenGuard]
   },
+  {
+    // Route pour vérifier l'email avec un token
+    path: 'verify-email/:token',
+    loadComponent: () => import('./pages/verify-email').then(m => m.VerifyEmailComponent)
+  },
   { 
     path: '**', 
     redirectTo: '' 

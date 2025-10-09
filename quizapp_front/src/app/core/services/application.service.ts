@@ -45,6 +45,10 @@ export interface ApplicationRequest {
 export interface ApplicationResponse {
   items: Application[];
   hasError: boolean;
+  status?: {
+    code?: string;
+    message?: string;
+  };
   errors?: any[];
   sessionUser?: any;
 }
@@ -139,5 +143,31 @@ export class ApplicationService {
     });
 
     return this.http.post<ApplicationResponse>(`${this.applicationsUrl}/delete`, request, { headers });
+  }
+
+  /**
+   * Vérifie l'email d'un candidat avec le token reçu par email
+   * @param token Token de vérification
+   * @returns Observable<ApplicationResponse>
+   */
+  verifyEmail(token: string): Observable<ApplicationResponse> {
+    const request = {
+      user: 1,
+      data: {
+        searchString: token,  // Le token est passé dans searchString
+        candidateFirstName: '',
+        candidateLastName: '',
+        candidateEmail: '',
+        candidatePhone: '',
+        candidateBirthDate: ''
+      }
+    };
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    });
+
+    return this.http.post<ApplicationResponse>(`${this.applicationsUrl}/verify-email`, request, { headers });
   }
 }

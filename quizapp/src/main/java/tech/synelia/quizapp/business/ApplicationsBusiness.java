@@ -615,6 +615,130 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		log.info("----end createVerificationTokenAndSendEmail-----");
 	}
 
+	/**
+	 * Vérifie l'email d'un candidat avec le token reçu par email
+	 * @param request Request contenant le token
+	 * @param locale locale
+	 * @return response
+	 * @throws JsonProcessingException
+	 */
+	public Response<ApplicationsDto> verifyEmail(Request<ApplicationsDto> request, Locale locale) throws JsonProcessingException {
+		log.info("----begin verifyEmail-----");
+		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
+		Response<ApplicationsDto> response = new Response<ApplicationsDto>();
+		
+		try {
+			// Récupérer le token depuis la requête
+			ApplicationsDto dto = request.getData();
+			log.info("DTO reçu: " + (dto != null ? "OK" : "NULL"));
+			
+			if (dto == null || Utilities.isBlank(dto.getSearchString())) {
+				log.warning("DTO null ou searchString vide - DTO: " + dto);
+				if (dto != null) {
+					log.warning("SearchString: [" + dto.getSearchString() + "]");
+				}
+				response.setStatus(functionalError.FIELD_EMPTY("token", locale));
+				response.setHasError(true);
+				response.setHttpCode(HttpStatus.BAD_REQUEST.value());
+				return response;
+			}
+			
+			String token = dto.getSearchString(); // Le token est passé dans searchString
+			log.info("Token reçu (longueur " + token.length() + "): " + token.substring(0, Math.min(20, token.length())) + "...");
+			log.info("Token complet: " + token);
+			
+			// Chercher le token dans la base de données
+			Optional<EmailVerificationToken> optionalToken = emailVerificationTokenRepository.findByToken(token);
+			
+			if (!optionalToken.isPresent()) {
+				log.warning("Token non trouvé dans la base de données");
+				log.warning("Token recherché: [" + token + "]");
+				response.setStatus(functionalError.DATA_NOT_EXIST("token de vérification", locale));
+				response.setHasError(true);
+				response.setHttpCode(HttpStatus.NOT_FOUND.value());
+				return response;
+			}
+			
+			EmailVerificationToken verificationToken = optionalToken.get();
+			
+			// Vérifier si le token a déjà été utilisé
+			if (verificationToken.getIsUsed()) {
+				log.warning("Token déjà utilisé: " + token);
+				response.setStatus(functionalError.DATA_EXIST("Ce lien de vérification a déjà été utilisé", locale));
+				response.setHasError(true);
+				response.setHttpCode(HttpStatus.BAD_REQUEST.value());
+				return response;
+			}
+			
+			// Vérifier si le token est expiré
+			if (verificationToken.getExpiresAt().before(new Date())) {
+				log.warning("Token expiré: " + token);
+				response.setStatus(functionalError.DATA_NOT_EXIST("Ce lien de vérification a expiré", locale));
+				response.setHasError(true);
+				response.setHttpCode(HttpStatus.BAD_REQUEST.value());
+				return response;
+			}
+			
+			// Vérifier que c'est bien un token de type APPLICATION_VERIFICATION
+			if (verificationToken.getTokenType() != EmailVerificationToken.TokenType.APPLICATION_VERIFICATION) {
+				log.warning("Type de token incorrect: " + verificationToken.getTokenType());
+				response.setStatus(functionalError.DATA_NOT_EXIST("Type de token invalide", locale));
+				response.setHasError(true);
+				response.setHttpCode(HttpStatus.BAD_REQUEST.value());
+				return response;
+			}
+			
+			// Récupérer l'application associée
+			Applications application = verificationToken.getApplication();
+			if (application == null) {
+				log.warning("Aucune application associée au token");
+				response.setStatus(functionalError.DATA_NOT_EXIST("Application non trouvée", locale));
+				response.setHasError(true);
+				response.setHttpCode(HttpStatus.NOT_FOUND.value());
+				return response;
+			}
+			
+			// Mettre à jour le token: marquer comme utilisé
+			verificationToken.setIsUsed(true);
+			verificationToken.setUsedAt(new Date());
+			emailVerificationTokenRepository.save(verificationToken);
+			log.info("Token marqué comme utilisé");
+			
+			// Mettre à jour l'application: email vérifié
+			application.setEmailVerified(true);
+			application.setUpdatedAt(Utilities.getCurrentDate());
+			application.setUpdatedBy(request.getUser());
+			applicationsRepository.save(application);
+			log.info("Email vérifié pour l'application ID: " + application.getId());
+			
+			// Préparer la réponse
+			ApplicationsDto resultDto = ApplicationsTransformer.INSTANCE.toDto(application);
+			resultDto = getFullInfos(resultDto, 1, false, locale);
+			
+			Status status = new Status();
+			status.setCode(StatusCode.SUCCESS);
+			status.setMessage("Email vérifié avec succès");
+			
+			response.setHttpCode(HttpStatus.OK.value());
+			response.setStatus(status);
+			response.setItems(Arrays.asList(resultDto));
+			response.setHasError(false);
+			
+			log.info("Email vérifié avec succès pour: " + application.getCandidateEmail());
+			
+		} catch (Exception e) {
+			log.severe("Erreur lors de la vérification de l'email: " + e.getMessage());
+			e.printStackTrace();
+			response.setStatus(functionalError.SAVE_FAIL("vérification email", locale));
+			response.setHasError(true);
+			response.setHttpCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
+		}
+		
+		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
+		log.info("----end verifyEmail-----");
+		return response;
+	}
+
 	public Response<ApplicationsDto> custom(Request<ApplicationsDto> request, Locale locale) throws JsonProcessingException {
 		log.info("----begin custom ApplicationsDto-----");
 		log.info("Request send --:> " + Utilities.convertObjectToJson(request));

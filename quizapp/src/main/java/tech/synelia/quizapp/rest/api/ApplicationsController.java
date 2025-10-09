@@ -9,31 +9,28 @@
 
 package tech.synelia.quizapp.rest.api;
 
-import lombok.extern.java.Log;
+import java.net.URI;
+import java.util.Locale;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-import org.springframework.http.ResponseEntity;
 
 import jakarta.servlet.http.HttpServletRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-
-
-import java.net.URI;
-import java.util.Locale;
-
-import tech.synelia.quizapp.utils.dto.*;
+import lombok.extern.java.Log;
+import tech.synelia.quizapp.business.ApplicationsBusiness;
+import tech.synelia.quizapp.rest.fact.ControllerFactory;
 import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
+import tech.synelia.quizapp.utils.dto.ApplicationsDto;
 import tech.synelia.quizapp.utils.enums.FunctionalityEnum;
-import tech.synelia.quizapp.business.*;
-import tech.synelia.quizapp.rest.fact.ControllerFactory;
 
 /**
 Controller for table "applications"
@@ -101,6 +98,16 @@ public class ApplicationsController {
     	Locale locale = Locale.of(languageID, "");
         Response<ApplicationsDto> response = applicationsBusiness.getAllByCriteria(request, locale);
 		slf4jLogger.info("end method /applications/getAllByCriteria");
+        return response;
+    }
+
+	@RequestMapping(value="/verify-email",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
+    public Response<ApplicationsDto> verifyEmail(@RequestBody Request<ApplicationsDto> request) throws Exception{
+    	slf4jLogger.info("start method /applications/verify-email");
+    	String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
+    	Locale locale = Locale.of(languageID, "");
+        Response<ApplicationsDto> response = applicationsBusiness.verifyEmail(request, locale);
+		slf4jLogger.info("end method /applications/verify-email");
         return response;
     }
 
