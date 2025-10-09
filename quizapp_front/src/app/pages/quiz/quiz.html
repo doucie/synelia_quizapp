@@ -1,0 +1,130 @@
+<div class="quiz-container">
+  <!-- État de chargement -->
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Chargement du quiz...</p>
+    </div>
+  }
+
+  <!-- État d'erreur -->
+  @else if (hasError()) {
+    <div class="error-state">
+      <div class="error-icon">❌</div>
+      <h2>Erreur</h2>
+      <p>{{ errorMessage() }}</p>
+      <button class="btn btn-primary" (click)="goHome()">
+        Retour à l'accueil
+      </button>
+    </div>
+  }
+
+  <!-- Quiz non démarré -->
+  @else if (!quizStarted() && quizData()) {
+    <div class="quiz-intro">
+      <h1>{{ quizData()?.campaignTitle }}</h1>
+      <div class="quiz-info">
+        <p class="info-item">
+          <span class="icon">📝</span>
+          <strong>{{ totalQuestions() }}</strong> questions
+        </p>
+        <p class="info-item">
+          <span class="icon">⏱️</span>
+          Pas de limite de temps
+        </p>
+        <p class="info-item">
+          <span class="icon">✅</span>
+          Une seule tentative possible
+        </p>
+      </div>
+      
+      <div class="instructions">
+        <h3>Instructions :</h3>
+        <ul>
+          <li>Lisez attentivement chaque question</li>
+          <li>Sélectionnez la réponse qui vous semble la plus appropriée</li>
+          <li>Vous pouvez revenir en arrière pour modifier vos réponses</li>
+          <li>Cliquez sur "Soumettre" à la dernière question pour terminer</li>
+        </ul>
+      </div>
+
+      <button class="btn btn-primary btn-large" (click)="startQuiz()">
+        Commencer le quiz
+      </button>
+    </div>
+  }
+
+  <!-- Quiz en cours -->
+  @else if (quizStarted() && !quizCompleted() && currentQuestion()) {
+    <div class="quiz-content">
+      <!-- Barre de progression -->
+      <div class="progress-bar">
+        <div class="progress-fill" [style.width.%]="progress()"></div>
+      </div>
+      
+      <div class="question-counter">
+        Question {{ currentQuestionIndex() + 1 }} / {{ totalQuestions() }}
+      </div>
+
+      <!-- Question -->
+      <div class="question-card">
+        <h2 class="question-text">{{ currentQuestion()?.questionContent }}</h2>
+
+        <!-- Réponses -->
+        <div class="answers-list">
+          @for (answer of currentQuestion()?.answers; track answer.id) {
+            <div 
+              class="answer-option"
+              [class.selected]="isAnswerSelected(currentQuestion()!.id, answer.id)"
+              (click)="selectAnswer(currentQuestion()!.id, answer.id)"
+            >
+              <div class="answer-radio">
+                <div class="radio-dot"></div>
+              </div>
+              <div class="answer-text">{{ answer.answerContent }}</div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <div class="quiz-navigation">
+        <button 
+          class="btn btn-secondary"
+          [disabled]="currentQuestionIndex() === 0"
+          (click)="goToPreviousQuestion()"
+        >
+          ← Précédent
+        </button>
+
+        <button 
+          class="btn btn-primary"
+          [disabled]="!canGoNext()"
+          (click)="goToNextQuestion()"
+        >
+          @if (isLastQuestion()) {
+            Soumettre le quiz
+          } @else {
+            Suivant →
+          }
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Quiz terminé -->
+  @else if (quizCompleted()) {
+    <div class="quiz-completed">
+      <div class="success-icon">🎉</div>
+      <h2>Quiz terminé !</h2>
+      <p>Vos réponses ont été enregistrées avec succès.</p>
+      <p class="completion-message">
+        Nous vous contacterons prochainement pour la suite du processus de recrutement.
+      </p>
+      
+      <button class="btn btn-primary" (click)="goHome()">
+        Retour à l'accueil
+      </button>
+    </div>
+  }
+</div>

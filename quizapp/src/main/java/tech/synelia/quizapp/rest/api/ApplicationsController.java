@@ -111,6 +111,15 @@ public class ApplicationsController {
         return response;
     }
 
-    // Méthode custom supprimée car elle causait des problèmes de compilation 
-    // et n'est pas nécessaire pour le formulaire de candidature
+	@RequestMapping(value="/get-quiz",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
+    public Response<ApplicationsDto> getQuiz(@RequestBody Request<ApplicationsDto> request) throws Exception{
+    	slf4jLogger.info("start method /applications/get-quiz");
+    	String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
+    	Locale locale = Locale.of(languageID, "");
+        Response<ApplicationsDto> response = applicationsBusiness.getQuizForApplication(request, locale);
+		slf4jLogger.info("end method /applications/get-quiz");
+        return response;
+    }
+
+   
 }

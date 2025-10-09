@@ -170,4 +170,30 @@ export class ApplicationService {
 
     return this.http.post<ApplicationResponse>(`${this.applicationsUrl}/verify-email`, request, { headers });
   }
+
+  /**
+   * Récupère le quiz (questions + réponses) pour une application donnée
+   * @param applicationId ID de l'application
+   * @returns Observable<ApplicationResponse>
+   */
+  getQuiz(applicationId: number): Observable<ApplicationResponse> {
+    const request = {
+      user: 1,
+      data: {
+        id: applicationId,
+        candidateFirstName: '',
+        candidateLastName: '',
+        candidateEmail: '',
+        candidatePhone: '',
+        candidateBirthDate: ''
+      }
+    };
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    });
+
+    return this.http.post<ApplicationResponse>(`${this.applicationsUrl}/get-quiz`, request, { headers });
+  }
 }

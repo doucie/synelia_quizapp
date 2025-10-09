@@ -61,6 +61,10 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 	@Autowired
 	private EmailVerificationTokenRepository emailVerificationTokenRepository;
 	@Autowired
+	private CampaignQuestionsRepository campaignQuestionsRepository;
+	@Autowired
+	private QuestionsAnswersRepository questionsAnswersRepository;
+	@Autowired
 	private HostingUtils hostingUtils;
 	@Autowired
 	private ParamsUtils paramsUtils;
@@ -736,6 +740,156 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		
 		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
 		log.info("----end verifyEmail-----");
+		return response;
+	}
+
+	/**
+	 * Récupère le quiz (questions + réponses) pour une application donnée
+	 * @param request Request contenant l'ID de l'application
+	 * @param locale locale
+	 * @return Response contenant les questions et réponses
+	 * @throws JsonProcessingException
+	 */
+	public Response<ApplicationsDto> getQuizForApplication(Request<ApplicationsDto> request, Locale locale) throws JsonProcessingException {
+		log.info("----begin getQuizForApplication-----");
+		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
+		Response<ApplicationsDto> response = new Response<>();
+		
+		try {
+			// Récupérer l'ID de l'application depuis la requête
+			ApplicationsDto dto = request.getData();
+			if (dto == null || dto.getId() == null) {
+				Status status = new Status();
+				status.setCode(StatusCode.FUNC_FIELD_EMPTY);
+				status.setMessage("ID de l'application manquant");
+				response.setStatus(status);
+				response.setHasError(true);
+				response.setHttpCode(HttpStatus.BAD_REQUEST.value());
+				return response;
+			}
+			
+			Integer applicationId = dto.getId();
+			log.info("Récupération du quiz pour l'application ID: " + applicationId);
+			
+			// 1. Récupérer l'application
+			Applications application = applicationsRepository.findOne(applicationId, false);
+			if (application == null) {
+				Status status = new Status();
+				status.setCode(StatusCode.FUNC_DATA_NOT_EXIST);
+				status.setMessage("Application non trouvée");
+				response.setStatus(status);
+				response.setHasError(true);
+				response.setHttpCode(HttpStatus.NOT_FOUND.value());
+				return response;
+			}
+			
+			// 2. Récupérer le source token
+			SourceToken sourceToken = application.getSourceToken();
+			if (sourceToken == null) {
+				Status status = new Status();
+				status.setCode(StatusCode.FUNC_DATA_NOT_EXIST);
+				status.setMessage("Source token non trouvé");
+				response.setStatus(status);
+				response.setHasError(true);
+				response.setHttpCode(HttpStatus.NOT_FOUND.value());
+				return response;
+			}
+			
+			// 3. Récupérer la campagne depuis le source token
+			Campaigns campaign = sourceToken.getCampaigns();
+			if (campaign == null) {
+				Status status = new Status();
+				status.setCode(StatusCode.FUNC_DATA_NOT_EXIST);
+				status.setMessage("Campagne non trouvée");
+				response.setStatus(status);
+				response.setHasError(true);
+				response.setHttpCode(HttpStatus.NOT_FOUND.value());
+				return response;
+			}
+			
+			log.info("Campagne trouvée: " + campaign.getCampaignTitle());
+			
+			// 4. Récupérer les questions de la campagne
+			List<CampaignQuestions> campaignQuestions = campaignQuestionsRepository.findByCampaignId(campaign.getId(), false);
+			
+			if (campaignQuestions == null || campaignQuestions.isEmpty()) {
+				Status status = new Status();
+				status.setCode(StatusCode.FUNC_DATA_EMPTY);
+				status.setMessage("Aucune question trouvée pour cette campagne");
+				response.setStatus(status);
+				response.setHasError(true);
+				response.setHttpCode(HttpStatus.NOT_FOUND.value());
+				return response;
+			}
+			
+			log.info("Nombre de questions trouvées: " + campaignQuestions.size());
+			
+			// 5. Pour chaque question, récupérer les réponses
+			List<Map<String, Object>> questionsWithAnswers = new ArrayList<>();
+			
+			for (CampaignQuestions cq : campaignQuestions) {
+				Questions question = cq.getQuestions();
+				if (question != null && !question.getIsDeleted()) {
+					Map<String, Object> questionData = new HashMap<>();
+					questionData.put("id", question.getId());
+					questionData.put("questionContent", question.getQuestionContent());
+					
+					// Récupérer les réponses pour cette question
+					List<QuestionsAnswers> questionAnswers = questionsAnswersRepository.findByQuestionId(question.getId(), false);
+					List<Map<String, Object>> answersData = new ArrayList<>();
+					
+					for (QuestionsAnswers qa : questionAnswers) {
+						Answers answer = qa.getAnswers();
+						if (answer != null && !answer.getIsDeleted()) {
+							Map<String, Object> answerData = new HashMap<>();
+							answerData.put("id", answer.getId());
+							answerData.put("answerContent", answer.getAnswerContent());
+							// Ne pas envoyer isCorrect au frontend pour des raisons de sécurité
+							answersData.add(answerData);
+						}
+					}
+					
+					questionData.put("answers", answersData);
+					questionsWithAnswers.add(questionData);
+				}
+			}
+			
+			// 6. Préparer la réponse avec un DTO qui contient les données du quiz
+			ApplicationsDto resultDto = new ApplicationsDto();
+			resultDto.setId(applicationId);
+			
+			// Stocker les données du quiz dans searchString (format JSON)
+			Map<String, Object> quizData = new HashMap<>();
+			quizData.put("applicationId", applicationId);
+			quizData.put("campaignId", campaign.getId());
+			quizData.put("campaignTitle", campaign.getCampaignTitle());
+			quizData.put("questions", questionsWithAnswers);
+			resultDto.setSearchString(Utilities.convertObjectToJson(quizData));
+			
+			Status status = new Status();
+			status.setCode(StatusCode.SUCCESS);
+			status.setMessage("Quiz récupéré avec succès");
+			
+			response.setHttpCode(HttpStatus.OK.value());
+			response.setStatus(status);
+			response.setItems(Arrays.asList(resultDto));
+			response.setHasError(false);
+			
+			log.info("Quiz récupéré avec succès: " + questionsWithAnswers.size() + " questions");
+			
+		} catch (Exception e) {
+			log.severe("Erreur lors de la récupération du quiz: " + e.getMessage());
+			e.printStackTrace();
+			Status status = new Status();
+			status.setCode(StatusCode.TECH_INTERN_ERROR);
+			status.setMessage("Erreur lors de la récupération du quiz");
+			response.setStatus(status);
+			response.setHasError(true);
+			response.setHttpCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
+		}
+		
+		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
+		log.info("----end getQuizForApplication-----");
 		return response;
 	}
 

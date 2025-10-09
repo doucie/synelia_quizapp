@@ -112,7 +112,12 @@ export const routes: Routes = [
   {
     // Route pour vérifier l'email avec un token
     path: 'verify-email/:token',
-    loadComponent: () => import('./pages/verify-email').then(m => m.VerifyEmailComponent)
+    loadComponent: () => import('./pages/verify-email/verify-email').then(m => m.VerifyEmailComponent)
+  },
+  {
+    // Route pour passer le quiz
+    path: 'quiz/:applicationId',
+    loadComponent: () => import('./pages/quiz/quiz').then(m => m.QuizComponent)
   },
   { 
     path: '**', 
