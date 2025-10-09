@@ -1,0 +1,18 @@
+{
+  "user": 1,
+  "datas": [
+    {
+      "applicationStatus": "PENDING",
+      "candidateBirthDate": "2003-09-09",
+      "candidateCvPath": "uploads/cv/test@test.com_123456789.pdf",
+      "candidateEmail": "test@test.com",
+      "candidateFirstName": "TEST",
+      "candidateLastName": "USER",
+      "candidatePhone": "0102030405",
+      "emailVerified": false,
+      "isDeleted": false,
+      "motivationLetter": "Test motivation",
+      "sourceTokenId": 52
+    }
+  ]
+}

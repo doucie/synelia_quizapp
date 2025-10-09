@@ -13,6 +13,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.http.HttpStatus;
+import org.thymeleaf.context.Context;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -58,6 +59,12 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 	@Autowired
 	private CandidateTokenRepository candidateTokenRepository;
 	@Autowired
+	private EmailVerificationTokenRepository emailVerificationTokenRepository;
+	@Autowired
+	private HostingUtils hostingUtils;
+	@Autowired
+	private ParamsUtils paramsUtils;
+	@Autowired
 	private FunctionalError functionalError;
 	@Autowired
 	private TechnicalError technicalError;
@@ -68,6 +75,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 
 	private SimpleDateFormat dateFormat;
 	private SimpleDateFormat dateTimeFormat;
+	private Context context;
 
 	public ApplicationsBusiness() {
 		dateFormat = new SimpleDateFormat("dd/MM/yyyy");
@@ -154,6 +162,18 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				Object[] objArray = listOfError.stream().distinct().toArray();
 				throw new RuntimeException(StringUtils.join(objArray, ", "));
 			}
+			
+			// Créer le token de vérification et envoyer l'email pour chaque application créée
+			for (Applications savedApp : itemsSaved) {
+				try {
+					createVerificationTokenAndSendEmail(savedApp, locale);
+				} catch (Exception e) {
+					log.warning("Erreur lors de la création du token/envoi email pour application ID " + savedApp.getId() + ": " + e.getMessage());
+					// Ne pas bloquer le processus même si l'email échoue
+					e.printStackTrace();
+				}
+			}
+			
 			Status status = new Status();
 			status.setCode(StatusCode.SUCCESS);
 			status.setMessage(StatusMessage.SUCCESS);
@@ -500,6 +520,99 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		}
 
 		return dto;
+	}
+
+	/**
+	 * Génère un token de vérification unique et sécurisé
+	 * @return token généré
+	 */
+	private String generateVerificationToken() {
+		return UUID.randomUUID().toString().replace("-", "") + UUID.randomUUID().toString().replace("-", "");
+	}
+
+	/**
+	 * Crée un token de vérification et envoie un email au candidat
+	 * @param application l'application créée
+	 * @param locale locale pour l'email
+	 * @throws Exception en cas d'erreur
+	 */
+	private void createVerificationTokenAndSendEmail(Applications application, Locale locale) throws Exception {
+		log.info("----begin createVerificationTokenAndSendEmail-----");
+		
+		// Générer le token
+		String token = generateVerificationToken();
+		
+		// Calculer la date d'expiration (48 heures)
+		Calendar calendar = Calendar.getInstance();
+		calendar.add(Calendar.HOUR, 48);
+		Date expiresAt = calendar.getTime();
+		
+		// Créer l'entité EmailVerificationToken
+		EmailVerificationToken verificationToken = new EmailVerificationToken();
+		verificationToken.setEmail(application.getCandidateEmail());
+		verificationToken.setToken(token);
+		verificationToken.setTokenType(EmailVerificationToken.TokenType.APPLICATION_VERIFICATION);
+		verificationToken.setExpiresAt(expiresAt);
+		verificationToken.setIsUsed(false);
+		verificationToken.setCreatedAt(new Date());
+		verificationToken.setApplication(application);
+		
+		// Sauvegarder le token en base de données
+		EmailVerificationToken savedToken = emailVerificationTokenRepository.save(verificationToken);
+		
+		if (savedToken == null) {
+			log.warning("Échec de la sauvegarde du token de vérification pour l'email: " + application.getCandidateEmail());
+			throw new InternalErrorException(functionalError.SAVE_FAIL("email_verification_token", locale));
+		}
+		
+		log.info("Token de vérification créé avec succès pour l'email: " + application.getCandidateEmail());
+		
+		// Préparer et envoyer l'email
+		Map<String, String> from = new HashMap<>();
+		from.put("email", paramsUtils.getSmtpLogin());
+		from.put("user", "Synelia Recrutement");
+		
+		List<Map<String, String>> toRecipients = new ArrayList<>();
+		Map<String, String> recipient = new HashMap<>();
+		recipient.put("email", application.getCandidateEmail());
+		recipient.put("user", application.getCandidateFirstName() + " " + application.getCandidateLastName());
+		toRecipients.add(recipient);
+		
+		// URL de vérification
+		String appLink = paramsUtils.getUrlAppl();
+		String verificationLink = appLink + "/verify-email/" + token;
+		
+		String subject = "Vérification de votre adresse email - Synelia";
+		
+		String contenu = "Bonjour " + application.getCandidateFirstName() + " " + application.getCandidateLastName() + ",<br/><br/>";
+		contenu += "Merci d'avoir soumis votre candidature chez Synelia !<br/><br/>";
+		contenu += "Pour continuer le processus de recrutement, veuillez vérifier votre adresse email en cliquant sur le lien ci-dessous :<br/><br/>";
+		contenu += "<a href=\"" + verificationLink + "\" style=\"background-color: #4CAF50; color: white; padding: 14px 20px; text-align: center; text-decoration: none; display: inline-block; border-radius: 4px;\">Vérifier mon email</a><br/><br/>";
+		contenu += "Ou copiez ce lien dans votre navigateur :<br/>";
+		contenu += verificationLink + "<br/><br/>";
+		contenu += "Ce lien est valide pendant 48 heures.<br/><br/>";
+		contenu += "Si vous n'avez pas soumis de candidature chez Synelia, veuillez ignorer cet email.<br/><br/>";
+		contenu += "Cordialement,<br/>";
+		contenu += "L'équipe Synelia";
+		
+		context = new Context();
+		String template = "blank";
+		context.setVariable("contenu", contenu);
+		context.setVariable("entete", "Vérification Email");
+		context.setVariable("titre", "Vérification de votre adresse email");
+		context.setVariable("appLink", appLink);
+		
+		String body = "";
+		Response<?> responseEmail = hostingUtils.sendEmail(from, toRecipients, subject, body, null, context, template, locale);
+		
+		if (responseEmail.isHasError()) {
+			log.warning("Échec de l'envoi de l'email de vérification pour: " + application.getCandidateEmail());
+			// Ne pas bloquer le processus si l'email échoue, mais logger l'erreur
+		} else {
+			log.info("Email de vérification envoyé avec succès à: " + application.getCandidateEmail());
+		}
+		
+		log.info("----end createVerificationTokenAndSendEmail-----");
 	}
 
 	public Response<ApplicationsDto> custom(Request<ApplicationsDto> request, Locale locale) throws JsonProcessingException {

@@ -1,0 +1,92 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <title>Vérification de votre candidature</title>
+
+    <style type="text/css">
+        html, body {
+            margin: 0 auto !important;
+            padding: 0 !important;
+            height: 100% !important;
+            width: 100% !important;
+        }
+
+        * {
+            -ms-text-size-adjust: 100%;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        .email-container {
+            width: 100% !important;
+            margin: auto !important;
+        }
+
+        .fluid {
+            max-width: 100% !important;
+            height: auto !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
+        }
+
+        @media only screen and (max-width: 600px) {
+            .email-container {
+                width: 100% !important;
+            }
+        }
+    </style>
+</head>
+<body bgcolor="#f4f4f4" width="100%" style="margin: 0;">
+<center style="width: 100%; background: #f4f4f4;">
+
+    <!-- Email Header -->
+    <table cellspacing="0" cellpadding="0" border="0" align="center" width="600" style="margin: auto;" class="email-container">
+        <tr>
+            <td style="padding: 20px 0; text-align: center; background: #ffffff; border-radius: 10px 10px 0 0;">
+                <h2 style="color: #333; margin: 0; font-family: Arial, sans-serif;">Synelia - Recrutement</h2>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Email Body -->
+    <table cellspacing="0" cellpadding="0" border="0" align="center" bgcolor="#ffffff" width="600" style="margin: auto; border-radius: 0 0 10px 10px;" class="email-container">
+
+        <tr>
+            <td style="padding: 40px 30px; text-align: left; font-family: Arial, sans-serif; font-size: 16px; line-height: 24px; color: #333;">
+                <h3 style="color: #008fe1; margin-top: 0;">Bonjour <span th:text="${candidateFirstName}">Prénom</span>,</h3>
+
+                <p>Nous avons bien reçu votre candidature pour le poste proposé par Synelia.</p>
+
+                <p><strong>Détails de votre candidature :</strong></p>
+                <ul>
+                    <li><strong>Nom complet :</strong> <span th:text="${candidateFirstName}">Prénom</span> <span th:text="${candidateLastName}">Nom</span></li>
+                    <li><strong>Email :</strong> <span th:text="${candidateEmail}">email@candidat.com</span></li>
+                    <li><strong>Téléphone :</strong> <span th:text="${candidatePhone}">01 23 45 67 89</span></li>
+                    <li><strong>Date de naissance :</strong> <span th:text="${candidateBirthDate}">01/01/1990</span></li>
+                </ul>
+
+                <p>Votre candidature est maintenant en cours d'examen par notre équipe de recrutement. Nous vous contacterons dans les plus brefs délais pour la suite du processus.</p>
+
+                <p>Si vous avez des questions, n'hésitez pas à nous contacter.</p>
+
+                <p>Cordialement,<br/>
+                <strong>L'équipe recrutement Synelia</strong></p>
+            </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+            <td style="padding: 20px 30px; text-align: center; background: #f8f8f8; border-top: 1px solid #eee; font-family: Arial, sans-serif; font-size: 12px; color: #666;">
+                <p>Cette adresse email est utilisée uniquement pour l'envoi automatique de notifications.<br/>
+                Merci de ne pas y répondre directement.</p>
+                <p>© 2025 Synelia - Tous droits réservés</p>
+            </td>
+        </tr>
+    </table>
+
+</center>
+</body>
+</html></content>
+<parameter name="filePath">c:\Users\kokoe\Documents\work\synelia\projects\quiz\codes\quizapp_full\quizapp\src\main\resources\templates\verification-candidature.html
