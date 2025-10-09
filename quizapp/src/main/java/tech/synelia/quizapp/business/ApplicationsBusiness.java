@@ -708,15 +708,22 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			emailVerificationTokenRepository.save(verificationToken);
 			log.info("Token marqué comme utilisé");
 			
-			// Mettre à jour l'application: email vérifié
+			// Générer le quiz_token sécurisé (UUID sans tirets)
+			String quizToken = UUID.randomUUID().toString().replace("-", "");
+			log.info("Quiz token généré: " + quizToken);
+			
+			// Mettre à jour l'application: email vérifié + quiz_token + status pending
 			application.setEmailVerified(true);
+			application.setQuizToken(quizToken);
+			application.setQuizStatus(tech.synelia.quizapp.utils.enums.QuizStatus.PENDING.getValue());
 			application.setUpdatedAt(Utilities.getCurrentDate());
 			application.setUpdatedBy(request.getUser());
 			applicationsRepository.save(application);
-			log.info("Email vérifié pour l'application ID: " + application.getId());
+			log.info("Email vérifié et quiz token généré pour l'application ID: " + application.getId());
 			
-			// Préparer la réponse
+			// Préparer la réponse avec le quiz_token dans searchString
 			ApplicationsDto resultDto = ApplicationsTransformer.INSTANCE.toDto(application);
+			resultDto.setSearchString(quizToken); // Retourner le quiz_token au frontend
 			resultDto = getFullInfos(resultDto, 1, false, locale);
 			
 			Status status = new Status();
@@ -745,7 +752,8 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 
 	/**
 	 * Récupère le quiz (questions + réponses) pour une application donnée
-	 * @param request Request contenant l'ID de l'application
+	 * Nécessite un quiz_token valide pour des raisons de sécurité
+	 * @param request Request contenant l'ID de l'application et le quiz_token
 	 * @param locale locale
 	 * @return Response contenant les questions et réponses
 	 * @throws JsonProcessingException
@@ -756,7 +764,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		Response<ApplicationsDto> response = new Response<>();
 		
 		try {
-			// Récupérer l'ID de l'application depuis la requête
+			// Récupérer l'ID de l'application et le quiz_token depuis la requête
 			ApplicationsDto dto = request.getData();
 			if (dto == null || dto.getId() == null) {
 				Status status = new Status();
@@ -768,10 +776,21 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				return response;
 			}
 			
-			Integer applicationId = dto.getId();
-			log.info("Récupération du quiz pour l'application ID: " + applicationId);
+			if (Utilities.isBlank(dto.getSearchString())) {
+				Status status = new Status();
+				status.setCode(StatusCode.FUNC_FIELD_EMPTY);
+				status.setMessage("Token de quiz manquant");
+				response.setStatus(status);
+				response.setHasError(true);
+				response.setHttpCode(HttpStatus.BAD_REQUEST.value());
+				return response;
+			}
 			
-			// 1. Récupérer l'application
+			Integer applicationId = dto.getId();
+			String quizToken = dto.getSearchString();
+			log.info("Récupération du quiz pour l'application ID: " + applicationId + " avec token");
+			
+			// 1. Récupérer l'application et valider le quiz_token
 			Applications application = applicationsRepository.findOne(applicationId, false);
 			if (application == null) {
 				Status status = new Status();
@@ -781,6 +800,37 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				response.setHasError(true);
 				response.setHttpCode(HttpStatus.NOT_FOUND.value());
 				return response;
+			}
+			
+			// Validation du quiz_token (sécurité)
+			if (!quizToken.equals(application.getQuizToken())) {
+				Status status = new Status();
+				status.setCode(StatusCode.FUNC_AUTH_FAIL);
+				status.setMessage("Token de quiz invalide. Veuillez utiliser le lien reçu par email.");
+				response.setStatus(status);
+				response.setHasError(true);
+				response.setHttpCode(HttpStatus.FORBIDDEN.value());
+				return response;
+			}
+			
+			// Vérifier que le quiz n'a pas déjà été complété
+			if (tech.synelia.quizapp.utils.enums.QuizStatus.COMPLETED.getValue().equals(application.getQuizStatus())) {
+				Status status = new Status();
+				status.setCode(StatusCode.FUNC_DATA_EXIST);
+				status.setMessage("Ce quiz a déjà été complété");
+				response.setStatus(status);
+				response.setHasError(true);
+				response.setHttpCode(HttpStatus.BAD_REQUEST.value());
+				return response;
+			}
+			
+			// Si le quiz est en statut PENDING, le mettre en STARTED
+			if (tech.synelia.quizapp.utils.enums.QuizStatus.PENDING.getValue().equals(application.getQuizStatus())) {
+				application.setQuizStatus(tech.synelia.quizapp.utils.enums.QuizStatus.STARTED.getValue());
+				application.setUpdatedAt(Utilities.getCurrentDate());
+				application.setUpdatedBy(request.getUser());
+				applicationsRepository.save(application);
+				log.info("Quiz status mis à jour: STARTED");
 			}
 			
 			// 2. Récupérer le source token

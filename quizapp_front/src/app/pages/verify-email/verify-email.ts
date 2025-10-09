@@ -50,11 +50,13 @@ export class VerifyEmailComponent implements OnInit {
         // Succès !
         this.verificationSuccess.set(true);
         
-        // Rediriger vers le QCM après 3 secondes
+        // Récupérer le quiz_token depuis searchString
+        const application = response.items[0];
+        const quizToken = application.searchString; // Le backend retourne le quiz_token dans searchString
+        
+        // Rediriger vers le QCM après 3 secondes avec applicationId et quizToken
         setTimeout(() => {
-          const application = response.items[0];
-          // TODO: Rediriger vers la page du QCM avec l'ID de l'application
-          this.router.navigate(['/quiz', application.id]);
+          this.router.navigate(['/quiz', application.id, quizToken]);
         }, 3000);
       },
       error: (error) => {

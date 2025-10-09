@@ -174,13 +174,15 @@ export class ApplicationService {
   /**
    * Récupère le quiz (questions + réponses) pour une application donnée
    * @param applicationId ID de l'application
+   * @param quizToken Token sécurisé pour accéder au quiz
    * @returns Observable<ApplicationResponse>
    */
-  getQuiz(applicationId: number): Observable<ApplicationResponse> {
+  getQuiz(applicationId: number, quizToken: string): Observable<ApplicationResponse> {
     const request = {
       user: 1,
       data: {
         id: applicationId,
+        searchString: quizToken, // Le quiz_token est passé dans searchString pour validation
         candidateFirstName: '',
         candidateLastName: '',
         candidateEmail: '',

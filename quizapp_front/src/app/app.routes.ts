@@ -115,8 +115,8 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/verify-email/verify-email').then(m => m.VerifyEmailComponent)
   },
   {
-    // Route pour passer le quiz
-    path: 'quiz/:applicationId',
+    // Route pour passer le quiz avec sécurité token
+    path: 'quiz/:applicationId/:quizToken',
     loadComponent: () => import('./pages/quiz/quiz').then(m => m.QuizComponent)
   },
   { 

@@ -77,19 +77,20 @@ export class QuizComponent implements OnInit {
 
   ngOnInit(): void {
     const applicationId = this.route.snapshot.paramMap.get('applicationId');
+    const quizToken = this.route.snapshot.paramMap.get('quizToken');
     
-    if (!applicationId) {
+    if (!applicationId || !quizToken) {
       this.isLoading.set(false);
       this.hasError.set(true);
-      this.errorMessage.set('ID de l\'application manquant');
+      this.errorMessage.set('Lien de quiz invalide. Veuillez utiliser le lien reçu par email.');
       return;
     }
 
-    this.loadQuiz(parseInt(applicationId, 10));
+    this.loadQuiz(parseInt(applicationId, 10), quizToken);
   }
 
-  private loadQuiz(applicationId: number): void {
-    this.applicationService.getQuiz(applicationId).subscribe({
+  private loadQuiz(applicationId: number, quizToken: string): void {
+    this.applicationService.getQuiz(applicationId, quizToken).subscribe({
       next: (response) => {
         this.isLoading.set(false);
         
@@ -155,7 +156,7 @@ export class QuizComponent implements OnInit {
     }
   }
 
-  private submitQuiz(): void {
+  submitQuiz(): void {
     // TODO: Implémenter la soumission des réponses au backend
     console.log('Réponses sélectionnées:', this.selectedAnswers());
     

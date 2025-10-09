@@ -7,13 +7,20 @@
 package tech.synelia.quizapp.dao.entity;
 
 import java.io.Serializable;
-import jakarta.persistence.*;
-
-import lombok.*;
-
-
 import java.util.Date;
-import java.util.List;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.Temporal;
+import jakarta.persistence.TemporalType;
+import lombok.Data;
+import lombok.ToString;
 
 
 /**
@@ -78,6 +85,12 @@ public class Applications implements Serializable, Cloneable {
 
     @Column(name="visit_token", length=255)
     private String     visitToken   ;
+
+    @Column(name="quiz_token", length=64, unique=true)
+    private String     quizToken    ;
+
+    @Column(name="quiz_status", nullable=false, length=9)
+    private String     quizStatus   ;
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name="created_at")
