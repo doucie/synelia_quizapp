@@ -7,12 +7,14 @@ import { ApplicationService } from '../../core/services/application.service';
 interface Answer {
   id: number;
   answerContent: string;
+  questionsAnswersId?: number; // ID dans la table questions_answers
 }
 
 interface Question {
   id: number;
   questionContent: string;
   answers: Answer[];
+  order?: number; // Ordre de la question dans la campagne
 }
 
 interface QuizData {
@@ -44,9 +46,14 @@ export class QuizComponent implements OnInit {
   currentQuestionIndex = signal(0);
   selectedAnswers = signal<Map<number, number>>(new Map()); // questionId -> answerId
   
+  // Données de l'application
+  applicationId = signal<number | null>(null);
+  quizToken = signal<string | null>(null);
+  
   // État du quiz
   quizStarted = signal(false);
   quizCompleted = signal(false);
+  isSaving = signal(false); // Indicateur de sauvegarde en cours
   
   // Computed
   currentQuestion = computed(() => {
@@ -85,6 +92,10 @@ export class QuizComponent implements OnInit {
       this.errorMessage.set('Lien de quiz invalide. Veuillez utiliser le lien reçu par email.');
       return;
     }
+
+    // Stocker les informations de l'application
+    this.applicationId.set(parseInt(applicationId, 10));
+    this.quizToken.set(quizToken);
 
     this.loadQuiz(parseInt(applicationId, 10), quizToken);
   }
@@ -129,9 +140,51 @@ export class QuizComponent implements OnInit {
   }
 
   selectAnswer(questionId: number, answerId: number): void {
+    const currentQ = this.currentQuestion();
+    if (!currentQ) return;
+
+    // Trouver l'objet Answer complet pour obtenir questionsAnswersId
+    const selectedAnswerObj = currentQ.answers.find(a => a.id === answerId);
+    if (!selectedAnswerObj || !selectedAnswerObj.questionsAnswersId) {
+      console.error('Answer object or questionsAnswersId not found');
+      return;
+    }
+
+    // Mettre à jour l'état local immédiatement pour une meilleure UX
     const answers = new Map(this.selectedAnswers());
     answers.set(questionId, answerId);
     this.selectedAnswers.set(answers);
+
+    // Sauvegarder la sélection en base de données
+    const appId = this.applicationId();
+    const token = this.quizToken();
+    
+    if (appId && token) {
+      this.isSaving.set(true);
+      
+      this.applicationService.saveQuizAnswer(
+        appId, 
+        token, 
+        questionId, 
+        selectedAnswerObj.questionsAnswersId
+      ).subscribe({
+        next: (response) => {
+          this.isSaving.set(false);
+          
+          if (response.hasError) {
+            console.error('Erreur lors de la sauvegarde:', response.status?.message);
+            // On garde quand même la sélection locale pour ne pas perturber l'utilisateur
+          } else {
+            console.log('Réponse sauvegardée avec succès');
+          }
+        },
+        error: (error) => {
+          this.isSaving.set(false);
+          console.error('Erreur réseau lors de la sauvegarde:', error);
+          // On garde quand même la sélection locale
+        }
+      });
+    }
   }
 
   isAnswerSelected(questionId: number, answerId: number): boolean {

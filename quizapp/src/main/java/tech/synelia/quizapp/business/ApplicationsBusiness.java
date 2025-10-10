@@ -994,7 +994,8 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 						Answers answer = qa.getAnswers();
 						if (answer != null && !answer.getIsDeleted()) {
 							Map<String, Object> answerData = new HashMap<>();
-							answerData.put("id", answer.getId());
+							answerData.put("id", answer.getId()); // ID de la table answers
+							answerData.put("questionsAnswersId", qa.getId()); // ID de la table questions_answers (nécessaire pour saveQuizAnswer)
 							answerData.put("answerContent", answer.getAnswerContent());
 							// Ne pas envoyer isCorrect au frontend pour des raisons de sécurité
 							answersData.add(answerData);

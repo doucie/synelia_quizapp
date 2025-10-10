@@ -21,6 +21,9 @@ export interface Application {
   evaluationScore?: number;
   applicationStatus?: string;
   visitToken?: string;
+  quizToken?: string;
+  quizStatus?: string;
+  quizLevel?: number;
   // createdAt?: string; // Let backend set this
   createdBy?: number;
   // updatedAt?: string; // Let backend set this
@@ -197,5 +200,36 @@ export class ApplicationService {
     });
 
     return this.http.post<ApplicationResponse>(`${this.applicationsUrl}/get-quiz`, request, { headers });
+  }
+
+  /**
+   * Sauvegarde la réponse sélectionnée par le candidat en temps réel
+   * @param applicationId ID de l'application
+   * @param quizToken Token sécurisé pour accéder au quiz
+   * @param questionId ID de la question
+   * @param questionsAnswersId ID de la réponse sélectionnée (questions_answers.id)
+   * @returns Observable<ApplicationResponse>
+   */
+  saveQuizAnswer(applicationId: number, quizToken: string, questionId: number, questionsAnswersId: number): Observable<ApplicationResponse> {
+    const request = {
+      user: 1,
+      data: {
+        id: applicationId,
+        searchString: quizToken, // Le quiz_token pour validation
+        candidatePhone: questionId.toString(), // questionId (utilisation temporaire)
+        candidateCvPath: questionsAnswersId.toString(), // questionsAnswersId (utilisation temporaire)
+        candidateFirstName: '',
+        candidateLastName: '',
+        candidateEmail: '',
+        candidateBirthDate: ''
+      }
+    };
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    });
+
+    return this.http.post<ApplicationResponse>(`${this.applicationsUrl}/save-quiz-answer`, request, { headers });
   }
 }
