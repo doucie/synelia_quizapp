@@ -140,6 +140,11 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			entityToSave.setCreatedAt(Utilities.getCurrentDate());
 			entityToSave.setCreatedBy(request.getUser());
 			entityToSave.setIsDeleted(false);
+			// Initialiser les champs obligatoires pour le quiz
+			entityToSave.setEmailVerified(false);
+			entityToSave.setQuizStatus(tech.synelia.quizapp.utils.enums.QuizStatus.PENDING.getValue());
+			entityToSave.setQuizToken(null); // Sera généré après vérification email
+			entityToSave.setQuizLevel(null); // Sera initialisé au démarrage du quiz
 			items.add(entityToSave);
 		}
 
@@ -751,6 +756,99 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 	}
 
 	/**
+	 * Initialise les réponses candidates pour toutes les questions de la campagne
+	 * Crée un enregistrement dans candidate_answers pour chaque questions_answers de la campagne
+	 * Tous les enregistrements sont initialisés avec is_selected = false
+	 * 
+	 * @param application L'application du candidat
+	 * @param userId L'utilisateur qui effectue l'action
+	 */
+	private void initializeCandidateAnswers(Applications application, Integer userId) {
+		log.info("----begin initializeCandidateAnswers for application ID: " + application.getId() + "-----");
+		
+		try {
+			// 1. Récupérer la campagne depuis l'application
+			SourceToken sourceToken = application.getSourceToken();
+			if (sourceToken == null || sourceToken.getCampaigns() == null) {
+				log.warning("Cannot initialize candidate answers: no campaign found for application " + application.getId());
+				return;
+			}
+			
+			Campaigns campaign = sourceToken.getCampaigns();
+			Integer campaignId = campaign.getId();
+			log.info("Initializing answers for campaign ID: " + campaignId);
+			
+			// 2. Récupérer toutes les questions de la campagne
+			List<CampaignQuestions> campaignQuestions = campaignQuestionsRepository.findByCampaignIdOrderByOrder(campaignId, false);
+			
+			if (campaignQuestions == null || campaignQuestions.isEmpty()) {
+				log.warning("No questions found for campaign " + campaignId);
+				return;
+			}
+			
+			log.info("Found " + campaignQuestions.size() + " questions in campaign");
+			
+			int totalAnswersCreated = 0;
+			
+			// 3. Pour chaque question, récupérer toutes les réponses possibles (questions_answers)
+			for (CampaignQuestions cq : campaignQuestions) {
+				Questions question = cq.getQuestions();
+				if (question == null || question.getIsDeleted()) {
+					continue;
+				}
+				
+				Integer questionId = question.getId();
+				
+				// Récupérer tous les questions_answers pour cette question
+				List<QuestionsAnswers> questionAnswers = questionsAnswersRepository.findByQuestionId(questionId, false);
+				
+				log.info("Question ID " + questionId + " has " + questionAnswers.size() + " possible answers");
+				
+				// 4. Pour chaque questions_answers, créer un candidate_answers avec is_selected = false
+				for (QuestionsAnswers qa : questionAnswers) {
+					if (qa == null || qa.getIsDeleted()) {
+						continue;
+					}
+					
+					// Vérifier si l'enregistrement existe déjà
+					CandidateAnswers existing = candidateAnswersRepository.findByApplicationIdAndQuestionsAnswersId(
+						application.getId(), 
+						qa.getId(), 
+						false
+					);
+					
+					if (existing == null) {
+						// Créer un nouveau candidate_answer
+						CandidateAnswers candidateAnswer = new CandidateAnswers();
+						candidateAnswer.setApplications(application);
+						candidateAnswer.setQuestionsAnswers(qa);
+						candidateAnswer.setIsSelected(false); // Pas encore sélectionné
+						candidateAnswer.setCreatedAt(Utilities.getCurrentDate());
+						candidateAnswer.setCreatedBy(userId);
+						candidateAnswer.setIsDeleted(false);
+						
+						candidateAnswersRepository.save(candidateAnswer);
+						totalAnswersCreated++;
+						
+						log.info("Created candidate_answer for questions_answers ID: " + qa.getId());
+					} else {
+						log.info("candidate_answer already exists for questions_answers ID: " + qa.getId());
+					}
+				}
+			}
+			
+			log.info("Successfully initialized " + totalAnswersCreated + " candidate_answers");
+			
+		} catch (Exception e) {
+			log.severe("Error initializing candidate answers: " + e.getMessage());
+			e.printStackTrace();
+			// Ne pas propager l'exception pour ne pas bloquer le démarrage du quiz
+		}
+		
+		log.info("----end initializeCandidateAnswers-----");
+	}
+
+	/**
 	 * Récupère le quiz (questions + réponses) pour une application donnée
 	 * Nécessite un quiz_token valide pour des raisons de sécurité
 	 * @param request Request contenant l'ID de l'application et le quiz_token
@@ -824,13 +922,17 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				return response;
 			}
 			
-			// Si le quiz est en statut PENDING, le mettre en STARTED
+			// Si le quiz est en statut PENDING, le mettre en STARTED et initialiser les réponses
 			if (tech.synelia.quizapp.utils.enums.QuizStatus.PENDING.getValue().equals(application.getQuizStatus())) {
 				application.setQuizStatus(tech.synelia.quizapp.utils.enums.QuizStatus.STARTED.getValue());
+				application.setQuizLevel(0); // Initialiser à 0 (aucune question répondue encore)
 				application.setUpdatedAt(Utilities.getCurrentDate());
 				application.setUpdatedBy(request.getUser());
 				applicationsRepository.save(application);
-				log.info("Quiz status mis à jour: STARTED");
+				log.info("Quiz status mis à jour: STARTED, quiz_level initialisé à 0");
+				
+				// Initialiser les candidate_answers pour toutes les réponses possibles
+				initializeCandidateAnswers(application, request.getUser());
 			}
 			
 			// 2. Récupérer le source token
@@ -940,6 +1042,199 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		
 		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
 		log.info("----end getQuizForApplication-----");
+		return response;
+	}
+
+	/**
+	 * Sauvegarde la sélection d'une réponse par le candidat
+	 * Met à jour is_selected pour la réponse sélectionnée (true) et toutes les autres réponses de la même question (false)
+	 * Met à jour quiz_level avec l'ordre de la question répondue
+	 * 
+	 * @param request Request contenant:
+	 *   - id: applicationId
+	 *   - searchString: quiz_token pour validation
+	 *   - candidateCvPath: questionsAnswersId sélectionné (utilisation temporaire de ce champ)
+	 *   - candidatePhone: questionId (utilisation temporaire de ce champ)
+	 * @param locale locale
+	 * @return Response indiquant le succès ou l'échec de la sauvegarde
+	 * @throws JsonProcessingException
+	 */
+	public Response<ApplicationsDto> saveQuizAnswer(Request<ApplicationsDto> request, Locale locale) throws JsonProcessingException {
+		log.info("----begin saveQuizAnswer-----");
+		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
+		Response<ApplicationsDto> response = new Response<>();
+		
+		try {
+			// 1. Récupérer et valider les paramètres
+			ApplicationsDto dto = request.getData();
+			if (dto == null || dto.getId() == null) {
+				Status status = new Status();
+				status.setCode(StatusCode.FUNC_FIELD_EMPTY);
+				status.setMessage("ID de l'application manquant");
+				response.setStatus(status);
+				response.setHasError(true);
+				response.setHttpCode(HttpStatus.BAD_REQUEST.value());
+				return response;
+			}
+			
+			if (Utilities.isBlank(dto.getSearchString())) {
+				Status status = new Status();
+				status.setCode(StatusCode.FUNC_FIELD_EMPTY);
+				status.setMessage("Token de quiz manquant");
+				response.setStatus(status);
+				response.setHasError(true);
+				response.setHttpCode(HttpStatus.BAD_REQUEST.value());
+				return response;
+			}
+			
+			if (Utilities.isBlank(dto.getCandidateCvPath()) || Utilities.isBlank(dto.getCandidatePhone())) {
+				Status status = new Status();
+				status.setCode(StatusCode.FUNC_FIELD_EMPTY);
+				status.setMessage("Question ID ou Questions-Answers ID manquant");
+				response.setStatus(status);
+				response.setHasError(true);
+				response.setHttpCode(HttpStatus.BAD_REQUEST.value());
+				return response;
+			}
+			
+			Integer applicationId = dto.getId();
+			String quizToken = dto.getSearchString();
+			Integer questionsAnswersId = Integer.parseInt(dto.getCandidateCvPath());
+			Integer questionId = Integer.parseInt(dto.getCandidatePhone());
+			
+			log.info("Saving answer for application " + applicationId + ", question " + questionId + ", answer " + questionsAnswersId);
+			
+			// 2. Valider l'application et le quiz_token
+			Applications application = applicationsRepository.findOne(applicationId, false);
+			if (application == null) {
+				Status status = new Status();
+				status.setCode(StatusCode.FUNC_DATA_NOT_EXIST);
+				status.setMessage("Application non trouvée");
+				response.setStatus(status);
+				response.setHasError(true);
+				response.setHttpCode(HttpStatus.NOT_FOUND.value());
+				return response;
+			}
+			
+			// Validation du quiz_token (sécurité)
+			if (!quizToken.equals(application.getQuizToken())) {
+				Status status = new Status();
+				status.setCode(StatusCode.FUNC_AUTH_FAIL);
+				status.setMessage("Token de quiz invalide");
+				response.setStatus(status);
+				response.setHasError(true);
+				response.setHttpCode(HttpStatus.FORBIDDEN.value());
+				return response;
+			}
+			
+			// Vérifier que le quiz n'est pas déjà complété
+			if (tech.synelia.quizapp.utils.enums.QuizStatus.COMPLETED.getValue().equals(application.getQuizStatus())) {
+				Status status = new Status();
+				status.setCode(StatusCode.FUNC_DATA_EXIST);
+				status.setMessage("Ce quiz a déjà été complété");
+				response.setStatus(status);
+				response.setHasError(true);
+				response.setHttpCode(HttpStatus.BAD_REQUEST.value());
+				return response;
+			}
+			
+			// 3. Récupérer toutes les candidate_answers pour cette application et cette question
+			List<CandidateAnswers> candidateAnswers = candidateAnswersRepository.findByApplicationIdAndQuestionId(
+				applicationId, 
+				questionId, 
+				false
+			);
+			
+			if (candidateAnswers == null || candidateAnswers.isEmpty()) {
+				Status status = new Status();
+				status.setCode(StatusCode.FUNC_DATA_NOT_EXIST);
+				status.setMessage("Aucune réponse candidate trouvée pour cette question");
+				response.setStatus(status);
+				response.setHasError(true);
+				response.setHttpCode(HttpStatus.NOT_FOUND.value());
+				return response;
+			}
+			
+			log.info("Found " + candidateAnswers.size() + " candidate answers for question " + questionId);
+			
+			// 4. Mettre à jour is_selected pour toutes les réponses de cette question
+			int updatedCount = 0;
+			for (CandidateAnswers ca : candidateAnswers) {
+				boolean shouldBeSelected = ca.getQuestionsAnswers().getId().equals(questionsAnswersId);
+				
+				// Mettre à jour seulement si la valeur change
+				if (ca.getIsSelected() != shouldBeSelected) {
+					ca.setIsSelected(shouldBeSelected);
+					ca.setUpdatedAt(Utilities.getCurrentDate());
+					ca.setUpdatedBy(request.getUser());
+					candidateAnswersRepository.save(ca);
+					updatedCount++;
+					
+					log.info("Updated candidate_answer ID " + ca.getId() + ": is_selected=" + shouldBeSelected);
+				}
+			}
+			
+			log.info("Updated " + updatedCount + " candidate_answers");
+			
+			// 5. Mettre à jour quiz_level avec l'ordre de la question répondue
+			SourceToken sourceToken = application.getSourceToken();
+			if (sourceToken != null && sourceToken.getCampaigns() != null) {
+				Integer campaignId = sourceToken.getCampaigns().getId();
+				
+				// Trouver l'ordre de cette question dans la campagne
+				CampaignQuestions cq = campaignQuestionsRepository.findByCampaignIdOrderByOrder(campaignId, false)
+					.stream()
+					.filter(c -> c.getQuestions() != null && c.getQuestions().getId().equals(questionId))
+					.findFirst()
+					.orElse(null);
+				
+				if (cq != null && cq.getOrder() != null) {
+					application.setQuizLevel(cq.getOrder());
+					application.setUpdatedAt(Utilities.getCurrentDate());
+					application.setUpdatedBy(request.getUser());
+					applicationsRepository.save(application);
+					
+					log.info("Updated quiz_level to " + cq.getOrder() + " for application " + applicationId);
+				}
+			}
+			
+			// 6. Préparer la réponse
+			ApplicationsDto resultDto = new ApplicationsDto();
+			resultDto.setId(applicationId);
+			resultDto.setQuizLevel(application.getQuizLevel());
+			
+			Status status = new Status();
+			status.setCode(StatusCode.SUCCESS);
+			status.setMessage("Réponse sauvegardée avec succès");
+			
+			response.setHttpCode(HttpStatus.OK.value());
+			response.setStatus(status);
+			response.setItems(Arrays.asList(resultDto));
+			response.setHasError(false);
+			
+			log.info("Answer saved successfully");
+			
+		} catch (NumberFormatException e) {
+			log.severe("Invalid number format: " + e.getMessage());
+			Status status = new Status();
+			status.setCode(StatusCode.FUNC_FIELD_EMPTY);
+			status.setMessage("Format de nombre invalide");
+			response.setStatus(status);
+			response.setHasError(true);
+			response.setHttpCode(HttpStatus.BAD_REQUEST.value());
+		} catch (Exception e) {
+			log.severe("Error saving quiz answer: " + e.getMessage());
+			e.printStackTrace();
+			Status status = new Status();
+			status.setCode(StatusCode.TECH_INTERN_ERROR);
+			status.setMessage("Erreur lors de la sauvegarde de la réponse");
+			response.setStatus(status);
+			response.setHasError(true);
+			response.setHttpCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
+		}
+		
+		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
+		log.info("----end saveQuizAnswer-----");
 		return response;
 	}
 

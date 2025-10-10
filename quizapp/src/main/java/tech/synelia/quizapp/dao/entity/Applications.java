@@ -92,6 +92,9 @@ public class Applications implements Serializable, Cloneable {
     @Column(name="quiz_status", nullable=false, length=9)
     private String     quizStatus   ;
 
+    @Column(name="quiz_level")
+    private Integer    quizLevel    ;
+
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name="created_at")
     private Date       createdAt    ;

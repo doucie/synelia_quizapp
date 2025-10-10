@@ -116,6 +116,27 @@ public interface CandidateAnswersRepository extends JpaRepository<CandidateAnswe
 	List<CandidateAnswers> findByQuestionsAnswersId(@Param("questionsAnswersId")Integer questionsAnswersId, @Param("isDeleted")Boolean isDeleted);
 
 	/**
+	 * Finds CandidateAnswers by using applicationId and questionsAnswersId as search criteria.
+	 * 
+	 * @param applicationId
+	 * @param questionsAnswersId
+	 * @return An Object CandidateAnswers matching both criteria. If no CandidateAnswers is found, this method returns null.
+	 */
+	@Query("select e from CandidateAnswers e where e.applications.id = :applicationId and e.questionsAnswers.id = :questionsAnswersId and e.isDeleted = :isDeleted")
+	CandidateAnswers findByApplicationIdAndQuestionsAnswersId(@Param("applicationId")Integer applicationId, @Param("questionsAnswersId")Integer questionsAnswersId, @Param("isDeleted")Boolean isDeleted);
+
+	/**
+	 * Finds CandidateAnswers by using applicationId and questionId as search criteria.
+	 * Returns all answers for a specific question for a specific application.
+	 * 
+	 * @param applicationId
+	 * @param questionId
+	 * @return A List of CandidateAnswers matching both criteria. If no CandidateAnswers is found, this method returns an empty list.
+	 */
+	@Query("select e from CandidateAnswers e where e.applications.id = :applicationId and e.questionsAnswers.questions.id = :questionId and e.isDeleted = :isDeleted")
+	List<CandidateAnswers> findByApplicationIdAndQuestionId(@Param("applicationId")Integer applicationId, @Param("questionId")Integer questionId, @Param("isDeleted")Boolean isDeleted);
+
+	/**
 	 * Finds List of CandidateAnswers by using candidateAnswersDto as a search criteria.
 	 * 
 	 * @param request, em

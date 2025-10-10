@@ -45,6 +45,9 @@ public class ApplicationsDto extends _ApplicationsDto implements Cloneable{
     private Float      evaluationScore      ;
     private String     applicationStatus    ;
     private String     visitToken           ;
+    private String     quizToken            ;
+    private String     quizStatus           ;
+    private Integer    quizLevel            ;
 	private String     createdAt            ;
     private Integer    createdBy            ;
 	private String     updatedAt            ;
@@ -71,6 +74,9 @@ public class ApplicationsDto extends _ApplicationsDto implements Cloneable{
 	private SearchParam<Float>    evaluationScoreParam  ;                     
 	private SearchParam<String>   applicationStatusParam;                     
 	private SearchParam<String>   visitTokenParam       ;                     
+	private SearchParam<String>   quizTokenParam        ;                     
+	private SearchParam<String>   quizStatusParam       ;                     
+	private SearchParam<Integer>  quizLevelParam        ;                     
 	private SearchParam<String>   createdAtParam        ;                     
 	private SearchParam<Integer>  createdByParam        ;                     
 	private SearchParam<String>   updatedAtParam        ;                     

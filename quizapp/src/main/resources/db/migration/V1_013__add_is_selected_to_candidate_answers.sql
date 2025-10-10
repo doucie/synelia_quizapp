@@ -11,8 +11,8 @@ COMMENT 'Indicates whether the candidate selected this answer option';
 -- Add index for better performance when filtering selected answers
 CREATE INDEX idx_candidate_answers_is_selected ON candidate_answers(is_selected);
 
--- Add composite index for common query pattern: application + question + selected
-CREATE INDEX idx_candidate_answers_app_question_selected ON candidate_answers(application_id, question_id, is_selected);
+-- Add composite index for common query pattern: application + question_answer + selected
+CREATE INDEX idx_candidate_answers_app_qa_selected ON candidate_answers(application_id, questions_answers_id, is_selected);
 
 -- Update table comment
 ALTER TABLE candidate_answers COMMENT = 'Table storing candidate answer selections with selection status';

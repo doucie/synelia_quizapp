@@ -116,6 +116,27 @@ public interface CampaignQuestionsRepository extends JpaRepository<CampaignQuest
 	List<CampaignQuestions> findByCampaignId(@Param("campaignId")Integer campaignId, @Param("isDeleted")Boolean isDeleted);
 
 	/**
+	 * Finds CampaignQuestions by using campaignId as a search criteria, ordered by order column.
+	 * 
+	 * @param campaignId
+	 * @return A List of CampaignQuestions whose campaignId is equals to the given campaignId, ordered by order. If
+	 *         no CampaignQuestions is found, this method returns an empty list.
+	 */
+	@Query("select e from CampaignQuestions e where e.campaigns.id = :campaignId and e.isDeleted = :isDeleted order by e.order asc")
+	List<CampaignQuestions> findByCampaignIdOrderByOrder(@Param("campaignId")Integer campaignId, @Param("isDeleted")Boolean isDeleted);
+
+	/**
+	 * Finds CampaignQuestions by using campaignId and order as search criteria.
+	 * 
+	 * @param campaignId
+	 * @param order
+	 * @return An Object CampaignQuestions whose campaignId and order match the given values. If
+	 *         no CampaignQuestions is found, this method returns null.
+	 */
+	@Query("select e from CampaignQuestions e where e.campaigns.id = :campaignId and e.order = :order and e.isDeleted = :isDeleted")
+	CampaignQuestions findByCampaignIdAndOrder(@Param("campaignId")Integer campaignId, @Param("order")Integer order, @Param("isDeleted")Boolean isDeleted);
+
+	/**
 	 * Finds List of CampaignQuestions by using campaignQuestionsDto as a search criteria.
 	 * 
 	 * @param request, em

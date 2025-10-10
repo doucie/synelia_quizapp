@@ -7,12 +7,20 @@
 package tech.synelia.quizapp.dao.entity;
 
 import java.io.Serializable;
-import jakarta.persistence.*;
-
-import lombok.*;
-
-
 import java.util.Date;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.Temporal;
+import jakarta.persistence.TemporalType;
+import lombok.Data;
+import lombok.ToString;
 
 
 /**
@@ -60,6 +68,9 @@ public class CandidateAnswers implements Serializable, Cloneable {
 
     @Column(name="search_string", length=65535)
     private String     searchString ;
+
+    @Column(name="is_selected", nullable=false)
+    private Boolean    isSelected   ;
 
 	// "questionsAnswersId" (column "questions_answers_id") is not defined by itself because used as FK in a link 
 	// "applicationId" (column "application_id") is not defined by itself because used as FK in a link 

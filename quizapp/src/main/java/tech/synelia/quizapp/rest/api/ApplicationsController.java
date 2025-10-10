@@ -121,5 +121,15 @@ public class ApplicationsController {
         return response;
     }
 
+	@RequestMapping(value="/save-quiz-answer",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
+    public Response<ApplicationsDto> saveQuizAnswer(@RequestBody Request<ApplicationsDto> request) throws Exception{
+    	slf4jLogger.info("start method /applications/save-quiz-answer");
+    	String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
+    	Locale locale = Locale.of(languageID, "");
+        Response<ApplicationsDto> response = applicationsBusiness.saveQuizAnswer(request, locale);
+		slf4jLogger.info("end method /applications/save-quiz-answer");
+        return response;
+    }
+
    
 }
