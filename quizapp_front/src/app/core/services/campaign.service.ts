@@ -10,19 +10,29 @@ import { QuestionService, Question } from './question.service';
  */
 export interface Campaign {
   id: number;
+  campaignTitle?: string;
   campaignName?: string;
   campaignDesc?: string;
+  campaignStatus?: 'ACTIVE' | 'PENDING' | 'CLOSED';
   campaignStart?: string;
   campaignEnd?: string;
   campaignDuration?: number;
+  maxApply?: number;
+  allCanUpdate?: boolean;
+  markedOutOf?: number;
   isActive?: boolean;
   departmentsId?: number;
   specialitiesId?: number;
   departmentName?: string;
   specialityName?: string;
+  specialityLibelle?: string;
   isDeleted?: boolean;
   createdAt?: string;
+  createdBy?: number;
   updatedAt?: string;
+  creatorName?: string;
+  applicationsCount?: number;
+  questionsCount?: number;
 }
 
 /**
@@ -84,7 +94,7 @@ export interface PagedResponse<T> {
 })
 export class CampaignService {
 
-  private readonly apiUrl = '/campaigns';
+  private readonly apiUrl = `${environment.apiUrl}/campaigns`;
 
   constructor(private http: HttpClient, private questionService: QuestionService) {
     console.log('🚀 Initialisation CampaignService');
@@ -388,5 +398,150 @@ export class CampaignService {
         return throwError(() => error);
       })
     );
+  }
+
+  /**
+   * Récupère les campagnes créées par l'utilisateur connecté
+   */
+  getMyCampaigns(criteria: CampaignSearchCriteria = {}): Observable<PagedResponse<Campaign>> {
+    const currentUserData = localStorage.getItem('user');
+    const currentUserId = currentUserData ? JSON.parse(currentUserData).id : null;
+
+    if (!currentUserId) {
+      return throwError(() => new Error('Utilisateur non connecté'));
+    }
+
+    console.log('📥 Récupération des campagnes créées par l\'utilisateur:', currentUserId);
+
+    const requestBody = {
+      user: currentUserId.toString(),
+      size: criteria.size || 100,
+      index: criteria.page || 0,
+      isSimpleLoading: false,
+      data: {
+        campaignTitle: criteria.campaignName || "",
+        campaignDesc: "",
+        campaignStatus: "",
+        createdBy: currentUserId,
+        searchString: criteria.search_string || ""
+      }
+    };
+
+    return this.http.post<any>(`${this.apiUrl}/getByCriteria`, requestBody).pipe(
+      map(response => {
+        console.log('✅ Réponse getMyCampaigns:', response);
+        
+        if (!response || (!response.items && !response.item)) {
+          return {
+            content: [],
+            totalElements: 0,
+            totalPages: 0,
+            size: criteria.size || 100,
+            number: criteria.page || 0,
+            first: true,
+            last: true,
+            empty: true
+          };
+        }
+
+        const rawCampaigns = response.items || (response.item ? [response.item] : []);
+        const campaigns = rawCampaigns.map((c: any) => this.transformCampaign(c));
+
+        return {
+          content: campaigns,
+          totalElements: response.totalCount || response.count || campaigns.length,
+          totalPages: Math.ceil((response.totalCount || response.count || campaigns.length) / (criteria.size || 100)),
+          size: criteria.size || 100,
+          number: criteria.page || 0,
+          first: (criteria.page || 0) === 0,
+          last: (criteria.page || 0) >= Math.ceil((response.totalCount || response.count || campaigns.length) / (criteria.size || 100)) - 1,
+          empty: campaigns.length === 0
+        };
+      }),
+      catchError(error => {
+        console.error('❌ Erreur getMyCampaigns:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Récupère les campagnes partagées avec l'utilisateur via campaign_crud
+   */
+  getSharedCampaigns(): Observable<Campaign[]> {
+    const currentUserData = localStorage.getItem('user');
+    const currentUserId = currentUserData ? JSON.parse(currentUserData).id?.toString() || "1" : "1";
+
+    console.log('📥 Récupération des campagnes partagées pour l\'utilisateur:', currentUserId);
+
+    const requestBody = {
+      user: currentUserId,
+      size: 100,
+      index: 0,
+      isSimpleLoading: false,
+      data: {
+        userId: currentUserId,
+        canUpdate: "",
+        canDelete: "",
+        canEvaluate: "",
+        follow: "",
+        searchString: ""
+      }
+    };
+
+    return this.http.post<any>(`${environment.apiUrl}/campaignCrud/getByCriteria`, requestBody).pipe(
+      map(response => {
+        console.log('✅ Réponse getSharedCampaigns:', response);
+        
+        if (!response || (!response.items && !response.item)) {
+          return [];
+        }
+
+        const rawCrudItems = response.items || (response.item ? [response.item] : []);
+        
+        // Extraire les campagnes des items campaign_crud
+        const campaigns: Campaign[] = rawCrudItems
+          .filter((item: any) => item.campaigns || item.campaign)
+          .map((item: any) => {
+            const campaign = item.campaigns || item.campaign;
+            return this.transformCampaign(campaign);
+          });
+
+        console.log('✅ Campagnes partagées transformées:', campaigns);
+        return campaigns;
+      }),
+      catchError(error => {
+        console.error('❌ Erreur getSharedCampaigns:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Transforme une campagne brute du backend vers le format frontend
+   */
+  private transformCampaign(campaign: any): Campaign {
+    return {
+      id: campaign.id,
+      campaignTitle: campaign.campaignTitle || campaign.campaign_title || '',
+      campaignName: campaign.campaignTitle || campaign.campaign_title || '',
+      campaignDesc: campaign.campaignDesc || campaign.campaign_desc || '',
+      campaignStatus: (campaign.campaignStatus || campaign.campaign_status || 'PENDING').toUpperCase(),
+      campaignStart: campaign.campaignStart || campaign.campaign_start,
+      campaignEnd: campaign.campaignEnd || campaign.campaign_end,
+      maxApply: campaign.maxApply || campaign.max_apply,
+      allCanUpdate: campaign.allCanUpdate || campaign.all_can_update || false,
+      markedOutOf: campaign.markedOutOf || campaign.marked_out_of,
+      isActive: campaign.campaignStatus === 'ACTIVE' || campaign.campaign_status === 'ACTIVE',
+      createdAt: campaign.createdAt || campaign.created_at,
+      createdBy: campaign.createdBy || campaign.created_by,
+      updatedAt: campaign.updatedAt || campaign.updated_at,
+      specialitiesId: campaign.specialityId || campaign.speciality_id,
+      specialityLibelle: campaign.specialityLibelle || campaign.speciality_libelle,
+      specialityName: campaign.specialityLibelle || campaign.speciality_libelle,
+      creatorName: campaign.creatorName || campaign.creator_name,
+      applicationsCount: campaign.applicationsCount || campaign.applications_count || 0,
+      questionsCount: campaign.questionsCount || campaign.questions_count || 0
+    };
   }
 }

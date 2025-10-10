@@ -1,0 +1,235 @@
+<div class="campaigns-container">
+  <!-- En-tête -->
+  <div class="campaigns-header">
+    <div class="header-content">
+      <h1 class="page-title">Campagnes de recrutement</h1>
+      <button class="btn-refresh" (click)="refreshCampaigns()" [disabled]="loading()">
+        <svg class="icon-refresh" [class.spinning]="loading()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+        </svg>
+        <span>Actualiser</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Onglets -->
+  <div class="tabs-container">
+    <div class="tabs">
+      <button 
+        class="tab" 
+        [class.active]="activeTab() === 'all'"
+        (click)="setActiveTab('all')">
+        <span class="tab-label">Toutes</span>
+        <span class="tab-count">{{ allCount() }}</span>
+      </button>
+      <button 
+        class="tab" 
+        [class.active]="activeTab() === 'my-campaigns'"
+        (click)="setActiveTab('my-campaigns')">
+        <span class="tab-label">Mes campagnes</span>
+        <span class="tab-count">{{ myCount() }}</span>
+      </button>
+      <button 
+        class="tab" 
+        [class.active]="activeTab() === 'shared'"
+        (click)="setActiveTab('shared')">
+        <span class="tab-label">Partagées</span>
+        <span class="tab-count">{{ sharedCount() }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Barre de filtres et recherche -->
+  <div class="filters-bar">
+    <div class="search-box">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/>
+        <path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input 
+        type="text" 
+        placeholder="Rechercher une campagne..."
+        [(ngModel)]="searchQuery"
+        (ngModelChange)="searchQuery.set($event)"
+        class="search-input">
+    </div>
+    
+    <div class="status-filters">
+      <button 
+        class="filter-chip"
+        [class.active]="filterStatus() === 'all'"
+        (click)="setFilterStatus('all')">
+        <span class="chip-label">Toutes</span>
+        <span class="chip-count">{{ displayedCampaigns().length }}</span>
+      </button>
+      <button 
+        class="filter-chip status-active"
+        [class.active]="filterStatus() === 'active'"
+        (click)="setFilterStatus('active')">
+        <span class="status-dot"></span>
+        <span class="chip-label">En cours</span>
+        <span class="chip-count">{{ activeCount() }}</span>
+      </button>
+      <button 
+        class="filter-chip status-pending"
+        [class.active]="filterStatus() === 'pending'"
+        (click)="setFilterStatus('pending')">
+        <span class="status-dot"></span>
+        <span class="chip-label">En attente</span>
+        <span class="chip-count">{{ pendingCount() }}</span>
+      </button>
+      <button 
+        class="filter-chip status-closed"
+        [class.active]="filterStatus() === 'closed'"
+        (click)="setFilterStatus('closed')">
+        <span class="status-dot"></span>
+        <span class="chip-label">Terminées</span>
+        <span class="chip-count">{{ closedCount() }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Spinner de chargement -->
+  @if (loading()) {
+    <div class="loading-container">
+      <div class="spinner"></div>
+      <p class="loading-text">Chargement des campagnes...</p>
+    </div>
+  }
+
+  <!-- Grille de campagnes -->
+  @if (!loading() && displayedCampaigns().length > 0) {
+    <div class="campaigns-grid">
+      @for (campaign of displayedCampaigns(); track campaign.id) {
+        <div class="campaign-card" (click)="viewCampaignDetails(campaign.id)">
+          <!-- En-tête de la card -->
+          <div class="card-header">
+            <div class="campaign-title-section">
+              <h3 class="campaign-title">{{ campaign.campaignTitle || 'Sans titre' }}</h3>
+              <svg class="access-icon" [title]="getAccessTooltip(campaign)" viewBox="0 0 24 24" fill="currentColor">
+                @if (campaign.allCanUpdate) {
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                } @else if (isMyCampaign(campaign)) {
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                } @else {
+                  <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                }
+              </svg>
+            </div>
+            <span 
+              class="status-badge"
+              [class]="getStatusClass(campaign.campaignStatus)">
+              {{ getStatusLabel(campaign.campaignStatus) }}
+            </span>
+          </div>
+
+          <!-- Description -->
+          @if (campaign.campaignDesc) {
+            <p class="campaign-desc">{{ campaign.campaignDesc }}</p>
+          }
+
+          <!-- Spécialité -->
+          @if (campaign.specialityLibelle) {
+            <div class="campaign-speciality">
+              <svg class="speciality-icon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+              </svg>
+              <span class="speciality-name">{{ campaign.specialityLibelle }}</span>
+            </div>
+          }
+
+          <!-- Statistiques -->
+          <div class="campaign-stats">
+            <div class="stat-item">
+              <svg class="stat-icon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+              </svg>
+              <span class="stat-value">{{ campaign.questionsCount || 0 }}</span>
+              <span class="stat-label">Questions</span>
+            </div>
+            <div class="stat-item">
+              <svg class="stat-icon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+              </svg>
+              <span class="stat-value">{{ campaign.applicationsCount || 0 }}</span>
+              <span class="stat-label">Candidats</span>
+            </div>
+            @if (campaign.maxApply) {
+              <div class="stat-item">
+                <svg class="stat-icon" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+                <span class="stat-value">{{ campaign.maxApply }}</span>
+                <span class="stat-label">Maximum</span>
+              </div>
+            }
+          </div>
+
+          <!-- Dates -->
+          <div class="campaign-dates">
+            @if (campaign.campaignStart) {
+              <div class="date-item">
+                <svg class="date-icon" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/>
+                </svg>
+                <span class="date-label">Début:</span>
+                <span class="date-value">{{ formatDate(campaign.campaignStart) }}</span>
+              </div>
+            }
+            @if (campaign.campaignEnd) {
+              <div class="date-item">
+                <svg class="date-icon" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/>
+                </svg>
+                <span class="date-label">Fin:</span>
+                <span class="date-value">{{ formatDate(campaign.campaignEnd) }}</span>
+              </div>
+            }
+          </div>
+
+          <!-- Footer avec créateur -->
+          @if (campaign.creatorName) {
+            <div class="card-footer">
+              <svg class="creator-icon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+              </svg>
+              <span class="creator-name">{{ campaign.creatorName }}</span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <!-- État vide -->
+  @if (!loading() && displayedCampaigns().length === 0) {
+    <div class="empty-state">
+      <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/>
+      </svg>
+      <h3 class="empty-title">
+        @if (searchQuery() || filterStatus() !== 'all') {
+          Aucune campagne trouvée
+        } @else if (activeTab() === 'my-campaigns') {
+          Vous n'avez pas encore créé de campagne
+        } @else if (activeTab() === 'shared') {
+          Aucune campagne n'est partagée avec vous
+        } @else {
+          Aucune campagne disponible
+        }
+      </h3>
+      <p class="empty-message">
+        @if (searchQuery() || filterStatus() !== 'all') {
+          Essayez de modifier vos critères de recherche
+        } @else {
+          Les campagnes de recrutement apparaîtront ici
+        }
+      </p>
+      @if (searchQuery() || filterStatus() !== 'all') {
+        <button class="btn-clear-filters" (click)="searchQuery.set(''); setFilterStatus('all')">
+          Effacer les filtres
+        </button>
+      }
+    </div>
+  }
+</div>

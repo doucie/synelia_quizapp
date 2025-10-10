@@ -100,6 +100,11 @@ export const routes: Routes = [
         path: 'users', 
         loadComponent: () => import('./pages/dashboard/users/users').then(m => m.UsersComponent),
         canActivate: [recruiterRoleGuard]
+      },
+      { 
+        path: 'campaigns', 
+        loadComponent: () => import('./pages/dashboard/campaigns/campaigns').then(m => m.CampaignsComponent),
+        canActivate: [recruiterRoleGuard]
       }
     ]
   },
