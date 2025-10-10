@@ -181,19 +181,30 @@ export class UserService {
         // Traiter les éléments (items ou item unique)
         const rawUsers = response.items || (response.item ? [response.item] : []);
         
+        console.log('🔍 [DEBUG] rawUsers avant transformation:', rawUsers);
+        console.log('🔍 [DEBUG] Premier utilisateur raw:', rawUsers[0]);
+        
         // Transformer la réponse du backend vers le format frontend
-        const transformedUsers: User[] = rawUsers.map((user: any) => ({
-          id: user.id,
-          nom: user.nom || user.lastName || '',
-          prenom: user.prenom || user.firstName || '',
-          pseudo: user.pseudo || user.username || '',
-          email: user.email || '',
-          telephone: user.telephone || user.phone || '',
-          role: user.role || user.userRole || 'recruiter',
-          isOnline: user.isOnline || false,
-          dateCreation: user.dateCreation || user.createdAt,
-          derniereConnexion: user.derniereConnexion || user.updatedAt
-        }));
+        const transformedUsers: User[] = rawUsers.map((user: any) => {
+          console.log(`🔍 [DEBUG] Transformation user ${user.id}:`, {
+            'user.role': user.role,
+            'user.userRole': user.userRole,
+            'role final': user.role || user.userRole || 'recruiter'
+          });
+          
+          return {
+            id: user.id,
+            nom: user.nom || user.lastName || '',
+            prenom: user.prenom || user.firstName || '',
+            pseudo: user.pseudo || user.username || '',
+            email: user.email || '',
+            telephone: user.telephone || user.phone || '',
+            role: user.role || user.userRole || 'recruiter',
+            isOnline: user.isOnline || false,
+            dateCreation: user.dateCreation || user.createdAt,
+            derniereConnexion: user.derniereConnexion || user.updatedAt
+          };
+        });
         
         return {
           content: transformedUsers,

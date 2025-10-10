@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard, noAuthGuard } from './core/guards/auth.guard';
-import { superRoleGuard } from './core/guards/role.guard';
+import { superRoleGuard, recruiterRoleGuard } from './core/guards/role.guard';
 import { sourceTokenGuard } from './core/guards/source-token.guard';
 
 export const routes: Routes = [
@@ -99,7 +99,7 @@ export const routes: Routes = [
       { 
         path: 'users', 
         loadComponent: () => import('./pages/dashboard/users/users').then(m => m.UsersComponent),
-        canActivate: [superRoleGuard]
+        canActivate: [recruiterRoleGuard]
       }
     ]
   },

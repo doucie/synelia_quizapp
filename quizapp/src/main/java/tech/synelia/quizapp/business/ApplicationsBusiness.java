@@ -1239,6 +1239,124 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		return response;
 	}
 
+	/**
+	 * Marque le quiz comme complété (quiz_status = COMPLETED)
+	 * Met à jour le statut du quiz pour indiquer que le candidat a terminé et soumis toutes ses réponses
+	 * 
+	 * @param request Request contenant:
+	 *   - id: applicationId
+	 *   - searchString: quiz_token pour validation
+	 * @param locale locale
+	 * @return Response indiquant le succès ou l'échec de la mise à jour
+	 * @throws JsonProcessingException
+	 */
+	public Response<ApplicationsDto> completeQuiz(Request<ApplicationsDto> request, Locale locale) throws JsonProcessingException {
+		log.info("----begin completeQuiz-----");
+		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
+		Response<ApplicationsDto> response = new Response<>();
+		
+		try {
+			// 1. Récupérer et valider les paramètres
+			ApplicationsDto dto = request.getData();
+			if (dto == null || dto.getId() == null) {
+				Status status = new Status();
+				status.setCode(StatusCode.FUNC_FIELD_EMPTY);
+				status.setMessage("ID de l'application manquant");
+				response.setStatus(status);
+				response.setHasError(true);
+				response.setHttpCode(HttpStatus.BAD_REQUEST.value());
+				return response;
+			}
+			
+			if (Utilities.isBlank(dto.getSearchString())) {
+				Status status = new Status();
+				status.setCode(StatusCode.FUNC_FIELD_EMPTY);
+				status.setMessage("Token de quiz manquant");
+				response.setStatus(status);
+				response.setHasError(true);
+				response.setHttpCode(HttpStatus.BAD_REQUEST.value());
+				return response;
+			}
+			
+			Integer applicationId = dto.getId();
+			String quizToken = dto.getSearchString();
+			
+			log.info("Completion du quiz pour l'application " + applicationId);
+			
+			// 2. Récupérer l'application et valider le quiz_token
+			Applications application = applicationsRepository.findOne(applicationId, false);
+			if (application == null) {
+				Status status = new Status();
+				status.setCode(StatusCode.FUNC_DATA_NOT_EXIST);
+				status.setMessage("Application non trouvée");
+				response.setStatus(status);
+				response.setHasError(true);
+				response.setHttpCode(HttpStatus.NOT_FOUND.value());
+				return response;
+			}
+			
+			// Validation du quiz_token (sécurité)
+			if (!quizToken.equals(application.getQuizToken())) {
+				Status status = new Status();
+				status.setCode(StatusCode.FUNC_AUTH_FAIL);
+				status.setMessage("Token de quiz invalide");
+				response.setStatus(status);
+				response.setHasError(true);
+				response.setHttpCode(HttpStatus.FORBIDDEN.value());
+				return response;
+			}
+			
+			// Vérifier que le quiz n'est pas déjà complété
+			if (tech.synelia.quizapp.utils.enums.QuizStatus.COMPLETED.getValue().equals(application.getQuizStatus())) {
+				Status status = new Status();
+				status.setCode(StatusCode.FUNC_DATA_EXIST);
+				status.setMessage("Ce quiz a déjà été complété");
+				response.setStatus(status);
+				response.setHasError(true);
+				response.setHttpCode(HttpStatus.BAD_REQUEST.value());
+				return response;
+			}
+			
+			// 3. Mettre à jour le statut du quiz à COMPLETED
+			application.setQuizStatus(tech.synelia.quizapp.utils.enums.QuizStatus.COMPLETED.getValue());
+			application.setUpdatedAt(Utilities.getCurrentDate());
+			application.setUpdatedBy(request.getUser());
+			applicationsRepository.save(application);
+			
+			log.info("Quiz marqué comme COMPLETED pour l'application " + applicationId);
+			
+			// 4. Préparer la réponse
+			ApplicationsDto resultDto = new ApplicationsDto();
+			resultDto.setId(applicationId);
+			resultDto.setQuizStatus(tech.synelia.quizapp.utils.enums.QuizStatus.COMPLETED.getValue());
+			
+			Status status = new Status();
+			status.setCode(StatusCode.SUCCESS);
+			status.setMessage("Quiz complété avec succès");
+			
+			response.setHttpCode(HttpStatus.OK.value());
+			response.setStatus(status);
+			response.setItems(Arrays.asList(resultDto));
+			response.setHasError(false);
+			
+			log.info("Quiz completion successful");
+			
+		} catch (Exception e) {
+			log.severe("Error completing quiz: " + e.getMessage());
+			e.printStackTrace();
+			Status status = new Status();
+			status.setCode(StatusCode.TECH_INTERN_ERROR);
+			status.setMessage("Erreur lors de la completion du quiz");
+			response.setStatus(status);
+			response.setHasError(true);
+			response.setHttpCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
+		}
+		
+		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
+		log.info("----end completeQuiz-----");
+		return response;
+	}
+
 	public Response<ApplicationsDto> custom(Request<ApplicationsDto> request, Locale locale) throws JsonProcessingException {
 		log.info("----begin custom ApplicationsDto-----");
 		log.info("Request send --:> " + Utilities.convertObjectToJson(request));

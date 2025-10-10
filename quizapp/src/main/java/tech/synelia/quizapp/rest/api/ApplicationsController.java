@@ -131,5 +131,15 @@ public class ApplicationsController {
         return response;
     }
 
+	@RequestMapping(value="/complete-quiz",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
+    public Response<ApplicationsDto> completeQuiz(@RequestBody Request<ApplicationsDto> request) throws Exception{
+    	slf4jLogger.info("start method /applications/complete-quiz");
+    	String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
+    	Locale locale = Locale.of(languageID, "");
+        Response<ApplicationsDto> response = applicationsBusiness.completeQuiz(request, locale);
+		slf4jLogger.info("end method /applications/complete-quiz");
+        return response;
+    }
+
    
 }

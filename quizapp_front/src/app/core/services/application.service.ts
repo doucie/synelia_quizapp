@@ -232,4 +232,32 @@ export class ApplicationService {
 
     return this.http.post<ApplicationResponse>(`${this.applicationsUrl}/save-quiz-answer`, request, { headers });
   }
+
+  /**
+   * Marque le quiz comme complété (quiz_status = COMPLETED)
+   * @param applicationId ID de l'application
+   * @param quizToken Token sécurisé pour accéder au quiz
+   * @returns Observable<ApplicationResponse>
+   */
+  completeQuiz(applicationId: number, quizToken: string): Observable<ApplicationResponse> {
+    const request = {
+      user: 1,
+      data: {
+        id: applicationId,
+        searchString: quizToken,
+        candidateFirstName: '',
+        candidateLastName: '',
+        candidateEmail: '',
+        candidatePhone: '',
+        candidateBirthDate: ''
+      }
+    };
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    });
+
+    return this.http.post<ApplicationResponse>(`${this.applicationsUrl}/complete-quiz`, request, { headers });
+  }
 }

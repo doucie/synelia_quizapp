@@ -1,56 +1,25 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
-import { UserService, UserManagement as User, UserSearchCriteria, PagedResponse } from '../../../core/services';
-import { AuthService } from '../../../core/services/auth/auth.service';
+import { UserService, UserManagement as User } from '../../../core/services';
 
 @Component({
   selector: 'app-users',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './users.html',
   styleUrls: ['./users.scss']
 })
 export class UsersComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   
-  users: User[] = [];
-  totalElements = 0;
-  totalPages = 0;
-  currentPage = 0;
-  pageSize = 10;
-  loading = false;
+  users = signal<User[]>([]);
+  loading = signal(false);
+  searchQuery = signal('');
+  filterStatus = signal<'all' | 'online' | 'offline'>('all');
   
-  // Critères de recherche
-  searchCriteria: UserSearchCriteria = {};
-  
-  // Modals
-  showCreateModal = false;
-  showEditModal = false;
-  showDeleteModal = false;
-  selectedUser: User | null = null;
-  
-  // Formulaires
-  userForm: FormGroup;
-  
-  // Rôles disponibles
-  availableRoles = ['super', 'admin', 'recruiter'];
-
-  constructor(
-    private userService: UserService,
-    private authService: AuthService,
-    private fb: FormBuilder
-  ) {
-    this.userForm = this.fb.group({
-      nom: ['', [Validators.required, Validators.minLength(2)]],
-      prenom: ['', [Validators.required, Validators.minLength(2)]],
-      pseudo: ['', [Validators.required, Validators.minLength(3)]],
-      email: ['', [Validators.required, Validators.email]],
-      telephone: [''],
-      role: ['recruiter', Validators.required]
-    });
-  }
+  constructor(private userService: UserService) {}
 
   ngOnInit(): void {
     this.loadUsers();
@@ -61,196 +30,68 @@ export class UsersComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  // Computed
+  filteredUsers = computed(() => {
+    const query = this.searchQuery().toLowerCase();
+    const status = this.filterStatus();
+    let filtered = this.users();
+    
+    // Filtrer par recherche
+    if (query) {
+      filtered = filtered.filter(user => 
+        (user.nom || '').toLowerCase().includes(query) ||
+        (user.prenom || '').toLowerCase().includes(query) ||
+        (user.pseudo || '').toLowerCase().includes(query) ||
+        user.email.toLowerCase().includes(query)
+      );
+    }
+    
+    // Filtrer par statut
+    if (status !== 'all') {
+      filtered = filtered.filter(user => 
+        status === 'online' ? user.isOnline : !user.isOnline
+      );
+    }
+    
+    return filtered;
+  });
+
   /**
-   * Charge la liste des utilisateurs selon les critères
+   * Charge tous les utilisateurs
    */
   loadUsers(): void {
-    this.loading = true;
+    this.loading.set(true);
     
-    const criteria: UserSearchCriteria = {
-      ...this.searchCriteria,
-      page: this.currentPage,
-      size: this.pageSize
-    };
-
-    this.userService.getByCriteria(criteria)
+    // Charger TOUS les utilisateurs (pagination désactivée avec size = 100)
+    this.userService.getByCriteria({ size: 100, page: 0 })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (response: PagedResponse<User>) => {
-          this.users = response.content;
-          this.totalElements = response.totalElements;
-          this.totalPages = response.totalPages;
-          this.loading = false;
+        next: (response) => {
+          console.log('📊 [UsersComponent] Réponse reçue:', response);
+          console.log('📊 [UsersComponent] Nombre d\'utilisateurs:', response.content?.length);
+          console.log('📊 [UsersComponent] Utilisateurs par rôle:', 
+            response.content?.reduce((acc: any, user: User) => {
+              acc[user.role] = (acc[user.role] || 0) + 1;
+              return acc;
+            }, {})
+          );
+          this.users.set(response.content || []);
+          this.loading.set(false);
         },
         error: (error) => {
           console.error('Erreur lors du chargement des utilisateurs:', error);
-          this.loading = false;
+          this.loading.set(false);
         }
       });
   }
 
   /**
-   * Recherche avec critères
+   * Obtient les initiales d'un utilisateur pour l'avatar
    */
-  onSearch(): void {
-    this.currentPage = 0;
-    this.loadUsers();
-  }
-
-  /**
-   * Réinitialise les critères de recherche
-   */
-  onClearSearch(): void {
-    this.searchCriteria = {};
-    this.currentPage = 0;
-    this.loadUsers();
-  }
-
-  /**
-   * Change de page
-   */
-  onPageChange(page: number): void {
-    if (page >= 0 && page < this.totalPages) {
-      this.currentPage = page;
-      this.loadUsers();
-    }
-  }
-
-  /**
-   * Ouvre le modal de création
-   */
-  openCreateModal(): void {
-    this.selectedUser = null;
-    this.userForm.reset();
-    this.userForm.patchValue({ role: 'recruiter' });
-    this.showCreateModal = true;
-  }
-
-  /**
-   * Ouvre le modal d'édition
-   */
-  openEditModal(user: User): void {
-    this.selectedUser = user;
-    this.userForm.patchValue({
-      nom: user.nom,
-      prenom: user.prenom,
-      pseudo: user.pseudo,
-      email: user.email,
-      telephone: user.telephone,
-      role: user.role
-    });
-    this.showEditModal = true;
-  }
-
-  /**
-   * Ouvre le modal de suppression
-   */
-  openDeleteModal(user: User): void {
-    this.selectedUser = user;
-    this.showDeleteModal = true;
-  }
-
-  /**
-   * Ferme tous les modals
-   */
-  closeModals(): void {
-    this.showCreateModal = false;
-    this.showEditModal = false;
-    this.showDeleteModal = false;
-    this.selectedUser = null;
-  }
-
-  /**
-   * Sauvegarde un utilisateur (création ou modification)
-   */
-  saveUser(): void {
-    if (this.userForm.valid) {
-      const userData = this.userForm.value;
-      
-      if (this.selectedUser) {
-        // Modification
-        this.userService.update(this.selectedUser.id, userData)
-          .pipe(takeUntil(this.destroy$))
-          .subscribe({
-            next: () => {
-              this.loadUsers();
-              this.closeModals();
-            },
-            error: (error) => {
-              console.error('Erreur lors de la modification:', error);
-            }
-          });
-      } else {
-        // Création
-        const currentUser = this.authService.getCurrentUser();
-        this.userService.create(userData, currentUser?.id ? parseInt(currentUser.id.toString()) : undefined)
-          .pipe(takeUntil(this.destroy$))
-          .subscribe({
-            next: () => {
-              this.loadUsers();
-              this.closeModals();
-            },
-            error: (error) => {
-              console.error('Erreur lors de la création:', error);
-            }
-          });
-      }
-    }
-  }
-
-  /**
-   * Supprime un utilisateur
-   */
-  deleteUser(): void {
-    if (this.selectedUser) {
-      this.userService.delete(this.selectedUser.id)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: () => {
-            this.loadUsers();
-            this.closeModals();
-          },
-          error: (error) => {
-            console.error('Erreur lors de la suppression:', error);
-          }
-        });
-    }
-  }
-
-  /**
-   * Bascule le statut en ligne d'un utilisateur
-   */
-  toggleOnlineStatus(user: User): void {
-    this.userService.updateOnlineStatus(user.id, !user.isOnline)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: () => {
-          user.isOnline = !user.isOnline;
-        },
-        error: (error) => {
-          console.error('Erreur lors du changement de statut:', error);
-        }
-      });
-  }
-
-  /**
-   * Retourne les pages à afficher dans la pagination
-   */
-  getVisiblePages(): number[] {
-    const maxVisible = 5;
-    const half = Math.floor(maxVisible / 2);
-    let start = Math.max(0, this.currentPage - half);
-    let end = Math.min(this.totalPages - 1, start + maxVisible - 1);
-    
-    if (end - start + 1 < maxVisible) {
-      start = Math.max(0, end - maxVisible + 1);
-    }
-    
-    const pages = [];
-    for (let i = start; i <= end; i++) {
-      pages.push(i);
-    }
-    return pages;
+  getUserInitials(user: User): string {
+    const firstInitial = user.prenom?.charAt(0) || '';
+    const lastInitial = user.nom?.charAt(0) || '';
+    return (firstInitial + lastInitial).toUpperCase();
   }
 
   /**
@@ -266,16 +107,28 @@ export class UsersComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Retourne la classe CSS pour le statut
+   * Obtient la couleur de l'avatar selon le rôle
    */
-  getStatusClass(isOnline: boolean): string {
-    return isOnline ? 'status-online' : 'status-offline';
+  getAvatarColor(role: string): string {
+    const colors: Record<string, string> = {
+      'super': 'avatar-super',
+      'admin': 'avatar-admin',
+      'recruiter': 'avatar-recruiter'
+    };
+    return colors[role] || 'avatar-recruiter';
   }
 
   /**
-   * Retourne le texte du statut
+   * Compte les utilisateurs en ligne
    */
-  getStatusText(isOnline: boolean): string {
-    return isOnline ? 'En ligne' : 'Hors ligne';
+  getOnlineCount(): number {
+    return this.users().filter(u => u.isOnline).length;
+  }
+
+  /**
+   * Compte les utilisateurs hors ligne
+   */
+  getOfflineCount(): number {
+    return this.users().filter(u => !u.isOnline).length;
   }
 }

@@ -122,3 +122,37 @@ export const adminRoleGuard: CanActivateFn = (route, state) => {
     return false;
   }
 };
+
+/**
+ * Guard spécifique pour les rôles recruiter, admin et super
+ * Raccourci pour les routes accessibles aux recruteurs et administrateurs
+ */
+export const recruiterRoleGuard: CanActivateFn = (route, state) => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+
+  const user = authService.getCurrentUser();
+  const isAuthenticated = authService.isAuthenticated();
+
+  console.log('🛡️ RecruiterRoleGuard - Vérification des rôles recruiter/admin/super');
+
+  if (!isAuthenticated || !user) {
+    console.log('❌ RecruiterRoleGuard - Utilisateur non connecté');
+    router.navigate(['/connexion']);
+    return false;
+  }
+
+  if (user.role === 'super' || user.role === 'admin' || user.role === 'recruiter') {
+    console.log('✅ RecruiterRoleGuard - Accès autorisé pour le rôle:', user.role);
+    return true;
+  } else {
+    console.log('❌ RecruiterRoleGuard - Accès refusé, rôle:', user.role);
+    router.navigate(['/dashboard'], { 
+      queryParams: { 
+        error: 'access_denied',
+        message: 'Accès réservé aux recruteurs et administrateurs.'
+      } 
+    });
+    return false;
+  }
+};

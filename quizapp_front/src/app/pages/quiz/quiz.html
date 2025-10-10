@@ -102,14 +102,6 @@
         <div class="question-section">
           <h2>{{ currentQuestion()?.questionContent }}</h2>
 
-          <!-- Indicateur de sauvegarde -->
-          @if (isSaving()) {
-            <div class="saving-indicator">
-              <div class="spinner-small"></div>
-              <span>Sauvegarde en cours...</span>
-            </div>
-          }
-
           <!-- Liste des réponses -->
           <div class="answers-list">
             @for (answer of currentQuestion()?.answers; track answer.id) {

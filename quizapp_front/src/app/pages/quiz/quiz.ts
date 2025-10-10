@@ -53,7 +53,6 @@ export class QuizComponent implements OnInit {
   // État du quiz
   quizStarted = signal(false);
   quizCompleted = signal(false);
-  isSaving = signal(false); // Indicateur de sauvegarde en cours
   
   // Computed
   currentQuestion = computed(() => {
@@ -160,8 +159,6 @@ export class QuizComponent implements OnInit {
     const token = this.quizToken();
     
     if (appId && token) {
-      this.isSaving.set(true);
-      
       this.applicationService.saveQuizAnswer(
         appId, 
         token, 
@@ -169,8 +166,6 @@ export class QuizComponent implements OnInit {
         selectedAnswerObj.questionsAnswersId
       ).subscribe({
         next: (response) => {
-          this.isSaving.set(false);
-          
           if (response.hasError) {
             console.error('Erreur lors de la sauvegarde:', response.status?.message);
             // On garde quand même la sélection locale pour ne pas perturber l'utilisateur
@@ -179,7 +174,6 @@ export class QuizComponent implements OnInit {
           }
         },
         error: (error) => {
-          this.isSaving.set(false);
           console.error('Erreur réseau lors de la sauvegarde:', error);
           // On garde quand même la sélection locale
         }
@@ -210,14 +204,37 @@ export class QuizComponent implements OnInit {
   }
 
   submitQuiz(): void {
-    // TODO: Implémenter la soumission des réponses au backend
-    console.log('Réponses sélectionnées:', this.selectedAnswers());
+    const appId = this.applicationId();
+    const token = this.quizToken();
     
-    // Pour l'instant, on marque simplement le quiz comme complété
-    this.quizCompleted.set(true);
+    if (!appId || !token) {
+      console.error('Application ID ou quiz token manquant');
+      return;
+    }
+
+    // Appeler l'API pour marquer le quiz comme COMPLETED
+    this.isLoading.set(true);
     
-    // Plus tard: appeler l'API pour sauvegarder les réponses
-    // this.applicationService.submitQuizAnswers(...)
+    this.applicationService.completeQuiz(appId, token).subscribe({
+      next: (response) => {
+        this.isLoading.set(false);
+        
+        if (response.hasError) {
+          console.error('Erreur lors de la soumission:', response.status?.message);
+          this.hasError.set(true);
+          this.errorMessage.set(response.status?.message || 'Erreur lors de la soumission du quiz');
+        } else {
+          console.log('✅ Quiz soumis avec succès');
+          this.quizCompleted.set(true);
+        }
+      },
+      error: (error) => {
+        this.isLoading.set(false);
+        console.error('❌ Erreur réseau lors de la soumission:', error);
+        this.hasError.set(true);
+        this.errorMessage.set('Une erreur est survenue lors de la soumission du quiz');
+      }
+    });
   }
 
   goHome(): void {
