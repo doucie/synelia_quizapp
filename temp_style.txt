@@ -1,0 +1,184 @@
+/* Colors System for Synelia Quiz App */
+
+:root {
+  /* Brand Primary Colors */
+  --primary: #6B46C1;
+  --primary-dark: #553C9A;
+  --primary-light: #8B5CF6;
+  --primary-600: #553C9A; /* Darker shade for hover states */
+  
+  /* Secondary Colors */
+  --secondary: #EC4899;
+  --secondary-dark: #BE185D;
+  --secondary-light: #F472B6;
+  
+  /* Accent Colors */
+  --accent: #10B981;
+  --accent-dark: #059669;
+  --accent-light: #34D399;
+  
+  /* Neutral Light Mode */
+  --background: #FFFFFF;
+  --background-rgb: 255, 255, 255;
+  --surface: #F8FAFC;
+  --surface-variant: #F1F5F9;
+  --on-background: #1E293B;
+  --on-surface: #334155;
+  --on-surface-variant: #64748B;
+  
+  /* Border & Divider */
+  --border: #E2E8F0;
+  --border-variant: #CBD5E1;
+  --border-hover: #CBD5E1;
+  --divider: #F1F5F9;
+  
+  /* Mono/Notifications Colors */
+  --mono-bg: #FFFFFF;
+  --mono-bg-secondary: #F8FAFC;
+  --mono-borders: #E2E8F0;
+  
+  /* Status Colors */
+  --success: #10B981;
+  --success-dark: #059669;
+  --warning: #F59E0B;
+  --warning-dark: #B45309;
+  --error: #EF4444;
+  --error-dark: #B91C1C;
+  --info: #3B82F6;
+  --info-dark: #1E40AF;
+  
+  /* Disabled States */
+  --disabled: #E2E8F0;
+  --disabled-text: #94A3B8;
+  
+  /* Text Colors */
+  --text-primary: #1E293B;
+  --text-secondary: #64748B;
+  --text-tertiary: #94A3B8;
+  --text-disabled: #94A3B8;
+  --text-on-primary: #FFFFFF;
+  
+  /* Shadow */
+  --shadow-light: rgba(0, 0, 0, 0.1);
+  --shadow-medium: rgba(0, 0, 0, 0.15);
+  --shadow-heavy: rgba(0, 0, 0, 0.25);
+  
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, var(--primary), var(--secondary));
+  
+    /* Scrollbar Colors */
+    --scrollbar-bg: var(--surface-variant);
+    --scrollbar-thumb: var(--primary);
+    --scrollbar-thumb-hover: var(--primary-dark);
+    --scrollbar-thumb-active: var(--secondary);
+    --scrollbar-border: var(--border);
+}
+
+/* Dark Mode Variables */
+.dark-mode {
+  --background: #0F172A;
+  --surface: #1E293B;
+  --surface-variant: #334155;
+  --on-background: #F8FAFC;
+  --on-surface: #E2E8F0;
+  --on-surface-variant: #CBD5E1;
+  
+  /* Primary Colors Dark Mode */
+  --primary-600: #8B5CF6; /* Lighter shade for hover in dark mode */
+  
+  /* Border & Divider Dark */
+  --border: #334155;
+  --border-variant: #475569;
+  --border-hover: #64748B;
+  --divider: #1E293B;
+  
+  /* Mono/Notifications Colors Dark */
+  --mono-bg: #1E293B;
+  --mono-bg-secondary: #334155;
+  --mono-borders: #475569;
+
+  /* Text Colors Dark */
+  --text-primary: #F8FAFC;
+  --text-secondary: #CBD5E1;
+  --text-tertiary: #94A3B8;
+  --text-disabled: #64748B;
+  
+  /* Disabled States Dark */
+  --disabled: #334155;
+  --disabled-text: #64748B;
+  
+  /* Shadow Dark */
+  --shadow-light: rgba(0, 0, 0, 0.3);
+  --shadow-medium: rgba(0, 0, 0, 0.4);
+  --shadow-heavy: rgba(0, 0, 0, 0.6);
+  
+  /* Status Colors Dark */
+  /* --success-dark: #10B981; */
+  
+    /* Scrollbar Colors Dark */
+    --scrollbar-bg: var(--surface-variant);
+    --scrollbar-thumb: var(--primary);
+    --scrollbar-thumb-hover: var(--primary-light);
+    --scrollbar-thumb-active: var(--secondary);
+    --scrollbar-border: var(--border);
+}
+
+/* Java Syntax Highlighting Colors */
+:root {
+  /* Java Keywords */
+  --java-keyword: #8B5CF6; /* purple */
+  --java-type: #10B981; /* green */
+  --java-string: #F59E0B; /* amber */
+  --java-comment: #64748B; /* gray */
+  --java-annotation: #EC4899; /* pink */
+  --java-number: #3B82F6; /* blue */
+  --java-method: #06B6D4; /* cyan */
+  --java-variable: var(--text-primary);
+}
+
+.dark-mode {
+  --java-keyword: #A78BFA;
+  --java-type: #34D399;
+  --java-string: #FBBF24;
+  --java-comment: #94A3B8;
+  --java-annotation: #F472B6;
+  --java-number: #60A5FA;
+  --java-method: #22D3EE;
+}
+
+/* QEEL (Qui Est En Ligne) Specific Colors */
+:root {
+  /* QEEL Status Colors */
+  --qeel-online: var(--success);
+  --qeel-online-bg: rgba(16, 185, 129, 0.1);
+  --qeel-offline: var(--text-disabled);
+  --qeel-offline-bg: rgba(148, 163, 184, 0.1);
+  
+  /* QEEL Role Colors */
+  --qeel-users: var(--info);
+  --qeel-users-bg: rgba(59, 130, 246, 0.1);
+  --qeel-admins: var(--error);
+  --qeel-admins-bg: rgba(239, 68, 68, 0.1);
+  --qeel-recruiters: var(--accent);
+  --qeel-recruiters-bg: rgba(16, 185, 129, 0.1);
+  
+  /* QEEL Percentage Colors */
+  --qeel-percentage-high: var(--success);
+  --qeel-percentage-high-bg: rgba(16, 185, 129, 0.15);
+  --qeel-percentage-medium: var(--warning);
+  --qeel-percentage-medium-bg: rgba(245, 158, 11, 0.15);
+  --qeel-percentage-low: var(--error);
+  --qeel-percentage-low-bg: rgba(239, 68, 68, 0.15);
+}
+
+.dark-mode {
+  /* QEEL Dark Mode Adjustments */
+  --qeel-online-bg: rgba(52, 211, 153, 0.15);
+  --qeel-offline-bg: rgba(100, 116, 139, 0.15);
+  --qeel-users-bg: rgba(96, 165, 250, 0.15);
+  --qeel-admins-bg: rgba(248, 113, 113, 0.15);
+  --qeel-recruiters-bg: rgba(52, 211, 153, 0.15);
+  --qeel-percentage-high-bg: rgba(52, 211, 153, 0.2);
+  --qeel-percentage-medium-bg: rgba(251, 191, 36, 0.2);
+  --qeel-percentage-low-bg: rgba(248, 113, 113, 0.2);
+}
