@@ -1,8 +1,36 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
+
+export interface SourceToken {
+  id?: number;
+  tokenString?: string;
+  sourceTokenName?: string;
+  campaignId?: number;
+  campaignName?: string;
+  createdAt?: string;
+  createdBy?: number;
+  updatedAt?: string;
+  updatedBy?: number;
+  isDeleted?: boolean;
+}
+
+export interface SourceTokenRequest {
+  user?: number;
+  data?: Partial<SourceToken>;
+  datas?: Partial<SourceToken>[];
+}
+
+export interface SourceTokenResponse {
+  hasError: boolean;
+  status: {
+    code: string;
+    message: string;
+  };
+  items?: SourceToken[];
+}
 
 export interface SourceTokenValidation {
   isValid: boolean;
@@ -26,6 +54,36 @@ interface BackendResponse {
 export class SourceTokenService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/sourceToken`;
+
+  /**
+   * Récupère tous les source tokens par critères
+   * @param criteria Critères de recherche
+   * @returns Observable avec les source tokens
+   */
+  getSourceTokensByCriteria(criteria: Partial<SourceToken> = {}): Observable<SourceTokenResponse> {
+    const request: SourceTokenRequest = {
+      user: 1,
+      data: criteria
+    };
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    });
+
+    return this.http.post<SourceTokenResponse>(`${this.apiUrl}/getByCriteria`, request, { headers });
+  }
+
+  /**
+   * Récupère les source tokens d'une campagne spécifique
+   * @param campaignId ID de la campagne
+   * @returns Observable avec les source tokens de cette campagne
+   */
+  getSourceTokensByCampaign(campaignId: number): Observable<SourceToken[]> {
+    return this.getSourceTokensByCriteria({ campaignId }).pipe(
+      map(response => response.items || [])
+    );
+  }
 
   /**
    * Vérifie si un source token existe et est valide

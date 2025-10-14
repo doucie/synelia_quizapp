@@ -1,0 +1,338 @@
+<div class="applications-page">
+  <!-- Header élégant -->
+  <header class="page-header">
+    <div class="header-top">
+      <div class="header-title-section">
+        <div class="title-wrapper">
+          <h1 class="page-title">
+            <span class="title-icon">📋</span>
+            Candidatures
+          </h1>
+          <span class="title-badge">{{ totalApplications() }}</span>
+        </div>
+        <p class="page-subtitle">Gérez les candidatures de vos campagnes suivies en temps réel</p>
+      </div>
+      
+      <div class="header-actions">
+        <button class="action-btn secondary" (click)="resetFilters()" title="Réinitialiser les filtres">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 6h18M7 12h10M10 18h4"/>
+          </svg>
+          <span>Réinitialiser</span>
+        </button>
+        <button class="action-btn primary" (click)="refreshApplications()" title="Actualiser">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+          </svg>
+          <span>Actualiser</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Statistiques modernes -->
+    <div class="stats-container">
+      <div class="stat-card total">
+        <div class="stat-icon-wrapper">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M8.5 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM20 8v6M23 11h-6"/>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ totalApplications() }}</div>
+          <div class="stat-label">Total</div>
+        </div>
+      </div>
+
+      <div class="stat-card pending">
+        <div class="stat-icon-wrapper">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 6v6l4 2"/>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ pendingApplications() }}</div>
+          <div class="stat-label">En attente</div>
+        </div>
+      </div>
+
+      <div class="stat-card verified">
+        <div class="stat-icon-wrapper">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <path d="M22 4 12 14.01l-3-3"/>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ verifiedApplications() }}</div>
+          <div class="stat-label">Vérifiés</div>
+        </div>
+      </div>
+
+      <div class="stat-card completed">
+        <div class="stat-icon-wrapper">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ completedQuizApplications() }}</div>
+          <div class="stat-label">Quiz complétés</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Barre de filtres moderne -->
+  <div class="filters-section">
+    <div class="search-container">
+      <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/>
+        <path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input 
+        type="text" 
+        class="search-input"
+        placeholder="Rechercher par nom, email ou campagne..." 
+        [(ngModel)]="searchQuery"
+        (ngModelChange)="searchQuery.set($event)"
+      />
+      @if (searchQuery()) {
+        <button class="clear-search" (click)="searchQuery.set('')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      }
+    </div>
+
+    <div class="filters-controls">
+      <div class="filter-group">
+        <label class="filter-label">Campagne</label>
+        <select 
+          class="filter-select"
+          [value]="selectedCampaign() || ''"
+          (change)="setSelectedCampaign($any($event.target).value ? +$any($event.target).value : null)"
+        >
+          <option value="">Toutes les campagnes</option>
+          @for (campaign of followedCampaigns(); track campaign.id) {
+            <option [value]="campaign.id">{{ campaign.campaignTitle }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label class="filter-label">Source</label>
+        <select 
+          class="filter-select"
+          [value]="selectedSource() || ''"
+          (change)="setSelectedSource($any($event.target).value || null)"
+        >
+          <option value="">Toutes les sources</option>
+          @for (source of availableSources(); track source) {
+            <option [value]="source">{{ source }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="view-controls">
+        <button 
+          class="control-btn" 
+          [class.active]="sortOrder() === 'recent'"
+          (click)="toggleSortOrder()"
+          title="Trier par date"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 5v14M19 12l-7 7-7-7"/>
+          </svg>
+          {{ sortOrder() === 'recent' ? 'Plus récent' : 'Plus ancien' }}
+        </button>
+        
+        <button 
+          class="control-btn icon-only" 
+          [class.active]="viewMode() === 'list'"
+          (click)="toggleViewMode()"
+          title="Changer la vue"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            @if (viewMode() === 'grid') {
+              <rect x="3" y="3" width="7" height="7"/>
+              <rect x="14" y="3" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/>
+            } @else {
+              <line x1="8" y1="6" x2="21" y2="6"/>
+              <line x1="8" y1="12" x2="21" y2="12"/>
+              <line x1="8" y1="18" x2="21" y2="18"/>
+              <line x1="3" y1="6" x2="3.01" y2="6"/>
+              <line x1="3" y1="12" x2="3.01" y2="12"/>
+              <line x1="3" y1="18" x2="3.01" y2="18"/>
+            }
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- État de chargement -->
+  @if (loading()) {
+    <div class="loading-container">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">Chargement des candidatures...</p>
+    </div>
+  }
+
+  <!-- Contenu principal -->
+  @if (!loading()) {
+    @if (displayedApplications().length > 0) {
+      <div class="applications-container" [class.list-view]="viewMode() === 'list'">
+        @for (app of displayedApplications(); track app.id) {
+          <article class="application-card" (click)="viewApplicationDetails(app.id!)">
+            <!-- Header de la carte -->
+            <div class="card-header">
+              <div class="candidate-profile">
+                <div class="candidate-avatar" [attr.data-initials]="getCandidateInitials(app)">
+                  {{ getCandidateInitials(app) }}
+                </div>
+                <div class="candidate-info">
+                  <h3 class="candidate-name">{{ getCandidateName(app) }}</h3>
+                  <a class="candidate-email" [href]="'mailto:' + app.candidateEmail" (click)="$event.stopPropagation()">
+                    {{ app.candidateEmail }}
+                  </a>
+                </div>
+              </div>
+              <span class="status-pill" [ngClass]="getStatusClass(app.applicationStatus)">
+                {{ getStatusLabel(app.applicationStatus) }}
+              </span>
+            </div>
+
+            <!-- Body de la carte -->
+            <div class="card-body">
+              <!-- Informations principales -->
+              <div class="info-grid">
+                <div class="info-item">
+                  <svg class="info-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                  <span class="info-text">{{ app.campaignTitle || 'N/A' }}</span>
+                </div>
+
+                <div class="info-item">
+                  <svg class="info-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                  </svg>
+                  <span class="info-text">{{ app.sourceTokenLabel || 'N/A' }}</span>
+                </div>
+
+                @if (app.candidatePhone) {
+                  <div class="info-item">
+                    <svg class="info-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                    </svg>
+                    <span class="info-text">{{ app.candidatePhone }}</span>
+                  </div>
+                }
+              </div>
+
+              <!-- Scores -->
+              @if (app.quizScore !== null && app.quizScore !== undefined || app.evaluationScore !== null && app.evaluationScore !== undefined) {
+                <div class="scores-section">
+                  @if (app.quizScore !== null && app.quizScore !== undefined) {
+                    <div class="score-badge" [class]="getScoreColor(app.quizScore)">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                        <polyline points="10 9 9 9 8 9"/>
+                      </svg>
+                      <span>Quiz: {{ app.quizScore }}%</span>
+                    </div>
+                  }
+                  @if (app.evaluationScore !== null && app.evaluationScore !== undefined) {
+                    <div class="score-badge" [class]="getScoreColor(app.evaluationScore * 20)">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                      </svg>
+                      <span>Note: {{ app.evaluationScore }}/5</span>
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- Tags -->
+              <div class="tags-section">
+                @if (app.emailVerified) {
+                  <span class="tag verified">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    Email vérifié
+                  </span>
+                }
+                @if (app.quizStatus === 'COMPLETED') {
+                  <span class="tag completed">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    Quiz complété
+                  </span>
+                }
+                @if (app.quizStatus === 'IN_PROGRESS') {
+                  <span class="tag in-progress">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                    </svg>
+                    En cours
+                  </span>
+                }
+              </div>
+            </div>
+
+            <!-- Footer de la carte -->
+            <div class="card-footer">
+              <span class="application-id">#{{ app.id }}</span>
+              <button class="details-btn">
+                <span>Voir les détails</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                  <polyline points="12 5 19 12 12 19"/>
+                </svg>
+              </button>
+            </div>
+          </article>
+        }
+      </div>
+    }
+
+    <!-- État vide élégant -->
+    @if (displayedApplications().length === 0) {
+      <div class="empty-state">
+        <div class="empty-illustration">
+          <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+          </svg>
+        </div>
+        @if (searchQuery() || selectedCampaign() !== null || selectedSource() !== null) {
+          <h3 class="empty-title">Aucune candidature trouvée</h3>
+          <p class="empty-message">Aucune candidature ne correspond à vos critères de recherche.</p>
+          <button class="empty-action-btn" (click)="resetFilters()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 6h18M7 12h10M10 18h4"/>
+            </svg>
+            Réinitialiser les filtres
+          </button>
+        } @else {
+          <h3 class="empty-title">Aucune candidature</h3>
+          <p class="empty-message">Les candidatures reçues sur vos campagnes suivies apparaîtront ici.</p>
+        }
+      </div>
+    }
+  }
+</div>

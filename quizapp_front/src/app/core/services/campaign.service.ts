@@ -154,23 +154,8 @@ export class CampaignService {
         // L'API retourne 'items', mais le frontend attend 'content'
         const rawCampaigns = response.items || response.content || [];
 
-        // Transformer les données pour correspondre au format attendu par le frontend
-        const campaigns = rawCampaigns.map((c: any) => ({
-          id: c.id,
-          campaignName: c.campaignTitle,
-          campaignDesc: c.campaignDesc,
-          campaignStart: c.campaignStart,
-          campaignEnd: c.campaignEnd,
-          campaignDuration: c.campaignDuration,
-          isActive: c.isActive,
-          departmentsId: c.departmentsId,
-          specialitiesId: c.specialitiesId,
-          departmentName: c.departmentName,
-          specialityName: c.specialityName,
-          isDeleted: c.isDeleted,
-          createdAt: c.createdAt,
-          updatedAt: c.updatedAt
-        }));
+        // Transformer les données en utilisant transformCampaign pour la cohérence
+        const campaigns = rawCampaigns.map((c: any) => this.transformCampaign(c));
 
         console.log('🔄 Campagnes transformées:', campaigns);
 

@@ -107,6 +107,18 @@ export class CampaignsComponent implements OnInit, OnDestroy {
     .pipe(takeUntil(this.destroy$))
     .subscribe({
       next: (results) => {
+        console.log('📦 Données brutes reçues:', results);
+        
+        if (results.all.content && results.all.content.length > 0) {
+          console.log('🔍 Exemple de campagne (toutes):', results.all.content[0]);
+        }
+        if (results.my.content && results.my.content.length > 0) {
+          console.log('🔍 Exemple de campagne (mes):', results.my.content[0]);
+        }
+        if (results.shared && results.shared.length > 0) {
+          console.log('🔍 Exemple de campagne (partagées):', results.shared[0]);
+        }
+        
         this.allCampaigns.set(results.all.content || []);
         this.myCampaigns.set(results.my.content || []);
         this.sharedCampaigns.set(results.shared || []);
