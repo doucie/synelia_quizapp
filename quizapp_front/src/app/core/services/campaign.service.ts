@@ -18,7 +18,7 @@ export interface Campaign {
   campaignEnd?: string;
   campaignDuration?: number;
   maxApply?: number;
-  allCanUpdate?: boolean;
+  allCanEvaluate?: boolean;
   markedOutOf?: number;
   isActive?: boolean;
   departmentsId?: number;
@@ -515,7 +515,7 @@ export class CampaignService {
       campaignStart: campaign.campaignStart || campaign.campaign_start,
       campaignEnd: campaign.campaignEnd || campaign.campaign_end,
       maxApply: campaign.maxApply || campaign.max_apply,
-      allCanUpdate: campaign.allCanUpdate || campaign.all_can_update || false,
+      allCanEvaluate: campaign.allCanEvaluate || campaign.all_can_evaluate || false,
       markedOutOf: campaign.markedOutOf || campaign.marked_out_of,
       isActive: campaign.campaignStatus === 'ACTIVE' || campaign.campaign_status === 'ACTIVE',
       createdAt: campaign.createdAt || campaign.created_at,

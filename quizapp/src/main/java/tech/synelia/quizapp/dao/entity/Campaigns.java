@@ -7,13 +7,20 @@
 package tech.synelia.quizapp.dao.entity;
 
 import java.io.Serializable;
-import jakarta.persistence.*;
-
-import lombok.*;
-
-
 import java.util.Date;
-import java.util.List;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.Temporal;
+import jakarta.persistence.TemporalType;
+import lombok.Data;
+import lombok.ToString;
 
 
 /**
@@ -62,8 +69,8 @@ public class Campaigns implements Serializable, Cloneable {
     @Column(name="max_apply")
     private Integer    maxApply     ;
 
-    @Column(name="all_can_update", nullable=false)
-    private Boolean    allCanUpdate ;
+    @Column(name="all_can_evaluate", nullable=false)
+    private Boolean    allCanEvaluate ;
 
     @Column(name="marked_out_of")
     private Integer    markedOutOf  ;

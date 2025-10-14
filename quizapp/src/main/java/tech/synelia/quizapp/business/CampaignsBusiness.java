@@ -92,16 +92,16 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			// Definir les parametres obligatoires
 			Map<String, java.lang.Object> fieldsToVerify = new HashMap<String, java.lang.Object>();
 			fieldsToVerify.put("campaignTitle", dto.getCampaignTitle());
-			// fieldsToVerify.put("campaignDesc", dto.getCampaignDesc());
-			fieldsToVerify.put("campaignStatus", dto.getCampaignStatus());
-			// fieldsToVerify.put("campaignStart", dto.getCampaignStart());
-			// fieldsToVerify.put("campaignEnd", dto.getCampaignEnd());
-			// fieldsToVerify.put("maxApply", dto.getMaxApply());
-			fieldsToVerify.put("allCanUpdate", dto.getAllCanUpdate());
-			fieldsToVerify.put("markedOutOf", dto.getMarkedOutOf());
-			// fieldsToVerify.put("searchString", dto.getSearchString());
-			fieldsToVerify.put("specialityId", dto.getSpecialityId());
-			fieldsToVerify.put("creatorId", dto.getCreatorId());
+		// fieldsToVerify.put("campaignDesc", dto.getCampaignDesc());
+		fieldsToVerify.put("campaignStatus", dto.getCampaignStatus());
+		// fieldsToVerify.put("campaignStart", dto.getCampaignStart());
+		// fieldsToVerify.put("campaignEnd", dto.getCampaignEnd());
+		// fieldsToVerify.put("maxApply", dto.getMaxApply());
+		fieldsToVerify.put("allCanEvaluate", dto.getAllCanEvaluate());
+		fieldsToVerify.put("markedOutOf", dto.getMarkedOutOf());
+		// fieldsToVerify.put("searchString", dto.getSearchString());
+		fieldsToVerify.put("specialityId", dto.getSpecialityId());
+		fieldsToVerify.put("creatorId", dto.getCreatorId());
 			if (!Validate.RequiredValue(fieldsToVerify).isGood()) {
 				throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
 			}
@@ -238,8 +238,8 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			if (dto.getMaxApply() != null && dto.getMaxApply() > 0) {
 				entityToSave.setMaxApply(dto.getMaxApply());
 			}
-			if (dto.getAllCanUpdate() != null) {
-				entityToSave.setAllCanUpdate(dto.getAllCanUpdate());
+			if (dto.getAllCanEvaluate() != null) {
+				entityToSave.setAllCanEvaluate(dto.getAllCanEvaluate());
 			}
 			if (dto.getMarkedOutOf() != null && dto.getMarkedOutOf() > 0) {
 				entityToSave.setMarkedOutOf(dto.getMarkedOutOf());
@@ -546,8 +546,8 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			if (dto.getMaxApply() != null && dto.getMaxApply() > 0) {
 				entityToSave.setMaxApply(dto.getMaxApply());
 			}
-			if (dto.getAllCanUpdate() != null) {
-				entityToSave.setAllCanUpdate(dto.getAllCanUpdate());
+			if (dto.getAllCanEvaluate() != null) {
+				entityToSave.setAllCanEvaluate(dto.getAllCanEvaluate());
 			}
 			if (dto.getMarkedOutOf() != null && dto.getMarkedOutOf() > 0) {
 				entityToSave.setMarkedOutOf(dto.getMarkedOutOf());
@@ -675,8 +675,8 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			if (dto.getMaxApply() != null && dto.getMaxApply() > 0) {
 				entityToSave.setMaxApply(dto.getMaxApply());
 			}
-			if (dto.getAllCanUpdate() != null) {
-				entityToSave.setAllCanUpdate(dto.getAllCanUpdate());
+			if (dto.getAllCanEvaluate() != null) {
+				entityToSave.setAllCanEvaluate(dto.getAllCanEvaluate());
 			}
 			if (dto.getMarkedOutOf() != null && dto.getMarkedOutOf() > 0) {
 				entityToSave.setMarkedOutOf(dto.getMarkedOutOf());

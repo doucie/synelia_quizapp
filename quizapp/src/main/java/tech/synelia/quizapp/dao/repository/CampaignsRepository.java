@@ -96,14 +96,14 @@ public interface CampaignsRepository extends JpaRepository<Campaigns, Integer>, 
 	@Query("select e from Campaigns e where e.maxApply = :maxApply and e.isDeleted = :isDeleted")
 	List<Campaigns> findByMaxApply(@Param("maxApply")Integer maxApply, @Param("isDeleted")Boolean isDeleted);
 	/**
-	 * Finds Campaigns by using allCanUpdate as a search criteria.
+	 * Finds Campaigns by using allCanEvaluate as a search criteria.
 	 * 
-	 * @param allCanUpdate
-	 * @return An Object Campaigns whose allCanUpdate is equals to the given allCanUpdate. If
+	 * @param allCanEvaluate
+	 * @return An Object Campaigns whose allCanEvaluate is equals to the given allCanEvaluate. If
 	 *         no Campaigns is found, this method returns null.
 	 */
-	@Query("select e from Campaigns e where e.allCanUpdate = :allCanUpdate and e.isDeleted = :isDeleted")
-	List<Campaigns> findByAllCanUpdate(@Param("allCanUpdate")Boolean allCanUpdate, @Param("isDeleted")Boolean isDeleted);
+	@Query("select e from Campaigns e where e.allCanEvaluate = :allCanEvaluate and e.isDeleted = :isDeleted")
+	List<Campaigns> findByAllCanEvaluate(@Param("allCanEvaluate")Boolean allCanEvaluate, @Param("isDeleted")Boolean isDeleted);
 	/**
 	 * Finds Campaigns by using markedOutOf as a search criteria.
 	 * 
@@ -379,8 +379,8 @@ public interface CampaignsRepository extends JpaRepository<Campaigns, Integer>, 
 			if (dto.getMaxApply()!= null && dto.getMaxApply() > 0) {
 				listOfQuery.add(CriteriaUtils.generateCriteria("maxApply", dto.getMaxApply(), "e.maxApply", "Integer", dto.getMaxApplyParam(), param, index, locale));
 			}
-			if (dto.getAllCanUpdate()!= null) {
-				listOfQuery.add(CriteriaUtils.generateCriteria("allCanUpdate", dto.getAllCanUpdate(), "e.allCanUpdate", "Boolean", dto.getAllCanUpdateParam(), param, index, locale));
+			if (dto.getAllCanEvaluate()!= null) {
+				listOfQuery.add(CriteriaUtils.generateCriteria("allCanEvaluate", dto.getAllCanEvaluate(), "e.allCanEvaluate", "Boolean", dto.getAllCanEvaluateParam(), param, index, locale));
 			}
 			if (dto.getMarkedOutOf()!= null && dto.getMarkedOutOf() > 0) {
 				listOfQuery.add(CriteriaUtils.generateCriteria("markedOutOf", dto.getMarkedOutOf(), "e.markedOutOf", "Integer", dto.getMarkedOutOfParam(), param, index, locale));
