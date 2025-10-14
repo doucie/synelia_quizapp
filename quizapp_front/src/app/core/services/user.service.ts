@@ -327,7 +327,12 @@ export class UserService {
           isOnline: user.isOnline || false,
           isDeleted: user.isDeleted || false, // ← Important : inclure le statut de suppression
           dateCreation: user.dateCreation || user.createdAt,
-          derniereConnexion: user.derniereConnexion || user.updatedAt
+          derniereConnexion: user.derniereConnexion || user.updatedAt,
+          // Garder aussi les champs du backend pour compatibilité
+          firstName: user.firstName || user.prenom || '',
+          lastName: user.lastName || user.nom || '',
+          username: user.username || user.pseudo || '',
+          phone: user.phone || user.telephone || ''
         }));
         
         console.log('📊 Utilisateurs transformés (including deleted):', transformedUsers);

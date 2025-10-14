@@ -746,7 +746,18 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 	 * @throws Exception
 	 */
 	public CampaignsDto getFullInfos(CampaignsDto dto, Integer size, Boolean isSimpleLoading, Locale locale) throws Exception {
-		// put code here
+		// Récupérer le nom du créateur
+		if (dto.getCreatedBy() != null && dto.getCreatedBy() > 0) {
+			User creator = userRepository.findOne(dto.getCreatedBy(), false);
+			if (creator != null) {
+				// Construire le nom complet: username (ou firstName + lastName si disponibles)
+				String creatorName = creator.getUsername();
+				if (Utilities.notBlank(creator.getFirstName()) && Utilities.notBlank(creator.getLastName())) {
+					creatorName = creator.getFirstName() + " " + creator.getLastName();
+				}
+				dto.setCreatorName(creatorName);
+			}
+		}
 
 		if (Utilities.isTrue(isSimpleLoading)) {
 			return dto;

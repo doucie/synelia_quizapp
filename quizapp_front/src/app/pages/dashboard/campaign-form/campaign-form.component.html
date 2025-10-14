@@ -57,7 +57,7 @@
         <div class="form-row">
           <div class="form-group full-width">
             <label for="campaignDesc">
-              Description <span class="required">*</span>
+              Description
             </label>
             <textarea
               id="campaignDesc"
@@ -68,12 +68,82 @@
             ></textarea>
             @if (campaignDesc?.invalid && campaignDesc?.touched) {
               <span class="error-message">
-                @if (campaignDesc?.errors?.['required']) {
-                  La description est requise
-                }
                 @if (campaignDesc?.errors?.['minlength']) {
                   La description doit contenir au moins 10 caractères
                 }
+              </span>
+            }
+          </div>
+        </div>
+
+        <!-- Recherche de spécialité -->
+        <div class="form-row">
+          <div class="form-group full-width">
+            <label for="specialitySearch">
+              Spécialité <span class="required">*</span>
+            </label>
+            
+            @if (selectedSpeciality(); as speciality) {
+              <div class="selected-item">
+                <div class="item-info">
+                  <span class="item-name">{{ speciality.nom || speciality.name }}</span>
+                  <span class="item-detail">Département: {{ speciality.departmentName || 'N/A' }}</span>
+                </div>
+                <button
+                  type="button"
+                  class="remove-btn"
+                  (click)="removeSpeciality()"
+                  title="Retirer cette spécialité"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 6L6 18M6 6l12 12"/>
+                  </svg>
+                </button>
+              </div>
+            } @else {
+              <div class="search-container">
+                <div class="search-input-wrapper">
+                  <input
+                    type="text"
+                    id="specialitySearch"
+                    [formControl]="specialitySearchControl"
+                    placeholder="Rechercher une spécialité..."
+                    [class.error]="campaignForm.get('specialityId')?.invalid && campaignForm.get('specialityId')?.touched"
+                  />
+                  @if (searchingSpeciality()) {
+                    <div class="search-spinner"></div>
+                  }
+                </div>
+
+                @if (showSpecialityDropdown() && specialitySearchResults().length > 0) {
+                  <div class="search-results">
+                    @for (speciality of specialitySearchResults(); track speciality.id) {
+                      <div
+                        class="search-result-item"
+                        (click)="selectSpeciality(speciality)"
+                      >
+                        <div class="item-main">
+                          <span class="item-name">{{ speciality.nom || speciality.name }}</span>
+                        </div>
+                        <div class="item-department">
+                          Département: {{ speciality.departmentName || 'N/A' }}
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+                
+                @if (showSpecialityDropdown() && specialitySearchResults().length === 0 && specialitySearchControl.value && !searchingSpeciality()) {
+                  <div class="no-results">
+                    Aucune spécialité trouvée
+                  </div>
+                }
+              </div>
+            }
+            
+            @if (campaignForm.get('specialityId')?.invalid && campaignForm.get('specialityId')?.touched) {
+              <span class="error-message">
+                La spécialité est requise
               </span>
             }
           </div>
@@ -97,7 +167,7 @@
 
           <div class="form-group">
             <label for="campaignStart">
-              Date de début <span class="required">*</span>
+              Date de début
             </label>
             <input
               type="date"
@@ -105,14 +175,11 @@
               formControlName="campaignStart"
               [class.error]="campaignStart?.invalid && campaignStart?.touched"
             />
-            @if (campaignStart?.invalid && campaignStart?.touched) {
-              <span class="error-message">La date de début est requise</span>
-            }
           </div>
 
           <div class="form-group">
             <label for="campaignEnd">
-              Date de fin <span class="required">*</span>
+              Date de fin
             </label>
             <input
               type="date"
@@ -120,9 +187,6 @@
               formControlName="campaignEnd"
               [class.error]="campaignEnd?.invalid && campaignEnd?.touched"
             />
-            @if (campaignEnd?.invalid && campaignEnd?.touched) {
-              <span class="error-message">La date de fin est requise</span>
-            }
           </div>
         </div>
       </div>
@@ -246,15 +310,15 @@
                   class="search-result-item"
                   (click)="selectRecruiter(user)"
                 >
-                  <div class="user-avatar">
-                    {{ user.firstName?.charAt(0) }}{{ user.lastName?.charAt(0) }}
+                  <div class="user-avatar" [class]="'avatar-' + (user.role || 'recruiter').toLowerCase()">
+                    {{ (user.firstName || '?').charAt(0).toUpperCase() }}{{ (user.lastName || '?').charAt(0).toUpperCase() }}
                   </div>
                   <div class="user-info">
-                    <div class="user-name">{{ user.firstName }} {{ user.lastName }}</div>
-                    <div class="user-email">{{ user.email }}</div>
+                    <div class="user-name">{{ user.firstName || 'Prénom' }} {{ user.lastName || 'Nom' }}</div>
+                    <div class="user-email">{{ user.email || 'email@example.com' }}</div>
                   </div>
-                  <span class="user-role" [class]="'role-' + user.role.toLowerCase()">
-                    {{ user.role }}
+                  <span class="user-role" [class]="'role-' + (user.role || 'recruiter').toLowerCase()">
+                    {{ user.role || 'recruiter' }}
                   </span>
                 </button>
               }
@@ -263,7 +327,7 @@
           
           @if (recruiterSearchControl.value && recruiterSearchControl.value.length >= 2 && !searching() && searchResults().length === 0) {
             <div class="no-results">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg class="no-results-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="10"/>
                 <line x1="12" y1="8" x2="12" y2="12"/>
                 <line x1="12" y1="16" x2="12.01" y2="16"/>
@@ -279,12 +343,12 @@
               <div class="recruiter-card">
                 <div class="recruiter-header">
                   <div class="recruiter-info">
-                    <div class="user-avatar">
-                      {{ recruiter.user.firstName?.charAt(0) }}{{ recruiter.user.lastName?.charAt(0) }}
+                    <div class="user-avatar" [class]="'avatar-' + (recruiter.user.role || 'recruiter').toLowerCase()">
+                      {{ (recruiter.user.firstName || '?').charAt(0).toUpperCase() }}{{ (recruiter.user.lastName || '?').charAt(0).toUpperCase() }}
                     </div>
                     <div>
                       <div class="recruiter-name">
-                        {{ recruiter.user.firstName }} {{ recruiter.user.lastName }}
+                        {{ recruiter.user.firstName || 'Prénom' }} {{ recruiter.user.lastName || 'Nom' }}
                       </div>
                       <div class="recruiter-email">{{ recruiter.user.email }}</div>
                     </div>

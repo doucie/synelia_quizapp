@@ -6,6 +6,7 @@ import { Subject } from 'rxjs';
 import { takeUntil, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { CampaignService, Campaign } from '../../../core/services/campaign.service';
 import { UserService, User, PagedResponse } from '../../../core/services/user.service';
+import { SpecialityService, Speciality } from '../../../core/services/speciality.service';
 
 interface RecruiterAccess {
   user: User;
@@ -37,6 +38,13 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
   showSearchDropdown = signal(false);
   searching = signal(false);
   
+  // Spécialités - Recherche instantanée
+  specialitySearchControl = new FormControl('');
+  specialitySearchResults = signal<Speciality[]>([]);
+  selectedSpeciality = signal<Speciality | null>(null);
+  showSpecialityDropdown = signal(false);
+  searchingSpeciality = signal(false);
+  
   // Options
   statusOptions = [
     { value: 'PENDING', label: 'En attente' },
@@ -57,12 +65,14 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
     private router: Router,
     private route: ActivatedRoute,
     private campaignService: CampaignService,
-    private userService: UserService
+    private userService: UserService,
+    private specialityService: SpecialityService
   ) {}
 
   ngOnInit(): void {
     this.initForm();
     this.setupSearch();
+    this.setupSpecialitySearch();
     
     // Vérifier si on est en mode édition
     this.route.params.pipe(takeUntil(this.destroy$)).subscribe(params => {
@@ -82,15 +92,16 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
   initForm(): void {
     this.campaignForm = this.fb.group({
       campaignTitle: ['', [Validators.required, Validators.minLength(3)]],
-      campaignDesc: ['', [Validators.required, Validators.minLength(10)]],
+      campaignDesc: [''], // Optionnel
       campaignStatus: ['PENDING', Validators.required],
-      campaignStart: ['', Validators.required],
-      campaignEnd: ['', Validators.required],
+      campaignStart: [''], // Optionnel
+      campaignEnd: [''], // Optionnel
       maxApply: [null, [Validators.min(1)]],
       allCanEvaluate: [false],
       markedOutOf: [10, [Validators.required, Validators.min(1)]],
       markedOutOfPreset: [10],
-      customMarkedOutOf: [{ value: '', disabled: true }]
+      customMarkedOutOf: [{ value: '', disabled: true }],
+      specialityId: [null, Validators.required] // Ajout spécialité
     });
 
     // Écouter les changements du preset pour activer/désactiver le champ personnalisé
@@ -191,6 +202,18 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
             
             console.log(`👥 ${filteredUsers.length} utilisateurs après exclusion des déjà sélectionnés`);
             
+            // Debug: vérifier les données des utilisateurs
+            if (filteredUsers.length > 0) {
+              console.log('📋 Premier utilisateur:', {
+                id: filteredUsers[0].id,
+                email: filteredUsers[0].email,
+                firstName: filteredUsers[0].firstName,
+                lastName: filteredUsers[0].lastName,
+                role: filteredUsers[0].role,
+                username: filteredUsers[0].username
+              });
+            }
+            
             this.searchResults.set(filteredUsers);
             this.showSearchDropdown.set(filteredUsers.length > 0);
           } else {
@@ -203,6 +226,77 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
           this.searching.set(false);
         }
       });
+  }
+
+  setupSpecialitySearch(): void {
+    // Recherche instantanée de spécialités avec debounce
+    this.specialitySearchControl.valueChanges
+      .pipe(
+        takeUntil(this.destroy$),
+        debounceTime(300),
+        distinctUntilChanged(),
+        switchMap(query => {
+          const searchQuery = (query || '').trim();
+          
+          console.log('🔍 Recherche spécialité:', searchQuery);
+          
+          if (searchQuery.length < 2) {
+            this.specialitySearchResults.set([]);
+            this.showSpecialityDropdown.set(false);
+            this.searchingSpeciality.set(false);
+            return [];
+          }
+          
+          this.searchingSpeciality.set(true);
+          
+          return this.specialityService.getAll({
+            search_string: searchQuery,
+            isDeleted: false,
+            size: 20,
+            page: 0
+          });
+        })
+      )
+      .subscribe({
+        next: (response: any) => {
+          console.log('📥 Spécialités reçues:', response);
+          
+          // La réponse du backend contient 'items' et non 'content'
+          if (response && response.items) {
+            console.log(`✅ ${response.items.length} spécialités trouvées`);
+            this.specialitySearchResults.set(response.items);
+            this.showSpecialityDropdown.set(response.items.length > 0);
+          } else {
+            console.log('⚠️ Aucune spécialité dans la réponse');
+            this.specialitySearchResults.set([]);
+            this.showSpecialityDropdown.set(false);
+          }
+          this.searchingSpeciality.set(false);
+        },
+        error: (error: any) => {
+          console.error('❌ Erreur recherche spécialités:', error);
+          this.specialitySearchResults.set([]);
+          this.showSpecialityDropdown.set(false);
+          this.searchingSpeciality.set(false);
+        }
+      });
+  }
+
+  selectSpeciality(speciality: Speciality): void {
+    this.selectedSpeciality.set(speciality);
+    this.campaignForm.patchValue({ specialityId: speciality.id });
+    
+    // Réinitialiser la recherche
+    this.specialitySearchControl.setValue('', { emitEvent: false });
+    this.specialitySearchResults.set([]);
+    this.showSpecialityDropdown.set(false);
+    
+    console.log('✅ Spécialité sélectionnée:', speciality);
+  }
+
+  removeSpeciality(): void {
+    this.selectedSpeciality.set(null);
+    this.campaignForm.patchValue({ specialityId: null });
   }
 
   selectRecruiter(user: User): void {

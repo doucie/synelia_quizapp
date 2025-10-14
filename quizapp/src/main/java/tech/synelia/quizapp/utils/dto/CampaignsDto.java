@@ -55,6 +55,7 @@ public class CampaignsDto extends _CampaignsDto implements Cloneable{
     //----------------------------------------------------------------------
 	private String userFirstName;
 	private String userLastName;
+	private String creatorName;  // Nom complet du créateur (username ou firstName + lastName)
 
 	// Search param
 	private SearchParam<Integer>  idParam               ;                     

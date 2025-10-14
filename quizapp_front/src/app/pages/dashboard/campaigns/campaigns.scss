@@ -519,6 +519,19 @@
   span {
     font-weight: 500;
   }
+
+  &.creator {
+    background: rgba(var(--primary-rgb), 0.1);
+    color: var(--primary);
+    
+    svg {
+      color: var(--primary);
+    }
+    
+    span {
+      color: var(--primary);
+    }
+  }
 }
 
 .card-footer {
