@@ -7,12 +7,20 @@
 package tech.synelia.quizapp.dao.entity;
 
 import java.io.Serializable;
-import jakarta.persistence.*;
-
-import lombok.*;
-
-
 import java.util.Date;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.Temporal;
+import jakarta.persistence.TemporalType;
+import lombok.Data;
+import lombok.ToString;
 
 
 /**
@@ -33,7 +41,7 @@ public class CampaignCrud implements Serializable, Cloneable {
     // ENTITY PRIMARY KEY ( BASED ON A SINGLE FIELD )
     //----------------------------------------------------------------------
     @Id
-    @GeneratedValue(strategy=GenerationType.AUTO)
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
     @Column(name="id", nullable=false)
     private Integer    id           ;
 
@@ -52,6 +60,9 @@ public class CampaignCrud implements Serializable, Cloneable {
 
     @Column(name="follow")
     private Boolean    follow       ;
+
+    @Column(name="is_admin")
+    private Boolean    isAdmin      ;
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name="created_at")

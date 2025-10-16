@@ -23,6 +23,7 @@ export interface Campaign {
   isActive?: boolean;
   departmentsId?: number;
   specialitiesId?: number;
+  specialityId?: number;
   departmentName?: string;
   specialityName?: string;
   specialityLibelle?: string;
@@ -206,38 +207,51 @@ export class CampaignService {
   /**
    * Crée une nouvelle campagne
    */
-  createCampaign(campaign: Partial<Campaign>): Observable<Campaign> {
+  createCampaign(campaign: Partial<Campaign>): Observable<any> {
     console.log('📝 Création d\'une campagne:', campaign);
 
     // Transformer les données pour correspondre au format backend
-    const backendCampaign = {
-      ...campaign,
-      campaignTitle: campaign.campaignName,
-      campaignName: undefined // Supprimer campaignName pour éviter la confusion
+    const backendCampaign: any = {
+      campaignTitle: campaign.campaignTitle,
+      campaignDesc: campaign.campaignDesc,
+      campaignStatus: campaign.campaignStatus,
+      campaignStart: campaign.campaignStart,
+      campaignEnd: campaign.campaignEnd,
+      maxApply: campaign.maxApply,
+      allCanEvaluate: campaign.allCanEvaluate,
+      markedOutOf: campaign.markedOutOf,
+      specialityId: campaign.specialityId, // Backend utilise specialityId
+      createdBy: campaign.createdBy,
+      creatorId: campaign.createdBy // Backend requiert aussi creatorId
     };
 
+    // Supprimer les valeurs undefined ou null
+    Object.keys(backendCampaign).forEach(key => {
+      if (backendCampaign[key] === undefined || backendCampaign[key] === null || backendCampaign[key] === '') {
+        delete backendCampaign[key];
+      }
+    });
+
     const requestBody = {
-      user: "1",
+      user: Number(campaign.createdBy) || 1,
       datas: [backendCampaign]
     };
 
+    console.log('📤 Corps de la requête création campagne:', requestBody);
+
     return this.http.post<any>(`${this.apiUrl}/create`, requestBody).pipe(
       map(response => {
-        console.log('✅ Campagne créée:', response);
-        if (response.items && response.items.length > 0) {
-          const backendItem = response.items[0];
-          // Transformer la réponse backend vers le format frontend
-          return {
-            ...backendItem,
-            campaignName: backendItem.campaignTitle,
-            campaignTitle: undefined
-          };
-        } else {
-          throw new Error('Failed to create campaign');
-        }
+        console.log('✅ Réponse création campagne:', response);
+        return response; // Retourner la réponse complète
       }),
       catchError(error => {
         console.error('❌ Erreur lors de la création de la campagne:', error);
+        if (error.error) {
+          console.error('📋 Détails erreur backend:', error.error);
+          if (error.error.status && error.error.status.message) {
+            console.error('💬 Message d\'erreur:', error.error.status.message);
+          }
+        }
         return throwError(() => error);
       })
     );
@@ -528,5 +542,67 @@ export class CampaignService {
       applicationsCount: campaign.applicationsCount || campaign.applications_count || 0,
       questionsCount: campaign.questionsCount || campaign.questions_count || 0
     };
+  }
+
+  /**
+   * Sauvegarde les accès recruteurs pour une campagne (campaign_crud)
+   */
+  saveCampaignAccess(accessDataArray: any[]): Observable<any> {
+    console.log('💾 Sauvegarde des accès recruteurs:', accessDataArray);
+
+    const requestBody = {
+      user: 1,
+      datas: accessDataArray
+    };
+
+    console.log('📤 Corps de la requête campaign_crud:', requestBody);
+
+    return this.http.post<any>(`${environment.apiUrl}/campaignCrud/create`, requestBody).pipe(
+      map(response => {
+        console.log('✅ Accès recruteurs sauvegardés:', response);
+        return response;
+      }),
+      catchError(error => {
+        console.error('❌ Erreur sauvegarde accès recruteurs:', error);
+        if (error.error) {
+          console.error('📋 Détails erreur backend campaign_crud:', error.error);
+          if (error.error.status && error.error.status.message) {
+            console.error('💬 Message d\'erreur campaign_crud:', error.error.status.message);
+          }
+        }
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Crée une notification pour un utilisateur
+   */
+  createNotification(notificationData: any): Observable<any> {
+    console.log('📬 Création notification:', notificationData);
+
+    const requestBody = {
+      user: 1,
+      datas: [notificationData]
+    };
+
+    console.log('📤 Corps de la requête notification:', requestBody);
+
+    return this.http.post<any>(`${environment.apiUrl}/notifications/create`, requestBody).pipe(
+      map(response => {
+        console.log('✅ Notification créée:', response);
+        return response;
+      }),
+      catchError(error => {
+        console.error('❌ Erreur création notification:', error);
+        if (error.error) {
+          console.error('📋 Détails erreur backend notification:', error.error);
+          if (error.error.status && error.error.status.message) {
+            console.error('💬 Message d\'erreur notification:', error.error.status.message);
+          }
+        }
+        return throwError(() => error);
+      })
+    );
   }
 }

@@ -2,7 +2,7 @@ import { Component, OnInit, signal, computed, effect, Renderer2, Inject } from '
 import { CommonModule, DOCUMENT } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../core/services/auth/auth.service';
-import { NotificationService } from '../../core/services/notification.service';
+import { NotificationService, DbNotification } from '../../core/services/notification.service';
 import { NotificationsComponent } from '../../components/notifications/notifications.component';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
@@ -24,13 +24,17 @@ interface EntityItem {
   safeIcon?: SafeHtml; // HTML sécurisé pour l'affichage
 }
 
-interface Notification {
-  id: string;
+/**
+ * Interface pour afficher les notifications dans le dashboard
+ */
+interface DashboardNotification {
+  id: number;
   title: string;
   message: string;
   type: 'info' | 'success' | 'warning' | 'error';
   timestamp: Date;
   read: boolean;
+  link?: string;
 }
 
 @Component({
@@ -44,7 +48,7 @@ export class DashboardComponent implements OnInit {
   
   // État réactif
   sidebarCollapsed = signal(false);
-  notifications = signal<Notification[]>([]);
+  notifications = signal<DashboardNotification[]>([]);
   showNotifications = signal(false);
   showUserMenu = signal(false);
   isDarkMode = signal(false);
@@ -344,57 +348,152 @@ export class DashboardComponent implements OnInit {
   }
 
   /**
-   * Charger les notifications (mock pour l'instant)
+   * Charger les notifications depuis la base de données
    */
   private loadNotifications(): void {
-    const mockNotifications: Notification[] = [
-      {
-        id: '1',
-        title: 'Nouveau candidat',
-        message: 'Un nouveau candidat a postulé pour le poste de développeur',
-        type: 'info',
-        timestamp: new Date(Date.now() - 30 * 60 * 1000),
-        read: false
-      },
-      {
-        id: '2',
-        title: 'Entretien prévu',
-        message: 'Entretien avec Jean Dupont prévu à 14h00',
-        type: 'warning',
-        timestamp: new Date(Date.now() - 60 * 60 * 1000),
-        read: false
-      },
-      {
-        id: '3',
-        title: 'Évaluation terminée',
-        message: 'L\'évaluation de Marie Martin a été complétée',
-        type: 'success',
-        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-        read: true
-      }
-    ];
+    const userIdString = this.currentUser()?.id;
     
-    this.notifications.set(mockNotifications);
+    if (!userIdString) {
+      console.warn('⚠️ Impossible de charger les notifications: userId non défini');
+      return;
+    }
+
+    const userId = parseInt(userIdString, 10);
+    console.log('📬 Chargement des notifications pour userId:', userId);
+
+    this.notificationService.getUserNotifications(userId).subscribe({
+      next: (dbNotifications: DbNotification[]) => {
+        console.log('✅ Notifications BD récupérées:', dbNotifications);
+        
+        // Convertir les notifications BD en format dashboard
+        const dashboardNotifications: DashboardNotification[] = dbNotifications.map(notif => 
+          this.convertToDashboardNotification(notif)
+        );
+        
+        this.notifications.set(dashboardNotifications);
+        console.log('📊 Notifications converties:', dashboardNotifications);
+      },
+      error: (error) => {
+        console.error('❌ Erreur chargement notifications:', error);
+        this.notifications.set([]); // Afficher une liste vide en cas d'erreur
+      }
+    });
+  }
+
+  /**
+   * Convertit une notification BD en notification dashboard
+   */
+  private convertToDashboardNotification(dbNotif: DbNotification): DashboardNotification {
+    // Mapper le type de notification
+    const typeMap: { [key: string]: 'info' | 'success' | 'warning' | 'error' } = {
+      'ADDED_TO_CAMPAIGN': 'info',
+      'CAMPAIGN_UPDATE': 'warning',
+      'APPLICATION_RECEIVED': 'info',
+      'INTERVIEW_SCHEDULED': 'warning',
+      'EVALUATION_COMPLETED': 'success',
+      'DEFAULT': 'info'
+    };
+
+    // Générer le titre et message selon le type
+    let title = '';
+    let message = '';
+
+    switch (dbNotif.notifType) {
+      case 'ADDED_TO_CAMPAIGN':
+        title = 'Nouvelle campagne';
+        message = dbNotif.actorName 
+          ? `${dbNotif.actorName} vous a ajouté à une campagne`
+          : 'Vous avez été ajouté à une campagne';
+        break;
+      case 'CAMPAIGN_UPDATE':
+        title = 'Campagne mise à jour';
+        message = 'Une campagne a été modifiée';
+        break;
+      case 'APPLICATION_RECEIVED':
+        title = 'Nouvelle candidature';
+        message = 'Une nouvelle candidature a été reçue';
+        break;
+      default:
+        title = dbNotif.notifType;
+        message = 'Notification';
+    }
+
+    return {
+      id: dbNotif.id,
+      title,
+      message,
+      type: typeMap[dbNotif.notifType] || typeMap['DEFAULT'],
+      timestamp: dbNotif.createdAt ? new Date(dbNotif.createdAt) : new Date(),
+      read: dbNotif.isRead,
+      link: dbNotif.notifLink
+    };
   }
 
   /**
    * Marquer une notification comme lue
    */
-  markNotificationAsRead(notificationId: string): void {
-    this.notifications.update(notifications =>
-      notifications.map(n => 
-        n.id === notificationId ? { ...n, read: true } : n
-      )
-    );
+  markNotificationAsRead(notificationId: number): void {
+    console.log('📖 Marquage notification comme lue:', notificationId);
+    
+    this.notificationService.markAsRead(notificationId).subscribe({
+      next: () => {
+        // Mettre à jour localement
+        this.notifications.update(notifications =>
+          notifications.map(n => 
+            n.id === notificationId ? { ...n, read: true } : n
+          )
+        );
+        console.log('✅ Notification marquée comme lue');
+      },
+      error: (error) => {
+        console.error('❌ Erreur marquage notification:', error);
+      }
+    });
   }
 
   /**
    * Marquer toutes les notifications comme lues
    */
   markAllNotificationsAsRead(): void {
-    this.notifications.update(notifications =>
-      notifications.map(n => ({ ...n, read: true }))
-    );
+    const unreadNotifications = this.notifications().filter(n => !n.read);
+    const userIdString = this.currentUser()?.id;
+    
+    if (!userIdString || unreadNotifications.length === 0) {
+      return;
+    }
+
+    const userId = parseInt(userIdString, 10);
+    const notificationIds = unreadNotifications.map(n => n.id);
+    console.log('📖 Marquage de toutes les notifications:', notificationIds);
+
+    this.notificationService.markAllAsRead(userId, notificationIds).subscribe({
+      next: () => {
+        // Mettre à jour localement
+        this.notifications.update(notifications =>
+          notifications.map(n => ({ ...n, read: true }))
+        );
+        console.log('✅ Toutes les notifications marquées comme lues');
+      },
+      error: (error) => {
+        console.error('❌ Erreur marquage notifications:', error);
+      }
+    });
+  }
+
+  /**
+   * Gérer le clic sur une notification
+   */
+  handleNotificationClick(notification: DashboardNotification): void {
+    // Marquer comme lue
+    if (!notification.read) {
+      this.markNotificationAsRead(notification.id);
+    }
+
+    // Naviguer vers le lien si disponible
+    if (notification.link) {
+      this.router.navigate([notification.link]);
+      this.showNotifications.set(false); // Fermer le panneau
+    }
   }
 
   /**

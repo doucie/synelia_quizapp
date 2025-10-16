@@ -90,7 +90,7 @@ public class CampaignCrudBusiness implements IBasicBusiness<Request<CampaignCrud
 			fieldsToVerify.put("canDelete", dto.getCanDelete());
 			fieldsToVerify.put("canEvaluate", dto.getCanEvaluate());
 			fieldsToVerify.put("follow", dto.getFollow());
-			fieldsToVerify.put("searchString", dto.getSearchString());
+			// fieldsToVerify.put("searchString", dto.getSearchString());
 			fieldsToVerify.put("campaignId", dto.getCampaignId());
 			fieldsToVerify.put("userId", dto.getUserId());
 			if (!Validate.RequiredValue(fieldsToVerify).isGood()) {

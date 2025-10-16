@@ -1,4 +1,8 @@
 import { Injectable, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, throwError } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
 
 export interface Notification {
   id: string;
@@ -8,13 +12,32 @@ export interface Notification {
   duration?: number;
 }
 
+/**
+ * Interface pour les notifications de la base de données
+ */
+export interface DbNotification {
+  id: number;
+  notifType: string;
+  notifActor: number;
+  notifLink: string;
+  isRead: boolean;
+  userId: number;
+  createdAt?: string;
+  createdBy?: number;
+  updatedAt?: string;
+  updatedBy?: number;
+  actorName?: string; // Nom de l'acteur (utilisateur qui a fait l'action)
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class NotificationService {
   
-  // Signal pour les notifications actives
+  // Signal pour les notifications toast actives
   notifications = signal<Notification[]>([]);
+
+  constructor(private http: HttpClient) {}
 
   /**
    * Affiche une notification
@@ -71,5 +94,93 @@ export class NotificationService {
 
   info(title: string, message: string, duration?: number): void {
     this.show({ type: 'info', title, message, duration });
+  }
+
+  /**
+   * ==================================================================
+   * MÉTHODES POUR LES NOTIFICATIONS DE LA BASE DE DONNÉES
+   * ==================================================================
+   */
+
+  /**
+   * Récupère les notifications d'un utilisateur depuis la BD
+   */
+  getUserNotifications(userId: number): Observable<DbNotification[]> {
+    console.log('📬 Chargement des notifications pour userId:', userId);
+
+    const requestBody = {
+      user: 1,
+      data: {
+        userId: userId
+      },
+      index: 0,
+      size: 50 // Charger les 50 dernières notifications
+    };
+
+    return this.http.post<any>(`${environment.apiUrl}/notifications/getByCriteria`, requestBody).pipe(
+      map(response => {
+        console.log('✅ Notifications récupérées:', response);
+        if (response && response.items) {
+          return response.items;
+        }
+        return [];
+      }),
+      catchError(error => {
+        console.error('❌ Erreur lors du chargement des notifications:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Marque une notification comme lue
+   */
+  markAsRead(notificationId: number): Observable<any> {
+    console.log('📖 Marquage notification comme lue:', notificationId);
+
+    const requestBody = {
+      user: 1,
+      data: {
+        id: notificationId,
+        isRead: true
+      }
+    };
+
+    return this.http.post<any>(`${environment.apiUrl}/notifications/update`, requestBody).pipe(
+      map(response => {
+        console.log('✅ Notification marquée comme lue:', response);
+        return response;
+      }),
+      catchError(error => {
+        console.error('❌ Erreur lors du marquage de la notification:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Marque toutes les notifications d'un utilisateur comme lues
+   */
+  markAllAsRead(userId: number, notificationIds: number[]): Observable<any> {
+    console.log('📖 Marquage de toutes les notifications comme lues pour userId:', userId);
+
+    const requestBody = {
+      user: 1,
+      datas: notificationIds.map(id => ({
+        id: id,
+        isRead: true
+      }))
+    };
+
+    return this.http.post<any>(`${environment.apiUrl}/notifications/update`, requestBody).pipe(
+      map(response => {
+        console.log('✅ Toutes les notifications marquées comme lues:', response);
+        return response;
+      }),
+      catchError(error => {
+        console.error('❌ Erreur lors du marquage des notifications:', error);
+        return throwError(() => error);
+      })
+    );
   }
 }

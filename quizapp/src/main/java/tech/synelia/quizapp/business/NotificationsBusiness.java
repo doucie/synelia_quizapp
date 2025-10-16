@@ -84,10 +84,10 @@ public class NotificationsBusiness implements IBasicBusiness<Request<Notificatio
 			// Definir les parametres obligatoires
 			Map<String, java.lang.Object> fieldsToVerify = new HashMap<String, java.lang.Object>();
 			fieldsToVerify.put("notifType", dto.getNotifType());
-			fieldsToVerify.put("notifActor", dto.getNotifActor());
-			fieldsToVerify.put("notifLink", dto.getNotifLink());
+			// fieldsToVerify.put("notifActor", dto.getNotifActor());
+			// fieldsToVerify.put("notifLink", dto.getNotifLink());
 			fieldsToVerify.put("isRead", dto.getIsRead());
-			fieldsToVerify.put("searchString", dto.getSearchString());
+			// fieldsToVerify.put("searchString", dto.getSearchString());
 			fieldsToVerify.put("userId", dto.getUserId());
 			if (!Validate.RequiredValue(fieldsToVerify).isGood()) {
 				throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));

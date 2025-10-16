@@ -2,11 +2,12 @@ import { Component, OnInit, OnDestroy, signal, computed, effect } from '@angular
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormArray, FormControl } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { Subject } from 'rxjs';
+import { Subject, forkJoin, of } from 'rxjs';
 import { takeUntil, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { CampaignService, Campaign } from '../../../core/services/campaign.service';
 import { UserService, User, PagedResponse } from '../../../core/services/user.service';
 import { SpecialityService, Speciality } from '../../../core/services/speciality.service';
+import { AuthService } from '../../../core/services/auth/auth.service';
 
 interface RecruiterAccess {
   user: User;
@@ -66,7 +67,8 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private campaignService: CampaignService,
     private userService: UserService,
-    private specialityService: SpecialityService
+    private specialityService: SpecialityService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -196,9 +198,23 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
             
             console.log(`🎯 ${filteredByRole.length} recruteurs/admins après filtrage par rôle`);
             
+            // Exclure l'utilisateur connecté de la recherche
+            const currentUser = this.authService.getCurrentUser();
+            const currentUserId = currentUser ? parseInt(currentUser.id) : null;
+            
+            const filteredWithoutCurrentUser = filteredByRole.filter((u: User) => {
+              const isCurrentUser = currentUserId && u.id === currentUserId;
+              if (isCurrentUser) {
+                console.log(`🚫 Utilisateur connecté exclu: ${u.firstName} ${u.lastName}`);
+              }
+              return !isCurrentUser;
+            });
+            
+            console.log(`👤 ${filteredWithoutCurrentUser.length} utilisateurs après exclusion de l'utilisateur connecté`);
+            
             // Filtrer les utilisateurs déjà sélectionnés
             const selectedIds = this.selectedRecruiters().map(r => r.user.id);
-            const filteredUsers = filteredByRole.filter((u: User) => !selectedIds.includes(u.id));
+            const filteredUsers = filteredWithoutCurrentUser.filter((u: User) => !selectedIds.includes(u.id));
             
             console.log(`👥 ${filteredUsers.length} utilisateurs après exclusion des déjà sélectionnés`);
             
@@ -396,6 +412,14 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
     this.saving.set(true);
 
     const formValue = this.campaignForm.value;
+    const currentUser = this.authService.getCurrentUser();
+    
+    if (!currentUser) {
+      console.error('❌ Utilisateur non connecté');
+      this.saving.set(false);
+      return;
+    }
+
     const campaignData: Partial<Campaign> = {
       campaignTitle: formValue.campaignTitle,
       campaignDesc: formValue.campaignDesc,
@@ -404,7 +428,9 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
       campaignEnd: formValue.campaignEnd,
       maxApply: formValue.maxApply,
       allCanEvaluate: formValue.allCanEvaluate,
-      markedOutOf: formValue.markedOutOf
+      markedOutOf: formValue.markedOutOf,
+      specialityId: formValue.specialityId,
+      createdBy: parseInt(currentUser.id)
     };
 
     const operation$ = this.isEditMode && this.campaignId
@@ -412,16 +438,40 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
       : this.campaignService.createCampaign(campaignData);
 
     operation$.pipe(takeUntil(this.destroy$)).subscribe({
-      next: (campaign) => {
-        console.log('✅ Campagne sauvegardée:', campaign);
+      next: (response: any) => {
+        console.log('✅ Réponse campagne:', response);
         
-        // Sauvegarder les accès recruteurs
-        if (campaign.id) {
-          this.saveCampaignRecruiters(campaign.id);
+        // Extraire l'ID de la campagne créée
+        let campaignId: number | null = null;
+        
+        if (response.items && response.items.length > 0) {
+          campaignId = response.items[0].id;
+        } else if (response.id) {
+          campaignId = response.id;
         }
         
-        this.saving.set(false);
-        this.router.navigate(['/dashboard/campaigns']);
+        if (campaignId) {
+          console.log('📝 Campagne créée avec ID:', campaignId);
+          // Sauvegarder les accès recruteurs et créer les notifications
+          // ATTENDRE que tout soit terminé avant de naviguer
+          this.saveCampaignAccessAndNotifications(campaignId, parseInt(currentUser.id)).subscribe({
+            next: () => {
+              console.log('✅ Tous les accès et notifications créés');
+              this.saving.set(false);
+              this.router.navigate(['/dashboard/campaigns']);
+            },
+            error: (error) => {
+              console.error('❌ Erreur lors de la sauvegarde des accès:', error);
+              this.saving.set(false);
+              // Naviguer quand même car la campagne est créée
+              this.router.navigate(['/dashboard/campaigns']);
+            }
+          });
+        } else {
+          console.error('❌ Impossible de récupérer l\'ID de la campagne');
+          this.saving.set(false);
+          this.router.navigate(['/dashboard/campaigns']);
+        }
       },
       error: (error) => {
         console.error('❌ Erreur sauvegarde campagne:', error);
@@ -430,10 +480,35 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
     });
   }
 
-  saveCampaignRecruiters(campaignId: number): void {
-    // TODO: Implémenter la sauvegarde des accès recruteurs via campaign_crud
-    const recruiters = this.selectedRecruiters();
+  saveCampaignAccessAndNotifications(campaignId: number, currentUserId: number) {
+    console.log('💾 Sauvegarde des accès recruteurs et notifications pour campagne:', campaignId);
     
+    const recruiters = this.selectedRecruiters();
+    const allAccessData: any[] = [];
+    const notificationObservables: any[] = [];
+    
+    // Helper pour calculer searchString (concaténation des valeurs)
+    const calculateSearchString = (obj: any): string => {
+      return Object.values(obj).filter(v => v != null).join(' ');
+    };
+
+    // 1. Ajouter le créateur avec tous les droits (is_admin = true)
+    const creatorAccess = {
+      campaignId,
+      userId: currentUserId,
+      canEvaluate: true,
+      canUpdate: true,
+      canDelete: true,
+      isAdmin: true,
+      follow: true, // Le créateur suit automatiquement sa campagne
+      createdBy: currentUserId,
+      searchString: '' // Sera calculé après
+    };
+    creatorAccess.searchString = calculateSearchString(creatorAccess);
+    allAccessData.push(creatorAccess);
+    console.log('👑 Créateur ajouté avec tous les droits:', creatorAccess);
+    
+    // 2. Ajouter les recruteurs sélectionnés (is_admin = false)
     recruiters.forEach(recruiter => {
       const accessData = {
         campaignId,
@@ -441,12 +516,40 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
         canEvaluate: recruiter.canEvaluate,
         canUpdate: recruiter.canUpdate,
         canDelete: recruiter.canDelete,
-        follow: false
+        isAdmin: false,
+        follow: true,
+        createdBy: currentUserId,
+        searchString: '' // Sera calculé après
       };
+      accessData.searchString = calculateSearchString(accessData);
+      allAccessData.push(accessData);
       
-      // this.campaignService.saveCampaignAccess(accessData).subscribe(...)
-      console.log('💾 Sauvegarde accès recruteur:', accessData);
+      // 3. Créer une notification pour chaque recruteur (sauf le créateur)
+      const notificationData = {
+        notifType: 'ADDED_TO_CAMPAIGN',
+        notifActor: currentUserId,
+        notifLink: `/dashboard/campaigns/${campaignId}`,
+        isRead: false,
+        createdBy: 1,
+        userId: recruiter.user.id,
+        searchString: '' // Sera calculé après
+      };
+      notificationData.searchString = calculateSearchString(notificationData);
+      
+      // Ajouter l'observable de notification à la liste
+      notificationObservables.push(
+        this.campaignService.createNotification(notificationData)
+      );
+      
+      console.log('👤 Recruteur ajouté:', accessData);
+      console.log('📬 Notification créée:', notificationData);
     });
+    
+    // 4. Sauvegarder tous les accès et notifications en parallèle et attendre qu'ils soient tous terminés
+    const saveAccess$ = this.campaignService.saveCampaignAccess(allAccessData);
+    const allOperations = [saveAccess$, ...notificationObservables];
+    
+    return forkJoin(allOperations.length > 0 ? allOperations : [of(null)]);
   }
 
   cancel(): void {

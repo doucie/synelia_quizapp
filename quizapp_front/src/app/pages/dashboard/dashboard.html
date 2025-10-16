@@ -160,7 +160,7 @@
                       class="notification-item"
                       [class.unread]="!notification.read"
                       [class]="'type-' + notification.type"
-                      (click)="markNotificationAsRead(notification.id)">
+                      (click)="handleNotificationClick(notification)">
                       <div class="notification-content">
                         <h4>{{ notification.title }}</h4>
                         <p>{{ notification.message }}</p>
