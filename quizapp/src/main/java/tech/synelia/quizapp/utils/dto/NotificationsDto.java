@@ -42,6 +42,8 @@ public class NotificationsDto extends _NotificationsDto implements Cloneable{
     private Integer    updatedBy            ;
     private Boolean    isDeleted            ;
     private String     searchString         ;
+    private String     objectTableName      ;
+    private Integer    objectTableId        ;
     private Integer    userId               ;
 
     //----------------------------------------------------------------------
@@ -62,6 +64,8 @@ public class NotificationsDto extends _NotificationsDto implements Cloneable{
 	private SearchParam<Integer>  updatedByParam        ;                     
 	private SearchParam<Boolean>  isDeletedParam        ;                     
 	private SearchParam<String>   searchStringParam     ;                     
+	private SearchParam<String>   objectTableNameParam  ;                     
+	private SearchParam<Integer>  objectTableIdParam    ;                     
 	private SearchParam<Integer>  userIdParam           ;                     
 	private SearchParam<String>   userFirstNameParam    ;                     
 	private SearchParam<String>   userLastNameParam     ;                     

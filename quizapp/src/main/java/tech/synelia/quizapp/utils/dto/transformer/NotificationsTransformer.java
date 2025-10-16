@@ -84,6 +84,8 @@ public interface NotificationsTransformer {
 		@Mapping(source="dto.updatedBy", target="updatedBy"),
 		@Mapping(source="dto.isDeleted", target="isDeleted"),
 		@Mapping(source="dto.searchString", target="searchString"),
+		@Mapping(source="dto.objectTableName", target="objectTableName"),
+		@Mapping(source="dto.objectTableId", target="objectTableId"),
 		@Mapping(source="user", target="user"),
 	})
     Notifications toEntity(NotificationsDto dto, User user) throws ParseException;

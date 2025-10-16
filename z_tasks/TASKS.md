@@ -1,3 +1,4 @@
+14 / 10 / 2025
 # Améliorations du Formulaire de Campagne
 
 ## Modifications Backend
@@ -70,4 +71,65 @@
 - Optimisation de la recherche avec RxJS (debounceTime, switchMap, distinctUntilChanged)
 - Utilisation de signals Angular pour la gestion réactive des états de recherche
 - Gestion correcte des types TypeScript pour les paramètres de callback (error: any)
+
+
+
+---
+
+16 / 10 / 2025
+## Corrections et Améliorations Supplémentaires
+
+### Corrections de la Sauvegarde de Campagne
+
+- Implémentation de `forkJoin` pour attendre la fin de toutes les requêtes HTTP (campaign_crud + notifications) avant de naviguer
+- Correction du type du champ `user` de String vers Integer dans les requêtes API
+- Implémentation d'une fonction `calculateSearchString()` pour générer automatiquement le champ searchString côté frontend
+- Ajout du searchString calculé dans les objets `creatorAccess`, `accessData` et `notificationData`
+- Changement de `GenerationType.AUTO` vers `GenerationType.IDENTITY` dans l'entité `CampaignCrud.java`
+- Suppression de la dépendance à la table `campaign_crud_seq` (utilisation de AUTO_INCREMENT MySQL)
+- Mise en commentaire des champs obligatoires `notifActor`, `notifLink` et `searchString` dans `NotificationsBusiness.java`
+- Modification de `follow: false` vers `follow: true` pour que le créateur suive automatiquement sa campagne
+
+### Système de Notifications
+
+- Ajout de l'interface `DbNotification` dans `notification.service.ts`
+- Implémentation de `getUserNotifications(userId)` pour récupérer les notifications depuis la BD
+- Implémentation de `markAsRead(notificationId)` pour marquer une notification comme lue
+- Implémentation de `markAllAsRead(userId, notificationIds[])` pour marquer toutes les notifications comme lues
+- Ajout de l'interface `DashboardNotification` dans `dashboard.ts`
+- Remplacement des notifications mock par des vraies données de la BD dans `loadNotifications()`
+- Implémentation de `convertToDashboardNotification()` pour transformer les notifications BD en format dashboard
+- Ajout du mapping des types de notifications (ADDED_TO_CAMPAIGN → info, CAMPAIGN_UPDATE → warning, etc.)
+- Implémentation de `handleNotificationClick()` pour gérer le clic (marquer comme lue + navigation)
+- Ajout de la conversion userId de string vers number avec `parseInt()`
+- Modification du HTML pour utiliser `handleNotificationClick()` au lieu de `markNotificationAsRead()`
+
+### Migration Base de Données
+
+- Création de la migration `V1_017__add_object_reference_to_notifications.sql`
+- Ajout de la colonne `object_table_name` VARCHAR(100) dans la table `notifications`
+- Ajout de la colonne `object_table_id` INT dans la table `notifications`
+- Création de l'index `idx_notifications_object_reference` sur (object_table_name, object_table_id)
+- Création de l'index `idx_notifications_user_object` sur (user_id, object_table_name, object_table_id)
+- Ajout des champs `objectTableName` et `objectTableId` dans l'entité `Notifications.java`
+- Ajout des champs `objectTableName` et `objectTableId` dans le DTO `NotificationsDto.java`
+- Ajout des SearchParam `objectTableNameParam` et `objectTableIdParam` dans `NotificationsDto.java`
+- Ajout des mappings `objectTableName` et `objectTableId` dans `NotificationsTransformer.java`
+- Ajout des champs optionnels `objectTableName` et `objectTableId` dans l'interface `DbNotification`
+- Ajout automatique de `objectTableName: 'campaigns'` et `objectTableId: campaignId` lors de la création de notifications
+
+### Fonctionnalités Badge et Liste de Notifications
+
+- Affichage du nombre réel de notifications non lues depuis la BD dans le badge
+- Mise à jour automatique du badge après marquage comme lue
+- Affichage de toutes les notifications de l'utilisateur dans la liste
+- Ajout d'un indicateur visuel (point bleu) pour les notifications non lues
+- Ajout du formatage du temps écoulé ("il y a 30 minutes")
+- Ajout des couleurs différentes selon le type (info, success, warning, error)
+- Implémentation du clic sur notification pour marquer comme lue et naviguer vers l'objet lié
+- Implémentation du bouton "Tout marquer" pour marquer toutes les notifications non lues
+- Synchronisation de l'état local avec la base de données
+- Affichage des notifications dans le dashboard après création de campagne
+- Navigation automatique vers la campagne lors du clic sur la notification
+
 

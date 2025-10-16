@@ -22,6 +22,8 @@ export interface DbNotification {
   notifLink: string;
   isRead: boolean;
   userId: number;
+  objectTableName?: string; // Nom de la table de l'objet lié (ex: 'campaigns', 'applications')
+  objectTableId?: number; // ID de l'objet dans la table
   createdAt?: string;
   createdBy?: number;
   updatedAt?: string;

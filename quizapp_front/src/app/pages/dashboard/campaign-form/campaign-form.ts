@@ -532,6 +532,8 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
         isRead: false,
         createdBy: 1,
         userId: recruiter.user.id,
+        objectTableName: 'campaigns', // Lier à la table campaigns
+        objectTableId: campaignId,     // Lier à cette campagne spécifique
         searchString: '' // Sera calculé après
       };
       notificationData.searchString = calculateSearchString(notificationData);
