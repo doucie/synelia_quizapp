@@ -134,4 +134,42 @@ export class SourceTokenService {
   getTokenInfo(tokenString: string): Observable<BackendResponse> {
     return this.http.get<BackendResponse>(`${this.apiUrl}/info/${tokenString}`);
   }
+
+  /**
+   * Crée un ou plusieurs nouveaux source tokens
+   * @param tokens Array de tokens à créer
+   * @returns Observable avec la réponse
+   */
+  createSourceTokens(tokens: Partial<SourceToken>[]): Observable<SourceTokenResponse> {
+    const request: SourceTokenRequest = {
+      user: 1,
+      datas: tokens
+    };
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    });
+
+    return this.http.post<SourceTokenResponse>(`${this.apiUrl}/create`, request, { headers });
+  }
+
+  /**
+   * Supprime un source token
+   * @param tokenId ID du token à supprimer
+   * @returns Observable avec la réponse
+   */
+  deleteSourceToken(tokenId: number): Observable<SourceTokenResponse> {
+    const request = {
+      user: 1,
+      data: { id: tokenId }
+    };
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    });
+
+    return this.http.post<SourceTokenResponse>(`${this.apiUrl}/delete`, request, { headers });
+  }
 }

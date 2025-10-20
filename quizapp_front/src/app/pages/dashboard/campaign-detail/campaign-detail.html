@@ -1,0 +1,620 @@
+<div class="campaign-detail-page">
+  <!-- Header avec bouton retour -->
+  <header class="page-header">
+    <button class="btn-back" (click)="goBack()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+      Retour aux campagnes
+    </button>
+  </header>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Chargement des détails...</p>
+    </div>
+  }
+
+  @if (error()) {
+    <div class="error-state">
+      <div class="error-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+      <h3>{{ error() }}</h3>
+      <button class="btn btn-primary" (click)="goBack()">Retour</button>
+    </div>
+  }
+
+  @if (!loading() && !error() && campaign()) {
+    <div class="campaign-detail-content">
+      <!-- En-tête de la campagne -->
+      <div class="campaign-header">
+        <div class="header-main">
+          <div class="title-section">
+            <h1 class="campaign-title">{{ campaign()?.campaignTitle || 'Sans titre' }}</h1>
+            <span class="status-badge" [class]="getStatusClass(campaign()?.campaignStatus)">
+              <span class="status-dot"></span>
+              {{ getStatusLabel(campaign()?.campaignStatus) }}
+            </span>
+          </div>
+          <div class="header-actions">
+            <button class="btn btn-secondary" (click)="editCampaign()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+              Modifier
+            </button>
+          </div>
+        </div>
+
+        @if (campaign()?.campaignDesc) {
+          <p class="campaign-description">{{ campaign()?.campaignDesc }}</p>
+        }
+
+        <div class="campaign-meta-grid">
+          @if (campaign()?.creatorName) {
+            <div class="meta-card">
+              <div class="meta-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </div>
+              <div class="meta-content">
+                <span class="meta-label">Créée par</span>
+                <span class="meta-value">{{ campaign()?.creatorName }}</span>
+              </div>
+            </div>
+          }
+
+          @if (campaign()?.specialityLibelle) {
+            <div class="meta-card">
+              <div class="meta-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                </svg>
+              </div>
+              <div class="meta-content">
+                <span class="meta-label">Spécialité</span>
+                <span class="meta-value">{{ campaign()?.specialityLibelle }}</span>
+              </div>
+            </div>
+          }
+
+          @if (campaign()?.departmentName) {
+            <div class="meta-card">
+              <div class="meta-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                  <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+              </div>
+              <div class="meta-content">
+                <span class="meta-label">Département</span>
+                <span class="meta-value">{{ campaign()?.departmentName }}</span>
+              </div>
+            </div>
+          }
+
+          @if (campaign()?.campaignStart) {
+            <div class="meta-card">
+              <div class="meta-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+              </div>
+              <div class="meta-content">
+                <span class="meta-label">Date de début</span>
+                <span class="meta-value">{{ formatDate(campaign()?.campaignStart) }}</span>
+              </div>
+            </div>
+          }
+
+          @if (campaign()?.campaignEnd) {
+            <div class="meta-card">
+              <div class="meta-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+              </div>
+              <div class="meta-content">
+                <span class="meta-label">Date de fin</span>
+                <span class="meta-value">{{ formatDate(campaign()?.campaignEnd) }}</span>
+              </div>
+            </div>
+          }
+
+          @if (campaign()?.campaignDuration) {
+            <div class="meta-card">
+              <div class="meta-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+              </div>
+              <div class="meta-content">
+                <span class="meta-label">Durée du quiz</span>
+                <span class="meta-value">{{ campaign()?.campaignDuration }} minutes</span>
+              </div>
+            </div>
+          }
+
+          @if (campaign()?.maxApply !== undefined) {
+            <div class="meta-card">
+              <div class="meta-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="8.5" cy="7" r="4"></circle>
+                  <line x1="20" y1="8" x2="20" y2="14"></line>
+                  <line x1="23" y1="11" x2="17" y2="11"></line>
+                </svg>
+              </div>
+              <div class="meta-content">
+                <span class="meta-label">Candidatures max</span>
+                <span class="meta-value">{{ campaign()?.maxApply === 0 ? 'Illimité' : campaign()?.maxApply }}</span>
+              </div>
+            </div>
+          }
+
+          @if (campaign()?.markedOutOf) {
+            <div class="meta-card">
+              <div class="meta-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                </svg>
+              </div>
+              <div class="meta-content">
+                <span class="meta-label">Note sur</span>
+                <span class="meta-value">{{ campaign()?.markedOutOf }} points</span>
+              </div>
+            </div>
+          }
+
+          @if (campaign()?.questionsCount !== undefined) {
+            <div class="meta-card">
+              <div class="meta-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+              </div>
+              <div class="meta-content">
+                <span class="meta-label">Questions</span>
+                <span class="meta-value">{{ campaign()?.questionsCount }}</span>
+              </div>
+            </div>
+          }
+
+          @if (campaign()?.applicationsCount !== undefined) {
+            <div class="meta-card">
+              <div class="meta-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+              </div>
+              <div class="meta-content">
+                <span class="meta-label">Candidatures</span>
+                <span class="meta-value">{{ campaign()?.applicationsCount }}</span>
+              </div>
+            </div>
+          }
+
+          @if (campaign()?.createdAt) {
+            <div class="meta-card">
+              <div class="meta-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+              </div>
+              <div class="meta-content">
+                <span class="meta-label">Créée le</span>
+                <span class="meta-value">{{ formatDate(campaign()?.createdAt) }}</span>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Section des recruteurs -->
+      <div class="recruiters-section">
+        <h2 class="section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          Recruteurs participants
+          <span class="count-badge">{{ recruiters().length }}</span>
+        </h2>
+
+        @if (recruiters().length > 0) {
+          <div class="recruiters-grid">
+            @for (recruiter of recruiters(); track recruiter.id) {
+              <div class="recruiter-card">
+                <div class="recruiter-header">
+                  <div class="recruiter-avatar">
+                    <span>{{ getInitials(recruiter.userName) }}</span>
+                  </div>
+                  <div class="recruiter-info">
+                    <h3 class="recruiter-name">{{ recruiter.userName || 'Utilisateur inconnu' }}</h3>
+                    <p class="recruiter-email">{{ recruiter.userEmail || 'N/A' }}</p>
+                  </div>
+                  <span class="role-badge" [class]="getRoleClass(recruiter.userRole)">
+                    {{ getRoleLabel(recruiter.userRole) }}
+                  </span>
+                </div>
+
+                <div class="recruiter-permissions">
+                  <h4 class="permissions-title">Permissions</h4>
+                  <div class="permissions-list">
+                    <div class="permission-item" [class.active]="recruiter.canEvaluate">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        @if (recruiter.canEvaluate) {
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        } @else {
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        }
+                      </svg>
+                      <span>Peut évaluer</span>
+                    </div>
+                    <div class="permission-item" [class.active]="recruiter.canUpdate">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        @if (recruiter.canUpdate) {
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        } @else {
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        }
+                      </svg>
+                      <span>Peut modifier</span>
+                    </div>
+                    <div class="permission-item" [class.active]="recruiter.canDelete">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        @if (recruiter.canDelete) {
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        } @else {
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        }
+                      </svg>
+                      <span>Peut supprimer</span>
+                    </div>
+                    @if (recruiter.isAdmin) {
+                      <div class="permission-item admin-badge">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                        <span>Administrateur</span>
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="empty-recruiters">
+            <div class="empty-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+            </div>
+            <p>Aucun recruteur n'a encore été ajouté à cette campagne.</p>
+          </div>
+        }
+      </div>
+
+      <!-- Section des tokens source -->
+      <!-- Section des questions/réponses -->
+      <div class="questions-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+            Questions de la campagne
+            <span class="count-badge">{{ campaignQuestions().length }}</span>
+          </h2>
+          <button class="btn btn-primary" (click)="toggleQuestionForm()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Ajouter une question
+          </button>
+        </div>
+
+        @if (showQuestionForm()) {
+          <div class="question-form">
+            <h3 class="form-title">Ajouter une question existante</h3>
+            
+            <div class="form-group">
+              <label for="questionSelect">Sélectionner une question</label>
+              <select 
+                id="questionSelect"
+                class="form-select"
+                [(ngModel)]="selectedQuestion"
+                (change)="onQuestionSelected()"
+                [disabled]="questionLoading()"
+              >
+                <option [value]="null">-- Choisir une question --</option>
+                @for (question of availableQuestions(); track question.id) {
+                  <option [value]="question.id">
+                    {{ question.questionText }} ({{ question.questionType }} - {{ question.difficultyLevel }})
+                  </option>
+                }
+              </select>
+            </div>
+
+            @if (selectedQuestion() && availableAnswers().length > 0) {
+              <div class="form-group">
+                <label>Sélectionner les réponses à inclure</label>
+                <div class="answers-list">
+                  @for (answer of availableAnswers(); track answer.id) {
+                    <div class="answer-checkbox">
+                      <input 
+                        type="checkbox"
+                        [id]="'answer-' + answer.id"
+                        [checked]="isAnswerSelected(answer.id)"
+                        (change)="toggleAnswerSelection(answer.id)"
+                        [disabled]="questionLoading()"
+                      />
+                      <label [for]="'answer-' + answer.id">
+                        {{ answer.answerText }}
+                      </label>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+            <div class="form-actions">
+              <button 
+                class="btn btn-primary" 
+                (click)="addQuestionToCampaign()"
+                [disabled]="questionLoading() || !selectedQuestion() || selectedAnswers().length === 0"
+              >
+                @if (questionLoading()) {
+                  <div class="spinner-small"></div>
+                } @else {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                }
+                {{ questionLoading() ? 'Ajout...' : 'Ajouter' }}
+              </button>
+              <button 
+                class="btn btn-secondary" 
+                (click)="toggleQuestionForm()"
+                [disabled]="questionLoading()"
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+        }
+
+        @if (campaignQuestions().length > 0) {
+          <div class="questions-list">
+            @for (question of campaignQuestions(); track question.id) {
+              <div class="question-card">
+                <div class="question-header">
+                  <div class="question-info">
+                    <h3 class="question-text">{{ question.questionText }}</h3>
+                    <div class="question-meta">
+                      <span class="badge badge-type">{{ question.questionType }}</span>
+                      <span class="badge badge-difficulty">{{ question.difficultyLevel }}</span>
+                      @if (question.points !== undefined) {
+                        <span class="badge badge-points">{{ question.points }} pts</span>
+                      }
+                      @if (question.timeLimit) {
+                        <span class="badge badge-time">⏱️ {{ question.timeLimit }}s</span>
+                      }
+                    </div>
+                  </div>
+                  <button 
+                    class="btn-icon btn-danger" 
+                    (click)="removeQuestionFromCampaign(question)"
+                    title="Retirer cette question"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                  </button>
+                </div>
+
+                @if (question.answers && question.answers.length > 0) {
+                  <div class="answers-section">
+                    <h4 class="answers-title">Réponses associées ({{ question.answers.length }})</h4>
+                    <div class="answers-grid">
+                      @for (answer of question.answers; track answer.id) {
+                        <div class="answer-item" [class.correct]="answer.isCorrect">
+                          <div class="answer-icon">
+                            @if (answer.isCorrect) {
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                              </svg>
+                            } @else {
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                              </svg>
+                            }
+                          </div>
+                          <span class="answer-text">{{ answer.answerText }}</span>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="empty-questions">
+            <div class="empty-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+            </div>
+            <p>Aucune question n'a encore été ajoutée à cette campagne.</p>
+            <p class="empty-hint">Cliquez sur "Ajouter une question" pour commencer.</p>
+          </div>
+        }
+      </div>
+
+      <!-- Section des tokens -->
+      <div class="tokens-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+              <line x1="1" y1="10" x2="23" y2="10"></line>
+            </svg>
+            Liens de candidature (Tokens)
+            <span class="count-badge">{{ sourceTokens().length }}</span>
+          </h2>
+          <button class="btn btn-primary" (click)="toggleTokenForm()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Créer un token
+          </button>
+        </div>
+
+        @if (showTokenForm()) {
+          <div class="token-form">
+            <div class="form-group">
+              <label for="tokenName">Nom du token</label>
+              <input 
+                type="text" 
+                id="tokenName"
+                class="form-input"
+                [(ngModel)]="newTokenName"
+                placeholder="Ex: LinkedIn, Site carrière, JobBoard..."
+                [disabled]="tokenLoading()"
+              />
+            </div>
+            <div class="form-actions">
+              <button 
+                class="btn btn-primary" 
+                (click)="createToken()"
+                [disabled]="tokenLoading() || !newTokenName().trim()"
+              >
+                @if (tokenLoading()) {
+                  <div class="spinner-small"></div>
+                } @else {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                }
+                {{ tokenLoading() ? 'Création...' : 'Créer' }}
+              </button>
+              <button 
+                class="btn btn-secondary" 
+                (click)="toggleTokenForm()"
+                [disabled]="tokenLoading()"
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+        }
+
+        @if (sourceTokens().length > 0) {
+          <div class="tokens-grid">
+            @for (token of sourceTokens(); track token.id) {
+              <div class="token-card">
+                <div class="token-header">
+                  <div class="token-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                      <line x1="1" y1="10" x2="23" y2="10"></line>
+                    </svg>
+                  </div>
+                  <div class="token-info">
+                    <h3 class="token-name">{{ token.sourceTokenName || 'Sans nom' }}</h3>
+                    <div class="token-code">{{ token.tokenString }}</div>
+                  </div>
+                </div>
+
+                <div class="token-url">
+                  <label>Lien de candidature :</label>
+                  <div class="url-display">
+                    <input 
+                      type="text" 
+                      readonly 
+                      [value]="'https://' + window.location.host + '/postuler/' + token.tokenString"
+                      class="url-input"
+                    />
+                  </div>
+                </div>
+
+                <div class="token-actions">
+                  <button class="btn-icon" (click)="copyTokenToClipboard(token)" title="Copier le lien">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                    Copier
+                  </button>
+                  <button class="btn-icon btn-danger" (click)="deleteToken(token)" title="Supprimer">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    Supprimer
+                  </button>
+                </div>
+
+                @if (token.createdAt) {
+                  <div class="token-meta">
+                    <span class="meta-label">Créé le</span>
+                    <span class="meta-value">{{ formatDate(token.createdAt) }}</span>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="empty-tokens">
+            <div class="empty-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                <line x1="1" y1="10" x2="23" y2="10"></line>
+              </svg>
+            </div>
+            <p>Aucun token n'a encore été créé pour cette campagne.</p>
+            <p class="empty-hint">Créez un token pour générer un lien de candidature unique.</p>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

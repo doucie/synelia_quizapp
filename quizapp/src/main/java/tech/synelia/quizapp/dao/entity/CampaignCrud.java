@@ -41,7 +41,7 @@ public class CampaignCrud implements Serializable, Cloneable {
     // ENTITY PRIMARY KEY ( BASED ON A SINGLE FIELD )
     //----------------------------------------------------------------------
     @Id
-    @GeneratedValue(strategy=GenerationType.IDENTITY)
+    @GeneratedValue(strategy=GenerationType.AUTO)
     @Column(name="id", nullable=false)
     private Integer    id           ;
 

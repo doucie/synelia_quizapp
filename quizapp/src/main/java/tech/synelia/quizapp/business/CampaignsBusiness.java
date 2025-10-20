@@ -98,7 +98,6 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 		// fieldsToVerify.put("campaignEnd", dto.getCampaignEnd());
 		// fieldsToVerify.put("maxApply", dto.getMaxApply());
 		fieldsToVerify.put("allCanEvaluate", dto.getAllCanEvaluate());
-		fieldsToVerify.put("markedOutOf", dto.getMarkedOutOf());
 		// fieldsToVerify.put("searchString", dto.getSearchString());
 		fieldsToVerify.put("specialityId", dto.getSpecialityId());
 		fieldsToVerify.put("creatorId", dto.getCreatorId());
@@ -240,9 +239,6 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			}
 			if (dto.getAllCanEvaluate() != null) {
 				entityToSave.setAllCanEvaluate(dto.getAllCanEvaluate());
-			}
-			if (dto.getMarkedOutOf() != null && dto.getMarkedOutOf() > 0) {
-				entityToSave.setMarkedOutOf(dto.getMarkedOutOf());
 			}
 			if (dto.getCreatedBy() != null && dto.getCreatedBy() > 0) {
 				entityToSave.setCreatedBy(dto.getCreatedBy());
@@ -549,9 +545,6 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			if (dto.getAllCanEvaluate() != null) {
 				entityToSave.setAllCanEvaluate(dto.getAllCanEvaluate());
 			}
-			if (dto.getMarkedOutOf() != null && dto.getMarkedOutOf() > 0) {
-				entityToSave.setMarkedOutOf(dto.getMarkedOutOf());
-			}
 			if (dto.getCreatedBy() != null && dto.getCreatedBy() > 0) {
 				entityToSave.setCreatedBy(dto.getCreatedBy());
 			}
@@ -677,9 +670,6 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			}
 			if (dto.getAllCanEvaluate() != null) {
 				entityToSave.setAllCanEvaluate(dto.getAllCanEvaluate());
-			}
-			if (dto.getMarkedOutOf() != null && dto.getMarkedOutOf() > 0) {
-				entityToSave.setMarkedOutOf(dto.getMarkedOutOf());
 			}
 			if (dto.getCreatedBy() != null && dto.getCreatedBy() > 0) {
 				entityToSave.setCreatedBy(dto.getCreatedBy());

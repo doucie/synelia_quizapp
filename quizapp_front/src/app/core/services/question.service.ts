@@ -438,7 +438,7 @@ export class QuestionService {
    */
   getAllQuestionsIncludingDeleted(criteria: QuestionSearchCriteria = {}): Observable<PagedResponse<Question>> {
     // Récupérer l'ID de l'utilisateur connecté depuis localStorage pour éviter la dépendance circulaire
-    const currentUserData = localStorage.getItem('currentUser');
+    const currentUserData = localStorage.getItem('user');
     const currentUserId = currentUserData ? JSON.parse(currentUserData).id?.toString() || "1" : "1";
 
     // Construction de la requête selon le format backend attendu

@@ -576,14 +576,95 @@
     width: 1rem;
     height: 1rem;
     stroke-width: 2;
-    transition: transform 0.2s ease;
+    transition: transform 0.3s ease;
   }
 
   &:hover {
     background: rgba(107, 70, 193, 0.1);
+  }
+}
+
+// Section déroulante de la carte
+.card-expanded-content {
+  margin-top: 1rem;
+  padding: 1.5rem;
+  background: var(--surface-secondary);
+  border-radius: 0.75rem;
+  border: 1px solid var(--border);
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
+    transform: translateY(0);
+  }
+}
+
+.expanded-section {
+  margin-bottom: 1rem;
+
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 1rem 0;
 
     svg {
-      transform: translateX(4px);
+      width: 1.25rem;
+      height: 1.25rem;
+      color: var(--primary);
     }
+  }
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+
+  &.full-width {
+    grid-column: 1 / -1;
+  }
+
+  .info-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .info-value {
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    line-height: 1.5;
+  }
+}
+
+.expanded-actions {
+  display: flex;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  
+  .btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
   }
 }

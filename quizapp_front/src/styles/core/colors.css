@@ -21,6 +21,7 @@
   --background: #FFFFFF;
   --background-rgb: 255, 255, 255;
   --surface: #F8FAFC;
+  --surface-secondary: #F1F5F9;
   --surface-variant: #F1F5F9;
   --on-background: #1E293B;
   --on-surface: #334155;
@@ -78,6 +79,7 @@
 .dark-mode {
   --background: #0F172A;
   --surface: #1E293B;
+  --surface-secondary: #283649;
   --surface-variant: #334155;
   --on-background: #F8FAFC;
   --on-surface: #E2E8F0;

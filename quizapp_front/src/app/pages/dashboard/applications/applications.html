@@ -109,6 +109,18 @@
     </div>
 
     <div class="filters-controls">
+      <div class="filter-checkbox">
+        <label class="checkbox-label">
+          <input 
+            type="checkbox"
+            [checked]="showOnlySharedCampaigns()"
+            (change)="toggleSharedCampaignsFilter()"
+          />
+          <span class="checkbox-text">Campagnes partagées uniquement</span>
+          <span class="checkbox-hint">(où j'ai des droits)</span>
+        </label>
+      </div>
+
       <div class="filter-group">
         <label class="filter-label">Campagne</label>
         <select 

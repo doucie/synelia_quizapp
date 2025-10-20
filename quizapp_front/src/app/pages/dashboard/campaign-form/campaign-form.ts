@@ -52,14 +52,6 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
     { value: 'ACTIVE', label: 'Active' },
     { value: 'CLOSED', label: 'Fermée' }
   ];
-  
-  markedOutOfOptions = [
-    { value: 10, label: '10 points' },
-    { value: 20, label: '20 points' },
-    { value: 50, label: '50 points' },
-    { value: 100, label: '100 points' },
-    { value: -1, label: 'Personnalisé' }
-  ];
 
   constructor(
     private fb: FormBuilder,
@@ -100,38 +92,8 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
       campaignEnd: [''], // Optionnel
       maxApply: [null, [Validators.min(1)]],
       allCanEvaluate: [false],
-      markedOutOf: [10, [Validators.required, Validators.min(1)]],
-      markedOutOfPreset: [10],
-      customMarkedOutOf: [{ value: '', disabled: true }],
       specialityId: [null, Validators.required] // Ajout spécialité
     });
-
-    // Écouter les changements du preset pour activer/désactiver le champ personnalisé
-    this.campaignForm.get('markedOutOfPreset')?.valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(value => {
-        const customField = this.campaignForm.get('customMarkedOutOf');
-        const markedOutOfField = this.campaignForm.get('markedOutOf');
-        
-        if (value === -1) {
-          customField?.enable();
-          customField?.setValidators([Validators.required, Validators.min(1)]);
-        } else {
-          customField?.disable();
-          customField?.clearValidators();
-          markedOutOfField?.setValue(value);
-        }
-        customField?.updateValueAndValidity();
-      });
-
-    // Écouter les changements du champ personnalisé
-    this.campaignForm.get('customMarkedOutOf')?.valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(value => {
-        if (value) {
-          this.campaignForm.get('markedOutOf')?.setValue(value);
-        }
-      });
   }
 
   setupSearch(): void {
@@ -379,22 +341,8 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
       campaignStart: this.formatDateForInput(campaign.campaignStart),
       campaignEnd: this.formatDateForInput(campaign.campaignEnd),
       maxApply: campaign.maxApply,
-      allCanEvaluate: campaign.allCanEvaluate,
-      markedOutOf: campaign.markedOutOf
+      allCanEvaluate: campaign.allCanEvaluate
     });
-
-    // Définir le preset approprié
-    const markedOutOf = campaign.markedOutOf || 10;
-    const isPreset = [10, 20, 50, 100].includes(markedOutOf);
-    
-    if (isPreset) {
-      this.campaignForm.patchValue({ markedOutOfPreset: markedOutOf });
-    } else {
-      this.campaignForm.patchValue({ 
-        markedOutOfPreset: -1,
-        customMarkedOutOf: markedOutOf
-      });
-    }
   }
 
   formatDateForInput(date?: string): string {
@@ -428,7 +376,6 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
       campaignEnd: formValue.campaignEnd,
       maxApply: formValue.maxApply,
       allCanEvaluate: formValue.allCanEvaluate,
-      markedOutOf: formValue.markedOutOf,
       specialityId: formValue.specialityId,
       createdBy: parseInt(currentUser.id)
     };
@@ -577,7 +524,4 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
   get campaignEnd() { return this.campaignForm.get('campaignEnd'); }
   get maxApply() { return this.campaignForm.get('maxApply'); }
   get allCanEvaluate() { return this.campaignForm.get('allCanEvaluate'); }
-  get markedOutOf() { return this.campaignForm.get('markedOutOf'); }
-  get markedOutOfPreset() { return this.campaignForm.get('markedOutOfPreset'); }
-  get customMarkedOutOf() { return this.campaignForm.get('customMarkedOutOf'); }
 }

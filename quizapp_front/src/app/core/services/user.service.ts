@@ -101,7 +101,7 @@ export class UserService {
    */
   getByCriteria(criteria: UserSearchCriteria = {}): Observable<PagedResponse<User>> {
     // Récupérer l'ID de l'utilisateur connecté depuis localStorage pour éviter la dépendance circulaire
-    const currentUserData = localStorage.getItem('currentUser');
+    const currentUserData = localStorage.getItem('user');
     const currentUserId = currentUserData ? JSON.parse(currentUserData).id?.toString() || "1" : "1";
     
     // Construction de la requête selon le format backend attendu
@@ -235,7 +235,7 @@ export class UserService {
     console.log('🔍 [DEBUG] dateModificationA:', criteria.dateModificationA, 'type:', typeof criteria.dateModificationA);
     
     // Récupérer l'ID de l'utilisateur connecté depuis localStorage pour éviter la dépendance circulaire
-    const currentUserData = localStorage.getItem('currentUser');
+    const currentUserData = localStorage.getItem('user');
     const currentUserId = currentUserData ? JSON.parse(currentUserData).id?.toString() || "1" : "1";
     
     // Construction de la requête selon le format backend attendu
@@ -572,7 +572,7 @@ export class UserService {
    */
   updatePageSizePreference(pageSizePreference: number): Observable<any> {
     // Récupération de l'ID utilisateur depuis localStorage
-    const currentUserData = localStorage.getItem('currentUser');
+    const currentUserData = localStorage.getItem('user');
     const currentUserId = currentUserData ? JSON.parse(currentUserData).id?.toString() : '1';
 
     const request = {

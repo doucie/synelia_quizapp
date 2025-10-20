@@ -105,14 +105,14 @@ public interface CampaignsRepository extends JpaRepository<Campaigns, Integer>, 
 	@Query("select e from Campaigns e where e.allCanEvaluate = :allCanEvaluate and e.isDeleted = :isDeleted")
 	List<Campaigns> findByAllCanEvaluate(@Param("allCanEvaluate")Boolean allCanEvaluate, @Param("isDeleted")Boolean isDeleted);
 	/**
-	 * Finds Campaigns by using markedOutOf as a search criteria.
+	 * Finds Campaigns by using totalQuestions as a search criteria.
 	 * 
-	 * @param markedOutOf
-	 * @return An Object Campaigns whose markedOutOf is equals to the given markedOutOf. If
+	 * @param totalQuestions
+	 * @return An Object Campaigns whose totalQuestions is equals to the given totalQuestions. If
 	 *         no Campaigns is found, this method returns null.
 	 */
-	@Query("select e from Campaigns e where e.markedOutOf = :markedOutOf and e.isDeleted = :isDeleted")
-	List<Campaigns> findByMarkedOutOf(@Param("markedOutOf")Integer markedOutOf, @Param("isDeleted")Boolean isDeleted);
+	@Query("select e from Campaigns e where e.totalQuestions = :totalQuestions and e.isDeleted = :isDeleted")
+	List<Campaigns> findByTotalQuestions(@Param("totalQuestions")Integer totalQuestions, @Param("isDeleted")Boolean isDeleted);
 	/**
 	 * Finds Campaigns by using createdAt as a search criteria.
 	 * 
@@ -382,8 +382,8 @@ public interface CampaignsRepository extends JpaRepository<Campaigns, Integer>, 
 			if (dto.getAllCanEvaluate()!= null) {
 				listOfQuery.add(CriteriaUtils.generateCriteria("allCanEvaluate", dto.getAllCanEvaluate(), "e.allCanEvaluate", "Boolean", dto.getAllCanEvaluateParam(), param, index, locale));
 			}
-			if (dto.getMarkedOutOf()!= null && dto.getMarkedOutOf() > 0) {
-				listOfQuery.add(CriteriaUtils.generateCriteria("markedOutOf", dto.getMarkedOutOf(), "e.markedOutOf", "Integer", dto.getMarkedOutOfParam(), param, index, locale));
+			if (dto.getTotalQuestions()!= null && dto.getTotalQuestions() > 0) {
+				listOfQuery.add(CriteriaUtils.generateCriteria("totalQuestions", dto.getTotalQuestions(), "e.totalQuestions", "Integer", dto.getTotalQuestionsParam(), param, index, locale));
 			}
 			if (Utilities.notBlank(dto.getCreatedAt())) {
 				listOfQuery.add(CriteriaUtils.generateCriteria("createdAt", dto.getCreatedAt(), "e.createdAt", "Date", dto.getCreatedAtParam(), param, index, locale));

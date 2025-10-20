@@ -30,12 +30,14 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   // Signals
   applications = signal<ApplicationWithCampaign[]>([]);
   followedCampaigns = signal<Campaign[]>([]);
+  sharedCampaignIds = signal<Set<number>>(new Set());
   loading = signal(false);
   searchQuery = signal('');
   selectedCampaign = signal<number | null>(null);
   selectedSource = signal<string | null>(null);
   sortOrder = signal<SortOrder>('recent');
   viewMode = signal<ViewMode>('grid');
+  showOnlySharedCampaigns = signal(true); // Cochée par défaut
 
   constructor(
     private applicationService: ApplicationService,
@@ -62,6 +64,15 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     const campaignId = this.selectedCampaign();
     const source = this.selectedSource();
     const sort = this.sortOrder();
+    const showOnlyShared = this.showOnlySharedCampaigns();
+    const sharedCampaignIds = this.sharedCampaignIds();
+    
+    // Filtrer par campagnes partagées
+    if (showOnlyShared) {
+      apps = apps.filter(app => 
+        app.campaignId && sharedCampaignIds.has(app.campaignId)
+      );
+    }
     
     // Filtrer par recherche
     if (query) {
@@ -129,10 +140,23 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   loadData(): void {
     this.loading.set(true);
     
-    // Charger les campagnes en parallèle avec les candidatures
+    // D'abord récupérer l'ID de l'utilisateur connecté
+    const currentUserData = localStorage.getItem('user');
+    const currentUserId = currentUserData ? JSON.parse(currentUserData).id : null;
+    
+    if (!currentUserId) {
+      console.error('❌ Utilisateur non connecté');
+      this.loading.set(false);
+      return;
+    }
+
+    console.log('👤 ID utilisateur connecté:', currentUserId);
+    
+    // Charger les campagnes et les accès en parallèle
     forkJoin({
       campaigns: this.campaignService.getMyCampaigns({ size: 100, page: 0 }),
       sharedCampaigns: this.campaignService.getSharedCampaigns(),
+      campaignAccesses: this.campaignService.getCampaignAccessesByUser(currentUserId),
       applications: this.applicationService.getApplicationsByCriteria({}),
       sourceTokens: this.sourceTokenService.getSourceTokensByCriteria({})
     })
@@ -142,6 +166,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
         console.log('📦 Données chargées:', {
           campaigns: results.campaigns.content?.length || 0,
           sharedCampaigns: results.sharedCampaigns?.length || 0,
+          campaignAccesses: results.campaignAccesses.length || 0,
           applications: results.applications.items?.length || 0,
           sourceTokens: results.sourceTokens.items?.length || 0
         });
@@ -152,6 +177,25 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
         ];
         
         this.followedCampaigns.set(allCampaigns);
+        
+        // Extraire les IDs des campagnes où l'utilisateur a au moins un droit
+        const sharedIds = new Set<number>();
+        results.campaignAccesses.forEach((access: any) => {
+          const campaignId = access.campaigns_id || access.campaignId;
+          const hasAnyRight = 
+            access.can_update || access.canUpdate ||
+            access.can_delete || access.canDelete ||
+            access.can_evaluate || access.canEvaluate ||
+            access.is_admin || access.isAdmin;
+          
+          if (campaignId && hasAnyRight) {
+            sharedIds.add(campaignId);
+            console.log(`✅ Campagne ${campaignId} accessible (au moins un droit)`);
+          }
+        });
+        
+        console.log(`🔑 ${sharedIds.size} campagnes partagées avec droits:`, Array.from(sharedIds));
+        this.sharedCampaignIds.set(sharedIds);
         
         // Enrichir les candidatures avec les infos de campagne
         this.enrichApplications(
@@ -326,6 +370,14 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     this.searchQuery.set('');
     this.selectedCampaign.set(null);
     this.selectedSource.set(null);
+    this.showOnlySharedCampaigns.set(true); // Retour à l'état par défaut
+  }
+
+  /**
+   * Toggle le filtre des campagnes partagées
+   */
+  toggleSharedCampaignsFilter(): void {
+    this.showOnlySharedCampaigns.set(!this.showOnlySharedCampaigns());
   }
 
   /**

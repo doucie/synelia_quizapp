@@ -1,6 +1,12 @@
 spring:
   application:
     name: quizapp
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 5MB
+      file-size-threshold: 2KB
   cloud:
     consul:
       host: localhost
@@ -12,6 +18,10 @@ spring:
       discovery:
         hostname: to.be.defined
         healthCheckUrl: to.be.defined
+
+app:
+  upload:
+    dir: uploads/cv
 feign:
   client:
     config:

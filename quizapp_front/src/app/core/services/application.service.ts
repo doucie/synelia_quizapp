@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
 /**
@@ -259,5 +260,44 @@ export class ApplicationService {
     });
 
     return this.http.post<ApplicationResponse>(`${this.applicationsUrl}/complete-quiz`, request, { headers });
+  }
+
+  /**
+   * Génère l'URL de téléchargement d'un CV
+   * @param cvPath Chemin du CV stocké en BDD (format: "uploads/cv/filename.pdf")
+   * @returns URL complète de téléchargement
+   */
+  getCvDownloadUrl(cvPath: string): string {
+    if (!cvPath) {
+      return '';
+    }
+    
+    // Extraire le nom du fichier du chemin complet
+    const filename = cvPath.split('/').pop();
+    
+    // Retourner l'URL complète de téléchargement
+    return `${this.baseUrl}/files/download/${filename}`;
+  }
+
+  /**
+   * Vérifie si un CV existe sur le serveur
+   * @param cvPath Chemin du CV stocké en BDD
+   * @returns Observable<boolean> true si le fichier existe
+   */
+  checkCvExists(cvPath: string): Observable<boolean> {
+    if (!cvPath) {
+      return new Observable(observer => {
+        observer.next(false);
+        observer.complete();
+      });
+    }
+
+    const filename = cvPath.split('/').pop();
+    
+    return this.http.get<{ exists: boolean }>(`${this.baseUrl}/files/exists/${filename}`)
+      .pipe(
+        map(response => response.exists),
+        catchError(() => of(false))
+      );
   }
 }

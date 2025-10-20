@@ -40,7 +40,7 @@ public class CampaignsDto extends _CampaignsDto implements Cloneable{
 	private String     campaignEnd          ;
     private Integer    maxApply             ;
     private Boolean    allCanEvaluate       ;
-    private Integer    markedOutOf          ;
+    private Integer    totalQuestions       ;
 	private String     createdAt            ;
     private Integer    createdBy            ;
 	private String     updatedAt            ;
@@ -66,7 +66,7 @@ public class CampaignsDto extends _CampaignsDto implements Cloneable{
 	private SearchParam<String>   campaignEndParam      ;                     
 	private SearchParam<Integer>  maxApplyParam         ;                     
 	private SearchParam<Boolean>  allCanEvaluateParam   ;                     
-	private SearchParam<Integer>  markedOutOfParam      ;                     
+	private SearchParam<Integer>  totalQuestionsParam   ;                     
 	private SearchParam<String>   createdAtParam        ;                     
 	private SearchParam<Integer>  createdByParam        ;                     
 	private SearchParam<String>   updatedAtParam        ;                     

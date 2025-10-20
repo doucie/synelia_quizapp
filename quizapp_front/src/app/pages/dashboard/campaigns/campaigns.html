@@ -155,13 +155,63 @@
                 <span>{{ formatDate(campaign.campaignStart) }}</span>
               </div>
             }
-            <button class="btn-details">
-              Voir détails
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <button class="btn-details" (click)="toggleCampaignExpansion($event, campaign.id!)">
+              {{ isCampaignExpanded(campaign.id!) ? 'Masquer' : 'Voir détails' }}
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" 
+                   [style.transform]="isCampaignExpanded(campaign.id!) ? 'rotate(90deg)' : 'rotate(0deg)'"
+                   style="transition: transform 0.3s ease">
                 <path d="M9 5l7 7-7 7"></path>
               </svg>
             </button>
           </div>
+
+          @if (isCampaignExpanded(campaign.id!)) {
+            <div class="card-expanded-content">
+              <div class="expanded-section">
+                <h4 class="section-title">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                  </svg>
+                  Informations détaillées
+                </h4>
+                <div class="info-grid">
+                  @if (campaign.campaignEnd) {
+                    <div class="info-item">
+                      <span class="info-label">Date de fin :</span>
+                      <span class="info-value">{{ formatDate(campaign.campaignEnd) }}</span>
+                    </div>
+                  }
+                  @if (campaign.campaignDesc) {
+                    <div class="info-item full-width">
+                      <span class="info-label">Description complète :</span>
+                      <span class="info-value">{{ campaign.campaignDesc }}</span>
+                    </div>
+                  }
+                  <div class="info-item">
+                    <span class="info-label">Statut :</span>
+                    <span class="info-value">{{ getStatusLabel(campaign.campaignStatus) }}</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="info-label">ID :</span>
+                    <span class="info-value">#{{ campaign.id }}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="expanded-actions">
+                <button class="btn btn-secondary btn-sm" (click)="viewCampaignDetails(campaign.id!)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                    <polyline points="10 17 15 12 10 7"></polyline>
+                    <line x1="15" y1="12" x2="3" y2="12"></line>
+                  </svg>
+                  Ouvrir la page complète
+                </button>
+              </div>
+            </div>
+          }
         </article>
       }
     </div>

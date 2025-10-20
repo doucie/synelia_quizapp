@@ -72,8 +72,8 @@ public class Campaigns implements Serializable, Cloneable {
     @Column(name="all_can_evaluate", nullable=false)
     private Boolean    allCanEvaluate ;
 
-    @Column(name="marked_out_of")
-    private Integer    markedOutOf  ;
+    @Column(name="total_questions")
+    private Integer    totalQuestions ;
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name="created_at")

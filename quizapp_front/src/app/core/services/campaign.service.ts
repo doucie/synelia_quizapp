@@ -192,11 +192,12 @@ export class CampaignService {
       data: { id: id }
     };
 
-    return this.http.post<PagedResponse<Campaign>>(`${this.apiUrl}/getAllByCriteria`, requestBody).pipe(
+    return this.http.post<any>(`${this.apiUrl}/getAllByCriteria`, requestBody).pipe(
       map(response => {
         console.log('✅ Campagne récupérée:', response);
-        if (response.content && response.content.length > 0) {
-          return response.content[0];
+        // L'API retourne {items: [...], count: number, ...}
+        if (response.items && response.items.length > 0) {
+          return response.items[0];
         } else {
           throw new Error('Campaign not found');
         }
@@ -526,21 +527,27 @@ export class CampaignService {
       campaignName: campaign.campaignTitle || campaign.campaign_title || '',
       campaignDesc: campaign.campaignDesc || campaign.campaign_desc || '',
       campaignStatus: (campaign.campaignStatus || campaign.campaign_status || 'PENDING').toUpperCase(),
-      campaignStart: campaign.campaignStart || campaign.campaign_start,
-      campaignEnd: campaign.campaignEnd || campaign.campaign_end,
-      maxApply: campaign.maxApply || campaign.max_apply,
-      allCanEvaluate: campaign.allCanEvaluate || campaign.all_can_evaluate || false,
-      markedOutOf: campaign.markedOutOf || campaign.marked_out_of,
+      campaignStart: campaign.campaignStart || campaign.campaign_start || undefined,
+      campaignEnd: campaign.campaignEnd || campaign.campaign_end || undefined,
+      campaignDuration: campaign.campaignDuration || campaign.campaign_duration || undefined,
+      maxApply: campaign.maxApply ?? campaign.max_apply ?? undefined,
+      allCanEvaluate: campaign.allCanEvaluate ?? campaign.all_can_evaluate ?? false,
+      markedOutOf: campaign.markedOutOf || campaign.marked_out_of || undefined,
       isActive: campaign.campaignStatus === 'ACTIVE' || campaign.campaign_status === 'ACTIVE',
-      createdAt: campaign.createdAt || campaign.created_at,
-      createdBy: campaign.createdBy || campaign.created_by,
-      updatedAt: campaign.updatedAt || campaign.updated_at,
-      specialitiesId: campaign.specialityId || campaign.speciality_id,
-      specialityLibelle: campaign.specialityLibelle || campaign.speciality_libelle,
-      specialityName: campaign.specialityLibelle || campaign.speciality_libelle,
-      creatorName: campaign.creatorName || campaign.creator_name,
-      applicationsCount: campaign.applicationsCount || campaign.applications_count || 0,
-      questionsCount: campaign.questionsCount || campaign.questions_count || 0
+      createdAt: campaign.createdAt || campaign.created_at || undefined,
+      createdBy: campaign.createdBy || campaign.created_by || undefined,
+      updatedAt: campaign.updatedAt || campaign.updated_at || undefined,
+      departmentsId: campaign.departmentsId || campaign.departments_id || undefined,
+      departmentName: campaign.departmentName || campaign.department_name || undefined,
+      specialitiesId: campaign.specialityId || campaign.speciality_id || undefined,
+      specialityLibelle: campaign.specialityLibelle || campaign.speciality_libelle || undefined,
+      specialityName: campaign.specialityLibelle || campaign.speciality_libelle || undefined,
+      creatorName: campaign.creatorName || campaign.creator_name || 
+                    (campaign.userFirstName && campaign.userLastName 
+                      ? `${campaign.userFirstName} ${campaign.userLastName}` 
+                      : undefined),
+      applicationsCount: campaign.applicationsCount || campaign.applications_count || undefined,
+      questionsCount: campaign.questionsCount || campaign.questions_count || undefined
     };
   }
 
@@ -576,6 +583,34 @@ export class CampaignService {
   }
 
   /**
+   * Récupère les accès recruteurs pour une campagne (campaign_crud)
+   */
+  getCampaignAccess(campaignId: number): Observable<any[]> {
+    console.log('📥 Récupération des accès recruteurs pour la campagne:', campaignId);
+
+    const requestBody = {
+      user: "1",
+      size: 100,
+      index: 0,
+      data: { campaigns_id: campaignId }
+    };
+
+    return this.http.post<any>(`${environment.apiUrl}/campaignCrud/getAllByCriteria`, requestBody).pipe(
+      map(response => {
+        console.log('✅ Accès recruteurs récupérés:', response);
+        if (response.items && response.items.length > 0) {
+          return response.items;
+        }
+        return [];
+      }),
+      catchError(error => {
+        console.error('❌ Erreur récupération accès recruteurs:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
    * Crée une notification pour un utilisateur
    */
   createNotification(notificationData: any): Observable<any> {
@@ -605,4 +640,139 @@ export class CampaignService {
       })
     );
   }
+
+  /**
+   * Ajoute une ou plusieurs questions à une campagne
+   */
+  addQuestionsToCampaign(campaignId: number, questionIds: number[]): Observable<any> {
+    console.log('➕ Ajout de questions à la campagne:', { campaignId, questionIds });
+
+    // Créer les données pour chaque liaison campagne-question
+    const campaignQuestions = questionIds.map(questionId => ({
+      campaigns_id: campaignId,
+      questions_id: questionId
+    }));
+
+    const requestBody = {
+      user: 1,
+      datas: campaignQuestions
+    };
+
+    console.log('📤 Corps de la requête d\'ajout de questions:', requestBody);
+
+    return this.http.post<any>(`${environment.apiUrl}/campaignQuestions/create`, requestBody).pipe(
+      map(response => {
+        console.log('✅ Questions ajoutées à la campagne:', response);
+        return response;
+      }),
+      catchError(error => {
+        console.error('❌ Erreur ajout questions à la campagne:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Retire une question d'une campagne (soft delete)
+   */
+  removeQuestionFromCampaign(campaignId: number, questionId: number): Observable<any> {
+    console.log('🗑️ Retrait de la question de la campagne:', { campaignId, questionId });
+
+    // D'abord récupérer l'ID de la liaison campaigns_questions
+    const requestBody = {
+      user: 1,
+      size: 1,
+      index: 0,
+      data: {
+        campaigns_id: campaignId,
+        questions_id: questionId,
+        isDeleted: false
+      }
+    };
+
+    return this.http.post<any>(`${environment.apiUrl}/campaignQuestions/getAllByCriteria`, requestBody).pipe(
+      switchMap(response => {
+        if (!response.items || response.items.length === 0) {
+          console.warn('⚠️ Liaison campagne-question introuvable');
+          return throwError(() => new Error('Liaison introuvable'));
+        }
+
+        const campaignQuestionId = response.items[0].id;
+        console.log('🔍 ID de la liaison trouvé:', campaignQuestionId);
+
+        // Supprimer la liaison
+        const deleteRequestBody = {
+          user: 1,
+          data: { id: campaignQuestionId }
+        };
+
+        return this.http.post<any>(`${environment.apiUrl}/campaignQuestions/delete`, deleteRequestBody);
+      }),
+      map(response => {
+        console.log('✅ Question retirée de la campagne:', response);
+        return response;
+      }),
+      catchError(error => {
+        console.error('❌ Erreur retrait question de la campagne:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Ajoute des réponses à une question (liaison questions_answers)
+   */
+  addAnswersToQuestion(questionId: number, answerIds: number[]): Observable<any> {
+    console.log('➕ Ajout de réponses à la question:', { questionId, answerIds });
+
+    // Créer les données pour chaque liaison question-réponse
+    const questionAnswers = answerIds.map(answerId => ({
+      questions_id: questionId,
+      answers_id: answerId
+    }));
+
+    const requestBody = {
+      user: 1,
+      datas: questionAnswers
+    };
+
+    console.log('📤 Corps de la requête d\'ajout de réponses:', requestBody);
+
+    return this.http.post<any>(`${environment.apiUrl}/questionsAnswers/create`, requestBody).pipe(
+      map(response => {
+        console.log('✅ Réponses ajoutées à la question:', response);
+        return response;
+      }),
+      catchError(error => {
+        console.error('❌ Erreur ajout réponses à la question:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Récupère tous les accès aux campagnes pour un utilisateur
+   */
+  getCampaignAccessesByUser(userId: number): Observable<any[]> {
+    console.log('🔍 Récupération des accès campagnes pour user:', userId);
+
+    const requestBody = {
+      user: 1,
+      size: 1000,
+      index: 0,
+      data: { users_id: userId }
+    };
+
+    return this.http.post<any>(`${environment.apiUrl}/campaignCrud/getAllByCriteria`, requestBody).pipe(
+      map(response => {
+        console.log('✅ Accès campagnes récupérés:', response);
+        return response.items || [];
+      }),
+      catchError(error => {
+        console.error('❌ Erreur récupération accès campagnes:', error);
+        return of([]);
+      })
+    );
+  }
 }
+

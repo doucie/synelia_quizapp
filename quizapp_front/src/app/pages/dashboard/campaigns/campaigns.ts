@@ -27,6 +27,7 @@ export class CampaignsComponent implements OnInit, OnDestroy {
   filterStatus = signal<'all' | 'active' | 'pending' | 'closed'>('all');
   activeTab = signal<CampaignTab>('all');
   viewMode = signal<ViewMode>('grid');
+  expandedCampaignId = signal<number | null>(null);
 
   constructor(
     private campaignService: CampaignService,
@@ -182,6 +183,19 @@ export class CampaignsComponent implements OnInit, OnDestroy {
 
   viewCampaignDetails(campaignId: number): void {
     this.router.navigate(['/dashboard/campaigns', campaignId]);
+  }
+
+  toggleCampaignExpansion(event: Event, campaignId: number): void {
+    event.stopPropagation();
+    if (this.expandedCampaignId() === campaignId) {
+      this.expandedCampaignId.set(null);
+    } else {
+      this.expandedCampaignId.set(campaignId);
+    }
+  }
+
+  isCampaignExpanded(campaignId: number): boolean {
+    return this.expandedCampaignId() === campaignId;
   }
 
   refreshCampaigns(): void {

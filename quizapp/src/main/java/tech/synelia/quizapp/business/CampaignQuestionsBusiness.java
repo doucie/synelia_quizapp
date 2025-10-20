@@ -132,6 +132,13 @@ public class CampaignQuestionsBusiness implements IBasicBusiness<Request<Campaig
 			if (itemsSaved == null) {
 				throw new InternalErrorException(functionalError.SAVE_FAIL("campaignQuestions", locale));
 			}
+			
+			// Mettre à jour total_questions dans la campagne après l'ajout
+			if (!itemsSaved.isEmpty()) {
+				Integer campaignId = itemsSaved.get(0).getCampaigns().getId();
+				updateCampaignTotalQuestions(campaignId);
+			}
+			
 			List<CampaignQuestionsDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading())) ? CampaignQuestionsTransformer.INSTANCE.toLiteDtos(itemsSaved) : CampaignQuestionsTransformer.INSTANCE.toDtos(itemsSaved);
 
 			final int size = itemsSaved.size();
@@ -304,8 +311,14 @@ public class CampaignQuestionsBusiness implements IBasicBusiness<Request<Campaig
 		}
 
 		if (!items.isEmpty()) {
+			// Récupérer l'ID de la campagne avant la suppression pour mettre à jour total_questions
+			Integer campaignId = items.get(0).getCampaigns().getId();
+			
 			// supprimer les donnees en base
 			campaignQuestionsRepository.saveAll((Iterable<CampaignQuestions>) items);
+			
+			// Mettre à jour total_questions dans la campagne après la suppression
+			updateCampaignTotalQuestions(campaignId);
 
 			Status status = new Status();
 			status.setCode(StatusCode.SUCCESS);
@@ -456,4 +469,30 @@ public class CampaignQuestionsBusiness implements IBasicBusiness<Request<Campaig
 		log.info("----end custom CampaignQuestionsDto-----");
 		return response;
 	}
+	
+	/**
+	 * Met à jour le nombre total de questions (total_questions) dans la table campaigns
+	 * Cette méthode compte le nombre de questions non supprimées liées à une campagne
+	 * 
+	 * @param campaignId ID de la campagne à mettre à jour
+	 */
+	private void updateCampaignTotalQuestions(Integer campaignId) {
+		try {
+			Campaigns campaign = campaignsRepository.findOne(campaignId, false);
+			if (campaign != null) {
+				// Compter le nombre de questions non supprimées dans cette campagne
+				List<CampaignQuestions> questions = campaignQuestionsRepository.findByCampaignIdOrderByOrder(campaignId, false);
+				Integer totalQuestions = questions.size();
+				
+				// Mettre à jour total_questions
+				campaign.setTotalQuestions(totalQuestions);
+				campaignsRepository.save(campaign);
+				
+				log.info("✅ Campagne " + campaignId + " - total_questions mis à jour: " + totalQuestions);
+			}
+		} catch (Exception e) {
+			log.severe("❌ Erreur lors de la mise à jour de total_questions pour la campagne " + campaignId + ": " + e.getMessage());
+		}
+	}
 }
+

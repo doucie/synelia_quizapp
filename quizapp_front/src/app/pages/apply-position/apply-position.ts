@@ -2,6 +2,7 @@ import { Component, ChangeDetectionStrategy, signal, OnInit, inject } from '@ang
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
 import { SourceTokenService } from '../../services/source-token.service';
 import { ApplicationService, Application } from '../../core/services/application.service';
 import { FileService } from '../../core/services/file.service';
@@ -142,12 +143,15 @@ export class ApplyPositionComponent implements OnInit {
     this.submitError.set(null);
 
     try {
-      // Étape 1 : Upload du CV
+      // Étape 1 : Upload du CV sur le serveur
       this.isUploadingCv.set(true);
       
-      // Utilisation de la simulation d'upload pour l'instant
-      // TODO: Remplacer par this.fileService.uploadCvFile quand l'endpoint sera prêt
-      const uploadResult = await this.fileService.simulateUpload(data.cvFile, data.email);
+      console.log('📤 Upload du CV en cours...');
+      
+      // ✅ Upload réel vers le serveur Spring Boot
+      const uploadResult = await firstValueFrom(
+        this.fileService.uploadCvFile(data.cvFile, data.email)
+      );
       
       this.isUploadingCv.set(false);
 
@@ -155,6 +159,7 @@ export class ApplyPositionComponent implements OnInit {
         throw new Error(uploadResult.error || 'Erreur lors de l\'upload du CV');
       }
 
+      console.log('✅ CV uploadé avec succès:', uploadResult.filePath);
       this.cvFilePath.set(uploadResult.filePath || '');
 
       // Étape 2 : Créer l'application

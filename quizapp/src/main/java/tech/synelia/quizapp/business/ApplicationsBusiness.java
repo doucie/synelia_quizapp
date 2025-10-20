@@ -1317,18 +1317,70 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				return response;
 			}
 			
-			// 3. Mettre à jour le statut du quiz à COMPLETED
+			// 3. Calculer le score et le nombre total de questions avant de compléter le quiz
+			SourceToken sourceToken = application.getSourceToken();
+			if (sourceToken == null) {
+				Status status = new Status();
+				status.setCode(StatusCode.FUNC_DATA_NOT_EXIST);
+				status.setMessage("Token source non trouvé");
+				response.setStatus(status);
+				response.setHasError(true);
+				response.setHttpCode(HttpStatus.NOT_FOUND.value());
+				return response;
+			}
+			
+			// Récupérer la campagne
+			Campaigns campaign = sourceToken.getCampaigns();
+			if (campaign == null) {
+				Status status = new Status();
+				status.setCode(StatusCode.FUNC_DATA_NOT_EXIST);
+				status.setMessage("Campagne non trouvée");
+				response.setStatus(status);
+				response.setHasError(true);
+				response.setHttpCode(HttpStatus.NOT_FOUND.value());
+				return response;
+			}
+			
+			// Récupérer les questions de la campagne (ordonnées)
+			List<CampaignQuestions> campaignQuestions = campaignQuestionsRepository.findByCampaignIdOrderByOrder(campaign.getId(), false);
+			Integer totalQuestions = campaignQuestions.size();
+			
+			log.info("Nombre total de questions dans la campagne: " + totalQuestions);
+			
+			// Récupérer toutes les réponses du candidat pour cette application
+			List<CandidateAnswers> candidateAnswers = candidateAnswersRepository.findByApplicationId(applicationId, false);
+			
+			// Calculer le nombre de bonnes réponses
+			Integer correctAnswersCount = 0;
+			
+			for (CandidateAnswers candidateAnswer : candidateAnswers) {
+				if (candidateAnswer.getIsSelected()) {
+					// Récupérer la QuestionsAnswers pour vérifier si c'est la bonne réponse
+					QuestionsAnswers qa = candidateAnswer.getQuestionsAnswers();
+					if (qa != null && qa.getIsCorrect() != null && qa.getIsCorrect()) {
+						correctAnswersCount++;
+					}
+				}
+			}
+			
+			log.info("Nombre de bonnes réponses: " + correctAnswersCount + " / " + totalQuestions);
+			
+			// 4. Mettre à jour l'application avec le score, total_questions et statut COMPLETED
 			application.setQuizStatus(tech.synelia.quizapp.utils.enums.QuizStatus.COMPLETED.getValue());
+			application.setQuizScore(correctAnswersCount);
+			application.setTotalQuestions(totalQuestions);
 			application.setUpdatedAt(Utilities.getCurrentDate());
 			application.setUpdatedBy(request.getUser());
 			applicationsRepository.save(application);
 			
-			log.info("Quiz marqué comme COMPLETED pour l'application " + applicationId);
+			log.info("Quiz complété pour l'application " + applicationId + " - Score: " + correctAnswersCount + "/" + totalQuestions);
 			
-			// 4. Préparer la réponse
+			// 5. Préparer la réponse
 			ApplicationsDto resultDto = new ApplicationsDto();
 			resultDto.setId(applicationId);
 			resultDto.setQuizStatus(tech.synelia.quizapp.utils.enums.QuizStatus.COMPLETED.getValue());
+			resultDto.setQuizScore(correctAnswersCount);
+			resultDto.setTotalQuestions(totalQuestions);
 			
 			Status status = new Status();
 			status.setCode(StatusCode.SUCCESS);

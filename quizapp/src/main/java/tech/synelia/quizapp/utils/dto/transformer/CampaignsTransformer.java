@@ -84,7 +84,7 @@ public interface CampaignsTransformer {
 	@Mapping(source="dto.campaignEnd", dateFormat="dd/MM/yyyy",target="campaignEnd"),
 	@Mapping(source="dto.maxApply", target="maxApply"),
 	@Mapping(source="dto.allCanEvaluate", target="allCanEvaluate"),
-	@Mapping(source="dto.markedOutOf", target="markedOutOf"),
+	@Mapping(source="dto.totalQuestions", target="totalQuestions"),
 	@Mapping(source="dto.createdAt", dateFormat="dd/MM/yyyy",target="createdAt"),
 		@Mapping(source="dto.createdBy", target="createdBy"),
 		@Mapping(source="dto.updatedAt", dateFormat="dd/MM/yyyy",target="updatedAt"),
