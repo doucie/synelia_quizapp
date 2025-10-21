@@ -555,4 +555,10 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
       this.router.navigate(['/dashboard/campaigns', this.campaignId(), 'edit']);
     }
   }
+
+  viewApplications(): void {
+    if (this.campaignId()) {
+      this.router.navigate(['/dashboard/candidates'], { fragment: `campaign${this.campaignId()}` });
+    }
+  }
 }

@@ -1,13 +1,14 @@
 import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Subject, takeUntil, forkJoin } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Application, ApplicationService } from '../../../core/services/application.service';
 import { CampaignService, Campaign } from '../../../core/services/campaign.service';
 import { SourceTokenService, SourceToken } from '../../../services/source-token.service';
+import { ClickOutsideDirective } from '../../../directives/click-outside.directive';
 
 type SortOrder = 'recent' | 'oldest';
 type ViewMode = 'grid' | 'list';
@@ -21,7 +22,7 @@ interface ApplicationWithCampaign extends Application {
 @Component({
   selector: 'app-applications',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ClickOutsideDirective],
   templateUrl: './applications.html',
   styleUrl: './applications.scss'
 })
@@ -36,9 +37,14 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   searchQuery = signal('');
   selectedCampaign = signal<number | null>(null);
   selectedSource = signal<string | null>(null);
+  campaignSearchQuery = signal(''); // Recherche rapide campagne
+  sourceSearchQuery = signal(''); // Recherche rapide source
+  showCampaignSuggestions = signal(false); // Afficher suggestions campagne
+  showSourceSuggestions = signal(false); // Afficher suggestions source
   sortOrder = signal<SortOrder>('recent');
   viewMode = signal<ViewMode>('grid');
   showOnlySharedCampaigns = signal(false); // Décochée par défaut
+  lockedCampaignId = signal<number | null>(null); // Campagne verrouillée depuis l'URL
   
   // Signals pour modal CV
   cvPreviewUrl = signal<SafeResourceUrl | null>(null);
@@ -50,10 +56,22 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     private campaignService: CampaignService,
     private sourceTokenService: SourceTokenService,
     private router: Router,
+    private route: ActivatedRoute,
     private sanitizer: DomSanitizer
   ) {}
 
   ngOnInit(): void {
+    // Vérifier si une campagne est verrouillée via le fragment (#campaign123)
+    this.route.fragment.pipe(takeUntil(this.destroy$)).subscribe(fragment => {
+      if (fragment && fragment.startsWith('campaign')) {
+        const campaignId = parseInt(fragment.replace('campaign', ''), 10);
+        if (!isNaN(campaignId)) {
+          console.log(`🔒 Campagne verrouillée: #${campaignId}`);
+          this.lockedCampaignId.set(campaignId);
+        }
+      }
+    });
+    
     this.loadData();
   }
 
@@ -68,11 +86,17 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   displayedApplications = computed(() => {
     let apps = [...this.applications()];
     const query = this.searchQuery().toLowerCase();
-    const campaignId = this.selectedCampaign();
-    const source = this.selectedSource();
+    const campaignSearchQuery = this.campaignSearchQuery().toLowerCase();
+    const sourceSearchQuery = this.sourceSearchQuery().toLowerCase();
+    const lockedCampaignId = this.lockedCampaignId();
     const sort = this.sortOrder();
     const showOnlyShared = this.showOnlySharedCampaigns();
     const sharedCampaignIds = this.sharedCampaignIds();
+    
+    // Filtrer par campagne verrouillée (priorité absolue)
+    if (lockedCampaignId !== null) {
+      apps = apps.filter(app => app.campaignId === lockedCampaignId);
+    }
     
     // Filtrer par campagnes partagées
     if (showOnlyShared) {
@@ -81,7 +105,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       );
     }
     
-    // Filtrer par recherche
+    // Filtrer par recherche globale
     if (query) {
       apps = apps.filter(app => 
         (app.candidateFirstName || '').toLowerCase().includes(query) ||
@@ -91,14 +115,18 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       );
     }
     
-    // Filtrer par campagne
-    if (campaignId !== null) {
-      apps = apps.filter(app => app.campaignId === campaignId);
+    // Filtrer par recherche campagne (seulement si pas de campagne verrouillée)
+    if (campaignSearchQuery && lockedCampaignId === null) {
+      apps = apps.filter(app => 
+        (app.campaignTitle || '').toLowerCase().includes(campaignSearchQuery)
+      );
     }
     
-    // Filtrer par source
-    if (source !== null) {
-      apps = apps.filter(app => app.sourceTokenLabel === source);
+    // Filtrer par recherche source
+    if (sourceSearchQuery) {
+      apps = apps.filter(app => 
+        (app.sourceTokenLabel || '').toLowerCase().includes(sourceSearchQuery)
+      );
     }
     
     // Trier
@@ -122,6 +150,49 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       }
     });
     return Array.from(sources).sort();
+  });
+
+  /**
+   * Computed - Campagnes filtrées pour suggestions
+   */
+  filteredCampaigns = computed(() => {
+    const query = this.campaignSearchQuery().toLowerCase();
+    const campaigns = this.followedCampaigns();
+    
+    if (!query) {
+      return campaigns; // Toutes les campagnes si pas de recherche
+    }
+    
+    return campaigns.filter(campaign => 
+      campaign.campaignTitle?.toLowerCase().includes(query)
+    );
+  });
+
+  /**
+   * Computed - Sources filtrées pour suggestions
+   */
+  filteredSources = computed(() => {
+    const query = this.sourceSearchQuery().toLowerCase();
+    const sources = this.availableSources();
+    
+    if (!query) {
+      return sources; // Toutes les sources si pas de recherche
+    }
+    
+    return sources.filter(source => 
+      source.toLowerCase().includes(query)
+    );
+  });
+
+  /**
+   * Computed - Campagne verrouillée (pour affichage)
+   */
+  lockedCampaign = computed(() => {
+    const lockedId = this.lockedCampaignId();
+    if (lockedId === null) return null;
+    
+    const allCampaigns = this.followedCampaigns();
+    return allCampaigns.find(c => c.id === lockedId) || null;
   });
 
   /**
@@ -161,7 +232,8 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     
     // Charger les campagnes et les accès en parallèle
     forkJoin({
-      campaigns: this.campaignService.getMyCampaigns({ size: 100, page: 0 }),
+      allCampaigns: this.campaignService.getAllCampaignsByCriteria({ size: 1000, page: 0 }),
+      myCampaigns: this.campaignService.getMyCampaigns({ size: 100, page: 0 }),
       sharedCampaigns: this.campaignService.getSharedCampaigns(),
       campaignAccesses: this.campaignService.getCampaignAccessesByUser(currentUserId),
       applications: this.applicationService.getApplicationsByCriteria({}),
@@ -171,19 +243,16 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     .subscribe({
       next: (results) => {
         console.log('📦 Données chargées:', {
-          campaigns: results.campaigns.content?.length || 0,
+          allCampaigns: results.allCampaigns.content?.length || 0,
+          myCampaigns: results.myCampaigns.content?.length || 0,
           sharedCampaigns: results.sharedCampaigns?.length || 0,
           campaignAccesses: results.campaignAccesses.length || 0,
           applications: results.applications.items?.length || 0,
           sourceTokens: results.sourceTokens.items?.length || 0
         });
 
-        const allCampaigns = [
-          ...(results.campaigns.content || []),
-          ...(results.sharedCampaigns || [])
-        ];
-        
-        this.followedCampaigns.set(allCampaigns);
+        // Pour l'enrichissement, on utilise TOUTES les campagnes
+        const allCampaignsForEnrichment = results.allCampaigns.content || [];
         
         // Extraire les IDs des campagnes où l'utilisateur a au moins un droit
         const sharedIds = new Set<number>();
@@ -209,12 +278,34 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
         console.log(`🔑 ${sharedIds.size} campagnes partagées avec droits:`, Array.from(sharedIds));
         this.sharedCampaignIds.set(sharedIds);
         
-        // Enrichir les candidatures avec les infos de campagne
+        // Enrichir les candidatures avec les infos de campagne (utiliser TOUTES les campagnes)
         this.enrichApplications(
           results.applications.items || [],
           results.sourceTokens.items || [],
-          allCampaigns
+          allCampaignsForEnrichment
         );
+        
+        // Pour followedCampaigns (suggestions de filtre), extraire les campagnes des candidatures affichées
+        const campaignIdsInApplications = new Set<number>();
+        (results.applications.items || []).forEach((app: Application) => {
+          if (app.sourceTokenId) {
+            const sourceToken = (results.sourceTokens.items || []).find((st: SourceToken) => st.id === app.sourceTokenId);
+            if (sourceToken?.campaignId) {
+              campaignIdsInApplications.add(sourceToken.campaignId);
+            }
+          }
+        });
+        
+        // Filtrer les campagnes pour ne garder que celles qui ont des candidatures
+        const campaignsWithApplications = allCampaignsForEnrichment.filter(campaign => 
+          campaign.id && campaignIdsInApplications.has(campaign.id)
+        );
+        
+        console.log(`📋 ${campaignsWithApplications.length} campagnes avec candidatures:`, 
+          campaignsWithApplications.map(c => `#${c.id}: ${c.campaignTitle}`)
+        );
+        
+        this.followedCampaigns.set(campaignsWithApplications);
         
         this.loading.set(false);
       },
@@ -306,17 +397,79 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Change le filtre de campagne
+   * Change le filtre de campagne (gardé pour compatibilité mais non utilisé)
    */
   setSelectedCampaign(campaignId: number | null): void {
     this.selectedCampaign.set(campaignId);
   }
 
   /**
-   * Change le filtre de source
+   * Change le filtre de source (gardé pour compatibilité mais non utilisé)
    */
   setSelectedSource(source: string | null): void {
     this.selectedSource.set(source);
+  }
+
+  /**
+   * Change la recherche rapide de campagne
+   */
+  setCampaignSearchQuery(query: string): void {
+    this.campaignSearchQuery.set(query);
+    this.showCampaignSuggestions.set(true); // Afficher suggestions lors de la saisie
+  }
+
+  /**
+   * Change la recherche rapide de source
+   */
+  setSourceSearchQuery(query: string): void {
+    this.sourceSearchQuery.set(query);
+    this.showSourceSuggestions.set(true); // Afficher suggestions lors de la saisie
+  }
+
+  /**
+   * Sélectionne une campagne depuis les suggestions
+   */
+  selectCampaign(campaign: Campaign): void {
+    this.campaignSearchQuery.set(campaign.campaignTitle || '');
+    this.showCampaignSuggestions.set(false);
+  }
+
+  /**
+   * Sélectionne une source depuis les suggestions
+   */
+  selectSource(source: string): void {
+    this.sourceSearchQuery.set(source);
+    this.showSourceSuggestions.set(false);
+  }
+
+  /**
+   * Efface la recherche campagne
+   */
+  clearCampaignSearch(): void {
+    this.campaignSearchQuery.set('');
+    this.showCampaignSuggestions.set(false);
+  }
+
+  /**
+   * Efface la recherche source
+   */
+  clearSourceSearch(): void {
+    this.sourceSearchQuery.set('');
+    this.showSourceSuggestions.set(false);
+  }
+
+  /**
+   * Ferme les suggestions campagne (clickOutside)
+   */
+  closeCampaignSuggestions(): void {
+    this.showCampaignSuggestions.set(false);
+  }
+
+  /**
+   * Ferme les suggestions source (clickOutside)
+   */
+  closeSourceSuggestions(): void {
+    this.showSourceSuggestions.set(false);
   }
 
   /**
@@ -447,7 +600,17 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     this.searchQuery.set('');
     this.selectedCampaign.set(null);
     this.selectedSource.set(null);
+    this.campaignSearchQuery.set('');
+    this.sourceSearchQuery.set('');
     this.showOnlySharedCampaigns.set(false); // Retour à l'état par défaut (décochée)
+  }
+
+  /**
+   * Déverrouille la campagne et retourne à la liste complète
+   */
+  unlockCampaign(): void {
+    this.lockedCampaignId.set(null);
+    this.router.navigate(['/dashboard/candidates']);
   }
 
   /**
