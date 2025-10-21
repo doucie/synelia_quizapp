@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Subject, takeUntil, forkJoin } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Application, ApplicationService } from '../../../core/services/application.service';
@@ -37,13 +38,19 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   selectedSource = signal<string | null>(null);
   sortOrder = signal<SortOrder>('recent');
   viewMode = signal<ViewMode>('grid');
-  showOnlySharedCampaigns = signal(true); // Cochée par défaut
+  showOnlySharedCampaigns = signal(false); // Décochée par défaut
+  
+  // Signals pour modal CV
+  cvPreviewUrl = signal<SafeResourceUrl | null>(null);
+  cvPreviewCandidateName = signal<string>('');
+  currentCvPath = signal<string>('');
 
   constructor(
     private applicationService: ApplicationService,
     private campaignService: CampaignService,
     private sourceTokenService: SourceTokenService,
-    private router: Router
+    private router: Router,
+    private sanitizer: DomSanitizer
   ) {}
 
   ngOnInit(): void {
@@ -181,16 +188,21 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
         // Extraire les IDs des campagnes où l'utilisateur a au moins un droit
         const sharedIds = new Set<number>();
         results.campaignAccesses.forEach((access: any) => {
-          const campaignId = access.campaigns_id || access.campaignId;
+          const campaignId = access.campaignId || access.campaigns_id;
           const hasAnyRight = 
-            access.can_update || access.canUpdate ||
-            access.can_delete || access.canDelete ||
-            access.can_evaluate || access.canEvaluate ||
-            access.is_admin || access.isAdmin;
+            access.canUpdate || access.can_update ||
+            access.canDelete || access.can_delete ||
+            access.canEvaluate || access.can_evaluate ||
+            access.isAdmin || access.is_admin;
           
           if (campaignId && hasAnyRight) {
             sharedIds.add(campaignId);
-            console.log(`✅ Campagne ${campaignId} accessible (au moins un droit)`);
+            console.log(`✅ Campagne ${campaignId} accessible (au moins un droit)`, {
+              canUpdate: access.canUpdate || access.can_update,
+              canDelete: access.canDelete || access.can_delete,
+              canEvaluate: access.canEvaluate || access.can_evaluate,
+              isAdmin: access.isAdmin || access.is_admin
+            });
           }
         });
         
@@ -240,8 +252,20 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     
     console.log(`� Maps créées: ${sourceTokenById.size} source tokens, ${campaignById.size} campagnes`);
     
+    // Log détaillé des source tokens
+    Array.from(sourceTokenById.values()).forEach(st => {
+      console.log(`  📌 SourceToken #${st.id}: "${st.sourceTokenName}" → campaignId=${st.campaignId}`);
+    });
+    
+    // Log détaillé des campaigns
+    Array.from(campaignById.values()).forEach(c => {
+      console.log(`  📌 Campaign #${c.id}: "${c.campaignTitle}"`);
+    });
+    
     // Enrichir toutes les candidatures
     const enrichedApplications: ApplicationWithCampaign[] = applications.map(app => {
+      console.log(`  🔍 Application #${app.id}: sourceTokenId=${app.sourceTokenId}`);
+      
       let campaignTitle = 'Campagne inconnue';
       let campaignId: number | undefined = undefined;
       let sourceTokenLabel = 'N/A';
@@ -370,7 +394,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     this.searchQuery.set('');
     this.selectedCampaign.set(null);
     this.selectedSource.set(null);
-    this.showOnlySharedCampaigns.set(true); // Retour à l'état par défaut
+    this.showOnlySharedCampaigns.set(false); // Retour à l'état par défaut (décochée)
   }
 
   /**
@@ -378,6 +402,87 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
    */
   toggleSharedCampaignsFilter(): void {
     this.showOnlySharedCampaigns.set(!this.showOnlySharedCampaigns());
+  }
+
+  /**
+   * Copie le texte dans le presse-papier
+   */
+  copyToClipboard(text: string, label: string, event: Event): void {
+    event.stopPropagation();
+    navigator.clipboard.writeText(text).then(() => {
+      console.log(`✅ ${label} copié: ${text}`);
+      // Optionnel: afficher un toast/notification
+    }).catch(err => {
+      console.error(`❌ Erreur lors de la copie du ${label}:`, err);
+    });
+  }
+
+  /**
+   * Ouvre l'aperçu du CV
+   */
+  openCVPreview(app: Application, event: Event): void {
+    event.stopPropagation();
+    if (app.candidateCvPath) {
+      this.currentCvPath.set(app.candidateCvPath);
+      this.cvPreviewCandidateName.set(this.getCandidateName(app));
+      this.cvPreviewUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(app.candidateCvPath));
+    }
+  }
+
+  /**
+   * Ferme l'aperçu du CV
+   */
+  closeCVPreview(): void {
+    this.cvPreviewUrl.set(null);
+    this.cvPreviewCandidateName.set('');
+    this.currentCvPath.set('');
+  }
+
+  /**
+   * Télécharge le CV actuellement affiché
+   */
+  downloadCurrentCV(): void {
+    const cvPath = this.currentCvPath();
+    const candidateName = this.cvPreviewCandidateName();
+    if (cvPath) {
+      const link = document.createElement('a');
+      link.href = cvPath;
+      link.download = `CV_${candidateName}.pdf`;
+      link.click();
+    }
+  }
+
+  /**
+   * Ouvre le CV actuellement affiché dans un nouvel onglet
+   */
+  openCurrentCVInNewTab(): void {
+    const cvPath = this.currentCvPath();
+    if (cvPath) {
+      window.open(cvPath, '_blank');
+    }
+  }
+
+  /**
+   * Télécharge le CV
+   */
+  downloadCV(app: Application, event: Event): void {
+    event.stopPropagation();
+    if (app.candidateCvPath) {
+      const link = document.createElement('a');
+      link.href = app.candidateCvPath;
+      link.download = `CV_${this.getCandidateName(app)}.pdf`;
+      link.click();
+    }
+  }
+
+  /**
+   * Ouvre le CV dans un nouvel onglet
+   */
+  openCVInNewTab(app: Application, event: Event): void {
+    event.stopPropagation();
+    if (app.candidateCvPath) {
+      window.open(app.candidateCvPath, '_blank');
+    }
   }
 
   /**

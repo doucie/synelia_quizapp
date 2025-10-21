@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 export interface SourceToken {
@@ -9,6 +9,7 @@ export interface SourceToken {
   tokenString?: string;
   sourceTokenName?: string;
   campaignId?: number;
+  campaigns_id?: number; // Version snake_case du backend
   campaignName?: string;
   createdAt?: string;
   createdBy?: number;
@@ -71,7 +72,16 @@ export class SourceTokenService {
       'Accept': 'application/json'
     });
 
-    return this.http.post<SourceTokenResponse>(`${this.apiUrl}/getByCriteria`, request, { headers });
+    return this.http.post<SourceTokenResponse>(`${this.apiUrl}/getByCriteria`, request, { headers }).pipe(
+      tap(response => {
+        console.log('🎫 Source Tokens bruts du backend:', response);
+        if (response.items) {
+          response.items.forEach(st => {
+            console.log(`  🎫 ST #${st.id}: "${st.sourceTokenName}" → campaignId=${st.campaignId || st.campaigns_id || 'undefined'}`);
+          });
+        }
+      })
+    );
   }
 
   /**

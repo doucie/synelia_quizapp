@@ -928,6 +928,176 @@
   }
 }
 
+/* ===== NOUVEAUX STYLES - OVERLAYS TRANSPARENTS ===== */
+
+/* Boutons de copie */
+.copy-btn {
+  background: transparent;
+  border: none;
+  padding: 0.375rem;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+  transition: all 0.2s ease;
+  opacity: 0;
+}
+
+.candidate-contact {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.candidate-contact:hover .copy-btn,
+.info-item:hover .copy-btn {
+  opacity: 1;
+}
+
+.copy-btn:hover {
+  background: rgba(107, 70, 193, 0.1);
+  color: var(--primary);
+  transform: scale(1.1);
+}
+
+.copy-btn:active {
+  transform: scale(0.95);
+}
+
+/* Info item avec bouton copie pour téléphone */
+.info-item.phone-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.info-item.cv-item {
+  grid-column: span 2;
+}
+
+.cv-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: var(--primary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 3px;
+}
+
+.cv-btn:hover {
+  color: var(--primary-dark);
+  text-decoration-style: solid;
+}
+
+/* Badges header (quiz status + application status) */
+.badges-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.quiz-status-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  backdrop-filter: blur(10px);
+  transition: all 0.2s ease;
+}
+
+.quiz-status-badge.quiz-completed {
+  background: rgba(16, 185, 129, 0.15);
+  color: #065F46;
+  border: 1.5px solid rgba(16, 185, 129, 0.3);
+}
+
+.quiz-status-badge.quiz-in_progress {
+  background: rgba(245, 158, 11, 0.15);
+  color: #92400E;
+  border: 1.5px solid rgba(245, 158, 11, 0.3);
+}
+
+.quiz-status-badge.quiz-not_started {
+  background: rgba(107, 114, 128, 0.15);
+  color: #374151;
+  border: 1.5px solid rgba(107, 114, 128, 0.3);
+}
+
+/* Overlay transparent pour score-badge et tag */
+.score-badge.overlay {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.score-badge.overlay.excellent {
+  background: rgba(16, 185, 129, 0.15);
+  color: #065F46;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.score-badge.overlay.good {
+  background: rgba(59, 130, 246, 0.15);
+  color: #1E40AF;
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.score-badge.overlay.average {
+  background: rgba(245, 158, 11, 0.15);
+  color: #92400E;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.score-badge.overlay.poor {
+  background: rgba(239, 68, 68, 0.15);
+  color: #991B1B;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.score-badge.overlay.neutral {
+  background: rgba(107, 114, 128, 0.15);
+  color: var(--text-secondary);
+  border-color: rgba(107, 114, 128, 0.3);
+}
+
+.tag.overlay {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+}
+
+.tag.overlay.verified {
+  background: rgba(16, 185, 129, 0.15);
+  color: #065F46;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.tag.overlay.completed {
+  background: rgba(59, 130, 246, 0.15);
+  color: #1E40AF;
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.tag.overlay.in-progress {
+  background: rgba(245, 158, 11, 0.15);
+  color: #92400E;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
 @media (max-width: 480px) {
   .stats-container {
     grid-template-columns: 1fr;
@@ -946,4 +1116,156 @@
     width: 100%;
     justify-content: center;
   }
+
+  .badges-header {
+    flex-direction: column;
+    align-items: flex-end;
+  }
+
+  .copy-btn {
+    opacity: 1;
+  }
 }
+
+/* ===== MODAL CV PREVIEW ===== */
+.cv-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 2rem;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.cv-modal {
+  background: var(--surface);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 900px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.cv-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 2rem;
+  border-bottom: 2px solid var(--border);
+}
+
+.cv-modal-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.cv-modal-close {
+  background: transparent;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.cv-modal-close:hover {
+  background: var(--surface-variant);
+  color: var(--text-primary);
+  transform: rotate(90deg);
+}
+
+.cv-modal-body {
+  flex: 1;
+  overflow: hidden;
+  padding: 1.5rem;
+  background: var(--background);
+}
+
+.cv-preview-frame {
+  width: 100%;
+  height: 100%;
+  min-height: 500px;
+  border: none;
+  border-radius: 12px;
+  background: white;
+}
+
+.cv-modal-footer {
+  display: flex;
+  gap: 1rem;
+  padding: 1.5rem 2rem;
+  border-top: 2px solid var(--border);
+  justify-content: flex-end;
+}
+
+.cv-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.875rem 1.5rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cv-action-btn.secondary {
+  background: var(--surface-variant);
+  color: var(--text-primary);
+}
+
+.cv-action-btn.secondary:hover {
+  background: var(--border);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.cv-action-btn.primary {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: white;
+  box-shadow: 0 4px 12px rgba(107, 70, 193, 0.3);
+}
+
+.cv-action-btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(107, 70, 193, 0.4);
+}
+

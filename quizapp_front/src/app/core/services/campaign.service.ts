@@ -498,6 +498,21 @@ export class CampaignService {
         }
 
         const rawCrudItems = response.items || (response.item ? [response.item] : []);
+        console.log('🔍 Raw campaign_crud items:', rawCrudItems);
+        console.log('🔍 Nombre de campaign_crud:', rawCrudItems.length);
+        
+        // Log chaque item pour voir sa structure
+        rawCrudItems.forEach((item: any, index: number) => {
+          console.log(`🔍 CampaignCrud #${index}:`, {
+            id: item.id,
+            userId: item.userId || item.users_id,
+            campaignId: item.campaignId || item.campaigns_id,
+            hasCampaignsField: !!item.campaigns,
+            hasCampaignField: !!item.campaign,
+            campaigns: item.campaigns,
+            campaign: item.campaign
+          });
+        });
         
         // Extraire les campagnes des items campaign_crud
         const campaigns: Campaign[] = rawCrudItems
@@ -592,7 +607,7 @@ export class CampaignService {
       user: "1",
       size: 100,
       index: 0,
-      data: { campaigns_id: campaignId }
+      data: { campaignId: campaignId }
     };
 
     return this.http.post<any>(`${environment.apiUrl}/campaignCrud/getAllByCriteria`, requestBody).pipe(
@@ -760,7 +775,7 @@ export class CampaignService {
       user: 1,
       size: 1000,
       index: 0,
-      data: { users_id: userId }
+      data: { userId: userId }
     };
 
     return this.http.post<any>(`${environment.apiUrl}/campaignCrud/getAllByCriteria`, requestBody).pipe(
