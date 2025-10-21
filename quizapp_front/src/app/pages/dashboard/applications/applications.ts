@@ -580,6 +580,43 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Vérifie si on peut planifier un entretien pour cette candidature
+   * Conditions: application_status = PENDING && quiz_status = COMPLETED && pas d'interview
+   */
+  canScheduleInterview(app: ApplicationWithCampaign): boolean {
+    const quizCompleted = app.quizStatus?.toLowerCase() === 'completed';
+    return app.applicationStatus === 'PENDING' && 
+           quizCompleted && 
+           !app.interviewDate;
+  }
+
+  /**
+   * Planifier un entretien pour cette candidature
+   */
+  scheduleInterview(app: ApplicationWithCampaign): void {
+    if (!this.canScheduleInterview(app)) {
+      console.log('Cannot schedule interview - conditions not met');
+      return;
+    }
+    
+    console.log('Navigating to interview form with app:', app.id);
+    
+    // Naviguer vers la page de création d'interview avec l'ID de la candidature
+    this.router.navigate(['/dashboard/interview-new'], {
+      queryParams: {
+        applicationId: app.id,
+        candidateName: `${app.candidateFirstName} ${app.candidateLastName}`,
+        campaignId: app.campaignId,
+        campaignTitle: app.campaignTitle
+      }
+    }).then(success => {
+      console.log('Navigation result:', success);
+    }).catch(error => {
+      console.error('Navigation error:', error);
+    });
+  }
+
+  /**
    * Navigation vers les détails
    */
   viewApplicationDetails(applicationId: number): void {

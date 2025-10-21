@@ -1,0 +1,160 @@
+<div class="interview-form-container">
+  <!-- Header -->
+  <div class="form-header">
+    <button class="back-button" (click)="onCancel()">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Retour
+    </button>
+    <h1>Planifier un entretien</h1>
+  </div>
+
+  <!-- Loading state -->
+  <div *ngIf="loading()" class="loading-state">
+    <div class="spinner"></div>
+    <p>Chargement des informations...</p>
+  </div>
+
+  <!-- Success message -->
+  <div *ngIf="success()" class="success-message">
+    <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+      <circle cx="24" cy="24" r="22" stroke="#10b981" stroke-width="4"/>
+      <path d="M14 24L20 30L34 16" stroke="#10b981" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <h2>Entretien planifié avec succès!</h2>
+    <p>Redirection en cours...</p>
+  </div>
+
+  <!-- Form content -->
+  <div *ngIf="!loading() && !success()" class="form-content">
+    <!-- Error message -->
+    <div *ngIf="error()" class="error-message">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="2"/>
+        <path d="M10 6V10M10 14H10.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      {{ error() }}
+    </div>
+
+    <!-- Candidate info card -->
+    <div *ngIf="applicationInfo()" class="candidate-card">
+      <div class="candidate-avatar">
+        {{ applicationInfo()!.candidateFirstName.charAt(0) }}{{ applicationInfo()!.candidateLastName.charAt(0) }}
+      </div>
+      <div class="candidate-details">
+        <h3>{{ getCandidateName() }}</h3>
+        <p class="candidate-email">{{ applicationInfo()!.candidateEmail }}</p>
+        <p class="candidate-campaign">{{ applicationInfo()!.campaignTitle }}</p>
+        <p *ngIf="applicationInfo()!.quizScore !== undefined" class="candidate-score">
+          Score du quiz: <strong>{{ applicationInfo()!.quizScore }}%</strong>
+        </p>
+      </div>
+    </div>
+
+    <!-- Form -->
+    <form (ngSubmit)="onSubmit()" class="interview-form">
+      <!-- Interview type -->
+      <div class="form-section">
+        <label class="section-label">Type d'entretien *</label>
+        <div class="interview-types">
+          <button 
+            *ngFor="let type of interviewTypes"
+            type="button"
+            class="type-button"
+            [class.active]="formData.interviewType === type.value"
+            (click)="onInterviewTypeChange(type.value)">
+            <span class="type-icon">{{ type.icon }}</span>
+            <span class="type-label">{{ type.label }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Date and time -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="interviewDate">Date de l'entretien *</label>
+          <input 
+            type="date" 
+            id="interviewDate" 
+            name="interviewDate"
+            [(ngModel)]="formData.interviewDate"
+            [min]="formData.interviewDate"
+            required>
+        </div>
+
+        <div class="form-group">
+          <label for="interviewTime">Heure *</label>
+          <input 
+            type="time" 
+            id="interviewTime" 
+            name="interviewTime"
+            [(ngModel)]="formData.interviewTime"
+            required>
+        </div>
+      </div>
+
+      <!-- Location (for IN_PERSON) -->
+      <div *ngIf="formData.interviewType === 'IN_PERSON'" class="form-group">
+        <label for="location">Lieu de l'entretien *</label>
+        <input 
+          type="text" 
+          id="location" 
+          name="location"
+          [(ngModel)]="formData.location"
+          placeholder="Ex: Salle de réunion A, 3ème étage"
+          required>
+      </div>
+
+      <!-- Meeting link (for VIDEO) -->
+      <div *ngIf="formData.interviewType === 'VIDEO'" class="form-group">
+        <label for="meetingLink">Lien de visioconférence *</label>
+        <input 
+          type="url" 
+          id="meetingLink" 
+          name="meetingLink"
+          [(ngModel)]="formData.meetingLink"
+          placeholder="Ex: https://meet.google.com/xyz-abc-def"
+          required>
+        <small class="input-hint">Zoom, Google Meet, Teams, etc.</small>
+      </div>
+
+      <!-- Interviewers -->
+      <div class="form-group">
+        <label for="interviewers">Intervieweurs</label>
+        <input 
+          type="text" 
+          id="interviewers" 
+          name="interviewers"
+          [(ngModel)]="formData.interviewers"
+          placeholder="Ex: Marie Dupont, Jean Martin">
+        <small class="input-hint">Noms des personnes qui mèneront l'entretien</small>
+      </div>
+
+      <!-- Notes -->
+      <div class="form-group">
+        <label for="notes">Notes / Instructions</label>
+        <textarea 
+          id="notes" 
+          name="notes"
+          [(ngModel)]="formData.notes"
+          rows="4"
+          placeholder="Ajoutez des notes pour l'entretien..."></textarea>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="form-actions">
+        <button type="button" class="btn-cancel" (click)="onCancel()" [disabled]="saving()">
+          Annuler
+        </button>
+        <button type="submit" class="btn-submit" [disabled]="!isFormValid() || saving()">
+          <span *ngIf="!saving()">Planifier l'entretien</span>
+          <span *ngIf="saving()" class="saving-text">
+            <span class="spinner-small"></span>
+            Enregistrement...
+          </span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

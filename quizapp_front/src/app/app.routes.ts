@@ -125,6 +125,11 @@ export const routes: Routes = [
         path: 'candidates', 
         loadComponent: () => import('./pages/dashboard/applications/applications').then(m => m.ApplicationsComponent),
         canActivate: [recruiterRoleGuard]
+      },
+      { 
+        path: 'interview-new', 
+        loadComponent: () => import('./pages/dashboard/interview-form/interview-form').then(m => m.InterviewFormComponent),
+        canActivate: [recruiterRoleGuard]
       }
     ]
   },
