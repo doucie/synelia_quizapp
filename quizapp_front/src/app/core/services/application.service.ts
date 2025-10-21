@@ -25,6 +25,8 @@ export interface Application {
   quizToken?: string;
   quizStatus?: string;
   quizLevel?: number;
+  interviewDate?: string; // Date de l'entretien
+  interviewStatus?: string; // Status de l'entretien
   // createdAt?: string; // Let backend set this
   createdBy?: number;
   // updatedAt?: string; // Let backend set this

@@ -374,6 +374,59 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Formate une date au format français
+   */
+  formatDate(dateString: string): string {
+    if (!dateString) return 'N/A';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    } catch (e) {
+      return 'N/A';
+    }
+  }
+
+  /**
+   * Obtient le label du status d'interview
+   */
+  getInterviewStatusLabel(status: string | undefined): string {
+    if (!status) return 'En attente';
+    
+    const statusMap: { [key: string]: string } = {
+      'SCHEDULED': 'Planifié',
+      'CONFIRMED': 'Confirmé',
+      'COMPLETED': 'Effectué',
+      'CANCELLED': 'Annulé',
+      'NO_SHOW': 'Absent',
+      'PENDING': 'En attente'
+    };
+    
+    return statusMap[status] || status;
+  }
+
+  /**
+   * Obtient la classe CSS pour le status d'interview
+   */
+  getInterviewStatusClass(status: string | undefined): string {
+    if (!status) return 'interview-pending';
+    
+    const statusMap: { [key: string]: string } = {
+      'SCHEDULED': 'interview-scheduled',
+      'CONFIRMED': 'interview-confirmed',
+      'COMPLETED': 'interview-completed',
+      'CANCELLED': 'interview-cancelled',
+      'NO_SHOW': 'interview-no-show',
+      'PENDING': 'interview-pending'
+    };
+    
+    return statusMap[status] || 'interview-pending';
+  }
+
+  /**
    * Navigation vers les détails
    */
   viewApplicationDetails(applicationId: number): void {
