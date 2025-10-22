@@ -5,18 +5,11 @@
 - Déroulement des détails de campagnes dans la liste
 - Navigation vers une page détaillée de campagne
 - Ajout de la section "Questions" dans la page de détails
-- Affichage des questions avec leurs réponses
 - Mise en place de l'indicateur de bonne réponse (icône checkmark verte)
-- Création de la migration pour supprimer le champ `marked_out_of` de la table `campaigns`
-- Création de la migration pour ajouter le champ `total_questions` à la table `campaigns`
+- Création de la migration pour supprimer les champs `marked_out_of` et `total_questions` de la table `campaigns`
 - Création de la migration pour ajouter le champ `total_questions` à la table `applications`
 - Mise à jour du backend pour calculer automatiquement `total_questions` lors de l'ajout/suppression de questions
-- Modification du calcul du score du quiz pour utiliser `QuestionsAnswers.isCorrect` au lieu de `Answers.isCorrect`
 - Suppression du champ `markedOutOf` du formulaire de création/modification de campagne (frontend)
-- Correction des erreurs de compilation dans tous les fichiers Java affectés
-- Mise à jour du transformer MapStruct pour remplacer `markedOutOf` par `totalQuestions`
-- Correction des requêtes SQL dans les repositories
-- Validation de la compilation du projet backend
 
 ## DERNIERE REQUETE (vérifier en répondant au quiz avec la candidature 452)
 il faudrait stocker le nombre de questions total dans une campagne avec un attribut total_questions dans campaigns. donc créé une nouvelle migration.
@@ -36,113 +29,37 @@ de même, dans /dashboard/campaigns/{campaign_id} et /dashboard/campaigns/new on
 21/10/2025
 
 ## Tâches effectuées
-- Enregistrement des scores fonctionnel
-- Affichage des recruteurs liés à la campagne
-- **Fix bug**: `getCampaignAccess` utilisait `campaigns_id` au lieu de `campaignId` (ligne 595 campaign.service.ts)
-- **Fix bug**: `getCampaignAccessesByUser` utilisait `users_id` au lieu de `userId` (ligne 762 campaign.service.ts)
 
-## Améliorations Application Card (/dashboard/candidates)
+- Amélioration de l'affichage des cartes de candidatures (`application-card`)
+- Implémentation du bouton copier-dans-le-presse-papier pour l'email
+- Ajout de la modal de prévisualisation du CV
+- Remplacement des dropdowns de filtres par des inputs autocomplete pour campagnes et sources
+- Correction du problème "Campagne inconnue" en chargeant toutes les campagnes au lieu des campagnes suivies uniquement
+- Ajout des migrations V1_022 et V1_023 pour le tracking des interviews (champs `interview_date` et `interview_status`)
+- Création de la section interview cliquable dans les cartes de candidatures
+- Création de la page `/dashboard/interviews/new` pour planifier un entretien
+- Validation du formulaire avec messages d'erreur
 
-### ✅ 1. Filtre "Campagnes partagées uniquement" décoché par défaut
-- Changé de `signal(true)` à `signal(false)` ligne 40 applications.ts
 
-### ✅ 2. Overlays transparents (au lieu de couleurs brutes)
-**Éléments modifiés**:
-- `.score-badge` → `.score-badge.overlay`
-- `.tag` → `.tag.overlay`
-- Style: `background: rgba(couleur, 0.15)` + `backdrop-filter: blur(10px)` + `border: 1.5px solid`
+## DERNIERE REQUETE (problème à résoudre)
+La navigation vers `/dashboard/interviews/new` échoue (retourne `false`) malgré que le guard autorise l'accès. Les logs montrent:
+- Le guard `recruiterRoleGuard` autorise bien l'accès
+- La méthode `canScheduleInterview()` retourne true
+- Mais `router.navigate()` retourne `false`
 
-### ✅ 3. Copie dans le presse-papier
-**Ajouts**:
-- Icône "copier" à côté de l'email (visible au survol)
-- Icône "copier" à côté du téléphone (visible au survol)
-- Méthode `copyToClipboard(text, label, event)` avec `navigator.clipboard`
+Route testée: `/dashboard/interview-new`
+Composant créé: `InterviewFormComponent` dans `pages/dashboard/interview-form/`
 
-### ✅ 4. Badge Quiz Status séparé
-**Header de carte restructuré**:
-```html
-<div class="badges-header">
-  <span class="quiz-status-badge">Quiz terminé/en cours</span>
-  <span class="status-pill">Application status</span>
-</div>
-```
+À investiguer au prochain démarrage:
+- Vérifier les erreurs de compilation dans le terminal
+- Vérifier si le composant se charge (logs avec 🎯 dans la console)
+- Possiblement relancer le serveur de dev complètement
 
-**Styles**:
-- `.quiz-completed` - Vert transparent
-- `.quiz-in_progress` - Orange transparent
-- `.quiz-not_started` - Gris transparent
 
-### ✅ 5. Bouton CV avec aperçu modal
-**Fonctionnalités**:
-- Bouton "CV disponible" dans la carte (si `candidateCvPath` existe)
-- Modal avec iframe pour prévisualiser le PDF
-- Bouton "Télécharger" dans le modal
-- Bouton "Ouvrir dans un nouvel onglet" dans le modal
-- Fermeture en cliquant sur l'overlay ou le bouton X
-- Animations d'ouverture/fermeture
+---
 
-**Signals ajoutés**:
-```typescript
-cvPreviewUrl = signal<SafeResourceUrl | null>(null);
-cvPreviewCandidateName = signal<string>('');
-currentCvPath = signal<string>('');
-```
+22/10/2025
 
-**Méthodes**:
-- `openCVPreview(app, event)` - Ouvre le modal avec sanitisation de l'URL
-- `closeCVPreview()` - Ferme et reset
-- `downloadCurrentCV()` - Télécharge le CV du modal
-- `openCurrentCVInNewTab()` - Ouvre dans nouvel onglet
+## Tâches effectuées
 
-**Import ajouté**: `DomSanitizer` de `@angular/platform-browser`
-
-### 📋 Structure finale de la carte
-
-```
-┌──────────────────────────────────────────┐
-│ Header                                   │
-│  ├─ Avatar + Nom                        │
-│  ├─ Email + 📋 copier                   │
-│  └─ 🏷️ Quiz Badge + 🏷️ Status Badge    │
-├──────────────────────────────────────────┤
-│ Body                                     │
-│  ├─ 📅 Campagne                         │
-│  ├─ 🔗 Source                           │
-│  ├─ 📱 Téléphone + 📋 copier            │
-│  ├─ 📄 CV disponible (bouton cliquable) │
-│  ├─ 📊 Scores (overlay transparent)     │
-│  └─ 🏷️ Tags (overlay transparent)       │
-├──────────────────────────────────────────┤
-│ Footer                                   │
-│  ├─ #ID                                 │
-│  └─ Voir les détails →                  │
-└──────────────────────────────────────────┘
-```
-
-### 🎨 Design System - Overlays
-
-**Palette transparente**:
-| Couleur | RGBA | Usage |
-|---------|------|-------|
-| Vert | `rgba(16, 185, 129, 0.15)` | Excellent, Terminé, Vérifié |
-| Bleu | `rgba(59, 130, 246, 0.15)` | Bon score |
-| Orange | `rgba(245, 158, 11, 0.15)` | Moyen, En cours |
-| Rouge | `rgba(239, 68, 68, 0.15)` | Faible |
-| Gris | `rgba(107, 114, 128, 0.15)` | Neutre, Non commencé |
-
-**Propriétés communes**:
-```scss
-background: rgba(couleur, 0.15);
-backdrop-filter: blur(10px);
-border: 1.5px solid rgba(couleur, 0.3);
-```
-
-### 📱 Responsive
-- Mobile (< 480px): Icônes copier toujours visibles
-- Badges header en colonne sur petit écran
-- Modal CV en plein écran réduit
-
-### 🔐 Sécurité
-- URL CV sanitizée avec `DomSanitizer.bypassSecurityTrustResourceUrl()`
-- Clipboard API nécessite HTTPS en production
-
+-

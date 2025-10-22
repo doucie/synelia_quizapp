@@ -54,10 +54,10 @@ export class InterviewFormComponent implements OnInit {
   };
 
   // Options
-  interviewTypes: Array<{ value: 'PHONE' | 'VIDEO' | 'IN_PERSON', label: string, icon: string }> = [
-    { value: 'PHONE', label: 'Téléphone', icon: '📞' },
-    { value: 'VIDEO', label: 'Visioconférence', icon: '🎥' },
-    { value: 'IN_PERSON', label: 'Présentiel', icon: '🏢' }
+  interviewTypes: Array<{ value: 'PHONE' | 'VIDEO' | 'IN_PERSON', label: string }> = [
+    { value: 'PHONE', label: 'Téléphone' },
+    { value: 'VIDEO', label: 'Visioconférence' },
+    { value: 'IN_PERSON', label: 'Présentiel' }
   ];
 
   constructor(
