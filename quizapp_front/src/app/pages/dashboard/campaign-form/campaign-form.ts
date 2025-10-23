@@ -14,6 +14,9 @@ interface RecruiterAccess {
   canEvaluate: boolean;
   canUpdate: boolean;
   canDelete: boolean;
+  canPlanify: boolean;
+  canAcceptPreScreen: boolean;
+  canAcceptFinal: boolean;
 }
 
 @Component({
@@ -282,7 +285,10 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
       user,
       canEvaluate: true,  // Coché par défaut
       canUpdate: false,   // Décoché par défaut
-      canDelete: false    // Décoché par défaut
+      canDelete: false,   // Décoché par défaut
+      canPlanify: false,  // Décoché par défaut
+      canAcceptPreScreen: false, // Décoché par défaut
+      canAcceptFinal: false      // Décoché par défaut
     };
     
     this.selectedRecruiters.update(recruiters => [...recruiters, recruiterAccess]);
@@ -299,7 +305,7 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
     );
   }
 
-  toggleRecruiterAccess(index: number, field: 'canEvaluate' | 'canUpdate' | 'canDelete'): void {
+  toggleRecruiterAccess(index: number, field: 'canEvaluate' | 'canUpdate' | 'canDelete' | 'canPlanify' | 'canAcceptPreScreen' | 'canAcceptFinal'): void {
     this.selectedRecruiters.update(recruiters => {
       const updated = [...recruiters];
       updated[index] = {
@@ -446,6 +452,9 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
       canEvaluate: true,
       canUpdate: true,
       canDelete: true,
+      canPlanify: true,
+      canAcceptPreScreen: true,
+      canAcceptFinal: true,
       isAdmin: true,
       follow: true, // Le créateur suit automatiquement sa campagne
       createdBy: currentUserId,
@@ -463,6 +472,9 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
         canEvaluate: recruiter.canEvaluate,
         canUpdate: recruiter.canUpdate,
         canDelete: recruiter.canDelete,
+        canPlanify: recruiter.canPlanify,
+        canAcceptPreScreen: recruiter.canAcceptPreScreen,
+        canAcceptFinal: recruiter.canAcceptFinal,
         isAdmin: false,
         follow: true,
         createdBy: currentUserId,

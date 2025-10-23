@@ -1540,6 +1540,223 @@
   border-bottom: 1.5px solid var(--border);
 }
 
+/* Progression visuelle du statut */
+.application-progress {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-shrink: 0;
+}
+
+.progress-step {
+  display: flex;
+  align-items: center;
+  position: relative;
+
+  .step-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 2;
+    transition: all 0.3s ease;
+    cursor: pointer;
+
+    svg {
+      opacity: 0;
+      transform: scale(0);
+      transition: all 0.3s ease;
+    }
+  }
+
+  .step-line {
+    width: 40px;
+    height: 2px;
+    background: var(--border);
+    z-index: 1;
+    transition: all 0.3s ease;
+  }
+
+  .step-tooltip {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 12px;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    z-index: 10;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+    // Flèche du tooltip (pointant vers le haut)
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+    }
+  }
+
+  // Afficher le tooltip au survol
+  &:hover .step-tooltip {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  // Dernier step n'a pas de ligne
+  &:last-child .step-line {
+    display: none;
+  }
+
+  // État: En attente (pending)
+  &.pending {
+    .step-circle {
+      border-color: var(--border);
+      background: var(--surface);
+    }
+
+    .step-tooltip {
+      background: var(--surface);
+      color: var(--text-secondary);
+      border: 1.5px solid var(--border);
+
+      &::after {
+        border-bottom: 5px solid var(--border);
+      }
+    }
+  }
+
+  // État: Actif (active) - En cours
+  &.active {
+    .step-circle {
+      border-color: var(--warning);
+      background: rgba(245, 158, 11, 0.1);
+      animation: pulse 2s ease-in-out infinite;
+
+      svg {
+        opacity: 0;
+      }
+    }
+
+    .step-tooltip {
+      background: rgba(245, 158, 11, 0.15);
+      color: #92400E;
+      border: 1.5px solid rgba(245, 158, 11, 0.4);
+
+      &::after {
+        border-bottom: 5px solid rgba(245, 158, 11, 0.4);
+      }
+    }
+  }
+
+  // État: Complété (completed)
+  &.completed {
+    .step-circle {
+      border-color: var(--success);
+      background: var(--success);
+
+      svg {
+        opacity: 1;
+        transform: scale(1);
+        stroke: white;
+      }
+    }
+
+    .step-line {
+      background: var(--success);
+    }
+
+    .step-tooltip {
+      background: rgba(16, 185, 129, 0.15);
+      color: #065F46;
+      border: 1.5px solid rgba(16, 185, 129, 0.4);
+
+      &::after {
+        border-bottom: 5px solid rgba(16, 185, 129, 0.4);
+      }
+    }
+  }
+
+  // État: Rejeté (rejected)
+  &.rejected {
+    .step-circle {
+      border-color: var(--error);
+      background: var(--error);
+
+      svg {
+        opacity: 1;
+        transform: scale(1);
+        stroke: white;
+      }
+    }
+
+    .step-line {
+      background: var(--error);
+    }
+
+    .step-tooltip {
+      background: rgba(239, 68, 68, 0.15);
+      color: #991B1B;
+      border: 1.5px solid rgba(239, 68, 68, 0.4);
+
+      &::after {
+        border-bottom: 5px solid rgba(239, 68, 68, 0.4);
+      }
+    }
+  }
+
+  // État: Archivé (archived)
+  &.archived {
+    .step-circle {
+      border-color: var(--disabled);
+      background: var(--disabled);
+      opacity: 0.5;
+    }
+
+    .step-line {
+      background: var(--disabled);
+      opacity: 0.5;
+    }
+
+    .step-tooltip {
+      background: rgba(107, 114, 128, 0.15);
+      color: #374151;
+      border: 1.5px solid rgba(107, 114, 128, 0.3);
+      opacity: 0.8;
+
+      &::after {
+        border-bottom: 5px solid rgba(107, 114, 128, 0.3);
+      }
+    }
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(245, 158, 11, 0);
+  }
+}
+
 .candidate-identity {
   display: flex;
   align-items: center;
@@ -1750,8 +1967,9 @@
   gap: 0.375rem;
   padding: 0.5rem 0.875rem;
   border-radius: 10px;
-  font-size: 0.8125rem;
-  font-weight: 600;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
   backdrop-filter: blur(10px);
   border: 1.5px solid;
   transition: transform 0.2s ease;

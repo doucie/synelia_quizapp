@@ -511,6 +511,89 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Obtient le statut d'une étape de progression
+   * @param applicationStatus Le statut de la candidature
+   * @param step Numéro de l'étape (1: Candidature, 2: Pré-sélection, 3: Final)
+   * @returns 'pending' | 'active' | 'completed' | 'rejected' | 'archived'
+   */
+  getStepStatus(applicationStatus: string = 'PENDING', step: number): string {
+    const status = applicationStatus.toUpperCase();
+    
+    // Étape 1: Candidature (PENDING → SUBMITTED)
+    if (step === 1) {
+      if (status === 'PENDING') return 'active';
+      if (status === 'PENDING_ARCHIVED') return 'archived';
+      // Si on est au-delà de PENDING, c'est completed
+      return 'completed';
+    }
+    
+    // Étape 2: Pré-sélection (PRE_SCREEN)
+    if (step === 2) {
+      if (status === 'PENDING' || status === 'PENDING_ARCHIVED') return 'pending';
+      if (status === 'SUBMITTED') return 'active';
+      if (status.startsWith('PRE_SCREEN_REJECTED')) return 'rejected';
+      if (status === 'PRE_SCREEN_ACCEPTED' || status === 'INTERVIEWING' || status.startsWith('FINAL_')) return 'completed';
+      return 'pending';
+    }
+    
+    // Étape 3: Final (FINAL_ACCEPTED / FINAL_REJECTED)
+    if (step === 3) {
+      if (!status.startsWith('FINAL_')) return 'pending';
+      if (status.startsWith('FINAL_ACCEPTED')) return 'completed';
+      if (status.startsWith('FINAL_REJECTED')) return 'rejected';
+      return 'pending';
+    }
+    
+    return 'pending';
+  }
+
+  /**
+   * Obtient le texte du tooltip pour une étape de progression
+   * @param applicationStatus Le statut de la candidature
+   * @param step Numéro de l'étape (1: Candidature, 2: Pré-sélection, 3: Final)
+   * @returns Le texte descriptif du tooltip
+   */
+  getStepTooltip(applicationStatus: string = 'PENDING', step: number): string {
+    const status = applicationStatus.toUpperCase();
+    
+    // Étape 1: Candidature
+    if (step === 1) {
+      if (status === 'PENDING') return 'Candidature en attente d\'envoi';
+      if (status === 'PENDING_ARCHIVED') return 'Candidature archivée (non envoyée)';
+      return 'Candidature envoyée';
+    }
+    
+    // Étape 2: Pré-sélection
+    if (step === 2) {
+      if (status === 'PENDING' || status === 'PENDING_ARCHIVED') 
+        return 'Pré-sélection : en attente d\'envoi de candidature';
+      if (status === 'SUBMITTED') return 'Pré-sélection en cours';
+      if (status === 'PRE_SCREEN_ACCEPTED') return 'Pré-sélection acceptée';
+      if (status === 'INTERVIEWING') return 'Pré-sélection acceptée - En entretien';
+      if (status === 'PRE_SCREEN_REJECTED') return 'Pré-sélection refusée';
+      if (status === 'PRE_SCREEN_REJECTED_ARCHIVED') return 'Pré-sélection refusée (archivé)';
+      if (status.startsWith('FINAL_ACCEPTED')) return 'Pré-sélection acceptée';
+      return 'Pré-sélection en attente';
+    }
+    
+    // Étape 3: Final
+    if (step === 3) {
+      if (status === 'PENDING' || status === 'PENDING_ARCHIVED' || status === 'SUBMITTED' || 
+          status.startsWith('PRE_SCREEN_REJECTED')) 
+        return 'Décision finale : en attente de pré-sélection';
+      if (status === 'PRE_SCREEN_ACCEPTED') return 'Décision finale en attente';
+      if (status === 'INTERVIEWING') return 'Décision finale : entretien en cours';
+      if (status === 'FINAL_ACCEPTED') return 'Candidature acceptée ✓';
+      if (status === 'FINAL_ACCEPTED_ARCHIVED') return 'Candidature acceptée (archivé)';
+      if (status === 'FINAL_REJECTED') return 'Candidature refusée';
+      if (status === 'FINAL_REJECTED_ARCHIVED') return 'Candidature refusée (archivé)';
+      return 'Décision finale en attente';
+    }
+    
+    return '';
+  }
+
+  /**
    * Obtient le nom complet du candidat
    */
   getCandidateName(app: Application): string {
@@ -581,13 +664,14 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
 
   /**
    * Vérifie si on peut planifier un entretien pour cette candidature
-   * Conditions: application_status = PENDING && quiz_status = COMPLETED && pas d'interview
+   * Conditions: application_status = PRE_SCREEN_ACCEPTED && pas d'interview
    */
   canScheduleInterview(app: ApplicationWithCampaign): boolean {
-    const quizCompleted = app.quizStatus?.toLowerCase() === 'completed';
-    return app.applicationStatus === 'PENDING' && 
-           quizCompleted && 
-           !app.interviewDate;
+    // Peut planifier un entretien si :
+    // - La candidature est soumise (SUBMITTED) ou pré-sélection acceptée (PRE_SCREEN_ACCEPTED)
+    // - Pas d'entretien déjà planifié
+    const validStatuses = ['SUBMITTED', 'PRE_SCREEN_ACCEPTED'];
+    return validStatuses.includes(app.applicationStatus || '') && !app.interviewDate;
   }
 
   /**

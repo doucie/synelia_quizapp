@@ -32,9 +32,10 @@ public class InterviewCrudDto extends _InterviewCrudDto implements Cloneable{
 
     private Integer    id                   ; // Primary Key
 
-    private Boolean    canCreate            ;
     private Boolean    canUpdate            ;
     private Boolean    canDelete            ;
+    private Boolean    canEvaluate          ;
+    private Boolean    isAdmin              ;
     private Boolean    follow               ;
 	private String     createdAt            ;
     private Integer    createdBy            ;
@@ -53,9 +54,10 @@ public class InterviewCrudDto extends _InterviewCrudDto implements Cloneable{
 
 	// Search param
 	private SearchParam<Integer>  idParam               ;                     
-	private SearchParam<Boolean>  canCreateParam        ;                     
 	private SearchParam<Boolean>  canUpdateParam        ;                     
 	private SearchParam<Boolean>  canDeleteParam        ;                     
+	private SearchParam<Boolean>  canEvaluateParam      ;                     
+	private SearchParam<Boolean>  isAdminParam          ;                     
 	private SearchParam<Boolean>  followParam           ;                     
 	private SearchParam<String>   createdAtParam        ;                     
 	private SearchParam<Integer>  createdByParam        ;                     

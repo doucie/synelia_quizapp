@@ -86,11 +86,6 @@ public class InterviewCrudBusiness implements IBasicBusiness<Request<InterviewCr
 		for (InterviewCrudDto dto : request.getDatas()) {
 			// Definir les parametres obligatoires
 			Map<String, java.lang.Object> fieldsToVerify = new HashMap<String, java.lang.Object>();
-			fieldsToVerify.put("canCreate", dto.getCanCreate());
-			fieldsToVerify.put("canUpdate", dto.getCanUpdate());
-			fieldsToVerify.put("canDelete", dto.getCanDelete());
-			fieldsToVerify.put("follow", dto.getFollow());
-			fieldsToVerify.put("searchString", dto.getSearchString());
 			fieldsToVerify.put("interviewId", dto.getInterviewId());
 			fieldsToVerify.put("userId", dto.getUserId());
 			if (!Validate.RequiredValue(fieldsToVerify).isGood()) {
@@ -211,14 +206,17 @@ public class InterviewCrudBusiness implements IBasicBusiness<Request<InterviewCr
 				}
 				entityToSave.setInterviews(existingInterviews);
 			}
-			if (dto.getCanCreate() != null) {
-				entityToSave.setCanCreate(dto.getCanCreate());
-			}
 			if (dto.getCanUpdate() != null) {
 				entityToSave.setCanUpdate(dto.getCanUpdate());
 			}
 			if (dto.getCanDelete() != null) {
 				entityToSave.setCanDelete(dto.getCanDelete());
+			}
+			if (dto.getCanEvaluate() != null) {
+				entityToSave.setCanEvaluate(dto.getCanEvaluate());
+			}
+			if (dto.getIsAdmin() != null) {
+				entityToSave.setIsAdmin(dto.getIsAdmin());
 			}
 			if (dto.getFollow() != null) {
 				entityToSave.setFollow(dto.getFollow());

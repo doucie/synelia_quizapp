@@ -294,9 +294,46 @@
                 <h3 class="candidate-name-large">{{ getCandidateName(app) }}</h3>
                 <span class="application-id-inline">#{{ app.id }}</span>
               </div>
-              <span class="status-badge-new" [ngClass]="getStatusClass(app.applicationStatus)">
-                {{ getStatusLabel(app.applicationStatus) }}
-              </span>
+              
+              <!-- Progression visuelle du statut -->
+              <div class="application-progress">
+                <div class="progress-step" [ngClass]="getStepStatus(app.applicationStatus, 1)">
+                  <div class="step-circle">
+                    <svg *ngIf="getStepStatus(app.applicationStatus, 1) === 'completed' || getStepStatus(app.applicationStatus, 1) === 'active'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                      <polyline points="20 6 9 17 4 12" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                  <div class="step-line"></div>
+                  <div class="step-tooltip">{{ getStepTooltip(app.applicationStatus, 1) }}</div>
+                </div>
+                
+                <div class="progress-step" [ngClass]="getStepStatus(app.applicationStatus, 2)">
+                  <div class="step-circle">
+                    <svg *ngIf="getStepStatus(app.applicationStatus, 2) === 'completed' || getStepStatus(app.applicationStatus, 2) === 'active'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                      <polyline points="20 6 9 17 4 12" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <svg *ngIf="getStepStatus(app.applicationStatus, 2) === 'rejected'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                      <line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round" stroke-linejoin="round"/>
+                      <line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                  <div class="step-line"></div>
+                  <div class="step-tooltip">{{ getStepTooltip(app.applicationStatus, 2) }}</div>
+                </div>
+                
+                <div class="progress-step" [ngClass]="getStepStatus(app.applicationStatus, 3)">
+                  <div class="step-circle">
+                    <svg *ngIf="getStepStatus(app.applicationStatus, 3) === 'completed'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                      <polyline points="20 6 9 17 4 12" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <svg *ngIf="getStepStatus(app.applicationStatus, 3) === 'rejected'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                      <line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round" stroke-linejoin="round"/>
+                      <line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                  <div class="step-tooltip">{{ getStepTooltip(app.applicationStatus, 3) }}</div>
+                </div>
+              </div>
             </div>
 
             <!-- Section Campagne & Source -->

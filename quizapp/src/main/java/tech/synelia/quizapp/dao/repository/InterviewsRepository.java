@@ -51,23 +51,23 @@ public interface InterviewsRepository extends JpaRepository<Interviews, Integer>
 	@Query("select e from Interviews e where e.interviewLocation = :interviewLocation and e.isDeleted = :isDeleted")
 	List<Interviews> findByInterviewLocation(@Param("interviewLocation")String interviewLocation, @Param("isDeleted")Boolean isDeleted);
 	/**
-	 * Finds Interviews by using interviewStart as a search criteria.
+	 * Finds Interviews by using interviewDate as a search criteria.
 	 * 
-	 * @param interviewStart
-	 * @return An Object Interviews whose interviewStart is equals to the given interviewStart. If
+	 * @param interviewDate
+	 * @return An Object Interviews whose interviewDate is equals to the given interviewDate. If
 	 *         no Interviews is found, this method returns null.
 	 */
-	@Query("select e from Interviews e where e.interviewStart = :interviewStart and e.isDeleted = :isDeleted")
-	List<Interviews> findByInterviewStart(@Param("interviewStart")Date interviewStart, @Param("isDeleted")Boolean isDeleted);
+	@Query("select e from Interviews e where e.interviewDate = :interviewDate and e.isDeleted = :isDeleted")
+	List<Interviews> findByInterviewDate(@Param("interviewDate")Date interviewDate, @Param("isDeleted")Boolean isDeleted);
 	/**
-	 * Finds Interviews by using interviewEnd as a search criteria.
+	 * Finds Interviews by using interviewStatus as a search criteria.
 	 * 
-	 * @param interviewEnd
-	 * @return An Object Interviews whose interviewEnd is equals to the given interviewEnd. If
+	 * @param interviewStatus
+	 * @return An Object Interviews whose interviewStatus is equals to the given interviewStatus. If
 	 *         no Interviews is found, this method returns null.
 	 */
-	@Query("select e from Interviews e where e.interviewEnd = :interviewEnd and e.isDeleted = :isDeleted")
-	List<Interviews> findByInterviewEnd(@Param("interviewEnd")Date interviewEnd, @Param("isDeleted")Boolean isDeleted);
+	@Query("select e from Interviews e where e.interviewStatus = :interviewStatus and e.isDeleted = :isDeleted")
+	List<Interviews> findByInterviewStatus(@Param("interviewStatus")String interviewStatus, @Param("isDeleted")Boolean isDeleted);
 	/**
 	 * Finds Interviews by using interviewType as a search criteria.
 	 * 
@@ -248,11 +248,20 @@ public interface InterviewsRepository extends JpaRepository<Interviews, Integer>
 			if (Utilities.notBlank(dto.getInterviewLocation())) {
 				listOfQuery.add(CriteriaUtils.generateCriteria("interviewLocation", dto.getInterviewLocation(), "e.interviewLocation", "String", dto.getInterviewLocationParam(), param, index, locale));
 			}
-			if (Utilities.notBlank(dto.getInterviewStart())) {
-				listOfQuery.add(CriteriaUtils.generateCriteria("interviewStart", dto.getInterviewStart(), "e.interviewStart", "Date", dto.getInterviewStartParam(), param, index, locale));
+			if (Utilities.notBlank(dto.getInterviewDate())) {
+				listOfQuery.add(CriteriaUtils.generateCriteria("interviewDate", dto.getInterviewDate(), "e.interviewDate", "Date", dto.getInterviewDateParam(), param, index, locale));
 			}
-			if (Utilities.notBlank(dto.getInterviewEnd())) {
-				listOfQuery.add(CriteriaUtils.generateCriteria("interviewEnd", dto.getInterviewEnd(), "e.interviewEnd", "Date", dto.getInterviewEndParam(), param, index, locale));
+			if (Utilities.notBlank(dto.getInterviewStatus())) {
+				listOfQuery.add(CriteriaUtils.generateCriteria("interviewStatus", dto.getInterviewStatus(), "e.interviewStatus", "String", dto.getInterviewStatusParam(), param, index, locale));
+			}
+			if (Utilities.notBlank(dto.getMeetLink())) {
+				listOfQuery.add(CriteriaUtils.generateCriteria("meetLink", dto.getMeetLink(), "e.meetLink", "String", dto.getMeetLinkParam(), param, index, locale));
+			}
+			if (Utilities.notBlank(dto.getInterviewNote())) {
+				listOfQuery.add(CriteriaUtils.generateCriteria("interviewNote", dto.getInterviewNote(), "e.interviewNote", "String", dto.getInterviewNoteParam(), param, index, locale));
+			}
+			if (dto.getInterviewMailSent()!= null) {
+				listOfQuery.add(CriteriaUtils.generateCriteria("interviewMailSent", dto.getInterviewMailSent(), "e.interviewMailSent", "Boolean", dto.getInterviewMailSentParam(), param, index, locale));
 			}
 			if (Utilities.notBlank(dto.getInterviewType())) {
 				listOfQuery.add(CriteriaUtils.generateCriteria("interviewType", dto.getInterviewType(), "e.interviewType", "String", dto.getInterviewTypeParam(), param, index, locale));

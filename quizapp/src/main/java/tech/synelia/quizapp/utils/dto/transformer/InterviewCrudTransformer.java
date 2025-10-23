@@ -75,7 +75,6 @@ public interface InterviewCrudTransformer {
 
 	@Mappings({
 		@Mapping(source="dto.id", target="id"),
-		@Mapping(source="dto.canCreate", target="canCreate"),
 		@Mapping(source="dto.canUpdate", target="canUpdate"),
 		@Mapping(source="dto.canDelete", target="canDelete"),
 		@Mapping(source="dto.follow", target="follow"),

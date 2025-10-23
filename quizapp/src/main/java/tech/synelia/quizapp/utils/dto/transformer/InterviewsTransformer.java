@@ -39,8 +39,11 @@ public interface InterviewsTransformer {
 	@FullTransformerQualifier
 	@Named("toFullDto")
 	@Mappings({
-		@Mapping(source="entity.interviewStart", dateFormat="dd/MM/yyyy", target="interviewStart"),
-		@Mapping(source="entity.interviewEnd", dateFormat="dd/MM/yyyy", target="interviewEnd"),
+		@Mapping(source="entity.interviewDate", dateFormat="dd/MM/yyyy HH:mm", target="interviewDate"),
+		@Mapping(source="entity.interviewStatus", target="interviewStatus"),
+		@Mapping(source="entity.meetLink", target="meetLink"),
+		@Mapping(source="entity.interviewNote", target="interviewNote"),
+		@Mapping(source="entity.interviewMailSent", target="interviewMailSent"),
 		@Mapping(source="entity.createdAt", dateFormat="dd/MM/yyyy", target="createdAt"),
 		@Mapping(source="entity.updatedAt", dateFormat="dd/MM/yyyy", target="updatedAt"),
 		@Mapping(source="entity.campaigns.id", target="campaignId"),
@@ -75,8 +78,11 @@ public interface InterviewsTransformer {
 	@Mappings({
 		@Mapping(source="dto.id", target="id"),
 		@Mapping(source="dto.interviewLocation", target="interviewLocation"),
-		@Mapping(source="dto.interviewStart", dateFormat="dd/MM/yyyy",target="interviewStart"),
-		@Mapping(source="dto.interviewEnd", dateFormat="dd/MM/yyyy",target="interviewEnd"),
+		@Mapping(source="dto.interviewDate", dateFormat="dd/MM/yyyy HH:mm",target="interviewDate"),
+		@Mapping(source="dto.interviewStatus", target="interviewStatus"),
+		@Mapping(source="dto.meetLink", target="meetLink"),
+		@Mapping(source="dto.interviewNote", target="interviewNote"),
+		@Mapping(source="dto.interviewMailSent", target="interviewMailSent"),
 		@Mapping(source="dto.interviewType", target="interviewType"),
 		@Mapping(source="dto.markedOutOf", target="markedOutOf"),
 		@Mapping(source="dto.createdAt", dateFormat="dd/MM/yyyy",target="createdAt"),

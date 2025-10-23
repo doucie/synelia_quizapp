@@ -37,6 +37,9 @@ public class CampaignCrudDto extends _CampaignCrudDto implements Cloneable{
     private Boolean    canEvaluate          ;
     private Boolean    follow               ;
     private Boolean    isAdmin              ;
+    private Boolean    canPlanify           ;
+    private Boolean    canAcceptPreScreen   ;
+    private Boolean    canAcceptFinal       ;
 	private String     createdAt            ;
     private Integer    createdBy            ;
 	private String     updatedAt            ;
@@ -59,6 +62,9 @@ public class CampaignCrudDto extends _CampaignCrudDto implements Cloneable{
 	private SearchParam<Boolean>  canEvaluateParam      ;                     
 	private SearchParam<Boolean>  followParam           ;                     
 	private SearchParam<Boolean>  isAdminParam          ;                     
+	private SearchParam<Boolean>  canPlanifyParam       ;                     
+	private SearchParam<Boolean>  canAcceptPreScreenParam ;                     
+	private SearchParam<Boolean>  canAcceptFinalParam   ;                     
 	private SearchParam<String>   createdAtParam        ;                     
 	private SearchParam<Integer>  createdByParam        ;                     
 	private SearchParam<String>   updatedAtParam        ;                     

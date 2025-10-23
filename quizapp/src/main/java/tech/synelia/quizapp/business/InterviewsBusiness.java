@@ -87,12 +87,8 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 		for (InterviewsDto dto : request.getDatas()) {
 			// Definir les parametres obligatoires
 			Map<String, java.lang.Object> fieldsToVerify = new HashMap<String, java.lang.Object>();
-			fieldsToVerify.put("interviewLocation", dto.getInterviewLocation());
-			fieldsToVerify.put("interviewStart", dto.getInterviewStart());
-			fieldsToVerify.put("interviewEnd", dto.getInterviewEnd());
+			fieldsToVerify.put("interviewDate", dto.getInterviewDate());
 			fieldsToVerify.put("interviewType", dto.getInterviewType());
-			fieldsToVerify.put("markedOutOf", dto.getMarkedOutOf());
-			fieldsToVerify.put("searchString", dto.getSearchString());
 			fieldsToVerify.put("campaignId", dto.getCampaignId());
 			if (!Validate.RequiredValue(fieldsToVerify).isGood()) {
 				throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
@@ -199,11 +195,20 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 			if (Utilities.notBlank(dto.getInterviewLocation())) {
 				entityToSave.setInterviewLocation(dto.getInterviewLocation());
 			}
-			if (Utilities.notBlank(dto.getInterviewStart())) {
-				entityToSave.setInterviewStart(dateFormat.parse(dto.getInterviewStart()));
+			if (Utilities.notBlank(dto.getInterviewDate())) {
+				entityToSave.setInterviewDate(dateFormat.parse(dto.getInterviewDate()));
 			}
-			if (Utilities.notBlank(dto.getInterviewEnd())) {
-				entityToSave.setInterviewEnd(dateFormat.parse(dto.getInterviewEnd()));
+			if (Utilities.notBlank(dto.getInterviewStatus())) {
+				entityToSave.setInterviewStatus(dto.getInterviewStatus());
+			}
+			if (Utilities.notBlank(dto.getMeetLink())) {
+				entityToSave.setMeetLink(dto.getMeetLink());
+			}
+			if (Utilities.notBlank(dto.getInterviewNote())) {
+				entityToSave.setInterviewNote(dto.getInterviewNote());
+			}
+			if (dto.getInterviewMailSent() != null) {
+				entityToSave.setInterviewMailSent(dto.getInterviewMailSent());
 			}
 			if (Utilities.notBlank(dto.getInterviewType())) {
 				entityToSave.setInterviewType(dto.getInterviewType());

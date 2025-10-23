@@ -130,6 +130,11 @@ export const routes: Routes = [
         path: 'interview-new', 
         loadComponent: () => import('./pages/dashboard/interview-form/interview-form').then(m => m.InterviewFormComponent),
         canActivate: [recruiterRoleGuard]
+      },
+      { 
+        path: 'interview-form-new', 
+        loadComponent: () => import('./pages/dashboard/interview-form/interview-form-new').then(m => m.InterviewFormNewComponent),
+        canActivate: [recruiterRoleGuard]
       }
     ]
   },

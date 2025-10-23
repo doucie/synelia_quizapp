@@ -64,6 +64,15 @@ public class CampaignCrud implements Serializable, Cloneable {
     @Column(name="is_admin")
     private Boolean    isAdmin      ;
 
+    @Column(name="can_planify")
+    private Boolean    canPlanify   ;
+
+    @Column(name="can_accept_pre_screen")
+    private Boolean    canAcceptPreScreen ;
+
+    @Column(name="can_accept_final")
+    private Boolean    canAcceptFinal ;
+
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name="created_at")
     private Date       createdAt    ;

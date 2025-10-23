@@ -7,13 +7,20 @@
 package tech.synelia.quizapp.dao.entity;
 
 import java.io.Serializable;
-import jakarta.persistence.*;
-
-import lombok.*;
-
-
 import java.util.Date;
-import java.util.List;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.Temporal;
+import jakarta.persistence.TemporalType;
+import lombok.Data;
+import lombok.ToString;
 
 
 /**
@@ -46,15 +53,23 @@ public class Interviews implements Serializable, Cloneable {
     private String     interviewLocation ;
 
     @Temporal(TemporalType.TIMESTAMP)
-    @Column(name="interview_start")
-    private Date       interviewStart ;
+    @Column(name="interview_date", nullable=false)
+    private Date       interviewDate ;
 
-    @Temporal(TemporalType.TIMESTAMP)
-    @Column(name="interview_end")
-    private Date       interviewEnd ;
+    @Column(name="interview_status", length=20, nullable=false)
+    private String     interviewStatus ; // PENDING, STARTED, OVER, POSTPONED, ARCHIVED
 
-    @Column(name="interview_type", length=9)
-    private String     interviewType ;
+    @Column(name="meet_link", length=500)
+    private String     meetLink ;
+
+    @Column(name="interview_note", columnDefinition="TEXT")
+    private String     interviewNote ;
+
+    @Column(name="interview_mail_sent", nullable=false)
+    private Boolean    interviewMailSent = false ;
+
+    @Column(name="interview_type", length=20, nullable=false)
+    private String     interviewType ; // IN_PERSON, ONLINE
 
     @Column(name="marked_out_of")
     private Integer    markedOutOf  ;

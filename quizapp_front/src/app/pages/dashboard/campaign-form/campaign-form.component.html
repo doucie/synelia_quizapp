@@ -361,6 +361,36 @@
                     <span class="checkbox-custom"></span>
                     <span>Peut supprimer</span>
                   </label>
+
+                  <label class="permission-label">
+                    <input
+                      type="checkbox"
+                      [checked]="recruiter.canPlanify"
+                      (change)="toggleRecruiterAccess(i, 'canPlanify')"
+                    />
+                    <span class="checkbox-custom"></span>
+                    <span>Peut planifier</span>
+                  </label>
+
+                  <label class="permission-label">
+                    <input
+                      type="checkbox"
+                      [checked]="recruiter.canAcceptPreScreen"
+                      (change)="toggleRecruiterAccess(i, 'canAcceptPreScreen')"
+                    />
+                    <span class="checkbox-custom"></span>
+                    <span>Peut accepter (pré-sélection)</span>
+                  </label>
+
+                  <label class="permission-label">
+                    <input
+                      type="checkbox"
+                      [checked]="recruiter.canAcceptFinal"
+                      (change)="toggleRecruiterAccess(i, 'canAcceptFinal')"
+                    />
+                    <span class="checkbox-custom"></span>
+                    <span>Peut accepter (final)</span>
+                  </label>
                 </div>
               </div>
             }

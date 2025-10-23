@@ -7,12 +7,20 @@
 package tech.synelia.quizapp.dao.entity;
 
 import java.io.Serializable;
-import jakarta.persistence.*;
-
-import lombok.*;
-
-
 import java.util.Date;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.Temporal;
+import jakarta.persistence.TemporalType;
+import lombok.Data;
+import lombok.ToString;
 
 
 /**
@@ -41,14 +49,17 @@ public class InterviewCrud implements Serializable, Cloneable {
     //----------------------------------------------------------------------
     // ENTITY DATA FIELDS 
     //----------------------------------------------------------------------    
-    @Column(name="can_create")
-    private Boolean    canCreate    ;
-
     @Column(name="can_update")
     private Boolean    canUpdate    ;
 
     @Column(name="can_delete")
     private Boolean    canDelete    ;
+
+    @Column(name="can_evaluate")
+    private Boolean    canEvaluate  ;
+
+    @Column(name="is_admin", nullable=false)
+    private Boolean    isAdmin = false ;
 
     @Column(name="follow")
     private Boolean    follow       ;

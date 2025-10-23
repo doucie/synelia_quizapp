@@ -98,6 +98,22 @@ public class Applications implements Serializable, Cloneable {
     @Column(name="total_questions")
     private Integer    totalQuestions ;
 
+    @Column(name="interview_date")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date       interviewDate ;
+
+    @Column(name="interview_status", length=20)
+    private String     interviewStatus ;
+
+    @Column(name="application_abandoned")
+    private Boolean    applicationAbandoned ;
+
+    @Column(name="pre_screen_decision_mail_sent")
+    private Boolean    preScreenDecisionMailSent ;
+
+    @Column(name="final_decision_mail_sent")
+    private Boolean    finalDecisionMailSent ;
+
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name="created_at")
     private Date       createdAt    ;

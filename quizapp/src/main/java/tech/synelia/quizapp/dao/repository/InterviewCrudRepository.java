@@ -41,15 +41,6 @@ public interface InterviewCrudRepository extends JpaRepository<InterviewCrud, In
 	InterviewCrud findOne(@Param("id")Integer id, @Param("isDeleted")Boolean isDeleted);
 
 	/**
-	 * Finds InterviewCrud by using canCreate as a search criteria.
-	 * 
-	 * @param canCreate
-	 * @return An Object InterviewCrud whose canCreate is equals to the given canCreate. If
-	 *         no InterviewCrud is found, this method returns null.
-	 */
-	@Query("select e from InterviewCrud e where e.canCreate = :canCreate and e.isDeleted = :isDeleted")
-	List<InterviewCrud> findByCanCreate(@Param("canCreate")Boolean canCreate, @Param("isDeleted")Boolean isDeleted);
-	/**
 	 * Finds InterviewCrud by using canUpdate as a search criteria.
 	 * 
 	 * @param canUpdate
@@ -245,14 +236,17 @@ public interface InterviewCrudRepository extends JpaRepository<InterviewCrud, In
 			if (dto.getId()!= null && dto.getId() > 0) {
 				listOfQuery.add(CriteriaUtils.generateCriteria("id", dto.getId(), "e.id", "Integer", dto.getIdParam(), param, index, locale));
 			}
-			if (dto.getCanCreate()!= null) {
-				listOfQuery.add(CriteriaUtils.generateCriteria("canCreate", dto.getCanCreate(), "e.canCreate", "Boolean", dto.getCanCreateParam(), param, index, locale));
-			}
 			if (dto.getCanUpdate()!= null) {
 				listOfQuery.add(CriteriaUtils.generateCriteria("canUpdate", dto.getCanUpdate(), "e.canUpdate", "Boolean", dto.getCanUpdateParam(), param, index, locale));
 			}
 			if (dto.getCanDelete()!= null) {
 				listOfQuery.add(CriteriaUtils.generateCriteria("canDelete", dto.getCanDelete(), "e.canDelete", "Boolean", dto.getCanDeleteParam(), param, index, locale));
+			}
+			if (dto.getCanEvaluate()!= null) {
+				listOfQuery.add(CriteriaUtils.generateCriteria("canEvaluate", dto.getCanEvaluate(), "e.canEvaluate", "Boolean", dto.getCanEvaluateParam(), param, index, locale));
+			}
+			if (dto.getIsAdmin()!= null) {
+				listOfQuery.add(CriteriaUtils.generateCriteria("isAdmin", dto.getIsAdmin(), "e.isAdmin", "Boolean", dto.getIsAdminParam(), param, index, locale));
 			}
 			if (dto.getFollow()!= null) {
 				listOfQuery.add(CriteriaUtils.generateCriteria("follow", dto.getFollow(), "e.follow", "Boolean", dto.getFollowParam(), param, index, locale));

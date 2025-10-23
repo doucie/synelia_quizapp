@@ -34,8 +34,11 @@ public class InterviewsDto extends _InterviewsDto implements Cloneable{
     private Integer    id                   ; // Primary Key
 
     private String     interviewLocation    ;
-	private String     interviewStart       ;
-	private String     interviewEnd         ;
+	private String     interviewDate        ;
+	private String     interviewStatus      ;
+	private String     meetLink             ;
+	private String     interviewNote        ;
+	private Boolean    interviewMailSent    ;
     private String     interviewType        ;
     private Integer    markedOutOf          ;
 	private String     createdAt            ;
@@ -53,8 +56,11 @@ public class InterviewsDto extends _InterviewsDto implements Cloneable{
 	// Search param
 	private SearchParam<Integer>  idParam               ;                     
 	private SearchParam<String>   interviewLocationParam;                     
-	private SearchParam<String>   interviewStartParam   ;                     
-	private SearchParam<String>   interviewEndParam     ;                     
+	private SearchParam<String>   interviewDateParam    ;                     
+	private SearchParam<String>   interviewStatusParam  ;                     
+	private SearchParam<String>   meetLinkParam         ;                     
+	private SearchParam<String>   interviewNoteParam    ;                     
+	private SearchParam<Boolean>  interviewMailSentParam;                     
 	private SearchParam<String>   interviewTypeParam    ;                     
 	private SearchParam<Integer>  markedOutOfParam      ;                     
 	private SearchParam<String>   createdAtParam        ;                     
