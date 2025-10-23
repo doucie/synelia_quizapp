@@ -129,14 +129,29 @@ export class InterviewFormNewComponent implements OnInit {
   }
 
   /**
-   * Charger les campagnes
+   * Charger les campagnes disponibles pour filtrage
    */
   loadCampaigns(): void {
-    this.http.get<any>(`${environment.apiUrl}/campaigns`).subscribe({
+    const userStr = localStorage.getItem('user');
+    const userId = userStr ? JSON.parse(userStr).id : null;
+    
+    const request = {
+      user: userId,
+      data: {},
+      index: 0,
+      size: 1000
+    };
+
+    console.log('🔵 Calling POST /campaigns/getByCriteria with:', request);
+    this.http.post<any>(`${environment.apiUrl}/campaigns/getByCriteria`, request).subscribe({
       next: (response) => {
-        this.campaigns.set(response.items || response || []);
+        console.log('✅ Campaigns loaded:', response);
+        this.campaigns.set(response.items || []);
       },
-      error: (err) => console.error('Erreur chargement campagnes:', err)
+      error: (err) => {
+        console.error('❌ Erreur chargement campagnes:', err);
+        console.error('Error details:', err.status, err.error);
+      }
     });
   }
 
@@ -144,11 +159,26 @@ export class InterviewFormNewComponent implements OnInit {
    * Charger les sources
    */
   loadSources(): void {
-    this.http.get<any>(`${environment.apiUrl}/source-tokens`).subscribe({
+    const userStr = localStorage.getItem('user');
+    const userId = userStr ? JSON.parse(userStr).id : null;
+    
+    const request = {
+      user: userId,
+      data: {},
+      index: 0,
+      size: 1000
+    };
+
+    console.log('🔵 Calling POST /sourceToken/getByCriteria with:', request);
+    this.http.post<any>(`${environment.apiUrl}/sourceToken/getByCriteria`, request).subscribe({
       next: (response) => {
-        this.sources.set(response.items || response || []);
+        console.log('✅ Sources loaded:', response);
+        this.sources.set(response.items || []);
       },
-      error: (err) => console.error('Erreur chargement sources:', err)
+      error: (err) => {
+        console.error('❌ Erreur chargement sources:', err);
+        console.error('Error details:', err.status, err.error);
+      }
     });
   }
 
@@ -158,25 +188,38 @@ export class InterviewFormNewComponent implements OnInit {
   loadCandidates(): void {
     this.loadingCandidates.set(true);
     
-    let url = `${environment.apiUrl}/applications?applicationStatus=SUBMITTED`;
+    const userStr = localStorage.getItem('user');
+    const userId = userStr ? JSON.parse(userStr).id : null;
+    
+    const request: any = {
+      user: userId,
+      data: {
+        applicationStatus: 'SUBMITTED'
+      },
+      index: 0,
+      size: 1000
+    };
     
     if (this.filters.campaignId) {
-      url += `&campaignId=${this.filters.campaignId}`;
+      request.data.campaignId = this.filters.campaignId;
     }
     if (this.filters.sourceTokenId) {
-      url += `&sourceTokenId=${this.filters.sourceTokenId}`;
+      request.data.sourceTokenId = this.filters.sourceTokenId;
     }
     if (this.filters.searchTerm) {
-      url += `&search=${encodeURIComponent(this.filters.searchTerm)}`;
+      request.data.searchTerm = this.filters.searchTerm;
     }
 
-    this.http.get<any>(url).subscribe({
+    console.log('🔵 Calling POST /applications/getByCriteria with:', request);
+    this.http.post<any>(`${environment.apiUrl}/applications/getByCriteria`, request).subscribe({
       next: (response) => {
-        this.candidates.set(response.items || response || []);
+        console.log('✅ Candidates loaded:', response);
+        this.candidates.set(response.items || []);
         this.loadingCandidates.set(false);
       },
       error: (err) => {
-        console.error('Erreur chargement candidats:', err);
+        console.error('❌ Erreur chargement candidats:', err);
+        console.error('Error details:', err.status, err.error);
         this.error.set('Impossible de charger les candidats');
         this.loadingCandidates.set(false);
       }
@@ -187,12 +230,25 @@ export class InterviewFormNewComponent implements OnInit {
    * Pré-sélectionner un candidat
    */
   preselectCandidate(applicationId: number): void {
-    this.http.get<any>(`${environment.apiUrl}/applications/${applicationId}`).subscribe({
+    const userStr = localStorage.getItem('user');
+    const userId = userStr ? JSON.parse(userStr).id : null;
+    
+    const request = {
+      user: userId,
+      data: { id: applicationId },
+      index: 0,
+      size: 1
+    };
+
+    this.http.post<any>(`${environment.apiUrl}/applications/getByCriteria`, request).subscribe({
       next: (response) => {
-        if (response.applicationStatus === 'SUBMITTED') {
-          this.selectedCandidate.set(response);
-          this.currentStep.set(2);
-          this.loadRecruiters(response.campaignId);
+        if (response.items && response.items.length > 0) {
+          const candidate = response.items[0];
+          if (candidate.applicationStatus === 'SUBMITTED') {
+            this.selectedCandidate.set(candidate);
+            this.currentStep.set(2);
+            this.loadRecruiters(candidate.campaignId);
+          }
         }
       },
       error: (err) => console.error('Erreur pré-sélection candidat:', err)
@@ -270,9 +326,19 @@ export class InterviewFormNewComponent implements OnInit {
   loadRecruiters(campaignId: number): void {
     this.loadingRecruiters.set(true);
     
-    this.http.get<any>(`${environment.apiUrl}/campaign-crud?campaignId=${campaignId}`).subscribe({
+    const userStr = localStorage.getItem('user');
+    const userId = userStr ? JSON.parse(userStr).id : null;
+    
+    const request = {
+      user: userId,
+      data: { campaignId: campaignId },
+      index: 0,
+      size: 1000
+    };
+
+    this.http.post<any>(`${environment.apiUrl}/campaignCrud/getByCriteria`, request).subscribe({
       next: (response) => {
-        const recruiters: Recruiter[] = (response.items || response || []).map((crud: any) => {
+        const recruiters: Recruiter[] = (response.items || []).map((crud: any) => {
           const isCreator = crud.userId === this.currentUserId;
           const canEvaluate = crud.canEvaluate === true;
           const isDefault = isCreator || canEvaluate;

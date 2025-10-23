@@ -62,30 +62,21 @@ Composant créé: `InterviewFormComponent` dans `pages/dashboard/interview-form/
 
 ## Tâches effectuées
 
-- Correction de la navigation vers la page de planification d'interview (ajout de `stopPropagation()`)
 - Refonte complète du design de `/dashboard/interview-new` avec les variables CSS
-- Remplacement de tous les emojis par des SVG professionnels
-- Support du dark mode pour la page d'interview
-- Création des migrations V1_024, V1_025 et V1_026
-- Ajout des permissions dans `campaign_crud`: `can_planify`, `can_accept_pre_screen`, `can_accept_final`
-- Refonte complète de l'enum `application_status` (11 états : PENDING, PENDING_ARCHIVED, SUBMITTED, PRE_SCREEN_ACCEPTED, PRE_SCREEN_REJECTED, PRE_SCREEN_REJECTED_ARCHIVED, INTERVIEWING, FINAL_ACCEPTED, FINAL_ACCEPTED_ARCHIVED, FINAL_REJECTED, FINAL_REJECTED_ARCHIVED)
-- Ajout des champs dans `applications`: `application_abandoned`, `pre_screen_decision_mail_sent`, `final_decision_mail_sent`, `interview_date`, `interview_status`
-- Mise en majuscules de l'enum `quiz_status` (PENDING, STARTED, COMPLETED)
-- Mise à jour des entités Java (Applications, CampaignCrud)
-- Mise à jour des DTOs (ApplicationsDto, CampaignCrudDto)
-- Ajout des 3 nouvelles permissions dans le formulaire de campagne (`/dashboard/campaigns/new` et `/dashboard/campaigns/:id/edit`)
-- Mise à jour de l'interface `RecruiterAccess` avec les 3 nouvelles permissions
-- Mise à jour de la méthode `toggleRecruiterAccess()` pour supporter les nouvelles permissions
+- Refonte complète de l'enum `application_status`
 - Ajout des nouvelles permissions lors de la création d'accès aux campagnes (créateur et recruteurs)
-- Modification de la condition `canScheduleInterview()` pour vérifier `applicationStatus === 'PRE_SCREEN_ACCEPTED'` au lieu de `PENDING + quiz completed`
+- Modernisation de la structure de la table `interviews` et création d'un nouveau formulaire wizard en 3 étapes.
+- Ajout de `meet_link`, `interview_note`, `interview_mail_sent`
+- Fix tooltips applications.html
 
 ## DERNIERE REQUETE
-Les migrations sont créées et le code Java/TypeScript est mis à jour. Il faut maintenant:
-1. Redémarrer le backend pour appliquer les migrations Flyway
-2. Vérifier que les nouvelles colonnes sont bien créées dans la base de données
-3. Tester la création/modification d'une campagne avec les nouvelles permissions
-4. Tester que seules les candidatures avec status `PRE_SCREEN_ACCEPTED` peuvent planifier un entretien
-5. Implémenter les fonctionnalités pour changer le statut des candidatures (boutons d'action dans l'interface)
+## REGLER CETTE ERREUR : - Fix canScheduleInterview() pour autoriser planification pour status SUBMITTED et PRE_SCREEN_ACCEPTED
+Refonte du système d'interviews complétée. Prochaines étapes:
+1. Redémarrer backend pour appliquer migrations V1_027 et V1_028
+2. Tester le nouveau formulaire `/dashboard/interview-form-new`: vérifier filtrage candidats SUBMITTED, auto-sélection recruteurs, création interview avec nouveau format
+3. Vérifier que les données sont bien enregistrées avec `interview_date`, `interview_status`, `meet_link`, etc.
+4. Possiblement ajouter un lien dans la navigation ou dans applications.html pour accéder au nouveau formulaire
+5. Mettre à jour l'ancienne route `/dashboard/interview-new` pour utiliser le nouveau composant une fois validé
 
 
 ---
@@ -94,41 +85,10 @@ Les migrations sont créées et le code Java/TypeScript est mis à jour. Il faut
 
 ## Tâches effectuées
 
-**Refonte complète du système d'interviews** - Modernisation de la structure de la table `interviews` et création d'un nouveau formulaire wizard en 3 étapes.
-
-**Migrations de base de données (V1_027 et V1_028):**
-- Table `interviews`: Remplacement de `interview_start`/`interview_end` par `interview_date` (datetime) et `interview_status` (ENUM: PENDING, STARTED, OVER, POSTPONED, ARCHIVED)
-- Ajout de `meet_link` (VARCHAR 500), `interview_note` (TEXT), `interview_mail_sent` (BOOLEAN)
-- Modification de `interview_type`: Suppression de PHONE, conservation de IN_PERSON et ONLINE uniquement
-- Table `interview_crud`: Suppression de `can_create`, ajout de `can_evaluate` et `is_admin` (BOOLEAN)
-
-**Backend Java (10 fichiers mis à jour):**
-- Entités: Interviews.java, InterviewCrud.java
-- DTOs: InterviewsDto.java, InterviewCrudDto.java avec SearchParams
-- Business: InterviewsBusiness.java, InterviewCrudBusiness.java (méthodes setters et validations)
-- Repositories: InterviewsRepository.java, InterviewCrudRepository.java (queries et generateCriteria)
-- Transformers: InterviewsTransformer.java (mappings MapStruct avec format datetime)
-- Suppression des méthodes findByInterviewStart/End/CanCreate, remplacement par findByInterviewDate/Status/CanEvaluate
-
-**Frontend Angular (3 nouveaux fichiers):**
-- interview-form-new.html (394 lignes): Wizard 3 étapes avec design moderne
-  * Étape 1: Sélection candidat (filtres campagne/source, recherche, affichage candidats SUBMITTED uniquement)
-  * Étape 2: Détails interview (cartes de sélection type IN_PERSON/ONLINE, date/heure, lieu/lien conditionnel, notes)
-  * Étape 3: Sélection intervieweurs (auto-sélection créateur + évaluateurs, badges de rôles)
-- interview-form-new.ts (369 lignes): Logique avec Signals Angular, loadCandidates() avec filtres, loadRecruiters() avec auto-sélection, submitInterview()
-- interview-form-new.scss (730 lignes): Design utilisant variables colors.css, indicateur de progression, animations
-- Route ajoutée: `/dashboard/interview-form-new`
-
-**Corrections compilation:**
-- Fix tooltips applications.html (position bottom au lieu de top pour éviter overflow)
-- Fix canScheduleInterview(): Autoriser planification pour status SUBMITTED et PRE_SCREEN_ACCEPTED
-- Fix import CSS: `../../../styles/core/colors.css` dans interview-form-new.scss
-- Fix optional chaining warnings: Suppression de `?.` pour firstName/lastName dans avatars
 
 ## DERNIERE REQUETE
-Refonte du système d'interviews complétée. Prochaines étapes:
-1. Redémarrer backend pour appliquer migrations V1_027 et V1_028
-2. Tester le nouveau formulaire `/dashboard/interview-form-new`: vérifier filtrage candidats SUBMITTED, auto-sélection recruteurs, création interview avec nouveau format
-3. Vérifier que les données sont bien enregistrées avec `interview_date`, `interview_status`, `meet_link`, etc.
-4. Possiblement ajouter un lien dans la navigation ou dans applications.html pour accéder au nouveau formulaire
-5. Mettre à jour l'ancienne route `/dashboard/interview-new` pour utiliser le nouveau composant une fois validé
+
+
+---
+
+
