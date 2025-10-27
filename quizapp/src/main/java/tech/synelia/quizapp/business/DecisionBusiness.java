@@ -1,0 +1,307 @@
+/*
+ * Java business for entity table decisions
+ * Created on 2025-10-27 ( Time 12:00:00 )
+ * Generator tool : Synelia Tools
+ */
+
+package tech.synelia.quizapp.business;
+
+import lombok.extern.java.Log;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.text.ParseException;
+import java.util.*;
+
+import tech.synelia.quizapp.utils.*;
+import tech.synelia.quizapp.utils.dto.*;
+import tech.synelia.quizapp.utils.exception.*;
+import tech.synelia.quizapp.utils.contract.IBasicBusiness;
+import tech.synelia.quizapp.utils.contract.Request;
+import tech.synelia.quizapp.utils.contract.Response;
+import tech.synelia.quizapp.utils.dto.transformer.*;
+import tech.synelia.quizapp.dao.entity.Decision;
+import tech.synelia.quizapp.dao.entity.Applications;
+import tech.synelia.quizapp.dao.entity.User;
+import tech.synelia.quizapp.dao.repository.*;
+
+/**
+ * BUSINESS for table "decisions"
+ *
+ * @author Synelia
+ */
+@Log
+@Component
+public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Response<DecisionDto>> {
+
+    @Autowired
+    private DecisionRepository decisionRepository;
+
+    @Autowired
+    private ApplicationsRepository applicationsRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private FunctionalError functionalError;
+
+    /**
+     * create Decision by using DecisionDto as object.
+     *
+     * @param request
+     * @return response
+     */
+    @Override
+    @Transactional
+    public Response<DecisionDto> create(Request<DecisionDto> request, Locale locale) throws ParseException {
+        log.info("----begin create Decision-----");
+
+        Response<DecisionDto> response = new Response<DecisionDto>();
+        List<Decision> items = new ArrayList<Decision>();
+
+        for (DecisionDto dto : request.getDatas()) {
+            // Validation
+            Response<DecisionDto> validation = validate(dto, locale);
+            if (validation.isHasError()) {
+                response.setStatus(validation.getStatus());
+                response.setHasError(true);
+                return response;
+            }
+
+            // Check if application exists
+            if (dto.getApplicationId() != null) {
+                Applications app = applicationsRepository.findOne(dto.getApplicationId(), false);
+                if (app == null) {
+                    response.setStatus(functionalError.DATA_NOT_EXIST("Application", locale));
+                    response.setHasError(true);
+                    return response;
+                }
+            }
+
+            // Check if user exists
+            if (dto.getUserId() != null) {
+                User user = userRepository.findOne(dto.getUserId(), false);
+                if (user == null) {
+                    response.setStatus(functionalError.DATA_NOT_EXIST("User", locale));
+                    response.setHasError(true);
+                    return response;
+                }
+            }
+
+            // Transform and save
+            Decision entity = DecisionTransformer.INSTANCE.toEntity(dto);
+            entity.setCreatedAt(new Date());
+            entity.setIsDeleted(false);
+
+            // Update application status based on decision
+            updateApplicationStatus(entity);
+
+            Decision saved = decisionRepository.save(entity);
+            items.add(saved);
+        }
+
+        List<DecisionDto> itemDtos = DecisionTransformer.INSTANCE.toDto(items);
+        response.setItems(itemDtos);
+        response.setHasError(false);
+        log.info("----end create Decision-----");
+        return response;
+    }
+
+    /**
+     * Update application status based on decision
+     */
+    private void updateApplicationStatus(Decision decision) {
+        if (decision.getApplication() != null && decision.getApplication().getId() != null) {
+            // Fetch the full application entity
+            Applications app = applicationsRepository.findOne(decision.getApplication().getId(), false);
+            if (app != null) {
+                String newStatus = decision.getDecisionType();
+
+                // Update the application status
+                app.setApplicationStatus(newStatus);
+                app.setUpdatedAt(new Date());
+                app.setUpdatedBy(decision.getCreatedBy());
+
+                applicationsRepository.save(app);
+                log.info("Updated application " + app.getId() + " status to " + newStatus);
+            }
+        }
+    }
+
+    /**
+     * get Decision by using DecisionDto as object.
+     *
+     * @param request
+     * @return response
+     */
+    @Override
+    public Response<DecisionDto> getByCriteria(Request<DecisionDto> request, Locale locale) throws ParseException {
+        log.info("----begin get Decision by criteria-----");
+
+        Response<DecisionDto> response = new Response<DecisionDto>();
+        List<Decision> items = new ArrayList<Decision>();
+
+        // Simple implementation - get all decisions for application if specified
+        if (request.getData() != null && request.getData().getApplicationId() != null) {
+            items = decisionRepository.findByApplicationId(request.getData().getApplicationId(), false);
+        } else {
+            items = decisionRepository.findAllActive();
+        }
+
+        // Apply pagination if needed
+        if (request.getIndex() != null && request.getSize() != null) {
+            int start = request.getIndex() * request.getSize();
+            int end = Math.min(start + request.getSize(), items.size());
+            if (start < items.size()) {
+                items = items.subList(start, end);
+            } else {
+                items = new ArrayList<>();
+            }
+        }
+
+        List<DecisionDto> itemDtos = DecisionTransformer.INSTANCE.toDto(items);
+        response.setItems(itemDtos);
+        response.setCount((long) items.size());
+        response.setHasError(false);
+
+        log.info("----end get Decision by criteria-----");
+        return response;
+    }
+
+    /**
+     * update Decision by using DecisionDto as object.
+     *
+     * @param request
+     * @return response
+     */
+    @Override
+    @Transactional
+    public Response<DecisionDto> update(Request<DecisionDto> request, Locale locale) throws ParseException {
+        log.info("----begin update Decision-----");
+
+        Response<DecisionDto> response = new Response<DecisionDto>();
+        List<Decision> items = new ArrayList<Decision>();
+
+        for (DecisionDto dto : request.getDatas()) {
+            // Validation
+            Response<DecisionDto> validation = validate(dto, locale);
+            if (validation.isHasError()) {
+                response.setStatus(validation.getStatus());
+                response.setHasError(true);
+                return response;
+            }
+
+            // Check if exists
+            Decision existing = decisionRepository.findOne(dto.getId(), false);
+            if (existing == null) {
+                response.setStatus(functionalError.DATA_NOT_EXIST("Decision", locale));
+                response.setHasError(true);
+                return response;
+            }
+
+            // Update
+            Decision entity = DecisionTransformer.INSTANCE.toEntity(dto);
+            entity.setUpdatedAt(new Date());
+            entity.setIsDeleted(false);
+
+            Decision saved = decisionRepository.save(entity);
+            items.add(saved);
+        }
+
+        List<DecisionDto> itemDtos = DecisionTransformer.INSTANCE.toDto(items);
+        response.setItems(itemDtos);
+        response.setHasError(false);
+
+        log.info("----end update Decision-----");
+        return response;
+    }
+
+    /**
+     * delete Decision by using DecisionDto as object.
+     *
+     * @param request
+     * @return response
+     */
+    @Override
+    @Transactional
+    public Response<DecisionDto> delete(Request<DecisionDto> request, Locale locale) throws ParseException {
+        log.info("----begin delete Decision-----");
+
+        Response<DecisionDto> response = new Response<DecisionDto>();
+
+        for (DecisionDto dto : request.getDatas()) {
+            // Check if exists
+            Decision existing = decisionRepository.findOne(dto.getId(), false);
+            if (existing == null) {
+                response.setStatus(functionalError.DATA_NOT_EXIST("Decision", locale));
+                response.setHasError(true);
+                return response;
+            }
+
+            // Soft delete
+            existing.setIsDeleted(true);
+            existing.setUpdatedAt(new Date());
+            decisionRepository.save(existing);
+        }
+
+        response.setHasError(false);
+
+        log.info("----end delete Decision-----");
+        return response;
+    }
+
+    /**
+     * get full data of Decision by using DecisionDto as object.
+     *
+     * @param request
+     * @return response
+     */
+    public Response<DecisionDto> getFull(Request<DecisionDto> request, Locale locale) throws ParseException {
+        return getByCriteria(request, locale);
+    }
+
+    /**
+     * validate DecisionDto
+     *
+     * @param dto
+     * @return response
+     */
+    private Response<DecisionDto> validate(DecisionDto dto, Locale locale) {
+        Response<DecisionDto> response = new Response<DecisionDto>();
+
+        if (dto == null) {
+            response.setStatus(functionalError.DATA_NOT_EXIST("Decision", locale));
+            response.setHasError(true);
+            return response;
+        }
+
+        if (!Utilities.notBlank(dto.getDecisionType())) {
+            response.setStatus(functionalError.FIELD_EMPTY("decisionType", locale));
+            response.setHasError(true);
+            return response;
+        }
+
+        if (!Utilities.notBlank(dto.getDecisionAction())) {
+            response.setStatus(functionalError.FIELD_EMPTY("decisionAction", locale));
+            response.setHasError(true);
+            return response;
+        }
+
+        if (dto.getApplicationId() == null) {
+            response.setStatus(functionalError.FIELD_EMPTY("applicationId", locale));
+            response.setHasError(true);
+            return response;
+        }
+
+        if (dto.getUserId() == null) {
+            response.setStatus(functionalError.FIELD_EMPTY("userId", locale));
+            response.setHasError(true);
+            return response;
+        }
+
+        response.setHasError(false);
+        return response;
+    }
+}
