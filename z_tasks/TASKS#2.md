@@ -2,10 +2,10 @@
 
 ## Tâches effectuées
 
-- Déroulement des détails de campagnes dans la liste
+- Déroulement des détails de campagnes
 - Navigation vers une page détaillée de campagne
 - Ajout de la section "Questions" dans la page de détails
-- Mise en place de l'indicateur de bonne réponse (icône checkmark verte)
+- Mise en place de l'indicateur de bonne réponse
 - Création de la migration pour supprimer les champs `marked_out_of` et `total_questions` de la table `campaigns`
 - Création de la migration pour ajouter le champ `total_questions` à la table `applications`
 - Mise à jour du backend pour calculer automatiquement `total_questions` lors de l'ajout/suppression de questions
@@ -81,10 +81,11 @@ Refonte du système d'interviews complétée. Prochaines étapes:
 
 ---
 
-23/10/2025
+25/10/2025
 
 ## Tâches effectuées
 
+- Ceci est une phrase de test ajoutée automatiquement.
 
 ## DERNIERE REQUETE
 
