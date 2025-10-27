@@ -1,0 +1,219 @@
+<div class="decisions-page">
+  <!-- Header élégant -->
+  <header class="page-header">
+    <div class="header-top">
+      <div class="header-title-section">
+        <div class="title-wrapper">
+          <h1 class="page-title">
+            <span class="title-icon">⚖️</span>
+            Gestion des Décisions
+          </h1>
+        </div>
+        <p class="page-subtitle">Suivez et gérez l'historique des décisions pour vos candidatures</p>
+      </div>
+
+      <div class="header-actions">
+        <button class="action-btn primary" (click)="loadApplications()" [disabled]="loading()" title="Actualiser">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+          </svg>
+          <span>Actualiser</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Section de recherche -->
+  <div class="search-section">
+    <div class="search-container">
+      <div class="search-input-wrapper">
+        <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="M21 21l-4.35-4.35"/>
+        </svg>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Rechercher une candidature (nom, email, campagne)..."
+          [(ngModel)]="searchQuery"
+          (input)="showApplicationSuggestions.set(true)"
+          (focus)="showApplicationSuggestions.set(true)"
+        />
+        @if (searchQuery()) {
+          <button class="clear-search" (click)="clearSearch()" title="Effacer la recherche">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        }
+      </div>
+
+      <!-- Suggestions de candidatures -->
+      @if (showApplicationSuggestions() && filteredApplications().length > 0) {
+        <div class="suggestions-dropdown">
+          <div class="suggestions-header">
+            <span class="suggestions-title">Candidatures</span>
+            <span class="suggestions-count">{{ filteredApplications().length }}</span>
+          </div>
+          <div class="suggestions-list">
+            @for (app of filteredApplications(); track app.id) {
+              <div class="suggestion-item" (click)="selectApplication(app)">
+                <div class="candidate-avatar">
+                  <span class="avatar-initials">{{ getCandidateName(app).charAt(0) }}</span>
+                </div>
+                <div class="candidate-info">
+                  <div class="candidate-name">{{ getCandidateName(app) }}</div>
+                  <div class="candidate-email">{{ app.candidateEmail }}</div>
+                  <div class="candidate-campaign">{{ app.campaignTitle }}</div>
+                </div>
+                <div class="candidate-status">
+                  <span class="status-badge" [ngClass]="getStepClass(getStepStatus(app.applicationStatus, 1))">
+                    {{ getStepDescription(app.applicationStatus, 1) }}
+                  </span>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Contenu principal -->
+  @if (selectedApplication()) {
+    <div class="content-grid">
+      <!-- Schéma de progression -->
+      <div class="progress-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <span class="section-icon">📈</span>
+            Progression de la candidature
+          </h2>
+          <div class="candidate-summary">
+            <div class="candidate-avatar-large">
+              <span class="avatar-initials-large">{{ getCandidateName(selectedApplication()!).charAt(0) }}</span>
+            </div>
+            <div class="candidate-details">
+              <h3 class="candidate-name-large">{{ getCandidateName(selectedApplication()!) }}</h3>
+              <p class="candidate-email-large">{{ selectedApplication()!.candidateEmail }}</p>
+              <p class="candidate-campaign-large">{{ selectedApplication()!.campaignTitle }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="progress-timeline">
+          @for (step of applicationSteps(); track step.id) {
+            <div class="timeline-step" [ngClass]="getStepClass(step.status)">
+              <div class="step-connector">
+                <div class="step-line"></div>
+                <div class="step-dot" [ngClass]="step.status"></div>
+              </div>
+              <div class="step-content">
+                <div class="step-header">
+                  <h4 class="step-title">{{ step.name }}</h4>
+                  <span class="step-status-badge" [ngClass]="step.status">
+                    {{ step.status === 'completed' ? 'Terminé' :
+                       step.status === 'active' ? 'En cours' :
+                       step.status === 'rejected' ? 'Refusé' :
+                       step.status === 'archived' ? 'Archivé' : 'En attente' }}
+                  </span>
+                </div>
+                <p class="step-description">{{ step.description }}</p>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Historique des décisions -->
+      <div class="decisions-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <span class="section-icon">📋</span>
+            Historique des décisions
+          </h2>
+          <div class="decisions-count">
+            <span class="count-badge">{{ selectedApplicationDecisions().length }}</span>
+            <span class="count-label">décision{{ selectedApplicationDecisions().length > 1 ? 's' : '' }}</span>
+          </div>
+        </div>
+
+        @if (selectedApplicationDecisions().length > 0) {
+          <div class="decisions-timeline">
+            @for (decision of selectedApplicationDecisions(); track $index) {
+              <div class="decision-item">
+                <div class="decision-connector">
+                  <div class="decision-line"></div>
+                  <div class="decision-dot" [ngClass]="getDecisionActionClass(decision.decisionAction)"></div>
+                </div>
+                <div class="decision-content">
+                  <div class="decision-header">
+                    <div class="decision-type">
+                      <span class="decision-type-badge">{{ decision.decisionType }}</span>
+                    </div>
+                    <div class="decision-action">
+                      <span class="decision-action-badge" [ngClass]="getDecisionActionClass(decision.decisionAction)">
+                        {{ getDecisionActionLabel(decision.decisionAction) }}
+                      </span>
+                    </div>
+                    <div class="decision-date">
+                      {{ formatDate(decision.createdAt) }}
+                    </div>
+                  </div>
+                  @if (decision.userName) {
+                    <div class="decision-user">
+                      <span class="user-label">Par:</span>
+                      <span class="user-name">{{ decision.userName }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="no-decisions">
+            <div class="no-decisions-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <path d="M14 2v6h6"/>
+                <path d="M16 13H8"/>
+                <path d="M16 17H8"/>
+                <path d="M10 9H8"/>
+              </svg>
+            </div>
+            <h3 class="no-decisions-title">Aucune décision enregistrée</h3>
+            <p class="no-decisions-text">Les décisions prises pour cette candidature apparaîtront ici.</p>
+          </div>
+        }
+      </div>
+    </div>
+  } @else {
+    <!-- État vide -->
+    <div class="empty-state">
+      <div class="empty-state-icon">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <path d="M14 2v6h6"/>
+          <path d="M16 13H8"/>
+          <path d="M16 17H8"/>
+          <path d="M10 9H8"/>
+        </svg>
+      </div>
+      <h2 class="empty-state-title">Sélectionnez une candidature</h2>
+      <p class="empty-state-text">Utilisez la barre de recherche ci-dessus pour trouver et sélectionner une candidature à analyser.</p>
+    </div>
+  }
+
+  <!-- Loading overlay -->
+  @if (loading()) {
+    <div class="loading-overlay">
+      <div class="loading-spinner">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+        </svg>
+      </div>
+      <p class="loading-text">Chargement...</p>
+    </div>
+  }
+</div>

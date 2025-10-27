@@ -668,9 +668,9 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
    */
   canScheduleInterview(app: ApplicationWithCampaign): boolean {
     // Peut planifier un entretien si :
-    // - La candidature est soumise (SUBMITTED) ou pré-sélection acceptée (PRE_SCREEN_ACCEPTED)
+    // - pré-sélection acceptée (PRE_SCREEN_ACCEPTED)
     // - Pas d'entretien déjà planifié
-    const validStatuses = ['SUBMITTED', 'PRE_SCREEN_ACCEPTED'];
+    const validStatuses = ['PRE_SCREEN_ACCEPTED'];
     return validStatuses.includes(app.applicationStatus || '') && !app.interviewDate;
   }
 
