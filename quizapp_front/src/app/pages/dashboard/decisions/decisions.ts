@@ -32,10 +32,20 @@ export class DecisionsComponent implements OnInit, OnDestroy {
   selectedApplication = signal<ApplicationWithCampaign | null>(null);
   showApplicationSuggestions = signal(false);
 
+  // Modal de décision
+  showDecisionModal = signal(false);
+  decisionModalStep = signal<number | null>(null);
+
+  // Modal de prévisualisation CV
+  showCvModal = signal(false);
+  cvModalUrl = signal<string | null>(null);
+  cvModalCandidateName = signal<string>('');
+
   constructor(
     private applicationService: ApplicationService,
     private campaignService: CampaignService,
     private sourceTokenService: SourceTokenService,
+    private decisionService: DecisionService,
     private router: Router
   ) {}
 
@@ -92,9 +102,60 @@ export class DecisionsComponent implements OnInit, OnDestroy {
 
     const status = app.applicationStatus || 'PENDING';
     const steps = [
-      { id: 1, name: 'Candidature', status: this.getStepStatus(status, 1), description: this.getStepDescription(status, 1) },
-      { id: 2, name: 'Pré-sélection', status: this.getStepStatus(status, 2), description: this.getStepDescription(status, 2) },
-      { id: 3, name: 'Décision finale', status: this.getStepStatus(status, 3), description: this.getStepDescription(status, 3) }
+      {
+        id: 1,
+        name: 'Candidature',
+        status: this.getStepStatus(status, 1),
+        description: this.getStepDescription(status, 1),
+        details: [
+          {
+            label: 'Email vérifié',
+            value: app.emailVerified !== null ? (app.emailVerified ? 'Oui' : 'Non') : 'Non vérifié',
+            type: 'text'
+          },
+          {
+            label: 'Score du quiz',
+            value: app.quizScore !== null ? `${app.quizScore}/100` : 'Quiz non passé',
+            type: 'text'
+          },
+          {
+            label: 'CV',
+            value: 'Voir le CV',
+            type: 'button',
+            action: 'viewCV'
+          }
+        ]
+      },
+      {
+        id: 2,
+        name: 'Pré-sélection',
+        status: this.getStepStatus(status, 2),
+        description: this.getStepDescription(status, 2),
+        details: [
+          {
+            label: 'Date d\'entretien',
+            value: app.interviewDate ? this.formatDate(app.interviewDate) : 'Non planifié',
+            type: 'text'
+          },
+          {
+            label: 'Statut entretien',
+            value: app.interviewStatus || 'Non planifié',
+            type: 'text'
+          },
+          {
+            label: 'Score d\'évaluation',
+            value: app.evaluationScore !== null ? `${app.evaluationScore}/100` : 'Non évalué',
+            type: 'text'
+          }
+        ]
+      },
+      {
+        id: 3,
+        name: 'Décision finale',
+        status: this.getStepStatus(status, 3),
+        description: this.getStepDescription(status, 3),
+        details: []
+      }
     ];
 
     return steps;
@@ -169,43 +230,111 @@ export class DecisionsComponent implements OnInit, OnDestroy {
    * Charge les décisions pour une candidature
    */
   loadDecisionsForApplication(applicationId: number): void {
-    // TODO: Implémenter le service pour charger les décisions depuis l'API
-    // Pour l'instant, on simule des données d'exemple
-    const mockDecisions: Decision[] = [
-      {
-        id: 1,
-        decisionType: 'PRE_SCREEN_ACCEPTED',
-        decisionAction: 'APPROVE',
-        applicationId: applicationId,
-        userId: 1,
-        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 jours avant
-        createdBy: 1,
-        userName: 'Alice Dupont'
-      },
-      {
-        id: 2,
-        decisionType: 'PRE_SCREEN_ACCEPTED',
-        decisionAction: 'APPROVE',
-        applicationId: applicationId,
-        userId: 2,
-        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 jours avant
-        createdBy: 2,
-        userName: 'Bob Martin'
-      },
-      {
-        id: 3,
-        decisionType: 'FINAL_REJECTED',
-        decisionAction: 'CANCEL',
-        applicationId: applicationId,
-        userId: 1,
-        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 jours avant
-        createdBy: 1,
-        userName: 'Alice Dupont'
-      }
-    ];
+    console.log(`\n📋 Chargement des décisions réelles pour l'application ${applicationId}`);
 
-    console.log(`\n📋 Chargement de ${mockDecisions.length} décisions mockées pour l'application ${applicationId}`);
-    this.decisions.set(mockDecisions);
+    this.decisionService.getDecisionsByApplicationId(applicationId).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (response) => {
+        if (response.hasError) {
+          console.error('❌ Erreur lors du chargement des décisions:', response.status.message);
+          this.decisions.set([]);
+        } else {
+          const decisions = response.items || [];
+          console.log(`\n✅ ${decisions.length} décisions chargées depuis l'API pour l'application ${applicationId}`);
+          this.decisions.set(decisions);
+        }
+      },
+      error: (error) => {
+        console.error('❌ Erreur lors du chargement des décisions:', error);
+        this.decisions.set([]);
+      }
+    });
+  }
+
+  /**
+   * Prend une décision pour la candidature sélectionnée
+   */
+  takeDecision(action: 'APPROVE' | 'CANCEL'): void {
+    const app = this.selectedApplication();
+    if (!app) return;
+
+    // Déterminer le type de décision basé sur le statut actuel
+    const currentStatus = app.applicationStatus || 'PENDING';
+    let decisionType = 'PRE_SCREEN_ACCEPTED'; // Par défaut
+
+    if (currentStatus.startsWith('PRE_SCREEN')) {
+      decisionType = currentStatus;
+    } else if (currentStatus.startsWith('FINAL')) {
+      decisionType = currentStatus;
+    } else if (currentStatus === 'SUBMITTED') {
+      decisionType = 'PRE_SCREEN_ACCEPTED';
+    }
+
+    const decision: Decision = {
+      decisionType: decisionType,
+      decisionAction: action,
+      applicationId: app.id!,
+      userId: 1, // TODO: Récupérer l'ID de l'utilisateur connecté
+      createdAt: new Date().toISOString(),
+      createdBy: 1
+    };
+
+    this.loading.set(true);
+    this.decisionService.createDecision(decision).subscribe({
+      next: (response: any) => {
+        if (response.hasError) {
+          console.error('❌ Erreur lors de la création de la décision:', response.status.message);
+          // TODO: Afficher une notification d'erreur
+        } else {
+          console.log('✅ Décision créée avec succès');
+          // Recharger les décisions
+          this.loadDecisionsForApplication(app.id!);
+          // Recharger les candidatures pour mettre à jour le statut
+          this.loadApplications();
+        }
+        this.loading.set(false);
+      },
+      error: (error: any) => {
+        console.error('❌ Erreur lors de la création de la décision:', error);
+        this.loading.set(false);
+      }
+    });
+  }
+
+  /**
+   * Annule la dernière décision
+   */
+  undoLastDecision(): void {
+    const decisions = this.selectedApplicationDecisions();
+    if (decisions.length === 0) return;
+
+    // Trouver la dernière décision (la plus récente)
+    const lastDecision = decisions[0]; // Les décisions sont triées par date décroissante
+
+    if (!lastDecision.id) return;
+
+    this.loading.set(true);
+    this.decisionService.deleteDecision(lastDecision.id).subscribe({
+      next: (response: any) => {
+        if (response.hasError) {
+          console.error('❌ Erreur lors de l\'annulation de la décision:', response.status.message);
+          // TODO: Afficher une notification d'erreur
+        } else {
+          console.log('✅ Décision annulée avec succès');
+          // Recharger les décisions
+          const app = this.selectedApplication();
+          if (app) {
+            this.loadDecisionsForApplication(app.id!);
+            // Recharger les candidatures pour mettre à jour le statut
+            this.loadApplications();
+          }
+        }
+        this.loading.set(false);
+      },
+      error: (error: any) => {
+        console.error('❌ Erreur lors de l\'annulation de la décision:', error);
+        this.loading.set(false);
+      }
+    });
   }
 
   /**
@@ -257,7 +386,7 @@ export class DecisionsComponent implements OnInit, OnDestroy {
       if (status === 'PENDING' || status === 'PENDING_ARCHIVED') return 'pending';
       if (status === 'SUBMITTED') return 'active';
       if (status.startsWith('PRE_SCREEN_REJECTED')) return 'rejected';
-      if (status === 'PRE_SCREEN_ACCEPTED' || status === 'INTERVIEWING' || status.startsWith('FINAL_')) return 'completed';
+      if (status === 'PRE_SCREEN_ACCEPTED' || status.startsWith('FINAL_')) return 'completed';
       return 'pending';
     }
 
@@ -291,7 +420,6 @@ export class DecisionsComponent implements OnInit, OnDestroy {
         return 'Pré-sélection : en attente d\'envoi de candidature';
       if (status === 'SUBMITTED') return 'Pré-sélection en cours';
       if (status === 'PRE_SCREEN_ACCEPTED') return 'Pré-sélection acceptée';
-      if (status === 'INTERVIEWING') return 'Pré-sélection acceptée - En entretien';
       if (status === 'PRE_SCREEN_REJECTED') return 'Pré-sélection refusée';
       if (status === 'PRE_SCREEN_REJECTED_ARCHIVED') return 'Pré-sélection refusée (archivé)';
       if (status.startsWith('FINAL_ACCEPTED')) return 'Pré-sélection acceptée';
@@ -304,7 +432,6 @@ export class DecisionsComponent implements OnInit, OnDestroy {
           status.startsWith('PRE_SCREEN_REJECTED'))
         return 'Décision finale : en attente de pré-sélection';
       if (status === 'PRE_SCREEN_ACCEPTED') return 'Décision finale en attente';
-      if (status === 'INTERVIEWING') return 'Décision finale : entretien en cours';
       if (status === 'FINAL_ACCEPTED') return 'Candidature acceptée ✓';
       if (status === 'FINAL_ACCEPTED_ARCHIVED') return 'Candidature acceptée (archivé)';
       if (status === 'FINAL_REJECTED') return 'Candidature refusée';
@@ -362,9 +489,264 @@ export class DecisionsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Obtient le libellé pour l'action de décision
+   * Obtient le label pour l'action de décision
    */
   getDecisionActionLabel(action: 'APPROVE' | 'CANCEL'): string {
-    return action === 'APPROVE' ? 'Approuvé' : 'Annulé';
+    return action === 'APPROVE' ? 'Approuvé' : 'Refusé';
+  }
+
+  /**
+   * Gère les actions des boutons dans les détails des étapes
+   */
+  handleDetailAction(action: string): void {
+    const app = this.selectedApplication();
+    if (!app) return;
+
+    switch (action) {
+      case 'viewCV':
+        this.viewCV(app);
+        break;
+      default:
+        console.warn('Action non reconnue:', action);
+    }
+  }
+
+  /**
+   * Vérifie si une décision a été prise pour une étape donnée
+   */
+  hasDecisionForStep(stepId: number): boolean {
+    const app = this.selectedApplication();
+    if (!app) return false;
+
+    const decisions = this.selectedApplicationDecisions();
+    if (decisions.length === 0) return false;
+
+    // Déterminer le type de décision basé sur l'étape
+    let decisionType = '';
+    if (stepId === 2) {
+      decisionType = 'PRE_SCREEN';
+    } else if (stepId === 3) {
+      decisionType = 'FINAL';
+    }
+
+    // Vérifier si une décision de ce type existe
+    return decisions.some(decision =>
+      decision.decisionType.startsWith(decisionType)
+    );
+  }
+
+  /**
+   * Vérifie si on peut prendre une décision pour une étape donnée
+   */
+  canTakeDecisionForStep(stepId: number): boolean {
+    const app = this.selectedApplication();
+    if (!app) return false;
+
+    const currentStatus = app.applicationStatus || 'PENDING';
+
+    // Étape 2 (Pré-sélection) : seulement si SUBMITTED
+    if (stepId === 2) {
+      return currentStatus === 'SUBMITTED';
+    }
+
+    // Étape 3 (Décision finale) : seulement si PRE_SCREEN_ACCEPTED
+    if (stepId === 3) {
+      return currentStatus === 'PRE_SCREEN_ACCEPTED';
+    }
+
+    return false;
+  }
+
+  /**
+   * Obtient les options de décision pour une étape
+   */
+  getDecisionOptionsForStep(stepId: number): { approveLabel: string; cancelLabel: string } {
+    if (stepId === 2) {
+      return {
+        approveLabel: 'Pré-sélection acceptée',
+        cancelLabel: 'Pré-sélection refusée'
+      };
+    } else if (stepId === 3) {
+      return {
+        approveLabel: 'Embaucher',
+        cancelLabel: 'Rejeter'
+      };
+    }
+    return { approveLabel: 'Accepter', cancelLabel: 'Refuser' };
+  }
+
+  /**
+   * Ouvre la popup de décision pour une étape
+   */
+  openDecisionModal(stepId: number): void {
+    this.decisionModalStep.set(stepId);
+    this.showDecisionModal.set(true);
+  }
+
+  /**
+   * Annule la décision pour une étape donnée
+   */
+  undoDecisionForStep(stepId: number): void {
+    const decisions = this.selectedApplicationDecisions();
+    if (decisions.length === 0) return;
+
+    // Trouver la dernière décision pour cette étape
+    let decisionType = '';
+    if (stepId === 2) {
+      decisionType = 'PRE_SCREEN';
+    } else if (stepId === 3) {
+      decisionType = 'FINAL';
+    }
+
+    const stepDecisions = decisions.filter(decision =>
+      decision.decisionType.startsWith(decisionType)
+    );
+
+    if (stepDecisions.length === 0) return;
+
+    // Prendre la plus récente
+    const lastDecision = stepDecisions[0];
+
+    if (!lastDecision.id) return;
+
+    this.loading.set(true);
+    this.decisionService.deleteDecision(lastDecision.id).subscribe({
+      next: (response: any) => {
+        if (response.hasError) {
+          console.error('❌ Erreur lors de l\'annulation de la décision:', response.status.message);
+        } else {
+          console.log('✅ Décision annulée avec succès');
+          // Recharger les décisions
+          const app = this.selectedApplication();
+          if (app) {
+            this.loadDecisionsForApplication(app.id!);
+            // Recharger les candidatures pour mettre à jour le statut
+            this.loadApplications();
+          }
+        }
+        this.loading.set(false);
+      },
+      error: (error: any) => {
+        console.error('❌ Erreur lors de l\'annulation de la décision:', error);
+        this.loading.set(false);
+      }
+    });
+  }
+
+  /**
+   * Prend une décision pour une étape spécifique
+   */
+  takeDecisionForStep(stepId: number, action: 'APPROVE' | 'CANCEL'): void {
+    const app = this.selectedApplication();
+    if (!app) return;
+
+    // Déterminer le type de décision basé sur l'étape
+    let decisionType = 'PRE_SCREEN_ACCEPTED';
+    if (stepId === 2) {
+      decisionType = action === 'APPROVE' ? 'PRE_SCREEN_ACCEPTED' : 'PRE_SCREEN_REJECTED';
+    } else if (stepId === 3) {
+      decisionType = action === 'APPROVE' ? 'FINAL_ACCEPTED' : 'FINAL_REJECTED';
+    }
+
+    const decision: Decision = {
+      decisionType: decisionType,
+      decisionAction: action,
+      applicationId: app.id!,
+      userId: 1, // TODO: Récupérer l'ID de l'utilisateur connecté
+      createdAt: new Date().toISOString(),
+      createdBy: 1
+    };
+
+    this.loading.set(true);
+    this.decisionService.createDecision(decision).subscribe({
+      next: (response: any) => {
+        if (response.hasError) {
+          console.error('❌ Erreur lors de la création de la décision:', response.status.message);
+        } else {
+          console.log('✅ Décision créée avec succès');
+          // Recharger les décisions
+          this.loadDecisionsForApplication(app.id!);
+          // Recharger les candidatures pour mettre à jour le statut
+          this.loadApplications();
+        }
+        this.loading.set(false);
+      },
+      error: (error: any) => {
+        console.error('❌ Erreur lors de la création de la décision:', error);
+        this.loading.set(false);
+      }
+    });
+  }
+
+  /**
+   * Ferme la popup de décision
+   */
+  closeDecisionModal(): void {
+    this.showDecisionModal.set(false);
+    this.decisionModalStep.set(null);
+  }
+
+  /**
+   * Prend une décision depuis la modal
+   */
+  takeDecisionFromModal(action: 'APPROVE' | 'CANCEL'): void {
+    const stepId = this.decisionModalStep();
+    if (!stepId) return;
+
+    this.takeDecisionForStep(stepId, action);
+    this.closeDecisionModal();
+  }
+
+  /**
+   * Ferme la popup de prévisualisation CV
+   */
+  closeCvModal(): void {
+    this.showCvModal.set(false);
+    this.cvModalUrl.set(null);
+    this.cvModalCandidateName.set('');
+  }
+
+  /**
+   * Télécharge le CV actuellement affiché
+   */
+  downloadCurrentCV(): void {
+    const cvUrl = this.cvModalUrl();
+    const candidateName = this.cvModalCandidateName();
+    if (cvUrl) {
+      const link = document.createElement('a');
+      link.href = cvUrl;
+      link.download = `CV_${candidateName}.pdf`;
+      link.click();
+    }
+  }
+
+  /**
+   * Ouvre le CV actuellement affiché dans un nouvel onglet
+   */
+  openCurrentCVInNewTab(): void {
+    const cvUrl = this.cvModalUrl();
+    if (cvUrl) {
+      window.open(cvUrl, '_blank');
+    }
+  }
+
+  /**
+   * Affiche un aperçu du CV du candidat
+   */
+  viewCV(application: ApplicationWithCampaign): void {
+    if (!application.candidateCvPath) {
+      console.warn('CV non disponible pour cette candidature');
+      return;
+    }
+
+    // Ouvrir la popup de prévisualisation
+    const cvUrl = this.applicationService.getCvDownloadUrl(application.candidateCvPath);
+    if (cvUrl) {
+      this.cvModalUrl.set(cvUrl);
+      this.cvModalCandidateName.set(this.getCandidateName(application));
+      this.showCvModal.set(true);
+    } else {
+      console.error('Impossible de générer l\'URL du CV');
+    }
   }
 }

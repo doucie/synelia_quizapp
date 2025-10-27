@@ -532,7 +532,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       if (status === 'PENDING' || status === 'PENDING_ARCHIVED') return 'pending';
       if (status === 'SUBMITTED') return 'active';
       if (status.startsWith('PRE_SCREEN_REJECTED')) return 'rejected';
-      if (status === 'PRE_SCREEN_ACCEPTED' || status === 'INTERVIEWING' || status.startsWith('FINAL_')) return 'completed';
+      if (status === 'PRE_SCREEN_ACCEPTED' || status.startsWith('FINAL_')) return 'completed';
       return 'pending';
     }
     
@@ -569,7 +569,6 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
         return 'Pré-sélection : en attente d\'envoi de candidature';
       if (status === 'SUBMITTED') return 'Pré-sélection en cours';
       if (status === 'PRE_SCREEN_ACCEPTED') return 'Pré-sélection acceptée';
-      if (status === 'INTERVIEWING') return 'Pré-sélection acceptée - En entretien';
       if (status === 'PRE_SCREEN_REJECTED') return 'Pré-sélection refusée';
       if (status === 'PRE_SCREEN_REJECTED_ARCHIVED') return 'Pré-sélection refusée (archivé)';
       if (status.startsWith('FINAL_ACCEPTED')) return 'Pré-sélection acceptée';
@@ -582,7 +581,6 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
           status.startsWith('PRE_SCREEN_REJECTED')) 
         return 'Décision finale : en attente de pré-sélection';
       if (status === 'PRE_SCREEN_ACCEPTED') return 'Décision finale en attente';
-      if (status === 'INTERVIEWING') return 'Décision finale : entretien en cours';
       if (status === 'FINAL_ACCEPTED') return 'Candidature acceptée ✓';
       if (status === 'FINAL_ACCEPTED_ARCHIVED') return 'Candidature acceptée (archivé)';
       if (status === 'FINAL_REJECTED') return 'Candidature refusée';
