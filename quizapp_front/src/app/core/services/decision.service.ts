@@ -24,12 +24,31 @@ export interface Decision {
 }
 
 /**
+ * Interface pour les données partielles de décision (pour les requêtes)
+ */
+export interface PartialDecision {
+  id?: number;
+  decisionType?: string;
+  decisionAction?: string;
+  applicationId?: number;
+  userId?: number;
+  createdAt?: string;
+  createdBy?: number;
+  updatedAt?: string;
+  updatedBy?: number;
+  isDeleted?: boolean;
+  searchString?: string;
+  // Propriétés jointes
+  userName?: string;
+}
+
+/**
  * Interface pour la structure de requête du backend
  */
 export interface DecisionRequest {
   user?: number;
   datas?: Decision[];
-  data?: Decision;
+  data?: PartialDecision;
 }
 
 /**
@@ -74,11 +93,24 @@ export class DecisionService {
    */
   getDecisionsByCriteria(criteria: DecisionCriteria = {}): Observable<DecisionResponse> {
     const headers = this.getHeaders();
-    const params = this.buildParams(criteria);
+    const request: DecisionRequest = {
+      user: 1, // Utiliser l'ID système 1 pour les opérations de lecture
+      data: {
+        applicationId: criteria.applicationId,
+        userId: criteria.userId,
+        decisionType: criteria.decisionType,
+        decisionAction: criteria.decisionAction
+      } as PartialDecision
+    };
 
-    return this.http.get<DecisionResponse>(`${this.apiUrl}/getByCriteria`, { headers, params })
+    console.log('🔍 Service: Envoi de la requête getByCriteria:', JSON.stringify(request, null, 2));
+
+    return this.http.post<DecisionResponse>(`${this.apiUrl}/getByCriteria`, request, { headers })
       .pipe(
-        map(response => response),
+        map(response => {
+          console.log('🔍 Service: Réponse reçue:', response);
+          return response;
+        }),
         catchError(error => {
           console.error('Erreur lors de la récupération des décisions:', error);
           return of({
@@ -99,11 +131,12 @@ export class DecisionService {
    */
   getDecisionById(id: number): Observable<DecisionResponse> {
     const headers = this.getHeaders();
+    const request: DecisionRequest = {
+      user: this.getCurrentUserId(),
+      data: { id } as PartialDecision
+    };
 
-    return this.http.get<DecisionResponse>(`${this.apiUrl}/getByCriteria`, {
-      headers,
-      params: { id: id.toString() }
-    })
+    return this.http.post<DecisionResponse>(`${this.apiUrl}/getByCriteria`, request, { headers })
       .pipe(
         map(response => response),
         catchError(error => {
@@ -124,7 +157,10 @@ export class DecisionService {
    * Récupère les décisions pour une application spécifique
    */
   getDecisionsByApplicationId(applicationId: number): Observable<DecisionResponse> {
-    return this.getDecisionsByCriteria({ applicationId });
+    console.log(`\n🔍 Service: Récupération des décisions pour l'application ${applicationId}`);
+    const criteria: DecisionCriteria = { applicationId };
+    console.log('🔍 Critères:', criteria);
+    return this.getDecisionsByCriteria(criteria);
   }
 
   /**
@@ -134,7 +170,7 @@ export class DecisionService {
     const headers = this.getHeaders();
     const request: DecisionRequest = {
       user: this.getCurrentUserId(),
-      data: decision
+      datas: [decision]  // Le backend attend 'datas' (pluriel) avec un tableau
     };
 
     return this.http.post<DecisionResponse>(`${this.apiUrl}/create`, request, { headers })
@@ -161,7 +197,7 @@ export class DecisionService {
     const headers = this.getHeaders();
     const request: DecisionRequest = {
       user: this.getCurrentUserId(),
-      data: decision
+      datas: [decision]  // Array avec l'objet décision à mettre à jour
     };
 
     return this.http.post<DecisionResponse>(`${this.apiUrl}/update`, request, { headers })
@@ -188,7 +224,7 @@ export class DecisionService {
     const headers = this.getHeaders();
     const request: DecisionRequest = {
       user: this.getCurrentUserId(),
-      data: { id } as Decision
+      datas: [{ id } as Decision]  // Array avec l'objet contenant l'ID
     };
 
     return this.http.post<DecisionResponse>(`${this.apiUrl}/delete`, request, { headers })

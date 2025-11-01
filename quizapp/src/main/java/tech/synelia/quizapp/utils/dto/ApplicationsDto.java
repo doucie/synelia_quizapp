@@ -49,6 +49,7 @@ public class ApplicationsDto extends _ApplicationsDto implements Cloneable{
     private String     quizStatus           ;
     private Integer    quizLevel            ;
     private Integer    totalQuestions       ;
+    private Integer    quizScorePercent     ;
     private String     interviewDate        ;
     private String     interviewStatus      ;
     private Boolean    applicationAbandoned ;
@@ -84,6 +85,7 @@ public class ApplicationsDto extends _ApplicationsDto implements Cloneable{
 	private SearchParam<String>   quizStatusParam       ;                     
 	private SearchParam<Integer>  quizLevelParam        ;                     
 	private SearchParam<Integer>  totalQuestionsParam   ;                     
+	private SearchParam<Integer>  quizScorePercentParam ;                     
 	private SearchParam<String>   interviewDateParam    ;                     
 	private SearchParam<String>   interviewStatusParam  ;                     
 	private SearchParam<Boolean>  applicationAbandonedParam ;                     

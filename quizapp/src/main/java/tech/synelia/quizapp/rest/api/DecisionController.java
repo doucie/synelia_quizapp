@@ -7,7 +7,6 @@
 package tech.synelia.quizapp.rest.api;
 
 import java.net.URI;
-import java.util.Locale;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,6 +54,13 @@ public class DecisionController {
     public ResponseEntity<Response<DecisionDto>> create(@RequestBody Request<DecisionDto> request) throws Exception {
         slf4jLogger.info("start method /decisions/create");
         Response<DecisionDto> response = controllerFactory.create(decisionBusiness, request, FunctionalityEnum.CREATE_DECISIONS);
+        
+        // Check if response has items before trying to access them
+        if (response.isHasError() || response.getItems() == null || response.getItems().isEmpty()) {
+            slf4jLogger.info("end method /decisions/create with error");
+            return ResponseEntity.badRequest().body(response);
+        }
+        
         URI uri = ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .buildAndExpand(response.getItems().get(0))

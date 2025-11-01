@@ -2,11 +2,12 @@ import { Component, OnInit, OnDestroy, signal, computed, HostListener } from '@a
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, forkJoin, of, catchError } from 'rxjs';
 import { Application, ApplicationService } from '../../../core/services/application.service';
 import { CampaignService, Campaign } from '../../../core/services/campaign.service';
 import { SourceTokenService, SourceToken } from '../../../services/source-token.service';
 import { Decision, DecisionService } from '../../../core/services/decision.service';
+import { User, UserService } from '../../../core/services/user.service';
 
 interface ApplicationWithCampaign extends Application {
   campaignTitle?: string;
@@ -27,6 +28,7 @@ export class DecisionsComponent implements OnInit, OnDestroy {
   // Signals
   applications = signal<ApplicationWithCampaign[]>([]);
   decisions = signal<Decision[]>([]);
+  users = signal<Map<number, User>>(new Map()); // Map pour stocker les utilisateurs par ID
   loading = signal(false);
   searchQuery = signal('');
   selectedApplication = signal<ApplicationWithCampaign | null>(null);
@@ -46,6 +48,7 @@ export class DecisionsComponent implements OnInit, OnDestroy {
     private campaignService: CampaignService,
     private sourceTokenService: SourceTokenService,
     private decisionService: DecisionService,
+    private userService: UserService,
     private router: Router
   ) {}
 
@@ -234,18 +237,68 @@ export class DecisionsComponent implements OnInit, OnDestroy {
 
     this.decisionService.getDecisionsByApplicationId(applicationId).pipe(takeUntil(this.destroy$)).subscribe({
       next: (response) => {
+        console.log('📦 Réponse complète du service:', response);
+        console.log('📦 hasError:', response.hasError);
+        console.log('📦 items:', response.items);
+        console.log('📦 count:', response.count);
+        
         if (response.hasError) {
           console.error('❌ Erreur lors du chargement des décisions:', response.status.message);
           this.decisions.set([]);
         } else {
           const decisions = response.items || [];
           console.log(`\n✅ ${decisions.length} décisions chargées depuis l'API pour l'application ${applicationId}`);
+          console.log('📋 Détail des décisions:', JSON.stringify(decisions, null, 2));
           this.decisions.set(decisions);
+          
+          // Charger les informations des utilisateurs pour les décisions
+          this.loadUsersForDecisions(decisions);
         }
       },
       error: (error) => {
         console.error('❌ Erreur lors du chargement des décisions:', error);
         this.decisions.set([]);
+      }
+    });
+  }
+
+  /**
+   * Charge les informations des utilisateurs pour les décisions
+   */
+  loadUsersForDecisions(decisions: Decision[]): void {
+    const userIds = [...new Set(decisions.map(d => d.userId).filter(id => id !== undefined))] as number[];
+    
+    if (userIds.length === 0) {
+      return;
+    }
+
+    console.log(`\n👤 Chargement des informations de ${userIds.length} utilisateurs`);
+
+    // Créer des observables pour chaque utilisateur à charger
+    const userObservables = userIds.map(userId => 
+      this.userService.getById(userId).pipe(
+        catchError((error: any) => {
+          console.error(`❌ Erreur lors du chargement de l'utilisateur ${userId}:`, error);
+          return of(null);
+        })
+      )
+    );
+
+    forkJoin(userObservables).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (users: (User | null)[]) => {
+        const usersMap = new Map(this.users());
+        
+        users.forEach((user, index) => {
+          if (user) {
+            usersMap.set(userIds[index], user);
+          }
+        });
+        
+        this.users.set(usersMap);
+        console.log(`✅ ${usersMap.size} utilisateurs chargés`);
+      },
+      error: (error: any) => {
+        console.error('❌ Erreur lors du chargement des utilisateurs:', error);
       }
     });
   }
@@ -518,21 +571,19 @@ export class DecisionsComponent implements OnInit, OnDestroy {
     const app = this.selectedApplication();
     if (!app) return false;
 
-    const decisions = this.selectedApplicationDecisions();
-    if (decisions.length === 0) return false;
+    const status = app.applicationStatus || 'PENDING';
 
-    // Déterminer le type de décision basé sur l'étape
-    let decisionType = '';
+    // Étape 2 (Pré-sélection) : une décision a été prise si le statut est PRE_SCREEN_ACCEPTED ou PRE_SCREEN_REJECTED
     if (stepId === 2) {
-      decisionType = 'PRE_SCREEN';
-    } else if (stepId === 3) {
-      decisionType = 'FINAL';
+      return status === 'PRE_SCREEN_ACCEPTED' || status === 'PRE_SCREEN_REJECTED';
     }
 
-    // Vérifier si une décision de ce type existe
-    return decisions.some(decision =>
-      decision.decisionType.startsWith(decisionType)
-    );
+    // Étape 3 (Décision finale) : une décision a été prise si le statut est FINAL_ACCEPTED ou FINAL_REJECTED
+    if (stepId === 3) {
+      return status === 'FINAL_ACCEPTED' || status === 'FINAL_REJECTED';
+    }
+
+    return false;
   }
 
   /**
@@ -544,14 +595,36 @@ export class DecisionsComponent implements OnInit, OnDestroy {
 
     const currentStatus = app.applicationStatus || 'PENDING';
 
-    // Étape 2 (Pré-sélection) : seulement si SUBMITTED
+    // Étape 2 (Pré-sélection) : seulement si SUBMITTED (et pas encore de décision)
     if (stepId === 2) {
       return currentStatus === 'SUBMITTED';
     }
 
-    // Étape 3 (Décision finale) : seulement si PRE_SCREEN_ACCEPTED
+    // Étape 3 (Décision finale) : seulement si PRE_SCREEN_ACCEPTED ou INTERVIEWING
     if (stepId === 3) {
-      return currentStatus === 'PRE_SCREEN_ACCEPTED';
+      return currentStatus === 'PRE_SCREEN_ACCEPTED' || currentStatus === 'INTERVIEWING';
+    }
+
+    return false;
+  }
+
+  /**
+   * Vérifie si on peut annuler une décision pour une étape donnée
+   */
+  canCancelDecisionForStep(stepId: number): boolean {
+    const app = this.selectedApplication();
+    if (!app) return false;
+
+    const currentStatus = app.applicationStatus || 'PENDING';
+
+    // Étape 2 (Pré-sélection) : on peut annuler si PRE_SCREEN_ACCEPTED ou PRE_SCREEN_REJECTED
+    if (stepId === 2) {
+      return currentStatus === 'PRE_SCREEN_ACCEPTED' || currentStatus === 'PRE_SCREEN_REJECTED';
+    }
+
+    // Étape 3 (Décision finale) : on peut annuler si FINAL_ACCEPTED ou FINAL_REJECTED
+    if (stepId === 3) {
+      return currentStatus === 'FINAL_ACCEPTED' || currentStatus === 'FINAL_REJECTED';
     }
 
     return false;
@@ -587,44 +660,50 @@ export class DecisionsComponent implements OnInit, OnDestroy {
    * Annule la décision pour une étape donnée
    */
   undoDecisionForStep(stepId: number): void {
-    const decisions = this.selectedApplicationDecisions();
-    if (decisions.length === 0) return;
+    const app = this.selectedApplication();
+    if (!app) return;
 
-    // Trouver la dernière décision pour cette étape
-    let decisionType = '';
-    if (stepId === 2) {
-      decisionType = 'PRE_SCREEN';
-    } else if (stepId === 3) {
-      decisionType = 'FINAL';
-    }
-
-    const stepDecisions = decisions.filter(decision =>
-      decision.decisionType.startsWith(decisionType)
-    );
-
-    if (stepDecisions.length === 0) return;
-
-    // Prendre la plus récente
-    const lastDecision = stepDecisions[0];
-
-    if (!lastDecision.id) return;
+    const currentStatus = app.applicationStatus || 'PENDING';
+    
+    // Déterminer le type de décision à annuler basé sur l'étape et le statut actuel
+    let decisionType = currentStatus; // Le type de décision est le statut actuel
+    
+    // Créer une nouvelle entrée de décision avec action CANCEL
+    const cancelDecision: Decision = {
+      decisionType: decisionType,
+      decisionAction: 'CANCEL',
+      applicationId: app.id!,
+      userId: this.getCurrentUserId(),
+      createdAt: new Date().toISOString(),
+      createdBy: this.getCurrentUserId()
+    };
 
     this.loading.set(true);
-    this.decisionService.deleteDecision(lastDecision.id).subscribe({
+    this.decisionService.createDecision(cancelDecision).subscribe({
       next: (response: any) => {
         if (response.hasError) {
           console.error('❌ Erreur lors de l\'annulation de la décision:', response.status.message);
+          this.loading.set(false);
         } else {
           console.log('✅ Décision annulée avec succès');
-          // Recharger les décisions
-          const app = this.selectedApplication();
-          if (app) {
+          
+          // Recharger les candidatures d'abord
+          this.loadApplications();
+          
+          // Attendre un peu puis recharger les décisions et resélectionner l'application
+          setTimeout(() => {
             this.loadDecisionsForApplication(app.id!);
-            // Recharger les candidatures pour mettre à jour le statut
-            this.loadApplications();
-          }
+            
+            // Resélectionner l'application pour forcer le rafraîchissement de l'affichage
+            const updatedApps = this.applications();
+            const updatedApp = updatedApps.find(a => a.id === app.id);
+            if (updatedApp) {
+              this.selectedApplication.set(updatedApp);
+            }
+            
+            this.loading.set(false);
+          }, 500);
         }
-        this.loading.set(false);
       },
       error: (error: any) => {
         console.error('❌ Erreur lors de l\'annulation de la décision:', error);
@@ -652,9 +731,9 @@ export class DecisionsComponent implements OnInit, OnDestroy {
       decisionType: decisionType,
       decisionAction: action,
       applicationId: app.id!,
-      userId: 1, // TODO: Récupérer l'ID de l'utilisateur connecté
+      userId: this.getCurrentUserId(),
       createdAt: new Date().toISOString(),
-      createdBy: 1
+      createdBy: this.getCurrentUserId()
     };
 
     this.loading.set(true);
@@ -662,20 +741,60 @@ export class DecisionsComponent implements OnInit, OnDestroy {
       next: (response: any) => {
         if (response.hasError) {
           console.error('❌ Erreur lors de la création de la décision:', response.status.message);
+          this.loading.set(false);
         } else {
           console.log('✅ Décision créée avec succès');
-          // Recharger les décisions
-          this.loadDecisionsForApplication(app.id!);
-          // Recharger les candidatures pour mettre à jour le statut
+          // Fermer la modal
+          this.closeDecisionModal();
+          
+          // Recharger les candidatures d'abord
           this.loadApplications();
+          
+          // Attendre un peu puis recharger les décisions et resélectionner l'application
+          setTimeout(() => {
+            this.loadDecisionsForApplication(app.id!);
+            
+            // Resélectionner l'application pour forcer le rafraîchissement de l'affichage
+            const updatedApps = this.applications();
+            const updatedApp = updatedApps.find(a => a.id === app.id);
+            if (updatedApp) {
+              this.selectedApplication.set(updatedApp);
+            }
+            
+            this.loading.set(false);
+          }, 500);
         }
-        this.loading.set(false);
       },
       error: (error: any) => {
         console.error('❌ Erreur lors de la création de la décision:', error);
         this.loading.set(false);
       }
     });
+  }
+
+  /**
+   * Récupère l'ID de l'utilisateur connecté
+   */
+  getCurrentUserId(): number {
+    const currentUserData = localStorage.getItem('user');
+    if (currentUserData) {
+      try {
+        const user = JSON.parse(currentUserData);
+        return user.id || 1;
+      } catch (e) {
+        console.error('Erreur lors de la récupération de l\'utilisateur:', e);
+        return 1;
+      }
+    }
+    return 1;
+  }
+
+  /**
+   * Récupère le pseudo d'un utilisateur par son ID
+   */
+  getUserPseudo(userId: number): string {
+    const user = this.users().get(userId);
+    return user?.pseudo || user?.username || 'Utilisateur inconnu';
   }
 
   /**

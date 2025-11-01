@@ -34,8 +34,8 @@ public interface DecisionTransformer {
     @FullTransformerQualifier
     @Named("toFullDto")
     @Mappings({
-        @Mapping(source="entity.createdAt", dateFormat="dd/MM/yyyy HH:mm:ss", target="createdAt"),
-        @Mapping(source="entity.updatedAt", dateFormat="dd/MM/yyyy HH:mm:ss", target="updatedAt"),
+        @Mapping(source="entity.createdAt", dateFormat="yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", target="createdAt"),
+        @Mapping(source="entity.updatedAt", dateFormat="yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", target="updatedAt"),
         @Mapping(source="entity.application.id", target="applicationId"),
         @Mapping(source="entity.user.id", target="userId"),
     })
@@ -64,10 +64,10 @@ public interface DecisionTransformer {
     @FullTransformerQualifier
     @Named("toFullEntity")
     @Mappings({
-        @Mapping(source="dto.createdAt", dateFormat="dd/MM/yyyy HH:mm:ss", target="createdAt"),
-        @Mapping(source="dto.updatedAt", dateFormat="dd/MM/yyyy HH:mm:ss", target="updatedAt"),
-        @Mapping(target="application", expression="java(dto.getApplicationId() != null ? new Applications(dto.getApplicationId()) : null)"),
-        @Mapping(target="user", expression="java(dto.getUserId() != null ? new User(dto.getUserId()) : null)"),
+        @Mapping(source="dto.createdAt", dateFormat="yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", target="createdAt"),
+        @Mapping(source="dto.updatedAt", dateFormat="yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", target="updatedAt"),
+        @Mapping(target="application", ignore=true),
+        @Mapping(target="user", ignore=true),
     })
     Decision toEntity(DecisionDto dto) throws ParseException;
 
@@ -93,5 +93,6 @@ public interface DecisionTransformer {
         return entity;
     }
 
+    @IterableMapping(qualifiedByName = "toFullEntity")
     List<Decision> toEntity(List<DecisionDto> dtos) throws ParseException;
 }

@@ -235,7 +235,7 @@ public interface ApplicationsRepository extends JpaRepository<Applications, Inte
 		for (Map.Entry<String, java.lang.Object> entry : param.entrySet()) {
 			query.setParameter(entry.getKey(), entry.getValue());
 		}
-		Long count = (Long) query.getResultList().get(0);
+		Long count = (Long) query.getSingleResult();
 		return count;
 	}
 
@@ -278,7 +278,7 @@ public interface ApplicationsRepository extends JpaRepository<Applications, Inte
 		for (Map.Entry<String, java.lang.Object> entry : param.entrySet()) {
 			query.setParameter(entry.getKey(), entry.getValue());
 		}
-		Long count = (Long) query.getResultList().get(0);
+		Long count = (Long) query.getSingleResult();
 		return count;
 	}
 

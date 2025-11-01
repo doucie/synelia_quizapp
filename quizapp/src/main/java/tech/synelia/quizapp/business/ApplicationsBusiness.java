@@ -145,6 +145,9 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			entityToSave.setQuizStatus(tech.synelia.quizapp.utils.enums.QuizStatus.PENDING.getValue());
 			entityToSave.setQuizToken(null); // Sera généré après vérification email
 			entityToSave.setQuizLevel(null); // Sera initialisé au démarrage du quiz
+			entityToSave.setApplicationAbandoned(false); // Initialiser à false
+			entityToSave.setPreScreenDecisionMailSent(false); // Initialiser à false
+			entityToSave.setFinalDecisionMailSent(false); // Initialiser à false
 			items.add(entityToSave);
 		}
 
@@ -790,54 +793,62 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			
 			int totalAnswersCreated = 0;
 			
-			// 3. Pour chaque question, récupérer toutes les réponses possibles (questions_answers)
-			for (CampaignQuestions cq : campaignQuestions) {
-				Questions question = cq.getQuestions();
-				if (question == null || question.getIsDeleted()) {
-					continue;
-				}
-				
-				Integer questionId = question.getId();
-				
-				// Récupérer tous les questions_answers pour cette question
-				List<QuestionsAnswers> questionAnswers = questionsAnswersRepository.findByQuestionId(questionId, false);
-				
-				log.info("Question ID " + questionId + " has " + questionAnswers.size() + " possible answers");
-				
-				// 4. Pour chaque questions_answers, créer un candidate_answers avec is_selected = false
-				for (QuestionsAnswers qa : questionAnswers) {
-					if (qa == null || qa.getIsDeleted()) {
-						continue;
-					}
-					
-					// Vérifier si l'enregistrement existe déjà
-					CandidateAnswers existing = candidateAnswersRepository.findByApplicationIdAndQuestionsAnswersId(
-						application.getId(), 
-						qa.getId(), 
-						false
-					);
-					
-					if (existing == null) {
-						// Créer un nouveau candidate_answer
-						CandidateAnswers candidateAnswer = new CandidateAnswers();
-						candidateAnswer.setApplications(application);
-						candidateAnswer.setQuestionsAnswers(qa);
-						candidateAnswer.setIsSelected(false); // Pas encore sélectionné
-						candidateAnswer.setCreatedAt(Utilities.getCurrentDate());
-						candidateAnswer.setCreatedBy(userId);
-						candidateAnswer.setIsDeleted(false);
-						
-						candidateAnswersRepository.save(candidateAnswer);
-						totalAnswersCreated++;
-						
-						log.info("Created candidate_answer for questions_answers ID: " + qa.getId());
-					} else {
-						log.info("candidate_answer already exists for questions_answers ID: " + qa.getId());
-					}
-				}
-			}
-			
-			log.info("Successfully initialized " + totalAnswersCreated + " candidate_answers");
+        // 3. Pour chaque question, récupérer toutes les réponses possibles (questions_answers)
+        for (CampaignQuestions cq : campaignQuestions) {
+            Questions question = cq.getQuestions();
+            if (question == null || question.getIsDeleted()) {
+                log.info("Skipping deleted or null question");
+                continue;
+            }
+            
+            Integer questionId = question.getId();
+            log.info("Processing question ID: " + questionId + " - " + question.getQuestionContent());
+            
+            // Récupérer tous les questions_answers pour cette question
+            List<QuestionsAnswers> questionAnswers = questionsAnswersRepository.findByQuestionId(questionId, false);
+            
+            log.info("Question ID " + questionId + " has " + questionAnswers.size() + " possible answers");
+            
+            if (questionAnswers.isEmpty()) {
+                log.warning("No answers found for question " + questionId + ", skipping");
+                continue;
+            }
+            
+            // 4. Pour chaque questions_answers, créer un candidate_answers avec is_selected = false
+            for (QuestionsAnswers qa : questionAnswers) {
+                if (qa == null || qa.getIsDeleted()) {
+                    log.info("Skipping deleted or null questions_answers");
+                    continue;
+                }
+                
+                log.info("Processing questions_answers ID: " + qa.getId() + " for question " + questionId);
+                
+                // Vérifier si l'enregistrement existe déjà
+                CandidateAnswers existing = candidateAnswersRepository.findByApplicationIdAndQuestionsAnswersId(
+                    application.getId(), 
+                    qa.getId(), 
+                    false
+                );
+                
+                if (existing == null) {
+                    // Créer un nouveau candidate_answer
+                    CandidateAnswers candidateAnswer = new CandidateAnswers();
+                    candidateAnswer.setApplications(application);
+                    candidateAnswer.setQuestionsAnswers(qa);
+                    candidateAnswer.setIsSelected(false); // Pas encore sélectionné
+                    candidateAnswer.setCreatedAt(Utilities.getCurrentDate());
+                    candidateAnswer.setCreatedBy(userId);
+                    candidateAnswer.setIsDeleted(false);
+                    
+                    candidateAnswersRepository.save(candidateAnswer);
+                    totalAnswersCreated++;
+                    
+                    log.info("Created candidate_answer for questions_answers ID: " + qa.getId());
+                } else {
+                    log.info("candidate_answer already exists for questions_answers ID: " + qa.getId());
+                }
+            }
+        }			log.info("Successfully initialized " + totalAnswersCreated + " candidate_answers");
 			
 		} catch (Exception e) {
 			log.severe("Error initializing candidate answers: " + e.getMessage());
@@ -922,6 +933,8 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				return response;
 			}
 			
+			log.info("Application status before quiz initialization: " + application.getQuizStatus());
+			
 			// Si le quiz est en statut PENDING, le mettre en STARTED et initialiser les réponses
 			if (tech.synelia.quizapp.utils.enums.QuizStatus.PENDING.getValue().equals(application.getQuizStatus())) {
 				application.setQuizStatus(tech.synelia.quizapp.utils.enums.QuizStatus.STARTED.getValue());
@@ -933,6 +946,8 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				
 				// Initialiser les candidate_answers pour toutes les réponses possibles
 				initializeCandidateAnswers(application, request.getUser());
+			} else {
+				log.info("Quiz already started (status: " + application.getQuizStatus() + "), skipping candidate_answers initialization");
 			}
 			
 			// 2. Récupérer le source token
@@ -1365,10 +1380,14 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			
 			log.info("Nombre de bonnes réponses: " + correctAnswersCount + " / " + totalQuestions);
 			
-			// 4. Mettre à jour l'application avec le score, total_questions et statut COMPLETED
+			// Calculer le pourcentage du score
+			Integer quizScorePercent = (correctAnswersCount * 100) / totalQuestions;
+			
+			// 4. Mettre à jour l'application avec le score, total_questions, quiz_score_percent et statut COMPLETED
 			application.setQuizStatus(tech.synelia.quizapp.utils.enums.QuizStatus.COMPLETED.getValue());
 			application.setQuizScore(correctAnswersCount);
 			application.setTotalQuestions(totalQuestions);
+			application.setQuizScorePercent(quizScorePercent);
 			application.setUpdatedAt(Utilities.getCurrentDate());
 			application.setUpdatedBy(request.getUser());
 			applicationsRepository.save(application);
@@ -1381,6 +1400,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			resultDto.setQuizStatus(tech.synelia.quizapp.utils.enums.QuizStatus.COMPLETED.getValue());
 			resultDto.setQuizScore(correctAnswersCount);
 			resultDto.setTotalQuestions(totalQuestions);
+			resultDto.setQuizScorePercent(quizScorePercent);
 			
 			Status status = new Status();
 			status.setCode(StatusCode.SUCCESS);

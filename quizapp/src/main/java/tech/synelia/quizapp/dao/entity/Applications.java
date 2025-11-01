@@ -98,6 +98,9 @@ public class Applications implements Serializable, Cloneable {
     @Column(name="total_questions")
     private Integer    totalQuestions ;
 
+    @Column(name="quiz_score_percent")
+    private Integer    quizScorePercent ;
+
     @Column(name="interview_date")
     @Temporal(TemporalType.TIMESTAMP)
     private Date       interviewDate ;

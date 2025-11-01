@@ -92,7 +92,21 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
 
             // Transform and save
             Decision entity = DecisionTransformer.INSTANCE.toEntity(dto);
+            
+            // Set relationships manually
+            if (dto.getApplicationId() != null) {
+                Applications app = new Applications();
+                app.setId(dto.getApplicationId());
+                entity.setApplication(app);
+            }
+            if (dto.getUserId() != null) {
+                User user = new User();
+                user.setId(dto.getUserId());
+                entity.setUser(user);
+            }
+            
             entity.setCreatedAt(new Date());
+            entity.setCreatedBy(request.getUser());
             entity.setIsDeleted(false);
 
             // Update application status based on decision
@@ -117,7 +131,30 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
             // Fetch the full application entity
             Applications app = applicationsRepository.findOne(decision.getApplication().getId(), false);
             if (app != null) {
-                String newStatus = decision.getDecisionType();
+                String newStatus;
+                
+                // Si l'action est CANCEL, on revient à l'état précédent
+                if ("CANCEL".equals(decision.getDecisionAction())) {
+                    String currentDecisionType = decision.getDecisionType();
+                    
+                    // Si on annule une décision de pré-sélection, on retourne à SUBMITTED
+                    if (currentDecisionType.startsWith("PRE_SCREEN")) {
+                        newStatus = "SUBMITTED";
+                        log.info("Cancelling pre-screen decision, reverting to SUBMITTED");
+                    }
+                    // Si on annule une décision finale, on retourne à PRE_SCREEN_ACCEPTED
+                    else if (currentDecisionType.startsWith("FINAL")) {
+                        newStatus = "PRE_SCREEN_ACCEPTED";
+                        log.info("Cancelling final decision, reverting to PRE_SCREEN_ACCEPTED");
+                    }
+                    else {
+                        newStatus = decision.getDecisionType();
+                    }
+                }
+                // Si l'action est APPROVE, on met à jour avec le type de décision
+                else {
+                    newStatus = decision.getDecisionType();
+                }
 
                 // Update the application status
                 app.setApplicationStatus(newStatus);
@@ -139,14 +176,18 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
     @Override
     public Response<DecisionDto> getByCriteria(Request<DecisionDto> request, Locale locale) throws ParseException {
         log.info("----begin get Decision by criteria-----");
+        log.info("Request data: " + (request.getData() != null ? request.getData().getApplicationId() : "null"));
 
         Response<DecisionDto> response = new Response<DecisionDto>();
         List<Decision> items = new ArrayList<Decision>();
 
         // Simple implementation - get all decisions for application if specified
         if (request.getData() != null && request.getData().getApplicationId() != null) {
+            log.info("Searching decisions for application ID: " + request.getData().getApplicationId());
             items = decisionRepository.findByApplicationId(request.getData().getApplicationId(), false);
+            log.info("Found " + items.size() + " decisions");
         } else {
+            log.info("No applicationId specified, getting all active decisions");
             items = decisionRepository.findAllActive();
         }
 
@@ -162,9 +203,16 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
         }
 
         List<DecisionDto> itemDtos = DecisionTransformer.INSTANCE.toDto(items);
+        
+        // Créer un status pour la réponse
+        Status status = new Status();
+        status.setCode(StatusCode.SUCCESS);
+        status.setMessage(StatusMessage.SUCCESS);
+        
         response.setItems(itemDtos);
         response.setCount((long) items.size());
         response.setHasError(false);
+        response.setStatus(status);
 
         log.info("----end get Decision by criteria-----");
         return response;
@@ -203,6 +251,19 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
 
             // Update
             Decision entity = DecisionTransformer.INSTANCE.toEntity(dto);
+            
+            // Set relationships manually
+            if (dto.getApplicationId() != null) {
+                Applications app = new Applications();
+                app.setId(dto.getApplicationId());
+                entity.setApplication(app);
+            }
+            if (dto.getUserId() != null) {
+                User user = new User();
+                user.setId(dto.getUserId());
+                entity.setUser(user);
+            }
+            
             entity.setUpdatedAt(new Date());
             entity.setIsDeleted(false);
 
