@@ -19,6 +19,7 @@ export interface Application {
   motivationLetter?: string;
   emailVerified?: boolean;
   quizScore?: number;
+  quizScorePercent?: number;
   evaluationScore?: number;
   applicationStatus?: string;
   visitToken?: string;

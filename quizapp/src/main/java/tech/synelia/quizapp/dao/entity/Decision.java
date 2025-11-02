@@ -37,7 +37,7 @@ public class Decision implements Serializable, Cloneable {
     // ENTITY PRIMARY KEY ( BASED ON A SINGLE FIELD )
     //----------------------------------------------------------------------
     @Id
-    @GeneratedValue(strategy=GenerationType.AUTO)
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
     @Column(name="id", nullable=false)
     private Integer    id           ;
 
@@ -47,8 +47,8 @@ public class Decision implements Serializable, Cloneable {
     @Column(name="decision_type", nullable=false, length=50)
     private String     decisionType ;
 
-    @Column(name="decision_action", nullable=false, length=10)
-    private String     decisionAction ;
+    @Column(name="is_cancel", nullable=false)
+    private Boolean    isCancel     ;
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name="created_at")

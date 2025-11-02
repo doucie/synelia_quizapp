@@ -1,462 +1,438 @@
-<div class="decisions-page">
-  <!-- Header élégant -->
-  <header class="page-header">
-    <div class="header-top">
-      <div class="header-title-section">
-        <div class="title-wrapper">
-          <h1 class="page-title">
-            <span class="title-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M3 6l3 3 3-3"/>
-                <path d="M21 6l-3 3-3-3"/>
-                <path d="M12 3v18"/>
-                <path d="M8 21h8"/>
-              </svg>
-            </span>
-            Gestion des Décisions
-          </h1>
+<div class="decisions-modern-page">
+  <!-- Header moderne et compact -->
+  <div class="modern-header">
+    <div class="header-main">
+      <div class="header-title">
+        <div class="title-icon">
+          <i class="bi bi-clipboard2-check"></i>
         </div>
-        <p class="page-subtitle">Suivez et gérez l'historique des décisions pour vos candidatures</p>
+        <div class="title-content">
+          <h1>Gestion des Décisions</h1>
+          <p>Gérez les pré-sélections et décisions finales</p>
+        </div>
       </div>
 
-      <div class="header-actions">
-        <button class="action-btn primary" (click)="loadApplications()" [disabled]="loading()" title="Actualiser">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
-          </svg>
-          <span>Actualiser</span>
+      <!-- Stats compactes -->
+      <div class="header-stats">
+        <div class="stat-chip submitted" title="Candidatures en attente">
+          <i class="bi bi-file-earmark-text"></i>
+          <span>{{ getApplicationsByStatus('SUBMITTED').length }}</span>
+        </div>
+        <div class="stat-chip pending" title="En pré-sélection">
+          <i class="bi bi-hourglass-split"></i>
+          <span>{{ getPendingDecisionsCount() }}</span>
+        </div>
+        <div class="stat-chip accepted" title="Pré-sélectionnés">
+          <i class="bi bi-check-circle"></i>
+          <span>{{ getApplicationsByStatus('PRE_SCREEN_ACCEPTED').length }}</span>
+        </div>
+        <div class="stat-chip final" title="Décisions finales">
+          <i class="bi bi-trophy"></i>
+          <span>{{ getFinalDecisionsCount() }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Barre de recherche et filtres compacts -->
+    <div class="header-controls">
+      <div class="search-box">
+        <i class="bi bi-search"></i>
+        <input
+          type="text"
+          placeholder="Rechercher un candidat..."
+          [(ngModel)]="searchTerm"
+          (input)="filterApplications()"
+        />
+      </div>
+      <div class="filter-chips">
+        <button
+          class="chip"
+          [class.active]="selectedFilter() === 'ALL'"
+          (click)="setFilter('ALL')"
+        >
+          Toutes ({{ applications().length || 0 }})
+        </button>
+        <button
+          class="chip submitted"
+          [class.active]="selectedFilter() === 'SUBMITTED'"
+          (click)="setFilter('SUBMITTED')"
+        >
+          En attente ({{ getPendingDecisionsCount() }})
+        </button>
+        <button
+          class="chip pending"
+          [class.active]="selectedFilter() === 'PRE_SCREEN'"
+          (click)="setFilter('PRE_SCREEN')"
+        >
+          Pré-sélectionnés ({{ getApplicationsByStatus('PRE_SCREEN_ACCEPTED').length }})
+        </button>
+        <button
+          class="chip final"
+          [class.active]="selectedFilter() === 'FINAL'"
+          (click)="setFilter('FINAL')"
+        >
+          Décisions finales ({{ getFinalDecisionsCount() }})
         </button>
       </div>
     </div>
-  </header>
+  </div>
 
-  <!-- Section de recherche -->
-  <div class="search-section">
-    <div class="search-container">
-      <div class="search-input-wrapper">
-        <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8"/>
-          <path d="M21 21l-4.35-4.35"/>
-        </svg>
-        <input
-          type="text"
-          class="search-input"
-          placeholder="Rechercher une candidature (nom, email, campagne)..."
-          [(ngModel)]="searchQuery"
-          (input)="showApplicationSuggestions.set(true)"
-          (focus)="showApplicationSuggestions.set(true)"
-        />
-        @if (searchQuery()) {
-          <button class="clear-search" (click)="clearSearch()" title="Effacer la recherche">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="18" y1="6" x2="6" y2="18"/>
-              <line x1="6" y1="6" x2="18" y2="18"/>
+  <!-- Layout 3 colonnes moderne -->
+  @if (loading()) {
+    <div class="loading-overlay">
+      <div class="spinner"></div>
+      <p>Chargement des candidatures...</p>
+    </div>
+  } @else {
+    <div class="modern-layout">
+      <!-- Left Column - Candidates List -->
+      <div class="left-column">
+        <div class="candidates-header">
+          <h3>Candidats</h3>
+          <span class="count-badge">{{ filteredApplications().length }}</span>
+        </div>
+        
+        @if (!filteredApplications().length) {
+          <div class="empty-state">
+            <svg class="empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
             </svg>
-          </button>
-        }
-      </div>
-
-      <!-- Suggestions de candidatures -->
-      @if (showApplicationSuggestions() && filteredApplications().length > 0) {
-        <div class="suggestions-dropdown">
-          <div class="suggestions-header">
-            <span class="suggestions-title">Candidatures</span>
-            <span class="suggestions-count">{{ filteredApplications().length }}</span>
+            <p>Aucun candidat trouvé</p>
           </div>
-          <div class="suggestions-list">
+        } @else {
+          <div class="candidates-list">
             @for (app of filteredApplications(); track app.id) {
-              <div class="suggestion-item" (click)="selectApplication(app)">
+              <div
+                class="candidate-card"
+                [class.selected]="selectedApplication()?.id === app.id"
+                (click)="selectApplication(app)"
+              >
                 <div class="candidate-avatar">
-                  <span class="avatar-initials">{{ getCandidateName(app).charAt(0) }}</span>
+                  {{ getCandidateInitials(app) }}
                 </div>
                 <div class="candidate-info">
                   <div class="candidate-name">{{ getCandidateName(app) }}</div>
-                  <div class="candidate-email">{{ app.candidateEmail }}</div>
                   <div class="candidate-campaign">{{ app.campaignTitle }}</div>
+                  <div class="candidate-date">{{ formatDateTime(app.createdAt) }}</div>
                 </div>
-                <div class="candidate-status">
-                  <span class="status-badge" [ngClass]="getStepClass(getStepStatus(app.applicationStatus, 1))">
-                    {{ getStepDescription(app.applicationStatus, 1) }}
-                  </span>
-                </div>
-              </div>
-            }
-          </div>
-        </div>
-      }
-    </div>
-  </div>
-
-  <!-- Contenu principal -->
-  @if (selectedApplication()) {
-    <div class="content-grid">
-      <!-- Schéma de progression -->
-      <div class="progress-section">
-        <div class="section-header">
-          <h2 class="section-title">
-            <span class="section-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M3 3v18h18"/>
-                <path d="M18 9l-5 5-3-3-5 5"/>
-              </svg>
-            </span>
-            Progression de la candidature
-          </h2>
-          <div class="candidate-summary">
-            <div class="candidate-avatar-large">
-              <span class="avatar-initials-large">{{ (getCandidateName(selectedApplication()!) || 'C').charAt(0) }}</span>
-            </div>
-            <div class="candidate-details">
-              <h3 class="candidate-name-large">{{ getCandidateName(selectedApplication()!) }}</h3>
-              <p class="candidate-email-large">{{ selectedApplication()!.candidateEmail }}</p>
-              <p class="candidate-campaign-large">{{ selectedApplication()!.campaignTitle }}</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="progress-timeline">
-          @for (step of applicationSteps(); track step.id) {
-            <div class="timeline-step" [ngClass]="getStepClass(step.status)">
-              <div class="step-connector">
-                <div class="step-line"></div>
-                <div class="step-dot" [ngClass]="step.status"></div>
-              </div>
-              <div class="step-content">
-                <div class="step-content-main">
-                  <div class="step-info">
-                    <div class="step-header">
-                      <h4 class="step-title">{{ step.name }}</h4>
-                      <span class="step-status-badge" [ngClass]="step.status">
-                        {{ step.status === 'completed' ? 'Terminé' :
-                           step.status === 'active' ? 'En cours' :
-                           step.status === 'rejected' ? 'Refusé' :
-                           step.status === 'archived' ? 'Archivé' : 'En attente' }}
-                      </span>
-                    </div>
-                    <p class="step-description">{{ step.description }}</p>
-                  </div>
-
-                  <!-- Boutons de décision pour les étapes appropriées -->
-                  @if (step.id === 2 || step.id === 3) {
-                    <div class="step-decision-buttons">
-                      @if (canTakeDecisionForStep(step.id)) {
-                        <button
-                          class="decision-btn decide-btn"
-                          (click)="openDecisionModal(step.id)"
-                          title="Prendre une décision">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M9 12l2 2 4-4"/>
-                            <path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/>
-                          </svg>
-                          Décider
-                        </button>
-                      }
-                      @if (canCancelDecisionForStep(step.id)) {
-                        <button
-                          class="decision-btn undo-btn"
-                          (click)="undoDecisionForStep(step.id)"
-                          title="Annuler la décision">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
-                            <path d="M21 3v5h-5"/>
-                          </svg>
-                          Annuler
-                        </button>
-                      }
-                    </div>
-                  }
-                </div>
-
-                <!-- Détails supplémentaires -->
-                @if (step.details && step.details.length > 0) {
-                  <div class="step-details">
-                    @for (detail of step.details; track $index) {
-                      <div class="detail-item">
-                        <span class="detail-label">{{ detail.label }}:</span>
-                        @if (detail.type === 'button') {
-                          <button
-                            class="detail-button"
-                            (click)="detail.action && handleDetailAction(detail.action)"
-                            title="Voir le CV">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                              <path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
-                              <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                            </svg>
-                            {{ detail.value }}
-                          </button>
-                        } @else {
-                          <span class="detail-value">{{ detail.value }}</span>
-                        }
-                      </div>
-                    }
-                  </div>
-                }
-              </div>
-            </div>
-          }
-        </div>
-      </div>
-
-      <!-- Historique des décisions -->
-      <div class="decisions-section">
-        <div class="section-header">
-          <h2 class="section-title">
-            <span class="section-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M16 4h.01"/>
-                <path d="M16 20h.01"/>
-                <path d="M8 4h.01"/>
-                <path d="M8 20h.01"/>
-                <path d="M12 4h.01"/>
-                <path d="M12 20h.01"/>
-                <path d="M4 8h16"/>
-                <path d="M4 12h16"/>
-                <path d="M4 16h16"/>
-              </svg>
-            </span>
-            Historique des décisions
-          </h2>
-          <div class="decisions-count">
-            <span class="count-badge">{{ selectedApplicationDecisions().length }}</span>
-            <span class="count-label">décision{{ selectedApplicationDecisions().length > 1 ? 's' : '' }}</span>
-          </div>
-        </div>
-
-        @if (selectedApplicationDecisions().length > 0) {
-          <div class="decisions-timeline">
-            @for (decision of selectedApplicationDecisions(); track $index) {
-              <div class="decision-item">
-                <div class="decision-connector">
-                  <div class="decision-line"></div>
-                  <div class="decision-dot" [ngClass]="getDecisionActionClass(decision.decisionAction)"></div>
-                </div>
-                <div class="decision-content">
-                  <div class="decision-header">
-                    <div class="decision-type">
-                      <span class="decision-type-badge">{{ decision.decisionType }}</span>
-                    </div>
-                    <div class="decision-action">
-                      <span class="decision-action-badge" [ngClass]="getDecisionActionClass(decision.decisionAction)">
-                        {{ getDecisionActionLabel(decision.decisionAction) }}
-                      </span>
-                    </div>
-                  </div>
-                  <div class="decision-meta">
-                    <div class="decision-user">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                        <circle cx="12" cy="7" r="4"/>
-                      </svg>
-                      <span class="user-name">{{ getUserPseudo(decision.userId) }}</span>
-                    </div>
-                    <div class="decision-date">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"/>
-                        <polyline points="12 6 12 12 16 14"/>
-                      </svg>
-                      <span class="date-text">{{ formatDate(decision.createdAt) }}</span>
-                    </div>
-                  </div>
+                <div class="candidate-status" [ngClass]="getStatusClass(app.applicationStatus)">
+                  <div class="status-dot"></div>
                 </div>
               </div>
             }
-          </div>
-        } @else {
-          <div class="no-decisions">
-            <div class="no-decisions-icon">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <path d="M14 2v6h6"/>
-                <path d="M16 13H8"/>
-                <path d="M16 17H8"/>
-                <path d="M10 9H8"/>
-              </svg>
-            </div>
-            <h3 class="no-decisions-title">Aucune décision enregistrée</h3>
-            <p class="no-decisions-text">Les décisions prises pour cette candidature apparaîtront ici.</p>
           </div>
         }
       </div>
-    </div>
-  } @else {
-    <!-- État vide -->
-    <div class="empty-state">
-      <div class="empty-state-icon">
-        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-          <path d="M14 2v6h6"/>
-          <path d="M16 13H8"/>
-          <path d="M16 17H8"/>
-          <path d="M10 9H8"/>
-        </svg>
-      </div>
-      <h2 class="empty-state-title">Sélectionnez une candidature</h2>
-      <p class="empty-state-text">Utilisez la barre de recherche ci-dessus pour trouver et sélectionner une candidature à analyser.</p>
-    </div>
-  }
 
-  <!-- Loading overlay -->
-  @if (loading()) {
-    <div class="loading-overlay">
-      <div class="loading-spinner">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-        </svg>
-      </div>
-      <p class="loading-text">Chargement...</p>
-    </div>
-  }
+      <!-- Middle Column - Candidate Details -->
+      <div class="middle-column">
+        @if (!selectedApplication()) {
+          <div class="no-selection">
+            <svg class="no-selection-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+            <p class="no-selection-text">Sélectionnez un candidat pour voir les détails</p>
+          </div>
+        } @else {
+          <div class="candidate-detail">
+            <!-- Header -->
+            <div class="detail-header">
+              <div class="detail-avatar">
+                {{ getCandidateInitials(selectedApplication()!) }}
+              </div>
+              <div class="detail-info">
+                <h2 class="detail-name">{{ getCandidateName(selectedApplication()!) }}</h2>
+                <div class="detail-meta">
+                  <span class="meta-item">
+                    <i class="bi bi-briefcase"></i>
+                    {{ selectedApplication()!.campaignTitle }}
+                  </span>
+                  <span class="meta-item">
+                    <i class="bi bi-calendar"></i>
+                    {{ formatDateTime(selectedApplication()!.createdAt) }}
+                  </span>
+                </div>
+              </div>
+              <div class="detail-status" [ngClass]="getStatusClass(selectedApplication()!.applicationStatus)">
+                {{ getStatusLabel(selectedApplication()!.applicationStatus) }}
+              </div>
+            </div>
 
-  <!-- Modal d'aperçu CV -->
-  @if (showCvModal()) {
-    <div class="cv-modal-overlay" (click)="closeCvModal()">
-      <div class="cv-modal" (click)="$event.stopPropagation()">
-        <div class="cv-modal-header">
-          <h3 class="cv-modal-title">Aperçu du CV - {{ cvModalCandidateName() }}</h3>
-          <button class="cv-modal-close" (click)="closeCvModal()" title="Fermer">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="18" y1="6" x2="6" y2="18"/>
-              <line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-          </button>
-        </div>
-        <div class="cv-modal-body">
-          <iframe [src]="cvModalUrl()" class="cv-preview-frame"></iframe>
-        </div>
-        <div class="cv-modal-footer">
-          <button class="cv-action-btn secondary" (click)="downloadCurrentCV()">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="7 10 12 15 17 10"/>
-              <line x1="12" y1="15" x2="12" y2="3"/>
-            </svg>
-            Télécharger
-          </button>
-          <button class="cv-action-btn primary" (click)="openCurrentCVInNewTab()">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-              <polyline points="15 3 21 3 21 9"/>
-              <line x1="10" y1="14" x2="21" y2="3"/>
-            </svg>
-            Ouvrir dans un nouvel onglet
-          </button>
-        </div>
-      </div>
-    </div>
-  }
+            <!-- Process Steps -->
+            <div class="process-section">
+              <h3 class="section-title">Processus de décision</h3>
+              
+              <div class="process-steps">
+                <!-- Step 1: Candidature -->
+                <div class="process-step" 
+                     [class.active]="selectedApplication()!.applicationStatus === 'PENDING'" 
+                     [class.completed]="selectedApplication()!.applicationStatus === 'SUBMITTED' || selectedApplication()!.applicationStatus === 'PRE_SCREEN_ACCEPTED' || selectedApplication()!.applicationStatus === 'FINAL_ACCEPTED' || selectedApplication()!.applicationStatus === 'FINAL_REJECTED'">
+                  <div class="step-indicator">
+                    <div class="step-number">1</div>
+                    <div class="step-line"></div>
+                  </div>
+                  <div class="step-content">
+                    <div class="step-header">
+                      <h4 class="step-title">Candidature</h4>
+                      @if (selectedApplication()!.applicationStatus === 'PENDING') {
+                        <span class="step-badge current">En cours</span>
+                      } @else {
+                        <span class="step-badge completed">✓</span>
+                      }
+                    </div>
+                    
+                    <!-- Informations de candidature -->
+                    <div class="step-info">
+                      <div class="info-item">
+                        <i class="bi bi-envelope-check"></i>
+                        <div class="info-content">
+                          <span class="info-label">Email vérifié</span>
+                          @if (selectedApplication()!.emailVerified) {
+                            <span class="info-value success">
+                              <i class="bi bi-check-circle-fill"></i>
+                              Oui
+                            </span>
+                          } @else {
+                            <span class="info-value warning">
+                              <i class="bi bi-exclamation-circle-fill"></i>
+                              Non vérifié
+                            </span>
+                          }
+                        </div>
+                      </div>
+                      
+                      <div class="info-item">
+                        <i class="bi bi-trophy"></i>
+                        <div class="info-content">
+                          <span class="info-label">Score du quiz</span>
+                          @if (selectedApplication()!.quizScorePercent !== null && selectedApplication()!.quizScorePercent !== undefined) {
+                            <span class="info-value" [class.success]="selectedApplication()!.quizScorePercent! >= 70" [class.warning]="selectedApplication()!.quizScorePercent! >= 50 && selectedApplication()!.quizScorePercent! < 70" [class.error]="selectedApplication()!.quizScorePercent! < 50">
+                              <i class="bi bi-bar-chart-fill"></i>
+                              {{ selectedApplication()!.quizScorePercent }}%
+                            </span>
+                          } @else {
+                            <span class="info-value muted">
+                              <i class="bi bi-dash-circle"></i>
+                              Quiz non complété
+                            </span>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                    
+                    @if (selectedApplication()!.applicationStatus === 'PENDING') {
+                      <p class="step-description">Le candidat doit compléter son quiz.</p>
+                    }
+                  </div>
+                </div>
 
-  <!-- Modal de décision -->
-  @if (showDecisionModal()) {
-    <div class="decision-modal-overlay" (click)="closeDecisionModal()">
-      <div class="decision-modal" (click)="$event.stopPropagation()">
-        <div class="decision-modal-header">
-          <h3 class="decision-modal-title">
-            @if (decisionModalStep() === 2) {
-              Prendre une décision de pré-sélection
-            } @else if (decisionModalStep() === 3) {
-              Prendre une décision finale
+                <!-- Step 2: Pré-sélection -->
+                <div class="process-step" 
+                     [class.active]="selectedApplication()!.applicationStatus === 'SUBMITTED'" 
+                     [class.completed]="selectedApplication()!.applicationStatus === 'PRE_SCREEN_ACCEPTED' || selectedApplication()!.applicationStatus === 'FINAL_ACCEPTED' || selectedApplication()!.applicationStatus === 'FINAL_REJECTED'">
+                  <div class="step-indicator">
+                    <div class="step-number">2</div>
+                    <div class="step-line"></div>
+                  </div>
+                  <div class="step-content">
+                    <div class="step-header">
+                      <h4 class="step-title">Pré-sélection</h4>
+                      @if (selectedApplication()!.applicationStatus === 'SUBMITTED') {
+                        <span class="step-badge current">En cours</span>
+                      } @else if (selectedApplication()!.applicationStatus === 'PRE_SCREEN_ACCEPTED' || selectedApplication()!.applicationStatus === 'FINAL_ACCEPTED' || selectedApplication()!.applicationStatus === 'FINAL_REJECTED') {
+                        <span class="step-badge completed">✓</span>
+                      } @else {
+                        <span class="step-badge pending">En attente</span>
+                      }
+                    </div>
+                    
+                    <!-- Informations de pré-sélection -->
+                    @if (selectedApplication()!.applicationStatus !== 'PENDING') {
+                      <div class="step-info">
+                        <div class="info-item">
+                          <i class="bi bi-calendar-event"></i>
+                          <div class="info-content">
+                            <span class="info-label">Date d'entretien</span>
+                            @if (selectedApplication()!.interviewDate) {
+                              <span class="info-value">
+                                <i class="bi bi-clock"></i>
+                                {{ formatDateTime(selectedApplication()!.interviewDate) }}
+                              </span>
+                            } @else {
+                              <span class="info-value muted">
+                                <i class="bi bi-dash-circle"></i>
+                                Non planifié
+                              </span>
+                            }
+                          </div>
+                        </div>
+                        
+                        <div class="info-item">
+                          <i class="bi bi-clipboard-check"></i>
+                          <div class="info-content">
+                            <span class="info-label">Statut entretien</span>
+                            @if (selectedApplication()!.interviewStatus) {
+                              <span class="info-value" [ngClass]="getInterviewStatusClass(selectedApplication()!.interviewStatus!)">
+                                <i [class]="getInterviewStatusIcon(selectedApplication()!.interviewStatus!)"></i>
+                                {{ getInterviewStatusLabel(selectedApplication()!.interviewStatus!) }}
+                              </span>
+                            } @else {
+                              <span class="info-value muted">
+                                <i class="bi bi-dash-circle"></i>
+                                Aucun entretien
+                              </span>
+                            }
+                          </div>
+                        </div>
+                        
+                        <div class="info-item">
+                          <i class="bi bi-star"></i>
+                          <div class="info-content">
+                            <span class="info-label">Score d'évaluation</span>
+                            @if (selectedApplication()!.evaluationScore !== null && selectedApplication()!.evaluationScore !== undefined) {
+                              <span class="info-value" [class.success]="selectedApplication()!.evaluationScore! >= 70" [class.warning]="selectedApplication()!.evaluationScore! >= 50 && selectedApplication()!.evaluationScore! < 70" [class.error]="selectedApplication()!.evaluationScore! < 50">
+                                <i class="bi bi-star-fill"></i>
+                                {{ selectedApplication()!.evaluationScore }}/100
+                              </span>
+                            } @else {
+                              <span class="info-value muted">
+                                <i class="bi bi-dash-circle"></i>
+                                Non évalué
+                              </span>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    }
+                    
+                    @if (selectedApplication()!.applicationStatus === 'SUBMITTED') {
+                      <div class="step-actions">
+                        <button class="btn btn-success" (click)="takeDecision('APPROVE')">
+                          <i class="bi bi-check-lg"></i>
+                          Accepter la pré-sélection
+                        </button>
+                        <button class="btn btn-error" (click)="takeDecision('CANCEL')">
+                          <i class="bi bi-x-lg"></i>
+                          Rejeter
+                        </button>
+                      </div>
+                    }
+                  </div>
+                </div>
+
+                <!-- Step 3: Décision finale -->
+                <div class="process-step" 
+                     [class.active]="selectedApplication()!.applicationStatus === 'PRE_SCREEN_ACCEPTED'"
+                     [class.completed]="selectedApplication()!.applicationStatus === 'FINAL_ACCEPTED' || selectedApplication()!.applicationStatus === 'FINAL_REJECTED'">
+                  <div class="step-indicator">
+                    <div class="step-number">3</div>
+                  </div>
+                  <div class="step-content">
+                    <div class="step-header">
+                      <h4 class="step-title">Décision finale</h4>
+                      @if (selectedApplication()!.applicationStatus === 'PRE_SCREEN_ACCEPTED') {
+                        <span class="step-badge current">En cours</span>
+                      } @else if (selectedApplication()!.applicationStatus === 'FINAL_ACCEPTED') {
+                        <span class="step-badge success">Accepté</span>
+                      } @else if (selectedApplication()!.applicationStatus === 'FINAL_REJECTED') {
+                        <span class="step-badge error">Rejeté</span>
+                      } @else {
+                        <span class="step-badge pending">En attente</span>
+                      }
+                    </div>
+                    @if (selectedApplication()!.applicationStatus === 'PRE_SCREEN_ACCEPTED') {
+                      <div class="step-actions">
+                        <button class="btn btn-success" (click)="takeDecision('APPROVE')">
+                          <i class="bi bi-check-lg"></i>
+                          Accepter définitivement
+                        </button>
+                        <button class="btn btn-error" (click)="takeDecision('CANCEL')">
+                          <i class="bi bi-x-lg"></i>
+                          Rejeter définitivement
+                        </button>
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- CV Section -->
+            @if (selectedApplication()!.candidateCvPath) {
+              <div class="cv-section">
+                <h3 class="section-title">CV du candidat</h3>
+                <div class="cv-card">
+                  <div class="cv-icon">
+                    <i class="bi bi-file-earmark-pdf"></i>
+                  </div>
+                  <div class="cv-info">
+                    <div class="cv-name">CV - {{ getCandidateName(selectedApplication()!) }}</div>
+                    <div class="cv-type">PDF Document</div>
+                  </div>
+                  <button class="btn btn-outline" (click)="viewCV(selectedApplication()!)">
+                    <i class="bi bi-eye"></i>
+                    Voir le CV
+                  </button>
+                </div>
+              </div>
             }
+          </div>
+        }
+      </div>
+
+      <!-- Right Column - Decision History -->
+      <div class="right-column">
+        <div class="history-panel">
+          <h3 class="panel-title">
+            <i class="bi bi-clock-history"></i>
+            Historique
           </h3>
-          <button class="decision-modal-close" (click)="closeDecisionModal()" title="Fermer">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="18" y1="6" x2="6" y2="18"/>
-              <line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-          </button>
-        </div>
-
-        <div class="decision-modal-body">
-          <div class="decision-candidate-info">
-            <div class="candidate-avatar-modal">
-              <span class="avatar-initials-modal">{{ (getCandidateName(selectedApplication()!) || 'C').charAt(0) }}</span>
+          
+          @if (!selectedApplication()) {
+            <div class="history-empty">
+              <svg class="empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <p>Sélectionnez un candidat</p>
             </div>
-            <div class="candidate-details-modal">
-              <h4 class="candidate-name-modal">{{ getCandidateName(selectedApplication()!) }}</h4>
-              <p class="candidate-email-modal">{{ selectedApplication()!.candidateEmail }}</p>
+          } @else if (!selectedApplication()!.decisions?.length) {
+            <div class="history-empty">
+              <svg class="empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <p>Aucune décision</p>
             </div>
-          </div>
-
-          <div class="decision-options">
-            @if (decisionModalStep() === 2) {
-              <button
-                class="decision-option-btn approve-btn"
-                (click)="takeDecisionFromModal('APPROVE')">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M9 12l2 2 4-4"/>
-                  <path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/>
-                </svg>
-                Pré-sélection acceptée
-              </button>
-              <button
-                class="decision-option-btn cancel-btn"
-                (click)="takeDecisionFromModal('CANCEL')">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="18" y1="6" x2="6" y2="18"/>
-                  <line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-                Pré-sélection refusée
-              </button>
-            } @else if (decisionModalStep() === 3) {
-              <button
-                class="decision-option-btn approve-btn"
-                (click)="takeDecisionFromModal('APPROVE')">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                  <circle cx="9" cy="7" r="4"/>
-                  <path d="M19 8v6"/>
-                  <path d="M22 11h-6"/>
-                </svg>
-                Embaucher
-              </button>
-              <button
-                class="decision-option-btn cancel-btn"
-                (click)="takeDecisionFromModal('CANCEL')">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="18" y1="6" x2="6" y2="18"/>
-                  <line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-                Rejeter
-              </button>
-            }
-          </div>
-        </div>
-      </div>
-    </div>
-  }
-
-  <!-- Modal d'aperçu CV -->
-  @if (showCvModal()) {
-    <div class="cv-modal-overlay" (click)="closeCvModal()">
-      <div class="cv-modal" (click)="$event.stopPropagation()">
-        <div class="cv-modal-header">
-          <h3 class="cv-modal-title">Aperçu du CV - {{ cvModalCandidateName() }}</h3>
-          <button class="cv-modal-close" (click)="closeCvModal()" title="Fermer">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="18" y1="6" x2="6" y2="18"/>
-              <line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-          </button>
-        </div>
-        <div class="cv-modal-body">
-          <iframe [src]="cvModalUrl()" class="cv-preview-frame"></iframe>
-        </div>
-        <div class="cv-modal-footer">
-          <button class="cv-action-btn secondary" (click)="downloadCurrentCV()">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="7 10 12 15 17 10"/>
-              <line x1="12" y1="15" x2="12" y2="3"/>
-            </svg>
-            Télécharger
-          </button>
-          <button class="cv-action-btn primary" (click)="openCurrentCVInNewTab()">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-              <polyline points="15 3 21 3 21 9"/>
-              <line x1="10" y1="14" x2="21" y2="3"/>
-            </svg>
-            Ouvrir dans un nouvel onglet
-          </button>
+          } @else {
+            <div class="history-timeline">
+              @for (decision of selectedApplication()!.decisions; track decision.id) {
+                <div class="timeline-item" [class.cancel]="decision.isCancel">
+                  <div class="timeline-marker">
+                    @if (decision.isCancel) {
+                      <i class="bi bi-arrow-counterclockwise"></i>
+                    } @else {
+                      <i class="bi bi-check-lg"></i>
+                    }
+                  </div>
+                  <div class="timeline-content">
+                    <div class="timeline-header">
+                      <span class="timeline-action">
+                        @if (decision.isCancel) {
+                          Annulation
+                        } @else {
+                          Validation
+                        }
+                      </span>
+                      <span class="timeline-date">{{ formatDateTime(decision.createdAt) }}</span>
+                    </div>
+                    <div class="timeline-footer">
+                      <i class="bi bi-person-circle"></i>
+                      {{ decision.userName || 'Utilisateur inconnu' }}
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          }
         </div>
       </div>
     </div>

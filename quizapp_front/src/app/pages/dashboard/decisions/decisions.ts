@@ -13,6 +13,8 @@ interface ApplicationWithCampaign extends Application {
   campaignTitle?: string;
   campaignId?: number;
   sourceTokenLabel?: string;
+  createdAt?: string;
+  decisions?: Decision[];
 }
 
 @Component({
@@ -20,7 +22,7 @@ interface ApplicationWithCampaign extends Application {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './decisions.html',
-  styleUrl: './decisions.scss'
+  styleUrl: './decisions-modern.scss'
 })
 export class DecisionsComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
@@ -31,6 +33,8 @@ export class DecisionsComponent implements OnInit, OnDestroy {
   users = signal<Map<number, User>>(new Map()); // Map pour stocker les utilisateurs par ID
   loading = signal(false);
   searchQuery = signal('');
+  searchTerm = signal(''); // Nouveau signal pour la recherche moderne
+  selectedFilter = signal<'ALL' | 'SUBMITTED' | 'PRE_SCREEN' | 'FINAL'>('ALL'); // Nouveau signal pour les filtres
   selectedApplication = signal<ApplicationWithCampaign | null>(null);
   showApplicationSuggestions = signal(false);
 
@@ -62,22 +66,36 @@ export class DecisionsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Computed - Candidatures filtrées pour suggestions
+   * Computed - Candidatures filtrées pour suggestions et affichage principal
    */
   filteredApplications = computed(() => {
-    const query = this.searchQuery().toLowerCase();
-    const apps = this.applications();
+    const query = this.searchTerm().toLowerCase();
+    const filter = this.selectedFilter();
+    let apps = this.applications();
 
-    if (!query) {
-      return apps.slice(0, 10); // Limiter à 10 résultats par défaut
+    // Appliquer le filtre par statut
+    if (filter !== 'ALL') {
+      if (filter === 'SUBMITTED') {
+        apps = apps.filter(app => app.applicationStatus === 'SUBMITTED');
+      } else if (filter === 'PRE_SCREEN') {
+        apps = apps.filter(app => app.applicationStatus?.startsWith('PRE_SCREEN') || false);
+      } else if (filter === 'FINAL') {
+        apps = apps.filter(app => app.applicationStatus?.startsWith('FINAL') || false);
+      }
     }
 
-    return apps.filter(app =>
-      (app.candidateFirstName || '').toLowerCase().includes(query) ||
-      (app.candidateLastName || '').toLowerCase().includes(query) ||
-      (app.candidateEmail || '').toLowerCase().includes(query) ||
-      (app.campaignTitle || '').toLowerCase().includes(query)
-    ).slice(0, 10);
+    // Appliquer la recherche textuelle
+    if (query) {
+      apps = apps.filter(app =>
+        (app.candidateFirstName || '').toLowerCase().includes(query) ||
+        (app.candidateLastName || '').toLowerCase().includes(query) ||
+        (app.candidateEmail || '').toLowerCase().includes(query) ||
+        (app.campaignTitle || '').toLowerCase().includes(query) ||
+        ((app.candidateFirstName || '') + ' ' + (app.candidateLastName || '')).toLowerCase().includes(query)
+      );
+    }
+
+    return apps;
   });
 
   /**
@@ -308,46 +326,77 @@ export class DecisionsComponent implements OnInit, OnDestroy {
    */
   takeDecision(action: 'APPROVE' | 'CANCEL'): void {
     const app = this.selectedApplication();
-    if (!app) return;
-
-    // Déterminer le type de décision basé sur le statut actuel
-    const currentStatus = app.applicationStatus || 'PENDING';
-    let decisionType = 'PRE_SCREEN_ACCEPTED'; // Par défaut
-
-    if (currentStatus.startsWith('PRE_SCREEN')) {
-      decisionType = currentStatus;
-    } else if (currentStatus.startsWith('FINAL')) {
-      decisionType = currentStatus;
-    } else if (currentStatus === 'SUBMITTED') {
-      decisionType = 'PRE_SCREEN_ACCEPTED';
+    if (!app) {
+      console.error('❌ Aucune candidature sélectionnée');
+      return;
     }
+
+    const currentStatus = app.applicationStatus || 'PENDING';
+    console.log('📝 Prise de décision:', {
+      action,
+      currentStatus,
+      applicationId: app.id
+    });
+
+    // Déterminer le type de décision et isCancel basé sur le statut actuel et l'action
+    let decisionType: string;
+    let isCancel: boolean;
+
+    if (currentStatus === 'SUBMITTED') {
+      // Décision de pré-sélection
+      if (action === 'APPROVE') {
+        decisionType = 'PRE_SCREEN_ACCEPTED';
+        isCancel = false;
+      } else {
+        decisionType = 'PRE_SCREEN_REJECTED';
+        isCancel = false;
+      }
+    } else if (currentStatus === 'PRE_SCREEN_ACCEPTED') {
+      // Décision finale
+      if (action === 'APPROVE') {
+        decisionType = 'FINAL_ACCEPTED';
+        isCancel = false;
+      } else {
+        decisionType = 'FINAL_REJECTED';
+        isCancel = false;
+      }
+    } else {
+      console.error('❌ Statut invalide pour prendre une décision:', currentStatus);
+      return;
+    }
+
+    // Récupérer l'utilisateur connecté
+    const userId = this.getCurrentUserId();
 
     const decision: Decision = {
       decisionType: decisionType,
-      decisionAction: action,
+      isCancel: isCancel,
       applicationId: app.id!,
-      userId: 1, // TODO: Récupérer l'ID de l'utilisateur connecté
+      userId: userId,
       createdAt: new Date().toISOString(),
-      createdBy: 1
+      createdBy: userId
     };
+
+    console.log('📤 Envoi de la décision:', decision);
 
     this.loading.set(true);
     this.decisionService.createDecision(decision).subscribe({
       next: (response: any) => {
         if (response.hasError) {
           console.error('❌ Erreur lors de la création de la décision:', response.status.message);
-          // TODO: Afficher une notification d'erreur
+          alert('Erreur: ' + response.status.message);
         } else {
           console.log('✅ Décision créée avec succès');
-          // Recharger les décisions
+          alert(`Décision ${action === 'APPROVE' ? 'acceptée' : 'rejetée'} avec succès!`);
+          // Recharger les décisions et les candidatures
           this.loadDecisionsForApplication(app.id!);
-          // Recharger les candidatures pour mettre à jour le statut
           this.loadApplications();
         }
         this.loading.set(false);
       },
       error: (error: any) => {
         console.error('❌ Erreur lors de la création de la décision:', error);
+        alert('Erreur réseau lors de la création de la décision');
         this.loading.set(false);
       }
     });
@@ -537,15 +586,15 @@ export class DecisionsComponent implements OnInit, OnDestroy {
   /**
    * Obtient la classe CSS pour l'action de décision
    */
-  getDecisionActionClass(action: 'APPROVE' | 'CANCEL'): string {
-    return action === 'APPROVE' ? 'decision-approve' : 'decision-cancel';
+  getDecisionActionClass(isCancel: boolean): string {
+    return isCancel ? 'decision-cancel' : 'decision-approve';
   }
 
   /**
    * Obtient le label pour l'action de décision
    */
-  getDecisionActionLabel(action: 'APPROVE' | 'CANCEL'): string {
-    return action === 'APPROVE' ? 'Approuvé' : 'Refusé';
+  getDecisionActionLabel(isCancel: boolean): string {
+    return isCancel ? 'Annulation' : 'Décision';
   }
 
   /**
@@ -668,10 +717,10 @@ export class DecisionsComponent implements OnInit, OnDestroy {
     // Déterminer le type de décision à annuler basé sur l'étape et le statut actuel
     let decisionType = currentStatus; // Le type de décision est le statut actuel
     
-    // Créer une nouvelle entrée de décision avec action CANCEL
+    // Créer une nouvelle entrée de décision avec isCancel = true
     const cancelDecision: Decision = {
       decisionType: decisionType,
-      decisionAction: 'CANCEL',
+      isCancel: true, // true indique que c'est une annulation
       applicationId: app.id!,
       userId: this.getCurrentUserId(),
       createdAt: new Date().toISOString(),
@@ -729,7 +778,7 @@ export class DecisionsComponent implements OnInit, OnDestroy {
 
     const decision: Decision = {
       decisionType: decisionType,
-      decisionAction: action,
+      isCancel: action === 'CANCEL', // true si c'est une annulation/rejet, false si c'est une approbation
       applicationId: app.id!,
       userId: this.getCurrentUserId(),
       createdAt: new Date().toISOString(),
@@ -867,5 +916,164 @@ export class DecisionsComponent implements OnInit, OnDestroy {
     } else {
       console.error('Impossible de générer l\'URL du CV');
     }
+  }
+
+  // ===========================
+  // NOUVELLES MÉTHODES POUR LE DESIGN MODERNE
+  // ===========================
+
+  /**
+   * Récupère les initiales d'un nom de candidat
+   */
+  getCandidateInitials(app: ApplicationWithCampaign): string {
+    const name = this.getCandidateName(app);
+    if (!name) return '??';
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return parts[0].substring(0, 2).toUpperCase();
+  }
+
+  /**
+   * Filtre les candidatures en fonction du terme de recherche ET du filtre sélectionné
+   */
+  filterApplications(): void {
+    // Mise à jour du signal searchQuery pour déclencher le computed
+    this.searchQuery.set(this.searchTerm());
+  }
+
+  /**
+   * Définit le filtre actif
+   */
+  setFilter(filter: 'ALL' | 'SUBMITTED' | 'PRE_SCREEN' | 'FINAL'): void {
+    this.selectedFilter.set(filter);
+  }
+
+  /**
+   * Récupère les candidatures par statut
+   */
+  getApplicationsByStatus(status: string): ApplicationWithCampaign[] {
+    return this.applications().filter(app => app.applicationStatus === status);
+  }
+
+  /**
+   * Compte le nombre de décisions en attente (PRE_SCREEN_*)
+   */
+  getPendingDecisionsCount(): number {
+    return this.applications().filter(app =>
+      app.applicationStatus?.startsWith('PRE_SCREEN') || false
+    ).length;
+  }
+
+  /**
+   * Compte le nombre de décisions finales (FINAL_*)
+   */
+  getFinalDecisionsCount(): number {
+    return this.applications().filter(app =>
+      app.applicationStatus?.startsWith('FINAL') || false
+    ).length;
+  }
+
+  /**
+   * Obtient la classe CSS pour un statut
+   */
+  getStatusClass(status: string | undefined): string {
+    if (!status) return 'pending';
+    if (status === 'PENDING') return 'pending';
+    if (status === 'SUBMITTED') return 'submitted';
+    if (status?.startsWith('PRE_SCREEN')) {
+      if (status === 'PRE_SCREEN_ACCEPTED') return 'accepted';
+      if (status === 'PRE_SCREEN_REJECTED') return 'rejected';
+      return 'prescreen';
+    }
+    if (status === 'FINAL_ACCEPTED') return 'success';
+    if (status === 'FINAL_REJECTED') return 'error';
+    return 'pending';
+  }
+
+  /**
+   * Obtient le label d'un statut
+   */
+  getStatusLabel(status: string | undefined): string {
+    if (!status) return 'En attente';
+    const labels: Record<string, string> = {
+      'PENDING': 'Quiz en cours',
+      'SUBMITTED': 'En attente de décision',
+      'PRE_SCREEN_ACCEPTED': 'Pré-sélectionné',
+      'PRE_SCREEN_REJECTED': 'Non pré-sélectionné',
+      'FINAL_ACCEPTED': 'Accepté',
+      'FINAL_REJECTED': 'Rejeté'
+    };
+    return labels[status] || status;
+  }
+
+  /**
+   * Formate une date avec l'heure
+   */
+  formatDateTime(date: string | undefined): string {
+    if (!date) return 'N/A';
+    try {
+      return new Date(date).toLocaleString('fr-FR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (e) {
+      return 'N/A';
+    }
+  }
+
+  /**
+   * Obtient la classe CSS pour le statut d'entretien
+   */
+  getInterviewStatusClass(status: string): string {
+    const statusMap: Record<string, string> = {
+      'PENDING': 'warning',
+      'SCHEDULED': 'info',
+      'STARTED': 'info',
+      'OVER': 'success',
+      'PASSED': 'success',
+      'FAILED': 'error',
+      'POSTPONED': 'warning',
+      'ARCHIVED': 'muted'
+    };
+    return statusMap[status] || 'muted';
+  }
+
+  /**
+   * Obtient l'icône Bootstrap pour le statut d'entretien
+   */
+  getInterviewStatusIcon(status: string): string {
+    const iconMap: Record<string, string> = {
+      'PENDING': 'bi bi-hourglass-split',
+      'SCHEDULED': 'bi bi-calendar-check',
+      'STARTED': 'bi bi-play-circle',
+      'OVER': 'bi bi-check-circle-fill',
+      'PASSED': 'bi bi-check-circle-fill',
+      'FAILED': 'bi bi-x-circle-fill',
+      'POSTPONED': 'bi bi-clock-history',
+      'ARCHIVED': 'bi bi-archive'
+    };
+    return iconMap[status] || 'bi bi-question-circle';
+  }
+
+  /**
+   * Obtient le label pour le statut d'entretien
+   */
+  getInterviewStatusLabel(status: string): string {
+    const labelMap: Record<string, string> = {
+      'PENDING': 'En attente',
+      'SCHEDULED': 'Planifié',
+      'STARTED': 'En cours',
+      'OVER': 'Terminé',
+      'PASSED': 'Réussi',
+      'FAILED': 'Échoué',
+      'POSTPONED': 'Reporté',
+      'ARCHIVED': 'Archivé'
+    };
+    return labelMap[status] || status;
   }
 }

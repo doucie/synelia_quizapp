@@ -133,8 +133,8 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
             if (app != null) {
                 String newStatus;
                 
-                // Si l'action est CANCEL, on revient à l'état précédent
-                if ("CANCEL".equals(decision.getDecisionAction())) {
+                // Si c'est une annulation (isCancel = true), on revient à l'état précédent
+                if (Boolean.TRUE.equals(decision.getIsCancel())) {
                     String currentDecisionType = decision.getDecisionType();
                     
                     // Si on annule une décision de pré-sélection, on retourne à SUBMITTED
@@ -151,7 +151,7 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
                         newStatus = decision.getDecisionType();
                     }
                 }
-                // Si l'action est APPROVE, on met à jour avec le type de décision
+                // Si c'est une prise de décision (isCancel = false), on met à jour avec le type de décision
                 else {
                     newStatus = decision.getDecisionType();
                 }
@@ -344,8 +344,8 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
             return response;
         }
 
-        if (!Utilities.notBlank(dto.getDecisionAction())) {
-            response.setStatus(functionalError.FIELD_EMPTY("decisionAction", locale));
+        if (dto.getIsCancel() == null) {
+            response.setStatus(functionalError.FIELD_EMPTY("isCancel", locale));
             response.setHasError(true);
             return response;
         }

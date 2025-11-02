@@ -10,7 +10,7 @@ import { environment } from '../../../environments/environment';
 export interface Decision {
   id?: number;
   decisionType: string;
-  decisionAction: 'APPROVE' | 'CANCEL';
+  isCancel: boolean; // true = annulation, false = décision
   applicationId: number;
   userId: number;
   createdAt?: string;
@@ -29,7 +29,7 @@ export interface Decision {
 export interface PartialDecision {
   id?: number;
   decisionType?: string;
-  decisionAction?: string;
+  isCancel?: boolean;
   applicationId?: number;
   userId?: number;
   createdAt?: string;
@@ -73,7 +73,7 @@ export interface DecisionCriteria {
   applicationId?: number;
   userId?: number;
   decisionType?: string;
-  decisionAction?: string;
+  isCancel?: boolean;
   page?: number;
   size?: number;
   sort?: string;
@@ -99,7 +99,7 @@ export class DecisionService {
         applicationId: criteria.applicationId,
         userId: criteria.userId,
         decisionType: criteria.decisionType,
-        decisionAction: criteria.decisionAction
+        isCancel: criteria.isCancel
       } as PartialDecision
     };
 
@@ -259,8 +259,8 @@ export class DecisionService {
     if (criteria.decisionType) {
       params['decisionType'] = criteria.decisionType;
     }
-    if (criteria.decisionAction) {
-      params['decisionAction'] = criteria.decisionAction;
+    if (criteria.isCancel !== undefined) {
+      params['isCancel'] = criteria.isCancel.toString();
     }
     if (criteria.page !== undefined) {
       params['page'] = criteria.page.toString();

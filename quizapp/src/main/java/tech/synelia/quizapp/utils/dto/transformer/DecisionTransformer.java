@@ -49,7 +49,7 @@ public interface DecisionTransformer {
         DecisionDto dto = new DecisionDto();
         dto.setId(entity.getId());
         dto.setDecisionType(entity.getDecisionType());
-        dto.setDecisionAction(entity.getDecisionAction());
+        dto.setIsCancel(entity.getIsCancel());
         dto.setApplicationId(entity.getApplication() != null ? entity.getApplication().getId() : null);
         dto.setUserId(entity.getUser() != null ? entity.getUser().getId() : null);
         return dto;
@@ -79,7 +79,7 @@ public interface DecisionTransformer {
         Decision entity = new Decision();
         entity.setId(dto.getId());
         entity.setDecisionType(dto.getDecisionType());
-        entity.setDecisionAction(dto.getDecisionAction());
+        entity.setIsCancel(dto.getIsCancel());
         if (dto.getApplicationId() != null) {
             Applications app = new Applications();
             app.setId(dto.getApplicationId());

@@ -53,13 +53,13 @@ public interface DecisionRepository extends JpaRepository<Decision, Integer> {
     List<Decision> findByDecisionType(@Param("decisionType") String decisionType, @Param("isDeleted") Boolean isDeleted);
 
     /**
-     * Finds Decisions by using decisionAction as a search criteria.
+     * Finds Decisions by using isCancel as a search criteria.
      *
-     * @param decisionAction
-     * @return List of Decision whose decisionAction is equals to the given decisionAction.
+     * @param isCancel
+     * @return List of Decision whose isCancel is equals to the given isCancel.
      */
-    @Query("select e from Decision e where e.decisionAction = :decisionAction and e.isDeleted = :isDeleted order by e.createdAt desc")
-    List<Decision> findByDecisionAction(@Param("decisionAction") String decisionAction, @Param("isDeleted") Boolean isDeleted);
+    @Query("select e from Decision e where e.isCancel = :isCancel and e.isDeleted = :isDeleted order by e.createdAt desc")
+    List<Decision> findByIsCancel(@Param("isCancel") Boolean isCancel, @Param("isDeleted") Boolean isDeleted);
 
     /**
      * Finds all non-deleted decisions

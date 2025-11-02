@@ -28,7 +28,7 @@ public class DecisionDto implements Cloneable{
     private Integer    id                   ; // Primary Key
 
     private String     decisionType         ;
-    private String     decisionAction       ;
+    private Boolean    isCancel             ;
     private String     createdAt            ;
     private Integer    createdBy            ;
     private String     updatedAt            ;
@@ -42,7 +42,7 @@ public class DecisionDto implements Cloneable{
 
     // Search parameters
     private SearchParam<String>  decisionTypeParam ;
-    private SearchParam<String>  decisionActionParam ;
+    private SearchParam<Boolean> isCancelParam ;
     private SearchParam<String>  createdAtParam ;
     private SearchParam<Integer> createdByParam ;
     private SearchParam<String>  updatedAtParam ;
