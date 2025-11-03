@@ -79,7 +79,7 @@
 
   <!-- Layout 3 colonnes moderne -->
   @if (loading()) {
-    <div class="loading-overlay">
+    <div class="loading-state">
       <div class="spinner"></div>
       <p>Chargement des candidatures...</p>
     </div>
@@ -395,7 +395,7 @@
               </svg>
               <p>Sélectionnez un candidat</p>
             </div>
-          } @else if (!selectedApplication()!.decisions?.length) {
+          } @else if (!selectedApplicationDecisions().length) {
             <div class="history-empty">
               <svg class="empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -404,7 +404,7 @@
             </div>
           } @else {
             <div class="history-timeline">
-              @for (decision of selectedApplication()!.decisions; track decision.id) {
+              @for (decision of selectedApplicationDecisions(); track decision.id) {
                 <div class="timeline-item" [class.cancel]="decision.isCancel">
                   <div class="timeline-marker">
                     @if (decision.isCancel) {
@@ -416,17 +416,23 @@
                   <div class="timeline-content">
                     <div class="timeline-header">
                       <span class="timeline-action">
-                        @if (decision.isCancel) {
-                          Annulation
+                        @if (decision.decisionType === 'PRE_SCREEN_ACCEPTED') {
+                          Pré-sélection acceptée
+                        } @else if (decision.decisionType === 'PRE_SCREEN_REJECTED') {
+                          Pré-sélection refusée
+                        } @else if (decision.decisionType === 'FINAL_ACCEPTED') {
+                          Décision finale : Accepté
+                        } @else if (decision.decisionType === 'FINAL_REJECTED') {
+                          Décision finale : Rejeté
                         } @else {
-                          Validation
+                          {{ decision.decisionType }}
                         }
                       </span>
                       <span class="timeline-date">{{ formatDateTime(decision.createdAt) }}</span>
                     </div>
                     <div class="timeline-footer">
                       <i class="bi bi-person-circle"></i>
-                      {{ decision.userName || 'Utilisateur inconnu' }}
+                      {{ getUserPseudo(decision.userId!) }}
                     </div>
                   </div>
                 </div>

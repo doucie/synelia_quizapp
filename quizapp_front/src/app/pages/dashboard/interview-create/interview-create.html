@@ -1,0 +1,345 @@
+<div class="interview-create-page">
+  <!-- Header -->
+  <div class="page-header">
+    <button class="btn-back" (click)="cancel()">
+      <i class="bi bi-arrow-left"></i>
+      Retour
+    </button>
+    <div class="header-title">
+      <h1>Planifier des entretiens</h1>
+      <p>Créez des entretiens pour plusieurs candidats simultanément</p>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-overlay">
+      <div class="spinner"></div>
+      <p>Chargement...</p>
+    </div>
+  } @else {
+    <div class="page-content">
+      <form (submit)="$event.preventDefault(); submitForm()">
+        <!-- Étape 1: Sélection de la campagne -->
+        <div class="form-section">
+          <div class="section-header">
+            <div class="section-number">1</div>
+            <div class="section-info">
+              <h2>Campagne</h2>
+              <p>Sélectionnez la campagne de recrutement</p>
+            </div>
+          </div>
+
+          <div class="section-content">
+            <div class="form-group">
+              <label for="campaignId">
+                <i class="bi bi-briefcase"></i>
+                Campagne *
+              </label>
+              <select
+                id="campaignId"
+                [(ngModel)]="formData().campaignId"
+                name="campaignId"
+                (change)="onCampaignChange()"
+                required
+              >
+                <option [value]="0">-- Sélectionner une campagne --</option>
+                @for (campaign of campaigns(); track campaign.id) {
+                  <option [value]="campaign.id">
+                    {{ campaign.campaignTitle || campaign.campaignName }}
+                  </option>
+                }
+              </select>
+            </div>
+          </div>
+        </div>
+
+        @if (formData().campaignId) {
+          <!-- Étape 2: Sélection des candidats -->
+          <div class="form-section">
+            <div class="section-header">
+              <div class="section-number">2</div>
+              <div class="section-info">
+                <h2>Candidats</h2>
+                <p>Sélectionnez les candidats à convoquer ({{ formData().selectedCandidates.length }} sélectionné(s))</p>
+              </div>
+              <div class="section-actions">
+                <button type="button" class="btn-sm" (click)="selectAllCandidates()">
+                  Tout sélectionner
+                </button>
+                <button type="button" class="btn-sm" (click)="deselectAllCandidates()">
+                  Tout désélectionner
+                </button>
+              </div>
+            </div>
+
+            <div class="section-content">
+              @if (eligibleApplications().length === 0) {
+                <div class="empty-state">
+                  <i class="bi bi-inbox"></i>
+                  <p>Aucun candidat éligible pour cette campagne</p>
+                  <small>Seuls les candidats "PRE_SCREEN_ACCEPTED" sont affichés</small>
+                </div>
+              } @else {
+                <div class="candidates-grid">
+                  @for (app of eligibleApplications(); track app.id) {
+                    <div 
+                      class="candidate-card"
+                      [class.selected]="isCandidateSelected(app.id!)"
+                      (click)="toggleCandidate(app.id!)"
+                    >
+                      <div class="card-check">
+                        <input 
+                          type="checkbox" 
+                          [checked]="isCandidateSelected(app.id!)"
+                          (click)="$event.stopPropagation()"
+                        />
+                      </div>
+                      <div class="candidate-avatar">
+                        {{ getInitials(getCandidateName(app)) }}
+                      </div>
+                      <div class="candidate-info">
+                        <h4>{{ getCandidateName(app) }}</h4>
+                        <p>{{ app.candidateEmail }}</p>
+                        @if (app.quizScorePercent !== null && app.quizScorePercent !== undefined) {
+                          <span class="score-badge">
+                            Score: {{ app.quizScorePercent }}%
+                          </span>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Étape 3: Détails de l'entretien -->
+          <div class="form-section">
+            <div class="section-header">
+              <div class="section-number">3</div>
+              <div class="section-info">
+                <h2>Détails de l'entretien</h2>
+                <p>Définissez les paramètres de l'entretien</p>
+              </div>
+            </div>
+
+            <div class="section-content">
+              <!-- Date et heure -->
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="interviewDate">
+                    <i class="bi bi-calendar"></i>
+                    Date *
+                  </label>
+                  <input
+                    type="date"
+                    id="interviewDate"
+                    [(ngModel)]="formData().interviewDate"
+                    name="interviewDate"
+                    required
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="interviewTime">
+                    <i class="bi bi-clock"></i>
+                    Heure *
+                  </label>
+                  <input
+                    type="time"
+                    id="interviewTime"
+                    [(ngModel)]="formData().interviewTime"
+                    name="interviewTime"
+                    required
+                  />
+                </div>
+              </div>
+
+              <!-- Type d'entretien -->
+              <div class="form-group">
+                <label>
+                  <i class="bi bi-list-check"></i>
+                  Type d'entretien *
+                </label>
+                <div class="radio-group">
+                  <label class="radio-card" [class.active]="formData().interviewType === 'IN_PERSON'">
+                    <input
+                      type="radio"
+                      name="interviewType"
+                      value="IN_PERSON"
+                      [(ngModel)]="formData().interviewType"
+                    />
+                    <div class="radio-content">
+                      <i class="bi bi-building"></i>
+                      <span>En personne</span>
+                    </div>
+                  </label>
+                  <label class="radio-card" [class.active]="formData().interviewType === 'ONLINE'">
+                    <input
+                      type="radio"
+                      name="interviewType"
+                      value="ONLINE"
+                      [(ngModel)]="formData().interviewType"
+                    />
+                    <div class="radio-content">
+                      <i class="bi bi-camera-video"></i>
+                      <span>En ligne</span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Lieu (si en personne) -->
+              @if (formData().interviewType === 'IN_PERSON') {
+                <div class="form-group">
+                  <label for="interviewLocation">
+                    <i class="bi bi-geo-alt"></i>
+                    Lieu *
+                  </label>
+                  <input
+                    type="text"
+                    id="interviewLocation"
+                    [(ngModel)]="formData().interviewLocation"
+                    name="interviewLocation"
+                    placeholder="Ex: Bureau principal, Salle de réunion 3"
+                    required
+                  />
+                </div>
+              }
+
+              <!-- Lien (si en ligne) -->
+              @if (formData().interviewType === 'ONLINE') {
+                <div class="form-group">
+                  <label for="meetLink">
+                    <i class="bi bi-camera-video"></i>
+                    Lien de visioconférence *
+                  </label>
+                  <input
+                    type="url"
+                    id="meetLink"
+                    [(ngModel)]="formData().meetLink"
+                    name="meetLink"
+                    placeholder="https://meet.google.com/xxx-xxxx-xxx"
+                    required
+                  />
+                </div>
+              }
+
+              <!-- Message personnalisé pour l'email -->
+              <div class="form-group">
+                <label for="interviewNote">
+                  <i class="bi bi-envelope-paper"></i>
+                  Message complémentaire (sera ajouté dans l'email de convocation)
+                </label>
+                <textarea
+                  id="interviewNote"
+                  [(ngModel)]="formData().interviewNote"
+                  name="interviewNote"
+                  rows="4"
+                  placeholder="Ajoutez des informations supplémentaires qui seront incluses dans l'email de convocation (ex: documents à apporter, code vestimentaire, etc.)"
+                ></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Étape 4: Sélection des évaluateurs -->
+          <div class="form-section">
+            <div class="section-header">
+              <div class="section-number">4</div>
+              <div class="section-info">
+                <h2>Évaluateurs</h2>
+                <p>Sélectionnez les recruteurs qui présideront l'entretien ({{ formData().selectedEvaluators.length }} sélectionné(s))</p>
+              </div>
+            </div>
+
+            <div class="section-content">
+              @if (evaluators().length === 0) {
+                <div class="empty-state">
+                  <i class="bi bi-people"></i>
+                  <p>Aucun évaluateur disponible pour cette campagne</p>
+                </div>
+              } @else {
+                <div class="evaluators-list">
+                  @for (evaluator of evaluators(); track evaluator.id) {
+                    <div 
+                      class="evaluator-item"
+                      [class.selected]="isEvaluatorSelected(evaluator.id!)"
+                      (click)="toggleEvaluator(evaluator.id!)"
+                    >
+                      <input 
+                        type="checkbox" 
+                        [checked]="isEvaluatorSelected(evaluator.id!)"
+                        (click)="$event.stopPropagation()"
+                      />
+                      <div class="evaluator-avatar">
+                        {{ getInitials(getEvaluatorName(evaluator)) }}
+                      </div>
+                      <div class="evaluator-info">
+                        <h4>{{ getEvaluatorName(evaluator) }}</h4>
+                        <p>{{ evaluator.email }}</p>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Prévisualisation email -->
+          <div class="form-section">
+            <div class="section-header">
+              <div class="section-number">5</div>
+              <div class="section-info">
+                <h2>Prévisualisation de l'email</h2>
+                <p>Aperçu de l'email qui sera envoyé aux candidats</p>
+              </div>
+              <button 
+                type="button" 
+                class="btn-toggle-preview"
+                (click)="toggleEmailPreview()"
+              >
+                <i [class]="showEmailPreview() ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+                {{ showEmailPreview() ? 'Masquer' : 'Afficher' }}
+              </button>
+            </div>
+
+            @if (showEmailPreview()) {
+              <div class="section-content">
+                <div class="email-preview">
+                  <div class="email-header">
+                    <div class="email-field">
+                      <strong>Sujet:</strong>
+                      <span>{{ emailPreview().subject }}</span>
+                    </div>
+                  </div>
+                  <div class="email-body">
+                    <pre>{{ emailPreview().body }}</pre>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Actions -->
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" (click)="cancel()">
+              Annuler
+            </button>
+            <button 
+              type="submit" 
+              class="btn-primary" 
+              [disabled]="loading() || formData().selectedCandidates.length === 0"
+            >
+              @if (loading()) {
+                <span class="spinner-small"></span>
+              } @else {
+                <i class="bi bi-check-lg"></i>
+              }
+              Créer {{ formData().selectedCandidates.length }} entretien(s)
+            </button>
+          </div>
+        }
+      </form>
+    </div>
+  }
+</div>

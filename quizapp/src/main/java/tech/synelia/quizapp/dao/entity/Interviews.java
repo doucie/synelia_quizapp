@@ -71,9 +71,6 @@ public class Interviews implements Serializable, Cloneable {
     @Column(name="interview_type", length=20, nullable=false)
     private String     interviewType ; // IN_PERSON, ONLINE
 
-    @Column(name="marked_out_of")
-    private Integer    markedOutOf  ;
-
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name="created_at")
     private Date       createdAt    ;

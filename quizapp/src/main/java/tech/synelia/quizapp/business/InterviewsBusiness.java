@@ -213,9 +213,6 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 			if (Utilities.notBlank(dto.getInterviewType())) {
 				entityToSave.setInterviewType(dto.getInterviewType());
 			}
-			if (dto.getMarkedOutOf() != null && dto.getMarkedOutOf() > 0) {
-				entityToSave.setMarkedOutOf(dto.getMarkedOutOf());
-			}
 			if (dto.getCreatedBy() != null && dto.getCreatedBy() > 0) {
 				entityToSave.setCreatedBy(dto.getCreatedBy());
 			}

@@ -78,15 +78,6 @@ public interface InterviewsRepository extends JpaRepository<Interviews, Integer>
 	@Query("select e from Interviews e where e.interviewType = :interviewType and e.isDeleted = :isDeleted")
 	List<Interviews> findByInterviewType(@Param("interviewType")String interviewType, @Param("isDeleted")Boolean isDeleted);
 	/**
-	 * Finds Interviews by using markedOutOf as a search criteria.
-	 * 
-	 * @param markedOutOf
-	 * @return An Object Interviews whose markedOutOf is equals to the given markedOutOf. If
-	 *         no Interviews is found, this method returns null.
-	 */
-	@Query("select e from Interviews e where e.markedOutOf = :markedOutOf and e.isDeleted = :isDeleted")
-	List<Interviews> findByMarkedOutOf(@Param("markedOutOf")Integer markedOutOf, @Param("isDeleted")Boolean isDeleted);
-	/**
 	 * Finds Interviews by using createdAt as a search criteria.
 	 * 
 	 * @param createdAt
@@ -265,9 +256,6 @@ public interface InterviewsRepository extends JpaRepository<Interviews, Integer>
 			}
 			if (Utilities.notBlank(dto.getInterviewType())) {
 				listOfQuery.add(CriteriaUtils.generateCriteria("interviewType", dto.getInterviewType(), "e.interviewType", "String", dto.getInterviewTypeParam(), param, index, locale));
-			}
-			if (dto.getMarkedOutOf()!= null && dto.getMarkedOutOf() > 0) {
-				listOfQuery.add(CriteriaUtils.generateCriteria("markedOutOf", dto.getMarkedOutOf(), "e.markedOutOf", "Integer", dto.getMarkedOutOfParam(), param, index, locale));
 			}
 			if (Utilities.notBlank(dto.getCreatedAt())) {
 				listOfQuery.add(CriteriaUtils.generateCriteria("createdAt", dto.getCreatedAt(), "e.createdAt", "Date", dto.getCreatedAtParam(), param, index, locale));

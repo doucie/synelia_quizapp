@@ -1,0 +1,331 @@
+<div class="interviews-page">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-main">
+      <div class="header-title">
+        <div class="title-icon">
+          <i class="bi bi-calendar-check"></i>
+        </div>
+        <div class="title-content">
+          <h1>Gestion des Entretiens</h1>
+          <p>Planifiez et suivez les entretiens avec les candidats</p>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="header-stats">
+        <div class="stat-chip pending">
+          <i class="bi bi-hourglass-split"></i>
+          <span>{{ getInterviewsByStatus('PENDING') }}</span>
+          <span class="stat-label">En attente</span>
+        </div>
+        <div class="stat-chip scheduled">
+          <i class="bi bi-calendar-event"></i>
+          <span>{{ getInterviewsByStatus('SCHEDULED') }}</span>
+          <span class="stat-label">Planifiés</span>
+        </div>
+        <div class="stat-chip started">
+          <i class="bi bi-play-circle"></i>
+          <span>{{ getInterviewsByStatus('STARTED') }}</span>
+          <span class="stat-label">En cours</span>
+        </div>
+        <div class="stat-chip completed">
+          <i class="bi bi-check-circle"></i>
+          <span>{{ getInterviewsByStatus('OVER') }}</span>
+          <span class="stat-label">Terminés</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="header-controls">
+      <div class="search-box">
+        <i class="bi bi-search"></i>
+        <input
+          type="text"
+          placeholder="Rechercher un candidat ou entretien..."
+          [(ngModel)]="searchTerm"
+        />
+      </div>
+      
+      <div class="filter-chips">
+        <button
+          class="chip"
+          [class.active]="selectedFilter() === 'ALL'"
+          (click)="setFilter('ALL')"
+        >
+          Tous ({{ interviews().length }})
+        </button>
+        <button
+          class="chip scheduled"
+          [class.active]="selectedFilter() === 'SCHEDULED'"
+          (click)="setFilter('SCHEDULED')"
+        >
+          Planifiés ({{ getInterviewsByStatus('SCHEDULED') }})
+        </button>
+        <button
+          class="chip started"
+          [class.active]="selectedFilter() === 'STARTED'"
+          (click)="setFilter('STARTED')"
+        >
+          En cours ({{ getInterviewsByStatus('STARTED') }})
+        </button>
+        <button
+          class="chip completed"
+          [class.active]="selectedFilter() === 'OVER'"
+          (click)="setFilter('OVER')"
+        >
+          Terminés ({{ getInterviewsByStatus('OVER') }})
+        </button>
+      </div>
+
+      <button class="btn-create" (click)="openCreateModal()">
+        <i class="bi bi-plus-lg"></i>
+        Planifier un entretien
+      </button>
+    </div>
+  </div>
+
+  <!-- Content -->
+  @if (loading()) {
+    <div class="loading-overlay">
+      <div class="spinner"></div>
+      <p>Chargement des entretiens...</p>
+    </div>
+  } @else {
+    <div class="page-content">
+      <!-- Liste des entretiens -->
+      <div class="interviews-list">
+        @if (!filteredInterviews().length) {
+          <div class="empty-state">
+            <svg class="empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            <p>Aucun entretien trouvé</p>
+            <button class="btn-empty" (click)="openCreateModal()">
+              <i class="bi bi-plus-lg"></i>
+              Planifier le premier entretien
+            </button>
+          </div>
+        } @else {
+          <div class="interview-cards">
+            @for (interview of filteredInterviews(); track interview.id) {
+              <div 
+                class="interview-card"
+                [class.selected]="selectedInterview()?.id === interview.id"
+                (click)="selectInterview(interview)"
+              >
+                <!-- Header -->
+                <div class="card-header">
+                  <div class="candidate-info">
+                    <div class="candidate-avatar">
+                      {{ getInitials(interview.candidateName || '') }}
+                    </div>
+                    <div class="candidate-details">
+                      <h3 class="candidate-name">{{ interview.candidateName }}</h3>
+                      <p class="candidate-email">{{ interview.candidateEmail }}</p>
+                    </div>
+                  </div>
+                  <div class="status-badge" [ngClass]="getStatusClass(interview.interviewStatus)">
+                    {{ getStatusLabel(interview.interviewStatus || '') }}
+                  </div>
+                </div>
+
+                <!-- Body -->
+                <div class="card-body">
+                  <div class="info-row">
+                    <i class="bi bi-calendar-event"></i>
+                    <span>{{ formatDateTime(interview.interviewDate) }}</span>
+                  </div>
+                  
+                  @if (interview.interviewLocation) {
+                    <div class="info-row">
+                      <i class="bi bi-geo-alt"></i>
+                      <span>{{ interview.interviewLocation }}</span>
+                    </div>
+                  }
+                  
+                  @if (interview.meetLink) {
+                    <div class="info-row">
+                      <i class="bi bi-camera-video"></i>
+                      <a [href]="interview.meetLink" target="_blank" (click)="$event.stopPropagation()">
+                        Lien de visioconférence
+                      </a>
+                    </div>
+                  }
+                  
+                  <div class="info-row">
+                    <i [class]="getInterviewTypeIcon(interview.interviewType)"></i>
+                    <span>{{ interview.interviewType || 'Non spécifié' }}</span>
+                  </div>
+                  
+                  @if (interview.campaignTitle) {
+                    <div class="info-row campaign">
+                      <i class="bi bi-briefcase"></i>
+                      <span>{{ interview.campaignTitle }}</span>
+                    </div>
+                  }
+                </div>
+
+                <!-- Footer -->
+                <div class="card-footer">
+                  <button 
+                    class="btn-action btn-edit" 
+                    (click)="openEditModal(interview); $event.stopPropagation()"
+                    title="Modifier"
+                  >
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  
+                  @if (interview.interviewStatus === 'SCHEDULED') {
+                    <button 
+                      class="btn-action btn-start" 
+                      (click)="changeStatus(interview, 'STARTED'); $event.stopPropagation()"
+                      title="Démarrer l'entretien"
+                    >
+                      <i class="bi bi-play-circle"></i>
+                    </button>
+                  }
+                  
+                  @if (interview.interviewStatus === 'STARTED') {
+                    <button 
+                      class="btn-action btn-complete" 
+                      (click)="changeStatus(interview, 'OVER'); $event.stopPropagation()"
+                      title="Terminer l'entretien"
+                    >
+                      <i class="bi bi-check-circle"></i>
+                    </button>
+                  }
+                  
+                  <button 
+                    class="btn-action btn-delete" 
+                    (click)="deleteInterview(interview); $event.stopPropagation()"
+                    title="Supprimer"
+                  >
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Détails de l'entretien sélectionné -->
+      @if (selectedInterview()) {
+        <div class="interview-details">
+          <div class="details-header">
+            <h2>Détails de l'entretien</h2>
+            <button class="btn-close" (click)="selectedInterview.set(null)">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+
+          <div class="details-content">
+            <!-- Candidat -->
+            <div class="detail-section">
+              <h3 class="section-title">
+                <i class="bi bi-person"></i>
+                Candidat
+              </h3>
+              <div class="section-content">
+                <div class="detail-item">
+                  <span class="label">Nom complet</span>
+                  <span class="value">{{ selectedInterview()!.candidateName }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="label">Email</span>
+                  <span class="value">{{ selectedInterview()!.candidateEmail }}</span>
+                </div>
+                @if (selectedInterview()!.quizScorePercent !== null && selectedInterview()!.quizScorePercent !== undefined) {
+                  <div class="detail-item">
+                    <span class="label">Score quiz</span>
+                    <span class="value score">{{ selectedInterview()!.quizScorePercent }}%</span>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- Informations de l'entretien -->
+            <div class="detail-section">
+              <h3 class="section-title">
+                <i class="bi bi-info-circle"></i>
+                Informations de l'entretien
+              </h3>
+              <div class="section-content">
+                <div class="detail-item">
+                  <span class="label">Date et heure</span>
+                  <span class="value">{{ formatDateTime(selectedInterview()!.interviewDate) }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="label">Statut</span>
+                  <span class="value status" [ngClass]="getStatusClass(selectedInterview()!.interviewStatus)">
+                    {{ getStatusLabel(selectedInterview()!.interviewStatus || '') }}
+                  </span>
+                </div>
+                <div class="detail-item">
+                  <span class="label">Type</span>
+                  <span class="value">{{ selectedInterview()!.interviewType || 'Non spécifié' }}</span>
+                </div>
+                @if (selectedInterview()!.interviewLocation) {
+                  <div class="detail-item">
+                    <span class="label">Lieu</span>
+                    <span class="value">{{ selectedInterview()!.interviewLocation }}</span>
+                  </div>
+                }
+                @if (selectedInterview()!.meetLink) {
+                  <div class="detail-item">
+                    <span class="label">Lien visio</span>
+                    <a [href]="selectedInterview()!.meetLink" target="_blank" class="value link">
+                      Rejoindre la réunion
+                      <i class="bi bi-box-arrow-up-right"></i>
+                    </a>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- Notes -->
+            @if (selectedInterview()!.interviewNote) {
+              <div class="detail-section">
+                <h3 class="section-title">
+                  <i class="bi bi-sticky"></i>
+                  Notes
+                </h3>
+                <div class="section-content">
+                  <p class="note-content">{{ selectedInterview()!.interviewNote }}</p>
+                </div>
+              </div>
+            }
+
+            <!-- Actions rapides -->
+            <div class="detail-actions">
+              @if (selectedInterview()!.interviewStatus === 'SCHEDULED') {
+                <button class="btn-action-full btn-start" (click)="changeStatus(selectedInterview()!, 'STARTED')">
+                  <i class="bi bi-play-circle"></i>
+                  Démarrer l'entretien
+                </button>
+              }
+              @if (selectedInterview()!.interviewStatus === 'STARTED') {
+                <button class="btn-action-full btn-complete" (click)="changeStatus(selectedInterview()!, 'OVER')">
+                  <i class="bi bi-check-circle"></i>
+                  Terminer l'entretien
+                </button>
+              }
+              @if (selectedInterview()!.interviewStatus === 'OVER') {
+                <button class="btn-action-full btn-pass" (click)="changeStatus(selectedInterview()!, 'PASSED')">
+                  <i class="bi bi-hand-thumbs-up"></i>
+                  Marquer comme réussi
+                </button>
+                <button class="btn-action-full btn-fail" (click)="changeStatus(selectedInterview()!, 'FAILED')">
+                  <i class="bi bi-hand-thumbs-down"></i>
+                  Marquer comme échoué
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
