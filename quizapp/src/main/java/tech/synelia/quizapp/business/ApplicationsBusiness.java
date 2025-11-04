@@ -594,14 +594,17 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		String appLink = paramsUtils.getUrlAppl();
 		String verificationLink = appLink + "/verify-email/" + token;
 		
+		log.info("=== EMAIL VERIFICATION LINK DEBUG ===");
+		log.info("appLink from config: " + appLink);
+		log.info("token: " + token);
+		log.info("verificationLink: " + verificationLink);
+		log.info("=====================================");
+		
 		String subject = "Vérification de votre adresse email - Synelia";
 		
 		String contenu = "Bonjour " + application.getCandidateFirstName() + " " + application.getCandidateLastName() + ",<br/><br/>";
 		contenu += "Merci d'avoir soumis votre candidature chez Synelia !<br/><br/>";
-		contenu += "Pour continuer le processus de recrutement, veuillez vérifier votre adresse email en cliquant sur le lien ci-dessous :<br/><br/>";
-		contenu += "<a href=\"" + verificationLink + "\" style=\"background-color: #4CAF50; color: white; padding: 14px 20px; text-align: center; text-decoration: none; display: inline-block; border-radius: 4px;\">Vérifier mon email</a><br/><br/>";
-		contenu += "Ou copiez ce lien dans votre navigateur :<br/>";
-		contenu += verificationLink + "<br/><br/>";
+		contenu += "Pour continuer le processus de recrutement, veuillez vérifier votre adresse email en cliquant sur le bouton ci-dessous.<br/><br/>";
 		contenu += "Ce lien est valide pendant 48 heures.<br/><br/>";
 		contenu += "Si vous n'avez pas soumis de candidature chez Synelia, veuillez ignorer cet email.<br/><br/>";
 		contenu += "Cordialement,<br/>";
@@ -612,7 +615,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		context.setVariable("contenu", contenu);
 		context.setVariable("entete", "Vérification Email");
 		context.setVariable("titre", "Vérification de votre adresse email");
-		context.setVariable("appLink", appLink);
+		context.setVariable("appLink", verificationLink);
 		
 		String body = "";
 		Response<?> responseEmail = hostingUtils.sendEmail(from, toRecipients, subject, body, null, context, template, locale);
@@ -773,7 +776,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			// 1. Récupérer la campagne depuis l'application
 			SourceToken sourceToken = application.getSourceToken();
 			if (sourceToken == null || sourceToken.getCampaigns() == null) {
-				log.warning("Cannot initialize candidate answers: no campaign found for application " + application.getId());
+				log.severe("ERREUR CRITIQUE: Cannot initialize candidate answers - no campaign found for application " + application.getId());
 				return;
 			}
 			
@@ -781,17 +784,18 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			Integer campaignId = campaign.getId();
 			log.info("Initializing answers for campaign ID: " + campaignId);
 			
-			// 2. Récupérer toutes les questions de la campagne
+			// 2. Récupérer toutes les questions de la campagne (ordonnées)
 			List<CampaignQuestions> campaignQuestions = campaignQuestionsRepository.findByCampaignIdOrderByOrder(campaignId, false);
 			
 			if (campaignQuestions == null || campaignQuestions.isEmpty()) {
-				log.warning("No questions found for campaign " + campaignId);
+				log.severe("ERREUR CRITIQUE: No questions found for campaign " + campaignId);
 				return;
 			}
 			
 			log.info("Found " + campaignQuestions.size() + " questions in campaign");
 			
 			int totalAnswersCreated = 0;
+			int totalAnswersSkipped = 0;
 			
         // 3. Pour chaque question, récupérer toutes les réponses possibles (questions_answers)
         for (CampaignQuestions cq : campaignQuestions) {
@@ -840,20 +844,30 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
                     candidateAnswer.setCreatedBy(userId);
                     candidateAnswer.setIsDeleted(false);
                     
-                    candidateAnswersRepository.save(candidateAnswer);
-                    totalAnswersCreated++;
-                    
-                    log.info("Created candidate_answer for questions_answers ID: " + qa.getId());
+                    CandidateAnswers saved = candidateAnswersRepository.save(candidateAnswer);
+                    if (saved != null) {
+                        totalAnswersCreated++;
+                        log.info("✓ Created candidate_answer ID " + saved.getId() + " for questions_answers ID: " + qa.getId());
+                    } else {
+                        log.severe("✗ FAILED to create candidate_answer for questions_answers ID: " + qa.getId());
+                    }
                 } else {
-                    log.info("candidate_answer already exists for questions_answers ID: " + qa.getId());
+                    totalAnswersSkipped++;
+                    log.info("⊘ candidate_answer already exists (ID: " + existing.getId() + ") for questions_answers ID: " + qa.getId());
                 }
             }
-        }			log.info("Successfully initialized " + totalAnswersCreated + " candidate_answers");
+        }
+			
+			log.info("=== INITIALIZATION COMPLETE ===");
+			log.info("Total candidate_answers created: " + totalAnswersCreated);
+			log.info("Total candidate_answers skipped (already exist): " + totalAnswersSkipped);
+			log.info("================================");
 			
 		} catch (Exception e) {
-			log.severe("Error initializing candidate answers: " + e.getMessage());
+			log.severe("ERREUR CRITIQUE lors de l'initialisation des candidate_answers: " + e.getMessage());
 			e.printStackTrace();
-			// Ne pas propager l'exception pour ne pas bloquer le démarrage du quiz
+			// Propager l'exception pour alerter qu'il y a un problème critique
+			throw new RuntimeException("Échec de l'initialisation des réponses candidates", e);
 		}
 		
 		log.info("----end initializeCandidateAnswers-----");
@@ -933,24 +947,34 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				return response;
 			}
 			
-			log.info("Application status before quiz initialization: " + application.getQuizStatus());
-			
-			// Si le quiz est en statut PENDING, le mettre en STARTED et initialiser les réponses
-			if (tech.synelia.quizapp.utils.enums.QuizStatus.PENDING.getValue().equals(application.getQuizStatus())) {
-				application.setQuizStatus(tech.synelia.quizapp.utils.enums.QuizStatus.STARTED.getValue());
-				application.setQuizLevel(0); // Initialiser à 0 (aucune question répondue encore)
-				application.setUpdatedAt(Utilities.getCurrentDate());
-				application.setUpdatedBy(request.getUser());
-				applicationsRepository.save(application);
-				log.info("Quiz status mis à jour: STARTED, quiz_level initialisé à 0");
-				
-				// Initialiser les candidate_answers pour toutes les réponses possibles
-				initializeCandidateAnswers(application, request.getUser());
-			} else {
-				log.info("Quiz already started (status: " + application.getQuizStatus() + "), skipping candidate_answers initialization");
-			}
-			
-			// 2. Récupérer le source token
+		log.info("Application status before quiz initialization: " + application.getQuizStatus());
+		
+		// Vérifier si des candidate_answers existent déjà pour cette application
+		List<CandidateAnswers> existingAnswers = candidateAnswersRepository.findByApplicationId(applicationId, false);
+		boolean needsInitialization = (existingAnswers == null || existingAnswers.isEmpty());
+		
+		log.info("Existing candidate_answers count: " + (existingAnswers != null ? existingAnswers.size() : 0));
+		log.info("Needs initialization: " + needsInitialization);
+		
+		// Si le quiz est en statut PENDING, le mettre en STARTED
+		if (tech.synelia.quizapp.utils.enums.QuizStatus.PENDING.getValue().equals(application.getQuizStatus())) {
+			application.setQuizStatus(tech.synelia.quizapp.utils.enums.QuizStatus.STARTED.getValue());
+			application.setQuizLevel(0); // Initialiser à 0 (aucune question répondue encore)
+			application.setUpdatedAt(Utilities.getCurrentDate());
+			application.setUpdatedBy(request.getUser());
+			applicationsRepository.save(application);
+			log.info("Quiz status mis à jour: STARTED, quiz_level initialisé à 0");
+		} else {
+			log.info("Quiz already started (status: " + application.getQuizStatus() + ")");
+		}
+		
+		// Initialiser les candidate_answers si nécessaire (que le quiz soit PENDING ou STARTED)
+		if (needsInitialization) {
+			log.info("Initializing candidate_answers for application " + applicationId);
+			initializeCandidateAnswers(application, request.getUser());
+		} else {
+			log.info("Candidate_answers already initialized, skipping initialization");
+		}			// 2. Récupérer le source token
 			SourceToken sourceToken = application.getSourceToken();
 			if (sourceToken == null) {
 				Status status = new Status();
