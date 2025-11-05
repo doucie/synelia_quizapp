@@ -75,6 +75,9 @@ public class Campaigns implements Serializable, Cloneable {
     @Column(name="total_questions")
     private Integer    totalQuestions ;
 
+    @Column(name="is_timed", nullable=false, columnDefinition="BOOLEAN DEFAULT FALSE")
+    private Boolean    isTimed      ;
+
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name="created_at")
     private Date       createdAt    ;

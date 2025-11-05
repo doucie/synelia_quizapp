@@ -72,6 +72,9 @@ public class CampaignQuestions implements Serializable, Cloneable {
     @Column(name="order", nullable=false)
     private Integer    order        ;
 
+    @Column(name="chrono", nullable=false, columnDefinition="INT DEFAULT 10")
+    private Integer    chrono       ;
+
 	// "campaignId" (column "campaign_id") is not defined by itself because used as FK in a link 
 	// "questionId" (column "question_id") is not defined by itself because used as FK in a link 
 

@@ -13,6 +13,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.http.HttpStatus;
+import org.springframework.transaction.annotation.Transactional;
 import org.thymeleaf.context.Context;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -881,6 +882,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 	 * @return Response contenant les questions et réponses
 	 * @throws JsonProcessingException
 	 */
+	@Transactional
 	public Response<ApplicationsDto> getQuizForApplication(Request<ApplicationsDto> request, Locale locale) throws JsonProcessingException {
 		log.info("----begin getQuizForApplication-----");
 		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
@@ -947,7 +949,13 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				return response;
 			}
 			
-		log.info("Application status before quiz initialization: " + application.getQuizStatus());
+		log.info("=== QUIZ START DEBUG ===");
+		log.info("Application ID: " + applicationId);
+		log.info("Application status BEFORE: " + application.getQuizStatus());
+		log.info("Application quiz_level BEFORE: " + application.getQuizLevel());
+		log.info("PENDING value: " + tech.synelia.quizapp.utils.enums.QuizStatus.PENDING.getValue());
+		log.info("STARTED value: " + tech.synelia.quizapp.utils.enums.QuizStatus.STARTED.getValue());
+		log.info("Status equals PENDING? " + tech.synelia.quizapp.utils.enums.QuizStatus.PENDING.getValue().equals(application.getQuizStatus()));
 		
 		// Vérifier si des candidate_answers existent déjà pour cette application
 		List<CandidateAnswers> existingAnswers = candidateAnswersRepository.findByApplicationId(applicationId, false);
@@ -958,15 +966,27 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		
 		// Si le quiz est en statut PENDING, le mettre en STARTED
 		if (tech.synelia.quizapp.utils.enums.QuizStatus.PENDING.getValue().equals(application.getQuizStatus())) {
+			log.info(">>> Updating status from PENDING to STARTED...");
 			application.setQuizStatus(tech.synelia.quizapp.utils.enums.QuizStatus.STARTED.getValue());
-			application.setQuizLevel(0); // Initialiser à 0 (aucune question répondue encore)
+			application.setQuizLevel(1); // Initialiser à 1 (commence à la première question avec order=1)
 			application.setUpdatedAt(Utilities.getCurrentDate());
 			application.setUpdatedBy(request.getUser());
-			applicationsRepository.save(application);
-			log.info("Quiz status mis à jour: STARTED, quiz_level initialisé à 0");
+			Applications savedApp = applicationsRepository.save(application);
+			log.info(">>> Quiz status mis à jour: STARTED, quiz_level initialisé à 1");
+			log.info(">>> Saved application status: " + savedApp.getQuizStatus());
+			log.info(">>> Saved application quiz_level: " + savedApp.getQuizLevel());
+			
+			// Vérifier immédiatement en base de données
+			Applications verifyApp = applicationsRepository.findOne(applicationId, false);
+			log.info(">>> VERIFICATION - Status in DB: " + verifyApp.getQuizStatus());
+			log.info(">>> VERIFICATION - quiz_level in DB: " + verifyApp.getQuizLevel());
+			
+			// Utiliser l'application vérifiée pour la suite
+			application = verifyApp;
 		} else {
-			log.info("Quiz already started (status: " + application.getQuizStatus() + ")");
+			log.info(">>> Quiz already started or completed (status: " + application.getQuizStatus() + ")");
 		}
+		log.info("========================");
 		
 		// Initialiser les candidate_answers si nécessaire (que le quiz soit PENDING ou STARTED)
 		if (needsInitialization) {
@@ -1000,8 +1020,8 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			
 			log.info("Campagne trouvée: " + campaign.getCampaignTitle());
 			
-			// 4. Récupérer les questions de la campagne
-			List<CampaignQuestions> campaignQuestions = campaignQuestionsRepository.findByCampaignId(campaign.getId(), false);
+			// 4. Récupérer les questions de la campagne TRIÉES par order (ASC)
+			List<CampaignQuestions> campaignQuestions = campaignQuestionsRepository.findByCampaignIdOrderByOrder(campaign.getId(), false);
 			
 			if (campaignQuestions == null || campaignQuestions.isEmpty()) {
 				Status status = new Status();
@@ -1015,7 +1035,21 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			
 			log.info("Nombre de questions trouvées: " + campaignQuestions.size());
 			
-			// 5. Pour chaque question, récupérer les réponses
+			// 5. Calculer le temps total alloué si la campagne est chronométrée
+			Integer totalTimeAllowed = null;
+			if (campaign.getIsTimed() != null && campaign.getIsTimed()) {
+				totalTimeAllowed = 0;
+				for (CampaignQuestions cq : campaignQuestions) {
+					if (cq.getChrono() != null) {
+						totalTimeAllowed += cq.getChrono();
+					}
+				}
+				log.info("Campagne chronométrée - Temps total alloué: " + totalTimeAllowed + " secondes");
+			} else {
+				log.info("Campagne non chronométrée");
+			}
+			
+			// 6. Pour chaque question, récupérer les réponses
 			List<Map<String, Object>> questionsWithAnswers = new ArrayList<>();
 			
 			for (CampaignQuestions cq : campaignQuestions) {
@@ -1024,6 +1058,8 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 					Map<String, Object> questionData = new HashMap<>();
 					questionData.put("id", question.getId());
 					questionData.put("questionContent", question.getQuestionContent());
+					questionData.put("order", cq.getOrder()); // Ordre de la question dans la campagne
+					questionData.put("chrono", cq.getChrono() != null ? cq.getChrono() : 10); // Temps alloué pour cette question (défaut 10s)
 					
 					// Récupérer les réponses pour cette question
 					List<QuestionsAnswers> questionAnswers = questionsAnswersRepository.findByQuestionId(question.getId(), false);
@@ -1055,6 +1091,10 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			quizData.put("applicationId", applicationId);
 			quizData.put("campaignId", campaign.getId());
 			quizData.put("campaignTitle", campaign.getCampaignTitle());
+			quizData.put("isTimed", campaign.getIsTimed() != null ? campaign.getIsTimed() : false);
+			if (totalTimeAllowed != null) {
+				quizData.put("totalTimeAllowed", totalTimeAllowed);
+			}
 			quizData.put("questions", questionsWithAnswers);
 			resultDto.setSearchString(Utilities.convertObjectToJson(quizData));
 			
@@ -1407,8 +1447,9 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			// Calculer le pourcentage du score
 			Integer quizScorePercent = (correctAnswersCount * 100) / totalQuestions;
 			
-			// 4. Mettre à jour l'application avec le score, total_questions, quiz_score_percent et statut COMPLETED
+			// 4. Mettre à jour l'application avec le score, total_questions, quiz_score_percent, statut COMPLETED et application_status SUBMITTED
 			application.setQuizStatus(tech.synelia.quizapp.utils.enums.QuizStatus.COMPLETED.getValue());
+			application.setApplicationStatus("SUBMITTED"); // Le candidat a soumis sa candidature en complétant le quiz
 			application.setQuizScore(correctAnswersCount);
 			application.setTotalQuestions(totalQuestions);
 			application.setQuizScorePercent(quizScorePercent);
@@ -1417,11 +1458,13 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			applicationsRepository.save(application);
 			
 			log.info("Quiz complété pour l'application " + applicationId + " - Score: " + correctAnswersCount + "/" + totalQuestions);
+			log.info("Application status mis à jour: SUBMITTED");
 			
 			// 5. Préparer la réponse
 			ApplicationsDto resultDto = new ApplicationsDto();
 			resultDto.setId(applicationId);
 			resultDto.setQuizStatus(tech.synelia.quizapp.utils.enums.QuizStatus.COMPLETED.getValue());
+			resultDto.setApplicationStatus("SUBMITTED");
 			resultDto.setQuizScore(correctAnswersCount);
 			resultDto.setTotalQuestions(totalQuestions);
 			resultDto.setQuizScorePercent(quizScorePercent);

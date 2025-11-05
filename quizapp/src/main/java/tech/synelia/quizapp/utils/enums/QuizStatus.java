@@ -7,17 +7,17 @@ public enum QuizStatus {
     /**
      * Quiz has not been started yet (initial state after email verification)
      */
-    PENDING("pending"),
+    PENDING("PENDING"),
     
     /**
      * Quiz has been started but not completed
      */
-    STARTED("started"),
+    STARTED("STARTED"),
     
     /**
      * Quiz has been completed
      */
-    COMPLETED("completed");
+    COMPLETED("COMPLETED");
 
     private final String value;
 

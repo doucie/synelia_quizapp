@@ -38,6 +38,8 @@ public class CampaignQuestionsDto extends _CampaignQuestionsDto implements Clone
     private Integer    updatedBy            ;
     private Boolean    isDeleted            ;
     private String     searchString         ;
+    private Integer    order                ;
+    private Integer    chrono               ;
     private Integer    campaignId           ;
     private Integer    questionId           ;
 
@@ -53,6 +55,8 @@ public class CampaignQuestionsDto extends _CampaignQuestionsDto implements Clone
 	private SearchParam<Integer>  updatedByParam        ;                     
 	private SearchParam<Boolean>  isDeletedParam        ;                     
 	private SearchParam<String>   searchStringParam     ;                     
+	private SearchParam<Integer>  orderParam            ;                     
+	private SearchParam<Integer>  chronoParam           ;                     
 	private SearchParam<Integer>  campaignIdParam       ;                     
 	private SearchParam<Integer>  questionIdParam       ;                     
     /**
