@@ -9,6 +9,7 @@ import { Campaign, CampaignService } from '../../../core/services/campaign.servi
 import { User, UserService } from '../../../core/services/user.service';
 import { CampaignCrudService } from '../../../core/services/campaign-crud.service';
 import { SourceTokenService, SourceToken } from '../../../services/source-token.service';
+import { InterviewCrud, InterviewCrudService } from '../../../core/services/interview-crud.service';
 
 interface InterviewFormData {
   campaignId: number;
@@ -38,8 +39,16 @@ export class InterviewCreateComponent implements OnInit, OnDestroy {
   applications = signal<Application[]>([]);
   sourceTokens = signal<SourceToken[]>([]);
   campaignCrudItems = signal<any[]>([]); // Pour stocker les campaign_crud
-  evaluators = signal<User[]>([]);
+  evaluators = signal<User[]>([]); // Évaluateurs avec droit d'évaluer
+  allUsers = signal<User[]>([]); // Tous les utilisateurs pour la recherche
+  searchEvaluatorQuery = signal('');
   showEmailPreview = signal(false);
+  
+  // Modal states
+  showSummaryModal = signal(false);
+  showEmailConfirmModal = signal(false);
+  showNoEmailWarningModal = signal(false);
+  sendEmail = signal(true); // Par défaut, on envoie l'email
   
   // Form data
   formData = signal<InterviewFormData>({
@@ -62,7 +71,8 @@ export class InterviewCreateComponent implements OnInit, OnDestroy {
     private campaignService: CampaignService,
     private userService: UserService,
     private campaignCrudService: CampaignCrudService,
-    private sourceTokenService: SourceTokenService
+    private sourceTokenService: SourceTokenService,
+    private interviewCrudService: InterviewCrudService
   ) {}
 
   ngOnInit(): void {
@@ -121,9 +131,83 @@ export class InterviewCreateComponent implements OnInit, OnDestroy {
    */
   selectedEvaluatorsDetails = computed(() => {
     const selectedIds = this.formData().selectedEvaluators;
-    return this.evaluators().filter(user => 
-      selectedIds.includes(user.id!)
+    // Rechercher dans tous les utilisateurs, pas seulement les évaluateurs avec droit
+    const allAvailableUsers = [...this.evaluators(), ...this.allUsers()];
+    return allAvailableUsers.filter((user, index, self) => 
+      selectedIds.includes(user.id!) && 
+      self.findIndex(u => u.id === user.id) === index // Éviter les doublons
     );
+  });
+
+  /**
+   * Computed - Utilisateurs filtrés pour la recherche (excluant ceux déjà évaluateurs)
+   */
+  filteredSearchUsers = computed(() => {
+    const query = this.searchEvaluatorQuery().toLowerCase().trim();
+    const evaluatorIds = this.evaluators().map(e => e.id);
+    
+    let filtered = this.allUsers().filter(user => 
+      !evaluatorIds.includes(user.id) // Exclure ceux qui ont déjà le droit d'évaluer
+    );
+    
+    if (query) {
+      filtered = filtered.filter(user => {
+        const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
+        const email = (user.email || '').toLowerCase();
+        return fullName.includes(query) || email.includes(query);
+      });
+    }
+    
+    return filtered;
+  });
+
+  /**
+   * Computed - Évaluateurs additionnels sélectionnés (non désignés)
+   */
+  additionalSelectedEvaluators = computed(() => {
+    const evaluatorIds = this.evaluators().map(e => e.id);
+    return this.selectedEvaluatorsDetails().filter(user => 
+      !evaluatorIds.includes(user.id)
+    );
+  });
+
+  /**
+   * Computed - Informations sur la date de l'interview
+   */
+  interviewDateInfo = computed(() => {
+    const form = this.formData();
+    if (!form.interviewDate) {
+      return null;
+    }
+
+    const interviewDate = new Date(form.interviewDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    interviewDate.setHours(0, 0, 0, 0);
+
+    const diffTime = interviewDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    const dayOfWeek = interviewDate.getDay();
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+    const dayNames = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+    const dayName = dayNames[dayOfWeek];
+
+    return {
+      date: interviewDate,
+      dayName,
+      isWeekend,
+      diffDays,
+      isPast: diffDays < 0,
+      isTooFar: diffDays > 30,
+      formattedDate: interviewDate.toLocaleDateString('fr-FR', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      })
+    };
   });
 
   /**
@@ -137,22 +221,36 @@ export class InterviewCreateComponent implements OnInit, OnDestroy {
       .map(e => `${e.firstName} ${e.lastName}`)
       .join(', ');
 
+    const interviewTypeText = form.interviewType === 'IN_PERSON' 
+      ? 'qui se déroulera en présentiel' 
+      : 'qui se déroulera en visioconférence';
+
+    const locationOrLink = form.interviewType === 'IN_PERSON'
+      ? `Lieu : ${form.interviewLocation || 'À préciser'}`
+      : `Lien de connexion : ${form.meetLink || 'Sera communiqué ultérieurement'}`;
+
+    const additionalNote = form.interviewNote 
+      ? `\n\nNote supplémentaire :\n${form.interviewNote}` 
+      : '';
+
     return {
       subject: `Convocation à un entretien - ${campaign?.campaignTitle || campaign?.campaignName || ''}`,
       body: `
-Bonjour [Nom du candidat],
+Madame, Monsieur,
 
-Nous avons le plaisir de vous informer que votre candidature pour le poste "${campaign?.campaignTitle || campaign?.campaignName || ''}" a été retenue.
+Nous avons le plaisir de vous informer que votre candidature pour le poste de "${campaign?.campaignTitle || campaign?.campaignName || ''}" a retenu notre attention.
 
-Nous souhaitons vous rencontrer pour un entretien ${form.interviewType === 'IN_PERSON' ? 'en personne' : 'en ligne'}.
+Dans le cadre de notre processus de recrutement, nous souhaitons vous rencontrer pour un entretien ${interviewTypeText}.
 
-📅 Date et heure : ${dateTime}
-${form.interviewType === 'IN_PERSON' ? `📍 Lieu : ${form.interviewLocation || 'À préciser'}` : `💻 Lien de connexion : ${form.meetLink || 'À envoyer ultérieurement'}`}
+Détails de l'entretien :
 
-👥 Vous serez évalué(e) par : ${evaluatorsNames || 'À confirmer'}
+Date et heure : ${dateTime}
+${locationOrLink}
+${evaluatorsNames ? `Interlocuteur(s) : ${evaluatorsNames}` : ''}${additionalNote}
 
-${form.interviewNote ? `\n📝 Informations complémentaires :\n${form.interviewNote}\n` : ''}
-Nous vous remercions de confirmer votre présence en répondant à cet email.
+Nous vous prions de bien vouloir confirmer votre disponibilité en répondant à cet email.
+
+Nous restons à votre disposition pour toute information complémentaire.
 
 Cordialement,
 L'équipe de recrutement
@@ -191,7 +289,8 @@ L'équipe de recrutement
     forkJoin({
       applications: this.applicationService.getApplicationsByCriteria({}),
       sourceTokens: this.sourceTokenService.getSourceTokensByCriteria({}),
-      evaluators: this.campaignCrudService.getEvaluatorsByCampaignId(campaignId)
+      evaluators: this.campaignCrudService.getEvaluatorsByCampaignId(campaignId),
+      allUsers: this.userService.getAllUsersByCriteria({ isDeleted: false })
     }).pipe(takeUntil(this.destroy$)).subscribe({
       next: (response) => {
         // Traiter les applications
@@ -202,6 +301,11 @@ L'équipe de recrutement
         // Traiter les sourceTokens
         if (response.sourceTokens.items) {
           this.sourceTokens.set(response.sourceTokens.items);
+        }
+
+        // Traiter tous les utilisateurs pour la recherche
+        if (response.allUsers.content) {
+          this.allUsers.set(response.allUsers.content);
         }
 
         // Traiter les évaluateurs
@@ -298,6 +402,42 @@ L'équipe de recrutement
   }
 
   /**
+   * Met à jour le message complémentaire
+   */
+  updateInterviewNote(value: string): void {
+    const current = this.formData();
+    current.interviewNote = value;
+    this.formData.set({ ...current });
+  }
+
+  /**
+   * Met à jour le type d'entretien
+   */
+  updateInterviewType(value: 'IN_PERSON' | 'ONLINE'): void {
+    const current = this.formData();
+    current.interviewType = value;
+    this.formData.set({ ...current });
+  }
+
+  /**
+   * Met à jour le lieu
+   */
+  updateInterviewLocation(value: string): void {
+    const current = this.formData();
+    current.interviewLocation = value;
+    this.formData.set({ ...current });
+  }
+
+  /**
+   * Met à jour le lien de visioconférence
+   */
+  updateMeetLink(value: string): void {
+    const current = this.formData();
+    current.meetLink = value;
+    this.formData.set({ ...current });
+  }
+
+  /**
    * Sélectionner tous les candidats
    */
   selectAllCandidates(): void {
@@ -368,8 +508,51 @@ L'équipe de recrutement
       return;
     }
 
-    // Créer les entretiens
+    // Afficher le récapitulatif
+    this.showSummaryModal.set(true);
+  }
+
+  /**
+   * Confirme le récapitulatif et demande si on envoie l'email
+   */
+  confirmSummary(sendEmail: boolean): void {
+    this.sendEmail.set(sendEmail);
+    this.showSummaryModal.set(false);
+
+    if (sendEmail) {
+      // Afficher la prévisualisation de l'email pour confirmation finale
+      this.showEmailConfirmModal.set(true);
+    } else {
+      // Afficher l'avertissement sur le non-envoi
+      this.showNoEmailWarningModal.set(true);
+    }
+  }
+
+  /**
+   * Confirme l'envoi de l'email et crée les entretiens
+   */
+  confirmEmailSend(): void {
+    this.showEmailConfirmModal.set(false);
     this.createInterviews();
+  }
+
+  /**
+   * Confirme qu'on ne veut pas envoyer l'email et crée les entretiens
+   */
+  confirmNoEmail(confirmed: boolean): void {
+    this.showNoEmailWarningModal.set(false);
+    if (confirmed) {
+      this.createInterviews();
+    }
+  }
+
+  /**
+   * Annule et ferme tous les modals
+   */
+  cancelAllModals(): void {
+    this.showSummaryModal.set(false);
+    this.showEmailConfirmModal.set(false);
+    this.showNoEmailWarningModal.set(false);
   }
 
   /**
@@ -378,9 +561,12 @@ L'équipe de recrutement
   createInterviews(): void {
     const form = this.formData();
     const dateTime = `${form.interviewDate.split('-').reverse().join('/')} ${form.interviewTime}`;
+    const shouldSendEmail = this.sendEmail();
 
-    const interviewPromises = form.selectedCandidates.map(candidateId => {
-      // Trouver l'application pour obtenir son sourceTokenId
+    this.loading.set(true);
+
+    // Créer un entretien pour chaque candidat
+    const interviewRequests = form.selectedCandidates.map(candidateId => {
       const application = this.applications().find(app => app.id === candidateId);
       
       if (!application || !application.sourceTokenId) {
@@ -389,45 +575,129 @@ L'équipe de recrutement
       }
 
       const interview: Interview = {
-        campaignId: application.sourceTokenId, // Utiliser le sourceTokenId de l'application
+        campaignId: application.sourceTokenId,
         interviewDate: dateTime,
         interviewType: form.interviewType,
         interviewLocation: form.interviewLocation,
         meetLink: form.meetLink,
         interviewNote: form.interviewNote,
         interviewStatus: 'SCHEDULED',
-        interviewMailSent: false,
+        interviewMailSent: shouldSendEmail,
         isDeleted: false
       };
 
       return this.interviewService.createInterview(interview);
-    }).filter(promise => promise !== null);
+    }).filter(request => request !== null);
 
-    this.loading.set(true);
-
-    forkJoin(interviewPromises).subscribe({
-      next: (responses) => {
-        const hasErrors = responses.some(r => r.hasError);
+    // Exécuter toutes les créations d'entretiens
+    forkJoin(interviewRequests).subscribe({
+      next: (interviewResponses) => {
+        const hasErrors = interviewResponses.some(r => r.hasError);
         
         if (hasErrors) {
-          const errorMessages = responses
+          const errorMessages = interviewResponses
             .filter(r => r.hasError)
             .map(r => r.status.message)
             .join('\n');
           alert(`Certains entretiens n'ont pas pu être créés:\n${errorMessages}`);
-        } else {
-          alert(`${responses.length} entretien(s) créé(s) avec succès!`);
-          this.router.navigate(['/dashboard/interviews']);
+          this.loading.set(false);
+          return;
         }
-        
-        this.loading.set(false);
+
+        // Extraire les IDs des entretiens créés
+        const createdInterviewIds = interviewResponses
+          .filter(r => !r.hasError && r.items && r.items.length > 0)
+          .map(r => r.items[0].id!)
+          .filter(id => id !== undefined);
+
+        console.log('✅ Entretiens créés:', createdInterviewIds);
+
+        // Créer les interview_crud pour chaque entretien
+        this.createInterviewCruds(createdInterviewIds);
       },
       error: (error) => {
-        console.error('Erreur lors de la création des entretiens:', error);
+        console.error('❌ Erreur lors de la création des entretiens:', error);
         alert('Erreur lors de la création des entretiens');
         this.loading.set(false);
       }
     });
+  }
+
+  /**
+   * Crée les enregistrements interview_crud pour tous les évaluateurs
+   */
+  createInterviewCruds(interviewIds: number[]): void {
+    const form = this.formData();
+    const allInterviewCruds: InterviewCrud[] = [];
+
+    // Pour chaque entretien créé
+    interviewIds.forEach(interviewId => {
+      // Pour chaque évaluateur sélectionné
+      form.selectedEvaluators.forEach(userId => {
+        // Vérifier si c'est un évaluateur désigné
+        const isDesignatedEvaluator = this.evaluators().some(e => e.id === userId);
+        
+        if (isDesignatedEvaluator) {
+          // Copier les droits de campaign_crud
+          const campaignCrud = this.campaignCrudItems().find(crud => crud.userId === userId);
+          
+          if (campaignCrud) {
+            const interviewCrud: InterviewCrud = {
+              interviewId,
+              userId,
+              canEvaluate: campaignCrud.canEvaluate || false,
+              canViewCandidateProfile: campaignCrud.canViewCandidateProfile || false,
+              canViewCandidateResults: campaignCrud.canViewCandidateResults || false,
+              canScheduleInterview: campaignCrud.canScheduleInterview || false,
+              canMarkAttendance: campaignCrud.canMarkAttendance || false,
+              canProvideScore: campaignCrud.canProvideScore || false,
+              canAddComments: campaignCrud.canAddComments || false
+            };
+            allInterviewCruds.push(interviewCrud);
+          }
+        } else {
+          // Pour les autres recruteurs, donner seulement canEvaluate
+          const interviewCrud: InterviewCrud = {
+            interviewId,
+            userId,
+            canEvaluate: true,
+            canViewCandidateProfile: false,
+            canViewCandidateResults: false,
+            canScheduleInterview: false,
+            canMarkAttendance: false,
+            canProvideScore: false,
+            canAddComments: false
+          };
+          allInterviewCruds.push(interviewCrud);
+        }
+      });
+    });
+
+    console.log('📋 Interview CRUDs à créer:', allInterviewCruds);
+
+    // Créer tous les interview_crud
+    if (allInterviewCruds.length > 0) {
+      this.interviewCrudService.createMultipleInterviewCruds(allInterviewCruds).subscribe({
+        next: (response) => {
+          console.log('✅ Interview CRUDs créés:', response);
+          this.loading.set(false);
+          
+          const emailStatus = this.sendEmail() ? 'avec envoi d\'emails' : 'sans envoi d\'emails';
+          alert(`${interviewIds.length} entretien(s) créé(s) avec succès ${emailStatus}!`);
+          this.router.navigate(['/dashboard/interviews']);
+        },
+        error: (error) => {
+          console.error('❌ Erreur lors de la création des interview CRUDs:', error);
+          alert('Entretiens créés mais erreur lors de l\'attribution des droits aux évaluateurs');
+          this.loading.set(false);
+          this.router.navigate(['/dashboard/interviews']);
+        }
+      });
+    } else {
+      this.loading.set(false);
+      alert(`${interviewIds.length} entretien(s) créé(s) avec succès!`);
+      this.router.navigate(['/dashboard/interviews']);
+    }
   }
 
   /**
@@ -462,7 +732,11 @@ L'équipe de recrutement
    * Obtient le nom complet d'un évaluateur
    */
   getEvaluatorName(user: User): string {
-    return `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Utilisateur';
+    if (!user) return 'Utilisateur';
+    const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+    if (fullName) return fullName;
+    if (user.username) return user.username;
+    return user.email || 'Utilisateur';
   }
 
   /**

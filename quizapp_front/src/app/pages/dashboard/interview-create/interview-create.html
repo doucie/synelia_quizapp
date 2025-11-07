@@ -167,7 +167,8 @@
                       type="radio"
                       name="interviewType"
                       value="IN_PERSON"
-                      [(ngModel)]="formData().interviewType"
+                      [checked]="formData().interviewType === 'IN_PERSON'"
+                      (change)="updateInterviewType('IN_PERSON')"
                     />
                     <div class="radio-content">
                       <i class="bi bi-building"></i>
@@ -179,7 +180,8 @@
                       type="radio"
                       name="interviewType"
                       value="ONLINE"
-                      [(ngModel)]="formData().interviewType"
+                      [checked]="formData().interviewType === 'ONLINE'"
+                      (change)="updateInterviewType('ONLINE')"
                     />
                     <div class="radio-content">
                       <i class="bi bi-camera-video"></i>
@@ -199,7 +201,8 @@
                   <input
                     type="text"
                     id="interviewLocation"
-                    [(ngModel)]="formData().interviewLocation"
+                    [ngModel]="formData().interviewLocation"
+                    (ngModelChange)="updateInterviewLocation($event)"
                     name="interviewLocation"
                     placeholder="Ex: Bureau principal, Salle de réunion 3"
                     required
@@ -217,28 +220,14 @@
                   <input
                     type="url"
                     id="meetLink"
-                    [(ngModel)]="formData().meetLink"
+                    [ngModel]="formData().meetLink"
+                    (ngModelChange)="updateMeetLink($event)"
                     name="meetLink"
                     placeholder="https://meet.google.com/xxx-xxxx-xxx"
                     required
                   />
                 </div>
               }
-
-              <!-- Message personnalisé pour l'email -->
-              <div class="form-group">
-                <label for="interviewNote">
-                  <i class="bi bi-envelope-paper"></i>
-                  Message complémentaire (sera ajouté dans l'email de convocation)
-                </label>
-                <textarea
-                  id="interviewNote"
-                  [(ngModel)]="formData().interviewNote"
-                  name="interviewNote"
-                  rows="4"
-                  placeholder="Ajoutez des informations supplémentaires qui seront incluses dans l'email de convocation (ex: documents à apporter, code vestimentaire, etc.)"
-                ></textarea>
-              </div>
             </div>
           </div>
 
@@ -259,27 +248,167 @@
                   <p>Aucun évaluateur disponible pour cette campagne</p>
                 </div>
               } @else {
-                <div class="evaluators-list">
-                  @for (evaluator of evaluators(); track evaluator.id) {
-                    <div 
-                      class="evaluator-item"
-                      [class.selected]="isEvaluatorSelected(evaluator.id!)"
-                      (click)="toggleEvaluator(evaluator.id!)"
-                    >
-                      <input 
-                        type="checkbox" 
-                        [checked]="isEvaluatorSelected(evaluator.id!)"
-                        (click)="$event.stopPropagation()"
-                      />
-                      <div class="evaluator-avatar">
-                        {{ getInitials(getEvaluatorName(evaluator)) }}
-                      </div>
-                      <div class="evaluator-info">
-                        <h4>{{ getEvaluatorName(evaluator) }}</h4>
-                        <p>{{ evaluator.email }}</p>
-                      </div>
+                <!-- Évaluateurs par défaut (avec cases à cocher) -->
+                <div class="evaluators-default-section">
+                  <div class="subsection-header">
+                    <div class="subsection-icon">
+                      <i class="bi bi-star-fill"></i>
                     </div>
-                  }
+                    <div class="subsection-content">
+                      <h3>Évaluateurs désignés</h3>
+                      <p>Ces évaluateurs ont le droit d'évaluer cette campagne</p>
+                    </div>
+                  </div>
+                  <div class="evaluators-checkbox-grid">
+                    @for (evaluator of evaluators(); track evaluator.id) {
+                      <div 
+                        class="evaluator-checkbox-card"
+                        [class.selected]="isEvaluatorSelected(evaluator.id!)"
+                        (click)="toggleEvaluator(evaluator.id!)"
+                      >
+                        <div class="card-header">
+                          <div class="checkbox-wrapper">
+                            <input 
+                              type="checkbox" 
+                              [checked]="isEvaluatorSelected(evaluator.id!)"
+                              (click)="$event.stopPropagation()"
+                            />
+                            <div class="checkbox-custom">
+                              <i class="bi bi-check-lg"></i>
+                            </div>
+                          </div>
+                          <div class="badge-designated">
+                            <i class="bi bi-patch-check-fill"></i>
+                            Désigné
+                          </div>
+                        </div>
+                        <div class="card-body">
+                          <div class="evaluator-avatar-wrapper">
+                            <div class="evaluator-avatar primary">
+                              {{ getInitials(getEvaluatorName(evaluator)) }}
+                            </div>
+                            <div class="status-indicator"></div>
+                          </div>
+                          <div class="evaluator-details">
+                            <h4>{{ getEvaluatorName(evaluator) }}</h4>
+                            <p>
+                              <i class="bi bi-envelope"></i>
+                              {{ evaluator.email }}
+                            </p>
+                            @if (evaluator.userRole || evaluator.role) {
+                              <p class="evaluator-role">
+                                <i class="bi bi-person-badge"></i>
+                                {{ evaluator.userRole || evaluator.role }}
+                              </p>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+
+                <!-- Recherche d'autres évaluateurs (avec dropdown select) -->
+                <div class="evaluators-search-section">
+                  <div class="subsection-header">
+                    <div class="subsection-icon secondary">
+                      <i class="bi bi-person-plus-fill"></i>
+                    </div>
+                    <div class="subsection-content">
+                      <h3>Ajouter d'autres évaluateurs</h3>
+                      <p>Recherchez et sélectionnez des évaluateurs supplémentaires</p>
+                    </div>
+                  </div>
+
+                  <div class="search-select-wrapper">
+                    <div class="search-input-container">
+                      <i class="bi bi-search"></i>
+                      <input
+                        type="text"
+                        [(ngModel)]="searchEvaluatorQuery"
+                        name="searchEvaluator"
+                        placeholder="Rechercher par nom ou email..."
+                        class="search-input"
+                      />
+                      @if (searchEvaluatorQuery()) {
+                        <button 
+                          type="button" 
+                          class="btn-clear-search"
+                          (click)="searchEvaluatorQuery.set('')"
+                        >
+                          <i class="bi bi-x-lg"></i>
+                        </button>
+                      }
+                    </div>
+
+                    @if (searchEvaluatorQuery() && filteredSearchUsers().length > 0) {
+                      <div class="search-results-dropdown">
+                        <div class="dropdown-header">
+                          <span>{{ filteredSearchUsers().length }} résultat(s) trouvé(s)</span>
+                        </div>
+                        <div class="dropdown-list">
+                          @for (user of filteredSearchUsers(); track user.id) {
+                            <div 
+                              class="dropdown-item"
+                              [class.selected]="isEvaluatorSelected(user.id!)"
+                              (click)="toggleEvaluator(user.id!)"
+                            >
+                              <div class="item-avatar secondary">
+                                {{ getInitials(getEvaluatorName(user)) }}
+                              </div>
+                              <div class="item-info">
+                                <h5>{{ getEvaluatorName(user) }}</h5>
+                                <span>{{ user.email }}</span>
+                              </div>
+                              @if (isEvaluatorSelected(user.id!)) {
+                                <div class="item-action selected">
+                                  <i class="bi bi-check-circle-fill"></i>
+                                  Sélectionné
+                                </div>
+                              } @else {
+                                <div class="item-action">
+                                  <i class="bi bi-plus-circle"></i>
+                                  Ajouter
+                                </div>
+                              }
+                            </div>
+                          }
+                        </div>
+                      </div>
+                    } @else if (searchEvaluatorQuery()) {
+                      <div class="search-empty-state">
+                        <i class="bi bi-inbox"></i>
+                        <p>Aucun utilisateur trouvé</p>
+                      </div>
+                    }
+
+                    <!-- Affichage des évaluateurs additionnels sélectionnés -->
+                    @if (additionalSelectedEvaluators().length > 0) {
+                      <div class="selected-additional-evaluators">
+                        <div class="selected-header">
+                          <i class="bi bi-people-fill"></i>
+                          <span>Évaluateurs additionnels ({{ additionalSelectedEvaluators().length }})</span>
+                        </div>
+                        <div class="selected-list">
+                          @for (user of additionalSelectedEvaluators(); track user.id) {
+                            <div class="selected-tag">
+                              <div class="tag-avatar">
+                                {{ getInitials(getEvaluatorName(user)) }}
+                              </div>
+                              <span class="tag-name">{{ getEvaluatorName(user) }}</span>
+                              <button 
+                                type="button"
+                                class="tag-remove"
+                                (click)="toggleEvaluator(user.id!)"
+                              >
+                                <i class="bi bi-x"></i>
+                              </button>
+                            </div>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
                 </div>
               }
             </div>
@@ -303,8 +432,28 @@
               </button>
             </div>
 
-            @if (showEmailPreview()) {
-              <div class="section-content">
+            <div class="section-content">
+              <!-- Message personnalisé pour l'email -->
+              <div class="form-group">
+                <label for="interviewNote">
+                  <i class="bi bi-envelope-paper"></i>
+                  Message complémentaire
+                </label>
+                <textarea
+                  id="interviewNote"
+                  [ngModel]="formData().interviewNote"
+                  (ngModelChange)="updateInterviewNote($event)"
+                  name="interviewNote"
+                  rows="4"
+                  placeholder="Ajoutez des informations supplémentaires qui seront incluses dans l'email de convocation (ex: documents à apporter, code vestimentaire, etc.)"
+                ></textarea>
+                <small class="form-hint">
+                  <i class="bi bi-info-circle"></i>
+                  Ce message sera ajouté dans la section "Note supplémentaire" de l'email
+                </small>
+              </div>
+
+              @if (showEmailPreview()) {
                 <div class="email-preview">
                   <div class="email-header">
                     <div class="email-field">
@@ -316,8 +465,8 @@
                     <pre>{{ emailPreview().body }}</pre>
                   </div>
                 </div>
-              </div>
-            }
+              }
+            </div>
           </div>
 
           <!-- Actions -->
@@ -340,6 +489,224 @@
           </div>
         }
       </form>
+    </div>
+  }
+
+  <!-- Modal de récapitulatif -->
+  @if (showSummaryModal()) {
+    <div class="modal-overlay" (click)="cancelAllModals()">
+      <div class="modal-container" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>
+            <i class="bi bi-clipboard-check"></i>
+            Récapitulatif de l'entretien
+          </h2>
+          <button class="btn-close-modal" (click)="cancelAllModals()">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+        
+        <div class="modal-body">
+          <!-- Date et alertes -->
+          <div class="summary-section">
+            <h3>
+              <i class="bi bi-calendar-event"></i>
+              Date et heure
+            </h3>
+            @if (interviewDateInfo()) {
+              <div class="summary-value">
+                <strong>{{ interviewDateInfo()!.formattedDate }}</strong> à {{ formData().interviewTime }}
+              </div>
+              
+              @if (interviewDateInfo()!.isPast) {
+                <div class="alert alert-error">
+                  <i class="bi bi-exclamation-triangle-fill"></i>
+                  <span>⚠️ La date sélectionnée est déjà passée !</span>
+                </div>
+              }
+              
+              @if (interviewDateInfo()!.isTooFar) {
+                <div class="alert alert-warning">
+                  <i class="bi bi-exclamation-circle-fill"></i>
+                  <span>La date est dans plus de 30 jours ({{ interviewDateInfo()!.diffDays }} jours)</span>
+                </div>
+              }
+              
+              @if (interviewDateInfo()!.isWeekend) {
+                <div class="alert alert-info">
+                  <i class="bi bi-info-circle-fill"></i>
+                  <span>Cette date tombe un {{ interviewDateInfo()!.dayName }} (weekend)</span>
+                </div>
+              }
+            }
+          </div>
+
+          <!-- Type et lieu -->
+          <div class="summary-section">
+            <h3>
+              <i class="bi bi-geo-alt"></i>
+              Modalité
+            </h3>
+            <div class="summary-value">
+              <span class="badge-type">
+                <i [class]="formData().interviewType === 'IN_PERSON' ? 'bi bi-building' : 'bi bi-camera-video'"></i>
+                {{ formData().interviewType === 'IN_PERSON' ? 'En personne' : 'En ligne' }}
+              </span>
+              @if (formData().interviewType === 'IN_PERSON') {
+                <p>{{ formData().interviewLocation }}</p>
+              } @else {
+                <p><a [href]="formData().meetLink" target="_blank">{{ formData().meetLink }}</a></p>
+              }
+            </div>
+          </div>
+
+          <!-- Candidats -->
+          <div class="summary-section">
+            <h3>
+              <i class="bi bi-people"></i>
+              Candidats ({{ selectedCandidatesDetails().length }})
+            </h3>
+            <div class="candidates-summary">
+              @for (app of selectedCandidatesDetails(); track app.id) {
+                <div class="candidate-chip">
+                  <div class="chip-avatar">{{ getInitials(getCandidateName(app)) }}</div>
+                  <span>{{ getCandidateName(app) }}</span>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Évaluateurs -->
+          <div class="summary-section">
+            <h3>
+              <i class="bi bi-person-badge"></i>
+              Évaluateurs ({{ selectedEvaluatorsDetails().length }})
+            </h3>
+            <div class="evaluators-summary">
+              @for (evaluator of selectedEvaluatorsDetails(); track evaluator.id) {
+                <div class="evaluator-chip">
+                  <div class="chip-avatar">{{ getInitials(getEvaluatorName(evaluator)) }}</div>
+                  <span>{{ getEvaluatorName(evaluator) }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="cancelAllModals()">
+            <i class="bi bi-x-circle"></i>
+            Annuler
+          </button>
+          <button class="btn-warning" (click)="confirmSummary(false)">
+            <i class="bi bi-envelope-x"></i>
+            <div class="button-content">
+              <span class="button-text">Créer sans envoyer l'email</span>
+              <small class="button-hint">Vous pourrez l'envoyer plus tard</small>
+            </div>
+          </button>
+          <button class="btn-primary" (click)="confirmSummary(true)">
+            <i class="bi bi-envelope-paper"></i>
+            <div class="button-content">
+              <span class="button-text">Créer et prévisualiser l'email</span>
+              <small class="button-hint">Avant envoi</small>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Modal de confirmation d'envoi d'email -->
+  @if (showEmailConfirmModal()) {
+    <div class="modal-overlay" (click)="cancelAllModals()">
+      <div class="modal-container" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>
+            <i class="bi bi-envelope-paper"></i>
+            Confirmer l'envoi de l'email
+          </h2>
+          <button class="btn-close-modal" (click)="cancelAllModals()">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+        
+        <div class="modal-body">
+          <p class="modal-description">
+            Voici l'aperçu de l'email qui sera envoyé aux {{ formData().selectedCandidates.length }} candidat(s) :
+          </p>
+          
+          <div class="email-preview-modal">
+            <div class="email-header">
+              <div class="email-field">
+                <strong>Sujet:</strong>
+                <span>{{ emailPreview().subject }}</span>
+              </div>
+            </div>
+            <div class="email-body">
+              <pre>{{ emailPreview().body }}</pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="cancelAllModals()">
+            <i class="bi bi-arrow-left"></i>
+            Retour
+          </button>
+          <button class="btn-primary" (click)="confirmEmailSend()">
+            <i class="bi bi-send-check"></i>
+            <div class="button-content">
+              <span class="button-text">Créer et envoyer l'email</span>
+              <small class="button-hint">Aux candidats sélectionnés</small>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Modal d'avertissement sans email -->
+  @if (showNoEmailWarningModal()) {
+    <div class="modal-overlay" (click)="cancelAllModals()">
+      <div class="modal-container modal-small" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>
+            <i class="bi bi-exclamation-triangle"></i>
+            Confirmation
+          </h2>
+          <button class="btn-close-modal" (click)="cancelAllModals()">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+        
+        <div class="modal-body">
+          <p class="modal-warning">
+            Vous avez choisi de ne pas envoyer d'email aux candidats.
+          </p>
+          <p class="modal-description">
+            Les entretiens seront créés mais les candidats ne seront pas notifiés. 
+            Vous pourrez envoyer les emails plus tard depuis la liste des entretiens.
+          </p>
+          <p class="modal-question">
+            Êtes-vous sûr de vouloir continuer sans envoyer d'email ?
+          </p>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="cancelAllModals()">
+            <i class="bi bi-arrow-left"></i>
+            Retour au récapitulatif
+          </button>
+          <button class="btn-primary" (click)="confirmNoEmail(true)">
+            <i class="bi bi-check-lg"></i>
+            <div class="button-content">
+              <span class="button-text">Créer les entretiens</span>
+              <small class="button-hint">Sans notification email</small>
+            </div>
+          </button>
+        </div>
+      </div>
     </div>
   }
 </div>

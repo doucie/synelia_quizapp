@@ -245,8 +245,45 @@
                         <span class="step-badge pending">En attente</span>
                       }
                     </div>
-                    
-                    <!-- Informations de pré-sélection -->
+
+                    @if (selectedApplication()!.applicationStatus === 'SUBMITTED') {
+                      <div class="step-actions">
+                        <button class="btn btn-success" (click)="takeDecision('APPROVE')">
+                          <i class="bi bi-check-lg"></i>
+                          Accepter la pré-sélection
+                        </button>
+                        <button class="btn btn-error" (click)="takeDecision('CANCEL')">
+                          <i class="bi bi-x-lg"></i>
+                          Rejeter
+                        </button>
+                      </div>
+                    }
+
+                  </div>
+                </div>
+
+                <!-- Step 3: Décision finale -->
+                <div class="process-step" 
+                     [class.active]="selectedApplication()!.applicationStatus === 'PRE_SCREEN_ACCEPTED'"
+                     [class.completed]="selectedApplication()!.applicationStatus === 'FINAL_ACCEPTED' || selectedApplication()!.applicationStatus === 'FINAL_REJECTED'">
+                  <div class="step-indicator">
+                    <div class="step-number">3</div>
+                  </div>
+                  <div class="step-content">
+                    <div class="step-header">
+                      <h4 class="step-title">Décision finale</h4>
+                      @if (selectedApplication()!.applicationStatus === 'PRE_SCREEN_ACCEPTED') {
+                        <span class="step-badge current">En cours</span>
+                      } @else if (selectedApplication()!.applicationStatus === 'FINAL_ACCEPTED') {
+                        <span class="step-badge success">Accepté</span>
+                      } @else if (selectedApplication()!.applicationStatus === 'FINAL_REJECTED') {
+                        <span class="step-badge error">Rejeté</span>
+                      } @else {
+                        <span class="step-badge pending">En attente</span>
+                      }
+                    </div>
+
+                    <!-- Informations après pré-sélection -->
                     @if (selectedApplication()!.applicationStatus !== 'PENDING') {
                       <div class="step-info">
                         <div class="info-item">
@@ -304,42 +341,7 @@
                         </div>
                       </div>
                     }
-                    
-                    @if (selectedApplication()!.applicationStatus === 'SUBMITTED') {
-                      <div class="step-actions">
-                        <button class="btn btn-success" (click)="takeDecision('APPROVE')">
-                          <i class="bi bi-check-lg"></i>
-                          Accepter la pré-sélection
-                        </button>
-                        <button class="btn btn-error" (click)="takeDecision('CANCEL')">
-                          <i class="bi bi-x-lg"></i>
-                          Rejeter
-                        </button>
-                      </div>
-                    }
-                  </div>
-                </div>
 
-                <!-- Step 3: Décision finale -->
-                <div class="process-step" 
-                     [class.active]="selectedApplication()!.applicationStatus === 'PRE_SCREEN_ACCEPTED'"
-                     [class.completed]="selectedApplication()!.applicationStatus === 'FINAL_ACCEPTED' || selectedApplication()!.applicationStatus === 'FINAL_REJECTED'">
-                  <div class="step-indicator">
-                    <div class="step-number">3</div>
-                  </div>
-                  <div class="step-content">
-                    <div class="step-header">
-                      <h4 class="step-title">Décision finale</h4>
-                      @if (selectedApplication()!.applicationStatus === 'PRE_SCREEN_ACCEPTED') {
-                        <span class="step-badge current">En cours</span>
-                      } @else if (selectedApplication()!.applicationStatus === 'FINAL_ACCEPTED') {
-                        <span class="step-badge success">Accepté</span>
-                      } @else if (selectedApplication()!.applicationStatus === 'FINAL_REJECTED') {
-                        <span class="step-badge error">Rejeté</span>
-                      } @else {
-                        <span class="step-badge pending">En attente</span>
-                      }
-                    </div>
                     @if (selectedApplication()!.applicationStatus === 'PRE_SCREEN_ACCEPTED') {
                       <div class="step-actions">
                         <button class="btn btn-success" (click)="takeDecision('APPROVE')">
