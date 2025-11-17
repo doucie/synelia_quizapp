@@ -47,6 +47,7 @@ public class InterviewsDto extends _InterviewsDto implements Cloneable{
     private Boolean    isDeleted            ;
     private String     searchString         ;
     private Integer    campaignId           ;
+    private Integer    applicationId        ;
 
     //----------------------------------------------------------------------
     // ENTITY LINKS FIELD ( RELATIONSHIP )
@@ -68,6 +69,7 @@ public class InterviewsDto extends _InterviewsDto implements Cloneable{
 	private SearchParam<Boolean>  isDeletedParam        ;                     
 	private SearchParam<String>   searchStringParam     ;                     
 	private SearchParam<Integer>  campaignIdParam       ;                     
+	private SearchParam<Integer>  applicationIdParam    ;                     
     /**
      * Default constructor
      */

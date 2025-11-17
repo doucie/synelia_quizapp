@@ -1,4 +1,4 @@
-03/11/2025
+03/11/2025 au 07/11/2025
 
 ## Tâches effectuées
 
@@ -6,31 +6,13 @@
 - Correction de l'affichage des candidats : amélioration du filtrage pour les campagnes multi-sources
 - Suppression complète des champs obsolètes
 - Correction du problème de chargement des évaluateurs
-- Améliorations de l'expérience utilisateur : pré-sélection automatique, correction thème sombre, clarification des libellés
-
-## DERNIERE REQUETE
-
-Système d'entretien fonctionnel avec affichage correct des candidats et évaluateurs. Migration de base de données à exécuter pour finaliser les changements.
-
-04/11/2025
-
-## Tâches effectuées
-
-- Correction du statut du quiz : le quiz ne passait pas à STARTED lors du clic sur 'Commencer le quiz' (problème d'enum case mismatch)
-- Initialisation correcte du niveau du quiz : ajout de @Transactional et logique pour initialiser quiz_level
-- Ordre des questions : correction pour que les questions apparaissent dans l'ordre correct
-- Ajout de fonctionnalités de timing : nouvelles colonnes chrono dans campaign_questions, time_elapsed dans applications, is_timed dans campaigns
-- Mise à jour du statut de l'application : passage à SUBMITTED après complétion du quiz
-- Correction de l'affichage du score dans le dashboard : utilisation de quiz_score_percent au lieu de quiz_score
-
-## DERNIERE REQUETE
-
-Quiz fonctionnel avec flux complet : PENDING → STARTED → COMPLETED, suivi des niveaux, questions ordonnées, timing ajouté, statut application mis à jour, score en pourcentage affiché correctement.
-
-06/11/2025
-
-## Tâches effectuées
-
+- Améliorations de l'expérience utilisateur : pré-sélection automatique, clarification des libellés
+- Correction des status de quiz
+- Initialisation correcte du niveau du quiz
+- Correction pour que les questions apparaissent dans l'ordre correct
+- Ajout de fonctionnalités de timing
+- Mise à jour du statut des candidatures en base de données
+- Correction de l'affichage du score dans le dashboard
 - Sélection élargie des évaluateurs pour la création d'entretien
 - Refonte visuelle de la page d'interview avec design moderne et animations
 - Prévisualisation d'email
@@ -39,6 +21,11 @@ Quiz fonctionnel avec flux complet : PENDING → STARTED → COMPLETED, suivi de
 - Validation automatique des dates avec alertes
 - Possibilité d'envoyer ou non les emails lors de la création d'interview
 - Attribution automatique des permissions aux évaluateurs
+
+- Formation Quarkus : Philosophie “Supersonic Subatomic Java”
+- Formation Quarkus : Différences avec Spring Boot
+- Formation Quarkus : Avantages (GraalVM, démarrage ultra-rapide, consommation mémoire faible)
+- Formation Quarkus : Installation et création d'un projet basique
 
 
 ## À VÉRIFIER AU RETOUR

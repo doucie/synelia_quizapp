@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
@@ -45,22 +45,17 @@ export class InterviewService {
 
   constructor(private http: HttpClient) {}
 
-  private getHeaders(): HttpHeaders {
-    const token = localStorage.getItem('token');
-    return new HttpHeaders({
-      'Content-Type': 'application/json',
-      'Authorization': token ? `Bearer ${token}` : ''
-    });
-  }
-
   /**
    * Récupère toutes les interviews
    */
   getAllInterviews(): Observable<InterviewResponse> {
+    const request = {
+      user: 1,
+      datas: [{}]
+    };
     return this.http.post<InterviewResponse>(
       `${this.baseUrl}/getByCriteria`,
-      {},
-      { headers: this.getHeaders() }
+      request
     );
   }
 
@@ -68,10 +63,13 @@ export class InterviewService {
    * Récupère une interview par ID
    */
   getInterviewById(id: number): Observable<InterviewResponse> {
+    const request = {
+      user: 1,
+      datas: [{ id }]
+    };
     return this.http.post<InterviewResponse>(
       `${this.baseUrl}/getByCriteria`,
-      { id },
-      { headers: this.getHeaders() }
+      request
     );
   }
 
@@ -79,10 +77,13 @@ export class InterviewService {
    * Récupère les interviews par campagne
    */
   getInterviewsByCampaignId(campaignId: number): Observable<InterviewResponse> {
+    const request = {
+      user: 1,
+      datas: [{ campaignId }]
+    };
     return this.http.post<InterviewResponse>(
       `${this.baseUrl}/getByCriteria`,
-      { campaignId },
-      { headers: this.getHeaders() }
+      request
     );
   }
 
@@ -90,10 +91,13 @@ export class InterviewService {
    * Récupère les interviews par statut
    */
   getInterviewsByStatus(status: string): Observable<InterviewResponse> {
+    const request = {
+      user: 1,
+      datas: [{ interviewStatus: status }]
+    };
     return this.http.post<InterviewResponse>(
       `${this.baseUrl}/getByCriteria`,
-      { interviewStatus: status },
-      { headers: this.getHeaders() }
+      request
     );
   }
 
@@ -101,10 +105,13 @@ export class InterviewService {
    * Crée une nouvelle interview
    */
   createInterview(interview: Interview): Observable<InterviewResponse> {
+    const request = {
+      user: 1, // User ID - à remplacer par le vrai user connecté
+      datas: [interview]
+    };
     return this.http.post<InterviewResponse>(
       `${this.baseUrl}/create`,
-      interview,
-      { headers: this.getHeaders() }
+      request
     );
   }
 
@@ -112,10 +119,13 @@ export class InterviewService {
    * Met à jour une interview
    */
   updateInterview(interview: Interview): Observable<InterviewResponse> {
+    const request = {
+      user: 1, // User ID - à remplacer par le vrai user connecté
+      datas: [interview]
+    };
     return this.http.post<InterviewResponse>(
       `${this.baseUrl}/update`,
-      interview,
-      { headers: this.getHeaders() }
+      request
     );
   }
 
@@ -123,10 +133,13 @@ export class InterviewService {
    * Supprime une interview
    */
   deleteInterview(id: number): Observable<InterviewResponse> {
+    const request = {
+      user: 1, // User ID - à remplacer par le vrai user connecté
+      datas: [{ id }]
+    };
     return this.http.post<InterviewResponse>(
       `${this.baseUrl}/delete`,
-      { id },
-      { headers: this.getHeaders() }
+      request
     );
   }
 

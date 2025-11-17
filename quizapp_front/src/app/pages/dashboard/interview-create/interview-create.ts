@@ -218,7 +218,7 @@ export class InterviewCreateComponent implements OnInit, OnDestroy {
     const campaign = this.campaigns().find(c => c.id === form.campaignId);
     const dateTime = this.formatDateTime(form.interviewDate, form.interviewTime);
     const evaluatorsNames = this.selectedEvaluatorsDetails()
-      .map(e => `${e.firstName} ${e.lastName}`)
+      .map(e => this.getEvaluatorName(e))
       .join(', ');
 
     const interviewTypeText = form.interviewType === 'IN_PERSON' 
@@ -353,6 +353,7 @@ L'équipe de recrutement
       next: (users) => {
         const validUsers = users.filter(u => u !== null);
         console.log('👥 Évaluateurs chargés:', validUsers);
+        console.log('🔍 Détails du premier évaluateur:', validUsers[0]);
         this.evaluators.set(validUsers);
         
         // Pré-sélectionner les évaluateurs avec canEvaluate=true
@@ -372,16 +373,24 @@ L'équipe de recrutement
   /**
    * Toggle sélection d'un candidat
    */
-  toggleCandidate(applicationId: number): void {
+  toggleCandidate(applicationId: number, event?: Event): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
     const current = this.formData();
     const index = current.selectedCandidates.indexOf(applicationId);
     
     if (index > -1) {
-      current.selectedCandidates.splice(index, 1);
+      // Créer un nouveau tableau sans l'élément
+      current.selectedCandidates = current.selectedCandidates.filter(id => id !== applicationId);
     } else {
-      current.selectedCandidates.push(applicationId);
+      // Créer un nouveau tableau avec l'élément
+      current.selectedCandidates = [...current.selectedCandidates, applicationId];
     }
     
+    // Créer un nouvel objet pour déclencher la détection de changement
     this.formData.set({ ...current });
   }
 
@@ -576,6 +585,7 @@ L'équipe de recrutement
 
       const interview: Interview = {
         campaignId: application.sourceTokenId,
+        applicationId: application.id,
         interviewDate: dateTime,
         interviewType: form.interviewType,
         interviewLocation: form.interviewLocation,
@@ -733,7 +743,12 @@ L'équipe de recrutement
    */
   getEvaluatorName(user: User): string {
     if (!user) return 'Utilisateur';
-    const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+    
+    // Essayer firstName/lastName en premier, puis prenom/nom
+    const firstName = user.firstName || user.prenom || '';
+    const lastName = user.lastName || user.nom || '';
+    const fullName = `${firstName} ${lastName}`.trim();
+    
     if (fullName) return fullName;
     if (user.username) return user.username;
     return user.email || 'Utilisateur';

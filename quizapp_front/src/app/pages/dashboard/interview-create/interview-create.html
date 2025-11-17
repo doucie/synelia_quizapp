@@ -85,12 +85,13 @@
                     <div 
                       class="candidate-card"
                       [class.selected]="isCandidateSelected(app.id!)"
-                      (click)="toggleCandidate(app.id!)"
+                      (click)="toggleCandidate(app.id!, $event)"
                     >
                       <div class="card-check">
                         <input 
                           type="checkbox" 
                           [checked]="isCandidateSelected(app.id!)"
+                          (change)="toggleCandidate(app.id!, $event)"
                           (click)="$event.stopPropagation()"
                         />
                       </div>
@@ -290,7 +291,7 @@
                             <div class="status-indicator"></div>
                           </div>
                           <div class="evaluator-details">
-                            <h4>{{ getEvaluatorName(evaluator) }}</h4>
+                            <h4>{{ (evaluator.firstName || evaluator.prenom || '') }} {{ (evaluator.lastName || evaluator.nom || '') }}</h4>
                             <p>
                               <i class="bi bi-envelope"></i>
                               {{ evaluator.email }}

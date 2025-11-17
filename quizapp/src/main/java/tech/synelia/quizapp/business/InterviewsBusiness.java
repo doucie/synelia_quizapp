@@ -52,6 +52,8 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 	@Autowired
 	private CampaignsRepository campaignsRepository;
 	@Autowired
+	private ApplicationsRepository applicationsRepository;
+	@Autowired
 	private InterviewCrudRepository interviewCrudRepository;
 	@Autowired
 	private FunctionalError functionalError;
@@ -108,10 +110,20 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 					throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("campaigns campaignId -> " + dto.getCampaignId(), locale));
 				}
 			}
+			
+			// Verify if applications exist
+			Applications existingApplications = null;
+			if (dto.getApplicationId() != null && dto.getApplicationId() > 0){
+				existingApplications = applicationsRepository.findOne(dto.getApplicationId(), false);
+				if (existingApplications == null) {
+					throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("applications applicationId -> " + dto.getApplicationId(), locale));
+				}
+			}
+			
 			dto.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(dto)));
 
 			Interviews entityToSave = null;
-			entityToSave = InterviewsTransformer.INSTANCE.toEntity(dto, existingCampaigns);
+			entityToSave = InterviewsTransformer.INSTANCE.toEntity(dto, existingCampaigns, existingApplications);
 			entityToSave.setCreatedAt(Utilities.getCurrentDate());
 			entityToSave.setCreatedBy(request.getUser());
 			entityToSave.setIsDeleted(false);
@@ -191,6 +203,14 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 					throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("campaigns campaignId -> " + dto.getCampaignId(), locale));
 				}
 				entityToSave.setCampaigns(existingCampaigns);
+			}
+			// Verify if applications exist
+			if (dto.getApplicationId() != null && dto.getApplicationId() > 0){
+				Applications existingApplications = applicationsRepository.findOne(dto.getApplicationId(), false);
+				if (existingApplications == null) {
+					throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("applications applicationId -> " + dto.getApplicationId(), locale));
+				}
+				entityToSave.setApplications(existingApplications);
 			}
 			if (Utilities.notBlank(dto.getInterviewLocation())) {
 				entityToSave.setInterviewLocation(dto.getInterviewLocation());

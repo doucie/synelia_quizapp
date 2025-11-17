@@ -36,7 +36,7 @@ export interface InterviewCrudResponse {
   providedIn: 'root'
 })
 export class InterviewCrudService {
-  private apiUrl = `${environment.apiUrl}/interview-crud`;
+  private apiUrl = `${environment.apiUrl}/interviewCrud`;
 
   constructor(private http: HttpClient) {}
 
@@ -51,7 +51,11 @@ export class InterviewCrudService {
    * Crée plusieurs enregistrements interview_crud
    */
   createMultipleInterviewCruds(interviewCruds: InterviewCrud[]): Observable<any> {
-    return this.http.post(`${this.apiUrl}/bulk`, interviewCruds);
+    const request = {
+      user: 1, // User ID - à remplacer par le vrai user connecté
+      datas: interviewCruds
+    };
+    return this.http.post(`${this.apiUrl}/create`, request);
   }
 
   /**

@@ -57,7 +57,7 @@ public class Interviews implements Serializable, Cloneable {
     private Date       interviewDate ;
 
     @Column(name="interview_status", length=20, nullable=false)
-    private String     interviewStatus ; // PENDING, STARTED, OVER, POSTPONED, ARCHIVED
+    private String     interviewStatus ; // PENDING, SCHEDULED, STARTED, OVER, POSTPONED, ARCHIVED
 
     @Column(name="meet_link", length=500)
     private String     meetLink ;
@@ -92,6 +92,7 @@ public class Interviews implements Serializable, Cloneable {
     private String     searchString ;
 
 	// "campaignId" (column "campaign_id") is not defined by itself because used as FK in a link 
+	// "applicationId" (column "application_id") is not defined by itself because used as FK in a link 
 
     //----------------------------------------------------------------------
     // ENTITY LINKS ( RELATIONSHIP )
@@ -99,6 +100,10 @@ public class Interviews implements Serializable, Cloneable {
     @ManyToOne
     @JoinColumn(name="campaign_id", referencedColumnName="id")
     private Campaigns campaigns   ;
+
+    @ManyToOne
+    @JoinColumn(name="application_id", referencedColumnName="id")
+    private Applications applications   ;
 
     //----------------------------------------------------------------------
     // CONSTRUCTOR(S)
