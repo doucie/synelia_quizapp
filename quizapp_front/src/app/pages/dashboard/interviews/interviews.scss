@@ -6,9 +6,8 @@
 .interviews-page {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 60px);
   background: var(--background);
-  overflow: hidden;
+  min-height: 100vh;
 }
 
 // ===========================
@@ -262,12 +261,10 @@
   gap: 1.5rem;
   padding: 1.5rem 2rem;
   flex: 1;
-  overflow: hidden;
 }
 
 .interviews-list {
   flex: 1;
-  //overflow-y: auto;
   padding-right: 0.5rem;
 }
 
@@ -512,8 +509,6 @@
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 1.5rem;
-  overflow-y: auto;
-  flex-shrink: 0;
 }
 
 .details-header {

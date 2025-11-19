@@ -583,19 +583,27 @@ L'équipe de recrutement
         return null;
       }
 
+      // Récupérer le sourceToken pour obtenir le campaignId
+      const sourceToken = this.sourceTokens().find(st => st.id === application.sourceTokenId);
+      if (!sourceToken || !sourceToken.campaignId) {
+        console.error(`SourceToken ${application.sourceTokenId} introuvable ou sans campaignId`);
+        return null;
+      }
+
       const interview: Interview = {
-        campaignId: application.sourceTokenId,
+        campaignId: sourceToken.campaignId, // Utiliser le campaignId du sourceToken
         applicationId: application.id,
         interviewDate: dateTime,
         interviewType: form.interviewType,
-        interviewLocation: form.interviewLocation,
-        meetLink: form.meetLink,
-        interviewNote: form.interviewNote,
+        interviewLocation: form.interviewLocation || undefined,
+        meetLink: form.meetLink || undefined,
+        interviewNote: form.interviewNote || undefined,
         interviewStatus: 'SCHEDULED',
         interviewMailSent: shouldSendEmail,
         isDeleted: false
       };
 
+      console.log('📋 Interview créé pour application', application.id, ':', interview);
       return this.interviewService.createInterview(interview);
     }).filter(request => request !== null);
 
@@ -655,6 +663,7 @@ L'équipe de recrutement
             const interviewCrud: InterviewCrud = {
               interviewId,
               userId,
+              isAdmin: false,
               canEvaluate: campaignCrud.canEvaluate || false,
               canViewCandidateProfile: campaignCrud.canViewCandidateProfile || false,
               canViewCandidateResults: campaignCrud.canViewCandidateResults || false,
@@ -670,6 +679,7 @@ L'équipe de recrutement
           const interviewCrud: InterviewCrud = {
             interviewId,
             userId,
+            isAdmin: false,
             canEvaluate: true,
             canViewCandidateProfile: false,
             canViewCandidateResults: false,

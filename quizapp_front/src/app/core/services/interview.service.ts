@@ -109,10 +109,10 @@ export class InterviewService {
       user: 1, // User ID - à remplacer par le vrai user connecté
       datas: [interview]
     };
-    return this.http.post<InterviewResponse>(
-      `${this.baseUrl}/create`,
-      request
-    );
+    const url = `${this.baseUrl}/create`;
+    console.log('🔗 URL de création:', url);
+    console.log('📤 Requête:', request);
+    return this.http.post<InterviewResponse>(url, request);
   }
 
   /**

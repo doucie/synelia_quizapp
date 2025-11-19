@@ -7,6 +7,7 @@ export interface InterviewCrud {
   id?: number;
   interviewId: number;
   userId: number;
+  isAdmin: boolean;
   canEvaluate?: boolean;
   canViewCandidateProfile?: boolean;
   canViewCandidateResults?: boolean;
