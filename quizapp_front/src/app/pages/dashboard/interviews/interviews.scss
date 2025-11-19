@@ -267,7 +267,7 @@
 
 .interviews-list {
   flex: 1;
-  overflow-y: auto;
+  //overflow-y: auto;
   padding-right: 0.5rem;
 }
 
@@ -379,6 +379,48 @@
   margin-bottom: 1rem;
 }
 
+.card-email-status {
+  // display: flex;
+  justify-content: center;
+  padding-top: 0.75rem;
+  margin-bottom: 0.5rem;
+  // border-top: 1px solid var(--border);
+}
+
+.email-badge {
+  padding: 0.375rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+
+  i {
+    font-size: 0.875rem;
+  }
+
+  &.email-sent {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+  }
+
+  &.email-pending {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--warning);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+  }
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  margin-bottom: 0;
+}
+
 .info-row {
   display: flex;
   align-items: center;
@@ -413,8 +455,8 @@
 .card-footer {
   display: flex;
   gap: 0.5rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border);
+  // padding-top: 1rem;
+  // border-top: 1px solid var(--border);
 }
 
 .btn-action {
@@ -556,6 +598,32 @@
     &.score {
       color: var(--success);
       font-weight: 600;
+    }
+
+    &.email-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.25rem 0.625rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 500;
+
+      i {
+        font-size: 0.875rem;
+      }
+
+      &.email-sent {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+      }
+
+      &.email-pending {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--warning);
+        border: 1px solid rgba(245, 158, 11, 0.2);
+      }
     }
 
     &.status {

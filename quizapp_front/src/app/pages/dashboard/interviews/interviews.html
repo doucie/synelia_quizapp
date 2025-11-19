@@ -156,7 +156,7 @@
                   
                   <div class="info-row">
                     <i [class]="getInterviewTypeIcon(interview.interviewType)"></i>
-                    <span>{{ interview.interviewType || 'Non spécifié' }}</span>
+                    <span>{{ getInterviewTypeLabel(interview.interviewType) }}</span>
                   </div>
                   
                   @if (interview.campaignTitle) {
@@ -165,6 +165,14 @@
                       <span>{{ interview.campaignTitle }}</span>
                     </div>
                   }
+                </div>
+
+                <!-- Email Status -->
+                <div class="card-email-status">
+                  <div class="email-badge" [ngClass]="getEmailStatusClass(interview.interviewMailSent)">
+                    <i class="bi" [ngClass]="interview.interviewMailSent ? 'bi-envelope-check' : 'bi-envelope-x'"></i>
+                    {{ getEmailStatusLabel(interview.interviewMailSent) }}
+                  </div>
                 </div>
 
                 <!-- Footer -->
@@ -265,7 +273,14 @@
                 </div>
                 <div class="detail-item">
                   <span class="label">Type</span>
-                  <span class="value">{{ selectedInterview()!.interviewType || 'Non spécifié' }}</span>
+                  <span class="value">{{ getInterviewTypeLabel(selectedInterview()!.interviewType) }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="label">Notification email</span>
+                  <span class="value email-status" [ngClass]="getEmailStatusClass(selectedInterview()!.interviewMailSent)">
+                    <i class="bi" [ngClass]="selectedInterview()!.interviewMailSent ? 'bi-envelope-check' : 'bi-envelope-x'"></i>
+                    {{ getEmailStatusLabel(selectedInterview()!.interviewMailSent) }}
+                  </span>
                 </div>
                 @if (selectedInterview()!.interviewLocation) {
                   <div class="detail-item">

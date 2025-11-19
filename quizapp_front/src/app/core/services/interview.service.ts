@@ -51,7 +51,7 @@ export class InterviewService {
   getAllInterviews(): Observable<InterviewResponse> {
     const request = {
       user: 1,
-      datas: [{}]
+      data: {}
     };
     return this.http.post<InterviewResponse>(
       `${this.baseUrl}/getByCriteria`,
@@ -65,7 +65,7 @@ export class InterviewService {
   getInterviewById(id: number): Observable<InterviewResponse> {
     const request = {
       user: 1,
-      datas: [{ id }]
+      data: { id }
     };
     return this.http.post<InterviewResponse>(
       `${this.baseUrl}/getByCriteria`,
@@ -79,7 +79,7 @@ export class InterviewService {
   getInterviewsByCampaignId(campaignId: number): Observable<InterviewResponse> {
     const request = {
       user: 1,
-      datas: [{ campaignId }]
+      data: { campaignId }
     };
     return this.http.post<InterviewResponse>(
       `${this.baseUrl}/getByCriteria`,
@@ -93,7 +93,7 @@ export class InterviewService {
   getInterviewsByStatus(status: string): Observable<InterviewResponse> {
     const request = {
       user: 1,
-      datas: [{ interviewStatus: status }]
+      data: { interviewStatus: status }
     };
     return this.http.post<InterviewResponse>(
       `${this.baseUrl}/getByCriteria`,

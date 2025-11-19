@@ -110,9 +110,10 @@ export class InterviewsComponent implements OnInit, OnDestroy {
     }).pipe(takeUntil(this.destroy$)).subscribe({
       next: (response) => {
         // Traiter les campaigns
-        if (response.campaigns.content) {
+        const campaignsData = (response.campaigns as any).items || response.campaigns.content;
+        if (campaignsData) {
           const campaignsMap = new Map<number, Campaign>();
-          response.campaigns.content.forEach((campaign: Campaign) => {
+          campaignsData.forEach((campaign: Campaign) => {
             if (campaign.id) {
               campaignsMap.set(campaign.id, campaign);
             }
@@ -144,11 +145,8 @@ export class InterviewsComponent implements OnInit, OnDestroy {
    */
   enrichInterviews(interviews: Interview[]): void {
     const enriched: InterviewWithDetails[] = interviews.map(interview => {
-      // Trouver l'application correspondante via campaignId
-      const application = this.applications().find(app => 
-        app.sourceTokenId === interview.campaignId
-      );
-      
+      // Trouver l'application correspondante via applicationId
+      const application = this.applications().find(app => app.id === interview.applicationId);
       const campaign = interview.campaignId ? this.campaigns().get(interview.campaignId) : undefined;
 
       return {
@@ -321,13 +319,35 @@ export class InterviewsComponent implements OnInit, OnDestroy {
    */
   getInterviewTypeIcon(type: string | undefined): string {
     const icons: Record<string, string> = {
-      'TECHNICAL': 'bi-code-slash',
-      'HR': 'bi-people',
-      'PHONE': 'bi-telephone',
-      'VIDEO': 'bi-camera-video',
-      'ONSITE': 'bi-building'
+      'IN_PERSON': 'bi-building',
+      'ONLINE': 'bi-camera-video'
     };
-    return icons[type || 'TECHNICAL'] || 'bi-calendar-check';
+    return icons[type || 'IN_PERSON'] || 'bi-calendar-check';
+  }
+
+  /**
+   * Obtient le libellé pour un type d'entretien
+   */
+  getInterviewTypeLabel(type: string | undefined): string {
+    const labels: Record<string, string> = {
+      'IN_PERSON': 'En présentiel',
+      'ONLINE': 'En ligne'
+    };
+    return labels[type || 'IN_PERSON'] || 'Non spécifié';
+  }
+
+  /**
+   * Obtient la classe CSS pour le statut d'envoi d'email
+   */
+  getEmailStatusClass(sent: boolean | undefined): string {
+    return sent ? 'email-sent' : 'email-pending';
+  }
+
+  /**
+   * Obtient le libellé pour le statut d'envoi d'email
+   */
+  getEmailStatusLabel(sent: boolean | undefined): string {
+    return sent ? 'Email envoyé' : 'Email non envoyé';
   }
 
   /**
