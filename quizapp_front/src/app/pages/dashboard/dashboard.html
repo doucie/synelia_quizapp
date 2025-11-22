@@ -100,6 +100,22 @@
       </div>
       
       <div class="header-controls">
+        <!-- Admin Mode Toggle (only for admins) -->
+        @if (isAdmin()) {
+          <div class="admin-mode-container">
+            <label class="admin-toggle-label">Mode Admin</label>
+            <button 
+              class="admin-toggle-btn"
+              (click)="toggleAdminMode(); $event.stopPropagation()"
+              [class.active]="adminModeEnabled()"
+              [attr.title]="adminModeEnabled() ? 'Désactiver le mode admin' : 'Activer le mode admin'">
+              <span class="toggle-track">
+                <span class="toggle-thumb"></span>
+              </span>
+            </button>
+          </div>
+        }
+
         <!-- Theme Toggle -->
         <button 
           class="control-btn theme-toggle"

@@ -771,4 +771,101 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 		log.info("----end custom CampaignsDto-----");
 		return response;
 	}
+
+	/**
+	 * Check if user has permission to edit a campaign
+	 * Returns:
+	 * - canEdit: true/false if user has rights via campaign_crud
+	 * - requiresAdminMode: true if user is ADMIN/SUPER but needs to enable admin mode
+	 * - userRole: the user's role (ADMIN/SUPER/RECRUITER)
+	 */
+	public Response<CampaignsDto> checkEditPermission(Request<CampaignsDto> request, Locale locale) throws JsonProcessingException {
+		log.info("----begin checkEditPermission-----");
+		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
+		Response<CampaignsDto> response = new Response<CampaignsDto>();
+		
+		try {
+			// Récupérer les paramètres
+			Integer userId = request.getUser();
+			Integer campaignId = request.getDatas().get(0).getId();
+			
+			if (userId == null || campaignId == null) {
+				throw new InvalidEntityException(functionalError.FIELD_EMPTY("userId or campaignId", locale));
+			}
+			
+			log.info("Checking edit permission for user " + userId + " on campaign " + campaignId);
+			
+			// 1. Récupérer l'utilisateur pour vérifier son rôle
+			User user = userRepository.findOne(userId, false);
+			if (user == null) {
+				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("user " + userId, locale));
+			}
+			
+			String userRole = user.getUserRole() != null ? user.getUserRole().toUpperCase() : "";
+			log.info("User role: " + userRole);
+			
+			// 2. Vérifier dans campaign_crud si l'utilisateur a des droits
+			CampaignCrudDto searchDto = new CampaignCrudDto();
+			searchDto.setCampaignId(campaignId);
+			searchDto.setUserId(userId);
+			
+			Request<CampaignCrudDto> crudRequest = new Request<>();
+			crudRequest.setUser(userId);
+			List<CampaignCrudDto> crudDtos = new ArrayList<>();
+			crudDtos.add(searchDto);
+			crudRequest.setDatas(crudDtos);
+			
+			List<CampaignCrud> campaignCrudList = campaignCrudRepository.getByCriteria(crudRequest, em, locale);
+			
+			boolean hasDirectRights = false;
+			if (campaignCrudList != null && !campaignCrudList.isEmpty()) {
+				CampaignCrud crud = campaignCrudList.get(0);
+				// L'utilisateur peut modifier si is_admin=true OU can_update=true
+				hasDirectRights = (crud.getIsAdmin() != null && crud.getIsAdmin()) || 
+				                 (crud.getCanUpdate() != null && crud.getCanUpdate());
+				log.info("User has campaign_crud record: isAdmin=" + crud.getIsAdmin() + ", canUpdate=" + crud.getCanUpdate());
+			}
+			
+			// 3. Préparer la réponse
+			CampaignsDto responseDto = new CampaignsDto();
+			responseDto.setId(campaignId);
+			
+			if (hasDirectRights) {
+				// L'utilisateur a les droits directs, il peut modifier
+				log.info("User has direct edit rights");
+				responseDto.setCampaignTitle("CAN_EDIT"); // Utiliser le titre pour transporter la réponse
+				responseDto.setCampaignDesc("HAS_RIGHTS");
+			} else {
+				// Pas de droits directs, vérifier si c'est un admin/super
+				if ("ADMIN".equals(userRole) || "SUPER".equals(userRole)) {
+					log.info("User is ADMIN/SUPER but has no direct rights - requires admin mode");
+					responseDto.setCampaignTitle("REQUIRES_ADMIN_MODE");
+					responseDto.setCampaignDesc(userRole);
+				} else {
+					log.info("User has no edit rights and is not admin");
+					responseDto.setCampaignTitle("NO_PERMISSION");
+					responseDto.setCampaignDesc(userRole);
+				}
+			}
+			
+			Status status = new Status();
+			status.setCode(StatusCode.SUCCESS);
+			status.setMessage(StatusMessage.SUCCESS);
+			
+			response.setItems(Arrays.asList(responseDto));
+			response.setHasError(false);
+			response.setHttpCode(HttpStatus.OK.value());
+			response.setStatus(status);
+			
+		} catch (Exception e) {
+			log.severe("Error checking edit permission: " + e.getMessage());
+			e.printStackTrace();
+			throw new RuntimeException("Error checking edit permission: " + e.getMessage());
+		}
+		
+		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
+		log.info("----end checkEditPermission-----");
+		return response;
+	}
 }
+

@@ -161,4 +161,14 @@ public class CampaignsController {
 	  slf4jLogger.info("end method /CampaignsDto/custom");
 	  return response;
 	 }
+
+	@RequestMapping(value="/checkEditPermission",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
+	public Response<CampaignsDto> checkEditPermission(@RequestBody Request<CampaignsDto> request) throws Exception{
+		log.info("start method /campaigns/checkEditPermission");
+		String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
+		Locale locale = Locale.of(languageID, "");
+		Response<CampaignsDto> response = campaignsBusiness.checkEditPermission(request, locale);
+		log.info("end method /campaigns/checkEditPermission");
+		return response;
+	}
 }

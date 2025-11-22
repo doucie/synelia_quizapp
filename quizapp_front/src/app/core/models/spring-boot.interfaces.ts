@@ -27,4 +27,5 @@ export interface UserApiData {
   lastName: string;
   email: string;
   userRole?: string;
+  adminMode?: boolean;
 }

@@ -13,6 +13,16 @@
       </h1>
       <p>{{ filteredUsers().length }} utilisateur{{ filteredUsers().length > 1 ? 's' : '' }} au total</p>
     </div>
+    
+    <!-- Bouton créer (visible uniquement en mode admin) -->
+    @if (isAdminModeEnabled()) {
+      <button class="btn-create" (click)="openCreateModal()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+        Créer un utilisateur
+      </button>
+    }
   </div>
 
   <!-- Barre de recherche et filtres -->
@@ -78,6 +88,29 @@
             <!-- Indicateur en ligne -->
             <div class="online-indicator" [class.is-online]="user.isOnline"></div>
             
+            <!-- Actions (visible uniquement en mode admin) -->
+            @if (isAdminModeEnabled()) {
+              <div class="user-actions">
+                <button 
+                  class="action-btn action-btn--edit" 
+                  (click)="openEditModal(user)"
+                  title="Modifier">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                </button>
+                <button 
+                  class="action-btn action-btn--delete" 
+                  (click)="openDeleteModal(user)"
+                  title="Supprimer">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                  </svg>
+                </button>
+              </div>
+            }
+            
             <!-- Avatar -->
             <div class="user-avatar" [class]="getAvatarColor(user.role)">
               <span class="avatar-initials">{{ getUserInitials(user) }}</span>
@@ -121,3 +154,161 @@
     }
   }
 </div>
+
+<!-- Modal Créer/Modifier utilisateur -->
+@if (showCreateEditModal()) {
+  <div class="modal-overlay" (click)="closeCreateEditModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ isEditMode() ? 'Modifier l\'utilisateur' : 'Créer un utilisateur' }}</h2>
+        <button class="modal-close" (click)="closeCreateEditModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      
+      <div class="modal-body">
+        <form class="user-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="prenom">Prénom *</label>
+              <input 
+                type="text" 
+                id="prenom" 
+                [ngModel]="userForm().prenom"
+                (ngModelChange)="updateFormField('prenom', $event)"
+                placeholder="Entrez le prénom"
+                required
+              >
+            </div>
+            
+            <div class="form-group">
+              <label for="nom">Nom *</label>
+              <input 
+                type="text" 
+                id="nom" 
+                [ngModel]="userForm().nom"
+                (ngModelChange)="updateFormField('nom', $event)"
+                placeholder="Entrez le nom"
+                required
+              >
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="pseudo">Pseudo *</label>
+            <input 
+              type="text" 
+              id="pseudo" 
+              [ngModel]="userForm().pseudo"
+              (ngModelChange)="updateFormField('pseudo', $event)"
+              placeholder="Entrez le pseudo"
+              required
+            >
+          </div>
+          
+          <div class="form-group">
+            <label for="email">Email *</label>
+            <input 
+              type="email" 
+              id="email" 
+              [ngModel]="userForm().email"
+              (ngModelChange)="updateFormField('email', $event)"
+              placeholder="Entrez l'email"
+              required
+            >
+          </div>
+          
+          <div class="form-group">
+            <label for="telephone">Téléphone</label>
+            <input 
+              type="tel" 
+              id="telephone" 
+              [ngModel]="userForm().telephone"
+              (ngModelChange)="updateFormField('telephone', $event)"
+              placeholder="Entrez le téléphone"
+            >
+          </div>
+          
+          <div class="form-group">
+            <label for="role">Rôle *</label>
+            <select 
+              id="role" 
+              [ngModel]="userForm().role"
+              (ngModelChange)="updateFormField('role', $event)"
+              required
+            >
+              <option value="recruiter">Recruteur</option>
+              <option value="admin">Administrateur</option>
+              <option value="super">Super Admin</option>
+            </select>
+          </div>
+        </form>
+      </div>
+      
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeCreateEditModal()">Annuler</button>
+        <button class="btn-primary" (click)="saveUser()" [disabled]="loading()">
+          {{ isEditMode() ? 'Enregistrer' : 'Créer' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal Supprimer utilisateur -->
+@if (showDeleteModal()) {
+  <div class="modal-overlay" (click)="closeDeleteModal()">
+    <div class="modal-content modal-content--danger" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Supprimer l'utilisateur</h2>
+        <button class="modal-close" (click)="closeDeleteModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      
+      <div class="modal-body">
+        <div class="delete-warning">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <path d="M12 9v4M12 17h.01"/>
+          </svg>
+          <p class="warning-text">
+            Vous êtes sur le point de supprimer l'utilisateur 
+            <strong>{{ selectedUser()?.prenom }} {{ selectedUser()?.nom }}</strong>.
+            Cette action est irréversible.
+          </p>
+        </div>
+        
+        <div class="form-group">
+          <label for="confirmEmail">
+            Pour confirmer, veuillez saisir l'email de l'utilisateur : 
+            <strong>{{ selectedUser()?.email }}</strong>
+          </label>
+          <input 
+            type="email" 
+            id="confirmEmail" 
+            [ngModel]="deleteEmailConfirmation()"
+            (ngModelChange)="deleteEmailConfirmation.set($event)"
+            placeholder="Tapez l'email pour confirmer"
+            class="confirm-input"
+          >
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeDeleteModal()">Annuler</button>
+        <button 
+          class="btn-danger" 
+          (click)="confirmDelete()" 
+          [disabled]="!canConfirmDelete() || loading()"
+        >
+          Supprimer définitivement
+        </button>
+      </div>
+    </div>
+  </div>
+}

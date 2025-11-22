@@ -20,6 +20,7 @@ export interface User {
   dateCreation?: string;  // Backend utilise createdAt
   derniereConnexion?: string;
   pageSizePreference?: number; // Préférence de taille de page
+  adminMode?: boolean;    // Mode admin activé/désactivé
   
   // Champs du backend pour mapping
   firstName?: string;
@@ -202,7 +203,8 @@ export class UserService {
             role: user.role || user.userRole || 'recruiter',
             isOnline: user.isOnline || false,
             dateCreation: user.dateCreation || user.createdAt,
-            derniereConnexion: user.derniereConnexion || user.updatedAt
+            derniereConnexion: user.derniereConnexion || user.updatedAt,
+            adminMode: user.adminMode || false
           };
         });
         
@@ -328,6 +330,7 @@ export class UserService {
           isDeleted: user.isDeleted || false, // ← Important : inclure le statut de suppression
           dateCreation: user.dateCreation || user.createdAt,
           derniereConnexion: user.derniereConnexion || user.updatedAt,
+          adminMode: user.adminMode || false,
           // Garder aussi les champs du backend pour compatibilité
           firstName: user.firstName || user.prenom || '',
           lastName: user.lastName || user.nom || '',
@@ -592,6 +595,38 @@ export class UserService {
       }),
       catchError(error => {
         console.error('❌ Erreur lors de la mise à jour de la préférence de taille de page:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Met à jour le mode admin de l'utilisateur connecté
+   * @param userId l'identifiant de l'utilisateur
+   * @param adminMode true pour activer le mode admin, false pour le désactiver
+   * @returns Observable de l'utilisateur mis à jour
+   */
+  updateAdminMode(userId: number, adminMode: boolean): Observable<User> {
+    const currentUserId = localStorage.getItem('user')?.includes('id') ? 
+      JSON.parse(localStorage.getItem('user')!)?.id?.toString() : '1';
+
+    const request = {
+      user: currentUserId,
+      datas: [{
+        id: userId,
+        adminMode: adminMode
+      }]
+    };
+
+    console.log('🔧 Mise à jour du mode admin:', request);
+
+    return this.http.post<any>(`${this.apiUrl}/update`, request).pipe(
+      map(response => {
+        console.log('✅ Mode admin mis à jour:', response);
+        return response.items?.[0] || response;
+      }),
+      catchError(error => {
+        console.error('❌ Erreur lors de la mise à jour du mode admin:', error);
         return throwError(() => error);
       })
     );

@@ -254,6 +254,9 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 			if (dto.getIsDeleted() != null) {
 				entityToSave.setIsDeleted(dto.getIsDeleted());
 			}
+			if (dto.getAdminMode() != null) {
+				entityToSave.setAdminMode(dto.getAdminMode());
+			}
 			if (Utilities.notBlank(dto.getLastConnectionDate())) {
 				entityToSave.setLastConnectionDate(dateFormat.parse(dto.getLastConnectionDate()));
 			}

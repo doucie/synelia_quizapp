@@ -59,5 +59,6 @@ export interface LoginResponse {
     lastName: string;
     role: string;
     userRole: string;
+    adminMode?: boolean;
   };
 }

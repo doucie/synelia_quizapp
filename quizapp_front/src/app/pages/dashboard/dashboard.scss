@@ -463,6 +463,85 @@
   gap: 1rem;
 }
 
+/* Admin Mode Toggle */
+.admin-mode-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  background: var(--surface-variant);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  transition: var(--transition);
+
+  &:hover {
+    border-color: var(--primary);
+    background: var(--surface);
+  }
+}
+
+.admin-toggle-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  user-select: none;
+  cursor: default;
+}
+
+.admin-toggle-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  
+  .toggle-track {
+    width: 44px;
+    height: 24px;
+    background: var(--border);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    padding: 2px;
+    transition: all 0.3s ease;
+    position: relative;
+    
+    .toggle-thumb {
+      width: 20px;
+      height: 20px;
+      background: var(--text-on-primary);
+      border-radius: 50%;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 4px var(--shadow-light);
+    }
+  }
+  
+  &.active .toggle-track {
+    background: var(--success);
+    
+    .toggle-thumb {
+      transform: translateX(20px);
+    }
+  }
+  
+  &:hover .toggle-track {
+    background: var(--border-hover);
+  }
+  
+  &.active:hover .toggle-track {
+    background: var(--success-dark);
+  }
+  
+  &:focus {
+    outline: none;
+  }
+  
+  &:focus-visible .toggle-track {
+    box-shadow: 0 0 0 3px rgba(var(--primary), 0.2);
+  }
+}
+
 .control-btn {
   background: none;
   border: none;

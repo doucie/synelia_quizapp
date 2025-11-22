@@ -7,6 +7,8 @@ import { CampaignService, Campaign } from '../../../core/services/campaign.servi
 import { SourceTokenService, SourceToken } from '../../../services/source-token.service';
 import { QuestionService, Question } from '../../../core/services/question.service';
 import { AnswerService, Answer, QuestionAnswer } from '../../../core/services/answer.service';
+import { AuthService } from '../../../core/services/auth/auth.service';
+import { UserService } from '../../../core/services/user.service';
 
 interface CampaignAccess {
   id?: number;
@@ -58,6 +60,10 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   selectedQuestion = signal<number | null>(null);
   selectedAnswers = signal<number[]>([]);
   questionLoading = signal(false);
+  
+  // Admin mode confirmation modal
+  showAdminModeModal = signal(false);
+  checkingPermission = signal(false);
 
   constructor(
     private route: ActivatedRoute,
@@ -65,7 +71,9 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
     private campaignService: CampaignService,
     private sourceTokenService: SourceTokenService,
     private questionService: QuestionService,
-    private answerService: AnswerService
+    private answerService: AnswerService,
+    private authService: AuthService,
+    private userService: UserService
   ) {}
 
   ngOnInit(): void {
@@ -551,9 +559,116 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   }
 
   editCampaign(): void {
-    if (this.campaignId()) {
-      this.router.navigate(['/dashboard/campaigns', this.campaignId(), 'edit']);
+    const campaignId = this.campaignId();
+    if (!campaignId) return;
+
+    this.checkingPermission.set(true);
+
+    // Vérifier les permissions
+    this.campaignService.checkEditPermission(campaignId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (result) => {
+          console.log('🔐 Résultat vérification permissions:', result);
+          this.checkingPermission.set(false);
+
+          if (result.status === 'CAN_EDIT') {
+            // L'utilisateur a les droits, rediriger directement
+            console.log('✅ Utilisateur autorisé, redirection vers edit');
+            this.router.navigate(['/dashboard/campaigns', campaignId, 'edit']);
+          } else if (result.status === 'REQUIRES_ADMIN_MODE') {
+            // L'utilisateur est admin/super mais doit activer le mode admin
+            console.log('⚠️ Requiert le mode administrateur');
+            this.showAdminModeModal.set(true);
+          } else {
+            // NO_PERMISSION - vérifier si l'utilisateur est admin/super localement
+            console.log('❌ Pas de droits directs, vérification du rôle local...');
+            const currentUser = this.authService.getCurrentUser();
+            
+            if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'super')) {
+              // L'utilisateur est admin/super, proposer d'activer le mode admin
+              console.log('⚠️ Utilisateur admin/super détecté, affichage modal');
+              this.showAdminModeModal.set(true);
+            } else {
+              // L'utilisateur n'est ni admin ni super
+              console.log('❌ Utilisateur non autorisé');
+              alert('Vous n\'avez pas les droits pour modifier cette campagne.');
+            }
+          }
+        },
+        error: (error) => {
+          console.error('❌ Erreur vérification permissions:', error);
+          this.checkingPermission.set(false);
+          
+          // En cas d'erreur (ex: 404, backend non démarré), vérifier localement
+          const currentUser = this.authService.getCurrentUser();
+          console.log('🔍 Vérification locale du rôle utilisateur:', currentUser?.role);
+          
+          if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'super')) {
+            // L'utilisateur est admin/super, proposer d'activer le mode admin
+            console.log('⚠️ Backend inaccessible mais utilisateur admin/super détecté');
+            this.showAdminModeModal.set(true);
+          } else {
+            // L'utilisateur n'est pas admin/super ou erreur inconnue
+            console.log('❌ Erreur backend et utilisateur non admin');
+            alert('Erreur lors de la vérification des permissions. Veuillez réessayer.');
+          }
+        }
+      });
+  }
+
+  confirmAdminMode(): void {
+    console.log('✅ Confirmation activation mode admin');
+    const campaignId = this.campaignId();
+    if (!campaignId) return;
+
+    // Récupérer l'utilisateur actuel
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser) {
+      alert('Erreur: utilisateur non connecté');
+      return;
     }
+
+    // Vérifier si admin_mode est déjà activé
+    if (currentUser.adminMode) {
+      // Déjà activé, rediriger directement
+      console.log('✅ Mode admin déjà activé, redirection');
+      this.showAdminModeModal.set(false);
+      this.router.navigate(['/dashboard/campaigns', campaignId, 'edit']);
+      return;
+    }
+
+    // Activer admin_mode (convertir l'ID string en number)
+    console.log('🔄 Activation du mode admin...');
+    const userId = parseInt(currentUser.id, 10);
+    this.userService.updateAdminMode(userId, true)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          console.log('✅ Mode admin activé avec succès');
+          
+          // Mettre à jour l'utilisateur dans le localStorage et le service
+          const updatedUser = { ...currentUser, adminMode: true };
+          this.authService.updateCurrentUser(updatedUser);
+          
+          // Fermer la modal
+          this.showAdminModeModal.set(false);
+          
+          // Rediriger vers la page d'édition
+          // Le dashboard va se mettre à jour automatiquement grâce au computed
+          console.log('🔄 Redirection vers la page d\'édition...');
+          this.router.navigate(['/dashboard/campaigns', campaignId, 'edit']);
+        },
+        error: (error) => {
+          console.error('❌ Erreur activation mode admin:', error);
+          alert('Erreur lors de l\'activation du mode administrateur');
+        }
+      });
+  }
+
+  cancelAdminMode(): void {
+    console.log('❌ Annulation activation mode admin');
+    this.showAdminModeModal.set(false);
   }
 
   viewApplications(): void {

@@ -43,6 +43,7 @@ public interface UserTransformer {
 		@Mapping(source="entity.createdAt", dateFormat="dd/MM/yyyy", target="createdAt"),
 		@Mapping(source="entity.updatedAt", dateFormat="dd/MM/yyyy", target="updatedAt"),
 		@Mapping(source="entity.pageSizePreference", target="pageSizePreference"),
+		@Mapping(source="entity.adminMode", target="adminMode"),
 	})
 	UserDto toDto(User entity) throws ParseException;
 
@@ -52,16 +53,15 @@ public interface UserTransformer {
 			return null;
 		}
 		UserDto dto = new UserDto();
-								dto.setId( entity.getId() );
-										dto.setFirstName( entity.getFirstName() );
-										dto.setLastName( entity.getLastName() );
-										dto.setEmail( entity.getEmail() );
-										dto.setUserRole( entity.getUserRole() );
-										dto.setPageSizePreference( entity.getPageSizePreference() );
-																																																																		return dto;
-    }
-
-	@IterableMapping(qualifiedByName = "toFullDto")
+							dto.setId( entity.getId() );
+									dto.setFirstName( entity.getFirstName() );
+									dto.setLastName( entity.getLastName() );
+									dto.setEmail( entity.getEmail() );
+									dto.setUserRole( entity.getUserRole() );
+									dto.setPageSizePreference( entity.getPageSizePreference() );
+									dto.setAdminMode( entity.getAdminMode() );
+																																																		return dto;
+    }	@IterableMapping(qualifiedByName = "toFullDto")
     List<UserDto> toDtos(List<User> entities) throws ParseException;
 
 	@IterableMapping(qualifiedByName = "toLiteDto")
@@ -94,6 +94,7 @@ public interface UserTransformer {
 		@Mapping(source="dto.updatedAt", dateFormat="dd/MM/yyyy",target="updatedAt"),
 		@Mapping(source="dto.updatedBy", target="updatedBy"),
 		@Mapping(source="dto.isDeleted", target="isDeleted"),
+		@Mapping(source="dto.adminMode", target="adminMode"),
 		@Mapping(source="dto.searchString", target="searchString"),
 		@Mapping(source="dto.pageSizePreference", target="pageSizePreference"),
 	})

@@ -15,9 +15,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import lombok.*;
-
-import tech.synelia.quizapp.utils.contract.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+import tech.synelia.quizapp.utils.contract.SearchParam;
 import tech.synelia.quizapp.utils.dto.customize._UserDto;
 
 /**
@@ -50,6 +51,7 @@ public class UserDto extends _UserDto implements Cloneable{
 	private String     updatedAt            ;
     private Integer    updatedBy            ;
     private Boolean    isDeleted            ;
+    private Boolean    adminMode            ;
     private String     searchString         ;
     private Integer    pageSizePreference   ;
 
@@ -81,6 +83,7 @@ public class UserDto extends _UserDto implements Cloneable{
 	private SearchParam<String>   updatedAtParam        ;                     
 	private SearchParam<Integer>  updatedByParam        ;                     
 	private SearchParam<Boolean>  isDeletedParam        ;                     
+	private SearchParam<Boolean>  adminModeParam        ;                     
 	private SearchParam<String>   searchStringParam     ;                     
 	private SearchParam<Integer>  pageSizePreferenceParam;                     
     /**

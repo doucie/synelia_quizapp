@@ -789,5 +789,47 @@ export class CampaignService {
       })
     );
   }
+
+  /**
+   * Vérifie les permissions d'édition pour une campagne
+   * Retourne:
+   * - CAN_EDIT si l'utilisateur a les droits directs
+   * - REQUIRES_ADMIN_MODE si l'utilisateur est ADMIN/SUPER mais doit activer admin_mode
+   * - NO_PERMISSION si l'utilisateur n'a aucun droit
+   */
+  checkEditPermission(campaignId: number): Observable<{
+    status: 'CAN_EDIT' | 'REQUIRES_ADMIN_MODE' | 'NO_PERMISSION';
+    userRole?: string;
+  }> {
+    console.log('🔐 Vérification des permissions pour la campagne:', campaignId);
+
+    const requestBody = {
+      user: 1, // sera remplacé par l'ID de l'utilisateur connecté via l'intercepteur
+      data: { id: campaignId }
+    };
+
+    return this.http.post<any>(`${this.apiUrl}/checkEditPermission`, requestBody).pipe(
+      map(response => {
+        console.log('✅ Réponse permissions:', response);
+        
+        if (response.items && response.items.length > 0) {
+          const item = response.items[0];
+          const status = item.campaignTitle; // Le backend utilise campaignTitle pour retourner le status
+          const userRole = item.campaignDesc; // Le backend utilise campaignDesc pour retourner le role
+          
+          return {
+            status: status as 'CAN_EDIT' | 'REQUIRES_ADMIN_MODE' | 'NO_PERMISSION',
+            userRole: userRole
+          };
+        }
+        
+        return { status: 'NO_PERMISSION' as const };
+      }),
+      catchError(error => {
+        console.error('❌ Erreur vérification permissions:', error);
+        return of({ status: 'NO_PERMISSION' as const });
+      })
+    );
+  }
 }
 

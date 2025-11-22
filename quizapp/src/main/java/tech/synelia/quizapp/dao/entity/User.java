@@ -99,6 +99,9 @@ public class User implements Serializable, Cloneable {
     @Column(name="is_deleted")
     private Boolean    isDeleted    ;
 
+    @Column(name="admin_mode")
+    private Boolean    adminMode = false ;
+
     @Column(name="search_string", length=65535)
     private String     searchString ;
 

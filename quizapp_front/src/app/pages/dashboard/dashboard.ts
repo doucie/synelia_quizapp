@@ -2,6 +2,7 @@ import { Component, OnInit, signal, computed, effect, Renderer2, Inject } from '
 import { CommonModule, DOCUMENT } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../core/services/auth/auth.service';
+import { UserService } from '../../core/services/user.service';
 import { NotificationService, DbNotification } from '../../core/services/notification.service';
 import { NotificationsComponent } from '../../components/notifications/notifications.component';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -53,16 +54,20 @@ export class DashboardComponent implements OnInit {
   showUserMenu = signal(false);
   isDarkMode = signal(false);
   showEntitiesDropdown = signal(false);
+  adminModeEnabled = signal(false);
   
-  currentUser = computed(() => {
-    const user = this.authService.getCurrentUser();
-    console.log('🔍 Dashboard currentUser computed:', user);
-    return user;
-  });
+  currentUser = signal<any>(null);
+  
   userRole = computed(() => {
     const role = this.currentUser()?.role || '';
     console.log('🔍 Dashboard userRole computed:', role);
     return role;
+  });
+  
+  // Check if current user is admin
+  isAdmin = computed(() => {
+    const role = this.userRole();
+    return role === 'admin' || role === 'super';
   });
 
   // Menu items basés sur les rôles
@@ -238,6 +243,7 @@ export class DashboardComponent implements OnInit {
 
   constructor(
     private authService: AuthService,
+    private userService: UserService,
     private router: Router,
     private route: ActivatedRoute,
     private notificationService: NotificationService,
@@ -245,12 +251,30 @@ export class DashboardComponent implements OnInit {
     @Inject(DOCUMENT) private document: Document,
     private domSanitizer: DomSanitizer
   ) {
+    // S'abonner aux changements de l'utilisateur courant
+    this.authService.currentUser$.subscribe(user => {
+      console.log('🔄 Dashboard: currentUser$ emitted:', user);
+      this.currentUser.set(user);
+    });
+    
     // Effet pour appliquer le thème
     effect(() => {
       if (this.isDarkMode()) {
         this.renderer.addClass(this.document.body, 'dark-mode');
       } else {
         this.renderer.removeClass(this.document.body, 'dark-mode');
+      }
+    });
+    
+    // Effet pour synchroniser adminModeEnabled avec currentUser().adminMode
+    effect(() => {
+      const user = this.currentUser();
+      if (user && this.isAdmin()) {
+        const newAdminMode = user.adminMode || false;
+        if (this.adminModeEnabled() !== newAdminMode) {
+          console.log('🔄 Dashboard: Syncing admin mode from user data:', newAdminMode);
+          this.adminModeEnabled.set(newAdminMode);
+        }
       }
     });
   }
@@ -289,6 +313,20 @@ export class DashboardComponent implements OnInit {
       this.router.navigate(['/connexion']);
       return;
     }
+    
+    // Initialiser l'état du mode admin depuis les données utilisateur
+    this.initializeAdminMode();
+  }
+
+  /**
+   * Initialise le mode admin depuis les données utilisateur
+   */
+  private initializeAdminMode(): void {
+    const user = this.currentUser();
+    if (user && this.isAdmin()) {
+      this.adminModeEnabled.set(user.adminMode || false);
+      console.log('🔧 Admin mode initialized:', user.adminMode);
+    }
   }
 
   /**
@@ -310,6 +348,50 @@ export class DashboardComponent implements OnInit {
     const newTheme = !this.isDarkMode();
     this.isDarkMode.set(newTheme);
     localStorage.setItem('theme', newTheme ? 'dark' : 'light');
+  }
+
+  /**
+   * Toggle admin mode
+   */
+  toggleAdminMode(): void {
+    const user = this.currentUser();
+    if (!user || !this.isAdmin()) {
+      console.warn('⚠️ Utilisateur non admin ou non connecté');
+      return;
+    }
+
+    const newAdminMode = !this.adminModeEnabled();
+    const userId = parseInt(user.id);
+
+    console.log('🔧 Toggle admin mode:', { userId, newAdminMode });
+
+    this.userService.updateAdminMode(userId, newAdminMode).subscribe({
+      next: (updatedUser) => {
+        this.adminModeEnabled.set(newAdminMode);
+        
+        // Mettre à jour l'utilisateur dans localStorage et le subject via la méthode publique
+        const currentUser = this.currentUser();
+        if (currentUser) {
+          const updatedUserData = { ...currentUser, adminMode: newAdminMode };
+          this.authService.updateCurrentUser(updatedUserData);
+        }
+        
+        console.log('✅ Mode admin mis à jour:', updatedUser);
+        this.notificationService.success(
+          'Mode admin',
+          `Mode admin ${newAdminMode ? 'activé' : 'désactivé'}`,
+          3000
+        );
+      },
+      error: (error) => {
+        console.error('❌ Erreur lors de la mise à jour du mode admin:', error);
+        this.notificationService.error(
+          'Erreur',
+          'Impossible de mettre à jour le mode admin',
+          5000
+        );
+      }
+    });
   }
 
   /**

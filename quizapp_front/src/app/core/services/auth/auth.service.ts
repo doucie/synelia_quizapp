@@ -10,6 +10,7 @@ export interface User {
   firstName: string;
   lastName: string;
   role: string;
+  adminMode?: boolean;
 }
 
 @Injectable({
@@ -53,7 +54,8 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
-        userRole: user.role
+        userRole: user.role,
+        adminMode: user.adminMode
       }
     };
 
@@ -97,6 +99,15 @@ export class AuthService {
    */
   getCurrentUser(): User | null {
     return this.currentUserSubject.value;
+  }
+
+  /**
+   * Met à jour l'utilisateur courant (pour admin_mode par exemple)
+   */
+  updateCurrentUser(updatedUser: User): void {
+    console.log('🔄 Mise à jour utilisateur courant:', updatedUser);
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+    this.currentUserSubject.next(updatedUser);
   }
 
   /**
@@ -161,7 +172,8 @@ export class AuthService {
       email: apiUser.email || '',
       firstName: apiUser.firstName || '',
       lastName: apiUser.lastName || '',
-      role: role
+      role: role,
+      adminMode: apiUser.adminMode || false
     };
   }
 

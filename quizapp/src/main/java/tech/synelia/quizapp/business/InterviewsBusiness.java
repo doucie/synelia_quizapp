@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.http.HttpStatus;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import org.thymeleaf.context.Context;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -56,6 +57,10 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 	@Autowired
 	private InterviewCrudRepository interviewCrudRepository;
 	@Autowired
+	private HostingUtils hostingUtils;
+	@Autowired
+	private ParamsUtils paramsUtils;
+	@Autowired
 	private FunctionalError functionalError;
 	@Autowired
 	private TechnicalError technicalError;
@@ -66,6 +71,7 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 
 	private SimpleDateFormat dateFormat;
 	private SimpleDateFormat dateTimeFormat;
+	private Context context;
 
 	public InterviewsBusiness() {
 		dateFormat = new SimpleDateFormat("dd/MM/yyyy");
@@ -153,6 +159,23 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 				Object[] objArray = listOfError.stream().distinct().toArray();
 				throw new RuntimeException(StringUtils.join(objArray, ", "));
 			}
+			
+			// Envoyer les emails si nécessaire
+			for (int i = 0; i < itemsSaved.size(); i++) {
+				Interviews interview = itemsSaved.get(i);
+				InterviewsDto dto = itemsDto.get(i);
+				
+				if (interview.getInterviewMailSent() != null && interview.getInterviewMailSent()) {
+					try {
+						sendInterviewEmail(interview, locale);
+						log.info("Email d'entretien envoyé avec succès pour l'interview ID: " + interview.getId());
+					} catch (Exception e) {
+						log.warning("Échec de l'envoi de l'email pour l'interview ID: " + interview.getId() + " - " + e.getMessage());
+						// Ne pas bloquer le processus si l'email échoue
+					}
+				}
+			}
+			
 			Status status = new Status();
 			status.setCode(StatusCode.SUCCESS);
 			status.setMessage(StatusMessage.SUCCESS);
@@ -488,5 +511,97 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
 		log.info("----end custom InterviewsDto-----");
 		return response;
+	}
+	
+	/**
+	 * Envoie un email de convocation pour un entretien
+	 * 
+	 * @param interview L'entretien pour lequel envoyer l'email
+	 * @param locale La locale pour les messages
+	 * @throws Exception en cas d'erreur
+	 */
+	private void sendInterviewEmail(Interviews interview, Locale locale) throws Exception {
+		log.info("----begin sendInterviewEmail-----");
+		
+		// Récupérer l'application associée
+		Applications application = interview.getApplications();
+		if (application == null) {
+			log.warning("Application introuvable pour l'interview ID: " + interview.getId());
+			return;
+		}
+		
+		// Récupérer la campagne associée
+		Campaigns campaign = interview.getCampaigns();
+		if (campaign == null) {
+			log.warning("Campagne introuvable pour l'interview ID: " + interview.getId());
+			return;
+		}
+		
+		// Préparer l'expéditeur
+		Map<String, String> from = new HashMap<>();
+		from.put("email", paramsUtils.getSmtpLogin());
+		from.put("user", "Synelia Recrutement");
+		
+		// Préparer le destinataire
+		List<Map<String, String>> toRecipients = new ArrayList<>();
+		Map<String, String> recipient = new HashMap<>();
+		recipient.put("email", application.getCandidateEmail());
+		recipient.put("user", application.getCandidateFirstName() + " " + application.getCandidateLastName());
+		toRecipients.add(recipient);
+		
+		// Formater la date et l'heure
+		String interviewDateTime = dateTimeFormat.format(interview.getInterviewDate());
+		
+		// Déterminer le type d'entretien
+		String interviewTypeText = "IN_PERSON".equals(interview.getInterviewType()) 
+			? "qui se déroulera en présentiel" 
+			: "qui se déroulera en visioconférence";
+		
+		// Déterminer le lieu ou le lien
+		String locationOrLink = "";
+		if ("IN_PERSON".equals(interview.getInterviewType())) {
+			locationOrLink = "Lieu : " + (interview.getInterviewLocation() != null ? interview.getInterviewLocation() : "À préciser");
+		} else {
+			locationOrLink = "Lien de connexion : " + (interview.getMeetLink() != null ? interview.getMeetLink() : "Sera communiqué ultérieurement");
+		}
+		
+		// Note supplémentaire
+		String additionalNote = interview.getInterviewNote() != null && !interview.getInterviewNote().isEmpty()
+			? "<br/><br/>Note supplémentaire :<br/>" + interview.getInterviewNote()
+			: "";
+		
+		// Sujet de l'email
+		String subject = "Convocation à un entretien - " + campaign.getCampaignTitle();
+		
+		// Corps de l'email
+		String contenu = "Madame, Monsieur,<br/><br/>";
+		contenu += "Nous avons le plaisir de vous informer que votre candidature pour le poste de \"" + campaign.getCampaignTitle() + "\" a retenu notre attention.<br/><br/>";
+		contenu += "Dans le cadre de notre processus de recrutement, nous souhaitons vous rencontrer pour un entretien " + interviewTypeText + ".<br/><br/>";
+		contenu += "Détails de l'entretien :<br/><br/>";
+		contenu += "Date et heure : " + interviewDateTime + "<br/>";
+		contenu += locationOrLink + additionalNote + "<br/><br/>";
+		contenu += "Nous vous prions de bien vouloir confirmer votre disponibilité en répondant à cet email.<br/><br/>";
+		contenu += "Nous restons à votre disposition pour toute information complémentaire.<br/><br/>";
+		contenu += "Cordialement,<br/>";
+		contenu += "L'équipe de recrutement";
+		
+		// Préparer le contexte Thymeleaf
+		context = new Context();
+		String template = "blank";
+		context.setVariable("contenu", contenu);
+		context.setVariable("entete", "Convocation Entretien");
+		context.setVariable("titre", "Convocation à un entretien");
+		
+		String body = "";
+		Response<?> responseEmail = hostingUtils.sendEmail(from, toRecipients, subject, body, null, context, template, locale);
+		
+		if (responseEmail.isHasError()) {
+			log.warning("Échec de l'envoi de l'email de convocation pour: " + application.getCandidateEmail());
+			throw new Exception("Erreur lors de l'envoi de l'email");
+		} else {
+			log.info("Email de convocation envoyé avec succès à: " + application.getCandidateEmail());
+		}
+		
+		log.info("----end sendInterviewEmail-----");
 	}
 }
