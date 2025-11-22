@@ -323,8 +323,17 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (campaign) => {
+          console.log('📥 Campagne chargée:', campaign);
           this.populateForm(campaign);
           this.loadCampaignRecruiters(id);
+          
+          // Charger la spécialité si elle existe
+          const specialityId = campaign.specialitiesId || campaign.specialityId;
+          if (specialityId) {
+            console.log('🔍 Chargement de la spécialité ID:', specialityId);
+            this.loadSpeciality(specialityId);
+          }
+          
           this.loading.set(false);
         },
         error: (error) => {
@@ -334,9 +343,63 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
       });
   }
 
+  loadSpeciality(id: number): void {
+    this.specialityService.getById(id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (speciality: Speciality) => {
+          console.log('✅ Spécialité chargée:', speciality);
+          this.selectedSpeciality.set(speciality);
+          this.campaignForm.patchValue({ specialityId: speciality.id });
+        },
+        error: (error: any) => {
+          console.error('❌ Erreur chargement spécialité:', error);
+        }
+      });
+  }
+
   loadCampaignRecruiters(campaignId: number): void {
-    // TODO: Charger les recruteurs associés via campaign_crud
-    // this.campaignService.getCampaignRecruiters(campaignId).subscribe(...)
+    console.log('👥 Chargement des recruteurs pour la campagne:', campaignId);
+    
+    this.campaignService.getCampaignAccess(campaignId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (accessItems) => {
+          console.log('📥 Accès recruteurs reçus:', accessItems);
+          
+          // Filtrer pour ne garder que les non-admins (les recruteurs assignés)
+          const recruiterAccess = accessItems.filter((item: any) => !item.isAdmin);
+          console.log('👤 Recruteurs filtrés (non-admins):', recruiterAccess);
+          
+          // Pour chaque accès recruteur, créer l'objet RecruiterAccess
+          const recruiters: RecruiterAccess[] = recruiterAccess.map((access: any) => {
+            console.log('🔍 Mapping access:', access);
+            return {
+              user: {
+                id: access.userId,
+                userName: access.userName || 'Utilisateur',
+                firstName: access.userFirstName || '',
+                lastName: access.userLastName || '',
+                email: access.userEmail || '',
+                role: access.userRole || 'RECRUITER',
+                isOnline: false
+              },
+              canEvaluate: access.canEvaluate || false,
+              canUpdate: access.canUpdate || false,
+              canDelete: access.canDelete || false,
+              canPlanify: access.canPlanify || false,
+              canAcceptPreScreen: access.canAcceptPreScreen || false,
+              canAcceptFinal: access.canAcceptFinal || false
+            };
+          });
+          
+          console.log('✅ Recruteurs chargés:', recruiters);
+          this.selectedRecruiters.set(recruiters);
+        },
+        error: (error) => {
+          console.error('❌ Erreur chargement recruteurs:', error);
+        }
+      });
   }
 
   populateForm(campaign: Campaign): void {
@@ -353,7 +416,16 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
 
   formatDateForInput(date?: string): string {
     if (!date) return '';
+    
+    // Vérifier si la date est valide
     const d = new Date(date);
+    
+    // isNaN vérifie si la date est invalide (Invalid Date)
+    if (isNaN(d.getTime())) {
+      console.warn('⚠️ Date invalide détectée:', date);
+      return '';
+    }
+    
     return d.toISOString().split('T')[0];
   }
 

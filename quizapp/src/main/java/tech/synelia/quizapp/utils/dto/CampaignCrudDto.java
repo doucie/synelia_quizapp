@@ -54,6 +54,9 @@ public class CampaignCrudDto extends _CampaignCrudDto implements Cloneable{
     //----------------------------------------------------------------------
 	private String userFirstName;
 	private String userLastName;
+	private String userEmail;
+	private String userRole;
+	private String userName;
 
 	// Search param
 	private SearchParam<Integer>  idParam               ;                     

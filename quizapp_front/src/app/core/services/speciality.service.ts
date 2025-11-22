@@ -206,10 +206,28 @@ export class SpecialityService {
    * @returns Observable de la spécialité
    */
   getById(id: number): Observable<Speciality> {
-    return this.http.get<any>(`${this.apiUrl}/${id}`).pipe(
-      map(response => this.mapBackendToFrontend(response)),
+    console.log('📥 Récupération de la spécialité ID:', id);
+
+    // Préparer le corps de la requête pour récupérer une spécialité spécifique
+    const requestBody = {
+      user: "1",
+      size: 1,
+      index: 0,
+      data: { id: id }
+    };
+
+    return this.http.post<any>(`${this.apiUrl}/getByCriteria`, requestBody).pipe(
+      map(response => {
+        console.log('✅ Spécialité récupérée:', response);
+        // L'API retourne {items: [...], count: number, ...}
+        if (response.items && response.items.length > 0) {
+          return this.mapBackendToFrontend(response.items[0]);
+        } else {
+          throw new Error('Speciality not found');
+        }
+      }),
       catchError(error => {
-        console.error(`Erreur lors de la récupération de la spécialité ${id}:`, error);
+        console.error(`❌ Erreur lors de la récupération de la spécialité ${id}:`, error);
         return throwError(() => error);
       })
     );

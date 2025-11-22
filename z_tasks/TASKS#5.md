@@ -37,3 +37,26 @@ La création d'entretien fonctionne avec Postman mais pas depuis l'application A
 
 ## Vérifier au retour
 - La création de l'entretien avec plusieurs candidats et d'autres évaluateurs que les prédéfinnis
+
+---
+
+22/11/2025
+
+## Tâches effectuées
+
+- Correction de la vérification des droits de modification des campagnes
+- Ajout d'une demande d'activation du mode administrateur pour modifier une campagne
+- Correction de la mise à jour automatique du mode administrateur dans l'interface
+- Correction du chargement des informations de la campagne lors de la modification
+- Correction de l'affichage de la spécialité sélectionnée lors de la modification
+- Ajout du chargement des recruteurs assignés à une campagne lors de la modification
+- Correction de la gestion des dates invalides dans le formulaire de modification
+- Correction de l'envoi des informations des recruteurs lors du chargement
+
+## Problème en cours
+Les couleurs des avatars des recruteurs ne correspondent pas à leurs rôles lors de la modification de campagne alors que c'est correct lors de la création.
+
+## À vérifier au retour
+
+1. Vérifier que les couleurs des avatars correspondent bien aux rôles lors de la modification
+2. Tester la modification complète d'une campagne avec plusieurs recruteurs

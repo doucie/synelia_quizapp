@@ -44,6 +44,9 @@ public interface CampaignCrudTransformer {
 		@Mapping(source="entity.user.id", target="userId"),
 		@Mapping(source="entity.user.firstName", target="userFirstName"),
 		@Mapping(source="entity.user.lastName", target="userLastName"),
+		@Mapping(source="entity.user.email", target="userEmail"),
+		@Mapping(source="entity.user.role", target="userRole"),
+		@Mapping(source="entity.user.userName", target="userName"),
 		@Mapping(source="entity.campaigns.id", target="campaignId"),
 	})
 	CampaignCrudDto toDto(CampaignCrud entity) throws ParseException;
