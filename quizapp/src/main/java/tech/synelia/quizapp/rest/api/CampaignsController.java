@@ -163,10 +163,16 @@ public class CampaignsController {
 	 }
 
 	@RequestMapping(value="/checkEditPermission",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
-	public Response<CampaignsDto> checkEditPermission(@RequestBody Request<CampaignsDto> request) throws Exception{
+	public Response<CampaignsDto> checkEditPermission(@RequestBody Request<CampaignsDto> request, @org.springframework.web.bind.annotation.RequestHeader(value = "user-id", required = true) Integer authenticatedUserId) throws Exception{
 		log.info("start method /campaigns/checkEditPermission");
 		String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
 		Locale locale = Locale.of(languageID, "");
+		
+		// IMPORTANT: Utiliser l'ID utilisateur depuis le header (envoyé par le frontend)
+		// au lieu du request.getUser() qui peut être incorrect
+		log.info("Using authenticated user from header: " + authenticatedUserId);
+		request.setUser(authenticatedUserId);
+		
 		Response<CampaignsDto> response = campaignsBusiness.checkEditPermission(request, locale);
 		log.info("end method /campaigns/checkEditPermission");
 		return response;

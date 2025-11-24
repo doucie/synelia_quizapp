@@ -20,9 +20,11 @@ import org.mapstruct.Mappings;
 import org.mapstruct.Named;
 import org.mapstruct.factory.Mappers;
 
-import tech.synelia.quizapp.dao.entity.*;
-import tech.synelia.quizapp.utils.contract.*;
-import tech.synelia.quizapp.utils.dto.*;
+import tech.synelia.quizapp.dao.entity.CampaignCrud;
+import tech.synelia.quizapp.dao.entity.Campaigns;
+import tech.synelia.quizapp.dao.entity.User;
+import tech.synelia.quizapp.utils.contract.FullTransformerQualifier;
+import tech.synelia.quizapp.utils.dto.CampaignCrudDto;
 
 
 /**
@@ -45,13 +47,30 @@ public interface CampaignCrudTransformer {
 		@Mapping(source="entity.user.firstName", target="userFirstName"),
 		@Mapping(source="entity.user.lastName", target="userLastName"),
 		@Mapping(source="entity.user.email", target="userEmail"),
-		@Mapping(source="entity.user.role", target="userRole"),
-		@Mapping(source="entity.user.userName", target="userName"),
+		@Mapping(source="entity.user.userRole", target="userRole"),
+		@Mapping(source="entity.user.username", target="userName"),
 		@Mapping(source="entity.campaigns.id", target="campaignId"),
+		@Mapping(target="idParam", ignore=true),
+		@Mapping(target="canUpdateParam", ignore=true),
+		@Mapping(target="canDeleteParam", ignore=true),
+		@Mapping(target="canEvaluateParam", ignore=true),
+		@Mapping(target="followParam", ignore=true),
+		@Mapping(target="isAdminParam", ignore=true),
+		@Mapping(target="canPlanifyParam", ignore=true),
+		@Mapping(target="canAcceptPreScreenParam", ignore=true),
+		@Mapping(target="canAcceptFinalParam", ignore=true),
+		@Mapping(target="createdAtParam", ignore=true),
+		@Mapping(target="createdByParam", ignore=true),
+		@Mapping(target="updatedAtParam", ignore=true),
+		@Mapping(target="updatedByParam", ignore=true),
+		@Mapping(target="isDeletedParam", ignore=true),
+		@Mapping(target="searchStringParam", ignore=true),
+		@Mapping(target="campaignIdParam", ignore=true),
+		@Mapping(target="userIdParam", ignore=true),
+		@Mapping(target="userFirstNameParam", ignore=true),
+		@Mapping(target="userLastNameParam", ignore=true),
 	})
-	CampaignCrudDto toDto(CampaignCrud entity) throws ParseException;
-
-	@Named("toLiteDto")
+	CampaignCrudDto toDto(CampaignCrud entity) throws ParseException;	@Named("toLiteDto")
     default CampaignCrudDto toLiteDto(CampaignCrud entity) {
 		if (entity == null) {
 			return null;
@@ -69,7 +88,7 @@ public interface CampaignCrudTransformer {
 		if (entities == null || entities.isEmpty()) {
 			return new ArrayList<>();
 		}
-		List<CampaignCrudDto> dtos = new ArrayList<CampaignCrudDto>();
+		List<CampaignCrudDto> dtos = new ArrayList<>();
 		for (CampaignCrud entity : entities) {
 			dtos.add(toLiteDto(entity));
 		}

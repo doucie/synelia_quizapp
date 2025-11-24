@@ -67,63 +67,86 @@ import { NotificationService, Notification } from '../../core/services/notificat
       display: flex;
       flex-direction: column;
       gap: 12px;
-      max-width: 400px;
+      max-width: 420px;
+      pointer-events: none;
     }
 
     .notification {
       display: flex;
       align-items: flex-start;
-      gap: 12px;
-      padding: 16px;
-      border-radius: 8px;
-      background: var(--mono-bg);
-      border: 1px solid var(--mono-borders);
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      gap: 14px;
+      padding: 18px 20px;
+      border-radius: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      box-shadow: 0 10px 25px -5px var(--shadow-medium), 0 4px 10px -2px var(--shadow-light);
       cursor: pointer;
-      animation: slideIn 0.3s ease-out;
-      transition: all 0.2s ease;
+      animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: auto;
+      backdrop-filter: blur(10px);
     }
 
     .notification:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 12px -1px rgba(0, 0, 0, 0.15);
+      transform: translateY(-3px) scale(1.01);
+      box-shadow: 0 15px 35px -5px var(--shadow-heavy), 0 8px 15px -2px var(--shadow-medium);
+      border-color: var(--border-hover);
     }
 
     .notification--success {
-      border-left: 4px solid #10B981;
+      border-left: 4px solid var(--success);
+      background: linear-gradient(135deg, var(--surface) 0%, color-mix(in srgb, var(--success) 5%, var(--surface)) 100%);
     }
 
     .notification--success .notification__icon {
-      color: #10B981;
+      color: var(--success);
+      background: color-mix(in srgb, var(--success) 10%, transparent);
+      padding: 8px;
+      border-radius: 8px;
     }
 
     .notification--error {
-      border-left: 4px solid #EF4444;
+      border-left: 4px solid var(--error);
+      background: linear-gradient(135deg, var(--surface) 0%, color-mix(in srgb, var(--error) 5%, var(--surface)) 100%);
     }
 
     .notification--error .notification__icon {
-      color: #EF4444;
+      color: var(--error);
+      background: color-mix(in srgb, var(--error) 10%, transparent);
+      padding: 8px;
+      border-radius: 8px;
     }
 
     .notification--warning {
-      border-left: 4px solid #F59E0B;
+      border-left: 4px solid var(--warning);
+      background: linear-gradient(135deg, var(--surface) 0%, color-mix(in srgb, var(--warning) 5%, var(--surface)) 100%);
     }
 
     .notification--warning .notification__icon {
-      color: #F59E0B;
+      color: var(--warning);
+      background: color-mix(in srgb, var(--warning) 10%, transparent);
+      padding: 8px;
+      border-radius: 8px;
     }
 
     .notification--info {
-      border-left: 4px solid #3B82F6;
+      border-left: 4px solid var(--info);
+      background: linear-gradient(135deg, var(--surface) 0%, color-mix(in srgb, var(--info) 5%, var(--surface)) 100%);
     }
 
     .notification--info .notification__icon {
-      color: #3B82F6;
+      color: var(--info);
+      background: color-mix(in srgb, var(--info) 10%, transparent);
+      padding: 8px;
+      border-radius: 8px;
     }
 
     .notification__icon {
       flex-shrink: 0;
-      margin-top: 2px;
+      margin-top: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .notification__content {
@@ -133,15 +156,16 @@ import { NotificationService, Notification } from '../../core/services/notificat
 
     .notification__title {
       font-weight: 600;
-      font-size: 14px;
+      font-size: 15px;
       color: var(--text-primary);
-      margin-bottom: 4px;
+      margin-bottom: 6px;
+      letter-spacing: -0.01em;
     }
 
     .notification__message {
-      font-size: 13px;
+      font-size: 14px;
       color: var(--text-secondary);
-      line-height: 1.4;
+      line-height: 1.5;
     }
 
     .notification__close {
@@ -150,24 +174,36 @@ import { NotificationService, Notification } from '../../core/services/notificat
       background: none;
       color: var(--text-tertiary);
       cursor: pointer;
-      padding: 2px;
-      border-radius: 4px;
-      transition: all 0.2s ease;
+      padding: 6px;
+      border-radius: 6px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .notification__close:hover {
       color: var(--text-primary);
-      background: var(--mono-bg-secondary);
+      background: var(--surface-variant);
+      transform: rotate(90deg);
     }
 
     @keyframes slideIn {
       from {
         opacity: 0;
-        transform: translateX(100%);
+        transform: translateX(120%) scale(0.95);
       }
       to {
         opacity: 1;
-        transform: translateX(0);
+        transform: translateX(0) scale(1);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .notifications-container {
+        left: 20px;
+        right: 20px;
+        max-width: none;
       }
     }
   `]

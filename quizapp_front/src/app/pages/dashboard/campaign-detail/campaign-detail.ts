@@ -9,6 +9,7 @@ import { QuestionService, Question } from '../../../core/services/question.servi
 import { AnswerService, Answer, QuestionAnswer } from '../../../core/services/answer.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
 import { UserService } from '../../../core/services/user.service';
+import { NotificationService } from '../../../core/services/notification.service';
 
 interface CampaignAccess {
   id?: number;
@@ -73,7 +74,8 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
     private questionService: QuestionService,
     private answerService: AnswerService,
     private authService: AuthService,
-    private userService: UserService
+    private userService: UserService,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
@@ -592,7 +594,11 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
             } else {
               // L'utilisateur n'est ni admin ni super
               console.log('❌ Utilisateur non autorisé');
-              alert('Vous n\'avez pas les droits pour modifier cette campagne.');
+              this.notificationService.error(
+                'Accès refusé',
+                'Vous n\'avez pas les droits nécessaires pour modifier cette campagne.',
+                6000
+              );
             }
           }
         },
@@ -611,7 +617,11 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
           } else {
             // L'utilisateur n'est pas admin/super ou erreur inconnue
             console.log('❌ Erreur backend et utilisateur non admin');
-            alert('Erreur lors de la vérification des permissions. Veuillez réessayer.');
+            this.notificationService.error(
+              'Erreur de vérification',
+              'Impossible de vérifier vos permissions. Veuillez réessayer ou contacter un administrateur.',
+              6000
+            );
           }
         }
       });

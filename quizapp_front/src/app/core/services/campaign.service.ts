@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError, of } from 'rxjs';
 import { map, catchError, switchMap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
@@ -803,12 +803,23 @@ export class CampaignService {
   }> {
     console.log('🔐 Vérification des permissions pour la campagne:', campaignId);
 
+    // Récupérer l'ID de l'utilisateur connecté depuis le localStorage
+    const currentUserData = localStorage.getItem('user');
+    const currentUserId = currentUserData ? JSON.parse(currentUserData).id : 1;
+    
+    console.log('👤 Utilisateur connecté ID:', currentUserId);
+
+    // Ajouter le header user-id avec l'ID de l'utilisateur connecté
+    const headers = new HttpHeaders({
+      'user-id': currentUserId.toString()
+    });
+
     const requestBody = {
-      user: 1, // sera remplacé par l'ID de l'utilisateur connecté via l'intercepteur
+      user: 1, // Le backend utilisera le header user-id à la place
       data: { id: campaignId }
     };
 
-    return this.http.post<any>(`${this.apiUrl}/checkEditPermission`, requestBody).pipe(
+    return this.http.post<any>(`${this.apiUrl}/checkEditPermission`, requestBody, { headers }).pipe(
       map(response => {
         console.log('✅ Réponse permissions:', response);
         

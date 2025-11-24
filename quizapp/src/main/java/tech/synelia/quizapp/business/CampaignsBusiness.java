@@ -28,6 +28,7 @@ import tech.synelia.quizapp.utils.exception.*;
 import tech.synelia.quizapp.utils.contract.IBasicBusiness;
 import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
+import tech.synelia.quizapp.utils.contract.SearchParam;
 import tech.synelia.quizapp.utils.dto.transformer.*;
 import tech.synelia.quizapp.dao.entity.*;
 import tech.synelia.quizapp.dao.repository.*;
@@ -779,7 +780,7 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 	 * - requiresAdminMode: true if user is ADMIN/SUPER but needs to enable admin mode
 	 * - userRole: the user's role (ADMIN/SUPER/RECRUITER)
 	 */
-	public Response<CampaignsDto> checkEditPermission(Request<CampaignsDto> request, Locale locale) throws JsonProcessingException {
+	public Response<CampaignsDto> checkEditPermission(Request<CampaignsDto> request, Locale locale) throws Exception {
 		log.info("----begin checkEditPermission-----");
 		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
 		Response<CampaignsDto> response = new Response<CampaignsDto>();
@@ -787,7 +788,14 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 		try {
 			// Récupérer les paramètres
 			Integer userId = request.getUser();
-			Integer campaignId = request.getDatas().get(0).getId();
+			Integer campaignId = null;
+			
+			// Gérer le cas où getDatas() peut être null ou vide
+			if (request.getDatas() != null && !request.getDatas().isEmpty()) {
+				campaignId = request.getDatas().get(0).getId();
+			} else if (request.getData() != null) {
+				campaignId = request.getData().getId();
+			}
 			
 			if (userId == null || campaignId == null) {
 				throw new InvalidEntityException(functionalError.FIELD_EMPTY("userId or campaignId", locale));
@@ -802,28 +810,45 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			}
 			
 			String userRole = user.getUserRole() != null ? user.getUserRole().toUpperCase() : "";
-			log.info("User role: " + userRole);
+			log.info("User ID: " + userId + ", Username: " + user.getUsername() + ", Role: " + userRole);
 			
-			// 2. Vérifier dans campaign_crud si l'utilisateur a des droits
-			CampaignCrudDto searchDto = new CampaignCrudDto();
-			searchDto.setCampaignId(campaignId);
-			searchDto.setUserId(userId);
-			
-			Request<CampaignCrudDto> crudRequest = new Request<>();
-			crudRequest.setUser(userId);
-			List<CampaignCrudDto> crudDtos = new ArrayList<>();
-			crudDtos.add(searchDto);
-			crudRequest.setDatas(crudDtos);
-			
-			List<CampaignCrud> campaignCrudList = campaignCrudRepository.getByCriteria(crudRequest, em, locale);
-			
-			boolean hasDirectRights = false;
+		// 2. Vérifier dans campaign_crud si l'utilisateur a des droits
+		CampaignCrudDto searchDto = new CampaignCrudDto();
+		
+		// Utiliser SearchParam pour les critères de recherche
+		SearchParam<Integer> campaignIdSearchParam = new SearchParam<>();
+		campaignIdSearchParam.setStart(campaignId);
+		campaignIdSearchParam.setOperator("=");
+		searchDto.setCampaignIdParam(campaignIdSearchParam);
+		log.info("DEBUG: campaignIdSearchParam set with start=" + campaignIdSearchParam.getStart() + ", operator=" + campaignIdSearchParam.getOperator());
+		
+		SearchParam<Integer> userIdSearchParam = new SearchParam<>();
+		userIdSearchParam.setStart(userId);
+		userIdSearchParam.setOperator("=");
+		searchDto.setUserIdParam(userIdSearchParam);
+		log.info("DEBUG: userIdSearchParam set with start=" + userIdSearchParam.getStart() + ", operator=" + userIdSearchParam.getOperator());
+		
+		log.info("DEBUG: searchDto.getCampaignIdParam() = " + (searchDto.getCampaignIdParam() != null ? searchDto.getCampaignIdParam().getStart() : "NULL"));
+		log.info("DEBUG: searchDto.getUserIdParam() = " + (searchDto.getUserIdParam() != null ? searchDto.getUserIdParam().getStart() : "NULL"));
+		
+		Request<CampaignCrudDto> crudRequest = new Request<>();
+		crudRequest.setUser(userId);
+		List<CampaignCrudDto> crudDtos = new ArrayList<>();
+		crudDtos.add(searchDto);
+		crudRequest.setDatas(crudDtos);
+		
+		log.info("DEBUG: Calling getByCriteria with request: " + Utilities.convertObjectToJson(crudRequest));
+		List<CampaignCrud> campaignCrudList = campaignCrudRepository.getByCriteria(crudRequest, em, locale);
+		
+		log.info("Found " + (campaignCrudList != null ? campaignCrudList.size() : 0) + " campaign_crud records for user " + userId + " and campaign " + campaignId);			boolean hasDirectRights = false;
 			if (campaignCrudList != null && !campaignCrudList.isEmpty()) {
 				CampaignCrud crud = campaignCrudList.get(0);
 				// L'utilisateur peut modifier si is_admin=true OU can_update=true
 				hasDirectRights = (crud.getIsAdmin() != null && crud.getIsAdmin()) || 
 				                 (crud.getCanUpdate() != null && crud.getCanUpdate());
-				log.info("User has campaign_crud record: isAdmin=" + crud.getIsAdmin() + ", canUpdate=" + crud.getCanUpdate());
+				log.info("User has campaign_crud record: isAdmin=" + crud.getIsAdmin() + ", canUpdate=" + crud.getCanUpdate() + " => hasDirectRights=" + hasDirectRights);
+			} else {
+				log.info("No campaign_crud record found for user " + userId + " and campaign " + campaignId);
 			}
 			
 			// 3. Préparer la réponse
