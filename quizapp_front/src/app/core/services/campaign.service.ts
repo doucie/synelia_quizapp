@@ -825,8 +825,14 @@ export class CampaignService {
         
         if (response.items && response.items.length > 0) {
           const item = response.items[0];
+          console.log('🔍 Item reçu:', item);
+          console.log('📝 campaignTitle (status):', item.campaignTitle);
+          console.log('📝 campaignDesc (userRole):', item.campaignDesc);
+          
           const status = item.campaignTitle; // Le backend utilise campaignTitle pour retourner le status
           const userRole = item.campaignDesc; // Le backend utilise campaignDesc pour retourner le role
+          
+          console.log('✨ Status final:', status, '| Role:', userRole);
           
           return {
             status: status as 'CAN_EDIT' | 'REQUIRES_ADMIN_MODE' | 'NO_PERMISSION',
@@ -834,6 +840,7 @@ export class CampaignService {
           };
         }
         
+        console.log('⚠️ Pas d\'items dans la réponse');
         return { status: 'NO_PERMISSION' as const };
       }),
       catchError(error => {
