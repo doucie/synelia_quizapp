@@ -17,6 +17,8 @@ interface RecruiterAccess {
   canPlanify: boolean;
   canAcceptPreScreen: boolean;
   canAcceptFinal: boolean;
+  isAdmin?: boolean; // Marque si c'est un admin
+  isCreator?: boolean; // Marque si c'est le créateur (non supprimable par personne)
 }
 
 @Component({
@@ -316,6 +318,28 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
     });
   }
 
+  toggleAdmin(index: number): void {
+    this.selectedRecruiters.update(recruiters => {
+      const updated = [...recruiters];
+      const newAdminStatus = !updated[index].isAdmin;
+      
+      updated[index] = {
+        ...updated[index],
+        isAdmin: newAdminStatus,
+        // Si on coche Admin, tous les droits sont activés automatiquement
+        ...(newAdminStatus ? {
+          canEvaluate: true,
+          canUpdate: true,
+          canDelete: true,
+          canPlanify: true,
+          canAcceptPreScreen: true,
+          canAcceptFinal: true
+        } : {})
+      };
+      return updated;
+    });
+  }
+
   loadCampaign(id: number): void {
     this.loading.set(true);
     
@@ -367,12 +391,8 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
         next: (accessItems) => {
           console.log('📥 Accès recruteurs reçus:', accessItems);
           
-          // Filtrer pour ne garder que les non-admins (les recruteurs assignés)
-          const recruiterAccess = accessItems.filter((item: any) => !item.isAdmin);
-          console.log('👤 Recruteurs filtrés (non-admins):', recruiterAccess);
-          
-          // Pour chaque accès recruteur, créer l'objet RecruiterAccess
-          const recruiters: RecruiterAccess[] = recruiterAccess.map((access: any) => {
+          // Inclure TOUS les utilisateurs (créateur, admins et recruteurs)
+          const recruiters: RecruiterAccess[] = accessItems.map((access: any) => {
             console.log('🔍 Mapping access:', access);
             return {
               user: {
@@ -389,11 +409,13 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
               canDelete: access.canDelete || false,
               canPlanify: access.canPlanify || false,
               canAcceptPreScreen: access.canAcceptPreScreen || false,
-              canAcceptFinal: access.canAcceptFinal || false
+              canAcceptFinal: access.canAcceptFinal || false,
+              isAdmin: access.isAdmin || false,
+              isCreator: access.isCreator || false // Marquer si c'est le créateur
             };
           });
           
-          console.log('✅ Recruteurs chargés:', recruiters);
+          console.log('✅ Recruteurs chargés (incluant admin):', recruiters);
           this.selectedRecruiters.set(recruiters);
         },
         error: (error) => {
@@ -477,21 +499,31 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
         
         if (campaignId) {
           console.log('📝 Campagne créée avec ID:', campaignId);
-          // Sauvegarder les accès recruteurs et créer les notifications
-          // ATTENDRE que tout soit terminé avant de naviguer
-          this.saveCampaignAccessAndNotifications(campaignId, parseInt(currentUser.id)).subscribe({
-            next: () => {
-              console.log('✅ Tous les accès et notifications créés');
-              this.saving.set(false);
-              this.router.navigate(['/dashboard/campaigns']);
-            },
-            error: (error) => {
-              console.error('❌ Erreur lors de la sauvegarde des accès:', error);
-              this.saving.set(false);
-              // Naviguer quand même car la campagne est créée
-              this.router.navigate(['/dashboard/campaigns']);
-            }
-          });
+          
+          // En mode édition, le backend a déjà recréé les campaign_crud
+          // On sauvegarde les accès uniquement en mode création
+          if (!this.isEditMode) {
+            // Sauvegarder les accès recruteurs et créer les notifications
+            // ATTENDRE que tout soit terminé avant de naviguer
+            this.saveCampaignAccessAndNotifications(campaignId, parseInt(currentUser.id)).subscribe({
+              next: () => {
+                console.log('✅ Tous les accès et notifications créés');
+                this.saving.set(false);
+                this.router.navigate(['/dashboard/campaigns']);
+              },
+              error: (error) => {
+                console.error('❌ Erreur lors de la sauvegarde des accès:', error);
+                this.saving.set(false);
+                // Naviguer quand même car la campagne est créée
+                this.router.navigate(['/dashboard/campaigns']);
+              }
+            });
+          } else {
+            // En mode édition, on navigue directement
+            console.log('✅ Mode édition: campaign_crud déjà gérés par le backend');
+            this.saving.set(false);
+            this.router.navigate(['/dashboard/campaigns']);
+          }
         } else {
           console.error('❌ Impossible de récupérer l\'ID de la campagne');
           this.saving.set(false);
@@ -511,11 +543,6 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
     const recruiters = this.selectedRecruiters();
     const allAccessData: any[] = [];
     const notificationObservables: any[] = [];
-    
-    // Helper pour calculer searchString (concaténation des valeurs)
-    const calculateSearchString = (obj: any): string => {
-      return Object.values(obj).filter(v => v != null).join(' ');
-    };
 
     // 1. Ajouter le créateur avec tous les droits (is_admin = true)
     const creatorAccess = {
@@ -529,10 +556,9 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
       canAcceptFinal: true,
       isAdmin: true,
       follow: true, // Le créateur suit automatiquement sa campagne
-      createdBy: currentUserId,
-      searchString: '' // Sera calculé après
+      createdBy: currentUserId
+      // searchString sera généré automatiquement par le backend
     };
-    creatorAccess.searchString = calculateSearchString(creatorAccess);
     allAccessData.push(creatorAccess);
     console.log('👑 Créateur ajouté avec tous les droits:', creatorAccess);
     
@@ -549,10 +575,9 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
         canAcceptFinal: recruiter.canAcceptFinal,
         isAdmin: false,
         follow: true,
-        createdBy: currentUserId,
-        searchString: '' // Sera calculé après
+        createdBy: currentUserId
+        // searchString sera généré automatiquement par le backend
       };
-      accessData.searchString = calculateSearchString(accessData);
       allAccessData.push(accessData);
       
       // 3. Créer une notification pour chaque recruteur (sauf le créateur)
@@ -564,10 +589,9 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
         createdBy: 1,
         userId: recruiter.user.id,
         objectTableName: 'campaigns', // Lier à la table campaigns
-        objectTableId: campaignId,     // Lier à cette campagne spécifique
-        searchString: '' // Sera calculé après
+        objectTableId: campaignId     // Lier à cette campagne spécifique
+        // searchString sera généré automatiquement par le backend
       };
-      notificationData.searchString = calculateSearchString(notificationData);
       
       // Ajouter l'observable de notification à la liste
       notificationObservables.push(

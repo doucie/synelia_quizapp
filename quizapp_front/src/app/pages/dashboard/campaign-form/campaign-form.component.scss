@@ -423,6 +423,37 @@
     border: 1px solid var(--border);
     border-radius: 0.75rem;
     padding: 1rem;
+    transition: all 0.2s;
+
+    // Style spécial pour le créateur
+    &.creator-card {
+      background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 193, 7, 0.1));
+      border: 2px solid rgba(255, 193, 7, 0.4);
+      box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);
+      
+      .recruiter-name {
+        font-weight: 600;
+        color: #d97706;
+      }
+    }
+
+    // Style spécial pour admin non-créateur
+    &.admin-card {
+      background: linear-gradient(135deg, rgba(107, 70, 193, 0.08), rgba(139, 92, 246, 0.08));
+      border: 2px solid var(--primary-light);
+      box-shadow: 0 4px 12px rgba(107, 70, 193, 0.15);
+      
+      .recruiter-name {
+        font-weight: 600;
+        color: var(--primary);
+      }
+
+      .btn-remove:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+        background: rgba(107, 70, 193, 0.1);
+      }
+    }
 
     .recruiter-header {
       display: flex;
@@ -465,11 +496,116 @@
           font-weight: 500;
           color: var(--text-primary);
           font-size: 0.875rem;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+
+
+
+          .admin-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.125rem 0.5rem;
+            background: linear-gradient(135deg, var(--primary-light), var(--primary));
+            color: var(--text-on-primary);
+            font-size: 0.625rem;
+            font-weight: 600;
+            border-radius: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 4px var(--shadow-light);
+          }
         }
 
         .recruiter-email {
           font-size: 0.75rem;
           color: var(--text-secondary);
+        }
+      }
+
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .creator-badge {
+        display: flex;
+        align-items: center;
+        padding: 0.5rem 0.75rem;
+        background: rgba(255, 215, 0, 0.1);
+        border: 1px solid rgba(255, 193, 7);
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: rgba(255, 193, 7);
+        //text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .admin-checkbox-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        background: rgba(107, 70, 193, 0.08);
+        border: 1px solid var(--primary-light);
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+
+        &:hover {
+          background: rgba(107, 70, 193, 0.12);
+        }
+
+        input {
+          position: absolute;
+          opacity: 0;
+          cursor: pointer;
+          width: 0;
+          height: 0;
+
+          &:checked + .checkbox-custom {
+            background: linear-gradient(135deg, var(--primary-light), var(--primary));
+            border-color: var(--primary);
+
+            &::after {
+              opacity: 1;
+              transform: rotate(45deg) scale(1);
+            }
+          }
+        }
+
+        .checkbox-custom {
+          width: 1rem;
+          height: 1rem;
+          border: 2px solid var(--primary-light);
+          border-radius: 0.25rem;
+          background: var(--background);
+          position: relative;
+          transition: all 0.2s;
+
+          &::after {
+            content: '';
+            position: absolute;
+            top: 1px;
+            left: 4px;
+            width: 4px;
+            height: 8px;
+            border: solid var(--text-on-primary);
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg) scale(0);
+            opacity: 0;
+            transition: all 0.2s;
+          }
+        }
+
+        span:last-child {
+          color: var(--primary);
+          font-weight: 600;
         }
       }
 

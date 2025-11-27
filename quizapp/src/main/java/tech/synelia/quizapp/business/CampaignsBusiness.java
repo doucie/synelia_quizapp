@@ -341,14 +341,19 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 							creatorCrud.setCampaigns(savedCampaign);
 							creatorCrud.setUser(creator);
 							creatorCrud.setIsAdmin(true);
+							creatorCrud.setIsCreator(true); // Marquer comme créateur
 							creatorCrud.setCanUpdate(true);
 							creatorCrud.setCanDelete(true);
 							creatorCrud.setCanEvaluate(true);
+							creatorCrud.setCanPlanify(true);
+							creatorCrud.setCanAcceptPreScreen(true);
+							creatorCrud.setCanAcceptFinal(true);
 							creatorCrud.setFollow(true);
 							creatorCrud.setCreatedAt(Utilities.getCurrentDate());
 							creatorCrud.setCreatedBy(request.getUser());
 							creatorCrud.setIsDeleted(false);
-							creatorCrud.setSearchString("campaign:" + savedCampaign.getId() + " user:" + creator.getId() + " admin:true");
+							// searchString sera généré automatiquement par le repository lors du save
+							creatorCrud.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(creatorCrud)));
 							campaignCrudRepository.save(creatorCrud);
 							log.info("👑 Créateur ID=" + creator.getId() + " ajouté avec tous les droits sur campagne " + savedCampaign.getId());
 						} else {

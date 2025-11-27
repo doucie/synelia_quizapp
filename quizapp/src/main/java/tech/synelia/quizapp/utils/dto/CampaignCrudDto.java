@@ -37,6 +37,7 @@ public class CampaignCrudDto extends _CampaignCrudDto implements Cloneable{
     private Boolean    canEvaluate          ;
     private Boolean    follow               ;
     private Boolean    isAdmin              ;
+    private Boolean    isCreator            ;
     private Boolean    canPlanify           ;
     private Boolean    canAcceptPreScreen   ;
     private Boolean    canAcceptFinal       ;

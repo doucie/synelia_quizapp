@@ -305,7 +305,9 @@
         @if (selectedRecruiters().length > 0) {
           <div class="selected-recruiters">
             @for (recruiter of selectedRecruiters(); track recruiter.user.id; let i = $index) {
-              <div class="recruiter-card">
+              <div class="recruiter-card" 
+                   [class.creator-card]="recruiter.isCreator"
+                   [class.admin-card]="recruiter.isAdmin && !recruiter.isCreator">
                 <div class="recruiter-header">
                   <div class="recruiter-info">
                     <div class="user-avatar" [class]="'avatar-' + (recruiter.user.role || 'recruiter').toLowerCase()">
@@ -318,17 +320,35 @@
                       <div class="recruiter-email">{{ recruiter.user.email }}</div>
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    class="btn-remove"
-                    (click)="removeRecruiter(i)"
-                    title="Retirer"
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <line x1="18" y1="6" x2="6" y2="18"/>
-                      <line x1="6" y1="6" x2="18" y2="18"/>
-                    </svg>
-                  </button>
+                  
+                  <div class="header-actions">
+                    @if (recruiter.isCreator) {
+                      <span class="creator-badge">Créateur</span>
+                    } @else {
+                      <label class="admin-checkbox-header">
+                        <input
+                          type="checkbox"
+                          [checked]="recruiter.isAdmin"
+                          (change)="toggleAdmin(i)"
+                        />
+                        <span class="checkbox-custom"></span>
+                        <span>Administrateur</span>
+                      </label>
+                      
+                      <button
+                        type="button"
+                        class="btn-remove"
+                        (click)="removeRecruiter(i)"
+                        [title]="recruiter.isAdmin ? 'Seul le créateur peut retirer un admin' : 'Retirer'"
+                        [disabled]="recruiter.isAdmin"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <line x1="18" y1="6" x2="6" y2="18"/>
+                          <line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                      </button>
+                    }
+                  </div>
                 </div>
 
                 <div class="recruiter-permissions">

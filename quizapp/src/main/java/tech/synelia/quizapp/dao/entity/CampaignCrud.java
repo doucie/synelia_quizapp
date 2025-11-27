@@ -64,6 +64,9 @@ public class CampaignCrud implements Serializable, Cloneable {
     @Column(name="is_admin")
     private Boolean    isAdmin      ;
 
+    @Column(name="is_creator")
+    private Boolean    isCreator    ;
+
     @Column(name="can_planify")
     private Boolean    canPlanify   ;
 
