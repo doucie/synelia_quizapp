@@ -41,6 +41,14 @@ export class InterviewsComponent implements OnInit, OnDestroy {
   modalMode = signal<'create' | 'edit'>('create');
   editingInterview = signal<InterviewWithDetails | null>(null);
 
+  // Calendar view
+  viewMode = signal<'list' | 'calendar'>('list');
+  calendarView = signal<'year' | 'month' | 'day'>('month');
+  selectedYear = signal(new Date().getFullYear());
+  selectedMonth = signal(new Date().getMonth());
+  selectedDay = signal<Date | null>(null);
+  currentDate = new Date();
+
   constructor(
     private interviewService: InterviewService,
     private applicationService: ApplicationService,
@@ -355,5 +363,228 @@ export class InterviewsComponent implements OnInit, OnDestroy {
    */
   getCandidateName(app: Application): string {
     return `${app.candidateFirstName || ''} ${app.candidateLastName || ''}`.trim() || 'Candidat';
+  }
+
+  // ===========================
+  // CALENDAR METHODS
+  // ===========================
+
+  /**
+   * Bascule entre vue liste et calendrier
+   */
+  toggleView(): void {
+    this.viewMode.set(this.viewMode() === 'list' ? 'calendar' : 'list');
+  }
+
+  /**
+   * Change la vue du calendrier
+   */
+  setCalendarView(view: 'year' | 'month' | 'day'): void {
+    this.calendarView.set(view);
+  }
+
+  /**
+   * Navigation dans le calendrier
+   */
+  previousYear(): void {
+    this.selectedYear.set(this.selectedYear() - 1);
+  }
+
+  nextYear(): void {
+    this.selectedYear.set(this.selectedYear() + 1);
+  }
+
+  previousMonth(): void {
+    let month = this.selectedMonth() - 1;
+    let year = this.selectedYear();
+    if (month < 0) {
+      month = 11;
+      year--;
+      this.selectedYear.set(year);
+    }
+    this.selectedMonth.set(month);
+  }
+
+  nextMonth(): void {
+    let month = this.selectedMonth() + 1;
+    let year = this.selectedYear();
+    if (month > 11) {
+      month = 0;
+      year++;
+      this.selectedYear.set(year);
+    }
+    this.selectedMonth.set(month);
+  }
+
+  /**
+   * Sélectionne un jour
+   */
+  selectDay(date: Date): void {
+    this.selectedDay.set(date);
+    this.setCalendarView('day');
+  }
+
+  /**
+   * Retourne au mois en cours
+   */
+  goToToday(): void {
+    const today = new Date();
+    this.selectedYear.set(today.getFullYear());
+    this.selectedMonth.set(today.getMonth());
+    this.selectedDay.set(null);
+    this.setCalendarView('month');
+  }
+
+  /**
+   * Obtient le nom du mois
+   */
+  getMonthName(monthIndex: number): string {
+    const months = [
+      'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+      'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+    ];
+    return months[monthIndex];
+  }
+
+  /**
+   * Obtient les jours du mois pour le calendrier
+   */
+  getCalendarDays(): Date[] {
+    const year = this.selectedYear();
+    const month = this.selectedMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    
+    // Jour de la semaine du premier jour (0 = dimanche)
+    let startDay = firstDay.getDay();
+    // Convertir pour que lundi soit 0
+    startDay = startDay === 0 ? 6 : startDay - 1;
+    
+    const days: Date[] = [];
+    
+    // Jours du mois précédent
+    for (let i = startDay - 1; i >= 0; i--) {
+      const date = new Date(year, month, -i);
+      days.push(date);
+    }
+    
+    // Jours du mois en cours
+    for (let i = 1; i <= lastDay.getDate(); i++) {
+      days.push(new Date(year, month, i));
+    }
+    
+    // Jours du mois suivant pour compléter la grille
+    const remainingDays = 42 - days.length; // 6 semaines * 7 jours
+    for (let i = 1; i <= remainingDays; i++) {
+      days.push(new Date(year, month + 1, i));
+    }
+    
+    return days;
+  }
+
+  /**
+   * Obtient les interviews d'une date spécifique
+   */
+  getInterviewsForDate(date: Date): InterviewWithDetails[] {
+    return this.interviews().filter(interview => {
+      if (!interview.interviewDate) return false;
+      const interviewDate = this.parseInterviewDate(interview.interviewDate);
+      return interviewDate &&
+        interviewDate.getFullYear() === date.getFullYear() &&
+        interviewDate.getMonth() === date.getMonth() &&
+        interviewDate.getDate() === date.getDate();
+    });
+  }
+
+  /**
+   * Parse une date d'interview (format: dd/MM/yyyy HH:mm)
+   */
+  parseInterviewDate(dateStr: string): Date | null {
+    try {
+      const [datePart, timePart] = dateStr.split(' ');
+      const [day, month, year] = datePart.split('/');
+      const [hours, minutes] = (timePart || '00:00').split(':');
+      return new Date(
+        parseInt(year),
+        parseInt(month) - 1,
+        parseInt(day),
+        parseInt(hours),
+        parseInt(minutes)
+      );
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /**
+   * Vérifie si une date est aujourd'hui
+   */
+  isToday(date: Date): boolean {
+    const today = this.currentDate;
+    return date.getFullYear() === today.getFullYear() &&
+      date.getMonth() === today.getMonth() &&
+      date.getDate() === today.getDate();
+  }
+
+  /**
+   * Vérifie si une date est dans le mois sélectionné
+   */
+  isCurrentMonth(date: Date): boolean {
+    return date.getMonth() === this.selectedMonth();
+  }
+
+  /**
+   * Obtient les interviews groupées par heure pour un jour
+   */
+  getInterviewsByHour(date: Date): Map<string, InterviewWithDetails[]> {
+    const interviews = this.getInterviewsForDate(date);
+    const byHour = new Map<string, InterviewWithDetails[]>();
+    
+    interviews.forEach(interview => {
+      if (!interview.interviewDate) return;
+      const interviewDate = this.parseInterviewDate(interview.interviewDate);
+      if (interviewDate) {
+        const hour = interviewDate.getHours();
+        const hourKey = `${hour.toString().padStart(2, '0')}:00`;
+        if (!byHour.has(hourKey)) {
+          byHour.set(hourKey, []);
+        }
+        byHour.get(hourKey)!.push(interview);
+      }
+    });
+    
+    return byHour;
+  }
+
+  /**
+   * Obtient les mois de l'année
+   */
+  getMonthsOfYear(): { index: number; name: string; interviewCount: number }[] {
+    return Array.from({ length: 12 }, (_, i) => ({
+      index: i,
+      name: this.getMonthName(i),
+      interviewCount: this.getInterviewsForMonth(i).length
+    }));
+  }
+
+  /**
+   * Obtient les interviews d'un mois
+   */
+  getInterviewsForMonth(monthIndex: number): InterviewWithDetails[] {
+    return this.interviews().filter(interview => {
+      if (!interview.interviewDate) return false;
+      const interviewDate = this.parseInterviewDate(interview.interviewDate);
+      return interviewDate &&
+        interviewDate.getFullYear() === this.selectedYear() &&
+        interviewDate.getMonth() === monthIndex;
+    });
+  }
+
+  /**
+   * Sélectionne un mois depuis la vue année
+   */
+  selectMonth(monthIndex: number): void {
+    this.selectedMonth.set(monthIndex);
+    this.setCalendarView('month');
   }
 }

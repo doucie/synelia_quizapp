@@ -62,6 +62,9 @@ public class Interviews implements Serializable, Cloneable {
     @Column(name="meet_link", length=500)
     private String     meetLink ;
 
+    @Column(name="interview_evaluations_link", length=8)
+    private String     interviewEvaluationsLink ;
+
     @Column(name="interview_note", columnDefinition="TEXT")
     private String     interviewNote ;
 

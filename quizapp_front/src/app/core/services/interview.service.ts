@@ -186,7 +186,7 @@ export class InterviewService {
     const classes: Record<string, string> = {
       'PENDING': 'warning',
       'SCHEDULED': 'info',
-      'STARTED': 'info',
+      'STARTED': 'started',
       'OVER': 'success',
       'PASSED': 'success',
       'FAILED': 'error',

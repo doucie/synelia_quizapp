@@ -242,7 +242,16 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 				entityToSave.setInterviewDate(dateFormat.parse(dto.getInterviewDate()));
 			}
 			if (Utilities.notBlank(dto.getInterviewStatus())) {
+				String oldStatus = entityToSave.getInterviewStatus();
 				entityToSave.setInterviewStatus(dto.getInterviewStatus());
+				
+				// Générer automatiquement le lien d'évaluation quand le statut passe à STARTED
+				if ("STARTED".equalsIgnoreCase(dto.getInterviewStatus()) && 
+				    (oldStatus == null || !"STARTED".equalsIgnoreCase(oldStatus)) &&
+				    (entityToSave.getInterviewEvaluationsLink() == null || entityToSave.getInterviewEvaluationsLink().isEmpty())) {
+					String evaluationLink = generateUniqueEvaluationLink();
+					entityToSave.setInterviewEvaluationsLink(evaluationLink);
+				}
 			}
 			if (Utilities.notBlank(dto.getMeetLink())) {
 				entityToSave.setMeetLink(dto.getMeetLink());
@@ -603,5 +612,33 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 		}
 		
 		log.info("----end sendInterviewEmail-----");
+	}
+	
+	/**
+	 * Génère un lien d'évaluation unique de 8 caractères alphanumériques en lowercase
+	 * Vérifie l'unicité dans la base de données
+	 * 
+	 * @return String - lien d'évaluation unique
+	 */
+	private String generateUniqueEvaluationLink() {
+		int maxAttempts = 10;
+		
+		for (int attempts = 0; attempts < maxAttempts; attempts++) {
+			// Générer un code alphanumérique de 8 caractères en lowercase
+			String evaluationLink = Utilities.generateCodeOld().toLowerCase();
+			
+			// Vérifier l'unicité dans la base de données
+			boolean linkExists = interviewsRepository.findAll().stream()
+				.anyMatch(i -> i.getInterviewEvaluationsLink() != null && 
+				              evaluationLink.equalsIgnoreCase(i.getInterviewEvaluationsLink()));
+			
+			if (!linkExists) {
+				log.info("Lien d'évaluation unique généré: " + evaluationLink);
+				return evaluationLink;
+			}
+		}
+		
+		log.warning("Impossible de générer un lien d'évaluation unique après " + maxAttempts + " tentatives");
+		throw new RuntimeException("Erreur lors de la génération du lien d'évaluation unique");
 	}
 }

@@ -65,7 +65,7 @@ La vérification des droits de modification des campagnes ne fonctionne pas corr
 
 ## À vérifier au retour
 
-1. Tester la modification complète d'une campagne avec plusieurs recruteurs
+1. Tester la modification complète d'une campagne avec plusieurs recruteurs et vérifier update_by
 2. Vérifier que le créateur ne peut pas être supprimé de la liste
 3. Vérifier que seul le créateur peut retirer les administrateurs
 4. Tester l'activation automatique des droits lors de la nomination d'un administrateur
