@@ -69,3 +69,26 @@ La vérification des droits de modification des campagnes ne fonctionne pas corr
 2. Vérifier que le créateur ne peut pas être supprimé de la liste
 3. Vérifier que seul le créateur peut retirer les administrateurs
 4. Tester l'activation automatique des droits lors de la nomination d'un administrateur
+
+---
+
+30/11/2025
+
+## Tâches effectuées
+
+- Ajout d'une vue calendrier pour la page des interviews avec navigation par année, mois et jour
+- Ajout d'une vue détaillée par heure pour afficher les interviews d'une journée
+- Ajout d'indicateurs visuels dans le calendrier pour voir les jours avec des interviews
+- Ajout d'un bouton pour basculer entre la vue liste et la vue calendrier
+- Ajout d'animations pour les interviews en cours avec un point rouge clignotant
+- Correction de l'affichage de la liste après l'ajout du calendrier
+- Ajout d'un champ pour stocker un lien unique d'évaluation pour chaque interview
+- Génération automatique d'un code unique de 8 caractères lors du démarrage d'une interview
+- Vérification de l'unicité du code d'évaluation dans la base de données
+
+## À vérifier au retour
+
+1. Tester le démarrage d'une interview et vérifier que le code d'évaluation est bien généré
+2. Remplacer le bouton de fin d'interview par un bouton d'évaluation dans l'interface
+3. Créer la page d'évaluation accessible via le lien unique
+4. Vérifier que le calendrier affiche correctement les interviews sur plusieurs mois
