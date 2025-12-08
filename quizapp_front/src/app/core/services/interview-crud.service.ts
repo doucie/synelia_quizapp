@@ -60,17 +60,43 @@ export class InterviewCrudService {
   }
 
   /**
-   * Récupère les interview_cruds par interview ID
+   * Récupère les interview_cruds par interview ID via getByCriteria
    */
   getInterviewCrudsByInterviewId(interviewId: number): Observable<InterviewCrudResponse> {
-    return this.http.get<InterviewCrudResponse>(`${this.apiUrl}/interview/${interviewId}`);
+    const request = {
+      user: 1,
+      data: {
+        interviewsId: interviewId
+      }
+    };
+    return this.http.post<InterviewCrudResponse>(`${this.apiUrl}/getByCriteria`, request);
   }
 
   /**
-   * Récupère les interview_cruds par user ID
+   * Récupère les évaluateurs (canEvaluate = true) pour un interview
+   */
+  getEvaluatorsByInterviewId(interviewId: number): Observable<InterviewCrudResponse> {
+    const request = {
+      user: 1,
+      data: {
+        interviewsId: interviewId,
+        canEvaluate: true
+      }
+    };
+    return this.http.post<InterviewCrudResponse>(`${this.apiUrl}/getByCriteria`, request);
+  }
+
+  /**
+   * Récupère les interview_cruds par user ID via getByCriteria
    */
   getInterviewCrudsByUserId(userId: number): Observable<InterviewCrudResponse> {
-    return this.http.get<InterviewCrudResponse>(`${this.apiUrl}/user/${userId}`);
+    const request = {
+      user: 1,
+      data: {
+        userId: userId
+      }
+    };
+    return this.http.post<InterviewCrudResponse>(`${this.apiUrl}/getByCriteria`, request);
   }
 
   /**

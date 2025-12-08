@@ -75,6 +75,23 @@ public class Interviews implements Serializable, Cloneable {
     private String     interviewType ; // IN_PERSON, ONLINE
 
     @Temporal(TemporalType.TIMESTAMP)
+    @Column(name="started_at")
+    private Date       startedAt    ;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name="ended_at")
+    private Date       endedAt      ;
+
+    @Column(name="evaluation_score")
+    private Integer    evaluationScore ; // Nombre de points total
+
+    @Column(name="evaluation_number")
+    private Integer    evaluationNumber ; // Nombre d'évaluations total
+
+    @Column(name="evaluation_percentage")
+    private Double     evaluationPercentage ; // Moyenne (evaluation_score / evaluation_number)
+
+    @Temporal(TemporalType.TIMESTAMP)
     @Column(name="created_at")
     private Date       createdAt    ;
 

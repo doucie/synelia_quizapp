@@ -78,11 +78,7 @@ La vérification des droits de modification des campagnes ne fonctionne pas corr
 
 - Ajout d'une vue calendrier pour la page des interviews avec navigation par année, mois et jour
 - Ajout d'une vue détaillée par heure pour afficher les interviews d'une journée
-- Ajout d'indicateurs visuels dans le calendrier pour voir les jours avec des interviews
-- Ajout d'un bouton pour basculer entre la vue liste et la vue calendrier
-- Ajout d'animations pour les interviews en cours avec un point rouge clignotant
-- Correction de l'affichage de la liste après l'ajout du calendrier
-- Ajout d'un champ pour stocker un lien unique d'évaluation pour chaque interview
+- Correction du bug lors de l'affichage de la liste des interviews après l'ajout du calendrier
 - Génération automatique d'un code unique de 8 caractères lors du démarrage d'une interview
 - Vérification de l'unicité du code d'évaluation dans la base de données
 

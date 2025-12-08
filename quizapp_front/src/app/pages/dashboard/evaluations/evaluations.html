@@ -1,0 +1,219 @@
+<div class="evaluations-page">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <button class="btn-back" (click)="goBack()">
+        <i class="bi bi-arrow-left"></i>
+      </button>
+      <div class="header-info">
+        <h1>Évaluations</h1>
+        @if (interview()) {
+          <p class="interview-info">
+            <i class="bi bi-calendar-event"></i>
+            {{ interview()?.interviewDate }}
+            @if (interview()?.interviewLocation) {
+              <span class="separator">•</span>
+              <i class="bi bi-geo-alt"></i>
+              {{ interview()?.interviewLocation }}
+            }
+          </p>
+        }
+      </div>
+    </div>
+
+    <!-- Score moyen -->
+    @if (evaluationCount() > 0) {
+      <div class="average-score" [ngClass]="getScoreClass(averageScore())">
+        <span class="score-value">{{ averageScore() }}/100</span>
+        <span class="score-label">Score moyen ({{ evaluationCount() }} éval.)</span>
+      </div>
+    }
+  </div>
+
+  <!-- Contenu principal -->
+  <div class="page-content">
+    @if (loading()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Chargement...</p>
+      </div>
+    } @else if (error()) {
+      <div class="error-state">
+        <div class="error-icon">
+          <i class="bi bi-exclamation-triangle"></i>
+        </div>
+        <h2>Accès non autorisé</h2>
+        <p>{{ error() }}</p>
+        <button class="btn-primary" (click)="goBack()">
+          <i class="bi bi-arrow-left"></i>
+          Retour aux entretiens
+        </button>
+      </div>
+    } @else {
+      <div class="evaluation-layout">
+        <!-- Sidebar: Liste des évaluateurs -->
+        <aside class="evaluators-sidebar">
+          <div class="sidebar-header">
+            <h3><i class="bi bi-people"></i> Évaluateurs</h3>
+            <span class="online-count">{{ onlineEvaluators().length }} en ligne</span>
+          </div>
+          
+          <div class="evaluators-list">
+            @for (evaluator of evaluators(); track evaluator.id) {
+              <div class="evaluator-item" [class.online]="evaluator.isOnline" [class.evaluated]="evaluator.hasEvaluated">
+                <div class="evaluator-avatar" [class.online]="evaluator.isOnline">
+                  {{ getInitials(evaluator.firstName + ' ' + evaluator.lastName) }}
+                  @if (evaluator.isOnline) {
+                    <span class="online-indicator"></span>
+                  }
+                </div>
+                <div class="evaluator-info">
+                  <span class="evaluator-name">
+                    {{ evaluator.firstName }} {{ evaluator.lastName }}
+                    @if (evaluator.id === currentUserId()) {
+                      <span class="you-badge">(vous)</span>
+                    }
+                  </span>
+                  @if (evaluator.hasEvaluated && evaluator.evaluation) {
+                    <span class="evaluator-score" [ngClass]="getScoreClass(evaluator.evaluation.mark)">
+                      {{ evaluator.evaluation.mark }}/100
+                    </span>
+                  } @else {
+                    <span class="evaluator-pending">En attente...</span>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </aside>
+
+        <!-- Zone principale: Candidat + Chat -->
+        <main class="main-content">
+          <!-- Infos candidat -->
+          @if (candidate()) {
+            <div class="candidate-card">
+              <div class="candidate-avatar large">
+                {{ getInitials(candidate()!.name) }}
+              </div>
+              <div class="candidate-info">
+                <h2>{{ candidate()!.name }}</h2>
+                <p class="candidate-email">{{ candidate()!.email }}</p>
+                @if (candidate()!.quizScore !== undefined) {
+                  <span class="quiz-score">
+                    <i class="bi bi-mortarboard"></i>
+                    Score quiz: {{ candidate()!.quizScore }}%
+                  </span>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Zone de chat des évaluations -->
+          <div class="chat-container" #chatContainer>
+            @if (evaluationMessages().length === 0) {
+              <div class="empty-chat">
+                <i class="bi bi-chat-dots"></i>
+                <p>Aucune évaluation pour le moment.</p>
+                <p class="hint">Soyez le premier à évaluer ce candidat !</p>
+              </div>
+            } @else {
+              <div class="chat-messages">
+                @for (message of evaluationMessages(); track message.id) {
+                  <div class="chat-message" [class.own-message]="message.isCurrentUser" [class.other-message]="!message.isCurrentUser">
+                    @if (!message.isCurrentUser) {
+                      <div class="message-avatar">
+                        {{ message.evaluatorInitials }}
+                      </div>
+                    }
+                    <div class="message-content">
+                      <div class="message-header">
+                        <span class="message-author">{{ message.evaluatorName }}</span>
+                        <span class="message-score" [ngClass]="getScoreClass(message.mark)">
+                          {{ message.mark }}/100
+                        </span>
+                      </div>
+                      <div class="message-body">
+                        {{ message.comment }}
+                      </div>
+                      <div class="message-footer">
+                        <span class="message-time">{{ formatDate(message.createdAt) }}</span>
+                      </div>
+                    </div>
+                    @if (message.isCurrentUser) {
+                      <div class="message-avatar own">
+                        {{ message.evaluatorInitials }}
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Formulaire d'évaluation (si pas encore évalué) -->
+          @if (canEvaluate() && !hasAlreadyEvaluated()) {
+            <div class="evaluation-form">
+              <div class="form-row">
+                <!-- Note sur 100 -->
+                <div class="score-input">
+                  <label>Note /100</label>
+                  <input 
+                    type="number" 
+                    min="0" 
+                    max="100"
+                    [value]="newMark()"
+                    (input)="newMark.set(+$any($event.target).value)"
+                    placeholder="50"
+                    class="score-field"
+                  />
+                </div>
+
+                <!-- Commentaire -->
+                <div class="comment-input">
+                  <label>Commentaire</label>
+                  <input 
+                    type="text"
+                    [value]="newComment()"
+                    (input)="newComment.set($any($event.target).value)"
+                    placeholder="Vos observations sur le candidat..."
+                    class="comment-field"
+                    (keyup.enter)="newComment().trim() && submitEvaluation()"
+                  />
+                </div>
+
+                <!-- Bouton envoyer -->
+                <button 
+                  class="btn-send" 
+                  [disabled]="submitting() || !newComment().trim()"
+                  (click)="submitEvaluation()"
+                >
+                  @if (submitting()) {
+                    <span class="spinner-small"></span>
+                  } @else {
+                    <i class="bi bi-send-fill"></i>
+                  }
+                </button>
+              </div>
+            </div>
+          } @else if (hasAlreadyEvaluated()) {
+            <div class="already-evaluated">
+              <i class="bi bi-check-circle"></i>
+              <span>Vous avez déjà soumis votre évaluation</span>
+            </div>
+          }
+
+          <!-- Bouton terminer l'évaluation -->
+          @if (canEvaluate() && evaluationCount() > 0) {
+            <div class="finish-section">
+              <button class="btn-finish" (click)="finishEvaluation()">
+                <i class="bi bi-check2-all"></i>
+                Terminer l'évaluation
+              </button>
+              <p class="finish-hint">Cela clôturera l'entretien et calculera le score final.</p>
+            </div>
+          }
+        </main>
+      </div>
+    }
+  </div>
+</div>

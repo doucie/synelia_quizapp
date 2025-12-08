@@ -193,41 +193,50 @@
 
                     <!-- Footer -->
                     <div class="card-footer">
-                      <button 
-                        class="btn-action btn-edit" 
-                        (click)="openEditModal(interview); $event.stopPropagation()"
-                        title="Modifier"
-                      >
-                        <i class="bi bi-pencil"></i>
-                      </button>
+                      <!-- Bouton Modifier - toujours visible sauf STARTED -->
+                      @if (interview.interviewStatus !== 'STARTED') {
+                        <button 
+                          class="btn-action btn-edit" 
+                          (click)="openEditModal(interview); $event.stopPropagation()"
+                          title="Modifier"
+                        >
+                          <i class="bi bi-pencil"></i>
+                        </button>
+                      }
                       
+                      <!-- Bouton Démarrer - uniquement pour SCHEDULED -->
                       @if (interview.interviewStatus === 'SCHEDULED') {
                         <button 
                           class="btn-action btn-start" 
-                          (click)="changeStatus(interview, 'STARTED'); $event.stopPropagation()"
+                          (click)="openStartConfirmation(interview); $event.stopPropagation()"
                           title="Démarrer l'entretien"
                         >
                           <i class="bi bi-play-circle"></i>
                         </button>
                       }
                       
+                      <!-- Bouton Évaluer - uniquement pour STARTED -->
                       @if (interview.interviewStatus === 'STARTED') {
                         <button 
-                          class="btn-action btn-complete" 
-                          (click)="changeStatus(interview, 'OVER'); $event.stopPropagation()"
-                          title="Terminer l'entretien"
+                          class="btn-action btn-evaluate" 
+                          (click)="evaluateInterview(interview); $event.stopPropagation()"
+                          title="Évaluer l'entretien"
                         >
-                          <i class="bi bi-check-circle"></i>
+                          <i class="bi bi-clipboard-check"></i>
+                          Évaluer
                         </button>
                       }
                       
-                      <button 
-                        class="btn-action btn-delete" 
-                        (click)="deleteInterview(interview); $event.stopPropagation()"
-                        title="Supprimer"
-                      >
-                        <i class="bi bi-trash"></i>
-                      </button>
+                      <!-- Bouton Supprimer - masqué pendant STARTED -->
+                      @if (interview.interviewStatus !== 'STARTED') {
+                        <button 
+                          class="btn-action btn-delete" 
+                          (click)="deleteInterview(interview); $event.stopPropagation()"
+                          title="Supprimer"
+                        >
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      }
                     </div>
                   </div>
                 }
@@ -553,3 +562,166 @@
     </div>
   }
 </div>
+
+<!-- Modal de confirmation pour démarrer un entretien (2 étapes) -->
+@if (showStartConfirmModal()) {
+  <div class="modal-overlay" (click)="closeStartConfirmModal()">
+    <div class="modal-container start-confirm-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>
+          <i class="bi bi-play-circle"></i>
+          Démarrer l'entretien
+        </h2>
+        <button class="btn-close-modal" (click)="closeStartConfirmModal()">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Étape 1: Confirmation de la date -->
+        @if (startConfirmStep() === 1) {
+          <div class="confirm-step step-1">
+            <div class="step-indicator">
+              <span class="step-badge active">1</span>
+              <span class="step-line"></span>
+              <span class="step-badge">2</span>
+            </div>
+
+            <div class="confirm-icon warning">
+              <i class="bi bi-calendar-check"></i>
+            </div>
+
+            <h3>Vérification de la date</h3>
+            
+            <p class="confirm-message">
+              Êtes-vous sûr de vouloir démarrer cet entretien ?
+            </p>
+
+            <div class="interview-info-card">
+              <div class="info-row">
+                <i class="bi bi-person"></i>
+                <span class="label">Candidat :</span>
+                <span class="value">{{ interviewToStart()?.candidateName || 'Non défini' }}</span>
+              </div>
+              <div class="info-row highlight">
+                <i class="bi bi-calendar-event"></i>
+                <span class="label">Date prévue :</span>
+                <span class="value date">{{ formatDateTime(interviewToStart()?.interviewDate) }}</span>
+              </div>
+              @if (interviewToStart()?.campaignTitle) {
+                <div class="info-row">
+                  <i class="bi bi-briefcase"></i>
+                  <span class="label">Campagne :</span>
+                  <span class="value">{{ interviewToStart()?.campaignTitle }}</span>
+                </div>
+              }
+              @if (interviewToStart()?.interviewLocation) {
+                <div class="info-row">
+                  <i class="bi bi-geo-alt"></i>
+                  <span class="label">Lieu :</span>
+                  <span class="value">{{ interviewToStart()?.interviewLocation }}</span>
+                </div>
+              }
+            </div>
+
+            <p class="confirm-note">
+              <i class="bi bi-info-circle"></i>
+              Veuillez vérifier que la date de l'entretien correspond bien à aujourd'hui avant de continuer.
+            </p>
+          </div>
+        }
+
+        <!-- Étape 2: Notification des évaluateurs -->
+        @if (startConfirmStep() === 2) {
+          <div class="confirm-step step-2">
+            <div class="step-indicator">
+              <span class="step-badge completed"><i class="bi bi-check"></i></span>
+              <span class="step-line completed"></span>
+              <span class="step-badge active">2</span>
+            </div>
+
+            <div class="confirm-icon info">
+              <i class="bi bi-bell"></i>
+            </div>
+
+            <h3>Notification des évaluateurs</h3>
+
+            @if (loadingEvaluators()) {
+              <div class="loading-evaluators">
+                <div class="spinner-small"></div>
+                <span>Chargement des évaluateurs...</span>
+              </div>
+            } @else {
+              @if (evaluatorsForInterview().length > 0) {
+                <p class="confirm-message">
+                  Les évaluateurs suivants seront notifiés du démarrage de l'entretien :
+                </p>
+
+                <div class="evaluators-list">
+                  @for (evaluator of evaluatorsForInterview(); track evaluator.userId) {
+                    <div class="evaluator-item">
+                      <div class="evaluator-avatar">
+                        {{ getEvaluatorInitials(evaluator) }}
+                      </div>
+                      <div class="evaluator-info">
+                        <span class="evaluator-name">{{ getEvaluatorFullName(evaluator) }}</span>
+                        <span class="evaluator-role">{{ evaluator.email || 'Peut évaluer cet entretien' }}</span>
+                      </div>
+                      <i class="bi bi-bell-fill notification-icon"></i>
+                    </div>
+                  }
+                </div>
+
+                <p class="confirm-note success">
+                  <i class="bi bi-check-circle"></i>
+                  {{ evaluatorsForInterview().length }} évaluateur(s) recevront une notification.
+                </p>
+              } @else {
+                <p class="confirm-message">
+                  Aucun évaluateur n'est assigné à cet entretien.
+                </p>
+                <p class="confirm-note warning">
+                  <i class="bi bi-exclamation-triangle"></i>
+                  L'entretien sera démarré mais aucune notification ne sera envoyée.
+                </p>
+              }
+            }
+          </div>
+        }
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="closeStartConfirmModal()">
+          <i class="bi bi-x"></i>
+          Annuler
+        </button>
+
+        @if (startConfirmStep() === 1) {
+          <button class="btn-next" (click)="confirmStep1()" [disabled]="loadingEvaluators()">
+            @if (loadingEvaluators()) {
+              <div class="spinner-small"></div>
+            } @else {
+              <i class="bi bi-arrow-right"></i>
+            }
+            Continuer
+          </button>
+        }
+
+        @if (startConfirmStep() === 2) {
+          <button class="btn-back" (click)="goBackToStep1()">
+            <i class="bi bi-arrow-left"></i>
+            Retour
+          </button>
+          <button class="btn-confirm" (click)="confirmStep2AndStart()" [disabled]="loading()">
+            @if (loading()) {
+              <div class="spinner-small"></div>
+            } @else {
+              <i class="bi bi-play-circle"></i>
+            }
+            Démarrer l'entretien
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+}

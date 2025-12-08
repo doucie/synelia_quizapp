@@ -9,9 +9,15 @@ export interface Interview {
   interviewDate?: string; // Format: dd/MM/yyyy HH:mm
   interviewStatus?: 'PENDING' | 'SCHEDULED' | 'STARTED' | 'OVER' | 'PASSED' | 'FAILED' | 'POSTPONED' | 'ARCHIVED';
   meetLink?: string;
+  interviewEvaluationsLink?: string; // Lien unique pour accéder à l'évaluation
   interviewNote?: string;
   interviewMailSent?: boolean;
   interviewType: 'IN_PERSON' | 'ONLINE';
+  startedAt?: string; // Date/heure de début effectif de l'entretien
+  endedAt?: string; // Date/heure de fin effectif de l'entretien
+  evaluationScore?: number; // Nombre de points total des évaluations
+  evaluationNumber?: number; // Nombre d'évaluations total
+  evaluationPercentage?: number; // Moyenne (evaluationScore / evaluationNumber)
   createdAt?: string;
   createdBy?: number;
   updatedAt?: string;

@@ -6,6 +6,10 @@ import { Subject, takeUntil, forkJoin } from 'rxjs';
 import { Interview, InterviewService } from '../../../core/services/interview.service';
 import { Application, ApplicationService } from '../../../core/services/application.service';
 import { Campaign, CampaignService } from '../../../core/services/campaign.service';
+import { InterviewCrudService, InterviewCrud } from '../../../core/services/interview-crud.service';
+import { NotificationService } from '../../../core/services/notification.service';
+import { AuthService } from '../../../core/services/auth/auth.service';
+import { UserService } from '../../../core/services/user.service';
 
 interface InterviewWithDetails extends Interview {
   candidateName?: string;
@@ -15,6 +19,14 @@ interface InterviewWithDetails extends Interview {
   candidateFirstName?: string;
   candidateLastName?: string;
   quizScorePercent?: number;
+}
+
+interface EvaluatorInfo {
+  userId: number;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  canEvaluate: boolean;
 }
 
 @Component({
@@ -41,6 +53,13 @@ export class InterviewsComponent implements OnInit, OnDestroy {
   modalMode = signal<'create' | 'edit'>('create');
   editingInterview = signal<InterviewWithDetails | null>(null);
 
+  // Modal de confirmation démarrage entretien (2 étapes)
+  showStartConfirmModal = signal(false);
+  startConfirmStep = signal<1 | 2>(1);
+  interviewToStart = signal<InterviewWithDetails | null>(null);
+  evaluatorsForInterview = signal<EvaluatorInfo[]>([]);
+  loadingEvaluators = signal(false);
+
   // Calendar view
   viewMode = signal<'list' | 'calendar'>('list');
   calendarView = signal<'year' | 'month' | 'day'>('month');
@@ -53,6 +72,10 @@ export class InterviewsComponent implements OnInit, OnDestroy {
     private interviewService: InterviewService,
     private applicationService: ApplicationService,
     private campaignService: CampaignService,
+    private interviewCrudService: InterviewCrudService,
+    private notificationService: NotificationService,
+    private authService: AuthService,
+    private userService: UserService,
     private router: Router
   ) {}
 
@@ -204,19 +227,226 @@ export class InterviewsComponent implements OnInit, OnDestroy {
 
   /**
    * Change le statut d'une interview
+   * Pour STARTED, ouvre la modale de confirmation en 2 étapes
    */
   changeStatus(interview: InterviewWithDetails, newStatus: string): void {
     if (!interview.id) return;
 
+    // Si on veut démarrer l'entretien, on ouvre la modale de confirmation
+    if (newStatus === 'STARTED') {
+      this.openStartConfirmation(interview);
+      return;
+    }
+
+    // Pour les autres statuts, on procède directement
+    this.updateInterviewStatus(interview, newStatus);
+  }
+
+  /**
+   * Ouvre la modale de confirmation pour démarrer un entretien
+   */
+  openStartConfirmation(interview: InterviewWithDetails): void {
+    this.interviewToStart.set(interview);
+    this.startConfirmStep.set(1);
+    this.showStartConfirmModal.set(true);
+    this.evaluatorsForInterview.set([]);
+  }
+
+  /**
+   * Ferme la modale de confirmation
+   */
+  closeStartConfirmModal(): void {
+    this.showStartConfirmModal.set(false);
+    this.interviewToStart.set(null);
+    this.startConfirmStep.set(1);
+    this.evaluatorsForInterview.set([]);
+  }
+
+  /**
+   * Retourne à l'étape 1 de la confirmation
+   */
+  goBackToStep1(): void {
+    this.startConfirmStep.set(1);
+  }
+
+  /**
+   * Confirme la première étape (vérification de la date)
+   * Charge ensuite les évaluateurs pour la deuxième étape
+   */
+  confirmStep1(): void {
+    const interview = this.interviewToStart();
+    if (!interview?.id) return;
+
+    // Éviter les appels multiples
+    if (this.loadingEvaluators()) return;
+
+    this.loadingEvaluators.set(true);
+    
+    // Charger les évaluateurs de cet entretien
+    this.interviewCrudService.getEvaluatorsByInterviewId(interview.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          if (!response.hasError && response.items && response.items.length > 0) {
+            const evaluatorCruds = response.items.filter(crud => crud.canEvaluate);
+            
+            // Dédupliquer par userId pour éviter les doublons
+            const uniqueEvaluatorCruds = evaluatorCruds.filter((crud, index, self) =>
+              index === self.findIndex(c => c.userId === crud.userId)
+            );
+            
+            if (uniqueEvaluatorCruds.length === 0) {
+              // Aucun évaluateur trouvé
+              this.evaluatorsForInterview.set([]);
+              this.startConfirmStep.set(2);
+              this.loadingEvaluators.set(false);
+              return;
+            }
+
+            // Charger les détails de chaque utilisateur
+            const userRequests = uniqueEvaluatorCruds.map(crud => 
+              this.userService.getById(crud.userId)
+            );
+
+            forkJoin(userRequests).pipe(takeUntil(this.destroy$)).subscribe({
+              next: (users) => {
+                const evaluators: EvaluatorInfo[] = uniqueEvaluatorCruds.map((crud, index) => {
+                  const user = users[index];
+                  return {
+                    userId: crud.userId,
+                    firstName: user?.firstName || user?.prenom || '',
+                    lastName: user?.lastName || user?.nom || '',
+                    email: user?.email || '',
+                    canEvaluate: crud.canEvaluate || false
+                  };
+                });
+                this.evaluatorsForInterview.set(evaluators);
+                this.startConfirmStep.set(2);
+                this.loadingEvaluators.set(false);
+              },
+              error: (error) => {
+                console.error('Erreur lors du chargement des détails utilisateurs:', error);
+                // Fallback: utiliser les IDs sans noms
+                const evaluators: EvaluatorInfo[] = uniqueEvaluatorCruds.map(crud => ({
+                  userId: crud.userId,
+                  canEvaluate: crud.canEvaluate || false
+                }));
+                this.evaluatorsForInterview.set(evaluators);
+                this.startConfirmStep.set(2);
+                this.loadingEvaluators.set(false);
+              }
+            });
+          } else {
+            // Aucun évaluateur
+            this.evaluatorsForInterview.set([]);
+            this.startConfirmStep.set(2);
+            this.loadingEvaluators.set(false);
+          }
+        },
+        error: (error) => {
+          console.error('Erreur lors du chargement des évaluateurs:', error);
+          // On passe quand même à l'étape 2 même sans évaluateurs
+          this.startConfirmStep.set(2);
+          this.loadingEvaluators.set(false);
+        }
+      });
+  }
+
+  /**
+   * Confirme la deuxième étape et démarre l'entretien
+   * Crée les notifications pour les évaluateurs et change le statut
+   */
+  confirmStep2AndStart(): void {
+    const interview = this.interviewToStart();
+    if (!interview?.id) return;
+
+    // Éviter les appels multiples
+    if (this.loading()) return;
+
+    this.loading.set(true);
+    
+    // Fermer le modal immédiatement pour éviter les doubles clics
+    this.closeStartConfirmModal();
+    
+    const evaluators = this.evaluatorsForInterview();
+    const currentUser = this.authService.getCurrentUser();
+    const currentUserId = currentUser ? parseInt(currentUser.id) : 1;
+
+    // Créer les notifications pour les évaluateurs (dédupliquées)
+    if (evaluators.length > 0) {
+      // Dédupliquer par userId au cas où
+      const uniqueEvaluators = evaluators.filter((eval_, index, self) =>
+        index === self.findIndex(e => e.userId === eval_.userId)
+      );
+      
+      // Construire le lien d'évaluation
+      const evaluationLink = interview.interviewEvaluationsLink 
+        ? `/dashboard/evaluations/${interview.interviewEvaluationsLink}`
+        : `/dashboard/evaluations?interviewId=${interview.id}`;
+
+      const notifications = uniqueEvaluators.map(evaluator => ({
+        notifType: 'INTERVIEW_STARTED',
+        notifActor: currentUserId,
+        notifLink: evaluationLink,
+        userId: evaluator.userId,
+        objectTableName: 'interviews',
+        objectTableId: interview.id!
+      }));
+
+      this.notificationService.createMultipleDbNotifications(notifications)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            console.log('✅ Notifications envoyées aux évaluateurs');
+            // Maintenant changer le statut de l'entretien
+            this.updateInterviewStatus(interview, 'STARTED');
+          },
+          error: (error) => {
+            console.error('❌ Erreur lors de l\'envoi des notifications:', error);
+            // On change quand même le statut même si les notifications échouent
+            this.updateInterviewStatus(interview, 'STARTED');
+          }
+        });
+    } else {
+      // Pas d'évaluateurs, on change directement le statut
+      this.updateInterviewStatus(interview, 'STARTED');
+    }
+  }
+
+  /**
+   * Met à jour le statut d'une interview (méthode interne)
+   * Ajoute startedAt si le statut passe à STARTED, endedAt si le statut passe à OVER
+   */
+  private updateInterviewStatus(interview: InterviewWithDetails, newStatus: string): void {
+    const now = new Date();
+    // Format dd/MM/yyyy HH:mm:ss pour le backend
+    const formattedNow = this.formatDateForBackend(now);
+    
     const updated: Interview = {
       ...interview,
       interviewStatus: newStatus as any
     };
 
+    // Ajouter startedAt si on démarre l'entretien
+    if (newStatus === 'STARTED') {
+      updated.startedAt = formattedNow;
+    }
+    
+    // Ajouter endedAt si on termine l'entretien
+    if (newStatus === 'OVER') {
+      updated.endedAt = formattedNow;
+    }
+
     this.loading.set(true);
     this.interviewService.updateInterview(updated).subscribe({
       next: (response) => {
         if (!response.hasError) {
+          if (newStatus === 'STARTED') {
+            this.notificationService.success(
+              'Entretien démarré',
+              'L\'entretien a été démarré avec succès. Les évaluateurs ont été notifiés.'
+            );
+          }
           this.loadData();
         } else {
           alert('Erreur: ' + response.status.message);
@@ -229,6 +459,19 @@ export class InterviewsComponent implements OnInit, OnDestroy {
         this.loading.set(false);
       }
     });
+  }
+
+  /**
+   * Formate une date pour le backend (dd/MM/yyyy HH:mm:ss)
+   */
+  private formatDateForBackend(date: Date): string {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
   }
 
   /**
@@ -262,6 +505,68 @@ export class InterviewsComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Évalue un entretien
+   * Vérifie d'abord si l'utilisateur courant a le droit d'évaluer (canEvaluate dans interview_crud)
+   */
+  evaluateInterview(interview: InterviewWithDetails): void {
+    if (!interview.id) {
+      this.notificationService.error('Erreur', 'ID de l\'entretien invalide');
+      return;
+    }
+
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser?.id) {
+      this.notificationService.error('Erreur', 'Utilisateur non connecté');
+      return;
+    }
+
+    const currentUserId = parseInt(currentUser.id);
+
+    // Vérifier si l'utilisateur a le droit d'évaluer cet entretien
+    this.loading.set(true);
+    this.interviewCrudService.getEvaluatorsByInterviewId(interview.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          this.loading.set(false);
+          
+          if (!response.hasError && response.items) {
+            // Chercher l'entrée pour l'utilisateur courant avec canEvaluate = true
+            const userCrud = response.items.find(
+              crud => crud.userId === currentUserId && crud.canEvaluate === true
+            );
+
+            if (userCrud) {
+              // L'utilisateur a le droit d'évaluer, ouvrir dans un nouvel onglet
+              let url: string;
+              if (interview.interviewEvaluationsLink) {
+                url = `/dashboard/evaluations/${interview.interviewEvaluationsLink}`;
+              } else {
+                // Fallback: utiliser l'ID de l'entretien
+                url = `/dashboard/evaluations?interviewId=${interview.id}`;
+              }
+              // Ouvrir dans un nouvel onglet
+              window.open(url, '_blank');
+            } else {
+              // L'utilisateur n'a pas le droit d'évaluer
+              this.notificationService.error(
+                'Accès refusé', 
+                'Vous n\'avez pas la permission d\'évaluer cet entretien.'
+              );
+            }
+          } else {
+            this.notificationService.error('Erreur', 'Impossible de vérifier les permissions');
+          }
+        },
+        error: (error) => {
+          console.error('Erreur lors de la vérification des permissions:', error);
+          this.loading.set(false);
+          this.notificationService.error('Erreur', 'Impossible de vérifier les permissions');
+        }
+      });
+  }
+
+  /**
    * Obtient les initiales d'un nom
    */
   getInitials(name: string): string {
@@ -274,10 +579,60 @@ export class InterviewsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Formate une date
+   * Obtient le nom complet d'un évaluateur
+   */
+  getEvaluatorFullName(evaluator: EvaluatorInfo): string {
+    const firstName = evaluator.firstName || '';
+    const lastName = evaluator.lastName || '';
+    const fullName = `${firstName} ${lastName}`.trim();
+    return fullName || `Évaluateur #${evaluator.userId}`;
+  }
+
+  /**
+   * Obtient les initiales d'un évaluateur
+   */
+  getEvaluatorInitials(evaluator: EvaluatorInfo): string {
+    const firstName = evaluator.firstName || '';
+    const lastName = evaluator.lastName || '';
+    
+    if (firstName && lastName) {
+      return (firstName[0] + lastName[0]).toUpperCase();
+    } else if (firstName) {
+      return firstName.substring(0, 2).toUpperCase();
+    } else if (lastName) {
+      return lastName.substring(0, 2).toUpperCase();
+    }
+    return '??';
+  }
+
+  /**
+   * Formate une date pour l'affichage
+   * Gère le format dd/MM/yyyy HH:mm du backend
    */
   formatDateTime(date: string | undefined): string {
-    return this.interviewService.formatDate(date);
+    if (!date) return 'N/A';
+    
+    // Si la date est déjà au format dd/MM/yyyy HH:mm, on la retourne directement
+    if (date.includes('/')) {
+      return date;
+    }
+    
+    // Sinon, essayer de parser comme une date ISO
+    try {
+      const parsedDate = new Date(date);
+      if (isNaN(parsedDate.getTime())) {
+        return date; // Retourner la chaîne originale si invalide
+      }
+      return parsedDate.toLocaleDateString('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (e) {
+      return date;
+    }
   }
 
   /**

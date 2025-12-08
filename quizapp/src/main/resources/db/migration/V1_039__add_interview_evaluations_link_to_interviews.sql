@@ -1,16 +1,19 @@
--- Add interview_evaluations_link column to interviews table
--- This column will store a unique 8-character lowercase alphanumeric string
--- Generated automatically when an interview status changes to STARTED
+-- Migration: Ajout des colonnes started_at, ended_at et evaluation dans la table interviews
+-- Date: 2024-12-07
+
+-- Ajouter les colonnes de timing
+ALTER TABLE interviews 
+ADD COLUMN started_at DATETIME NULL AFTER interview_status,
+ADD COLUMN ended_at DATETIME NULL AFTER started_at;
+
+-- Ajouter les colonnes d'évaluation
+ALTER TABLE interviews 
+ADD COLUMN evaluation_score INT NULL AFTER started_at,
+ADD COLUMN evaluation_number INT NULL AFTER evaluation_score;
 
 ALTER TABLE interviews
-ADD COLUMN interview_evaluations_link VARCHAR(8) AFTER meet_link;
+ADD COLUMN evaluation_percentage DOUBLE NULL AFTER evaluation_number;
 
--- Create unique index on interview_evaluations_link
--- Note: The application ensures the link is always generated in lowercase
-CREATE UNIQUE INDEX idx_interviews_evaluation_link 
-ON interviews (interview_evaluations_link);
-
--- Add comment to explain the column
-ALTER TABLE interviews 
-MODIFY COLUMN interview_evaluations_link VARCHAR(8) 
-COMMENT 'Unique 8-character lowercase alphanumeric link for interview evaluation. Generated when interview status changes to STARTED.';
+-- Créer un index sur les colonnes de timing pour les recherches
+CREATE INDEX idx_interviews_started_at ON interviews(started_at);
+CREATE INDEX idx_interviews_ended_at ON interviews(ended_at);

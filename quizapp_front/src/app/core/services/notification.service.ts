@@ -185,4 +185,74 @@ export class NotificationService {
       })
     );
   }
+
+  /**
+   * Crée une notification pour un utilisateur
+   */
+  createDbNotification(notificationData: {
+    notifType: string;
+    notifActor: number;
+    notifLink?: string;
+    userId: number;
+    objectTableName?: string;
+    objectTableId?: number;
+  }): Observable<any> {
+    console.log('📬 Création notification BD:', notificationData);
+
+    const requestBody = {
+      user: 1,
+      datas: [{
+        ...notificationData,
+        isRead: false
+      }]
+    };
+
+    console.log('📤 Corps de la requête notification:', requestBody);
+
+    return this.http.post<any>(`${environment.apiUrl}/notifications/create`, requestBody).pipe(
+      map(response => {
+        console.log('✅ Notification BD créée:', response);
+        return response;
+      }),
+      catchError(error => {
+        console.error('❌ Erreur création notification BD:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Crée plusieurs notifications en une seule requête
+   */
+  createMultipleDbNotifications(notifications: Array<{
+    notifType: string;
+    notifActor: number;
+    notifLink?: string;
+    userId: number;
+    objectTableName?: string;
+    objectTableId?: number;
+  }>): Observable<any> {
+    console.log('📬 Création de plusieurs notifications BD:', notifications);
+
+    const requestBody = {
+      user: 1,
+      datas: notifications.map(n => ({
+        ...n,
+        isRead: false
+      }))
+    };
+
+    console.log('📤 Corps de la requête notifications multiples:', requestBody);
+
+    return this.http.post<any>(`${environment.apiUrl}/notifications/create`, requestBody).pipe(
+      map(response => {
+        console.log('✅ Notifications BD créées:', response);
+        return response;
+      }),
+      catchError(error => {
+        console.error('❌ Erreur création notifications BD:', error);
+        return throwError(() => error);
+      })
+    );
+  }
 }
