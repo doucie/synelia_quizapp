@@ -45,6 +45,9 @@ public interface InterviewCrudTransformer {
 		@Mapping(source="entity.user.firstName", target="userFirstName"),
 		@Mapping(source="entity.user.lastName", target="userLastName"),
 		@Mapping(source="entity.interviews.id", target="interviewId"),
+		@Mapping(source="entity.isOnline", target="isOnline"),
+		@Mapping(source="entity.hasFinished", target="hasFinished"),
+		@Mapping(source="entity.lastPingAt", dateFormat="dd/MM/yyyy", target="lastPingAt"),
 	})
 	InterviewCrudDto toDto(InterviewCrud entity) throws ParseException;
 
@@ -77,6 +80,8 @@ public interface InterviewCrudTransformer {
 		@Mapping(source="dto.id", target="id"),
 		@Mapping(source="dto.canUpdate", target="canUpdate"),
 		@Mapping(source="dto.canDelete", target="canDelete"),
+		@Mapping(source="dto.canEvaluate", target="canEvaluate"),
+		@Mapping(source="dto.isAdmin", target="isAdmin"),
 		@Mapping(source="dto.follow", target="follow"),
 		@Mapping(source="dto.createdAt", dateFormat="dd/MM/yyyy",target="createdAt"),
 		@Mapping(source="dto.createdBy", target="createdBy"),
@@ -84,6 +89,9 @@ public interface InterviewCrudTransformer {
 		@Mapping(source="dto.updatedBy", target="updatedBy"),
 		@Mapping(source="dto.isDeleted", target="isDeleted"),
 		@Mapping(source="dto.searchString", target="searchString"),
+		@Mapping(source="dto.isOnline", target="isOnline"),
+		@Mapping(source="dto.hasFinished", target="hasFinished"),
+		@Mapping(source="dto.lastPingAt", dateFormat="dd/MM/yyyy HH:mm:ss", target="lastPingAt"),
 		@Mapping(source="user", target="user"),
 		@Mapping(source="interviews", target="interviews"),
 	})

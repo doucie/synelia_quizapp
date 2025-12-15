@@ -55,35 +55,111 @@
         <aside class="evaluators-sidebar">
           <div class="sidebar-header">
             <h3><i class="bi bi-people"></i> Évaluateurs</h3>
-            <span class="online-count">{{ onlineEvaluators().length }} en ligne</span>
+            <span class="evaluators-counter" title="Évaluateurs connectés">
+              <i class="bi bi-circle-fill online-dot"></i>
+              {{ onlineEvaluators().length }}/{{ totalEvaluatorsCount() }}
+            </span>
           </div>
           
           <div class="evaluators-list">
             @for (evaluator of evaluators(); track evaluator.id) {
-              <div class="evaluator-item" [class.online]="evaluator.isOnline" [class.evaluated]="evaluator.hasEvaluated">
-                <div class="evaluator-avatar" [class.online]="evaluator.isOnline">
-                  {{ getInitials(evaluator.firstName + ' ' + evaluator.lastName) }}
-                  @if (evaluator.isOnline) {
-                    <span class="online-indicator"></span>
-                  }
-                </div>
-                <div class="evaluator-info">
-                  <span class="evaluator-name">
-                    {{ evaluator.firstName }} {{ evaluator.lastName }}
-                    @if (evaluator.id === currentUserId()) {
-                      <span class="you-badge">(vous)</span>
+              <div class="evaluator-item" 
+                   [class.online]="evaluator.isOnline" 
+                   [class.evaluated]="evaluator.hasEvaluated"
+                   [class.is-admin]="evaluator.isAdmin"
+                   [class.is-creator]="evaluator.isCreator"
+                   [class.is-current-user]="evaluator.id === currentUserId()">
+                <div class="evaluator-row">
+                  <div class="evaluator-avatar" 
+                       [class.online]="evaluator.isOnline"
+                       [class.admin]="evaluator.isAdmin"
+                       [class.creator]="evaluator.isCreator">
+                    {{ getInitials(evaluator.firstName + ' ' + evaluator.lastName) }}
+                    @if (evaluator.isOnline) {
+                      <span class="online-indicator"></span>
                     }
-                  </span>
-                  @if (evaluator.hasEvaluated && evaluator.evaluation) {
-                    <span class="evaluator-score" [ngClass]="getScoreClass(evaluator.evaluation.mark)">
-                      {{ evaluator.evaluation.mark }}/100
+                  </div>
+                  <div class="evaluator-info">
+                    <span class="evaluator-name">
+                      {{ evaluator.firstName }} {{ evaluator.lastName }}
+                      @if (evaluator.isCreator) {
+                        <span class="role-badge creator-badge" title="Créateur de la campagne">
+                          <i class="bi bi-star-fill"></i>
+                        </span>
+                      } @else if (evaluator.isAdmin) {
+                        <span class="role-badge admin-badge" title="Administrateur">
+                          <i class="bi bi-shield-fill"></i>
+                        </span>
+                      }
+                      @if (evaluator.id === currentUserId()) {
+                        <span class="you-badge">(vous)</span>
+                      }
                     </span>
-                  } @else {
-                    <span class="evaluator-pending">En attente...</span>
+                    @if (evaluator.hasEvaluated && evaluator.evaluation) {
+                      <span class="evaluator-score" [ngClass]="getScoreClass(evaluator.evaluation.mark)">
+                        {{ evaluator.evaluation.mark }}/100
+                      </span>
+                    } @else {
+                      <span class="evaluator-pending">En attente...</span>
+                    }
+                  </div>
+                  <!-- Indicateur terminé pour les autres (non cliquable) -->
+                  @if (evaluator.id !== currentUserId()) {
+                    <span class="finished-indicator" [class.finished]="evaluator.hasFinished" title="{{ evaluator.hasFinished ? 'A terminé' : 'En cours' }}">
+                      @if (evaluator.hasFinished) {
+                        <i class="bi bi-check-circle-fill"></i>
+                      } @else {
+                        <i class="bi bi-hourglass-split"></i>
+                      }
+                    </span>
                   }
                 </div>
+                
+                <!-- Checkbox spéciale pour l'utilisateur connecté -->
+                @if (evaluator.id === currentUserId()) {
+                  <label class="my-finished-checkbox" (click)="$event.stopPropagation()">
+                    <input 
+                      type="checkbox" 
+                      [checked]="evaluator.hasFinished"
+                      (change)="toggleEvaluatorFinished(evaluator.id)"
+                    />
+                    <span class="checkmark"></span>
+                    <span class="checkbox-label">J'ai terminé mon évaluation</span>
+                  </label>
+                }
               </div>
             }
+          </div>
+          
+          <!-- Bouton conclure l'entretien (dans la sidebar) -->
+          <div class="sidebar-conclude">
+            <button 
+              class="btn-conclude" 
+              [class.disabled]="!canFinishEvaluation()"
+              [disabled]="!canFinishEvaluation()"
+              (click)="finishEvaluation()"
+              [title]="canFinishEvaluation() ? 'Conclure l\'entretien' : 'Seuls les administrateurs et créateurs peuvent conclure l\'entretien'"
+            >
+              <i class="bi bi-flag-fill"></i>
+              <span class="btn-text">Conclure l'entretien</span>
+              <span class="finished-badge">{{ finishedEvaluatorsCount() }}/{{ totalEvaluatorsCount() }}</span>
+            </button>
+            @if (!canFinishEvaluation()) {
+              <p class="conclude-hint">
+                <i class="bi bi-lock"></i>
+                Réservé aux admins
+              </p>
+            }
+          </div>
+
+          <!-- Légende -->
+          <div class="sidebar-legend">
+            <span class="legend-item">
+              <i class="bi bi-star-fill creator-icon"></i> Créateur
+            </span>
+            <span class="legend-item">
+              <i class="bi bi-shield-fill admin-icon"></i> Admin
+            </span>
           </div>
         </aside>
 
@@ -171,14 +247,13 @@
                 <!-- Commentaire -->
                 <div class="comment-input">
                   <label>Commentaire</label>
-                  <input 
-                    type="text"
+                  <textarea
                     [value]="newComment()"
                     (input)="newComment.set($any($event.target).value)"
                     placeholder="Vos observations sur le candidat..."
                     class="comment-field"
-                    (keyup.enter)="newComment().trim() && submitEvaluation()"
-                  />
+                    rows="3"
+                  ></textarea>
                 </div>
 
                 <!-- Bouton envoyer -->
@@ -199,17 +274,6 @@
             <div class="already-evaluated">
               <i class="bi bi-check-circle"></i>
               <span>Vous avez déjà soumis votre évaluation</span>
-            </div>
-          }
-
-          <!-- Bouton terminer l'évaluation -->
-          @if (canEvaluate() && evaluationCount() > 0) {
-            <div class="finish-section">
-              <button class="btn-finish" (click)="finishEvaluation()">
-                <i class="bi bi-check2-all"></i>
-                Terminer l'évaluation
-              </button>
-              <p class="finish-hint">Cela clôturera l'entretien et calculera le score final.</p>
             </div>
           }
         </main>

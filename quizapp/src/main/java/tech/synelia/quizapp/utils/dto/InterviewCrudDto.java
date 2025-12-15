@@ -8,15 +8,14 @@
 
 package tech.synelia.quizapp.utils.dto;
 
-import java.util.Date;
-import java.util.Date;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import lombok.*;
-
-import tech.synelia.quizapp.utils.contract.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+import tech.synelia.quizapp.utils.contract.SearchParam;
 import tech.synelia.quizapp.utils.dto.customize._InterviewCrudDto;
 
 /**
@@ -25,6 +24,7 @@ import tech.synelia.quizapp.utils.dto.customize._InterviewCrudDto;
  * @author Geo
  */
 @Data
+@EqualsAndHashCode(callSuper = false)
 @ToString
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
@@ -45,6 +45,9 @@ public class InterviewCrudDto extends _InterviewCrudDto implements Cloneable{
     private String     searchString         ;
     private Integer    interviewId          ;
     private Integer    userId               ;
+    private Boolean    isOnline             ;
+    private Boolean    hasFinished          ;
+    private String     lastPingAt           ;
 
     //----------------------------------------------------------------------
     // ENTITY LINKS FIELD ( RELATIONSHIP )
@@ -69,6 +72,9 @@ public class InterviewCrudDto extends _InterviewCrudDto implements Cloneable{
 	private SearchParam<Integer>  userIdParam           ;                     
 	private SearchParam<String>   userFirstNameParam    ;                     
 	private SearchParam<String>   userLastNameParam     ;                     
+	private SearchParam<Boolean>  isOnlineParam         ;                     
+	private SearchParam<Boolean>  hasFinishedParam      ;                     
+	private SearchParam<String>   lastPingAtParam       ;                     
     /**
      * Default constructor
      */

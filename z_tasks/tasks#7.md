@@ -5,19 +5,15 @@
 - Correction du chargement des informations du candidat sur la page d'évaluation
 - Ajout des champs de stockage pour les informations du candidat dans les interviews
 - Mise à jour automatique des informations du candidat lors du démarrage d'une interview
-- Correction de l'affichage du nom et du poste du candidat
+- Correction du bug lors de l'affichage du nom du candidat et de la date de l'entretien
 
 ## Tâches effectuées
 
-- Refonte complète de la page d'évaluation avec une interface de chat
-- Affichage des notes et commentaires comme des messages de conversation
+- Création de la page d'évaluation et affichage des notes et commentaires sur la page d'évaluation d'interview
 - Ajout d'une liste des évaluateurs connectés avec leur statut en ligne
 - Mise à jour automatique des évaluations en temps réel
-- Ouverture de la page d'évaluation dans un nouvel onglet
-- Affichage en plein écran sans barre de navigation
-- Simplification du formulaire de notation avec un champ simple pour la note sur 100
-- Ajout d'un champ de commentaire et d'un bouton d'envoi
-- Correction des doublons dans la liste des évaluateurs
+- Ajout d'un formulaire de notation pour les évaluations, d'un champ de commentaire et d'un bouton d'envoi
+- Correction du bug des doublons dans la liste des évaluateurs
 
 ## À vérifier au retour
 
@@ -25,3 +21,28 @@
 2. Vérifier que les évaluations des autres recruteurs s'affichent en temps réel
 3. Tester le bouton "Évaluation terminée" pour fermer la session
 4. Vérifier l'affichage correct des informations du candidat
+
+---
+
+15/12/2025
+
+## Tâches effectuées
+
+- Ajout de badges pour identifier les administrateurs et créateurs de campagne sur la page d'évaluation
+- Ajout d'une case à cocher pour que chaque évaluateur puisse indiquer qu'il a terminé son évaluation
+- Ajout d'un compteur affichant le nombre d'évaluateurs ayant terminé leur évaluation
+- Restriction du bouton de conclusion aux administrateurs et créateurs uniquement
+- Agrandissement du champ de commentaire pour permettre les sauts de ligne
+- Ajout de nouveaux champs en base de données pour la synchronisation en temps réel des évaluateurs
+- Mise à jour de la version de MapStruct pour la compatibilité avec Java 21
+- Correction de la mise à jour automatique du schéma de base de données
+
+## Problème en cours
+
+La synchronisation en temps réel du statut des évaluateurs entre plusieurs utilisateurs connectés ne fonctionne pas encore correctement
+
+## À vérifier au retour
+
+1. Tester la synchronisation du statut en ligne entre plusieurs utilisateurs
+2. Vérifier que la case à cocher de fin d'évaluation se synchronise entre les utilisateurs
+3. Tester le bouton de conclusion de l'entretien

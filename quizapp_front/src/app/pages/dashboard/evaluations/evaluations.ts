@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, signal, computed, ViewChild, ElementRef }
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subject, takeUntil, interval } from 'rxjs';
+import { Subject, takeUntil, interval, forkJoin } from 'rxjs';
 import { EvaluationService, Evaluation, CandidateInterview } from '../../../core/services/evaluation.service';
 import { InterviewCrudService, InterviewCrud } from '../../../core/services/interview-crud.service';
 import { ApplicationService, Application } from '../../../core/services/application.service';
@@ -10,6 +10,7 @@ import { NotificationService } from '../../../core/services/notification.service
 import { AuthService } from '../../../core/services/auth/auth.service';
 import { UserService } from '../../../core/services/user.service';
 import { InterviewService } from '../../../core/services/interview.service';
+import { CampaignService } from '../../../core/services/campaign.service';
 
 interface EvaluatorInfo {
   id: number;
@@ -19,6 +20,9 @@ interface EvaluatorInfo {
   canEvaluate: boolean;
   isOnline: boolean;
   hasEvaluated: boolean;
+  hasFinished: boolean; // Nouveau: a terminé son évaluation
+  isAdmin: boolean; // Admin de la campagne
+  isCreator: boolean; // Créateur de la campagne
   evaluation?: EvaluationMessage;
 }
 
@@ -78,6 +82,12 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
   hasAlreadyEvaluated = signal(false);
   currentUserId = signal<number>(0);
   currentUserName = signal<string>('');
+  isCurrentUserAdmin = signal(false); // L'utilisateur courant est admin de la campagne
+  isCurrentUserCreator = signal(false); // L'utilisateur courant est créateur de la campagne
+  campaignAccesses = signal<any[]>([]); // Accès de la campagne
+  
+  // Présence en ligne - stocke l'interviewCrud de l'utilisateur courant
+  currentUserInterviewCrudId = signal<number | null>(null);
 
   // Computed
   averageScore = computed(() => {
@@ -88,6 +98,18 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
   });
 
   evaluationCount = computed(() => this.evaluationMessages().length);
+
+  // Nombre d'évaluateurs qui ont terminé
+  finishedEvaluatorsCount = computed(() => 
+    this.evaluators().filter(e => e.hasFinished).length
+  );
+
+  totalEvaluatorsCount = computed(() => this.evaluators().length);
+
+  // L'utilisateur peut terminer l'évaluation (admin ou créateur)
+  canFinishEvaluation = computed(() => 
+    this.isCurrentUserAdmin() || this.isCurrentUserCreator()
+  );
 
   onlineEvaluators = computed(() => 
     this.evaluators().filter(e => e.isOnline)
@@ -102,7 +124,8 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
     private applicationService: ApplicationService,
     private notificationService: NotificationService,
     private authService: AuthService,
-    private userService: UserService
+    private userService: UserService,
+    private campaignService: CampaignService
   ) {}
 
   ngOnInit(): void {
@@ -135,12 +158,58 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    // Marquer l'utilisateur comme offline avant de quitter
+    this.markUserOffline();
     this.destroy$.next();
     this.destroy$.complete();
   }
 
   /**
-   * Démarre le polling pour récupérer les nouvelles évaluations
+   * Marque l'utilisateur courant comme en ligne
+   */
+  private markUserOnline(): void {
+    const crudId = this.currentUserInterviewCrudId();
+    if (!crudId) return;
+
+    this.interviewCrudService.updateInterviewCrudStatus(crudId, true, false)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        error: (err) => console.error('Erreur mise à jour statut online:', err)
+      });
+  }
+
+  /**
+   * Marque l'utilisateur courant comme hors ligne
+   */
+  private markUserOffline(): void {
+    const crudId = this.currentUserInterviewCrudId();
+    if (!crudId) return;
+
+    // Utiliser sendBeacon pour garantir l'envoi même si la page se ferme
+    const hasFinished = this.evaluators().find(e => e.id === this.currentUserId())?.hasFinished || false;
+    this.interviewCrudService.updateInterviewCrudStatus(crudId, false, hasFinished)
+      .subscribe({
+        error: (err) => console.error('Erreur mise à jour statut offline:', err)
+      });
+  }
+
+  /**
+   * Envoie un ping de présence pour maintenir le statut en ligne
+   */
+  private sendPresencePing(): void {
+    const crudId = this.currentUserInterviewCrudId();
+    if (!crudId) return;
+
+    const hasFinished = this.evaluators().find(e => e.id === this.currentUserId())?.hasFinished || false;
+    this.interviewCrudService.updateInterviewCrudStatus(crudId, true, hasFinished)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        error: (err) => console.error('Erreur ping présence:', err)
+      });
+  }
+
+  /**
+   * Démarre le polling pour récupérer les nouvelles évaluations et maintenir la présence
    */
   private startPolling(): void {
     interval(this.pollingInterval)
@@ -148,9 +217,89 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
       .subscribe(() => {
         const intId = this.interviewId();
         if (intId && !this.loading()) {
+          // Envoyer un ping de présence
+          this.sendPresencePing();
+          
+          // Rafraîchir les évaluations et les statuts des évaluateurs
           this.refreshEvaluations();
+          this.refreshEvaluatorsStatus();
         }
       });
+  }
+
+  /**
+   * Rafraîchit les statuts isOnline et hasFinished des évaluateurs depuis le backend
+   */
+  private refreshEvaluatorsStatus(): void {
+    const intId = this.interviewId();
+    if (!intId) return;
+
+    this.interviewCrudService.getEvaluatorsByInterviewId(intId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          if (!response.hasError && response.items) {
+            const cruds = response.items as InterviewCrud[];
+            const now = new Date().getTime();
+            const onlineThreshold = 15000; // 15 secondes pour considérer quelqu'un comme en ligne
+
+            // Mettre à jour les évaluateurs existants avec les nouveaux statuts
+            const currentEvaluators = this.evaluators();
+            const updated = currentEvaluators.map(evaluator => {
+              const crud = cruds.find(c => c.userId === evaluator.id);
+              if (crud) {
+                // Vérifier si l'utilisateur est en ligne basé sur lastPingAt
+                let isOnline = false;
+                if (crud.lastPingAt) {
+                  const lastPing = this.parseBackendDate(crud.lastPingAt);
+                  if (lastPing) {
+                    isOnline = (now - lastPing.getTime()) < onlineThreshold;
+                  }
+                }
+                // L'utilisateur courant est toujours en ligne
+                if (evaluator.id === this.currentUserId()) {
+                  isOnline = true;
+                }
+                
+                return {
+                  ...evaluator,
+                  isOnline,
+                  hasFinished: crud.hasFinished || false
+                };
+              }
+              return evaluator;
+            });
+            
+            this.evaluators.set(updated);
+          }
+        },
+        error: (err) => console.error('Erreur refresh évaluateurs:', err)
+      });
+  }
+
+  /**
+   * Parse une date du backend (format dd/MM/yyyy HH:mm:ss ou ISO)
+   */
+  private parseBackendDate(dateStr: string): Date | null {
+    if (!dateStr) return null;
+    try {
+      if (dateStr.includes('/')) {
+        const parts = dateStr.split(' ');
+        const dateParts = parts[0].split('/');
+        const timeParts = parts[1]?.split(':') || ['00', '00', '00'];
+        return new Date(
+          parseInt(dateParts[2]), 
+          parseInt(dateParts[1]) - 1, 
+          parseInt(dateParts[0]),
+          parseInt(timeParts[0]),
+          parseInt(timeParts[1]),
+          parseInt(timeParts[2] || '0')
+        );
+      }
+      return new Date(dateStr);
+    } catch {
+      return null;
+    }
   }
 
   /**
@@ -214,12 +363,28 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
    * Charge toutes les données nécessaires
    */
   private loadFullData(interviewId: number, interview: any): void {
-    this.interviewCrudService.getEvaluatorsByInterviewId(interviewId)
-      .pipe(takeUntil(this.destroy$))
+    const campaignId = interview?.campaignId;
+    
+    // Charger les évaluateurs et les accès campagne en parallèle
+    forkJoin({
+      evaluators: this.interviewCrudService.getEvaluatorsByInterviewId(interviewId),
+      campaignAccesses: campaignId 
+        ? this.campaignService.getCampaignAccess(campaignId)
+        : Promise.resolve([])
+    }).pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (response) => {
-          if (!response.hasError && response.items) {
-            this.processEvaluators(response.items, interview);
+        next: ({ evaluators, campaignAccesses }) => {
+          // Stocker les accès campagne
+          this.campaignAccesses.set(campaignAccesses || []);
+          
+          // Déterminer si l'utilisateur courant est admin/créateur
+          const currentUserId = this.currentUserId();
+          const currentUserAccess = (campaignAccesses || []).find((a: any) => a.userId === currentUserId);
+          this.isCurrentUserAdmin.set(currentUserAccess?.isAdmin || false);
+          this.isCurrentUserCreator.set(currentUserAccess?.isCreator || false);
+          
+          if (!evaluators.hasError && evaluators.items) {
+            this.processEvaluators(evaluators.items, interview, campaignAccesses || []);
           } else {
             this.error.set('Aucun évaluateur trouvé');
             this.loading.set(false);
@@ -236,7 +401,7 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
   /**
    * Traite les évaluateurs et vérifie les permissions
    */
-  private processEvaluators(cruds: InterviewCrud[], interview: any): void {
+  private processEvaluators(cruds: InterviewCrud[], interview: any, campaignAccesses: any[]): void {
     const currentUserId = this.currentUserId();
     
     // Vérifier si l'utilisateur courant peut évaluer
@@ -248,6 +413,12 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
     }
     
     this.canEvaluate.set(true);
+    
+    // Stocker l'ID du crud de l'utilisateur courant pour les mises à jour de statut
+    this.currentUserInterviewCrudId.set(userCrud.id ?? null);
+    
+    // Marquer immédiatement l'utilisateur comme en ligne
+    this.markUserOnline();
 
     // Dédupliquer les cruds par userId avant de charger les détails
     const uniqueCruds = new Map<number, InterviewCrud>();
@@ -258,8 +429,11 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
     });
 
     // Charger les détails des utilisateurs évaluateurs
+    const now = new Date().getTime();
+    const onlineThreshold = 15000; // 15 secondes
+    
     const evaluatorPromises = Array.from(uniqueCruds.values())
-      .map(crud => this.loadEvaluatorDetails(crud));
+      .map(crud => this.loadEvaluatorDetails(crud, campaignAccesses, now, onlineThreshold));
 
     Promise.all(evaluatorPromises).then(evaluators => {
       this.evaluators.set(evaluators.filter(e => e !== null) as EvaluatorInfo[]);
@@ -272,7 +446,25 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
   /**
    * Charge les détails d'un évaluateur
    */
-  private async loadEvaluatorDetails(crud: InterviewCrud): Promise<EvaluatorInfo | null> {
+  private async loadEvaluatorDetails(crud: InterviewCrud, campaignAccesses: any[], now: number, onlineThreshold: number): Promise<EvaluatorInfo | null> {
+    // Trouver les accès campagne pour cet utilisateur
+    const userAccess = campaignAccesses.find(a => a.userId === crud.userId);
+    const isAdmin = userAccess?.isAdmin || false;
+    const isCreator = userAccess?.isCreator || false;
+    
+    // Déterminer si l'utilisateur est en ligne basé sur lastPingAt
+    let isOnline = false;
+    if (crud.userId === this.currentUserId()) {
+      isOnline = true; // L'utilisateur courant est toujours en ligne
+    } else if (crud.lastPingAt) {
+      const lastPing = this.parseBackendDate(crud.lastPingAt);
+      if (lastPing) {
+        isOnline = (now - lastPing.getTime()) < onlineThreshold;
+      }
+    }
+    
+    const hasFinished = crud.hasFinished || false;
+    
     return new Promise((resolve) => {
       this.userService.getById(crud.userId)
         .pipe(takeUntil(this.destroy$))
@@ -284,8 +476,11 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
               lastName: user?.lastName || user?.nom || '',
               email: user?.email || '',
               canEvaluate: crud.canEvaluate || false,
-              isOnline: crud.userId === this.currentUserId(),
-              hasEvaluated: false
+              isOnline,
+              hasEvaluated: false,
+              hasFinished,
+              isAdmin,
+              isCreator
             });
           },
           error: () => {
@@ -295,8 +490,11 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
               lastName: `#${crud.userId}`,
               email: '',
               canEvaluate: crud.canEvaluate || false,
-              isOnline: crud.userId === this.currentUserId(),
-              hasEvaluated: false
+              isOnline,
+              hasEvaluated: false,
+              hasFinished,
+              isAdmin,
+              isCreator
             });
           }
         });
@@ -635,6 +833,66 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
    */
   goBack(): void {
     this.router.navigate(['/dashboard/interviews']);
+  }
+
+  /**
+   * Marque un évaluateur comme ayant terminé son évaluation
+   * Seul l'utilisateur courant peut changer son propre statut
+   */
+  toggleEvaluatorFinished(evaluatorId: number): void {
+    // Sécurité: seul l'utilisateur courant peut changer son propre statut
+    if (evaluatorId !== this.currentUserId()) {
+      return;
+    }
+
+    const evaluators = this.evaluators();
+    const evaluator = evaluators.find(e => e.id === evaluatorId);
+    if (!evaluator) return;
+
+    const newHasFinished = !evaluator.hasFinished;
+    
+    // Mettre à jour localement d'abord pour une réponse immédiate
+    const updated = evaluators.map(e => {
+      if (e.id === evaluatorId) {
+        return { ...e, hasFinished: newHasFinished };
+      }
+      return e;
+    });
+    this.evaluators.set(updated);
+
+    // Persister au backend
+    const crudId = this.currentUserInterviewCrudId();
+    if (crudId) {
+      this.interviewCrudService.updateInterviewCrudStatus(crudId, true, newHasFinished)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            this.notificationService.success(
+              'Statut mis à jour',
+              newHasFinished ? 'Vous avez marqué votre évaluation comme terminée' : 'Statut remis à en cours'
+            );
+          },
+          error: (err) => {
+            console.error('Erreur mise à jour statut:', err);
+            // Annuler le changement local en cas d'erreur
+            const revert = this.evaluators().map(e => {
+              if (e.id === evaluatorId) {
+                return { ...e, hasFinished: !newHasFinished };
+              }
+              return e;
+            });
+            this.evaluators.set(revert);
+            this.notificationService.error('Erreur', 'Impossible de mettre à jour le statut');
+          }
+        });
+    }
+  }
+
+  /**
+   * Marque l'évaluateur courant comme ayant terminé
+   */
+  markCurrentUserFinished(): void {
+    this.toggleEvaluatorFinished(this.currentUserId());
   }
 
   /**

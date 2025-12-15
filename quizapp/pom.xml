@@ -31,7 +31,7 @@
 	<properties>
 		<java.version>21</java.version>
 		<maven.compiler.release>21</maven.compiler.release>
-		<org.mapstruct.version>1.2.0.Final</org.mapstruct.version>
+		<org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
 		<org.projectlombok.version>1.18.40</org.projectlombok.version>
 	</properties>
 
@@ -85,11 +85,11 @@
 			<scope>runtime</scope>
 		</dependency>
 
-		<!-- MapStruct JDK8: Utilisé pour mapper les objets Java entre eux,
+		<!-- MapStruct: Utilisé pour mapper les objets Java entre eux,
 		comme les entités et DTO -->
 		<dependency>
 			<groupId>org.mapstruct</groupId>
-			<artifactId>mapstruct-jdk8</artifactId>
+			<artifactId>mapstruct</artifactId>
 			<version>${org.mapstruct.version}</version>
 		</dependency>
 

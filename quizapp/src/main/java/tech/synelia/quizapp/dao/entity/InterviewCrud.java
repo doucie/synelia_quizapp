@@ -84,6 +84,16 @@ public class InterviewCrud implements Serializable, Cloneable {
     @Column(name="search_string", length=65535)
     private String     searchString ;
 
+    @Column(name="is_online")
+    private Boolean    isOnline     ;
+
+    @Column(name="has_finished")
+    private Boolean    hasFinished  ;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name="last_ping_at")
+    private Date       lastPingAt   ;
+
 	// "interviewId" (column "interview_id") is not defined by itself because used as FK in a link 
 	// "userId" (column "user_id") is not defined by itself because used as FK in a link 
 
