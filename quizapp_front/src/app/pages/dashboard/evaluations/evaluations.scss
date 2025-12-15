@@ -21,6 +21,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 20px;
   margin-bottom: 16px;
   padding: 16px 20px;
   background: var(--background);
@@ -80,6 +81,63 @@
 
       .separator {
         color: var(--border);
+      }
+    }
+  }
+
+  // Candidat dans le header
+  .header-candidate {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+
+    .candidate-avatar-small {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--primary), #7c3aed);
+      border-radius: 50%;
+      font-weight: 600;
+      font-size: 0.875rem;
+      color: white;
+    }
+
+    .candidate-details {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+
+      .candidate-name {
+        font-weight: 600;
+        font-size: 0.9375rem;
+        color: var(--text-primary);
+      }
+
+      .candidate-email {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+      }
+    }
+
+    .quiz-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--success);
+      border-radius: 20px;
+      font-size: 0.8125rem;
+      font-weight: 600;
+
+      i {
+        font-size: 0.875rem;
       }
     }
   }

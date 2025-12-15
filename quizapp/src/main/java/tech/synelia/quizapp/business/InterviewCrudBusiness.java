@@ -230,11 +230,17 @@ public class InterviewCrudBusiness implements IBasicBusiness<Request<InterviewCr
 			if (Utilities.notBlank(dto.getSearchString())) {
 				entityToSave.setSearchString(dto.getSearchString());
 			}
-			entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(dto)));
-			entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(dto)));
-			entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(dto)));
-			entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(dto)));
-			entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(dto)));
+			// Champs de présence en ligne
+			if (dto.getIsOnline() != null) {
+				entityToSave.setIsOnline(dto.getIsOnline());
+			}
+			if (dto.getHasFinished() != null) {
+				entityToSave.setHasFinished(dto.getHasFinished());
+			}
+			if (Utilities.notBlank(dto.getLastPingAt())) {
+				java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+				entityToSave.setLastPingAt(sdf.parse(dto.getLastPingAt()));
+			}
 			entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(dto)));
 			entityToSave.setUpdatedAt(Utilities.getCurrentDate());
 			entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(dto)));

@@ -1,5 +1,5 @@
 <div class="evaluations-page">
-  <!-- Header -->
+  <!-- Header avec infos candidat -->
   <div class="page-header">
     <div class="header-left">
       <button class="btn-back" (click)="goBack()">
@@ -20,6 +20,25 @@
         }
       </div>
     </div>
+
+    <!-- Infos candidat dans le header -->
+    @if (candidate()) {
+      <div class="header-candidate">
+        <div class="candidate-avatar-small">
+          {{ getInitials(candidate()!.name) }}
+        </div>
+        <div class="candidate-details">
+          <span class="candidate-name">{{ candidate()!.name }}</span>
+          <span class="candidate-email">{{ candidate()!.email }}</span>
+        </div>
+        @if (candidate()!.quizScore !== undefined) {
+          <span class="quiz-badge">
+            <i class="bi bi-mortarboard"></i>
+            {{ candidate()!.quizScore }}%
+          </span>
+        }
+      </div>
+    }
 
     <!-- Score moyen -->
     @if (evaluationCount() > 0) {
@@ -163,27 +182,8 @@
           </div>
         </aside>
 
-        <!-- Zone principale: Candidat + Chat -->
+        <!-- Zone principale: Chat -->
         <main class="main-content">
-          <!-- Infos candidat -->
-          @if (candidate()) {
-            <div class="candidate-card">
-              <div class="candidate-avatar large">
-                {{ getInitials(candidate()!.name) }}
-              </div>
-              <div class="candidate-info">
-                <h2>{{ candidate()!.name }}</h2>
-                <p class="candidate-email">{{ candidate()!.email }}</p>
-                @if (candidate()!.quizScore !== undefined) {
-                  <span class="quiz-score">
-                    <i class="bi bi-mortarboard"></i>
-                    Score quiz: {{ candidate()!.quizScore }}%
-                  </span>
-                }
-              </div>
-            </div>
-          }
-
           <!-- Zone de chat des évaluations -->
           <div class="chat-container" #chatContainer>
             @if (evaluationMessages().length === 0) {

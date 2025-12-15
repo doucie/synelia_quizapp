@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export interface InterviewCrud {
@@ -86,7 +86,11 @@ export class InterviewCrudService {
         canEvaluate: true
       }
     };
-    return this.http.post<InterviewCrudResponse>(`${this.apiUrl}/getByCriteria`, request);
+    return this.http.post<InterviewCrudResponse>(`${this.apiUrl}/getByCriteria`, request).pipe(
+      tap(response => {
+        console.log('🔍 [InterviewCrud] getByCriteria response:', JSON.stringify(response.items?.[0], null, 2));
+      })
+    );
   }
 
   /**

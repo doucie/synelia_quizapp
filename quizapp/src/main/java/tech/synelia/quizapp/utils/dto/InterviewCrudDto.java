@@ -10,6 +10,7 @@ package tech.synelia.quizapp.utils.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import lombok.Data;
@@ -45,8 +46,11 @@ public class InterviewCrudDto extends _InterviewCrudDto implements Cloneable{
     private String     searchString         ;
     private Integer    interviewId          ;
     private Integer    userId               ;
+    @JsonProperty("isOnline")
     private Boolean    isOnline             ;
+    @JsonProperty("hasFinished")
     private Boolean    hasFinished          ;
+    @JsonProperty("lastPingAt")
     private String     lastPingAt           ;
 
     //----------------------------------------------------------------------

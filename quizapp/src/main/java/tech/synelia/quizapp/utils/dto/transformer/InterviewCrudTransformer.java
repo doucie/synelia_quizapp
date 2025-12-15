@@ -47,7 +47,7 @@ public interface InterviewCrudTransformer {
 		@Mapping(source="entity.interviews.id", target="interviewId"),
 		@Mapping(source="entity.isOnline", target="isOnline"),
 		@Mapping(source="entity.hasFinished", target="hasFinished"),
-		@Mapping(source="entity.lastPingAt", dateFormat="dd/MM/yyyy", target="lastPingAt"),
+		@Mapping(source="entity.lastPingAt", dateFormat="dd/MM/yyyy HH:mm:ss", target="lastPingAt"),
 	})
 	InterviewCrudDto toDto(InterviewCrud entity) throws ParseException;
 

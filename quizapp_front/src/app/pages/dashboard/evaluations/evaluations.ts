@@ -241,21 +241,31 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
           if (!response.hasError && response.items) {
             const cruds = response.items as InterviewCrud[];
             const now = new Date().getTime();
-            const onlineThreshold = 15000; // 15 secondes pour considérer quelqu'un comme en ligne
+            const onlineThreshold = 20000; // 20 secondes pour considérer quelqu'un comme en ligne
 
             // Mettre à jour les évaluateurs existants avec les nouveaux statuts
             const currentEvaluators = this.evaluators();
             const updated = currentEvaluators.map(evaluator => {
               const crud = cruds.find(c => c.userId === evaluator.id);
               if (crud) {
-                // Vérifier si l'utilisateur est en ligne basé sur lastPingAt
                 let isOnline = false;
-                if (crud.lastPingAt) {
-                  const lastPing = this.parseBackendDate(crud.lastPingAt);
-                  if (lastPing) {
-                    isOnline = (now - lastPing.getTime()) < onlineThreshold;
+                
+                // Utiliser directement isOnline du backend si disponible
+                if (crud.isOnline === true) {
+                  // Vérifier si le ping est récent (si lastPingAt existe)
+                  if (crud.lastPingAt && crud.lastPingAt !== 'undefined' && crud.lastPingAt !== 'null') {
+                    const lastPing = this.parseBackendDate(crud.lastPingAt);
+                    if (lastPing) {
+                      const diff = now - lastPing.getTime();
+                      isOnline = diff < onlineThreshold;
+                    } else {
+                      isOnline = true; // Pas de lastPingAt parsable, on fait confiance à isOnline
+                    }
+                  } else {
+                    isOnline = true; // isOnline est true mais pas de lastPingAt
                   }
                 }
+                
                 // L'utilisateur courant est toujours en ligne
                 if (evaluator.id === this.currentUserId()) {
                   isOnline = true;
@@ -264,7 +274,7 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
                 return {
                   ...evaluator,
                   isOnline,
-                  hasFinished: crud.hasFinished || false
+                  hasFinished: crud.hasFinished === true
                 };
               }
               return evaluator;

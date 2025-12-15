@@ -24,15 +24,26 @@
 
 ---
 
+08/12/2025
+
+## Tâches effectuées
+
+- [Recrutement] Création des requêtes Postman pour tester les API
+- [Recrutement] Vérification des des API de l'application
+- [Recrutement] Ajout du cryptage des mots de passe
+- [Recrutement] Retrait des champs obligatoires inutiles lors de la création
+- [Recrutement] Configuration de l'email pour tester la réinitialisation de mot de passe
+
+---
+
 15/12/2025
 
 ## Tâches effectuées
 
 - Ajout de badges pour identifier les administrateurs et créateurs de campagne sur la page d'évaluation
-- Ajout d'une case à cocher pour que chaque évaluateur puisse indiquer qu'il a terminé son évaluation
+- Ajout de checkboxs mises à jour en temps réel pour indiquer la fin d'une évaluation
 - Ajout d'un compteur affichant le nombre d'évaluateurs ayant terminé leur évaluation
 - Restriction du bouton de conclusion aux administrateurs et créateurs uniquement
-- Agrandissement du champ de commentaire pour permettre les sauts de ligne
 - Ajout de nouveaux champs en base de données pour la synchronisation en temps réel des évaluateurs
 - Mise à jour de la version de MapStruct pour la compatibilité avec Java 21
 - Correction de la mise à jour automatique du schéma de base de données
