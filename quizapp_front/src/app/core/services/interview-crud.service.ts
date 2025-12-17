@@ -69,7 +69,7 @@ export class InterviewCrudService {
     const request = {
       user: 1,
       data: {
-        interviewsId: interviewId
+        interviewId: interviewId
       }
     };
     return this.http.post<InterviewCrudResponse>(`${this.apiUrl}/getByCriteria`, request);
@@ -82,7 +82,7 @@ export class InterviewCrudService {
     const request = {
       user: 1,
       data: {
-        interviewsId: interviewId,
+        interviewId: interviewId,
         canEvaluate: true
       }
     };
@@ -120,7 +120,7 @@ export class InterviewCrudService {
     const request = {
       user: userId,
       datas: [{
-        interviewsId: interviewId,
+        interviewId: interviewId,
         userId: userId,
         isOnline: isOnline,
         lastPingAt: new Date().toISOString()
@@ -136,7 +136,7 @@ export class InterviewCrudService {
     const request = {
       user: userId,
       datas: [{
-        interviewsId: interviewId,
+        interviewId: interviewId,
         userId: userId,
         hasFinished: hasFinished
       }]

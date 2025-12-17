@@ -88,9 +88,6 @@ public class CandidateInterviewBusiness implements IBasicBusiness<Request<Candid
 		for (CandidateInterviewDto dto : request.getDatas()) {
 			// Definir les parametres obligatoires
 			Map<String, java.lang.Object> fieldsToVerify = new HashMap<String, java.lang.Object>();
-			fieldsToVerify.put("interviewStart", dto.getInterviewStart());
-			fieldsToVerify.put("interviewDuration", dto.getInterviewDuration());
-			fieldsToVerify.put("searchString", dto.getSearchString());
 			fieldsToVerify.put("applicationId", dto.getApplicationId());
 			fieldsToVerify.put("interviewId", dto.getInterviewId());
 			if (!Validate.RequiredValue(fieldsToVerify).isGood()) {

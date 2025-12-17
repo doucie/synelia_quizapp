@@ -77,6 +77,18 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
   newMark = signal<number>(50);
   newComment = signal<string>('');
   
+  // Mode édition
+  editingEvaluationId = signal<number | null>(null);
+  editMark = signal<number>(50);
+  editComment = signal<string>('');
+  
+  // Modal de confirmation pour terminer l'entretien
+  showFinishModal = signal(false);
+  finishModalTitle = signal('');
+  finishModalMessage = signal('');
+  finishModalWarning = signal(false);
+  pendingEvaluators = signal<string[]>([]);
+  
   // Permission
   canEvaluate = signal(false);
   hasAlreadyEvaluated = signal(false);
@@ -95,6 +107,11 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
     if (messages.length === 0) return 0;
     const total = messages.reduce((sum, m) => sum + m.mark, 0);
     return Math.round(total / messages.length);
+  });
+
+  totalScore = computed(() => {
+    const messages = this.evaluationMessages();
+    return messages.reduce((sum, m) => sum + m.mark, 0);
   });
 
   evaluationCount = computed(() => this.evaluationMessages().length);
@@ -459,8 +476,15 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
   private async loadEvaluatorDetails(crud: InterviewCrud, campaignAccesses: any[], now: number, onlineThreshold: number): Promise<EvaluatorInfo | null> {
     // Trouver les accès campagne pour cet utilisateur
     const userAccess = campaignAccesses.find(a => a.userId === crud.userId);
-    const isAdmin = userAccess?.isAdmin || false;
-    const isCreator = userAccess?.isCreator || false;
+    
+    console.log('🔍 loadEvaluatorDetails - crud.userId:', crud.userId);
+    console.log('🔍 campaignAccesses:', campaignAccesses);
+    console.log('🔍 userAccess trouvé:', userAccess);
+    
+    const isAdmin = userAccess?.isAdmin === true || userAccess?.isAdmin === 1;
+    const isCreator = userAccess?.isCreator === true || userAccess?.isCreator === 1;
+    
+    console.log('🔍 isAdmin:', isAdmin, 'isCreator:', isCreator);
     
     // Déterminer si l'utilisateur est en ligne basé sur lastPingAt
     let isOnline = false;
@@ -696,21 +720,30 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
    * Soumet une nouvelle évaluation
    */
   submitEvaluation(): void {
+    console.log('🚀 submitEvaluation() appelée');
+    
     const cand = this.candidate();
+    console.log('📋 Candidat:', cand);
+    console.log('📋 candidateInterviewId:', cand?.candidateInterviewId);
+    
     if (!cand?.candidateInterviewId) {
-      this.notificationService.error('Erreur', 'Impossible de soumettre l\'évaluation');
+      console.error('❌ Pas de candidateInterviewId');
+      this.notificationService.error('Erreur', 'Impossible de soumettre l\'évaluation - Pas de candidateInterviewId');
       return;
     }
 
     if (this.hasAlreadyEvaluated()) {
+      console.warn('⚠️ Déjà évalué');
       this.notificationService.warning('Attention', 'Vous avez déjà soumis une évaluation');
       return;
     }
 
     const mark = this.newMark();
     const comment = this.newComment().trim();
+    console.log('📝 Note:', mark, 'Commentaire:', comment);
 
     if (!comment) {
+      console.warn('⚠️ Pas de commentaire');
       this.notificationService.warning('Attention', 'Veuillez ajouter un commentaire');
       return;
     }
@@ -722,8 +755,9 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
       candidateMark: mark,
       recruiterComment: comment
     };
+    console.log('📤 Envoi évaluation:', evaluation, 'par utilisateur:', this.currentUserId());
 
-    this.evaluationService.createEvaluation(evaluation)
+    this.evaluationService.createEvaluation(evaluation, this.currentUserId())
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response: any) => {
@@ -766,28 +800,206 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Démarre l'édition d'une évaluation
+   */
+  startEditEvaluation(message: EvaluationMessage): void {
+    if (!message.isCurrentUser || !message.id) return;
+    
+    this.editingEvaluationId.set(message.id);
+    this.editMark.set(message.mark);
+    this.editComment.set(message.comment);
+  }
+
+  /**
+   * Annule l'édition
+   */
+  cancelEditEvaluation(): void {
+    this.editingEvaluationId.set(null);
+    this.editMark.set(50);
+    this.editComment.set('');
+  }
+
+  /**
+   * Sauvegarde les modifications d'une évaluation
+   */
+  saveEditEvaluation(): void {
+    const evaluationId = this.editingEvaluationId();
+    if (!evaluationId) return;
+
+    const mark = this.editMark();
+    const comment = this.editComment().trim();
+
+    if (!comment) {
+      this.notificationService.warning('Attention', 'Le commentaire ne peut pas être vide');
+      return;
+    }
+
+    this.submitting.set(true);
+
+    const cand = this.candidate();
+    const evaluation: Evaluation = {
+      id: evaluationId,
+      candidateInterviewId: cand?.candidateInterviewId,
+      candidateMark: mark,
+      recruiterComment: comment
+    };
+
+    this.evaluationService.updateEvaluation(evaluation, this.currentUserId())
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response: any) => {
+          if (!response.hasError) {
+            // Mettre à jour le message dans la liste
+            this.evaluationMessages.update(msgs => 
+              msgs.map(m => m.id === evaluationId 
+                ? { ...m, mark, comment, createdAt: new Date().toISOString() } 
+                : m
+              )
+            );
+            
+            // Réinitialiser hasFinished à false
+            this.resetHasFinished();
+            
+            this.cancelEditEvaluation();
+            this.notificationService.success('Succès', 'Évaluation modifiée');
+          } else {
+            this.notificationService.error('Erreur', response.status?.message || 'Erreur inconnue');
+          }
+          this.submitting.set(false);
+        },
+        error: () => {
+          this.notificationService.error('Erreur', 'Impossible de modifier l\'évaluation');
+          this.submitting.set(false);
+        }
+      });
+  }
+
+  /**
+   * Supprime une évaluation
+   */
+  deleteEvaluation(message: EvaluationMessage): void {
+    if (!message.isCurrentUser || !message.id) return;
+
+    if (!confirm('Êtes-vous sûr de vouloir supprimer votre évaluation ?')) {
+      return;
+    }
+
+    this.submitting.set(true);
+
+    this.evaluationService.deleteEvaluation(message.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response: any) => {
+          if (!response.hasError) {
+            // Retirer le message de la liste
+            this.evaluationMessages.update(msgs => msgs.filter(m => m.id !== message.id));
+            this.hasAlreadyEvaluated.set(false);
+            this.updateEvaluatorsStatus(this.evaluationMessages());
+            
+            // Réinitialiser hasFinished à false
+            this.resetHasFinished();
+            
+            this.notificationService.success('Succès', 'Évaluation supprimée');
+          } else {
+            this.notificationService.error('Erreur', response.status?.message || 'Erreur inconnue');
+          }
+          this.submitting.set(false);
+        },
+        error: () => {
+          this.notificationService.error('Erreur', 'Impossible de supprimer l\'évaluation');
+          this.submitting.set(false);
+        }
+      });
+  }
+
+  /**
+   * Réinitialise hasFinished à false pour l'utilisateur courant
+   */
+  private resetHasFinished(): void {
+    const crudId = this.currentUserInterviewCrudId();
+    if (!crudId) return;
+
+    // Mettre hasFinished à false
+    this.interviewCrudService.updateInterviewCrudStatus(crudId, true, false)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          // Mettre à jour l'état local
+          this.evaluators.update(evals => 
+            evals.map(e => e.id === this.currentUserId() 
+              ? { ...e, hasFinished: false } 
+              : e
+            )
+          );
+        },
+        error: (err) => console.error('Erreur réinitialisation hasFinished:', err)
+      });
+  }
+
+  /**
    * Termine l'évaluation et met à jour l'entretien
    */
   finishEvaluation(): void {
     const interv = this.interview();
     if (!interv?.id) return;
 
-    if (!confirm('Êtes-vous sûr de vouloir terminer l\'évaluation ? Cette action changera le statut de l\'entretien.')) {
-      return;
+    // Vérifier si tous les évaluateurs ont terminé
+    const evaluatorsNotFinished = this.evaluators().filter(e => !e.hasFinished);
+    const allFinished = evaluatorsNotFinished.length === 0;
+
+    if (!allFinished) {
+      // Il y a des évaluateurs qui n'ont pas terminé
+      const names = evaluatorsNotFinished.map(e => `${e.firstName} ${e.lastName}`);
+      this.pendingEvaluators.set(names);
+      this.finishModalTitle.set('Évaluateurs en attente');
+      this.finishModalMessage.set('Les évaluateurs suivants n\'ont pas encore terminé leur évaluation :');
+      this.finishModalWarning.set(true);
+    } else {
+      // Tous ont terminé
+      this.pendingEvaluators.set([]);
+      this.finishModalTitle.set('Clôturer l\'entretien');
+      this.finishModalMessage.set('Tous les évaluateurs ont terminé leur évaluation. Voulez-vous clôturer l\'entretien ?');
+      this.finishModalWarning.set(false);
     }
 
+    this.showFinishModal.set(true);
+  }
+
+  /**
+   * Ferme la modal de confirmation
+   */
+  closeFinishModal(): void {
+    this.showFinishModal.set(false);
+  }
+
+  /**
+   * Confirme la finalisation depuis la modal
+   */
+  confirmFinishEvaluation(): void {
+    this.showFinishModal.set(false);
+    this.doFinishEvaluation();
+  }
+
+  /**
+   * Exécute la finalisation de l'entretien
+   */
+  private doFinishEvaluation(): void {
+    const interv = this.interview();
+    if (!interv?.id) return;
+
     const messages = this.evaluationMessages();
-    const totalScore = messages.reduce((sum, m) => sum + m.mark, 0);
-    const avgScore = messages.length > 0 ? Math.round(totalScore / messages.length) : 0;
+    const evaluationNumber = messages.length;
+    const evaluationScore = messages.reduce((sum, m) => sum + m.mark, 0);
+    const evaluationPercentage = evaluationNumber > 0 ? Math.round(evaluationScore / evaluationNumber) : 0;
 
     // Mettre à jour l'entretien
     const updatedInterview = {
       ...interv,
       interviewStatus: 'OVER',
       endedAt: this.formatDateForBackend(new Date()),
-      evaluationScore: totalScore,
-      evaluationNumber: messages.length,
-      evaluationPercentage: avgScore
+      evaluationScore: evaluationScore,
+      evaluationNumber: evaluationNumber,
+      evaluationPercentage: evaluationPercentage
     };
 
     this.loading.set(true);
@@ -797,8 +1009,8 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
         next: (response) => {
           if (!response.hasError) {
             this.notificationService.success(
-              'Évaluation terminée',
-              `Score moyen: ${avgScore}/100 (${messages.length} évaluations)`
+              'Entretien terminé',
+              `Score moyen: ${evaluationPercentage}/100 (${evaluationNumber} évaluations, total: ${evaluationScore})`
             );
             this.router.navigate(['/dashboard/interviews']);
           } else {
@@ -808,7 +1020,7 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           console.error('Erreur:', err);
-          this.notificationService.error('Erreur', 'Impossible de terminer l\'évaluation');
+          this.notificationService.error('Erreur', 'Impossible de terminer l\'entretien');
           this.loading.set(false);
         }
       });

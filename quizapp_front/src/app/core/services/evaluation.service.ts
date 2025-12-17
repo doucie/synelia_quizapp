@@ -92,7 +92,7 @@ export class EvaluationService {
     const request = {
       user: 1,
       data: {
-        interviewsId: interviewId
+        interviewId: interviewId
       }
     };
     return this.http.post<CandidateInterviewResponse>(`${this.candidateInterviewApiUrl}/getByCriteria`, request);
@@ -118,8 +118,8 @@ export class EvaluationService {
     const request = {
       user: 1,
       datas: [{
-        interviewsId: data.interviewId,
-        applicationsId: data.applicationId
+        interviewId: data.interviewId,
+        applicationId: data.applicationId
       }]
     };
     return this.http.post<CandidateInterviewResponse>(`${this.candidateInterviewApiUrl}/create`, request);
@@ -128,9 +128,9 @@ export class EvaluationService {
   /**
    * Crée une évaluation
    */
-  createEvaluation(evaluation: Evaluation): Observable<any> {
+  createEvaluation(evaluation: Evaluation, evaluatorId: number): Observable<any> {
     const request = {
-      user: 1,
+      user: evaluatorId,
       datas: [evaluation]
     };
     return this.http.post(`${this.evaluationsApiUrl}/create`, request);
@@ -139,9 +139,9 @@ export class EvaluationService {
   /**
    * Met à jour une évaluation
    */
-  updateEvaluation(evaluation: Evaluation): Observable<any> {
+  updateEvaluation(evaluation: Evaluation, userId: number = 1): Observable<any> {
     const request = {
-      user: 1,
+      user: userId,
       datas: [evaluation]
     };
     return this.http.post(`${this.evaluationsApiUrl}/update`, request);

@@ -85,7 +85,6 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 			Map<String, java.lang.Object> fieldsToVerify = new HashMap<String, java.lang.Object>();
 			fieldsToVerify.put("candidateMark", dto.getCandidateMark());
 			fieldsToVerify.put("recruiterComment", dto.getRecruiterComment());
-			fieldsToVerify.put("searchString", dto.getSearchString());
 			fieldsToVerify.put("candidateInterviewId", dto.getCandidateInterviewId());
 			if (!Validate.RequiredValue(fieldsToVerify).isGood()) {
 				throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
