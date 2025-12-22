@@ -41,3 +41,36 @@ Le bouton "Terminer l'entretien" ne semble pas mettre à jour les données en ba
 2. Vérifier que les badges Admin et Créateur s'affichent correctement pour tous les évaluateurs
 3. Tester la mise à jour du statut de l'entretien en base de données
 
+
+21/12/2025
+
+## Tâches effectuées
+
+- Correction de la checkbox pour terminer l'interview qui se décochait automatiquement
+- Correction du bouton "Terminer l'entretien" qui renvoyait une erreur au lieu du succès
+- Création de la page liste des évaluations avec en-tête et barre latérale
+- Ajout de filtres par statut sur la liste des évaluations
+- Ajout d'un compteur de statistiques sur la liste des évaluations
+- Ajout d'une barre de recherche sur la liste des évaluations
+- Redirection automatique vers la liste des évaluations après avoir terminé un entretien
+- Réorganisation des routes pour séparer la liste des évaluations et la page d'évaluation plein écran
+- Caching et batching
+Persisted queries
+Monitoring (Apollo Studio)
+Pagination : offset vs cursor-based
+Apollo Client (ou urql) : installation et usage
+Queries et mutations côté client
+Gestion du cache
+Optimistic response
+
+
+
+## Problème en cours
+
+La mise à jour de la base de données lors de la clôture de l'entretien ne fonctionne pas. La redirection se fait correctement mais les scores et le statut de l'entretien ne sont pas enregistrés.
+
+## À vérifier au retour
+
+1. Vérifier que l'entretien est bien marqué comme terminé en base de données
+2. Vérifier que les scores sont calculés et enregistrés correctement
+3. Tester le flux complet de clôture d'un entretien

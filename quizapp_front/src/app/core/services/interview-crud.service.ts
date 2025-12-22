@@ -88,7 +88,10 @@ export class InterviewCrudService {
     };
     return this.http.post<InterviewCrudResponse>(`${this.apiUrl}/getByCriteria`, request).pipe(
       tap(response => {
-        console.log('🔍 [InterviewCrud] getByCriteria response:', JSON.stringify(response.items?.[0], null, 2));
+        console.log('🔍 [InterviewCrud] getByCriteria - ALL items:', response.items);
+        response.items?.forEach((item, i) => {
+          console.log(`🔍 [InterviewCrud] item[${i}] userId=${item.userId}, hasFinished=${item.hasFinished}, type=${typeof item.hasFinished}`);
+        });
       })
     );
   }
@@ -130,21 +133,6 @@ export class InterviewCrudService {
   }
 
   /**
-   * Met à jour le statut "a terminé"
-   */
-  updateHasFinished(interviewId: number, userId: number, hasFinished: boolean): Observable<any> {
-    const request = {
-      user: userId,
-      datas: [{
-        interviewId: interviewId,
-        userId: userId,
-        hasFinished: hasFinished
-      }]
-    };
-    return this.http.post(`${this.apiUrl}/update`, request);
-  }
-
-  /**
    * Met à jour le statut de présence et "terminé" par ID de l'interview_crud
    */
   updateInterviewCrudStatus(interviewCrudId: number, isOnline: boolean, hasFinished: boolean): Observable<any> {
@@ -165,6 +153,58 @@ export class InterviewCrudService {
         isOnline: isOnline,
         hasFinished: hasFinished,
         lastPingAt: formattedDate
+      }]
+    };
+    return this.http.post(`${this.apiUrl}/update`, request);
+  }
+
+  /**
+   * Met à jour uniquement le statut de présence (ping) sans toucher à hasFinished
+   */
+  sendPresencePing(interviewCrudId: number): Observable<any> {
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = now.getFullYear();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    const formattedDate = `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+
+    const request = {
+      user: 1,
+      datas: [{
+        id: interviewCrudId,
+        isOnline: true,
+        lastPingAt: formattedDate
+      }]
+    };
+    return this.http.post(`${this.apiUrl}/update`, request);
+  }
+
+  /**
+   * Marque l'utilisateur comme hors ligne sans toucher à hasFinished
+   */
+  markOffline(interviewCrudId: number): Observable<any> {
+    const request = {
+      user: 1,
+      datas: [{
+        id: interviewCrudId,
+        isOnline: false
+      }]
+    };
+    return this.http.post(`${this.apiUrl}/update`, request);
+  }
+
+  /**
+   * Met à jour uniquement hasFinished
+   */
+  updateHasFinished(interviewCrudId: number, hasFinished: boolean): Observable<any> {
+    const request = {
+      user: 1,
+      datas: [{
+        id: interviewCrudId,
+        hasFinished: hasFinished
       }]
     };
     return this.http.post(`${this.apiUrl}/update`, request);

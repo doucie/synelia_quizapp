@@ -140,19 +140,24 @@ export const routes: Routes = [
         path: 'interviews/create', 
         loadComponent: () => import('./pages/dashboard/interview-create/interview-create').then(m => m.InterviewCreateComponent),
         canActivate: [recruiterRoleGuard]
+      },
+      { 
+        path: 'evaluations', 
+        loadComponent: () => import('./pages/dashboard/evaluations-list/evaluations-list').then(m => m.EvaluationsListComponent),
+        canActivate: [recruiterRoleGuard]
       }
-      // Note: Les évaluations sont maintenant hors du dashboard pour être en plein écran
+      // Note: L'évaluation en mode plein écran est sur /dashboard/evaluate/:link
     ]
   },
   {
-    // Route pour les évaluations - Plein écran sans header/sidebar
-    path: 'dashboard/evaluations',
+    // Route pour l'évaluation - Plein écran sans header/sidebar
+    path: 'dashboard/evaluate',
     loadComponent: () => import('./pages/dashboard/evaluations/evaluations').then(m => m.EvaluationsComponent),
     canActivate: [authGuard, recruiterRoleGuard]
   },
   {
-    // Route pour les évaluations avec lien - Plein écran sans header/sidebar
-    path: 'dashboard/evaluations/:link',
+    // Route pour l'évaluation avec lien - Plein écran sans header/sidebar
+    path: 'dashboard/evaluate/:link',
     loadComponent: () => import('./pages/dashboard/evaluations/evaluations').then(m => m.EvaluationsComponent),
     canActivate: [authGuard, recruiterRoleGuard]
   },

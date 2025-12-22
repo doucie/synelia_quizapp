@@ -105,14 +105,14 @@ public interface ApplicationsRepository extends JpaRepository<Applications, Inte
 	@Query("select e from Applications e where e.quizScore = :quizScore and e.isDeleted = :isDeleted")
 	List<Applications> findByQuizScore(@Param("quizScore")Integer quizScore, @Param("isDeleted")Boolean isDeleted);
 	/**
-	 * Finds Applications by using evaluationScore as a search criteria.
+	 * Finds Applications by using totalEvaluationScore as a search criteria.
 	 * 
-	 * @param evaluationScore
-	 * @return An Object Applications whose evaluationScore is equals to the given evaluationScore. If
+	 * @param totalEvaluationScore
+	 * @return An Object Applications whose totalEvaluationScore is equals to the given totalEvaluationScore. If
 	 *         no Applications is found, this method returns null.
 	 */
-	@Query("select e from Applications e where e.evaluationScore = :evaluationScore and e.isDeleted = :isDeleted")
-	List<Applications> findByEvaluationScore(@Param("evaluationScore")Float evaluationScore, @Param("isDeleted")Boolean isDeleted);
+	@Query("select e from Applications e where e.totalEvaluationScore = :totalEvaluationScore and e.isDeleted = :isDeleted")
+	List<Applications> findByTotalEvaluationScore(@Param("totalEvaluationScore")Float totalEvaluationScore, @Param("isDeleted")Boolean isDeleted);
 	/**
 	 * Finds Applications by using applicationStatus as a search criteria.
 	 * 
@@ -390,8 +390,14 @@ public interface ApplicationsRepository extends JpaRepository<Applications, Inte
 			if (dto.getQuizScore()!= null && dto.getQuizScore() > 0) {
 				listOfQuery.add(CriteriaUtils.generateCriteria("quizScore", dto.getQuizScore(), "e.quizScore", "Integer", dto.getQuizScoreParam(), param, index, locale));
 			}
-			if (dto.getEvaluationScore()!= null && dto.getEvaluationScore() > 0) {
-				listOfQuery.add(CriteriaUtils.generateCriteria("evaluationScore", dto.getEvaluationScore(), "e.evaluationScore", "Float", dto.getEvaluationScoreParam(), param, index, locale));
+			if (dto.getTotalEvaluationScore()!= null && dto.getTotalEvaluationScore() > 0) {
+				listOfQuery.add(CriteriaUtils.generateCriteria("totalEvaluationScore", dto.getTotalEvaluationScore(), "e.totalEvaluationScore", "Float", dto.getTotalEvaluationScoreParam(), param, index, locale));
+			}
+			if (dto.getTotalEvaluationNumber()!= null && dto.getTotalEvaluationNumber() > 0) {
+				listOfQuery.add(CriteriaUtils.generateCriteria("totalEvaluationNumber", dto.getTotalEvaluationNumber(), "e.totalEvaluationNumber", "Integer", dto.getTotalEvaluationNumberParam(), param, index, locale));
+			}
+			if (dto.getTotalEvaluationPercentage()!= null && dto.getTotalEvaluationPercentage() > 0) {
+				listOfQuery.add(CriteriaUtils.generateCriteria("totalEvaluationPercentage", dto.getTotalEvaluationPercentage(), "e.totalEvaluationPercentage", "Double", dto.getTotalEvaluationPercentageParam(), param, index, locale));
 			}
 			if (Utilities.notBlank(dto.getApplicationStatus())) {
 				listOfQuery.add(CriteriaUtils.generateCriteria("applicationStatus", dto.getApplicationStatus(), "e.applicationStatus", "String", dto.getApplicationStatusParam(), param, index, locale));

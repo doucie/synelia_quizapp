@@ -139,4 +139,39 @@ public class InterviewsController {
 	  slf4jLogger.info("end method /InterviewsDto/custom");
 	  return response;
 	 }
+
+	 /**
+	  * Termine un entretien et calcule les scores d'évaluation
+	  */
+	 @RequestMapping(value = "/finish", method = RequestMethod.POST, consumes = {
+	   "application/json" }, produces = { "application/json" })
+	 public Response<InterviewsDto> finishInterview(@RequestBody Request<InterviewsDto> request) throws Exception {
+	  log.info("start method /interviews/finish");
+	  Response<InterviewsDto> response = new Response<InterviewsDto>();
+	  String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
+	  Locale locale = Locale.of(languageID, "");
+	  try {
+	   response = Validate.validateList(request, response, functionalError, locale);
+	   if (!response.isHasError()) {
+	    response = interviewsBusiness.finishInterview(request, locale);
+	   } else {
+	    slf4jLogger.info("Erreur| code: {} -  message: {}", response.getStatus().getCode(),
+	      response.getStatus().getMessage());
+	    return response;
+	   }
+	   if (!response.isHasError()) {
+	    slf4jLogger.info("Interview terminé avec succès");
+	    slf4jLogger.info("code: {} -  message: {}", StatusCode.SUCCESS, StatusMessage.SUCCESS);
+	   } else {
+	    slf4jLogger.info("Erreur| code: {} -  message: {}", response.getStatus().getCode(),
+	      response.getStatus().getMessage());
+	   }
+	  } catch (CannotCreateTransactionException e) {
+	   exceptionUtils.CANNOT_CREATE_TRANSACTION_EXCEPTION(response, locale, e);
+	  } catch (TransactionSystemException e) {
+	   exceptionUtils.TRANSACTION_SYSTEM_EXCEPTION(response, locale, e);
+	  }
+	  log.info("end method /interviews/finish");
+	  return response;
+	 }
 }

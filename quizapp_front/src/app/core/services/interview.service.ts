@@ -201,4 +201,20 @@ export class InterviewService {
     };
     return classes[status] || 'muted';
   }
+
+  /**
+   * Termine un entretien et calcule les scores d'évaluation
+   * Met à jour interview.interviewStatus à "OVER", ended_at, evaluationScore, evaluationNumber, evaluationPercentage
+   * Met à jour application.totalEvaluationScore, totalEvaluationNumber, totalEvaluationPercentage
+   */
+  finishInterview(interviewId: number, userId: number): Observable<InterviewResponse> {
+    const request = {
+      user: userId,
+      datas: [{ id: interviewId }]
+    };
+    return this.http.post<InterviewResponse>(
+      `${this.baseUrl}/finish`,
+      request
+    );
+  }
 }

@@ -183,12 +183,15 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
 
   /**
    * Marque l'utilisateur courant comme en ligne
+   * Note: Utilise sendPresencePing pour ne pas toucher à hasFinished
    */
   private markUserOnline(): void {
     const crudId = this.currentUserInterviewCrudId();
     if (!crudId) return;
 
-    this.interviewCrudService.updateInterviewCrudStatus(crudId, true, false)
+    // Utiliser sendPresencePing qui met juste isOnline=true et lastPingAt
+    // sans toucher à hasFinished
+    this.interviewCrudService.sendPresencePing(crudId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         error: (err) => console.error('Erreur mise à jour statut online:', err)
@@ -197,14 +200,13 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
 
   /**
    * Marque l'utilisateur courant comme hors ligne
+   * Note: Ne modifie PAS hasFinished pour ne pas écraser la valeur en BD
    */
   private markUserOffline(): void {
     const crudId = this.currentUserInterviewCrudId();
     if (!crudId) return;
 
-    // Utiliser sendBeacon pour garantir l'envoi même si la page se ferme
-    const hasFinished = this.evaluators().find(e => e.id === this.currentUserId())?.hasFinished || false;
-    this.interviewCrudService.updateInterviewCrudStatus(crudId, false, hasFinished)
+    this.interviewCrudService.markOffline(crudId)
       .subscribe({
         error: (err) => console.error('Erreur mise à jour statut offline:', err)
       });
@@ -212,13 +214,13 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
 
   /**
    * Envoie un ping de présence pour maintenir le statut en ligne
+   * Note: Ne modifie PAS hasFinished pour ne pas écraser la valeur en BD
    */
   private sendPresencePing(): void {
     const crudId = this.currentUserInterviewCrudId();
     if (!crudId) return;
 
-    const hasFinished = this.evaluators().find(e => e.id === this.currentUserId())?.hasFinished || false;
-    this.interviewCrudService.updateInterviewCrudStatus(crudId, true, hasFinished)
+    this.interviewCrudService.sendPresencePing(crudId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         error: (err) => console.error('Erreur ping présence:', err)
@@ -288,10 +290,14 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
                   isOnline = true;
                 }
                 
+                // Parser hasFinished - peut être boolean, string "true"/"false", ou 1/0
+                const rawHasFinished = crud.hasFinished as any;
+                const hasFinished = rawHasFinished === true || rawHasFinished === 'true' || rawHasFinished === 1;
+                
                 return {
                   ...evaluator,
                   isOnline,
-                  hasFinished: crud.hasFinished === true
+                  hasFinished
                 };
               }
               return evaluator;
@@ -497,7 +503,10 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
       }
     }
     
-    const hasFinished = crud.hasFinished || false;
+    // Parser hasFinished - peut être boolean, string "true"/"false", ou 1/0
+    const rawHasFinished = crud.hasFinished as any;
+    const hasFinished = rawHasFinished === true || rawHasFinished === 'true' || rawHasFinished === 1;
+    console.log(`🔍 [buildEvaluatorFromCrud] userId=${crud.userId}, hasFinished raw:`, crud.hasFinished, 'parsed:', hasFinished);
     
     return new Promise((resolve) => {
       this.userService.getById(crud.userId)
@@ -919,8 +928,8 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
     const crudId = this.currentUserInterviewCrudId();
     if (!crudId) return;
 
-    // Mettre hasFinished à false
-    this.interviewCrudService.updateInterviewCrudStatus(crudId, true, false)
+    // Mettre hasFinished à false avec la méthode dédiée
+    this.interviewCrudService.updateHasFinished(crudId, false)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
@@ -976,45 +985,41 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
    * Confirme la finalisation depuis la modal
    */
   confirmFinishEvaluation(): void {
+    console.log('🔴 confirmFinishEvaluation called');
     this.showFinishModal.set(false);
     this.doFinishEvaluation();
   }
 
   /**
    * Exécute la finalisation de l'entretien
+   * Appelle le nouvel endpoint /finish qui calcule automatiquement les scores
    */
   private doFinishEvaluation(): void {
     const interv = this.interview();
-    if (!interv?.id) return;
-
-    const messages = this.evaluationMessages();
-    const evaluationNumber = messages.length;
-    const evaluationScore = messages.reduce((sum, m) => sum + m.mark, 0);
-    const evaluationPercentage = evaluationNumber > 0 ? Math.round(evaluationScore / evaluationNumber) : 0;
-
-    // Mettre à jour l'entretien
-    const updatedInterview = {
-      ...interv,
-      interviewStatus: 'OVER',
-      endedAt: this.formatDateForBackend(new Date()),
-      evaluationScore: evaluationScore,
-      evaluationNumber: evaluationNumber,
-      evaluationPercentage: evaluationPercentage
-    };
+    console.log('🔴 doFinishEvaluation called - interview:', interv, 'userId:', this.currentUserId());
+    if (!interv?.id) {
+      console.log('🔴 No interview id, returning');
+      return;
+    }
 
     this.loading.set(true);
-    this.interviewService.updateInterview(updatedInterview)
+    console.log('🔴 Calling finishInterview API...');
+    
+    // Appeler le nouvel endpoint qui calcule tout côté backend
+    this.interviewService.finishInterview(interv.id, this.currentUserId())
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
-          if (!response.hasError) {
+          console.log('📤 finishInterview response:', response);
+          if (!response.hasError && response.items?.[0]) {
+            const updatedInterview = response.items[0];
             this.notificationService.success(
               'Entretien terminé',
-              `Score moyen: ${evaluationPercentage}/100 (${evaluationNumber} évaluations, total: ${evaluationScore})`
+              `Score moyen: ${updatedInterview.evaluationPercentage?.toFixed(1) || 0}/5 (${updatedInterview.evaluationNumber || 0} évaluations, total: ${updatedInterview.evaluationScore || 0})`
             );
-            this.router.navigate(['/dashboard/interviews']);
+            this.router.navigate(['/dashboard/evaluations']);
           } else {
-            this.notificationService.error('Erreur', response.status.message);
+            this.notificationService.error('Erreur', response.status?.message || 'Erreur inconnue');
           }
           this.loading.set(false);
         },
@@ -1082,10 +1087,10 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
     });
     this.evaluators.set(updated);
 
-    // Persister au backend
+    // Persister au backend avec la méthode dédiée
     const crudId = this.currentUserInterviewCrudId();
     if (crudId) {
-      this.interviewCrudService.updateInterviewCrudStatus(crudId, true, newHasFinished)
+      this.interviewCrudService.updateHasFinished(crudId, newHasFinished)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: () => {

@@ -1,0 +1,170 @@
+<div class="evaluations-list-page">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-main">
+      <div class="header-title">
+        <div class="title-icon">
+          <i class="bi bi-clipboard-check"></i>
+        </div>
+        <div class="title-content">
+          <h1>Évaluations</h1>
+          <p>Consultez et gérez les évaluations des entretiens</p>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="header-stats">
+        <div class="stat-chip total">
+          <i class="bi bi-list-check"></i>
+          <span>{{ totalEvaluations() }}</span>
+          <span class="stat-label">Total</span>
+        </div>
+        <div class="stat-chip started">
+          <i class="bi bi-play-circle"></i>
+          <span>{{ inProgressCount() }}</span>
+          <span class="stat-label">En cours</span>
+        </div>
+        <div class="stat-chip completed">
+          <i class="bi bi-check-circle"></i>
+          <span>{{ completedCount() }}</span>
+          <span class="stat-label">Terminés</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="header-controls">
+      <div class="search-box">
+        <i class="bi bi-search"></i>
+        <input
+          type="text"
+          placeholder="Rechercher un candidat ou entretien..."
+          [ngModel]="searchTerm()"
+          (ngModelChange)="searchTerm.set($event)"
+        />
+      </div>
+      
+      <div class="filter-chips">
+        <button
+          class="chip"
+          [class.active]="selectedFilter() === 'ALL'"
+          (click)="setFilter('ALL')"
+        >
+          Tous ({{ totalEvaluations() }})
+        </button>
+        <button
+          class="chip started"
+          [class.active]="selectedFilter() === 'STARTED'"
+          (click)="setFilter('STARTED')"
+        >
+          En cours ({{ inProgressCount() }})
+        </button>
+        <button
+          class="chip completed"
+          [class.active]="selectedFilter() === 'OVER'"
+          (click)="setFilter('OVER')"
+        >
+          Terminés ({{ completedCount() }})
+        </button>
+      </div>
+
+      <button class="btn-secondary" (click)="goToInterviews()">
+        <i class="bi bi-arrow-left"></i>
+        Retour aux entretiens
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  @if (loading()) {
+    <div class="loading-container">
+      <div class="loading-spinner"></div>
+      <p>Chargement des évaluations...</p>
+    </div>
+  }
+
+  <!-- Liste des évaluations -->
+  @if (!loading()) {
+    @if (filteredInterviews().length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon">
+          <i class="bi bi-clipboard-x"></i>
+        </div>
+        <h2>Aucune évaluation</h2>
+        <p>Les évaluations apparaîtront ici une fois les entretiens démarrés.</p>
+        <button class="btn-primary" (click)="goToInterviews()">
+          <i class="bi bi-calendar-check"></i>
+          Voir les entretiens
+        </button>
+      </div>
+    } @else {
+      <div class="evaluations-grid">
+        @for (interview of filteredInterviews(); track interview.id) {
+          <div class="evaluation-card" [class.completed]="interview.interviewStatus === 'OVER'" (click)="openEvaluation(interview)">
+            <div class="card-header">
+              <div class="candidate-info">
+                <div class="candidate-avatar">
+                  {{ interview.candidateFirstName?.charAt(0) || 'C' }}{{ interview.candidateLastName?.charAt(0) || '' }}
+                </div>
+                <div class="candidate-details">
+                  <h3 class="candidate-name">{{ interview.candidateName }}</h3>
+                  <span class="candidate-email">{{ interview.candidateEmailDisplay }}</span>
+                </div>
+              </div>
+              <div class="status-badge" [class]="getStatusClass(interview.interviewStatus)">
+                {{ getStatusLabel(interview.interviewStatus) }}
+              </div>
+            </div>
+
+            <div class="card-body">
+              <div class="info-row">
+                <i class="bi bi-briefcase"></i>
+                <span>{{ interview.campaignTitle }}</span>
+              </div>
+              <div class="info-row">
+                <i class="bi bi-chat-text"></i>
+                <span>{{ interview.interviewTitle || 'Entretien' }}</span>
+              </div>
+              @if (interview.interviewStatus === 'STARTED' && interview.startedAt) {
+                <div class="info-row">
+                  <i class="bi bi-play-circle"></i>
+                  <span>Démarré le {{ formatDate(interview.startedAt) }}</span>
+                </div>
+              }
+              @if (interview.interviewStatus === 'OVER' && interview.endedAt) {
+                <div class="info-row">
+                  <i class="bi bi-check-circle"></i>
+                  <span>Terminé le {{ formatDate(interview.endedAt) }}</span>
+                </div>
+              }
+            </div>
+
+            <div class="card-footer">
+              @if (interview.interviewStatus === 'OVER') {
+                <div class="score-section">
+                  <div class="score-item">
+                    <span class="score-label">Score</span>
+                    <span class="score-value">{{ formatScore(interview.evaluationScore, interview.evaluationNumber) }}</span>
+                  </div>
+                  <div class="score-item">
+                    <span class="score-label">Moyenne</span>
+                    <span class="score-value highlight">{{ formatPercentage(interview.evaluationPercentage) }}</span>
+                  </div>
+                  <div class="score-item">
+                    <span class="score-label">Évaluations</span>
+                    <span class="score-value">{{ interview.evaluationNumber || 0 }}</span>
+                  </div>
+                </div>
+              } @else {
+                <div class="action-hint">
+                  <i class="bi bi-pencil-square"></i>
+                  <span>Cliquer pour évaluer</span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  }
+</div>

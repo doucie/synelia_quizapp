@@ -259,8 +259,14 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			if (dto.getQuizScore() != null && dto.getQuizScore() > 0) {
 				entityToSave.setQuizScore(dto.getQuizScore());
 			}
-			if (dto.getEvaluationScore() != null && dto.getEvaluationScore() > 0) {
-				entityToSave.setEvaluationScore(dto.getEvaluationScore());
+			if (dto.getTotalEvaluationScore() != null && dto.getTotalEvaluationScore() > 0) {
+				entityToSave.setTotalEvaluationScore(dto.getTotalEvaluationScore());
+			}
+			if (dto.getTotalEvaluationNumber() != null && dto.getTotalEvaluationNumber() > 0) {
+				entityToSave.setTotalEvaluationNumber(dto.getTotalEvaluationNumber());
+			}
+			if (dto.getTotalEvaluationPercentage() != null && dto.getTotalEvaluationPercentage() > 0) {
+				entityToSave.setTotalEvaluationPercentage(dto.getTotalEvaluationPercentage());
 			}
 			if (Utilities.notBlank(dto.getApplicationStatus())) {
 				entityToSave.setApplicationStatus(dto.getApplicationStatus());

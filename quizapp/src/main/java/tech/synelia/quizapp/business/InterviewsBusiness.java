@@ -53,6 +53,8 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 	@Autowired
 	private CampaignsRepository campaignsRepository;
 	@Autowired
+	private EvaluationsRepository evaluationsRepository;
+	@Autowired
 	private ApplicationsRepository applicationsRepository;
 	@Autowired
 	private InterviewCrudRepository interviewCrudRepository;
@@ -640,5 +642,128 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 		
 		log.warning("Impossible de générer un lien d'évaluation unique après " + maxAttempts + " tentatives");
 		throw new RuntimeException("Erreur lors de la génération du lien d'évaluation unique");
+	}
+
+	/**
+	 * Termine un entretien et calcule les scores d'évaluation
+	 * Met à jour l'interview et la candidature avec les statistiques d'évaluation
+	 * 
+	 * @param request contient l'ID de l'interview à terminer
+	 * @param locale
+	 * @return response
+	 */
+	public Response<InterviewsDto> finishInterview(Request<InterviewsDto> request, Locale locale) throws ParseException {
+		log.info("----begin finishInterview-----");
+		Response<InterviewsDto> response = new Response<InterviewsDto>();
+		
+		try {
+			// Récupérer le premier élément de datas (comme les autres méthodes)
+			if (request.getDatas() == null || request.getDatas().isEmpty()) {
+				response.setStatus(functionalError.DATA_NOT_EXIST("Interview data is required", locale));
+				response.setHasError(true);
+				return response;
+			}
+			
+			InterviewsDto dto = request.getDatas().get(0);
+			
+			if (dto == null || dto.getId() == null) {
+				response.setStatus(functionalError.DATA_NOT_EXIST("Interview ID is required", locale));
+				response.setHasError(true);
+				return response;
+			}
+			
+			// Récupérer l'interview
+			Interviews interview = interviewsRepository.findOne(dto.getId(), false);
+			if (interview == null) {
+				response.setStatus(functionalError.DATA_NOT_EXIST("Interview not found with id: " + dto.getId(), locale));
+				response.setHasError(true);
+				return response;
+			}
+			
+			// Si l'interview est déjà terminé, retourner un succès (idempotent)
+			if ("OVER".equals(interview.getInterviewStatus())) {
+				log.info("Interview " + dto.getId() + " est déjà terminé, retour succès (idempotent)");
+				InterviewsDto resultDto = InterviewsTransformer.INSTANCE.toDto(interview);
+				List<InterviewsDto> resultList = new ArrayList<>();
+				resultList.add(resultDto);
+				response.setItems(resultList);
+				response.setHasError(false);
+				
+				Status status = new Status();
+				status.setCode(StatusCode.SUCCESS);
+				status.setMessage("Interview already finished");
+				response.setStatus(status);
+				return response;
+			}
+			
+			// Calculer les statistiques d'évaluation pour cet interview
+			Integer evaluationScore = evaluationsRepository.sumMarksByInterviewId(dto.getId());
+			Long evaluationNumberLong = evaluationsRepository.countByInterviewId(dto.getId());
+			Integer evaluationNumber = evaluationNumberLong.intValue();
+			Double evaluationPercentage = evaluationNumber > 0 
+				? (double) evaluationScore / evaluationNumber 
+				: 0.0;
+			
+			log.info("Interview " + dto.getId() + " - Score: " + evaluationScore + 
+			        ", Number: " + evaluationNumber + ", Percentage: " + evaluationPercentage);
+			
+			// Mettre à jour l'interview
+			interview.setInterviewStatus("OVER");
+			interview.setEndedAt(new Date());
+			interview.setEvaluationScore(evaluationScore);
+			interview.setEvaluationNumber(evaluationNumber);
+			interview.setEvaluationPercentage(evaluationPercentage);
+			interview.setUpdatedAt(new Date());
+			interview.setUpdatedBy(request.getUser());
+			
+			interviewsRepository.save(interview);
+			log.info("Interview " + dto.getId() + " terminé avec succès");
+			
+			// Mettre à jour la candidature (application)
+			if (interview.getApplications() != null) {
+				Applications application = interview.getApplications();
+				
+				// Calculer les statistiques totales pour la candidature (tous les interviews)
+				Integer totalScore = evaluationsRepository.sumMarksByApplicationId(application.getId());
+				Long totalNumberLong = evaluationsRepository.countByApplicationId(application.getId());
+				Integer totalNumber = totalNumberLong.intValue();
+				Double totalPercentage = totalNumber > 0 
+					? (double) totalScore / totalNumber 
+					: 0.0;
+				
+				log.info("Application " + application.getId() + " - Total Score: " + totalScore + 
+				        ", Total Number: " + totalNumber + ", Total Percentage: " + totalPercentage);
+				
+				application.setTotalEvaluationScore(totalScore.floatValue());
+				application.setTotalEvaluationNumber(totalNumber);
+				application.setTotalEvaluationPercentage(totalPercentage);
+				application.setUpdatedAt(new Date());
+				application.setUpdatedBy(request.getUser());
+				
+				applicationsRepository.save(application);
+				log.info("Application " + application.getId() + " mise à jour avec succès");
+			}
+			
+			// Retourner l'interview mis à jour
+			InterviewsDto resultDto = InterviewsTransformer.INSTANCE.toDto(interview);
+			List<InterviewsDto> resultList = new ArrayList<>();
+			resultList.add(resultDto);
+			response.setItems(resultList);
+			response.setHasError(false);
+			
+			Status status = new Status();
+			status.setCode(StatusCode.SUCCESS);
+			status.setMessage(StatusMessage.SUCCESS);
+			response.setStatus(status);
+			
+		} catch (Exception e) {
+			log.severe("Erreur lors de la terminaison de l'interview: " + e.getMessage());
+			e.printStackTrace();
+			response.setStatus(functionalError.SAVE_FAIL("Error finishing interview: " + e.getMessage(), locale));
+			response.setHasError(true);
+		}
+		
+		log.info("----end finishInterview-----");
+		return response;
 	}
 }

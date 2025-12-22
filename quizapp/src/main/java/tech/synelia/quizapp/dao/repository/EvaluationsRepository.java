@@ -124,6 +124,34 @@ public interface EvaluationsRepository extends JpaRepository<Evaluations, Intege
 	List<Evaluations> findByCandidateInterviewId(@Param("candidateInterviewId")Integer candidateInterviewId, @Param("isDeleted")Boolean isDeleted);
 
 	/**
+	 * Calcule la somme des marks pour un interview donné
+	 */
+	@Query("SELECT COALESCE(SUM(e.candidateMark), 0) FROM Evaluations e " +
+	       "WHERE e.candidateInterview.interviews.id = :interviewId AND e.isDeleted = false")
+	Integer sumMarksByInterviewId(@Param("interviewId") Integer interviewId);
+
+	/**
+	 * Compte le nombre d'évaluations pour un interview donné
+	 */
+	@Query("SELECT COUNT(e) FROM Evaluations e " +
+	       "WHERE e.candidateInterview.interviews.id = :interviewId AND e.isDeleted = false")
+	Long countByInterviewId(@Param("interviewId") Integer interviewId);
+
+	/**
+	 * Calcule la somme des marks pour tous les interviews d'une application donnée
+	 */
+	@Query("SELECT COALESCE(SUM(e.candidateMark), 0) FROM Evaluations e " +
+	       "WHERE e.candidateInterview.applications.id = :applicationId AND e.isDeleted = false")
+	Integer sumMarksByApplicationId(@Param("applicationId") Integer applicationId);
+
+	/**
+	 * Compte le nombre d'évaluations pour tous les interviews d'une application donnée
+	 */
+	@Query("SELECT COUNT(e) FROM Evaluations e " +
+	       "WHERE e.candidateInterview.applications.id = :applicationId AND e.isDeleted = false")
+	Long countByApplicationId(@Param("applicationId") Integer applicationId);
+
+	/**
 	 * Finds List of Evaluations by using evaluationsDto as a search criteria.
 	 * 
 	 * @param request, em

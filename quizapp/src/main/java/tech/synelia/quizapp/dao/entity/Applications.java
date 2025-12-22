@@ -77,8 +77,14 @@ public class Applications implements Serializable, Cloneable {
     @Column(name="quiz_score")
     private Integer    quizScore    ;
 
-    @Column(name="evaluation_score")
-    private Float      evaluationScore ;
+    @Column(name="total_evaluation_score")
+    private Float      totalEvaluationScore ;
+
+    @Column(name="total_evaluation_number")
+    private Integer    totalEvaluationNumber ;
+
+    @Column(name="total_evaluation_percentage")
+    private Double     totalEvaluationPercentage ;
 
     @Column(name="application_status", length=8)
     private String     applicationStatus ;

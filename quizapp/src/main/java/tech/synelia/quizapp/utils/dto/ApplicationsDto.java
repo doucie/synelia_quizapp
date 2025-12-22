@@ -42,7 +42,9 @@ public class ApplicationsDto extends _ApplicationsDto implements Cloneable{
     private String     motivationLetter     ; // Lettre de motivation du candidat
     private Boolean    emailVerified        ;
     private Integer    quizScore            ;
-    private Float      evaluationScore      ;
+    private Float      totalEvaluationScore ;
+    private Integer    totalEvaluationNumber ;
+    private Double     totalEvaluationPercentage ;
     private String     applicationStatus    ;
     private String     visitToken           ;
     private String     quizToken            ;
@@ -79,7 +81,9 @@ public class ApplicationsDto extends _ApplicationsDto implements Cloneable{
 	private SearchParam<String>   motivationLetterParam ;                     
 	private SearchParam<Boolean>  emailVerifiedParam    ;                     
 	private SearchParam<Integer>  quizScoreParam        ;                     
-	private SearchParam<Float>    evaluationScoreParam  ;                     
+	private SearchParam<Float>    totalEvaluationScoreParam ;                     
+	private SearchParam<Integer>  totalEvaluationNumberParam ;                     
+	private SearchParam<Double>   totalEvaluationPercentageParam ;                     
 	private SearchParam<String>   applicationStatusParam;                     
 	private SearchParam<String>   visitTokenParam       ;                     
 	private SearchParam<String>   quizTokenParam        ;                     
