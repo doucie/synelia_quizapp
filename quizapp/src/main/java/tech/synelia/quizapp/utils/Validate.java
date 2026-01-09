@@ -13,7 +13,6 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang.NullArgumentException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -251,7 +250,7 @@ public class Validate {
 	 */
 	public static <T> boolean hasDuplicateData(List<T> datas, Function<? super T, ? extends Object> groupExp, Response response, FunctionalError functionalError, Locale locale) {
 		if (datas == null) {
-			throw new NullArgumentException("datas");
+			throw new IllegalArgumentException("datas must not be null");
 		}
 		Function<Map<Object, Long>, Map<Object, Long>> havingCount = (m) -> {
 			m.values().removeIf(v -> v <= 1L);
@@ -268,7 +267,7 @@ public class Validate {
 	
 	public static <T> Map<Object, Long> getDuplicateData(List<T> datas, Function<? super T, ? extends Object> groupExp) {
 		if (datas == null) {
-			throw new NullArgumentException("datas");
+			throw new IllegalArgumentException("datas must not be null");
 		}
 		Function<Map<Object, Long>, Map<Object, Long>> havingCount = (m) -> {
 			m.values().removeIf(v -> v <= 1L);

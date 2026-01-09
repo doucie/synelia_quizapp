@@ -1,0 +1,1185 @@
+/* ========================================
+   TEMPLATE MÉMOIRE - STYLES MODERNES
+   Police: Crimson Pro (titres) + Source Sans 3 (corps)
+   ======================================== */
+
+:root {
+    /* Couleurs principales - subtiles et professionnelles */
+    --primary: #1a365d;      /* Bleu marine profond */
+    --secondary: #2c5282;    /* Bleu moyen */
+    --accent: #3182ce;       /* Bleu accent */
+    --text: #1a202c;         /* Noir doux */
+    --text-light: #4a5568;   /* Gris texte */
+    --bg: #ffffff;
+    --bg-alt: #f7fafc;
+    --border: #e2e8f0;
+    --separator: #cbd5e0;
+    
+    /* Typographie */
+    --font-serif: 'Crimson Pro', Georgia, serif;
+    --font-sans: 'Source Sans 3', 'Segoe UI', sans-serif;
+    
+    /* Dimensions page A4 */
+    --page-width: 21cm;
+    --page-height: 29.7cm;
+    --margin: 2.5cm;
+}
+
+/* Reset et base */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    font-size: 12pt;
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--text);
+    background: #e2e8f0;
+}
+
+/* ========================================
+   MISE EN PAGE DOCUMENT
+   ======================================== */
+
+.document {
+    max-width: var(--page-width);
+    margin: 2rem auto;
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem; /* Espacement entre les pages */
+}
+
+.page {
+    width: var(--page-width);
+    min-height: var(--page-height);
+    max-height: var(--page-height);
+    height: var(--page-height);
+    padding: var(--margin);
+    background: var(--bg);
+    position: relative;
+    page-break-after: always;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    overflow: hidden; /* Masquer visuellement le débordement */
+    flex-shrink: 0;
+    box-sizing: border-box;
+}
+
+/* Pendant le calcul de pagination, permettre le débordement visible */
+.document.calculating-overflow .page {
+    overflow: visible;
+    max-height: none;
+}
+
+/* Page de continuation (générée automatiquement par JS) */
+.page.continuation-page {
+    padding-top: var(--margin);
+}
+
+/* Forcer un saut de page (nouveau chapitre, nouvelle section) */
+.page.page-break {
+    page-break-before: always;
+}
+
+/* Indicateur de débordement restant (problème de pagination) */
+.page.has-overflow {
+    border: 2px solid #f59e0b;
+}
+
+.page.has-overflow::after {
+    content: '⚠️ Débordement détecté - rechargez la page';
+    position: absolute;
+    bottom: 0.5cm;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #fef3c7;
+    color: #92400e;
+    padding: 0.3rem 0.8rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    z-index: 100;
+    white-space: nowrap;
+}
+
+/* ========================================
+   PAGE DE COUVERTURE
+   ======================================== */
+
+.cover-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: linear-gradient(180deg, var(--bg) 0%, var(--bg-alt) 100%);
+    overflow: hidden; /* Pas de débordement sur la couverture */
+}
+
+.cover-content {
+    max-width: 85%;
+}
+
+.logos {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+}
+
+.logo-placeholder {
+    width: 80px;
+    height: 80px;
+    border: 2px dashed var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    color: var(--text-light);
+    border-radius: 4px;
+}
+
+.school-name {
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.school-acronym {
+    font-size: 1rem;
+    color: var(--secondary);
+    margin-bottom: 1.5rem;
+}
+
+.cover-separator {
+    width: 120px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    margin: 1.5rem auto;
+}
+
+.document-type {
+    font-family: var(--font-serif);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.5rem;
+}
+
+.diploma-info {
+    font-size: 0.95rem;
+    color: var(--text-light);
+    line-height: 1.8;
+}
+
+.theme-label {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--secondary);
+    margin-bottom: 0.75rem;
+}
+
+.thesis-title {
+    font-family: var(--font-serif);
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.6;
+    font-style: italic;
+}
+
+.cover-info {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    text-align: left;
+    margin: 2rem 0;
+    padding: 1.5rem;
+    background: var(--bg-alt);
+    border-radius: 4px;
+    border-left: 3px solid var(--accent);
+}
+
+.info-label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-light);
+    margin-bottom: 0.25rem;
+}
+
+.info-value {
+    font-weight: 600;
+    color: var(--text);
+}
+
+.info-sub {
+    font-weight: 400;
+    font-size: 0.9rem;
+    color: var(--text-light);
+}
+
+.company {
+    font-size: 1rem;
+    margin-top: 1rem;
+}
+
+.academic-year {
+    font-weight: 600;
+    color: var(--primary);
+    margin-top: 1.5rem;
+    font-size: 1rem;
+}
+
+/* ========================================
+   PAGES DE PARTIES (Saut de page obligatoire)
+   ======================================== */
+
+.part-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-alt);
+    page-break-before: always; /* Toujours nouvelle page */
+}
+
+.part-content {
+    text-align: center;
+}
+
+.part-number {
+    font-family: var(--font-serif);
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--secondary);
+    margin-bottom: 1rem;
+}
+
+.part-title {
+    font-family: var(--font-serif);
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.part-separator {
+    width: 80px;
+    height: 3px;
+    background: var(--accent);
+    margin: 1.5rem auto 0;
+}
+
+/* ========================================
+   TITRES ET HIÉRARCHIE
+   ======================================== */
+
+.section-title {
+    font-family: var(--font-serif);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 2rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--accent);
+}
+
+.section-title.centered {
+    text-align: center;
+    border-bottom: none;
+}
+
+.section-title.centered::after {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 2px;
+    background: var(--accent);
+    margin: 0.75rem auto 0;
+}
+
+.chapter-title {
+    font-family: var(--font-serif);
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 2rem;
+    padding: 1rem 0;
+    border-bottom: 2px solid var(--primary);
+    display: flex;
+    flex-direction: column;
+}
+
+/* Les pages de chapitre doivent commencer sur une nouvelle page */
+.page[id^="chapitre"]:not(.continuation-page) {
+    page-break-before: always;
+}
+
+/* Sections spéciales qui commencent sur nouvelle page */
+#introduction, #conclusion, #references, #annexes {
+    page-break-before: always;
+}
+
+.chapter-subtitle {
+    font-size: 1.1rem;
+    font-weight: 400;
+    color: var(--text);
+    margin-top: 0.5rem;
+}
+
+.section-heading {
+    font-family: var(--font-sans);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--secondary);
+    margin: 2rem 0 1rem;
+    padding-left: 0.75rem;
+    border-left: 3px solid var(--accent);
+}
+
+.subsection-heading {
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+    margin: 1.5rem 0 0.75rem;
+    font-style: italic;
+}
+
+/* ========================================
+   CONTENU
+   ======================================== */
+
+.content {
+    text-align: justify;
+    hyphens: auto;
+}
+
+.content p, .page > p {
+    margin-bottom: 1rem;
+    text-indent: 1.5rem;
+}
+
+.content p:first-child {
+    text-indent: 0;
+}
+
+.placeholder {
+    color: var(--text-light);
+    background: var(--bg-alt);
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-style: italic;
+    border-left: 3px solid var(--border);
+}
+
+.abstract-text {
+    text-indent: 0 !important;
+}
+
+.keywords {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: var(--bg-alt);
+    border-radius: 4px;
+}
+
+/* ========================================
+   SOMMAIRE / TABLE DES MATIÈRES
+   ======================================== */
+
+.toc {
+    max-width: 90%;
+    margin: 0 auto;
+}
+
+.toc-part {
+    font-family: var(--font-serif);
+    font-weight: 700;
+    color: var(--primary);
+    margin: 1.5rem 0 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border);
+}
+
+.toc-item {
+    padding: 0.4rem 0 0.4rem 1.5rem;
+    color: var(--text);
+    position: relative;
+}
+
+.toc-item::before {
+    content: '—';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+}
+
+.toc-item.main {
+    font-weight: 600;
+    padding-left: 0;
+}
+
+.toc-item.main::before {
+    display: none;
+}
+
+/* ========================================
+   LISTES
+   ======================================== */
+
+.styled-list {
+    margin: 1rem 0 1rem 2rem;
+    list-style: none;
+}
+
+.styled-list li {
+    position: relative;
+    padding: 0.3rem 0 0.3rem 1.5rem;
+}
+
+.styled-list li::before {
+    content: '▸';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-size: 0.8rem;
+}
+
+/* ========================================
+   TABLEAUX
+   ======================================== */
+
+.styled-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.95rem;
+}
+
+.styled-table thead {
+    background: var(--primary);
+    color: white;
+}
+
+.styled-table th, .styled-table td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border: 1px solid var(--border);
+}
+
+.styled-table tbody tr:nth-child(even) {
+    background: var(--bg-alt);
+}
+
+.styled-table tbody tr:hover {
+    background: #edf2f7;
+}
+
+/* ========================================
+   FIGURES ET IMAGES
+   ======================================== */
+
+.figure {
+    margin: 1.5rem 0;
+    text-align: center;
+}
+
+.figure-placeholder {
+    width: 100%;
+    min-height: 200px;
+    border: 2px dashed var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-light);
+    background: var(--bg-alt);
+    border-radius: 4px;
+}
+
+.figure-caption {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    margin-top: 0.75rem;
+    font-style: italic;
+}
+
+/* ========================================
+   CODE
+   ======================================== */
+
+.code-block {
+    margin: 1.5rem 0;
+    background: #1a202c;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.code-title {
+    background: var(--primary);
+    color: white;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+}
+
+.code-block pre {
+    padding: 1rem;
+    overflow-x: auto;
+}
+
+.code-block code {
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.85rem;
+    color: #e2e8f0;
+    line-height: 1.5;
+}
+
+/* ========================================
+   TECH STACK
+   ======================================== */
+
+.tech-stack {
+    display: grid;
+    gap: 0.75rem;
+    margin: 1rem 0;
+}
+
+.tech-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: var(--bg-alt);
+    border-radius: 4px;
+    border-left: 3px solid var(--accent);
+}
+
+.tech-name {
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.tech-desc {
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+/* ========================================
+   RÉFÉRENCES
+   ======================================== */
+
+.references-list {
+    text-align: left;
+}
+
+.ref-category {
+    font-weight: 700;
+    color: var(--primary);
+    margin: 1.5rem 0 0.75rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.reference {
+    padding: 0.5rem 0 0.5rem 1.5rem;
+    text-indent: -1.5rem;
+    margin-left: 1.5rem;
+}
+
+.reference a {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.reference a:hover {
+    text-decoration: underline;
+}
+
+/* ========================================
+   ANNEXES
+   ======================================== */
+
+.annexe-title {
+    font-family: var(--font-serif);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--secondary);
+    margin: 2rem 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+/* ========================================
+   NAVIGATION SIDEBAR
+   ======================================== */
+
+#sidebar {
+    position: fixed;
+    left: -280px;
+    top: 0;
+    width: 280px;
+    height: 100vh;
+    background: var(--bg);
+    box-shadow: 2px 0 20px rgba(0,0,0,0.1);
+    transition: left 0.3s ease;
+    z-index: 1000;
+    overflow-y: auto;
+}
+
+#sidebar.open {
+    left: 0;
+}
+
+.nav-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: var(--primary);
+    color: white;
+}
+
+.nav-title {
+    font-weight: 600;
+}
+
+#closeSidebar {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+#navList {
+    list-style: none;
+    padding: 1rem;
+}
+
+#navList li {
+    margin-bottom: 0.5rem;
+}
+
+#navList a {
+    display: block;
+    padding: 0.5rem 0.75rem;
+    color: var(--text);
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+}
+
+#navList a:hover {
+    background: var(--bg-alt);
+    color: var(--accent);
+}
+
+#menuToggle {
+    position: fixed;
+    left: 1rem;
+    top: 1rem;
+    width: 44px;
+    height: 44px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 1.25rem;
+    cursor: pointer;
+    z-index: 999;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    transition: background 0.2s;
+}
+
+#menuToggle:hover {
+    background: var(--secondary);
+}
+
+/* ========================================
+   IMPRESSION
+   ======================================== */
+
+@media print {
+    body {
+        background: white;
+    }
+    
+    .page {
+        page-break-after: always;
+        border: none;
+        box-shadow: none;
+    }
+    
+    #sidebar, #menuToggle {
+        display: none;
+    }
+    
+    .document {
+        max-width: none;
+    }
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+
+@media (max-width: 900px) {
+    .page {
+        padding: 1.5rem;
+        min-height: auto;
+    }
+    
+    .cover-info {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ========================================
+   INSPECTEUR DE STYLES
+   ======================================== */
+
+#styleInspector {
+    position: fixed;
+    right: -320px;
+    top: 0;
+    width: 320px;
+    height: 100vh;
+    background: var(--bg);
+    box-shadow: -2px 0 20px rgba(0,0,0,0.15);
+    transition: right 0.3s ease;
+    z-index: 1000;
+    overflow-y: auto;
+    font-size: 0.85rem;
+}
+
+#styleInspector.open {
+    right: 0;
+}
+
+.inspector-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: var(--primary);
+    color: white;
+    position: sticky;
+    top: 0;
+}
+
+.inspector-header span {
+    font-weight: 600;
+}
+
+#closeInspector {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.inspector-content {
+    padding: 1rem;
+}
+
+.inspector-hint {
+    color: var(--text-light);
+    font-style: italic;
+    text-align: center;
+    padding: 2rem 1rem;
+    background: var(--bg-alt);
+    border-radius: 6px;
+    border: 2px dashed var(--border);
+}
+
+.inspector-section {
+    margin-bottom: 1.25rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.inspector-section:last-child {
+    border-bottom: none;
+}
+
+.inspector-section h4 {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--primary);
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.25rem;
+}
+
+.style-row {
+    display: flex;
+    align-items: center;
+    padding: 0.35rem 0;
+    gap: 0.5rem;
+}
+
+.style-label {
+    flex: 0 0 80px;
+    color: var(--text-light);
+    font-size: 0.8rem;
+}
+
+.style-value {
+    flex: 1;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.8rem;
+    color: var(--text);
+    background: var(--bg-alt);
+    padding: 0.25rem 0.5rem;
+    border-radius: 3px;
+    word-break: break-all;
+}
+
+.style-value.copyable {
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.style-value.copyable:hover {
+    background: #e2e8f0;
+}
+
+.style-value.copied {
+    background: #c6f6d5;
+}
+
+.color-preview {
+    flex: 0 0 24px;
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.5);
+}
+
+.word-tips {
+    background: #fffbeb;
+    border: 1px solid #f59e0b;
+    border-radius: 6px;
+    padding: 0.75rem;
+    font-size: 0.8rem;
+    line-height: 1.5;
+}
+
+.word-tips p {
+    margin: 0.25rem 0;
+}
+
+.word-tips strong {
+    color: var(--primary);
+}
+
+.word-tips .tip-title {
+    font-weight: 700;
+    color: var(--secondary);
+    margin-top: 0.5rem;
+    margin-bottom: 0.25rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+}
+
+.word-tips ul {
+    margin: 0.25rem 0 0.5rem 1rem;
+    padding: 0;
+}
+
+.word-tips li {
+    margin: 0.15rem 0;
+}
+
+.gradient-colors {
+    display: flex;
+    gap: 0.25rem;
+    flex-wrap: wrap;
+    flex: 1;
+}
+
+.gradient-color-item {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: var(--bg-alt);
+    padding: 0.2rem 0.4rem;
+    border-radius: 3px;
+    font-size: 0.75rem;
+    font-family: 'Consolas', monospace;
+    cursor: pointer;
+}
+
+.gradient-color-item:hover {
+    background: #e2e8f0;
+}
+
+.gradient-color-swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 2px;
+    border: 1px solid var(--border);
+}
+
+#inspectorToggle {
+    position: fixed;
+    right: 1rem;
+    top: 1rem;
+    width: 44px;
+    height: 44px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 1.25rem;
+    cursor: pointer;
+    z-index: 999;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    transition: 0.2s, transform 0.2s;
+}
+
+#inspectorToggle:hover {
+    background: var(--secondary);
+    transform: scale(1.05);
+}
+
+/* Élément sélectionné */
+.inspector-selected {
+    outline: 2px dashed var(--accent) !important;
+    outline-offset: 2px;
+}
+
+/* Ajustement du document quand l'inspecteur est ouvert */
+body.inspector-active .document {
+    margin-right: 340px;
+    transition: margin-right 0.3s ease;
+}
+
+body .document {
+    transition: margin-right 0.3s ease;
+}
+
+@media (max-width: 1200px) {
+    body.inspector-active .document {
+        margin-right: 0;
+    }
+}
+
+/* Tooltip "Copié" */
+.copy-tooltip {
+    position: fixed;
+    background: var(--primary);
+    color: white;
+    padding: 0.4rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(5px);
+    transition: opacity 0.2s, transform 0.2s;
+    z-index: 9999;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.copy-tooltip.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.copy-tooltip::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid var(--primary);
+}
+
+/* ========================================
+   NAVIGATEUR DE PAGES
+   ======================================== */
+
+#pageNavigator {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: var(--primary);
+    padding: 0.6rem 1.2rem;
+    border-radius: 50px;
+    box-shadow: 0 4px 20px rgba(26, 54, 93, 0.3);
+    z-index: 1000;
+    transition: all 0.3s ease;
+}
+
+#pageNavigator:hover {
+    box-shadow: 0 6px 25px rgba(26, 54, 93, 0.4);
+    transform: translateX(-50%) translateY(-2px);
+}
+
+#pageNavigator button {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    font-size: 1.3rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#pageNavigator button:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+#pageNavigator button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+#pageIndicator {
+    color: white;
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    font-weight: 600;
+    min-width: 70px;
+    text-align: center;
+}
+
+.chapter-nav {
+    border-left: 1px solid rgba(255, 255, 255, 0.3);
+    padding-left: 0.75rem;
+    margin-left: 0.25rem;
+}
+
+#chapterSelect {
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    color: white;
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    padding: 0.4rem 0.6rem;
+    border-radius: 20px;
+    cursor: pointer;
+    outline: none;
+    transition: background 0.2s;
+}
+
+#chapterSelect:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+#chapterSelect option {
+    background: var(--primary);
+    color: white;
+}
+
+/* Numéro de page sur chaque page */
+.page-number {
+    position: absolute;
+    bottom: 1.5cm;
+    right: 2cm;
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    color: var(--text-light);
+    font-weight: 500;
+}
+
+/* Page numérotée en chiffres romains (avant-propos) */
+.page-number-roman {
+    font-style: italic;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    #pageNavigator {
+        bottom: 20px;
+        padding: 0.5rem 1rem;
+        gap: 0.5rem;
+    }
+    
+    #pageNavigator button {
+        width: 32px;
+        height: 32px;
+        font-size: 1.1rem;
+    }
+    
+    #pageIndicator {
+        font-size: 0.8rem;
+        min-width: 60px;
+    }
+    
+    .chapter-nav {
+        display: none;
+    }
+}
+
+/* ========================================
+   IMPRESSION
+   ======================================== */
+
+@media print {
+    body {
+        background: white;
+    }
+    
+    .document {
+        gap: 0;
+        margin: 0;
+    }
+    
+    .page {
+        box-shadow: none;
+        margin: 0;
+        page-break-after: always;
+        page-break-inside: avoid;
+    }
+    
+    .page:last-child {
+        page-break-after: auto;
+    }
+    
+    /* Masquer les éléments d'interface */
+    #sidebar,
+    #menuToggle,
+    #pageNavigator,
+    #styleInspector,
+    #inspectorToggle,
+    .page.has-overflow::after {
+        display: none !important;
+    }
+    
+    /* Afficher les numéros de page */
+    .page-number {
+        display: block;
+    }
+}

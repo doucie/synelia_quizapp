@@ -1,0 +1,435 @@
+<div class="entities-interviews-container">
+  <!-- Header et toolbar -->
+  <div class="header-toolbar-container">
+    <div class="page-header">
+      <div class="breadcrumb">
+        <button class="btn-back" (click)="goBackToEntities()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 12H5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 19L5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Retour aux Entités
+        </button>
+        <span class="breadcrumb-separator">/</span>
+        <span class="current-page">Gestion des Entretiens</span>
+      </div>
+      <h1>Gestion des Entretiens</h1>
+      <p class="page-description">
+        Administration complète des entretiens - création, modification et suppression
+      </p>
+    </div>
+
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <input 
+          type="text" 
+          class="search-input"
+          placeholder="Rechercher un entretien..."
+          [(ngModel)]="quickSearch"
+          (input)="onQuickSearch()"
+        />
+        
+        <div class="checkbox-container">
+          <input 
+            type="checkbox" 
+            id="showDeleted" 
+            class="checkbox-input"
+            [checked]="showDeletedInterviews"
+            (click)="toggleDeletedInterviews()"
+          />
+          <label for="showDeleted" class="checkbox-label">
+            Afficher les entretiens supprimés
+          </label>
+        </div>
+      </div>
+      <div class="toolbar-right">
+        <button class="btn-secondary-pro" (click)="openAdvancedSearch()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 6H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M7 12H17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M10 18H14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Filtres avancés
+        </button>
+        <button class="btn-primary-pro" (click)="createInterview()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 5V19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Nouvel entretien
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panneau de filtres avancés -->
+  <div class="advanced-search-panel" *ngIf="showAdvancedSearch">
+    <div class="panel-header">
+      <h3>Filtres avancés</h3>
+      <button class="btn-close" (click)="openAdvancedSearch()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+    
+    <div class="panel-content">
+      <div class="form-grid">
+        <div class="form-row-full">
+          <div class="form-group-inline">
+            <label>ID de</label>
+            <input type="text" class="form-input-inline" [(ngModel)]="advancedCriteria.idDe" placeholder="ID minimum" />
+          </div>
+          <span class="range-separator">à</span>
+          <div class="form-group-inline">
+            <input type="text" class="form-input-inline" [(ngModel)]="advancedCriteria.idA" placeholder="ID maximum" />
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label>Statut</label>
+          <select class="form-select" [(ngModel)]="advancedCriteria.interviewStatus">
+            <option [ngValue]="undefined">Tous</option>
+            <option value="PENDING">En attente</option>
+            <option value="SCHEDULED">Planifié</option>
+            <option value="STARTED">En cours</option>
+            <option value="OVER">Terminé</option>
+            <option value="PASSED">Réussi</option>
+            <option value="FAILED">Échoué</option>
+            <option value="POSTPONED">Reporté</option>
+            <option value="ARCHIVED">Archivé</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>Type</label>
+          <select class="form-select" [(ngModel)]="advancedCriteria.interviewType">
+            <option [ngValue]="undefined">Tous</option>
+            <option value="ONLINE">En ligne</option>
+            <option value="IN_PERSON">En personne</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>Campagne ID</label>
+          <input type="number" class="form-input" [(ngModel)]="advancedCriteria.campaignId" placeholder="ID de campagne" />
+        </div>
+      </div>
+      
+      <div class="panel-actions">
+        <button class="btn-secondary-pro" (click)="resetAdvancedSearch()">Réinitialiser</button>
+        <button class="btn-primary-pro" (click)="applyAdvancedSearch()">Appliquer les filtres</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section principale -->
+  <div class="interviews-section">
+    <div class="section-stats">
+      <div class="stats-row">
+        <h2 class="section-title">Entretiens</h2>
+        <div class="stats-info" *ngIf="!isLoading()">
+          <div class="stat-item">
+            <span>Total:</span>
+            <span class="stat-number">{{ totalElements() }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="isLoading()" class="loading-state">
+      <div class="loading-spinner"></div>
+      <p>Chargement des entretiens...</p>
+    </div>
+
+    <div *ngIf="!isLoading() && interviews().length === 0" class="empty-state">
+      <div class="empty-state-icon">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M19 4H5C3.89543 4 3 4.89543 3 6V20C3 21.1046 3.89543 22 5 22H19C20.1046 22 21 21.1046 21 20V6C21 4.89543 20.1046 4 19 4Z" stroke="currentColor" stroke-width="2"/>
+          <path d="M16 2V6M8 2V6M3 10H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h3>Aucun entretien trouvé</h3>
+      <p>Aucun entretien ne correspond aux critères actuels.</p>
+    </div>
+
+    <div *ngIf="!isLoading() && interviews().length > 0" class="data-table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Lieu / Lien</th>
+            <th>Statut</th>
+            <th>Campagne</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let interview of interviews(); trackBy: trackByInterviewId" 
+              [class.interview-deleted]="interview.isDeleted">
+            <td><span class="cell-id">#{{ interview.id }}</span></td>
+            <td><span class="cell-date">{{ formatDate(interview.interviewDate) }}</span></td>
+            <td>
+              <span class="type-badge" [ngClass]="interview.interviewType === 'ONLINE' ? 'type-online' : 'type-person'">
+                {{ getTypeLabel(interview.interviewType) }}
+              </span>
+            </td>
+            <td>
+              <span *ngIf="interview.interviewType === 'ONLINE' && interview.meetLink" class="cell-link">
+                <a [href]="interview.meetLink" target="_blank">{{ interview.meetLink | slice:0:30 }}...</a>
+              </span>
+              <span *ngIf="interview.interviewType === 'IN_PERSON'">{{ interview.interviewLocation || '-' }}</span>
+              <span *ngIf="!interview.meetLink && interview.interviewType === 'ONLINE'">-</span>
+            </td>
+            <td>
+              <span class="status-badge" [ngClass]="getStatusClass(interview.interviewStatus)">
+                {{ getStatusLabel(interview.interviewStatus) }}
+              </span>
+            </td>
+            <td>
+              <span *ngIf="interview.campaignId">{{ interview.campaignTitle || '#' + interview.campaignId }}</span>
+              <span *ngIf="!interview.campaignId">-</span>
+            </td>
+            <td class="actions-cell">
+              <div class="actions-menu">
+                <ng-container *ngIf="!interview.isDeleted">
+                  <button class="action-btn primary" (click)="editInterview(interview)" title="Modifier">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 20H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M16.5 3.5A2.12 2.12 0 0 1 19 6L7 18L3 19L4 15L16.5 3.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                  <button class="action-btn danger" (click)="deleteInterview(interview)" title="Supprimer">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M8 6V4C8 3 9 2 10 2H14C15 2 16 3 16 4V6M19 6V20C19 21 18 22 17 22H7C6 22 5 21 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                </ng-container>
+                <ng-container *ngIf="interview.isDeleted">
+                  <button class="action-btn success" (click)="restoreInterview(interview)" title="Restaurer">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M3 12A9 9 0 1 0 12 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M12 3L8 7L12 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                </ng-container>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <!-- Pagination -->
+    <div class="pagination-container">
+      <div class="pagination-info">
+        <span class="results-info">
+          Affichage {{ currentPage() * pageSize() + 1 }} - {{ Math.min((currentPage() + 1) * pageSize(), totalElements()) }} 
+          sur {{ totalElements() }} entretiens
+        </span>
+        
+        <div class="page-size-selector">
+          <label for="pageSize">Par page:</label>
+          <div class="select-wrapper">
+            <select id="pageSize" class="page-size-select" [value]="pageSize()" (change)="onPageSizeChange($event)">
+              <option [value]="5">5</option>
+              <option [value]="10">10</option>
+              <option [value]="20">20</option>
+              <option [value]="50">50</option>
+              <option [value]="100">100</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      
+      <div class="pagination-controls" *ngIf="totalElements() > pageSize()">
+        <button class="pagination-btn" [class.disabled]="!hasPreviousPage()" (click)="previousPage()" [disabled]="!hasPreviousPage()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Précédent
+        </button>
+        
+        <div class="page-numbers">
+          <button *ngFor="let page of getPageNumbers()" class="page-number-btn" [class.active]="page === currentPage()" (click)="goToPage(page)">
+            {{ page + 1 }}
+          </button>
+        </div>
+        
+        <button class="pagination-btn" [class.disabled]="!hasNextPage()" (click)="nextPage()" [disabled]="!hasNextPage()">
+          Suivant
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de confirmation suppression -->
+<div class="confirmation-overlay" *ngIf="showDeleteConfirmation" (click)="cancelDeleteInterview()">
+  <div class="confirmation-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-icon danger">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 9V13M12 17H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+        </svg>
+      </div>
+      <h3>Confirmer la suppression</h3>
+    </div>
+    <div class="modal-body">
+      <p>Êtes-vous certain de vouloir supprimer cet entretien ?</p>
+      <div class="item-info" *ngIf="interviewToDelete">
+        <div class="item-details">
+          <strong>Entretien #{{ interviewToDelete.id }}</strong>
+          <span class="item-text">{{ formatDate(interviewToDelete.interviewDate) }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="cancelDeleteInterview()">Annuler</button>
+      <button class="btn-confirm-danger" (click)="confirmDeleteInterview()">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de confirmation restauration -->
+<div class="confirmation-overlay" *ngIf="showRestoreConfirmation()" (click)="cancelRestoreInterview()">
+  <div class="confirmation-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-icon success">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 12A9 9 0 1 0 12 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M12 3L8 7L12 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h3>Confirmer la restauration</h3>
+    </div>
+    <div class="modal-body">
+      <p>Voulez-vous restaurer cet entretien ?</p>
+      <div class="item-info" *ngIf="interviewToRestore()">
+        <div class="item-details">
+          <strong>Entretien #{{ interviewToRestore()?.id }}</strong>
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="cancelRestoreInterview()">Annuler</button>
+      <button class="btn-confirm-success" (click)="confirmRestoreInterview()">Restaurer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal édition -->
+<div class="confirmation-overlay" *ngIf="showEditDialog()" (click)="closeEditDialog()">
+  <div class="edit-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Modification d'entretien</h3>
+      <button class="btn-close" (click)="closeEditDialog()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-content">
+      <form class="edit-form">
+        <div class="form-group">
+          <label class="form-label">Type *</label>
+          <select class="form-select" [(ngModel)]="editFormData.interviewType" name="type">
+            <option value="ONLINE">En ligne</option>
+            <option value="IN_PERSON">En personne</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date et heure</label>
+          <input type="datetime-local" class="form-input" [(ngModel)]="editFormData.interviewDate" name="date" />
+        </div>
+        <div class="form-group" *ngIf="editFormData.interviewType === 'ONLINE'">
+          <label class="form-label">Lien Meet</label>
+          <input type="url" class="form-input" [(ngModel)]="editFormData.meetLink" name="meetLink" />
+        </div>
+        <div class="form-group" *ngIf="editFormData.interviewType === 'IN_PERSON'">
+          <label class="form-label">Lieu</label>
+          <input type="text" class="form-input" [(ngModel)]="editFormData.interviewLocation" name="location" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Statut</label>
+          <select class="form-select" [(ngModel)]="editFormData.interviewStatus" name="status">
+            <option value="PENDING">En attente</option>
+            <option value="SCHEDULED">Planifié</option>
+            <option value="STARTED">En cours</option>
+            <option value="OVER">Terminé</option>
+            <option value="PASSED">Réussi</option>
+            <option value="FAILED">Échoué</option>
+            <option value="POSTPONED">Reporté</option>
+            <option value="ARCHIVED">Archivé</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes</label>
+          <textarea class="form-textarea" [(ngModel)]="editFormData.interviewNote" name="note" rows="3"></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-danger" (click)="deleteInterviewFromEdit()">Supprimer</button>
+      <div class="action-buttons-right">
+        <button class="btn-cancel" (click)="closeEditDialog()">Annuler</button>
+        <button class="btn-confirm-success" (click)="validateInterviewEdit()">Valider</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal création -->
+<div class="confirmation-overlay" *ngIf="showCreateDialog()" (click)="closeCreateDialog()">
+  <div class="edit-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Nouvel entretien</h3>
+      <button class="btn-close" (click)="closeCreateDialog()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-content">
+      <form class="edit-form">
+        <div class="form-group">
+          <label class="form-label">Type *</label>
+          <select class="form-select" [(ngModel)]="createFormData.interviewType" name="type">
+            <option value="ONLINE">En ligne</option>
+            <option value="IN_PERSON">En personne</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date et heure</label>
+          <input type="datetime-local" class="form-input" [(ngModel)]="createFormData.interviewDate" name="date" />
+        </div>
+        <div class="form-group" *ngIf="createFormData.interviewType === 'ONLINE'">
+          <label class="form-label">Lien Meet</label>
+          <input type="url" class="form-input" [(ngModel)]="createFormData.meetLink" name="meetLink" />
+        </div>
+        <div class="form-group" *ngIf="createFormData.interviewType === 'IN_PERSON'">
+          <label class="form-label">Lieu</label>
+          <input type="text" class="form-input" [(ngModel)]="createFormData.interviewLocation" name="location" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes</label>
+          <textarea class="form-textarea" [(ngModel)]="createFormData.interviewNote" name="note" rows="3"></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal-actions">
+      <div class="action-buttons-right">
+        <button class="btn-cancel" (click)="closeCreateDialog()">Annuler</button>
+        <button class="btn-confirm-success" (click)="validateInterviewCreation()">Créer</button>
+      </div>
+    </div>
+  </div>
+</div>

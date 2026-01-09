@@ -1,7 +1,38 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+
+/**
+ * Interface pour les critères de recherche paginée des interviews
+ */
+export interface InterviewSearchCriteria {
+  page?: number;
+  size?: number;
+  search_string?: string;
+  idDe?: string;
+  idA?: string;
+  interviewStatus?: string;
+  interviewType?: string;
+  campaignId?: number;
+  isDeleted?: boolean;
+  dateCreationDe?: string;
+  dateCreationA?: string;
+  dateModificationDe?: string;
+  dateModificationA?: string;
+}
+
+/**
+ * Interface pour la réponse paginée des interviews
+ */
+export interface PagedInterviewResponse {
+  content: Interview[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+}
 
 export interface Interview {
   id?: number;
@@ -216,5 +247,93 @@ export class InterviewService {
       `${this.baseUrl}/finish`,
       request
     );
+  }
+
+  /**
+   * Récupère TOUTES les interviews selon des critères (y compris les supprimées)
+   * @param criteria critères de recherche optionnels
+   * @returns Observable de la liste paginée d'interviews incluant les supprimées
+   */
+  getAllInterviewsByCriteria(criteria: InterviewSearchCriteria = {}): Observable<PagedInterviewResponse> {
+    // Récupérer l'ID de l'utilisateur connecté depuis localStorage
+    const currentUserData = localStorage.getItem('user');
+    const currentUserId = currentUserData ? JSON.parse(currentUserData).id?.toString() || "1" : "1";
+    
+    // Construction de la requête selon le format backend attendu
+    const request = {
+      user: currentUserId,
+      size: criteria.size || 10,
+      index: criteria.page || 0,
+      isSimpleLoading: false,
+      data: {
+        id: criteria.idDe || "",
+        interviewStatus: criteria.interviewStatus || "",
+        interviewType: criteria.interviewType || "",
+        isDeleted: criteria.isDeleted !== undefined ? criteria.isDeleted.toString() : "",
+        searchString: criteria.search_string || "",
+        
+        // Critères de dates
+        ...(criteria.dateCreationDe && criteria.dateCreationDe.trim() && { dateCreationDe: criteria.dateCreationDe }),
+        ...(criteria.dateCreationA && criteria.dateCreationA.trim() && { dateCreationA: criteria.dateCreationA }),
+        ...(criteria.dateModificationDe && criteria.dateModificationDe.trim() && { dateModificationDe: criteria.dateModificationDe }),
+        ...(criteria.dateModificationA && criteria.dateModificationA.trim() && { dateModificationA: criteria.dateModificationA }),
+        
+        // Intervalles d'ID
+        ...(criteria.idDe && criteria.idDe.trim() && { idStart: criteria.idDe }),
+        ...(criteria.idA && criteria.idA.trim() && { idEnd: criteria.idA })
+      }
+    };
+
+    return this.http.post<any>(`${this.baseUrl}/getAllByCriteria`, request).pipe(
+      map(response => {
+        // Vérifier si la réponse contient des données
+        if (!response || (!response.items && !response.item)) {
+          return {
+            content: [],
+            totalElements: 0,
+            totalPages: 0,
+            size: criteria.size || 10,
+            number: criteria.page || 0
+          };
+        }
+        
+        // Traiter les éléments
+        const rawInterviews = response.items || (response.item ? [response.item] : []);
+        
+        // Calculer le nombre total de pages
+        const totalElements = response.totalCount || response.count || rawInterviews.length;
+        const pageSize = criteria.size || 10;
+        const totalPages = Math.ceil(totalElements / pageSize);
+        
+        return {
+          content: rawInterviews,
+          totalElements: totalElements,
+          totalPages: totalPages,
+          size: pageSize,
+          number: criteria.page || 0
+        };
+      }),
+      catchError(error => {
+        console.error('❌ Erreur lors de la récupération des interviews:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Restaure une interview supprimée
+   * @param interviewId ID de l'interview à restaurer
+   * @returns Observable<InterviewResponse>
+   */
+  restoreInterview(interviewId: number): Observable<InterviewResponse> {
+    const request = {
+      user: 1,
+      datas: [{ 
+        id: interviewId,
+        isDeleted: false
+      }]
+    };
+
+    return this.http.post<InterviewResponse>(`${this.baseUrl}/update`, request);
   }
 }

@@ -1,0 +1,604 @@
+<div class="entities-source-tokens-container">
+  <!-- Conteneur header et toolbar avec border-radius -->
+  <div class="header-toolbar-container">
+    <!-- Header -->
+    <div class="page-header">
+      <div class="breadcrumb">
+        <button class="btn-back" (click)="goBackToEntities()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 12H5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 19L5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Retour aux Entites
+        </button>
+        <span class="breadcrumb-separator">/</span>
+        <span class="current-page">Gestion des Tokens Source</span>
+      </div>
+      <h1>Gestion des Tokens Source</h1>
+      <p class="page-description">
+        Administration des tokens d'acces aux campagnes - creation, modification et gestion
+      </p>
+    </div>
+
+    <!-- Barre d'outils -->
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <input 
+          type="text" 
+          class="search-input"
+          placeholder="Rechercher un token..."
+          [(ngModel)]="quickSearch"
+          (input)="onQuickSearch()"
+        />
+        
+        <!-- Checkbox pour afficher les tokens supprimes -->
+        <div class="checkbox-container">
+          <input 
+            type="checkbox" 
+            id="showDeleted" 
+            class="checkbox-input"
+            [checked]="showDeletedSourceTokens"
+            (click)="toggleDeletedSourceTokens()"
+          />
+          <label for="showDeleted" class="checkbox-label">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Afficher les tokens supprimes
+          </label>
+        </div>
+      </div>
+      <div class="toolbar-right">
+        <button class="btn-secondary-pro" (click)="openAdvancedSearch()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 6H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M7 12H17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M10 18H14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Filtres avances
+        </button>
+        <button class="btn-primary-pro" (click)="createSourceToken()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 5V19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Nouveau token
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panneau de filtres avances -->
+  <div class="advanced-search-panel" *ngIf="showAdvancedSearch">
+    <div class="panel-header">
+      <h3>Filtres avances</h3>
+      <button class="btn-close" (click)="openAdvancedSearch()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+    
+    <div class="panel-content">
+      <div class="form-grid">
+        <!-- Ligne 1 : Intervalle d'ID -->
+        <div class="form-row-full">
+          <div class="form-group-inline">
+            <label>ID de</label>
+            <input 
+              type="text" 
+              class="form-input-inline"
+              [(ngModel)]="advancedCriteria.idDe"
+              placeholder="ID minimum"
+            />
+          </div>
+          <span class="range-separator">a</span>
+          <div class="form-group-inline">
+            <input 
+              type="text" 
+              class="form-input-inline"
+              [(ngModel)]="advancedCriteria.idA"
+              placeholder="ID maximum"
+            />
+          </div>
+        </div>
+        
+        <!-- Ligne 2 : Nom du token -->
+        <div class="form-group">
+          <label>Nom du token</label>
+          <input 
+            type="text" 
+            class="form-input"
+            [(ngModel)]="advancedCriteria.sourceTokenName"
+            placeholder="Nom du token"
+          />
+        </div>
+        
+        <!-- Ligne 3 : Campaign ID -->
+        <div class="form-group">
+          <label>ID Campagne</label>
+          <input 
+            type="number" 
+            class="form-input"
+            [(ngModel)]="advancedCriteria.campaignId"
+            placeholder="ID de la campagne"
+          />
+        </div>
+        
+        <!-- Ligne 4 : Supprime -->
+        <div class="form-group">
+          <label>Supprime</label>
+          <select class="form-select" [(ngModel)]="advancedCriteria.isDeleted">
+            <option [ngValue]="undefined">Tous</option>
+            <option [ngValue]="false">Non supprime</option>
+            <option [ngValue]="true">Supprime</option>
+          </select>
+        </div>
+        
+        <!-- Ligne 5 : Date de creation -->
+        <div class="form-row-full">
+          <div class="form-group-inline">
+            <label>Date de creation de</label>
+            <input 
+              type="date" 
+              class="form-input-inline"
+              [(ngModel)]="advancedCriteria.dateCreationDe"
+            />
+          </div>
+          <span class="range-separator">a</span>
+          <div class="form-group-inline">
+            <input 
+              type="date" 
+              class="form-input-inline"
+              [(ngModel)]="advancedCriteria.dateCreationA"
+            />
+          </div>
+        </div>
+      </div>
+      
+      <div class="panel-actions">
+        <button class="btn-secondary-pro" (click)="resetAdvancedSearch()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M1 4V10H7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M23 20V14H17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10M23 14L18.36 18.36A9 9 0 0 1 3.51 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Reinitialiser
+        </button>
+        <button class="btn-primary-pro" (click)="applyAdvancedSearch()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+            <path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Appliquer les filtres
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section principale -->
+  <div class="source-tokens-section">
+    <!-- Stats et informations -->
+    <div class="section-stats">
+      <div class="stats-row">
+        <h2 class="section-title">Tokens Source</h2>
+        <div class="stats-info" *ngIf="!isLoading()">
+          <div class="stat-item">
+            <span>Total:</span>
+            <span class="stat-number">{{ totalElements() }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Etat de chargement -->
+    <div *ngIf="isLoading()" class="loading-state">
+      <div class="loading-spinner"></div>
+      <p>Chargement des tokens...</p>
+    </div>
+
+    <!-- Etat vide -->
+    <div *ngIf="!isLoading() && sourceTokens().length === 0" class="empty-state">
+      <div class="empty-state-icon">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 16.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1v-5.257c0-.245.097-.48.269-.652l5.515-5.515A6 6 0 0115 7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h3>Aucun token trouve</h3>
+      <p>Aucun token ne correspond aux criteres de recherche actuels.</p>
+    </div>
+
+    <!-- Tableau de donnees professionnel -->
+    <div *ngIf="!isLoading() && sourceTokens().length > 0" class="data-table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nom</th>
+            <th>Token</th>
+            <th>ID Campagne</th>
+            <th>Cree le</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let token of sourceTokens(); trackBy: trackBySourceTokenId" 
+              [class.token-deleted]="token.isDeleted">
+            <td>
+              <span class="cell-id">#{{ token.id }}</span>
+            </td>
+            <td>
+              <span class="cell-name">{{ token.sourceTokenName || '-' }}</span>
+            </td>
+            <td>
+              <code class="token-value">{{ token.tokenString || '-' }}</code>
+            </td>
+            <td>
+              <span class="cell-campaign">{{ token.campaignId || token.campaigns_id || '-' }}</span>
+            </td>
+            <td>
+              <span class="cell-date">{{ formatDate(token.createdAt) }}</span>
+            </td>
+            <td class="actions-cell">
+              <div class="actions-menu">
+                <!-- Boutons normaux pour les tokens non supprimes -->
+                <ng-container *ngIf="!token.isDeleted">
+                  <button 
+                    class="action-btn primary" 
+                    (click)="editSourceToken(token)"
+                    title="Modifier le token">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 20H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M16.5 3.5A2.12 2.12 0 0 1 19 6L7 18L3 19L4 15L16.5 3.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                  <button 
+                    class="action-btn danger" 
+                    (click)="deleteSourceToken(token)"
+                    title="Supprimer le token">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                </ng-container>
+                
+                <!-- Bouton de restauration pour les tokens supprimes -->
+                <ng-container *ngIf="token.isDeleted">
+                  <button 
+                    class="action-btn success" 
+                    (click)="restoreSourceToken(token); $event.stopPropagation()"
+                    title="Restaurer le token">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M3 12A9 9 0 1 0 12 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M12 3L8 7L12 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                </ng-container>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <!-- Section de pagination -->
+    <div class="pagination-container">
+      <div class="pagination-info">
+        <span class="results-info">
+          Affichage {{ currentPage() * pageSize() + 1 }} - {{ Math.min((currentPage() + 1) * pageSize(), totalElements()) }} 
+          sur {{ totalElements() }} tokens
+        </span>
+        
+        <!-- Selecteur de taille de page -->
+        <div class="page-size-selector">
+          <label for="pageSize">Par page:</label>
+          <div class="select-wrapper">
+            <select 
+              id="pageSize" 
+              class="page-size-select"
+              [value]="pageSize()"
+              (change)="onPageSizeChange($event)"
+            >
+              <option [value]="5" [selected]="pageSize() === 5">5</option>
+              <option [value]="10" [selected]="pageSize() === 10">10</option>
+              <option [value]="20" [selected]="pageSize() === 20">20</option>
+              <option [value]="50" [selected]="pageSize() === 50">50</option>
+              <option [value]="100" [selected]="pageSize() === 100">100</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Controles de pagination -->
+      <div class="pagination-controls" *ngIf="totalElements() > pageSize()">
+        <!-- Bouton Precedent -->
+        <button 
+          class="pagination-btn"
+          [class.disabled]="!hasPreviousPage()"
+          (click)="previousPage()"
+          [disabled]="!hasPreviousPage()"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Precedent
+        </button>
+        
+        <!-- Numeros de pages -->
+        <div class="page-numbers">
+          <button 
+            *ngFor="let page of getPageNumbers()"
+            class="page-number-btn"
+            [class.active]="page === currentPage()"
+            (click)="goToPage(page)"
+          >
+            {{ page + 1 }}
+          </button>
+        </div>
+        
+        <!-- Bouton Suivant -->
+        <button 
+          class="pagination-btn"
+          [class.disabled]="!hasNextPage()"
+          (click)="nextPage()"
+          [disabled]="!hasNextPage()"
+        >
+          Suivant
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Popup de confirmation de suppression -->
+<div class="confirmation-overlay" *ngIf="showDeleteConfirmation" (click)="cancelDeleteSourceToken()">
+  <div class="confirmation-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-icon danger">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 9V13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M12 17H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+        </svg>
+      </div>
+      <h3>Confirmer la suppression</h3>
+    </div>
+    
+    <div class="modal-body">
+      <p>Etes-vous certain de vouloir supprimer ce token ?</p>
+      <div class="token-info" *ngIf="sourceTokenToDelete">
+        <div class="token-details">
+          <strong>{{ sourceTokenToDelete.sourceTokenName }}</strong>
+          <span class="token-id">#{{ sourceTokenToDelete.id }}</span>
+        </div>
+      </div>
+      <div class="warning-message">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 9V13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M12 17H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M10.29 3.86L1.82 18A2 2 0 0 0 3.55 21H20.45A2 2 0 0 0 22.18 18L13.71 3.86A2 2 0 0 0 10.29 3.86Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Cette action est definitive et ne peut pas etre annulee.
+      </div>
+    </div>
+    
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="cancelDeleteSourceToken()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Annuler
+      </button>
+      <button class="btn-confirm-danger" (click)="confirmDeleteSourceToken()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Supprimer definitivement
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Popup de confirmation de restauration -->
+<div class="confirmation-overlay" *ngIf="showRestoreConfirmation()" (click)="cancelRestoreSourceToken()">
+  <div class="confirmation-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-icon success">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 12A9 9 0 1 0 12 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M12 3L8 7L12 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h3>Confirmer la restauration</h3>
+    </div>
+    
+    <div class="modal-body">
+      <p>Etes-vous certain de vouloir restaurer ce token ?</p>
+      <div class="token-info" *ngIf="sourceTokenToRestore()">
+        <div class="token-details">
+          <strong>{{ sourceTokenToRestore()?.sourceTokenName }}</strong>
+          <span class="token-id">#{{ sourceTokenToRestore()?.id }}</span>
+        </div>
+      </div>
+      <div class="info-message">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+          <path d="M12 8V12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M12 16H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Le token sera reactive et pourra a nouveau etre utilise.
+      </div>
+    </div>
+    
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="cancelRestoreSourceToken()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Annuler
+      </button>
+      <button class="btn-confirm-success" (click)="confirmRestoreSourceToken()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 12A9 9 0 1 0 12 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M12 3L8 7L12 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Restaurer le token
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Popup d'edition de token -->
+<div class="confirmation-overlay" *ngIf="showEditDialog()" (click)="closeEditDialog()">
+  <div class="edit-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Modification de token</h3>
+      <button class="btn-close" (click)="closeEditDialog()" aria-label="Fermer">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+    
+    <div class="modal-content">
+      <form class="edit-form">
+        <!-- ID (readonly) -->
+        <div class="form-group">
+          <label for="edit-id" class="form-label">ID</label>
+          <input 
+            type="text" 
+            id="edit-id"
+            class="form-input readonly"
+            [value]="editFormData.id"
+            readonly
+          />
+        </div>
+
+        <!-- Nom du token -->
+        <div class="form-group">
+          <label for="edit-name" class="form-label">Nom du token *</label>
+          <input 
+            type="text" 
+            id="edit-name"
+            class="form-input"
+            [(ngModel)]="editFormData.sourceTokenName"
+            name="sourceTokenName"
+            placeholder="Nom du token"
+            required
+          />
+        </div>
+
+        <!-- ID Campagne -->
+        <div class="form-group">
+          <label for="edit-campaign" class="form-label">ID Campagne</label>
+          <input 
+            type="number" 
+            id="edit-campaign"
+            class="form-input"
+            [(ngModel)]="editFormData.campaignId"
+            name="campaignId"
+            placeholder="ID de la campagne"
+          />
+        </div>
+      </form>
+    </div>
+    
+    <div class="modal-actions">
+      <button class="btn-danger" (click)="deleteSourceTokenFromEdit()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <polyline points="3,6 5,6 21,6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M19,6 L19,20 C19,21 18,22 17,22 L7,22 C6,22 5,21 5,20 L5,6 M8,6 L8,4 C8,3 9,2 10,2 L14,2 C15,2 16,3 16,4 L16,6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Supprimer
+      </button>
+      <div class="action-buttons-right">
+        <button class="btn-cancel" (click)="closeEditDialog()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Annuler
+        </button>
+        <button class="btn-confirm-success" (click)="validateSourceTokenEdit()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Valider les modifications
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Popup de creation de token -->
+<div class="confirmation-overlay" *ngIf="showCreateDialog()" (click)="closeCreateDialog()">
+  <div class="edit-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Creation de token</h3>
+      <button class="btn-close" (click)="closeCreateDialog()" aria-label="Fermer">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-content">
+      <form class="edit-form">
+        <!-- Nom du token -->
+        <div class="form-group">
+          <label for="create-name" class="form-label">Nom du token *</label>
+          <input
+            type="text"
+            id="create-name"
+            class="form-input"
+            [(ngModel)]="createFormData.sourceTokenName"
+            name="sourceTokenName"
+            placeholder="Nom du token"
+            required
+          />
+        </div>
+
+        <!-- ID Campagne -->
+        <div class="form-group">
+          <label for="create-campaign" class="form-label">ID Campagne</label>
+          <input
+            type="number"
+            id="create-campaign"
+            class="form-input"
+            [(ngModel)]="createFormData.campaignId"
+            name="campaignId"
+            placeholder="ID de la campagne"
+          />
+        </div>
+      </form>
+    </div>
+
+    <div class="modal-actions">
+      <div class="action-buttons-right">
+        <button class="btn-cancel" (click)="closeCreateDialog()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Annuler
+        </button>
+        <button class="btn-confirm-success" (click)="validateSourceTokenCreation()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Creer le token
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

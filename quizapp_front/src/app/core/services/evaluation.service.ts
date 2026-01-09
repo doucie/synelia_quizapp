@@ -1,7 +1,36 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+
+/**
+ * Interface pour les critères de recherche paginée des évaluations
+ */
+export interface EvaluationSearchCriteria {
+  page?: number;
+  size?: number;
+  search_string?: string;
+  idDe?: string;
+  idA?: string;
+  candidateInterviewId?: number;
+  isDeleted?: boolean;
+  dateCreationDe?: string;
+  dateCreationA?: string;
+  dateModificationDe?: string;
+  dateModificationA?: string;
+}
+
+/**
+ * Interface pour la réponse paginée des évaluations
+ */
+export interface PagedEvaluationResponse {
+  content: Evaluation[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+}
 
 export interface Evaluation {
   id?: number;
@@ -156,5 +185,91 @@ export class EvaluationService {
       datas: [{ id }]
     };
     return this.http.post(`${this.evaluationsApiUrl}/delete`, request);
+  }
+
+  /**
+   * Récupère TOUTES les évaluations selon des critères (y compris les supprimées)
+   * @param criteria critères de recherche optionnels
+   * @returns Observable de la liste paginée d'évaluations incluant les supprimées
+   */
+  getAllEvaluationsByCriteria(criteria: EvaluationSearchCriteria = {}): Observable<PagedEvaluationResponse> {
+    // Récupérer l'ID de l'utilisateur connecté depuis localStorage
+    const currentUserData = localStorage.getItem('user');
+    const currentUserId = currentUserData ? JSON.parse(currentUserData).id?.toString() || "1" : "1";
+    
+    // Construction de la requête selon le format backend attendu
+    const request = {
+      user: currentUserId,
+      size: criteria.size || 10,
+      index: criteria.page || 0,
+      isSimpleLoading: false,
+      data: {
+        id: criteria.idDe || "",
+        isDeleted: criteria.isDeleted !== undefined ? criteria.isDeleted.toString() : "",
+        searchString: criteria.search_string || "",
+        
+        // Critères de dates
+        ...(criteria.dateCreationDe && criteria.dateCreationDe.trim() && { dateCreationDe: criteria.dateCreationDe }),
+        ...(criteria.dateCreationA && criteria.dateCreationA.trim() && { dateCreationA: criteria.dateCreationA }),
+        ...(criteria.dateModificationDe && criteria.dateModificationDe.trim() && { dateModificationDe: criteria.dateModificationDe }),
+        ...(criteria.dateModificationA && criteria.dateModificationA.trim() && { dateModificationA: criteria.dateModificationA }),
+        
+        // Intervalles d'ID
+        ...(criteria.idDe && criteria.idDe.trim() && { idStart: criteria.idDe }),
+        ...(criteria.idA && criteria.idA.trim() && { idEnd: criteria.idA })
+      }
+    };
+
+    return this.http.post<any>(`${this.evaluationsApiUrl}/getAllByCriteria`, request).pipe(
+      map(response => {
+        // Vérifier si la réponse contient des données
+        if (!response || (!response.items && !response.item)) {
+          return {
+            content: [],
+            totalElements: 0,
+            totalPages: 0,
+            size: criteria.size || 10,
+            number: criteria.page || 0
+          };
+        }
+        
+        // Traiter les éléments
+        const rawEvaluations = response.items || (response.item ? [response.item] : []);
+        
+        // Calculer le nombre total de pages
+        const totalElements = response.totalCount || response.count || rawEvaluations.length;
+        const pageSize = criteria.size || 10;
+        const totalPages = Math.ceil(totalElements / pageSize);
+        
+        return {
+          content: rawEvaluations,
+          totalElements: totalElements,
+          totalPages: totalPages,
+          size: pageSize,
+          number: criteria.page || 0
+        };
+      }),
+      catchError((error: any) => {
+        console.error('❌ Erreur lors de la récupération des évaluations:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Restaure une évaluation supprimée
+   * @param evaluationId ID de l'évaluation à restaurer
+   * @returns Observable
+   */
+  restoreEvaluation(evaluationId: number): Observable<any> {
+    const request = {
+      user: 1,
+      datas: [{ 
+        id: evaluationId,
+        isDeleted: false
+      }]
+    };
+
+    return this.http.post(`${this.evaluationsApiUrl}/update`, request);
   }
 }

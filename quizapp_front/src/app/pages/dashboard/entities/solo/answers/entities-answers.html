@@ -1,0 +1,599 @@
+<div class="entities-answers-container">
+  <!-- Conteneur header et toolbar avec border-radius -->
+  <div class="header-toolbar-container">
+    <!-- Header -->
+    <div class="page-header">
+      <div class="breadcrumb">
+        <button class="btn-back" (click)="goBackToEntities()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 12H5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 19L5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Retour aux Entités
+        </button>
+        <span class="breadcrumb-separator">/</span>
+        <span class="current-page">Gestion des Réponses</span>
+      </div>
+      <h1>Gestion des Réponses</h1>
+      <p class="page-description">
+        Administration complète des réponses - création, modification et suppression
+      </p>
+    </div>
+
+    <!-- Barre d'outils -->
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <input 
+          type="text" 
+          class="search-input"
+          placeholder="Rechercher une réponse..."
+          [(ngModel)]="quickSearch"
+          (input)="onQuickSearch()"
+        />
+        
+        <!-- Checkbox pour afficher les réponses supprimées -->
+        <div class="checkbox-container">
+          <input 
+            type="checkbox" 
+            id="showDeleted" 
+            class="checkbox-input"
+            [checked]="showDeletedAnswers"
+            (click)="toggleDeletedAnswers()"
+          />
+          <label for="showDeleted" class="checkbox-label">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Afficher les réponses supprimées
+          </label>
+        </div>
+      </div>
+      <div class="toolbar-right">
+        <button class="btn-secondary-pro" (click)="openAdvancedSearch()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 6H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M7 12H17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M10 18H14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Filtres avancés
+        </button>
+        <button class="btn-primary-pro" (click)="createAnswer()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 5V19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Nouvelle réponse
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panneau de filtres avancés -->
+  <div class="advanced-search-panel" *ngIf="showAdvancedSearch">
+    <div class="panel-header">
+      <h3>Filtres avancés</h3>
+      <button class="btn-close" (click)="openAdvancedSearch()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+    
+    <div class="panel-content">
+      <div class="form-grid">
+        <!-- Ligne 1 : Intervalle d'ID -->
+        <div class="form-row-full">
+          <div class="form-group-inline">
+            <label>ID de</label>
+            <input 
+              type="text" 
+              class="form-input-inline"
+              [(ngModel)]="advancedCriteria.idDe"
+              placeholder="ID minimum"
+            />
+          </div>
+          <span class="range-separator">à</span>
+          <div class="form-group-inline">
+            <input 
+              type="text" 
+              class="form-input-inline"
+              [(ngModel)]="advancedCriteria.idA"
+              placeholder="ID maximum"
+            />
+          </div>
+        </div>
+        
+        <!-- Ligne 2 : Texte réponse -->
+        <div class="form-group">
+          <label>Texte de la réponse</label>
+          <input 
+            type="text" 
+            class="form-input"
+            [(ngModel)]="advancedCriteria.answerText"
+            placeholder="Contenu de la réponse"
+          />
+        </div>
+        
+        <!-- Ligne 3 : Question ID, Supprimé -->
+        <div class="form-group">
+          <label>ID Question</label>
+          <input 
+            type="number" 
+            class="form-input"
+            [(ngModel)]="advancedCriteria.questionId"
+            placeholder="ID de la question liée"
+          />
+        </div>
+        
+        <div class="form-group">
+          <label>Supprimé</label>
+          <select class="form-select" [(ngModel)]="advancedCriteria.isDeleted">
+            <option [ngValue]="undefined">Tous</option>
+            <option [ngValue]="false">Non supprimé</option>
+            <option [ngValue]="true">Supprimé</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="panel-actions">
+        <button class="btn-secondary-pro" (click)="resetAdvancedSearch()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M1 4V10H7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M23 20V14H17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10M23 14L18.36 18.36A9 9 0 0 1 3.51 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Réinitialiser
+        </button>
+        <button class="btn-primary-pro" (click)="applyAdvancedSearch()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+            <path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Appliquer les filtres
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section principale -->
+  <div class="answers-section">
+    <!-- Stats et informations -->
+    <div class="section-stats">
+      <div class="stats-row">
+        <h2 class="section-title">Réponses</h2>
+        <div class="stats-info" *ngIf="!isLoading()">
+          <div class="stat-item">
+            <span>Total:</span>
+            <span class="stat-number">{{ totalElements() }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- État de chargement -->
+    <div *ngIf="isLoading()" class="loading-state">
+      <div class="loading-spinner"></div>
+      <p>Chargement des réponses...</p>
+    </div>
+
+    <!-- État vide -->
+    <div *ngIf="!isLoading() && answers().length === 0" class="empty-state">
+      <div class="empty-state-icon">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" stroke="currentColor" stroke-width="2"/>
+          <path d="M6 8H18M6 12H14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h3>Aucune réponse trouvée</h3>
+      <p>Aucune réponse ne correspond aux critères de recherche actuels.</p>
+    </div>
+
+    <!-- Tableau de données -->
+    <div *ngIf="!isLoading() && answers().length > 0" class="data-table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Texte de la réponse</th>
+            <th>Question ID</th>
+            <th>Ordre</th>
+            <th>Créé le</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let answer of answers(); trackBy: trackByAnswerId" 
+              [class.answer-deleted]="answer.isDeleted">
+            <td>
+              <span class="cell-id">#{{ answer.id }}</span>
+            </td>
+            <td>
+              <span class="cell-text" [title]="answer.answerText">{{ truncateText(answer.answerText, 60) }}</span>
+            </td>
+            <td>
+              <span class="cell-question-id" *ngIf="answer.questionId">#{{ answer.questionId }}</span>
+              <span *ngIf="!answer.questionId" style="color: var(--text-secondary);">-</span>
+            </td>
+            <td>
+              <span class="cell-order">{{ answer.displayOrder || 1 }}</span>
+            </td>
+            <td>
+              <span class="cell-date">{{ formatDate(answer.dateCreation) }}</span>
+            </td>
+            <td class="actions-cell">
+              <div class="actions-menu">
+                <ng-container *ngIf="!answer.isDeleted">
+                  <button 
+                    class="action-btn primary" 
+                    (click)="editAnswer(answer)"
+                    title="Modifier la réponse">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 20H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M16.5 3.5A2.12 2.12 0 0 1 19 6L7 18L3 19L4 15L16.5 3.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                  <button 
+                    class="action-btn danger" 
+                    (click)="deleteAnswer(answer)"
+                    title="Supprimer la réponse">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                </ng-container>
+                
+                <ng-container *ngIf="answer.isDeleted">
+                  <button 
+                    class="action-btn success" 
+                    (click)="restoreAnswer(answer); $event.stopPropagation()"
+                    title="Restaurer la réponse">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M3 12A9 9 0 1 0 12 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M12 3L8 7L12 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                </ng-container>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <!-- Section de pagination -->
+    <div class="pagination-container">
+      <div class="pagination-info">
+        <span class="results-info">
+          Affichage {{ currentPage() * pageSize() + 1 }} - {{ Math.min((currentPage() + 1) * pageSize(), totalElements()) }} 
+          sur {{ totalElements() }} réponses
+        </span>
+        
+        <div class="page-size-selector">
+          <label for="pageSize">Par page:</label>
+          <div class="select-wrapper">
+            <select 
+              id="pageSize" 
+              class="page-size-select"
+              [value]="pageSize()"
+              (change)="onPageSizeChange($event)"
+            >
+              <option [value]="5" [selected]="pageSize() === 5">5</option>
+              <option [value]="10" [selected]="pageSize() === 10">10</option>
+              <option [value]="20" [selected]="pageSize() === 20">20</option>
+              <option [value]="50" [selected]="pageSize() === 50">50</option>
+              <option [value]="100" [selected]="pageSize() === 100">100</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      
+      <div class="pagination-controls" *ngIf="totalElements() > pageSize()">
+        <button 
+          class="pagination-btn"
+          [class.disabled]="!hasPreviousPage()"
+          (click)="previousPage()"
+          [disabled]="!hasPreviousPage()"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Précédent
+        </button>
+        
+        <div class="page-numbers">
+          <button 
+            *ngFor="let page of getPageNumbers()"
+            class="page-number-btn"
+            [class.active]="page === currentPage()"
+            (click)="goToPage(page)"
+          >
+            {{ page + 1 }}
+          </button>
+        </div>
+        
+        <button 
+          class="pagination-btn"
+          [class.disabled]="!hasNextPage()"
+          (click)="nextPage()"
+          [disabled]="!hasNextPage()"
+        >
+          Suivant
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Popup de confirmation de suppression -->
+<div class="confirmation-overlay" *ngIf="showDeleteConfirmation" (click)="cancelDeleteAnswer()">
+  <div class="confirmation-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-icon danger">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 9V13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M12 17H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+        </svg>
+      </div>
+      <h3>Confirmer la suppression</h3>
+    </div>
+    
+    <div class="modal-body">
+      <p>Êtes-vous certain de vouloir supprimer cette réponse ?</p>
+      <div class="item-info" *ngIf="answerToDelete">
+        <div class="item-details">
+          <strong>ID: #{{ answerToDelete.id }}</strong>
+          <span class="item-text">{{ truncateText(answerToDelete.answerText, 100) }}</span>
+        </div>
+      </div>
+      <div class="warning-message">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 9V13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M12 17H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M10.29 3.86L1.82 18A2 2 0 0 0 3.55 21H20.45A2 2 0 0 0 22.18 18L13.71 3.86A2 2 0 0 0 10.29 3.86Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Cette action peut être annulée via la restauration.
+      </div>
+    </div>
+    
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="cancelDeleteAnswer()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Annuler
+      </button>
+      <button class="btn-confirm-danger" (click)="confirmDeleteAnswer()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M8 6V4C8 3 9 2 10 2H14C15 2 16 3 16 4V6M19 6V20C19 21 18 22 17 22H7C6 22 5 21 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Supprimer
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Popup de confirmation de restauration -->
+<div class="confirmation-overlay" *ngIf="showRestoreConfirmation()" (click)="cancelRestoreAnswer()">
+  <div class="confirmation-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-icon success">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 12A9 9 0 1 0 12 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M12 3L8 7L12 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h3>Confirmer la restauration</h3>
+    </div>
+    
+    <div class="modal-body">
+      <p>Êtes-vous certain de vouloir restaurer cette réponse ?</p>
+      <div class="item-info" *ngIf="answerToRestore()">
+        <div class="item-details">
+          <strong>ID: #{{ answerToRestore()?.id }}</strong>
+          <span class="item-text">{{ truncateText(answerToRestore()?.answerText, 100) }}</span>
+        </div>
+      </div>
+      <div class="info-message">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+          <path d="M12 8V12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M12 16H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        La réponse sera réactivée et disponible.
+      </div>
+    </div>
+    
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="cancelRestoreAnswer()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Annuler
+      </button>
+      <button class="btn-confirm-success" (click)="confirmRestoreAnswer()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 12A9 9 0 1 0 12 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M12 3L8 7L12 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Restaurer
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Popup d'édition -->
+<div class="confirmation-overlay" *ngIf="showEditDialog()" (click)="closeEditDialog()">
+  <div class="edit-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Modification de réponse</h3>
+      <button class="btn-close" (click)="closeEditDialog()" aria-label="Fermer">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+    
+    <div class="modal-content">
+      <form class="edit-form">
+        <div class="form-group">
+          <label for="edit-id" class="form-label">ID</label>
+          <input 
+            type="text" 
+            id="edit-id"
+            class="form-input readonly"
+            [value]="editFormData.id"
+            readonly
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="edit-answerText" class="form-label">Texte de la réponse *</label>
+          <textarea 
+            id="edit-answerText"
+            class="form-textarea"
+            [(ngModel)]="editFormData.answerText"
+            name="answerText"
+            placeholder="Contenu de la réponse"
+            rows="4"
+            required
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="edit-questionId" class="form-label">ID Question</label>
+          <input 
+            type="number" 
+            id="edit-questionId"
+            class="form-input"
+            [(ngModel)]="editFormData.questionId"
+            name="questionId"
+            placeholder="ID de la question liée (optionnel)"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="edit-displayOrder" class="form-label">Ordre d'affichage</label>
+          <input 
+            type="number" 
+            id="edit-displayOrder"
+            class="form-input"
+            [(ngModel)]="editFormData.displayOrder"
+            name="displayOrder"
+            placeholder="1"
+            min="1"
+          />
+        </div>
+      </form>
+    </div>
+    
+    <div class="modal-actions">
+      <button class="btn-danger" (click)="deleteAnswerFromEdit()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <polyline points="3,6 5,6 21,6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M19,6 L19,20 C19,21 18,22 17,22 L7,22 C6,22 5,21 5,20 L5,6 M8,6 L8,4 C8,3 9,2 10,2 L14,2 C15,2 16,3 16,4 L16,6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Supprimer
+      </button>
+      <div class="action-buttons-right">
+        <button class="btn-cancel" (click)="closeEditDialog()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Annuler
+        </button>
+        <button class="btn-confirm-success" (click)="validateAnswerEdit()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Valider les modifications
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Popup de création -->
+<div class="confirmation-overlay" *ngIf="showCreateDialog()" (click)="closeCreateDialog()">
+  <div class="edit-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Création de réponse</h3>
+      <button class="btn-close" (click)="closeCreateDialog()" aria-label="Fermer">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-content">
+      <form class="edit-form">
+        <div class="form-group">
+          <label for="create-answerText" class="form-label">Texte de la réponse *</label>
+          <textarea 
+            id="create-answerText"
+            class="form-textarea"
+            [(ngModel)]="createFormData.answerText"
+            name="answerText"
+            placeholder="Contenu de la réponse"
+            rows="4"
+            required
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="create-questionId" class="form-label">ID Question</label>
+          <input 
+            type="number" 
+            id="create-questionId"
+            class="form-input"
+            [(ngModel)]="createFormData.questionId"
+            name="questionId"
+            placeholder="ID de la question liée (optionnel)"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="create-displayOrder" class="form-label">Ordre d'affichage</label>
+          <input 
+            type="number" 
+            id="create-displayOrder"
+            class="form-input"
+            [(ngModel)]="createFormData.displayOrder"
+            name="displayOrder"
+            placeholder="1"
+            min="1"
+          />
+        </div>
+      </form>
+    </div>
+
+    <div class="modal-actions">
+      <div class="action-buttons-right">
+        <button class="btn-cancel" (click)="closeCreateDialog()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Annuler
+        </button>
+        <button class="btn-confirm-success" (click)="validateAnswerCreation()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Créer la réponse
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

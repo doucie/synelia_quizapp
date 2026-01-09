@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cahier des Charges - SyneliaQuizApp</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation latérale -->
+    <nav id="sidebar">
+        <div class="nav-header">
+            <span class="nav-title">Navigation</span>
+            <button id="closeSidebar">×</button>
+        </div>
+        <ul id="navList"></ul>
+    </nav>
+
+    <button id="menuToggle">☰</button>
+
+    <!-- Toggle Dark Mode -->
+    <button id="themeToggle" title="Basculer mode clair/sombre">
+        <span class="icon-sun">Clair</span>
+        <span class="icon-moon">Sombre</span>
+    </button>
+
+    <!-- Navigateur de pages -->
+    <div id="pageNavigator">
+        <button id="prevPage" title="Page précédente">‹</button>
+        <span id="pageIndicator">1 / 1</span>
+        <button id="nextPage" title="Page suivante">›</button>
+        <div class="chapter-nav">
+            <select id="chapterSelect" title="Aller au chapitre">
+                <option value="">— Sections —</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Panneau Inspecteur de Styles -->
+    <aside id="styleInspector">
+        <div class="inspector-header">
+            <span>Inspecteur de Styles</span>
+            <button id="closeInspector">×</button>
+        </div>
+        <div class="inspector-content">
+            <p class="inspector-hint">Cliquez sur n'importe quel élément du document pour voir ses styles.</p>
+            
+            <div id="inspectorDetails" style="display: none;">
+                <div class="inspector-section">
+                    <h4>Élément</h4>
+                    <div class="style-row">
+                        <span class="style-label">Balise</span>
+                        <span class="style-value" id="elemTag">-</span>
+                    </div>
+                    <div class="style-row">
+                        <span class="style-label">Classe(s)</span>
+                        <span class="style-value" id="elemClass">-</span>
+                    </div>
+                </div>
+
+                <div class="inspector-section">
+                    <h4>Typographie</h4>
+                    <div class="style-row">
+                        <span class="style-label">Police</span>
+                        <span class="style-value copyable" id="fontFamily">-</span>
+                    </div>
+                    <div class="style-row">
+                        <span class="style-label">Taille</span>
+                        <span class="style-value copyable" id="fontSize">-</span>
+                    </div>
+                    <div class="style-row">
+                        <span class="style-label">Graisse</span>
+                        <span class="style-value copyable" id="fontWeight">-</span>
+                    </div>
+                    <div class="style-row">
+                        <span class="style-label">Interligne</span>
+                        <span class="style-value copyable" id="lineHeight">-</span>
+                    </div>
+                </div>
+
+                <div class="inspector-section">
+                    <h4>Couleurs</h4>
+                    <div class="style-row">
+                        <span class="style-label">Texte</span>
+                        <span class="style-value copyable" id="textColor">-</span>
+                        <span class="color-preview" id="textColorPreview"></span>
+                    </div>
+                    <div class="style-row">
+                        <span class="style-label">Fond</span>
+                        <span class="style-value copyable" id="bgColor">-</span>
+                        <span class="color-preview" id="bgColorPreview"></span>
+                    </div>
+                </div>
+
+                <div class="inspector-section">
+                    <h4>Espacement</h4>
+                    <div class="style-row">
+                        <span class="style-label">Marge ext.</span>
+                        <span class="style-value copyable" id="margin">-</span>
+                    </div>
+                    <div class="style-row">
+                        <span class="style-label">Marge int.</span>
+                        <span class="style-value copyable" id="padding">-</span>
+                    </div>
+                </div>
+
+                <div class="inspector-section">
+                    <h4>Pour Word</h4>
+                    <div id="wordTips" class="word-tips"></div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <button id="inspectorToggle" title="Inspecteur de styles">CSS</button>
+
+    <!-- ============================================
+         CONTENEUR DES PAGES (généré dynamiquement)
+         ============================================ -->
+    <main class="document" id="documentContainer">
+        <!-- Les pages seront générées ici par JavaScript -->
+    </main>
+
+    <!-- ============================================
+         CONTENU SOURCE (caché, utilisé par le script)
+         Utiliser class="page-break" pour forcer un saut de page
+         Utiliser data-section="nom" pour marquer les sections
+         ============================================ -->
+    <div id="contentSource" style="display: none;">
+
+        <!-- ==================== PAGE DE COUVERTURE ==================== -->
+        <div class="cover-content" data-type="cover">
+            <div class="logos">
+                <div class="logo-placeholder">[Logo SYNELIA]</div>
+            </div>
+            
+            <span class="document-badge">Document Technique</span>
+            
+            <h1 class="company-name">SYNELIA</h1>
+            
+            <div class="cover-separator"></div>
+            
+            <p class="document-type">Cahier des Charges Fonctionnel</p>
+            
+            <div class="project-title">
+                Application Web de Gestion du Processus de Recrutement avec Évaluation Technique Automatisée
+                <br><strong>SyneliaQuizApp</strong>
+            </div>
+            
+            <div class="cover-separator"></div>
+            
+            <div class="cover-metadata">
+                <div class="metadata-item">
+                    <p class="metadata-label">Version</p>
+                    <p class="metadata-value"><span class="version-badge">1.0</span></p>
+                </div>
+                <div class="metadata-item">
+                    <p class="metadata-label">Date</p>
+                    <p class="metadata-value">7 janvier 2026</p>
+                </div>
+                <div class="metadata-item">
+                    <p class="metadata-label">Auteur</p>
+                    <p class="metadata-value">[NOM Prénom]</p>
+                </div>
+                <div class="metadata-item">
+                    <p class="metadata-label">Statut</p>
+                    <p class="metadata-value">En cours de rédaction</p>
+                </div>
+            </div>
+            
+            <p style="font-size: 0.85rem; color: var(--text-light);">
+                Document confidentiel - Usage interne uniquement
+            </p>
+        </div>
+
+        <!-- ==================== HISTORIQUE DES VERSIONS ==================== -->
+        <div class="page-break" data-section="historique" data-title="Historique des versions"></div>
+        <h2 class="page-title centered">Historique des Versions</h2>
+        
+        <div class="version-history">
+            <div class="version-entry">
+                <div class="version-info">
+                    <span class="version-number">v1.0</span>
+                    <p class="version-date">07/01/2026</p>
+                </div>
+                <div class="version-changes">
+                    <strong>[NOM Prénom]</strong> - Création initiale du document
+                    <ul>
+                        <li>Rédaction de la structure générale</li>
+                        <li>Définition du périmètre fonctionnel</li>
+                        <li>Description des modules principaux</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="version-entry">
+                <div class="version-info">
+                    <span class="version-number">v0.1</span>
+                    <p class="version-date">01/01/2026</p>
+                </div>
+                <div class="version-changes">
+                    <strong>[NOM Prénom]</strong> - Ébauche
+                    <ul>
+                        <li>Création du squelette du document</li>
+                        <li>Collecte des besoins initiaux</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== SOMMAIRE ==================== -->
+        <div class="page-break" data-section="sommaire" data-title="Sommaire"></div>
+        <h2 class="page-title centered">Sommaire</h2>
+        
+        <div class="toc">
+            <div class="toc-item main">Introduction</div>
+            
+            <div class="toc-section">
+                <span class="toc-section-number">I</span>
+                Présentation Générale
+            </div>
+            <div class="toc-item"><span>1. Contexte du projet</span></div>
+            <div class="toc-item"><span>2. Objectifs</span></div>
+            <div class="toc-item"><span>3. Périmètre fonctionnel</span></div>
+            
+            <div class="toc-section">
+                <span class="toc-section-number">II</span>
+                Acteurs et Cas d'Utilisation
+            </div>
+            <div class="toc-item"><span>4. Identification des acteurs</span></div>
+            <div class="toc-item"><span>5. Cas d'utilisation</span></div>
+            
+            <div class="toc-section">
+                <span class="toc-section-number">III</span>
+                Spécifications Fonctionnelles
+            </div>
+            <div class="toc-item"><span>6. Exigences fonctionnelles</span></div>
+            <div class="toc-item"><span>7. Exigences techniques</span></div>
+            
+            <div class="toc-section">
+                <span class="toc-section-number">IV</span>
+                Annexes
+            </div>
+            <div class="toc-item"><span>Glossaire</span></div>
+            <div class="toc-item"><span>Références</span></div>
+        </div>
+
+        <!-- ==================== INTRODUCTION ==================== -->
+        <div class="page-break" data-section="introduction" data-title="Introduction"></div>
+        <h2 class="page-title centered">Introduction</h2>
+        
+        <p>Ce document constitue le <strong>Cahier des Charges Fonctionnel</strong> de l'application SyneliaQuizApp, une solution web dédiée à la gestion du processus de recrutement avec évaluation technique automatisée.</p>
+        
+        <p>Il a pour objectif de formaliser les besoins exprimés par l'entreprise SYNELIA et de définir les spécifications fonctionnelles et techniques de la solution à développer.</p>
+        
+        <div class="info-box note">
+            <strong>Objectif du document</strong><br>
+            Ce cahier des charges sert de référence commune entre les parties prenantes du projet. Il définit le périmètre, les fonctionnalités attendues et les contraintes à respecter.
+        </div>
+        
+        <h3 class="section-heading">Structure du document</h3>
+        
+        <p>Le présent document est organisé comme suit :</p>
+        
+        <ul class="styled-list">
+            <li><strong>Partie I</strong> : Présentation générale du projet (contexte, objectifs, périmètre)</li>
+            <li><strong>Partie II</strong> : Identification des acteurs et cas d'utilisation</li>
+            <li><strong>Partie III</strong> : Spécifications fonctionnelles et techniques détaillées</li>
+            <li><strong>Partie IV</strong> : Annexes (glossaire, références)</li>
+        </ul>
+
+        <!-- ==================== PARTIE I ==================== -->
+        <div class="page-break" data-type="section" data-section="partie1" data-title="Partie I"></div>
+        <div class="section-content">
+            <span class="section-number">I</span>
+            <h2 class="section-main-title">Présentation Générale</h2>
+            <p class="section-description">Cette partie présente le contexte du projet, les objectifs poursuivis et le périmètre fonctionnel de l'application.</p>
+            <div class="section-separator"></div>
+        </div>
+
+        <!-- ==================== CHAPITRE 1 ==================== -->
+        <div class="page-break" data-section="chapitre1" data-title="1. Contexte du projet"></div>
+        <h2 class="chapter-title">
+            <span class="chapter-number">1</span>
+            <span class="chapter-text">Contexte du Projet</span>
+        </h2>
+        
+        <h3 class="section-heading">1.1 Présentation de l'entreprise</h3>
+        
+        <p>SYNELIA est une entreprise spécialisée dans le développement de solutions numériques et l'accompagnement des organisations dans leur transformation digitale.</p>
+        
+        <p class="placeholder">[Compléter avec la présentation détaillée de l'entreprise]</p>
+        
+        <h3 class="section-heading">1.2 Problématique</h3>
+        
+        <p>Dans le cadre de sa croissance, SYNELIA fait face à des défis récurrents en matière de recrutement de talents techniques :</p>
+        
+        <ul class="styled-list">
+            <li>Volume croissant de candidatures à traiter</li>
+            <li>Difficulté d'évaluer objectivement les compétences techniques</li>
+            <li>Temps considérable consacré aux entretiens préliminaires</li>
+            <li>Absence d'outil centralisé pour le suivi du recrutement</li>
+            <li>Coordination difficile entre plusieurs recruteurs</li>
+        </ul>
+        
+        <h3 class="section-heading">1.3 Solution proposée</h3>
+        
+        <p>Face à ces constats, le projet <strong>SyneliaQuizApp</strong> vise à développer une application web complète permettant de :</p>
+        
+        <div class="info-box success">
+            Centraliser la gestion des campagnes de recrutement<br>
+            Automatiser l'évaluation technique via des quiz<br>
+            Faciliter la collaboration entre recruteurs<br>
+            Améliorer l'expérience candidat
+        </div>
+
+        <!-- ==================== CHAPITRE 2 ==================== -->
+        <div class="page-break" data-section="chapitre2" data-title="2. Objectifs"></div>
+        <h2 class="chapter-title">
+            <span class="chapter-number">2</span>
+            <span class="chapter-text">Objectifs du Projet</span>
+        </h2>
+        
+        <h3 class="section-heading">2.1 Objectifs généraux</h3>
+        
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>Objectif</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Digitalisation</strong></td>
+                    <td>Transformer le processus de recrutement manuel en workflow numérique intégré</td>
+                </tr>
+                <tr>
+                    <td><strong>Automatisation</strong></td>
+                    <td>Automatiser l'évaluation technique des candidats via des quiz</td>
+                </tr>
+                <tr>
+                    <td><strong>Collaboration</strong></td>
+                    <td>Permettre aux recruteurs de travailler ensemble sur les mêmes campagnes</td>
+                </tr>
+                <tr>
+                    <td><strong>Traçabilité</strong></td>
+                    <td>Conserver un historique complet de chaque candidature</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h3 class="section-heading">2.2 Objectifs spécifiques</h3>
+        
+        <ul class="requirement-list">
+            <li>
+                <span class="req-priority must">MUST</span>
+                <span>Développer une application web moderne et responsive</span>
+            </li>
+            <li>
+                <span class="req-priority must">MUST</span>
+                <span>Implémenter un système d'authentification sécurisé avec gestion des rôles</span>
+            </li>
+            <li>
+                <span class="req-priority must">MUST</span>
+                <span>Créer un module de gestion des campagnes de recrutement</span>
+            </li>
+            <li>
+                <span class="req-priority must">MUST</span>
+                <span>Concevoir une interface de passage de quiz avec chronomètre</span>
+            </li>
+            <li>
+                <span class="req-priority should">SHOULD</span>
+                <span>Développer un module de planification des entretiens</span>
+            </li>
+            <li>
+                <span class="req-priority should">SHOULD</span>
+                <span>Implémenter une interface d'évaluation collaborative</span>
+            </li>
+            <li>
+                <span class="req-priority could">COULD</span>
+                <span>Créer un système de notifications en temps réel</span>
+            </li>
+        </ul>
+
+        <!-- ==================== CHAPITRE 3 ==================== -->
+        <div class="page-break" data-section="chapitre3" data-title="3. Périmètre"></div>
+        <h2 class="chapter-title">
+            <span class="chapter-number">3</span>
+            <span class="chapter-text">Périmètre Fonctionnel</span>
+        </h2>
+        
+        <h3 class="section-heading">3.1 Fonctionnalités incluses (In Scope)</h3>
+        
+        <table class="styled-table compact">
+            <thead>
+                <tr>
+                    <th>Module</th>
+                    <th>Fonctionnalités</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Authentification</strong></td>
+                    <td>Connexion, inscription, récupération mot de passe, gestion des rôles</td>
+                </tr>
+                <tr>
+                    <td><strong>Référentiels</strong></td>
+                    <td>Gestion des départements, spécialités, questions, réponses</td>
+                </tr>
+                <tr>
+                    <td><strong>Campagnes</strong></td>
+                    <td>Création, configuration, tokens de partage, statistiques</td>
+                </tr>
+                <tr>
+                    <td><strong>Candidatures</strong></td>
+                    <td>Formulaire, upload CV, vérification email, suivi</td>
+                </tr>
+                <tr>
+                    <td><strong>Quiz</strong></td>
+                    <td>Passage, chronomètre, calcul de score automatique</td>
+                </tr>
+                <tr>
+                    <td><strong>Entretiens</strong></td>
+                    <td>Planification, convocations, gestion des statuts</td>
+                </tr>
+                <tr>
+                    <td><strong>Évaluations</strong></td>
+                    <td>Notation collaborative, commentaires, temps réel</td>
+                </tr>
+                <tr>
+                    <td><strong>Décisions</strong></td>
+                    <td>Pré-sélection, décision finale, notifications</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h3 class="section-heading">3.2 Fonctionnalités exclues (Out of Scope)</h3>
+        
+        <div class="info-box warning">
+            <strong>Non inclus dans cette version :</strong>
+            <ul class="styled-list">
+                <li>Intégration avec des calendriers externes (Google, Outlook)</li>
+                <li>Visioconférence intégrée</li>
+                <li>Matching IA des CV</li>
+                <li>Application mobile native</li>
+                <li>Support multi-langue</li>
+            </ul>
+        </div>
+
+        <!-- ==================== PARTIE II ==================== -->
+        <div class="page-break" data-type="section" data-section="partie2" data-title="Partie II"></div>
+        <div class="section-content">
+            <span class="section-number">II</span>
+            <h2 class="section-main-title">Acteurs et Cas d'Utilisation</h2>
+            <p class="section-description">Cette partie identifie les différents acteurs du système et décrit leurs interactions avec l'application.</p>
+            <div class="section-separator"></div>
+        </div>
+
+        <!-- ==================== CHAPITRE 4 ==================== -->
+        <div class="page-break" data-section="chapitre4" data-title="4. Acteurs du système"></div>
+        <h2 class="chapter-title">
+            <span class="chapter-number">4</span>
+            <span class="chapter-text">Identification des Acteurs</span>
+        </h2>
+        
+        <h3 class="section-heading">4.1 Acteurs internes</h3>
+        
+        <div class="actor-grid">
+            <div class="actor-card">
+                <div class="actor-icon">SA</div>
+                <p class="actor-name">Super Administrateur</p>
+                <p class="actor-desc">Configuration système, gestion globale de toutes les entités</p>
+            </div>
+            <div class="actor-card">
+                <div class="actor-icon">AD</div>
+                <p class="actor-name">Administrateur</p>
+                <p class="actor-desc">Gestion RH, paramétrage des campagnes et utilisateurs</p>
+            </div>
+            <div class="actor-card">
+                <div class="actor-icon">RE</div>
+                <p class="actor-name">Recruteur</p>
+                <p class="actor-desc">Évaluation des candidats, entretiens, prise de décision</p>
+            </div>
+        </div>
+        
+        <h3 class="section-heading">4.2 Acteurs externes</h3>
+        
+        <div class="actor-grid">
+            <div class="actor-card">
+                <div class="actor-icon">CA</div>
+                <p class="actor-name">Candidat</p>
+                <p class="actor-desc">Postulation, passage du quiz, suivi de candidature</p>
+            </div>
+            <div class="actor-card">
+                <div class="actor-icon">VI</div>
+                <p class="actor-name">Visiteur</p>
+                <p class="actor-desc">Consultation des offres (accès public)</p>
+            </div>
+        </div>
+        
+        <h3 class="section-heading">4.3 Matrice des permissions</h3>
+        
+        <table class="styled-table compact requirements-table">
+            <thead>
+                <tr>
+                    <th>Fonctionnalité</th>
+                    <th class="priority-cell">Super Admin</th>
+                    <th class="priority-cell">Admin</th>
+                    <th class="priority-cell">Recruteur</th>
+                    <th class="priority-cell">Candidat</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Gestion des entités</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">❌</td>
+                    <td class="priority-cell">❌</td>
+                    <td class="priority-cell">❌</td>
+                </tr>
+                <tr>
+                    <td>Gestion des utilisateurs</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">👁️</td>
+                    <td class="priority-cell">❌</td>
+                </tr>
+                <tr>
+                    <td>Gestion des campagnes</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">❌</td>
+                </tr>
+                <tr>
+                    <td>Gestion des candidatures</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">❌</td>
+                </tr>
+                <tr>
+                    <td>Passage du quiz</td>
+                    <td class="priority-cell">❌</td>
+                    <td class="priority-cell">❌</td>
+                    <td class="priority-cell">❌</td>
+                    <td class="priority-cell">✅</td>
+                </tr>
+                <tr>
+                    <td>Évaluations</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">❌</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- ==================== CHAPITRE 5 ==================== -->
+        <div class="page-break" data-section="chapitre5" data-title="5. Cas d'utilisation"></div>
+        <h2 class="chapter-title">
+            <span class="chapter-number">5</span>
+            <span class="chapter-text">Cas d'Utilisation</span>
+        </h2>
+        
+        <h3 class="section-heading">5.1 Diagramme des cas d'utilisation</h3>
+        
+        <div class="figure">
+            <div class="figure-placeholder">
+                <span>[Diagramme UML des cas d'utilisation à insérer]</span>
+            </div>
+            <p class="figure-caption">Figure 1 : Diagramme des cas d'utilisation - Vue globale</p>
+        </div>
+        
+        <h3 class="section-heading">5.2 Parcours Candidat</h3>
+        
+        <p>Le parcours candidat comprend les étapes suivantes :</p>
+        
+        <ol class="styled-list" style="list-style: decimal; margin-left: 2rem;">
+            <li>Découverte de l'offre via un lien de partage (SourceToken)</li>
+            <li>Soumission du formulaire de candidature avec CV</li>
+            <li>Réception de l'email de vérification</li>
+            <li>Passage du quiz technique</li>
+            <li>Suivi de l'avancement via le code de suivi</li>
+        </ol>
+        
+        <h3 class="section-heading">5.3 Parcours Recruteur</h3>
+        
+        <p>Le recruteur suit ce workflow :</p>
+        
+        <ol class="styled-list" style="list-style: decimal; margin-left: 2rem;">
+            <li>Création d'une campagne de recrutement</li>
+            <li>Configuration des questions du quiz</li>
+            <li>Génération des tokens de partage</li>
+            <li>Réception et tri des candidatures</li>
+            <li>Planification des entretiens</li>
+            <li>Évaluation collaborative</li>
+            <li>Prise de décision finale</li>
+        </ol>
+
+        <!-- ==================== PARTIE III ==================== -->
+        <div class="page-break" data-type="section" data-section="partie3" data-title="Partie III"></div>
+        <div class="section-content">
+            <span class="section-number">III</span>
+            <h2 class="section-main-title">Spécifications Fonctionnelles</h2>
+            <p class="section-description">Cette partie détaille les exigences fonctionnelles et techniques de l'application.</p>
+            <div class="section-separator"></div>
+        </div>
+
+        <!-- ==================== CHAPITRE 6 ==================== -->
+        <div class="page-break" data-section="chapitre6" data-title="6. Exigences fonctionnelles"></div>
+        <h2 class="chapter-title">
+            <span class="chapter-number">6</span>
+            <span class="chapter-text">Exigences Fonctionnelles</span>
+        </h2>
+        
+        <h3 class="section-heading">6.1 Module Authentification</h3>
+        
+        <table class="styled-table requirements-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Exigence</th>
+                    <th>Priorité</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>AUTH-01</td>
+                    <td>L'utilisateur doit pouvoir se connecter avec email et mot de passe</td>
+                    <td class="priority-cell"><span class="req-priority must">MUST</span></td>
+                </tr>
+                <tr>
+                    <td>AUTH-02</td>
+                    <td>Les mots de passe doivent être hashés avec BCrypt</td>
+                    <td class="priority-cell"><span class="req-priority must">MUST</span></td>
+                </tr>
+                <tr>
+                    <td>AUTH-03</td>
+                    <td>L'utilisateur doit pouvoir réinitialiser son mot de passe par email</td>
+                    <td class="priority-cell"><span class="req-priority should">SHOULD</span></td>
+                </tr>
+                <tr>
+                    <td>AUTH-04</td>
+                    <td>Le système doit gérer trois rôles : super, admin, recruiter</td>
+                    <td class="priority-cell"><span class="req-priority must">MUST</span></td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h3 class="section-heading">6.2 Module Quiz</h3>
+        
+        <table class="styled-table requirements-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Exigence</th>
+                    <th>Priorité</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>QUIZ-01</td>
+                    <td>Le quiz doit afficher les questions une par une</td>
+                    <td class="priority-cell"><span class="req-priority must">MUST</span></td>
+                </tr>
+                <tr>
+                    <td>QUIZ-02</td>
+                    <td>Le système doit sauvegarder les réponses en temps réel</td>
+                    <td class="priority-cell"><span class="req-priority must">MUST</span></td>
+                </tr>
+                <tr>
+                    <td>QUIZ-03</td>
+                    <td>Un chronomètre doit s'afficher si le quiz est chronométré</td>
+                    <td class="priority-cell"><span class="req-priority should">SHOULD</span></td>
+                </tr>
+                <tr>
+                    <td>QUIZ-04</td>
+                    <td>Le score doit être calculé automatiquement à la fin</td>
+                    <td class="priority-cell"><span class="req-priority must">MUST</span></td>
+                </tr>
+                <tr>
+                    <td>QUIZ-05</td>
+                    <td>Le candidat doit pouvoir naviguer entre les questions</td>
+                    <td class="priority-cell"><span class="req-priority should">SHOULD</span></td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <p class="placeholder">[Continuer avec les autres modules : Campagnes, Candidatures, Entretiens, Évaluations, Décisions, Notifications...]</p>
+
+        <!-- ==================== CHAPITRE 7 ==================== -->
+        <div class="page-break" data-section="chapitre7" data-title="7. Exigences techniques"></div>
+        <h2 class="chapter-title">
+            <span class="chapter-number">7</span>
+            <span class="chapter-text">Exigences Techniques</span>
+        </h2>
+        
+        <h3 class="section-heading">7.1 Stack Technologique</h3>
+        
+        <h4 class="subsection-heading">Backend</h4>
+        
+        <div class="tech-grid">
+            <div class="tech-item">
+                <span class="tech-name">Java</span>
+                <span class="tech-version">Version 21</span>
+            </div>
+            <div class="tech-item">
+                <span class="tech-name">Spring Boot</span>
+                <span class="tech-version">Version 3.5.6</span>
+            </div>
+            <div class="tech-item">
+                <span class="tech-name">Spring Security</span>
+                <span class="tech-version">Authentification</span>
+            </div>
+            <div class="tech-item">
+                <span class="tech-name">MySQL</span>
+                <span class="tech-version">Base de données</span>
+            </div>
+            <div class="tech-item">
+                <span class="tech-name">MapStruct</span>
+                <span class="tech-version">Version 1.5.5</span>
+            </div>
+            <div class="tech-item">
+                <span class="tech-name">WebSocket</span>
+                <span class="tech-version">Temps réel</span>
+            </div>
+        </div>
+        
+        <h4 class="subsection-heading">Frontend</h4>
+        
+        <div class="tech-grid">
+            <div class="tech-item">
+                <span class="tech-name">Angular</span>
+                <span class="tech-version">Version 20.2.0</span>
+            </div>
+            <div class="tech-item">
+                <span class="tech-name">TypeScript</span>
+                <span class="tech-version">Version 5.9.2</span>
+            </div>
+            <div class="tech-item">
+                <span class="tech-name">SCSS</span>
+                <span class="tech-version">Styles</span>
+            </div>
+            <div class="tech-item">
+                <span class="tech-name">RxJS</span>
+                <span class="tech-version">Version 7.8.0</span>
+            </div>
+        </div>
+        
+        <h3 class="section-heading">7.2 Architecture</h3>
+        
+        <div class="figure">
+            <div class="figure-placeholder">
+                <span>[Diagramme d'architecture à insérer]</span>
+            </div>
+            <p class="figure-caption">Figure 2 : Architecture technique de l'application</p>
+        </div>
+        
+        <h3 class="section-heading">7.3 Exigences de sécurité</h3>
+        
+        <ul class="requirement-list">
+            <li>
+                <span class="req-priority must">MUST</span>
+                <span>Hashage des mots de passe avec BCrypt</span>
+            </li>
+            <li>
+                <span class="req-priority must">MUST</span>
+                <span>Protection CSRF sur les formulaires</span>
+            </li>
+            <li>
+                <span class="req-priority must">MUST</span>
+                <span>Validation des entrées utilisateur</span>
+            </li>
+            <li>
+                <span class="req-priority should">SHOULD</span>
+                <span>Configuration CORS restrictive en production</span>
+            </li>
+            <li>
+                <span class="req-priority should">SHOULD</span>
+                <span>Suppression logique (soft delete) des données</span>
+            </li>
+        </ul>
+
+        <!-- ==================== GLOSSAIRE ==================== -->
+        <div class="page-break" data-section="glossaire" data-title="Glossaire"></div>
+        <h2 class="page-title centered">Glossaire</h2>
+        
+        <dl class="glossary">
+            <dt>API</dt>
+            <dd>Application Programming Interface - Interface de programmation applicative permettant à des applications de communiquer entre elles.</dd>
+            
+            <dt>Campagne</dt>
+            <dd>Offre de recrutement pour un poste spécifique, avec ses propres paramètres de quiz et de sélection.</dd>
+            
+            <dt>CRUD</dt>
+            <dd>Create, Read, Update, Delete - Les quatre opérations de base pour la gestion des données.</dd>
+            
+            <dt>DTO</dt>
+            <dd>Data Transfer Object - Objet utilisé pour transférer des données entre les couches de l'application.</dd>
+            
+            <dt>MoSCoW</dt>
+            <dd>Méthode de priorisation : Must have, Should have, Could have, Won't have.</dd>
+            
+            <dt>REST</dt>
+            <dd>Representational State Transfer - Style d'architecture pour les services web.</dd>
+            
+            <dt>SPA</dt>
+            <dd>Single Page Application - Application web monopage qui charge dynamiquement le contenu.</dd>
+            
+            <dt>Source Token</dt>
+            <dd>Code de partage unique permettant de tracker l'origine des candidatures.</dd>
+            
+            <dt>WebSocket</dt>
+            <dd>Protocole de communication bidirectionnelle en temps réel.</dd>
+        </dl>
+
+        <!-- ==================== ANNEXES ==================== -->
+        <div class="page-break" data-section="annexes" data-title="Annexes"></div>
+        <h2 class="page-title centered">Annexes</h2>
+        
+        <h3 class="section-heading">Annexe A : Maquettes des interfaces</h3>
+        
+        <p class="placeholder">[Insérer les captures d'écran ou maquettes des principales interfaces]</p>
+        
+        <h3 class="section-heading">Annexe B : Modèle de données</h3>
+        
+        <p class="placeholder">[Insérer le diagramme entité-relation (ERD)]</p>
+        
+        <h3 class="section-heading">Annexe C : Documentation API</h3>
+        
+        <p class="placeholder">[Référence vers la documentation OpenAPI/Swagger]</p>
+        
+        <h3 class="section-heading">Annexe D : Références</h3>
+        
+        <ul class="styled-list">
+            <li>Documentation Angular : <a href="https://angular.dev">https://angular.dev</a></li>
+            <li>Documentation Spring Boot : <a href="https://spring.io/projects/spring-boot">https://spring.io/projects/spring-boot</a></li>
+            <li>Documentation MapStruct : <a href="https://mapstruct.org">https://mapstruct.org</a></li>
+        </ul>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

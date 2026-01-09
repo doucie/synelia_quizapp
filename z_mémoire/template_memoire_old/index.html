@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mémoire - SyneliaQuizApp</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation latérale -->
+    <nav id="sidebar">
+        <div class="nav-header">
+            <span class="nav-title">Navigation</span>
+            <button id="closeSidebar">×</button>
+        </div>
+        <ul id="navList"></ul>
+    </nav>
+
+    <button id="menuToggle">☰</button>
+
+    <!-- Navigateur de pages -->
+    <div id="pageNavigator">
+        <button id="prevPage" title="Page précédente">‹</button>
+        <span id="pageIndicator">1 / 1</span>
+        <button id="nextPage" title="Page suivante">›</button>
+        <div class="chapter-nav">
+            <select id="chapterSelect" title="Aller au chapitre">
+                <option value="">— Chapitres —</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Panneau Inspecteur de Styles -->
+    <aside id="styleInspector">
+        <div class="inspector-header">
+            <span>🎨 Inspecteur de Styles</span>
+            <button id="closeInspector">×</button>
+        </div>
+        <div class="inspector-content">
+            <p class="inspector-hint">Cliquez sur n'importe quel élément du document pour voir ses styles.</p>
+            
+            <div id="inspectorDetails" style="display: none;">
+                <div class="inspector-section">
+                    <h4>📝 Élément</h4>
+                    <div class="style-row">
+                        <span class="style-label">Balise</span>
+                        <span class="style-value" id="elemTag">-</span>
+                    </div>
+                    <div class="style-row">
+                        <span class="style-label">Classe(s)</span>
+                        <span class="style-value" id="elemClass">-</span>
+                    </div>
+                </div>
+
+                <div class="inspector-section">
+                    <h4>🔤 Typographie</h4>
+                    <div class="style-row">
+                        <span class="style-label">Police</span>
+                        <span class="style-value copyable" id="fontFamily">-</span>
+                    </div>
+                    <div class="style-row">
+                        <span class="style-label">Taille</span>
+                        <span class="style-value copyable" id="fontSize">-</span>
+                    </div>
+                    <div class="style-row">
+                        <span class="style-label">Graisse</span>
+                        <span class="style-value copyable" id="fontWeight">-</span>
+                    </div>
+                    <div class="style-row">
+                        <span class="style-label">Style</span>
+                        <span class="style-value copyable" id="fontStyle">-</span>
+                    </div>
+                    <div class="style-row">
+                        <span class="style-label">Interligne</span>
+                        <span class="style-value copyable" id="lineHeight">-</span>
+                    </div>
+                    <div class="style-row">
+                        <span class="style-label">Alignement</span>
+                        <span class="style-value copyable" id="textAlign">-</span>
+                    </div>
+                </div>
+
+                <div class="inspector-section">
+                    <h4>🎨 Couleurs</h4>
+                    <div class="style-row">
+                        <span class="style-label">Texte</span>
+                        <span class="style-value copyable" id="textColor">-</span>
+                        <span class="color-preview" id="textColorPreview"></span>
+                    </div>
+                    <div class="style-row">
+                        <span class="style-label">Fond</span>
+                        <span class="style-value copyable" id="bgColor">-</span>
+                        <span class="color-preview" id="bgColorPreview"></span>
+                    </div>
+                </div>
+
+                <div class="inspector-section">
+                    <h4>📏 Bordures</h4>
+                    <div class="style-row">
+                        <span class="style-label">Bordure</span>
+                        <span class="style-value copyable" id="border">-</span>
+                    </div>
+                    <div class="style-row">
+                        <span class="style-label">Couleur</span>
+                        <span class="style-value copyable" id="borderColor">-</span>
+                        <span class="color-preview" id="borderColorPreview"></span>
+                    </div>
+                    <div class="style-row">
+                        <span class="style-label">Rayon</span>
+                        <span class="style-value copyable" id="borderRadius">-</span>
+                    </div>
+                </div>
+
+                <div class="inspector-section">
+                    <h4>📐 Espacement</h4>
+                    <div class="style-row">
+                        <span class="style-label">Marge ext.</span>
+                        <span class="style-value copyable" id="margin">-</span>
+                    </div>
+                    <div class="style-row">
+                        <span class="style-label">Marge int.</span>
+                        <span class="style-value copyable" id="padding">-</span>
+                    </div>
+                </div>
+
+                <div class="inspector-section">
+                    <h4>� Dimensions</h4>
+                    <div class="style-row">
+                        <span class="style-label">Largeur</span>
+                        <span class="style-value copyable" id="width">-</span>
+                    </div>
+                    <div class="style-row">
+                        <span class="style-label">Hauteur</span>
+                        <span class="style-value copyable" id="height">-</span>
+                    </div>
+                </div>
+
+                <div class="inspector-section" id="gradientSection" style="display: none;">
+                    <h4>🌈 Dégradé / Effet</h4>
+                    <div class="style-row">
+                        <span class="style-label">Type</span>
+                        <span class="style-value" id="gradientType">-</span>
+                    </div>
+                    <div class="style-row">
+                        <span class="style-label">Couleurs</span>
+                        <div class="gradient-colors" id="gradientColors"></div>
+                    </div>
+                </div>
+
+                <div class="inspector-section">
+                    <h4>�🔧 Pour Word</h4>
+                    <div id="wordTips" class="word-tips"></div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <button id="inspectorToggle" title="Inspecteur de styles">🎨</button>
+
+    <main class="document">
+        <!-- PAGE DE COUVERTURE -->
+        <section class="page cover-page">
+            <div class="cover-content">
+                <div class="logos">
+                    <div class="logo-placeholder">[Logo ENSIT]</div>
+                    <div class="logo-placeholder">[Logo Ministère]</div>
+                </div>
+                
+                <h1 class="school-name">École Nouvelle Supérieure d'Ingénieurs et de Technologie</h1>
+                <p class="school-acronym">(ENSIT)</p>
+                
+                <div class="cover-separator"></div>
+                
+                <p class="document-type">Mémoire de Fin d'Études</p>
+                <p class="diploma-info">En vue de l'obtention du diplôme d'Ingénieur en Sciences Informatiques<br>
+                Option : Génie Logiciel</p>
+                
+                <div class="cover-separator"></div>
+                
+                <p class="theme-label">Thème</p>
+                <h2 class="thesis-title">« Étude, conception et mise en œuvre d'une application web de gestion du processus de recrutement avec évaluation technique automatisée : Cas de l'entreprise SYNELIA »</h2>
+                
+                <div class="cover-separator"></div>
+                
+                <div class="cover-info">
+                    <div class="info-group">
+                        <p class="info-label">Présenté par</p>
+                        <p class="info-value">[NOM Prénom]</p>
+                    </div>
+                    <div class="info-group">
+                        <p class="info-label">Encadreur pédagogique</p>
+                        <p class="info-value">[Titre NOM Prénom]</p>
+                    </div>
+                    <div class="info-group">
+                        <p class="info-label">Maître de stage</p>
+                        <p class="info-value">[NOM Prénom]<br><span class="info-sub">[Fonction]</span></p>
+                    </div>
+                </div>
+                
+                <p class="company">Entreprise d'accueil : <strong>SYNELIA</strong></p>
+                <p class="academic-year">Année académique : 2023 - 2024</p>
+            </div>
+        </section>
+
+        <!-- REMERCIEMENTS -->
+        <section class="page" id="remerciements">
+            <h2 class="section-title centered">Remerciements</h2>
+            <div class="content">
+                <p>Je tiens à exprimer ma profonde gratitude à mon encadreur pédagogique, <strong>[Titre NOM Prénom]</strong>, pour son accompagnement, ses précieux conseils et sa disponibilité tout au long de ce travail.</p>
+                <p>Mes sincères remerciements vont également à mon maître de stage, <strong>[NOM Prénom]</strong>, pour sa confiance, son encadrement et le partage de son expertise au sein de l'entreprise SYNELIA.</p>
+                <p>Je remercie l'ensemble de l'équipe SYNELIA pour leur accueil chaleureux et leur collaboration.</p>
+                <p>Je tiens également à remercier le corps professoral et administratif de l'ENSIT pour la qualité de la formation reçue.</p>
+                <p>Mes remerciements s'adressent aussi aux membres du jury qui ont accepté d'évaluer ce travail.</p>
+                <p>Enfin, je remercie ma famille et mes proches pour leur soutien indéfectible tout au long de mon parcours académique.</p>
+            </div>
+        </section>
+
+        <!-- RÉSUMÉ -->
+        <section class="page" id="resume">
+            <h2 class="section-title centered">Résumé</h2>
+            <div class="content">
+                <p class="abstract-text">[Votre résumé ici - Maximum 1 à 1,5 page]</p>
+                <p class="abstract-text">Ce mémoire présente l'étude, la conception et la mise en œuvre d'une application web de gestion du processus de recrutement avec évaluation technique automatisée, développée pour l'entreprise SYNELIA.</p>
+                <div class="keywords">
+                    <strong>Mots-clés :</strong> Application web, Recrutement, Quiz technique, Spring Boot, Angular, Évaluation collaborative, SPA, API REST
+                </div>
+            </div>
+            
+            <h2 class="section-title centered" style="margin-top: 3rem;">Abstract</h2>
+            <div class="content">
+                <p class="abstract-text">[Your abstract here - Maximum 1 to 1.5 pages]</p>
+                <div class="keywords">
+                    <strong>Keywords:</strong> Web application, Recruitment, Technical quiz, Spring Boot, Angular, Collaborative evaluation, SPA, REST API
+                </div>
+            </div>
+        </section>
+
+        <!-- SOMMAIRE -->
+        <section class="page" id="sommaire">
+            <h2 class="section-title centered">Sommaire</h2>
+            <div class="toc">
+                <div class="toc-item main">Introduction</div>
+                
+                <div class="toc-part">Première Partie : Cadre Théorique et Contexte du Projet</div>
+                <div class="toc-item">Chapitre 1 : Présentation générale du projet</div>
+                <div class="toc-item">Chapitre 2 : Étude de l'existant et état de l'art</div>
+                
+                <div class="toc-part">Deuxième Partie : Analyse et Conception</div>
+                <div class="toc-item">Chapitre 3 : Analyse des besoins</div>
+                <div class="toc-item">Chapitre 4 : Conception de la solution</div>
+                
+                <div class="toc-part">Troisième Partie : Réalisation et Mise en Œuvre</div>
+                <div class="toc-item">Chapitre 5 : Environnement technique et outils</div>
+                <div class="toc-item">Chapitre 6 : Implémentation de la solution</div>
+                <div class="toc-item">Chapitre 7 : Tests et validation</div>
+                
+                <div class="toc-part">Quatrième Partie : Résultats et Perspectives</div>
+                <div class="toc-item">Chapitre 8 : Présentation des résultats</div>
+                <div class="toc-item">Chapitre 9 : Limites et perspectives</div>
+                
+                <div class="toc-item main">Conclusion</div>
+                <div class="toc-item main">Références bibliographiques</div>
+                <div class="toc-item main">Annexes</div>
+            </div>
+        </section>
+
+        <!-- INTRODUCTION -->
+        <section class="page" id="introduction">
+            <h2 class="section-title centered">Introduction</h2>
+            <div class="content">
+                <p>À l'ère du digital, la gestion des ressources humaines connaît une transformation profonde. Le recrutement, fonction stratégique de l'entreprise, n'échappe pas à cette révolution numérique...</p>
+                <p class="placeholder">[Contenu de l'introduction à rédiger]</p>
+            </div>
+        </section>
+
+        <!-- PREMIÈRE PARTIE -->
+        <section class="page part-page" id="partie1">
+            <div class="part-content">
+                <p class="part-number">Première Partie</p>
+                <h2 class="part-title">Cadre Théorique et Contexte du Projet</h2>
+                <div class="part-separator"></div>
+            </div>
+        </section>
+
+        <!-- CHAPITRE 1 -->
+        <section class="page" id="chapitre1">
+            <h2 class="chapter-title">Chapitre 1<span class="chapter-subtitle">Présentation générale du projet</span></h2>
+            
+            <p>Ce premier chapitre a pour objectif de présenter le cadre général dans lequel s'inscrit notre projet de fin d'études. Nous y aborderons le contexte de l'entreprise d'accueil, les motivations qui ont conduit à la réalisation de ce travail, ainsi que les objectifs poursuivis et le périmètre fonctionnel de la solution développée.</p>
+            
+            <h3 class="section-heading">1.1. Contexte du projet</h3>
+            
+            <h4 class="subsection-heading">1.1.1. L'entreprise SYNELIA et ses besoins</h4>
+            <p>SYNELIA est une entreprise spécialisée dans le développement de solutions numériques et l'accompagnement des organisations dans leur transformation digitale. Fondée avec la vision de proposer des services informatiques innovants et sur mesure, l'entreprise intervient dans divers domaines tels que le développement d'applications web et mobiles, l'intégration de systèmes d'information, et le conseil en stratégie numérique.</p>
+            
+            <p>Dans le cadre de sa croissance, SYNELIA fait face à des besoins récurrents en matière de recrutement de talents techniques. L'entreprise cherche régulièrement à intégrer des développeurs, des ingénieurs logiciels et d'autres profils spécialisés capables de répondre aux exigences de ses projets. Cette nécessité de recruter des profils qualifiés a mis en évidence plusieurs défis :</p>
+            
+            <ul class="styled-list">
+                <li>Le volume croissant de candidatures à traiter pour chaque poste ouvert</li>
+                <li>La difficulté d'évaluer objectivement les compétences techniques des candidats</li>
+                <li>Le temps considérable consacré par les équipes techniques aux entretiens préliminaires</li>
+                <li>L'absence d'un outil centralisé pour suivre l'ensemble du processus de recrutement</li>
+                <li>La nécessité de coordonner plusieurs recruteurs sur les mêmes campagnes</li>
+            </ul>
+            
+            <p>Face à ces constats, la direction de SYNELIA a exprimé le besoin de disposer d'une solution interne permettant d'optimiser et d'automatiser une partie significative du processus de recrutement, tout en garantissant une évaluation technique rigoureuse et objective des candidats.</p>
+            
+            <h4 class="subsection-heading">1.1.2. Le processus de recrutement traditionnel</h4>
+            <p>Avant la mise en place de notre solution, le processus de recrutement chez SYNELIA suivait un schéma classique, largement répandu dans les entreprises du secteur technologique. Ce processus peut être décomposé en plusieurs étapes successives :</p>
+            
+            <p><strong>Étape 1 : Publication de l'offre d'emploi.</strong> Les offres étaient diffusées sur diverses plateformes (LinkedIn, sites d'emploi spécialisés, site web de l'entreprise). Cette diffusion multi-canal, bien que nécessaire pour maximiser la visibilité, engendrait une gestion fragmentée des candidatures.</p>
+            
+            <p><strong>Étape 2 : Réception et tri des candidatures.</strong> Les CV étaient reçus par email ou via les plateformes de recrutement. Un premier tri manuel était effectué par les ressources humaines, basé principalement sur l'analyse des CV et lettres de motivation. Cette étape, chronophage, reposait sur des critères parfois subjectifs.</p>
+            
+            <p><strong>Étape 3 : Évaluation technique préliminaire.</strong> Les candidats présélectionnés étaient soumis à des tests techniques, généralement sous forme d'exercices de programmation envoyés par email ou de questionnaires en ligne via des outils tiers. Cette méthode présentait plusieurs inconvénients : difficulté de standardisation, risque de triche, et absence de traçabilité.</p>
+            
+            <p><strong>Étape 4 : Entretiens.</strong> Les candidats ayant réussi l'évaluation technique étaient convoqués pour des entretiens, impliquant souvent plusieurs collaborateurs de l'entreprise. La coordination de ces entretiens et la consolidation des retours constituaient un défi organisationnel majeur.</p>
+            
+            <p><strong>Étape 5 : Prise de décision.</strong> La décision finale était prise de manière collégiale, mais l'absence d'un outil centralisé rendait difficile la comparaison objective des candidats et la traçabilité des évaluations.</p>
+            
+            <h4 class="subsection-heading">1.1.3. Les défis et limitations actuels</h4>
+            <p>L'analyse du processus existant a permis d'identifier plusieurs limitations significatives :</p>
+            
+            <table class="styled-table">
+                <thead>
+                    <tr>
+                        <th>Problématique</th>
+                        <th>Impact</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Absence de centralisation des données</td>
+                        <td>Perte d'information, difficulté de suivi, communication fragmentée</td>
+                    </tr>
+                    <tr>
+                        <td>Évaluation technique non standardisée</td>
+                        <td>Résultats difficilement comparables, subjectivité dans la notation</td>
+                    </tr>
+                    <tr>
+                        <td>Processus chronophage</td>
+                        <td>Mobilisation excessive des ressources techniques pour les évaluations</td>
+                    </tr>
+                    <tr>
+                        <td>Collaboration limitée entre recruteurs</td>
+                        <td>Difficulté à partager les retours et à coordonner les décisions</td>
+                    </tr>
+                    <tr>
+                        <td>Expérience candidat peu optimale</td>
+                        <td>Délais de réponse longs, manque de visibilité sur l'avancement</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <h4 class="subsection-heading">1.1.4. La nécessité d'une solution digitale</h4>
+            <p>Face aux limitations identifiées, la mise en place d'une solution digitale dédiée s'est imposée comme une nécessité stratégique pour SYNELIA. Cette solution devait répondre à plusieurs impératifs :</p>
+            
+            <ul class="styled-list">
+                <li><strong>Centralisation :</strong> regrouper l'ensemble des données relatives au recrutement dans une plateforme unique et accessible</li>
+                <li><strong>Automatisation :</strong> réduire les tâches manuelles répétitives, notamment dans l'évaluation technique des candidats</li>
+                <li><strong>Objectivité :</strong> garantir une évaluation standardisée et équitable grâce à des quiz techniques automatisés</li>
+                <li><strong>Collaboration :</strong> permettre à plusieurs recruteurs de travailler simultanément sur les mêmes campagnes</li>
+                <li><strong>Traçabilité :</strong> conserver un historique complet de chaque candidature et des décisions associées</li>
+            </ul>
+            
+            <p>C'est dans ce contexte que le projet <strong>SyneliaQuizApp</strong> a été initié, avec pour ambition de développer une application web complète répondant à l'ensemble de ces exigences.</p>
+        </section>
+        
+        <!-- CHAPITRE 1 - SUITE -->
+        <section class="page" id="chapitre1-suite">
+            <h3 class="section-heading">1.2. Objectifs du projet</h3>
+            
+            <p>La définition claire des objectifs constitue une étape fondamentale dans tout projet de développement logiciel. Elle permet d'orienter les choix techniques et fonctionnels, et de disposer de critères mesurables pour évaluer le succès du projet.</p>
+            
+            <h4 class="subsection-heading">1.2.1. Objectifs généraux</h4>
+            <p>Le projet SyneliaQuizApp poursuit trois objectifs généraux majeurs :</p>
+            
+            <p><strong>Digitaliser le processus de recrutement.</strong> L'objectif premier est de transformer un processus largement manuel et fragmenté en un workflow numérique fluide et intégré. Cette digitalisation vise à améliorer l'efficacité opérationnelle tout en réduisant les risques d'erreur humaine et de perte d'information.</p>
+            
+            <p><strong>Automatiser les évaluations techniques.</strong> L'un des aspects les plus innovants du projet réside dans la mise en place d'un système de quiz technique automatisé. Ce système permet d'évaluer les compétences des candidats de manière objective, reproductible et sans mobiliser les ressources techniques de l'entreprise pour chaque évaluation.</p>
+            
+            <p><strong>Faciliter la collaboration entre recruteurs.</strong> Le projet vise à créer un espace de travail collaboratif où les différents acteurs du recrutement (RH, managers, équipes techniques) peuvent partager leurs évaluations, échanger sur les candidatures et prendre des décisions de manière coordonnée.</p>
+            
+            <h4 class="subsection-heading">1.2.2. Objectifs spécifiques</h4>
+            <p>Ces objectifs généraux se déclinent en objectifs spécifiques, plus opérationnels :</p>
+            
+            <ul class="styled-list">
+                <li>Développer une application web moderne, responsive et intuitive</li>
+                <li>Implémenter un système d'authentification sécurisé avec gestion des rôles (Administrateur, Recruteur, Candidat)</li>
+                <li>Créer un module de gestion des campagnes de recrutement avec paramétrage des quiz</li>
+                <li>Concevoir une interface de passage de quiz avec gestion du temps et sauvegarde automatique des réponses</li>
+                <li>Mettre en place un système de notation automatique avec calcul des scores</li>
+                <li>Développer un module de planification et de suivi des entretiens</li>
+                <li>Implémenter une interface d'évaluation collaborative avec notation et commentaires</li>
+                <li>Créer un système de notifications pour informer les différents acteurs en temps réel</li>
+                <li>Assurer la traçabilité complète du parcours de chaque candidat</li>
+            </ul>
+            
+            <h3 class="section-heading">1.3. Périmètre fonctionnel</h3>
+            
+            <h4 class="subsection-heading">1.3.1. Modules couverts par l'application</h4>
+            <p>L'application SyneliaQuizApp couvre l'ensemble du cycle de recrutement à travers plusieurs modules fonctionnels interconnectés :</p>
+            
+            <p><strong>Module Authentification et Gestion des utilisateurs.</strong> Ce module gère l'inscription, la connexion, la récupération de mot de passe et la vérification par email. Il implémente également un système de rôles et permissions permettant de contrôler l'accès aux différentes fonctionnalités.</p>
+            
+            <p><strong>Module Données de référence.</strong> Il permet la gestion des entités de base du système : départements, spécialités, questions techniques et leurs réponses associées. Ces données constituent le socle sur lequel reposent les campagnes de recrutement.</p>
+            
+            <p><strong>Module Campagnes de recrutement.</strong> Cœur fonctionnel de l'application, ce module permet de créer et configurer des campagnes de recrutement, d'associer des quiz techniques, et de générer des tokens de partage pour la diffusion des offres.</p>
+            
+            <p><strong>Module Candidatures.</strong> Il gère le parcours candidat : soumission de candidature, upload de CV, vérification d'email, et suivi de l'avancement du dossier.</p>
+            
+            <p><strong>Module Quiz technique.</strong> Ce module implémente le passage des quiz avec gestion du chronomètre, affichage des questions, enregistrement des réponses et calcul automatique du score.</p>
+            
+            <p><strong>Module Entretiens.</strong> Il permet la planification des entretiens, la gestion des statuts et l'envoi automatique des convocations aux candidats.</p>
+            
+            <p><strong>Module Évaluations.</strong> Ce module offre une interface d'évaluation collaborative permettant aux recruteurs de noter les candidats, d'ajouter des commentaires et de visualiser les évaluations de leurs collègues.</p>
+            
+            <p><strong>Module Décisions.</strong> Il gère le workflow de prise de décision : pré-sélection, décision finale, et notification automatique des candidats.</p>
+            
+            <p><strong>Module Notifications.</strong> Système transversal de notifications permettant d'informer les utilisateurs des événements importants (nouvelle candidature, entretien planifié, décision prise, etc.).</p>
+            
+            <p><strong>Module Dashboard.</strong> Tableau de bord présentant les statistiques clés et un système de présence en ligne (QEEL) indiquant les utilisateurs connectés.</p>
+            
+            <h4 class="subsection-heading">1.3.2. Acteurs du système</h4>
+            <p>L'application distingue plusieurs catégories d'utilisateurs, chacune disposant de droits et fonctionnalités spécifiques :</p>
+            
+            <div class="figure">
+                <div class="figure-placeholder">[Diagramme des acteurs du système]</div>
+                <p class="figure-caption">Figure 1.1 : Les différents acteurs du système SyneliaQuizApp</p>
+            </div>
+            
+            <p><strong>Super Administrateur.</strong> Dispose de tous les droits sur l'application. Il peut gérer les utilisateurs, configurer les paramètres système et accéder à l'ensemble des données.</p>
+            
+            <p><strong>Administrateur.</strong> Gère les données de référence (départements, spécialités, questions), supervise les campagnes et peut consulter les statistiques globales.</p>
+            
+            <p><strong>Recruteur.</strong> Acteur principal du processus de recrutement, il crée et gère les campagnes, consulte les candidatures, planifie les entretiens et participe aux évaluations.</p>
+            
+            <p><strong>Candidat.</strong> Utilisateur externe qui postule à une offre, passe le quiz technique et suit l'avancement de sa candidature.</p>
+            
+            <h4 class="subsection-heading">1.3.3. Frontières du projet</h4>
+            <p>Il est important de délimiter clairement le périmètre du projet afin d'éviter toute ambiguïté. Les éléments suivants sont <strong>inclus</strong> dans le périmètre :</p>
+            
+            <ul class="styled-list">
+                <li>Gestion complète du cycle de recrutement, de la candidature à la décision finale</li>
+                <li>Système de quiz technique avec questions à choix multiples</li>
+                <li>Notifications par email et notifications in-app</li>
+                <li>Interface web responsive accessible sur desktop et mobile</li>
+            </ul>
+            
+            <p>Les éléments suivants sont <strong>exclus</strong> du périmètre initial :</p>
+            
+            <ul class="styled-list">
+                <li>Intégration avec des calendriers externes (Google Calendar, Outlook)</li>
+                <li>Système de visioconférence intégré</li>
+                <li>Application mobile native</li>
+                <li>Intelligence artificielle pour le matching CV/offre</li>
+                <li>Intégration avec des job boards externes</li>
+            </ul>
+        </section>
+        
+        <!-- CHAPITRE 1 - FIN -->
+        <section class="page" id="chapitre1-fin">
+            <h3 class="section-heading">1.4. Contraintes du projet</h3>
+            
+            <p>Tout projet de développement s'inscrit dans un cadre contraint qu'il est essentiel d'identifier et de prendre en compte dès la phase de conception. Les contraintes du projet SyneliaQuizApp peuvent être classées en plusieurs catégories.</p>
+            
+            <h4 class="subsection-heading">1.4.1. Contraintes techniques</h4>
+            <p>Le choix des technologies a été guidé par plusieurs facteurs :</p>
+            
+            <ul class="styled-list">
+                <li><strong>Compatibilité avec l'écosystème existant :</strong> SYNELIA dispose d'une expertise interne sur les technologies Java et Spring, ce qui a orienté le choix du backend</li>
+                <li><strong>Modernité et maintenabilité :</strong> l'utilisation de frameworks récents (Spring Boot 3.x, Angular 19+) garantit un code moderne et facilement maintenable</li>
+                <li><strong>Performance :</strong> l'application doit supporter plusieurs utilisateurs simultanés sans dégradation notable des performances</li>
+                <li><strong>Sécurité :</strong> les données des candidats étant sensibles, des mécanismes de sécurité robustes doivent être implémentés</li>
+            </ul>
+            
+            <h4 class="subsection-heading">1.4.2. Contraintes temporelles</h4>
+            <p>Le projet s'inscrit dans le cadre d'un stage de fin d'études d'une durée limitée. Cette contrainte temporelle a nécessité :</p>
+            
+            <ul class="styled-list">
+                <li>Une priorisation rigoureuse des fonctionnalités selon leur valeur métier</li>
+                <li>L'adoption d'une méthodologie agile permettant de livrer des incréments fonctionnels réguliers</li>
+                <li>La définition d'un MVP (Minimum Viable Product) couvrant les fonctionnalités essentielles</li>
+            </ul>
+            
+            <h4 class="subsection-heading">1.4.3. Contraintes budgétaires</h4>
+            <p>S'agissant d'un projet interne, les contraintes budgétaires ont principalement impacté :</p>
+            
+            <ul class="styled-list">
+                <li>Le choix de technologies open source pour éviter les coûts de licence</li>
+                <li>L'utilisation d'outils gratuits ou à faible coût pour le développement et les tests</li>
+                <li>La préférence pour un hébergement initial sur infrastructure existante</li>
+            </ul>
+            
+            <h4 class="subsection-heading">1.4.4. Contraintes organisationnelles</h4>
+            <p>Plusieurs contraintes organisationnelles ont également été prises en compte :</p>
+            
+            <ul class="styled-list">
+                <li><strong>Disponibilité des parties prenantes :</strong> les recruteurs et managers de SYNELIA, sollicités pour la définition des besoins, avaient une disponibilité limitée</li>
+                <li><strong>Processus de validation :</strong> chaque livraison devait être validée par le maître de stage avant intégration</li>
+                <li><strong>Documentation :</strong> une documentation technique et utilisateur devait accompagner les développements</li>
+            </ul>
+            
+            <div class="conclusion-box" style="background: #f7fafc; border-left: 4px solid #3182ce; padding: 1rem 1.5rem; margin-top: 2rem; border-radius: 0 4px 4px 0;">
+                <p style="margin: 0; font-style: italic;"><strong>Conclusion du chapitre.</strong> Ce premier chapitre a permis de poser les bases du projet SyneliaQuizApp en présentant le contexte de l'entreprise SYNELIA, les problématiques liées au processus de recrutement traditionnel, et la nécessité d'une solution digitale. Les objectifs généraux et spécifiques ont été définis, le périmètre fonctionnel délimité, et les différentes contraintes identifiées. Ces éléments constituent le socle sur lequel s'appuiera l'analyse approfondie des besoins et la conception de la solution, objets des chapitres suivants.</p>
+            </div>
+        </section>
+
+        <!-- CHAPITRE 2 -->
+        <section class="page" id="chapitre2">
+            <h2 class="chapter-title">Chapitre 2<span class="chapter-subtitle">Étude de l'existant et état de l'art</span></h2>
+            
+            <h3 class="section-heading">2.1. Étude de l'existant</h3>
+            <p class="placeholder">[Contenu à rédiger]</p>
+            
+            <h3 class="section-heading">2.2. Benchmark des solutions existantes</h3>
+            
+            <!-- Exemple de tableau -->
+            <table class="styled-table">
+                <thead>
+                    <tr>
+                        <th>Solution</th>
+                        <th>Points forts</th>
+                        <th>Limites</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Workable</td>
+                        <td>[À compléter]</td>
+                        <td>[À compléter]</td>
+                    </tr>
+                    <tr>
+                        <td>Greenhouse</td>
+                        <td>[À compléter]</td>
+                        <td>[À compléter]</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <h3 class="section-heading">2.3. État de l'art technologique</h3>
+            <p class="placeholder">[Contenu à rédiger]</p>
+        </section>
+
+        <!-- DEUXIÈME PARTIE -->
+        <section class="page part-page" id="partie2">
+            <div class="part-content">
+                <p class="part-number">Deuxième Partie</p>
+                <h2 class="part-title">Analyse et Conception</h2>
+                <div class="part-separator"></div>
+            </div>
+        </section>
+
+        <!-- CHAPITRE 3 -->
+        <section class="page" id="chapitre3">
+            <h2 class="chapter-title">Chapitre 3<span class="chapter-subtitle">Analyse des besoins</span></h2>
+            
+            <h3 class="section-heading">3.1. Besoins fonctionnels</h3>
+            <p class="placeholder">[Contenu à rédiger]</p>
+            
+            <h3 class="section-heading">3.2. Besoins non fonctionnels</h3>
+            <p class="placeholder">[Contenu à rédiger]</p>
+            
+            <h3 class="section-heading">3.3. Diagrammes des cas d'utilisation</h3>
+            <div class="figure">
+                <div class="figure-placeholder">[Diagramme de cas d'utilisation]</div>
+                <p class="figure-caption">Figure 3.1 : Diagramme de cas d'utilisation global</p>
+            </div>
+        </section>
+
+        <!-- CHAPITRE 4 -->
+        <section class="page" id="chapitre4">
+            <h2 class="chapter-title">Chapitre 4<span class="chapter-subtitle">Conception de la solution</span></h2>
+            
+            <h3 class="section-heading">4.1. Architecture globale du système</h3>
+            <p class="placeholder">[Contenu à rédiger]</p>
+            
+            <h3 class="section-heading">4.2. Conception de la base de données</h3>
+            <div class="figure">
+                <div class="figure-placeholder">[Modèle Conceptuel de Données]</div>
+                <p class="figure-caption">Figure 4.1 : Modèle Conceptuel de Données (MCD)</p>
+            </div>
+            
+            <h3 class="section-heading">4.3. Diagrammes de classes</h3>
+            <p class="placeholder">[Contenu à rédiger]</p>
+        </section>
+
+        <!-- TROISIÈME PARTIE -->
+        <section class="page part-page" id="partie3">
+            <div class="part-content">
+                <p class="part-number">Troisième Partie</p>
+                <h2 class="part-title">Réalisation et Mise en Œuvre</h2>
+                <div class="part-separator"></div>
+            </div>
+        </section>
+
+        <!-- CHAPITRE 5 -->
+        <section class="page" id="chapitre5">
+            <h2 class="chapter-title">Chapitre 5<span class="chapter-subtitle">Environnement technique et outils</span></h2>
+            
+            <h3 class="section-heading">5.1. Technologies backend</h3>
+            <div class="tech-stack">
+                <div class="tech-item">
+                    <span class="tech-name">Java 21</span>
+                    <span class="tech-desc">Langage de programmation principal</span>
+                </div>
+                <div class="tech-item">
+                    <span class="tech-name">Spring Boot 3.5.6</span>
+                    <span class="tech-desc">Framework backend</span>
+                </div>
+                <div class="tech-item">
+                    <span class="tech-name">MySQL 8.0</span>
+                    <span class="tech-desc">Base de données relationnelle</span>
+                </div>
+            </div>
+            
+            <h3 class="section-heading">5.2. Technologies frontend</h3>
+            <div class="tech-stack">
+                <div class="tech-item">
+                    <span class="tech-name">Angular 20</span>
+                    <span class="tech-desc">Framework frontend</span>
+                </div>
+                <div class="tech-item">
+                    <span class="tech-name">TypeScript</span>
+                    <span class="tech-desc">Langage typé</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- CHAPITRE 6 -->
+        <section class="page" id="chapitre6">
+            <h2 class="chapter-title">Chapitre 6<span class="chapter-subtitle">Implémentation de la solution</span></h2>
+            
+            <h3 class="section-heading">6.1. Organisation du code source</h3>
+            <p class="placeholder">[Contenu à rédiger]</p>
+            
+            <h3 class="section-heading">6.2. Implémentation du backend</h3>
+            
+            <!-- Exemple de code -->
+            <div class="code-block">
+                <p class="code-title">Exemple : Configuration Spring Security</p>
+                <pre><code>@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+    // Configuration...
+}</code></pre>
+            </div>
+        </section>
+
+        <!-- CONCLUSION -->
+        <section class="page" id="conclusion">
+            <h2 class="section-title centered">Conclusion</h2>
+            <div class="content">
+                <p class="placeholder">[Contenu de la conclusion à rédiger]</p>
+                <p>Ce travail nous a permis de développer une solution complète répondant aux besoins de l'entreprise SYNELIA en matière de gestion du recrutement...</p>
+            </div>
+        </section>
+
+        <!-- RÉFÉRENCES -->
+        <section class="page" id="references">
+            <h2 class="section-title centered">Références Bibliographiques</h2>
+            <div class="references-list">
+                <div class="ref-category">Ouvrages</div>
+                <p class="reference">[1] WALLS, C. (2022). <em>Spring in Action</em>. 6th Edition. Manning Publications.</p>
+                <p class="reference">[2] FREEMAN, A. (2022). <em>Pro Angular 16</em>. 6th Edition. Apress.</p>
+                
+                <div class="ref-category">Documentation technique</div>
+                <p class="reference">[3] Spring Boot Documentation. (2024). <a href="https://docs.spring.io/spring-boot/">https://docs.spring.io/spring-boot/</a></p>
+                <p class="reference">[4] Angular Documentation. (2024). <a href="https://angular.dev/">https://angular.dev/</a></p>
+            </div>
+        </section>
+
+        <!-- ANNEXES -->
+        <section class="page" id="annexes">
+            <h2 class="section-title centered">Annexes</h2>
+            
+            <h3 class="annexe-title">Annexe A : Captures d'écran de l'application</h3>
+            <div class="figure">
+                <div class="figure-placeholder">[Capture d'écran]</div>
+                <p class="figure-caption">Figure A.1 : Page de connexion</p>
+            </div>
+            
+            <h3 class="annexe-title">Annexe B : Diagrammes complémentaires</h3>
+            <p class="placeholder">[Contenu à ajouter]</p>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

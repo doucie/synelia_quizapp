@@ -2,8 +2,8 @@
 
 ## Tâches effectuées
 
-- Déplacement des informations du candidat dans l'en-tête de la page d'évaluation pour libérer de l'espace
-- Correction de la sauvegarde de la checkbox de fin d'évaluation entre les sessions
+- Déplacement des informations du candidat dans l'en-tête de la page d'évaluation
+- Correction de la sauvegarde de l'état la checkbox de fin d'évaluation entre les sessions
 - Ajout de la synchronisation de la checkbox entre plusieurs utilisateurs connectés
 - Ajout de champs en base de données pour le statut en ligne et la date du dernier ping
 - Correction du format de date pour le suivi du statut en ligne
@@ -23,13 +23,10 @@ Le statut "en ligne" des évaluateurs reste bloqué sur "en attente" malgré les
 
 ## Tâches effectuées
 
-- Correction de l'envoi des évaluations qui ne fonctionnait pas
-- Ajout de l'identifiant de l'évaluateur lors de la soumission d'une évaluation pour afficher son nom dans le chat
-- Ajout des boutons Modifier et Supprimer sur ses propres messages d'évaluation
-- Ajout du formulaire de modification en ligne dans le chat
+- Correction du bug lors l'envoi des évaluations
+- Ajout des fonctions Modifier et Supprimer sur ses propres messages d'évaluation et du formulaire de modification en ligne dans le chat
 - Réinitialisation automatique du statut "terminé" quand on modifie ou supprime son évaluation
-- Création d'une popup personnalisée pour terminer l'entretien avec liste des évaluateurs en attente
-- Affichage du résumé des scores dans la popup de clôture
+- Création d'une popup personnalisée pour terminer l'entretien avec liste des évaluateurs en attente et affichage du résumé des scores dans la popup de clôture
 
 ## Problème en cours
 
@@ -46,23 +43,35 @@ Le bouton "Terminer l'entretien" ne semble pas mettre à jour les données en ba
 
 ## Tâches effectuées
 
-- Correction de la checkbox pour terminer l'interview qui se décochait automatiquement
-- Correction du bouton "Terminer l'entretien" qui renvoyait une erreur au lieu du succès
+- Correction de la checkbox pour terminer l'évaluation qui se décochait automatiquement
+- Correction du bouton "Terminer l'évaluation" qui renvoyait une erreur
 - Création de la page liste des évaluations avec en-tête et barre latérale
 - Ajout de filtres par statut sur la liste des évaluations
-- Ajout d'un compteur de statistiques sur la liste des évaluations
-- Ajout d'une barre de recherche sur la liste des évaluations
-- Redirection automatique vers la liste des évaluations après avoir terminé un entretien
+- Ajout d'un compteur de statistiques et barre de recherche sur la liste des évaluations
 - Réorganisation des routes pour séparer la liste des évaluations et la page d'évaluation plein écran
-- Caching et batching
-Persisted queries
-Monitoring (Apollo Studio)
-Pagination : offset vs cursor-based
-Apollo Client (ou urql) : installation et usage
-Queries et mutations côté client
-Gestion du cache
-Optimistic response
 
+- Formation GraphQL : Caching et batching
+- Formation GraphQL : Persisted queries
+- Formation GraphQL : Monitoring (Apollo Studio)
+- Formation GraphQL : Pagination : offset vs cursor-based
+- Formation GraphQL : Apollo Client (ou urql) : installation et usage
+- Formation GraphQL : Queries et mutations côté client
+- Formation GraphQL : Gestion du cache
+- Formation GraphQL : Optimistic response
+
+
+- Formation GraphQL : (Projet Final) Définir le schéma GraphQL complet
+- Formation GraphQL : (Projet Final) Définir les types, relations, inputs
+- Formation GraphQL : (Projet Final) Implémentation de tous les queries
+- Formation GraphQL : (Projet Final) Implémentation de toutes les mutations
+- Formation GraphQL : (Projet Final) Ajout de la validation des inputs
+- Formation GraphQL : (Projet Final) Ajout d'authentification (JWT)
+- Formation GraphQL : (Projet Final) Ajout des permissions
+- Formation GraphQL : (Projet Final) Ajout des DataLoader
+- Formation GraphQL : (Projet Final) Écriture des tests essentiels
+- Formation GraphQL : (Projet Final) Documentation auto. avec GraphQL Playground / Voyager
+- 
+- Formation GraphQL : (Projet Final) Document de Présentation
 
 
 ## Problème en cours

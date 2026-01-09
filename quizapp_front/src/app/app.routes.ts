@@ -97,6 +97,56 @@ export const routes: Routes = [
         canActivate: [superRoleGuard]
       },
       { 
+        path: 'entities/answers/:page', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/answers/entities-answers').then(m => m.EntitiesAnswersComponent),
+        canActivate: [superRoleGuard]
+      },
+      { 
+        path: 'entities/answers', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/answers/entities-answers').then(m => m.EntitiesAnswersComponent),
+        canActivate: [superRoleGuard]
+      },
+      { 
+        path: 'entities/applications/:page', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/applications/entities-applications').then(m => m.EntitiesApplicationsComponent),
+        canActivate: [superRoleGuard]
+      },
+      { 
+        path: 'entities/applications', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/applications/entities-applications').then(m => m.EntitiesApplicationsComponent),
+        canActivate: [superRoleGuard]
+      },
+      { 
+        path: 'entities/interviews/:page', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/interviews/entities-interviews').then(m => m.EntitiesInterviewsComponent),
+        canActivate: [superRoleGuard]
+      },
+      { 
+        path: 'entities/interviews', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/interviews/entities-interviews').then(m => m.EntitiesInterviewsComponent),
+        canActivate: [superRoleGuard]
+      },
+      { 
+        path: 'entities/source-tokens/:page', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/source-tokens/entities-source-tokens').then(m => m.EntitiesSourceTokensComponent),
+        canActivate: [superRoleGuard]
+      },
+      { 
+        path: 'entities/source-tokens', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/source-tokens/entities-source-tokens').then(m => m.EntitiesSourceTokensComponent),
+        canActivate: [superRoleGuard]
+      },
+      { 
+        path: 'entities/evaluations/:page', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/evaluations/entities-evaluations').then(m => m.EntitiesEvaluationsComponent),
+        canActivate: [superRoleGuard]
+      },
+      { 
+        path: 'entities/evaluations', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/evaluations/entities-evaluations').then(m => m.EntitiesEvaluationsComponent),
+        canActivate: [superRoleGuard]
+      },
+      { 
         path: 'users', 
         loadComponent: () => import('./pages/dashboard/users/users').then(m => m.UsersComponent),
         canActivate: [recruiterRoleGuard]

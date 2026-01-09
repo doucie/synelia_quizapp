@@ -1,8 +1,41 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+
+/**
+ * Interface pour les critères de recherche paginée des applications
+ */
+export interface ApplicationSearchCriteria {
+  page?: number;
+  size?: number;
+  search_string?: string;
+  idDe?: string;
+  idA?: string;
+  candidateFirstName?: string;
+  candidateLastName?: string;
+  candidateEmail?: string;
+  candidatePhone?: string;
+  applicationStatus?: string;
+  quizStatus?: string;
+  isDeleted?: boolean;
+  dateCreationDe?: string;
+  dateCreationA?: string;
+  dateModificationDe?: string;
+  dateModificationA?: string;
+}
+
+/**
+ * Interface pour la réponse paginée des applications
+ */
+export interface PagedApplicationResponse {
+  content: Application[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+}
 
 /**
  * Interface pour les données d'une application
@@ -28,9 +61,9 @@ export interface Application {
   quizLevel?: number;
   interviewDate?: string; // Date de l'entretien
   interviewStatus?: string; // Status de l'entretien
-  // createdAt?: string; // Let backend set this
+  createdAt?: string;
   createdBy?: number;
-  // updatedAt?: string; // Let backend set this
+  updatedAt?: string;
   updatedBy?: number;
   isDeleted?: boolean;
   searchString?: string;
@@ -302,5 +335,108 @@ export class ApplicationService {
         map(response => response.exists),
         catchError(() => of(false))
       );
+  }
+
+  /**
+   * Récupère TOUTES les applications selon des critères (y compris les supprimées)
+   * @param criteria critères de recherche optionnels
+   * @returns Observable de la liste paginée d'applications incluant les supprimées
+   */
+  getAllApplicationsByCriteria(criteria: ApplicationSearchCriteria = {}): Observable<PagedApplicationResponse> {
+    // Récupérer l'ID de l'utilisateur connecté depuis localStorage
+    const currentUserData = localStorage.getItem('user');
+    const currentUserId = currentUserData ? JSON.parse(currentUserData).id?.toString() || "1" : "1";
+    
+    // Construction de la requête selon le format backend attendu
+    const request = {
+      user: currentUserId,
+      size: criteria.size || 10,
+      index: criteria.page || 0,
+      isSimpleLoading: false,
+      data: {
+        id: criteria.idDe || "",
+        candidateFirstName: criteria.candidateFirstName || "",
+        candidateLastName: criteria.candidateLastName || "",
+        candidateEmail: criteria.candidateEmail || "",
+        candidatePhone: criteria.candidatePhone || "",
+        candidateBirthDate: "",
+        applicationStatus: criteria.applicationStatus || "",
+        quizStatus: criteria.quizStatus || "",
+        isDeleted: criteria.isDeleted !== undefined ? criteria.isDeleted.toString() : "",
+        searchString: criteria.search_string || "",
+        
+        // Critères de dates
+        ...(criteria.dateCreationDe && criteria.dateCreationDe.trim() && { dateCreationDe: criteria.dateCreationDe }),
+        ...(criteria.dateCreationA && criteria.dateCreationA.trim() && { dateCreationA: criteria.dateCreationA }),
+        ...(criteria.dateModificationDe && criteria.dateModificationDe.trim() && { dateModificationDe: criteria.dateModificationDe }),
+        ...(criteria.dateModificationA && criteria.dateModificationA.trim() && { dateModificationA: criteria.dateModificationA }),
+        
+        // Intervalles d'ID
+        ...(criteria.idDe && criteria.idDe.trim() && { idStart: criteria.idDe }),
+        ...(criteria.idA && criteria.idA.trim() && { idEnd: criteria.idA })
+      }
+    };
+
+    return this.http.post<any>(`${this.applicationsUrl}/getAllByCriteria`, request).pipe(
+      map(response => {
+        // Vérifier si la réponse contient des données
+        if (!response || (!response.items && !response.item)) {
+          return {
+            content: [],
+            totalElements: 0,
+            totalPages: 0,
+            size: criteria.size || 10,
+            number: criteria.page || 0
+          };
+        }
+        
+        // Traiter les éléments
+        const rawApplications = response.items || (response.item ? [response.item] : []);
+        
+        // Calculer le nombre total de pages
+        const totalElements = response.totalCount || response.count || rawApplications.length;
+        const pageSize = criteria.size || 10;
+        const totalPages = Math.ceil(totalElements / pageSize);
+        
+        return {
+          content: rawApplications,
+          totalElements: totalElements,
+          totalPages: totalPages,
+          size: pageSize,
+          number: criteria.page || 0
+        };
+      }),
+      catchError(error => {
+        console.error('❌ Erreur lors de la récupération des applications:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Restaure une application supprimée
+   * @param applicationId ID de l'application à restaurer
+   * @returns Observable<ApplicationResponse>
+   */
+  restoreApplication(applicationId: number): Observable<ApplicationResponse> {
+    const request: ApplicationRequest = {
+      user: 1,
+      datas: [{ 
+        id: applicationId,
+        isDeleted: false,
+        candidateFirstName: '',
+        candidateLastName: '',
+        candidateEmail: '',
+        candidatePhone: '',
+        candidateBirthDate: ''
+      }]
+    };
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    });
+
+    return this.http.post<ApplicationResponse>(`${this.applicationsUrl}/update`, request, { headers });
   }
 }

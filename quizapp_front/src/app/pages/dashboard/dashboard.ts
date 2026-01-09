@@ -53,7 +53,8 @@ export class DashboardComponent implements OnInit {
   showNotifications = signal(false);
   showUserMenu = signal(false);
   isDarkMode = signal(false);
-  showEntitiesDropdown = signal(false);
+  // Restaurer l'état du dropdown depuis localStorage
+  showEntitiesDropdown = signal(localStorage.getItem('entitiesDropdownOpen') === 'true');
   adminModeEnabled = signal(false);
   
   currentUser = signal<any>(null);
@@ -214,19 +215,9 @@ export class DashboardComponent implements OnInit {
       icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>' 
     },
     { 
-      id: 'notifications', 
-      label: 'Notifications', 
-      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>' 
-    },
-    { 
       id: 'source-tokens', 
       label: 'Tokens Source', 
       icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>' 
-    },
-    { 
-      id: 'roles', 
-      label: 'Rôles', 
-      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2V9h-2V7h8v12z"/></svg>' 
     }
   ];
 
@@ -425,7 +416,12 @@ export class DashboardComponent implements OnInit {
    * Toggle entities dropdown
    */
   toggleEntitiesDropdown(): void {
-    this.showEntitiesDropdown.update(show => !show);
+    this.showEntitiesDropdown.update(show => {
+      const newState = !show;
+      // Persister l'état dans localStorage
+      localStorage.setItem('entitiesDropdownOpen', String(newState));
+      return newState;
+    });
   }
 
   /**
@@ -433,7 +429,7 @@ export class DashboardComponent implements OnInit {
    */
   navigateToEntity(entityId: string): void {
     this.router.navigate([`/dashboard/entities/${entityId}`]);
-    this.showEntitiesDropdown.set(false);
+    // Ne pas fermer le dropdown - l'utilisateur le fermera manuellement s'il le souhaite
   }
 
   /**
@@ -601,12 +597,12 @@ export class DashboardComponent implements OnInit {
   }
 
   /**
-   * Fermer tous les panneaux
+   * Fermer tous les panneaux (sauf le dropdown des entités qui est persistant)
    */
   closeAllPanels(): void {
     this.showNotifications.set(false);
     this.showUserMenu.set(false);
-    this.showEntitiesDropdown.set(false);
+    // Ne pas fermer le dropdown des entités - il est persistant et géré manuellement
   }
 
   /**

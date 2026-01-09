@@ -76,11 +76,11 @@ export class EntitiesComponent implements OnInit {
     },
     {
       name: 'evaluations',
-      displayName: 'Évaluations',
-      description: 'Résultats et évaluations des candidats',
+      displayName: 'Evaluations',
+      description: 'Resultats et evaluations des candidats',
       icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>',
       iconType: 'svg',
-      route: '/dashboard/evaluations',
+      route: '/dashboard/entities/evaluations',
       color: '#06B6D4'
     },
     {
@@ -140,10 +140,10 @@ export class EntitiesComponent implements OnInit {
     {
       name: 'tokens',
       displayName: 'Jetons',
-      description: 'Tokens de sécurité et d\'accès',
+      description: 'Tokens de securite et d\'acces',
       icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 16.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1v-5.257c0-.245.097-.48.269-.652l5.515-5.515A6 6 0 0115 7z"/></svg>',
       iconType: 'svg',
-      route: '/dashboard/tokens',
+      route: '/dashboard/entities/source-tokens',
       color: '#64748B'
     }
   ];

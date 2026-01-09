@@ -267,7 +267,7 @@ export class AnswerService {
   /**
    * Crée une nouvelle réponse
    */
-  createAnswer(answer: Answer): Observable<Answer> {
+  createAnswer(answer: Partial<Answer>): Observable<Answer> {
     console.log('➕ Création d\'une nouvelle réponse:', answer);
 
     // Préparer les données pour l'API - utiliser le format attendu par l'API

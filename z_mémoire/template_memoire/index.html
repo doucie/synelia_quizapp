@@ -1,0 +1,1652 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mémoire - SyneliaQuizApp</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation latérale -->
+    <nav id="sidebar">
+        <div class="nav-header">
+            <span class="nav-title">Navigation</span>
+            <button id="closeSidebar">×</button>
+        </div>
+        <ul id="navList"></ul>
+    </nav>
+
+    <button id="menuToggle">☰</button>
+
+    <!-- Toggle Dark Mode -->
+    <button id="themeToggle" title="Basculer mode clair/sombre">
+        <span class="icon-sun">☀️</span>
+        <span class="icon-moon">🌙</span>
+    </button>
+
+    <!-- Navigateur de pages -->
+    <div id="pageNavigator">
+        <button id="prevPage" title="Page précédente">‹</button>
+        <span id="pageIndicator">1 / 1</span>
+        <button id="nextPage" title="Page suivante">›</button>
+        <div class="chapter-nav">
+            <select id="chapterSelect" title="Aller au chapitre">
+                <option value="">— Chapitres —</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Panneau Inspecteur de Styles -->
+    <aside id="styleInspector">
+        <div class="inspector-header">
+            <span>🎨 Inspecteur de Styles</span>
+            <button id="closeInspector">×</button>
+        </div>
+        <div class="inspector-content">
+            <p class="inspector-hint">Cliquez sur n'importe quel élément du document pour voir ses styles.</p>
+            
+            <div id="inspectorDetails" style="display: none;">
+                <div class="inspector-section">
+                    <h4>📝 Élément</h4>
+                    <div class="style-row">
+                        <span class="style-label">Balise</span>
+                        <span class="style-value" id="elemTag">-</span>
+                    </div>
+                    <div class="style-row">
+                        <span class="style-label">Classe(s)</span>
+                        <span class="style-value" id="elemClass">-</span>
+                    </div>
+                </div>
+
+                <div class="inspector-section">
+                    <h4>🔤 Typographie</h4>
+                    <div class="style-row">
+                        <span class="style-label">Police</span>
+                        <span class="style-value copyable" id="fontFamily">-</span>
+                    </div>
+                    <div class="style-row">
+                        <span class="style-label">Taille</span>
+                        <span class="style-value copyable" id="fontSize">-</span>
+                    </div>
+                    <div class="style-row">
+                        <span class="style-label">Graisse</span>
+                        <span class="style-value copyable" id="fontWeight">-</span>
+                    </div>
+                    <div class="style-row">
+                        <span class="style-label">Interligne</span>
+                        <span class="style-value copyable" id="lineHeight">-</span>
+                    </div>
+                </div>
+
+                <div class="inspector-section">
+                    <h4>🎨 Couleurs</h4>
+                    <div class="style-row">
+                        <span class="style-label">Texte</span>
+                        <span class="style-value copyable" id="textColor">-</span>
+                        <span class="color-preview" id="textColorPreview"></span>
+                    </div>
+                    <div class="style-row">
+                        <span class="style-label">Fond</span>
+                        <span class="style-value copyable" id="bgColor">-</span>
+                        <span class="color-preview" id="bgColorPreview"></span>
+                    </div>
+                </div>
+
+                <div class="inspector-section">
+                    <h4>📐 Espacement</h4>
+                    <div class="style-row">
+                        <span class="style-label">Marge ext.</span>
+                        <span class="style-value copyable" id="margin">-</span>
+                    </div>
+                    <div class="style-row">
+                        <span class="style-label">Marge int.</span>
+                        <span class="style-value copyable" id="padding">-</span>
+                    </div>
+                </div>
+
+                <div class="inspector-section">
+                    <h4>🔧 Pour Word</h4>
+                    <div id="wordTips" class="word-tips"></div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <button id="inspectorToggle" title="Inspecteur de styles">🎨</button>
+
+    <!-- ============================================
+         CONTENEUR DES PAGES (généré dynamiquement)
+         ============================================ -->
+    <main class="document" id="documentContainer">
+        <!-- Les pages seront générées ici par JavaScript -->
+    </main>
+
+    <!-- ============================================
+         CONTENU SOURCE (caché, utilisé par le script)
+         Utiliser class="page-break" pour forcer un saut de page
+         Utiliser data-section="nom" pour marquer les sections
+         ============================================ -->
+    <div id="contentSource" style="display: none;">
+
+        <!-- ==================== PAGE DE COUVERTURE ==================== -->
+        <div class="cover-content" data-type="cover">
+            <div class="logos">
+                <div class="logo-placeholder">[Logo ENSIT]</div>
+                <div class="logo-placeholder">[Logo Ministère]</div>
+            </div>
+            
+            <h1 class="school-name">École Nouvelle Supérieure d'Ingénieurs et de Technologie</h1>
+            <p class="school-acronym">(ENSIT)</p>
+            
+            <div class="cover-separator"></div>
+            
+            <p class="document-type">Mémoire de Fin d'Études</p>
+            <p class="diploma-info">En vue de l'obtention du diplôme d'Ingénieur en Sciences Informatiques<br>
+            Option : Génie Logiciel</p>
+            
+            <div class="cover-separator"></div>
+            
+            <p class="theme-label">Thème</p>
+            <h2 class="thesis-title">« Étude, conception et mise en œuvre d'une application web de gestion du processus de recrutement avec évaluation technique automatisée : Cas de l'entreprise SYNELIA »</h2>
+            
+            <div class="cover-separator"></div>
+            
+            <div class="cover-info">
+                <div class="info-group">
+                    <p class="info-label">Présenté par</p>
+                    <p class="info-value">[NOM Prénom]</p>
+                </div>
+                <div class="info-group">
+                    <p class="info-label">Encadreur pédagogique</p>
+                    <p class="info-value">[Titre NOM Prénom]</p>
+                </div>
+                <div class="info-group">
+                    <p class="info-label">Maître de stage</p>
+                    <p class="info-value">[NOM Prénom]<br><span class="info-sub">[Fonction]</span></p>
+                </div>
+            </div>
+            
+            <p class="company">Entreprise d'accueil : <strong>SYNELIA</strong></p>
+            <p class="academic-year">Année académique : 2023 - 2024</p>
+        </div>
+
+        <!-- ==================== REMERCIEMENTS ==================== -->
+        <div class="page-break" data-section="remerciements" data-title="Remerciements"></div>
+        <h2 class="section-title centered">Remerciements</h2>
+        
+        <p>Je tiens à exprimer ma profonde gratitude à mon encadreur pédagogique, <strong>[Titre NOM Prénom]</strong>, pour son accompagnement, ses précieux conseils et sa disponibilité tout au long de ce travail.</p>
+        <p>Mes sincères remerciements vont également à mon maître de stage, <strong>[NOM Prénom]</strong>, pour sa confiance, son encadrement et le partage de son expertise au sein de l'entreprise SYNELIA.</p>
+        <p>Je remercie l'ensemble de l'équipe SYNELIA pour leur accueil chaleureux et leur collaboration.</p>
+        <p>Je tiens également à remercier le corps professoral et administratif de l'ENSIT pour la qualité de la formation reçue.</p>
+        <p>Mes remerciements s'adressent aussi aux membres du jury qui ont accepté d'évaluer ce travail.</p>
+        <p>Enfin, je remercie ma famille et mes proches pour leur soutien indéfectible tout au long de mon parcours académique.</p>
+
+        <!-- ==================== RÉSUMÉ ==================== -->
+        <div class="page-break" data-section="resume" data-title="Résumé"></div>
+        <h2 class="section-title centered">Résumé</h2>
+        
+        <p class="abstract-text">[Votre résumé ici - Maximum 1 à 1,5 page]</p>
+        <p class="abstract-text">Ce mémoire présente l'étude, la conception et la mise en œuvre d'une application web de gestion du processus de recrutement avec évaluation technique automatisée, développée pour l'entreprise SYNELIA.</p>
+        <div class="keywords">
+            <strong>Mots-clés :</strong> Application web, Recrutement, Quiz technique, Spring Boot, Angular, Évaluation collaborative, SPA, API REST
+        </div>
+        
+        <h2 class="section-title centered" style="margin-top: 3rem;">Abstract</h2>
+        
+        <p class="abstract-text">[Your abstract here - Maximum 1 to 1.5 pages]</p>
+        <div class="keywords">
+            <strong>Keywords:</strong> Web application, Recruitment, Technical quiz, Spring Boot, Angular, Collaborative evaluation, SPA, REST API
+        </div>
+
+        <!-- ==================== SOMMAIRE ==================== -->
+        <div class="page-break" data-section="sommaire" data-title="Sommaire"></div>
+        <h2 class="section-title centered">Sommaire</h2>
+        <div class="toc">
+            <div class="toc-item main">Introduction</div>
+            
+            <div class="toc-part">Première Partie : Cadre Théorique et Contexte du Projet</div>
+            <div class="toc-item">Chapitre 1 : Présentation générale du projet</div>
+            <div class="toc-item">Chapitre 2 : Étude de l'existant et état de l'art</div>
+            
+            <div class="toc-part">Deuxième Partie : Analyse et Conception</div>
+            <div class="toc-item">Chapitre 3 : Analyse des besoins</div>
+            <div class="toc-item">Chapitre 4 : Conception de la solution</div>
+            
+            <div class="toc-part">Troisième Partie : Réalisation et Mise en Œuvre</div>
+            <div class="toc-item">Chapitre 5 : Environnement technique et outils</div>
+            <div class="toc-item">Chapitre 6 : Implémentation de la solution</div>
+            <div class="toc-item">Chapitre 7 : Tests et validation</div>
+            
+            <div class="toc-part">Quatrième Partie : Résultats et Perspectives</div>
+            <div class="toc-item">Chapitre 8 : Présentation des résultats</div>
+            <div class="toc-item">Chapitre 9 : Limites et perspectives</div>
+            
+            <div class="toc-item main">Conclusion</div>
+            <div class="toc-item main">Références bibliographiques</div>
+            <div class="toc-item main">Annexes</div>
+        </div>
+
+        <!-- ==================== AVANT-PROPOS ==================== -->
+        <div class="page-break" data-section="avant-propos" data-title="Avant-propos"></div>
+        <h2 class="section-title centered">Avant-propos</h2>
+        <p>Ce mémoire a été réalisé dans le cadre du projet de fin d'études pour l'obtention du diplôme d'Ingénieur en Sciences Informatiques, option Génie Logiciel, à l'École Nouvelle Supérieure d'Ingénieurs et de Technologie (ENSIT).</p>
+        <p class="placeholder">[Contenu de l'avant-propos à compléter]</p>
+
+        <!-- ==================== GLOSSAIRE ==================== -->
+        <div class="page-break" data-section="glossaire" data-title="Glossaire"></div>
+        <h2 class="section-title centered">Glossaire</h2>
+        <dl class="glossary">
+            <dt>API</dt>
+            <dd>Application Programming Interface - Interface de programmation applicative</dd>
+            <dt>REST</dt>
+            <dd>Representational State Transfer - Style d'architecture pour les services web</dd>
+            <dt>SPA</dt>
+            <dd>Single Page Application - Application web monopage</dd>
+            <dt>JWT</dt>
+            <dd>JSON Web Token - Standard de jetons d'authentification</dd>
+        </dl>
+
+        <!-- ==================== INTRODUCTION ==================== -->
+        <div class="page-break" data-section="introduction" data-title="Introduction" data-numbering="arabic"></div>
+        <h2 class="section-title centered">Introduction</h2>
+        
+        <p>À l'ère du digital, la gestion des ressources humaines connaît une transformation profonde. Le recrutement, fonction stratégique de l'entreprise, n'échappe pas à cette révolution numérique...</p>
+        <p class="placeholder">[Contenu de l'introduction à rédiger]</p>
+
+        <!-- ==================== PREMIÈRE PARTIE ==================== -->
+        <div class="page-break" data-type="part" data-section="partie1" data-title="Première Partie"></div>
+        <div class="part-content">
+            <p class="part-number">Première Partie</p>
+            <h2 class="part-title">Cadre Théorique et Contexte du Projet</h2>
+            <div class="part-separator"></div>
+        </div>
+
+        <!-- ==================== CHAPITRE 1 ==================== -->
+        <div class="page-break" data-section="chapitre1" data-title="Chapitre 1 - Présentation générale"></div>
+        <h2 class="chapter-title">Chapitre 1<span class="chapter-subtitle">Présentation générale du projet</span></h2>
+        
+        <p>Ce premier chapitre a pour objectif de présenter le cadre général dans lequel s'inscrit notre projet de fin d'études. Nous y aborderons le contexte de l'entreprise d'accueil, les motivations qui ont conduit à la réalisation de ce travail, ainsi que les objectifs poursuivis et le périmètre fonctionnel de la solution développée.</p>
+        
+        <h3 class="section-heading">1.1. Contexte du projet</h3>
+        
+        <h4 class="subsection-heading">1.1.1. L'entreprise SYNELIA et ses besoins</h4>
+        <p>SYNELIA est une entreprise spécialisée dans le développement de solutions numériques et l'accompagnement des organisations dans leur transformation digitale. Fondée avec la vision de proposer des services informatiques innovants et sur mesure, l'entreprise intervient dans divers domaines tels que le développement d'applications web et mobiles, l'intégration de systèmes d'information, et le conseil en stratégie numérique.</p>
+        
+        <p>Dans le cadre de sa croissance, SYNELIA fait face à des besoins récurrents en matière de recrutement de talents techniques. L'entreprise cherche régulièrement à intégrer des développeurs, des ingénieurs logiciels et d'autres profils spécialisés capables de répondre aux exigences de ses projets. Cette nécessité de recruter des profils qualifiés a mis en évidence plusieurs défis :</p>
+        
+        <ul class="styled-list">
+            <li>Le volume croissant de candidatures à traiter pour chaque poste ouvert</li>
+            <li>La difficulté d'évaluer objectivement les compétences techniques des candidats</li>
+            <li>Le temps considérable consacré par les équipes techniques aux entretiens préliminaires</li>
+            <li>L'absence d'un outil centralisé pour suivre l'ensemble du processus de recrutement</li>
+            <li>La nécessité de coordonner plusieurs recruteurs sur les mêmes campagnes</li>
+        </ul>
+        
+        <p>Face à ces constats, la direction de SYNELIA a exprimé le besoin de disposer d'une solution interne permettant d'optimiser et d'automatiser une partie significative du processus de recrutement, tout en garantissant une évaluation technique rigoureuse et objective des candidats.</p>
+        
+        <h4 class="subsection-heading">1.1.2. Le processus de recrutement traditionnel</h4>
+        <p>Avant la mise en place de notre solution, le processus de recrutement chez SYNELIA suivait un schéma classique, largement répandu dans les entreprises du secteur technologique. Ce processus peut être décomposé en plusieurs étapes successives :</p>
+        
+        <p><strong>Étape 1 : Publication de l'offre d'emploi.</strong> Les offres étaient diffusées sur diverses plateformes (LinkedIn, sites d'emploi spécialisés, site web de l'entreprise). Cette diffusion multi-canal, bien que nécessaire pour maximiser la visibilité, engendrait une gestion fragmentée des candidatures.</p>
+        
+        <p><strong>Étape 2 : Réception et tri des candidatures.</strong> Les CV étaient reçus par email ou via les plateformes de recrutement. Un premier tri manuel était effectué par les ressources humaines, basé principalement sur l'analyse des CV et lettres de motivation. Cette étape, chronophage, reposait sur des critères parfois subjectifs.</p>
+        
+        <p><strong>Étape 3 : Évaluation technique préliminaire.</strong> Les candidats présélectionnés étaient soumis à des tests techniques, généralement sous forme d'exercices de programmation envoyés par email ou de questionnaires en ligne via des outils tiers. Cette méthode présentait plusieurs inconvénients : difficulté de standardisation, risque de triche, et absence de traçabilité.</p>
+        
+        <p><strong>Étape 4 : Entretiens.</strong> Les candidats ayant réussi l'évaluation technique étaient convoqués pour des entretiens, impliquant souvent plusieurs collaborateurs de l'entreprise. La coordination de ces entretiens et la consolidation des retours constituaient un défi organisationnel majeur.</p>
+        
+        <p><strong>Étape 5 : Prise de décision.</strong> La décision finale était prise de manière collégiale, mais l'absence d'un outil centralisé rendait difficile la comparaison objective des candidats et la traçabilité des évaluations.</p>
+        
+        <h4 class="subsection-heading">1.1.3. Les défis et limitations actuels</h4>
+        <p>L'analyse du processus existant a permis d'identifier plusieurs limitations significatives :</p>
+        
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>Problématique</th>
+                    <th>Impact</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Absence de centralisation des données</td>
+                    <td>Perte d'information, difficulté de suivi, communication fragmentée</td>
+                </tr>
+                <tr>
+                    <td>Évaluation technique non standardisée</td>
+                    <td>Résultats difficilement comparables, subjectivité dans la notation</td>
+                </tr>
+                <tr>
+                    <td>Processus chronophage</td>
+                    <td>Mobilisation excessive des ressources techniques pour les évaluations</td>
+                </tr>
+                <tr>
+                    <td>Collaboration limitée entre recruteurs</td>
+                    <td>Difficulté à partager les retours et à coordonner les décisions</td>
+                </tr>
+                <tr>
+                    <td>Expérience candidat peu optimale</td>
+                    <td>Délais de réponse longs, manque de visibilité sur l'avancement</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h4 class="subsection-heading">1.1.4. La nécessité d'une solution digitale</h4>
+        <p>Face aux limitations identifiées, la mise en place d'une solution digitale dédiée s'est imposée comme une nécessité stratégique pour SYNELIA. Cette solution devait répondre à plusieurs impératifs :</p>
+        
+        <ul class="styled-list">
+            <li><strong>Centralisation :</strong> regrouper l'ensemble des données relatives au recrutement dans une plateforme unique et accessible</li>
+            <li><strong>Automatisation :</strong> réduire les tâches manuelles répétitives, notamment dans l'évaluation technique des candidats</li>
+            <li><strong>Objectivité :</strong> garantir une évaluation standardisée et équitable grâce à des quiz techniques automatisés</li>
+            <li><strong>Collaboration :</strong> permettre à plusieurs recruteurs de travailler simultanément sur les mêmes campagnes</li>
+            <li><strong>Traçabilité :</strong> conserver un historique complet de chaque candidature et des décisions associées</li>
+        </ul>
+        
+        <p>C'est dans ce contexte que le projet <strong>SyneliaQuizApp</strong> a été initié, avec pour ambition de développer une application web complète répondant à l'ensemble de ces exigences.</p>
+        
+        <h3 class="section-heading">1.2. Objectifs du projet</h3>
+        
+        <p>La définition claire des objectifs constitue une étape fondamentale dans tout projet de développement logiciel. Elle permet d'orienter les choix techniques et fonctionnels, et de disposer de critères mesurables pour évaluer le succès du projet.</p>
+        
+        <h4 class="subsection-heading">1.2.1. Objectifs généraux</h4>
+        <p>Le projet SyneliaQuizApp poursuit trois objectifs généraux majeurs :</p>
+        
+        <p><strong>Digitaliser le processus de recrutement.</strong> L'objectif premier est de transformer un processus largement manuel et fragmenté en un workflow numérique fluide et intégré. Cette digitalisation vise à améliorer l'efficacité opérationnelle tout en réduisant les risques d'erreur humaine et de perte d'information.</p>
+        
+        <p><strong>Automatiser les évaluations techniques.</strong> L'un des aspects les plus innovants du projet réside dans la mise en place d'un système de quiz technique automatisé. Ce système permet d'évaluer les compétences des candidats de manière objective, reproductible et sans mobiliser les ressources techniques de l'entreprise pour chaque évaluation.</p>
+        
+        <p><strong>Faciliter la collaboration entre recruteurs.</strong> Le projet vise à créer un espace de travail collaboratif où les différents acteurs du recrutement (RH, managers, équipes techniques) peuvent partager leurs évaluations, échanger sur les candidatures et prendre des décisions de manière coordonnée.</p>
+        
+        <h4 class="subsection-heading">1.2.2. Objectifs spécifiques</h4>
+        <p>Ces objectifs généraux se déclinent en objectifs spécifiques, plus opérationnels :</p>
+        
+        <ul class="styled-list">
+            <li>Développer une application web moderne, responsive et intuitive</li>
+            <li>Implémenter un système d'authentification sécurisé avec gestion des rôles (Administrateur, Recruteur, Candidat)</li>
+            <li>Créer un module de gestion des campagnes de recrutement avec paramétrage des quiz</li>
+            <li>Concevoir une interface de passage de quiz avec gestion du temps et sauvegarde automatique des réponses</li>
+            <li>Mettre en place un système de notation automatique avec calcul des scores</li>
+            <li>Développer un module de planification et de suivi des entretiens</li>
+            <li>Implémenter une interface d'évaluation collaborative avec notation et commentaires</li>
+            <li>Créer un système de notifications pour informer les différents acteurs en temps réel</li>
+            <li>Assurer la traçabilité complète du parcours de chaque candidat</li>
+        </ul>
+        
+        <h3 class="section-heading">1.3. Périmètre fonctionnel</h3>
+        
+        <h4 class="subsection-heading">1.3.1. Modules couverts par l'application</h4>
+        <p>L'application SyneliaQuizApp couvre l'ensemble du cycle de recrutement à travers plusieurs modules fonctionnels interconnectés :</p>
+        
+        <p><strong>Module Authentification et Gestion des utilisateurs.</strong> Ce module gère l'inscription, la connexion, la récupération de mot de passe et la vérification par email. Il implémente également un système de rôles et permissions permettant de contrôler l'accès aux différentes fonctionnalités.</p>
+        
+        <p><strong>Module Données de référence.</strong> Il permet la gestion des entités de base du système : départements, spécialités, questions techniques et leurs réponses associées. Ces données constituent le socle sur lequel reposent les campagnes de recrutement.</p>
+        
+        <p><strong>Module Campagnes de recrutement.</strong> Cœur fonctionnel de l'application, ce module permet de créer et configurer des campagnes de recrutement, d'associer des quiz techniques, et de générer des tokens de partage pour la diffusion des offres.</p>
+        
+        <p><strong>Module Candidatures.</strong> Il gère le parcours candidat : soumission de candidature, upload de CV, vérification d'email, et suivi de l'avancement du dossier.</p>
+        
+        <p><strong>Module Quiz technique.</strong> Ce module implémente le passage des quiz avec gestion du chronomètre, affichage des questions, enregistrement des réponses et calcul automatique du score.</p>
+        
+        <p><strong>Module Entretiens.</strong> Il permet la planification des entretiens, la gestion des statuts et l'envoi automatique des convocations aux candidats.</p>
+        
+        <p><strong>Module Évaluations.</strong> Ce module offre une interface d'évaluation collaborative permettant aux recruteurs de noter les candidats, d'ajouter des commentaires et de visualiser les évaluations de leurs collègues.</p>
+        
+        <p><strong>Module Décisions.</strong> Il gère le workflow de prise de décision : pré-sélection, décision finale, et notification automatique des candidats.</p>
+        
+        <p><strong>Module Notifications.</strong> Système transversal de notifications permettant d'informer les utilisateurs des événements importants (nouvelle candidature, entretien planifié, décision prise, etc.).</p>
+        
+        <p><strong>Module Dashboard.</strong> Tableau de bord présentant les statistiques clés et un système de présence en ligne (QEEL) indiquant les utilisateurs connectés.</p>
+        
+        <h4 class="subsection-heading">1.3.2. Acteurs du système</h4>
+        <p>L'application distingue plusieurs catégories d'utilisateurs, chacune disposant de droits et fonctionnalités spécifiques :</p>
+        
+        <div class="figure">
+            <div class="figure-placeholder">[Diagramme des acteurs du système]</div>
+            <p class="figure-caption">Figure 1.1 : Les différents acteurs du système SyneliaQuizApp</p>
+        </div>
+        
+        <p><strong>Super Administrateur.</strong> Dispose de tous les droits sur l'application. Il peut gérer les utilisateurs, configurer les paramètres système et accéder à l'ensemble des données.</p>
+        
+        <p><strong>Administrateur.</strong> Gère les données de référence (départements, spécialités, questions), supervise les campagnes et peut consulter les statistiques globales.</p>
+        
+        <p><strong>Recruteur.</strong> Acteur principal du processus de recrutement, il crée et gère les campagnes, consulte les candidatures, planifie les entretiens et participe aux évaluations.</p>
+        
+        <p><strong>Candidat.</strong> Utilisateur externe qui postule à une offre, passe le quiz technique et suit l'avancement de sa candidature.</p>
+        
+        <h4 class="subsection-heading">1.3.3. Frontières du projet</h4>
+        <p>Il est important de délimiter clairement le périmètre du projet afin d'éviter toute ambiguïté. Les éléments suivants sont <strong>inclus</strong> dans le périmètre :</p>
+        
+        <ul class="styled-list">
+            <li>Gestion complète du cycle de recrutement, de la candidature à la décision finale</li>
+            <li>Système de quiz technique avec questions à choix multiples</li>
+            <li>Notifications par email et notifications in-app</li>
+            <li>Interface web responsive accessible sur desktop et mobile</li>
+        </ul>
+        
+        <p>Les éléments suivants sont <strong>exclus</strong> du périmètre initial :</p>
+        
+        <ul class="styled-list">
+            <li>Intégration avec des calendriers externes (Google Calendar, Outlook)</li>
+            <li>Système de visioconférence intégré</li>
+            <li>Application mobile native</li>
+            <li>Intelligence artificielle pour le matching CV/offre</li>
+            <li>Intégration avec des job boards externes</li>
+        </ul>
+        
+        <h3 class="section-heading">1.4. Contraintes du projet</h3>
+        
+        <p>Tout projet de développement s'inscrit dans un cadre contraint qu'il est essentiel d'identifier et de prendre en compte dès la phase de conception. Les contraintes du projet SyneliaQuizApp peuvent être classées en plusieurs catégories.</p>
+        
+        <h4 class="subsection-heading">1.4.1. Contraintes techniques</h4>
+        <p>Le choix des technologies a été guidé par plusieurs facteurs :</p>
+        
+        <ul class="styled-list">
+            <li><strong>Compatibilité avec l'écosystème existant :</strong> SYNELIA dispose d'une expertise interne sur les technologies Java et Spring, ce qui a orienté le choix du backend</li>
+            <li><strong>Modernité et maintenabilité :</strong> l'utilisation de frameworks récents (Spring Boot 3.x, Angular 19+) garantit un code moderne et facilement maintenable</li>
+            <li><strong>Performance :</strong> l'application doit supporter plusieurs utilisateurs simultanés sans dégradation notable des performances</li>
+            <li><strong>Sécurité :</strong> les données des candidats étant sensibles, des mécanismes de sécurité robustes doivent être implémentés</li>
+        </ul>
+        
+        <h4 class="subsection-heading">1.4.2. Contraintes temporelles</h4>
+        <p>Le projet s'inscrit dans le cadre d'un stage de fin d'études d'une durée limitée. Cette contrainte temporelle a nécessité :</p>
+        
+        <ul class="styled-list">
+            <li>Une priorisation rigoureuse des fonctionnalités selon leur valeur métier</li>
+            <li>L'adoption d'une méthodologie agile permettant de livrer des incréments fonctionnels réguliers</li>
+            <li>La définition d'un MVP (Minimum Viable Product) couvrant les fonctionnalités essentielles</li>
+        </ul>
+        
+        <h4 class="subsection-heading">1.4.3. Contraintes budgétaires</h4>
+        <p>S'agissant d'un projet interne, les contraintes budgétaires ont principalement impacté :</p>
+        
+        <ul class="styled-list">
+            <li>Le choix de technologies open source pour éviter les coûts de licence</li>
+            <li>L'utilisation d'outils gratuits ou à faible coût pour le développement et les tests</li>
+            <li>La préférence pour un hébergement initial sur infrastructure existante</li>
+        </ul>
+        
+        <div class="conclusion-box">
+            <p><strong>Conclusion du chapitre.</strong> Ce premier chapitre a permis de poser les bases du projet SyneliaQuizApp en présentant le contexte de l'entreprise SYNELIA, les problématiques liées au processus de recrutement traditionnel, et la nécessité d'une solution digitale. Les objectifs généraux et spécifiques ont été définis, le périmètre fonctionnel délimité, et les différentes contraintes identifiées. Ces éléments constituent le socle sur lequel s'appuiera l'analyse approfondie des besoins et la conception de la solution, objets des chapitres suivants.</p>
+        </div>
+
+        <!-- ==================== CHAPITRE 2 ==================== -->
+        <div class="page-break" data-section="chapitre2" data-title="Chapitre 2 - État de l'art"></div>
+        <h2 class="chapter-title">Chapitre 2<span class="chapter-subtitle">Étude de l'existant et état de l'art</span></h2>
+        
+        <p>Ce deuxième chapitre propose une analyse approfondie du contexte dans lequel s'inscrit notre projet. Nous y examinerons d'abord les solutions de recrutement existantes sur le marché, avant d'étudier les technologies modernes qui sous-tendent le développement d'applications web. Cette double perspective permettra de justifier nos choix techniques et fonctionnels.</p>
+        
+        <h3 class="section-heading">2.1. Étude de l'existant</h3>
+        
+        <h4 class="subsection-heading">2.1.1. Le marché des logiciels de recrutement</h4>
+        <p>Le marché des solutions de gestion du recrutement, communément appelées ATS (Applicant Tracking System), connaît une croissance significative depuis plusieurs années. Selon une étude de Grand View Research, le marché mondial des ATS devrait atteindre 3,2 milliards de dollars d'ici 2026, avec un taux de croissance annuel composé (CAGR) de 6,7%.</p>
+        
+        <p>Cette croissance s'explique par plusieurs facteurs convergents :</p>
+        
+        <ul class="styled-list">
+            <li><strong>La digitalisation des RH :</strong> les entreprises cherchent à automatiser leurs processus pour gagner en efficacité</li>
+            <li><strong>La guerre des talents :</strong> dans un marché de l'emploi tendu, les entreprises doivent optimiser leur capacité à identifier et attirer les meilleurs profils</li>
+            <li><strong>Le télétravail :</strong> l'essor du travail à distance a accéléré l'adoption d'outils numériques pour le recrutement</li>
+            <li><strong>La conformité réglementaire :</strong> les obligations légales (RGPD, égalité des chances) nécessitent une traçabilité accrue</li>
+        </ul>
+        
+        <h4 class="subsection-heading">2.1.2. Classification des solutions existantes</h4>
+        <p>Les solutions de recrutement disponibles sur le marché peuvent être classées en plusieurs catégories selon leur périmètre fonctionnel et leur positionnement :</p>
+        
+        <p><strong>Les ATS généralistes.</strong> Ces plateformes couvrent l'ensemble du cycle de recrutement : publication d'offres, réception des candidatures, tri, entretiens, et décision. Exemples : Workable, Greenhouse, Lever, BambooHR. Ces solutions sont généralement proposées en mode SaaS (Software as a Service) avec une tarification basée sur le nombre d'utilisateurs ou de recrutements.</p>
+        
+        <p><strong>Les plateformes d'évaluation technique.</strong> Spécialisées dans l'évaluation des compétences techniques des candidats, ces solutions proposent des tests de programmation, des quiz techniques et des environnements de coding en ligne. Exemples : HackerRank, Codility, CoderPad, TestGorilla. Elles s'intègrent généralement à un ATS existant via des API.</p>
+        
+        <p><strong>Les solutions tout-en-un RH.</strong> Ces ERP RH intègrent le recrutement comme un module parmi d'autres (paie, formation, évaluation, etc.). Exemples : Workday, SAP SuccessFactors, Oracle HCM Cloud. Ces solutions s'adressent principalement aux grandes entreprises.</p>
+        
+        <p><strong>Les outils de sourcing.</strong> Focalisés sur la recherche proactive de candidats, ces outils permettent d'identifier des profils sur les réseaux sociaux professionnels. Exemples : LinkedIn Recruiter, Hiretual, SeekOut.</p>
+        
+        <h4 class="subsection-heading">2.1.3. Limites des solutions existantes</h4>
+        <p>Malgré la richesse de l'offre disponible, plusieurs limites persistent et ont motivé le développement d'une solution sur mesure pour SYNELIA :</p>
+        
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>Limite identifiée</th>
+                    <th>Impact pour SYNELIA</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Coût élevé des licences</td>
+                    <td>Les solutions complètes (ATS + évaluation technique) représentent un investissement significatif, souvent disproportionné pour une PME</td>
+                </tr>
+                <tr>
+                    <td>Manque de personnalisation</td>
+                    <td>Les workflows proposés ne correspondent pas toujours aux processus internes de l'entreprise</td>
+                </tr>
+                <tr>
+                    <td>Fragmentation des outils</td>
+                    <td>L'utilisation de plusieurs outils (ATS + plateforme de tests) génère des ruptures dans le parcours candidat</td>
+                </tr>
+                <tr>
+                    <td>Dépendance fournisseur</td>
+                    <td>Les données sont hébergées chez le prestataire, posant des questions de souveraineté et de continuité</td>
+                </tr>
+                <tr>
+                    <td>Complexité d'intégration</td>
+                    <td>L'intégration avec les outils existants (email, calendrier) nécessite souvent des développements spécifiques</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h3 class="section-heading">2.2. Benchmark des solutions du marché</h3>
+        
+        <p>Afin de mieux positionner notre solution et d'identifier les fonctionnalités essentielles, nous avons réalisé une analyse comparative des principales solutions du marché.</p>
+        
+        <h4 class="subsection-heading">2.2.1. Workable</h4>
+        <p>Workable est l'une des solutions ATS les plus populaires, utilisée par plus de 27 000 entreprises dans le monde. La plateforme propose une interface intuitive et un ensemble complet de fonctionnalités couvrant l'ensemble du cycle de recrutement.</p>
+        
+        <p><strong>Points forts :</strong></p>
+        <ul class="styled-list">
+            <li>Interface utilisateur moderne et ergonomique</li>
+            <li>Intégration native avec plus de 200 job boards</li>
+            <li>Fonctionnalités de collaboration avancées (commentaires, évaluations partagées)</li>
+            <li>Application mobile pour le suivi en déplacement</li>
+            <li>Reporting et analytics intégrés</li>
+        </ul>
+        
+        <p><strong>Limites :</strong></p>
+        <ul class="styled-list">
+            <li>Coût élevé (à partir de 149$/mois pour la version de base)</li>
+            <li>Module d'évaluation technique basique, nécessitant souvent un outil complémentaire</li>
+            <li>Personnalisation limitée des workflows</li>
+        </ul>
+        
+        <h4 class="subsection-heading">2.2.2. Greenhouse</h4>
+        <p>Greenhouse se positionne comme une solution premium destinée aux entreprises en forte croissance. La plateforme met l'accent sur la structuration du processus de recrutement et la réduction des biais.</p>
+        
+        <p><strong>Points forts :</strong></p>
+        <ul class="styled-list">
+            <li>Méthodologie de recrutement structurée intégrée</li>
+            <li>Outils avancés pour l'équité et la diversité</li>
+            <li>Écosystème d'intégrations très riche (400+ partenaires)</li>
+            <li>Scorecards personnalisables pour l'évaluation</li>
+        </ul>
+        
+        <p><strong>Limites :</strong></p>
+        <ul class="styled-list">
+            <li>Tarification opaque et généralement élevée</li>
+            <li>Courbe d'apprentissage importante</li>
+            <li>Peu adapté aux petites structures</li>
+        </ul>
+        
+        <h4 class="subsection-heading">2.2.3. HackerRank</h4>
+        <p>HackerRank est la référence en matière d'évaluation technique des développeurs. La plateforme propose un environnement de coding en ligne avec une bibliothèque de tests techniques prêts à l'emploi.</p>
+        
+        <p><strong>Points forts :</strong></p>
+        <ul class="styled-list">
+            <li>Large bibliothèque de questions techniques (algorithmes, structures de données, langages)</li>
+            <li>Environnement de coding intégré avec exécution du code</li>
+            <li>Détection de plagiat et de comportements suspects</li>
+            <li>Analytics détaillées sur les performances des candidats</li>
+        </ul>
+        
+        <p><strong>Limites :</strong></p>
+        <ul class="styled-list">
+            <li>Focalisé uniquement sur l'évaluation technique, ne couvre pas le reste du processus</li>
+            <li>Nécessite une intégration avec un ATS</li>
+            <li>Coût par candidat pouvant devenir significatif à grande échelle</li>
+        </ul>
+        
+        <h4 class="subsection-heading">2.2.4. Synthèse comparative</h4>
+        
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>Critère</th>
+                    <th>Workable</th>
+                    <th>Greenhouse</th>
+                    <th>HackerRank</th>
+                    <th>SyneliaQuizApp</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Gestion des candidatures</td>
+                    <td>✓✓✓</td>
+                    <td>✓✓✓</td>
+                    <td>✗</td>
+                    <td>✓✓</td>
+                </tr>
+                <tr>
+                    <td>Quiz techniques intégrés</td>
+                    <td>✓</td>
+                    <td>✓</td>
+                    <td>✓✓✓</td>
+                    <td>✓✓</td>
+                </tr>
+                <tr>
+                    <td>Évaluation collaborative</td>
+                    <td>✓✓</td>
+                    <td>✓✓✓</td>
+                    <td>✗</td>
+                    <td>✓✓</td>
+                </tr>
+                <tr>
+                    <td>Coût pour PME</td>
+                    <td>€€€</td>
+                    <td>€€€€</td>
+                    <td>€€</td>
+                    <td>€ (interne)</td>
+                </tr>
+                <tr>
+                    <td>Personnalisation</td>
+                    <td>✓</td>
+                    <td>✓✓</td>
+                    <td>✓✓</td>
+                    <td>✓✓✓</td>
+                </tr>
+                <tr>
+                    <td>Maîtrise des données</td>
+                    <td>✗</td>
+                    <td>✗</td>
+                    <td>✗</td>
+                    <td>✓✓✓</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <p>Cette analyse comparative met en évidence l'intérêt de développer une solution interne combinant les fonctionnalités d'un ATS simplifié avec un module d'évaluation technique intégré, tout en conservant la maîtrise complète des données et des workflows.</p>
+        
+        <h3 class="section-heading">2.3. État de l'art technologique</h3>
+        
+        <p>Le choix des technologies constitue un facteur critique de succès pour tout projet de développement logiciel. Cette section présente les principales technologies et architectures considérées pour la réalisation de SyneliaQuizApp.</p>
+        
+        <h4 class="subsection-heading">2.3.1. Architectures applicatives modernes</h4>
+        
+        <p><strong>Architecture monolithique.</strong> L'architecture monolithique regroupe l'ensemble des composants de l'application (interface utilisateur, logique métier, accès aux données) dans un seul déploiement. Cette approche, longtemps dominante, présente l'avantage de la simplicité de développement et de déploiement. Cependant, elle peut devenir problématique à mesure que l'application grandit (difficulté de mise à l'échelle, déploiements risqués).</p>
+        
+        <p><strong>Architecture microservices.</strong> L'architecture microservices décompose l'application en services indépendants, chacun responsable d'une fonctionnalité métier spécifique. Chaque service peut être développé, déployé et mis à l'échelle indépendamment. Cette approche, popularisée par des entreprises comme Netflix et Amazon, offre une grande flexibilité mais introduit une complexité opérationnelle significative.</p>
+        
+        <p><strong>Architecture hybride (Modular Monolith).</strong> L'architecture monolithique modulaire représente un compromis entre les deux approches précédentes. L'application reste déployée comme un monolithe, mais son code est organisé en modules clairement délimités, facilitant une éventuelle évolution vers des microservices. Cette approche est particulièrement adaptée aux projets de taille moyenne.</p>
+        
+        <div class="figure">
+            <div class="figure-placeholder">[Schéma comparatif des architectures applicatives]</div>
+            <p class="figure-caption">Figure 2.1 : Comparaison des architectures monolithique, microservices et modulaire</p>
+        </div>
+        
+        <p>Pour le projet SyneliaQuizApp, nous avons opté pour une <strong>architecture monolithique modulaire</strong>, offrant un bon équilibre entre simplicité de mise en œuvre et évolutivité future.</p>
+        
+        <h4 class="subsection-heading">2.3.2. Technologies backend</h4>
+        
+        <p>Le choix du framework backend conditionne largement les performances, la maintenabilité et l'évolutivité de l'application. Plusieurs options ont été évaluées :</p>
+        
+        <p><strong>Spring Boot (Java).</strong> Spring Boot est le framework de référence pour le développement d'applications Java d'entreprise. Il offre une configuration automatique, un écosystème riche (Spring Security, Spring Data, Spring MVC) et une excellente documentation. La version 3.x, basée sur Java 17+, apporte des améliorations significatives en termes de performances grâce à la compilation native (GraalVM).</p>
+        
+        <p><strong>Node.js avec Express/NestJS.</strong> L'écosystème Node.js offre une alternative performante, particulièrement adaptée aux applications temps réel grâce à son modèle événementiel non-bloquant. NestJS, framework TypeScript inspiré d'Angular, apporte une structure et des patterns d'architecture d'entreprise.</p>
+        
+        <p><strong>Django/FastAPI (Python).</strong> L'écosystème Python propose Django pour les applications web complètes et FastAPI pour les API REST performantes. Ces frameworks bénéficient de la richesse des bibliothèques Python, notamment pour l'analyse de données.</p>
+        
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>Critère</th>
+                    <th>Spring Boot</th>
+                    <th>Node.js/NestJS</th>
+                    <th>FastAPI</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Performance</td>
+                    <td>Excellente</td>
+                    <td>Très bonne</td>
+                    <td>Excellente</td>
+                </tr>
+                <tr>
+                    <td>Écosystème entreprise</td>
+                    <td>Très riche</td>
+                    <td>En croissance</td>
+                    <td>Limité</td>
+                </tr>
+                <tr>
+                    <td>Typage statique</td>
+                    <td>Natif (Java)</td>
+                    <td>TypeScript</td>
+                    <td>Type hints</td>
+                </tr>
+                <tr>
+                    <td>Courbe d'apprentissage</td>
+                    <td>Modérée</td>
+                    <td>Faible</td>
+                    <td>Faible</td>
+                </tr>
+                <tr>
+                    <td>Expertise SYNELIA</td>
+                    <td>Forte</td>
+                    <td>Moyenne</td>
+                    <td>Faible</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <p>Le choix s'est porté sur <strong>Spring Boot 3.x</strong>, compte tenu de l'expertise existante au sein de SYNELIA et de la robustesse du framework pour les applications d'entreprise.</p>
+        
+        <h4 class="subsection-heading">2.3.3. Technologies frontend</h4>
+        
+        <p>Le développement frontend moderne est dominé par trois frameworks JavaScript majeurs : React, Angular et Vue.js. Chacun présente des caractéristiques spécifiques :</p>
+        
+        <p><strong>React.</strong> Développé par Meta (Facebook), React est une bibliothèque focalisée sur la création d'interfaces utilisateur à base de composants. Sa flexibilité et son écosystème riche en font le choix le plus populaire. Cependant, cette flexibilité implique de nombreuses décisions architecturales à prendre par les développeurs.</p>
+        
+        <p><strong>Angular.</strong> Développé par Google, Angular est un framework complet proposant une approche « batteries included ». Il impose une structure de projet et des conventions strictes, facilitant le travail en équipe et la maintenance à long terme. L'utilisation native de TypeScript renforce la qualité du code.</p>
+        
+        <p><strong>Vue.js.</strong> Vue.js offre un compromis entre la flexibilité de React et la structure d'Angular. Sa courbe d'apprentissage progressive et sa documentation exemplaire en font un choix populaire, particulièrement en Asie.</p>
+        
+        <p>Le choix s'est porté sur <strong>Angular</strong> (version 19+) pour les raisons suivantes :</p>
+        <ul class="styled-list">
+            <li>Structure imposée facilitant la maintenance et l'onboarding de nouveaux développeurs</li>
+            <li>TypeScript natif assurant un typage fort et une meilleure détection des erreurs</li>
+            <li>Cohérence avec les pratiques de développement orienté objet familières aux développeurs Java</li>
+            <li>Système de modules et d'injection de dépendances mature</li>
+            <li>Signals et nouvelles fonctionnalités de la version 19 améliorant les performances</li>
+        </ul>
+        
+        <h4 class="subsection-heading">2.3.4. Bases de données</h4>
+        
+        <p>Le choix du système de gestion de base de données dépend de la nature des données à stocker et des patterns d'accès prévus :</p>
+        
+        <p><strong>Bases de données relationnelles (SQL).</strong> MySQL, PostgreSQL et MariaDB restent les choix privilégiés pour les données structurées nécessitant des garanties ACID (Atomicité, Cohérence, Isolation, Durabilité). Ces systèmes excellent dans la gestion des relations complexes entre entités.</p>
+        
+        <p><strong>Bases de données NoSQL.</strong> MongoDB (documents), Redis (clé-valeur) et Elasticsearch (recherche) offrent des alternatives pour des cas d'usage spécifiques : flexibilité du schéma, haute performance en lecture, recherche full-text.</p>
+        
+        <p>Pour SyneliaQuizApp, nous avons choisi <strong>MySQL 8.0</strong>, base de données relationnelle éprouvée, adaptée à la nature structurée des données de recrutement (candidats, campagnes, évaluations) et aux relations entre entités.</p>
+        
+        <h4 class="subsection-heading">2.3.5. Sécurité des applications web</h4>
+        
+        <p>La sécurité constitue un enjeu majeur pour toute application manipulant des données personnelles. Les principales menaces identifiées par l'OWASP (Open Web Application Security Project) incluent :</p>
+        
+        <ul class="styled-list">
+            <li><strong>Injection SQL :</strong> prévenue par l'utilisation de requêtes préparées (JPA/Hibernate)</li>
+            <li><strong>Cross-Site Scripting (XSS) :</strong> mitigé par l'échappement automatique d'Angular</li>
+            <li><strong>Broken Authentication :</strong> adressé par l'implémentation de JWT avec Spring Security</li>
+            <li><strong>Cross-Site Request Forgery (CSRF) :</strong> protégé par les tokens CSRF de Spring Security</li>
+            <li><strong>Broken Access Control :</strong> géré par un système de rôles et permissions granulaires</li>
+        </ul>
+        
+        <p>L'authentification de l'application repose sur <strong>JWT (JSON Web Tokens)</strong>, standard de l'industrie pour l'authentification stateless des API REST. Cette approche permet une scalabilité horizontale aisée et une intégration facilitée avec différents clients (web, mobile).</p>
+        
+        <h3 class="section-heading">2.4. Positionnement de la solution</h3>
+        
+        <p>Au regard de l'analyse de l'existant et de l'état de l'art technologique, SyneliaQuizApp se positionne comme une solution de niche répondant aux besoins spécifiques des PME technologiques souhaitant :</p>
+        
+        <ul class="styled-list">
+            <li>Disposer d'un outil de recrutement intégrant nativement l'évaluation technique</li>
+            <li>Conserver la maîtrise de leurs données et de leurs processus</li>
+            <li>Bénéficier d'une solution évolutive et personnalisable</li>
+            <li>Maîtriser leurs coûts de recrutement sur le long terme</li>
+        </ul>
+        
+        <div class="conclusion-box">
+            <p><strong>Conclusion du chapitre.</strong> Ce chapitre a permis de dresser un panorama des solutions de recrutement existantes et d'identifier les opportunités pour une solution sur mesure. L'analyse comparative a mis en évidence les limites des outils du marché pour les PME technologiques, justifiant le développement de SyneliaQuizApp. Sur le plan technologique, le choix d'une architecture monolithique modulaire basée sur Spring Boot et Angular, avec une base de données MySQL, offre un équilibre optimal entre robustesse, maintenabilité et adéquation avec les compétences de l'équipe. Le chapitre suivant détaillera l'analyse des besoins fonctionnels et non fonctionnels de la solution.</p>
+        </div>
+
+        <!-- ==================== DEUXIÈME PARTIE ==================== -->
+        <div class="page-break" data-type="part" data-section="partie2" data-title="Deuxième Partie"></div>
+        <div class="part-content">
+            <p class="part-number">Deuxième Partie</p>
+            <h2 class="part-title">Analyse et Conception</h2>
+            <div class="part-separator"></div>
+        </div>
+
+        <!-- ==================== CHAPITRE 3 ==================== -->
+        <div class="page-break" data-section="chapitre3" data-title="Chapitre 3 - Analyse des besoins"></div>
+        <h2 class="chapter-title">Chapitre 3<span class="chapter-subtitle">Analyse des besoins</span></h2>
+        
+        <p>L'analyse des besoins constitue une étape fondamentale dans le cycle de développement logiciel. Elle permet de définir précisément les attentes des utilisateurs et les contraintes auxquelles le système doit répondre. Ce chapitre présente les besoins fonctionnels et non fonctionnels identifiés pour SyneliaQuizApp, ainsi que leur modélisation à travers les diagrammes de cas d'utilisation.</p>
+        
+        <h3 class="section-heading">3.1. Méthodologie d'analyse</h3>
+        
+        <h4 class="subsection-heading">3.1.1. Démarche adoptée</h4>
+        <p>L'identification des besoins s'est appuyée sur une démarche participative impliquant les différentes parties prenantes du projet :</p>
+        
+        <ul class="styled-list">
+            <li><strong>Entretiens avec les recruteurs :</strong> sessions de travail avec les responsables RH et les managers impliqués dans le recrutement pour comprendre leurs pratiques actuelles et leurs attentes</li>
+            <li><strong>Analyse des processus existants :</strong> étude documentaire des workflows de recrutement en place chez SYNELIA</li>
+            <li><strong>Benchmark fonctionnel :</strong> analyse des fonctionnalités proposées par les solutions concurrentes (cf. Chapitre 2)</li>
+            <li><strong>Ateliers de co-conception :</strong> sessions collaboratives pour prioriser les fonctionnalités et définir les parcours utilisateurs</li>
+        </ul>
+        
+        <h4 class="subsection-heading">3.1.2. Identification des acteurs</h4>
+        <p>L'analyse a permis d'identifier quatre catégories d'acteurs principaux interagissant avec le système :</p>
+        
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>Acteur</th>
+                    <th>Description</th>
+                    <th>Objectifs principaux</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Administrateur</strong></td>
+                    <td>Responsable de la configuration et de la maintenance du système</td>
+                    <td>Gérer les utilisateurs, configurer les paramètres, superviser l'activité</td>
+                </tr>
+                <tr>
+                    <td><strong>Recruteur</strong></td>
+                    <td>Collaborateur impliqué dans le processus de recrutement (RH, manager)</td>
+                    <td>Créer des campagnes, évaluer les candidats, planifier les entretiens</td>
+                </tr>
+                <tr>
+                    <td><strong>Candidat</strong></td>
+                    <td>Personne postulant à une offre d'emploi</td>
+                    <td>Soumettre sa candidature, passer le quiz technique, suivre son dossier</td>
+                </tr>
+                <tr>
+                    <td><strong>Système</strong></td>
+                    <td>Acteur automatique déclenchant des actions programmées</td>
+                    <td>Envoyer des notifications, calculer les scores, générer des rappels</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h3 class="section-heading">3.2. Besoins fonctionnels</h3>
+        
+        <p>Les besoins fonctionnels décrivent les fonctionnalités que le système doit offrir à ses utilisateurs. Ils ont été organisés par module fonctionnel pour faciliter leur compréhension et leur implémentation.</p>
+        
+        <h4 class="subsection-heading">3.2.1. Module Authentification et Gestion des utilisateurs</h4>
+        
+        <p>Ce module gère l'accès sécurisé à l'application et la gestion des comptes utilisateurs.</p>
+        
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Besoin fonctionnel</th>
+                    <th>Priorité</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>BF-AUTH-01</td>
+                    <td>Le système doit permettre l'inscription d'un nouvel utilisateur avec email et mot de passe</td>
+                    <td>Haute</td>
+                </tr>
+                <tr>
+                    <td>BF-AUTH-02</td>
+                    <td>Le système doit envoyer un email de vérification lors de l'inscription</td>
+                    <td>Haute</td>
+                </tr>
+                <tr>
+                    <td>BF-AUTH-03</td>
+                    <td>Le système doit permettre la connexion avec email et mot de passe</td>
+                    <td>Haute</td>
+                </tr>
+                <tr>
+                    <td>BF-AUTH-04</td>
+                    <td>Le système doit proposer une fonctionnalité de récupération de mot de passe</td>
+                    <td>Haute</td>
+                </tr>
+                <tr>
+                    <td>BF-AUTH-05</td>
+                    <td>Le système doit gérer différents rôles (Admin, Recruteur, Candidat)</td>
+                    <td>Haute</td>
+                </tr>
+                <tr>
+                    <td>BF-AUTH-06</td>
+                    <td>L'administrateur doit pouvoir créer, modifier et désactiver des comptes utilisateurs</td>
+                    <td>Haute</td>
+                </tr>
+                <tr>
+                    <td>BF-AUTH-07</td>
+                    <td>Le système doit permettre la déconnexion et l'invalidation du token</td>
+                    <td>Moyenne</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h4 class="subsection-heading">3.2.2. Module Gestion des données de référence</h4>
+        
+        <p>Ce module permet la configuration des données structurantes de l'application.</p>
+        
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Besoin fonctionnel</th>
+                    <th>Priorité</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>BF-REF-01</td>
+                    <td>L'administrateur doit pouvoir gérer les départements (CRUD)</td>
+                    <td>Haute</td>
+                </tr>
+                <tr>
+                    <td>BF-REF-02</td>
+                    <td>L'administrateur doit pouvoir gérer les spécialités rattachées aux départements</td>
+                    <td>Haute</td>
+                </tr>
+                <tr>
+                    <td>BF-REF-03</td>
+                    <td>L'administrateur doit pouvoir créer et gérer des questions techniques</td>
+                    <td>Haute</td>
+                </tr>
+                <tr>
+                    <td>BF-REF-04</td>
+                    <td>Chaque question doit pouvoir avoir plusieurs réponses avec indication de la bonne réponse</td>
+                    <td>Haute</td>
+                </tr>
+                <tr>
+                    <td>BF-REF-05</td>
+                    <td>Les questions doivent être catégorisées par spécialité et niveau de difficulté</td>
+                    <td>Moyenne</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h4 class="subsection-heading">3.2.3. Module Gestion des campagnes de recrutement</h4>
+        
+        <p>Ce module constitue le cœur fonctionnel de l'application, permettant de gérer les offres d'emploi.</p>
+        
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Besoin fonctionnel</th>
+                    <th>Priorité</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>BF-CAMP-01</td>
+                    <td>Le recruteur doit pouvoir créer une campagne de recrutement avec titre, description et dates</td>
+                    <td>Haute</td>
+                </tr>
+                <tr>
+                    <td>BF-CAMP-02</td>
+                    <td>Le recruteur doit pouvoir associer un quiz technique à une campagne</td>
+                    <td>Haute</td>
+                </tr>
+                <tr>
+                    <td>BF-CAMP-03</td>
+                    <td>Le recruteur doit pouvoir configurer les paramètres du quiz (durée, nombre de questions)</td>
+                    <td>Haute</td>
+                </tr>
+                <tr>
+                    <td>BF-CAMP-04</td>
+                    <td>Le système doit générer un lien unique (token) pour chaque campagne</td>
+                    <td>Haute</td>
+                </tr>
+                <tr>
+                    <td>BF-CAMP-05</td>
+                    <td>Le recruteur doit pouvoir activer/désactiver une campagne</td>
+                    <td>Haute</td>
+                </tr>
+                <tr>
+                    <td>BF-CAMP-06</td>
+                    <td>Le recruteur doit pouvoir consulter les statistiques d'une campagne</td>
+                    <td>Moyenne</td>
+                </tr>
+                <tr>
+                    <td>BF-CAMP-07</td>
+                    <td>Plusieurs recruteurs doivent pouvoir collaborer sur une même campagne</td>
+                    <td>Moyenne</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h4 class="subsection-heading">3.2.4. Module Candidatures</h4>
+        
+        <p>Ce module gère le parcours du candidat depuis sa postulation jusqu'à la décision finale.</p>
+        
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Besoin fonctionnel</th>
+                    <th>Priorité</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>BF-CAND-01</td>
+                    <td>Le candidat doit pouvoir postuler via le lien de la campagne</td>
+                    <td>Haute</td>
+                </tr>
+                <tr>
+                    <td>BF-CAND-02</td>
+                    <td>Le candidat doit pouvoir renseigner ses informations personnelles</td>
+                    <td>Haute</td>
+                </tr>
+                <tr>
+                    <td>BF-CAND-03</td>
+                    <td>Le candidat doit pouvoir télécharger son CV (format PDF)</td>
+                    <td>Haute</td>
+                </tr>
+                <tr>
+                    <td>BF-CAND-04</td>
+                    <td>Le système doit vérifier l'email du candidat avant le passage du quiz</td>
+                    <td>Haute</td>
+                </tr>
+                <tr>
+                    <td>BF-CAND-05</td>
+                    <td>Le recruteur doit pouvoir consulter la liste des candidatures d'une campagne</td>
+                    <td>Haute</td>
+                </tr>
+                <tr>
+                    <td>BF-CAND-06</td>
+                    <td>Le recruteur doit pouvoir filtrer et rechercher les candidatures</td>
+                    <td>Moyenne</td>
+                </tr>
+                <tr>
+                    <td>BF-CAND-07</td>
+                    <td>Le recruteur doit pouvoir télécharger le CV d'un candidat</td>
+                    <td>Haute</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h4 class="subsection-heading">3.2.5. Module Quiz technique</h4>
+        
+        <p>Ce module gère le passage des évaluations techniques par les candidats.</p>
+        
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Besoin fonctionnel</th>
+                    <th>Priorité</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>BF-QUIZ-01</td>
+                    <td>Le candidat doit pouvoir démarrer le quiz après validation de son email</td>
+                    <td>Haute</td>
+                </tr>
+                <tr>
+                    <td>BF-QUIZ-02</td>
+                    <td>Le système doit afficher les questions une par une avec leurs options de réponse</td>
+                    <td>Haute</td>
+                </tr>
+                <tr>
+                    <td>BF-QUIZ-03</td>
+                    <td>Le système doit afficher un chronomètre indiquant le temps restant</td>
+                    <td>Haute</td>
+                </tr>
+                <tr>
+                    <td>BF-QUIZ-04</td>
+                    <td>Le système doit sauvegarder automatiquement les réponses du candidat</td>
+                    <td>Haute</td>
+                </tr>
+                <tr>
+                    <td>BF-QUIZ-05</td>
+                    <td>Le candidat doit pouvoir naviguer entre les questions</td>
+                    <td>Moyenne</td>
+                </tr>
+                <tr>
+                    <td>BF-QUIZ-06</td>
+                    <td>Le système doit terminer automatiquement le quiz à expiration du temps</td>
+                    <td>Haute</td>
+                </tr>
+                <tr>
+                    <td>BF-QUIZ-07</td>
+                    <td>Le système doit calculer et enregistrer le score à la fin du quiz</td>
+                    <td>Haute</td>
+                </tr>
+                <tr>
+                    <td>BF-QUIZ-08</td>
+                    <td>Le candidat doit recevoir une confirmation de soumission</td>
+                    <td>Moyenne</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h4 class="subsection-heading">3.2.6. Module Entretiens</h4>
+        
+        <p>Ce module permet la planification et le suivi des entretiens avec les candidats.</p>
+        
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Besoin fonctionnel</th>
+                    <th>Priorité</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>BF-ENT-01</td>
+                    <td>Le recruteur doit pouvoir planifier un entretien pour un candidat</td>
+                    <td>Haute</td>
+                </tr>
+                <tr>
+                    <td>BF-ENT-02</td>
+                    <td>Le système doit envoyer une convocation par email au candidat</td>
+                    <td>Haute</td>
+                </tr>
+                <tr>
+                    <td>BF-ENT-03</td>
+                    <td>Le recruteur doit pouvoir modifier ou annuler un entretien</td>
+                    <td>Haute</td>
+                </tr>
+                <tr>
+                    <td>BF-ENT-04</td>
+                    <td>Le recruteur doit pouvoir marquer un entretien comme réalisé</td>
+                    <td>Moyenne</td>
+                </tr>
+                <tr>
+                    <td>BF-ENT-05</td>
+                    <td>Le système doit afficher un calendrier des entretiens planifiés</td>
+                    <td>Basse</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h4 class="subsection-heading">3.2.7. Module Évaluations collaboratives</h4>
+        
+        <p>Ce module permet aux recruteurs de partager leurs évaluations des candidats.</p>
+        
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Besoin fonctionnel</th>
+                    <th>Priorité</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>BF-EVAL-01</td>
+                    <td>Le recruteur doit pouvoir noter un candidat sur différents critères</td>
+                    <td>Haute</td>
+                </tr>
+                <tr>
+                    <td>BF-EVAL-02</td>
+                    <td>Le recruteur doit pouvoir ajouter des commentaires sur un candidat</td>
+                    <td>Haute</td>
+                </tr>
+                <tr>
+                    <td>BF-EVAL-03</td>
+                    <td>Les évaluations des autres recruteurs doivent être visibles</td>
+                    <td>Haute</td>
+                </tr>
+                <tr>
+                    <td>BF-EVAL-04</td>
+                    <td>Le système doit calculer une note moyenne par candidat</td>
+                    <td>Moyenne</td>
+                </tr>
+                <tr>
+                    <td>BF-EVAL-05</td>
+                    <td>Le recruteur doit pouvoir prendre une décision (retenu, rejeté, en attente)</td>
+                    <td>Haute</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h4 class="subsection-heading">3.2.8. Module Notifications</h4>
+        
+        <p>Ce module gère les communications automatiques avec les utilisateurs.</p>
+        
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Besoin fonctionnel</th>
+                    <th>Priorité</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>BF-NOTIF-01</td>
+                    <td>Le système doit notifier le recruteur lors d'une nouvelle candidature</td>
+                    <td>Haute</td>
+                </tr>
+                <tr>
+                    <td>BF-NOTIF-02</td>
+                    <td>Le système doit notifier le recruteur lorsqu'un candidat termine son quiz</td>
+                    <td>Haute</td>
+                </tr>
+                <tr>
+                    <td>BF-NOTIF-03</td>
+                    <td>Le système doit envoyer des rappels pour les entretiens à venir</td>
+                    <td>Moyenne</td>
+                </tr>
+                <tr>
+                    <td>BF-NOTIF-04</td>
+                    <td>Les notifications doivent être visibles dans l'application (in-app)</td>
+                    <td>Haute</td>
+                </tr>
+                <tr>
+                    <td>BF-NOTIF-05</td>
+                    <td>L'utilisateur doit pouvoir marquer les notifications comme lues</td>
+                    <td>Moyenne</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h4 class="subsection-heading">3.2.9. Module Dashboard et Reporting</h4>
+        
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Besoin fonctionnel</th>
+                    <th>Priorité</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>BF-DASH-01</td>
+                    <td>Le tableau de bord doit afficher les statistiques clés (candidatures, campagnes actives)</td>
+                    <td>Moyenne</td>
+                </tr>
+                <tr>
+                    <td>BF-DASH-02</td>
+                    <td>Le système doit afficher la liste des utilisateurs connectés (QEEL)</td>
+                    <td>Basse</td>
+                </tr>
+                <tr>
+                    <td>BF-DASH-03</td>
+                    <td>Le recruteur doit avoir une vue d'ensemble de ses campagnes en cours</td>
+                    <td>Moyenne</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h3 class="section-heading">3.3. Besoins non fonctionnels</h3>
+        
+        <p>Les besoins non fonctionnels définissent les contraintes et qualités attendues du système, indépendamment des fonctionnalités offertes. Ils sont essentiels pour garantir une expérience utilisateur satisfaisante et une exploitation pérenne de l'application.</p>
+        
+        <h4 class="subsection-heading">3.3.1. Performance</h4>
+        
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Exigence</th>
+                    <th>Critère de mesure</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>BNF-PERF-01</td>
+                    <td>Temps de réponse des pages</td>
+                    <td>< 2 secondes pour 95% des requêtes</td>
+                </tr>
+                <tr>
+                    <td>BNF-PERF-02</td>
+                    <td>Temps de chargement initial</td>
+                    <td>< 3 secondes sur une connexion standard</td>
+                </tr>
+                <tr>
+                    <td>BNF-PERF-03</td>
+                    <td>Utilisateurs simultanés</td>
+                    <td>Support de 100 utilisateurs concurrents minimum</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h4 class="subsection-heading">3.3.2. Sécurité</h4>
+        
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Exigence</th>
+                    <th>Critère de mesure</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>BNF-SEC-01</td>
+                    <td>Chiffrement des mots de passe</td>
+                    <td>Utilisation de BCrypt avec un coût minimum de 10</td>
+                </tr>
+                <tr>
+                    <td>BNF-SEC-02</td>
+                    <td>Communication sécurisée</td>
+                    <td>HTTPS obligatoire pour toutes les communications</td>
+                </tr>
+                <tr>
+                    <td>BNF-SEC-03</td>
+                    <td>Expiration des sessions</td>
+                    <td>Tokens JWT avec durée de vie limitée (24h maximum)</td>
+                </tr>
+                <tr>
+                    <td>BNF-SEC-04</td>
+                    <td>Protection contre les attaques</td>
+                    <td>Conformité aux recommandations OWASP Top 10</td>
+                </tr>
+                <tr>
+                    <td>BNF-SEC-05</td>
+                    <td>Traçabilité</td>
+                    <td>Journalisation des actions sensibles (connexions, modifications)</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h4 class="subsection-heading">3.3.3. Ergonomie et Accessibilité</h4>
+        
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Exigence</th>
+                    <th>Critère de mesure</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>BNF-ERG-01</td>
+                    <td>Interface responsive</td>
+                    <td>Affichage correct sur desktop, tablette et mobile</td>
+                </tr>
+                <tr>
+                    <td>BNF-ERG-02</td>
+                    <td>Compatibilité navigateurs</td>
+                    <td>Support des navigateurs modernes (Chrome, Firefox, Edge, Safari)</td>
+                </tr>
+                <tr>
+                    <td>BNF-ERG-03</td>
+                    <td>Cohérence visuelle</td>
+                    <td>Charte graphique uniforme sur toutes les pages</td>
+                </tr>
+                <tr>
+                    <td>BNF-ERG-04</td>
+                    <td>Messages d'erreur</td>
+                    <td>Messages clairs et actionables pour l'utilisateur</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h4 class="subsection-heading">3.3.4. Fiabilité et Disponibilité</h4>
+        
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Exigence</th>
+                    <th>Critère de mesure</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>BNF-FIAB-01</td>
+                    <td>Disponibilité</td>
+                    <td>99% de disponibilité hors maintenance planifiée</td>
+                </tr>
+                <tr>
+                    <td>BNF-FIAB-02</td>
+                    <td>Sauvegarde des données</td>
+                    <td>Backup quotidien de la base de données</td>
+                </tr>
+                <tr>
+                    <td>BNF-FIAB-03</td>
+                    <td>Récupération après panne</td>
+                    <td>Restauration possible en moins de 4 heures</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h4 class="subsection-heading">3.3.5. Maintenabilité</h4>
+        
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Exigence</th>
+                    <th>Critère de mesure</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>BNF-MAINT-01</td>
+                    <td>Documentation du code</td>
+                    <td>Commentaires Javadoc/JSDoc pour les classes et méthodes publiques</td>
+                </tr>
+                <tr>
+                    <td>BNF-MAINT-02</td>
+                    <td>Tests automatisés</td>
+                    <td>Couverture de code minimum de 60% pour les tests unitaires</td>
+                </tr>
+                <tr>
+                    <td>BNF-MAINT-03</td>
+                    <td>Architecture modulaire</td>
+                    <td>Séparation claire des responsabilités (couches, modules)</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h3 class="section-heading">3.4. Diagrammes des cas d'utilisation</h3>
+        
+        <p>Les diagrammes de cas d'utilisation constituent un outil de modélisation UML permettant de représenter les interactions entre les acteurs et le système. Ils offrent une vue d'ensemble des fonctionnalités du système du point de vue de l'utilisateur.</p>
+        
+        <h4 class="subsection-heading">3.4.1. Diagramme de cas d'utilisation global</h4>
+        
+        <p>Le diagramme suivant présente une vue d'ensemble des principaux cas d'utilisation de SyneliaQuizApp, organisés par acteur.</p>
+        
+        <div class="figure">
+            <div class="figure-placeholder">[Diagramme de cas d'utilisation global]</div>
+            <p class="figure-caption">Figure 3.1 : Diagramme de cas d'utilisation global de SyneliaQuizApp</p>
+        </div>
+        
+        <h4 class="subsection-heading">3.4.2. Cas d'utilisation de l'Administrateur</h4>
+        
+        <p>L'administrateur dispose des privilèges les plus étendus sur le système. Ses cas d'utilisation principaux incluent :</p>
+        
+        <ul class="styled-list">
+            <li><strong>Gérer les utilisateurs :</strong> créer, modifier, activer/désactiver des comptes</li>
+            <li><strong>Gérer les données de référence :</strong> départements, spécialités, questions</li>
+            <li><strong>Superviser l'activité :</strong> consulter les statistiques globales, les logs</li>
+            <li><strong>Configurer le système :</strong> paramètres généraux, templates d'emails</li>
+        </ul>
+        
+        <div class="figure">
+            <div class="figure-placeholder">[Diagramme de cas d'utilisation - Administrateur]</div>
+            <p class="figure-caption">Figure 3.2 : Cas d'utilisation de l'Administrateur</p>
+        </div>
+        
+        <h4 class="subsection-heading">3.4.3. Cas d'utilisation du Recruteur</h4>
+        
+        <p>Le recruteur est l'utilisateur principal de l'application au quotidien. Ses cas d'utilisation couvrent l'ensemble du cycle de recrutement :</p>
+        
+        <ul class="styled-list">
+            <li><strong>Gérer les campagnes :</strong> créer, configurer, activer/désactiver</li>
+            <li><strong>Consulter les candidatures :</strong> lister, filtrer, visualiser les détails</li>
+            <li><strong>Évaluer les candidats :</strong> noter, commenter, prendre des décisions</li>
+            <li><strong>Planifier les entretiens :</strong> créer, modifier, annuler des rendez-vous</li>
+            <li><strong>Collaborer :</strong> partager des évaluations, consulter les avis des collègues</li>
+        </ul>
+        
+        <div class="figure">
+            <div class="figure-placeholder">[Diagramme de cas d'utilisation - Recruteur]</div>
+            <p class="figure-caption">Figure 3.3 : Cas d'utilisation du Recruteur</p>
+        </div>
+        
+        <h4 class="subsection-heading">3.4.4. Cas d'utilisation du Candidat</h4>
+        
+        <p>Le candidat interagit avec le système à travers un parcours guidé :</p>
+        
+        <ul class="styled-list">
+            <li><strong>Postuler :</strong> accéder au formulaire via le lien de campagne, renseigner ses informations</li>
+            <li><strong>Vérifier son email :</strong> confirmer son adresse email via le lien reçu</li>
+            <li><strong>Passer le quiz :</strong> répondre aux questions dans le temps imparti</li>
+            <li><strong>Suivre sa candidature :</strong> consulter l'état d'avancement de son dossier</li>
+        </ul>
+        
+        <div class="figure">
+            <div class="figure-placeholder">[Diagramme de cas d'utilisation - Candidat]</div>
+            <p class="figure-caption">Figure 3.4 : Cas d'utilisation du Candidat</p>
+        </div>
+        
+        <h3 class="section-heading">3.5. Priorisation des besoins</h3>
+        
+        <p>Compte tenu des contraintes temporelles du projet, une priorisation des fonctionnalités a été réalisée selon la méthode MoSCoW (Must have, Should have, Could have, Won't have).</p>
+        
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>Priorité</th>
+                    <th>Fonctionnalités</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Must Have</strong><br>(MVP)</td>
+                    <td>Authentification, Gestion des campagnes, Passage du quiz, Calcul des scores, Consultation des candidatures, Notifications de base</td>
+                </tr>
+                <tr>
+                    <td><strong>Should Have</strong></td>
+                    <td>Évaluations collaboratives, Planification des entretiens, Dashboard, Gestion des questions</td>
+                </tr>
+                <tr>
+                    <td><strong>Could Have</strong></td>
+                    <td>Statistiques avancées, Export des données, Personnalisation des templates d'email</td>
+                </tr>
+                <tr>
+                    <td><strong>Won't Have</strong><br>(V1)</td>
+                    <td>Intégration calendrier externe, Application mobile, IA pour le matching</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="conclusion-box">
+            <p><strong>Conclusion du chapitre.</strong> Ce chapitre a permis de formaliser les besoins fonctionnels et non fonctionnels de l'application SyneliaQuizApp. L'analyse a identifié 9 modules fonctionnels couvrant l'ensemble du cycle de recrutement, de la création de campagne à la prise de décision finale. Les exigences non fonctionnelles garantissent que la solution répondra aux attentes en termes de performance, sécurité, ergonomie et maintenabilité. La priorisation MoSCoW permettra de guider le développement en se concentrant d'abord sur les fonctionnalités essentielles. Le chapitre suivant détaillera la conception de la solution pour répondre à ces besoins.</p>
+        </div>
+
+        <!-- ==================== CHAPITRE 4 ==================== -->
+        <div class="page-break" data-section="chapitre4" data-title="Chapitre 4 - Conception"></div>
+        <h2 class="chapter-title">Chapitre 4<span class="chapter-subtitle">Conception de la solution</span></h2>
+        
+        <h3 class="section-heading">4.1. Architecture globale du système</h3>
+        <p class="placeholder">[Contenu à rédiger]</p>
+        
+        <h3 class="section-heading">4.2. Conception de la base de données</h3>
+        <div class="figure">
+            <div class="figure-placeholder">[Modèle Conceptuel de Données]</div>
+            <p class="figure-caption">Figure 4.1 : Modèle Conceptuel de Données (MCD)</p>
+        </div>
+        
+        <h3 class="section-heading">4.3. Diagrammes de classes</h3>
+        <p class="placeholder">[Contenu à rédiger]</p>
+
+        <!-- ==================== TROISIÈME PARTIE ==================== -->
+        <div class="page-break" data-type="part" data-section="partie3" data-title="Troisième Partie"></div>
+        <div class="part-content">
+            <p class="part-number">Troisième Partie</p>
+            <h2 class="part-title">Réalisation et Mise en Œuvre</h2>
+            <div class="part-separator"></div>
+        </div>
+
+        <!-- ==================== CHAPITRE 5 ==================== -->
+        <div class="page-break" data-section="chapitre5" data-title="Chapitre 5 - Technologies"></div>
+        <h2 class="chapter-title">Chapitre 5<span class="chapter-subtitle">Environnement technique et outils</span></h2>
+        
+        <h3 class="section-heading">5.1. Technologies backend</h3>
+        <div class="tech-stack">
+            <div class="tech-item">
+                <span class="tech-name">Java 21</span>
+                <span class="tech-desc">Langage de programmation principal</span>
+            </div>
+            <div class="tech-item">
+                <span class="tech-name">Spring Boot 3.5.6</span>
+                <span class="tech-desc">Framework backend</span>
+            </div>
+            <div class="tech-item">
+                <span class="tech-name">MySQL 8.0</span>
+                <span class="tech-desc">Base de données relationnelle</span>
+            </div>
+        </div>
+        
+        <h3 class="section-heading">5.2. Technologies frontend</h3>
+        <div class="tech-stack">
+            <div class="tech-item">
+                <span class="tech-name">Angular 20</span>
+                <span class="tech-desc">Framework frontend</span>
+            </div>
+            <div class="tech-item">
+                <span class="tech-name">TypeScript</span>
+                <span class="tech-desc">Langage typé</span>
+            </div>
+        </div>
+
+        <!-- ==================== CHAPITRE 6 ==================== -->
+        <div class="page-break" data-section="chapitre6" data-title="Chapitre 6 - Implémentation"></div>
+        <h2 class="chapter-title">Chapitre 6<span class="chapter-subtitle">Implémentation de la solution</span></h2>
+        
+        <h3 class="section-heading">6.1. Organisation du code source</h3>
+        <p class="placeholder">[Contenu à rédiger]</p>
+        
+        <h3 class="section-heading">6.2. Implémentation du backend</h3>
+        
+        <div class="code-block">
+            <p class="code-title">Exemple : Configuration Spring Security</p>
+            <pre><code>@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+    // Configuration...
+}</code></pre>
+        </div>
+
+        <!-- ==================== QUATRIÈME PARTIE ==================== -->
+        <div class="page-break" data-type="part" data-section="partie4" data-title="Quatrième Partie"></div>
+        <div class="part-content">
+            <p class="part-number">Quatrième Partie</p>
+            <h2 class="part-title">Résultats et Perspectives</h2>
+            <div class="part-separator"></div>
+        </div>
+
+        <!-- ==================== CHAPITRE 7-9 (à compléter) ==================== -->
+        <div class="page-break" data-section="chapitre7" data-title="Chapitre 7 - Tests"></div>
+        <h2 class="chapter-title">Chapitre 7<span class="chapter-subtitle">Tests et validation</span></h2>
+        <p class="placeholder">[Contenu à rédiger]</p>
+
+        <div class="page-break" data-section="chapitre8" data-title="Chapitre 8 - Résultats"></div>
+        <h2 class="chapter-title">Chapitre 8<span class="chapter-subtitle">Présentation des résultats</span></h2>
+        <p class="placeholder">[Contenu à rédiger]</p>
+
+        <div class="page-break" data-section="chapitre9" data-title="Chapitre 9 - Perspectives"></div>
+        <h2 class="chapter-title">Chapitre 9<span class="chapter-subtitle">Limites et perspectives</span></h2>
+        <p class="placeholder">[Contenu à rédiger]</p>
+
+        <!-- ==================== CONCLUSION ==================== -->
+        <div class="page-break" data-section="conclusion" data-title="Conclusion"></div>
+        <h2 class="section-title centered">Conclusion</h2>
+        
+        <p class="placeholder">[Contenu de la conclusion à rédiger]</p>
+        <p>Ce travail nous a permis de développer une solution complète répondant aux besoins de l'entreprise SYNELIA en matière de gestion du recrutement...</p>
+
+        <!-- ==================== RÉFÉRENCES ==================== -->
+        <div class="page-break" data-section="references" data-title="Références"></div>
+        <h2 class="section-title centered">Références Bibliographiques</h2>
+        <div class="references-list">
+            <div class="ref-category">Ouvrages</div>
+            <p class="reference">[1] WALLS, C. (2022). <em>Spring in Action</em>. 6th Edition. Manning Publications.</p>
+            <p class="reference">[2] FREEMAN, A. (2022). <em>Pro Angular 16</em>. 6th Edition. Apress.</p>
+            
+            <div class="ref-category">Documentation technique</div>
+            <p class="reference">[3] Spring Boot Documentation. (2024). <a href="https://docs.spring.io/spring-boot/">https://docs.spring.io/spring-boot/</a></p>
+            <p class="reference">[4] Angular Documentation. (2024). <a href="https://angular.dev/">https://angular.dev/</a></p>
+        </div>
+
+        <!-- ==================== ANNEXES ==================== -->
+        <div class="page-break" data-section="annexes" data-title="Annexes"></div>
+        <h2 class="section-title centered">Annexes</h2>
+        
+        <h3 class="annexe-title">Annexe A : Captures d'écran de l'application</h3>
+        <div class="figure">
+            <div class="figure-placeholder">[Capture d'écran]</div>
+            <p class="figure-caption">Figure A.1 : Page de connexion</p>
+        </div>
+        
+        <h3 class="annexe-title">Annexe B : Diagrammes complémentaires</h3>
+        <p class="placeholder">[Contenu à ajouter]</p>
+
+    </div>
+    <!-- FIN DU CONTENU SOURCE -->
+
+    <script src="script.js"></script>
+</body>
+</html>

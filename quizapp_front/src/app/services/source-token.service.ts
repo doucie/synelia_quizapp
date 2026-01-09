@@ -1,8 +1,38 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
+
+/**
+ * Interface pour les critères de recherche paginée des source tokens
+ */
+export interface SourceTokenSearchCriteria {
+  page?: number;
+  size?: number;
+  search_string?: string;
+  sourceTokenName?: string;
+  idDe?: string;
+  idA?: string;
+  campaignId?: number;
+  isDeleted?: boolean;
+  dateCreationDe?: string;
+  dateCreationA?: string;
+  dateModificationDe?: string;
+  dateModificationA?: string;
+}
+
+/**
+ * Interface pour la réponse paginée des source tokens
+ */
+export interface PagedSourceTokenResponse {
+  content: SourceToken[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+  last?: boolean;
+}
 
 export interface SourceToken {
   id?: number;
@@ -165,6 +195,25 @@ export class SourceTokenService {
   }
 
   /**
+   * Met à jour un source token
+   * @param token Le source token à mettre à jour
+   * @returns Observable avec la réponse
+   */
+  updateSourceToken(token: SourceToken): Observable<SourceTokenResponse> {
+    const request: SourceTokenRequest = {
+      user: 1,
+      datas: [token]
+    };
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    });
+
+    return this.http.post<SourceTokenResponse>(`${this.apiUrl}/update`, request, { headers });
+  }
+
+  /**
    * Supprime un source token
    * @param tokenId ID du token à supprimer
    * @returns Observable avec la réponse
@@ -181,5 +230,97 @@ export class SourceTokenService {
     });
 
     return this.http.post<SourceTokenResponse>(`${this.apiUrl}/delete`, request, { headers });
+  }
+
+  /**
+   * Récupère TOUS les source tokens selon des critères (y compris les supprimés)
+   * @param criteria critères de recherche optionnels
+   * @returns Observable de la liste paginée de source tokens incluant les supprimés
+   */
+  getAllSourceTokensByCriteria(criteria: SourceTokenSearchCriteria = {}): Observable<PagedSourceTokenResponse> {
+    // Récupérer l'ID de l'utilisateur connecté depuis localStorage
+    const currentUserData = localStorage.getItem('user');
+    const currentUserId = currentUserData ? JSON.parse(currentUserData).id?.toString() || "1" : "1";
+    
+    // Construction de la requête selon le format backend attendu
+    const request = {
+      user: currentUserId,
+      size: criteria.size || 10,
+      index: criteria.page || 0,
+      isSimpleLoading: false,
+      data: {
+        id: criteria.idDe || "",
+        campaignId: criteria.campaignId || "",
+        isDeleted: criteria.isDeleted !== undefined ? criteria.isDeleted.toString() : "",
+        searchString: criteria.search_string || "",
+        
+        // Critères de dates
+        ...(criteria.dateCreationDe && criteria.dateCreationDe.trim() && { dateCreationDe: criteria.dateCreationDe }),
+        ...(criteria.dateCreationA && criteria.dateCreationA.trim() && { dateCreationA: criteria.dateCreationA }),
+        ...(criteria.dateModificationDe && criteria.dateModificationDe.trim() && { dateModificationDe: criteria.dateModificationDe }),
+        ...(criteria.dateModificationA && criteria.dateModificationA.trim() && { dateModificationA: criteria.dateModificationA }),
+        
+        // Intervalles d'ID
+        ...(criteria.idDe && criteria.idDe.trim() && { idStart: criteria.idDe }),
+        ...(criteria.idA && criteria.idA.trim() && { idEnd: criteria.idA })
+      }
+    };
+
+    return this.http.post<any>(`${this.apiUrl}/getAllByCriteria`, request).pipe(
+      map(response => {
+        // Vérifier si la réponse contient des données
+        if (!response || (!response.items && !response.item)) {
+          return {
+            content: [],
+            totalElements: 0,
+            totalPages: 0,
+            size: criteria.size || 10,
+            number: criteria.page || 0
+          };
+        }
+        
+        // Traiter les éléments
+        const rawTokens = response.items || (response.item ? [response.item] : []);
+        
+        // Calculer le nombre total de pages
+        const totalElements = response.totalCount || response.count || rawTokens.length;
+        const pageSize = criteria.size || 10;
+        const totalPages = Math.ceil(totalElements / pageSize);
+        
+        return {
+          content: rawTokens,
+          totalElements: totalElements,
+          totalPages: totalPages,
+          size: pageSize,
+          number: criteria.page || 0
+        };
+      }),
+      catchError((error: any) => {
+        console.error('❌ Erreur lors de la récupération des source tokens:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Restaure un source token supprimé
+   * @param tokenId ID du source token à restaurer
+   * @returns Observable
+   */
+  restoreSourceToken(tokenId: number): Observable<SourceTokenResponse> {
+    const request = {
+      user: 1,
+      datas: [{ 
+        id: tokenId,
+        isDeleted: false
+      }]
+    };
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    });
+
+    return this.http.post<SourceTokenResponse>(`${this.apiUrl}/update`, request, { headers });
   }
 }
