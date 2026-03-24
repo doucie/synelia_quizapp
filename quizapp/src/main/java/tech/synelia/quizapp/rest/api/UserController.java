@@ -179,7 +179,7 @@ public class UserController {
 			HttpServletRequest request, 
 			Locale locale) {
 		
-		slf4jLogger.info("start method updateOnlineStatus - user id: {}, isOnline: {}", id, isOnline);
+		slf4jLogger.debug("start method updateOnlineStatus - user id: {}, isOnline: {}", id, isOnline);
 		
 		// Mise à jour réelle du statut en ligne
 		userRepository.findById(id).ifPresent(user -> {
@@ -190,11 +190,11 @@ public class UserController {
 			}
 			user.setUpdatedAt(new Date());
 			userRepository.save(user);
-			slf4jLogger.info("Utilisateur {} statut en ligne mis à jour en base: {} (lastConnection: {})", 
+			slf4jLogger.debug("Utilisateur {} statut en ligne mis à jour en base: {} (lastConnection: {})", 
 				id, isOnline, user.getLastConnectionDate());
 		});
 		
-		slf4jLogger.info("Statut en ligne mis à jour pour l'utilisateur {} : {}", id, isOnline);
+		slf4jLogger.debug("Statut en ligne mis à jour pour l'utilisateur {} : {}", id, isOnline);
 		return ResponseEntity.ok("{\"status\":\"success\",\"message\":\"Online status updated\"}");
 	}
 
@@ -263,13 +263,13 @@ public class UserController {
 	@RequestMapping(value="/online-stats", method=RequestMethod.GET, produces={"application/json"})
 	public ResponseEntity<OnlineStatsDto> getOnlineStats(HttpServletRequest request, Locale locale) {
 		
-		slf4jLogger.info("start method getOnlineStats - récupération des statistiques utilisateurs en ligne");
+		slf4jLogger.debug("start method getOnlineStats - récupération des statistiques utilisateurs en ligne");
 		
 		try {
 			// Récupération des vraies statistiques depuis la base de données
 			OnlineStatsDto stats = onlineStatsBusiness.getOnlineStats();
 			
-			slf4jLogger.info("Statistiques QEEL retournées avec succès: {} utilisateurs total, {} en ligne", 
+slf4jLogger.debug("Statistiques QEEL retournées avec succès: {} utilisateurs total, {} en ligne", 
 							stats.getTotalUsers(), stats.getOnlineUsers());
 			
 			return ResponseEntity.ok(stats);
@@ -293,13 +293,13 @@ public class UserController {
 	@RequestMapping(value="/online-count", method=RequestMethod.GET, produces={"application/json"})
 	public ResponseEntity<Long> getOnlineUsersCount(HttpServletRequest request, Locale locale) {
 		
-		slf4jLogger.info("start method getOnlineUsersCount");
+		slf4jLogger.debug("start method getOnlineUsersCount");
 		
 		try {
 			// Récupération du vrai nombre d'utilisateurs en ligne depuis la base de données
 			Long count = onlineStatsBusiness.getOnlineUsersCount();
 			
-			slf4jLogger.info("Nombre d'utilisateurs en ligne retourné: {}", count);
+			slf4jLogger.debug("Nombre d'utilisateurs en ligne retourné: {}", count);
 			return ResponseEntity.ok(count);
 			
 		} catch (Exception e) {

@@ -39,7 +39,7 @@ public class QeelController {
         
         try {
             OnlineStatsDto stats = onlineStatsBusiness.getOnlineStats();
-            logger.info("✅ Statistiques QEEL récupérées: {} utilisateurs total, {} en ligne", 
+            logger.debug("Statistiques QEEL récupérées: {} utilisateurs total, {} en ligne", 
                        stats.getTotalUsers(), stats.getOnlineUsers());
             
             return ResponseEntity.ok(stats);

@@ -166,6 +166,9 @@ body {
     height: 100%;
     box-sizing: border-box;
     overflow: hidden;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
 }
 
 .page.continuation-page .page-content {
@@ -509,6 +512,47 @@ p.no-indent {
 }
 
 /* ========================================
+   MARQUEUR DE RÉVISION (ajouts post-review)
+   ======================================== */
+.revision-mark {
+    border-left: 4px solid #e040fb !important;
+    position: relative;
+}
+
+.revision-mark::before {
+    content: "✦ AJOUT v2.1";
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #e040fb;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.revision-mark.info-box {
+    background: #fce4ec;
+    border-left: 4px solid #e040fb;
+}
+
+[data-theme="dark"] .revision-mark.info-box {
+    background: #3e1a2e;
+}
+
+.revision-mark.styled-table-wrap {
+    border: 2px solid #e040fb;
+    border-radius: 6px;
+    padding: 0.5rem;
+    margin: 1rem 0;
+}
+
+.revision-mark h3,
+.revision-mark h4 {
+    color: #e040fb;
+}
+
+/* ========================================
    TABLE DES MATIÈRES
    ======================================== */
 
@@ -671,6 +715,39 @@ p.no-indent {
     font-weight: 600;
 }
 
+/* Tableaux divisés sur plusieurs pages */
+.table-continuation {
+    margin-top: 0;
+}
+
+.table-continuation::before {
+    content: '(suite du tableau)';
+    display: block;
+    font-size: 0.8rem;
+    font-style: italic;
+    color: var(--text-light);
+    margin-bottom: 0.5rem;
+    text-align: right;
+}
+
+.table-continuation thead {
+    background: var(--secondary);
+}
+
+.table-continued {
+    margin-bottom: 0;
+}
+
+.table-continued::after {
+    content: '(suite page suivante)';
+    display: block;
+    font-size: 0.8rem;
+    font-style: italic;
+    color: var(--text-light);
+    margin-top: 0.5rem;
+    text-align: right;
+}
+
 /* ========================================
    DIAGRAMMES ET FIGURES
    ======================================== */
@@ -818,18 +895,52 @@ code {
 
 .glossary {
     margin: 1rem 0;
+    width: 100%;
+    max-width: 100%;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+    display: block;
 }
 
 .glossary dt {
     font-weight: 600;
     color: var(--primary);
     margin-top: 0.75rem;
+    margin-bottom: 0.25rem;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+    hyphens: auto;
+    display: block;
+    width: 100%;
+    max-width: 100%;
 }
 
 .glossary dd {
     margin-left: 1.5rem;
+    margin-right: 0;
     color: var(--text-light);
     padding: 0.25rem 0;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+    hyphens: auto;
+    display: block;
+    width: calc(100% - 1.5rem);
+    max-width: calc(100% - 1.5rem);
+    white-space: normal;
+}
+
+/* Glossaire qui continue sur la page suivante */
+.glossary-continuation::before {
+    content: '(suite du glossaire)';
+    display: block;
+    font-size: 0.8rem;
+    font-style: italic;
+    color: var(--text-light);
+    margin-bottom: 0.5rem;
+    text-align: right;
 }
 
 /* ========================================

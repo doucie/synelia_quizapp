@@ -39,35 +39,3 @@ Formation Kafka : Utilisation des outils CLI Kafka (kafka-topics, kafka-console-
 
 Formation Kafka : Configuration d’un Producer Kafka
 — 2h
-
-Rédaction de mémoire : Bases de données
-Rédaction de mémoire : 
-Rédaction de mémoire : 
-Rédaction de mémoire : 
-Rédaction de mémoire : 
-Rédaction de mémoire : 
-Rédaction de mémoire : 
-Rédaction de mémoire : 
-Rédaction de mémoire : 
-Rédaction de mémoire : 
-Rédaction de mémoire : 
-Rédaction de mémoire : 
-Rédaction de mémoire :
-Rédaction de mémoire : 
-Rédaction de mémoire : 
-Rédaction de mémoire : 
-Rédaction de mémoire : 
-Rédaction de mémoire : 
-Rédaction de mémoire :
-Rédaction de mémoire : 
-Rédaction de mémoire : 
-Rédaction de mémoire : 
-Rédaction de mémoire : 
-Rédaction de mémoire : 
-Rédaction de mémoire :
-Rédaction de mémoire : 
-Rédaction de mémoire : 
-Rédaction de mémoire : 
-Rédaction de mémoire : 
-Rédaction de mémoire : 
-Rédaction de mémoire :

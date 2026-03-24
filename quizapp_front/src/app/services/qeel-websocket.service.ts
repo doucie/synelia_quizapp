@@ -43,7 +43,7 @@ export class QeelWebSocketService {
   private loadInitialDataDirectly(): void {
     console.log('🔄 [QEEL] Chargement direct des données...');
     
-    fetch('http://localhost:8081/user/online-stats', {
+    fetch('http://localhost:8085/user/online-stats', {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
@@ -71,7 +71,7 @@ export class QeelWebSocketService {
    * À appeler depuis le composant
    */
   public async loadInitialData(): Promise<void> {
-    const apiUrl = 'http://localhost:8081/user/online-stats';
+    const apiUrl = 'http://localhost:8085/user/online-stats';
     
     console.log('🔄 [QEEL] Début chargement initial via fetch...');
     console.log('🔄 [QEEL] URL:', apiUrl);
@@ -107,7 +107,7 @@ export class QeelWebSocketService {
    * Fallback avec HttpClient
    */
   private loadWithHttpClient(): void {
-    const apiUrl = 'http://localhost:8081/user/online-stats';
+    const apiUrl = 'http://localhost:8085/user/online-stats';
     
     this.http.get<OnlineStats>(apiUrl).subscribe({
       next: (stats) => {
@@ -125,7 +125,7 @@ export class QeelWebSocketService {
    */
   private connect(): void {
     // Essayer d'abord la connexion WebSocket native
-    const wsUrl = 'ws://localhost:8081/ws/qeel';
+    const wsUrl = 'ws://localhost:8085/ws/qeel';
     
     try {
       console.log('🔌 Tentative de connexion WebSocket QEEL à:', wsUrl);

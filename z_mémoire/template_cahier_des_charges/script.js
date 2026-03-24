@@ -102,6 +102,228 @@ function generatePagesFromContent() {
     let currentSectionId = null;
     let currentSectionTitle = null;
     
+    // Fonction helper pour créer une nouvelle page
+    function startNewPage(sectionId, sectionTitle) {
+        currentPage = createNewPage(documentContainer, sectionId, sectionTitle, ++pageCount);
+        currentPageContent = currentPage.querySelector('.page-content');
+        currentHeight = 0;
+    }
+    
+    // Fonction helper pour ajouter un élément à la page courante
+    function addElementToPage(element) {
+        currentPageContent.appendChild(element);
+        void element.offsetHeight;
+        const height = getElementHeight(element);
+        currentHeight += height;
+        return height;
+    }
+    
+    // Fonction pour diviser un tableau sur plusieurs pages
+    function splitTableAcrossPages(table) {
+        const thead = table.querySelector('thead');
+        const tbody = table.querySelector('tbody');
+        const rows = tbody ? Array.from(tbody.querySelectorAll('tr')) : Array.from(table.querySelectorAll('tr:not(thead tr)'));
+        
+        if (rows.length === 0) {
+            // Pas de lignes, ajouter le tableau tel quel
+            const clone = table.cloneNode(true);
+            if (currentHeight + getElementHeight(clone) > USABLE_HEIGHT && currentHeight > 0) {
+                startNewPage(null, null);
+            }
+            addElementToPage(clone);
+            return;
+        }
+        
+        // Calculer la hauteur du header
+        let headerHeight = 0;
+        if (thead) {
+            const tempTable = document.createElement('table');
+            tempTable.className = table.className;
+            tempTable.appendChild(thead.cloneNode(true));
+            currentPageContent.appendChild(tempTable);
+            void tempTable.offsetHeight;
+            headerHeight = getElementHeight(tempTable);
+            currentPageContent.removeChild(tempTable);
+        }
+        
+        // Créer le premier tableau avec le header
+        let currentTable = document.createElement('table');
+        currentTable.className = table.className;
+        if (thead) {
+            currentTable.appendChild(thead.cloneNode(true));
+        }
+        let currentTbody = document.createElement('tbody');
+        currentTable.appendChild(currentTbody);
+        
+        // Calculer l'espace disponible
+        let availableHeight = USABLE_HEIGHT - currentHeight - headerHeight - 20; // 20px marge sécurité
+        
+        // Si pas assez d'espace pour au moins le header + 1 ligne, nouvelle page
+        if (availableHeight < 50) {
+            startNewPage(null, null);
+            availableHeight = USABLE_HEIGHT - headerHeight - 20;
+        }
+        
+        let tableStarted = false;
+        let isFirstTablePart = true;
+        
+        rows.forEach((row, rowIndex) => {
+            // Mesurer la hauteur de la ligne
+            const tempRow = row.cloneNode(true);
+            const tempTable = document.createElement('table');
+            tempTable.className = table.className;
+            tempTable.style.visibility = 'hidden';
+            tempTable.style.position = 'absolute';
+            const tempTbody = document.createElement('tbody');
+            tempTbody.appendChild(tempRow);
+            tempTable.appendChild(tempTbody);
+            currentPageContent.appendChild(tempTable);
+            void tempTable.offsetHeight;
+            const rowHeight = tempRow.offsetHeight + 2; // +2 pour borders
+            currentPageContent.removeChild(tempTable);
+            
+            // Vérifier si la ligne rentre dans l'espace disponible
+            if (availableHeight < rowHeight) {
+                // Ajouter le tableau courant à la page
+                if (currentTbody.children.length > 0) {
+                    if (!isFirstTablePart) {
+                        // Ajouter indication "suite" au début du tableau
+                        currentTable.classList.add('table-continued');
+                    }
+                    addElementToPage(currentTable);
+                    tableStarted = false;
+                }
+                
+                // Nouvelle page
+                startNewPage(null, null);
+                
+                // Nouveau tableau avec header répété
+                currentTable = document.createElement('table');
+                currentTable.className = table.className;
+                currentTable.classList.add('table-continuation');
+                if (thead) {
+                    currentTable.appendChild(thead.cloneNode(true));
+                }
+                currentTbody = document.createElement('tbody');
+                currentTable.appendChild(currentTbody);
+                
+                availableHeight = USABLE_HEIGHT - headerHeight - 20;
+                isFirstTablePart = false;
+            }
+            
+            // Ajouter la ligne au tableau courant
+            currentTbody.appendChild(row.cloneNode(true));
+            availableHeight -= rowHeight;
+            tableStarted = true;
+        });
+        
+        // Ajouter le dernier tableau
+        if (tableStarted && currentTbody.children.length > 0) {
+            if (!isFirstTablePart) {
+                currentTable.classList.add('table-continuation');
+            }
+            addElementToPage(currentTable);
+        }
+    }
+    
+    // Fonction pour diviser une liste de définitions (glossaire) sur plusieurs pages
+    function splitDefinitionListAcrossPages(dl) {
+        const children = Array.from(dl.children);
+        
+        if (children.length === 0) {
+            const clone = dl.cloneNode(true);
+            if (currentHeight + getElementHeight(clone) > USABLE_HEIGHT && currentHeight > 0) {
+                startNewPage(null, null);
+            }
+            addElementToPage(clone);
+            return;
+        }
+        
+        // Regrouper les dt/dd en paires
+        const pairs = [];
+        let currentPair = null;
+        
+        children.forEach(child => {
+            if (child.tagName === 'DT') {
+                if (currentPair) {
+                    pairs.push(currentPair);
+                }
+                currentPair = { dt: child, dds: [] };
+            } else if (child.tagName === 'DD' && currentPair) {
+                currentPair.dds.push(child);
+            }
+        });
+        if (currentPair) {
+            pairs.push(currentPair);
+        }
+        
+        // Créer la première liste
+        let currentDl = document.createElement('dl');
+        currentDl.className = dl.className;
+        
+        let availableHeight = USABLE_HEIGHT - currentHeight - 20;
+        
+        if (availableHeight < 60) {
+            startNewPage(null, null);
+            availableHeight = USABLE_HEIGHT - 20;
+        }
+        
+        let dlStarted = false;
+        let isFirstPart = true;
+        
+        pairs.forEach((pair, pairIndex) => {
+            // Mesurer la hauteur de cette paire dt/dd
+            const tempDl = document.createElement('dl');
+            tempDl.className = dl.className;
+            tempDl.style.visibility = 'hidden';
+            tempDl.style.position = 'absolute';
+            tempDl.style.width = '100%';
+            tempDl.appendChild(pair.dt.cloneNode(true));
+            pair.dds.forEach(dd => tempDl.appendChild(dd.cloneNode(true)));
+            currentPageContent.appendChild(tempDl);
+            void tempDl.offsetHeight;
+            const pairHeight = getElementHeight(tempDl);
+            currentPageContent.removeChild(tempDl);
+            
+            // Vérifier si la paire rentre dans l'espace disponible
+            if (availableHeight < pairHeight && dlStarted) {
+                // Ajouter la liste courante à la page
+                if (currentDl.children.length > 0) {
+                    if (!isFirstPart) {
+                        currentDl.classList.add('glossary-continuation');
+                    }
+                    addElementToPage(currentDl);
+                }
+                
+                // Nouvelle page
+                startNewPage(null, null);
+                
+                // Nouvelle liste
+                currentDl = document.createElement('dl');
+                currentDl.className = dl.className;
+                currentDl.classList.add('glossary-continuation');
+                
+                availableHeight = USABLE_HEIGHT - 20;
+                isFirstPart = false;
+                dlStarted = false;
+            }
+            
+            // Ajouter la paire à la liste courante
+            currentDl.appendChild(pair.dt.cloneNode(true));
+            pair.dds.forEach(dd => currentDl.appendChild(dd.cloneNode(true)));
+            availableHeight -= pairHeight;
+            dlStarted = true;
+        });
+        
+        // Ajouter la dernière liste
+        if (dlStarted && currentDl.children.length > 0) {
+            if (!isFirstPart) {
+                currentDl.classList.add('glossary-continuation');
+            }
+            addElementToPage(currentDl);
+        }
+    }
+    
     elements.forEach((element, index) => {
         // Marqueur de page-break
         if (element.classList.contains('page-break')) {
@@ -112,9 +334,9 @@ function generatePagesFromContent() {
                 return;
             }
             
-            currentPage = createNewPage(documentContainer, currentSectionId, currentSectionTitle, ++pageCount);
-            currentPageContent = currentPage.querySelector('.page-content');
-            currentHeight = 0;
+            startNewPage(currentSectionId, currentSectionTitle);
+            currentSectionId = null;
+            currentSectionTitle = null;
             
             return;
         }
@@ -142,11 +364,36 @@ function generatePagesFromContent() {
         
         // Créer une page si nécessaire
         if (!currentPage || !currentPageContent) {
-            currentPage = createNewPage(documentContainer, currentSectionId, currentSectionTitle, ++pageCount);
-            currentPageContent = currentPage.querySelector('.page-content');
-            currentHeight = 0;
+            startNewPage(currentSectionId, currentSectionTitle);
             currentSectionId = null;
             currentSectionTitle = null;
+        }
+        
+        // Traitement spécial pour les tableaux
+        if (element.tagName === 'TABLE') {
+            splitTableAcrossPages(element);
+            return;
+        }
+        
+        // Traitement spécial pour les listes de définitions (glossaire)
+        if (element.tagName === 'DL') {
+            splitDefinitionListAcrossPages(element);
+            return;
+        }
+        
+        // Traitement spécial pour les éléments contenant des tableaux (comme les divs)
+        if (element.querySelector && element.querySelector('table')) {
+            // Cloner sans les tableaux d'abord
+            const clone = element.cloneNode(true);
+            const tablesInClone = clone.querySelectorAll('table');
+            
+            // Si l'élément contient UNIQUEMENT un tableau, traiter le tableau directement
+            if (tablesInClone.length === 1 && element.children.length === 1 && element.children[0].tagName === 'TABLE') {
+                splitTableAcrossPages(element.children[0]);
+                return;
+            }
+            
+            // Sinon, traiter l'élément normalement (le tableau sera peut-être coupé)
         }
         
         const clone = element.cloneNode(true);
@@ -157,17 +404,30 @@ function generatePagesFromContent() {
         
         const elementHeight = getElementHeight(clone);
         
+        // Si l'élément est trop grand pour la page ET c'est le premier élément
+        if (elementHeight > USABLE_HEIGHT) {
+            // L'élément est plus grand que la page entière - on le laisse déborder
+            // mais on s'assure qu'il commence sur une nouvelle page
+            if (currentHeight > 0) {
+                currentPageContent.removeChild(clone);
+                startNewPage(null, null);
+                currentPageContent.appendChild(clone);
+            }
+            currentHeight = USABLE_HEIGHT; // Force nouvelle page pour le prochain élément
+            console.warn('⚠️ Élément trop grand pour une page, considérez le diviser:', element.tagName);
+            return;
+        }
+        
         if (currentHeight + elementHeight > USABLE_HEIGHT && currentHeight > 0) {
             currentPageContent.removeChild(clone);
             
-            currentPage = createNewPage(documentContainer, null, null, ++pageCount);
-            currentPageContent = currentPage.querySelector('.page-content');
-            currentHeight = 0;
+            startNewPage(null, null);
             
             currentPageContent.appendChild(clone);
+            currentHeight = elementHeight;
+        } else {
+            currentHeight += elementHeight;
         }
-        
-        currentHeight += elementHeight;
     });
     
     addPageNumbers();
@@ -473,7 +733,12 @@ function populateChapterSelect(select) {
         { id: 'chapitre6', label: '6. Exigences fonctionnelles' },
         { id: 'chapitre7', label: '7. Exigences techniques' },
         
-        { type: 'group', label: 'Partie IV - Annexes' },
+        { type: 'group', label: 'Partie IV - Architecture' },
+        { id: 'partie4', label: 'Page de partie' },
+        { id: 'chapitre8', label: '8. Architecture technique' },
+        { id: 'chapitre9', label: '9. Sécurité' },
+        
+        { type: 'group', label: 'Annexes' },
         { id: 'glossaire', label: 'Glossaire' },
         { id: 'annexes', label: 'Annexes' }
     ];

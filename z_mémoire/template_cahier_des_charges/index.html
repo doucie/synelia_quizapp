@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cahier des Charges - SyneliaQuizApp</title>
+    <title>Conception et mise en œuvre d'une plateforme web de recrutement - SyneliaQuizApp</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -146,8 +146,7 @@
             <p class="document-type">Cahier des Charges Fonctionnel</p>
             
             <div class="project-title">
-                Application Web de Gestion du Processus de Recrutement avec Évaluation Technique Automatisée
-                <br><strong>SyneliaQuizApp</strong>
+                Conception et mise en œuvre d'une plateforme web de gestion du recrutement intégrant un système d'évaluation technique automatisée et un workflow décisionnel collaboratif : <em>Cas de l'entreprise SYNELIA</em>
             </div>
             
             <div class="cover-separator"></div>
@@ -155,11 +154,11 @@
             <div class="cover-metadata">
                 <div class="metadata-item">
                     <p class="metadata-label">Version</p>
-                    <p class="metadata-value"><span class="version-badge">1.0</span></p>
+                    <p class="metadata-value"><span class="version-badge">2.2</span></p>
                 </div>
                 <div class="metadata-item">
                     <p class="metadata-label">Date</p>
-                    <p class="metadata-value">7 janvier 2026</p>
+                    <p class="metadata-value">25 février 2026</p>
                 </div>
                 <div class="metadata-item">
                     <p class="metadata-label">Auteur</p>
@@ -167,7 +166,7 @@
                 </div>
                 <div class="metadata-item">
                     <p class="metadata-label">Statut</p>
-                    <p class="metadata-value">En cours de rédaction</p>
+                    <p class="metadata-value">Version finale</p>
                 </div>
             </div>
             
@@ -181,13 +180,47 @@
         <h2 class="page-title centered">Historique des Versions</h2>
         
         <div class="version-history">
+            <div class="version-entry" style="border-left: 4px solid #e040fb;">
+                <div class="version-info">
+                    <span class="version-number">v2.2</span>
+                    <p class="version-date">25/02/2026</p>
+                </div>
+                <div class="version-changes">
+                    <strong>[NOM Prénom]</strong> - Révision post-review (observations jury)
+                    <ul>
+                        <li>Nouveau thème académique (conception et mise en œuvre… workflow décisionnel)</li>
+                        <li>Ajout du workflow global du processus de recrutement (Ch. 5)</li>
+                        <li>Ajout de la section Scalabilité et Évolutivité (§ 7.5)</li>
+                        <li>Ajout moteur de recherche multicritère (APP-08, APP-09)</li>
+                        <li>Ajout calendrier intégré pour la gestion des entretiens (INT-05, INT-06)</li>
+                        <li>Ajout mode anti-triche pour les quiz (QUIZ-09, QUIZ-10, QUIZ-11)</li>
+                        <li>Retrait du calendrier de la liste Out of Scope</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="version-entry">
+                <div class="version-info">
+                    <span class="version-number">v2.0</span>
+                    <p class="version-date">09/01/2026</p>
+                </div>
+                <div class="version-changes">
+                    <strong>[NOM Prénom]</strong> - Version finale allégée
+                    <ul>
+                        <li>Réorganisation en 4 parties + annexes</li>
+                        <li>Suppression des détails de base de données</li>
+                        <li>Ajout des exigences détaillées par module (11 modules)</li>
+                        <li>Mise en avant de la sauvegarde automatique du quiz</li>
+                        <li>Complétion de l'architecture et sécurité</li>
+                    </ul>
+                </div>
+            </div>
             <div class="version-entry">
                 <div class="version-info">
                     <span class="version-number">v1.0</span>
                     <p class="version-date">07/01/2026</p>
                 </div>
                 <div class="version-changes">
-                    <strong>[NOM Prénom]</strong> - Création initiale du document
+                    <strong>[NOM Prénom]</strong> - Création initiale
                     <ul>
                         <li>Rédaction de la structure générale</li>
                         <li>Définition du périmètre fonctionnel</li>
@@ -236,15 +269,23 @@
                 <span class="toc-section-number">III</span>
                 Spécifications Fonctionnelles
             </div>
-            <div class="toc-item"><span>6. Exigences fonctionnelles</span></div>
-            <div class="toc-item"><span>7. Exigences techniques</span></div>
+            <div class="toc-item"><span>6. Exigences fonctionnelles par module</span></div>
+            <div class="toc-item"><span>7. Exigences non-fonctionnelles</span></div>
             
             <div class="toc-section">
                 <span class="toc-section-number">IV</span>
+                Architecture et Sécurité
+            </div>
+            <div class="toc-item"><span>8. Architecture technique</span></div>
+            <div class="toc-item"><span>9. Sécurité</span></div>
+            
+            <div class="toc-section">
+                <span class="toc-section-number">V</span>
                 Annexes
             </div>
             <div class="toc-item"><span>Glossaire</span></div>
-            <div class="toc-item"><span>Références</span></div>
+            <div class="toc-item"><span>Diagrammes UML</span></div>
+            <div class="toc-item"><span>Maquettes d'écran</span></div>
         </div>
 
         <!-- ==================== INTRODUCTION ==================== -->
@@ -265,11 +306,17 @@
         <p>Le présent document est organisé comme suit :</p>
         
         <ul class="styled-list">
-            <li><strong>Partie I</strong> : Présentation générale du projet (contexte, objectifs, périmètre)</li>
-            <li><strong>Partie II</strong> : Identification des acteurs et cas d'utilisation</li>
-            <li><strong>Partie III</strong> : Spécifications fonctionnelles et techniques détaillées</li>
-            <li><strong>Partie IV</strong> : Annexes (glossaire, références)</li>
+            <li><strong>Partie I - Présentation Générale</strong> : Contexte du projet, objectifs stratégiques et opérationnels, périmètre fonctionnel</li>
+            <li><strong>Partie II - Acteurs et Cas d'Utilisation</strong> : Identification des acteurs (internes et externes), parcours utilisateurs, priorisation MoSCoW</li>
+            <li><strong>Partie III - Spécifications Fonctionnelles</strong> : Exigences détaillées par module (11 modules), exigences non-fonctionnelles</li>
+            <li><strong>Partie IV - Architecture et Sécurité</strong> : Stack technologique, architecture 3-tiers, mesures de sécurité, conformité RGPD</li>
+            <li><strong>Annexes</strong> : Glossaire, diagrammes UML, maquettes d'écran</li>
         </ul>
+        
+        <div class="info-box success">
+            <strong>⚡ Point clé</strong><br>
+            Ce cahier des charges met en avant la fonctionnalité de <strong>sauvegarde automatique des réponses du quiz</strong>, permettant aux candidats de reprendre leur évaluation en cas d'interruption.
+        </div>
 
         <!-- ==================== PARTIE I ==================== -->
         <div class="page-break" data-type="section" data-section="partie1" data-title="Partie I"></div>
@@ -289,31 +336,57 @@
         
         <h3 class="section-heading">1.1 Présentation de l'entreprise</h3>
         
-        <p>SYNELIA est une entreprise spécialisée dans le développement de solutions numériques et l'accompagnement des organisations dans leur transformation digitale.</p>
+        <p>SYNELIA est une entreprise spécialisée dans les services informatiques et le conseil en technologies. En pleine croissance, l'entreprise fait face à des besoins de recrutement importants pour renforcer ses équipes techniques et accompagner son développement.</p>
         
-        <p class="placeholder">[Compléter avec la présentation détaillée de l'entreprise]</p>
+        <p>Le département des Ressources Humaines gère actuellement plusieurs dizaines de recrutements par an, avec des profils variés allant des développeurs juniors aux experts seniors, en passant par les chefs de projet et consultants.</p>
         
         <h3 class="section-heading">1.2 Problématique</h3>
         
-        <p>Dans le cadre de sa croissance, SYNELIA fait face à des défis récurrents en matière de recrutement de talents techniques :</p>
+        <p>Le processus de recrutement actuel chez SYNELIA présente plusieurs difficultés majeures :</p>
         
+        <h4 class="subsection-heading">Processus manuel et chronophage</h4>
         <ul class="styled-list">
-            <li>Volume croissant de candidatures à traiter</li>
-            <li>Difficulté d'évaluer objectivement les compétences techniques</li>
-            <li>Temps considérable consacré aux entretiens préliminaires</li>
-            <li>Absence d'outil centralisé pour le suivi du recrutement</li>
-            <li>Coordination difficile entre plusieurs recruteurs</li>
+            <li>Les candidatures arrivent par différents canaux (email, site web, LinkedIn, cabinets)</li>
+            <li>Le tri des CV se fait manuellement, sans critères standardisés</li>
+            <li>La planification des entretiens nécessite de nombreux échanges emails</li>
+            <li>Le suivi des candidatures est effectué sur des fichiers Excel dispersés</li>
         </ul>
         
-        <h3 class="section-heading">1.3 Solution proposée</h3>
+        <h4 class="subsection-heading">Absence de centralisation</h4>
+        <ul class="styled-list">
+            <li>Pas de base de données unique des candidats</li>
+            <li>Informations éparpillées entre plusieurs outils</li>
+            <li>Difficulté à retrouver l'historique d'un candidat</li>
+            <li>Pas de vision globale sur les campagnes en cours</li>
+        </ul>
         
-        <p>Face à ces constats, le projet <strong>SyneliaQuizApp</strong> vise à développer une application web complète permettant de :</p>
+        <h4 class="subsection-heading">Évaluations non standardisées</h4>
+        <ul class="styled-list">
+            <li>Chaque recruteur évalue selon ses propres critères</li>
+            <li>Pas de grille d'évaluation commune</li>
+            <li>Difficile de comparer objectivement les candidats</li>
+            <li>Les compétences techniques ne sont pas vérifiées de manière uniforme</li>
+        </ul>
+        
+        <h4 class="subsection-heading">Manque de traçabilité et expérience candidat dégradée</h4>
+        <ul class="styled-list">
+            <li>Impossible de savoir d'où viennent les meilleurs candidats</li>
+            <li>Pas de métriques sur l'efficacité des sources de recrutement</li>
+            <li>Délais de réponse trop longs pour les candidats</li>
+            <li>Image de l'entreprise impactée</li>
+        </ul>
+        
+        <h3 class="section-heading">1.3 Besoin de digitalisation</h3>
+        
+        <p>Face à ces constats, SYNELIA souhaite se doter d'un outil moderne permettant de :</p>
         
         <div class="info-box success">
-            Centraliser la gestion des campagnes de recrutement<br>
-            Automatiser l'évaluation technique via des quiz<br>
-            Faciliter la collaboration entre recruteurs<br>
-            Améliorer l'expérience candidat
+            <strong>1. Centraliser</strong> toutes les candidatures dans une plateforme unique<br>
+            <strong>2. Automatiser</strong> les tâches répétitives (emails, évaluations techniques)<br>
+            <strong>3. Standardiser</strong> le processus d'évaluation des candidats<br>
+            <strong>4. Collaborer</strong> efficacement entre les différents acteurs du recrutement<br>
+            <strong>5. Suivre</strong> l'ensemble des candidatures en temps réel<br>
+            <strong>6. Mesurer</strong> la performance du processus de recrutement
         </div>
 
         <!-- ==================== CHAPITRE 2 ==================== -->
@@ -323,7 +396,7 @@
             <span class="chapter-text">Objectifs du Projet</span>
         </h2>
         
-        <h3 class="section-heading">2.1 Objectifs généraux</h3>
+        <h3 class="section-heading">2.1 Objectifs stratégiques</h3>
         
         <table class="styled-table">
             <thead>
@@ -334,56 +407,78 @@
             </thead>
             <tbody>
                 <tr>
-                    <td><strong>Digitalisation</strong></td>
-                    <td>Transformer le processus de recrutement manuel en workflow numérique intégré</td>
+                    <td><strong>Digitaliser le processus</strong></td>
+                    <td>Remplacer les processus manuels par une plateforme web centralisée permettant de gérer l'intégralité du cycle de recrutement</td>
                 </tr>
                 <tr>
-                    <td><strong>Automatisation</strong></td>
-                    <td>Automatiser l'évaluation technique des candidats via des quiz</td>
+                    <td><strong>Automatiser l'évaluation technique</strong></td>
+                    <td>Intégrer un système de quiz technique permettant de pré-filtrer les candidats de manière objective avant les entretiens</td>
                 </tr>
                 <tr>
-                    <td><strong>Collaboration</strong></td>
-                    <td>Permettre aux recruteurs de travailler ensemble sur les mêmes campagnes</td>
+                    <td><strong>Faciliter la collaboration</strong></td>
+                    <td>Permettre à plusieurs recruteurs d'évaluer simultanément les candidats et de partager leurs avis en temps réel</td>
                 </tr>
                 <tr>
-                    <td><strong>Traçabilité</strong></td>
-                    <td>Conserver un historique complet de chaque candidature</td>
+                    <td><strong>Améliorer l'image employeur</strong></td>
+                    <td>Offrir aux candidats une expérience de candidature moderne et fluide</td>
                 </tr>
             </tbody>
         </table>
         
-        <h3 class="section-heading">2.2 Objectifs spécifiques</h3>
+        <h3 class="section-heading">2.2 Objectifs opérationnels</h3>
         
-        <ul class="requirement-list">
-            <li>
-                <span class="req-priority must">MUST</span>
-                <span>Développer une application web moderne et responsive</span>
-            </li>
-            <li>
-                <span class="req-priority must">MUST</span>
-                <span>Implémenter un système d'authentification sécurisé avec gestion des rôles</span>
-            </li>
-            <li>
-                <span class="req-priority must">MUST</span>
-                <span>Créer un module de gestion des campagnes de recrutement</span>
-            </li>
-            <li>
-                <span class="req-priority must">MUST</span>
-                <span>Concevoir une interface de passage de quiz avec chronomètre</span>
-            </li>
-            <li>
-                <span class="req-priority should">SHOULD</span>
-                <span>Développer un module de planification des entretiens</span>
-            </li>
-            <li>
-                <span class="req-priority should">SHOULD</span>
-                <span>Implémenter une interface d'évaluation collaborative</span>
-            </li>
-            <li>
-                <span class="req-priority could">COULD</span>
-                <span>Créer un système de notifications en temps réel</span>
-            </li>
-        </ul>
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>Objectif</th>
+                    <th>Cible</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Réduire le temps de traitement d'une candidature</td>
+                    <td><strong>-50%</strong></td>
+                </tr>
+                <tr>
+                    <td>Diminuer le nombre d'emails échangés</td>
+                    <td><strong>-70%</strong></td>
+                </tr>
+                <tr>
+                    <td>Augmenter le taux de réponse aux candidats</td>
+                    <td><strong>100% dans les 48h</strong></td>
+                </tr>
+                <tr>
+                    <td>Standardiser les évaluations techniques</td>
+                    <td><strong>100% des candidats passent le quiz</strong></td>
+                </tr>
+                <tr>
+                    <td>Centraliser les données candidats</td>
+                    <td><strong>Base unique accessible à tous</strong></td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h3 class="section-heading">2.3 Indicateurs de succès (KPIs)</h3>
+        
+        <div class="info-box note">
+            <strong>KPIs quantitatifs :</strong>
+            <ul class="styled-list">
+                <li>Nombre de candidatures traitées par mois</li>
+                <li>Temps moyen de traitement d'une candidature</li>
+                <li>Taux de conversion candidature → entretien → embauche</li>
+                <li>Score moyen des candidats aux quiz techniques</li>
+                <li>Nombre d'évaluations collaboratives réalisées</li>
+            </ul>
+        </div>
+        
+        <div class="info-box note">
+            <strong>KPIs qualitatifs :</strong>
+            <ul class="styled-list">
+                <li>Satisfaction des recruteurs (enquête interne)</li>
+                <li>Satisfaction des candidats (enquête post-candidature)</li>
+                <li>Qualité des embauches (évaluation à 6 mois)</li>
+            </ul>
+        </div>
 
         <!-- ==================== CHAPITRE 3 ==================== -->
         <div class="page-break" data-section="chapitre3" data-title="3. Périmètre"></div>
@@ -404,35 +499,39 @@
             <tbody>
                 <tr>
                     <td><strong>Authentification</strong></td>
-                    <td>Connexion, inscription, récupération mot de passe, gestion des rôles</td>
+                    <td>Connexion, inscription, récupération mot de passe, gestion des rôles (super, admin, recruiter)</td>
                 </tr>
                 <tr>
                     <td><strong>Référentiels</strong></td>
-                    <td>Gestion des départements, spécialités, questions, réponses</td>
+                    <td>Gestion des départements, spécialités, questions, réponses et associations question-réponse</td>
                 </tr>
                 <tr>
                     <td><strong>Campagnes</strong></td>
-                    <td>Création, configuration, tokens de partage, statistiques</td>
+                    <td>Création, configuration du quiz, génération de tokens de partage traçables, statistiques</td>
                 </tr>
                 <tr>
                     <td><strong>Candidatures</strong></td>
-                    <td>Formulaire, upload CV, vérification email, suivi</td>
+                    <td>Formulaire de candidature, upload CV (PDF, DOC, DOCX), vérification email, suivi par le candidat</td>
                 </tr>
                 <tr>
                     <td><strong>Quiz</strong></td>
-                    <td>Passage, chronomètre, calcul de score automatique</td>
+                    <td>Passage du quiz, chronomètre optionnel, <strong>sauvegarde automatique des réponses</strong>, <strong>mode anti-triche</strong>, calcul de score automatique</td>
                 </tr>
                 <tr>
                     <td><strong>Entretiens</strong></td>
-                    <td>Planification, convocations, gestion des statuts</td>
+                    <td>Planification (présentiel/en ligne), <strong>calendrier intégré</strong> (vues année/mois/jour), convocations par email, gestion des statuts</td>
                 </tr>
                 <tr>
                     <td><strong>Évaluations</strong></td>
-                    <td>Notation collaborative, commentaires, temps réel</td>
+                    <td>Notation collaborative sur 100, commentaires, synchronisation temps réel entre évaluateurs</td>
                 </tr>
                 <tr>
                     <td><strong>Décisions</strong></td>
-                    <td>Pré-sélection, décision finale, notifications</td>
+                    <td>Pré-sélection après quiz, décision finale après entretien, notifications automatiques</td>
+                </tr>
+                <tr>
+                    <td><strong>Dashboard</strong></td>
+                    <td>Statistiques globales, présence en ligne (QEEL), dernières activités</td>
                 </tr>
             </tbody>
         </table>
@@ -442,13 +541,37 @@
         <div class="info-box warning">
             <strong>Non inclus dans cette version :</strong>
             <ul class="styled-list">
-                <li>Intégration avec des calendriers externes (Google, Outlook)</li>
-                <li>Visioconférence intégrée</li>
-                <li>Matching IA des CV</li>
-                <li>Application mobile native</li>
-                <li>Support multi-langue</li>
+                <li><strong>Visioconférence intégrée</strong> - Utilisation d'outils externes (Teams, Zoom)</li>
+                <li><strong>Matching IA des CV</strong> - Fonctionnalité avancée pour version ultérieure</li>
+                <li><strong>Application mobile native</strong> - Version web responsive prioritaire</li>
+                <li><strong>Support multi-langue</strong> - Version française uniquement pour le lancement</li>
+                <li><strong>Gestion paie et contrats</strong> - Périmètre RH distinct</li>
             </ul>
         </div>
+        
+        <h3 class="section-heading">3.3 Contraintes du projet</h3>
+        
+        <h4 class="subsection-heading">Contraintes techniques</h4>
+        <ul class="styled-list">
+            <li>Application accessible via navigateur web moderne (Chrome, Firefox, Edge, Safari)</li>
+            <li>Temps de réponse inférieur à 3 secondes pour les opérations courantes</li>
+            <li>Disponibilité cible de 99% en heures ouvrées</li>
+            <li>Compatibilité avec les écrans de 1280px minimum</li>
+        </ul>
+        
+        <h4 class="subsection-heading">Contraintes réglementaires</h4>
+        <ul class="styled-list">
+            <li>Conformité RGPD obligatoire</li>
+            <li>Conservation des données candidats limitée à 2 ans</li>
+            <li>Droit d'accès et de suppression des données pour les candidats</li>
+        </ul>
+        
+        <h4 class="subsection-heading">Hypothèses</h4>
+        <ul class="styled-list">
+            <li>Les utilisateurs disposent d'une connexion internet stable</li>
+            <li>Les candidats possèdent une adresse email valide</li>
+            <li>L'entreprise dispose d'un serveur de messagerie fonctionnel</li>
+        </ul>
 
         <!-- ==================== PARTIE II ==================== -->
         <div class="page-break" data-type="section" data-section="partie2" data-title="Partie II"></div>
@@ -468,21 +591,23 @@
         
         <h3 class="section-heading">4.1 Acteurs internes</h3>
         
+        <p>L'application distingue trois niveaux d'utilisateurs internes avec des droits croissants :</p>
+        
         <div class="actor-grid">
             <div class="actor-card">
                 <div class="actor-icon">SA</div>
                 <p class="actor-name">Super Administrateur</p>
-                <p class="actor-desc">Configuration système, gestion globale de toutes les entités</p>
+                <p class="actor-desc">Administrateur technique avec accès complet au système. Responsable de la configuration système et de la gestion globale de toutes les entités (départements, spécialités, questions, réponses).</p>
             </div>
             <div class="actor-card">
                 <div class="actor-icon">AD</div>
                 <p class="actor-name">Administrateur</p>
-                <p class="actor-desc">Gestion RH, paramétrage des campagnes et utilisateurs</p>
+                <p class="actor-desc">Responsable RH ou manager avec droits étendus. Gère les utilisateurs, supervise les recruteurs, et a accès à toutes les campagnes et candidatures.</p>
             </div>
             <div class="actor-card">
                 <div class="actor-icon">RE</div>
                 <p class="actor-name">Recruteur</p>
-                <p class="actor-desc">Évaluation des candidats, entretiens, prise de décision</p>
+                <p class="actor-desc">Chargé de recrutement opérationnel. Gère les campagnes, planifie les entretiens, évalue les candidats et prend des décisions sur les candidatures.</p>
             </div>
         </div>
         
@@ -492,12 +617,7 @@
             <div class="actor-card">
                 <div class="actor-icon">CA</div>
                 <p class="actor-name">Candidat</p>
-                <p class="actor-desc">Postulation, passage du quiz, suivi de candidature</p>
-            </div>
-            <div class="actor-card">
-                <div class="actor-icon">VI</div>
-                <p class="actor-name">Visiteur</p>
-                <p class="actor-desc">Consultation des offres (accès public)</p>
+                <p class="actor-desc">Personne postulant à une offre d'emploi. Peut soumettre sa candidature, vérifier son email, passer le quiz technique et suivre l'avancement de sa candidature.</p>
             </div>
         </div>
         
@@ -515,45 +635,192 @@
             </thead>
             <tbody>
                 <tr>
-                    <td>Gestion des entités</td>
-                    <td class="priority-cell">✅</td>
-                    <td class="priority-cell">❌</td>
-                    <td class="priority-cell">❌</td>
-                    <td class="priority-cell">❌</td>
+                    <td><strong>Authentification</strong></td>
+                    <td class="priority-cell"></td>
+                    <td class="priority-cell"></td>
+                    <td class="priority-cell"></td>
+                    <td class="priority-cell"></td>
                 </tr>
                 <tr>
-                    <td>Gestion des utilisateurs</td>
-                    <td class="priority-cell">✅</td>
-                    <td class="priority-cell">✅</td>
-                    <td class="priority-cell">👁️</td>
-                    <td class="priority-cell">❌</td>
-                </tr>
-                <tr>
-                    <td>Gestion des campagnes</td>
+                    <td>Connexion / Déconnexion</td>
                     <td class="priority-cell">✅</td>
                     <td class="priority-cell">✅</td>
                     <td class="priority-cell">✅</td>
                     <td class="priority-cell">❌</td>
                 </tr>
                 <tr>
-                    <td>Gestion des candidatures</td>
+                    <td>Modifier son profil</td>
                     <td class="priority-cell">✅</td>
                     <td class="priority-cell">✅</td>
                     <td class="priority-cell">✅</td>
                     <td class="priority-cell">❌</td>
                 </tr>
                 <tr>
-                    <td>Passage du quiz</td>
+                    <td><strong>Gestion des utilisateurs</strong></td>
+                    <td class="priority-cell"></td>
+                    <td class="priority-cell"></td>
+                    <td class="priority-cell"></td>
+                    <td class="priority-cell"></td>
+                </tr>
+                <tr>
+                    <td>Créer un utilisateur</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">❌</td>
+                    <td class="priority-cell">❌</td>
+                </tr>
+                <tr>
+                    <td>Supprimer un utilisateur</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">❌</td>
+                    <td class="priority-cell">❌</td>
+                    <td class="priority-cell">❌</td>
+                </tr>
+                <tr>
+                    <td>Attribuer le rôle Super Admin</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">❌</td>
+                    <td class="priority-cell">❌</td>
+                    <td class="priority-cell">❌</td>
+                </tr>
+                <tr>
+                    <td><strong>Données de référence</strong></td>
+                    <td class="priority-cell"></td>
+                    <td class="priority-cell"></td>
+                    <td class="priority-cell"></td>
+                    <td class="priority-cell"></td>
+                </tr>
+                <tr>
+                    <td>Gérer départements/spécialités</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">❌</td>
+                    <td class="priority-cell">❌</td>
+                    <td class="priority-cell">❌</td>
+                </tr>
+                <tr>
+                    <td>Gérer questions/réponses</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">❌</td>
+                    <td class="priority-cell">❌</td>
+                    <td class="priority-cell">❌</td>
+                </tr>
+                <tr>
+                    <td><strong>Campagnes</strong></td>
+                    <td class="priority-cell"></td>
+                    <td class="priority-cell"></td>
+                    <td class="priority-cell"></td>
+                    <td class="priority-cell"></td>
+                </tr>
+                <tr>
+                    <td>Créer/Modifier une campagne</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">❌</td>
+                </tr>
+                <tr>
+                    <td>Supprimer une campagne</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">❌</td>
+                    <td class="priority-cell">❌</td>
+                </tr>
+                <tr>
+                    <td>Générer tokens de partage</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">❌</td>
+                </tr>
+                <tr>
+                    <td><strong>Candidatures</strong></td>
+                    <td class="priority-cell"></td>
+                    <td class="priority-cell"></td>
+                    <td class="priority-cell"></td>
+                    <td class="priority-cell"></td>
+                </tr>
+                <tr>
+                    <td>Soumettre une candidature</td>
                     <td class="priority-cell">❌</td>
                     <td class="priority-cell">❌</td>
                     <td class="priority-cell">❌</td>
                     <td class="priority-cell">✅</td>
                 </tr>
                 <tr>
-                    <td>Évaluations</td>
+                    <td>Consulter les candidatures</td>
                     <td class="priority-cell">✅</td>
                     <td class="priority-cell">✅</td>
                     <td class="priority-cell">✅</td>
+                    <td class="priority-cell">❌</td>
+                </tr>
+                <tr>
+                    <td>Passer le quiz</td>
+                    <td class="priority-cell">❌</td>
+                    <td class="priority-cell">❌</td>
+                    <td class="priority-cell">❌</td>
+                    <td class="priority-cell">✅</td>
+                </tr>
+                <tr>
+                    <td>Suivre sa candidature</td>
+                    <td class="priority-cell">❌</td>
+                    <td class="priority-cell">❌</td>
+                    <td class="priority-cell">❌</td>
+                    <td class="priority-cell">✅</td>
+                </tr>
+                <tr>
+                    <td><strong>Entretiens & Évaluations</strong></td>
+                    <td class="priority-cell"></td>
+                    <td class="priority-cell"></td>
+                    <td class="priority-cell"></td>
+                    <td class="priority-cell"></td>
+                </tr>
+                <tr>
+                    <td>Planifier un entretien</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">❌</td>
+                </tr>
+                <tr>
+                    <td>Évaluer un candidat</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">❌</td>
+                </tr>
+                <tr>
+                    <td>Prendre une décision</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">❌</td>
+                </tr>
+                <tr>
+                    <td>Annuler une décision</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">❌</td>
+                    <td class="priority-cell">❌</td>
+                </tr>
+                <tr>
+                    <td><strong>Dashboard</strong></td>
+                    <td class="priority-cell"></td>
+                    <td class="priority-cell"></td>
+                    <td class="priority-cell"></td>
+                    <td class="priority-cell"></td>
+                </tr>
+                <tr>
+                    <td>Accéder au tableau de bord</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">❌</td>
+                </tr>
+                <tr>
+                    <td>Voir les statistiques globales</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">✅</td>
+                    <td class="priority-cell">❌</td>
                     <td class="priority-cell">❌</td>
                 </tr>
             </tbody>
@@ -566,47 +833,165 @@
             <span class="chapter-text">Cas d'Utilisation</span>
         </h2>
         
-        <h3 class="section-heading">5.1 Diagramme des cas d'utilisation</h3>
+        <div class="info-box revision-mark">
+            <strong>Workflow global du processus de recrutement</strong><br>
+            Le système implémente un workflow complet articulé en <strong>6 phases séquentielles</strong> avec transitions d'état automatisées :
+            <ol class="styled-list" style="list-style: decimal; margin-left: 1.5rem; margin-top: 0.5rem;">
+                <li><strong>Soumission</strong> → Le candidat postule via un lien traçable (SourceToken). Statut : <em>PENDING</em></li>
+                <li><strong>Vérification</strong> → Validation de l'email + passage du quiz technique. Statut : <em>VERIFIED</em></li>
+                <li><strong>Tri &amp; scoring</strong> → Score automatique du quiz + consultation du CV par le recruteur. Filtrage et recherche multicritère. Statut : <em>REVIEWED</em></li>
+                <li><strong>Entretien</strong> → Planification et conduite des entretiens (présentiel/visio). Statut : <em>INTERVIEW_SCHEDULED</em></li>
+                <li><strong>Évaluation collaborative</strong> → Notation partagée sur 100 avec synchronisation temps réel (WebSocket). Statut : <em>EVALUATED</em></li>
+                <li><strong>Décision</strong> → Acceptation ou refus avec notification automatique au candidat. Statut : <em>ACCEPTED / REJECTED</em></li>
+            </ol>
+            Chaque transition déclenche une notification email et/ou in-app. Le tableau de bord fournit des métriques en temps réel sur l'avancement du pipeline.
+        </div>
+
+        <h3 class="section-heading">5.1 Parcours Candidat</h3>
         
-        <div class="figure">
-            <div class="figure-placeholder">
-                <span>[Diagramme UML des cas d'utilisation à insérer]</span>
-            </div>
-            <p class="figure-caption">Figure 1 : Diagramme des cas d'utilisation - Vue globale</p>
+        <p>Le parcours du candidat se déroule en <strong>5 étapes principales</strong> :</p>
+        
+        <div class="info-box note">
+            <strong>Étape 1 : Découverte de l'offre</strong><br>
+            Le candidat reçoit un lien de partage (via email, LinkedIn, site web). Le lien contient un <strong>token de source</strong> permettant de tracer l'origine de la candidature.
         </div>
         
-        <h3 class="section-heading">5.2 Parcours Candidat</h3>
+        <div class="info-box note">
+            <strong>Étape 2 : Soumission de la candidature</strong><br>
+            Remplissage du formulaire avec : informations personnelles (nom, prénom, email, téléphone, date de naissance), upload du CV (PDF, DOC, DOCX), lettre de motivation optionnelle, et acceptation du consentement RGPD.
+        </div>
         
-        <p>Le parcours candidat comprend les étapes suivantes :</p>
+        <div class="info-box note">
+            <strong>Étape 3 : Vérification de l'email</strong><br>
+            Réception d'un email de confirmation avec un lien de vérification. Le clic sur le lien valide l'adresse email et débloque l'accès au quiz technique.
+        </div>
+        
+        <div class="info-box success">
+            <strong>Étape 4 : Passage du quiz technique</strong><br>
+            Accès au quiz via un lien sécurisé (token unique). Le candidat lit les instructions, répond aux questions (QCM), avec une <strong>sauvegarde automatique</strong> des réponses à chaque question. Un <strong>mode anti-triche</strong> peut être activé (blocage copier-coller, détection changement d'onglet). Le score est calculé automatiquement à la soumission.
+        </div>
+        
+        <div class="info-box note">
+            <strong>Étape 5 : Suivi de la candidature</strong><br>
+            Accès à une page de suivi avec code personnel, visualisation du statut actuel, historique des étapes franchies, et réception d'emails à chaque changement de statut.
+        </div>
+        
+        <h3 class="section-heading">5.2 Parcours Recruteur</h3>
+        
+        <p>Le recruteur suit ce workflow complet :</p>
         
         <ol class="styled-list" style="list-style: decimal; margin-left: 2rem;">
-            <li>Découverte de l'offre via un lien de partage (SourceToken)</li>
-            <li>Soumission du formulaire de candidature avec CV</li>
-            <li>Réception de l'email de vérification</li>
-            <li>Passage du quiz technique</li>
-            <li>Suivi de l'avancement via le code de suivi</li>
+            <li><strong>Création de campagne</strong> : Définition du poste, de la spécialité requise, configuration du quiz (nombre de questions, mode chronométré, mode anti-triche)</li>
+            <li><strong>Génération des tokens de partage</strong> : Création de liens traçables pour différentes sources (LinkedIn, site web, cabinets, etc.)</li>
+            <li><strong>Réception des candidatures</strong> : Notifications en temps réel, consultation de la liste avec filtres, tri et recherche multicritère</li>
+            <li><strong>Analyse des profils</strong> : Visualisation du CV, de la lettre de motivation, du score au quiz et du journal anti-triche</li>
+            <li><strong>Planification des entretiens</strong> : Sélection des candidats, création d'entretiens (date, type, lieu/lien visio), visualisation via le <strong>calendrier intégré</strong> (vues année/mois/jour)</li>
+            <li><strong>Évaluation collaborative</strong> : Interface partagée avec notation sur 100, commentaires, et synchronisation en temps réel</li>
+            <li><strong>Prise de décision</strong> : Acceptation ou refus, déclenchement des notifications automatiques au candidat</li>
         </ol>
         
-        <h3 class="section-heading">5.3 Parcours Recruteur</h3>
+        <h3 class="section-heading">5.3 Parcours Super Administrateur</h3>
         
-        <p>Le recruteur suit ce workflow :</p>
+        <p>Le super administrateur est responsable de la <strong>configuration technique</strong> du système :</p>
         
         <ol class="styled-list" style="list-style: decimal; margin-left: 2rem;">
-            <li>Création d'une campagne de recrutement</li>
-            <li>Configuration des questions du quiz</li>
-            <li>Génération des tokens de partage</li>
-            <li>Réception et tri des candidatures</li>
-            <li>Planification des entretiens</li>
-            <li>Évaluation collaborative</li>
-            <li>Prise de décision finale</li>
+            <li><strong>Gestion des données de référence</strong> : Création et organisation des départements de l'entreprise, définition des spécialités par département</li>
+            <li><strong>Alimentation de la banque de questions</strong> : Création des questions techniques par spécialité, définition du temps alloué par question, création des réponses possibles et marquage des bonnes réponses</li>
+            <li><strong>Gestion des utilisateurs système</strong> : Création de tous les types de comptes (super admin, admin, recruteur), attribution et modification des rôles, suppression définitive des comptes</li>
+            <li><strong>Configuration avancée</strong> : Accès à toutes les fonctionnalités du système, supervision globale de l'activité</li>
         </ol>
+        
+        <h3 class="section-heading">5.4 Parcours Administrateur</h3>
+        
+        <p>L'administrateur gère les opérations RH quotidiennes :</p>
+        
+        <ol class="styled-list" style="list-style: decimal; margin-left: 2rem;">
+            <li><strong>Gestion des recruteurs</strong> : Création des comptes recruteurs, attribution des rôles (admin ou recruiter uniquement), activation/désactivation des comptes</li>
+            <li><strong>Supervision des campagnes</strong> : Vue globale sur toutes les campagnes de recrutement, accès aux statistiques consolidées</li>
+            <li><strong>Gestion des candidatures</strong> : Consultation de toutes les candidatures, possibilité d'annuler des décisions prises par les recruteurs</li>
+            <li><strong>Consultation du tableau de bord</strong> : Visualisation des indicateurs clés, suivi des activités en cours</li>
+        </ol>
+        
+        <h3 class="section-heading">5.5 Priorisation des cas d'utilisation (MoSCoW)</h3>
+        
+        <table class="styled-table requirements-table">
+            <thead>
+                <tr>
+                    <th>Priorité</th>
+                    <th>Cas d'utilisation</th>
+                    <th>Justification</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="priority-cell"><span class="req-priority must">MUST</span></td>
+                    <td>Soumettre une candidature</td>
+                    <td>Fonctionnalité cœur du système</td>
+                </tr>
+                <tr>
+                    <td class="priority-cell"><span class="req-priority must">MUST</span></td>
+                    <td>Passer le quiz technique</td>
+                    <td>Différenciateur clé de l'application</td>
+                </tr>
+                <tr>
+                    <td class="priority-cell"><span class="req-priority must">MUST</span></td>
+                    <td>Gérer les campagnes</td>
+                    <td>Indispensable pour organiser les recrutements</td>
+                </tr>
+                <tr>
+                    <td class="priority-cell"><span class="req-priority must">MUST</span></td>
+                    <td>Consulter les candidatures</td>
+                    <td>Nécessaire pour les recruteurs</td>
+                </tr>
+                <tr>
+                    <td class="priority-cell"><span class="req-priority must">MUST</span></td>
+                    <td>Évaluer les candidats</td>
+                    <td>Objectif principal de collaboration</td>
+                </tr>
+                <tr>
+                    <td class="priority-cell"><span class="req-priority must">MUST</span></td>
+                    <td>S'authentifier</td>
+                    <td>Sécurité de base</td>
+                </tr>
+                <tr>
+                    <td class="priority-cell"><span class="req-priority should">SHOULD</span></td>
+                    <td>Planifier des entretiens</td>
+                    <td>Important mais pas bloquant</td>
+                </tr>
+                <tr>
+                    <td class="priority-cell"><span class="req-priority should">SHOULD</span></td>
+                    <td>Prendre des décisions</td>
+                    <td>Workflow complet de recrutement</td>
+                </tr>
+                <tr>
+                    <td class="priority-cell"><span class="req-priority should">SHOULD</span></td>
+                    <td>Vérifier l'email</td>
+                    <td>Validation des candidats</td>
+                </tr>
+                <tr>
+                    <td class="priority-cell"><span class="req-priority should">SHOULD</span></td>
+                    <td>Suivre sa candidature</td>
+                    <td>Expérience candidat</td>
+                </tr>
+                <tr>
+                    <td class="priority-cell"><span class="req-priority could">COULD</span></td>
+                    <td>Consulter le dashboard</td>
+                    <td>Supervision et analytics</td>
+                </tr>
+                <tr>
+                    <td class="priority-cell"><span class="req-priority could">COULD</span></td>
+                    <td>Générer des tokens de partage</td>
+                    <td>Tracking des sources</td>
+                </tr>
+            </tbody>
+        </table>
 
         <!-- ==================== PARTIE III ==================== -->
         <div class="page-break" data-type="section" data-section="partie3" data-title="Partie III"></div>
         <div class="section-content">
             <span class="section-number">III</span>
             <h2 class="section-main-title">Spécifications Fonctionnelles</h2>
-            <p class="section-description">Cette partie détaille les exigences fonctionnelles et techniques de l'application.</p>
+            <p class="section-description">Cette partie détaille les exigences fonctionnelles par module, avec les règles de gestion associées.</p>
             <div class="section-separator"></div>
         </div>
 
@@ -614,7 +999,7 @@
         <div class="page-break" data-section="chapitre6" data-title="6. Exigences fonctionnelles"></div>
         <h2 class="chapter-title">
             <span class="chapter-number">6</span>
-            <span class="chapter-text">Exigences Fonctionnelles</span>
+            <span class="chapter-text">Exigences Fonctionnelles par Module</span>
         </h2>
         
         <h3 class="section-heading">6.1 Module Authentification</h3>
@@ -635,7 +1020,7 @@
                 </tr>
                 <tr>
                     <td>AUTH-02</td>
-                    <td>Les mots de passe doivent être hashés avec BCrypt</td>
+                    <td>Les mots de passe doivent être hashés avec BCrypt (12 rounds minimum)</td>
                     <td class="priority-cell"><span class="req-priority must">MUST</span></td>
                 </tr>
                 <tr>
@@ -648,10 +1033,206 @@
                     <td>Le système doit gérer trois rôles : super, admin, recruiter</td>
                     <td class="priority-cell"><span class="req-priority must">MUST</span></td>
                 </tr>
+                <tr>
+                    <td>AUTH-05</td>
+                    <td>La session doit expirer après 24 heures d'inactivité</td>
+                    <td class="priority-cell"><span class="req-priority should">SHOULD</span></td>
+                </tr>
             </tbody>
         </table>
         
-        <h3 class="section-heading">6.2 Module Quiz</h3>
+        <h3 class="section-heading">6.2 Module Gestion des Utilisateurs</h3>
+        
+        <table class="styled-table requirements-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Exigence</th>
+                    <th>Priorité</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>USER-01</td>
+                    <td>L'administrateur doit pouvoir créer des comptes utilisateurs</td>
+                    <td class="priority-cell"><span class="req-priority must">MUST</span></td>
+                </tr>
+                <tr>
+                    <td>USER-02</td>
+                    <td>La liste des utilisateurs doit être paginée (20 éléments par page)</td>
+                    <td class="priority-cell"><span class="req-priority should">SHOULD</span></td>
+                </tr>
+                <tr>
+                    <td>USER-03</td>
+                    <td>La recherche d'utilisateurs doit être possible par nom, email ou rôle</td>
+                    <td class="priority-cell"><span class="req-priority should">SHOULD</span></td>
+                </tr>
+                <tr>
+                    <td>USER-04</td>
+                    <td>Seul le super admin peut attribuer le rôle super admin</td>
+                    <td class="priority-cell"><span class="req-priority must">MUST</span></td>
+                </tr>
+                <tr>
+                    <td>USER-05</td>
+                    <td>Un compte peut être désactivé sans suppression des données</td>
+                    <td class="priority-cell"><span class="req-priority should">SHOULD</span></td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h3 class="section-heading">6.3 Module Données de Référence</h3>
+        
+        <table class="styled-table requirements-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Exigence</th>
+                    <th>Priorité</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>REF-01</td>
+                    <td>Le super admin doit pouvoir créer/modifier/supprimer des départements</td>
+                    <td class="priority-cell"><span class="req-priority must">MUST</span></td>
+                </tr>
+                <tr>
+                    <td>REF-02</td>
+                    <td>Chaque spécialité doit être rattachée à un département</td>
+                    <td class="priority-cell"><span class="req-priority must">MUST</span></td>
+                </tr>
+                <tr>
+                    <td>REF-03</td>
+                    <td>Les questions doivent être associées à une spécialité</td>
+                    <td class="priority-cell"><span class="req-priority must">MUST</span></td>
+                </tr>
+                <tr>
+                    <td>REF-04</td>
+                    <td>Chaque question doit avoir un temps alloué en secondes</td>
+                    <td class="priority-cell"><span class="req-priority should">SHOULD</span></td>
+                </tr>
+                <tr>
+                    <td>REF-05</td>
+                    <td>Les réponses doivent être marquées comme correctes ou incorrectes</td>
+                    <td class="priority-cell"><span class="req-priority must">MUST</span></td>
+                </tr>
+                <tr>
+                    <td>REF-06</td>
+                    <td>L'association Question-Réponse doit permettre plusieurs réponses par question</td>
+                    <td class="priority-cell"><span class="req-priority must">MUST</span></td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h3 class="section-heading">6.4 Module Campagnes de Recrutement</h3>
+        
+        <table class="styled-table requirements-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Exigence</th>
+                    <th>Priorité</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>CAMP-01</td>
+                    <td>Une campagne doit avoir un titre, une description et une spécialité</td>
+                    <td class="priority-cell"><span class="req-priority must">MUST</span></td>
+                </tr>
+                <tr>
+                    <td>CAMP-02</td>
+                    <td>La campagne doit définir des dates de début et de fin</td>
+                    <td class="priority-cell"><span class="req-priority should">SHOULD</span></td>
+                </tr>
+                <tr>
+                    <td>CAMP-03</td>
+                    <td>Le nombre de questions du quiz doit être configurable</td>
+                    <td class="priority-cell"><span class="req-priority must">MUST</span></td>
+                </tr>
+                <tr>
+                    <td>CAMP-04</td>
+                    <td>Le mode chronométré doit être activable par campagne</td>
+                    <td class="priority-cell"><span class="req-priority should">SHOULD</span></td>
+                </tr>
+                <tr>
+                    <td>CAMP-05</td>
+                    <td>Des tokens de partage (SourceToken) doivent être générables</td>
+                    <td class="priority-cell"><span class="req-priority should">SHOULD</span></td>
+                </tr>
+                <tr>
+                    <td>CAMP-06</td>
+                    <td>Les statistiques de candidatures par source doivent être visibles</td>
+                    <td class="priority-cell"><span class="req-priority could">COULD</span></td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h3 class="section-heading">6.5 Module Candidatures</h3>
+        
+        <table class="styled-table requirements-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Exigence</th>
+                    <th>Priorité</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>APP-01</td>
+                    <td>Le candidat doit renseigner : nom, prénom, email, téléphone, date de naissance</td>
+                    <td class="priority-cell"><span class="req-priority must">MUST</span></td>
+                </tr>
+                <tr>
+                    <td>APP-02</td>
+                    <td>Le candidat doit pouvoir uploader son CV (PDF, DOC, DOCX, max 5 Mo)</td>
+                    <td class="priority-cell"><span class="req-priority must">MUST</span></td>
+                </tr>
+                <tr>
+                    <td>APP-03</td>
+                    <td>La lettre de motivation doit être optionnelle</td>
+                    <td class="priority-cell"><span class="req-priority should">SHOULD</span></td>
+                </tr>
+                <tr>
+                    <td>APP-04</td>
+                    <td>Le consentement RGPD doit être obligatoire</td>
+                    <td class="priority-cell"><span class="req-priority must">MUST</span></td>
+                </tr>
+                <tr>
+                    <td>APP-05</td>
+                    <td>Un email de vérification doit être envoyé après soumission</td>
+                    <td class="priority-cell"><span class="req-priority must">MUST</span></td>
+                </tr>
+                <tr>
+                    <td>APP-06</td>
+                    <td>Le candidat doit recevoir un code de suivi unique</td>
+                    <td class="priority-cell"><span class="req-priority should">SHOULD</span></td>
+                </tr>
+                <tr>
+                    <td>APP-07</td>
+                    <td>La liste des candidatures doit être filtrable par statut et triable</td>
+                    <td class="priority-cell"><span class="req-priority should">SHOULD</span></td>
+                </tr>
+                <tr class="revision-mark" style="border-left: 4px solid #e040fb;">
+                    <td>APP-08</td>
+                    <td>Un moteur de recherche multicritère doit permettre la recherche par nom, email, spécialité, score au quiz et statut de candidature</td>
+                    <td class="priority-cell"><span class="req-priority should">SHOULD</span></td>
+                </tr>
+                <tr class="revision-mark" style="border-left: 4px solid #e040fb;">
+                    <td>APP-09</td>
+                    <td>Le scoring du quiz doit être affiché dans la liste des candidatures avec un indicateur visuel (code couleur par tranche de score)</td>
+                    <td class="priority-cell"><span class="req-priority should">SHOULD</span></td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h3 class="section-heading">6.6 Module Quiz Technique</h3>
+        
+        <div class="info-box success">
+            <strong>⚡ Fonctionnalité clé : Sauvegarde automatique</strong><br>
+            Le système enregistre automatiquement chaque réponse sélectionnée par le candidat. Cette protection contre la perte de données permet au candidat de reprendre le quiz à la dernière question sauvegardée en cas de déconnexion ou fermeture du navigateur.
+        </div>
         
         <table class="styled-table requirements-table">
             <thead>
@@ -669,177 +1250,887 @@
                 </tr>
                 <tr>
                     <td>QUIZ-02</td>
-                    <td>Le système doit sauvegarder les réponses en temps réel</td>
+                    <td><strong>Le système doit sauvegarder les réponses automatiquement à chaque sélection</strong></td>
                     <td class="priority-cell"><span class="req-priority must">MUST</span></td>
                 </tr>
                 <tr>
                     <td>QUIZ-03</td>
+                    <td>Le candidat doit pouvoir reprendre le quiz après déconnexion</td>
+                    <td class="priority-cell"><span class="req-priority must">MUST</span></td>
+                </tr>
+                <tr>
+                    <td>QUIZ-04</td>
                     <td>Un chronomètre doit s'afficher si le quiz est chronométré</td>
                     <td class="priority-cell"><span class="req-priority should">SHOULD</span></td>
                 </tr>
                 <tr>
-                    <td>QUIZ-04</td>
-                    <td>Le score doit être calculé automatiquement à la fin</td>
+                    <td>QUIZ-05</td>
+                    <td>Le score doit être calculé automatiquement à la soumission</td>
                     <td class="priority-cell"><span class="req-priority must">MUST</span></td>
                 </tr>
                 <tr>
-                    <td>QUIZ-05</td>
+                    <td>QUIZ-06</td>
                     <td>Le candidat doit pouvoir naviguer entre les questions</td>
+                    <td class="priority-cell"><span class="req-priority should">SHOULD</span></td>
+                </tr>
+                <tr>
+                    <td>QUIZ-07</td>
+                    <td>Une barre de progression doit indiquer l'avancement</td>
+                    <td class="priority-cell"><span class="req-priority should">SHOULD</span></td>
+                </tr>
+                <tr>
+                    <td>QUIZ-08</td>
+                    <td>Les états du quiz sont : PENDING → IN_PROGRESS → COMPLETED</td>
+                    <td class="priority-cell"><span class="req-priority must">MUST</span></td>
+                </tr>
+                <tr class="revision-mark" style="border-left: 4px solid #e040fb;">
+                    <td>QUIZ-09</td>
+                    <td>Le mode anti-triche doit bloquer le clic droit, la sélection de texte et les raccourcis copier/coller pendant le quiz</td>
+                    <td class="priority-cell"><span class="req-priority should">SHOULD</span></td>
+                </tr>
+                <tr class="revision-mark" style="border-left: 4px solid #e040fb;">
+                    <td>QUIZ-10</td>
+                    <td>Le changement d'onglet ou de fenêtre doit être détecté et journalisé (nombre de tentatives enregistré)</td>
+                    <td class="priority-cell"><span class="req-priority should">SHOULD</span></td>
+                </tr>
+                <tr class="revision-mark" style="border-left: 4px solid #e040fb;">
+                    <td>QUIZ-11</td>
+                    <td>Au-delà d'un seuil configurable de changements d'onglet, un avertissement doit être affiché au candidat et le recruteur doit être notifié</td>
+                    <td class="priority-cell"><span class="req-priority could">COULD</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="info-box revision-mark">
+            <strong>🛡️ Mode Anti-Triche</strong><br>
+            Pour garantir l'intégrité des évaluations techniques, l'application intègre un <strong>mode anti-triche</strong> activable par campagne. Ce mode :
+            <ul class="styled-list" style="margin-top: 0.5rem;">
+                <li><strong>Désactive le clic droit</strong> et le menu contextuel sur l'interface du quiz</li>
+                <li><strong>Bloque la sélection de texte</strong> et les raccourcis clavier (Ctrl+C, Ctrl+V, Ctrl+A)</li>
+                <li><strong>Détecte les changements d'onglet</strong> via l'API Page Visibility et enregistre chaque occurrence</li>
+                <li><strong>Affiche un avertissement</strong> au candidat après un nombre configurable de tentatives de sortie</li>
+                <li><strong>Enregistre un journal</strong> des incidents consultable par le recruteur dans le détail de la candidature</li>
+            </ul>
+        </div>
+        
+        <h3 class="section-heading">6.7 Module Entretiens</h3>
+        
+        <table class="styled-table requirements-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Exigence</th>
+                    <th>Priorité</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>INT-01</td>
+                    <td>Un entretien doit avoir une date, un type (présentiel/en ligne) et un lieu</td>
+                    <td class="priority-cell"><span class="req-priority must">MUST</span></td>
+                </tr>
+                <tr>
+                    <td>INT-02</td>
+                    <td>Plusieurs candidats peuvent être associés à un même entretien</td>
+                    <td class="priority-cell"><span class="req-priority should">SHOULD</span></td>
+                </tr>
+                <tr>
+                    <td>INT-03</td>
+                    <td>Les statuts gérés : PENDING, SCHEDULED, STARTED, OVER, POSTPONED</td>
+                    <td class="priority-cell"><span class="req-priority must">MUST</span></td>
+                </tr>
+                <tr>
+                    <td>INT-04</td>
+                    <td>Une convocation doit être envoyée par email au candidat</td>
+                    <td class="priority-cell"><span class="req-priority should">SHOULD</span></td>
+                </tr>
+                <tr class="revision-mark" style="border-left: 4px solid #e040fb;">
+                    <td>INT-05</td>
+                    <td>Un calendrier intégré doit permettre la visualisation des entretiens en vues année, mois et jour</td>
+                    <td class="priority-cell"><span class="req-priority should">SHOULD</span></td>
+                </tr>
+                <tr class="revision-mark" style="border-left: 4px solid #e040fb;">
+                    <td>INT-06</td>
+                    <td>Le clic sur un jour du calendrier doit afficher les entretiens planifiés avec leur statut et les candidats associés</td>
                     <td class="priority-cell"><span class="req-priority should">SHOULD</span></td>
                 </tr>
             </tbody>
         </table>
         
-        <p class="placeholder">[Continuer avec les autres modules : Campagnes, Candidatures, Entretiens, Évaluations, Décisions, Notifications...]</p>
+        <h3 class="section-heading">6.8 Module Évaluations</h3>
+        
+        <table class="styled-table requirements-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Exigence</th>
+                    <th>Priorité</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>EVAL-01</td>
+                    <td>L'évaluation doit permettre une notation sur 100</td>
+                    <td class="priority-cell"><span class="req-priority must">MUST</span></td>
+                </tr>
+                <tr>
+                    <td>EVAL-02</td>
+                    <td>Un champ commentaire doit être disponible pour chaque évaluation</td>
+                    <td class="priority-cell"><span class="req-priority must">MUST</span></td>
+                </tr>
+                <tr>
+                    <td>EVAL-03</td>
+                    <td>L'interface d'évaluation doit être en mode plein écran</td>
+                    <td class="priority-cell"><span class="req-priority should">SHOULD</span></td>
+                </tr>
+                <tr>
+                    <td>EVAL-04</td>
+                    <td>Les évaluations doivent être synchronisées en temps réel entre évaluateurs</td>
+                    <td class="priority-cell"><span class="req-priority should">SHOULD</span></td>
+                </tr>
+                <tr>
+                    <td>EVAL-05</td>
+                    <td>La moyenne des évaluations doit être calculée automatiquement</td>
+                    <td class="priority-cell"><span class="req-priority must">MUST</span></td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h3 class="section-heading">6.9 Module Décisions</h3>
+        
+        <table class="styled-table requirements-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Exigence</th>
+                    <th>Priorité</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>DEC-01</td>
+                    <td>Les actions possibles sont : Accepter, Rejeter, Annuler</td>
+                    <td class="priority-cell"><span class="req-priority must">MUST</span></td>
+                </tr>
+                <tr>
+                    <td>DEC-02</td>
+                    <td>Une pré-sélection peut être faite après le quiz</td>
+                    <td class="priority-cell"><span class="req-priority should">SHOULD</span></td>
+                </tr>
+                <tr>
+                    <td>DEC-03</td>
+                    <td>La décision finale est prise après l'entretien</td>
+                    <td class="priority-cell"><span class="req-priority must">MUST</span></td>
+                </tr>
+                <tr>
+                    <td>DEC-04</td>
+                    <td>Le candidat doit être notifié automatiquement par email</td>
+                    <td class="priority-cell"><span class="req-priority should">SHOULD</span></td>
+                </tr>
+                <tr>
+                    <td>DEC-05</td>
+                    <td>Une décision peut être annulée par un admin</td>
+                    <td class="priority-cell"><span class="req-priority should">SHOULD</span></td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h3 class="section-heading">6.10 Module Notifications</h3>
+        
+        <table class="styled-table requirements-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Exigence</th>
+                    <th>Priorité</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>NOTIF-01</td>
+                    <td>Les notifications in-app doivent être visibles dans un centre dédié</td>
+                    <td class="priority-cell"><span class="req-priority should">SHOULD</span></td>
+                </tr>
+                <tr>
+                    <td>NOTIF-02</td>
+                    <td>Les événements déclencheurs : nouvelle candidature, quiz complété, entretien planifié</td>
+                    <td class="priority-cell"><span class="req-priority should">SHOULD</span></td>
+                </tr>
+                <tr>
+                    <td>NOTIF-03</td>
+                    <td>Les emails doivent utiliser des templates HTML personnalisés</td>
+                    <td class="priority-cell"><span class="req-priority could">COULD</span></td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h3 class="section-heading">6.11 Module Dashboard</h3>
+        
+        <table class="styled-table requirements-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Exigence</th>
+                    <th>Priorité</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>DASH-01</td>
+                    <td>Le dashboard doit afficher les statistiques globales (candidatures, campagnes actives)</td>
+                    <td class="priority-cell"><span class="req-priority could">COULD</span></td>
+                </tr>
+                <tr>
+                    <td>DASH-02</td>
+                    <td>La fonctionnalité QEEL doit afficher les utilisateurs connectés en temps réel</td>
+                    <td class="priority-cell"><span class="req-priority could">COULD</span></td>
+                </tr>
+                <tr>
+                    <td>DASH-03</td>
+                    <td>Les dernières activités doivent être listées chronologiquement</td>
+                    <td class="priority-cell"><span class="req-priority could">COULD</span></td>
+                </tr>
+            </tbody>
+        </table>
 
         <!-- ==================== CHAPITRE 7 ==================== -->
         <div class="page-break" data-section="chapitre7" data-title="7. Exigences techniques"></div>
         <h2 class="chapter-title">
             <span class="chapter-number">7</span>
-            <span class="chapter-text">Exigences Techniques</span>
+            <span class="chapter-text">Exigences Non-Fonctionnelles</span>
         </h2>
         
-        <h3 class="section-heading">7.1 Stack Technologique</h3>
+        <h3 class="section-heading">7.1 Performance</h3>
+        
+        <table class="styled-table requirements-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Exigence</th>
+                    <th>Cible</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>PERF-01</td>
+                    <td>Temps de réponse des pages</td>
+                    <td>&lt; 3 secondes</td>
+                </tr>
+                <tr>
+                    <td>PERF-02</td>
+                    <td>Temps de chargement initial de l'application</td>
+                    <td>&lt; 5 secondes</td>
+                </tr>
+                <tr>
+                    <td>PERF-03</td>
+                    <td>Temps de sauvegarde d'une réponse quiz</td>
+                    <td>&lt; 500 ms</td>
+                </tr>
+                <tr>
+                    <td>PERF-04</td>
+                    <td>Nombre d'utilisateurs simultanés supportés</td>
+                    <td>100 minimum</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h3 class="section-heading">7.2 Disponibilité et Fiabilité</h3>
+        
+        <table class="styled-table requirements-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Exigence</th>
+                    <th>Cible</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>DISP-01</td>
+                    <td>Disponibilité en heures ouvrées (8h-20h)</td>
+                    <td>99%</td>
+                </tr>
+                <tr>
+                    <td>DISP-02</td>
+                    <td>Temps de reprise après incident</td>
+                    <td>&lt; 4 heures</td>
+                </tr>
+                <tr>
+                    <td>DISP-03</td>
+                    <td>Sauvegarde de la base de données</td>
+                    <td>Quotidienne</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h3 class="section-heading">7.3 Compatibilité</h3>
+        
+        <table class="styled-table requirements-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Exigence</th>
+                    <th>Détail</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>COMPAT-01</td>
+                    <td>Navigateurs supportés</td>
+                    <td>Chrome 90+, Firefox 88+, Edge 90+, Safari 14+</td>
+                </tr>
+                <tr>
+                    <td>COMPAT-02</td>
+                    <td>Résolution minimale</td>
+                    <td>1280 x 720 pixels</td>
+                </tr>
+                <tr>
+                    <td>COMPAT-03</td>
+                    <td>Responsive design</td>
+                    <td>Tablettes et desktop uniquement (mobile V2)</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h3 class="section-heading">7.4 Maintenabilité</h3>
+        
+        <ul class="styled-list">
+            <li><strong>Architecture modulaire</strong> : Séparation claire des couches (Controller, Service, Repository)</li>
+            <li><strong>Code documenté</strong> : JavaDoc pour les classes publiques, commentaires pour la logique complexe</li>
+            <li><strong>Conventions de nommage</strong> : CamelCase pour Java, kebab-case pour Angular</li>
+            <li><strong>Tests unitaires</strong> : Couverture minimale de 60% pour les services métier</li>
+            <li><strong>Logs structurés</strong> : Utilisation de SLF4J avec niveaux INFO, WARN, ERROR</li>
+        </ul>
+
+        <div class="info-box revision-mark">
+            <h3 class="section-heading" style="margin-top: 0;">7.5 Scalabilité et Évolutivité</h3>
+            <p>L'architecture de l'application est conçue pour supporter une montée en charge progressive :</p>
+            <ul class="styled-list">
+                <li><strong>Scalabilité horizontale</strong> : L'application Spring Boot est stateless (session externalisable), permettant le déploiement de plusieurs instances derrière un load balancer</li>
+                <li><strong>Base de données</strong> : MySQL supporte le read-replica pour distribuer la charge en lecture. Les index sont optimisés pour les requêtes fréquentes (recherche candidats, filtrage par statut)</li>
+                <li><strong>Pagination systématique</strong> : Toutes les API de liste utilisent la pagination (paramètres <code>page</code>/<code>size</code>) pour limiter la charge mémoire</li>
+                <li><strong>WebSocket scalable</strong> : L'utilisation de STOMP permet de migrer vers un broker externe (RabbitMQ, Redis Pub/Sub) en cas de montée en charge</li>
+                <li><strong>Upload fichiers</strong> : Stockage sur système de fichiers avec possibilité de migration vers un stockage objet (S3, MinIO) pour la scalabilité</li>
+            </ul>
+            <p><strong>Prévisions de capacité</strong> : L'application est dimensionnée pour gérer simultanément 50 campagnes actives, 500 candidatures par mois, et 20 utilisateurs internes connectés.</p>
+        </div>
+
+        <!-- ==================== PARTIE IV ==================== -->
+        <div class="page-break" data-type="section" data-section="partie4" data-title="Partie IV"></div>
+        <div class="section-content">
+            <span class="section-number">IV</span>
+            <h2 class="section-main-title">Architecture et Sécurité</h2>
+            <p class="section-description">Cette partie décrit l'architecture technique et les mesures de sécurité de l'application.</p>
+            <div class="section-separator"></div>
+        </div>
+
+        <!-- ==================== CHAPITRE 8 ==================== -->
+        <div class="page-break" data-section="chapitre8" data-title="8. Architecture technique"></div>
+        <h2 class="chapter-title">
+            <span class="chapter-number">8</span>
+            <span class="chapter-text">Architecture Technique</span>
+        </h2>
+        
+        <h3 class="section-heading">8.1 Architecture Globale</h3>
+        
+        <p>L'application adopte une <strong>architecture 3-tiers</strong> classique :</p>
+        
+        <div class="info-box note">
+            <strong>Couche Présentation (Frontend)</strong><br>
+            Application Angular (SPA) communiquant avec le backend via API REST. Gère l'interface utilisateur, la navigation et l'état local.
+        </div>
+        
+        <div class="info-box note">
+            <strong>Couche Métier (Backend)</strong><br>
+            Application Spring Boot exposant des services REST. Implémente la logique métier, les règles de gestion et l'orchestration des traitements.
+        </div>
+        
+        <div class="info-box note">
+            <strong>Couche Données</strong><br>
+            Base de données MySQL stockant l'ensemble des données persistantes. Accès via Spring Data JPA avec mapping Hibernate.
+        </div>
+        
+        <h3 class="section-heading">8.2 Stack Technologique</h3>
         
         <h4 class="subsection-heading">Backend</h4>
         
-        <div class="tech-grid">
-            <div class="tech-item">
-                <span class="tech-name">Java</span>
-                <span class="tech-version">Version 21</span>
-            </div>
-            <div class="tech-item">
-                <span class="tech-name">Spring Boot</span>
-                <span class="tech-version">Version 3.5.6</span>
-            </div>
-            <div class="tech-item">
-                <span class="tech-name">Spring Security</span>
-                <span class="tech-version">Authentification</span>
-            </div>
-            <div class="tech-item">
-                <span class="tech-name">MySQL</span>
-                <span class="tech-version">Base de données</span>
-            </div>
-            <div class="tech-item">
-                <span class="tech-name">MapStruct</span>
-                <span class="tech-version">Version 1.5.5</span>
-            </div>
-            <div class="tech-item">
-                <span class="tech-name">WebSocket</span>
-                <span class="tech-version">Temps réel</span>
-            </div>
-        </div>
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>Technologie</th>
+                    <th>Version</th>
+                    <th>Rôle</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Java</strong></td>
+                    <td>21 (LTS)</td>
+                    <td>Langage principal</td>
+                </tr>
+                <tr>
+                    <td><strong>Spring Boot</strong></td>
+                    <td>3.5.6</td>
+                    <td>Framework applicatif</td>
+                </tr>
+                <tr>
+                    <td><strong>Spring Security</strong></td>
+                    <td>6.x</td>
+                    <td>Authentification et autorisation</td>
+                </tr>
+                <tr>
+                    <td><strong>Spring Data JPA</strong></td>
+                    <td>3.x</td>
+                    <td>Accès aux données</td>
+                </tr>
+                <tr>
+                    <td><strong>Spring WebSocket</strong></td>
+                    <td>6.x</td>
+                    <td>Communication temps réel</td>
+                </tr>
+                <tr>
+                    <td><strong>Spring Mail</strong></td>
+                    <td>3.x</td>
+                    <td>Envoi d'emails</td>
+                </tr>
+                <tr>
+                    <td><strong>MySQL</strong></td>
+                    <td>8.x</td>
+                    <td>Base de données relationnelle</td>
+                </tr>
+                <tr>
+                    <td><strong>MapStruct</strong></td>
+                    <td>1.5.5</td>
+                    <td>Mapping DTO ↔ Entity</td>
+                </tr>
+                <tr>
+                    <td><strong>Lombok</strong></td>
+                    <td>1.18.40</td>
+                    <td>Réduction du boilerplate</td>
+                </tr>
+            </tbody>
+        </table>
         
         <h4 class="subsection-heading">Frontend</h4>
         
-        <div class="tech-grid">
-            <div class="tech-item">
-                <span class="tech-name">Angular</span>
-                <span class="tech-version">Version 20.2.0</span>
-            </div>
-            <div class="tech-item">
-                <span class="tech-name">TypeScript</span>
-                <span class="tech-version">Version 5.9.2</span>
-            </div>
-            <div class="tech-item">
-                <span class="tech-name">SCSS</span>
-                <span class="tech-version">Styles</span>
-            </div>
-            <div class="tech-item">
-                <span class="tech-name">RxJS</span>
-                <span class="tech-version">Version 7.8.0</span>
-            </div>
-        </div>
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>Technologie</th>
+                    <th>Version</th>
+                    <th>Rôle</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Angular</strong></td>
+                    <td>20.2.0</td>
+                    <td>Framework SPA</td>
+                </tr>
+                <tr>
+                    <td><strong>TypeScript</strong></td>
+                    <td>5.9.2</td>
+                    <td>Langage typé</td>
+                </tr>
+                <tr>
+                    <td><strong>RxJS</strong></td>
+                    <td>7.8.0</td>
+                    <td>Programmation réactive</td>
+                </tr>
+                <tr>
+                    <td><strong>SCSS</strong></td>
+                    <td>-</td>
+                    <td>Styles avec préprocesseur</td>
+                </tr>
+            </tbody>
+        </table>
         
-        <h3 class="section-heading">7.2 Architecture</h3>
+        <h3 class="section-heading">8.3 Communications</h3>
         
-        <div class="figure">
-            <div class="figure-placeholder">
-                <span>[Diagramme d'architecture à insérer]</span>
-            </div>
-            <p class="figure-caption">Figure 2 : Architecture technique de l'application</p>
-        </div>
+        <h4 class="subsection-heading">API REST</h4>
         
-        <h3 class="section-heading">7.3 Exigences de sécurité</h3>
+        <ul class="styled-list">
+            <li>Format d'échange : <strong>JSON</strong></li>
+            <li>Authentification : Token de session</li>
+            <li>Codes HTTP standard : 200 (OK), 201 (Created), 400 (Bad Request), 401 (Unauthorized), 404 (Not Found), 500 (Server Error)</li>
+            <li>Pagination : paramètres <code>page</code> et <code>size</code> pour les listes</li>
+        </ul>
         
-        <ul class="requirement-list">
-            <li>
-                <span class="req-priority must">MUST</span>
-                <span>Hashage des mots de passe avec BCrypt</span>
-            </li>
-            <li>
-                <span class="req-priority must">MUST</span>
-                <span>Protection CSRF sur les formulaires</span>
-            </li>
-            <li>
-                <span class="req-priority must">MUST</span>
-                <span>Validation des entrées utilisateur</span>
-            </li>
-            <li>
-                <span class="req-priority should">SHOULD</span>
-                <span>Configuration CORS restrictive en production</span>
-            </li>
-            <li>
-                <span class="req-priority should">SHOULD</span>
-                <span>Suppression logique (soft delete) des données</span>
-            </li>
+        <h4 class="subsection-heading">WebSocket (Temps réel)</h4>
+        
+        <ul class="styled-list">
+            <li><strong>QEEL</strong> : Suivi des utilisateurs connectés en temps réel</li>
+            <li><strong>Évaluations</strong> : Synchronisation des notes entre évaluateurs</li>
+            <li><strong>Notifications</strong> : Push des nouvelles notifications</li>
+            <li>Protocole : STOMP over WebSocket</li>
+        </ul>
+
+        <!-- ==================== CHAPITRE 9 ==================== -->
+        <div class="page-break" data-section="chapitre9" data-title="9. Sécurité"></div>
+        <h2 class="chapter-title">
+            <span class="chapter-number">9</span>
+            <span class="chapter-text">Sécurité</span>
+        </h2>
+        
+        <h3 class="section-heading">9.1 Authentification et Autorisation</h3>
+        
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>Mesure</th>
+                    <th>Implémentation</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Hashage des mots de passe</strong></td>
+                    <td>BCrypt avec 12 rounds (coût adaptatif)</td>
+                </tr>
+                <tr>
+                    <td><strong>Gestion des sessions</strong></td>
+                    <td>Session HTTP avec token, expiration après 24h</td>
+                </tr>
+                <tr>
+                    <td><strong>Contrôle d'accès</strong></td>
+                    <td>RBAC (Role-Based Access Control) avec 3 rôles</td>
+                </tr>
+                <tr>
+                    <td><strong>Protection des routes</strong></td>
+                    <td>Guards Angular + annotations Spring Security</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h3 class="section-heading">9.2 Matrice Rôles / Routes API</h3>
+        
+        <table class="styled-table compact">
+            <thead>
+                <tr>
+                    <th>Endpoint</th>
+                    <th>Méthode</th>
+                    <th>Super</th>
+                    <th>Admin</th>
+                    <th>Recruiter</th>
+                    <th>Public</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>/api/auth/*</td>
+                    <td>POST</td>
+                    <td>✅</td>
+                    <td>✅</td>
+                    <td>✅</td>
+                    <td>✅</td>
+                </tr>
+                <tr>
+                    <td>/api/users</td>
+                    <td>GET/POST</td>
+                    <td>✅</td>
+                    <td>✅</td>
+                    <td>❌</td>
+                    <td>❌</td>
+                </tr>
+                <tr>
+                    <td>/api/departments</td>
+                    <td>CRUD</td>
+                    <td>✅</td>
+                    <td>❌</td>
+                    <td>❌</td>
+                    <td>❌</td>
+                </tr>
+                <tr>
+                    <td>/api/specialities</td>
+                    <td>CRUD</td>
+                    <td>✅</td>
+                    <td>❌</td>
+                    <td>❌</td>
+                    <td>❌</td>
+                </tr>
+                <tr>
+                    <td>/api/questions</td>
+                    <td>CRUD</td>
+                    <td>✅</td>
+                    <td>❌</td>
+                    <td>❌</td>
+                    <td>❌</td>
+                </tr>
+                <tr>
+                    <td>/api/campaigns</td>
+                    <td>CRUD</td>
+                    <td>✅</td>
+                    <td>✅</td>
+                    <td>✅</td>
+                    <td>❌</td>
+                </tr>
+                <tr>
+                    <td>/api/applications</td>
+                    <td>GET</td>
+                    <td>✅</td>
+                    <td>✅</td>
+                    <td>✅</td>
+                    <td>❌</td>
+                </tr>
+                <tr>
+                    <td>/api/applications</td>
+                    <td>POST</td>
+                    <td>❌</td>
+                    <td>❌</td>
+                    <td>❌</td>
+                    <td>✅</td>
+                </tr>
+                <tr>
+                    <td>/api/quiz/*</td>
+                    <td>GET/POST</td>
+                    <td>❌</td>
+                    <td>❌</td>
+                    <td>❌</td>
+                    <td>✅*</td>
+                </tr>
+                <tr>
+                    <td>/api/interviews</td>
+                    <td>CRUD</td>
+                    <td>✅</td>
+                    <td>✅</td>
+                    <td>✅</td>
+                    <td>❌</td>
+                </tr>
+                <tr>
+                    <td>/api/evaluations</td>
+                    <td>CRUD</td>
+                    <td>✅</td>
+                    <td>✅</td>
+                    <td>✅</td>
+                    <td>❌</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <p><em>* Accès avec token unique du candidat</em></p>
+        
+        <h3 class="section-heading">9.3 Protection des Données</h3>
+        
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>Mesure</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Validation des entrées</strong></td>
+                    <td>Validation côté serveur avec Bean Validation (JSR-380)</td>
+                </tr>
+                <tr>
+                    <td><strong>Protection CSRF</strong></td>
+                    <td>Tokens CSRF sur les formulaires sensibles</td>
+                </tr>
+                <tr>
+                    <td><strong>Sanitization XSS</strong></td>
+                    <td>Échappement automatique par Angular + validation serveur</td>
+                </tr>
+                <tr>
+                    <td><strong>Suppression logique</strong></td>
+                    <td>Soft delete avec champ <code>deleted</code> boolean</td>
+                </tr>
+                <tr>
+                    <td><strong>Upload sécurisé</strong></td>
+                    <td>Validation MIME type, taille max 5 Mo, stockage hors webroot</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h3 class="section-heading">9.4 Conformité RGPD</h3>
+        
+        <ul class="styled-list">
+            <li><strong>Consentement explicite</strong> : Case à cocher obligatoire lors de la candidature</li>
+            <li><strong>Droit d'accès</strong> : Le candidat peut consulter ses données via son code de suivi</li>
+            <li><strong>Droit à l'oubli</strong> : Possibilité de demander la suppression des données</li>
+            <li><strong>Conservation limitée</strong> : Données candidats conservées 2 ans maximum</li>
+            <li><strong>Minimisation</strong> : Seules les données nécessaires sont collectées</li>
         </ul>
 
         <!-- ==================== GLOSSAIRE ==================== -->
         <div class="page-break" data-section="glossaire" data-title="Glossaire"></div>
         <h2 class="page-title centered">Glossaire</h2>
         
+        <h3 class="section-heading">Termes Métier</h3>
+        
         <dl class="glossary">
-            <dt>API</dt>
-            <dd>Application Programming Interface - Interface de programmation applicative permettant à des applications de communiquer entre elles.</dd>
-            
+            <dt>Anti-Triche (Mode)</dt>
+            <dd>Ensemble de mécanismes de sécurité appliqués pendant le passage du quiz : blocage du clic droit, désactivation du copier-coller, détection des changements d'onglet via l'API Page Visibility.</dd>
+
+            <dt>Calendrier Intégré</dt>
+            <dd>Composant visuel permettant de planifier et visualiser les entretiens sur trois niveaux de zoom : vue année, vue mois et vue jour.</dd>
+
             <dt>Campagne</dt>
-            <dd>Offre de recrutement pour un poste spécifique, avec ses propres paramètres de quiz et de sélection.</dd>
+            <dd>Offre de recrutement pour un poste spécifique, avec ses propres paramètres de quiz, dates de validité et critères de sélection.</dd>
             
-            <dt>CRUD</dt>
-            <dd>Create, Read, Update, Delete - Les quatre opérations de base pour la gestion des données.</dd>
+            <dt>Candidature (Application)</dt>
+            <dd>Dossier soumis par un candidat pour un poste, comprenant ses informations personnelles, son CV et éventuellement une lettre de motivation.</dd>
             
-            <dt>DTO</dt>
-            <dd>Data Transfer Object - Objet utilisé pour transférer des données entre les couches de l'application.</dd>
+            <dt>Entretien (Interview)</dt>
+            <dd>Rencontre planifiée entre le candidat et les recruteurs, pouvant être en présentiel ou en visioconférence.</dd>
             
-            <dt>MoSCoW</dt>
-            <dd>Méthode de priorisation : Must have, Should have, Could have, Won't have.</dd>
+            <dt>Évaluation</dt>
+            <dd>Notation et commentaires attribués par les recruteurs à un candidat suite à un entretien.</dd>
             
-            <dt>REST</dt>
-            <dd>Representational State Transfer - Style d'architecture pour les services web.</dd>
+            <dt>QEEL</dt>
+            <dd>"Qui Est En Ligne" - Fonctionnalité affichant en temps réel les utilisateurs connectés à l'application.</dd>
             
-            <dt>SPA</dt>
-            <dd>Single Page Application - Application web monopage qui charge dynamiquement le contenu.</dd>
+            <dt>Quiz Technique</dt>
+            <dd>Questionnaire à choix multiples permettant d'évaluer les compétences techniques d'un candidat. Les réponses sont sauvegardées automatiquement. Peut être associé à un mode anti-triche configurable.</dd>
             
             <dt>Source Token</dt>
-            <dd>Code de partage unique permettant de tracker l'origine des candidatures.</dd>
+            <dd>Code de partage unique généré pour chaque canal de diffusion d'une offre, permettant de tracer l'origine des candidatures (LinkedIn, site web, cabinet, etc.).</dd>
+            
+            <dt>Spécialité</dt>
+            <dd>Domaine de compétence technique (ex: Développement Java, DevOps, Data Science) rattaché à un département et associé à une banque de questions.</dd>
+        </dl>
+        
+        <h3 class="section-heading">Termes Techniques</h3>
+        
+        <dl class="glossary">
+            <dt>API (Application Programming Interface)</dt>
+            <dd>Interface de programmation permettant à des applications de communiquer entre elles via des requêtes HTTP.</dd>
+            
+            <dt>BCrypt</dt>
+            <dd>Algorithme de hashage sécurisé utilisé pour stocker les mots de passe de manière irréversible.</dd>
+            
+            <dt>CRUD</dt>
+            <dd>Create, Read, Update, Delete - Les quatre opérations de base pour la manipulation des données.</dd>
+            
+            <dt>DTO (Data Transfer Object)</dt>
+            <dd>Objet utilisé pour transférer des données entre les couches de l'application, découplant l'API des entités de base de données.</dd>
+            
+            <dt>JPA (Java Persistence API)</dt>
+            <dd>Spécification Java pour la persistance des données, implémentée par Hibernate dans ce projet.</dd>
+            
+            <dt>MoSCoW</dt>
+            <dd>Méthode de priorisation des exigences : Must have (indispensable), Should have (important), Could have (souhaitable), Won't have (exclu).</dd>
+            
+            <dt>Page Visibility API</dt>
+            <dd>API JavaScript standard du navigateur permettant de détecter quand l'utilisateur quitte l'onglet actif. Utilisée dans le mode anti-triche pour journaliser les changements d'onglet.</dd>
+
+            <dt>RBAC (Role-Based Access Control)</dt>
+            <dd>Modèle de contrôle d'accès basé sur les rôles, utilisé pour définir les permissions des utilisateurs.</dd>
+            
+            <dt>REST (Representational State Transfer)</dt>
+            <dd>Style d'architecture pour les services web utilisant les méthodes HTTP (GET, POST, PUT, DELETE).</dd>
+            
+            <dt>RGPD</dt>
+            <dd>Règlement Général sur la Protection des Données - Réglementation européenne sur la protection des données personnelles.</dd>
+            
+            <dt>SPA (Single Page Application)</dt>
+            <dd>Application web monopage qui charge dynamiquement le contenu sans rechargement complet de la page.</dd>
             
             <dt>WebSocket</dt>
-            <dd>Protocole de communication bidirectionnelle en temps réel.</dd>
+            <dd>Protocole de communication bidirectionnelle persistante, utilisé pour les fonctionnalités temps réel (QEEL, évaluations collaboratives).</dd>
         </dl>
 
         <!-- ==================== ANNEXES ==================== -->
         <div class="page-break" data-section="annexes" data-title="Annexes"></div>
         <h2 class="page-title centered">Annexes</h2>
         
-        <h3 class="section-heading">Annexe A : Maquettes des interfaces</h3>
+        <h3 class="section-heading">Annexe A : Diagrammes UML</h3>
         
-        <p class="placeholder">[Insérer les captures d'écran ou maquettes des principales interfaces]</p>
+        <h4 class="subsection-heading">A.1 Diagramme des cas d'utilisation</h4>
         
-        <h3 class="section-heading">Annexe B : Modèle de données</h3>
+        <div class="figure">
+            <div class="figure-placeholder">
+                <span>[Diagramme UML des cas d'utilisation - Vue globale]</span>
+            </div>
+            <p class="figure-caption">Figure A.1 : Diagramme des cas d'utilisation du système SyneliaQuizApp</p>
+        </div>
         
-        <p class="placeholder">[Insérer le diagramme entité-relation (ERD)]</p>
+        <h4 class="subsection-heading">A.2 Diagramme de séquence - Processus de candidature</h4>
         
-        <h3 class="section-heading">Annexe C : Documentation API</h3>
+        <div class="figure">
+            <div class="figure-placeholder">
+                <span>[Diagramme de séquence - Parcours candidat : Candidature → Quiz → Suivi]</span>
+            </div>
+            <p class="figure-caption">Figure A.2 : Séquence du parcours candidat de la soumission à la décision finale</p>
+        </div>
         
-        <p class="placeholder">[Référence vers la documentation OpenAPI/Swagger]</p>
+        <h3 class="section-heading">Annexe B : Maquettes d'écran</h3>
         
-        <h3 class="section-heading">Annexe D : Références</h3>
+        <p>Les interfaces principales de l'application sont présentées ci-dessous :</p>
+        
+        <h4 class="subsection-heading">B.1 Interfaces Candidat</h4>
+        
+        <div class="figure">
+            <div class="figure-placeholder">
+                <span>[Maquette : Formulaire de candidature]</span>
+            </div>
+            <p class="figure-caption">Figure B.1 : Formulaire de soumission de candidature</p>
+        </div>
+        
+        <div class="figure">
+            <div class="figure-placeholder">
+                <span>[Maquette : Interface du quiz technique]</span>
+            </div>
+            <p class="figure-caption">Figure B.2 : Interface de passage du quiz avec barre de progression et chronomètre</p>
+        </div>
+        
+        <h4 class="subsection-heading">B.2 Interfaces Recruteur</h4>
+        
+        <div class="figure">
+            <div class="figure-placeholder">
+                <span>[Maquette : Tableau de bord recruteur]</span>
+            </div>
+            <p class="figure-caption">Figure B.3 : Dashboard principal du recruteur</p>
+        </div>
+        
+        <div class="figure">
+            <div class="figure-placeholder">
+                <span>[Maquette : Liste des candidatures avec filtres]</span>
+            </div>
+            <p class="figure-caption">Figure B.4 : Liste des candidatures avec options de tri et filtrage</p>
+        </div>
+        
+        <div class="figure">
+            <div class="figure-placeholder">
+                <span>[Maquette : Interface d'évaluation collaborative]</span>
+            </div>
+            <p class="figure-caption">Figure B.5 : Interface d'évaluation en mode plein écran</p>
+        </div>
+        
+        <h4 class="subsection-heading">B.3 Interfaces Administrateur</h4>
+        
+        <div class="figure">
+            <div class="figure-placeholder">
+                <span>[Maquette : Gestion des questions/réponses]</span>
+            </div>
+            <p class="figure-caption">Figure B.6 : Interface de gestion de la banque de questions</p>
+        </div>
+        
+        <h3 class="section-heading">Annexe C : Références</h3>
+        
+        <h4 class="subsection-heading">Documentation technique</h4>
         
         <ul class="styled-list">
-            <li>Documentation Angular : <a href="https://angular.dev">https://angular.dev</a></li>
-            <li>Documentation Spring Boot : <a href="https://spring.io/projects/spring-boot">https://spring.io/projects/spring-boot</a></li>
-            <li>Documentation MapStruct : <a href="https://mapstruct.org">https://mapstruct.org</a></li>
+            <li><strong>Angular</strong> : <a href="https://angular.dev">https://angular.dev</a></li>
+            <li><strong>Spring Boot</strong> : <a href="https://spring.io/projects/spring-boot">https://spring.io/projects/spring-boot</a></li>
+            <li><strong>Spring Security</strong> : <a href="https://spring.io/projects/spring-security">https://spring.io/projects/spring-security</a></li>
+            <li><strong>MapStruct</strong> : <a href="https://mapstruct.org">https://mapstruct.org</a></li>
+            <li><strong>MySQL</strong> : <a href="https://dev.mysql.com/doc/">https://dev.mysql.com/doc/</a></li>
+        </ul>
+        
+        <h4 class="subsection-heading">Normes et réglementations</h4>
+        
+        <ul class="styled-list">
+            <li><strong>RGPD</strong> : Règlement (UE) 2016/679 du Parlement européen</li>
+            <li><strong>OWASP</strong> : Open Web Application Security Project - Top 10 des vulnérabilités</li>
+        </ul>
+        
+        <h4 class="subsection-heading">Outils de développement</h4>
+        
+        <ul class="styled-list">
+            <li><strong>IDE Backend</strong> : IntelliJ IDEA / Eclipse</li>
+            <li><strong>IDE Frontend</strong> : Visual Studio Code</li>
+            <li><strong>Gestion de versions</strong> : Git</li>
+            <li><strong>Base de données</strong> : MySQL Workbench</li>
         </ul>
 
     </div>

@@ -1,66 +1,66 @@
 {
   "/questions/**": {
-    "target": "http://localhost:8081",
+    "target": "http://localhost:8085",
     "secure": false,
     "changeOrigin": true,
     "logLevel": "debug"
   },
   "/answers/**": {
-    "target": "http://localhost:8081",
+    "target": "http://localhost:8085",
     "secure": false,
     "changeOrigin": true,
     "logLevel": "debug"
   },
   "/questionsAnswers/**": {
-    "target": "http://localhost:8081",
+    "target": "http://localhost:8085",
     "secure": false,
     "changeOrigin": true,
     "logLevel": "debug"
   },
   "/user/**": {
-    "target": "http://localhost:8081",
+    "target": "http://localhost:8085",
     "secure": false,
     "changeOrigin": true,
     "logLevel": "debug"
   },
   "/specialities/**": {
-    "target": "http://localhost:8081",
+    "target": "http://localhost:8085",
     "secure": false,
     "changeOrigin": true,
     "logLevel": "debug"
   },
   "/departments/**": {
-    "target": "http://localhost:8081",
+    "target": "http://localhost:8085",
     "secure": false,
     "changeOrigin": true,
     "logLevel": "debug"
   },
   "/userManager/**": {
-    "target": "http://localhost:8081",
+    "target": "http://localhost:8085",
     "secure": false,
     "changeOrigin": true,
     "logLevel": "debug"
   },
   "/campaigns/**": {
-    "target": "http://localhost:8081",
+    "target": "http://localhost:8085",
     "secure": false,
     "changeOrigin": true,
     "logLevel": "debug"
   },
   "/interviews/**": {
-    "target": "http://localhost:8081",
+    "target": "http://localhost:8085",
     "secure": false,
     "changeOrigin": true,
     "logLevel": "debug"
   },
   "/applications/**": {
-    "target": "http://localhost:8081",
+    "target": "http://localhost:8085",
     "secure": false,
     "changeOrigin": true,
     "logLevel": "debug"
   },
   "/evaluations/**": {
-    "target": "http://localhost:8081",
+    "target": "http://localhost:8085",
     "secure": false,
     "changeOrigin": true,
     "logLevel": "debug"
