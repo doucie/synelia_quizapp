@@ -19,7 +19,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import tech.synelia.quizapp.utils.*;
@@ -61,12 +61,10 @@ public class CandidateAnswersBusiness implements IBasicBusiness<Request<Candidat
 	@PersistenceContext
 	private EntityManager em;
 
-	private SimpleDateFormat dateFormat;
-	private SimpleDateFormat dateTimeFormat;
+	private static final DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+	private static final DateTimeFormatter dateTimeFormat = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
 
 	public CandidateAnswersBusiness() {
-		dateFormat = new SimpleDateFormat("dd/MM/yyyy");
-		dateTimeFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 	}
 	
 	/**
@@ -136,7 +134,7 @@ public class CandidateAnswersBusiness implements IBasicBusiness<Request<Candidat
 
 			final int size = itemsSaved.size();
 			List<String>  listOfError      = Collections.synchronizedList(new ArrayList<String>());
-			itemsDto.parallelStream().forEach(dto -> {
+			itemsDto.stream().forEach(dto -> {
 				try {
 					dto = getFullInfos(dto, size, request.getIsSimpleLoading(), locale);
 				} catch (Exception e) {
@@ -238,7 +236,7 @@ public class CandidateAnswersBusiness implements IBasicBusiness<Request<Candidat
 
 			final int size = itemsSaved.size();
 			List<String>  listOfError      = Collections.synchronizedList(new ArrayList<String>());
-			itemsDto.parallelStream().forEach(dto -> {
+			itemsDto.stream().forEach(dto -> {
 				try {
 					dto = getFullInfos(dto, size, request.getIsSimpleLoading(), locale);
 				} catch (Exception e) {
@@ -339,7 +337,7 @@ public class CandidateAnswersBusiness implements IBasicBusiness<Request<Candidat
 
 			final int size = items.size();
 			List<String>  listOfError      = Collections.synchronizedList(new ArrayList<String>());
-			itemsDto.parallelStream().forEach(dto -> {
+			itemsDto.stream().forEach(dto -> {
 				try {
 					dto = getFullInfos(dto, size, request.getIsSimpleLoading(), locale);
 				} catch (Exception e) {
@@ -389,7 +387,7 @@ public class CandidateAnswersBusiness implements IBasicBusiness<Request<Candidat
 
 			final int size = items.size();
 			List<String>  listOfError      = Collections.synchronizedList(new ArrayList<String>());
-			itemsDto.parallelStream().forEach(dto -> {
+			itemsDto.stream().forEach(dto -> {
 				try {
 					dto = getFullInfos(dto, size, request.getIsSimpleLoading(), locale);
 				} catch (Exception e) {

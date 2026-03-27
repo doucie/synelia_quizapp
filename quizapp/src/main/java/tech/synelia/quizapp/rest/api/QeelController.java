@@ -47,9 +47,8 @@ public class QeelController {
         } catch (Exception e) {
             logger.error("❌ Erreur lors de la récupération des statistiques QEEL", e);
             
-            // Retourner des statistiques par défaut en cas d'erreur
             OnlineStatsDto fallbackStats = new OnlineStatsDto(0L, 0L, 0.0, 0L, 0L, 0.0, 0L, 0L, 0.0);
-            return ResponseEntity.ok(fallbackStats);
+            return ResponseEntity.status(500).body(fallbackStats);
         }
     }
 

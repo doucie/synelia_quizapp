@@ -16,6 +16,12 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
   if (!isMultipartRequest) {
     headers['Content-Type'] = 'application/json';
   }
+
+  // Ajouter le token JWT si disponible
+  const token = localStorage.getItem('authToken');
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
   
   const modifiedReq = req.clone({
     setHeaders: headers
@@ -27,8 +33,8 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
       
       if (error.status === 0) {
         // Erreur CORS ou connexion refusée
-        console.error('❌ Connexion refusée - Backend Spring Boot non accessible sur le port 8081');
-        return throwError(() => new Error('Backend non accessible. Vérifiez que le serveur Spring Boot est démarré sur le port 8081.'));
+        console.error('❌ Connexion refusée - Backend Spring Boot non accessible sur le port 8085');
+        return throwError(() => new Error('Backend non accessible. Vérifiez que le serveur Spring Boot est démarré sur le port 8085.'));
       }
       
       if (error.status === 500) {

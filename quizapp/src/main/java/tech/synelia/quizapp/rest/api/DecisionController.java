@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -37,6 +38,7 @@ import tech.synelia.quizapp.utils.enums.FunctionalityEnum;
 @CrossOrigin("*")
 @RestController
 @RequestMapping(value="/decisions")
+@PreAuthorize("hasAnyRole('ADMIN', 'SUPER', 'RECRUITER')")
 public class DecisionController {
 
     @Autowired

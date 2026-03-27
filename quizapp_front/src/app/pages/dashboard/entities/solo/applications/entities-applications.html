@@ -36,8 +36,8 @@
             type="checkbox" 
             id="showDeleted" 
             class="checkbox-input"
-            [checked]="showDeletedApplications"
-            (click)="toggleDeletedApplications()"
+            [checked]="showDeletedItems"
+            (click)="toggleDeletedItems()"
           />
           <label for="showDeleted" class="checkbox-label">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -56,7 +56,7 @@
           </svg>
           Filtres avancés
         </button>
-        <button class="btn-primary-pro" (click)="createApplication()">
+        <button class="btn-primary-pro" (click)="openCreateDialog()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 5V19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             <path d="M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -196,7 +196,7 @@
     </div>
 
     <!-- État vide -->
-    <div *ngIf="!isLoading() && applications().length === 0" class="empty-state">
+    <div *ngIf="!isLoading() && items().length === 0" class="empty-state">
       <div class="empty-state-icon">
         <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M16 4H18C19.1046 4 20 4.89543 20 6V20C20 21.1046 19.1046 22 18 22H6C4.89543 22 4 21.1046 4 20V6C4 4.89543 4.89543 4 6 4H8" stroke="currentColor" stroke-width="2"/>
@@ -208,7 +208,7 @@
     </div>
 
     <!-- Tableau de données -->
-    <div *ngIf="!isLoading() && applications().length > 0" class="data-table-container">
+    <div *ngIf="!isLoading() && items().length > 0" class="data-table-container">
       <table class="data-table">
         <thead>
           <tr>
@@ -223,7 +223,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let app of applications(); trackBy: trackByApplicationId" 
+          <tr *ngFor="let app of items(); trackBy: trackById" 
               [class.application-deleted]="app.isDeleted">
             <td>
               <span class="cell-id">#{{ app.id }}</span>
@@ -254,7 +254,7 @@
                 <ng-container *ngIf="!app.isDeleted">
                   <button 
                     class="action-btn primary" 
-                    (click)="editApplication(app)"
+                    (click)="openEditDialog(app)"
                     title="Modifier la candidature">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M12 20H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -263,7 +263,7 @@
                   </button>
                   <button 
                     class="action-btn danger" 
-                    (click)="deleteApplication(app)"
+                    (click)="confirmDelete(app)"
                     title="Supprimer la candidature">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -275,7 +275,7 @@
                 <ng-container *ngIf="app.isDeleted">
                   <button 
                     class="action-btn success" 
-                    (click)="restoreApplication(app); $event.stopPropagation()"
+                    (click)="confirmRestore(app); $event.stopPropagation()"
                     title="Restaurer la candidature">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M3 12A9 9 0 1 0 12 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -358,7 +358,7 @@
 </div>
 
 <!-- Popup de confirmation de suppression -->
-<div class="confirmation-overlay" *ngIf="showDeleteConfirmation" (click)="cancelDeleteApplication()">
+<div class="confirmation-overlay" *ngIf="showDeleteConfirmation" (click)="cancelDelete()">
   <div class="confirmation-modal" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <div class="modal-icon danger">
@@ -373,10 +373,10 @@
     
     <div class="modal-body">
       <p>Êtes-vous certain de vouloir supprimer cette candidature ?</p>
-      <div class="item-info" *ngIf="applicationToDelete">
+      <div class="item-info" *ngIf="itemToDelete">
         <div class="item-details">
-          <strong>{{ applicationToDelete.candidateFirstName }} {{ applicationToDelete.candidateLastName }}</strong>
-          <span class="item-text">{{ applicationToDelete.candidateEmail }}</span>
+          <strong>{{ itemToDelete.candidateFirstName }} {{ itemToDelete.candidateLastName }}</strong>
+          <span class="item-text">{{ itemToDelete.candidateEmail }}</span>
         </div>
       </div>
       <div class="warning-message">
@@ -390,14 +390,14 @@
     </div>
     
     <div class="modal-actions">
-      <button class="btn-cancel" (click)="cancelDeleteApplication()">Annuler</button>
-      <button class="btn-confirm-danger" (click)="confirmDeleteApplication()">Supprimer</button>
+      <button class="btn-cancel" (click)="cancelDelete()">Annuler</button>
+      <button class="btn-confirm-danger" (click)="executeDelete()">Supprimer</button>
     </div>
   </div>
 </div>
 
 <!-- Popup de confirmation de restauration -->
-<div class="confirmation-overlay" *ngIf="showRestoreConfirmation()" (click)="cancelRestoreApplication()">
+<div class="confirmation-overlay" *ngIf="showRestoreConfirmation()" (click)="cancelRestore()">
   <div class="confirmation-modal" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <div class="modal-icon success">
@@ -411,17 +411,17 @@
     
     <div class="modal-body">
       <p>Êtes-vous certain de vouloir restaurer cette candidature ?</p>
-      <div class="item-info" *ngIf="applicationToRestore()">
+      <div class="item-info" *ngIf="itemToRestore()">
         <div class="item-details">
-          <strong>{{ applicationToRestore()?.candidateFirstName }} {{ applicationToRestore()?.candidateLastName }}</strong>
-          <span class="item-text">{{ applicationToRestore()?.candidateEmail }}</span>
+          <strong>{{ itemToRestore()?.candidateFirstName }} {{ itemToRestore()?.candidateLastName }}</strong>
+          <span class="item-text">{{ itemToRestore()?.candidateEmail }}</span>
         </div>
       </div>
     </div>
     
     <div class="modal-actions">
-      <button class="btn-cancel" (click)="cancelRestoreApplication()">Annuler</button>
-      <button class="btn-confirm-success" (click)="confirmRestoreApplication()">Restaurer</button>
+      <button class="btn-cancel" (click)="cancelRestore()">Annuler</button>
+      <button class="btn-confirm-success" (click)="executeRestore()">Restaurer</button>
     </div>
   </div>
 </div>
@@ -476,10 +476,10 @@
     </div>
     
     <div class="modal-actions">
-      <button class="btn-danger" (click)="deleteApplicationFromEdit()">Supprimer</button>
+      <button class="btn-danger" (click)="deleteFromEdit()">Supprimer</button>
       <div class="action-buttons-right">
         <button class="btn-cancel" (click)="closeEditDialog()">Annuler</button>
-        <button class="btn-confirm-success" (click)="validateApplicationEdit()">Valider</button>
+        <button class="btn-confirm-success" (click)="validateEdit()">Valider</button>
       </div>
     </div>
   </div>
@@ -526,7 +526,7 @@
     <div class="modal-actions">
       <div class="action-buttons-right">
         <button class="btn-cancel" (click)="closeCreateDialog()">Annuler</button>
-        <button class="btn-confirm-success" (click)="validateApplicationCreation()">Créer</button>
+        <button class="btn-confirm-success" (click)="validateCreate()">Créer</button>
       </div>
     </div>
   </div>

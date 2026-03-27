@@ -19,7 +19,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import tech.synelia.quizapp.utils.*;
@@ -62,12 +64,15 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 	@PersistenceContext
 	private EntityManager em;
 
-	private SimpleDateFormat dateFormat;
-	private SimpleDateFormat dateTimeFormat;
+	private static final DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+	private static final DateTimeFormatter dateTimeFormat = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
 
 	public UserBusiness() {
-		dateFormat = new SimpleDateFormat("dd/MM/yyyy");
-		dateTimeFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+	}
+
+	private static Date parseDate(String dateStr) {
+		return Date.from(LocalDate.parse(dateStr, dateFormat)
+				.atStartOfDay(ZoneId.systemDefault()).toInstant());
 	}
 	
 	/**
@@ -156,7 +161,7 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 
 			final int size = itemsSaved.size();
 			List<String>  listOfError      = Collections.synchronizedList(new ArrayList<String>());
-			itemsDto.parallelStream().forEach(dto -> {
+			itemsDto.stream().forEach(dto -> {
 				try {
 					dto = getFullInfos(dto, size, request.getIsSimpleLoading(), locale);
 				} catch (Exception e) {
@@ -258,7 +263,7 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 				entityToSave.setAdminMode(dto.getAdminMode());
 			}
 			if (Utilities.notBlank(dto.getLastConnectionDate())) {
-				entityToSave.setLastConnectionDate(dateFormat.parse(dto.getLastConnectionDate()));
+				entityToSave.setLastConnectionDate(parseDate(dto.getLastConnectionDate()));
 			}
 			if (dto.getCreatedBy() != null && dto.getCreatedBy() > 0) {
 				entityToSave.setCreatedBy(dto.getCreatedBy());
@@ -310,7 +315,7 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 
 			final int size = itemsSaved.size();
 			List<String>  listOfError      = Collections.synchronizedList(new ArrayList<String>());
-			itemsDto.parallelStream().forEach(dto -> {
+			itemsDto.stream().forEach(dto -> {
 				try {
 					dto = getFullInfos(dto, size, request.getIsSimpleLoading(), locale);
 				} catch (Exception e) {
@@ -418,7 +423,7 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 				entityToSave.setIsDeleted(dto.getIsDeleted());
 			}
 			if (Utilities.notBlank(dto.getLastConnectionDate())) {
-				entityToSave.setLastConnectionDate(dateFormat.parse(dto.getLastConnectionDate()));
+				entityToSave.setLastConnectionDate(parseDate(dto.getLastConnectionDate()));
 			}
 			if (dto.getCreatedBy() != null && dto.getCreatedBy() > 0) {
 				entityToSave.setCreatedBy(dto.getCreatedBy());
@@ -446,7 +451,7 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 
 			final int size = itemsSaved.size();
 			List<String>  listOfError      = Collections.synchronizedList(new ArrayList<String>());
-			itemsDto.parallelStream().forEach(dto -> {
+			itemsDto.stream().forEach(dto -> {
 				try {
 					dto = getFullInfos(dto, size, request.getIsSimpleLoading(), locale);
 				} catch (Exception e) {
@@ -477,68 +482,57 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 	@Override
 	public Response<UserDto> delete(Request<UserDto> request, Locale locale) throws JsonProcessingException {
 		log.info("----begin delete User-----");
-		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
 		Response<UserDto> response = new Response<UserDto>();
-		List<User>        items    = new ArrayList<User>();
-			
+
+		// 1. Valider et collecter tous les IDs
+		List<Integer> userIds = new ArrayList<>();
 		for (UserDto dto : request.getDatas()) {
-			// Definir les parametres obligatoires
 			Map<String, java.lang.Object> fieldsToVerify = new HashMap<String, java.lang.Object>();
 			fieldsToVerify.put("id", dto.getId());
 			if (!Validate.RequiredValue(fieldsToVerify).isGood()) {
 				throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
 			}
-
-			// Verifier si user existe
-			User existingEntity = null;
-			existingEntity = userRepository.findOne(dto.getId(), false);
-			if (existingEntity == null) {
-				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("user -> " + dto.getId(), locale));
-			}
-
-			// -----------------------------------------------------------------------
-			// ----------- CHECK IF DATA IS USED
-			// -----------------------------------------------------------------------
-
-			// notifications
-			List<Notifications> listOfNotifications = notificationsRepository.findByUserId(existingEntity.getId(), false);
-			if (listOfNotifications != null && !listOfNotifications.isEmpty()){
-				throw new InternalErrorException(functionalError.DATA_NOT_DELETABLE("(" + listOfNotifications.size() + ")", locale));
-			}
-			// campaigns
-			List<Campaigns> listOfCampaigns = campaignsRepository.findByCreatorId(existingEntity.getId(), false);
-			if (listOfCampaigns != null && !listOfCampaigns.isEmpty()){
-				throw new InternalErrorException(functionalError.DATA_NOT_DELETABLE("(" + listOfCampaigns.size() + ")", locale));
-			}
-			// interviewCrud
-			List<InterviewCrud> listOfInterviewCrud = interviewCrudRepository.findByUserId(existingEntity.getId(), false);
-			if (listOfInterviewCrud != null && !listOfInterviewCrud.isEmpty()){
-				throw new InternalErrorException(functionalError.DATA_NOT_DELETABLE("(" + listOfInterviewCrud.size() + ")", locale));
-			}
-			// campaignCrud
-			List<CampaignCrud> listOfCampaignCrud = campaignCrudRepository.findByUserId(existingEntity.getId(), false);
-			if (listOfCampaignCrud != null && !listOfCampaignCrud.isEmpty()){
-				throw new InternalErrorException(functionalError.DATA_NOT_DELETABLE("(" + listOfCampaignCrud.size() + ")", locale));
-			}
-
-
-			existingEntity.setIsDeleted(true);
-			items.add(existingEntity);
+			userIds.add(dto.getId());
 		}
 
-		if (!items.isEmpty()) {
-			// supprimer les donnees en base
-			userRepository.saveAll((Iterable<User>) items);
-
-			Status status = new Status();
-			status.setCode(StatusCode.SUCCESS);
-			status.setMessage(StatusMessage.SUCCESS);
-
-			response.setHasError(false);
-			response.setHttpCode(HttpStatus.OK.value());
-			response.setStatus(status);
+		// 2. Charger tous les utilisateurs en une seule requête
+		List<User> items = userRepository.findByIdIn(userIds);
+		if (items.size() != userIds.size()) {
+			// Trouver les IDs manquants
+			List<Integer> foundIds = items.stream().map(User::getId).toList();
+			Integer missingId = userIds.stream().filter(id -> !foundIds.contains(id)).findFirst().orElse(null);
+			throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("user -> " + missingId, locale));
 		}
-		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
+
+		// 3. Vérifier les dépendances en batch (4 requêtes au lieu de 4*N)
+		List<Integer> usersWithNotifications = notificationsRepository.findUserIdsWithNotifications(userIds);
+		if (!usersWithNotifications.isEmpty()) {
+			throw new InternalErrorException(functionalError.DATA_NOT_DELETABLE("notifications (" + usersWithNotifications.size() + " users)", locale));
+		}
+		List<Integer> usersWithCampaigns = campaignsRepository.findCreatorIdsWithCampaigns(userIds);
+		if (!usersWithCampaigns.isEmpty()) {
+			throw new InternalErrorException(functionalError.DATA_NOT_DELETABLE("campaigns (" + usersWithCampaigns.size() + " users)", locale));
+		}
+		List<Integer> usersWithInterviews = interviewCrudRepository.findUserIdsWithInterviewCruds(userIds);
+		if (!usersWithInterviews.isEmpty()) {
+			throw new InternalErrorException(functionalError.DATA_NOT_DELETABLE("interviews (" + usersWithInterviews.size() + " users)", locale));
+		}
+		List<Integer> usersWithCampaignCruds = campaignCrudRepository.findUserIdsWithCampaignCruds(userIds);
+		if (!usersWithCampaignCruds.isEmpty()) {
+			throw new InternalErrorException(functionalError.DATA_NOT_DELETABLE("campaignCruds (" + usersWithCampaignCruds.size() + " users)", locale));
+		}
+
+		// 4. Soft-delete en batch
+		items.forEach(user -> user.setIsDeleted(true));
+		userRepository.saveAll(items);
+
+		Status status = new Status();
+		status.setCode(StatusCode.SUCCESS);
+		status.setMessage(StatusMessage.SUCCESS);
+		response.setHasError(false);
+		response.setHttpCode(HttpStatus.OK.value());
+		response.setStatus(status);
+
 		log.info("----end delete User-----");
 		return response;
 	}
@@ -565,7 +559,7 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 
 			final int size = items.size();
 			List<String>  listOfError      = Collections.synchronizedList(new ArrayList<String>());
-			itemsDto.parallelStream().forEach(dto -> {
+			itemsDto.stream().forEach(dto -> {
 				try {
 					dto = getFullInfos(dto, size, request.getIsSimpleLoading(), locale);
 				} catch (Exception e) {
@@ -626,7 +620,7 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 
 			final int size = items.size();
 			List<String> listOfError = Collections.synchronizedList(new ArrayList<String>());
-			itemsDto.parallelStream().forEach(dto -> {
+			itemsDto.stream().forEach(dto -> {
 				try {
 					dto = getFullInfos(dto, size, request.getIsSimpleLoading(), locale);
 				} catch (Exception e) {
@@ -752,5 +746,19 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
 		log.info("----end updatePageSizePreference-----");
 		return response;
+	}
+
+	/**
+	 * Met à jour le statut en ligne d'un utilisateur
+	 */
+	public void updateOnlineStatus(Integer userId, Boolean isOnline) {
+		userRepository.findById(userId).ifPresent(user -> {
+			user.setIsOnline(isOnline);
+			if (Boolean.TRUE.equals(isOnline)) {
+				user.setLastConnectionDate(new Date());
+			}
+			user.setUpdatedAt(new Date());
+			userRepository.save(user);
+		});
 	}
 }

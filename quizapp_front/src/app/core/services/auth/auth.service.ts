@@ -44,7 +44,7 @@ export class AuthService {
 
     const userData = apiResponse.items[0];
     const user: User = this.transformUserData(userData);
-    const token = this.generateToken(userData);
+    const token = apiResponse.sessionUser || '';
 
     const loginResponse: LoginResponse = {
       token: token,
@@ -102,6 +102,20 @@ export class AuthService {
   }
 
   /**
+   * Retourne l'ID de l'utilisateur courant sous forme de string
+   */
+  getCurrentUserId(): string {
+    return this.currentUserSubject.value?.id || '0';
+  }
+
+  /**
+   * Retourne le token JWT courant
+   */
+  getToken(): string | null {
+    return localStorage.getItem('authToken');
+  }
+
+  /**
    * Met à jour l'utilisateur courant (pour admin_mode par exemple)
    */
   updateCurrentUser(updatedUser: User): void {
@@ -143,29 +157,8 @@ export class AuthService {
     console.log('🔍 API User Data:', apiUser);
     console.log('🔍 User Role from API:', apiUser.userRole);
     
-    // Le backend ne retourne pas userRole dans toLiteDto, donc on applique une logique
-    let role = apiUser.userRole;
-    
-    if (!role) {
-      // Logique pour déterminer le rôle basé sur l'email ou l'ID
-      const email = apiUser.email?.toLowerCase() || '';
-      const userId = apiUser.id;
-      
-      if (email.includes('admin') || email.includes('super') || userId === 1) {
-        role = 'super';
-      } else if (email.includes('recruiter') || email.includes('rec')) {
-        role = 'recruiter';
-      } else if (email.includes('admin')) {
-        role = 'admin';
-      } else {
-        // Pour le moment, assigner 'admin' par défaut pour les tests
-        // TODO: Corriger le backend pour retourner le vraie rôle
-        role = 'admin';
-      }
-      console.log('🔧 Role determined from logic:', role, 'for email:', email, 'ID:', userId);
-    } else {
-      console.log('✅ Role from API:', role);
-    }
+    const role = apiUser.userRole || 'admin';
+    console.log('✅ Role from API:', role);
     
     return {
       id: apiUser.id?.toString() || '0',
@@ -175,20 +168,6 @@ export class AuthService {
       role: role,
       adminMode: apiUser.adminMode || false
     };
-  }
-
-  /**
-   * Génère un token temporaire (en attendant l'implémentation JWT côté serveur)
-   */
-  private generateToken(user: UserApiData): string {
-    const payload = {
-      userId: user.id,
-      email: user.email,
-      timestamp: Date.now()
-    };
-    
-    // Encodage base64 temporaire - À remplacer par JWT
-    return btoa(JSON.stringify(payload));
   }
 
   /**

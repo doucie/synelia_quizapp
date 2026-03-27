@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy, signal } from '@angular/core';
+import { Subject, takeUntil } from 'rxjs';
 import { CommonModule, NgIf, NgFor } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -17,7 +18,7 @@ export class EntitiesSourceTokensComponent implements OnInit, OnDestroy {
   // Exposer Math pour utilisation dans le template
   Math = Math;
   
-  // Variable pour eviter les appels multiples
+  private destroy$ = new Subject<void>();
   private loadingTimeout: any;
   
   // Signaux pour la reactivite
@@ -96,7 +97,7 @@ export class EntitiesSourceTokensComponent implements OnInit, OnDestroy {
     console.log('Initialisation EntitiesSourceTokensComponent');
     this.initializePageSizePreference();
     
-    this.route.params.subscribe(params => {
+    this.route.params.pipe(takeUntil(this.destroy$)).subscribe(params => {
       const pageParam = params['page'];
       if (pageParam && !isNaN(+pageParam) && +pageParam > 0) {
         this.currentPage.set(+pageParam - 1);
@@ -109,6 +110,8 @@ export class EntitiesSourceTokensComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
     if (this.loadingTimeout) {
       clearTimeout(this.loadingTimeout);
     }

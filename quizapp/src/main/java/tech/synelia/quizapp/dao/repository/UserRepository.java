@@ -425,34 +425,12 @@ public interface UserRepository extends JpaRepository<User, Integer>, _UserRepos
 	// ==================== MÉTHODES POUR STATISTIQUES QEEL ====================
 
 	/**
-	 * Compte le nombre total d'utilisateurs actifs
-	 * @return Le nombre total d'utilisateurs non supprimés
+	 * Récupère les statistiques QEEL en une seule requête GROUP BY
+	 * Retourne : [userRole, totalCount, onlineCount] pour chaque rôle
 	 */
-	@Query("select count(e) from User e where e.isDeleted = false")
-	Long countTotalUsers();
-
-	/**
-	 * Compte le nombre d'utilisateurs en ligne
-	 * @return Le nombre d'utilisateurs connectés actuellement
-	 */
-	@Query("select count(e) from User e where e.isDeleted = false and e.isOnline = true")
-	Long countOnlineUsers();
-
-	/**
-	 * Compte le nombre total d'utilisateurs par rôle
-	 * @param userRole Le rôle à compter (admin, recruiter, etc.)
-	 * @return Le nombre total d'utilisateurs de ce rôle
-	 */
-	@Query("select count(e) from User e where e.isDeleted = false and e.userRole = :userRole")
-	Long countUsersByRole(@Param("userRole") String userRole);
-
-	/**
-	 * Compte le nombre d'utilisateurs en ligne par rôle
-	 * @param userRole Le rôle à compter (admin, recruiter, etc.)
-	 * @return Le nombre d'utilisateurs connectés de ce rôle
-	 */
-	@Query("select count(e) from User e where e.isDeleted = false and e.isOnline = true and e.userRole = :userRole")
-	Long countOnlineUsersByRole(@Param("userRole") String userRole);
+	@Query("select e.userRole, count(e), sum(case when e.isOnline = true then 1 else 0 end) " +
+	       "from User e where e.isDeleted = false group by e.userRole")
+	List<Object[]> countUsersGroupedByRole();
 
 	/**
 	 * Trouve les utilisateurs marqués comme en ligne mais inactifs (sans heartbeat récent)
@@ -461,4 +439,7 @@ public interface UserRepository extends JpaRepository<User, Integer>, _UserRepos
 	 */
 	@Query("select e from User e where e.isDeleted = false and e.isOnline = true and (e.lastConnectionDate is null or e.lastConnectionDate < :timeoutThreshold)")
 	List<User> findInactiveOnlineUsers(@Param("timeoutThreshold") Date timeoutThreshold);
+
+	@Query("select e from User e where e.id in :ids and e.isDeleted = false")
+	List<User> findByIdIn(@Param("ids") List<Integer> ids);
 }

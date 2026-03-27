@@ -367,4 +367,7 @@ public interface InterviewCrudRepository extends JpaRepository<InterviewCrud, In
 		req += othersReq;
 		return req;
 	}
+
+	@Query("select e.user.id from InterviewCrud e where e.user.id in :userIds and e.isDeleted = false")
+	List<Integer> findUserIdsWithInterviewCruds(@Param("userIds") List<Integer> userIds);
 }

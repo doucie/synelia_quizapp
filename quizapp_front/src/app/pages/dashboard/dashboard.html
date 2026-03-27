@@ -33,7 +33,7 @@
                 [routerLink]="item.route"
                 routerLinkActive="active"
                 [attr.title]="sidebarCollapsed() ? item.label : ''">
-                <span class="nav-icon" [innerHTML]="item.safeIcon"></span>
+                <span class="nav-icon" [innerHTML]="item.icon | safeHtml"></span>
                 <span class="nav-label" *ngIf="!sidebarCollapsed()">{{ item.label }}</span>
               </a>
               
@@ -59,7 +59,7 @@
                       class="entity-item"
                       (click)="navigateToEntity(entity.id)"
                       [title]="entity.label">
-                      <span class="entity-icon" [innerHTML]="entity.safeIcon"></span>
+                      <span class="entity-icon" [innerHTML]="entity.icon | safeHtml"></span>
                       <span class="entity-label">{{ entity.label }}</span>
                     </button>
                   }

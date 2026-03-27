@@ -360,4 +360,7 @@ public interface NotificationsRepository extends JpaRepository<Notifications, In
 		req += othersReq;
 		return req;
 	}
+
+	@Query("select e.user.id from Notifications e where e.user.id in :userIds and e.isDeleted = false")
+	List<Integer> findUserIdsWithNotifications(@Param("userIds") List<Integer> userIds);
 }

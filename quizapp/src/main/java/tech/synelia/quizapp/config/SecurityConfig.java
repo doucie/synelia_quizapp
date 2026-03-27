@@ -3,40 +3,50 @@ package tech.synelia.quizapp.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import tech.synelia.quizapp.security.JwtAuthenticationFilter;
 
 import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
+
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // Désactiver CSRF pour les APIs REST
             .csrf(csrf -> csrf.disable())
-            
-            // Configuration CORS globale
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            
-            // Désactiver les sessions car nous utilisons des tokens
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            
-            // Configuration des autorisations
             .authorizeHttpRequests(authz -> authz
-                // Permettre l'accès libre aux endpoints de connexion
-                .requestMatchers("/userManager/**").permitAll()
-                
-                // Permettre l'accès libre à tous les endpoints pour le développement
-                // TODO: Sécuriser en production
-                .anyRequest().permitAll()
-            );
+                // Endpoints publics (connexion, candidature, QEEL, Swagger)
+                .requestMatchers("/userManager/connexion").permitAll()
+                .requestMatchers("/api/qeel/**", "/ws/**").permitAll()
+                .requestMatchers("/applications/create", "/applications/verifyEmail/**").permitAll()
+                .requestMatchers("/candidateToken/**", "/sourceToken/**").permitAll()
+                .requestMatchers("/candidateAnswers/**").permitAll()
+                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                // Endpoints ADMIN uniquement
+                .requestMatchers("/user/set-users-online", "/user/roles-debug").hasAnyRole("ADMIN", "SUPER")
+                // Tous les autres endpoints nécessitent une authentification
+                .anyRequest().authenticated()
+            )
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
             
         return http.build();
     }
@@ -45,22 +55,16 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // Permettre toutes les origines (pour le développement)
-        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
+        // Origines autorisées (dev + prod)
+        configuration.setAllowedOrigins(List.of(
+            "http://localhost:4200",
+            "http://localhost:8085"
+        ));
         
-        // Permettre toutes les méthodes HTTP
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        
-        // Permettre tous les headers
-        configuration.setAllowedHeaders(Arrays.asList("*"));
-        
-        // Permettre l'envoi des credentials
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"));
         configuration.setAllowCredentials(true);
-        
-        // Headers exposés au client
         configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Type"));
-        
-        // Durée de cache des requêtes preflight (en secondes)
         configuration.setMaxAge(3600L);
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

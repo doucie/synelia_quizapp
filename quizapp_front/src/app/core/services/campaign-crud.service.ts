@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
@@ -48,22 +48,13 @@ export class CampaignCrudService {
 
   constructor(private http: HttpClient) {}
 
-  private getHeaders(): HttpHeaders {
-    const token = localStorage.getItem('token');
-    return new HttpHeaders({
-      'Content-Type': 'application/json',
-      'Authorization': token ? `Bearer ${token}` : ''
-    });
-  }
-
   /**
    * Récupère les permissions pour une campagne
    */
   getByCampaignId(campaignId: number): Observable<CampaignCrudResponse> {
     return this.http.post<CampaignCrudResponse>(
       `${this.baseUrl}/getByCriteria`,
-      { campaignId },
-      { headers: this.getHeaders() }
+      { campaignId }
     );
   }
 
@@ -83,8 +74,7 @@ export class CampaignCrudService {
     
     return this.http.post<CampaignCrudResponse>(
       `${this.baseUrl}/getByCriteria`,
-      payload,
-      { headers: this.getHeaders() }
+      payload
     ).pipe(
       tap((response: CampaignCrudResponse) => console.log('📦 Réponse getEvaluatorsByCampaignId:', response))
     );

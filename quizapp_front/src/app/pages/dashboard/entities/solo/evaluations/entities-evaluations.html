@@ -20,13 +20,13 @@
       <div class="toolbar-left">
         <input type="text" class="search-input" placeholder="Rechercher..." [(ngModel)]="quickSearch" (input)="onQuickSearch()" />
         <div class="checkbox-container">
-          <input type="checkbox" id="showDeleted" class="checkbox-input" [checked]="showDeletedEvaluations" (click)="toggleDeletedEvaluations()" />
+          <input type="checkbox" id="showDeleted" class="checkbox-input" [checked]="showDeletedItems" (click)="toggleDeletedItems()" />
           <label for="showDeleted" class="checkbox-label">Afficher les évaluations supprimées</label>
         </div>
       </div>
       <div class="toolbar-right">
         <button class="btn-secondary-pro" (click)="openAdvancedSearch()">Filtres avancés</button>
-        <button class="btn-primary-pro" (click)="createEvaluation()">
+        <button class="btn-primary-pro" (click)="openCreateDialog()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
@@ -89,7 +89,7 @@
       <p>Chargement des évaluations...</p>
     </div>
 
-    <div *ngIf="!isLoading() && evaluations().length === 0" class="empty-state">
+    <div *ngIf="!isLoading() && items().length === 0" class="empty-state">
       <div class="empty-state-icon">
         <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -99,7 +99,7 @@
       <p>Aucune évaluation ne correspond aux critères actuels.</p>
     </div>
 
-    <div *ngIf="!isLoading() && evaluations().length > 0" class="data-table-container">
+    <div *ngIf="!isLoading() && items().length > 0" class="data-table-container">
       <table class="data-table">
         <thead>
           <tr>
@@ -112,7 +112,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let evaluation of evaluations(); trackBy: trackByEvaluationId" 
+          <tr *ngFor="let evaluation of items(); trackBy: trackById" 
               [class.evaluation-deleted]="evaluation.isDeleted">
             <td><span class="cell-id">#{{ evaluation.id }}</span></td>
             <td>
@@ -130,19 +130,19 @@
             <td class="actions-cell">
               <div class="actions-menu">
                 <ng-container *ngIf="!evaluation.isDeleted">
-                  <button class="action-btn primary" (click)="editEvaluation(evaluation)" title="Modifier">
+                  <button class="action-btn primary" (click)="openEditDialog(evaluation)" title="Modifier">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M12 20H21M16.5 3.5A2.12 2.12 0 0 1 19 6L7 18L3 19L4 15L16.5 3.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                   </button>
-                  <button class="action-btn danger" (click)="deleteEvaluation(evaluation)" title="Supprimer">
+                  <button class="action-btn danger" (click)="confirmDelete(evaluation)" title="Supprimer">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M3 6H5H21M8 6V4C8 3 9 2 10 2H14C15 2 16 3 16 4V6M19 6V20C19 21 18 22 17 22H7C6 22 5 21 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                   </button>
                 </ng-container>
                 <ng-container *ngIf="evaluation.isDeleted">
-                  <button class="action-btn success" (click)="restoreEvaluation(evaluation)" title="Restaurer">
+                  <button class="action-btn success" (click)="confirmRestore(evaluation)" title="Restaurer">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M3 12A9 9 0 1 0 12 3M12 3L8 7L12 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
@@ -186,7 +186,7 @@
 </div>
 
 <!-- Modals -->
-<div class="confirmation-overlay" *ngIf="showDeleteConfirmation" (click)="cancelDeleteEvaluation()">
+<div class="confirmation-overlay" *ngIf="showDeleteConfirmation" (click)="cancelDelete()">
   <div class="confirmation-modal" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <div class="modal-icon danger">
@@ -199,18 +199,18 @@
     </div>
     <div class="modal-body">
       <p>Voulez-vous supprimer cette évaluation ?</p>
-      <div class="item-info" *ngIf="evaluationToDelete">
-        <strong>Évaluation #{{ evaluationToDelete.id }}</strong>
+      <div class="item-info" *ngIf="itemToDelete">
+        <strong>Évaluation #{{ itemToDelete.id }}</strong>
       </div>
     </div>
     <div class="modal-actions">
-      <button class="btn-cancel" (click)="cancelDeleteEvaluation()">Annuler</button>
-      <button class="btn-confirm-danger" (click)="confirmDeleteEvaluation()">Supprimer</button>
+      <button class="btn-cancel" (click)="cancelDelete()">Annuler</button>
+      <button class="btn-confirm-danger" (click)="executeDelete()">Supprimer</button>
     </div>
   </div>
 </div>
 
-<div class="confirmation-overlay" *ngIf="showRestoreConfirmation()" (click)="cancelRestoreEvaluation()">
+<div class="confirmation-overlay" *ngIf="showRestoreConfirmation()" (click)="cancelRestore()">
   <div class="confirmation-modal" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <div class="modal-icon success">
@@ -224,8 +224,8 @@
       <p>Voulez-vous restaurer cette évaluation ?</p>
     </div>
     <div class="modal-actions">
-      <button class="btn-cancel" (click)="cancelRestoreEvaluation()">Annuler</button>
-      <button class="btn-confirm-success" (click)="confirmRestoreEvaluation()">Restaurer</button>
+      <button class="btn-cancel" (click)="cancelRestore()">Annuler</button>
+      <button class="btn-confirm-success" (click)="executeRestore()">Restaurer</button>
     </div>
   </div>
 </div>
@@ -257,10 +257,10 @@
       </form>
     </div>
     <div class="modal-actions">
-      <button class="btn-danger" (click)="deleteEvaluationFromEdit()">Supprimer</button>
+      <button class="btn-danger" (click)="deleteFromEdit()">Supprimer</button>
       <div class="action-buttons-right">
         <button class="btn-cancel" (click)="closeEditDialog()">Annuler</button>
-        <button class="btn-confirm-success" (click)="validateEvaluationEdit()">Valider</button>
+        <button class="btn-confirm-success" (click)="validateEdit()">Valider</button>
       </div>
     </div>
   </div>
@@ -295,7 +295,7 @@
     <div class="modal-actions">
       <div class="action-buttons-right">
         <button class="btn-cancel" (click)="closeCreateDialog()">Annuler</button>
-        <button class="btn-confirm-success" (click)="validateEvaluationCreation()">Créer</button>
+        <button class="btn-confirm-success" (click)="validateCreate()">Créer</button>
       </div>
     </div>
   </div>

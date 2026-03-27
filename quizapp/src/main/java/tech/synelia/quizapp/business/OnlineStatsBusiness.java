@@ -1,12 +1,15 @@
 package tech.synelia.quizapp.business;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import tech.synelia.quizapp.dao.repository.UserRepository;
 import tech.synelia.quizapp.utils.dto.OnlineStatsDto;
+
+import java.util.List;
 
 /**
  * Service métier pour les statistiques d'utilisateurs en ligne (QEEL)
@@ -20,33 +23,43 @@ public class OnlineStatsBusiness {
     @Autowired
     private UserRepository userRepository;
     
-    // Constants pour les rôles utilisateurs
     private static final String ROLE_ADMIN = "admin";
     private static final String ROLE_RECRUITER = "recruiter";
     
     /**
-     * Récupère toutes les statistiques d'utilisateurs en ligne depuis la base de données
-     * @return OnlineStatsDto avec toutes les statistiques calculées
+     * Récupère toutes les statistiques QEEL en une seule requête GROUP BY
      */
+    @Cacheable("qeelStats")
     public OnlineStatsDto getOnlineStats() {
         logger.info("Récupération des statistiques QEEL depuis la base de données");
         
         try {
             OnlineStatsDto stats = new OnlineStatsDto();
+            stats.setTotalUsers(0L);
+            stats.setOnlineUsers(0L);
+            stats.setTotalAdmins(0L);
+            stats.setOnlineAdmins(0L);
+            stats.setTotalRecruiters(0L);
+            stats.setOnlineRecruiters(0L);
             
-            // Statistiques générales
-            stats.setTotalUsers(userRepository.countTotalUsers());
-            stats.setOnlineUsers(userRepository.countOnlineUsers());
+            List<Object[]> rows = userRepository.countUsersGroupedByRole();
+            for (Object[] row : rows) {
+                String role = (String) row[0];
+                Long total = (Long) row[1];
+                Long online = (Long) row[2];
+                
+                stats.setTotalUsers(stats.getTotalUsers() + total);
+                stats.setOnlineUsers(stats.getOnlineUsers() + online);
+                
+                if (ROLE_ADMIN.equalsIgnoreCase(role)) {
+                    stats.setTotalAdmins(total);
+                    stats.setOnlineAdmins(online);
+                } else if (ROLE_RECRUITER.equalsIgnoreCase(role)) {
+                    stats.setTotalRecruiters(total);
+                    stats.setOnlineRecruiters(online);
+                }
+            }
             
-            // Statistiques des administrateurs
-            stats.setTotalAdmins(userRepository.countUsersByRole(ROLE_ADMIN));
-            stats.setOnlineAdmins(userRepository.countOnlineUsersByRole(ROLE_ADMIN));
-            
-            // Statistiques des recruteurs
-            stats.setTotalRecruiters(userRepository.countUsersByRole(ROLE_RECRUITER));
-            stats.setOnlineRecruiters(userRepository.countOnlineUsersByRole(ROLE_RECRUITER));
-            
-            // Calcul automatique des pourcentages
             stats.calculateAllPercentages();
             
             logger.info("Statistiques QEEL récupérées: {} utilisateurs total, {} en ligne", 
@@ -56,26 +69,22 @@ public class OnlineStatsBusiness {
             
         } catch (Exception e) {
             logger.error("Erreur lors de la récupération des statistiques QEEL", e);
-            // Retourner des statistiques par défaut en cas d'erreur
             return getFallbackStats();
         }
     }
     
     /**
      * Récupère uniquement le nombre d'utilisateurs en ligne
-     * @return Le nombre d'utilisateurs connectés
      */
     public Long getOnlineUsersCount() {
         logger.info("Récupération du nombre d'utilisateurs en ligne");
         
         try {
-            Long count = userRepository.countOnlineUsers();
-            logger.info("Nombre d'utilisateurs en ligne: {}", count);
-            return count;
-            
+            OnlineStatsDto stats = getOnlineStats();
+            return stats.getOnlineUsers();
         } catch (Exception e) {
             logger.error("Erreur lors de la récupération du nombre d'utilisateurs en ligne", e);
-            return 0L; // Valeur par défaut en cas d'erreur
+            return 0L;
         }
     }
     

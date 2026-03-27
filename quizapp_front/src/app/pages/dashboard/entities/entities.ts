@@ -1,7 +1,7 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { SafeHtmlPipe } from '../../../pipes/safe-html.pipe';
 import { AuthService } from '../../../core/services/auth/auth.service';
 
 interface EntityInfo {
@@ -13,13 +13,12 @@ interface EntityInfo {
   route: string;
   count?: number;
   color?: string; // Couleur thématique pour chaque entité
-  safeIcon?: SafeHtml; // HTML sécurisé pour l'affichage
 }
 
 @Component({
   selector: 'app-entities',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, SafeHtmlPipe],
   templateUrl: './entities.html',
   styleUrls: ['./entities.scss']
 })
@@ -30,7 +29,6 @@ export class EntitiesComponent implements OnInit {
   searchTerm = signal('');
 
   constructor(
-    private sanitizer: DomSanitizer,
     private router: Router,
     private route: ActivatedRoute,
     private authService: AuthService
@@ -160,12 +158,6 @@ export class EntitiesComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    // Convertir les icônes SVG en HTML sécurisé
-    this.entities = this.entities.map(entity => ({
-      ...entity,
-      safeIcon: this.sanitizer.bypassSecurityTrustHtml(entity.icon)
-    }));
-    
     this.loadEntityCounts();
     
     // Navigation par fragments supprimée - utilisation directe des routes

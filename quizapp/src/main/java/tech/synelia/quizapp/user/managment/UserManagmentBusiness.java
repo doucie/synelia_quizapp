@@ -60,16 +60,14 @@ public class UserManagmentBusiness {
 	private UserManagmentRepository userManagmentRepository;
 	@Autowired
 	private FunctionalError functionalError;
-	// @Autowired
-	// private TechnicalError technicalError;
-	// @Autowired
-	// private ExceptionUtils exceptionUtils;
 	@PersistenceContext
 	private EntityManager em;
 	@Autowired
 	private ParamsUtils paramsUtils;
 	@Autowired
 	private HostingUtils hostingUtils;
+	@Autowired
+	private tech.synelia.quizapp.security.JwtService jwtService;
 
 	private Context context;
 
@@ -161,6 +159,10 @@ public class UserManagmentBusiness {
 			response.setItems(itemsDto);
 			response.setHasError(false);
 			response.setStatus(functionalError.SUCCESS("", locale));
+			
+			// Générer le JWT et l'inclure dans la réponse
+			String jwt = jwtService.generateToken(item.getId(), item.getEmail(), item.getUserRole());
+			response.setSessionUser(jwt);
 		} else {
 			response.setStatus(functionalError.DATA_EMPTY("user", locale));
 			response.setHasError(false);

@@ -5,7 +5,7 @@ import { AuthService } from '../../core/services/auth/auth.service';
 import { UserService } from '../../core/services/user.service';
 import { NotificationService, DbNotification } from '../../core/services/notification.service';
 import { NotificationsComponent } from '../../components/notifications/notifications.component';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { SafeHtmlPipe } from '../../pipes/safe-html.pipe';
 
 interface MenuItem {
   id: string;
@@ -14,7 +14,6 @@ interface MenuItem {
   route?: string;
   roles: string[];
   children?: MenuItem[];
-  safeIcon?: SafeHtml; // HTML sécurisé pour l'affichage
   hasDropdown?: boolean; // Indique si l'item a un dropdown
 }
 
@@ -22,7 +21,6 @@ interface EntityItem {
   id: string;
   label: string;
   icon: string;
-  safeIcon?: SafeHtml; // HTML sécurisé pour l'affichage
 }
 
 /**
@@ -41,7 +39,7 @@ interface DashboardNotification {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, NotificationsComponent],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, NotificationsComponent, SafeHtmlPipe],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss']
 })
@@ -240,7 +238,6 @@ export class DashboardComponent implements OnInit {
     private notificationService: NotificationService,
     private renderer: Renderer2,
     @Inject(DOCUMENT) private document: Document,
-    private domSanitizer: DomSanitizer
   ) {
     // S'abonner aux changements de l'utilisateur courant
     this.authService.currentUser$.subscribe(user => {
@@ -287,17 +284,7 @@ export class DashboardComponent implements OnInit {
       }
     });
     
-    // Sanitiser les icônes SVG des menus
-    this.menuItems = this.menuItems.map(item => ({
-      ...item,
-      safeIcon: this.domSanitizer.bypassSecurityTrustHtml(item.icon)
-    }));
-    
-    // Sanitiser les icônes SVG des entités
-    this.entitiesList = this.entitiesList.map(entity => ({
-      ...entity,
-      safeIcon: this.domSanitizer.bypassSecurityTrustHtml(entity.icon)
-    }));
+
     
     // Vérifier si l'utilisateur est connecté
     if (!this.currentUser()) {

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
@@ -92,7 +92,6 @@ export class DecisionService {
    * Récupère les décisions par critères
    */
   getDecisionsByCriteria(criteria: DecisionCriteria = {}): Observable<DecisionResponse> {
-    const headers = this.getHeaders();
     const request: DecisionRequest = {
       user: 1, // Utiliser l'ID système 1 pour les opérations de lecture
       data: {
@@ -105,7 +104,7 @@ export class DecisionService {
 
     console.log('🔍 Service: Envoi de la requête getByCriteria:', JSON.stringify(request, null, 2));
 
-    return this.http.post<DecisionResponse>(`${this.apiUrl}/getByCriteria`, request, { headers })
+    return this.http.post<DecisionResponse>(`${this.apiUrl}/getByCriteria`, request)
       .pipe(
         map(response => {
           console.log('🔍 Service: Réponse reçue:', response);
@@ -130,13 +129,12 @@ export class DecisionService {
    * Récupère une décision par ID
    */
   getDecisionById(id: number): Observable<DecisionResponse> {
-    const headers = this.getHeaders();
     const request: DecisionRequest = {
       user: this.getCurrentUserId(),
       data: { id } as PartialDecision
     };
 
-    return this.http.post<DecisionResponse>(`${this.apiUrl}/getByCriteria`, request, { headers })
+    return this.http.post<DecisionResponse>(`${this.apiUrl}/getByCriteria`, request)
       .pipe(
         map(response => response),
         catchError(error => {
@@ -167,13 +165,12 @@ export class DecisionService {
    * Crée une nouvelle décision
    */
   createDecision(decision: Decision): Observable<DecisionResponse> {
-    const headers = this.getHeaders();
     const request: DecisionRequest = {
       user: this.getCurrentUserId(),
       datas: [decision]  // Le backend attend 'datas' (pluriel) avec un tableau
     };
 
-    return this.http.post<DecisionResponse>(`${this.apiUrl}/create`, request, { headers })
+    return this.http.post<DecisionResponse>(`${this.apiUrl}/create`, request)
       .pipe(
         map(response => response),
         catchError(error => {
@@ -194,13 +191,12 @@ export class DecisionService {
    * Met à jour une décision
    */
   updateDecision(decision: Decision): Observable<DecisionResponse> {
-    const headers = this.getHeaders();
     const request: DecisionRequest = {
       user: this.getCurrentUserId(),
       datas: [decision]  // Array avec l'objet décision à mettre à jour
     };
 
-    return this.http.post<DecisionResponse>(`${this.apiUrl}/update`, request, { headers })
+    return this.http.post<DecisionResponse>(`${this.apiUrl}/update`, request)
       .pipe(
         map(response => response),
         catchError(error => {
@@ -221,13 +217,12 @@ export class DecisionService {
    * Supprime une décision
    */
   deleteDecision(id: number): Observable<DecisionResponse> {
-    const headers = this.getHeaders();
     const request: DecisionRequest = {
       user: this.getCurrentUserId(),
       datas: [{ id } as Decision]  // Array avec l'objet contenant l'ID
     };
 
-    return this.http.post<DecisionResponse>(`${this.apiUrl}/delete`, request, { headers })
+    return this.http.post<DecisionResponse>(`${this.apiUrl}/delete`, request)
       .pipe(
         map(response => response),
         catchError(error => {
@@ -278,20 +273,6 @@ export class DecisionService {
     return params;
   }
 
-  /**
-   * Récupère les headers avec le token d'authentification
-   */
-  private getHeaders(): HttpHeaders {
-    const token = localStorage.getItem('token');
-    return new HttpHeaders({
-      'Content-Type': 'application/json',
-      'Authorization': token ? `Bearer ${token}` : ''
-    });
-  }
-
-  /**
-   * Récupère l'ID de l'utilisateur connecté
-   */
   private getCurrentUserId(): number | undefined {
     const user = localStorage.getItem('user');
     if (user) {

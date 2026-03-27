@@ -373,4 +373,7 @@ public interface CampaignCrudRepository extends JpaRepository<CampaignCrud, Inte
 		}
 		return CriteriaUtils.getCriteriaByListOfQuery(listOfQuery);
 	}
+
+	@Query("select e.user.id from CampaignCrud e where e.user.id in :userIds and e.isDeleted = false")
+	List<Integer> findUserIdsWithCampaignCruds(@Param("userIds") List<Integer> userIds);
 }

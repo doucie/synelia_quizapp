@@ -34,8 +34,8 @@
             type="checkbox" 
             id="showDeleted" 
             class="checkbox-input"
-            [checked]="showDeletedInterviews"
-            (click)="toggleDeletedInterviews()"
+            [checked]="showDeletedItems"
+            (click)="toggleDeletedItems()"
           />
           <label for="showDeleted" class="checkbox-label">
             Afficher les entretiens supprimés
@@ -51,7 +51,7 @@
           </svg>
           Filtres avancés
         </button>
-        <button class="btn-primary-pro" (click)="createInterview()">
+        <button class="btn-primary-pro" (click)="openCreateDialog()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 5V19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             <path d="M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -143,7 +143,7 @@
       <p>Chargement des entretiens...</p>
     </div>
 
-    <div *ngIf="!isLoading() && interviews().length === 0" class="empty-state">
+    <div *ngIf="!isLoading() && items().length === 0" class="empty-state">
       <div class="empty-state-icon">
         <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M19 4H5C3.89543 4 3 4.89543 3 6V20C3 21.1046 3.89543 22 5 22H19C20.1046 22 21 21.1046 21 20V6C21 4.89543 20.1046 4 19 4Z" stroke="currentColor" stroke-width="2"/>
@@ -154,7 +154,7 @@
       <p>Aucun entretien ne correspond aux critères actuels.</p>
     </div>
 
-    <div *ngIf="!isLoading() && interviews().length > 0" class="data-table-container">
+    <div *ngIf="!isLoading() && items().length > 0" class="data-table-container">
       <table class="data-table">
         <thead>
           <tr>
@@ -168,7 +168,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let interview of interviews(); trackBy: trackByInterviewId" 
+          <tr *ngFor="let interview of items(); trackBy: trackById" 
               [class.interview-deleted]="interview.isDeleted">
             <td><span class="cell-id">#{{ interview.id }}</span></td>
             <td><span class="cell-date">{{ formatDate(interview.interviewDate) }}</span></td>
@@ -196,13 +196,13 @@
             <td class="actions-cell">
               <div class="actions-menu">
                 <ng-container *ngIf="!interview.isDeleted">
-                  <button class="action-btn primary" (click)="editInterview(interview)" title="Modifier">
+                  <button class="action-btn primary" (click)="openEditDialog(interview)" title="Modifier">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M12 20H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                       <path d="M16.5 3.5A2.12 2.12 0 0 1 19 6L7 18L3 19L4 15L16.5 3.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                   </button>
-                  <button class="action-btn danger" (click)="deleteInterview(interview)" title="Supprimer">
+                  <button class="action-btn danger" (click)="confirmDelete(interview)" title="Supprimer">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                       <path d="M8 6V4C8 3 9 2 10 2H14C15 2 16 3 16 4V6M19 6V20C19 21 18 22 17 22H7C6 22 5 21 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -210,7 +210,7 @@
                   </button>
                 </ng-container>
                 <ng-container *ngIf="interview.isDeleted">
-                  <button class="action-btn success" (click)="restoreInterview(interview)" title="Restaurer">
+                  <button class="action-btn success" (click)="confirmRestore(interview)" title="Restaurer">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M3 12A9 9 0 1 0 12 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                       <path d="M12 3L8 7L12 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -272,7 +272,7 @@
 </div>
 
 <!-- Modal de confirmation suppression -->
-<div class="confirmation-overlay" *ngIf="showDeleteConfirmation" (click)="cancelDeleteInterview()">
+<div class="confirmation-overlay" *ngIf="showDeleteConfirmation" (click)="cancelDelete()">
   <div class="confirmation-modal" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <div class="modal-icon danger">
@@ -285,22 +285,22 @@
     </div>
     <div class="modal-body">
       <p>Êtes-vous certain de vouloir supprimer cet entretien ?</p>
-      <div class="item-info" *ngIf="interviewToDelete">
+      <div class="item-info" *ngIf="itemToDelete">
         <div class="item-details">
-          <strong>Entretien #{{ interviewToDelete.id }}</strong>
-          <span class="item-text">{{ formatDate(interviewToDelete.interviewDate) }}</span>
+          <strong>Entretien #{{ itemToDelete.id }}</strong>
+          <span class="item-text">{{ formatDate(itemToDelete.interviewDate) }}</span>
         </div>
       </div>
     </div>
     <div class="modal-actions">
-      <button class="btn-cancel" (click)="cancelDeleteInterview()">Annuler</button>
-      <button class="btn-confirm-danger" (click)="confirmDeleteInterview()">Supprimer</button>
+      <button class="btn-cancel" (click)="cancelDelete()">Annuler</button>
+      <button class="btn-confirm-danger" (click)="executeDelete()">Supprimer</button>
     </div>
   </div>
 </div>
 
 <!-- Modal de confirmation restauration -->
-<div class="confirmation-overlay" *ngIf="showRestoreConfirmation()" (click)="cancelRestoreInterview()">
+<div class="confirmation-overlay" *ngIf="showRestoreConfirmation()" (click)="cancelRestore()">
   <div class="confirmation-modal" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <div class="modal-icon success">
@@ -313,15 +313,15 @@
     </div>
     <div class="modal-body">
       <p>Voulez-vous restaurer cet entretien ?</p>
-      <div class="item-info" *ngIf="interviewToRestore()">
+      <div class="item-info" *ngIf="itemToRestore()">
         <div class="item-details">
-          <strong>Entretien #{{ interviewToRestore()?.id }}</strong>
+          <strong>Entretien #{{ itemToRestore()?.id }}</strong>
         </div>
       </div>
     </div>
     <div class="modal-actions">
-      <button class="btn-cancel" (click)="cancelRestoreInterview()">Annuler</button>
-      <button class="btn-confirm-success" (click)="confirmRestoreInterview()">Restaurer</button>
+      <button class="btn-cancel" (click)="cancelRestore()">Annuler</button>
+      <button class="btn-confirm-success" (click)="executeRestore()">Restaurer</button>
     </div>
   </div>
 </div>
@@ -378,10 +378,10 @@
       </form>
     </div>
     <div class="modal-actions">
-      <button class="btn-danger" (click)="deleteInterviewFromEdit()">Supprimer</button>
+      <button class="btn-danger" (click)="deleteFromEdit()">Supprimer</button>
       <div class="action-buttons-right">
         <button class="btn-cancel" (click)="closeEditDialog()">Annuler</button>
-        <button class="btn-confirm-success" (click)="validateInterviewEdit()">Valider</button>
+        <button class="btn-confirm-success" (click)="validateEdit()">Valider</button>
       </div>
     </div>
   </div>
@@ -428,7 +428,7 @@
     <div class="modal-actions">
       <div class="action-buttons-right">
         <button class="btn-cancel" (click)="closeCreateDialog()">Annuler</button>
-        <button class="btn-confirm-success" (click)="validateInterviewCreation()">Créer</button>
+        <button class="btn-confirm-success" (click)="validateCreate()">Créer</button>
       </div>
     </div>
   </div>

@@ -1,7 +1,6 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { OnlineStats } from '../../core/services/online-stats.service';
-import { QeelWebSocketService } from '../../services/qeel-websocket.service';
+import { OnlineStats, OnlineStatsService } from '../../core/services/online-stats.service';
 import { Subscription } from 'rxjs';
 
 /**
@@ -578,7 +577,7 @@ export class QeelModernComponent implements OnInit, OnDestroy {
   private timeInterval: any;
 
   constructor(
-    private qeelWebSocketService: QeelWebSocketService,
+    private onlineStatsService: OnlineStatsService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -611,7 +610,7 @@ export class QeelModernComponent implements OnInit, OnDestroy {
     this.error = null;
     this.isConnecting = true;
     this.cdr.detectChanges();
-    this.qeelWebSocketService.reconnect();
+    this.onlineStatsService.reconnect();
     this.loadStats();
   }
 
@@ -624,7 +623,7 @@ export class QeelModernComponent implements OnInit, OnDestroy {
     this.error = null;
     
     // S'abonner au flux WebSocket pour recevoir les mises à jour automatiques en temps réel
-    const statsSubscription = this.qeelWebSocketService.getOnlineStats().subscribe({
+    const statsSubscription = this.onlineStatsService.getOnlineStatsStream().subscribe({
       next: (stats: OnlineStats | null) => {
         if (stats) {
           console.log('✅ Statistiques QEEL mises à jour via WebSocket:', stats);
@@ -650,9 +649,9 @@ export class QeelModernComponent implements OnInit, OnDestroy {
       if (!this.stats && this.isConnecting) {
         console.log('⚠️ Aucune donnée reçue après 3 secondes, vérification de l\'état...');
         // Ne pas marquer comme erreur immédiatement, laisser plus de temps
-        if (!this.qeelWebSocketService.isWebSocketConnected()) {
+        if (!this.onlineStatsService.isWebSocketConnected()) {
           console.log('⚠️ WebSocket non connecté, tentative de reconnexion...');
-          this.qeelWebSocketService.reconnect();
+          this.onlineStatsService.reconnect();
         }
       }
     }, 3000);

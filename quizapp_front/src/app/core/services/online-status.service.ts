@@ -1,6 +1,7 @@
 import { Injectable, OnDestroy, HostListener } from '@angular/core';
 import { UserService } from './user.service';
 import { Subscription } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 /**
  * Service pour gérer automatiquement le statut en ligne des utilisateurs
@@ -92,7 +93,7 @@ export class OnlineStatusService implements OnDestroy {
         console.log('🚪 Détection fermeture navigateur - marquage hors ligne');
         // Envoi synchrone pour s'assurer que la requête est envoyée avant la fermeture
         navigator.sendBeacon(
-          `http://localhost:8085/user/${this.currentUserId}/online-status?isOnline=false`,
+          `${environment.apiUrl}/user/${this.currentUserId}/online-status?isOnline=false`,
           ''
         );
       }
@@ -103,7 +104,7 @@ export class OnlineStatusService implements OnDestroy {
       if (this.currentUserId) {
         console.log('🚪 Détection déchargement page - marquage hors ligne');
         navigator.sendBeacon(
-          `http://localhost:8085/user/${this.currentUserId}/online-status?isOnline=false`,
+          `${environment.apiUrl}/user/${this.currentUserId}/online-status?isOnline=false`,
           ''
         );
       }

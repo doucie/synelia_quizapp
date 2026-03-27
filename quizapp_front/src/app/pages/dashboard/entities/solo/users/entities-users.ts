@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule, NgIf, NgFor } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
+import { Subject, takeUntil } from 'rxjs';
 
 import { UserService, User, UserSearchCriteria, PagedResponse } from '../../../../../core/services/user.service';
 import { DepartmentService } from '../../../../../core/services/department.service';
@@ -21,6 +22,7 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
   
   // Variable pour éviter les appels multiples
   private loadingTimeout: any;
+  private destroy$ = new Subject<void>();
   
   // Signaux pour la réactivité
   users = signal<User[]>([]);
@@ -125,7 +127,7 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
     await this.initializePageSizePreference();
     
     // Lire le paramètre page depuis l'URL (1-based) et convertir en 0-based
-    this.route.params.subscribe(params => {
+    this.route.params.pipe(takeUntil(this.destroy$)).subscribe(params => {
       const pageParam = params['page'];
       if (pageParam && !isNaN(+pageParam) && +pageParam > 0) {
         this.currentPage.set(+pageParam - 1); // Convertir 1-based en 0-based
@@ -139,6 +141,8 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
     // Nettoyer le timeout s'il existe
     if (this.loadingTimeout) {
       clearTimeout(this.loadingTimeout);

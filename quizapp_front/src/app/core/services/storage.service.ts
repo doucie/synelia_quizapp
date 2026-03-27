@@ -13,9 +13,27 @@ export class StorageService {
     }
   }
 
+  getJson<T>(key: string): T | null {
+    const raw = this.getItem(key);
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw) as T;
+    } catch {
+      return null;
+    }
+  }
+
   setItem(key: string, value: string): void {
     try {
       localStorage.setItem(key, value);
+    } catch {
+      // Handle storage quota exceeded or other errors silently
+    }
+  }
+
+  setJson(key: string, value: unknown): void {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
     } catch {
       // Handle storage quota exceeded or other errors silently
     }

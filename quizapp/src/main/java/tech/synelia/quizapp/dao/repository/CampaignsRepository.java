@@ -422,4 +422,7 @@ public interface CampaignsRepository extends JpaRepository<Campaigns, Integer>, 
 		}
 		return CriteriaUtils.getCriteriaByListOfQuery(listOfQuery);
 	}
+
+	@Query("select e.user.id from Campaigns e where e.user.id in :userIds and e.isDeleted = false")
+	List<Integer> findCreatorIdsWithCampaigns(@Param("userIds") List<Integer> userIds);
 }

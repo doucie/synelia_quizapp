@@ -19,6 +19,7 @@ export interface SpringBootResponse<T> {
     message: string;
   };
   httpCode?: number;
+  sessionUser?: string;
 }
 
 export interface UserApiData {
