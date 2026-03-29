@@ -52,16 +52,11 @@ export class ConnexionService {
    */
   validateCredentials(credentials: LoginCredentials): string | null {
     if (!credentials.email || !credentials.email.trim()) {
-      return 'L\'email est requis';
+      return 'L\'identifiant est requis';
     }
     
     if (!credentials.password || !credentials.password.trim()) {
       return 'Le mot de passe est requis';
-    }
-    
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(credentials.email)) {
-      return 'Format d\'email invalide';
     }
     
     return null;

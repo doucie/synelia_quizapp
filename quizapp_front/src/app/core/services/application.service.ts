@@ -244,17 +244,17 @@ export class ApplicationService {
    * @param applicationId ID de l'application
    * @param quizToken Token sécurisé pour accéder au quiz
    * @param questionId ID de la question
-   * @param questionsAnswersId ID de la réponse sélectionnée (questions_answers.id)
+   * @param answerId ID de la réponse sélectionnée (answers.id)
    * @returns Observable<ApplicationResponse>
    */
-  saveQuizAnswer(applicationId: number, quizToken: string, questionId: number, questionsAnswersId: number): Observable<ApplicationResponse> {
+  saveQuizAnswer(applicationId: number, quizToken: string, questionId: number, answerId: number): Observable<ApplicationResponse> {
     const request = {
       user: 1,
       data: {
         id: applicationId,
         searchString: quizToken, // Le quiz_token pour validation
         candidatePhone: questionId.toString(), // questionId (utilisation temporaire)
-        candidateCvPath: questionsAnswersId.toString(), // questionsAnswersId (utilisation temporaire)
+        candidateCvPath: answerId.toString(), // answerId (utilisation temporaire)
         candidateFirstName: '',
         candidateLastName: '',
         candidateEmail: '',

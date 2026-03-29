@@ -735,31 +735,29 @@ export class CampaignService {
   }
 
   /**
-   * Ajoute des réponses à une question (liaison questions_answers)
+   * Ajoute des réponses à une question (met à jour le questionId des réponses)
    */
   addAnswersToQuestion(questionId: number, answerIds: number[]): Observable<any> {
-    console.log('➕ Ajout de réponses à la question:', { questionId, answerIds });
+    console.log('Ajout de réponses à la question:', { questionId, answerIds });
 
-    // Créer les données pour chaque liaison question-réponse
-    const questionAnswers = answerIds.map(answerId => ({
-      questions_id: questionId,
-      answers_id: answerId
+    // Mettre à jour chaque réponse avec le questionId
+    const answers = answerIds.map(answerId => ({
+      id: answerId,
+      questionId: questionId
     }));
 
     const requestBody = {
       user: 1,
-      datas: questionAnswers
+      datas: answers
     };
 
-    console.log('📤 Corps de la requête d\'ajout de réponses:', requestBody);
-
-    return this.http.post<any>(`${environment.apiUrl}/questionsAnswers/create`, requestBody).pipe(
+    return this.http.post<any>(`${environment.apiUrl}/answers/update`, requestBody).pipe(
       map(response => {
-        console.log('✅ Réponses ajoutées à la question:', response);
+        console.log('Réponses ajoutées à la question:', response);
         return response;
       }),
       catchError(error => {
-        console.error('❌ Erreur ajout réponses à la question:', error);
+        console.error('Erreur ajout réponses à la question:', error);
         return throwError(() => error);
       })
     );

@@ -1,0 +1,9 @@
+@use '../shared/entities-solo.scss' as *;
+
+.entities-notifications-container {
+  padding: var(--spacing-lg);
+  max-width: 1400px;
+  margin: 0 auto;
+  background: var(--background);
+  min-height: 100vh;
+}

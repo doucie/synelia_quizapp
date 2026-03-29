@@ -17,7 +17,7 @@ import tech.synelia.quizapp.dao.entity.EmailVerificationToken.TokenType;
  * Repository : EmailVerificationToken.
  */
 @Repository
-public interface EmailVerificationTokenRepository extends JpaRepository<EmailVerificationToken, Long> {
+public interface EmailVerificationTokenRepository extends JpaRepository<EmailVerificationToken, Integer> {
 
     /**
      * Trouver un token par sa valeur

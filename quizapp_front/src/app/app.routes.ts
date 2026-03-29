@@ -47,6 +47,11 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/dashboard/entities/entities').then(m => m.EntitiesComponent)
       },
       { 
+        path: 'merise', 
+        loadComponent: () => import('./pages/dashboard/merise/merise').then(m => m.MeriseComponent),
+        canActivate: [superRoleGuard]
+      },
+      { 
         path: 'entities/campaigns/:page', 
         loadComponent: () => import('./pages/dashboard/entities/solo/campaigns/entities-campaigns').then(m => m.EntitiesCampaignsComponent),
         canActivate: [superRoleGuard]
@@ -144,6 +149,126 @@ export const routes: Routes = [
       { 
         path: 'entities/evaluations', 
         loadComponent: () => import('./pages/dashboard/entities/solo/evaluations/entities-evaluations').then(m => m.EntitiesEvaluationsComponent),
+        canActivate: [superRoleGuard]
+      },
+      { 
+        path: 'entities/campaign-crud/:page', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/campaign-crud/entities-campaign-crud').then(m => m.EntitiesCampaignCrudComponent),
+        canActivate: [superRoleGuard]
+      },
+      { 
+        path: 'entities/campaign-crud', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/campaign-crud/entities-campaign-crud').then(m => m.EntitiesCampaignCrudComponent),
+        canActivate: [superRoleGuard]
+      },
+      { 
+        path: 'entities/campaign-questions/:page', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/campaign-questions/entities-campaign-questions').then(m => m.EntitiesCampaignQuestionsComponent),
+        canActivate: [superRoleGuard]
+      },
+      { 
+        path: 'entities/campaign-questions', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/campaign-questions/entities-campaign-questions').then(m => m.EntitiesCampaignQuestionsComponent),
+        canActivate: [superRoleGuard]
+      },
+      { 
+        path: 'entities/candidate-answers/:page', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/candidate-answers/entities-candidate-answers').then(m => m.EntitiesCandidateAnswersComponent),
+        canActivate: [superRoleGuard]
+      },
+      { 
+        path: 'entities/candidate-answers', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/candidate-answers/entities-candidate-answers').then(m => m.EntitiesCandidateAnswersComponent),
+        canActivate: [superRoleGuard]
+      },
+      { 
+        path: 'entities/candidate-ask/:page', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/candidate-ask/entities-candidate-ask').then(m => m.EntitiesCandidateAskComponent),
+        canActivate: [superRoleGuard]
+      },
+      { 
+        path: 'entities/candidate-ask', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/candidate-ask/entities-candidate-ask').then(m => m.EntitiesCandidateAskComponent),
+        canActivate: [superRoleGuard]
+      },
+      { 
+        path: 'entities/candidate-interview/:page', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/candidate-interview/entities-candidate-interview').then(m => m.EntitiesCandidateInterviewComponent),
+        canActivate: [superRoleGuard]
+      },
+      { 
+        path: 'entities/candidate-interview', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/candidate-interview/entities-candidate-interview').then(m => m.EntitiesCandidateInterviewComponent),
+        canActivate: [superRoleGuard]
+      },
+      { 
+        path: 'entities/candidate-token/:page', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/candidate-token/entities-candidate-token').then(m => m.EntitiesCandidateTokenComponent),
+        canActivate: [superRoleGuard]
+      },
+      { 
+        path: 'entities/candidate-token', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/candidate-token/entities-candidate-token').then(m => m.EntitiesCandidateTokenComponent),
+        canActivate: [superRoleGuard]
+      },
+      { 
+        path: 'entities/interview-crud/:page', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/interview-crud/entities-interview-crud').then(m => m.EntitiesInterviewCrudComponent),
+        canActivate: [superRoleGuard]
+      },
+      { 
+        path: 'entities/interview-crud', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/interview-crud/entities-interview-crud').then(m => m.EntitiesInterviewCrudComponent),
+        canActivate: [superRoleGuard]
+      },
+      { 
+        path: 'entities/decisions/:page', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/decisions/entities-decisions').then(m => m.EntitiesDecisionsComponent),
+        canActivate: [superRoleGuard]
+      },
+      { 
+        path: 'entities/decisions', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/decisions/entities-decisions').then(m => m.EntitiesDecisionsComponent),
+        canActivate: [superRoleGuard]
+      },
+      { 
+        path: 'entities/notifications/:page', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/notifications/entities-notifications').then(m => m.EntitiesNotificationsComponent),
+        canActivate: [superRoleGuard]
+      },
+      { 
+        path: 'entities/notifications', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/notifications/entities-notifications').then(m => m.EntitiesNotificationsComponent),
+        canActivate: [superRoleGuard]
+      },
+      { 
+        path: 'entities/forms/:page', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/forms/entities-forms').then(m => m.EntitiesFormsComponent),
+        canActivate: [superRoleGuard]
+      },
+      { 
+        path: 'entities/forms', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/forms/entities-forms').then(m => m.EntitiesFormsComponent),
+        canActivate: [superRoleGuard]
+      },
+      { 
+        path: 'entities/form-versions/:page', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/form-versions/entities-form-versions').then(m => m.EntitiesFormVersionsComponent),
+        canActivate: [superRoleGuard]
+      },
+      { 
+        path: 'entities/form-versions', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/form-versions/entities-form-versions').then(m => m.EntitiesFormVersionsComponent),
+        canActivate: [superRoleGuard]
+      },
+      { 
+        path: 'entities/form-questions/:page', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/form-questions/entities-form-questions').then(m => m.EntitiesFormQuestionsComponent),
+        canActivate: [superRoleGuard]
+      },
+      { 
+        path: 'entities/form-questions', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/form-questions/entities-form-questions').then(m => m.EntitiesFormQuestionsComponent),
         canActivate: [superRoleGuard]
       },
       { 

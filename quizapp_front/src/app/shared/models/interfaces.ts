@@ -25,12 +25,15 @@ export interface Quiz {
 }
 
 export interface Question {
-  id: number;
-  text: string;
-  type: QuestionType;
-  options: Answer[];
-  correctAnswers: number[];
-  points: number;
+  id?: number;
+  questionRef?: string;
+  questionText?: string;
+  questionChrono?: number;
+  questionType?: string;
+  score?: number;
+  difficultyLevel?: string;
+  specialityId?: number;
+  isDeleted?: boolean;
 }
 
 export enum QuestionType {
@@ -41,12 +44,44 @@ export enum QuestionType {
 }
 
 export interface Answer {
-  id: number;
-  text: string;
+  id?: number;
+  answerText?: string;
+  answerType?: string;
+  answerOrder?: number;
+  isCorrect?: boolean;
+  questionId?: number;
+  isDeleted?: boolean;
+}
+
+export interface Form {
+  id?: number;
+  formName?: string;
+  formDesc?: string;
+  isActive?: boolean;
+  campaignId?: number;
+  isDeleted?: boolean;
+}
+
+export interface FormVersion {
+  id?: number;
+  versionNumber?: number;
+  isPublished?: boolean;
+  isLocked?: boolean;
+  formId?: number;
+  isDeleted?: boolean;
+}
+
+export interface FormQuestions {
+  id?: number;
+  questionOrder?: number;
+  chronoOverride?: number;
+  formVersionId?: number;
+  questionId?: number;
+  isDeleted?: boolean;
 }
 
 export interface LoginCredentials {
-  email: string;
+  email: string; // email ou username
   password: string;
 }
 

@@ -26,7 +26,7 @@ import tech.synelia.quizapp.dao.entity.EmailVerificationToken.TokenType;
 @JsonPropertyOrder(alphabetic = true)
 public class EmailVerificationTokenDto implements Cloneable {
 
-    private Long       id                   ; // Primary Key
+    private Integer    id                   ; // Primary Key
     private String     email                ;
     private String     token                ;
     private TokenType  tokenType            ;

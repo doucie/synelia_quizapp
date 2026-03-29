@@ -160,7 +160,7 @@
 
 
   <!-- Section principale -->
-  <div class="questions-section">
+  <div class="entity-section">
     <!-- Stats et informations -->
     <div class="section-stats">
       <div class="stats-row">
@@ -216,7 +216,7 @@
         </thead>
         <tbody>
           <ng-container *ngFor="let question of questions(); trackBy: trackByQuestionId">
-            <tr [class.user-deleted]="question.isDeleted">
+            <tr [class.row-deleted]="question.isDeleted">
               <td>
                 <span class="cell-id">#{{ question.id }}</span>
               </td>
@@ -224,10 +224,10 @@
                 <span class="cell-name">{{ question.questionText || '-' }}</span>
               </td>
               <td>
-                <span class="cell-description">{{ question.specialityName || '-' }}</span>
+                <span class="cell-description">{{ question.specialityId || '-' }}</span>
               </td>
               <td>
-                <span class="cell-chrono">{{ question.timeLimit || '-' }}</span>
+                <span class="cell-chrono">{{ question.questionChrono || '-' }}</span>
               </td>
               <td class="actions-cell">
                 <div class="actions-menu">
@@ -256,8 +256,8 @@
                     <!-- Bouton d'expansion pour afficher les spécialités -->
                     <button 
                       class="action-btn secondary" 
-                      (click)="toggleQuestionExpansion(question.id)"
-                      [class.expanded]="isQuestionExpanded(question.id)"
+                      (click)="toggleQuestionExpansion(question.id!)"
+                      [class.expanded]="isQuestionExpanded(question.id!)"
                       title="Afficher les spécialités">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path 
@@ -266,7 +266,7 @@
                           stroke-width="2" 
                           stroke-linecap="round" 
                           stroke-linejoin="round"
-                          [attr.transform]="isQuestionExpanded(question.id) ? 'rotate(180 12 12)' : ''"/>
+                          [attr.transform]="isQuestionExpanded(question.id!) ? 'rotate(180 12 12)' : ''"/>
                       </svg>
                     </button>
                   </ng-container>
@@ -285,8 +285,8 @@
                     <!-- Bouton d'expansion pour afficher les spécialités -->
                     <button 
                       class="action-btn secondary" 
-                      (click)="toggleQuestionExpansion(question.id)"
-                      [class.expanded]="isQuestionExpanded(question.id)"
+                      (click)="toggleQuestionExpansion(question.id!)"
+                      [class.expanded]="isQuestionExpanded(question.id!)"
                       title="Afficher les spécialités">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path 
@@ -295,7 +295,7 @@
                           stroke-width="2" 
                           stroke-linecap="round" 
                           stroke-linejoin="round"
-                          [attr.transform]="isQuestionExpanded(question.id) ? 'rotate(180 12 12)' : ''"/>
+                          [attr.transform]="isQuestionExpanded(question.id!) ? 'rotate(180 12 12)' : ''"/>
                       </svg>
                     </button>
                   </ng-container>
@@ -304,14 +304,14 @@
             </tr>
             
             <!-- Ligne d'expansion pour afficher les réponses -->
-            <tr *ngIf="isQuestionExpanded(question.id)" class="expansion-row">
+            <tr *ngIf="isQuestionExpanded(question.id!)" class="expansion-row">
               <td colspan="6" class="expansion-content">
                 <div class="answers-container">
                   <div class="expansion-header">
                     <h4>Réponses de la question "{{ question.questionText }}"</h4>
                     <div class="header-actions">
                       <span class="answers-count">
-                        {{ getQuestionAnswers(question.id).length || 0 }} réponse(s)
+                        {{ getQuestionAnswers(question.id!).length || 0 }} réponse(s)
                       </span>
                       <button 
                         class="btn-add-answer" 
@@ -327,15 +327,15 @@
                   </div>
                   
                   <!-- État de chargement des réponses -->
-                  <div *ngIf="isLoadingAnswers(question.id)" class="loading-answers">
+                  <div *ngIf="isLoadingAnswers(question.id!)" class="loading-answers">
                     <div class="loading-spinner-small"></div>
                     <span>Chargement des réponses...</span>
                   </div>
                   
                   <!-- Liste des réponses -->
-                  <div *ngIf="!isLoadingAnswers(question.id) && getQuestionAnswers(question.id).length > 0" class="answers-list">
+                  <div *ngIf="!isLoadingAnswers(question.id!) && getQuestionAnswers(question.id!).length > 0" class="answers-list">
                     <div 
-                      *ngFor="let answer of getQuestionAnswers(question.id); trackBy: trackByAnswerId" 
+                      *ngFor="let answer of getQuestionAnswers(question.id!); trackBy: trackByAnswerId" 
                       class="answer-item"
                       [class.deleted]="answer.isDeleted"
                       [class.correct]="answer.isCorrect">
@@ -385,15 +385,15 @@
                           </svg>
                           Correct
                         </span>
-                        <span class="answer-order" *ngIf="answer.displayOrder">
-                          - Ordre: {{ answer.displayOrder }}
+                        <span class="answer-order" *ngIf="answer.answerOrder">
+                          - Ordre: {{ answer.answerOrder }}
                         </span>
                       </div>
                     </div>
                   </div>
                   
                   <!-- État vide pour les réponses -->
-                  <div *ngIf="!isLoadingAnswers(question.id) && !getQuestionAnswers(question.id).length" class="no-answers">
+                  <div *ngIf="!isLoadingAnswers(question.id!) && !getQuestionAnswers(question.id!).length" class="no-answers">
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                       <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
@@ -663,8 +663,8 @@
             type="number"
             id="edit-chrono"
             class="form-input"
-            [(ngModel)]="editFormData.timeLimit"
-            name="timeLimit"
+            [(ngModel)]="editFormData.questionChrono"
+            name="questionChrono"
             placeholder="Temps limite en secondes"
             min="0"
           />
@@ -751,8 +751,8 @@
             type="number"
             id="create-chrono"
             class="form-input"
-            [(ngModel)]="createFormData.timeLimit"
-            name="timeLimit"
+            [(ngModel)]="createFormData.questionChrono"
+            name="questionChrono"
             placeholder="Temps limite en secondes"
             min="0"
           />
@@ -928,7 +928,7 @@
             <path d="M12 9V11M12 15H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </div>
-        <p>Êtes-vous sûr de vouloir supprimer la spécialité <strong>"{{ answerToDelete()?.questionText }}"</strong> ?</p>
+        <p>Êtes-vous sûr de vouloir supprimer la réponse <strong>"{{ answerToDelete()?.answerText }}"</strong> ?</p>
         <p class="confirmation-warning">Cette action peut être annulée en restaurant la spécialité ultérieurement.</p>
       </div>
     </div>
@@ -969,7 +969,7 @@
             <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             <path d="M8 16H3v5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-        <p>Êtes-vous sûr de vouloir restaurer la spécialité <strong>"{{ answerToRestore()?.questionText }}"</strong> ?</p>
+        <p>Êtes-vous sûr de vouloir restaurer la réponse <strong>"{{ answerToRestore()?.answerText }}"</strong> ?</p>
         <p class="confirmation-info">La spécialité redeviendra active et visible dans les listes.</p>
       </div>
     </div>

@@ -197,6 +197,12 @@ public interface ApplicationsRepository extends JpaRepository<Applications, Inte
 	List<Applications> findBySourceTokenId(@Param("sourceTokenId")Integer sourceTokenId, @Param("isDeleted")Boolean isDeleted);
 
 	/**
+	 * Finds Applications by using formVersionId as a search criteria.
+	 */
+	@Query("select e from Applications e where e.formVersion.id = :formVersionId and e.isDeleted = :isDeleted")
+	List<Applications> findByFormVersionId(@Param("formVersionId")Integer formVersionId, @Param("isDeleted")Boolean isDeleted);
+
+	/**
 	 * Finds List of Applications by using applicationsDto as a search criteria.
 	 * 
 	 * @param request, em
@@ -425,6 +431,9 @@ public interface ApplicationsRepository extends JpaRepository<Applications, Inte
 			}
 			if (dto.getSourceTokenId()!= null && dto.getSourceTokenId() > 0) {
 				listOfQuery.add(CriteriaUtils.generateCriteria("sourceTokenId", dto.getSourceTokenId(), "e.sourceToken.id", "Integer", dto.getSourceTokenIdParam(), param, index, locale));
+			}
+			if (dto.getFormVersionId()!= null && dto.getFormVersionId() > 0) {
+				listOfQuery.add(CriteriaUtils.generateCriteria("formVersionId", dto.getFormVersionId(), "e.formVersion.id", "Integer", dto.getFormVersionIdParam(), param, index, locale));
 			}
 			List<String> listOfCustomQuery = _generateCriteria(dto, param, index, locale);
 			if (Utilities.isNotEmpty(listOfCustomQuery)) {

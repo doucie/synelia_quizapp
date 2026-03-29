@@ -7,14 +7,14 @@
 
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="connexion__form">
       <div class="connexion__field">
-        <label for="email" class="connexion__label">Email professionnel</label>
+        <label for="email" class="connexion__label">Email ou nom d'utilisateur</label>
         <input 
-          type="email" 
+          type="text" 
           id="email" 
           formControlName="email"
           class="connexion__input"
           [class.connexion__input--error]="getFieldError('email')"
-          placeholder="votre.nom@synelia.com">
+          placeholder="votre.nom&#64;synelia.com ou votre username">
         <div class="connexion__error" *ngIf="getFieldError('email')">
           {{ getFieldError('email') }}
         </div>
@@ -22,13 +22,29 @@
 
       <div class="connexion__field">
         <label for="password" class="connexion__label">Mot de passe</label>
-        <input 
-          type="password" 
-          id="password" 
-          formControlName="password"
-          class="connexion__input"
-          [class.connexion__input--error]="getFieldError('password')"
-          placeholder="••••••••">
+        <div class="connexion__input-wrapper">
+          <input 
+            [type]="showPassword ? 'text' : 'password'" 
+            id="password" 
+            formControlName="password"
+            class="connexion__input connexion__input--has-toggle"
+            [class.connexion__input--error]="getFieldError('password')"
+            placeholder="••••••••">
+          <button 
+            type="button" 
+            class="connexion__toggle-password"
+            (click)="showPassword = !showPassword"
+            [attr.aria-label]="showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'">
+            <svg *ngIf="!showPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+            <svg *ngIf="showPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+              <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
+              <line x1="1" y1="1" x2="23" y2="23"/>
+            </svg>
+          </button>
+        </div>
         <div class="connexion__error" *ngIf="getFieldError('password')">
           {{ getFieldError('password') }}
         </div>

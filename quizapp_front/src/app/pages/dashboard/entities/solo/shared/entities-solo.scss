@@ -856,13 +856,14 @@ tr.deleted {
     
     svg {
       position: absolute;
-      left: 2px;
+      left: 3px;
       top: 50%;
       transform: translateY(-50%);
       opacity: 0;
       transition: all 0.2s ease;
       stroke: white;
       stroke-width: 3;
+      color: var(--background);
     }
     
     &:hover {
@@ -2727,6 +2728,82 @@ tr.deleted {
     .page-controls {
       justify-content: center;
     }
+  }
+}
+
+/* =================================================================
+   SECTION COMMUNE - ENTITY SECTION
+   Styles partagés pour toutes les pages entités (section de données)
+   ================================================================= */
+.entity-section {
+  background: var(--surface);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-top: 2rem;
+}
+
+.section-stats {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.stats-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.section-title {
+  margin: 0;
+  font-size: 1.125rem;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.stats-info {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stat-number {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+/* Ligne supprimée — style commun pour toutes les entités */
+.row-deleted {
+  background: rgba(239, 68, 68, 0.05) !important;
+  opacity: 0.7;
+  border-left: 4px solid rgba(239, 68, 68, 0.6) !important;
+
+  td {
+    color: var(--text-muted) !important;
+  }
+
+  .action-btn, .btn-action {
+    opacity: 0.5;
+    pointer-events: none;
+
+    &.success, &.btn-restore {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  }
+
+  .status-badge, .role-badge {
+    opacity: 0.6;
   }
 }
 

@@ -50,7 +50,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 	@Autowired
 	private ApplicationsRepository applicationsRepository;
 	@Autowired
-	private CandidateAnswersRepository candidateAnswersRepository;
+	private CandidateAnswerRepository candidateAnswerRepository;
 	@Autowired
 	private CandidateAskRepository candidateAskRepository;
 	@Autowired
@@ -62,9 +62,13 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 	@Autowired
 	private EmailVerificationTokenRepository emailVerificationTokenRepository;
 	@Autowired
-	private CampaignQuestionsRepository campaignQuestionsRepository;
+	private FormQuestionsRepository formQuestionsRepository;
 	@Autowired
-	private QuestionsAnswersRepository questionsAnswersRepository;
+	private FormVersionRepository formVersionRepository;
+	@Autowired
+	private FormRepository formRepository;
+	@Autowired
+	private AnswerRepository answerRepository;
 	@Autowired
 	private HostingUtils hostingUtils;
 	@Autowired
@@ -134,10 +138,18 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 					throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("sourceToken sourceTokenId -> " + dto.getSourceTokenId(), locale));
 				}
 			}
+			// Verify if formVersion exist
+			FormVersion existingFormVersion = null;
+			if (dto.getFormVersionId() != null && dto.getFormVersionId() > 0){
+				existingFormVersion = formVersionRepository.findOne(dto.getFormVersionId(), false);
+				if (existingFormVersion == null) {
+					throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("formVersion formVersionId -> " + dto.getFormVersionId(), locale));
+				}
+			}
 			dto.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(dto)));
 
 			Applications entityToSave = null;
-			entityToSave = ApplicationsTransformer.INSTANCE.toEntity(dto, existingSourceToken);
+			entityToSave = ApplicationsTransformer.INSTANCE.toEntity(dto, existingSourceToken, existingFormVersion);
 			entityToSave.setCreatedAt(Utilities.getCurrentDate());
 			entityToSave.setCreatedBy(request.getUser());
 			entityToSave.setIsDeleted(false);
@@ -374,10 +386,10 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			// ----------- CHECK IF DATA IS USED
 			// -----------------------------------------------------------------------
 
-			// candidateAnswers
-			List<CandidateAnswers> listOfCandidateAnswers = candidateAnswersRepository.findByApplicationId(existingEntity.getId(), false);
-			if (listOfCandidateAnswers != null && !listOfCandidateAnswers.isEmpty()){
-				throw new InternalErrorException(functionalError.DATA_NOT_DELETABLE("(" + listOfCandidateAnswers.size() + ")", locale));
+			// candidateAnswer
+			List<CandidateAnswer> listOfCandidateAnswer = candidateAnswerRepository.findByApplicationId(existingEntity.getId(), false);
+			if (listOfCandidateAnswer != null && !listOfCandidateAnswer.isEmpty()){
+				throw new InternalErrorException(functionalError.DATA_NOT_DELETABLE("(" + listOfCandidateAnswer.size() + ")", locale));
 			}
 			// candidateAsk
 			List<CandidateAsk> listOfCandidateAsk = candidateAskRepository.findByApplicationId(existingEntity.getId(), false);
@@ -769,8 +781,8 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 	}
 
 	/**
-	 * Initialise les réponses candidates pour toutes les questions de la campagne
-	 * Crée un enregistrement dans candidate_answers pour chaque questions_answers de la campagne
+	 * Initialise les réponses candidates pour toutes les questions du formulaire (formVersion)
+	 * Crée un enregistrement dans candidate_answer pour chaque answer de chaque question
 	 * Tous les enregistrements sont initialisés avec is_selected = false
 	 * 
 	 * @param application L'application du candidat
@@ -780,90 +792,90 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		log.info("----begin initializeCandidateAnswers for application ID: " + application.getId() + "-----");
 		
 		try {
-			// 1. Récupérer la campagne depuis l'application
-			SourceToken sourceToken = application.getSourceToken();
-			if (sourceToken == null || sourceToken.getCampaigns() == null) {
-				log.severe("ERREUR CRITIQUE: Cannot initialize candidate answers - no campaign found for application " + application.getId());
+			// 1. Récupérer la formVersion depuis l'application
+			FormVersion formVersion = application.getFormVersion();
+			if (formVersion == null) {
+				log.severe("ERREUR CRITIQUE: Cannot initialize candidate answers - no formVersion found for application " + application.getId());
 				return;
 			}
 			
-			Campaigns campaign = sourceToken.getCampaigns();
-			Integer campaignId = campaign.getId();
-			log.info("Initializing answers for campaign ID: " + campaignId);
+			Integer formVersionId = formVersion.getId();
+			log.info("Initializing answers for formVersion ID: " + formVersionId);
 			
-			// 2. Récupérer toutes les questions de la campagne (ordonnées)
-			List<CampaignQuestions> campaignQuestions = campaignQuestionsRepository.findByCampaignIdOrderByOrder(campaignId, false);
+			// 2. Récupérer toutes les questions du formulaire (ordonnées)
+			List<FormQuestions> formQuestions = formQuestionsRepository.findByFormVersionIdOrderByQuestionOrder(formVersionId, false);
 			
-			if (campaignQuestions == null || campaignQuestions.isEmpty()) {
-				log.severe("ERREUR CRITIQUE: No questions found for campaign " + campaignId);
+			if (formQuestions == null || formQuestions.isEmpty()) {
+				log.severe("ERREUR CRITIQUE: No questions found for formVersion " + formVersionId);
 				return;
 			}
 			
-			log.info("Found " + campaignQuestions.size() + " questions in campaign");
+			log.info("Found " + formQuestions.size() + " questions in formVersion");
 			
 			int totalAnswersCreated = 0;
 			int totalAnswersSkipped = 0;
 			
-        // 3. Pour chaque question, récupérer toutes les réponses possibles (questions_answers)
-        for (CampaignQuestions cq : campaignQuestions) {
-            Questions question = cq.getQuestions();
-            if (question == null || question.getIsDeleted()) {
-                log.info("Skipping deleted or null question");
-                continue;
-            }
-            
-            Integer questionId = question.getId();
-            log.info("Processing question ID: " + questionId + " - " + question.getQuestionContent());
-            
-            // Récupérer tous les questions_answers pour cette question
-            List<QuestionsAnswers> questionAnswers = questionsAnswersRepository.findByQuestionId(questionId, false);
-            
-            log.info("Question ID " + questionId + " has " + questionAnswers.size() + " possible answers");
-            
-            if (questionAnswers.isEmpty()) {
-                log.warning("No answers found for question " + questionId + ", skipping");
-                continue;
-            }
-            
-            // 4. Pour chaque questions_answers, créer un candidate_answers avec is_selected = false
-            for (QuestionsAnswers qa : questionAnswers) {
-                if (qa == null || qa.getIsDeleted()) {
-                    log.info("Skipping deleted or null questions_answers");
-                    continue;
-                }
-                
-                log.info("Processing questions_answers ID: " + qa.getId() + " for question " + questionId);
-                
-                // Vérifier si l'enregistrement existe déjà
-                CandidateAnswers existing = candidateAnswersRepository.findByApplicationIdAndQuestionsAnswersId(
-                    application.getId(), 
-                    qa.getId(), 
-                    false
-                );
-                
-                if (existing == null) {
-                    // Créer un nouveau candidate_answer
-                    CandidateAnswers candidateAnswer = new CandidateAnswers();
-                    candidateAnswer.setApplications(application);
-                    candidateAnswer.setQuestionsAnswers(qa);
-                    candidateAnswer.setIsSelected(false); // Pas encore sélectionné
-                    candidateAnswer.setCreatedAt(Utilities.getCurrentDate());
-                    candidateAnswer.setCreatedBy(userId);
-                    candidateAnswer.setIsDeleted(false);
-                    
-                    CandidateAnswers saved = candidateAnswersRepository.save(candidateAnswer);
-                    if (saved != null) {
-                        totalAnswersCreated++;
-                        log.info("✓ Created candidate_answer ID " + saved.getId() + " for questions_answers ID: " + qa.getId());
-                    } else {
-                        log.severe("✗ FAILED to create candidate_answer for questions_answers ID: " + qa.getId());
-                    }
-                } else {
-                    totalAnswersSkipped++;
-                    log.info("⊘ candidate_answer already exists (ID: " + existing.getId() + ") for questions_answers ID: " + qa.getId());
-                }
-            }
-        }
+			// 3. Pour chaque question, récupérer toutes les réponses possibles
+			for (FormQuestions fq : formQuestions) {
+				Question question = fq.getQuestion();
+				if (question == null || question.getIsDeleted()) {
+					log.info("Skipping deleted or null question");
+					continue;
+				}
+				
+				Integer questionId = question.getId();
+				log.info("Processing question ID: " + questionId + " - " + question.getQuestionText());
+				
+				// Récupérer tous les answers pour cette question
+				List<Answer> questionAnswers = answerRepository.findByQuestionId(questionId, false);
+				
+				log.info("Question ID " + questionId + " has " + questionAnswers.size() + " possible answers");
+				
+				if (questionAnswers.isEmpty()) {
+					log.warning("No answers found for question " + questionId + ", skipping");
+					continue;
+				}
+				
+				// 4. Pour chaque answer, créer un candidate_answer avec is_selected = false
+				for (Answer answer : questionAnswers) {
+					if (answer == null || answer.getIsDeleted()) {
+						log.info("Skipping deleted or null answer");
+						continue;
+					}
+					
+					log.info("Processing answer ID: " + answer.getId() + " for question " + questionId);
+					
+					// Vérifier si l'enregistrement existe déjà
+					CandidateAnswer existing = candidateAnswerRepository.findByApplicationIdAndAnswerId(
+						application.getId(), 
+						answer.getId(), 
+						false
+					);
+					
+					if (existing == null) {
+						// Créer un nouveau candidate_answer
+						CandidateAnswer candidateAnswer = new CandidateAnswer();
+						candidateAnswer.setApplications(application);
+						candidateAnswer.setQuestion(question);
+						candidateAnswer.setAnswer(answer);
+						candidateAnswer.setIsSelected(false);
+						candidateAnswer.setCreatedAt(Utilities.getCurrentDate());
+						candidateAnswer.setCreatedBy(userId);
+						candidateAnswer.setIsDeleted(false);
+						
+						CandidateAnswer saved = candidateAnswerRepository.save(candidateAnswer);
+						if (saved != null) {
+							totalAnswersCreated++;
+							log.info("Created candidate_answer ID " + saved.getId() + " for answer ID: " + answer.getId());
+						} else {
+							log.severe("FAILED to create candidate_answer for answer ID: " + answer.getId());
+						}
+					} else {
+						totalAnswersSkipped++;
+						log.info("candidate_answer already exists (ID: " + existing.getId() + ") for answer ID: " + answer.getId());
+					}
+				}
+			}
 			
 			log.info("=== INITIALIZATION COMPLETE ===");
 			log.info("Total candidate_answers created: " + totalAnswersCreated);
@@ -873,7 +885,6 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		} catch (Exception e) {
 			log.severe("ERREUR CRITIQUE lors de l'initialisation des candidate_answers: " + e.getMessage());
 			e.printStackTrace();
-			// Propager l'exception pour alerter qu'il y a un problème critique
 			throw new RuntimeException("Échec de l'initialisation des réponses candidates", e);
 		}
 		
@@ -964,30 +975,53 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		log.info("Status equals PENDING? " + tech.synelia.quizapp.utils.enums.QuizStatus.PENDING.getValue().equals(application.getQuizStatus()));
 		
 		// Vérifier si des candidate_answers existent déjà pour cette application
-		List<CandidateAnswers> existingAnswers = candidateAnswersRepository.findByApplicationId(applicationId, false);
+		List<CandidateAnswer> existingAnswers = candidateAnswerRepository.findByApplicationId(applicationId, false);
 		boolean needsInitialization = (existingAnswers == null || existingAnswers.isEmpty());
 		
 		log.info("Existing candidate_answers count: " + (existingAnswers != null ? existingAnswers.size() : 0));
 		log.info("Needs initialization: " + needsInitialization);
 		
-		// Si le quiz est en statut PENDING, le mettre en STARTED
+		// Si le quiz est en statut PENDING, le mettre en STARTED et affecter la formVersion publiée
 		if (tech.synelia.quizapp.utils.enums.QuizStatus.PENDING.getValue().equals(application.getQuizStatus())) {
 			log.info(">>> Updating status from PENDING to STARTED...");
+			
+			// Affecter la formVersion publiée si pas encore assignée
+			if (application.getFormVersion() == null) {
+				SourceToken sourceToken = application.getSourceToken();
+				if (sourceToken != null && sourceToken.getCampaigns() != null) {
+					Integer campaignId = sourceToken.getCampaigns().getId();
+					List<Form> forms = formRepository.findByCampaignId(campaignId, false);
+					FormVersion publishedVersion = null;
+					for (Form form : forms) {
+						List<FormVersion> published = formVersionRepository.findByFormIdAndIsPublished(form.getId(), true, false);
+						if (published != null && !published.isEmpty()) {
+							publishedVersion = published.get(0);
+							break;
+						}
+					}
+					if (publishedVersion == null) {
+						Status status = new Status();
+						status.setCode(StatusCode.FUNC_DATA_NOT_EXIST);
+						status.setMessage("Aucun formulaire publié trouvé pour cette campagne");
+						response.setStatus(status);
+						response.setHasError(true);
+						response.setHttpCode(HttpStatus.NOT_FOUND.value());
+						return response;
+					}
+					application.setFormVersion(publishedVersion);
+					log.info(">>> FormVersion assignée: id=" + publishedVersion.getId() + ", version=" + publishedVersion.getVersionNumber());
+				}
+			}
+			
 			application.setQuizStatus(tech.synelia.quizapp.utils.enums.QuizStatus.STARTED.getValue());
-			application.setQuizLevel(1); // Initialiser à 1 (commence à la première question avec order=1)
+			application.setQuizLevel(1);
 			application.setUpdatedAt(Utilities.getCurrentDate());
 			application.setUpdatedBy(request.getUser());
 			Applications savedApp = applicationsRepository.save(application);
 			log.info(">>> Quiz status mis à jour: STARTED, quiz_level initialisé à 1");
-			log.info(">>> Saved application status: " + savedApp.getQuizStatus());
-			log.info(">>> Saved application quiz_level: " + savedApp.getQuizLevel());
 			
 			// Vérifier immédiatement en base de données
 			Applications verifyApp = applicationsRepository.findOne(applicationId, false);
-			log.info(">>> VERIFICATION - Status in DB: " + verifyApp.getQuizStatus());
-			log.info(">>> VERIFICATION - quiz_level in DB: " + verifyApp.getQuizLevel());
-			
-			// Utiliser l'application vérifiée pour la suite
 			application = verifyApp;
 		} else {
 			log.info(">>> Quiz already started or completed (status: " + application.getQuizStatus() + ")");
@@ -1000,7 +1034,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			initializeCandidateAnswers(application, request.getUser());
 		} else {
 			log.info("Candidate_answers already initialized, skipping initialization");
-		}			// 2. Récupérer le source token
+		}			// 2. Récupérer le source token et la campagne
 			SourceToken sourceToken = application.getSourceToken();
 			if (sourceToken == null) {
 				Status status = new Status();
@@ -1012,7 +1046,6 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				return response;
 			}
 			
-			// 3. Récupérer la campagne depuis le source token
 			Campaigns campaign = sourceToken.getCampaigns();
 			if (campaign == null) {
 				Status status = new Status();
@@ -1026,28 +1059,41 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			
 			log.info("Campagne trouvée: " + campaign.getCampaignTitle());
 			
-			// 4. Récupérer les questions de la campagne TRIÉES par order (ASC)
-			List<CampaignQuestions> campaignQuestions = campaignQuestionsRepository.findByCampaignIdOrderByOrder(campaign.getId(), false);
-			
-			if (campaignQuestions == null || campaignQuestions.isEmpty()) {
+			// 3. Récupérer la formVersion depuis l'application
+			FormVersion formVersion = application.getFormVersion();
+			if (formVersion == null) {
 				Status status = new Status();
-				status.setCode(StatusCode.FUNC_DATA_EMPTY);
-				status.setMessage("Aucune question trouvée pour cette campagne");
+				status.setCode(StatusCode.FUNC_DATA_NOT_EXIST);
+				status.setMessage("Aucun formulaire associé à cette application");
 				response.setStatus(status);
 				response.setHasError(true);
 				response.setHttpCode(HttpStatus.NOT_FOUND.value());
 				return response;
 			}
 			
-			log.info("Nombre de questions trouvées: " + campaignQuestions.size());
+			// 4. Récupérer les questions du formulaire TRIÉES par questionOrder (ASC)
+			List<FormQuestions> formQuestions = formQuestionsRepository.findByFormVersionIdOrderByQuestionOrder(formVersion.getId(), false);
+			
+			if (formQuestions == null || formQuestions.isEmpty()) {
+				Status status = new Status();
+				status.setCode(StatusCode.FUNC_DATA_EMPTY);
+				status.setMessage("Aucune question trouvée pour ce formulaire");
+				response.setStatus(status);
+				response.setHasError(true);
+				response.setHttpCode(HttpStatus.NOT_FOUND.value());
+				return response;
+			}
+			
+			log.info("Nombre de questions trouvées: " + formQuestions.size());
 			
 			// 5. Calculer le temps total alloué si la campagne est chronométrée
 			Integer totalTimeAllowed = null;
 			if (campaign.getIsTimed() != null && campaign.getIsTimed()) {
 				totalTimeAllowed = 0;
-				for (CampaignQuestions cq : campaignQuestions) {
-					if (cq.getChrono() != null) {
-						totalTimeAllowed += cq.getChrono();
+				for (FormQuestions fq : formQuestions) {
+					Integer chrono = fq.getChronoOverride() != null ? fq.getChronoOverride() : (fq.getQuestion() != null ? fq.getQuestion().getQuestionChrono() : null);
+					if (chrono != null) {
+						totalTimeAllowed += chrono;
 					}
 				}
 				log.info("Campagne chronométrée - Temps total alloué: " + totalTimeAllowed + " secondes");
@@ -1058,26 +1104,26 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			// 6. Pour chaque question, récupérer les réponses
 			List<Map<String, Object>> questionsWithAnswers = new ArrayList<>();
 			
-			for (CampaignQuestions cq : campaignQuestions) {
-				Questions question = cq.getQuestions();
+			for (FormQuestions fq : formQuestions) {
+				Question question = fq.getQuestion();
 				if (question != null && !question.getIsDeleted()) {
 					Map<String, Object> questionData = new HashMap<>();
 					questionData.put("id", question.getId());
-					questionData.put("questionContent", question.getQuestionContent());
-					questionData.put("order", cq.getOrder()); // Ordre de la question dans la campagne
-					questionData.put("chrono", cq.getChrono() != null ? cq.getChrono() : 10); // Temps alloué pour cette question (défaut 10s)
+					questionData.put("questionContent", question.getQuestionText());
+					questionData.put("order", fq.getQuestionOrder());
+					Integer chrono = fq.getChronoOverride() != null ? fq.getChronoOverride() : (question.getQuestionChrono() != null ? question.getQuestionChrono() : 10);
+					questionData.put("chrono", chrono);
 					
 					// Récupérer les réponses pour cette question
-					List<QuestionsAnswers> questionAnswers = questionsAnswersRepository.findByQuestionId(question.getId(), false);
+					List<Answer> questionAnswers = answerRepository.findByQuestionId(question.getId(), false);
 					List<Map<String, Object>> answersData = new ArrayList<>();
 					
-					for (QuestionsAnswers qa : questionAnswers) {
-						Answers answer = qa.getAnswers();
+					for (Answer answer : questionAnswers) {
 						if (answer != null && !answer.getIsDeleted()) {
 							Map<String, Object> answerData = new HashMap<>();
-							answerData.put("id", answer.getId()); // ID de la table answers
-							answerData.put("questionsAnswersId", qa.getId()); // ID de la table questions_answers (nécessaire pour saveQuizAnswer)
-							answerData.put("answerContent", answer.getAnswerContent());
+							answerData.put("id", answer.getId());
+							answerData.put("answerId", answer.getId());
+							answerData.put("answerContent", answer.getAnswerText());
 							// Ne pas envoyer isCorrect au frontend pour des raisons de sécurité
 							answersData.add(answerData);
 						}
@@ -1088,7 +1134,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				}
 			}
 			
-			// 6. Préparer la réponse avec un DTO qui contient les données du quiz
+			// 7. Préparer la réponse avec un DTO qui contient les données du quiz
 			ApplicationsDto resultDto = new ApplicationsDto();
 			resultDto.setId(applicationId);
 			
@@ -1139,7 +1185,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 	 * @param request Request contenant:
 	 *   - id: applicationId
 	 *   - searchString: quiz_token pour validation
-	 *   - candidateCvPath: questionsAnswersId sélectionné (utilisation temporaire de ce champ)
+	 *   - candidateCvPath: answerId sélectionné (utilisation temporaire de ce champ)
 	 *   - candidatePhone: questionId (utilisation temporaire de ce champ)
 	 * @param locale locale
 	 * @return Response indiquant le succès ou l'échec de la sauvegarde
@@ -1176,7 +1222,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			if (Utilities.isBlank(dto.getCandidateCvPath()) || Utilities.isBlank(dto.getCandidatePhone())) {
 				Status status = new Status();
 				status.setCode(StatusCode.FUNC_FIELD_EMPTY);
-				status.setMessage("Question ID ou Questions-Answers ID manquant");
+				status.setMessage("Question ID ou Answer ID manquant");
 				response.setStatus(status);
 				response.setHasError(true);
 				response.setHttpCode(HttpStatus.BAD_REQUEST.value());
@@ -1185,10 +1231,10 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			
 			Integer applicationId = dto.getId();
 			String quizToken = dto.getSearchString();
-			Integer questionsAnswersId = Integer.parseInt(dto.getCandidateCvPath());
+			Integer answerId = Integer.parseInt(dto.getCandidateCvPath());
 			Integer questionId = Integer.parseInt(dto.getCandidatePhone());
 			
-			log.info("Saving answer for application " + applicationId + ", question " + questionId + ", answer " + questionsAnswersId);
+			log.info("Saving answer for application " + applicationId + ", question " + questionId + ", answer " + answerId);
 			
 			// 2. Valider l'application et le quiz_token
 			Applications application = applicationsRepository.findOne(applicationId, false);
@@ -1225,7 +1271,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			}
 			
 			// 3. Récupérer toutes les candidate_answers pour cette application et cette question
-			List<CandidateAnswers> candidateAnswers = candidateAnswersRepository.findByApplicationIdAndQuestionId(
+			List<CandidateAnswer> candidateAnswers = candidateAnswerRepository.findByApplicationIdAndQuestionId(
 				applicationId, 
 				questionId, 
 				false
@@ -1245,15 +1291,15 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			
 			// 4. Mettre à jour is_selected pour toutes les réponses de cette question
 			int updatedCount = 0;
-			for (CandidateAnswers ca : candidateAnswers) {
-				boolean shouldBeSelected = ca.getQuestionsAnswers().getId().equals(questionsAnswersId);
+			for (CandidateAnswer ca : candidateAnswers) {
+				boolean shouldBeSelected = ca.getAnswer().getId().equals(answerId);
 				
 				// Mettre à jour seulement si la valeur change
 				if (ca.getIsSelected() != shouldBeSelected) {
 					ca.setIsSelected(shouldBeSelected);
 					ca.setUpdatedAt(Utilities.getCurrentDate());
 					ca.setUpdatedBy(request.getUser());
-					candidateAnswersRepository.save(ca);
+					candidateAnswerRepository.save(ca);
 					updatedCount++;
 					
 					log.info("Updated candidate_answer ID " + ca.getId() + ": is_selected=" + shouldBeSelected);
@@ -1263,24 +1309,22 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			log.info("Updated " + updatedCount + " candidate_answers");
 			
 			// 5. Mettre à jour quiz_level avec l'ordre de la question répondue
-			SourceToken sourceToken = application.getSourceToken();
-			if (sourceToken != null && sourceToken.getCampaigns() != null) {
-				Integer campaignId = sourceToken.getCampaigns().getId();
-				
-				// Trouver l'ordre de cette question dans la campagne
-				CampaignQuestions cq = campaignQuestionsRepository.findByCampaignIdOrderByOrder(campaignId, false)
+			FormVersion formVersion = application.getFormVersion();
+			if (formVersion != null) {
+				// Trouver l'ordre de cette question dans le formulaire
+				FormQuestions fq = formQuestionsRepository.findByFormVersionIdOrderByQuestionOrder(formVersion.getId(), false)
 					.stream()
-					.filter(c -> c.getQuestions() != null && c.getQuestions().getId().equals(questionId))
+					.filter(f -> f.getQuestion() != null && f.getQuestion().getId().equals(questionId))
 					.findFirst()
 					.orElse(null);
 				
-				if (cq != null && cq.getOrder() != null) {
-					application.setQuizLevel(cq.getOrder());
+				if (fq != null && fq.getQuestionOrder() != null) {
+					application.setQuizLevel(fq.getQuestionOrder());
 					application.setUpdatedAt(Utilities.getCurrentDate());
 					application.setUpdatedBy(request.getUser());
 					applicationsRepository.save(application);
 					
-					log.info("Updated quiz_level to " + cq.getOrder() + " for application " + applicationId);
+					log.info("Updated quiz_level to " + fq.getQuestionOrder() + " for application " + applicationId);
 				}
 			}
 			
@@ -1403,46 +1447,34 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			}
 			
 			// 3. Calculer le score et le nombre total de questions avant de compléter le quiz
-			SourceToken sourceToken = application.getSourceToken();
-			if (sourceToken == null) {
+			FormVersion formVersion = application.getFormVersion();
+			if (formVersion == null) {
 				Status status = new Status();
 				status.setCode(StatusCode.FUNC_DATA_NOT_EXIST);
-				status.setMessage("Token source non trouvé");
+				status.setMessage("Aucun formulaire associé à cette application");
 				response.setStatus(status);
 				response.setHasError(true);
 				response.setHttpCode(HttpStatus.NOT_FOUND.value());
 				return response;
 			}
 			
-			// Récupérer la campagne
-			Campaigns campaign = sourceToken.getCampaigns();
-			if (campaign == null) {
-				Status status = new Status();
-				status.setCode(StatusCode.FUNC_DATA_NOT_EXIST);
-				status.setMessage("Campagne non trouvée");
-				response.setStatus(status);
-				response.setHasError(true);
-				response.setHttpCode(HttpStatus.NOT_FOUND.value());
-				return response;
-			}
+			// Récupérer les questions du formulaire (ordonnées)
+			List<FormQuestions> formQuestions = formQuestionsRepository.findByFormVersionIdOrderByQuestionOrder(formVersion.getId(), false);
+			Integer totalQuestions = formQuestions.size();
 			
-			// Récupérer les questions de la campagne (ordonnées)
-			List<CampaignQuestions> campaignQuestions = campaignQuestionsRepository.findByCampaignIdOrderByOrder(campaign.getId(), false);
-			Integer totalQuestions = campaignQuestions.size();
-			
-			log.info("Nombre total de questions dans la campagne: " + totalQuestions);
+			log.info("Nombre total de questions dans le formulaire: " + totalQuestions);
 			
 			// Récupérer toutes les réponses du candidat pour cette application
-			List<CandidateAnswers> candidateAnswers = candidateAnswersRepository.findByApplicationId(applicationId, false);
+			List<CandidateAnswer> candidateAnswers = candidateAnswerRepository.findByApplicationId(applicationId, false);
 			
 			// Calculer le nombre de bonnes réponses
 			Integer correctAnswersCount = 0;
 			
-			for (CandidateAnswers candidateAnswer : candidateAnswers) {
+			for (CandidateAnswer candidateAnswer : candidateAnswers) {
 				if (candidateAnswer.getIsSelected()) {
-					// Récupérer la QuestionsAnswers pour vérifier si c'est la bonne réponse
-					QuestionsAnswers qa = candidateAnswer.getQuestionsAnswers();
-					if (qa != null && qa.getIsCorrect() != null && qa.getIsCorrect()) {
+					// Récupérer la Answer pour vérifier si c'est la bonne réponse
+					Answer answer = candidateAnswer.getAnswer();
+					if (answer != null && answer.getIsCorrect() != null && answer.getIsCorrect()) {
 						correctAnswersCount++;
 					}
 				}
@@ -1455,13 +1487,22 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			
 			// 4. Mettre à jour l'application avec le score, total_questions, quiz_score_percent, statut COMPLETED et application_status SUBMITTED
 			application.setQuizStatus(tech.synelia.quizapp.utils.enums.QuizStatus.COMPLETED.getValue());
-			application.setApplicationStatus("SUBMITTED"); // Le candidat a soumis sa candidature en complétant le quiz
+			application.setApplicationStatus("SUBMITTED");
 			application.setQuizScore(correctAnswersCount);
 			application.setTotalQuestions(totalQuestions);
 			application.setQuizScorePercent(quizScorePercent);
 			application.setUpdatedAt(Utilities.getCurrentDate());
 			application.setUpdatedBy(request.getUser());
 			applicationsRepository.save(application);
+			
+			// 5. Verrouiller la formVersion (empêche toute modification des questions/réponses)
+			if (formVersion.getIsLocked() == null || !formVersion.getIsLocked()) {
+				formVersion.setIsLocked(true);
+				formVersion.setUpdatedAt(Utilities.getCurrentDate());
+				formVersion.setUpdatedBy(request.getUser());
+				formVersionRepository.save(formVersion);
+				log.info("FormVersion " + formVersion.getId() + " verrouillée");
+			}
 			
 			log.info("Quiz complété pour l'application " + applicationId + " - Score: " + correctAnswersCount + "/" + totalQuestions);
 			log.info("Application status mis à jour: SUBMITTED");

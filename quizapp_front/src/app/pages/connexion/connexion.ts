@@ -18,6 +18,7 @@ import { LoginCredentials } from '../../shared/models/interfaces';
 })
 export class ConnexionComponent {
   loginForm: FormGroup;
+  showPassword: boolean = false;
   private loadingSubject = new BehaviorSubject<boolean>(false);
   private errorSubject = new BehaviorSubject<string | null>(null);
   private destroyRef = inject(DestroyRef);
@@ -32,9 +33,10 @@ export class ConnexionComponent {
     private connexionService: ConnexionService
   ) {
     this.loginForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
+      email: ['', [Validators.required]],
       password: ['', [Validators.required]]
     });
+    this.showPassword = false;
   }
 
   onSubmit(): void {
@@ -85,10 +87,7 @@ export class ConnexionComponent {
     const field = this.loginForm.get(fieldName);
     if (field?.touched && field?.errors) {
       if (field.errors['required']) {
-        return `Le champ ${fieldName} est requis`;
-      }
-      if (field.errors['email']) {
-        return 'Format d\'email invalide';
+        return `Le champ ${fieldName === 'email' ? 'identifiant' : fieldName} est requis`;
       }
     }
     return null;

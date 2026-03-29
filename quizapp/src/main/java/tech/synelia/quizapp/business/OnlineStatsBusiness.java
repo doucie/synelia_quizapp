@@ -1,15 +1,15 @@
 package tech.synelia.quizapp.business;
 
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import tech.synelia.quizapp.dao.repository.UserRepository;
 import tech.synelia.quizapp.utils.dto.OnlineStatsDto;
-
-import java.util.List;
 
 /**
  * Service métier pour les statistiques d'utilisateurs en ligne (QEEL)
@@ -31,7 +31,7 @@ public class OnlineStatsBusiness {
      */
     @Cacheable("qeelStats")
     public OnlineStatsDto getOnlineStats() {
-        logger.info("Récupération des statistiques QEEL depuis la base de données");
+        logger.debug("Récupération des statistiques QEEL depuis la base de données");
         
         try {
             OnlineStatsDto stats = new OnlineStatsDto();
@@ -62,7 +62,7 @@ public class OnlineStatsBusiness {
             
             stats.calculateAllPercentages();
             
-            logger.info("Statistiques QEEL récupérées: {} utilisateurs total, {} en ligne", 
+            logger.debug("Statistiques QEEL récupérées: {} utilisateurs total, {} en ligne", 
                        stats.getTotalUsers(), stats.getOnlineUsers());
             
             return stats;
@@ -77,7 +77,7 @@ public class OnlineStatsBusiness {
      * Récupère uniquement le nombre d'utilisateurs en ligne
      */
     public Long getOnlineUsersCount() {
-        logger.info("Récupération du nombre d'utilisateurs en ligne");
+        logger.debug("Récupération du nombre d'utilisateurs en ligne");
         
         try {
             OnlineStatsDto stats = getOnlineStats();

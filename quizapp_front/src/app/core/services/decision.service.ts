@@ -78,6 +78,18 @@ export interface DecisionCriteria {
   size?: number;
   sort?: string;
   direction?: 'ASC' | 'DESC';
+  search_string?: string;
+  idDe?: string;
+  idA?: string;
+  isDeleted?: boolean;
+}
+
+export interface PagedDecisionResponse {
+  content: Decision[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
 }
 
 @Injectable({
@@ -284,5 +296,41 @@ export class DecisionService {
       }
     }
     return undefined;
+  }
+
+  getAllDecisionsByCriteria(criteria: DecisionCriteria = {}): Observable<PagedDecisionResponse> {
+    const currentUserId = this.getCurrentUserId()?.toString() || '1';
+    const request = {
+      user: currentUserId,
+      size: criteria.size || 10,
+      index: criteria.page || 0,
+      isSimpleLoading: false,
+      data: {
+        id: criteria.idDe || '',
+        isDeleted: criteria.isDeleted !== undefined ? criteria.isDeleted.toString() : '',
+        searchString: criteria.search_string || '',
+        ...(criteria.applicationId && { applicationId: criteria.applicationId }),
+        ...(criteria.userId && { userId: criteria.userId }),
+        ...(criteria.decisionType && { decisionType: criteria.decisionType }),
+        ...(criteria.idDe && criteria.idDe.trim() && { idStart: criteria.idDe }),
+        ...(criteria.idA && criteria.idA.trim() && { idEnd: criteria.idA })
+      }
+    };
+    return this.http.post<any>(`${this.apiUrl}/getByCriteria`, request).pipe(
+      map(response => {
+        if (!response || (!response.items && !response.item)) {
+          return { content: [], totalElements: 0, totalPages: 0, size: criteria.size || 10, number: criteria.page || 0 };
+        }
+        const items = response.items || (response.item ? [response.item] : []);
+        const totalElements = response.totalCount || response.count || items.length;
+        const pageSize = criteria.size || 10;
+        return { content: items, totalElements, totalPages: Math.ceil(totalElements / pageSize), size: pageSize, number: criteria.page || 0 };
+      }),
+      catchError(error => { console.error('Erreur decisions:', error); return of({ content: [], totalElements: 0, totalPages: 0, size: criteria.size || 10, number: criteria.page || 0 }); })
+    );
+  }
+
+  restoreDecision(id: number): Observable<any> {
+    return this.http.post(`${this.apiUrl}/update`, { user: this.getCurrentUserId(), datas: [{ id, isDeleted: false }] });
   }
 }

@@ -197,7 +197,7 @@
   </div>
 
   <!-- Section principale -->
-  <div class="users-section">
+  <div class="entity-section">
     <!-- Stats et informations -->
     <div class="section-stats">
       <div class="stats-row">
@@ -253,7 +253,7 @@
         </thead>
         <tbody>
           <ng-container *ngFor="let campaign of campaigns(); trackBy: trackByCampaignId">
-            <tr [class.user-deleted]="campaign.isDeleted">
+            <tr [class.row-deleted]="campaign.isDeleted">
               <td>
                 <span class="cell-id">#{{ campaign.id }}</span>
               </td>

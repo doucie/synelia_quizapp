@@ -50,7 +50,7 @@ public class SpecialitiesBusiness implements IBasicBusiness<Request<Specialities
 	@Autowired
 	private DepartmentsRepository departmentsRepository;
 	@Autowired
-	private QuestionsRepository questionsRepository;
+	private QuestionRepository questionRepository;
 	@Autowired
 	private CampaignsRepository campaignsRepository;
 	@Autowired
@@ -290,10 +290,10 @@ public class SpecialitiesBusiness implements IBasicBusiness<Request<Specialities
 			// ----------- CHECK IF DATA IS USED
 			// -----------------------------------------------------------------------
 
-			// questions
-			List<Questions> listOfQuestions = questionsRepository.findBySpecialityId(existingEntity.getId(), false);
-			if (listOfQuestions != null && !listOfQuestions.isEmpty()){
-				throw new InternalErrorException(functionalError.DATA_NOT_DELETABLE("(" + listOfQuestions.size() + ")", locale));
+			// question
+			List<Question> listOfQuestion = questionRepository.findBySpecialityId(existingEntity.getId(), false);
+			if (listOfQuestion != null && !listOfQuestion.isEmpty()){
+				throw new InternalErrorException(functionalError.DATA_NOT_DELETABLE("(" + listOfQuestion.size() + ")", locale));
 			}
 			// campaigns
 			List<Campaigns> listOfCampaigns = campaignsRepository.findBySpecialityId(existingEntity.getId(), false);

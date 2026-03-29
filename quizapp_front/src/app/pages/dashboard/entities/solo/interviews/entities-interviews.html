@@ -125,7 +125,7 @@
   </div>
 
   <!-- Section principale -->
-  <div class="interviews-section">
+  <div class="entity-section">
     <div class="section-stats">
       <div class="stats-row">
         <h2 class="section-title">Entretiens</h2>
@@ -169,7 +169,7 @@
         </thead>
         <tbody>
           <tr *ngFor="let interview of items(); trackBy: trackById" 
-              [class.interview-deleted]="interview.isDeleted">
+              [class.row-deleted]="interview.isDeleted">
             <td><span class="cell-id">#{{ interview.id }}</span></td>
             <td><span class="cell-date">{{ formatDate(interview.interviewDate) }}</span></td>
             <td>

@@ -157,7 +157,7 @@
   </div>
 
   <!-- Section principale -->
-  <div class="answers-section">
+  <div class="entity-section">
     <!-- Stats et informations -->
     <div class="section-stats">
       <div class="stats-row">
@@ -204,7 +204,7 @@
         </thead>
         <tbody>
           <tr *ngFor="let answer of answers(); trackBy: trackByAnswerId" 
-              [class.answer-deleted]="answer.isDeleted">
+              [class.row-deleted]="answer.isDeleted">
             <td>
               <span class="cell-id">#{{ answer.id }}</span>
             </td>
@@ -216,10 +216,10 @@
               <span *ngIf="!answer.questionId" style="color: var(--text-secondary);">-</span>
             </td>
             <td>
-              <span class="cell-order">{{ answer.displayOrder || 1 }}</span>
+              <span class="cell-order">{{ answer.answerOrder || 1 }}</span>
             </td>
             <td>
-              <span class="cell-date">{{ formatDate(answer.dateCreation) }}</span>
+              <span class="cell-date">{{ formatDate(answer.createdAt) }}</span>
             </td>
             <td class="actions-cell">
               <div class="actions-menu">
@@ -482,13 +482,13 @@
         </div>
 
         <div class="form-group">
-          <label for="edit-displayOrder" class="form-label">Ordre d'affichage</label>
+          <label for="edit-answerOrder" class="form-label">Ordre d'affichage</label>
           <input 
             type="number" 
-            id="edit-displayOrder"
+            id="edit-answerOrder"
             class="form-input"
-            [(ngModel)]="editFormData.displayOrder"
-            name="displayOrder"
+            [(ngModel)]="editFormData.answerOrder"
+            name="answerOrder"
             placeholder="1"
             min="1"
           />
@@ -564,13 +564,13 @@
         </div>
 
         <div class="form-group">
-          <label for="create-displayOrder" class="form-label">Ordre d'affichage</label>
+          <label for="create-answerOrder" class="form-label">Ordre d'affichage</label>
           <input 
             type="number" 
-            id="create-displayOrder"
+            id="create-answerOrder"
             class="form-input"
-            [(ngModel)]="createFormData.displayOrder"
-            name="displayOrder"
+            [(ngModel)]="createFormData.answerOrder"
+            name="answerOrder"
             placeholder="1"
             min="1"
           />

@@ -42,6 +42,7 @@ public interface ApplicationsTransformer {
 		@Mapping(source="entity.createdAt", dateFormat="dd/MM/yyyy", target="createdAt"),
 		@Mapping(source="entity.updatedAt", dateFormat="dd/MM/yyyy", target="updatedAt"),
 		@Mapping(source="entity.sourceToken.id", target="sourceTokenId"),
+		@Mapping(source="entity.formVersion.id", target="formVersionId"),
 	})
 	ApplicationsDto toDto(Applications entity) throws ParseException;
 
@@ -93,6 +94,7 @@ public interface ApplicationsTransformer {
 		@Mapping(source="dto.isDeleted", target="isDeleted"),
 		@Mapping(source="dto.searchString", target="searchString"),
 		@Mapping(source="sourceToken", target="sourceToken"),
+		@Mapping(source="formVersion", target="formVersion"),
 	})
-    Applications toEntity(ApplicationsDto dto, SourceToken sourceToken) throws ParseException;
+    Applications toEntity(ApplicationsDto dto, SourceToken sourceToken, FormVersion formVersion) throws ParseException;
 }

@@ -43,7 +43,7 @@ public class EmailVerificationToken implements Serializable, Cloneable {
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     @Column(name="id", nullable=false)
-    private Long id;
+    private Integer id;
 
     //----------------------------------------------------------------------
     // ENTITY DATA FIELDS

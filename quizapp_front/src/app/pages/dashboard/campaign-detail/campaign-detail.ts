@@ -2,11 +2,10 @@ import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subject, takeUntil, forkJoin, switchMap } from 'rxjs';
+import { Subject, takeUntil } from 'rxjs';
 import { CampaignService, Campaign } from '../../../core/services/campaign.service';
 import { SourceTokenService, SourceToken } from '../../../services/source-token.service';
-import { QuestionService, Question } from '../../../core/services/question.service';
-import { AnswerService, Answer, QuestionAnswer } from '../../../core/services/answer.service';
+import { FormService, Form } from '../../../core/services/form.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
 import { UserService } from '../../../core/services/user.service';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -22,10 +21,6 @@ interface CampaignAccess {
   canEvaluate: boolean;
   isAdmin: boolean;
   follow: boolean;
-}
-
-interface QuestionWithAnswers extends Question {
-  answers?: Answer[];
 }
 
 @Component({
@@ -45,9 +40,7 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   campaign = signal<Campaign | null>(null);
   recruiters = signal<CampaignAccess[]>([]);
   sourceTokens = signal<SourceToken[]>([]);
-  campaignQuestions = signal<QuestionWithAnswers[]>([]);
-  availableQuestions = signal<Question[]>([]);
-  availableAnswers = signal<Answer[]>([]);
+  campaignForms = signal<Form[]>([]);
   loading = signal(false);
   error = signal<string | null>(null);
   
@@ -55,12 +48,6 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   showTokenForm = signal(false);
   newTokenName = signal('');
   tokenLoading = signal(false);
-  
-  // Question management
-  showQuestionForm = signal(false);
-  selectedQuestion = signal<number | null>(null);
-  selectedAnswers = signal<number[]>([]);
-  questionLoading = signal(false);
   
   // Admin mode confirmation modal
   showAdminModeModal = signal(false);
@@ -71,8 +58,7 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
     private router: Router,
     private campaignService: CampaignService,
     private sourceTokenService: SourceTokenService,
-    private questionService: QuestionService,
-    private answerService: AnswerService,
+    private formService: FormService,
     private authService: AuthService,
     private userService: UserService,
     private notificationService: NotificationService
@@ -190,231 +176,33 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
           this.sourceTokens.set(tokens);
           
           // Charger les questions de la campagne
-          this.loadCampaignQuestions(campaignId);
+          this.loadCampaignForms(campaignId);
         },
         error: (error) => {
           console.error('❌ Erreur lors du chargement des tokens:', error);
           this.sourceTokens.set([]);
           
-          // Charger quand même les questions
-          this.loadCampaignQuestions(campaignId);
+          // Charger quand même les formulaires
+          this.loadCampaignForms(campaignId);
         }
       });
   }
 
-  loadCampaignQuestions(campaignId: number): void {
-    console.log('📝 Chargement des questions pour la campagne:', campaignId);
+  loadCampaignForms(campaignId: number): void {
+    console.log('📝 Chargement des formulaires pour la campagne:', campaignId);
     
-    this.campaignService.getCampaignQuestions(campaignId)
+    this.formService.getAllByCriteria({ campaignId, size: 100, isDeleted: false })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (questions) => {
-          console.log('✅ Questions récupérées:', questions);
-          
-          // Pour chaque question, charger ses réponses
-          if (questions.length === 0) {
-            this.campaignQuestions.set([]);
-            this.loading.set(false);
-            return;
-          }
-
-          // Charger les réponses pour toutes les questions en parallèle
-          const answerRequests = questions.map(q => 
-            this.answerService.getQuestionAnswersByCriteria({ questionId: q.id, size: 100 })
-          );
-
-          forkJoin(answerRequests)
-            .pipe(takeUntil(this.destroy$))
-            .subscribe({
-              next: (answersResponses) => {
-                // Combiner les questions avec leurs réponses
-                const questionsWithAnswers: QuestionWithAnswers[] = questions.map((q, index) => ({
-                  ...q,
-                  answers: answersResponses[index]?.content || []
-                }));
-                
-                console.log('✅ Questions avec réponses:', questionsWithAnswers);
-                this.campaignQuestions.set(questionsWithAnswers);
-                this.loading.set(false);
-              },
-              error: (error) => {
-                console.error('❌ Erreur lors du chargement des réponses:', error);
-                // Même en cas d'erreur, afficher les questions sans réponses
-                const questionsWithAnswers: QuestionWithAnswers[] = questions.map(q => ({
-                  ...q,
-                  answers: []
-                }));
-                this.campaignQuestions.set(questionsWithAnswers);
-                this.loading.set(false);
-              }
-            });
-        },
-        error: (error) => {
-          console.error('❌ Erreur lors du chargement des questions:', error);
-          this.campaignQuestions.set([]);
+        next: (response) => {
+          console.log('✅ Formulaires récupérés:', response.content);
+          this.campaignForms.set(response.content);
           this.loading.set(false);
-        }
-      });
-  }
-
-  loadAvailableQuestions(): void {
-    console.log('🔍 Chargement des questions disponibles...');
-    
-    this.questionService.getAllQuestionsByCriteria({ size: 1000, isDeleted: false })
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (response) => {
-          console.log('✅ Questions disponibles récupérées:', response);
-          
-          // Filtrer les questions déjà dans la campagne
-          const currentQuestionIds = this.campaignQuestions().map(q => q.id);
-          const available = response.content.filter(q => !currentQuestionIds.includes(q.id));
-          
-          this.availableQuestions.set(available);
         },
         error: (error) => {
-          console.error('❌ Erreur lors du chargement des questions disponibles:', error);
-          this.availableQuestions.set([]);
-        }
-      });
-  }
-
-  loadAvailableAnswers(questionId: number): void {
-    console.log('🔍 Chargement des réponses disponibles pour la question:', questionId);
-    
-    this.answerService.getQuestionAnswersByCriteria({ questionId, size: 100 })
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (response) => {
-          console.log('✅ Réponses disponibles récupérées:', response);
-          this.availableAnswers.set(response.content);
-        },
-        error: (error) => {
-          console.error('❌ Erreur lors du chargement des réponses disponibles:', error);
-          this.availableAnswers.set([]);
-        }
-      });
-  }
-
-  toggleQuestionForm(): void {
-    const newState = !this.showQuestionForm();
-    this.showQuestionForm.set(newState);
-    
-    if (newState) {
-      // Charger les questions disponibles
-      this.loadAvailableQuestions();
-    } else {
-      // Réinitialiser le formulaire
-      this.selectedQuestion.set(null);
-      this.selectedAnswers.set([]);
-      this.availableQuestions.set([]);
-      this.availableAnswers.set([]);
-    }
-  }
-
-  onQuestionSelected(): void {
-    const questionId = this.selectedQuestion();
-    if (questionId) {
-      // Charger les réponses disponibles pour cette question
-      this.loadAvailableAnswers(questionId);
-    } else {
-      this.availableAnswers.set([]);
-    }
-    this.selectedAnswers.set([]);
-  }
-
-  toggleAnswerSelection(answerId: number): void {
-    const currentSelection = this.selectedAnswers();
-    const index = currentSelection.indexOf(answerId);
-    
-    if (index > -1) {
-      // Désélectionner
-      this.selectedAnswers.set(currentSelection.filter(id => id !== answerId));
-    } else {
-      // Sélectionner
-      this.selectedAnswers.set([...currentSelection, answerId]);
-    }
-  }
-
-  isAnswerSelected(answerId: number): boolean {
-    return this.selectedAnswers().includes(answerId);
-  }
-
-  addQuestionToCampaign(): void {
-    const questionId = this.selectedQuestion();
-    const answerIds = this.selectedAnswers();
-    
-    if (!questionId) {
-      alert('Veuillez sélectionner une question');
-      return;
-    }
-
-    if (answerIds.length === 0) {
-      alert('Veuillez sélectionner au moins une réponse');
-      return;
-    }
-
-    if (!this.campaignId()) {
-      return;
-    }
-
-    this.questionLoading.set(true);
-
-    console.log('➕ Ajout de la question:', questionId, 'avec réponses:', answerIds);
-    
-    // D'abord ajouter la question à la campagne
-    this.campaignService.addQuestionsToCampaign(this.campaignId()!, [questionId])
-      .pipe(
-        switchMap(() => {
-          // Ensuite ajouter les réponses à la question
-          return this.campaignService.addAnswersToQuestion(questionId, answerIds);
-        }),
-        takeUntil(this.destroy$)
-      )
-      .subscribe({
-        next: () => {
-          console.log('✅ Question et réponses ajoutées avec succès');
-          this.questionLoading.set(false);
-          this.showQuestionForm.set(false);
-          this.selectedQuestion.set(null);
-          this.selectedAnswers.set([]);
-          
-          // Recharger les questions de la campagne
-          this.loadCampaignQuestions(this.campaignId()!);
-        },
-        error: (error) => {
-          console.error('❌ Erreur lors de l\'ajout:', error);
-          alert('Erreur lors de l\'ajout de la question à la campagne');
-          this.questionLoading.set(false);
-        }
-      });
-  }
-
-  removeQuestionFromCampaign(question: QuestionWithAnswers): void {
-    if (!question.id) return;
-
-    if (!confirm(`Voulez-vous vraiment retirer la question "${question.questionText}" de cette campagne ?`)) {
-      return;
-    }
-
-    if (!this.campaignId()) {
-      return;
-    }
-
-    console.log('🗑️ Suppression de la question:', question.id);
-    
-    this.campaignService.removeQuestionFromCampaign(this.campaignId()!, question.id)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: () => {
-          console.log('✅ Question retirée avec succès');
-          
-          // Recharger les questions
-          this.loadCampaignQuestions(this.campaignId()!);
-        },
-        error: (error) => {
-          console.error('❌ Erreur lors du retrait:', error);
-          alert('Erreur lors du retrait de la question');
+          console.error('❌ Erreur lors du chargement des formulaires:', error);
+          this.campaignForms.set([]);
+          this.loading.set(false);
         }
       });
   }

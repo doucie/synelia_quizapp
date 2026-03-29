@@ -247,7 +247,7 @@
   </div>
 
   <!-- Section principale -->
-  <div class="users-section">
+  <div class="entity-section">
     <!-- Stats et informations -->
     <div class="section-stats">
       <div class="stats-row">
@@ -306,7 +306,7 @@
         </thead>
         <tbody>
           <tr *ngFor="let user of users(); trackBy: trackByUserId" 
-              [class.user-deleted]="user.isDeleted">
+              [class.row-deleted]="user.isDeleted">
             <td>
               <span class="cell-id">#{{ user.id }}</span>
             </td>

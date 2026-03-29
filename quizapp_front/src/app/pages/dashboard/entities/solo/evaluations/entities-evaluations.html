@@ -71,7 +71,7 @@
   </div>
 
   <!-- Section principale -->
-  <div class="evaluations-section">
+  <div class="entity-section">
     <div class="section-stats">
       <div class="stats-row">
         <h2 class="section-title">Évaluations</h2>
@@ -113,7 +113,7 @@
         </thead>
         <tbody>
           <tr *ngFor="let evaluation of items(); trackBy: trackById" 
-              [class.evaluation-deleted]="evaluation.isDeleted">
+              [class.row-deleted]="evaluation.isDeleted">
             <td><span class="cell-id">#{{ evaluation.id }}</span></td>
             <td>
               <span class="mark-badge" *ngIf="evaluation.candidateMark !== undefined">{{ evaluation.candidateMark }}</span>

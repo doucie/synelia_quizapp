@@ -1,620 +1,145 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, map } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { Observable, throwError } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
-// Interface pour les réponses
 export interface Answer {
-  id: number;
+  id?: number;
   answerText?: string;
-  questionId?: number;
-  questionText?: string;
-  displayOrder?: number;
+  answerType?: string;
+  answerOrder?: number;
   isCorrect?: boolean;
-  isDeleted?: boolean;
-  dateCreation?: string;
-  dateModification?: string;
-}
-
-// Interface pour les liaisons question-réponse
-export interface QuestionAnswer {
-  id: number;
-  questionId: number;
-  answerId: number;
-  isCorrect: boolean;
-  displayOrder?: number;
-  isDeleted?: boolean;
+  questionId?: number;
   createdAt?: string;
+  createdBy?: number;
   updatedAt?: string;
+  updatedBy?: number;
+  isDeleted?: boolean;
 }
 
-// Interface pour les critères de recherche des réponses
 export interface AnswerSearchCriteria {
-  // Frontend field names
+  page?: number;
+  size?: number;
+  search_string?: string;
   idDe?: string;
   idA?: string;
   answerText?: string;
   questionId?: number;
   isDeleted?: boolean;
-
-  // Recherche générale
-  search_string?: string;
-
-  // Pagination
-  size?: number;
-  page?: number;
 }
 
-// Interface pour la réponse paginée
+export interface PagedAnswerResponse {
+  content: Answer[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+}
+
+// Keep for backward compatibility
 export interface PagedResponse<T> {
   content: T[];
   totalElements: number;
   totalPages: number;
   size: number;
   number: number;
-  first: boolean;
-  last: boolean;
-  empty: boolean;
+  first?: boolean;
+  last?: boolean;
+  empty?: boolean;
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class AnswerService {
+  private apiUrl = `${environment.apiUrl}/answer`;
 
-  private readonly apiUrl = '/answers';
-  private readonly questionAnswersApiUrl = '/questionsAnswers';
+  constructor(private http: HttpClient) {}
 
-  constructor(private http: HttpClient) {
-    console.log('🚀 Initialisation AnswerService');
-    console.log('📡 URL de l\'API:', this.apiUrl);
-    console.log('📡 URL de l\'API questionAnswers:', this.questionAnswersApiUrl);
+  private getUserId(): string {
+    const data = localStorage.getItem('user');
+    return data ? JSON.parse(data).id?.toString() || '1' : '1';
   }
 
-  /**
-   * Récupère toutes les réponses avec critères de recherche
-   */
+  getAllByCriteria(criteria: AnswerSearchCriteria = {}): Observable<PagedAnswerResponse> {
+    const request = {
+      user: this.getUserId(),
+      size: criteria.size || 10,
+      index: criteria.page || 0,
+      isSimpleLoading: false,
+      data: {
+        id: criteria.idDe || '',
+        isDeleted: criteria.isDeleted !== undefined ? criteria.isDeleted.toString() : '',
+        searchString: criteria.search_string || '',
+        ...(criteria.answerText && { answerText: criteria.answerText }),
+        ...(criteria.questionId && { questionId: criteria.questionId }),
+        ...(criteria.idDe && criteria.idDe.trim() && { idStart: criteria.idDe }),
+        ...(criteria.idA && criteria.idA.trim() && { idEnd: criteria.idA })
+      }
+    };
+
+    return this.http.post<any>(`${this.apiUrl}/getAllByCriteria`, request).pipe(
+      map(response => {
+        if (!response || (!response.items && !response.item)) {
+          return { content: [], totalElements: 0, totalPages: 0, size: criteria.size || 10, number: criteria.page || 0 };
+        }
+        const items = response.items || (response.item ? [response.item] : []);
+        const totalElements = response.totalCount || response.count || items.length;
+        const pageSize = criteria.size || 10;
+        return { content: items, totalElements, totalPages: Math.ceil(totalElements / pageSize), size: pageSize, number: criteria.page || 0 };
+      }),
+      catchError(error => { console.error('Erreur answer:', error); return throwError(() => error); })
+    );
+  }
+
+  /** Backward-compatible alias */
   getAllAnswersByCriteria(criteria: AnswerSearchCriteria): Observable<PagedResponse<Answer>> {
-    console.log('📥 Récupération des réponses avec critères:', criteria);
+    return this.getAllByCriteria(criteria);
+  }
 
-    // Préparer le corps de la requête selon le format attendu par l'API backend
-    const requestBody = {
-      user: "1",
+  /** Backward-compatible: get answers for a question */
+  getQuestionAnswersByCriteria(criteria: any): Observable<PagedResponse<Answer>> {
+    return this.getAllByCriteria({
+      questionId: criteria.questionId,
       size: criteria.size || 10,
-      index: criteria.page || 0,
-      data: {
-        idDe: criteria.idDe,
-        idA: criteria.idA,
-        answerText: criteria.answerText,
-        questionId: criteria.questionId,
-        isDeleted: criteria.isDeleted,
-        search_string: criteria.search_string
-      }
-    };
-
-    console.log('🔍 Corps de la requête:', JSON.stringify(requestBody, null, 2));
-
-    return this.http.post<PagedResponse<Answer>>(`${this.apiUrl}/getByCriteria`, requestBody).pipe(
-      map((response: any) => {
-        console.log('🔍 Raw API Response (ANSWERS):', response);
-        console.log('🔍 Response keys:', Object.keys(response));
-        console.log('🔍 Response.items exists:', !!response.items);
-        console.log('🔍 Response.items length:', response.items?.length);
-
-        // Transformer la réponse pour correspondre au format attendu par le frontend
-        if (!response || !response.items) {
-          console.warn('⚠️ Erreur dans la réponse API ou aucune donnée');
-          return {
-            content: [],
-            totalElements: 0,
-            totalPages: 1,
-            size: criteria.size || 10,
-            number: criteria.page || 0,
-            first: true,
-            last: true,
-            empty: true
-          };
-        }
-
-        // Transformer les données pour correspondre au format attendu par le frontend
-        const answers = response.items.map((a: any) => ({
-          id: a.id,
-          answerText: a.answerContent || a.answerText, // API retourne 'answerContent', frontend attend 'answerText'
-          questionId: a.questionId,
-          questionText: a.questionText || `Question ${a.questionId}`, // Placeholder si pas fourni
-          displayOrder: a.displayOrder,
-          isDeleted: a.isDeleted,
-          dateCreation: a.createdAt || a.dateCreation,
-          dateModification: a.updatedAt || a.dateModification
-        }));
-
-        console.log('🔍 Premier élément des réponses transformées:', answers[0]);
-        console.log('🔍 Propriétés du premier élément transformé:', answers[0] ? Object.keys(answers[0]) : 'Aucun élément');
-
-        return {
-          content: answers,
-          totalElements: response.count || response.items.length,
-          totalPages: Math.ceil((response.count || response.items.length) / (criteria.size || 10)),
-          size: criteria.size || 10,
-          number: criteria.page || 0,
-          first: (criteria.page || 0) === 0,
-          last: (criteria.page || 0) >= Math.ceil((response.count || response.items.length) / (criteria.size || 10)) - 1,
-          empty: response.items.length === 0
-        };
-      })
-    );
+      page: criteria.page || 0,
+      isDeleted: criteria.isDeleted,
+      search_string: criteria.search_string
+    });
   }
 
-  /**
-   * Récupère les liaisons question-réponse par critères de recherche
-   */
-  getQuestionAnswersByCriteria(criteria: any): Observable<PagedResponse<QuestionAnswer>> {
-    console.log('📥 Récupération des liaisons question-réponse avec critères:', criteria);
-
-    // Préparer le corps de la requête selon le format attendu par l'API backend
-    const requestBody = {
-      user: "1",
-      size: criteria.size || 10,
-      index: criteria.page || 0,
-      data: {
-        questionId: criteria.questionId,
-        answerId: criteria.answerId,
-        isCorrect: criteria.isCorrect,
-        isDeleted: criteria.isDeleted,
-        search_string: criteria.search_string
-      }
-    };
-
-    console.log('🔍 Corps de la requête:', JSON.stringify(requestBody, null, 2));
-
-    return this.http.post<PagedResponse<QuestionAnswer>>(`${this.questionAnswersApiUrl}/getByCriteria`, requestBody).pipe(
-      map((response: any) => {
-        console.log('🔍 Raw API Response (QUESTION ANSWERS):', response);
-        console.log('🔍 Response keys:', Object.keys(response));
-        console.log('🔍 Response.items exists:', !!response.items);
-        console.log('🔍 Response.items length:', response.items?.length);
-
-        // Transformer la réponse pour correspondre au format attendu par le frontend
-        if (!response || !response.items) {
-          console.warn('⚠️ Erreur dans la réponse API ou aucune donnée');
-          return {
-            content: [],
-            totalElements: 0,
-            totalPages: 1,
-            size: criteria.size || 10,
-            number: criteria.page || 0,
-            first: true,
-            last: true,
-            empty: true
-          };
-        }
-
-        // Transformer les données pour correspondre au format attendu par le frontend
-        const questionAnswers = response.items.map((qa: any) => ({
-          id: qa.id,
-          questionId: qa.questionId,
-          answerId: qa.answerId,
-          isCorrect: qa.isCorrect,
-          displayOrder: qa.displayOrder,
-          isDeleted: qa.isDeleted,
-          createdAt: qa.createdAt,
-          updatedAt: qa.updatedAt
-        }));
-
-        console.log('🔍 Premier élément des liaisons transformées:', questionAnswers[0]);
-        console.log('🔍 Propriétés du premier élément transformé:', questionAnswers[0] ? Object.keys(questionAnswers[0]) : 'Aucun élément');
-
-        return {
-          content: questionAnswers,
-          totalElements: response.count || response.items.length,
-          totalPages: Math.ceil((response.count || response.items.length) / (criteria.size || 10)),
-          size: criteria.size || 10,
-          number: criteria.page || 0,
-          first: (criteria.page || 0) === 0,
-          last: (criteria.page || 0) >= Math.ceil((response.count || response.items.length) / (criteria.size || 10)) - 1,
-          empty: response.items.length === 0
-        };
-      })
-    );
+  create(item: Partial<Answer>): Observable<any> {
+    return this.http.post(`${this.apiUrl}/create`, { user: this.getUserId(), datas: [item] });
   }
 
-  /**
-   * Récupère une réponse par son ID
-   */
-  getAnswerById(id: number): Observable<Answer> {
-    console.log('📥 Récupération de la réponse ID:', id);
-
-    // Préparer le corps de la requête selon le format attendu par l'API backend
-    const requestBody = {
-      user: "1",
-      size: 1,
-      index: 0,
-      data: {
-        id: id,
-        isDeleted: false
-      }
-    };
-
-    return this.http.post<PagedResponse<Answer>>(`${this.apiUrl}/getByCriteria`, requestBody).pipe(
-      map((response: any) => {
-        console.log('🔍 Raw API Response (SINGLE ANSWER):', response);
-
-        if (!response || !response.items || response.items.length === 0) {
-          throw new Error(`Réponse avec ID ${id} non trouvée`);
-        }
-
-        const item = response.items[0];
-
-        // Transformer les données pour correspondre au format attendu par le frontend
-        const answer = {
-          id: item.id,
-          answerText: item.answerContent || item.answerText, // API peut retourner 'answerContent', frontend attend 'answerText'
-          questionId: item.questionId,
-          questionText: item.questionText || `Question ${item.questionId}`, // Placeholder si pas fourni
-          isCorrect: item.isCorrect,
-          displayOrder: item.displayOrder,
-          isDeleted: item.isDeleted,
-          dateCreation: item.createdAt || item.dateCreation,
-          dateModification: item.updatedAt || item.dateModification
-        };
-
-        console.log('✅ Réponse transformée:', answer);
-        return answer;
-      })
-    );
+  /** Backward-compatible alias */
+  createAnswer(item: Partial<Answer>): Observable<any> {
+    return this.create(item);
   }
 
-  /**
-   * Crée une nouvelle réponse
-   */
-  createAnswer(answer: Partial<Answer>): Observable<Answer> {
-    console.log('➕ Création d\'une nouvelle réponse:', answer);
-
-    // Préparer les données pour l'API - utiliser le format attendu par l'API
-    const answerData = {
-      answerText: answer.answerText, // Frontend utilise 'answerText', API peut attendre 'answerContent'
-      questionId: answer.questionId,
-      displayOrder: answer.displayOrder || 1
-    };
-
-    return this.http.post<Answer>(this.apiUrl, answerData).pipe(
-      map((response: any) => {
-        console.log('🔍 Raw API Response (CREATE ANSWER):', response);
-
-        // Transformer la réponse pour correspondre au format frontend
-        const createdAnswer = {
-          id: response.id,
-          answerText: response.answerContent || response.answerText,
-          questionId: response.questionId,
-          questionText: response.questionText || `Question ${response.questionId}`,
-          isCorrect: response.isCorrect,
-          displayOrder: response.displayOrder,
-          isDeleted: response.isDeleted,
-          dateCreation: response.createdAt || response.dateCreation,
-          dateModification: response.updatedAt || response.dateModification
-        };
-
-        console.log('✅ Réponse créée et transformée:', createdAnswer);
-        return createdAnswer;
-      })
-    );
+  update(item: Partial<Answer>): Observable<any> {
+    return this.http.post(`${this.apiUrl}/update`, { user: this.getUserId(), datas: [item] });
   }
 
-  /**
-   * Met à jour une réponse existante
-   */
-  updateAnswer(id: number, answer: Answer): Observable<Answer> {
-    console.log('✏️ Mise à jour de la réponse ID:', id, answer);
-
-    // Préparer les données pour l'API - utiliser le format attendu par l'API
-    const answerData = {
-      answerText: answer.answerText, // Frontend utilise 'answerText', API peut attendre 'answerContent'
-      questionId: answer.questionId,
-      displayOrder: answer.displayOrder || 1
-    };
-
-    return this.http.put<Answer>(`${this.apiUrl}/${id}`, answerData).pipe(
-      map((response: any) => {
-        console.log('🔍 Raw API Response (UPDATE ANSWER):', response);
-
-        // Transformer la réponse pour correspondre au format frontend
-        const updatedAnswer = {
-          id: response.id,
-          answerText: response.answerContent || response.answerText,
-          questionId: response.questionId,
-          questionText: response.questionText || `Question ${response.questionId}`,
-          isCorrect: response.isCorrect,
-          displayOrder: response.displayOrder,
-          isDeleted: response.isDeleted,
-          dateCreation: response.createdAt || response.dateCreation,
-          dateModification: response.updatedAt || response.dateModification
-        };
-
-        console.log('✅ Réponse mise à jour et transformée:', updatedAnswer);
-        return updatedAnswer;
-      })
-    );
+  /** Backward-compatible alias */
+  updateAnswer(id: number, item: Partial<Answer>): Observable<any> {
+    return this.update({ ...item, id });
   }
 
-  /**
-   * Supprime une réponse (soft delete)
-   */
-  deleteAnswer(id: number): Observable<void> {
-    console.log('🗑️ Suppression de la réponse ID:', id);
-    return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
-      map(() => {
-        console.log('✅ Réponse supprimée');
-      })
-    );
+  delete(id: number): Observable<any> {
+    return this.http.post(`${this.apiUrl}/delete`, { user: this.getUserId(), datas: [{ id }] });
   }
 
-  /**
-   * Restaure une réponse supprimée
-   */
-  restoreAnswer(id: number): Observable<Answer> {
-    console.log('♻️ Restauration de la réponse ID:', id);
-    return this.http.patch<Answer>(`${this.apiUrl}/${id}/restore`, {}).pipe(
-      map((response: any) => {
-        console.log('🔍 Raw API Response (RESTORE ANSWER):', response);
-
-        // Transformer la réponse pour correspondre au format frontend
-        const restoredAnswer = {
-          id: response.id,
-          answerText: response.answerContent || response.answerText,
-          questionId: response.questionId,
-          questionText: response.questionText || `Question ${response.questionId}`,
-          isCorrect: response.isCorrect,
-          displayOrder: response.displayOrder,
-          isDeleted: response.isDeleted,
-          dateCreation: response.createdAt || response.dateCreation,
-          dateModification: response.updatedAt || response.dateModification
-        };
-
-        console.log('✅ Réponse restaurée et transformée:', restoredAnswer);
-        return restoredAnswer;
-      })
-    );
+  /** Backward-compatible alias */
+  deleteAnswer(id: number): Observable<any> {
+    return this.delete(id);
   }
 
-  /**
-   * Récupère toutes les réponses (sans pagination)
-   */
-  getAllAnswers(): Observable<Answer[]> {
-    console.log('📥 Récupération de toutes les réponses');
-    return this.http.get<Answer[]>(`${this.apiUrl}/all`).pipe(
-      map((response: any[]) => {
-        console.log('🔍 Raw API Response (ALL ANSWERS):', response);
-
-        // Transformer les données pour correspondre au format attendu par le frontend
-        const answers = response.map((a: any) => ({
-          id: a.id,
-          answerText: a.answerContent || a.answerText,
-          questionId: a.questionId,
-          questionText: a.questionText || `Question ${a.questionId}`,
-          isCorrect: a.isCorrect,
-          displayOrder: a.displayOrder,
-          isDeleted: a.isDeleted,
-          dateCreation: a.createdAt || a.dateCreation,
-          dateModification: a.updatedAt || a.dateModification
-        }));
-
-        console.log('✅ Toutes les réponses transformées:', answers.length);
-        return answers;
-      })
-    );
+  restore(id: number): Observable<any> {
+    return this.http.post(`${this.apiUrl}/update`, { user: this.getUserId(), datas: [{ id, isDeleted: false }] });
   }
 
-  /**
-   * Récupère les réponses par question
-   */
-  getAnswersByQuestion(questionId: number): Observable<Answer[]> {
-    console.log('📥 Récupération des réponses pour la question ID:', questionId);
-    return this.http.get<Answer[]>(`${this.apiUrl}/question/${questionId}`).pipe(
-      map((response: any[]) => {
-        console.log('🔍 Raw API Response (ANSWERS BY QUESTION):', response);
-
-        // Transformer les données pour correspondre au format attendu par le frontend
-        const answers = response.map((a: any) => ({
-          id: a.id,
-          answerText: a.answerContent || a.answerText,
-          questionId: a.questionId,
-          questionText: a.questionText || `Question ${a.questionId}`,
-          isCorrect: a.isCorrect,
-          displayOrder: a.displayOrder,
-          isDeleted: a.isDeleted,
-          dateCreation: a.createdAt || a.dateCreation,
-          dateModification: a.updatedAt || a.dateModification
-        }));
-
-        console.log('✅ Réponses de la question transformées:', answers.length);
-        return answers;
-      })
-    );
-  }
-
-  /**
-   * Recherche des réponses par texte
-   */
-  searchAnswers(searchText: string): Observable<Answer[]> {
-    console.log('🔍 Recherche de réponses avec le texte:', searchText);
-    const params = new HttpParams().set('search', searchText);
-    return this.http.get<Answer[]>(`${this.apiUrl}/search`, { params }).pipe(
-      map((response: any[]) => {
-        console.log('🔍 Raw API Response (SEARCH ANSWERS):', response);
-
-        // Transformer les données pour correspondre au format attendu par le frontend
-        const answers = response.map((a: any) => ({
-          id: a.id,
-          answerText: a.answerContent || a.answerText,
-          questionId: a.questionId,
-          questionText: a.questionText || `Question ${a.questionId}`,
-          isCorrect: a.isCorrect,
-          displayOrder: a.displayOrder,
-          isDeleted: a.isDeleted,
-          dateCreation: a.createdAt || a.dateCreation,
-          dateModification: a.updatedAt || a.dateModification
-        }));
-
-        console.log('✅ Résultats de recherche transformés:', answers.length);
-        return answers;
-      })
-    );
-  }
-
-  /**
-   * Exporte les réponses au format CSV
-   */
-  exportAnswers(criteria?: AnswerSearchCriteria): Observable<Blob> {
-    console.log('📤 Export des réponses');
-
-    let params = new HttpParams();
-    if (criteria) {
-      if (criteria.answerText) params = params.set('answerText', criteria.answerText);
-      if (criteria.questionId) params = params.set('questionId', criteria.questionId.toString());
-      if (criteria.isDeleted !== undefined) params = params.set('isDeleted', criteria.isDeleted.toString());
-    }
-
-    return this.http.get(`${this.apiUrl}/export`, {
-      params,
-      responseType: 'blob'
-    }).pipe(
-      map(response => {
-        console.log('✅ Export terminé');
-        return response;
-      })
-    );
-  }
-
-  /**
-   * Importe des réponses depuis un fichier CSV
-   */
-  importAnswers(file: File): Observable<{ imported: number; errors: string[] }> {
-    console.log('📥 Import de réponses depuis le fichier:', file.name);
-
-    const formData = new FormData();
-    formData.append('file', file);
-
-    return this.http.post<{ imported: number; errors: string[] }>(`${this.apiUrl}/import`, formData).pipe(
-      map(response => {
-        console.log('✅ Import terminé:', response);
-        return response;
-      })
-    );
-  }
-
-  /**
-   * Duplique une réponse
-   */
-  duplicateAnswer(id: number): Observable<Answer> {
-    console.log('📋 Duplication de la réponse ID:', id);
-    return this.http.post<Answer>(`${this.apiUrl}/${id}/duplicate`, {}).pipe(
-      map((response: any) => {
-        console.log('🔍 Raw API Response (DUPLICATE ANSWER):', response);
-
-        // Transformer la réponse pour correspondre au format frontend
-        const duplicatedAnswer = {
-          id: response.id,
-          answerText: response.answerContent || response.answerText,
-          questionId: response.questionId,
-          questionText: response.questionText || `Question ${response.questionId}`,
-          isCorrect: response.isCorrect,
-          displayOrder: response.displayOrder,
-          isDeleted: response.isDeleted,
-          dateCreation: response.createdAt || response.dateCreation,
-          dateModification: response.updatedAt || response.dateModification
-        };
-
-        console.log('✅ Réponse dupliquée et transformée:', duplicatedAnswer);
-        return duplicatedAnswer;
-      })
-    );
-  }
-
-  /**
-   * Met à jour le statut d'une réponse (activée/désactivée)
-   */
-  updateAnswerStatus(id: number, isActive: boolean): Observable<Answer> {
-    console.log('🔄 Mise à jour du statut de la réponse ID:', id, 'actif:', isActive);
-    return this.http.patch<Answer>(`${this.apiUrl}/${id}/status`, { isActive }).pipe(
-      map((response: any) => {
-        console.log('🔍 Raw API Response (UPDATE STATUS):', response);
-
-        // Transformer la réponse pour correspondre au format frontend
-        const updatedAnswer = {
-          id: response.id,
-          answerText: response.answerContent || response.answerText,
-          questionId: response.questionId,
-          questionText: response.questionText || `Question ${response.questionId}`,
-          isCorrect: response.isCorrect,
-          displayOrder: response.displayOrder,
-          isDeleted: response.isDeleted,
-          dateCreation: response.createdAt || response.dateCreation,
-          dateModification: response.updatedAt || response.dateModification
-        };
-
-        console.log('✅ Statut mis à jour et réponse transformée:', updatedAnswer);
-        return updatedAnswer;
-      })
-    );
-  }
-
-  /**
-   * Valide une réponse avant sauvegarde
-   */
-  validateAnswer(answer: Answer): { isValid: boolean; errors: string[] } {
-    const errors: string[] = [];
-
-    if (!answer.answerText || answer.answerText.trim().length === 0) {
-      errors.push('Le texte de la réponse est requis');
-    }
-
-    if (!answer.questionId) {
-      errors.push('La question associée est requise');
-    }
-
-    if (answer.displayOrder !== undefined && answer.displayOrder < 1) {
-      errors.push('L\'ordre d\'affichage doit être supérieur à 0');
-    }
-
-    return {
-      isValid: errors.length === 0,
-      errors
-    };
-  }
-
-  /**
-   * Nettoie les données d'une réponse avant envoi à l'API
-   */
-  sanitizeAnswer(answer: Answer): Answer {
-    return {
-      ...answer,
-      answerText: answer.answerText?.trim(),
-      displayOrder: answer.displayOrder || 1
-    };
-  }
-
-  /**
-   * Met à jour l'ordre d'affichage des réponses pour une question
-   */
-  updateAnswersOrder(questionId: number, answers: { id: number; displayOrder: number }[]): Observable<void> {
-    console.log('🔄 Mise à jour de l\'ordre des réponses pour la question ID:', questionId);
-    return this.http.patch<void>(`${this.apiUrl}/question/${questionId}/order`, { answers }).pipe(
-      map(() => {
-        console.log('✅ Ordre des réponses mis à jour');
-      })
-    );
-  }
-
-  /**
-   * Vérifie si une réponse peut être supprimée (pas d'associations)
-   */
-  checkAssociatedData(answerId: number): Observable<{ canDelete: boolean; associatedCount: number }> {
-    console.log('🔍 Vérification des données associées pour la réponse ID:', answerId);
-    return this.http.get<{ canDelete: boolean; associatedCount: number }>(`${this.apiUrl}/${answerId}/check-associations`).pipe(
-      map(response => {
-        console.log('✅ Vérification terminée:', response);
-        return response;
-      })
-    );
+  /** Backward-compatible alias */
+  restoreAnswer(id: number): Observable<any> {
+    return this.restore(id);
   }
 }

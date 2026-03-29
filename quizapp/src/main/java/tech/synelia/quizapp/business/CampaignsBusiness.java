@@ -51,7 +51,7 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 	@Autowired
 	private UserRepository userRepository;
 	@Autowired
-	private CampaignQuestionsRepository campaignQuestionsRepository;
+	private FormRepository formRepository;
 	@Autowired
 	private SpecialitiesRepository specialitiesRepository;
 	@Autowired
@@ -500,10 +500,10 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			if (listOfCampaignCrud != null && !listOfCampaignCrud.isEmpty()){
 				throw new InternalErrorException(functionalError.DATA_NOT_DELETABLE("(" + listOfCampaignCrud.size() + ")", locale));
 			}
-			// campaignQuestions
-			List<CampaignQuestions> listOfCampaignQuestions = campaignQuestionsRepository.findByCampaignId(existingEntity.getId(), false);
-			if (listOfCampaignQuestions != null && !listOfCampaignQuestions.isEmpty()){
-				throw new InternalErrorException(functionalError.DATA_NOT_DELETABLE("(" + listOfCampaignQuestions.size() + ")", locale));
+			// form
+			List<Form> listOfForm = formRepository.findByCampaignId(existingEntity.getId(), false);
+			if (listOfForm != null && !listOfForm.isEmpty()){
+				throw new InternalErrorException(functionalError.DATA_NOT_DELETABLE("(" + listOfForm.size() + ")", locale));
 			}
 			// interviews
 			List<Interviews> listOfInterviews = interviewsRepository.findByCampaignId(existingEntity.getId(), false);

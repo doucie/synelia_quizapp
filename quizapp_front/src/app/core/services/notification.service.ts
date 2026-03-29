@@ -28,7 +28,27 @@ export interface DbNotification {
   createdBy?: number;
   updatedAt?: string;
   updatedBy?: number;
+  isDeleted?: boolean;
   actorName?: string; // Nom de l'acteur (utilisateur qui a fait l'action)
+}
+
+export interface NotificationSearchCriteria {
+  page?: number;
+  size?: number;
+  search_string?: string;
+  idDe?: string;
+  idA?: string;
+  userId?: number;
+  notifType?: string;
+  isDeleted?: boolean;
+}
+
+export interface PagedNotificationResponse {
+  content: DbNotification[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
 }
 
 @Injectable({
@@ -254,5 +274,45 @@ export class NotificationService {
         return throwError(() => error);
       })
     );
+  }
+
+  getAllNotificationsByCriteria(criteria: NotificationSearchCriteria = {}): Observable<PagedNotificationResponse> {
+    const currentUserData = localStorage.getItem('user');
+    const currentUserId = currentUserData ? JSON.parse(currentUserData).id?.toString() || '1' : '1';
+    const request = {
+      user: currentUserId,
+      size: criteria.size || 10,
+      index: criteria.page || 0,
+      isSimpleLoading: false,
+      data: {
+        id: criteria.idDe || '',
+        isDeleted: criteria.isDeleted !== undefined ? criteria.isDeleted.toString() : '',
+        searchString: criteria.search_string || '',
+        ...(criteria.userId && { userId: criteria.userId }),
+        ...(criteria.notifType && { notifType: criteria.notifType }),
+        ...(criteria.idDe && criteria.idDe.trim() && { idStart: criteria.idDe }),
+        ...(criteria.idA && criteria.idA.trim() && { idEnd: criteria.idA })
+      }
+    };
+    return this.http.post<any>(`${environment.apiUrl}/notifications/getAllByCriteria`, request).pipe(
+      map(response => {
+        if (!response || (!response.items && !response.item)) {
+          return { content: [], totalElements: 0, totalPages: 0, size: criteria.size || 10, number: criteria.page || 0 };
+        }
+        const items = response.items || (response.item ? [response.item] : []);
+        const totalElements = response.totalCount || response.count || items.length;
+        const pageSize = criteria.size || 10;
+        return { content: items, totalElements, totalPages: Math.ceil(totalElements / pageSize), size: pageSize, number: criteria.page || 0 };
+      }),
+      catchError(error => { console.error('Erreur notifications:', error); return throwError(() => error); })
+    );
+  }
+
+  deleteNotification(id: number): Observable<any> {
+    return this.http.post(`${environment.apiUrl}/notifications/delete`, { user: 1, datas: [{ id }] });
+  }
+
+  restoreNotification(id: number): Observable<any> {
+    return this.http.post(`${environment.apiUrl}/notifications/update`, { user: 1, datas: [{ id, isDeleted: false }] });
   }
 }

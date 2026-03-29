@@ -1,0 +1,246 @@
+<div class="entities-notifications-container">
+  <div class="header-toolbar-container">
+    <div class="page-header">
+      <div class="breadcrumb">
+        <button class="btn-back" (click)="goBackToEntities()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 12H5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 19L5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Retour aux Entités
+        </button>
+        <span class="breadcrumb-separator">/</span>
+        <span class="current-page">Gestion des Notifications</span>
+      </div>
+      <h1>Gestion des Notifications</h1>
+      <p class="page-description">Administration complète des notifications</p>
+    </div>
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <input type="text" class="search-input" placeholder="Rechercher..." [(ngModel)]="quickSearch" (input)="onQuickSearch()" />
+        <div class="checkbox-container">
+          <input type="checkbox" id="showDeleted" class="checkbox-input" [checked]="showDeletedItems" (click)="toggleDeletedItems()" />
+          <label for="showDeleted" class="checkbox-label">Afficher les supprimés</label>
+        </div>
+      </div>
+      <div class="toolbar-right">
+        <button class="btn-secondary-pro" (click)="openAdvancedSearch()">Filtres avancés</button>
+        <button class="btn-primary-pro" (click)="openCreateDialog()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Nouveau
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="advanced-search-panel" *ngIf="showAdvancedSearch">
+    <div class="panel-header">
+      <h3>Filtres avancés</h3>
+      <button class="btn-close" (click)="openAdvancedSearch()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+    <div class="panel-content">
+      <div class="form-grid">
+        <div class="form-row-full">
+          <div class="form-group-inline">
+            <label>ID de</label>
+            <input type="text" class="form-input-inline" [(ngModel)]="advancedCriteria.idDe" placeholder="ID minimum" />
+          </div>
+          <span class="range-separator">à</span>
+          <div class="form-group-inline">
+            <input type="text" class="form-input-inline" [(ngModel)]="advancedCriteria.idA" placeholder="ID maximum" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>User ID</label>
+          <input type="number" class="form-input" [(ngModel)]="advancedCriteria.userId" placeholder="ID utilisateur" />
+        </div>
+        <div class="form-group">
+          <label>Type</label>
+          <input type="text" class="form-input" [(ngModel)]="advancedCriteria.notifType" placeholder="Type notification" />
+        </div>
+      </div>
+      <div class="panel-actions">
+        <button class="btn-secondary-pro" (click)="resetAdvancedSearch()">Réinitialiser</button>
+        <button class="btn-primary-pro" (click)="applyAdvancedSearch()">Appliquer</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="entity-section">
+    <div class="section-stats">
+      <div class="stats-row">
+        <h2 class="section-title">Notifications</h2>
+        <div class="stats-info" *ngIf="!isLoading()">
+          <div class="stat-item"><span>Total:</span><span class="stat-number">{{ totalElements() }}</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="isLoading()" class="loading-state">
+      <div class="loading-spinner"></div>
+      <p>Chargement...</p>
+    </div>
+
+    <div *ngIf="!isLoading() && items().length === 0" class="empty-state">
+      <h3>Aucun enregistrement trouvé</h3>
+    </div>
+
+    <div *ngIf="!isLoading() && items().length > 0" class="data-table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>User ID</th>
+            <th>Type</th>
+            <th>Acteur</th>
+            <th>Lien</th>
+            <th>Lu</th>
+            <th>Table</th>
+            <th>Table ID</th>
+            <th>Créé le</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of items(); trackBy: trackById" [class.row-deleted]="item.isDeleted">
+            <td><span class="cell-id">#{{ item.id }}</span></td>
+            <td>{{ item.userId || '-' }}</td>
+            <td>{{ item.notifType || '-' }}</td>
+            <td>{{ item.notifActor || '-' }}</td>
+            <td><span class="cell-comment">{{ item.notifLink || '-' }}</span></td>
+            <td>{{ item.isRead ? '✓' : '✗' }}</td>
+            <td>{{ item.objectTableName || '-' }}</td>
+            <td>{{ item.objectTableId || '-' }}</td>
+            <td><span class="cell-date">{{ formatDate(item.createdAt) }}</span></td>
+            <td class="actions-cell">
+              <div class="actions-menu">
+                <ng-container *ngIf="!item.isDeleted">
+                  <button class="action-btn primary" (click)="openEditDialog(item)" title="Modifier">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 20H21M16.5 3.5A2.12 2.12 0 0 1 19 6L7 18L3 19L4 15L16.5 3.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
+                  <button class="action-btn danger" (click)="confirmDelete(item)" title="Supprimer">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 6H5H21M8 6V4C8 3 9 2 10 2H14C15 2 16 3 16 4V6M19 6V20C19 21 18 22 17 22H7C6 22 5 21 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
+                </ng-container>
+                <ng-container *ngIf="item.isDeleted">
+                  <button class="action-btn success" (click)="confirmRestore(item)" title="Restaurer">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 12A9 9 0 1 0 12 3M12 3L8 7L12 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
+                </ng-container>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination-container">
+      <div class="pagination-info">
+        <span class="results-info">
+          Affichage {{ currentPage() * pageSize() + 1 }} - {{ Math.min((currentPage() + 1) * pageSize(), totalElements()) }} sur {{ totalElements() }}
+        </span>
+        <div class="page-size-selector">
+          <label for="pageSize">Par page:</label>
+          <div class="select-wrapper">
+            <select id="pageSize" class="page-size-select" [value]="pageSize()" (change)="onPageSizeChange($event)">
+              <option [value]="5">5</option><option [value]="10">10</option><option [value]="20">20</option><option [value]="50">50</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="pagination-controls" *ngIf="totalElements() > pageSize()">
+        <button class="pagination-btn" [class.disabled]="!hasPreviousPage()" (click)="previousPage()" [disabled]="!hasPreviousPage()">Précédent</button>
+        <div class="page-numbers">
+          <button *ngFor="let page of getPageNumbers()" class="page-number-btn" [class.active]="page === currentPage()" (click)="goToPage(page)">{{ page + 1 }}</button>
+        </div>
+        <button class="pagination-btn" [class.disabled]="!hasNextPage()" (click)="nextPage()" [disabled]="!hasNextPage()">Suivant</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation -->
+<div class="confirmation-overlay" *ngIf="showDeleteConfirmation" (click)="cancelDelete()">
+  <div class="confirmation-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header"><h3>Confirmer la suppression</h3></div>
+    <div class="modal-body">
+      <p>Voulez-vous supprimer cet enregistrement ?</p>
+      <div class="item-info" *ngIf="itemToDelete"><strong>#{{ itemToDelete.id }}</strong></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="cancelDelete()">Annuler</button>
+      <button class="btn-confirm-danger" (click)="executeDelete()">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Restore Confirmation -->
+<div class="confirmation-overlay" *ngIf="showRestoreConfirmation()" (click)="cancelRestore()">
+  <div class="confirmation-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header"><h3>Confirmer la restauration</h3></div>
+    <div class="modal-body"><p>Voulez-vous restaurer cet enregistrement ?</p></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="cancelRestore()">Annuler</button>
+      <button class="btn-confirm-success" (click)="executeRestore()">Restaurer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="confirmation-overlay" *ngIf="showEditDialog()" (click)="closeEditDialog()">
+  <div class="edit-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Modification</h3>
+      <button class="btn-close" (click)="closeEditDialog()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    </div>
+    <div class="modal-content">
+      <form class="edit-form">
+        <div class="form-group"><label class="form-label">User ID</label><input type="number" class="form-input" [(ngModel)]="editFormData.userId" name="userId" /></div>
+        <div class="form-group"><label class="form-label">Type</label><input type="text" class="form-input" [(ngModel)]="editFormData.notifType" name="notifType" /></div>
+        <div class="form-group"><label class="form-label">Acteur</label><input type="number" class="form-input" [(ngModel)]="editFormData.notifActor" name="notifActor" /></div>
+        <div class="form-group"><label class="form-label">Lien</label><input type="text" class="form-input" [(ngModel)]="editFormData.notifLink" name="notifLink" /></div>
+        <div class="form-group"><label class="form-label"><input type="checkbox" [(ngModel)]="editFormData.isRead" name="isRead" /> Lu</label></div>
+        <div class="form-group"><label class="form-label">Table</label><input type="text" class="form-input" [(ngModel)]="editFormData.objectTableName" name="objectTableName" /></div>
+        <div class="form-group"><label class="form-label">Table ID</label><input type="number" class="form-input" [(ngModel)]="editFormData.objectTableId" name="objectTableId" /></div>
+      </form>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-danger" (click)="deleteFromEdit()">Supprimer</button>
+      <div class="action-buttons-right">
+        <button class="btn-cancel" (click)="closeEditDialog()">Annuler</button>
+        <button class="btn-confirm-success" (click)="validateEdit()">Valider</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create Modal -->
+<div class="confirmation-overlay" *ngIf="showCreateDialog()" (click)="closeCreateDialog()">
+  <div class="edit-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Nouveau</h3>
+      <button class="btn-close" (click)="closeCreateDialog()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    </div>
+    <div class="modal-content">
+      <form class="edit-form">
+        <div class="form-group"><label class="form-label">User ID</label><input type="number" class="form-input" [(ngModel)]="createFormData.userId" name="userId" /></div>
+        <div class="form-group"><label class="form-label">Type</label><input type="text" class="form-input" [(ngModel)]="createFormData.notifType" name="notifType" /></div>
+        <div class="form-group"><label class="form-label">Acteur</label><input type="number" class="form-input" [(ngModel)]="createFormData.notifActor" name="notifActor" /></div>
+        <div class="form-group"><label class="form-label">Lien</label><input type="text" class="form-input" [(ngModel)]="createFormData.notifLink" name="notifLink" /></div>
+        <div class="form-group"><label class="form-label"><input type="checkbox" [(ngModel)]="createFormData.isRead" name="isRead" /> Lu</label></div>
+        <div class="form-group"><label class="form-label">Table</label><input type="text" class="form-input" [(ngModel)]="createFormData.objectTableName" name="objectTableName" /></div>
+        <div class="form-group"><label class="form-label">Table ID</label><input type="number" class="form-input" [(ngModel)]="createFormData.objectTableId" name="objectTableId" /></div>
+      </form>
+    </div>
+    <div class="modal-actions">
+      <div class="action-buttons-right">
+        <button class="btn-cancel" (click)="closeCreateDialog()">Annuler</button>
+        <button class="btn-confirm-success" (click)="validateCreate()">Créer</button>
+      </div>
+    </div>
+  </div>
+</div>

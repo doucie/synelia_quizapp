@@ -65,7 +65,7 @@ export class EntitiesAnswersComponent implements OnInit, OnDestroy {
     id: 0,
     answerText: '',
     questionId: 0,
-    displayOrder: 1
+    answerOrder: 1
   };
 
   // État de la popup de création
@@ -73,7 +73,7 @@ export class EntitiesAnswersComponent implements OnInit, OnDestroy {
   createFormData = {
     answerText: '',
     questionId: 0,
-    displayOrder: 1
+    answerOrder: 1
   };
   
   // Critères de recherche avancée
@@ -206,7 +206,7 @@ export class EntitiesAnswersComponent implements OnInit, OnDestroy {
     this.createFormData = {
       answerText: '',
       questionId: 0,
-      displayOrder: 1
+      answerOrder: 1
     };
     this.showCreateDialog.set(true);
   }
@@ -216,7 +216,7 @@ export class EntitiesAnswersComponent implements OnInit, OnDestroy {
     this.createFormData = {
       answerText: '',
       questionId: 0,
-      displayOrder: 1
+      answerOrder: 1
     };
   }
 
@@ -232,7 +232,7 @@ export class EntitiesAnswersComponent implements OnInit, OnDestroy {
       const newAnswer: any = await this.answerService.createAnswer({
         answerText: formData.answerText.trim(),
         questionId: formData.questionId,
-        displayOrder: formData.displayOrder
+        answerOrder: formData.answerOrder
       } as Partial<Answer>).toPromise();
 
       if (newAnswer && newAnswer.hasError) {
@@ -253,10 +253,10 @@ export class EntitiesAnswersComponent implements OnInit, OnDestroy {
   editAnswer(answer: Answer) {
     this.answerToEdit.set(answer);
     this.editFormData = {
-      id: answer.id,
+      id: answer.id || 0,
       answerText: answer.answerText || '',
       questionId: answer.questionId || 0,
-      displayOrder: answer.displayOrder || 1
+      answerOrder: answer.answerOrder || 1
     };
     this.showEditDialog.set(true);
   }
@@ -268,7 +268,7 @@ export class EntitiesAnswersComponent implements OnInit, OnDestroy {
       id: 0,
       answerText: '',
       questionId: 0,
-      displayOrder: 1
+      answerOrder: 1
     };
   }
 
@@ -287,11 +287,11 @@ export class EntitiesAnswersComponent implements OnInit, OnDestroy {
     }
 
     try {
-      const updatedAnswer: any = await this.answerService.updateAnswer(currentAnswer.id, {
+      const updatedAnswer: any = await this.answerService.updateAnswer(currentAnswer.id!, {
         id: currentAnswer.id,
         answerText: formData.answerText.trim(),
         questionId: formData.questionId || undefined,
-        displayOrder: formData.displayOrder
+        answerOrder: formData.answerOrder
       }).toPromise();
 
       if (updatedAnswer && updatedAnswer.hasError) {
@@ -325,7 +325,7 @@ export class EntitiesAnswersComponent implements OnInit, OnDestroy {
   confirmDeleteAnswer() {
     if (!this.answerToDelete) return;
     
-    this.answerService.deleteAnswer(this.answerToDelete.id).subscribe({
+    this.answerService.deleteAnswer(this.answerToDelete.id!).subscribe({
       next: () => {
         this.notificationService.success('Succès', 'Réponse supprimée avec succès');
         
@@ -359,7 +359,7 @@ export class EntitiesAnswersComponent implements OnInit, OnDestroy {
     const answerToRestore = this.answerToRestore();
     if (!answerToRestore) return;
     
-    this.answerService.restoreAnswer(answerToRestore.id).subscribe({
+    this.answerService.restoreAnswer(answerToRestore.id!).subscribe({
       next: () => {
         this.notificationService.success('Succès', 'Réponse restaurée avec succès');
         answerToRestore.isDeleted = false;
@@ -413,7 +413,7 @@ export class EntitiesAnswersComponent implements OnInit, OnDestroy {
   }
 
   trackByAnswerId(index: number, answer: Answer): number {
-    return answer.id;
+    return answer.id!;
   }
 
   onQuickSearch() {

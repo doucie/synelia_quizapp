@@ -39,7 +39,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/qeel/**", "/ws/**").permitAll()
                 .requestMatchers("/applications/create", "/applications/verifyEmail/**").permitAll()
                 .requestMatchers("/candidateToken/**", "/sourceToken/**").permitAll()
-                .requestMatchers("/candidateAnswers/**").permitAll()
+                .requestMatchers("/candidateanswer/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 // Endpoints ADMIN uniquement
                 .requestMatchers("/user/set-users-online", "/user/roles-debug").hasAnyRole("ADMIN", "SUPER")

@@ -1,0 +1,225 @@
+<div class="merise-page" [class.merise-page--fullscreen]="isFullscreen()">
+  <!-- Header -->
+  <div class="merise-header">
+    <div class="header-left">
+      <div class="title-block">
+        <h1>Modélisation Merise</h1>
+        <p class="subtitle">Modèle Conceptuel de Données — {{ stats().totalTables }} tables, {{ stats().totalColumns }} colonnes, {{ stats().totalFKs }} relations</p>
+      </div>
+    </div>
+    <div class="header-controls">
+      <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+        </svg>
+        <input type="text" placeholder="Rechercher une table ou colonne..." [value]="searchTerm()" (input)="onSearchChange($event)" />
+      </div>
+      <button class="btn-toggle" [class.active]="showCommonColumns()" (click)="toggleCommonColumns()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+        {{ showCommonColumns() ? 'Masquer' : 'Afficher' }} colonnes communes
+      </button>
+      <button class="btn-toggle" (click)="toggleFullscreen()" [title]="isFullscreen() ? 'Quitter le plein écran' : 'Plein écran'">
+        <svg *ngIf="!isFullscreen()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/></svg>
+        <svg *ngIf="isFullscreen()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v3a2 2 0 01-2 2H3m18 0h-3a2 2 0 01-2-2V3m0 18v-3a2 2 0 012-2h3M3 16h3a2 2 0 012 2v3"/></svg>
+        {{ isFullscreen() ? 'Réduire' : 'Plein écran' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="merise-content">
+    <!-- Sidebar: table list -->
+    <aside class="table-sidebar">
+      <h3>Tables ({{ filteredTables().length }})</h3>
+      <ul class="table-list">
+        @for (table of filteredTables(); track table.name) {
+          <li
+            [class.selected]="selectedTable() === table.name"
+            [class.related]="isRelatedToSelected(table.name)"
+            (click)="scrollToTable(table.name)">
+            <span class="color-dot" [style.background]="table.color"></span>
+            <span class="table-name">{{ table.displayName }}</span>
+            <span class="table-meta">{{ table.columns.length }} col</span>
+          </li>
+        }
+      </ul>
+
+      <!-- Legend -->
+      <div class="legend">
+        <h4>Légende</h4>
+        <div class="legend-item">
+          <span class="legend-icon pk">PK</span>
+          <span>Clé primaire</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-icon fk">FK</span>
+          <span>Clé étrangère</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-icon nullable">?</span>
+          <span>Nullable</span>
+        </div>
+        <div class="legend-item">
+          <svg class="legend-line" viewBox="0 0 40 10"><path d="M 0 5 C 20 5, 20 5, 40 5" stroke="var(--primary)" stroke-width="1.5" fill="none"/></svg>
+          <span>Relation (FK)</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- SVG Canvas -->
+    <div class="canvas-wrapper"
+         (wheel)="onWheel($event)"
+         (mousedown)="onMouseDown($event)"
+         (mousemove)="onMouseMove($event)"
+         (mouseup)="onMouseUp()"
+         (mouseleave)="onMouseUp()">
+
+      <svg #svgContainer class="merise-svg" [attr.width]="'100%'" [attr.height]="'100%'">
+        <defs>
+          <marker id="arrowN" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+            <circle cx="4" cy="4" r="3" fill="var(--primary)" opacity="0.6"/>
+          </marker>
+          <marker id="arrow1" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto">
+            <path d="M 1 1 L 5 5 L 1 9" fill="none" stroke="var(--primary)" stroke-width="1.5" opacity="0.6"/>
+          </marker>
+          <filter id="tableShadow" x="-5%" y="-5%" width="110%" height="115%">
+            <feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.1"/>
+          </filter>
+          <filter id="tableShadowHover" x="-5%" y="-5%" width="110%" height="118%">
+            <feDropShadow dx="0" dy="4" stdDeviation="8" flood-opacity="0.15"/>
+          </filter>
+        </defs>
+
+        <g [attr.transform]="'translate(' + panX() + ',' + panY() + ') scale(' + zoom() + ')'">
+
+          <!-- Relationships -->
+          @for (rel of relationships; track rel.from + rel.fromColumn) {
+            <g class="relationship"
+               [class.highlighted]="selectedTable() === rel.from || selectedTable() === rel.to"
+               [class.dimmed]="selectedTable() !== null && selectedTable() !== rel.from && selectedTable() !== rel.to">
+              <path
+                [attr.d]="getRelationshipPath(rel)"
+                fill="none"
+                stroke="var(--primary)"
+                stroke-width="1.5"
+                [attr.stroke-opacity]="selectedTable() === rel.from || selectedTable() === rel.to ? 0.9 : 0.25"
+                marker-start="url(#arrowN)"
+                marker-end="url(#arrow1)"/>
+              <!-- Cardinality labels -->
+              @if (getCardinalityPositions(rel); as card) {
+                <text [attr.x]="card.startPos.x" [attr.y]="card.startPos.y"
+                      class="cardinality" [attr.fill-opacity]="selectedTable() === rel.from || selectedTable() === rel.to ? 1 : 0.4">
+                  {{ card.startLabel }}
+                </text>
+                <text [attr.x]="card.endPos.x" [attr.y]="card.endPos.y"
+                      class="cardinality" [attr.fill-opacity]="selectedTable() === rel.from || selectedTable() === rel.to ? 1 : 0.4">
+                  {{ card.endLabel }}
+                </text>
+              }
+            </g>
+          }
+
+          <!-- Tables -->
+          @for (table of tables; track table.name) {
+            <g class="table-group"
+               [class.selected]="selectedTable() === table.name"
+               [class.related]="isRelatedToSelected(table.name)"
+               [class.dimmed]="selectedTable() !== null && selectedTable() !== table.name && !isRelatedToSelected(table.name)"
+               (click)="selectTable(table.name)">
+
+              <!-- Table body -->
+              <rect
+                [attr.x]="table.x"
+                [attr.y]="table.y"
+                [attr.width]="getTableWidth()"
+                [attr.height]="getTableHeight(table)"
+                rx="8" ry="8"
+                class="table-bg"
+                [attr.filter]="selectedTable() === table.name ? 'url(#tableShadowHover)' : 'url(#tableShadow)'"/>
+
+              <!-- Header bar -->
+              <rect
+                [attr.x]="table.x"
+                [attr.y]="table.y"
+                [attr.width]="getTableWidth()"
+                height="36"
+                rx="8" ry="8"
+                [attr.fill]="table.color"/>
+              <!-- Bottom half of header (square corners) -->
+              <rect
+                [attr.x]="table.x"
+                [attr.y]="table.y + 20"
+                [attr.width]="getTableWidth()"
+                height="16"
+                [attr.fill]="table.color"/>
+
+              <!-- Table name -->
+              <text
+                [attr.x]="table.x + 12"
+                [attr.y]="table.y + 23"
+                class="table-title">
+                {{ table.displayName }}
+              </text>
+
+              <!-- Columns -->
+              @for (col of (showCommonColumns() ? table.columns : (visibleColumns()(table.columns))); track col.name; let i = $index) {
+                <g class="column-row">
+                  <!-- Alternating row bg -->
+                  @if (i % 2 === 0) {
+                    <rect
+                      [attr.x]="table.x"
+                      [attr.y]="table.y + 36 + i * 22"
+                      [attr.width]="getTableWidth()"
+                      height="22"
+                      class="row-even"/>
+                  }
+                  <!-- PK / FK badge -->
+                  @if (col.pk) {
+                    <text [attr.x]="table.x + 8" [attr.y]="table.y + 52 + i * 22" class="badge-pk">PK</text>
+                  }
+                  @if (col.fk) {
+                    <text [attr.x]="table.x + (col.pk ? 28 : 8)" [attr.y]="table.y + 52 + i * 22" class="badge-fk">FK</text>
+                  }
+                  <!-- Column name -->
+                  <text
+                    [attr.x]="table.x + (col.pk || col.fk ? (col.pk && col.fk ? 48 : 28) : 8) + 4"
+                    [attr.y]="table.y + 52 + i * 22"
+                    class="col-name"
+                    [class.fk-col]="col.fk">
+                    {{ col.name }}
+                  </text>
+                  <!-- Type -->
+                  <text
+                    [attr.x]="table.x + getTableWidth() - 8"
+                    [attr.y]="table.y + 52 + i * 22"
+                    text-anchor="end"
+                    class="col-type">
+                    {{ col.type }}{{ col.nullable ? '?' : '' }}
+                  </text>
+                </g>
+              }
+            </g>
+          }
+        </g>
+      </svg>
+
+      <!-- Zoom controls -->
+      <div class="zoom-controls">
+        <button (click)="zoomIn()" title="Zoom +">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+        <span class="zoom-level">{{ (zoom() * 100).toFixed(0) }}%</span>
+        <button (click)="zoomOut()" title="Zoom -">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/></svg>
+        </button>
+        <button (click)="resetView()" title="Réinitialiser la vue" class="btn-reset">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+        </button>
+        <button (click)="toggleScrollZoom()" [class.active]="!scrollZoomEnabled()" [title]="scrollZoomEnabled() ? 'Désactiver le zoom molette' : 'Activer le zoom molette'" class="btn-scroll-lock">
+          <svg *ngIf="scrollZoomEnabled()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12a5 5 0 005 5h10a5 5 0 000-10H7a5 5 0 00-5 5z"/><circle cx="17" cy="12" r="3"/></svg>
+          <svg *ngIf="!scrollZoomEnabled()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12a5 5 0 005 5h10a5 5 0 000-10H7a5 5 0 00-5 5z"/><circle cx="7" cy="12" r="3"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>

@@ -176,7 +176,7 @@
   </div>
 
   <!-- Section principale -->
-  <div class="applications-section">
+  <div class="entity-section">
     <div class="section-stats">
       <div class="stats-row">
         <h2 class="section-title">Candidatures</h2>
@@ -224,7 +224,7 @@
         </thead>
         <tbody>
           <tr *ngFor="let app of items(); trackBy: trackById" 
-              [class.application-deleted]="app.isDeleted">
+              [class.row-deleted]="app.isDeleted">
             <td>
               <span class="cell-id">#{{ app.id }}</span>
             </td>

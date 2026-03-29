@@ -7,7 +7,7 @@ import { ApplicationService } from '../../core/services/application.service';
 interface Answer {
   id: number;
   answerContent: string;
-  questionsAnswersId?: number; // ID dans la table questions_answers
+  answerId?: number; // ID de la réponse
 }
 
 interface Question {
@@ -142,12 +142,15 @@ export class QuizComponent implements OnInit {
     const currentQ = this.currentQuestion();
     if (!currentQ) return;
 
-    // Trouver l'objet Answer complet pour obtenir questionsAnswersId
+    // Trouver l'objet Answer complet
     const selectedAnswerObj = currentQ.answers.find(a => a.id === answerId);
-    if (!selectedAnswerObj || !selectedAnswerObj.questionsAnswersId) {
-      console.error('Answer object or questionsAnswersId not found');
+    if (!selectedAnswerObj) {
+      console.error('Answer object not found');
       return;
     }
+
+    // Utiliser answerId directement (ou fallback sur id)
+    const answerIdToSave = selectedAnswerObj.answerId || selectedAnswerObj.id;
 
     // Mettre à jour l'état local immédiatement pour une meilleure UX
     const answers = new Map(this.selectedAnswers());
@@ -163,7 +166,7 @@ export class QuizComponent implements OnInit {
         appId, 
         token, 
         questionId, 
-        selectedAnswerObj.questionsAnswersId
+        answerIdToSave
       ).subscribe({
         next: (response) => {
           if (response.hasError) {

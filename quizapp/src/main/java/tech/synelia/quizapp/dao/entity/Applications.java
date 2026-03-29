@@ -41,7 +41,7 @@ public class Applications implements Serializable, Cloneable {
     // ENTITY PRIMARY KEY ( BASED ON A SINGLE FIELD )
     //----------------------------------------------------------------------
     @Id
-    @GeneratedValue(strategy=GenerationType.AUTO)
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
     @Column(name="id", nullable=false)
     private Integer    id           ;
 
@@ -154,6 +154,10 @@ public class Applications implements Serializable, Cloneable {
     @ManyToOne
     @JoinColumn(name="source_token_id", referencedColumnName="id")
     private SourceToken sourceToken ;
+
+    @ManyToOne
+    @JoinColumn(name="form_version_id", referencedColumnName="id")
+    private FormVersion formVersion ;
 
     //----------------------------------------------------------------------
     // CONSTRUCTOR(S)

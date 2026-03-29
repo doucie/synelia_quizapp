@@ -178,7 +178,7 @@
   </div>
 
   <!-- Section principale -->
-  <div class="source-tokens-section">
+  <div class="entity-section">
     <!-- Stats et informations -->
     <div class="section-stats">
       <div class="stats-row">
@@ -224,7 +224,7 @@
         </thead>
         <tbody>
           <tr *ngFor="let token of sourceTokens(); trackBy: trackBySourceTokenId" 
-              [class.token-deleted]="token.isDeleted">
+              [class.row-deleted]="token.isDeleted">
             <td>
               <span class="cell-id">#{{ token.id }}</span>
             </td>

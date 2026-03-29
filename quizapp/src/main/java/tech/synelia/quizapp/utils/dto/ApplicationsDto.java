@@ -65,6 +65,7 @@ public class ApplicationsDto extends _ApplicationsDto implements Cloneable{
     private Boolean    isDeleted            ;
     private String     searchString         ;
     private Integer    sourceTokenId        ;
+    private Integer    formVersionId        ;
 
     //----------------------------------------------------------------------
     // ENTITY LINKS FIELD ( RELATIONSHIP )
@@ -104,6 +105,7 @@ public class ApplicationsDto extends _ApplicationsDto implements Cloneable{
 	private SearchParam<Boolean>  isDeletedParam        ;                     
 	private SearchParam<String>   searchStringParam     ;                     
 	private SearchParam<Integer>  sourceTokenIdParam    ;                     
+	private SearchParam<Integer>  formVersionIdParam    ;                     
     /**
      * Default constructor
      */

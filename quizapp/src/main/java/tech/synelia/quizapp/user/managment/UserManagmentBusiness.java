@@ -92,9 +92,13 @@ public class UserManagmentBusiness {
 			response.setHasError(true);
 			return response;
 		}
-		// find User - Nouvelle méthode avec BCrypt
-		// D'abord essayer de trouver l'utilisateur par email seulement
-		List<User> users = userManagmentRepository.findByEmail(data.getEmail(), false);
+		// find User - Recherche par email OU username
+		String login = data.getEmail(); // Le champ email peut contenir un email ou un username
+		List<User> users = userManagmentRepository.findByEmail(login, false);
+		if (users == null || users.isEmpty()) {
+			// Si pas trouvé par email, essayer par username
+			users = userManagmentRepository.findByUsername(login, false);
+		}
 		User item = null;
 		
 		if (users != null && !users.isEmpty()) {
@@ -599,7 +603,7 @@ public class UserManagmentBusiness {
 	@Scheduled(fixedRate = 60000) // Toutes les minutes (60 secondes)
 	public void cleanupInactiveUsers() {
 		try {
-			log.info("🧹 [CLEANUP] Début du nettoyage des utilisateurs inactifs");
+			log.fine("[CLEANUP] Début du nettoyage des utilisateurs inactifs");
 			
 			// Calculer la date limite (2 minutes dans le passé)
 			Date timeoutThreshold = new Date(System.currentTimeMillis() - (2 * 60 * 1000)); // 2 minutes
@@ -608,24 +612,24 @@ public class UserManagmentBusiness {
 			List<User> inactiveUsers = userRepository.findInactiveOnlineUsers(timeoutThreshold);
 			
 			if (inactiveUsers != null && !inactiveUsers.isEmpty()) {
-				log.info("🧹 [CLEANUP] " + inactiveUsers.size() + " utilisateurs inactifs détectés");
+				log.fine("[CLEANUP] " + inactiveUsers.size() + " utilisateurs inactifs détectés");
 				
 				// Marquer ces utilisateurs comme hors ligne
 				for (User user : inactiveUsers) {
 					user.setIsOnline(false);
 					user.setUpdatedAt(new Date());
-					log.info("🧹 [CLEANUP] Utilisateur " + user.getId() + " (" + user.getUsername() + ") marqué hors ligne (inactif depuis " + user.getLastConnectionDate() + ")");
+					log.fine("[CLEANUP] Utilisateur " + user.getId() + " (" + user.getUsername() + ") marqué hors ligne (inactif depuis " + user.getLastConnectionDate() + ")");
 				}
 				
 				// Sauvegarder les modifications
 				userRepository.saveAll(inactiveUsers);
-				log.info("✅ [CLEANUP] " + inactiveUsers.size() + " utilisateurs marqués comme hors ligne");
+				log.fine("[CLEANUP] " + inactiveUsers.size() + " utilisateurs marqués comme hors ligne");
 			} else {
-				log.info("ℹ️ [CLEANUP] Aucun utilisateur inactif détecté");
+				log.fine("[CLEANUP] Aucun utilisateur inactif détecté");
 			}
 			
 		} catch (Exception e) {
-			log.severe("❌ [CLEANUP] Erreur lors du nettoyage des utilisateurs inactifs: " + e.getMessage());
+			log.severe("[CLEANUP] Erreur lors du nettoyage des utilisateurs inactifs: " + e.getMessage());
 			e.printStackTrace();
 		}
 	}

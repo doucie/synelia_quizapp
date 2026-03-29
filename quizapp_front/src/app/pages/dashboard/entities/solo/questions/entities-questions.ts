@@ -81,8 +81,8 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
     specialityId: undefined as number | undefined,
     questionType: '',
     difficultyLevel: '',
-    points: undefined as number | undefined,
-    timeLimit: undefined as number | undefined
+    score: undefined as number | undefined,
+    questionChrono: undefined as number | undefined
   };
 
   // État de la popup de création
@@ -92,8 +92,8 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
     specialityId: undefined as number | undefined,
     questionType: '',
     difficultyLevel: '',
-    points: undefined as number | undefined,
-    timeLimit: undefined as number | undefined
+    score: undefined as number | undefined,
+    questionChrono: undefined as number | undefined
   };
   
   // États pour la gestion des réponses
@@ -109,13 +109,13 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
   
   answerCreateFormData = {
     answerText: '',
-    displayOrder: undefined as number | undefined
+    answerOrder: undefined as number | undefined
   };
   
   answerEditFormData = {
     id: 0,
     answerText: '',
-    displayOrder: undefined as number | undefined
+    answerOrder: undefined as number | undefined
   };
   
   // Critères de recherche avancée
@@ -316,8 +316,8 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
       specialityId: undefined,
       questionType: '',
       difficultyLevel: '',
-      points: undefined,
-      timeLimit: undefined
+      score: undefined,
+      questionChrono: undefined
     };
     this.showCreateDialog.set(true);
   }
@@ -332,8 +332,8 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
       specialityId: undefined,
       questionType: '',
       difficultyLevel: '',
-      points: undefined,
-      timeLimit: undefined
+      score: undefined,
+      questionChrono: undefined
     };
   }
 
@@ -360,8 +360,8 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
         specialityId: formData.specialityId,
         questionType: formData.questionType,
         difficultyLevel: formData.difficultyLevel,
-        points: formData.points,
-        timeLimit: formData.timeLimit
+        score: formData.score,
+        questionChrono: formData.questionChrono
       } as any).toPromise();
 
       console.log('✅ Question créée:', newQuestion);
@@ -390,13 +390,13 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
   editQuestion(department: Question) {
     this.questionToEdit.set(department);
     this.editFormData = {
-      id: department.id,
+      id: department.id!,
       questionText: department.questionText || '',
       specialityId: department.specialityId,
       questionType: department.questionType || '',
       difficultyLevel: department.difficultyLevel || '',
-      points: department.points,
-      timeLimit: department.timeLimit
+      score: department.score,
+      questionChrono: department.questionChrono
     };
     this.showEditDialog.set(true);
   }
@@ -413,8 +413,8 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
       specialityId: undefined,
       questionType: '',
       difficultyLevel: '',
-      points: undefined,
-      timeLimit: undefined
+      score: undefined,
+      questionChrono: undefined
     };
   }
 
@@ -443,14 +443,14 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
       // Appel de l'API pour mettre à jour une question
       console.log('🔧 Mise à jour d\'une question');
       
-      const updatedQuestion: any = await this.questionService.updateQuestion(currentQuestion.id, {
+      const updatedQuestion: any = await this.questionService.updateQuestion(currentQuestion.id!, {
         id: currentQuestion.id,
         questionText: formData.questionText.trim(),
         specialityId: formData.specialityId,
         questionType: formData.questionType,
         difficultyLevel: formData.difficultyLevel,
-        points: formData.points,
-        timeLimit: formData.timeLimit
+        score: formData.score,
+        questionChrono: formData.questionChrono
       }).toPromise();
 
       console.log('✅ Question mise à jour:', updatedQuestion);
@@ -498,7 +498,7 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
   confirmdeleteQuestion() {
     if (!this.questionToDelete) return;
     
-    this.questionService.deleteQuestion(this.questionToDelete.id).subscribe({
+    this.questionService.deleteQuestion(this.questionToDelete.id!).subscribe({
       next: () => {
         this.notificationService.success('Succès', `Question ${this.questionToDelete?.questionText} supprimé avec succès`);
         
@@ -545,7 +545,7 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
     const questionToRestore = this.questionToRestore();
     if (!questionToRestore) return;
     
-    this.questionService.restoreQuestion(questionToRestore.id).subscribe({
+    this.questionService.restoreQuestion(questionToRestore.id!).subscribe({
       next: (response: any) => {
         this.notificationService.success('Succès', `Département ${questionToRestore.questionText} restauré avec succès`);
         
@@ -651,7 +651,7 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
    * TrackBy function pour optimiser les performances de rendu de la liste
    */
   trackByQuestionId(index: number, department: Question): number {
-    return department.id;
+    return department.id!;
   }
 
   /**
@@ -897,7 +897,7 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Charge les spécialités d'un département
+   * Charge les réponses d'une question
    */
   loadQuestionAnswers(questionId: number) {
     // Éviter les appels multiples
@@ -905,103 +905,41 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Activer le loading pour ce département
+    // Activer le loading pour cette question
     this.loadingAnswers.set({
       ...this.loadingAnswers(),
       [questionId]: true
     });
 
-    console.log(`🔍 Chargement des liaisons question-réponse pour la question ${questionId}...`);
+    console.log(`Chargement des réponses pour la question ${questionId}...`);
 
-    // Charger les liaisons question-réponse pour cette question
+    // Les réponses sont maintenant directement liées à la question avec isCorrect, displayOrder, etc.
     this.answerService.getQuestionAnswersByCriteria({
       page: 0,
-      size: 10000, // Charger beaucoup pour avoir toutes les liaisons
+      size: 10000,
       questionId: questionId
     }).subscribe({
       next: (response) => {
-        console.log(`✅ Liaisons question-réponse chargées:`, response.content);
+        console.log(`Réponses chargées pour la question ${questionId}:`, response.content);
 
-        if (response.content.length === 0) {
-          // Aucune liaison trouvée, pas de réponses
-          this.questionAnswers.set({
-            ...this.questionAnswers(),
-            [questionId]: []
-          });
-          this.loadingAnswers.set({
-            ...this.loadingAnswers(),
-            [questionId]: false
-          });
-          return;
-        }
-
-        // Récupérer les IDs des réponses liées
-        const answerIds = response.content.map(qa => qa.answerId);
-        console.log(`🔍 IDs des réponses à charger:`, answerIds);
-
-        // Charger les détails des réponses
-        this.loadAnswersByIds(answerIds, response.content, questionId);
+        this.questionAnswers.set({
+          ...this.questionAnswers(),
+          [questionId]: response.content
+        });
+        this.loadingAnswers.set({
+          ...this.loadingAnswers(),
+          [questionId]: false
+        });
       },
       error: (error) => {
-        console.error(`❌ Erreur lors du chargement des liaisons question-réponse de la question ${questionId}:`, error);
+        console.error(`Erreur lors du chargement des réponses de la question ${questionId}:`, error);
         this.notificationService.error('Erreur', `Erreur lors du chargement des réponses de la question ${questionId}`);
         
-        // Désactiver le loading même en cas d'erreur
         this.loadingAnswers.set({
           ...this.loadingAnswers(),
           [questionId]: false
         });
       }
-    });
-  }
-
-  /**
-   * Charge les détails des réponses par leurs IDs et les combine avec les liaisons
-   */
-  loadAnswersByIds(answerIds: number[], questionAnswers: any[], questionId: number) {
-    // Pour chaque ID de réponse, charger ses détails
-    const answerPromises = answerIds.map(answerId =>
-      this.answerService.getAnswerById(answerId).toPromise()
-    );
-
-    Promise.all(answerPromises).then(answers => {
-      console.log(`✅ Détails des réponses chargés:`, answers);
-
-      // Filtrer les réponses valides (non null/undefined)
-      const validAnswers = answers.filter(answer => answer != null);
-
-      // Combiner les réponses avec les informations de liaison (isCorrect, etc.)
-      const combinedAnswers: Answer[] = validAnswers.map(answer => {
-        const qa = questionAnswers.find(qa => qa.answerId === answer.id);
-        return {
-          ...answer,
-          isCorrect: qa ? qa.isCorrect : false,
-          displayOrder: qa ? qa.displayOrder : undefined
-        };
-      });
-
-      console.log(`✅ Réponses combinées pour la question ${questionId}:`, combinedAnswers);
-
-      // Mettre à jour les réponses de la question
-      this.questionAnswers.set({
-        ...this.questionAnswers(),
-        [questionId]: combinedAnswers
-      });
-
-      // Désactiver le loading
-      this.loadingAnswers.set({
-        ...this.loadingAnswers(),
-        [questionId]: false
-      });
-    }).catch(error => {
-      console.error(`❌ Erreur lors du chargement des détails des réponses:`, error);
-      this.notificationService.error('Erreur', `Erreur lors du chargement des détails des réponses`);
-      
-      // Désactiver le loading même en cas d'erreur
-      this.loadingAnswers.set({
-        ...this.loadingAnswers(),
-        [questionId]: false
-      });
     });
   }
 
@@ -1013,7 +951,7 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
     this.currentQuestionForAnswer.set(question);
     this.answerCreateFormData = {
       answerText: '',
-      displayOrder: undefined as number | undefined
+      answerOrder: undefined as number | undefined
     };
     this.showAnswerCreateDialog.set(true);
   }
@@ -1026,9 +964,9 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
     this.currentQuestionForAnswer.set(question);
     this.answerToEdit.set(answer);
     this.answerEditFormData = {
-      id: answer.id,
+      id: answer.id!,
       answerText: answer.answerText || '',
-      displayOrder: answer.displayOrder || undefined
+      answerOrder: answer.answerOrder || undefined
     };
     this.showAnswerEditDialog.set(true);
   }
@@ -1066,7 +1004,7 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
     const answerData = {
       answerText: this.answerCreateFormData.answerText.trim(),
       questionId: department.id,
-      displayOrder: this.answerCreateFormData.displayOrder
+      answerOrder: this.answerCreateFormData.answerOrder
     };
 
     if (!answerData.answerText) {
@@ -1075,12 +1013,12 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
     }
 
     try {
-      console.log('🚀 Création de la spécialité:', answerData);
-      const newanswer: any = await this.answerService.createAnswer(answerData as any);
+      console.log('🚀 Création de la réponse:', answerData);
+      const newanswer: any = await this.answerService.createAnswer(answerData as any).toPromise();
       console.log('✅ Spécialité créée:', newanswer);
 
       // Recharger les spécialités du département
-      this.loadQuestionAnswers(department.id);
+      this.loadQuestionAnswers(department.id!);
 
       this.notificationService.success('Succès', 'Spécialité créée avec succès');
       this.cancelCreateAnswer();
@@ -1098,7 +1036,7 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
     this.currentQuestionForAnswer.set(null);
     this.answerCreateFormData = {
       answerText: '',
-      displayOrder: undefined as number | undefined
+      answerOrder: undefined as number | undefined
     };
   }
 
@@ -1117,7 +1055,7 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
       id: answer.id,
       answerText: this.answerEditFormData.answerText.trim(),
       questionId: department.id,
-      displayOrder: this.answerEditFormData.displayOrder
+      answerOrder: this.answerEditFormData.answerOrder
     };
 
     if (!answerData.answerText) {
@@ -1126,12 +1064,12 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
     }
 
     try {
-      console.log('🚀 Modification de la spécialité:', answer.id, answerData);
-      const updatedanswer: any = await this.answerService.updateAnswer(answer.id, answerData as any);
+      console.log('🚀 Modification de la réponse:', answer.id, answerData);
+      const updatedanswer: any = await this.answerService.updateAnswer(answer.id!, answerData as any).toPromise();
       console.log('✅ Spécialité modifiée:', updatedanswer);
 
       // Recharger les spécialités du département
-      this.loadQuestionAnswers(department.id);
+      this.loadQuestionAnswers(department.id!);
 
       this.notificationService.success('Succès', 'Spécialité modifiée avec succès');
       this.cancelEditAnswer();
@@ -1151,7 +1089,7 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
     this.answerEditFormData = {
       id: 0,
       answerText: '',
-      displayOrder: undefined as number | undefined
+      answerOrder: undefined as number | undefined
     };
   }
 
@@ -1168,12 +1106,12 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
     const department = this.currentQuestionForAnswer()!;
 
     try {
-      console.log('🚀 Suppression de la spécialité:', answer.id);
-      await this.answerService.deleteAnswer(answer.id);
-      console.log('✅ Spécialité supprimée');
+      console.log('🚀 Suppression de la réponse:', answer.id);
+      await this.answerService.deleteAnswer(answer.id!).toPromise();
+      console.log('✅ Réponse supprimée');
 
       // Recharger les spécialités du département
-      this.loadQuestionAnswers(department.id);
+      this.loadQuestionAnswers(department.id!);
 
       this.notificationService.success('Succès', 'Spécialité supprimée avec succès');
       this.cancelDeleteAnswer();
@@ -1205,12 +1143,12 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
     const department = this.currentQuestionForAnswer()!;
 
     try {
-      console.log('🚀 Restauration de la spécialité:', answer.id);
-      await this.answerService.restoreAnswer(answer.id);
-      console.log('✅ Spécialité restaurée');
+      console.log('🚀 Restauration de la réponse:', answer.id);
+      await this.answerService.restoreAnswer(answer.id!).toPromise();
+      console.log('✅ Réponse restaurée');
 
       // Recharger les spécialités du département
-      this.loadQuestionAnswers(department.id);
+      this.loadQuestionAnswers(department.id!);
 
       this.notificationService.success('Succès', 'Spécialité restaurée avec succès');
       this.cancelRestoreAnswer();

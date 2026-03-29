@@ -17,4 +17,7 @@ public interface UserManagmentRepository extends JpaRepository<User, Integer>{
 	@Query("select e from User e where e.email = :email and e.isDeleted = :isDeleted")
 	List<User> findByEmail(@Param("email")String email, @Param("isDeleted")Boolean isDeleted);
 
+	@Query("select e from User e where e.username = :username and e.isDeleted = :isDeleted")
+	List<User> findByUsername(@Param("username")String username, @Param("isDeleted")Boolean isDeleted);
+
 }

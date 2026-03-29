@@ -1,17 +1,35 @@
 {
-  "/questions/**": {
+  "/question/**": {
     "target": "http://localhost:8085",
     "secure": false,
     "changeOrigin": true,
     "logLevel": "debug"
   },
-  "/answers/**": {
+  "/answer/**": {
     "target": "http://localhost:8085",
     "secure": false,
     "changeOrigin": true,
     "logLevel": "debug"
   },
-  "/questionsAnswers/**": {
+  "/form/**": {
+    "target": "http://localhost:8085",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/formversion/**": {
+    "target": "http://localhost:8085",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/formquestions/**": {
+    "target": "http://localhost:8085",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/candidateanswer/**": {
     "target": "http://localhost:8085",
     "secure": false,
     "changeOrigin": true,

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, throwError } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
 export interface InterviewCrud {
@@ -34,6 +35,25 @@ export interface InterviewCrudResponse {
   count: number;
   httpCode: number;
   items: InterviewCrud[];
+}
+
+export interface InterviewCrudSearchCriteria {
+  page?: number;
+  size?: number;
+  search_string?: string;
+  idDe?: string;
+  idA?: string;
+  userId?: number;
+  interviewId?: number;
+  isDeleted?: boolean;
+}
+
+export interface PagedInterviewCrudResponse {
+  content: InterviewCrud[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
 }
 
 @Injectable({
@@ -215,5 +235,53 @@ export class InterviewCrudService {
    */
   deleteInterviewCrud(id: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/${id}`);
+  }
+
+  getAllByCriteria(criteria: InterviewCrudSearchCriteria = {}): Observable<PagedInterviewCrudResponse> {
+    const currentUserData = localStorage.getItem('user');
+    const currentUserId = currentUserData ? JSON.parse(currentUserData).id?.toString() || '1' : '1';
+    const request = {
+      user: currentUserId,
+      size: criteria.size || 10,
+      index: criteria.page || 0,
+      isSimpleLoading: false,
+      data: {
+        id: criteria.idDe || '',
+        isDeleted: criteria.isDeleted !== undefined ? criteria.isDeleted.toString() : '',
+        searchString: criteria.search_string || '',
+        ...(criteria.userId && { userId: criteria.userId }),
+        ...(criteria.interviewId && { interviewId: criteria.interviewId }),
+        ...(criteria.idDe && criteria.idDe.trim() && { idStart: criteria.idDe }),
+        ...(criteria.idA && criteria.idA.trim() && { idEnd: criteria.idA })
+      }
+    };
+    return this.http.post<any>(`${this.apiUrl}/getAllByCriteria`, request).pipe(
+      map(response => {
+        if (!response || (!response.items && !response.item)) {
+          return { content: [], totalElements: 0, totalPages: 0, size: criteria.size || 10, number: criteria.page || 0 };
+        }
+        const items = response.items || (response.item ? [response.item] : []);
+        const totalElements = response.totalCount || response.count || items.length;
+        const pageSize = criteria.size || 10;
+        return { content: items, totalElements, totalPages: Math.ceil(totalElements / pageSize), size: pageSize, number: criteria.page || 0 };
+      }),
+      catchError(error => { console.error('Erreur interview-crud:', error); return throwError(() => error); })
+    );
+  }
+
+  entityCreate(item: InterviewCrud): Observable<any> {
+    return this.http.post(`${this.apiUrl}/create`, { user: 1, datas: [item] });
+  }
+
+  entityUpdate(item: InterviewCrud): Observable<any> {
+    return this.http.post(`${this.apiUrl}/update`, { user: 1, datas: [item] });
+  }
+
+  entityDelete(id: number): Observable<any> {
+    return this.http.post(`${this.apiUrl}/delete`, { user: 1, datas: [{ id }] });
+  }
+
+  entityRestore(id: number): Observable<any> {
+    return this.http.post(`${this.apiUrl}/update`, { user: 1, datas: [{ id, isDeleted: false }] });
   }
 }

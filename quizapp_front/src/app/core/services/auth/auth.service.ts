@@ -157,8 +157,8 @@ export class AuthService {
     console.log('🔍 API User Data:', apiUser);
     console.log('🔍 User Role from API:', apiUser.userRole);
     
-    const role = apiUser.userRole || 'admin';
-    console.log('✅ Role from API:', role);
+    const role = (apiUser.userRole || 'admin').toLowerCase();
+    console.log('✅ Role from API (normalized):', role);
     
     return {
       id: apiUser.id?.toString() || '0',
