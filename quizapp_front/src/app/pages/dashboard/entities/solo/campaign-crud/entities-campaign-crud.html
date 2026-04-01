@@ -20,7 +20,7 @@
         <input type="text" class="search-input" placeholder="Rechercher..." [(ngModel)]="quickSearch" (input)="onQuickSearch()" />
         <div class="checkbox-container">
           <input type="checkbox" id="showDeleted" class="checkbox-input" [checked]="showDeletedItems" (click)="toggleDeletedItems()" />
-          <label for="showDeleted" class="checkbox-label">Afficher les supprimés</label>
+          <label for="showDeleted" class="checkbox-label"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Afficher les supprimés</label>
         </div>
       </div>
       <div class="toolbar-right">
@@ -110,11 +110,11 @@
             <td><span class="cell-id">#{{ item.id }}</span></td>
             <td>{{ item.userId || '-' }}</td>
             <td>{{ item.campaignId || '-' }}</td>
-            <td>{{ item.isAdmin ? '✓' : '✗' }}</td>
-            <td>{{ item.canUpdate ? '✓' : '✗' }}</td>
-            <td>{{ item.canDelete ? '✓' : '✗' }}</td>
-            <td>{{ item.canEvaluate ? '✓' : '✗' }}</td>
-            <td>{{ item.canPlanify ? '✓' : '✗' }}</td>
+            <td><span class="bool-badge" [class.is-true]="item.isAdmin" [class.is-false]="!item.isAdmin"><svg *ngIf="item.isAdmin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><svg *ngIf="!item.isAdmin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>{{ item.isAdmin ? 'Oui' : 'Non' }}</span></td>
+            <td><span class="bool-badge" [class.is-true]="item.canUpdate" [class.is-false]="!item.canUpdate"><svg *ngIf="item.canUpdate" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><svg *ngIf="!item.canUpdate" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>{{ item.canUpdate ? 'Oui' : 'Non' }}</span></td>
+            <td><span class="bool-badge" [class.is-true]="item.canDelete" [class.is-false]="!item.canDelete"><svg *ngIf="item.canDelete" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><svg *ngIf="!item.canDelete" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>{{ item.canDelete ? 'Oui' : 'Non' }}</span></td>
+            <td><span class="bool-badge" [class.is-true]="item.canEvaluate" [class.is-false]="!item.canEvaluate"><svg *ngIf="item.canEvaluate" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><svg *ngIf="!item.canEvaluate" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>{{ item.canEvaluate ? 'Oui' : 'Non' }}</span></td>
+            <td><span class="bool-badge" [class.is-true]="item.canPlanify" [class.is-false]="!item.canPlanify"><svg *ngIf="item.canPlanify" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><svg *ngIf="!item.canPlanify" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>{{ item.canPlanify ? 'Oui' : 'Non' }}</span></td>
             <td><span class="cell-date">{{ formatDate(item.createdAt) }}</span></td>
             <td class="actions-cell" (click)="$event.stopPropagation()">
               <div class="actions-menu">
@@ -258,7 +258,8 @@
   (closePanel)="closeDetailPanel()"
   (editItem)="editFromDetail($event)"
   (deleteItem)="deleteFromDetail($event)"
-  (restoreItem)="restoreFromDetail($event)">
+  (restoreItem)="restoreFromDetail($event)"
+  (saveItem)="saveFromDetail($event)">
 </app-entity-detail-panel>
 
 <!-- Popup d�pendances FK -->

@@ -20,7 +20,7 @@
         <input type="text" class="search-input" placeholder="Rechercher..." [(ngModel)]="quickSearch" (input)="onQuickSearch()" />
         <div class="checkbox-container">
           <input type="checkbox" id="showDeleted" class="checkbox-input" [checked]="showDeletedItems" (click)="toggleDeletedItems()" />
-          <label for="showDeleted" class="checkbox-label">Afficher les supprimés</label>
+          <label for="showDeleted" class="checkbox-label"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Afficher les supprimés</label>
         </div>
       </div>
       <div class="toolbar-right">
@@ -104,8 +104,8 @@
             <td><span class="cell-id">#{{ item.id }}</span></td>
             <td>v{{ item.versionNumber || '-' }}</td>
             <td>{{ item.formId || '-' }}</td>
-            <td>{{ item.isPublished ? '✓' : '✗' }}</td>
-            <td>{{ item.isLocked ? '🔒' : '🔓' }}</td>
+            <td><span class="bool-badge" [class.is-true]="item.isPublished" [class.is-false]="!item.isPublished"><svg *ngIf="item.isPublished" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><svg *ngIf="!item.isPublished" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>{{ item.isPublished ? 'Oui' : 'Non' }}</span></td>
+            <td><span class="bool-badge" [class.is-locked]="item.isLocked" [class.is-unlocked]="!item.isLocked"><svg *ngIf="item.isLocked" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><svg *ngIf="!item.isLocked" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>{{ item.isLocked ? 'Verrouillé' : 'Ouvert' }}</span></td>
             <td><span class="cell-date">{{ formatDate(item.createdAt) }}</span></td>
             <td class="actions-cell" (click)="$event.stopPropagation()">
               <div class="actions-menu">
@@ -278,7 +278,8 @@
   (closePanel)="closeDetailPanel()"
   (editItem)="editFromDetail($event)"
   (deleteItem)="deleteFromDetail($event)"
-  (restoreItem)="restoreFromDetail($event)">
+  (restoreItem)="restoreFromDetail($event)"
+  (saveItem)="saveFromDetail($event)">
 </app-entity-detail-panel>
 
 <!-- Popup d�pendances FK -->

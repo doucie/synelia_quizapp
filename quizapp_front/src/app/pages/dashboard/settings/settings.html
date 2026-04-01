@@ -122,7 +122,12 @@
           </div>
           <div class="form-group">
             <label>Corps du message (HTML) *</label>
-            <textarea rows="10" [ngModel]="templateForm().bodyTemplate" (ngModelChange)="updateTemplateForm('bodyTemplate', $event)" [placeholder]="'Contenu HTML de l\'email avec &#123;&#123;variables&#125;&#125;'"></textarea>
+            <app-rich-text-editor
+              [value]="templateForm().bodyTemplate || ''"
+              (valueChange)="updateTemplateForm('bodyTemplate', $event)"
+              [variables]="templateVariables()"
+              placeholder="Contenu HTML de l'email">
+            </app-rich-text-editor>
           </div>
           <div class="form-group">
             <label>Description</label>
@@ -344,7 +349,11 @@
           </div>
           <div class="form-group">
             <label>Contenu (HTML) *</label>
-            <textarea rows="15" [ngModel]="legalForm().content" (ngModelChange)="updateLegalForm('content', $event)" placeholder="Contenu HTML du texte juridique"></textarea>
+            <app-rich-text-editor
+              [value]="legalForm().content || ''"
+              (valueChange)="updateLegalForm('content', $event)"
+              placeholder="Contenu HTML du texte juridique">
+            </app-rich-text-editor>
           </div>
           <div class="form-group checkbox">
             <label><input type="checkbox" [ngModel]="legalForm().isActive" (ngModelChange)="updateLegalForm('isActive', $event)"> Actif</label>
@@ -473,8 +482,32 @@
             </div>
           </div>
           <div class="form-group">
-            <label>Logo (HTML/SVG)</label>
-            <textarea rows="4" [ngModel]="configForm().logoHtml" (ngModelChange)="updateConfigForm('logoHtml', $event)" placeholder="Code HTML ou SVG du logo"></textarea>
+            <label>Logo</label>
+            <div class="logo-mode-toggle">
+              <button type="button" class="logo-mode-btn" [class.active]="logoMode() === 'code'" (click)="logoMode.set('code')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M16 18L22 12L16 6M8 6L2 12L8 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                HTML/CSS/SVG
+              </button>
+              <button type="button" class="logo-mode-btn" [class.active]="logoMode() === 'image'" (click)="logoMode.set('image')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/><path d="M21 15L16 10L5 21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Image
+              </button>
+            </div>
+            <div class="logo-editor" *ngIf="logoMode() === 'code'">
+              <textarea rows="5" class="logo-code-textarea" [ngModel]="configForm().logoHtml" (ngModelChange)="updateConfigForm('logoHtml', $event)" placeholder="Collez votre code HTML, CSS ou SVG ici"></textarea>
+            </div>
+            <div class="logo-editor" *ngIf="logoMode() === 'image'">
+              <label class="logo-upload-zone">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M21 15V19A2 2 0 0 1 19 21H5A2 2 0 0 1 3 19V15M17 8L12 3L7 8M12 3V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span>Cliquez pour sélectionner une image</span>
+                <span class="logo-upload-hint">PNG, JPG, SVG — max 500 Ko</span>
+                <input type="file" accept="image/*" (change)="onLogoFileChange($event)" hidden />
+              </label>
+            </div>
+            <div class="logo-preview" *ngIf="configForm().logoHtml">
+              <span class="logo-preview-label">Aperçu :</span>
+              <div class="logo-preview-render" [innerHTML]="configForm().logoHtml"></div>
+            </div>
           </div>
           <div class="form-group">
             <label>Thème de couleurs</label>

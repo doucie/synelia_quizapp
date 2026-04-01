@@ -1,0 +1,79 @@
+<div class="rte-container">
+  <!-- Toolbar -->
+  <div class="rte-toolbar">
+    <div class="rte-toolbar-group">
+      <button type="button" class="rte-btn" (mousedown)="$event.preventDefault()" (click)="exec('bold')" title="Gras">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 4H14C16.2091 4 18 5.79086 18 8C18 10.2091 16.2091 12 14 12H6V4Z" stroke="currentColor" stroke-width="2.5"/><path d="M6 12H15C17.2091 12 19 13.7909 19 16C19 18.2091 17.2091 20 15 20H6V12Z" stroke="currentColor" stroke-width="2.5"/></svg>
+      </button>
+      <button type="button" class="rte-btn" (mousedown)="$event.preventDefault()" (click)="exec('italic')" title="Italique">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M10 4H20M4 20H14M15 4L9 20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <button type="button" class="rte-btn" (mousedown)="$event.preventDefault()" (click)="exec('underline')" title="Souligner">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 4V10C6 13.3137 8.68629 16 12 16C15.3137 16 18 13.3137 18 10V4M4 21H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    <span class="rte-separator"></span>
+
+    <div class="rte-toolbar-group">
+      <button type="button" class="rte-btn" (mousedown)="$event.preventDefault()" (click)="exec('justifyLeft')" title="Aligner à gauche">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 6H21M3 10H15M3 14H21M3 18H15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <button type="button" class="rte-btn" (mousedown)="$event.preventDefault()" (click)="exec('justifyCenter')" title="Centrer">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 6H21M7 10H17M3 14H21M7 18H17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <button type="button" class="rte-btn" (mousedown)="$event.preventDefault()" (click)="exec('justifyRight')" title="Aligner à droite">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 6H21M9 10H21M3 14H21M9 18H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <button type="button" class="rte-btn" (mousedown)="$event.preventDefault()" (click)="exec('justifyFull')" title="Justifier">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 6H21M3 10H21M3 14H21M3 18H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    <span class="rte-separator"></span>
+
+    <div class="rte-toolbar-group">
+      <button type="button" class="rte-btn" (mousedown)="$event.preventDefault()" (click)="exec('insertUnorderedList')" title="Liste à puces">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="4" cy="6" r="1.5" fill="currentColor"/><circle cx="4" cy="12" r="1.5" fill="currentColor"/><circle cx="4" cy="18" r="1.5" fill="currentColor"/><path d="M9 6H21M9 12H21M9 18H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <button type="button" class="rte-btn" (mousedown)="$event.preventDefault()" (click)="exec('insertOrderedList')" title="Liste numérotée">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 6H21M9 12H21M9 18H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><text x="2" y="8" font-size="7" fill="currentColor" font-weight="600">1</text><text x="2" y="14" font-size="7" fill="currentColor" font-weight="600">2</text><text x="2" y="20" font-size="7" fill="currentColor" font-weight="600">3</text></svg>
+      </button>
+    </div>
+
+    <span class="rte-separator"></span>
+
+    <div class="rte-toolbar-group">
+      <select class="rte-select" (change)="setFontSize($event)" title="Taille">
+        <option value="">Taille</option>
+        <option value="1">Très petit</option>
+        <option value="2">Petit</option>
+        <option value="3">Normal</option>
+        <option value="4">Moyen</option>
+        <option value="5">Grand</option>
+        <option value="6">Très grand</option>
+        <option value="7">Énorme</option>
+      </select>
+      <input type="color" class="rte-color" (input)="setForeColor($event)" title="Couleur du texte" value="#000000" />
+    </div>
+  </div>
+
+  <!-- Editor content -->
+  <div class="rte-content"
+       #editor
+       contenteditable="true"
+       (input)="onInput()"
+       [attr.data-placeholder]="placeholder">
+  </div>
+
+  <!-- Variable insertion toolbar -->
+  <div class="rte-variables" *ngIf="variables.length > 0">
+    <span class="rte-variables-label">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Variables :
+    </span>
+    <button type="button" class="rte-var-btn" *ngFor="let v of variables" (mousedown)="$event.preventDefault()" (click)="insertVariable(v)">
+      {{ '{' + '{' + v + '}' + '}' }}
+    </button>
+  </div>
+</div>

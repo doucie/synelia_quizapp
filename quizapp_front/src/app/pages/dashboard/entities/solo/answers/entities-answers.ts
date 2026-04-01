@@ -46,6 +46,13 @@ export class EntitiesAnswersComponent implements OnInit, OnDestroy {
     this.editAnswer(item);
   }
 
+  saveFromDetail(data: any): void {
+    this.answerService.updateAnswer(data.id, data).subscribe({
+      next: () => { this.selectedItem.set(data); this.loadAnswers(); this.notificationService.success('Succès', 'Réponse modifiée'); },
+      error: () => { this.notificationService.error('Erreur', 'Erreur lors de la modification'); }
+    });
+  }
+
   deleteFromDetail(item: any): void {
     this.closeDetailPanel();
     this.deleteAnswer(item);

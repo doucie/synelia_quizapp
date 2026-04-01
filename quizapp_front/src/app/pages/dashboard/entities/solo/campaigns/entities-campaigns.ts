@@ -51,6 +51,13 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
     this.editCampaign(item);
   }
 
+  saveFromDetail(data: any): void {
+    this.campaignService.updateCampaign(data.id, data).subscribe({
+      next: () => { this.selectedItem.set(data); this.loadCampaigns(); this.notificationService.success('Succès', 'Campagne modifiée'); },
+      error: () => { this.notificationService.error('Erreur', 'Erreur lors de la modification'); }
+    });
+  }
+
   deleteFromDetail(item: any): void {
     this.closeDetailPanel();
     this.deleteCampaign(item);
@@ -949,17 +956,10 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
    * Bascule l'expansion d'une campagne
    */
   toggleCampaignExpansion(campaignId: number) {
-    const currentExpanded = this.expandedCampaigns();
-    const newExpanded = new Set(currentExpanded);
-    
-    if (newExpanded.has(campaignId)) {
-      // Réduire
-      newExpanded.delete(campaignId);
-      this.expandedCampaigns.set(newExpanded);
+    if (this.expandedCampaigns().has(campaignId)) {
+      this.expandedCampaigns.set(new Set());
     } else {
-      // Étendre et charger les enfants
-      newExpanded.add(campaignId);
-      this.expandedCampaigns.set(newExpanded);
+      this.expandedCampaigns.set(new Set([campaignId]));
       this.loadCampaignChildren(campaignId);
     }
   }

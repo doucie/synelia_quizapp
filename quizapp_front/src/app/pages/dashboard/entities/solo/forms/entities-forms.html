@@ -20,7 +20,7 @@
         <input type="text" class="search-input" placeholder="Rechercher..." [(ngModel)]="quickSearch" (input)="onQuickSearch()" />
         <div class="checkbox-container">
           <input type="checkbox" id="showDeleted" class="checkbox-input" [checked]="showDeletedItems" (click)="toggleDeletedItems()" />
-          <label for="showDeleted" class="checkbox-label">Afficher les supprimés</label>
+          <label for="showDeleted" class="checkbox-label"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Afficher les supprimés</label>
         </div>
       </div>
       <div class="toolbar-right">
@@ -108,7 +108,7 @@
             <td><span class="cell-id">#{{ item.id }}</span></td>
             <td>{{ item.formName || '-' }}</td>
             <td>{{ item.formDesc || '-' }}</td>
-            <td>{{ item.isActive ? '✓' : '✗' }}</td>
+            <td><span class="bool-badge" [class.is-true]="item.isActive" [class.is-false]="!item.isActive"><svg *ngIf="item.isActive" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><svg *ngIf="!item.isActive" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>{{ item.isActive ? 'Oui' : 'Non' }}</span></td>
             <td>{{ item.campaignId || '-' }}</td>
             <td><span class="cell-date">{{ formatDate(item.createdAt) }}</span></td>
             <td class="actions-cell" (click)="$event.stopPropagation()">
@@ -282,7 +282,8 @@
   (closePanel)="closeDetailPanel()"
   (editItem)="editFromDetail($event)"
   (deleteItem)="deleteFromDetail($event)"
-  (restoreItem)="restoreFromDetail($event)">
+  (restoreItem)="restoreFromDetail($event)"
+  (saveItem)="saveFromDetail($event)">
 </app-entity-detail-panel>
 
 <!-- Popup d�pendances FK -->

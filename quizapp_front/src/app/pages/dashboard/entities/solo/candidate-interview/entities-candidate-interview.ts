@@ -55,9 +55,12 @@ export class EntitiesCandidateInterviewComponent extends EntityCrudBase<Candidat
   }
 
   toggleExpansion(id: number) {
-    const s = new Set(this.expandedItems());
-    if (s.has(id)) { s.delete(id); } else { s.add(id); this.loadChildren(id); }
-    this.expandedItems.set(s);
+    if (this.expandedItems().has(id)) {
+      this.expandedItems.set(new Set());
+    } else {
+      this.expandedItems.set(new Set([id]));
+      this.loadChildren(id);
+    }
   }
 
   isExpanded(id: number): boolean { return this.expandedItems().has(id); }

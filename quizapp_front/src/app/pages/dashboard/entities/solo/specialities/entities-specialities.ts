@@ -46,6 +46,13 @@ export class EntitiesSpecialitiesComponent implements OnInit, OnDestroy {
     this.editSpeciality(item);
   }
 
+  saveFromDetail(data: any): void {
+    this.specialityService.update(data.id, data).subscribe({
+      next: () => { this.selectedItem.set(data); this.loadSpecialities(); this.notificationService.success('Succès', 'Spécialité modifiée'); },
+      error: () => { this.notificationService.error('Erreur', 'Erreur lors de la modification'); }
+    });
+  }
+
   deleteFromDetail(item: any): void {
     this.closeDetailPanel();
     this.deleteSpeciality(item);

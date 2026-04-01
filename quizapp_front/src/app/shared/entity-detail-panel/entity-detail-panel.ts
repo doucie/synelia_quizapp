@@ -1,17 +1,19 @@
 import { Component, Input, Output, EventEmitter, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
 export interface DetailField {
   key: string;
   label: string;
   type?: 'text' | 'date' | 'boolean' | 'badge' | 'id';
   badgeMap?: Record<string, { label: string; cssClass: string }>;
+  editable?: boolean;
 }
 
 @Component({
   selector: 'app-entity-detail-panel',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './entity-detail-panel.html',
   styleUrl: './entity-detail-panel.scss'
 })
@@ -25,6 +27,15 @@ export class EntityDetailPanelComponent {
   @Output() editItem = new EventEmitter<any>();
   @Output() deleteItem = new EventEmitter<any>();
   @Output() restoreItem = new EventEmitter<any>();
+  @Output() saveItem = new EventEmitter<any>();
+
+  isEditing = false;
+  editData: Record<string, any> = {};
+
+  private readonly READ_ONLY_KEYS = new Set([
+    'id', 'createdAt', 'updatedAt', 'dateCreation', 'dateModification',
+    'createdBy', 'updatedBy'
+  ]);
 
   private readonly LABEL_MAP: Record<string, string> = {
     id: 'ID', nom: 'Nom', prenom: 'Prénom', pseudo: 'Pseudo',
@@ -63,13 +74,47 @@ export class EntityDetailPanelComponent {
 
   @HostListener('document:keydown.escape')
   onEscKey() {
+    if (this.isEditing) { this.cancelEdit(); return; }
     if (this.isOpen) this.closePanel.emit();
   }
 
-  close() { this.closePanel.emit(); }
-  edit() { this.editItem.emit(this.entity); }
+  close() {
+    if (this.isEditing) this.cancelEdit();
+    this.closePanel.emit();
+  }
+
+  edit() {
+    this.editData = { ...this.entity };
+    this.isEditing = true;
+  }
+
+  cancelEdit() {
+    this.isEditing = false;
+    this.editData = {};
+  }
+
+  save() {
+    this.saveItem.emit({ ...this.editData });
+    this.isEditing = false;
+    this.editData = {};
+  }
+
   delete() { this.deleteItem.emit(this.entity); }
   restore() { this.restoreItem.emit(this.entity); }
+
+  isFieldEditable(field: DetailField): boolean {
+    if (field.editable === false) return false;
+    if (field.type === 'id') return false;
+    if (this.READ_ONLY_KEYS.has(field.key)) return false;
+    return true;
+  }
+
+  getBadgeOptions(field: DetailField): { value: string; label: string }[] {
+    if (!field.badgeMap) return [];
+    return Object.entries(field.badgeMap).map(([value, config]) => ({
+      value, label: config.label
+    }));
+  }
 
   getDisplayFields(): DetailField[] {
     if (this.fields.length > 0) return this.fields;
@@ -103,12 +148,15 @@ export class EntityDetailPanelComponent {
   }
 
   private formatDate(date: string): string {
+    if (!date) return '-';
     try {
-      return new Date(date).toLocaleDateString('fr-FR', {
+      const d = new Date(date);
+      if (isNaN(d.getTime())) return '-';
+      return d.toLocaleDateString('fr-FR', {
         day: '2-digit', month: '2-digit', year: 'numeric',
         hour: '2-digit', minute: '2-digit'
       });
-    } catch { return String(date); }
+    } catch { return '-'; }
   }
 
   private formatLabel(key: string): string {

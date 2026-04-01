@@ -49,6 +49,13 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
     this.editDepartment(item);
   }
 
+  saveFromDetail(data: any): void {
+    this.departmentService.update(data.id, data).subscribe({
+      next: () => { this.selectedItem.set(data); this.loadDepartments(); this.notificationService.success('Succès', 'Département modifié'); },
+      error: () => { this.notificationService.error('Erreur', 'Erreur lors de la modification'); }
+    });
+  }
+
   deleteFromDetail(item: any): void {
     this.closeDetailPanel();
     this.deleteDepartment(item);
@@ -928,17 +935,10 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
    * Bascule l'expansion d'un département
    */
   toggleDepartmentExpansion(departmentId: number) {
-    const currentExpanded = this.expandedDepartments();
-    const newExpanded = new Set(currentExpanded);
-    
-    if (newExpanded.has(departmentId)) {
-      // Réduire
-      newExpanded.delete(departmentId);
-      this.expandedDepartments.set(newExpanded);
+    if (this.expandedDepartments().has(departmentId)) {
+      this.expandedDepartments.set(new Set());
     } else {
-      // Étendre et charger les spécialités
-      newExpanded.add(departmentId);
-      this.expandedDepartments.set(newExpanded);
+      this.expandedDepartments.set(new Set([departmentId]));
       this.loadDepartmentSpecialities(departmentId);
     }
   }

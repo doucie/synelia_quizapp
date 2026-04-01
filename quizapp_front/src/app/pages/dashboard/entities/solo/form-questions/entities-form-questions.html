@@ -20,7 +20,7 @@
         <input type="text" class="search-input" placeholder="Rechercher..." [(ngModel)]="quickSearch" (input)="onQuickSearch()" />
         <div class="checkbox-container">
           <input type="checkbox" id="showDeleted" class="checkbox-input" [checked]="showDeletedItems" (click)="toggleDeletedItems()" />
-          <label for="showDeleted" class="checkbox-label">Afficher les supprimés</label>
+          <label for="showDeleted" class="checkbox-label"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Afficher les supprimés</label>
         </div>
       </div>
       <div class="toolbar-right">
@@ -270,7 +270,8 @@
   (closePanel)="closeDetailPanel()"
   (editItem)="editFromDetail($event)"
   (deleteItem)="deleteFromDetail($event)"
-  (restoreItem)="restoreFromDetail($event)">
+  (restoreItem)="restoreFromDetail($event)"
+  (saveItem)="saveFromDetail($event)">
 </app-entity-detail-panel>
 
 <!-- Popup d�pendances FK -->

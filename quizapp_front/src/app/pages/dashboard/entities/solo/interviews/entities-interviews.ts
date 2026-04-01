@@ -84,7 +84,9 @@ export class EntitiesInterviewsComponent extends EntityCrudBase<Interview, Inter
   override formatDate(date: string | undefined): string {
     if (!date) return '-';
     try {
-      return new Date(date).toLocaleDateString('fr-FR', {
+      const d = new Date(date);
+      if (isNaN(d.getTime())) return '-';
+      return d.toLocaleDateString('fr-FR', {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
@@ -136,9 +138,12 @@ export class EntitiesInterviewsComponent extends EntityCrudBase<Interview, Inter
   }
 
   toggleExpansion(id: number) {
-    const s = new Set(this.expandedItems());
-    if (s.has(id)) { s.delete(id); } else { s.add(id); this.loadChildren(id); }
-    this.expandedItems.set(s);
+    if (this.expandedItems().has(id)) {
+      this.expandedItems.set(new Set());
+    } else {
+      this.expandedItems.set(new Set([id]));
+      this.loadChildren(id);
+    }
   }
 
   isExpanded(id: number): boolean { return this.expandedItems().has(id); }

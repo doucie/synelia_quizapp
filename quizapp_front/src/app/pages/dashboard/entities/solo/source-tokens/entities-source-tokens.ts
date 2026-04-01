@@ -45,6 +45,13 @@ export class EntitiesSourceTokensComponent implements OnInit, OnDestroy {
     this.editSourceToken(item);
   }
 
+  saveFromDetail(data: any): void {
+    this.sourceTokenService.updateSourceToken(data).subscribe({
+      next: () => { this.selectedItem.set(data); this.loadSourceTokens(); this.notificationService.success('Succès', 'Token source modifié'); },
+      error: () => { this.notificationService.error('Erreur', 'Erreur lors de la modification'); }
+    });
+  }
+
   deleteFromDetail(item: any): void {
     this.closeDetailPanel();
     this.deleteSourceToken(item);

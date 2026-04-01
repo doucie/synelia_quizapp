@@ -80,9 +80,9 @@
   transition: all 0.2s ease;
 
   &:hover {
-    background: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
-    border-color: rgba(239, 68, 68, 0.3);
+    background: color-mix(in srgb, var(--error) 10%, transparent);
+    color: var(--error);
+    border-color: color-mix(in srgb, var(--error) 30%, transparent);
   }
 }
 
@@ -91,11 +91,11 @@
   align-items: center;
   gap: 8px;
   padding: 10px 24px;
-  background: rgba(239, 68, 68, 0.08);
-  color: #ef4444;
+  background: color-mix(in srgb, var(--error) 8%, transparent);
+  color: var(--error);
   font-size: 13px;
   font-weight: 500;
-  border-bottom: 1px solid rgba(239, 68, 68, 0.15);
+  border-bottom: 1px solid color-mix(in srgb, var(--error) 15%, transparent);
 }
 
 .detail-panel-body {
@@ -141,14 +141,14 @@
     font-weight: 500;
 
     &.is-true {
-      color: #22c55e;
+      color: var(--success);
       &::before {
         content: '';
         display: inline-block;
         width: 8px;
         height: 8px;
         border-radius: 50%;
-        background: #22c55e;
+        background: var(--success);
       }
     }
 
@@ -186,6 +186,35 @@
   }
 }
 
+/* Edit mode inputs */
+.detail-edit-input {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 14px;
+  color: var(--text-primary);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 15%, transparent);
+  }
+}
+
+.detail-edit-textarea {
+  resize: vertical;
+  min-height: 60px;
+  line-height: 1.5;
+}
+
+select.detail-edit-input {
+  cursor: pointer;
+  appearance: auto;
+}
+
 .detail-panel-footer {
   padding: 16px 24px;
   border-top: 1px solid var(--border);
@@ -217,17 +246,30 @@
   }
 
   &.delete {
-    background: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
-    border: 1px solid rgba(239, 68, 68, 0.2);
-    &:hover { background: rgba(239, 68, 68, 0.2); }
+    background: color-mix(in srgb, var(--error) 10%, transparent);
+    color: var(--error);
+    border: 1px solid color-mix(in srgb, var(--error) 20%, transparent);
+    &:hover { background: color-mix(in srgb, var(--error) 20%, transparent); }
+  }
+
+  &.cancel {
+    background: var(--surface-variant);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    &:hover { background: var(--surface-hover); }
+  }
+
+  &.save {
+    background: var(--success);
+    color: var(--text-on-primary);
+    &:hover { opacity: 0.9; }
   }
 
   &.restore {
-    background: rgba(34, 197, 94, 0.1);
-    color: #22c55e;
-    border: 1px solid rgba(34, 197, 94, 0.2);
-    &:hover { background: rgba(34, 197, 94, 0.2); }
+    background: color-mix(in srgb, var(--success) 10%, transparent);
+    color: var(--success);
+    border: 1px solid color-mix(in srgb, var(--success) 20%, transparent);
+    &:hover { background: color-mix(in srgb, var(--success) 20%, transparent); }
   }
 }
 

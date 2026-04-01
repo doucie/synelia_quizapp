@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { DetailField } from './entity-detail-panel/entity-detail-panel';
 import { DependencyInfo } from './models/interfaces';
 import { DashboardStatsService } from '../core/services/dashboard-stats.service';
+import { NotificationService } from '../core/services/notification.service';
 
 /**
  * Interface minimale pour les entités gérées par le CRUD
@@ -67,7 +68,7 @@ export abstract class EntityCrudBase<
   // ── Recherche ────────────────────────────────
   quickSearch = '';
   showAdvancedSearch = false;
-  showDeletedItems = false;
+  showDeletedItems = true;
 
   // ── Suppression ──────────────────────────────
   showDeleteConfirmation = false;
@@ -83,6 +84,7 @@ export abstract class EntityCrudBase<
   showDependencyPopup = signal<boolean>(false);
   dependencyMode = signal<'delete' | 'restore'>('delete');
   private depService = inject(DashboardStatsService);
+  protected notificationService = inject(NotificationService);
 
   // ── Computed ─────────────────────────────────
   hasPreviousPage = computed(() => this.currentPage() > 0);
@@ -238,13 +240,15 @@ export abstract class EntityCrudBase<
   formatDate(date: string | undefined): string {
     if (!date) return '-';
     try {
-      return new Date(date).toLocaleDateString('fr-FR', {
+      const d = new Date(date);
+      if (isNaN(d.getTime())) return '-';
+      return d.toLocaleDateString('fr-FR', {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric'
       });
     } catch {
-      return date;
+      return '-';
     }
   }
 
@@ -275,7 +279,7 @@ export abstract class EntityCrudBase<
       },
       error: (error) => {
         console.error(`Erreur lors de la création (${this.entityName}):`, error);
-        alert(`Erreur lors de la création`);
+        this.notificationService.error('Erreur', `Erreur lors de la création`);
       }
     });
   }
@@ -298,7 +302,7 @@ export abstract class EntityCrudBase<
       },
       error: (error) => {
         console.error(`Erreur lors de la modification (${this.entityName}):`, error);
-        alert(`Erreur lors de la modification`);
+        this.notificationService.error('Erreur', `Erreur lors de la modification`);
       }
     });
   }
@@ -336,7 +340,7 @@ export abstract class EntityCrudBase<
         },
         error: (error) => {
           console.error(`Erreur lors de la suppression (${this.entityName}):`, error);
-          alert(`Erreur lors de la suppression`);
+          this.notificationService.error('Erreur', `Erreur lors de la suppression`);
         }
       });
     }
@@ -383,7 +387,7 @@ export abstract class EntityCrudBase<
         },
         error: (error) => {
           console.error(`Erreur lors de la restauration (${this.entityName}):`, error);
-          alert(`Erreur lors de la restauration`);
+          this.notificationService.error('Erreur', `Erreur lors de la restauration`);
         }
       });
     }
@@ -418,6 +422,20 @@ export abstract class EntityCrudBase<
   editFromDetail(item: T): void {
     this.closeDetailPanel();
     this.openEditDialog(item);
+  }
+
+  saveFromDetail(data: any): void {
+    this.performUpdate(data).subscribe({
+      next: () => {
+        this.selectedItem.set(data);
+        this.loadItems();
+        this.notificationService.success('Succès', `${this.entityName} modifié avec succès`);
+      },
+      error: (error) => {
+        console.error(`Erreur lors de la modification rapide (${this.entityName}):`, error);
+        this.notificationService.error('Erreur', `Erreur lors de la modification`);
+      }
+    });
   }
 
   deleteFromDetail(item: T): void {

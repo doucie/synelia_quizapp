@@ -10,13 +10,14 @@ import { AppConfigService, AppConfig, COLOR_SCHEMES } from '../../../core/servic
 import { InvitationCodeService, InvitationCode } from '../../../core/services/invitation-code.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { ThemeService } from '../../../core/services/theme.service';
+import { RichTextEditorComponent } from '../../../shared/rich-text-editor/rich-text-editor';
 
 type SettingsTab = 'emails' | 'smtp' | 'legal' | 'config' | 'invitations';
 
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RichTextEditorComponent],
   templateUrl: './settings.html',
   styleUrls: ['./settings.scss']
 })
@@ -34,6 +35,10 @@ export class SettingsComponent implements OnInit, OnDestroy {
   templateForm = signal<Partial<EmailTemplate>>({});
   showTemplateEditor = signal(false);
   savingTemplate = signal(false);
+  templateVariables = computed(() => {
+    const vars = this.templateForm().availableVariables || '';
+    return vars.split(',').map(v => v.trim()).filter(v => v.length > 0);
+  });
 
   // SMTP Config
   smtpConfigs = signal<SmtpConfig[]>([]);
@@ -58,6 +63,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
   savingConfig = signal(false);
   colorSchemes = COLOR_SCHEMES;
   previewingConfig = signal<AppConfig | null>(null);
+  logoMode = signal<'code' | 'image'>('code');
 
   // Invitation Codes
   invitationCodes = signal<InvitationCode[]>([]);
@@ -338,9 +344,11 @@ export class SettingsComponent implements OnInit, OnDestroy {
     if (config) {
       this.editingConfig.set(config);
       this.configForm.set({ ...config });
+      this.logoMode.set(config.logoHtml?.startsWith('<img') ? 'image' : 'code');
     } else {
       this.editingConfig.set(null);
       this.configForm.set({ configName: '', companyName: '', logoHtml: '', primaryColor: '#7C3AED', colorScheme: 'violet', isActive: false });
+      this.logoMode.set('code');
     }
     this.showConfigEditor.set(true);
   }
@@ -348,6 +356,25 @@ export class SettingsComponent implements OnInit, OnDestroy {
   closeConfigEditor() {
     this.showConfigEditor.set(false);
     this.editingConfig.set(null);
+  }
+
+  onLogoFileChange(event: Event) {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      this.notificationService.error('Erreur', 'Veuillez sélectionner un fichier image');
+      return;
+    }
+    if (file.size > 500_000) {
+      this.notificationService.error('Erreur', 'L\'image ne doit pas dépasser 500 Ko');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      this.updateConfigForm('logoHtml', `<img src="${dataUrl}" alt="Logo" style="max-height:48px;" />`);
+    };
+    reader.readAsDataURL(file);
   }
 
   saveConfig() {

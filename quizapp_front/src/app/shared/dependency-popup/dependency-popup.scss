@@ -18,7 +18,7 @@
 }
 
 .dependency-modal {
-  background: var(--surface, #fff);
+  background: var(--surface);
   border-radius: 12px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
   width: 480px;
@@ -39,7 +39,7 @@
   align-items: center;
   gap: 12px;
   padding: 20px 24px 16px;
-  border-bottom: 1px solid var(--border, #e5e7eb);
+  border-bottom: 1px solid var(--border);
 
   .modal-icon {
     width: 40px;
@@ -49,8 +49,8 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    background: #fef3c7;
-    color: #d97706;
+    background: color-mix(in srgb, var(--warning) 15%, transparent);
+    color: var(--warning-dark);
 
     svg {
       width: 22px;
@@ -59,20 +59,20 @@
   }
 
   &.critical .modal-icon {
-    background: #fee2e2;
-    color: #dc2626;
+    background: color-mix(in srgb, var(--error) 10%, transparent);
+    color: var(--error);
   }
 
   &.restore .modal-icon {
-    background: #dbeafe;
-    color: #2563eb;
+    background: color-mix(in srgb, var(--info) 10%, transparent);
+    color: var(--info);
   }
 
   h3 {
     margin: 0;
     font-size: 1.1rem;
     font-weight: 600;
-    color: var(--text-primary, #111827);
+    color: var(--text-primary);
   }
 }
 
@@ -83,7 +83,7 @@
   .description {
     margin: 0 0 14px;
     font-size: 0.9rem;
-    color: var(--text-secondary, #6b7280);
+    color: var(--text-secondary);
     line-height: 1.5;
   }
 }
@@ -102,33 +102,33 @@
   gap: 10px;
   padding: 8px 12px;
   border-radius: 8px;
-  background: var(--surface-alt, #f9fafb);
-  border: 1px solid var(--border, #e5e7eb);
+  background: var(--surface-secondary);
+  border: 1px solid var(--border);
   font-size: 0.88rem;
 
   .dep-label {
     flex: 1;
-    color: var(--text-primary, #374151);
+    color: var(--text-primary);
     font-weight: 500;
   }
 
   .dep-count {
-    background: #e5e7eb;
-    color: #374151;
+    background: var(--surface-variant);
+    color: var(--text-primary);
     padding: 2px 8px;
     border-radius: 12px;
     font-weight: 600;
     font-size: 0.82rem;
 
     &.critical {
-      background: #fee2e2;
-      color: #dc2626;
+      background: color-mix(in srgb, var(--error) 10%, transparent);
+      color: var(--error);
     }
   }
 
   .dep-badge {
-    background: #dc2626;
-    color: #fff;
+    background: var(--error);
+    color: var(--text-on-primary);
     padding: 2px 8px;
     border-radius: 10px;
     font-size: 0.72rem;
@@ -138,7 +138,7 @@
   }
 
   .dep-name {
-    color: var(--text-secondary, #6b7280);
+    color: var(--text-secondary);
     font-size: 0.85rem;
     max-width: 220px;
     overflow: hidden;
@@ -147,13 +147,13 @@
   }
 
   &.critical {
-    border-color: #fca5a5;
-    background: #fef2f2;
+    border-color: color-mix(in srgb, var(--error) 40%, transparent);
+    background: color-mix(in srgb, var(--error) 5%, transparent);
   }
 
   &.parent {
-    border-color: #93c5fd;
-    background: #eff6ff;
+    border-color: color-mix(in srgb, var(--info) 40%, transparent);
+    background: color-mix(in srgb, var(--info) 5%, transparent);
   }
 }
 
@@ -176,19 +176,19 @@
   }
 
   &.warning {
-    background: #fffbeb;
-    border: 1px solid #fde68a;
-    color: #92400e;
+    background: color-mix(in srgb, var(--warning) 5%, transparent);
+    border: 1px solid color-mix(in srgb, var(--warning) 30%, transparent);
+    color: var(--warning-dark);
 
-    svg { color: #d97706; }
+    svg { color: var(--warning-dark); }
   }
 
   &.critical {
-    background: #fef2f2;
-    border: 1px solid #fca5a5;
-    color: #991b1b;
+    background: color-mix(in srgb, var(--error) 5%, transparent);
+    border: 1px solid color-mix(in srgb, var(--error) 40%, transparent);
+    color: var(--error-dark);
 
-    svg { color: #dc2626; }
+    svg { color: var(--error); }
   }
 }
 
@@ -199,17 +199,17 @@
   gap: 8px;
   padding: 10px 14px;
   border-radius: 8px;
-  background: #fef2f2;
-  border: 1px solid #fca5a5;
+  background: color-mix(in srgb, var(--error) 5%, transparent);
+  border: 1px solid color-mix(in srgb, var(--error) 40%, transparent);
   font-size: 0.85rem;
-  color: #991b1b;
+  color: var(--error-dark);
   cursor: pointer;
   user-select: none;
 
   input[type="checkbox"] {
     width: 16px;
     height: 16px;
-    accent-color: #dc2626;
+    accent-color: var(--error);
     cursor: pointer;
   }
 }
@@ -220,22 +220,22 @@
   justify-content: flex-end;
   gap: 10px;
   padding: 16px 24px 20px;
-  border-top: 1px solid var(--border, #e5e7eb);
+  border-top: 1px solid var(--border);
 }
 
 .btn-cancel {
   padding: 8px 18px;
-  border: 1px solid var(--border, #d1d5db);
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: var(--surface, #fff);
-  color: var(--text-primary, #374151);
+  background: var(--surface);
+  color: var(--text-primary);
   font-size: 0.88rem;
   font-weight: 500;
   cursor: pointer;
   transition: background 0.15s;
 
   &:hover {
-    background: var(--surface-alt, #f3f4f6);
+    background: var(--surface-secondary);
   }
 }
 
@@ -243,15 +243,15 @@
   padding: 8px 18px;
   border: none;
   border-radius: 8px;
-  background: #dc2626;
-  color: #fff;
+  background: var(--error);
+  color: var(--text-on-primary);
   font-size: 0.88rem;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s, opacity 0.15s;
 
   &:hover:not(:disabled) {
-    background: #b91c1c;
+    background: var(--error-dark);
   }
 
   &:disabled {
@@ -264,14 +264,14 @@
   padding: 8px 18px;
   border: none;
   border-radius: 8px;
-  background: #2563eb;
-  color: #fff;
+  background: var(--info);
+  color: var(--text-on-primary);
   font-size: 0.88rem;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s;
 
   &:hover {
-    background: #1d4ed8;
+    background: var(--info-dark);
   }
 }

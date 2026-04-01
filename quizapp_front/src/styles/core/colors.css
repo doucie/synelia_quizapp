@@ -79,6 +79,7 @@
 /* Dark Mode Variables */
 .dark-mode {
   --background: #0F172A;
+  --background-rgb: 15, 23, 42;
   --surface: #1E293B;
   --surface-secondary: #283649;
   --surface-variant: #334155;

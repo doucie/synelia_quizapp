@@ -48,6 +48,13 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
     this.editUser(item);
   }
 
+  saveFromDetail(data: any): void {
+    this.userService.update(data.id, data).subscribe({
+      next: () => { this.selectedItem.set(data); this.loadUsers(); this.notificationService.success('Succès', 'Utilisateur modifié'); },
+      error: () => { this.notificationService.error('Erreur', 'Erreur lors de la modification'); }
+    });
+  }
+
   deleteFromDetail(item: any): void {
     this.closeDetailPanel();
     this.deleteUser(item);
