@@ -1,7 +1,11 @@
-import { Component, OnInit, OnDestroy, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
 import { CommonModule, NgIf, NgFor } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { EntityDetailPanelComponent, DetailField } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
+import { DependencyPopupComponent } from '../../../../../shared/dependency-popup/dependency-popup';
+import { DashboardStatsService } from '../../../../../core/services/dashboard-stats.service';
+import { DependencyInfo } from '../../../../../shared/models/interfaces';
 import { Router, ActivatedRoute } from '@angular/router';
 
 import { SpecialityService, Speciality, SpecialitySearchCriteria, PagedResponse } from '../../../../../core/services/speciality.service';
@@ -12,7 +16,7 @@ import { AuthService } from '../../../../../core/services/auth/auth.service';
 @Component({
   selector: 'app-entities-specialities',
   standalone: true,
-  imports: [CommonModule, NgIf, NgFor, FormsModule],
+  imports: [CommonModule, NgIf, NgFor, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent],
   templateUrl: './entities-specialities.html',
   styleUrl: './entities-specialities.scss'
 })
@@ -21,6 +25,36 @@ export class EntitiesSpecialitiesComponent implements OnInit, OnDestroy {
   Math = Math;
   
   private destroy$ = new Subject<void>();
+
+  // Detail panel
+  selectedItem = signal<any>(null);
+  showDetailPanel = signal<boolean>(false);
+  detailFields: DetailField[] = [];
+
+  selectItem(item: any): void {
+    this.selectedItem.set(item);
+    this.showDetailPanel.set(true);
+  }
+
+  closeDetailPanel(): void {
+    this.showDetailPanel.set(false);
+    this.selectedItem.set(null);
+  }
+
+  editFromDetail(item: any): void {
+    this.closeDetailPanel();
+    this.editSpeciality(item);
+  }
+
+  deleteFromDetail(item: any): void {
+    this.closeDetailPanel();
+    this.deleteSpeciality(item);
+  }
+
+  restoreFromDetail(item: any): void {
+    this.closeDetailPanel();
+    this.restoreSpeciality(item);
+  }
   private loadingTimeout: any;
   
   // Signaux pour la réactivité
@@ -58,6 +92,26 @@ export class EntitiesSpecialitiesComponent implements OnInit, OnDestroy {
   
   // État de la popup de confirmation
   showDeleteConfirmation = false;
+  // -- D�pendances FK ---------------------------
+  private depService = inject(DashboardStatsService);
+  dependencyInfo = signal<DependencyInfo | null>(null);
+  showDependencyPopup = signal<boolean>(false);
+  dependencyMode = signal<'delete' | 'restore'>('delete');
+
+  closeDependencyPopup(): void {
+    this.showDependencyPopup.set(false);
+    this.dependencyInfo.set(null);
+  }
+
+  confirmDependencyAction(): void {
+    const mode = this.dependencyMode();
+    this.closeDependencyPopup();
+    if (mode === 'delete') {
+      this.showDeleteConfirmation = true;
+    } else {
+      this.showRestoreConfirmation.set(true);
+    }
+  }
   specialityToDelete: Speciality | null = null;
   
   // État de la popup de restauration
@@ -560,7 +614,18 @@ export class EntitiesSpecialitiesComponent implements OnInit, OnDestroy {
    */
   deleteSpeciality(speciality: Speciality) {
     this.specialityToDelete = speciality;
-    this.showDeleteConfirmation = true;
+    this.depService.checkDependencies('specialities', speciality.id).subscribe({
+      next: (info) => {
+        if (info.totalDependencies > 0) {
+          this.dependencyInfo.set(info);
+          this.dependencyMode.set('delete');
+          this.showDependencyPopup.set(true);
+        } else {
+          this.showDeleteConfirmation = true;
+        }
+      },
+      error: () => this.showDeleteConfirmation = true
+    });
   }
 
   /**
@@ -609,7 +674,18 @@ export class EntitiesSpecialitiesComponent implements OnInit, OnDestroy {
    */
   restoreSpeciality(speciality: Speciality) {
     this.specialityToRestore.set(speciality);
-    this.showRestoreConfirmation.set(true);
+    this.depService.checkParent('specialities', speciality.id).subscribe({
+      next: (info) => {
+        if (info.deletedParents && info.deletedParents.length > 0) {
+          this.dependencyInfo.set(info);
+          this.dependencyMode.set('restore');
+          this.showDependencyPopup.set(true);
+        } else {
+          this.showRestoreConfirmation.set(true);
+        }
+      },
+      error: () => this.showRestoreConfirmation.set(true)
+    });
   }
 
   /**

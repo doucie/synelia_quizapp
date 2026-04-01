@@ -351,6 +351,56 @@
   border-top: 1px solid var(--border);
 }
 
+/* Admin toggle in sidebar */
+.sidebar-admin-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.625rem 0.75rem;
+  margin-bottom: 0.75rem;
+  background: var(--surface-variant);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  transition: var(--transition);
+
+  &:hover {
+    border-color: var(--primary);
+  }
+
+  .admin-toggle-label {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    user-select: none;
+  }
+}
+
+.sidebar-admin-toggle-collapsed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin: 0 auto 0.75rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-variant);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+
+  &:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+
+  &.active {
+    background: var(--primary);
+    color: var(--text-on-primary);
+    border-color: var(--primary);
+  }
+}
+
 .user-card {
   display: flex;
   align-items: center;

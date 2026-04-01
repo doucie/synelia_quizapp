@@ -1,0 +1,136 @@
+<div class="profile">
+  <h2 class="profile__title">Mon profil</h2>
+
+  <!-- Avatar + basic info card -->
+  <div class="profile__card">
+    <div class="profile__header">
+      <div class="profile__avatar">{{ initials() }}</div>
+      <div class="profile__info">
+        <h3 class="profile__name">{{ user()?.firstName }} {{ user()?.lastName }}</h3>
+        <p class="profile__email">{{ user()?.email }}</p>
+        <span class="role-badge" [ngClass]="getRoleBadgeClass()">{{ getRoleLabel() }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit profile section -->
+  <div class="profile__card">
+    <div class="profile__card-header">
+      <h3>Informations personnelles</h3>
+      <button class="profile__btn profile__btn--outline" (click)="toggleEditMode()">
+        {{ editMode() ? 'Annuler' : 'Modifier' }}
+      </button>
+    </div>
+
+    @if (profileMessage(); as msg) {
+      <div class="profile__alert" [ngClass]="'profile__alert--' + msg.type">{{ msg.text }}</div>
+    }
+
+    @if (!editMode()) {
+      <div class="profile__fields">
+        <div class="profile__field">
+          <span class="profile__field-label">Prénom</span>
+          <span class="profile__field-value">{{ user()?.firstName || '—' }}</span>
+        </div>
+        <div class="profile__field">
+          <span class="profile__field-label">Nom</span>
+          <span class="profile__field-value">{{ user()?.lastName || '—' }}</span>
+        </div>
+        <div class="profile__field">
+          <span class="profile__field-label">Email</span>
+          <span class="profile__field-value">{{ user()?.email || '—' }}</span>
+        </div>
+        <div class="profile__field">
+          <span class="profile__field-label">Rôle</span>
+          <span class="profile__field-value">{{ getRoleLabel() }}</span>
+        </div>
+      </div>
+    } @else {
+      <div class="profile__form">
+        <div class="profile__form-group">
+          <label class="profile__label" for="firstName">Prénom</label>
+          <input id="firstName" class="profile__input" type="text"
+            [ngModel]="profileForm().firstName"
+            (ngModelChange)="profileForm.set({ firstName: $event, lastName: profileForm().lastName })" />
+        </div>
+        <div class="profile__form-group">
+          <label class="profile__label" for="lastName">Nom</label>
+          <input id="lastName" class="profile__input" type="text"
+            [ngModel]="profileForm().lastName"
+            (ngModelChange)="profileForm.set({ firstName: profileForm().firstName, lastName: $event })" />
+        </div>
+        <button class="profile__btn profile__btn--primary" (click)="saveProfile()" [disabled]="profileLoading()">
+          {{ profileLoading() ? 'Enregistrement...' : 'Enregistrer' }}
+        </button>
+      </div>
+    }
+  </div>
+
+  <!-- Password change section -->
+  <div class="profile__card">
+    <div class="profile__card-header">
+      <h3>Changer le mot de passe</h3>
+    </div>
+
+    @if (passwordMessage(); as msg) {
+      <div class="profile__alert" [ngClass]="'profile__alert--' + msg.type">{{ msg.text }}</div>
+    }
+
+    <div class="profile__form">
+      <div class="profile__form-group">
+        <label class="profile__label" for="currentPassword">Mot de passe actuel</label>
+        <div class="profile__input-wrapper">
+          <input id="currentPassword" class="profile__input profile__input--has-toggle"
+            [type]="showCurrentPassword() ? 'text' : 'password'"
+            [ngModel]="passwordForm().currentPassword"
+            (ngModelChange)="passwordForm.set({ currentPassword: $event, newPassword: passwordForm().newPassword, confirmPassword: passwordForm().confirmPassword })" />
+          <button type="button" class="profile__toggle-password" (click)="showCurrentPassword.set(!showCurrentPassword())">
+            @if (showCurrentPassword()) {
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            } @else {
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            }
+          </button>
+        </div>
+      </div>
+
+      <div class="profile__form-group">
+        <label class="profile__label" for="newPassword">Nouveau mot de passe</label>
+        <div class="profile__input-wrapper">
+          <input id="newPassword" class="profile__input profile__input--has-toggle"
+            [type]="showNewPassword() ? 'text' : 'password'"
+            [ngModel]="passwordForm().newPassword"
+            (ngModelChange)="passwordForm.set({ currentPassword: passwordForm().currentPassword, newPassword: $event, confirmPassword: passwordForm().confirmPassword })" />
+          <button type="button" class="profile__toggle-password" (click)="showNewPassword.set(!showNewPassword())">
+            @if (showNewPassword()) {
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            } @else {
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            }
+          </button>
+        </div>
+      </div>
+
+      <div class="profile__form-group">
+        <label class="profile__label" for="confirmPassword">Confirmer le nouveau mot de passe</label>
+        <div class="profile__input-wrapper">
+          <input id="confirmPassword" class="profile__input profile__input--has-toggle"
+            [type]="showConfirmPassword() ? 'text' : 'password'"
+            [ngModel]="passwordForm().confirmPassword"
+            (ngModelChange)="passwordForm.set({ currentPassword: passwordForm().currentPassword, newPassword: passwordForm().newPassword, confirmPassword: $event })" />
+          <button type="button" class="profile__toggle-password" (click)="showConfirmPassword.set(!showConfirmPassword())">
+            @if (showConfirmPassword()) {
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            } @else {
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            }
+          </button>
+        </div>
+      </div>
+
+      <button class="profile__btn profile__btn--primary" (click)="changePassword()" [disabled]="passwordLoading()">
+        {{ passwordLoading() ? 'Modification...' : 'Changer le mot de passe' }}
+      </button>
+    </div>
+  </div>
+</div>

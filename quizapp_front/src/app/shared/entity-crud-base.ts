@@ -1,6 +1,9 @@
-import { signal, computed, OnInit, Directive } from '@angular/core';
+import { signal, computed, inject, OnInit, Directive } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
+import { DetailField } from './entity-detail-panel/entity-detail-panel';
+import { DependencyInfo } from './models/interfaces';
+import { DashboardStatsService } from '../core/services/dashboard-stats.service';
 
 /**
  * Interface minimale pour les entités gérées par le CRUD
@@ -70,6 +73,17 @@ export abstract class EntityCrudBase<
   showDeleteConfirmation = false;
   itemToDelete: T | null = null;
 
+  // ── Panneau de détail ────────────────────────
+  selectedItem = signal<T | null>(null);
+  showDetailPanel = signal<boolean>(false);
+  detailFields: DetailField[] = [];
+
+  // ── Dépendances FK ───────────────────────────
+  dependencyInfo = signal<DependencyInfo | null>(null);
+  showDependencyPopup = signal<boolean>(false);
+  dependencyMode = signal<'delete' | 'restore'>('delete');
+  private depService = inject(DashboardStatsService);
+
   // ── Computed ─────────────────────────────────
   hasPreviousPage = computed(() => this.currentPage() > 0);
   hasNextPage = computed(() => this.currentPage() < this.totalPages() - 1);
@@ -80,6 +94,8 @@ export abstract class EntityCrudBase<
   protected abstract readonly pageSizeStorageKey: string;
   /** Nom de l'entité (pour les logs d'erreur) */
   protected abstract readonly entityName: string;
+  /** Type d'entité pour l'API dependency-check (ex: 'departments', 'questions') */
+  protected abstract readonly entityTypeApi: string;
   /** Router injecté par le composant enfant */
   protected abstract readonly router: Router;
 
@@ -290,7 +306,20 @@ export abstract class EntityCrudBase<
   // ── Suppression ──────────────────────────────
   confirmDelete(item: T): void {
     this.itemToDelete = item;
-    this.showDeleteConfirmation = true;
+    if (!item.id) { this.showDeleteConfirmation = true; return; }
+
+    this.depService.checkDependencies(this.entityTypeApi, item.id).subscribe({
+      next: (info) => {
+        if (info.totalDependencies > 0) {
+          this.dependencyInfo.set(info);
+          this.dependencyMode.set('delete');
+          this.showDependencyPopup.set(true);
+        } else {
+          this.showDeleteConfirmation = true;
+        }
+      },
+      error: () => this.showDeleteConfirmation = true
+    });
   }
 
   cancelDelete(): void {
@@ -316,15 +345,27 @@ export abstract class EntityCrudBase<
   deleteFromEdit(): void {
     if (this.editFormData.id) {
       this.closeEditDialog();
-      this.itemToDelete = this.editFormData;
-      this.showDeleteConfirmation = true;
+      this.confirmDelete(this.editFormData);
     }
   }
 
   // ── Restauration ─────────────────────────────
   confirmRestore(item: T): void {
     this.itemToRestore.set(item);
-    this.showRestoreConfirmation.set(true);
+    if (!item.id) { this.showRestoreConfirmation.set(true); return; }
+
+    this.depService.checkParent(this.entityTypeApi, item.id).subscribe({
+      next: (info) => {
+        if (info.deletedParents && info.deletedParents.length > 0) {
+          this.dependencyInfo.set(info);
+          this.dependencyMode.set('restore');
+          this.showDependencyPopup.set(true);
+        } else {
+          this.showRestoreConfirmation.set(true);
+        }
+      },
+      error: () => this.showRestoreConfirmation.set(true)
+    });
   }
 
   cancelRestore(): void {
@@ -346,5 +387,46 @@ export abstract class EntityCrudBase<
         }
       });
     }
+  }
+
+  // ── Popup dépendances ────────────────────────
+  closeDependencyPopup(): void {
+    this.showDependencyPopup.set(false);
+    this.dependencyInfo.set(null);
+  }
+
+  confirmDependencyAction(): void {
+    const mode = this.dependencyMode();
+    this.closeDependencyPopup();
+    if (mode === 'delete') {
+      this.showDeleteConfirmation = true;
+    } else {
+      this.showRestoreConfirmation.set(true);
+    }
+  }
+
+  // ── Panneau de détail ────────────────────────
+  selectItem(item: T): void {
+    this.selectedItem.set(item);
+    this.showDetailPanel.set(true);
+  }
+
+  closeDetailPanel(): void {
+    this.showDetailPanel.set(false);
+  }
+
+  editFromDetail(item: T): void {
+    this.closeDetailPanel();
+    this.openEditDialog(item);
+  }
+
+  deleteFromDetail(item: T): void {
+    this.closeDetailPanel();
+    this.confirmDelete(item);
+  }
+
+  restoreFromDetail(item: T): void {
+    this.closeDetailPanel();
+    this.confirmRestore(item);
   }
 }

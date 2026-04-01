@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { SafeHtmlPipe } from '../../../pipes/safe-html.pipe';
 import { AuthService } from '../../../core/services/auth/auth.service';
+import { DashboardStatsService } from '../../../core/services/dashboard-stats.service';
 
 interface EntityInfo {
   name: string;
@@ -31,7 +32,8 @@ export class EntitiesComponent implements OnInit {
   constructor(
     private router: Router,
     private route: ActivatedRoute,
-    private authService: AuthService
+    private authService: AuthService,
+    private statsService: DashboardStatsService
   ) {}
 
   // Liste des entités disponibles dans la base de données
@@ -134,15 +136,6 @@ export class EntitiesComponent implements OnInit {
       iconType: 'svg',
       route: '/dashboard/entities/campaign-crud',
       color: '#DC2626'
-    },
-    {
-      name: 'campaign-questions',
-      displayName: 'Questions Campagne',
-      description: 'Association des questions aux campagnes',
-      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9h-4v4h-2v-4H9V9h4V5h2v4h4v2z"/></svg>',
-      iconType: 'svg',
-      route: '/dashboard/entities/campaign-questions',
-      color: '#B91C1C'
     },
     {
       name: 'candidate-answers',
@@ -254,24 +247,24 @@ export class EntitiesComponent implements OnInit {
   }
 
   /**
-   * Charge le nombre d'enregistrements pour chaque entité
+   * Charge le nombre d'enregistrements pour chaque entité via un seul appel API
    */
-  private async loadEntityCounts(): Promise<void> {
+  private loadEntityCounts(): void {
     this.loading.set(true);
-    
-    try {
-      // TODO: Implémenter l'appel API pour récupérer les compteurs
-      // Pour l'instant, on simule des données
-      setTimeout(() => {
+
+    this.statsService.getCounts().subscribe({
+      next: (counts) => {
         this.entities.forEach(entity => {
-          entity.count = Math.floor(Math.random() * 100) + 1;
+          if (counts[entity.name] !== undefined) {
+            entity.count = counts[entity.name] || 0;
+          }
         });
         this.loading.set(false);
-      }, 1000);
-    } catch (error) {
-      console.error('Erreur lors du chargement des compteurs:', error);
-      this.loading.set(false);
-    }
+      },
+      error: () => {
+        this.loading.set(false);
+      }
+    });
   }
 
   /**

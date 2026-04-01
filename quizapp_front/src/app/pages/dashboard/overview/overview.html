@@ -6,48 +6,44 @@
     </div>
     
     <div class="stats-grid">
-      <div class="stat-card">
+      <div class="stat-card" [class.stat-card--loading]="statsLoading()">
         <svg class="stat-icon" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
         </svg>
         <div class="stat-content">
-          <div class="stat-number">24</div>
-          <div class="stat-label">Candidats actifs</div>
+          <div class="stat-number">{{ candidatesCount() }}</div>
+          <div class="stat-label">Candidatures</div>
         </div>
-        <div class="stat-trend positive">+12%</div>
       </div>
       
-      <div class="stat-card">
+      <div class="stat-card" [class.stat-card--loading]="statsLoading()">
         <svg class="stat-icon" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
         </svg>
         <div class="stat-content">
-          <div class="stat-number">8</div>
-          <div class="stat-label">Entretiens prévus</div>
+          <div class="stat-number">{{ interviewsCount() }}</div>
+          <div class="stat-label">Entretiens</div>
         </div>
-        <div class="stat-trend neutral">=</div>
       </div>
       
-      <div class="stat-card">
+      <div class="stat-card" [class.stat-card--loading]="statsLoading()">
         <svg class="stat-icon" viewBox="0 0 24 24" fill="currentColor">
           <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
         </svg>
         <div class="stat-content">
-          <div class="stat-number">15</div>
+          <div class="stat-number">{{ evaluationsCount() }}</div>
           <div class="stat-label">Évaluations</div>
         </div>
-        <div class="stat-trend positive">+3</div>
       </div>
       
-      <div class="stat-card">
+      <div class="stat-card" [class.stat-card--loading]="statsLoading()">
         <svg class="stat-icon" viewBox="0 0 24 24" fill="currentColor">
           <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
         </svg>
         <div class="stat-content">
-          <div class="stat-number">6</div>
-          <div class="stat-label">Recrutements finalisés</div>
+          <div class="stat-number">{{ decisionsCount() }}</div>
+          <div class="stat-label">Décisions</div>
         </div>
-        <div class="stat-trend positive">+2</div>
       </div>
     </div>
   </div>

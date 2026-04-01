@@ -253,7 +253,7 @@
         </thead>
         <tbody>
           <ng-container *ngFor="let department of departments(); trackBy: trackByDepartmentId">
-            <tr [class.row-deleted]="department.isDeleted">
+            <tr [class.row-deleted]="department.isDeleted" (click)="selectItem(department)" style="cursor: pointer;">
               <td>
                 <span class="cell-id">#{{ department.id }}</span>
               </td>
@@ -271,7 +271,7 @@
                   <span style="color: var(--text-secondary);">-</span>
                 </ng-template>
               </td>
-              <td class="actions-cell">
+              <td class="actions-cell" (click)="$event.stopPropagation()">
                 <div class="actions-menu">
                   <!-- Boutons normaux pour les départements non supprimés -->
                   <ng-container *ngIf="!department.isDeleted">
@@ -992,3 +992,23 @@
     </div>
   </div>
 </div>
+
+<!-- Entity Detail Panel -->
+<app-entity-detail-panel
+  [entity]="selectedItem()"
+  [fields]="detailFields"
+  [title]="'Département'"
+  [isOpen]="showDetailPanel()"
+  (closePanel)="closeDetailPanel()"
+  (editItem)="editFromDetail($event)"
+  (deleteItem)="deleteFromDetail($event)"
+  (restoreItem)="restoreFromDetail($event)">
+</app-entity-detail-panel>
+
+<app-dependency-popup
+  [info]="dependencyInfo()!"
+  [mode]="dependencyMode()"
+  [visible]="showDependencyPopup()"
+  (cancel)="closeDependencyPopup()"
+  (confirm)="confirmDependencyAction()">
+</app-dependency-popup>

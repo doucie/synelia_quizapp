@@ -1,0 +1,104 @@
+@if (visible()) {
+  <div class="dependency-overlay" (click)="onOverlayClick()">
+    <div class="dependency-modal" (click)="$event.stopPropagation()">
+
+      <!-- Header -->
+      <div class="modal-header" [class.warning]="info().level === 'WARNING'" [class.critical]="info().level === 'CRITICAL'" [class.restore]="mode() === 'restore'">
+        <div class="modal-icon">
+          @if (mode() === 'delete') {
+            @if (info().level === 'CRITICAL') {
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            } @else {
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            }
+          } @else {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          }
+        </div>
+        <h3>
+          @if (mode() === 'delete') {
+            @if (info().level === 'CRITICAL') {
+              Suppression critique
+            } @else {
+              Dépendances détectées
+            }
+          } @else {
+            Parent supprimé détecté
+          }
+        </h3>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body">
+        @if (mode() === 'delete') {
+          <p class="description">
+            Cette entité possède <strong>{{ info().totalDependencies }}</strong> élément(s) dépendant(s) :
+          </p>
+          <div class="dep-list">
+            @for (dep of info().dependencies; track dep.entityType) {
+              <div class="dep-item" [class.critical]="dep.critical">
+                <span class="dep-label">{{ dep.label }}</span>
+                <span class="dep-count" [class.critical]="dep.critical">{{ dep.count }}</span>
+                @if (dep.critical) {
+                  <span class="dep-badge">critique</span>
+                }
+              </div>
+            }
+          </div>
+
+          @if (info().level === 'CRITICAL') {
+            <div class="warning-box critical">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <span>Cette entité est liée à des <strong>données de candidat</strong>. La suppression peut entraîner une perte d'intégrité des données.</span>
+            </div>
+            <label class="critical-checkbox">
+              <input type="checkbox" [(ngModel)]="criticalConfirmed" />
+              Je comprends les risques et je confirme la suppression
+            </label>
+          } @else {
+            <div class="warning-box warning">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <span>Les éléments dépendants ne seront pas supprimés automatiquement. Ils deviendront orphelins.</span>
+            </div>
+          }
+
+        } @else {
+          <!-- Restore mode -->
+          <p class="description">
+            L'entité que vous souhaitez restaurer a un ou plusieurs parent(s) supprimé(s) :
+          </p>
+          <div class="dep-list">
+            @for (parent of info().deletedParents; track parent.parentId) {
+              <div class="dep-item parent">
+                <span class="dep-label">{{ parent.label }}</span>
+                <span class="dep-name">{{ parent.parentName }}</span>
+              </div>
+            }
+          </div>
+          <div class="warning-box warning">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span>Restaurer cette entité sans restaurer son parent pourrait causer des incohérences.</span>
+          </div>
+        }
+      </div>
+
+      <!-- Actions -->
+      <div class="modal-actions">
+        <button class="btn-cancel" (click)="onCancel()">Annuler</button>
+        @if (mode() === 'delete') {
+          <button
+            class="btn-confirm-danger"
+            [disabled]="info().level === 'CRITICAL' && !criticalConfirmed"
+            (click)="onConfirm()">
+            Supprimer quand même
+          </button>
+        } @else {
+          <button class="btn-confirm-restore" (click)="onConfirm()">
+            Restaurer quand même
+          </button>
+        }
+      </div>
+
+    </div>
+  </div>
+}

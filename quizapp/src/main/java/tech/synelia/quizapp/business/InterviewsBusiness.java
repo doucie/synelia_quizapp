@@ -63,6 +63,8 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 	@Autowired
 	private ParamsUtils paramsUtils;
 	@Autowired
+	private EmailTemplateBusiness emailTemplateBusiness;
+	@Autowired
 	private FunctionalError functionalError;
 	@Autowired
 	private TechnicalError technicalError;
@@ -582,19 +584,36 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 			: "";
 		
 		// Sujet de l'email
-		String subject = "Convocation à un entretien - " + campaign.getCampaignTitle();
-		
+		String subject;
 		// Corps de l'email
-		String contenu = "Madame, Monsieur,<br/><br/>";
-		contenu += "Nous avons le plaisir de vous informer que votre candidature pour le poste de \"" + campaign.getCampaignTitle() + "\" a retenu notre attention.<br/><br/>";
-		contenu += "Dans le cadre de notre processus de recrutement, nous souhaitons vous rencontrer pour un entretien " + interviewTypeText + ".<br/><br/>";
-		contenu += "Détails de l'entretien :<br/><br/>";
-		contenu += "Date et heure : " + interviewDateTime + "<br/>";
-		contenu += locationOrLink + additionalNote + "<br/><br/>";
-		contenu += "Nous vous prions de bien vouloir confirmer votre disponibilité en répondant à cet email.<br/><br/>";
-		contenu += "Nous restons à votre disposition pour toute information complémentaire.<br/><br/>";
-		contenu += "Cordialement,<br/>";
-		contenu += "L'équipe de recrutement";
+		String contenu;
+
+		// Charger le template depuis la base de données
+		EmailTemplate emailTemplate = emailTemplateBusiness.findByKey("interview_convocation");
+		if (emailTemplate != null && emailTemplate.getIsActive() != null && emailTemplate.getIsActive()) {
+			Map<String, String> vars = new HashMap<>();
+			vars.put("first_name", application.getCandidateFirstName());
+			vars.put("last_name", application.getCandidateLastName());
+			vars.put("campaign_title", campaign.getCampaignTitle());
+			vars.put("interview_date", interviewDateTime);
+			vars.put("interview_type_text", interviewTypeText);
+			vars.put("location_or_link", locationOrLink);
+			vars.put("additional_note", additionalNote);
+			subject = emailTemplateBusiness.renderTemplate(emailTemplate.getSubjectTemplate(), vars);
+			contenu = emailTemplateBusiness.renderTemplate(emailTemplate.getBodyTemplate(), vars);
+		} else {
+			subject = "Convocation à un entretien - " + campaign.getCampaignTitle();
+			contenu = "Madame, Monsieur,<br/><br/>";
+			contenu += "Nous avons le plaisir de vous informer que votre candidature pour le poste de \"" + campaign.getCampaignTitle() + "\" a retenu notre attention.<br/><br/>";
+			contenu += "Dans le cadre de notre processus de recrutement, nous souhaitons vous rencontrer pour un entretien " + interviewTypeText + ".<br/><br/>";
+			contenu += "Détails de l'entretien :<br/><br/>";
+			contenu += "Date et heure : " + interviewDateTime + "<br/>";
+			contenu += locationOrLink + additionalNote + "<br/><br/>";
+			contenu += "Nous vous prions de bien vouloir confirmer votre disponibilité en répondant à cet email.<br/><br/>";
+			contenu += "Nous restons à votre disposition pour toute information complémentaire.<br/><br/>";
+			contenu += "Cordialement,<br/>";
+			contenu += "L'équipe de recrutement";
+		}
 		
 		// Préparer le contexte Thymeleaf
 		context = new Context();

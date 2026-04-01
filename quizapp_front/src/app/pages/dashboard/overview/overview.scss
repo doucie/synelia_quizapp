@@ -53,6 +53,18 @@
     transform: translateY(-4px);
     box-shadow: 0 8px 30px var(--shadow-medium);
   }
+
+  &--loading .stat-number {
+    background: var(--border);
+    color: transparent;
+    border-radius: 4px;
+    animation: shimmer 1.5s infinite;
+  }
+}
+
+@keyframes shimmer {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
 }
 
 .stat-icon {
@@ -78,23 +90,6 @@
     margin: 0.25rem 0 0 0;
     font-size: 0.875rem;
     font-weight: 500;
-  }
-}
-
-.stat-trend {
-  font-size: 0.875rem;
-  font-weight: 600;
-  padding: 0.25rem 0.5rem;
-  border-radius: 8px;
-  
-  &.positive {
-    color: var(--success);
-    background: rgba(var(--success-rgb), 0.1);
-  }
-  
-  &.neutral {
-    color: var(--text-secondary);
-    background: var(--surface);
   }
 }
 

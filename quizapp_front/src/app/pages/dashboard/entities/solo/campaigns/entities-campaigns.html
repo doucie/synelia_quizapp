@@ -253,7 +253,7 @@
         </thead>
         <tbody>
           <ng-container *ngFor="let campaign of campaigns(); trackBy: trackByCampaignId">
-            <tr [class.row-deleted]="campaign.isDeleted">
+            <tr [class.row-deleted]="campaign.isDeleted" (click)="selectItem(campaign)" style="cursor: pointer;">
               <td>
                 <span class="cell-id">#{{ campaign.id }}</span>
               </td>
@@ -271,7 +271,7 @@
                   <span style="color: var(--text-secondary);">-</span>
                 </ng-template>
               </td>
-              <td class="actions-cell">
+              <td class="actions-cell" (click)="$event.stopPropagation()">
                 <div class="actions-menu">
                   <!-- Boutons normaux pour les campagnes non supprimés -->
                   <ng-container *ngIf="!campaign.isDeleted">
@@ -295,12 +295,12 @@
                         <path d="M14 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                       </svg>
                     </button>
-                    <!-- Bouton d'expansion pour afficher les spécialités -->
+                    <!-- Bouton d'expansion pour afficher les enfants -->
                     <button 
                       class="action-btn secondary" 
                       (click)="toggleCampaignExpansion(campaign.id)"
                       [class.expanded]="isCampaignExpanded(campaign.id)"
-                      title="Afficher les spécialités">
+                      title="Afficher les détails">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path 
                           d="M6 9L12 15L18 9" 
@@ -324,12 +324,12 @@
                         <path d="M12 3L8 7L12 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                       </svg>
                     </button>
-                    <!-- Bouton d'expansion pour afficher les spécialités -->
+                    <!-- Bouton d'expansion -->
                     <button 
                       class="action-btn secondary" 
                       (click)="toggleCampaignExpansion(campaign.id)"
                       [class.expanded]="isCampaignExpanded(campaign.id)"
-                      title="Afficher les spécialités">
+                      title="Afficher les détails">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path 
                           d="M6 9L12 15L18 9" 
@@ -345,95 +345,71 @@
               </td>
             </tr>
             
-            <!-- Ligne d'expansion pour afficher les spécialités -->
+            <!-- Ligne d'expansion avec onglets enfants -->
             <tr *ngIf="isCampaignExpanded(campaign.id)" class="expansion-row">
               <td colspan="5" class="expansion-content">
-                <div class="specialities-container">
-                  <div class="expansion-header">
-                    <h4>Questions de la campagne "{{ campaign.campaignName }}"</h4>
-                    <div class="header-actions">
-                      <span class="specialities-count">
-                        {{ getCampaignQuestions(campaign.id).length || 0 }} question(s)
-                      </span>
-                      <button 
-                        class="btn-add-speciality" 
-                        (click)="createQuestionInCampaign(campaign)"
-                        title="Ajouter une question">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M12 5V19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                          <path d="M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                        Ajouter une question
-                      </button>
-                    </div>
+                <div class="children-container">
+                  <!-- Onglets -->
+                  <div class="children-tabs">
+                    <button class="children-tab" [class.active]="getChildTab(campaign.id) === 'forms'" (click)="setChildTab(campaign.id, 'forms')">
+                      Formulaires <span class="tab-count">{{ getCampaignForms(campaign.id).length }}</span>
+                    </button>
+                    <button class="children-tab" [class.active]="getChildTab(campaign.id) === 'tokens'" (click)="setChildTab(campaign.id, 'tokens')">
+                      Tokens Source <span class="tab-count">{{ getCampaignSourceTokens(campaign.id).length }}</span>
+                    </button>
+                    <button class="children-tab" [class.active]="getChildTab(campaign.id) === 'permissions'" (click)="setChildTab(campaign.id, 'permissions')">
+                      Permissions <span class="tab-count">{{ getCampaignPermissions(campaign.id).length }}</span>
+                    </button>
                   </div>
-                  
-                  <!-- État de chargement des questions -->
-                  <div *ngIf="isLoadingSpecialities(campaign.id)" class="loading-specialities">
+
+                  <!-- Chargement -->
+                  <div *ngIf="isLoadingChildren(campaign.id)" class="loading-children">
                     <div class="loading-spinner-small"></div>
-                    <span>Chargement des questions...</span>
+                    <span>Chargement...</span>
                   </div>
-                  
-                  <!-- Liste des questions -->
-                  <div *ngIf="!isLoadingSpecialities(campaign.id) && getCampaignQuestions(campaign.id).length > 0" class="specialities-list">
-                    <div 
-                      *ngFor="let question of getCampaignQuestions(campaign.id); trackBy: trackByQuestionId" 
-                      class="speciality-item"
-                      [class.deleted]="question.isDeleted">
-                      <div class="speciality-header">
-                        <div class="speciality-id-wrapper">
-                          <span class="speciality-id">#{{ question.id }}</span>
-                        </div>
-                        <div class="speciality-actions">
-                          <button 
-                            class="btn-action btn-edit" 
-                            (click)="editQuestionInCampaign(question, campaign)"
-                            title="Modifier la question">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M12 20H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                              <path d="M16.5 3.5A2.12 2.12 0 0 1 19 6L7 18L3 19L4 15L16.5 3.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                          </button>
-                        <button 
-                          *ngIf="!question.isDeleted"
-                          class="btn-action btn-delete" 
-                          (click)="deleteQuestionInCampaign(question, campaign)"
-                          title="Supprimer la question">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M10 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M14 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                          </svg>
-                        </button>
-                        <button 
-                          *ngIf="question.isDeleted"
-                          class="btn-action btn-restore" 
-                          (click)="restoreQuestionInCampaign(question, campaign)"
-                          title="Restaurer la question">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M3 12A9 9 0 1 0 12 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M12 3L8 7L12 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                          </svg>
-                        </button>
-                      </div>
-                      </div>
-                      <div class="speciality-info">
-                        <span class="speciality-name">{{ question.questionText }}</span>
-                        <span class="speciality-description" *ngIf="question.questionType">
-                          - Type: {{ question.questionType }}
-                        </span>
-                      </div>
+
+                  <!-- Tab: Formulaires -->
+                  <div *ngIf="!isLoadingChildren(campaign.id) && getChildTab(campaign.id) === 'forms'" class="children-list">
+                    <div *ngIf="getCampaignForms(campaign.id).length === 0" class="no-children">
+                      <span>Aucun formulaire pour cette campagne</span>
+                    </div>
+                    <div *ngFor="let form of getCampaignForms(campaign.id); trackBy: trackByChildId" class="child-item" [class.deleted]="form.isDeleted">
+                      <span class="child-id">#{{ form.id }}</span>
+                      <span class="child-name">{{ form.formName }}</span>
+                      <span class="child-badge" [class.active]="form.isActive" [class.inactive]="!form.isActive">
+                        {{ form.isActive ? 'Actif' : 'Inactif' }}
+                      </span>
                     </div>
                   </div>
-                  
-                  <!-- État vide pour les questions -->
-                  <div *ngIf="!isLoadingSpecialities(campaign.id) && !getCampaignQuestions(campaign.id).length" class="no-specialities">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                      <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
-                    </svg>
-                    <span>Aucune question trouvée pour cette campagne</span>
+
+                  <!-- Tab: Tokens Source -->
+                  <div *ngIf="!isLoadingChildren(campaign.id) && getChildTab(campaign.id) === 'tokens'" class="children-list">
+                    <div *ngIf="getCampaignSourceTokens(campaign.id).length === 0" class="no-children">
+                      <span>Aucun token source pour cette campagne</span>
+                    </div>
+                    <div *ngFor="let token of getCampaignSourceTokens(campaign.id); trackBy: trackByChildId" class="child-item" [class.deleted]="token.isDeleted">
+                      <span class="child-id">#{{ token.id }}</span>
+                      <span class="child-name">{{ token.sourceTokenName }}</span>
+                      <span class="child-token">{{ token.tokenString }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Tab: Permissions -->
+                  <div *ngIf="!isLoadingChildren(campaign.id) && getChildTab(campaign.id) === 'permissions'" class="children-list">
+                    <div *ngIf="getCampaignPermissions(campaign.id).length === 0" class="no-children">
+                      <span>Aucune permission pour cette campagne</span>
+                    </div>
+                    <div *ngFor="let perm of getCampaignPermissions(campaign.id); trackBy: trackByChildId" class="child-item" [class.deleted]="perm.isDeleted">
+                      <span class="child-id">#{{ perm.id }}</span>
+                      <span class="child-name">{{ perm.userEmail || 'User #' + perm.userId }}</span>
+                      <div class="child-permissions">
+                        <span class="perm-badge" [class.granted]="perm.canUpdate">Modifier</span>
+                        <span class="perm-badge" [class.granted]="perm.canDelete">Supprimer</span>
+                        <span class="perm-badge" [class.granted]="perm.canEvaluate">Évaluer</span>
+                        <span class="perm-badge" [class.granted]="perm.canPlanify">Planifier</span>
+                        <span class="perm-badge" [class.granted]="perm.isAdmin">Admin</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </td>
@@ -688,6 +664,15 @@
             rows="3"
           ></textarea>
         </div>
+        <div class="form-group">
+          <label class="form-label">Spécialité</label>
+          <select class="form-input" [(ngModel)]="editFormData.specialitiesId" name="specialitiesId">
+            <option [ngValue]="undefined">-- Sélectionner --</option>
+            @for (s of allSpecialities(); track s.id) {
+              <option [ngValue]="s.id">{{ s.nom }}</option>
+            }
+          </select>
+        </div>
       </form>
     </div>
     
@@ -759,6 +744,15 @@
             rows="3"
           ></textarea>
         </div>
+        <div class="form-group">
+          <label class="form-label">Spécialité</label>
+          <select class="form-input" [(ngModel)]="createFormData.specialitiesId" name="specialitiesId">
+            <option [ngValue]="undefined">-- Sélectionner --</option>
+            @for (s of allSpecialities(); track s.id) {
+              <option [ngValue]="s.id">{{ s.nom }}</option>
+            }
+          </select>
+        </div>
       </form>
     </div>
 
@@ -782,213 +776,24 @@
   </div>
 </div>
 
-<!-- Modal de création de spécialité -->
-<div class="confirmation-overlay" *ngIf="showSpecialityCreateDialog()" (click)="cancelCreateSpeciality()">
-  <div class="edit-modal" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <h3>Ajouter une spécialité</h3>
-      <button class="btn-close" (click)="cancelCreateSpeciality()" aria-label="Fermer">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </button>
-    </div>
+<!-- Entity Detail Panel -->
+<app-entity-detail-panel
+  [entity]="selectedItem()"
+  [fields]="detailFields"
+  [title]="'Campagne'"
+  [isOpen]="showDetailPanel()"
+  (closePanel)="closeDetailPanel()"
+  (editItem)="editFromDetail($event)"
+  (deleteItem)="deleteFromDetail($event)"
+  (restoreItem)="restoreFromDetail($event)">
+</app-entity-detail-panel>
 
-    <div class="modal-content">
-      <form class="edit-form">
-        <!-- Nom -->
-        <div class="form-group">
-          <label for="specialityCreateName" class="form-label required">Nom de la spécialité</label>
-          <input
-            id="specialityCreateName"
-            type="text"
-            class="form-input"
-            [(ngModel)]="specialityCreateFormData.nom"
-            placeholder="Entrez le nom de la spécialité"
-            required
-          />
-        </div>
+<app-dependency-popup
+  [info]="dependencyInfo()!"
+  [mode]="dependencyMode()"
+  [visible]="showDependencyPopup()"
+  (cancel)="closeDependencyPopup()"
+  (confirm)="confirmDependencyAction()">
+</app-dependency-popup>
 
-        <!-- Description -->
-        <div class="form-group">
-          <label for="specialityCreateDescription" class="form-label">Description</label>
-          <textarea
-            id="specialityCreateDescription"
-            class="form-textarea"
-            [(ngModel)]="specialityCreateFormData.description"
-            placeholder="Entrez une description (optionnel)"
-            rows="3"
-          ></textarea>
-        </div>
 
-        <!-- Campagne -->
-        <div class="form-group">
-          <label class="form-label">Campagne</label>
-          <div class="form-input-readonly">
-            {{ currentCampaignForSpeciality()?.campaignName }}
-          </div>
-        </div>
-      </form>
-    </div>
-
-    <div class="modal-footer">
-      <button class="btn-confirm-secondary" (click)="cancelCreateSpeciality()">
-        Annuler
-      </button>
-      <button class="btn-confirm-success" (click)="confirmCreateSpeciality()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        Créer la spécialité
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- Modal de modification de spécialité -->
-<div class="confirmation-overlay" *ngIf="showSpecialityEditDialog()" (click)="cancelEditSpeciality()">
-  <div class="edit-modal" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <h3>Modifier la spécialité</h3>
-      <button class="btn-close" (click)="cancelEditSpeciality()" aria-label="Fermer">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </button>
-    </div>
-
-    <div class="modal-content">
-      <form class="edit-form">
-        <!-- Nom -->
-        <div class="form-group">
-          <label for="specialityEditName" class="form-label required">Nom de la spécialité</label>
-          <input
-            id="specialityEditName"
-            type="text"
-            class="form-input"
-            [(ngModel)]="specialityEditFormData.nom"
-            placeholder="Entrez le nom de la spécialité"
-            required
-          />
-        </div>
-
-        <!-- Description -->
-        <div class="form-group">
-          <label for="specialityEditDescription" class="form-label">Description</label>
-          <textarea
-            id="specialityEditDescription"
-            class="form-textarea"
-            [(ngModel)]="specialityEditFormData.description"
-            placeholder="Entrez une description (optionnel)"
-            rows="3"
-          ></textarea>
-        </div>
-
-        <!-- Campagne -->
-        <div class="form-group">
-          <label class="form-label">Campagne</label>
-          <div class="form-input-readonly">
-            {{ currentCampaignForSpeciality()?.campaignName }}
-          </div>
-        </div>
-      </form>
-    </div>
-
-    <div class="modal-footer">
-      <button class="btn-confirm-secondary" (click)="cancelEditSpeciality()">
-        Annuler
-      </button>
-      <button class="btn-confirm-success" (click)="confirmEditSpeciality()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        Modifier la spécialité
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- Modal de confirmation de suppression de spécialité -->
-<div class="confirmation-overlay" *ngIf="showSpecialityDeleteConfirmation()" (click)="cancelDeleteSpeciality()">
-  <div class="confirmation-modal" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <h3>Confirmer la suppression</h3>
-      <button class="btn-close" (click)="cancelDeleteSpeciality()" aria-label="Fermer">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </button>
-    </div>
-
-    <div class="modal-content">
-      <div class="confirmation-message">
-        <div class="confirmation-icon">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 9V11M12 15H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-        <p>Êtes-vous sûr de vouloir supprimer la spécialité <strong>"{{ specialityToDelete()?.nom }}"</strong> ?</p>
-        <p class="confirmation-warning">Cette action peut être annulée en restaurant la spécialité ultérieurement.</p>
-      </div>
-    </div>
-
-    <div class="modal-footer">
-      <button class="btn-confirm-secondary" (click)="cancelDeleteSpeciality()">
-        Annuler
-      </button>
-      <button class="btn-confirm-danger" (click)="confirmDeleteSpeciality()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M19 7L5 21M21 21H5L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        Supprimer
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- Modal de confirmation de restauration de spécialité -->
-<div class="confirmation-overlay" *ngIf="showSpecialityRestoreConfirmation()" (click)="cancelRestoreSpeciality()">
-  <div class="confirmation-modal" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <h3>Confirmer la restauration</h3>
-      <button class="btn-close" (click)="cancelRestoreSpeciality()" aria-label="Fermer">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </button>
-    </div>
-
-    <div class="modal-content">
-      <div class="confirmation-message">
-        <div class="confirmation-icon">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M21 3v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M8 16H3v5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        <p>Êtes-vous sûr de vouloir restaurer la spécialité <strong>"{{ specialityToRestore()?.nom }}"</strong> ?</p>
-        <p class="confirmation-info">La spécialité redeviendra active et visible dans les listes.</p>
-      </div>
-    </div>
-
-    <div class="modal-footer">
-      <button class="btn-confirm-secondary" (click)="cancelRestoreSpeciality()">
-        Annuler
-      </button>
-      <button class="btn-confirm-success" (click)="confirmRestoreSpeciality()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M21 3v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M8 16H3v5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        Restaurer
-      </button>
-    </div>
-  </div>
-</div>

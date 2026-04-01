@@ -26,6 +26,8 @@ import org.thymeleaf.context.Context;
 import lombok.AllArgsConstructor;
 
 import tech.synelia.quizapp.utils.contract.Response;
+import tech.synelia.quizapp.dao.entity.SmtpConfig;
+import tech.synelia.quizapp.dao.repository.SmtpConfigRepository;
 
 /**
  * BUSINESS factory
@@ -45,6 +47,9 @@ public class HostingUtils {
 	@Autowired
 	private ExceptionUtils exceptionUtils;
 
+	@Autowired
+	private SmtpConfigRepository smtpConfigRepository;
+
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(HostingUtils.class);
 
 	public <T> Response<T> sendEmail(Map<String, String> from, List<Map<String, String>> toRecipients, String subject,
@@ -57,15 +62,56 @@ public class HostingUtils {
 		Response<T> response = new Response<T>();
 		JavaMailSenderImpl javaMailSender = new JavaMailSenderImpl();
 
-		String smtpServer = paramsUtils.getSmtpHost();
-		slf4jLogger.info("SMTP Server: {}, Port: {}", smtpServer, paramsUtils.getSmtpPort());
+		// Try DB-based SMTP config first, fallback to application.properties via ParamsUtils
+		SmtpConfig dbConfig = null;
+		try {
+			dbConfig = smtpConfigRepository.findActiveConfig(true, false);
+		} catch (Exception e) {
+			slf4jLogger.warn("Could not load SMTP config from DB, falling back to application.properties", e);
+		}
+
+		String smtpServer;
+		int smtpPort;
+		String smtpUsername;
+		String smtpPassword;
+		Boolean smtpAuth;
+		Boolean starttlsEnable;
+		Boolean starttlsRequired;
+
+		if (dbConfig != null && dbConfig.getHost() != null) {
+			slf4jLogger.info("Using SMTP config from database (id={})", dbConfig.getId());
+			smtpServer = dbConfig.getHost();
+			smtpPort = dbConfig.getPort() != null ? dbConfig.getPort() : 587;
+			smtpUsername = dbConfig.getUsername();
+			smtpPassword = dbConfig.getPasswordEncrypted();
+			smtpAuth = dbConfig.getSmtpAuth() != null ? dbConfig.getSmtpAuth() : true;
+			starttlsEnable = dbConfig.getStarttlsEnable() != null ? dbConfig.getStarttlsEnable() : true;
+			starttlsRequired = dbConfig.getStarttlsRequired() != null ? dbConfig.getStarttlsRequired() : false;
+			// Override sender info in 'from' if DB config has sender details
+			if (dbConfig.getSenderEmail() != null && !dbConfig.getSenderEmail().isEmpty()) {
+				from.put("email", dbConfig.getSenderEmail());
+				if (dbConfig.getSenderName() != null && !dbConfig.getSenderName().isEmpty()) {
+					from.put("user", dbConfig.getSenderName());
+				}
+			}
+		} else {
+			slf4jLogger.info("Using SMTP config from application.properties");
+			smtpServer = paramsUtils.getSmtpHost();
+			smtpPort = paramsUtils.getSmtpPort();
+			smtpUsername = paramsUtils.getSmtpMailAdresse();
+			smtpPassword = paramsUtils.getSmtpPassword();
+			smtpAuth = true;
+			starttlsEnable = true;
+			starttlsRequired = true;
+		}
+
+		slf4jLogger.info("SMTP Server: {}, Port: {}", smtpServer, smtpPort);
 		
 		if (smtpServer != null) {
-			Boolean auth = false;
 			javaMailSender.setHost(smtpServer);
-			javaMailSender.setPort(paramsUtils.getSmtpPort());
-			javaMailSender.setUsername(paramsUtils.getSmtpMailAdresse());
-			javaMailSender.setPassword(paramsUtils.getSmtpPassword());
+			javaMailSender.setPort(smtpPort);
+			javaMailSender.setUsername(smtpUsername);
+			javaMailSender.setPassword(smtpPassword);
 
 			// ADD NEW CONFIG for "no object DCH for MIME type multipart/mixed" error
 			MailcapCommandMap mc = (MailcapCommandMap) CommandMap.getDefaultCommandMap();
@@ -75,9 +121,8 @@ public class HostingUtils {
 			mc.addMailcap("multipart/*;; x-java-content-handler=com.sun.mail.handlers.multipart_mixed");
 			mc.addMailcap("message/rfc822;; x-java-content- handler=com.sun.mail.handlers.message_rfc822");
 			Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
-			auth = true;
 
-			javaMailSender.setJavaMailProperties(getMailProperties(paramsUtils.getSmtpHost(), auth));
+			javaMailSender.setJavaMailProperties(getMailProperties(smtpServer, smtpAuth, starttlsEnable, starttlsRequired));
 
 			MimeMessage message = javaMailSender.createMimeMessage();
 			try {
@@ -133,12 +178,12 @@ public class HostingUtils {
 		return response;
 	}
 
-	private Properties getMailProperties(String host, Boolean auth) {
+	private Properties getMailProperties(String host, Boolean auth, Boolean starttlsEnable, Boolean starttlsRequired) {
 		Properties properties = new Properties();
 		properties.setProperty("mail.transport.protocol", "smtp");
 		properties.setProperty("mail.smtp.auth", auth.toString());
-		properties.setProperty("mail.smtp.starttls.enable", "true");
-		properties.setProperty("mail.smtp.starttls.required", "true");
+		properties.setProperty("mail.smtp.starttls.enable", starttlsEnable.toString());
+		properties.setProperty("mail.smtp.starttls.required", starttlsRequired.toString());
 		properties.setProperty("mail.debug", "true");
 		if (host.equals("smtp.gmail.com")) {
 			properties.setProperty("mail.smtp.ssl.trust", "smtp.gmail.com");

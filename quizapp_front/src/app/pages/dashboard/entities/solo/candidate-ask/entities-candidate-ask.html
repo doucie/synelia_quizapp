@@ -106,7 +106,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let item of items(); trackBy: trackById" [class.row-deleted]="item.isDeleted">
+          <tr *ngFor="let item of items(); trackBy: trackById" [class.row-deleted]="item.isDeleted" (click)="selectItem(item)" style="cursor: pointer;">
             <td><span class="cell-id">#{{ item.id }}</span></td>
             <td>{{ item.applicationId || '-' }}</td>
             <td>{{ item.requestType || '-' }}</td>
@@ -116,7 +116,7 @@
             <td>{{ item.newPhone || '-' }}</td>
             <td>{{ item.isVerified ? '✓' : '✗' }}</td>
             <td><span class="cell-date">{{ formatDate(item.createdAt) }}</span></td>
-            <td class="actions-cell">
+            <td class="actions-cell" (click)="$event.stopPropagation()">
               <div class="actions-menu">
                 <ng-container *ngIf="!item.isDeleted">
                   <button class="action-btn primary" (click)="openEditDialog(item)" title="Modifier">
@@ -199,7 +199,7 @@
     </div>
     <div class="modal-content">
       <form class="edit-form">
-        <div class="form-group"><label class="form-label">Application ID</label><input type="number" class="form-input" [(ngModel)]="editFormData.applicationId" name="applicationId" /></div>
+        <div class="form-group"><label class="form-label">Candidature</label><select class="form-input" [(ngModel)]="editFormData.applicationId" name="applicationId"><option [ngValue]="undefined">-- Sélectionner --</option>@for (a of allApplications(); track a.id) {<option [ngValue]="a.id">{{ a.candidateEmail }}</option>}</select></div>
         <div class="form-group"><label class="form-label">Type de demande</label><input type="text" class="form-input" [(ngModel)]="editFormData.requestType" name="requestType" /></div>
         <div class="form-group"><label class="form-label">Prénom</label><input type="text" class="form-input" [(ngModel)]="editFormData.firstName" name="firstName" /></div>
         <div class="form-group"><label class="form-label">Nom</label><input type="text" class="form-input" [(ngModel)]="editFormData.lastName" name="lastName" /></div>
@@ -227,7 +227,7 @@
     </div>
     <div class="modal-content">
       <form class="edit-form">
-        <div class="form-group"><label class="form-label">Application ID</label><input type="number" class="form-input" [(ngModel)]="createFormData.applicationId" name="applicationId" /></div>
+        <div class="form-group"><label class="form-label">Candidature</label><select class="form-input" [(ngModel)]="createFormData.applicationId" name="applicationId"><option [ngValue]="undefined">-- Sélectionner --</option>@for (a of allApplications(); track a.id) {<option [ngValue]="a.id">{{ a.candidateEmail }}</option>}</select></div>
         <div class="form-group"><label class="form-label">Type de demande</label><input type="text" class="form-input" [(ngModel)]="createFormData.requestType" name="requestType" /></div>
         <div class="form-group"><label class="form-label">Prénom</label><input type="text" class="form-input" [(ngModel)]="createFormData.firstName" name="firstName" /></div>
         <div class="form-group"><label class="form-label">Nom</label><input type="text" class="form-input" [(ngModel)]="createFormData.lastName" name="lastName" /></div>
@@ -244,3 +244,24 @@
     </div>
   </div>
 </div>
+
+<!-- Entity Detail Panel -->
+<app-entity-detail-panel
+  [entity]="selectedItem()"
+  [fields]="detailFields"
+  [title]="entityName"
+  [isOpen]="showDetailPanel()"
+  (closePanel)="closeDetailPanel()"
+  (editItem)="editFromDetail($event)"
+  (deleteItem)="deleteFromDetail($event)"
+  (restoreItem)="restoreFromDetail($event)">
+</app-entity-detail-panel>
+
+<!-- Popup d�pendances FK -->
+<app-dependency-popup
+  [info]="dependencyInfo()!"
+  [mode]="dependencyMode()"
+  [visible]="showDependencyPopup()"
+  (cancel)="closeDependencyPopup()"
+  (confirm)="confirmDependencyAction()">
+</app-dependency-popup>

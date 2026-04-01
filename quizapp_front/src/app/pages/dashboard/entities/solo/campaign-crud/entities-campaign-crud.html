@@ -106,7 +106,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let item of items(); trackBy: trackById" [class.row-deleted]="item.isDeleted">
+          <tr *ngFor="let item of items(); trackBy: trackById" [class.row-deleted]="item.isDeleted" (click)="selectItem(item)" style="cursor: pointer;">
             <td><span class="cell-id">#{{ item.id }}</span></td>
             <td>{{ item.userId || '-' }}</td>
             <td>{{ item.campaignId || '-' }}</td>
@@ -116,7 +116,7 @@
             <td>{{ item.canEvaluate ? '✓' : '✗' }}</td>
             <td>{{ item.canPlanify ? '✓' : '✗' }}</td>
             <td><span class="cell-date">{{ formatDate(item.createdAt) }}</span></td>
-            <td class="actions-cell">
+            <td class="actions-cell" (click)="$event.stopPropagation()">
               <div class="actions-menu">
                 <ng-container *ngIf="!item.isDeleted">
                   <button class="action-btn primary" (click)="openEditDialog(item)" title="Modifier">
@@ -199,8 +199,8 @@
     </div>
     <div class="modal-content">
       <form class="edit-form">
-        <div class="form-group"><label class="form-label">User ID</label><input type="number" class="form-input" [(ngModel)]="editFormData.userId" name="userId" /></div>
-        <div class="form-group"><label class="form-label">Campaign ID</label><input type="number" class="form-input" [(ngModel)]="editFormData.campaignId" name="campaignId" /></div>
+        <div class="form-group"><label class="form-label">Utilisateur</label><select class="form-input" [(ngModel)]="editFormData.userId" name="userId"><option [ngValue]="undefined">-- Sélectionner --</option>@for (u of allUsers(); track u.id) {<option [ngValue]="u.id">{{ u.email }}</option>}</select></div>
+        <div class="form-group"><label class="form-label">Campagne</label><select class="form-input" [(ngModel)]="editFormData.campaignId" name="campaignId"><option [ngValue]="undefined">-- Sélectionner --</option>@for (c of allCampaigns(); track c.id) {<option [ngValue]="c.id">{{ c.campaignName }}</option>}</select></div>
         <div class="form-group"><label class="form-label"><input type="checkbox" [(ngModel)]="editFormData.isAdmin" name="isAdmin" /> Admin</label></div>
         <div class="form-group"><label class="form-label"><input type="checkbox" [(ngModel)]="editFormData.canUpdate" name="canUpdate" /> Can Update</label></div>
         <div class="form-group"><label class="form-label"><input type="checkbox" [(ngModel)]="editFormData.canDelete" name="canDelete" /> Can Delete</label></div>
@@ -230,8 +230,8 @@
     </div>
     <div class="modal-content">
       <form class="edit-form">
-        <div class="form-group"><label class="form-label">User ID</label><input type="number" class="form-input" [(ngModel)]="createFormData.userId" name="userId" /></div>
-        <div class="form-group"><label class="form-label">Campaign ID</label><input type="number" class="form-input" [(ngModel)]="createFormData.campaignId" name="campaignId" /></div>
+        <div class="form-group"><label class="form-label">Utilisateur</label><select class="form-input" [(ngModel)]="createFormData.userId" name="userId"><option [ngValue]="undefined">-- Sélectionner --</option>@for (u of allUsers(); track u.id) {<option [ngValue]="u.id">{{ u.email }}</option>}</select></div>
+        <div class="form-group"><label class="form-label">Campagne</label><select class="form-input" [(ngModel)]="createFormData.campaignId" name="campaignId"><option [ngValue]="undefined">-- Sélectionner --</option>@for (c of allCampaigns(); track c.id) {<option [ngValue]="c.id">{{ c.campaignName }}</option>}</select></div>
         <div class="form-group"><label class="form-label"><input type="checkbox" [(ngModel)]="createFormData.isAdmin" name="isAdmin" /> Admin</label></div>
         <div class="form-group"><label class="form-label"><input type="checkbox" [(ngModel)]="createFormData.canUpdate" name="canUpdate" /> Can Update</label></div>
         <div class="form-group"><label class="form-label"><input type="checkbox" [(ngModel)]="createFormData.canDelete" name="canDelete" /> Can Delete</label></div>
@@ -248,3 +248,24 @@
     </div>
   </div>
 </div>
+
+<!-- Entity Detail Panel -->
+<app-entity-detail-panel
+  [entity]="selectedItem()"
+  [fields]="detailFields"
+  [title]="entityName"
+  [isOpen]="showDetailPanel()"
+  (closePanel)="closeDetailPanel()"
+  (editItem)="editFromDetail($event)"
+  (deleteItem)="deleteFromDetail($event)"
+  (restoreItem)="restoreFromDetail($event)">
+</app-entity-detail-panel>
+
+<!-- Popup d�pendances FK -->
+<app-dependency-popup
+  [info]="dependencyInfo()!"
+  [mode]="dependencyMode()"
+  [visible]="showDependencyPopup()"
+  (cancel)="closeDependencyPopup()"
+  (confirm)="confirmDependencyAction()">
+</app-dependency-popup>

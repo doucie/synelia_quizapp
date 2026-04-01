@@ -1,23 +1,33 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { EntityCrudBase } from '../../../../../shared/entity-crud-base';
+import { EntityDetailPanelComponent } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
+import { DependencyPopupComponent } from '../../../../../shared/dependency-popup/dependency-popup';
 import { CampaignCrudService, CampaignCrud, PagedCampaignCrudResponse, CampaignCrudSearchCriteria } from '../../../../../core/services/campaign-crud.service';
+import { CampaignService, Campaign } from '../../../../../core/services/campaign.service';
+import { UserService, User } from '../../../../../core/services/user.service';
 
 @Component({
   selector: 'app-entities-campaign-crud',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent],
   templateUrl: './entities-campaign-crud.html',
   styleUrls: ['./entities-campaign-crud.scss']
 })
 export class EntitiesCampaignCrudComponent extends EntityCrudBase<CampaignCrud, CampaignCrudSearchCriteria, PagedCampaignCrudResponse> {
   private service = inject(CampaignCrudService);
+  private campaignService = inject(CampaignService);
+  private userService = inject(UserService);
   protected override readonly router = inject(Router);
   protected override readonly pageSizeStorageKey = 'entitiesCampaignCrudPageSize';
   protected override readonly entityName = 'permissions campagne';
+  protected override readonly entityTypeApi = 'campaign-crud';
+
+  allCampaigns = signal<Campaign[]>([]);
+  allUsers = signal<User[]>([]);
 
   advancedCriteria: CampaignCrudSearchCriteria = {};
   editFormData: CampaignCrud = {};
@@ -43,5 +53,11 @@ export class EntitiesCampaignCrudComponent extends EntityCrudBase<CampaignCrud, 
   }
   protected resetCreateFormData(): void {
     this.createFormData = {};
+  }
+
+  override ngOnInit() {
+    super.ngOnInit();
+    this.campaignService.getAllCampaignsByCriteria({ page: 0, size: 9999, isDeleted: false }).subscribe({ next: (res) => this.allCampaigns.set(res.content) });
+    this.userService.getByCriteria({ page: 0, size: 9999, isDeleted: false }).subscribe({ next: (res) => this.allUsers.set(res.content) });
   }
 }

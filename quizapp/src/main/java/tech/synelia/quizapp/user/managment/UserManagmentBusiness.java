@@ -30,7 +30,9 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lombok.extern.java.Log;
 import tech.synelia.quizapp.business.UserBusiness;
+import tech.synelia.quizapp.business.InvitationCodeBusiness;
 import tech.synelia.quizapp.dao.entity.User;
+import tech.synelia.quizapp.dao.entity.EmailTemplate;
 import tech.synelia.quizapp.dao.repository.UserRepository;
 // import tech.synelia.quizapp.user.managment.UserManagmentRepository;
 // import tech.synelia.quizapp.utils.ExceptionUtils;
@@ -68,6 +70,10 @@ public class UserManagmentBusiness {
 	private HostingUtils hostingUtils;
 	@Autowired
 	private tech.synelia.quizapp.security.JwtService jwtService;
+	@Autowired
+	private tech.synelia.quizapp.business.EmailTemplateBusiness emailTemplateBusiness;
+	@Autowired
+	private InvitationCodeBusiness invitationCodeBusiness;
 
 	private Context context;
 
@@ -357,13 +363,29 @@ public class UserManagmentBusiness {
 			});
 			// choisir la vraie url
 			String appLink = paramsUtils.getUrlAppl();
-			// subject
-			String subject = "Réinitialisation des paramètres d'accès";
-			String contenu = "Bonjour " + existingEntity.getFirstName() + " " + existingEntity.getLastName() + "<br/><br/>";
-			contenu += "Votre mot de passe a été reinitialisé avec succès" + " ! " + "<br/>";
-			contenu += "Vos nouveaux paramètres de connexion sont :" + "<br/><br/>";
-			contenu += "Email : " + existingEntity.getEmail() + " " + "<br/>";
-			contenu += "Password : " + validationCode + " " + "<br/>";
+			// subject et contenu
+			String subject;
+			String contenu;
+
+			// Charger le template depuis la base de données
+			EmailTemplate emailTemplate = emailTemplateBusiness.findByKey("password_reset");
+			if (emailTemplate != null && emailTemplate.getIsActive() != null && emailTemplate.getIsActive()) {
+				Map<String, String> vars = new HashMap<>();
+				vars.put("first_name", existingEntity.getFirstName());
+				vars.put("last_name", existingEntity.getLastName());
+				vars.put("email", existingEntity.getEmail());
+				vars.put("new_password", validationCode);
+				vars.put("app_link", appLink);
+				subject = emailTemplateBusiness.renderTemplate(emailTemplate.getSubjectTemplate(), vars);
+				contenu = emailTemplateBusiness.renderTemplate(emailTemplate.getBodyTemplate(), vars);
+			} else {
+				subject = "Réinitialisation des paramètres d'accès";
+				contenu = "Bonjour " + existingEntity.getFirstName() + " " + existingEntity.getLastName() + "<br/><br/>";
+				contenu += "Votre mot de passe a été reinitialisé avec succès" + " ! " + "<br/>";
+				contenu += "Vos nouveaux paramètres de connexion sont :" + "<br/><br/>";
+				contenu += "Email : " + existingEntity.getEmail() + " " + "<br/>";
+				contenu += "Password : " + validationCode + " " + "<br/>";
+			}
 			String body = "";
 			context = new Context();
 			String template = "blank";
@@ -632,6 +654,86 @@ public class UserManagmentBusiness {
 			log.severe("[CLEANUP] Erreur lors du nettoyage des utilisateurs inactifs: " + e.getMessage());
 			e.printStackTrace();
 		}
+	}
+
+	/**
+	 * Register a new user using an invitation code.
+	 * Public endpoint - no authentication required.
+	 */
+	@SuppressWarnings("unused")
+	public Response<UserDto> registerWithCode(Request<UserManagmentDto> request, Locale locale) throws Exception {
+		log.info("----begin registerWithCode-----");
+		response = new Response<UserDto>();
+
+		UserManagmentDto dto = request.getData();
+		Map<String, Object> fieldsToVerify = new HashMap<>();
+		fieldsToVerify.put("code", dto.getCode());
+		fieldsToVerify.put("firstName", dto.getFirstName());
+		fieldsToVerify.put("lastName", dto.getLastName());
+		fieldsToVerify.put("password", dto.getPassword());
+		if (!Validate.RequiredValue(fieldsToVerify).isGood()) {
+			response.setStatus(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
+			response.setHasError(true);
+			return response;
+		}
+
+		// Validate invitation code
+		Response<tech.synelia.quizapp.utils.dto.InvitationCodeDto> codeResponse = invitationCodeBusiness.validateCode(dto.getCode(), locale);
+		if (codeResponse.isHasError()) {
+			response.setStatus(codeResponse.getStatus());
+			response.setHasError(true);
+			return response;
+		}
+
+		tech.synelia.quizapp.utils.dto.InvitationCodeDto invitation = codeResponse.getItem();
+
+		// Validate password strength
+		Map<String, Object> passValid = Utilities.validatePassword(dto.getPassword());
+		if (Utilities.isTrue(Boolean.parseBoolean(passValid.get(Utilities.validePassState).toString()))) {
+			response.setStatus(functionalError.INVALID_FORMAT(passValid.get(Utilities.validePassMessage).toString(), locale));
+			response.setHasError(true);
+			return response;
+		}
+
+		// Check email uniqueness
+		User existingUser = userRepository.findByEmail(invitation.getEmail(), false);
+		if (existingUser != null) {
+			response.setStatus(functionalError.DATA_EXIST("Un compte existe déjà avec cet email -> " + invitation.getEmail(), locale));
+			response.setHasError(true);
+			return response;
+		}
+
+		// Create the user
+		User newUser = new User();
+		newUser.setEmail(invitation.getEmail());
+		newUser.setFirstName(dto.getFirstName());
+		newUser.setLastName(dto.getLastName());
+		newUser.setUsername(dto.getFirstName().toLowerCase() + "." + dto.getLastName().toLowerCase());
+		newUser.setPassword(Utilities.encryptWithBCrypt(dto.getPassword()));
+		newUser.setUserRole(invitation.getRole());
+		newUser.setIsDefaultPassword(false);
+		newUser.setIsOnline(false);
+		newUser.setIsLocked(false);
+		newUser.setIsDeleted(false);
+		newUser.setCreatedAt(Utilities.getCurrentDate());
+
+		User savedUser = userRepository.save(newUser);
+		if (savedUser == null) {
+			response.setStatus(functionalError.SAVE_FAIL("user", locale));
+			response.setHasError(true);
+			return response;
+		}
+
+		// Mark invitation code as used
+		invitationCodeBusiness.markAsUsed(dto.getCode());
+
+		List<UserDto> itemsDto = Arrays.asList(UserTransformer.INSTANCE.toDto(savedUser));
+		response.setItems(itemsDto);
+		response.setHasError(false);
+		response.setStatus(functionalError.SUCCESS("Compte créé avec succès", locale));
+
+		log.info("----end registerWithCode-----");
+		return response;
 	}
 
 }

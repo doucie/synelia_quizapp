@@ -306,7 +306,7 @@
         </thead>
         <tbody>
           <tr *ngFor="let user of users(); trackBy: trackByUserId" 
-              [class.row-deleted]="user.isDeleted">
+              [class.row-deleted]="user.isDeleted" (click)="selectItem(user)" style="cursor: pointer;">
             <td>
               <span class="cell-id">#{{ user.id }}</span>
             </td>
@@ -344,7 +344,7 @@
                 <span style="color: var(--text-secondary);">-</span>
               </ng-template>
             </td>
-            <td class="actions-cell">
+            <td class="actions-cell" (click)="$event.stopPropagation()">
               <div class="actions-menu">
                 <!-- Boutons normaux pour les utilisateurs non supprimés -->
                 <ng-container *ngIf="!user.isDeleted">
@@ -848,3 +848,23 @@
     </div>
   </div>
 </div>
+
+<!-- Entity Detail Panel -->
+<app-entity-detail-panel
+  [entity]="selectedItem()"
+  [fields]="detailFields"
+  [title]="'Utilisateur'"
+  [isOpen]="showDetailPanel()"
+  (closePanel)="closeDetailPanel()"
+  (editItem)="editFromDetail($event)"
+  (deleteItem)="deleteFromDetail($event)"
+  (restoreItem)="restoreFromDetail($event)">
+</app-entity-detail-panel>
+
+<app-dependency-popup
+  [info]="dependencyInfo()!"
+  [mode]="dependencyMode()"
+  [visible]="showDependencyPopup()"
+  (cancel)="closeDependencyPopup()"
+  (confirm)="confirmDependencyAction()">
+</app-dependency-popup>

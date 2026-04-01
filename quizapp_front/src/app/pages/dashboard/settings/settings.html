@@ -1,0 +1,602 @@
+<div class="settings">
+  <h1 class="settings__title">Paramètres</h1>
+
+  <!-- Tabs -->
+  <div class="settings__tabs">
+    @if (isSuper()) {
+      <button class="settings__tab" [class.active]="activeTab() === 'emails'" (click)="switchTab('emails')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+          <polyline points="22,6 12,13 2,6"/>
+        </svg>
+        Templates Email
+      </button>
+      <button class="settings__tab" [class.active]="activeTab() === 'smtp'" (click)="switchTab('smtp')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/>
+          <line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/>
+          <line x1="2" y1="12" x2="22" y2="12"/>
+          <line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/>
+          <line x1="17" y1="7" x2="22" y2="7"/><line x1="17" y1="17" x2="22" y2="17"/>
+        </svg>
+        Configuration SMTP
+      </button>
+      <button class="settings__tab" [class.active]="activeTab() === 'legal'" (click)="switchTab('legal')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+        </svg>
+        Textes juridiques
+      </button>
+    }
+    <button class="settings__tab" [class.active]="activeTab() === 'config'" (click)="switchTab('config')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+      </svg>
+      Configuration App
+    </button>
+    @if (isSuper()) {
+      <button class="settings__tab" [class.active]="activeTab() === 'invitations'" (click)="switchTab('invitations')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+          <circle cx="8.5" cy="7" r="4"/>
+          <line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/>
+        </svg>
+        Invitations
+      </button>
+    }
+  </div>
+
+  <!-- Loading -->
+  <div class="settings__loading" *ngIf="isLoading()">
+    <div class="spinner"></div>
+    <span>Chargement des paramètres...</span>
+  </div>
+
+  <!-- ─── EMAIL TEMPLATES TAB ─────────────── -->
+  <div class="settings__panel" *ngIf="activeTab() === 'emails' && !isLoading()">
+    <div class="settings__panel-header">
+      <div>
+        <h2>Templates d'emails</h2>
+        <p>Gérez les modèles d'emails envoyés par l'application</p>
+      </div>
+      <button class="btn-primary" (click)="openTemplateEditor()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Nouveau template
+      </button>
+    </div>
+
+    <div class="settings__empty" *ngIf="emailTemplates().length === 0">
+      <p>Aucun template d'email configuré</p>
+    </div>
+
+    <div class="settings__list">
+      @for (tmpl of emailTemplates(); track tmpl.id) {
+        <div class="settings__card">
+          <div class="settings__card-header">
+            <div class="settings__card-title">
+              <span class="settings__badge" [class.active]="tmpl.isActive">{{ tmpl.isActive ? 'Actif' : 'Inactif' }}</span>
+              <strong>{{ tmpl.templateKey }}</strong>
+            </div>
+            <div class="settings__card-actions">
+              <button class="btn-icon" title="Modifier" (click)="openTemplateEditor(tmpl)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </button>
+              <button class="btn-icon danger" title="Supprimer" (click)="deleteTemplate(tmpl)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="settings__card-body">
+            <div class="settings__card-field"><span class="label">Sujet :</span> {{ tmpl.subjectTemplate }}</div>
+            <div class="settings__card-field" *ngIf="tmpl.description"><span class="label">Description :</span> {{ tmpl.description }}</div>
+            <div class="settings__card-field" *ngIf="tmpl.availableVariables"><span class="label">Variables :</span> <code>{{ tmpl.availableVariables }}</code></div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Template Editor Modal -->
+    <div class="settings__modal-overlay" *ngIf="showTemplateEditor()" (click)="closeTemplateEditor()">
+      <div class="settings__modal" (click)="$event.stopPropagation()">
+        <div class="settings__modal-header">
+          <h3>{{ editingTemplate() ? 'Modifier le template' : 'Nouveau template' }}</h3>
+          <button class="btn-close" (click)="closeTemplateEditor()">&times;</button>
+        </div>
+        <div class="settings__modal-body">
+          <div class="form-group">
+            <label>Clé du template *</label>
+            <input type="text" [ngModel]="templateForm().templateKey" (ngModelChange)="updateTemplateForm('templateKey', $event)" placeholder="ex: interview_convocation" [disabled]="!!editingTemplate()">
+          </div>
+          <div class="form-group">
+            <label>Sujet *</label>
+            <input type="text" [ngModel]="templateForm().subjectTemplate" (ngModelChange)="updateTemplateForm('subjectTemplate', $event)" placeholder="Sujet de l'email">
+          </div>
+          <div class="form-group">
+            <label>Corps du message (HTML) *</label>
+            <textarea rows="10" [ngModel]="templateForm().bodyTemplate" (ngModelChange)="updateTemplateForm('bodyTemplate', $event)" [placeholder]="'Contenu HTML de l\'email avec &#123;&#123;variables&#125;&#125;'"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <input type="text" [ngModel]="templateForm().description" (ngModelChange)="updateTemplateForm('description', $event)" placeholder="Description interne">
+          </div>
+          <div class="form-group">
+            <label>Variables disponibles</label>
+            <input type="text" [ngModel]="templateForm().availableVariables" (ngModelChange)="updateTemplateForm('availableVariables', $event)" placeholder="candidat_nom, date_entretien, ...">
+          </div>
+          <div class="form-group checkbox">
+            <label><input type="checkbox" [ngModel]="templateForm().isActive" (ngModelChange)="updateTemplateForm('isActive', $event)"> Actif</label>
+          </div>
+        </div>
+        <div class="settings__modal-footer">
+          <button class="btn-secondary" (click)="closeTemplateEditor()">Annuler</button>
+          <button class="btn-primary" (click)="saveTemplate()" [disabled]="savingTemplate()">
+            {{ savingTemplate() ? 'Sauvegarde...' : 'Sauvegarder' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── SMTP CONFIG TAB ────────────────── -->
+  <div class="settings__panel" *ngIf="activeTab() === 'smtp' && !isLoading()">
+    <div class="settings__panel-header">
+      <div>
+        <h2>Configuration SMTP</h2>
+        <p>Configurez le serveur d'envoi d'emails</p>
+      </div>
+      <button class="btn-primary" (click)="openSmtpEditor()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Nouvelle configuration
+      </button>
+    </div>
+
+    <div class="settings__empty" *ngIf="smtpConfigs().length === 0">
+      <p>Aucune configuration SMTP</p>
+    </div>
+
+    <div class="settings__list">
+      @for (cfg of smtpConfigs(); track cfg.id) {
+        <div class="settings__card">
+          <div class="settings__card-header">
+            <div class="settings__card-title">
+              <span class="settings__badge" [class.active]="cfg.isActive">{{ cfg.isActive ? 'Actif' : 'Inactif' }}</span>
+              <strong>{{ cfg.host }}:{{ cfg.port }}</strong>
+            </div>
+            <div class="settings__card-actions">
+              <button class="btn-icon" title="Modifier" (click)="openSmtpEditor(cfg)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </button>
+              <button class="btn-icon danger" title="Supprimer" (click)="deleteSmtp(cfg)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="settings__card-body">
+            <div class="settings__card-field"><span class="label">Expéditeur :</span> {{ cfg.senderName }} &lt;{{ cfg.senderEmail }}&gt;</div>
+            <div class="settings__card-field"><span class="label">Auth :</span> {{ cfg.smtpAuth ? 'Oui' : 'Non' }} | <span class="label">STARTTLS :</span> {{ cfg.starttlsEnable ? 'Oui' : 'Non' }}</div>
+            <div class="settings__card-field" *ngIf="cfg.username"><span class="label">Utilisateur :</span> {{ cfg.username }}</div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- SMTP Editor Modal -->
+    <div class="settings__modal-overlay" *ngIf="showSmtpEditor()" (click)="closeSmtpEditor()">
+      <div class="settings__modal settings__modal--wide" (click)="$event.stopPropagation()">
+        <div class="settings__modal-header">
+          <h3>{{ editingSmtp() ? 'Modifier la configuration' : 'Nouvelle configuration' }}</h3>
+          <button class="btn-close" (click)="closeSmtpEditor()">&times;</button>
+        </div>
+        <div class="settings__modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Hôte SMTP *</label>
+              <input type="text" [ngModel]="smtpForm().host" (ngModelChange)="updateSmtpForm('host', $event)" placeholder="smtp.gmail.com">
+            </div>
+            <div class="form-group">
+              <label>Port *</label>
+              <input type="number" [ngModel]="smtpForm().port" (ngModelChange)="updateSmtpForm('port', $event)" placeholder="587">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nom d'utilisateur</label>
+              <input type="text" [ngModel]="smtpForm().username" (ngModelChange)="updateSmtpForm('username', $event)" placeholder="user@gmail.com">
+            </div>
+            <div class="form-group">
+              <label>Mot de passe</label>
+              <div class="input-group">
+                <input [type]="showSmtpPassword() ? 'text' : 'password'" [ngModel]="smtpForm().passwordEncrypted" (ngModelChange)="updateSmtpForm('passwordEncrypted', $event)" placeholder="••••••••">
+                <button class="btn-toggle-password" type="button" (click)="showSmtpPassword.set(!showSmtpPassword())">
+                  {{ showSmtpPassword() ? '🙈' : '👁' }}
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nom expéditeur</label>
+              <input type="text" [ngModel]="smtpForm().senderName" (ngModelChange)="updateSmtpForm('senderName', $event)" placeholder="Synelia RH">
+            </div>
+            <div class="form-group">
+              <label>Email expéditeur</label>
+              <input type="email" [ngModel]="smtpForm().senderEmail" (ngModelChange)="updateSmtpForm('senderEmail', $event)" placeholder="noreply@synelia.com">
+            </div>
+          </div>
+          <div class="form-row checkboxes">
+            <label><input type="checkbox" [ngModel]="smtpForm().smtpAuth" (ngModelChange)="updateSmtpForm('smtpAuth', $event)"> SMTP Auth</label>
+            <label><input type="checkbox" [ngModel]="smtpForm().starttlsEnable" (ngModelChange)="updateSmtpForm('starttlsEnable', $event)"> STARTTLS</label>
+            <label><input type="checkbox" [ngModel]="smtpForm().starttlsRequired" (ngModelChange)="updateSmtpForm('starttlsRequired', $event)"> STARTTLS requis</label>
+            <label><input type="checkbox" [ngModel]="smtpForm().isActive" (ngModelChange)="updateSmtpForm('isActive', $event)"> Actif</label>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Timeout connexion (ms)</label>
+              <input type="number" [ngModel]="smtpForm().connectionTimeout" (ngModelChange)="updateSmtpForm('connectionTimeout', $event)">
+            </div>
+            <div class="form-group">
+              <label>Timeout lecture (ms)</label>
+              <input type="number" [ngModel]="smtpForm().timeout" (ngModelChange)="updateSmtpForm('timeout', $event)">
+            </div>
+            <div class="form-group">
+              <label>Timeout écriture (ms)</label>
+              <input type="number" [ngModel]="smtpForm().writeTimeout" (ngModelChange)="updateSmtpForm('writeTimeout', $event)">
+            </div>
+          </div>
+        </div>
+        <div class="settings__modal-footer">
+          <button class="btn-secondary" (click)="closeSmtpEditor()">Annuler</button>
+          <button class="btn-primary" (click)="saveSmtp()" [disabled]="savingSmtp()">
+            {{ savingSmtp() ? 'Sauvegarde...' : 'Sauvegarder' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── LEGAL TEXTS TAB ────────────────── -->
+  <div class="settings__panel" *ngIf="activeTab() === 'legal' && !isLoading()">
+    <div class="settings__panel-header">
+      <div>
+        <h2>Textes juridiques</h2>
+        <p>Gérez les textes de consentement, politique de confidentialité et conditions d'utilisation</p>
+      </div>
+      <button class="btn-primary" (click)="openLegalEditor()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Nouveau texte
+      </button>
+    </div>
+
+    <div class="settings__empty" *ngIf="legalTexts().length === 0">
+      <p>Aucun texte juridique configuré</p>
+    </div>
+
+    <div class="settings__list">
+      @for (txt of legalTexts(); track txt.id) {
+        <div class="settings__card">
+          <div class="settings__card-header">
+            <div class="settings__card-title">
+              <span class="settings__badge" [class.active]="txt.isActive">{{ txt.isActive ? 'Actif' : 'Inactif' }}</span>
+              <strong>{{ txt.title }}</strong>
+              <span class="settings__key">{{ txt.textKey }}</span>
+            </div>
+            <div class="settings__card-actions">
+              <button class="btn-icon" title="Modifier" (click)="openLegalEditor(txt)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </button>
+              <button class="btn-icon danger" title="Supprimer" (click)="deleteLegal(txt)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="settings__card-body">
+            <div class="settings__card-field" *ngIf="txt.description"><span class="label">Description :</span> {{ txt.description }}</div>
+            <div class="settings__card-preview" [innerHTML]="txt.content"></div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Legal Text Editor Modal -->
+    <div class="settings__modal-overlay" *ngIf="showLegalEditor()" (click)="closeLegalEditor()">
+      <div class="settings__modal settings__modal--wide" (click)="$event.stopPropagation()">
+        <div class="settings__modal-header">
+          <h3>{{ editingLegal() ? 'Modifier le texte' : 'Nouveau texte juridique' }}</h3>
+          <button class="btn-close" (click)="closeLegalEditor()">&times;</button>
+        </div>
+        <div class="settings__modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Clé *</label>
+              <input type="text" [ngModel]="legalForm().textKey" (ngModelChange)="updateLegalForm('textKey', $event)" placeholder="ex: candidate_consent" [disabled]="!!editingLegal()">
+            </div>
+            <div class="form-group">
+              <label>Titre *</label>
+              <input type="text" [ngModel]="legalForm().title" (ngModelChange)="updateLegalForm('title', $event)" placeholder="Consentement candidat">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <input type="text" [ngModel]="legalForm().description" (ngModelChange)="updateLegalForm('description', $event)" placeholder="Description interne">
+          </div>
+          <div class="form-group">
+            <label>Contenu (HTML) *</label>
+            <textarea rows="15" [ngModel]="legalForm().content" (ngModelChange)="updateLegalForm('content', $event)" placeholder="Contenu HTML du texte juridique"></textarea>
+          </div>
+          <div class="form-group checkbox">
+            <label><input type="checkbox" [ngModel]="legalForm().isActive" (ngModelChange)="updateLegalForm('isActive', $event)"> Actif</label>
+          </div>
+        </div>
+        <div class="settings__modal-footer">
+          <button class="btn-secondary" (click)="closeLegalEditor()">Annuler</button>
+          <button class="btn-primary" (click)="saveLegal()" [disabled]="savingLegal()">
+            {{ savingLegal() ? 'Sauvegarde...' : 'Sauvegarder' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── APP CONFIG TAB ─────────────────── -->
+  <div class="settings__panel" *ngIf="activeTab() === 'config' && !isLoading()">
+    <div class="settings__panel-header">
+      <div>
+        <h2>Configuration de l'application</h2>
+        <p>{{ isSuper() ? 'Gérez l\'apparence et l\'identité visuelle de l\'application' : 'Consultez la configuration visuelle de l\'application' }}</p>
+      </div>
+      <div class="settings__panel-header-actions">
+        @if (previewingConfig()) {
+          <button class="btn-secondary btn-cancel-preview" (click)="cancelPreview()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 12a9 9 0 019-9 9.75 9.75 0 016.74 2.74L21 8"/>
+              <path d="M21 3v5h-5"/><path d="M21 12a9 9 0 01-9 9 9.75 9.75 0 01-6.74-2.74L3 16"/>
+              <path d="M3 21v-5h5"/>
+            </svg>
+            Annuler l'aperçu
+          </button>
+        }
+        @if (isSuper()) {
+          <button class="btn-primary" (click)="openConfigEditor()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Nouvelle configuration
+          </button>
+        }
+      </div>
+    </div>
+
+    @if (!isSuper()) {
+      <div class="settings__info-banner">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
+        <span>Vous consultez la configuration en lecture seule. Seul un super administrateur peut modifier ces paramètres.</span>
+      </div>
+    }
+
+    <div class="settings__empty" *ngIf="appConfigs().length === 0">
+      <p>Aucune configuration d'application</p>
+    </div>
+
+    <div class="settings__list">
+      @for (cfg of appConfigs(); track cfg.id) {
+        <div class="settings__card" [class.settings__card--active-config]="cfg.isActive" [class.settings__card--previewing]="previewingConfig()?.id === cfg.id">
+          <div class="settings__card-header">
+            <div class="settings__card-title">
+              <span class="settings__badge" [class.active]="cfg.isActive">{{ cfg.isActive ? 'Active' : 'Inactive' }}</span>
+              @if (previewingConfig()?.id === cfg.id) {
+                <span class="settings__badge settings__badge--preview">Aperçu</span>
+              }
+              <span class="settings__color-dot" [style.background]="getSchemeColor(cfg.colorScheme || 'violet')"></span>
+              <strong>{{ cfg.configName }}</strong>
+            </div>
+            <div class="settings__card-actions">
+              <!-- Preview button (visible to all) -->
+              @if (!cfg.isActive && previewingConfig()?.id !== cfg.id) {
+                <button class="btn-icon btn-preview" title="Prévisualiser ce thème" (click)="previewConfig(cfg)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                  </svg>
+                </button>
+              }
+              @if (isSuper()) {
+                @if (!cfg.isActive) {
+                  <button class="btn-icon btn-activate" title="Activer cette configuration" (click)="revertToConfig(cfg)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                  </button>
+                }
+                <button class="btn-icon" title="Modifier" (click)="openConfigEditor(cfg)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                </button>
+                <button class="btn-icon danger" title="Supprimer" (click)="deleteConfig(cfg)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                  </svg>
+                </button>
+              }
+            </div>
+          </div>
+          <div class="settings__card-body">
+            <div class="settings__card-field"><span class="label">Entreprise :</span> {{ cfg.companyName }}</div>
+            <div class="settings__card-field"><span class="label">Thème :</span> {{ cfg.colorScheme }} <span class="settings__color-dot settings__color-dot--sm" [style.background]="getSchemeColor(cfg.colorScheme || 'violet')"></span></div>
+            <div class="settings__card-field"><span class="label">Couleur :</span> <code>{{ cfg.primaryColor }}</code> <span class="settings__color-dot settings__color-dot--sm" [style.background]="cfg.primaryColor"></span></div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Config Editor Modal (super only) -->
+    <div class="settings__modal-overlay" *ngIf="showConfigEditor() && isSuper()" (click)="closeConfigEditor()">
+      <div class="settings__modal" (click)="$event.stopPropagation()">
+        <div class="settings__modal-header">
+          <h3>{{ editingConfig() ? 'Modifier la configuration' : 'Nouvelle configuration' }}</h3>
+          <button class="btn-close" (click)="closeConfigEditor()">&times;</button>
+        </div>
+        <div class="settings__modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nom de la configuration *</label>
+              <input type="text" [ngModel]="configForm().configName" (ngModelChange)="updateConfigForm('configName', $event)" placeholder="ex: Config Production">
+            </div>
+            <div class="form-group">
+              <label>Nom de l'entreprise *</label>
+              <input type="text" [ngModel]="configForm().companyName" (ngModelChange)="updateConfigForm('companyName', $event)" placeholder="Synelia">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Logo (HTML/SVG)</label>
+            <textarea rows="4" [ngModel]="configForm().logoHtml" (ngModelChange)="updateConfigForm('logoHtml', $event)" placeholder="Code HTML ou SVG du logo"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Thème de couleurs</label>
+            <div class="color-scheme-picker">
+              @for (scheme of colorSchemes; track scheme.key) {
+                <button class="color-scheme-option" [class.selected]="configForm().colorScheme === scheme.key"
+                  (click)="updateConfigForm('colorScheme', scheme.key); updateConfigForm('primaryColor', scheme.primary)">
+                  <span class="color-scheme-swatch" [style.background]="scheme.primary"></span>
+                  <span class="color-scheme-label">{{ scheme.label }}</span>
+                </button>
+              }
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Couleur primaire</label>
+            <div class="color-input-row">
+              <input type="color" [ngModel]="configForm().primaryColor" (ngModelChange)="updateConfigForm('primaryColor', $event)">
+              <input type="text" [ngModel]="configForm().primaryColor" (ngModelChange)="updateConfigForm('primaryColor', $event)" placeholder="#7C3AED" class="color-text-input">
+            </div>
+          </div>
+          <div class="form-group checkbox">
+            <label><input type="checkbox" [ngModel]="configForm().isActive" (ngModelChange)="updateConfigForm('isActive', $event)"> Active</label>
+          </div>
+        </div>
+        <div class="settings__modal-footer">
+          <button class="btn-secondary" (click)="closeConfigEditor()">Annuler</button>
+          <button class="btn-primary" (click)="saveConfig()" [disabled]="savingConfig()">
+            {{ savingConfig() ? 'Sauvegarde...' : 'Sauvegarder' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── INVITATIONS TAB ────────────────── -->
+  <div class="settings__panel" *ngIf="activeTab() === 'invitations' && !isLoading()">
+    <div class="settings__panel-header">
+      <div>
+        <h2 class="settings__panel-title">Codes d'invitation</h2>
+        <p class="settings__panel-subtitle">Invitez de nouveaux utilisateurs à rejoindre la plateforme</p>
+      </div>
+      <button class="btn-new" (click)="openInvitationEditor()">+ Nouvelle invitation</button>
+    </div>
+
+    <div class="settings__list">
+      @for (invitation of invitationCodes(); track invitation.id) {
+        <div class="settings__card" [class.settings__card--expired]="isExpired(invitation)" [class.settings__card--used]="invitation.isUsed">
+          <div class="settings__card-header">
+            <div class="settings__card-title">{{ invitation.email }}</div>
+            <div class="settings__card-badges">
+              <span class="settings__badge" [class.settings__badge--admin]="invitation.role === 'admin'"
+                [class.settings__badge--recruiter]="invitation.role === 'recruiter'">
+                {{ invitation.role }}
+              </span>
+              @if (invitation.isUsed) {
+                <span class="settings__badge settings__badge--used">Utilisé</span>
+              } @else if (isExpired(invitation)) {
+                <span class="settings__badge settings__badge--expired">Expiré</span>
+              } @else {
+                <span class="settings__badge settings__badge--pending">En attente</span>
+              }
+            </div>
+          </div>
+          <div class="settings__card-meta">
+            <span>Code: <code>{{ invitation.code }}</code></span>
+            <span>Expire le: {{ invitation.expiredAt }}</span>
+            @if (invitation.createdAt) {
+              <span>Créé le: {{ invitation.createdAt }}</span>
+            }
+          </div>
+          <div class="settings__card-actions">
+            @if (!invitation.isUsed) {
+              <button class="btn-resend" (click)="resendInvitation(invitation)" title="Renvoyer l'invitation">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
+                </svg>
+                Renvoyer
+              </button>
+            }
+            <button class="btn-delete" (click)="deleteInvitation(invitation)" title="Supprimer">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+              </svg>
+              Supprimer
+            </button>
+          </div>
+        </div>
+      } @empty {
+        <div class="settings__empty">Aucun code d'invitation. Cliquez sur "+ Nouvelle invitation" pour inviter un utilisateur.</div>
+      }
+    </div>
+
+    <!-- Invitation Editor Modal -->
+    @if (showInvitationEditor()) {
+      <div class="settings__modal-overlay" (click)="closeInvitationEditor()">
+        <div class="settings__modal" (click)="$event.stopPropagation()">
+          <div class="settings__modal-header">
+            <h3>Nouvelle invitation</h3>
+            <button class="settings__modal-close" (click)="closeInvitationEditor()">&times;</button>
+          </div>
+          <div class="settings__modal-body">
+            <div class="form-group">
+              <label>Email *</label>
+              <input type="email" [ngModel]="invitationForm().email" (ngModelChange)="updateInvitationForm('email', $event)"
+                placeholder="nom@example.com">
+            </div>
+            <div class="form-group">
+              <label>Rôle</label>
+              <select [ngModel]="invitationForm().role" (ngModelChange)="updateInvitationForm('role', $event)">
+                <option value="recruiter">Recruteur</option>
+                <option value="admin">Administrateur</option>
+              </select>
+            </div>
+          </div>
+          <div class="settings__modal-footer">
+            <button class="btn-secondary" (click)="closeInvitationEditor()">Annuler</button>
+            <button class="btn-primary" (click)="saveInvitation()" [disabled]="savingInvitation()">
+              {{ savingInvitation() ? 'Envoi...' : 'Envoyer l\'invitation' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>

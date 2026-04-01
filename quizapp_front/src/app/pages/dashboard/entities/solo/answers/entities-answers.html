@@ -204,7 +204,7 @@
         </thead>
         <tbody>
           <tr *ngFor="let answer of answers(); trackBy: trackByAnswerId" 
-              [class.row-deleted]="answer.isDeleted">
+              [class.row-deleted]="answer.isDeleted" (click)="selectItem(answer)" style="cursor: pointer;">
             <td>
               <span class="cell-id">#{{ answer.id }}</span>
             </td>
@@ -221,7 +221,7 @@
             <td>
               <span class="cell-date">{{ formatDate(answer.createdAt) }}</span>
             </td>
-            <td class="actions-cell">
+            <td class="actions-cell" (click)="$event.stopPropagation()">
               <div class="actions-menu">
                 <ng-container *ngIf="!answer.isDeleted">
                   <button 
@@ -470,15 +470,18 @@
         </div>
 
         <div class="form-group">
-          <label for="edit-questionId" class="form-label">ID Question</label>
-          <input 
-            type="number" 
+          <label for="edit-questionId" class="form-label">Question</label>
+          <select
             id="edit-questionId"
-            class="form-input"
+            class="form-select"
             [(ngModel)]="editFormData.questionId"
             name="questionId"
-            placeholder="ID de la question liée (optionnel)"
-          />
+          >
+            <option value="">Sélectionner une question (optionnel)</option>
+            @for (q of allQuestions(); track q.id) {
+              <option [value]="q.id">{{ q.questionText }}</option>
+            }
+          </select>
         </div>
 
         <div class="form-group">
@@ -552,15 +555,18 @@
         </div>
 
         <div class="form-group">
-          <label for="create-questionId" class="form-label">ID Question</label>
-          <input 
-            type="number" 
+          <label for="create-questionId" class="form-label">Question</label>
+          <select
             id="create-questionId"
-            class="form-input"
+            class="form-select"
             [(ngModel)]="createFormData.questionId"
             name="questionId"
-            placeholder="ID de la question liée (optionnel)"
-          />
+          >
+            <option value="">Sélectionner une question (optionnel)</option>
+            @for (q of allQuestions(); track q.id) {
+              <option [value]="q.id">{{ q.questionText }}</option>
+            }
+          </select>
         </div>
 
         <div class="form-group">
@@ -597,3 +603,23 @@
     </div>
   </div>
 </div>
+
+<!-- Entity Detail Panel -->
+<app-entity-detail-panel
+  [entity]="selectedItem()"
+  [fields]="detailFields"
+  [title]="'Réponse'"
+  [isOpen]="showDetailPanel()"
+  (closePanel)="closeDetailPanel()"
+  (editItem)="editFromDetail($event)"
+  (deleteItem)="deleteFromDetail($event)"
+  (restoreItem)="restoreFromDetail($event)">
+</app-entity-detail-panel>
+
+<app-dependency-popup
+  [info]="dependencyInfo()!"
+  [mode]="dependencyMode()"
+  [visible]="showDependencyPopup()"
+  (cancel)="closeDependencyPopup()"
+  (confirm)="confirmDependencyAction()">
+</app-dependency-popup>

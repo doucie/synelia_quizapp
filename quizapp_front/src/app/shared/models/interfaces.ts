@@ -97,3 +97,27 @@ export interface LoginResponse {
     adminMode?: boolean;
   };
 }
+
+// ── Dependency check (FK management) ─────────
+export interface DependencyGroup {
+  entityType: string;
+  label: string;
+  count: number;
+  critical: boolean;
+}
+
+export interface DeletedParent {
+  entityType: string;
+  label: string;
+  parentId: number;
+  parentName: string;
+}
+
+export interface DependencyInfo {
+  entityType: string;
+  entityId: number;
+  level: 'NORMAL' | 'WARNING' | 'CRITICAL';
+  totalDependencies: number;
+  dependencies: DependencyGroup[];
+  deletedParents: DeletedParent[];
+}

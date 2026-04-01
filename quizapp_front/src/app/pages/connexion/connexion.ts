@@ -1,6 +1,6 @@
-import { Component, ChangeDetectionStrategy, DestroyRef, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, DestroyRef, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { BehaviorSubject, switchMap } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -16,19 +16,22 @@ import { LoginCredentials } from '../../shared/models/interfaces';
   styleUrl: './connexion.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ConnexionComponent {
+export class ConnexionComponent implements OnInit {
   loginForm: FormGroup;
   showPassword: boolean = false;
   private loadingSubject = new BehaviorSubject<boolean>(false);
   private errorSubject = new BehaviorSubject<string | null>(null);
+  private infoSubject = new BehaviorSubject<string | null>(null);
   private destroyRef = inject(DestroyRef);
   
   readonly loading$ = this.loadingSubject.asObservable();
   readonly error$ = this.errorSubject.asObservable();
+  readonly info$ = this.infoSubject.asObservable();
 
   constructor(
     private fb: FormBuilder,
     private router: Router,
+    private route: ActivatedRoute,
     private authService: AuthService,
     private connexionService: ConnexionService
   ) {
@@ -37,6 +40,19 @@ export class ConnexionComponent {
       password: ['', [Validators.required]]
     });
     this.showPassword = false;
+  }
+
+  ngOnInit(): void {
+    // Détecter si la session a expiré (redirection depuis l'interceptor)
+    this.route.queryParams.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(params => {
+      if (params['expired'] === 'true') {
+        this.infoSubject.next('Votre session a expiré. Veuillez vous reconnecter.');
+        // Nettoyer le paramètre de l'URL
+        this.router.navigate([], { queryParams: {}, replaceUrl: true });
+      }
+    });
   }
 
   onSubmit(): void {

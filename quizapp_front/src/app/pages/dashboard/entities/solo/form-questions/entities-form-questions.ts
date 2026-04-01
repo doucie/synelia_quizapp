@@ -1,15 +1,19 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { EntityCrudBase } from '../../../../../shared/entity-crud-base';
+import { EntityDetailPanelComponent } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
+import { DependencyPopupComponent } from '../../../../../shared/dependency-popup/dependency-popup';
 import { FormQuestionsService, FormQuestions, PagedFormQuestionsResponse, FormQuestionsSearchCriteria } from '../../../../../core/services/form-questions.service';
+import { FormVersionService, FormVersion } from '../../../../../core/services/form-version.service';
+import { QuestionService, Question } from '../../../../../core/services/question.service';
 
 @Component({
   selector: 'app-entities-form-questions',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent],
   templateUrl: './entities-form-questions.html',
   styleUrls: ['./entities-form-questions.scss']
 })
@@ -18,6 +22,23 @@ export class EntitiesFormQuestionsComponent extends EntityCrudBase<FormQuestions
   protected override readonly router = inject(Router);
   protected override readonly pageSizeStorageKey = 'entitiesFormQuestionsPageSize';
   protected override readonly entityName = 'questions formulaire';
+  protected override readonly entityTypeApi = 'form-questions';
+
+  // FK dropdowns
+  private fvService = inject(FormVersionService);
+  private questionService = inject(QuestionService);
+  allFormVersions = signal<FormVersion[]>([]);
+  allQuestions = signal<Question[]>([]);
+
+  override ngOnInit(): void {
+    super.ngOnInit();
+    this.fvService.getAllByCriteria({ page: 0, size: 9999, isDeleted: false }).subscribe({
+      next: (res) => this.allFormVersions.set(res.content)
+    });
+    this.questionService.getAllByCriteria({ page: 0, size: 9999, isDeleted: false }).subscribe({
+      next: (res) => this.allQuestions.set(res.content)
+    });
+  }
 
   advancedCriteria: FormQuestionsSearchCriteria = {};
   editFormData: FormQuestions = {};

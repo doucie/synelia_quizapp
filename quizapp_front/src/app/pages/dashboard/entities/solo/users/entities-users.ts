@@ -1,6 +1,10 @@
-import { Component, OnInit, OnDestroy, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
 import { CommonModule, NgIf, NgFor } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { EntityDetailPanelComponent, DetailField } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
+import { DependencyPopupComponent } from '../../../../../shared/dependency-popup/dependency-popup';
+import { DashboardStatsService } from '../../../../../core/services/dashboard-stats.service';
+import { DependencyInfo } from '../../../../../shared/models/interfaces';
 import { Router, ActivatedRoute } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 
@@ -12,7 +16,7 @@ import { AuthService } from '../../../../../core/services/auth/auth.service';
 @Component({
   selector: 'app-entities-users',
   standalone: true,
-  imports: [CommonModule, NgIf, NgFor, FormsModule],
+  imports: [CommonModule, NgIf, NgFor, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent],
   templateUrl: './entities-users.html',
   styleUrl: './entities-users.scss'
 })
@@ -23,6 +27,36 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
   // Variable pour éviter les appels multiples
   private loadingTimeout: any;
   private destroy$ = new Subject<void>();
+
+  // Detail panel
+  selectedItem = signal<any>(null);
+  showDetailPanel = signal<boolean>(false);
+  detailFields: DetailField[] = [];
+
+  selectItem(item: any): void {
+    this.selectedItem.set(item);
+    this.showDetailPanel.set(true);
+  }
+
+  closeDetailPanel(): void {
+    this.showDetailPanel.set(false);
+    this.selectedItem.set(null);
+  }
+
+  editFromDetail(item: any): void {
+    this.closeDetailPanel();
+    this.editUser(item);
+  }
+
+  deleteFromDetail(item: any): void {
+    this.closeDetailPanel();
+    this.deleteUser(item);
+  }
+
+  restoreFromDetail(item: any): void {
+    this.closeDetailPanel();
+    this.restoreUser(item);
+  }
   
   // Signaux pour la réactivité
   users = signal<User[]>([]);
@@ -63,6 +97,26 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
   
   // État de la popup de confirmation
   showDeleteConfirmation = false;
+  // -- D�pendances FK ---------------------------
+  private depService = inject(DashboardStatsService);
+  dependencyInfo = signal<DependencyInfo | null>(null);
+  showDependencyPopup = signal<boolean>(false);
+  dependencyMode = signal<'delete' | 'restore'>('delete');
+
+  closeDependencyPopup(): void {
+    this.showDependencyPopup.set(false);
+    this.dependencyInfo.set(null);
+  }
+
+  confirmDependencyAction(): void {
+    const mode = this.dependencyMode();
+    this.closeDependencyPopup();
+    if (mode === 'delete') {
+      this.showDeleteConfirmation = true;
+    } else {
+      this.showRestoreConfirmation.set(true);
+    }
+  }
   userToDelete: User | null = null;
   
   // État de la popup de restauration
@@ -585,7 +639,18 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
    */
   deleteUser(user: User) {
     this.userToDelete = user;
-    this.showDeleteConfirmation = true;
+    this.depService.checkDependencies('users', user.id).subscribe({
+      next: (info) => {
+        if (info.totalDependencies > 0) {
+          this.dependencyInfo.set(info);
+          this.dependencyMode.set('delete');
+          this.showDependencyPopup.set(true);
+        } else {
+          this.showDeleteConfirmation = true;
+        }
+      },
+      error: () => this.showDeleteConfirmation = true
+    });
   }
 
   /**
@@ -631,7 +696,18 @@ export class EntitiesUsersComponent implements OnInit, OnDestroy {
    */
   restoreUser(user: User) {
     this.userToRestore.set(user);
-    this.showRestoreConfirmation.set(true);
+    this.depService.checkParent('users', user.id).subscribe({
+      next: (info) => {
+        if (info.deletedParents && info.deletedParents.length > 0) {
+          this.dependencyInfo.set(info);
+          this.dependencyMode.set('restore');
+          this.showDependencyPopup.set(true);
+        } else {
+          this.showRestoreConfirmation.set(true);
+        }
+      },
+      error: () => this.showRestoreConfirmation.set(true)
+    });
   }
 
   /**

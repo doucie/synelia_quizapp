@@ -1,7 +1,11 @@
-import { Component, OnInit, OnDestroy, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
 import { CommonModule, NgIf, NgFor } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { EntityDetailPanelComponent, DetailField } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
+import { DependencyPopupComponent } from '../../../../../shared/dependency-popup/dependency-popup';
+import { DashboardStatsService } from '../../../../../core/services/dashboard-stats.service';
+import { DependencyInfo } from '../../../../../shared/models/interfaces';
 import { Router, ActivatedRoute } from '@angular/router';
 
 import { QuestionService, Question, QuestionSearchCriteria, PagedResponse } from '../../../../../core/services/question.service';
@@ -9,11 +13,12 @@ import { UserService } from '../../../../../core/services/user.service';
 import { AnswerService, Answer } from '../../../../../core/services/answer.service';
 import { NotificationService } from '../../../../../core/services/notification.service';
 import { AuthService } from '../../../../../core/services/auth/auth.service';
+import { SpecialityService, Speciality } from '../../../../../core/services/speciality.service';
 
 @Component({
   selector: 'app-entities-questions',
   standalone: true,
-  imports: [CommonModule, NgIf, NgFor, FormsModule],
+  imports: [CommonModule, NgIf, NgFor, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent],
   templateUrl: './entities-questions.html',
   styleUrl: './entities-questions.scss'
 })
@@ -22,6 +27,36 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
   Math = Math;
   
   private destroy$ = new Subject<void>();
+
+  // Detail panel
+  selectedItem = signal<any>(null);
+  showDetailPanel = signal<boolean>(false);
+  detailFields: DetailField[] = [];
+
+  selectItem(item: any): void {
+    this.selectedItem.set(item);
+    this.showDetailPanel.set(true);
+  }
+
+  closeDetailPanel(): void {
+    this.showDetailPanel.set(false);
+    this.selectedItem.set(null);
+  }
+
+  editFromDetail(item: any): void {
+    this.closeDetailPanel();
+    this.editQuestion(item);
+  }
+
+  deleteFromDetail(item: any): void {
+    this.closeDetailPanel();
+    this.deleteQuestion(item);
+  }
+
+  restoreFromDetail(item: any): void {
+    this.closeDetailPanel();
+    this.restoreQuestion(item);
+  }
   private loadingTimeout: any;
   
   // Signaux pour la réactivité
@@ -66,6 +101,29 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
   
   // État de la popup de confirmation
   showDeleteConfirmation = false;
+  // FK dropdowns
+  private specialityService = inject(SpecialityService);
+  allSpecialities = signal<Speciality[]>([]);
+  // -- D�pendances FK ---------------------------
+  private depService = inject(DashboardStatsService);
+  dependencyInfo = signal<DependencyInfo | null>(null);
+  showDependencyPopup = signal<boolean>(false);
+  dependencyMode = signal<'delete' | 'restore'>('delete');
+
+  closeDependencyPopup(): void {
+    this.showDependencyPopup.set(false);
+    this.dependencyInfo.set(null);
+  }
+
+  confirmDependencyAction(): void {
+    const mode = this.dependencyMode();
+    this.closeDependencyPopup();
+    if (mode === 'delete') {
+      this.showDeleteConfirmation = true;
+    } else {
+      this.showRestoreConfirmation.set(true);
+    }
+  }
   questionToDelete: Question | null = null;
   
   // État de la popup de restauration
@@ -159,6 +217,9 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
     });
     
     this.loadQuestions();
+    this.specialityService.getAll({ page: 0, size: 9999, isDeleted: false }).subscribe({
+      next: (res) => this.allSpecialities.set(res.items)
+    });
   }
 
   ngOnDestroy() {
@@ -489,7 +550,18 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
    */
   deleteQuestion(department: Question) {
     this.questionToDelete = department;
-    this.showDeleteConfirmation = true;
+    this.depService.checkDependencies('questions', department.id!).subscribe({
+      next: (info) => {
+        if (info.totalDependencies > 0) {
+          this.dependencyInfo.set(info);
+          this.dependencyMode.set('delete');
+          this.showDependencyPopup.set(true);
+        } else {
+          this.showDeleteConfirmation = true;
+        }
+      },
+      error: () => this.showDeleteConfirmation = true
+    });
   }
 
   /**
@@ -535,7 +607,18 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
    */
   restoreQuestion(department: Question) {
     this.questionToRestore.set(department);
-    this.showRestoreConfirmation.set(true);
+    this.depService.checkParent('questions', department.id!).subscribe({
+      next: (info) => {
+        if (info.deletedParents && info.deletedParents.length > 0) {
+          this.dependencyInfo.set(info);
+          this.dependencyMode.set('restore');
+          this.showDependencyPopup.set(true);
+        } else {
+          this.showRestoreConfirmation.set(true);
+        }
+      },
+      error: () => this.showRestoreConfirmation.set(true)
+    });
   }
 
   /**

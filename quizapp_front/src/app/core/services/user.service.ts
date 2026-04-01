@@ -429,7 +429,7 @@ export class UserService {
       JSON.parse(localStorage.getItem('user')!)?.id?.toString() : '1';
       
     // Mapper les champs frontend vers backend
-    const backendUser = {
+    const backendUser: Record<string, any> = {
       id: id,
       firstName: user.prenom,
       lastName: user.nom,

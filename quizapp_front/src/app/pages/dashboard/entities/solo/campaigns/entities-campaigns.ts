@@ -1,20 +1,26 @@
-import { Component, OnInit, OnDestroy, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
 import { CommonModule, NgIf, NgFor } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { EntityDetailPanelComponent, DetailField } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
+import { DependencyPopupComponent } from '../../../../../shared/dependency-popup/dependency-popup';
+import { DashboardStatsService } from '../../../../../core/services/dashboard-stats.service';
+import { DependencyInfo } from '../../../../../shared/models/interfaces';
 import { Router, ActivatedRoute } from '@angular/router';
 
 import { CampaignService, Campaign, CampaignSearchCriteria, PagedResponse } from '../../../../../core/services/campaign.service';
 import { UserService } from '../../../../../core/services/user.service';
-import { SpecialityService, Speciality } from '../../../../../core/services/speciality.service';
-import { QuestionService, Question } from '../../../../../core/services/question.service';
+import { FormService, Form } from '../../../../../core/services/form.service';
+import { SourceTokenService, SourceToken } from '../../../../../services/source-token.service';
+import { CampaignCrudService, CampaignCrud } from '../../../../../core/services/campaign-crud.service';
 import { NotificationService } from '../../../../../core/services/notification.service';
 import { AuthService } from '../../../../../core/services/auth/auth.service';
+import { SpecialityService, Speciality } from '../../../../../core/services/speciality.service';
 
 @Component({
   selector: 'app-entities-campaigns',
   standalone: true,
-  imports: [CommonModule, NgIf, NgFor, FormsModule],
+  imports: [CommonModule, NgIf, NgFor, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent],
   templateUrl: './entities-campaigns.html',
   styleUrl: './entities-campaigns.scss'
 })
@@ -24,6 +30,36 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
   
   // Variable pour éviter les appels multiples
   private destroy$ = new Subject<void>();
+
+  // Detail panel
+  selectedItem = signal<any>(null);
+  showDetailPanel = signal<boolean>(false);
+  detailFields: DetailField[] = [];
+
+  selectItem(item: any): void {
+    this.selectedItem.set(item);
+    this.showDetailPanel.set(true);
+  }
+
+  closeDetailPanel(): void {
+    this.showDetailPanel.set(false);
+    this.selectedItem.set(null);
+  }
+
+  editFromDetail(item: any): void {
+    this.closeDetailPanel();
+    this.editCampaign(item);
+  }
+
+  deleteFromDetail(item: any): void {
+    this.closeDetailPanel();
+    this.deleteCampaign(item);
+  }
+
+  restoreFromDetail(item: any): void {
+    this.closeDetailPanel();
+    this.restoreCampaign(item);
+  }
   private loadingTimeout: any;
   
   // Signaux pour la réactivité
@@ -35,8 +71,11 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
   
   // Signaux pour l'expansion des campagnes
   expandedCampaigns = signal<Set<number>>(new Set());
-  campaignQuestions = signal<{[campaignId: number]: Question[]}>({});
-  loadingQuestions = signal<{[campaignId: number]: boolean}>({});
+  campaignForms = signal<{[campaignId: number]: Form[]}>({});
+  campaignSourceTokens = signal<{[campaignId: number]: SourceToken[]}>({});
+  campaignPermissions = signal<{[campaignId: number]: CampaignCrud[]}>({});
+  loadingChildren = signal<{[campaignId: number]: boolean}>({});
+  childTab = signal<{[campaignId: number]: string}>({});
   
   // Critères de recherche
   searchCriteria: CampaignSearchCriteria = {
@@ -66,6 +105,29 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
   
   // État de la popup de confirmation
   showDeleteConfirmation = false;
+  // -- FK Dropdowns --
+  private specialityFkService = inject(SpecialityService);
+  allSpecialities = signal<Speciality[]>([]);
+  // -- D�pendances FK ---------------------------
+  private depService = inject(DashboardStatsService);
+  dependencyInfo = signal<DependencyInfo | null>(null);
+  showDependencyPopup = signal<boolean>(false);
+  dependencyMode = signal<'delete' | 'restore'>('delete');
+
+  closeDependencyPopup(): void {
+    this.showDependencyPopup.set(false);
+    this.dependencyInfo.set(null);
+  }
+
+  confirmDependencyAction(): void {
+    const mode = this.dependencyMode();
+    this.closeDependencyPopup();
+    if (mode === 'delete') {
+      this.showDeleteConfirmation = true;
+    } else {
+      this.showRestoreConfirmation.set(true);
+    }
+  }
   campaignToDelete: Campaign | null = null;
   
   // État de la popup de restauration
@@ -75,40 +137,22 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
   // État de la popup d'édition
   showEditDialog = signal<boolean>(false);
   campaignToEdit = signal<Campaign | null>(null);
-  editFormData = {
+  editFormData: { id: number; campaignName: string; campaignDesc: string; specialitiesId?: number } = {
     id: 0,
     campaignName: '',
-    campaignDesc: ''
+    campaignDesc: '',
+    specialitiesId: undefined
   };
 
   // État de la popup de création
   showCreateDialog = signal<boolean>(false);
-  createFormData = {
+  createFormData: { campaignName: string; campaignDesc: string; specialitiesId?: number } = {
     campaignName: '',
-    campaignDesc: ''
+    campaignDesc: '',
+    specialitiesId: undefined
   };
   
-  // États pour la gestion des spécialités
-  showSpecialityCreateDialog = signal<boolean>(false);
-  showSpecialityEditDialog = signal<boolean>(false);
-  showSpecialityDeleteConfirmation = signal<boolean>(false);
-  showSpecialityRestoreConfirmation = signal<boolean>(false);
-  
-  specialityToEdit = signal<Speciality | null>(null);
-  specialityToDelete = signal<Speciality | null>(null);
-  specialityToRestore = signal<Speciality | null>(null);
-  currentCampaignForSpeciality = signal<Campaign | null>(null);
-  
-  specialityCreateFormData = {
-    nom: '',
-    description: ''
-  };
-  
-  specialityEditFormData = {
-    id: 0,
-    nom: '',
-    description: ''
-  };
+
   
   // Critères de recherche avancée
   advancedCriteria: CampaignSearchCriteria = {
@@ -129,7 +173,9 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
   constructor(
     private campaignService: CampaignService,
     private userService: UserService,
-    private specialityService: SpecialityService,
+    private formService: FormService,
+    private sourceTokenService: SourceTokenService,
+    private campaignCrudService: CampaignCrudService,
     private notificationService: NotificationService,
     private authService: AuthService,
     private router: Router,
@@ -153,6 +199,7 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
     });
     
     this.loadCampaigns();
+    this.specialityFkService.getAll({ page: 0, size: 9999, isDeleted: false }).subscribe({ next: (res) => this.allSpecialities.set(res.items) });
   }
 
   ngOnDestroy() {
@@ -468,7 +515,18 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
    */
   deleteCampaign(campaign: Campaign) {
     this.campaignToDelete = campaign;
-    this.showDeleteConfirmation = true;
+    this.depService.checkDependencies('campaigns', campaign.id).subscribe({
+      next: (info) => {
+        if (info.totalDependencies > 0) {
+          this.dependencyInfo.set(info);
+          this.dependencyMode.set('delete');
+          this.showDependencyPopup.set(true);
+        } else {
+          this.showDeleteConfirmation = true;
+        }
+      },
+      error: () => this.showDeleteConfirmation = true
+    });
   }
 
   /**
@@ -514,7 +572,18 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
    */
   restoreCampaign(campaign: Campaign) {
     this.campaignToRestore.set(campaign);
-    this.showRestoreConfirmation.set(true);
+    this.depService.checkParent('campaigns', campaign.id).subscribe({
+      next: (info) => {
+        if (info.deletedParents && info.deletedParents.length > 0) {
+          this.dependencyInfo.set(info);
+          this.dependencyMode.set('restore');
+          this.showDependencyPopup.set(true);
+        } else {
+          this.showRestoreConfirmation.set(true);
+        }
+      },
+      error: () => this.showRestoreConfirmation.set(true)
+    });
   }
 
   /**
@@ -627,18 +696,8 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
   }
 
 
-  /**
-   * TrackBy function pour optimiser les performances de rendu des spécialités
-   */
-  trackBySpecialityId(index: number, speciality: any): number {
-    return speciality.id;
-  }
-
-  /**
-   * TrackBy function pour optimiser les performances de rendu des questions
-   */
-  trackByQuestionId(index: number, question: any): number {
-    return question.id;
+  trackByChildId(index: number, item: any): number {
+    return item.id;
   }
 
   /**
@@ -838,11 +897,24 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
   }
 
 
-  /**
-   * Retourne les questions d'une campagne donnée
-   */
-  getCampaignQuestions(campaignId: number): Question[] {
-    return this.campaignQuestions()[campaignId] || [];
+  getCampaignForms(campaignId: number): Form[] {
+    return this.campaignForms()[campaignId] || [];
+  }
+
+  getCampaignSourceTokens(campaignId: number): SourceToken[] {
+    return this.campaignSourceTokens()[campaignId] || [];
+  }
+
+  getCampaignPermissions(campaignId: number): CampaignCrud[] {
+    return this.campaignPermissions()[campaignId] || [];
+  }
+
+  getChildTab(campaignId: number): string {
+    return this.childTab()[campaignId] || 'forms';
+  }
+
+  setChildTab(campaignId: number, tab: string) {
+    this.childTab.set({ ...this.childTab(), [campaignId]: tab });
   }
 
   /**
@@ -885,10 +957,10 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
       newExpanded.delete(campaignId);
       this.expandedCampaigns.set(newExpanded);
     } else {
-      // Étendre et charger les spécialités
+      // Étendre et charger les enfants
       newExpanded.add(campaignId);
       this.expandedCampaigns.set(newExpanded);
-      this.loadCampaignQuestions(campaignId);
+      this.loadCampaignChildren(campaignId);
     }
   }
 
@@ -899,313 +971,35 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
     return this.expandedCampaigns().has(campaignId);
   }
 
-  /**
-   * Charge les questions d'une campagne
-   */
-  loadCampaignQuestions(campaignId: number) {
-    // Éviter les appels multiples
-    if (this.loadingQuestions()[campaignId]) {
-      return;
-    }
+  loadCampaignChildren(campaignId: number) {
+    if (this.loadingChildren()[campaignId]) return;
 
-    // Activer le loading pour cette campagne
-    this.loadingQuestions.set({
-      ...this.loadingQuestions(),
-      [campaignId]: true
+    this.loadingChildren.set({ ...this.loadingChildren(), [campaignId]: true });
+
+    this.formService.getAllByCriteria({ campaignId, size: 100 }).subscribe({
+      next: (res) => this.campaignForms.set({ ...this.campaignForms(), [campaignId]: res.content }),
+      error: () => this.campaignForms.set({ ...this.campaignForms(), [campaignId]: [] })
     });
 
-    console.log(`🔍 Chargement des questions pour la campagne ${campaignId}...`);
+    this.sourceTokenService.getAllSourceTokensByCriteria({ campaignId, size: 100 }).subscribe({
+      next: (res) => this.campaignSourceTokens.set({ ...this.campaignSourceTokens(), [campaignId]: res.content }),
+      error: () => this.campaignSourceTokens.set({ ...this.campaignSourceTokens(), [campaignId]: [] })
+    });
 
-    // Charger les questions de la campagne
-    this.campaignService.getCampaignQuestions(campaignId).subscribe({
-      next: (questions: Question[]) => {
-        console.log(`✅ Questions chargées pour la campagne ${campaignId}:`, questions);
-        
-        // Mettre à jour les questions de la campagne
-        this.campaignQuestions.set({
-          ...this.campaignQuestions(),
-          [campaignId]: questions
-        });
-
-        // Désactiver le loading
-        this.loadingQuestions.set({
-          ...this.loadingQuestions(),
-          [campaignId]: false
-        });
+    this.campaignCrudService.getAllByCriteria({ campaignId, size: 100 }).subscribe({
+      next: (res) => {
+        this.campaignPermissions.set({ ...this.campaignPermissions(), [campaignId]: res.content });
+        this.loadingChildren.set({ ...this.loadingChildren(), [campaignId]: false });
       },
-      error: (error) => {
-        console.error(`❌ Erreur lors du chargement des questions de la campagne ${campaignId}:`, error);
-        this.notificationService.error('Erreur', `Erreur lors du chargement des questions de la campagne ${campaignId}`);
-        
-        // Désactiver le loading même en cas d'erreur
-        this.loadingQuestions.set({
-          ...this.loadingQuestions(),
-          [campaignId]: false
-        });
+      error: () => {
+        this.campaignPermissions.set({ ...this.campaignPermissions(), [campaignId]: [] });
+        this.loadingChildren.set({ ...this.loadingChildren(), [campaignId]: false });
       }
     });
   }
 
-  /**
-   * Vérifie si les spécialités d'une campagne sont en cours de chargement
-   */
-  isLoadingSpecialities(campaignId: number): boolean {
-    return this.loadingQuestions()[campaignId] || false;
-  }
-
-  /**
-   * Crée une nouvelle spécialité dans une campagne
-   */
-  createSpecialityInCampaign(campaign: Campaign) {
-    console.log('🆕 Création d\'une spécialité dans la campagne:', campaign.campaignName);
-    this.currentCampaignForSpeciality.set(campaign);
-    this.specialityCreateFormData = {
-      nom: '',
-      description: ''
-    };
-    this.showSpecialityCreateDialog.set(true);
-  }
-
-  /**
-   * Modifie une spécialité
-   */
-  editSpecialityInCampaign(speciality: Speciality, campaign: Campaign) {
-    console.log('✏️ Modification de la spécialité:', speciality.nom, 'dans la campagne:', campaign.campaignName);
-    this.currentCampaignForSpeciality.set(campaign);
-    this.specialityToEdit.set(speciality);
-    this.specialityEditFormData = {
-      id: speciality.id,
-      nom: speciality.nom || '',
-      description: speciality.description || ''
-    };
-    this.showSpecialityEditDialog.set(true);
-  }
-
-  /**
-   * Supprime une spécialité
-   */
-  deleteSpecialityInCampaign(speciality: Speciality, campaign: Campaign) {
-    console.log('🗑️ Suppression de la spécialité:', speciality.nom, 'dans la campagne:', campaign.campaignName);
-    this.currentCampaignForSpeciality.set(campaign);
-    this.specialityToDelete.set(speciality);
-    this.showSpecialityDeleteConfirmation.set(true);
-  }
-
-  /**
-   * Restaure une spécialité supprimée
-   */
-  restoreSpecialityInCampaign(speciality: Speciality, campaign: Campaign) {
-    console.log('♻️ Restauration de la spécialité:', speciality.nom, 'dans la campagne:', campaign.campaignName);
-    this.currentCampaignForSpeciality.set(campaign);
-    this.specialityToRestore.set(speciality);
-    this.showSpecialityRestoreConfirmation.set(true);
-  }
-
-  /**
-   * Confirme la création d'une spécialité
-   */
-  async confirmCreateSpeciality() {
-    if (!this.currentCampaignForSpeciality()) {
-      this.notificationService.error('Erreur', 'Campagne non trouvée');
-      return;
-    }
-
-    const campaign = this.currentCampaignForSpeciality()!;
-    const specialityData = {
-      nom: this.specialityCreateFormData.nom.trim(),
-      description: this.specialityCreateFormData.description.trim(),
-      campaignId: campaign.id
-    };
-
-    if (!specialityData.nom) {
-      this.notificationService.error('Erreur', 'Le nom de la spécialité est obligatoire');
-      return;
-    }
-
-    try {
-      console.log('🚀 Création de la spécialité:', specialityData);
-      const newSpeciality: any = await this.specialityService.create(specialityData);
-      console.log('✅ Spécialité créée:', newSpeciality);
-
-      // Recharger les spécialités de la campagne
-      this.loadCampaignQuestions(campaign.id);
-
-      this.notificationService.success('Succès', 'Spécialité créée avec succès');
-      this.cancelCreateSpeciality();
-    } catch (error: any) {
-      console.error('❌ Erreur lors de la création de la spécialité:', error);
-      this.notificationService.error('Erreur', 'Erreur lors de la création de la spécialité');
-    }
-  }
-
-  /**
-   * Annule la création d'une spécialité
-   */
-  cancelCreateSpeciality() {
-    this.showSpecialityCreateDialog.set(false);
-    this.currentCampaignForSpeciality.set(null);
-    this.specialityCreateFormData = {
-      nom: '',
-      description: ''
-    };
-  }
-
-  /**
-   * Confirme la modification d'une spécialité
-   */
-  async confirmEditSpeciality() {
-    if (!this.specialityToEdit() || !this.currentCampaignForSpeciality()) {
-      this.notificationService.error('Erreur', 'Spécialité ou campagne non trouvée');
-      return;
-    }
-
-    const speciality = this.specialityToEdit()!;
-    const campaign = this.currentCampaignForSpeciality()!;
-    const specialityData = {
-      nom: this.specialityEditFormData.nom.trim(),
-      description: this.specialityEditFormData.description.trim(),
-      campaignId: campaign.id
-    };
-
-    if (!specialityData.nom) {
-      this.notificationService.error('Erreur', 'Le nom de la spécialité est obligatoire');
-      return;
-    }
-
-    try {
-      console.log('🚀 Modification de la spécialité:', speciality.id, specialityData);
-      const updatedSpeciality: any = await this.specialityService.update(speciality.id, specialityData);
-      console.log('✅ Spécialité modifiée:', updatedSpeciality);
-
-      // Recharger les spécialités de la campagne
-      this.loadCampaignQuestions(campaign.id);
-
-      this.notificationService.success('Succès', 'Spécialité modifiée avec succès');
-      this.cancelEditSpeciality();
-    } catch (error: any) {
-      console.error('❌ Erreur lors de la modification de la spécialité:', error);
-      this.notificationService.error('Erreur', 'Erreur lors de la modification de la spécialité');
-    }
-  }
-
-  /**
-   * Annule la modification d'une spécialité
-   */
-  cancelEditSpeciality() {
-    this.showSpecialityEditDialog.set(false);
-    this.specialityToEdit.set(null);
-    this.currentCampaignForSpeciality.set(null);
-    this.specialityEditFormData = {
-      id: 0,
-      nom: '',
-      description: ''
-    };
-  }
-
-  /**
-   * Confirme la suppression d'une spécialité
-   */
-  async confirmDeleteSpeciality() {
-    if (!this.specialityToDelete() || !this.currentCampaignForSpeciality()) {
-      this.notificationService.error('Erreur', 'Spécialité ou campagne non trouvée');
-      return;
-    }
-
-    const speciality = this.specialityToDelete()!;
-    const campaign = this.currentCampaignForSpeciality()!;
-
-    try {
-      console.log('🚀 Suppression de la spécialité:', speciality.id);
-      await this.specialityService.delete(speciality.id);
-      console.log('✅ Spécialité supprimée');
-
-      // Recharger les spécialités de la campagne
-      this.loadCampaignQuestions(campaign.id);
-
-      this.notificationService.success('Succès', 'Spécialité supprimée avec succès');
-      this.cancelDeleteSpeciality();
-    } catch (error: any) {
-      console.error('❌ Erreur lors de la suppression de la spécialité:', error);
-      this.notificationService.error('Erreur', 'Erreur lors de la suppression de la spécialité');
-    }
-  }
-
-  /**
-   * Annule la suppression d'une spécialité
-   */
-  cancelDeleteSpeciality() {
-    this.showSpecialityDeleteConfirmation.set(false);
-    this.specialityToDelete.set(null);
-    this.currentCampaignForSpeciality.set(null);
-  }
-
-  /**
-   * Confirme la restauration d'une spécialité
-   */
-  async confirmRestoreSpeciality() {
-    if (!this.specialityToRestore() || !this.currentCampaignForSpeciality()) {
-      this.notificationService.error('Erreur', 'Spécialité ou campagne non trouvée');
-      return;
-    }
-
-    const speciality = this.specialityToRestore()!;
-    const campaign = this.currentCampaignForSpeciality()!;
-
-    try {
-      console.log('🚀 Restauration de la spécialité:', speciality.id);
-      await this.specialityService.restore(speciality.id);
-      console.log('✅ Spécialité restaurée');
-
-      // Recharger les spécialités de la campagne
-      this.loadCampaignQuestions(campaign.id);
-
-      this.notificationService.success('Succès', 'Spécialité restaurée avec succès');
-      this.cancelRestoreSpeciality();
-    } catch (error: any) {
-      console.error('❌ Erreur lors de la restauration de la spécialité:', error);
-      this.notificationService.error('Erreur', 'Erreur lors de la restauration de la spécialité');
-    }
-  }
-
-  /**
-   * Annule la restauration d'une spécialité
-   */
-  cancelRestoreSpeciality() {
-    this.showSpecialityRestoreConfirmation.set(false);
-    this.specialityToRestore.set(null);
-    this.currentCampaignForSpeciality.set(null);
-  }
-
-  /**
-   * Édite une question dans une campagne
-   */
-  editQuestionInCampaign(question: Question, campaign: Campaign) {
-    console.log('✏️ Modification de la question:', question.questionText, 'dans la campagne:', campaign.campaignName);
-    // TODO: Implémenter l'édition d'une question dans une campagne
-  }
-
-  /**
-   * Crée une nouvelle question dans une campagne
-   */
-  createQuestionInCampaign(campaign: Campaign) {
-    console.log('🆕 Création d\'une question dans la campagne:', campaign.campaignName);
-    // TODO: Implémenter la création d'une question dans une campagne
-  }
-
-  /**
-   * Supprime une question d'une campagne
-   */
-  deleteQuestionInCampaign(question: Question, campaign: Campaign) {
-    console.log('🗑️ Suppression de la question:', question.questionText, 'dans la campagne:', campaign.campaignName);
-    // TODO: Implémenter la suppression d'une question d'une campagne
-  }
-
-  /**
-   * Restaure une question supprimée dans une campagne
-   */
-  restoreQuestionInCampaign(question: Question, campaign: Campaign) {
-    console.log('♻️ Restauration de la question:', question.questionText, 'dans la campagne:', campaign.campaignName);
-    // TODO: Implémenter la restauration d'une question dans une campagne
+  isLoadingChildren(campaignId: number): boolean {
+    return this.loadingChildren()[campaignId] || false;
   }
 
   /**

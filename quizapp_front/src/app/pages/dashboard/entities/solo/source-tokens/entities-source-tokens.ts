@@ -1,16 +1,21 @@
-import { Component, OnInit, OnDestroy, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
 import { CommonModule, NgIf, NgFor } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { EntityDetailPanelComponent, DetailField } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
+import { DependencyPopupComponent } from '../../../../../shared/dependency-popup/dependency-popup';
+import { DashboardStatsService } from '../../../../../core/services/dashboard-stats.service';
+import { DependencyInfo } from '../../../../../shared/models/interfaces';
 import { Router, ActivatedRoute } from '@angular/router';
 
 import { SourceTokenService, SourceToken, SourceTokenSearchCriteria, PagedSourceTokenResponse } from '../../../../../services/source-token.service';
 import { NotificationService } from '../../../../../core/services/notification.service';
+import { CampaignService, Campaign } from '../../../../../core/services/campaign.service';
 
 @Component({
   selector: 'app-entities-source-tokens',
   standalone: true,
-  imports: [CommonModule, NgIf, NgFor, FormsModule],
+  imports: [CommonModule, NgIf, NgFor, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent],
   templateUrl: './entities-source-tokens.html',
   styleUrl: './entities-source-tokens.scss'
 })
@@ -19,6 +24,36 @@ export class EntitiesSourceTokensComponent implements OnInit, OnDestroy {
   Math = Math;
   
   private destroy$ = new Subject<void>();
+
+  // Detail panel
+  selectedItem = signal<any>(null);
+  showDetailPanel = signal<boolean>(false);
+  detailFields: DetailField[] = [];
+
+  selectItem(item: any): void {
+    this.selectedItem.set(item);
+    this.showDetailPanel.set(true);
+  }
+
+  closeDetailPanel(): void {
+    this.showDetailPanel.set(false);
+    this.selectedItem.set(null);
+  }
+
+  editFromDetail(item: any): void {
+    this.closeDetailPanel();
+    this.editSourceToken(item);
+  }
+
+  deleteFromDetail(item: any): void {
+    this.closeDetailPanel();
+    this.deleteSourceToken(item);
+  }
+
+  restoreFromDetail(item: any): void {
+    this.closeDetailPanel();
+    this.restoreSourceToken(item);
+  }
   private loadingTimeout: any;
   
   // Signaux pour la reactivite
@@ -50,7 +85,29 @@ export class EntitiesSourceTokensComponent implements OnInit, OnDestroy {
   private readonly PAGE_SIZE_STORAGE_KEY = 'entities-source-tokens-page-size';
   
   // Etat de la popup de confirmation
-  showDeleteConfirmation = false;
+  showDeleteConfirmation = false;  // -- FK Dropdowns --
+  private campaignFkService = inject(CampaignService);
+  allCampaigns = signal<Campaign[]>([]);
+  // -- D�pendances FK ---------------------------
+  private depService = inject(DashboardStatsService);
+  dependencyInfo = signal<DependencyInfo | null>(null);
+  showDependencyPopup = signal<boolean>(false);
+  dependencyMode = signal<'delete' | 'restore'>('delete');
+
+  closeDependencyPopup(): void {
+    this.showDependencyPopup.set(false);
+    this.dependencyInfo.set(null);
+  }
+
+  confirmDependencyAction(): void {
+    const mode = this.dependencyMode();
+    this.closeDependencyPopup();
+    if (mode === 'delete') {
+      this.showDeleteConfirmation = true;
+    } else {
+      this.showRestoreConfirmation.set(true);
+    }
+  }
   sourceTokenToDelete: SourceToken | null = null;
   
   // Etat de la popup de restauration
@@ -107,6 +164,7 @@ export class EntitiesSourceTokensComponent implements OnInit, OnDestroy {
     });
     
     this.loadSourceTokens();
+    this.campaignFkService.getAllCampaignsByCriteria({ page: 0, size: 9999, isDeleted: false }).subscribe({ next: (res) => this.allCampaigns.set(res.content) });
   }
 
   ngOnDestroy() {
@@ -294,7 +352,18 @@ export class EntitiesSourceTokensComponent implements OnInit, OnDestroy {
 
   deleteSourceToken(token: SourceToken) {
     this.sourceTokenToDelete = token;
-    this.showDeleteConfirmation = true;
+    this.depService.checkDependencies('source-tokens', token.id!).subscribe({
+      next: (info) => {
+        if (info.totalDependencies > 0) {
+          this.dependencyInfo.set(info);
+          this.dependencyMode.set('delete');
+          this.showDependencyPopup.set(true);
+        } else {
+          this.showDeleteConfirmation = true;
+        }
+      },
+      error: () => this.showDeleteConfirmation = true
+    });
   }
 
   confirmDeleteSourceToken() {
@@ -327,7 +396,18 @@ export class EntitiesSourceTokensComponent implements OnInit, OnDestroy {
 
   restoreSourceToken(token: SourceToken) {
     this.sourceTokenToRestore.set(token);
-    this.showRestoreConfirmation.set(true);
+    this.depService.checkParent('source-tokens', token.id!).subscribe({
+      next: (info) => {
+        if (info.deletedParents && info.deletedParents.length > 0) {
+          this.dependencyInfo.set(info);
+          this.dependencyMode.set('restore');
+          this.showDependencyPopup.set(true);
+        } else {
+          this.showRestoreConfirmation.set(true);
+        }
+      },
+      error: () => this.showRestoreConfirmation.set(true)
+    });
   }
 
   confirmRestoreSourceToken() {

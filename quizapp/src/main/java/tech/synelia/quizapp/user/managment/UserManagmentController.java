@@ -236,4 +236,23 @@ public class UserManagmentController {
 		slf4jLogger.info("end method /$/déverrouiller");
 		return response;
 	}
+
+	@RequestMapping(value = "/registerWithCode", method = RequestMethod.POST, consumes = { "application/json" }, produces = { "application/json" })
+	public Response<UserDto> registerWithCode(@RequestBody Request<UserManagmentDto> request) throws Exception {
+		log.info("start method /userManager/registerWithCode");
+		Response<UserDto> response = new Response<UserDto>();
+		String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
+		Locale locale = Locale.of(languageID != null ? languageID : "fr", "");
+		try {
+			response = userManagerBusiness.registerWithCode(request, locale);
+		} catch (CannotCreateTransactionException e) {
+			exceptionUtils.CANNOT_CREATE_TRANSACTION_EXCEPTION(response, locale, e);
+		} catch (TransactionSystemException e) {
+			exceptionUtils.TRANSACTION_SYSTEM_EXCEPTION(response, locale, e);
+		} catch (RuntimeException e) {
+			exceptionUtils.RUNTIME_EXCEPTION(response, locale, e);
+		}
+		log.info("end method /userManager/registerWithCode");
+		return response;
+	}
 }

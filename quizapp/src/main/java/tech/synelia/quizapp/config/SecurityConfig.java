@@ -40,6 +40,9 @@ public class SecurityConfig {
                 .requestMatchers("/applications/create", "/applications/verifyEmail/**").permitAll()
                 .requestMatchers("/candidateToken/**", "/sourceToken/**").permitAll()
                 .requestMatchers("/candidateanswer/**").permitAll()
+                .requestMatchers("/legalText/getByCriteria").permitAll()
+                .requestMatchers("/invitationCode/validate").permitAll()
+                .requestMatchers("/userManager/registerWithCode").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 // Endpoints ADMIN uniquement
                 .requestMatchers("/user/set-users-online", "/user/roles-debug").hasAnyRole("ADMIN", "SUPER")

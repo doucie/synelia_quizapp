@@ -103,14 +103,14 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let item of items(); trackBy: trackById" [class.row-deleted]="item.isDeleted">
+          <tr *ngFor="let item of items(); trackBy: trackById" [class.row-deleted]="item.isDeleted" (click)="selectItem(item)" style="cursor: pointer;">
             <td><span class="cell-id">#{{ item.id }}</span></td>
             <td>{{ item.questionOrder || '-' }}</td>
             <td>{{ item.chronoOverride ? item.chronoOverride + 's' : '-' }}</td>
             <td>{{ item.formVersionId || '-' }}</td>
             <td>{{ item.questionId || '-' }}</td>
             <td><span class="cell-date">{{ formatDate(item.createdAt) }}</span></td>
-            <td class="actions-cell">
+            <td class="actions-cell" (click)="$event.stopPropagation()">
               <div class="actions-menu">
                 <ng-container *ngIf="!item.isDeleted">
                   <button class="action-btn primary" (click)="openEditDialog(item)" title="Modifier">
@@ -195,8 +195,22 @@
       <form class="edit-form">
         <div class="form-group"><label class="form-label">Ordre</label><input type="number" class="form-input" [(ngModel)]="editFormData.questionOrder" name="questionOrder" /></div>
         <div class="form-group"><label class="form-label">Chrono Override (s)</label><input type="number" class="form-input" [(ngModel)]="editFormData.chronoOverride" name="chronoOverride" /></div>
-        <div class="form-group"><label class="form-label">Version Formulaire ID</label><input type="number" class="form-input" [(ngModel)]="editFormData.formVersionId" name="formVersionId" /></div>
-        <div class="form-group"><label class="form-label">Question ID</label><input type="number" class="form-input" [(ngModel)]="editFormData.questionId" name="questionId" /></div>
+        <div class="form-group"><label class="form-label">Version Formulaire</label>
+          <select class="form-input" [(ngModel)]="editFormData.formVersionId" name="formVersionId">
+            <option [ngValue]="null">-- Sélectionner --</option>
+            @for (fv of allFormVersions(); track fv.id) {
+              <option [ngValue]="fv.id">Version {{ fv.versionNumber }} (ID #{{ fv.id }})</option>
+            }
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Question</label>
+          <select class="form-input" [(ngModel)]="editFormData.questionId" name="questionId">
+            <option [ngValue]="null">-- Sélectionner --</option>
+            @for (q of allQuestions(); track q.id) {
+              <option [ngValue]="q.id">{{ q.questionText }}</option>
+            }
+          </select>
+        </div>
       </form>
     </div>
     <div class="modal-actions">
@@ -220,8 +234,22 @@
       <form class="edit-form">
         <div class="form-group"><label class="form-label">Ordre</label><input type="number" class="form-input" [(ngModel)]="createFormData.questionOrder" name="questionOrder" /></div>
         <div class="form-group"><label class="form-label">Chrono Override (s)</label><input type="number" class="form-input" [(ngModel)]="createFormData.chronoOverride" name="chronoOverride" /></div>
-        <div class="form-group"><label class="form-label">Version Formulaire ID</label><input type="number" class="form-input" [(ngModel)]="createFormData.formVersionId" name="formVersionId" /></div>
-        <div class="form-group"><label class="form-label">Question ID</label><input type="number" class="form-input" [(ngModel)]="createFormData.questionId" name="questionId" /></div>
+        <div class="form-group"><label class="form-label">Version Formulaire</label>
+          <select class="form-input" [(ngModel)]="createFormData.formVersionId" name="formVersionId">
+            <option [ngValue]="null">-- Sélectionner --</option>
+            @for (fv of allFormVersions(); track fv.id) {
+              <option [ngValue]="fv.id">Version {{ fv.versionNumber }} (ID #{{ fv.id }})</option>
+            }
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Question</label>
+          <select class="form-input" [(ngModel)]="createFormData.questionId" name="questionId">
+            <option [ngValue]="null">-- Sélectionner --</option>
+            @for (q of allQuestions(); track q.id) {
+              <option [ngValue]="q.id">{{ q.questionText }}</option>
+            }
+          </select>
+        </div>
       </form>
     </div>
     <div class="modal-actions">
@@ -232,3 +260,24 @@
     </div>
   </div>
 </div>
+
+<!-- Entity Detail Panel -->
+<app-entity-detail-panel
+  [entity]="selectedItem()"
+  [fields]="detailFields"
+  [title]="entityName"
+  [isOpen]="showDetailPanel()"
+  (closePanel)="closeDetailPanel()"
+  (editItem)="editFromDetail($event)"
+  (deleteItem)="deleteFromDetail($event)"
+  (restoreItem)="restoreFromDetail($event)">
+</app-entity-detail-panel>
+
+<!-- Popup d�pendances FK -->
+<app-dependency-popup
+  [info]="dependencyInfo()!"
+  [mode]="dependencyMode()"
+  [visible]="showDependencyPopup()"
+  (cancel)="closeDependencyPopup()"
+  (confirm)="confirmDependencyAction()">
+</app-dependency-popup>

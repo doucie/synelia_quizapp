@@ -1,0 +1,72 @@
+<!-- Backdrop -->
+<div class="detail-panel-overlay" *ngIf="isOpen" (click)="close()"></div>
+
+<!-- Panel -->
+<div class="detail-panel" [class.open]="isOpen">
+  <!-- Header -->
+  <div class="detail-panel-header">
+    <div class="detail-panel-title">
+      <h3>{{ title }}</h3>
+      <span class="detail-panel-id" *ngIf="entity?.id">#{{ entity.id }}</span>
+    </div>
+    <button class="detail-panel-close" (click)="close()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Status banner -->
+  <div class="detail-status-banner" *ngIf="entity?.isDeleted">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 9V13M12 17H12.01M21 12A9 9 0 1 1 3 12A9 9 0 0 1 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    Cet élément est supprimé
+  </div>
+
+  <!-- Body -->
+  <div class="detail-panel-body" *ngIf="entity">
+    <div class="detail-fields">
+      <div class="detail-field" *ngFor="let field of getDisplayFields()">
+        <span class="detail-field-label">{{ field.label }}</span>
+        <ng-container [ngSwitch]="field.type">
+          <span *ngSwitchCase="'id'" class="detail-field-value detail-value-id">#{{ getFieldValue(field) }}</span>
+          <span *ngSwitchCase="'boolean'" class="detail-field-value detail-value-bool"
+                [class.is-true]="getFieldValue(field)" [class.is-false]="!getFieldValue(field)">
+            {{ getFieldValue(field) ? 'Oui' : 'Non' }}
+          </span>
+          <span *ngSwitchCase="'date'" class="detail-field-value detail-value-date">{{ formatValue(field) }}</span>
+          <span *ngSwitchCase="'badge'" class="detail-field-value detail-value-badge"
+                [attr.data-badge]="getFieldValue(field)">
+            {{ field.badgeMap?.[getFieldValue(field)]?.label || getFieldValue(field) || '-' }}
+          </span>
+          <span *ngSwitchDefault class="detail-field-value detail-value-text">{{ formatValue(field) }}</span>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="detail-panel-footer" *ngIf="entity">
+    <ng-container *ngIf="!entity.isDeleted">
+      <button class="detail-btn edit" (click)="edit()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 20H21M16.5 3.5A2.12 2.12 0 0 1 19 6L7 18L3 19L4 15L16.5 3.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Modifier
+      </button>
+      <button class="detail-btn delete" (click)="delete()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 6H5H21M8 6V4C8 3 9 2 10 2H14C15 2 16 3 16 4V6M19 6V20C19 21 18 22 17 22H7C6 22 5 21 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Supprimer
+      </button>
+    </ng-container>
+    <button class="detail-btn restore" *ngIf="entity.isDeleted" (click)="restore()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 12A9 9 0 1 0 12 3M12 3L8 7L12 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Restaurer
+    </button>
+  </div>
+</div>

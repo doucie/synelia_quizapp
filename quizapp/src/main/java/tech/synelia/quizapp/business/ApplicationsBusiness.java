@@ -74,6 +74,8 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 	@Autowired
 	private ParamsUtils paramsUtils;
 	@Autowired
+	private EmailTemplateBusiness emailTemplateBusiness;
+	@Autowired
 	private FunctionalError functionalError;
 	@Autowired
 	private TechnicalError technicalError;
@@ -619,15 +621,29 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		log.info("verificationLink: " + verificationLink);
 		log.info("=====================================");
 		
-		String subject = "Vérification de votre adresse email - Synelia";
-		
-		String contenu = "Bonjour " + application.getCandidateFirstName() + " " + application.getCandidateLastName() + ",<br/><br/>";
-		contenu += "Merci d'avoir soumis votre candidature chez Synelia !<br/><br/>";
-		contenu += "Pour continuer le processus de recrutement, veuillez vérifier votre adresse email en cliquant sur le bouton ci-dessous.<br/><br/>";
-		contenu += "Ce lien est valide pendant 48 heures.<br/><br/>";
-		contenu += "Si vous n'avez pas soumis de candidature chez Synelia, veuillez ignorer cet email.<br/><br/>";
-		contenu += "Cordialement,<br/>";
-		contenu += "L'équipe Synelia";
+		String subject;
+		String contenu;
+
+		// Charger le template depuis la base de données
+		EmailTemplate emailTemplate = emailTemplateBusiness.findByKey("application_verification");
+		if (emailTemplate != null && emailTemplate.getIsActive() != null && emailTemplate.getIsActive()) {
+			Map<String, String> vars = new HashMap<>();
+			vars.put("first_name", application.getCandidateFirstName());
+			vars.put("last_name", application.getCandidateLastName());
+			vars.put("verification_link", verificationLink);
+			vars.put("campaign_title", "");
+			subject = emailTemplateBusiness.renderTemplate(emailTemplate.getSubjectTemplate(), vars);
+			contenu = emailTemplateBusiness.renderTemplate(emailTemplate.getBodyTemplate(), vars);
+		} else {
+			subject = "Vérification de votre adresse email - Synelia";
+			contenu = "Bonjour " + application.getCandidateFirstName() + " " + application.getCandidateLastName() + ",<br/><br/>";
+			contenu += "Merci d'avoir soumis votre candidature chez Synelia !<br/><br/>";
+			contenu += "Pour continuer le processus de recrutement, veuillez vérifier votre adresse email en cliquant sur le bouton ci-dessous.<br/><br/>";
+			contenu += "Ce lien est valide pendant 48 heures.<br/><br/>";
+			contenu += "Si vous n'avez pas soumis de candidature chez Synelia, veuillez ignorer cet email.<br/><br/>";
+			contenu += "Cordialement,<br/>";
+			contenu += "L'équipe Synelia";
+		}
 		
 		context = new Context();
 		String template = "blank";

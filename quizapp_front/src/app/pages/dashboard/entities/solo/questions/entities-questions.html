@@ -216,7 +216,7 @@
         </thead>
         <tbody>
           <ng-container *ngFor="let question of questions(); trackBy: trackByQuestionId">
-            <tr [class.row-deleted]="question.isDeleted">
+            <tr [class.row-deleted]="question.isDeleted" (click)="selectItem(question)" style="cursor: pointer;">
               <td>
                 <span class="cell-id">#{{ question.id }}</span>
               </td>
@@ -229,7 +229,7 @@
               <td>
                 <span class="cell-chrono">{{ question.questionChrono || '-' }}</span>
               </td>
-              <td class="actions-cell">
+              <td class="actions-cell" (click)="$event.stopPropagation()">
                 <div class="actions-menu">
                   <!-- Boutons normaux pour les questions non supprimés -->
                   <ng-container *ngIf="!question.isDeleted">
@@ -650,9 +650,9 @@
             name="specialityId"
           >
             <option value="">Sélectionner une spécialité</option>
-            <option value="1">Informatique</option>
-            <option value="2">Mathématiques</option>
-            <option value="3">Physique</option>
+            @for (s of allSpecialities(); track s.id) {
+              <option [value]="s.id">{{ s.nom }}</option>
+            }
           </select>
         </div>
 
@@ -738,9 +738,9 @@
             name="specialityId"
           >
             <option value="">Sélectionner une spécialité</option>
-            <option value="1">Informatique</option>
-            <option value="2">Mathématiques</option>
-            <option value="3">Physique</option>
+            @for (s of allSpecialities(); track s.id) {
+              <option [value]="s.id">{{ s.nom }}</option>
+            }
           </select>
         </div>
 
@@ -991,3 +991,23 @@
   </div>
 </div>
 </div>
+
+<!-- Entity Detail Panel -->
+<app-entity-detail-panel
+  [entity]="selectedItem()"
+  [fields]="detailFields"
+  [title]="'Question'"
+  [isOpen]="showDetailPanel()"
+  (closePanel)="closeDetailPanel()"
+  (editItem)="editFromDetail($event)"
+  (deleteItem)="deleteFromDetail($event)"
+  (restoreItem)="restoreFromDetail($event)">
+</app-entity-detail-panel>
+
+<app-dependency-popup
+  [info]="dependencyInfo()!"
+  [mode]="dependencyMode()"
+  [visible]="showDependencyPopup()"
+  (cancel)="closeDependencyPopup()"
+  (confirm)="confirmDependencyAction()">
+</app-dependency-popup>

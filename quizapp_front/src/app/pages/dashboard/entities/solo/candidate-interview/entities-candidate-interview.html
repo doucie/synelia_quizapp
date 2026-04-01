@@ -103,14 +103,15 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let item of items(); trackBy: trackById" [class.row-deleted]="item.isDeleted">
+          <ng-container *ngFor="let item of items(); trackBy: trackById">
+          <tr [class.row-deleted]="item.isDeleted" (click)="selectItem(item)" style="cursor: pointer;">
             <td><span class="cell-id">#{{ item.id }}</span></td>
             <td>{{ item.applicationId || '-' }}</td>
             <td>{{ item.interviewId || '-' }}</td>
             <td>{{ item.interviewStart || '-' }}</td>
             <td>{{ item.interviewDuration || '-' }}</td>
             <td><span class="cell-date">{{ formatDate(item.createdAt) }}</span></td>
-            <td class="actions-cell">
+            <td class="actions-cell" (click)="$event.stopPropagation()">
               <div class="actions-menu">
                 <ng-container *ngIf="!item.isDeleted">
                   <button class="action-btn primary" (click)="openEditDialog(item)" title="Modifier">
@@ -119,15 +120,39 @@
                   <button class="action-btn danger" (click)="confirmDelete(item)" title="Supprimer">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 6H5H21M8 6V4C8 3 9 2 10 2H14C15 2 16 3 16 4V6M19 6V20C19 21 18 22 17 22H7C6 22 5 21 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   </button>
+                  <button class="action-btn secondary" (click)="toggleExpansion(item.id!)" [class.expanded]="isExpanded(item.id!)" title="Voir les évaluations">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" [attr.transform]="isExpanded(item.id!) ? 'rotate(180 12 12)' : ''"/></svg>
+                  </button>
                 </ng-container>
                 <ng-container *ngIf="item.isDeleted">
                   <button class="action-btn success" (click)="confirmRestore(item)" title="Restaurer">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 12A9 9 0 1 0 12 3M12 3L8 7L12 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   </button>
+                  <button class="action-btn secondary" (click)="toggleExpansion(item.id!)" [class.expanded]="isExpanded(item.id!)" title="Voir les évaluations">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" [attr.transform]="isExpanded(item.id!) ? 'rotate(180 12 12)' : ''"/></svg>
+                  </button>
                 </ng-container>
               </div>
             </td>
           </tr>
+          <!-- Expansion: Évaluations -->
+          <tr *ngIf="isExpanded(item.id!)" class="expansion-row">
+            <td colspan="7" class="expansion-content">
+              <div class="children-container">
+                <div class="children-header">Évaluations <span class="tab-count">{{ getChildren(item.id!).length }}</span></div>
+                <div *ngIf="isLoadingChildren(item.id!)" class="loading-children"><div class="loading-spinner-small"></div><span>Chargement...</span></div>
+                <div *ngIf="!isLoadingChildren(item.id!)" class="children-list">
+                  <div *ngIf="getChildren(item.id!).length === 0" class="no-children"><span>Aucune évaluation</span></div>
+                  <div *ngFor="let child of getChildren(item.id!); trackBy: trackByChildId" class="child-item" [class.deleted]="child.isDeleted">
+                    <span class="child-id">#{{ child.id }}</span>
+                    <span class="child-name">{{ child.candidateName || 'Candidat' }} - Note: {{ child.candidateMark || '-' }}</span>
+                    <span class="child-badge active" *ngIf="child.recruiterComment">Commenté</span>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          </ng-container>
         </tbody>
       </table>
     </div>
@@ -193,8 +218,8 @@
     </div>
     <div class="modal-content">
       <form class="edit-form">
-        <div class="form-group"><label class="form-label">Application ID</label><input type="number" class="form-input" [(ngModel)]="editFormData.applicationId" name="applicationId" /></div>
-        <div class="form-group"><label class="form-label">Interview ID</label><input type="number" class="form-input" [(ngModel)]="editFormData.interviewId" name="interviewId" /></div>
+        <div class="form-group"><label class="form-label">Candidature</label><select class="form-input" [(ngModel)]="editFormData.applicationId" name="applicationId"><option [ngValue]="undefined">-- Sélectionner --</option>@for (a of allApplications(); track a.id) {<option [ngValue]="a.id">{{ a.candidateEmail }}</option>}</select></div>
+        <div class="form-group"><label class="form-label">Entretien</label><select class="form-input" [(ngModel)]="editFormData.interviewId" name="interviewId"><option [ngValue]="undefined">-- Sélectionner --</option>@for (i of allInterviews(); track i.id) {<option [ngValue]="i.id">#{{ i.id }} - {{ i.interviewType }}</option>}</select></div>
         <div class="form-group"><label class="form-label">Début</label><input type="text" class="form-input" [(ngModel)]="editFormData.interviewStart" name="interviewStart" placeholder="YYYY-MM-DD HH:mm" /></div>
         <div class="form-group"><label class="form-label">Durée (min)</label><input type="number" class="form-input" [(ngModel)]="editFormData.interviewDuration" name="interviewDuration" /></div>
       </form>
@@ -218,8 +243,8 @@
     </div>
     <div class="modal-content">
       <form class="edit-form">
-        <div class="form-group"><label class="form-label">Application ID</label><input type="number" class="form-input" [(ngModel)]="createFormData.applicationId" name="applicationId" /></div>
-        <div class="form-group"><label class="form-label">Interview ID</label><input type="number" class="form-input" [(ngModel)]="createFormData.interviewId" name="interviewId" /></div>
+        <div class="form-group"><label class="form-label">Candidature</label><select class="form-input" [(ngModel)]="createFormData.applicationId" name="applicationId"><option [ngValue]="undefined">-- Sélectionner --</option>@for (a of allApplications(); track a.id) {<option [ngValue]="a.id">{{ a.candidateEmail }}</option>}</select></div>
+        <div class="form-group"><label class="form-label">Entretien</label><select class="form-input" [(ngModel)]="createFormData.interviewId" name="interviewId"><option [ngValue]="undefined">-- Sélectionner --</option>@for (i of allInterviews(); track i.id) {<option [ngValue]="i.id">#{{ i.id }} - {{ i.interviewType }}</option>}</select></div>
         <div class="form-group"><label class="form-label">Début</label><input type="text" class="form-input" [(ngModel)]="createFormData.interviewStart" name="interviewStart" placeholder="YYYY-MM-DD HH:mm" /></div>
         <div class="form-group"><label class="form-label">Durée (min)</label><input type="number" class="form-input" [(ngModel)]="createFormData.interviewDuration" name="interviewDuration" /></div>
       </form>
@@ -232,3 +257,24 @@
     </div>
   </div>
 </div>
+
+<!-- Entity Detail Panel -->
+<app-entity-detail-panel
+  [entity]="selectedItem()"
+  [fields]="detailFields"
+  [title]="entityName"
+  [isOpen]="showDetailPanel()"
+  (closePanel)="closeDetailPanel()"
+  (editItem)="editFromDetail($event)"
+  (deleteItem)="deleteFromDetail($event)"
+  (restoreItem)="restoreFromDetail($event)">
+</app-entity-detail-panel>
+
+<!-- Popup d�pendances FK -->
+<app-dependency-popup
+  [info]="dependencyInfo()!"
+  [mode]="dependencyMode()"
+  [visible]="showDependencyPopup()"
+  (cancel)="closeDependencyPopup()"
+  (confirm)="confirmDependencyAction()">
+</app-dependency-popup>

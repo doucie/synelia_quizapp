@@ -37,18 +37,6 @@ export interface Campaign {
 }
 
 /**
- * Interface pour les données de liaison campagne-questions
- */
-export interface CampaignQuestions {
-  id: number;
-  campaignId: number;
-  questionId: number;
-  createdAt?: string;
-  createdBy?: number;
-  isDeleted?: boolean;
-}
-
-/**
  * Interface pour les critères de recherche des campagnes
  */
 export interface CampaignSearchCriteria {
@@ -345,62 +333,6 @@ export class CampaignService {
   }
 
   /**
-   * Récupère les questions liées à une campagne
-   */
-  getCampaignQuestions(campaignId: number): Observable<Question[]> {
-    console.log('📥 Récupération des questions de la campagne:', campaignId);
-
-    // D'abord récupérer les CampaignQuestions pour cette campagne
-    const requestBody = {
-      user: "1",
-      data: {
-        campaignId: campaignId.toString()
-      },
-      size: 1000, // Récupérer toutes les questions
-      index: 0
-    };
-
-    return this.http.post<any>(`${environment.apiUrl}/campaignQuestions/getAllByCriteria`, requestBody).pipe(
-      switchMap((response: any) => {
-        console.log('🔍 CampaignQuestions reçues:', response);
-
-        if (!response || response.hasError || !response.items || response.items.length === 0) {
-          console.log('⚠️ Aucune question trouvée pour cette campagne');
-          return of([]);
-        }
-
-        // Extraire les questionIds
-        const questionIds = response.items.map((cq: any) => cq.questionId);
-        console.log('📋 IDs des questions à récupérer:', questionIds);
-
-        if (questionIds.length === 0) {
-          return of([]);
-        }
-
-        // Maintenant récupérer les détails des questions
-        // Pour simplifier, on va récupérer toutes les questions et filtrer côté client
-        return this.questionService.getAllQuestionsByCriteria({
-          size: 1000,
-          page: 0
-        }).pipe(
-          map(questionResponse => {
-            // Filtrer les questions qui appartiennent à cette campagne
-            const campaignQuestions = questionResponse.content.filter((q: Question) =>
-              questionIds.includes(q.id)
-            );
-            console.log('✅ Questions de la campagne récupérées:', campaignQuestions);
-            return campaignQuestions;
-          })
-        );
-      }),
-      catchError(error => {
-        console.error('❌ Erreur lors de la récupération des questions de la campagne:', error);
-        return throwError(() => error);
-      })
-    );
-  }
-
-  /**
    * Récupère les campagnes créées par l'utilisateur connecté
    */
   getMyCampaigns(criteria: CampaignSearchCriteria = {}): Observable<PagedResponse<Campaign>> {
@@ -651,84 +583,6 @@ export class CampaignService {
             console.error('💬 Message d\'erreur notification:', error.error.status.message);
           }
         }
-        return throwError(() => error);
-      })
-    );
-  }
-
-  /**
-   * Ajoute une ou plusieurs questions à une campagne
-   */
-  addQuestionsToCampaign(campaignId: number, questionIds: number[]): Observable<any> {
-    console.log('➕ Ajout de questions à la campagne:', { campaignId, questionIds });
-
-    // Créer les données pour chaque liaison campagne-question
-    const campaignQuestions = questionIds.map(questionId => ({
-      campaigns_id: campaignId,
-      questions_id: questionId
-    }));
-
-    const requestBody = {
-      user: 1,
-      datas: campaignQuestions
-    };
-
-    console.log('📤 Corps de la requête d\'ajout de questions:', requestBody);
-
-    return this.http.post<any>(`${environment.apiUrl}/campaignQuestions/create`, requestBody).pipe(
-      map(response => {
-        console.log('✅ Questions ajoutées à la campagne:', response);
-        return response;
-      }),
-      catchError(error => {
-        console.error('❌ Erreur ajout questions à la campagne:', error);
-        return throwError(() => error);
-      })
-    );
-  }
-
-  /**
-   * Retire une question d'une campagne (soft delete)
-   */
-  removeQuestionFromCampaign(campaignId: number, questionId: number): Observable<any> {
-    console.log('🗑️ Retrait de la question de la campagne:', { campaignId, questionId });
-
-    // D'abord récupérer l'ID de la liaison campaigns_questions
-    const requestBody = {
-      user: 1,
-      size: 1,
-      index: 0,
-      data: {
-        campaigns_id: campaignId,
-        questions_id: questionId,
-        isDeleted: false
-      }
-    };
-
-    return this.http.post<any>(`${environment.apiUrl}/campaignQuestions/getAllByCriteria`, requestBody).pipe(
-      switchMap(response => {
-        if (!response.items || response.items.length === 0) {
-          console.warn('⚠️ Liaison campagne-question introuvable');
-          return throwError(() => new Error('Liaison introuvable'));
-        }
-
-        const campaignQuestionId = response.items[0].id;
-        console.log('🔍 ID de la liaison trouvé:', campaignQuestionId);
-
-        // Supprimer la liaison
-        const deleteRequestBody = {
-          user: 1,
-          data: { id: campaignQuestionId }
-        };
-
-        return this.http.post<any>(`${environment.apiUrl}/campaignQuestions/delete`, deleteRequestBody);
-      }),
-      map(response => {
-        console.log('✅ Question retirée de la campagne:', response);
-        return response;
-      }),
-      catchError(error => {
-        console.error('❌ Erreur retrait question de la campagne:', error);
         return throwError(() => error);
       })
     );

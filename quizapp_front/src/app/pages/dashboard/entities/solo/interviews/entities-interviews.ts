@@ -1,23 +1,40 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { EntityCrudBase } from '../../../../../shared/entity-crud-base';
+import { EntityDetailPanelComponent } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
+import { DependencyPopupComponent } from '../../../../../shared/dependency-popup/dependency-popup';
 import { InterviewService, Interview, PagedInterviewResponse, InterviewSearchCriteria } from '../../../../../core/services/interview.service';
+import { InterviewCrudService, InterviewCrud } from '../../../../../core/services/interview-crud.service';
+import { CandidateInterviewEntityService, CandidateInterviewEntity } from '../../../../../core/services/candidate-interview-entity.service';
+import { CampaignService, Campaign } from '../../../../../core/services/campaign.service';
 
 @Component({
   selector: 'app-entities-interviews',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent],
   templateUrl: './entities-interviews.html',
   styleUrls: ['./entities-interviews.scss']
 })
 export class EntitiesInterviewsComponent extends EntityCrudBase<Interview, InterviewSearchCriteria, PagedInterviewResponse> {
   private interviewService = inject(InterviewService);
+  private interviewCrudService = inject(InterviewCrudService);
+  private candidateInterviewEntityService = inject(CandidateInterviewEntityService);
+  private campaignFkService = inject(CampaignService);
+  allCampaigns = signal<Campaign[]>([]);
   protected override readonly router = inject(Router);
   protected override readonly pageSizeStorageKey = 'entitiesInterviewsPageSize';
   protected override readonly entityName = 'entretiens';
+  protected override readonly entityTypeApi = 'interviews';
+
+  // Expansion
+  expandedItems = signal<Set<number>>(new Set());
+  childCruds = signal<{[id: number]: InterviewCrud[]}>({});
+  childCandidateInterviews = signal<{[id: number]: CandidateInterviewEntity[]}>({});
+  loadingChildren = signal<{[id: number]: boolean}>({});
+  childTab = signal<{[id: number]: string}>({});
 
   advancedCriteria: InterviewSearchCriteria = {};
   editFormData: Interview = { interviewType: 'ONLINE' };
@@ -41,6 +58,11 @@ export class EntitiesInterviewsComponent extends EntityCrudBase<Interview, Inter
 
   protected performRestore(id: number): Observable<any> {
     return this.interviewService.restoreInterview(id);
+  }
+
+  override ngOnInit() {
+    super.ngOnInit();
+    this.campaignFkService.getAllCampaignsByCriteria({ page: 0, size: 9999, isDeleted: false }).subscribe({ next: (res) => this.allCampaigns.set(res.content) });
   }
 
   protected resetAdvancedCriteriaValues(): void {
@@ -112,4 +134,35 @@ export class EntitiesInterviewsComponent extends EntityCrudBase<Interview, Inter
     };
     return labels[type] || type;
   }
+
+  toggleExpansion(id: number) {
+    const s = new Set(this.expandedItems());
+    if (s.has(id)) { s.delete(id); } else { s.add(id); this.loadChildren(id); }
+    this.expandedItems.set(s);
+  }
+
+  isExpanded(id: number): boolean { return this.expandedItems().has(id); }
+
+  getChildTab(id: number): string { return this.childTab()[id] || 'cruds'; }
+  setChildTab(id: number, tab: string) { this.childTab.set({ ...this.childTab(), [id]: tab }); }
+
+  loadChildren(id: number) {
+    if (this.loadingChildren()[id]) return;
+    this.loadingChildren.set({ ...this.loadingChildren(), [id]: true });
+    let loaded = 0;
+    const done = () => { loaded++; if (loaded >= 2) this.loadingChildren.set({ ...this.loadingChildren(), [id]: false }); };
+    this.interviewCrudService.getAllByCriteria({ interviewId: id, size: 100 }).subscribe({
+      next: (r) => { this.childCruds.set({ ...this.childCruds(), [id]: r.content }); done(); },
+      error: () => { this.childCruds.set({ ...this.childCruds(), [id]: [] }); done(); }
+    });
+    this.candidateInterviewEntityService.getAllByCriteria({ interviewId: id, size: 100 }).subscribe({
+      next: (r) => { this.childCandidateInterviews.set({ ...this.childCandidateInterviews(), [id]: r.content }); done(); },
+      error: () => { this.childCandidateInterviews.set({ ...this.childCandidateInterviews(), [id]: [] }); done(); }
+    });
+  }
+
+  getCruds(id: number): InterviewCrud[] { return this.childCruds()[id] || []; }
+  getCandidateInterviews(id: number): CandidateInterviewEntity[] { return this.childCandidateInterviews()[id] || []; }
+  isLoadingChildren(id: number): boolean { return this.loadingChildren()[id] || false; }
+  trackByChildId(index: number, item: any): number { return item.id; }
 }

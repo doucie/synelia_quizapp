@@ -1,0 +1,130 @@
+import { Component, Input, Output, EventEmitter, HostListener } from '@angular/core';
+import { CommonModule } from '@angular/common';
+
+export interface DetailField {
+  key: string;
+  label: string;
+  type?: 'text' | 'date' | 'boolean' | 'badge' | 'id';
+  badgeMap?: Record<string, { label: string; cssClass: string }>;
+}
+
+@Component({
+  selector: 'app-entity-detail-panel',
+  standalone: true,
+  imports: [CommonModule],
+  templateUrl: './entity-detail-panel.html',
+  styleUrl: './entity-detail-panel.scss'
+})
+export class EntityDetailPanelComponent {
+  @Input() entity: any = null;
+  @Input() fields: DetailField[] = [];
+  @Input() title = 'Détails';
+  @Input() isOpen = false;
+
+  @Output() closePanel = new EventEmitter<void>();
+  @Output() editItem = new EventEmitter<any>();
+  @Output() deleteItem = new EventEmitter<any>();
+  @Output() restoreItem = new EventEmitter<any>();
+
+  private readonly LABEL_MAP: Record<string, string> = {
+    id: 'ID', nom: 'Nom', prenom: 'Prénom', pseudo: 'Pseudo',
+    email: 'Email', telephone: 'Téléphone', role: 'Rôle',
+    isOnline: 'En ligne', isDeleted: 'Supprimé', isActive: 'Actif',
+    isPublished: 'Publié', isLocked: 'Verrouillé', isCorrect: 'Correct',
+    isSelected: 'Sélectionné', isUsed: 'Utilisé',
+    createdAt: 'Créé le', updatedAt: 'Modifié le',
+    dateCreation: 'Créé le', dateModification: 'Modifié le',
+    createdBy: 'Créé par', updatedBy: 'Modifié par',
+    description: 'Description', formName: 'Nom du formulaire',
+    formDesc: 'Description', campaignId: 'ID Campagne',
+    departmentId: 'ID Département', specialityId: 'ID Spécialité',
+    questionId: 'ID Question', answerId: 'ID Réponse',
+    formId: 'ID Formulaire', formVersionId: 'ID Version',
+    applicationId: 'ID Candidature', interviewId: 'ID Entretien',
+    userId: 'ID Utilisateur', candidateInterviewId: 'ID Entretien candidat',
+    sourceTokenId: 'ID Token source', versionNumber: 'N° de version',
+    questionText: 'Question', questionType: 'Type de question',
+    difficultyLevel: 'Difficulté', questionChrono: 'Chronomètre (s)',
+    score: 'Score', answerText: 'Réponse', answerOrder: 'Ordre',
+    questionOrder: 'Ordre', chronoOverride: 'Chrono personnalisé',
+    candidateName: 'Candidat', candidateMark: 'Note',
+    recruiterComment: 'Commentaire', token: 'Token', code: 'Code',
+    expiredAt: 'Expire le', title: 'Titre', content: 'Contenu',
+    subject: 'Sujet', body: 'Corps', templateKey: 'Clé du template',
+    configName: 'Nom de la config', companyName: 'Entreprise',
+    primaryColor: 'Couleur primaire', colorScheme: 'Schéma de couleurs',
+    host: 'Hôte', port: 'Port', username: 'Utilisateur',
+    senderEmail: 'Email expéditeur', senderName: 'Nom expéditeur',
+    permissions: 'Permissions', follow: 'Suivre',
+    notificationType: 'Type', message: 'Message', isRead: 'Lu',
+    candidateFirstname: 'Prénom candidat', candidateLastname: 'Nom candidat',
+    candidateEmail: 'Email candidat',
+  };
+
+  @HostListener('document:keydown.escape')
+  onEscKey() {
+    if (this.isOpen) this.closePanel.emit();
+  }
+
+  close() { this.closePanel.emit(); }
+  edit() { this.editItem.emit(this.entity); }
+  delete() { this.deleteItem.emit(this.entity); }
+  restore() { this.restoreItem.emit(this.entity); }
+
+  getDisplayFields(): DetailField[] {
+    if (this.fields.length > 0) return this.fields;
+    if (!this.entity) return [];
+    return Object.keys(this.entity)
+      .filter(key => {
+        const value = this.entity[key];
+        return typeof value !== 'object' || value === null;
+      })
+      .filter(key => !Array.isArray(this.entity[key]))
+      .map(key => ({
+        key,
+        label: this.LABEL_MAP[key] || this.formatLabel(key),
+        type: this.inferType(key, this.entity[key]) as any
+      }));
+  }
+
+  getFieldValue(field: DetailField): any {
+    return this.entity?.[field.key];
+  }
+
+  formatValue(field: DetailField): string {
+    const value = this.getFieldValue(field);
+    if (value === null || value === undefined || value === '') return '-';
+    switch (field.type) {
+      case 'date': return this.formatDate(value);
+      case 'boolean': return value ? 'Oui' : 'Non';
+      case 'id': return '#' + value;
+      default: return String(value);
+    }
+  }
+
+  private formatDate(date: string): string {
+    try {
+      return new Date(date).toLocaleDateString('fr-FR', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      });
+    } catch { return String(date); }
+  }
+
+  private formatLabel(key: string): string {
+    return key
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/_/g, ' ')
+      .replace(/^./, s => s.toUpperCase())
+      .trim();
+  }
+
+  private inferType(key: string, value: any): string {
+    if (key === 'id') return 'id';
+    if (key === 'createdAt' || key === 'updatedAt' || key === 'dateCreation' ||
+        key === 'dateModification' || key === 'expiredAt') return 'date';
+    if (typeof value === 'boolean') return 'boolean';
+    if (key.startsWith('is') && key.length > 2 && key[2] === key[2].toUpperCase()) return 'boolean';
+    return 'text';
+  }
+}

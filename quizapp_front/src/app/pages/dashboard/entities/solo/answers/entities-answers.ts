@@ -1,17 +1,22 @@
-import { Component, OnInit, OnDestroy, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
 import { CommonModule, NgIf, NgFor } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { EntityDetailPanelComponent, DetailField } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
+import { DependencyPopupComponent } from '../../../../../shared/dependency-popup/dependency-popup';
+import { DashboardStatsService } from '../../../../../core/services/dashboard-stats.service';
+import { DependencyInfo } from '../../../../../shared/models/interfaces';
 import { Router, ActivatedRoute } from '@angular/router';
 
 import { AnswerService, Answer, AnswerSearchCriteria, PagedResponse } from '../../../../../core/services/answer.service';
 import { NotificationService } from '../../../../../core/services/notification.service';
 import { AuthService } from '../../../../../core/services/auth/auth.service';
+import { QuestionService, Question } from '../../../../../core/services/question.service';
 
 @Component({
   selector: 'app-entities-answers',
   standalone: true,
-  imports: [CommonModule, NgIf, NgFor, FormsModule],
+  imports: [CommonModule, NgIf, NgFor, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent],
   templateUrl: './entities-answers.html',
   styleUrl: './entities-answers.scss'
 })
@@ -20,6 +25,36 @@ export class EntitiesAnswersComponent implements OnInit, OnDestroy {
   Math = Math;
   
   private destroy$ = new Subject<void>();
+
+  // Detail panel
+  selectedItem = signal<any>(null);
+  showDetailPanel = signal<boolean>(false);
+  detailFields: DetailField[] = [];
+
+  selectItem(item: any): void {
+    this.selectedItem.set(item);
+    this.showDetailPanel.set(true);
+  }
+
+  closeDetailPanel(): void {
+    this.showDetailPanel.set(false);
+    this.selectedItem.set(null);
+  }
+
+  editFromDetail(item: any): void {
+    this.closeDetailPanel();
+    this.editAnswer(item);
+  }
+
+  deleteFromDetail(item: any): void {
+    this.closeDetailPanel();
+    this.deleteAnswer(item);
+  }
+
+  restoreFromDetail(item: any): void {
+    this.closeDetailPanel();
+    this.restoreAnswer(item);
+  }
   private loadingTimeout: any;
   
   // Signaux pour la réactivité
@@ -52,6 +87,29 @@ export class EntitiesAnswersComponent implements OnInit, OnDestroy {
   
   // État de la popup de confirmation
   showDeleteConfirmation = false;
+  // FK dropdowns
+  private questionService = inject(QuestionService);
+  allQuestions = signal<Question[]>([]);
+  // -- D�pendances FK ---------------------------
+  private depService = inject(DashboardStatsService);
+  dependencyInfo = signal<DependencyInfo | null>(null);
+  showDependencyPopup = signal<boolean>(false);
+  dependencyMode = signal<'delete' | 'restore'>('delete');
+
+  closeDependencyPopup(): void {
+    this.showDependencyPopup.set(false);
+    this.dependencyInfo.set(null);
+  }
+
+  confirmDependencyAction(): void {
+    const mode = this.dependencyMode();
+    this.closeDependencyPopup();
+    if (mode === 'delete') {
+      this.showDeleteConfirmation = true;
+    } else {
+      this.showRestoreConfirmation.set(true);
+    }
+  }
   answerToDelete: Answer | null = null;
   
   // État de la popup de restauration
@@ -109,6 +167,9 @@ export class EntitiesAnswersComponent implements OnInit, OnDestroy {
     });
     
     this.loadAnswers();
+    this.questionService.getAllByCriteria({ page: 0, size: 9999, isDeleted: false }).subscribe({
+      next: (res) => this.allQuestions.set(res.content)
+    });
   }
 
   ngOnDestroy() {
@@ -319,7 +380,18 @@ export class EntitiesAnswersComponent implements OnInit, OnDestroy {
 
   deleteAnswer(answer: Answer) {
     this.answerToDelete = answer;
-    this.showDeleteConfirmation = true;
+    this.depService.checkDependencies('answers', answer.id!).subscribe({
+      next: (info) => {
+        if (info.totalDependencies > 0) {
+          this.dependencyInfo.set(info);
+          this.dependencyMode.set('delete');
+          this.showDependencyPopup.set(true);
+        } else {
+          this.showDeleteConfirmation = true;
+        }
+      },
+      error: () => this.showDeleteConfirmation = true
+    });
   }
 
   confirmDeleteAnswer() {
@@ -352,7 +424,18 @@ export class EntitiesAnswersComponent implements OnInit, OnDestroy {
 
   restoreAnswer(answer: Answer) {
     this.answerToRestore.set(answer);
-    this.showRestoreConfirmation.set(true);
+    this.depService.checkParent('answers', answer.id!).subscribe({
+      next: (info) => {
+        if (info.deletedParents && info.deletedParents.length > 0) {
+          this.dependencyInfo.set(info);
+          this.dependencyMode.set('restore');
+          this.showDependencyPopup.set(true);
+        } else {
+          this.showRestoreConfirmation.set(true);
+        }
+      },
+      error: () => this.showRestoreConfirmation.set(true)
+    });
   }
 
   confirmRestoreAnswer() {

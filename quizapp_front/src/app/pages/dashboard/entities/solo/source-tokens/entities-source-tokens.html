@@ -224,7 +224,7 @@
         </thead>
         <tbody>
           <tr *ngFor="let token of sourceTokens(); trackBy: trackBySourceTokenId" 
-              [class.row-deleted]="token.isDeleted">
+              [class.row-deleted]="token.isDeleted" (click)="selectItem(token)" style="cursor: pointer;">
             <td>
               <span class="cell-id">#{{ token.id }}</span>
             </td>
@@ -240,7 +240,7 @@
             <td>
               <span class="cell-date">{{ formatDate(token.createdAt) }}</span>
             </td>
-            <td class="actions-cell">
+            <td class="actions-cell" (click)="$event.stopPropagation()">
               <div class="actions-menu">
                 <!-- Boutons normaux pour les tokens non supprimes -->
                 <ng-container *ngIf="!token.isDeleted">
@@ -497,17 +497,20 @@
           />
         </div>
 
-        <!-- ID Campagne -->
+        <!-- Campagne -->
         <div class="form-group">
-          <label for="edit-campaign" class="form-label">ID Campagne</label>
-          <input 
-            type="number" 
+          <label for="edit-campaign" class="form-label">Campagne</label>
+          <select
             id="edit-campaign"
             class="form-input"
             [(ngModel)]="editFormData.campaignId"
             name="campaignId"
-            placeholder="ID de la campagne"
-          />
+          >
+            <option [ngValue]="undefined">-- Sélectionner --</option>
+            @for (c of allCampaigns(); track c.id) {
+              <option [ngValue]="c.id">{{ c.campaignName }}</option>
+            }
+          </select>
         </div>
       </form>
     </div>
@@ -568,17 +571,20 @@
           />
         </div>
 
-        <!-- ID Campagne -->
+        <!-- Campagne -->
         <div class="form-group">
-          <label for="create-campaign" class="form-label">ID Campagne</label>
-          <input
-            type="number"
+          <label for="create-campaign" class="form-label">Campagne</label>
+          <select
             id="create-campaign"
             class="form-input"
             [(ngModel)]="createFormData.campaignId"
             name="campaignId"
-            placeholder="ID de la campagne"
-          />
+          >
+            <option [ngValue]="undefined">-- Sélectionner --</option>
+            @for (c of allCampaigns(); track c.id) {
+              <option [ngValue]="c.id">{{ c.campaignName }}</option>
+            }
+          </select>
         </div>
       </form>
     </div>
@@ -602,3 +608,23 @@
     </div>
   </div>
 </div>
+
+<!-- Entity Detail Panel -->
+<app-entity-detail-panel
+  [entity]="selectedItem()"
+  [fields]="detailFields"
+  [title]="'Token source'"
+  [isOpen]="showDetailPanel()"
+  (closePanel)="closeDetailPanel()"
+  (editItem)="editFromDetail($event)"
+  (deleteItem)="deleteFromDetail($event)"
+  (restoreItem)="restoreFromDetail($event)">
+</app-entity-detail-panel>
+
+<app-dependency-popup
+  [info]="dependencyInfo()!"
+  [mode]="dependencyMode()"
+  [visible]="showDependencyPopup()"
+  (cancel)="closeDependencyPopup()"
+  (confirm)="confirmDependencyAction()">
+</app-dependency-popup>

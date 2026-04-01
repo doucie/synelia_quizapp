@@ -254,12 +254,37 @@
               />
               <span class="checkbox-custom"></span>
               <span class="checkbox-text">
-                J'accepte que mes données personnelles soient traitées par Synelia dans le cadre de ma candidature. 
-                <a href="#" class="link">En savoir plus</a> <span class="required">*</span>
+                @if (consentText()) {
+                  <span [innerHTML]="consentText() | safeHtml"></span>
+                } @else {
+                  J'accepte que mes données personnelles soient traitées par Synelia dans le cadre de ma candidature.
+                }
+                @if (privacyPolicyContent()) {
+                  <a href="#" class="link" (click)="openPrivacyModal($event)">En savoir plus</a>
+                }
+                <span class="required">*</span>
               </span>
             </label>
           </div>
         </section>
+
+        <!-- Modal politique de confidentialité -->
+        @if (showPrivacyModal()) {
+          <div class="modal-overlay" (click)="closePrivacyModal()">
+            <div class="modal-content" (click)="$event.stopPropagation()">
+              <div class="modal-header">
+                <h2>{{ privacyPolicyTitle() }}</h2>
+                <button type="button" class="modal-close" (click)="closePrivacyModal()">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
+              <div class="modal-body" [innerHTML]="privacyPolicyContent() | safeHtml"></div>
+            </div>
+          </div>
+        }
 
         <!-- Message d'erreur -->
         @if (submitError()) {

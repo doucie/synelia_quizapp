@@ -223,8 +223,8 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let app of items(); trackBy: trackById" 
-              [class.row-deleted]="app.isDeleted">
+          <ng-container *ngFor="let app of items(); trackBy: trackById">
+          <tr [class.row-deleted]="app.isDeleted" (click)="selectItem(app)" style="cursor: pointer;">
             <td>
               <span class="cell-id">#{{ app.id }}</span>
             </td>
@@ -249,7 +249,7 @@
             <td>
               <span class="cell-date">{{ formatDate(app.createdAt) }}</span>
             </td>
-            <td class="actions-cell">
+            <td class="actions-cell" (click)="$event.stopPropagation()">
               <div class="actions-menu">
                 <ng-container *ngIf="!app.isDeleted">
                   <button 
@@ -270,6 +270,9 @@
                       <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                   </button>
+                  <button class="action-btn secondary" (click)="toggleExpansion(app.id!)" [class.expanded]="isExpanded(app.id!)" title="Voir les détails">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" [attr.transform]="isExpanded(app.id!) ? 'rotate(180 12 12)' : ''"/></svg>
+                  </button>
                 </ng-container>
                 
                 <ng-container *ngIf="app.isDeleted">
@@ -282,10 +285,65 @@
                       <path d="M12 3L8 7L12 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                   </button>
+                  <button class="action-btn secondary" (click)="toggleExpansion(app.id!)" [class.expanded]="isExpanded(app.id!)" title="Voir les détails">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" [attr.transform]="isExpanded(app.id!) ? 'rotate(180 12 12)' : ''"/></svg>
+                  </button>
                 </ng-container>
               </div>
             </td>
           </tr>
+          <!-- Expansion: Détails candidature -->
+          <tr *ngIf="isExpanded(app.id!)" class="expansion-row">
+            <td colspan="8" class="expansion-content">
+              <div class="children-container">
+                <div class="children-tabs">
+                  <button class="children-tab" [class.active]="getChildTab(app.id!) === 'answers'" (click)="setChildTab(app.id!, 'answers')">Réponses <span class="tab-count">{{ getAnswers(app.id!).length }}</span></button>
+                  <button class="children-tab" [class.active]="getChildTab(app.id!) === 'asks'" (click)="setChildTab(app.id!, 'asks')">Demandes <span class="tab-count">{{ getAsks(app.id!).length }}</span></button>
+                  <button class="children-tab" [class.active]="getChildTab(app.id!) === 'tokens'" (click)="setChildTab(app.id!, 'tokens')">Tokens <span class="tab-count">{{ getTokens(app.id!).length }}</span></button>
+                  <button class="children-tab" [class.active]="getChildTab(app.id!) === 'interviews'" (click)="setChildTab(app.id!, 'interviews')">Entretiens <span class="tab-count">{{ getInterviews(app.id!).length }}</span></button>
+                </div>
+                <div *ngIf="isLoadingChildren(app.id!)" class="loading-children"><div class="loading-spinner-small"></div><span>Chargement...</span></div>
+                <div *ngIf="!isLoadingChildren(app.id!)">
+                  <!-- Tab: Réponses -->
+                  <div *ngIf="getChildTab(app.id!) === 'answers'" class="children-list">
+                    <div *ngIf="getAnswers(app.id!).length === 0" class="no-children"><span>Aucune réponse</span></div>
+                    <div *ngFor="let child of getAnswers(app.id!); trackBy: trackByChildId" class="child-item" [class.deleted]="child.isDeleted">
+                      <span class="child-id">#{{ child.id }}</span>
+                      <span class="child-name">Q#{{ child.questionId }} → R#{{ child.answerId || 'libre' }}</span>
+                      <span class="child-badge" [class.active]="child.isSelected" [class.inactive]="!child.isSelected">{{ child.isSelected ? 'Sélectionnée' : 'Non sélectionnée' }}</span>
+                    </div>
+                  </div>
+                  <!-- Tab: Demandes -->
+                  <div *ngIf="getChildTab(app.id!) === 'asks'" class="children-list">
+                    <div *ngIf="getAsks(app.id!).length === 0" class="no-children"><span>Aucune demande</span></div>
+                    <div *ngFor="let child of getAsks(app.id!); trackBy: trackByChildId" class="child-item" [class.deleted]="child.isDeleted">
+                      <span class="child-id">#{{ child.id }}</span>
+                      <span class="child-name">{{ child.requestType }} - {{ child.firstName }} {{ child.lastName }}</span>
+                      <span class="child-badge" [class.active]="child.isVerified" [class.inactive]="!child.isVerified">{{ child.isVerified ? 'Vérifié' : 'En attente' }}</span>
+                    </div>
+                  </div>
+                  <!-- Tab: Tokens -->
+                  <div *ngIf="getChildTab(app.id!) === 'tokens'" class="children-list">
+                    <div *ngIf="getTokens(app.id!).length === 0" class="no-children"><span>Aucun token</span></div>
+                    <div *ngFor="let child of getTokens(app.id!); trackBy: trackByChildId" class="child-item" [class.deleted]="child.isDeleted">
+                      <span class="child-id">#{{ child.id }}</span>
+                      <span class="child-token">{{ child.tokenString }}</span>
+                    </div>
+                  </div>
+                  <!-- Tab: Entretiens -->
+                  <div *ngIf="getChildTab(app.id!) === 'interviews'" class="children-list">
+                    <div *ngIf="getInterviews(app.id!).length === 0" class="no-children"><span>Aucun entretien</span></div>
+                    <div *ngFor="let child of getInterviews(app.id!); trackBy: trackByChildId" class="child-item" [class.deleted]="child.isDeleted">
+                      <span class="child-id">#{{ child.id }}</span>
+                      <span class="child-name">Entretien #{{ child.interviewId }} - {{ child.interviewStart || '-' }}</span>
+                      <span class="child-badge active" *ngIf="child.interviewDuration">{{ child.interviewDuration }} min</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          </ng-container>
         </tbody>
       </table>
     </div>
@@ -472,10 +530,16 @@
             <option value="ARCHIVED">Archivé</option>
           </select>
         </div>
+        <div class="form-group">
+          <label class="form-label">Source Token</label>
+          <select class="form-input" [(ngModel)]="editFormData.sourceTokenId" name="sourceTokenId">
+            <option [ngValue]="undefined">-- Sélectionner --</option>
+            @for (st of allSourceTokens(); track st.id) {
+              <option [ngValue]="st.id">{{ st.sourceTokenName }}</option>
+            }
+          </select>
+        </div>
       </form>
-    </div>
-    
-    <div class="modal-actions">
       <button class="btn-danger" (click)="deleteFromEdit()">Supprimer</button>
       <div class="action-buttons-right">
         <button class="btn-cancel" (click)="closeEditDialog()">Annuler</button>
@@ -520,6 +584,15 @@
           <label class="form-label">Date de naissance</label>
           <input type="date" class="form-input" [(ngModel)]="createFormData.candidateBirthDate" name="birthDate" />
         </div>
+        <div class="form-group">
+          <label class="form-label">Source Token</label>
+          <select class="form-input" [(ngModel)]="createFormData.sourceTokenId" name="sourceTokenId">
+            <option [ngValue]="undefined">-- Sélectionner --</option>
+            @for (st of allSourceTokens(); track st.id) {
+              <option [ngValue]="st.id">{{ st.sourceTokenName }}</option>
+            }
+          </select>
+        </div>
       </form>
     </div>
 
@@ -531,3 +604,24 @@
     </div>
   </div>
 </div>
+
+<!-- Entity Detail Panel -->
+<app-entity-detail-panel
+  [entity]="selectedItem()"
+  [fields]="detailFields"
+  [title]="entityName"
+  [isOpen]="showDetailPanel()"
+  (closePanel)="closeDetailPanel()"
+  (editItem)="editFromDetail($event)"
+  (deleteItem)="deleteFromDetail($event)"
+  (restoreItem)="restoreFromDetail($event)">
+</app-entity-detail-panel>
+
+<!-- Popup d�pendances FK -->
+<app-dependency-popup
+  [info]="dependencyInfo()!"
+  [mode]="dependencyMode()"
+  [visible]="showDependencyPopup()"
+  (cancel)="closeDependencyPopup()"
+  (confirm)="confirmDependencyAction()">
+</app-dependency-popup>

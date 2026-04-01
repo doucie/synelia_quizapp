@@ -2,10 +2,12 @@ import { Component, ChangeDetectionStrategy, signal, OnInit, inject } from '@ang
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { SourceTokenService } from '../../services/source-token.service';
 import { ApplicationService, Application } from '../../core/services/application.service';
 import { FileService } from '../../core/services/file.service';
+import { SafeHtmlPipe } from '../../pipes/safe-html.pipe';
 
 interface ApplicationForm {
   // Informations personnelles
@@ -29,7 +31,7 @@ interface ApplicationForm {
 
 @Component({
   selector: 'app-apply-position',
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, SafeHtmlPipe],
   templateUrl: './apply-position.html',
   styleUrl: './apply-position.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -40,12 +42,19 @@ export class ApplyPositionComponent implements OnInit {
   private readonly sourceTokenService = inject(SourceTokenService);
   private readonly applicationService = inject(ApplicationService);
   private readonly fileService = inject(FileService);
+  private readonly http = inject(HttpClient);
 
   // Token source et informations de campagne
   sourceToken = signal<string>('');
   sourceTokenId = signal<number | null>(null);
   campaignName = signal<string>('');
   isLoadingToken = signal(true);
+
+  // Textes légaux
+  consentText = signal<string>('');
+  privacyPolicyTitle = signal<string>('');
+  privacyPolicyContent = signal<string>('');
+  showPrivacyModal = signal(false);
 
   // Formulaire
   formData = signal<ApplicationForm>({
@@ -96,6 +105,47 @@ export class ApplyPositionComponent implements OnInit {
       // Pas de token, rediriger
       this.router.navigate(['/']);
     }
+
+    // Charger les textes légaux (endpoint public, pas besoin d'auth)
+    this.loadLegalTexts();
+  }
+
+  private loadLegalTexts(): void {
+    // Charger le texte de consentement candidat
+    this.http.post<any>('/legalText/getByCriteria', {
+      size: 1, index: 0, isSimpleLoading: false,
+      data: { textKey: 'candidate_consent', isDeleted: false }
+    }).subscribe({
+      next: (res) => {
+        const item = res?.items?.[0];
+        if (item?.content && item.isActive) {
+          this.consentText.set(item.content);
+        }
+      }
+    });
+
+    // Charger la politique de confidentialité
+    this.http.post<any>('/legalText/getByCriteria', {
+      size: 1, index: 0, isSimpleLoading: false,
+      data: { textKey: 'privacy_policy', isDeleted: false }
+    }).subscribe({
+      next: (res) => {
+        const item = res?.items?.[0];
+        if (item?.content && item.isActive) {
+          this.privacyPolicyTitle.set(item.title || 'Politique de confidentialité');
+          this.privacyPolicyContent.set(item.content);
+        }
+      }
+    });
+  }
+
+  openPrivacyModal(event: Event): void {
+    event.preventDefault();
+    this.showPrivacyModal.set(true);
+  }
+
+  closePrivacyModal(): void {
+    this.showPrivacyModal.set(false);
   }
 
   onFileSelected(event: Event): void {

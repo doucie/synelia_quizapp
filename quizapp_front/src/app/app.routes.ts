@@ -52,6 +52,14 @@ export const routes: Routes = [
         canActivate: [superRoleGuard]
       },
       { 
+        path: 'profile', 
+        loadComponent: () => import('./pages/dashboard/profile/profile').then(m => m.ProfileComponent)
+      },
+      {
+        path: 'settings',
+        loadComponent: () => import('./pages/dashboard/settings/settings').then(m => m.SettingsComponent)
+      },
+      { 
         path: 'entities/campaigns/:page', 
         loadComponent: () => import('./pages/dashboard/entities/solo/campaigns/entities-campaigns').then(m => m.EntitiesCampaignsComponent),
         canActivate: [superRoleGuard]
@@ -159,16 +167,6 @@ export const routes: Routes = [
       { 
         path: 'entities/campaign-crud', 
         loadComponent: () => import('./pages/dashboard/entities/solo/campaign-crud/entities-campaign-crud').then(m => m.EntitiesCampaignCrudComponent),
-        canActivate: [superRoleGuard]
-      },
-      { 
-        path: 'entities/campaign-questions/:page', 
-        loadComponent: () => import('./pages/dashboard/entities/solo/campaign-questions/entities-campaign-questions').then(m => m.EntitiesCampaignQuestionsComponent),
-        canActivate: [superRoleGuard]
-      },
-      { 
-        path: 'entities/campaign-questions', 
-        loadComponent: () => import('./pages/dashboard/entities/solo/campaign-questions/entities-campaign-questions').then(m => m.EntitiesCampaignQuestionsComponent),
         canActivate: [superRoleGuard]
       },
       { 

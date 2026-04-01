@@ -18,5 +18,9 @@ public class UserManagmentDto {
 	private String email;
 	private String password;
 	private String oldPassword;
+	// Registration with invitation code
+	private String code;
+	private String firstName;
+	private String lastName;
 
 }

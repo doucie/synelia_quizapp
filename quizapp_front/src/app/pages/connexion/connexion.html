@@ -6,6 +6,11 @@
     </div>
 
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="connexion__form">
+      <!-- Message d'information (session expirée) -->
+      <div class="connexion__info" *ngIf="info$ | async">
+        {{ info$ | async }}
+      </div>
+
       <div class="connexion__field">
         <label for="email" class="connexion__label">Email ou nom d'utilisateur</label>
         <input 
@@ -22,13 +27,12 @@
 
       <div class="connexion__field">
         <label for="password" class="connexion__label">Mot de passe</label>
-        <div class="connexion__input-wrapper">
+        <div class="connexion__input-wrapper" [class.connexion__input-wrapper--error]="getFieldError('password')">
           <input 
             [type]="showPassword ? 'text' : 'password'" 
             id="password" 
             formControlName="password"
             class="connexion__input connexion__input--has-toggle"
-            [class.connexion__input--error]="getFieldError('password')"
             placeholder="••••••••">
           <button 
             type="button" 
@@ -65,7 +69,7 @@
 
     <div class="connexion__links">
       <a routerLink="/inscription" class="connexion__link">
-        Première connexion ? Créer un compte
+        Vous avez un code d'invitation ? Créer un compte
       </a>
       <a routerLink="/mot-de-passe-oublie" class="connexion__link">
         Mot de passe oublié ?
