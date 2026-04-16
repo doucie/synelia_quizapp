@@ -229,7 +229,7 @@ public class CampaignCrudBusiness implements IBasicBusiness<Request<CampaignCrud
 			if (dto.getUpdatedBy() != null && dto.getUpdatedBy() > 0) {
 				entityToSave.setUpdatedBy(dto.getUpdatedBy());
 			}
-			if (Utilities.notBlank(dto.getSearchString())) {
+			if (Utilities.shouldUpdate(dto.getSearchString())) {
 				entityToSave.setSearchString(dto.getSearchString());
 			}
 			entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(dto)));

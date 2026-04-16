@@ -164,10 +164,10 @@ public class AnswerBusiness implements IBasicBusiness<Request<AnswerDto>, Respon
 				}
 				entityToSave.setQuestion(existingQuestion);
 			}
-			if (Utilities.notBlank(dto.getAnswerText())) {
+			if (Utilities.shouldUpdate(dto.getAnswerText())) {
 				entityToSave.setAnswerText(dto.getAnswerText());
 			}
-			if (Utilities.notBlank(dto.getAnswerType())) {
+			if (Utilities.shouldUpdate(dto.getAnswerType())) {
 				entityToSave.setAnswerType(dto.getAnswerType());
 			}
 			if (dto.getAnswerOrder() != null) {
@@ -390,10 +390,10 @@ public class AnswerBusiness implements IBasicBusiness<Request<AnswerDto>, Respon
 				}
 				entityToSave.setQuestion(existingQuestion);
 			}
-			if (Utilities.notBlank(dto.getAnswerText())) {
+			if (Utilities.shouldUpdate(dto.getAnswerText())) {
 				entityToSave.setAnswerText(dto.getAnswerText());
 			}
-			if (Utilities.notBlank(dto.getAnswerType())) {
+			if (Utilities.shouldUpdate(dto.getAnswerType())) {
 				entityToSave.setAnswerType(dto.getAnswerType());
 			}
 			if (dto.getAnswerOrder() != null) {
@@ -457,10 +457,10 @@ public class AnswerBusiness implements IBasicBusiness<Request<AnswerDto>, Respon
 				}
 				entityToSave.setQuestion(existingQuestion);
 			}
-			if (Utilities.notBlank(dto.getAnswerText())) {
+			if (Utilities.shouldUpdate(dto.getAnswerText())) {
 				entityToSave.setAnswerText(dto.getAnswerText());
 			}
-			if (Utilities.notBlank(dto.getAnswerType())) {
+			if (Utilities.shouldUpdate(dto.getAnswerType())) {
 				entityToSave.setAnswerType(dto.getAnswerType());
 			}
 			if (dto.getAnswerOrder() != null) {

@@ -18,6 +18,10 @@ export interface Question {
   updatedAt?: string;
   updatedBy?: number;
   isDeleted?: boolean;
+  dateCreationDe?: string;
+  dateCreationA?: string;
+  dateModificationDe?: string;
+  dateModificationA?: string;
 }
 
 export interface QuestionSearchCriteria {
@@ -27,7 +31,13 @@ export interface QuestionSearchCriteria {
   specialityId?: number;
   questionType?: string;
   difficultyLevel?: string;
+  score?: number;
+  questionChrono?: number;
   isDeleted?: boolean;
+  dateCreationDe?: string;
+  dateCreationA?: string;
+  dateModificationDe?: string;
+  dateModificationA?: string;
   search_string?: string;
   size?: number;
   page?: number;
@@ -78,6 +88,12 @@ export class QuestionService {
         ...(criteria.specialityId && { specialityId: criteria.specialityId }),
         ...(criteria.questionType && { questionType: criteria.questionType }),
         ...(criteria.difficultyLevel && { difficultyLevel: criteria.difficultyLevel }),
+        ...(criteria.score && { score: criteria.score }),
+        ...(criteria.questionChrono && { questionChrono: criteria.questionChrono }),
+                ...(criteria.dateCreationDe && { dateCreationDe: criteria.dateCreationDe }),
+        ...(criteria.dateCreationA && { dateCreationA: criteria.dateCreationA }),
+        ...(criteria.dateModificationDe && { dateModificationDe: criteria.dateModificationDe }),
+        ...(criteria.dateModificationA && { dateModificationA: criteria.dateModificationA }),
         ...(criteria.idDe && criteria.idDe.trim() && { idStart: criteria.idDe }),
         ...(criteria.idA && criteria.idA.trim() && { idEnd: criteria.idA })
       }

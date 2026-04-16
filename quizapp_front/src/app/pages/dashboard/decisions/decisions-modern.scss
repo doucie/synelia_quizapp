@@ -649,6 +649,11 @@
     background: rgba(239, 68, 68, 0.1);
     color: var(--error);
   }
+
+  &.warning {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--warning, #f59e0b);
+  }
 }
 
 // Step info display
@@ -1425,6 +1430,13 @@
   &.rejected {
     .step-number {
       background: var(--error);
+      color: white;
+    }
+  }
+
+  &.skipped {
+    .step-number {
+      background: var(--text-tertiary);
       color: white;
     }
   }

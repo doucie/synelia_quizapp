@@ -1,0 +1,168 @@
+<div class="user-permissions">
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      @if (selectedUser()) {
+        <button class="btn btn-secondary" (click)="backToList()">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+          Retour
+        </button>
+      }
+      <h1>Permissions utilisateurs</h1>
+      <p class="subtitle">Gérer les surcharges de permissions individuelles et les groupes métiers</p>
+    </div>
+  </div>
+
+  <!-- Users list -->
+  @if (!selectedUser()) {
+    <div class="search-bar">
+      <input type="text" placeholder="Rechercher un utilisateur..." [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" />
+    </div>
+
+    @if (isLoadingUsers()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        Chargement des utilisateurs...
+      </div>
+    } @else if (filteredUsers().length === 0) {
+      <div class="empty-state">Aucun utilisateur trouvé</div>
+    } @else {
+      <div class="users-grid">
+        @for (user of filteredUsers(); track user.id) {
+          <div class="user-card" (click)="selectUser(user)">
+            <div class="user-card-header">
+              <div class="user-avatar">{{ (user.userFirstName?.[0] || '') + (user.userLastName?.[0] || '') }}</div>
+              <div class="user-info">
+                <h3>{{ user.userFirstName }} {{ user.userLastName }}</h3>
+                <span class="user-email">{{ user.userEmail }}</span>
+              </div>
+            </div>
+            <span class="role-badge" [ngClass]="{
+              'badge-super': user.userRole?.toUpperCase() === 'SUPER_ADMIN',
+              'badge-admin': user.userRole?.toUpperCase() === 'ADMIN',
+              'badge-user': user.userRole?.toUpperCase() === 'UTILISATEUR'
+            }">
+              {{ user.userRole }}
+            </span>
+          </div>
+        }
+      </div>
+    }
+  }
+
+  <!-- User detail -->
+  @if (selectedUser(); as user) {
+    <div class="user-detail">
+      <div class="user-detail-header">
+        <div class="user-avatar large">{{ (user.userFirstName?.[0] || '') + (user.userLastName?.[0] || '') }}</div>
+        <div class="user-detail-info">
+          <h2>{{ user.userFirstName }} {{ user.userLastName }}</h2>
+          <span class="user-email">{{ user.userEmail }}</span>
+          <span class="role-badge" [ngClass]="getRoleBadgeClass()">{{ getRoleLabel() }}</span>
+        </div>
+      </div>
+
+      @if (isSuperAdmin()) {
+        <div class="info-banner warning">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+          <span>Super Admin — Accès total. Aucune surcharge possible, ce rôle dispose d'un bypass complet sur toutes les permissions.</span>
+        </div>
+      } @else {
+        <!-- Tabs -->
+        <div class="tabs">
+          <button class="tab" [class.active]="editTab() === 'overrides'" (click)="editTab.set('overrides')">Surcharges</button>
+          <button class="tab" [class.active]="editTab() === 'groups'" (click)="editTab.set('groups')">Groupes métiers</button>
+        </div>
+
+        @if (isLoadingDetail()) {
+          <div class="loading-state">
+            <div class="spinner"></div>
+            Chargement...
+          </div>
+        } @else {
+
+          <!-- Overrides Tab -->
+          @if (editTab() === 'overrides') {
+            @if (isAdmin()) {
+              <div class="info-banner info">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                <span>Administrateur — Les permissions de base ADMIN ne peuvent pas être refusées (plancher immuable). Seul l'ajout de permissions supplémentaires (GRANT) est possible.</span>
+              </div>
+            }
+
+            <div class="permissions-grid">
+              @for (category of categories; track category.label) {
+                <div class="category-section">
+                  <h3 class="category-title">{{ category.label }}</h3>
+                  <div class="overrides-list">
+                    @for (perm of category.permissions; track perm.key) {
+                      <div class="override-item" [class.saving]="isSaving(perm.key)">
+                        <div class="override-info">
+                          <span class="permission-label">{{ perm.label }}</span>
+                          <span class="permission-key">{{ perm.key }}</span>
+                        </div>
+                        <div class="override-controls">
+                          <button class="override-btn"
+                                  [class.active]="getOverrideState(perm.key) === 'default'"
+                                  (click)="setOverride(perm.key, 'default')"
+                                  [disabled]="isSaving(perm.key)">
+                            Par défaut
+                          </button>
+                          <button class="override-btn grant"
+                                  [class.active]="getOverrideState(perm.key) === 'GRANT'"
+                                  (click)="setOverride(perm.key, 'GRANT')"
+                                  [disabled]="isSaving(perm.key)">
+                            Accorder
+                          </button>
+                          <button class="override-btn deny"
+                                  [class.active]="getOverrideState(perm.key) === 'DENY'"
+                                  (click)="setOverride(perm.key, 'DENY')"
+                                  [disabled]="isSaving(perm.key) || isDenyDisabled(perm.key)"
+                                  [title]="isDenyDisabled(perm.key) ? 'Droit de base ADMIN non retirable' : ''">
+                            Refuser
+                          </button>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- Groups Tab -->
+          @if (editTab() === 'groups') {
+            <div class="groups-section">
+              <div class="add-group-form">
+                <select [ngModel]="addGroupId()" (ngModelChange)="addGroupId.set($event)">
+                  <option [ngValue]="null">-- Sélectionner un groupe --</option>
+                  @for (group of availableGroups(); track group.id) {
+                    <option [ngValue]="group.id">{{ group.groupName }}</option>
+                  }
+                </select>
+                <button class="btn btn-primary btn-sm" (click)="addUserToGroup()" [disabled]="!addGroupId()">
+                  Ajouter au groupe
+                </button>
+              </div>
+
+              @if (userGroups().length === 0) {
+                <p class="empty-hint">Cet utilisateur n'appartient à aucun groupe métier.</p>
+              } @else {
+                <div class="groups-list">
+                  @for (membership of userGroups(); track membership.id) {
+                    <div class="group-row">
+                      <span class="group-name">{{ membership.groupName || 'Groupe #' + membership.businessGroupId }}</span>
+                      <button class="btn-icon danger" (click)="removeUserFromGroup(membership)" title="Retirer du groupe">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                      </button>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        }
+      }
+    </div>
+  }
+</div>

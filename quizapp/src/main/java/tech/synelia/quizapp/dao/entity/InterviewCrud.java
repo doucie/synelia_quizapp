@@ -32,7 +32,7 @@ import lombok.ToString;
 @Data
 @ToString
 @Entity
-@Table(name="interview_crud" )
+@Table(name="interview_participant" )
 public class InterviewCrud implements Serializable, Cloneable {
 
     private static final long serialVersionUID = 1L;

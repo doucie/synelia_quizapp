@@ -193,22 +193,22 @@ public class CandidateAskBusiness implements IBasicBusiness<Request<CandidateAsk
 				}
 				entityToSave.setApplications(existingApplications);
 			}
-			if (Utilities.notBlank(dto.getRequestType())) {
+			if (Utilities.shouldUpdate(dto.getRequestType())) {
 				entityToSave.setRequestType(dto.getRequestType());
 			}
 			if (dto.getIsVerified() != null) {
 				entityToSave.setIsVerified(dto.getIsVerified());
 			}
-			if (Utilities.notBlank(dto.getFirstName())) {
+			if (Utilities.shouldUpdate(dto.getFirstName())) {
 				entityToSave.setFirstName(dto.getFirstName());
 			}
-			if (Utilities.notBlank(dto.getLastName())) {
+			if (Utilities.shouldUpdate(dto.getLastName())) {
 				entityToSave.setLastName(dto.getLastName());
 			}
-			if (Utilities.notBlank(dto.getNewEmail())) {
+			if (Utilities.shouldUpdate(dto.getNewEmail())) {
 				entityToSave.setNewEmail(dto.getNewEmail());
 			}
-			if (Utilities.notBlank(dto.getNewPhone())) {
+			if (Utilities.shouldUpdate(dto.getNewPhone())) {
 				entityToSave.setNewPhone(dto.getNewPhone());
 			}
 			if (dto.getCreatedBy() != null && dto.getCreatedBy() > 0) {
@@ -217,7 +217,7 @@ public class CandidateAskBusiness implements IBasicBusiness<Request<CandidateAsk
 			if (dto.getUpdatedBy() != null && dto.getUpdatedBy() > 0) {
 				entityToSave.setUpdatedBy(dto.getUpdatedBy());
 			}
-			if (Utilities.notBlank(dto.getSearchString())) {
+			if (Utilities.shouldUpdate(dto.getSearchString())) {
 				entityToSave.setSearchString(dto.getSearchString());
 			}
 			// Après toutes les mises à jour conditionnelles...

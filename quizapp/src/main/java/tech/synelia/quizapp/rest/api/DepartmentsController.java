@@ -49,7 +49,7 @@ Controller for table "departments"
 @CrossOrigin("*")
 @RestController
 @RequestMapping(value="/departments")
-@PreAuthorize("hasAnyRole('ADMIN', 'SUPER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
 public class DepartmentsController {
 
      @Autowired

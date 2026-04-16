@@ -9,17 +9,20 @@ package tech.synelia.quizapp.dao.entity;
 import java.io.Serializable;
 import java.util.Date;
 
+import java.util.List;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
 import lombok.Data;
 import lombok.ToString;
-// import java.util.List;
 
 
 /**
@@ -69,7 +72,7 @@ public class User implements Serializable, Cloneable {
     @Column(name="is_default_password")
     private Boolean    isDefaultPassword ;
 
-    @Column(name="user_role", length=9)
+    @Column(name="user_role", length=20)
     private String     userRole     ;
 
     @Column(name="is_online")
@@ -112,6 +115,9 @@ public class User implements Serializable, Cloneable {
     //----------------------------------------------------------------------
     // ENTITY LINKS ( RELATIONSHIP )
     //----------------------------------------------------------------------
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @ToString.Exclude
+    private List<UserBusinessGroup> userBusinessGroups;
 
     //----------------------------------------------------------------------
     // CONSTRUCTOR(S)

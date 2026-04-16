@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -36,9 +37,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             try {
                 if (jwtService.isTokenValid(token)) {
                     Integer userId = jwtService.extractUserId(token);
-                    String role = jwtService.extractRole(token);
+                    String systemRole = jwtService.extractSystemRole(token);
 
-                    var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
+                    // Map systemRole to Spring Security authorities
+                    List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+                    authorities.add(new SimpleGrantedAuthority("ROLE_" + systemRole.toUpperCase()));
+
+                    // Backward compat: SUPER_ADMIN also gets ROLE_SUPER, ADMIN also gets ROLE_ADMIN
+                    if ("SUPER_ADMIN".equalsIgnoreCase(systemRole)) {
+                        authorities.add(new SimpleGrantedAuthority("ROLE_SUPER"));
+                        authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+                        authorities.add(new SimpleGrantedAuthority("ROLE_RECRUITER"));
+                    } else if ("ADMIN".equalsIgnoreCase(systemRole)) {
+                        authorities.add(new SimpleGrantedAuthority("ROLE_RECRUITER"));
+                    } else if ("UTILISATEUR".equalsIgnoreCase(systemRole)) {
+                        authorities.add(new SimpleGrantedAuthority("ROLE_RECRUITER"));
+                    }
+
                     var authToken = new UsernamePasswordAuthenticationToken(userId, null, authorities);
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 }

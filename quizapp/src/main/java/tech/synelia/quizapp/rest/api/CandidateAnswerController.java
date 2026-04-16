@@ -36,7 +36,7 @@ import tech.synelia.quizapp.rest.fact.ControllerFactory;
 @CrossOrigin("*")
 @RestController
 @RequestMapping(value="/candidateanswer")
-@PreAuthorize("hasAnyRole('ADMIN', 'SUPER', 'RECRUITER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'UTILISATEUR')")
 public class CandidateAnswerController {
 
 	@Autowired

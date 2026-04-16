@@ -188,7 +188,7 @@ public class CandidateTokenBusiness implements IBasicBusiness<Request<CandidateT
 				}
 				entityToSave.setApplications(existingApplications);
 			}
-			if (Utilities.notBlank(dto.getTokenString())) {
+			if (Utilities.shouldUpdate(dto.getTokenString())) {
 				entityToSave.setTokenString(dto.getTokenString());
 			}
 			if (dto.getCreatedBy() != null && dto.getCreatedBy() > 0) {
@@ -197,7 +197,7 @@ public class CandidateTokenBusiness implements IBasicBusiness<Request<CandidateT
 			if (dto.getUpdatedBy() != null && dto.getUpdatedBy() > 0) {
 				entityToSave.setUpdatedBy(dto.getUpdatedBy());
 			}
-			if (Utilities.notBlank(dto.getSearchString())) {
+			if (Utilities.shouldUpdate(dto.getSearchString())) {
 				entityToSave.setSearchString(dto.getSearchString());
 			}
 			entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(dto)));

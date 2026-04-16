@@ -110,6 +110,9 @@ public class Campaigns implements Serializable, Cloneable {
     @ManyToOne
     @JoinColumn(name="speciality_id", referencedColumnName="id")
     private Specialities specialities;
+    @ManyToOne
+    @JoinColumn(name="pipeline_template_id", referencedColumnName="id")
+    private PipelineTemplate pipelineTemplate;
 
     //----------------------------------------------------------------------
     // CONSTRUCTOR(S)

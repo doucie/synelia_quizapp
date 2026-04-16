@@ -15,6 +15,10 @@ export interface FormQuestions {
   updatedAt?: string;
   updatedBy?: number;
   isDeleted?: boolean;
+  dateCreationDe?: string;
+  dateCreationA?: string;
+  dateModificationDe?: string;
+  dateModificationA?: string;
 }
 
 export interface FormQuestionsSearchCriteria {
@@ -25,7 +29,12 @@ export interface FormQuestionsSearchCriteria {
   idA?: string;
   formVersionId?: number;
   questionId?: number;
+  questionOrder?: number;
   isDeleted?: boolean;
+  dateCreationDe?: string;
+  dateCreationA?: string;
+  dateModificationDe?: string;
+  dateModificationA?: string;
 }
 
 export interface PagedFormQuestionsResponse {
@@ -57,6 +66,11 @@ export class FormQuestionsService {
         searchString: criteria.search_string || '',
         ...(criteria.formVersionId && { formVersionId: criteria.formVersionId }),
         ...(criteria.questionId && { questionId: criteria.questionId }),
+        ...(criteria.questionOrder && { questionOrder: criteria.questionOrder }),
+                ...(criteria.dateCreationDe && { dateCreationDe: criteria.dateCreationDe }),
+        ...(criteria.dateCreationA && { dateCreationA: criteria.dateCreationA }),
+        ...(criteria.dateModificationDe && { dateModificationDe: criteria.dateModificationDe }),
+        ...(criteria.dateModificationA && { dateModificationA: criteria.dateModificationA }),
         ...(criteria.idDe && criteria.idDe.trim() && { idStart: criteria.idDe }),
         ...(criteria.idA && criteria.idA.trim() && { idEnd: criteria.idA })
       }

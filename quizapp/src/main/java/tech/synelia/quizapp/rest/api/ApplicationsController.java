@@ -11,6 +11,7 @@ package tech.synelia.quizapp.rest.api;
 
 import java.net.URI;
 import java.util.Locale;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,10 +27,12 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.java.Log;
 import tech.synelia.quizapp.business.ApplicationsBusiness;
+import tech.synelia.quizapp.business.ApplicationProgressBusiness;
 import tech.synelia.quizapp.rest.fact.ControllerFactory;
 import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.dto.ApplicationsDto;
+import tech.synelia.quizapp.utils.dto.ApplicationProgressDto;
 import tech.synelia.quizapp.utils.enums.FunctionalityEnum;
 
 /**
@@ -54,6 +57,8 @@ public class ApplicationsController {
     private ControllerFactory<ApplicationsDto> controllerFactory;
 	@Autowired
 	private ApplicationsBusiness applicationsBusiness;
+	@Autowired
+	private ApplicationProgressBusiness applicationProgressBusiness;
 
 	@RequestMapping(value="/create",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
     public ResponseEntity<Response<ApplicationsDto>> create(@RequestBody Request<ApplicationsDto> request) throws Exception {
@@ -138,6 +143,27 @@ public class ApplicationsController {
     	Locale locale = Locale.of(languageID, "");
         Response<ApplicationsDto> response = applicationsBusiness.completeQuiz(request, locale);
 		slf4jLogger.info("end method /applications/complete-quiz");
+        return response;
+    }
+
+	@RequestMapping(value="/progress",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
+    public Response<ApplicationProgressDto> getProgress(@RequestBody Request<ApplicationProgressDto> request) throws Exception{
+    	slf4jLogger.info("start method /applications/progress");
+    	String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
+    	Locale locale = Locale.of(languageID, "");
+        Response<ApplicationProgressDto> response = applicationProgressBusiness.getProgressForApplication(
+				request.getData().getApplicationId(), request.getIsSimpleLoading(), locale);
+		slf4jLogger.info("end method /applications/progress");
+        return response;
+    }
+
+	@RequestMapping(value="/track",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
+    public Map<String, Object> track(@RequestBody Map<String, String> request) throws Exception{
+    	slf4jLogger.info("start method /applications/track");
+    	Locale locale = Locale.of("fr", "");
+        Map<String, Object> response = applicationsBusiness.trackApplication(
+				request.get("trackingCode"), request.get("email"), locale);
+		slf4jLogger.info("end method /applications/track");
         return response;
     }
 

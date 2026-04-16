@@ -80,71 +80,36 @@
     </div>
     
     <div class="panel-content">
-      <div class="form-grid">
+                  <div class="form-grid">
+        <!-- Intervalle d'ID -->
         <div class="form-row-full">
           <div class="form-group-inline">
             <label>ID de</label>
-            <input 
-              type="text" 
-              class="form-input-inline"
-              [(ngModel)]="advancedCriteria.idDe"
-              placeholder="ID minimum"
-            />
+            <input type="text" class="form-input-inline" [(ngModel)]="advancedCriteria.idDe" placeholder="ID minimum" />
           </div>
           <span class="range-separator">à</span>
           <div class="form-group-inline">
-            <input 
-              type="text" 
-              class="form-input-inline"
-              [(ngModel)]="advancedCriteria.idA"
-              placeholder="ID maximum"
-            />
+            <input type="text" class="form-input-inline" [(ngModel)]="advancedCriteria.idA" placeholder="ID maximum" />
           </div>
         </div>
-        
         <div class="form-group">
-          <label>Prénom</label>
-          <input 
-            type="text" 
-            class="form-input"
-            [(ngModel)]="advancedCriteria.candidateFirstName"
-            placeholder="Prénom du candidat"
-          />
-        </div>
-        
-        <div class="form-group">
-          <label>Nom</label>
-          <input 
-            type="text" 
-            class="form-input"
-            [(ngModel)]="advancedCriteria.candidateLastName"
-            placeholder="Nom du candidat"
-          />
-        </div>
-        
-        <div class="form-group">
-          <label>Email</label>
-          <input 
-            type="email" 
-            class="form-input"
-            [(ngModel)]="advancedCriteria.candidateEmail"
-            placeholder="Email du candidat"
-          />
-        </div>
-        
-        <div class="form-group">
-          <label>Statut</label>
-          <select class="form-select" [(ngModel)]="advancedCriteria.applicationStatus">
-            <option [ngValue]="undefined">Tous les statuts</option>
-            <option value="PENDING">En attente</option>
-            <option value="UNDER_REVIEW">En révision</option>
-            <option value="INTERVIEW_SCHEDULED">Entretien planifié</option>
-            <option value="ACCEPTED">Accepté</option>
-            <option value="REJECTED">Rejeté</option>
-            <option value="ARCHIVED">Archivé</option>
+          <label>Source Token</label>
+          <select class="form-select" [(ngModel)]="advancedCriteria.sourceTokenId">
+            <option [ngValue]="undefined">-- Tous --</option>
+            @for (item of allSourceTokens(); track item.id) {
+              <option [ngValue]="item.id">{{ item.sourceTokenName || '#' + item.id }}</option>
+            }
           </select>
         </div>
-        
+        <div class="form-group">
+          <label>Version de formulaire</label>
+          <select class="form-select" [(ngModel)]="advancedCriteria.formVersionId">
+            <option [ngValue]="undefined">-- Tous --</option>
+            @for (item of allFormVersions(); track item.id) {
+              <option [ngValue]="item.id">{{ 'Version ' + item.versionNumber + ' (#' + item.id + ')' }}</option>
+            }
+          </select>
+        </div>
         <div class="form-group">
           <label>Supprimé</label>
           <select class="form-select" [(ngModel)]="advancedCriteria.isDeleted">
@@ -153,7 +118,32 @@
             <option [ngValue]="true">Supprimé</option>
           </select>
         </div>
+        <!-- Date de création -->
+        <div class="form-row-full">
+          <div class="form-group-inline">
+            <label>Date de création de</label>
+            <input type="date" class="form-input-inline" [(ngModel)]="advancedCriteria.dateCreationDe" />
+          </div>
+          <span class="range-separator">à</span>
+          <div class="form-group-inline">
+            <input type="date" class="form-input-inline" [(ngModel)]="advancedCriteria.dateCreationA" />
+          </div>
+        </div>
+
+        <!-- Date de modification -->
+        <div class="form-row-full">
+          <div class="form-group-inline">
+            <label>Date de modification de</label>
+            <input type="date" class="form-input-inline" [(ngModel)]="advancedCriteria.dateModificationDe" />
+          </div>
+          <span class="range-separator">à</span>
+          <div class="form-group-inline">
+            <input type="date" class="form-input-inline" [(ngModel)]="advancedCriteria.dateModificationA" />
+          </div>
+        </div>
       </div>
+
+
       
       <div class="panel-actions">
         <button class="btn-secondary-pro" (click)="resetAdvancedSearch()">

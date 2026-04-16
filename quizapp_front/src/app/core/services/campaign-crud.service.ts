@@ -19,10 +19,14 @@ export interface CampaignCrud {
   updatedAt?: string;
   updatedBy?: number;
   isDeleted?: boolean;
+  dateCreationDe?: string;
+  dateCreationA?: string;
+  dateModificationDe?: string;
+  dateModificationA?: string;
   campaignId?: number;
   userId?: number;
   
-  // Données enrichies
+  // DonnÃ©es enrichies
   userName?: string;
   userEmail?: string;
   userFirstName?: string;
@@ -49,6 +53,10 @@ export interface CampaignCrudSearchCriteria {
   userId?: number;
   campaignId?: number;
   isDeleted?: boolean;
+  dateCreationDe?: string;
+  dateCreationA?: string;
+  dateModificationDe?: string;
+  dateModificationA?: string;
 }
 
 export interface PagedCampaignCrudResponse {
@@ -68,7 +76,7 @@ export class CampaignCrudService {
   constructor(private http: HttpClient) {}
 
   /**
-   * Récupère les permissions pour une campagne
+   * RÃ©cupÃ¨re les permissions pour une campagne
    */
   getByCampaignId(campaignId: number): Observable<CampaignCrudResponse> {
     return this.http.post<CampaignCrudResponse>(
@@ -78,7 +86,7 @@ export class CampaignCrudService {
   }
 
   /**
-   * Récupère les utilisateurs pouvant évaluer une campagne
+   * RÃ©cupÃ¨re les utilisateurs pouvant Ã©valuer une campagne
    */
   getEvaluatorsByCampaignId(campaignId: number): Observable<CampaignCrudResponse> {
     const payload = { 
@@ -89,13 +97,13 @@ export class CampaignCrudService {
         canEvaluate: true
       }
     };
-    console.log('🔍 Requête getEvaluatorsByCampaignId:', payload);
+    console.log('ðŸ” RequÃªte getEvaluatorsByCampaignId:', payload);
     
     return this.http.post<CampaignCrudResponse>(
       `${this.baseUrl}/getByCriteria`,
       payload
     ).pipe(
-      tap((response: CampaignCrudResponse) => console.log('📦 Réponse getEvaluatorsByCampaignId:', response))
+      tap((response: CampaignCrudResponse) => console.log('ðŸ“¦ RÃ©ponse getEvaluatorsByCampaignId:', response))
     );
   }
 
@@ -113,6 +121,10 @@ export class CampaignCrudService {
         searchString: criteria.search_string || '',
         ...(criteria.userId && { userId: criteria.userId }),
         ...(criteria.campaignId && { campaignId: criteria.campaignId }),
+                ...(criteria.dateCreationDe && { dateCreationDe: criteria.dateCreationDe }),
+        ...(criteria.dateCreationA && { dateCreationA: criteria.dateCreationA }),
+        ...(criteria.dateModificationDe && { dateModificationDe: criteria.dateModificationDe }),
+        ...(criteria.dateModificationA && { dateModificationA: criteria.dateModificationA }),
         ...(criteria.idDe && criteria.idDe.trim() && { idStart: criteria.idDe }),
         ...(criteria.idA && criteria.idA.trim() && { idEnd: criteria.idA })
       }

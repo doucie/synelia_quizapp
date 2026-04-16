@@ -76,6 +76,14 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 	@Autowired
 	private EmailTemplateBusiness emailTemplateBusiness;
 	@Autowired
+	private ApplicationProgressBusiness applicationProgressBusiness;
+	@Autowired
+	private CampaignsRepository campaignsRepository;
+	@Autowired
+	private PipelineStageRepository pipelineStageRepository;
+	@Autowired
+	private ApplicationProgressRepository applicationProgressRepository;
+	@Autowired
 	private FunctionalError functionalError;
 	@Autowired
 	private TechnicalError technicalError;
@@ -201,6 +209,26 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				}
 			}
 			
+			// Initialiser le progrès pipeline pour chaque application créée
+			for (Applications savedApp : itemsSaved) {
+				try {
+					// Récupérer le pipelineTemplateId via SourceToken → Campaign
+					if (savedApp.getSourceToken() != null && savedApp.getSourceToken().getCampaigns() != null) {
+						Campaigns campaign = savedApp.getSourceToken().getCampaigns();
+						if (campaign.getPipelineTemplate() != null) {
+							Integer templateId = campaign.getPipelineTemplate().getId();
+							// Créer toutes les lignes PENDING + verrouiller le template
+							applicationProgressBusiness.initProgressForApplication(savedApp.getId(), templateId, request.getUser());
+							// Avancer la 1ère étape (CANDIDATURE) à IN_PROGRESS
+							applicationProgressBusiness.advanceToNextStage(savedApp.getId(), request.getUser(), locale);
+						}
+					}
+				} catch (Exception e) {
+					log.warning("Erreur lors de l'initialisation du pipeline pour application ID " + savedApp.getId() + ": " + e.getMessage());
+					e.printStackTrace();
+				}
+			}
+
 			Status status = new Status();
 			status.setCode(StatusCode.SUCCESS);
 			status.setMessage(StatusMessage.SUCCESS);
@@ -252,19 +280,19 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				}
 				entityToSave.setSourceToken(existingSourceToken);
 			}
-			if (Utilities.notBlank(dto.getCandidateFirstName())) {
+			if (Utilities.shouldUpdate(dto.getCandidateFirstName())) {
 				entityToSave.setCandidateFirstName(dto.getCandidateFirstName());
 			}
-			if (Utilities.notBlank(dto.getCandidateLastName())) {
+			if (Utilities.shouldUpdate(dto.getCandidateLastName())) {
 				entityToSave.setCandidateLastName(dto.getCandidateLastName());
 			}
-			if (Utilities.notBlank(dto.getCandidateEmail())) {
+			if (Utilities.shouldUpdate(dto.getCandidateEmail())) {
 				entityToSave.setCandidateEmail(dto.getCandidateEmail());
 			}
-			if (Utilities.notBlank(dto.getCandidatePhone())) {
+			if (Utilities.shouldUpdate(dto.getCandidatePhone())) {
 				entityToSave.setCandidatePhone(dto.getCandidatePhone());
 			}
-			if (Utilities.notBlank(dto.getCandidateCvPath())) {
+			if (Utilities.shouldUpdate(dto.getCandidateCvPath())) {
 				entityToSave.setCandidateCvPath(dto.getCandidateCvPath());
 			}
 			if (dto.getEmailVerified() != null) {
@@ -282,10 +310,10 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			if (dto.getTotalEvaluationPercentage() != null && dto.getTotalEvaluationPercentage() > 0) {
 				entityToSave.setTotalEvaluationPercentage(dto.getTotalEvaluationPercentage());
 			}
-			if (Utilities.notBlank(dto.getApplicationStatus())) {
+			if (Utilities.shouldUpdate(dto.getApplicationStatus())) {
 				entityToSave.setApplicationStatus(dto.getApplicationStatus());
 			}
-			if (Utilities.notBlank(dto.getVisitToken())) {
+			if (Utilities.shouldUpdate(dto.getVisitToken())) {
 				entityToSave.setVisitToken(dto.getVisitToken());
 			}
 			if (dto.getCreatedBy() != null && dto.getCreatedBy() > 0) {
@@ -294,7 +322,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			if (dto.getUpdatedBy() != null && dto.getUpdatedBy() > 0) {
 				entityToSave.setUpdatedBy(dto.getUpdatedBy());
 			}
-			if (Utilities.notBlank(dto.getSearchString())) {
+			if (Utilities.shouldUpdate(dto.getSearchString())) {
 				entityToSave.setSearchString(dto.getSearchString());
 			}
 			entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(dto)));
@@ -1570,5 +1598,112 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
 		log.info("----end custom ApplicationsDto-----");
 		return response;
+	}
+
+	/**
+	 * Suivi public de candidature par code de suivi + email.
+	 * Retourne l'application + les étapes du pipeline + le progrès du candidat.
+	 */
+	@Transactional(readOnly = true)
+	public Map<String, Object> trackApplication(String trackingCode, String email, Locale locale) throws ParseException {
+		log.info("----begin trackApplication-----");
+		Map<String, Object> result = new HashMap<>();
+
+		if (StringUtils.isBlank(trackingCode) || StringUtils.isBlank(email)) {
+			result.put("hasError", true);
+			result.put("message", "Le code de suivi et l'email sont requis.");
+			return result;
+		}
+
+		// 1. Chercher le token candidat
+		List<CandidateToken> tokens = candidateTokenRepository.findByTokenString(trackingCode.trim(), false);
+		if (tokens == null || tokens.isEmpty()) {
+			result.put("hasError", true);
+			result.put("message", "Code de suivi invalide.");
+			return result;
+		}
+
+		// 2. Trouver l'application liée au token dont l'email correspond
+		Applications application = null;
+		for (CandidateToken token : tokens) {
+			if (token.getApplications() != null
+					&& token.getApplications().getCandidateEmail() != null
+					&& token.getApplications().getCandidateEmail().equalsIgnoreCase(email.trim())) {
+				application = token.getApplications();
+				break;
+			}
+		}
+
+		if (application == null) {
+			result.put("hasError", true);
+			result.put("message", "Aucune candidature trouvée pour ce code et cet email.");
+			return result;
+		}
+
+		// 3. Données de base de la candidature
+		Map<String, Object> appData = new HashMap<>();
+		appData.put("id", application.getId());
+		appData.put("candidateFirstName", application.getCandidateFirstName());
+		appData.put("candidateLastName", application.getCandidateLastName());
+		appData.put("candidateEmail", application.getCandidateEmail());
+		appData.put("applicationStatus", application.getApplicationStatus());
+		appData.put("quizStatus", application.getQuizStatus());
+		appData.put("createdAt", application.getCreatedAt());
+		appData.put("emailVerified", application.getEmailVerified());
+
+		// 4. Campagne et pipeline template
+		String campaignTitle = null;
+		Integer pipelineTemplateId = null;
+		if (application.getSourceToken() != null && application.getSourceToken().getCampaigns() != null) {
+			Campaigns campaign = application.getSourceToken().getCampaigns();
+			campaignTitle = campaign.getCampaignTitle();
+			if (campaign.getPipelineTemplate() != null) {
+				pipelineTemplateId = campaign.getPipelineTemplate().getId();
+			}
+		}
+		appData.put("campaignTitle", campaignTitle);
+
+		// 5. Étapes du pipeline
+		List<Map<String, Object>> stages = new ArrayList<>();
+		if (pipelineTemplateId != null) {
+			List<PipelineStage> pipelineStages = pipelineStageRepository.findByPipelineTemplateIdOrderByStageOrder(pipelineTemplateId);
+			if (pipelineStages != null) {
+				for (PipelineStage stage : pipelineStages) {
+					Map<String, Object> stageData = new HashMap<>();
+					stageData.put("id", stage.getId());
+					stageData.put("stageLabel", stage.getStageLabel());
+					stageData.put("stageType", stage.getStageType());
+					stageData.put("stageOrder", stage.getStageOrder());
+					stageData.put("isRequired", stage.getIsRequired());
+					stageData.put("isEliminatory", stage.getIsEliminatory());
+					stages.add(stageData);
+				}
+			}
+		}
+
+		// 6. Progrès du candidat
+		List<Map<String, Object>> progressList = new ArrayList<>();
+		List<ApplicationProgress> progressItems = applicationProgressRepository
+				.findByApplicationIdOrderByStageOrder(application.getId());
+		if (progressItems != null) {
+			for (ApplicationProgress p : progressItems) {
+				Map<String, Object> progressData = new HashMap<>();
+				progressData.put("id", p.getId());
+				progressData.put("pipelineStageId", p.getPipelineStage() != null ? p.getPipelineStage().getId() : null);
+				progressData.put("progressStatus", p.getProgressStatus());
+				progressData.put("startedAt", p.getStartedAt());
+				progressData.put("completedAt", p.getCompletedAt());
+				progressData.put("score", p.getScore());
+				progressList.add(progressData);
+			}
+		}
+
+		result.put("hasError", false);
+		result.put("application", appData);
+		result.put("stages", stages);
+		result.put("progress", progressList);
+
+		log.info("----end trackApplication-----");
+		return result;
 	}
 }

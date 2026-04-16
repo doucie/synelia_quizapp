@@ -32,6 +32,7 @@ import tech.synelia.quizapp.utils.contract.IBasicBusiness;
 import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.enums.FunctionalityEnum;
+import tech.synelia.quizapp.business.PermissionService;
 import tech.synelia.quizapp.business.fact.BusinessFactory;
 
 
@@ -48,6 +49,8 @@ public class BusinessFactory<DTO> {
     private FunctionalError functionalError;
     @Autowired
     private ExceptionUtils  exceptionUtils;
+    @Autowired
+    private PermissionService permissionService;
 
     /**
      * create entity by using dto as object.
@@ -177,6 +180,13 @@ public class BusinessFactory<DTO> {
         fieldsToVerifyUser.put("user", request.getUser());
         if (!Validate.RequiredValue(fieldsToVerifyUser).isGood()) {
             throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
+        }
+        // Vérifier la permission fonctionnelle (sauf DEFAULT qui est un pass-through)
+        if (functionalityEnum != null && functionalityEnum != FunctionalityEnum.DEFAULT) {
+            if (!permissionService.hasPermission(request.getUser(), functionalityEnum.name())) {
+                throw new PermissionDeniedDataAccessException(
+                        "Accès refusé pour la fonctionnalité : " + functionalityEnum.name(), null);
+            }
         }
     }
 

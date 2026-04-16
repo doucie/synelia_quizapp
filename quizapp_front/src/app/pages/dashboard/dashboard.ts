@@ -1,10 +1,11 @@
-import { Component, OnInit, signal, computed, effect, Renderer2, Inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, effect, Renderer2, Inject } from '@angular/core';
 import { CommonModule, DOCUMENT } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../core/services/auth/auth.service';
 import { UserService } from '../../core/services/user.service';
 import { NotificationService, DbNotification } from '../../core/services/notification.service';
 import { ThemeService } from '../../core/services/theme.service';
+import { PermissionService } from '../../core/services/permission.service';
 import { NotificationsComponent } from '../../components/notifications/notifications.component';
 import { SafeHtmlPipe } from '../../pipes/safe-html.pipe';
 
@@ -14,8 +15,9 @@ interface MenuItem {
   icon: string;
   route?: string;
   roles: string[];
+  permissions?: string[];  // Permissions requises (PermissionService)
   children?: MenuItem[];
-  hasDropdown?: boolean; // Indique si l'item a un dropdown
+  hasDropdown?: boolean;
 }
 
 interface EntityItem {
@@ -44,7 +46,12 @@ interface DashboardNotification {
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss']
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
+  
+  // Session timer
+  private sessionTimerId: any = null;
+  sessionWarningVisible = signal(false);
+  sessionRemainingMinutes = signal(0);
   
   // État réactif
   sidebarCollapsed = signal(false);
@@ -85,6 +92,7 @@ export class DashboardComponent implements OnInit {
       icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 7v10c0 2.21 1.79 4 4 4h8c2.21 0 4-1.79 4-4V7c0-2.21-1.79-4-4-4H8c-2.21 0-4 1.79-4 4zm0 0V5a2 2 0 012-2h1m1 0h8a2 2 0 012 2v2M9 7h6m-6 4h6m-3 4h3"/></svg>',
       route: '/dashboard/entities',
       roles: ['super'],
+      permissions: ['VIEW_APP_CONFIG'],
       hasDropdown: true
     },
     {
@@ -92,84 +100,128 @@ export class DashboardComponent implements OnInit {
       label: 'Modèle Merise',
       icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h7v7H3V3zm11 0h7v7h-7V3zM3 14h7v7H3v-7zm14 3a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M10 6.5h4M6.5 10v4M17.5 10v4" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>',
       route: '/dashboard/merise',
-      roles: ['super']
+      roles: ['super'],
+      permissions: ['VIEW_APP_CONFIG']
     },
     {
       id: 'users',
       label: 'Utilisateurs',
       icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>',
       route: '/dashboard/users',
-      roles: ['super', 'admin', 'recruiter']
+      roles: ['super', 'admin', 'recruiter'],
+      permissions: ['VIEW_USER']
     },
     {
       id: 'departments',
       label: 'Départements',
       icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3v18h8v-8h2v8h8V3H3zm6 16H5v-2h4v2zm0-4H5v-2h4v2zm0-4H5V9h4v2zm0-4H5V5h4v2zm6 12h-4v-2h4v2zm0-4h-4v-2h4v2zm0-4h-4V9h4v2zm0-4h-4V5h4v2zm6 12h-4v-2h4v2zm0-4h-4v-2h4v2z"/></svg>',
       route: '/dashboard/departments',
-      roles: ['super', 'admin']
+      roles: ['super', 'admin'],
+      permissions: ['VIEW_DEPARTMENTS']
     },
     {
       id: 'specialities',
       label: 'Spécialités',
       icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>',
       route: '/dashboard/specialities',
-      roles: ['super', 'admin']
+      roles: ['super', 'admin'],
+      permissions: ['VIEW_SPECIALITIES']
     },
     {
       id: 'questions',
       label: 'Questions',
       icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"/></svg>',
       route: '/dashboard/questions',
-      roles: ['super', 'admin']
+      roles: ['super', 'admin'],
+      permissions: ['VIEW_QUESTIONS']
     },
     {
       id: 'answers',
       label: 'Réponses',
       icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>',
       route: '/dashboard/answers',
-      roles: ['super', 'admin']
+      roles: ['super', 'admin'],
+      permissions: ['VIEW_ANSWERS']
     },
     {
       id: 'campaigns',
       label: 'Campagnes',
       icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 5h-2V3h2v2zm-2 2h2v2h-2V7zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2zm-2 0h-2v2h2v-2zm-4 0H7v2h2v-2zm0-4H7v2h2V9zm0-4H7v2h2V7zm0-2H7V3h2v2zm10-1v18H3V2h2v2h2V2h2v2h6V2h2v2h2z"/></svg>',
       route: '/dashboard/campaigns',
-      roles: ['super', 'admin', 'recruiter']
+      roles: ['super', 'admin', 'recruiter'],
+      permissions: ['VIEW_CAMPAIGNS']
+    },
+    {
+      id: 'pipeline-templates',
+      label: 'Modèles Pipeline',
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>',
+      route: '/dashboard/pipeline-templates',
+      roles: ['super', 'admin', 'recruiter'],
+      permissions: ['MANAGE_PIPELINE_TEMPLATE']
     },
     {
       id: 'candidates',
       label: 'Candidatures',
       icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>',
       route: '/dashboard/candidates',
-      roles: ['super', 'admin', 'recruiter']
+      roles: ['super', 'admin', 'recruiter'],
+      permissions: ['VIEW_APPLICATIONS']
     },
     {
       id: 'decisions',
       label: 'Décisions',
       icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>',
       route: '/dashboard/decisions',
-      roles: ['super', 'admin', 'recruiter']
+      roles: ['super', 'admin', 'recruiter'],
+      permissions: ['VIEW_DECISIONS']
     },
     {
       id: 'interviews',
       label: 'Entretiens',
       icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1c-4.97 0-9 4.03-9 9v7c0 1.66 1.34 3 3 3h3v-8H5v-2c0-3.87 3.13-7 7-7s7 3.13 7 7v2h-4v8h3c1.66 0 3-1.34 3-3v-7c0-4.97-4.03-9-9-9z"/></svg>',
       route: '/dashboard/interviews',
-      roles: ['super', 'admin', 'recruiter']
+      roles: ['super', 'admin', 'recruiter'],
+      permissions: ['VIEW_INTERVIEWS']
     },
     {
       id: 'evaluations',
       label: 'Évaluations',
       icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>',
       route: '/dashboard/evaluations',
-      roles: ['super', 'admin', 'recruiter']
+      roles: ['super', 'admin', 'recruiter'],
+      permissions: ['VIEW_EVALUATIONS']
     },
     {
       id: 'settings',
       label: 'Paramètres',
       icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.82,11.69,4.82,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>',
       route: '/dashboard/settings',
-      roles: ['super', 'admin', 'recruiter']
+      roles: ['super', 'admin', 'recruiter'],
+      permissions: ['VIEW_APP_CONFIG', 'VIEW_EMAIL_TEMPLATE']
+    },
+    {
+      id: 'system-role-permissions',
+      label: 'Rôles système',
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>',
+      route: '/dashboard/system-role-permissions',
+      roles: ['super'],
+      permissions: ['MANAGE_SYSTEM_ROLES']
+    },
+    {
+      id: 'business-groups',
+      label: 'Groupes métiers',
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>',
+      route: '/dashboard/business-groups',
+      roles: ['super'],
+      permissions: ['MANAGE_BUSINESS_GROUPS']
+    },
+    {
+      id: 'user-permissions',
+      label: 'Permissions utilisateurs',
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>',
+      route: '/dashboard/user-permissions',
+      roles: ['super'],
+      permissions: ['MANAGE_USER_OVERRIDES']
     }
   ];
 
@@ -267,10 +319,19 @@ export class DashboardComponent implements OnInit {
     }
   ];
 
-  // Menu filtré basé sur le rôle
+  // Menu filtré basé sur les permissions (avec fallback rôle)
   filteredMenuItems = computed(() => {
     const role = this.userRole();
-    return this.menuItems.filter(item => item.roles.includes(role));
+    const permLoaded = this.permissionService.loaded();
+
+    return this.menuItems.filter(item => {
+      // Si permissions chargées ET item a des permissions définies → utiliser permissions
+      if (permLoaded && item.permissions && item.permissions.length > 0) {
+        return this.permissionService.hasAnyPermission(item.permissions);
+      }
+      // Sinon fallback sur les rôles
+      return item.roles.includes(role);
+    });
   });
 
   // Compteur de notifications non lues
@@ -285,6 +346,7 @@ export class DashboardComponent implements OnInit {
     private route: ActivatedRoute,
     private notificationService: NotificationService,
     public themeService: ThemeService,
+    public permissionService: PermissionService,
     private renderer: Renderer2,
     @Inject(DOCUMENT) private document: Document,
   ) {
@@ -343,6 +405,9 @@ export class DashboardComponent implements OnInit {
     
     // Initialiser l'état du mode admin depuis les données utilisateur
     this.initializeAdminMode();
+    
+    // Démarrer le timer de session
+    this.startSessionTimer();
   }
 
   /**
@@ -655,5 +720,39 @@ export class DashboardComponent implements OnInit {
     if (diffMins < 60) return `Il y a ${diffMins}min`;
     if (diffHours < 24) return `Il y a ${diffHours}h`;
     return `Il y a ${diffDays}j`;
+  }
+
+  // --- Session expiration timer ---
+
+  private startSessionTimer(): void {
+    this.checkSessionExpiration();
+    this.sessionTimerId = setInterval(() => this.checkSessionExpiration(), 30_000);
+  }
+
+  private checkSessionExpiration(): void {
+    const token = localStorage.getItem('authToken');
+    if (!token) return;
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) return;
+      const payload = JSON.parse(atob(parts[1]));
+      if (!payload.exp) return;
+      const remainingMs = (payload.exp * 1000) - Date.now();
+      const remainingMin = Math.ceil(remainingMs / 60_000);
+      this.sessionRemainingMinutes.set(remainingMin);
+      this.sessionWarningVisible.set(remainingMin > 0 && remainingMin <= 5);
+    } catch {
+      // Token invalide, l'intercepteur gère la redirection
+    }
+  }
+
+  dismissSessionWarning(): void {
+    this.sessionWarningVisible.set(false);
+  }
+
+  ngOnDestroy(): void {
+    if (this.sessionTimerId) {
+      clearInterval(this.sessionTimerId);
+    }
   }
 }

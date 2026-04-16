@@ -44,7 +44,7 @@ public class LegalTextController {
     @Autowired
     private LegalTextBusiness legalTextBusiness;
 
-    @PreAuthorize("hasRole('SUPER')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     @RequestMapping(value="/create", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
     public ResponseEntity<Response<LegalTextDto>> create(@RequestBody Request<LegalTextDto> request) throws Exception {
         log.info("start method /legalText/create");
@@ -54,7 +54,7 @@ public class LegalTextController {
         return ResponseEntity.created(uri).body(response);
     }
 
-    @PreAuthorize("hasRole('SUPER')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     @RequestMapping(value="/update", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
     public Response<LegalTextDto> update(@RequestBody Request<LegalTextDto> request) throws Exception {
         log.info("start method /legalText/update");
@@ -63,7 +63,7 @@ public class LegalTextController {
         return response;
     }
 
-    @PreAuthorize("hasRole('SUPER')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     @RequestMapping(value="/delete", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
     public Response<LegalTextDto> delete(@RequestBody Request<LegalTextDto> request) throws Exception {
         log.info("start method /legalText/delete");

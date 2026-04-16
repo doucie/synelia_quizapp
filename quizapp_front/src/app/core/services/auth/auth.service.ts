@@ -3,6 +3,7 @@ import { BehaviorSubject, Observable, of } from 'rxjs';
 import { LoginResponse } from '../../../shared/models/interfaces';
 import { SpringBootResponse, UserApiData } from '../../models/spring-boot.interfaces';
 import { OnlineStatusService } from '../online-status.service';
+import { PermissionService } from '../permission.service';
 
 export interface User {
   id: string;
@@ -23,7 +24,10 @@ export class AuthService {
   readonly isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
   readonly currentUser$ = this.currentUserSubject.asObservable();
 
-  constructor(private onlineStatusService: OnlineStatusService) {
+  constructor(
+    private onlineStatusService: OnlineStatusService,
+    private permissionService: PermissionService
+  ) {
     // Vérifier si un utilisateur est déjà connecté au démarrage
     this.initializeAuthState();
   }
@@ -62,6 +66,9 @@ export class AuthService {
     // Stocker les données d'authentification
     this.setAuthData(loginResponse);
     
+    // Charger les permissions de l'utilisateur
+    this.permissionService.loadPermissions(parseInt(user.id));
+    
     // Démarrer le suivi du statut en ligne pour l'utilisateur connecté
     this.onlineStatusService.startOnlineTracking(parseInt(user.id));
     
@@ -77,6 +84,9 @@ export class AuthService {
     
     // Arrêter le suivi du statut en ligne avant de déconnecter
     this.onlineStatusService.stopOnlineTracking();
+    
+    // Réinitialiser les permissions
+    this.permissionService.reset();
     
     localStorage.removeItem('authToken');
     localStorage.removeItem('user');
@@ -141,6 +151,9 @@ export class AuthService {
         
         // Redémarrer le suivi du statut en ligne si l'utilisateur était déjà connecté
         this.onlineStatusService.startOnlineTracking(parseInt(user.id));
+        
+        // Recharger les permissions si l'utilisateur est restauré
+        this.permissionService.loadPermissions(parseInt(user.id));
         
         console.log('🔄 Auth state restored for:', user.email);
       } catch (error) {

@@ -9,7 +9,7 @@
 package tech.synelia.quizapp.utils.dto;
 
 // import java.util.Date;
-// import java.util.List;
+import java.util.List;
 // import java.util.Date;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -54,6 +54,10 @@ public class UserDto extends _UserDto implements Cloneable{
     private Boolean    adminMode            ;
     private String     searchString         ;
     private Integer    pageSizePreference   ;
+
+    // Permissions (renseigné côté Business, pas mappé depuis l'entité)
+    private List<BusinessGroupDto> businessGroups;
+    private List<String> effectivePermissions;
 
     // Champs pour les intervalles de dates (recherche avancée)
     private String     dateCreationDe       ; // Date de création - début

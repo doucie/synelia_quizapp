@@ -36,7 +36,7 @@ import tech.synelia.quizapp.rest.fact.ControllerFactory;
 @CrossOrigin("*")
 @RestController
 @RequestMapping(value="/formversion")
-@PreAuthorize("hasAnyRole('ADMIN', 'SUPER', 'RECRUITER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'UTILISATEUR')")
 public class FormVersionController {
 
 	@Autowired

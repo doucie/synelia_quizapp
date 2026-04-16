@@ -35,10 +35,16 @@ public class DecisionDto implements Cloneable{
     private Integer    updatedBy            ;
     private Boolean    isDeleted            ;
     private String     searchString         ;
+    // Champs pour les intervalles de dates (recherche avancee)
+    private String     dateCreationDe       ;
+    private String     dateCreationA        ;
+    private String     dateModificationDe   ;
+    private String     dateModificationA    ;
 
     // Foreign keys
     private Integer    applicationId        ;
     private Integer    userId               ;
+    private Integer    pipelineStageId      ;
 
     // Search parameters
     private SearchParam<String>  decisionTypeParam ;

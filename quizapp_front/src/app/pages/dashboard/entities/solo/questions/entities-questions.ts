@@ -192,6 +192,10 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
     questionType: '',
     difficultyLevel: '',
     isDeleted: undefined,
+    dateCreationDe: '',
+    dateCreationA: '',
+    dateModificationDe: '',
+    dateModificationA: '',
     search_string: ''
   };
 
@@ -806,6 +810,10 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
       questionType: '',
       difficultyLevel: '',
       isDeleted: undefined,
+      dateCreationDe: '',
+      dateCreationA: '',
+      dateModificationDe: '',
+      dateModificationA: '',
       search_string: ''
     };
     this.applyAdvancedSearch();

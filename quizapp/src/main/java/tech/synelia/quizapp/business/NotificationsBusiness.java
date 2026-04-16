@@ -191,13 +191,13 @@ public class NotificationsBusiness implements IBasicBusiness<Request<Notificatio
 				}
 				entityToSave.setUser(existingUser);
 			}
-			if (Utilities.notBlank(dto.getNotifType())) {
+			if (Utilities.shouldUpdate(dto.getNotifType())) {
 				entityToSave.setNotifType(dto.getNotifType());
 			}
 			if (dto.getNotifActor() != null && dto.getNotifActor() > 0) {
 				entityToSave.setNotifActor(dto.getNotifActor());
 			}
-			if (Utilities.notBlank(dto.getNotifLink())) {
+			if (Utilities.shouldUpdate(dto.getNotifLink())) {
 				entityToSave.setNotifLink(dto.getNotifLink());
 			}
 			if (dto.getIsRead() != null) {
@@ -209,7 +209,7 @@ public class NotificationsBusiness implements IBasicBusiness<Request<Notificatio
 			if (dto.getUpdatedBy() != null && dto.getUpdatedBy() > 0) {
 				entityToSave.setUpdatedBy(dto.getUpdatedBy());
 			}
-			if (Utilities.notBlank(dto.getSearchString())) {
+			if (Utilities.shouldUpdate(dto.getSearchString())) {
 				entityToSave.setSearchString(dto.getSearchString());
 			}
 			// Après toutes les mises à jour conditionnelles...

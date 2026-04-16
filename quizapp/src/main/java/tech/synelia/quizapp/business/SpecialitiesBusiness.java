@@ -194,10 +194,10 @@ public class SpecialitiesBusiness implements IBasicBusiness<Request<Specialities
 				}
 				entityToSave.setDepartments(existingDepartments);
 			}
-			if (Utilities.notBlank(dto.getSpecialityName())) {
+			if (Utilities.shouldUpdate(dto.getSpecialityName())) {
 				entityToSave.setSpecialityName(dto.getSpecialityName());
 			}
-			if (Utilities.notBlank(dto.getSpecialityDesc())) {
+			if (Utilities.shouldUpdate(dto.getSpecialityDesc())) {
 				entityToSave.setSpecialityDesc(dto.getSpecialityDesc());
 			}
 			if (dto.getIsDeleted() != null) {
@@ -209,7 +209,7 @@ public class SpecialitiesBusiness implements IBasicBusiness<Request<Specialities
 			if (dto.getUpdatedBy() != null && dto.getUpdatedBy() > 0) {
 				entityToSave.setUpdatedBy(dto.getUpdatedBy());
 			}
-			if (Utilities.notBlank(dto.getSearchString())) {
+			if (Utilities.shouldUpdate(dto.getSearchString())) {
 				entityToSave.setSearchString(dto.getSearchString());
 			}
 			// Après toutes les mises à jour conditionnelles...
@@ -511,10 +511,10 @@ public class SpecialitiesBusiness implements IBasicBusiness<Request<Specialities
 			Specialities entityToSave = existingEntity;
 
 			// Mise à jour conditionnelle des champs
-			if (Utilities.notBlank(dto.getSpecialityName())) {
+			if (Utilities.shouldUpdate(dto.getSpecialityName())) {
 				entityToSave.setSpecialityName(dto.getSpecialityName());
 			}
-			if (Utilities.notBlank(dto.getSpecialityDesc())) {
+			if (Utilities.shouldUpdate(dto.getSpecialityDesc())) {
 				entityToSave.setSpecialityDesc(dto.getSpecialityDesc());
 			}
 			if (dto.getIsDeleted() != null) {
@@ -526,10 +526,10 @@ public class SpecialitiesBusiness implements IBasicBusiness<Request<Specialities
 			if (dto.getUpdatedBy() != null && dto.getUpdatedBy() > 0) {
 				entityToSave.setUpdatedBy(dto.getUpdatedBy());
 			}
-			if (Utilities.notBlank(dto.getCreatedAt())) {
+			if (Utilities.shouldUpdate(dto.getCreatedAt())) {
 				entityToSave.setCreatedAt(dateFormat.parse(dto.getCreatedAt()));
 			}
-			if (Utilities.notBlank(dto.getUpdatedAt())) {
+			if (Utilities.shouldUpdate(dto.getUpdatedAt())) {
 				entityToSave.setUpdatedAt(dateFormat.parse(dto.getUpdatedAt()));
 			}
 

@@ -227,7 +227,7 @@ public class InterviewCrudBusiness implements IBasicBusiness<Request<InterviewCr
 			if (dto.getUpdatedBy() != null && dto.getUpdatedBy() > 0) {
 				entityToSave.setUpdatedBy(dto.getUpdatedBy());
 			}
-			if (Utilities.notBlank(dto.getSearchString())) {
+			if (Utilities.shouldUpdate(dto.getSearchString())) {
 				entityToSave.setSearchString(dto.getSearchString());
 			}
 			// Champs de présence en ligne
@@ -237,7 +237,7 @@ public class InterviewCrudBusiness implements IBasicBusiness<Request<InterviewCr
 			if (dto.getHasFinished() != null) {
 				entityToSave.setHasFinished(dto.getHasFinished());
 			}
-			if (Utilities.notBlank(dto.getLastPingAt())) {
+			if (Utilities.shouldUpdate(dto.getLastPingAt())) {
 				java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 				entityToSave.setLastPingAt(sdf.parse(dto.getLastPingAt()));
 			}

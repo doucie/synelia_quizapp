@@ -34,6 +34,8 @@ export interface Campaign {
   creatorName?: string;
   applicationsCount?: number;
   questionsCount?: number;
+  pipelineTemplateId?: number;
+  pipelineTemplateName?: string;
 }
 
 /**
@@ -55,6 +57,12 @@ export interface CampaignSearchCriteria {
   campaignStartA?: string;
   campaignEndDe?: string;
   campaignEndA?: string;
+
+  // Dates de création/modification
+  dateCreationDe?: string;
+  dateCreationA?: string;
+  dateModificationDe?: string;
+  dateModificationA?: string;
 
   // Recherche générale
   search_string?: string;

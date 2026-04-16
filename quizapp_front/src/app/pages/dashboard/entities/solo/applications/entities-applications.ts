@@ -12,6 +12,7 @@ import { CandidateAskService, CandidateAsk } from '../../../../../core/services/
 import { CandidateTokenService, CandidateToken } from '../../../../../core/services/candidate-token.service';
 import { CandidateInterviewEntityService, CandidateInterviewEntity } from '../../../../../core/services/candidate-interview-entity.service';
 import { SourceTokenService, SourceToken, SourceTokenResponse } from '../../../../../services/source-token.service';
+import { FormVersionService, FormVersion } from '../../../../../core/services/form-version.service';
 
 @Component({
   selector: 'app-entities-applications',
@@ -27,7 +28,9 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
   private candidateTokenService = inject(CandidateTokenService);
   private candidateInterviewEntityService = inject(CandidateInterviewEntityService);
   private sourceTokenFkService = inject(SourceTokenService);
+  private formVersionFkService = inject(FormVersionService);
   allSourceTokens = signal<SourceToken[]>([]);
+  allFormVersions = signal<FormVersion[]>([]);
   protected override readonly router = inject(Router);
   protected override readonly pageSizeStorageKey = 'entitiesApplicationsPageSize';
   protected override readonly entityName = 'candidatures';
@@ -81,6 +84,7 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
   override ngOnInit() {
     super.ngOnInit();
     this.sourceTokenFkService.getSourceTokensByCriteria({}).subscribe({ next: (res: SourceTokenResponse) => this.allSourceTokens.set(res.items || []) });
+    this.formVersionFkService.getAllByCriteria({ page: 0, size: 9999, isDeleted: false }).subscribe({ next: (res) => this.allFormVersions.set(res.content) });
   }
 
   protected resetAdvancedCriteriaValues(): void {

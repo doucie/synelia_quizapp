@@ -30,7 +30,7 @@ import tech.synelia.quizapp.rest.fact.ControllerFactory;
 @CrossOrigin("*")
 @RestController
 @RequestMapping(value="/emailTemplate")
-@PreAuthorize("hasRole('SUPER')")
+@PreAuthorize("hasRole('SUPER_ADMIN')")
 public class EmailTemplateController {
 
     @Autowired

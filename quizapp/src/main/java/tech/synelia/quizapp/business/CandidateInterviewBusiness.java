@@ -208,7 +208,7 @@ public class CandidateInterviewBusiness implements IBasicBusiness<Request<Candid
 				}
 				entityToSave.setInterviews(existingInterviews);
 			}
-			if (Utilities.notBlank(dto.getInterviewStart())) {
+			if (Utilities.shouldUpdate(dto.getInterviewStart())) {
 				entityToSave.setInterviewStart(dateFormat.parse(dto.getInterviewStart()));
 			}
 			if (dto.getInterviewDuration() != null && dto.getInterviewDuration() > 0) {
@@ -220,7 +220,7 @@ public class CandidateInterviewBusiness implements IBasicBusiness<Request<Candid
 			if (dto.getUpdatedBy() != null && dto.getUpdatedBy() > 0) {
 				entityToSave.setUpdatedBy(dto.getUpdatedBy());
 			}
-			if (Utilities.notBlank(dto.getSearchString())) {
+			if (Utilities.shouldUpdate(dto.getSearchString())) {
 				entityToSave.setSearchString(dto.getSearchString());
 			}
 			entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(dto)));

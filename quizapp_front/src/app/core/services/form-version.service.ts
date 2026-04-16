@@ -15,6 +15,10 @@ export interface FormVersion {
   updatedAt?: string;
   updatedBy?: number;
   isDeleted?: boolean;
+  dateCreationDe?: string;
+  dateCreationA?: string;
+  dateModificationDe?: string;
+  dateModificationA?: string;
 }
 
 export interface FormVersionSearchCriteria {
@@ -24,9 +28,14 @@ export interface FormVersionSearchCriteria {
   idDe?: string;
   idA?: string;
   formId?: number;
+  versionNumber?: number;
   isPublished?: boolean;
   isLocked?: boolean;
   isDeleted?: boolean;
+  dateCreationDe?: string;
+  dateCreationA?: string;
+  dateModificationDe?: string;
+  dateModificationA?: string;
 }
 
 export interface PagedFormVersionResponse {
@@ -57,8 +66,13 @@ export class FormVersionService {
         isDeleted: criteria.isDeleted !== undefined ? criteria.isDeleted.toString() : '',
         searchString: criteria.search_string || '',
         ...(criteria.formId && { formId: criteria.formId }),
+        ...(criteria.versionNumber && { versionNumber: criteria.versionNumber }),
         ...(criteria.isPublished !== undefined && { isPublished: criteria.isPublished }),
         ...(criteria.isLocked !== undefined && { isLocked: criteria.isLocked }),
+                ...(criteria.dateCreationDe && { dateCreationDe: criteria.dateCreationDe }),
+        ...(criteria.dateCreationA && { dateCreationA: criteria.dateCreationA }),
+        ...(criteria.dateModificationDe && { dateModificationDe: criteria.dateModificationDe }),
+        ...(criteria.dateModificationA && { dateModificationA: criteria.dateModificationA }),
         ...(criteria.idDe && criteria.idDe.trim() && { idStart: criteria.idDe }),
         ...(criteria.idA && criteria.idA.trim() && { idEnd: criteria.idA })
       }

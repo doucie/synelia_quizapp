@@ -44,6 +44,11 @@ public class InterviewCrudDto extends _InterviewCrudDto implements Cloneable{
     private Integer    updatedBy            ;
     private Boolean    isDeleted            ;
     private String     searchString         ;
+    // Champs pour les intervalles de dates (recherche avancee)
+    private String     dateCreationDe       ;
+    private String     dateCreationA        ;
+    private String     dateModificationDe   ;
+    private String     dateModificationA    ;
     private Integer    interviewId          ;
     private Integer    userId               ;
     @JsonProperty("isOnline")

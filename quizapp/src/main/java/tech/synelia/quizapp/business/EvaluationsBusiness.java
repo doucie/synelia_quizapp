@@ -50,6 +50,12 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 	@Autowired
 	private CandidateInterviewRepository candidateInterviewRepository;
 	@Autowired
+	private ApplicationsRepository applicationsRepository;
+	@Autowired
+	private PipelineStageRepository pipelineStageRepository;
+	@Autowired
+	private ApplicationProgressRepository applicationProgressRepository;
+	@Autowired
 	private FunctionalError functionalError;
 	@Autowired
 	private TechnicalError technicalError;
@@ -145,6 +151,15 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 			response.setStatus(status);
 			response.setItems(itemsDto);
 			response.setHasError(false);
+			
+			// Après création, vérifier si toutes les évaluations sont soumises pour mettre à jour le pipeline
+			for (Evaluations savedEval : itemsSaved) {
+				try {
+					updateEvaluationStageProgress(savedEval, request.getUser());
+				} catch (Exception e) {
+					log.warning("Erreur lors de la mise à jour du pipeline pour l'évaluation: " + e.getMessage());
+				}
+			}
 		}
 		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
 		log.info("----end create Evaluations-----");
@@ -191,7 +206,7 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 			if (dto.getCandidateMark() != null && dto.getCandidateMark() > 0) {
 				entityToSave.setCandidateMark(dto.getCandidateMark());
 			}
-			if (Utilities.notBlank(dto.getRecruiterComment())) {
+			if (Utilities.shouldUpdate(dto.getRecruiterComment())) {
 				entityToSave.setRecruiterComment(dto.getRecruiterComment());
 			}
 			if (dto.getCreatedBy() != null && dto.getCreatedBy() > 0) {
@@ -200,7 +215,7 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 			if (dto.getUpdatedBy() != null && dto.getUpdatedBy() > 0) {
 				entityToSave.setUpdatedBy(dto.getUpdatedBy());
 			}
-			if (Utilities.notBlank(dto.getSearchString())) {
+			if (Utilities.shouldUpdate(dto.getSearchString())) {
 				entityToSave.setSearchString(dto.getSearchString());
 			}
 			entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(dto)));
@@ -444,5 +459,43 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
 		log.info("----end custom EvaluationsDto-----");
 		return response;
+	}
+
+	/**
+	 * Mettre à jour le progrès de l'étape EVALUATION dans le pipeline
+	 * Quand toutes les évaluations sont soumises, calculer le score moyen
+	 */
+	private void updateEvaluationStageProgress(Evaluations evaluation, Integer userId) {
+		if (evaluation.getCandidateInterview() == null) return;
+		CandidateInterview ci = candidateInterviewRepository.findOne(evaluation.getCandidateInterview().getId(), false);
+		if (ci == null || ci.getApplications() == null) return;
+
+		Applications application = applicationsRepository.findOne(ci.getApplications().getId(), false);
+		if (application == null || application.getSourceToken() == null) return;
+		if (application.getSourceToken().getCampaigns() == null) return;
+
+		Campaigns campaign = application.getSourceToken().getCampaigns();
+		if (campaign.getPipelineTemplate() == null) return;
+
+		// Trouver l'étape EVALUATION dans le template
+		PipelineStage evalStage = pipelineStageRepository.findByTemplateIdAndStageType(
+				campaign.getPipelineTemplate().getId(), "EVALUATION");
+		if (evalStage == null) return;
+		ApplicationProgress progress = applicationProgressRepository.findByApplicationIdAndPipelineStageId(
+				application.getId(), evalStage.getId());
+		if (progress == null) return;
+
+		// Calculer le score moyen de toutes les évaluations pour cette application
+		Integer totalScore = evaluationsRepository.sumMarksByApplicationId(application.getId());
+		Long totalNumber = evaluationsRepository.countByApplicationId(application.getId());
+
+		if (totalNumber > 0) {
+			double avgScore = (double) totalScore / totalNumber;
+			progress.setScore(avgScore);
+			progress.setUpdatedAt(Utilities.getCurrentDate());
+			progress.setUpdatedBy(userId);
+			applicationProgressRepository.save(progress);
+			log.info("Pipeline EVALUATION score mis à jour pour application " + application.getId() + ": " + avgScore);
+		}
 	}
 }

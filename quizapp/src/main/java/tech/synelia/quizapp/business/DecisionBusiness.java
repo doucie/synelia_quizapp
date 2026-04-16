@@ -24,6 +24,7 @@ import tech.synelia.quizapp.utils.dto.transformer.*;
 import tech.synelia.quizapp.dao.entity.Decision;
 import tech.synelia.quizapp.dao.entity.Applications;
 import tech.synelia.quizapp.dao.entity.User;
+import tech.synelia.quizapp.dao.entity.*;
 import tech.synelia.quizapp.dao.repository.*;
 
 /**
@@ -43,6 +44,12 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private PipelineStageRepository pipelineStageRepository;
+
+    @Autowired
+    private ApplicationProgressRepository applicationProgressRepository;
 
     @Autowired
     private FunctionalError functionalError;
@@ -104,6 +111,11 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
                 user.setId(dto.getUserId());
                 entity.setUser(user);
             }
+            if (dto.getPipelineStageId() != null) {
+                PipelineStage stage = new PipelineStage();
+                stage.setId(dto.getPipelineStageId());
+                entity.setPipelineStage(stage);
+            }
             
             entity.setCreatedAt(new Date());
             entity.setCreatedBy(request.getUser());
@@ -163,6 +175,13 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
 
                 applicationsRepository.save(app);
                 log.info("Updated application " + app.getId() + " status to " + newStatus);
+                
+                // Mettre à jour le progrès pipeline pour l'étape DECISION
+                try {
+                    updateDecisionStageProgress(app, decision);
+                } catch (Exception e) {
+                    log.warning("Erreur lors de la mise à jour du pipeline pour la décision: " + e.getMessage());
+                }
             }
         }
     }
@@ -364,5 +383,64 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
 
         response.setHasError(false);
         return response;
+    }
+
+    /**
+     * Met à jour le progrès pipeline pour l'étape DECISION ou PRESELECTION
+     * en fonction du type de décision.
+     */
+    private void updateDecisionStageProgress(Applications app, Decision decision) {
+        if (app.getSourceToken() == null || app.getSourceToken().getCampaigns() == null) {
+            return;
+        }
+        Campaigns campaign = app.getSourceToken().getCampaigns();
+        if (campaign.getPipelineTemplate() == null) {
+            return;
+        }
+        Integer templateId = campaign.getPipelineTemplate().getId();
+
+        // Déterminer le type d'étape pipeline en fonction du type de décision
+        String stageType;
+        String decisionType = decision.getDecisionType();
+        if ("PRE_SCREEN_ACCEPTED".equals(decisionType) || "PRE_SCREEN_REJECTED".equals(decisionType)) {
+            stageType = "PRESELECTION";
+        } else if ("FINAL_ACCEPTED".equals(decisionType) || "FINAL_REJECTED".equals(decisionType)) {
+            stageType = "DECISION";
+        } else {
+            return;
+        }
+
+        PipelineStage stage = pipelineStageRepository.findByTemplateIdAndStageType(templateId, stageType);
+        if (stage == null) {
+            log.info("Aucune étape " + stageType + " trouvée dans le template " + templateId);
+            return;
+        }
+
+        // Lier la décision à l'étape pipeline (optionnel, rétrocompatible)
+        if (decision.getPipelineStage() == null) {
+            decision.setPipelineStage(stage);
+            decisionRepository.save(decision);
+        }
+
+        ApplicationProgress progress = applicationProgressRepository
+                .findByApplicationIdAndPipelineStageId(app.getId(), stage.getId());
+        if (progress == null) {
+            log.info("Aucun progrès trouvé pour application " + app.getId() + " et étape " + stage.getId());
+            return;
+        }
+
+        boolean isAccepted = "PRE_SCREEN_ACCEPTED".equals(decisionType) || "FINAL_ACCEPTED".equals(decisionType);
+        progress.setProgressStatus(isAccepted ? "PASSED" : "FAILED");
+        progress.setCompletedAt(new Date());
+        if (decision.getCreatedBy() != null) {
+            User decidedBy = userRepository.findOne(decision.getCreatedBy(), false);
+            if (decidedBy != null) {
+                progress.setDecidedBy(decidedBy);
+            }
+        }
+        progress.setUpdatedAt(new Date());
+        progress.setUpdatedBy(decision.getCreatedBy());
+        applicationProgressRepository.save(progress);
+        log.info("Pipeline stage " + stageType + " mis à jour: " + (isAccepted ? "PASSED" : "FAILED") + " pour application " + app.getId());
     }
 }

@@ -19,6 +19,8 @@ export interface ApplicationSearchCriteria {
   candidatePhone?: string;
   applicationStatus?: string;
   quizStatus?: string;
+  sourceTokenId?: number;
+  formVersionId?: number;
   isDeleted?: boolean;
   dateCreationDe?: string;
   dateCreationA?: string;
@@ -364,6 +366,8 @@ export class ApplicationService {
         quizStatus: criteria.quizStatus || "",
         isDeleted: criteria.isDeleted !== undefined ? criteria.isDeleted.toString() : "",
         searchString: criteria.search_string || "",
+        ...(criteria.sourceTokenId && { sourceTokenId: criteria.sourceTokenId }),
+        ...(criteria.formVersionId && { formVersionId: criteria.formVersionId }),
         
         // Critères de dates
         ...(criteria.dateCreationDe && criteria.dateCreationDe.trim() && { dateCreationDe: criteria.dateCreationDe }),

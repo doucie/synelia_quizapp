@@ -49,7 +49,7 @@ Controller for table "candidate_interview"
 @CrossOrigin("*")
 @RestController
 @RequestMapping(value="/candidateInterview")
-@PreAuthorize("hasAnyRole('ADMIN', 'SUPER', 'RECRUITER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'UTILISATEUR')")
 public class CandidateInterviewController {
 
      @Autowired

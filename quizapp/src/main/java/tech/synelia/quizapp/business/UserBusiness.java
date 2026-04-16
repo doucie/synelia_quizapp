@@ -125,7 +125,7 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 			}
 
 			// Validation de userRole si fourni
-			if (Utilities.notBlank(dto.getUserRole())) {
+			if (Utilities.shouldUpdate(dto.getUserRole())) {
 				List<String> allowedRoles = Arrays.asList("super", "admin", "recruiter");
 				if (!allowedRoles.contains(dto.getUserRole())) {
 					throw new InvalidEntityException(functionalError.INVALID_FORMAT("userRole -> " + dto.getUserRole() + " (autorisé: super, admin, recruiter)", locale));
@@ -216,22 +216,22 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("user id -> " + dto.getId(), locale));
 			}
 
-			if (Utilities.notBlank(dto.getFirstName())) {
+			if (Utilities.shouldUpdate(dto.getFirstName())) {
 				entityToSave.setFirstName(dto.getFirstName());
 			}
-			if (Utilities.notBlank(dto.getLastName())) {
+			if (Utilities.shouldUpdate(dto.getLastName())) {
 				entityToSave.setLastName(dto.getLastName());
 			}
-			if (Utilities.notBlank(dto.getUsername())) {
+			if (Utilities.shouldUpdate(dto.getUsername())) {
 				entityToSave.setUsername(dto.getUsername());
 			}
-			if (Utilities.notBlank(dto.getEmail())) {
+			if (Utilities.shouldUpdate(dto.getEmail())) {
 				entityToSave.setEmail(dto.getEmail());
 			}
-			if (Utilities.notBlank(dto.getPhone())) {
+			if (Utilities.shouldUpdate(dto.getPhone())) {
 				entityToSave.setPhone(dto.getPhone());
 			}
-			if (Utilities.notBlank(dto.getPassword())) {
+			if (Utilities.shouldUpdate(dto.getPassword())) {
 				// Hasher le nouveau mot de passe avec BCrypt avant la sauvegarde
 				try {
 					entityToSave.setPassword(Utilities.encryptWithBCrypt(dto.getPassword()));
@@ -242,7 +242,7 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 			if (dto.getIsDefaultPassword() != null) {
 				entityToSave.setIsDefaultPassword(dto.getIsDefaultPassword());
 			}
-			if (Utilities.notBlank(dto.getUserRole())) {
+			if (Utilities.shouldUpdate(dto.getUserRole())) {
 				// Validation des valeurs autorisées pour userRole
 				List<String> allowedRoles = Arrays.asList("super", "admin", "recruiter");
 				if (!allowedRoles.contains(dto.getUserRole())) {
@@ -262,7 +262,7 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 			if (dto.getAdminMode() != null) {
 				entityToSave.setAdminMode(dto.getAdminMode());
 			}
-			if (Utilities.notBlank(dto.getLastConnectionDate())) {
+			if (Utilities.shouldUpdate(dto.getLastConnectionDate())) {
 				entityToSave.setLastConnectionDate(parseDate(dto.getLastConnectionDate()));
 			}
 			if (dto.getCreatedBy() != null && dto.getCreatedBy() > 0) {
@@ -271,7 +271,7 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 			if (dto.getUpdatedBy() != null && dto.getUpdatedBy() > 0) {
 				entityToSave.setUpdatedBy(dto.getUpdatedBy());
 			}
-			if (Utilities.notBlank(dto.getSearchString())) {
+			if (Utilities.shouldUpdate(dto.getSearchString())) {
 				entityToSave.setSearchString(dto.getSearchString());
 			}
 			/*
@@ -388,28 +388,28 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 			User entityToSave = existingEntity;
 			
 			// Mise à jour conditionnelle des champs
-			if (Utilities.notBlank(dto.getFirstName())) {
+			if (Utilities.shouldUpdate(dto.getFirstName())) {
 				entityToSave.setFirstName(dto.getFirstName());
 			}
-			if (Utilities.notBlank(dto.getLastName())) {
+			if (Utilities.shouldUpdate(dto.getLastName())) {
 				entityToSave.setLastName(dto.getLastName());
 			}
-			if (Utilities.notBlank(dto.getUsername())) {
+			if (Utilities.shouldUpdate(dto.getUsername())) {
 				entityToSave.setUsername(dto.getUsername());
 			}
-			if (Utilities.notBlank(dto.getEmail())) {
+			if (Utilities.shouldUpdate(dto.getEmail())) {
 				entityToSave.setEmail(dto.getEmail());
 			}
-			if (Utilities.notBlank(dto.getPhone())) {
+			if (Utilities.shouldUpdate(dto.getPhone())) {
 				entityToSave.setPhone(dto.getPhone());
 			}
-			if (Utilities.notBlank(dto.getPassword())) {
+			if (Utilities.shouldUpdate(dto.getPassword())) {
 				entityToSave.setPassword(dto.getPassword());
 			}
 			if (dto.getIsDefaultPassword() != null) {
 				entityToSave.setIsDefaultPassword(dto.getIsDefaultPassword());
 			}
-			if (Utilities.notBlank(dto.getUserRole())) {
+			if (Utilities.shouldUpdate(dto.getUserRole())) {
 				entityToSave.setUserRole(dto.getUserRole());
 			}
 			if (dto.getIsOnline() != null) {
@@ -422,7 +422,7 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 			if (dto.getIsDeleted() != null) {
 				entityToSave.setIsDeleted(dto.getIsDeleted());
 			}
-			if (Utilities.notBlank(dto.getLastConnectionDate())) {
+			if (Utilities.shouldUpdate(dto.getLastConnectionDate())) {
 				entityToSave.setLastConnectionDate(parseDate(dto.getLastConnectionDate()));
 			}
 			if (dto.getCreatedBy() != null && dto.getCreatedBy() > 0) {
@@ -431,7 +431,7 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 			if (dto.getUpdatedBy() != null && dto.getUpdatedBy() > 0) {
 				entityToSave.setUpdatedBy(dto.getUpdatedBy());
 			}
-			if (Utilities.notBlank(dto.getSearchString())) {
+			if (Utilities.shouldUpdate(dto.getSearchString())) {
 				entityToSave.setSearchString(dto.getSearchString());
 			}
 

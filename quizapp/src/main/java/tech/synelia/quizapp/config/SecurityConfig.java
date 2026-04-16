@@ -37,7 +37,7 @@ public class SecurityConfig {
                 // Endpoints publics (connexion, candidature, QEEL, Swagger)
                 .requestMatchers("/userManager/connexion").permitAll()
                 .requestMatchers("/api/qeel/**", "/ws/**").permitAll()
-                .requestMatchers("/applications/create", "/applications/verifyEmail/**").permitAll()
+                .requestMatchers("/applications/create", "/applications/verifyEmail/**", "/applications/track").permitAll()
                 .requestMatchers("/candidateToken/**", "/sourceToken/**").permitAll()
                 .requestMatchers("/candidateanswer/**").permitAll()
                 .requestMatchers("/legalText/getByCriteria").permitAll()
@@ -45,7 +45,7 @@ public class SecurityConfig {
                 .requestMatchers("/userManager/registerWithCode").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 // Endpoints ADMIN uniquement
-                .requestMatchers("/user/set-users-online", "/user/roles-debug").hasAnyRole("ADMIN", "SUPER")
+                .requestMatchers("/user/set-users-online", "/user/roles-debug").hasAnyRole("ADMIN", "SUPER_ADMIN")
                 // Tous les autres endpoints nécessitent une authentification
                 .anyRequest().authenticated()
             )

@@ -162,16 +162,16 @@ public class QuestionBusiness implements IBasicBusiness<Request<QuestionDto>, Re
 				}
 				entityToSave.setSpecialities(existingSpecialities);
 			}
-			if (Utilities.notBlank(dto.getQuestionText())) {
+			if (Utilities.shouldUpdate(dto.getQuestionText())) {
 				entityToSave.setQuestionText(dto.getQuestionText());
 			}
-			if (Utilities.notBlank(dto.getQuestionType())) {
+			if (Utilities.shouldUpdate(dto.getQuestionType())) {
 				entityToSave.setQuestionType(dto.getQuestionType());
 			}
-			if (Utilities.notBlank(dto.getQuestionRef())) {
+			if (Utilities.shouldUpdate(dto.getQuestionRef())) {
 				entityToSave.setQuestionRef(dto.getQuestionRef());
 			}
-			if (Utilities.notBlank(dto.getDifficultyLevel())) {
+			if (Utilities.shouldUpdate(dto.getDifficultyLevel())) {
 				entityToSave.setDifficultyLevel(dto.getDifficultyLevel());
 			}
 			if (dto.getQuestionChrono() != null) {
@@ -398,16 +398,16 @@ public class QuestionBusiness implements IBasicBusiness<Request<QuestionDto>, Re
 				}
 				entityToSave.setSpecialities(existingSpecialities);
 			}
-			if (Utilities.notBlank(dto.getQuestionText())) {
+			if (Utilities.shouldUpdate(dto.getQuestionText())) {
 				entityToSave.setQuestionText(dto.getQuestionText());
 			}
-			if (Utilities.notBlank(dto.getQuestionType())) {
+			if (Utilities.shouldUpdate(dto.getQuestionType())) {
 				entityToSave.setQuestionType(dto.getQuestionType());
 			}
-			if (Utilities.notBlank(dto.getQuestionRef())) {
+			if (Utilities.shouldUpdate(dto.getQuestionRef())) {
 				entityToSave.setQuestionRef(dto.getQuestionRef());
 			}
-			if (Utilities.notBlank(dto.getDifficultyLevel())) {
+			if (Utilities.shouldUpdate(dto.getDifficultyLevel())) {
 				entityToSave.setDifficultyLevel(dto.getDifficultyLevel());
 			}
 			if (dto.getQuestionChrono() != null) {
@@ -471,16 +471,16 @@ public class QuestionBusiness implements IBasicBusiness<Request<QuestionDto>, Re
 				}
 				entityToSave.setSpecialities(existingSpecialities);
 			}
-			if (Utilities.notBlank(dto.getQuestionText())) {
+			if (Utilities.shouldUpdate(dto.getQuestionText())) {
 				entityToSave.setQuestionText(dto.getQuestionText());
 			}
-			if (Utilities.notBlank(dto.getQuestionType())) {
+			if (Utilities.shouldUpdate(dto.getQuestionType())) {
 				entityToSave.setQuestionType(dto.getQuestionType());
 			}
-			if (Utilities.notBlank(dto.getQuestionRef())) {
+			if (Utilities.shouldUpdate(dto.getQuestionRef())) {
 				entityToSave.setQuestionRef(dto.getQuestionRef());
 			}
-			if (Utilities.notBlank(dto.getDifficultyLevel())) {
+			if (Utilities.shouldUpdate(dto.getDifficultyLevel())) {
 				entityToSave.setDifficultyLevel(dto.getDifficultyLevel());
 			}
 			if (dto.getQuestionChrono() != null) {

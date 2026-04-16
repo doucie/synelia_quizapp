@@ -191,6 +191,120 @@
         </div>
       </div>
 
+      <!-- Modèle de pipeline -->
+      <div class="form-section">
+        <h2 class="section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+          Modèle de pipeline <span class="required">*</span>
+        </h2>
+
+        <div class="form-row">
+          <div class="form-group full-width">
+            <label for="pipelineTemplateId">
+              Sélectionner un modèle de pipeline
+            </label>
+            @if (loadingTemplates()) {
+              <div class="template-loading">
+                <div class="search-spinner"></div>
+                <span>Chargement des modèles...</span>
+              </div>
+            } @else {
+              <select
+                id="pipelineTemplateId"
+                [value]="selectedTemplate()?.id || ''"
+                (change)="onTemplateChange($event)"
+                [class.error]="campaignForm.get('pipelineTemplateId')?.invalid && campaignForm.get('pipelineTemplateId')?.touched"
+              >
+                <option value="" disabled>-- Choisir un modèle --</option>
+                @for (template of pipelineTemplates(); track template.id) {
+                  <option [value]="template.id">
+                    {{ template.templateName }}{{ template.isDefault ? ' (par défaut)' : '' }}
+                  </option>
+                }
+              </select>
+              @if (campaignForm.get('pipelineTemplateId')?.invalid && campaignForm.get('pipelineTemplateId')?.touched) {
+                <span class="error-message">Le modèle de pipeline est requis</span>
+              }
+            }
+          </div>
+        </div>
+
+        @if (templateStages().length > 0) {
+          <div class="pipeline-preview">
+            <div class="preview-label">Aperçu des étapes</div>
+            <div class="pipeline-stages-bar">
+              @for (stage of templateStages(); track stage.id; let i = $index; let last = $last) {
+                <div class="preview-stage">
+                  <div class="stage-circle">{{ i + 1 }}</div>
+                  <span class="stage-name">{{ stage.stageLabel }}</span>
+                  @if (stage.isRequired) {
+                    <span class="stage-badge required-badge">Requis</span>
+                  }
+                  @if (stage.isEliminatory) {
+                    <span class="stage-badge eliminatory-badge">Éliminatoire</span>
+                  }
+                </div>
+                @if (!last) {
+                  <div class="stage-connector"></div>
+                }
+              }
+            </div>
+          </div>
+
+          <div class="pipeline-actions">
+            <button type="button" class="btn-customize" (click)="customizeTemplate()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+              Personnaliser ce pipeline
+            </button>
+          </div>
+        }
+      </div>
+
+      <!-- Configuration -->
+
+      <!-- Migration modal -->
+      @if (showMigrationModal()) {
+        <div class="modal-overlay" (click)="skipMigration()">
+          <div class="modal-content migration-modal" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+              <h3>Migration de pipeline</h3>
+              <button type="button" class="modal-close" (click)="skipMigration()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M18 6L6 18M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+            <div class="modal-body">
+              <p class="migration-info">
+                <strong>{{ migratableIds().length }}</strong> candidat(s) peuvent être migrés vers le nouveau pipeline.
+                La migration conserve les statuts des étapes correspondantes (matching par type d'étape).
+              </p>
+              <p class="migration-warning">
+                Les candidats non migrés garderont l'ancien pipeline.
+              </p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" (click)="skipMigration()" [disabled]="migrating()">
+                Ne migrer personne
+              </button>
+              <button type="button" class="btn btn-primary" (click)="migrateAllCandidates()" [disabled]="migrating()">
+                @if (migrating()) {
+                  <span class="btn-spinner"></span>
+                  Migration...
+                } @else {
+                  Migrer les {{ migratableIds().length }} candidat(s)
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+
       <!-- Configuration -->
       <div class="form-section">
         <h2 class="section-title">

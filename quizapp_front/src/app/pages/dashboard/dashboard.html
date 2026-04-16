@@ -256,6 +256,17 @@
       </div>
     </header>
 
+    <!-- Avertissement expiration de session -->
+    @if (sessionWarningVisible()) {
+      <div class="session-warning-banner">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span>Votre session expire dans {{ sessionRemainingMinutes() }} minute{{ sessionRemainingMinutes() > 1 ? 's' : '' }}.</span>
+        <button class="session-warning-dismiss" (click)="dismissSessionWarning()">✕</button>
+      </div>
+    }
+
     <!-- Zone de contenu -->
     <div class="content-area">
       <router-outlet></router-outlet>

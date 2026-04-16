@@ -1,0 +1,171 @@
+<div class="pipeline-template-edit-page">
+  <!-- Header -->
+  <header class="page-header">
+    <div class="header-content">
+      <button class="btn btn-ghost" (click)="goBack()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M19 12H5m7-7l-7 7 7 7"/></svg>
+        Retour
+      </button>
+      <div class="header-center">
+        <h1 class="page-title">Éditeur de pipeline</h1>
+        @if (template()) {
+          <p class="page-subtitle">{{ template()?.templateName }}</p>
+        }
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-secondary" (click)="goBack()">Annuler</button>
+        <button class="btn btn-primary" (click)="save()" [disabled]="saving() || !templateName().trim()">
+          @if (saving()) {
+            <span class="btn-spinner"></span>
+          }
+          Enregistrer
+        </button>
+      </div>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Chargement du template...</p>
+    </div>
+  }
+
+  @if (!loading() && template()) {
+    <div class="edit-layout">
+      <!-- Form section -->
+      <section class="form-section">
+        <h2 class="section-title">Informations générales</h2>
+        <div class="form-group">
+          <label class="form-label">Nom du modèle <span class="required">*</span></label>
+          <input type="text" class="form-input" [ngModel]="templateName()" (ngModelChange)="templateName.set($event)"
+                 placeholder="Ex: Flux technique senior" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea class="form-input" rows="3" [ngModel]="templateDesc()" (ngModelChange)="templateDesc.set($event)"
+                    placeholder="Description du pipeline..."></textarea>
+        </div>
+      </section>
+
+      <!-- Pipeline preview -->
+      <section class="preview-section">
+        <h2 class="section-title">Aperçu du pipeline</h2>
+        @if (stages().length === 0) {
+          <p class="preview-empty">Ajoutez des étapes ci-dessous pour voir l'aperçu</p>
+        } @else {
+          <div class="pipeline-preview">
+            @for (stage of stages(); track stage.stageOrder; let i = $index) {
+              <div class="preview-step" [class.required]="stage.isRequired" [class.eliminatory]="stage.isEliminatory">
+                <div class="preview-dot">
+                  <span class="preview-order">{{ i + 1 }}</span>
+                </div>
+                <span class="preview-label">{{ stage.stageLabel || getStageTypeLabel(stage.stageType) }}</span>
+              </div>
+              @if (i < stages().length - 1) {
+                <div class="preview-connector"></div>
+              }
+            }
+          </div>
+        }
+      </section>
+
+      <!-- Stages editor -->
+      <section class="stages-section">
+        <div class="stages-header">
+          <h2 class="section-title">Étapes du pipeline</h2>
+          <button class="btn btn-primary btn-sm" (click)="addStage()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 4v16m8-8H4"/></svg>
+            Ajouter une étape
+          </button>
+        </div>
+
+        @if (stages().length === 0) {
+          <div class="stages-empty">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+            <p>Aucune étape définie</p>
+            <button class="btn btn-outline" (click)="addStage()">Ajouter la première étape</button>
+          </div>
+        }
+
+        <div class="stages-list">
+          @for (stage of stages(); track stage.stageOrder; let i = $index) {
+            <div class="stage-card"
+                 [class.dragging]="dragIndex() === i"
+                 [class.drag-over]="dragOverIndex() === i"
+                 draggable="true"
+                 (dragstart)="onDragStart(i)"
+                 (dragover)="onDragOver($event, i)"
+                 (dragleave)="onDragLeave()"
+                 (drop)="onDrop($event, i)"
+                 (dragend)="onDragEnd()">
+
+              <div class="stage-drag-handle" title="Glisser pour réordonner">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                  <circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/>
+                  <circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/>
+                  <circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/>
+                </svg>
+              </div>
+
+              <div class="stage-order-badge">{{ i + 1 }}</div>
+
+              <div class="stage-fields">
+                <div class="stage-field stage-field-label">
+                  <label class="field-label">Libellé</label>
+                  <input type="text" class="form-input form-input-sm" [ngModel]="stage.stageLabel"
+                         (ngModelChange)="updateStageField(i, 'stageLabel', $event)" placeholder="Nom de l'étape" />
+                </div>
+
+                <div class="stage-field stage-field-type">
+                  <label class="field-label">Type</label>
+                  <select class="form-input form-input-sm" [ngModel]="stage.stageType"
+                          (ngModelChange)="updateStageField(i, 'stageType', $event)">
+                    @for (type of stageTypes; track type.value) {
+                      <option [value]="type.value">{{ type.label }}</option>
+                    }
+                  </select>
+                </div>
+
+                <div class="stage-toggles">
+                  <label class="toggle-label" [class.active]="stage.isRequired">
+                    <input type="checkbox" [ngModel]="stage.isRequired"
+                           (ngModelChange)="updateStageField(i, 'isRequired', $event)" />
+                    <span class="toggle-switch"></span>
+                    Obligatoire
+                  </label>
+
+                  <label class="toggle-label" [class.active]="stage.isEliminatory">
+                    <input type="checkbox" [ngModel]="stage.isEliminatory"
+                           (ngModelChange)="updateStageField(i, 'isEliminatory', $event)" />
+                    <span class="toggle-switch"></span>
+                    Éliminatoire
+                  </label>
+                </div>
+              </div>
+
+              <button class="btn-icon-action btn-icon-danger" (click)="openDeleteStageConfirm(i)" title="Supprimer cette étape">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/></svg>
+              </button>
+            </div>
+          }
+        </div>
+      </section>
+    </div>
+  }
+</div>
+
+<!-- Modale Supprimer étape -->
+<div class="modal-overlay" *ngIf="showDeleteStageConfirm()" (click)="closeDeleteStageConfirm()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header"><h3>Supprimer cette étape</h3></div>
+    <div class="modal-body">
+      <p>Voulez-vous supprimer cette étape du pipeline ?</p>
+      <p class="modal-hint modal-hint-danger">Les étapes restantes seront renumérotées automatiquement.</p>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" (click)="closeDeleteStageConfirm()">Annuler</button>
+      <button class="btn btn-danger" (click)="confirmDeleteStage()">Supprimer</button>
+    </div>
+  </div>
+</div>

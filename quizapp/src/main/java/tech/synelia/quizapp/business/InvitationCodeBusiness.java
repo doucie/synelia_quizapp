@@ -88,7 +88,7 @@ public class InvitationCodeBusiness implements IBasicBusiness<Request<Invitation
             Calendar cal = Calendar.getInstance();
             cal.add(Calendar.HOUR_OF_DAY, 48);
             Date expiredAt = cal.getTime();
-            if (Utilities.notBlank(dto.getExpiredAt())) {
+            if (Utilities.shouldUpdate(dto.getExpiredAt())) {
                 expiredAt = dateTimeFormat.parse(dto.getExpiredAt());
             }
 
@@ -150,10 +150,10 @@ public class InvitationCodeBusiness implements IBasicBusiness<Request<Invitation
                 throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("invitation_code id -> " + dto.getId(), locale));
             }
 
-            if (Utilities.notBlank(dto.getEmail())) entityToSave.setEmail(dto.getEmail());
-            if (Utilities.notBlank(dto.getRole())) entityToSave.setRole(dto.getRole());
+            if (Utilities.shouldUpdate(dto.getEmail())) entityToSave.setEmail(dto.getEmail());
+            if (Utilities.shouldUpdate(dto.getRole())) entityToSave.setRole(dto.getRole());
             if (dto.getIsUsed() != null) entityToSave.setIsUsed(dto.getIsUsed());
-            if (Utilities.notBlank(dto.getExpiredAt())) entityToSave.setExpiredAt(dateTimeFormat.parse(dto.getExpiredAt()));
+            if (Utilities.shouldUpdate(dto.getExpiredAt())) entityToSave.setExpiredAt(dateTimeFormat.parse(dto.getExpiredAt()));
             if (dto.getIsDeleted() != null) entityToSave.setIsDeleted(dto.getIsDeleted());
 
             entityToSave.setUpdatedAt(Utilities.getCurrentDate());

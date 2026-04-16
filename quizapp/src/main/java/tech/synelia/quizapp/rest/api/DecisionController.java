@@ -38,7 +38,7 @@ import tech.synelia.quizapp.utils.enums.FunctionalityEnum;
 @CrossOrigin("*")
 @RestController
 @RequestMapping(value="/decisions")
-@PreAuthorize("hasAnyRole('ADMIN', 'SUPER', 'RECRUITER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'UTILISATEUR')")
 public class DecisionController {
 
     @Autowired

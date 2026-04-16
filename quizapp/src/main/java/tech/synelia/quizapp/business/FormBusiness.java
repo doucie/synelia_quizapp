@@ -148,10 +148,10 @@ public class FormBusiness implements IBasicBusiness<Request<FormDto>, Response<F
 				}
 				entityToSave.setCampaigns(existingCampaigns);
 			}
-			if (Utilities.notBlank(dto.getFormName())) {
+			if (Utilities.shouldUpdate(dto.getFormName())) {
 				entityToSave.setFormName(dto.getFormName());
 			}
-			if (Utilities.notBlank(dto.getFormDesc())) {
+			if (Utilities.shouldUpdate(dto.getFormDesc())) {
 				entityToSave.setFormDesc(dto.getFormDesc());
 			}
 			if (dto.getIsActive() != null) {
@@ -358,10 +358,10 @@ public class FormBusiness implements IBasicBusiness<Request<FormDto>, Response<F
 				}
 				entityToSave.setCampaigns(existingCampaigns);
 			}
-			if (Utilities.notBlank(dto.getFormName())) {
+			if (Utilities.shouldUpdate(dto.getFormName())) {
 				entityToSave.setFormName(dto.getFormName());
 			}
-			if (Utilities.notBlank(dto.getFormDesc())) {
+			if (Utilities.shouldUpdate(dto.getFormDesc())) {
 				entityToSave.setFormDesc(dto.getFormDesc());
 			}
 			if (dto.getIsActive() != null) {
@@ -422,10 +422,10 @@ public class FormBusiness implements IBasicBusiness<Request<FormDto>, Response<F
 				}
 				entityToSave.setCampaigns(existingCampaigns);
 			}
-			if (Utilities.notBlank(dto.getFormName())) {
+			if (Utilities.shouldUpdate(dto.getFormName())) {
 				entityToSave.setFormName(dto.getFormName());
 			}
-			if (Utilities.notBlank(dto.getFormDesc())) {
+			if (Utilities.shouldUpdate(dto.getFormDesc())) {
 				entityToSave.setFormDesc(dto.getFormDesc());
 			}
 			if (dto.getIsActive() != null) {

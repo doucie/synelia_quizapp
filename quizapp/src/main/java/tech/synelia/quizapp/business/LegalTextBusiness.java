@@ -108,10 +108,10 @@ public class LegalTextBusiness implements IBasicBusiness<Request<LegalTextDto>, 
                 throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("legal_text id -> " + dto.getId(), locale));
             }
 
-            if (Utilities.notBlank(dto.getTextKey())) entityToSave.setTextKey(dto.getTextKey());
-            if (Utilities.notBlank(dto.getTitle())) entityToSave.setTitle(dto.getTitle());
-            if (Utilities.notBlank(dto.getContent())) entityToSave.setContent(dto.getContent());
-            if (Utilities.notBlank(dto.getDescription())) entityToSave.setDescription(dto.getDescription());
+            if (Utilities.shouldUpdate(dto.getTextKey())) entityToSave.setTextKey(dto.getTextKey());
+            if (Utilities.shouldUpdate(dto.getTitle())) entityToSave.setTitle(dto.getTitle());
+            if (Utilities.shouldUpdate(dto.getContent())) entityToSave.setContent(dto.getContent());
+            if (Utilities.shouldUpdate(dto.getDescription())) entityToSave.setDescription(dto.getDescription());
             if (dto.getIsActive() != null) entityToSave.setIsActive(dto.getIsActive());
             if (dto.getIsDeleted() != null) entityToSave.setIsDeleted(dto.getIsDeleted());
 

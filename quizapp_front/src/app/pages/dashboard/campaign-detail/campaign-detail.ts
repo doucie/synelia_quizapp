@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { Subject, takeUntil } from 'rxjs';
 import { CampaignService, Campaign } from '../../../core/services/campaign.service';
 import { SourceTokenService, SourceToken } from '../../../services/source-token.service';
@@ -9,6 +10,10 @@ import { FormService, Form } from '../../../core/services/form.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
 import { UserService } from '../../../core/services/user.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { PipelineStageService } from '../../../core/services/pipeline-stage.service';
+import { ApplicationProgressService } from '../../../core/services/application-progress.service';
+import { PipelineStage } from '../../../core/models/pipeline.interfaces';
+import { environment } from '../../../../environments/environment';
 
 interface CampaignAccess {
   id?: number;
@@ -22,6 +27,24 @@ interface CampaignAccess {
   isAdmin: boolean;
   follow: boolean;
 }
+
+interface EntityPerm {
+  id?: number;
+  userId?: number;
+  entityType?: string;
+  entityId?: number;
+  permissionKey?: string;
+  granted?: boolean;
+  userName?: string;
+  userEmail?: string;
+}
+
+const CAMPAIGN_PERMISSION_KEYS = [
+  { key: 'VIEW_CAMPAIGNS', label: 'Voir' },
+  { key: 'UPDATE_CAMPAIGNS', label: 'Modifier' },
+  { key: 'DELETE_CAMPAIGNS', label: 'Supprimer' },
+  { key: 'VIEW_EVALUATIONS', label: 'Évaluer' }
+];
 
 @Component({
   selector: 'app-campaign-detail',
@@ -44,6 +67,10 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   loading = signal(false);
   error = signal<string | null>(null);
   
+  // Pipeline
+  pipelineStages = signal<PipelineStage[]>([]);
+  stageCandidateCounts = signal<Record<number, number>>({});
+  
   // Token management
   showTokenForm = signal(false);
   newTokenName = signal('');
@@ -53,15 +80,25 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   showAdminModeModal = signal(false);
   checkingPermission = signal(false);
 
+  // Entity permissions
+  entityPermissions = signal<EntityPerm[]>([]);
+  entityPermLoading = signal(false);
+  entityPermSaving = signal<Set<string>>(new Set());
+  campaignPermKeys = CAMPAIGN_PERMISSION_KEYS;
+  private apiUrl = environment.apiUrl;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
+    private http: HttpClient,
     private campaignService: CampaignService,
     private sourceTokenService: SourceTokenService,
     private formService: FormService,
     private authService: AuthService,
     private userService: UserService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private pipelineStageService: PipelineStageService,
+    private applicationProgressService: ApplicationProgressService
   ) {}
 
   ngOnInit(): void {
@@ -110,8 +147,16 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
           
           this.campaign.set(campaign);
           
+          // Charger le pipeline si un template est assigné
+          if (campaign.pipelineTemplateId) {
+            this.loadPipelineStages(campaign.pipelineTemplateId);
+          }
+          
           // Charger les recruteurs ayant accès à la campagne
           this.loadCampaignRecruiters(id);
+          
+          // Charger les permissions par entité
+          this.loadEntityPermissions();
         },
         error: (error) => {
           console.error('❌ Erreur lors du chargement de la campagne:', error);
@@ -205,6 +250,51 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
           this.loading.set(false);
         }
       });
+  }
+
+  // ── Pipeline ──────────────────────────────────────
+
+  loadPipelineStages(templateId: number): void {
+    this.pipelineStageService.getByTemplate(templateId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          const stages = (response.items || []).sort((a, b) => (a.stageOrder || 0) - (b.stageOrder || 0));
+          this.pipelineStages.set(stages);
+          // Charger le compteur de candidats par étape
+          this.loadStageCandidateCounts(stages);
+        },
+        error: () => this.pipelineStages.set([])
+      });
+  }
+
+  loadStageCandidateCounts(stages: PipelineStage[]): void {
+    const counts: Record<number, number> = {};
+    stages.forEach(stage => {
+      if (stage.id) {
+        this.applicationProgressService.getAllByCriteria({
+          pipelineStageId: stage.id,
+          progressStatus: 'IN_PROGRESS',
+          isDeleted: false,
+          size: 1
+        }).pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (response) => {
+            counts[stage.id!] = response.totalElements;
+            this.stageCandidateCounts.set({ ...counts });
+          }
+        });
+      }
+    });
+  }
+
+  filterByStage(stage: PipelineStage): void {
+    if (this.campaignId() && stage.id) {
+      this.router.navigate(['/dashboard/candidates'], { 
+        fragment: `campaign${this.campaignId()}`,
+        queryParams: { stageId: stage.id }
+      });
+    }
   }
 
   toggleTokenForm(): void {
@@ -473,5 +563,93 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
     if (this.campaignId()) {
       this.router.navigate(['/dashboard/candidates'], { fragment: `campaign${this.campaignId()}` });
     }
+  }
+
+  // ── Entity Permissions ──────────────────────────
+
+  loadEntityPermissions(): void {
+    const campaignId = this.campaignId();
+    if (!campaignId) return;
+
+    this.entityPermLoading.set(true);
+    const request = { data: { entityType: 'CAMPAIGN', entityId: campaignId } };
+    this.http.post<any>(`${this.apiUrl}/entityPermission/getForEntity`, request)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res) => {
+          this.entityPermissions.set(res.items || []);
+          this.entityPermLoading.set(false);
+        },
+        error: () => {
+          this.entityPermissions.set([]);
+          this.entityPermLoading.set(false);
+        }
+      });
+  }
+
+  hasEntityPerm(userId: number, permKey: string): boolean {
+    return this.entityPermissions().some(
+      p => p.userId === userId && p.permissionKey === permKey && p.granted
+    );
+  }
+
+  toggleEntityPerm(userId: number, permKey: string): void {
+    const campaignId = this.campaignId();
+    if (!campaignId) return;
+
+    const savingKey = `${userId}_${permKey}`;
+    const saving = new Set(this.entityPermSaving());
+    saving.add(savingKey);
+    this.entityPermSaving.set(saving);
+
+    const has = this.hasEntityPerm(userId, permKey);
+    const endpoint = has ? '/entityPermission/revoke' : '/entityPermission/grant';
+    const request = { data: { userId, entityType: 'CAMPAIGN', entityId: campaignId, permissionKey: permKey } };
+
+    this.http.post<any>(`${this.apiUrl}${endpoint}`, request)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.loadEntityPermissions();
+          this.removeEntitySaving(savingKey);
+        },
+        error: () => this.removeEntitySaving(savingKey)
+      });
+  }
+
+  isEntityPermSaving(userId: number, permKey: string): boolean {
+    return this.entityPermSaving().has(`${userId}_${permKey}`);
+  }
+
+  private removeEntitySaving(key: string): void {
+    const saving = new Set(this.entityPermSaving());
+    saving.delete(key);
+    this.entityPermSaving.set(saving);
+  }
+
+  getUniquePermUsers(): { userId: number; userName: string; userEmail: string }[] {
+    const usersMap = new Map<number, { userId: number; userName: string; userEmail: string }>();
+
+    // Use recruiters as base list
+    for (const r of this.recruiters()) {
+      usersMap.set(r.userId, {
+        userId: r.userId,
+        userName: r.userName || 'Utilisateur',
+        userEmail: r.userEmail || ''
+      });
+    }
+
+    // Add any additional users from entity permissions
+    for (const p of this.entityPermissions()) {
+      if (p.userId && !usersMap.has(p.userId)) {
+        usersMap.set(p.userId, {
+          userId: p.userId,
+          userName: p.userName || `User #${p.userId}`,
+          userEmail: p.userEmail || ''
+        });
+      }
+    }
+
+    return Array.from(usersMap.values());
   }
 }

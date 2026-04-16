@@ -23,7 +23,7 @@ import java.util.Map;
 @CrossOrigin("*")
 @RestController
 @RequestMapping(value = "/api/dashboard")
-@PreAuthorize("hasAnyRole('ADMIN', 'SUPER', 'RECRUITER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'UTILISATEUR')")
 public class DashboardController {
 
     private final UserRepository userRepository;

@@ -19,6 +19,14 @@ public interface _UserRepository {
 	default List<String> _generateCriteria(UserDto dto, HashMap<String, java.lang.Object> param, Integer index, Locale locale) throws Exception {
 		List<String> listOfQuery = new ArrayList<String>();
 
+		// Recherche globale (searchString)
+		if (Utilities.notBlank(dto.getSearchString())) {
+			String sv = "%" + dto.getSearchString().toLowerCase() + "%";
+			String sp = "searchAll_" + (index != null ? index : "");
+			param.put(sp, sv);
+			listOfQuery.add("(" + "LOWER(e.firstName) LIKE :" + sp + " OR LOWER(e.lastName) LIKE :" + sp + " OR LOWER(e.email) LIKE :" + sp + " OR LOWER(e.userRole) LIKE :" + sp + ")");
+		}
+
 		// Traitement des intervalles de dates pour la recherche avancée
 		if (Utilities.notBlank(dto.getDateCreationDe())) {
 			try {

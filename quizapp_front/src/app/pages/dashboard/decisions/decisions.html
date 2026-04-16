@@ -163,199 +163,171 @@
               <h3 class="section-title">Processus de décision</h3>
               
               <div class="process-steps">
-                <!-- Step 1: Candidature -->
-                <div class="process-step" 
-                     [class.active]="selectedApplication()!.applicationStatus === 'PENDING'" 
-                     [class.completed]="selectedApplication()!.applicationStatus === 'SUBMITTED' || selectedApplication()!.applicationStatus === 'PRE_SCREEN_ACCEPTED' || selectedApplication()!.applicationStatus === 'FINAL_ACCEPTED' || selectedApplication()!.applicationStatus === 'FINAL_REJECTED'">
-                  <div class="step-indicator">
-                    <div class="step-number">1</div>
-                    <div class="step-line"></div>
-                  </div>
-                  <div class="step-content">
-                    <div class="step-header">
-                      <h4 class="step-title">Candidature</h4>
-                      @if (selectedApplication()!.applicationStatus === 'PENDING') {
-                        <span class="step-badge current">En cours</span>
-                      } @else {
-                        <span class="step-badge completed">✓</span>
+                @for (stage of getStagesForSelectedApp(); track stage.id; let i = $index; let last = $last) {
+                  <div class="process-step" 
+                       [class.active]="getDynamicStepStatus(stage.id!) === 'active'" 
+                       [class.completed]="getDynamicStepStatus(stage.id!) === 'completed'"
+                       [class.rejected]="getDynamicStepStatus(stage.id!) === 'rejected'"
+                       [class.skipped]="getDynamicStepStatus(stage.id!) === 'skipped'">
+                    <div class="step-indicator">
+                      <div class="step-number">{{ i + 1 }}</div>
+                      @if (!last) {
+                        <div class="step-line"></div>
                       }
                     </div>
-                    
-                    <!-- Informations de candidature -->
-                    <div class="step-info">
-                      <div class="info-item">
-                        <i class="bi bi-envelope-check"></i>
-                        <div class="info-content">
-                          <span class="info-label">Email vérifié</span>
-                          @if (selectedApplication()!.emailVerified) {
-                            <span class="info-value success">
-                              <i class="bi bi-check-circle-fill"></i>
-                              Oui
-                            </span>
-                          } @else {
-                            <span class="info-value warning">
-                              <i class="bi bi-exclamation-circle-fill"></i>
-                              Non vérifié
-                            </span>
+                    <div class="step-content">
+                      <div class="step-header">
+                        <h4 class="step-title">{{ stage.stageLabel }}</h4>
+                        @switch (getDynamicStepStatus(stage.id!)) {
+                          @case ('active') {
+                            <span class="step-badge current">En cours</span>
                           }
-                        </div>
-                      </div>
-                      
-                      <div class="info-item">
-                        <i class="bi bi-trophy"></i>
-                        <div class="info-content">
-                          <span class="info-label">Score du quiz</span>
-                          @if (selectedApplication()!.quizScorePercent !== null && selectedApplication()!.quizScorePercent !== undefined) {
-                            <span class="info-value" [class.success]="selectedApplication()!.quizScorePercent! >= 70" [class.warning]="selectedApplication()!.quizScorePercent! >= 50 && selectedApplication()!.quizScorePercent! < 70" [class.error]="selectedApplication()!.quizScorePercent! < 50">
-                              <i class="bi bi-bar-chart-fill"></i>
-                              {{ selectedApplication()!.quizScorePercent }}%
-                            </span>
-                          } @else {
-                            <span class="info-value muted">
-                              <i class="bi bi-dash-circle"></i>
-                              Quiz non complété
-                            </span>
+                          @case ('completed') {
+                            <span class="step-badge completed">✓</span>
                           }
-                        </div>
+                          @case ('rejected') {
+                            <span class="step-badge error">Refusé</span>
+                          }
+                          @case ('skipped') {
+                            <span class="step-badge warning">Ignoré</span>
+                          }
+                          @default {
+                            <span class="step-badge pending">En attente</span>
+                          }
+                        }
                       </div>
-                    </div>
-                    
-                    @if (selectedApplication()!.applicationStatus === 'PENDING') {
-                      <p class="step-description">Le candidat doit compléter son quiz.</p>
-                    }
-                  </div>
-                </div>
 
-                <!-- Step 2: Pré-sélection -->
-                <div class="process-step" 
-                     [class.active]="selectedApplication()!.applicationStatus === 'SUBMITTED'" 
-                     [class.completed]="selectedApplication()!.applicationStatus === 'PRE_SCREEN_ACCEPTED' || selectedApplication()!.applicationStatus === 'FINAL_ACCEPTED' || selectedApplication()!.applicationStatus === 'FINAL_REJECTED'">
-                  <div class="step-indicator">
-                    <div class="step-number">2</div>
-                    <div class="step-line"></div>
-                  </div>
-                  <div class="step-content">
-                    <div class="step-header">
-                      <h4 class="step-title">Pré-sélection</h4>
-                      @if (selectedApplication()!.applicationStatus === 'SUBMITTED') {
-                        <span class="step-badge current">En cours</span>
-                      } @else if (selectedApplication()!.applicationStatus === 'PRE_SCREEN_ACCEPTED' || selectedApplication()!.applicationStatus === 'FINAL_ACCEPTED' || selectedApplication()!.applicationStatus === 'FINAL_REJECTED') {
-                        <span class="step-badge completed">✓</span>
-                      } @else {
-                        <span class="step-badge pending">En attente</span>
+                      <!-- Infos candidature / quiz -->
+                      @if (stage.stageType === 'CANDIDATURE' || stage.stageType === 'QUIZ') {
+                        <div class="step-info">
+                          <div class="info-item">
+                            <i class="bi bi-envelope-check"></i>
+                            <div class="info-content">
+                              <span class="info-label">Email vérifié</span>
+                              @if (selectedApplication()!.emailVerified) {
+                                <span class="info-value success">
+                                  <i class="bi bi-check-circle-fill"></i> Oui
+                                </span>
+                              } @else {
+                                <span class="info-value warning">
+                                  <i class="bi bi-exclamation-circle-fill"></i> Non vérifié
+                                </span>
+                              }
+                            </div>
+                          </div>
+                          <div class="info-item">
+                            <i class="bi bi-trophy"></i>
+                            <div class="info-content">
+                              <span class="info-label">Score du quiz</span>
+                              @if (selectedApplication()!.quizScorePercent !== null && selectedApplication()!.quizScorePercent !== undefined) {
+                                <span class="info-value" [class.success]="selectedApplication()!.quizScorePercent! >= 70" [class.warning]="selectedApplication()!.quizScorePercent! >= 50 && selectedApplication()!.quizScorePercent! < 70" [class.error]="selectedApplication()!.quizScorePercent! < 50">
+                                  <i class="bi bi-bar-chart-fill"></i>
+                                  {{ selectedApplication()!.quizScorePercent }}%
+                                </span>
+                              } @else {
+                                <span class="info-value muted">
+                                  <i class="bi bi-dash-circle"></i> Quiz non complété
+                                </span>
+                              }
+                            </div>
+                          </div>
+                        </div>
                       }
-                    </div>
 
-                    @if (selectedApplication()!.applicationStatus === 'SUBMITTED') {
-                      <div class="step-actions">
-                        <button class="btn btn-success" (click)="takeDecision('APPROVE')">
-                          <i class="bi bi-check-lg"></i>
-                          Accepter la pré-sélection
-                        </button>
-                        <button class="btn btn-error" (click)="takeDecision('CANCEL')">
-                          <i class="bi bi-x-lg"></i>
-                          Rejeter
-                        </button>
-                      </div>
-                    }
-
-                  </div>
-                </div>
-
-                <!-- Step 3: Décision finale -->
-                <div class="process-step" 
-                     [class.active]="selectedApplication()!.applicationStatus === 'PRE_SCREEN_ACCEPTED'"
-                     [class.completed]="selectedApplication()!.applicationStatus === 'FINAL_ACCEPTED' || selectedApplication()!.applicationStatus === 'FINAL_REJECTED'">
-                  <div class="step-indicator">
-                    <div class="step-number">3</div>
-                  </div>
-                  <div class="step-content">
-                    <div class="step-header">
-                      <h4 class="step-title">Décision finale</h4>
-                      @if (selectedApplication()!.applicationStatus === 'PRE_SCREEN_ACCEPTED') {
-                        <span class="step-badge current">En cours</span>
-                      } @else if (selectedApplication()!.applicationStatus === 'FINAL_ACCEPTED') {
-                        <span class="step-badge success">Accepté</span>
-                      } @else if (selectedApplication()!.applicationStatus === 'FINAL_REJECTED') {
-                        <span class="step-badge error">Rejeté</span>
-                      } @else {
-                        <span class="step-badge pending">En attente</span>
+                      <!-- Infos entretien -->
+                      @if (stage.stageType === 'INTERVIEW') {
+                        <div class="step-info">
+                          <div class="info-item">
+                            <i class="bi bi-calendar-event"></i>
+                            <div class="info-content">
+                              <span class="info-label">Date d'entretien</span>
+                              @if (selectedApplication()!.interviewDate) {
+                                <span class="info-value">
+                                  <i class="bi bi-clock"></i>
+                                  {{ formatDateTime(selectedApplication()!.interviewDate) }}
+                                </span>
+                              } @else {
+                                <span class="info-value muted">
+                                  <i class="bi bi-dash-circle"></i> Non planifié
+                                </span>
+                              }
+                            </div>
+                          </div>
+                          <div class="info-item">
+                            <i class="bi bi-clipboard-check"></i>
+                            <div class="info-content">
+                              <span class="info-label">Statut entretien</span>
+                              @if (selectedApplication()!.interviewStatus) {
+                                <span class="info-value" [ngClass]="getInterviewStatusClass(selectedApplication()!.interviewStatus!)">
+                                  <i [class]="getInterviewStatusIcon(selectedApplication()!.interviewStatus!)"></i>
+                                  {{ getInterviewStatusLabel(selectedApplication()!.interviewStatus!) }}
+                                </span>
+                              } @else {
+                                <span class="info-value muted">
+                                  <i class="bi bi-dash-circle"></i> Aucun entretien
+                                </span>
+                              }
+                            </div>
+                          </div>
+                        </div>
                       }
+
+                      <!-- Infos évaluation -->
+                      @if (stage.stageType === 'EVALUATION') {
+                        <div class="step-info">
+                          <div class="info-item">
+                            <i class="bi bi-star"></i>
+                            <div class="info-content">
+                              <span class="info-label">Score d'évaluation</span>
+                              @if (selectedApplication()!.evaluationScore !== null && selectedApplication()!.evaluationScore !== undefined) {
+                                <span class="info-value" [class.success]="selectedApplication()!.evaluationScore! >= 70" [class.warning]="selectedApplication()!.evaluationScore! >= 50 && selectedApplication()!.evaluationScore! < 70" [class.error]="selectedApplication()!.evaluationScore! < 50">
+                                  <i class="bi bi-star-fill"></i>
+                                  {{ selectedApplication()!.evaluationScore }}/100
+                                </span>
+                              } @else {
+                                <span class="info-value muted">
+                                  <i class="bi bi-dash-circle"></i> Non évalué
+                                </span>
+                              }
+                            </div>
+                          </div>
+                        </div>
+                      }
+
+                      <!-- Boutons de décision pour étapes PRESELECTION/DECISION -->
+                      @if (canTakeDecisionForStage(stage)) {
+                        <div class="step-actions">
+                          <button class="btn btn-success" (click)="takeDecisionForStage(stage, 'APPROVE')">
+                            <i class="bi bi-check-lg"></i>
+                            {{ getDecisionOptionsForStage(stage).approveLabel }}
+                          </button>
+                          <button class="btn btn-error" (click)="takeDecisionForStage(stage, 'CANCEL')">
+                            <i class="bi bi-x-lg"></i>
+                            {{ getDecisionOptionsForStage(stage).cancelLabel }}
+                          </button>
+                        </div>
+                      }
+
+                      <!-- Annulation de décision -->
+                      @if (canCancelDecisionForStage(stage)) {
+                        <div class="step-actions">
+                          <button class="btn btn-outline" (click)="undoDecisionForStage(stage)">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                            Annuler la décision
+                          </button>
+                        </div>
+                      }
+
+                      <p class="step-description">{{ getDynamicStepDescription(stage) }}</p>
                     </div>
-
-                    <!-- Informations après pré-sélection -->
-                    @if (selectedApplication()!.applicationStatus !== 'PENDING') {
-                      <div class="step-info">
-                        <div class="info-item">
-                          <i class="bi bi-calendar-event"></i>
-                          <div class="info-content">
-                            <span class="info-label">Date d'entretien</span>
-                            @if (selectedApplication()!.interviewDate) {
-                              <span class="info-value">
-                                <i class="bi bi-clock"></i>
-                                {{ formatDateTime(selectedApplication()!.interviewDate) }}
-                              </span>
-                            } @else {
-                              <span class="info-value muted">
-                                <i class="bi bi-dash-circle"></i>
-                                Non planifié
-                              </span>
-                            }
-                          </div>
-                        </div>
-                        
-                        <div class="info-item">
-                          <i class="bi bi-clipboard-check"></i>
-                          <div class="info-content">
-                            <span class="info-label">Statut entretien</span>
-                            @if (selectedApplication()!.interviewStatus) {
-                              <span class="info-value" [ngClass]="getInterviewStatusClass(selectedApplication()!.interviewStatus!)">
-                                <i [class]="getInterviewStatusIcon(selectedApplication()!.interviewStatus!)"></i>
-                                {{ getInterviewStatusLabel(selectedApplication()!.interviewStatus!) }}
-                              </span>
-                            } @else {
-                              <span class="info-value muted">
-                                <i class="bi bi-dash-circle"></i>
-                                Aucun entretien
-                              </span>
-                            }
-                          </div>
-                        </div>
-                        
-                        <div class="info-item">
-                          <i class="bi bi-star"></i>
-                          <div class="info-content">
-                            <span class="info-label">Score d'évaluation</span>
-                            @if (selectedApplication()!.evaluationScore !== null && selectedApplication()!.evaluationScore !== undefined) {
-                              <span class="info-value" [class.success]="selectedApplication()!.evaluationScore! >= 70" [class.warning]="selectedApplication()!.evaluationScore! >= 50 && selectedApplication()!.evaluationScore! < 70" [class.error]="selectedApplication()!.evaluationScore! < 50">
-                                <i class="bi bi-star-fill"></i>
-                                {{ selectedApplication()!.evaluationScore }}/100
-                              </span>
-                            } @else {
-                              <span class="info-value muted">
-                                <i class="bi bi-dash-circle"></i>
-                                Non évalué
-                              </span>
-                            }
-                          </div>
-                        </div>
-                      </div>
-                    }
-
-                    @if (selectedApplication()!.applicationStatus === 'PRE_SCREEN_ACCEPTED') {
-                      <div class="step-actions">
-                        <button class="btn btn-success" (click)="takeDecision('APPROVE')">
-                          <i class="bi bi-check-lg"></i>
-                          Accepter définitivement
-                        </button>
-                        <button class="btn btn-error" (click)="takeDecision('CANCEL')">
-                          <i class="bi bi-x-lg"></i>
-                          Rejeter définitivement
-                        </button>
-                      </div>
-                    }
                   </div>
-                </div>
+                }
+
+                @if (!getStagesForSelectedApp().length) {
+                  <div class="empty-state">
+                    <p>Aucun pipeline configuré pour cette campagne</p>
+                  </div>
+                }
               </div>
             </div>
 
@@ -418,17 +390,7 @@
                   <div class="timeline-content">
                     <div class="timeline-header">
                       <span class="timeline-action">
-                        @if (decision.decisionType === 'PRE_SCREEN_ACCEPTED') {
-                          Pré-sélection acceptée
-                        } @else if (decision.decisionType === 'PRE_SCREEN_REJECTED') {
-                          Pré-sélection refusée
-                        } @else if (decision.decisionType === 'FINAL_ACCEPTED') {
-                          Décision finale : Accepté
-                        } @else if (decision.decisionType === 'FINAL_REJECTED') {
-                          Décision finale : Rejeté
-                        } @else {
-                          {{ decision.decisionType }}
-                        }
+                        {{ getDecisionLabel(decision.decisionType) }}
                       </span>
                       <span class="timeline-date">{{ formatDateTime(decision.createdAt) }}</span>
                     </div>

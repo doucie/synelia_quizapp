@@ -6,10 +6,12 @@ import { Subject, takeUntil, forkJoin } from 'rxjs';
 import { Interview, InterviewService } from '../../../core/services/interview.service';
 import { Application, ApplicationService } from '../../../core/services/application.service';
 import { Campaign, CampaignService } from '../../../core/services/campaign.service';
-import { InterviewCrudService, InterviewCrud } from '../../../core/services/interview-crud.service';
+import { EntityPermissionService } from '../../../core/services/entity-permission.service';
+import { EntityPermission } from '../../../core/models/permission.interfaces';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
 import { UserService } from '../../../core/services/user.service';
+import { APPLICATION_STATUS } from '../../../core/constants/application-status.constants';
 
 interface InterviewWithDetails extends Interview {
   candidateName?: string;
@@ -72,7 +74,7 @@ export class InterviewsComponent implements OnInit, OnDestroy {
     private interviewService: InterviewService,
     private applicationService: ApplicationService,
     private campaignService: CampaignService,
-    private interviewCrudService: InterviewCrudService,
+    private entityPermissionService: EntityPermissionService,
     private notificationService: NotificationService,
     private authService: AuthService,
     private userService: UserService,
@@ -123,8 +125,8 @@ export class InterviewsComponent implements OnInit, OnDestroy {
    */
   eligibleApplications = computed(() => {
     return this.applications().filter(app => 
-      app.applicationStatus === 'PRE_SCREEN_ACCEPTED' || 
-      app.applicationStatus === 'INTERVIEWING'
+      app.applicationStatus === APPLICATION_STATUS.PRE_SCREEN_ACCEPTED || 
+      app.applicationStatus === APPLICATION_STATUS.INTERVIEWING
     );
   });
 
@@ -283,20 +285,19 @@ export class InterviewsComponent implements OnInit, OnDestroy {
     this.loadingEvaluators.set(true);
     
     // Charger les évaluateurs de cet entretien
-    this.interviewCrudService.getEvaluatorsByInterviewId(interview.id)
+    this.entityPermissionService.getForEntity('INTERVIEW', interview.id)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
           if (!response.hasError && response.items && response.items.length > 0) {
-            const evaluatorCruds = response.items.filter(crud => crud.canEvaluate);
+            const evaluatorPerms = response.items.filter((p: EntityPermission) => p.permissionKey === 'VIEW_EVALUATIONS' && p.granted);
             
-            // Dédupliquer par userId pour éviter les doublons
-            const uniqueEvaluatorCruds = evaluatorCruds.filter((crud, index, self) =>
-              index === self.findIndex(c => c.userId === crud.userId)
+            // Dédupliquer par userId
+            const uniquePerms = evaluatorPerms.filter((p: EntityPermission, index: number, self: EntityPermission[]) =>
+              index === self.findIndex(c => c.userId === p.userId)
             );
             
-            if (uniqueEvaluatorCruds.length === 0) {
-              // Aucun évaluateur trouvé
+            if (uniquePerms.length === 0) {
               this.evaluatorsForInterview.set([]);
               this.startConfirmStep.set(2);
               this.loadingEvaluators.set(false);
@@ -304,20 +305,20 @@ export class InterviewsComponent implements OnInit, OnDestroy {
             }
 
             // Charger les détails de chaque utilisateur
-            const userRequests = uniqueEvaluatorCruds.map(crud => 
-              this.userService.getById(crud.userId)
+            const userRequests = uniquePerms.map((p: EntityPermission) => 
+              this.userService.getById(p.userId!)
             );
 
             forkJoin(userRequests).pipe(takeUntil(this.destroy$)).subscribe({
               next: (users) => {
-                const evaluators: EvaluatorInfo[] = uniqueEvaluatorCruds.map((crud, index) => {
+                const evaluators: EvaluatorInfo[] = uniquePerms.map((p: EntityPermission, index: number) => {
                   const user = users[index];
                   return {
-                    userId: crud.userId,
+                    userId: p.userId!,
                     firstName: user?.firstName || user?.prenom || '',
                     lastName: user?.lastName || user?.nom || '',
                     email: user?.email || '',
-                    canEvaluate: crud.canEvaluate || false
+                    canEvaluate: true
                   };
                 });
                 this.evaluatorsForInterview.set(evaluators);
@@ -326,10 +327,9 @@ export class InterviewsComponent implements OnInit, OnDestroy {
               },
               error: (error) => {
                 console.error('Erreur lors du chargement des détails utilisateurs:', error);
-                // Fallback: utiliser les IDs sans noms
-                const evaluators: EvaluatorInfo[] = uniqueEvaluatorCruds.map(crud => ({
-                  userId: crud.userId,
-                  canEvaluate: crud.canEvaluate || false
+                const evaluators: EvaluatorInfo[] = uniquePerms.map((p: EntityPermission) => ({
+                  userId: p.userId!,
+                  canEvaluate: true
                 }));
                 this.evaluatorsForInterview.set(evaluators);
                 this.startConfirmStep.set(2);
@@ -524,19 +524,19 @@ export class InterviewsComponent implements OnInit, OnDestroy {
 
     // Vérifier si l'utilisateur a le droit d'évaluer cet entretien
     this.loading.set(true);
-    this.interviewCrudService.getEvaluatorsByInterviewId(interview.id)
+    this.entityPermissionService.getForEntity('INTERVIEW', interview.id)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
           this.loading.set(false);
           
           if (!response.hasError && response.items) {
-            // Chercher l'entrée pour l'utilisateur courant avec canEvaluate = true
-            const userCrud = response.items.find(
-              crud => crud.userId === currentUserId && crud.canEvaluate === true
+            // Chercher VIEW_EVALUATIONS pour l'utilisateur courant
+            const userPerm = response.items.find(
+              (p: EntityPermission) => p.userId === currentUserId && p.permissionKey === 'VIEW_EVALUATIONS' && p.granted
             );
 
-            if (userCrud) {
+            if (userPerm) {
               // L'utilisateur a le droit d'évaluer, ouvrir dans un nouvel onglet
               let url: string;
               if (interview.interviewEvaluationsLink) {

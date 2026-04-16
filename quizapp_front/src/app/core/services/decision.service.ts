@@ -82,6 +82,10 @@ export interface DecisionCriteria {
   idDe?: string;
   idA?: string;
   isDeleted?: boolean;
+  dateCreationDe?: string;
+  dateCreationA?: string;
+  dateModificationDe?: string;
+  dateModificationA?: string;
 }
 
 export interface PagedDecisionResponse {
@@ -313,7 +317,11 @@ export class DecisionService {
         ...(criteria.userId && { userId: criteria.userId }),
         ...(criteria.decisionType && { decisionType: criteria.decisionType }),
         ...(criteria.idDe && criteria.idDe.trim() && { idStart: criteria.idDe }),
-        ...(criteria.idA && criteria.idA.trim() && { idEnd: criteria.idA })
+        ...(criteria.idA && criteria.idA.trim() && { idEnd: criteria.idA }),
+        ...(criteria.dateCreationDe && { dateCreationDe: criteria.dateCreationDe }),
+        ...(criteria.dateCreationA && { dateCreationA: criteria.dateCreationA }),
+        ...(criteria.dateModificationDe && { dateModificationDe: criteria.dateModificationDe }),
+        ...(criteria.dateModificationA && { dateModificationA: criteria.dateModificationA })
       }
     };
     return this.http.post<any>(`${this.apiUrl}/getByCriteria`, request).pipe(

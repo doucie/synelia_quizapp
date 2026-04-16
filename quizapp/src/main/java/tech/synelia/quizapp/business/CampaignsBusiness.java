@@ -47,7 +47,9 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 	@Autowired
 	private CampaignsRepository campaignsRepository;
 	@Autowired
-	private CampaignCrudRepository campaignCrudRepository;
+	private PermissionService permissionService;
+	@Autowired
+	private EntityPermissionRepository entityPermissionRepository;
 	@Autowired
 	private UserRepository userRepository;
 	@Autowired
@@ -58,6 +60,10 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 	private InterviewsRepository interviewsRepository;
 	@Autowired
 	private SourceTokenRepository sourceTokenRepository;
+	@Autowired
+	private PipelineTemplateRepository pipelineTemplateRepository;
+	@Autowired
+	private ApplicationProgressBusiness applicationProgressBusiness;
 	@Autowired
 	private FunctionalError functionalError;
 	@Autowired
@@ -128,10 +134,29 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 					throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("specialities specialityId -> " + dto.getSpecialityId(), locale));
 				}
 			}
+			// Vérifier / assigner le pipeline template
+			PipelineTemplate existingPipelineTemplate = null;
+			if (dto.getPipelineTemplateId() != null && dto.getPipelineTemplateId() > 0) {
+				existingPipelineTemplate = pipelineTemplateRepository.findOne(dto.getPipelineTemplateId(), false);
+				if (existingPipelineTemplate == null) {
+					throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("pipelineTemplate pipelineTemplateId -> " + dto.getPipelineTemplateId(), locale));
+				}
+				if (existingPipelineTemplate.getIsActive() == null || !existingPipelineTemplate.getIsActive()) {
+					throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION("Le template de pipeline sélectionné n'est pas actif", locale));
+				}
+			} else {
+				// Utiliser le template par défaut si non fourni
+				existingPipelineTemplate = pipelineTemplateRepository.findByIsDefaultTrue();
+				if (existingPipelineTemplate == null) {
+					throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("Aucun template de pipeline par défaut configuré", locale));
+				}
+			}
+
 			dto.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(dto)));
 
 			Campaigns entityToSave = null;
 			entityToSave = CampaignsTransformer.INSTANCE.toEntity(dto, existingUser, existingSpecialities);
+			entityToSave.setPipelineTemplate(existingPipelineTemplate);
 			entityToSave.setCreatedAt(Utilities.getCurrentDate());
 			entityToSave.setCreatedBy(request.getUser());
 			entityToSave.setIsDeleted(false);
@@ -205,53 +230,13 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			// ========== VÉRIFICATION DES PERMISSIONS ==========
 			log.info("🔐 Vérification des permissions pour l'utilisateur " + authenticatedUserId + " sur la campagne " + dto.getId());
 			
-			// Récupérer l'utilisateur pour vérifier son rôle
-			User user = userRepository.findOne(authenticatedUserId, false);
-			if (user == null) {
-				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("user " + authenticatedUserId, locale));
-			}
-			String userRole = user.getUserRole() != null ? user.getUserRole().toUpperCase() : "";
-			
-			// Vérifier dans campaign_crud si l'utilisateur a des droits
-			CampaignCrudDto searchDto = new CampaignCrudDto();
-			searchDto.setCampaignId(dto.getId());
-			searchDto.setUserId(authenticatedUserId);
-			
-			Request<CampaignCrudDto> crudRequest = new Request<>();
-			crudRequest.setUser(authenticatedUserId);
-			crudRequest.setData(searchDto);
-			
-			List<CampaignCrud> campaignCrudList = null;
-			try {
-				campaignCrudList = campaignCrudRepository.getByCriteria(crudRequest, em, locale);
-			} catch (Exception e) {
-				log.severe("Erreur lors de la vérification des permissions: " + e.getMessage());
-				throw new InternalErrorException(functionalError.REQUEST_FAIL("Erreur technique lors de la vérification des permissions", locale));
-			}
-			
-			boolean hasDirectRights = false;
-			if (campaignCrudList != null && !campaignCrudList.isEmpty()) {
-				for (CampaignCrud crud : campaignCrudList) {
-					boolean isAdmin = crud.getIsAdmin() != null && crud.getIsAdmin();
-					boolean canUpdate = crud.getCanUpdate() != null && crud.getCanUpdate();
-					
-					if (isAdmin || canUpdate) {
-						hasDirectRights = true;
-						log.info("✅ Utilisateur autorisé via campaign_crud ID=" + crud.getId());
-						break;
-					}
-				}
-			}
-			
-			// Si pas de droits directs, vérifier si c'est un admin/super
-			if (!hasDirectRights && !"ADMIN".equals(userRole) && !"SUPER".equals(userRole)) {
+			boolean canModify = permissionService.hasEntityPermission(authenticatedUserId, "CAMPAIGN", dto.getId(), "ADMIN")
+					|| permissionService.hasEntityPermission(authenticatedUserId, "CAMPAIGN", dto.getId(), "UPDATE");
+			if (!canModify) {
 				log.warning("❌ Accès refusé : l'utilisateur " + authenticatedUserId + " n'a pas les droits pour modifier la campagne " + dto.getId());
 				throw new InvalidEntityException(functionalError.REQUEST_FAIL("Accès refusé: droits insuffisants pour modifier cette campagne", locale));
 			}
-			
-			if (!hasDirectRights) {
-				log.info("⚠️ Utilisateur " + userRole + " modifie la campagne " + dto.getId() + " avec privilèges admin");
-			}
+			log.info("✅ Utilisateur autorisé à modifier la campagne " + dto.getId());
 			// ========== FIN VÉRIFICATION DES PERMISSIONS ==========
 
 			// Verifier si la campaigns existe
@@ -277,19 +262,30 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 				}
 				entityToSave.setSpecialities(existingSpecialities);
 			}
-			if (Utilities.notBlank(dto.getCampaignTitle())) {
+			// Verify if pipelineTemplate changed
+			if (dto.getPipelineTemplateId() != null && dto.getPipelineTemplateId() > 0) {
+				PipelineTemplate newTemplate = pipelineTemplateRepository.findOne(dto.getPipelineTemplateId(), false);
+				if (newTemplate == null) {
+					throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("pipelineTemplate pipelineTemplateId -> " + dto.getPipelineTemplateId(), locale));
+				}
+				if (newTemplate.getIsActive() == null || !newTemplate.getIsActive()) {
+					throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION("Le template de pipeline sélectionné n'est pas actif", locale));
+				}
+				entityToSave.setPipelineTemplate(newTemplate);
+			}
+			if (Utilities.shouldUpdate(dto.getCampaignTitle())) {
 				entityToSave.setCampaignTitle(dto.getCampaignTitle());
 			}
-			if (Utilities.notBlank(dto.getCampaignDesc())) {
+			if (Utilities.shouldUpdate(dto.getCampaignDesc())) {
 				entityToSave.setCampaignDesc(dto.getCampaignDesc());
 			}
-			if (Utilities.notBlank(dto.getCampaignStatus())) {
+			if (Utilities.shouldUpdate(dto.getCampaignStatus())) {
 				entityToSave.setCampaignStatus(dto.getCampaignStatus());
 			}
-			if (Utilities.notBlank(dto.getCampaignStart())) {
+			if (Utilities.shouldUpdate(dto.getCampaignStart())) {
 				entityToSave.setCampaignStart(dateFormat.parse(dto.getCampaignStart()));
 			}
-			if (Utilities.notBlank(dto.getCampaignEnd())) {
+			if (Utilities.shouldUpdate(dto.getCampaignEnd())) {
 				entityToSave.setCampaignEnd(dateFormat.parse(dto.getCampaignEnd()));
 			}
 			if (dto.getMaxApply() != null && dto.getMaxApply() > 0) {
@@ -318,62 +314,40 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 				throw new InternalErrorException(functionalError.SAVE_FAIL("campaigns", locale));
 			}
 			
-			// ========== RECRÉATION DES CAMPAIGN_CRUD ==========
-			// Lors de la modification d'une campagne, on doit supprimer tous les campaign_crud 
-			// existants et les recréer à nouveau pour refléter les nouvelles permissions
-			log.info("🔄 Recréation des campaign_crud pour les campagnes modifiées");
+			// ========== RECRÉATION DES ENTITY_PERMISSIONS ==========
+			// Lors de la modification d'une campagne, on s'assure que le créateur a toutes les permissions entité
+			log.info("🔄 Vérification des entity_permission pour les campagnes modifiées");
 			for (Campaigns savedCampaign : itemsSaved) {
 				try {
-					// 1. Supprimer tous les campaign_crud existants pour cette campagne
-					List<CampaignCrud> existingCrudList = campaignCrudRepository.findByCampaignId(savedCampaign.getId(), false);
-					if (existingCrudList != null && !existingCrudList.isEmpty()) {
-						log.info("🗑️ Suppression de " + existingCrudList.size() + " campaign_crud existants pour campagne " + savedCampaign.getId());
-						campaignCrudRepository.deleteAll(existingCrudList);
-					}
-					
-					// 2. Recréer le campaign_crud pour le créateur avec TOUS les droits
-					// Récupérer le créateur depuis createdBy (ID)
 					Integer creatorId = savedCampaign.getCreatedBy();
 					if (creatorId != null && creatorId > 0) {
 						User creator = userRepository.findOne(creatorId, false);
 						if (creator != null) {
-							CampaignCrud creatorCrud = new CampaignCrud();
-							creatorCrud.setCampaigns(savedCampaign);
-							creatorCrud.setUser(creator);
-							creatorCrud.setIsAdmin(true);
-							creatorCrud.setIsCreator(true); // Marquer comme créateur
-							creatorCrud.setCanUpdate(true);
-							creatorCrud.setCanDelete(true);
-							creatorCrud.setCanEvaluate(true);
-							creatorCrud.setCanPlanify(true);
-							creatorCrud.setCanAcceptPreScreen(true);
-							creatorCrud.setCanAcceptFinal(true);
-							creatorCrud.setFollow(true);
-							creatorCrud.setCreatedAt(Utilities.getCurrentDate());
-							creatorCrud.setCreatedBy(request.getUser());
-							creatorCrud.setIsDeleted(false);
-							// searchString sera généré automatiquement par le repository lors du save
-							creatorCrud.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(creatorCrud)));
-							campaignCrudRepository.save(creatorCrud);
-							log.info("👑 Créateur ID=" + creator.getId() + " ajouté avec tous les droits sur campagne " + savedCampaign.getId());
-						} else {
-							log.warning("⚠️ Créateur ID=" + creatorId + " non trouvé pour campagne " + savedCampaign.getId());
+							String[] permissionKeys = {"ADMIN", "CREATOR", "UPDATE", "DELETE", "EVALUATE", "PLANIFY", "ADVANCE_PIPELINE", "FOLLOW"};
+							for (String key : permissionKeys) {
+								EntityPermission existing = entityPermissionRepository.findByUserIdAndEntityTypeAndEntityIdAndPermissionKey(
+										creatorId, "CAMPAIGN", savedCampaign.getId(), key);
+								if (existing == null) {
+									EntityPermission ep = new EntityPermission();
+									ep.setUser(creator);
+									ep.setEntityType("CAMPAIGN");
+									ep.setEntityId(savedCampaign.getId());
+									ep.setPermissionKey(key);
+									ep.setCreatedAt(Utilities.getCurrentDate());
+									ep.setCreatedBy(request.getUser());
+									ep.setIsDeleted(false);
+									entityPermissionRepository.save(ep);
+								}
+							}
+							log.info("👑 Créateur ID=" + creator.getId() + " vérifié avec tous les droits sur campagne " + savedCampaign.getId());
 						}
-					} else {
-						log.warning("⚠️ createdBy null pour campagne " + savedCampaign.getId());
 					}
-					
-					// 3. TODO: Recréer les campaign_crud pour les recruteurs sélectionnés
-					// Note: Les recruteurs sélectionnés doivent être envoyés dans le DTO (pas encore implémenté)
-					// Pour l'instant, seul le créateur reçoit des droits lors de l'update
-					
 				} catch (Exception e) {
-					log.severe("❌ Erreur lors de la recréation des campaign_crud pour campagne " + savedCampaign.getId() + ": " + e.getMessage());
+					log.severe("❌ Erreur lors de la vérification des entity_permission pour campagne " + savedCampaign.getId() + ": " + e.getMessage());
 					e.printStackTrace();
-					// On continue pour ne pas bloquer tout le processus, mais on log l'erreur
 				}
 			}
-			log.info("✅ Recréation des campaign_crud terminée");
+			log.info("✅ Vérification des entity_permission terminée");
 			
 			List<CampaignsDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading())) ? CampaignsTransformer.INSTANCE.toLiteDtos(itemsSaved) : CampaignsTransformer.INSTANCE.toDtos(itemsSaved);
 
@@ -435,53 +409,13 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			// ========== VÉRIFICATION DES PERMISSIONS ==========
 			log.info("🔐 Vérification des permissions pour l'utilisateur " + authenticatedUserId + " sur la campagne " + dto.getId());
 			
-			// Récupérer l'utilisateur pour vérifier son rôle
-			User user = userRepository.findOne(authenticatedUserId, false);
-			if (user == null) {
-				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("user " + authenticatedUserId, locale));
-			}
-			String userRole = user.getUserRole() != null ? user.getUserRole().toUpperCase() : "";
-			
-			// Vérifier dans campaign_crud si l'utilisateur a des droits de suppression
-			CampaignCrudDto searchDto = new CampaignCrudDto();
-			searchDto.setCampaignId(dto.getId());
-			searchDto.setUserId(authenticatedUserId);
-			
-			Request<CampaignCrudDto> crudRequest = new Request<>();
-			crudRequest.setUser(authenticatedUserId);
-			crudRequest.setData(searchDto);
-			
-			List<CampaignCrud> campaignCrudList = null;
-			try {
-				campaignCrudList = campaignCrudRepository.getByCriteria(crudRequest, em, locale);
-			} catch (Exception e) {
-				log.severe("Erreur lors de la vérification des permissions: " + e.getMessage());
-				throw new InternalErrorException(functionalError.REQUEST_FAIL("Erreur technique lors de la vérification des permissions", locale));
-			}
-			
-			boolean hasDeleteRights = false;
-			if (campaignCrudList != null && !campaignCrudList.isEmpty()) {
-				for (CampaignCrud crud : campaignCrudList) {
-					boolean isAdmin = crud.getIsAdmin() != null && crud.getIsAdmin();
-					boolean canDelete = crud.getCanDelete() != null && crud.getCanDelete();
-					
-					if (isAdmin || canDelete) {
-						hasDeleteRights = true;
-						log.info("✅ Utilisateur autorisé à supprimer via campaign_crud ID=" + crud.getId());
-						break;
-					}
-				}
-			}
-			
-			// Si pas de droits directs, vérifier si c'est un admin/super
-			if (!hasDeleteRights && !"ADMIN".equals(userRole) && !"SUPER".equals(userRole)) {
+			boolean canDelete = permissionService.hasEntityPermission(authenticatedUserId, "CAMPAIGN", dto.getId(), "ADMIN")
+					|| permissionService.hasEntityPermission(authenticatedUserId, "CAMPAIGN", dto.getId(), "DELETE");
+			if (!canDelete) {
 				log.warning("❌ Accès refusé : l'utilisateur " + authenticatedUserId + " n'a pas les droits pour supprimer la campagne " + dto.getId());
 				throw new InvalidEntityException(functionalError.REQUEST_FAIL("Accès refusé: droits insuffisants pour supprimer cette campagne", locale));
 			}
-			
-			if (!hasDeleteRights) {
-				log.info("⚠️ Utilisateur " + userRole + " supprime la campagne " + dto.getId() + " avec privilèges admin");
-			}
+			log.info("✅ Utilisateur autorisé à supprimer la campagne " + dto.getId());
 			// ========== FIN VÉRIFICATION DES PERMISSIONS ==========
 
 			// Verifier si la campaigns existe
@@ -495,10 +429,14 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			// ----------- CHECK IF DATA IS USED
 			// -----------------------------------------------------------------------
 
-			// campaignCrud
-			List<CampaignCrud> listOfCampaignCrud = campaignCrudRepository.findByCampaignId(existingEntity.getId(), false);
-			if (listOfCampaignCrud != null && !listOfCampaignCrud.isEmpty()){
-				throw new InternalErrorException(functionalError.DATA_NOT_DELETABLE("(" + listOfCampaignCrud.size() + ")", locale));
+			// entityPermission
+			List<EntityPermission> listOfEntityPermission = entityPermissionRepository.findByEntityTypeAndEntityId("CAMPAIGN", existingEntity.getId());
+			if (listOfEntityPermission != null && !listOfEntityPermission.isEmpty()){
+				// Supprimer les entity_permission associées avant de soft-delete la campagne
+				for (EntityPermission ep : listOfEntityPermission) {
+					ep.setIsDeleted(true);
+				}
+				entityPermissionRepository.saveAll(listOfEntityPermission);
 			}
 			// form
 			List<Form> listOfForm = formRepository.findByCampaignId(existingEntity.getId(), false);
@@ -689,19 +627,19 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 				}
 				entityToSave.setSpecialities(existingSpecialities);
 			}
-			if (Utilities.notBlank(dto.getCampaignTitle())) {
+			if (Utilities.shouldUpdate(dto.getCampaignTitle())) {
 				entityToSave.setCampaignTitle(dto.getCampaignTitle());
 			}
-			if (Utilities.notBlank(dto.getCampaignDesc())) {
+			if (Utilities.shouldUpdate(dto.getCampaignDesc())) {
 				entityToSave.setCampaignDesc(dto.getCampaignDesc());
 			}
-			if (Utilities.notBlank(dto.getCampaignStatus())) {
+			if (Utilities.shouldUpdate(dto.getCampaignStatus())) {
 				entityToSave.setCampaignStatus(dto.getCampaignStatus());
 			}
-			if (Utilities.notBlank(dto.getCampaignStart())) {
+			if (Utilities.shouldUpdate(dto.getCampaignStart())) {
 				entityToSave.setCampaignStart(dateFormat.parse(dto.getCampaignStart()));
 			}
-			if (Utilities.notBlank(dto.getCampaignEnd())) {
+			if (Utilities.shouldUpdate(dto.getCampaignEnd())) {
 				entityToSave.setCampaignEnd(dateFormat.parse(dto.getCampaignEnd()));
 			}
 			if (dto.getIsDeleted() != null) {
@@ -719,7 +657,7 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			if (dto.getUpdatedBy() != null && dto.getUpdatedBy() > 0) {
 				entityToSave.setUpdatedBy(dto.getUpdatedBy());
 			}
-			if (Utilities.notBlank(dto.getSearchString())) {
+			if (Utilities.shouldUpdate(dto.getSearchString())) {
 				entityToSave.setSearchString(dto.getSearchString());
 			}
 			// Après toutes les mises à jour conditionnelles...
@@ -815,19 +753,19 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 				}
 				entityToSave.setSpecialities(existingSpecialities);
 			}
-			if (Utilities.notBlank(dto.getCampaignTitle())) {
+			if (Utilities.shouldUpdate(dto.getCampaignTitle())) {
 				entityToSave.setCampaignTitle(dto.getCampaignTitle());
 			}
-			if (Utilities.notBlank(dto.getCampaignDesc())) {
+			if (Utilities.shouldUpdate(dto.getCampaignDesc())) {
 				entityToSave.setCampaignDesc(dto.getCampaignDesc());
 			}
-			if (Utilities.notBlank(dto.getCampaignStatus())) {
+			if (Utilities.shouldUpdate(dto.getCampaignStatus())) {
 				entityToSave.setCampaignStatus(dto.getCampaignStatus());
 			}
-			if (Utilities.notBlank(dto.getCampaignStart())) {
+			if (Utilities.shouldUpdate(dto.getCampaignStart())) {
 				entityToSave.setCampaignStart(dateFormat.parse(dto.getCampaignStart()));
 			}
-			if (Utilities.notBlank(dto.getCampaignEnd())) {
+			if (Utilities.shouldUpdate(dto.getCampaignEnd())) {
 				entityToSave.setCampaignEnd(dateFormat.parse(dto.getCampaignEnd()));
 			}
 			if (dto.getIsDeleted() != null) {
@@ -845,7 +783,7 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			if (dto.getUpdatedBy() != null && dto.getUpdatedBy() > 0) {
 				entityToSave.setUpdatedBy(dto.getUpdatedBy());
 			}
-			if (Utilities.notBlank(dto.getSearchString())) {
+			if (Utilities.shouldUpdate(dto.getSearchString())) {
 				entityToSave.setSearchString(dto.getSearchString());
 			}
 			// Après toutes les mises à jour conditionnelles...
@@ -970,73 +908,11 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			
 			log.info("Checking edit permission for user " + userId + " on campaign " + campaignId);
 			
-			// 1. Récupérer l'utilisateur pour vérifier son rôle
-			User user = userRepository.findOne(userId, false);
-			if (user == null) {
-				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("user " + userId, locale));
-			}
-			
-			String userRole = user.getUserRole() != null ? user.getUserRole().toUpperCase() : "";
-			log.info("User ID: " + userId + ", Username: " + user.getUsername() + ", Role: " + userRole);
-			
-		// 2. Vérifier dans campaign_crud si l'utilisateur a des droits
-		CampaignCrudDto searchDto = new CampaignCrudDto();
+		// 2. Vérifier les permissions entité via PermissionService
+		boolean hasDirectRights = permissionService.hasEntityPermission(userId, "CAMPAIGN", campaignId, "ADMIN")
+				|| permissionService.hasEntityPermission(userId, "CAMPAIGN", campaignId, "UPDATE");
 		
-		// Définir les valeurs directement dans le DTO (OBLIGATOIRE pour que generateCriteria les utilise)
-		searchDto.setCampaignId(campaignId);
-		searchDto.setUserId(userId);
-		
-		// Utiliser SearchParam pour les critères de recherche
-		SearchParam<Integer> campaignIdSearchParam = new SearchParam<>();
-		campaignIdSearchParam.setStart(campaignId);
-		campaignIdSearchParam.setOperator("=");
-		searchDto.setCampaignIdParam(campaignIdSearchParam);
-		log.info("DEBUG: campaignIdSearchParam set with start=" + campaignIdSearchParam.getStart() + ", operator=" + campaignIdSearchParam.getOperator());
-		
-		SearchParam<Integer> userIdSearchParam = new SearchParam<>();
-		userIdSearchParam.setStart(userId);
-		userIdSearchParam.setOperator("=");
-		searchDto.setUserIdParam(userIdSearchParam);
-		log.info("DEBUG: userIdSearchParam set with start=" + userIdSearchParam.getStart() + ", operator=" + userIdSearchParam.getOperator());
-		
-		log.info("DEBUG: searchDto.getCampaignId() = " + searchDto.getCampaignId());
-		log.info("DEBUG: searchDto.getUserId() = " + searchDto.getUserId());
-		log.info("DEBUG: searchDto.getCampaignIdParam() = " + (searchDto.getCampaignIdParam() != null ? searchDto.getCampaignIdParam().getStart() : "NULL"));
-		log.info("DEBUG: searchDto.getUserIdParam() = " + (searchDto.getUserIdParam() != null ? searchDto.getUserIdParam().getStart() : "NULL"));
-		
-		Request<CampaignCrudDto> crudRequest = new Request<>();
-		crudRequest.setUser(userId);
-		// Utiliser setData() pour combiner les critères avec AND (au lieu de setDatas() qui utilise OR)
-		crudRequest.setData(searchDto);
-		
-		log.info("DEBUG: Calling getByCriteria with request: " + Utilities.convertObjectToJson(crudRequest));
-		List<CampaignCrud> campaignCrudList = campaignCrudRepository.getByCriteria(crudRequest, em, locale);
-		
-		log.info("Found " + (campaignCrudList != null ? campaignCrudList.size() : 0) + " campaign_crud records for user " + userId + " and campaign " + campaignId);
-		
-		boolean hasDirectRights = false;
-		if (campaignCrudList != null && !campaignCrudList.isEmpty()) {
-			// Parcourir TOUS les enregistrements pour vérifier si AU MOINS UN donne les droits
-			for (CampaignCrud crud : campaignCrudList) {
-				boolean isAdmin = crud.getIsAdmin() != null && crud.getIsAdmin();
-				boolean canUpdate = crud.getCanUpdate() != null && crud.getCanUpdate();
-				
-				log.info("Checking campaign_crud record ID=" + crud.getId() + ": isAdmin=" + crud.getIsAdmin() + ", canUpdate=" + crud.getCanUpdate());
-				
-				// L'utilisateur peut modifier si is_admin=true OU can_update=true
-				if (isAdmin || canUpdate) {
-					hasDirectRights = true;
-					log.info("✅ Found rights in record ID=" + crud.getId() + " => hasDirectRights=true");
-					break; // Pas besoin de continuer si on a trouvé les droits
-				}
-			}
-			
-			if (!hasDirectRights) {
-				log.info("❌ No edit rights found in any of the " + campaignCrudList.size() + " records");
-			}
-		} else {
-			log.info("No campaign_crud record found for user " + userId + " and campaign " + campaignId);
-		}
+		log.info("User " + userId + " hasDirectRights on campaign " + campaignId + ": " + hasDirectRights);
 			
 			// 3. Préparer la réponse
 			CampaignsDto responseDto = new CampaignsDto();
@@ -1045,18 +921,20 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			if (hasDirectRights) {
 				// L'utilisateur a les droits directs, il peut modifier
 				log.info("User has direct edit rights");
-				responseDto.setCampaignTitle("CAN_EDIT"); // Utiliser le titre pour transporter la réponse
+				responseDto.setCampaignTitle("CAN_EDIT");
 				responseDto.setCampaignDesc("HAS_RIGHTS");
 			} else {
-				// Pas de droits directs, vérifier si c'est un admin/super
-				if ("ADMIN".equals(userRole) || "SUPER".equals(userRole)) {
-					log.info("User is ADMIN/SUPER but has no direct rights - requires admin mode");
+				// Pas de droits directs, vérifier s'il a la permission fonctionnelle UPDATE_CAMPAIGNS
+				if (permissionService.hasPermission(userId, "UPDATE_CAMPAIGNS")) {
+					log.info("User has functional UPDATE_CAMPAIGNS permission but no entity rights - requires admin mode");
 					responseDto.setCampaignTitle("REQUIRES_ADMIN_MODE");
-					responseDto.setCampaignDesc(userRole);
+					User user = userRepository.findOne(userId, false);
+					responseDto.setCampaignDesc(user != null ? user.getUserRole() : "");
 				} else {
-					log.info("User has no edit rights and is not admin");
+					log.info("User has no edit rights");
 					responseDto.setCampaignTitle("NO_PERMISSION");
-					responseDto.setCampaignDesc(userRole);
+					User user = userRepository.findOne(userId, false);
+					responseDto.setCampaignDesc(user != null ? user.getUserRole() : "");
 				}
 			}
 			

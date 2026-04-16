@@ -55,7 +55,7 @@ Controller for table "user"
 @CrossOrigin("*")
 @RestController
 @RequestMapping(value="/user")
-@PreAuthorize("hasAnyRole('ADMIN', 'SUPER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
 public class UserController {
 
      @Autowired

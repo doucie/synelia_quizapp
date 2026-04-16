@@ -1,0 +1,57 @@
+<div class="system-role-permissions">
+  <div class="page-header">
+    <h1>Permissions par rôle système</h1>
+    <p class="subtitle">Gérer les permissions de base attribuées à chaque rôle système</p>
+  </div>
+
+  <!-- Info SUPER_ADMIN -->
+  <div class="info-banner super-admin-info">
+    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+    </svg>
+    <span><strong>SUPER_ADMIN</strong> — Accès total, bypass complet. Aucune permission configurable.</span>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab" [class.active]="activeTab() === 'ADMIN'" (click)="setTab('ADMIN')">
+      ADMIN
+    </button>
+    <button class="tab" [class.active]="activeTab() === 'UTILISATEUR'" (click)="setTab('UTILISATEUR')">
+      UTILISATEUR
+    </button>
+  </div>
+
+  <!-- Loading -->
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <span>Chargement des permissions...</span>
+    </div>
+  }
+
+  <!-- Grille de permissions -->
+  @if (!isLoading()) {
+    <div class="permissions-grid">
+      @for (category of categories; track category.label) {
+        <div class="category-section">
+          <h3 class="category-title">{{ category.label }}</h3>
+          <div class="permissions-list">
+            @for (perm of category.permissions; track perm.key) {
+              <label class="permission-item" [class.saving]="saving()">
+                <input
+                  type="checkbox"
+                  [checked]="isChecked(perm.key)"
+                  (change)="togglePermission(perm.key)"
+                  [disabled]="saving()"
+                />
+                <span class="permission-label">{{ perm.label }}</span>
+                <code class="permission-key">{{ perm.key }}</code>
+              </label>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

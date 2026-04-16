@@ -110,11 +110,11 @@ public class EmailTemplateBusiness implements IBasicBusiness<Request<EmailTempla
                 throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("email_template id -> " + dto.getId(), locale));
             }
 
-            if (Utilities.notBlank(dto.getTemplateKey())) entityToSave.setTemplateKey(dto.getTemplateKey());
-            if (Utilities.notBlank(dto.getSubjectTemplate())) entityToSave.setSubjectTemplate(dto.getSubjectTemplate());
-            if (Utilities.notBlank(dto.getBodyTemplate())) entityToSave.setBodyTemplate(dto.getBodyTemplate());
-            if (Utilities.notBlank(dto.getDescription())) entityToSave.setDescription(dto.getDescription());
-            if (Utilities.notBlank(dto.getAvailableVariables())) entityToSave.setAvailableVariables(dto.getAvailableVariables());
+            if (Utilities.shouldUpdate(dto.getTemplateKey())) entityToSave.setTemplateKey(dto.getTemplateKey());
+            if (Utilities.shouldUpdate(dto.getSubjectTemplate())) entityToSave.setSubjectTemplate(dto.getSubjectTemplate());
+            if (Utilities.shouldUpdate(dto.getBodyTemplate())) entityToSave.setBodyTemplate(dto.getBodyTemplate());
+            if (Utilities.shouldUpdate(dto.getDescription())) entityToSave.setDescription(dto.getDescription());
+            if (Utilities.shouldUpdate(dto.getAvailableVariables())) entityToSave.setAvailableVariables(dto.getAvailableVariables());
             if (dto.getIsActive() != null) entityToSave.setIsActive(dto.getIsActive());
             if (dto.getIsDeleted() != null) entityToSave.setIsDeleted(dto.getIsDeleted());
 

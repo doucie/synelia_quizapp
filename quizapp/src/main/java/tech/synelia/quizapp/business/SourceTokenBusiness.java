@@ -231,7 +231,7 @@ public class SourceTokenBusiness implements IBasicBusiness<Request<SourceTokenDt
 			}
 
 			// Vérifier l'unicité du sourceTokenName par campagne si on met à jour le nom
-			if (Utilities.notBlank(dto.getSourceTokenName()) && entityToSave.getCampaigns() != null) {
+			if (Utilities.shouldUpdate(dto.getSourceTokenName()) && entityToSave.getCampaigns() != null) {
 				SourceToken existingByName = sourceTokenRepository.findBySourceTokenNameAndCampaignId(
 					dto.getSourceTokenName(), entityToSave.getCampaigns().getId(), false);
 				// Vérifier que ce n'est pas le même enregistrement
@@ -240,10 +240,10 @@ public class SourceTokenBusiness implements IBasicBusiness<Request<SourceTokenDt
 				}
 			}
 
-			if (Utilities.notBlank(dto.getTokenString())) {
+			if (Utilities.shouldUpdate(dto.getTokenString())) {
 				entityToSave.setTokenString(dto.getTokenString());
 			}
-			if (Utilities.notBlank(dto.getSourceTokenName())) {
+			if (Utilities.shouldUpdate(dto.getSourceTokenName())) {
 				entityToSave.setSourceTokenName(dto.getSourceTokenName());
 			}
 			if (dto.getIsDeleted() != null) {
@@ -255,7 +255,7 @@ public class SourceTokenBusiness implements IBasicBusiness<Request<SourceTokenDt
 			if (dto.getUpdatedBy() != null && dto.getUpdatedBy() > 0) {
 				entityToSave.setUpdatedBy(dto.getUpdatedBy());
 			}
-			if (Utilities.notBlank(dto.getSearchString())) {
+			if (Utilities.shouldUpdate(dto.getSearchString())) {
 				entityToSave.setSearchString(dto.getSearchString());
 			}
 
@@ -363,7 +363,7 @@ public class SourceTokenBusiness implements IBasicBusiness<Request<SourceTokenDt
 			}
 			
 			// Vérifier l'unicité du sourceTokenName par campagne si on met à jour le nom
-			if (Utilities.notBlank(dto.getSourceTokenName()) && entityToSave.getCampaigns() != null) {
+			if (Utilities.shouldUpdate(dto.getSourceTokenName()) && entityToSave.getCampaigns() != null) {
 				SourceToken existingByName = sourceTokenRepository.findBySourceTokenNameAndCampaignId(
 					dto.getSourceTokenName(), entityToSave.getCampaigns().getId(), false);
 				// Vérifier que ce n'est pas le même enregistrement
@@ -373,10 +373,10 @@ public class SourceTokenBusiness implements IBasicBusiness<Request<SourceTokenDt
 			}
 			
 			// Mise à jour conditionnelle des champs
-			if (Utilities.notBlank(dto.getTokenString())) {
+			if (Utilities.shouldUpdate(dto.getTokenString())) {
 				entityToSave.setTokenString(dto.getTokenString());
 			}
-			if (Utilities.notBlank(dto.getSourceTokenName())) {
+			if (Utilities.shouldUpdate(dto.getSourceTokenName())) {
 				entityToSave.setSourceTokenName(dto.getSourceTokenName());
 			}
 			// IMPORTANT: Gestion du champ isDeleted pour updateAll
@@ -389,7 +389,7 @@ public class SourceTokenBusiness implements IBasicBusiness<Request<SourceTokenDt
 			if (dto.getUpdatedBy() != null && dto.getUpdatedBy() > 0) {
 				entityToSave.setUpdatedBy(dto.getUpdatedBy());
 			}
-			if (Utilities.notBlank(dto.getSearchString())) {
+			if (Utilities.shouldUpdate(dto.getSearchString())) {
 				entityToSave.setSearchString(dto.getSearchString());
 			}
 

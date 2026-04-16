@@ -16,6 +16,10 @@ export interface Answer {
   updatedAt?: string;
   updatedBy?: number;
   isDeleted?: boolean;
+  dateCreationDe?: string;
+  dateCreationA?: string;
+  dateModificationDe?: string;
+  dateModificationA?: string;
 }
 
 export interface AnswerSearchCriteria {
@@ -25,8 +29,14 @@ export interface AnswerSearchCriteria {
   idDe?: string;
   idA?: string;
   answerText?: string;
+  answerOrder?: number;
+  isCorrect?: boolean;
   questionId?: number;
   isDeleted?: boolean;
+  dateCreationDe?: string;
+  dateCreationA?: string;
+  dateModificationDe?: string;
+  dateModificationA?: string;
 }
 
 export interface PagedAnswerResponse {
@@ -72,6 +82,12 @@ export class AnswerService {
         searchString: criteria.search_string || '',
         ...(criteria.answerText && { answerText: criteria.answerText }),
         ...(criteria.questionId && { questionId: criteria.questionId }),
+        ...(criteria.answerOrder && { answerOrder: criteria.answerOrder }),
+        ...(criteria.isCorrect !== undefined && { isCorrect: criteria.isCorrect }),
+                ...(criteria.dateCreationDe && { dateCreationDe: criteria.dateCreationDe }),
+        ...(criteria.dateCreationA && { dateCreationA: criteria.dateCreationA }),
+        ...(criteria.dateModificationDe && { dateModificationDe: criteria.dateModificationDe }),
+        ...(criteria.dateModificationA && { dateModificationA: criteria.dateModificationA }),
         ...(criteria.idDe && criteria.idDe.trim() && { idStart: criteria.idDe }),
         ...(criteria.idA && criteria.idA.trim() && { idEnd: criteria.idA })
       }

@@ -57,7 +57,13 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 	@Autowired
 	private ApplicationsRepository applicationsRepository;
 	@Autowired
-	private InterviewCrudRepository interviewCrudRepository;
+	private EntityPermissionRepository entityPermissionRepository;
+	@Autowired
+	private PipelineStageRepository pipelineStageRepository;
+	@Autowired
+	private ApplicationProgressRepository applicationProgressRepository;
+	@Autowired
+	private ApplicationProgressBusiness applicationProgressBusiness;
 	@Autowired
 	private HostingUtils hostingUtils;
 	@Autowired
@@ -130,6 +136,15 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 				}
 			}
 			
+			// Vérifier qu'une étape INTERVIEW existe dans le template de la campagne
+			if (existingCampaigns != null && existingCampaigns.getPipelineTemplate() != null) {
+				PipelineStage interviewStage = pipelineStageRepository.findByTemplateIdAndStageType(
+						existingCampaigns.getPipelineTemplate().getId(), "INTERVIEW");
+				if (interviewStage == null) {
+					log.warning("Aucune étape INTERVIEW dans le template de la campagne " + existingCampaigns.getId());
+				}
+			}
+
 			dto.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(dto)));
 
 			Interviews entityToSave = null;
@@ -239,13 +254,13 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 				}
 				entityToSave.setApplications(existingApplications);
 			}
-			if (Utilities.notBlank(dto.getInterviewLocation())) {
+			if (Utilities.shouldUpdate(dto.getInterviewLocation())) {
 				entityToSave.setInterviewLocation(dto.getInterviewLocation());
 			}
-			if (Utilities.notBlank(dto.getInterviewDate())) {
+			if (Utilities.shouldUpdate(dto.getInterviewDate())) {
 				entityToSave.setInterviewDate(dateFormat.parse(dto.getInterviewDate()));
 			}
-			if (Utilities.notBlank(dto.getInterviewStatus())) {
+			if (Utilities.shouldUpdate(dto.getInterviewStatus())) {
 				String oldStatus = entityToSave.getInterviewStatus();
 				entityToSave.setInterviewStatus(dto.getInterviewStatus());
 				
@@ -257,16 +272,16 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 					entityToSave.setInterviewEvaluationsLink(evaluationLink);
 				}
 			}
-			if (Utilities.notBlank(dto.getMeetLink())) {
+			if (Utilities.shouldUpdate(dto.getMeetLink())) {
 				entityToSave.setMeetLink(dto.getMeetLink());
 			}
-			if (Utilities.notBlank(dto.getInterviewNote())) {
+			if (Utilities.shouldUpdate(dto.getInterviewNote())) {
 				entityToSave.setInterviewNote(dto.getInterviewNote());
 			}
 			if (dto.getInterviewMailSent() != null) {
 				entityToSave.setInterviewMailSent(dto.getInterviewMailSent());
 			}
-			if (Utilities.notBlank(dto.getInterviewType())) {
+			if (Utilities.shouldUpdate(dto.getInterviewType())) {
 				entityToSave.setInterviewType(dto.getInterviewType());
 			}
 			if (dto.getCreatedBy() != null && dto.getCreatedBy() > 0) {
@@ -275,7 +290,7 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 			if (dto.getUpdatedBy() != null && dto.getUpdatedBy() > 0) {
 				entityToSave.setUpdatedBy(dto.getUpdatedBy());
 			}
-			if (Utilities.notBlank(dto.getSearchString())) {
+			if (Utilities.shouldUpdate(dto.getSearchString())) {
 				entityToSave.setSearchString(dto.getSearchString());
 			}
 			// Après toutes les mises à jour conditionnelles...
@@ -361,10 +376,13 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 			if (listOfCandidateInterview != null && !listOfCandidateInterview.isEmpty()){
 				throw new InternalErrorException(functionalError.DATA_NOT_DELETABLE("(" + listOfCandidateInterview.size() + ")", locale));
 			}
-			// interviewCrud
-			List<InterviewCrud> listOfInterviewCrud = interviewCrudRepository.findByInterviewId(existingEntity.getId(), false);
-			if (listOfInterviewCrud != null && !listOfInterviewCrud.isEmpty()){
-				throw new InternalErrorException(functionalError.DATA_NOT_DELETABLE("(" + listOfInterviewCrud.size() + ")", locale));
+			// entityPermission - soft-delete les permissions entité associées
+			List<EntityPermission> listOfEntityPermission = entityPermissionRepository.findByEntityTypeAndEntityId("INTERVIEW", existingEntity.getId());
+			if (listOfEntityPermission != null && !listOfEntityPermission.isEmpty()){
+				for (EntityPermission ep : listOfEntityPermission) {
+					ep.setIsDeleted(true);
+				}
+				entityPermissionRepository.saveAll(listOfEntityPermission);
 			}
 
 
@@ -761,6 +779,39 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 				
 				applicationsRepository.save(application);
 				log.info("Application " + application.getId() + " mise à jour avec succès");
+				
+				// Mettre à jour le progrès pipeline pour l'étape INTERVIEW
+				try {
+					if (application.getSourceToken() != null && application.getSourceToken().getCampaigns() != null) {
+						Campaigns campaign = application.getSourceToken().getCampaigns();
+						if (campaign.getPipelineTemplate() != null) {
+							PipelineStage interviewStage = pipelineStageRepository.findByTemplateIdAndStageType(
+									campaign.getPipelineTemplate().getId(), "INTERVIEW");
+							if (interviewStage != null) {
+								ApplicationProgress progress = applicationProgressRepository
+										.findByApplicationIdAndPipelineStageId(application.getId(), interviewStage.getId());
+								if (progress != null) {
+									// Si evaluationPercentage >= 50% → PASSED, sinon FAILED
+									String stageStatus = (totalPercentage >= 50.0) ? "PASSED" : "FAILED";
+									progress.setProgressStatus(stageStatus);
+									progress.setCompletedAt(new Date());
+									progress.setScore(totalPercentage);
+									progress.setUpdatedAt(new Date());
+									progress.setUpdatedBy(request.getUser());
+									applicationProgressRepository.save(progress);
+									log.info("Pipeline progress INTERVIEW mis à jour à " + stageStatus + " pour application " + application.getId());
+									
+									// Si FAILED et éliminatoire, skip les étapes suivantes
+									if ("FAILED".equals(stageStatus) && interviewStage.getIsEliminatory() != null && interviewStage.getIsEliminatory()) {
+										applicationProgressBusiness.failStage(application.getId(), interviewStage.getId(), request.getUser(), "Entretien échoué", locale);
+									}
+								}
+							}
+						}
+					}
+				} catch (Exception e) {
+					log.warning("Erreur lors de la mise à jour du pipeline pour l'interview: " + e.getMessage());
+				}
 			}
 			
 			// Retourner l'interview mis à jour

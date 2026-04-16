@@ -103,11 +103,11 @@ public class AppConfigBusiness implements IBasicBusiness<Request<AppConfigDto>, 
                 throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("app_config id -> " + dto.getId(), locale));
             }
 
-            if (Utilities.notBlank(dto.getConfigName())) entityToSave.setConfigName(dto.getConfigName());
-            if (Utilities.notBlank(dto.getCompanyName())) entityToSave.setCompanyName(dto.getCompanyName());
+            if (Utilities.shouldUpdate(dto.getConfigName())) entityToSave.setConfigName(dto.getConfigName());
+            if (Utilities.shouldUpdate(dto.getCompanyName())) entityToSave.setCompanyName(dto.getCompanyName());
             if (dto.getLogoHtml() != null) entityToSave.setLogoHtml(dto.getLogoHtml());
-            if (Utilities.notBlank(dto.getPrimaryColor())) entityToSave.setPrimaryColor(dto.getPrimaryColor());
-            if (Utilities.notBlank(dto.getColorScheme())) entityToSave.setColorScheme(dto.getColorScheme());
+            if (Utilities.shouldUpdate(dto.getPrimaryColor())) entityToSave.setPrimaryColor(dto.getPrimaryColor());
+            if (Utilities.shouldUpdate(dto.getColorScheme())) entityToSave.setColorScheme(dto.getColorScheme());
             if (dto.getIsActive() != null) entityToSave.setIsActive(dto.getIsActive());
             if (dto.getIsDeleted() != null) entityToSave.setIsDeleted(dto.getIsDeleted());
 

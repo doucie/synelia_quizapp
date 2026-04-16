@@ -1,0 +1,211 @@
+<div class="pipeline-templates-page">
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-left">
+        <h1 class="page-title">
+          <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
+          </svg>
+          Modèles de pipeline
+        </h1>
+        <p class="page-subtitle">Configurez les étapes de recrutement pour vos campagnes</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-secondary" (click)="loadTemplates()" [disabled]="loading()">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          Actualiser
+        </button>
+        <button class="btn btn-primary" (click)="openCreateModal()">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 4v16m8-8H4"/>
+          </svg>
+          Nouveau modèle
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="filters-bar">
+    <div class="search-box">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"></circle>
+        <path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input type="text" class="search-input" placeholder="Rechercher un modèle..."
+             [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" />
+    </div>
+    <span class="results-count">{{ filteredTemplates().length }} modèle(s)</span>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Chargement des modèles...</p>
+    </div>
+  }
+
+  @if (!loading() && filteredTemplates().length === 0) {
+    <div class="empty-state">
+      <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
+      </svg>
+      <h3>Aucun modèle trouvé</h3>
+      <p>Créez votre premier modèle de pipeline</p>
+      <button class="btn btn-primary" (click)="openCreateModal()">Créer un modèle</button>
+    </div>
+  }
+
+  @if (!loading() && filteredTemplates().length > 0) {
+    <div class="templates-grid">
+      @for (template of filteredTemplates(); track template.id) {
+        <article class="template-card" [class.is-default]="template.isDefault" [class.is-locked]="template.isLocked">
+          <div class="card-header">
+            <div class="card-badges">
+              @if (template.isDefault) {
+                <span class="badge badge-default">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                  Par défaut
+                </span>
+              }
+              @if (template.isLocked) {
+                <span class="badge badge-locked" title="Verrouillé — des candidats utilisent ce pipeline">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                  Verrouillé
+                </span>
+              }
+              @if (!template.isActive) {
+                <span class="badge badge-inactive">Inactif</span>
+              }
+            </div>
+            <div class="card-menu">
+              <button class="btn-icon-action" (click)="openDuplicateModal($event, template)" title="Dupliquer">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              </button>
+              @if (!template.isLocked) {
+                <button class="btn-icon-action btn-icon-danger" (click)="openDeleteConfirm($event, template)" title="Supprimer">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/></svg>
+                </button>
+              }
+            </div>
+          </div>
+
+          <div class="card-body" (click)="!template.isLocked && editTemplate(template)">
+            <h3 class="template-name">{{ template.templateName || 'Sans nom' }}</h3>
+            <p class="template-desc">{{ template.templateDesc || 'Aucune description' }}</p>
+
+            <div class="stages-preview">
+              <span class="stages-count">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+                {{ getStagesCount(template.id) }} étape(s)
+              </span>
+            </div>
+
+            @if (getStages(template.id).length > 0) {
+              <div class="stages-bar">
+                @for (stage of getStages(template.id); track stage.id; let i = $index) {
+                  <div class="stage-dot" [title]="stage.stageLabel || ''" [class.required]="stage.isRequired" [class.eliminatory]="stage.isEliminatory">
+                    <span class="stage-order">{{ i + 1 }}</span>
+                  </div>
+                  @if (i < getStages(template.id).length - 1) {
+                    <div class="stage-connector"></div>
+                  }
+                }
+              </div>
+            }
+          </div>
+
+          <div class="card-footer">
+            <span class="footer-date">Créé le {{ formatDate(template.createdAt) }}</span>
+            <div class="footer-actions">
+              @if (!template.isDefault) {
+                <button class="btn btn-sm btn-outline" (click)="openSetDefaultConfirm($event, template)">Définir par défaut</button>
+              }
+              @if (!template.isLocked) {
+                <button class="btn btn-sm btn-primary" (click)="editTemplate(template)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                  Modifier
+                </button>
+              } @else {
+                <button class="btn btn-sm btn-outline" (click)="openDuplicateModal($event, template)" title="Dupliquez ce modèle pour le modifier">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                  Dupliquer pour modifier
+                </button>
+              }
+            </div>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</div>
+
+<!-- Modale Définir par défaut -->
+<div class="modal-overlay" *ngIf="showDefaultConfirm()" (click)="closeSetDefaultConfirm()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header"><h3>Définir comme modèle par défaut</h3></div>
+    <div class="modal-body">
+      <p>Voulez-vous définir <strong>{{ templateToSetDefault()?.templateName }}</strong> comme modèle par défaut ?</p>
+      <p class="modal-hint">Ce modèle sera utilisé automatiquement pour les nouvelles campagnes.</p>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" (click)="closeSetDefaultConfirm()">Annuler</button>
+      <button class="btn btn-primary" (click)="confirmSetDefault()">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modale Dupliquer -->
+<div class="modal-overlay" *ngIf="showDuplicateModal()" (click)="closeDuplicateModal()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header"><h3>Dupliquer le modèle</h3></div>
+    <div class="modal-body">
+      <p>Dupliquer <strong>{{ templateToDuplicate()?.templateName }}</strong> avec toutes ses étapes.</p>
+      <div class="form-group">
+        <label class="form-label">Nom du nouveau modèle</label>
+        <input type="text" class="form-input" [ngModel]="duplicateName()" (ngModelChange)="duplicateName.set($event)" />
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" (click)="closeDuplicateModal()">Annuler</button>
+      <button class="btn btn-primary" (click)="confirmDuplicate()" [disabled]="!duplicateName().trim()">Dupliquer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modale Créer -->
+<div class="modal-overlay" *ngIf="showCreateModal()" (click)="closeCreateModal()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header"><h3>Nouveau modèle de pipeline</h3></div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Nom du modèle</label>
+        <input type="text" class="form-input" [ngModel]="createName()" (ngModelChange)="createName.set($event)" placeholder="Ex: Flux technique" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description (optionnel)</label>
+        <textarea class="form-input" rows="3" [ngModel]="createDesc()" (ngModelChange)="createDesc.set($event)" placeholder="Description du pipeline..."></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" (click)="closeCreateModal()">Annuler</button>
+      <button class="btn btn-primary" (click)="confirmCreate()" [disabled]="!createName().trim()">Créer et configurer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modale Supprimer -->
+<div class="modal-overlay" *ngIf="showDeleteConfirm()" (click)="closeDeleteConfirm()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header"><h3>Supprimer le modèle</h3></div>
+    <div class="modal-body">
+      <p>Voulez-vous supprimer <strong>{{ templateToDelete()?.templateName }}</strong> ?</p>
+      <p class="modal-hint modal-hint-danger">Cette action est irréversible.</p>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" (click)="closeDeleteConfirm()">Annuler</button>
+      <button class="btn btn-danger" (click)="confirmDelete()">Supprimer</button>
+    </div>
+  </div>
+</div>

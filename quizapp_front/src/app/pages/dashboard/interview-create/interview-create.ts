@@ -7,9 +7,11 @@ import { Interview, InterviewService } from '../../../core/services/interview.se
 import { Application, ApplicationService } from '../../../core/services/application.service';
 import { Campaign, CampaignService } from '../../../core/services/campaign.service';
 import { User, UserService } from '../../../core/services/user.service';
-import { CampaignCrudService } from '../../../core/services/campaign-crud.service';
+import { EntityPermissionService } from '../../../core/services/entity-permission.service';
 import { SourceTokenService, SourceToken } from '../../../services/source-token.service';
-import { InterviewCrud, InterviewCrudService } from '../../../core/services/interview-crud.service';
+import { InterviewParticipantService, InterviewParticipant } from '../../../core/services/interview-participant.service';
+import { EntityPermission } from '../../../core/models/permission.interfaces';
+import { APPLICATION_STATUS } from '../../../core/constants/application-status.constants';
 
 interface InterviewFormData {
   campaignId: number;
@@ -38,7 +40,7 @@ export class InterviewCreateComponent implements OnInit, OnDestroy {
   campaigns = signal<Campaign[]>([]);
   applications = signal<Application[]>([]);
   sourceTokens = signal<SourceToken[]>([]);
-  campaignCrudItems = signal<any[]>([]); // Pour stocker les campaign_crud
+  campaignEntityPerms = signal<EntityPermission[]>([]); // Permissions entity_permission pour la campagne
   evaluators = signal<User[]>([]); // Évaluateurs avec droit d'évaluer
   allUsers = signal<User[]>([]); // Tous les utilisateurs pour la recherche
   searchEvaluatorQuery = signal('');
@@ -70,9 +72,9 @@ export class InterviewCreateComponent implements OnInit, OnDestroy {
     private applicationService: ApplicationService,
     private campaignService: CampaignService,
     private userService: UserService,
-    private campaignCrudService: CampaignCrudService,
+    private entityPermissionService: EntityPermissionService,
     private sourceTokenService: SourceTokenService,
-    private interviewCrudService: InterviewCrudService
+    private interviewParticipantService: InterviewParticipantService
   ) {}
 
   ngOnInit(): void {
@@ -110,7 +112,7 @@ export class InterviewCreateComponent implements OnInit, OnDestroy {
     const eligible = this.applications().filter(app => 
       app.sourceTokenId && 
       sourceTokenIds.includes(app.sourceTokenId) &&
-      app.applicationStatus === 'PRE_SCREEN_ACCEPTED'
+      app.applicationStatus === APPLICATION_STATUS.PRE_SCREEN_ACCEPTED
     );
     
     return eligible;
@@ -289,7 +291,7 @@ L'équipe de recrutement
     forkJoin({
       applications: this.applicationService.getApplicationsByCriteria({}),
       sourceTokens: this.sourceTokenService.getSourceTokensByCriteria({}),
-      evaluators: this.campaignCrudService.getEvaluatorsByCampaignId(campaignId),
+      evaluators: this.entityPermissionService.getForEntity('CAMPAIGN', campaignId),
       allUsers: this.userService.getAllUsersByCriteria({ isDeleted: false })
     }).pipe(takeUntil(this.destroy$)).subscribe({
       next: (response) => {
@@ -308,23 +310,26 @@ L'équipe de recrutement
           this.allUsers.set(response.allUsers.content);
         }
 
-        // Traiter les évaluateurs
+        // Traiter les évaluateurs (entity_permission)
         if (response.evaluators.items) {
-          console.log('📋 Campaign CRUD items reçus:', response.evaluators.items);
-          this.campaignCrudItems.set(response.evaluators.items);
+          console.log('📋 Entity permissions reçus:', response.evaluators.items);
+          this.campaignEntityPerms.set(response.evaluators.items);
           
-          const userIds = response.evaluators.items.map(crud => crud.userId!).filter(id => id);
-          const canEvaluateUserIds = response.evaluators.items
-            .filter(crud => crud.canEvaluate === true)
-            .map(crud => crud.userId!)
-            .filter(id => id);
+          // Extraire les userIds uniques ayant au moins une permission
+          const allPerms = response.evaluators.items.filter((p: EntityPermission) => p.granted);
+          const userIds = [...new Set(allPerms.map((p: EntityPermission) => p.userId!))].filter(id => id);
+          // Évaluateurs = ceux qui ont VIEW_EVALUATIONS
+          const canEvaluateUserIds = [...new Set(
+            allPerms.filter((p: EntityPermission) => p.permissionKey === 'VIEW_EVALUATIONS')
+              .map((p: EntityPermission) => p.userId!)
+          )].filter(id => id);
           
           console.log('👥 UserIds extraits:', userIds);
-          console.log('✅ UserIds avec canEvaluate=true:', canEvaluateUserIds);
+          console.log('✅ UserIds avec VIEW_EVALUATIONS:', canEvaluateUserIds);
           
           this.loadEvaluatorDetails(userIds, canEvaluateUserIds);
         } else {
-          console.warn('⚠️ Aucun évaluateur reçu de l\'API');
+          console.warn('⚠️ Aucune permission d\'entité reçue de l\'API');
         }
 
         this.loading.set(false);
@@ -642,73 +647,74 @@ L'équipe de recrutement
   }
 
   /**
-   * Crée les enregistrements interview_crud pour tous les évaluateurs
+   * Crée les participants d'entretien et copie les permissions d'entité
    */
   createInterviewCruds(interviewIds: number[]): void {
     const form = this.formData();
-    const allInterviewCruds: InterviewCrud[] = [];
+    const allParticipants: InterviewParticipant[] = [];
 
-    // Pour chaque entretien créé
+    // Pour chaque entretien créé, créer un participant pour chaque évaluateur
     interviewIds.forEach(interviewId => {
-      // Pour chaque évaluateur sélectionné
       form.selectedEvaluators.forEach(userId => {
-        // Vérifier si c'est un évaluateur désigné
-        const isDesignatedEvaluator = this.evaluators().some(e => e.id === userId);
-        
-        if (isDesignatedEvaluator) {
-          // Copier les droits de campaign_crud
-          const campaignCrud = this.campaignCrudItems().find(crud => crud.userId === userId);
-          
-          if (campaignCrud) {
-            const interviewCrud: InterviewCrud = {
-              interviewId,
-              userId,
-              isAdmin: false,
-              canEvaluate: campaignCrud.canEvaluate || false,
-              canViewCandidateProfile: campaignCrud.canViewCandidateProfile || false,
-              canViewCandidateResults: campaignCrud.canViewCandidateResults || false,
-              canScheduleInterview: campaignCrud.canScheduleInterview || false,
-              canMarkAttendance: campaignCrud.canMarkAttendance || false,
-              canProvideScore: campaignCrud.canProvideScore || false,
-              canAddComments: campaignCrud.canAddComments || false
-            };
-            allInterviewCruds.push(interviewCrud);
-          }
-        } else {
-          // Pour les autres recruteurs, donner seulement canEvaluate
-          const interviewCrud: InterviewCrud = {
-            interviewId,
-            userId,
-            isAdmin: false,
-            canEvaluate: true,
-            canViewCandidateProfile: false,
-            canViewCandidateResults: false,
-            canScheduleInterview: false,
-            canMarkAttendance: false,
-            canProvideScore: false,
-            canAddComments: false
-          };
-          allInterviewCruds.push(interviewCrud);
-        }
+        allParticipants.push({ interviewId, userId });
       });
     });
 
-    console.log('📋 Interview CRUDs à créer:', allInterviewCruds);
+    console.log('📋 Participants à créer:', allParticipants);
 
-    // Créer tous les interview_crud
-    if (allInterviewCruds.length > 0) {
-      this.interviewCrudService.createMultipleInterviewCruds(allInterviewCruds).subscribe({
+    if (allParticipants.length > 0) {
+      // Créer les participants (session state)
+      this.interviewParticipantService.createParticipants(allParticipants).subscribe({
         next: (response) => {
-          console.log('✅ Interview CRUDs créés:', response);
-          this.loading.set(false);
-          
-          const emailStatus = this.sendEmail() ? 'avec envoi d\'emails' : 'sans envoi d\'emails';
-          alert(`${interviewIds.length} entretien(s) créé(s) avec succès ${emailStatus}!`);
-          this.router.navigate(['/dashboard/interviews']);
+          console.log('✅ Participants créés:', response);
+
+          // Copier les permissions d'entité de la campagne vers chaque interview
+          const campaignPerms = this.campaignEntityPerms().filter(p => p.granted);
+          let permsDone = 0;
+          const totalPerms = interviewIds.length * form.selectedEvaluators.length;
+
+          interviewIds.forEach(interviewId => {
+            form.selectedEvaluators.forEach(userId => {
+              const isDesignatedEvaluator = this.evaluators().some(e => e.id === userId);
+
+              if (isDesignatedEvaluator) {
+                // Copier les permissions de la campagne pour cet utilisateur
+                const userPerms = campaignPerms.filter(p => p.userId === userId);
+                const permKeys = userPerms.map(p => p.permissionKey!).filter(k => k);
+
+                if (permKeys.length > 0) {
+                  this.entityPermissionService.grantBulk([userId], 'INTERVIEW', interviewId, permKeys).subscribe({
+                    next: () => { permsDone++; this.checkPermsDone(permsDone, totalPerms, interviewIds.length); },
+                    error: () => { permsDone++; this.checkPermsDone(permsDone, totalPerms, interviewIds.length); }
+                  });
+                } else {
+                  // Pas de permission campaign → accorder VIEW_EVALUATIONS par défaut
+                  this.entityPermissionService.grant(userId, 'INTERVIEW', interviewId, 'VIEW_EVALUATIONS').subscribe({
+                    next: () => { permsDone++; this.checkPermsDone(permsDone, totalPerms, interviewIds.length); },
+                    error: () => { permsDone++; this.checkPermsDone(permsDone, totalPerms, interviewIds.length); }
+                  });
+                }
+              } else {
+                // Évaluateur supplémentaire → seulement VIEW_EVALUATIONS
+                this.entityPermissionService.grant(userId, 'INTERVIEW', interviewId, 'VIEW_EVALUATIONS').subscribe({
+                  next: () => { permsDone++; this.checkPermsDone(permsDone, totalPerms, interviewIds.length); },
+                  error: () => { permsDone++; this.checkPermsDone(permsDone, totalPerms, interviewIds.length); }
+                });
+              }
+            });
+          });
+
+          // Si pas de permissions à copier, terminer directement
+          if (totalPerms === 0) {
+            this.loading.set(false);
+            const emailStatus = this.sendEmail() ? 'avec envoi d\'emails' : 'sans envoi d\'emails';
+            alert(`${interviewIds.length} entretien(s) créé(s) avec succès ${emailStatus}!`);
+            this.router.navigate(['/dashboard/interviews']);
+          }
         },
         error: (error) => {
-          console.error('❌ Erreur lors de la création des interview CRUDs:', error);
-          alert('Entretiens créés mais erreur lors de l\'attribution des droits aux évaluateurs');
+          console.error('❌ Erreur lors de la création des participants:', error);
+          alert('Entretiens créés mais erreur lors de l\'ajout des participants');
           this.loading.set(false);
           this.router.navigate(['/dashboard/interviews']);
         }
@@ -716,6 +722,18 @@ L'équipe de recrutement
     } else {
       this.loading.set(false);
       alert(`${interviewIds.length} entretien(s) créé(s) avec succès!`);
+      this.router.navigate(['/dashboard/interviews']);
+    }
+  }
+
+  /**
+   * Vérifie si toutes les permissions d'entité ont été copiées
+   */
+  private checkPermsDone(done: number, total: number, interviewCount: number): void {
+    if (done >= total) {
+      this.loading.set(false);
+      const emailStatus = this.sendEmail() ? 'avec envoi d\'emails' : 'sans envoi d\'emails';
+      alert(`${interviewCount} entretien(s) créé(s) avec succès ${emailStatus}!`);
       this.router.navigate(['/dashboard/interviews']);
     }
   }

@@ -15,6 +15,10 @@ export interface Form {
   updatedAt?: string;
   updatedBy?: number;
   isDeleted?: boolean;
+  dateCreationDe?: string;
+  dateCreationA?: string;
+  dateModificationDe?: string;
+  dateModificationA?: string;
 }
 
 export interface FormSearchCriteria {
@@ -27,6 +31,10 @@ export interface FormSearchCriteria {
   campaignId?: number;
   isActive?: boolean;
   isDeleted?: boolean;
+  dateCreationDe?: string;
+  dateCreationA?: string;
+  dateModificationDe?: string;
+  dateModificationA?: string;
 }
 
 export interface PagedFormResponse {
@@ -59,6 +67,10 @@ export class FormService {
         ...(criteria.formName && { formName: criteria.formName }),
         ...(criteria.campaignId && { campaignId: criteria.campaignId }),
         ...(criteria.isActive !== undefined && { isActive: criteria.isActive }),
+                ...(criteria.dateCreationDe && { dateCreationDe: criteria.dateCreationDe }),
+        ...(criteria.dateCreationA && { dateCreationA: criteria.dateCreationA }),
+        ...(criteria.dateModificationDe && { dateModificationDe: criteria.dateModificationDe }),
+        ...(criteria.dateModificationA && { dateModificationA: criteria.dateModificationA }),
         ...(criteria.idDe && criteria.idDe.trim() && { idStart: criteria.idDe }),
         ...(criteria.idA && criteria.idA.trim() && { idEnd: criteria.idA })
       }

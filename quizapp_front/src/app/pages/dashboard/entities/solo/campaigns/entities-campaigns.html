@@ -81,51 +81,39 @@
     </div>
     
     <div class="panel-content">
-      <div class="form-grid">
-        <!-- Ligne 1 : Intervalle d'ID -->
+                  <div class="form-grid">
+        <!-- Intervalle d'ID -->
         <div class="form-row-full">
           <div class="form-group-inline">
             <label>ID de</label>
-            <input 
-              type="text" 
-              class="form-input-inline"
-              [(ngModel)]="advancedCriteria.idDe"
-              placeholder="ID minimum"
-            />
+            <input type="text" class="form-input-inline" [(ngModel)]="advancedCriteria.idDe" placeholder="ID minimum" />
           </div>
           <span class="range-separator">à</span>
           <div class="form-group-inline">
-            <input 
-              type="text" 
-              class="form-input-inline"
-              [(ngModel)]="advancedCriteria.idA"
-              placeholder="ID maximum"
-            />
+            <input type="text" class="form-input-inline" [(ngModel)]="advancedCriteria.idA" placeholder="ID maximum" />
           </div>
         </div>
-        
-        <!-- Ligne 2 : Nom, Description -->
         <div class="form-group">
-          <label>Nom</label>
-          <input
-            type="text"
-            class="form-input"
-            [(ngModel)]="advancedCriteria.campaignName"
-            placeholder="Nom de la campagne"
-          />
+          <label>Nom de la campagne</label>
+          <input type="text" class="form-input" [(ngModel)]="advancedCriteria.campaignName" placeholder="Nom..." />
         </div>
-
         <div class="form-group">
-          <label>Description</label>
-          <input
-            type="text"
-            class="form-input"
-            [(ngModel)]="advancedCriteria.campaignDesc"
-            placeholder="Description de la campagne"
-          />
+          <label>Spécialité</label>
+          <select class="form-select" [(ngModel)]="advancedCriteria.specialitiesId">
+            <option [ngValue]="undefined">-- Tous --</option>
+            @for (item of allSpecialities(); track item.id) {
+              <option [ngValue]="item.id">{{ item.specialityName || '#' + item.id }}</option>
+            }
+          </select>
         </div>
-        
-        <!-- Ligne 3 : Supprimé -->
+        <div class="form-group">
+          <label>Active</label>
+          <select class="form-select" [(ngModel)]="advancedCriteria.isActive">
+            <option [ngValue]="undefined">Tous</option>
+            <option [ngValue]="true">Oui</option>
+            <option [ngValue]="false">Non</option>
+          </select>
+        </div>
         <div class="form-group">
           <label>Supprimé</label>
           <select class="form-select" [(ngModel)]="advancedCriteria.isDeleted">
@@ -134,47 +122,32 @@
             <option [ngValue]="true">Supprimé</option>
           </select>
         </div>
-        
-        <!-- Ligne 5 : Date de création -->
+        <!-- Date de création -->
         <div class="form-row-full">
           <div class="form-group-inline">
             <label>Date de création de</label>
-            <input 
-              type="date" 
-              class="form-input-inline"
-              [(ngModel)]="advancedCriteria.campaignStartDe"
-            />
+            <input type="date" class="form-input-inline" [(ngModel)]="advancedCriteria.dateCreationDe" />
           </div>
           <span class="range-separator">à</span>
           <div class="form-group-inline">
-            <input 
-              type="date" 
-              class="form-input-inline"
-              [(ngModel)]="advancedCriteria.campaignStartA"
-            />
+            <input type="date" class="form-input-inline" [(ngModel)]="advancedCriteria.dateCreationA" />
           </div>
         </div>
-        
-        <!-- Ligne 6 : Date de fin -->
+
+        <!-- Date de modification -->
         <div class="form-row-full">
           <div class="form-group-inline">
-            <label>Date de fin de</label>
-            <input 
-              type="date" 
-              class="form-input-inline"
-              [(ngModel)]="advancedCriteria.campaignEndDe"
-            />
+            <label>Date de modification de</label>
+            <input type="date" class="form-input-inline" [(ngModel)]="advancedCriteria.dateModificationDe" />
           </div>
           <span class="range-separator">à</span>
           <div class="form-group-inline">
-            <input 
-              type="date" 
-              class="form-input-inline"
-              [(ngModel)]="advancedCriteria.campaignEndA"
-            />
+            <input type="date" class="form-input-inline" [(ngModel)]="advancedCriteria.dateModificationA" />
           </div>
         </div>
       </div>
+
+
       
       <div class="panel-actions">
         <button class="btn-secondary-pro" (click)="resetAdvancedSearch()">

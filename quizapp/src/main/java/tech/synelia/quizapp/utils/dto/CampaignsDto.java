@@ -48,8 +48,14 @@ public class CampaignsDto extends _CampaignsDto implements Cloneable{
     private Integer    updatedBy            ;
     private Boolean    isDeleted            ;
     private String     searchString         ;
+    // Champs pour les intervalles de dates (recherche avancee)
+    private String     dateCreationDe       ;
+    private String     dateCreationA        ;
+    private String     dateModificationDe   ;
+    private String     dateModificationA    ;
     private Integer    specialityId         ;
     private Integer    creatorId            ;
+    private Integer    pipelineTemplateId   ;
 
     //----------------------------------------------------------------------
     // ENTITY LINKS FIELD ( RELATIONSHIP )

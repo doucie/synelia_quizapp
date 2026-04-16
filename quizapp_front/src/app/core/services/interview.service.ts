@@ -16,6 +16,7 @@ export interface InterviewSearchCriteria {
   interviewStatus?: string;
   interviewType?: string;
   campaignId?: number;
+  applicationId?: number;
   isDeleted?: boolean;
   dateCreationDe?: string;
   dateCreationA?: string;
@@ -271,6 +272,8 @@ export class InterviewService {
         interviewType: criteria.interviewType || "",
         isDeleted: criteria.isDeleted !== undefined ? criteria.isDeleted.toString() : "",
         searchString: criteria.search_string || "",
+        ...(criteria.campaignId && { campaignId: criteria.campaignId }),
+        ...(criteria.applicationId && { applicationId: criteria.applicationId }),
         
         // Critères de dates
         ...(criteria.dateCreationDe && criteria.dateCreationDe.trim() && { dateCreationDe: criteria.dateCreationDe }),

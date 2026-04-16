@@ -246,6 +246,23 @@
         </div>
       </div>
 
+      <!-- Filtre par étape du pipeline -->
+      @if (availableStagesForFilter().length > 0) {
+        <div class="filter-group">
+          <label class="filter-label">Étape pipeline</label>
+          <div class="filter-select-wrapper">
+            <select class="filter-select" 
+              [value]="selectedStageFilter() ?? ''" 
+              (change)="setStageFilter($any($event.target).value ? +$any($event.target).value : null)">
+              <option value="">Toutes les étapes</option>
+              @for (stage of availableStagesForFilter(); track stage.id) {
+                <option [value]="stage.id">{{ stage.stageLabel }}</option>
+              }
+            </select>
+          </div>
+        </div>
+      }
+
       <div class="view-controls">
         <button 
           class="control-btn" 
@@ -309,42 +326,118 @@
               
               <!-- Progression visuelle du statut -->
               <div class="application-progress">
-                <div class="progress-step" [ngClass]="getStepStatus(app.applicationStatus, 1)">
-                  <div class="step-circle">
-                    <svg *ngIf="getStepStatus(app.applicationStatus, 1) === 'completed' || getStepStatus(app.applicationStatus, 1) === 'active'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                      <polyline points="20 6 9 17 4 12" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
+                @if (getStagesForApp(app).length > 0) {
+                  <!-- Pipeline dynamique -->
+                  @for (stage of getStagesForApp(app); track stage.id; let last = $last) {
+                    <div class="progress-step" [ngClass]="getDynamicStepStatus(app, stage.id!)">
+                      <div class="step-circle">
+                        @if (getDynamicStepStatus(app, stage.id!) === 'completed' || getDynamicStepStatus(app, stage.id!) === 'active') {
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                            <polyline points="20 6 9 17 4 12" stroke-linecap="round" stroke-linejoin="round"/>
+                          </svg>
+                        }
+                        @if (getDynamicStepStatus(app, stage.id!) === 'rejected') {
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                            <line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round" stroke-linejoin="round"/>
+                            <line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round" stroke-linejoin="round"/>
+                          </svg>
+                        }
+                        @if (getDynamicStepStatus(app, stage.id!) === 'skipped') {
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                            <polyline points="13 17 18 12 13 7" stroke-linecap="round" stroke-linejoin="round"/>
+                            <polyline points="6 17 11 12 6 7" stroke-linecap="round" stroke-linejoin="round"/>
+                          </svg>
+                        }
+                      </div>
+                      @if (!last) {
+                        <div class="step-line"></div>
+                      }
+                      <div class="step-tooltip">
+                        <span class="tooltip-label">{{ stage.stageLabel }}</span>
+                        <span class="tooltip-status">{{ getDynamicStepTooltip(app, stage) }}</span>
+                        <!-- Actions par étape -->
+                        @if (canAdvanceStage(app, stage.id!) || canRejectStage(app, stage.id!) || canSkipStage(app, stage)) {
+                          <div class="stage-actions" (click)="$event.stopPropagation()">
+                            @if (canAdvanceStage(app, stage.id!)) {
+                              <button class="stage-action-btn advance" 
+                                [disabled]="isActionLoading(app.id!, stage.id!)"
+                                (click)="advanceStage(app, stage.id!, $event)" 
+                                title="Valider cette étape">
+                                @if (isActionLoading(app.id!, stage.id!)) {
+                                  <span class="btn-spinner"></span>
+                                } @else {
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                    <polyline points="20 6 9 17 4 12"/>
+                                  </svg>
+                                }
+                              </button>
+                            }
+                            @if (canRejectStage(app, stage.id!)) {
+                              <button class="stage-action-btn reject" 
+                                [disabled]="isActionLoading(app.id!, stage.id!)"
+                                (click)="openRejectModal(app, stage.id!, $event)" 
+                                title="Refuser cette étape">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                  <line x1="18" y1="6" x2="6" y2="18"/>
+                                  <line x1="6" y1="6" x2="18" y2="18"/>
+                                </svg>
+                              </button>
+                            }
+                            @if (canSkipStage(app, stage)) {
+                              <button class="stage-action-btn skip" 
+                                [disabled]="isActionLoading(app.id!, stage.id!)"
+                                (click)="skipStage(app, stage, $event)" 
+                                title="Passer cette étape">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                  <polyline points="13 17 18 12 13 7"/>
+                                  <polyline points="6 17 11 12 6 7"/>
+                                </svg>
+                              </button>
+                            }
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+                } @else {
+                  <!-- Fallback: pipeline 3 étapes legacy -->
+                  <div class="progress-step" [ngClass]="getStepStatus(app.applicationStatus, 1)">
+                    <div class="step-circle">
+                      <svg *ngIf="getStepStatus(app.applicationStatus, 1) === 'completed' || getStepStatus(app.applicationStatus, 1) === 'active'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <polyline points="20 6 9 17 4 12" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
+                    <div class="step-line"></div>
+                    <div class="step-tooltip">{{ getStepTooltip(app.applicationStatus, 1) }}</div>
                   </div>
-                  <div class="step-line"></div>
-                  <div class="step-tooltip">{{ getStepTooltip(app.applicationStatus, 1) }}</div>
-                </div>
-                
-                <div class="progress-step" [ngClass]="getStepStatus(app.applicationStatus, 2)">
-                  <div class="step-circle">
-                    <svg *ngIf="getStepStatus(app.applicationStatus, 2) === 'completed' || getStepStatus(app.applicationStatus, 2) === 'active'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                      <polyline points="20 6 9 17 4 12" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    <svg *ngIf="getStepStatus(app.applicationStatus, 2) === 'rejected'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                      <line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round" stroke-linejoin="round"/>
-                      <line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
+                  
+                  <div class="progress-step" [ngClass]="getStepStatus(app.applicationStatus, 2)">
+                    <div class="step-circle">
+                      <svg *ngIf="getStepStatus(app.applicationStatus, 2) === 'completed' || getStepStatus(app.applicationStatus, 2) === 'active'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <polyline points="20 6 9 17 4 12" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                      <svg *ngIf="getStepStatus(app.applicationStatus, 2) === 'rejected'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round" stroke-linejoin="round"/>
+                        <line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
+                    <div class="step-line"></div>
+                    <div class="step-tooltip">{{ getStepTooltip(app.applicationStatus, 2) }}</div>
                   </div>
-                  <div class="step-line"></div>
-                  <div class="step-tooltip">{{ getStepTooltip(app.applicationStatus, 2) }}</div>
-                </div>
-                
-                <div class="progress-step" [ngClass]="getStepStatus(app.applicationStatus, 3)">
-                  <div class="step-circle">
-                    <svg *ngIf="getStepStatus(app.applicationStatus, 3) === 'completed'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                      <polyline points="20 6 9 17 4 12" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    <svg *ngIf="getStepStatus(app.applicationStatus, 3) === 'rejected'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                      <line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round" stroke-linejoin="round"/>
-                      <line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
+                  
+                  <div class="progress-step" [ngClass]="getStepStatus(app.applicationStatus, 3)">
+                    <div class="step-circle">
+                      <svg *ngIf="getStepStatus(app.applicationStatus, 3) === 'completed'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <polyline points="20 6 9 17 4 12" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                      <svg *ngIf="getStepStatus(app.applicationStatus, 3) === 'rejected'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round" stroke-linejoin="round"/>
+                        <line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
+                    <div class="step-tooltip">{{ getStepTooltip(app.applicationStatus, 3) }}</div>
                   </div>
-                  <div class="step-tooltip">{{ getStepTooltip(app.applicationStatus, 3) }}</div>
-                </div>
+                }
               </div>
             </div>
 
@@ -628,6 +721,43 @@
             <line x1="10" y1="14" x2="21" y2="3"/>
           </svg>
           Ouvrir dans un nouvel onglet
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal de refus d'étape -->
+@if (showRejectModal()) {
+  <div class="reject-modal-overlay" (click)="cancelReject()">
+    <div class="reject-modal" (click)="$event.stopPropagation()">
+      <div class="reject-modal-header">
+        <h3 class="reject-modal-title">Refuser cette étape</h3>
+        <button class="reject-modal-close" (click)="cancelReject()" title="Fermer">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="reject-modal-body">
+        <label class="reject-label">Motif du refus (optionnel) :</label>
+        <textarea 
+          class="reject-textarea" 
+          rows="4" 
+          placeholder="Indiquez la raison du refus..."
+          [value]="rejectReason()"
+          (input)="rejectReason.set($any($event.target).value)"
+        ></textarea>
+      </div>
+      <div class="reject-modal-footer">
+        <button class="reject-btn cancel" (click)="cancelReject()">Annuler</button>
+        <button class="reject-btn confirm" (click)="confirmReject()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+          Confirmer le refus
         </button>
       </div>
     </div>

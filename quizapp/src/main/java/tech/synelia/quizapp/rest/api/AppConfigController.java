@@ -40,7 +40,7 @@ public class AppConfigController {
     @Autowired
     private AppConfigBusiness appConfigBusiness;
 
-    @PreAuthorize("hasRole('SUPER')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     @RequestMapping(value="/create", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
     public ResponseEntity<Response<AppConfigDto>> create(@RequestBody Request<AppConfigDto> request) throws Exception {
         log.info("start method /appConfig/create");
@@ -48,7 +48,7 @@ public class AppConfigController {
         return ResponseEntity.ok().body(response);
     }
 
-    @PreAuthorize("hasRole('SUPER')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     @RequestMapping(value="/update", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
     public ResponseEntity<Response<AppConfigDto>> update(@RequestBody Request<AppConfigDto> request) throws Exception {
         log.info("start method /appConfig/update");
@@ -56,7 +56,7 @@ public class AppConfigController {
         return ResponseEntity.ok().body(response);
     }
 
-    @PreAuthorize("hasRole('SUPER')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     @RequestMapping(value="/delete", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
     public ResponseEntity<Response<AppConfigDto>> delete(@RequestBody Request<AppConfigDto> request) throws Exception {
         log.info("start method /appConfig/delete");
@@ -71,7 +71,7 @@ public class AppConfigController {
         return ResponseEntity.ok().body(response);
     }
 
-    @PreAuthorize("hasRole('SUPER')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     @RequestMapping(value="/activate", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
     public ResponseEntity<Response<AppConfigDto>> activate(@RequestBody Request<AppConfigDto> request) throws Exception {
         log.info("start method /appConfig/activate");

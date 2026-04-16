@@ -226,6 +226,33 @@ export class EntitiesComponent implements OnInit {
       iconType: 'svg',
       route: '/dashboard/entities/form-questions',
       color: '#2563EB'
+    },
+    {
+      name: 'pipeline-templates',
+      displayName: 'Templates Pipeline',
+      description: 'Modèles de pipeline de recrutement définissant les étapes',
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>',
+      iconType: 'svg',
+      route: '/dashboard/entities/pipeline-templates',
+      color: '#0EA5E9'
+    },
+    {
+      name: 'pipeline-stages',
+      displayName: 'Étapes Pipeline',
+      description: 'Étapes composant les templates de pipeline de recrutement',
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 14H8v-2h5v2zm3-4H8v-2h8v2zm0-4H8V6h5v4h4v2z"/></svg>',
+      iconType: 'svg',
+      route: '/dashboard/entities/pipeline-stages',
+      color: '#14B8A6'
+    },
+    {
+      name: 'application-progress',
+      displayName: 'Progressions',
+      description: 'Suivi de la progression des candidatures dans le pipeline',
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l4.59-4.58L18 11l-6 6z"/></svg>',
+      iconType: 'svg',
+      route: '/dashboard/entities/application-progress',
+      color: '#A855F7'
     }
   ];
 

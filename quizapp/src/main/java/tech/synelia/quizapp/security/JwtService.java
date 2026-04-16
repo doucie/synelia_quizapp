@@ -32,7 +32,8 @@ public class JwtService {
                 .subject(userId.toString())
                 .claims(Map.of(
                         "email", email,
-                        "role", role
+                        "role", role,
+                        "systemRole", role
                 ))
                 .issuedAt(now)
                 .expiration(expiryDate)
@@ -63,5 +64,10 @@ public class JwtService {
 
     public String extractRole(String token) {
         return extractClaims(token).get("role", String.class);
+    }
+
+    public String extractSystemRole(String token) {
+        String systemRole = extractClaims(token).get("systemRole", String.class);
+        return systemRole != null ? systemRole : extractRole(token);
     }
 }

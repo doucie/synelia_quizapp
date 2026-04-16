@@ -147,7 +147,12 @@ export class EntitiesAnswersComponent implements OnInit, OnDestroy {
     idA: '',
     answerText: '',
     questionId: undefined,
+    isCorrect: undefined,
     isDeleted: undefined,
+    dateCreationDe: '',
+    dateCreationA: '',
+    dateModificationDe: '',
+    dateModificationA: '',
     search_string: ''
   };
 
@@ -533,7 +538,12 @@ export class EntitiesAnswersComponent implements OnInit, OnDestroy {
       idA: '',
       answerText: '',
       questionId: undefined,
+      isCorrect: undefined,
       isDeleted: undefined,
+      dateCreationDe: '',
+      dateCreationA: '',
+      dateModificationDe: '',
+      dateModificationA: '',
       search_string: ''
     };
     this.applyAdvancedSearch();

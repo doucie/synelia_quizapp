@@ -238,6 +238,45 @@
         </div>
       </div>
 
+      <!-- Pipeline du recrutement -->
+      @if (pipelineStages().length > 0) {
+        <div class="pipeline-section">
+          <h2 class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+            Pipeline de recrutement
+            <span class="count-badge">{{ pipelineStages().length }} étapes</span>
+          </h2>
+
+          <div class="pipeline-visual">
+            @for (stage of pipelineStages(); track stage.id; let i = $index; let last = $last) {
+              <div class="pipeline-stage-card" (click)="filterByStage(stage)">
+                <div class="stage-number">{{ i + 1 }}</div>
+                <div class="stage-details">
+                  <span class="stage-label">{{ stage.stageLabel }}</span>
+                  <span class="stage-type">{{ stage.stageType }}</span>
+                </div>
+                <div class="stage-count">
+                  <span class="count-value">{{ stageCandidateCounts()[stage.id!] || 0 }}</span>
+                  <span class="count-label">candidat(s)</span>
+                </div>
+                @if (stage.isEliminatory) {
+                  <span class="stage-tag eliminatory">Éliminatoire</span>
+                }
+              </div>
+              @if (!last) {
+                <div class="pipeline-connector">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"/>
+                  </svg>
+                </div>
+              }
+            }
+          </div>
+        </div>
+      }
+
       <!-- Section des recruteurs -->
       <div class="recruiters-section">
         <h2 class="section-title">
@@ -509,6 +548,57 @@
             </div>
             <p>Aucun token n'a encore été créé pour cette campagne.</p>
             <p class="empty-hint">Créez un token pour générer un lien de candidature unique.</p>
+          </div>
+        }
+      </div>
+
+      <!-- Section des permissions par entité -->
+      <div class="entity-permissions-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            Permissions sur cette campagne
+          </h2>
+        </div>
+
+        @if (entityPermLoading()) {
+          <div class="loading-inline">
+            <div class="spinner-sm"></div>
+            Chargement...
+          </div>
+        } @else if (getUniquePermUsers().length === 0) {
+          <div class="empty-section">
+            <p>Aucun utilisateur avec des permissions spécifiques sur cette campagne.</p>
+          </div>
+        } @else {
+          <div class="entity-perm-table">
+            <div class="perm-table-header">
+              <div class="perm-user-col">Utilisateur</div>
+              @for (pk of campaignPermKeys; track pk.key) {
+                <div class="perm-key-col">{{ pk.label }}</div>
+              }
+            </div>
+            @for (user of getUniquePermUsers(); track user.userId) {
+              <div class="perm-table-row">
+                <div class="perm-user-col">
+                  <span class="perm-user-name">{{ user.userName }}</span>
+                  <span class="perm-user-email">{{ user.userEmail }}</span>
+                </div>
+                @for (pk of campaignPermKeys; track pk.key) {
+                  <div class="perm-key-col">
+                    <label class="perm-toggle" [class.saving]="isEntityPermSaving(user.userId, pk.key)">
+                      <input type="checkbox"
+                             [checked]="hasEntityPerm(user.userId, pk.key)"
+                             (change)="toggleEntityPerm(user.userId, pk.key)"
+                             [disabled]="isEntityPermSaving(user.userId, pk.key)" />
+                      <span class="perm-check-label">{{ pk.label }}</span>
+                    </label>
+                  </div>
+                }
+              </div>
+            }
           </div>
         }
       </div>

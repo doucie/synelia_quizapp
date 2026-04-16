@@ -13,6 +13,10 @@ export interface CandidateToken {
   updatedAt?: string;
   updatedBy?: number;
   isDeleted?: boolean;
+  dateCreationDe?: string;
+  dateCreationA?: string;
+  dateModificationDe?: string;
+  dateModificationA?: string;
 }
 
 export interface CandidateTokenSearchCriteria {
@@ -23,6 +27,10 @@ export interface CandidateTokenSearchCriteria {
   idA?: string;
   applicationId?: number;
   isDeleted?: boolean;
+  dateCreationDe?: string;
+  dateCreationA?: string;
+  dateModificationDe?: string;
+  dateModificationA?: string;
 }
 
 export interface PagedCandidateTokenResponse {
@@ -53,6 +61,10 @@ export class CandidateTokenService {
         isDeleted: criteria.isDeleted !== undefined ? criteria.isDeleted.toString() : '',
         searchString: criteria.search_string || '',
         ...(criteria.applicationId && { applicationId: criteria.applicationId }),
+                ...(criteria.dateCreationDe && { dateCreationDe: criteria.dateCreationDe }),
+        ...(criteria.dateCreationA && { dateCreationA: criteria.dateCreationA }),
+        ...(criteria.dateModificationDe && { dateModificationDe: criteria.dateModificationDe }),
+        ...(criteria.dateModificationA && { dateModificationA: criteria.dateModificationA }),
         ...(criteria.idDe && criteria.idDe.trim() && { idStart: criteria.idDe }),
         ...(criteria.idA && criteria.idA.trim() && { idEnd: criteria.idA })
       }

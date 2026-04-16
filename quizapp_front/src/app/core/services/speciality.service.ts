@@ -7,6 +7,7 @@ import { environment } from '../../../environments/environment';
 export interface Speciality {
   id: number;
   nom?: string;           // Backend utilise name
+  specialityName?: string;
   description?: string;   // Backend utilise description
   departmentId?: number;  // ID du département
   departmentName?: string; // Nom du département

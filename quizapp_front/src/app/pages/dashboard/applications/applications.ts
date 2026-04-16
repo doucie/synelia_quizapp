@@ -9,6 +9,10 @@ import { Application, ApplicationService } from '../../../core/services/applicat
 import { CampaignService, Campaign } from '../../../core/services/campaign.service';
 import { SourceTokenService, SourceToken } from '../../../services/source-token.service';
 import { ClickOutsideDirective } from '../../../directives/click-outside.directive';
+import { PipelineStageService } from '../../../core/services/pipeline-stage.service';
+import { ApplicationProgressService } from '../../../core/services/application-progress.service';
+import { PipelineStage, ApplicationProgress } from '../../../core/models/pipeline.interfaces';
+import { APPLICATION_STATUS, getApplicationStatusLabel, isRejectedStatus } from '../../../core/constants/application-status.constants';
 
 type SortOrder = 'recent' | 'oldest';
 type ViewMode = 'grid' | 'list';
@@ -51,13 +55,19 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   cvPreviewCandidateName = signal<string>('');
   currentCvPath = signal<string>('');
 
+  // Pipeline dynamique
+  campaignStagesMap = signal<Record<number, PipelineStage[]>>({});
+  applicationProgressMap = signal<Record<number, ApplicationProgress[]>>({});
+
   constructor(
     private applicationService: ApplicationService,
     private campaignService: CampaignService,
     private sourceTokenService: SourceTokenService,
     private router: Router,
     private route: ActivatedRoute,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private pipelineStageService: PipelineStageService,
+    private applicationProgressService: ApplicationProgressService
   ) {}
 
   ngOnInit(): void {
@@ -92,6 +102,8 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     const sort = this.sortOrder();
     const showOnlyShared = this.showOnlySharedCampaigns();
     const sharedCampaignIds = this.sharedCampaignIds();
+    const stageFilter = this.selectedStageFilter();
+    const progressMap = this.applicationProgressMap();
     
     // Filtrer par campagne verrouillée (priorité absolue)
     if (lockedCampaignId !== null) {
@@ -127,6 +139,16 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       apps = apps.filter(app => 
         (app.sourceTokenLabel || '').toLowerCase().includes(sourceSearchQuery)
       );
+    }
+
+    // Filtrer par étape du pipeline
+    if (stageFilter !== null) {
+      apps = apps.filter(app => {
+        if (!app.id) return false;
+        const progressList = progressMap[app.id] || [];
+        const progress = progressList.find(p => p.pipelineStageId === stageFilter);
+        return progress && (progress.progressStatus === 'IN_PROGRESS' || progress.progressStatus === 'PENDING');
+      });
     }
     
     // Trier
@@ -201,7 +223,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   totalApplications = computed(() => this.applications().length);
   
   pendingApplications = computed(() => 
-    this.applications().filter(a => a.applicationStatus === 'PENDING' || !a.applicationStatus).length
+    this.applications().filter(a => a.applicationStatus === APPLICATION_STATUS.PENDING || !a.applicationStatus).length
   );
   
   verifiedApplications = computed(() => 
@@ -394,6 +416,22 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     
     console.log(`\n✅ ${enrichedApplications.length} candidatures enrichies et affichées`);
     this.applications.set(enrichedApplications);
+
+    // Charger les pipelines dynamiques pour chaque campagne et candidature
+    const campaignTemplateIds = new Map<number, number>();
+    campaigns.forEach(c => {
+      if (c.id && c.pipelineTemplateId) {
+        campaignTemplateIds.set(c.id, c.pipelineTemplateId);
+      }
+    });
+    enrichedApplications.forEach(app => {
+      if (app.campaignId && campaignTemplateIds.has(app.campaignId)) {
+        this.loadPipelineStagesForCampaign(app.campaignId, campaignTemplateIds.get(app.campaignId)!);
+      }
+      if (app.id) {
+        this.loadProgressForApplication(app.id);
+      }
+    });
   }
 
   /**
@@ -511,7 +549,278 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Obtient le statut d'une étape de progression
+   * Obtient les étapes du pipeline pour une candidature (via sa campagne)
+   */
+  getStagesForApp(app: ApplicationWithCampaign): PipelineStage[] {
+    if (!app.campaignId) return [];
+    return this.campaignStagesMap()[app.campaignId] || [];
+  }
+
+  /**
+   * Obtient le progrès d'une candidature pour une étape donnée
+   */
+  getProgressForStage(appId: number, stageId: number): ApplicationProgress | undefined {
+    const progressList = this.applicationProgressMap()[appId] || [];
+    return progressList.find(p => p.pipelineStageId === stageId);
+  }
+
+  /**
+   * Obtient le statut visuel d'une étape pour une candidature
+   * Utilise le pipeline dynamique si disponible, sinon fallback sur le statut legacy
+   */
+  getDynamicStepStatus(app: ApplicationWithCampaign, stageId: number): string {
+    const progress = this.getProgressForStage(app.id!, stageId);
+    if (!progress) return 'pending';
+    switch (progress.progressStatus) {
+      case 'IN_PROGRESS': return 'active';
+      case 'PASSED': return 'completed';
+      case 'FAILED': return 'rejected';
+      case 'SKIPPED': return 'skipped';
+      case 'PENDING':
+      default: return 'pending';
+    }
+  }
+
+  /**
+   * Obtient le tooltip pour une étape dynamique
+   */
+  getDynamicStepTooltip(app: ApplicationWithCampaign, stage: PipelineStage): string {
+    const progress = this.getProgressForStage(app.id!, stage.id!);
+    if (!progress || progress.progressStatus === 'PENDING') return `${stage.stageLabel} : en attente`;
+    switch (progress.progressStatus) {
+      case 'IN_PROGRESS': return `${stage.stageLabel} : en cours`;
+      case 'PASSED': return `${stage.stageLabel} : validé`;
+      case 'FAILED': return `${stage.stageLabel} : refusé`;
+      case 'SKIPPED': return `${stage.stageLabel} : ignoré`;
+      default: return `${stage.stageLabel}`;
+    }
+  }
+
+  // Signals pour actions pipeline
+  actionLoading = signal<Record<string, boolean>>({});
+  showRejectModal = signal(false);
+  rejectModalAppId = signal<number | null>(null);
+  rejectModalStageId = signal<number | null>(null);
+  rejectReason = signal('');
+
+  // Signal pour filtre par étape
+  selectedStageFilter = signal<number | null>(null);
+
+  /**
+   * Computed - Étapes disponibles pour le filtre (union de toutes les campagnes)
+   */
+  availableStagesForFilter = computed(() => {
+    const stagesMap = this.campaignStagesMap();
+    const allStages = new Map<number, PipelineStage>();
+    Object.values(stagesMap).forEach(stages => {
+      stages.forEach(stage => {
+        if (stage.id && !allStages.has(stage.id)) {
+          allStages.set(stage.id, stage);
+        }
+      });
+    });
+    return Array.from(allStages.values()).sort((a, b) => (a.stageOrder || 0) - (b.stageOrder || 0));
+  });
+
+  /**
+   * Vérifie si une action est en cours sur app+stage
+   */
+  isActionLoading(appId: number, stageId: number): boolean {
+    return this.actionLoading()[`${appId}-${stageId}`] || false;
+  }
+
+  /**
+   * Peut-on valider cette étape pour ce candidat ?
+   * Seulement si le statut est IN_PROGRESS ou PENDING
+   */
+  canAdvanceStage(app: ApplicationWithCampaign, stageId: number): boolean {
+    const status = this.getDynamicStepStatus(app, stageId);
+    return status === 'active' || status === 'pending';
+  }
+
+  /**
+   * Peut-on refuser cette étape pour ce candidat ?
+   * Seulement si le statut est IN_PROGRESS ou PENDING
+   */
+  canRejectStage(app: ApplicationWithCampaign, stageId: number): boolean {
+    const status = this.getDynamicStepStatus(app, stageId);
+    return status === 'active' || status === 'pending';
+  }
+
+  /**
+   * Peut-on passer cette étape ? Seulement si non requise et status pending/active
+   */
+  canSkipStage(app: ApplicationWithCampaign, stage: PipelineStage): boolean {
+    if (stage.isRequired) return false;
+    const status = this.getDynamicStepStatus(app, stage.id!);
+    return status === 'active' || status === 'pending';
+  }
+
+  /**
+   * Valide l'étape courante du candidat (advance)
+   */
+  advanceStage(app: ApplicationWithCampaign, stageId: number, event: Event): void {
+    event.stopPropagation();
+    if (!app.id || this.isActionLoading(app.id, stageId)) return;
+
+    const key = `${app.id}-${stageId}`;
+    this.actionLoading.set({ ...this.actionLoading(), [key]: true });
+
+    this.applicationProgressService.advance(app.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res) => {
+          if (!res.hasError) {
+            this.refreshProgressForApplication(app.id!);
+          }
+          this.actionLoading.set({ ...this.actionLoading(), [key]: false });
+        },
+        error: () => {
+          this.actionLoading.set({ ...this.actionLoading(), [key]: false });
+        }
+      });
+  }
+
+  /**
+   * Ouvre la modale de refus
+   */
+  openRejectModal(app: ApplicationWithCampaign, stageId: number, event: Event): void {
+    event.stopPropagation();
+    this.rejectModalAppId.set(app.id!);
+    this.rejectModalStageId.set(stageId);
+    this.rejectReason.set('');
+    this.showRejectModal.set(true);
+  }
+
+  /**
+   * Confirme le refus
+   */
+  confirmReject(): void {
+    const appId = this.rejectModalAppId();
+    const stageId = this.rejectModalStageId();
+    if (!appId || !stageId) return;
+
+    const key = `${appId}-${stageId}`;
+    this.actionLoading.set({ ...this.actionLoading(), [key]: true });
+    this.showRejectModal.set(false);
+
+    this.applicationProgressService.fail(appId, stageId, this.rejectReason() || undefined)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res) => {
+          if (!res.hasError) {
+            this.refreshProgressForApplication(appId);
+          }
+          this.actionLoading.set({ ...this.actionLoading(), [key]: false });
+        },
+        error: () => {
+          this.actionLoading.set({ ...this.actionLoading(), [key]: false });
+        }
+      });
+  }
+
+  /**
+   * Annule la modale de refus
+   */
+  cancelReject(): void {
+    this.showRejectModal.set(false);
+    this.rejectModalAppId.set(null);
+    this.rejectModalStageId.set(null);
+    this.rejectReason.set('');
+  }
+
+  /**
+   * Passe (skip) une étape non requise
+   */
+  skipStage(app: ApplicationWithCampaign, stage: PipelineStage, event: Event): void {
+    event.stopPropagation();
+    if (!app.id || !stage.id || this.isActionLoading(app.id, stage.id)) return;
+
+    const key = `${app.id}-${stage.id}`;
+    this.actionLoading.set({ ...this.actionLoading(), [key]: true });
+
+    this.applicationProgressService.skip(app.id, stage.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res) => {
+          if (!res.hasError) {
+            this.refreshProgressForApplication(app.id!);
+          }
+          this.actionLoading.set({ ...this.actionLoading(), [key]: false });
+        },
+        error: () => {
+          this.actionLoading.set({ ...this.actionLoading(), [key]: false });
+        }
+      });
+  }
+
+  /**
+   * Recharge le progrès d'une candidature (après action)
+   */
+  refreshProgressForApplication(applicationId: number): void {
+    this.applicationProgressService.getAllByCriteria({
+      applicationId,
+      isDeleted: false,
+      size: 100
+    }).pipe(takeUntil(this.destroy$))
+    .subscribe({
+      next: (response) => {
+        this.applicationProgressMap.set({
+          ...this.applicationProgressMap(),
+          [applicationId]: response.content || []
+        });
+      }
+    });
+  }
+
+  /**
+   * Sélectionne un filtre par étape
+   */
+  setStageFilter(stageId: number | null): void {
+    this.selectedStageFilter.set(stageId);
+  }
+
+  /**
+   * Charge les étapes du pipeline pour une campagne donnée
+   */
+  loadPipelineStagesForCampaign(campaignId: number, templateId: number): void {
+    const currentMap = this.campaignStagesMap();
+    if (currentMap[campaignId]) return; // Déjà chargé
+
+    this.pipelineStageService.getByTemplate(templateId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          const stages = (response.items || []).sort((a, b) => (a.stageOrder || 0) - (b.stageOrder || 0));
+          this.campaignStagesMap.set({ ...this.campaignStagesMap(), [campaignId]: stages });
+        }
+      });
+  }
+
+  /**
+   * Charge le progrès pour une candidature
+   */
+  loadProgressForApplication(applicationId: number): void {
+    const currentMap = this.applicationProgressMap();
+    if (currentMap[applicationId]) return; // Déjà chargé
+
+    this.applicationProgressService.getAllByCriteria({
+      applicationId,
+      isDeleted: false,
+      size: 100
+    }).pipe(takeUntil(this.destroy$))
+    .subscribe({
+      next: (response) => {
+        this.applicationProgressMap.set({
+          ...this.applicationProgressMap(),
+          [applicationId]: response.content || []
+        });
+      }
+    });
+  }
+
+  /**
+   * Obtient le statut d'une étape de progression (legacy/fallback)
    * @param applicationStatus Le statut de la candidature
    * @param step Numéro de l'étape (1: Candidature, 2: Pré-sélection, 3: Final)
    * @returns 'pending' | 'active' | 'completed' | 'rejected' | 'archived'
@@ -521,18 +830,17 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     
     // Étape 1: Candidature (PENDING → SUBMITTED)
     if (step === 1) {
-      if (status === 'PENDING') return 'active';
-      if (status === 'PENDING_ARCHIVED') return 'archived';
-      // Si on est au-delà de PENDING, c'est completed
+      if (status === APPLICATION_STATUS.PENDING) return 'active';
+      if (status === APPLICATION_STATUS.PENDING_ARCHIVED) return 'archived';
       return 'completed';
     }
     
     // Étape 2: Pré-sélection (PRE_SCREEN)
     if (step === 2) {
-      if (status === 'PENDING' || status === 'PENDING_ARCHIVED') return 'pending';
-      if (status === 'SUBMITTED') return 'active';
+      if (status === APPLICATION_STATUS.PENDING || status === APPLICATION_STATUS.PENDING_ARCHIVED) return 'pending';
+      if (status === APPLICATION_STATUS.SUBMITTED) return 'active';
       if (status.startsWith('PRE_SCREEN_REJECTED')) return 'rejected';
-      if (status === 'PRE_SCREEN_ACCEPTED' || status.startsWith('FINAL_')) return 'completed';
+      if (status === APPLICATION_STATUS.PRE_SCREEN_ACCEPTED || status.startsWith('FINAL_')) return 'completed';
       return 'pending';
     }
     
@@ -558,33 +866,33 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     
     // Étape 1: Candidature
     if (step === 1) {
-      if (status === 'PENDING') return 'Candidature en attente d\'envoi';
-      if (status === 'PENDING_ARCHIVED') return 'Candidature archivée (non envoyée)';
+      if (status === APPLICATION_STATUS.PENDING) return 'Candidature en attente d\'envoi';
+      if (status === APPLICATION_STATUS.PENDING_ARCHIVED) return 'Candidature archivée (non envoyée)';
       return 'Candidature envoyée';
     }
     
     // Étape 2: Pré-sélection
     if (step === 2) {
-      if (status === 'PENDING' || status === 'PENDING_ARCHIVED') 
+      if (status === APPLICATION_STATUS.PENDING || status === APPLICATION_STATUS.PENDING_ARCHIVED) 
         return 'Pré-sélection : en attente d\'envoi de candidature';
-      if (status === 'SUBMITTED') return 'Pré-sélection en cours';
-      if (status === 'PRE_SCREEN_ACCEPTED') return 'Pré-sélection acceptée';
-      if (status === 'PRE_SCREEN_REJECTED') return 'Pré-sélection refusée';
-      if (status === 'PRE_SCREEN_REJECTED_ARCHIVED') return 'Pré-sélection refusée (archivé)';
+      if (status === APPLICATION_STATUS.SUBMITTED) return 'Pré-sélection en cours';
+      if (status === APPLICATION_STATUS.PRE_SCREEN_ACCEPTED) return 'Pré-sélection acceptée';
+      if (status === APPLICATION_STATUS.PRE_SCREEN_REJECTED) return 'Pré-sélection refusée';
+      if (status === APPLICATION_STATUS.PRE_SCREEN_REJECTED_ARCHIVED) return 'Pré-sélection refusée (archivé)';
       if (status.startsWith('FINAL_ACCEPTED')) return 'Pré-sélection acceptée';
       return 'Pré-sélection en attente';
     }
     
     // Étape 3: Final
     if (step === 3) {
-      if (status === 'PENDING' || status === 'PENDING_ARCHIVED' || status === 'SUBMITTED' || 
+      if (status === APPLICATION_STATUS.PENDING || status === APPLICATION_STATUS.PENDING_ARCHIVED || status === APPLICATION_STATUS.SUBMITTED || 
           status.startsWith('PRE_SCREEN_REJECTED')) 
         return 'Décision finale : en attente de pré-sélection';
-      if (status === 'PRE_SCREEN_ACCEPTED') return 'Décision finale en attente';
-      if (status === 'FINAL_ACCEPTED') return 'Candidature acceptée ✓';
-      if (status === 'FINAL_ACCEPTED_ARCHIVED') return 'Candidature acceptée (archivé)';
-      if (status === 'FINAL_REJECTED') return 'Candidature refusée';
-      if (status === 'FINAL_REJECTED_ARCHIVED') return 'Candidature refusée (archivé)';
+      if (status === APPLICATION_STATUS.PRE_SCREEN_ACCEPTED) return 'Décision finale en attente';
+      if (status === APPLICATION_STATUS.FINAL_ACCEPTED) return 'Candidature acceptée ✓';
+      if (status === APPLICATION_STATUS.FINAL_ACCEPTED_ARCHIVED) return 'Candidature acceptée (archivé)';
+      if (status === APPLICATION_STATUS.FINAL_REJECTED) return 'Candidature refusée';
+      if (status === APPLICATION_STATUS.FINAL_REJECTED_ARCHIVED) return 'Candidature refusée (archivé)';
       return 'Décision finale en attente';
     }
     
@@ -668,8 +976,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     // Peut planifier un entretien si :
     // - pré-sélection acceptée (PRE_SCREEN_ACCEPTED)
     // - Pas d'entretien déjà planifié
-    const validStatuses = ['PRE_SCREEN_ACCEPTED'];
-    return validStatuses.includes(app.applicationStatus || '') && !app.interviewDate;
+    return app.applicationStatus === APPLICATION_STATUS.PRE_SCREEN_ACCEPTED && !app.interviewDate;
   }
 
   /**

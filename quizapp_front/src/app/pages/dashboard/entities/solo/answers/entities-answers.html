@@ -81,51 +81,43 @@
     </div>
     
     <div class="panel-content">
-      <div class="form-grid">
-        <!-- Ligne 1 : Intervalle d'ID -->
+                  <div class="form-grid">
+        <!-- Intervalle d'ID -->
         <div class="form-row-full">
           <div class="form-group-inline">
             <label>ID de</label>
-            <input 
-              type="text" 
-              class="form-input-inline"
-              [(ngModel)]="advancedCriteria.idDe"
-              placeholder="ID minimum"
-            />
+            <input type="text" class="form-input-inline" [(ngModel)]="advancedCriteria.idDe" placeholder="ID minimum" />
           </div>
           <span class="range-separator">à</span>
           <div class="form-group-inline">
-            <input 
-              type="text" 
-              class="form-input-inline"
-              [(ngModel)]="advancedCriteria.idA"
-              placeholder="ID maximum"
-            />
+            <input type="text" class="form-input-inline" [(ngModel)]="advancedCriteria.idA" placeholder="ID maximum" />
           </div>
         </div>
-        
-        <!-- Ligne 2 : Texte réponse -->
         <div class="form-group">
           <label>Texte de la réponse</label>
-          <input 
-            type="text" 
-            class="form-input"
-            [(ngModel)]="advancedCriteria.answerText"
-            placeholder="Contenu de la réponse"
-          />
+          <input type="text" class="form-input" [(ngModel)]="advancedCriteria.answerText" placeholder="Texte..." />
         </div>
-        
-        <!-- Ligne 3 : Question ID, Supprimé -->
         <div class="form-group">
-          <label>ID Question</label>
-          <input 
-            type="number" 
-            class="form-input"
-            [(ngModel)]="advancedCriteria.questionId"
-            placeholder="ID de la question liée"
-          />
+          <label>Ordre</label>
+          <input type="number" class="form-input" [(ngModel)]="advancedCriteria.answerOrder" placeholder="Ordre" />
         </div>
-        
+        <div class="form-group">
+          <label>Correcte</label>
+          <select class="form-select" [(ngModel)]="advancedCriteria.isCorrect">
+            <option [ngValue]="undefined">Tous</option>
+            <option [ngValue]="true">Oui</option>
+            <option [ngValue]="false">Non</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Question</label>
+          <select class="form-select" [(ngModel)]="advancedCriteria.questionId">
+            <option [ngValue]="undefined">-- Tous --</option>
+            @for (item of allQuestions(); track item.id) {
+              <option [ngValue]="item.id">{{ item.questionText || '#' + item.id }}</option>
+            }
+          </select>
+        </div>
         <div class="form-group">
           <label>Supprimé</label>
           <select class="form-select" [(ngModel)]="advancedCriteria.isDeleted">
@@ -134,7 +126,32 @@
             <option [ngValue]="true">Supprimé</option>
           </select>
         </div>
+        <!-- Date de création -->
+        <div class="form-row-full">
+          <div class="form-group-inline">
+            <label>Date de création de</label>
+            <input type="date" class="form-input-inline" [(ngModel)]="advancedCriteria.dateCreationDe" />
+          </div>
+          <span class="range-separator">à</span>
+          <div class="form-group-inline">
+            <input type="date" class="form-input-inline" [(ngModel)]="advancedCriteria.dateCreationA" />
+          </div>
+        </div>
+
+        <!-- Date de modification -->
+        <div class="form-row-full">
+          <div class="form-group-inline">
+            <label>Date de modification de</label>
+            <input type="date" class="form-input-inline" [(ngModel)]="advancedCriteria.dateModificationDe" />
+          </div>
+          <span class="range-separator">à</span>
+          <div class="form-group-inline">
+            <input type="date" class="form-input-inline" [(ngModel)]="advancedCriteria.dateModificationA" />
+          </div>
+        </div>
       </div>
+
+
       
       <div class="panel-actions">
         <button class="btn-secondary-pro" (click)="resetAdvancedSearch()">

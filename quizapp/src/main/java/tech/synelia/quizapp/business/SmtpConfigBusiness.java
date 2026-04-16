@@ -101,18 +101,18 @@ public class SmtpConfigBusiness implements IBasicBusiness<Request<SmtpConfigDto>
                 throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("smtp_config id -> " + dto.getId(), locale));
             }
 
-            if (Utilities.notBlank(dto.getHost())) entityToSave.setHost(dto.getHost());
+            if (Utilities.shouldUpdate(dto.getHost())) entityToSave.setHost(dto.getHost());
             if (dto.getPort() != null) entityToSave.setPort(dto.getPort());
-            if (Utilities.notBlank(dto.getUsername())) entityToSave.setUsername(dto.getUsername());
-            if (Utilities.notBlank(dto.getPasswordEncrypted())) entityToSave.setPasswordEncrypted(dto.getPasswordEncrypted());
+            if (Utilities.shouldUpdate(dto.getUsername())) entityToSave.setUsername(dto.getUsername());
+            if (Utilities.shouldUpdate(dto.getPasswordEncrypted())) entityToSave.setPasswordEncrypted(dto.getPasswordEncrypted());
             if (dto.getSmtpAuth() != null) entityToSave.setSmtpAuth(dto.getSmtpAuth());
             if (dto.getStarttlsEnable() != null) entityToSave.setStarttlsEnable(dto.getStarttlsEnable());
             if (dto.getStarttlsRequired() != null) entityToSave.setStarttlsRequired(dto.getStarttlsRequired());
             if (dto.getConnectionTimeout() != null) entityToSave.setConnectionTimeout(dto.getConnectionTimeout());
             if (dto.getTimeout() != null) entityToSave.setTimeout(dto.getTimeout());
             if (dto.getWriteTimeout() != null) entityToSave.setWriteTimeout(dto.getWriteTimeout());
-            if (Utilities.notBlank(dto.getSenderName())) entityToSave.setSenderName(dto.getSenderName());
-            if (Utilities.notBlank(dto.getSenderEmail())) entityToSave.setSenderEmail(dto.getSenderEmail());
+            if (Utilities.shouldUpdate(dto.getSenderName())) entityToSave.setSenderName(dto.getSenderName());
+            if (Utilities.shouldUpdate(dto.getSenderEmail())) entityToSave.setSenderEmail(dto.getSenderEmail());
             if (dto.getIsActive() != null) entityToSave.setIsActive(dto.getIsActive());
             if (dto.getIsDeleted() != null) entityToSave.setIsDeleted(dto.getIsDeleted());
 

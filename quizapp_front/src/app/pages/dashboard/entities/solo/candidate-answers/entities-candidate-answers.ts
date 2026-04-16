@@ -9,6 +9,7 @@ import { DependencyPopupComponent } from '../../../../../shared/dependency-popup
 import { CandidateAnswersService, CandidateAnswer, PagedCandidateAnswerResponse, CandidateAnswerSearchCriteria } from '../../../../../core/services/candidate-answers.service';
 import { ApplicationService, Application } from '../../../../../core/services/application.service';
 import { AnswerService, Answer } from '../../../../../core/services/answer.service';
+import { QuestionService, Question } from '../../../../../core/services/question.service';
 
 @Component({
   selector: 'app-entities-candidate-answers',
@@ -21,6 +22,7 @@ export class EntitiesCandidateAnswersComponent extends EntityCrudBase<CandidateA
   private service = inject(CandidateAnswersService);
   private applicationService = inject(ApplicationService);
   private answerService = inject(AnswerService);
+  private questionService = inject(QuestionService);
   protected override readonly router = inject(Router);
   protected override readonly pageSizeStorageKey = 'entitiesCandidateAnswersPageSize';
   protected override readonly entityName = 'réponses candidat';
@@ -28,6 +30,7 @@ export class EntitiesCandidateAnswersComponent extends EntityCrudBase<CandidateA
 
   allApplications = signal<Application[]>([]);
   allAnswers = signal<Answer[]>([]);
+  allQuestions = signal<Question[]>([]);
 
   advancedCriteria: CandidateAnswerSearchCriteria = {};
   editFormData: CandidateAnswer = {};
@@ -45,5 +48,6 @@ export class EntitiesCandidateAnswersComponent extends EntityCrudBase<CandidateA
     super.ngOnInit();
     this.applicationService.getAllApplicationsByCriteria({ page: 0, size: 9999, isDeleted: false }).subscribe({ next: (res) => this.allApplications.set(res.content) });
     this.answerService.getAllByCriteria({ page: 0, size: 9999, isDeleted: false }).subscribe({ next: (res) => this.allAnswers.set(res.content) });
+    this.questionService.getAllByCriteria({ page: 0, size: 9999, isDeleted: false }).subscribe({ next: (res) => this.allQuestions.set(res.content) });
   }
 }

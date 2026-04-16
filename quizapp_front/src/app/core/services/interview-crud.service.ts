@@ -24,6 +24,10 @@ export interface InterviewCrud {
   updatedAt?: string;
   updatedBy?: number;
   isDeleted?: boolean;
+  dateCreationDe?: string;
+  dateCreationA?: string;
+  dateModificationDe?: string;
+  dateModificationA?: string;
 }
 
 export interface InterviewCrudResponse {
@@ -46,6 +50,10 @@ export interface InterviewCrudSearchCriteria {
   userId?: number;
   interviewId?: number;
   isDeleted?: boolean;
+  dateCreationDe?: string;
+  dateCreationA?: string;
+  dateModificationDe?: string;
+  dateModificationA?: string;
 }
 
 export interface PagedInterviewCrudResponse {
@@ -65,25 +73,25 @@ export class InterviewCrudService {
   constructor(private http: HttpClient) {}
 
   /**
-   * Crée un enregistrement interview_crud
+   * CrÃ©e un enregistrement interview_crud
    */
   createInterviewCrud(interviewCrud: InterviewCrud): Observable<any> {
     return this.http.post(`${this.apiUrl}`, interviewCrud);
   }
 
   /**
-   * Crée plusieurs enregistrements interview_crud
+   * CrÃ©e plusieurs enregistrements interview_crud
    */
   createMultipleInterviewCruds(interviewCruds: InterviewCrud[]): Observable<any> {
     const request = {
-      user: 1, // User ID - à remplacer par le vrai user connecté
+      user: 1, // User ID - Ã  remplacer par le vrai user connectÃ©
       datas: interviewCruds
     };
     return this.http.post(`${this.apiUrl}/create`, request);
   }
 
   /**
-   * Récupère les interview_cruds par interview ID via getByCriteria
+   * RÃ©cupÃ¨re les interview_cruds par interview ID via getByCriteria
    */
   getInterviewCrudsByInterviewId(interviewId: number): Observable<InterviewCrudResponse> {
     const request = {
@@ -96,7 +104,7 @@ export class InterviewCrudService {
   }
 
   /**
-   * Récupère les évaluateurs (canEvaluate = true) pour un interview
+   * RÃ©cupÃ¨re les Ã©valuateurs (canEvaluate = true) pour un interview
    */
   getEvaluatorsByInterviewId(interviewId: number): Observable<InterviewCrudResponse> {
     const request = {
@@ -108,16 +116,16 @@ export class InterviewCrudService {
     };
     return this.http.post<InterviewCrudResponse>(`${this.apiUrl}/getByCriteria`, request).pipe(
       tap(response => {
-        console.log('🔍 [InterviewCrud] getByCriteria - ALL items:', response.items);
+        console.log('ðŸ” [InterviewCrud] getByCriteria - ALL items:', response.items);
         response.items?.forEach((item, i) => {
-          console.log(`🔍 [InterviewCrud] item[${i}] userId=${item.userId}, hasFinished=${item.hasFinished}, type=${typeof item.hasFinished}`);
+          console.log(`ðŸ” [InterviewCrud] item[${i}] userId=${item.userId}, hasFinished=${item.hasFinished}, type=${typeof item.hasFinished}`);
         });
       })
     );
   }
 
   /**
-   * Récupère les interview_cruds par user ID via getByCriteria
+   * RÃ©cupÃ¨re les interview_cruds par user ID via getByCriteria
    */
   getInterviewCrudsByUserId(userId: number): Observable<InterviewCrudResponse> {
     const request = {
@@ -130,14 +138,14 @@ export class InterviewCrudService {
   }
 
   /**
-   * Met à jour un interview_crud
+   * Met Ã  jour un interview_crud
    */
   updateInterviewCrud(id: number, interviewCrud: Partial<InterviewCrud>): Observable<any> {
     return this.http.put(`${this.apiUrl}/${id}`, interviewCrud);
   }
 
   /**
-   * Met à jour le statut de présence (ping)
+   * Met Ã  jour le statut de prÃ©sence (ping)
    */
   updatePresence(interviewId: number, userId: number, isOnline: boolean): Observable<any> {
     const request = {
@@ -153,7 +161,7 @@ export class InterviewCrudService {
   }
 
   /**
-   * Met à jour le statut de présence et "terminé" par ID de l'interview_crud
+   * Met Ã  jour le statut de prÃ©sence et "terminÃ©" par ID de l'interview_crud
    */
   updateInterviewCrudStatus(interviewCrudId: number, isOnline: boolean, hasFinished: boolean): Observable<any> {
     // Formater la date au format dd/MM/yyyy HH:mm:ss attendu par le backend
@@ -179,7 +187,7 @@ export class InterviewCrudService {
   }
 
   /**
-   * Met à jour uniquement le statut de présence (ping) sans toucher à hasFinished
+   * Met Ã  jour uniquement le statut de prÃ©sence (ping) sans toucher Ã  hasFinished
    */
   sendPresencePing(interviewCrudId: number): Observable<any> {
     const now = new Date();
@@ -203,7 +211,7 @@ export class InterviewCrudService {
   }
 
   /**
-   * Marque l'utilisateur comme hors ligne sans toucher à hasFinished
+   * Marque l'utilisateur comme hors ligne sans toucher Ã  hasFinished
    */
   markOffline(interviewCrudId: number): Observable<any> {
     const request = {
@@ -217,7 +225,7 @@ export class InterviewCrudService {
   }
 
   /**
-   * Met à jour uniquement hasFinished
+   * Met Ã  jour uniquement hasFinished
    */
   updateHasFinished(interviewCrudId: number, hasFinished: boolean): Observable<any> {
     const request = {
@@ -251,6 +259,10 @@ export class InterviewCrudService {
         searchString: criteria.search_string || '',
         ...(criteria.userId && { userId: criteria.userId }),
         ...(criteria.interviewId && { interviewId: criteria.interviewId }),
+                ...(criteria.dateCreationDe && { dateCreationDe: criteria.dateCreationDe }),
+        ...(criteria.dateCreationA && { dateCreationA: criteria.dateCreationA }),
+        ...(criteria.dateModificationDe && { dateModificationDe: criteria.dateModificationDe }),
+        ...(criteria.dateModificationA && { dateModificationA: criteria.dateModificationA }),
         ...(criteria.idDe && criteria.idDe.trim() && { idStart: criteria.idDe }),
         ...(criteria.idA && criteria.idA.trim() && { idEnd: criteria.idA })
       }

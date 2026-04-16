@@ -195,7 +195,8 @@
             "campaignDuration": 3600,
             "isActive": true,
             "departmentsId": 1,
-            "specialitiesId": 1
+            "specialitiesId": 1,
+            "pipelineTemplateId": 1
         }
     ]
 }
@@ -507,16 +508,398 @@
 7. **questionsanswers** - Association question-réponse
 8. **campaigns** - Campagnes de recrutement
 9. **campaignquestions** - Questions par campagne
-10. **campaigncrud** - Permissions sur campagnes
+10. **campaigncrud** - Permissions sur campagnes *(legacy)*
 11. **sourcetoken** - Tokens de source
 12. **candidatetoken** - Tokens candidats
 13. **candidateask** - Demandes candidats
 14. **candidateanswers** - Réponses des candidats
 15. **interviews** - Entretiens
-16. **interviewcrud** - Permissions entretiens
+16. **interviewcrud** - Permissions entretiens *(legacy)*
 17. **candidateinterview** - Planning entretiens
 18. **evaluations** - Évaluations
 19. **notifications** - Notifications
+20. **pipelineTemplate** - Modèles de pipeline
+21. **pipelineStage** - Étapes de pipeline
+22. **applicationProgress** - Progrès candidat dans le pipeline
+23. **businessGroup** - Groupes métier (rôles/permissions)
+24. **entityPermission** - Permissions sur entités (campagnes, entretiens)
+
+---
+
+## 20. Pipeline Templates (Modèles de pipeline)
+
+### ➕ Créer un modèle
+**POST** `/pipelineTemplate/create`
+
+```json
+{
+    "user": "1",
+    "datas": [
+        {
+            "templateName": "Pipeline Standard", ⭐
+            "templateDesc": "Pipeline de recrutement avec 4 étapes",
+            "isDefault": false,
+            "isActive": true
+        }
+    ]
+}
+```
+
+### 🔍 Lister les modèles
+**POST** `/pipelineTemplate/getByCriteria`
+
+```json
+{
+    "user": "1",
+    "size": 50,
+    "index": 0,
+    "data": {
+        "isActive": "true"
+    }
+}
+```
+
+### ⭐ Définir comme modèle par défaut
+**POST** `/pipelineTemplate/setDefault`
+
+```json
+{
+    "user": "1",
+    "data": {
+        "id": 1
+    }
+}
+```
+
+### 📋 Dupliquer un modèle
+**POST** `/pipelineTemplate/duplicate`
+
+```json
+{
+    "user": "1",
+    "data": {
+        "id": 1,
+        "templateName": "Pipeline Standard - Copie"
+    }
+}
+```
+
+---
+
+## 21. Pipeline Stages (Étapes de pipeline)
+
+### ➕ Créer une étape
+**POST** `/pipelineStage/create`
+
+```json
+{
+    "user": "1",
+    "datas": [
+        {
+            "stageLabel": "Pré-sélection", ⭐
+            "stageType": "PRE_SCREEN", ⭐
+            "stageOrder": 1,
+            "isRequired": true,
+            "isEliminatory": true,
+            "pipelineTemplateId": 1 ⭐
+        }
+    ]
+}
+```
+
+### 📋 Lister les étapes d'un modèle
+**POST** `/pipelineStage/byTemplate`
+
+```json
+{
+    "user": "1",
+    "data": {
+        "pipelineTemplateId": 1
+    }
+}
+```
+
+### 🔄 Réordonner les étapes
+**POST** `/pipelineStage/reorder`
+
+```json
+{
+    "user": "1",
+    "data": {
+        "pipelineTemplateId": 1,
+        "orderedStageIds": [3, 1, 2, 4]
+    }
+}
+```
+
+---
+
+## 22. Application Progress (Progrès dans le pipeline)
+
+### 📋 Progrès d'un candidat
+**POST** `/applicationProgress/byApplication`
+
+```json
+{
+    "user": "1",
+    "data": {
+        "applicationId": 1
+    }
+}
+```
+
+### ▶️ Avancer à l'étape suivante
+**POST** `/applicationProgress/advance`
+
+```json
+{
+    "user": "1",
+    "data": {
+        "applicationId": 1
+    }
+}
+```
+
+### ❌ Échouer une étape
+**POST** `/applicationProgress/fail`
+
+```json
+{
+    "user": "1",
+    "data": {
+        "applicationId": 1,
+        "pipelineStageId": 2,
+        "notes": "Compétences techniques insuffisantes"
+    }
+}
+```
+
+### ⏭️ Passer une étape
+**POST** `/applicationProgress/skip`
+
+```json
+{
+    "user": "1",
+    "data": {
+        "applicationId": 1,
+        "pipelineStageId": 3
+    }
+}
+```
+
+### 📍 Étape courante
+**POST** `/applicationProgress/currentStage`
+
+```json
+{
+    "user": "1",
+    "data": {
+        "applicationId": 1
+    }
+}
+```
+
+### 🔍 Candidats migrables
+**POST** `/applicationProgress/migratableCandidates`
+
+```json
+{
+    "user": "1",
+    "data": {
+        "campaignId": 1,
+        "newTemplateId": 2
+    }
+}
+```
+
+### 🔄 Migrer des candidats vers un nouveau pipeline
+**POST** `/applicationProgress/migrateMultiple`
+
+```json
+{
+    "user": "1",
+    "data": {
+        "migratableApplicationIds": [1, 2, 3],
+        "newTemplateId": 2
+    }
+}
+```
+
+---
+
+## 23. Business Groups (Groupes métier)
+
+### ➕ Créer un groupe
+**POST** `/businessGroup/create`
+
+```json
+{
+    "user": "1",
+    "data": {
+        "groupName": "Recruteurs Senior", ⭐
+        "groupDesc": "Accès complet aux campagnes et entretiens"
+    }
+}
+```
+
+### 🔍 Lister les groupes
+**POST** `/businessGroup/getByCriteria`
+
+```json
+{
+    "user": "1",
+    "size": 50,
+    "index": 0
+}
+```
+
+### 📋 Voir un groupe avec ses permissions
+**POST** `/businessGroup/getGroupWithPermissions`
+
+```json
+{
+    "user": "1",
+    "data": {
+        "id": 1
+    }
+}
+```
+
+### ➕ Ajouter des permissions à un groupe
+**POST** `/businessGroup/addPermission`
+
+```json
+{
+    "user": "1",
+    "data": {
+        "id": 1,
+        "functionalities": ["VIEW_CAMPAIGNS", "CREATE_CAMPAIGNS", "VIEW_INTERVIEWS"]
+    }
+}
+```
+
+### ➖ Retirer des permissions d'un groupe
+**POST** `/businessGroup/removePermission`
+
+```json
+{
+    "user": "1",
+    "data": {
+        "id": 1,
+        "functionalities": ["CREATE_CAMPAIGNS"]
+    }
+}
+```
+
+### 👤 Assigner un utilisateur à un groupe
+**POST** `/businessGroup/assignUser`
+
+```json
+{
+    "user": "5",
+    "data": {
+        "id": 1
+    }
+}
+```
+
+### 👤 Retirer un utilisateur d'un groupe
+**POST** `/businessGroup/removeUser`
+
+```json
+{
+    "user": "5",
+    "data": {
+        "id": 1
+    }
+}
+```
+
+### 👥 Liste des utilisateurs d'un groupe
+**POST** `/businessGroup/getUsers`
+
+```json
+{
+    "user": "1",
+    "data": {
+        "id": 1
+    }
+}
+```
+
+---
+
+## 24. Entity Permissions (Permissions sur entités)
+
+### ➕ Accorder une permission
+**POST** `/entityPermission/grant`
+
+```json
+{
+    "user": "1",
+    "data": {
+        "entityType": "CAMPAIGN", ⭐
+        "entityId": 1, ⭐
+        "userId": 5, ⭐
+        "canEvaluate": true,
+        "canUpdate": false,
+        "canDelete": false,
+        "canPlanify": false,
+        "canAcceptPreScreen": false,
+        "canAcceptFinal": false,
+        "isAdmin": false,
+        "follow": true
+    }
+}
+```
+
+### ➖ Révoquer une permission
+**POST** `/entityPermission/revoke`
+
+```json
+{
+    "user": "1",
+    "data": {
+        "entityType": "CAMPAIGN",
+        "entityId": 1,
+        "userId": 5
+    }
+}
+```
+
+### 📋 Permissions sur une entité
+**POST** `/entityPermission/getForEntity`
+
+```json
+{
+    "user": "1",
+    "data": {
+        "entityType": "CAMPAIGN",
+        "entityId": 1
+    }
+}
+```
+
+### 📋 Permissions d'un utilisateur
+**POST** `/entityPermission/getForUser`
+
+```json
+{
+    "user": "1",
+    "data": {
+        "userId": 5
+    }
+}
+```
+
+### 📋 Mes permissions effectives
+**POST** `/entityPermission/me`
+
+```json
+{
+    "user": "5"
+}
+```
 
 ---
 

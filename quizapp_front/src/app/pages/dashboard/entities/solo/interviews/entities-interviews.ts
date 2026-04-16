@@ -7,9 +7,11 @@ import { EntityCrudBase } from '../../../../../shared/entity-crud-base';
 import { EntityDetailPanelComponent } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
 import { DependencyPopupComponent } from '../../../../../shared/dependency-popup/dependency-popup';
 import { InterviewService, Interview, PagedInterviewResponse, InterviewSearchCriteria } from '../../../../../core/services/interview.service';
-import { InterviewCrudService, InterviewCrud } from '../../../../../core/services/interview-crud.service';
+import { EntityPermissionService } from '../../../../../core/services/entity-permission.service';
+import { EntityPermission } from '../../../../../core/models/permission.interfaces';
 import { CandidateInterviewEntityService, CandidateInterviewEntity } from '../../../../../core/services/candidate-interview-entity.service';
 import { CampaignService, Campaign } from '../../../../../core/services/campaign.service';
+import { ApplicationService, Application } from '../../../../../core/services/application.service';
 
 @Component({
   selector: 'app-entities-interviews',
@@ -20,10 +22,12 @@ import { CampaignService, Campaign } from '../../../../../core/services/campaign
 })
 export class EntitiesInterviewsComponent extends EntityCrudBase<Interview, InterviewSearchCriteria, PagedInterviewResponse> {
   private interviewService = inject(InterviewService);
-  private interviewCrudService = inject(InterviewCrudService);
+  private entityPermissionService = inject(EntityPermissionService);
   private candidateInterviewEntityService = inject(CandidateInterviewEntityService);
   private campaignFkService = inject(CampaignService);
+  private applicationFkService = inject(ApplicationService);
   allCampaigns = signal<Campaign[]>([]);
+  allApplications = signal<Application[]>([]);
   protected override readonly router = inject(Router);
   protected override readonly pageSizeStorageKey = 'entitiesInterviewsPageSize';
   protected override readonly entityName = 'entretiens';
@@ -31,7 +35,7 @@ export class EntitiesInterviewsComponent extends EntityCrudBase<Interview, Inter
 
   // Expansion
   expandedItems = signal<Set<number>>(new Set());
-  childCruds = signal<{[id: number]: InterviewCrud[]}>({});
+  childCruds = signal<{[id: number]: any[]}>({});
   childCandidateInterviews = signal<{[id: number]: CandidateInterviewEntity[]}>({});
   loadingChildren = signal<{[id: number]: boolean}>({});
   childTab = signal<{[id: number]: string}>({});
@@ -63,6 +67,7 @@ export class EntitiesInterviewsComponent extends EntityCrudBase<Interview, Inter
   override ngOnInit() {
     super.ngOnInit();
     this.campaignFkService.getAllCampaignsByCriteria({ page: 0, size: 9999, isDeleted: false }).subscribe({ next: (res) => this.allCampaigns.set(res.content) });
+    this.applicationFkService.getAllApplicationsByCriteria({ page: 0, size: 9999, isDeleted: false }).subscribe({ next: (res) => this.allApplications.set(res.content) });
   }
 
   protected resetAdvancedCriteriaValues(): void {
@@ -156,8 +161,26 @@ export class EntitiesInterviewsComponent extends EntityCrudBase<Interview, Inter
     this.loadingChildren.set({ ...this.loadingChildren(), [id]: true });
     let loaded = 0;
     const done = () => { loaded++; if (loaded >= 2) this.loadingChildren.set({ ...this.loadingChildren(), [id]: false }); };
-    this.interviewCrudService.getAllByCriteria({ interviewId: id, size: 100 }).subscribe({
-      next: (r) => { this.childCruds.set({ ...this.childCruds(), [id]: r.content }); done(); },
+    this.entityPermissionService.getForEntity('INTERVIEW', id).subscribe({
+      next: (res) => {
+        // Agréger par userId pour compatibilité template
+        const permsMap = new Map<number, any>();
+        (res.items || []).forEach((p: EntityPermission) => {
+          if (!p.userId) return;
+          if (!permsMap.has(p.userId)) {
+            permsMap.set(p.userId, { id: p.id, userId: p.userId, isAdmin: false, canEvaluate: false, canScheduleInterview: false, canAddComments: false, isDeleted: false });
+          }
+          const entry = permsMap.get(p.userId)!;
+          if (p.granted) {
+            if (p.permissionKey === 'MANAGE_APP_CONFIG') entry.isAdmin = true;
+            if (p.permissionKey === 'VIEW_EVALUATIONS') entry.canEvaluate = true;
+            if (p.permissionKey === 'SCHEDULE_INTERVIEW') entry.canScheduleInterview = true;
+            if (p.permissionKey === 'ADD_COMMENTS') entry.canAddComments = true;
+          }
+        });
+        this.childCruds.set({ ...this.childCruds(), [id]: Array.from(permsMap.values()) });
+        done();
+      },
       error: () => { this.childCruds.set({ ...this.childCruds(), [id]: [] }); done(); }
     });
     this.candidateInterviewEntityService.getAllByCriteria({ interviewId: id, size: 100 }).subscribe({
@@ -166,7 +189,7 @@ export class EntitiesInterviewsComponent extends EntityCrudBase<Interview, Inter
     });
   }
 
-  getCruds(id: number): InterviewCrud[] { return this.childCruds()[id] || []; }
+  getCruds(id: number): any[] { return this.childCruds()[id] || []; }
   getCandidateInterviews(id: number): CandidateInterviewEntity[] { return this.childCandidateInterviews()[id] || []; }
   isLoadingChildren(id: number): boolean { return this.loadingChildren()[id] || false; }
   trackByChildId(index: number, item: any): number { return item.id; }

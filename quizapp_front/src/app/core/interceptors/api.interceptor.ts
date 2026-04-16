@@ -2,6 +2,7 @@ import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
+import { cleanFormData } from '../utils/form.utils';
 
 /**
  * Vérifie si le token JWT est expiré en décodant le payload (base64).
@@ -61,9 +62,15 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
     }
     headers['Authorization'] = `Bearer ${token}`;
   }
-  
+
+  // Nettoyer le body : "" → null pour l'update partiel (sauf FormData/uploads)
+  const cleanedBody = (!isMultipartRequest && req.body && typeof req.body === 'object')
+    ? cleanFormData(req.body as Record<string, unknown>)
+    : req.body;
+
   const modifiedReq = req.clone({
-    setHeaders: headers
+    setHeaders: headers,
+    body: cleanedBody
   });
 
   return next(modifiedReq).pipe(

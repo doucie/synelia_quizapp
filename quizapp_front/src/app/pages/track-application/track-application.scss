@@ -29,7 +29,7 @@
 }
 
 .tracking-form {
-  margin-bottom: 3rem;
+  margin-bottom: 2rem;
 
   .form-card {
     background: var(--background);
@@ -79,6 +79,38 @@
   }
 }
 
+.error-message {
+  background: var(--error-bg, #ffebee);
+  color: var(--error, #c62828);
+  padding: 1rem 1.5rem;
+  border-radius: 0.75rem;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--error-border, #ef9a9a);
+
+  .error-icon {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+  }
+}
+
+.spinner {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  margin-right: 0.5rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 .application-status {
   margin-bottom: 3rem;
 
@@ -109,29 +141,29 @@
       font-size: 0.875rem;
       font-weight: 500;
 
-      &.status-submitted {
-        background: #e0f2fe;
-        color: #0277bd;
+      &.status-new {
+        background: var(--info-bg, #e0f2fe);
+        color: var(--info, #0277bd);
       }
 
-      &.status-reviewing {
-        background: #fff3e0;
-        color: #f57c00;
-      }
-
-      &.status-interview {
-        background: #f3e5f5;
-        color: #7b1fa2;
+      &.status-in-progress {
+        background: var(--warning-bg, #fff3e0);
+        color: var(--warning, #f57c00);
       }
 
       &.status-accepted {
-        background: #e8f5e8;
-        color: #2e7d32;
+        background: var(--success-bg, #e8f5e8);
+        color: var(--success, #2e7d32);
       }
 
       &.status-rejected {
-        background: #ffebee;
-        color: #c62828;
+        background: var(--error-bg, #ffebee);
+        color: var(--error, #c62828);
+      }
+
+      &.status-withdrawn {
+        background: var(--surface-variant);
+        color: var(--text-secondary);
       }
     }
   }
@@ -159,6 +191,11 @@
   .progress-timeline {
     margin-bottom: 2rem;
 
+    > h3 {
+      margin-bottom: 1.5rem;
+      color: var(--text-primary);
+    }
+
     .timeline-item {
       display: flex;
       margin-bottom: 1.5rem;
@@ -174,7 +211,11 @@
         background: var(--border);
       }
 
-      &.completed::after {
+      &.passed::after {
+        background: var(--success, #2e7d32);
+      }
+
+      &.in-progress::after {
         background: var(--primary);
       }
 
@@ -196,59 +237,123 @@
         }
       }
 
-      &.completed .timeline-marker {
-        background: var(--primary);
-        color: var(--text-on-primary);
+      &.passed .timeline-marker {
+        background: var(--success, #2e7d32);
       }
 
-      &.current .timeline-marker {
-        background: var(--secondary);
-        color: var(--text-on-secondary);
+      &.in-progress .timeline-marker {
+        background: var(--primary);
         animation: pulse 2s infinite;
+      }
+
+      &.failed .timeline-marker {
+        background: var(--error, #c62828);
+      }
+
+      &.skipped .timeline-marker {
+        background: var(--text-tertiary);
       }
 
       .timeline-content {
         flex: 1;
 
+        .timeline-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 0.25rem;
+        }
+
         h4 {
           color: var(--text-primary);
-          margin-bottom: 0.25rem;
+          margin: 0;
           font-size: 1rem;
         }
 
-        p {
-          color: var(--text-secondary);
-          margin-bottom: 0.25rem;
-          font-size: 0.875rem;
-        }
-
-        small {
-          color: var(--text-tertiary);
+        .stage-status-label {
           font-size: 0.75rem;
+          font-weight: 500;
+          padding: 0.15rem 0.5rem;
+          border-radius: 1rem;
+
+          &.label-pending {
+            background: var(--surface-variant);
+            color: var(--text-tertiary);
+          }
+
+          &.label-in-progress {
+            background: var(--warning-bg, #fff3e0);
+            color: var(--warning, #f57c00);
+          }
+
+          &.label-passed {
+            background: var(--success-bg, #e8f5e8);
+            color: var(--success, #2e7d32);
+          }
+
+          &.label-failed {
+            background: var(--error-bg, #ffebee);
+            color: var(--error, #c62828);
+          }
+
+          &.label-skipped {
+            background: var(--surface-variant);
+            color: var(--text-secondary);
+          }
+        }
+
+        .timeline-details {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.75rem;
+          margin-top: 0.25rem;
+
+          small {
+            color: var(--text-tertiary);
+            font-size: 0.75rem;
+          }
+
+          .score {
+            font-weight: 600;
+            color: var(--primary);
+          }
         }
       }
 
-      &.completed .timeline-content h4 {
-        color: var(--primary);
+      &.passed .timeline-content h4 {
+        color: var(--success, #2e7d32);
       }
 
-      &.current .timeline-content h4 {
-        color: var(--secondary);
+      &.in-progress .timeline-content h4 {
+        color: var(--primary);
         font-weight: 600;
+      }
+
+      &.failed .timeline-content h4 {
+        color: var(--error, #c62828);
+      }
+
+      &.skipped .timeline-content h4 {
+        color: var(--text-tertiary);
+        text-decoration: line-through;
       }
     }
   }
 
-  .next-steps {
-    .next-step-card {
+  .current-stage-info {
+    h3 {
+      margin-bottom: 1rem;
+      color: var(--text-primary);
+    }
+
+    .current-stage-card {
       display: flex;
       align-items: center;
       gap: 1rem;
       background: var(--surface);
       border-radius: 0.75rem;
       padding: 1.5rem;
-      margin-top: 1rem;
-      border: 1px solid var(--border);
+      border: 1px solid var(--primary);
 
       .step-icon {
         font-size: 2rem;
@@ -263,11 +368,7 @@
 
         p {
           color: var(--text-secondary);
-          margin-bottom: 0.25rem;
-        }
-
-        small {
-          color: var(--text-tertiary);
+          margin: 0;
         }
       }
     }
@@ -377,6 +478,12 @@
     flex-direction: column;
     align-items: flex-start !important;
     gap: 1rem;
+  }
+
+  .timeline-header {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 0.25rem;
   }
 
   .help-actions {

@@ -624,6 +624,19 @@ public class Utilities {
 		return str != null && !str.isEmpty() && !str.equals("\n");
 	}
 
+	/**
+	 * Détermine si un champ String doit être mis à jour lors d'un update partiel.
+	 * - null → true (on veut effacer la valeur en BDD)
+	 * - "" ou "\n" → false (on ignore, on garde la valeur existante)
+	 * - autre → true (on met à jour normalement)
+	 */
+	public static boolean shouldUpdate(String value) {
+		if (value == null) {
+			return true;
+		}
+		return !value.isEmpty() && !value.equals("\n");
+	}
+
 	public static boolean notEmpty(List<String> lst) {
 		return lst != null && !lst.isEmpty() && lst.stream().noneMatch(s -> s.equals("\n"))
 				&& lst.stream().noneMatch(s -> s.equals(null));

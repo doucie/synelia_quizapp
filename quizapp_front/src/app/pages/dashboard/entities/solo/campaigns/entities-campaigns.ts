@@ -12,7 +12,8 @@ import { CampaignService, Campaign, CampaignSearchCriteria, PagedResponse } from
 import { UserService } from '../../../../../core/services/user.service';
 import { FormService, Form } from '../../../../../core/services/form.service';
 import { SourceTokenService, SourceToken } from '../../../../../services/source-token.service';
-import { CampaignCrudService, CampaignCrud } from '../../../../../core/services/campaign-crud.service';
+import { EntityPermissionService } from '../../../../../core/services/entity-permission.service';
+import { EntityPermission } from '../../../../../core/models/permission.interfaces';
 import { NotificationService } from '../../../../../core/services/notification.service';
 import { AuthService } from '../../../../../core/services/auth/auth.service';
 import { SpecialityService, Speciality } from '../../../../../core/services/speciality.service';
@@ -80,7 +81,7 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
   expandedCampaigns = signal<Set<number>>(new Set());
   campaignForms = signal<{[campaignId: number]: Form[]}>({});
   campaignSourceTokens = signal<{[campaignId: number]: SourceToken[]}>({});
-  campaignPermissions = signal<{[campaignId: number]: CampaignCrud[]}>({});
+  campaignPermissions = signal<{[campaignId: number]: any[]}>({});
   loadingChildren = signal<{[campaignId: number]: boolean}>({});
   childTab = signal<{[campaignId: number]: string}>({});
   
@@ -167,11 +168,17 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
     idA: '',
     campaignName: '',
     campaignDesc: '',
+    specialitiesId: undefined,
+    isActive: undefined,
     isDeleted: undefined,
     campaignStartDe: '',
     campaignStartA: '',
     campaignEndDe: '',
     campaignEndA: '',
+    dateCreationDe: '',
+    dateCreationA: '',
+    dateModificationDe: '',
+    dateModificationA: '',
     search_string: ''
   };
 
@@ -182,7 +189,7 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
     private userService: UserService,
     private formService: FormService,
     private sourceTokenService: SourceTokenService,
-    private campaignCrudService: CampaignCrudService,
+    private entityPermissionService: EntityPermissionService,
     private notificationService: NotificationService,
     private authService: AuthService,
     private router: Router,
@@ -760,11 +767,17 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
       idA: '',
       campaignName: '',
       campaignDesc: '',
+      specialitiesId: undefined,
+      isActive: undefined,
       isDeleted: undefined,
       campaignStartDe: '',
       campaignStartA: '',
       campaignEndDe: '',
       campaignEndA: '',
+      dateCreationDe: '',
+      dateCreationA: '',
+      dateModificationDe: '',
+      dateModificationA: '',
       search_string: ''
     };
     this.applyAdvancedSearch();
@@ -912,7 +925,7 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
     return this.campaignSourceTokens()[campaignId] || [];
   }
 
-  getCampaignPermissions(campaignId: number): CampaignCrud[] {
+  getCampaignPermissions(campaignId: number): any[] {
     return this.campaignPermissions()[campaignId] || [];
   }
 
@@ -986,9 +999,25 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
       error: () => this.campaignSourceTokens.set({ ...this.campaignSourceTokens(), [campaignId]: [] })
     });
 
-    this.campaignCrudService.getAllByCriteria({ campaignId, size: 100 }).subscribe({
+    this.entityPermissionService.getForEntity('CAMPAIGN', campaignId).subscribe({
       next: (res) => {
-        this.campaignPermissions.set({ ...this.campaignPermissions(), [campaignId]: res.content });
+        // Agréger les entity_permissions par userId pour compatibilité template
+        const permsMap = new Map<number, any>();
+        (res.items || []).forEach((p: EntityPermission) => {
+          if (!p.userId) return;
+          if (!permsMap.has(p.userId)) {
+            permsMap.set(p.userId, { id: p.id, userId: p.userId, canUpdate: false, canDelete: false, canEvaluate: false, canPlanify: false, isAdmin: false, isDeleted: false });
+          }
+          const entry = permsMap.get(p.userId)!;
+          if (p.granted) {
+            if (p.permissionKey === 'UPDATE_CAMPAIGNS') entry.canUpdate = true;
+            if (p.permissionKey === 'DELETE_CAMPAIGNS') entry.canDelete = true;
+            if (p.permissionKey === 'VIEW_EVALUATIONS') entry.canEvaluate = true;
+            if (p.permissionKey === 'MANAGE_PIPELINE_TEMPLATES') entry.canPlanify = true;
+            if (p.permissionKey === 'MANAGE_APP_CONFIG') entry.isAdmin = true;
+          }
+        });
+        this.campaignPermissions.set({ ...this.campaignPermissions(), [campaignId]: Array.from(permsMap.values()) });
         this.loadingChildren.set({ ...this.loadingChildren(), [campaignId]: false });
       },
       error: () => {

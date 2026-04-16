@@ -38,6 +38,7 @@ public interface DecisionTransformer {
         @Mapping(source="entity.updatedAt", dateFormat="yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", target="updatedAt"),
         @Mapping(source="entity.application.id", target="applicationId"),
         @Mapping(source="entity.user.id", target="userId"),
+        @Mapping(source="entity.pipelineStage.id", target="pipelineStageId"),
     })
     DecisionDto toDto(Decision entity) throws ParseException;
 
@@ -52,6 +53,7 @@ public interface DecisionTransformer {
         dto.setIsCancel(entity.getIsCancel());
         dto.setApplicationId(entity.getApplication() != null ? entity.getApplication().getId() : null);
         dto.setUserId(entity.getUser() != null ? entity.getUser().getId() : null);
+        dto.setPipelineStageId(entity.getPipelineStage() != null ? entity.getPipelineStage().getId() : null);
         return dto;
     }
 
@@ -68,6 +70,7 @@ public interface DecisionTransformer {
         @Mapping(source="dto.updatedAt", dateFormat="yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", target="updatedAt"),
         @Mapping(target="application", ignore=true),
         @Mapping(target="user", ignore=true),
+        @Mapping(target="pipelineStage", ignore=true),
     })
     Decision toEntity(DecisionDto dto) throws ParseException;
 
@@ -89,6 +92,11 @@ public interface DecisionTransformer {
             User user = new User();
             user.setId(dto.getUserId());
             entity.setUser(user);
+        }
+        if (dto.getPipelineStageId() != null) {
+            PipelineStage stage = new PipelineStage();
+            stage.setId(dto.getPipelineStageId());
+            entity.setPipelineStage(stage);
         }
         return entity;
     }

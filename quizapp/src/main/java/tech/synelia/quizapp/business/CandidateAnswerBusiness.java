@@ -182,7 +182,7 @@ public class CandidateAnswerBusiness implements IBasicBusiness<Request<Candidate
 				}
 				entityToSave.setAnswer(existingAnswer);
 			}
-			if (Utilities.notBlank(dto.getFreeTextResponse())) {
+			if (Utilities.shouldUpdate(dto.getFreeTextResponse())) {
 				entityToSave.setFreeTextResponse(dto.getFreeTextResponse());
 			}
 			if (dto.getIsSelected() != null) {
@@ -397,7 +397,7 @@ public class CandidateAnswerBusiness implements IBasicBusiness<Request<Candidate
 				}
 				entityToSave.setAnswer(existingAnswer);
 			}
-			if (Utilities.notBlank(dto.getFreeTextResponse())) {
+			if (Utilities.shouldUpdate(dto.getFreeTextResponse())) {
 				entityToSave.setFreeTextResponse(dto.getFreeTextResponse());
 			}
 			if (dto.getIsSelected() != null) {
@@ -472,7 +472,7 @@ public class CandidateAnswerBusiness implements IBasicBusiness<Request<Candidate
 				}
 				entityToSave.setAnswer(existingAnswer);
 			}
-			if (Utilities.notBlank(dto.getFreeTextResponse())) {
+			if (Utilities.shouldUpdate(dto.getFreeTextResponse())) {
 				entityToSave.setFreeTextResponse(dto.getFreeTextResponse());
 			}
 			if (dto.getIsSelected() != null) {

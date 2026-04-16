@@ -13,7 +13,7 @@ export interface Notification {
 }
 
 /**
- * Interface pour les notifications de la base de données
+ * Interface pour les notifications de la base de donnÃ©es
  */
 export interface DbNotification {
   id: number;
@@ -22,13 +22,17 @@ export interface DbNotification {
   notifLink: string;
   isRead: boolean;
   userId: number;
-  objectTableName?: string; // Nom de la table de l'objet lié (ex: 'campaigns', 'applications')
+  objectTableName?: string; // Nom de la table de l'objet liÃ© (ex: 'campaigns', 'applications')
   objectTableId?: number; // ID de l'objet dans la table
   createdAt?: string;
   createdBy?: number;
   updatedAt?: string;
   updatedBy?: number;
   isDeleted?: boolean;
+  dateCreationDe?: string;
+  dateCreationA?: string;
+  dateModificationDe?: string;
+  dateModificationA?: string;
   actorName?: string; // Nom de l'acteur (utilisateur qui a fait l'action)
 }
 
@@ -41,6 +45,10 @@ export interface NotificationSearchCriteria {
   userId?: number;
   notifType?: string;
   isDeleted?: boolean;
+  dateCreationDe?: string;
+  dateCreationA?: string;
+  dateModificationDe?: string;
+  dateModificationA?: string;
 }
 
 export interface PagedNotificationResponse {
@@ -75,7 +83,7 @@ export class NotificationService {
     // Ajouter la notification
     this.notifications.update(notifications => [...notifications, newNotification]);
 
-    // Supprimer automatiquement après la durée spécifiée
+    // Supprimer automatiquement aprÃ¨s la durÃ©e spÃ©cifiÃ©e
     if (newNotification.duration && newNotification.duration > 0) {
       setTimeout(() => {
         this.remove(id);
@@ -100,7 +108,7 @@ export class NotificationService {
   }
 
   /**
-   * Méthodes de raccourci pour les types de notifications courantes
+   * MÃ©thodes de raccourci pour les types de notifications courantes
    */
   success(title: string, message: string, duration?: number): void {
     this.show({ type: 'success', title, message, duration });
@@ -120,15 +128,15 @@ export class NotificationService {
 
   /**
    * ==================================================================
-   * MÉTHODES POUR LES NOTIFICATIONS DE LA BASE DE DONNÉES
+   * MÃ‰THODES POUR LES NOTIFICATIONS DE LA BASE DE DONNÃ‰ES
    * ==================================================================
    */
 
   /**
-   * Récupère les notifications d'un utilisateur depuis la BD
+   * RÃ©cupÃ¨re les notifications d'un utilisateur depuis la BD
    */
   getUserNotifications(userId: number): Observable<DbNotification[]> {
-    console.log('📬 Chargement des notifications pour userId:', userId);
+    console.log('ðŸ“¬ Chargement des notifications pour userId:', userId);
 
     const requestBody = {
       user: 1,
@@ -136,19 +144,19 @@ export class NotificationService {
         userId: userId
       },
       index: 0,
-      size: 50 // Charger les 50 dernières notifications
+      size: 50 // Charger les 50 derniÃ¨res notifications
     };
 
     return this.http.post<any>(`${environment.apiUrl}/notifications/getByCriteria`, requestBody).pipe(
       map(response => {
-        console.log('✅ Notifications récupérées:', response);
+        console.log('âœ… Notifications rÃ©cupÃ©rÃ©es:', response);
         if (response && response.items) {
           return response.items;
         }
         return [];
       }),
       catchError(error => {
-        console.error('❌ Erreur lors du chargement des notifications:', error);
+        console.error('âŒ Erreur lors du chargement des notifications:', error);
         return throwError(() => error);
       })
     );
@@ -158,7 +166,7 @@ export class NotificationService {
    * Marque une notification comme lue
    */
   markAsRead(notificationId: number): Observable<any> {
-    console.log('📖 Marquage notification comme lue:', notificationId);
+    console.log('ðŸ“– Marquage notification comme lue:', notificationId);
 
     const requestBody = {
       user: 1,
@@ -170,11 +178,11 @@ export class NotificationService {
 
     return this.http.post<any>(`${environment.apiUrl}/notifications/update`, requestBody).pipe(
       map(response => {
-        console.log('✅ Notification marquée comme lue:', response);
+        console.log('âœ… Notification marquÃ©e comme lue:', response);
         return response;
       }),
       catchError(error => {
-        console.error('❌ Erreur lors du marquage de la notification:', error);
+        console.error('âŒ Erreur lors du marquage de la notification:', error);
         return throwError(() => error);
       })
     );
@@ -184,7 +192,7 @@ export class NotificationService {
    * Marque toutes les notifications d'un utilisateur comme lues
    */
   markAllAsRead(userId: number, notificationIds: number[]): Observable<any> {
-    console.log('📖 Marquage de toutes les notifications comme lues pour userId:', userId);
+    console.log('ðŸ“– Marquage de toutes les notifications comme lues pour userId:', userId);
 
     const requestBody = {
       user: 1,
@@ -196,18 +204,18 @@ export class NotificationService {
 
     return this.http.post<any>(`${environment.apiUrl}/notifications/update`, requestBody).pipe(
       map(response => {
-        console.log('✅ Toutes les notifications marquées comme lues:', response);
+        console.log('âœ… Toutes les notifications marquÃ©es comme lues:', response);
         return response;
       }),
       catchError(error => {
-        console.error('❌ Erreur lors du marquage des notifications:', error);
+        console.error('âŒ Erreur lors du marquage des notifications:', error);
         return throwError(() => error);
       })
     );
   }
 
   /**
-   * Crée une notification pour un utilisateur
+   * CrÃ©e une notification pour un utilisateur
    */
   createDbNotification(notificationData: {
     notifType: string;
@@ -217,7 +225,7 @@ export class NotificationService {
     objectTableName?: string;
     objectTableId?: number;
   }): Observable<any> {
-    console.log('📬 Création notification BD:', notificationData);
+    console.log('ðŸ“¬ CrÃ©ation notification BD:', notificationData);
 
     const requestBody = {
       user: 1,
@@ -227,22 +235,22 @@ export class NotificationService {
       }]
     };
 
-    console.log('📤 Corps de la requête notification:', requestBody);
+    console.log('ðŸ“¤ Corps de la requÃªte notification:', requestBody);
 
     return this.http.post<any>(`${environment.apiUrl}/notifications/create`, requestBody).pipe(
       map(response => {
-        console.log('✅ Notification BD créée:', response);
+        console.log('âœ… Notification BD crÃ©Ã©e:', response);
         return response;
       }),
       catchError(error => {
-        console.error('❌ Erreur création notification BD:', error);
+        console.error('âŒ Erreur crÃ©ation notification BD:', error);
         return throwError(() => error);
       })
     );
   }
 
   /**
-   * Crée plusieurs notifications en une seule requête
+   * CrÃ©e plusieurs notifications en une seule requÃªte
    */
   createMultipleDbNotifications(notifications: Array<{
     notifType: string;
@@ -252,7 +260,7 @@ export class NotificationService {
     objectTableName?: string;
     objectTableId?: number;
   }>): Observable<any> {
-    console.log('📬 Création de plusieurs notifications BD:', notifications);
+    console.log('ðŸ“¬ CrÃ©ation de plusieurs notifications BD:', notifications);
 
     const requestBody = {
       user: 1,
@@ -262,15 +270,15 @@ export class NotificationService {
       }))
     };
 
-    console.log('📤 Corps de la requête notifications multiples:', requestBody);
+    console.log('ðŸ“¤ Corps de la requÃªte notifications multiples:', requestBody);
 
     return this.http.post<any>(`${environment.apiUrl}/notifications/create`, requestBody).pipe(
       map(response => {
-        console.log('✅ Notifications BD créées:', response);
+        console.log('âœ… Notifications BD crÃ©Ã©es:', response);
         return response;
       }),
       catchError(error => {
-        console.error('❌ Erreur création notifications BD:', error);
+        console.error('âŒ Erreur crÃ©ation notifications BD:', error);
         return throwError(() => error);
       })
     );
@@ -290,6 +298,10 @@ export class NotificationService {
         searchString: criteria.search_string || '',
         ...(criteria.userId && { userId: criteria.userId }),
         ...(criteria.notifType && { notifType: criteria.notifType }),
+                ...(criteria.dateCreationDe && { dateCreationDe: criteria.dateCreationDe }),
+        ...(criteria.dateCreationA && { dateCreationA: criteria.dateCreationA }),
+        ...(criteria.dateModificationDe && { dateModificationDe: criteria.dateModificationDe }),
+        ...(criteria.dateModificationA && { dateModificationA: criteria.dateModificationA }),
         ...(criteria.idDe && criteria.idDe.trim() && { idStart: criteria.idDe }),
         ...(criteria.idA && criteria.idA.trim() && { idEnd: criteria.idA })
       }

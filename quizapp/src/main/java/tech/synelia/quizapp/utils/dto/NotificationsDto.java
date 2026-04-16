@@ -42,6 +42,11 @@ public class NotificationsDto extends _NotificationsDto implements Cloneable{
     private Integer    updatedBy            ;
     private Boolean    isDeleted            ;
     private String     searchString         ;
+    // Champs pour les intervalles de dates (recherche avancee)
+    private String     dateCreationDe       ;
+    private String     dateCreationA        ;
+    private String     dateModificationDe   ;
+    private String     dateModificationA    ;
     private String     objectTableName      ;
     private Integer    objectTableId        ;
     private Integer    userId               ;

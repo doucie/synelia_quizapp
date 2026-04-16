@@ -11,90 +11,119 @@
       <div class="form-card">
         <div class="form-group">
           <label for="trackingCode">Code de suivi</label>
-          <input 
-            type="text" 
+          <input
+            type="text"
             id="trackingCode"
             [(ngModel)]="trackingCode"
-            placeholder="Ex: SYN-2024-001234"
+            placeholder="Ex: ABC123"
             class="form-input"
             maxlength="20">
         </div>
-        
+
         <div class="form-group">
           <label for="email">Adresse e-mail</label>
-          <input 
-            type="email" 
+          <input
+            type="email"
             id="email"
             [(ngModel)]="email"
-            placeholder="votre.email@exemple.com"
+            placeholder="votre.email&#64;exemple.com"
             class="form-input">
         </div>
 
-        <button 
-          (click)="trackApplication()" 
+        <button
+          (click)="trackApplication()"
           class="btn btn--primary btn--large"
-          [disabled]="!trackingCode || !email">
-          Suivre ma candidature
+          [disabled]="!trackingCode || !email || loading()">
+          @if (loading()) {
+            <span class="spinner"></span> Recherche en cours...
+          } @else {
+            Suivre ma candidature
+          }
         </button>
       </div>
     </div>
 
-    <div class="application-status" *ngIf="applicationStatus">
-      <div class="status-card">
-        <div class="status-header">
-          <h2>État de votre candidature</h2>
-          <span class="status-badge" [ngClass]="'status-' + applicationStatus.status">
-            {{ getStatusLabel(applicationStatus.status) }}
-          </span>
-        </div>
+    @if (errorMessage()) {
+      <div class="error-message">
+        <span class="error-icon">⚠️</span>
+        {{ errorMessage() }}
+      </div>
+    }
 
-        <div class="candidate-info">
-          <h3>{{ applicationStatus.candidateName }}</h3>
-          <p>{{ applicationStatus.position }}</p>
-          <small>Candidature soumise le {{ applicationStatus.submittedDate | date:'dd/MM/yyyy' }}</small>
-        </div>
-
-        <div class="progress-timeline">
-          <div class="timeline-item" 
-               *ngFor="let step of applicationStatus.steps" 
-               [ngClass]="{ 'completed': step.completed, 'current': step.current }">
-            <div class="timeline-marker">
-              <div class="marker-icon" [innerHTML]="step.icon"></div>
-            </div>
-            <div class="timeline-content">
-              <h4>{{ step.title }}</h4>
-              <p>{{ step.description }}</p>
-              <small *ngIf="step.date">{{ step.date | date:'dd/MM/yyyy à HH:mm' }}</small>
-            </div>
+    @if (application(); as app) {
+      <div class="application-status">
+        <div class="status-card">
+          <div class="status-header">
+            <h2>État de votre candidature</h2>
+            <span class="status-badge" [class]="getApplicationStatusClass(app.applicationStatus)">
+              {{ getApplicationStatusLabel(app.applicationStatus) }}
+            </span>
           </div>
-        </div>
 
-        <div class="next-steps" *ngIf="applicationStatus.nextSteps">
-          <h3>Prochaines étapes</h3>
-          <div class="next-step-card">
-            <div class="step-icon">📋</div>
-            <div class="step-content">
-              <h4>{{ applicationStatus.nextSteps.title }}</h4>
-              <p>{{ applicationStatus.nextSteps.description }}</p>
-              <small>{{ applicationStatus.nextSteps.expectedDate | date:'dd/MM/yyyy' }}</small>
-            </div>
+          <div class="candidate-info">
+            <h3>{{ app.candidateFirstName }} {{ app.candidateLastName }}</h3>
+            @if (app.campaignTitle) {
+              <p>{{ app.campaignTitle }}</p>
+            }
+            <small>Candidature soumise le {{ app.createdAt | date:'dd/MM/yyyy' }}</small>
           </div>
+
+          @if (stages().length > 0) {
+            <div class="progress-timeline">
+              <h3>Progression</h3>
+              @for (stage of stages(); track stage.id) {
+                <div class="timeline-item" [class]="getStatusClass(stage)">
+                  <div class="timeline-marker">
+                    <div class="marker-icon">{{ getStatusIcon(stage) }}</div>
+                  </div>
+                  <div class="timeline-content">
+                    <div class="timeline-header">
+                      <h4>{{ stage.stageLabel }}</h4>
+                      <span class="stage-status-label" [class]="'label-' + getStatusClass(stage)">
+                        {{ getStatusLabel(stage) }}
+                      </span>
+                    </div>
+                    <div class="timeline-details">
+                      @if (stage.progress?.startedAt) {
+                        <small>Début : {{ stage.progress!.startedAt | date:'dd/MM/yyyy à HH:mm' }}</small>
+                      }
+                      @if (stage.progress?.completedAt) {
+                        <small>Fin : {{ stage.progress!.completedAt | date:'dd/MM/yyyy à HH:mm' }}</small>
+                      }
+                      @if (stage.progress?.score != null) {
+                        <small class="score">Score : {{ stage.progress!.score }}%</small>
+                      }
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+          @if (getCurrentStage(); as current) {
+            <div class="current-stage-info">
+              <h3>Étape en cours</h3>
+              <div class="current-stage-card">
+                <div class="step-icon">🔄</div>
+                <div class="step-content">
+                  <h4>{{ current.stageLabel }}</h4>
+                  <p>Cette étape est actuellement en cours de traitement.</p>
+                </div>
+              </div>
+            </div>
+          }
         </div>
       </div>
-    </div>
+    }
 
     <div class="help-section">
       <div class="help-card">
         <h3>Besoin d'aide ?</h3>
         <p>Si vous avez des questions concernant votre candidature :</p>
         <div class="help-actions">
-          <a href="mailto:recrutement@synelia.com" class="help-link">
+          <a href="mailto:recrutement&#64;synelia.com" class="help-link">
             <span class="help-icon">✉️</span>
             Contactez notre équipe RH
-          </a>
-          <a href="tel:+33123456789" class="help-link">
-            <span class="help-icon">📞</span>
-            01 23 45 67 89
           </a>
         </div>
       </div>

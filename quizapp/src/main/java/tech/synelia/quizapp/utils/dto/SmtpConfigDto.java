@@ -36,6 +36,12 @@ public class SmtpConfigDto extends _SmtpConfigDto implements Cloneable {
     private Boolean isDeleted;
     private String  searchString;
 
+    // Champs pour les intervalles de dates (recherche avancee)
+    private String     dateCreationDe       ;
+    private String     dateCreationA        ;
+    private String     dateModificationDe   ;
+    private String     dateModificationA    ;
+
     // Search params
     private SearchParam<Integer> idParam;
     private SearchParam<String>  hostParam;

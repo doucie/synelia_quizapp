@@ -1,0 +1,150 @@
+<div class="business-groups">
+
+  <!-- ══ MODE LISTE ══ -->
+  @if (viewMode() === 'list') {
+    <div class="page-header">
+      <div>
+        <h1>Groupes métiers</h1>
+        <p class="subtitle">Gérer les groupes métiers et leurs permissions</p>
+      </div>
+      <button class="btn btn-primary" (click)="createGroup()">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+        Nouveau groupe
+      </button>
+    </div>
+
+    @if (isLoading()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <span>Chargement...</span>
+      </div>
+    }
+
+    @if (!isLoading() && groups().length === 0) {
+      <div class="empty-state">
+        <p>Aucun groupe métier créé.</p>
+      </div>
+    }
+
+    @if (!isLoading() && groups().length > 0) {
+      <div class="groups-grid">
+        @for (group of groups(); track group.id) {
+          <div class="group-card">
+            <div class="group-card-header">
+              <h3>{{ group.groupName }}</h3>
+              <div class="group-actions">
+                <button class="btn-icon" title="Modifier" (click)="editGroup(group)">
+                  <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                </button>
+                <button class="btn-icon danger" title="Supprimer" (click)="deleteGroup(group)">
+                  <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                </button>
+              </div>
+            </div>
+            @if (group.groupDesc) {
+              <p class="group-desc">{{ group.groupDesc }}</p>
+            }
+          </div>
+        }
+      </div>
+    }
+  }
+
+  <!-- ══ MODE ÉDITION ══ -->
+  @if (viewMode() === 'edit') {
+    <div class="page-header">
+      <div>
+        <button class="btn btn-secondary btn-sm" (click)="backToList()">
+          ← Retour
+        </button>
+        <h1>{{ isNew() ? 'Nouveau groupe' : editingGroup().groupName }}</h1>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab" [class.active]="editTab() === 'info'" (click)="editTab.set('info')">Informations</button>
+      @if (!isNew()) {
+        <button class="tab" [class.active]="editTab() === 'permissions'" (click)="editTab.set('permissions')">Permissions</button>
+        <button class="tab" [class.active]="editTab() === 'members'" (click)="editTab.set('members')">Membres</button>
+      }
+    </div>
+
+    <!-- Tab: Info -->
+    @if (editTab() === 'info') {
+      <div class="edit-section">
+        <div class="form-group">
+          <label>Nom du groupe</label>
+          <input type="text" [(ngModel)]="editingGroup().groupName" placeholder="Ex: Recruteurs Paris" />
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea [(ngModel)]="editingGroup().groupDesc" rows="3" placeholder="Description du groupe..."></textarea>
+        </div>
+        <button class="btn btn-primary" [disabled]="saving()" (click)="saveGroup()">
+          {{ saving() ? 'Enregistrement...' : (isNew() ? 'Créer' : 'Enregistrer') }}
+        </button>
+      </div>
+    }
+
+    <!-- Tab: Permissions -->
+    @if (editTab() === 'permissions') {
+      <div class="permissions-grid">
+        @for (category of categories; track category.label) {
+          <div class="category-section">
+            <h3 class="category-title">{{ category.label }}</h3>
+            <div class="permissions-list">
+              @for (perm of category.permissions; track perm.key) {
+                <label class="permission-item" [class.saving]="saving()">
+                  <input
+                    type="checkbox"
+                    [checked]="isPermChecked(perm.key)"
+                    (change)="toggleGroupPermission(perm.key)"
+                    [disabled]="saving()"
+                  />
+                  <span class="permission-label">{{ perm.label }}</span>
+                  <code class="permission-key">{{ perm.key }}</code>
+                </label>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Tab: Membres -->
+    @if (editTab() === 'members') {
+      <div class="members-section">
+        <div class="add-member-form">
+          <input
+            type="number"
+            placeholder="ID utilisateur"
+            [ngModel]="newMemberUserId()"
+            (ngModelChange)="newMemberUserId.set($event)"
+          />
+          <button class="btn btn-primary btn-sm" (click)="addMember()">Ajouter</button>
+        </div>
+
+        @if (groupMembers().length === 0) {
+          <p class="empty-hint">Aucun membre dans ce groupe.</p>
+        }
+
+        @if (groupMembers().length > 0) {
+          <div class="members-list">
+            @for (member of groupMembers(); track member.userId) {
+              <div class="member-row">
+                <div class="member-info">
+                  <span class="member-name">{{ member.userFirstName }} {{ member.userLastName }}</span>
+                  <span class="member-email">{{ member.userEmail }}</span>
+                </div>
+                <button class="btn-icon danger" title="Retirer" (click)="removeMember(member)">
+                  <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M19 13H5v-2h14v2z"/></svg>
+                </button>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  }
+</div>

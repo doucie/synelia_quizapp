@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 @Profile("local")
 @RestController
 @RequestMapping(value = "/user")
-@PreAuthorize("hasAnyRole('ADMIN', 'SUPER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
 public class UserDebugController {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());

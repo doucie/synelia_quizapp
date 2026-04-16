@@ -81,6 +81,10 @@ public class Decision implements Serializable, Cloneable {
     @JoinColumn(name="user_id", referencedColumnName="id")
     private User user ;
 
+    @ManyToOne
+    @JoinColumn(name="pipeline_stage_id", referencedColumnName="id")
+    private PipelineStage pipelineStage ;
+
     //----------------------------------------------------------------------
     // CONSTRUCTOR(S)
     //----------------------------------------------------------------------
