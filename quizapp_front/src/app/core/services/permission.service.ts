@@ -21,6 +21,9 @@ export class PermissionService {
   /** Indique si les permissions ont été chargées */
   loaded = signal<boolean>(false);
 
+  /** Promesse de chargement en cours (pour les guards) */
+  private loadingPromise: Promise<void> | null = null;
+
   /** SUPER_ADMIN bypass complet */
   isSuperAdmin = computed(() => this.systemRole().toUpperCase() === 'SUPER_ADMIN');
 
@@ -34,6 +37,20 @@ export class PermissionService {
    * Appelé après le login, une fois le token JWT disponible.
    */
   async loadPermissions(userId: number): Promise<void> {
+    this.loadingPromise = this._doLoadPermissions(userId);
+    return this.loadingPromise;
+  }
+
+  /**
+   * Attend que le chargement en cours soit terminé.
+   * Utilisé par les guards pour ne pas évaluer avant que les permissions soient prêtes.
+   */
+  async waitUntilLoaded(): Promise<void> {
+    if (this.loaded()) return;
+    if (this.loadingPromise) await this.loadingPromise;
+  }
+
+  private async _doLoadPermissions(userId: number): Promise<void> {
     try {
       const request: SpringBootRequest<any> = {
         data: {},

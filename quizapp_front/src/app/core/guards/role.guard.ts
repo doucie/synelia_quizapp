@@ -8,7 +8,7 @@ import { PermissionService } from '../services/permission.service';
  * des permissions listées.  SUPER_ADMIN → bypass complet.
  */
 export function permissionGuard(requiredPermissions: string[]): CanActivateFn {
-  return (_route, _state) => {
+  return async (_route, _state) => {
     const authService = inject(AuthService);
     const router      = inject(Router);
     const permService = inject(PermissionService);
@@ -17,6 +17,9 @@ export function permissionGuard(requiredPermissions: string[]): CanActivateFn {
       router.navigate(['/connexion']);
       return false;
     }
+
+    // Attendre que les permissions soient chargées (résout immédiatement si déjà prêtes)
+    await permService.waitUntilLoaded();
 
     if (permService.hasAnyPermission(requiredPermissions)) {
       return true;

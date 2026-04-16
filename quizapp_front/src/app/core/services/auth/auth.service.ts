@@ -170,8 +170,15 @@ export class AuthService {
     console.log('🔍 API User Data:', apiUser);
     console.log('🔍 User Role from API:', apiUser.userRole);
     
-    const role = (apiUser.userRole || 'admin').toLowerCase();
-    console.log('✅ Role from API (normalized):', role);
+    // Mapper les rôles DB vers les noms internes frontend
+    const roleMap: Record<string, string> = {
+      'SUPER_ADMIN': 'super',
+      'ADMIN': 'admin',
+      'UTILISATEUR': 'recruiter'
+    };
+    const rawRole = apiUser.userRole || 'ADMIN';
+    const role = roleMap[rawRole] || rawRole.toLowerCase();
+    console.log('✅ Role from API (mapped):', rawRole, '→', role);
     
     return {
       id: apiUser.id?.toString() || '0',
