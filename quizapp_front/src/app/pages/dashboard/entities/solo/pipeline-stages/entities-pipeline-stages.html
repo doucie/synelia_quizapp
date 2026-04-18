@@ -154,6 +154,7 @@
             <th>Obligatoire</th>
             <th>Éliminatoire</th>
             <th>Template</th>
+            <th>Config</th>
             <th>Créé le</th>
             <th>Actions</th>
           </tr>
@@ -167,6 +168,7 @@
             <td><span class="bool-badge" [class.is-true]="item.isRequired" [class.is-false]="!item.isRequired">{{ item.isRequired ? 'Oui' : 'Non' }}</span></td>
             <td><span class="bool-badge" [class.is-true]="item.isEliminatory" [class.is-false]="!item.isEliminatory">{{ item.isEliminatory ? 'Oui' : 'Non' }}</span></td>
             <td>{{ getTemplateName(item.pipelineTemplateId) }}</td>
+            <td><span class="bool-badge" [class.is-true]="item.configJson" [class.is-false]="!item.configJson">{{ item.configJson ? 'Oui' : 'Non' }}</span></td>
             <td><span class="cell-date">{{ formatDate(item.createdAt) }}</span></td>
             <td class="actions-cell" (click)="$event.stopPropagation()">
               <div class="actions-menu">

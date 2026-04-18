@@ -77,7 +77,7 @@
     "changeOrigin": true,
     "logLevel": "debug"
   },
-  "/interviewCrud/**": {
+  "/interviewParticipant/**": {
     "target": "http://localhost:8085",
     "secure": false,
     "changeOrigin": true,

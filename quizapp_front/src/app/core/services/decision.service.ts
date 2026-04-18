@@ -13,6 +13,7 @@ export interface Decision {
   isCancel: boolean; // true = annulation, false = décision
   applicationId: number;
   userId: number;
+  pipelineStageId?: number;
   createdAt?: string;
   createdBy?: number;
   updatedAt?: string;

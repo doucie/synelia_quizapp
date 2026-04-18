@@ -210,17 +210,17 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/dashboard/entities/solo/candidate-token/entities-candidate-token').then(m => m.EntitiesCandidateTokenComponent),
         canActivate: [permissionGuard(['MANAGE_APP_CONFIG'])]
       },
-      // @deprecated — Remplacé par entity_permission + interview_participant (Section 49)
-      // { 
-      //   path: 'entities/interview-crud/:page', 
-      //   loadComponent: () => import('./pages/dashboard/entities/solo/interview-crud/entities-interview-crud').then(m => m.EntitiesInterviewCrudComponent),
-      //   canActivate: [superRoleGuard]
-      // },
-      // { 
-      //   path: 'entities/interview-crud', 
-      //   loadComponent: () => import('./pages/dashboard/entities/solo/interview-crud/entities-interview-crud').then(m => m.EntitiesInterviewCrudComponent),
-      //   canActivate: [superRoleGuard]
-      // },
+      // interview_participant (anciennement interview_crud)
+      { 
+        path: 'entities/interview-participant/:page', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/interview-participant/entities-interview-participant').then(m => m.EntitiesInterviewParticipantComponent),
+        canActivate: [permissionGuard(['MANAGE_APP_CONFIG'])]
+      },
+      { 
+        path: 'entities/interview-participant', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/interview-participant/entities-interview-participant').then(m => m.EntitiesInterviewParticipantComponent),
+        canActivate: [permissionGuard(['MANAGE_APP_CONFIG'])]
+      },
       { 
         path: 'entities/decisions/:page', 
         loadComponent: () => import('./pages/dashboard/entities/solo/decisions/entities-decisions').then(m => m.EntitiesDecisionsComponent),
@@ -299,6 +299,126 @@ export const routes: Routes = [
       { 
         path: 'entities/application-progress', 
         loadComponent: () => import('./pages/dashboard/entities/solo/application-progress/entities-application-progress').then(m => m.EntitiesApplicationProgressComponent),
+        canActivate: [permissionGuard(['MANAGE_APP_CONFIG'])]
+      },
+      { 
+        path: 'entities/email-verification-tokens/:page', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/email-verification-tokens/entities-email-verification-tokens').then(m => m.EntitiesEmailVerificationTokensComponent),
+        canActivate: [permissionGuard(['MANAGE_APP_CONFIG'])]
+      },
+      { 
+        path: 'entities/email-verification-tokens', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/email-verification-tokens/entities-email-verification-tokens').then(m => m.EntitiesEmailVerificationTokensComponent),
+        canActivate: [permissionGuard(['MANAGE_APP_CONFIG'])]
+      },
+      { 
+        path: 'entities/business-group-permissions/:page', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/business-group-permissions/entities-business-group-permissions').then(m => m.EntitiesBusinessGroupPermissionsComponent),
+        canActivate: [permissionGuard(['MANAGE_APP_CONFIG'])]
+      },
+      { 
+        path: 'entities/business-group-permissions', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/business-group-permissions/entities-business-group-permissions').then(m => m.EntitiesBusinessGroupPermissionsComponent),
+        canActivate: [permissionGuard(['MANAGE_APP_CONFIG'])]
+      },
+      { 
+        path: 'entities/user-business-groups/:page', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/user-business-groups/entities-user-business-groups').then(m => m.EntitiesUserBusinessGroupsComponent),
+        canActivate: [permissionGuard(['MANAGE_APP_CONFIG'])]
+      },
+      { 
+        path: 'entities/user-business-groups', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/user-business-groups/entities-user-business-groups').then(m => m.EntitiesUserBusinessGroupsComponent),
+        canActivate: [permissionGuard(['MANAGE_APP_CONFIG'])]
+      },
+      { 
+        path: 'entities/email-templates/:page', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/email-templates/entities-email-templates').then(m => m.EntitiesEmailTemplatesComponent),
+        canActivate: [permissionGuard(['MANAGE_APP_CONFIG'])]
+      },
+      { 
+        path: 'entities/email-templates', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/email-templates/entities-email-templates').then(m => m.EntitiesEmailTemplatesComponent),
+        canActivate: [permissionGuard(['MANAGE_APP_CONFIG'])]
+      },
+      { 
+        path: 'entities/smtp-config/:page', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/smtp-config/entities-smtp-config').then(m => m.EntitiesSmtpConfigComponent),
+        canActivate: [permissionGuard(['MANAGE_APP_CONFIG'])]
+      },
+      { 
+        path: 'entities/smtp-config', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/smtp-config/entities-smtp-config').then(m => m.EntitiesSmtpConfigComponent),
+        canActivate: [permissionGuard(['MANAGE_APP_CONFIG'])]
+      },
+      { 
+        path: 'entities/legal-texts/:page', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/legal-texts/entities-legal-texts').then(m => m.EntitiesLegalTextsComponent),
+        canActivate: [permissionGuard(['MANAGE_APP_CONFIG'])]
+      },
+      { 
+        path: 'entities/legal-texts', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/legal-texts/entities-legal-texts').then(m => m.EntitiesLegalTextsComponent),
+        canActivate: [permissionGuard(['MANAGE_APP_CONFIG'])]
+      },
+      { 
+        path: 'entities/app-config/:page', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/app-config/entities-app-config').then(m => m.EntitiesAppConfigComponent),
+        canActivate: [permissionGuard(['MANAGE_APP_CONFIG'])]
+      },
+      { 
+        path: 'entities/app-config', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/app-config/entities-app-config').then(m => m.EntitiesAppConfigComponent),
+        canActivate: [permissionGuard(['MANAGE_APP_CONFIG'])]
+      },
+      { 
+        path: 'entities/invitation-codes/:page', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/invitation-codes/entities-invitation-codes').then(m => m.EntitiesInvitationCodesComponent),
+        canActivate: [permissionGuard(['MANAGE_APP_CONFIG'])]
+      },
+      { 
+        path: 'entities/invitation-codes', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/invitation-codes/entities-invitation-codes').then(m => m.EntitiesInvitationCodesComponent),
+        canActivate: [permissionGuard(['MANAGE_APP_CONFIG'])]
+      },
+      { 
+        path: 'entities/business-groups/:page', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/business-groups/entities-business-groups').then(m => m.EntitiesBusinessGroupsComponent),
+        canActivate: [permissionGuard(['MANAGE_APP_CONFIG'])]
+      },
+      { 
+        path: 'entities/business-groups', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/business-groups/entities-business-groups').then(m => m.EntitiesBusinessGroupsComponent),
+        canActivate: [permissionGuard(['MANAGE_APP_CONFIG'])]
+      },
+      { 
+        path: 'entities/system-role-permissions/:page', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/system-role-permissions/entities-system-role-permissions').then(m => m.EntitiesSystemRolePermissionsComponent),
+        canActivate: [permissionGuard(['MANAGE_APP_CONFIG'])]
+      },
+      { 
+        path: 'entities/system-role-permissions', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/system-role-permissions/entities-system-role-permissions').then(m => m.EntitiesSystemRolePermissionsComponent),
+        canActivate: [permissionGuard(['MANAGE_APP_CONFIG'])]
+      },
+      { 
+        path: 'entities/user-permission-overrides/:page', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/user-permission-overrides/entities-user-permission-overrides').then(m => m.EntitiesUserPermissionOverridesComponent),
+        canActivate: [permissionGuard(['MANAGE_APP_CONFIG'])]
+      },
+      { 
+        path: 'entities/user-permission-overrides', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/user-permission-overrides/entities-user-permission-overrides').then(m => m.EntitiesUserPermissionOverridesComponent),
+        canActivate: [permissionGuard(['MANAGE_APP_CONFIG'])]
+      },
+      { 
+        path: 'entities/entity-permissions/:page', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/entity-permissions/entities-entity-permissions').then(m => m.EntitiesEntityPermissionsComponent),
+        canActivate: [permissionGuard(['MANAGE_APP_CONFIG'])]
+      },
+      { 
+        path: 'entities/entity-permissions', 
+        loadComponent: () => import('./pages/dashboard/entities/solo/entity-permissions/entities-entity-permissions').then(m => m.EntitiesEntityPermissionsComponent),
         canActivate: [permissionGuard(['MANAGE_APP_CONFIG'])]
       },
       {

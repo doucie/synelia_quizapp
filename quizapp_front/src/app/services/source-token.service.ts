@@ -41,6 +41,7 @@ export interface SourceToken {
   campaignId?: number;
   campaigns_id?: number; // Version snake_case du backend
   campaignName?: string;
+  expirationDate?: string;
   createdAt?: string;
   createdBy?: number;
   updatedAt?: string;

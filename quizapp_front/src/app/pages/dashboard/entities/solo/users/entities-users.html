@@ -298,6 +298,8 @@
             <th>Nom complet</th>
             <th>Prénom</th>
             <th>Pseudo</th>
+            <th>Email</th>
+            <th>Téléphone</th>
             <th>Rôle</th>
             <th>Statut</th>
             <th>Créé le</th>
@@ -319,6 +321,12 @@
             <td>
               <span class="cell-pseudo" *ngIf="user.pseudo">{{ user.pseudo }}</span>
               <span *ngIf="!user.pseudo" style="color: var(--text-secondary);">-</span>
+            </td>
+            <td>
+              <span>{{ user.email || '-' }}</span>
+            </td>
+            <td>
+              <span>{{ user.phone || user.telephone || '-' }}</span>
             </td>
             <td>
               <span class="role-badge" [attr.data-role]="user.role">

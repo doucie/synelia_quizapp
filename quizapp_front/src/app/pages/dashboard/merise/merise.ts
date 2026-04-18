@@ -303,7 +303,7 @@ export class MeriseComponent implements OnInit, AfterViewInit {
       ]
     },
     {
-      name: 'interview_crud', displayName: 'InterviewCrud', color: '#D97706', x: 1400, y: 1000,
+      name: 'interview_participant', displayName: 'InterviewParticipant', color: '#D97706', x: 1400, y: 1000,
       columns: [
         { name: 'id', type: 'INT UNSIGNED', pk: true },
         { name: 'user_id', type: 'INT UNSIGNED', fk: true, fkTarget: 'user' },
@@ -411,8 +411,8 @@ export class MeriseComponent implements OnInit, AfterViewInit {
     { from: 'candidate_answers', fromColumn: 'answer_id', to: 'answers', toColumn: 'id', cardinality: 'N,1', label: 'réponse' },
     { from: 'interviews', fromColumn: 'campaign_id', to: 'campaigns', toColumn: 'id', cardinality: 'N,1', label: 'campagne' },
     { from: 'interviews', fromColumn: 'application_id', to: 'applications', toColumn: 'id', cardinality: 'N,1', label: 'candidature' },
-    { from: 'interview_crud', fromColumn: 'user_id', to: 'user', toColumn: 'id', cardinality: 'N,1', label: 'utilisateur' },
-    { from: 'interview_crud', fromColumn: 'interview_id', to: 'interviews', toColumn: 'id', cardinality: 'N,1', label: 'entretien' },
+    { from: 'interview_participant', fromColumn: 'user_id', to: 'user', toColumn: 'id', cardinality: 'N,1', label: 'utilisateur' },
+    { from: 'interview_participant', fromColumn: 'interview_id', to: 'interviews', toColumn: 'id', cardinality: 'N,1', label: 'entretien' },
     { from: 'candidate_interview', fromColumn: 'application_id', to: 'applications', toColumn: 'id', cardinality: 'N,1', label: 'candidature' },
     { from: 'candidate_interview', fromColumn: 'interview_id', to: 'interviews', toColumn: 'id', cardinality: 'N,1', label: 'entretien' },
     { from: 'evaluations', fromColumn: 'candidate_interview_id', to: 'candidate_interview', toColumn: 'id', cardinality: 'N,1', label: 'entretien candidat' },

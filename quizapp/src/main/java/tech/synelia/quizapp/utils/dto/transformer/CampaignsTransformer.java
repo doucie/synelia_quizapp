@@ -47,6 +47,9 @@ public interface CampaignsTransformer {
 		@Mapping(source="entity.user.firstName", target="userFirstName"),
 		@Mapping(source="entity.user.lastName", target="userLastName"),
 		@Mapping(source="entity.specialities.id", target="specialityId"),
+		@Mapping(source="entity.specialities.specialityName", target="specialityName"),
+		@Mapping(source="entity.pipelineTemplate.id", target="pipelineTemplateId"),
+		@Mapping(source="entity.pipelineTemplate.templateName", target="pipelineTemplateName"),
 	})
 	CampaignsDto toDto(Campaigns entity) throws ParseException;
 

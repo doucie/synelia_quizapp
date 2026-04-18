@@ -142,6 +142,7 @@
             <th>User ID</th>
             <th>Type Décision</th>
             <th>Annulée</th>
+            <th>Étape Pipeline</th>
             <th>Créé le</th>
             <th>Actions</th>
           </tr>
@@ -153,6 +154,7 @@
             <td>{{ item.userId || '-' }}</td>
             <td>{{ item.decisionType || '-' }}</td>
             <td><span class="bool-badge" [class.is-true]="item.isCancel" [class.is-false]="!item.isCancel"><svg *ngIf="item.isCancel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><svg *ngIf="!item.isCancel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>{{ item.isCancel ? 'Oui' : 'Non' }}</span></td>
+            <td>{{ item.pipelineStageId || '-' }}</td>
             <td><span class="cell-date">{{ formatDate(item.createdAt) }}</span></td>
             <td class="actions-cell" (click)="$event.stopPropagation()">
               <div class="actions-menu">

@@ -52,7 +52,7 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 	@Autowired
 	private CampaignsRepository campaignsRepository;
 	@Autowired
-	private InterviewCrudRepository interviewCrudRepository;
+	private InterviewParticipantRepository interviewParticipantRepository;
 	@Autowired
 	private CampaignCrudRepository campaignCrudRepository;
 	@Autowired
@@ -513,7 +513,7 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 		if (!usersWithCampaigns.isEmpty()) {
 			throw new InternalErrorException(functionalError.DATA_NOT_DELETABLE("campaigns (" + usersWithCampaigns.size() + " users)", locale));
 		}
-		List<Integer> usersWithInterviews = interviewCrudRepository.findUserIdsWithInterviewCruds(userIds);
+		List<Integer> usersWithInterviews = interviewParticipantRepository.findUserIdsWithInterviewParticipants(userIds);
 		if (!usersWithInterviews.isEmpty()) {
 			throw new InternalErrorException(functionalError.DATA_NOT_DELETABLE("interviews (" + usersWithInterviews.size() + " users)", locale));
 		}

@@ -72,6 +72,57 @@ public class SystemRolePermissionController {
         return ResponseEntity.ok().body(response);
     }
 
+    @RequestMapping(value="/getByCriteria", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
+    public ResponseEntity<Response<SystemRolePermissionDto>> getByCriteria(@RequestBody Request<SystemRolePermissionDto> request) throws Exception {
+        log.info("start method /systemRolePermission/getByCriteria");
+        Response<SystemRolePermissionDto> response = new Response<>();
+        try {
+            response = systemRolePermissionBusiness.getByCriteria(request, locale(requestBasic));
+        } catch (Exception e) {
+            exceptionUtils.EXCEPTION(response, locale(requestBasic), e);
+        }
+        return ResponseEntity.ok().body(response);
+    }
+
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @RequestMapping(value="/getAllByCriteria", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
+    public ResponseEntity<Response<SystemRolePermissionDto>> getAllByCriteria(@RequestBody Request<SystemRolePermissionDto> request) throws Exception {
+        log.info("start method /systemRolePermission/getAllByCriteria");
+        Response<SystemRolePermissionDto> response = new Response<>();
+        try {
+            response = systemRolePermissionBusiness.getByCriteria(request, locale(requestBasic));
+        } catch (Exception e) {
+            exceptionUtils.EXCEPTION(response, locale(requestBasic), e);
+        }
+        return ResponseEntity.ok().body(response);
+    }
+
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @RequestMapping(value="/update", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
+    public ResponseEntity<Response<SystemRolePermissionDto>> update(@RequestBody Request<SystemRolePermissionDto> request) throws Exception {
+        log.info("start method /systemRolePermission/update");
+        Response<SystemRolePermissionDto> response = new Response<>();
+        try {
+            response = systemRolePermissionBusiness.update(request, locale(requestBasic));
+        } catch (Exception e) {
+            exceptionUtils.EXCEPTION(response, locale(requestBasic), e);
+        }
+        return ResponseEntity.ok().body(response);
+    }
+
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @RequestMapping(value="/delete", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
+    public ResponseEntity<Response<SystemRolePermissionDto>> delete(@RequestBody Request<SystemRolePermissionDto> request) throws Exception {
+        log.info("start method /systemRolePermission/delete");
+        Response<SystemRolePermissionDto> response = new Response<>();
+        try {
+            response = systemRolePermissionBusiness.delete(request, locale(requestBasic));
+        } catch (Exception e) {
+            exceptionUtils.EXCEPTION(response, locale(requestBasic), e);
+        }
+        return ResponseEntity.ok().body(response);
+    }
+
     private Locale locale(HttpServletRequest request) {
         return request.getLocale();
     }

@@ -146,4 +146,63 @@ public class UserPermissionOverrideBusiness {
 		response.setStatus(status);
 		return response;
 	}
+
+	/**
+	 * Retourne toutes les surcharges de permissions (pour page entité CRUD).
+	 */
+	public Response<UserPermissionOverrideDto> getByCriteria(Request<UserPermissionOverrideDto> request, Locale locale) {
+		Response<UserPermissionOverrideDto> response = new Response<>();
+
+		List<UserPermissionOverride> entities = userPermissionOverrideRepository.findAll();
+		List<UserPermissionOverrideDto> dtos = entities.stream().map(e -> {
+			UserPermissionOverrideDto dto = new UserPermissionOverrideDto();
+			dto.setId(e.getId());
+			dto.setUserId(e.getUser().getId());
+			dto.setFunctionality(e.getFunctionality());
+			dto.setIsAllowed(e.getIsAllowed());
+			java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
+			if (e.getCreatedAt() != null) dto.setCreatedAt(sdf.format(e.getCreatedAt()));
+			dto.setCreatedBy(e.getCreatedBy());
+			if (e.getUpdatedAt() != null) dto.setUpdatedAt(sdf.format(e.getUpdatedAt()));
+			dto.setUpdatedBy(e.getUpdatedBy());
+			return dto;
+		}).collect(Collectors.toList());
+
+		Status status = new Status();
+		status.setCode(StatusCode.SUCCESS);
+		status.setMessage(StatusMessage.SUCCESS);
+		response.setItems(dtos);
+		response.setCount((long) dtos.size());
+		response.setHasError(false);
+		response.setHttpCode(HttpStatus.OK.value());
+		response.setStatus(status);
+		return response;
+	}
+
+	/**
+	 * Supprimer un override par ID (hard delete).
+	 */
+	public Response<UserPermissionOverrideDto> delete(Request<UserPermissionOverrideDto> request, Locale locale) {
+		Response<UserPermissionOverrideDto> response = new Response<>();
+
+		UserPermissionOverrideDto dto = request.getData();
+		if (dto == null || dto.getId() == null) {
+			throw new InvalidEntityException(functionalError.FIELD_EMPTY("id", locale));
+		}
+
+		UserPermissionOverride entity = userPermissionOverrideRepository.findById(dto.getId()).orElse(null);
+		if (entity == null) {
+			throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("userPermissionOverride id -> " + dto.getId(), locale));
+		}
+
+		userPermissionOverrideRepository.delete(entity);
+
+		Status status = new Status();
+		status.setCode(StatusCode.SUCCESS);
+		status.setMessage(StatusMessage.SUCCESS);
+		response.setHasError(false);
+		response.setHttpCode(HttpStatus.OK.value());
+		response.setStatus(status);
+		return response;
+	}
 }

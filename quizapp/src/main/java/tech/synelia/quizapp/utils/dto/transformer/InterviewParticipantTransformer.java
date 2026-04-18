@@ -1,0 +1,81 @@
+package tech.synelia.quizapp.utils.dto.transformer;
+
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.mapstruct.IterableMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.Mappings;
+import org.mapstruct.Named;
+import org.mapstruct.factory.Mappers;
+
+import tech.synelia.quizapp.dao.entity.*;
+import tech.synelia.quizapp.utils.contract.*;
+import tech.synelia.quizapp.utils.dto.*;
+
+/**
+ * TRANSFORMER for table "interview_participant"
+ */
+@Mapper
+public interface InterviewParticipantTransformer {
+
+	InterviewParticipantTransformer INSTANCE = Mappers.getMapper(InterviewParticipantTransformer.class);
+
+	@FullTransformerQualifier
+	@Named("toFullDto")
+	@Mappings({
+		@Mapping(source="entity.createdAt", dateFormat="dd/MM/yyyy", target="createdAt"),
+		@Mapping(source="entity.updatedAt", dateFormat="dd/MM/yyyy", target="updatedAt"),
+		@Mapping(source="entity.user.id", target="userId"),
+		@Mapping(source="entity.user.firstName", target="userFirstName"),
+		@Mapping(source="entity.user.lastName", target="userLastName"),
+		@Mapping(source="entity.interviews.id", target="interviewId"),
+		@Mapping(source="entity.isOnline", target="isOnline"),
+		@Mapping(source="entity.hasFinished", target="hasFinished"),
+		@Mapping(source="entity.lastPingAt", dateFormat="dd/MM/yyyy HH:mm:ss", target="lastPingAt"),
+	})
+	InterviewParticipantDto toDto(InterviewParticipant entity) throws ParseException;
+
+	@Named("toLiteDto")
+    default InterviewParticipantDto toLiteDto(InterviewParticipant entity) {
+		if (entity == null) {
+			return null;
+		}
+		InterviewParticipantDto dto = new InterviewParticipantDto();
+		dto.setId( entity.getId() );
+		return dto;
+    }
+
+	@IterableMapping(qualifiedByName = "toFullDto")
+    List<InterviewParticipantDto> toDtos(List<InterviewParticipant> entities) throws ParseException;
+
+	@IterableMapping(qualifiedByName = "toLiteDto")
+	default List<InterviewParticipantDto> toLiteDtos(List<InterviewParticipant> entities) {
+		if (entities == null || entities.isEmpty()) {
+			return new ArrayList<>();
+		}
+		List<InterviewParticipantDto> dtos = new ArrayList<InterviewParticipantDto>();
+		for (InterviewParticipant entity : entities) {
+			dtos.add(toLiteDto(entity));
+		}
+		return dtos;
+	}
+
+	@Mappings({
+		@Mapping(source="dto.id", target="id"),
+		@Mapping(source="dto.createdAt", dateFormat="dd/MM/yyyy",target="createdAt"),
+		@Mapping(source="dto.createdBy", target="createdBy"),
+		@Mapping(source="dto.updatedAt", dateFormat="dd/MM/yyyy",target="updatedAt"),
+		@Mapping(source="dto.updatedBy", target="updatedBy"),
+		@Mapping(source="dto.isDeleted", target="isDeleted"),
+		@Mapping(source="dto.searchString", target="searchString"),
+		@Mapping(source="dto.isOnline", target="isOnline"),
+		@Mapping(source="dto.hasFinished", target="hasFinished"),
+		@Mapping(source="dto.lastPingAt", dateFormat="dd/MM/yyyy HH:mm:ss", target="lastPingAt"),
+		@Mapping(source="user", target="user"),
+		@Mapping(source="interviews", target="interviews"),
+	})
+    InterviewParticipant toEntity(InterviewParticipantDto dto, User user, Interviews interviews) throws ParseException;
+}

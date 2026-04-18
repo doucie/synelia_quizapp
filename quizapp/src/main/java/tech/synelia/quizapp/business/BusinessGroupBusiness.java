@@ -357,18 +357,25 @@ public class BusinessGroupBusiness {
 	public Response<BusinessGroupDto> getByCriteria(Request<BusinessGroupDto> request, Locale locale) {
 		Response<BusinessGroupDto> response = new Response<>();
 
-		List<BusinessGroup> entities = businessGroupRepository.findByIsDeleted(false);
+		Boolean isDeleted = false;
+		if (request.getData() != null && request.getData().getIsDeleted() != null) {
+			isDeleted = request.getData().getIsDeleted();
+		}
+
+		List<BusinessGroup> entities = businessGroupRepository.findByIsDeleted(isDeleted);
 		List<BusinessGroupDto> dtos = entities.stream().map(e -> {
 			BusinessGroupDto dto = new BusinessGroupDto();
 			dto.setId(e.getId());
 			dto.setGroupName(e.getGroupName());
 			dto.setGroupDesc(e.getGroupDesc());
+			dto.setIsDeleted(e.getIsDeleted());
+			java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
+			if (e.getCreatedAt() != null) dto.setCreatedAt(sdf.format(e.getCreatedAt()));
+			dto.setCreatedBy(e.getCreatedBy());
+			if (e.getUpdatedAt() != null) dto.setUpdatedAt(sdf.format(e.getUpdatedAt()));
+			dto.setUpdatedBy(e.getUpdatedBy());
 			return dto;
 		}).collect(Collectors.toList());
-
-		if (dtos.isEmpty()) {
-			throw new EntityNotFoundException(functionalError.DATA_EMPTY("businessGroup", locale));
-		}
 
 		Status status = new Status();
 		status.setCode(StatusCode.SUCCESS);

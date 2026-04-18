@@ -220,6 +220,11 @@
             <th>ID</th>
             <th>Nom</th>
             <th>Description</th>
+            <th>Statut</th>
+            <th>Spécialité</th>
+            <th>Template Pipeline</th>
+            <th>Date Début</th>
+            <th>Date Fin</th>
             <th>Créé le</th>
             <th>Actions</th>
           </tr>
@@ -235,6 +240,21 @@
               </td>
               <td>
                 <span class="cell-description">{{ campaign.campaignDesc || '-' }}</span>
+              </td>
+              <td>
+                <span class="status-badge">{{ campaign.campaignStatus || '-' }}</span>
+              </td>
+              <td>
+                <span class="cell-text">{{ campaign.specialityName || '-' }}</span>
+              </td>
+              <td>
+                <span class="cell-text">{{ campaign.pipelineTemplateName || '-' }}</span>
+              </td>
+              <td>
+                <span class="cell-date">{{ campaign.campaignStart || '-' }}</span>
+              </td>
+              <td>
+                <span class="cell-date">{{ campaign.campaignEnd || '-' }}</span>
               </td>
               <td>
                 <span class="cell-date" *ngIf="campaign.createdAt; else noDate">
@@ -320,7 +340,7 @@
             
             <!-- Ligne d'expansion avec onglets enfants -->
             <tr *ngIf="isCampaignExpanded(campaign.id)" class="expansion-row">
-              <td colspan="5" class="expansion-content">
+              <td colspan="10" class="expansion-content">
                 <div class="children-container">
                   <!-- Onglets -->
                   <div class="children-tabs">

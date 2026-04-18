@@ -41,7 +41,7 @@ public class DashboardController {
     private final CandidateAskRepository candidateAskRepository;
     private final CandidateInterviewRepository candidateInterviewRepository;
     private final CandidateTokenRepository candidateTokenRepository;
-    private final InterviewCrudRepository interviewCrudRepository;
+    private final InterviewParticipantRepository interviewParticipantRepository;
     private final DecisionRepository decisionRepository;
     private final NotificationsRepository notificationsRepository;
     private final FormRepository formRepository;
@@ -65,7 +65,7 @@ public class DashboardController {
             CandidateAskRepository candidateAskRepository,
             CandidateInterviewRepository candidateInterviewRepository,
             CandidateTokenRepository candidateTokenRepository,
-            InterviewCrudRepository interviewCrudRepository,
+            InterviewParticipantRepository interviewParticipantRepository,
             DecisionRepository decisionRepository,
             NotificationsRepository notificationsRepository,
             FormRepository formRepository,
@@ -88,7 +88,7 @@ public class DashboardController {
         this.candidateAskRepository = candidateAskRepository;
         this.candidateInterviewRepository = candidateInterviewRepository;
         this.candidateTokenRepository = candidateTokenRepository;
-        this.interviewCrudRepository = interviewCrudRepository;
+        this.interviewParticipantRepository = interviewParticipantRepository;
         this.decisionRepository = decisionRepository;
         this.notificationsRepository = notificationsRepository;
         this.formRepository = formRepository;
@@ -119,7 +119,7 @@ public class DashboardController {
         counts.put("candidate-ask", candidateAskRepository.count());
         counts.put("candidate-interview", candidateInterviewRepository.count());
         counts.put("candidate-token", candidateTokenRepository.count());
-        counts.put("interview-crud", interviewCrudRepository.count());
+        counts.put("interview-participant", interviewParticipantRepository.count());
         counts.put("decisions", decisionRepository.count());
         counts.put("notifications", notificationsRepository.count());
         counts.put("forms", formRepository.count());
@@ -148,7 +148,7 @@ public class DashboardController {
             case "users":
                 addDep(deps, "campaigns", "Campagnes (créateur)", campaignsRepository.findByCreatorId(id, false), false);
                 addDep(deps, "campaign-crud", "Permissions campagne", campaignCrudRepository.findByUserId(id, false), false);
-                addDep(deps, "interview-crud", "Permissions entretien", interviewCrudRepository.findByUserId(id, false), false);
+                addDep(deps, "interview-participant", "Permissions entretien", interviewParticipantRepository.findByUserId(id, false), false);
                 addDep(deps, "decisions", "Décisions", decisionRepository.findByUserId(id, false), false);
                 addDep(deps, "notifications", "Notifications", notificationsRepository.findByUserId(id, false), false);
                 break;
@@ -192,7 +192,7 @@ public class DashboardController {
                 break;
             case "interviews":
                 addDep(deps, "candidate-interview", "Entretiens candidat", candidateInterviewRepository.findByInterviewId(id, false), true);
-                addDep(deps, "interview-crud", "Permissions entretien", interviewCrudRepository.findByInterviewId(id, false), false);
+                addDep(deps, "interview-participant", "Permissions entretien", interviewParticipantRepository.findByInterviewId(id, false), false);
                 break;
             case "candidate-interview":
                 addDep(deps, "evaluations", "Évaluations", evaluationsRepository.findByCandidateInterviewId(id, false), false);

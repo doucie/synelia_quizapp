@@ -112,6 +112,44 @@ public class EntityPermissionController {
         return ResponseEntity.ok().body(response);
     }
 
+    @RequestMapping(value="/getByCriteria", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
+    public ResponseEntity<Response<EntityPermissionDto>> getByCriteria(@RequestBody Request<EntityPermissionDto> request) throws Exception {
+        log.info("start method /entityPermission/getByCriteria");
+        Response<EntityPermissionDto> response = new Response<>();
+        try {
+            response = entityPermissionBusiness.getByCriteria(request, locale(requestBasic));
+        } catch (Exception e) {
+            exceptionUtils.EXCEPTION(response, locale(requestBasic), e);
+        }
+        return ResponseEntity.ok().body(response);
+    }
+
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @RequestMapping(value="/getAllByCriteria", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
+    public ResponseEntity<Response<EntityPermissionDto>> getAllByCriteria(@RequestBody Request<EntityPermissionDto> request) throws Exception {
+        log.info("start method /entityPermission/getAllByCriteria");
+        Response<EntityPermissionDto> response = new Response<>();
+        try {
+            response = entityPermissionBusiness.getByCriteria(request, locale(requestBasic));
+        } catch (Exception e) {
+            exceptionUtils.EXCEPTION(response, locale(requestBasic), e);
+        }
+        return ResponseEntity.ok().body(response);
+    }
+
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @RequestMapping(value="/delete", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
+    public ResponseEntity<Response<EntityPermissionDto>> delete(@RequestBody Request<EntityPermissionDto> request) throws Exception {
+        log.info("start method /entityPermission/delete");
+        Response<EntityPermissionDto> response = new Response<>();
+        try {
+            response = entityPermissionBusiness.delete(request, locale(requestBasic));
+        } catch (Exception e) {
+            exceptionUtils.EXCEPTION(response, locale(requestBasic), e);
+        }
+        return ResponseEntity.ok().body(response);
+    }
+
     private Locale locale(HttpServletRequest request) {
         return request.getLocale();
     }

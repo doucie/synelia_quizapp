@@ -218,6 +218,7 @@
             <th>Nom</th>
             <th>Token</th>
             <th>ID Campagne</th>
+            <th>Expiration</th>
             <th>Cree le</th>
             <th>Actions</th>
           </tr>
@@ -236,6 +237,9 @@
             </td>
             <td>
               <span class="cell-campaign">{{ token.campaignId || token.campaigns_id || '-' }}</span>
+            </td>
+            <td>
+              <span class="cell-date">{{ token.expirationDate || '-' }}</span>
             </td>
             <td>
               <span class="cell-date">{{ formatDate(token.createdAt) }}</span>

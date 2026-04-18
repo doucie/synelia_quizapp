@@ -101,7 +101,7 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
   campaignAccesses = signal<any[]>([]); // Accès de la campagne
   
   // Présence en ligne - stocke l'ID du participant pour l'utilisateur courant
-  currentUserInterviewCrudId = signal<number | null>(null);
+  currentUserParticipantId = signal<number | null>(null);
 
   // Computed
   averageScore = computed(() => {
@@ -189,7 +189,7 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
    * Note: Utilise sendPresencePing pour ne pas toucher à hasFinished
    */
   private markUserOnline(): void {
-    const crudId = this.currentUserInterviewCrudId();
+    const crudId = this.currentUserParticipantId();
     if (!crudId) return;
 
     // Utiliser sendPresencePing qui met juste isOnline=true et lastPingAt
@@ -206,7 +206,7 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
    * Note: Ne modifie PAS hasFinished pour ne pas écraser la valeur en BD
    */
   private markUserOffline(): void {
-    const crudId = this.currentUserInterviewCrudId();
+    const crudId = this.currentUserParticipantId();
     if (!crudId) return;
 
     this.interviewParticipantService.markOffline(crudId)
@@ -220,7 +220,7 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
    * Note: Ne modifie PAS hasFinished pour ne pas écraser la valeur en BD
    */
   private sendPresencePing(): void {
-    const crudId = this.currentUserInterviewCrudId();
+    const crudId = this.currentUserParticipantId();
     if (!crudId) return;
 
     this.interviewParticipantService.sendPresencePing(crudId)
@@ -457,7 +457,7 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
     this.canEvaluate.set(true);
     
     // Stocker l'ID du participant pour les mises à jour de statut
-    this.currentUserInterviewCrudId.set(userParticipant?.id ?? null);
+    this.currentUserParticipantId.set(userParticipant?.id ?? null);
     
     // Marquer immédiatement l'utilisateur comme en ligne
     this.markUserOnline();
@@ -928,7 +928,7 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
    * Réinitialise hasFinished à false pour l'utilisateur courant
    */
   private resetHasFinished(): void {
-    const crudId = this.currentUserInterviewCrudId();
+    const crudId = this.currentUserParticipantId();
     if (!crudId) return;
 
     // Mettre hasFinished à false avec la méthode dédiée
@@ -1091,7 +1091,7 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
     this.evaluators.set(updated);
 
     // Persister au backend avec la méthode dédiée
-    const crudId = this.currentUserInterviewCrudId();
+    const crudId = this.currentUserParticipantId();
     if (crudId) {
       this.interviewParticipantService.updateHasFinished(crudId, newHasFinished)
         .pipe(takeUntil(this.destroy$))

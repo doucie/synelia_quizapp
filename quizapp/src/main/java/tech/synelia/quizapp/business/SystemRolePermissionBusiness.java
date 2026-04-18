@@ -136,4 +136,102 @@ public class SystemRolePermissionBusiness {
 		response.setStatus(status);
 		return response;
 	}
+
+	/**
+	 * Retourne toutes les permissions système (pour la page entité CRUD).
+	 */
+	public Response<SystemRolePermissionDto> getByCriteria(Request<SystemRolePermissionDto> request, Locale locale) {
+		Response<SystemRolePermissionDto> response = new Response<>();
+
+		List<SystemRolePermission> entities = systemRolePermissionRepository.findAll();
+		List<SystemRolePermissionDto> dtos = entities.stream().map(e -> {
+			SystemRolePermissionDto dto = new SystemRolePermissionDto();
+			dto.setId(e.getId());
+			dto.setSystemRole(e.getSystemRole());
+			dto.setFunctionality(e.getFunctionality());
+			java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
+			if (e.getCreatedAt() != null) dto.setCreatedAt(sdf.format(e.getCreatedAt()));
+			dto.setCreatedBy(e.getCreatedBy());
+			if (e.getUpdatedAt() != null) dto.setUpdatedAt(sdf.format(e.getUpdatedAt()));
+			dto.setUpdatedBy(e.getUpdatedBy());
+			return dto;
+		}).collect(Collectors.toList());
+
+		Status status = new Status();
+		status.setCode(StatusCode.SUCCESS);
+		status.setMessage(StatusMessage.SUCCESS);
+		response.setItems(dtos);
+		response.setCount((long) dtos.size());
+		response.setHasError(false);
+		response.setHttpCode(HttpStatus.OK.value());
+		response.setStatus(status);
+		return response;
+	}
+
+	/**
+	 * Modifier une permission système par ID.
+	 */
+	public Response<SystemRolePermissionDto> update(Request<SystemRolePermissionDto> request, Locale locale) {
+		Response<SystemRolePermissionDto> response = new Response<>();
+
+		SystemRolePermissionDto dto = request.getData();
+		if (dto == null || dto.getId() == null) {
+			throw new InvalidEntityException(functionalError.FIELD_EMPTY("id", locale));
+		}
+
+		SystemRolePermission entity = systemRolePermissionRepository.findById(dto.getId()).orElse(null);
+		if (entity == null) {
+			throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("systemRolePermission id -> " + dto.getId(), locale));
+		}
+
+		if (SUPER_ADMIN.equals(entity.getSystemRole())) {
+			throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION("Impossible de modifier les permissions de SUPER_ADMIN", locale));
+		}
+
+		if (Utilities.notBlank(dto.getSystemRole())) entity.setSystemRole(dto.getSystemRole());
+		if (Utilities.notBlank(dto.getFunctionality())) entity.setFunctionality(dto.getFunctionality());
+		entity.setUpdatedAt(Utilities.getCurrentDate());
+		entity.setUpdatedBy(request.getUser());
+		systemRolePermissionRepository.save(entity);
+
+		Status status = new Status();
+		status.setCode(StatusCode.SUCCESS);
+		status.setMessage(StatusMessage.SUCCESS);
+		response.setItems(Arrays.asList(dto));
+		response.setHasError(false);
+		response.setHttpCode(HttpStatus.OK.value());
+		response.setStatus(status);
+		return response;
+	}
+
+	/**
+	 * Supprimer une permission système par ID (hard delete).
+	 */
+	public Response<SystemRolePermissionDto> delete(Request<SystemRolePermissionDto> request, Locale locale) {
+		Response<SystemRolePermissionDto> response = new Response<>();
+
+		SystemRolePermissionDto dto = request.getData();
+		if (dto == null || dto.getId() == null) {
+			throw new InvalidEntityException(functionalError.FIELD_EMPTY("id", locale));
+		}
+
+		SystemRolePermission entity = systemRolePermissionRepository.findById(dto.getId()).orElse(null);
+		if (entity == null) {
+			throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("systemRolePermission id -> " + dto.getId(), locale));
+		}
+
+		if (SUPER_ADMIN.equals(entity.getSystemRole())) {
+			throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION("Impossible de modifier les permissions de SUPER_ADMIN", locale));
+		}
+
+		systemRolePermissionRepository.delete(entity);
+
+		Status status = new Status();
+		status.setCode(StatusCode.SUCCESS);
+		status.setMessage(StatusMessage.SUCCESS);
+		response.setHasError(false);
+		response.setHttpCode(HttpStatus.OK.value());
+		response.setStatus(status);
+		return response;
+	}
 }

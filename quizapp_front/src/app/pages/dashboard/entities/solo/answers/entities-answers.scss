@@ -68,17 +68,9 @@
   td:last-child {
     position: sticky;
     right: 0;
-    background: var(--surface);
     z-index: 5;
   }
 
-  thead th:last-child {
-    background: var(--surface-variant);
-  }
-
-  tbody tr:hover td:last-child {
-    background: var(--surface-hover);
-  }
 }
 
 @media (max-width: 768px) {

@@ -42,6 +42,7 @@ public interface SourceTokenTransformer {
 	@Mappings({
 		@Mapping(source="entity.createdAt", dateFormat="dd/MM/yyyy", target="createdAt"),
 		@Mapping(source="entity.updatedAt", dateFormat="dd/MM/yyyy", target="updatedAt"),
+		@Mapping(source="entity.expirationDate", dateFormat="dd/MM/yyyy", target="expirationDate"),
 		@Mapping(source="entity.campaigns.id", target="campaignId"),
 		@Mapping(source="entity.sourceTokenName", target="sourceTokenName"),
 	})

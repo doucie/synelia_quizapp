@@ -506,7 +506,7 @@ export class InterviewsComponent implements OnInit, OnDestroy {
 
   /**
    * Évalue un entretien
-   * Vérifie d'abord si l'utilisateur courant a le droit d'évaluer (canEvaluate dans interview_crud)
+   * Vérifie d'abord si l'utilisateur courant a le droit d'évaluer (via entity_permission / interview_participant)
    */
   evaluateInterview(interview: InterviewWithDetails): void {
     if (!interview.id) {

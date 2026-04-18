@@ -48,6 +48,7 @@ public class SourceTokenDto extends _SourceTokenDto implements Cloneable{
     private String     dateModificationA    ;
     private Integer    campaignId           ;
     private String     campaignName         ; // Nom de la campagne associée (non persisté, calculé)
+    private String     expirationDate       ;
 
     //----------------------------------------------------------------------
     // ENTITY LINKS FIELD ( RELATIONSHIP )

@@ -266,28 +266,28 @@
 			"name": "DELETE EVALUATIONS"
 		},
 		{
-			"code": "INTERVIEW_CRUD",
-			"name": "INTERVIEW_CRUD"
+			"code": "INTERVIEW_PARTICIPANT",
+			"name": "INTERVIEW_PARTICIPANT"
 		},
 		{
-			"code": "VIEW_INTERVIEW_CRUD",
-			"parentCode": "INTERVIEW_CRUD",
-			"name": "VIEW INTERVIEW_CRUD"
+			"code": "VIEW_INTERVIEW_PARTICIPANT",
+			"parentCode": "INTERVIEW_PARTICIPANT",
+			"name": "VIEW INTERVIEW_PARTICIPANT"
 		},
 		{
-			"code": "CREATE_INTERVIEW_CRUD",
-			"parentCode": "INTERVIEW_CRUD",
-			"name": "CREATE INTERVIEW_CRUD"
+			"code": "CREATE_INTERVIEW_PARTICIPANT",
+			"parentCode": "INTERVIEW_PARTICIPANT",
+			"name": "CREATE INTERVIEW_PARTICIPANT"
 		},
 		{
-			"code": "UPDATE_INTERVIEW_CRUD",
-			"parentCode": "INTERVIEW_CRUD",
-			"name": "UPDATE INTERVIEW_CRUD"
+			"code": "UPDATE_INTERVIEW_PARTICIPANT",
+			"parentCode": "INTERVIEW_PARTICIPANT",
+			"name": "UPDATE INTERVIEW_PARTICIPANT"
 		},
 		{
-			"code": "DELETE_INTERVIEW_CRUD",
-			"parentCode": "INTERVIEW_CRUD",
-			"name": "DELETE INTERVIEW_CRUD"
+			"code": "DELETE_INTERVIEW_PARTICIPANT",
+			"parentCode": "INTERVIEW_PARTICIPANT",
+			"name": "DELETE INTERVIEW_PARTICIPANT"
 		},
 		{
 			"code": "INTERVIEWS",

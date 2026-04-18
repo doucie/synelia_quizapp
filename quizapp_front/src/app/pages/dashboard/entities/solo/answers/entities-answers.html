@@ -215,6 +215,8 @@
             <th>Texte de la réponse</th>
             <th>Question ID</th>
             <th>Ordre</th>
+            <th>Type</th>
+            <th>Correcte</th>
             <th>Créé le</th>
             <th>Actions</th>
           </tr>
@@ -234,6 +236,12 @@
             </td>
             <td>
               <span class="cell-order">{{ answer.answerOrder || 1 }}</span>
+            </td>
+            <td>
+              <span>{{ answer.answerType || '-' }}</span>
+            </td>
+            <td>
+              <span class="bool-badge" [class.is-true]="answer.isCorrect" [class.is-false]="!answer.isCorrect">{{ answer.isCorrect ? 'Oui' : 'Non' }}</span>
             </td>
             <td>
               <span class="cell-date">{{ formatDate(answer.createdAt) }}</span>

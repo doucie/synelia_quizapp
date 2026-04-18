@@ -70,6 +70,44 @@ public class UserPermissionOverrideController {
         return ResponseEntity.ok().body(response);
     }
 
+    @RequestMapping(value="/getByCriteria", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
+    public ResponseEntity<Response<UserPermissionOverrideDto>> getByCriteria(@RequestBody Request<UserPermissionOverrideDto> request) throws Exception {
+        log.info("start method /userPermissionOverride/getByCriteria");
+        Response<UserPermissionOverrideDto> response = new Response<>();
+        try {
+            response = userPermissionOverrideBusiness.getByCriteria(request, locale(requestBasic));
+        } catch (Exception e) {
+            exceptionUtils.EXCEPTION(response, locale(requestBasic), e);
+        }
+        return ResponseEntity.ok().body(response);
+    }
+
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @RequestMapping(value="/getAllByCriteria", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
+    public ResponseEntity<Response<UserPermissionOverrideDto>> getAllByCriteria(@RequestBody Request<UserPermissionOverrideDto> request) throws Exception {
+        log.info("start method /userPermissionOverride/getAllByCriteria");
+        Response<UserPermissionOverrideDto> response = new Response<>();
+        try {
+            response = userPermissionOverrideBusiness.getByCriteria(request, locale(requestBasic));
+        } catch (Exception e) {
+            exceptionUtils.EXCEPTION(response, locale(requestBasic), e);
+        }
+        return ResponseEntity.ok().body(response);
+    }
+
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @RequestMapping(value="/delete", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
+    public ResponseEntity<Response<UserPermissionOverrideDto>> delete(@RequestBody Request<UserPermissionOverrideDto> request) throws Exception {
+        log.info("start method /userPermissionOverride/delete");
+        Response<UserPermissionOverrideDto> response = new Response<>();
+        try {
+            response = userPermissionOverrideBusiness.delete(request, locale(requestBasic));
+        } catch (Exception e) {
+            exceptionUtils.EXCEPTION(response, locale(requestBasic), e);
+        }
+        return ResponseEntity.ok().body(response);
+    }
+
     private Locale locale(HttpServletRequest request) {
         return request.getLocale();
     }

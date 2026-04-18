@@ -12,6 +12,12 @@ import tech.synelia.quizapp.dao.entity.UserBusinessGroup;
 @Repository
 public interface UserBusinessGroupRepository extends JpaRepository<UserBusinessGroup, Integer> {
 
+	@Query("select e from UserBusinessGroup e where e.id = :id and e.isDeleted = :isDeleted")
+	UserBusinessGroup findOne(@Param("id") Integer id, @Param("isDeleted") Boolean isDeleted);
+
+	@Query("select e from UserBusinessGroup e where e.isDeleted = false")
+	List<UserBusinessGroup> findAllActive();
+
 	@Query("select e from UserBusinessGroup e where e.user.id = :userId")
 	List<UserBusinessGroup> findByUserId(@Param("userId") Integer userId);
 

@@ -12,6 +12,12 @@ import tech.synelia.quizapp.dao.entity.BusinessGroupPermission;
 @Repository
 public interface BusinessGroupPermissionRepository extends JpaRepository<BusinessGroupPermission, Integer> {
 
+	@Query("select e from BusinessGroupPermission e where e.id = :id and e.isDeleted = :isDeleted")
+	BusinessGroupPermission findOne(@Param("id") Integer id, @Param("isDeleted") Boolean isDeleted);
+
+	@Query("select e from BusinessGroupPermission e where e.isDeleted = false")
+	List<BusinessGroupPermission> findAllActive();
+
 	@Query("select e from BusinessGroupPermission e where e.businessGroup.id = :businessGroupId")
 	List<BusinessGroupPermission> findByBusinessGroupId(@Param("businessGroupId") Integer businessGroupId);
 

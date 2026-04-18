@@ -156,7 +156,9 @@
           <tr>
             <th>ID</th>
             <th>Application ID</th>
+            <th>Question ID</th>
             <th>Answer ID</th>
+            <th>Réponse Libre</th>
             <th>Selected</th>
             <th>Créé le</th>
             <th>Actions</th>
@@ -166,7 +168,9 @@
           <tr *ngFor="let item of items(); trackBy: trackById" [class.row-deleted]="item.isDeleted" (click)="selectItem(item)" style="cursor: pointer;">
             <td><span class="cell-id">#{{ item.id }}</span></td>
             <td>{{ item.applicationId || '-' }}</td>
+            <td>{{ item.questionId || '-' }}</td>
             <td>{{ item.answerId || '-' }}</td>
+            <td>{{ item.freeTextResponse ? (item.freeTextResponse.length > 30 ? (item.freeTextResponse | slice:0:30) + '...' : item.freeTextResponse) : '-' }}</td>
             <td><span class="bool-badge" [class.is-true]="item.isSelected" [class.is-false]="!item.isSelected"><svg *ngIf="item.isSelected" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><svg *ngIf="!item.isSelected" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>{{ item.isSelected ? 'Oui' : 'Non' }}</span></td>
             <td><span class="cell-date">{{ formatDate(item.createdAt) }}</span></td>
             <td class="actions-cell" (click)="$event.stopPropagation()">

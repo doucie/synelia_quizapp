@@ -190,6 +190,7 @@
             <th>Lieu / Lien</th>
             <th>Statut</th>
             <th>Campagne</th>
+            <th>Candidature</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -218,6 +219,10 @@
             <td>
               <span *ngIf="interview.campaignId">{{ interview.campaignTitle || '#' + interview.campaignId }}</span>
               <span *ngIf="!interview.campaignId">-</span>
+            </td>
+            <td>
+              <span *ngIf="interview.applicationId">{{ interview.candidateName || '#' + interview.applicationId }}</span>
+              <span *ngIf="!interview.applicationId">-</span>
             </td>
             <td class="actions-cell" (click)="$event.stopPropagation()">
               <div class="actions-menu">

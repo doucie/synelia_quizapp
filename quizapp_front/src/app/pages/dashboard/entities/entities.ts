@@ -174,12 +174,12 @@ export class EntitiesComponent implements OnInit {
       color: '#475569'
     },
     {
-      name: 'interview-crud',
-      displayName: 'Permissions Entretien',
-      description: 'Droits d\'accès et permissions sur les entretiens',
+      name: 'interview-participant',
+      displayName: 'Participants Entretien',
+      description: 'Participants aux entretiens (présence, statut)',
       icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>',
       iconType: 'svg',
-      route: '/dashboard/entities/interview-crud',
+      route: '/dashboard/entities/interview-participant',
       color: '#0891B2'
     },
     {

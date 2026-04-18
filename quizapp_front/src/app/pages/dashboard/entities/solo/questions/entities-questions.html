@@ -240,6 +240,9 @@
             <th>Question</th>
             <th>Spécialité</th>
             <th>Chrono</th>
+            <th>Type</th>
+            <th>Score</th>
+            <th>Difficulté</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -257,6 +260,15 @@
               </td>
               <td>
                 <span class="cell-chrono">{{ question.questionChrono || '-' }}</span>
+              </td>
+              <td>
+                <span>{{ question.questionType || '-' }}</span>
+              </td>
+              <td>
+                <span>{{ question.score ?? '-' }}</span>
+              </td>
+              <td>
+                <span>{{ question.difficultyLevel || '-' }}</span>
               </td>
               <td class="actions-cell" (click)="$event.stopPropagation()">
                 <div class="actions-menu">

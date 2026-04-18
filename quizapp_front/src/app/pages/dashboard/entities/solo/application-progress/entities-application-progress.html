@@ -138,6 +138,8 @@
             <th>Score</th>
             <th>Démarré le</th>
             <th>Terminé le</th>
+            <th>Notes</th>
+            <th>Décidé par</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -154,6 +156,8 @@
             <td>{{ item.score !== undefined && item.score !== null ? item.score : '-' }}</td>
             <td><span class="cell-date">{{ formatDate(item.startedAt) }}</span></td>
             <td><span class="cell-date">{{ formatDate(item.completedAt) }}</span></td>
+            <td>{{ item.notes ? (item.notes.length > 25 ? (item.notes | slice:0:25) + '...' : item.notes) : '-' }}</td>
+            <td>{{ (item.decidedByFirstName || item.decidedByLastName) ? ((item.decidedByFirstName || '') + ' ' + (item.decidedByLastName || '')).trim() : '-' }}</td>
             <td class="actions-cell" (click)="$event.stopPropagation()">
               <div class="actions-menu">
                 <ng-container *ngIf="!item.isDeleted">

@@ -14,7 +14,7 @@ export interface EntityPermissionResponse {
 
 /**
  * Service for entity-level permissions (campaign, interview, etc.).
- * Replaces the permission aspects of CampaignCrud and InterviewCrud.
+ * Replaces the permission aspects of CampaignCrud and InterviewParticipant.
  */
 @Injectable({
   providedIn: 'root'

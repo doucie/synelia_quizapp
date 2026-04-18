@@ -1,0 +1,337 @@
+<div class="entities-business-groups-container">
+  <div class="header-toolbar-container">
+    <div class="page-header">
+      <div class="breadcrumb">
+        <button class="btn-back" (click)="goBackToEntities()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 12H5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 19L5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Retour aux Entités
+        </button>
+        <span class="breadcrumb-separator">/</span>
+        <span class="current-page">Gestion des Groupes Métier</span>
+      </div>
+      <h1>Gestion des Groupes Métier</h1>
+      <p class="page-description">Administration des groupes métier</p>
+    </div>
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <input type="text" class="search-input" placeholder="Rechercher..." [(ngModel)]="quickSearch" (input)="onQuickSearch()" />
+        <div class="checkbox-container">
+          <input type="checkbox" id="showDeleted" class="checkbox-input" [checked]="showDeletedItems" (click)="toggleDeletedItems()" />
+          <label for="showDeleted" class="checkbox-label"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Afficher les supprimés</label>
+        </div>
+      </div>
+      <div class="toolbar-right">
+        <button class="btn-secondary-pro" (click)="openAdvancedSearch()">Filtres avancés</button>
+        <button class="btn-primary-pro" (click)="openCreateDialog()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Nouveau
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="advanced-search-panel" *ngIf="showAdvancedSearch">
+    <div class="panel-header">
+      <h3>Filtres avancés</h3>
+      <button class="btn-close" (click)="openAdvancedSearch()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+    <div class="panel-content">
+      <div class="form-grid">
+        <div class="form-row-full">
+          <div class="form-group-inline">
+            <label>ID de</label>
+            <input type="text" class="form-input-inline" [(ngModel)]="advancedCriteria.idDe" placeholder="ID minimum" />
+          </div>
+          <span class="range-separator">à</span>
+          <div class="form-group-inline">
+            <input type="text" class="form-input-inline" [(ngModel)]="advancedCriteria.idA" placeholder="ID maximum" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Nom du groupe</label>
+          <input type="text" class="form-input" [(ngModel)]="advancedCriteria.groupName" placeholder="Nom" />
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <input type="text" class="form-input" [(ngModel)]="advancedCriteria.groupDesc" placeholder="Description" />
+        </div>
+        <div class="form-group">
+          <label>Supprimé</label>
+          <select class="form-select" [(ngModel)]="advancedCriteria.isDeleted">
+            <option [ngValue]="undefined">Tous</option>
+            <option [ngValue]="false">Non supprimé</option>
+            <option [ngValue]="true">Supprimé</option>
+          </select>
+        </div>
+        <div class="form-row-full">
+          <div class="form-group-inline">
+            <label>Date de création de</label>
+            <input type="date" class="form-input-inline" [(ngModel)]="advancedCriteria.dateCreationDe" />
+          </div>
+          <span class="range-separator">à</span>
+          <div class="form-group-inline">
+            <input type="date" class="form-input-inline" [(ngModel)]="advancedCriteria.dateCreationA" />
+          </div>
+        </div>
+        <div class="form-row-full">
+          <div class="form-group-inline">
+            <label>Date de modification de</label>
+            <input type="date" class="form-input-inline" [(ngModel)]="advancedCriteria.dateModificationDe" />
+          </div>
+          <span class="range-separator">à</span>
+          <div class="form-group-inline">
+            <input type="date" class="form-input-inline" [(ngModel)]="advancedCriteria.dateModificationA" />
+          </div>
+        </div>
+      </div>
+      <div class="panel-actions">
+        <button class="btn-secondary-pro" (click)="resetAdvancedSearch()">Réinitialiser</button>
+        <button class="btn-primary-pro" (click)="applyAdvancedSearch()">Appliquer</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="entity-section">
+    <div class="section-stats">
+      <div class="stats-row">
+        <h2 class="section-title">Groupes Métier</h2>
+        <div class="stats-info" *ngIf="!isLoading()">
+          <div class="stat-item"><span>Total:</span><span class="stat-number">{{ totalElements() }}</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="isLoading()" class="loading-state"><div class="loading-spinner"></div><p>Chargement...</p></div>
+    <div *ngIf="!isLoading() && items().length === 0" class="empty-state"><h3>Aucun enregistrement trouvé</h3></div>
+
+    <div *ngIf="!isLoading() && items().length > 0" class="data-table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nom</th>
+            <th>Description</th>
+            <th>Créé le</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <ng-container *ngFor="let item of items(); trackBy: trackById">
+          <tr [class.row-deleted]="item.isDeleted" (click)="selectItem(item)" style="cursor: pointer;">
+            <td><span class="cell-id">#{{ item.id }}</span></td>
+            <td>{{ item.groupName || '-' }}</td>
+            <td>{{ item.groupDesc || '-' }}</td>
+            <td><span class="cell-date">{{ formatDate(item.createdAt) }}</span></td>
+            <td class="actions-cell" (click)="$event.stopPropagation()">
+              <div class="actions-menu">
+                <ng-container *ngIf="!item.isDeleted">
+                  <button class="action-btn primary" (click)="openEditDialog(item)" title="Modifier">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 20H21M16.5 3.5A2.12 2.12 0 0 1 19 6L7 18L3 19L4 15L16.5 3.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
+                  <button class="action-btn danger" (click)="confirmDelete(item)" title="Supprimer">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 6H5H21M8 6V4C8 3 9 2 10 2H14C15 2 16 3 16 4V6M19 6V20C19 21 18 22 17 22H7C6 22 5 21 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
+                </ng-container>
+                <ng-container *ngIf="item.isDeleted">
+                  <button class="action-btn success" (click)="confirmRestore(item)" title="Restaurer">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 12A9 9 0 1 0 12 3M12 3L8 7L12 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
+                </ng-container>
+                <button
+                  class="action-btn secondary"
+                  (click)="toggleGroupExpansion(item.id!)"
+                  [class.expanded]="isGroupExpanded(item.id!)"
+                  title="Afficher les détails">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                      d="M6 9L12 15L18 9"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      [attr.transform]="isGroupExpanded(item.id!) ? 'rotate(180 12 12)' : ''"/>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Ligne d'expansion avec onglets enfants -->
+          <tr *ngIf="isGroupExpanded(item.id!)" class="expansion-row">
+            <td colspan="5" class="expansion-content">
+              <div class="children-container">
+                <!-- Onglets -->
+                <div class="children-tabs">
+                  <button class="children-tab" [class.active]="getChildTab(item.id!) === 'permissions'" (click)="setChildTab(item.id!, 'permissions')">
+                    Permissions <span class="tab-count">{{ getGroupPermissions(item.id!).length }}</span>
+                  </button>
+                  <button class="children-tab" [class.active]="getChildTab(item.id!) === 'members'" (click)="setChildTab(item.id!, 'members')">
+                    Membres <span class="tab-count">{{ getGroupMembers(item.id!).length }}</span>
+                  </button>
+                </div>
+
+                <!-- Chargement -->
+                <div *ngIf="isLoadingChildren(item.id!)" class="loading-children">
+                  <div class="loading-spinner-small"></div>
+                  <span>Chargement...</span>
+                </div>
+
+                <!-- Tab: Permissions -->
+                <div *ngIf="!isLoadingChildren(item.id!) && getChildTab(item.id!) === 'permissions'" class="children-list">
+                  <div *ngIf="getGroupPermissions(item.id!).length === 0" class="no-children">
+                    <span>Aucune permission pour ce groupe</span>
+                  </div>
+                  <div *ngFor="let perm of getGroupPermissions(item.id!); trackBy: trackByChildId" class="child-item" [class.deleted]="perm.isDeleted">
+                    <span class="child-id">#{{ perm.id }}</span>
+                    <span class="child-name">{{ perm.functionality || '-' }}</span>
+                  </div>
+                </div>
+
+                <!-- Tab: Membres -->
+                <div *ngIf="!isLoadingChildren(item.id!) && getChildTab(item.id!) === 'members'" class="children-list">
+                  <div *ngIf="getGroupMembers(item.id!).length === 0" class="no-children">
+                    <span>Aucun membre pour ce groupe</span>
+                  </div>
+                  <div *ngFor="let member of getGroupMembers(item.id!); trackBy: trackByChildId" class="child-item" [class.deleted]="member.isDeleted">
+                    <span class="child-id">#{{ member.id }}</span>
+                    <span class="child-name">User #{{ member.userId }}</span>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          </ng-container>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination-container">
+      <div class="pagination-info">
+        <span class="results-info">
+          Affichage {{ currentPage() * pageSize() + 1 }} - {{ Math.min((currentPage() + 1) * pageSize(), totalElements()) }} sur {{ totalElements() }}
+        </span>
+        <div class="page-size-selector">
+          <label for="pageSize">Par page:</label>
+          <div class="select-wrapper">
+            <select id="pageSize" class="page-size-select" [value]="pageSize()" (change)="onPageSizeChange($event)">
+              <option [value]="5">5</option><option [value]="10">10</option><option [value]="20">20</option><option [value]="50">50</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="pagination-controls" *ngIf="totalElements() > pageSize()">
+        <button class="pagination-btn" [class.disabled]="!hasPreviousPage()" (click)="previousPage()" [disabled]="!hasPreviousPage()">Précédent</button>
+        <div class="page-numbers">
+          <button *ngFor="let page of getPageNumbers()" class="page-number-btn" [class.active]="page === currentPage()" (click)="goToPage(page)">{{ page + 1 }}</button>
+        </div>
+        <button class="pagination-btn" [class.disabled]="!hasNextPage()" (click)="nextPage()" [disabled]="!hasNextPage()">Suivant</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation -->
+<div class="confirmation-overlay" *ngIf="showDeleteConfirmation" (click)="cancelDelete()">
+  <div class="confirmation-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header"><h3>Confirmer la suppression</h3></div>
+    <div class="modal-body">
+      <p>Voulez-vous supprimer ce groupe métier ?</p>
+      <div class="item-info" *ngIf="itemToDelete"><strong>#{{ itemToDelete.id }} — {{ itemToDelete.groupName }}</strong></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="cancelDelete()">Annuler</button>
+      <button class="btn-confirm-danger" (click)="executeDelete()">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Restore Confirmation -->
+<div class="confirmation-overlay" *ngIf="showRestoreConfirmation()" (click)="cancelRestore()">
+  <div class="confirmation-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header"><h3>Confirmer la restauration</h3></div>
+    <div class="modal-body"><p>Voulez-vous restaurer ce groupe métier ?</p></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="cancelRestore()">Annuler</button>
+      <button class="btn-confirm-success" (click)="executeRestore()">Restaurer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="confirmation-overlay" *ngIf="showEditDialog()" (click)="closeEditDialog()">
+  <div class="edit-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Modification</h3>
+      <button class="btn-close" (click)="closeEditDialog()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    </div>
+    <div class="modal-content">
+      <form class="edit-form">
+        <div class="form-group"><label class="form-label">Nom du groupe</label><input type="text" class="form-input" [(ngModel)]="editFormData.groupName" name="groupName" /></div>
+        <div class="form-group"><label class="form-label">Description</label><input type="text" class="form-input" [(ngModel)]="editFormData.groupDesc" name="groupDesc" /></div>
+      </form>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-danger" (click)="deleteFromEdit()">Supprimer</button>
+      <div class="action-buttons-right">
+        <button class="btn-cancel" (click)="closeEditDialog()">Annuler</button>
+        <button class="btn-confirm-success" (click)="validateEdit()">Valider</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create Modal -->
+<div class="confirmation-overlay" *ngIf="showCreateDialog()" (click)="closeCreateDialog()">
+  <div class="edit-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Nouveau groupe métier</h3>
+      <button class="btn-close" (click)="closeCreateDialog()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    </div>
+    <div class="modal-content">
+      <form class="edit-form">
+        <div class="form-group"><label class="form-label">Nom du groupe</label><input type="text" class="form-input" [(ngModel)]="createFormData.groupName" name="groupName" /></div>
+        <div class="form-group"><label class="form-label">Description</label><input type="text" class="form-input" [(ngModel)]="createFormData.groupDesc" name="groupDesc" /></div>
+      </form>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="closeCreateDialog()">Annuler</button>
+      <button class="btn-confirm-success" (click)="validateCreate()">Créer</button>
+    </div>
+  </div>
+</div>
+
+<app-entity-detail-panel
+  [entity]="selectedItem()"
+  [fields]="[
+    { key: 'id', label: 'ID' },
+    { key: 'groupName', label: 'Nom du groupe' },
+    { key: 'groupDesc', label: 'Description' },
+    { key: 'isDeleted', label: 'Supprimé' },
+    { key: 'createdAt', label: 'Créé le' },
+    { key: 'createdBy', label: 'Créé par' },
+    { key: 'updatedAt', label: 'Modifié le' },
+    { key: 'updatedBy', label: 'Modifié par' }
+  ]"
+  [title]="'Détail du groupe métier'"
+  [isOpen]="showDetailPanel()"
+  (closePanel)="closeDetailPanel()"
+  (editItem)="openEditDialog($event)"
+  (deleteItem)="confirmDelete($event)"
+  (restoreItem)="confirmRestore($event)"
+  (saveItem)="validateEdit()"
+/>
+
+<app-dependency-popup
+  [info]="dependencyInfo()!"
+  [mode]="dependencyMode()"
+  [visible]="showDependencyPopup()"
+  (cancel)="closeDependencyPopup()"
+  (confirm)="confirmDependencyAction()"
+/>

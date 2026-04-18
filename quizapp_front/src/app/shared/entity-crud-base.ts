@@ -22,6 +22,12 @@ export interface BaseSearchCriteria {
   size?: number;
   search_string?: string;
   isDeleted?: boolean;
+  idDe?: string;
+  idA?: string;
+  dateCreationDe?: string;
+  dateCreationA?: string;
+  dateModificationDe?: string;
+  dateModificationA?: string;
 }
 
 /**

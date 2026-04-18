@@ -191,4 +191,86 @@ public class EntityPermissionBusiness {
 		response.setStatus(status);
 		return response;
 	}
+
+	/**
+	 * Retourne toutes les permissions entités (pour page entité CRUD).
+	 * Supporte le filtre isDeleted.
+	 */
+	public Response<EntityPermissionDto> getByCriteria(Request<EntityPermissionDto> request, Locale locale) {
+		Response<EntityPermissionDto> response = new Response<>();
+
+		List<EntityPermission> entities = entityPermissionRepository.findAll();
+
+		// Filtre par isDeleted
+		Boolean isDeleted = null;
+		if (request.getData() != null) {
+			isDeleted = request.getData().getIsDeleted();
+		}
+		if (isDeleted != null) {
+			final Boolean filterDeleted = isDeleted;
+			entities = entities.stream()
+					.filter(e -> filterDeleted.equals(e.getIsDeleted()))
+					.collect(Collectors.toList());
+		} else {
+			entities = entities.stream()
+					.filter(e -> !Boolean.TRUE.equals(e.getIsDeleted()))
+					.collect(Collectors.toList());
+		}
+
+		List<EntityPermissionDto> dtos = entities.stream().map(e -> {
+			EntityPermissionDto d = new EntityPermissionDto();
+			d.setId(e.getId());
+			d.setUserId(e.getUser().getId());
+			d.setEntityType(e.getEntityType());
+			d.setEntityId(e.getEntityId());
+			d.setPermissionKey(e.getPermissionKey());
+			d.setIsDeleted(e.getIsDeleted());
+			java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
+			if (e.getCreatedAt() != null) d.setCreatedAt(sdf.format(e.getCreatedAt()));
+			d.setCreatedBy(e.getCreatedBy());
+			if (e.getUpdatedAt() != null) d.setUpdatedAt(sdf.format(e.getUpdatedAt()));
+			d.setUpdatedBy(e.getUpdatedBy());
+			return d;
+		}).collect(Collectors.toList());
+
+		Status status = new Status();
+		status.setCode(StatusCode.SUCCESS);
+		status.setMessage(StatusMessage.SUCCESS);
+		response.setItems(dtos);
+		response.setCount((long) dtos.size());
+		response.setHasError(false);
+		response.setHttpCode(HttpStatus.OK.value());
+		response.setStatus(status);
+		return response;
+	}
+
+	/**
+	 * Supprimer (soft-delete) une permission entité par ID.
+	 */
+	public Response<EntityPermissionDto> delete(Request<EntityPermissionDto> request, Locale locale) {
+		Response<EntityPermissionDto> response = new Response<>();
+
+		EntityPermissionDto dto = request.getData();
+		if (dto == null || dto.getId() == null) {
+			throw new InvalidEntityException(functionalError.FIELD_EMPTY("id", locale));
+		}
+
+		EntityPermission entity = entityPermissionRepository.findById(dto.getId()).orElse(null);
+		if (entity == null) {
+			throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("entityPermission id -> " + dto.getId(), locale));
+		}
+
+		entity.setIsDeleted(true);
+		entity.setUpdatedAt(Utilities.getCurrentDate());
+		entity.setUpdatedBy(request.getUser());
+		entityPermissionRepository.save(entity);
+
+		Status status = new Status();
+		status.setCode(StatusCode.SUCCESS);
+		status.setMessage(StatusMessage.SUCCESS);
+		response.setHasError(false);
+		response.setHttpCode(HttpStatus.OK.value());
+		response.setStatus(status);
+		return response;
+	}
 }

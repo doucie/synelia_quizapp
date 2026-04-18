@@ -635,8 +635,8 @@ L'équipe de recrutement
 
         console.log('✅ Entretiens créés:', createdInterviewIds);
 
-        // Créer les interview_crud pour chaque entretien
-        this.createInterviewCruds(createdInterviewIds);
+        // Créer les participants pour chaque entretien
+        this.createInterviewParticipants(createdInterviewIds);
       },
       error: (error) => {
         console.error('❌ Erreur lors de la création des entretiens:', error);
@@ -649,7 +649,7 @@ L'équipe de recrutement
   /**
    * Crée les participants d'entretien et copie les permissions d'entité
    */
-  createInterviewCruds(interviewIds: number[]): void {
+  createInterviewParticipants(interviewIds: number[]): void {
     const form = this.formData();
     const allParticipants: InterviewParticipant[] = [];
 
