@@ -199,6 +199,7 @@
                           class="btn-action btn-edit" 
                           (click)="openEditModal(interview); $event.stopPropagation()"
                           title="Modifier"
+                          aria-label="Modifier"
                         >
                           <i class="bi bi-pencil"></i>
                         </button>
@@ -210,6 +211,7 @@
                           class="btn-action btn-start" 
                           (click)="openStartConfirmation(interview); $event.stopPropagation()"
                           title="Démarrer l'entretien"
+                          aria-label="Démarrer l'entretien"
                         >
                           <i class="bi bi-play-circle"></i>
                         </button>
@@ -233,6 +235,7 @@
                           class="btn-action btn-delete" 
                           (click)="deleteInterview(interview); $event.stopPropagation()"
                           title="Supprimer"
+                          aria-label="Supprimer"
                         >
                           <i class="bi bi-trash"></i>
                         </button>
@@ -565,7 +568,7 @@
 
 <!-- Modal de confirmation pour démarrer un entretien (2 étapes) -->
 @if (showStartConfirmModal()) {
-  <div class="modal-overlay" (click)="closeStartConfirmModal()">
+  <div class="modal-overlay" role="dialog" aria-modal="true" (click)="closeStartConfirmModal()">
     <div class="modal-container start-confirm-modal" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h2>

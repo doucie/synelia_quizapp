@@ -41,6 +41,8 @@ public class CandidateInterviewDto extends _CandidateInterviewDto implements Clo
     private Integer    updatedBy            ;
     private Boolean    isDeleted            ;
     private String     searchString         ;
+    private String     declineReason        ;
+    private String     alternativeDateRequested ;
     // Champs pour les intervalles de dates (recherche avancee)
     private String     dateCreationDe       ;
     private String     dateCreationA        ;

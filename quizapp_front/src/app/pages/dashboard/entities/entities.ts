@@ -129,15 +129,6 @@ export class EntitiesComponent implements OnInit {
       color: '#64748B'
     },
     {
-      name: 'campaign-crud',
-      displayName: 'Permissions Campagne',
-      description: 'Droits d\'accès et permissions sur les campagnes',
-      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>',
-      iconType: 'svg',
-      route: '/dashboard/entities/campaign-crud',
-      color: '#DC2626'
-    },
-    {
       name: 'candidate-answers',
       displayName: 'Réponses Candidat',
       description: 'Réponses sélectionnées par les candidats',
@@ -253,6 +244,114 @@ export class EntitiesComponent implements OnInit {
       iconType: 'svg',
       route: '/dashboard/entities/application-progress',
       color: '#A855F7'
+    },
+    {
+      name: 'business-groups',
+      displayName: 'Groupes Métier',
+      description: 'Groupes métier pour l\'organisation des équipes',
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"/></svg>',
+      iconType: 'svg',
+      route: '/dashboard/entities/business-groups',
+      color: '#0284C7'
+    },
+    {
+      name: 'system-role-permissions',
+      displayName: 'Permissions Rôles',
+      description: 'Permissions associées aux rôles système',
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>',
+      iconType: 'svg',
+      route: '/dashboard/entities/system-role-permissions',
+      color: '#B91C1C'
+    },
+    {
+      name: 'user-permission-overrides',
+      displayName: 'Permissions Utilisateur',
+      description: 'Surcharges de permissions spécifiques par utilisateur',
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/><path d="M20 10h-2v3h-3v2h3v3h2v-3h3v-2h-3z"/></svg>',
+      iconType: 'svg',
+      route: '/dashboard/entities/user-permission-overrides',
+      color: '#7E22CE'
+    },
+    {
+      name: 'entity-permissions',
+      displayName: 'Permissions Entité',
+      description: 'Permissions au niveau des entités individuelles',
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM9 8V6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9z"/></svg>',
+      iconType: 'svg',
+      route: '/dashboard/entities/entity-permissions',
+      color: '#4338CA'
+    },
+    {
+      name: 'email-templates',
+      displayName: 'Modèles Email',
+      description: 'Templates de mails pour les notifications automatiques',
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>',
+      iconType: 'svg',
+      route: '/dashboard/entities/email-templates',
+      color: '#EA580C'
+    },
+    {
+      name: 'smtp-config',
+      displayName: 'Configurations SMTP',
+      description: 'Configuration des serveurs d\'envoi d\'emails',
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6zm-2 0l-8 5-8-5h16zm0 12H4V8l8 5 8-5v10z"/></svg>',
+      iconType: 'svg',
+      route: '/dashboard/entities/smtp-config',
+      color: '#0369A1'
+    },
+    {
+      name: 'app-config',
+      displayName: 'Configurations App',
+      description: 'Paramètres de configuration de l\'application',
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.488.488 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>',
+      iconType: 'svg',
+      route: '/dashboard/entities/app-config',
+      color: '#525252'
+    },
+    {
+      name: 'legal-texts',
+      displayName: 'Textes Légaux',
+      description: 'Textes juridiques et conditions d\'utilisation',
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zM6 20V4h7v5h5v11H6z"/></svg>',
+      iconType: 'svg',
+      route: '/dashboard/entities/legal-texts',
+      color: '#78716C'
+    },
+    {
+      name: 'invitation-codes',
+      displayName: 'Codes d\'Invitation',
+      description: 'Codes d\'invitation pour l\'inscription des utilisateurs',
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-2.18c.11-.31.18-.65.18-1a3 3 0 00-3-3c-1.05 0-1.95.56-2.47 1.37L12 4l-.53-.63C10.95 2.56 10.05 2 9 2a3 3 0 00-3 3c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm11 15H4v-2h16v2zm0-5H4V8h5.08L7 10.83 8.62 12 11 8.76l1-1.36 1 1.36L15.38 12 17 10.83 14.92 8H20v6z"/></svg>',
+      iconType: 'svg',
+      route: '/dashboard/entities/invitation-codes',
+      color: '#D946EF'
+    },
+    {
+      name: 'user-business-groups',
+      displayName: 'Utilisateurs-Groupes',
+      description: 'Associations entre utilisateurs et groupes métier',
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>',
+      iconType: 'svg',
+      route: '/dashboard/entities/user-business-groups',
+      color: '#0D9488'
+    },
+    {
+      name: 'business-group-permissions',
+      displayName: 'Permissions Groupes',
+      description: 'Permissions associées aux groupes métier',
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>',
+      iconType: 'svg',
+      route: '/dashboard/entities/business-group-permissions',
+      color: '#065F46'
+    },
+    {
+      name: 'email-verification-tokens',
+      displayName: 'Tokens Vérification',
+      description: 'Tokens de vérification d\'email des utilisateurs',
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>',
+      iconType: 'svg',
+      route: '/dashboard/entities/email-verification-tokens',
+      color: '#15803D'
     }
   ];
 

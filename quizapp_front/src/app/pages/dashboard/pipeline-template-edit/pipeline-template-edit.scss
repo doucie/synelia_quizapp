@@ -1,18 +1,18 @@
 .pipeline-template-edit-page {
-  padding: 1.5rem;
+  padding: var(--spacing-lg);
   max-width: 1100px;
   margin: 0 auto;
 }
 
 // Header
 .page-header {
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--spacing-lg);
 }
 
 .header-content {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: var(--spacing-md);
 }
 
 .header-center {
@@ -21,20 +21,20 @@
 
 .page-title {
   font-size: 1.35rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: var(--text-primary);
   margin: 0;
 }
 
 .page-subtitle {
   color: var(--text-secondary);
-  font-size: 0.85rem;
+  font-size: var(--font-size-sm);
   margin: 0.15rem 0 0;
 }
 
 .header-actions {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--spacing-sm);
 }
 
 // Buttons
@@ -42,13 +42,13 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.55rem 1rem;
+  padding: 0.55rem var(--spacing-md);
   border: none;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 600;
+  border-radius: var(--radius);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: var(--transition);
   white-space: nowrap;
 
   &:disabled {
@@ -59,7 +59,7 @@
 
 .btn-primary {
   background: var(--primary);
-  color: #fff;
+  color: var(--white);
 
   &:hover:not(:disabled) {
     background: var(--primary-hover);
@@ -86,13 +86,13 @@
 
   &:hover:not(:disabled) {
     background: var(--primary);
-    color: #fff;
+    color: var(--white);
   }
 }
 
 .btn-danger {
-  background: var(--danger, #e53e3e);
-  color: #fff;
+  background: var(--error);
+  color: var(--white);
 
   &:hover:not(:disabled) {
     opacity: 0.9;
@@ -112,7 +112,7 @@
 
 .btn-sm {
   padding: 0.35rem 0.7rem;
-  font-size: 0.8rem;
+  font-size: var(--font-size-xs);
 }
 
 .btn-spinner {
@@ -120,8 +120,8 @@
   width: 14px;
   height: 14px;
   border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: #fff;
-  border-radius: 50%;
+  border-top-color: var(--white);
+  border-radius: var(--radius-full);
   animation: spin 0.8s linear infinite;
 }
 
@@ -132,11 +132,11 @@
   width: 34px;
   height: 34px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius);
   background: transparent;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: var(--transition);
   flex-shrink: 0;
 
   &:hover {
@@ -146,8 +146,8 @@
 }
 
 .btn-icon-danger:hover {
-  color: var(--danger, #e53e3e);
-  background: rgba(229, 62, 62, 0.08);
+  color: var(--error);
+  background: rgba(var(--error-rgb), 0.08);
 }
 
 // Loading / spinner
@@ -155,7 +155,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 4rem 1rem;
+  padding: var(--spacing-3xl) var(--spacing-md);
   color: var(--text-secondary);
 }
 
@@ -164,9 +164,9 @@
   height: 36px;
   border: 3px solid var(--border);
   border-top-color: var(--primary);
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   animation: spin 0.8s linear infinite;
-  margin-bottom: 1rem;
+  margin-bottom: var(--spacing-md);
 }
 
 @keyframes spin {
@@ -177,15 +177,15 @@
 .edit-layout {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--spacing-lg);
 }
 
 // Sections
 .section-title {
-  font-size: 1rem;
-  font-weight: 700;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
   color: var(--text-primary);
-  margin: 0 0 1rem;
+  margin: 0 0 var(--spacing-md);
 }
 
 .form-section,
@@ -193,13 +193,13 @@
 .stages-section {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 1.25rem;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
 }
 
 // Form
 .form-group {
-  margin-bottom: 0.75rem;
+  margin-bottom: var(--spacing-md);
 
   &:last-child {
     margin-bottom: 0;
@@ -209,23 +209,23 @@
 .form-label {
   display: block;
   font-size: 0.825rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--text-primary);
   margin-bottom: 0.35rem;
 }
 
 .required {
-  color: var(--danger, #e53e3e);
+  color: var(--error);
 }
 
 .form-input {
   width: 100%;
-  padding: 0.55rem 0.75rem;
+  padding: 0.55rem var(--spacing-md);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius);
   background: var(--background);
   color: var(--text-primary);
-  font-size: 0.875rem;
+  font-size: var(--font-size-sm);
   transition: border-color 0.2s ease;
 
   &::placeholder {
@@ -251,14 +251,19 @@ textarea.form-input {
 
 select.form-input {
   cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2.25rem;
 }
 
 // Pipeline preview
 .preview-empty {
   color: var(--text-secondary);
-  font-size: 0.85rem;
+  font-size: var(--font-size-sm);
   text-align: center;
-  padding: 1rem;
+  padding: var(--spacing-md);
   margin: 0;
 }
 
@@ -266,7 +271,7 @@ select.form-input {
   display: flex;
   align-items: center;
   gap: 0;
-  padding: 0.75rem 0.5rem;
+  padding: var(--spacing-md) var(--spacing-sm);
   overflow-x: auto;
   flex-wrap: wrap;
   row-gap: 0.75rem;
@@ -283,13 +288,13 @@ select.form-input {
 .preview-dot {
   width: 32px;
   height: 32px;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   background: var(--surface);
   border: 2px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: var(--transition);
 
   .required & {
     border-color: var(--primary);
@@ -297,14 +302,14 @@ select.form-input {
   }
 
   .eliminatory & {
-    border-color: var(--danger, #e53e3e);
-    background: rgba(229, 62, 62, 0.06);
+    border-color: var(--error);
+    background: rgba(var(--error-rgb), 0.06);
   }
 }
 
 .preview-order {
   font-size: 0.7rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: var(--text-secondary);
 
   .required & {
@@ -312,7 +317,7 @@ select.form-input {
   }
 
   .eliminatory & {
-    color: var(--danger, #e53e3e);
+    color: var(--error);
   }
 }
 
@@ -340,7 +345,7 @@ select.form-input {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: var(--spacing-md);
 
   .section-title {
     margin-bottom: 0;
@@ -351,34 +356,34 @@ select.form-input {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 2rem 1rem;
+  padding: var(--spacing-xl) var(--spacing-md);
   color: var(--text-secondary);
   text-align: center;
 
   p {
-    margin: 0.75rem 0;
+    margin: var(--spacing-md) 0;
   }
 }
 
 .stages-list {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--spacing-sm);
 }
 
 .stage-card {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
   background: var(--background);
   border: 1px solid var(--border);
   border-radius: 10px;
-  transition: all 0.2s ease;
+  transition: var(--transition);
 
   &:hover {
     border-color: var(--primary);
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--shadow);
   }
 
   &.dragging {
@@ -415,11 +420,11 @@ select.form-input {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   background: var(--primary);
-  color: #fff;
-  font-size: 0.75rem;
-  font-weight: 700;
+  color: var(--white);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
   flex-shrink: 0;
 }
 
@@ -427,7 +432,7 @@ select.form-input {
   flex: 1;
   display: flex;
   align-items: flex-end;
-  gap: 0.75rem;
+  gap: var(--spacing-md);
   flex-wrap: wrap;
   min-width: 0;
 }
@@ -450,7 +455,7 @@ select.form-input {
 
 .field-label {
   font-size: 0.7rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -459,7 +464,7 @@ select.form-input {
 // Toggles
 .stage-toggles {
   display: flex;
-  gap: 0.75rem;
+  gap: var(--spacing-md);
   align-items: flex-end;
   padding-bottom: 0.1rem;
 }
@@ -468,7 +473,7 @@ select.form-input {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  font-size: 0.8rem;
+  font-size: var(--font-size-xs);
   color: var(--text-secondary);
   cursor: pointer;
   user-select: none;
@@ -499,8 +504,8 @@ select.form-input {
     left: 2px;
     width: 14px;
     height: 14px;
-    border-radius: 50%;
-    background: #fff;
+    border-radius: var(--radius-full);
+    background: var(--background);
     transition: transform 0.2s ease;
   }
 
@@ -517,20 +522,20 @@ select.form-input {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--overlay-backdrop);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
-  padding: 1rem;
+  z-index: var(--z-dropdown);
+  padding: var(--spacing-md);
 }
 
 .modal {
   background: var(--surface);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   width: 100%;
   max-width: 400px;
-  box-shadow: var(--shadow-large, 0 20px 60px rgba(0, 0, 0, 0.2));
+  box-shadow: var(--elevation-4);
   animation: modalIn 0.2s ease;
 }
 
@@ -540,23 +545,23 @@ select.form-input {
 }
 
 .modal-header {
-  padding: 1.25rem 1.25rem 0;
+  padding: var(--spacing-lg) var(--spacing-lg) 0;
 
   h3 {
     margin: 0;
-    font-size: 1.1rem;
-    font-weight: 700;
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
     color: var(--text-primary);
   }
 }
 
 .modal-body {
-  padding: 1rem 1.25rem;
+  padding: var(--spacing-md) var(--spacing-lg);
 
   p {
-    margin: 0 0 0.5rem;
+    margin: 0 0 var(--spacing-sm);
     color: var(--text-primary);
-    font-size: 0.9rem;
+    font-size: var(--font-size-sm);
     line-height: 1.5;
   }
 }
@@ -567,20 +572,20 @@ select.form-input {
 }
 
 .modal-hint-danger {
-  color: var(--danger, #e53e3e) !important;
+  color: var(--error) !important;
 }
 
 .modal-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 0.5rem;
-  padding: 0.75rem 1.25rem 1.25rem;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-lg) var(--spacing-lg);
 }
 
 // Responsive
 @media (max-width: 768px) {
   .pipeline-template-edit-page {
-    padding: 1rem;
+    padding: var(--spacing-md);
   }
 
   .header-content {

@@ -21,6 +21,8 @@ public class EmailTemplateDto extends _EmailTemplateDto implements Cloneable {
     private String  bodyTemplate;
     private String  description;
     private String  availableVariables;
+    private String  actionType;
+    private Integer presetId;
     private Boolean isActive;
     private String  createdAt;
     private Integer createdBy;

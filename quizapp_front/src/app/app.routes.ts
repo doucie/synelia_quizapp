@@ -38,6 +38,22 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       { path: '', redirectTo: 'overview', pathMatch: 'full' },
+      {
+        path: 'departments',
+        loadComponent: () => import('./pages/dashboard/departments/departments').then(m => m.DepartmentsComponent)
+      },
+      {
+        path: 'specialities',
+        loadComponent: () => import('./pages/dashboard/specialities/specialities').then(m => m.SpecialitiesComponent)
+      },
+      {
+        path: 'questions',
+        loadComponent: () => import('./pages/dashboard/questions/questions').then(m => m.QuestionsComponent)
+      },
+      {
+        path: 'answers',
+        loadComponent: () => import('./pages/dashboard/answers/answers').then(m => m.AnswersComponent)
+      },
       { 
         path: 'overview', 
         loadComponent: () => import('./pages/dashboard/overview/overview').then(m => m.OverviewComponent)
@@ -495,6 +511,16 @@ export const routes: Routes = [
         path: 'pipeline-templates/:id/edit', 
         loadComponent: () => import('./pages/dashboard/pipeline-template-edit/pipeline-template-edit').then(m => m.PipelineTemplateEditComponent),
         canActivate: [permissionGuard(['UPDATE_PIPELINE_TEMPLATE'])]
+      },
+      {
+        path: 'email-editor',
+        loadComponent: () => import('./pages/dashboard/email-editor/email-editor').then(m => m.EmailEditorComponent),
+        canActivate: [permissionGuard(['VIEW_EMAIL_TEMPLATE'])]
+      },
+      {
+        path: 'email-editor/:id',
+        loadComponent: () => import('./pages/dashboard/email-editor/email-editor').then(m => m.EmailEditorComponent),
+        canActivate: [permissionGuard(['VIEW_EMAIL_TEMPLATE'])]
       }
       // Note: L'évaluation en mode plein écran est sur /dashboard/evaluate/:link
     ]

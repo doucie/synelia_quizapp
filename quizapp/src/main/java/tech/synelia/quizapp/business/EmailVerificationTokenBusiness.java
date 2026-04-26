@@ -19,6 +19,8 @@ import tech.synelia.quizapp.dao.entity.EmailVerificationToken;
 import tech.synelia.quizapp.dao.entity.Applications;
 import tech.synelia.quizapp.dao.entity.User;
 import tech.synelia.quizapp.dao.repository.*;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 @Log
 @Component
@@ -32,6 +34,8 @@ public class EmailVerificationTokenBusiness implements IBasicBusiness<Request<Em
     private UserRepository userRepository;
     @Autowired
     private FunctionalError functionalError;
+    @PersistenceContext
+    private EntityManager em;
 
     @Override
     @Transactional
@@ -170,31 +174,28 @@ public class EmailVerificationTokenBusiness implements IBasicBusiness<Request<Em
     public Response<EmailVerificationTokenDto> getByCriteria(Request<EmailVerificationTokenDto> request, Locale locale) throws ParseException {
         log.info("----begin get EmailVerificationToken by criteria-----");
         Response<EmailVerificationTokenDto> response = new Response<>();
-        List<EmailVerificationToken> items;
 
-        if (request.getData() != null && request.getData().getEmail() != null) {
-            items = emailVerificationTokenRepository.findByEmailAndIsUsedFalse(request.getData().getEmail());
-        } else {
-            items = emailVerificationTokenRepository.findAll();
+        try {
+            List<EmailVerificationToken> items = emailVerificationTokenRepository.getByCriteria(request, em, locale);
+
+            if (items != null && !items.isEmpty()) {
+                List<EmailVerificationTokenDto> dtos = EmailVerificationTokenTransformer.INSTANCE.toDto(items);
+
+                Status status = new Status();
+                status.setCode(StatusCode.SUCCESS);
+                status.setMessage(StatusMessage.SUCCESS);
+                response.setItems(dtos);
+                response.setHasError(false);
+                response.setStatus(status);
+                response.setCount(emailVerificationTokenRepository.count(request, em, locale));
+            } else {
+                response.setStatus(functionalError.DATA_EMPTY("email_verification_token", locale));
+                response.setHasError(false);
+                return response;
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-
-        // Pagination
-        long totalCount = items.size();
-        if (request.getIndex() != null && request.getSize() != null) {
-            int start = request.getIndex() * request.getSize();
-            int end = Math.min(start + request.getSize(), items.size());
-            items = start < items.size() ? items.subList(start, end) : new ArrayList<>();
-        }
-
-        List<EmailVerificationTokenDto> dtos = EmailVerificationTokenTransformer.INSTANCE.toDto(items);
-
-        Status status = new Status();
-        status.setCode(StatusCode.SUCCESS);
-        status.setMessage(StatusMessage.SUCCESS);
-        response.setItems(dtos);
-        response.setCount(totalCount);
-        response.setHasError(false);
-        response.setStatus(status);
         log.info("----end get EmailVerificationToken by criteria-----");
         return response;
     }

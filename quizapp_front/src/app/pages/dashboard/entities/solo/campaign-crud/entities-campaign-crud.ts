@@ -3,9 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
-import { EntityCrudBase } from '../../../../../shared/entity-crud-base';
+import { EntityCrudBase, ColumnDef } from '../../../../../shared/entity-crud-base';
 import { EntityDetailPanelComponent } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
 import { DependencyPopupComponent } from '../../../../../shared/dependency-popup/dependency-popup';
+import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
 import { CampaignCrudService, CampaignCrud, PagedCampaignCrudResponse, CampaignCrudSearchCriteria } from '../../../../../core/services/campaign-crud.service';
 import { CampaignService, Campaign } from '../../../../../core/services/campaign.service';
 import { UserService, User } from '../../../../../core/services/user.service';
@@ -13,7 +14,7 @@ import { UserService, User } from '../../../../../core/services/user.service';
 @Component({
   selector: 'app-entities-campaign-crud',
   standalone: true,
-  imports: [CommonModule, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent],
+  imports: [CommonModule, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent, ColumnVisibilityManagerComponent],
   templateUrl: './entities-campaign-crud.html',
   styleUrls: ['./entities-campaign-crud.scss']
 })
@@ -32,6 +33,19 @@ export class EntitiesCampaignCrudComponent extends EntityCrudBase<CampaignCrud, 
   advancedCriteria: CampaignCrudSearchCriteria = {};
   editFormData: CampaignCrud = {};
   createFormData: Partial<CampaignCrud> = {};
+
+  override allColumns: ColumnDef[] = [
+    { key: 'id', label: 'ID', priority: 1 },
+    { key: 'userId', label: 'User ID', priority: 1 },
+    { key: 'campaignId', label: 'Campaign ID', priority: 1 },
+    { key: 'admin', label: 'Admin', priority: 2 },
+    { key: 'update', label: 'Update', priority: 2 },
+    { key: 'delete', label: 'Delete', priority: 2 },
+    { key: 'evaluate', label: 'Evaluate', priority: 3 },
+    { key: 'planify', label: 'Planify', priority: 3 },
+    { key: 'createdAt', label: 'Créé le', priority: 2 },
+    { key: 'actions', label: 'Actions', priority: 1 },
+  ];
 
   protected fetchAll(criteria: CampaignCrudSearchCriteria): Observable<PagedCampaignCrudResponse> {
     return this.service.getAllByCriteria(criteria);

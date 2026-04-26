@@ -1,34 +1,32 @@
-@import '../../../../styles/core/colors.css';
-
 .interview-create-page {
   min-height: 100vh;
   background: var(--surface-light);
-  padding: 2rem;
+  padding: var(--spacing-xl);
 }
 
 // Header
 .page-header {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 2rem;
-  padding: 1.5rem;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
+  padding: var(--spacing-lg);
   background: var(--surface);
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
 
   .btn-back {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1.5rem;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md) var(--spacing-lg);
     background: transparent;
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius);
     color: var(--text-primary);
-    font-size: 1rem;
+    font-size: var(--font-size-base);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--transition);
 
     &:hover {
       background: var(--surface-light);
@@ -39,10 +37,10 @@
 
   .header-title {
     h1 {
-      font-size: 1.75rem;
-      font-weight: 600;
+      font-size: var(--font-size-3xl);
+      font-weight: var(--font-weight-semibold);
       color: var(--text-primary);
-      margin: 0 0 0.25rem 0;
+      margin: 0 0 var(--spacing-xs) 0;
     }
 
     p {
@@ -59,21 +57,21 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 4rem;
-  gap: 1rem;
+  padding: var(--spacing-3xl);
+  gap: var(--spacing-md);
 
   .spinner {
     width: 50px;
     height: 50px;
     border: 4px solid var(--border);
     border-top-color: var(--primary);
-    border-radius: 50%;
+    border-radius: var(--radius-full);
     animation: spin 1s linear infinite;
   }
 
   p {
     color: var(--text-secondary);
-    font-size: 1rem;
+    font-size: var(--font-size-base);
   }
 }
 
@@ -90,18 +88,18 @@
 // Form Section
 .form-section {
   background: var(--surface);
-  border-radius: 12px;
-  padding: 2rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
+  margin-bottom: var(--spacing-lg);
+  box-shadow: var(--shadow);
 }
 
 .section-header {
   display: flex;
   align-items: flex-start;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-md);
   border-bottom: 2px solid var(--border);
 
   .section-number {
@@ -111,10 +109,10 @@
     width: 40px;
     height: 40px;
     background: var(--primary);
-    color: white;
-    border-radius: 50%;
-    font-size: 1.25rem;
-    font-weight: 600;
+    color: var(--white);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
     flex-shrink: 0;
   }
 
@@ -123,9 +121,9 @@
 
     h2 {
       font-size: 1.4rem;
-      font-weight: 600;
+      font-weight: var(--font-weight-semibold);
       color: var(--text-primary);
-      margin: 0 0 0.25rem 0;
+      margin: 0 0 var(--spacing-xs) 0;
     }
 
     p {
@@ -137,21 +135,21 @@
 
   .section-actions {
     display: flex;
-    gap: 0.5rem;
+    gap: var(--spacing-sm);
   }
 
   .btn-toggle-preview {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
     background: transparent;
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius);
     color: var(--text-primary);
-    font-size: 0.9rem;
+    font-size: var(--font-size-sm);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--transition);
 
     &:hover {
       background: var(--surface-light);
@@ -162,20 +160,20 @@
 }
 
 .section-content {
-  padding: 0.5rem 0 0 0;
+  padding: var(--spacing-sm) 0 0 0;
 }
 
 // Form Groups
 .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--spacing-lg);
 
   label {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    font-weight: 500;
+    gap: var(--spacing-sm);
+    font-weight: var(--font-weight-medium);
     color: var(--text-primary);
-    margin-bottom: 0.5rem;
+    margin-bottom: var(--spacing-sm);
 
     i {
       color: var(--primary);
@@ -191,13 +189,13 @@
   select,
   textarea {
     width: 100%;
-    padding: 0.75rem 1rem;
+    padding: var(--spacing-md) var(--spacing-md);
     border: 1px solid var(--border);
-    border-radius: 8px;
-    font-size: 1rem;
+    border-radius: var(--radius);
+    font-size: var(--font-size-base);
     color: var(--text-primary);
     background: var(--surface);
-    transition: all 0.2s;
+    transition: var(--transition);
 
     &:focus {
       outline: none;
@@ -210,6 +208,16 @@
     }
   }
 
+  select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    padding-right: 2.25rem;
+    border-radius: var(--radius-lg);
+  }
+
   textarea {
     resize: vertical;
     min-height: 100px;
@@ -220,12 +228,12 @@
     display: flex;
     align-items: center;
     gap: 0.375rem;
-    margin-top: 0.5rem;
-    font-size: 0.875rem;
+    margin-top: var(--spacing-sm);
+    font-size: var(--font-size-sm);
     color: var(--text-secondary);
     
     i {
-      font-size: 0.875rem;
+      font-size: var(--font-size-sm);
       color: var(--info);
     }
   }
@@ -234,24 +242,24 @@
 .form-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
+  gap: var(--spacing-md);
 }
 
 // Radio Group
 .radio-group {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
+  gap: var(--spacing-md);
 }
 
 .radio-card {
   position: relative;
   display: flex;
-  padding: 1rem;
+  padding: var(--spacing-md);
   border: 2px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: var(--transition);
 
   input[type="radio"] {
     position: absolute;
@@ -262,17 +270,17 @@
   .radio-content {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: var(--spacing-md);
     width: 100%;
 
     i {
-      font-size: 1.5rem;
+      font-size: var(--font-size-2xl);
       color: var(--text-secondary);
       transition: color 0.2s;
     }
 
     span {
-      font-weight: 500;
+      font-weight: var(--font-weight-medium);
       color: var(--text-primary);
     }
   }
@@ -300,18 +308,18 @@
 .candidates-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
+  gap: var(--spacing-md);
 }
 
 .candidate-card {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1rem;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
   border: 2px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: var(--transition);
 
   .card-check {
     input[type="checkbox"] {
@@ -324,14 +332,14 @@
   .candidate-avatar {
     width: 50px;
     height: 50px;
-    border-radius: 50%;
+    border-radius: var(--radius-full);
     background: var(--primary);
-    color: white;
+    color: var(--white);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 600;
-    font-size: 1.1rem;
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-lg);
     flex-shrink: 0;
   }
 
@@ -340,9 +348,9 @@
     min-width: 0;
 
     h4 {
-      margin: 0 0 0.25rem 0;
-      font-size: 1rem;
-      font-weight: 600;
+      margin: 0 0 var(--spacing-xs) 0;
+      font-size: var(--font-size-base);
+      font-weight: var(--font-weight-semibold);
       color: var(--text-primary);
       white-space: nowrap;
       overflow: hidden;
@@ -350,8 +358,8 @@
     }
 
     p {
-      margin: 0 0 0.5rem 0;
-      font-size: 0.85rem;
+      margin: 0 0 var(--spacing-sm) 0;
+      font-size: var(--font-size-sm);
       color: var(--text-secondary);
       white-space: nowrap;
       overflow: hidden;
@@ -360,12 +368,12 @@
 
     .score-badge {
       display: inline-block;
-      padding: 0.25rem 0.5rem;
+      padding: var(--spacing-xs) var(--spacing-sm);
       background: var(--success-light);
       color: var(--success);
-      border-radius: 4px;
-      font-size: 0.75rem;
-      font-weight: 600;
+      border-radius: var(--radius-sm);
+      font-size: var(--font-size-xs);
+      font-weight: var(--font-weight-semibold);
     }
   }
 
@@ -387,17 +395,17 @@
 // Email Preview
 .email-preview {
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius);
   overflow: hidden;
 
   .email-header {
-    padding: 1rem;
+    padding: var(--spacing-md);
     background: var(--surface-light);
     border-bottom: 1px solid var(--border);
 
     .email-field {
       display: flex;
-      gap: 0.75rem;
+      gap: var(--spacing-md);
 
       strong {
         color: var(--text-primary);
@@ -412,12 +420,12 @@
   }
 
   .email-body {
-    padding: 1.5rem;
+    padding: var(--spacing-lg);
     // Utiliser une couleur de fond qui s'adapte au thème
     background: var(--surface);
     // Ajouter une bordure subtile pour délimiter la zone
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
 
     pre {
       margin: 0;
@@ -437,37 +445,37 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 3rem 1rem;
+  padding: var(--spacing-2xl) var(--spacing-md);
   text-align: center;
 
   i {
-    font-size: 3rem;
+    font-size: var(--font-size-4xl);
     color: var(--text-tertiary);
-    margin-bottom: 1rem;
+    margin-bottom: var(--spacing-md);
   }
 
   p {
-    font-size: 1.1rem;
+    font-size: var(--font-size-lg);
     color: var(--text-secondary);
-    margin: 0 0 0.5rem 0;
+    margin: 0 0 var(--spacing-sm) 0;
   }
 
   small {
     color: var(--text-tertiary);
-    font-size: 0.9rem;
+    font-size: var(--font-size-sm);
   }
 }
 
 // Buttons
 .btn-sm {
-  padding: 0.5rem 1rem;
+  padding: var(--spacing-sm) var(--spacing-md);
   background: transparent;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   color: var(--text-primary);
-  font-size: 0.9rem;
+  font-size: var(--font-size-sm);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: var(--transition);
 
   &:hover {
     background: var(--surface-light);
@@ -479,22 +487,22 @@
 .form-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 2rem;
-  padding-top: 2rem;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-xl);
   border-top: 2px solid var(--border);
 
   button {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 2rem;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md) var(--spacing-xl);
     border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 500;
+    border-radius: var(--radius);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--transition);
 
     &.btn-secondary {
       background: var(--surface-light);
@@ -508,7 +516,7 @@
 
     &.btn-primary {
       background: var(--primary);
-      color: white;
+      color: var(--white);
 
       &:hover:not(:disabled) {
         background: var(--primary-dark);
@@ -528,7 +536,7 @@
     height: 16px;
     border: 2px solid rgba(255, 255, 255, 0.3);
     border-top-color: white;
-    border-radius: 50%;
+    border-radius: var(--radius-full);
     animation: spin 0.8s linear infinite;
   }
 }
@@ -540,7 +548,7 @@
 // Section commune
 .evaluators-default-section,
 .evaluators-search-section {
-  margin-bottom: 2rem;
+  margin-bottom: var(--spacing-xl);
   
   &:last-child {
     margin-bottom: 0;
@@ -551,11 +559,11 @@
 .subsection-header {
   display: flex;
   align-items: flex-start;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  padding: 1.25rem;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-lg);
   background: linear-gradient(135deg, var(--surface-secondary) 0%, var(--surface) 100%);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--border);
 
   .subsection-icon {
@@ -565,9 +573,9 @@
     width: 48px;
     height: 48px;
     background: var(--gradient-primary);
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     color: var(--text-on-primary);
-    font-size: 1.5rem;
+    font-size: var(--font-size-2xl);
     flex-shrink: 0;
 
     &.secondary {
@@ -579,16 +587,16 @@
     flex: 1;
 
     h3 {
-      font-size: 1.125rem;
-      font-weight: 600;
+      font-size: var(--font-size-lg);
+      font-weight: var(--font-weight-semibold);
       color: var(--text-primary);
-      margin: 0 0 0.25rem 0;
+      margin: 0 0 var(--spacing-xs) 0;
     }
 
     p {
       margin: 0;
       color: var(--text-secondary);
-      font-size: 0.875rem;
+      font-size: var(--font-size-sm);
       line-height: 1.4;
     }
   }
@@ -601,14 +609,14 @@
 .evaluators-checkbox-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1rem;
+  gap: var(--spacing-md);
 }
 
 .evaluator-checkbox-card {
   background: var(--background);
   border: 2px solid var(--border);
-  border-radius: 12px;
-  padding: 1.25rem;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
@@ -630,7 +638,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 1rem;
+    margin-bottom: var(--spacing-md);
   }
 
   .checkbox-wrapper {
@@ -661,7 +669,7 @@
       width: 22px;
       height: 22px;
       border: 2px solid var(--border-variant);
-      border-radius: 6px;
+      border-radius: var(--radius-md);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -670,7 +678,7 @@
 
       i {
         color: var(--text-on-primary);
-        font-size: 0.875rem;
+        font-size: var(--font-size-sm);
         opacity: 0;
         transform: scale(0);
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -682,23 +690,23 @@
     display: flex;
     align-items: center;
     gap: 0.375rem;
-    padding: 0.375rem 0.75rem;
+    padding: 0.375rem var(--spacing-md);
     background: var(--primary-light);
     color: var(--text-on-primary);
     border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
     letter-spacing: 0.025em;
 
     i {
-      font-size: 0.875rem;
+      font-size: var(--font-size-sm);
     }
   }
 
   .card-body {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: var(--spacing-md);
   }
 
   .evaluator-avatar-wrapper {
@@ -708,12 +716,12 @@
     .evaluator-avatar {
       width: 56px;
       height: 56px;
-      border-radius: 50%;
+      border-radius: var(--radius-full);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: 700;
-      font-size: 1.125rem;
+      font-weight: var(--font-weight-bold);
+      font-size: var(--font-size-lg);
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
       &.primary {
@@ -730,7 +738,7 @@
       height: 14px;
       background: var(--success);
       border: 2px solid var(--background);
-      border-radius: 50%;
+      border-radius: var(--radius-full);
       box-shadow: 0 2px 4px var(--shadow-light);
     }
   }
@@ -740,9 +748,9 @@
     min-width: 0;
 
     h4 {
-      margin: 0 0 0.25rem 0;
-      font-size: 1rem;
-      font-weight: 600;
+      margin: 0 0 var(--spacing-xs) 0;
+      font-size: var(--font-size-base);
+      font-weight: var(--font-weight-semibold);
       color: var(--text-primary);
       white-space: nowrap;
       overflow: hidden;
@@ -751,25 +759,25 @@
     }
 
     p {
-      margin: 0 0 0.25rem 0;
-      font-size: 0.875rem;
+      margin: 0 0 var(--spacing-xs) 0;
+      font-size: var(--font-size-sm);
       color: var(--text-secondary);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: var(--spacing-sm);
 
       i {
-        font-size: 0.8rem;
+        font-size: var(--font-size-xs);
       }
     }
 
     .evaluator-role {
-      font-size: 0.8rem;
+      font-size: var(--font-size-xs);
       color: var(--primary);
-      font-weight: 500;
+      font-weight: var(--font-weight-medium);
     }
   }
 
@@ -812,7 +820,7 @@
 .search-select-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--spacing-md);
 }
 
 .search-input-container {
@@ -824,17 +832,17 @@
     top: 50%;
     transform: translateY(-50%);
     color: var(--text-tertiary);
-    font-size: 1.125rem;
+    font-size: var(--font-size-lg);
     pointer-events: none;
     transition: color 0.2s;
   }
 
   .search-input {
     width: 100%;
-    padding: 0.875rem 3.5rem 0.875rem 3rem;
+    padding: var(--spacing-md) 3.5rem var(--spacing-md) var(--spacing-2xl);
     border: 2px solid var(--border);
-    border-radius: 12px;
-    font-size: 1rem;
+    border-radius: var(--radius-lg);
+    font-size: var(--font-size-base);
     background: var(--surface);
     color: var(--text-primary);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -863,14 +871,14 @@
     background: var(--surface-secondary);
     border: none;
     color: var(--text-secondary);
-    font-size: 1rem;
+    font-size: var(--font-size-base);
     cursor: pointer;
-    padding: 0.5rem;
-    border-radius: 8px;
+    padding: var(--spacing-sm);
+    border-radius: var(--radius);
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s;
+    transition: var(--transition);
 
     &:hover {
       background: var(--error);
@@ -884,19 +892,19 @@
 .search-results-dropdown {
   background: var(--background);
   border: 2px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: 0 8px 24px var(--shadow-light);
   animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   .dropdown-header {
-    padding: 0.75rem 1rem;
+    padding: var(--spacing-md) var(--spacing-md);
     background: var(--surface-secondary);
     border-bottom: 1px solid var(--border);
 
     span {
-      font-size: 0.875rem;
-      font-weight: 600;
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-semibold);
       color: var(--text-secondary);
       text-transform: uppercase;
       letter-spacing: 0.05em;
@@ -918,7 +926,7 @@
 
     &::-webkit-scrollbar-thumb {
       background: var(--border-variant);
-      border-radius: 4px;
+      border-radius: var(--radius-sm);
 
       &:hover {
         background: var(--primary);
@@ -930,11 +938,11 @@
 .dropdown-item {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1rem;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
   border-bottom: 1px solid var(--border);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: var(--transition);
   background: var(--background);
 
   &:last-child {
@@ -944,14 +952,14 @@
   .item-avatar {
     width: 48px;
     height: 48px;
-    border-radius: 50%;
+    border-radius: var(--radius-full);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 700;
-    font-size: 1rem;
+    font-weight: var(--font-weight-bold);
+    font-size: var(--font-size-base);
     flex-shrink: 0;
-    transition: all 0.3s;
+    transition: var(--transition-slow);
 
     &.secondary {
       background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
@@ -964,9 +972,9 @@
     min-width: 0;
 
     h5 {
-      margin: 0 0 0.25rem 0;
-      font-size: 0.9375rem;
-      font-weight: 600;
+      margin: 0 0 var(--spacing-xs) 0;
+      font-size: var(--font-size-base);
+      font-weight: var(--font-weight-semibold);
       color: var(--text-primary);
       white-space: nowrap;
       overflow: hidden;
@@ -974,7 +982,7 @@
     }
 
     span {
-      font-size: 0.8125rem;
+      font-size: var(--font-size-sm);
       color: var(--text-secondary);
       white-space: nowrap;
       overflow: hidden;
@@ -986,19 +994,19 @@
   .item-action {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    font-size: 0.875rem;
-    font-weight: 600;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
     flex-shrink: 0;
-    transition: all 0.2s;
+    transition: var(--transition);
     background: var(--surface);
     color: var(--text-secondary);
     border: 1px solid var(--border);
 
     i {
-      font-size: 1rem;
+      font-size: var(--font-size-base);
     }
 
     &.selected {
@@ -1029,21 +1037,21 @@
 }
 
 .search-empty-state {
-  padding: 2.5rem 1.5rem;
+  padding: var(--spacing-2xl) var(--spacing-lg);
   text-align: center;
   color: var(--text-secondary);
 
   i {
-    font-size: 2.5rem;
-    margin-bottom: 0.75rem;
+    font-size: var(--font-size-4xl);
+    margin-bottom: var(--spacing-md);
     opacity: 0.4;
     color: var(--text-tertiary);
   }
 
   p {
     margin: 0;
-    font-size: 1rem;
-    font-weight: 500;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
   }
 }
 
@@ -1051,25 +1059,25 @@
 .selected-additional-evaluators {
   background: var(--surface);
   border: 2px solid var(--border);
-  border-radius: 12px;
-  padding: 1rem;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md);
 
   .selected-header {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 0.75rem;
-    padding-bottom: 0.75rem;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-md);
     border-bottom: 1px solid var(--border);
 
     i {
       color: var(--accent);
-      font-size: 1.125rem;
+      font-size: var(--font-size-lg);
     }
 
     span {
-      font-size: 0.875rem;
-      font-weight: 600;
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-semibold);
       color: var(--text-primary);
     }
   }
@@ -1084,30 +1092,30 @@
 .selected-tag {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
   background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.1) 0%, rgba(var(--primary-rgb), 0.05) 100%);
   border: 1px solid rgba(var(--primary-rgb), 0.2);
   border-radius: 20px;
-  transition: all 0.2s;
+  transition: var(--transition);
 
   .tag-avatar {
     width: 28px;
     height: 28px;
-    border-radius: 50%;
+    border-radius: var(--radius-full);
     background: var(--gradient-primary);
     color: var(--text-on-primary);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.75rem;
-    font-weight: 700;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
     flex-shrink: 0;
   }
 
   .tag-name {
-    font-size: 0.875rem;
-    font-weight: 500;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
     color: var(--text-primary);
     white-space: nowrap;
     max-width: 150px;
@@ -1120,16 +1128,16 @@
     border: none;
     color: var(--text-secondary);
     cursor: pointer;
-    padding: 0.25rem;
+    padding: var(--spacing-xs);
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
-    transition: all 0.2s;
+    border-radius: var(--radius-full);
+    transition: var(--transition);
     margin-left: auto;
 
     i {
-      font-size: 0.875rem;
+      font-size: var(--font-size-sm);
     }
 
     &:hover {
@@ -1167,19 +1175,19 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: var(--overlay-backdrop);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: var(--z-dropdown);
   animation: fadeIn 0.3s ease;
-  padding: 1rem;
+  padding: var(--spacing-md);
 }
 
 .modal-container {
   background: var(--background);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   box-shadow: 0 20px 60px var(--shadow-heavy);
   max-width: 800px;
   width: 100%;
@@ -1197,21 +1205,21 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.5rem 2rem;
+  padding: var(--spacing-lg) var(--spacing-xl);
   border-bottom: 2px solid var(--border);
 
   h2 {
-    font-size: 1.5rem;
-    font-weight: 600;
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-semibold);
     color: var(--text-primary);
     margin: 0;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: var(--spacing-md);
 
     i {
       color: var(--primary);
-      font-size: 1.75rem;
+      font-size: var(--font-size-3xl);
     }
   }
 
@@ -1219,11 +1227,11 @@
     background: transparent;
     border: none;
     color: var(--text-secondary);
-    font-size: 1.25rem;
+    font-size: var(--font-size-xl);
     cursor: pointer;
-    padding: 0.5rem;
-    border-radius: 8px;
-    transition: all 0.2s;
+    padding: var(--spacing-sm);
+    border-radius: var(--radius);
+    transition: var(--transition);
 
     &:hover {
       background: var(--surface);
@@ -1235,7 +1243,7 @@
 .modal-body {
   flex: 1;
   overflow-y: auto;
-  padding: 2rem;
+  padding: var(--spacing-xl);
 
   /* Custom scrollbar */
   &::-webkit-scrollbar {
@@ -1248,7 +1256,7 @@
 
   &::-webkit-scrollbar-thumb {
     background: var(--border-variant);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
 
     &:hover {
       background: var(--primary);
@@ -1260,37 +1268,37 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 1rem;
-  padding: 1.5rem 2rem;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg) var(--spacing-xl);
   border-top: 2px solid var(--border);
 
   button {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem 1.5rem;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-lg);
     border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 500;
+    border-radius: var(--radius);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--transition);
 
     .button-content {
       display: flex;
       flex-direction: column;
       align-items: flex-start;
-      gap: 0.25rem;
+      gap: var(--spacing-xs);
 
       .button-text {
-        font-weight: 600;
+        font-weight: var(--font-weight-semibold);
         font-size: 0.95rem;
       }
 
       .button-hint {
-        font-size: 0.75rem;
+        font-size: var(--font-size-xs);
         opacity: 0.85;
-        font-weight: 400;
+        font-weight: var(--font-weight-normal);
       }
     }
 
@@ -1306,7 +1314,7 @@
 
     &.btn-warning {
       background: var(--warning);
-      color: white;
+      color: var(--white);
 
       &:hover {
         background: var(--warning-dark);
@@ -1317,7 +1325,7 @@
 
     &.btn-primary {
       background: var(--primary);
-      color: white;
+      color: var(--white);
 
       &:hover {
         background: var(--primary-dark);
@@ -1330,8 +1338,8 @@
 
 // Summary sections
 .summary-section {
-  margin-bottom: 1.5rem;
-  padding-bottom: 1.5rem;
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-lg);
   border-bottom: 1px solid var(--border);
 
   &:last-child {
@@ -1341,13 +1349,13 @@
   }
 
   h3 {
-    font-size: 1rem;
-    font-weight: 600;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
     color: var(--text-primary);
-    margin: 0 0 1rem 0;
+    margin: 0 0 var(--spacing-md) 0;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--spacing-sm);
 
     i {
       color: var(--primary);
@@ -1359,13 +1367,13 @@
     line-height: 1.6;
 
     strong {
-      font-size: 1.125rem;
+      font-size: var(--font-size-lg);
       display: block;
-      margin-bottom: 0.5rem;
+      margin-bottom: var(--spacing-sm);
     }
 
     p {
-      margin: 0.5rem 0 0 0;
+      margin: var(--spacing-sm) 0 0 0;
       color: var(--text-secondary);
     }
 
@@ -1384,15 +1392,15 @@
 .alert {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.875rem 1rem;
-  border-radius: 8px;
-  margin-top: 0.75rem;
-  font-size: 0.9375rem;
-  font-weight: 500;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-md);
+  border-radius: var(--radius);
+  margin-top: var(--spacing-md);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
 
   i {
-    font-size: 1.125rem;
+    font-size: var(--font-size-lg);
     flex-shrink: 0;
   }
 
@@ -1419,14 +1427,14 @@
 .badge-type {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
   background: var(--primary-light);
   color: var(--text-on-primary);
   border-radius: 20px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--spacing-sm);
 }
 
 // Candidates/Evaluators summary
@@ -1441,25 +1449,25 @@
 .evaluator-chip {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.875rem;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 20px;
-  font-size: 0.875rem;
+  font-size: var(--font-size-sm);
   color: var(--text-primary);
 
   .chip-avatar {
     width: 28px;
     height: 28px;
-    border-radius: 50%;
+    border-radius: var(--radius-full);
     background: var(--gradient-primary);
     color: var(--text-on-primary);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.75rem;
-    font-weight: 700;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
   }
 }
 
@@ -1467,38 +1475,38 @@
 .modal-description {
   color: var(--text-secondary);
   line-height: 1.6;
-  margin: 0 0 1rem 0;
+  margin: 0 0 var(--spacing-md) 0;
 }
 
 .modal-warning {
   color: var(--warning-dark);
-  font-weight: 600;
-  font-size: 1.125rem;
-  margin: 0 0 1rem 0;
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-lg);
+  margin: 0 0 var(--spacing-md) 0;
 }
 
 .modal-question {
   color: var(--text-primary);
-  font-weight: 500;
-  font-size: 1rem;
-  margin: 1.5rem 0 0 0;
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-base);
+  margin: var(--spacing-lg) 0 0 0;
 }
 
 // Email preview in modal
 .email-preview-modal {
   border: 2px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  margin-top: 1rem;
+  margin-top: var(--spacing-md);
 
   .email-header {
-    padding: 1rem;
+    padding: var(--spacing-md);
     background: var(--surface);
     border-bottom: 1px solid var(--border);
 
     .email-field {
       display: flex;
-      gap: 0.75rem;
+      gap: var(--spacing-md);
 
       strong {
         color: var(--text-primary);
@@ -1513,7 +1521,7 @@
   }
 
   .email-body {
-    padding: 1.5rem;
+    padding: var(--spacing-lg);
     background: var(--background);
     max-height: 300px;
     overflow-y: auto;
@@ -1522,7 +1530,7 @@
       margin: 0;
       white-space: pre-wrap;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      font-size: 0.9375rem;
+      font-size: var(--font-size-base);
       line-height: 1.6;
       color: var(--text-primary);
     }
@@ -1553,7 +1561,7 @@
 // Responsive
 @media (max-width: 768px) {
   .interview-create-page {
-    padding: 1rem;
+    padding: var(--spacing-md);
   }
 
   .page-header {
@@ -1562,7 +1570,7 @@
   }
 
   .form-section {
-    padding: 1.5rem;
+    padding: var(--spacing-lg);
   }
 
   .section-header {
@@ -1598,7 +1606,7 @@
   .modal-header,
   .modal-body,
   .modal-footer {
-    padding: 1rem;
+    padding: var(--spacing-md);
   }
 
   .modal-footer {
@@ -1612,6 +1620,6 @@
 
   .candidates-summary,
   .evaluators-summary {
-    gap: 0.5rem;
+    gap: var(--spacing-sm);
   }
 }

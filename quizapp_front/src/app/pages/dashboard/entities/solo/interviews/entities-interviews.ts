@@ -3,9 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
-import { EntityCrudBase } from '../../../../../shared/entity-crud-base';
+import { EntityCrudBase, ColumnDef } from '../../../../../shared/entity-crud-base';
 import { EntityDetailPanelComponent } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
 import { DependencyPopupComponent } from '../../../../../shared/dependency-popup/dependency-popup';
+import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
 import { InterviewService, Interview, PagedInterviewResponse, InterviewSearchCriteria } from '../../../../../core/services/interview.service';
 import { EntityPermissionService } from '../../../../../core/services/entity-permission.service';
 import { EntityPermission } from '../../../../../core/models/permission.interfaces';
@@ -16,7 +17,7 @@ import { ApplicationService, Application } from '../../../../../core/services/ap
 @Component({
   selector: 'app-entities-interviews',
   standalone: true,
-  imports: [CommonModule, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent],
+  imports: [CommonModule, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent, ColumnVisibilityManagerComponent],
   templateUrl: './entities-interviews.html',
   styleUrls: ['./entities-interviews.scss']
 })
@@ -43,6 +44,17 @@ export class EntitiesInterviewsComponent extends EntityCrudBase<Interview, Inter
   advancedCriteria: InterviewSearchCriteria = {};
   editFormData: Interview = { interviewType: 'ONLINE' };
   createFormData: Partial<Interview> = { interviewType: 'ONLINE', interviewStatus: 'PENDING' };
+
+  override allColumns: ColumnDef[] = [
+    { key: 'id', label: 'ID', priority: 1 },
+    { key: 'date', label: 'Date', priority: 2 },
+    { key: 'type', label: 'Type', priority: 2 },
+    { key: 'location', label: 'Lieu / Lien', priority: 3 },
+    { key: 'status', label: 'Statut', priority: 2 },
+    { key: 'campaign', label: 'Campagne', priority: 2 },
+    { key: 'application', label: 'Candidature', priority: 2 },
+    { key: 'actions', label: 'Actions', priority: 1 },
+  ];
 
   protected fetchAll(criteria: InterviewSearchCriteria): Observable<PagedInterviewResponse> {
     return this.interviewService.getAllInterviewsByCriteria(criteria);

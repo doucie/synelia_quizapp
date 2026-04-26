@@ -1,0 +1,520 @@
+<div class="questions-page">
+  <!-- Header -->
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-left">
+        <h1 class="page-title">
+          <svg class="title-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"/>
+          </svg>
+          Questions
+        </h1>
+        <p class="page-subtitle">{{ filteredQuestions().length }} question{{ filteredQuestions().length > 1 ? 's' : '' }} · {{ activeCount() }} active{{ activeCount() > 1 ? 's' : '' }}</p>
+      </div>
+
+      <div class="header-actions">
+        <button class="btn btn-secondary" (click)="loadQuestions()" [disabled]="loading()">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          Actualiser
+        </button>
+        @if (isAdminModeEnabled()) {
+          <button class="btn btn-primary" (click)="openCreateModal()">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 4v16m8-8H4"/>
+            </svg>
+            Nouvelle question
+          </button>
+        }
+      </div>
+    </div>
+  </header>
+
+  <!-- Filtres -->
+  <div class="filters-section">
+    <div class="search-bar">
+      <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/>
+        <path d="M21 21l-4.35-4.35"/>
+      </svg>
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Rechercher une question..."
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+      >
+    </div>
+
+    <div class="filter-chips">
+      <button class="filter-chip" [class.active]="filterStatus() === 'all'" (click)="filterStatus.set('all')">
+        <span class="chip-label">Tous</span>
+        <span class="chip-count">{{ questions().length }}</span>
+      </button>
+      <button class="filter-chip" [class.active]="filterStatus() === 'active'" (click)="filterStatus.set('active')">
+        <span class="chip-label">Actives</span>
+        <span class="chip-count">{{ activeCount() }}</span>
+      </button>
+      <button class="filter-chip" [class.active]="filterStatus() === 'deleted'" (click)="filterStatus.set('deleted')">
+        <span class="chip-label">Supprimées</span>
+        <span class="chip-count">{{ deletedCount() }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Filtres avancés -->
+  <div class="advanced-filters">
+    <select class="filter-select" [ngModel]="filterDifficulty()" (ngModelChange)="filterDifficulty.set($event)">
+      <option [ngValue]="null">Toutes difficultés</option>
+      @for (level of difficultyLevels; track level) {
+        <option [ngValue]="level">{{ getDifficultyLabel(level) }}</option>
+      }
+    </select>
+
+    <select class="filter-select" [ngModel]="filterType()" (ngModelChange)="filterType.set($event)">
+      <option [ngValue]="null">Tous types</option>
+      @for (type of questionTypes; track type) {
+        <option [ngValue]="type">{{ getTypeLabel(type) }}</option>
+      }
+    </select>
+  </div>
+
+  <!-- Chargement -->
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Chargement des questions...</p>
+    </div>
+  }
+
+  <!-- Liste -->
+  @if (!loading()) {
+    @if (filteredQuestions().length > 0) {
+      <div class="questions-list">
+        @for (q of paginatedQuestions(); track q.id ?? $index) {
+          <div class="question-card" [class.deleted]="q.isDeleted">
+            @if (q.isDeleted) {
+              <div class="deleted-badge">Supprimée</div>
+            }
+
+            @if (isAdminModeEnabled()) {
+              <div class="card-actions">
+                @if (q.isDeleted) {
+                  <button class="action-btn action-btn--restore" (click)="restoreQuestion(q); $event.stopPropagation()" title="Restaurer" aria-label="Restaurer">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M3 12a9 9 0 019-9 9.75 9.75 0 016.74 2.74L21 8"/>
+                      <path d="M21 3v5h-5"/>
+                      <path d="M21 12a9 9 0 01-9 9 9.75 9.75 0 01-6.74-2.74L3 16"/>
+                    </svg>
+                  </button>
+                } @else {
+                  <button class="action-btn action-btn--edit" (click)="openEditModal(q); $event.stopPropagation()" title="Modifier" aria-label="Modifier">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                      <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
+                  </button>
+                  <button class="action-btn action-btn--delete" (click)="openDeleteModal(q); $event.stopPropagation()" title="Supprimer" aria-label="Supprimer">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                    </svg>
+                  </button>
+                }
+              </div>
+            }
+
+            <div class="question-content">
+              <div class="question-header">
+                @if (q.questionRef) {
+                  <span class="question-ref">{{ q.questionRef }}</span>
+                }
+                <div class="question-badges">
+                  <span class="badge badge--type">{{ getTypeLabel(q.questionType) }}</span>
+                  <span class="badge {{ getDifficultyClass(q.difficultyLevel) }}">{{ getDifficultyLabel(q.difficultyLevel) }}</span>
+                </div>
+              </div>
+
+              <p class="question-text">{{ q.questionText || 'Question sans texte' }}</p>
+
+              <div class="question-meta">
+                @if (q.score !== undefined) {
+                  <span class="meta-item">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                    {{ q.score }} pt{{ q.score && q.score > 1 ? 's' : '' }}
+                  </span>
+                }
+                @if (q.questionChrono) {
+                  <span class="meta-item">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                      <path d="M12 6v6l4 2"/>
+                    </svg>
+                    {{ q.questionChrono }}s
+                  </span>
+                }
+                @if (q.specialityId) {
+                  <span class="meta-item meta-item--speciality">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                    {{ getSpecialityName(q.specialityId) }}
+                  </span>
+                }
+                @if (q.createdAt) {
+                  <span class="meta-item meta-item--date">
+                    {{ q.createdAt }}
+                  </span>
+                }
+              </div>
+            </div>
+
+            <!-- Réponses -->
+            <div class="answers-section">
+              <div class="answers-toggle" (click)="toggleAnswers(q.id ?? 0)">
+                <svg class="toggle-chevron" [class.collapsed]="!isExpanded(q.id ?? 0)" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M6 9l6 6 6-6"/>
+                </svg>
+                <span class="answers-toggle-label">
+                  Réponses
+                  <span class="answers-count">{{ answersForQuestion(q.id ?? 0).length }}</span>
+                </span>
+                @if (isAdminModeEnabled() && !q.isDeleted) {
+                  <button class="btn-add-answer" (click)="openAddAnswerModal(q.id ?? 0); $event.stopPropagation()" title="Ajouter une réponse">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Ajouter
+                  </button>
+                }
+              </div>
+
+              @if (isExpanded(q.id ?? 0)) {
+                <div class="answers-list">
+                  @if (answersForQuestion(q.id ?? 0).length === 0) {
+                    <div class="answers-empty">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 11l3 3L22 4"/>
+                        <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+                      </svg>
+                      Aucune réponse
+                    </div>
+                  }
+                  @for (a of answersForQuestion(q.id ?? 0); track a.id ?? $index) {
+                    <div class="answer-item" [class.correct]="a.isCorrect" [class.deleted]="a.isDeleted">
+                      <span class="answer-indicator">
+                        @if (a.isCorrect) {
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <path d="M20 6L9 17l-5-5"/>
+                          </svg>
+                        } @else {
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <path d="M18 6L6 18M6 6l12 12"/>
+                          </svg>
+                        }
+                      </span>
+                      <span class="answer-text">{{ a.answerText }}</span>
+                      @if (a.isDeleted) {
+                        <span class="answer-deleted-badge">Supprimée</span>
+                      }
+                      @if (isAdminModeEnabled()) {
+                        <div class="answer-actions">
+                          @if (!a.isDeleted) {
+                            <button class="answer-btn answer-btn--edit" (click)="openEditAnswerModal(a)" title="Modifier" aria-label="Modifier">
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                              </svg>
+                            </button>
+                            <button class="answer-btn answer-btn--delete" (click)="openDeleteAnswerModal(a)" title="Supprimer" aria-label="Supprimer">
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                              </svg>
+                            </button>
+                          } @else {
+                            <button class="answer-btn answer-btn--restore" (click)="restoreAnswer(a)" title="Restaurer" aria-label="Restaurer">
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 12a9 9 0 019-9 9.75 9.75 0 016.74 2.74L21 8"/>
+                                <path d="M21 3v5h-5"/>
+                                <path d="M21 12a9 9 0 01-9 9 9.75 9.75 0 01-6.74-2.74L3 16"/>
+                              </svg>
+                            </button>
+                          }
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Pagination -->
+      @if (totalPages() > 1) {
+        <nav class="pagination" aria-label="Pagination des questions">
+          <button class="pagination-btn" (click)="goToPage(0)" [disabled]="currentPage() === 0" title="Première page">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/></svg>
+          </button>
+          <button class="pagination-btn" (click)="prevPage()" [disabled]="currentPage() === 0" title="Page précédente">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          @for (page of pageNumbers(); track page) {
+            <button class="pagination-btn" [class.active]="currentPage() === page" (click)="goToPage(page)">
+              {{ page + 1 }}
+            </button>
+          }
+          <button class="pagination-btn" (click)="nextPage()" [disabled]="currentPage() === totalPages() - 1" title="Page suivante">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+          <button class="pagination-btn" (click)="goToPage(totalPages() - 1)" [disabled]="currentPage() === totalPages() - 1" title="Dernière page">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 17l5-5-5-5M6 17l5-5-5-5"/></svg>
+          </button>
+        </nav>
+      }
+    } @else {
+      <div class="empty-state">
+        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="empty-icon">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        <h3>Aucune question trouvée</h3>
+        <p>Aucune question ne correspond à vos critères de recherche</p>
+      </div>
+    }
+  }
+</div>
+
+<!-- Modal Créer/Modifier -->
+@if (showCreateEditModal()) {
+  <div class="modal-overlay" role="dialog" aria-modal="true" (click)="closeCreateEditModal()">
+    <div class="modal-content modal-content--large" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ isEditMode() ? 'Modifier la question' : 'Nouvelle question' }}</h2>
+        <button class="modal-close" (click)="closeCreateEditModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <form class="question-form">
+          <div class="form-group">
+            <label for="q-text">Texte de la question *</label>
+            <textarea
+              id="q-text"
+              [ngModel]="questionForm().questionText"
+              (ngModelChange)="updateFormField('questionText', $event)"
+              placeholder="Saisissez le texte de la question..."
+              rows="4"
+              required
+            ></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="q-type">Type</label>
+              <select id="q-type" [ngModel]="questionForm().questionType" (ngModelChange)="updateFormField('questionType', $event)">
+                @for (type of questionTypes; track type) {
+                  <option [ngValue]="type">{{ getTypeLabel(type) }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="q-difficulty">Difficulté</label>
+              <select id="q-difficulty" [ngModel]="questionForm().difficultyLevel" (ngModelChange)="updateFormField('difficultyLevel', $event)">
+                @for (level of difficultyLevels; track level) {
+                  <option [ngValue]="level">{{ getDifficultyLabel(level) }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="q-score">Score</label>
+              <input
+                type="number"
+                id="q-score"
+                [ngModel]="questionForm().score"
+                (ngModelChange)="updateFormField('score', $event)"
+                min="0"
+                step="1"
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="q-chrono">Chrono (secondes)</label>
+              <input
+                type="number"
+                id="q-chrono"
+                [ngModel]="questionForm().questionChrono"
+                (ngModelChange)="updateFormField('questionChrono', $event)"
+                min="0"
+                step="5"
+              >
+            </div>
+          </div>
+
+          @if (specialities().length > 0) {
+            <div class="form-group">
+              <label for="q-speciality">Spécialité</label>
+              <select id="q-speciality" [ngModel]="questionForm().specialityId" (ngModelChange)="updateFormField('specialityId', $event)">
+                <option [ngValue]="undefined">Aucune spécialité</option>
+                @for (spec of specialities(); track spec.id ?? $index) {
+                  <option [ngValue]="spec.id">{{ spec.nom || spec.name || spec.specialityName }}</option>
+                }
+              </select>
+            </div>
+          }
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeCreateEditModal()">Annuler</button>
+        <button class="btn btn-primary" (click)="saveQuestion()" [disabled]="loading()">
+          {{ isEditMode() ? 'Enregistrer' : 'Créer' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal Supprimer -->
+@if (showDeleteModal()) {
+  <div class="modal-overlay" role="dialog" aria-modal="true" (click)="closeDeleteModal()">
+    <div class="modal-content modal-content--small" (click)="$event.stopPropagation()">
+      <div class="modal-header modal-header--danger">
+        <h2>Supprimer la question</h2>
+        <button class="modal-close" (click)="closeDeleteModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="delete-warning">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="warning-icon">
+            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          <p>Êtes-vous sûr de vouloir supprimer cette question ?</p>
+          <p class="warning-detail">{{ selectedQuestion()?.questionText }}</p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeDeleteModal()">Annuler</button>
+        <button class="btn btn-danger" (click)="confirmDelete()" [disabled]="loading()">
+          Supprimer
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal Réponse Créer/Modifier -->
+@if (showAnswerModal()) {
+  <div class="modal-overlay" role="dialog" aria-modal="true" (click)="closeAnswerModal()">
+    <div class="modal-content modal-content--large" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ isAnswerEditMode() ? 'Modifier la réponse' : 'Nouvelle réponse' }}</h2>
+        <button class="modal-close" (click)="closeAnswerModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form class="question-form">
+          <div class="form-group">
+            <label for="a-text">Texte de la réponse *</label>
+            <input
+              type="text"
+              id="a-text"
+              [ngModel]="answerForm().answerText"
+              (ngModelChange)="updateAnswerFormField('answerText', $event)"
+              placeholder="Saisissez le texte de la réponse..."
+              required
+            >
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="a-type">Type</label>
+              <select id="a-type" [ngModel]="answerForm().answerType" (ngModelChange)="updateAnswerFormField('answerType', $event)">
+                @for (type of answerTypes; track type) {
+                  <option [ngValue]="type">{{ type }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="a-order">Ordre</label>
+              <input
+                type="number"
+                id="a-order"
+                [ngModel]="answerForm().answerOrder"
+                (ngModelChange)="updateAnswerFormField('answerOrder', $event)"
+                min="1"
+              >
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                [ngModel]="answerForm().isCorrect"
+                (ngModelChange)="updateAnswerFormField('isCorrect', $event)"
+              >
+              Réponse correcte
+            </label>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeAnswerModal()">Annuler</button>
+        <button class="btn btn-primary" (click)="saveAnswer()">
+          {{ isAnswerEditMode() ? 'Enregistrer' : 'Ajouter' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal Supprimer Réponse -->
+@if (showAnswerDeleteModal()) {
+  <div class="modal-overlay" role="dialog" aria-modal="true" (click)="closeDeleteAnswerModal()">
+    <div class="modal-content modal-content--small" (click)="$event.stopPropagation()">
+      <div class="modal-header modal-header--danger">
+        <h2>Supprimer la réponse</h2>
+        <button class="modal-close" (click)="closeDeleteAnswerModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="delete-warning">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="warning-icon">
+            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          <p>Supprimer cette réponse ?</p>
+          <p class="warning-detail">{{ selectedAnswer()?.answerText }}</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeDeleteAnswerModal()">Annuler</button>
+        <button class="btn btn-danger" (click)="confirmDeleteAnswer()">Supprimer</button>
+      </div>
+    </div>
+  </div>
+}

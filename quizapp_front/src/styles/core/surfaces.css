@@ -14,6 +14,7 @@
   --elevation-5: 0 19px 38px rgba(0, 0, 0, 0.30), 0 15px 12px rgba(0, 0, 0, 0.22);
   
   /* Surface Overlays */
+  --overlay-backdrop: rgba(0, 0, 0, 0.5);
   --overlay-light: rgba(255, 255, 255, 0.05);
   --overlay-medium: rgba(255, 255, 255, 0.10);
   --overlay-heavy: rgba(255, 255, 255, 0.15);
@@ -34,6 +35,7 @@
   --surface-selected: rgba(255, 255, 255, 0.16);
   --surface-disabled: rgba(255, 255, 255, 0.12);
   
+  --overlay-backdrop: rgba(0, 0, 0, 0.6);
   --overlay-light: rgba(0, 0, 0, 0.05);
   --overlay-medium: rgba(0, 0, 0, 0.10);
   --overlay-heavy: rgba(0, 0, 0, 0.15);

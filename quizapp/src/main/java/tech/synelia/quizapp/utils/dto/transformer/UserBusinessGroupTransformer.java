@@ -38,6 +38,7 @@ public interface UserBusinessGroupTransformer {
         dto.setId(entity.getId());
         dto.setUserId(entity.getUser() != null ? entity.getUser().getId() : null);
         dto.setBusinessGroupId(entity.getBusinessGroup() != null ? entity.getBusinessGroup().getId() : null);
+        dto.setIsModerator(entity.getIsModerator());
         return dto;
     }
 

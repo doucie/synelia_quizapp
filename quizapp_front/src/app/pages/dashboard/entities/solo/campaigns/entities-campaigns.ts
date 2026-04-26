@@ -1,9 +1,11 @@
-import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, HostListener, signal, inject } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
 import { CommonModule, NgIf, NgFor } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { EntityDetailPanelComponent, DetailField } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
 import { DependencyPopupComponent } from '../../../../../shared/dependency-popup/dependency-popup';
+import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
+import { EntityColumnVisibilityState, ColumnDef } from '../../../../../shared/entity-column-visibility';
 import { DashboardStatsService } from '../../../../../core/services/dashboard-stats.service';
 import { DependencyInfo } from '../../../../../shared/models/interfaces';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -21,7 +23,7 @@ import { SpecialityService, Speciality } from '../../../../../core/services/spec
 @Component({
   selector: 'app-entities-campaigns',
   standalone: true,
-  imports: [CommonModule, NgIf, NgFor, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent],
+  imports: [CommonModule, NgIf, NgFor, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent, ColumnVisibilityManagerComponent],
   templateUrl: './entities-campaigns.html',
   styleUrl: './entities-campaigns.scss'
 })
@@ -110,6 +112,34 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
   // Options de pagination avec 10 par défaut
   pageSizeOptions = [5, 10, 20, 50, 100];
   private readonly PAGE_SIZE_STORAGE_KEY = 'entities-campaigns-page-size';
+
+  readonly allColumns: ColumnDef[] = [
+    { key: 'id', label: 'ID', priority: 1 },
+    { key: 'name', label: 'Nom', priority: 1 },
+    { key: 'description', label: 'Description', priority: 3 },
+    { key: 'status', label: 'Statut', priority: 2 },
+    { key: 'speciality', label: 'Spécialité', priority: 2 },
+    { key: 'pipelineTemplate', label: 'Template Pipeline', priority: 3 },
+    { key: 'startDate', label: 'Date Début', priority: 2 },
+    { key: 'endDate', label: 'Date Fin', priority: 2 },
+    { key: 'createdAt', label: 'Créé le', priority: 3 },
+    { key: 'actions', label: 'Actions', priority: 1 },
+  ];
+  private readonly columnVisibility = new EntityColumnVisibilityState(this.allColumns, 'column-visibility-campaigns');
+  private readonly hostElement = inject(ElementRef<HTMLElement>);
+  readonly visibleColumns = this.columnVisibility.visibleColumns;
+  readonly hiddenColumnsCount = this.columnVisibility.hiddenColumnsCount;
+
+  @HostListener('window:resize')
+  onWindowResize(): void { this.columnVisibility.applyAutoHideForHost(); }
+
+  @HostListener('mouseover', ['$event.target'])
+  onDataTableCellHover(target: EventTarget | null): void { this.columnVisibility.ensureCellTitle(target); }
+
+  isColumnVisible(key: string): boolean { return this.columnVisibility.isColumnVisible(key); }
+  toggleColumnVisibility(key: string): void { this.columnVisibility.toggleColumnVisibility(key); }
+  showAllColumns(): void { this.columnVisibility.showAllColumns(); }
+  resetColumnVisibility(): void { this.columnVisibility.resetColumnVisibility(); }
   
   // État de la popup de confirmation
   showDeleteConfirmation = false;
@@ -198,6 +228,7 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     console.log('🚀 Initialisation EntitiesCampaignsComponent');
+    this.columnVisibility.observeHost(this.hostElement.nativeElement);
     // Initialiser la taille de page avec la valeur stockée
     this.pageSize.set(this.getStoredPageSize());
     console.log('📦 Taille de page au démarrage:', this.pageSize());
@@ -217,6 +248,7 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.columnVisibility.disconnect();
     this.destroy$.next();
     this.destroy$.complete();
     if (this.loadingTimeout) {

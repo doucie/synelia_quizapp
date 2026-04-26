@@ -28,7 +28,7 @@
   width: 28px;
   height: 28px;
   background: var(--surface-variant);
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   font-weight: var(--font-weight-semibold);
   font-size: var(--font-size-sm);
 }
@@ -36,7 +36,12 @@
 /* Container du tableau avec scroll horizontal */
 .data-table-container {
   position: relative;
-  overflow: hidden;
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  contain: inline-size;
 }
 
 .data-table-wrapper {
@@ -54,7 +59,7 @@
 
   &::-webkit-scrollbar-thumb {
     background: var(--border);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
 
     &:hover {
       background: var(--text-secondary);

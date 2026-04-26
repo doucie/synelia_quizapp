@@ -15,6 +15,8 @@ import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.dao.entity.*;
 import tech.synelia.quizapp.dao.repository.*;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 @Log
 @Component
@@ -30,6 +32,8 @@ public class BusinessGroupBusiness {
 	private UserRepository userRepository;
 	@Autowired
 	private FunctionalError functionalError;
+	@PersistenceContext
+	private EntityManager em;
 
 	/**
 	 * Créer un groupe métier.
@@ -354,37 +358,41 @@ public class BusinessGroupBusiness {
 	/**
 	 * Retourne tous les groupes (non supprimés).
 	 */
-	public Response<BusinessGroupDto> getByCriteria(Request<BusinessGroupDto> request, Locale locale) {
+	public Response<BusinessGroupDto> getByCriteria(Request<BusinessGroupDto> request, Locale locale) throws Exception {
+		log.info("----begin get BusinessGroup-----");
 		Response<BusinessGroupDto> response = new Response<>();
 
-		Boolean isDeleted = false;
-		if (request.getData() != null && request.getData().getIsDeleted() != null) {
-			isDeleted = request.getData().getIsDeleted();
+		List<BusinessGroup> items = businessGroupRepository.getByCriteria(request, em, locale);
+
+		if (items != null && !items.isEmpty()) {
+			List<BusinessGroupDto> dtos = items.stream().map(e -> {
+				BusinessGroupDto dto = new BusinessGroupDto();
+				dto.setId(e.getId());
+				dto.setGroupName(e.getGroupName());
+				dto.setGroupDesc(e.getGroupDesc());
+				dto.setIsDeleted(e.getIsDeleted());
+				java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
+				if (e.getCreatedAt() != null) dto.setCreatedAt(sdf.format(e.getCreatedAt()));
+				dto.setCreatedBy(e.getCreatedBy());
+				if (e.getUpdatedAt() != null) dto.setUpdatedAt(sdf.format(e.getUpdatedAt()));
+				dto.setUpdatedBy(e.getUpdatedBy());
+				return dto;
+			}).collect(Collectors.toList());
+
+			Status status = new Status();
+			status.setCode(StatusCode.SUCCESS);
+			status.setMessage(StatusMessage.SUCCESS);
+			response.setItems(dtos);
+			response.setHasError(false);
+			response.setHttpCode(HttpStatus.OK.value());
+			response.setStatus(status);
+			response.setCount(businessGroupRepository.count(request, em, locale));
+		} else {
+			response.setStatus(functionalError.DATA_EMPTY("business_group", locale));
+			response.setHasError(false);
+			return response;
 		}
-
-		List<BusinessGroup> entities = businessGroupRepository.findByIsDeleted(isDeleted);
-		List<BusinessGroupDto> dtos = entities.stream().map(e -> {
-			BusinessGroupDto dto = new BusinessGroupDto();
-			dto.setId(e.getId());
-			dto.setGroupName(e.getGroupName());
-			dto.setGroupDesc(e.getGroupDesc());
-			dto.setIsDeleted(e.getIsDeleted());
-			java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
-			if (e.getCreatedAt() != null) dto.setCreatedAt(sdf.format(e.getCreatedAt()));
-			dto.setCreatedBy(e.getCreatedBy());
-			if (e.getUpdatedAt() != null) dto.setUpdatedAt(sdf.format(e.getUpdatedAt()));
-			dto.setUpdatedBy(e.getUpdatedBy());
-			return dto;
-		}).collect(Collectors.toList());
-
-		Status status = new Status();
-		status.setCode(StatusCode.SUCCESS);
-		status.setMessage(StatusMessage.SUCCESS);
-		response.setItems(dtos);
-		response.setCount((long) dtos.size());
-		response.setHasError(false);
-		response.setHttpCode(HttpStatus.OK.value());
-		response.setStatus(status);
+		log.info("----end get BusinessGroup-----");
 		return response;
 	}
 }

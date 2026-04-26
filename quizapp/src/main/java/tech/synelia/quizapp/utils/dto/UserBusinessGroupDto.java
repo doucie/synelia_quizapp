@@ -22,6 +22,7 @@ public class UserBusinessGroupDto implements Cloneable {
     private String     updatedAt            ;
     private Integer    updatedBy            ;
     private Boolean    isDeleted            ;
+    private Boolean    isModerator          ;
 
     // Search parameters
     private SearchParam<Integer> idParam              ;
@@ -32,6 +33,7 @@ public class UserBusinessGroupDto implements Cloneable {
     private SearchParam<String>  updatedAtParam       ;
     private SearchParam<Integer> updatedByParam       ;
     private SearchParam<Boolean> isDeletedParam       ;
+    private SearchParam<Boolean> isModeratorParam     ;
 
     public UserBusinessGroupDto() {
         super();

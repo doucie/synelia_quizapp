@@ -109,9 +109,24 @@
 
   <!-- Entity section -->
   <div class="entity-section">
-    <div class="stats-bar">
-      <span class="stat-item">Total: {{ totalElements() }}</span>
-      <span class="stat-item">Page: {{ currentPage() + 1 }} / {{ totalPages() || 1 }}</span>
+    <div class="section-stats">
+      <div class="stats-row">
+        <h2 class="section-title">Codes d'Invitation</h2>
+        <app-column-visibility-manager
+          [columns]="allColumns"
+          [visibleColumns]="visibleColumns()"
+          [hiddenCount]="hiddenColumnsCount()"
+          (toggleColumn)="toggleColumnVisibility($event)"
+          (showAll)="showAllColumns()"
+          (resetColumns)="resetColumnVisibility()"
+        />
+        <div class="stats-info" *ngIf="!isLoading()">
+          <div class="stat-item">
+            <span>Total:</span>
+            <span class="stat-number">{{ totalElements() }}</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="loading-container" *ngIf="isLoading()">
@@ -127,29 +142,29 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th>ID</th>
-            <th>Email</th>
-            <th>Rôle</th>
-            <th>Code</th>
-            <th>Utilisé?</th>
-            <th>Expire le</th>
-            <th>Supprimé</th>
-            <th>Créé le</th>
-            <th>Actions</th>
+            <th class="col-id" [class.col-hidden]="!isColumnVisible('id')">ID</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('email')">Email</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('role')">Rôle</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('code')">Code</th>
+            <th class="col-boolean" [class.col-hidden]="!isColumnVisible('used')">Utilisé?</th>
+            <th class="col-date" [class.col-hidden]="!isColumnVisible('expiresAt')">Expire le</th>
+            <th class="col-boolean" [class.col-hidden]="!isColumnVisible('deleted')">Supprimé</th>
+            <th class="col-date" [class.col-hidden]="!isColumnVisible('createdAt')">Créé le</th>
+            <th class="col-actions" [class.col-hidden]="!isColumnVisible('actions')">Actions</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let item of items()" [class.deleted-row]="item.isDeleted" (click)="selectItem(item)">
-            <td>{{ item.id }}</td>
-            <td>{{ item.email || '-' }}</td>
-            <td>{{ item.role || '-' }}</td>
-            <td>{{ (item.code || '-').substring(0, 20) }}{{ (item.code || '').length > 20 ? '...' : '' }}</td>
-            <td><span class="badge" [class.badge-success]="item.isUsed" [class.badge-danger]="!item.isUsed">{{ item.isUsed ? 'Oui' : 'Non' }}</span></td>
-            <td>{{ formatDate(item.expiredAt) }}</td>
-            <td><span class="badge" [class.badge-danger]="item.isDeleted" [class.badge-success]="!item.isDeleted">{{ item.isDeleted ? 'Oui' : 'Non' }}</span></td>
-            <td>{{ formatDate(item.createdAt) }}</td>
-            <td class="actions-cell" (click)="$event.stopPropagation()">
-              <button class="btn-icon btn-danger" *ngIf="!item.isDeleted" (click)="confirmDelete(item)" title="Supprimer">
+            <td [class.col-hidden]="!isColumnVisible('id')">{{ item.id }}</td>
+            <td [class.col-hidden]="!isColumnVisible('email')">{{ item.email || '-' }}</td>
+            <td [class.col-hidden]="!isColumnVisible('role')">{{ item.role || '-' }}</td>
+            <td [class.col-hidden]="!isColumnVisible('code')">{{ (item.code || '-').substring(0, 20) }}{{ (item.code || '').length > 20 ? '...' : '' }}</td>
+            <td [class.col-hidden]="!isColumnVisible('used')"><span class="badge" [class.badge-success]="item.isUsed" [class.badge-danger]="!item.isUsed">{{ item.isUsed ? 'Oui' : 'Non' }}</span></td>
+            <td [class.col-hidden]="!isColumnVisible('expiresAt')">{{ formatDate(item.expiredAt) }}</td>
+            <td [class.col-hidden]="!isColumnVisible('deleted')"><span class="badge" [class.badge-danger]="item.isDeleted" [class.badge-success]="!item.isDeleted">{{ item.isDeleted ? 'Oui' : 'Non' }}</span></td>
+            <td [class.col-hidden]="!isColumnVisible('createdAt')">{{ formatDate(item.createdAt) }}</td>
+            <td class="actions-cell" [class.col-hidden]="!isColumnVisible('actions')" (click)="$event.stopPropagation()">
+              <button class="btn-icon btn-danger" *ngIf="!item.isDeleted" (click)="confirmDelete(item)" title="Supprimer" aria-label="Supprimer">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </button>
             </td>
@@ -158,22 +173,32 @@
       </table>
     </div>
 
-    <!-- Pagination -->
-    <div class="pagination" *ngIf="totalPages() > 1">
-      <button class="btn-page" [disabled]="!hasPreviousPage()" (click)="previousPage()">Précédent</button>
-      <button *ngFor="let p of getPageNumbers()" class="btn-page" [class.active]="p === currentPage()" (click)="goToPage(p)">{{ p + 1 }}</button>
-      <button class="btn-page" [disabled]="!hasNextPage()" (click)="nextPage()">Suivant</button>
-      <select class="page-size-select" (change)="onPageSizeChange($event)">
-        <option [value]="10" [selected]="pageSize() === 10">10</option>
-        <option [value]="25" [selected]="pageSize() === 25">25</option>
-        <option [value]="50" [selected]="pageSize() === 50">50</option>
-        <option [value]="100" [selected]="pageSize() === 100">100</option>
-      </select>
+    <div class="pagination-container">
+      <div class="pagination-info">
+        <span class="results-info">
+          Affichage {{ currentPage() * pageSize() + 1 }} - {{ Math.min((currentPage() + 1) * pageSize(), totalElements()) }} sur {{ totalElements() }}
+        </span>
+        <div class="page-size-selector">
+          <label for="pageSize">Par page:</label>
+          <div class="select-wrapper">
+            <select id="pageSize" class="page-size-select" [value]="pageSize()" (change)="onPageSizeChange($event)">
+              <option [value]="5">5</option><option [value]="10">10</option><option [value]="20">20</option><option [value]="50">50</option><option [value]="100">100</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="pagination-controls" *ngIf="totalElements() > pageSize()">
+        <button class="pagination-btn" [class.disabled]="!hasPreviousPage()" (click)="previousPage()" [disabled]="!hasPreviousPage()">Précédent</button>
+        <div class="page-numbers">
+          <button *ngFor="let page of getPageNumbers()" class="page-number-btn" [class.active]="page === currentPage()" (click)="goToPage(page)">{{ page + 1 }}</button>
+        </div>
+        <button class="pagination-btn" [class.disabled]="!hasNextPage()" (click)="nextPage()" [disabled]="!hasNextPage()">Suivant</button>
+      </div>
     </div>
   </div>
 
   <!-- Delete confirmation -->
-  <div class="modal-overlay" *ngIf="showDeleteConfirmation" (click)="cancelDelete()">
+  <div class="modal-overlay" role="dialog" aria-modal="true" *ngIf="showDeleteConfirmation" (click)="cancelDelete()">
     <div class="modal-dialog" (click)="$event.stopPropagation()">
       <h3>Confirmer la suppression</h3>
       <p>Voulez-vous vraiment supprimer cet élément ?</p>
@@ -185,7 +210,7 @@
   </div>
 
   <!-- Restore confirmation -->
-  <div class="modal-overlay" *ngIf="showRestoreConfirmation()" (click)="cancelRestore()">
+  <div class="modal-overlay" role="dialog" aria-modal="true" *ngIf="showRestoreConfirmation()" (click)="cancelRestore()">
     <div class="modal-dialog" (click)="$event.stopPropagation()">
       <h3>Confirmer la restauration</h3>
       <p>Voulez-vous vraiment restaurer cet élément ?</p>
@@ -197,7 +222,7 @@
   </div>
 
   <!-- Create modal -->
-  <div class="modal-overlay" *ngIf="showCreateDialog()" (click)="closeCreateDialog()">
+  <div class="modal-overlay" role="dialog" aria-modal="true" *ngIf="showCreateDialog()" (click)="closeCreateDialog()">
     <div class="modal-dialog modal-lg" (click)="$event.stopPropagation()">
       <h3>Nouveau code d'invitation</h3>
       <div class="form-grid">

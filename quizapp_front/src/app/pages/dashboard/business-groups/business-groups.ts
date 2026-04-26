@@ -6,6 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../../core/services/auth/auth.service';
 import { PERMISSION_CATEGORIES } from '../../../core/constants/permissions.constants';
 import { SpringBootRequest, SpringBootResponse } from '../../../core/models/spring-boot.interfaces';
+import { GroupChangeRequestService, GroupChangeRequest } from '../../../core/services/group-change-request.service';
 
 interface BusinessGroupItem {
   id?: number;
@@ -13,6 +14,7 @@ interface BusinessGroupItem {
   groupDesc?: string;
   createdAt?: string;
   userCount?: number;
+  permissionCount?: number;
 }
 
 interface GroupPermission {
@@ -28,10 +30,11 @@ interface GroupUser {
   userFirstName?: string;
   userLastName?: string;
   userEmail?: string;
+  isModerator?: boolean;
 }
 
 type ViewMode = 'list' | 'edit';
-type EditTab = 'info' | 'permissions' | 'members';
+type EditTab = 'info' | 'permissions' | 'members' | 'requests';
 
 @Component({
   selector: 'app-business-groups',
@@ -63,7 +66,12 @@ export class BusinessGroupsComponent implements OnInit, OnDestroy {
   groupMembers = signal<GroupUser[]>([]);
   newMemberUserId = signal('');
 
-  constructor(private http: HttpClient, private authService: AuthService) {}
+  // Demandes de changement de groupe
+  pendingRequests = signal<GroupChangeRequest[]>([]);
+  requestsLoading = signal(false);
+  processingRequestId = signal<number | null>(null);
+
+  constructor(private http: HttpClient, private authService: AuthService, private groupChangeRequestService: GroupChangeRequestService) {}
 
   ngOnInit(): void {
     this.loadGroups();
@@ -108,6 +116,7 @@ export class BusinessGroupsComponent implements OnInit, OnDestroy {
     this.viewMode.set('edit');
     this.loadGroupPermissions(group.id!);
     this.loadGroupMembers(group.id!);
+    this.loadGroupRequests(group.id!);
   }
 
   deleteGroup(group: BusinessGroupItem): void {
@@ -275,6 +284,56 @@ export class BusinessGroupsComponent implements OnInit, OnDestroy {
       next: (res) => {
         if (!res.hasError) this.loadGroupMembers(groupId);
       }
+    });
+  }
+
+  // ─── Demandes de changement ────────────────
+
+  loadGroupRequests(groupId: number): void {
+    this.requestsLoading.set(true);
+    this.groupChangeRequestService.getAllByCriteria({
+      targetGroupId: groupId,
+      status: 'PENDING',
+      isDeleted: false,
+      size: 100
+    }).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (res) => {
+        this.pendingRequests.set(res.content);
+        this.requestsLoading.set(false);
+      },
+      error: () => {
+        this.pendingRequests.set([]);
+        this.requestsLoading.set(false);
+      }
+    });
+  }
+
+  approveRequest(req: GroupChangeRequest): void {
+    if (!req.id) return;
+    this.processingRequestId.set(req.id);
+    this.groupChangeRequestService.approve(req.id).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => {
+        this.processingRequestId.set(null);
+        const groupId = this.editingGroup().id;
+        if (groupId) {
+          this.loadGroupRequests(groupId);
+          this.loadGroupMembers(groupId);
+        }
+      },
+      error: () => this.processingRequestId.set(null)
+    });
+  }
+
+  rejectRequest(req: GroupChangeRequest): void {
+    if (!req.id) return;
+    this.processingRequestId.set(req.id);
+    this.groupChangeRequestService.reject(req.id).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => {
+        this.processingRequestId.set(null);
+        const groupId = this.editingGroup().id;
+        if (groupId) this.loadGroupRequests(groupId);
+      },
+      error: () => this.processingRequestId.set(null)
     });
   }
 }

@@ -3,15 +3,16 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
-import { EntityCrudBase } from '../../../../../shared/entity-crud-base';
+import { EntityCrudBase, ColumnDef } from '../../../../../shared/entity-crud-base';
 import { InterviewParticipantService, InterviewParticipant, PagedInterviewParticipantResponse, InterviewParticipantSearchCriteria } from '../../../../../core/services/interview-participant.service';
 import { InterviewService, Interview } from '../../../../../core/services/interview.service';
 import { UserService, User } from '../../../../../core/services/user.service';
+import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
 
 @Component({
   selector: 'app-entities-interview-participant',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ColumnVisibilityManagerComponent],
   templateUrl: './entities-interview-participant.html',
   styleUrls: ['./entities-interview-participant.scss']
 })
@@ -30,6 +31,17 @@ export class EntitiesInterviewParticipantComponent extends EntityCrudBase<Interv
   advancedCriteria: InterviewParticipantSearchCriteria = {};
   editFormData: InterviewParticipant = { interviewId: 0, userId: 0 };
   createFormData: Partial<InterviewParticipant> = {};
+
+  override allColumns: ColumnDef[] = [
+    { key: 'id', label: 'ID', priority: 1 },
+    { key: 'userId', label: 'User ID', priority: 1 },
+    { key: 'interviewId', label: 'Interview ID', priority: 1 },
+    { key: 'online', label: 'Online', priority: 2 },
+    { key: 'finished', label: 'Finished', priority: 2 },
+    { key: 'lastPing', label: 'Dernier Ping', priority: 3 },
+    { key: 'createdAt', label: 'Créé le', priority: 2 },
+    { key: 'actions', label: 'Actions', priority: 1 },
+  ];
 
   protected fetchAll(criteria: InterviewParticipantSearchCriteria): Observable<PagedInterviewParticipantResponse> { return this.service.getAllByCriteria(criteria); }
   protected performCreate(item: Partial<InterviewParticipant>): Observable<any> { return this.service.entityCreate(item as InterviewParticipant); }

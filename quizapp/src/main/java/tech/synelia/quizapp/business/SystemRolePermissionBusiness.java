@@ -15,6 +15,8 @@ import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.dao.entity.*;
 import tech.synelia.quizapp.dao.repository.*;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 @Log
 @Component
@@ -24,6 +26,8 @@ public class SystemRolePermissionBusiness {
 	private SystemRolePermissionRepository systemRolePermissionRepository;
 	@Autowired
 	private FunctionalError functionalError;
+	@PersistenceContext
+	private EntityManager em;
 
 	private static final String SUPER_ADMIN = "SUPER_ADMIN";
 
@@ -140,31 +144,40 @@ public class SystemRolePermissionBusiness {
 	/**
 	 * Retourne toutes les permissions système (pour la page entité CRUD).
 	 */
-	public Response<SystemRolePermissionDto> getByCriteria(Request<SystemRolePermissionDto> request, Locale locale) {
+	public Response<SystemRolePermissionDto> getByCriteria(Request<SystemRolePermissionDto> request, Locale locale) throws Exception {
+		log.info("----begin get SystemRolePermission-----");
 		Response<SystemRolePermissionDto> response = new Response<>();
 
-		List<SystemRolePermission> entities = systemRolePermissionRepository.findAll();
-		List<SystemRolePermissionDto> dtos = entities.stream().map(e -> {
-			SystemRolePermissionDto dto = new SystemRolePermissionDto();
-			dto.setId(e.getId());
-			dto.setSystemRole(e.getSystemRole());
-			dto.setFunctionality(e.getFunctionality());
-			java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
-			if (e.getCreatedAt() != null) dto.setCreatedAt(sdf.format(e.getCreatedAt()));
-			dto.setCreatedBy(e.getCreatedBy());
-			if (e.getUpdatedAt() != null) dto.setUpdatedAt(sdf.format(e.getUpdatedAt()));
-			dto.setUpdatedBy(e.getUpdatedBy());
-			return dto;
-		}).collect(Collectors.toList());
+		List<SystemRolePermission> items = systemRolePermissionRepository.getByCriteria(request, em, locale);
 
-		Status status = new Status();
-		status.setCode(StatusCode.SUCCESS);
-		status.setMessage(StatusMessage.SUCCESS);
-		response.setItems(dtos);
-		response.setCount((long) dtos.size());
-		response.setHasError(false);
-		response.setHttpCode(HttpStatus.OK.value());
-		response.setStatus(status);
+		if (items != null && !items.isEmpty()) {
+			List<SystemRolePermissionDto> dtos = items.stream().map(e -> {
+				SystemRolePermissionDto dto = new SystemRolePermissionDto();
+				dto.setId(e.getId());
+				dto.setSystemRole(e.getSystemRole());
+				dto.setFunctionality(e.getFunctionality());
+				java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
+				if (e.getCreatedAt() != null) dto.setCreatedAt(sdf.format(e.getCreatedAt()));
+				dto.setCreatedBy(e.getCreatedBy());
+				if (e.getUpdatedAt() != null) dto.setUpdatedAt(sdf.format(e.getUpdatedAt()));
+				dto.setUpdatedBy(e.getUpdatedBy());
+				return dto;
+			}).collect(Collectors.toList());
+
+			Status status = new Status();
+			status.setCode(StatusCode.SUCCESS);
+			status.setMessage(StatusMessage.SUCCESS);
+			response.setItems(dtos);
+			response.setHasError(false);
+			response.setHttpCode(HttpStatus.OK.value());
+			response.setStatus(status);
+			response.setCount(systemRolePermissionRepository.count(request, em, locale));
+		} else {
+			response.setStatus(functionalError.DATA_EMPTY("system_role_permission", locale));
+			response.setHasError(false);
+			return response;
+		}
+		log.info("----end get SystemRolePermission-----");
 		return response;
 	}
 

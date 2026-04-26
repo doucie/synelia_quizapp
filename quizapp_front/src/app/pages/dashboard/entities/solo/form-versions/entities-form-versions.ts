@@ -3,9 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
-import { EntityCrudBase } from '../../../../../shared/entity-crud-base';
+import { EntityCrudBase, ColumnDef } from '../../../../../shared/entity-crud-base';
 import { EntityDetailPanelComponent } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
 import { DependencyPopupComponent } from '../../../../../shared/dependency-popup/dependency-popup';
+import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
 import { FormVersionService, FormVersion, PagedFormVersionResponse, FormVersionSearchCriteria } from '../../../../../core/services/form-version.service';
 import { FormQuestionsService, FormQuestions } from '../../../../../core/services/form-questions.service';
 import { FormService, Form } from '../../../../../core/services/form.service';
@@ -13,7 +14,7 @@ import { FormService, Form } from '../../../../../core/services/form.service';
 @Component({
   selector: 'app-entities-form-versions',
   standalone: true,
-  imports: [CommonModule, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent],
+  imports: [CommonModule, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent, ColumnVisibilityManagerComponent],
   templateUrl: './entities-form-versions.html',
   styleUrls: ['./entities-form-versions.scss']
 })
@@ -44,6 +45,16 @@ export class EntitiesFormVersionsComponent extends EntityCrudBase<FormVersion, F
   advancedCriteria: FormVersionSearchCriteria = {};
   editFormData: FormVersion = {};
   createFormData: Partial<FormVersion> = {};
+
+  override allColumns: ColumnDef[] = [
+    { key: 'id', label: 'ID', priority: 1 },
+    { key: 'version', label: 'Version', priority: 1 },
+    { key: 'formId', label: 'Formulaire ID', priority: 2 },
+    { key: 'published', label: 'Publié', priority: 2 },
+    { key: 'locked', label: 'Verrouillé', priority: 2 },
+    { key: 'createdAt', label: 'Créé le', priority: 2 },
+    { key: 'actions', label: 'Actions', priority: 1 },
+  ];
 
   protected fetchAll(criteria: FormVersionSearchCriteria): Observable<PagedFormVersionResponse> { return this.service.getAllByCriteria(criteria); }
   protected performCreate(item: Partial<FormVersion>): Observable<any> { return this.service.create(item as FormVersion); }

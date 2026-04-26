@@ -218,10 +218,10 @@
                           <!-- Actions pour l'utilisateur courant -->
                           @if (message.isCurrentUser) {
                             <div class="message-actions">
-                              <button class="btn-action btn-edit" (click)="startEditEvaluation(message)" title="Modifier">
+                              <button class="btn-action btn-edit" (click)="startEditEvaluation(message)" title="Modifier" aria-label="Modifier">
                                 <i class="bi bi-pencil"></i>
                               </button>
-                              <button class="btn-action btn-delete" (click)="deleteEvaluation(message)" title="Supprimer">
+                              <button class="btn-action btn-delete" (click)="deleteEvaluation(message)" title="Supprimer" aria-label="Supprimer">
                                 <i class="bi bi-trash"></i>
                               </button>
                             </div>
@@ -339,7 +339,7 @@
 
 <!-- Modal de confirmation pour terminer l'entretien -->
 @if (showFinishModal()) {
-  <div class="modal-overlay" (click)="closeFinishModal()">
+  <div class="modal-overlay" role="dialog" aria-modal="true" (click)="closeFinishModal()">
     <div class="modal-container" (click)="$event.stopPropagation()">
       <div class="modal-header" [class.warning]="finishModalWarning()">
         <div class="modal-icon">

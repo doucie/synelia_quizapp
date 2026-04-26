@@ -202,6 +202,14 @@
     <div class="section-stats">
       <div class="stats-row">
         <h2 class="section-title">Spécialités</h2>
+        <app-column-visibility-manager
+          [columns]="allColumns"
+          [visibleColumns]="visibleColumns()"
+          [hiddenCount]="hiddenColumnsCount()"
+          (toggleColumn)="toggleColumnVisibility($event)"
+          (showAll)="showAllColumns()"
+          (resetColumns)="resetColumnVisibility()"
+        />
         <div class="stats-info" *ngIf="!isLoading()">
           <div class="stat-item">
             <span>Total:</span>
@@ -244,31 +252,31 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th>ID</th>
-            <th>Nom de spécialité</th>
-            <th>Description</th>
-            <th>Département</th>
-            <th>Créé le</th>
-            <th>Actions</th>
+            <th class="col-id" [class.col-hidden]="!isColumnVisible('id')">ID</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('name')">Nom de spécialité</th>
+            <th class="col-medium" [class.col-hidden]="!isColumnVisible('description')">Description</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('department')">Département</th>
+            <th class="col-date" [class.col-hidden]="!isColumnVisible('createdAt')">Créé le</th>
+            <th class="col-actions" [class.col-hidden]="!isColumnVisible('actions')">Actions</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let speciality of specialities(); trackBy: trackBySpecialityId" 
               [class.row-deleted]="speciality.isDeleted" (click)="selectItem(speciality)" style="cursor: pointer;">
-            <td>
+            <td class="col-id" [class.col-hidden]="!isColumnVisible('id')">
               <span class="cell-id">#{{ speciality.id }}</span>
             </td>
-            <td>
+            <td class="col-short" [class.col-hidden]="!isColumnVisible('name')" [title]="speciality.nom || ''">
               <span class="cell-name">{{ speciality.nom || '-' }}</span>
             </td>
-            <td>
+            <td class="col-medium" [class.col-hidden]="!isColumnVisible('description')" [title]="speciality.description || ''">
               <span class="cell-description" *ngIf="speciality.description">{{ speciality.description }}</span>
               <span *ngIf="!speciality.description" style="color: var(--text-secondary);">-</span>
             </td>
-            <td>
+            <td class="col-short" [class.col-hidden]="!isColumnVisible('department')" [title]="speciality.departmentName || ''">
               <span class="cell-department">{{ speciality.departmentName || '-' }}</span>
             </td>
-            <td>
+            <td class="col-date" [class.col-hidden]="!isColumnVisible('createdAt')">
               <span class="cell-date" *ngIf="speciality.createdAt; else noDate">
                 {{ formatCreationDate(speciality) }}
               </span>
@@ -276,14 +284,14 @@
                 <span style="color: var(--text-secondary);">-</span>
               </ng-template>
             </td>
-            <td class="actions-cell" (click)="$event.stopPropagation()">
+            <td class="actions-cell col-actions" [class.col-hidden]="!isColumnVisible('actions')" (click)="$event.stopPropagation()">
               <div class="actions-menu">
                 <!-- Boutons normaux pour les utilisateurs non supprimés -->
                 <ng-container *ngIf="!speciality.isDeleted">
                   <button 
                     class="action-btn primary" 
                     (click)="editSpeciality(speciality)"
-                    title="Modifier la spécialité">
+                    title="Modifier la spécialité" aria-label="Modifier la spécialité">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M12 20H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                       <path d="M16.5 3.5A2.12 2.12 0 0 1 19 6L7 18L3 19L4 15L16.5 3.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -292,7 +300,7 @@
                   <button 
                     class="action-btn danger" 
                     (click)="deleteSpeciality(speciality)"
-                    title="Supprimer la spécialité">
+                    title="Supprimer la spécialité" aria-label="Supprimer la spécialité">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                       <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -307,7 +315,7 @@
                   <button 
                     class="action-btn success" 
                     (click)="restoreSpeciality(speciality); $event.stopPropagation()"
-                    title="Restaurer la spécialité"
+                    title="Restaurer la spécialité" aria-label="Restaurer la spécialité"
                     style="z-index: 10; position: relative;">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M3 12A9 9 0 1 0 12 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>

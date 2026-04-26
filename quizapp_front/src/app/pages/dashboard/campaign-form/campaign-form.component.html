@@ -94,6 +94,7 @@
                   class="remove-btn"
                   (click)="removeSpeciality()"
                   title="Retirer cette spécialité"
+                  aria-label="Retirer cette spécialité"
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M18 6L6 18M6 6l12 12"/>
@@ -269,7 +270,7 @@
 
       <!-- Migration modal -->
       @if (showMigrationModal()) {
-        <div class="modal-overlay" (click)="skipMigration()">
+        <div class="modal-overlay" role="dialog" aria-modal="true" (click)="skipMigration()">
           <div class="modal-content migration-modal" (click)="$event.stopPropagation()">
             <div class="modal-header">
               <h3>Migration de pipeline</h3>

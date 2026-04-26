@@ -1,7 +1,8 @@
 import { Component, signal, computed, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject, takeUntil, forkJoin } from 'rxjs';
+import { Router } from '@angular/router';
+import { Subject, takeUntil, forkJoin, of, catchError } from 'rxjs';
 import { AuthService, User as AuthUser } from '../../../core/services/auth/auth.service';
 import { EmailTemplateService, EmailTemplate } from '../../../core/services/email-template.service';
 import { SmtpConfigService, SmtpConfig } from '../../../core/services/smtp-config.service';
@@ -23,6 +24,7 @@ type SettingsTab = 'emails' | 'smtp' | 'legal' | 'config' | 'invitations';
 })
 export class SettingsComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
+  private hasLoadedSettings = false;
 
   activeTab = signal<SettingsTab>('emails');
   user = signal<AuthUser | null>(null);
@@ -72,6 +74,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
   savingInvitation = signal(false);
 
   constructor(
+    private router: Router,
     private authService: AuthService,
     private emailTemplateService: EmailTemplateService,
     private smtpConfigService: SmtpConfigService,
@@ -88,8 +91,12 @@ export class SettingsComponent implements OnInit, OnDestroy {
       if (u && u.role !== 'super') {
         this.activeTab.set('config');
       }
+
+      if (u && !this.hasLoadedSettings) {
+        this.hasLoadedSettings = true;
+        this.loadAll();
+      }
     });
-    this.loadAll();
   }
 
   ngOnDestroy() {
@@ -126,13 +133,49 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
   // ─── Load All Data ───────────────────────
   loadAll() {
+    const isSuperUser = this.user()?.role === 'super';
+    const failedSections: string[] = [];
     this.isLoading.set(true);
+
     forkJoin({
-      templates: this.emailTemplateService.getByCriteria(),
-      smtp: this.smtpConfigService.getByCriteria(),
-      legal: this.legalTextService.getByCriteria(),
-      configs: this.appConfigService.getByCriteria(),
-      invitations: this.invitationCodeService.getByCriteria()
+      templates: isSuperUser
+        ? this.emailTemplateService.getByCriteria().pipe(
+            catchError(() => {
+              failedSections.push('templates email');
+              return of({ items: [] as EmailTemplate[], count: 0 });
+            })
+          )
+        : of({ items: [] as EmailTemplate[], count: 0 }),
+      smtp: isSuperUser
+        ? this.smtpConfigService.getByCriteria().pipe(
+            catchError(() => {
+              failedSections.push('configuration SMTP');
+              return of({ items: [] as SmtpConfig[], count: 0 });
+            })
+          )
+        : of({ items: [] as SmtpConfig[], count: 0 }),
+      legal: isSuperUser
+        ? this.legalTextService.getByCriteria().pipe(
+            catchError(() => {
+              failedSections.push('textes juridiques');
+              return of({ items: [] as LegalText[], count: 0 });
+            })
+          )
+        : of({ items: [] as LegalText[], count: 0 }),
+      configs: this.appConfigService.getByCriteria().pipe(
+        catchError(() => {
+          failedSections.push('configuration application');
+          return of({ items: [] as AppConfig[], count: 0 });
+        })
+      ),
+      invitations: isSuperUser
+        ? this.invitationCodeService.getByCriteria().pipe(
+            catchError(() => {
+              failedSections.push('invitations');
+              return of({ items: [] as InvitationCode[], count: 0 });
+            })
+          )
+        : of({ items: [] as InvitationCode[], count: 0 })
     }).pipe(takeUntil(this.destroy$)).subscribe({
       next: ({ templates, smtp, legal, configs, invitations }) => {
         this.emailTemplates.set(templates.items);
@@ -141,6 +184,13 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.appConfigs.set(configs.items);
         this.invitationCodes.set(invitations.items);
         this.isLoading.set(false);
+
+        if (failedSections.length > 0) {
+          this.notificationService.error(
+            'Chargement partiel',
+            `Certaines sections n'ont pas pu être chargées : ${failedSections.join(', ')}`
+          );
+        }
       },
       error: () => {
         this.isLoading.set(false);
@@ -150,15 +200,15 @@ export class SettingsComponent implements OnInit, OnDestroy {
   }
 
   // ─── Email Templates ─────────────────────
-  openTemplateEditor(template?: EmailTemplate) {
-    if (template) {
-      this.editingTemplate.set(template);
-      this.templateForm.set({ ...template });
-    } else {
-      this.editingTemplate.set(null);
-      this.templateForm.set({ templateKey: '', subjectTemplate: '', bodyTemplate: '', description: '', availableVariables: '', isActive: true });
+  navigateToTemplateEditor(template?: EmailTemplate) {
+    if (template?.id) {
+      this.router.navigate(['/dashboard/email-editor', template.id]);
+      return;
     }
-    this.showTemplateEditor.set(true);
+
+    this.router.navigate(['/dashboard/email-editor'], {
+      queryParams: { mode: 'new' }
+    });
   }
 
   closeTemplateEditor() {

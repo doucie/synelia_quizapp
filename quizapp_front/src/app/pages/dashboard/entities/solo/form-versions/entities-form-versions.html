@@ -129,6 +129,14 @@
     <div class="section-stats">
       <div class="stats-row">
         <h2 class="section-title">Versions Formulaire</h2>
+        <app-column-visibility-manager
+          [columns]="allColumns"
+          [visibleColumns]="visibleColumns()"
+          [hiddenCount]="hiddenColumnsCount()"
+          (toggleColumn)="toggleColumnVisibility($event)"
+          (showAll)="showAllColumns()"
+          (resetColumns)="resetColumnVisibility()"
+        />
         <div class="stats-info" *ngIf="!isLoading()">
           <div class="stat-item"><span>Total:</span><span class="stat-number">{{ totalElements() }}</span></div>
         </div>
@@ -148,45 +156,45 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th>ID</th>
-            <th>Version</th>
-            <th>Formulaire ID</th>
-            <th>Publié</th>
-            <th>Verrouillé</th>
-            <th>Créé le</th>
-            <th>Actions</th>
+            <th class="col-id" [class.col-hidden]="!isColumnVisible('id')">ID</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('version')">Version</th>
+            <th class="col-id" [class.col-hidden]="!isColumnVisible('formId')">Formulaire ID</th>
+            <th class="col-boolean" [class.col-hidden]="!isColumnVisible('published')">Publié</th>
+            <th class="col-boolean" [class.col-hidden]="!isColumnVisible('locked')">Verrouillé</th>
+            <th class="col-date" [class.col-hidden]="!isColumnVisible('createdAt')">Créé le</th>
+            <th class="col-actions" [class.col-hidden]="!isColumnVisible('actions')">Actions</th>
           </tr>
         </thead>
         <tbody>
           <ng-container *ngFor="let item of items(); trackBy: trackById">
           <tr [class.row-deleted]="item.isDeleted" (click)="selectItem(item)" style="cursor: pointer;">
-            <td><span class="cell-id">#{{ item.id }}</span></td>
-            <td>v{{ item.versionNumber || '-' }}</td>
-            <td>{{ item.formId || '-' }}</td>
-            <td><span class="bool-badge" [class.is-true]="item.isPublished" [class.is-false]="!item.isPublished"><svg *ngIf="item.isPublished" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><svg *ngIf="!item.isPublished" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>{{ item.isPublished ? 'Oui' : 'Non' }}</span></td>
-            <td><span class="bool-badge" [class.is-locked]="item.isLocked" [class.is-unlocked]="!item.isLocked"><svg *ngIf="item.isLocked" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><svg *ngIf="!item.isLocked" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>{{ item.isLocked ? 'Verrouillé' : 'Ouvert' }}</span></td>
-            <td><span class="cell-date">{{ formatDate(item.createdAt) }}</span></td>
-            <td class="actions-cell" (click)="$event.stopPropagation()">
+            <td [class.col-hidden]="!isColumnVisible('id')"><span class="cell-id">#{{ item.id }}</span></td>
+            <td [class.col-hidden]="!isColumnVisible('version')">v{{ item.versionNumber || '-' }}</td>
+            <td [class.col-hidden]="!isColumnVisible('formId')">{{ item.formId || '-' }}</td>
+            <td [class.col-hidden]="!isColumnVisible('published')"><span class="bool-badge" [class.is-true]="item.isPublished" [class.is-false]="!item.isPublished"><svg *ngIf="item.isPublished" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><svg *ngIf="!item.isPublished" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>{{ item.isPublished ? 'Oui' : 'Non' }}</span></td>
+            <td [class.col-hidden]="!isColumnVisible('locked')"><span class="bool-badge" [class.is-locked]="item.isLocked" [class.is-unlocked]="!item.isLocked"><svg *ngIf="item.isLocked" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><svg *ngIf="!item.isLocked" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>{{ item.isLocked ? 'Verrouillé' : 'Ouvert' }}</span></td>
+            <td [class.col-hidden]="!isColumnVisible('createdAt')"><span class="cell-date">{{ formatDate(item.createdAt) }}</span></td>
+            <td class="actions-cell" [class.col-hidden]="!isColumnVisible('actions')" (click)="$event.stopPropagation()">
               <div class="actions-menu">
                 <ng-container *ngIf="!item.isDeleted">
-                  <button class="action-btn primary" (click)="openEditDialog(item)" title="Modifier">
+                  <button class="action-btn primary" (click)="openEditDialog(item)" title="Modifier" aria-label="Modifier">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 20H21M16.5 3.5A2.12 2.12 0 0 1 19 6L7 18L3 19L4 15L16.5 3.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   </button>
-                  <button *ngIf="item.isLocked" class="action-btn warning" (click)="forkVersion(item)" title="Fork (nouvelle version)">
+                  <button *ngIf="item.isLocked" class="action-btn warning" (click)="forkVersion(item)" title="Fork (nouvelle version)" aria-label="Fork (nouvelle version)">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 3V15M18 3V15M6 9H18M6 15C6 18 9 21 12 21C15 21 18 18 18 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   </button>
-                  <button class="action-btn danger" (click)="confirmDelete(item)" title="Supprimer">
+                  <button class="action-btn danger" (click)="confirmDelete(item)" title="Supprimer" aria-label="Supprimer">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 6H5H21M8 6V4C8 3 9 2 10 2H14C15 2 16 3 16 4V6M19 6V20C19 21 18 22 17 22H7C6 22 5 21 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   </button>
-                  <button class="action-btn secondary" (click)="toggleExpansion(item.id!)" [class.expanded]="isExpanded(item.id!)" title="Voir les questions">
+                  <button class="action-btn secondary" (click)="toggleExpansion(item.id!)" [class.expanded]="isExpanded(item.id!)" title="Voir les questions" aria-label="Voir les questions">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" [attr.transform]="isExpanded(item.id!) ? 'rotate(180 12 12)' : ''"/></svg>
                   </button>
                 </ng-container>
                 <ng-container *ngIf="item.isDeleted">
-                  <button class="action-btn success" (click)="confirmRestore(item)" title="Restaurer">
+                  <button class="action-btn success" (click)="confirmRestore(item)" title="Restaurer" aria-label="Restaurer">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 12A9 9 0 1 0 12 3M12 3L8 7L12 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   </button>
-                  <button class="action-btn secondary" (click)="toggleExpansion(item.id!)" [class.expanded]="isExpanded(item.id!)" title="Voir les questions">
+                  <button class="action-btn secondary" (click)="toggleExpansion(item.id!)" [class.expanded]="isExpanded(item.id!)" title="Voir les questions" aria-label="Voir les questions">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" [attr.transform]="isExpanded(item.id!) ? 'rotate(180 12 12)' : ''"/></svg>
                   </button>
                 </ng-container>
@@ -224,7 +232,7 @@
           <label for="pageSize">Par page:</label>
           <div class="select-wrapper">
             <select id="pageSize" class="page-size-select" [value]="pageSize()" (change)="onPageSizeChange($event)">
-              <option [value]="5">5</option><option [value]="10">10</option><option [value]="20">20</option><option [value]="50">50</option>
+              <option [value]="5">5</option><option [value]="10">10</option><option [value]="20">20</option><option [value]="50">50</option><option [value]="100">100</option>
             </select>
           </div>
         </div>

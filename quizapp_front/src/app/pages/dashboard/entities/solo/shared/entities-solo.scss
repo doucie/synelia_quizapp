@@ -9,12 +9,20 @@
   min-height: 100vh;
 }
 
+[class^="entities-"][class$="-container"] {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1400px;
+  min-width: 0;
+  margin-inline: auto;
+}
+
 /* =================================================================
    SECTION HEADER
    ================================================================= */
 .header-section {
   background: linear-gradient(135deg, var(--surface) 0%, var(--surface-variant) 100%);
-  border-radius: 16px 16px 0 0;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   padding: var(--spacing-xl) var(--spacing-2xl);
   border: 1px solid var(--border);
   border-bottom: none;
@@ -32,15 +40,15 @@
       justify-content: center;
       width: 36px;
       height: 36px;
-      border-radius: 50%;
+      border-radius: var(--radius-full);
       border: 1px solid var(--border);
       background: var(--surface);
       color: var(--text-secondary);
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: var(--transition);
       
       i {
-        font-size: 14px;
+        font-size: var(--font-size-sm);
       }
       
       &:hover {
@@ -98,11 +106,11 @@
     border-radius: var(--radius);
     padding: var(--spacing-sm) var(--spacing-md);
     min-width: 280px;
-    transition: all 0.2s ease;
+    transition: var(--transition);
     
     i {
       color: var(--text-secondary);
-      font-size: 14px;
+      font-size: var(--font-size-sm);
     }
     
     input {
@@ -137,10 +145,10 @@
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-medium);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: var(--transition);
     
     i {
-      font-size: 12px;
+      font-size: var(--font-size-xs);
     }
     
     &:hover {
@@ -201,7 +209,7 @@
       background: var(--background);
       color: var(--text-primary);
       font-size: var(--font-size-sm);
-      transition: all 0.2s ease;
+      transition: var(--transition);
       
       &:focus {
         outline: none;
@@ -223,7 +231,7 @@
       font-size: var(--font-size-sm);
       font-weight: var(--font-weight-medium);
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: var(--transition);
     }
     
     .btn-secondary {
@@ -256,7 +264,7 @@
   position: relative;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 0 0 16px 16px;
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
   overflow: hidden;
   
   .loading-overlay {
@@ -277,7 +285,7 @@
       height: 40px;
       border: 3px solid var(--border);
       border-top-color: var(--primary);
-      border-radius: 50%;
+      border-radius: var(--radius-full);
       animation: spin 1s linear infinite;
       margin-bottom: var(--spacing-sm);
     }
@@ -306,23 +314,61 @@ tr.deleted {
 
 /* Colonnes standard */
 .col-id {
-  width: 60px;
+  width: 1%;
+  min-width: 44px;
+  max-width: 72px;
+  white-space: nowrap;
   text-align: center;
 }
 
-.col-status {
-  width: 120px;
-  text-align: center;
-}
-
+.col-boolean,
 .col-deleted {
   width: 80px;
   text-align: center;
+  white-space: nowrap;
+}
+
+.col-badge,
+.col-tag,
+.col-status {
+  width: 1%;
+  min-width: 60px;
+  max-width: none;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.col-date {
+  width: 1%;
+  min-width: 150px;
+  white-space: nowrap;
+}
+
+.col-short {
+  width: 150px;
+  max-width: 200px;
+}
+
+.col-medium {
+  width: 200px;
+  max-width: 300px;
+}
+
+.col-long {
+  width: 250px;
+  max-width: 350px;
 }
 
 .col-actions {
-  width: 120px;
+  width: 1%;
+  min-width: 124px;
+  white-space: nowrap;
   text-align: right;
+}
+
+/* Colonne masquée */
+.col-hidden {
+  display: none !important;
 }
 
 /* Badge gÃ©nÃ©rique */
@@ -404,7 +450,7 @@ tr.deleted {
 /* Conteneur header et toolbar avec border-radius */
 .header-toolbar-container {
   background: var(--white);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   box-shadow: 0 2px 8px var(--shadow-light);
   overflow: hidden;
   margin-bottom: var(--spacing-2xl);
@@ -435,7 +481,7 @@ tr.deleted {
       cursor: pointer;
       padding: var(--spacing-xs) 0;
       font-weight: var(--font-weight-medium);
-      transition: all 0.2s ease;
+      transition: var(--transition);
       
       svg {
         width: 16px;
@@ -489,7 +535,7 @@ tr.deleted {
   background: rgba(var(--background-rgb), 0.8);
   backdrop-filter: blur(10px);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   padding: var(--spacing-2xl);
   margin-bottom: var(--spacing-2xl);
   box-shadow: 0 8px 32px var(--shadow-light);
@@ -521,11 +567,11 @@ tr.deleted {
         width: 100%;
         padding: var(--spacing-md);
         border: 2px solid var(--border);
-        border-radius: 12px;
+        border-radius: var(--radius-lg);
         font-size: var(--font-size-sm);
         background: var(--background);
         color: var(--text-primary);
-        transition: all 0.3s ease;
+        transition: var(--transition-slow);
         font-family: var(--font-family);
         
         &::placeholder {
@@ -581,7 +627,7 @@ tr.deleted {
     height: 48px;
     border: 4px solid var(--surface-variant);
     border-top: 4px solid var(--primary);
-    border-radius: 50%;
+    border-radius: var(--radius-full);
     animation: spin 1s cubic-bezier(0.4, 0.0, 0.2, 1) infinite;
     margin: 0 auto var(--spacing-lg);
   }
@@ -614,7 +660,7 @@ tr.deleted {
   gap: var(--spacing-sm);
   padding: var(--spacing-md) var(--spacing-lg);
   border: 2px solid transparent;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   font-family: var(--font-family);
@@ -680,7 +726,7 @@ tr.deleted {
   &.btn-sm {
     padding: var(--spacing-sm) var(--spacing-md);
     font-size: var(--font-size-xs);
-    border-radius: 8px;
+    border-radius: var(--radius);
   }
   
   &.btn-outline-primary {
@@ -713,30 +759,30 @@ tr.deleted {
    ================================================================= */
 .page-header {
   margin-bottom: 0;
-  padding: 2rem;
+  padding: var(--spacing-xl);
   background: linear-gradient(135deg, var(--surface) 0%, var(--surface-variant) 100%);
 }
 
 .breadcrumb {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
   flex-wrap: wrap;
 }
 
 .btn-back {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
   background: transparent;
   color: var(--text-secondary);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  font-size: 0.875rem;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: var(--transition);
 }
 
 .btn-back:hover {
@@ -747,64 +793,64 @@ tr.deleted {
 
 .breadcrumb-separator {
   color: var(--text-secondary);
-  font-weight: 300;
+  font-weight: var(--font-weight-light);
 }
 
 .current-page {
   color: var(--text-secondary);
-  font-size: 0.875rem;
+  font-size: var(--font-size-sm);
 }
 
 .page-header h1 {
-  margin: 0 0 0.5rem 0;
-  font-size: 2.25rem;
+  margin: 0 0 var(--spacing-sm) 0;
+  font-size: var(--font-size-4xl);
   color: var(--text-primary);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   letter-spacing: -0.025em;
 }
 
 .page-description {
   margin: 0;
   color: var(--text-secondary);
-  font-size: 1rem;
+  font-size: var(--font-size-base);
   line-height: 1.5;
-  font-weight: 400;
+  font-weight: var(--font-weight-normal);
 }
 
 /* =================================================================
    BARRE D'OUTILS ET ACTIONS
    ================================================================= */
 .toolbar {
-  padding: 1.5rem 2rem;
+  padding: var(--spacing-lg) var(--spacing-xl);
   background: var(--surface);
   border-bottom: none;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: var(--spacing-md);
 }
 
 .toolbar-left {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: var(--spacing-md);
 }
 
 .toolbar-right {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--spacing-md);
 }
 
 .search-input {
   min-width: 300px;
-  padding: 0.625rem 1rem;
+  padding: 0.625rem var(--spacing-md);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   background: var(--background);
   color: var(--text-primary);
-  font-size: 0.875rem;
+  font-size: var(--font-size-sm);
   transition: border-color 0.2s ease;
 }
 
@@ -818,94 +864,55 @@ tr.deleted {
 }
 
 /* ====================================
-   CHECKBOX POUR UTILISATEURS SUPPRIMÃ‰S
+   CHECKBOX POUR UTILISATEURS SUPPRIMÉS
+   (Style global — voir styles/components/checkbox.scss)
 ==================================== */
-.checkbox-container {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  
-  .checkbox-input {
-    display: none;
-  }
-  
-  .checkbox-label {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-xs);
-    cursor: pointer;
-    font-size: var(--font-size-sm);
-    color: var(--text-secondary);
-    transition: all 0.2s ease;
-    position: relative;
-    padding-left: 28px;
-    
-    &::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 20px;
-      height: 20px;
-      border: 2px solid var(--border);
-      border-radius: 4px;
-      background: var(--background);
-      transition: all 0.2s ease;
-    }
-    
-    svg {
-      position: absolute;
-      left: 3px;
-      top: 50%;
-      transform: translateY(-50%);
-      opacity: 0;
-      transition: all 0.2s ease;
-      stroke: white;
-      stroke-width: 3;
-      color: var(--background);
-    }
-    
-    &:hover {
-      color: var(--text-primary);
-      
-      &::before {
-        border-color: var(--primary);
-      }
-    }
-  }
-  
-  .checkbox-input:checked + .checkbox-label {
-    color: var(--primary);
-    
-    &::before {
-      background: var(--primary);
-      border-color: var(--primary);
-    }
-    
-    svg {
-      opacity: 1;
-    }
-  }
-}
 
 
 /* =================================================================
    TABLEAU PROFESSIONNEL - STYLE ENTERPRISE
    ================================================================= */
 .data-table-container {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   overflow-x: auto;
+  overflow-y: hidden;
   background: var(--surface);
+  contain: inline-size;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+
+  &::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: var(--radius-sm);
+
+    &:hover {
+      background: var(--text-secondary);
+    }
+  }
 }
 
 .data-table {
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
   border-collapse: separate;
   border-spacing: 0;
   background: var(--surface);
-  font-size: 0.875rem;
+  font-size: var(--font-size-sm);
   line-height: 1.5;
-  table-layout: fixed;
+  table-layout: auto;
 }
 
 .data-table thead {
@@ -913,10 +920,10 @@ tr.deleted {
 }
 
 .data-table th {
-  padding: 1rem 1.5rem;
+  padding: var(--spacing-md) var(--spacing-lg);
   text-align: left;
-  font-weight: 600;
-  font-size: 0.75rem;
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-xs);
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -925,14 +932,123 @@ tr.deleted {
 }
 
 .data-table td {
-  padding: 1rem 1.5rem;
+  padding: var(--spacing-md) var(--spacing-lg);
   border-bottom: 1px solid var(--border);
   color: var(--text-primary);
   vertical-align: middle;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 250px;
+}
+
+.data-table td.col-short {
+  max-width: 200px;
+}
+
+.data-table td.col-medium {
+  max-width: 300px;
+}
+
+.data-table td.col-long {
+  max-width: 350px;
+  overflow-x: auto;
+  text-overflow: clip;
+  scrollbar-width: thin;
+}
+
+.data-table td[title]:not([title=""]) {
+  cursor: help;
+}
+
+.data-table td[title]:not([title=""]):hover::after {
+  content: attr(title);
+  position: absolute;
+  left: var(--spacing-md);
+  top: calc(100% - var(--spacing-xs));
+  z-index: 20;
+  display: block;
+  width: max-content;
+  max-width: min(420px, 70vw);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-elevated);
+  color: var(--text-primary);
+  box-shadow: var(--elevation-2);
+  white-space: normal;
+  word-break: break-word;
+  pointer-events: none;
+}
+
+.data-table td[title]:not([title=""]):hover {
+  position: relative;
+  z-index: 10;
+  overflow: visible;
+}
+
+.data-table td.col-short > span,
+.data-table td.col-medium > span,
+.data-table td.col-long > span,
+.data-table td.col-long > code {
+  display: block;
+  overflow: hidden;
+  max-width: 100%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.data-table td.col-long:hover > span,
+.data-table td.col-long:hover > code {
+  overflow-x: auto;
+  text-overflow: clip;
+}
+
+.data-table th.col-id,
+.data-table td:has(.cell-id) {
+  width: 1%;
+  min-width: 44px;
+  max-width: 72px;
+  text-align: center;
+}
+
+.data-table th.col-date,
+.data-table td:has(.cell-date) {
+  width: 1%;
+  min-width: 150px;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: nowrap;
+}
+
+.data-table th.col-status,
+.data-table th.col-badge,
+.data-table th.col-tag,
+.data-table td:has(.status-badge),
+.data-table td:has(.badge),
+.data-table td:has(.role-badge) {
+  width: 1%;
+  max-width: none;
+  white-space: nowrap;
+}
+
+.data-table th.col-actions,
+.data-table td.actions-cell {
+  width: 1%;
+  min-width: 124px;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: nowrap;
+  text-align: right;
+  position: sticky;
+  right: 0;
+  z-index: 2;
+  background: var(--surface);
+  box-shadow: -8px 0 12px -12px rgba(var(--surface-rgb), 0.9);
+}
+
+.data-table th.col-actions {
+  z-index: 3;
+  background: var(--surface-variant);
 }
 
 .data-table tbody tr {
@@ -950,20 +1066,20 @@ tr.deleted {
 /* Styles spÃ©cialisÃ©s pour les cellules */
 .cell-id {
   font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
-  font-size: 0.8rem;
+  font-size: var(--font-size-xs);
   color: var(--text-secondary);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 
 .cell-name {
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--text-primary);
 }
 
 .cell-email {
   color: var(--primary);
   text-decoration: none;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 
 .cell-email:hover {
@@ -972,7 +1088,7 @@ tr.deleted {
 
 .cell-phone {
   font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
-  font-size: 0.85rem;
+  font-size: var(--font-size-sm);
   color: var(--text-secondary);
 }
 
@@ -980,26 +1096,26 @@ tr.deleted {
   font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
   background: color-mix(in srgb, var(--primary) 8%, transparent);
   color: var(--primary);
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  font-weight: 500;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
 }
 
 .cell-date {
   font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
-  font-size: 0.8rem;
+  font-size: var(--font-size-xs);
   color: var(--text-secondary);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 
 .cell-score {
   display: inline-flex;
   align-items: center;
-  padding: 0.25rem 0.625rem;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 700;
+  padding: var(--spacing-xs) 0.625rem;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
   font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
   background: color-mix(in srgb, var(--primary) 10%, transparent);
   color: var(--primary);
@@ -1010,10 +1126,10 @@ tr.deleted {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  padding: 0.375rem 0.75rem;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 600;
+  padding: 0.375rem var(--spacing-md);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
   white-space: nowrap;
 
   &.type-online {
@@ -1032,7 +1148,7 @@ tr.deleted {
 .status-indicator {
   width: 6px;
   height: 6px;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   background-color: currentColor;
 }
 
@@ -1040,10 +1156,10 @@ tr.deleted {
 .role-badge {
   display: inline-flex;
   align-items: center;
-  padding: 0.375rem 0.75rem;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 600;
+  padding: 0.375rem var(--spacing-md);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
   text-transform: capitalize;
   letter-spacing: 0.025em;
   min-width: 70px;
@@ -1075,7 +1191,7 @@ tr.deleted {
 
 .actions-menu {
   display: inline-flex;
-  gap: 0.25rem;
+  gap: var(--spacing-xs);
 }
 
 .action-btn {
@@ -1085,17 +1201,17 @@ tr.deleted {
   width: 32px;
   height: 32px;
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   background: var(--surface);
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: var(--transition-fast);
   
   svg {
     width: 16px;
     height: 16px;
     stroke-width: 2;
-    transition: all 0.15s ease;
+    transition: var(--transition-fast);
   }
 }
 
@@ -1108,7 +1224,7 @@ tr.deleted {
 .action-btn.primary {
   background: var(--primary);
   border-color: var(--primary);
-  color: white;
+  color: var(--white);
 }
 
 .action-btn.primary:hover {
@@ -1144,16 +1260,16 @@ tr.deleted {
 .btn-primary-pro {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.625rem 1.25rem;
+  gap: var(--spacing-sm);
+  padding: 0.625rem var(--spacing-lg);
   background: var(--primary);
-  color: white;
+  color: var(--white);
   border: 1px solid var(--primary);
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 600;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: var(--transition-fast);
   text-decoration: none;
   
   svg {
@@ -1172,16 +1288,16 @@ tr.deleted {
 .btn-secondary-pro {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.625rem 1.25rem;
+  gap: var(--spacing-sm);
+  padding: 0.625rem var(--spacing-lg);
   background: var(--surface);
   color: var(--text-primary);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 600;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: var(--transition-fast);
   text-decoration: none;
   
   svg {
@@ -1207,7 +1323,7 @@ tr.deleted {
    ================================================================= */
 .loading-state {
   text-align: center;
-  padding: 4rem 2rem;
+  padding: var(--spacing-3xl) var(--spacing-xl);
   color: var(--text-secondary);
 }
 
@@ -1216,9 +1332,9 @@ tr.deleted {
   height: 32px;
   border: 2px solid var(--border);
   border-top: 2px solid var(--primary);
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   animation: spin 1s linear infinite;
-  margin: 0 auto 1rem;
+  margin: 0 auto var(--spacing-md);
 }
 
 @keyframes spin {
@@ -1228,27 +1344,27 @@ tr.deleted {
 
 .empty-state {
   text-align: center;
-  padding: 4rem 2rem;
+  padding: var(--spacing-3xl) var(--spacing-xl);
   color: var(--text-secondary);
 }
 
 .empty-state-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
+  font-size: var(--font-size-4xl);
+  margin-bottom: var(--spacing-md);
   opacity: 0.4;
   color: var(--text-secondary);
 }
 
 .empty-state h3 {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.125rem;
-  font-weight: 600;
+  margin: 0 0 var(--spacing-sm) 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
   color: var(--text-primary);
 }
 
 .empty-state p {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: var(--font-size-sm);
   line-height: 1.5;
 }
 
@@ -1259,15 +1375,15 @@ tr.deleted {
 /* Tablettes */
 @media (max-width: 1024px) {
   .page-header {
-    padding: 1.5rem;
+    padding: var(--spacing-lg);
   }
   
   .page-header h1 {
-    font-size: 1.875rem;
+    font-size: var(--font-size-3xl);
   }
   
   .toolbar {
-    padding: 1rem 1.5rem;
+    padding: var(--spacing-md) var(--spacing-lg);
     flex-direction: column;
     align-items: stretch;
   }
@@ -1284,36 +1400,36 @@ tr.deleted {
   
   .data-table th,
   .data-table td {
-    padding: 0.75rem 1rem;
+    padding: var(--spacing-md) var(--spacing-md);
   }
   
   .section-stats {
-    padding: 1rem 1.5rem;
+    padding: var(--spacing-md) var(--spacing-lg);
   }
 }
 
 /* Mobile */
 @media (max-width: 768px) {
   .page-header {
-    padding: 1rem;
+    padding: var(--spacing-md);
   }
   
   .page-header h1 {
-    font-size: 1.5rem;
+    font-size: var(--font-size-2xl);
   }
   
   .breadcrumb {
-    margin-bottom: 1rem;
+    margin-bottom: var(--spacing-md);
   }
   
   .toolbar {
-    padding: 1rem;
+    padding: var(--spacing-md);
   }
   
   .stats-row {
     flex-direction: column;
     align-items: stretch;
-    gap: 1rem;
+    gap: var(--spacing-md);
   }
   
   .stats-info {
@@ -1321,12 +1437,12 @@ tr.deleted {
   }
   
   .data-table {
-    font-size: 0.8rem;
+    font-size: var(--font-size-xs);
   }
   
   .data-table th,
   .data-table td {
-    padding: 0.5rem 0.75rem;
+    padding: var(--spacing-sm) var(--spacing-md);
   }
   
   /* Masquer certaines colonnes sur mobile */
@@ -1345,31 +1461,31 @@ tr.deleted {
   .action-btn {
     width: 28px;
     height: 28px;
-    font-size: 0.75rem;
+    font-size: var(--font-size-xs);
   }
 }
 
 /* Mobile trÃ¨s petit */
 @media (max-width: 480px) {
   .page-header h1 {
-    font-size: 1.25rem;
+    font-size: var(--font-size-xl);
   }
   
   .data-table {
-    font-size: 0.75rem;
+    font-size: var(--font-size-xs);
   }
   
   .data-table th,
   .data-table td {
-    padding: 0.375rem 0.5rem;
+    padding: 0.375rem var(--spacing-sm);
   }
   
   .section-stats {
-    padding: 0.75rem 1rem;
+    padding: var(--spacing-md) var(--spacing-md);
   }
   
   .toolbar {
-    padding: 0.75rem 1rem;
+    padding: var(--spacing-md) var(--spacing-md);
   }
 }
 
@@ -1377,7 +1493,7 @@ tr.deleted {
    ACTIONS PRINCIPALES
    ================================================================= */
 .main-actions {
-  margin-bottom: 2rem;
+  margin-bottom: var(--spacing-xl);
   display: flex;
   justify-content: flex-start;
 }
@@ -1389,14 +1505,14 @@ tr.deleted {
 .btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem; // Gap rÃ©duit
-  padding: 0.65rem 1.25rem; // Padding rÃ©duit
+  gap: 0.4rem; // Gap réduit
+  padding: 0.65rem var(--spacing-lg); // Padding rÃ©duit
   border: none;
-  border-radius: 8px;
-  font-size: 0.8rem; // Taille rÃ©duite
-  font-weight: 600;
+  border-radius: var(--radius);
+  font-size: var(--font-size-xs); // Taille rÃ©duite
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: var(--transition-slow);
   text-decoration: none;
   border: 2px solid transparent;
 }
@@ -1408,7 +1524,7 @@ tr.deleted {
 
 .btn-primary {
   background: var(--primary);
-  color: white;
+  color: var(--white);
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -1428,7 +1544,7 @@ tr.deleted {
 
 .btn-success {
   background: var(--success);
-  color: white;
+  color: var(--white);
 }
 
 .btn-success:hover:not(:disabled) {
@@ -1449,7 +1565,7 @@ tr.deleted {
 
 .btn-outline-primary:hover:not(:disabled) {
   background: var(--primary);
-  color: white;
+  color: var(--white);
 }
 
 .btn-outline-danger {
@@ -1460,7 +1576,7 @@ tr.deleted {
 
 .btn-outline-danger:hover:not(:disabled) {
   background: var(--error);
-  color: white;
+  color: var(--white);
 }
 
 /* ====================================
@@ -1469,7 +1585,7 @@ tr.deleted {
 .advanced-search-panel {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   margin-bottom: var(--spacing-lg);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
@@ -1494,10 +1610,10 @@ tr.deleted {
       background: none;
       border: none;
       padding: var(--spacing-xs);
-      border-radius: 8px;
+      border-radius: var(--radius);
       color: var(--text-secondary);
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: var(--transition);
       
       svg {
         width: 16px;
@@ -1540,11 +1656,11 @@ tr.deleted {
       width: 100%;
       padding: var(--spacing-sm) var(--spacing-md);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: var(--radius);
       font-size: var(--font-size-sm);
       background: var(--background);
       color: var(--text-primary);
-      transition: all 0.2s ease;
+      transition: var(--transition);
       
       &:focus {
         outline: none;
@@ -1560,7 +1676,12 @@ tr.deleted {
     
     .form-select {
       cursor: pointer;
-      
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.75rem center;
+      padding-right: 2.25rem;
+
       option {
         padding: var(--spacing-xs);
         background: var(--surface);
@@ -1577,7 +1698,7 @@ tr.deleted {
     gap: var(--spacing-md);
     padding: var(--spacing-md);
     background: var(--surface-secondary);
-    border-radius: 8px;
+    border-radius: var(--radius);
     border: 1px solid var(--border-variant);
   }
   
@@ -1598,11 +1719,11 @@ tr.deleted {
       width: 100%;
       padding: var(--spacing-sm) var(--spacing-md);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: var(--radius);
       font-size: var(--font-size-sm);
       background: var(--background);
       color: var(--text-primary);
-      transition: all 0.2s ease;
+      transition: var(--transition);
       
       &:focus {
         outline: none;
@@ -1690,20 +1811,20 @@ tr.deleted {
    PAGINATION
 ==================================== */
 .pagination-container {
-  padding: 1.5rem 2rem;
+  padding: var(--spacing-lg) var(--spacing-xl);
   background: var(--surface);
   border-top: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: var(--spacing-md);
 }
 
 .pagination-info {
   display: flex;
   align-items: center;
-  gap: 2rem;
+  gap: var(--spacing-xl);
   
   .results-info {
     font-size: var(--font-size-sm);
@@ -1726,42 +1847,30 @@ tr.deleted {
     .select-wrapper {
       position: relative;
       display: inline-block;
-      
+
+      // Arrow provided by background-image on .page-size-select
       &::after {
-        content: '';
-        position: absolute;
-        right: 0.75rem;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 0;
-        height: 0;
-        border-left: 4px solid transparent;
-        border-right: 4px solid transparent;
-        border-top: 5px solid var(--text-secondary);
-        transition: border-top-color 0.2s ease;
-        pointer-events: none;
-        z-index: 1;
-      }
-      
-      &:hover::after {
-        border-top-color: var(--primary);
+        display: none;
       }
     }
 
     .page-size-select {
-      padding: 0.625rem 2rem 0.625rem 0.875rem;
+      padding: 0.625rem 2.25rem 0.625rem var(--spacing-md);
       border: 1px solid var(--border);
-      border-radius: 6px;
+      border-radius: var(--radius-lg);
       background: var(--background);
       color: var(--text-primary);
       font-size: var(--font-size-sm);
       font-weight: var(--font-weight-medium);
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: var(--transition);
       appearance: none;
       -webkit-appearance: none;
       -moz-appearance: none;
       min-width: 85px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.75rem center;
       
       &:hover {
         border-color: var(--primary);
@@ -1780,13 +1889,13 @@ tr.deleted {
       option {
         background: var(--background);
         color: var(--text-primary);
-        padding: 8px 12px;
+        padding: var(--spacing-sm) var(--spacing-md);
         font-size: var(--font-size-sm);
         font-weight: var(--font-weight-medium);
         
         &:checked {
           background: var(--primary);
-          color: white;
+          color: var(--white);
         }
       }
     }
@@ -1803,15 +1912,15 @@ tr.deleted {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
-  padding: 0.5rem 1rem;
+  padding: var(--spacing-sm) var(--spacing-md);
   background: var(--background);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius);
   color: var(--text-primary);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: var(--transition);
   
   svg {
     width: 16px;
@@ -1835,7 +1944,7 @@ tr.deleted {
 .page-numbers {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--spacing-xs);
 }
 
 .page-number-btn {
@@ -1846,12 +1955,12 @@ tr.deleted {
   justify-content: center;
   background: var(--background);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius);
   color: var(--text-primary);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: var(--transition);
   
   &:hover:not(.active) {
     background: var(--surface);
@@ -1862,7 +1971,7 @@ tr.deleted {
   &.active {
     background: var(--primary);
     border-color: var(--primary);
-    color: white;
+    color: var(--white);
     font-weight: var(--font-weight-bold);
   }
 }
@@ -1872,12 +1981,12 @@ tr.deleted {
   .pagination-container {
     flex-direction: column;
     align-items: stretch;
-    gap: 1rem;
+    gap: var(--spacing-md);
     
     .pagination-info {
       flex-direction: column;
       align-items: stretch;
-      gap: 1rem;
+      gap: var(--spacing-md);
       
       .page-size-selector {
         justify-content: space-between;
@@ -1905,7 +2014,7 @@ tr.deleted {
 /* Styles pour la popup d'Ã©dition */
 .edit-modal {
   background: var(--surface);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   box-shadow: 0 20px 25px -5px var(--shadow-light), 0 10px 10px -5px var(--shadow-light);
   max-width: 600px;
   width: 90%;
@@ -1917,7 +2026,7 @@ tr.deleted {
   border: 1px solid var(--border);
   
   .modal-header {
-    padding: 1.5rem 1.5rem 1rem;
+    padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-md);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1926,8 +2035,8 @@ tr.deleted {
     
     h3 {
       margin: 0;
-      font-size: 1.125rem;
-      font-weight: 600;
+      font-size: var(--font-size-lg);
+      font-weight: var(--font-weight-semibold);
       color: var(--text-primary);
     }
     
@@ -1937,8 +2046,8 @@ tr.deleted {
       color: var(--text-secondary);
       cursor: pointer;
       padding: 0.375rem;
-      border-radius: 8px;
-      transition: all 0.2s ease;
+      border-radius: var(--radius);
+      transition: var(--transition);
       
       &:hover {
         background: var(--surface-hover);
@@ -1953,7 +2062,7 @@ tr.deleted {
   }
   
   .modal-content {
-    padding: 1.5rem;
+    padding: var(--spacing-lg);
     overflow-y: auto;
     flex: 1;
     min-height: 0;
@@ -1977,11 +2086,11 @@ tr.deleted {
         .form-select {
           padding: var(--spacing-md);
           border: 1px solid var(--border);
-          border-radius: 8px;
+          border-radius: var(--radius);
           font-size: var(--font-size-sm);
           background: var(--background);
           color: var(--text-primary);
-          transition: all 0.2s ease;
+          transition: var(--transition);
           
           &:focus {
             outline: none;
@@ -2031,13 +2140,13 @@ tr.deleted {
       align-items: center;
       gap: var(--spacing-sm);
       background: var(--error);
-      color: white;
+      color: var(--white);
       border: none;
       padding: var(--spacing-md) var(--spacing-lg);
-      border-radius: 8px;
+      border-radius: var(--radius);
       font-weight: var(--font-weight-medium);
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: var(--transition);
       
       &:hover {
         background: var(--error-dark);
@@ -2063,10 +2172,10 @@ tr.deleted {
         color: var(--text-secondary);
         border: 1px solid var(--border);
         padding: var(--spacing-md) var(--spacing-lg);
-        border-radius: 8px;
+        border-radius: var(--radius);
         font-weight: var(--font-weight-medium);
         cursor: pointer;
-        transition: all 0.2s ease;
+        transition: var(--transition);
         
         &:hover {
           background: var(--surface-pressed);
@@ -2085,13 +2194,13 @@ tr.deleted {
         align-items: center;
         gap: var(--spacing-sm);
         background: var(--success);
-        color: white;
+        color: var(--white);
         border: none;
         padding: var(--spacing-md) var(--spacing-lg);
-        border-radius: 8px;
+        border-radius: var(--radius);
         font-weight: var(--font-weight-medium);
         cursor: pointer;
-        transition: all 0.2s ease;
+        transition: var(--transition);
         
         &:hover {
           background: var(--success-dark);
@@ -2157,10 +2266,10 @@ tr.deleted {
   justify-content: space-between;
   padding: var(--spacing-md) var(--spacing-lg);
   border: 2px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: var(--surface);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: var(--transition);
   min-height: 48px;
 
   &:hover {
@@ -2196,12 +2305,12 @@ tr.deleted {
 }
 
 .dropdown-list {
-  margin-top: 4px;
+  margin-top: var(--spacing-xs);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   box-shadow: 0 8px 32px var(--shadow);
-  z-index: 1000;
+  z-index: var(--z-dropdown);
   max-height: 200px;
   overflow-y: auto;
 
@@ -2253,11 +2362,11 @@ tr.deleted {
 .status-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.375rem 0.75rem;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 600;
+  gap: var(--spacing-sm);
+  padding: 0.375rem var(--spacing-md);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
   white-space: nowrap;
   
   &.warning {
@@ -2301,13 +2410,13 @@ tr.deleted {
     background: linear-gradient(135deg, color-mix(in srgb, var(--error) 15%, transparent), color-mix(in srgb, var(--error-dark) 15%, transparent));
     color: var(--error);
     border: 1px solid color-mix(in srgb, var(--error) 30%, transparent);
-    font-weight: 700;
+    font-weight: var(--font-weight-bold);
     
     &::before {
       content: '';
       width: 8px;
       height: 8px;
-      border-radius: 50%;
+      border-radius: var(--radius-full);
       background: var(--error);
       animation: recording-blink 1.2s infinite;
       flex-shrink: 0;
@@ -2386,7 +2495,7 @@ tr.deleted {
       content: '';
       width: 8px;
       height: 8px;
-      border-radius: 50%;
+      border-radius: var(--radius-full);
       background: var(--primary);
       animation: recording-blink 1.2s infinite;
       flex-shrink: 0;
@@ -2456,10 +2565,10 @@ tr.deleted {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  padding: 0.25rem 0.625rem;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 600;
+  padding: var(--spacing-xs) 0.625rem;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
   white-space: nowrap;
 
   svg {
@@ -2497,10 +2606,10 @@ tr.deleted {
 .deleted-badge {
   display: inline-flex;
   align-items: center;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 600;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
   
   &.yes {
     background: color-mix(in srgb, var(--error) 10%, transparent);
@@ -2520,7 +2629,7 @@ tr.deleted {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 0.5rem;
+  gap: var(--spacing-sm);
 }
 
 .btn-action {
@@ -2531,15 +2640,15 @@ tr.deleted {
   height: 32px;
   padding: 0;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius);
   background: var(--background);
   color: var(--text-secondary);
-  font-size: 0.875rem;
+  font-size: var(--font-size-sm);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: var(--transition);
   
   i {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
   }
   
   &:hover {
@@ -2578,27 +2687,27 @@ tr.deleted {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 1.5rem;
+  padding: var(--spacing-md) var(--spacing-lg);
   background: var(--surface);
   border-top: 1px solid var(--border);
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: var(--spacing-md);
 }
 
 .page-size {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-sm);
   color: var(--text-secondary);
   
   select {
-    padding: 0.5rem 2rem 0.5rem 0.75rem;
+    padding: var(--spacing-sm) var(--spacing-xl) var(--spacing-sm) var(--spacing-md);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     background: var(--background);
     color: var(--text-primary);
-    font-size: 0.875rem;
+    font-size: var(--font-size-sm);
     cursor: pointer;
     appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
@@ -2618,15 +2727,15 @@ tr.deleted {
 }
 
 .page-info {
-  font-size: 0.875rem;
+  font-size: var(--font-size-sm);
   color: var(--text-secondary);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 
 .page-controls {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: var(--spacing-xs);
 }
 
 .btn-page {
@@ -2636,12 +2745,12 @@ tr.deleted {
   width: 36px;
   height: 36px;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   background: var(--background);
   color: var(--text-secondary);
-  font-size: 1rem;
+  font-size: var(--font-size-base);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: var(--transition);
   
   &:hover:not(:disabled) {
     background: var(--surface);
@@ -2678,7 +2787,7 @@ tr.deleted {
 
 .modal-content {
   background: var(--surface);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   box-shadow: 0 20px 25px -5px var(--shadow-light), 0 10px 10px -5px var(--shadow-light);
   max-width: 500px;
   width: 90%;
@@ -2693,7 +2802,7 @@ tr.deleted {
 }
 
 .modal-header {
-  padding: 1.5rem;
+  padding: var(--spacing-lg);
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
@@ -2701,12 +2810,12 @@ tr.deleted {
   
   h3 {
     margin: 0;
-    font-size: 1.25rem;
-    font-weight: 600;
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
     color: var(--text-primary);
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--spacing-sm);
     
     i {
       color: var(--primary);
@@ -2720,11 +2829,11 @@ tr.deleted {
     width: 32px;
     height: 32px;
     border: none;
-    border-radius: 8px;
+    border-radius: var(--radius);
     background: transparent;
     color: var(--text-secondary);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: var(--transition);
     
     &:hover {
       background: var(--surface-variant);
@@ -2734,49 +2843,49 @@ tr.deleted {
 }
 
 .modal-body {
-  padding: 1.5rem;
+  padding: var(--spacing-lg);
   
   p {
-    margin: 0 0 1rem 0;
+    margin: 0 0 var(--spacing-md) 0;
     color: var(--text-secondary);
     line-height: 1.5;
   }
   
   .warning-text {
     color: var(--warning);
-    font-size: 0.875rem;
+    font-size: var(--font-size-sm);
     font-style: italic;
   }
   
   .form-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
+    gap: var(--spacing-md);
   }
   
   .field-group {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: var(--spacing-sm);
     
     &.full-width {
       grid-column: 1 / -1;
     }
     
     label {
-      font-size: 0.875rem;
-      font-weight: 500;
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-medium);
       color: var(--text-primary);
     }
     
     input, select, textarea {
-      padding: 0.75rem 1rem;
+      padding: var(--spacing-md) var(--spacing-md);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: var(--radius);
       background: var(--background);
       color: var(--text-primary);
-      font-size: 0.875rem;
-      transition: all 0.2s ease;
+      font-size: var(--font-size-sm);
+      transition: var(--transition);
       
       &:focus {
         outline: none;
@@ -2799,25 +2908,25 @@ tr.deleted {
 }
 
 .modal-footer {
-  padding: 1rem 1.5rem;
+  padding: var(--spacing-md) var(--spacing-lg);
   border-top: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 0.75rem;
+  gap: var(--spacing-md);
   
   .btn-secondary,
   .btn-primary,
   .btn-danger {
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.625rem 1.25rem;
-    border-radius: 8px;
-    font-size: 0.875rem;
-    font-weight: 600;
+    gap: var(--spacing-sm);
+    padding: 0.625rem var(--spacing-lg);
+    border-radius: var(--radius);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: var(--transition);
   }
   
   .btn-secondary {
@@ -2834,7 +2943,7 @@ tr.deleted {
   
   .btn-primary {
     background: var(--primary);
-    color: white;
+    color: var(--white);
     border: 1px solid var(--primary);
     
     &:hover {
@@ -2845,7 +2954,7 @@ tr.deleted {
   
   .btn-danger {
     background: var(--error);
-    color: white;
+    color: var(--white);
     border: 1px solid var(--error);
     
     &:hover {
@@ -2876,19 +2985,19 @@ tr.deleted {
    ================================================================= */
 .no-data {
   text-align: center;
-  padding: 3rem 2rem;
+  padding: var(--spacing-2xl) var(--spacing-xl);
   color: var(--text-secondary);
   
   i {
     display: block;
-    font-size: 3rem;
-    margin-bottom: 1rem;
+    font-size: var(--font-size-4xl);
+    margin-bottom: var(--spacing-md);
     opacity: 0.4;
     color: var(--text-tertiary);
   }
   
   span {
-    font-size: 1rem;
+    font-size: var(--font-size-base);
   }
 }
 
@@ -2897,7 +3006,7 @@ tr.deleted {
    ================================================================= */
 @media (max-width: 768px) {
   .modal-content {
-    margin: 1rem;
+    margin: var(--spacing-md);
     width: calc(100% - 2rem);
     max-height: calc(100vh - 2rem);
     
@@ -2938,16 +3047,21 @@ tr.deleted {
    Styles partagÃ©s pour toutes les pages entitÃ©s (section de donnÃ©es)
    ================================================================= */
 .entity-section {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   background: var(--surface);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   border: 1px solid var(--border);
   overflow: hidden;
   box-shadow: 0 2px 8px var(--shadow-light);
-  margin-top: 2rem;
+  margin-top: var(--spacing-xl);
 }
 
 .section-stats {
-  padding: 1.5rem 2rem;
+  min-width: 0;
+  padding: var(--spacing-lg) var(--spacing-xl);
   border-bottom: 1px solid var(--border);
   background: var(--surface);
 }
@@ -2956,31 +3070,35 @@ tr.deleted {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  min-width: 0;
 }
 
 .section-title {
   margin: 0;
-  font-size: 1.125rem;
+  font-size: var(--font-size-lg);
   color: var(--text-primary);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .stats-info {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
-  font-size: 0.875rem;
+  flex-wrap: wrap;
+  gap: var(--spacing-lg);
+  font-size: var(--font-size-sm);
   color: var(--text-secondary);
 }
 
 .stat-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--spacing-sm);
 }
 
 .stat-number {
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--primary);
 }
 
@@ -3035,8 +3153,8 @@ tr.deleted {
 }
 
 .children-header {
-  font-weight: 600;
-  font-size: 0.9rem;
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-sm);
   color: var(--text-primary);
   margin-bottom: var(--spacing-sm);
 }
@@ -3053,24 +3171,24 @@ tr.deleted {
   border: none;
   background: none;
   cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 500;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   color: var(--text-secondary);
   border-bottom: 2px solid transparent;
   margin-bottom: -2px;
-  transition: all 0.2s;
+  transition: var(--transition);
   &:hover { color: var(--primary); }
   &.active { color: var(--primary); border-bottom-color: var(--primary); }
   .tab-count {
     display: inline-block;
     background: var(--surface-tertiary);
     color: var(--text-secondary);
-    padding: 0 6px;
+    padding: 0 var(--spacing-sm);
     border-radius: 10px;
-    font-size: 0.75rem;
-    margin-left: 4px;
+    font-size: var(--font-size-xs);
+    margin-left: var(--spacing-xs);
   }
-  &.active .tab-count { background: var(--primary); color: white; }
+  &.active .tab-count { background: var(--primary); color: var(--white); }
 }
 
 .loading-children {
@@ -3079,7 +3197,7 @@ tr.deleted {
   gap: var(--spacing-sm);
   padding: var(--spacing-md);
   color: var(--text-secondary);
-  font-size: 0.85rem;
+  font-size: var(--font-size-sm);
 }
 
 .children-list {
@@ -3096,29 +3214,29 @@ tr.deleted {
   background: var(--surface);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
-  font-size: 0.85rem;
+  font-size: var(--font-size-sm);
   flex-wrap: wrap;
   &.deleted { opacity: 0.5; text-decoration: line-through; }
 }
 
 .child-id {
   color: var(--text-tertiary);
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
   min-width: 40px;
 }
 
 .child-name {
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   color: var(--text-primary);
   flex: 1;
 }
 
 .child-badge {
-  padding: 2px 8px;
+  padding: 2px var(--spacing-sm);
   border-radius: 10px;
   font-size: 0.7rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   text-transform: uppercase;
   &.active { background: color-mix(in srgb, var(--success) 10%, transparent); color: var(--success); }
   &.inactive { background: color-mix(in srgb, var(--error) 10%, transparent); color: var(--error); }
@@ -3126,24 +3244,24 @@ tr.deleted {
 
 .child-token {
   font-family: monospace;
-  font-size: 0.75rem;
+  font-size: var(--font-size-xs);
   color: var(--text-secondary);
   background: var(--surface-tertiary);
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 2px var(--spacing-sm);
+  border-radius: var(--radius-sm);
 }
 
 .child-permissions {
   display: flex;
-  gap: 4px;
+  gap: var(--spacing-xs);
   flex-wrap: wrap;
 }
 
 .perm-badge {
-  padding: 1px 6px;
-  border-radius: 4px;
+  padding: 1px var(--spacing-sm);
+  border-radius: var(--radius-sm);
   font-size: 0.65rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   background: color-mix(in srgb, var(--error) 10%, transparent);
   color: var(--error);
   &.granted { background: color-mix(in srgb, var(--success) 10%, transparent); color: var(--success); }
@@ -3153,7 +3271,7 @@ tr.deleted {
   padding: var(--spacing-md);
   text-align: center;
   color: var(--text-tertiary);
-  font-size: 0.85rem;
+  font-size: var(--font-size-sm);
 }
 
 /* =================================================================

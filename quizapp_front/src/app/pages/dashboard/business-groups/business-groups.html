@@ -2,16 +2,33 @@
 
   <!-- ══ MODE LISTE ══ -->
   @if (viewMode() === 'list') {
-    <div class="page-header">
-      <div>
-        <h1>Groupes métiers</h1>
-        <p class="subtitle">Gérer les groupes métiers et leurs permissions</p>
+    <header class="page-header">
+      <div class="header-content">
+        <div class="header-left">
+          <h1 class="page-title">
+            <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            Groupes métiers
+          </h1>
+          <p class="page-subtitle">Gérer les groupes métiers et leurs permissions</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-secondary" (click)="loadGroups()" [disabled]="isLoading()">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            Actualiser
+          </button>
+          <button class="btn btn-primary" (click)="createGroup()">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 4v16m8-8H4"></path>
+            </svg>
+            Nouveau groupe
+          </button>
+        </div>
       </div>
-      <button class="btn btn-primary" (click)="createGroup()">
-        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-        Nouveau groupe
-      </button>
-    </div>
+    </header>
 
     @if (isLoading()) {
       <div class="loading-state">
@@ -44,6 +61,12 @@
             @if (group.groupDesc) {
               <p class="group-desc">{{ group.groupDesc }}</p>
             }
+            <div class="group-badges">
+              <span class="group-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                {{ group.userCount || 0 }} membres
+              </span>
+            </div>
           </div>
         }
       </div>
@@ -67,6 +90,12 @@
       @if (!isNew()) {
         <button class="tab" [class.active]="editTab() === 'permissions'" (click)="editTab.set('permissions')">Permissions</button>
         <button class="tab" [class.active]="editTab() === 'members'" (click)="editTab.set('members')">Membres</button>
+        <button class="tab" [class.active]="editTab() === 'requests'" (click)="editTab.set('requests')">
+          Demandes
+          @if (pendingRequests().length > 0) {
+            <span class="tab-badge">{{ pendingRequests().length }}</span>
+          }
+        </button>
       }
     </div>
 
@@ -95,16 +124,25 @@
             <h3 class="category-title">{{ category.label }}</h3>
             <div class="permissions-list">
               @for (perm of category.permissions; track perm.key) {
-                <label class="permission-item" [class.saving]="saving()">
-                  <input
-                    type="checkbox"
-                    [checked]="isPermChecked(perm.key)"
-                    (change)="toggleGroupPermission(perm.key)"
-                    [disabled]="saving()"
-                  />
-                  <span class="permission-label">{{ perm.label }}</span>
+                <div class="permission-item" [class.saving]="saving()">
+                  <div class="checkbox-container">
+                    <input
+                      type="checkbox"
+                      [id]="'bg-perm-' + perm.key"
+                      class="checkbox-input"
+                      [checked]="isPermChecked(perm.key)"
+                      (change)="toggleGroupPermission(perm.key)"
+                      [disabled]="saving()"
+                    />
+                    <label [for]="'bg-perm-' + perm.key" class="checkbox-label">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                      {{ perm.label }}
+                    </label>
+                  </div>
                   <code class="permission-key">{{ perm.key }}</code>
-                </label>
+                </div>
               }
             </div>
           </div>
@@ -133,13 +171,76 @@
           <div class="members-list">
             @for (member of groupMembers(); track member.userId) {
               <div class="member-row">
+                <div class="member-avatar">{{ (member.userFirstName || '?').charAt(0).toUpperCase() }}</div>
                 <div class="member-info">
-                  <span class="member-name">{{ member.userFirstName }} {{ member.userLastName }}</span>
+                  <span class="member-name">
+                    {{ member.userFirstName }} {{ member.userLastName }}
+                    @if (member.isModerator) {
+                      <span class="moderator-badge">Modérateur</span>
+                    }
+                  </span>
                   <span class="member-email">{{ member.userEmail }}</span>
                 </div>
                 <button class="btn-icon danger" title="Retirer" (click)="removeMember(member)">
                   <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M19 13H5v-2h14v2z"/></svg>
                 </button>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Tab: Demandes -->
+    @if (editTab() === 'requests') {
+      <div class="requests-section">
+        @if (requestsLoading()) {
+          <div class="loading-state">
+            <div class="spinner"></div>
+            <span>Chargement des demandes...</span>
+          </div>
+        } @else if (pendingRequests().length === 0) {
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="empty-icon">
+              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <p>Aucune demande en attente pour ce groupe.</p>
+          </div>
+        } @else {
+          <div class="requests-list">
+            @for (req of pendingRequests(); track req.id) {
+              <div class="request-card">
+                <div class="request-info">
+                  <div class="request-user">
+                    <div class="request-avatar">{{ (req.userName || '?').charAt(0).toUpperCase() }}</div>
+                    <div class="request-details">
+                      <span class="request-name">{{ req.userName || 'Utilisateur #' + req.userId }}</span>
+                      <span class="request-email">{{ req.userEmail || '' }}</span>
+                    </div>
+                  </div>
+                  @if (req.reason) {
+                    <div class="request-reason">
+                      <span class="request-reason-label">Raison :</span>
+                      {{ req.reason }}
+                    </div>
+                  }
+                </div>
+                <div class="request-actions">
+                  <button class="btn btn-success btn-sm" (click)="approveRequest(req)"
+                    [disabled]="processingRequestId() === req.id">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="btn-action-icon">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    Approuver
+                  </button>
+                  <button class="btn btn-danger btn-sm" (click)="rejectRequest(req)"
+                    [disabled]="processingRequestId() === req.id">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="btn-action-icon">
+                      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                    Refuser
+                  </button>
+                </div>
               </div>
             }
           </div>

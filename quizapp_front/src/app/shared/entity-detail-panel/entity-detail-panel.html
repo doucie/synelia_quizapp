@@ -2,14 +2,14 @@
 <div class="detail-panel-overlay" *ngIf="isOpen" (click)="close()"></div>
 
 <!-- Panel -->
-<div class="detail-panel" [class.open]="isOpen">
+<div class="detail-panel" [class.open]="isOpen" role="dialog" aria-modal="true" [attr.aria-label]="title">
   <!-- Header -->
   <div class="detail-panel-header">
     <div class="detail-panel-title">
       <h3>{{ title }}</h3>
       <span class="detail-panel-id" *ngIf="entity?.id">#{{ entity.id }}</span>
     </div>
-    <button class="detail-panel-close" (click)="close()">
+    <button class="detail-panel-close" (click)="close()" aria-label="Fermer">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>

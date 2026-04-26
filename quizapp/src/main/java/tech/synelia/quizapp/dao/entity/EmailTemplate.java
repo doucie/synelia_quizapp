@@ -33,6 +33,12 @@ public class EmailTemplate implements Serializable, Cloneable {
     @Column(name = "available_variables", columnDefinition = "TEXT")
     private String availableVariables;
 
+    @Column(name = "action_type", length = 50)
+    private String actionType;
+
+    @Column(name = "preset_id")
+    private Integer presetId;
+
     @Column(name = "is_active")
     private Boolean isActive;
 

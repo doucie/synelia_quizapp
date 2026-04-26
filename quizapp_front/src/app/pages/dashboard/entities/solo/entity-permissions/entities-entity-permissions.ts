@@ -3,15 +3,16 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
-import { EntityCrudBase } from '../../../../../shared/entity-crud-base';
+import { EntityCrudBase, ColumnDef } from '../../../../../shared/entity-crud-base';
 import { EntityDetailPanelComponent } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
 import { DependencyPopupComponent } from '../../../../../shared/dependency-popup/dependency-popup';
+import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
 import { EntityPermissionCrudService, EntityPermissionItem, PagedEntityPermissionResponse, EntityPermissionCrudCriteria } from '../../../../../core/services/entity-permission-crud.service';
 
 @Component({
   selector: 'app-entities-entity-permissions',
   standalone: true,
-  imports: [CommonModule, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent],
+  imports: [CommonModule, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent, ColumnVisibilityManagerComponent],
   templateUrl: './entities-entity-permissions.html',
   styleUrls: ['./entities-entity-permissions.scss']
 })
@@ -25,6 +26,16 @@ export class EntitiesEntityPermissionsComponent extends EntityCrudBase<EntityPer
   advancedCriteria: EntityPermissionCrudCriteria = {};
   editFormData: EntityPermissionItem = {};
   createFormData: Partial<EntityPermissionItem> = {};
+
+  override allColumns: ColumnDef[] = [
+    { key: 'id', label: 'ID', priority: 1 },
+    { key: 'entityType', label: 'Type Entité', priority: 1 },
+    { key: 'entityId', label: 'ID Entité', priority: 2 },
+    { key: 'permission', label: 'Permission', priority: 1 },
+    { key: 'userId', label: 'User ID', priority: 2 },
+    { key: 'createdAt', label: 'Créé le', priority: 2 },
+    { key: 'actions', label: 'Actions', priority: 1 },
+  ];
 
   protected fetchAll(criteria: EntityPermissionCrudCriteria): Observable<PagedEntityPermissionResponse> { return this.service.getAllByCriteria(criteria); }
   protected performCreate(item: Partial<EntityPermissionItem>): Observable<any> { return this.service.create(item as EntityPermissionItem); }

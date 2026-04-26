@@ -128,6 +128,14 @@
     <div class="section-stats">
       <div class="stats-row">
         <h2 class="section-title">Étapes de Pipeline</h2>
+        <app-column-visibility-manager
+          [columns]="allColumns"
+          [visibleColumns]="visibleColumns()"
+          [hiddenCount]="hiddenColumnsCount()"
+          (toggleColumn)="toggleColumnVisibility($event)"
+          (showAll)="showAllColumns()"
+          (resetColumns)="resetColumnVisibility()"
+        />
         <div class="stats-info" *ngIf="!isLoading()">
           <div class="stat-item"><span>Total:</span><span class="stat-number">{{ totalElements() }}</span></div>
         </div>
@@ -147,41 +155,41 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th>ID</th>
-            <th>Libellé</th>
-            <th>Type</th>
-            <th>Ordre</th>
-            <th>Obligatoire</th>
-            <th>Éliminatoire</th>
-            <th>Template</th>
-            <th>Config</th>
-            <th>Créé le</th>
-            <th>Actions</th>
+            <th class="col-id" [class.col-hidden]="!isColumnVisible('id')">ID</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('label')">Libellé</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('type')">Type</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('order')">Ordre</th>
+            <th class="col-boolean" [class.col-hidden]="!isColumnVisible('mandatory')">Obligatoire</th>
+            <th class="col-boolean" [class.col-hidden]="!isColumnVisible('eliminatory')">Éliminatoire</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('template')">Template</th>
+            <th class="col-boolean" [class.col-hidden]="!isColumnVisible('config')">Config</th>
+            <th class="col-date" [class.col-hidden]="!isColumnVisible('createdAt')">Créé le</th>
+            <th class="col-actions" [class.col-hidden]="!isColumnVisible('actions')">Actions</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let item of items(); trackBy: trackById" [class.row-deleted]="item.isDeleted" (click)="selectItem(item)" style="cursor: pointer;">
-            <td><span class="cell-id">#{{ item.id }}</span></td>
-            <td>{{ item.stageLabel || '-' }}</td>
-            <td>{{ getStageTypeLabel(item.stageType) }}</td>
-            <td>{{ item.stageOrder ?? '-' }}</td>
-            <td><span class="bool-badge" [class.is-true]="item.isRequired" [class.is-false]="!item.isRequired">{{ item.isRequired ? 'Oui' : 'Non' }}</span></td>
-            <td><span class="bool-badge" [class.is-true]="item.isEliminatory" [class.is-false]="!item.isEliminatory">{{ item.isEliminatory ? 'Oui' : 'Non' }}</span></td>
-            <td>{{ getTemplateName(item.pipelineTemplateId) }}</td>
-            <td><span class="bool-badge" [class.is-true]="item.configJson" [class.is-false]="!item.configJson">{{ item.configJson ? 'Oui' : 'Non' }}</span></td>
-            <td><span class="cell-date">{{ formatDate(item.createdAt) }}</span></td>
-            <td class="actions-cell" (click)="$event.stopPropagation()">
+            <td [class.col-hidden]="!isColumnVisible('id')"><span class="cell-id">#{{ item.id }}</span></td>
+            <td [class.col-hidden]="!isColumnVisible('label')">{{ item.stageLabel || '-' }}</td>
+            <td [class.col-hidden]="!isColumnVisible('type')">{{ getStageTypeLabel(item.stageType) }}</td>
+            <td [class.col-hidden]="!isColumnVisible('order')">{{ item.stageOrder ?? '-' }}</td>
+            <td [class.col-hidden]="!isColumnVisible('mandatory')"><span class="bool-badge" [class.is-true]="item.isRequired" [class.is-false]="!item.isRequired">{{ item.isRequired ? 'Oui' : 'Non' }}</span></td>
+            <td [class.col-hidden]="!isColumnVisible('eliminatory')"><span class="bool-badge" [class.is-true]="item.isEliminatory" [class.is-false]="!item.isEliminatory">{{ item.isEliminatory ? 'Oui' : 'Non' }}</span></td>
+            <td [class.col-hidden]="!isColumnVisible('template')">{{ getTemplateName(item.pipelineTemplateId) }}</td>
+            <td [class.col-hidden]="!isColumnVisible('config')"><span class="bool-badge" [class.is-true]="item.configJson" [class.is-false]="!item.configJson">{{ item.configJson ? 'Oui' : 'Non' }}</span></td>
+            <td [class.col-hidden]="!isColumnVisible('createdAt')"><span class="cell-date">{{ formatDate(item.createdAt) }}</span></td>
+            <td class="actions-cell" [class.col-hidden]="!isColumnVisible('actions')" (click)="$event.stopPropagation()">
               <div class="actions-menu">
                 <ng-container *ngIf="!item.isDeleted">
-                  <button class="action-btn primary" (click)="openEditDialog(item)" title="Modifier">
+                  <button class="action-btn primary" (click)="openEditDialog(item)" title="Modifier" aria-label="Modifier">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 20H21M16.5 3.5A2.12 2.12 0 0 1 19 6L7 18L3 19L4 15L16.5 3.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   </button>
-                  <button class="action-btn danger" (click)="confirmDelete(item)" title="Supprimer">
+                  <button class="action-btn danger" (click)="confirmDelete(item)" title="Supprimer" aria-label="Supprimer">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 6H5H21M8 6V4C8 3 9 2 10 2H14C15 2 16 3 16 4V6M19 6V20C19 21 18 22 17 22H7C6 22 5 21 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   </button>
                 </ng-container>
                 <ng-container *ngIf="item.isDeleted">
-                  <button class="action-btn success" (click)="confirmRestore(item)" title="Restaurer">
+                  <button class="action-btn success" (click)="confirmRestore(item)" title="Restaurer" aria-label="Restaurer">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 12A9 9 0 1 0 12 3M12 3L8 7L12 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   </button>
                 </ng-container>
@@ -201,7 +209,7 @@
           <label for="pageSize">Par page:</label>
           <div class="select-wrapper">
             <select id="pageSize" class="page-size-select" [value]="pageSize()" (change)="onPageSizeChange($event)">
-              <option [value]="5">5</option><option [value]="10">10</option><option [value]="20">20</option><option [value]="50">50</option>
+              <option [value]="5">5</option><option [value]="10">10</option><option [value]="20">20</option><option [value]="50">50</option><option [value]="100">100</option>
             </select>
           </div>
         </div>

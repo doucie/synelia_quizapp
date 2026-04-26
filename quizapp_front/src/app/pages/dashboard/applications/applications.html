@@ -24,42 +24,38 @@
 
   <!-- Header élégant -->
   <header class="page-header">
-    <div class="header-top">
-      <div class="header-title-section">
-        <div class="title-wrapper">
-          <h1 class="page-title">
-            <span class="title-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M16 4h.01"/>
-                <path d="M16 20h.01"/>
-                <path d="M8 4h.01"/>
-                <path d="M8 20h.01"/>
-                <path d="M12 4h.01"/>
-                <path d="M12 20h.01"/>
-                <path d="M4 8h16"/>
-                <path d="M4 12h16"/>
-                <path d="M4 16h16"/>
-              </svg>
-            </span>
-            Candidatures
-          </h1>
+    <div class="header-content">
+      <div class="header-left">
+        <h1 class="page-title">
+          <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M16 4h.01"/>
+            <path d="M16 20h.01"/>
+            <path d="M8 4h.01"/>
+            <path d="M8 20h.01"/>
+            <path d="M12 4h.01"/>
+            <path d="M12 20h.01"/>
+            <path d="M4 8h16"/>
+            <path d="M4 12h16"/>
+            <path d="M4 16h16"/>
+          </svg>
+          Candidatures
           <span class="title-badge">{{ totalApplications() }}</span>
-        </div>
+        </h1>
         <p class="page-subtitle">Gérez les candidatures de vos campagnes suivies en temps réel</p>
       </div>
       
       <div class="header-actions">
-        <button class="action-btn secondary" (click)="resetFilters()" title="Réinitialiser les filtres">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <button class="btn btn-secondary" (click)="resetFilters()" title="Réinitialiser les filtres">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M3 6h18M7 12h10M10 18h4"/>
           </svg>
-          <span>Réinitialiser</span>
+          Réinitialiser
         </button>
-        <button class="action-btn primary" (click)="refreshApplications()" title="Actualiser">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <button class="btn btn-primary" (click)="refreshApplications()" title="Actualiser">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
           </svg>
-          <span>Actualiser</span>
+          Actualiser
         </button>
       </div>
     </div>
@@ -145,15 +141,22 @@
 
     <div class="filters-controls">
       <div class="filter-checkbox">
-        <label class="checkbox-label">
+        <div class="checkbox-container">
           <input 
             type="checkbox"
+            id="sharedCampaigns"
+            class="checkbox-input"
             [checked]="showOnlySharedCampaigns()"
             (change)="toggleSharedCampaignsFilter()"
           />
-          <span class="checkbox-text">Campagnes partagées uniquement</span>
-          <span class="checkbox-hint">(où j'ai des droits)</span>
-        </label>
+          <label for="sharedCampaigns" class="checkbox-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Campagnes partagées uniquement
+            <span class="checkbox-hint">(où j'ai des droits)</span>
+          </label>
+        </div>
       </div>
 
       <div class="filter-group">
@@ -325,319 +328,181 @@
               </div>
               
               <!-- Progression visuelle du statut -->
-              <div class="application-progress">
+              <div class="pipeline-compact">
                 @if (getStagesForApp(app).length > 0) {
-                  <!-- Pipeline dynamique -->
-                  @for (stage of getStagesForApp(app); track stage.id; let last = $last) {
-                    <div class="progress-step" [ngClass]="getDynamicStepStatus(app, stage.id!)">
-                      <div class="step-circle">
-                        @if (getDynamicStepStatus(app, stage.id!) === 'completed' || getDynamicStepStatus(app, stage.id!) === 'active') {
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                            <polyline points="20 6 9 17 4 12" stroke-linecap="round" stroke-linejoin="round"/>
-                          </svg>
-                        }
-                        @if (getDynamicStepStatus(app, stage.id!) === 'rejected') {
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                            <line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round" stroke-linejoin="round"/>
-                            <line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round" stroke-linejoin="round"/>
-                          </svg>
-                        }
-                        @if (getDynamicStepStatus(app, stage.id!) === 'skipped') {
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                            <polyline points="13 17 18 12 13 7" stroke-linecap="round" stroke-linejoin="round"/>
-                            <polyline points="6 17 11 12 6 7" stroke-linecap="round" stroke-linejoin="round"/>
-                          </svg>
-                        }
+                  <!-- Pipeline dynamique compact -->
+                  <div class="pipeline-dots">
+                    @for (stage of getStagesForApp(app); track stage.id) {
+                      <div class="pipeline-dot" 
+                        [ngClass]="getDynamicStepStatus(app, stage.id!)"
+                        [title]="stage.stageLabel + ' — ' + getDynamicStepTooltip(app, stage)">
                       </div>
-                      @if (!last) {
-                        <div class="step-line"></div>
+                    }
+                  </div>
+                  <span class="pipeline-label">{{ getCurrentStageName(app) }}</span>
+                  <!-- Actions de la stage courante -->
+                  @if (getCurrentStageId(app) !== null) {
+                    <div class="pipeline-actions" (click)="$event.stopPropagation()">
+                      @if (canAdvanceStage(app, getCurrentStageId(app)!)) {
+                        <button class="mini-action advance" 
+                          [disabled]="isActionLoading(app.id!, getCurrentStageId(app)!)"
+                          (click)="advanceStage(app, getCurrentStageId(app)!, $event)" 
+                          title="Valider">
+                          @if (isActionLoading(app.id!, getCurrentStageId(app)!)) {
+                            <span class="btn-spinner"></span>
+                          } @else {
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                          }
+                        </button>
                       }
-                      <div class="step-tooltip">
-                        <span class="tooltip-label">{{ stage.stageLabel }}</span>
-                        <span class="tooltip-status">{{ getDynamicStepTooltip(app, stage) }}</span>
-                        <!-- Actions par étape -->
-                        @if (canAdvanceStage(app, stage.id!) || canRejectStage(app, stage.id!) || canSkipStage(app, stage)) {
-                          <div class="stage-actions" (click)="$event.stopPropagation()">
-                            @if (canAdvanceStage(app, stage.id!)) {
-                              <button class="stage-action-btn advance" 
-                                [disabled]="isActionLoading(app.id!, stage.id!)"
-                                (click)="advanceStage(app, stage.id!, $event)" 
-                                title="Valider cette étape">
-                                @if (isActionLoading(app.id!, stage.id!)) {
-                                  <span class="btn-spinner"></span>
-                                } @else {
-                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                                    <polyline points="20 6 9 17 4 12"/>
-                                  </svg>
-                                }
-                              </button>
-                            }
-                            @if (canRejectStage(app, stage.id!)) {
-                              <button class="stage-action-btn reject" 
-                                [disabled]="isActionLoading(app.id!, stage.id!)"
-                                (click)="openRejectModal(app, stage.id!, $event)" 
-                                title="Refuser cette étape">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                                  <line x1="18" y1="6" x2="6" y2="18"/>
-                                  <line x1="6" y1="6" x2="18" y2="18"/>
-                                </svg>
-                              </button>
-                            }
-                            @if (canSkipStage(app, stage)) {
-                              <button class="stage-action-btn skip" 
-                                [disabled]="isActionLoading(app.id!, stage.id!)"
-                                (click)="skipStage(app, stage, $event)" 
-                                title="Passer cette étape">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                                  <polyline points="13 17 18 12 13 7"/>
-                                  <polyline points="6 17 11 12 6 7"/>
-                                </svg>
-                              </button>
-                            }
-                          </div>
-                        }
-                      </div>
+                      @if (canRejectStage(app, getCurrentStageId(app)!)) {
+                        <button class="mini-action reject" 
+                          [disabled]="isActionLoading(app.id!, getCurrentStageId(app)!)"
+                          (click)="openRejectModal(app, getCurrentStageId(app)!, $event)" 
+                          title="Refuser">
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                          </svg>
+                        </button>
+                      }
                     </div>
                   }
                 } @else {
-                  <!-- Fallback: pipeline 3 étapes legacy -->
-                  <div class="progress-step" [ngClass]="getStepStatus(app.applicationStatus, 1)">
-                    <div class="step-circle">
-                      <svg *ngIf="getStepStatus(app.applicationStatus, 1) === 'completed' || getStepStatus(app.applicationStatus, 1) === 'active'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                        <polyline points="20 6 9 17 4 12" stroke-linecap="round" stroke-linejoin="round"/>
-                      </svg>
-                    </div>
-                    <div class="step-line"></div>
-                    <div class="step-tooltip">{{ getStepTooltip(app.applicationStatus, 1) }}</div>
+                  <!-- Fallback legacy 3 étapes compact -->
+                  <div class="pipeline-dots">
+                    <div class="pipeline-dot" [ngClass]="getStepStatus(app.applicationStatus, 1)"></div>
+                    <div class="pipeline-dot" [ngClass]="getStepStatus(app.applicationStatus, 2)"></div>
+                    <div class="pipeline-dot" [ngClass]="getStepStatus(app.applicationStatus, 3)"></div>
                   </div>
-                  
-                  <div class="progress-step" [ngClass]="getStepStatus(app.applicationStatus, 2)">
-                    <div class="step-circle">
-                      <svg *ngIf="getStepStatus(app.applicationStatus, 2) === 'completed' || getStepStatus(app.applicationStatus, 2) === 'active'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                        <polyline points="20 6 9 17 4 12" stroke-linecap="round" stroke-linejoin="round"/>
-                      </svg>
-                      <svg *ngIf="getStepStatus(app.applicationStatus, 2) === 'rejected'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                        <line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round" stroke-linejoin="round"/>
-                        <line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round" stroke-linejoin="round"/>
-                      </svg>
-                    </div>
-                    <div class="step-line"></div>
-                    <div class="step-tooltip">{{ getStepTooltip(app.applicationStatus, 2) }}</div>
-                  </div>
-                  
-                  <div class="progress-step" [ngClass]="getStepStatus(app.applicationStatus, 3)">
-                    <div class="step-circle">
-                      <svg *ngIf="getStepStatus(app.applicationStatus, 3) === 'completed'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                        <polyline points="20 6 9 17 4 12" stroke-linecap="round" stroke-linejoin="round"/>
-                      </svg>
-                      <svg *ngIf="getStepStatus(app.applicationStatus, 3) === 'rejected'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                        <line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round" stroke-linejoin="round"/>
-                        <line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round" stroke-linejoin="round"/>
-                      </svg>
-                    </div>
-                    <div class="step-tooltip">{{ getStepTooltip(app.applicationStatus, 3) }}</div>
-                  </div>
+                  <span class="pipeline-label">{{ getLegacyStageLabel(app.applicationStatus) }}</span>
                 }
               </div>
             </div>
 
             <!-- Section Campagne & Source -->
-            <div class="campaign-info-section">
-              <div class="info-row">
-                <svg class="info-icon-inline" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                  <line x1="16" y1="2" x2="16" y2="6"/>
-                  <line x1="8" y1="2" x2="8" y2="6"/>
-                  <line x1="3" y1="10" x2="21" y2="10"/>
-                </svg>
-                <span class="info-label">Campagne:</span>
-                <span class="info-value">{{ app.campaignTitle || 'N/A' }}</span>
-              </div>
-              <div class="info-row">
-                <svg class="info-icon-inline" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-                </svg>
-                <span class="info-label">Source:</span>
-                <span class="info-value">{{ app.sourceTokenLabel || 'N/A' }}</span>
-              </div>
-            </div>
-
-            <!-- Section Contact (Email + Téléphone + CV) -->
-            <div class="contact-section">
-              <!-- Email -->
-              <div class="contact-item">
-                <label class="contact-label">Email</label>
-                <div class="input-with-copy">
-                  <input 
-                    type="text" 
-                    class="contact-input" 
-                    [value]="app.candidateEmail" 
-                    readonly
-                    (click)="$event.stopPropagation()"
-                  />
-                  <button class="copy-button" (click)="copyToClipboard(app.candidateEmail, 'Email', $event)" title="Copier l'email">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Téléphone -->
-              @if (app.candidatePhone) {
-                <div class="contact-item">
-                  <label class="contact-label">Téléphone</label>
-                  <div class="input-with-copy">
-                    <input 
-                      type="text" 
-                      class="contact-input" 
-                      [value]="app.candidatePhone" 
-                      readonly
-                      (click)="$event.stopPropagation()"
-                    />
-                    <button class="copy-button" (click)="copyToClipboard(app.candidatePhone, 'Téléphone', $event)" title="Copier le téléphone">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              }
-
-              <!-- CV -->
-              @if (app.candidateCvPath) {
-                <div class="contact-item">
-                  <label class="contact-label">CV</label>
-                  <button class="cv-preview-button" (click)="openCVPreview(app, $event)" title="Prévisualiser le CV">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                      <polyline points="14 2 14 8 20 8"/>
-                    </svg>
-                    Prévisualiser le CV
-                  </button>
-                </div>
-              }
-            </div>
-
-            <!-- Section Tags/Badges -->
-            <div class="badges-section">
-              <!-- Email vérifié -->
-              <span class="status-tag" [ngClass]="app.emailVerified ? 'verified' : 'unverified'">
+            <div class="campaign-source-row">
+              <span class="campaign-tag">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  @if (app.emailVerified) {
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                    <polyline points="22 4 12 14.01 9 11.01"/>
-                  } @else {
-                    <circle cx="12" cy="12" r="10"/>
-                    <line x1="15" y1="9" x2="9" y2="15"/>
-                    <line x1="9" y1="9" x2="15" y2="15"/>
-                  }
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
                 </svg>
-                {{ app.emailVerified ? 'Email vérifié' : 'Email non vérifié' }}
+                {{ app.campaignTitle || 'N/A' }}
               </span>
-
-              <!-- Quiz Status -->
-              <span class="status-tag quiz" [ngClass]="'quiz-' + (app.quizStatus || 'not_started').toLowerCase()">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  @if (app.quizStatus === 'COMPLETED') {
-                    <polyline points="20 6 9 17 4 12"/>
-                  } @else if (app.quizStatus === 'IN_PROGRESS') {
-                    <circle cx="12" cy="12" r="10"/>
-                    <polyline points="12 6 12 12 16 14"/>
-                  } @else {
-                    <circle cx="12" cy="12" r="10"/>
-                    <line x1="12" y1="8" x2="12" y2="12"/>
-                    <line x1="12" y1="16" x2="12.01" y2="16"/>
-                  }
-                </svg>
-                @if (app.quizStatus === 'COMPLETED') {
-                  Quiz terminé
-                } @else if (app.quizStatus === 'IN_PROGRESS') {
-                  Quiz en cours
-                } @else {
-                  Quiz en attente
-                }
-              </span>
-
-              <!-- Score Quiz -->
-              @if (app.quizScorePercent !== null && app.quizScorePercent !== undefined) {
-                <span class="status-tag score" [ngClass]="getScoreColor(app.quizScorePercent)">
+              @if (app.sourceTokenLabel) {
+                <span class="source-tag">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <polyline points="14 2 14 8 20 8"/>
-                    <line x1="16" y1="13" x2="8" y2="13"/>
-                    <line x1="16" y1="17" x2="8" y2="17"/>
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
                   </svg>
-                  {{ app.quizScorePercent }}% de bonnes réponses
+                  {{ app.sourceTokenLabel }}
                 </span>
               }
             </div>
 
-            <!-- Section Entretien -->
-            <div class="interview-section">
-              @if (app.interviewDate) {
-                <div class="interview-info" [ngClass]="getInterviewStatusClass(app.interviewStatus)">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                    <line x1="16" y1="2" x2="16" y2="6"/>
-                    <line x1="8" y1="2" x2="8" y2="6"/>
-                    <line x1="3" y1="10" x2="21" y2="10"/>
-                    <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/>
+            <!-- Contact rapide -->
+            <div class="contact-row" (click)="$event.stopPropagation()">
+              <button class="contact-chip" (click)="copyToClipboard(app.candidateEmail, 'Email', $event)" title="Copier l'email">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+                </svg>
+                <span class="chip-text">{{ app.candidateEmail }}</span>
+              </button>
+              @if (app.candidatePhone) {
+                <button class="contact-chip" (click)="copyToClipboard(app.candidatePhone, 'Téléphone', $event)" title="Copier le téléphone">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.79 19.79 0 012.12 4.18 2 2 0 014.11 2h3a2 2 0 012 1.72c.12.96.36 1.9.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.9.34 1.85.58 2.81.7A2 2 0 0122 16.92z"/>
                   </svg>
-                  <div class="interview-details">
-                    <span class="interview-label">Entretien le {{ formatDate(app.interviewDate) }}</span>
-                    <span class="interview-status-text">{{ getInterviewStatusLabel(app.interviewStatus) }}</span>
-                  </div>
-                </div>
-              } @else {
-                <div 
-                  class="interview-info no-interview"
-                  [class.clickable]="canScheduleInterview(app)"
-                  [title]="canScheduleInterview(app) ? 'Cliquer pour planifier un entretien' : ''"
-                  (click)="canScheduleInterview(app) ? scheduleInterview(app) : null; $event.stopPropagation()"
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                    <line x1="16" y1="2" x2="16" y2="6"/>
-                    <line x1="8" y1="2" x2="8" y2="6"/>
-                    <line x1="3" y1="10" x2="21" y2="10"/>
+                  <span class="chip-text">{{ app.candidatePhone }}</span>
+                </button>
+              }
+              @if (app.candidateCvPath) {
+                <button class="contact-chip cv-chip" (click)="openCVPreview(app, $event)" title="Prévisualiser le CV">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
                   </svg>
-                  <span class="interview-label">
-                    {{ canScheduleInterview(app) ? 'Cliquer pour planifier un entretien' : 'Aucune interview planifiée' }}
-                  </span>
-                  @if (canScheduleInterview(app)) {
-                    <svg class="plus-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <line x1="12" y1="5" x2="12" y2="19"/>
-                      <line x1="5" y1="12" x2="19" y2="12"/>
-                    </svg>
-                  }
-                </div>
+                  CV
+                </button>
               }
             </div>
 
-            <!-- Section Score Évaluation -->
-            <div class="evaluation-section">
-              @if (app.evaluationScore !== null && app.evaluationScore !== undefined && app.evaluationScore > 0) {
-                <div class="evaluation-score">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                  </svg>
-                  <span class="evaluation-label">Score d'évaluation:</span>
-                  <span class="evaluation-value" [ngClass]="getScoreColor(app.evaluationScore * 20)">
-                    {{ app.evaluationScore }}/5
+            <!-- Liste verticale de statuts -->
+            <div class="status-list">
+              <!-- Email -->
+              <div class="status-row">
+                <span class="status-label">Email</span>
+                <span class="status-badge" [ngClass]="app.emailVerified ? 'badge-success' : 'badge-warning'">
+                  @if (app.emailVerified) {
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                    Vérifié
+                  } @else {
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                    Non vérifié
+                  }
+                </span>
+              </div>
+
+              <!-- Quiz -->
+              <div class="status-row">
+                <span class="status-label">Quiz</span>
+                <span class="status-badge" [ngClass]="getQuizBadgeClass(app.quizStatus)">
+                  @if (app.quizStatus === 'COMPLETED') {
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                    Terminé
+                  } @else if (app.quizStatus === 'IN_PROGRESS') {
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    En cours
+                  } @else if (app.quizStatus === 'ABANDONED') {
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    Abandonné
+                  } @else if (app.quizStatus === 'NOT_REQUIRED') {
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Non requis
+                  } @else {
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    En attente
+                  }
+                </span>
+              </div>
+
+              <!-- Score -->
+              @if (app.quizScorePercent !== null && app.quizScorePercent !== undefined) {
+                <div class="status-row">
+                  <span class="status-label">Score</span>
+                  <span class="status-badge" [ngClass]="getScoreColor(app.quizScorePercent)">
+                    {{ app.quizScorePercent }}%
                   </span>
                 </div>
-              } @else {
-                <div class="evaluation-score no-evaluation">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                  </svg>
-                  <span class="evaluation-label">Aucune évaluation</span>
-                </div>
               }
+
+              <!-- Entretien -->
+              <div class="status-row">
+                <span class="status-label">Entretien</span>
+                @if (app.interviewDate) {
+                  <span class="status-badge" [ngClass]="getInterviewBadgeClass(app.interviewStatus)">
+                    {{ getInterviewStatusLabel(app.interviewStatus) }} — {{ formatDate(app.interviewDate) }}
+                  </span>
+                } @else {
+                  @if (canScheduleInterview(app)) {
+                    <button class="status-badge badge-action" (click)="scheduleInterview(app); $event.stopPropagation()" title="Planifier un entretien">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                      Planifier
+                    </button>
+                  } @else {
+                    <span class="status-badge badge-neutral">Aucun</span>
+                  }
+                }
+              </div>
+
+              <!-- Évaluation -->
+              <div class="status-row">
+                <span class="status-label">Évaluation</span>
+                @if (app.evaluationScore !== null && app.evaluationScore !== undefined && app.evaluationScore > 0) {
+                  <span class="status-badge" [ngClass]="getScoreColor(app.evaluationScore * 20)">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    {{ app.evaluationScore }}/5
+                  </span>
+                } @else {
+                  <span class="status-badge badge-neutral">Aucune</span>
+                }
+              </div>
             </div>
 
             <!-- Footer: Date + Bouton détails -->
@@ -691,11 +556,11 @@
 
 <!-- Modal d'aperçu CV -->
 @if (cvPreviewUrl()) {
-  <div class="cv-modal-overlay" (click)="closeCVPreview()">
+  <div class="cv-modal-overlay" role="dialog" aria-modal="true" (click)="closeCVPreview()">
     <div class="cv-modal" (click)="$event.stopPropagation()">
       <div class="cv-modal-header">
         <h3 class="cv-modal-title">Aperçu du CV - {{ cvPreviewCandidateName() }}</h3>
-        <button class="cv-modal-close" (click)="closeCVPreview()" title="Fermer">
+        <button class="cv-modal-close" (click)="closeCVPreview()" title="Fermer" aria-label="Fermer">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"/>
             <line x1="6" y1="6" x2="18" y2="18"/>
@@ -729,11 +594,11 @@
 
 <!-- Modal de refus d'étape -->
 @if (showRejectModal()) {
-  <div class="reject-modal-overlay" (click)="cancelReject()">
+  <div class="reject-modal-overlay" role="dialog" aria-modal="true" (click)="cancelReject()">
     <div class="reject-modal" (click)="$event.stopPropagation()">
       <div class="reject-modal-header">
         <h3 class="reject-modal-title">Refuser cette étape</h3>
-        <button class="reject-modal-close" (click)="cancelReject()" title="Fermer">
+        <button class="reject-modal-close" (click)="cancelReject()" title="Fermer" aria-label="Fermer">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"/>
             <line x1="6" y1="6" x2="18" y2="18"/>

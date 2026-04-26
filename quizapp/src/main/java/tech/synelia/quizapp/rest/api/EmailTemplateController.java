@@ -30,7 +30,7 @@ import tech.synelia.quizapp.rest.fact.ControllerFactory;
 @CrossOrigin("*")
 @RestController
 @RequestMapping(value="/emailTemplate")
-@PreAuthorize("hasRole('SUPER_ADMIN')")
+@PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
 public class EmailTemplateController {
 
     @Autowired
@@ -75,6 +75,14 @@ public class EmailTemplateController {
         log.info("start method /emailTemplate/getByCriteria");
         Response<EmailTemplateDto> response = controllerFactory.getByCriteria(emailTemplateBusiness, request, FunctionalityEnum.VIEW_EMAIL_TEMPLATE);
         log.info("end method /emailTemplate/getByCriteria");
+        return response;
+    }
+
+    @RequestMapping(value="/getByActionType", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
+    public Response<EmailTemplateDto> getByActionType(@RequestBody Request<EmailTemplateDto> request) throws Exception {
+        log.info("start method /emailTemplate/getByActionType");
+        Response<EmailTemplateDto> response = emailTemplateBusiness.getByActionType(request, Locale.FRENCH);
+        log.info("end method /emailTemplate/getByActionType");
         return response;
     }
 }

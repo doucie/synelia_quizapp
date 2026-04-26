@@ -2,23 +2,28 @@
 .campaigns-page {
   min-height: 100vh;
   background: var(--background);
-  padding: 2rem;
+  padding: var(--spacing-xl);
   color: var(--text-primary);
 
   @media (max-width: 768px) {
-    padding: 1rem;
+    padding: var(--spacing-md);
   }
 }
 
 // En-tête
 .page-header {
-  margin-bottom: 2rem;
+  margin-bottom: var(--spacing-xl);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-lg) var(--spacing-xl);
+  box-shadow: var(--shadow-sm);
 
   .header-content {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    gap: 2rem;
+    align-items: center;
+    gap: var(--spacing-xl);
     flex-wrap: wrap;
   }
 
@@ -29,29 +34,35 @@
   .page-title {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    font-size: 2rem;
-    font-weight: 700;
+    gap: var(--spacing-md);
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
     color: var(--text-primary);
-    margin: 0 0 0.5rem 0;
+    margin: 0 0 var(--spacing-sm) 0;
   }
 
   .title-icon {
-    width: 2rem;
-    height: 2rem;
+    width: 1.5rem;
+    height: 1.5rem;
     color: var(--primary);
     stroke-width: 2;
+    background: rgba(var(--primary-rgb), 0.1);
+    border-radius: var(--radius-md);
+    padding: 0.4rem;
+    flex-shrink: 0;
+    box-sizing: content-box;
   }
 
   .page-subtitle {
     color: var(--text-secondary);
-    font-size: 1rem;
+    font-size: var(--font-size-sm);
     margin: 0;
   }
 
   .header-actions {
     display: flex;
-    gap: 1rem;
+    align-items: center;
+    gap: var(--spacing-md);
     flex-wrap: wrap;
   }
 }
@@ -60,14 +71,14 @@
 .btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-lg);
   border: none;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 600;
+  border-radius: var(--radius);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: var(--transition);
   white-space: nowrap;
 
   &:disabled {
@@ -109,11 +120,11 @@
 // Onglets
 .tabs-navigation {
   display: flex;
-  gap: 0.5rem;
-  padding: 0.5rem;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
   background: var(--surface);
-  border-radius: 0.75rem;
-  margin-bottom: 2rem;
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--spacing-xl);
   border: 1px solid var(--border);
   overflow-x: auto;
 }
@@ -123,16 +134,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-lg);
   background: transparent;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: var(--radius);
   color: var(--text-secondary);
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: var(--transition);
   white-space: nowrap;
 
   &:hover {
@@ -151,11 +162,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.125rem 0.5rem;
+  padding: 0.125rem var(--spacing-sm);
   background: var(--surface-variant);
-  border-radius: 1rem;
-  font-size: 0.75rem;
-  font-weight: 600;
+  border-radius: var(--radius-xl);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
 
   .tab-item.active & {
     background: rgba(255, 255, 255, 0.2);
@@ -166,8 +177,8 @@
 // Filtres
 .filters-bar {
   display: flex;
-  gap: 1rem;
-  margin-bottom: 2rem;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
   flex-wrap: wrap;
   align-items: center;
 }
@@ -192,13 +203,13 @@
 
 .search-input {
   width: 100%;
-  padding: 0.75rem 1rem 0.75rem 3rem;
+  padding: var(--spacing-md) var(--spacing-md) var(--spacing-md) var(--spacing-2xl);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 0.5rem;
+  border-radius: var(--radius);
   color: var(--text-primary);
-  font-size: 0.875rem;
-  transition: all 0.2s ease;
+  font-size: var(--font-size-sm);
+  transition: var(--transition);
 
   &::placeholder {
     color: var(--text-tertiary);
@@ -207,29 +218,29 @@
   &:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(107, 70, 193, 0.1);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
   }
 }
 
 .filter-group {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--spacing-sm);
   flex-wrap: wrap;
 }
 
 .filter-chip {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 2rem;
+  border-radius: var(--radius-2xl);
   color: var(--text-secondary);
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: var(--transition);
   white-space: nowrap;
 
   &:hover {
@@ -241,7 +252,7 @@
     background: var(--primary);
     color: var(--text-on-primary);
     border-color: var(--primary);
-    font-weight: 600;
+    font-weight: var(--font-weight-semibold);
   }
 
   &.status-active.active {
@@ -261,13 +272,13 @@
 }
 
 .view-toggle {
-  padding: 0.75rem;
+  padding: var(--spacing-md);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 0.5rem;
+  border-radius: var(--radius);
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: var(--transition);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -291,12 +302,12 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 4rem 2rem;
+  padding: var(--spacing-3xl) var(--spacing-xl);
   color: var(--text-secondary);
 
   p {
-    margin-top: 1rem;
-    font-size: 0.875rem;
+    margin-top: var(--spacing-md);
+    font-size: var(--font-size-sm);
   }
 }
 
@@ -305,7 +316,7 @@
   height: 3rem;
   border: 3px solid var(--surface-variant);
   border-top-color: var(--primary);
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   animation: spin 0.8s linear infinite;
 }
 
@@ -320,14 +331,14 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 4rem 2rem;
+  padding: var(--spacing-3xl) var(--spacing-xl);
   text-align: center;
 
   .empty-icon {
     width: 5rem;
     height: 5rem;
     color: var(--text-tertiary);
-    margin-bottom: 1.5rem;
+    margin-bottom: var(--spacing-lg);
 
     svg {
       width: 100%;
@@ -337,16 +348,16 @@
   }
 
   .empty-title {
-    font-size: 1.5rem;
-    font-weight: 600;
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-semibold);
     color: var(--text-primary);
-    margin: 0 0 0.5rem 0;
+    margin: 0 0 var(--spacing-sm) 0;
   }
 
   .empty-message {
-    font-size: 1rem;
+    font-size: var(--font-size-base);
     color: var(--text-secondary);
-    margin: 0 0 1.5rem 0;
+    margin: 0 0 var(--spacing-lg) 0;
     max-width: 28rem;
   }
 }
@@ -355,7 +366,7 @@
 .campaigns-container {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 1.5rem;
+  gap: var(--spacing-lg);
 
   &.list-view {
     grid-template-columns: 1fr;
@@ -374,13 +385,13 @@
 .campaign-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 1rem;
-  padding: 1.5rem;
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-lg);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: var(--transition-slow);
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--spacing-md);
 
   &:hover {
     transform: translateY(-4px);
@@ -393,7 +404,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--spacing-md);
   flex-wrap: wrap;
 }
 
@@ -401,15 +412,15 @@
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  padding: 0.375rem 0.75rem;
-  border-radius: 1rem;
-  font-size: 0.75rem;
-  font-weight: 600;
+  padding: 0.375rem var(--spacing-md);
+  border-radius: var(--radius-xl);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
   text-transform: uppercase;
   letter-spacing: 0.025em;
 
   &.status-active {
-    background: rgba(16, 185, 129, 0.1);
+    background: rgba(var(--success-rgb), 0.1);
     color: var(--success);
 
     .status-dot {
@@ -418,7 +429,7 @@
   }
 
   &.status-pending {
-    background: rgba(245, 158, 11, 0.1);
+    background: rgba(var(--warning-rgb), 0.1);
     color: var(--warning);
 
     .status-dot {
@@ -427,7 +438,7 @@
   }
 
   &.status-closed {
-    background: rgba(148, 163, 184, 0.1);
+    background: rgba(var(--text-tertiary-rgb, 148, 163, 184), 0.1);
     color: var(--text-tertiary);
 
     .status-dot {
@@ -439,7 +450,7 @@
 .status-dot {
   width: 0.5rem;
   height: 0.5rem;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   animation: pulse 2s ease-in-out infinite;
 }
 
@@ -456,12 +467,12 @@
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  padding: 0.375rem 0.75rem;
-  background: rgba(107, 70, 193, 0.1);
+  padding: 0.375rem var(--spacing-md);
+  background: rgba(var(--primary-rgb), 0.1);
   color: var(--primary);
-  border-radius: 1rem;
-  font-size: 0.75rem;
-  font-weight: 600;
+  border-radius: var(--radius-xl);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
 
   svg {
     width: 1rem;
@@ -474,12 +485,12 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--spacing-md);
 }
 
 .campaign-title {
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
   color: var(--text-primary);
   margin: 0;
   line-height: 1.4;
@@ -487,7 +498,7 @@
 
 .campaign-description {
   color: var(--text-secondary);
-  font-size: 0.875rem;
+  font-size: var(--font-size-sm);
   line-height: 1.6;
   margin: 0;
 }
@@ -495,19 +506,19 @@
 .campaign-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-top: 0.5rem;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-sm);
 }
 
 .meta-item {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
   background: var(--surface-variant);
-  border-radius: 0.5rem;
+  border-radius: var(--radius);
   color: var(--text-secondary);
-  font-size: 0.875rem;
+  font-size: var(--font-size-sm);
 
   svg {
     width: 1rem;
@@ -517,7 +528,7 @@
   }
 
   span {
-    font-weight: 500;
+    font-weight: var(--font-weight-medium);
   }
 
   &.creator {
@@ -538,8 +549,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 1rem;
-  padding-top: 1rem;
+  gap: var(--spacing-md);
+  padding-top: var(--spacing-md);
   border-top: 1px solid var(--border);
   flex-wrap: wrap;
 }
@@ -547,9 +558,9 @@
 .date-info {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--spacing-sm);
   color: var(--text-secondary);
-  font-size: 0.875rem;
+  font-size: var(--font-size-sm);
 
   svg {
     width: 1rem;
@@ -561,16 +572,16 @@
 .btn-details {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
   background: transparent;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: var(--radius);
   color: var(--primary);
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: var(--transition);
 
   svg {
     width: 1rem;
@@ -580,16 +591,16 @@
   }
 
   &:hover {
-    background: rgba(107, 70, 193, 0.1);
+    background: rgba(var(--primary-rgb), 0.1);
   }
 }
 
 // Section déroulante de la carte
 .card-expanded-content {
-  margin-top: 1rem;
-  padding: 1.5rem;
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-lg);
   background: var(--surface-secondary);
-  border-radius: 0.75rem;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   animation: slideDown 0.3s ease-out;
 }
@@ -608,16 +619,16 @@
 }
 
 .expanded-section {
-  margin-bottom: 1rem;
+  margin-bottom: var(--spacing-md);
 
   .section-title {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    font-size: 1rem;
-    font-weight: 600;
+    gap: var(--spacing-sm);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
     color: var(--text-primary);
-    margin: 0 0 1rem 0;
+    margin: 0 0 var(--spacing-md) 0;
 
     svg {
       width: 1.25rem;
@@ -630,28 +641,28 @@
 .info-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
+  gap: var(--spacing-md);
 }
 
 .info-item {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: var(--spacing-xs);
 
   &.full-width {
     grid-column: 1 / -1;
   }
 
   .info-label {
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
     color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
 
   .info-value {
-    font-size: 0.875rem;
+    font-size: var(--font-size-sm);
     color: var(--text-primary);
     line-height: 1.5;
   }
@@ -659,12 +670,12 @@
 
 .expanded-actions {
   display: flex;
-  gap: 0.75rem;
-  padding-top: 1rem;
+  gap: var(--spacing-md);
+  padding-top: var(--spacing-md);
   border-top: 1px solid var(--border);
   
   .btn-sm {
-    padding: 0.5rem 1rem;
-    font-size: 0.875rem;
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--font-size-sm);
   }
 }

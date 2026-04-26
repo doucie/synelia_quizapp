@@ -1,21 +1,21 @@
 .candidates-page {
-  padding: 2rem;
+  padding: var(--spacing-xl);
   max-width: 1400px;
   margin: 0 auto;
 }
 
 .page-header {
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: var(--spacing-2xl);
 
   h1 {
-    font-size: 2.5rem;
+    font-size: var(--font-size-4xl);
     color: var(--text-primary);
-    margin-bottom: 1rem;
+    margin-bottom: var(--spacing-md);
   }
 
   .page-description {
-    font-size: 1.125rem;
+    font-size: var(--font-size-lg);
     color: var(--text-secondary);
     max-width: 700px;
     margin: 0 auto;
@@ -26,8 +26,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
-  gap: 2rem;
+  margin-bottom: var(--spacing-xl);
+  gap: var(--spacing-xl);
   flex-wrap: wrap;
 
   .search-box {
@@ -38,10 +38,10 @@
 
     .search-input {
       flex: 1;
-      padding: 0.75rem 1rem;
-      border: 1px solid var(--border-color);
-      border-radius: 0.5rem 0 0 0.5rem;
-      background: var(--bg-primary);
+      padding: var(--spacing-md) var(--spacing-md);
+      border: 1px solid var(--border);
+      border-radius: var(--radius) 0 0 var(--radius);
+      background: var(--background);
       color: var(--text-primary);
 
       &:focus {
@@ -51,32 +51,32 @@
     }
 
     .search-btn {
-      padding: 0.75rem 1rem;
-      border: 1px solid var(--border-color);
+      padding: var(--spacing-md) var(--spacing-md);
+      border: 1px solid var(--border);
       border-left: none;
-      border-radius: 0 0.5rem 0.5rem 0;
-      background: var(--bg-secondary);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      background: var(--surface-secondary);
       cursor: pointer;
       color: var(--text-primary);
 
       &:hover {
-        background: var(--bg-tertiary);
+        background: var(--surface-variant);
       }
     }
   }
 
   .filter-buttons {
     display: flex;
-    gap: 0.5rem;
+    gap: var(--spacing-sm);
 
     .filter-btn {
-      padding: 0.5rem 1rem;
-      border: 1px solid var(--border-color);
-      border-radius: 0.5rem;
-      background: var(--bg-secondary);
+      padding: var(--spacing-sm) var(--spacing-md);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface-secondary);
       color: var(--text-primary);
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: var(--transition-slow);
 
       &:hover,
       &.active {
@@ -91,35 +91,35 @@
 .candidates-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  margin-bottom: 2rem;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
 
   .stat-card {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: 0.75rem;
-    padding: 1.5rem;
+    background: var(--surface-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
     text-align: center;
 
     .stat-value {
-      font-size: 2rem;
-      font-weight: 600;
+      font-size: var(--font-size-3xl);
+      font-weight: var(--font-weight-semibold);
       color: var(--primary);
-      margin-bottom: 0.5rem;
+      margin-bottom: var(--spacing-sm);
     }
 
     .stat-label {
       color: var(--text-secondary);
-      font-size: 0.875rem;
+      font-size: var(--font-size-sm);
     }
   }
 }
 
 .candidates-list {
-  background: var(--bg-secondary);
-  border-radius: 1rem;
-  padding: 2rem;
-  border: 1px solid var(--border-color);
+  background: var(--surface-secondary);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-xl);
+  border: 1px solid var(--border);
   min-height: 300px;
   display: flex;
   align-items: center;
@@ -128,17 +128,17 @@
 
 .empty-state {
   text-align: center;
-  padding: 3rem 2rem;
+  padding: var(--spacing-2xl) var(--spacing-xl);
 
   .empty-icon {
-    font-size: 4rem;
-    margin-bottom: 1rem;
+    font-size: var(--font-size-4xl);
+    margin-bottom: var(--spacing-md);
   }
 
   h3 {
     color: var(--text-primary);
-    margin-bottom: 0.5rem;
-    font-size: 1.25rem;
+    margin-bottom: var(--spacing-sm);
+    font-size: var(--font-size-xl);
   }
 
   p {

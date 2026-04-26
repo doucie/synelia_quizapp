@@ -1,38 +1,38 @@
 .quiz-detail {
   max-width: 800px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: var(--spacing-xl);
 }
 
 .quiz-header {
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: var(--spacing-2xl);
 
   h1 {
     color: var(--text-primary);
-    margin-bottom: 1rem;
-    font-size: 2.5rem;
+    margin-bottom: var(--spacing-md);
+    font-size: var(--font-size-4xl);
   }
 
   .quiz-description {
     color: var(--text-secondary);
-    font-size: 1.125rem;
+    font-size: var(--font-size-lg);
     line-height: 1.6;
-    margin-bottom: 2rem;
+    margin-bottom: var(--spacing-xl);
   }
 }
 
 .quiz-info {
   display: flex;
   justify-content: center;
-  gap: 2rem;
+  gap: var(--spacing-xl);
   flex-wrap: wrap;
 }
 
 .info-item {
   background: var(--surface);
-  padding: 1rem 1.5rem;
-  border-radius: 8px;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--radius);
   border: 1px solid var(--border);
   
   strong {
@@ -43,7 +43,7 @@
 .quiz-actions {
   display: flex;
   justify-content: center;
-  gap: 1rem;
+  gap: var(--spacing-md);
   flex-wrap: wrap;
 }
 
@@ -51,13 +51,13 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem 2rem;
+  padding: var(--spacing-md) var(--spacing-xl);
   border: none;
-  border-radius: 8px;
-  font-weight: 600;
+  border-radius: var(--radius);
+  font-weight: var(--font-weight-semibold);
   text-decoration: none;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: var(--transition);
   
   &--primary {
     background: linear-gradient(135deg, var(--primary), var(--primary-dark));
@@ -83,7 +83,7 @@
 
 .loading {
   text-align: center;
-  padding: 4rem;
+  padding: var(--spacing-3xl);
   color: var(--text-secondary);
-  font-size: 1.125rem;
+  font-size: var(--font-size-lg);
 }

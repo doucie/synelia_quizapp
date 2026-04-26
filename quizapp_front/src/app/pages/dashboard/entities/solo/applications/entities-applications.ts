@@ -3,9 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
-import { EntityCrudBase } from '../../../../../shared/entity-crud-base';
+import { EntityCrudBase, ColumnDef } from '../../../../../shared/entity-crud-base';
 import { EntityDetailPanelComponent } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
 import { DependencyPopupComponent } from '../../../../../shared/dependency-popup/dependency-popup';
+import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
 import { ApplicationService, Application, PagedApplicationResponse, ApplicationSearchCriteria } from '../../../../../core/services/application.service';
 import { CandidateAnswersService, CandidateAnswer } from '../../../../../core/services/candidate-answers.service';
 import { CandidateAskService, CandidateAsk } from '../../../../../core/services/candidate-ask.service';
@@ -17,7 +18,7 @@ import { FormVersionService, FormVersion } from '../../../../../core/services/fo
 @Component({
   selector: 'app-entities-applications',
   standalone: true,
-  imports: [CommonModule, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent],
+  imports: [CommonModule, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent, ColumnVisibilityManagerComponent],
   templateUrl: './entities-applications.html',
   styleUrl: './entities-applications.scss'
 })
@@ -60,6 +61,17 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
     candidatePhone: '',
     candidateBirthDate: ''
   };
+
+  override allColumns: ColumnDef[] = [
+    { key: 'id', label: 'ID', priority: 1 },
+    { key: 'candidate', label: 'Candidat', priority: 1 },
+    { key: 'email', label: 'Email', priority: 2 },
+    { key: 'phone', label: 'Téléphone', priority: 3 },
+    { key: 'status', label: 'Statut', priority: 2 },
+    { key: 'quizScore', label: 'Score Quiz', priority: 2 },
+    { key: 'createdAt', label: 'Créé le', priority: 2 },
+    { key: 'actions', label: 'Actions', priority: 1 },
+  ];
 
   protected fetchAll(criteria: ApplicationSearchCriteria): Observable<PagedApplicationResponse> {
     return this.applicationService.getAllApplicationsByCriteria(criteria);

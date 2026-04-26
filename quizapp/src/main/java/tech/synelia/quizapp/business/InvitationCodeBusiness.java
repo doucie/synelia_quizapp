@@ -366,8 +366,8 @@ public class InvitationCodeBusiness implements IBasicBusiness<Request<Invitation
             String contenu;
 
             // Load email template from DB
-            EmailTemplate emailTemplate = emailTemplateBusiness.findByKey("invitation_code");
-            if (emailTemplate != null && emailTemplate.getIsActive() != null && emailTemplate.getIsActive()) {
+            EmailTemplate emailTemplate = emailTemplateBusiness.findDefaultByActionTypeOrKey("INVITATION_CODE", "invitation_code");
+            if (emailTemplate != null) {
                 Map<String, String> vars = new HashMap<>();
                 vars.put("email", invitation.getEmail());
                 vars.put("role", invitation.getRole());

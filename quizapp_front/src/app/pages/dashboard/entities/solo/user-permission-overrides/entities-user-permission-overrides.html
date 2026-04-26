@@ -88,6 +88,14 @@
     <div class="section-stats">
       <div class="stats-row">
         <h2 class="section-title">Surcharges Permissions Utilisateur</h2>
+        <app-column-visibility-manager
+          [columns]="allColumns"
+          [visibleColumns]="visibleColumns()"
+          [hiddenCount]="hiddenColumnsCount()"
+          (toggleColumn)="toggleColumnVisibility($event)"
+          (showAll)="showAllColumns()"
+          (resetColumns)="resetColumnVisibility()"
+        />
         <div class="stats-info" *ngIf="!isLoading()">
           <div class="stat-item"><span>Total:</span><span class="stat-number">{{ totalElements() }}</span></div>
         </div>
@@ -101,27 +109,27 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th>ID</th>
-            <th>User ID</th>
-            <th>Fonctionnalité</th>
-            <th>Autorisé</th>
-            <th>Créé le</th>
-            <th>Actions</th>
+            <th class="col-id" [class.col-hidden]="!isColumnVisible('id')">ID</th>
+            <th class="col-id" [class.col-hidden]="!isColumnVisible('userId')">User ID</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('feature')">Fonctionnalité</th>
+            <th class="col-boolean" [class.col-hidden]="!isColumnVisible('allowed')">Autorisé</th>
+            <th class="col-date" [class.col-hidden]="!isColumnVisible('createdAt')">Créé le</th>
+            <th class="col-actions" [class.col-hidden]="!isColumnVisible('actions')">Actions</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let item of items(); trackBy: trackById" (click)="selectItem(item)" style="cursor: pointer;">
-            <td><span class="cell-id">#{{ item.id }}</span></td>
-            <td>{{ item.userId || '-' }}</td>
-            <td>{{ item.functionality || '-' }}</td>
-            <td><span [class.badge-success]="item.isAllowed" [class.badge-danger]="!item.isAllowed">{{ item.isAllowed ? 'Oui' : 'Non' }}</span></td>
-            <td><span class="cell-date">{{ formatDate(item.createdAt) }}</span></td>
-            <td class="actions-cell" (click)="$event.stopPropagation()">
+            <td [class.col-hidden]="!isColumnVisible('id')"><span class="cell-id">#{{ item.id }}</span></td>
+            <td [class.col-hidden]="!isColumnVisible('userId')">{{ item.userId || '-' }}</td>
+            <td [class.col-hidden]="!isColumnVisible('feature')">{{ item.functionality || '-' }}</td>
+            <td [class.col-hidden]="!isColumnVisible('allowed')"><span [class.badge-success]="item.isAllowed" [class.badge-danger]="!item.isAllowed">{{ item.isAllowed ? 'Oui' : 'Non' }}</span></td>
+            <td [class.col-hidden]="!isColumnVisible('createdAt')"><span class="cell-date">{{ formatDate(item.createdAt) }}</span></td>
+            <td class="actions-cell" [class.col-hidden]="!isColumnVisible('actions')" (click)="$event.stopPropagation()">
               <div class="actions-menu">
-                <button class="action-btn primary" (click)="openEditDialog(item)" title="Modifier">
+                <button class="action-btn primary" (click)="openEditDialog(item)" title="Modifier" aria-label="Modifier">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 20H21M16.5 3.5A2.12 2.12 0 0 1 19 6L7 18L3 19L4 15L16.5 3.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </button>
-                <button class="action-btn danger" (click)="confirmDelete(item)" title="Supprimer">
+                <button class="action-btn danger" (click)="confirmDelete(item)" title="Supprimer" aria-label="Supprimer">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 6H5H21M8 6V4C8 3 9 2 10 2H14C15 2 16 3 16 4V6M19 6V20C19 21 18 22 17 22H7C6 22 5 21 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </button>
               </div>
@@ -140,7 +148,7 @@
           <label for="pageSize">Par page:</label>
           <div class="select-wrapper">
             <select id="pageSize" class="page-size-select" [value]="pageSize()" (change)="onPageSizeChange($event)">
-              <option [value]="5">5</option><option [value]="10">10</option><option [value]="20">20</option><option [value]="50">50</option>
+              <option [value]="5">5</option><option [value]="10">10</option><option [value]="20">20</option><option [value]="50">50</option><option [value]="100">100</option>
             </select>
           </div>
         </div>

@@ -1,34 +1,38 @@
 @use '../shared/entities-solo.scss' as *;
 
 .entities-application-progress-container {
-  max-width: 100%;
-  overflow-x: hidden;
+  padding: var(--spacing-lg);
+  max-width: 1400px;
+  margin: 0 auto;
+  background: var(--background);
+  min-height: 100vh;
+  min-width: 0;
 }
 
 .status-badge {
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  font-weight: 500;
+  padding: 2px var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
 
   &.status-pending {
-    background-color: var(--color-warning-light, #fff3cd);
-    color: var(--color-warning-dark, #856404);
+    background-color: var(--color-warning-light);
+    color: var(--color-warning-dark);
   }
   &.status-in-progress {
-    background-color: var(--color-info-light, #d1ecf1);
-    color: var(--color-info-dark, #0c5460);
+    background-color: var(--color-info-light);
+    color: var(--color-info-dark);
   }
   &.status-passed {
-    background-color: var(--color-success-light, #d4edda);
-    color: var(--color-success-dark, #155724);
+    background-color: var(--color-success-light);
+    color: var(--color-success-dark);
   }
   &.status-failed {
-    background-color: var(--color-danger-light, #f8d7da);
-    color: var(--color-danger-dark, #721c24);
+    background-color: var(--color-danger-light);
+    color: var(--color-danger-dark);
   }
   &.status-skipped {
-    background-color: var(--color-muted-light, #e2e3e5);
-    color: var(--color-muted-dark, #383d41);
+    background-color: var(--color-muted-light);
+    color: var(--color-muted-dark);
   }
 }

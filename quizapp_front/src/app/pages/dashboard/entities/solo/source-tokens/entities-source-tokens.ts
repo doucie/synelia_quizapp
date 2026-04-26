@@ -1,9 +1,11 @@
-import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, HostListener, signal, inject } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
 import { CommonModule, NgIf, NgFor } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { EntityDetailPanelComponent, DetailField } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
 import { DependencyPopupComponent } from '../../../../../shared/dependency-popup/dependency-popup';
+import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
+import { EntityColumnVisibilityState, ColumnDef } from '../../../../../shared/entity-column-visibility';
 import { DashboardStatsService } from '../../../../../core/services/dashboard-stats.service';
 import { DependencyInfo } from '../../../../../shared/models/interfaces';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -15,7 +17,7 @@ import { CampaignService, Campaign } from '../../../../../core/services/campaign
 @Component({
   selector: 'app-entities-source-tokens',
   standalone: true,
-  imports: [CommonModule, NgIf, NgFor, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent],
+  imports: [CommonModule, NgIf, NgFor, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent, ColumnVisibilityManagerComponent],
   templateUrl: './entities-source-tokens.html',
   styleUrl: './entities-source-tokens.scss'
 })
@@ -90,6 +92,31 @@ export class EntitiesSourceTokensComponent implements OnInit, OnDestroy {
   // Options de pagination
   pageSizeOptions = [5, 10, 20, 50, 100];
   private readonly PAGE_SIZE_STORAGE_KEY = 'entities-source-tokens-page-size';
+
+  readonly allColumns: ColumnDef[] = [
+    { key: 'id', label: 'ID', priority: 1 },
+    { key: 'name', label: 'Nom', priority: 1 },
+    { key: 'token', label: 'Token', priority: 3 },
+    { key: 'campaignId', label: 'ID Campagne', priority: 2 },
+    { key: 'expiration', label: 'Expiration', priority: 2 },
+    { key: 'createdAt', label: 'Créé le', priority: 3 },
+    { key: 'actions', label: 'Actions', priority: 1 },
+  ];
+  private readonly columnVisibility = new EntityColumnVisibilityState(this.allColumns, 'column-visibility-source-tokens');
+  private readonly hostElement = inject(ElementRef<HTMLElement>);
+  readonly visibleColumns = this.columnVisibility.visibleColumns;
+  readonly hiddenColumnsCount = this.columnVisibility.hiddenColumnsCount;
+
+  @HostListener('window:resize')
+  onWindowResize(): void { this.columnVisibility.applyAutoHideForHost(); }
+
+  @HostListener('mouseover', ['$event.target'])
+  onDataTableCellHover(target: EventTarget | null): void { this.columnVisibility.ensureCellTitle(target); }
+
+  isColumnVisible(key: string): boolean { return this.columnVisibility.isColumnVisible(key); }
+  toggleColumnVisibility(key: string): void { this.columnVisibility.toggleColumnVisibility(key); }
+  showAllColumns(): void { this.columnVisibility.showAllColumns(); }
+  resetColumnVisibility(): void { this.columnVisibility.resetColumnVisibility(); }
   
   // Etat de la popup de confirmation
   showDeleteConfirmation = false;  // -- FK Dropdowns --
@@ -159,6 +186,7 @@ export class EntitiesSourceTokensComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     console.log('Initialisation EntitiesSourceTokensComponent');
+    this.columnVisibility.observeHost(this.hostElement.nativeElement);
     this.initializePageSizePreference();
     
     this.route.params.pipe(takeUntil(this.destroy$)).subscribe(params => {
@@ -175,6 +203,7 @@ export class EntitiesSourceTokensComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.columnVisibility.disconnect();
     this.destroy$.next();
     this.destroy$.complete();
     if (this.loadingTimeout) {

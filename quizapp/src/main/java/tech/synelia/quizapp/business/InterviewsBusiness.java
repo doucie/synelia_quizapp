@@ -607,8 +607,8 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 		String contenu;
 
 		// Charger le template depuis la base de données
-		EmailTemplate emailTemplate = emailTemplateBusiness.findByKey("interview_convocation");
-		if (emailTemplate != null && emailTemplate.getIsActive() != null && emailTemplate.getIsActive()) {
+		EmailTemplate emailTemplate = emailTemplateBusiness.findDefaultByActionTypeOrKey("INTERVIEW_INVITE", "interview_convocation");
+		if (emailTemplate != null) {
 			Map<String, String> vars = new HashMap<>();
 			vars.put("first_name", application.getCandidateFirstName());
 			vars.put("last_name", application.getCandidateLastName());

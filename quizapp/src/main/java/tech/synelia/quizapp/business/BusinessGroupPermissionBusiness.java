@@ -18,6 +18,8 @@ import tech.synelia.quizapp.utils.dto.transformer.*;
 import tech.synelia.quizapp.dao.entity.BusinessGroupPermission;
 import tech.synelia.quizapp.dao.entity.BusinessGroup;
 import tech.synelia.quizapp.dao.repository.*;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 @Log
 @Component
@@ -29,6 +31,8 @@ public class BusinessGroupPermissionBusiness implements IBasicBusiness<Request<B
     private BusinessGroupRepository businessGroupRepository;
     @Autowired
     private FunctionalError functionalError;
+    @PersistenceContext
+    private EntityManager em;
 
     @Override
     @Transactional
@@ -167,31 +171,28 @@ public class BusinessGroupPermissionBusiness implements IBasicBusiness<Request<B
     public Response<BusinessGroupPermissionDto> getByCriteria(Request<BusinessGroupPermissionDto> request, Locale locale) throws ParseException {
         log.info("----begin get BusinessGroupPermission by criteria-----");
         Response<BusinessGroupPermissionDto> response = new Response<>();
-        List<BusinessGroupPermission> items;
 
-        if (request.getData() != null && request.getData().getBusinessGroupId() != null) {
-            items = businessGroupPermissionRepository.findByBusinessGroupId(request.getData().getBusinessGroupId());
-        } else {
-            items = businessGroupPermissionRepository.findAllActive();
+        try {
+            List<BusinessGroupPermission> items = businessGroupPermissionRepository.getByCriteria(request, em, locale);
+
+            if (items != null && !items.isEmpty()) {
+                List<BusinessGroupPermissionDto> dtos = BusinessGroupPermissionTransformer.INSTANCE.toDtos(items);
+
+                Status status = new Status();
+                status.setCode(StatusCode.SUCCESS);
+                status.setMessage(StatusMessage.SUCCESS);
+                response.setItems(dtos);
+                response.setHasError(false);
+                response.setStatus(status);
+                response.setCount(businessGroupPermissionRepository.count(request, em, locale));
+            } else {
+                response.setStatus(functionalError.DATA_EMPTY("business_group_permission", locale));
+                response.setHasError(false);
+                return response;
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-
-        // Pagination
-        long totalCount = items.size();
-        if (request.getIndex() != null && request.getSize() != null) {
-            int start = request.getIndex() * request.getSize();
-            int end = Math.min(start + request.getSize(), items.size());
-            items = start < items.size() ? items.subList(start, end) : new ArrayList<>();
-        }
-
-        List<BusinessGroupPermissionDto> dtos = BusinessGroupPermissionTransformer.INSTANCE.toDtos(items);
-
-        Status status = new Status();
-        status.setCode(StatusCode.SUCCESS);
-        status.setMessage(StatusMessage.SUCCESS);
-        response.setItems(dtos);
-        response.setCount(totalCount);
-        response.setHasError(false);
-        response.setStatus(status);
         log.info("----end get BusinessGroupPermission by criteria-----");
         return response;
     }

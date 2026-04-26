@@ -64,7 +64,7 @@
           font-size: var(--font-size-sm);
           background: var(--background);
           padding: var(--spacing-xs) var(--spacing-sm);
-          border-radius: 12px;
+          border-radius: var(--radius-lg);
           border: 1px solid var(--border);
         }
       }
@@ -82,7 +82,7 @@
           height: 20px;
           border: 2px solid var(--border);
           border-top: 2px solid var(--primary);
-          border-radius: 50%;
+          border-radius: var(--radius-full);
           animation: spin 1s linear infinite;
         }
       }
@@ -97,9 +97,9 @@
           flex-direction: column;
           background: var(--background);
           border: 1px solid var(--border);
-          border-radius: 12px;
+          border-radius: var(--radius-lg);
           padding: var(--spacing-md);
-          transition: all 0.2s ease;
+          transition: var(--transition);
 
           &:hover {
             border-color: var(--primary);
@@ -169,7 +169,7 @@
 .specialities-container {
   padding: var(--spacing-lg);
   background: var(--surface-variant);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   margin-top: var(--spacing-md);
 }
 
@@ -205,7 +205,7 @@
     font-weight: var(--font-weight-medium);
     background: var(--surface);
     padding: var(--spacing-xs) var(--spacing-sm);
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     border: 1px solid var(--border);
   }
 
@@ -217,11 +217,11 @@
     color: var(--text-on-primary);
     border: none;
     padding: var(--spacing-sm) var(--spacing-md);
-    border-radius: 8px;
+    border-radius: var(--radius);
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-medium);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: var(--transition);
 
     &:hover {
       background: var(--primary-hover);
@@ -250,7 +250,7 @@
     height: 20px;
     border: 2px solid var(--border);
     border-top: 2px solid var(--primary);
-    border-radius: 50%;
+    border-radius: var(--radius-full);
     animation: spin 1s linear infinite;
   }
 }
@@ -269,8 +269,8 @@
   padding: var(--spacing-md);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  transition: all 0.2s ease;
+  border-radius: var(--radius);
+  transition: var(--transition);
 
   &:hover {
     border-color: var(--primary);
@@ -322,17 +322,17 @@
   width: 32px;
   height: 32px;
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   background: var(--surface);
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: var(--transition-fast);
 
   svg {
     width: 16px;
     height: 16px;
     stroke-width: 2;
-    transition: all 0.15s ease;
+    transition: var(--transition-fast);
   }
 
   &:hover {
@@ -344,7 +344,7 @@
   &.btn-edit {
     background: var(--primary);
     border-color: var(--primary);
-    color: white;
+    color: var(--white);
 
     &:hover {
       background: var(--secondary);
@@ -365,10 +365,10 @@
 
   &.btn-restore {
     color: var(--success);
-    border-color: rgba(34, 197, 94, 0.3);
+    border-color: rgba(var(--success-rgb), 0.3);
 
     &:hover {
-      background: rgba(34, 197, 94, 0.1);
+      background: rgba(var(--success-rgb), 0.1);
       color: var(--success);
       border-color: var(--success);
     }

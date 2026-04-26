@@ -85,8 +85,10 @@ export class AppConfigService {
 
   private getCurrentUserId(): number {
     try {
-      const user = localStorage.getItem('currentUser');
+      const user = localStorage.getItem('user');
       return user ? JSON.parse(user).id : 0;
-    } catch { return 0; }
+    } catch {
+      return 0;
+    }
   }
 }

@@ -1,10 +1,20 @@
-import { signal, computed, inject, OnInit, Directive } from '@angular/core';
+import { signal, computed, inject, OnInit, OnDestroy, AfterViewInit, Directive, ElementRef, NgZone, HostListener } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { DetailField } from './entity-detail-panel/entity-detail-panel';
 import { DependencyInfo } from './models/interfaces';
 import { DashboardStatsService } from '../core/services/dashboard-stats.service';
 import { NotificationService } from '../core/services/notification.service';
+
+/**
+ * Définition d'une colonne pour le Column Visibility Manager
+ */
+export interface ColumnDef {
+  key: string;
+  label: string;
+  /** 1 = essentielle (jamais masquée auto), 2 = importante, 3 = secondaire */
+  priority: number;
+}
 
 /**
  * Interface minimale pour les entités gérées par le CRUD
@@ -55,7 +65,7 @@ export abstract class EntityCrudBase<
   T extends BaseEntity,
   C extends BaseSearchCriteria,
   R extends BasePagedResponse<T>
-> implements OnInit {
+> implements OnInit, OnDestroy, AfterViewInit {
 
   // ── Signaux communs ──────────────────────────
   items = signal<T[]>([]);
@@ -96,6 +106,222 @@ export abstract class EntityCrudBase<
   hasPreviousPage = computed(() => this.currentPage() > 0);
   hasNextPage = computed(() => this.currentPage() < this.totalPages() - 1);
   Math = Math;
+
+  // ── Column visibility ────────────────────────
+  /** Toutes les colonnes disponibles — à override dans chaque composant enfant */
+  allColumns: ColumnDef[] = [];
+  /** Colonnes actuellement visibles (par clé) */
+  visibleColumns = signal<Set<string>>(new Set());
+  /** Nombre de colonnes masquées */
+  hiddenColumnsCount = computed(() => {
+    if (this.allColumns.length === 0) return 0;
+    return this.allColumns.length - this.visibleColumns().size;
+  });
+  /** Afficher/masquer le dropdown de gestion des colonnes */
+  showColumnManager = signal(false);
+  /** Colonnes choisies explicitement par l'utilisateur. Null = mode automatique par priorité. */
+  private manualVisibleColumns: Set<string> | null = null;
+
+  /** Clé localStorage pour la visibilité des colonnes */
+  protected get columnVisibilityStorageKey(): string {
+    return `column-visibility-${this.entityName}`;
+  }
+
+  /** Vérifie si une colonne est visible */
+  isColumnVisible(key: string): boolean {
+    const cols = this.visibleColumns();
+    return cols.size === 0 || cols.has(key);
+  }
+
+  /** Toggle la visibilité d'une colonne */
+  toggleColumnVisibility(key: string): void {
+    if (key === 'actions') return;
+
+    const current = new Set(this.manualVisibleColumns ?? this.visibleColumns());
+    if (current.has(key)) {
+      // Ne pas masquer si c'est la dernière colonne visible
+      if (current.size > 1) {
+        current.delete(key);
+      }
+    } else {
+      current.add(key);
+    }
+    current.add('actions');
+    this.manualVisibleColumns = current;
+    this.visibleColumns.set(current);
+    this.saveColumnVisibility(current);
+  }
+
+  /** Afficher toutes les colonnes */
+  showAllColumns(): void {
+    const all = new Set(this.allColumns.map(c => c.key));
+    all.add('actions');
+    this.manualVisibleColumns = all;
+    this.visibleColumns.set(all);
+    this.saveColumnVisibility(all);
+  }
+
+  /** Réinitialiser aux colonnes par défaut (mode automatique par priorité) */
+  resetColumnVisibility(): void {
+    this.manualVisibleColumns = null;
+    localStorage.removeItem(this.columnVisibilityStorageKey);
+    this.applyAutoHide(1400);
+  }
+
+  /** Toggle le panneau de gestion des colonnes */
+  toggleColumnManager(): void {
+    this.showColumnManager.update(v => !v);
+  }
+
+  /** Initialiser la visibilité des colonnes depuis localStorage */
+  protected initColumnVisibility(): void {
+    if (this.allColumns.length === 0) return;
+    const saved = localStorage.getItem(this.columnVisibilityStorageKey);
+    if (saved) {
+      try {
+        const keys: string[] = JSON.parse(saved);
+        const validKeys = keys.filter(k => this.allColumns.some(c => c.key === k));
+        if (validKeys.length > 0) {
+          const savedColumns = new Set(validKeys);
+          savedColumns.add('actions');
+          this.manualVisibleColumns = savedColumns;
+          this.visibleColumns.set(savedColumns);
+          return;
+        }
+      } catch {
+        localStorage.removeItem(this.columnVisibilityStorageKey);
+      }
+    }
+    this.applyAutoHide(1400);
+  }
+
+  /** Persister la visibilité dans localStorage */
+  private saveColumnVisibility(cols: Set<string>): void {
+    localStorage.setItem(this.columnVisibilityStorageKey, JSON.stringify([...cols]));
+  }
+
+  // ── Auto-hide responsive columns ─────────────
+  private resizeObserver: ResizeObserver | null = null;
+  private el = inject(ElementRef);
+  private zone = inject(NgZone);
+  private overflowCorrectionFrame: number | null = null;
+  /** Colonnes masquées automatiquement (par le responsive) */
+  private autoHiddenColumns = new Set<string>();
+  /** Seuils de largeur pour masquer par priorité (px) */
+  private readonly breakpoints = { priority3: 900, priority2: 600 };
+
+  /** Initialise le ResizeObserver sur le conteneur de table */
+  protected initAutoHideColumns(): void {
+    if (this.allColumns.length === 0) return;
+    const container = this.el.nativeElement.querySelector('.data-table-container');
+    if (!container) return;
+
+    this.resizeObserver?.disconnect();
+
+    this.resizeObserver = new ResizeObserver(entries => {
+      this.zone.run(() => {
+        const width = entries[0].contentRect.width;
+        this.applyAutoHide(width);
+      });
+    });
+    this.resizeObserver.observe(container);
+    this.applyAutoHide(container.clientWidth);
+  }
+
+  /** Masque/affiche les colonnes en fonction de la largeur */
+  private applyAutoHide(width: number): void {
+    if (this.manualVisibleColumns) {
+      this.visibleColumns.set(new Set(this.manualVisibleColumns));
+      return;
+    }
+
+    const visible = new Set(this.allColumns.map(col => col.key));
+    visible.add('actions');
+    const removable = [...this.allColumns]
+      .filter(col => col.priority > 1 && col.key !== 'actions')
+      .sort((left, right) => right.priority - left.priority || this.estimateColumnWidth(right) - this.estimateColumnWidth(left));
+    const availableWidth = Math.max(360, Math.min(width, 1400));
+    let estimatedWidth = this.estimateVisibleWidth(visible);
+
+    for (const col of removable) {
+      if (estimatedWidth <= availableWidth) break;
+      visible.delete(col.key);
+      estimatedWidth -= this.estimateColumnWidth(col);
+    }
+
+    this.autoHiddenColumns = new Set(this.allColumns.map(col => col.key).filter(key => !visible.has(key)));
+    this.visibleColumns.set(visible);
+    this.scheduleOverflowCorrection();
+  }
+
+  private estimateVisibleWidth(visible: Set<string>): number {
+    return this.allColumns
+      .filter(col => visible.has(col.key))
+      .reduce((total, col) => total + this.estimateColumnWidth(col), 0);
+  }
+
+  private estimateColumnWidth(col: ColumnDef): number {
+    const key = col.key.toLowerCase();
+    if (key === 'actions') return 172;
+    if (key === 'id' || key.endsWith('id')) return 84;
+    if (key.includes('date') || key.includes('created') || key.includes('updated') || key.includes('expiration')) return 180;
+    if (key.includes('status') || key.includes('role') || key.includes('type') || key.includes('score') || key.includes('active') || key.includes('correct')) return 140;
+    if (key.includes('description') || key.includes('text') || key.includes('token')) return 340;
+    if (key.includes('email')) return 240;
+    if (col.priority === 1) return 210;
+    if (col.priority === 2) return 180;
+    return 160;
+  }
+
+  private scheduleOverflowCorrection(attempt = 0): void {
+    if (this.manualVisibleColumns || attempt > this.allColumns.length) return;
+
+    const container = this.el.nativeElement.querySelector('.data-table-container');
+    if (!(container instanceof HTMLElement)) return;
+
+    if (this.overflowCorrectionFrame !== null) {
+      cancelAnimationFrame(this.overflowCorrectionFrame);
+    }
+
+    this.overflowCorrectionFrame = requestAnimationFrame(() => {
+      this.overflowCorrectionFrame = null;
+      if (this.manualVisibleColumns || container.scrollWidth <= container.clientWidth + 2) return;
+
+      const visible = new Set(this.visibleColumns());
+      const nextColumn = [...this.allColumns]
+        .filter(col => visible.has(col.key) && col.priority > 1 && col.key !== 'actions')
+        .sort((left, right) => right.priority - left.priority || this.estimateColumnWidth(right) - this.estimateColumnWidth(left))[0];
+
+      if (!nextColumn) return;
+      visible.delete(nextColumn.key);
+      visible.add('actions');
+      this.autoHiddenColumns = new Set(this.allColumns.map(col => col.key).filter(key => !visible.has(key)));
+      this.visibleColumns.set(visible);
+      this.scheduleOverflowCorrection(attempt + 1);
+    });
+  }
+
+  @HostListener('mouseover', ['$event.target'])
+  protected onDataTableCellHover(target: EventTarget | null): void {
+    const element = target instanceof HTMLElement ? target : null;
+    const cell = element?.closest('.data-table td');
+    if (!(cell instanceof HTMLTableCellElement) || cell.classList.contains('actions-cell')) return;
+    if (cell.getAttribute('title')) return;
+
+    const text = (cell.textContent ?? '').replace(/\s+/g, ' ').trim();
+    if (text && text !== '-') {
+      cell.setAttribute('title', text);
+    }
+  }
+
+  /** Nettoyage du ResizeObserver */
+  ngOnDestroy(): void {
+    this.resizeObserver?.disconnect();
+    if (this.overflowCorrectionFrame !== null) {
+      cancelAnimationFrame(this.overflowCorrectionFrame);
+      this.overflowCorrectionFrame = null;
+    }
+  }
 
   // ── Config abstraite ─────────────────────────
   /** Clé localStorage pour persister la taille de page */
@@ -140,7 +366,13 @@ export abstract class EntityCrudBase<
         this.pageSize.set(size);
       }
     }
+    this.initColumnVisibility();
     this.loadItems();
+  }
+
+  ngAfterViewInit(): void {
+    // Retry init after data loads since the table container may not exist yet
+    setTimeout(() => this.initAutoHideColumns(), 500);
   }
 
   // ── Chargement des données ───────────────────
@@ -164,6 +396,7 @@ export abstract class EntityCrudBase<
         this.totalElements.set(response.totalElements);
         this.totalPages.set(response.totalPages);
         this.isLoading.set(false);
+        requestAnimationFrame(() => this.initAutoHideColumns());
       },
       error: (error) => {
         console.error(`Erreur lors du chargement des ${this.entityName}:`, error);

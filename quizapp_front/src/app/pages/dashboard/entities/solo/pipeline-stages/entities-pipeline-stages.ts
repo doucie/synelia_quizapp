@@ -3,9 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
-import { EntityCrudBase } from '../../../../../shared/entity-crud-base';
+import { EntityCrudBase, ColumnDef } from '../../../../../shared/entity-crud-base';
 import { EntityDetailPanelComponent } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
 import { DependencyPopupComponent } from '../../../../../shared/dependency-popup/dependency-popup';
+import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
 import { PipelineStageService, PipelineStageCriteria, PagedPipelineStageResponse } from '../../../../../core/services/pipeline-stage.service';
 import { PipelineTemplateService } from '../../../../../core/services/pipeline-template.service';
 import { PipelineStage, PipelineTemplate, StageType } from '../../../../../core/models/pipeline.interfaces';
@@ -13,7 +14,7 @@ import { PipelineStage, PipelineTemplate, StageType } from '../../../../../core/
 @Component({
   selector: 'app-entities-pipeline-stages',
   standalone: true,
-  imports: [CommonModule, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent],
+  imports: [CommonModule, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent, ColumnVisibilityManagerComponent],
   templateUrl: './entities-pipeline-stages.html',
   styleUrls: ['./entities-pipeline-stages.scss']
 })
@@ -28,6 +29,19 @@ export class EntitiesPipelineStagesComponent extends EntityCrudBase<PipelineStag
   advancedCriteria: PipelineStageCriteria = {};
   editFormData: PipelineStage = {};
   createFormData: Partial<PipelineStage> = {};
+
+  override allColumns: ColumnDef[] = [
+    { key: 'id', label: 'ID', priority: 1 },
+    { key: 'label', label: 'Libellé', priority: 1 },
+    { key: 'type', label: 'Type', priority: 2 },
+    { key: 'order', label: 'Ordre', priority: 2 },
+    { key: 'mandatory', label: 'Obligatoire', priority: 2 },
+    { key: 'eliminatory', label: 'Éliminatoire', priority: 2 },
+    { key: 'template', label: 'Template', priority: 2 },
+    { key: 'config', label: 'Config', priority: 3 },
+    { key: 'createdAt', label: 'Créé le', priority: 2 },
+    { key: 'actions', label: 'Actions', priority: 1 },
+  ];
 
   allTemplates = signal<PipelineTemplate[]>([]);
   stageTypes: StageType[] = ['CANDIDATURE', 'QUIZ', 'PRESELECTION', 'INTERVIEW', 'TECHNICAL_TEST', 'EVALUATION', 'DECISION', 'CUSTOM'];

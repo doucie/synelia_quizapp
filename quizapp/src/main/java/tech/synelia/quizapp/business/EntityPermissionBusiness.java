@@ -5,6 +5,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.http.HttpStatus;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -26,6 +28,8 @@ public class EntityPermissionBusiness {
 	private UserRepository userRepository;
 	@Autowired
 	private FunctionalError functionalError;
+	@PersistenceContext
+	private EntityManager em;
 
 	/**
 	 * Accorder une permission sur une entité à un utilisateur.
@@ -196,51 +200,43 @@ public class EntityPermissionBusiness {
 	 * Retourne toutes les permissions entités (pour page entité CRUD).
 	 * Supporte le filtre isDeleted.
 	 */
-	public Response<EntityPermissionDto> getByCriteria(Request<EntityPermissionDto> request, Locale locale) {
+	public Response<EntityPermissionDto> getByCriteria(Request<EntityPermissionDto> request, Locale locale) throws Exception {
+		log.info("----begin get EntityPermission-----");
 		Response<EntityPermissionDto> response = new Response<>();
 
-		List<EntityPermission> entities = entityPermissionRepository.findAll();
+		List<EntityPermission> items = entityPermissionRepository.getByCriteria(request, em, locale);
 
-		// Filtre par isDeleted
-		Boolean isDeleted = null;
-		if (request.getData() != null) {
-			isDeleted = request.getData().getIsDeleted();
-		}
-		if (isDeleted != null) {
-			final Boolean filterDeleted = isDeleted;
-			entities = entities.stream()
-					.filter(e -> filterDeleted.equals(e.getIsDeleted()))
-					.collect(Collectors.toList());
+		if (items != null && !items.isEmpty()) {
+			List<EntityPermissionDto> dtos = items.stream().map(e -> {
+				EntityPermissionDto d = new EntityPermissionDto();
+				d.setId(e.getId());
+				d.setUserId(e.getUser() != null ? e.getUser().getId() : null);
+				d.setEntityType(e.getEntityType());
+				d.setEntityId(e.getEntityId());
+				d.setPermissionKey(e.getPermissionKey());
+				d.setIsDeleted(e.getIsDeleted());
+				java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
+				if (e.getCreatedAt() != null) d.setCreatedAt(sdf.format(e.getCreatedAt()));
+				d.setCreatedBy(e.getCreatedBy());
+				if (e.getUpdatedAt() != null) d.setUpdatedAt(sdf.format(e.getUpdatedAt()));
+				d.setUpdatedBy(e.getUpdatedBy());
+				return d;
+			}).collect(Collectors.toList());
+
+			Status status = new Status();
+			status.setCode(StatusCode.SUCCESS);
+			status.setMessage(StatusMessage.SUCCESS);
+			response.setItems(dtos);
+			response.setHasError(false);
+			response.setHttpCode(HttpStatus.OK.value());
+			response.setStatus(status);
+			response.setCount(entityPermissionRepository.count(request, em, locale));
 		} else {
-			entities = entities.stream()
-					.filter(e -> !Boolean.TRUE.equals(e.getIsDeleted()))
-					.collect(Collectors.toList());
+			response.setStatus(functionalError.DATA_EMPTY("entity_permission", locale));
+			response.setHasError(false);
+			return response;
 		}
-
-		List<EntityPermissionDto> dtos = entities.stream().map(e -> {
-			EntityPermissionDto d = new EntityPermissionDto();
-			d.setId(e.getId());
-			d.setUserId(e.getUser().getId());
-			d.setEntityType(e.getEntityType());
-			d.setEntityId(e.getEntityId());
-			d.setPermissionKey(e.getPermissionKey());
-			d.setIsDeleted(e.getIsDeleted());
-			java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
-			if (e.getCreatedAt() != null) d.setCreatedAt(sdf.format(e.getCreatedAt()));
-			d.setCreatedBy(e.getCreatedBy());
-			if (e.getUpdatedAt() != null) d.setUpdatedAt(sdf.format(e.getUpdatedAt()));
-			d.setUpdatedBy(e.getUpdatedBy());
-			return d;
-		}).collect(Collectors.toList());
-
-		Status status = new Status();
-		status.setCode(StatusCode.SUCCESS);
-		status.setMessage(StatusMessage.SUCCESS);
-		response.setItems(dtos);
-		response.setCount((long) dtos.size());
-		response.setHasError(false);
-		response.setHttpCode(HttpStatus.OK.value());
-		response.setStatus(status);
+		log.info("----end get EntityPermission-----");
 		return response;
 	}
 

@@ -15,64 +15,88 @@
       <button 
         class="sidebar-toggle" 
         (click)="toggleSidebar(); $event.stopPropagation()"
-        [attr.title]="sidebarCollapsed() ? 'Développer' : 'Réduire'">
+        [attr.title]="sidebarCollapsed() ? 'Développer' : 'Réduire'"
+        [attr.aria-expanded]="!sidebarCollapsed()"
+        [attr.aria-label]="sidebarCollapsed() ? 'Développer la barre latérale' : 'Réduire la barre latérale'"
+        aria-controls="sidebar-nav">
         <span class="toggle-icon">{{ sidebarCollapsed() ? '→' : '←' }}</span>
       </button>
     </div>
 
     <!-- Navigation -->
-    <nav class="sidebar-nav">
-      <div class="nav-section">
-        <div class="nav-section-title" *ngIf="!sidebarCollapsed()">Navigation</div>
-        <ul class="nav-list">
-          @for (item of filteredMenuItems(); track item.id) {
-            <li class="nav-item">
-              <!-- Lien principal -->
-              <a 
-                class="nav-link"
-                [routerLink]="item.route"
-                routerLinkActive="active"
-                [attr.title]="sidebarCollapsed() ? item.label : ''">
-                <span class="nav-icon" [innerHTML]="item.icon | safeHtml"></span>
-                <span class="nav-label" *ngIf="!sidebarCollapsed()">{{ item.label }}</span>
-              </a>
-              
-              <!-- Bouton dropdown pour les entités (en bas du nav-item) -->
-              @if (item.hasDropdown && !sidebarCollapsed()) {
-                <button 
-                  class="dropdown-toggle-bottom"
-                  (click)="toggleEntitiesDropdown(); $event.stopPropagation()"
-                  [class.active]="showEntitiesDropdown()"
-                  title="Accès rapide aux entités">
-                  <svg viewBox="0 0 24 24" fill="currentColor" class="chevron-icon" [class.rotated]="showEntitiesDropdown()">
-                    <path d="M7 10l5 5 5-5z"/>
-                  </svg>
-                  <span class="dropdown-label">Accès rapide</span>
-                </button>
-              }
-              
-              <!-- Dropdown des entités -->
-              @if (item.hasDropdown && showEntitiesDropdown() && !sidebarCollapsed()) {
-                <div class="entities-dropdown">
-                  @for (entity of entitiesList; track entity.id) {
-                    <button 
-                      class="entity-item"
-                      (click)="navigateToEntity(entity.id)"
-                      [title]="entity.label">
-                      <span class="entity-icon" [innerHTML]="entity.icon | safeHtml"></span>
-                      <span class="entity-label">{{ entity.label }}</span>
-                    </button>
-                  }
-                </div>
-              }
-            </li>
-          }
-        </ul>
-      </div>
+    <nav class="sidebar-nav" id="sidebar-nav">
+      @for (group of groupedMenuItems(); track group.category) {
+        <div class="nav-section">
+          <div class="nav-section-title" *ngIf="!sidebarCollapsed()">{{ group.label }}</div>
+          <ul class="nav-list">
+            @for (item of group.items; track item.id) {
+              <li class="nav-item">
+                <!-- Lien principal -->
+                <a 
+                  class="nav-link"
+                  [class.nav-link--utility]="item.isUtility"
+                  [routerLink]="item.route"
+                  routerLinkActive="active"
+                  [attr.title]="sidebarCollapsed() ? item.label : ''">
+                  <span class="nav-icon" [innerHTML]="item.icon | safeHtml"></span>
+                  <span class="nav-label" *ngIf="!sidebarCollapsed()">{{ item.label }}</span>
+                </a>
+                
+                <!-- Bouton dropdown pour les entités (en bas du nav-item) -->
+                @if (item.hasDropdown && !sidebarCollapsed()) {
+                  <button 
+                    class="dropdown-toggle-bottom"
+                    (click)="toggleEntitiesDropdown(); $event.stopPropagation()"
+                    [class.active]="showEntitiesDropdown()"
+                    title="Accès rapide aux entités">
+                    <svg viewBox="0 0 24 24" fill="currentColor" class="chevron-icon" [class.rotated]="showEntitiesDropdown()">
+                      <path d="M7 10l5 5 5-5z"/>
+                    </svg>
+                    <span class="dropdown-label">Accès rapide</span>
+                  </button>
+                }
+                
+                <!-- Dropdown des entités -->
+                @if (item.hasDropdown && showEntitiesDropdown() && !sidebarCollapsed()) {
+                  <div class="entities-dropdown">
+                    @for (entityGroup of groupedEntities(); track entityGroup.group) {
+                      <div class="entity-group">
+                        <div class="entity-group-title">{{ entityGroup.label }}</div>
+                        @for (entity of entityGroup.items; track entity.id) {
+                          <button 
+                            class="entity-item"
+                            [class.active]="activeEntityId() === entity.id"
+                            (click)="navigateToEntity(entity.id)"
+                            [title]="entity.label">
+                            <span class="entity-icon" [innerHTML]="entity.icon | safeHtml"></span>
+                            <span class="entity-label">{{ entity.label }}</span>
+                          </button>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+              </li>
+            }
+          </ul>
+        </div>
+      }
     </nav>
 
     <!-- User info en bas de la sidebar -->
     <div class="sidebar-footer">
+      <!-- Paramètres (séparé de la nav principale) -->
+      @if (settingsMenuItem(); as settings) {
+        <a 
+          class="nav-link nav-link--footer"
+          [routerLink]="settings.route"
+          routerLinkActive="active"
+          [attr.title]="sidebarCollapsed() ? settings.label : ''">
+          <span class="nav-icon" [innerHTML]="settings.icon | safeHtml"></span>
+          <span class="nav-label" *ngIf="!sidebarCollapsed()">{{ settings.label }}</span>
+        </a>
+      }
+
       <!-- Admin Mode Toggle (sidebar) -->
       @if (isAdmin() && !sidebarCollapsed()) {
         <div class="sidebar-admin-toggle">

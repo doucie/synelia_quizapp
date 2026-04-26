@@ -3,16 +3,17 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
-import { EntityCrudBase } from '../../../../../shared/entity-crud-base';
+import { EntityCrudBase, ColumnDef } from '../../../../../shared/entity-crud-base';
 import { EntityDetailPanelComponent } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
 import { DependencyPopupComponent } from '../../../../../shared/dependency-popup/dependency-popup';
+import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
 import { ApplicationProgressService, ApplicationProgressCriteria, PagedApplicationProgressResponse } from '../../../../../core/services/application-progress.service';
 import { ApplicationProgress, ProgressStatus } from '../../../../../core/models/pipeline.interfaces';
 
 @Component({
   selector: 'app-entities-application-progress',
   standalone: true,
-  imports: [CommonModule, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent],
+  imports: [CommonModule, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent, ColumnVisibilityManagerComponent],
   templateUrl: './entities-application-progress.html',
   styleUrls: ['./entities-application-progress.scss']
 })
@@ -26,6 +27,20 @@ export class EntitiesApplicationProgressComponent extends EntityCrudBase<Applica
   advancedCriteria: ApplicationProgressCriteria = {};
   editFormData: ApplicationProgress = {};
   createFormData: Partial<ApplicationProgress> = {};
+
+  override allColumns: ColumnDef[] = [
+    { key: 'id', label: 'ID', priority: 1 },
+    { key: 'application', label: 'Candidature', priority: 1 },
+    { key: 'stage', label: 'Étape', priority: 2 },
+    { key: 'type', label: 'Type', priority: 2 },
+    { key: 'status', label: 'Statut', priority: 2 },
+    { key: 'score', label: 'Score', priority: 2 },
+    { key: 'startedAt', label: 'Démarré le', priority: 2 },
+    { key: 'completedAt', label: 'Terminé le', priority: 3 },
+    { key: 'notes', label: 'Notes', priority: 3 },
+    { key: 'decidedBy', label: 'Décidé par', priority: 3 },
+    { key: 'actions', label: 'Actions', priority: 1 },
+  ];
 
   progressStatuses: ProgressStatus[] = ['PENDING', 'IN_PROGRESS', 'PASSED', 'FAILED', 'SKIPPED'];
 

@@ -1,0 +1,62 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+ * Global Select Styling
+ * Applies the suggestions-dropdown visual language (from /dashboard/candidates)
+ * to all native <select> elements.
+ * Component-scoped styles override specific properties via Angular encapsulation,
+ * but appearance:none and the SVG chevron apply as a reliable baseline.
+ * ───────────────────────────────────────────────────────────────────────────── */
+
+$chevron-light: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+$chevron-dark:  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+
+/* ─ Base ─────────────────────────────────────────────────────────────────── */
+
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: $chevron-light;
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-color: var(--background);
+  padding-right: 2.25rem;
+
+  /* Design-system tokens */
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: var(--transition);
+  outline: none;
+
+  &:hover {
+    border-color: var(--border-hover);
+  }
+
+  &:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+  }
+
+  &:disabled {
+    background-color: var(--disabled);
+    color: var(--disabled-text);
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+
+  /* Options – supported on Chrome/Edge on Windows */
+  option {
+    background-color: var(--background);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+  }
+}
+
+/* ─ Dark mode – replace chevron with lighter stroke ──────────────────────── */
+
+.dark-mode select {
+  background-image: $chevron-dark;
+}

@@ -19,6 +19,8 @@ import tech.synelia.quizapp.dao.entity.UserBusinessGroup;
 import tech.synelia.quizapp.dao.entity.User;
 import tech.synelia.quizapp.dao.entity.BusinessGroup;
 import tech.synelia.quizapp.dao.repository.*;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 @Log
 @Component
@@ -32,6 +34,8 @@ public class UserBusinessGroupBusiness implements IBasicBusiness<Request<UserBus
     private BusinessGroupRepository businessGroupRepository;
     @Autowired
     private FunctionalError functionalError;
+    @PersistenceContext
+    private EntityManager em;
 
     @Override
     @Transactional
@@ -82,6 +86,7 @@ public class UserBusinessGroupBusiness implements IBasicBusiness<Request<UserBus
             entity.setCreatedAt(new Date());
             entity.setCreatedBy(request.getUser());
             entity.setIsDeleted(false);
+            entity.setIsModerator(dto.getIsModerator() != null ? dto.getIsModerator() : false);
             items.add(entity);
         }
 
@@ -128,6 +133,9 @@ public class UserBusinessGroupBusiness implements IBasicBusiness<Request<UserBus
                 BusinessGroup bg = new BusinessGroup();
                 bg.setId(dto.getBusinessGroupId());
                 existing.setBusinessGroup(bg);
+            }
+            if (dto.getIsModerator() != null) {
+                existing.setIsModerator(dto.getIsModerator());
             }
             existing.setUpdatedAt(new Date());
             existing.setUpdatedBy(request.getUser());
@@ -186,33 +194,28 @@ public class UserBusinessGroupBusiness implements IBasicBusiness<Request<UserBus
     public Response<UserBusinessGroupDto> getByCriteria(Request<UserBusinessGroupDto> request, Locale locale) throws ParseException {
         log.info("----begin get UserBusinessGroup by criteria-----");
         Response<UserBusinessGroupDto> response = new Response<>();
-        List<UserBusinessGroup> items;
 
-        if (request.getData() != null && request.getData().getUserId() != null) {
-            items = userBusinessGroupRepository.findByUserId(request.getData().getUserId());
-        } else if (request.getData() != null && request.getData().getBusinessGroupId() != null) {
-            items = userBusinessGroupRepository.findByBusinessGroupId(request.getData().getBusinessGroupId());
-        } else {
-            items = userBusinessGroupRepository.findAllActive();
+        try {
+            List<UserBusinessGroup> items = userBusinessGroupRepository.getByCriteria(request, em, locale);
+
+            if (items != null && !items.isEmpty()) {
+                List<UserBusinessGroupDto> dtos = UserBusinessGroupTransformer.INSTANCE.toDtos(items);
+
+                Status status = new Status();
+                status.setCode(StatusCode.SUCCESS);
+                status.setMessage(StatusMessage.SUCCESS);
+                response.setItems(dtos);
+                response.setHasError(false);
+                response.setStatus(status);
+                response.setCount(userBusinessGroupRepository.count(request, em, locale));
+            } else {
+                response.setStatus(functionalError.DATA_EMPTY("user_business_group", locale));
+                response.setHasError(false);
+                return response;
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-
-        // Pagination
-        long totalCount = items.size();
-        if (request.getIndex() != null && request.getSize() != null) {
-            int start = request.getIndex() * request.getSize();
-            int end = Math.min(start + request.getSize(), items.size());
-            items = start < items.size() ? items.subList(start, end) : new ArrayList<>();
-        }
-
-        List<UserBusinessGroupDto> dtos = UserBusinessGroupTransformer.INSTANCE.toDtos(items);
-
-        Status status = new Status();
-        status.setCode(StatusCode.SUCCESS);
-        status.setMessage(StatusMessage.SUCCESS);
-        response.setItems(dtos);
-        response.setCount(totalCount);
-        response.setHasError(false);
-        response.setStatus(status);
         log.info("----end get UserBusinessGroup by criteria-----");
         return response;
     }

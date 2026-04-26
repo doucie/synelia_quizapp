@@ -29,4 +29,31 @@ public interface BusinessGroupRepository extends JpaRepository<BusinessGroup, In
 
 	@Query("select e from BusinessGroup e where e.isDeleted = :isDeleted")
 	List<BusinessGroup> findByIsDeleted(@Param("isDeleted") Boolean isDeleted);
+
+	default List<BusinessGroup> getByCriteria(Request<BusinessGroupDto> request, EntityManager em, Locale locale) throws DataAccessException, Exception {
+		String req = "select e from BusinessGroup e where e IS NOT NULL";
+		HashMap<String, Object> param = new HashMap<>();
+		req += getWhereExpression(request, param, locale);
+		req += " order by e.id desc";
+		TypedQuery<BusinessGroup> query = em.createQuery(req, BusinessGroup.class);
+		for (Map.Entry<String, Object> entry : param.entrySet()) {
+			query.setParameter(entry.getKey(), entry.getValue());
+		}
+		if (request.getIndex() != null && request.getSize() != null) {
+			query.setFirstResult(request.getIndex() * request.getSize());
+			query.setMaxResults(request.getSize());
+		}
+		return query.getResultList();
+	}
+
+	default Long count(Request<BusinessGroupDto> request, EntityManager em, Locale locale) throws DataAccessException, Exception {
+		String req = "select count(e.id) from BusinessGroup e where e IS NOT NULL";
+		HashMap<String, Object> param = new HashMap<>();
+		req += getWhereExpression(request, param, locale);
+		jakarta.persistence.Query query = em.createQuery(req);
+		for (Map.Entry<String, Object> entry : param.entrySet()) {
+			query.setParameter(entry.getKey(), entry.getValue());
+		}
+		return (Long) query.getResultList().get(0);
+	}
 }

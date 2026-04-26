@@ -1,0 +1,233 @@
+<!-- Email Editor - Split Screen -->
+<div class="email-editor-page">
+  
+  <!-- Header -->
+  <div class="editor-header">
+    <div class="header-left">
+      <h1>
+        <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+          <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+        </svg>
+        Éditeur de templates email
+      </h1>
+    </div>
+    <div class="header-actions">
+      <button class="btn-secondary" (click)="newTemplate()">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+        Nouveau
+      </button>
+      @if (selectedTemplate() || isNewTemplate()) {
+        <button class="btn-primary" (click)="save()" [disabled]="isSaving()">
+          {{ isSaving() ? 'Sauvegarde...' : 'Sauvegarder' }}
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Chargement...</p>
+    </div>
+  } @else {
+    <div class="editor-layout">
+
+      <!-- LEFT: Template list + editor form -->
+      <div class="editor-panel">
+
+        <!-- Template list (compact) -->
+        <div class="template-list">
+          <div class="list-header">
+            <h3>Templates ({{ templates().length }})</h3>
+          </div>
+          <div class="list-items">
+            @for (tpl of templates(); track tpl.id) {
+              <button 
+                class="template-item"
+                [class.active]="selectedTemplate()?.id === tpl.id"
+                (click)="selectTemplate(tpl)">
+                <div class="tpl-info">
+                  <span class="tpl-key">{{ tpl.templateKey }}</span>
+                  @if (tpl.actionType) {
+                    <span class="tpl-action">{{ getActionTypeLabel(tpl.actionType) }}</span>
+                  }
+                </div>
+                <span class="tpl-status" [class.active]="tpl.isActive" [class.inactive]="!tpl.isActive">
+                  {{ tpl.isActive ? '●' : '○' }}
+                </span>
+              </button>
+            }
+            @if (templates().length === 0) {
+              <p class="empty-msg">Aucun template. Créez-en un !</p>
+            }
+          </div>
+        </div>
+
+        <!-- Editor form -->
+        @if (selectedTemplate() || isNewTemplate()) {
+          <div class="editor-form">
+            <div class="form-header">
+              <h3>{{ isNewTemplate() ? 'Nouveau template' : 'Modifier : ' + form().templateKey }}</h3>
+              <div class="form-actions">
+                @if (selectedTemplate()) {
+                  <button class="btn-icon" title="Dupliquer" (click)="duplicateTemplate()">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                  </button>
+                  <button class="btn-icon btn-danger" title="Supprimer" (click)="deleteTemplate()">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                  </button>
+                }
+              </div>
+            </div>
+
+            <!-- Row: key + action type -->
+            <div class="form-row">
+              <div class="form-group flex-2">
+                <label>Clé du template *</label>
+                <input type="text" [ngModel]="form().templateKey" (ngModelChange)="updateField('templateKey', $event)" placeholder="ex: welcome_email">
+              </div>
+              <div class="form-group flex-1">
+                <label>Type d'action</label>
+                <select [ngModel]="form().actionType" (ngModelChange)="onActionTypeChange($event)">
+                  <option value="">— Aucun —</option>
+                  @for (at of actionTypes; track at.value) {
+                    <option [value]="at.value">{{ at.label }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+
+            @if (selectedActionConfig(); as actionConfig) {
+              <div class="action-summary">
+                <div class="action-summary__row">
+                  <span class="action-summary__label">Type selectionne</span>
+                  <strong>{{ getActionTypeLabel(form().actionType || '') }}</strong>
+                </div>
+                <div class="action-summary__row">
+                  <span class="action-summary__label">Cle suggeree</span>
+                  <code>{{ actionConfig.templateKey }}</code>
+                </div>
+                <p class="action-summary__text">{{ actionConfig.description }}</p>
+              </div>
+            }
+
+            <!-- Subject -->
+            <div class="form-group">
+              <label>Sujet *</label>
+              <input type="text" [ngModel]="form().subjectTemplate" (ngModelChange)="updateField('subjectTemplate', $event)" placeholder="ex: Bienvenue chez {companyName}">
+            </div>
+
+            <!-- Description -->
+            <div class="form-group">
+              <label>Description</label>
+              <input type="text" [ngModel]="form().description" (ngModelChange)="updateField('description', $event)" placeholder="Description interne...">
+            </div>
+
+            <!-- Variables -->
+            <div class="form-group">
+              <div class="field-header">
+                <label>Variables disponibles (separees par virgule)</label>
+                <button type="button" class="field-action" (click)="resetVariablesForCurrentAction()">
+                  Reappliquer le type
+                </button>
+              </div>
+              <input type="text" [ngModel]="form().availableVariables" (ngModelChange)="updateField('availableVariables', $event)" placeholder="candidatName,companyName,...">
+              @if (selectedActionConfig()) {
+                <p class="field-help">
+                  Variables suggerees pour {{ getActionTypeLabel(form().actionType || '') }} :
+                  {{ suggestedVariables().join(', ') }}
+                </p>
+              }
+              @if (templateVariables().length > 0) {
+                <div class="var-tags">
+                  @for (v of templateVariables(); track v) {
+                    <span class="var-tag">{{ '{{' + v + '}}' }}</span>
+                  }
+                </div>
+              }
+            </div>
+
+            <!-- Preset Gallery Toggle -->
+            <div class="preset-section">
+              <button class="preset-toggle" (click)="showPresetGallery.set(!showPresetGallery())">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/></svg>
+                {{ showPresetGallery() ? 'Masquer les presets' : 'Choisir un preset' }}
+              </button>
+
+              @if (showPresetGallery()) {
+                @if (selectedActionConfig()) {
+                  <div class="preset-intro">
+                    Les presets recommandes pour ce type d'action sont affiches en premier.
+                  </div>
+                }
+                <div class="preset-gallery">
+                  @for (preset of sortedPresets(); track preset.id) {
+                    <button class="preset-card" (click)="applyPreset(preset)">
+                      @if (isPresetRecommended(preset.category)) {
+                        <span class="preset-badge">Recommande</span>
+                      }
+                      <div class="preset-icon">{{ getPresetIcon(preset.category) }}</div>
+                      <div class="preset-name">{{ preset.name }}</div>
+                      <div class="preset-desc">{{ preset.description }}</div>
+                    </button>
+                  }
+                  @if (presets().length === 0) {
+                    <p class="empty-msg">Aucun preset disponible</p>
+                  }
+                </div>
+              }
+            </div>
+
+            <!-- Body editor -->
+            <div class="form-group body-editor">
+              <label>Contenu HTML *</label>
+              <app-rich-text-editor 
+                [value]="form().bodyTemplate || ''" 
+                [variables]="templateVariables()"
+                (valueChange)="updateBody($event)">
+              </app-rich-text-editor>
+            </div>
+
+            <!-- Active toggle -->
+            <div class="form-row align-center">
+              <label class="toggle-label">
+                <input type="checkbox" [ngModel]="form().isActive" (ngModelChange)="updateField('isActive', $event)">
+                <span>Template actif</span>
+              </label>
+            </div>
+          </div>
+        } @else {
+          <div class="empty-editor">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48" opacity="0.3">
+              <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+            </svg>
+            <p>Sélectionnez un template ou créez-en un nouveau</p>
+          </div>
+        }
+      </div>
+
+      <!-- RIGHT: Live Preview -->
+      <div class="preview-panel">
+        <div class="preview-header">
+          <h3>Aperçu</h3>
+          @if (form().subjectTemplate) {
+            <div class="preview-subject">
+              <span class="subject-label">Sujet :</span>
+              {{ form().subjectTemplate }}
+            </div>
+          }
+        </div>
+        <div class="preview-frame">
+          @if (previewHtml()) {
+            <div class="preview-content" [innerHTML]="previewHtml()"></div>
+          } @else {
+            <div class="preview-empty">
+              <p>L'aperçu apparaîtra ici</p>
+            </div>
+          }
+        </div>
+      </div>
+
+    </div>
+  }
+</div>

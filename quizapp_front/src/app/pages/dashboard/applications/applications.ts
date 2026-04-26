@@ -1137,4 +1137,58 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     if (score >= 40) return 'average';
     return 'poor';
   }
+
+  getQuizBadgeClass(status: string | undefined): string {
+    switch (status) {
+      case 'COMPLETED': return 'badge-success';
+      case 'IN_PROGRESS': return 'badge-info';
+      case 'ABANDONED': return 'badge-error';
+      case 'NOT_REQUIRED': return 'badge-neutral';
+      default: return 'badge-info';
+    }
+  }
+
+  getInterviewBadgeClass(status: string | undefined): string {
+    switch (status) {
+      case 'COMPLETED': case 'DONE': return 'badge-success';
+      case 'SCHEDULED': case 'PLANNED': return 'badge-info';
+      case 'DECLINED': case 'CANCELLED': return 'badge-error';
+      default: return 'badge-neutral';
+    }
+  }
+
+  getCurrentStageId(app: ApplicationWithCampaign): number | null {
+    const stages = this.getStagesForApp(app);
+    for (const stage of stages) {
+      const status = this.getDynamicStepStatus(app, stage.id!);
+      if (status === 'active' || status === 'pending') return stage.id!;
+    }
+    return stages.length > 0 ? stages[stages.length - 1].id! : null;
+  }
+
+  getCurrentStageName(app: ApplicationWithCampaign): string {
+    const stages = this.getStagesForApp(app);
+    for (const stage of stages) {
+      const status = this.getDynamicStepStatus(app, stage.id!);
+      if (status === 'active') return stage.stageLabel || 'En cours';
+      if (status === 'pending') return stage.stageLabel || 'En attente';
+    }
+    const last = stages[stages.length - 1];
+    if (last) {
+      const lastStatus = this.getDynamicStepStatus(app, last.id!);
+      if (lastStatus === 'completed') return 'Terminé';
+      if (lastStatus === 'rejected') return 'Refusé';
+    }
+    return 'N/A';
+  }
+
+  getLegacyStageLabel(status: string | undefined): string {
+    switch (status) {
+      case 'ACCEPTED': return 'Accepté';
+      case 'REJECTED': return 'Refusé';
+      case 'COMPLETED': return 'Terminé';
+      case 'IN_PROGRESS': return 'En cours';
+      default: return 'En attente';
+    }
+  }
 }

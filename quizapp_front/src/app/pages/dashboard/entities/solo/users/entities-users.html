@@ -252,6 +252,14 @@
     <div class="section-stats">
       <div class="stats-row">
         <h2 class="section-title">Utilisateurs</h2>
+        <app-column-visibility-manager
+          [columns]="allColumns"
+          [visibleColumns]="visibleColumns()"
+          [hiddenCount]="hiddenColumnsCount()"
+          (toggleColumn)="toggleColumnVisibility($event)"
+          (showAll)="showAllColumns()"
+          (resetColumns)="resetColumnVisibility()"
+        />
         <div class="stats-info" *ngIf="!isLoading()">
           <div class="stat-item">
             <span>Total:</span>
@@ -294,46 +302,46 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th>ID</th>
-            <th>Nom complet</th>
-            <th>Prénom</th>
-            <th>Pseudo</th>
-            <th>Email</th>
-            <th>Téléphone</th>
-            <th>Rôle</th>
-            <th>Statut</th>
-            <th>Créé le</th>
-            <th>Actions</th>
+            <th class="col-id" [class.col-hidden]="!isColumnVisible('id')">ID</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('nom')">Nom complet</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('prenom')">Prénom</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('pseudo')">Pseudo</th>
+            <th class="col-medium" [class.col-hidden]="!isColumnVisible('email')">Email</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('telephone')">Téléphone</th>
+            <th class="col-status" [class.col-hidden]="!isColumnVisible('role')">Rôle</th>
+            <th class="col-status" [class.col-hidden]="!isColumnVisible('status')">Statut</th>
+            <th class="col-date" [class.col-hidden]="!isColumnVisible('createdAt')">Créé le</th>
+            <th class="col-actions" [class.col-hidden]="!isColumnVisible('actions')">Actions</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let user of users(); trackBy: trackByUserId" 
               [class.row-deleted]="user.isDeleted" (click)="selectItem(user)" style="cursor: pointer;">
-            <td>
+            <td class="col-id" [class.col-hidden]="!isColumnVisible('id')">
               <span class="cell-id">#{{ user.id }}</span>
             </td>
-            <td>
+            <td class="col-short" [class.col-hidden]="!isColumnVisible('nom')" [title]="user.nom || ''">
               <span class="cell-name">{{ user.nom || '-' }}</span>
             </td>
-            <td>
+            <td class="col-short" [class.col-hidden]="!isColumnVisible('prenom')" [title]="user.prenom || ''">
               <span class="cell-name">{{ user.prenom || '-' }}</span>
             </td>
-            <td>
+            <td class="col-short" [class.col-hidden]="!isColumnVisible('pseudo')" [title]="user.pseudo || ''">
               <span class="cell-pseudo" *ngIf="user.pseudo">{{ user.pseudo }}</span>
               <span *ngIf="!user.pseudo" style="color: var(--text-secondary);">-</span>
             </td>
-            <td>
+            <td class="col-medium" [class.col-hidden]="!isColumnVisible('email')" [title]="user.email || ''">
               <span>{{ user.email || '-' }}</span>
             </td>
-            <td>
+            <td class="col-short" [class.col-hidden]="!isColumnVisible('telephone')" [title]="user.phone || user.telephone || ''">
               <span>{{ user.phone || user.telephone || '-' }}</span>
             </td>
-            <td>
+            <td class="col-status" [class.col-hidden]="!isColumnVisible('role')">
               <span class="role-badge" [attr.data-role]="user.role">
                 {{ getRoleLabel(user.role || 'recruiter') }}
               </span>
             </td>
-            <td>
+            <td class="col-status" [class.col-hidden]="!isColumnVisible('status')">
               <button 
                 class="status-badge"
                 [class.online]="user.isOnline"
@@ -344,7 +352,7 @@
                 {{ user.isOnline ? 'En ligne' : 'Hors ligne' }}
               </button>
             </td>
-            <td>
+            <td class="col-date" [class.col-hidden]="!isColumnVisible('createdAt')">
               <span class="cell-date" *ngIf="user.dateCreation; else noDate">
                 {{ formatCreationDate(user) }}
               </span>
@@ -352,14 +360,14 @@
                 <span style="color: var(--text-secondary);">-</span>
               </ng-template>
             </td>
-            <td class="actions-cell" (click)="$event.stopPropagation()">
+            <td class="actions-cell col-actions" [class.col-hidden]="!isColumnVisible('actions')" (click)="$event.stopPropagation()">
               <div class="actions-menu">
                 <!-- Boutons normaux pour les utilisateurs non supprimés -->
                 <ng-container *ngIf="!user.isDeleted">
                   <button 
                     class="action-btn primary" 
                     (click)="editUser(user)"
-                    title="Modifier l'utilisateur">
+                    title="Modifier l'utilisateur" aria-label="Modifier l'utilisateur">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M12 20H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                       <path d="M16.5 3.5A2.12 2.12 0 0 1 19 6L7 18L3 19L4 15L16.5 3.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -368,7 +376,7 @@
                   <button 
                     class="action-btn danger" 
                     (click)="deleteUser(user)"
-                    title="Supprimer l'utilisateur">
+                    title="Supprimer l'utilisateur" aria-label="Supprimer l'utilisateur">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                       <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -383,7 +391,7 @@
                   <button 
                     class="action-btn success" 
                     (click)="restoreUser(user); $event.stopPropagation()"
-                    title="Restaurer l'utilisateur"
+                    title="Restaurer l'utilisateur" aria-label="Restaurer l'utilisateur"
                     style="z-index: 10; position: relative;">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M3 12A9 9 0 1 0 12 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>

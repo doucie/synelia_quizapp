@@ -1,29 +1,33 @@
 <div class="users-page">
   <!-- En-tête -->
-  <div class="page-header">
-    <div class="page-title">
-      <h1>
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-          <circle cx="9" cy="7" r="4"/>
-          <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
-          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-        </svg>
-        Équipe
-      </h1>
-      <p>{{ filteredUsers().length }} utilisateur{{ filteredUsers().length > 1 ? 's' : '' }} au total</p>
-    </div>
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-left">
+        <h1 class="page-title">
+          <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          Équipe
+        </h1>
+        <p class="page-subtitle">{{ filteredUsers().length }} utilisateur{{ filteredUsers().length > 1 ? 's' : '' }} au total</p>
+      </div>
     
-    <!-- Bouton créer (visible uniquement en mode admin) -->
-    @if (isAdminModeEnabled()) {
-      <button class="btn-create" (click)="openCreateModal()">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M12 5v14M5 12h14"/>
-        </svg>
-        Créer un utilisateur
-      </button>
-    }
-  </div>
+      <!-- Bouton créer (visible uniquement en mode admin) -->
+      @if (isAdminModeEnabled()) {
+        <div class="header-actions">
+          <button class="btn btn-primary" (click)="openCreateModal()">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+            Créer un utilisateur
+          </button>
+        </div>
+      }
+    </div>
+  </header>
 
   <!-- Barre de recherche et filtres -->
   <div class="search-section">
@@ -94,7 +98,8 @@
                 <button 
                   class="action-btn action-btn--edit" 
                   (click)="openEditModal(user)"
-                  title="Modifier">
+                  title="Modifier"
+                  aria-label="Modifier">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
@@ -103,7 +108,8 @@
                 <button 
                   class="action-btn action-btn--delete" 
                   (click)="openDeleteModal(user)"
-                  title="Supprimer">
+                  title="Supprimer"
+                  aria-label="Supprimer">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
                   </svg>
@@ -157,7 +163,7 @@
 
 <!-- Modal Créer/Modifier utilisateur -->
 @if (showCreateEditModal()) {
-  <div class="modal-overlay" (click)="closeCreateEditModal()">
+  <div class="modal-overlay" role="dialog" aria-modal="true" (click)="closeCreateEditModal()">
     <div class="modal-content" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h2>{{ isEditMode() ? 'Modifier l\'utilisateur' : 'Créer un utilisateur' }}</h2>
@@ -259,7 +265,7 @@
 
 <!-- Modal Supprimer utilisateur -->
 @if (showDeleteModal()) {
-  <div class="modal-overlay" (click)="closeDeleteModal()">
+  <div class="modal-overlay" role="dialog" aria-modal="true" (click)="closeDeleteModal()">
     <div class="modal-content modal-content--danger" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h2>Supprimer l'utilisateur</h2>

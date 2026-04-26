@@ -653,8 +653,8 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		String contenu;
 
 		// Charger le template depuis la base de données
-		EmailTemplate emailTemplate = emailTemplateBusiness.findByKey("application_verification");
-		if (emailTemplate != null && emailTemplate.getIsActive() != null && emailTemplate.getIsActive()) {
+		EmailTemplate emailTemplate = emailTemplateBusiness.findDefaultByActionTypeOrKey("APPLICATION_VERIFICATION", "application_verification");
+		if (emailTemplate != null) {
 			Map<String, String> vars = new HashMap<>();
 			vars.put("first_name", application.getCandidateFirstName());
 			vars.put("last_name", application.getCandidateLastName());

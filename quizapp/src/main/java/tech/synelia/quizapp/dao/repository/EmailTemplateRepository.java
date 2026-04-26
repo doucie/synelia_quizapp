@@ -1,12 +1,9 @@
 package tech.synelia.quizapp.dao.repository;
 
-import java.util.Date;
-import java.util.List;
 import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.Locale;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.TypedQuery;
+import java.util.Map;
 
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,10 +11,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import tech.synelia.quizapp.utils.dto.*;
-import tech.synelia.quizapp.utils.contract.Request;
-import tech.synelia.quizapp.dao.entity.*;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.TypedQuery;
+import tech.synelia.quizapp.dao.entity.EmailTemplate;
 import tech.synelia.quizapp.dao.repository.customize._EmailTemplateRepository;
+import tech.synelia.quizapp.utils.contract.Request;
+import tech.synelia.quizapp.utils.dto.EmailTemplateDto;
 
 @Repository
 public interface EmailTemplateRepository extends JpaRepository<EmailTemplate, Integer>, _EmailTemplateRepository {
@@ -27,6 +26,12 @@ public interface EmailTemplateRepository extends JpaRepository<EmailTemplate, In
 
     @Query("select e from EmailTemplate e where e.templateKey = :templateKey and e.isDeleted = :isDeleted")
     EmailTemplate findByTemplateKey(@Param("templateKey") String templateKey, @Param("isDeleted") Boolean isDeleted);
+
+    @Query("select e from EmailTemplate e where e.actionType = :actionType and e.isDeleted = :isDeleted")
+    List<EmailTemplate> findByActionTypeAndIsDeleted(@Param("actionType") String actionType, @Param("isDeleted") Boolean isDeleted);
+
+    @Query("select e from EmailTemplate e where e.actionType = :actionType and e.isDeleted = :isDeleted and e.isActive = true order by e.updatedAt desc, e.id desc")
+    List<EmailTemplate> findActiveByActionType(@Param("actionType") String actionType, @Param("isDeleted") Boolean isDeleted);
 
     @Query("select e from EmailTemplate e where e.isDeleted = :isDeleted")
     List<EmailTemplate> findByIsDeleted(@Param("isDeleted") Boolean isDeleted);

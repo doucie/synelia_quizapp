@@ -14,18 +14,18 @@
 .user-avatar {
   width: 2.5rem;
   height: 2.5rem;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   background: var(--primary);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  font-weight: 600;
+  color: var(--white);
+  font-weight: var(--font-weight-semibold);
 }
 
 .user-info { min-width: 0; }
 .user-name { font-weight: 500; color: var(--text-primary); }
-.user-role { font-size: var(--font-size-sm); color: var(--text-muted); }
+.user-role { font-size: var(--font-size-sm); color: var(--text-secondary); }
 
 .theme-toggle {
   background: var(--surface);

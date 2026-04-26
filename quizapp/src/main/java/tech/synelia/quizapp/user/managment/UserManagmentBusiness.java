@@ -368,8 +368,8 @@ public class UserManagmentBusiness {
 			String contenu;
 
 			// Charger le template depuis la base de données
-			EmailTemplate emailTemplate = emailTemplateBusiness.findByKey("password_reset");
-			if (emailTemplate != null && emailTemplate.getIsActive() != null && emailTemplate.getIsActive()) {
+			EmailTemplate emailTemplate = emailTemplateBusiness.findDefaultByActionTypeOrKey("PASSWORD_RESET", "password_reset");
+			if (emailTemplate != null) {
 				Map<String, String> vars = new HashMap<>();
 				vars.put("first_name", existingEntity.getFirstName());
 				vars.put("last_name", existingEntity.getLastName());

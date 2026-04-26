@@ -1,12 +1,9 @@
 package tech.synelia.quizapp.dao.repository;
 
-import java.util.Date;
-import java.util.List;
 import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.Locale;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.TypedQuery;
+import java.util.Map;
 
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,10 +11,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import tech.synelia.quizapp.utils.dto.*;
-import tech.synelia.quizapp.utils.contract.Request;
-import tech.synelia.quizapp.dao.entity.*;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.TypedQuery;
+import tech.synelia.quizapp.dao.entity.SmtpConfig;
 import tech.synelia.quizapp.dao.repository.customize._SmtpConfigRepository;
+import tech.synelia.quizapp.utils.contract.Request;
+import tech.synelia.quizapp.utils.dto.SmtpConfigDto;
 
 @Repository
 public interface SmtpConfigRepository extends JpaRepository<SmtpConfig, Integer>, _SmtpConfigRepository {
@@ -27,6 +26,9 @@ public interface SmtpConfigRepository extends JpaRepository<SmtpConfig, Integer>
 
     @Query("select e from SmtpConfig e where e.isActive = :isActive and e.isDeleted = :isDeleted")
     SmtpConfig findActiveConfig(@Param("isActive") Boolean isActive, @Param("isDeleted") Boolean isDeleted);
+
+    @Query("select e from SmtpConfig e where e.isActive = :isActive and e.isDeleted = :isDeleted")
+    List<SmtpConfig> findByIsActiveAndIsDeleted(@Param("isActive") Boolean isActive, @Param("isDeleted") Boolean isDeleted);
 
     @Query("select e from SmtpConfig e where e.isDeleted = :isDeleted")
     List<SmtpConfig> findByIsDeleted(@Param("isDeleted") Boolean isDeleted);

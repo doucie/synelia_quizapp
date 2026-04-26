@@ -44,6 +44,7 @@ public interface CandidateInterviewTransformer {
 		@Mapping(source="entity.updatedAt", dateFormat="dd/MM/yyyy", target="updatedAt"),
 		@Mapping(source="entity.applications.id", target="applicationId"),
 		@Mapping(source="entity.interviews.id", target="interviewId"),
+		@Mapping(source="entity.alternativeDateRequested", dateFormat="dd/MM/yyyy", target="alternativeDateRequested"),
 	})
 	CandidateInterviewDto toDto(CandidateInterview entity) throws ParseException;
 
@@ -82,6 +83,8 @@ public interface CandidateInterviewTransformer {
 		@Mapping(source="dto.updatedBy", target="updatedBy"),
 		@Mapping(source="dto.isDeleted", target="isDeleted"),
 		@Mapping(source="dto.searchString", target="searchString"),
+		@Mapping(source="dto.declineReason", target="declineReason"),
+		@Mapping(source="dto.alternativeDateRequested", dateFormat="dd/MM/yyyy", target="alternativeDateRequested"),
 		@Mapping(source="applications", target="applications"),
 		@Mapping(source="interviews", target="interviews"),
 	})

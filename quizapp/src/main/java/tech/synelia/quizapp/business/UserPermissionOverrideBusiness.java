@@ -5,6 +5,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.http.HttpStatus;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -28,6 +30,8 @@ public class UserPermissionOverrideBusiness {
 	private PermissionService permissionService;
 	@Autowired
 	private FunctionalError functionalError;
+	@PersistenceContext
+	private EntityManager em;
 
 	/**
 	 * Créer ou mettre à jour un override de permission pour un utilisateur.
@@ -150,32 +154,41 @@ public class UserPermissionOverrideBusiness {
 	/**
 	 * Retourne toutes les surcharges de permissions (pour page entité CRUD).
 	 */
-	public Response<UserPermissionOverrideDto> getByCriteria(Request<UserPermissionOverrideDto> request, Locale locale) {
+	public Response<UserPermissionOverrideDto> getByCriteria(Request<UserPermissionOverrideDto> request, Locale locale) throws Exception {
+		log.info("----begin get UserPermissionOverride-----");
 		Response<UserPermissionOverrideDto> response = new Response<>();
 
-		List<UserPermissionOverride> entities = userPermissionOverrideRepository.findAll();
-		List<UserPermissionOverrideDto> dtos = entities.stream().map(e -> {
-			UserPermissionOverrideDto dto = new UserPermissionOverrideDto();
-			dto.setId(e.getId());
-			dto.setUserId(e.getUser().getId());
-			dto.setFunctionality(e.getFunctionality());
-			dto.setIsAllowed(e.getIsAllowed());
-			java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
-			if (e.getCreatedAt() != null) dto.setCreatedAt(sdf.format(e.getCreatedAt()));
-			dto.setCreatedBy(e.getCreatedBy());
-			if (e.getUpdatedAt() != null) dto.setUpdatedAt(sdf.format(e.getUpdatedAt()));
-			dto.setUpdatedBy(e.getUpdatedBy());
-			return dto;
-		}).collect(Collectors.toList());
+		List<UserPermissionOverride> items = userPermissionOverrideRepository.getByCriteria(request, em, locale);
 
-		Status status = new Status();
-		status.setCode(StatusCode.SUCCESS);
-		status.setMessage(StatusMessage.SUCCESS);
-		response.setItems(dtos);
-		response.setCount((long) dtos.size());
-		response.setHasError(false);
-		response.setHttpCode(HttpStatus.OK.value());
-		response.setStatus(status);
+		if (items != null && !items.isEmpty()) {
+			List<UserPermissionOverrideDto> dtos = items.stream().map(e -> {
+				UserPermissionOverrideDto dto = new UserPermissionOverrideDto();
+				dto.setId(e.getId());
+				dto.setUserId(e.getUser() != null ? e.getUser().getId() : null);
+				dto.setFunctionality(e.getFunctionality());
+				dto.setIsAllowed(e.getIsAllowed());
+				java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
+				if (e.getCreatedAt() != null) dto.setCreatedAt(sdf.format(e.getCreatedAt()));
+				dto.setCreatedBy(e.getCreatedBy());
+				if (e.getUpdatedAt() != null) dto.setUpdatedAt(sdf.format(e.getUpdatedAt()));
+				dto.setUpdatedBy(e.getUpdatedBy());
+				return dto;
+			}).collect(Collectors.toList());
+
+			Status status = new Status();
+			status.setCode(StatusCode.SUCCESS);
+			status.setMessage(StatusMessage.SUCCESS);
+			response.setItems(dtos);
+			response.setHasError(false);
+			response.setHttpCode(HttpStatus.OK.value());
+			response.setStatus(status);
+			response.setCount(userPermissionOverrideRepository.count(request, em, locale));
+		} else {
+			response.setStatus(functionalError.DATA_EMPTY("user_permission_override", locale));
+			response.setHasError(false);
+			return response;
+		}
+		log.info("----end get UserPermissionOverride-----");
 		return response;
 	}
 

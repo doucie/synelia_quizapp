@@ -4,9 +4,10 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { EntityCrudBase, BaseSearchCriteria, BasePagedResponse } from '../../../../../shared/entity-crud-base';
+import { EntityCrudBase, BaseSearchCriteria, BasePagedResponse, ColumnDef } from '../../../../../shared/entity-crud-base';
 import { EntityDetailPanelComponent } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
 import { DependencyPopupComponent } from '../../../../../shared/dependency-popup/dependency-popup';
+import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
 import { AppConfigService, AppConfig } from '../../../../../core/services/app-config.service';
 
 interface AppConfigCriteria extends BaseSearchCriteria {
@@ -19,7 +20,7 @@ interface PagedAppConfigResponse extends BasePagedResponse<AppConfig> {}
 @Component({
   selector: 'app-entities-app-config',
   standalone: true,
-  imports: [CommonModule, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent],
+  imports: [CommonModule, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent, ColumnVisibilityManagerComponent],
   templateUrl: './entities-app-config.html',
   styleUrls: ['./entities-app-config.scss']
 })
@@ -33,6 +34,17 @@ export class EntitiesAppConfigComponent extends EntityCrudBase<AppConfig, AppCon
   advancedCriteria: AppConfigCriteria = {};
   editFormData: AppConfig = {} as AppConfig;
   createFormData: Partial<AppConfig> = {};
+
+  override allColumns: ColumnDef[] = [
+    { key: 'id', label: 'ID', priority: 1 },
+    { key: 'configName', label: 'Nom Config', priority: 1 },
+    { key: 'companyName', label: 'Entreprise', priority: 2 },
+    { key: 'primaryColor', label: 'Couleur Primaire', priority: 3 },
+    { key: 'theme', label: 'Thème', priority: 3 },
+    { key: 'active', label: 'Actif', priority: 2 },
+    { key: 'deleted', label: 'Supprimé', priority: 3 },
+    { key: 'actions', label: 'Actions', priority: 1 },
+  ];
 
   protected fetchAll(criteria: AppConfigCriteria): Observable<PagedAppConfigResponse> {
     const { page, size, ...data } = criteria;

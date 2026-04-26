@@ -1,6 +1,10 @@
 @use '../shared/entities-solo.scss' as *;
 
 .entities-pipeline-stages-container {
-  max-width: 100%;
-  overflow-x: hidden;
+  padding: var(--spacing-lg);
+  max-width: 1400px;
+  margin: 0 auto;
+  background: var(--background);
+  min-height: 100vh;
+  min-width: 0;
 }

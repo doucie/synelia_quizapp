@@ -1,9 +1,11 @@
-import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, HostListener, signal, inject } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
 import { CommonModule, NgIf, NgFor } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { EntityDetailPanelComponent, DetailField } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
 import { DependencyPopupComponent } from '../../../../../shared/dependency-popup/dependency-popup';
+import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
+import { EntityColumnVisibilityState, ColumnDef } from '../../../../../shared/entity-column-visibility';
 import { DashboardStatsService } from '../../../../../core/services/dashboard-stats.service';
 import { DependencyInfo } from '../../../../../shared/models/interfaces';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -18,7 +20,7 @@ import { SpecialityService, Speciality } from '../../../../../core/services/spec
 @Component({
   selector: 'app-entities-questions',
   standalone: true,
-  imports: [CommonModule, NgIf, NgFor, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent],
+  imports: [CommonModule, NgIf, NgFor, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent, ColumnVisibilityManagerComponent],
   templateUrl: './entities-questions.html',
   styleUrl: './entities-questions.scss'
 })
@@ -105,6 +107,32 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
   // Options de pagination avec 10 par défaut
   pageSizeOptions = [5, 10, 20, 50, 100];
   private readonly PAGE_SIZE_STORAGE_KEY = 'entities-questions-page-size';
+
+  readonly allColumns: ColumnDef[] = [
+    { key: 'id', label: 'ID', priority: 1 },
+    { key: 'question', label: 'Question', priority: 1 },
+    { key: 'speciality', label: 'Spécialité', priority: 2 },
+    { key: 'chrono', label: 'Chrono', priority: 3 },
+    { key: 'type', label: 'Type', priority: 2 },
+    { key: 'score', label: 'Score', priority: 2 },
+    { key: 'difficulty', label: 'Difficulté', priority: 3 },
+    { key: 'actions', label: 'Actions', priority: 1 },
+  ];
+  private readonly columnVisibility = new EntityColumnVisibilityState(this.allColumns, 'column-visibility-questions');
+  private readonly hostElement = inject(ElementRef<HTMLElement>);
+  readonly visibleColumns = this.columnVisibility.visibleColumns;
+  readonly hiddenColumnsCount = this.columnVisibility.hiddenColumnsCount;
+
+  @HostListener('window:resize')
+  onWindowResize(): void { this.columnVisibility.applyAutoHideForHost(); }
+
+  @HostListener('mouseover', ['$event.target'])
+  onDataTableCellHover(target: EventTarget | null): void { this.columnVisibility.ensureCellTitle(target); }
+
+  isColumnVisible(key: string): boolean { return this.columnVisibility.isColumnVisible(key); }
+  toggleColumnVisibility(key: string): void { this.columnVisibility.toggleColumnVisibility(key); }
+  showAllColumns(): void { this.columnVisibility.showAllColumns(); }
+  resetColumnVisibility(): void { this.columnVisibility.resetColumnVisibility(); }
   
   // État de la popup de confirmation
   showDeleteConfirmation = false;
@@ -213,6 +241,7 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     console.log('🚀 Initialisation EntitiesDepartmentsComponent');
+    this.columnVisibility.observeHost(this.hostElement.nativeElement);
     // Initialiser la taille de page avec la valeur stockée
     this.pageSize.set(this.getStoredPageSize());
     console.log('📦 Taille de page au démarrage:', this.pageSize());
@@ -234,6 +263,7 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.columnVisibility.disconnect();
     this.destroy$.next();
     this.destroy$.complete();
     if (this.loadingTimeout) {

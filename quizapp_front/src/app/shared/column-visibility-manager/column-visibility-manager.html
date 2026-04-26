@@ -1,0 +1,37 @@
+<div class="column-manager">
+  <button class="column-manager-btn" (click)="toggle()" [class.has-hidden]="hiddenCount > 0" title="Gérer les colonnes visibles">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+      <path d="M12 3h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7m0-18H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7m0-18v18"/>
+      <path d="M7 8h2m-2 4h2m-2 4h2"/>
+    </svg>
+    @if (hiddenCount > 0) {
+      <span class="hidden-badge">{{ hiddenCount }}</span>
+    }
+  </button>
+
+  @if (isOpen()) {
+    <div class="column-dropdown">
+      <div class="dropdown-header">
+        <span class="dropdown-title">Colonnes visibles</span>
+        <div class="dropdown-actions">
+          <button class="dropdown-action" (click)="onShowAll()">Tout afficher</button>
+          <button class="dropdown-action" (click)="onReset()">Réinitialiser</button>
+        </div>
+      </div>
+      <div class="dropdown-list">
+        @for (col of columns; track col.key) {
+          <label class="column-option" [class.priority-1]="col.priority === 1" [class.is-locked]="isLocked(col.key)">
+            <input type="checkbox" [checked]="isVisible(col.key)" [disabled]="isLocked(col.key)" (change)="onToggle(col.key)">
+            <span class="option-label">{{ col.label }}</span>
+            @if (isLocked(col.key)) {
+              <span class="priority-badge">fixe</span>
+            }
+            @if (col.priority === 1) {
+              <span class="priority-badge">essentiel</span>
+            }
+          </label>
+        }
+      </div>
+    </div>
+  }
+</div>

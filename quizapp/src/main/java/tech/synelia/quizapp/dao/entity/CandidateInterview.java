@@ -69,6 +69,13 @@ public class CandidateInterview implements Serializable, Cloneable {
     @Column(name="search_string", length=65535)
     private String     searchString ;
 
+    @Column(name="decline_reason", length=500)
+    private String     declineReason ;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name="alternative_date_requested")
+    private Date       alternativeDateRequested ;
+
 	// "applicationId" (column "application_id") is not defined by itself because used as FK in a link 
 	// "interviewId" (column "interview_id") is not defined by itself because used as FK in a link 
 

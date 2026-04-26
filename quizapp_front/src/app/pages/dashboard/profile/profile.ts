@@ -4,6 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { AuthService, User as AuthUser } from '../../../core/services/auth/auth.service';
 import { UserService } from '../../../core/services/user.service';
+import { UserBusinessGroupService } from '../../../core/services/user-business-group.service';
+import { BusinessGroupCrudService, BusinessGroup } from '../../../core/services/business-group-crud.service';
+import { GroupChangeRequestService, GroupChangeRequest } from '../../../core/services/group-change-request.service';
 
 @Component({
   selector: 'app-profile',
@@ -31,10 +34,26 @@ export class ProfileComponent implements OnInit {
   showNewPassword = signal(false);
   showConfirmPassword = signal(false);
 
+  // Business groups
+  userGroups = signal<BusinessGroup[]>([]);
+  groupsLoading = signal(false);
+
+  // Group change request
+  allGroups = signal<BusinessGroup[]>([]);
+  pendingRequests = signal<GroupChangeRequest[]>([]);
+  showGroupRequestModal = signal(false);
+  selectedTargetGroupId = signal<number | null>(null);
+  requestReason = signal('');
+  requestLoading = signal(false);
+  requestMessage = signal<{ type: 'success' | 'error'; text: string } | null>(null);
+
   constructor(
     private authService: AuthService,
     private userService: UserService,
-    private http: HttpClient
+    private http: HttpClient,
+    private userBusinessGroupService: UserBusinessGroupService,
+    private businessGroupService: BusinessGroupCrudService,
+    private groupChangeRequestService: GroupChangeRequestService
   ) {}
 
   ngOnInit() {
@@ -47,8 +66,113 @@ export class ProfileComponent implements OnInit {
         if (!this.editMode()) {
           this.profileForm.set({ firstName: u.firstName || '', lastName: u.lastName || '' });
         }
+        this.loadUserGroups(Number(u.id));
+        this.loadPendingRequests(Number(u.id));
       }
     });
+  }
+
+  private loadUserGroups(userId: number) {
+    this.groupsLoading.set(true);
+    this.userBusinessGroupService.getAllByCriteria({ userId, isDeleted: false, size: 100 }).subscribe({
+      next: (response) => {
+        const groupIds = response.content
+          .map(ubg => ubg.businessGroupId)
+          .filter((id): id is number => id !== undefined);
+
+        if (groupIds.length === 0) {
+          this.userGroups.set([]);
+          this.groupsLoading.set(false);
+          return;
+        }
+
+        this.businessGroupService.getAllByCriteria({ isDeleted: false, size: 100 }).subscribe({
+          next: (groupsResponse) => {
+            const groups = groupsResponse.content.filter(g => g.id !== undefined && groupIds.includes(g.id));
+            this.userGroups.set(groups);
+            this.groupsLoading.set(false);
+          },
+          error: () => {
+            this.userGroups.set([]);
+            this.groupsLoading.set(false);
+          }
+        });
+      },
+      error: () => {
+        this.userGroups.set([]);
+        this.groupsLoading.set(false);
+      }
+    });
+  }
+
+  private loadPendingRequests(userId: number) {
+    this.groupChangeRequestService.getAllByCriteria({ userId, status: 'PENDING', isDeleted: false, size: 100 }).subscribe({
+      next: (response) => this.pendingRequests.set(response.content),
+      error: () => this.pendingRequests.set([])
+    });
+  }
+
+  private loadAllGroups() {
+    this.businessGroupService.getAllByCriteria({ isDeleted: false, size: 100 }).subscribe({
+      next: (response) => this.allGroups.set(response.content),
+      error: () => this.allGroups.set([])
+    });
+  }
+
+  getAvailableGroups(): BusinessGroup[] {
+    const currentGroupIds = this.userGroups().map(g => g.id);
+    const pendingGroupIds = this.pendingRequests().map(r => r.targetGroupId);
+    return this.allGroups().filter(g => g.id !== undefined && !currentGroupIds.includes(g.id) && !pendingGroupIds.includes(g.id));
+  }
+
+  openGroupRequestModal() {
+    this.loadAllGroups();
+    this.selectedTargetGroupId.set(null);
+    this.requestReason.set('');
+    this.requestMessage.set(null);
+    this.showGroupRequestModal.set(true);
+  }
+
+  closeGroupRequestModal() {
+    this.showGroupRequestModal.set(false);
+  }
+
+  submitGroupRequest() {
+    const u = this.user();
+    const targetGroupId = this.selectedTargetGroupId();
+    if (!u || !targetGroupId) {
+      this.requestMessage.set({ type: 'error', text: 'Veuillez sélectionner un groupe.' });
+      return;
+    }
+
+    this.requestLoading.set(true);
+    this.requestMessage.set(null);
+
+    this.groupChangeRequestService.create({
+      userId: Number(u.id),
+      targetGroupId,
+      reason: this.requestReason().trim() || undefined
+    }).subscribe({
+      next: (response) => {
+        this.requestLoading.set(false);
+        if (response?.hasError) {
+          this.requestMessage.set({ type: 'error', text: response?.status?.message || 'Erreur lors de l\'envoi de la demande.' });
+        } else {
+          this.requestMessage.set({ type: 'success', text: 'Demande envoyée avec succès !' });
+          this.loadPendingRequests(Number(u.id));
+          setTimeout(() => this.closeGroupRequestModal(), 1500);
+        }
+      },
+      error: () => {
+        this.requestLoading.set(false);
+        this.requestMessage.set({ type: 'error', text: 'Erreur lors de l\'envoi de la demande.' });
+      }
+    });
+  }
+
+  hasPendingRequestForGroup(groupId: number | undefined): boolean {
+    if (!groupId) return false;
+    return this.pendingRequests().some(r => r.targetGroupId === groupId);
   }
 
   toggleEditMode() {

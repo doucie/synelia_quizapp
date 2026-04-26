@@ -3,9 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
-import { EntityCrudBase } from '../../../../../shared/entity-crud-base';
+import { EntityCrudBase, ColumnDef } from '../../../../../shared/entity-crud-base';
 import { EntityDetailPanelComponent } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
 import { DependencyPopupComponent } from '../../../../../shared/dependency-popup/dependency-popup';
+import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
 import { FormService, Form, PagedFormResponse, FormSearchCriteria } from '../../../../../core/services/form.service';
 import { FormVersionService, FormVersion } from '../../../../../core/services/form-version.service';
 import { CampaignService, Campaign } from '../../../../../core/services/campaign.service';
@@ -13,7 +14,7 @@ import { CampaignService, Campaign } from '../../../../../core/services/campaign
 @Component({
   selector: 'app-entities-forms',
   standalone: true,
-  imports: [CommonModule, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent],
+  imports: [CommonModule, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent, ColumnVisibilityManagerComponent],
   templateUrl: './entities-forms.html',
   styleUrls: ['./entities-forms.scss']
 })
@@ -44,6 +45,16 @@ export class EntitiesFormsComponent extends EntityCrudBase<Form, FormSearchCrite
   advancedCriteria: FormSearchCriteria = {};
   editFormData: Form = {};
   createFormData: Partial<Form> = {};
+
+  override allColumns: ColumnDef[] = [
+    { key: 'id', label: 'ID', priority: 1 },
+    { key: 'name', label: 'Nom', priority: 1 },
+    { key: 'description', label: 'Description', priority: 3 },
+    { key: 'active', label: 'Actif', priority: 2 },
+    { key: 'campaignId', label: 'Campagne ID', priority: 2 },
+    { key: 'createdAt', label: 'Créé le', priority: 2 },
+    { key: 'actions', label: 'Actions', priority: 1 },
+  ];
 
   protected fetchAll(criteria: FormSearchCriteria): Observable<PagedFormResponse> { return this.service.getAllByCriteria(criteria); }
   protected performCreate(item: Partial<Form>): Observable<any> { return this.service.create(item as Form); }

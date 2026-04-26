@@ -7,19 +7,19 @@
 .welcome-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 2rem;
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-xl);
   box-shadow: 0 4px 20px var(--shadow-light);
 }
 
 .welcome-header {
-  margin-bottom: 2rem;
+  margin-bottom: var(--spacing-xl);
   
   h2 {
-    font-size: 2rem;
-    font-weight: 700;
+    font-size: var(--font-size-3xl);
+    font-weight: var(--font-weight-bold);
     color: var(--text-primary);
-    margin: 0 0 0.5rem 0;
+    margin: 0 0 var(--spacing-sm) 0;
     background: var(--gradient-primary);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -29,24 +29,24 @@
   p {
     color: var(--text-secondary);
     margin: 0;
-    font-size: 1.125rem;
+    font-size: var(--font-size-lg);
   }
 }
 
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
+  gap: var(--spacing-lg);
 }
 
 .stat-card {
   background: var(--surface-variant);
   border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 1.5rem;
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-lg);
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: var(--spacing-md);
   transition: var(--transition);
   
   &:hover {
@@ -57,7 +57,7 @@
   &--loading .stat-number {
     background: var(--border);
     color: transparent;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     animation: shimmer 1.5s infinite;
   }
 }
@@ -78,8 +78,8 @@
   flex: 1;
   
   .stat-number {
-    font-size: 2rem;
-    font-weight: 700;
+    font-size: var(--font-size-3xl);
+    font-weight: var(--font-weight-bold);
     color: var(--text-primary);
     margin: 0;
     line-height: 1;
@@ -87,9 +87,9 @@
   
   .stat-label {
     color: var(--text-secondary);
-    margin: 0.25rem 0 0 0;
-    font-size: 0.875rem;
-    font-weight: 500;
+    margin: var(--spacing-xs) 0 0 0;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
   }
 }
 
@@ -97,25 +97,25 @@
 @media (max-width: 768px) {
   .dashboard-welcome {
     .welcome-card {
-      padding: 1.5rem;
+      padding: var(--spacing-lg);
 
       .welcome-header {
-        margin-bottom: 1.5rem;
+        margin-bottom: var(--spacing-lg);
 
         h2 {
-          font-size: 1.75rem;
+          font-size: var(--font-size-3xl);
         }
       }
 
       .stats-grid {
         grid-template-columns: 1fr;
-        gap: 1rem;
+        gap: var(--spacing-md);
 
         .stat-card {
-          padding: 1.25rem;
+          padding: var(--spacing-lg);
 
           .stat-content .stat-number {
-            font-size: 1.75rem;
+            font-size: var(--font-size-3xl);
           }
         }
       }

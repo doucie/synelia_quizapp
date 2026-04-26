@@ -58,6 +58,8 @@ public interface EmailTemplateTransformer {
         @Mapping(source = "dto.bodyTemplate", target = "bodyTemplate"),
         @Mapping(source = "dto.description", target = "description"),
         @Mapping(source = "dto.availableVariables", target = "availableVariables"),
+        @Mapping(source = "dto.actionType", target = "actionType"),
+        @Mapping(source = "dto.presetId", target = "presetId"),
         @Mapping(source = "dto.isActive", target = "isActive"),
         @Mapping(source = "dto.createdAt", dateFormat = "dd/MM/yyyy", target = "createdAt"),
         @Mapping(source = "dto.createdBy", target = "createdBy"),

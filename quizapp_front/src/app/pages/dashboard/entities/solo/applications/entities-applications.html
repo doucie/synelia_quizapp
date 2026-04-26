@@ -170,6 +170,14 @@
     <div class="section-stats">
       <div class="stats-row">
         <h2 class="section-title">Candidatures</h2>
+        <app-column-visibility-manager
+          [columns]="allColumns"
+          [visibleColumns]="visibleColumns()"
+          [hiddenCount]="hiddenColumnsCount()"
+          (toggleColumn)="toggleColumnVisibility($event)"
+          (showAll)="showAllColumns()"
+          (resetColumns)="resetColumnVisibility()"
+        />
         <div class="stats-info" *ngIf="!isLoading()">
           <div class="stat-item">
             <span>Total:</span>
@@ -202,50 +210,50 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th>ID</th>
-            <th>Candidat</th>
-            <th>Email</th>
-            <th>Téléphone</th>
-            <th>Statut</th>
-            <th>Score Quiz</th>
-            <th>Créé le</th>
-            <th>Actions</th>
+            <th class="col-id" [class.col-hidden]="!isColumnVisible('id')">ID</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('candidate')">Candidat</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('email')">Email</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('phone')">Téléphone</th>
+            <th class="col-status" [class.col-hidden]="!isColumnVisible('status')">Statut</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('quizScore')">Score Quiz</th>
+            <th class="col-date" [class.col-hidden]="!isColumnVisible('createdAt')">Créé le</th>
+            <th class="col-actions" [class.col-hidden]="!isColumnVisible('actions')">Actions</th>
           </tr>
         </thead>
         <tbody>
           <ng-container *ngFor="let app of items(); trackBy: trackById">
           <tr [class.row-deleted]="app.isDeleted" (click)="selectItem(app)" style="cursor: pointer;">
-            <td>
+            <td [class.col-hidden]="!isColumnVisible('id')">
               <span class="cell-id">#{{ app.id }}</span>
             </td>
-            <td>
+            <td [class.col-hidden]="!isColumnVisible('candidate')">
               <span class="cell-name" [title]="app.candidateFirstName + ' ' + app.candidateLastName">{{ app.candidateFirstName }} {{ app.candidateLastName }}</span>
             </td>
-            <td>
+            <td [class.col-hidden]="!isColumnVisible('email')">
               <span class="cell-email" [title]="app.candidateEmail">{{ app.candidateEmail }}</span>
             </td>
-            <td>
+            <td [class.col-hidden]="!isColumnVisible('phone')">
               <span class="cell-phone">{{ app.candidatePhone || '-' }}</span>
             </td>
-            <td>
+            <td [class.col-hidden]="!isColumnVisible('status')">
               <span class="status-badge" [ngClass]="getStatusClass(app.applicationStatus)">
                 {{ getStatusLabel(app.applicationStatus) }}
               </span>
             </td>
-            <td>
+            <td [class.col-hidden]="!isColumnVisible('quizScore')">
               <span class="cell-score" *ngIf="app.quizScorePercent !== undefined">{{ app.quizScorePercent }}%</span>
               <span *ngIf="app.quizScorePercent === undefined" style="color: var(--text-secondary);">-</span>
             </td>
-            <td>
+            <td [class.col-hidden]="!isColumnVisible('createdAt')">
               <span class="cell-date">{{ formatDate(app.createdAt) }}</span>
             </td>
-            <td class="actions-cell" (click)="$event.stopPropagation()">
+            <td class="actions-cell" [class.col-hidden]="!isColumnVisible('actions')" (click)="$event.stopPropagation()">
               <div class="actions-menu">
                 <ng-container *ngIf="!app.isDeleted">
                   <button 
                     class="action-btn primary" 
                     (click)="openEditDialog(app)"
-                    title="Modifier la candidature">
+                    title="Modifier la candidature" aria-label="Modifier la candidature">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M12 20H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                       <path d="M16.5 3.5A2.12 2.12 0 0 1 19 6L7 18L3 19L4 15L16.5 3.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -254,13 +262,13 @@
                   <button 
                     class="action-btn danger" 
                     (click)="confirmDelete(app)"
-                    title="Supprimer la candidature">
+                    title="Supprimer la candidature" aria-label="Supprimer la candidature">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                       <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                   </button>
-                  <button class="action-btn secondary" (click)="toggleExpansion(app.id!)" [class.expanded]="isExpanded(app.id!)" title="Voir les détails">
+                  <button class="action-btn secondary" (click)="toggleExpansion(app.id!)" [class.expanded]="isExpanded(app.id!)" title="Voir les détails" aria-label="Voir les détails">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" [attr.transform]="isExpanded(app.id!) ? 'rotate(180 12 12)' : ''"/></svg>
                   </button>
                 </ng-container>
@@ -269,13 +277,13 @@
                   <button 
                     class="action-btn success" 
                     (click)="confirmRestore(app); $event.stopPropagation()"
-                    title="Restaurer la candidature">
+                    title="Restaurer la candidature" aria-label="Restaurer la candidature">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M3 12A9 9 0 1 0 12 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                       <path d="M12 3L8 7L12 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                   </button>
-                  <button class="action-btn secondary" (click)="toggleExpansion(app.id!)" [class.expanded]="isExpanded(app.id!)" title="Voir les détails">
+                  <button class="action-btn secondary" (click)="toggleExpansion(app.id!)" [class.expanded]="isExpanded(app.id!)" title="Voir les détails" aria-label="Voir les détails">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" [attr.transform]="isExpanded(app.id!) ? 'rotate(180 12 12)' : ''"/></svg>
                   </button>
                 </ng-container>

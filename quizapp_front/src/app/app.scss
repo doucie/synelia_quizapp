@@ -23,25 +23,25 @@
 .footer {
   background-color: var(--surface);
   border-top: 1px solid var(--border);
-  padding: 3rem 0 1rem;
+  padding: var(--spacing-2xl) 0 var(--spacing-md);
   margin-top: auto; // Pousse le footer en bas
 
   &__content {
     display: grid;
     grid-template-columns: 2fr 1fr;
-    gap: 3rem;
-    margin-bottom: 2rem;
+    gap: var(--spacing-2xl);
+    margin-bottom: var(--spacing-xl);
   }
 
   &__brand {
     .brand-text {
-      font-size: 1.5rem;
-      font-weight: 700;
+      font-size: var(--font-size-2xl);
+      font-weight: var(--font-weight-bold);
       background: linear-gradient(135deg, var(--primary), var(--secondary));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      margin-bottom: 0.75rem;
+      margin-bottom: var(--spacing-md);
       display: block;
     }
 
@@ -54,13 +54,13 @@
   &__links {
     display: flex;
     flex-wrap: wrap;
-    gap: 2rem;
+    gap: var(--spacing-xl);
     justify-content: flex-end;
 
     a {
       color: var(--text-secondary);
       text-decoration: none;
-      font-weight: 500;
+      font-weight: var(--font-weight-medium);
       transition: color 0.2s ease;
 
       &:hover {
@@ -70,14 +70,14 @@
   }
 
   &__bottom {
-    padding-top: 2rem;
+    padding-top: var(--spacing-xl);
     border-top: 1px solid var(--border);
     text-align: center;
 
     p {
       color: var(--text-disabled);
       margin: 0;
-      font-size: 0.875rem;
+      font-size: var(--font-size-sm);
     }
   }
 }
@@ -94,24 +94,24 @@
   .footer {
     &__content {
       grid-template-columns: 1fr;
-      gap: 2rem;
+      gap: var(--spacing-xl);
       text-align: center;
     }
 
     &__links {
       justify-content: center;
-      gap: 1.5rem;
+      gap: var(--spacing-lg);
     }
   }
 }
 
 @media (max-width: 480px) {
   .footer {
-    padding: 2rem 0 1rem;
+    padding: var(--spacing-xl) 0 var(--spacing-md);
 
     &__links {
       flex-direction: column;
-      gap: 1rem;
+      gap: var(--spacing-md);
 
       a {
         display: block;

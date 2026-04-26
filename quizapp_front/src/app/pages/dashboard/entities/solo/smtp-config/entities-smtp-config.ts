@@ -4,9 +4,10 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { EntityCrudBase, BaseSearchCriteria, BasePagedResponse } from '../../../../../shared/entity-crud-base';
+import { EntityCrudBase, BaseSearchCriteria, BasePagedResponse, ColumnDef } from '../../../../../shared/entity-crud-base';
 import { EntityDetailPanelComponent } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
 import { DependencyPopupComponent } from '../../../../../shared/dependency-popup/dependency-popup';
+import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
 import { SmtpConfigService, SmtpConfig } from '../../../../../core/services/smtp-config.service';
 
 interface SmtpConfigCriteria extends BaseSearchCriteria {
@@ -19,7 +20,7 @@ interface PagedSmtpConfigResponse extends BasePagedResponse<SmtpConfig> {}
 @Component({
   selector: 'app-entities-smtp-config',
   standalone: true,
-  imports: [CommonModule, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent],
+  imports: [CommonModule, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent, ColumnVisibilityManagerComponent],
   templateUrl: './entities-smtp-config.html',
   styleUrls: ['./entities-smtp-config.scss']
 })
@@ -33,6 +34,17 @@ export class EntitiesSmtpConfigComponent extends EntityCrudBase<SmtpConfig, Smtp
   advancedCriteria: SmtpConfigCriteria = {};
   editFormData: SmtpConfig = {} as SmtpConfig;
   createFormData: Partial<SmtpConfig> = {};
+
+  override allColumns: ColumnDef[] = [
+    { key: 'id', label: 'ID', priority: 1 },
+    { key: 'host', label: 'Host', priority: 1 },
+    { key: 'port', label: 'Port', priority: 2 },
+    { key: 'username', label: 'Username', priority: 2 },
+    { key: 'sender', label: 'Expéditeur', priority: 2 },
+    { key: 'active', label: 'Actif', priority: 2 },
+    { key: 'deleted', label: 'Supprimé', priority: 3 },
+    { key: 'actions', label: 'Actions', priority: 1 },
+  ];
 
   protected fetchAll(criteria: SmtpConfigCriteria): Observable<PagedSmtpConfigResponse> {
     const { page, size, ...data } = criteria;

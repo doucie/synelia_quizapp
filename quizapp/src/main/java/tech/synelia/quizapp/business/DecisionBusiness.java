@@ -26,6 +26,8 @@ import tech.synelia.quizapp.dao.entity.Applications;
 import tech.synelia.quizapp.dao.entity.User;
 import tech.synelia.quizapp.dao.entity.*;
 import tech.synelia.quizapp.dao.repository.*;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 /**
  * BUSINESS for table "decisions"
@@ -53,6 +55,8 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
 
     @Autowired
     private FunctionalError functionalError;
+    @PersistenceContext
+    private EntityManager em;
 
     /**
      * create Decision by using DecisionDto as object.
@@ -195,44 +199,29 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
     @Override
     public Response<DecisionDto> getByCriteria(Request<DecisionDto> request, Locale locale) throws ParseException {
         log.info("----begin get Decision by criteria-----");
-        log.info("Request data: " + (request.getData() != null ? request.getData().getApplicationId() : "null"));
+        Response<DecisionDto> response = new Response<>();
 
-        Response<DecisionDto> response = new Response<DecisionDto>();
-        List<Decision> items = new ArrayList<Decision>();
+        try {
+            List<Decision> items = decisionRepository.getByCriteria(request, em, locale);
 
-        // Simple implementation - get all decisions for application if specified
-        if (request.getData() != null && request.getData().getApplicationId() != null) {
-            log.info("Searching decisions for application ID: " + request.getData().getApplicationId());
-            items = decisionRepository.findByApplicationId(request.getData().getApplicationId(), false);
-            log.info("Found " + items.size() + " decisions");
-        } else {
-            log.info("No applicationId specified, getting all active decisions");
-            items = decisionRepository.findAllActive();
-        }
+            if (items != null && !items.isEmpty()) {
+                List<DecisionDto> itemDtos = DecisionTransformer.INSTANCE.toDto(items);
 
-        // Apply pagination if needed
-        if (request.getIndex() != null && request.getSize() != null) {
-            int start = request.getIndex() * request.getSize();
-            int end = Math.min(start + request.getSize(), items.size());
-            if (start < items.size()) {
-                items = items.subList(start, end);
+                Status status = new Status();
+                status.setCode(StatusCode.SUCCESS);
+                status.setMessage(StatusMessage.SUCCESS);
+                response.setItems(itemDtos);
+                response.setHasError(false);
+                response.setStatus(status);
+                response.setCount(decisionRepository.count(request, em, locale));
             } else {
-                items = new ArrayList<>();
+                response.setStatus(functionalError.DATA_EMPTY("decision", locale));
+                response.setHasError(false);
+                return response;
             }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-
-        List<DecisionDto> itemDtos = DecisionTransformer.INSTANCE.toDto(items);
-        
-        // Créer un status pour la réponse
-        Status status = new Status();
-        status.setCode(StatusCode.SUCCESS);
-        status.setMessage(StatusMessage.SUCCESS);
-        
-        response.setItems(itemDtos);
-        response.setCount((long) items.size());
-        response.setHasError(false);
-        response.setStatus(status);
-
         log.info("----end get Decision by criteria-----");
         return response;
     }

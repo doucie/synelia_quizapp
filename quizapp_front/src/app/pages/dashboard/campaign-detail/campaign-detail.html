@@ -513,14 +513,14 @@
                 </div>
 
                 <div class="token-actions">
-                  <button class="btn-icon" (click)="copyTokenToClipboard(token)" title="Copier le lien">
+                  <button class="btn-icon" (click)="copyTokenToClipboard(token)" title="Copier le lien" aria-label="Copier le lien">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                       <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                     </svg>
                     Copier
                   </button>
-                  <button class="btn-icon btn-danger" (click)="deleteToken(token)" title="Supprimer">
+                  <button class="btn-icon btn-danger" (click)="deleteToken(token)" title="Supprimer" aria-label="Supprimer">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <polyline points="3 6 5 6 21 6"></polyline>
                       <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -608,7 +608,7 @@
 
 <!-- Modal de confirmation pour activer le mode administrateur -->
 @if (showAdminModeModal()) {
-  <div class="modal-overlay" (click)="cancelAdminMode()">
+  <div class="modal-overlay" role="dialog" aria-modal="true" (click)="cancelAdminMode()">
     <div class="modal-content admin-mode-modal" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <div class="modal-icon warning">

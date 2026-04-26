@@ -1,28 +1,41 @@
 package tech.synelia.quizapp.business;
 
-import lombok.extern.java.Log;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
-
-import tech.synelia.quizapp.utils.*;
-import tech.synelia.quizapp.utils.dto.*;
-import tech.synelia.quizapp.utils.exception.*;
+import lombok.extern.java.Log;
+import tech.synelia.quizapp.dao.entity.EmailTemplate;
+import tech.synelia.quizapp.dao.repository.EmailTemplateRepository;
+import tech.synelia.quizapp.utils.ExceptionUtils;
+import tech.synelia.quizapp.utils.FunctionalError;
+import tech.synelia.quizapp.utils.Status;
+import tech.synelia.quizapp.utils.StatusCode;
+import tech.synelia.quizapp.utils.StatusMessage;
+import tech.synelia.quizapp.utils.TechnicalError;
+import tech.synelia.quizapp.utils.Utilities;
+import tech.synelia.quizapp.utils.Validate;
 import tech.synelia.quizapp.utils.contract.IBasicBusiness;
 import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
-import tech.synelia.quizapp.utils.dto.transformer.*;
-import tech.synelia.quizapp.dao.entity.EmailTemplate;
-import tech.synelia.quizapp.dao.repository.*;
+import tech.synelia.quizapp.utils.dto.EmailTemplateDto;
+import tech.synelia.quizapp.utils.dto.transformer.EmailTemplateTransformer;
+import tech.synelia.quizapp.utils.exception.EntityNotFoundException;
+import tech.synelia.quizapp.utils.exception.InternalErrorException;
+import tech.synelia.quizapp.utils.exception.InvalidEntityException;
 
 @Log
 @Component
@@ -67,6 +80,7 @@ public class EmailTemplateBusiness implements IBasicBusiness<Request<EmailTempla
             entityToSave.setCreatedBy(request.getUser());
             entityToSave.setIsDeleted(false);
             if (entityToSave.getIsActive() == null) entityToSave.setIsActive(true);
+            ensureSingleActiveTemplatePerActionType(entityToSave, request.getUser());
             entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(dto)));
             items.add(entityToSave);
         }
@@ -115,9 +129,12 @@ public class EmailTemplateBusiness implements IBasicBusiness<Request<EmailTempla
             if (Utilities.shouldUpdate(dto.getBodyTemplate())) entityToSave.setBodyTemplate(dto.getBodyTemplate());
             if (Utilities.shouldUpdate(dto.getDescription())) entityToSave.setDescription(dto.getDescription());
             if (Utilities.shouldUpdate(dto.getAvailableVariables())) entityToSave.setAvailableVariables(dto.getAvailableVariables());
+            if (Utilities.shouldUpdate(dto.getActionType())) entityToSave.setActionType(dto.getActionType());
+            if (dto.getPresetId() != null) entityToSave.setPresetId(dto.getPresetId());
             if (dto.getIsActive() != null) entityToSave.setIsActive(dto.getIsActive());
             if (dto.getIsDeleted() != null) entityToSave.setIsDeleted(dto.getIsDeleted());
 
+            ensureSingleActiveTemplatePerActionType(entityToSave, request.getUser());
             entityToSave.setUpdatedAt(Utilities.getCurrentDate());
             entityToSave.setUpdatedBy(request.getUser());
             entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(entityToSave)));
@@ -214,6 +231,29 @@ public class EmailTemplateBusiness implements IBasicBusiness<Request<EmailTempla
         return emailTemplateRepository.findByTemplateKey(templateKey, false);
     }
 
+    public EmailTemplate findDefaultByActionType(String actionType) {
+        if (StringUtils.isBlank(actionType)) {
+            return null;
+        }
+
+        List<EmailTemplate> templates = emailTemplateRepository.findActiveByActionType(actionType, false);
+        return templates.isEmpty() ? null : templates.get(0);
+    }
+
+    public EmailTemplate findDefaultByActionTypeOrKey(String actionType, String templateKey) {
+        EmailTemplate template = findDefaultByActionType(actionType);
+        if (template != null) {
+            return template;
+        }
+
+        EmailTemplate legacyTemplate = findByKey(templateKey);
+        if (legacyTemplate != null && Boolean.TRUE.equals(legacyTemplate.getIsActive())) {
+            return legacyTemplate;
+        }
+
+        return null;
+    }
+
     /**
      * Render a template by replacing {{variable}} placeholders with actual values.
      */
@@ -224,5 +264,63 @@ public class EmailTemplateBusiness implements IBasicBusiness<Request<EmailTempla
             result = result.replace("{{" + entry.getKey() + "}}", entry.getValue() != null ? entry.getValue() : "");
         }
         return result;
+    }
+
+    public Response<EmailTemplateDto> getByActionType(Request<EmailTemplateDto> request, Locale locale) throws ParseException {
+        log.info("----begin getByActionType EmailTemplate-----");
+        Response<EmailTemplateDto> response = new Response<>();
+
+        EmailTemplateDto dto = request.getData();
+        if (dto == null || !Utilities.shouldUpdate(dto.getActionType())) {
+            throw new InvalidEntityException(functionalError.FIELD_EMPTY("actionType", locale));
+        }
+
+        EmailTemplate entity = findDefaultByActionType(dto.getActionType());
+        if (entity == null) {
+            response.setStatus(functionalError.DATA_EMPTY("email_template actionType -> " + dto.getActionType(), locale));
+            response.setHasError(false);
+            return response;
+        }
+
+        List<EmailTemplateDto> items = new ArrayList<>();
+        items.add(EmailTemplateTransformer.INSTANCE.toDto(entity));
+
+        Status status = new Status();
+        status.setCode(StatusCode.SUCCESS);
+        status.setMessage(StatusMessage.SUCCESS);
+        response.setItems(items);
+        response.setHasError(false);
+        response.setHttpCode(HttpStatus.OK.value());
+        response.setStatus(status);
+        log.info("----end getByActionType EmailTemplate-----");
+        return response;
+    }
+
+    private void ensureSingleActiveTemplatePerActionType(EmailTemplate template, Integer userId) throws JsonProcessingException {
+        if (template == null
+                || !Boolean.TRUE.equals(template.getIsActive())
+                || Boolean.TRUE.equals(template.getIsDeleted())
+                || StringUtils.isBlank(template.getActionType())) {
+            return;
+        }
+
+        List<EmailTemplate> templates = emailTemplateRepository.findActiveByActionType(template.getActionType(), false);
+        List<EmailTemplate> templatesToUpdate = new ArrayList<>();
+
+        for (EmailTemplate existing : templates) {
+            if (template.getId() != null && template.getId().equals(existing.getId())) {
+                continue;
+            }
+
+            existing.setIsActive(false);
+            existing.setUpdatedAt(Utilities.getCurrentDate());
+            existing.setUpdatedBy(userId);
+            existing.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(existing)));
+            templatesToUpdate.add(existing);
+        }
+
+        if (!templatesToUpdate.isEmpty()) {
+            emailTemplateRepository.saveAll(templatesToUpdate);
+        }
     }
 }

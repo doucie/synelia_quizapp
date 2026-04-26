@@ -1,8 +1,25 @@
 <div class="system-role-permissions">
-  <div class="page-header">
-    <h1>Permissions par rôle système</h1>
-    <p class="subtitle">Gérer les permissions de base attribuées à chaque rôle système</p>
-  </div>
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-left">
+        <h1 class="page-title">
+          <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          </svg>
+          Permissions par rôle système
+        </h1>
+        <p class="page-subtitle">Gérer les permissions de base attribuées à chaque rôle système</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-secondary" (click)="refreshPermissions()" [disabled]="isLoading()">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          Actualiser
+        </button>
+      </div>
+    </div>
+  </header>
 
   <!-- Info SUPER_ADMIN -->
   <div class="info-banner super-admin-info">
@@ -35,19 +52,48 @@
     <div class="permissions-grid">
       @for (category of categories; track category.label) {
         <div class="category-section">
-          <h3 class="category-title">{{ category.label }}</h3>
-          <div class="permissions-list">
-            @for (perm of category.permissions; track perm.key) {
-              <label class="permission-item" [class.saving]="saving()">
-                <input
-                  type="checkbox"
-                  [checked]="isChecked(perm.key)"
-                  (change)="togglePermission(perm.key)"
-                  [disabled]="saving()"
-                />
-                <span class="permission-label">{{ perm.label }}</span>
-                <code class="permission-key">{{ perm.key }}</code>
-              </label>
+          <h3 class="category-title">
+            {{ category.label }}
+            <span class="category-count">{{ countActiveInCategory(category) }} / {{ category.permissions.length }}</span>
+          </h3>
+          <div class="permission-groups" [class.permission-groups--stacked]="category.groups.length === 1">
+            @for (group of category.groups; track group.id) {
+              <section class="permission-group">
+                @if (category.groups.length > 1) {
+                  <div class="permission-group__header">
+                    <h4 class="permission-group__title">{{ group.title }}</h4>
+                    <span class="permission-group__count">{{ countActiveInGroup(group) }} / {{ group.permissions.length }}</span>
+                  </div>
+                }
+
+                <div class="permissions-list">
+                  @for (perm of group.permissions; track perm.key) {
+                    <div class="permission-item" [class.saving]="saving()">
+                      <div class="checkbox-container">
+                        <input
+                          type="checkbox"
+                          [id]="'perm-' + perm.key"
+                          class="checkbox-input"
+                          [checked]="isChecked(perm.key)"
+                          (change)="togglePermission(perm.key)"
+                          [disabled]="saving()"
+                        />
+                        <label [for]="'perm-' + perm.key" class="checkbox-label">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                          </svg>
+                          {{ perm.label }}
+                        </label>
+                      </div>
+
+                      <div class="permission-meta">
+                        <span class="permission-action">{{ getPermissionActionLabel(perm.key) }}</span>
+                        <code class="permission-key">{{ perm.key }}</code>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </section>
             }
           </div>
         </div>

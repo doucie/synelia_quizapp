@@ -1,28 +1,37 @@
 package tech.synelia.quizapp.business;
 
-import lombok.extern.java.Log;
-import org.apache.commons.lang3.StringUtils;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
-
-import tech.synelia.quizapp.utils.*;
-import tech.synelia.quizapp.utils.dto.*;
-import tech.synelia.quizapp.utils.exception.*;
+import lombok.extern.java.Log;
+import tech.synelia.quizapp.dao.entity.SmtpConfig;
+import tech.synelia.quizapp.dao.repository.SmtpConfigRepository;
+import tech.synelia.quizapp.utils.FunctionalError;
+import tech.synelia.quizapp.utils.Status;
+import tech.synelia.quizapp.utils.StatusCode;
+import tech.synelia.quizapp.utils.StatusMessage;
+import tech.synelia.quizapp.utils.Utilities;
+import tech.synelia.quizapp.utils.Validate;
 import tech.synelia.quizapp.utils.contract.IBasicBusiness;
 import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
-import tech.synelia.quizapp.utils.dto.transformer.*;
-import tech.synelia.quizapp.dao.entity.SmtpConfig;
-import tech.synelia.quizapp.dao.repository.*;
+import tech.synelia.quizapp.utils.dto.SmtpConfigDto;
+import tech.synelia.quizapp.utils.dto.transformer.SmtpConfigTransformer;
+import tech.synelia.quizapp.utils.exception.EntityNotFoundException;
+import tech.synelia.quizapp.utils.exception.InternalErrorException;
+import tech.synelia.quizapp.utils.exception.InvalidEntityException;
 
 @Log
 @Component
@@ -32,10 +41,6 @@ public class SmtpConfigBusiness implements IBasicBusiness<Request<SmtpConfigDto>
     private SmtpConfigRepository smtpConfigRepository;
     @Autowired
     private FunctionalError functionalError;
-    @Autowired
-    private TechnicalError technicalError;
-    @Autowired
-    private ExceptionUtils exceptionUtils;
     @PersistenceContext
     private EntityManager em;
 
@@ -63,7 +68,16 @@ public class SmtpConfigBusiness implements IBasicBusiness<Request<SmtpConfigDto>
         }
 
         if (!items.isEmpty()) {
+            SmtpConfig activeConfigToKeep = getLastActiveConfig(items);
             List<SmtpConfig> itemsSaved = smtpConfigRepository.saveAll(items);
+
+            if (activeConfigToKeep != null && activeConfigToKeep.getId() != null) {
+                activateConfig(activeConfigToKeep.getId(), request.getUser());
+                for (SmtpConfig savedItem : itemsSaved) {
+                    savedItem.setIsActive(activeConfigToKeep.getId().equals(savedItem.getId()));
+                }
+            }
+
             if (itemsSaved == null) {
                 throw new InternalErrorException(functionalError.SAVE_FAIL("smtp_config", locale));
             }
@@ -104,7 +118,10 @@ public class SmtpConfigBusiness implements IBasicBusiness<Request<SmtpConfigDto>
             if (Utilities.shouldUpdate(dto.getHost())) entityToSave.setHost(dto.getHost());
             if (dto.getPort() != null) entityToSave.setPort(dto.getPort());
             if (Utilities.shouldUpdate(dto.getUsername())) entityToSave.setUsername(dto.getUsername());
-            if (Utilities.shouldUpdate(dto.getPasswordEncrypted())) entityToSave.setPasswordEncrypted(dto.getPasswordEncrypted());
+            // Keep the existing password when the frontend omits the field during edition.
+            if (dto.getPasswordEncrypted() != null && Utilities.shouldUpdate(dto.getPasswordEncrypted())) {
+                entityToSave.setPasswordEncrypted(dto.getPasswordEncrypted());
+            }
             if (dto.getSmtpAuth() != null) entityToSave.setSmtpAuth(dto.getSmtpAuth());
             if (dto.getStarttlsEnable() != null) entityToSave.setStarttlsEnable(dto.getStarttlsEnable());
             if (dto.getStarttlsRequired() != null) entityToSave.setStarttlsRequired(dto.getStarttlsRequired());
@@ -123,7 +140,16 @@ public class SmtpConfigBusiness implements IBasicBusiness<Request<SmtpConfigDto>
         }
 
         if (!items.isEmpty()) {
+            SmtpConfig activeConfigToKeep = getLastActiveConfig(items);
             List<SmtpConfig> itemsSaved = smtpConfigRepository.saveAll(items);
+
+            if (activeConfigToKeep != null && activeConfigToKeep.getId() != null) {
+                activateConfig(activeConfigToKeep.getId(), request.getUser());
+                for (SmtpConfig savedItem : itemsSaved) {
+                    savedItem.setIsActive(activeConfigToKeep.getId().equals(savedItem.getId()));
+                }
+            }
+
             List<SmtpConfigDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading()))
                     ? SmtpConfigTransformer.INSTANCE.toLiteDtos(itemsSaved)
                     : SmtpConfigTransformer.INSTANCE.toDtos(itemsSaved);
@@ -216,16 +242,19 @@ public class SmtpConfigBusiness implements IBasicBusiness<Request<SmtpConfigDto>
      * Activate a config and deactivate all others.
      */
     public void activateConfig(Integer configId, Integer userId) {
-        // Deactivate all
-        List<SmtpConfig> allConfigs = smtpConfigRepository.findByIsDeleted(false);
-        for (SmtpConfig config : allConfigs) {
-            if (config.getIsActive() != null && config.getIsActive()) {
+        // Deactivate only currently active configs.
+        List<SmtpConfig> activeConfigs = smtpConfigRepository.findByIsActiveAndIsDeleted(true, false);
+        for (SmtpConfig config : activeConfigs) {
+            if (!config.getId().equals(configId)) {
                 config.setIsActive(false);
                 config.setUpdatedAt(Utilities.getCurrentDate());
                 config.setUpdatedBy(userId);
             }
         }
-        smtpConfigRepository.saveAll(allConfigs);
+
+        if (!activeConfigs.isEmpty()) {
+            smtpConfigRepository.saveAll(activeConfigs);
+        }
 
         // Activate the requested one
         SmtpConfig toActivate = smtpConfigRepository.findOne(configId, false);
@@ -235,5 +264,15 @@ public class SmtpConfigBusiness implements IBasicBusiness<Request<SmtpConfigDto>
             toActivate.setUpdatedBy(userId);
             smtpConfigRepository.save(toActivate);
         }
+    }
+
+    private SmtpConfig getLastActiveConfig(List<SmtpConfig> items) {
+        SmtpConfig activeConfig = null;
+        for (SmtpConfig item : items) {
+            if (Boolean.TRUE.equals(item.getIsActive()) && !Boolean.TRUE.equals(item.getIsDeleted())) {
+                activeConfig = item;
+            }
+        }
+        return activeConfig;
     }
 }

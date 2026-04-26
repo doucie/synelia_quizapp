@@ -8,6 +8,7 @@ export interface UserBusinessGroup {
   id?: number;
   userId?: number;
   businessGroupId?: number;
+  isModerator?: boolean;
   createdAt?: string;
   createdBy?: number;
   updatedAt?: string;

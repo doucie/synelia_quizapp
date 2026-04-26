@@ -3,9 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
-import { EntityCrudBase } from '../../../../../shared/entity-crud-base';
+import { EntityCrudBase, ColumnDef } from '../../../../../shared/entity-crud-base';
 import { EntityDetailPanelComponent } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
 import { DependencyPopupComponent } from '../../../../../shared/dependency-popup/dependency-popup';
+import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
 import { DecisionService, Decision, PagedDecisionResponse, DecisionCriteria } from '../../../../../core/services/decision.service';
 import { ApplicationService, Application } from '../../../../../core/services/application.service';
 import { UserService, User } from '../../../../../core/services/user.service';
@@ -13,7 +14,7 @@ import { UserService, User } from '../../../../../core/services/user.service';
 @Component({
   selector: 'app-entities-decisions',
   standalone: true,
-  imports: [CommonModule, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent],
+  imports: [CommonModule, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent, ColumnVisibilityManagerComponent],
   templateUrl: './entities-decisions.html',
   styleUrls: ['./entities-decisions.scss']
 })
@@ -32,6 +33,17 @@ export class EntitiesDecisionsComponent extends EntityCrudBase<Decision, Decisio
   advancedCriteria: DecisionCriteria = {};
   editFormData: Decision = { decisionType: '', isCancel: false, applicationId: 0, userId: 0 };
   createFormData: Partial<Decision> = {};
+
+  override allColumns: ColumnDef[] = [
+    { key: 'id', label: 'ID', priority: 1 },
+    { key: 'applicationId', label: 'Application ID', priority: 1 },
+    { key: 'userId', label: 'User ID', priority: 2 },
+    { key: 'decisionType', label: 'Type Décision', priority: 1 },
+    { key: 'cancelled', label: 'Annulée', priority: 2 },
+    { key: 'pipelineStage', label: 'Étape Pipeline', priority: 2 },
+    { key: 'createdAt', label: 'Créé le', priority: 2 },
+    { key: 'actions', label: 'Actions', priority: 1 },
+  ];
 
   protected fetchAll(criteria: DecisionCriteria): Observable<PagedDecisionResponse> { return this.service.getAllDecisionsByCriteria(criteria); }
   protected performCreate(item: Partial<Decision>): Observable<any> { return this.service.createDecision(item as Decision); }

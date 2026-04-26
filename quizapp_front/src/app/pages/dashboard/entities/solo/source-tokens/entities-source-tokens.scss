@@ -12,7 +12,12 @@
 
 // Tableau de donnees
 .data-table-container {
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;
   overflow-x: auto;
+  overflow-y: hidden;
+  contain: inline-size;
 }
 
 .data-table {
@@ -156,7 +161,7 @@
   font-size: var(--font-size-sm);
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: var(--transition-fast);
 
   &:hover:not(.disabled) {
     background: var(--surface-variant);
@@ -187,7 +192,7 @@
   font-size: var(--font-size-sm);
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: var(--transition-fast);
 
   &:hover:not(.active) {
     background: var(--surface-variant);
@@ -197,7 +202,7 @@
   &.active {
     background: var(--primary);
     border-color: var(--primary);
-    color: white;
+    color: var(--white);
   }
 }
 
@@ -273,8 +278,8 @@
   font-size: var(--font-size-sm);
   padding: var(--spacing-sm) var(--spacing-md);
   border-radius: var(--border-radius);
-  background: rgba(245, 158, 11, 0.1);
-  border: 1px solid rgba(245, 158, 11, 0.3);
+  background: rgba(var(--warning-rgb), 0.1);
+  border: 1px solid rgba(var(--warning-rgb), 0.3);
   color: rgb(146, 64, 14);
 }
 
@@ -286,8 +291,8 @@
   font-size: var(--font-size-sm);
   padding: var(--spacing-sm) var(--spacing-md);
   border-radius: var(--border-radius);
-  background: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.3);
+  background: rgba(var(--info-rgb), 0.1);
+  border: 1px solid rgba(var(--info-rgb), 0.3);
   color: rgb(30, 64, 175);
 }
 
@@ -304,7 +309,7 @@
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: var(--transition);
 
   svg {
     width: 16px;
@@ -324,13 +329,13 @@
   gap: var(--spacing-sm);
   padding: var(--spacing-sm) var(--spacing-lg);
   background: var(--error);
-  color: white;
+  color: var(--white);
   border: 1px solid var(--error);
   border-radius: var(--border-radius);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: var(--transition);
 
   svg {
     width: 16px;
@@ -349,13 +354,13 @@
   gap: var(--spacing-sm);
   padding: var(--spacing-sm) var(--spacing-lg);
   background: var(--success);
-  color: white;
+  color: var(--white);
   border: 1px solid var(--success);
   border-radius: var(--border-radius);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: var(--transition);
 
   svg {
     width: 16px;
@@ -373,17 +378,17 @@
   align-items: center;
   gap: var(--spacing-sm);
   padding: var(--spacing-sm) var(--spacing-lg);
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(var(--error-rgb), 0.1);
   border: 1px solid var(--error);
   border-radius: var(--border-radius);
   font-size: var(--font-size-sm);
   color: var(--error);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: var(--transition-fast);
 
   &:hover {
     background: var(--error);
-    color: white;
+    color: var(--white);
   }
 }
 
@@ -416,7 +421,7 @@
     font-size: var(--font-size-sm);
     background: var(--surface);
     color: var(--text-primary);
-    transition: all 0.15s ease;
+    transition: var(--transition-fast);
 
     &:focus {
       outline: none;
@@ -426,7 +431,7 @@
 
     &.readonly {
       background: var(--surface-subtle);
-      color: var(--text-muted);
+      color: var(--text-secondary);
       cursor: not-allowed;
     }
   }

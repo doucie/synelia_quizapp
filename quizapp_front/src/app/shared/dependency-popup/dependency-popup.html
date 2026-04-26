@@ -1,6 +1,6 @@
 @if (visible()) {
   <div class="dependency-overlay" (click)="onOverlayClick()">
-    <div class="dependency-modal" (click)="$event.stopPropagation()">
+    <div class="dependency-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
 
       <!-- Header -->
       <div class="modal-header" [class.warning]="info().level === 'WARNING'" [class.critical]="info().level === 'CRITICAL'" [class.restore]="mode() === 'restore'">

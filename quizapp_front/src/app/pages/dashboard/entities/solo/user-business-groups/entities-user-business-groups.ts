@@ -3,15 +3,16 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
-import { EntityCrudBase } from '../../../../../shared/entity-crud-base';
+import { EntityCrudBase, ColumnDef } from '../../../../../shared/entity-crud-base';
 import { EntityDetailPanelComponent } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
 import { DependencyPopupComponent } from '../../../../../shared/dependency-popup/dependency-popup';
+import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
 import { UserBusinessGroupService, UserBusinessGroup, PagedUserBusinessGroupResponse, UserBusinessGroupCriteria } from '../../../../../core/services/user-business-group.service';
 
 @Component({
   selector: 'app-entities-user-business-groups',
   standalone: true,
-  imports: [CommonModule, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent],
+  imports: [CommonModule, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent, ColumnVisibilityManagerComponent],
   templateUrl: './entities-user-business-groups.html',
   styleUrls: ['./entities-user-business-groups.scss']
 })
@@ -25,6 +26,14 @@ export class EntitiesUserBusinessGroupsComponent extends EntityCrudBase<UserBusi
   advancedCriteria: UserBusinessGroupCriteria = {};
   editFormData: UserBusinessGroup = {};
   createFormData: Partial<UserBusinessGroup> = {};
+
+  override allColumns: ColumnDef[] = [
+    { key: 'id', label: 'ID', priority: 1 },
+    { key: 'userId', label: 'User ID', priority: 1 },
+    { key: 'businessGroupId', label: 'Groupe Métier ID', priority: 1 },
+    { key: 'createdAt', label: 'Créé le', priority: 2 },
+    { key: 'actions', label: 'Actions', priority: 1 },
+  ];
 
   protected fetchAll(criteria: UserBusinessGroupCriteria): Observable<PagedUserBusinessGroupResponse> { return this.service.getAllByCriteria(criteria); }
   protected performCreate(item: Partial<UserBusinessGroup>): Observable<any> { return this.service.create(item as UserBusinessGroup); }

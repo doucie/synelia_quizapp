@@ -48,6 +48,9 @@ public class UserBusinessGroup implements Serializable, Cloneable {
     @Column(name="is_deleted")
     private Boolean isDeleted;
 
+    @Column(name="is_moderator")
+    private Boolean isModerator;
+
     public UserBusinessGroup() {
         super();
     }

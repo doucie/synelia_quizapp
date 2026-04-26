@@ -66,6 +66,74 @@
     }
   </div>
 
+  <!-- Business groups section -->
+  <div class="profile__card">
+    <div class="profile__card-header">
+      <h3>
+        <svg class="profile__section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        Groupes métier
+      </h3>
+      <button class="profile__btn profile__btn--outline" (click)="openGroupRequestModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="profile__btn-icon">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
+        </svg>
+        Rejoindre un groupe
+      </button>
+    </div>
+
+    @if (pendingRequests().length > 0) {
+      <div class="profile__pending-requests">
+        <span class="profile__pending-label">Demandes en attente :</span>
+        @for (req of pendingRequests(); track req.id) {
+          <span class="profile__pending-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="profile__pending-icon">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+            {{ req.targetGroupName || 'Groupe #' + req.targetGroupId }}
+          </span>
+        }
+      </div>
+    }
+
+    @if (groupsLoading()) {
+      <div class="profile__groups-loading">
+        <span class="profile__spinner"></span>
+        Chargement des groupes...
+      </div>
+    } @else if (userGroups().length === 0) {
+      <div class="profile__groups-empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="profile__groups-empty-icon">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <line x1="19" y1="11" x2="23" y2="11"/>
+        </svg>
+        <span>Aucun groupe métier assigné</span>
+      </div>
+    } @else {
+      <div class="profile__groups">
+        @for (group of userGroups(); track group.id) {
+          <div class="profile__group-chip">
+            <svg class="profile__group-chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            <span class="profile__group-chip-name">{{ group.groupName }}</span>
+            @if (group.groupDesc) {
+              <span class="profile__group-chip-desc" [title]="group.groupDesc">{{ group.groupDesc }}</span>
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>
+
   <!-- Password change section -->
   <div class="profile__card">
     <div class="profile__card-header">
@@ -133,4 +201,57 @@
       </button>
     </div>
   </div>
+
+  <!-- Group change request modal -->
+  @if (showGroupRequestModal()) {
+    <div class="profile__modal-overlay" (click)="closeGroupRequestModal()">
+      <div class="profile__modal" (click)="$event.stopPropagation()">
+        <div class="profile__modal-header">
+          <h3>Demander à rejoindre un groupe</h3>
+          <button class="profile__modal-close" (click)="closeGroupRequestModal()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        @if (requestMessage(); as msg) {
+          <div class="profile__alert" [ngClass]="'profile__alert--' + msg.type">{{ msg.text }}</div>
+        }
+
+        <div class="profile__modal-body">
+          <div class="profile__form-group">
+            <label class="profile__label" for="targetGroup">Groupe cible</label>
+            <select id="targetGroup" class="profile__input profile__select"
+              [ngModel]="selectedTargetGroupId()"
+              (ngModelChange)="selectedTargetGroupId.set($event)">
+              <option [ngValue]="null">— Sélectionner un groupe —</option>
+              @for (group of getAvailableGroups(); track group.id) {
+                <option [ngValue]="group.id">{{ group.groupName }}</option>
+              }
+            </select>
+            @if (getAvailableGroups().length === 0) {
+              <p class="profile__hint">Aucun groupe disponible à rejoindre.</p>
+            }
+          </div>
+
+          <div class="profile__form-group">
+            <label class="profile__label" for="requestReason">Raison (optionnel)</label>
+            <textarea id="requestReason" class="profile__input profile__textarea" rows="3"
+              placeholder="Expliquez pourquoi vous souhaitez rejoindre ce groupe..."
+              [ngModel]="requestReason()"
+              (ngModelChange)="requestReason.set($event)"></textarea>
+          </div>
+        </div>
+
+        <div class="profile__modal-footer">
+          <button class="profile__btn profile__btn--outline" (click)="closeGroupRequestModal()">Annuler</button>
+          <button class="profile__btn profile__btn--primary" (click)="submitGroupRequest()"
+            [disabled]="requestLoading() || !selectedTargetGroupId()">
+            {{ requestLoading() ? 'Envoi...' : 'Envoyer la demande' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 </div>

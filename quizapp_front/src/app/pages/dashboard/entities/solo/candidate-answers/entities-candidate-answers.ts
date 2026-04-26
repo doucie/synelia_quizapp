@@ -3,9 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
-import { EntityCrudBase } from '../../../../../shared/entity-crud-base';
+import { EntityCrudBase, ColumnDef } from '../../../../../shared/entity-crud-base';
 import { EntityDetailPanelComponent } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
 import { DependencyPopupComponent } from '../../../../../shared/dependency-popup/dependency-popup';
+import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
 import { CandidateAnswersService, CandidateAnswer, PagedCandidateAnswerResponse, CandidateAnswerSearchCriteria } from '../../../../../core/services/candidate-answers.service';
 import { ApplicationService, Application } from '../../../../../core/services/application.service';
 import { AnswerService, Answer } from '../../../../../core/services/answer.service';
@@ -14,7 +15,7 @@ import { QuestionService, Question } from '../../../../../core/services/question
 @Component({
   selector: 'app-entities-candidate-answers',
   standalone: true,
-  imports: [CommonModule, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent],
+  imports: [CommonModule, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent, ColumnVisibilityManagerComponent],
   templateUrl: './entities-candidate-answers.html',
   styleUrls: ['./entities-candidate-answers.scss']
 })
@@ -35,6 +36,17 @@ export class EntitiesCandidateAnswersComponent extends EntityCrudBase<CandidateA
   advancedCriteria: CandidateAnswerSearchCriteria = {};
   editFormData: CandidateAnswer = {};
   createFormData: Partial<CandidateAnswer> = {};
+
+  override allColumns: ColumnDef[] = [
+    { key: 'id', label: 'ID', priority: 1 },
+    { key: 'applicationId', label: 'Application ID', priority: 2 },
+    { key: 'questionId', label: 'Question ID', priority: 2 },
+    { key: 'answerId', label: 'Answer ID', priority: 2 },
+    { key: 'freeAnswer', label: 'Réponse Libre', priority: 3 },
+    { key: 'selected', label: 'Selected', priority: 2 },
+    { key: 'createdAt', label: 'Créé le', priority: 2 },
+    { key: 'actions', label: 'Actions', priority: 1 },
+  ];
 
   protected fetchAll(criteria: CandidateAnswerSearchCriteria): Observable<PagedCandidateAnswerResponse> { return this.service.getAllByCriteria(criteria); }
   protected performCreate(item: Partial<CandidateAnswer>): Observable<any> { return this.service.create(item as CandidateAnswer); }

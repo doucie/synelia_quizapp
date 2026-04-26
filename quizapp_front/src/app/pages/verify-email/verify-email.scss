@@ -3,14 +3,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 20px;
+  background: var(--gradient-primary);
+  padding: var(--spacing-lg);
 }
 
 .verify-email-card {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elevation-3);
   padding: 40px;
   max-width: 500px;
   width: 100%;
@@ -19,27 +19,27 @@
 
 /* Loading State */
 .verification-loading {
-  padding: 20px;
+  padding: var(--spacing-lg);
 
   .spinner {
     width: 60px;
     height: 60px;
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #667eea;
-    border-radius: 50%;
+    border: 4px solid var(--border);
+    border-top: 4px solid var(--primary);
+    border-radius: var(--radius-full);
     animation: spin 1s linear infinite;
-    margin: 0 auto 20px;
+    margin: 0 auto var(--spacing-lg);
   }
 
   h2 {
-    color: #333;
-    margin-bottom: 10px;
-    font-size: 24px;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-sm);
+    font-size: var(--font-size-2xl);
   }
 
   p {
-    color: #666;
-    font-size: 16px;
+    color: var(--text-secondary);
+    font-size: var(--font-size-base);
   }
 }
 
@@ -50,14 +50,14 @@
 
 /* Success State */
 .verification-success {
-  padding: 20px;
+  padding: var(--spacing-lg);
 
   .success-icon {
     width: 80px;
     height: 80px;
-    margin: 0 auto 20px;
-    background: #4caf50;
-    border-radius: 50%;
+    margin: 0 auto var(--spacing-lg);
+    background: var(--success);
+    border-radius: var(--radius-full);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -66,41 +66,41 @@
     svg {
       width: 50px;
       height: 50px;
-      color: white;
+      color: var(--white);
     }
   }
 
   h2 {
-    color: #4caf50;
-    margin-bottom: 10px;
-    font-size: 26px;
-    font-weight: 600;
+    color: var(--success);
+    margin-bottom: var(--spacing-sm);
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-semibold);
   }
 
   p {
-    color: #666;
-    font-size: 16px;
-    margin-bottom: 8px;
+    color: var(--text-secondary);
+    font-size: var(--font-size-base);
+    margin-bottom: var(--spacing-sm);
   }
 
   .redirect-message {
-    color: #999;
-    font-size: 14px;
+    color: var(--text-tertiary);
+    font-size: var(--font-size-sm);
     font-style: italic;
-    margin-top: 20px;
+    margin-top: var(--spacing-lg);
   }
 }
 
 /* Error State */
 .verification-error {
-  padding: 20px;
+  padding: var(--spacing-lg);
 
   .error-icon {
     width: 80px;
     height: 80px;
-    margin: 0 auto 20px;
-    background: #f44336;
-    border-radius: 50%;
+    margin: 0 auto var(--spacing-lg);
+    background: var(--error);
+    border-radius: var(--radius-full);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -109,38 +109,38 @@
     svg {
       width: 50px;
       height: 50px;
-      color: white;
+      color: var(--white);
     }
   }
 
   h2 {
-    color: #f44336;
-    margin-bottom: 10px;
-    font-size: 26px;
-    font-weight: 600;
+    color: var(--error);
+    margin-bottom: var(--spacing-sm);
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-semibold);
   }
 
   .error-message {
-    color: #666;
-    font-size: 16px;
+    color: var(--text-secondary);
+    font-size: var(--font-size-base);
     margin-bottom: 30px;
   }
 
   .btn-home {
-    background: #667eea;
-    color: white;
+    background: var(--primary);
+    color: var(--white);
     border: none;
-    padding: 12px 30px;
-    border-radius: 6px;
-    font-size: 16px;
-    font-weight: 500;
+    padding: var(--spacing-md) 30px;
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: var(--transition-slow);
 
     &:hover {
-      background: #5568d3;
+      background: var(--primary-dark);
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.4);
     }
 
     &:active {
@@ -166,11 +166,11 @@
 /* Responsive */
 @media (max-width: 600px) {
   .verify-email-card {
-    padding: 30px 20px;
+    padding: 30px var(--spacing-lg);
   }
 
   .verification-success h2,
   .verification-error h2 {
-    font-size: 22px;
+    font-size: var(--font-size-xl);
   }
 }

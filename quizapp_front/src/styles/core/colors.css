@@ -68,6 +68,34 @@
   /* Gradients */
   --gradient-primary: linear-gradient(135deg, var(--primary), var(--secondary));
   
+  /* RGB Decomposed Colors (for rgba() usage) */
+  --primary-rgb: 107, 70, 193;
+  --error-rgb: 239, 68, 68;
+  --success-rgb: 16, 185, 129;
+  --warning-rgb: 245, 158, 11;
+  --info-rgb: 59, 130, 246;
+  --surface-rgb: 248, 250, 252;
+  --text-secondary-rgb: 107, 114, 128;
+  
+  /* Hover State Colors */
+  --hover: var(--surface-variant);
+  --primary-hover: var(--primary-dark);
+  --secondary-hover: var(--secondary-dark);
+  
+  /* Light Variants */
+  --success-light: #D1FAE5;
+  --error-light: #FEE2E2;
+  --primary-surface: rgba(107, 70, 193, 0.08);
+  
+  /* Surface Aliases */
+  --background-secondary: var(--surface-secondary);
+  --surface-light: var(--surface);
+  --surface-subtle: var(--surface-secondary);
+  --white: #FFFFFF;
+  
+  /* Text Aliases */
+  --text-muted: var(--text-secondary);
+  
     /* Scrollbar Colors */
     --scrollbar-bg: var(--surface-variant);
     --scrollbar-thumb: var(--primary);
@@ -118,6 +146,24 @@
   
   /* Status Colors Dark */
   /* --success-dark: #10B981; */
+  
+  /* RGB Decomposed Colors Dark */
+  --primary-rgb: 139, 92, 246;
+  --error-rgb: 239, 68, 68;
+  --success-rgb: 16, 185, 129;
+  --surface-rgb: 30, 41, 59;
+  
+  /* Hover State Colors Dark */
+  --primary-hover: var(--primary-light);
+  --secondary-hover: var(--secondary-light);
+  
+  /* Light Variants Dark */
+  --success-light: #065F46;
+  --error-light: #7F1D1D;
+  --primary-surface: rgba(139, 92, 246, 0.12);
+  
+  /* White adjusted for dark mode */
+  --white: #F8FAFC;
   
     /* Scrollbar Colors Dark */
     --scrollbar-bg: var(--surface-variant);

@@ -4,9 +4,10 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { EntityCrudBase, BaseSearchCriteria, BasePagedResponse } from '../../../../../shared/entity-crud-base';
+import { EntityCrudBase, BaseSearchCriteria, BasePagedResponse, ColumnDef } from '../../../../../shared/entity-crud-base';
 import { EntityDetailPanelComponent } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
 import { DependencyPopupComponent } from '../../../../../shared/dependency-popup/dependency-popup';
+import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
 import { EmailTemplateService, EmailTemplate } from '../../../../../core/services/email-template.service';
 
 interface EmailTemplateCriteria extends BaseSearchCriteria {
@@ -19,7 +20,7 @@ interface PagedEmailTemplateResponse extends BasePagedResponse<EmailTemplate> {}
 @Component({
   selector: 'app-entities-email-templates',
   standalone: true,
-  imports: [CommonModule, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent],
+  imports: [CommonModule, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent, ColumnVisibilityManagerComponent],
   templateUrl: './entities-email-templates.html',
   styleUrls: ['./entities-email-templates.scss']
 })
@@ -33,6 +34,17 @@ export class EntitiesEmailTemplatesComponent extends EntityCrudBase<EmailTemplat
   advancedCriteria: EmailTemplateCriteria = {};
   editFormData: EmailTemplate = {} as EmailTemplate;
   createFormData: Partial<EmailTemplate> = {};
+
+  override allColumns: ColumnDef[] = [
+    { key: 'id', label: 'ID', priority: 1 },
+    { key: 'key', label: 'Clé', priority: 1 },
+    { key: 'subject', label: 'Sujet', priority: 1 },
+    { key: 'description', label: 'Description', priority: 3 },
+    { key: 'active', label: 'Actif', priority: 2 },
+    { key: 'deleted', label: 'Supprimé', priority: 3 },
+    { key: 'createdAt', label: 'Créé le', priority: 2 },
+    { key: 'actions', label: 'Actions', priority: 1 },
+  ];
 
   protected fetchAll(criteria: EmailTemplateCriteria): Observable<PagedEmailTemplateResponse> {
     const { page, size, ...data } = criteria;

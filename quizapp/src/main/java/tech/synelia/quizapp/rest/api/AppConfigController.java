@@ -1,26 +1,26 @@
 package tech.synelia.quizapp.rest.api;
 
-import lombok.extern.java.Log;
+import java.util.Locale;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.http.ResponseEntity;
 
 import jakarta.servlet.http.HttpServletRequest;
-
-import java.util.Locale;
-
-import tech.synelia.quizapp.utils.*;
-import tech.synelia.quizapp.utils.dto.*;
+import lombok.extern.java.Log;
+import tech.synelia.quizapp.business.AppConfigBusiness;
+import tech.synelia.quizapp.rest.fact.ControllerFactory;
+import tech.synelia.quizapp.utils.ExceptionUtils;
+import tech.synelia.quizapp.utils.FunctionalError;
 import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
+import tech.synelia.quizapp.utils.dto.AppConfigDto;
 import tech.synelia.quizapp.utils.enums.FunctionalityEnum;
-import tech.synelia.quizapp.business.*;
-import tech.synelia.quizapp.rest.fact.ControllerFactory;
 
 @Log
 @CrossOrigin("*")
@@ -67,7 +67,7 @@ public class AppConfigController {
     @RequestMapping(value="/getByCriteria", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
     public ResponseEntity<Response<AppConfigDto>> getByCriteria(@RequestBody Request<AppConfigDto> request) throws Exception {
         log.info("start method /appConfig/getByCriteria");
-        Response<AppConfigDto> response = controllerFactory.getByCriteria(appConfigBusiness, request, FunctionalityEnum.VIEW_APP_CONFIG);
+        Response<AppConfigDto> response = controllerFactory.getByCriteria(appConfigBusiness, request, FunctionalityEnum.DEFAULT);
         return ResponseEntity.ok().body(response);
     }
 

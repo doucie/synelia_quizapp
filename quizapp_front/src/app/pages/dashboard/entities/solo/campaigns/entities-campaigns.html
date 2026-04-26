@@ -175,6 +175,14 @@
     <div class="section-stats">
       <div class="stats-row">
         <h2 class="section-title">Campagnes</h2>
+        <app-column-visibility-manager
+          [columns]="allColumns"
+          [visibleColumns]="visibleColumns()"
+          [hiddenCount]="hiddenColumnsCount()"
+          (toggleColumn)="toggleColumnVisibility($event)"
+          (showAll)="showAllColumns()"
+          (resetColumns)="resetColumnVisibility()"
+        />
         <div class="stats-info" *ngIf="!isLoading()">
           <div class="stat-item">
             <span>Total:</span>
@@ -217,46 +225,46 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th>ID</th>
-            <th>Nom</th>
-            <th>Description</th>
-            <th>Statut</th>
-            <th>Spécialité</th>
-            <th>Template Pipeline</th>
-            <th>Date Début</th>
-            <th>Date Fin</th>
-            <th>Créé le</th>
-            <th>Actions</th>
+            <th class="col-id" [class.col-hidden]="!isColumnVisible('id')">ID</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('name')">Nom</th>
+            <th class="col-medium" [class.col-hidden]="!isColumnVisible('description')">Description</th>
+            <th class="col-status" [class.col-hidden]="!isColumnVisible('status')">Statut</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('speciality')">Spécialité</th>
+            <th class="col-medium" [class.col-hidden]="!isColumnVisible('pipelineTemplate')">Template Pipeline</th>
+            <th class="col-date" [class.col-hidden]="!isColumnVisible('startDate')">Date Début</th>
+            <th class="col-date" [class.col-hidden]="!isColumnVisible('endDate')">Date Fin</th>
+            <th class="col-date" [class.col-hidden]="!isColumnVisible('createdAt')">Créé le</th>
+            <th class="col-actions" [class.col-hidden]="!isColumnVisible('actions')">Actions</th>
           </tr>
         </thead>
         <tbody>
           <ng-container *ngFor="let campaign of campaigns(); trackBy: trackByCampaignId">
             <tr [class.row-deleted]="campaign.isDeleted" (click)="selectItem(campaign)" style="cursor: pointer;">
-              <td>
+              <td class="col-id" [class.col-hidden]="!isColumnVisible('id')">
                 <span class="cell-id">#{{ campaign.id }}</span>
               </td>
-              <td>
+              <td class="col-short" [class.col-hidden]="!isColumnVisible('name')" [title]="campaign.campaignName || ''">
                 <span class="cell-name">{{ campaign.campaignName || '-' }}</span>
               </td>
-              <td>
+              <td class="col-medium" [class.col-hidden]="!isColumnVisible('description')" [title]="campaign.campaignDesc || ''">
                 <span class="cell-description">{{ campaign.campaignDesc || '-' }}</span>
               </td>
-              <td>
+              <td class="col-status" [class.col-hidden]="!isColumnVisible('status')">
                 <span class="status-badge">{{ campaign.campaignStatus || '-' }}</span>
               </td>
-              <td>
+              <td class="col-short" [class.col-hidden]="!isColumnVisible('speciality')" [title]="campaign.specialityName || ''">
                 <span class="cell-text">{{ campaign.specialityName || '-' }}</span>
               </td>
-              <td>
+              <td class="col-medium" [class.col-hidden]="!isColumnVisible('pipelineTemplate')" [title]="campaign.pipelineTemplateName || ''">
                 <span class="cell-text">{{ campaign.pipelineTemplateName || '-' }}</span>
               </td>
-              <td>
+              <td class="col-date" [class.col-hidden]="!isColumnVisible('startDate')">
                 <span class="cell-date">{{ campaign.campaignStart || '-' }}</span>
               </td>
-              <td>
+              <td class="col-date" [class.col-hidden]="!isColumnVisible('endDate')">
                 <span class="cell-date">{{ campaign.campaignEnd || '-' }}</span>
               </td>
-              <td>
+              <td class="col-date" [class.col-hidden]="!isColumnVisible('createdAt')">
                 <span class="cell-date" *ngIf="campaign.createdAt; else noDate">
                   {{ formatCreationDate(campaign) }}
                 </span>
@@ -264,14 +272,14 @@
                   <span style="color: var(--text-secondary);">-</span>
                 </ng-template>
               </td>
-              <td class="actions-cell" (click)="$event.stopPropagation()">
+              <td class="actions-cell col-actions" [class.col-hidden]="!isColumnVisible('actions')" (click)="$event.stopPropagation()">
                 <div class="actions-menu">
                   <!-- Boutons normaux pour les campagnes non supprimés -->
                   <ng-container *ngIf="!campaign.isDeleted">
                     <button 
                       class="action-btn primary" 
                       (click)="editCampaign(campaign)"
-                      title="Modifier la campagne">
+                      title="Modifier la campagne" aria-label="Modifier la campagne">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M12 20H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         <path d="M16.5 3.5A2.12 2.12 0 0 1 19 6L7 18L3 19L4 15L16.5 3.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -280,7 +288,7 @@
                     <button 
                       class="action-btn danger" 
                       (click)="deleteCampaign(campaign)"
-                      title="Supprimer la campagne">
+                      title="Supprimer la campagne" aria-label="Supprimer la campagne">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -293,7 +301,7 @@
                       class="action-btn secondary" 
                       (click)="toggleCampaignExpansion(campaign.id)"
                       [class.expanded]="isCampaignExpanded(campaign.id)"
-                      title="Afficher les détails">
+                      title="Afficher les détails" aria-label="Afficher les détails">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path 
                           d="M6 9L12 15L18 9" 
@@ -311,7 +319,7 @@
                     <button 
                       class="action-btn success" 
                       (click)="restoreCampaign(campaign)"
-                      title="Restaurer le département">
+                      title="Restaurer le département" aria-label="Restaurer le département">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M3 12A9 9 0 1 0 12 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         <path d="M12 3L8 7L12 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -322,7 +330,7 @@
                       class="action-btn secondary" 
                       (click)="toggleCampaignExpansion(campaign.id)"
                       [class.expanded]="isCampaignExpanded(campaign.id)"
-                      title="Afficher les détails">
+                      title="Afficher les détails" aria-label="Afficher les détails">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path 
                           d="M6 9L12 15L18 9" 
@@ -340,7 +348,7 @@
             
             <!-- Ligne d'expansion avec onglets enfants -->
             <tr *ngIf="isCampaignExpanded(campaign.id)" class="expansion-row">
-              <td colspan="10" class="expansion-content">
+              <td [attr.colspan]="visibleColumns().size" class="expansion-content">
                 <div class="children-container">
                   <!-- Onglets -->
                   <div class="children-tabs">
