@@ -18,6 +18,12 @@ export const authGuard: CanActivateFn = (route, state) => {
   console.log('🔓 Authenticated:', isAuthenticated);
 
   if (isAuthenticated && user) {
+    if (authService.requiresPasswordChange() && !state.url.startsWith('/dashboard/profile')) {
+      console.log('⚠️ AuthGuard - Mot de passe par défaut détecté, redirection vers /dashboard/profile');
+      router.navigate(['/dashboard/profile']);
+      return false;
+    }
+
     console.log('✅ AuthGuard - Accès autorisé');
     return true;
   } else {
@@ -46,8 +52,9 @@ export const noAuthGuard: CanActivateFn = (route, state) => {
     console.log('✅ NoAuthGuard - Accès autorisé à la page de connexion');
     return true;
   } else {
-    console.log('❌ NoAuthGuard - Redirection vers /dashboard (déjà connecté)');
-    router.navigate(['/dashboard']);
+    const redirectRoute = authService.getAuthenticatedHomeRoute();
+    console.log('❌ NoAuthGuard - Redirection vers', redirectRoute, '(déjà connecté)');
+    router.navigate([redirectRoute]);
     return false;
   }
 };

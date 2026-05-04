@@ -25,6 +25,7 @@ export class EntitiesFormVersionsComponent extends EntityCrudBase<FormVersion, F
   protected override readonly pageSizeStorageKey = 'entitiesFormVersionsPageSize';
   protected override readonly entityName = 'versions formulaire';
   protected override readonly entityTypeApi = 'form-versions';
+  editingLockedVersion = signal(false);
 
   // FK dropdowns
   private formService = inject(FormService);
@@ -63,6 +64,23 @@ export class EntitiesFormVersionsComponent extends EntityCrudBase<FormVersion, F
   protected performRestore(id: number): Observable<any> { return this.service.restore(id); }
   protected resetAdvancedCriteriaValues(): void { this.advancedCriteria = {}; }
   protected resetCreateFormData(): void { this.createFormData = {}; }
+
+  override openEditDialog(item: FormVersion): void {
+    this.editingLockedVersion.set(Boolean(item.isLocked));
+    super.openEditDialog(this.editingLockedVersion()
+      ? {
+          ...item,
+          versionNumber: (item.versionNumber ?? 0) + 1,
+          isPublished: false,
+          isLocked: false,
+        }
+      : item);
+  }
+
+  override closeEditDialog(): void {
+    this.editingLockedVersion.set(false);
+    super.closeEditDialog();
+  }
 
   forkVersion(item: FormVersion): void {
     if (!item.id) return;

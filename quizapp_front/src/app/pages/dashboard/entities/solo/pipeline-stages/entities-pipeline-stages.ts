@@ -68,6 +68,158 @@ export class EntitiesPipelineStagesComponent extends EntityCrudBase<PipelineStag
     return type ? labels[type] || type : '-';
   }
 
+  getConfigPlaceholder(type?: StageType): string {
+    switch (type) {
+      case 'TECHNICAL_TEST':
+        return '{"testMode":"INTERNAL","passingScore":60} ou {"testMode":"EXTERNAL","externalUrl":"https://...","passingScore":60}';
+      case 'EVALUATION':
+        return '{"passingScore":50,"allowSkip":false}';
+      case 'CUSTOM':
+        return '{"label":"Étape libre","allowSkip":true}';
+      case 'INTERVIEW':
+        return '{"passingScore":50}';
+      default:
+        return '{"allowSkip":true,"passingScore":50}';
+    }
+  }
+
+  getConfigHelp(type?: StageType): string {
+    switch (type) {
+      case 'TECHNICAL_TEST':
+        return 'TECHNICAL_TEST exige un JSON avec testMode INTERNAL ou EXTERNAL. Si EXTERNAL, externalUrl est obligatoire.';
+      case 'CUSTOM':
+        return 'CUSTOM exige un JSON non vide. Utilise-le pour définir le comportement métier attendu de l’étape.';
+      case 'EVALUATION':
+        return 'EVALUATION peut utiliser passingScore pour définir le seuil de validation.';
+      case 'INTERVIEW':
+        return 'INTERVIEW peut utiliser passingScore pour définir le seuil de validation si aucune étape EVALUATION n’existe.';
+      default:
+        return 'Laisse vide si ce type d’étape n’a pas besoin de configuration spécifique.';
+    }
+  }
+
+  private normalizeConfigJson(value: string | null | undefined): string | null | undefined {
+    if (value === undefined) {
+      return undefined;
+    }
+    if (value === null) {
+      return null;
+    }
+
+    const trimmed = value.trim();
+    return trimmed === '' ? null : trimmed;
+  }
+
+  private validateStagePayload(stage: Partial<PipelineStage>): string | null {
+    if (!stage.stageLabel?.trim()) {
+      return 'Le libellé est requis';
+    }
+    if (!stage.stageType) {
+      return 'Le type est requis';
+    }
+    if (!stage.pipelineTemplateId) {
+      return 'Le template est requis';
+    }
+
+    const configJson = this.normalizeConfigJson(stage.configJson);
+    if (stage.stageType === 'TECHNICAL_TEST' && !configJson) {
+      return 'TECHNICAL_TEST exige un config_json';
+    }
+    if (stage.stageType === 'CUSTOM' && !configJson) {
+      return 'CUSTOM exige un config_json';
+    }
+
+    if (configJson) {
+      try {
+        const parsed = JSON.parse(configJson) as Record<string, unknown>;
+        if (Array.isArray(parsed) || parsed === null) {
+          return 'config_json doit être un objet JSON';
+        }
+
+        if (parsed['passingScore'] !== undefined) {
+          const passingScore = Number(parsed['passingScore']);
+          if (Number.isNaN(passingScore) || passingScore < 0 || passingScore > 100) {
+            return 'passingScore doit être compris entre 0 et 100';
+          }
+        }
+
+        if (parsed['allowSkip'] !== undefined && typeof parsed['allowSkip'] !== 'boolean') {
+          return 'allowSkip doit être un booléen';
+        }
+
+        if (stage.stageType === 'TECHNICAL_TEST') {
+          const testMode = String(parsed['testMode'] ?? '').toUpperCase();
+          if (testMode !== 'INTERNAL' && testMode !== 'EXTERNAL') {
+            return 'TECHNICAL_TEST attend testMode INTERNAL ou EXTERNAL';
+          }
+          if (testMode === 'EXTERNAL' && !String(parsed['externalUrl'] ?? '').trim()) {
+            return 'TECHNICAL_TEST externe: externalUrl est requis';
+          }
+        }
+      } catch {
+        return 'config_json doit être un JSON valide';
+      }
+    }
+
+    return null;
+  }
+
+  override validateCreate(): void {
+    const payload: Partial<PipelineStage> = {
+      ...this.createFormData,
+      stageLabel: this.createFormData.stageLabel?.trim(),
+      configJson: this.normalizeConfigJson(this.createFormData.configJson)
+    };
+
+    const validationError = this.validateStagePayload(payload);
+    if (validationError) {
+      this.notificationService.warning('Attention', validationError);
+      return;
+    }
+
+    this.performCreate(payload).subscribe({
+      next: (response: any) => {
+        if (response?.hasError) {
+          this.notificationService.error('Erreur', response.status?.message || 'Erreur lors de la création');
+          return;
+        }
+        this.closeCreateDialog();
+        this.loadItems();
+      },
+      error: (error) => {
+        this.notificationService.error('Erreur', error?.error?.status?.message || 'Erreur lors de la création');
+      }
+    });
+  }
+
+  override validateEdit(): void {
+    const payload: PipelineStage = {
+      ...this.editFormData,
+      stageLabel: this.editFormData.stageLabel?.trim(),
+      configJson: this.normalizeConfigJson(this.editFormData.configJson)
+    };
+
+    const validationError = this.validateStagePayload(payload);
+    if (validationError) {
+      this.notificationService.warning('Attention', validationError);
+      return;
+    }
+
+    this.performUpdate(payload).subscribe({
+      next: (response: any) => {
+        if (response?.hasError) {
+          this.notificationService.error('Erreur', response.status?.message || 'Erreur lors de la mise à jour');
+          return;
+        }
+        this.closeEditDialog();
+        this.loadItems();
+      },
+      error: (error) => {
+        this.notificationService.error('Erreur', error?.error?.status?.message || 'Erreur lors de la mise à jour');
+      }
+    });
+  }
+
   protected fetchAll(criteria: PipelineStageCriteria): Observable<PagedPipelineStageResponse> { return this.service.getAllByCriteria(criteria); }
   protected performCreate(item: Partial<PipelineStage>): Observable<any> { return this.service.create(item); }
   protected performUpdate(item: PipelineStage): Observable<any> { return this.service.update(item); }

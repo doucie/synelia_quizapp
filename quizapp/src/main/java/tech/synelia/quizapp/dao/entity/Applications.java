@@ -89,9 +89,6 @@ public class Applications implements Serializable, Cloneable {
     @Column(name="application_status", length=8)
     private String     applicationStatus ;
 
-    @Column(name="visit_token", length=255)
-    private String     visitToken   ;
-
     @Column(name="quiz_token", length=64, unique=true)
     private String     quizToken    ;
 
@@ -107,8 +104,15 @@ public class Applications implements Serializable, Cloneable {
     @Column(name="quiz_score_percent")
     private Integer    quizScorePercent ;
 
+    @Column(name="quiz_manual_correction_status", nullable=false, length=20)
+    private String     quizManualCorrectionStatus ;
+
     @Column(name="time_elapsed", nullable=false, columnDefinition="INT DEFAULT 0")
     private Integer    timeElapsed  ;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name="quiz_last_activity_at")
+    private Date       quizLastActivityAt ;
 
     @Column(name="interview_date")
     @Temporal(TemporalType.TIMESTAMP)

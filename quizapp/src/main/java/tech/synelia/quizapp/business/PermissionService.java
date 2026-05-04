@@ -1,13 +1,28 @@
 package tech.synelia.quizapp.business;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import tech.synelia.quizapp.dao.entity.*;
-import tech.synelia.quizapp.dao.repository.*;
+import tech.synelia.quizapp.dao.entity.BusinessGroupPermission;
+import tech.synelia.quizapp.dao.entity.EntityPermission;
+import tech.synelia.quizapp.dao.entity.SystemRolePermission;
+import tech.synelia.quizapp.dao.entity.User;
+import tech.synelia.quizapp.dao.entity.UserBusinessGroup;
+import tech.synelia.quizapp.dao.entity.UserPermissionOverride;
+import tech.synelia.quizapp.dao.repository.BusinessGroupPermissionRepository;
+import tech.synelia.quizapp.dao.repository.EntityPermissionRepository;
+import tech.synelia.quizapp.dao.repository.SystemRolePermissionRepository;
+import tech.synelia.quizapp.dao.repository.UserBusinessGroupRepository;
+import tech.synelia.quizapp.dao.repository.UserPermissionOverrideRepository;
+import tech.synelia.quizapp.dao.repository.UserRepository;
 import tech.synelia.quizapp.utils.enums.FunctionalityEnum;
 
 @Service
@@ -44,6 +59,18 @@ public class PermissionService {
 		return combined.contains(functionality);
 	}
 
+	public boolean hasAnyPermission(Integer userId, String... functionalities) {
+		if (functionalities == null || functionalities.length == 0) {
+			return false;
+		}
+		for (String functionality : functionalities) {
+			if (functionality != null && hasPermission(userId, functionality)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	/**
 	 * Vérifie si un utilisateur a une permission sur une entité spécifique.
 	 * 1. SUPER_ADMIN → bypass
@@ -61,6 +88,18 @@ public class PermissionService {
 		EntityPermission ep = entityPermissionRepository.findByUserIdAndEntityTypeAndEntityIdAndPermissionKey(
 				userId, entityType, entityId, permissionKey);
 		return ep != null;
+	}
+
+	public boolean hasAnyEntityPermission(Integer userId, String entityType, Integer entityId, String... permissionKeys) {
+		if (permissionKeys == null || permissionKeys.length == 0) {
+			return false;
+		}
+		for (String permissionKey : permissionKeys) {
+			if (permissionKey != null && hasEntityPermission(userId, entityType, entityId, permissionKey)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

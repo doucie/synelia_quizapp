@@ -101,6 +101,20 @@
                   </svg>
                 </button>
               </div>
+            } @else if (!checkingSpecialityAvailability() && !hasAvailableSpecialities()) {
+              <div class="speciality-empty-state">
+                <div class="speciality-empty-state__content">
+                  <span class="speciality-empty-state__title">Aucune spécialité active n'est disponible.</span>
+                  <span class="speciality-empty-state__text">Créez d'abord une spécialité avant de pouvoir enregistrer une campagne, ou demandez à un administrateur de la créer.</span>
+                </div>
+                <button
+                  type="button"
+                  class="speciality-empty-state__action"
+                  (click)="openSpecialities()"
+                >
+                  Ouvrir les spécialités
+                </button>
+              </div>
             } @else {
               <div class="search-container">
                 <div class="search-input-wrapper">

@@ -77,6 +77,8 @@ export class CampaignsComponent implements OnInit, OnDestroy {
         (campaign.campaignStatus || 'PENDING').toLowerCase() === status
       );
     }
+
+    campaigns = campaigns.filter(campaign => !campaign.isDeleted);
     
     return campaigns;
   });
@@ -101,9 +103,9 @@ export class CampaignsComponent implements OnInit, OnDestroy {
     this.loading.set(true);
     
     forkJoin({
-      all: this.campaignService.getAllCampaignsByCriteria({ size: 100, page: 0 }),
-      my: this.campaignService.getMyCampaigns({ size: 100, page: 0 }),
-      shared: this.campaignService.getSharedCampaigns()
+      all: this.campaignService.getAllCampaignsByCriteria({ size: 100, page: 0, isDeleted: false }),
+      my: this.campaignService.getMyCampaigns({ size: 100, page: 0, isDeleted: false }),
+      shared: this.campaignService.getSharedCampaigns({ isDeleted: false })
     })
     .pipe(takeUntil(this.destroy$))
     .subscribe({

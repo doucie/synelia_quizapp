@@ -1,28 +1,55 @@
 package tech.synelia.quizapp.business;
 
-import lombok.extern.java.Log;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import tech.synelia.quizapp.utils.*;
-import tech.synelia.quizapp.utils.dto.*;
-import tech.synelia.quizapp.utils.exception.*;
+import lombok.extern.java.Log;
+import tech.synelia.quizapp.dao.entity.ApplicationProgress;
+import tech.synelia.quizapp.dao.entity.Applications;
+import tech.synelia.quizapp.dao.entity.Campaigns;
+import tech.synelia.quizapp.dao.entity.PipelineStage;
+import tech.synelia.quizapp.dao.entity.PipelineTemplate;
+import tech.synelia.quizapp.dao.entity.SourceToken;
+import tech.synelia.quizapp.dao.entity.User;
+import tech.synelia.quizapp.dao.repository.ApplicationProgressRepository;
+import tech.synelia.quizapp.dao.repository.ApplicationsRepository;
+import tech.synelia.quizapp.dao.repository.PipelineStageRepository;
+import tech.synelia.quizapp.dao.repository.PipelineTemplateRepository;
+import tech.synelia.quizapp.dao.repository.SourceTokenRepository;
+import tech.synelia.quizapp.dao.repository.UserRepository;
+import tech.synelia.quizapp.utils.ExceptionUtils;
+import tech.synelia.quizapp.utils.FunctionalError;
+import tech.synelia.quizapp.utils.Status;
+import tech.synelia.quizapp.utils.StatusCode;
+import tech.synelia.quizapp.utils.StatusMessage;
+import tech.synelia.quizapp.utils.TechnicalError;
+import tech.synelia.quizapp.utils.Utilities;
+import tech.synelia.quizapp.utils.Validate;
 import tech.synelia.quizapp.utils.contract.IBasicBusiness;
 import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
-import tech.synelia.quizapp.utils.dto.transformer.*;
-import tech.synelia.quizapp.dao.entity.*;
-import tech.synelia.quizapp.dao.repository.*;
+import tech.synelia.quizapp.utils.dto.ApplicationProgressDto;
+import tech.synelia.quizapp.utils.dto.transformer.ApplicationProgressTransformer;
+import tech.synelia.quizapp.utils.enums.FunctionalityEnum;
+import tech.synelia.quizapp.utils.enums.StageType;
+import tech.synelia.quizapp.utils.exception.EntityNotFoundException;
+import tech.synelia.quizapp.utils.exception.InternalErrorException;
+import tech.synelia.quizapp.utils.exception.InvalidEntityException;
 
 @Log
 @Component
@@ -43,15 +70,13 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
     @Autowired
     private PipelineTemplateBusiness pipelineTemplateBusiness;
     @Autowired
+    private PermissionService permissionService;
+    @Autowired
     private FunctionalError functionalError;
-    @Autowired
-    private TechnicalError technicalError;
-    @Autowired
-    private ExceptionUtils exceptionUtils;
     @PersistenceContext
     private EntityManager em;
 
-    private SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     public Response<ApplicationProgressDto> create(Request<ApplicationProgressDto> request, Locale locale) throws ParseException, JsonProcessingException {
@@ -284,53 +309,79 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
     /**
      * Avancer à l'étape suivante : passer l'étape courante à PASSED et la suivante à IN_PROGRESS
      */
+    public Response<ApplicationProgressDto> advanceToNextStageForUser(Integer applicationId, Integer userId, Locale locale) throws ParseException {
+        ensureCampaignMutationAllowed(applicationId, userId, locale, "faire avancer cette candidature");
+        return advanceToNextStage(applicationId, userId, locale);
+    }
+
     public Response<ApplicationProgressDto> advanceToNextStage(Integer applicationId, Integer userId, Locale locale) throws ParseException {
         log.info("----begin advanceToNextStage-----");
-        Response<ApplicationProgressDto> response = new Response<>();
 
         // Trouver l'étape IN_PROGRESS
         ApplicationProgress current = applicationProgressRepository.findCurrentStage(applicationId);
         if (current != null) {
-            current.setProgressStatus("PASSED");
-            current.setCompletedAt(Utilities.getCurrentDate());
-            current.setDecidedBy(userRepository.findOne(userId, false));
-            current.setUpdatedAt(Utilities.getCurrentDate());
-            current.setUpdatedBy(userId);
-            applicationProgressRepository.save(current);
+            return passStage(applicationId, current.getPipelineStage().getId(), userId, null, null, locale);
         }
 
-        // Trouver la prochaine étape PENDING
+        // Aucun stage en cours : démarrer simplement la première étape restante.
         List<ApplicationProgress> pending = applicationProgressRepository.findPendingByApplicationId(applicationId);
         if (pending != null && !pending.isEmpty()) {
-            ApplicationProgress next = pending.get(0);
-            next.setProgressStatus("IN_PROGRESS");
-            next.setStartedAt(Utilities.getCurrentDate());
-            next.setUpdatedAt(Utilities.getCurrentDate());
-            next.setUpdatedBy(userId);
-            applicationProgressRepository.save(next);
+            activateStage(pending.get(0), userId);
         }
 
-        // Synchroniser applicationStatus
         syncApplicationStatus(applicationId);
+        return getProgressForApplication(applicationId, false, locale);
+    }
 
-        // Retourner le progrès complet
+    public Response<ApplicationProgressDto> passStage(Integer applicationId, Integer stageId, Integer decidedById, Double score, String notes, Locale locale) throws ParseException {
+        log.info("----begin passStage-----");
+
+        ApplicationProgress progress = getProgressOrThrow(applicationId, stageId, locale);
+        ensureStageCanBeCompleted(progress, locale);
+
+        if (!"PASSED".equals(progress.getProgressStatus())) {
+            if (progress.getStartedAt() == null) {
+                progress.setStartedAt(Utilities.getCurrentDate());
+            }
+            progress.setProgressStatus("PASSED");
+            progress.setCompletedAt(Utilities.getCurrentDate());
+            progress.setNotes(notes);
+            progress.setScore(score);
+            if (decidedById != null) {
+                User decidedBy = userRepository.findOne(decidedById, false);
+                if (decidedBy != null) {
+                    progress.setDecidedBy(decidedBy);
+                }
+            }
+            progress.setUpdatedAt(Utilities.getCurrentDate());
+            progress.setUpdatedBy(decidedById);
+            applicationProgressRepository.save(progress);
+        }
+
+        activateNextPendingStage(applicationId, progress.getPipelineStage().getStageOrder(), decidedById);
+        syncApplicationStatus(applicationId);
         return getProgressForApplication(applicationId, false, locale);
     }
 
     /**
      * Échouer une étape : marquer FAILED + SKIPPED pour les suivantes si éliminatoire
      */
+    public Response<ApplicationProgressDto> failStageForUser(Integer applicationId, Integer stageId, Integer decidedById, String notes, Locale locale) throws ParseException {
+        ensureCampaignMutationAllowed(applicationId, decidedById, locale, "refuser cette étape de pipeline");
+        return failStage(applicationId, stageId, decidedById, notes, locale);
+    }
+
     public Response<ApplicationProgressDto> failStage(Integer applicationId, Integer stageId, Integer decidedById, String notes, Locale locale) throws ParseException {
         log.info("----begin failStage-----");
-        Response<ApplicationProgressDto> response = new Response<>();
 
-        ApplicationProgress progress = applicationProgressRepository.findByApplicationIdAndPipelineStageId(applicationId, stageId);
-        if (progress == null) {
-            throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("application_progress pour application " + applicationId + " et stage " + stageId, locale));
-        }
+        ApplicationProgress progress = getProgressOrThrow(applicationId, stageId, locale);
+        ensureStageCanBeCompleted(progress, locale);
 
         User decidedBy = decidedById != null ? userRepository.findOne(decidedById, false) : null;
 
+        if (progress.getStartedAt() == null) {
+            progress.setStartedAt(Utilities.getCurrentDate());
+        }
         progress.setProgressStatus("FAILED");
         progress.setCompletedAt(Utilities.getCurrentDate());
         progress.setNotes(notes);
@@ -347,14 +398,17 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
                 if (ap.getPipelineStage().getStageOrder() > failedStage.getStageOrder()
                         && "PENDING".equals(ap.getProgressStatus())) {
                     ap.setProgressStatus("SKIPPED");
+                    ap.setCompletedAt(Utilities.getCurrentDate());
+                    ap.setNotes("Ignoré après échec d'une étape éliminatoire");
                     ap.setUpdatedAt(Utilities.getCurrentDate());
                     ap.setUpdatedBy(decidedById);
                     applicationProgressRepository.save(ap);
                 }
             }
+        } else {
+            activateNextPendingStage(applicationId, failedStage.getStageOrder(), decidedById);
         }
 
-        // Synchroniser applicationStatus
         syncApplicationStatus(applicationId);
 
         return getProgressForApplication(applicationId, false, locale);
@@ -363,24 +417,248 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
     /**
      * Sauter une étape (pour étapes non requises)
      */
-    public Response<ApplicationProgressDto> skipStage(Integer applicationId, Integer stageId, Integer userId, Locale locale) throws ParseException {
-        log.info("----begin skipStage-----");
-        Response<ApplicationProgressDto> response = new Response<>();
+    public Response<ApplicationProgressDto> skipStageForUser(Integer applicationId, Integer stageId, Integer userId, String notes, Locale locale) throws ParseException {
+        ensureCampaignMutationAllowed(applicationId, userId, locale, "ignorer cette étape de pipeline");
+        return skipStage(applicationId, stageId, userId, notes, locale);
+    }
 
-        ApplicationProgress progress = applicationProgressRepository.findByApplicationIdAndPipelineStageId(applicationId, stageId);
-        if (progress == null) {
-            throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("application_progress pour application " + applicationId + " et stage " + stageId, locale));
+    public Response<ApplicationProgressDto> skipStage(Integer applicationId, Integer stageId, Integer userId, String notes, Locale locale) throws ParseException {
+        log.info("----begin skipStage-----");
+
+        ApplicationProgress progress = getProgressOrThrow(applicationId, stageId, locale);
+        ensureStageCanBeCompleted(progress, locale);
+
+        if (!isSkipAllowed(progress.getPipelineStage())) {
+            throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION(
+                    "Cette étape obligatoire ne peut pas être ignorée",
+                    locale));
         }
 
         progress.setProgressStatus("SKIPPED");
+        if (progress.getStartedAt() == null) {
+            progress.setStartedAt(Utilities.getCurrentDate());
+        }
+        progress.setCompletedAt(Utilities.getCurrentDate());
+        progress.setNotes(notes);
+        if (userId != null) {
+            User decidedBy = userRepository.findOne(userId, false);
+            if (decidedBy != null) {
+                progress.setDecidedBy(decidedBy);
+            }
+        }
         progress.setUpdatedAt(Utilities.getCurrentDate());
         progress.setUpdatedBy(userId);
         applicationProgressRepository.save(progress);
 
-        // Synchroniser applicationStatus
+        activateNextPendingStage(applicationId, progress.getPipelineStage().getStageOrder(), userId);
         syncApplicationStatus(applicationId);
 
         return getProgressForApplication(applicationId, false, locale);
+    }
+
+    public Response<ApplicationProgressDto> rollbackStageForUser(Integer applicationId, Integer stageId, Integer userId, String notes, Locale locale) throws ParseException {
+        ensureCampaignRollbackAllowed(applicationId, userId, locale);
+        return rollbackStage(applicationId, stageId, userId, notes, locale);
+    }
+
+    public Response<ApplicationProgressDto> rollbackStage(Integer applicationId, Integer stageId, Integer userId, String notes, Locale locale) throws ParseException {
+        log.info("----begin rollbackStage-----");
+
+        ApplicationProgress targetProgress = getProgressOrThrow(applicationId, stageId, locale);
+        List<ApplicationProgress> allProgress = applicationProgressRepository.findByApplicationIdOrderByStageOrder(applicationId);
+        if (allProgress == null || allProgress.isEmpty()) {
+            throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("application_progress pour application -> " + applicationId, locale));
+        }
+
+        Integer targetStageOrder = targetProgress.getPipelineStage() != null ? targetProgress.getPipelineStage().getStageOrder() : null;
+        if (targetStageOrder == null) {
+            throw new InvalidEntityException(functionalError.REQUEST_FAIL("Stage cible invalide pour le rollback du pipeline", locale));
+        }
+
+        boolean hasProgressToRewind = !"PENDING".equals(targetProgress.getProgressStatus());
+        if (!hasProgressToRewind) {
+            for (ApplicationProgress progress : allProgress) {
+                if (progress.getPipelineStage() != null
+                        && progress.getPipelineStage().getStageOrder() > targetStageOrder
+                        && !"PENDING".equals(progress.getProgressStatus())) {
+                    hasProgressToRewind = true;
+                    break;
+                }
+            }
+        }
+
+        if (!hasProgressToRewind) {
+            throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION(
+                    "Aucun retour arriere utile n'est possible pour cette étape",
+                    locale));
+        }
+
+        for (ApplicationProgress progress : allProgress) {
+            if (progress.getPipelineStage() == null || progress.getPipelineStage().getStageOrder() == null) {
+                continue;
+            }
+
+            int stageOrder = progress.getPipelineStage().getStageOrder();
+            if (stageOrder < targetStageOrder) {
+                continue;
+            }
+
+            if (stageOrder == targetStageOrder) {
+                progress.setProgressStatus("IN_PROGRESS");
+                if (progress.getStartedAt() == null) {
+                    progress.setStartedAt(Utilities.getCurrentDate());
+                }
+                progress.setCompletedAt(null);
+                progress.setScore(null);
+                progress.setNotes(notes);
+                progress.setDecidedBy(null);
+            } else {
+                progress.setProgressStatus("PENDING");
+                progress.setStartedAt(null);
+                progress.setCompletedAt(null);
+                progress.setScore(null);
+                progress.setNotes(null);
+                progress.setDecidedBy(null);
+            }
+
+            progress.setUpdatedAt(Utilities.getCurrentDate());
+            progress.setUpdatedBy(userId);
+            applicationProgressRepository.save(progress);
+        }
+
+        syncApplicationStatus(applicationId);
+        return getProgressForApplication(applicationId, false, locale);
+    }
+
+    public void updateStageScore(Integer applicationId, String stageType, Double score, Integer userId) {
+        updateStageScore(applicationId, stageType, score, userId, true);
+    }
+
+    public void syncInterviewEvaluationStages(Integer applicationId, Double score, boolean interviewCompleted, Integer userId, Locale locale) throws ParseException {
+        if (applicationId == null) {
+            return;
+        }
+
+        ApplicationProgress interviewProgress = findProgressByStageType(applicationId, StageType.INTERVIEW.getValue());
+        ApplicationProgress evaluationProgress = findProgressByStageType(applicationId, StageType.EVALUATION.getValue());
+        if (interviewProgress == null && evaluationProgress == null) {
+            return;
+        }
+
+        double normalizedScore = score != null ? score : 0d;
+
+        if (evaluationProgress != null) {
+            updateStageScore(applicationId, StageType.EVALUATION.getValue(), normalizedScore, userId, false);
+            if (!interviewCompleted) {
+                return;
+            }
+
+            if (interviewProgress != null) {
+                ensureStagePassed(applicationId, interviewProgress, userId, null, "Entretien terminé", locale);
+            }
+
+            resolveScoredStage(
+                    applicationId,
+                    evaluationProgress,
+                    normalizedScore,
+                    userId,
+                    locale,
+                    "Évaluation validée",
+                    "Évaluation insuffisante");
+            return;
+        }
+
+        if (interviewProgress != null) {
+            updateStageScore(applicationId, StageType.INTERVIEW.getValue(), normalizedScore, userId, false);
+            if (interviewCompleted) {
+                resolveScoredStage(
+                        applicationId,
+                        interviewProgress,
+                        normalizedScore,
+                        userId,
+                        locale,
+                        "Entretien validé",
+                        "Entretien échoué");
+            }
+        }
+    }
+
+    private void updateStageScore(Integer applicationId, String stageType, Double score, Integer userId, boolean activateIfPending) {
+        if (applicationId == null || !Utilities.notBlank(stageType) || score == null) {
+            return;
+        }
+
+        ApplicationProgress progress = findProgressByStageType(applicationId, stageType);
+        if (progress == null) {
+            return;
+        }
+
+        if (activateIfPending && "PENDING".equals(progress.getProgressStatus())) {
+            activateStage(progress, userId);
+        }
+
+        progress.setScore(score);
+        progress.setUpdatedAt(Utilities.getCurrentDate());
+        progress.setUpdatedBy(userId);
+        applicationProgressRepository.save(progress);
+        syncApplicationStatus(applicationId);
+    }
+
+    private void ensureStagePassed(Integer applicationId, ApplicationProgress progress, Integer userId, Double score, String notes, Locale locale) throws ParseException {
+        if (progress == null || progress.getPipelineStage() == null) {
+            return;
+        }
+
+        if (score != null) {
+            updateStageScore(applicationId, progress.getPipelineStage().getStageType(), score, userId, false);
+        }
+
+        if (!"PASSED".equals(progress.getProgressStatus())) {
+            passStage(applicationId, progress.getPipelineStage().getId(), userId, score, notes, locale);
+        }
+    }
+
+    private void resolveScoredStage(Integer applicationId, ApplicationProgress progress, double score, Integer userId, Locale locale, String passNotes, String failNotes) throws ParseException {
+        if (progress == null || progress.getPipelineStage() == null) {
+            return;
+        }
+
+        updateStageScore(applicationId, progress.getPipelineStage().getStageType(), score, userId, false);
+        double passingScore = resolvePassingScore(progress.getPipelineStage(), 50.0d);
+        if (score >= passingScore) {
+            ensureStagePassed(applicationId, progress, userId, score, passNotes, locale);
+            return;
+        }
+
+        if (!"FAILED".equals(progress.getProgressStatus())) {
+            failStage(applicationId, progress.getPipelineStage().getId(), userId, failNotes, locale);
+        }
+    }
+
+    public double resolvePassingScore(PipelineStage stage, double defaultValue) {
+        JsonNode config = readStageConfig(stage);
+        if (config == null || !config.has("passingScore") || !config.get("passingScore").isNumber()) {
+            return defaultValue;
+        }
+
+        double configuredScore = config.get("passingScore").asDouble(defaultValue);
+        if (configuredScore < 0d || configuredScore > 100d) {
+            return defaultValue;
+        }
+        return configuredScore;
+    }
+
+    public Integer resolveInactivityTimeoutMinutes(PipelineStage stage, Integer defaultValue) {
+        JsonNode config = readStageConfig(stage);
+        if (config == null || !config.has("inactivityTimeoutMinutes") || !config.get("inactivityTimeoutMinutes").isNumber()) {
+            return defaultValue;
+        }
+
+        int configuredTimeout = config.get("inactivityTimeoutMinutes").asInt(defaultValue != null ? defaultValue : 0);
+        if (configuredTimeout < 0) {
+            return defaultValue;
+        }
+        return configuredTimeout == 0 ? null : configuredTimeout;
     }
 
     /**
@@ -565,43 +843,52 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
         List<ApplicationProgress> progress = applicationProgressRepository.findByApplicationIdOrderByStageOrder(applicationId);
         if (progress == null || progress.isEmpty()) return "PENDING";
 
-        // Trouver l'étape la plus avancée avec un état significatif
-        String lastSignificantStageType = null;
-        String lastSignificantStatus = null;
-        boolean hasFailed = false;
-        boolean allDone = true;
+        String currentStageType = null;
+        boolean hasTerminalFailure = false;
+        String failureStageType = null;
+        boolean allStagesResolved = true;
+        boolean hasStarted = false;
+        boolean preselectionPassed = false;
 
         for (ApplicationProgress ap : progress) {
             String pStatus = ap.getProgressStatus();
-            String sType = ap.getPipelineStage() != null ? ap.getPipelineStage().getStageType() : null;
+            PipelineStage stage = ap.getPipelineStage();
+            String sType = stage != null ? stage.getStageType() : null;
 
-            if ("FAILED".equals(pStatus)) {
-                hasFailed = true;
-                lastSignificantStageType = sType;
-                lastSignificantStatus = pStatus;
-            } else if ("PASSED".equals(pStatus) || "IN_PROGRESS".equals(pStatus)) {
-                lastSignificantStageType = sType;
-                lastSignificantStatus = pStatus;
+            if ("IN_PROGRESS".equals(pStatus)) {
+                currentStageType = sType;
+                hasStarted = true;
             }
-            if (!"PASSED".equals(pStatus) && !"SKIPPED".equals(pStatus)) {
-                allDone = false;
+            if ("PASSED".equals(pStatus) || "FAILED".equals(pStatus) || "SKIPPED".equals(pStatus)) {
+                hasStarted = true;
+            }
+            if ("PASSED".equals(pStatus) && StageType.PRESELECTION.getValue().equals(sType)) {
+                preselectionPassed = true;
+            }
+            if (!isResolvedStatus(pStatus)) {
+                allStagesResolved = false;
+            }
+            if ("FAILED".equals(pStatus) && isTerminalFailure(stage)) {
+                hasTerminalFailure = true;
+                failureStageType = sType;
             }
         }
 
-        // Candidature rejetée — identifier d'où vient le rejet
-        if (hasFailed) {
-            if ("PRESELECTION".equals(lastSignificantStageType)) return "PRE_SCREEN_REJECTED";
-            if ("DECISION".equals(lastSignificantStageType)) return "FINAL_REJECTED";
-            return "PRE_SCREEN_REJECTED"; // défaut si type inconnu
+        if (hasTerminalFailure) {
+            if (StageType.DECISION.getValue().equals(failureStageType)) return "FINAL_REJECTED";
+            if (StageType.PRESELECTION.getValue().equals(failureStageType)) return "PRE_SCREEN_REJECTED";
+            return "PRE_SCREEN_REJECTED";
         }
 
-        // Toutes les étapes terminées (PASSED ou SKIPPED) = accepté
-        if (allDone) return "FINAL_ACCEPTED";
+        if (allStagesResolved) return "FINAL_ACCEPTED";
 
-        // Sinon, en cours — déterminer le statut basé sur l'étape courante
-        if ("PRESELECTION".equals(lastSignificantStageType) && "PASSED".equals(lastSignificantStatus)) return "PRE_SCREEN_ACCEPTED";
-        if ("INTERVIEW".equals(lastSignificantStageType)) return "INTERVIEWING";
-        if ("IN_PROGRESS".equals(lastSignificantStatus)) return "SUBMITTED";
+        if (preselectionPassed) return "PRE_SCREEN_ACCEPTED";
+
+        if (StageType.INTERVIEW.getValue().equals(currentStageType) || StageType.EVALUATION.getValue().equals(currentStageType)) {
+            return "INTERVIEWING";
+        }
+
+        if (hasStarted) return "SUBMITTED";
 
         return "PENDING";
     }
@@ -619,5 +906,189 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
             applicationsRepository.save(app);
             log.info("syncApplicationStatus: application " + applicationId + " → " + newStatus);
         }
+    }
+
+    private ApplicationProgress getProgressOrThrow(Integer applicationId, Integer stageId, Locale locale) {
+        ApplicationProgress progress = applicationProgressRepository.findByApplicationIdAndPipelineStageId(applicationId, stageId);
+        if (progress == null) {
+            throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST(
+                    "application_progress pour application " + applicationId + " et stage " + stageId,
+                    locale));
+        }
+        return progress;
+    }
+
+    private void ensureStageCanBeCompleted(ApplicationProgress targetProgress, Locale locale) {
+        List<ApplicationProgress> allProgress = applicationProgressRepository.findByApplicationIdOrderByStageOrder(
+                targetProgress.getApplications().getId());
+
+        for (ApplicationProgress progress : allProgress) {
+            if (progress.getId() != null && progress.getId().equals(targetProgress.getId())) {
+                break;
+            }
+
+            PipelineStage stage = progress.getPipelineStage();
+            if (stage != null
+                    && Boolean.TRUE.equals(stage.getIsRequired())
+                    && !isResolvedStatus(progress.getProgressStatus())) {
+                throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION(
+                        "Les étapes obligatoires précédentes doivent être traitées avant de finaliser cette étape",
+                        locale));
+            }
+        }
+    }
+
+    private void activateNextPendingStage(Integer applicationId, Integer currentStageOrder, Integer userId) {
+        ApplicationProgress activeProgress = applicationProgressRepository.findCurrentStage(applicationId);
+        if (activeProgress != null) {
+            return;
+        }
+
+        List<ApplicationProgress> pendingStages = applicationProgressRepository.findPendingByApplicationId(applicationId);
+        if (pendingStages == null || pendingStages.isEmpty()) {
+            return;
+        }
+
+        for (ApplicationProgress pendingStage : pendingStages) {
+            if (pendingStage.getPipelineStage() != null
+                    && pendingStage.getPipelineStage().getStageOrder() > currentStageOrder) {
+                activateStage(pendingStage, userId);
+                return;
+            }
+        }
+    }
+
+    private void activateStage(ApplicationProgress progress, Integer userId) {
+        progress.setProgressStatus("IN_PROGRESS");
+        if (progress.getStartedAt() == null) {
+            progress.setStartedAt(Utilities.getCurrentDate());
+        }
+        progress.setUpdatedAt(Utilities.getCurrentDate());
+        progress.setUpdatedBy(userId);
+        applicationProgressRepository.save(progress);
+    }
+
+    private ApplicationProgress findProgressByStageType(Integer applicationId, String stageType) {
+        List<ApplicationProgress> progressList = applicationProgressRepository.findByApplicationIdOrderByStageOrder(applicationId);
+        if (progressList == null || progressList.isEmpty()) {
+            return null;
+        }
+
+        for (ApplicationProgress progress : progressList) {
+            if (progress.getPipelineStage() != null
+                    && stageType.equalsIgnoreCase(progress.getPipelineStage().getStageType())) {
+                return progress;
+            }
+        }
+        return null;
+    }
+
+    private boolean isResolvedStatus(String progressStatus) {
+        return "PASSED".equals(progressStatus)
+                || "FAILED".equals(progressStatus)
+                || "SKIPPED".equals(progressStatus);
+    }
+
+    private boolean isTerminalFailure(PipelineStage stage) {
+        if (stage == null) {
+            return false;
+        }
+
+        String stageType = stage.getStageType();
+        return Boolean.TRUE.equals(stage.getIsEliminatory())
+                || StageType.PRESELECTION.getValue().equals(stageType)
+                || StageType.DECISION.getValue().equals(stageType);
+    }
+
+    private boolean isSkipAllowed(PipelineStage stage) {
+        if (stage == null) {
+            return false;
+        }
+        if (!Boolean.TRUE.equals(stage.getIsRequired())) {
+            return true;
+        }
+
+        JsonNode config = readStageConfig(stage);
+        return config != null && config.path("allowSkip").asBoolean(false);
+    }
+
+    private JsonNode readStageConfig(PipelineStage stage) {
+        if (stage == null || !Utilities.notBlank(stage.getConfigJson())) {
+            return null;
+        }
+
+        try {
+            JsonNode config = objectMapper.readTree(stage.getConfigJson());
+            return config != null && config.isObject() ? config : null;
+        } catch (Exception exception) {
+            log.warning("Config JSON invalide ignorée pour le stage " + stage.getId() + ": " + exception.getMessage());
+            return null;
+        }
+    }
+
+    private void ensureCampaignMutationAllowed(Integer applicationId, Integer userId, Locale locale, String actionLabel) {
+        if (userId == null) {
+            throw new InvalidEntityException(functionalError.FIELD_EMPTY("authenticatedUserId", locale));
+        }
+
+        Applications application = applicationsRepository.findOne(applicationId, false);
+        if (application == null) {
+            throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("applications id -> " + applicationId, locale));
+        }
+
+        Campaigns campaign = getCampaignForApplication(application, locale);
+        boolean hasGlobalRight = permissionService.hasAnyPermission(
+                userId,
+                FunctionalityEnum.UPDATE_APPLICATION_PROGRESS.getValue(),
+                FunctionalityEnum.ADVANCE_PIPELINE.getValue());
+        boolean hasCampaignRight = permissionService.hasAnyEntityPermission(
+                userId,
+                "CAMPAIGN",
+                campaign.getId(),
+                "ADMIN",
+                "ADVANCE_PIPELINE");
+
+        if (!hasGlobalRight && !hasCampaignRight) {
+            throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+                    "Accès refusé: droits insuffisants pour " + actionLabel,
+                    locale));
+        }
+    }
+
+    private void ensureCampaignRollbackAllowed(Integer applicationId, Integer userId, Locale locale) {
+        if (userId == null) {
+            throw new InvalidEntityException(functionalError.FIELD_EMPTY("authenticatedUserId", locale));
+        }
+
+        Applications application = applicationsRepository.findOne(applicationId, false);
+        if (application == null) {
+            throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("applications id -> " + applicationId, locale));
+        }
+
+        Campaigns campaign = getCampaignForApplication(application, locale);
+        boolean hasGlobalRight = permissionService.hasPermission(
+                userId,
+                FunctionalityEnum.MIGRATE_CANDIDATE_PIPELINE.getValue());
+        boolean hasCampaignRight = permissionService.hasEntityPermission(
+                userId,
+                "CAMPAIGN",
+                campaign.getId(),
+                "ADMIN");
+
+        if (!hasGlobalRight && !hasCampaignRight) {
+            throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+                    "Accès refusé: droits insuffisants pour revenir en arrière sur cette candidature",
+                    locale));
+        }
+    }
+
+    private Campaigns getCampaignForApplication(Applications application, Locale locale) {
+        SourceToken sourceToken = application.getSourceToken();
+        if (sourceToken == null || sourceToken.getCampaigns() == null || sourceToken.getCampaigns().getId() == null) {
+            throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST(
+                    "campaign linked to application -> " + application.getId(),
+                    locale));
+        }
+        return sourceToken.getCampaigns();
     }
 }

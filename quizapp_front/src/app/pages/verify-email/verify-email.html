@@ -19,6 +19,9 @@
         </div>
         <h2>Email vérifié avec succès !</h2>
         <p>Votre adresse email a été confirmée.</p>
+        @if (trackingCode()) {
+          <p class="tracking-code-reminder">Code de suivi à conserver : <strong>{{ trackingCode() }}</strong></p>
+        }
         <p class="redirect-message">Vous allez être redirigé vers le questionnaire dans quelques instants...</p>
       </div>
     }

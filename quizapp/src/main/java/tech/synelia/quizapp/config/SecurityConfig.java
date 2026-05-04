@@ -1,9 +1,12 @@
 package tech.synelia.quizapp.config;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
@@ -11,10 +14,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import tech.synelia.quizapp.security.JwtAuthenticationFilter;
 
-import java.util.Arrays;
-import java.util.List;
+import tech.synelia.quizapp.security.JwtAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -37,7 +38,7 @@ public class SecurityConfig {
                 // Endpoints publics (connexion, candidature, QEEL, Swagger)
                 .requestMatchers("/userManager/connexion").permitAll()
                 .requestMatchers("/api/qeel/**", "/ws/**").permitAll()
-                .requestMatchers("/applications/create", "/applications/verifyEmail/**", "/applications/track").permitAll()
+                    .requestMatchers("/applications/create", "/applications/verifyEmail/**", "/applications/track", "/applications/respond-interview", "/applications/submit-ask").permitAll()
                 .requestMatchers("/candidateToken/**", "/sourceToken/**").permitAll()
                 .requestMatchers("/candidateanswer/**").permitAll()
                 .requestMatchers("/legalText/getByCriteria").permitAll()

@@ -122,7 +122,7 @@ export class EvaluationsListComponent implements OnInit, OnDestroy {
     forkJoin({
       interviews: this.interviewService.getAllInterviews(),
       applications: this.applicationService.getApplicationsByCriteria({}),
-      campaigns: this.campaignService.getMyCampaigns()
+      campaigns: this.campaignService.getMyCampaigns({ isDeleted: false })
     })
       .pipe(takeUntil(this.destroy$))
       .subscribe({

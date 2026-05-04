@@ -78,6 +78,12 @@ public class Campaigns implements Serializable, Cloneable {
     @Column(name="is_timed", nullable=false, columnDefinition="BOOLEAN DEFAULT FALSE")
     private Boolean    isTimed      ;
 
+    @Column(name="form_assignment_strategy", length=30)
+    private String     formAssignmentStrategy ;
+
+    @Column(name="form_assignment_exhaustion_policy", length=20)
+    private String     formAssignmentExhaustionPolicy ;
+
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name="created_at")
     private Date       createdAt    ;

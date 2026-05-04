@@ -21,6 +21,7 @@ interface RecruiterAccess {
   canPlanify: boolean;
   canAcceptPreScreen: boolean;
   canAcceptFinal: boolean;
+  follow: boolean;
   isAdmin?: boolean; // Marque si c'est un admin
   isCreator?: boolean; // Marque si c'est le créateur (non supprimable par personne)
 }
@@ -45,6 +46,7 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
   recruiterSearchControl = new FormControl('');
   searchResults = signal<User[]>([]);
   selectedRecruiters = signal<RecruiterAccess[]>([]);
+  initialRecruiterIds = signal<Set<number>>(new Set());
   showSearchDropdown = signal(false);
   searching = signal(false);
   
@@ -54,6 +56,8 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
   selectedSpeciality = signal<Speciality | null>(null);
   showSpecialityDropdown = signal(false);
   searchingSpeciality = signal(false);
+  checkingSpecialityAvailability = signal(false);
+  hasAvailableSpecialities = signal(true);
   
   // Pipeline templates
   pipelineTemplates = signal<PipelineTemplate[]>([]);
@@ -91,6 +95,7 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
     this.initForm();
     this.setupSearch();
     this.setupSpecialitySearch();
+    this.loadSpecialityAvailability();
     this.loadPipelineTemplates();
     
     // Vérifier si on est en mode édition
@@ -303,6 +308,27 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
     this.campaignForm.patchValue({ specialityId: null });
   }
 
+  loadSpecialityAvailability(): void {
+    this.checkingSpecialityAvailability.set(true);
+    this.specialityService.getAll({ isDeleted: false, size: 1, page: 0 })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          const totalElements = response.totalElements || response.items.length;
+          this.hasAvailableSpecialities.set(totalElements > 0);
+          this.checkingSpecialityAvailability.set(false);
+        },
+        error: () => {
+          this.hasAvailableSpecialities.set(true);
+          this.checkingSpecialityAvailability.set(false);
+        }
+      });
+  }
+
+  openSpecialities(): void {
+    this.router.navigate(['/dashboard/specialities']);
+  }
+
   // ── Pipeline Template ──────────────────────────────
 
   loadPipelineTemplates(): void {
@@ -422,7 +448,8 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
       canDelete: false,   // Décoché par défaut
       canPlanify: false,  // Décoché par défaut
       canAcceptPreScreen: false, // Décoché par défaut
-      canAcceptFinal: false      // Décoché par défaut
+      canAcceptFinal: false,     // Décoché par défaut
+      follow: true
     };
     
     this.selectedRecruiters.update(recruiters => [...recruiters, recruiterAccess]);
@@ -542,6 +569,7 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
               canPlanify: access.canPlanify || false,
               canAcceptPreScreen: access.canAcceptPreScreen || false,
               canAcceptFinal: access.canAcceptFinal || false,
+              follow: access.follow ?? true,
               isAdmin: access.isAdmin || false,
               isCreator: access.isCreator || false // Marquer si c'est le créateur
             };
@@ -549,6 +577,7 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
           
           console.log('✅ Recruteurs chargés (incluant admin):', recruiters);
           this.selectedRecruiters.set(recruiters);
+          this.initialRecruiterIds.set(new Set(recruiters.filter(recruiter => !recruiter.isCreator).map(recruiter => recruiter.user.id)));
         },
         error: (error) => {
           console.error('❌ Erreur chargement recruteurs:', error);
@@ -654,30 +683,18 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
         if (campaignId) {
           console.log('📝 Campagne créée avec ID:', campaignId);
           
-          // En mode édition, le backend a déjà recréé les campaign_crud
-          // On sauvegarde les accès uniquement en mode création
-          if (!this.isEditMode) {
-            // Sauvegarder les accès recruteurs et créer les notifications
-            // ATTENDRE que tout soit terminé avant de naviguer
-            this.saveCampaignAccessAndNotifications(campaignId, parseInt(currentUser.id)).subscribe({
-              next: () => {
-                console.log('✅ Tous les accès et notifications créés');
-                this.saving.set(false);
-                this.router.navigate(['/dashboard/campaigns']);
-              },
-              error: (error) => {
-                console.error('❌ Erreur lors de la sauvegarde des accès:', error);
-                this.saving.set(false);
-                // Naviguer quand même car la campagne est créée
-                this.router.navigate(['/dashboard/campaigns']);
-              }
-            });
-          } else {
-            // En mode édition, on navigue directement
-            console.log('✅ Mode édition: campaign_crud déjà gérés par le backend');
-            this.saving.set(false);
-            this.router.navigate(['/dashboard/campaigns']);
-          }
+      this.saveCampaignAccessAndNotifications(campaignId, parseInt(currentUser.id)).subscribe({
+        next: () => {
+          console.log('✅ Tous les accès et notifications sont synchronisés');
+          this.saving.set(false);
+          this.router.navigate(['/dashboard/campaigns']);
+        },
+        error: (error) => {
+          console.error('❌ Erreur lors de la sauvegarde des accès:', error);
+          this.saving.set(false);
+          this.router.navigate(['/dashboard/campaigns']);
+        }
+      });
         } else {
           console.error('❌ Impossible de récupérer l\'ID de la campagne');
           this.saving.set(false);
@@ -716,8 +733,14 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
     allAccessData.push(creatorAccess);
     console.log('👑 Créateur ajouté avec tous les droits:', creatorAccess);
     
+    const initialRecruiterIds = this.initialRecruiterIds();
+
     // 2. Ajouter les recruteurs sélectionnés (is_admin = false)
     recruiters.forEach(recruiter => {
+      if (recruiter.user.id === currentUserId || recruiter.isCreator) {
+        return;
+      }
+
       const accessData = {
         campaignId,
         userId: recruiter.user.id,
@@ -728,32 +751,34 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
         canAcceptPreScreen: recruiter.canAcceptPreScreen,
         canAcceptFinal: recruiter.canAcceptFinal,
         isAdmin: false,
-        follow: true,
+        follow: recruiter.follow,
         createdBy: currentUserId
         // searchString sera généré automatiquement par le backend
       };
       allAccessData.push(accessData);
       
-      // 3. Créer une notification pour chaque recruteur (sauf le créateur)
-      const notificationData = {
-        notifType: 'ADDED_TO_CAMPAIGN',
-        notifActor: currentUserId,
-        notifLink: `/dashboard/campaigns/${campaignId}`,
-        isRead: false,
-        createdBy: 1,
-        userId: recruiter.user.id,
-        objectTableName: 'campaigns', // Lier à la table campaigns
-        objectTableId: campaignId     // Lier à cette campagne spécifique
-        // searchString sera généré automatiquement par le backend
-      };
-      
-      // Ajouter l'observable de notification à la liste
-      notificationObservables.push(
-        this.campaignService.createNotification(notificationData)
-      );
+      const shouldNotify = !this.isEditMode || !initialRecruiterIds.has(recruiter.user.id);
+      if (shouldNotify) {
+        // 3. Créer une notification pour chaque nouveau recruteur (sauf le créateur)
+        const notificationData = {
+          notifType: 'ADDED_TO_CAMPAIGN',
+          notifActor: currentUserId,
+          notifLink: `/dashboard/campaigns/${campaignId}`,
+          isRead: false,
+          createdBy: 1,
+          userId: recruiter.user.id,
+          objectTableName: 'campaigns',
+          objectTableId: campaignId
+        };
+
+        notificationObservables.push(
+          this.campaignService.createNotification(notificationData)
+        );
+
+        console.log('📬 Notification créée:', notificationData);
+      }
       
       console.log('👤 Recruteur ajouté:', accessData);
-      console.log('📬 Notification créée:', notificationData);
     });
     
     // 4. Sauvegarder tous les accès et notifications en parallèle et attendre qu'ils soient tous terminés

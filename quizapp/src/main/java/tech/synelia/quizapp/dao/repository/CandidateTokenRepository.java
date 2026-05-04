@@ -49,6 +49,9 @@ public interface CandidateTokenRepository extends JpaRepository<CandidateToken, 
 	 */
 	@Query("select e from CandidateToken e where e.tokenString = :tokenString and e.isDeleted = :isDeleted")
 	List<CandidateToken> findByTokenString(@Param("tokenString")String tokenString, @Param("isDeleted")Boolean isDeleted);
+
+	@Query("select e from CandidateToken e where lower(e.tokenString) = lower(:tokenString) and e.isDeleted = :isDeleted")
+	List<CandidateToken> findByTokenStringIgnoreCase(@Param("tokenString")String tokenString, @Param("isDeleted")Boolean isDeleted);
 	/**
 	 * Finds CandidateToken by using createdAt as a search criteria.
 	 * 

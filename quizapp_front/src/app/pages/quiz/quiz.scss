@@ -249,13 +249,46 @@ $navbar-height: 70px;
         border-radius: var(--radius);
         border: 1px solid var(--border);
 
+        .progress-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: var(--spacing-md);
+          margin-bottom: var(--spacing-md);
+          flex-wrap: wrap;
+        }
+
         .question-counter {
           color: var(--text-secondary);
           font-size: var(--font-size-sm);
-          margin-bottom: var(--spacing-md);
           font-weight: var(--font-weight-medium);
           text-transform: uppercase;
           letter-spacing: 0.05em;
+        }
+
+        .timer-chip {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: var(--spacing-xs) var(--spacing-md);
+          border-radius: var(--radius-full);
+          background: rgba(var(--primary-rgb), 0.1);
+          color: var(--primary);
+          border: 1px solid rgba(var(--primary-rgb), 0.2);
+          font-size: var(--font-size-sm);
+          font-weight: var(--font-weight-semibold);
+
+          &.warning {
+            background: var(--surface-secondary);
+            color: var(--warning);
+            border-color: var(--warning);
+          }
+
+          &.danger {
+            background: rgba(var(--error-rgb), 0.12);
+            color: var(--error);
+            border-color: rgba(var(--error-rgb), 0.22);
+          }
         }
 
         .progress-bar {
@@ -283,6 +316,12 @@ $navbar-height: 70px;
           margin-bottom: 1.75rem;
           line-height: 1.5;
           font-weight: var(--font-weight-semibold);
+        }
+
+        .question-instruction {
+          color: var(--text-secondary);
+          font-size: var(--font-size-sm);
+          margin-bottom: var(--spacing-lg);
         }
 
         .answers-list {
@@ -319,6 +358,10 @@ $navbar-height: 70px;
                 }
               }
 
+              .radio-button.checkbox::after {
+                transform: translate(-50%, -60%) rotate(45deg) scale(1);
+              }
+
               .answer-text {
                 color: var(--text-primary);
                 font-weight: var(--font-weight-medium);
@@ -348,6 +391,20 @@ $navbar-height: 70px;
                 opacity: 0;
                 transition: var(--transition);
               }
+
+              &.checkbox {
+                border-radius: var(--radius-sm);
+
+                &::after {
+                  width: 6px;
+                  height: 12px;
+                  border-radius: 0;
+                  background: transparent;
+                  border-right: 2px solid var(--primary);
+                  border-bottom: 2px solid var(--primary);
+                  transform: translate(-50%, -60%) rotate(45deg) scale(0);
+                }
+              }
             }
 
             .answer-text {
@@ -356,6 +413,46 @@ $navbar-height: 70px;
               flex: 1;
               line-height: 1.5;
             }
+          }
+        }
+
+        .text-response-card {
+          background: var(--surface);
+          border: 1px solid var(--border);
+          border-radius: var(--radius);
+          padding: var(--spacing-lg);
+          display: flex;
+          flex-direction: column;
+          gap: var(--spacing-md);
+
+          .text-response-label {
+            color: var(--text-primary);
+            font-weight: var(--font-weight-semibold);
+          }
+
+          .text-response-input {
+            width: 100%;
+            min-height: 180px;
+            resize: vertical;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: var(--spacing-md);
+            background: var(--background);
+            color: var(--text-primary);
+            font: inherit;
+            line-height: 1.6;
+
+            &:focus {
+              outline: none;
+              border-color: var(--primary);
+              box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.12);
+            }
+          }
+
+          .text-response-note {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: var(--font-size-sm);
           }
         }
       }
@@ -493,6 +590,16 @@ $navbar-height: 70px;
                 font-size: var(--font-size-base);
               }
             }
+          }
+        }
+
+        .progress-section {
+          .progress-header {
+            align-items: flex-start;
+          }
+
+          .timer-chip {
+            width: 100%;
           }
         }
 

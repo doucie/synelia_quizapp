@@ -52,8 +52,11 @@ public interface CandidateAskTransformer {
 		}
 		CandidateAskDto dto = new CandidateAskDto();
 								dto.setId( entity.getId() );
+							dto.setAskStatus( entity.getAskStatus() );
+							dto.setIsVerified( entity.getIsVerified() );
 																		dto.setFirstName( entity.getFirstName() );
 										dto.setLastName( entity.getLastName() );
+										dto.setDecisionReason( entity.getDecisionReason() );
 																																										return dto;
     }
 
@@ -75,11 +78,13 @@ public interface CandidateAskTransformer {
 	@Mappings({
 		@Mapping(source="dto.id", target="id"),
 		@Mapping(source="dto.requestType", target="requestType"),
+		@Mapping(source="dto.askStatus", target="askStatus"),
 		@Mapping(source="dto.isVerified", target="isVerified"),
 		@Mapping(source="dto.firstName", target="firstName"),
 		@Mapping(source="dto.lastName", target="lastName"),
 		@Mapping(source="dto.newEmail", target="newEmail"),
 		@Mapping(source="dto.newPhone", target="newPhone"),
+		@Mapping(source="dto.decisionReason", target="decisionReason"),
 		@Mapping(source="dto.createdAt", dateFormat="dd/MM/yyyy",target="createdAt"),
 		@Mapping(source="dto.createdBy", target="createdBy"),
 		@Mapping(source="dto.updatedAt", dateFormat="dd/MM/yyyy",target="updatedAt"),

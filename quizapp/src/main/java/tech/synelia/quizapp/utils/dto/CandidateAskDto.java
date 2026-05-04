@@ -33,11 +33,13 @@ public class CandidateAskDto extends _CandidateAskDto implements Cloneable{
     private Integer    id                   ; // Primary Key
 
     private String     requestType          ;
+    private String     askStatus            ;
     private Boolean    isVerified           ;
     private String     firstName            ;
     private String     lastName             ;
     private String     newEmail             ;
     private String     newPhone             ;
+    private String     decisionReason       ;
 	private String     createdAt            ;
     private Integer    createdBy            ;
 	private String     updatedAt            ;
@@ -58,11 +60,13 @@ public class CandidateAskDto extends _CandidateAskDto implements Cloneable{
 	// Search param
 	private SearchParam<Integer>  idParam               ;                     
 	private SearchParam<String>   requestTypeParam      ;                     
+    private SearchParam<String>   askStatusParam        ;                     
 	private SearchParam<Boolean>  isVerifiedParam       ;                     
 	private SearchParam<String>   firstNameParam        ;                     
 	private SearchParam<String>   lastNameParam         ;                     
 	private SearchParam<String>   newEmailParam         ;                     
 	private SearchParam<String>   newPhoneParam         ;                     
+    private SearchParam<String>   decisionReasonParam   ;                     
 	private SearchParam<String>   createdAtParam        ;                     
 	private SearchParam<Integer>  createdByParam        ;                     
 	private SearchParam<String>   updatedAtParam        ;                     

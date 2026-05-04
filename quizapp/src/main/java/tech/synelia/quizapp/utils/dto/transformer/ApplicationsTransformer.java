@@ -86,7 +86,7 @@ public interface ApplicationsTransformer {
 		@Mapping(source="dto.totalEvaluationNumber", target="totalEvaluationNumber"),
 		@Mapping(source="dto.totalEvaluationPercentage", target="totalEvaluationPercentage"),
 		@Mapping(source="dto.applicationStatus", target="applicationStatus"),
-		@Mapping(source="dto.visitToken", target="visitToken"),
+		@Mapping(source="dto.quizManualCorrectionStatus", target="quizManualCorrectionStatus"),
 		@Mapping(target="createdAt", ignore=true), // Backend sets this
 		@Mapping(source="dto.createdBy", target="createdBy"),
 		@Mapping(target="updatedAt", ignore=true), // Backend sets this

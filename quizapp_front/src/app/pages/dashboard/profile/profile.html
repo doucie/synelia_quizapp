@@ -1,6 +1,12 @@
 <div class="profile">
   <h2 class="profile__title">Mon profil</h2>
 
+  @if (mustChangePassword()) {
+    <div class="profile__alert profile__alert--error">
+      Vous utilisez encore le mot de passe par défaut. Vous devez le modifier avant d'accéder aux autres pages du dashboard.
+    </div>
+  }
+
   <!-- Avatar + basic info card -->
   <div class="profile__card">
     <div class="profile__header">
@@ -51,14 +57,29 @@
           <label class="profile__label" for="firstName">Prénom</label>
           <input id="firstName" class="profile__input" type="text"
             [ngModel]="profileForm().firstName"
-            (ngModelChange)="profileForm.set({ firstName: $event, lastName: profileForm().lastName })" />
+            (ngModelChange)="updateProfileField('firstName', $event)" />
         </div>
         <div class="profile__form-group">
           <label class="profile__label" for="lastName">Nom</label>
           <input id="lastName" class="profile__input" type="text"
             [ngModel]="profileForm().lastName"
-            (ngModelChange)="profileForm.set({ firstName: profileForm().firstName, lastName: $event })" />
+            (ngModelChange)="updateProfileField('lastName', $event)" />
         </div>
+        <div class="profile__form-group">
+          <label class="profile__label" for="email">Email</label>
+          <input id="email" class="profile__input" type="email"
+            [ngModel]="profileForm().email"
+            (ngModelChange)="updateProfileField('email', $event)" />
+        </div>
+        @if (isEmailChangeRequested()) {
+          <div class="profile__form-group">
+            <label class="profile__label" for="profileCurrentPassword">Mot de passe actuel</label>
+            <input id="profileCurrentPassword" class="profile__input" type="password"
+              [ngModel]="profileForm().currentPassword"
+              (ngModelChange)="updateProfileField('currentPassword', $event)" />
+            <p class="profile__hint">Confirmez votre mot de passe actuel pour modifier l'adresse email.</p>
+          </div>
+        }
         <button class="profile__btn profile__btn--primary" (click)="saveProfile()" [disabled]="profileLoading()">
           {{ profileLoading() ? 'Enregistrement...' : 'Enregistrer' }}
         </button>

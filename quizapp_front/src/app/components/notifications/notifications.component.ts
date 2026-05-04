@@ -12,7 +12,7 @@ import { NotificationService, Notification } from '../../core/services/notificat
         <div 
           class="notification" 
           [class]="'notification--' + notification.type"
-          (click)="close(notification.id)"
+          (click)="handleNotificationClick(notification)"
         >
           <div class="notification__icon">
             @switch (notification.type) {
@@ -213,7 +213,65 @@ export class NotificationsComponent {
 
   constructor(private notificationService: NotificationService) {}
 
+  async handleNotificationClick(notification: Notification): Promise<void> {
+    if (notification.type !== 'error') {
+      this.close(notification.id);
+      return;
+    }
+
+    const copied = await this.copyToClipboard(notification.message || notification.title);
+    this.close(notification.id);
+
+    if (copied) {
+      this.notificationService.success('Copié', 'Le message d\'erreur a été copié.');
+      return;
+    }
+
+    this.notificationService.warning('Copie impossible', 'Impossible de copier automatiquement le message.');
+  }
+
   close(id: string): void {
     this.notificationService.remove(id);
+  }
+
+  private async copyToClipboard(text: string): Promise<boolean> {
+    if (!text) {
+      return false;
+    }
+
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch {
+      // Fallback below.
+    }
+
+    return this.copyToClipboardFallback(text);
+  }
+
+  private copyToClipboardFallback(text: string): boolean {
+    if (typeof document === 'undefined') {
+      return false;
+    }
+
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.setAttribute('readonly', 'true');
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    textarea.style.pointerEvents = 'none';
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+
+    try {
+      return document.execCommand('copy');
+    } catch {
+      return false;
+    } finally {
+      document.body.removeChild(textarea);
+    }
   }
 }

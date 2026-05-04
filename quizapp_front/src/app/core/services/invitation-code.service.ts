@@ -17,6 +17,12 @@ export interface InvitationCode {
   updatedBy?: number;
 }
 
+export interface InvitationCodeActionResult {
+  invitation?: InvitationCode;
+  hasError: boolean;
+  message?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class InvitationCodeService {
   private apiUrl = '/invitationCode';
@@ -40,10 +46,14 @@ export class InvitationCodeService {
     );
   }
 
-  create(invitation: Partial<InvitationCode>): Observable<InvitationCode> {
+  create(invitation: Partial<InvitationCode>): Observable<InvitationCodeActionResult> {
     const request = { user: this.getCurrentUserId(), datas: [invitation] };
     return this.http.post<any>(`${this.apiUrl}/create`, request).pipe(
-      map(resp => resp.items?.[0]),
+      map(resp => ({
+        invitation: resp.items?.[0],
+        hasError: resp.hasError === true,
+        message: resp.status?.message
+      })),
       catchError(err => throwError(() => err))
     );
   }
@@ -56,10 +66,14 @@ export class InvitationCodeService {
     );
   }
 
-  resend(id: number): Observable<InvitationCode> {
+  resend(id: number): Observable<InvitationCodeActionResult> {
     const request = { user: this.getCurrentUserId(), data: { id } };
     return this.http.post<any>(`${this.apiUrl}/resend`, request).pipe(
-      map(resp => resp.item || resp.items?.[0]),
+      map(resp => ({
+        invitation: resp.item || resp.items?.[0],
+        hasError: resp.hasError === true,
+        message: resp.status?.message
+      })),
       catchError(err => throwError(() => err))
     );
   }

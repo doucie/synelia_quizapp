@@ -30,6 +30,8 @@ import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.contract.SearchParam;
 import tech.synelia.quizapp.utils.dto.transformer.*;
+import tech.synelia.quizapp.utils.enums.FormAssignmentExhaustionPolicy;
+import tech.synelia.quizapp.utils.enums.FormAssignmentStrategy;
 import tech.synelia.quizapp.dao.entity.*;
 import tech.synelia.quizapp.dao.repository.*;
 
@@ -157,6 +159,7 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			Campaigns entityToSave = null;
 			entityToSave = CampaignsTransformer.INSTANCE.toEntity(dto, existingUser, existingSpecialities);
 			entityToSave.setPipelineTemplate(existingPipelineTemplate);
+			applyFormAssignmentConfiguration(entityToSave, dto, true, locale);
 			entityToSave.setCreatedAt(Utilities.getCurrentDate());
 			entityToSave.setCreatedBy(request.getUser());
 			entityToSave.setIsDeleted(false);
@@ -170,6 +173,7 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			if (itemsSaved == null) {
 				throw new InternalErrorException(functionalError.SAVE_FAIL("campaigns", locale));
 			}
+			ensureCampaignCreatorPermissions(itemsSaved, request.getUser());
 			List<CampaignsDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading())) ? CampaignsTransformer.INSTANCE.toLiteDtos(itemsSaved) : CampaignsTransformer.INSTANCE.toDtos(itemsSaved);
 
 			final int size = itemsSaved.size();
@@ -233,7 +237,9 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			boolean canModify = permissionService.hasEntityPermission(authenticatedUserId, "CAMPAIGN", dto.getId(), "ADMIN")
 					|| permissionService.hasEntityPermission(authenticatedUserId, "CAMPAIGN", dto.getId(), "UPDATE");
 			if (!canModify) {
-				log.warning("❌ Accès refusé : l'utilisateur " + authenticatedUserId + " n'a pas les droits pour modifier la campagne " + dto.getId());
+				log.log(java.util.logging.Level.WARNING,
+						"❌ Accès refusé : l'utilisateur {0} n'a pas les droits pour modifier la campagne {1}",
+						new Object[]{authenticatedUserId, dto.getId()});
 				throw new InvalidEntityException(functionalError.REQUEST_FAIL("Accès refusé: droits insuffisants pour modifier cette campagne", locale));
 			}
 			log.info("✅ Utilisateur autorisé à modifier la campagne " + dto.getId());
@@ -294,6 +300,8 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			if (dto.getAllCanEvaluate() != null) {
 				entityToSave.setAllCanEvaluate(dto.getAllCanEvaluate());
 			}
+			applyFormAssignmentConfiguration(entityToSave, dto, false, locale);
+			ensureOperationalPipelineTemplate(entityToSave, locale);
 			
 			// ⚠️ NE JAMAIS modifier createdBy lors d'une mise à jour !
 			// createdBy doit toujours rester l'utilisateur qui a créé la campagne initialement
@@ -314,40 +322,7 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 				throw new InternalErrorException(functionalError.SAVE_FAIL("campaigns", locale));
 			}
 			
-			// ========== RECRÉATION DES ENTITY_PERMISSIONS ==========
-			// Lors de la modification d'une campagne, on s'assure que le créateur a toutes les permissions entité
-			log.info("🔄 Vérification des entity_permission pour les campagnes modifiées");
-			for (Campaigns savedCampaign : itemsSaved) {
-				try {
-					Integer creatorId = savedCampaign.getCreatedBy();
-					if (creatorId != null && creatorId > 0) {
-						User creator = userRepository.findOne(creatorId, false);
-						if (creator != null) {
-							String[] permissionKeys = {"ADMIN", "CREATOR", "UPDATE", "DELETE", "EVALUATE", "PLANIFY", "ADVANCE_PIPELINE", "FOLLOW"};
-							for (String key : permissionKeys) {
-								EntityPermission existing = entityPermissionRepository.findByUserIdAndEntityTypeAndEntityIdAndPermissionKey(
-										creatorId, "CAMPAIGN", savedCampaign.getId(), key);
-								if (existing == null) {
-									EntityPermission ep = new EntityPermission();
-									ep.setUser(creator);
-									ep.setEntityType("CAMPAIGN");
-									ep.setEntityId(savedCampaign.getId());
-									ep.setPermissionKey(key);
-									ep.setCreatedAt(Utilities.getCurrentDate());
-									ep.setCreatedBy(request.getUser());
-									ep.setIsDeleted(false);
-									entityPermissionRepository.save(ep);
-								}
-							}
-							log.info("👑 Créateur ID=" + creator.getId() + " vérifié avec tous les droits sur campagne " + savedCampaign.getId());
-						}
-					}
-				} catch (Exception e) {
-					log.severe("❌ Erreur lors de la vérification des entity_permission pour campagne " + savedCampaign.getId() + ": " + e.getMessage());
-					e.printStackTrace();
-				}
-			}
-			log.info("✅ Vérification des entity_permission terminée");
+			ensureCampaignCreatorPermissions(itemsSaved, request.getUser());
 			
 			List<CampaignsDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading())) ? CampaignsTransformer.INSTANCE.toLiteDtos(itemsSaved) : CampaignsTransformer.INSTANCE.toDtos(itemsSaved);
 
@@ -377,6 +352,114 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
 		log.info("----end update Campaigns-----");
 		return response;
+	}
+
+	private void ensureOperationalPipelineTemplate(Campaigns campaign, Locale locale) {
+		if (campaign == null) {
+			return;
+		}
+
+		String campaignStatus = StringUtils.upperCase(StringUtils.trimToEmpty(campaign.getCampaignStatus()));
+		if (!"ACTIVE".equals(campaignStatus)) {
+			return;
+		}
+
+		if (campaign.getPipelineTemplate() != null && campaign.getPipelineTemplate().getId() != null) {
+			return;
+		}
+
+		PipelineTemplate defaultTemplate = pipelineTemplateRepository.findByIsDefaultTrue();
+		if (defaultTemplate != null && Boolean.TRUE.equals(defaultTemplate.getIsActive())) {
+			campaign.setPipelineTemplate(defaultTemplate);
+			return;
+		}
+
+		throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION(
+				"Impossible d'activer cette campagne sans pipeline template actif ou template par défaut.", locale));
+	}
+
+	private void applyFormAssignmentConfiguration(Campaigns entityToSave, CampaignsDto dto, boolean isCreate, Locale locale) {
+		if (isCreate) {
+			entityToSave.setFormAssignmentStrategy(normalizeFormAssignmentStrategy(dto.getFormAssignmentStrategy(), true, locale));
+			entityToSave.setFormAssignmentExhaustionPolicy(normalizeFormAssignmentExhaustionPolicy(dto.getFormAssignmentExhaustionPolicy(), true, locale));
+			return;
+		}
+
+		if (Utilities.shouldUpdate(dto.getFormAssignmentStrategy())) {
+			entityToSave.setFormAssignmentStrategy(normalizeFormAssignmentStrategy(dto.getFormAssignmentStrategy(), false, locale));
+		}
+
+		if (Utilities.shouldUpdate(dto.getFormAssignmentExhaustionPolicy())) {
+			entityToSave.setFormAssignmentExhaustionPolicy(normalizeFormAssignmentExhaustionPolicy(dto.getFormAssignmentExhaustionPolicy(), false, locale));
+		}
+	}
+
+	private String normalizeFormAssignmentStrategy(String value, boolean useDefaultWhenBlank, Locale locale) {
+		String trimmedValue = StringUtils.trimToNull(value);
+		if (trimmedValue == null) {
+			return useDefaultWhenBlank ? FormAssignmentStrategy.RANDOM.getValue() : null;
+		}
+		try {
+			return FormAssignmentStrategy.fromValue(trimmedValue).getValue();
+		} catch (IllegalArgumentException ex) {
+			throw new InvalidEntityException(functionalError.REQUEST_FAIL("Strategie d'attribution de formulaire invalide: " + trimmedValue, locale));
+		}
+	}
+
+	private String normalizeFormAssignmentExhaustionPolicy(String value, boolean useDefaultWhenBlank, Locale locale) {
+		String trimmedValue = StringUtils.trimToNull(value);
+		if (trimmedValue == null) {
+			return useDefaultWhenBlank ? FormAssignmentExhaustionPolicy.BLOCK.getValue() : null;
+		}
+		try {
+			return FormAssignmentExhaustionPolicy.fromValue(trimmedValue).getValue();
+		} catch (IllegalArgumentException ex) {
+			throw new InvalidEntityException(functionalError.REQUEST_FAIL("Politique d'epuisement de formulaires invalide: " + trimmedValue, locale));
+		}
+	}
+
+	private void ensureCampaignCreatorPermissions(List<Campaigns> campaigns, Integer actorUserId) {
+		log.info("🔄 Vérification des entity_permission pour les campagnes sauvegardées");
+		for (Campaigns savedCampaign : campaigns) {
+			try {
+				Integer creatorId = savedCampaign.getCreatedBy();
+				if (creatorId == null || creatorId <= 0) {
+					continue;
+				}
+
+				User creator = userRepository.findOne(creatorId, false);
+				if (creator == null) {
+					continue;
+				}
+
+				String[] permissionKeys = {"ADMIN", "CREATOR", "UPDATE", "DELETE", "EVALUATE", "CORRECT_TEST", "PLANIFY", "ADVANCE_PIPELINE", "FOLLOW"};
+				for (String key : permissionKeys) {
+					EntityPermission existing = entityPermissionRepository.findByUserIdAndEntityTypeAndEntityIdAndPermissionKey(
+							creatorId, "CAMPAIGN", savedCampaign.getId(), key);
+					if (existing == null) {
+						EntityPermission ep = new EntityPermission();
+						ep.setUser(creator);
+						ep.setEntityType("CAMPAIGN");
+						ep.setEntityId(savedCampaign.getId());
+						ep.setPermissionKey(key);
+						ep.setCreatedAt(Utilities.getCurrentDate());
+						ep.setCreatedBy(actorUserId);
+						ep.setIsDeleted(false);
+						entityPermissionRepository.save(ep);
+					} else if (Boolean.TRUE.equals(existing.getIsDeleted())) {
+						existing.setIsDeleted(false);
+						existing.setUpdatedAt(Utilities.getCurrentDate());
+						existing.setUpdatedBy(actorUserId);
+						entityPermissionRepository.save(existing);
+					}
+				}
+				log.info("👑 Créateur ID=" + creator.getId() + " vérifié avec tous les droits sur campagne " + savedCampaign.getId());
+			} catch (Exception e) {
+				log.severe("❌ Erreur lors de la vérification des entity_permission pour campagne " + savedCampaign.getId() + ": " + e.getMessage());
+				e.printStackTrace();
+			}
+		}
+		log.info("✅ Vérification des entity_permission terminée");
 	}
 
 	/**
@@ -595,6 +678,10 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
 		Response<CampaignsDto> response = new Response<CampaignsDto>();
 		List<Campaigns>        items    = new ArrayList<Campaigns>();
+		Integer authenticatedUserId = request.getUser();
+		if (authenticatedUserId == null) {
+			throw new InvalidEntityException(functionalError.FIELD_EMPTY("authenticatedUserId", locale));
+		}
         
 		for (CampaignsDto dto : request.getDatas()) {
 			// Definir les parametres obligatoires
@@ -602,6 +689,15 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			fieldsToVerify.put("id", dto.getId());
 			if (!Validate.RequiredValue(fieldsToVerify).isGood()) {
 				throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
+			}
+
+			boolean canModify = permissionService.hasEntityPermission(authenticatedUserId, "CAMPAIGN", dto.getId(), "ADMIN")
+					|| permissionService.hasEntityPermission(authenticatedUserId, "CAMPAIGN", dto.getId(), "UPDATE");
+			if (!canModify) {
+				log.log(java.util.logging.Level.WARNING,
+						"❌ Accès refusé : l'utilisateur {0} n'a pas les droits pour modifier la campagne {1}",
+						new Object[]{authenticatedUserId, dto.getId()});
+				throw new InvalidEntityException(functionalError.REQUEST_FAIL("Accès refusé: droits insuffisants pour modifier cette campagne", locale));
 			}
 
 			// Verifier si la campaigns existe (incluant les supprimés)
@@ -651,6 +747,7 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			if (dto.getAllCanEvaluate() != null) {
 				entityToSave.setAllCanEvaluate(dto.getAllCanEvaluate());
 			}
+			ensureOperationalPipelineTemplate(entityToSave, locale);
 			if (dto.getCreatedBy() != null && dto.getCreatedBy() > 0) {
 				entityToSave.setCreatedBy(dto.getCreatedBy());
 			}
@@ -717,6 +814,10 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
 		Response<CampaignsDto> response = new Response<CampaignsDto>();
 		List<Campaigns>        items    = new ArrayList<Campaigns>();
+		Integer authenticatedUserId = request.getUser();
+		if (authenticatedUserId == null) {
+			throw new InvalidEntityException(functionalError.FIELD_EMPTY("authenticatedUserId", locale));
+		}
 
 		for (CampaignsDto dto : request.getDatas()) {
 			// Definir les parametres obligatoires
@@ -724,6 +825,13 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			fieldsToVerify.put("id", dto.getId());
 			if (!Validate.RequiredValue(fieldsToVerify).isGood()) {
 				throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
+			}
+
+			boolean canModify = permissionService.hasEntityPermission(authenticatedUserId, "CAMPAIGN", dto.getId(), "ADMIN")
+					|| permissionService.hasEntityPermission(authenticatedUserId, "CAMPAIGN", dto.getId(), "UPDATE");
+			if (!canModify) {
+				log.warning("❌ Accès refusé : l'utilisateur " + authenticatedUserId + " n'a pas les droits pour modifier la campagne " + dto.getId());
+				throw new InvalidEntityException(functionalError.REQUEST_FAIL("Accès refusé: droits insuffisants pour modifier cette campagne", locale));
 			}
 
 			// Verifier si la campaigns existe (actifs d'abord, puis supprimés)

@@ -130,6 +130,35 @@ p.campaign-info {
       font-weight: var(--font-weight-semibold);
     }
   }
+
+  .tracking-code-card {
+    margin: var(--spacing-xl) 0;
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    background: linear-gradient(135deg, var(--surface) 0%, var(--surface-hover, var(--surface)) 100%);
+  }
+
+  .tracking-code-card__label {
+    margin-bottom: var(--spacing-xs);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--on-surface-variant);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .tracking-code-card__value {
+    display: inline-block;
+    margin-bottom: var(--spacing-sm);
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    letter-spacing: 0.18em;
+    color: var(--primary);
+  }
+
+  .tracking-code-card__hint {
+    margin-bottom: 0;
+  }
   
   .success-actions {
     display: flex;

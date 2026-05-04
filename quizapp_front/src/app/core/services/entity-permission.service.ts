@@ -29,6 +29,14 @@ export class EntityPermissionService {
     return this.http.post<EntityPermissionResponse>(
       `${this.apiUrl}/getForEntity`,
       { user: 1, data: { entityType, entityId: entityId.toString() } }
+    ).pipe(
+      map(response => ({
+        ...response,
+        items: (response.items || []).map(permission => ({
+          ...permission,
+          granted: permission.granted ?? true
+        }))
+      }))
     );
   }
 
@@ -55,9 +63,14 @@ export class EntityPermissionService {
     );
   }
 
-  /** Get evaluators for a campaign (users with VIEW_EVALUATIONS on CAMPAIGN entity) */
+  /** Get evaluators for a campaign (users with EVALUATE on CAMPAIGN entity) */
   getCampaignEvaluators(campaignId: number): Observable<EntityPermission[]> {
-    return this.getUsersWithPermission('CAMPAIGN', campaignId, 'VIEW_EVALUATIONS');
+    return this.getUsersWithPermission('CAMPAIGN', campaignId, 'EVALUATE');
+  }
+
+  /** Get test correctors for a campaign (users with CORRECT_TEST on CAMPAIGN entity) */
+  getCampaignTestCorrectors(campaignId: number): Observable<EntityPermission[]> {
+    return this.getUsersWithPermission('CAMPAIGN', campaignId, 'CORRECT_TEST');
   }
 
   /** Get evaluators for an interview (users with VIEW_EVALUATIONS on INTERVIEW entity) */

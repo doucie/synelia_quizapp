@@ -79,6 +79,7 @@ public class AnswerBusiness implements IBasicBusiness<Request<AnswerDto>, Respon
 				if (existingQuestion == null) {
 					throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("question questionId -> " + dto.getQuestionId(), locale));
 				}
+				ensureQuestionIsEditable(existingQuestion, locale);
 			}
 
 			dto.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(dto)));
@@ -146,15 +147,7 @@ public class AnswerBusiness implements IBasicBusiness<Request<AnswerDto>, Respon
 
 			// Vérifier si la réponse est liée à une question dans un formulaire verrouillé
 			if (entityToSave.getQuestion() != null) {
-				List<FormQuestions> linkedFqs = formQuestionsRepository.findByQuestionId(entityToSave.getQuestion().getId(), false);
-				if (linkedFqs != null) {
-					for (FormQuestions fq : linkedFqs) {
-						if (fq.getFormVersion() != null && Boolean.TRUE.equals(fq.getFormVersion().getIsLocked())) {
-							throw new InternalErrorException(functionalError.DATA_NOT_DELETABLE(
-								"Cette réponse est dans un formulaire verrouillé (version " + fq.getFormVersion().getVersionNumber() + ")", locale));
-						}
-					}
-				}
+				ensureQuestionIsEditable(entityToSave.getQuestion(), locale);
 			}
 
 			if (dto.getQuestionId() != null && dto.getQuestionId() > 0) {
@@ -162,6 +155,7 @@ public class AnswerBusiness implements IBasicBusiness<Request<AnswerDto>, Respon
 				if (existingQuestion == null) {
 					throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("question questionId -> " + dto.getQuestionId(), locale));
 				}
+				ensureQuestionIsEditable(existingQuestion, locale);
 				entityToSave.setQuestion(existingQuestion);
 			}
 			if (Utilities.shouldUpdate(dto.getAnswerText())) {
@@ -236,15 +230,7 @@ public class AnswerBusiness implements IBasicBusiness<Request<AnswerDto>, Respon
 
 			// Vérifier si la réponse est liée à une question dans un formulaire verrouillé
 			if (existingEntity.getQuestion() != null) {
-				List<FormQuestions> linkedFqs = formQuestionsRepository.findByQuestionId(existingEntity.getQuestion().getId(), false);
-				if (linkedFqs != null) {
-					for (FormQuestions fq : linkedFqs) {
-						if (fq.getFormVersion() != null && Boolean.TRUE.equals(fq.getFormVersion().getIsLocked())) {
-							throw new InternalErrorException(functionalError.DATA_NOT_DELETABLE(
-								"Cette réponse est dans un formulaire verrouillé (version " + fq.getFormVersion().getVersionNumber() + ")", locale));
-						}
-					}
-				}
+				ensureQuestionIsEditable(existingEntity.getQuestion(), locale);
 			}
 
 			// Check if data is used by candidateAnswer
@@ -268,6 +254,26 @@ public class AnswerBusiness implements IBasicBusiness<Request<AnswerDto>, Respon
 		}
 		log.info("----end delete Answer-----");
 		return response;
+	}
+
+	private void ensureQuestionIsEditable(Question question, Locale locale) {
+		if (question == null || question.getId() == null) {
+			return;
+		}
+
+		List<FormQuestions> linkedFqs = formQuestionsRepository.findByQuestionId(question.getId(), false);
+		if (linkedFqs == null) {
+			return;
+		}
+
+		for (FormQuestions fq : linkedFqs) {
+			if (fq.getFormVersion() != null && Boolean.TRUE.equals(fq.getFormVersion().getIsLocked())) {
+				throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+						"Cette reponse est rattachee a un formulaire verrouille (version "
+								+ fq.getFormVersion().getVersionNumber() + "). Creez d'abord une nouvelle version.",
+						locale));
+			}
+		}
 	}
 
 	@Override

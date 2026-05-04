@@ -180,6 +180,24 @@ public class LegalTextBusiness implements IBasicBusiness<Request<LegalTextDto>, 
     public Response<LegalTextDto> getByCriteria(Request<LegalTextDto> request, Locale locale) throws Exception {
         log.info("----begin get LegalText-----");
         Response<LegalTextDto> response = new Response<>();
+
+        if (isPublicCandidateConsentLookup(request)) {
+            LegalText legalText = requireActiveByKey("candidate_consent", locale);
+            List<LegalTextDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading()))
+                    ? LegalTextTransformer.INSTANCE.toLiteDtos(List.of(legalText))
+                    : LegalTextTransformer.INSTANCE.toDtos(List.of(legalText));
+
+            Status status = new Status();
+            status.setCode(StatusCode.SUCCESS);
+            status.setMessage(StatusMessage.SUCCESS);
+            response.setItems(itemsDto);
+            response.setHasError(false);
+            response.setHttpCode(HttpStatus.OK.value());
+            response.setStatus(status);
+            response.setCount(1L);
+            return response;
+        }
+
         List<LegalText> items = legalTextRepository.getByCriteria(request, em, locale);
 
         if (items != null && !items.isEmpty()) {
@@ -209,5 +227,31 @@ public class LegalTextBusiness implements IBasicBusiness<Request<LegalTextDto>, 
      */
     public LegalText findByKey(String textKey) {
         return legalTextRepository.findByTextKey(textKey, false);
+    }
+
+    public LegalText findActiveByKey(String textKey) {
+        LegalText legalText = findByKey(textKey);
+        if (legalText == null || Boolean.TRUE.equals(legalText.getIsDeleted()) || !Boolean.TRUE.equals(legalText.getIsActive())) {
+            return null;
+        }
+
+        return legalText;
+    }
+
+    public LegalText requireActiveByKey(String textKey, Locale locale) {
+        LegalText legalText = findActiveByKey(textKey);
+        if (legalText == null) {
+            throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION(
+                    "Le texte legal requis '" + textKey + "' est absent ou inactif.", locale));
+        }
+
+        return legalText;
+    }
+
+    private boolean isPublicCandidateConsentLookup(Request<LegalTextDto> request) {
+        return request != null
+                && request.getUser() == null
+                && request.getData() != null
+                && "candidate_consent".equals(request.getData().getTextKey());
     }
 }

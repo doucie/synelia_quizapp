@@ -21,7 +21,24 @@
         <h2>Candidature envoyée avec succès !</h2>
         <p>Nous avons bien reçu votre candidature. Notre équipe RH l'examinera dans les plus brefs délais.</p>
         <p class="success-info">Vous recevrez un email de confirmation à <strong>{{ formData().email }}</strong></p>
+
+        @if (submittedTrackingCode()) {
+          <div class="tracking-code-card">
+            <p class="tracking-code-card__label">Code de suivi à conserver</p>
+            <strong class="tracking-code-card__value">{{ submittedTrackingCode() }}</strong>
+            <p class="tracking-code-card__hint">
+              Ce code vous permettra de reprendre votre candidature plus tard avec votre adresse email.
+            </p>
+          </div>
+        }
+
         <div class="success-actions">
+          <a
+            [routerLink]="['/suivre-candidature']"
+            [queryParams]="submittedTrackingCode() ? { code: submittedTrackingCode(), email: formData().email } : null"
+            class="btn btn--secondary">
+            Suivre ma candidature
+          </a>
           <button type="button" class="btn btn--primary" (click)="resetForm()">
             Soumettre une autre candidature
           </button>
@@ -40,6 +57,17 @@
         </p>
       }
       <form class="apply-form" (ngSubmit)="onSubmit()" #applicationForm="ngForm">
+
+        @if (platformBlockMessage()) {
+          <div class="error-message">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            {{ platformBlockMessage() }}
+          </div>
+        }
         
         <!-- Section 1: Informations personnelles -->
         <section class="form-section">
@@ -243,29 +271,40 @@
 
         <!-- Section 5: Consentement -->
         <section class="form-section">
-          <div class="form-group">
-            <label class="checkbox-label">
-              <input
-                type="checkbox"
-                name="consent"
-                [(ngModel)]="formData().consent"
-                class="checkbox-input"
-                required
-              />
-              <span class="checkbox-custom"></span>
-              <span class="checkbox-text">
-                @if (consentText()) {
-                  <span [innerHTML]="consentText() | safeHtml"></span>
-                } @else {
-                  J'accepte que mes données personnelles soient traitées par Synelia dans le cadre de ma candidature.
-                }
-                @if (privacyPolicyContent()) {
-                  <a href="#" class="link" (click)="openPrivacyModal($event)">En savoir plus</a>
-                }
-                <span class="required">*</span>
-              </span>
-            </label>
-          </div>
+          @if (platformBlockMessage()) {
+            <div class="error-message">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              {{ platformBlockMessage() }}
+            </div>
+          } @else {
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input
+                  type="checkbox"
+                  name="consent"
+                  [(ngModel)]="formData().consent"
+                  class="checkbox-input"
+                  required
+                />
+                <span class="checkbox-custom"></span>
+                <span class="checkbox-text">
+                  @if (consentText()) {
+                    <span [innerHTML]="consentText() | safeHtml"></span>
+                  } @else {
+                    Chargement du texte de consentement...
+                  }
+                  @if (privacyPolicyContent()) {
+                    <a href="#" class="link" (click)="openPrivacyModal($event)">En savoir plus</a>
+                  }
+                  <span class="required">*</span>
+                </span>
+              </label>
+            </div>
+          }
         </section>
 
         <!-- Modal politique de confidentialité -->
@@ -303,7 +342,7 @@
           <button
             type="submit"
             class="btn btn--primary btn--large"
-            [disabled]="isSubmitting() || !applicationForm.valid"
+            [disabled]="isSubmitting() || isLoadingConsentText() || !!platformBlockMessage() || !applicationForm.valid"
           >
             @if (isSubmitting()) {
               <span class="spinner"></span>

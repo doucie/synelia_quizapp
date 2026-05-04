@@ -12,6 +12,7 @@ import java.util.Date;
 import java.util.Date;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import lombok.Data;
 
 import tech.synelia.quizapp.utils.contract.*;
 
@@ -21,7 +22,10 @@ import tech.synelia.quizapp.utils.contract.*;
  * @author Geo
  *
  */
+@Data
 @JsonInclude(Include.NON_NULL)
 public class _CandidateAskDto {
+
+	private String action;
 
 }

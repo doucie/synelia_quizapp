@@ -30,6 +30,7 @@ import tech.synelia.quizapp.utils.contract.IBasicBusiness;
 import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.dto.transformer.*;
+import tech.synelia.quizapp.utils.enums.FunctionalityEnum;
 import tech.synelia.quizapp.dao.entity.Interviews;
 import tech.synelia.quizapp.dao.entity.Campaigns;
 import tech.synelia.quizapp.dao.entity.*;
@@ -57,6 +58,10 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 	@Autowired
 	private ApplicationsRepository applicationsRepository;
 	@Autowired
+	private NotificationsRepository notificationsRepository;
+	@Autowired
+	private UserRepository userRepository;
+	@Autowired
 	private EntityPermissionRepository entityPermissionRepository;
 	@Autowired
 	private PipelineStageRepository pipelineStageRepository;
@@ -71,6 +76,10 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 	@Autowired
 	private EmailTemplateBusiness emailTemplateBusiness;
 	@Autowired
+	private PlatformReadinessService platformReadinessService;
+	@Autowired
+	private PermissionService permissionService;
+	@Autowired
 	private FunctionalError functionalError;
 	@Autowired
 	private TechnicalError technicalError;
@@ -82,9 +91,12 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 	private SimpleDateFormat dateFormat;
 	private SimpleDateFormat dateTimeFormat;
 	private Context context;
+	private static final int SYSTEM_ACTOR_USER_ID = 0;
+	private static final Set<String> EVALUATION_COMPLETED_NOTIFICATION_PERMISSION_KEYS = Collections.unmodifiableSet(
+			new HashSet<String>(Arrays.asList("ADMIN", "CREATOR", "FOLLOW", "ADVANCE_PIPELINE")));
 
 	public InterviewsBusiness() {
-		dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+		dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm");
 		dateTimeFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 	}
 	
@@ -101,6 +113,8 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
 		Response<InterviewsDto> response = new Response<InterviewsDto>();
 		List<Interviews>        items    = new ArrayList<Interviews>();
+		List<Boolean> sendInvitationRequests = new ArrayList<Boolean>();
+		List<Boolean> resetCandidateResponseRequests = new ArrayList<Boolean>();
 			
 		for (InterviewsDto dto : request.getDatas()) {
 			// Definir les parametres obligatoires
@@ -126,6 +140,13 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 					throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("campaigns campaignId -> " + dto.getCampaignId(), locale));
 				}
 			}
+			ensureInterviewCampaignPermission(
+					request.getUser(),
+					existingCampaigns,
+					locale,
+					"planifier cet entretien",
+					new String[] {FunctionalityEnum.CREATE_INTERVIEWS.getValue()},
+					new String[] {"ADMIN", "PLANIFY"});
 			
 			// Verify if applications exist
 			Applications existingApplications = null;
@@ -149,10 +170,13 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 
 			Interviews entityToSave = null;
 			entityToSave = InterviewsTransformer.INSTANCE.toEntity(dto, existingCampaigns, existingApplications);
+			boolean shouldSendInvitation = Boolean.TRUE.equals(dto.getInterviewMailSent());
+			entityToSave.setInterviewMailSent(false);
 			entityToSave.setCreatedAt(Utilities.getCurrentDate());
 			entityToSave.setCreatedBy(request.getUser());
 			entityToSave.setIsDeleted(false);
 			items.add(entityToSave);
+			sendInvitationRequests.add(shouldSendInvitation);
 		}
 
 		if (!items.isEmpty()) {
@@ -162,42 +186,23 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 			if (itemsSaved == null) {
 				throw new InternalErrorException(functionalError.SAVE_FAIL("interviews", locale));
 			}
-			List<InterviewsDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading())) ? InterviewsTransformer.INSTANCE.toLiteDtos(itemsSaved) : InterviewsTransformer.INSTANCE.toDtos(itemsSaved);
+			int invitationAttempts = 0;
+			int invitationFailures = 0;
 
-			final int size = itemsSaved.size();
-			List<String>  listOfError      = Collections.synchronizedList(new ArrayList<String>());
-			itemsDto.parallelStream().forEach(dto -> {
-				try {
-					dto = getFullInfos(dto, size, request.getIsSimpleLoading(), locale);
-				} catch (Exception e) {
-					listOfError.add(e.getMessage());
-					e.printStackTrace();
-				}
-			});
-			if (Utilities.isNotEmpty(listOfError)) {
-				Object[] objArray = listOfError.stream().distinct().toArray();
-				throw new RuntimeException(StringUtils.join(objArray, ", "));
-			}
-			
-			// Envoyer les emails si nécessaire
+			// Synchroniser le lien candidat-entretien puis envoyer les emails si nécessaire
 			for (int i = 0; i < itemsSaved.size(); i++) {
 				Interviews interview = itemsSaved.get(i);
-				InterviewsDto dto = itemsDto.get(i);
-				
-				if (interview.getInterviewMailSent() != null && interview.getInterviewMailSent()) {
-					try {
-						sendInterviewEmail(interview, locale);
-						log.info("Email d'entretien envoyé avec succès pour l'interview ID: " + interview.getId());
-					} catch (Exception e) {
-						log.warning("Échec de l'envoi de l'email pour l'interview ID: " + interview.getId() + " - " + e.getMessage());
-						// Ne pas bloquer le processus si l'email échoue
+				ensureCandidateInterviewLink(interview, request.getUser());
+				if (Boolean.TRUE.equals(sendInvitationRequests.get(i))) {
+					invitationAttempts++;
+					if (!processInterviewInvitationRequest(interview, locale)) {
+						invitationFailures++;
 					}
 				}
 			}
-			
-			Status status = new Status();
-			status.setCode(StatusCode.SUCCESS);
-			status.setMessage(StatusMessage.SUCCESS);
+
+			List<InterviewsDto> itemsDto = buildInterviewsResponseItems(itemsSaved, request.getIsSimpleLoading(), locale);
+			Status status = buildInterviewMutationStatus(invitationAttempts, invitationFailures);
 
 			response.setHttpCode(HttpStatus.CREATED.value());
 			response.setStatus(status);
@@ -222,6 +227,8 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
 		Response<InterviewsDto> response = new Response<InterviewsDto>();
 		List<Interviews>        items    = new ArrayList<Interviews>();
+		List<Boolean> sendInvitationRequests = new ArrayList<Boolean>();
+		List<Boolean> resetCandidateResponseRequests = new ArrayList<Boolean>();
 			
 		for (InterviewsDto dto : request.getDatas()) {
 			// Definir les parametres obligatoires
@@ -237,6 +244,15 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 			if (entityToSave == null) {
 				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("interviews id -> " + dto.getId(), locale));
 			}
+			Integer originalApplicationId = entityToSave.getApplications() != null ? entityToSave.getApplications().getId() : null;
+			Integer originalCampaignId = entityToSave.getCampaigns() != null ? entityToSave.getCampaigns().getId() : null;
+			Date originalInterviewDate = entityToSave.getInterviewDate();
+			String originalInterviewType = entityToSave.getInterviewType();
+			String originalInterviewLocation = entityToSave.getInterviewLocation();
+			String originalMeetLink = entityToSave.getMeetLink();
+			String originalInterviewNote = entityToSave.getInterviewNote();
+
+			Campaigns permissionCampaign = entityToSave.getCampaigns();
 
 			// Verify if campaigns exist
 			if (dto.getCampaignId() != null && dto.getCampaignId() > 0){
@@ -245,7 +261,15 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 					throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("campaigns campaignId -> " + dto.getCampaignId(), locale));
 				}
 				entityToSave.setCampaigns(existingCampaigns);
+				permissionCampaign = existingCampaigns;
 			}
+			ensureInterviewCampaignPermission(
+					request.getUser(),
+					permissionCampaign,
+					locale,
+					"modifier cet entretien",
+					new String[] {FunctionalityEnum.UPDATE_INTERVIEWS.getValue()},
+					new String[] {"ADMIN", "PLANIFY"});
 			// Verify if applications exist
 			if (dto.getApplicationId() != null && dto.getApplicationId() > 0){
 				Applications existingApplications = applicationsRepository.findOne(dto.getApplicationId(), false);
@@ -254,6 +278,7 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 				}
 				entityToSave.setApplications(existingApplications);
 			}
+			String currentInterviewStatus = entityToSave.getInterviewStatus();
 			if (Utilities.shouldUpdate(dto.getInterviewLocation())) {
 				entityToSave.setInterviewLocation(dto.getInterviewLocation());
 			}
@@ -261,12 +286,11 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 				entityToSave.setInterviewDate(dateFormat.parse(dto.getInterviewDate()));
 			}
 			if (Utilities.shouldUpdate(dto.getInterviewStatus())) {
-				String oldStatus = entityToSave.getInterviewStatus();
 				entityToSave.setInterviewStatus(dto.getInterviewStatus());
 				
 				// Générer automatiquement le lien d'évaluation quand le statut passe à STARTED
 				if ("STARTED".equalsIgnoreCase(dto.getInterviewStatus()) && 
-				    (oldStatus == null || !"STARTED".equalsIgnoreCase(oldStatus)) &&
+				    (currentInterviewStatus == null || !"STARTED".equalsIgnoreCase(currentInterviewStatus)) &&
 				    (entityToSave.getInterviewEvaluationsLink() == null || entityToSave.getInterviewEvaluationsLink().isEmpty())) {
 					String evaluationLink = generateUniqueEvaluationLink();
 					entityToSave.setInterviewEvaluationsLink(evaluationLink);
@@ -278,11 +302,27 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 			if (Utilities.shouldUpdate(dto.getInterviewNote())) {
 				entityToSave.setInterviewNote(dto.getInterviewNote());
 			}
-			if (dto.getInterviewMailSent() != null) {
-				entityToSave.setInterviewMailSent(dto.getInterviewMailSent());
-			}
 			if (Utilities.shouldUpdate(dto.getInterviewType())) {
 				entityToSave.setInterviewType(dto.getInterviewType());
+			}
+			boolean shouldCloseRescheduleRequest = Utilities.shouldUpdate(dto.getInterviewStatus())
+					&& "ARCHIVED".equalsIgnoreCase(dto.getInterviewStatus())
+					&& "POSTPONED".equalsIgnoreCase(currentInterviewStatus);
+			boolean invitationContentChanged = !Objects.equals(originalApplicationId, entityToSave.getApplications() != null ? entityToSave.getApplications().getId() : null)
+					|| !Objects.equals(originalCampaignId, entityToSave.getCampaigns() != null ? entityToSave.getCampaigns().getId() : null)
+					|| !Objects.equals(originalInterviewDate, entityToSave.getInterviewDate())
+					|| !Objects.equals(originalInterviewType, entityToSave.getInterviewType())
+					|| !Objects.equals(originalInterviewLocation, entityToSave.getInterviewLocation())
+					|| !Objects.equals(originalMeetLink, entityToSave.getMeetLink())
+					|| !Objects.equals(originalInterviewNote, entityToSave.getInterviewNote());
+			boolean interviewScheduleChanged = !Objects.equals(originalInterviewDate, entityToSave.getInterviewDate())
+					|| !Objects.equals(originalMeetLink, entityToSave.getMeetLink())
+					|| !Objects.equals(originalInterviewLocation, entityToSave.getInterviewLocation());
+			boolean shouldSendInvitation = Boolean.TRUE.equals(dto.getInterviewMailSent())
+					&& (!Boolean.TRUE.equals(entityToSave.getInterviewMailSent()) || invitationContentChanged);
+			boolean shouldResetCandidateResponse = interviewScheduleChanged || shouldSendInvitation || shouldCloseRescheduleRequest;
+			if (shouldSendInvitation || invitationContentChanged) {
+				entityToSave.setInterviewMailSent(false);
 			}
 			if (dto.getCreatedBy() != null && dto.getCreatedBy() > 0) {
 				entityToSave.setCreatedBy(dto.getCreatedBy());
@@ -299,6 +339,8 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 			// Générer le searchString à partir de l'entité finale
 			entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(entityToSave)));
 			items.add(entityToSave);
+			sendInvitationRequests.add(shouldSendInvitation);
+			resetCandidateResponseRequests.add(shouldResetCandidateResponse);
 		}
 
 		if (!items.isEmpty()) {
@@ -308,25 +350,23 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 			if (itemsSaved == null) {
 				throw new InternalErrorException(functionalError.SAVE_FAIL("interviews", locale));
 			}
-			List<InterviewsDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading())) ? InterviewsTransformer.INSTANCE.toLiteDtos(itemsSaved) : InterviewsTransformer.INSTANCE.toDtos(itemsSaved);
-
-			final int size = itemsSaved.size();
-			List<String>  listOfError      = Collections.synchronizedList(new ArrayList<String>());
-			itemsDto.parallelStream().forEach(dto -> {
-				try {
-					dto = getFullInfos(dto, size, request.getIsSimpleLoading(), locale);
-				} catch (Exception e) {
-					listOfError.add(e.getMessage());
-					e.printStackTrace();
+			int invitationAttempts = 0;
+			int invitationFailures = 0;
+			for (int i = 0; i < itemsSaved.size(); i++) {
+				Interviews interview = itemsSaved.get(i);
+				ensureCandidateInterviewLink(interview, request.getUser());
+				if (Boolean.TRUE.equals(resetCandidateResponseRequests.get(i))) {
+					resetCandidateInterviewResponse(interview, request.getUser());
 				}
-			});
-			if (Utilities.isNotEmpty(listOfError)) {
-				Object[] objArray = listOfError.stream().distinct().toArray();
-				throw new RuntimeException(StringUtils.join(objArray, ", "));
+				if (Boolean.TRUE.equals(sendInvitationRequests.get(i))) {
+					invitationAttempts++;
+					if (!processInterviewInvitationRequest(interview, locale)) {
+						invitationFailures++;
+					}
+				}
 			}
-			Status status = new Status();
-			status.setCode(StatusCode.SUCCESS);
-			status.setMessage(StatusMessage.SUCCESS);
+			List<InterviewsDto> itemsDto = buildInterviewsResponseItems(itemsSaved, request.getIsSimpleLoading(), locale);
+			Status status = buildInterviewMutationStatus(invitationAttempts, invitationFailures);
 
 			response.setItems(itemsDto);
 			response.setHasError(false);
@@ -336,6 +376,152 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
 		log.info("----end update Interviews-----");
 		return response;
+	}
+
+	private List<InterviewsDto> buildInterviewsResponseItems(List<Interviews> interviews, Boolean isSimpleLoading, Locale locale) {
+		List<InterviewsDto> itemsDto = (Utilities.isTrue(isSimpleLoading))
+				? InterviewsTransformer.INSTANCE.toLiteDtos(interviews)
+				: InterviewsTransformer.INSTANCE.toDtos(interviews);
+
+		final int size = interviews.size();
+		List<String> listOfError = Collections.synchronizedList(new ArrayList<String>());
+		itemsDto.parallelStream().forEach(dto -> {
+			try {
+				dto = getFullInfos(dto, size, isSimpleLoading, locale);
+			} catch (Exception e) {
+				listOfError.add(e.getMessage());
+				e.printStackTrace();
+			}
+		});
+
+		if (Utilities.isNotEmpty(listOfError)) {
+			Object[] objArray = listOfError.stream().distinct().toArray();
+			throw new RuntimeException(StringUtils.join(objArray, ", "));
+		}
+
+		return itemsDto;
+	}
+
+	private Status buildInterviewMutationStatus(int invitationAttempts, int invitationFailures) {
+		Status status = new Status();
+		status.setCode(StatusCode.SUCCESS);
+		if (invitationAttempts > 0 && invitationFailures > 0) {
+			String savedMessage = invitationAttempts == 1
+					? "L'entretien a bien ete enregistre, mais "
+					: "Les entretiens ont bien ete enregistres, mais ";
+			String failureMessage = invitationFailures == 1
+					? "la convocation n'a pas pu etre envoyee."
+					: invitationFailures + " convocations n'ont pas pu etre envoyees.";
+			status.setMessage(savedMessage + failureMessage + " Vous pouvez reessayer depuis la liste des entretiens.");
+		} else {
+			status.setMessage(StatusMessage.SUCCESS);
+		}
+		return status;
+	}
+
+	private void ensureCandidateInterviewLink(Interviews interview, Integer actorUserId) {
+		if (interview == null || interview.getId() == null || interview.getApplications() == null || interview.getApplications().getId() == null) {
+			return;
+		}
+
+		List<CandidateInterview> links = candidateInterviewRepository.findByInterviewId(interview.getId(), false);
+		CandidateInterview existingLink = null;
+		if (links != null) {
+			for (CandidateInterview candidateInterview : links) {
+				if (candidateInterview.getApplications() != null
+						&& Objects.equals(candidateInterview.getApplications().getId(), interview.getApplications().getId())) {
+					existingLink = candidateInterview;
+					break;
+				}
+			}
+		}
+
+		if (existingLink == null) {
+			CandidateInterview link = new CandidateInterview();
+			link.setApplications(interview.getApplications());
+			link.setInterviews(interview);
+			link.setInterviewStart(interview.getInterviewDate());
+			link.setCreatedAt(Utilities.getCurrentDate());
+			link.setCreatedBy(actorUserId);
+			link.setIsDeleted(false);
+			link.setSearchString(buildCandidateInterviewSearchString(interview.getApplications().getId(), interview.getId()));
+			candidateInterviewRepository.save(link);
+			return;
+		}
+
+		boolean updated = false;
+		if (!Objects.equals(existingLink.getInterviewStart(), interview.getInterviewDate())) {
+			existingLink.setInterviewStart(interview.getInterviewDate());
+			updated = true;
+		}
+		if (updated) {
+			existingLink.setUpdatedAt(Utilities.getCurrentDate());
+			existingLink.setUpdatedBy(actorUserId);
+			existingLink.setSearchString(buildCandidateInterviewSearchString(interview.getApplications().getId(), interview.getId()));
+			candidateInterviewRepository.save(existingLink);
+		}
+	}
+
+	private String buildCandidateInterviewSearchString(Integer applicationId, Integer interviewId) {
+		return String.join(" ",
+				Objects.toString(applicationId, ""),
+				Objects.toString(interviewId, "")).trim();
+	}
+
+	private void resetCandidateInterviewResponse(Interviews interview, Integer actorUserId) {
+		if (interview == null || interview.getId() == null) {
+			return;
+		}
+
+		List<CandidateInterview> links = candidateInterviewRepository.findByInterviewId(interview.getId(), false);
+		if (links == null || links.isEmpty()) {
+			return;
+		}
+
+		for (CandidateInterview link : links) {
+			boolean updated = false;
+			if (!Objects.equals(link.getInterviewStart(), interview.getInterviewDate())) {
+				link.setInterviewStart(interview.getInterviewDate());
+				updated = true;
+			}
+			if (link.getAlternativeDateRequested() != null) {
+				link.setAlternativeDateRequested(null);
+				updated = true;
+			}
+			if (StringUtils.isNotBlank(link.getDeclineReason())) {
+				link.setDeclineReason(null);
+				updated = true;
+			}
+
+			if (updated) {
+				link.setUpdatedAt(Utilities.getCurrentDate());
+				link.setUpdatedBy(actorUserId);
+				link.setSearchString(buildCandidateInterviewSearchString(
+						link.getApplications() != null ? link.getApplications().getId() : null,
+						interview.getId()));
+				candidateInterviewRepository.save(link);
+			}
+		}
+	}
+
+	private boolean processInterviewInvitationRequest(Interviews interview, Locale locale) {
+		if (interview == null || interview.getId() == null) {
+			return false;
+		}
+		try {
+			sendInterviewEmail(interview, locale);
+			interview.setInterviewMailSent(true);
+			interview.setUpdatedAt(Utilities.getCurrentDate());
+			interviewsRepository.save(interview);
+			log.info("Email d'entretien envoyé avec succès pour l'interview ID: " + interview.getId());
+			return true;
+		} catch (Exception e) {
+			interview.setInterviewMailSent(false);
+			interview.setUpdatedAt(Utilities.getCurrentDate());
+			interviewsRepository.save(interview);
+			log.warning("Échec de l'envoi de l'email pour l'interview ID: " + interview.getId() + " - " + e.getMessage());
+			return false;
+		}
 	}
 
 	/**
@@ -366,6 +552,13 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 			if (existingEntity == null) {
 				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("interviews -> " + dto.getId(), locale));
 			}
+			ensureInterviewCampaignPermission(
+					request.getUser(),
+					resolveCampaign(existingEntity, locale),
+					locale,
+					"supprimer cet entretien",
+					new String[] {FunctionalityEnum.DELETE_INTERVIEWS.getValue()},
+					new String[] {"ADMIN", "PLANIFY"});
 
 			// -----------------------------------------------------------------------
 			// ----------- CHECK IF DATA IS USED
@@ -557,15 +750,21 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 		// Récupérer l'application associée
 		Applications application = interview.getApplications();
 		if (application == null) {
-			log.warning("Application introuvable pour l'interview ID: " + interview.getId());
-			return;
+			throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("application linked to interview -> " + interview.getId(), locale));
 		}
 		
 		// Récupérer la campagne associée
 		Campaigns campaign = interview.getCampaigns();
 		if (campaign == null) {
-			log.warning("Campagne introuvable pour l'interview ID: " + interview.getId());
-			return;
+			throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("campaign linked to interview -> " + interview.getId(), locale));
+		}
+
+		if (!Utilities.notBlank(application.getCandidateEmail())) {
+			throw new InvalidEntityException(functionalError.FIELD_EMPTY("candidateEmail", locale));
+		}
+
+		if (interview.getInterviewDate() == null) {
+			throw new InvalidEntityException(functionalError.FIELD_EMPTY("interviewDate", locale));
 		}
 		
 		// Préparer l'expéditeur
@@ -606,32 +805,18 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 		// Corps de l'email
 		String contenu;
 
-		// Charger le template depuis la base de données
-		EmailTemplate emailTemplate = emailTemplateBusiness.findDefaultByActionTypeOrKey("INTERVIEW_INVITE", "interview_convocation");
-		if (emailTemplate != null) {
-			Map<String, String> vars = new HashMap<>();
-			vars.put("first_name", application.getCandidateFirstName());
-			vars.put("last_name", application.getCandidateLastName());
-			vars.put("campaign_title", campaign.getCampaignTitle());
-			vars.put("interview_date", interviewDateTime);
-			vars.put("interview_type_text", interviewTypeText);
-			vars.put("location_or_link", locationOrLink);
-			vars.put("additional_note", additionalNote);
-			subject = emailTemplateBusiness.renderTemplate(emailTemplate.getSubjectTemplate(), vars);
-			contenu = emailTemplateBusiness.renderTemplate(emailTemplate.getBodyTemplate(), vars);
-		} else {
-			subject = "Convocation à un entretien - " + campaign.getCampaignTitle();
-			contenu = "Madame, Monsieur,<br/><br/>";
-			contenu += "Nous avons le plaisir de vous informer que votre candidature pour le poste de \"" + campaign.getCampaignTitle() + "\" a retenu notre attention.<br/><br/>";
-			contenu += "Dans le cadre de notre processus de recrutement, nous souhaitons vous rencontrer pour un entretien " + interviewTypeText + ".<br/><br/>";
-			contenu += "Détails de l'entretien :<br/><br/>";
-			contenu += "Date et heure : " + interviewDateTime + "<br/>";
-			contenu += locationOrLink + additionalNote + "<br/><br/>";
-			contenu += "Nous vous prions de bien vouloir confirmer votre disponibilité en répondant à cet email.<br/><br/>";
-			contenu += "Nous restons à votre disposition pour toute information complémentaire.<br/><br/>";
-			contenu += "Cordialement,<br/>";
-			contenu += "L'équipe de recrutement";
-		}
+		EmailTemplate emailTemplate = platformReadinessService.requireActiveEmailTemplate(
+				"INTERVIEW_INVITE", "interview_convocation", locale);
+		Map<String, String> vars = new HashMap<>();
+		vars.put("first_name", application.getCandidateFirstName());
+		vars.put("last_name", application.getCandidateLastName());
+		vars.put("campaign_title", campaign.getCampaignTitle());
+		vars.put("interview_date", interviewDateTime);
+		vars.put("interview_type_text", interviewTypeText);
+		vars.put("location_or_link", locationOrLink);
+		vars.put("additional_note", additionalNote);
+		subject = emailTemplateBusiness.renderSubjectTemplate(emailTemplate, vars);
+		contenu = emailTemplateBusiness.renderBodyTemplate(emailTemplate, vars);
 		
 		// Préparer le contexte Thymeleaf
 		context = new Context();
@@ -716,6 +901,13 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 				response.setHasError(true);
 				return response;
 			}
+			ensureInterviewCampaignPermission(
+					request.getUser(),
+					resolveCampaign(interview, locale),
+					locale,
+					"finaliser cet entretien",
+					new String[] {FunctionalityEnum.UPDATE_INTERVIEWS.getValue(), FunctionalityEnum.UPDATE_EVALUATIONS.getValue()},
+					new String[] {"ADMIN", "PLANIFY", "EVALUATE"});
 			
 			// Si l'interview est déjà terminé, retourner un succès (idempotent)
 			if ("OVER".equals(interview.getInterviewStatus())) {
@@ -780,37 +972,22 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 				applicationsRepository.save(application);
 				log.info("Application " + application.getId() + " mise à jour avec succès");
 				
-				// Mettre à jour le progrès pipeline pour l'étape INTERVIEW
+				// Synchroniser le pipeline via un moteur unique INTERVIEW/EVALUATION.
 				try {
-					if (application.getSourceToken() != null && application.getSourceToken().getCampaigns() != null) {
-						Campaigns campaign = application.getSourceToken().getCampaigns();
-						if (campaign.getPipelineTemplate() != null) {
-							PipelineStage interviewStage = pipelineStageRepository.findByTemplateIdAndStageType(
-									campaign.getPipelineTemplate().getId(), "INTERVIEW");
-							if (interviewStage != null) {
-								ApplicationProgress progress = applicationProgressRepository
-										.findByApplicationIdAndPipelineStageId(application.getId(), interviewStage.getId());
-								if (progress != null) {
-									// Si evaluationPercentage >= 50% → PASSED, sinon FAILED
-									String stageStatus = (totalPercentage >= 50.0) ? "PASSED" : "FAILED";
-									progress.setProgressStatus(stageStatus);
-									progress.setCompletedAt(new Date());
-									progress.setScore(totalPercentage);
-									progress.setUpdatedAt(new Date());
-									progress.setUpdatedBy(request.getUser());
-									applicationProgressRepository.save(progress);
-									log.info("Pipeline progress INTERVIEW mis à jour à " + stageStatus + " pour application " + application.getId());
-									
-									// Si FAILED et éliminatoire, skip les étapes suivantes
-									if ("FAILED".equals(stageStatus) && interviewStage.getIsEliminatory() != null && interviewStage.getIsEliminatory()) {
-										applicationProgressBusiness.failStage(application.getId(), interviewStage.getId(), request.getUser(), "Entretien échoué", locale);
-									}
-								}
-							}
-						}
-					}
+					applicationProgressBusiness.syncInterviewEvaluationStages(
+							application.getId(),
+							totalPercentage,
+							true,
+							request.getUser(),
+							locale);
 				} catch (Exception e) {
 					log.warning("Erreur lors de la mise à jour du pipeline pour l'interview: " + e.getMessage());
+				}
+
+				try {
+					notifyCampaignOfCompletedEvaluation(interview, request.getUser(), locale);
+				} catch (Exception e) {
+					log.warning("Erreur lors de la notification de fin d'evaluation pour l'interview " + interview.getId() + ": " + e.getMessage());
 				}
 			}
 			
@@ -835,5 +1012,133 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 		
 		log.info("----end finishInterview-----");
 		return response;
+	}
+
+	private void notifyCampaignOfCompletedEvaluation(Interviews interview, Integer actorUserId, Locale locale) throws Exception {
+		Campaigns campaign = resolveCampaign(interview, locale);
+		if (campaign == null || campaign.getId() == null) {
+			return;
+		}
+
+		Map<Integer, User> recipients = resolveCampaignNotificationRecipients(campaign, EVALUATION_COMPLETED_NOTIFICATION_PERMISSION_KEYS);
+		if (recipients.isEmpty()) {
+			return;
+		}
+
+		Integer notifActor = normalizeInternalActor(actorUserId);
+		Integer createdBy = normalizeSystemActor(actorUserId);
+		String notifLink = "/dashboard/campaigns/" + campaign.getId();
+		for (User recipient : recipients.values()) {
+			if (recipient == null || recipient.getId() == null) {
+				continue;
+			}
+			if (notifActor != null && Objects.equals(recipient.getId(), notifActor)) {
+				continue;
+			}
+			createInternalNotification(
+					recipient,
+					"EVALUATION_COMPLETED",
+					notifActor,
+					notifLink,
+					createdBy,
+					"interviews",
+					interview.getId());
+		}
+	}
+
+	private Map<Integer, User> resolveCampaignNotificationRecipients(Campaigns campaign, Set<String> permissionKeys) {
+		Map<Integer, User> recipients = new LinkedHashMap<>();
+		if (campaign == null || campaign.getId() == null || permissionKeys == null || permissionKeys.isEmpty()) {
+			return recipients;
+		}
+
+		List<EntityPermission> permissions = entityPermissionRepository.findByEntityTypeAndEntityId("CAMPAIGN", campaign.getId());
+		if (permissions != null) {
+			for (EntityPermission permission : permissions) {
+				if (permission == null || Boolean.TRUE.equals(permission.getIsDeleted())) {
+					continue;
+				}
+				if (!permissionKeys.contains(permission.getPermissionKey())) {
+					continue;
+				}
+				User permissionUser = permission.getUser();
+				if (permissionUser == null || permissionUser.getId() == null || Boolean.TRUE.equals(permissionUser.getIsDeleted())) {
+					continue;
+				}
+				recipients.put(permissionUser.getId(), permissionUser);
+			}
+		}
+
+		Integer creatorId = campaign.getCreatedBy();
+		if (creatorId != null && creatorId > 0) {
+			User creator = userRepository.findOne(creatorId, false);
+			if (creator != null) {
+				recipients.put(creator.getId(), creator);
+			}
+		}
+
+		return recipients;
+	}
+
+	private void createInternalNotification(
+			User recipient,
+			String notifType,
+			Integer notifActor,
+			String notifLink,
+			Integer createdBy,
+			String objectTableName,
+			Integer objectTableId) {
+		if (recipient == null || recipient.getId() == null || StringUtils.isBlank(notifType)) {
+			return;
+		}
+
+		Notifications notification = new Notifications();
+		notification.setUser(recipient);
+		notification.setNotifType(notifType);
+		notification.setNotifActor(notifActor);
+		notification.setNotifLink(notifLink);
+		notification.setIsRead(false);
+		notification.setCreatedAt(Utilities.getCurrentDate());
+		notification.setCreatedBy(createdBy);
+		notification.setIsDeleted(false);
+		notification.setObjectTableName(objectTableName);
+		notification.setObjectTableId(objectTableId);
+		notificationsRepository.save(notification);
+	}
+
+	private Integer normalizeSystemActor(Integer actorUserId) {
+		return actorUserId != null && actorUserId > 0 ? actorUserId : SYSTEM_ACTOR_USER_ID;
+	}
+
+	private Integer normalizeInternalActor(Integer actorUserId) {
+		return actorUserId != null && actorUserId > 0 ? actorUserId : null;
+	}
+
+	private void ensureInterviewCampaignPermission(Integer actorUserId, Campaigns campaign, Locale locale, String actionLabel, String[] globalPermissions, String[] entityPermissions) {
+		if (actorUserId == null) {
+			throw new InvalidEntityException(functionalError.FIELD_EMPTY("authenticatedUserId", locale));
+		}
+		if (campaign == null || campaign.getId() == null) {
+			throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("campaign linked to interview", locale));
+		}
+
+		boolean hasGlobalRight = permissionService.hasAnyPermission(actorUserId, globalPermissions);
+		boolean hasCampaignRight = permissionService.hasAnyEntityPermission(actorUserId, "CAMPAIGN", campaign.getId(), entityPermissions);
+		if (!hasGlobalRight && !hasCampaignRight) {
+			throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+					"Accès refusé: droits insuffisants pour " + actionLabel,
+					locale));
+		}
+	}
+
+	private Campaigns resolveCampaign(Interviews interview, Locale locale) {
+		if (interview.getCampaigns() != null && interview.getCampaigns().getId() != null) {
+			return interview.getCampaigns();
+		}
+		Applications application = interview.getApplications();
+		if (application != null && application.getSourceToken() != null && application.getSourceToken().getCampaigns() != null) {
+			return application.getSourceToken().getCampaigns();
+		}
+		throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("campaign linked to interview -> " + interview.getId(), locale));
 	}
 }

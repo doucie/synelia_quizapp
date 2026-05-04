@@ -6,7 +6,8 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Subject, takeUntil, forkJoin } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Application, ApplicationService } from '../../../core/services/application.service';
-import { CampaignService, Campaign } from '../../../core/services/campaign.service';
+import { CampaignService, Campaign, CampaignAccessRecord } from '../../../core/services/campaign.service';
+import { PermissionService } from '../../../core/services/permission.service';
 import { SourceTokenService, SourceToken } from '../../../services/source-token.service';
 import { ClickOutsideDirective } from '../../../directives/click-outside.directive';
 import { PipelineStageService } from '../../../core/services/pipeline-stage.service';
@@ -37,6 +38,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   applications = signal<ApplicationWithCampaign[]>([]);
   followedCampaigns = signal<Campaign[]>([]);
   sharedCampaignIds = signal<Set<number>>(new Set());
+  campaignAccessMap = signal<Record<number, CampaignAccessRecord>>({});
   loading = signal(false);
   searchQuery = signal('');
   selectedCampaign = signal<number | null>(null);
@@ -67,7 +69,8 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private sanitizer: DomSanitizer,
     private pipelineStageService: PipelineStageService,
-    private applicationProgressService: ApplicationProgressService
+    private applicationProgressService: ApplicationProgressService,
+    private permissionService: PermissionService
   ) {}
 
   ngOnInit(): void {
@@ -254,9 +257,9 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     
     // Charger les campagnes et les accès en parallèle
     forkJoin({
-      allCampaigns: this.campaignService.getAllCampaignsByCriteria({ size: 1000, page: 0 }),
-      myCampaigns: this.campaignService.getMyCampaigns({ size: 100, page: 0 }),
-      sharedCampaigns: this.campaignService.getSharedCampaigns(),
+      allCampaigns: this.campaignService.getAllCampaignsByCriteria({ size: 1000, page: 0, isDeleted: false }),
+      myCampaigns: this.campaignService.getMyCampaigns({ size: 100, page: 0, isDeleted: false }),
+      sharedCampaigns: this.campaignService.getSharedCampaigns({ isDeleted: false }),
       campaignAccesses: this.campaignService.getCampaignAccessesByUser(currentUserId),
       applications: this.applicationService.getApplicationsByCriteria({}),
       sourceTokens: this.sourceTokenService.getSourceTokensByCriteria({})
@@ -275,24 +278,22 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
 
         // Pour l'enrichissement, on utilise TOUTES les campagnes
         const allCampaignsForEnrichment = results.allCampaigns.content || [];
+        const accessMap = this.buildCampaignAccessMap(results.campaignAccesses || []);
+        this.campaignAccessMap.set(accessMap);
         
         // Extraire les IDs des campagnes où l'utilisateur a au moins un droit
         const sharedIds = new Set<number>();
-        results.campaignAccesses.forEach((access: any) => {
-          const campaignId = access.campaignId || access.campaigns_id;
-          const hasAnyRight = 
-            access.canUpdate || access.can_update ||
-            access.canDelete || access.can_delete ||
-            access.canEvaluate || access.can_evaluate ||
-            access.isAdmin || access.is_admin;
-          
-          if (campaignId && hasAnyRight) {
-            sharedIds.add(campaignId);
-            console.log(`✅ Campagne ${campaignId} accessible (au moins un droit)`, {
-              canUpdate: access.canUpdate || access.can_update,
-              canDelete: access.canDelete || access.can_delete,
-              canEvaluate: access.canEvaluate || access.can_evaluate,
-              isAdmin: access.isAdmin || access.is_admin
+        Object.values(accessMap).forEach((access) => {
+          if (access.campaignId && this.hasAnyCampaignAccess(access) && !access.isCreator) {
+            sharedIds.add(access.campaignId);
+            console.log(`✅ Campagne ${access.campaignId} accessible (au moins un droit)`, {
+              canUpdate: access.canUpdate,
+              canDelete: access.canDelete,
+              canEvaluate: access.canEvaluate,
+              canPlanify: access.canPlanify,
+              canAdvancePipeline: access.canAcceptPreScreen || access.canAcceptFinal,
+              follow: access.follow,
+              isAdmin: access.isAdmin
             });
           }
         });
@@ -635,7 +636,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
    */
   canAdvanceStage(app: ApplicationWithCampaign, stageId: number): boolean {
     const status = this.getDynamicStepStatus(app, stageId);
-    return status === 'active' || status === 'pending';
+    return this.canAdvancePipelineForCampaign(app.campaignId) && (status === 'active' || status === 'pending');
   }
 
   /**
@@ -644,7 +645,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
    */
   canRejectStage(app: ApplicationWithCampaign, stageId: number): boolean {
     const status = this.getDynamicStepStatus(app, stageId);
-    return status === 'active' || status === 'pending';
+    return this.canAdvancePipelineForCampaign(app.campaignId) && (status === 'active' || status === 'pending');
   }
 
   /**
@@ -653,7 +654,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   canSkipStage(app: ApplicationWithCampaign, stage: PipelineStage): boolean {
     if (stage.isRequired) return false;
     const status = this.getDynamicStepStatus(app, stage.id!);
-    return status === 'active' || status === 'pending';
+    return this.canAdvancePipelineForCampaign(app.campaignId) && (status === 'active' || status === 'pending');
   }
 
   /**
@@ -976,7 +977,9 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     // Peut planifier un entretien si :
     // - pré-sélection acceptée (PRE_SCREEN_ACCEPTED)
     // - Pas d'entretien déjà planifié
-    return app.applicationStatus === APPLICATION_STATUS.PRE_SCREEN_ACCEPTED && !app.interviewDate;
+    return this.canPlanifyInterviewForCampaign(app.campaignId)
+      && app.applicationStatus === APPLICATION_STATUS.PRE_SCREEN_ACCEPTED
+      && !app.interviewDate;
   }
 
   /**
@@ -991,7 +994,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     console.log('Navigating to interview form with app:', app.id);
     
     // Naviguer vers la page de création d'interview avec l'ID de la candidature
-    this.router.navigate(['/dashboard/interview-new'], {
+    this.router.navigate(['/dashboard/interviews/create'], {
       queryParams: {
         applicationId: app.id,
         candidateName: `${app.candidateFirstName} ${app.candidateLastName}`,
@@ -1190,5 +1193,79 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       case 'IN_PROGRESS': return 'En cours';
       default: return 'En attente';
     }
+  }
+
+  private buildCampaignAccessMap(accesses: any[]): Record<number, CampaignAccessRecord> {
+    return accesses.reduce((map, rawAccess) => {
+      const campaignId = Number(rawAccess.campaignId || rawAccess.campaigns_id || 0);
+      if (!campaignId) {
+        return map;
+      }
+
+      const current = map[campaignId] || {
+        campaignId,
+        userId: Number(rawAccess.userId || 0),
+        userFirstName: rawAccess.userFirstName,
+        userLastName: rawAccess.userLastName,
+        userName: rawAccess.userName,
+        userEmail: rawAccess.userEmail,
+        userRole: rawAccess.userRole,
+        canUpdate: false,
+        canDelete: false,
+        canEvaluate: false,
+        canPlanify: false,
+        canAcceptPreScreen: false,
+        canAcceptFinal: false,
+        isAdmin: false,
+        isCreator: false,
+        follow: false
+      } satisfies CampaignAccessRecord;
+
+      current.canUpdate = current.canUpdate || Boolean(rawAccess.canUpdate || rawAccess.can_update);
+      current.canDelete = current.canDelete || Boolean(rawAccess.canDelete || rawAccess.can_delete);
+      current.canEvaluate = current.canEvaluate || Boolean(rawAccess.canEvaluate || rawAccess.can_evaluate);
+      current.canPlanify = current.canPlanify || Boolean(rawAccess.canPlanify || rawAccess.can_planify);
+      current.canAcceptPreScreen = current.canAcceptPreScreen || Boolean(rawAccess.canAcceptPreScreen || rawAccess.can_accept_pre_screen);
+      current.canAcceptFinal = current.canAcceptFinal || Boolean(rawAccess.canAcceptFinal || rawAccess.can_accept_final);
+      current.isAdmin = current.isAdmin || Boolean(rawAccess.isAdmin || rawAccess.is_admin);
+      current.isCreator = current.isCreator || Boolean(rawAccess.isCreator || rawAccess.is_creator);
+      current.follow = current.follow || Boolean(rawAccess.follow);
+      map[campaignId] = current;
+      return map;
+    }, {} as Record<number, CampaignAccessRecord>);
+  }
+
+  private hasAnyCampaignAccess(access: CampaignAccessRecord): boolean {
+    return access.canUpdate
+      || access.canDelete
+      || access.canEvaluate
+      || access.canPlanify
+      || access.canAcceptPreScreen
+      || access.canAcceptFinal
+      || access.follow
+      || access.isAdmin
+      || access.isCreator;
+  }
+
+  private canAdvancePipelineForCampaign(campaignId?: number | null): boolean {
+    if (this.permissionService.hasAnyPermission(['ADVANCE_PIPELINE', 'UPDATE_APPLICATION_PROGRESS'])) {
+      return true;
+    }
+    if (!campaignId) {
+      return false;
+    }
+    const access = this.campaignAccessMap()[campaignId];
+    return Boolean(access && (access.isAdmin || access.isCreator || access.canAcceptPreScreen || access.canAcceptFinal));
+  }
+
+  private canPlanifyInterviewForCampaign(campaignId?: number | null): boolean {
+    if (this.permissionService.hasAnyPermission(['CREATE_INTERVIEWS', 'UPDATE_INTERVIEWS'])) {
+      return true;
+    }
+    if (!campaignId) {
+      return false;
+    }
+    const access = this.campaignAccessMap()[campaignId];
+    return Boolean(access && (access.isAdmin || access.isCreator || access.canPlanify));
   }
 }

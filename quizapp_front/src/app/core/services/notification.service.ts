@@ -63,11 +63,26 @@ export interface PagedNotificationResponse {
   providedIn: 'root'
 })
 export class NotificationService {
+  private readonly defaultDurations: Record<Notification['type'], number> = {
+    success: 3000,
+    error: 5000,
+    warning: 5000,
+    info: 5000
+  };
   
   // Signal pour les notifications toast actives
   notifications = signal<Notification[]>([]);
 
   constructor(private http: HttpClient) {}
+
+  private getCurrentUserId(): number {
+    try {
+      const user = localStorage.getItem('user');
+      return user ? Number(JSON.parse(user)?.id || 0) : 0;
+    } catch {
+      return 0;
+    }
+  }
 
   /**
    * Affiche une notification
@@ -76,8 +91,8 @@ export class NotificationService {
     const id = `notification-${Date.now()}-${Math.random()}`;
     const newNotification: Notification = {
       id,
-      duration: 5000,
-      ...notification
+      ...notification,
+      duration: notification.duration ?? this.defaultDurations[notification.type]
     };
 
     // Ajouter la notification
@@ -139,7 +154,7 @@ export class NotificationService {
     console.log('ðŸ“¬ Chargement des notifications pour userId:', userId);
 
     const requestBody = {
-      user: 1,
+      user: this.getCurrentUserId(),
       data: {
         userId: userId
       },
@@ -169,7 +184,7 @@ export class NotificationService {
     console.log('ðŸ“– Marquage notification comme lue:', notificationId);
 
     const requestBody = {
-      user: 1,
+      user: this.getCurrentUserId(),
       data: {
         id: notificationId,
         isRead: true
@@ -195,7 +210,7 @@ export class NotificationService {
     console.log('ðŸ“– Marquage de toutes les notifications comme lues pour userId:', userId);
 
     const requestBody = {
-      user: 1,
+      user: this.getCurrentUserId(),
       datas: notificationIds.map(id => ({
         id: id,
         isRead: true
@@ -228,7 +243,7 @@ export class NotificationService {
     console.log('ðŸ“¬ CrÃ©ation notification BD:', notificationData);
 
     const requestBody = {
-      user: 1,
+      user: this.getCurrentUserId(),
       datas: [{
         ...notificationData,
         isRead: false

@@ -44,6 +44,8 @@ public interface SourceTokenTransformer {
 		@Mapping(source="entity.updatedAt", dateFormat="dd/MM/yyyy", target="updatedAt"),
 		@Mapping(source="entity.expirationDate", dateFormat="dd/MM/yyyy", target="expirationDate"),
 		@Mapping(source="entity.campaigns.id", target="campaignId"),
+		@Mapping(source="entity.form.id", target="formId"),
+		@Mapping(source="entity.form.formName", target="formName"),
 		@Mapping(source="entity.sourceTokenName", target="sourceTokenName"),
 	})
 	SourceTokenDto toDto(SourceToken entity) throws ParseException;
@@ -84,6 +86,7 @@ public interface SourceTokenTransformer {
 		@Mapping(source="dto.isDeleted", target="isDeleted"),
 		@Mapping(source="dto.searchString", target="searchString"),
 		@Mapping(source="campaigns", target="campaigns"),
+		@Mapping(source="form", target="form"),
 	})
-    SourceToken toEntity(SourceTokenDto dto, Campaigns campaigns) throws ParseException;
+    SourceToken toEntity(SourceTokenDto dto, Campaigns campaigns, Form form) throws ParseException;
 }

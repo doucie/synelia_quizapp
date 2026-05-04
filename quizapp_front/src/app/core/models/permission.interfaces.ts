@@ -26,6 +26,7 @@ export interface UserPermissionOverride {
   id?: number;
   userId?: number;
   functionality?: string;
+  isAllowed?: boolean;
   accessType?: 'GRANT' | 'DENY';
   createdAt?: string;
   createdBy?: number;
@@ -41,6 +42,11 @@ export interface EntityPermission {
   entityId?: number;
   permissionKey?: string;
   granted?: boolean;
+  userFirstName?: string;
+  userLastName?: string;
+  userName?: string;
+  userEmail?: string;
+  userRole?: string;
   createdAt?: string;
   createdBy?: number;
   updatedAt?: string;

@@ -103,6 +103,17 @@
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r=".5" fill="currentColor"/></svg>
               <span><strong>Par défaut</strong> = permission du rôle système. <strong>Accorder</strong> = ajout individuel. <strong>Refuser</strong> = retrait individuel.</span>
             </div>
+            @if (deniedFunctionalities().length > 0) {
+              <div class="info-banner warning">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                <span>
+                  {{ deniedFunctionalities().length }} refus individuel(s) actif(s). Un <strong>DENY</strong> retire le droit pour cet utilisateur, meme s'il l'herite de son role ou de ses groupes metiers.
+                  @if (assignedGroupNames().length > 0) {
+                    Groupes actuels: {{ assignedGroupNames().join(', ') }}.
+                  }
+                </span>
+              </div>
+            }
             @if (isAdmin()) {
               <div class="info-banner info">
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
@@ -120,6 +131,9 @@
                         <div class="override-info">
                           <span class="permission-label">{{ perm.label }}</span>
                           <span class="permission-key">{{ perm.key }}</span>
+                          @if (getOverrideExplanation(perm.key); as explanation) {
+                            <span class="permission-key">{{ explanation }}</span>
+                          }
                         </div>
                         <div class="override-controls">
                           <button class="override-btn"

@@ -20,6 +20,7 @@ export class VerifyEmailComponent implements OnInit {
   verificationSuccess = signal(false);
   verificationError = signal<string | null>(null);
   token = signal<string>('');
+  trackingCode = signal<string | null>(null);
 
   ngOnInit(): void {
     // Récupérer le token depuis l'URL
@@ -52,6 +53,7 @@ export class VerifyEmailComponent implements OnInit {
         
         // Récupérer le quiz_token depuis searchString
         const application = response.items[0];
+        this.trackingCode.set(application.trackingCode || null);
         const quizToken = application.searchString; // Le backend retourne le quiz_token dans searchString
         
         // Rediriger vers le QCM après 3 secondes avec applicationId et quizToken

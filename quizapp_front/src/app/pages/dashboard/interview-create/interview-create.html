@@ -243,6 +243,13 @@
             </div>
 
             <div class="section-content">
+              @if (formData().selectedEvaluators.length === 0) {
+                <div class="alert alert-warning">
+                  <i class="bi bi-exclamation-circle-fill"></i>
+                  <span>Aucun évaluateur n'est sélectionné. L'entretien peut être créé, mais aucun recruteur ne sera assigné pour l'évaluation tant que vous n'en ajoutez pas.</span>
+                </div>
+              }
+
               @if (evaluators().length === 0) {
                 <div class="empty-state">
                   <i class="bi bi-people"></i>
@@ -583,6 +590,12 @@
               <i class="bi bi-person-badge"></i>
               Évaluateurs ({{ selectedEvaluatorsDetails().length }})
             </h3>
+            @if (selectedEvaluatorsDetails().length === 0) {
+              <div class="alert alert-warning">
+                <i class="bi bi-exclamation-circle-fill"></i>
+                <span>Vous allez créer cet entretien sans évaluateur assigné. Vous pourrez ajouter des évaluateurs plus tard depuis la gestion des entretiens.</span>
+              </div>
+            }
             <div class="evaluators-summary">
               @for (evaluator of selectedEvaluatorsDetails(); track evaluator.id) {
                 <div class="evaluator-chip">

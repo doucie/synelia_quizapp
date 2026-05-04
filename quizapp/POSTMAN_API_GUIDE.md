@@ -73,12 +73,13 @@
             "quizScore": null,
             "evaluationScore": null,
             "applicationStatus": "pending",
-            "visitToken": "token_abc123",
             "sourceTokenId": 1
         }
     ]
 }
 ```
+
+Note: le code de suivi public est genere automatiquement via `candidate_token`; il n'est plus attendu dans la requete de creation.
 
 ---
 

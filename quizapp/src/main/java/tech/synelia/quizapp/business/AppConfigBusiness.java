@@ -60,6 +60,7 @@ public class AppConfigBusiness implements IBasicBusiness<Request<AppConfigDto>, 
             entityToSave.setCreatedBy(request.getUser());
             entityToSave.setIsDeleted(false);
             if (entityToSave.getIsActive() == null) entityToSave.setIsActive(false);
+            if (entityToSave.getCandidateAccountsEnabled() == null) entityToSave.setCandidateAccountsEnabled(false);
             if (entityToSave.getCompanyName() == null) entityToSave.setCompanyName("Synelia");
             items.add(entityToSave);
         }
@@ -108,6 +109,7 @@ public class AppConfigBusiness implements IBasicBusiness<Request<AppConfigDto>, 
             if (dto.getLogoHtml() != null) entityToSave.setLogoHtml(dto.getLogoHtml());
             if (Utilities.shouldUpdate(dto.getPrimaryColor())) entityToSave.setPrimaryColor(dto.getPrimaryColor());
             if (Utilities.shouldUpdate(dto.getColorScheme())) entityToSave.setColorScheme(dto.getColorScheme());
+            if (dto.getCandidateAccountsEnabled() != null) entityToSave.setCandidateAccountsEnabled(dto.getCandidateAccountsEnabled());
             if (dto.getIsActive() != null) entityToSave.setIsActive(dto.getIsActive());
             if (dto.getIsDeleted() != null) entityToSave.setIsDeleted(dto.getIsDeleted());
 

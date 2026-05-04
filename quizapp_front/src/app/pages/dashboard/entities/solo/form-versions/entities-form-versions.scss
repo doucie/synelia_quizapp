@@ -7,3 +7,14 @@
   background: var(--background);
   min-height: 100vh;
 }
+
+.fork-notice {
+  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
+  border: 1px solid color-mix(in srgb, var(--info) 35%, transparent);
+  background: color-mix(in srgb, var(--info) 10%, var(--surface));
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}

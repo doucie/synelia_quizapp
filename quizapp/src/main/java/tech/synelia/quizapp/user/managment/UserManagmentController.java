@@ -141,6 +141,38 @@ public class UserManagmentController {
 		return response;
 	}
 
+	@RequestMapping(value = "/changerEmail", method = RequestMethod.POST, consumes = {
+			"application/json" }, produces = { "application/json" })
+	public Response<UserDto> changerEmail(@RequestBody Request<UserManagmentDto> request) throws Exception {
+		log.info("FonctionaliteDto method /$/changerEmail");
+		Response<UserDto> response = new Response<UserDto>();
+		String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
+		Locale locale = Locale.of(languageID, "");
+		try {
+			response = Validate.validateObject1(request, response, functionalError, locale);
+			if (!response.isHasError()) {
+				response = userManagerBusiness.changerEmail(request, locale);
+			} else {
+				slf4jLogger.info("Erreur| code: {} -  message: {}", response.getStatus().getCode(),
+						response.getStatus().getMessage());
+				return response;
+			}
+			if (!response.isHasError()) {
+				slf4jLogger.info("end method changerEmail");
+				slf4jLogger.info("code: {} -  message: {}", StatusCode.SUCCESS, StatusMessage.SUCCESS);
+			} else {
+				slf4jLogger.info("Erreur| code: {} -  message: {}", response.getStatus().getCode(),
+						response.getStatus().getMessage());
+			}
+		} catch (CannotCreateTransactionException e) {
+			exceptionUtils.CANNOT_CREATE_TRANSACTION_EXCEPTION(response, locale, e);
+		} catch (TransactionSystemException e) {
+			exceptionUtils.TRANSACTION_SYSTEM_EXCEPTION(response, locale, e);
+		}
+		slf4jLogger.info("end method /$/changerEmail");
+		return response;
+	}
+
 	@RequestMapping(value = "/reinitialiserMotDePasse", method = RequestMethod.POST, consumes = {
 			"application/json" }, produces = { "application/json" })
 	public Response<UserDto> reinitialiserMotDePasse(@RequestBody Request<UserDto> request) throws Exception {

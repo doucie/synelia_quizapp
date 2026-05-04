@@ -88,7 +88,7 @@ export class InterviewService {
    */
   getAllInterviews(): Observable<InterviewResponse> {
     const request = {
-      user: 1,
+      user: this.getCurrentUserId(),
       data: {}
     };
     return this.http.post<InterviewResponse>(
@@ -102,7 +102,7 @@ export class InterviewService {
    */
   getInterviewById(id: number): Observable<InterviewResponse> {
     const request = {
-      user: 1,
+      user: this.getCurrentUserId(),
       data: { id }
     };
     return this.http.post<InterviewResponse>(
@@ -116,7 +116,7 @@ export class InterviewService {
    */
   getInterviewsByCampaignId(campaignId: number): Observable<InterviewResponse> {
     const request = {
-      user: 1,
+      user: this.getCurrentUserId(),
       data: { campaignId }
     };
     return this.http.post<InterviewResponse>(
@@ -130,7 +130,7 @@ export class InterviewService {
    */
   getInterviewsByStatus(status: string): Observable<InterviewResponse> {
     const request = {
-      user: 1,
+      user: this.getCurrentUserId(),
       data: { interviewStatus: status }
     };
     return this.http.post<InterviewResponse>(
@@ -144,7 +144,7 @@ export class InterviewService {
    */
   createInterview(interview: Interview): Observable<InterviewResponse> {
     const request = {
-      user: 1, // User ID - à remplacer par le vrai user connecté
+      user: this.getCurrentUserId(),
       datas: [interview]
     };
     const url = `${this.baseUrl}/create`;
@@ -158,7 +158,7 @@ export class InterviewService {
    */
   updateInterview(interview: Interview): Observable<InterviewResponse> {
     const request = {
-      user: 1, // User ID - à remplacer par le vrai user connecté
+      user: this.getCurrentUserId(),
       datas: [interview]
     };
     return this.http.post<InterviewResponse>(
@@ -172,7 +172,7 @@ export class InterviewService {
    */
   deleteInterview(id: number): Observable<InterviewResponse> {
     const request = {
-      user: 1, // User ID - à remplacer par le vrai user connecté
+      user: this.getCurrentUserId(),
       datas: [{ id }]
     };
     return this.http.post<InterviewResponse>(
@@ -256,13 +256,9 @@ export class InterviewService {
    * @returns Observable de la liste paginée d'interviews incluant les supprimées
    */
   getAllInterviewsByCriteria(criteria: InterviewSearchCriteria = {}): Observable<PagedInterviewResponse> {
-    // Récupérer l'ID de l'utilisateur connecté depuis localStorage
-    const currentUserData = localStorage.getItem('user');
-    const currentUserId = currentUserData ? JSON.parse(currentUserData).id?.toString() || "1" : "1";
-    
     // Construction de la requête selon le format backend attendu
     const request = {
-      user: currentUserId,
+      user: this.getCurrentUserId(),
       size: criteria.size || 10,
       index: criteria.page || 0,
       isSimpleLoading: false,
@@ -330,7 +326,7 @@ export class InterviewService {
    */
   restoreInterview(interviewId: number): Observable<InterviewResponse> {
     const request = {
-      user: 1,
+      user: this.getCurrentUserId(),
       datas: [{ 
         id: interviewId,
         isDeleted: false
@@ -338,5 +334,14 @@ export class InterviewService {
     };
 
     return this.http.post<InterviewResponse>(`${this.baseUrl}/update`, request);
+  }
+
+  private getCurrentUserId(): number {
+    try {
+      const user = localStorage.getItem('user');
+      return user ? Number(JSON.parse(user).id) || 0 : 0;
+    } catch {
+      return 0;
+    }
   }
 }

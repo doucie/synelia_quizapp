@@ -13,6 +13,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.http.HttpStatus;
+import org.springframework.transaction.annotation.Transactional;
+import org.thymeleaf.context.Context;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -29,6 +31,7 @@ import tech.synelia.quizapp.utils.contract.IBasicBusiness;
 import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.dto.transformer.*;
+import tech.synelia.quizapp.utils.enums.CandidateAskStatus;
 import tech.synelia.quizapp.dao.entity.CandidateAsk;
 import tech.synelia.quizapp.dao.entity.Applications;
 import tech.synelia.quizapp.dao.entity.*;
@@ -50,6 +53,16 @@ public class CandidateAskBusiness implements IBasicBusiness<Request<CandidateAsk
 	@Autowired
 	private ApplicationsRepository applicationsRepository;
 	@Autowired
+	private ApplicationsBusiness applicationsBusiness;
+	@Autowired
+	private HostingUtils hostingUtils;
+	@Autowired
+	private ParamsUtils paramsUtils;
+	@Autowired
+	private EmailTemplateBusiness emailTemplateBusiness;
+	@Autowired
+	private PlatformReadinessService platformReadinessService;
+	@Autowired
 	private FunctionalError functionalError;
 	@Autowired
 	private TechnicalError technicalError;
@@ -60,6 +73,10 @@ public class CandidateAskBusiness implements IBasicBusiness<Request<CandidateAsk
 
 	private SimpleDateFormat dateFormat;
 	private SimpleDateFormat dateTimeFormat;
+
+	private static final String CANDIDATE_ASK_RESULT_ACTION = "CANDIDATE_ASK_RESULT";
+	private static final String CANDIDATE_ASK_RESULT_TEMPLATE_KEY = "candidate_ask_result";
+	private static final String MAIL_SENDER_NAME = "Synelia Recrutement";
 
 	public CandidateAskBusiness() {
 		dateFormat = new SimpleDateFormat("dd/MM/yyyy");
@@ -113,6 +130,7 @@ public class CandidateAskBusiness implements IBasicBusiness<Request<CandidateAsk
 
 			CandidateAsk entityToSave = null;
 			entityToSave = CandidateAskTransformer.INSTANCE.toEntity(dto, existingApplications);
+			entityToSave.setAskStatus(StringUtils.defaultIfBlank(dto.getAskStatus(), CandidateAskStatus.PENDING.getValue()));
 			entityToSave.setCreatedAt(Utilities.getCurrentDate());
 			entityToSave.setCreatedBy(request.getUser());
 			entityToSave.setIsDeleted(false);
@@ -196,6 +214,9 @@ public class CandidateAskBusiness implements IBasicBusiness<Request<CandidateAsk
 			if (Utilities.shouldUpdate(dto.getRequestType())) {
 				entityToSave.setRequestType(dto.getRequestType());
 			}
+			if (Utilities.shouldUpdate(dto.getAskStatus())) {
+				entityToSave.setAskStatus(dto.getAskStatus());
+			}
 			if (dto.getIsVerified() != null) {
 				entityToSave.setIsVerified(dto.getIsVerified());
 			}
@@ -210,6 +231,9 @@ public class CandidateAskBusiness implements IBasicBusiness<Request<CandidateAsk
 			}
 			if (Utilities.shouldUpdate(dto.getNewPhone())) {
 				entityToSave.setNewPhone(dto.getNewPhone());
+			}
+			if (Utilities.shouldUpdate(dto.getDecisionReason())) {
+				entityToSave.setDecisionReason(dto.getDecisionReason());
 			}
 			if (dto.getCreatedBy() != null && dto.getCreatedBy() > 0) {
 				entityToSave.setCreatedBy(dto.getCreatedBy());
@@ -441,20 +465,317 @@ public class CandidateAskBusiness implements IBasicBusiness<Request<CandidateAsk
 		if (size > 1) {
 			return dto;
 		}
+		if (StringUtils.isBlank(dto.getAskStatus())) {
+			dto.setAskStatus(Boolean.TRUE.equals(dto.getIsVerified())
+					? CandidateAskStatus.APPROVED.getValue()
+					: CandidateAskStatus.PENDING.getValue());
+		}
 
 		return dto;
 	}
 
-	public Response<CandidateAskDto> custom(Request<CandidateAskDto> request, Locale locale) throws JsonProcessingException {
+	@Transactional
+	public Response<CandidateAskDto> custom(Request<CandidateAskDto> request, Locale locale) throws Exception {
 		log.info("----begin custom CandidateAskDto-----");
 		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
 		Response<CandidateAskDto> response = new Response<CandidateAskDto>();
-		
+		List<CandidateAskDto> itemsDto = new ArrayList<CandidateAskDto>();
+
+		for (CandidateAskDto dto : request.getDatas()) {
+			Map<String, Object> fieldsToVerify = new HashMap<String, Object>();
+			fieldsToVerify.put("id", dto.getId());
+			fieldsToVerify.put("action", dto.getAction());
+			if (!Validate.RequiredValue(fieldsToVerify).isGood()) {
+				throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
+			}
+
+			CandidateAsk candidateAsk = candidateAskRepository.findOne(dto.getId(), false);
+			if (candidateAsk == null || Boolean.TRUE.equals(candidateAsk.getIsDeleted())) {
+				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("candidateAsk id -> " + dto.getId(), locale));
+			}
+
+			CandidateAskStatus currentStatus = resolveAskStatus(candidateAsk);
+			if (currentStatus != CandidateAskStatus.PENDING) {
+				throw invalidCandidateAskRequest("Cette demande a deja ete traitee.", locale);
+			}
+
+			Applications application = candidateAsk.getApplications() != null && candidateAsk.getApplications().getId() != null
+					? applicationsRepository.findOne(candidateAsk.getApplications().getId(), false)
+					: null;
+			if (application == null) {
+				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("applications applicationId -> " + dto.getApplicationId(), locale));
+			}
+
+			platformReadinessService.requireEmailDeliveryAvailable(
+					CANDIDATE_ASK_RESULT_ACTION,
+					CANDIDATE_ASK_RESULT_TEMPLATE_KEY,
+					locale);
+
+			String action = StringUtils.trimToEmpty(dto.getAction()).toUpperCase(Locale.ROOT);
+			Date now = Utilities.getCurrentDate();
+			switch (action) {
+				case "APPROVE":
+					applyCandidateAskToApplication(candidateAsk, application, request.getUser(), locale);
+					candidateAsk.setAskStatus(CandidateAskStatus.APPROVED.getValue());
+					candidateAsk.setIsVerified(true);
+					candidateAsk.setDecisionReason(null);
+					break;
+				case "REJECT":
+					if (StringUtils.isBlank(dto.getDecisionReason())) {
+						throw invalidCandidateAskRequest("Le motif de refus est obligatoire.", locale);
+					}
+					candidateAsk.setAskStatus(CandidateAskStatus.REJECTED.getValue());
+					candidateAsk.setIsVerified(false);
+					candidateAsk.setDecisionReason(dto.getDecisionReason().trim());
+					break;
+				default:
+					throw invalidCandidateAskRequest("Action candidate ask inconnue.", locale);
+			}
+
+			candidateAsk.setUpdatedAt(now);
+			candidateAsk.setUpdatedBy(request.getUser());
+			candidateAsk.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(candidateAsk)));
+			CandidateAsk savedCandidateAsk = candidateAskRepository.save(candidateAsk);
+			sendCandidateAskResultEmail(application, savedCandidateAsk, locale);
+			itemsDto.add(getFullInfos(CandidateAskTransformer.INSTANCE.toDto(savedCandidateAsk), 1, request.getIsSimpleLoading(), locale));
+		}
+
+		Status status = new Status();
+		status.setCode(StatusCode.SUCCESS);
+		status.setMessage(StatusMessage.SUCCESS);
+		response.setStatus(status);
+		response.setHttpCode(HttpStatus.OK.value());
 		response.setHasError(false);
-		response.setCount(1L);
-		response.setItems(Arrays.asList(new CandidateAskDto()));
+		response.setCount((long) itemsDto.size());
+		response.setItems(itemsDto);
 		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
 		log.info("----end custom CandidateAskDto-----");
 		return response;
+	}
+
+	private CandidateAskStatus resolveAskStatus(CandidateAsk candidateAsk) {
+		if (candidateAsk == null) {
+			return CandidateAskStatus.PENDING;
+		}
+
+		String askStatus = StringUtils.trimToNull(candidateAsk.getAskStatus());
+		if (askStatus != null) {
+			return CandidateAskStatus.fromValue(askStatus);
+		}
+
+		return Boolean.TRUE.equals(candidateAsk.getIsVerified())
+				? CandidateAskStatus.APPROVED
+				: CandidateAskStatus.PENDING;
+	}
+
+	private void applyCandidateAskToApplication(CandidateAsk candidateAsk, Applications application, Integer userId, Locale locale) throws JsonProcessingException {
+		if (candidateAsk == null || application == null) {
+			throw invalidCandidateAskRequest("Demande ou candidature introuvable.", locale);
+		}
+
+		String requestType = StringUtils.trimToEmpty(candidateAsk.getRequestType()).toUpperCase(Locale.ROOT);
+		boolean applicationChanged = false;
+
+		switch (requestType) {
+			case "EMAIL":
+				String newEmail = normalizeEmail(candidateAsk.getNewEmail());
+				if (StringUtils.isBlank(newEmail)) {
+					throw invalidCandidateAskRequest("Aucune nouvelle adresse email n'est disponible pour cette demande.", locale);
+				}
+				if (!Utilities.isValidEmail(newEmail)) {
+					throw invalidCandidateAskRequest("La nouvelle adresse email est invalide.", locale);
+				}
+				if (StringUtils.equalsIgnoreCase(newEmail, application.getCandidateEmail())) {
+					throw invalidCandidateAskRequest("La nouvelle adresse email est identique a l'adresse actuelle.", locale);
+				}
+				application.setCandidateEmail(newEmail);
+				application.setEmailVerified(false);
+				applicationChanged = true;
+				break;
+			case "PHONE":
+				String newPhone = normalizeText(candidateAsk.getNewPhone());
+				if (StringUtils.isBlank(newPhone)) {
+					throw invalidCandidateAskRequest("Aucun nouveau numero de telephone n'est disponible pour cette demande.", locale);
+				}
+				if (StringUtils.equals(newPhone, normalizeText(application.getCandidatePhone()))) {
+					throw invalidCandidateAskRequest("Le nouveau numero de telephone est identique au numero actuel.", locale);
+				}
+				application.setCandidatePhone(newPhone);
+				applicationChanged = true;
+				break;
+			case "IDENTITY":
+				String firstName = normalizeText(candidateAsk.getFirstName());
+				String lastName = normalizeText(candidateAsk.getLastName());
+				if (StringUtils.isNotBlank(firstName) && !StringUtils.equals(firstName, normalizeText(application.getCandidateFirstName()))) {
+					application.setCandidateFirstName(firstName);
+					applicationChanged = true;
+				}
+				if (StringUtils.isNotBlank(lastName) && !StringUtils.equals(lastName, normalizeText(application.getCandidateLastName()))) {
+					application.setCandidateLastName(lastName);
+					applicationChanged = true;
+				}
+				if (!applicationChanged) {
+					throw invalidCandidateAskRequest("Aucune correction d'identite applicable n'a ete trouvee.", locale);
+				}
+				break;
+			default:
+				throw invalidCandidateAskRequest("Le type de demande candidat est invalide.", locale);
+		}
+
+		if (!applicationChanged) {
+			throw invalidCandidateAskRequest("Aucune modification n'a ete appliquee a la candidature.", locale);
+		}
+
+		application.setUpdatedAt(Utilities.getCurrentDate());
+		application.setUpdatedBy(userId);
+		application.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(application)));
+		Applications savedApplication = applicationsRepository.save(application);
+
+		if ("EMAIL".equals(requestType)) {
+			try {
+				applicationsBusiness.restartEmailVerification(savedApplication, locale);
+			} catch (Exception exception) {
+				throw new InternalErrorException(technicalError.INTERN_ERROR(exception.getMessage(), locale));
+			}
+		}
+	}
+
+	private InvalidEntityException invalidCandidateAskRequest(String message, Locale locale) {
+		return new InvalidEntityException(functionalError.INVALID_FORMAT(message, locale));
+	}
+
+	private void sendCandidateAskResultEmail(Applications application, CandidateAsk candidateAsk, Locale locale) {
+		if (application == null || candidateAsk == null || StringUtils.isBlank(application.getCandidateEmail())) {
+			return;
+		}
+
+		EmailTemplate emailTemplate = emailTemplateBusiness.findDefaultByActionTypeOrKey(
+				CANDIDATE_ASK_RESULT_ACTION,
+				CANDIDATE_ASK_RESULT_TEMPLATE_KEY);
+		if (emailTemplate == null || Boolean.TRUE.equals(emailTemplate.getIsDeleted()) || !Boolean.TRUE.equals(emailTemplate.getIsActive())) {
+			log.warning("Aucun template actif pour la notification de candidate ask " + candidateAsk.getId());
+			return;
+		}
+
+		try {
+			Map<String, String> from = new HashMap<>();
+			from.put("email", paramsUtils.getSmtpLogin());
+			from.put("user", MAIL_SENDER_NAME);
+
+			List<Map<String, String>> toRecipients = new ArrayList<>();
+			Map<String, String> recipient = new HashMap<>();
+			recipient.put("email", application.getCandidateEmail());
+			recipient.put("user", buildCandidateFullName(application));
+			toRecipients.add(recipient);
+
+			CandidateAskStatus askStatus = resolveAskStatus(candidateAsk);
+			Map<String, String> vars = new HashMap<>();
+			vars.put("first_name", StringUtils.defaultString(application.getCandidateFirstName()));
+			vars.put("last_name", StringUtils.defaultString(application.getCandidateLastName()));
+			vars.put("candidate_ask_type_label", getCandidateAskTypeLabel(candidateAsk.getRequestType()));
+			vars.put("ask_status_label", getCandidateAskStatusLabel(askStatus));
+			vars.put("ask_summary_block", buildCandidateAskSummaryBlock(candidateAsk));
+			vars.put("decision_reason_block", buildCandidateAskDecisionReasonBlock(candidateAsk));
+			vars.put("verification_notice_block", buildCandidateAskVerificationNoticeBlock(candidateAsk, askStatus));
+			vars.put("app_link", paramsUtils.getUrlAppl());
+
+			String subject = emailTemplateBusiness.renderSubjectTemplate(emailTemplate, vars);
+			String contenu = emailTemplateBusiness.renderBodyTemplate(emailTemplate, vars);
+
+			Context context = new Context();
+			context.setVariable("contenu", contenu);
+			context.setVariable("entete", "Demande de correction candidat");
+			context.setVariable("titre", askStatus == CandidateAskStatus.APPROVED
+					? "Votre demande de correction a ete validee"
+					: "Votre demande de correction a ete refusee");
+			context.setVariable("appLink", paramsUtils.getUrlAppl());
+
+			Response<?> responseEmail = hostingUtils.sendEmail(from, toRecipients, subject, "", null, context, "blank", locale);
+			if (responseEmail.isHasError()) {
+				log.warning("Echec de l'envoi de l'email candidate ask pour la candidature " + application.getId());
+			}
+		} catch (Exception exception) {
+			log.warning("Envoi email candidate ask ignore pour la candidature " + application.getId() + ": " + exception.getMessage());
+		}
+	}
+
+	private String buildCandidateFullName(Applications application) {
+		return StringUtils.trim(StringUtils.defaultString(application.getCandidateFirstName())
+				+ " "
+				+ StringUtils.defaultString(application.getCandidateLastName()));
+	}
+
+	private String getCandidateAskTypeLabel(String requestType) {
+		String normalizedType = StringUtils.trimToEmpty(requestType).toUpperCase(Locale.ROOT);
+		switch (normalizedType) {
+			case "EMAIL":
+				return "l'adresse email";
+			case "PHONE":
+				return "le telephone";
+			case "IDENTITY":
+				return "l'identite";
+			default:
+				return "vos informations";
+		}
+	}
+
+	private String getCandidateAskStatusLabel(CandidateAskStatus askStatus) {
+		return askStatus == CandidateAskStatus.APPROVED ? "validee" : "refusee";
+	}
+
+	private String buildCandidateAskSummaryBlock(CandidateAsk candidateAsk) {
+		String requestType = StringUtils.trimToEmpty(candidateAsk.getRequestType()).toUpperCase(Locale.ROOT);
+		String summary;
+		switch (requestType) {
+			case "EMAIL":
+				summary = StringUtils.isNotBlank(candidateAsk.getNewEmail())
+						? "Nouvelle adresse email demandee : <strong>" + candidateAsk.getNewEmail() + "</strong>."
+						: "";
+				break;
+			case "PHONE":
+				summary = StringUtils.isNotBlank(candidateAsk.getNewPhone())
+						? "Nouveau numero demande : <strong>" + candidateAsk.getNewPhone() + "</strong>."
+						: "";
+				break;
+			case "IDENTITY":
+				List<String> identityParts = new ArrayList<>();
+				if (StringUtils.isNotBlank(candidateAsk.getFirstName())) {
+					identityParts.add(candidateAsk.getFirstName());
+				}
+				if (StringUtils.isNotBlank(candidateAsk.getLastName())) {
+					identityParts.add(candidateAsk.getLastName());
+				}
+				summary = identityParts.isEmpty()
+						? ""
+						: "Identite demandee : <strong>" + StringUtils.join(identityParts, ' ') + "</strong>.";
+				break;
+			default:
+				summary = "";
+		}
+
+		return StringUtils.isNotBlank(summary) ? "<p>" + summary + "</p>" : "";
+	}
+
+	private String buildCandidateAskDecisionReasonBlock(CandidateAsk candidateAsk) {
+		if (StringUtils.isBlank(candidateAsk.getDecisionReason())) {
+			return "";
+		}
+		return "<p><strong>Motif :</strong> " + candidateAsk.getDecisionReason() + "</p>";
+	}
+
+	private String buildCandidateAskVerificationNoticeBlock(CandidateAsk candidateAsk, CandidateAskStatus askStatus) {
+		if (askStatus != CandidateAskStatus.APPROVED || !"EMAIL".equalsIgnoreCase(candidateAsk.getRequestType())) {
+			return "";
+		}
+		return "<p>Un nouvel email de verification vient de vous etre envoye a votre nouvelle adresse afin de confirmer ce changement.</p>";
+	}
+
+	private String normalizeText(String value) {
+		return StringUtils.trimToNull(value);
+	}
+
+	private String normalizeEmail(String value) {
+		String normalizedValue = normalizeText(value);
+		return normalizedValue != null ? normalizedValue.toLowerCase(Locale.ROOT) : null;
 	}
 }

@@ -52,6 +52,8 @@ export class ApplyPositionComponent implements OnInit {
 
   // Textes légaux
   consentText = signal<string>('');
+  isLoadingConsentText = signal(true);
+  platformBlockMessage = signal<string | null>(null);
   privacyPolicyTitle = signal<string>('');
   privacyPolicyContent = signal<string>('');
   showPrivacyModal = signal(false);
@@ -75,6 +77,7 @@ export class ApplyPositionComponent implements OnInit {
   isUploadingCv = signal(false);
   submitSuccess = signal(false);
   submitError = signal<string | null>(null);
+  submittedTrackingCode = signal<string | null>(null);
   fileName = signal<string>('');
   cvFilePath = signal<string>('');
 
@@ -120,7 +123,24 @@ export class ApplyPositionComponent implements OnInit {
         const item = res?.items?.[0];
         if (item?.content && item.isActive) {
           this.consentText.set(item.content);
+          this.platformBlockMessage.set(null);
+        } else {
+          this.platformBlockMessage.set(
+            'La candidature est temporairement indisponible: le texte de consentement candidat n\'est pas configure.'
+          );
         }
+
+        this.isLoadingConsentText.set(false);
+      },
+      error: (error) => {
+        console.error('Erreur chargement consentement:', error);
+        this.platformBlockMessage.set(
+          this.extractPlatformError(
+            error,
+            'La candidature est temporairement indisponible: le texte de consentement candidat est absent ou inactif.'
+          )
+        );
+        this.isLoadingConsentText.set(false);
       }
     });
 
@@ -173,6 +193,16 @@ export class ApplyPositionComponent implements OnInit {
   async onSubmit(): Promise<void> {
     // Validation basique
     const data = this.formData();
+
+    if (this.isLoadingConsentText()) {
+      this.submitError.set('Le texte de consentement est encore en cours de chargement.');
+      return;
+    }
+
+    if (this.platformBlockMessage()) {
+      this.submitError.set(this.platformBlockMessage());
+      return;
+    }
     
     if (!data.firstName || !data.lastName || !data.email || !data.phone || !data.birthDate) {
       this.submitError.set('Veuillez remplir tous les champs obligatoires');
@@ -234,18 +264,25 @@ export class ApplyPositionComponent implements OnInit {
           this.isSubmitting.set(false);
           
           if (response.hasError || !response.items || response.items.length === 0) {
-            throw new Error('Erreur lors de la création de la candidature');
+				this.submitError.set(
+					response.status?.message || 'Erreur lors de la creation de la candidature'
+				);
+				return;
           }
 
           this.submitSuccess.set(true);
+          this.submittedTrackingCode.set(response.items[0].trackingCode || null);
           console.log('Candidature créée avec succès:', response.items[0]);
         },
         error: (error) => {
           this.isSubmitting.set(false);
           console.error('Erreur lors de la soumission:', error);
-          this.submitError.set(
-            'Une erreur est survenue lors de l\'envoi de votre candidature. Veuillez réessayer plus tard.'
-          );
+				this.submitError.set(
+					this.extractPlatformError(
+						error,
+						'Une erreur est survenue lors de l\'envoi de votre candidature. Veuillez reessayer plus tard.'
+					)
+				);
         }
       });
 
@@ -279,6 +316,11 @@ export class ApplyPositionComponent implements OnInit {
     this.cvFilePath.set('');
     this.submitSuccess.set(false);
     this.submitError.set(null);
+    this.submittedTrackingCode.set(null);
     this.isUploadingCv.set(false);
+  }
+
+  private extractPlatformError(error: any, fallback: string): string {
+    return error?.error?.status?.message || error?.status?.message || fallback;
   }
 }

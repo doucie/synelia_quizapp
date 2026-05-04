@@ -8,7 +8,6 @@
 
 package tech.synelia.quizapp.business;
 
-import lombok.extern.java.Log;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -21,6 +20,7 @@ import jakarta.persistence.PersistenceContext;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.logging.Logger;
 
 import tech.synelia.quizapp.utils.*;
 import tech.synelia.quizapp.utils.dto.*;
@@ -29,6 +29,7 @@ import tech.synelia.quizapp.utils.contract.IBasicBusiness;
 import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.dto.transformer.*;
+import tech.synelia.quizapp.utils.enums.FunctionalityEnum;
 import tech.synelia.quizapp.dao.entity.Evaluations;
 import tech.synelia.quizapp.dao.entity.CandidateInterview;
 import tech.synelia.quizapp.dao.entity.*;
@@ -40,9 +41,10 @@ BUSINESS for table "evaluations"
  * @author Geo
  *
  */
-@Log
 @Component
 public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDto>, Response<EvaluationsDto>> {
+
+	private static final Logger log = Logger.getLogger(EvaluationsBusiness.class.getName());
 
 	private Response<EvaluationsDto> response;
 	@Autowired
@@ -50,11 +52,19 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 	@Autowired
 	private CandidateInterviewRepository candidateInterviewRepository;
 	@Autowired
+	private InterviewParticipantRepository interviewParticipantRepository;
+	@Autowired
+	private InterviewsRepository interviewsRepository;
+	@Autowired
 	private ApplicationsRepository applicationsRepository;
 	@Autowired
 	private PipelineStageRepository pipelineStageRepository;
 	@Autowired
 	private ApplicationProgressRepository applicationProgressRepository;
+	@Autowired
+	private ApplicationProgressBusiness applicationProgressBusiness;
+	@Autowired
+	private PermissionService permissionService;
 	@Autowired
 	private FunctionalError functionalError;
 	@Autowired
@@ -85,6 +95,7 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
 		Response<EvaluationsDto> response = new Response<EvaluationsDto>();
 		List<Evaluations>        items    = new ArrayList<Evaluations>();
+		List<Integer> affectedCandidateInterviewIds = new ArrayList<Integer>();
 			
 		for (EvaluationsDto dto : request.getDatas()) {
 			// Definir les parametres obligatoires
@@ -110,6 +121,12 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 					throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("candidateInterview candidateInterviewId -> " + dto.getCandidateInterviewId(), locale));
 				}
 			}
+			ensureEvaluationAllowed(
+					existingCandidateInterview,
+					request.getUser(),
+					locale,
+					"saisir cette évaluation",
+					FunctionalityEnum.CREATE_EVALUATIONS.getValue());
 			dto.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(dto)));
 
 			Evaluations entityToSave = null;
@@ -118,6 +135,7 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 			entityToSave.setCreatedBy(request.getUser());
 			entityToSave.setIsDeleted(false);
 			items.add(entityToSave);
+			affectedCandidateInterviewIds.add(dto.getCandidateInterviewId());
 		}
 
 		if (!items.isEmpty()) {
@@ -152,14 +170,7 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 			response.setItems(itemsDto);
 			response.setHasError(false);
 			
-			// Après création, vérifier si toutes les évaluations sont soumises pour mettre à jour le pipeline
-			for (Evaluations savedEval : itemsSaved) {
-				try {
-					updateEvaluationStageProgress(savedEval, request.getUser());
-				} catch (Exception e) {
-					log.warning("Erreur lors de la mise à jour du pipeline pour l'évaluation: " + e.getMessage());
-				}
-			}
+			recalculateEvaluationAggregates(affectedCandidateInterviewIds, request.getUser(), locale);
 		}
 		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
 		log.info("----end create Evaluations-----");
@@ -179,6 +190,7 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
 		Response<EvaluationsDto> response = new Response<EvaluationsDto>();
 		List<Evaluations>        items    = new ArrayList<Evaluations>();
+		List<Integer> affectedCandidateInterviewIds = new ArrayList<Integer>();
 			
 		for (EvaluationsDto dto : request.getDatas()) {
 			// Definir les parametres obligatoires
@@ -194,6 +206,12 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 			if (entityToSave == null) {
 				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("evaluations id -> " + dto.getId(), locale));
 			}
+			CandidateInterview permissionCandidateInterview = entityToSave.getCandidateInterview() != null
+					? candidateInterviewRepository.findOne(entityToSave.getCandidateInterview().getId(), false)
+					: null;
+			if (entityToSave.getCandidateInterview() != null && entityToSave.getCandidateInterview().getId() != null) {
+				affectedCandidateInterviewIds.add(entityToSave.getCandidateInterview().getId());
+			}
 
 			// Verify if candidateInterview exist
 			if (dto.getCandidateInterviewId() != null && dto.getCandidateInterviewId() > 0){
@@ -202,7 +220,15 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 					throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("candidateInterview candidateInterviewId -> " + dto.getCandidateInterviewId(), locale));
 				}
 				entityToSave.setCandidateInterview(existingCandidateInterview);
+				permissionCandidateInterview = existingCandidateInterview;
+				affectedCandidateInterviewIds.add(dto.getCandidateInterviewId());
 			}
+			ensureEvaluationAllowed(
+					permissionCandidateInterview,
+					request.getUser(),
+					locale,
+					"modifier cette évaluation",
+					FunctionalityEnum.UPDATE_EVALUATIONS.getValue());
 			if (dto.getCandidateMark() != null && dto.getCandidateMark() > 0) {
 				entityToSave.setCandidateMark(dto.getCandidateMark());
 			}
@@ -262,6 +288,7 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 			response.setHasError(false);
 			response.setHttpCode(HttpStatus.OK.value());
 			response.setStatus(status);
+			recalculateEvaluationAggregates(affectedCandidateInterviewIds, request.getUser(), locale);
 		}
 		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
 		log.info("----end update Evaluations-----");
@@ -281,6 +308,7 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
 		Response<EvaluationsDto> response = new Response<EvaluationsDto>();
 		List<Evaluations>        items    = new ArrayList<Evaluations>();
+		List<Integer> affectedCandidateInterviewIds = new ArrayList<Integer>();
 			
 		for (EvaluationsDto dto : request.getDatas()) {
 			// Definir les parametres obligatoires
@@ -296,6 +324,18 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 			if (existingEntity == null) {
 				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("evaluations -> " + dto.getId(), locale));
 			}
+			CandidateInterview permissionCandidateInterview = existingEntity.getCandidateInterview() != null
+					? candidateInterviewRepository.findOne(existingEntity.getCandidateInterview().getId(), false)
+					: null;
+			ensureEvaluationAllowed(
+					permissionCandidateInterview,
+					request.getUser(),
+					locale,
+					"supprimer cette évaluation",
+					FunctionalityEnum.DELETE_EVALUATIONS.getValue());
+			if (existingEntity.getCandidateInterview() != null && existingEntity.getCandidateInterview().getId() != null) {
+				affectedCandidateInterviewIds.add(existingEntity.getCandidateInterview().getId());
+			}
 
 			// -----------------------------------------------------------------------
 			// ----------- CHECK IF DATA IS USED
@@ -310,6 +350,7 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 		if (!items.isEmpty()) {
 			// supprimer les donnees en base
 			evaluationsRepository.saveAll((Iterable<Evaluations>) items);
+			recalculateEvaluationAggregates(affectedCandidateInterviewIds, request.getUser(), locale);
 
 			Status status = new Status();
 			status.setCode(StatusCode.SUCCESS);
@@ -461,41 +502,122 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 		return response;
 	}
 
-	/**
-	 * Mettre à jour le progrès de l'étape EVALUATION dans le pipeline
-	 * Quand toutes les évaluations sont soumises, calculer le score moyen
-	 */
-	private void updateEvaluationStageProgress(Evaluations evaluation, Integer userId) {
-		if (evaluation.getCandidateInterview() == null) return;
-		CandidateInterview ci = candidateInterviewRepository.findOne(evaluation.getCandidateInterview().getId(), false);
-		if (ci == null || ci.getApplications() == null) return;
+	private void recalculateEvaluationAggregates(List<Integer> candidateInterviewIds, Integer userId, Locale locale) {
+		if (candidateInterviewIds == null || candidateInterviewIds.isEmpty()) {
+			return;
+		}
 
-		Applications application = applicationsRepository.findOne(ci.getApplications().getId(), false);
-		if (application == null || application.getSourceToken() == null) return;
-		if (application.getSourceToken().getCampaigns() == null) return;
+		LinkedHashSet<Integer> distinctIds = new LinkedHashSet<Integer>(candidateInterviewIds);
+		for (Integer candidateInterviewId : distinctIds) {
+			if (candidateInterviewId == null) {
+				continue;
+			}
+			try {
+				recalculateEvaluationAggregatesForCandidateInterview(candidateInterviewId, userId, locale);
+			} catch (Exception exception) {
+				log.warning("Erreur lors du recalcul des agrégats d'évaluation pour candidateInterview " + candidateInterviewId + ": " + exception.getMessage());
+			}
+		}
+	}
 
-		Campaigns campaign = application.getSourceToken().getCampaigns();
-		if (campaign.getPipelineTemplate() == null) return;
+	private void recalculateEvaluationAggregatesForCandidateInterview(Integer candidateInterviewId, Integer userId, Locale locale) {
+		CandidateInterview candidateInterview = candidateInterviewRepository.findOne(candidateInterviewId, false);
+		if (candidateInterview == null || candidateInterview.getInterviews() == null || candidateInterview.getApplications() == null) {
+			return;
+		}
 
-		// Trouver l'étape EVALUATION dans le template
-		PipelineStage evalStage = pipelineStageRepository.findByTemplateIdAndStageType(
-				campaign.getPipelineTemplate().getId(), "EVALUATION");
-		if (evalStage == null) return;
-		ApplicationProgress progress = applicationProgressRepository.findByApplicationIdAndPipelineStageId(
-				application.getId(), evalStage.getId());
-		if (progress == null) return;
+		Interviews interview = interviewsRepository.findOne(candidateInterview.getInterviews().getId(), false);
+		Applications application = applicationsRepository.findOne(candidateInterview.getApplications().getId(), false);
+		if (interview == null || application == null) {
+			return;
+		}
 
-		// Calculer le score moyen de toutes les évaluations pour cette application
-		Integer totalScore = evaluationsRepository.sumMarksByApplicationId(application.getId());
-		Long totalNumber = evaluationsRepository.countByApplicationId(application.getId());
+		Integer interviewScore = evaluationsRepository.sumMarksByInterviewId(interview.getId());
+		Long interviewCount = evaluationsRepository.countByInterviewId(interview.getId());
+		double interviewPercentage = interviewCount != null && interviewCount > 0
+				? (double) interviewScore / interviewCount
+				: 0d;
 
-		if (totalNumber > 0) {
-			double avgScore = (double) totalScore / totalNumber;
-			progress.setScore(avgScore);
-			progress.setUpdatedAt(Utilities.getCurrentDate());
-			progress.setUpdatedBy(userId);
-			applicationProgressRepository.save(progress);
-			log.info("Pipeline EVALUATION score mis à jour pour application " + application.getId() + ": " + avgScore);
+		interview.setEvaluationScore(interviewScore);
+		interview.setEvaluationNumber(interviewCount != null ? interviewCount.intValue() : 0);
+		interview.setEvaluationPercentage(interviewPercentage);
+		interview.setUpdatedAt(Utilities.getCurrentDate());
+		interview.setUpdatedBy(userId);
+		interviewsRepository.save(interview);
+
+		Integer applicationScore = evaluationsRepository.sumMarksByApplicationId(application.getId());
+		Long applicationCount = evaluationsRepository.countByApplicationId(application.getId());
+		double applicationPercentage = applicationCount != null && applicationCount > 0
+				? (double) applicationScore / applicationCount
+				: 0d;
+
+		application.setTotalEvaluationScore(applicationScore != null ? applicationScore.floatValue() : 0f);
+		application.setTotalEvaluationNumber(applicationCount != null ? applicationCount.intValue() : 0);
+		application.setTotalEvaluationPercentage(applicationPercentage);
+		application.setUpdatedAt(Utilities.getCurrentDate());
+		application.setUpdatedBy(userId);
+		applicationsRepository.save(application);
+
+		try {
+			applicationProgressBusiness.syncInterviewEvaluationStages(
+					application.getId(),
+					applicationPercentage,
+					"OVER".equalsIgnoreCase(interview.getInterviewStatus()),
+					userId,
+					locale);
+		} catch (ParseException exception) {
+			throw new RuntimeException(exception);
+		}
+	}
+
+	private void ensureEvaluationAllowed(CandidateInterview candidateInterview, Integer actorUserId, Locale locale, String actionLabel, String globalPermission) {
+		if (actorUserId == null) {
+			throw new InvalidEntityException(functionalError.FIELD_EMPTY("authenticatedUserId", locale));
+		}
+		if (candidateInterview == null || candidateInterview.getInterviews() == null || candidateInterview.getInterviews().getId() == null) {
+			throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("candidateInterview/interview pour l'évaluation", locale));
+		}
+
+		Interviews interview = interviewsRepository.findOne(candidateInterview.getInterviews().getId(), false);
+		if (interview == null) {
+			throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("interviews id -> " + candidateInterview.getInterviews().getId(), locale));
+		}
+
+		Applications application = candidateInterview.getApplications() != null && candidateInterview.getApplications().getId() != null
+				? applicationsRepository.findOne(candidateInterview.getApplications().getId(), false)
+				: null;
+		Campaigns campaign = application != null && application.getSourceToken() != null
+				? application.getSourceToken().getCampaigns()
+				: null;
+
+		boolean hasGlobalRight = permissionService.hasPermission(actorUserId, globalPermission);
+		boolean hasCampaignRight = campaign != null && permissionService.hasAnyEntityPermission(
+				actorUserId,
+				"CAMPAIGN",
+				campaign.getId(),
+				"ADMIN",
+				"EVALUATE");
+		boolean hasInterviewRight = permissionService.hasAnyEntityPermission(
+				actorUserId,
+				"INTERVIEW",
+				interview.getId(),
+				"ADMIN",
+				"EVALUATE");
+		boolean isInterviewParticipant = false;
+		List<InterviewParticipant> participants = interviewParticipantRepository.findByInterviewId(interview.getId(), false);
+		if (participants != null) {
+			for (InterviewParticipant participant : participants) {
+				if (participant.getUser() != null && Objects.equals(participant.getUser().getId(), actorUserId)) {
+					isInterviewParticipant = true;
+					break;
+				}
+			}
+		}
+
+		if (!hasGlobalRight && !hasCampaignRight && !hasInterviewRight && !isInterviewParticipant) {
+			throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+					"Accès refusé: droits insuffisants pour " + actionLabel,
+					locale));
 		}
 	}
 }

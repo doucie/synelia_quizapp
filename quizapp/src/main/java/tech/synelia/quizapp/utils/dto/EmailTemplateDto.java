@@ -19,6 +19,7 @@ public class EmailTemplateDto extends _EmailTemplateDto implements Cloneable {
     private String  templateKey;
     private String  subjectTemplate;
     private String  bodyTemplate;
+    private String  editableVariablesJson;
     private String  description;
     private String  availableVariables;
     private String  actionType;
@@ -42,6 +43,7 @@ public class EmailTemplateDto extends _EmailTemplateDto implements Cloneable {
     private SearchParam<String>  templateKeyParam;
     private SearchParam<String>  subjectTemplateParam;
     private SearchParam<String>  bodyTemplateParam;
+    private SearchParam<String>  editableVariablesJsonParam;
     private SearchParam<String>  descriptionParam;
     private SearchParam<Boolean> isActiveParam;
     private SearchParam<String>  createdAtParam;

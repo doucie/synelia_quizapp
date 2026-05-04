@@ -81,6 +81,10 @@ public class SourceToken implements Serializable, Cloneable {
     @JoinColumn(name="campaign_id", referencedColumnName="id")
     private Campaigns campaigns   ;
 
+    @ManyToOne
+    @JoinColumn(name="form_id", referencedColumnName="id")
+    private Form      form        ;
+
     //----------------------------------------------------------------------
     // CONSTRUCTOR(S)
     //----------------------------------------------------------------------

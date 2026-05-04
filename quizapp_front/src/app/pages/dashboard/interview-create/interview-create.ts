@@ -5,9 +5,10 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { Subject, takeUntil, forkJoin } from 'rxjs';
 import { Interview, InterviewService } from '../../../core/services/interview.service';
 import { Application, ApplicationService } from '../../../core/services/application.service';
-import { Campaign, CampaignService } from '../../../core/services/campaign.service';
+import { Campaign, CampaignService, CampaignAccessRecord } from '../../../core/services/campaign.service';
 import { User, UserService } from '../../../core/services/user.service';
 import { EntityPermissionService } from '../../../core/services/entity-permission.service';
+import { PermissionService } from '../../../core/services/permission.service';
 import { SourceTokenService, SourceToken } from '../../../services/source-token.service';
 import { InterviewParticipantService, InterviewParticipant } from '../../../core/services/interview-participant.service';
 import { EntityPermission } from '../../../core/models/permission.interfaces';
@@ -34,10 +35,14 @@ interface InterviewFormData {
 })
 export class InterviewCreateComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
+  private prefilledCampaignId: number | null = null;
+  private prefilledApplicationId: number | null = null;
+  private prefilledCandidateApplied = false;
 
   // Signals
   loading = signal(false);
   campaigns = signal<Campaign[]>([]);
+  campaignAccessMap = signal<Record<number, CampaignAccessRecord>>({});
   applications = signal<Application[]>([]);
   sourceTokens = signal<SourceToken[]>([]);
   campaignEntityPerms = signal<EntityPermission[]>([]); // Permissions entity_permission pour la campagne
@@ -73,11 +78,13 @@ export class InterviewCreateComponent implements OnInit, OnDestroy {
     private campaignService: CampaignService,
     private userService: UserService,
     private entityPermissionService: EntityPermissionService,
+    private permissionService: PermissionService,
     private sourceTokenService: SourceTokenService,
     private interviewParticipantService: InterviewParticipantService
   ) {}
 
   ngOnInit(): void {
+    this.readRoutePrefill();
     this.loadCampaigns();
   }
 
@@ -264,12 +271,38 @@ L'équipe de recrutement
    * Charge les campagnes
    */
   loadCampaigns(): void {
+    const currentUserId = this.getCurrentUserId();
+    if (!currentUserId) {
+      this.loading.set(false);
+      return;
+    }
+
     this.loading.set(true);
-    this.campaignService.getAllCampaignsByCriteria({}).pipe(takeUntil(this.destroy$)).subscribe({
+    forkJoin({
+      campaigns: this.campaignService.getAllCampaignsByCriteria({ isDeleted: false }),
+      campaignAccesses: this.campaignService.getCampaignAccessesByUser(currentUserId)
+    }).pipe(takeUntil(this.destroy$)).subscribe({
       next: (response) => {
-        if (response.content) {
-          this.campaigns.set(response.content);
+        const accessMap = this.buildCampaignAccessMap(response.campaignAccesses || []);
+        this.campaignAccessMap.set(accessMap);
+
+        const allCampaigns = response.campaigns.content || [];
+        const allowedCampaigns = this.permissionService.hasAnyPermission(['CREATE_INTERVIEWS', 'UPDATE_INTERVIEWS'])
+          ? allCampaigns
+          : allCampaigns.filter(campaign => campaign.id && this.canPlanifyCampaign(campaign.id, accessMap));
+
+        this.campaigns.set(allowedCampaigns);
+
+        if (this.formData().campaignId && !allowedCampaigns.some(campaign => campaign.id === this.formData().campaignId)) {
+          this.formData.set({ ...this.formData(), campaignId: 0, selectedCandidates: [], selectedEvaluators: [] });
         }
+
+        if (this.prefilledCampaignId && allowedCampaigns.some(campaign => campaign.id === this.prefilledCampaignId)) {
+          this.formData.set({ ...this.formData(), campaignId: this.prefilledCampaignId });
+          this.onCampaignChange();
+          return;
+        }
+
         this.loading.set(false);
       },
       error: (error) => {
@@ -285,6 +318,10 @@ L'équipe de recrutement
   onCampaignChange(): void {
     const campaignId = this.formData().campaignId;
     if (!campaignId) return;
+    if (!this.canPlanifyCampaign(campaignId)) {
+      console.warn('Accès refusé à la planification pour la campagne', campaignId);
+      return;
+    }
 
     this.loading.set(true);
 
@@ -320,7 +357,7 @@ L'équipe de recrutement
           const userIds = [...new Set(allPerms.map((p: EntityPermission) => p.userId!))].filter(id => id);
           // Évaluateurs = ceux qui ont VIEW_EVALUATIONS
           const canEvaluateUserIds = [...new Set(
-            allPerms.filter((p: EntityPermission) => p.permissionKey === 'VIEW_EVALUATIONS')
+            allPerms.filter((p: EntityPermission) => p.permissionKey === 'EVALUATE')
               .map((p: EntityPermission) => p.userId!)
           )].filter(id => id);
           
@@ -331,6 +368,8 @@ L'équipe de recrutement
         } else {
           console.warn('⚠️ Aucune permission d\'entité reçue de l\'API');
         }
+
+        this.applyRouteCandidatePrefill();
 
         this.loading.set(false);
       },
@@ -373,6 +412,95 @@ L'équipe de recrutement
         console.error('❌ Erreur lors du chargement des évaluateurs:', error);
       }
     });
+  }
+
+  private readRoutePrefill(): void {
+    const campaignId = Number(this.route.snapshot.queryParamMap.get('campaignId') || 0);
+    const applicationId = Number(this.route.snapshot.queryParamMap.get('applicationId') || 0);
+
+    this.prefilledCampaignId = campaignId > 0 ? campaignId : null;
+    this.prefilledApplicationId = applicationId > 0 ? applicationId : null;
+  }
+
+  private applyRouteCandidatePrefill(): void {
+    if (!this.prefilledApplicationId || this.prefilledCandidateApplied) {
+      return;
+    }
+
+    const matchingApplication = this.eligibleApplications().find(app => app.id === this.prefilledApplicationId);
+    if (!matchingApplication) {
+      return;
+    }
+
+    const current = this.formData();
+    if (!current.selectedCandidates.includes(this.prefilledApplicationId)) {
+      current.selectedCandidates = [this.prefilledApplicationId];
+      this.formData.set({ ...current });
+    }
+
+    this.prefilledCandidateApplied = true;
+  }
+
+  private buildCampaignAccessMap(accesses: any[]): Record<number, CampaignAccessRecord> {
+    return accesses.reduce((map, rawAccess) => {
+      const campaignId = Number(rawAccess.campaignId || rawAccess.campaigns_id || 0);
+      if (!campaignId) {
+        return map;
+      }
+
+      const current = map[campaignId] || {
+        campaignId,
+        userId: Number(rawAccess.userId || 0),
+        userFirstName: rawAccess.userFirstName,
+        userLastName: rawAccess.userLastName,
+        userName: rawAccess.userName,
+        userEmail: rawAccess.userEmail,
+        userRole: rawAccess.userRole,
+        canUpdate: false,
+        canDelete: false,
+        canEvaluate: false,
+        canPlanify: false,
+        canAcceptPreScreen: false,
+        canAcceptFinal: false,
+        isAdmin: false,
+        isCreator: false,
+        follow: false
+      } satisfies CampaignAccessRecord;
+
+      current.canUpdate = current.canUpdate || Boolean(rawAccess.canUpdate || rawAccess.can_update);
+      current.canDelete = current.canDelete || Boolean(rawAccess.canDelete || rawAccess.can_delete);
+      current.canEvaluate = current.canEvaluate || Boolean(rawAccess.canEvaluate || rawAccess.can_evaluate);
+      current.canPlanify = current.canPlanify || Boolean(rawAccess.canPlanify || rawAccess.can_planify);
+      current.canAcceptPreScreen = current.canAcceptPreScreen || Boolean(rawAccess.canAcceptPreScreen || rawAccess.can_accept_pre_screen);
+      current.canAcceptFinal = current.canAcceptFinal || Boolean(rawAccess.canAcceptFinal || rawAccess.can_accept_final);
+      current.isAdmin = current.isAdmin || Boolean(rawAccess.isAdmin || rawAccess.is_admin);
+      current.isCreator = current.isCreator || Boolean(rawAccess.isCreator || rawAccess.is_creator);
+      current.follow = current.follow || Boolean(rawAccess.follow);
+      map[campaignId] = current;
+      return map;
+    }, {} as Record<number, CampaignAccessRecord>);
+  }
+
+  private canPlanifyCampaign(campaignId: number, accessMap = this.campaignAccessMap()): boolean {
+    if (this.permissionService.hasAnyPermission(['CREATE_INTERVIEWS', 'UPDATE_INTERVIEWS'])) {
+      return true;
+    }
+    const access = accessMap[campaignId];
+    return Boolean(access && (access.isAdmin || access.isCreator || access.canPlanify));
+  }
+
+  private getCurrentUserId(): number | null {
+    const currentUserData = localStorage.getItem('user');
+    if (!currentUserData) {
+      return null;
+    }
+
+    try {
+      const parsedUser = JSON.parse(currentUserData);
+      return parsedUser?.id ?? null;
+    } catch {
+      return null;
+    }
   }
 
   /**
@@ -632,11 +760,14 @@ L'équipe de recrutement
           .filter(r => !r.hasError && r.items && r.items.length > 0)
           .map(r => r.items[0].id!)
           .filter(id => id !== undefined);
+        const failedEmailCount = shouldSendEmail
+          ? interviewResponses.filter(r => r.items?.[0]?.interviewMailSent === false).length
+          : 0;
 
         console.log('✅ Entretiens créés:', createdInterviewIds);
 
         // Créer les participants pour chaque entretien
-        this.createInterviewParticipants(createdInterviewIds);
+        this.createInterviewParticipants(createdInterviewIds, failedEmailCount);
       },
       error: (error) => {
         console.error('❌ Erreur lors de la création des entretiens:', error);
@@ -649,7 +780,7 @@ L'équipe de recrutement
   /**
    * Crée les participants d'entretien et copie les permissions d'entité
    */
-  createInterviewParticipants(interviewIds: number[]): void {
+  createInterviewParticipants(interviewIds: number[], failedEmailCount = 0): void {
     const form = this.formData();
     const allParticipants: InterviewParticipant[] = [];
 
@@ -684,21 +815,21 @@ L'équipe de recrutement
 
                 if (permKeys.length > 0) {
                   this.entityPermissionService.grantBulk([userId], 'INTERVIEW', interviewId, permKeys).subscribe({
-                    next: () => { permsDone++; this.checkPermsDone(permsDone, totalPerms, interviewIds.length); },
-                    error: () => { permsDone++; this.checkPermsDone(permsDone, totalPerms, interviewIds.length); }
+                    next: () => { permsDone++; this.checkPermsDone(permsDone, totalPerms, interviewIds.length, failedEmailCount); },
+                    error: () => { permsDone++; this.checkPermsDone(permsDone, totalPerms, interviewIds.length, failedEmailCount); }
                   });
                 } else {
                   // Pas de permission campaign → accorder VIEW_EVALUATIONS par défaut
                   this.entityPermissionService.grant(userId, 'INTERVIEW', interviewId, 'VIEW_EVALUATIONS').subscribe({
-                    next: () => { permsDone++; this.checkPermsDone(permsDone, totalPerms, interviewIds.length); },
-                    error: () => { permsDone++; this.checkPermsDone(permsDone, totalPerms, interviewIds.length); }
+                    next: () => { permsDone++; this.checkPermsDone(permsDone, totalPerms, interviewIds.length, failedEmailCount); },
+                    error: () => { permsDone++; this.checkPermsDone(permsDone, totalPerms, interviewIds.length, failedEmailCount); }
                   });
                 }
               } else {
                 // Évaluateur supplémentaire → seulement VIEW_EVALUATIONS
                 this.entityPermissionService.grant(userId, 'INTERVIEW', interviewId, 'VIEW_EVALUATIONS').subscribe({
-                  next: () => { permsDone++; this.checkPermsDone(permsDone, totalPerms, interviewIds.length); },
-                  error: () => { permsDone++; this.checkPermsDone(permsDone, totalPerms, interviewIds.length); }
+                  next: () => { permsDone++; this.checkPermsDone(permsDone, totalPerms, interviewIds.length, failedEmailCount); },
+                  error: () => { permsDone++; this.checkPermsDone(permsDone, totalPerms, interviewIds.length, failedEmailCount); }
                 });
               }
             });
@@ -707,8 +838,7 @@ L'équipe de recrutement
           // Si pas de permissions à copier, terminer directement
           if (totalPerms === 0) {
             this.loading.set(false);
-            const emailStatus = this.sendEmail() ? 'avec envoi d\'emails' : 'sans envoi d\'emails';
-            alert(`${interviewIds.length} entretien(s) créé(s) avec succès ${emailStatus}!`);
+            alert(this.buildInterviewCreationSuccessMessage(interviewIds.length, failedEmailCount));
             this.router.navigate(['/dashboard/interviews']);
           }
         },
@@ -721,7 +851,7 @@ L'équipe de recrutement
       });
     } else {
       this.loading.set(false);
-      alert(`${interviewIds.length} entretien(s) créé(s) avec succès!`);
+      alert(this.buildInterviewCreationSuccessMessage(interviewIds.length, failedEmailCount));
       this.router.navigate(['/dashboard/interviews']);
     }
   }
@@ -729,13 +859,24 @@ L'équipe de recrutement
   /**
    * Vérifie si toutes les permissions d'entité ont été copiées
    */
-  private checkPermsDone(done: number, total: number, interviewCount: number): void {
+  private checkPermsDone(done: number, total: number, interviewCount: number, failedEmailCount = 0): void {
     if (done >= total) {
       this.loading.set(false);
-      const emailStatus = this.sendEmail() ? 'avec envoi d\'emails' : 'sans envoi d\'emails';
-      alert(`${interviewCount} entretien(s) créé(s) avec succès ${emailStatus}!`);
+      alert(this.buildInterviewCreationSuccessMessage(interviewCount, failedEmailCount));
       this.router.navigate(['/dashboard/interviews']);
     }
+  }
+
+  private buildInterviewCreationSuccessMessage(interviewCount: number, failedEmailCount: number): string {
+    if (!this.sendEmail()) {
+      return `${interviewCount} entretien(s) créé(s) avec succès sans envoi d'emails !`;
+    }
+
+    if (failedEmailCount > 0) {
+      return `${interviewCount} entretien(s) créé(s) avec succès, mais ${failedEmailCount} convocation(s) n'ont pas pu être envoyée(s). Vous pourrez les renvoyer depuis la liste des entretiens.`;
+    }
+
+    return `${interviewCount} entretien(s) créé(s) avec succès avec envoi d'emails !`;
   }
 
   /**

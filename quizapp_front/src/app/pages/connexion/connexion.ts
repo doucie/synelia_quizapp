@@ -83,7 +83,7 @@ export class ConnexionComponent implements OnInit {
             console.log('✅ Connexion réussie:', loginResponse.user.email);
             
             // Étape 3: Navigation vers le dashboard après authentification réussie
-            this.router.navigate(['/dashboard']);
+            this.router.navigate([this.authService.getAuthenticatedHomeRoute()]);
           },
           error: (error) => {
             this.loadingSubject.next(false);

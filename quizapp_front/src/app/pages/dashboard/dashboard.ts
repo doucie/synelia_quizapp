@@ -196,15 +196,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
       permissions: ['MANAGE_PIPELINE_TEMPLATE'],
       category: 'donnees'
     },
-    {
-      id: 'email-editor',
-      label: 'Templates Email',
-      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>',
-      route: '/dashboard/email-editor',
-      roles: ['super', 'admin'],
-      permissions: ['VIEW_EMAIL_TEMPLATE'],
-      category: 'donnees'
-    },
     // === ADMINISTRATION ===
     {
       id: 'system-role-permissions',
@@ -230,7 +221,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>',
       route: '/dashboard/user-permissions',
       roles: ['super'],
-      permissions: ['MANAGE_USER_OVERRIDES'],
+      permissions: ['MANAGE_SYSTEM_ROLES'],
       category: 'administration'
     },
     // === SYSTÈME ===
@@ -419,6 +410,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    if (!this.currentUser()) {
+      this.router.navigate(['/connexion']);
+      return;
+    }
+
+    if (this.ensurePasswordChangeRoute(this.router.url)) {
+      return;
+    }
+
     this.loadNotifications();
     this.initializeTheme();
     
@@ -427,6 +427,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event: NavigationEnd) => {
+      if (this.ensurePasswordChangeRoute(event.urlAfterRedirects)) {
+        return;
+      }
+
       this.updateActiveEntityFromUrl(event.urlAfterRedirects);
     });
     
@@ -444,12 +448,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
     
 
-    
-    // Vérifier si l'utilisateur est connecté
-    if (!this.currentUser()) {
-      this.router.navigate(['/connexion']);
-      return;
-    }
     
     // Initialiser l'état du mode admin depuis les données utilisateur
     this.initializeAdminMode();
@@ -487,6 +485,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private updateActiveEntityFromUrl(url: string): void {
     const match = url.match(/\/dashboard\/entities\/([^/?]+)/);
     this.activeEntityId.set(match ? match[1] : null);
+  }
+
+  private ensurePasswordChangeRoute(url: string): boolean {
+    if (this.currentUser()?.isDefaultPassword !== true) {
+      return false;
+    }
+
+    if (url.startsWith('/dashboard/profile')) {
+      return false;
+    }
+
+    this.router.navigate(['/dashboard/profile'], { replaceUrl: true });
+    return true;
   }
 
   /**
@@ -631,7 +642,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
       'ADDED_TO_CAMPAIGN': 'info',
       'CAMPAIGN_UPDATE': 'warning',
       'APPLICATION_RECEIVED': 'info',
+      'EMAIL_SMTP_CONFIG_MISSING': 'warning',
+      'EMAIL_DELIVERY_FAILED': 'warning',
+      'EMAIL_TEMPLATE_VARIABLE_MISSING': 'error',
       'INTERVIEW_SCHEDULED': 'warning',
+      'INTERVIEW_DECLINED': 'warning',
+      'INTERVIEW_RESCHEDULE_REQUESTED': 'warning',
       'EVALUATION_COMPLETED': 'success',
       'DEFAULT': 'info'
     };
@@ -654,6 +670,26 @@ export class DashboardComponent implements OnInit, OnDestroy {
       case 'APPLICATION_RECEIVED':
         title = 'Nouvelle candidature';
         message = 'Une nouvelle candidature a été reçue';
+        break;
+      case 'EMAIL_SMTP_CONFIG_MISSING':
+        title = 'SMTP indisponible';
+        message = 'Un envoi email est bloque tant qu\'aucune configuration SMTP active n\'est disponible';
+        break;
+      case 'EMAIL_DELIVERY_FAILED':
+        title = 'Echec d\'envoi email';
+        message = 'Un envoi email a echoue. Verifiez la configuration SMTP puis relancez l\'action concernee';
+        break;
+      case 'EMAIL_TEMPLATE_VARIABLE_MISSING':
+        title = 'Template email invalide';
+        message = 'Un template email contient des variables manquantes ou non resolues';
+        break;
+      case 'INTERVIEW_DECLINED':
+        title = 'Entretien refuse';
+        message = 'Un candidat a refuse un entretien';
+        break;
+      case 'INTERVIEW_RESCHEDULE_REQUESTED':
+        title = 'Replanification demandee';
+        message = 'Un candidat a demande une replanification d\'entretien';
         break;
       default:
         title = dbNotif.notifType;

@@ -103,7 +103,7 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
   showAdvancedSearch = false;
   
   // Contrôle d'affichage des campagnes supprimés
-  showDeletedCampaigns = true; // Par défaut, afficher toutes les campagnes
+  showDeletedCampaigns = false; // Par défaut, masquer les campagnes supprimées dans la liste active
   
   // Compteurs réels (total dans la BD)
   totalActiveCampaigns = signal<number>(0);
@@ -1042,11 +1042,11 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
           }
           const entry = permsMap.get(p.userId)!;
           if (p.granted) {
-            if (p.permissionKey === 'UPDATE_CAMPAIGNS') entry.canUpdate = true;
-            if (p.permissionKey === 'DELETE_CAMPAIGNS') entry.canDelete = true;
-            if (p.permissionKey === 'VIEW_EVALUATIONS') entry.canEvaluate = true;
-            if (p.permissionKey === 'MANAGE_PIPELINE_TEMPLATES') entry.canPlanify = true;
-            if (p.permissionKey === 'MANAGE_APP_CONFIG') entry.isAdmin = true;
+            if (p.permissionKey === 'UPDATE') entry.canUpdate = true;
+            if (p.permissionKey === 'DELETE') entry.canDelete = true;
+            if (p.permissionKey === 'EVALUATE') entry.canEvaluate = true;
+            if (p.permissionKey === 'PLANIFY') entry.canPlanify = true;
+            if (p.permissionKey === 'ADMIN' || p.permissionKey === 'CREATOR') entry.isAdmin = true;
           }
         });
         this.campaignPermissions.set({ ...this.campaignPermissions(), [campaignId]: Array.from(permsMap.values()) });

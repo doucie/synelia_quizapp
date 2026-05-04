@@ -44,6 +44,9 @@ public class CandidateAsk implements Serializable, Cloneable {
     @Column(name="request_type", length=10)
     private String     requestType  ;
 
+    @Column(name="ask_status", nullable=false, length=20)
+    private String     askStatus    ;
+
     @Column(name="is_verified", nullable=false)
     private Boolean    isVerified   ;
 
@@ -58,6 +61,9 @@ public class CandidateAsk implements Serializable, Cloneable {
 
     @Column(name="new_phone", length=20)
     private String     newPhone     ;
+
+    @Column(name="decision_reason", length=500)
+    private String     decisionReason ;
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name="created_at")

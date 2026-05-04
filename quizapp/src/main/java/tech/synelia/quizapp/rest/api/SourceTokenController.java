@@ -37,9 +37,10 @@ import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.enums.FunctionalityEnum;
 import tech.synelia.quizapp.utils.dto.transformer.SourceTokenTransformer;
+import tech.synelia.quizapp.utils.exception.EntityNotFoundException;
+import tech.synelia.quizapp.utils.exception.InvalidEntityException;
 import tech.synelia.quizapp.business.*;
 import tech.synelia.quizapp.dao.entity.SourceToken;
-import tech.synelia.quizapp.dao.repository.SourceTokenRepository;
 import tech.synelia.quizapp.rest.fact.ControllerFactory;
 
 /**
@@ -68,7 +69,7 @@ public class SourceTokenController {
 	@Autowired
 	private SourceTokenBusiness sourceTokenBusiness;
 	@Autowired
-	private SourceTokenRepository sourceTokenRepository;
+	private CampaignPublicAccessService campaignPublicAccessService;
 
 	@RequestMapping(value="/create",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
     public ResponseEntity<Response<SourceTokenDto>> create(@RequestBody Request<SourceTokenDto> request) throws Exception {
@@ -174,18 +175,7 @@ public class SourceTokenController {
 				return response;
 			}
 			
-			// Rechercher le token valide (non supprimé, non expiré, campagne active)
-			SourceToken sourceToken = sourceTokenRepository.findValidToken(
-				tokenString.toLowerCase(), 
-				false, 
-				new java.util.Date()
-			);
-			
-			if (sourceToken == null) {
-				response.setStatus(functionalError.DATA_NOT_EXIST("Token introuvable, expiré ou campagne inactive", locale));
-				response.setHasError(true);
-				return response;
-			}
+			SourceToken sourceToken = campaignPublicAccessService.requireAvailableToken(tokenString, locale);
 			
 			// Transformer en DTO
 			SourceTokenDto dto = SourceTokenTransformer.INSTANCE.toDto(sourceToken);
@@ -203,6 +193,14 @@ public class SourceTokenController {
 			log.info("end method /sourceToken/validate/" + tokenString);
 			return response;
 			
+		} catch (EntityNotFoundException e) {
+			response.setStatus(e.getStatus());
+			response.setHasError(true);
+			return response;
+		} catch (InvalidEntityException e) {
+			response.setStatus(e.getStatus());
+			response.setHasError(true);
+			return response;
 		} catch (Exception e) {
 			slf4jLogger.error("Erreur validation token: " + tokenString, e);
 			response.setStatus(functionalError.REQUEST_FAIL("Erreur technique lors de la validation", locale));
@@ -226,18 +224,7 @@ public class SourceTokenController {
 		Locale locale = Locale.of(languageID != null ? languageID : "fr", "");
 		
 		try {
-			// Rechercher le token valide (non supprimé, non expiré, campagne active)
-			SourceToken sourceToken = sourceTokenRepository.findValidToken(
-				tokenString.toLowerCase(), 
-				false, 
-				new java.util.Date()
-			);
-			
-			if (sourceToken == null) {
-				response.setStatus(functionalError.DATA_NOT_EXIST("Token introuvable, expiré ou campagne inactive", locale));
-				response.setHasError(true);
-				return response;
-			}
+			SourceToken sourceToken = campaignPublicAccessService.requireAvailableToken(tokenString, locale);
 			
 			// Transformer en DTO avec toutes les infos
 			SourceTokenDto dto = SourceTokenTransformer.INSTANCE.toDto(sourceToken);
@@ -254,6 +241,14 @@ public class SourceTokenController {
 			log.info("end method /sourceToken/info/" + tokenString);
 			return response;
 			
+		} catch (EntityNotFoundException e) {
+			response.setStatus(e.getStatus());
+			response.setHasError(true);
+			return response;
+		} catch (InvalidEntityException e) {
+			response.setStatus(e.getStatus());
+			response.setHasError(true);
+			return response;
 		} catch (Exception e) {
 			slf4jLogger.error("Erreur récupération info token: " + tokenString, e);
 			response.setStatus(functionalError.REQUEST_FAIL("Erreur technique", locale));

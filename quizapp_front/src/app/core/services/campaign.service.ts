@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
-import { Observable, throwError, of } from 'rxjs';
+import { Observable, throwError, of, forkJoin } from 'rxjs';
 import { map, catchError, switchMap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { QuestionService, Question } from './question.service';
@@ -14,6 +14,8 @@ export interface Campaign {
   campaignName?: string;
   campaignDesc?: string;
   campaignStatus?: 'ACTIVE' | 'PENDING' | 'CLOSED';
+  formAssignmentStrategy?: 'RANDOM' | 'RANDOM_NO_REPEAT' | 'SOURCE_TOKEN' | 'SEQUENTIAL';
+  formAssignmentExhaustionPolicy?: 'BLOCK' | 'RESET' | 'LOOP';
   campaignStart?: string;
   campaignEnd?: string;
   campaignDuration?: number;
@@ -36,6 +38,25 @@ export interface Campaign {
   questionsCount?: number;
   pipelineTemplateId?: number;
   pipelineTemplateName?: string;
+}
+
+export interface CampaignAccessRecord {
+  campaignId: number;
+  userId: number;
+  userFirstName?: string;
+  userLastName?: string;
+  userName?: string;
+  userEmail?: string;
+  userRole?: string;
+  canUpdate: boolean;
+  canDelete: boolean;
+  canEvaluate: boolean;
+  canPlanify: boolean;
+  canAcceptPreScreen: boolean;
+  canAcceptFinal: boolean;
+  isAdmin: boolean;
+  isCreator: boolean;
+  follow: boolean;
 }
 
 /**
@@ -92,6 +113,8 @@ export interface PagedResponse<T> {
 export class CampaignService {
 
   private readonly apiUrl = `${environment.apiUrl}/campaigns`;
+  private readonly entityPermissionUrl = `${environment.apiUrl}/entityPermission`;
+  private readonly managedCampaignPermissionKeys = ['ADMIN', 'CREATOR', 'UPDATE', 'DELETE', 'EVALUATE', 'CORRECT_TEST', 'PLANIFY', 'ADVANCE_PIPELINE', 'FOLLOW'];
 
   constructor(private http: HttpClient, private questionService: QuestionService) {
     console.log('🚀 Initialisation CampaignService');
@@ -193,7 +216,7 @@ export class CampaignService {
         console.log('✅ Campagne récupérée:', response);
         // L'API retourne {items: [...], count: number, ...}
         if (response.items && response.items.length > 0) {
-          return response.items[0];
+          return this.transformCampaign(response.items[0]);
         } else {
           throw new Error('Campaign not found');
         }
@@ -207,19 +230,24 @@ export class CampaignService {
   createCampaign(campaign: Partial<Campaign>): Observable<any> {
     console.log('📝 Création d\'une campagne:', campaign);
 
+    const currentUserId = this.getCurrentUserId();
+    const creatorId = Number(campaign.createdBy) || currentUserId;
+
     // Transformer les données pour correspondre au format backend
     const backendCampaign: any = {
       campaignTitle: campaign.campaignTitle,
       campaignDesc: campaign.campaignDesc,
       campaignStatus: campaign.campaignStatus,
+      formAssignmentStrategy: campaign.formAssignmentStrategy,
+      formAssignmentExhaustionPolicy: campaign.formAssignmentExhaustionPolicy,
       campaignStart: campaign.campaignStart,
       campaignEnd: campaign.campaignEnd,
       maxApply: campaign.maxApply,
       allCanEvaluate: campaign.allCanEvaluate,
       markedOutOf: campaign.markedOutOf,
       specialityId: campaign.specialityId, // Backend utilise specialityId
-      createdBy: campaign.createdBy,
-      creatorId: campaign.createdBy // Backend requiert aussi creatorId
+      createdBy: creatorId,
+      creatorId // Backend requiert aussi creatorId
     };
 
     // Supprimer les valeurs undefined ou null
@@ -230,7 +258,7 @@ export class CampaignService {
     });
 
     const requestBody = {
-      user: Number(campaign.createdBy) || 1,
+      user: currentUserId,
       datas: [backendCampaign]
     };
 
@@ -268,7 +296,7 @@ export class CampaignService {
     };
 
     const requestBody = {
-      user: "1",
+      user: this.getCurrentUserId(),
       datas: [{ id, ...backendCampaign }]
     };
 
@@ -276,13 +304,7 @@ export class CampaignService {
       map(response => {
         console.log('✅ Campagne mise à jour:', response);
         if (response.items && response.items.length > 0) {
-          const backendItem = response.items[0];
-          // Transformer la réponse backend vers le format frontend
-          return {
-            ...backendItem,
-            campaignName: backendItem.campaignTitle,
-            campaignTitle: undefined
-          };
+          return this.transformCampaign(response.items[0]);
         } else {
           throw new Error('Failed to update campaign');
         }
@@ -301,7 +323,7 @@ export class CampaignService {
     console.log('🗑️ Suppression de la campagne ID:', id);
 
     const requestBody = {
-      user: "1",
+      user: this.getCurrentUserId(),
       datas: [{ id }]
     };
 
@@ -324,7 +346,7 @@ export class CampaignService {
     console.log('♻️ Restauration de la campagne ID:', id);
 
     const requestBody = {
-      user: "1",
+      user: this.getCurrentUserId(),
       datas: [{ id }]
     };
 
@@ -363,6 +385,7 @@ export class CampaignService {
         campaignDesc: "",
         campaignStatus: "",
         createdBy: currentUserId,
+				isDeleted: criteria.isDeleted ?? false,
         searchString: criteria.search_string || ""
       }
     };
@@ -408,66 +431,188 @@ export class CampaignService {
   /**
    * Récupère les campagnes partagées avec l'utilisateur via campaign_crud
    */
-  getSharedCampaigns(): Observable<Campaign[]> {
+  getSharedCampaigns(criteria: CampaignSearchCriteria = {}): Observable<Campaign[]> {
     const currentUserData = localStorage.getItem('user');
-    const currentUserId = currentUserData ? JSON.parse(currentUserData).id?.toString() || "1" : "1";
+    const currentUserId = currentUserData ? Number(JSON.parse(currentUserData).id) || 1 : 1;
 
     console.log('📥 Récupération des campagnes partagées pour l\'utilisateur:', currentUserId);
 
-    const requestBody = {
-      user: currentUserId,
-      size: 100,
-      index: 0,
-      isSimpleLoading: false,
-      data: {
-        userId: currentUserId,
-        canUpdate: "",
-        canDelete: "",
-        canEvaluate: "",
-        follow: "",
-        searchString: ""
-      }
-    };
+    return this.getCampaignAccessesByUser(currentUserId).pipe(
+      switchMap((accesses) => {
+        const sharedCampaignIds = new Set(
+          accesses
+            .filter(access => !access.isCreator)
+            .map(access => access.campaignId)
+        );
 
-    return this.http.post<any>(`${environment.apiUrl}/campaignCrud/getByCriteria`, requestBody).pipe(
-      map(response => {
-        console.log('✅ Réponse getSharedCampaigns:', response);
-        
-        if (!response || (!response.items && !response.item)) {
-          return [];
+        if (sharedCampaignIds.size === 0) {
+          return of([]);
         }
 
-        const rawCrudItems = response.items || (response.item ? [response.item] : []);
-        console.log('🔍 Raw campaign_crud items:', rawCrudItems);
-        console.log('🔍 Nombre de campaign_crud:', rawCrudItems.length);
-        
-        // Log chaque item pour voir sa structure
-        rawCrudItems.forEach((item: any, index: number) => {
-          console.log(`🔍 CampaignCrud #${index}:`, {
-            id: item.id,
-            userId: item.userId || item.users_id,
-            campaignId: item.campaignId || item.campaigns_id,
-            hasCampaignsField: !!item.campaigns,
-            hasCampaignField: !!item.campaign,
-            campaigns: item.campaigns,
-            campaign: item.campaign
-          });
-        });
-        
-        // Extraire les campagnes des items campaign_crud
-        const campaigns: Campaign[] = rawCrudItems
-          .filter((item: any) => item.campaigns || item.campaign)
-          .map((item: any) => {
-            const campaign = item.campaigns || item.campaign;
-            return this.transformCampaign(campaign);
-          });
-
-        console.log('✅ Campagnes partagées transformées:', campaigns);
-        return campaigns;
+        return this.getAllCampaignsByCriteria({
+          ...criteria,
+          size: criteria.size || 1000,
+          page: criteria.page || 0,
+          isDeleted: criteria.isDeleted ?? false
+        }).pipe(
+          map(response => (response.content || []).filter(campaign => campaign.id && sharedCampaignIds.has(campaign.id)))
+        );
       }),
       catchError(error => {
         console.error('❌ Erreur getSharedCampaigns:', error);
         return throwError(() => error);
+      })
+    );
+  }
+
+  private mapEntityPermissionsToCampaignAccess(permissions: any[]): CampaignAccessRecord[] {
+    const accessMap = new Map<string, CampaignAccessRecord>();
+
+    for (const permission of permissions || []) {
+      if ((permission.entityType || '').toUpperCase() !== 'CAMPAIGN') {
+        continue;
+      }
+
+      const campaignId = Number(permission.entityId);
+      const userId = Number(permission.userId);
+      if (!campaignId || !userId) {
+        continue;
+      }
+
+      const mapKey = `${campaignId}_${userId}`;
+      const entry = accessMap.get(mapKey) || {
+        campaignId,
+        userId,
+        userFirstName: permission.userFirstName,
+        userLastName: permission.userLastName,
+        userName: permission.userName,
+        userEmail: permission.userEmail,
+        userRole: permission.userRole,
+        canUpdate: false,
+        canDelete: false,
+        canEvaluate: false,
+        canPlanify: false,
+        canAcceptPreScreen: false,
+        canAcceptFinal: false,
+        isAdmin: false,
+        isCreator: false,
+        follow: false
+      } as CampaignAccessRecord;
+
+      const permissionKey = (permission.permissionKey || '').toUpperCase();
+      switch (permissionKey) {
+        case 'ADMIN':
+          entry.isAdmin = true;
+          entry.canUpdate = true;
+          entry.canDelete = true;
+          entry.canEvaluate = true;
+          entry.canPlanify = true;
+          entry.canAcceptPreScreen = true;
+          entry.canAcceptFinal = true;
+          entry.follow = true;
+          break;
+        case 'CREATOR':
+          entry.isCreator = true;
+          entry.canUpdate = true;
+          entry.canDelete = true;
+          entry.canEvaluate = true;
+          entry.canPlanify = true;
+          entry.canAcceptPreScreen = true;
+          entry.canAcceptFinal = true;
+          entry.follow = true;
+          break;
+        case 'UPDATE':
+          entry.canUpdate = true;
+          break;
+        case 'DELETE':
+          entry.canDelete = true;
+          break;
+        case 'EVALUATE':
+          entry.canEvaluate = true;
+          break;
+        case 'PLANIFY':
+          entry.canPlanify = true;
+          break;
+        case 'ADVANCE_PIPELINE':
+          entry.canAcceptPreScreen = true;
+          entry.canAcceptFinal = true;
+          break;
+        case 'FOLLOW':
+          entry.follow = true;
+          break;
+      }
+
+      accessMap.set(mapKey, entry);
+    }
+
+    return Array.from(accessMap.values());
+  }
+
+  private getEntityPermissionsForCampaign(campaignId: number): Observable<any[]> {
+    return this.http.post<any>(`${this.entityPermissionUrl}/getForEntity`, {
+      user: this.getCurrentUserId(),
+      data: { entityType: 'CAMPAIGN', entityId: campaignId }
+    }).pipe(
+      map(response => response.items || [])
+    );
+  }
+
+  private getEntityPermissionsForUser(userId: number): Observable<any[]> {
+    return this.http.post<any>(`${this.entityPermissionUrl}/getForUser`, {
+      user: this.getCurrentUserId(),
+      data: { userId }
+    }).pipe(
+      map(response => response.items || [])
+    );
+  }
+
+  private mapAccessToPermissionKeys(access: any): string[] {
+    const permissionKeys = new Set<string>();
+    const isAdmin = Boolean(access.isAdmin);
+    const isCreator = Boolean(access.isCreator);
+
+    if (isAdmin) permissionKeys.add('ADMIN');
+    if (isCreator) permissionKeys.add('CREATOR');
+    if (isAdmin || isCreator || access.canUpdate) permissionKeys.add('UPDATE');
+    if (isAdmin || isCreator || access.canDelete) permissionKeys.add('DELETE');
+    if (isAdmin || isCreator || access.canEvaluate) permissionKeys.add('EVALUATE');
+    if (isAdmin || isCreator || access.canPlanify) permissionKeys.add('PLANIFY');
+    if (isAdmin || isCreator || access.canAcceptPreScreen || access.canAcceptFinal) permissionKeys.add('ADVANCE_PIPELINE');
+    if (access.follow !== false || isAdmin || isCreator) permissionKeys.add('FOLLOW');
+
+    return Array.from(permissionKeys);
+  }
+
+  private getLegacyCampaignAccess(campaignId: number): Observable<any[]> {
+    const requestBody = {
+      user: this.getCurrentUserId(),
+      size: 100,
+      index: 0,
+      data: { campaignId }
+    };
+
+    return this.http.post<any>(`${environment.apiUrl}/campaignCrud/getAllByCriteria`, requestBody).pipe(
+      map(response => response.items || []),
+      catchError(error => {
+        console.error('❌ Erreur récupération accès recruteurs legacy:', error);
+        return of([]);
+      })
+    );
+  }
+
+  private getLegacyCampaignAccessesByUser(userId: number): Observable<any[]> {
+    const requestBody = {
+      user: this.getCurrentUserId(),
+      size: 1000,
+      index: 0,
+      data: { userId }
+    };
+
+    return this.http.post<any>(`${environment.apiUrl}/campaignCrud/getAllByCriteria`, requestBody).pipe(
+      map(response => response.items || []),
+      catchError(error => {
+        console.error('❌ Erreur récupération accès campagnes legacy:', error);
+        return of([]);
       })
     );
   }
@@ -482,11 +627,14 @@ export class CampaignService {
       campaignName: campaign.campaignTitle || campaign.campaign_title || '',
       campaignDesc: campaign.campaignDesc || campaign.campaign_desc || '',
       campaignStatus: (campaign.campaignStatus || campaign.campaign_status || 'PENDING').toUpperCase(),
+      formAssignmentStrategy: (campaign.formAssignmentStrategy || campaign.form_assignment_strategy || 'RANDOM').toUpperCase(),
+      formAssignmentExhaustionPolicy: (campaign.formAssignmentExhaustionPolicy || campaign.form_assignment_exhaustion_policy || 'BLOCK').toUpperCase(),
       campaignStart: campaign.campaignStart || campaign.campaign_start || undefined,
       campaignEnd: campaign.campaignEnd || campaign.campaign_end || undefined,
       campaignDuration: campaign.campaignDuration || campaign.campaign_duration || undefined,
       maxApply: campaign.maxApply ?? campaign.max_apply ?? undefined,
       allCanEvaluate: campaign.allCanEvaluate ?? campaign.all_can_evaluate ?? false,
+      isDeleted: campaign.isDeleted ?? campaign.is_deleted ?? false,
       markedOutOf: campaign.markedOutOf || campaign.marked_out_of || undefined,
       isActive: campaign.campaignStatus === 'ACTIVE' || campaign.campaign_status === 'ACTIVE',
       createdAt: campaign.createdAt || campaign.created_at || undefined,
@@ -502,66 +650,105 @@ export class CampaignService {
                       ? `${campaign.userFirstName} ${campaign.userLastName}` 
                       : undefined),
       applicationsCount: campaign.applicationsCount || campaign.applications_count || undefined,
-      questionsCount: campaign.questionsCount || campaign.questions_count || undefined
+      questionsCount: campaign.questionsCount || campaign.questions_count || undefined,
+      pipelineTemplateId: campaign.pipelineTemplateId || campaign.pipeline_template_id || undefined,
+      pipelineTemplateName: campaign.pipelineTemplateName || campaign.pipeline_template_name || undefined
     };
   }
 
   /**
-   * Sauvegarde les accès recruteurs pour une campagne (campaign_crud)
+   * Synchronise les accès recruteurs d'une campagne via entity_permission.
    */
   saveCampaignAccess(accessDataArray: any[]): Observable<any> {
     console.log('💾 Sauvegarde des accès recruteurs:', accessDataArray);
 
-    const requestBody = {
-      user: 1,
-      datas: accessDataArray
-    };
+    if (!accessDataArray || accessDataArray.length === 0) {
+      return of([]);
+    }
 
-    console.log('📤 Corps de la requête campaign_crud:', requestBody);
+    const campaignId = Number(accessDataArray[0].campaignId);
+    if (!campaignId) {
+      return of([]);
+    }
 
-    return this.http.post<any>(`${environment.apiUrl}/campaignCrud/create`, requestBody).pipe(
-      map(response => {
-        console.log('✅ Accès recruteurs sauvegardés:', response);
-        return response;
+    return this.getEntityPermissionsForCampaign(campaignId).pipe(
+      switchMap((currentPermissions) => {
+        const currentKeys = new Set(
+          (currentPermissions || [])
+            .filter(permission => this.managedCampaignPermissionKeys.includes((permission.permissionKey || '').toUpperCase()))
+            .map(permission => `${permission.userId}:${(permission.permissionKey || '').toUpperCase()}`)
+        );
+
+        const desiredKeys = new Set<string>();
+        for (const access of accessDataArray) {
+          const userId = Number(access.userId);
+          if (!userId) {
+            continue;
+          }
+
+          for (const permissionKey of this.mapAccessToPermissionKeys(access)) {
+            desiredKeys.add(`${userId}:${permissionKey}`);
+          }
+        }
+
+        const operations: Observable<any>[] = [];
+        desiredKeys.forEach((entry) => {
+          if (currentKeys.has(entry)) {
+            return;
+          }
+
+          const [userId, permissionKey] = entry.split(':');
+          operations.push(
+            this.http.post(`${this.entityPermissionUrl}/grant`, {
+              user: this.getCurrentUserId(),
+              data: {
+                userId: Number(userId),
+                entityType: 'CAMPAIGN',
+                entityId: campaignId,
+                permissionKey
+              }
+            })
+          );
+        });
+
+        currentKeys.forEach((entry) => {
+          if (desiredKeys.has(entry)) {
+            return;
+          }
+
+          const [userId, permissionKey] = entry.split(':');
+          operations.push(
+            this.http.post(`${this.entityPermissionUrl}/revoke`, {
+              user: this.getCurrentUserId(),
+              data: {
+                userId: Number(userId),
+                entityType: 'CAMPAIGN',
+                entityId: campaignId,
+                permissionKey
+              }
+            })
+          );
+        });
+
+        return operations.length > 0 ? forkJoin(operations) : of([]);
       }),
       catchError(error => {
         console.error('❌ Erreur sauvegarde accès recruteurs:', error);
-        if (error.error) {
-          console.error('📋 Détails erreur backend campaign_crud:', error.error);
-          if (error.error.status && error.error.status.message) {
-            console.error('💬 Message d\'erreur campaign_crud:', error.error.status.message);
-          }
-        }
         return throwError(() => error);
       })
     );
   }
 
   /**
-   * Récupère les accès recruteurs pour une campagne (campaign_crud)
+   * Récupère les accès recruteurs pour une campagne.
    */
   getCampaignAccess(campaignId: number): Observable<any[]> {
     console.log('📥 Récupération des accès recruteurs pour la campagne:', campaignId);
 
-    const requestBody = {
-      user: "1",
-      size: 100,
-      index: 0,
-      data: { campaignId: campaignId }
-    };
-
-    return this.http.post<any>(`${environment.apiUrl}/campaignCrud/getAllByCriteria`, requestBody).pipe(
-      map(response => {
-        console.log('✅ Accès recruteurs récupérés:', response);
-        if (response.items && response.items.length > 0) {
-          return response.items;
-        }
-        return [];
-      }),
-      catchError(error => {
-        console.error('❌ Erreur récupération accès recruteurs:', error);
-        return of([]);
-      })
+    return this.getEntityPermissionsForCampaign(campaignId).pipe(
+      map(permissions => this.mapEntityPermissionsToCampaignAccess(permissions)),
+      switchMap(accesses => accesses.length > 0 ? of(accesses) : this.getLegacyCampaignAccess(campaignId)),
+      catchError(() => this.getLegacyCampaignAccess(campaignId))
     );
   }
 
@@ -572,7 +759,7 @@ export class CampaignService {
     console.log('📬 Création notification:', notificationData);
 
     const requestBody = {
-      user: 1,
+      user: this.getCurrentUserId(),
       datas: [notificationData]
     };
 
@@ -609,7 +796,7 @@ export class CampaignService {
     }));
 
     const requestBody = {
-      user: 1,
+      user: this.getCurrentUserId(),
       datas: answers
     };
 
@@ -631,22 +818,10 @@ export class CampaignService {
   getCampaignAccessesByUser(userId: number): Observable<any[]> {
     console.log('🔍 Récupération des accès campagnes pour user:', userId);
 
-    const requestBody = {
-      user: 1,
-      size: 1000,
-      index: 0,
-      data: { userId: userId }
-    };
-
-    return this.http.post<any>(`${environment.apiUrl}/campaignCrud/getAllByCriteria`, requestBody).pipe(
-      map(response => {
-        console.log('✅ Accès campagnes récupérés:', response);
-        return response.items || [];
-      }),
-      catchError(error => {
-        console.error('❌ Erreur récupération accès campagnes:', error);
-        return of([]);
-      })
+    return this.getEntityPermissionsForUser(userId).pipe(
+      map(permissions => this.mapEntityPermissionsToCampaignAccess(permissions)),
+      switchMap(accesses => accesses.length > 0 ? of(accesses) : this.getLegacyCampaignAccessesByUser(userId)),
+      catchError(() => this.getLegacyCampaignAccessesByUser(userId))
     );
   }
 
@@ -675,7 +850,7 @@ export class CampaignService {
     });
 
     const requestBody = {
-      user: 1, // Le backend utilisera le header user-id à la place
+      user: currentUserId,
       data: { id: campaignId }
     };
 
@@ -708,6 +883,15 @@ export class CampaignService {
         return of({ status: 'NO_PERMISSION' as const });
       })
     );
+  }
+
+  private getCurrentUserId(): number {
+    try {
+      const user = localStorage.getItem('user');
+      return user ? Number(JSON.parse(user).id) || 0 : 0;
+    } catch {
+      return 0;
+    }
   }
 }
 

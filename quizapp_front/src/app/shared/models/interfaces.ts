@@ -95,6 +95,7 @@ export interface LoginResponse {
     role: string;
     userRole: string;
     adminMode?: boolean;
+    isDefaultPassword?: boolean;
   };
 }
 

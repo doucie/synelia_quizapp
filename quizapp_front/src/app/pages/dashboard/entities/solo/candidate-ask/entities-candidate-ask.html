@@ -139,11 +139,12 @@
             <th class="col-id" [class.col-hidden]="!isColumnVisible('id')">ID</th>
             <th class="col-id" [class.col-hidden]="!isColumnVisible('applicationId')">Application ID</th>
             <th class="col-short" [class.col-hidden]="!isColumnVisible('type')">Type</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('status')">Statut</th>
             <th class="col-short" [class.col-hidden]="!isColumnVisible('firstName')">Prénom</th>
             <th class="col-short" [class.col-hidden]="!isColumnVisible('lastName')">Nom</th>
             <th class="col-short" [class.col-hidden]="!isColumnVisible('email')">Email</th>
             <th class="col-short" [class.col-hidden]="!isColumnVisible('phone')">Téléphone</th>
-            <th class="col-boolean" [class.col-hidden]="!isColumnVisible('verified')">Vérifié</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('decisionReason')">Motif</th>
             <th class="col-date" [class.col-hidden]="!isColumnVisible('createdAt')">Créé le</th>
             <th class="col-actions" [class.col-hidden]="!isColumnVisible('actions')">Actions</th>
           </tr>
@@ -153,15 +154,36 @@
             <td [class.col-hidden]="!isColumnVisible('id')"><span class="cell-id">#{{ item.id }}</span></td>
             <td [class.col-hidden]="!isColumnVisible('applicationId')">{{ item.applicationId || '-' }}</td>
             <td [class.col-hidden]="!isColumnVisible('type')">{{ item.requestType || '-' }}</td>
+            <td [class.col-hidden]="!isColumnVisible('status')">
+              <span [class]="getAskStatusClass(item)">{{ getAskStatusLabel(item) }}</span>
+            </td>
             <td [class.col-hidden]="!isColumnVisible('firstName')">{{ item.firstName || '-' }}</td>
             <td [class.col-hidden]="!isColumnVisible('lastName')">{{ item.lastName || '-' }}</td>
             <td [class.col-hidden]="!isColumnVisible('email')">{{ item.newEmail || '-' }}</td>
             <td [class.col-hidden]="!isColumnVisible('phone')">{{ item.newPhone || '-' }}</td>
-            <td [class.col-hidden]="!isColumnVisible('verified')"><span class="bool-badge" [class.is-true]="item.isVerified" [class.is-false]="!item.isVerified"><svg *ngIf="item.isVerified" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><svg *ngIf="!item.isVerified" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>{{ item.isVerified ? 'Oui' : 'Non' }}</span></td>
+            <td [class.col-hidden]="!isColumnVisible('decisionReason')">{{ item.decisionReason || '-' }}</td>
             <td [class.col-hidden]="!isColumnVisible('createdAt')"><span class="cell-date">{{ formatDate(item.createdAt) }}</span></td>
             <td class="actions-cell" [class.col-hidden]="!isColumnVisible('actions')" (click)="$event.stopPropagation()">
               <div class="actions-menu">
                 <ng-container *ngIf="!item.isDeleted">
+                  <button
+                    *ngIf="canReview(item)"
+                    class="action-btn success"
+                    (click)="openApproveConfirmation(item, $event)"
+                    [disabled]="isReviewLoading(item)"
+                    title="Valider"
+                    aria-label="Valider">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
+                  <button
+                    *ngIf="canReview(item)"
+                    class="action-btn danger"
+                    (click)="openRejectDialog(item, $event)"
+                    [disabled]="isReviewLoading(item)"
+                    title="Refuser"
+                    aria-label="Refuser">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
                   <button class="action-btn primary" (click)="openEditDialog(item)" title="Modifier" aria-label="Modifier">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 20H21M16.5 3.5A2.12 2.12 0 0 1 19 6L7 18L3 19L4 15L16.5 3.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   </button>
@@ -202,6 +224,45 @@
         </div>
         <button class="pagination-btn" [class.disabled]="!hasNextPage()" (click)="nextPage()" [disabled]="!hasNextPage()">Suivant</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<div class="confirmation-overlay" *ngIf="showApproveConfirmation()" (click)="cancelApproveConfirmation()">
+  <div class="confirmation-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header"><h3>Confirmer la validation</h3></div>
+    <div class="modal-body">
+      <p>Cette action appliquera la correction sur la candidature associée.</p>
+      <div class="item-info" *ngIf="reviewTarget()"><strong>#{{ reviewTarget()?.id }}</strong></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="cancelApproveConfirmation()">Annuler</button>
+      <button class="btn-confirm-success" (click)="executeApprove()">Valider</button>
+    </div>
+  </div>
+</div>
+
+<div class="confirmation-overlay" *ngIf="showRejectDialog()" (click)="cancelRejectDialog()">
+  <div class="edit-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Refuser la demande</h3>
+      <button class="btn-close" (click)="cancelRejectDialog()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    </div>
+    <div class="modal-content">
+      <div class="form-group">
+        <label class="form-label" for="rejectReason">Motif de refus</label>
+        <textarea
+          id="rejectReason"
+          class="form-input review-textarea"
+          [(ngModel)]="rejectReason"
+          [ngModelOptions]="{ standalone: true }"
+          placeholder="Expliquer pourquoi la demande est refusée"></textarea>
+      </div>
+      <p class="review-modal-note">Le motif sera conservé sur la demande candidat et visible dans l’historique.</p>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="cancelRejectDialog()">Annuler</button>
+      <button class="btn-confirm-danger" (click)="confirmReject()">Confirmer le refus</button>
     </div>
   </div>
 </div>

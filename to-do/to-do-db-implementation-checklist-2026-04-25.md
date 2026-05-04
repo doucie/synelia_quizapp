@@ -195,18 +195,20 @@ Champs clefs: `token_string`, `source_token_name`, `expiration_date`, `campaign_
 
 ## Table `applications`
 
-Champs clefs: `candidate_first_name`, `candidate_last_name`, `candidate_email`, `candidate_phone`, `candidate_cv_path`, `candidate_birth_date`, `motivation_letter`, `email_verified`, `quiz_score`, `total_evaluation_score`, `total_evaluation_number`, `total_evaluation_percentage`, `application_status`, `visit_token`, `quiz_token`, `quiz_status`, `quiz_level`, `total_questions`, `quiz_score_percent`, `time_elapsed`, `interview_date`, `interview_status`, `application_abandoned`, `pre_screen_decision_mail_sent`, `final_decision_mail_sent`, `source_token_id`, `form_version_id`, audit, `is_deleted`, `search_string`.
+Champs clefs: `candidate_first_name`, `candidate_last_name`, `candidate_email`, `candidate_phone`, `candidate_cv_path`, `candidate_birth_date`, `motivation_letter`, `email_verified`, `quiz_score`, `total_evaluation_score`, `total_evaluation_number`, `total_evaluation_percentage`, `application_status`, `quiz_token`, `quiz_status`, `quiz_level`, `total_questions`, `quiz_score_percent`, `time_elapsed`, `quiz_last_activity_at`, `interview_date`, `interview_status`, `application_abandoned`, `pre_screen_decision_mail_sent`, `final_decision_mail_sent`, `source_token_id`, `form_version_id`, audit, `is_deleted`, `search_string`.
 
 - [ ] **P0** Page candidature publique: creer `applications` avec infos candidat + CV + lettre + consentement legal.
 - [ ] **P0** Verifier unicite ou regle anti-doublon par `candidate_email` + campagne/source.
 - [ ] **P0** Verifier stockage/upload `candidate_cv_path` et telechargement recruteur.
-- [ ] **P0** Generer `visit_token` et `quiz_token` correctement.
+- [x] **P0** Generer le code de suivi candidat et `quiz_token` correctement.
+	Base: `candidate_token` est maintenant cree automatiquement comme code de suivi public, et `quiz_token` a la verification email; `visit_token` a ete retire du schema actif.
 - [ ] **P0** Verifier `email_verified`: le candidat ne commence pas le quiz si non verifie, sauf choix metier explicite.
 - [ ] **P0** Rattacher `form_version_id` au moment exact de candidature.
 - [ ] **P0** Mettre a jour `quiz_status`, `quiz_score`, `quiz_score_percent`, `time_elapsed`, `total_questions` apres quiz.
 - [ ] **P0** Synchroniser `application_status` avec `application_progress` et `decisions`.
 - [ ] **P1** Calculer `total_evaluation_score`, `total_evaluation_number`, `total_evaluation_percentage` apres evaluations.
-- [ ] **P1** Gerer `application_abandoned` si candidat quitte/expire.
+- [x] **P1** Gerer `application_abandoned` si candidat quitte/expire.
+	Base: `quiz_last_activity_at` + endpoint public `touch-quiz` + controle planifie backend marquent desormais la candidature abandonnee en cas d'inactivite sur un quiz `STARTED`.
 - [ ] **P1** Gerer `pre_screen_decision_mail_sent` et `final_decision_mail_sent` pour eviter les doubles emails.
 - [ ] **P2** Nettoyer les champs entretien dupliques (`interview_date`, `interview_status`) si la source fiable devient `interviews`/`candidate_interview`.
 
@@ -214,17 +216,19 @@ Champs clefs: `candidate_first_name`, `candidate_last_name`, `candidate_email`, 
 
 Champs clefs: `token_string`, `application_id`, audit, `is_deleted`, `search_string`.
 
-- [ ] **P1** Clarifier usage par rapport a `applications.visit_token` / `quiz_token`.
+- [x] **P1** Clarifier usage par rapport a `applications.visit_token` / `quiz_token`.
+	Base: `candidate_token` est maintenant cree automatiquement comme code de suivi public et utilise par `/applications/track`; `visit_token` a ete retire du schema/code actifs.
 - [ ] **P1** Si conserve: endpoints de regeneration/expiration et controle securite.
 - [ ] **P2** Fusionner ou documenter pour eviter trois systemes de token candidat.
 
 ## Table `candidate_ask`
 
-Champs clefs: `request_type`, `is_verified`, `first_name`, `last_name`, `new_email`, `new_phone`, `application_id`, audit, `is_deleted`, `search_string`.
+Champs clefs: `request_type`, `ask_status`, `decision_reason`, `is_verified`, `first_name`, `last_name`, `new_email`, `new_phone`, `application_id`, audit, `is_deleted`, `search_string`.
 
-- [ ] **P1** Implementer demande candidat de correction email/telephone/identite.
-- [ ] **P1** Workflow validation recruteur: `is_verified` et application des nouvelles valeurs.
+- [x] **P1** Implementer demande candidat de correction email/telephone/identite.
+- [x] **P1** Workflow validation recruteur: `ask_status`, `decision_reason` et application des nouvelles valeurs.
 - [ ] **P2** Notifier recruteur et candidat.
+	Base: la notification email du candidat est maintenant en place apres revue; la notification recruteur reste a completer.
 
 ## Table `candidate_answer`
 
@@ -302,7 +306,7 @@ Champs clefs: `decision_type`, `is_cancel`, `application_id`, `user_id`, `pipeli
 Champs clefs: `interview_location`, `interview_date`, `interview_status`, `meet_link`, `interview_evaluations_link`, `interview_note`, `interview_mail_sent`, `interview_type`, `started_at`, `ended_at`, `evaluation_score`, `evaluation_number`, `evaluation_percentage`, `campaign_id`, `application_id`, audit, `is_deleted`, `search_string`.
 
 - [ ] **P0** Planifier entretien depuis candidature/pipeline avec date, type, lieu/lien.
-- [ ] **P0** Envoyer convocation email et mettre `interview_mail_sent`.
+- [x] **P0** Envoyer convocation email et mettre `interview_mail_sent`.
 - [ ] **P0** Generer/afficher `interview_evaluations_link` pour participants autorises.
 - [ ] **P1** Mettre a jour statut entretien: planifie, en cours, termine, annule/refuse.
 - [ ] **P1** Calculer `evaluation_score`, `evaluation_number`, `evaluation_percentage` depuis `evaluations`.
@@ -339,8 +343,8 @@ Champs clefs: `candidate_mark`, `recruiter_comment`, `candidate_interview_id`, a
 Champs a verifier dans l'entite: participants recruteurs/evaluateurs, rattachement entretien/utilisateur, statut participation.
 
 - [ ] **P1** Confirmer le schema exact de la table/entite `interview_participant` et aligner avec la migration actuelle.
-- [ ] **P1** Ajouter/retirer participants depuis creation/edition entretien.
-- [ ] **P1** Relier participants aux permissions d'evaluation.
+- [x] **P1** Ajouter/retirer participants depuis creation/edition entretien.
+- [x] **P1** Relier participants aux permissions d'evaluation.
 
 ---
 
@@ -369,9 +373,9 @@ Champs clefs: `name`, `category`, `html_structure`, `preview_image`, `descriptio
 Champs clefs: `host`, `port`, `username`, `password_encrypted`, `smtp_auth`, `starttls_enable`, `starttls_required`, `connection_timeout`, `timeout`, `write_timeout`, `sender_name`, `sender_email`, `is_active`, audit, `is_deleted`, `search_string`.
 
 - [ ] **P0** Verifier qu'une config active permet l'envoi reel des emails essentiels.
-- [ ] **P0** Securiser `password_encrypted`: jamais exposer le secret au front.
-- [ ] **P1** Bouton test SMTP.
-- [ ] **P1** Garantir une seule configuration `is_active`.
+- [x] **P0** Securiser `password_encrypted`: jamais exposer le secret au front.
+- [x] **P1** Bouton test SMTP.
+- [x] **P1** Garantir une seule configuration `is_active`.
 - [ ] **P2** Logs d'erreur mail comprehensibles.
 
 ## Table `legal_text`

@@ -8,6 +8,7 @@ export interface EmailTemplate {
   templateKey?: string;
   subjectTemplate?: string;
   bodyTemplate?: string;
+  editableVariablesJson?: string;
   description?: string;
   availableVariables?: string;
   actionType?: string;
@@ -71,6 +72,7 @@ export type EmailActionType =
   | 'APPLICATION_VERIFICATION'
   | 'PASSWORD_RESET'
   | 'INVITATION_CODE'
+  | 'CANDIDATE_ASK_RESULT'
   | 'ACCEPTANCE'
   | 'REJECTION'
   | 'INTERVIEW_INVITE'
@@ -81,6 +83,7 @@ export const EMAIL_ACTION_TYPES: { value: EmailActionType; label: string }[] = [
   { value: 'APPLICATION_VERIFICATION', label: 'Verification email candidature' },
   { value: 'PASSWORD_RESET', label: 'Reinitialisation mot de passe' },
   { value: 'INVITATION_CODE', label: 'Invitation inscription' },
+  { value: 'CANDIDATE_ASK_RESULT', label: 'Resultat demande candidat' },
   { value: 'ACCEPTANCE', label: 'Acceptation' },
   { value: 'REJECTION', label: 'Refus' },
   { value: 'INTERVIEW_INVITE', label: 'Invitation entretien' },

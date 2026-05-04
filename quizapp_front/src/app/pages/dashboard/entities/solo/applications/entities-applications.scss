@@ -58,6 +58,133 @@
   font-size: var(--font-size-sm);
 }
 
+.cell-score-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-xs);
+}
+
+.manual-correction-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-semibold);
+  border: 1px solid transparent;
+
+  &.manual-status-pending {
+    background: rgba(var(--warning-rgb), 0.12);
+    color: var(--warning);
+    border-color: rgba(var(--warning-rgb), 0.25);
+  }
+
+  &.manual-status-completed {
+    background: rgba(var(--success-rgb), 0.12);
+    color: var(--success);
+    border-color: rgba(var(--success-rgb), 0.25);
+  }
+
+  &.manual-status-auto {
+    background: rgba(var(--info-rgb), 0.12);
+    color: var(--info);
+    border-color: rgba(var(--info-rgb), 0.25);
+  }
+}
+
+.child-item--answer {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacing-sm);
+}
+
+.child-answer-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.child-answer-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.child-answer-choice {
+  color: var(--text-secondary);
+}
+
+.child-badge.pending {
+  background: rgba(var(--warning-rgb), 0.12);
+  color: var(--warning);
+}
+
+.manual-correction-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.manual-correction-response {
+  margin: 0;
+  white-space: pre-wrap;
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+.manual-correction-note {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+}
+
+.manual-correction-form {
+  display: grid;
+  gap: var(--spacing-sm);
+}
+
+.manual-correction-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-secondary);
+}
+
+.manual-correction-select,
+.manual-correction-comment {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--background);
+  color: var(--text-primary);
+  padding: 0.75rem;
+  font: inherit;
+}
+
+.manual-correction-select:focus,
+.manual-correction-comment:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.12);
+}
+
+.manual-correction-comment {
+  resize: vertical;
+  min-height: 96px;
+}
+
+.manual-correction-save {
+  align-self: flex-start;
+}
+
 /* Container du tableau avec scroll horizontal */
 .data-table-container {
   position: relative;

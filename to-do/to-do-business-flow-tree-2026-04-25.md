@@ -18,7 +18,7 @@ Acteurs principaux:
 - **SUPER**: utilisateur racine, bypass total des permissions.
 - **ADMIN**: gere les utilisateurs, campagnes, groupes, permissions selon droits.
 - **RECRUTEUR / UTILISATEUR**: travaille sur les campagnes si ses permissions le permettent.
-- **CANDIDAT**: postule, verifie son email, repond, suit ou accepte/refuse un entretien.
+- **CANDIDAT**: postule, verifie son email, repond, suit ou accepte/refuse un entretien, via acces leger et, si active, via `candidate_account`.
 
 Tables les plus importantes par parcours:
 
@@ -225,8 +225,8 @@ Branches de limite:
 Tables: `entity_permission`, eventuellement `campaign_crud` legacy.
 
 - [ ] **P0 CMP-016** Le createur recoit droits admin sur la campagne (`entity_permission` ou `campaign_crud`).
-- [ ] **P0 CMP-017** Partage campagne: ajouter un recruteur avec permissions `UPDATE`, `DELETE`, `EVALUATE`, `FOLLOW`, `PLANIFY`, `ADVANCE_PIPELINE` selon besoin.
-- [ ] **P0 CMP-018** Les actions front et back doivent verifier ces permissions.
+- [x] **P0 CMP-017** Partage campagne: ajouter un recruteur avec permissions `UPDATE`, `DELETE`, `EVALUATE`, `FOLLOW`, `PLANIFY`, `ADVANCE_PIPELINE`, `CORRECT_TEST` selon besoin.
+- [x] **P0 CMP-018** Les actions front et back doivent verifier ces permissions.
 - [ ] **P1 CMP-019** Decider si `campaign_crud` reste utilise ou si `entity_permission` devient la source officielle.
 
 ---
@@ -282,32 +282,32 @@ Tables: `form`, `form_version`, `form_questions`, `question`, `answer`.
 - [ ] **P0 FORM-001** Une campagne peut avoir au moins un formulaire (`form.campaign_id`).
 - [ ] **P0 FORM-002** Le recruteur peut creer un formulaire pour la campagne.
 - [ ] **P0 FORM-003** Le recruteur peut ajouter plusieurs formulaires si le metier le permet.
-- [ ] **P0 FORM-004** Definir comment le candidat recoit plusieurs formulaires.
+- [x] **P0 FORM-004** Definir comment le candidat recoit plusieurs formulaires via une strategie d'attribution anti-triche.
 
-Branches multi-formulaires a trancher:
+Branches multi-formulaires cible:
 
-- [ ] **P0 FORM-005** Option A: tous les formulaires actifs sont obligatoires.
-- [ ] **P1 FORM-006** Option B: un formulaire est choisi selon `source_token` ou profil candidat.
-- [ ] **P1 FORM-007** Option C: le recruteur choisit manuellement le formulaire a envoyer.
-- [ ] **P2 FORM-008** Option D: formulaire principal + formulaires complementaires plus tard.
+- [x] **P0 FORM-005** Option A: tirage aleatoire parmi les formulaires lies a la campagne, en hasard pur ou sans repetition sur reprise candidat.
+- [x] **P1 FORM-006** Option B: un formulaire est choisi selon le `source_token` utilise par le candidat.
+- [x] **P1 FORM-007** Option C: rotation sequentielle a chaque nouveau candidat (formulaire 1, puis 2, etc.).
+- [x] **P2 FORM-008** Si le stock/cycle de formulaires est epuise: bloquer la participation ou redemarrer selon configuration.
 
 ## 6.2 Versioning du formulaire
 
 Champs: `form_version.version_number`, `is_published`, `is_locked`.
 
-- [ ] **P0 FORM-009** A la creation d'un formulaire: creer `form_version` version 1 non publiee.
+- [x] **P0 FORM-009** A la creation d'un formulaire: creer `form_version` version 1 non publiee.
 - [ ] **P0 FORM-010** Le recruteur construit la version avec `form_questions`.
 - [ ] **P0 FORM-011** Publication: passer `is_published = true`.
 - [ ] **P0 FORM-012** Quand une candidature utilise une version, stocker cette version dans `applications.form_version_id`.
-- [ ] **P0 FORM-013** Quand une version est utilisee par au moins une candidature: passer ou traiter comme `is_locked = true`.
+- [x] **P0 FORM-013** Quand une version est utilisee par au moins une candidature: passer ou traiter comme `is_locked = true`.
 
 Branches version:
 
 - [ ] **P0 FORM-014** Version brouillon non publiee: modifiable.
 - [ ] **P0 FORM-015** Version publiee mais pas encore utilisee: modifiable ou repasser brouillon selon choix metier.
-- [ ] **P0 FORM-016** Version publiee et utilisee: non modifiable; toute modification cree une nouvelle version.
-- [ ] **P1 FORM-017** Si nouvelle version publiee: les nouvelles candidatures utilisent la nouvelle version, les anciennes gardent l'ancienne.
-- [ ] **P1 FORM-018** Si aucune version publiee: campagne non ouvrable au candidat.
+- [x] **P0 FORM-016** Version publiee et utilisee: non modifiable; toute modification cree une nouvelle version.
+- [x] **P1 FORM-017** Si nouvelle version publiee: les nouvelles candidatures utilisent la nouvelle version, les anciennes gardent l'ancienne.
+- [x] **P1 FORM-018** Si aucune version publiee: campagne non ouvrable au candidat.
 
 ## 6.3 Questions et reponses
 
@@ -322,9 +322,12 @@ Tables: `question`, `answer`, `form_questions`.
 Branches type question:
 
 - [ ] **P0 QST-006** `SINGLE_CHOICE`: une seule reponse selectionnee.
-- [ ] **P0 QST-007** Choix multiple: plusieurs `candidate_answer.is_selected = true` possibles.
-- [ ] **P1 QST-008** Texte libre: utiliser `candidate_answer.free_text_response` et evaluation manuelle si necessaire.
-- [ ] **P1 QST-009** Si question sans bonne reponse: pas de scoring automatique, ou bloquer publication selon choix metier.
+- [x] **P0 QST-007** Choix multiple: plusieurs `candidate_answer.is_selected = true` possibles.
+- [x] **P1 QST-008** Texte libre: utiliser `candidate_answer.free_text_response` et evaluation manuelle si necessaire.
+  - Une reponse libre cree/utilise une ligne `candidate_answer` dediee, sans `answer_id`.
+  - La candidature expose `quiz_manual_correction_status` pour suivre `NOT_REQUIRED`, `PENDING`, `COMPLETED`.
+  - La correction recruteur passe par le droit campagne `CORRECT_TEST`.
+- [x] **P1 QST-009** Si question sans bonne reponse: pas de scoring automatique, ou bloquer publication selon choix metier.
 
 ---
 
@@ -334,47 +337,47 @@ Tables: `source_token`, `applications`, `email_verification_tokens`, `legal_text
 
 ## 7.1 Candidat ouvre un lien de campagne
 
-- [ ] **P0 CAND-001** Verifier que la campagne existe, est ouverte, dans les dates, non supprimee.
-- [ ] **P0 CAND-002** Verifier que la limite `max_apply` n'est pas atteinte.
-- [ ] **P0 CAND-003** Charger le consentement `legal_text.candidate_consent`.
-- [ ] **P0 CAND-004** Si lien contient un `source_token`, verifier `source_token.expiration_date` et `campaign_id`.
+- [x] **P0 CAND-001** Verifier que la campagne existe, est ouverte, dans les dates, non supprimee.
+- [x] **P0 CAND-002** Verifier que la limite `max_apply` n'est pas atteinte.
+- [x] **P0 CAND-003** Charger le consentement `legal_text.candidate_consent`.
+- [x] **P0 CAND-004** Si lien contient un `source_token`, verifier `source_token.expiration_date` et `campaign_id`.
 
 Branches source token:
 
-- [ ] **P1 CAND-005** Token valide: rattacher `applications.source_token_id`.
-- [ ] **P1 CAND-006** Token expire: refuser ou laisser postuler sans source selon choix metier.
-- [ ] **P1 CAND-007** Token inconnu: afficher erreur ou rediriger vers candidature classique.
+- [x] **P1 CAND-005** Token valide: rattacher `applications.source_token_id`.
+- [x] **P1 CAND-006** Token expire: refuser ou laisser postuler sans source selon choix metier.
+- [x] **P1 CAND-007** Token inconnu: afficher erreur ou rediriger vers candidature classique.
 
 ## 7.2 Candidat depose sa candidature
 
-Champs `applications`: `candidate_first_name`, `candidate_last_name`, `candidate_email`, `candidate_phone`, `candidate_cv_path`, `candidate_birth_date`, `motivation_letter`, `email_verified`, `visit_token`, `quiz_token`, `quiz_status`, `application_status`, `form_version_id`.
+Champs `applications`: `candidate_first_name`, `candidate_last_name`, `candidate_email`, `candidate_phone`, `candidate_cv_path`, `candidate_birth_date`, `motivation_letter`, `email_verified`, `quiz_token`, `quiz_status`, `application_status`, `form_version_id`, `quiz_manual_correction_status`.
 
-- [ ] **P0 CAND-008** Sauvegarder identite candidat.
-- [ ] **P0 CAND-009** Uploader CV et stocker `candidate_cv_path`.
-- [ ] **P0 CAND-010** Sauvegarder lettre de motivation si fournie.
-- [ ] **P0 CAND-011** Exiger consentement legal avant creation.
-- [ ] **P0 CAND-012** Choisir la bonne `form_version_id` au moment de la candidature.
-- [ ] **P0 CAND-013** Generer `visit_token` et `quiz_token`.
-- [ ] **P0 CAND-014** Initialiser `email_verified = false`.
-- [ ] **P0 CAND-015** Initialiser `quiz_status` et `application_status`.
-- [ ] **P0 CAND-016** Creer un token dans `email_verification_tokens`.
+- [x] **P0 CAND-008** Sauvegarder identite candidat.
+- [x] **P0 CAND-009** Uploader CV et stocker `candidate_cv_path`.
+- [x] **P0 CAND-010** Sauvegarder lettre de motivation si fournie.
+- [x] **P0 CAND-011** Exiger consentement legal avant creation.
+- [x] **P0 CAND-012** Choisir la bonne `form_version_id` au moment de la candidature.
+- [x] **P0 CAND-013** Generer le code de suivi candidat et `quiz_token`.
+- [x] **P0 CAND-014** Initialiser `email_verified = false`.
+- [~] **P0 CAND-015** Initialiser `quiz_status` et `application_status`.
+- [x] **P0 CAND-016** Creer un token dans `email_verification_tokens`.
 
 Branches candidature:
 
 - [ ] **P0 CAND-017** Email deja candidat sur meme campagne: bloquer doublon ou proposer reprise.
-- [ ] **P1 CAND-018** CV absent si obligatoire: bloquer.
-- [ ] **P1 CAND-019** Formulaire publie absent: bloquer candidature et alerter admin.
-- [ ] **P1 CAND-020** Upload CV echoue: ne pas creer candidature incomplete ou marquer comme incomplete.
+- [~] **P1 CAND-018** CV absent si obligatoire: bloquer.
+- [x] **P1 CAND-019** Formulaire publie absent: bloquer candidature et alerter admin.
+- [~] **P1 CAND-020** Upload CV echoue: ne pas creer candidature incomplete ou marquer comme incomplete.
 
 ## 7.3 Verification email candidat
 
 Tables: `email_verification_tokens`, `applications`.
 
-- [ ] **P0 MAIL-001** Envoyer email de verification apres candidature.
-- [ ] **P0 MAIL-002** Si token valide et non expire: marquer `email_verification_tokens.is_used = true`, `used_at`, et `applications.email_verified = true`.
-- [ ] **P0 MAIL-003** Si token expire: afficher erreur et proposer renvoi.
-- [ ] **P1 MAIL-004** Si token deja utilise: afficher deja verifie ou rediriger.
-- [ ] **P1 MAIL-005** Si token inconnu: afficher erreur.
+- [x] **P0 MAIL-001** Envoyer email de verification apres candidature.
+- [x] **P0 MAIL-002** Si token valide et non expire: marquer `email_verification_tokens.is_used = true`, `used_at`, et `applications.email_verified = true`.
+- [~] **P0 MAIL-003** Si token expire: afficher erreur et proposer renvoi.
+- [x] **P1 MAIL-004** Si token deja utilise: afficher deja verifie ou rediriger.
+- [x] **P1 MAIL-005** Si token inconnu: afficher erreur.
 
 ---
 
@@ -384,32 +387,34 @@ Tables: `applications`, `form_version`, `form_questions`, `question`, `answer`, 
 
 ## 8.1 Acces au quiz
 
-- [ ] **P0 QUIZ-001** Candidat accede via `applications.quiz_token`.
-- [ ] **P0 QUIZ-002** Refuser acces si `email_verified = false`, sauf mode demo decide.
-- [ ] **P0 QUIZ-003** Charger exactement `applications.form_version_id`.
-- [ ] **P0 QUIZ-004** Charger questions par `form_questions.question_order`.
+- [x] **P0 QUIZ-001** Candidat accede via `applications.quiz_token`.
+- [x] **P0 QUIZ-002** Refuser acces si `email_verified = false`, sauf mode demo decide.
+- [x] **P0 QUIZ-003** Charger exactement `applications.form_version_id`.
+- [x] **P0 QUIZ-004** Charger questions par `form_questions.question_order`.
 
 Branches acces:
 
-- [ ] **P0 QUIZ-005** Token quiz invalide: refuser.
-- [ ] **P0 QUIZ-006** Quiz deja soumis: afficher resultat ou interdire reprise.
-- [ ] **P1 QUIZ-007** Candidature abandonnee: refuser ou proposer reprise selon `application_abandoned`.
+- [x] **P0 QUIZ-005** Token quiz invalide: refuser.
+- [x] **P0 QUIZ-006** Quiz deja soumis: afficher resultat ou interdire reprise.
+- [x] **P1 QUIZ-007** Candidature abandonnee: refuser ou proposer reprise selon `application_abandoned`.
+  Base: `application_abandoned` est desormais alimente automatiquement pour le quiz via `quiz_last_activity_at`, un ping d'activite public et un controle planifie cote backend.
 
 ## 8.2 Reponses et scoring
 
-- [ ] **P0 QUIZ-008** Enregistrer chaque reponse dans `candidate_answer`.
-- [ ] **P0 QUIZ-009** Pour choix fixe: remplir `answer_id` et `is_selected`.
-- [ ] **P1 QUIZ-010** Pour texte libre: remplir `free_text_response`.
-- [ ] **P0 QUIZ-011** Calculer `applications.quiz_score` et `quiz_score_percent`.
-- [ ] **P0 QUIZ-012** Mettre a jour `time_elapsed`, `total_questions`, `quiz_status`.
-- [ ] **P0 QUIZ-013** Mettre a jour le stage `application_progress` de type `QUIZ`.
+- [x] **P0 QUIZ-008** Enregistrer chaque reponse dans `candidate_answer`.
+- [x] **P0 QUIZ-009** Pour choix fixe: remplir `answer_id` et `is_selected`.
+- [x] **P1 QUIZ-010** Pour texte libre: remplir `free_text_response`.
+- [x] **P0 QUIZ-011** Calculer `applications.quiz_score` et `quiz_score_percent`.
+- [x] **P0 QUIZ-012** Mettre a jour `time_elapsed`, `total_questions`, `quiz_status`.
+- [x] **P0 QUIZ-013** Mettre a jour le stage `application_progress` de type `QUIZ`.
 
 Branches resultat:
 
-- [ ] **P0 QUIZ-014** Score suffisant: stage QUIZ passe en `PASSED`.
-- [ ] **P0 QUIZ-015** Score insuffisant sur stage eliminatoire: stage `FAILED` et candidature refusee ou bloquee.
-- [ ] **P1 QUIZ-016** Quiz partiellement rempli: statut `IN_PROGRESS` ou abandon selon delai.
-- [ ] **P1 QUIZ-017** Temps depasse: soumission automatique ou echec selon choix metier.
+- [x] **P0 QUIZ-014** Score suffisant: stage QUIZ passe en `PASSED`.
+- [x] **P0 QUIZ-015** Score insuffisant sur stage eliminatoire: stage `FAILED` et candidature refusee ou bloquee.
+- [x] **P1 QUIZ-016** Quiz partiellement rempli: statut `IN_PROGRESS` ou abandon selon delai.
+  Base: le quiz peut reprendre tant que l'activite est reguliere; au-dela du delai configure, la candidature bascule en abandonnee et le stage `QUIZ` est fige cote pipeline.
+- [x] **P1 QUIZ-017** Temps depasse: soumission automatique ou echec selon choix metier.
 
 ---
 
@@ -419,31 +424,31 @@ Tables: `application_progress`, `pipeline_stage`, `applications`, `decisions`.
 
 ## 9.1 Initialisation a la candidature
 
-- [ ] **P0 PROG-001** A creation candidature, creer une ligne `application_progress` pour chaque `pipeline_stage` du template campagne.
-- [ ] **P0 PROG-002** Premier stage passe en `IN_PROGRESS` ou `PASSED` selon logique candidature.
-- [ ] **P0 PROG-003** Les autres stages restent `PENDING`.
-- [ ] **P0 PROG-004** Respecter l'ordre `pipeline_stage.stage_order`.
+- [x] **P0 PROG-001** A creation candidature, creer une ligne `application_progress` pour chaque `pipeline_stage` du template campagne.
+- [x] **P0 PROG-002** Premier stage passe en `IN_PROGRESS` ou `PASSED` selon logique candidature.
+- [x] **P0 PROG-003** Les autres stages restent `PENDING`.
+- [x] **P0 PROG-004** Respecter l'ordre `pipeline_stage.stage_order`.
 
 Branches:
 
-- [ ] **P0 PROG-005** Si campagne sans pipeline template: utiliser template par defaut ou bloquer ouverture campagne.
-- [ ] **P1 PROG-006** Si pipeline modifie apres candidature: ne pas casser les progress existants; migrer seulement avec action explicite.
+- [x] **P0 PROG-005** Si campagne sans pipeline template: utiliser template par defaut ou bloquer ouverture campagne.
+- [x] **P1 PROG-006** Si pipeline modifie apres candidature: ne pas casser les progress existants; migrer seulement avec action explicite.
 
 ## 9.2 Action recruteur sur une etape
 
 Champs: `progress_status`, `started_at`, `completed_at`, `score`, `notes`, `decided_by`.
 
-- [ ] **P0 PROG-007** Recruteur doit avoir `ADVANCE_PIPELINE` ou permission entite.
-- [ ] **P0 PROG-008** Passer une etape de `PENDING` a `IN_PROGRESS`.
-- [ ] **P0 PROG-009** Passer une etape a `PASSED`, `FAILED` ou `SKIPPED`.
-- [ ] **P0 PROG-010** Renseigner `decided_by`, `completed_at`, `notes` si decision humaine.
+- [x] **P0 PROG-007** Recruteur doit avoir `ADVANCE_PIPELINE` ou permission entite.
+- [x] **P0 PROG-008** Passer une etape de `PENDING` a `IN_PROGRESS`.
+- [x] **P0 PROG-009** Passer une etape a `PASSED`, `FAILED` ou `SKIPPED`.
+- [x] **P0 PROG-010** Renseigner `decided_by`, `completed_at`, `notes` si decision humaine.
 
 Branches:
 
-- [ ] **P0 PROG-011** Etape requise non terminee: impossible d'aller a la decision finale, sauf override admin.
-- [ ] **P0 PROG-012** Etape eliminatoire echouee: candidature passe en echec/refus selon regle.
-- [ ] **P1 PROG-013** Etape optionnelle: peut passer en `SKIPPED`.
-- [ ] **P1 PROG-014** Retour en arriere: autorise seulement admin ou permission speciale.
+- [x] **P0 PROG-011** Etape requise non terminee: impossible d'aller a la decision finale, sauf override admin.
+- [x] **P0 PROG-012** Etape eliminatoire echouee: candidature passe en echec/refus selon regle.
+- [x] **P1 PROG-013** Etape optionnelle: peut passer en `SKIPPED`.
+- [x] **P1 PROG-014** Retour en arriere: autorise seulement admin ou permission speciale.
 
 ---
 
@@ -455,19 +460,19 @@ Tables: `decisions`, `applications`, `application_progress`, `email_template`.
 
 Champs: `decision_type`, `is_cancel`, `application_id`, `user_id`, `pipeline_stage_id`.
 
-- [ ] **P0 DEC-001** Creer une decision pour accepter/refuser/mettre en attente un candidat.
-- [ ] **P0 DEC-002** Lier la decision a `application_id`.
-- [ ] **P0 DEC-003** Lier la decision a `pipeline_stage_id` si elle concerne une etape precise.
-- [ ] **P0 DEC-004** Mettre `user_id` ou `created_by` pour tracer le recruteur.
-- [ ] **P0 DEC-005** Synchroniser `application_progress` et `applications.application_status`.
+- [x] **P0 DEC-001** Creer une decision pour accepter/refuser/mettre en attente un candidat.
+- [x] **P0 DEC-002** Lier la decision a `application_id`.
+- [x] **P0 DEC-003** Lier la decision a `pipeline_stage_id` si elle concerne une etape precise.
+- [x] **P0 DEC-004** Mettre `user_id` ou `created_by` pour tracer le recruteur.
+- [x] **P0 DEC-005** Synchroniser `application_progress` et `applications.application_status`.
 
 Branches:
 
-- [ ] **P0 DEC-006** Decision positive: stage passe `PASSED`, ouvrir stage suivant.
-- [ ] **P0 DEC-007** Decision negative: stage passe `FAILED`, candidature refusee si eliminatoire.
-- [ ] **P1 DEC-008** Decision annulee: creer ou marquer `is_cancel = true`, ne pas supprimer l'historique.
-- [ ] **P1 DEC-009** Decision finale: envoyer email final si template actif et `final_decision_mail_sent = false`.
-- [ ] **P1 DEC-010** Decision preselection: envoyer email si `pre_screen_decision_mail_sent = false`.
+- [x] **P0 DEC-006** Decision positive: stage passe `PASSED`, ouvrir stage suivant.
+- [x] **P0 DEC-007** Decision negative: stage passe `FAILED`, candidature refusee si eliminatoire.
+- [x] **P1 DEC-008** Decision annulee: creer ou marquer `is_cancel = true`, ne pas supprimer l'historique.
+- [x] **P1 DEC-009** Decision finale: envoyer email final si template actif et `final_decision_mail_sent = false`.
+- [x] **P1 DEC-010** Decision preselection: envoyer email si `pre_screen_decision_mail_sent = false`.
 
 ---
 
@@ -477,49 +482,49 @@ Tables: `interviews`, `candidate_interview`, `interview_participant`, `evaluatio
 
 ## 11.1 Planification entretien
 
-- [ ] **P0 INT-001** Depuis une candidature/stage INTERVIEW, recruteur planifie entretien.
-- [ ] **P0 INT-002** Creer `interviews` avec date, type, lieu ou lien, campagne, application.
-- [ ] **P0 INT-003** Creer ou lier `candidate_interview` pour le candidat.
-- [ ] **P1 INT-004** Ajouter participants/evaluateurs via `interview_participant`.
-- [ ] **P1 INT-005** Donner permissions d'evaluation via `entity_permission` ou logique participant.
-- [ ] **P0 INT-006** Envoyer email convocation et mettre `interview_mail_sent = true`.
+- [x] **P0 INT-001** Depuis une candidature/stage INTERVIEW, recruteur planifie entretien.
+- [x] **P0 INT-002** Creer `interviews` avec date, type, lieu ou lien, campagne, application.
+- [x] **P0 INT-003** Creer ou lier `candidate_interview` pour le candidat.
+- [x] **P1 INT-004** Ajouter participants/evaluateurs via `interview_participant`.
+- [x] **P1 INT-005** Donner permissions d'evaluation via `entity_permission` ou logique participant.
+- [x] **P0 INT-006** Envoyer email convocation et mettre `interview_mail_sent = true`.
 
 Branches entretien:
 
-- [ ] **P0 INT-007** Entretien presentiel: utiliser `interview_location`.
-- [ ] **P0 INT-008** Entretien visio: utiliser `meet_link`.
-- [ ] **P1 INT-009** Entretien sans evaluateur: autoriser creation mais afficher alerte.
-- [ ] **P1 INT-010** Email non envoye: garder entretien mais indiquer erreur/retry.
+- [x] **P0 INT-007** Entretien presentiel: utiliser `interview_location`.
+- [x] **P0 INT-008** Entretien visio: utiliser `meet_link`.
+- [x] **P1 INT-009** Entretien sans evaluateur: autoriser creation mais afficher alerte.
+- [x] **P1 INT-010** Email non envoye: garder entretien mais indiquer erreur/retry.
 
 ## 11.2 Reponse candidat a l'entretien
 
 Champs: `candidate_interview.decline_reason`, `alternative_date_requested`.
 
-- [ ] **P1 INT-011** Candidat accepte: entretien reste planifie.
-- [ ] **P1 INT-012** Candidat decline: remplir `decline_reason`.
-- [ ] **P1 INT-013** Candidat demande autre date: remplir `alternative_date_requested`.
-- [ ] **P1 INT-014** Recruteur voit la demande et peut replanifier.
+- [x] **P1 INT-011** Candidat accepte: entretien reste planifie.
+- [x] **P1 INT-012** Candidat decline: remplir `decline_reason`.
+- [x] **P1 INT-013** Candidat demande autre date: remplir `alternative_date_requested`.
+- [x] **P1 INT-014** Recruteur voit la demande et peut replanifier.
 
 Branches:
 
-- [ ] **P1 INT-015** Replanification acceptee: modifier date/lien et renvoyer convocation.
-- [ ] **P1 INT-016** Replanification refusee: garder statut refuse/annule selon choix metier.
+- [x] **P1 INT-015** Replanification acceptee: modifier date/lien et renvoyer convocation.
+- [x] **P1 INT-016** Replanification refusee: garder statut refuse/annule selon choix metier.
 
 ## 11.3 Evaluation entretien
 
 Tables: `evaluations`, `interviews`, `applications`.
 
-- [ ] **P0 EVAL-001** Evaluateur autorise saisit `candidate_mark` et `recruiter_comment`.
-- [ ] **P0 EVAL-002** Rattacher evaluation a `candidate_interview_id`.
-- [ ] **P0 EVAL-003** Recalculer `interviews.evaluation_score`, `evaluation_number`, `evaluation_percentage`.
-- [ ] **P0 EVAL-004** Recalculer `applications.total_evaluation_score`, `total_evaluation_number`, `total_evaluation_percentage`.
-- [ ] **P0 EVAL-005** Mettre a jour stage `EVALUATION` ou `INTERVIEW` dans `application_progress`.
+- [x] **P0 EVAL-001** Evaluateur autorise saisit `candidate_mark` et `recruiter_comment`.
+- [x] **P0 EVAL-002** Rattacher evaluation a `candidate_interview_id`.
+- [x] **P0 EVAL-003** Recalculer `interviews.evaluation_score`, `evaluation_number`, `evaluation_percentage`.
+- [x] **P0 EVAL-004** Recalculer `applications.total_evaluation_score`, `total_evaluation_number`, `total_evaluation_percentage`.
+- [x] **P0 EVAL-005** Mettre a jour stage `EVALUATION` ou `INTERVIEW` dans `application_progress`.
 
 Branches:
 
-- [ ] **P1 EVAL-006** Plusieurs evaluateurs: moyenne ou somme selon regle choisie.
-- [ ] **P1 EVAL-007** Evaluation modifiee: recalculer agregats.
-- [ ] **P1 EVAL-008** Evaluateur non autorise: refuser cote back.
+- [x] **P1 EVAL-006** Plusieurs evaluateurs: moyenne ou somme selon regle choisie.
+- [x] **P1 EVAL-007** Evaluation modifiee: recalculer agregats.
+- [x] **P1 EVAL-008** Evaluateur non autorise: refuser cote back.
 
 ---
 
@@ -529,21 +534,21 @@ Tables: `candidate_ask`, `applications`, `notifications`, `candidate_token`.
 
 ## 12.1 Demande de correction candidat
 
-- [ ] **P1 ASK-001** Candidat demande changement email/telephone/nom via `candidate_ask`.
-- [ ] **P1 ASK-002** Recruteur/admin valide ou refuse la demande.
-- [ ] **P1 ASK-003** Si valide: appliquer `new_email`, `new_phone`, `first_name`, `last_name` sur `applications`.
-- [ ] **P2 ASK-004** Notifier candidat du resultat.
+- [x] **P1 ASK-001** Candidat demande changement email/telephone/nom via `candidate_ask`, depuis l'espace de suivi public ou via `candidate_account` si la fonctionnalite est activee.
+- [x] **P1 ASK-002** Recruteur/admin valide ou refuse la demande.
+- [x] **P1 ASK-003** Si valide: appliquer `new_email`, `new_phone`, `first_name`, `last_name` sur `applications`.
+- [x] **P2 ASK-004** Notifier candidat du resultat.
 
 Branches:
 
-- [ ] **P1 ASK-005** Si changement email: refaire verification email.
-- [ ] **P2 ASK-006** Si demande invalide: refuser avec motif.
+- [x] **P1 ASK-005** Si changement email: refaire verification email.
+- [x] **P2 ASK-006** Si demande invalide: refuser avec motif.
 
 ## 12.2 Reprise de parcours candidat
 
-- [ ] **P1 TOK-001** Clarifier usage de `candidate_token` vs `visit_token` vs `quiz_token`.
-- [ ] **P1 TOK-002** Candidat peut reprendre via token valide.
-- [ ] **P1 TOK-003** Token expire/invalide: refuser et proposer contact recruteur.
+- [x] **P1 TOK-001** Clarifier usage de `candidate_token` vs `visit_token` vs `quiz_token`, avec cible: `candidate_token` pour le suivi/reprise candidat, `quiz_token` pour le quiz, `email_verification_tokens` pour la verification email; `visit_token` a ete retire du schema actif.
+- [x] **P1 TOK-002** Candidat peut reprendre via acces leger (code de suivi + email) ou via `candidate_account` si la fonctionnalite est activee.
+- [x] **P1 TOK-003** Token expire/invalide: refuser et proposer contact recruteur.
 
 ---
 
@@ -553,27 +558,27 @@ Tables: `notifications`, `email_template`, `smtp_config`, `email_template_preset
 
 ## 13.1 Notifications internes
 
-- [ ] **P1 NOTIF-001** Nouvelle candidature: notifier recruteurs autorises.
-- [ ] **P1 NOTIF-002** Demande de groupe: notifier moderateurs/admins.
-- [ ] **P1 NOTIF-003** Entretien decline: notifier recruteur.
-- [ ] **P1 NOTIF-004** Evaluation terminee: notifier responsable campagne si utile.
-- [ ] **P2 NOTIF-005** Marquer lu/non lu via `notifications.is_read`.
+- [x] **P1 NOTIF-001** Nouvelle candidature: notifier recruteurs autorises.
+- [x] **P1 NOTIF-002** Demande de groupe: notifier moderateurs/admins.
+- [x] **P1 NOTIF-003** Entretien decline: notifier recruteur.
+- [x] **P1 NOTIF-004** Evaluation terminee: notifier responsable campagne si utile.
+- [x] **P2 NOTIF-005** Marquer lu/non lu via `notifications.is_read`.
 
 ## 13.2 Emails externes
 
-- [ ] **P0 EMAIL-001** Invitation utilisateur.
-- [ ] **P0 EMAIL-002** Verification candidature.
-- [ ] **P0 EMAIL-003** Convocation entretien.
-- [ ] **P1 EMAIL-004** Decision preselection.
-- [ ] **P0 EMAIL-005** Decision finale.
-- [ ] **P1 EMAIL-006** Reset password.
+- [x] **P0 EMAIL-001** Invitation utilisateur.
+- [x] **P0 EMAIL-002** Verification candidature.
+- [x] **P0 EMAIL-003** Convocation entretien.
+- [x] **P1 EMAIL-004** Decision preselection.
+- [x] **P0 EMAIL-005** Decision finale.
+- [x] **P1 EMAIL-006** Reset password.
 
 Branches email:
 
-- [ ] **P0 EMAIL-007** Si template actif existe: envoyer avec variables.
-- [ ] **P0 EMAIL-008** Si SMTP actif absent: afficher erreur et garder action retry possible.
-- [ ] **P1 EMAIL-009** Si variable manquante: ne pas envoyer email casse; logguer et alerter admin.
-- [ ] **P1 EMAIL-010** Si email deja envoye: utiliser flags `*_mail_sent` pour eviter doublon.
+- [x] **P0 EMAIL-007** Si template actif existe: envoyer avec variables.
+- [x] **P0 EMAIL-008** Si SMTP actif absent: afficher erreur et garder action retry possible.
+- [x] **P1 EMAIL-009** Si variable manquante: ne pas envoyer email casse; logguer et alerter admin.
+- [x] **P1 EMAIL-010** Si email deja envoye: utiliser flags `*_mail_sent` pour eviter doublon.
 
 ---
 
@@ -584,14 +589,14 @@ Tables: `app_config`, `smtp_config`, `legal_text`, `email_template`, `email_temp
 ## 14.1 Branding et configuration globale
 
 - [ ] **P1 ADMIN-001** Admin peut modifier `app_config.company_name`, `primary_color`, `color_scheme`.
-- [ ] **P1 ADMIN-002** Admin peut choisir une seule config active.
-- [ ] **P2 ADMIN-003** Nettoyer/sanitizer `logo_html` avant affichage.
+- [x] **P1 ADMIN-002** Admin peut choisir une seule config active.
+- [x] **P2 ADMIN-003** Nettoyer/sanitizer `logo_html` avant affichage.
 
 ## 14.2 SMTP
 
-- [ ] **P0 ADMIN-004** Admin peut configurer SMTP sans exposer `password_encrypted` au front.
-- [ ] **P1 ADMIN-005** Admin peut tester SMTP.
-- [ ] **P1 ADMIN-006** Une seule config SMTP active.
+- [x] **P0 ADMIN-004** Admin peut configurer SMTP sans exposer `password_encrypted` au front.
+- [x] **P1 ADMIN-005** Admin peut tester SMTP.
+- [x] **P1 ADMIN-006** Une seule config SMTP active.
 
 ## 14.3 Textes legaux
 
@@ -603,6 +608,10 @@ Tables: `app_config`, `smtp_config`, `legal_text`, `email_template`, `email_temp
 - [ ] **P1 ADMIN-009** Admin peut editer sujet/corps/variables.
 - [ ] **P1 ADMIN-010** Admin peut choisir un preset.
 - [ ] **P1 ADMIN-011** Admin peut preview un email avec donnees exemples.
+
+## 14.5 Comptes candidats
+
+- [x] **P1 ADMIN-012** SUPER seul peut activer ou desactiver la fonctionnalite de comptes candidats.
 
 ---
 
@@ -618,28 +627,28 @@ Ce parcours doit fonctionner sans manipulation SQL.
 - [ ] **P0 DEMO-004** L'invite accepte dans les temps et cree son compte.
 - [ ] **P0 DEMO-005** ADMIN cree une specialite si necessaire.
 - [ ] **P0 DEMO-006** ADMIN cree un pipeline template simple: CANDIDATURE -> QUIZ -> PRESELECTION -> INTERVIEW -> DECISION.
-- [ ] **P0 DEMO-007** ADMIN cree une campagne ouverte avec ce pipeline.
-- [ ] **P0 DEMO-008** ADMIN cree un formulaire, une version, des questions, des reponses.
+- [x] **P0 DEMO-007** ADMIN cree une campagne ouverte avec ce pipeline.
+- [x] **P0 DEMO-008** ADMIN cree un formulaire, une version, des questions, des reponses.
 - [ ] **P0 DEMO-009** ADMIN publie la version du formulaire.
-- [ ] **P0 DEMO-010** Candidat postule avec CV et consentement.
+- [x] **P0 DEMO-010** Candidat postule avec CV et consentement.
 - [ ] **P0 DEMO-011** Candidat verifie son email.
-- [ ] **P0 DEMO-012** Candidat passe le quiz.
+- [x] **P0 DEMO-012** Candidat passe le quiz.
 - [ ] **P0 DEMO-013** Recruteur consulte candidature, CV, score, reponses.
-- [ ] **P0 DEMO-014** Recruteur avance le pipeline en preselection.
-- [ ] **P0 DEMO-015** Recruteur planifie un entretien.
+- [x] **P0 DEMO-014** Recruteur avance le pipeline en preselection.
+- [x] **P0 DEMO-015** Recruteur planifie un entretien.
 - [ ] **P0 DEMO-016** Evaluateur saisit une evaluation.
-- [ ] **P0 DEMO-017** Recruteur prend une decision finale.
-- [ ] **P0 DEMO-018** Candidat recoit l'email de decision.
+- [x] **P0 DEMO-017** Recruteur prend une decision finale.
+- [x] **P0 DEMO-018** Candidat recoit l'email de decision.
 
 ## 15.2 Scenarios KO a montrer ou tester
 
-- [ ] **P0 KO-001** Invitation expiree: inscription refusee + relance possible.
-- [ ] **P0 KO-002** Candidature sur campagne fermee: refusee proprement.
-- [ ] **P0 KO-003** Candidat non verifie: quiz inaccessible.
-- [ ] **P0 KO-004** Utilisateur sans permission: modification campagne refusee.
-- [ ] **P1 KO-005** Version formulaire verrouillee: modification cree nouvelle version.
-- [ ] **P1 KO-006** Stage eliminatoire echoue: pipeline bloque/refuse.
-- [ ] **P1 KO-007** Entretien decline avec date alternative: recruteur peut replanifier.
+- [x] **P0 KO-001** Invitation expiree: inscription refusee + relance possible.
+- [x] **P0 KO-002** Candidature sur campagne fermee: refusee proprement.
+- [x] **P0 KO-003** Candidat non verifie: quiz inaccessible.
+- [x] **P0 KO-004** Utilisateur sans permission: modification campagne refusee.
+- [x] **P1 KO-005** Version formulaire verrouillee: modification cree nouvelle version.
+- [x] **P1 KO-006** Stage eliminatoire echoue: pipeline bloque/refuse.
+- [x] **P1 KO-007** Entretien decline avec date alternative: recruteur peut replanifier.
 
 ---
 
@@ -647,13 +656,13 @@ Ce parcours doit fonctionner sans manipulation SQL.
 
 Ces points peuvent bloquer plusieurs ecrans si on ne choisit pas rapidement.
 
-- [ ] **P0 DECIDE-001** Plusieurs formulaires par campagne: tous obligatoires, choix par source, choix recruteur, ou formulaire principal + secondaires ?
-- [ ] **P0 DECIDE-002** Source officielle des permissions campagne: `entity_permission` ou `campaign_crud` ?
-- [ ] **P1 DECIDE-003** Source officielle des droits entretien: `entity_permission`, `interview_participant`, ou `interview_crud` ?
-- [ ] **P1 DECIDE-004** Source officielle du statut candidat: `applications.application_status` ou agregation `application_progress` ?
-- [ ] **P1 DECIDE-005** Tokens candidat: garder `candidate_token`, `visit_token`, `quiz_token`, `email_verification_tokens` avec roles separes ou simplifier ?
-- [ ] **P1 DECIDE-006** Score final: quelle ponderation entre quiz, entretien, evaluation humaine ?
-- [ ] **P2 DECIDE-007** Pipeline template utilise: verrouillage simple ou vrai versioning des templates ?
+- [x] **P0 DECIDE-001** Plusieurs formulaires par campagne: strategie configurable entre tirage aleatoire, choix par `source_token`, ou rotation sequentielle, avec politique d'epuisement definie.
+- [x] **P0 DECIDE-002** Source officielle des permissions campagne: `entity_permission`; `campaign_crud` reste legacy.
+- [x] **P1 DECIDE-003** Source officielle des droits entretien: `entity_permission`, avec `interview_participant` reserve a l'affectation/session evaluateur; `interview_crud` obsolete.
+- [x] **P1 DECIDE-004** Source officielle du statut candidat: `application_progress`, avec `applications.application_status` conserve comme snapshot synchronise.
+- [x] **P1 DECIDE-005** Acces candidat: conserver un acces leger via `candidate_token`/code de suivi + email, avec `quiz_token` et `email_verification_tokens` gardes comme tokens techniques dedies; ajouter un `candidate_account` optionnel activable/desactivable uniquement par SUPER.
+- [x] **P1 DECIDE-006** Score final: pas de score pondere automatique; decision finale explicite et humaine.
+- [x] **P2 DECIDE-007** Pipeline template utilise: verrouillage simple + duplication, pas de vrai versioning multi-revisions.
 
 ---
 
@@ -661,37 +670,37 @@ Ces points peuvent bloquer plusieurs ecrans si on ne choisit pas rapidement.
 
 ## Lot 1 - Auth, invitations, permissions minimales
 
-- [ ] **P0 LOT1-001** Invitation utilisateur complete.
-- [ ] **P0 LOT1-002** Connexion + role + menus selon permissions.
-- [ ] **P0 LOT1-003** Permissions campagne minimum.
+- [x] **P0 LOT1-001** Invitation utilisateur complete.
+- [~] **P0 LOT1-002** Connexion + role + menus selon permissions.
+- [x] **P0 LOT1-003** Permissions campagne minimum.
 
 ## Lot 2 - Campagne + formulaire versionne
 
-- [ ] **P0 LOT2-001** Creation campagne avec pipeline.
-- [ ] **P0 LOT2-002** Creation formulaire + version + questions/reponses.
-- [ ] **P0 LOT2-003** Publication/verrouillage version.
+- [x] **P0 LOT2-001** Creation campagne avec pipeline.
+- [x] **P0 LOT2-002** Creation formulaire + version + questions/reponses.
+- [x] **P0 LOT2-003** Publication/verrouillage version.
 
 ## Lot 3 - Candidature + quiz
 
-- [ ] **P0 LOT3-001** Page candidature publique.
-- [ ] **P0 LOT3-002** Verification email.
-- [ ] **P0 LOT3-003** Passage quiz + sauvegarde reponses + score.
+- [x] **P0 LOT3-001** Page candidature publique.
+- [x] **P0 LOT3-002** Verification email.
+- [x] **P0 LOT3-003** Passage quiz + sauvegarde reponses + score.
 
 ## Lot 4 - Pipeline + decisions
 
-- [ ] **P0 LOT4-001** Initialisation `application_progress`.
-- [ ] **P0 LOT4-002** Avancement pipeline recruteur.
-- [ ] **P0 LOT4-003** Decisions liees aux stages.
+- [x] **P0 LOT4-001** Initialisation `application_progress`.
+- [x] **P0 LOT4-002** Avancement pipeline recruteur.
+- [x] **P0 LOT4-003** Decisions liees aux stages.
 
 ## Lot 5 - Entretiens + evaluations
 
-- [ ] **P0 LOT5-001** Planification entretien.
-- [ ] **P1 LOT5-002** Participants/evaluateurs.
-- [ ] **P0 LOT5-003** Evaluation + agregats.
+- [x] **P0 LOT5-001** Planification entretien.
+- [x] **P1 LOT5-002** Participants/evaluateurs.
+- [x] **P0 LOT5-003** Evaluation + agregats.
 
 ## Lot 6 - Admin et polish memoire
 
-- [ ] **P1 LOT6-001** Emails configurables.
-- [ ] **P1 LOT6-002** Groupes metiers + demandes.
-- [ ] **P1 LOT6-003** Notifications.
-- [ ] **P2 LOT6-004** Branding et textes legaux administrables.
+- [x] **P1 LOT6-001** Emails configurables.
+- [x] **P1 LOT6-002** Groupes metiers + demandes.
+- [x] **P1 LOT6-003** Notifications.
+- [x] **P2 LOT6-004** Branding et textes legaux administrables.

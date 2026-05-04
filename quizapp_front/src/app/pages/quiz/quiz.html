@@ -50,7 +50,11 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <span>Pas de limite de temps</span>
+            @if (hasTimeLimit()) {
+              <span><strong>{{ timerLabel() }}</strong> restantes</span>
+            } @else {
+              <span>Pas de limite de temps</span>
+            }
           </div>
           <div class="info-item">
             <div class="icon">
@@ -71,8 +75,12 @@
           </h3>
           <ul>
             <li>Lisez attentivement chaque question</li>
-            <li>Sélectionnez la réponse qui vous semble la plus appropriée</li>
+            <li>Les questions à choix multiples peuvent accepter plusieurs réponses</li>
+            <li>Les réponses libres doivent être rédigées directement dans la zone de texte</li>
             <li>Vous pouvez revenir en arrière pour modifier vos réponses</li>
+            @if (hasTimeLimit()) {
+              <li>Le chronomètre démarre dès l'ouverture de cette page et le quiz sera soumis automatiquement à l'expiration.</li>
+            }
             <li>Cliquez sur "Soumettre" à la dernière question pour terminer</li>
           </ul>
         </div>
@@ -90,8 +98,15 @@
       <div class="quiz-content">
         <!-- Section de progression -->
         <div class="progress-section">
-          <div class="question-counter">
-            Question {{ currentQuestionIndex() + 1 }} / {{ totalQuestions() }}
+          <div class="progress-header">
+            <div class="question-counter">
+              Question {{ currentQuestionIndex() + 1 }} / {{ totalQuestions() }}
+            </div>
+            @if (hasTimeLimit()) {
+              <div class="timer-chip" [class.warning]="timerTone() === 'warning'" [class.danger]="timerTone() === 'danger'">
+                Temps restant: {{ timerLabel() }}
+              </div>
+            }
           </div>
           <div class="progress-bar">
             <div class="progress-fill" [style.width.%]="progress()"></div>
@@ -101,20 +116,37 @@
         <!-- Section de question -->
         <div class="question-section">
           <h2>{{ currentQuestion()?.questionContent }}</h2>
+          <p class="question-instruction">{{ getQuestionInstruction(currentQuestion()) }}</p>
 
-          <!-- Liste des réponses -->
-          <div class="answers-list">
-            @for (answer of currentQuestion()?.answers; track answer.id) {
-              <div 
-                class="answer-option"
-                [class.selected]="isAnswerSelected(currentQuestion()!.id, answer.id)"
-                (click)="selectAnswer(currentQuestion()!.id, answer.id)"
-              >
-                <div class="radio-button"></div>
-                <div class="answer-text">{{ answer.answerContent }}</div>
-              </div>
-            }
-          </div>
+          @if (isTextQuestion(currentQuestion())) {
+            <div class="text-response-card">
+              <label class="text-response-label" [for]="'free-text-' + currentQuestion()!.id">Votre réponse</label>
+              <textarea
+                class="text-response-input"
+                [id]="'free-text-' + currentQuestion()!.id"
+                rows="7"
+                [ngModel]="getFreeTextResponse(currentQuestion()!.id)"
+                (ngModelChange)="updateFreeTextResponse(currentQuestion()!.id, $event)"
+                (blur)="saveFreeTextAnswer(currentQuestion()!.id)"
+                placeholder="Rédigez votre réponse ici..."
+              ></textarea>
+              <p class="text-response-note">Cette réponse sera relue et corrigée manuellement.</p>
+            </div>
+          } @else {
+            <div class="answers-list">
+              @for (answer of currentQuestion()?.answers; track answer.id) {
+                <div 
+                  class="answer-option"
+                  [class.selected]="isAnswerSelected(currentQuestion()!.id, answer.id)"
+                  [class.multiple]="isMultipleChoiceQuestion(currentQuestion())"
+                  (click)="selectAnswer(currentQuestion()!.id, answer.id)"
+                >
+                  <div class="radio-button" [class.checkbox]="isMultipleChoiceQuestion(currentQuestion())"></div>
+                  <div class="answer-text">{{ answer.answerContent }}</div>
+                </div>
+              }
+            </div>
+          }
         </div>
 
         <!-- Boutons de navigation -->
@@ -159,7 +191,11 @@
           </svg>
         </div>
         <h2>Quiz terminé !</h2>
-        <p>Vos réponses ont été enregistrées avec succès.</p>
+        @if (quizManualCorrectionStatus() === 'PENDING') {
+          <p>Vos réponses ont été enregistrées. Les réponses libres seront corrigées manuellement avant finalisation du score.</p>
+        } @else {
+          <p>Vos réponses ont été enregistrées avec succès.</p>
+        }
         <p>Nous vous contacterons prochainement pour la suite du processus de recrutement.</p>
         
         <button class="btn btn-primary" (click)="goHome()">

@@ -1,4 +1,4 @@
-import { Component, signal, OnInit } from '@angular/core';
+import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -19,12 +19,19 @@ export class ProfileComponent implements OnInit {
 
   user = signal<AuthUser | null>(null);
   initials = signal('?');
+  mustChangePassword = computed(() => this.user()?.isDefaultPassword === true);
 
   // Profile edit
   editMode = signal(false);
-  profileForm = signal({ firstName: '', lastName: '' });
+  profileForm = signal({ firstName: '', lastName: '', email: '', currentPassword: '' });
   profileLoading = signal(false);
   profileMessage = signal<{ type: 'success' | 'error'; text: string } | null>(null);
+  isEmailChangeRequested = computed(() => {
+    const currentUser = this.user();
+    const nextEmail = (this.profileForm().email || '').trim().toLowerCase();
+    const currentEmail = (currentUser?.email || '').trim().toLowerCase();
+    return !!currentUser && nextEmail !== currentEmail;
+  });
 
   // Password change
   passwordForm = signal({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -64,7 +71,7 @@ export class ProfileComponent implements OnInit {
         const last = (u.lastName || '').charAt(0).toUpperCase();
         this.initials.set((first + last) || '?');
         if (!this.editMode()) {
-          this.profileForm.set({ firstName: u.firstName || '', lastName: u.lastName || '' });
+          this.profileForm.set({ firstName: u.firstName || '', lastName: u.lastName || '', email: u.email || '', currentPassword: '' });
         }
         this.loadUserGroups(Number(u.id));
         this.loadPendingRequests(Number(u.id));
@@ -179,11 +186,18 @@ export class ProfileComponent implements OnInit {
     if (this.editMode()) {
       const u = this.user();
       if (u) {
-        this.profileForm.set({ firstName: u.firstName || '', lastName: u.lastName || '' });
+        this.profileForm.set({ firstName: u.firstName || '', lastName: u.lastName || '', email: u.email || '', currentPassword: '' });
       }
     }
     this.editMode.set(!this.editMode());
     this.profileMessage.set(null);
+  }
+
+  updateProfileField(field: 'firstName' | 'lastName' | 'email' | 'currentPassword', value: string) {
+    this.profileForm.set({
+      ...this.profileForm(),
+      [field]: value
+    });
   }
 
   saveProfile() {
@@ -191,33 +205,120 @@ export class ProfileComponent implements OnInit {
     if (!u) return;
 
     const form = this.profileForm();
-    if (!form.firstName.trim() || !form.lastName.trim()) {
+    const firstName = form.firstName.trim();
+    const lastName = form.lastName.trim();
+    const nextEmail = form.email.trim().toLowerCase();
+    const currentEmail = (u.email || '').trim();
+    const nameChanged = firstName !== (u.firstName || '').trim() || lastName !== (u.lastName || '').trim();
+    const emailChanged = nextEmail !== currentEmail.toLowerCase();
+
+    if (!firstName || !lastName) {
       this.profileMessage.set({ type: 'error', text: 'Le prénom et le nom sont requis.' });
+      return;
+    }
+
+    if (!nextEmail) {
+      this.profileMessage.set({ type: 'error', text: 'L\'adresse email est requise.' });
+      return;
+    }
+
+    if (!this.isValidEmail(nextEmail)) {
+      this.profileMessage.set({ type: 'error', text: 'Veuillez saisir une adresse email valide.' });
+      return;
+    }
+
+    if (!nameChanged && !emailChanged) {
+      this.profileMessage.set({ type: 'error', text: 'Aucune modification à enregistrer.' });
+      return;
+    }
+
+    if (emailChanged && !form.currentPassword) {
+      this.profileMessage.set({ type: 'error', text: 'Confirmez votre mot de passe actuel pour modifier l\'adresse email.' });
       return;
     }
 
     this.profileLoading.set(true);
     this.profileMessage.set(null);
 
+    const finalizeSuccess = (email: string, text: string) => {
+      this.profileLoading.set(false);
+      this.editMode.set(false);
+      this.profileForm.set({ firstName, lastName, email, currentPassword: '' });
+      this.profileMessage.set({ type: 'success', text });
+      this.authService.updateCurrentUser({
+        ...u,
+        firstName,
+        lastName,
+        email
+      });
+    };
+
+    const handleEmailChange = () => {
+      if (!emailChanged) {
+        finalizeSuccess(currentEmail, 'Profil mis à jour avec succès.');
+        return;
+      }
+
+      this.userService.changeEmail(nextEmail, form.currentPassword).subscribe({
+        next: () => {
+          finalizeSuccess(
+            nextEmail,
+            nameChanged
+              ? 'Profil et adresse email mis à jour avec succès.'
+              : 'Adresse email mise à jour avec succès.'
+          );
+        },
+        error: (error) => {
+          this.profileLoading.set(false);
+          this.profileForm.set({ ...this.profileForm(), firstName, lastName, currentPassword: '' });
+
+          if (nameChanged) {
+            this.authService.updateCurrentUser({
+              ...u,
+              firstName,
+              lastName,
+              email: currentEmail
+            });
+            this.profileMessage.set({
+              type: 'error',
+              text: this.extractProfileError(error, 'Le profil a été mis à jour, mais l\'adresse email n\'a pas pu être modifiée.')
+            });
+            return;
+          }
+
+          this.profileMessage.set({
+            type: 'error',
+            text: this.extractProfileError(error, 'Erreur lors de la mise à jour de l\'adresse email.')
+          });
+        }
+      });
+    };
+
+    if (!nameChanged) {
+      handleEmailChange();
+      return;
+    }
+
     this.userService.update(Number(u.id), {
-      prenom: form.firstName.trim(),
-      nom: form.lastName.trim()
+      prenom: firstName,
+      nom: lastName
     }).subscribe({
       next: () => {
-        this.profileLoading.set(false);
-        this.editMode.set(false);
-        this.profileMessage.set({ type: 'success', text: 'Profil mis à jour avec succès.' });
-        this.authService.updateCurrentUser({
-          ...u,
-          firstName: form.firstName.trim(),
-          lastName: form.lastName.trim()
-        });
+        handleEmailChange();
       },
-      error: () => {
+      error: (error) => {
         this.profileLoading.set(false);
-        this.profileMessage.set({ type: 'error', text: 'Erreur lors de la mise à jour du profil.' });
+        this.profileMessage.set({ type: 'error', text: this.extractProfileError(error, 'Erreur lors de la mise à jour du profil.') });
       }
     });
+  }
+
+  private isValidEmail(email: string): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  private extractProfileError(error: any, fallback: string): string {
+    return error?.error?.status?.message || error?.status?.message || fallback;
   }
 
   changePassword() {
@@ -259,6 +360,10 @@ export class ProfileComponent implements OnInit {
         } else {
           this.passwordMessage.set({ type: 'success', text: 'Mot de passe modifié avec succès.' });
           this.passwordForm.set({ currentPassword: '', newPassword: '', confirmPassword: '' });
+          this.authService.updateCurrentUser({
+            ...u,
+            isDefaultPassword: false
+          });
         }
       },
       error: () => {

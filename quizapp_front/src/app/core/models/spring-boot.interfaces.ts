@@ -29,4 +29,5 @@ export interface UserApiData {
   email: string;
   userRole?: string;
   adminMode?: boolean;
+  isDefaultPassword?: boolean;
 }

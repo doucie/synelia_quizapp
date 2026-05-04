@@ -46,6 +46,8 @@ public class InvitationCodeBusiness implements IBasicBusiness<Request<Invitation
     private HostingUtils hostingUtils;
     @Autowired
     private EmailTemplateBusiness emailTemplateBusiness;
+    @Autowired
+    private PlatformReadinessService platformReadinessService;
     @PersistenceContext
     private EntityManager em;
 
@@ -61,6 +63,8 @@ public class InvitationCodeBusiness implements IBasicBusiness<Request<Invitation
         log.info("----begin create InvitationCode-----");
         Response<InvitationCodeDto> response = new Response<>();
         List<InvitationCode> items = new ArrayList<>();
+
+		platformReadinessService.requireEmailDeliveryAvailable("INVITATION_CODE", "invitation_code", locale);
 
         for (InvitationCodeDto dto : request.getDatas()) {
             Map<String, Object> fieldsToVerify = new HashMap<>();
@@ -87,10 +91,7 @@ public class InvitationCodeBusiness implements IBasicBusiness<Request<Invitation
             // Default expiry: 48 hours from now
             Calendar cal = Calendar.getInstance();
             cal.add(Calendar.HOUR_OF_DAY, 48);
-            Date expiredAt = cal.getTime();
-            if (Utilities.shouldUpdate(dto.getExpiredAt())) {
-                expiredAt = dateTimeFormat.parse(dto.getExpiredAt());
-            }
+            Date expiredAt = resolveRequestedExpiry(dto.getExpiredAt(), cal.getTime());
 
             InvitationCode entityToSave = new InvitationCode();
             entityToSave.setEmail(dto.getEmail());
@@ -110,10 +111,16 @@ public class InvitationCodeBusiness implements IBasicBusiness<Request<Invitation
             if (itemsSaved == null) {
                 throw new InternalErrorException(functionalError.SAVE_FAIL("invitation_code", locale));
             }
+            boolean emailSendFailed = false;
 
             // Send invitation emails
             for (InvitationCode saved : itemsSaved) {
-                sendInvitationEmail(saved, locale);
+                try {
+                    sendInvitationEmail(saved, locale);
+                } catch (Exception exception) {
+                    emailSendFailed = true;
+                    log.warning("Invitation creee mais email non envoye pour " + saved.getEmail() + ": " + exception.getMessage());
+                }
             }
 
             List<InvitationCodeDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading()))
@@ -121,12 +128,18 @@ public class InvitationCodeBusiness implements IBasicBusiness<Request<Invitation
                     : InvitationCodeTransformer.INSTANCE.toDtos(itemsSaved);
 
             Status status = new Status();
-            status.setCode(StatusCode.SUCCESS);
-            status.setMessage(StatusMessage.SUCCESS);
+            if (emailSendFailed) {
+                status = functionalError.REQUEST_FAIL(
+                        "Invitation creee, mais au moins un email n'a pas pu etre envoye. Corrigez la configuration email puis utilisez la relance.",
+                        locale);
+            } else {
+                status.setCode(StatusCode.SUCCESS);
+                status.setMessage(StatusMessage.SUCCESS);
+            }
             response.setHttpCode(HttpStatus.CREATED.value());
             response.setStatus(status);
             response.setItems(itemsDto);
-            response.setHasError(false);
+            response.setHasError(emailSendFailed);
         }
         log.info("----end create InvitationCode-----");
         return response;
@@ -153,7 +166,7 @@ public class InvitationCodeBusiness implements IBasicBusiness<Request<Invitation
             if (Utilities.shouldUpdate(dto.getEmail())) entityToSave.setEmail(dto.getEmail());
             if (Utilities.shouldUpdate(dto.getRole())) entityToSave.setRole(dto.getRole());
             if (dto.getIsUsed() != null) entityToSave.setIsUsed(dto.getIsUsed());
-            if (Utilities.shouldUpdate(dto.getExpiredAt())) entityToSave.setExpiredAt(dateTimeFormat.parse(dto.getExpiredAt()));
+            entityToSave.setExpiredAt(resolveRequestedExpiry(dto.getExpiredAt(), entityToSave.getExpiredAt()));
             if (dto.getIsDeleted() != null) entityToSave.setIsDeleted(dto.getIsDeleted());
 
             entityToSave.setUpdatedAt(Utilities.getCurrentDate());
@@ -310,6 +323,12 @@ public class InvitationCodeBusiness implements IBasicBusiness<Request<Invitation
         log.info("----begin resendInvitation-----");
         Response<InvitationCodeDto> response = new Response<>();
 
+        if (id == null) {
+            response.setStatus(functionalError.FIELD_EMPTY("id", locale));
+            response.setHasError(true);
+            return response;
+        }
+
         InvitationCode invitation = invitationCodeRepository.findOne(id, false);
         if (invitation == null) {
             response.setStatus(functionalError.DATA_NOT_EXIST("invitation_code -> " + id, locale));
@@ -323,16 +342,32 @@ public class InvitationCodeBusiness implements IBasicBusiness<Request<Invitation
             return response;
         }
 
-        // Extend expiry by 48 hours from now
-        Calendar cal = Calendar.getInstance();
-        cal.add(Calendar.HOUR_OF_DAY, 48);
-        invitation.setExpiredAt(cal.getTime());
-        invitation.setUpdatedAt(Utilities.getCurrentDate());
-        invitationCodeRepository.save(invitation);
+		platformReadinessService.requireEmailDeliveryAvailable("INVITATION_CODE", "invitation_code", locale);
 
-        sendInvitationEmail(invitation, locale);
+        InvitationCode invitationToSend = invitation;
+        Date now = Utilities.getCurrentDate();
+        if (invitation.getExpiredAt() != null && invitation.getExpiredAt().before(now)) {
+            invitation.setIsDeleted(true);
+            invitation.setUpdatedAt(now);
+            invitationCodeRepository.save(invitation);
 
-        InvitationCodeDto dto = InvitationCodeTransformer.INSTANCE.toDto(invitation);
+            invitationToSend = createReplacementInvitation(invitation, now);
+            invitationCodeRepository.save(invitationToSend);
+        }
+
+        try {
+            sendInvitationEmail(invitationToSend, locale);
+        } catch (Exception exception) {
+            response.setStatus(functionalError.REQUEST_FAIL(
+                    "Invitation regeneree, mais l'email n'a pas pu etre envoye. Corrigez la configuration email puis relancez l'envoi.",
+                    locale));
+            response.setHasError(true);
+            response.setHttpCode(HttpStatus.OK.value());
+            response.setItem(InvitationCodeTransformer.INSTANCE.toDto(invitationToSend));
+            return response;
+        }
+
+        InvitationCodeDto dto = InvitationCodeTransformer.INSTANCE.toDto(invitationToSend);
         Status status = new Status();
         status.setCode(StatusCode.SUCCESS);
         status.setMessage(StatusMessage.SUCCESS);
@@ -345,59 +380,117 @@ public class InvitationCodeBusiness implements IBasicBusiness<Request<Invitation
         return response;
     }
 
+    private InvitationCode createReplacementInvitation(InvitationCode source, Date createdAt) {
+        InvitationCode replacement = new InvitationCode();
+        replacement.setEmail(source.getEmail());
+        replacement.setRole(source.getRole());
+        replacement.setCode(UUID.randomUUID().toString().replace("-", "").substring(0, 32));
+        replacement.setIsUsed(false);
+        replacement.setExpiredAt(buildDefaultExpiry(createdAt));
+        replacement.setCreatedAt(createdAt);
+        replacement.setCreatedBy(source.getCreatedBy());
+        replacement.setIsDeleted(false);
+        replacement.setSearchString(buildInvitationSearchString(replacement));
+        return replacement;
+    }
+
+    private String buildInvitationSearchString(InvitationCode invitation) {
+        try {
+            return Utilities.extractValuesFromJson(Utilities.convertObjectToJson(invitation));
+        } catch (JsonProcessingException e) {
+            log.warning("Impossible de generer le searchString de l'invitation de remplacement: " + e.getMessage());
+            return String.join(" ",
+                    Objects.toString(invitation.getEmail(), ""),
+                    Objects.toString(invitation.getRole(), ""),
+                    Objects.toString(invitation.getCode(), "")).trim();
+        }
+    }
+
+    private Date buildDefaultExpiry(Date referenceDate) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(referenceDate);
+        cal.add(Calendar.HOUR_OF_DAY, 48);
+        return cal.getTime();
+    }
+
+    private Date resolveRequestedExpiry(String rawExpiredAt, Date fallbackExpiry) throws ParseException {
+        if (!Utilities.notBlank(rawExpiredAt)) {
+            return fallbackExpiry;
+        }
+
+        return dateTimeFormat.parse(rawExpiredAt);
+    }
+
+    private String resolveInvitationRecipientLabel(String email) {
+        if (email == null || email.isBlank()) {
+            return "utilisateur";
+        }
+
+        int atIndex = email.indexOf('@');
+        String localPart = atIndex > 0 ? email.substring(0, atIndex) : email;
+        String normalized = localPart
+                .replace('.', ' ')
+                .replace('_', ' ')
+                .replace('-', ' ')
+                .trim();
+
+        return normalized.isBlank() ? "utilisateur" : normalized;
+    }
+
     /**
      * Send the invitation email using the email template system.
      */
-    private void sendInvitationEmail(InvitationCode invitation, Locale locale) {
-        try {
-            Map<String, String> from = new HashMap<>();
-            from.put("email", paramsUtils.getSmtpLogin());
-            from.put("user", SENDER);
+    private void sendInvitationEmail(InvitationCode invitation, Locale locale) throws Exception {
+        Map<String, String> from = new HashMap<>();
+        from.put("email", paramsUtils.getSmtpLogin());
+        from.put("user", SENDER);
 
-            List<Map<String, String>> toRecipients = new ArrayList<>();
-            Map<String, String> recipient = new HashMap<>();
-            recipient.put("email", invitation.getEmail());
-            toRecipients.add(recipient);
+        List<Map<String, String>> toRecipients = new ArrayList<>();
+        Map<String, String> recipient = new HashMap<>();
+        recipient.put("email", invitation.getEmail());
+        toRecipients.add(recipient);
 
-            String appLink = paramsUtils.getUrlAppl();
-            String registrationLink = appLink + "/inscription?code=" + invitation.getCode();
+        String appLink = paramsUtils.getUrlAppl();
+        String registrationLink = appLink + "/inscription?code=" + invitation.getCode();
 
-            String subject;
-            String contenu;
+        String subject;
+        String contenu;
 
-            // Load email template from DB
-            EmailTemplate emailTemplate = emailTemplateBusiness.findDefaultByActionTypeOrKey("INVITATION_CODE", "invitation_code");
-            if (emailTemplate != null) {
-                Map<String, String> vars = new HashMap<>();
-                vars.put("email", invitation.getEmail());
-                vars.put("role", invitation.getRole());
-                vars.put("code", invitation.getCode());
-                vars.put("registration_link", registrationLink);
-                vars.put("app_link", appLink);
-                vars.put("expired_at", dateTimeFormat.format(invitation.getExpiredAt()));
-                subject = emailTemplateBusiness.renderTemplate(emailTemplate.getSubjectTemplate(), vars);
-                contenu = emailTemplateBusiness.renderTemplate(emailTemplate.getBodyTemplate(), vars);
-            } else {
-                subject = "Invitation à rejoindre QuizApp";
-                contenu = "Bonjour,<br/><br/>";
-                contenu += "Vous avez été invité(e) à rejoindre la plateforme QuizApp en tant que <strong>" + invitation.getRole() + "</strong>.<br/><br/>";
-                contenu += "Pour créer votre compte, veuillez cliquer sur le lien suivant :<br/>";
-                contenu += "<a href=\"" + registrationLink + "\">" + registrationLink + "</a><br/><br/>";
-                contenu += "Ce lien est valable jusqu'au " + dateTimeFormat.format(invitation.getExpiredAt()) + ".<br/><br/>";
-                contenu += "Cordialement,<br/>L'équipe QuizApp";
-            }
+        EmailTemplate emailTemplate = platformReadinessService.requireActiveEmailTemplate(
+                "INVITATION_CODE", "invitation_code", locale);
+    String invitationEmail = invitation.getEmail();
+    String invitationCode = invitation.getCode();
+    Date invitationExpiry = invitation.getExpiredAt();
+    String registrationExpiry = invitationExpiry != null ? dateTimeFormat.format(invitationExpiry) : "";
+    String legacyExpiryDate = invitationExpiry != null ? dateFormat.format(invitationExpiry) : "";
 
-            String body = "";
-            Context context = new Context();
-            String template = "blank";
-            context.setVariable("contenu", contenu);
-            context.setVariable("entete", ENTETE);
-            context.setVariable("titre", TITRE);
-            context.setVariable("appLink", appLink);
+        Map<String, String> vars = new HashMap<>();
+    vars.put("email", invitationEmail);
+    vars.put("first_name", resolveInvitationRecipientLabel(invitationEmail));
+    vars.put("role", invitation.getRole());
+    vars.put("code", invitationCode);
+    vars.put("invitation_code", invitationCode);
+        vars.put("registration_link", registrationLink);
+    vars.put("invitation_link", registrationLink);
+        vars.put("app_link", appLink);
+    vars.put("expired_at", registrationExpiry);
+    vars.put("expiry_date", legacyExpiryDate);
+        subject = emailTemplateBusiness.renderSubjectTemplate(emailTemplate, vars);
+        contenu = emailTemplateBusiness.renderBodyTemplate(emailTemplate, vars);
 
-            hostingUtils.sendEmail(from, toRecipients, subject, body, null, context, template, locale);
-        } catch (Exception e) {
-            log.warning("Failed to send invitation email to " + invitation.getEmail() + ": " + e.getMessage());
+        String body = "";
+        Context context = new Context();
+        String template = "blank";
+        context.setVariable("contenu", contenu);
+        context.setVariable("entete", ENTETE);
+        context.setVariable("titre", TITRE);
+        context.setVariable("appLink", appLink);
+
+        Response<?> responseEmail = hostingUtils.sendEmail(from, toRecipients, subject, body, null, context, template, locale);
+        if (responseEmail.isHasError()) {
+            throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+                    "Envoi de l'invitation impossible pour " + invitation.getEmail(),
+                    locale));
         }
     }
 }

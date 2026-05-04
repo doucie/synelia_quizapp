@@ -17,6 +17,7 @@ public class EntityPermissionDto extends _EntityPermissionDto implements Cloneab
     private String  entityType;
     private Integer entityId;
     private String  permissionKey;
+    private Boolean granted;
     private String  createdAt;
     private Integer createdBy;
     private String  updatedAt;
@@ -26,6 +27,11 @@ public class EntityPermissionDto extends _EntityPermissionDto implements Cloneab
 
     // Foreign keys
     private Integer userId;
+    private String  userFirstName;
+    private String  userLastName;
+    private String  userEmail;
+    private String  userName;
+    private String  userRole;
 
     // Search params
     private SearchParam<Integer> idParam;

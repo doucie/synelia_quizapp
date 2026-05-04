@@ -77,6 +77,7 @@ public class FormQuestionsBusiness implements IBasicBusiness<Request<FormQuestio
 				if (existingFormVersion == null) {
 					throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("formVersion formVersionId -> " + dto.getFormVersionId(), locale));
 				}
+				ensureFormVersionIsEditable(existingFormVersion, locale);
 			}
 
 			// Verify if question exists
@@ -147,12 +148,14 @@ public class FormQuestionsBusiness implements IBasicBusiness<Request<FormQuestio
 			if (entityToSave == null) {
 				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("formQuestions id -> " + dto.getId(), locale));
 			}
+			ensureFormVersionIsEditable(entityToSave.getFormVersion(), locale);
 
 			if (dto.getFormVersionId() != null && dto.getFormVersionId() > 0) {
 				FormVersion existingFormVersion = formVersionRepository.findOne(dto.getFormVersionId(), false);
 				if (existingFormVersion == null) {
 					throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("formVersion formVersionId -> " + dto.getFormVersionId(), locale));
 				}
+				ensureFormVersionIsEditable(existingFormVersion, locale);
 				entityToSave.setFormVersion(existingFormVersion);
 			}
 			if (dto.getQuestionId() != null && dto.getQuestionId() > 0) {
@@ -225,6 +228,7 @@ public class FormQuestionsBusiness implements IBasicBusiness<Request<FormQuestio
 			if (existingEntity == null) {
 				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("formQuestions -> " + dto.getId(), locale));
 			}
+			ensureFormVersionIsEditable(existingEntity.getFormVersion(), locale);
 
 			existingEntity.setIsDeleted(true);
 			items.add(existingEntity);
@@ -283,6 +287,15 @@ public class FormQuestionsBusiness implements IBasicBusiness<Request<FormQuestio
 		}
 		log.info("----end get FormQuestions-----");
 		return response;
+	}
+
+	private void ensureFormVersionIsEditable(FormVersion formVersion, Locale locale) {
+		if (formVersion != null && Boolean.TRUE.equals(formVersion.getIsLocked())) {
+			throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+					"La version de formulaire " + formVersion.getVersionNumber()
+							+ " est verrouillee. Creez d'abord une nouvelle version pour la modifier.",
+					locale));
+		}
 	}
 
 	public Response<FormQuestionsDto> getAllByCriteria(Request<FormQuestionsDto> request, Locale locale) throws Exception {

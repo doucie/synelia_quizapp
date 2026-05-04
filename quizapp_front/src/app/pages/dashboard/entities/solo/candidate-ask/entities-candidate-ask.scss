@@ -7,3 +7,39 @@
   background: var(--background);
   min-height: 100vh;
 }
+
+.candidate-ask-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+
+  &--pending {
+    background: rgba(var(--warning-rgb), 0.12);
+    color: var(--warning);
+  }
+
+  &--approved {
+    background: rgba(var(--success-rgb), 0.12);
+    color: var(--success);
+  }
+
+  &--rejected {
+    background: rgba(var(--error-rgb), 0.12);
+    color: var(--error);
+  }
+}
+
+.review-textarea {
+  min-height: 8rem;
+  resize: vertical;
+}
+
+.review-modal-note {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}

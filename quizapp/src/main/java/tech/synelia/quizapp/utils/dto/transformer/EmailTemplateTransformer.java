@@ -56,6 +56,7 @@ public interface EmailTemplateTransformer {
         @Mapping(source = "dto.templateKey", target = "templateKey"),
         @Mapping(source = "dto.subjectTemplate", target = "subjectTemplate"),
         @Mapping(source = "dto.bodyTemplate", target = "bodyTemplate"),
+        @Mapping(source = "dto.editableVariablesJson", target = "editableVariablesJson"),
         @Mapping(source = "dto.description", target = "description"),
         @Mapping(source = "dto.availableVariables", target = "availableVariables"),
         @Mapping(source = "dto.actionType", target = "actionType"),

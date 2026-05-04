@@ -241,8 +241,15 @@
               </span>
             </td>
             <td [class.col-hidden]="!isColumnVisible('quizScore')">
-              <span class="cell-score" *ngIf="app.quizScorePercent !== undefined">{{ app.quizScorePercent }}%</span>
-              <span *ngIf="app.quizScorePercent === undefined" style="color: var(--text-secondary);">-</span>
+              <div class="cell-score-stack">
+                <span class="cell-score" *ngIf="app.quizScorePercent !== undefined">{{ app.quizScorePercent }}%</span>
+                <span *ngIf="app.quizScorePercent === undefined" style="color: var(--text-secondary);">-</span>
+                <span *ngIf="app.quizManualCorrectionStatus && app.quizManualCorrectionStatus !== 'NOT_REQUIRED'"
+                      class="manual-correction-badge"
+                      [ngClass]="getManualCorrectionStatusClass(app.quizManualCorrectionStatus)">
+                  {{ getManualCorrectionStatusLabel(app.quizManualCorrectionStatus) }}
+                </span>
+              </div>
             </td>
             <td [class.col-hidden]="!isColumnVisible('createdAt')">
               <span class="cell-date">{{ formatDate(app.createdAt) }}</span>
@@ -305,10 +312,55 @@
                   <!-- Tab: Réponses -->
                   <div *ngIf="getChildTab(app.id!) === 'answers'" class="children-list">
                     <div *ngIf="getAnswers(app.id!).length === 0" class="no-children"><span>Aucune réponse</span></div>
-                    <div *ngFor="let child of getAnswers(app.id!); trackBy: trackByChildId" class="child-item" [class.deleted]="child.isDeleted">
-                      <span class="child-id">#{{ child.id }}</span>
-                      <span class="child-name">Q#{{ child.questionId }} → R#{{ child.answerId || 'libre' }}</span>
-                      <span class="child-badge" [class.active]="child.isSelected" [class.inactive]="!child.isSelected">{{ child.isSelected ? 'Sélectionnée' : 'Non sélectionnée' }}</span>
+                    <div *ngFor="let child of getAnswers(app.id!); trackBy: trackByChildId" class="child-item child-item--answer" [class.deleted]="child.isDeleted">
+                      <div class="child-answer-header">
+                        <span class="child-id">#{{ child.id }}</span>
+                        <span class="child-name">{{ child.questionText || ('Question #' + child.questionId) }}</span>
+                        <span *ngIf="!isTextAnswer(child)" class="child-badge" [class.active]="child.isSelected" [class.inactive]="!child.isSelected">{{ child.isSelected ? 'Sélectionnée' : 'Non sélectionnée' }}</span>
+                        <span *ngIf="isTextAnswer(child) && child.manualIsCorrect === true" class="child-badge active">Correcte</span>
+                        <span *ngIf="isTextAnswer(child) && child.manualIsCorrect === false" class="child-badge inactive">Incorrecte</span>
+                        <span *ngIf="isTextAnswer(child) && (child.manualIsCorrect === null || child.manualIsCorrect === undefined)" class="child-badge pending">À corriger</span>
+                      </div>
+
+                      <div class="child-answer-body">
+                        <span *ngIf="!isTextAnswer(child)" class="child-answer-choice">{{ child.answerText || ('Réponse #' + child.answerId) }}</span>
+
+                        <div *ngIf="isTextAnswer(child)" class="manual-correction-card">
+                          <p class="manual-correction-response">{{ child.freeTextResponse || 'Aucune réponse libre saisie.' }}</p>
+
+                          <div *ngIf="isManualCorrectionPermissionLoading(app)" class="manual-correction-note">
+                            Vérification des droits de correction...
+                          </div>
+
+                          <div *ngIf="!isManualCorrectionPermissionLoading(app) && hasManualCorrectionPermission(app); else correctionPermissionDenied" class="manual-correction-form">
+                            <label class="manual-correction-label">Décision</label>
+                            <select class="manual-correction-select"
+                                    [ngModel]="getManualCorrectionDecision(child)"
+                                    (ngModelChange)="updateManualCorrectionDecision(child.id, $event)">
+                              <option value="">Choisir…</option>
+                              <option value="true">Réponse correcte</option>
+                              <option value="false">Réponse incorrecte</option>
+                            </select>
+
+                            <label class="manual-correction-label">Commentaire</label>
+                            <textarea class="manual-correction-comment"
+                                      rows="3"
+                                      [ngModel]="getManualCorrectionComment(child)"
+                                      (ngModelChange)="updateManualCorrectionComment(child.id, $event)"
+                                      placeholder="Commentaire de correction (optionnel)"></textarea>
+
+                            <button class="action-btn primary manual-correction-save"
+                                    [disabled]="isManualCorrectionSaving(child.id) || getManualCorrectionDecision(child) === ''"
+                                    (click)="saveManualCorrection(child)">
+                              {{ isManualCorrectionSaving(child.id) ? 'Enregistrement…' : 'Enregistrer la correction' }}
+                            </button>
+                          </div>
+
+                          <ng-template #correctionPermissionDenied>
+                            <p class="manual-correction-note">Consultation seule. La correction manuelle requiert la permission campagne CORRECT_TEST.</p>
+                          </ng-template>
+                        </div>
+                      </div>
                     </div>
                   </div>
                   <!-- Tab: Demandes -->

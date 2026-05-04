@@ -2,14 +2,16 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
+import { LogoHtmlSanitizerService } from './logo-html-sanitizer.service';
 
 export interface AppConfig {
   id: number;
   configName?: string;
   companyName?: string;
-  logoHtml?: string;
+  logoHtml?: string | null;
   primaryColor?: string;
   colorScheme?: string;
+  candidateAccountsEnabled?: boolean;
   isActive?: boolean;
   isDeleted?: boolean;
   createdAt?: string;
@@ -33,7 +35,10 @@ export const COLOR_SCHEMES: { key: string; label: string; primary: string }[] = 
 export class AppConfigService {
   private apiUrl = '/appConfig';
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private logoHtmlSanitizer: LogoHtmlSanitizerService
+  ) {}
 
   getByCriteria(criteria: Partial<AppConfig> = {}, page = 0, size = 50): Observable<{ items: AppConfig[]; count: number }> {
     const request = {
@@ -45,7 +50,7 @@ export class AppConfigService {
     };
     return this.http.post<any>(`${this.apiUrl}/getByCriteria`, request).pipe(
       map(resp => ({
-        items: resp.items || [],
+        items: (resp.items || []).map((item: AppConfig) => this.normalizeConfigFromApi(item)),
         count: resp.count || resp.totalCount || 0
       })),
       catchError(err => throwError(() => err))
@@ -53,17 +58,17 @@ export class AppConfigService {
   }
 
   create(config: Partial<AppConfig>): Observable<AppConfig> {
-    const request = { user: this.getCurrentUserId(), datas: [config] };
+    const request = { user: this.getCurrentUserId(), datas: [this.normalizeConfigPayload(config)] };
     return this.http.post<any>(`${this.apiUrl}/create`, request).pipe(
-      map(resp => resp.items?.[0]),
+      map(resp => this.normalizeConfigFromApi(resp.items?.[0])),
       catchError(err => throwError(() => err))
     );
   }
 
   update(config: Partial<AppConfig>): Observable<AppConfig> {
-    const request = { user: this.getCurrentUserId(), datas: [config] };
+    const request = { user: this.getCurrentUserId(), datas: [this.normalizeConfigPayload(config)] };
     return this.http.post<any>(`${this.apiUrl}/update`, request).pipe(
-      map(resp => resp.items?.[0]),
+      map(resp => this.normalizeConfigFromApi(resp.items?.[0])),
       catchError(err => throwError(() => err))
     );
   }
@@ -90,5 +95,26 @@ export class AppConfigService {
     } catch {
       return 0;
     }
+  }
+
+  private normalizeConfigPayload(config: Partial<AppConfig>): Partial<AppConfig> {
+    const normalized = { ...config };
+
+    if (Object.prototype.hasOwnProperty.call(normalized, 'logoHtml')) {
+      normalized.logoHtml = this.logoHtmlSanitizer.sanitize(normalized.logoHtml);
+    }
+
+    return normalized;
+  }
+
+  private normalizeConfigFromApi(config: AppConfig | undefined): AppConfig {
+    if (!config) {
+      return {} as AppConfig;
+    }
+
+    return {
+      ...config,
+      logoHtml: this.logoHtmlSanitizer.sanitize(config.logoHtml)
+    };
   }
 }

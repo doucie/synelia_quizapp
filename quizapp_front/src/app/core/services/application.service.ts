@@ -49,6 +49,7 @@ export interface Application {
   candidateLastName: string;
   candidateEmail: string;
   candidatePhone: string;
+  trackingCode?: string;
   candidateCvPath?: string;
   candidateBirthDate: string;
   motivationLetter?: string;
@@ -57,10 +58,10 @@ export interface Application {
   quizScorePercent?: number;
   evaluationScore?: number;
   applicationStatus?: string;
-  visitToken?: string;
   quizToken?: string;
   quizStatus?: string;
   quizLevel?: number;
+  quizManualCorrectionStatus?: string;
   interviewDate?: string; // Date de l'entretien
   interviewStatus?: string; // Status de l'entretien
   createdAt?: string;
@@ -93,6 +94,13 @@ export interface ApplicationResponse {
   };
   errors?: any[];
   sessionUser?: any;
+}
+
+export interface SaveQuizAnswerPayload {
+  questionId: number;
+  answerId?: number;
+  selectedAnswerIds?: number[];
+  freeTextResponse?: string | null;
 }
 
 @Injectable({
@@ -225,11 +233,11 @@ export class ApplicationService {
       data: {
         id: applicationId,
         searchString: quizToken, // Le quiz_token est passé dans searchString pour validation
-        candidateFirstName: '',
-        candidateLastName: '',
-        candidateEmail: '',
-        candidatePhone: '',
-        candidateBirthDate: ''
+        candidateFirstName: null,
+        candidateLastName: null,
+        candidateEmail: null,
+        candidatePhone: null,
+        candidateBirthDate: null
       }
     };
 
@@ -242,25 +250,25 @@ export class ApplicationService {
   }
 
   /**
-   * Sauvegarde la réponse sélectionnée par le candidat en temps réel
-   * @param applicationId ID de l'application
-   * @param quizToken Token sécurisé pour accéder au quiz
-   * @param questionId ID de la question
-   * @param answerId ID de la réponse sélectionnée (answers.id)
-   * @returns Observable<ApplicationResponse>
+   * Sauvegarde l'état complet d'une question de quiz.
    */
-  saveQuizAnswer(applicationId: number, quizToken: string, questionId: number, answerId: number): Observable<ApplicationResponse> {
+  saveQuizAnswer(applicationId: number, quizToken: string, payload: SaveQuizAnswerPayload): Observable<ApplicationResponse> {
+    const selectedAnswerIds = (payload.selectedAnswerIds || []).filter((id): id is number => Number.isFinite(id));
     const request = {
       user: 1,
       data: {
         id: applicationId,
-        searchString: quizToken, // Le quiz_token pour validation
-        candidatePhone: questionId.toString(), // questionId (utilisation temporaire)
-        candidateCvPath: answerId.toString(), // answerId (utilisation temporaire)
-        candidateFirstName: '',
-        candidateLastName: '',
-        candidateEmail: '',
-        candidateBirthDate: ''
+        searchString: quizToken,
+        questionId: payload.questionId,
+        answerId: payload.answerId,
+        selectedAnswerIds,
+        freeTextResponse: payload.freeTextResponse ?? null,
+        candidateFirstName: null,
+        candidateLastName: null,
+        candidateEmail: null,
+        candidateBirthDate: null,
+        candidatePhone: payload.questionId.toString(),
+        candidateCvPath: payload.answerId ? payload.answerId.toString() : null
       }
     };
 
@@ -284,11 +292,11 @@ export class ApplicationService {
       data: {
         id: applicationId,
         searchString: quizToken,
-        candidateFirstName: '',
-        candidateLastName: '',
-        candidateEmail: '',
-        candidatePhone: '',
-        candidateBirthDate: ''
+        candidateFirstName: null,
+        candidateLastName: null,
+        candidateEmail: null,
+        candidatePhone: null,
+        candidateBirthDate: null
       }
     };
 
@@ -298,6 +306,28 @@ export class ApplicationService {
     });
 
     return this.http.post<ApplicationResponse>(`${this.applicationsUrl}/complete-quiz`, request, { headers });
+  }
+
+  touchQuiz(applicationId: number, quizToken: string): Observable<ApplicationResponse> {
+    const request = {
+      user: 1,
+      data: {
+        id: applicationId,
+        searchString: quizToken,
+        candidateFirstName: null,
+        candidateLastName: null,
+        candidateEmail: null,
+        candidatePhone: null,
+        candidateBirthDate: null
+      }
+    };
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    });
+
+    return this.http.post<ApplicationResponse>(`${this.applicationsUrl}/touch-quiz`, request, { headers });
   }
 
   /**

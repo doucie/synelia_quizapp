@@ -19,6 +19,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.PermissionDeniedDataAccessException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -176,6 +178,11 @@ public class BusinessFactory<DTO> {
     }
 
     private void checkUserAccess(Request<DTO> request, FunctionalityEnum functionalityEnum, Locale locale) {
+        Integer authenticatedUserId = resolveAuthenticatedUserId();
+        if (authenticatedUserId != null) {
+            request.setUser(authenticatedUserId);
+        }
+
         Map<String, java.lang.Object> fieldsToVerifyUser = new HashMap<String, java.lang.Object>();
         fieldsToVerifyUser.put("user", request.getUser());
         if (!Validate.RequiredValue(fieldsToVerifyUser).isGood()) {
@@ -188,6 +195,32 @@ public class BusinessFactory<DTO> {
                         "Accès refusé pour la fonctionnalité : " + functionalityEnum.name(), null);
             }
         }
+    }
+
+    private Integer resolveAuthenticatedUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return null;
+        }
+
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof Integer) {
+            return (Integer) principal;
+        }
+        if (principal instanceof Number) {
+            return ((Number) principal).intValue();
+        }
+        if (principal instanceof String principalValue
+                && !principalValue.isBlank()
+                && !"anonymousUser".equalsIgnoreCase(principalValue)) {
+            try {
+                return Integer.valueOf(principalValue);
+            } catch (NumberFormatException exception) {
+                return null;
+            }
+        }
+
+        return null;
     }
 
 

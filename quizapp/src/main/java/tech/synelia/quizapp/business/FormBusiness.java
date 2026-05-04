@@ -5,6 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.http.HttpStatus;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -56,6 +57,7 @@ public class FormBusiness implements IBasicBusiness<Request<FormDto>, Response<F
 	}
 
 	@Override
+	@Transactional
 	public Response<FormDto> create(Request<FormDto> request, Locale locale) throws ParseException, JsonProcessingException {
 		log.info("----begin create Form-----");
 		Response<FormDto> response = new Response<FormDto>();
@@ -94,6 +96,7 @@ public class FormBusiness implements IBasicBusiness<Request<FormDto>, Response<F
 			if (itemsSaved == null) {
 				throw new InternalErrorException(functionalError.SAVE_FAIL("form", locale));
 			}
+			createInitialDraftVersions(itemsSaved, request.getUser());
 			List<FormDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading())) ? FormTransformer.INSTANCE.toLiteDtos(itemsSaved) : FormTransformer.INSTANCE.toDtos(itemsSaved);
 
 			final int size = itemsSaved.size();
@@ -121,6 +124,34 @@ public class FormBusiness implements IBasicBusiness<Request<FormDto>, Response<F
 		}
 		log.info("----end create Form-----");
 		return response;
+	}
+
+	private void createInitialDraftVersions(List<Form> savedForms, Integer actorUserId) {
+		List<FormVersion> initialVersions = new ArrayList<FormVersion>();
+		for (Form savedForm : savedForms) {
+			if (savedForm == null || savedForm.getId() == null) {
+				continue;
+			}
+
+			List<FormVersion> existingVersions = formVersionRepository.findByFormId(savedForm.getId(), false);
+			if (existingVersions != null && !existingVersions.isEmpty()) {
+				continue;
+			}
+
+			FormVersion initialVersion = new FormVersion();
+			initialVersion.setForm(savedForm);
+			initialVersion.setVersionNumber(1);
+			initialVersion.setIsPublished(false);
+			initialVersion.setIsLocked(false);
+			initialVersion.setIsDeleted(false);
+			initialVersion.setCreatedAt(Utilities.getCurrentDate());
+			initialVersion.setCreatedBy(actorUserId);
+			initialVersions.add(initialVersion);
+		}
+
+		if (!initialVersions.isEmpty()) {
+			formVersionRepository.saveAll(initialVersions);
+		}
 	}
 
 	@Override

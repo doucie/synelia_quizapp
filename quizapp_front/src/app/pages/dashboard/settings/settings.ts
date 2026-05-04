@@ -9,6 +9,7 @@ import { SmtpConfigService, SmtpConfig } from '../../../core/services/smtp-confi
 import { LegalTextService, LegalText } from '../../../core/services/legal-text.service';
 import { AppConfigService, AppConfig, COLOR_SCHEMES } from '../../../core/services/app-config.service';
 import { InvitationCodeService, InvitationCode } from '../../../core/services/invitation-code.service';
+import { LogoHtmlSanitizerService } from '../../../core/services/logo-html-sanitizer.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { RichTextEditorComponent } from '../../../shared/rich-text-editor/rich-text-editor';
@@ -48,7 +49,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
   editingSmtp = signal<SmtpConfig | null>(null);
   showSmtpEditor = signal(false);
   savingSmtp = signal(false);
+  testingSmtp = signal(false);
   showSmtpPassword = signal(false);
+  activeSmtpConfig = computed(() => this.smtpConfigs().find(cfg => cfg.isActive && !cfg.isDeleted) || null);
 
   // Legal Texts
   legalTexts = signal<LegalText[]>([]);
@@ -66,6 +69,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
   colorSchemes = COLOR_SCHEMES;
   previewingConfig = signal<AppConfig | null>(null);
   logoMode = signal<'code' | 'image'>('code');
+  sanitizedLogoPreview = computed(() => this.logoHtmlSanitizer.sanitizeOrEmpty(this.configForm().logoHtml));
 
   // Invitation Codes
   invitationCodes = signal<InvitationCode[]>([]);
@@ -81,6 +85,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     private legalTextService: LegalTextService,
     private appConfigService: AppConfigService,
     private invitationCodeService: InvitationCodeService,
+    private logoHtmlSanitizer: LogoHtmlSanitizerService,
     private notificationService: NotificationService,
     private themeService: ThemeService
   ) {}
@@ -262,11 +267,11 @@ export class SettingsComponent implements OnInit, OnDestroy {
   openSmtpEditor(config?: SmtpConfig) {
     if (config) {
       this.editingSmtp.set(config);
-      this.smtpForm.set({ ...config, passwordEncrypted: '' });
+      this.smtpForm.set({ ...config, password: '' });
     } else {
       this.editingSmtp.set(null);
       this.smtpForm.set({
-        host: '', port: 587, username: '', passwordEncrypted: '',
+        host: '', port: 587, username: '', password: '',
         smtpAuth: true, starttlsEnable: true, starttlsRequired: false,
         connectionTimeout: 5000, timeout: 5000, writeTimeout: 5000,
         senderName: '', senderEmail: '', isActive: false
@@ -291,8 +296,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     // Don't send empty password on update
     const data = { ...form };
-    if (this.editingSmtp() && !data.passwordEncrypted?.trim()) {
-      delete data.passwordEncrypted;
+    if (this.editingSmtp() && !data.password?.trim()) {
+      delete data.password;
     }
 
     const op = this.editingSmtp()
@@ -309,6 +314,26 @@ export class SettingsComponent implements OnInit, OnDestroy {
       error: () => {
         this.notificationService.error('Erreur', 'Erreur lors de la sauvegarde SMTP');
         this.savingSmtp.set(false);
+      }
+    });
+  }
+
+  testActiveSmtp() {
+    if (!this.activeSmtpConfig()) {
+      this.notificationService.error('Configuration requise', 'Aucune configuration SMTP active a tester');
+      return;
+    }
+
+    this.testingSmtp.set(true);
+    this.smtpConfigService.testActive().pipe(takeUntil(this.destroy$)).subscribe({
+      next: message => {
+        this.notificationService.success('Test SMTP', message);
+        this.testingSmtp.set(false);
+      },
+      error: (error) => {
+        const message = error?.error?.status?.message || 'Erreur lors du test SMTP';
+        this.notificationService.error('Erreur', message);
+        this.testingSmtp.set(false);
       }
     });
   }
@@ -394,10 +419,10 @@ export class SettingsComponent implements OnInit, OnDestroy {
     if (config) {
       this.editingConfig.set(config);
       this.configForm.set({ ...config });
-      this.logoMode.set(config.logoHtml?.startsWith('<img') ? 'image' : 'code');
+      this.logoMode.set(this.logoHtmlSanitizer.isImageMarkup(config.logoHtml) ? 'image' : 'code');
     } else {
       this.editingConfig.set(null);
-      this.configForm.set({ configName: '', companyName: '', logoHtml: '', primaryColor: '#7C3AED', colorScheme: 'violet', isActive: false });
+      this.configForm.set({ configName: '', companyName: '', logoHtml: '', primaryColor: '#7C3AED', colorScheme: 'violet', candidateAccountsEnabled: false, isActive: false });
       this.logoMode.set('code');
     }
     this.showConfigEditor.set(true);
@@ -433,10 +458,18 @@ export class SettingsComponent implements OnInit, OnDestroy {
       this.notificationService.error('Champs requis', 'Le nom de la configuration et le nom de l\'entreprise sont requis');
       return;
     }
+
+    const payload: Partial<AppConfig> = {
+      ...form,
+      configName: form.configName.trim(),
+      companyName: form.companyName.trim(),
+      logoHtml: this.logoHtmlSanitizer.sanitize(form.logoHtml)
+    };
+
     this.savingConfig.set(true);
     const op = this.editingConfig()
-      ? this.appConfigService.update(form)
-      : this.appConfigService.create(form);
+      ? this.appConfigService.update(payload)
+      : this.appConfigService.create(payload);
 
     op.pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
@@ -469,8 +502,12 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.notificationService.success('Succès', `Configuration "${config.configName}" activée`);
         this.themeService.applyTheme(config);
         this.themeService.companyName.set(config.companyName || 'Synelia');
-        this.themeService.logoHtml.set(config.logoHtml || '');
-        this.themeService.activeConfig.set(config);
+        this.themeService.logoHtml.set(this.logoHtmlSanitizer.sanitizeOrEmpty(config.logoHtml));
+        this.themeService.candidateAccountsEnabled.set(config.candidateAccountsEnabled === true);
+        this.themeService.activeConfig.set({
+          ...config,
+          logoHtml: this.logoHtmlSanitizer.sanitize(config.logoHtml)
+        });
         this.reloadConfigs();
       },
       error: () => this.notificationService.error('Erreur', 'Erreur lors de l\'activation')
@@ -509,14 +546,24 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
     this.savingInvitation.set(true);
     this.invitationCodeService.create(form).pipe(takeUntil(this.destroy$)).subscribe({
-      next: () => {
-        this.notificationService.success('Succès', 'Invitation envoyée à ' + form.email);
-        this.closeInvitationEditor();
+      next: result => {
         this.savingInvitation.set(false);
+        if (result.hasError) {
+          this.notificationService.warning(
+            'Invitation créée',
+            result.message || 'Invitation créée, mais l\'email n\'a pas pu être envoyé.'
+          );
+        } else {
+          this.notificationService.success('Succès', 'Invitation envoyée à ' + form.email);
+        }
+        this.closeInvitationEditor();
         this.reloadInvitations();
       },
-      error: () => {
-        this.notificationService.error('Erreur', 'Erreur lors de l\'envoi de l\'invitation');
+      error: error => {
+        this.notificationService.error(
+          'Erreur',
+          this.extractApiErrorMessage(error, 'Erreur lors de l\'envoi de l\'invitation')
+        );
         this.savingInvitation.set(false);
       }
     });
@@ -535,11 +582,21 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
   resendInvitation(invitation: InvitationCode) {
     this.invitationCodeService.resend(invitation.id).pipe(takeUntil(this.destroy$)).subscribe({
-      next: () => {
-        this.notificationService.success('Succès', 'Invitation renvoyée à ' + invitation.email);
+      next: result => {
+        if (result.hasError) {
+          this.notificationService.warning(
+            'Email non envoyé',
+            result.message || 'L\'invitation a été mise à jour, mais l\'email n\'a pas pu être envoyé.'
+          );
+        } else {
+          this.notificationService.success('Succès', 'Invitation renvoyée à ' + invitation.email);
+        }
         this.reloadInvitations();
       },
-      error: () => this.notificationService.error('Erreur', 'Erreur lors du renvoi')
+      error: error => this.notificationService.error(
+        'Erreur',
+        this.extractApiErrorMessage(error, 'Erreur lors du renvoi')
+      )
     });
   }
 
@@ -552,6 +609,10 @@ export class SettingsComponent implements OnInit, OnDestroy {
     this.invitationCodeService.getByCriteria().pipe(takeUntil(this.destroy$)).subscribe({
       next: resp => this.invitationCodes.set(resp.items)
     });
+  }
+
+  private extractApiErrorMessage(error: any, fallback: string): string {
+    return error?.message || error?.error?.status?.message || error?.status?.message || fallback;
   }
 
   // ─── Preview & Revert ─────────────────

@@ -28,6 +28,9 @@ public class AppConfig {
     @Column(name = "color_scheme", nullable = false, length = 30)
     private String colorScheme;
 
+    @Column(name = "candidate_accounts_enabled", nullable = false)
+    private Boolean candidateAccountsEnabled;
+
     @Column(name = "is_active")
     private Boolean isActive;
 

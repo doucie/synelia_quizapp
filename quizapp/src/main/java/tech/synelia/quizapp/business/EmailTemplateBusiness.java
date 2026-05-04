@@ -4,9 +4,14 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +19,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -49,10 +56,14 @@ public class EmailTemplateBusiness implements IBasicBusiness<Request<EmailTempla
     private TechnicalError technicalError;
     @Autowired
     private ExceptionUtils exceptionUtils;
+    @Autowired
+    private EmailOperationalAlertService emailOperationalAlertService;
     @PersistenceContext
     private EntityManager em;
 
     private SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private static final Pattern UNRESOLVED_TEMPLATE_VARIABLE_PATTERN = Pattern.compile("\\{\\{\\s*([^{}]+?)\\s*\\}\\}");
 
     @Override
     public Response<EmailTemplateDto> create(Request<EmailTemplateDto> request, Locale locale) throws ParseException, JsonProcessingException {
@@ -61,27 +72,24 @@ public class EmailTemplateBusiness implements IBasicBusiness<Request<EmailTempla
         List<EmailTemplate> items = new ArrayList<>();
 
         for (EmailTemplateDto dto : request.getDatas()) {
+            String requestedTemplateKey = StringUtils.trimToNull(dto.getTemplateKey());
             Map<String, Object> fieldsToVerify = new HashMap<>();
-            fieldsToVerify.put("templateKey", dto.getTemplateKey());
+            fieldsToVerify.put("templateKey", requestedTemplateKey);
             fieldsToVerify.put("subjectTemplate", dto.getSubjectTemplate());
             fieldsToVerify.put("bodyTemplate", dto.getBodyTemplate());
             if (!Validate.RequiredValue(fieldsToVerify).isGood()) {
                 throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
             }
 
-            // Verify uniqueness of templateKey
-            EmailTemplate existing = emailTemplateRepository.findByTemplateKey(dto.getTemplateKey(), false);
-            if (existing != null) {
-                throw new InternalErrorException(functionalError.DATA_EXIST("email_template templateKey -> " + dto.getTemplateKey(), locale));
-            }
-
             EmailTemplate entityToSave = EmailTemplateTransformer.INSTANCE.toEntity(dto);
+            entityToSave.setTemplateKey(resolveTemplateKeyForCreate(requestedTemplateKey));
+            entityToSave.setEditableVariablesJson(StringUtils.trimToNull(dto.getEditableVariablesJson()));
             entityToSave.setCreatedAt(Utilities.getCurrentDate());
             entityToSave.setCreatedBy(request.getUser());
             entityToSave.setIsDeleted(false);
             if (entityToSave.getIsActive() == null) entityToSave.setIsActive(true);
             ensureSingleActiveTemplatePerActionType(entityToSave, request.getUser());
-            entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(dto)));
+            entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(entityToSave)));
             items.add(entityToSave);
         }
 
@@ -124,9 +132,14 @@ public class EmailTemplateBusiness implements IBasicBusiness<Request<EmailTempla
                 throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("email_template id -> " + dto.getId(), locale));
             }
 
-            if (Utilities.shouldUpdate(dto.getTemplateKey())) entityToSave.setTemplateKey(dto.getTemplateKey());
+            if (Utilities.shouldUpdate(dto.getTemplateKey())) {
+                String requestedTemplateKey = StringUtils.trimToNull(dto.getTemplateKey());
+                ensureTemplateKeyAvailableForUpdate(requestedTemplateKey, entityToSave.getId(), locale);
+                entityToSave.setTemplateKey(requestedTemplateKey);
+            }
             if (Utilities.shouldUpdate(dto.getSubjectTemplate())) entityToSave.setSubjectTemplate(dto.getSubjectTemplate());
             if (Utilities.shouldUpdate(dto.getBodyTemplate())) entityToSave.setBodyTemplate(dto.getBodyTemplate());
+            if (dto.getEditableVariablesJson() != null) entityToSave.setEditableVariablesJson(StringUtils.trimToNull(dto.getEditableVariablesJson()));
             if (Utilities.shouldUpdate(dto.getDescription())) entityToSave.setDescription(dto.getDescription());
             if (Utilities.shouldUpdate(dto.getAvailableVariables())) entityToSave.setAvailableVariables(dto.getAvailableVariables());
             if (Utilities.shouldUpdate(dto.getActionType())) entityToSave.setActionType(dto.getActionType());
@@ -266,6 +279,28 @@ public class EmailTemplateBusiness implements IBasicBusiness<Request<EmailTempla
         return result;
     }
 
+    public String renderSubjectTemplate(EmailTemplate emailTemplate, Map<String, String> variables) {
+        if (emailTemplate == null) {
+            return null;
+        }
+
+        return validateRenderedTemplate(
+                emailTemplate,
+                renderTemplate(emailTemplate.getSubjectTemplate(), buildRenderVariables(emailTemplate, variables)),
+                "subject");
+    }
+
+    public String renderBodyTemplate(EmailTemplate emailTemplate, Map<String, String> variables) {
+        if (emailTemplate == null) {
+            return null;
+        }
+
+        return validateRenderedTemplate(
+                emailTemplate,
+                renderTemplate(emailTemplate.getBodyTemplate(), buildRenderVariables(emailTemplate, variables)),
+                "body");
+    }
+
     public Response<EmailTemplateDto> getByActionType(Request<EmailTemplateDto> request, Locale locale) throws ParseException {
         log.info("----begin getByActionType EmailTemplate-----");
         Response<EmailTemplateDto> response = new Response<>();
@@ -322,5 +357,91 @@ public class EmailTemplateBusiness implements IBasicBusiness<Request<EmailTempla
         if (!templatesToUpdate.isEmpty()) {
             emailTemplateRepository.saveAll(templatesToUpdate);
         }
+    }
+
+    private String resolveTemplateKeyForCreate(String templateKey) {
+        EmailTemplate existing = emailTemplateRepository.findByTemplateKey(templateKey, false);
+        if (existing == null) {
+            return templateKey;
+        }
+
+        String baseCandidate = templateKey + "_" + existing.getId();
+        String candidate = baseCandidate;
+        int counter = 1;
+
+        while (emailTemplateRepository.findByTemplateKey(candidate, false) != null) {
+            candidate = baseCandidate + "_" + counter;
+            counter++;
+        }
+
+        return candidate;
+    }
+
+    private void ensureTemplateKeyAvailableForUpdate(String templateKey, Integer currentTemplateId, Locale locale) throws ParseException {
+        EmailTemplate existing = emailTemplateRepository.findByTemplateKey(templateKey, false);
+        if (existing != null && !existing.getId().equals(currentTemplateId)) {
+            throw new InternalErrorException(functionalError.DATA_EXIST("email_template templateKey -> " + templateKey, locale));
+        }
+    }
+
+    private Map<String, String> buildRenderVariables(EmailTemplate emailTemplate, Map<String, String> variables) {
+        Map<String, String> renderVariables = new LinkedHashMap<>();
+        renderVariables.putAll(parseEditableVariables(emailTemplate != null ? emailTemplate.getEditableVariablesJson() : null));
+        if (variables != null) {
+            renderVariables.putAll(variables);
+        }
+        return renderVariables;
+    }
+
+    private Map<String, String> parseEditableVariables(String editableVariablesJson) {
+        if (StringUtils.isBlank(editableVariablesJson)) {
+            return new LinkedHashMap<>();
+        }
+
+        try {
+            return objectMapper.readValue(editableVariablesJson, new TypeReference<Map<String, String>>() {});
+        } catch (Exception exception) {
+            log.warning("Unable to parse editable email template variables: " + exception.getMessage());
+            return new LinkedHashMap<>();
+        }
+    }
+
+    private String validateRenderedTemplate(EmailTemplate emailTemplate, String renderedTemplate, String templatePart) {
+        Set<String> unresolvedVariables = extractUnresolvedVariables(renderedTemplate);
+        if (unresolvedVariables.isEmpty()) {
+            return renderedTemplate;
+        }
+
+        emailOperationalAlertService.notifyTemplateVariablesMissing(emailTemplate, unresolvedVariables);
+        throw new IllegalStateException(
+                "Variables email non resolues dans le " + templatePart + " du template "
+                        + resolveTemplateIdentifier(emailTemplate)
+                        + " : " + String.join(", ", unresolvedVariables));
+    }
+
+    private Set<String> extractUnresolvedVariables(String renderedTemplate) {
+        Set<String> unresolvedVariables = new LinkedHashSet<>();
+        if (StringUtils.isBlank(renderedTemplate)) {
+            return unresolvedVariables;
+        }
+
+        Matcher matcher = UNRESOLVED_TEMPLATE_VARIABLE_PATTERN.matcher(renderedTemplate);
+        while (matcher.find()) {
+            unresolvedVariables.add(StringUtils.trimToEmpty(matcher.group(1)));
+        }
+        return unresolvedVariables;
+    }
+
+    private String resolveTemplateIdentifier(EmailTemplate emailTemplate) {
+        if (emailTemplate == null) {
+            return "unknown";
+        }
+        if (StringUtils.isNotBlank(emailTemplate.getActionType())) {
+            return emailTemplate.getActionType();
+        }
+        if (StringUtils.isNotBlank(emailTemplate.getTemplateKey())) {
+            return emailTemplate.getTemplateKey();
+        }
+        return emailTemplate.getId() != null ? emailTemplate.getId().toString() : "unknown";
     }
 }

@@ -24,6 +24,22 @@ interface EmailActionEditorConfig {
   recommendedPresetCategories: string[];
 }
 
+type EmailEditorMode = 'wysiwyg' | 'html';
+type EditableVariableKey = 'content' | 'subtitle';
+
+interface EditableVariableDefinition {
+  key: EditableVariableKey;
+  label: string;
+  type: 'text' | 'richtext';
+  placeholder: string;
+  helpText: string;
+}
+
+interface VariablePreviewEntry {
+  key: string;
+  value: string;
+}
+
 const DEFAULT_TEMPLATE_VARIABLES = ['first_name', 'last_name', 'campaign_title', 'app_link', 'companyName', 'currentYear'];
 const EMAIL_ACTION_TYPE_VALUES = EMAIL_ACTION_TYPES.map(action => action.value);
 const DEFAULT_PREVIEW_VALUES: Record<string, string> = {
@@ -64,13 +80,40 @@ const DEFAULT_PREVIEW_VALUES: Record<string, string> = {
   invitation_code: 'ABC123',
   new_password: 'Temporaire123!'
 };
+const EDITABLE_VARIABLE_DEFINITIONS: Record<EditableVariableKey, EditableVariableDefinition> = {
+  content: {
+    key: 'content',
+    label: 'Contenu principal',
+    type: 'richtext',
+    placeholder: 'Votre message principal...',
+    helpText: 'Le contenu reste stable quand vous changez de preset.'
+  },
+  subtitle: {
+    key: 'subtitle',
+    label: 'Sous-titre',
+    type: 'text',
+    placeholder: 'Ex: Votre candidature',
+    helpText: 'Petit texte affiche dans le header quand le layout le supporte.'
+  }
+};
+const EDITABLE_VARIABLE_KEYS = Object.keys(EDITABLE_VARIABLE_DEFINITIONS) as EditableVariableKey[];
+
+function getDefaultEditableVariables(): Record<EditableVariableKey, string> {
+  return {
+    content: DEFAULT_PREVIEW_VALUES['content'],
+    subtitle: DEFAULT_PREVIEW_VALUES['subtitle']
+  };
+}
+
 const EMAIL_ACTION_EDITOR_CONFIGS: Record<EmailActionType, EmailActionEditorConfig> = {
   APPLICATION_VERIFICATION: {
     templateKey: 'application_verification',
     subjectTemplate: 'Verification de votre adresse email - {{companyName}}',
     description: 'Email de verification envoye apres depot de candidature.',
-    availableVariables: ['first_name', 'last_name', 'verification_link', 'campaign_title', 'companyName', 'currentYear'],
-    previewVariables: {},
+    availableVariables: ['first_name', 'last_name', 'verification_link', 'tracking_code', 'campaign_title', 'companyName', 'currentYear'],
+    previewVariables: {
+      tracking_code: 'AB12CD'
+    },
     recommendedPresetCategories: ['MODERN', 'MINIMAL']
   },
   PASSWORD_RESET: {
@@ -88,6 +131,20 @@ const EMAIL_ACTION_EDITOR_CONFIGS: Record<EmailActionType, EmailActionEditorConf
     availableVariables: ['email', 'role', 'code', 'registration_link', 'expired_at', 'app_link', 'companyName', 'currentYear'],
     previewVariables: {},
     recommendedPresetCategories: ['MODERN', 'COLORFUL']
+  },
+  CANDIDATE_ASK_RESULT: {
+    templateKey: 'candidate_ask_result',
+    subjectTemplate: 'Suite a votre demande de correction - {{companyName}}',
+    description: 'Notification envoyee apres validation ou refus d\'une demande de correction candidat.',
+    availableVariables: ['first_name', 'last_name', 'candidate_ask_type_label', 'ask_status_label', 'ask_summary_block', 'decision_reason_block', 'verification_notice_block', 'app_link', 'companyName', 'currentYear'],
+    previewVariables: {
+      candidate_ask_type_label: 'l\'adresse email',
+      ask_status_label: 'validee',
+      ask_summary_block: '<p>Nouvelle adresse email demandee : <strong>jeanne.dupont@example.com</strong>.</p>',
+      decision_reason_block: '',
+      verification_notice_block: '<p>Un nouvel email de verification vient de vous etre envoye a votre nouvelle adresse afin de confirmer ce changement.</p>'
+    },
+    recommendedPresetCategories: ['CORPORATE', 'MODERN']
   },
   ACCEPTANCE: {
     templateKey: 'candidate_acceptance',
@@ -153,12 +210,15 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
   selectedTemplate = signal<EmailTemplate | null>(null);
   isNewTemplate = signal(false);
   showPresetGallery = signal(true);
+  editorMode = signal<EmailEditorMode>('wysiwyg');
+  editableVariables = signal<Record<EditableVariableKey, string>>(getDefaultEditableVariables());
 
   // Form
   form = signal<Partial<EmailTemplate>>({
     templateKey: '',
     subjectTemplate: '',
     bodyTemplate: '',
+    editableVariablesJson: undefined,
     description: '',
     availableVariables: '',
     actionType: '',
@@ -167,6 +227,7 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
 
   // Preview
   previewHtml = signal<SafeHtml>('');
+  previewSubject = signal('');
 
   // Action types
   actionTypes = EMAIL_ACTION_TYPES;
@@ -183,6 +244,34 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
     const vars = this.form().availableVariables || this.suggestedVariables().join(',');
     return vars.split(',').map(v => v.trim()).filter(v => v.length > 0);
   });
+
+  layoutVariables = computed(() => Array.from(new Set([...EDITABLE_VARIABLE_KEYS, ...this.templateVariables()])));
+
+  activeEditableVariableDefinitions = computed(() => {
+    const placeholders = this.getTemplatePlaceholders(`${this.form().subjectTemplate || ''}\n${this.form().bodyTemplate || ''}`);
+    return EDITABLE_VARIABLE_KEYS
+      .filter(key => placeholders.has(key))
+      .map(key => EDITABLE_VARIABLE_DEFINITIONS[key]);
+  });
+
+  systemVariableEntries = computed<VariablePreviewEntry[]>(() => {
+    const placeholders = new Set<string>([
+      ...this.templateVariables(),
+      ...this.getTemplatePlaceholders(`${this.form().subjectTemplate || ''}\n${this.form().bodyTemplate || ''}`)
+    ]);
+    const editableKeys = new Set(this.activeEditableVariableDefinitions().map(definition => definition.key));
+    const previewVariables = this.buildPreviewVariables();
+
+    return Array.from(placeholders)
+      .filter(key => !editableKeys.has(key as EditableVariableKey))
+      .sort((left, right) => left.localeCompare(right))
+      .map(key => ({
+        key,
+        value: previewVariables[key] || 'Valeur de preview'
+      }));
+  });
+
+  systemVariableKeys = computed(() => this.systemVariableEntries().map(entry => entry.key));
 
   sortedPresets = computed(() => {
     const config = this.selectedActionConfig();
@@ -205,12 +294,19 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
   hasUnsavedChanges = computed(() => {
     const tpl = this.selectedTemplate();
     const f = this.form();
-    if (!tpl) return this.isNewTemplate() && (f.templateKey || f.subjectTemplate || f.bodyTemplate);
-    return tpl.subjectTemplate !== f.subjectTemplate ||
+    const editableVariablesJson = this.serializeEditableVariables();
+    if (!tpl) {
+      return this.isNewTemplate() && !!(f.templateKey || f.subjectTemplate || f.bodyTemplate || editableVariablesJson);
+    }
+    return tpl.templateKey !== f.templateKey ||
+           tpl.subjectTemplate !== f.subjectTemplate ||
            tpl.bodyTemplate !== f.bodyTemplate ||
+           (tpl.editableVariablesJson || '') !== (editableVariablesJson || '') ||
            tpl.description !== f.description ||
            tpl.availableVariables !== f.availableVariables ||
-           tpl.actionType !== f.actionType;
+           tpl.actionType !== f.actionType ||
+           tpl.presetId !== f.presetId ||
+           tpl.isActive !== f.isActive;
   });
 
   constructor(
@@ -273,12 +369,14 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
       templateKey: tpl.templateKey,
       subjectTemplate: tpl.subjectTemplate,
       bodyTemplate: tpl.bodyTemplate,
+      editableVariablesJson: tpl.editableVariablesJson,
       description: tpl.description,
       availableVariables: tpl.availableVariables,
       actionType: tpl.actionType || '',
       presetId: tpl.presetId,
       isActive: tpl.isActive
     });
+    this.editableVariables.set(this.resolveEditableVariables(tpl.editableVariablesJson, tpl.bodyTemplate || ''));
     this.updatePreview();
 
     if (syncRoute) {
@@ -295,12 +393,14 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
       templateKey: config?.templateKey ?? '',
       subjectTemplate: config?.subjectTemplate ?? '',
       bodyTemplate: '',
+      editableVariablesJson: undefined,
       description: config?.description ?? '',
       availableVariables: (config?.availableVariables ?? DEFAULT_TEMPLATE_VARIABLES).join(','),
       actionType: actionType || '',
       presetId: undefined,
       isActive: true
     });
+    this.editableVariables.set(getDefaultEditableVariables());
     this.showPresetGallery.set(true);
     this.updatePreview();
 
@@ -312,6 +412,7 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
 
   applyPreset(preset: EmailTemplatePreset) {
     const current = this.form();
+    this.editableVariables.set(this.prepareEditableVariablesForPreset(current.bodyTemplate || ''));
     this.form.set({
       ...current,
       presetId: preset.id,
@@ -322,10 +423,26 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
     this.notificationService.success('Preset', `"${preset.name}" appliqué`);
   }
 
+  setEditorMode(mode: EmailEditorMode) {
+    this.editorMode.set(mode);
+  }
+
   updateBody(html: string) {
     const current = this.form();
     this.form.set({ ...current, bodyTemplate: html });
     this.updatePreview();
+  }
+
+  updateEditableVariable(key: EditableVariableKey, value: string) {
+    this.editableVariables.set({
+      ...this.editableVariables(),
+      [key]: value
+    });
+    this.updatePreview();
+  }
+
+  getEditableVariableValue(key: EditableVariableKey): string {
+    return this.editableVariables()[key] || getDefaultEditableVariables()[key] || '';
   }
 
   updateField(field: keyof EmailTemplate, value: any) {
@@ -385,13 +502,10 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
 
   private updatePreview() {
     const body = this.form().bodyTemplate || '';
-    const previewVariables = {
-      ...DEFAULT_PREVIEW_VALUES,
-      companyName: this.themeService.companyName() || DEFAULT_PREVIEW_VALUES['companyName'],
-      ...(this.selectedActionConfig()?.previewVariables ?? {})
-    };
+    const previewVariables = this.buildPreviewVariables();
     const preview = this.renderPreviewTemplate(body, previewVariables);
     this.previewHtml.set(this.sanitizer.bypassSecurityTrustHtml(preview));
+    this.previewSubject.set(this.renderPreviewTemplate(this.form().subjectTemplate || '', previewVariables));
   }
 
   save() {
@@ -400,34 +514,42 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
       this.notificationService.error('Champs requis', 'Veuillez remplir les champs obligatoires (clé, sujet, contenu)');
       return;
     }
+
+    const payload: Partial<EmailTemplate> = {
+      ...f,
+      editableVariablesJson: this.serializeEditableVariables() ?? ''
+    };
     this.isSaving.set(true);
 
     if (this.isNewTemplate()) {
-      this.emailTemplateService.create(f).pipe(takeUntil(this.destroy$)).subscribe({
+      this.emailTemplateService.create(payload).pipe(takeUntil(this.destroy$)).subscribe({
         next: (created) => {
           this.isSaving.set(false);
-          this.notificationService.success('Succès', 'Template créé avec succès');
+          const successMessage = created?.templateKey && created.templateKey !== payload.templateKey
+            ? `Template cree avec succes. Cle generee: ${created.templateKey}`
+            : 'Template cree avec succes';
+          this.notificationService.success('Succes', successMessage);
           this.loadData();
           if (created) this.selectTemplate(created);
         },
-        error: () => {
+        error: (error) => {
           this.isSaving.set(false);
-          this.notificationService.error('Erreur', 'Erreur lors de la création');
+          this.notificationService.error('Erreur', this.extractErrorMessage(error, 'Erreur lors de la creation'));
         }
       });
     } else {
       const tpl = this.selectedTemplate();
       if (!tpl) return;
-      this.emailTemplateService.update({ ...f, id: tpl.id }).pipe(takeUntil(this.destroy$)).subscribe({
+      this.emailTemplateService.update({ ...payload, id: tpl.id }).pipe(takeUntil(this.destroy$)).subscribe({
         next: (updated) => {
           this.isSaving.set(false);
-          this.notificationService.success('Succès', 'Template mis à jour');
+          this.notificationService.success('Succes', 'Template mis a jour');
           this.loadData();
           if (updated) this.selectTemplate(updated);
         },
-        error: () => {
+        error: (error) => {
           this.isSaving.set(false);
-          this.notificationService.error('Erreur', 'Erreur lors de la mise à jour');
+          this.notificationService.error('Erreur', this.extractErrorMessage(error, 'Erreur lors de la mise a jour'));
         }
       });
     }
@@ -457,12 +579,14 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
       templateKey: tpl.templateKey + '_copy',
       subjectTemplate: tpl.subjectTemplate,
       bodyTemplate: tpl.bodyTemplate,
+      editableVariablesJson: tpl.editableVariablesJson,
       description: tpl.description,
       availableVariables: tpl.availableVariables,
       actionType: tpl.actionType || '',
       presetId: tpl.presetId,
       isActive: true
     });
+    this.editableVariables.set(this.resolveEditableVariables(tpl.editableVariablesJson, tpl.bodyTemplate || ''));
     const actionType = this.normalizeActionType(tpl.actionType);
     const queryParams = actionType ? { mode: 'new', actionType } : { mode: 'new' };
     this.router.navigate(['/dashboard/email-editor'], { queryParams });
@@ -516,6 +640,92 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
     }
 
     return actionType as EmailActionType;
+  }
+
+  private extractErrorMessage(error: any, fallback: string): string {
+    return error?.error?.status?.message || error?.status?.message || fallback;
+  }
+
+  private buildPreviewVariables(): Record<string, string> {
+    return {
+      ...DEFAULT_PREVIEW_VALUES,
+      companyName: this.themeService.companyName() || DEFAULT_PREVIEW_VALUES['companyName'],
+      ...(this.selectedActionConfig()?.previewVariables ?? {}),
+      ...this.editableVariables()
+    };
+  }
+
+  private resolveEditableVariables(editableVariablesJson?: string, currentLayout = ''): Record<EditableVariableKey, string> {
+    const defaults = getDefaultEditableVariables();
+    const parsedVariables = this.parseEditableVariablesJson(editableVariablesJson);
+    const currentPlaceholders = this.getTemplatePlaceholders(currentLayout);
+
+    return {
+      ...defaults,
+      ...parsedVariables,
+      content: parsedVariables.content
+        || (!currentPlaceholders.has('content') && currentLayout.trim() ? currentLayout : defaults.content),
+      subtitle: parsedVariables.subtitle || defaults.subtitle
+    };
+  }
+
+  private prepareEditableVariablesForPreset(currentLayout: string): Record<EditableVariableKey, string> {
+    const defaults = getDefaultEditableVariables();
+    const currentVariables = {
+      ...defaults,
+      ...this.editableVariables()
+    };
+    const currentPlaceholders = this.getTemplatePlaceholders(currentLayout);
+
+    if (!currentPlaceholders.has('content') && currentLayout.trim()) {
+      currentVariables.content = currentLayout;
+    }
+
+    return currentVariables;
+  }
+
+  private parseEditableVariablesJson(editableVariablesJson?: string): Partial<Record<EditableVariableKey, string>> {
+    if (!editableVariablesJson) {
+      return {};
+    }
+
+    try {
+      const parsed = JSON.parse(editableVariablesJson) as Record<string, unknown>;
+      return EDITABLE_VARIABLE_KEYS.reduce((result, key) => {
+        const value = parsed[key];
+        if (typeof value === 'string') {
+          result[key] = value;
+        }
+        return result;
+      }, {} as Partial<Record<EditableVariableKey, string>>);
+    } catch {
+      return {};
+    }
+  }
+
+  private serializeEditableVariables(): string | undefined {
+    const activeDefinitions = this.activeEditableVariableDefinitions();
+    if (activeDefinitions.length === 0) {
+      return undefined;
+    }
+
+    const payload = activeDefinitions.reduce((result, definition) => {
+      result[definition.key] = this.getEditableVariableValue(definition.key);
+      return result;
+    }, {} as Record<EditableVariableKey, string>);
+
+    return JSON.stringify(payload);
+  }
+
+  private getTemplatePlaceholders(template: string): Set<string> {
+    const placeholders = new Set<string>();
+    const matches = template.matchAll(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g);
+    for (const match of matches) {
+      if (match[1]) {
+        placeholders.add(match[1]);
+      }
+    }
+    return placeholders;
   }
 
   private renderPreviewTemplate(template: string, variables: Record<string, string>): string {

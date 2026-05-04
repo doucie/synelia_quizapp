@@ -1,6 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { AppConfig, COLOR_SCHEMES } from './app-config.service';
+import { LogoHtmlSanitizerService } from './logo-html-sanitizer.service';
 
 interface SchemeColors {
   primary: string;
@@ -59,8 +60,12 @@ export class ThemeService {
   activeConfig = signal<AppConfig | null>(null);
   companyName = signal('Synelia');
   logoHtml = signal('');
+  candidateAccountsEnabled = signal(false);
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private logoHtmlSanitizer: LogoHtmlSanitizerService
+  ) {}
 
   loadActiveConfig(): Promise<void> {
     return new Promise(resolve => {
@@ -74,10 +79,15 @@ export class ThemeService {
         next: (resp) => {
           const config: AppConfig | undefined = resp.items?.[0];
           if (config) {
-            this.activeConfig.set(config);
-            this.companyName.set(config.companyName || 'Synelia');
-            this.logoHtml.set(config.logoHtml || '');
-            this.applyTheme(config);
+            const normalizedConfig = {
+              ...config,
+              logoHtml: this.logoHtmlSanitizer.sanitize(config.logoHtml)
+            };
+            this.activeConfig.set(normalizedConfig);
+            this.companyName.set(normalizedConfig.companyName || 'Synelia');
+            this.logoHtml.set(this.logoHtmlSanitizer.sanitizeOrEmpty(normalizedConfig.logoHtml));
+            this.candidateAccountsEnabled.set(normalizedConfig.candidateAccountsEnabled === true);
+            this.applyTheme(normalizedConfig);
           }
           resolve();
         },

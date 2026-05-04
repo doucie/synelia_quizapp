@@ -12,6 +12,7 @@ import { UserService } from '../../../core/services/user.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { PipelineStageService } from '../../../core/services/pipeline-stage.service';
 import { ApplicationProgressService } from '../../../core/services/application-progress.service';
+import { EntityPermissionService } from '../../../core/services/entity-permission.service';
 import { PipelineStage } from '../../../core/models/pipeline.interfaces';
 import { environment } from '../../../../environments/environment';
 
@@ -39,11 +40,67 @@ interface EntityPerm {
   userEmail?: string;
 }
 
+interface FormAssignmentOption {
+  value: 'RANDOM' | 'RANDOM_NO_REPEAT' | 'SOURCE_TOKEN' | 'SEQUENTIAL';
+  label: string;
+  description: string;
+}
+
+interface FormExhaustionOption {
+  value: 'BLOCK' | 'RESET' | 'LOOP';
+  label: string;
+  description: string;
+}
+
 const CAMPAIGN_PERMISSION_KEYS = [
-  { key: 'VIEW_CAMPAIGNS', label: 'Voir' },
-  { key: 'UPDATE_CAMPAIGNS', label: 'Modifier' },
-  { key: 'DELETE_CAMPAIGNS', label: 'Supprimer' },
-  { key: 'VIEW_EVALUATIONS', label: 'Évaluer' }
+  { key: 'UPDATE', label: 'Modifier' },
+  { key: 'DELETE', label: 'Supprimer' },
+  { key: 'EVALUATE', label: 'Évaluer' },
+  { key: 'CORRECT_TEST', label: 'Corriger tests' },
+  { key: 'PLANIFY', label: 'Planifier' },
+  { key: 'ADVANCE_PIPELINE', label: 'Avancer pipeline' },
+  { key: 'FOLLOW', label: 'Suivre' }
+];
+
+const FORM_ASSIGNMENT_STRATEGIES: FormAssignmentOption[] = [
+  {
+    value: 'RANDOM',
+    label: 'Aléatoire simple',
+    description: 'Chaque candidature reçoit un formulaire publié choisi au hasard parmi ceux de la campagne.'
+  },
+  {
+    value: 'RANDOM_NO_REPEAT',
+    label: 'Aléatoire sans répétition',
+    description: 'Le même candidat ne reçoit pas deux fois le même formulaire tant que le pool n’est pas épuisé.'
+  },
+  {
+    value: 'SOURCE_TOKEN',
+    label: 'Selon le source token',
+    description: 'Le formulaire servi dépend du lien d’entrée utilisé pour candidater.'
+  },
+  {
+    value: 'SEQUENTIAL',
+    label: 'Rotation séquentielle',
+    description: 'Les formulaires sont distribués dans l’ordre à chaque nouvelle candidature.'
+  }
+];
+
+const FORM_EXHAUSTION_POLICIES: FormExhaustionOption[] = [
+  {
+    value: 'BLOCK',
+    label: 'Bloquer',
+    description: 'Refuse la participation quand tous les formulaires exploitables ont déjà été consommés.'
+  },
+  {
+    value: 'RESET',
+    label: 'Réinitialiser',
+    description: 'Redémarre le tirage ou le cycle depuis zéro quand le pool est épuisé.'
+  },
+  {
+    value: 'LOOP',
+    label: 'Boucler',
+    description: 'Continue la distribution en boucle, surtout utile pour la rotation séquentielle.'
+  }
 ];
 
 @Component({
@@ -74,7 +131,17 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   // Token management
   showTokenForm = signal(false);
   newTokenName = signal('');
+  newTokenFormId = signal<number | null>(null);
   tokenLoading = signal(false);
+  tokenFormSelections = signal<Record<number, number | null>>({});
+  tokenFormSaving = signal<Set<number>>(new Set());
+
+  // Form assignment configuration
+  campaignConfigSaving = signal(false);
+  selectedFormAssignmentStrategy = signal<'RANDOM' | 'RANDOM_NO_REPEAT' | 'SOURCE_TOKEN' | 'SEQUENTIAL'>('RANDOM');
+  selectedFormExhaustionPolicy = signal<'BLOCK' | 'RESET' | 'LOOP'>('BLOCK');
+  formAssignmentStrategies = FORM_ASSIGNMENT_STRATEGIES;
+  formExhaustionPolicies = FORM_EXHAUSTION_POLICIES;
   
   // Admin mode confirmation modal
   showAdminModeModal = signal(false);
@@ -98,7 +165,8 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
     private userService: UserService,
     private notificationService: NotificationService,
     private pipelineStageService: PipelineStageService,
-    private applicationProgressService: ApplicationProgressService
+    private applicationProgressService: ApplicationProgressService,
+    private entityPermissionService: EntityPermissionService
   ) {}
 
   ngOnInit(): void {
@@ -144,8 +212,11 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
           console.log('  - Department Name:', campaign.departmentName);
           console.log('  - Speciality:', campaign.specialityLibelle);
           console.log('  - Created At:', campaign.createdAt);
+          console.log('  - Form Assignment Strategy:', campaign.formAssignmentStrategy);
+          console.log('  - Form Exhaustion Policy:', campaign.formAssignmentExhaustionPolicy);
           
           this.campaign.set(campaign);
+          this.initializeFormAssignmentDraft(campaign);
           
           // Charger le pipeline si un template est assigné
           if (campaign.pipelineTemplateId) {
@@ -219,6 +290,7 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
         next: (tokens) => {
           console.log('✅ Tokens récupérés:', tokens);
           this.sourceTokens.set(tokens);
+          this.syncTokenFormSelections(tokens);
           
           // Charger les questions de la campagne
           this.loadCampaignForms(campaignId);
@@ -226,6 +298,7 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
         error: (error) => {
           console.error('❌ Erreur lors du chargement des tokens:', error);
           this.sourceTokens.set([]);
+          this.tokenFormSelections.set({});
           
           // Charger quand même les formulaires
           this.loadCampaignForms(campaignId);
@@ -301,6 +374,7 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
     this.showTokenForm.set(!this.showTokenForm());
     if (!this.showTokenForm()) {
       this.newTokenName.set('');
+      this.newTokenFormId.set(null);
     }
   }
 
@@ -320,7 +394,8 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
 
     const newToken: Partial<SourceToken> = {
       campaignId: this.campaignId()!,
-      sourceTokenName: tokenName
+      sourceTokenName: tokenName,
+      formId: this.newTokenFormId() ?? undefined
     };
 
     this.sourceTokenService.createSourceTokens([newToken])
@@ -331,6 +406,7 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
           this.tokenLoading.set(false);
           this.showTokenForm.set(false);
           this.newTokenName.set('');
+          this.newTokenFormId.set(null);
           
           // Recharger les tokens
           this.loadCampaignTokens(this.campaignId()!);
@@ -341,6 +417,127 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
           this.tokenLoading.set(false);
         }
       });
+  }
+
+  saveCampaignFormConfiguration(): void {
+    const currentCampaign = this.campaign();
+    if (!currentCampaign?.id || this.campaignConfigSaving()) {
+      return;
+    }
+
+    this.campaignConfigSaving.set(true);
+
+    this.campaignService.updateCampaign(currentCampaign.id, {
+      formAssignmentStrategy: this.selectedFormAssignmentStrategy(),
+      formAssignmentExhaustionPolicy: this.selectedFormExhaustionPolicy()
+    })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (updatedCampaign) => {
+          this.campaign.set({
+            ...currentCampaign,
+            ...updatedCampaign,
+            formAssignmentStrategy: this.selectedFormAssignmentStrategy(),
+            formAssignmentExhaustionPolicy: this.selectedFormExhaustionPolicy()
+          });
+          this.campaignConfigSaving.set(false);
+          this.notificationService.success('Succès', 'La stratégie d’attribution des formulaires a été enregistrée.');
+        },
+        error: (error) => {
+          console.error('❌ Erreur lors de la sauvegarde de la stratégie de formulaires:', error);
+          this.campaignConfigSaving.set(false);
+          this.notificationService.error('Erreur', this.extractErrorMessage(error, 'Impossible d’enregistrer la configuration des formulaires.'));
+        }
+      });
+  }
+
+  isCampaignFormConfigDirty(): boolean {
+    const currentCampaign = this.campaign();
+    if (!currentCampaign) {
+      return false;
+    }
+
+    const currentStrategy = currentCampaign.formAssignmentStrategy || 'RANDOM';
+    const currentPolicy = currentCampaign.formAssignmentExhaustionPolicy || 'BLOCK';
+    return currentStrategy !== this.selectedFormAssignmentStrategy()
+      || currentPolicy !== this.selectedFormExhaustionPolicy();
+  }
+
+  updateTokenFormSelection(tokenId: number | undefined, formId: number | null): void {
+    if (!tokenId) {
+      return;
+    }
+
+    this.tokenFormSelections.set({
+      ...this.tokenFormSelections(),
+      [tokenId]: formId
+    });
+  }
+
+  getTokenFormSelection(token: SourceToken): number | null {
+    if (!token.id) {
+      return token.formId ?? null;
+    }
+    return this.tokenFormSelections()[token.id] ?? token.formId ?? null;
+  }
+
+  isTokenFormDirty(token: SourceToken): boolean {
+    return this.getTokenFormSelection(token) !== (token.formId ?? null);
+  }
+
+  saveTokenFormAssignment(token: SourceToken): void {
+    if (!token.id || this.isTokenFormSaving(token.id)) {
+      return;
+    }
+
+    const selectedFormId = this.getTokenFormSelection(token);
+    this.setTokenFormSaving(token.id, true);
+
+    this.sourceTokenService.updateSourceToken({
+      id: token.id,
+      formId: selectedFormId ?? 0
+    })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.setTokenFormSaving(token.id!, false);
+          this.notificationService.success('Succès', 'Le formulaire du token a été mis à jour.');
+          if (this.campaignId()) {
+            this.loadCampaignTokens(this.campaignId()!);
+          }
+        },
+        error: (error) => {
+          console.error('❌ Erreur lors de la mise à jour du formulaire du token:', error);
+          this.setTokenFormSaving(token.id!, false);
+          this.notificationService.error('Erreur', this.extractErrorMessage(error, 'Impossible de mettre à jour le formulaire du token.'));
+        }
+      });
+  }
+
+  isTokenFormSaving(tokenId?: number): boolean {
+    return tokenId ? this.tokenFormSaving().has(tokenId) : false;
+  }
+
+  getFormAssignmentStrategyLabel(value?: string): string {
+    return this.formAssignmentStrategies.find(option => option.value === value)?.label || 'Aléatoire simple';
+  }
+
+  getFormAssignmentStrategyDescription(value?: string): string {
+    return this.formAssignmentStrategies.find(option => option.value === value)?.description
+      || this.formAssignmentStrategies[0].description;
+  }
+
+  getExhaustionPolicyLabel(value?: string): string {
+    return this.formExhaustionPolicies.find(option => option.value === value)?.label || 'Bloquer';
+  }
+
+  getExhaustionPolicyDescription(value?: string): string {
+    return this.formExhaustionPolicies.find(option => option.value === value)?.description
+      || this.formExhaustionPolicies[0].description;
+  }
+
+  isSourceTokenStrategySelected(): boolean {
+    return this.selectedFormAssignmentStrategy() === 'SOURCE_TOKEN';
   }
 
   deleteToken(token: SourceToken): void {
@@ -572,8 +769,7 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
     if (!campaignId) return;
 
     this.entityPermLoading.set(true);
-    const request = { data: { entityType: 'CAMPAIGN', entityId: campaignId } };
-    this.http.post<any>(`${this.apiUrl}/entityPermission/getForEntity`, request)
+    this.entityPermissionService.getForEntity('CAMPAIGN', campaignId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (res) => {
@@ -589,7 +785,7 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
 
   hasEntityPerm(userId: number, permKey: string): boolean {
     return this.entityPermissions().some(
-      p => p.userId === userId && p.permissionKey === permKey && p.granted
+      p => p.userId === userId && (p.permissionKey || '').toUpperCase() === permKey && p.granted
     );
   }
 
@@ -603,10 +799,11 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
     this.entityPermSaving.set(saving);
 
     const has = this.hasEntityPerm(userId, permKey);
-    const endpoint = has ? '/entityPermission/revoke' : '/entityPermission/grant';
-    const request = { data: { userId, entityType: 'CAMPAIGN', entityId: campaignId, permissionKey: permKey } };
+    const request$ = has
+      ? this.entityPermissionService.revoke(userId, 'CAMPAIGN', campaignId, permKey)
+      : this.entityPermissionService.grant(userId, 'CAMPAIGN', campaignId, permKey);
 
-    this.http.post<any>(`${this.apiUrl}${endpoint}`, request)
+    request$
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
@@ -651,5 +848,37 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
     }
 
     return Array.from(usersMap.values());
+  }
+
+  private initializeFormAssignmentDraft(campaign: Campaign): void {
+    this.selectedFormAssignmentStrategy.set(campaign.formAssignmentStrategy || 'RANDOM');
+    this.selectedFormExhaustionPolicy.set(campaign.formAssignmentExhaustionPolicy || 'BLOCK');
+  }
+
+  private syncTokenFormSelections(tokens: SourceToken[]): void {
+    const nextSelections: Record<number, number | null> = {};
+    for (const token of tokens) {
+      if (token.id) {
+        nextSelections[token.id] = token.formId ?? null;
+      }
+    }
+    this.tokenFormSelections.set(nextSelections);
+  }
+
+  private setTokenFormSaving(tokenId: number, isSaving: boolean): void {
+    const next = new Set(this.tokenFormSaving());
+    if (isSaving) {
+      next.add(tokenId);
+    } else {
+      next.delete(tokenId);
+    }
+    this.tokenFormSaving.set(next);
+  }
+
+  private extractErrorMessage(error: any, fallbackMessage: string): string {
+    return error?.error?.status?.message
+      || error?.error?.message
+      || error?.message
+      || fallbackMessage;
   }
 }

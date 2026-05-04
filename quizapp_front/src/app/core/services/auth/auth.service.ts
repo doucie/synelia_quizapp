@@ -12,6 +12,7 @@ export interface User {
   lastName: string;
   role: string;
   adminMode?: boolean;
+  isDefaultPassword?: boolean;
 }
 
 @Injectable({
@@ -59,7 +60,8 @@ export class AuthService {
         lastName: user.lastName,
         role: user.role,
         userRole: user.role,
-        adminMode: user.adminMode
+        adminMode: user.adminMode,
+        isDefaultPassword: user.isDefaultPassword
       }
     };
 
@@ -125,6 +127,14 @@ export class AuthService {
     return localStorage.getItem('authToken');
   }
 
+  requiresPasswordChange(): boolean {
+    return this.currentUserSubject.value?.isDefaultPassword === true;
+  }
+
+  getAuthenticatedHomeRoute(): string {
+    return this.requiresPasswordChange() ? '/dashboard/profile' : '/dashboard';
+  }
+
   /**
    * Met à jour l'utilisateur courant (pour admin_mode par exemple)
    */
@@ -186,7 +196,8 @@ export class AuthService {
       firstName: apiUser.firstName || '',
       lastName: apiUser.lastName || '',
       role: role,
-      adminMode: apiUser.adminMode || false
+      adminMode: apiUser.adminMode || false,
+      isDefaultPassword: apiUser.isDefaultPassword === true
     };
   }
 

@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Date;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import lombok.Data;
 
 import tech.synelia.quizapp.utils.contract.*;
 
@@ -23,6 +24,9 @@ import tech.synelia.quizapp.utils.contract.*;
  *
  */
 @JsonInclude(Include.NON_NULL)
+@Data
 public class _ApplicationsDto {
+
+	private String trackingCode;
 
 }

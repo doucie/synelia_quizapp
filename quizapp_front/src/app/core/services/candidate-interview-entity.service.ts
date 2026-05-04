@@ -8,6 +8,8 @@ export interface CandidateInterviewEntity {
   id?: number;
   interviewStart?: string;
   interviewDuration?: number;
+  declineReason?: string | null;
+  alternativeDateRequested?: string | null;
   applicationId?: number;
   interviewId?: number;
   createdAt?: string;
@@ -51,11 +53,8 @@ export class CandidateInterviewEntityService {
   constructor(private http: HttpClient) {}
 
   getAllByCriteria(criteria: CandidateInterviewSearchCriteria = {}): Observable<PagedCandidateInterviewResponse> {
-    const currentUserData = localStorage.getItem('user');
-    const currentUserId = currentUserData ? JSON.parse(currentUserData).id?.toString() || '1' : '1';
-
     const request = {
-      user: currentUserId,
+      user: this.getCurrentUserId(),
       size: criteria.size || 10,
       index: criteria.page || 0,
       isSimpleLoading: false,
@@ -89,18 +88,27 @@ export class CandidateInterviewEntityService {
   }
 
   create(item: CandidateInterviewEntity): Observable<any> {
-    return this.http.post(`${this.apiUrl}/create`, { user: 1, datas: [item] });
+    return this.http.post(`${this.apiUrl}/create`, { user: this.getCurrentUserId(), datas: [item] });
   }
 
   update(item: CandidateInterviewEntity): Observable<any> {
-    return this.http.post(`${this.apiUrl}/update`, { user: 1, datas: [item] });
+    return this.http.post(`${this.apiUrl}/update`, { user: this.getCurrentUserId(), datas: [item] });
   }
 
   delete(id: number): Observable<any> {
-    return this.http.post(`${this.apiUrl}/delete`, { user: 1, datas: [{ id }] });
+    return this.http.post(`${this.apiUrl}/delete`, { user: this.getCurrentUserId(), datas: [{ id }] });
   }
 
   restore(id: number): Observable<any> {
-    return this.http.post(`${this.apiUrl}/update`, { user: 1, datas: [{ id, isDeleted: false }] });
+    return this.http.post(`${this.apiUrl}/update`, { user: this.getCurrentUserId(), datas: [{ id, isDeleted: false }] });
+  }
+
+  private getCurrentUserId(): number {
+    try {
+      const user = localStorage.getItem('user');
+      return user ? Number(JSON.parse(user).id) || 0 : 0;
+    } catch {
+      return 0;
+    }
   }
 }

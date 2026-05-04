@@ -21,6 +21,7 @@ import tech.synelia.quizapp.utils.contract.IBasicBusiness;
 import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.dto.transformer.*;
+import tech.synelia.quizapp.utils.enums.QuestionType;
 import tech.synelia.quizapp.dao.entity.*;
 import tech.synelia.quizapp.dao.repository.*;
 
@@ -40,6 +41,10 @@ public class CandidateAnswerBusiness implements IBasicBusiness<Request<Candidate
 	private QuestionRepository questionRepository;
 	@Autowired
 	private AnswerRepository answerRepository;
+	@Autowired
+	private PermissionService permissionService;
+	@Autowired
+	private ApplicationsBusiness applicationsBusiness;
 	@Autowired
 	private FunctionalError functionalError;
 	@Autowired
@@ -348,15 +353,85 @@ public class CandidateAnswerBusiness implements IBasicBusiness<Request<Candidate
 
 	public Response<CandidateAnswerDto> custom(Request<CandidateAnswerDto> request, Locale locale) throws Exception {
 		log.info("----begin custom CandidateAnswerBusiness-----");
+		CandidateAnswerDto dto = request.getData();
+		if (dto == null && request.getDatas() != null && !request.getDatas().isEmpty()) {
+			dto = request.getDatas().get(0);
+		}
+		if (dto == null) {
+			throw new InvalidEntityException(functionalError.FIELD_EMPTY("candidateAnswer custom payload", locale));
+		}
+
+		if ("manualCorrection".equalsIgnoreCase(StringUtils.trimToEmpty(dto.getAction()))) {
+			return applyManualCorrection(dto, request.getUser(), locale);
+		}
+
+		throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+				"Action custom candidateAnswer non supportee: " + dto.getAction(), locale));
+	}
+
+	private Response<CandidateAnswerDto> applyManualCorrection(CandidateAnswerDto dto, Integer actorUserId, Locale locale) throws Exception {
+		if (dto.getId() == null) {
+			throw new InvalidEntityException(functionalError.FIELD_EMPTY("id", locale));
+		}
+		if (dto.getManualIsCorrect() == null) {
+			throw new InvalidEntityException(functionalError.FIELD_EMPTY("manualIsCorrect", locale));
+		}
+		if (actorUserId == null || actorUserId <= 0) {
+			throw new InvalidEntityException(functionalError.FIELD_EMPTY("authenticatedUserId", locale));
+		}
+
+		CandidateAnswer entityToSave = candidateAnswerRepository.findOne(dto.getId(), false);
+		if (entityToSave == null) {
+			throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("candidateAnswer id -> " + dto.getId(), locale));
+		}
+		if (entityToSave.getApplications() == null) {
+			throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("application linked to candidateAnswer -> " + dto.getId(), locale));
+		}
+		if (entityToSave.getQuestion() == null || !QuestionType.TEXT.getValue().equalsIgnoreCase(StringUtils.trimToEmpty(entityToSave.getQuestion().getQuestionType()))) {
+			throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+					"Seules les réponses libres peuvent être corrigées manuellement.", locale));
+		}
+
+		Campaigns campaign = resolveCampaignFromApplication(entityToSave.getApplications(), locale);
+		boolean hasCampaignRight = permissionService.hasAnyEntityPermission(actorUserId, "CAMPAIGN", campaign.getId(), "ADMIN", "CREATOR", "CORRECT_TEST");
+		if (!hasCampaignRight) {
+			throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+					"Accès refusé: droits insuffisants pour corriger ce test.", locale));
+		}
+
+		entityToSave.setManualIsCorrect(dto.getManualIsCorrect());
+		entityToSave.setManualCorrectionComment(StringUtils.trimToNull(dto.getManualCorrectionComment()));
+		entityToSave.setManualCorrectedAt(Utilities.getCurrentDate());
+		entityToSave.setManualCorrectedBy(actorUserId);
+		entityToSave.setUpdatedAt(Utilities.getCurrentDate());
+		entityToSave.setUpdatedBy(actorUserId);
+		entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(entityToSave)));
+		CandidateAnswer savedEntity = candidateAnswerRepository.save(entityToSave);
+		Applications updatedApplication = applicationsBusiness.refreshQuizScoringState(entityToSave.getApplications(), actorUserId);
+
+		CandidateAnswerDto resultDto = CandidateAnswerTransformer.INSTANCE.toDto(savedEntity);
+		if (updatedApplication != null) {
+			resultDto.setApplicationId(updatedApplication.getId());
+		}
+
 		Response<CandidateAnswerDto> response = new Response<CandidateAnswerDto>();
+		Status status = new Status();
+		status.setCode(StatusCode.SUCCESS);
+		status.setMessage("Correction manuelle enregistrée avec succès");
 		response.setHasError(false);
 		response.setCount(1L);
 		response.setHttpCode(HttpStatus.OK.value());
-		Status status = new Status();
-		status.setCode(StatusCode.SUCCESS);
-		status.setMessage(StatusMessage.SUCCESS);
 		response.setStatus(status);
+		response.setItems(Arrays.asList(resultDto));
 		return response;
+	}
+
+	private Campaigns resolveCampaignFromApplication(Applications application, Locale locale) {
+		if (application != null && application.getSourceToken() != null && application.getSourceToken().getCampaigns() != null) {
+			return application.getSourceToken().getCampaigns();
+		}
+		throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST(
+				"campaign linked to application -> " + (application != null ? application.getId() : null), locale));
 	}
 
 	public Response<CandidateAnswerDto> updateDeleted(Request<CandidateAnswerDto> request, Locale locale) throws ParseException, JsonProcessingException {

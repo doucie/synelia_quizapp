@@ -226,7 +226,6 @@ export class MeriseComponent implements OnInit, AfterViewInit {
         { name: 'time_elapsed', type: 'INT', nullable: true },
         { name: 'application_status', type: 'VARCHAR(8)', nullable: true },
         { name: 'application_abandoned', type: 'BIT', nullable: true },
-        { name: 'visit_token', type: 'VARCHAR(255)', nullable: true },
         { name: 'total_evaluation_score', type: 'FLOAT', nullable: true },
         { name: 'total_evaluation_number', type: 'INT', nullable: true },
         { name: 'total_evaluation_percentage', type: 'DOUBLE', nullable: true },

@@ -4,9 +4,10 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subject, takeUntil, forkJoin, of, catchError } from 'rxjs';
 import { Application, ApplicationService } from '../../../core/services/application.service';
-import { CampaignService, Campaign } from '../../../core/services/campaign.service';
+import { CampaignService, Campaign, CampaignAccessRecord } from '../../../core/services/campaign.service';
 import { SourceTokenService, SourceToken } from '../../../services/source-token.service';
 import { Decision, DecisionService } from '../../../core/services/decision.service';
+import { PermissionService } from '../../../core/services/permission.service';
 import { User, UserService } from '../../../core/services/user.service';
 import { PipelineStageService } from '../../../core/services/pipeline-stage.service';
 import { APPLICATION_STATUS } from '../../../core/constants/application-status.constants';
@@ -35,6 +36,7 @@ export class DecisionsComponent implements OnInit, OnDestroy {
   applications = signal<ApplicationWithCampaign[]>([]);
   decisions = signal<Decision[]>([]);
   users = signal<Map<number, User>>(new Map()); // Map pour stocker les utilisateurs par ID
+  campaignAccessMap = signal<Record<number, CampaignAccessRecord>>({});
   loading = signal(false);
   searchQuery = signal('');
   searchTerm = signal(''); // Nouveau signal pour la recherche moderne
@@ -63,7 +65,8 @@ export class DecisionsComponent implements OnInit, OnDestroy {
     private userService: UserService,
     private router: Router,
     private pipelineStageService: PipelineStageService,
-    private applicationProgressService: ApplicationProgressService
+    private applicationProgressService: ApplicationProgressService,
+    private permissionService: PermissionService
   ) {}
 
   ngOnInit(): void {
@@ -194,9 +197,11 @@ export class DecisionsComponent implements OnInit, OnDestroy {
     forkJoin({
       applications: this.applicationService.getApplicationsByCriteria({}),
       sourceTokens: this.sourceTokenService.getSourceTokensByCriteria({}),
-      campaigns: this.campaignService.getAllCampaignsByCriteria({ size: 1000, page: 0 })
+      campaigns: this.campaignService.getAllCampaignsByCriteria({ size: 1000, page: 0, isDeleted: false }),
+      campaignAccesses: this.campaignService.getCampaignAccessesByUser(currentUserId)
     }).pipe(takeUntil(this.destroy$)).subscribe({
       next: (results) => {
+        this.campaignAccessMap.set(this.buildCampaignAccessMap(results.campaignAccesses || []));
         this.enrichApplications(
           results.applications.items || [],
           results.sourceTokens.items || [],
@@ -358,6 +363,7 @@ export class DecisionsComponent implements OnInit, OnDestroy {
   takeDecisionForStage(stage: PipelineStage, action: 'APPROVE' | 'CANCEL'): void {
     const app = this.selectedApplication();
     if (!app) return;
+    if (!this.hasDecisionPermissionForCampaign(app.campaignId)) return;
 
     const decisionType = this.mapStageToDecisionType(stage, action === 'APPROVE');
     if (!decisionType) {
@@ -419,6 +425,9 @@ export class DecisionsComponent implements OnInit, OnDestroy {
   undoLastDecision(): void {
     const decisions = this.selectedApplicationDecisions();
     if (decisions.length === 0) return;
+
+    const app = this.selectedApplication();
+    if (!app || !this.hasDecisionPermissionForCampaign(app.campaignId)) return;
 
     // Trouver la dernière décision (la plus récente)
     const lastDecision = decisions[0]; // Les décisions sont triées par date décroissante
@@ -565,7 +574,7 @@ export class DecisionsComponent implements OnInit, OnDestroy {
   canTakeDecisionForStage(stage: PipelineStage): boolean {
     if (stage.stageType !== 'PRESELECTION' && stage.stageType !== 'DECISION') return false;
     const status = this.getDynamicStepStatus(stage.id!);
-    return status === 'active';
+    return this.hasDecisionPermissionForSelectedApplication() && status === 'active';
   }
 
   /**
@@ -574,7 +583,7 @@ export class DecisionsComponent implements OnInit, OnDestroy {
   canCancelDecisionForStage(stage: PipelineStage): boolean {
     if (stage.stageType !== 'PRESELECTION' && stage.stageType !== 'DECISION') return false;
     const status = this.getDynamicStepStatus(stage.id!);
-    return status === 'completed' || status === 'rejected';
+    return this.hasDecisionPermissionForSelectedApplication() && (status === 'completed' || status === 'rejected');
   }
 
   /**
@@ -595,6 +604,7 @@ export class DecisionsComponent implements OnInit, OnDestroy {
    * Ouvre la popup de décision pour une étape
    */
   openDecisionModal(stageId: number): void {
+    if (!this.hasDecisionPermissionForSelectedApplication()) return;
     this.decisionModalStep.set(stageId);
     this.showDecisionModal.set(true);
   }
@@ -605,6 +615,7 @@ export class DecisionsComponent implements OnInit, OnDestroy {
   undoDecisionForStage(stage: PipelineStage): void {
     const app = this.selectedApplication();
     if (!app) return;
+    if (!this.hasDecisionPermissionForCampaign(app.campaignId)) return;
 
     const progress = this.getProgressForStage(app.id!, stage.id!);
     if (!progress) return;
@@ -689,11 +700,68 @@ export class DecisionsComponent implements OnInit, OnDestroy {
     const stageId = this.decisionModalStep();
     if (!stageId) return;
 
+    if (!this.hasDecisionPermissionForSelectedApplication()) return;
+
     const stages = this.getStagesForSelectedApp();
     const stage = stages.find(s => s.id === stageId);
     if (!stage) return;
 
     this.takeDecisionForStage(stage, action);
+  }
+
+  private buildCampaignAccessMap(accesses: any[]): Record<number, CampaignAccessRecord> {
+    return accesses.reduce((map, rawAccess) => {
+      const campaignId = Number(rawAccess.campaignId || rawAccess.campaigns_id || 0);
+      if (!campaignId) {
+        return map;
+      }
+
+      const current = map[campaignId] || {
+        campaignId,
+        userId: Number(rawAccess.userId || 0),
+        userFirstName: rawAccess.userFirstName,
+        userLastName: rawAccess.userLastName,
+        userName: rawAccess.userName,
+        userEmail: rawAccess.userEmail,
+        userRole: rawAccess.userRole,
+        canUpdate: false,
+        canDelete: false,
+        canEvaluate: false,
+        canPlanify: false,
+        canAcceptPreScreen: false,
+        canAcceptFinal: false,
+        isAdmin: false,
+        isCreator: false,
+        follow: false
+      } satisfies CampaignAccessRecord;
+
+      current.canUpdate = current.canUpdate || Boolean(rawAccess.canUpdate || rawAccess.can_update);
+      current.canDelete = current.canDelete || Boolean(rawAccess.canDelete || rawAccess.can_delete);
+      current.canEvaluate = current.canEvaluate || Boolean(rawAccess.canEvaluate || rawAccess.can_evaluate);
+      current.canPlanify = current.canPlanify || Boolean(rawAccess.canPlanify || rawAccess.can_planify);
+      current.canAcceptPreScreen = current.canAcceptPreScreen || Boolean(rawAccess.canAcceptPreScreen || rawAccess.can_accept_pre_screen);
+      current.canAcceptFinal = current.canAcceptFinal || Boolean(rawAccess.canAcceptFinal || rawAccess.can_accept_final);
+      current.isAdmin = current.isAdmin || Boolean(rawAccess.isAdmin || rawAccess.is_admin);
+      current.isCreator = current.isCreator || Boolean(rawAccess.isCreator || rawAccess.is_creator);
+      current.follow = current.follow || Boolean(rawAccess.follow);
+      map[campaignId] = current;
+      return map;
+    }, {} as Record<number, CampaignAccessRecord>);
+  }
+
+  private hasDecisionPermissionForSelectedApplication(): boolean {
+    return this.hasDecisionPermissionForCampaign(this.selectedApplication()?.campaignId);
+  }
+
+  private hasDecisionPermissionForCampaign(campaignId?: number | null): boolean {
+    if (this.permissionService.hasAnyPermission(['CREATE_DECISIONS', 'UPDATE_DECISIONS', 'DELETE_DECISIONS', 'ADVANCE_PIPELINE'])) {
+      return true;
+    }
+    if (!campaignId) {
+      return false;
+    }
+    const access = this.campaignAccessMap()[campaignId];
+    return Boolean(access && (access.isAdmin || access.isCreator || access.canAcceptPreScreen || access.canAcceptFinal));
   }
 
   /**

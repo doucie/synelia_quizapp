@@ -461,6 +461,23 @@ export class UserService {
     );
   }
 
+  changeEmail(email: string, currentPassword: string): Observable<User> {
+    const currentUserId = localStorage.getItem('user')?.includes('id') ?
+      JSON.parse(localStorage.getItem('user')!)?.id?.toString() : '1';
+
+    const request = {
+      data: {
+        email,
+        oldPassword: currentPassword
+      },
+      user: currentUserId
+    };
+
+    return this.http.post<any>('/userManager/changerEmail', request).pipe(
+      map(response => response.item || response.items?.[0] || response)
+    );
+  }
+
   /**
    * Supprime un utilisateur
    * @param id l'identifiant de l'utilisateur à supprimer

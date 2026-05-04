@@ -6,6 +6,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.http.HttpStatus;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -22,6 +24,7 @@ import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.dto.transformer.*;
 import tech.synelia.quizapp.dao.entity.*;
 import tech.synelia.quizapp.dao.repository.*;
+import tech.synelia.quizapp.utils.enums.StageType;
 
 @Log
 @Component
@@ -41,6 +44,7 @@ public class PipelineStageBusiness implements IBasicBusiness<Request<PipelineSta
     private EntityManager em;
 
     private SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     public Response<PipelineStageDto> create(Request<PipelineStageDto> request, Locale locale) throws ParseException, JsonProcessingException {
@@ -73,6 +77,11 @@ public class PipelineStageBusiness implements IBasicBusiness<Request<PipelineSta
                 Long count = pipelineStageRepository.countByPipelineTemplateId(dto.getPipelineTemplateId());
                 dto.setStageOrder(count != null ? count.intValue() + 1 : 1);
             }
+
+            String normalizedStageType = normalizeStageType(dto.getStageType(), locale);
+            String normalizedConfigJson = validateAndNormalizeConfig(normalizedStageType, dto.getConfigJson(), locale);
+            dto.setStageType(normalizedStageType);
+            dto.setConfigJson(normalizedConfigJson);
 
             PipelineStage entityToSave = PipelineStageTransformer.INSTANCE.toEntity(dto, template);
             entityToSave.setCreatedAt(Utilities.getCurrentDate());
@@ -128,12 +137,20 @@ public class PipelineStageBusiness implements IBasicBusiness<Request<PipelineSta
                 throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION("Ce pipeline est verrouillé car utilisé par des candidats", locale));
             }
 
-            if (Utilities.shouldUpdate(dto.getStageType())) entityToSave.setStageType(dto.getStageType());
+                String nextStageType = Utilities.shouldUpdate(dto.getStageType())
+                    ? normalizeStageType(dto.getStageType(), locale)
+                    : entityToSave.getStageType();
+                String nextConfigJson = Utilities.shouldUpdate(dto.getConfigJson())
+                    ? dto.getConfigJson()
+                    : entityToSave.getConfigJson();
+                String normalizedConfigJson = validateAndNormalizeConfig(nextStageType, nextConfigJson, locale);
+
+                if (Utilities.shouldUpdate(dto.getStageType())) entityToSave.setStageType(nextStageType);
             if (Utilities.shouldUpdate(dto.getStageLabel())) entityToSave.setStageLabel(dto.getStageLabel());
             if (dto.getStageOrder() != null) entityToSave.setStageOrder(dto.getStageOrder());
             if (dto.getIsRequired() != null) entityToSave.setIsRequired(dto.getIsRequired());
             if (dto.getIsEliminatory() != null) entityToSave.setIsEliminatory(dto.getIsEliminatory());
-            if (Utilities.shouldUpdate(dto.getConfigJson())) entityToSave.setConfigJson(dto.getConfigJson());
+                if (Utilities.shouldUpdate(dto.getConfigJson())) entityToSave.setConfigJson(normalizedConfigJson);
             if (dto.getIsDeleted() != null) entityToSave.setIsDeleted(dto.getIsDeleted());
 
             entityToSave.setUpdatedAt(Utilities.getCurrentDate());
@@ -200,6 +217,121 @@ public class PipelineStageBusiness implements IBasicBusiness<Request<PipelineSta
         }
         log.info("----end delete PipelineStage-----");
         return response;
+    }
+
+    private String normalizeStageType(String stageType, Locale locale) {
+        if (!Utilities.notBlank(stageType)) {
+            throw new InvalidEntityException(functionalError.FIELD_EMPTY("stageType", locale));
+        }
+
+        try {
+            return StageType.fromValue(stageType).getValue();
+        } catch (IllegalArgumentException exception) {
+            throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+                    "Type d'étape invalide: " + stageType,
+                    locale));
+        }
+    }
+
+    private String validateAndNormalizeConfig(String stageType, String configJson, Locale locale) {
+        JsonNode config = null;
+
+        if (configJson != null) {
+            try {
+                config = objectMapper.readTree(configJson);
+            } catch (Exception exception) {
+                throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+                        "config_json invalide: JSON mal formé",
+                        locale));
+            }
+
+            if (config == null || !config.isObject()) {
+                throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+                        "config_json invalide: un objet JSON est attendu",
+                        locale));
+            }
+
+            validateCommonConfig(config, locale);
+        }
+
+        if (StageType.TECHNICAL_TEST.getValue().equals(stageType)) {
+            if (config == null) {
+                throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+                        "config_json est requis pour une étape TECHNICAL_TEST",
+                        locale));
+            }
+
+            String testMode = config.path("testMode").asText("").trim().toUpperCase(Locale.ROOT);
+            if (!"INTERNAL".equals(testMode) && !"EXTERNAL".equals(testMode)) {
+                throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+                        "TECHNICAL_TEST attend un testMode INTERNAL ou EXTERNAL",
+                        locale));
+            }
+            if ("EXTERNAL".equals(testMode) && !Utilities.notBlank(config.path("externalUrl").asText(null))) {
+                throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+                        "TECHNICAL_TEST externe: externalUrl est requis",
+                        locale));
+            }
+        }
+
+        if (StageType.CUSTOM.getValue().equals(stageType)) {
+            if (config == null || config.isEmpty()) {
+                throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+                        "config_json est requis pour une étape CUSTOM",
+                        locale));
+            }
+        }
+
+        if (config == null) {
+            return null;
+        }
+
+        try {
+            return objectMapper.writeValueAsString(config);
+        } catch (JsonProcessingException exception) {
+            throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+                    "config_json invalide: impossible de normaliser la configuration",
+                    locale));
+        }
+    }
+
+    private void validateCommonConfig(JsonNode config, Locale locale) {
+        if (config.has("allowSkip") && !config.get("allowSkip").isBoolean()) {
+            throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+                    "config_json.allowSkip doit être un booléen",
+                    locale));
+        }
+
+        if (config.has("passingScore")) {
+            JsonNode passingScore = config.get("passingScore");
+            if (!passingScore.isNumber()) {
+                throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+                        "config_json.passingScore doit être un nombre",
+                        locale));
+            }
+            double value = passingScore.asDouble();
+            if (value < 0d || value > 100d) {
+                throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+                        "config_json.passingScore doit être compris entre 0 et 100",
+                        locale));
+            }
+        }
+
+        if (config.has("inactivityTimeoutMinutes")) {
+            JsonNode inactivityTimeout = config.get("inactivityTimeoutMinutes");
+            if (!inactivityTimeout.isNumber()) {
+                throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+                        "config_json.inactivityTimeoutMinutes doit être un nombre",
+                        locale));
+            }
+
+            int value = inactivityTimeout.asInt();
+            if (value < 0 || value > 1440) {
+                throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+                        "config_json.inactivityTimeoutMinutes doit être compris entre 0 et 1440",
+                        locale));
+            }
+        }
     }
 
     @Override

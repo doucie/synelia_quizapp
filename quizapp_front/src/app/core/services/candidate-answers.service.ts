@@ -8,9 +8,17 @@ export interface CandidateAnswer {
   id?: number;
   freeTextResponse?: string;
   isSelected?: boolean;
+  manualIsCorrect?: boolean | null;
+  manualCorrectionComment?: string | null;
+  manualCorrectedAt?: string;
+  manualCorrectedBy?: number;
   applicationId?: number;
   questionId?: number;
   answerId?: number;
+  questionText?: string;
+  questionType?: string;
+  answerText?: string;
+  action?: string;
   createdAt?: string;
   createdBy?: number;
   updatedAt?: string;
@@ -99,6 +107,21 @@ export class CandidateAnswersService {
 
   update(item: CandidateAnswer): Observable<any> {
     return this.http.post(`${this.apiUrl}/update`, { user: 1, datas: [item] });
+  }
+
+  manualCorrect(id: number, manualIsCorrect: boolean, manualCorrectionComment?: string | null): Observable<any> {
+    const currentUserData = localStorage.getItem('user');
+    const currentUserId = currentUserData ? JSON.parse(currentUserData).id?.toString() || '1' : '1';
+
+    return this.http.post(`${this.apiUrl}/custom`, {
+      user: currentUserId,
+      datas: [{
+        id,
+        action: 'manualCorrection',
+        manualIsCorrect,
+        manualCorrectionComment: manualCorrectionComment ?? null
+      }]
+    });
   }
 
   delete(id: number): Observable<any> {

@@ -4,14 +4,18 @@ import { Observable, throwError } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
+export type CandidateAskReviewAction = 'APPROVE' | 'REJECT';
+
 export interface CandidateAsk {
   id?: number;
   requestType?: string;
+  askStatus?: string;
   isVerified?: boolean;
   firstName?: string;
   lastName?: string;
   newEmail?: string;
   newPhone?: string;
+  decisionReason?: string;
   applicationId?: number;
   createdAt?: string;
   createdBy?: number;
@@ -53,9 +57,13 @@ export class CandidateAskService {
 
   constructor(private http: HttpClient) {}
 
-  getAllByCriteria(criteria: CandidateAskSearchCriteria = {}): Observable<PagedCandidateAskResponse> {
+  private getCurrentUserId(): string {
     const currentUserData = localStorage.getItem('user');
-    const currentUserId = currentUserData ? JSON.parse(currentUserData).id?.toString() || '1' : '1';
+    return currentUserData ? JSON.parse(currentUserData).id?.toString() || '1' : '1';
+  }
+
+  getAllByCriteria(criteria: CandidateAskSearchCriteria = {}): Observable<PagedCandidateAskResponse> {
+    const currentUserId = this.getCurrentUserId();
 
     const request = {
       user: currentUserId,
@@ -105,5 +113,16 @@ export class CandidateAskService {
 
   restore(id: number): Observable<any> {
     return this.http.post(`${this.apiUrl}/update`, { user: 1, datas: [{ id, isDeleted: false }] });
+  }
+
+  review(id: number, action: CandidateAskReviewAction, decisionReason?: string | null): Observable<any> {
+    return this.http.post(`${this.apiUrl}/custom`, {
+      user: this.getCurrentUserId(),
+      datas: [{
+        id,
+        action,
+        decisionReason: decisionReason ?? null
+      }]
+    });
   }
 }

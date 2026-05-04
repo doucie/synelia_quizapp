@@ -9,13 +9,14 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 import org.mapstruct.Named;
+import org.mapstruct.ReportingPolicy;
 import org.mapstruct.factory.Mappers;
 
 import tech.synelia.quizapp.dao.entity.*;
 import tech.synelia.quizapp.utils.contract.*;
 import tech.synelia.quizapp.utils.dto.*;
 
-@Mapper
+@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface SmtpConfigTransformer {
 
     SmtpConfigTransformer INSTANCE = Mappers.getMapper(SmtpConfigTransformer.class);
@@ -56,7 +57,7 @@ public interface SmtpConfigTransformer {
         @Mapping(source = "dto.host", target = "host"),
         @Mapping(source = "dto.port", target = "port"),
         @Mapping(source = "dto.username", target = "username"),
-        @Mapping(source = "dto.passwordEncrypted", target = "passwordEncrypted"),
+        @Mapping(source = "dto.password", target = "passwordEncrypted"),
         @Mapping(source = "dto.smtpAuth", target = "smtpAuth"),
         @Mapping(source = "dto.starttlsEnable", target = "starttlsEnable"),
         @Mapping(source = "dto.starttlsRequired", target = "starttlsRequired"),

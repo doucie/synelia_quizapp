@@ -27,6 +27,9 @@ public class EmailTemplate implements Serializable, Cloneable {
     @Column(name = "body_template", nullable = false, columnDefinition = "TEXT")
     private String bodyTemplate;
 
+    @Column(name = "editable_variables_json", columnDefinition = "TEXT")
+    private String editableVariablesJson;
+
     @Column(name = "description", length = 500)
     private String description;
 

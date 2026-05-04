@@ -18,6 +18,7 @@ interface UserOverride {
   id?: number;
   userId?: number;
   functionality?: string;
+  isAllowed?: boolean;
   accessType?: 'GRANT' | 'DENY';
 }
 
@@ -82,6 +83,18 @@ export class UserPermissionsComponent implements OnInit, OnDestroy {
     return user?.userRole?.toUpperCase() === 'ADMIN';
   });
 
+  deniedFunctionalities = computed(() =>
+    Array.from(this.userOverrides().entries())
+      .filter(([, accessType]) => accessType === 'DENY')
+      .map(([functionality]) => functionality)
+  );
+
+  assignedGroupNames = computed(() =>
+    this.userGroups()
+      .map(group => group.groupName?.trim())
+      .filter((groupName): groupName is string => !!groupName)
+  );
+
   filteredUsers = computed(() => {
     const query = this.searchQuery().toLowerCase().trim();
     if (!query) return this.users();
@@ -142,8 +155,9 @@ export class UserPermissionsComponent implements OnInit, OnDestroy {
         next: (res) => {
           const map = new Map<string, 'GRANT' | 'DENY'>();
           (res.items || []).forEach(o => {
-            if (o.functionality && o.accessType) {
-              map.set(o.functionality, o.accessType);
+            const accessType = o.accessType || this.toAccessType(o.isAllowed);
+            if (o.functionality && accessType) {
+              map.set(o.functionality, accessType);
             }
           });
           this.userOverrides.set(map);
@@ -191,6 +205,14 @@ export class UserPermissionsComponent implements OnInit, OnDestroy {
 
   getOverrideState(functionality: string): 'default' | 'GRANT' | 'DENY' {
     return this.userOverrides().get(functionality) || 'default';
+  }
+
+  getOverrideExplanation(functionality: string): string | null {
+    if (this.getOverrideState(functionality) !== 'DENY') {
+      return null;
+    }
+
+    return 'DENY individuel actif: ce droit est retiré a cet utilisateur, meme si son role ou un groupe metier le lui accorde.';
   }
 
   isDenyDisabled(functionality: string): boolean {
@@ -248,7 +270,7 @@ export class UserPermissionsComponent implements OnInit, OnDestroy {
         });
     } else {
       // Set GRANT or DENY
-      const request: SpringBootRequest<any> = { data: { userId, functionality, accessType: value } };
+      const request: SpringBootRequest<any> = { data: { userId, functionality, isAllowed: value === 'GRANT' } };
       this.http.post<SpringBootResponse<any>>(`${this.apiUrl}/userPermissionOverride/setOverride`, request)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
@@ -317,5 +339,11 @@ export class UserPermissionsComponent implements OnInit, OnDestroy {
     if (role === 'SUPER_ADMIN') return 'Super Admin';
     if (role === 'ADMIN') return 'Administrateur';
     return 'Utilisateur';
+  }
+
+  private toAccessType(isAllowed?: boolean): 'GRANT' | 'DENY' | undefined {
+    if (isAllowed === true) return 'GRANT';
+    if (isAllowed === false) return 'DENY';
+    return undefined;
   }
 }

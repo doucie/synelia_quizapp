@@ -46,12 +46,12 @@ public class ApplicationsDto extends _ApplicationsDto implements Cloneable{
     private Integer    totalEvaluationNumber ;
     private Double     totalEvaluationPercentage ;
     private String     applicationStatus    ;
-    private String     visitToken           ;
     private String     quizToken            ;
     private String     quizStatus           ;
     private Integer    quizLevel            ;
     private Integer    totalQuestions       ;
     private Integer    quizScorePercent     ;
+    private String     quizManualCorrectionStatus ;
     private Integer    timeElapsed          ;
     private String     interviewDate        ;
     private String     interviewStatus      ;
@@ -71,6 +71,10 @@ public class ApplicationsDto extends _ApplicationsDto implements Cloneable{
     private String     dateModificationA    ;
     private Integer    sourceTokenId        ;
     private Integer    formVersionId        ;
+    private Integer    questionId           ;
+    private Integer    answerId             ;
+    private List<Integer> selectedAnswerIds ;
+    private String     freeTextResponse     ;
 
     //----------------------------------------------------------------------
     // ENTITY LINKS FIELD ( RELATIONSHIP )
@@ -91,12 +95,12 @@ public class ApplicationsDto extends _ApplicationsDto implements Cloneable{
 	private SearchParam<Integer>  totalEvaluationNumberParam ;                     
 	private SearchParam<Double>   totalEvaluationPercentageParam ;                     
 	private SearchParam<String>   applicationStatusParam;                     
-	private SearchParam<String>   visitTokenParam       ;                     
 	private SearchParam<String>   quizTokenParam        ;                     
 	private SearchParam<String>   quizStatusParam       ;                     
 	private SearchParam<Integer>  quizLevelParam        ;                     
 	private SearchParam<Integer>  totalQuestionsParam   ;                     
 	private SearchParam<Integer>  quizScorePercentParam ;                     
+    private SearchParam<String>   quizManualCorrectionStatusParam ;                     
 	private SearchParam<Integer>  timeElapsedParam      ;                     
 	private SearchParam<String>   interviewDateParam    ;                     
 	private SearchParam<String>   interviewStatusParam  ;                     

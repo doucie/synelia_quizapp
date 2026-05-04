@@ -31,8 +31,11 @@ import jakarta.persistence.PersistenceContext;
 import lombok.extern.java.Log;
 import tech.synelia.quizapp.business.UserBusiness;
 import tech.synelia.quizapp.business.InvitationCodeBusiness;
+import tech.synelia.quizapp.business.PlatformReadinessService;
+import tech.synelia.quizapp.dao.entity.AppConfig;
 import tech.synelia.quizapp.dao.entity.User;
 import tech.synelia.quizapp.dao.entity.EmailTemplate;
+import tech.synelia.quizapp.dao.repository.AppConfigRepository;
 import tech.synelia.quizapp.dao.repository.UserRepository;
 // import tech.synelia.quizapp.user.managment.UserManagmentRepository;
 // import tech.synelia.quizapp.utils.ExceptionUtils;
@@ -47,6 +50,7 @@ import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.dto.UserDto;
 // import tech.synelia.quizapp.user.managment.UserManagmentDto;
 import tech.synelia.quizapp.utils.dto.transformer.UserTransformer;
+import tech.synelia.quizapp.utils.enums.UserRole;
 
 @Log
 @Component
@@ -58,6 +62,8 @@ public class UserManagmentBusiness {
 	private UserBusiness userBusiness;
 	@Autowired
 	private UserRepository userRepository;
+	@Autowired
+	private AppConfigRepository appConfigRepository;
 	@Autowired
 	private UserManagmentRepository userManagmentRepository;
 	@Autowired
@@ -74,6 +80,8 @@ public class UserManagmentBusiness {
 	private tech.synelia.quizapp.business.EmailTemplateBusiness emailTemplateBusiness;
 	@Autowired
 	private InvitationCodeBusiness invitationCodeBusiness;
+	@Autowired
+	private PlatformReadinessService platformReadinessService;
 
 	private Context context;
 
@@ -139,6 +147,13 @@ public class UserManagmentBusiness {
 
 		if (Utilities.isTrue(item.getIsLocked())) {
 			response.setStatus(functionalError.DISALLOWED_OPERATION("Desole votre compte est verouille", locale));
+			response.setHasError(true);
+			return response;
+		}
+
+		if (isCandidateRole(item.getUserRole()) && !areCandidateAccountsEnabled()) {
+			response.setStatus(functionalError.DISALLOWED_OPERATION(
+					"La fonctionnalite de comptes candidats est desactivee.", locale));
 			response.setHasError(true);
 			return response;
 		}
@@ -309,6 +324,67 @@ public class UserManagmentBusiness {
 	}
 
 	@SuppressWarnings("unused")
+	@Transactional
+	public Response<UserDto> changerEmail(Request<UserManagmentDto> request, Locale locale) throws Exception {
+		log.info("----begin changerEmail-----");
+
+		response = new Response<UserDto>();
+
+		UserManagmentDto dto = request.getData();
+		Map<String, Object> fieldsToVerify = new HashMap<String, Object>();
+		fieldsToVerify.put("email", dto.getEmail());
+		fieldsToVerify.put("oldPassword", dto.getOldPassword());
+		if (!Validate.RequiredValue(fieldsToVerify).isGood()) {
+			response.setStatus(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
+			response.setHasError(true);
+			return response;
+		}
+
+		User currentUser = userRepository.findOne(request.getUser(), false);
+		if (currentUser == null) {
+			response.setStatus(functionalError.AUTH_FAIL("Utilisateur introuvable.", locale));
+			response.setHasError(true);
+			return response;
+		}
+
+		if (!passwordMatches(currentUser, dto.getOldPassword().trim())) {
+			response.setStatus(functionalError.LOGIN_FAIL(locale));
+			response.setHasError(true);
+			return response;
+		}
+
+		String nextEmail = dto.getEmail().trim().toLowerCase(Locale.ROOT);
+		if (nextEmail.equalsIgnoreCase(currentUser.getEmail())) {
+			response.setStatus(functionalError.SUCCESS("", locale));
+			response.setItem(UserTransformer.INSTANCE.toDto(currentUser));
+			response.setHasError(false);
+			log.info("----end changerEmail-----");
+			return response;
+		}
+
+		User existingUser = userRepository.findByEmail(nextEmail, false);
+		if (existingUser != null && !existingUser.getId().equals(currentUser.getId())) {
+			response.setStatus(functionalError.DATA_EXIST("user email -> " + nextEmail, locale));
+			response.setHasError(true);
+			return response;
+		}
+
+		currentUser.setEmail(nextEmail);
+		currentUser.setUpdatedAt(Utilities.getCurrentDate());
+		currentUser.setUpdatedBy(request.getUser());
+		currentUser.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(currentUser)));
+		currentUser = userRepository.save(currentUser);
+
+		response.setStatus(functionalError.SUCCESS("", locale));
+		response.setItem(UserTransformer.INSTANCE.toDto(currentUser));
+		response.setHasError(false);
+
+		log.info("----end changerEmail-----");
+
+		return response;
+	}
+
+	@SuppressWarnings("unused")
 	public Response<UserDto> reinitialiserMotDePasse(Request<UserDto> request, Locale locale) throws Exception {
 		log.info("----begin reinitialiserMotDePasse User-----");
 
@@ -340,6 +416,8 @@ public class UserManagmentBusiness {
 			return response;
 		}
 
+		platformReadinessService.requireEmailDeliveryAvailable("PASSWORD_RESET", "password_reset", locale);
+
 		Date targetTime = new Date(); // now
 		targetTime = DateUtils.addHours(targetTime, 48); // add // 48// hours
 		String validationCode = Utilities.generateAlphanumericCode(8);
@@ -367,25 +445,16 @@ public class UserManagmentBusiness {
 			String subject;
 			String contenu;
 
-			// Charger le template depuis la base de données
-			EmailTemplate emailTemplate = emailTemplateBusiness.findDefaultByActionTypeOrKey("PASSWORD_RESET", "password_reset");
-			if (emailTemplate != null) {
-				Map<String, String> vars = new HashMap<>();
-				vars.put("first_name", existingEntity.getFirstName());
-				vars.put("last_name", existingEntity.getLastName());
-				vars.put("email", existingEntity.getEmail());
-				vars.put("new_password", validationCode);
-				vars.put("app_link", appLink);
-				subject = emailTemplateBusiness.renderTemplate(emailTemplate.getSubjectTemplate(), vars);
-				contenu = emailTemplateBusiness.renderTemplate(emailTemplate.getBodyTemplate(), vars);
-			} else {
-				subject = "Réinitialisation des paramètres d'accès";
-				contenu = "Bonjour " + existingEntity.getFirstName() + " " + existingEntity.getLastName() + "<br/><br/>";
-				contenu += "Votre mot de passe a été reinitialisé avec succès" + " ! " + "<br/>";
-				contenu += "Vos nouveaux paramètres de connexion sont :" + "<br/><br/>";
-				contenu += "Email : " + existingEntity.getEmail() + " " + "<br/>";
-				contenu += "Password : " + validationCode + " " + "<br/>";
-			}
+			EmailTemplate emailTemplate = platformReadinessService.requireActiveEmailTemplate(
+					"PASSWORD_RESET", "password_reset", locale);
+			Map<String, String> vars = new HashMap<>();
+			vars.put("first_name", existingEntity.getFirstName());
+			vars.put("last_name", existingEntity.getLastName());
+			vars.put("email", existingEntity.getEmail());
+			vars.put("new_password", validationCode);
+			vars.put("app_link", appLink);
+			subject = emailTemplateBusiness.renderSubjectTemplate(emailTemplate, vars);
+			contenu = emailTemplateBusiness.renderBodyTemplate(emailTemplate, vars);
 			String body = "";
 			context = new Context();
 			String template = "blank";
@@ -687,6 +756,13 @@ public class UserManagmentBusiness {
 
 		tech.synelia.quizapp.utils.dto.InvitationCodeDto invitation = codeResponse.getItem();
 
+		if (isCandidateRole(invitation.getRole()) && !areCandidateAccountsEnabled()) {
+			response.setStatus(functionalError.DISALLOWED_OPERATION(
+					"La fonctionnalite de comptes candidats est desactivee.", locale));
+			response.setHasError(true);
+			return response;
+		}
+
 		// Validate password strength
 		Map<String, Object> passValid = Utilities.validatePassword(dto.getPassword());
 		if (Utilities.isTrue(Boolean.parseBoolean(passValid.get(Utilities.validePassState).toString()))) {
@@ -734,6 +810,27 @@ public class UserManagmentBusiness {
 
 		log.info("----end registerWithCode-----");
 		return response;
+	}
+
+	private boolean areCandidateAccountsEnabled() {
+		AppConfig activeConfig = appConfigRepository.findActiveConfig(true, false);
+		return activeConfig != null && Boolean.TRUE.equals(activeConfig.getCandidateAccountsEnabled());
+	}
+
+	private boolean isCandidateRole(String role) {
+		return UserRole.CANDIDATE.getValue().equalsIgnoreCase(StringUtils.trimToEmpty(role));
+	}
+
+	private boolean passwordMatches(User user, String rawPassword) throws Exception {
+		if (user == null || StringUtils.isBlank(rawPassword) || user.getPassword() == null) {
+			return false;
+		}
+
+		if (user.getPassword().startsWith("$2")) {
+			return Utilities.verifyBCryptPassword(rawPassword, user.getPassword());
+		}
+
+		return user.getPassword().equals(Utilities.encrypt(rawPassword));
 	}
 
 }

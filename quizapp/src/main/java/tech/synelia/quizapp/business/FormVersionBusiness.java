@@ -21,6 +21,7 @@ import tech.synelia.quizapp.utils.contract.IBasicBusiness;
 import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.dto.transformer.*;
+import tech.synelia.quizapp.utils.enums.QuestionType;
 import tech.synelia.quizapp.dao.entity.*;
 import tech.synelia.quizapp.dao.repository.*;
 
@@ -93,6 +94,9 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 			if (entityToSave.getIsLocked() == null) {
 				entityToSave.setIsLocked(false);
 			}
+			if (Boolean.TRUE.equals(entityToSave.getIsPublished())) {
+				validateFormVersionCanBePublished(entityToSave, locale);
+			}
 			items.add(entityToSave);
 		}
 
@@ -143,9 +147,15 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 				throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
 			}
 
-			FormVersion entityToSave = formVersionRepository.findOne(dto.getId(), false);
-			if (entityToSave == null) {
+			FormVersion sourceVersion = formVersionRepository.findOne(dto.getId(), false);
+			if (sourceVersion == null) {
 				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("formVersion id -> " + dto.getId(), locale));
+			}
+
+			FormVersion entityToSave = sourceVersion;
+			boolean autoForkedFromLockedVersion = Boolean.TRUE.equals(sourceVersion.getIsLocked());
+			if (autoForkedFromLockedVersion) {
+				entityToSave = createForkedVersion(sourceVersion, request.getUser());
 			}
 
 			if (dto.getFormId() != null && dto.getFormId() > 0) {
@@ -155,12 +165,25 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 				}
 				entityToSave.setForm(existingForm);
 			}
-			if (dto.getVersionNumber() != null) {
-				entityToSave.setVersionNumber(dto.getVersionNumber());
+
+			Integer versionNumberToApply = dto.getVersionNumber();
+			if (autoForkedFromLockedVersion
+					&& (versionNumberToApply == null || Objects.equals(versionNumberToApply, sourceVersion.getVersionNumber()))) {
+				versionNumberToApply = entityToSave.getVersionNumber();
 			}
-			if (dto.getIsPublished() != null) {
+			if (versionNumberToApply != null) {
+				entityToSave.setVersionNumber(versionNumberToApply);
+			}
+
+			Boolean publishedToApply = dto.getIsPublished();
+			if (autoForkedFromLockedVersion
+					&& (publishedToApply == null || Objects.equals(publishedToApply, sourceVersion.getIsPublished()))) {
+				publishedToApply = entityToSave.getIsPublished();
+			}
+			if (publishedToApply != null) {
 				// Publication unique : dépublier les autres versions du même formulaire
-				if (dto.getIsPublished() && entityToSave.getForm() != null) {
+				if (publishedToApply && entityToSave.getForm() != null) {
+					validateFormVersionCanBePublished(entityToSave, locale);
 					List<FormVersion> otherVersions = formVersionRepository.findByFormIdAndIsPublished(
 						entityToSave.getForm().getId(), true, false);
 					for (FormVersion other : otherVersions) {
@@ -172,10 +195,16 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 						}
 					}
 				}
-				entityToSave.setIsPublished(dto.getIsPublished());
+				entityToSave.setIsPublished(publishedToApply);
 			}
-			if (dto.getIsLocked() != null) {
-				entityToSave.setIsLocked(dto.getIsLocked());
+
+			Boolean lockedToApply = dto.getIsLocked();
+			if (autoForkedFromLockedVersion
+					&& (lockedToApply == null || Objects.equals(lockedToApply, sourceVersion.getIsLocked()))) {
+				lockedToApply = entityToSave.getIsLocked();
+			}
+			if (lockedToApply != null) {
+				entityToSave.setIsLocked(lockedToApply);
 			}
 			entityToSave.setUpdatedAt(Utilities.getCurrentDate());
 			entityToSave.setUpdatedBy(request.getUser());
@@ -215,6 +244,57 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 		}
 		log.info("----end update FormVersion-----");
 		return response;
+	}
+
+	private void validateFormVersionCanBePublished(FormVersion formVersion, Locale locale) {
+		if (formVersion == null || formVersion.getId() == null) {
+			throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+					"La version doit etre enregistree et completee avant publication.", locale));
+		}
+
+		List<FormQuestions> formQuestions = formQuestionsRepository.findByFormVersionIdOrderByQuestionOrder(formVersion.getId(), false);
+		if (formQuestions == null || formQuestions.isEmpty()) {
+			return;
+		}
+
+		for (FormQuestions formQuestion : formQuestions) {
+			Question question = formQuestion.getQuestion();
+			if (question == null || Boolean.TRUE.equals(question.getIsDeleted())) {
+				continue;
+			}
+
+			String questionType = StringUtils.trimToEmpty(question.getQuestionType());
+			if (QuestionType.TEXT.getValue().equals(questionType)) {
+				continue;
+			}
+
+			List<Answer> answers = answerRepository.findByQuestionId(question.getId(), false);
+			int correctAnswersCount = 0;
+			for (Answer answer : answers) {
+				if (answer != null && !Boolean.TRUE.equals(answer.getIsDeleted()) && Boolean.TRUE.equals(answer.getIsCorrect())) {
+					correctAnswersCount++;
+				}
+			}
+
+			String questionLabel = StringUtils.defaultIfBlank(question.getQuestionRef(), question.getQuestionText());
+			if ((QuestionType.SINGLE_CHOICE.getValue().equals(questionType)
+					|| QuestionType.TRUE_FALSE.getValue().equals(questionType))
+					&& correctAnswersCount != 1) {
+				throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+						"Publication impossible: la question '" + questionLabel + "' doit avoir exactement une bonne réponse.", locale));
+			}
+			if (QuestionType.MULTIPLE_CHOICE.getValue().equals(questionType) && correctAnswersCount < 1) {
+				throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+						"Publication impossible: la question '" + questionLabel + "' doit avoir au moins une bonne réponse.", locale));
+			}
+			if (!QuestionType.SINGLE_CHOICE.getValue().equals(questionType)
+					&& !QuestionType.TRUE_FALSE.getValue().equals(questionType)
+					&& !QuestionType.MULTIPLE_CHOICE.getValue().equals(questionType)
+					&& correctAnswersCount < 1) {
+				throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+						"Publication impossible: la question '" + questionLabel + "' n'a pas de bonne réponse exploitable.", locale));
+			}
+		}
 	}
 
 	@Override
@@ -386,6 +466,21 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 				"La version " + sourceVersion.getVersionNumber() + " n'est pas verrouillée, modification directe possible", locale));
 		}
 
+		FormVersion newVersion = createForkedVersion(sourceVersion, userId);
+
+		// 3. Return the new version
+		FormVersionDto resultDto = FormVersionTransformer.INSTANCE.toDto(newVersion);
+		Status status = new Status();
+		status.setCode(StatusCode.SUCCESS);
+		status.setMessage(StatusMessage.SUCCESS);
+		response.setItems(Collections.singletonList(resultDto));
+		response.setHasError(false);
+		response.setHttpCode(HttpStatus.CREATED.value());
+		response.setStatus(status);
+		return response;
+	}
+
+	private FormVersion createForkedVersion(FormVersion sourceVersion, Integer userId) {
 		// 1. Create new form_version
 		FormVersion newVersion = new FormVersion();
 		newVersion.setForm(sourceVersion.getForm());
@@ -416,16 +511,7 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 			formQuestionsRepository.saveAll(newLinks);
 		}
 
-		// 3. Return the new version
-		FormVersionDto resultDto = FormVersionTransformer.INSTANCE.toDto(newVersion);
-		Status status = new Status();
-		status.setCode(StatusCode.SUCCESS);
-		status.setMessage(StatusMessage.SUCCESS);
-		response.setItems(Collections.singletonList(resultDto));
-		response.setHasError(false);
-		response.setHttpCode(HttpStatus.CREATED.value());
-		response.setStatus(status);
-		return response;
+		return newVersion;
 	}
 
 	/**

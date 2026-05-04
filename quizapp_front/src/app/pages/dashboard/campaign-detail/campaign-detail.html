@@ -321,6 +321,17 @@
                       </svg>
                       <span>Peut évaluer</span>
                     </div>
+                    <div class="permission-item" [class.active]="hasEntityPerm(recruiter.userId, 'CORRECT_TEST')">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        @if (hasEntityPerm(recruiter.userId, 'CORRECT_TEST')) {
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        } @else {
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        }
+                      </svg>
+                      <span>Peut corriger les tests</span>
+                    </div>
                     <div class="permission-item" [class.active]="recruiter.canUpdate">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         @if (recruiter.canUpdate) {
@@ -424,6 +435,81 @@
         }
       </div>
 
+      <div class="form-assignment-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 5h18"></path>
+              <path d="M3 12h18"></path>
+              <path d="M3 19h18"></path>
+              <path d="M8 5v14"></path>
+            </svg>
+            Attribution des formulaires
+          </h2>
+          <button
+            class="btn btn-primary"
+            (click)="saveCampaignFormConfiguration()"
+            [disabled]="campaignConfigSaving() || !isCampaignFormConfigDirty()"
+          >
+            @if (campaignConfigSaving()) {
+              <div class="spinner-small"></div>
+            } @else {
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            }
+            {{ campaignConfigSaving() ? 'Enregistrement...' : 'Enregistrer la stratégie' }}
+          </button>
+        </div>
+
+        <div class="assignment-grid">
+          <div class="question-form">
+            <div class="form-group">
+              <label for="formAssignmentStrategy">Stratégie d’attribution</label>
+              <select
+                id="formAssignmentStrategy"
+                class="form-select"
+                [ngModel]="selectedFormAssignmentStrategy()"
+                (ngModelChange)="selectedFormAssignmentStrategy.set($event)"
+              >
+                @for (strategy of formAssignmentStrategies; track strategy.value) {
+                  <option [ngValue]="strategy.value">{{ strategy.label }}</option>
+                }
+              </select>
+              <p class="form-helper">{{ getFormAssignmentStrategyDescription(selectedFormAssignmentStrategy()) }}</p>
+            </div>
+
+            <div class="form-group">
+              <label for="formExhaustionPolicy">Politique d’épuisement</label>
+              <select
+                id="formExhaustionPolicy"
+                class="form-select"
+                [ngModel]="selectedFormExhaustionPolicy()"
+                (ngModelChange)="selectedFormExhaustionPolicy.set($event)"
+              >
+                @for (policy of formExhaustionPolicies; track policy.value) {
+                  <option [ngValue]="policy.value">{{ policy.label }}</option>
+                }
+              </select>
+              <p class="form-helper">{{ getExhaustionPolicyDescription(selectedFormExhaustionPolicy()) }}</p>
+            </div>
+          </div>
+
+          <div class="assignment-summary-card">
+            <span class="assignment-pill">{{ getFormAssignmentStrategyLabel(selectedFormAssignmentStrategy()) }}</span>
+            <span class="assignment-pill assignment-pill-secondary">{{ getExhaustionPolicyLabel(selectedFormExhaustionPolicy()) }}</span>
+            <p class="assignment-summary-text">{{ getFormAssignmentStrategyDescription(selectedFormAssignmentStrategy()) }}</p>
+            <p class="assignment-summary-note">
+              @if (isSourceTokenStrategySelected()) {
+                Chaque token doit pointer vers un formulaire dédié pour servir le bon quiz.
+              } @else {
+                Les affectations par token restent configurables à l’avance, même si cette stratégie n’est pas encore active.
+              }
+            </p>
+          </div>
+        </div>
+      </div>
+
       <!-- Section des tokens -->
       <div class="tokens-section">
         <div class="section-header">
@@ -456,6 +542,22 @@
                 placeholder="Ex: LinkedIn, Site carrière, JobBoard..."
                 [disabled]="tokenLoading()"
               />
+            </div>
+            <div class="form-group">
+              <label for="tokenForm">Formulaire dédié</label>
+              <select
+                id="tokenForm"
+                class="form-select"
+                [ngModel]="newTokenFormId()"
+                (ngModelChange)="newTokenFormId.set($event)"
+                [disabled]="tokenLoading() || campaignForms().length === 0"
+              >
+                <option [ngValue]="null">Aucun formulaire dédié</option>
+                @for (form of campaignForms(); track form.id) {
+                  <option [ngValue]="form.id">{{ form.formName || 'Sans nom' }}</option>
+                }
+              </select>
+              <p class="form-helper">Optionnel. Utilisé surtout avec la stratégie « Selon le source token ».</p>
             </div>
             <div class="form-actions">
               <button 
@@ -497,6 +599,7 @@
                   <div class="token-info">
                     <h3 class="token-name">{{ token.sourceTokenName || 'Sans nom' }}</h3>
                     <div class="token-code">{{ token.tokenString }}</div>
+                    <div class="token-assigned-form">{{ token.formName || 'Aucun formulaire dédié' }}</div>
                   </div>
                 </div>
 
@@ -510,6 +613,38 @@
                       class="url-input"
                     />
                   </div>
+                </div>
+
+                <div class="token-form-mapping">
+                  <label>Formulaire lié à ce token</label>
+                  <div class="token-form-actions">
+                    <select
+                      class="form-select"
+                      [ngModel]="getTokenFormSelection(token)"
+                      (ngModelChange)="updateTokenFormSelection(token.id, $event)"
+                      [disabled]="campaignForms().length === 0 || isTokenFormSaving(token.id)"
+                    >
+                      <option [ngValue]="null">Aucun formulaire dédié</option>
+                      @for (form of campaignForms(); track form.id) {
+                        <option [ngValue]="form.id">{{ form.formName || 'Sans nom' }}</option>
+                      }
+                    </select>
+                    <button
+                      class="btn btn-secondary btn-inline-save"
+                      (click)="saveTokenFormAssignment(token)"
+                      [disabled]="isTokenFormSaving(token.id) || !isTokenFormDirty(token)"
+                    >
+                      @if (isTokenFormSaving(token.id)) {
+                        <div class="spinner-small"></div>
+                      } @else {
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                      }
+                      {{ isTokenFormSaving(token.id) ? 'En cours...' : 'Enregistrer' }}
+                    </button>
+                  </div>
+                  <p class="form-helper">Pratique pour servir un formulaire précis quand le candidat arrive via ce lien.</p>
                 </div>
 
                 <div class="token-actions">

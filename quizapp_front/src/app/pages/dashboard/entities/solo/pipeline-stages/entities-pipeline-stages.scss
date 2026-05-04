@@ -8,3 +8,10 @@
   min-height: 100vh;
   min-width: 0;
 }
+
+.form-helper {
+  display: block;
+  margin-top: var(--spacing-xs);
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}

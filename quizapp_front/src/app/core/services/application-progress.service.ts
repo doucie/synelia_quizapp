@@ -133,10 +133,16 @@ export class ApplicationProgressService {
     }).pipe(catchError(this.handleError('échec de l\'étape')));
   }
 
-  skip(applicationId: number, stageId: number): Observable<ApplicationProgressResponse> {
+  skip(applicationId: number, stageId: number, notes?: string): Observable<ApplicationProgressResponse> {
     return this.http.post<ApplicationProgressResponse>(`${this.apiUrl}/skip`, {
-      user: this.getCurrentUserId(), data: { applicationId, pipelineStageId: stageId }
+      user: this.getCurrentUserId(), data: { applicationId, pipelineStageId: stageId, notes }
     }).pipe(catchError(this.handleError('passage de l\'étape')));
+  }
+
+  rollback(applicationId: number, stageId: number, notes?: string): Observable<ApplicationProgressResponse> {
+    return this.http.post<ApplicationProgressResponse>(`${this.apiUrl}/rollback`, {
+      user: this.getCurrentUserId(), data: { applicationId, pipelineStageId: stageId, notes }
+    }).pipe(catchError(this.handleError('retour arrière pipeline')));
   }
 
   getCurrentStage(applicationId: number): Observable<ApplicationProgressResponse> {

@@ -23,8 +23,8 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
-import lombok.AllArgsConstructor;
 
+import tech.synelia.quizapp.business.EmailOperationalAlertService;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.dao.entity.SmtpConfig;
 import tech.synelia.quizapp.dao.repository.SmtpConfigRepository;
@@ -46,6 +46,10 @@ public class HostingUtils {
 
 	@Autowired
 	private ExceptionUtils exceptionUtils;
+	@Autowired
+	private FunctionalError functionalError;
+	@Autowired
+	private EmailOperationalAlertService emailOperationalAlertService;
 
 	@Autowired
 	private SmtpConfigRepository smtpConfigRepository;
@@ -62,23 +66,32 @@ public class HostingUtils {
 		Response<T> response = new Response<T>();
 		JavaMailSenderImpl javaMailSender = new JavaMailSenderImpl();
 
-		// Try DB-based SMTP config first, fallback to application.properties via ParamsUtils
+		// Email delivery is only allowed when a DB SMTP config is explicitly active.
 		SmtpConfig dbConfig = null;
 		try {
 			dbConfig = smtpConfigRepository.findActiveConfig(true, false);
 		} catch (Exception e) {
-			slf4jLogger.warn("Could not load SMTP config from DB, falling back to application.properties", e);
+			slf4jLogger.warn("Could not load SMTP config from DB", e);
 		}
 
-		String smtpServer;
-		int smtpPort;
-		String smtpUsername;
-		String smtpPassword;
-		Boolean smtpAuth;
-		Boolean starttlsEnable;
-		Boolean starttlsRequired;
+		String smtpServer = null;
+		int smtpPort = 587;
+		String smtpUsername = null;
+		String smtpPassword = null;
+		Boolean smtpAuth = Boolean.TRUE;
+		Boolean starttlsEnable = Boolean.TRUE;
+		Boolean starttlsRequired = Boolean.FALSE;
 
-		if (dbConfig != null && dbConfig.getHost() != null) {
+		if (dbConfig == null || dbConfig.getHost() == null || dbConfig.getHost().trim().isEmpty()) {
+			slf4jLogger.error("No active SMTP config available in database");
+			emailOperationalAlertService.notifyMissingSmtpConfiguration();
+			response.setHasError(Boolean.TRUE);
+			response.setStatus(functionalError.DISALLOWED_OPERATION(
+					"Aucune configuration SMTP active n'est disponible pour cet envoi.", locale));
+			return response;
+		}
+
+		if (dbConfig.getHost() != null) {
 			slf4jLogger.info("Using SMTP config from database (id={})", dbConfig.getId());
 			smtpServer = dbConfig.getHost();
 			smtpPort = dbConfig.getPort() != null ? dbConfig.getPort() : 587;
@@ -94,15 +107,6 @@ public class HostingUtils {
 					from.put("user", dbConfig.getSenderName());
 				}
 			}
-		} else {
-			slf4jLogger.info("Using SMTP config from application.properties");
-			smtpServer = paramsUtils.getSmtpHost();
-			smtpPort = paramsUtils.getSmtpPort();
-			smtpUsername = paramsUtils.getSmtpMailAdresse();
-			smtpPassword = paramsUtils.getSmtpPassword();
-			smtpAuth = true;
-			starttlsEnable = true;
-			starttlsRequired = true;
 		}
 
 		slf4jLogger.info("SMTP Server: {}, Port: {}", smtpServer, smtpPort);
@@ -164,15 +168,21 @@ public class HostingUtils {
 				/// gerer les cas d'exeption de non envoi de mail
 			} catch (MessagingException e) {
 				slf4jLogger.error("Erreur MessagingException lors de l'envoi de l'email", e);
+				emailOperationalAlertService.notifyDeliveryFailure();
 				e.printStackTrace();
 				exceptionUtils.EXCEPTION(response, locale, e);
 			} catch (UnsupportedEncodingException e) {
 				slf4jLogger.error("Erreur UnsupportedEncodingException lors de l'envoi de l'email", e);
+				emailOperationalAlertService.notifyDeliveryFailure();
 				e.printStackTrace();
 				exceptionUtils.EXCEPTION(response, locale, e);
 			}
 		} else {
 			slf4jLogger.error("SMTP Server est null - impossible d'envoyer l'email");
+			emailOperationalAlertService.notifyMissingSmtpConfiguration();
+			response.setHasError(Boolean.TRUE);
+			response.setStatus(functionalError.DISALLOWED_OPERATION(
+					"Aucune configuration SMTP active n'est disponible pour cet envoi.", locale));
 		}
 		slf4jLogger.info("----end sendEmail-----");
 		return response;

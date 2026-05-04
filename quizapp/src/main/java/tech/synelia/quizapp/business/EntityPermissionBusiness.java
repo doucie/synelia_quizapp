@@ -1,22 +1,31 @@
 package tech.synelia.quizapp.business;
 
-import lombok.extern.java.Log;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Component;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import tech.synelia.quizapp.utils.*;
-import tech.synelia.quizapp.utils.dto.*;
-import tech.synelia.quizapp.utils.exception.*;
+import lombok.extern.java.Log;
+import tech.synelia.quizapp.dao.entity.EntityPermission;
+import tech.synelia.quizapp.dao.entity.User;
+import tech.synelia.quizapp.dao.repository.EntityPermissionRepository;
+import tech.synelia.quizapp.dao.repository.UserRepository;
+import tech.synelia.quizapp.utils.FunctionalError;
+import tech.synelia.quizapp.utils.Status;
+import tech.synelia.quizapp.utils.StatusCode;
+import tech.synelia.quizapp.utils.StatusMessage;
+import tech.synelia.quizapp.utils.Utilities;
 import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
-import tech.synelia.quizapp.dao.entity.*;
-import tech.synelia.quizapp.dao.repository.*;
+import tech.synelia.quizapp.utils.dto.EntityPermissionDto;
+import tech.synelia.quizapp.utils.exception.EntityNotFoundException;
+import tech.synelia.quizapp.utils.exception.InvalidEntityException;
 
 @Log
 @Component
@@ -145,6 +154,12 @@ public class EntityPermissionBusiness {
 					d.setEntityType(e.getEntityType());
 					d.setEntityId(e.getEntityId());
 					d.setPermissionKey(e.getPermissionKey());
+					d.setGranted(true);
+					d.setUserFirstName(e.getUser().getFirstName());
+					d.setUserLastName(e.getUser().getLastName());
+					d.setUserEmail(e.getUser().getEmail());
+					d.setUserName(e.getUser().getUsername());
+					d.setUserRole(e.getUser().getUserRole());
 					return d;
 				}).collect(Collectors.toList());
 
@@ -182,6 +197,12 @@ public class EntityPermissionBusiness {
 					d.setEntityType(e.getEntityType());
 					d.setEntityId(e.getEntityId());
 					d.setPermissionKey(e.getPermissionKey());
+					d.setGranted(true);
+					d.setUserFirstName(e.getUser().getFirstName());
+					d.setUserLastName(e.getUser().getLastName());
+					d.setUserEmail(e.getUser().getEmail());
+					d.setUserName(e.getUser().getUsername());
+					d.setUserRole(e.getUser().getUserRole());
 					return d;
 				}).collect(Collectors.toList());
 
@@ -214,7 +235,15 @@ public class EntityPermissionBusiness {
 				d.setEntityType(e.getEntityType());
 				d.setEntityId(e.getEntityId());
 				d.setPermissionKey(e.getPermissionKey());
+				d.setGranted(!Boolean.TRUE.equals(e.getIsDeleted()));
 				d.setIsDeleted(e.getIsDeleted());
+				if (e.getUser() != null) {
+					d.setUserFirstName(e.getUser().getFirstName());
+					d.setUserLastName(e.getUser().getLastName());
+					d.setUserEmail(e.getUser().getEmail());
+					d.setUserName(e.getUser().getUsername());
+					d.setUserRole(e.getUser().getUserRole());
+				}
 				java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
 				if (e.getCreatedAt() != null) d.setCreatedAt(sdf.format(e.getCreatedAt()));
 				d.setCreatedBy(e.getCreatedBy());

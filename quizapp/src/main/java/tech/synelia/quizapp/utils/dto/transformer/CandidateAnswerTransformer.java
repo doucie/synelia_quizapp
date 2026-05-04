@@ -26,11 +26,15 @@ public interface CandidateAnswerTransformer {
 	@FullTransformerQualifier
 	@Named("toFullDto")
 	@Mappings({
+		@Mapping(source="entity.manualCorrectedAt", dateFormat="dd/MM/yyyy HH:mm:ss", target="manualCorrectedAt"),
 		@Mapping(source="entity.createdAt", dateFormat="dd/MM/yyyy", target="createdAt"),
 		@Mapping(source="entity.updatedAt", dateFormat="dd/MM/yyyy", target="updatedAt"),
 		@Mapping(source="entity.applications.id", target="applicationId"),
 		@Mapping(source="entity.question.id", target="questionId"),
+		@Mapping(source="entity.question.questionText", target="questionText"),
+		@Mapping(source="entity.question.questionType", target="questionType"),
 		@Mapping(source="entity.answer.id", target="answerId"),
+		@Mapping(source="entity.answer.answerText", target="answerText"),
 	})
 	CandidateAnswerDto toDto(CandidateAnswer entity) throws ParseException;
 
@@ -63,6 +67,10 @@ public interface CandidateAnswerTransformer {
 		@Mapping(source="dto.id", target="id"),
 		@Mapping(source="dto.freeTextResponse", target="freeTextResponse"),
 		@Mapping(source="dto.isSelected", target="isSelected"),
+		@Mapping(source="dto.manualIsCorrect", target="manualIsCorrect"),
+		@Mapping(source="dto.manualCorrectionComment", target="manualCorrectionComment"),
+		@Mapping(source="dto.manualCorrectedAt", dateFormat="dd/MM/yyyy HH:mm:ss", target="manualCorrectedAt"),
+		@Mapping(source="dto.manualCorrectedBy", target="manualCorrectedBy"),
 		@Mapping(source="dto.createdAt", dateFormat="dd/MM/yyyy", target="createdAt"),
 		@Mapping(source="dto.createdBy", target="createdBy"),
 		@Mapping(source="dto.updatedAt", dateFormat="dd/MM/yyyy", target="updatedAt"),

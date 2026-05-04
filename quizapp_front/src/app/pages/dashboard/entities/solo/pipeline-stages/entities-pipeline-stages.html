@@ -281,6 +281,16 @@
             }
           </select>
         </div>
+        <div class="form-group">
+          <label class="form-label">config_json</label>
+          <textarea
+            class="form-input"
+            rows="5"
+            [(ngModel)]="editFormData.configJson"
+            name="configJson"
+            [placeholder]="getConfigPlaceholder(editFormData.stageType)"></textarea>
+          <small class="form-helper">{{ getConfigHelp(editFormData.stageType) }}</small>
+        </div>
         <div class="form-group"><label class="form-label"><input type="checkbox" [(ngModel)]="editFormData.isRequired" name="isRequired" /> Obligatoire</label></div>
         <div class="form-group"><label class="form-label"><input type="checkbox" [(ngModel)]="editFormData.isEliminatory" name="isEliminatory" /> Éliminatoire</label></div>
       </form>
@@ -323,6 +333,16 @@
               <option [ngValue]="tpl.id">{{ tpl.templateName }}</option>
             }
           </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">config_json</label>
+          <textarea
+            class="form-input"
+            rows="5"
+            [(ngModel)]="createFormData.configJson"
+            name="configJsonCreate"
+            [placeholder]="getConfigPlaceholder(createFormData.stageType)"></textarea>
+          <small class="form-helper">{{ getConfigHelp(createFormData.stageType) }}</small>
         </div>
         <div class="form-group"><label class="form-label"><input type="checkbox" [(ngModel)]="createFormData.isRequired" name="isRequired" /> Obligatoire</label></div>
         <div class="form-group"><label class="form-label"><input type="checkbox" [(ngModel)]="createFormData.isEliminatory" name="isEliminatory" /> Éliminatoire</label></div>

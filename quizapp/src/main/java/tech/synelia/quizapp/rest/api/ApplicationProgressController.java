@@ -1,27 +1,30 @@
 package tech.synelia.quizapp.rest.api;
 
-import lombok.extern.java.Log;
+import java.util.List;
+import java.util.Locale;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.http.ResponseEntity;
 
 import jakarta.servlet.http.HttpServletRequest;
-
-import java.util.List;
-import java.util.Locale;
-
-import tech.synelia.quizapp.utils.*;
-import tech.synelia.quizapp.utils.dto.*;
+import lombok.extern.java.Log;
+import tech.synelia.quizapp.business.ApplicationProgressBusiness;
+import tech.synelia.quizapp.rest.fact.ControllerFactory;
+import tech.synelia.quizapp.utils.ExceptionUtils;
+import tech.synelia.quizapp.utils.FunctionalError;
+import tech.synelia.quizapp.utils.Status;
+import tech.synelia.quizapp.utils.StatusCode;
+import tech.synelia.quizapp.utils.StatusMessage;
 import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
+import tech.synelia.quizapp.utils.dto.ApplicationProgressDto;
 import tech.synelia.quizapp.utils.enums.FunctionalityEnum;
-import tech.synelia.quizapp.business.*;
-import tech.synelia.quizapp.rest.fact.ControllerFactory;
 
 @Log
 @CrossOrigin("*")
@@ -120,7 +123,7 @@ public class ApplicationProgressController {
                 response.setHasError(true);
                 return ResponseEntity.ok().body(response);
             }
-            response = applicationProgressBusiness.advanceToNextStage(dto.getApplicationId(), request.getUser(), locale(requestBasic));
+            response = applicationProgressBusiness.advanceToNextStageForUser(dto.getApplicationId(), request.getUser(), locale(requestBasic));
         } catch (Exception e) {
             exceptionUtils.EXCEPTION(response, locale(requestBasic), e);
         }
@@ -137,7 +140,7 @@ public class ApplicationProgressController {
                 response.setHasError(true);
                 return ResponseEntity.ok().body(response);
             }
-            response = applicationProgressBusiness.failStage(dto.getApplicationId(), dto.getPipelineStageId(), request.getUser(), dto.getNotes(), locale(requestBasic));
+            response = applicationProgressBusiness.failStageForUser(dto.getApplicationId(), dto.getPipelineStageId(), request.getUser(), dto.getNotes(), locale(requestBasic));
         } catch (Exception e) {
             exceptionUtils.EXCEPTION(response, locale(requestBasic), e);
         }
@@ -154,7 +157,24 @@ public class ApplicationProgressController {
                 response.setHasError(true);
                 return ResponseEntity.ok().body(response);
             }
-            response = applicationProgressBusiness.skipStage(dto.getApplicationId(), dto.getPipelineStageId(), request.getUser(), locale(requestBasic));
+            response = applicationProgressBusiness.skipStageForUser(dto.getApplicationId(), dto.getPipelineStageId(), request.getUser(), dto.getNotes(), locale(requestBasic));
+        } catch (Exception e) {
+            exceptionUtils.EXCEPTION(response, locale(requestBasic), e);
+        }
+        return ResponseEntity.ok().body(response);
+    }
+
+    @RequestMapping(value="/rollback", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
+    public ResponseEntity<Response<ApplicationProgressDto>> rollback(@RequestBody Request<ApplicationProgressDto> request) throws Exception {
+        log.info("start method /applicationProgress/rollback");
+        Response<ApplicationProgressDto> response = new Response<>();
+        try {
+            ApplicationProgressDto dto = request.getDatas() != null && !request.getDatas().isEmpty() ? request.getDatas().get(0) : request.getData();
+            if (dto == null || dto.getApplicationId() == null || dto.getPipelineStageId() == null) {
+                response.setHasError(true);
+                return ResponseEntity.ok().body(response);
+            }
+            response = applicationProgressBusiness.rollbackStageForUser(dto.getApplicationId(), dto.getPipelineStageId(), request.getUser(), dto.getNotes(), locale(requestBasic));
         } catch (Exception e) {
             exceptionUtils.EXCEPTION(response, locale(requestBasic), e);
         }

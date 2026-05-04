@@ -26,13 +26,13 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.java.Log;
-import tech.synelia.quizapp.business.ApplicationsBusiness;
 import tech.synelia.quizapp.business.ApplicationProgressBusiness;
+import tech.synelia.quizapp.business.ApplicationsBusiness;
 import tech.synelia.quizapp.rest.fact.ControllerFactory;
 import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
-import tech.synelia.quizapp.utils.dto.ApplicationsDto;
 import tech.synelia.quizapp.utils.dto.ApplicationProgressDto;
+import tech.synelia.quizapp.utils.dto.ApplicationsDto;
 import tech.synelia.quizapp.utils.enums.FunctionalityEnum;
 
 /**
@@ -146,6 +146,16 @@ public class ApplicationsController {
         return response;
     }
 
+	@RequestMapping(value="/touch-quiz",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
+    public Response<ApplicationsDto> touchQuiz(@RequestBody Request<ApplicationsDto> request) throws Exception{
+		slf4jLogger.info("start method /applications/touch-quiz");
+		String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
+		Locale locale = Locale.of(languageID, "");
+        Response<ApplicationsDto> response = applicationsBusiness.touchQuizActivity(request, locale);
+		slf4jLogger.info("end method /applications/touch-quiz");
+        return response;
+    }
+
 	@RequestMapping(value="/progress",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
     public Response<ApplicationProgressDto> getProgress(@RequestBody Request<ApplicationProgressDto> request) throws Exception{
     	slf4jLogger.info("start method /applications/progress");
@@ -166,6 +176,43 @@ public class ApplicationsController {
 		slf4jLogger.info("end method /applications/track");
         return response;
     }
+
+	@RequestMapping(value="/respond-interview",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
+    public Map<String, Object> respondInterview(@RequestBody Map<String, String> request) throws Exception{
+		slf4jLogger.info("start method /applications/respond-interview");
+		Locale locale = Locale.of("fr", "");
+		Integer candidateInterviewId = null;
+		if (request.get("candidateInterviewId") != null) {
+			candidateInterviewId = Integer.valueOf(request.get("candidateInterviewId"));
+		}
+		Map<String, Object> response = applicationsBusiness.respondToTrackedInterview(
+				request.get("trackingCode"),
+				request.get("email"),
+				candidateInterviewId,
+				request.get("action"),
+				request.get("declineReason"),
+				request.get("alternativeDateRequested"),
+				locale);
+		slf4jLogger.info("end method /applications/respond-interview");
+		return response;
+	}
+
+	@RequestMapping(value="/submit-ask",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
+    public Map<String, Object> submitAsk(@RequestBody Map<String, String> request) throws Exception{
+		slf4jLogger.info("start method /applications/submit-ask");
+		Locale locale = Locale.of("fr", "");
+		Map<String, Object> response = applicationsBusiness.submitTrackedCandidateAsk(
+				request.get("trackingCode"),
+				request.get("email"),
+				request.get("requestType"),
+				request.get("firstName"),
+				request.get("lastName"),
+				request.get("newEmail"),
+				request.get("newPhone"),
+				locale);
+		slf4jLogger.info("end method /applications/submit-ask");
+		return response;
+	}
 
    
 }

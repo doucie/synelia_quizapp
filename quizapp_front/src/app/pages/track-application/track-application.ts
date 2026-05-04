@@ -1,8 +1,13 @@
-import { Component, ChangeDetectionStrategy, signal, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { ActivatedRoute } from '@angular/router';
 import { environment } from '../../../environments/environment';
+
+type InterviewResponseAction = 'ACCEPT' | 'DECLINE' | 'REQUEST_RESCHEDULE';
+type CandidateAskRequestType = 'IDENTITY' | 'EMAIL' | 'PHONE';
+type CandidateAskStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
 interface TrackingStage {
   id: number;
@@ -28,11 +33,56 @@ interface TrackingApplication {
   candidateFirstName: string;
   candidateLastName: string;
   candidateEmail: string;
+  trackingCode?: string | null;
   applicationStatus: string;
   quizStatus: string;
   createdAt: string;
   emailVerified: boolean;
   campaignTitle: string;
+}
+
+interface TrackingInterview {
+  id: number;
+  interviewId: number;
+  interviewStart: string | null;
+  interviewDuration: number | null;
+  interviewType: string;
+  interviewStatus: string;
+  interviewLocation: string | null;
+  meetLink: string | null;
+  interviewMailSent: boolean;
+  interviewNote: string | null;
+  declineReason: string | null;
+  alternativeDateRequested: string | null;
+  responseState: string;
+  canRespond: boolean;
+}
+
+interface TrackingCandidateAsk {
+  id: number;
+  requestType: CandidateAskRequestType;
+  askStatus: CandidateAskStatus;
+  isVerified: boolean;
+  firstName: string | null;
+  lastName: string | null;
+  newEmail: string | null;
+  newPhone: string | null;
+  decisionReason: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+}
+
+interface InterviewDraft {
+  declineReason: string;
+  alternativeDateRequested: string;
+}
+
+interface CandidateAskDraft {
+  requestType: CandidateAskRequestType | '';
+  firstName: string;
+  lastName: string;
+  newEmail: string;
+  newPhone: string;
 }
 
 interface TrackingResponse {
@@ -41,6 +91,8 @@ interface TrackingResponse {
   application?: TrackingApplication;
   stages?: any[];
   progress?: any[];
+  interviews?: TrackingInterview[];
+  asks?: TrackingCandidateAsk[];
 }
 
 @Component({
@@ -51,15 +103,43 @@ interface TrackingResponse {
   templateUrl: './track-application.html',
   styleUrls: ['./track-application.scss']
 })
-export class TrackApplicationComponent {
+export class TrackApplicationComponent implements OnInit {
+  private readonly route = inject(ActivatedRoute);
   trackingCode = '';
   email = '';
   loading = signal(false);
   errorMessage = signal<string | null>(null);
   application = signal<TrackingApplication | null>(null);
   stages = signal<TrackingStage[]>([]);
+  interviews = signal<TrackingInterview[]>([]);
+  asks = signal<TrackingCandidateAsk[]>([]);
+  interviewSuccessMessage = signal<string | null>(null);
+  interviewErrorMessage = signal<string | null>(null);
+  askSuccessMessage = signal<string | null>(null);
+  askErrorMessage = signal<string | null>(null);
+  submittingInterviewId = signal<number | null>(null);
+  submittingAsk = signal(false);
+
+  selectedInterviewAction: Record<number, InterviewResponseAction | null> = {};
+  interviewDrafts: Record<number, InterviewDraft> = {};
+  askDraft: CandidateAskDraft = this.createEmptyAskDraft();
 
   constructor(private http: HttpClient) {}
+
+  ngOnInit(): void {
+    const prefilledCode = this.route.snapshot.queryParamMap.get('code');
+    const prefilledEmail = this.route.snapshot.queryParamMap.get('email');
+
+    if (prefilledCode) {
+      this.trackingCode = prefilledCode;
+    }
+    if (prefilledEmail) {
+      this.email = prefilledEmail;
+    }
+    if (prefilledCode && prefilledEmail) {
+      this.trackApplication();
+    }
+  }
 
   trackApplication() {
     if (!this.trackingCode || !this.email) return;
@@ -68,6 +148,15 @@ export class TrackApplicationComponent {
     this.errorMessage.set(null);
     this.application.set(null);
     this.stages.set([]);
+    this.interviews.set([]);
+    this.asks.set([]);
+    this.interviewSuccessMessage.set(null);
+    this.interviewErrorMessage.set(null);
+    this.askSuccessMessage.set(null);
+    this.askErrorMessage.set(null);
+    this.selectedInterviewAction = {};
+    this.interviewDrafts = {};
+    this.askDraft = this.createEmptyAskDraft();
 
     this.http.post<TrackingResponse>(`${environment.apiUrl}/applications/track`, {
       trackingCode: this.trackingCode.trim(),
@@ -86,6 +175,8 @@ export class TrackApplicationComponent {
           return { ...s, progress: progress || undefined };
         });
         this.stages.set(stageList);
+        this.syncInterviewState(res.interviews || []);
+        this.syncCandidateAskState(res.asks || []);
       },
       error: () => {
         this.loading.set(false);
@@ -149,8 +240,261 @@ export class TrackApplicationComponent {
     return classes[status] || 'status-new';
   }
 
+  getDisplayedTrackingCode(app: TrackingApplication): string {
+    return (app.trackingCode || this.trackingCode || '').trim().toUpperCase();
+  }
+
   getCurrentStage(): TrackingStage | null {
     const list = this.stages();
     return list.find(s => s.progress?.progressStatus === 'IN_PROGRESS') || null;
+  }
+
+  onAskTypeChange(requestType: CandidateAskRequestType | '') {
+    this.askSuccessMessage.set(null);
+    this.askErrorMessage.set(null);
+    this.askDraft = {
+      ...this.createEmptyAskDraft(),
+      requestType
+    };
+  }
+
+  submitCandidateAsk() {
+    if (!this.application()) {
+      return;
+    }
+
+    const requestType = this.askDraft.requestType;
+    if (!requestType) {
+      this.askErrorMessage.set('Veuillez choisir le type de correction à demander.');
+      return;
+    }
+
+    this.submittingAsk.set(true);
+    this.askSuccessMessage.set(null);
+    this.askErrorMessage.set(null);
+
+    this.http.post<TrackingResponse>(`${environment.apiUrl}/applications/submit-ask`, {
+      trackingCode: this.trackingCode.trim(),
+      email: this.email.trim(),
+      requestType,
+      firstName: requestType === 'IDENTITY' ? this.normalizeOptionalField(this.askDraft.firstName) : null,
+      lastName: requestType === 'IDENTITY' ? this.normalizeOptionalField(this.askDraft.lastName) : null,
+      newEmail: requestType === 'EMAIL' ? this.normalizeOptionalField(this.askDraft.newEmail)?.toLowerCase() ?? null : null,
+      newPhone: requestType === 'PHONE' ? this.normalizeOptionalField(this.askDraft.newPhone) : null
+    }).subscribe({
+      next: (res) => {
+        this.submittingAsk.set(false);
+        if (res.hasError) {
+          this.askErrorMessage.set(res.message || 'Impossible d’enregistrer votre demande pour le moment.');
+          return;
+        }
+
+        this.askSuccessMessage.set(res.message || 'Votre demande a bien été enregistrée.');
+        this.syncCandidateAskState(res.asks || []);
+        this.askDraft = this.createEmptyAskDraft();
+      },
+      error: () => {
+        this.submittingAsk.set(false);
+        this.askErrorMessage.set('Impossible de transmettre votre demande pour le moment.');
+      }
+    });
+  }
+
+  getAskRequestTypeLabel(requestType: CandidateAskRequestType): string {
+    const labels: Record<CandidateAskRequestType, string> = {
+      IDENTITY: 'Nom / prénom',
+      EMAIL: 'Adresse email',
+      PHONE: 'Téléphone'
+    };
+    return labels[requestType];
+  }
+
+  getAskStatusLabel(ask: TrackingCandidateAsk): string {
+    const labels: Record<CandidateAskStatus, string> = {
+      PENDING: 'En attente',
+      APPROVED: 'Validée',
+      REJECTED: 'Refusée'
+    };
+    return labels[ask.askStatus] || ask.askStatus;
+  }
+
+  getAskStatusClass(ask: TrackingCandidateAsk): string {
+    const classes: Record<CandidateAskStatus, string> = {
+      PENDING: 'candidate-ask-status--pending',
+      APPROVED: 'candidate-ask-status--approved',
+      REJECTED: 'candidate-ask-status--rejected'
+    };
+    return classes[ask.askStatus] || classes.PENDING;
+  }
+
+  getAskSummary(ask: TrackingCandidateAsk): string {
+    if (ask.requestType === 'EMAIL') {
+      return ask.newEmail || 'Aucune adresse fournie';
+    }
+    if (ask.requestType === 'PHONE') {
+      return ask.newPhone || 'Aucun numéro fourni';
+    }
+
+    const identityParts = [ask.firstName, ask.lastName].filter((value): value is string => !!value && value.trim().length > 0);
+    return identityParts.length > 0 ? identityParts.join(' ') : 'Aucune correction fournie';
+  }
+
+  getInterviewAction(interviewId: number): InterviewResponseAction | null {
+    return this.selectedInterviewAction[interviewId] || null;
+  }
+
+  setInterviewAction(interviewId: number, action: InterviewResponseAction) {
+    this.interviewSuccessMessage.set(null);
+    this.interviewErrorMessage.set(null);
+    this.selectedInterviewAction[interviewId] = action;
+  }
+
+  cancelInterviewAction(interviewId: number) {
+    this.selectedInterviewAction[interviewId] = null;
+    this.interviewErrorMessage.set(null);
+  }
+
+  submitInterviewAction(interview: TrackingInterview, actionOverride?: InterviewResponseAction) {
+    const action = actionOverride || this.getInterviewAction(interview.id);
+    if (!action) {
+      return;
+    }
+
+    const draft = this.interviewDrafts[interview.id] || { declineReason: '', alternativeDateRequested: '' };
+    if (action === 'DECLINE' && !draft.declineReason.trim()) {
+      this.interviewErrorMessage.set('Veuillez préciser la raison du refus avant validation.');
+      return;
+    }
+    if (action === 'REQUEST_RESCHEDULE' && !draft.alternativeDateRequested.trim()) {
+      this.interviewErrorMessage.set('Veuillez proposer une autre date avant validation.');
+      return;
+    }
+
+    this.submittingInterviewId.set(interview.id);
+    this.interviewSuccessMessage.set(null);
+    this.interviewErrorMessage.set(null);
+
+    this.http.post<TrackingResponse>(`${environment.apiUrl}/applications/respond-interview`, {
+      trackingCode: this.trackingCode.trim(),
+      email: this.email.trim(),
+      candidateInterviewId: String(interview.id),
+      action,
+      declineReason: draft.declineReason.trim(),
+      alternativeDateRequested: draft.alternativeDateRequested
+    }).subscribe({
+      next: (res) => {
+        this.submittingInterviewId.set(null);
+        if (res.hasError) {
+          this.interviewErrorMessage.set(res.message || 'Impossible d’enregistrer votre réponse.');
+          return;
+        }
+
+        this.interviewSuccessMessage.set(res.message || 'Votre réponse a bien été enregistrée.');
+        this.selectedInterviewAction[interview.id] = null;
+        this.syncInterviewState(res.interviews || []);
+      },
+      error: () => {
+        this.submittingInterviewId.set(null);
+        this.interviewErrorMessage.set('Impossible de transmettre votre réponse pour le moment.');
+      }
+    });
+  }
+
+  isSubmittingInterview(interviewId: number): boolean {
+    return this.submittingInterviewId() === interviewId;
+  }
+
+  getInterviewTypeLabel(type: string): string {
+    return type === 'IN_PERSON' ? 'Entretien en présentiel' : 'Entretien en visioconférence';
+  }
+
+  getInterviewStatusLabel(status: string): string {
+    const labels: Record<string, string> = {
+      PENDING: 'En préparation',
+      SCHEDULED: 'Planifié',
+      STARTED: 'En cours',
+      OVER: 'Terminé',
+      POSTPONED: 'Replanification demandée',
+      ARCHIVED: 'Archivé'
+    };
+
+    return labels[status] || status;
+  }
+
+  getInterviewStatusClass(status: string): string {
+    const classes: Record<string, string> = {
+      PENDING: 'pending',
+      SCHEDULED: 'scheduled',
+      STARTED: 'started',
+      OVER: 'over',
+      POSTPONED: 'postponed',
+      ARCHIVED: 'archived'
+    };
+
+    return classes[status] || 'pending';
+  }
+
+  getInterviewResponseLabel(state: string): string {
+    const labels: Record<string, string> = {
+      PENDING: 'Aucune réponse envoyée',
+      DECLINED: 'Refus transmis',
+      RESCHEDULE_REQUESTED: 'Nouvelle date demandée'
+    };
+
+    return labels[state] || state;
+  }
+
+  getInterviewResponseClass(state: string): string {
+    const classes: Record<string, string> = {
+      PENDING: 'response-pending',
+      DECLINED: 'response-declined',
+      RESCHEDULE_REQUESTED: 'response-reschedule'
+    };
+
+    return classes[state] || 'response-pending';
+  }
+
+  getInterviewAccessLabel(interview: TrackingInterview): string {
+    if (interview.interviewType === 'IN_PERSON') {
+      return interview.interviewLocation || 'Lieu à préciser';
+    }
+
+    return interview.meetLink || 'Lien communiqué ultérieurement';
+  }
+
+  private syncInterviewState(interviews: TrackingInterview[]) {
+    this.interviews.set(interviews);
+    this.selectedInterviewAction = interviews.reduce<Record<number, InterviewResponseAction | null>>((state, interview) => {
+      state[interview.id] = this.selectedInterviewAction[interview.id] || null;
+      return state;
+    }, {});
+    this.interviewDrafts = interviews.reduce<Record<number, InterviewDraft>>((state, interview) => {
+      state[interview.id] = this.interviewDrafts[interview.id] || {
+        declineReason: interview.declineReason || '',
+        alternativeDateRequested: interview.alternativeDateRequested
+          ? interview.alternativeDateRequested.slice(0, 16)
+          : ''
+      };
+      return state;
+    }, {});
+  }
+
+  private syncCandidateAskState(asks: TrackingCandidateAsk[]) {
+    this.asks.set(asks);
+  }
+
+  private createEmptyAskDraft(): CandidateAskDraft {
+    return {
+      requestType: '',
+      firstName: '',
+      lastName: '',
+      newEmail: '',
+      newPhone: ''
+    };
+  }
+
+  private normalizeOptionalField(value: string): string | null {
+    const normalizedValue = value?.trim();
+    return normalizedValue ? normalizedValue : null;
   }
 }

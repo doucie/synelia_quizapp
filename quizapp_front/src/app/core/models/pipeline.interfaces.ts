@@ -27,7 +27,7 @@ export interface PipelineStage {
   stageOrder?: number;
   isRequired?: boolean;
   isEliminatory?: boolean;
-  configJson?: string;
+  configJson?: string | null;
   pipelineTemplateId?: number;
   pipelineTemplateName?: string;
   orderedStageIds?: number[];

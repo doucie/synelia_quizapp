@@ -72,6 +72,12 @@ public class GroupChangeRequestBusiness implements IBasicBusiness<Request<GroupC
                 return response;
             }
 
+            if (hasActiveMembership(dto.getUserId(), dto.getTargetGroupId())) {
+                response.setStatus(functionalError.DATA_EXIST("user already belongs to this business group", locale));
+                response.setHasError(true);
+                return response;
+            }
+
             // Check for existing pending request
             List<GroupChangeRequest> existingPending = groupChangeRequestRepository.findPendingByUserId(dto.getUserId());
             for (GroupChangeRequest pending : existingPending) {
@@ -233,15 +239,49 @@ public class GroupChangeRequestBusiness implements IBasicBusiness<Request<GroupC
     }
 
     private void approveRequest(GroupChangeRequest request, Integer processedBy) {
-        // Add the user to the target group
-        UserBusinessGroup ubg = new UserBusinessGroup();
-        ubg.setUser(request.getUser());
-        ubg.setBusinessGroup(request.getTargetGroup());
-        ubg.setCreatedAt(new Date());
-        ubg.setCreatedBy(processedBy);
-        ubg.setIsDeleted(false);
-        ubg.setIsModerator(false);
-        userBusinessGroupRepository.save(ubg);
+        ensureUserMembership(request.getUser(), request.getTargetGroup(), processedBy);
+    }
+
+    private boolean hasActiveMembership(Integer userId, Integer groupId) {
+        return userBusinessGroupRepository.findByUserIdAndBusinessGroupId(userId, groupId).stream()
+                .anyMatch(this::isActiveMembership);
+    }
+
+    private void ensureUserMembership(User user, BusinessGroup targetGroup, Integer processedBy) {
+        List<UserBusinessGroup> memberships = userBusinessGroupRepository
+                .findByUserIdAndBusinessGroupId(user.getId(), targetGroup.getId());
+
+        Optional<UserBusinessGroup> activeMembership = memberships.stream()
+                .filter(this::isActiveMembership)
+                .findFirst();
+        if (activeMembership.isPresent()) {
+            return;
+        }
+
+        UserBusinessGroup membership = memberships.stream().findFirst().orElseGet(UserBusinessGroup::new);
+        Date now = new Date();
+
+        membership.setUser(user);
+        membership.setBusinessGroup(targetGroup);
+        membership.setIsDeleted(false);
+
+        if (membership.getId() == null) {
+            membership.setCreatedAt(now);
+            membership.setCreatedBy(processedBy);
+            membership.setIsModerator(false);
+        } else {
+            membership.setUpdatedAt(now);
+            membership.setUpdatedBy(processedBy);
+            if (membership.getIsModerator() == null) {
+                membership.setIsModerator(false);
+            }
+        }
+
+        userBusinessGroupRepository.save(membership);
+    }
+
+    private boolean isActiveMembership(UserBusinessGroup membership) {
+        return membership != null && !Boolean.TRUE.equals(membership.getIsDeleted());
     }
 
     private void notifyGroupModerators(BusinessGroup targetGroup, User requester, Integer createdBy) {

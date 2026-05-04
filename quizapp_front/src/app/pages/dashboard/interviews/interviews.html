@@ -24,6 +24,11 @@
           <span>{{ getInterviewsByStatus('SCHEDULED') }}</span>
           <span class="stat-label">Planifiés</span>
         </div>
+        <div class="stat-chip postponed">
+          <i class="bi bi-arrow-repeat"></i>
+          <span>{{ getInterviewsByStatus('POSTPONED') }}</span>
+          <span class="stat-label">À replanifier</span>
+        </div>
         <div class="stat-chip started">
           <i class="bi bi-play-circle"></i>
           <span>{{ getInterviewsByStatus('STARTED') }}</span>
@@ -62,6 +67,13 @@
           (click)="setFilter('SCHEDULED')"
         >
           Planifiés ({{ getInterviewsByStatus('SCHEDULED') }})
+        </button>
+        <button
+          class="chip postponed"
+          [class.active]="selectedFilter() === 'POSTPONED'"
+          (click)="setFilter('POSTPONED')"
+        >
+          À replanifier ({{ getInterviewsByStatus('POSTPONED') }})
         </button>
         <button
           class="chip started"
@@ -179,6 +191,27 @@
                         <div class="info-row campaign">
                           <i class="bi bi-briefcase"></i>
                           <span>{{ interview.campaignTitle }}</span>
+                        </div>
+                      }
+
+                      @if (hasCandidateResponse(interview)) {
+                        <div class="candidate-response-card" [ngClass]="getCandidateResponseClass(interview)">
+                          <div class="candidate-response-card__title">
+                            <i class="bi" [ngClass]="getCandidateResponseIcon(interview)"></i>
+                            <span>{{ getCandidateResponseLabel(interview) }}</span>
+                          </div>
+
+                          @if (interview.alternativeDateRequested) {
+                            <div class="candidate-response-card__detail">
+                              Nouvelle disponibilité proposée : {{ formatDateTime(interview.alternativeDateRequested) }}
+                            </div>
+                          }
+
+                          @if (interview.declineReason) {
+                            <div class="candidate-response-card__detail">
+                              Motif : {{ interview.declineReason }}
+                            </div>
+                          }
                         </div>
                       }
                     </div>
@@ -341,8 +374,52 @@
                   </div>
                 }
 
+                @if (hasCandidateResponse(selectedInterview()!)) {
+                  <div class="detail-section">
+                    <h3 class="section-title">
+                      <i class="bi bi-chat-left-text"></i>
+                      Réponse du candidat
+                    </h3>
+                    <div class="section-content candidate-response-panel">
+                      <div class="detail-item">
+                        <span class="label">Statut candidat</span>
+                        <span class="value response-badge" [ngClass]="getCandidateResponseClass(selectedInterview()!)">
+                          <i class="bi" [ngClass]="getCandidateResponseIcon(selectedInterview()!)"></i>
+                          {{ getCandidateResponseLabel(selectedInterview()!) }}
+                        </span>
+                      </div>
+
+                      @if (selectedInterview()!.alternativeDateRequested) {
+                        <div class="detail-item">
+                          <span class="label">Date proposée</span>
+                          <span class="value">{{ formatDateTime(selectedInterview()!.alternativeDateRequested || undefined) }}</span>
+                        </div>
+                      }
+
+                      @if (selectedInterview()!.declineReason) {
+                        <div class="detail-item detail-item--stacked">
+                          <span class="label">Motif</span>
+                          <span class="value">{{ selectedInterview()!.declineReason }}</span>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+
                 <!-- Actions rapides -->
                 <div class="detail-actions">
+                  @if (selectedInterview()!.interviewStatus !== 'STARTED') {
+                    <button class="btn-action-full btn-edit-schedule" (click)="openEditModal(selectedInterview()!)">
+                      <i class="bi bi-calendar2-week"></i>
+                      {{ getEditActionLabel(selectedInterview()!) }}
+                    </button>
+                  }
+                  @if (selectedInterview()!.candidateResponseState === 'RESCHEDULE_REQUESTED') {
+                    <button class="btn-action-full btn-fail" (click)="rejectRescheduleRequest(selectedInterview()!)">
+                      <i class="bi bi-slash-circle"></i>
+                      Refuser la demande de replanification
+                    </button>
+                  }
                   @if (selectedInterview()!.interviewStatus === 'SCHEDULED') {
                     <button class="btn-action-full btn-start" (click)="changeStatus(selectedInterview()!, 'STARTED')">
                       <i class="bi bi-play-circle"></i>
@@ -724,6 +801,200 @@
             Démarrer l'entretien
           </button>
         }
+      </div>
+    </div>
+  </div>
+}
+
+@if (showInterviewEditModal()) {
+  <div class="modal-overlay" role="dialog" aria-modal="true" (click)="closeInterviewEditModal()">
+    <div class="interview-edit-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>
+          <i class="bi bi-calendar2-week"></i>
+          {{ getEditActionLabel(interviewToEdit()!) }}
+        </h2>
+        <button class="btn-close-modal" (click)="closeInterviewEditModal()" [disabled]="savingInterview()">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="interview-info-card edit-summary-card">
+          <div class="info-row">
+            <i class="bi bi-person"></i>
+            <span class="label">Candidat :</span>
+            <span class="value">{{ interviewToEdit()?.candidateName || 'Non défini' }}</span>
+          </div>
+          <div class="info-row">
+            <i class="bi bi-briefcase"></i>
+            <span class="label">Campagne :</span>
+            <span class="value">{{ interviewToEdit()?.campaignTitle || 'Non définie' }}</span>
+          </div>
+          @if (interviewToEdit()?.alternativeDateRequested) {
+            <div class="info-row highlight">
+              <i class="bi bi-arrow-repeat"></i>
+              <span class="label">Date souhaitée :</span>
+              <span class="value date">{{ formatDateTime(interviewToEdit()?.alternativeDateRequested || undefined) }}</span>
+            </div>
+          }
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="editInterviewDate">
+              <i class="bi bi-calendar-event"></i>
+              Date
+            </label>
+            <input
+              id="editInterviewDate"
+              type="date"
+              [ngModel]="editFormData().interviewDate"
+              (ngModelChange)="updateEditForm({ interviewDate: $event })"
+              name="editInterviewDate"
+              [disabled]="savingInterview()"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="editInterviewTime">
+              <i class="bi bi-clock"></i>
+              Heure
+            </label>
+            <input
+              id="editInterviewTime"
+              type="time"
+              [ngModel]="editFormData().interviewTime"
+              (ngModelChange)="updateEditForm({ interviewTime: $event })"
+              name="editInterviewTime"
+              [disabled]="savingInterview()"
+            />
+          </div>
+        </div>
+
+        @if (interviewToEdit()?.interviewType === 'IN_PERSON') {
+          <div class="form-group">
+            <label for="editInterviewLocation">
+              <i class="bi bi-geo-alt"></i>
+              Lieu
+            </label>
+            <input
+              id="editInterviewLocation"
+              type="text"
+              [ngModel]="editFormData().interviewLocation"
+              (ngModelChange)="updateEditForm({ interviewLocation: $event })"
+              name="editInterviewLocation"
+              [disabled]="savingInterview()"
+            />
+          </div>
+        }
+
+        @if (interviewToEdit()?.interviewType === 'ONLINE') {
+          <div class="form-group">
+            <label for="editInterviewMeetLink">
+              <i class="bi bi-camera-video"></i>
+              Lien de visioconférence
+            </label>
+            <input
+              id="editInterviewMeetLink"
+              type="url"
+              [ngModel]="editFormData().meetLink"
+              (ngModelChange)="updateEditForm({ meetLink: $event })"
+              name="editInterviewMeetLink"
+              [disabled]="savingInterview()"
+            />
+          </div>
+        }
+
+        <div class="form-group">
+          <label for="editInterviewNote">
+            <i class="bi bi-sticky"></i>
+            Note interne
+          </label>
+          <textarea
+            id="editInterviewNote"
+            [ngModel]="editFormData().interviewNote"
+            (ngModelChange)="updateEditForm({ interviewNote: $event })"
+            name="editInterviewNote"
+            rows="4"
+            [disabled]="savingInterview()"
+          ></textarea>
+        </div>
+
+        <div class="form-group evaluator-edit-group">
+          <label>
+            <i class="bi bi-people"></i>
+            Évaluateurs
+          </label>
+
+          @if (loadingEditEvaluators()) {
+            <div class="loading-evaluators-inline">
+              <div class="spinner-small"></div>
+              <span>Chargement des évaluateurs disponibles...</span>
+            </div>
+          } @else {
+            @if (editAvailableEvaluators().length > 0) {
+              <div class="edit-evaluator-list">
+                @for (evaluator of editAvailableEvaluators(); track evaluator.userId) {
+                  <label class="edit-evaluator-option">
+                    <input
+                      type="checkbox"
+                      [checked]="isEditEvaluatorSelected(evaluator.userId)"
+                      (change)="toggleEditEvaluator(evaluator.userId)"
+                      [disabled]="savingInterview()"
+                    />
+
+                    <div class="edit-evaluator-meta">
+                      <span class="edit-evaluator-name">{{ getEvaluatorFullName(evaluator) }}</span>
+                      <span class="edit-evaluator-email">{{ evaluator.email || 'Peut évaluer cet entretien' }}</span>
+                    </div>
+
+                    @if (evaluator.canEvaluate) {
+                      <span class="edit-evaluator-badge">Campagne</span>
+                    }
+                  </label>
+                }
+              </div>
+            } @else {
+              <p class="edit-evaluator-empty">
+                Aucun évaluateur disponible n'a été trouvé pour cette campagne.
+              </p>
+            }
+
+            @if (editFormData().selectedEvaluatorIds.length === 0) {
+              <p class="edit-evaluator-warning">
+                <i class="bi bi-exclamation-triangle"></i>
+                Aucun évaluateur n'est assigné. L'entretien peut être enregistré sans évaluateur et ils pourront être ajoutés plus tard.
+              </p>
+            }
+          }
+        </div>
+
+        <label class="edit-checkbox">
+          <input
+            type="checkbox"
+            [ngModel]="editFormData().sendEmail"
+            (ngModelChange)="updateEditForm({ sendEmail: $event })"
+            name="editInterviewSendEmail"
+            [disabled]="savingInterview()"
+          />
+          <span>Renvoyer une convocation au candidat après mise à jour</span>
+        </label>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="closeInterviewEditModal()" [disabled]="savingInterview()">
+          <i class="bi bi-x-circle"></i>
+          Annuler
+        </button>
+        <button class="btn-next" (click)="submitInterviewUpdate()" [disabled]="savingInterview()">
+          <i class="bi bi-check2-circle"></i>
+          @if (savingInterview()) {
+            Enregistrement...
+          } @else {
+            Enregistrer
+          }
+        </button>
       </div>
     </div>
   </div>

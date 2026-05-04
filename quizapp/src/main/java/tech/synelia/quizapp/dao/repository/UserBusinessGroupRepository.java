@@ -33,6 +33,9 @@ public interface UserBusinessGroupRepository extends JpaRepository<UserBusinessG
 	@Query("select e from UserBusinessGroup e where e.businessGroup.id = :businessGroupId")
 	List<UserBusinessGroup> findByBusinessGroupId(@Param("businessGroupId") Integer businessGroupId);
 
+	@Query("select e from UserBusinessGroup e where e.user.id = :userId and e.businessGroup.id = :businessGroupId")
+	List<UserBusinessGroup> findByUserIdAndBusinessGroupId(@Param("userId") Integer userId, @Param("businessGroupId") Integer businessGroupId);
+
     @Query("select e from UserBusinessGroup e where e.businessGroup.id = :businessGroupId and e.isModerator = true and e.isDeleted = false")
     List<UserBusinessGroup> findModeratorsForGroup(@Param("businessGroupId") Integer businessGroupId);
 

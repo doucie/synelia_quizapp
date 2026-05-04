@@ -35,6 +35,19 @@ public class CandidateAnswer implements Serializable, Cloneable {
     @Column(name="is_selected")
     private Boolean    isSelected   ;
 
+    @Column(name="manual_is_correct")
+    private Boolean    manualIsCorrect ;
+
+    @Column(name="manual_correction_comment", length=65535)
+    private String     manualCorrectionComment ;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name="manual_corrected_at")
+    private Date       manualCorrectedAt ;
+
+    @Column(name="manual_corrected_by")
+    private Integer    manualCorrectedBy ;
+
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name="created_at")
     private Date       createdAt    ;

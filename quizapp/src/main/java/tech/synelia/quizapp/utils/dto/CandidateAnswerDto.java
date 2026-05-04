@@ -18,6 +18,10 @@ public class CandidateAnswerDto extends _CandidateAnswerDto implements Cloneable
     private Integer    id                   ;
     private String     freeTextResponse     ;
     private Boolean    isSelected           ;
+    private Boolean    manualIsCorrect      ;
+    private String     manualCorrectionComment ;
+    private String     manualCorrectedAt    ;
+    private Integer    manualCorrectedBy    ;
     private String     createdAt            ;
     private Integer    createdBy            ;
     private String     updatedAt            ;
@@ -31,12 +35,20 @@ public class CandidateAnswerDto extends _CandidateAnswerDto implements Cloneable
     private String     dateModificationA    ;
     private Integer    applicationId        ;
     private Integer    questionId           ;
+    private String     questionText         ;
+    private String     questionType         ;
+    private String     answerText           ;
     private Integer    answerId             ;
+    private String     action               ;
 
     // Search param
     private SearchParam<Integer>  idParam               ;
     private SearchParam<String>   freeTextResponseParam  ;
     private SearchParam<Boolean>  isSelectedParam        ;
+    private SearchParam<Boolean>  manualIsCorrectParam   ;
+    private SearchParam<String>   manualCorrectionCommentParam ;
+    private SearchParam<String>   manualCorrectedAtParam ;
+    private SearchParam<Integer>  manualCorrectedByParam ;
     private SearchParam<String>   createdAtParam         ;
     private SearchParam<Integer>  createdByParam         ;
     private SearchParam<String>   updatedAtParam         ;

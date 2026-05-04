@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard, noAuthGuard } from './core/guards/auth.guard';
-import { permissionGuard } from './core/guards/role.guard';
+import { permissionGuard, campaignEditGuard, campaignViewGuard, interviewCreateGuard } from './core/guards/role.guard';
 import { sourceTokenGuard } from './core/guards/source-token.guard';
 
 export const routes: Routes = [
@@ -470,12 +470,12 @@ export const routes: Routes = [
       { 
         path: 'campaigns/:id/edit', 
         loadComponent: () => import('./pages/dashboard/campaign-form/campaign-form').then(m => m.CampaignFormComponent),
-        canActivate: [permissionGuard(['UPDATE_CAMPAIGNS'])]
+        canActivate: [campaignEditGuard]
       },
       { 
         path: 'campaigns/:id', 
         loadComponent: () => import('./pages/dashboard/campaign-detail/campaign-detail').then(m => m.CampaignDetailComponent),
-        canActivate: [permissionGuard(['VIEW_CAMPAIGNS'])]
+        canActivate: [campaignViewGuard]
       },
       { 
         path: 'candidates', 
@@ -495,7 +495,7 @@ export const routes: Routes = [
       { 
         path: 'interviews/create', 
         loadComponent: () => import('./pages/dashboard/interview-create/interview-create').then(m => m.InterviewCreateComponent),
-        canActivate: [permissionGuard(['CREATE_INTERVIEWS'])]
+        canActivate: [interviewCreateGuard]
       },
       { 
         path: 'evaluations', 
@@ -529,13 +529,13 @@ export const routes: Routes = [
     // Route pour l'évaluation - Plein écran sans header/sidebar
     path: 'dashboard/evaluate',
     loadComponent: () => import('./pages/dashboard/evaluations/evaluations').then(m => m.EvaluationsComponent),
-    canActivate: [authGuard, permissionGuard(['VIEW_EVALUATIONS'])]
+    canActivate: [authGuard]
   },
   {
     // Route pour l'évaluation avec lien - Plein écran sans header/sidebar
     path: 'dashboard/evaluate/:link',
     loadComponent: () => import('./pages/dashboard/evaluations/evaluations').then(m => m.EvaluationsComponent),
-    canActivate: [authGuard, permissionGuard(['VIEW_EVALUATIONS'])]
+    canActivate: [authGuard]
   },
   {
     // Route pour postuler avec un source token

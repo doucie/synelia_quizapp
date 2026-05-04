@@ -17,8 +17,12 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lombok.extern.java.Log;
 import tech.synelia.quizapp.dao.entity.SmtpConfig;
+import tech.synelia.quizapp.dao.entity.User;
 import tech.synelia.quizapp.dao.repository.SmtpConfigRepository;
+import tech.synelia.quizapp.dao.repository.UserRepository;
 import tech.synelia.quizapp.utils.FunctionalError;
+import tech.synelia.quizapp.utils.HostingUtils;
+import tech.synelia.quizapp.utils.ParamsUtils;
 import tech.synelia.quizapp.utils.Status;
 import tech.synelia.quizapp.utils.StatusCode;
 import tech.synelia.quizapp.utils.StatusMessage;
@@ -40,7 +44,13 @@ public class SmtpConfigBusiness implements IBasicBusiness<Request<SmtpConfigDto>
     @Autowired
     private SmtpConfigRepository smtpConfigRepository;
     @Autowired
+    private UserRepository userRepository;
+    @Autowired
     private FunctionalError functionalError;
+    @Autowired
+    private HostingUtils hostingUtils;
+    @Autowired
+    private ParamsUtils paramsUtils;
     @PersistenceContext
     private EntityManager em;
 
@@ -63,7 +73,7 @@ public class SmtpConfigBusiness implements IBasicBusiness<Request<SmtpConfigDto>
             entityToSave.setCreatedBy(request.getUser());
             entityToSave.setIsDeleted(false);
             if (entityToSave.getIsActive() == null) entityToSave.setIsActive(false);
-            entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(dto)));
+            entityToSave.setSearchString(buildSearchString(entityToSave));
             items.add(entityToSave);
         }
 
@@ -119,8 +129,8 @@ public class SmtpConfigBusiness implements IBasicBusiness<Request<SmtpConfigDto>
             if (dto.getPort() != null) entityToSave.setPort(dto.getPort());
             if (Utilities.shouldUpdate(dto.getUsername())) entityToSave.setUsername(dto.getUsername());
             // Keep the existing password when the frontend omits the field during edition.
-            if (dto.getPasswordEncrypted() != null && Utilities.shouldUpdate(dto.getPasswordEncrypted())) {
-                entityToSave.setPasswordEncrypted(dto.getPasswordEncrypted());
+            if (dto.getPassword() != null && Utilities.shouldUpdate(dto.getPassword())) {
+                entityToSave.setPasswordEncrypted(dto.getPassword());
             }
             if (dto.getSmtpAuth() != null) entityToSave.setSmtpAuth(dto.getSmtpAuth());
             if (dto.getStarttlsEnable() != null) entityToSave.setStarttlsEnable(dto.getStarttlsEnable());
@@ -135,7 +145,7 @@ public class SmtpConfigBusiness implements IBasicBusiness<Request<SmtpConfigDto>
 
             entityToSave.setUpdatedAt(Utilities.getCurrentDate());
             entityToSave.setUpdatedBy(request.getUser());
-            entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(entityToSave)));
+            entityToSave.setSearchString(buildSearchString(entityToSave));
             items.add(entityToSave);
         }
 
@@ -231,6 +241,83 @@ public class SmtpConfigBusiness implements IBasicBusiness<Request<SmtpConfigDto>
         return response;
     }
 
+    public Response<SmtpConfigDto> testActiveConfig(Request<SmtpConfigDto> request, Locale locale) {
+        log.info("----begin testActiveConfig-----");
+
+        Map<String, Object> fieldsToVerify = new HashMap<>();
+        fieldsToVerify.put("user", request.getUser());
+        if (!Validate.RequiredValue(fieldsToVerify).isGood()) {
+            throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
+        }
+
+        User currentUser = userRepository.findOne(request.getUser(), false);
+        if (currentUser == null) {
+            throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("user id -> " + request.getUser(), locale));
+        }
+        if (!Utilities.notBlank(currentUser.getEmail())) {
+            throw new InvalidEntityException(functionalError.FIELD_EMPTY("email", locale));
+        }
+
+        SmtpConfig activeConfig = getActiveConfig();
+        if (activeConfig == null || !Utilities.notBlank(activeConfig.getHost())) {
+            throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION(
+                    "Aucune configuration SMTP active n'est disponible pour cet envoi.", locale));
+        }
+
+        String senderEmail = resolveSenderEmail(activeConfig);
+        if (!Utilities.notBlank(senderEmail)) {
+            throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION(
+                    "La configuration SMTP active ne definit aucun email expediteur exploitable.", locale));
+        }
+
+        Map<String, String> from = new HashMap<>();
+        from.put("email", senderEmail);
+        from.put("user", Utilities.notBlank(activeConfig.getSenderName()) ? activeConfig.getSenderName() : "Synelia SMTP");
+
+        Map<String, String> recipient = new HashMap<>();
+        recipient.put("email", currentUser.getEmail().trim());
+        recipient.put("user", buildDisplayName(currentUser));
+
+        List<Map<String, String>> toRecipients = new ArrayList<>();
+        toRecipients.add(recipient);
+
+        StringBuilder body = new StringBuilder();
+        body.append("<p>Ceci est un email de test SMTP envoye depuis l'administration QuizApp.</p>");
+        body.append("<p>Configuration active : ")
+                .append(activeConfig.getHost())
+                .append(":")
+                .append(activeConfig.getPort())
+                .append(".</p>");
+
+        Response<Object> emailResponse = hostingUtils.sendEmail(
+                from,
+                toRecipients,
+                "Test SMTP QuizApp",
+                body.toString(),
+                null,
+                null,
+            null,
+                locale);
+
+        Response<SmtpConfigDto> response = new Response<>();
+        if (emailResponse.isHasError()) {
+            response.setHasError(true);
+            response.setHttpCode(emailResponse.getHttpCode() > 0 ? emailResponse.getHttpCode() : HttpStatus.BAD_REQUEST.value());
+            response.setStatus(emailResponse.getStatus());
+            return response;
+        }
+
+        Status status = new Status();
+        status.setCode(StatusCode.SUCCESS);
+        status.setMessage("Email de test SMTP envoye a " + currentUser.getEmail().trim());
+        response.setHasError(false);
+        response.setHttpCode(HttpStatus.OK.value());
+        response.setStatus(status);
+
+        log.info("----end testActiveConfig-----");
+        return response;
+    }
+
     /**
      * Get the currently active SMTP configuration, if any.
      */
@@ -274,5 +361,60 @@ public class SmtpConfigBusiness implements IBasicBusiness<Request<SmtpConfigDto>
             }
         }
         return activeConfig;
+    }
+
+    private String buildSearchString(SmtpConfig entity) {
+        StringBuilder builder = new StringBuilder();
+        appendSearchValue(builder, entity.getHost());
+        appendSearchValue(builder, entity.getPort());
+        appendSearchValue(builder, entity.getUsername());
+        appendSearchValue(builder, entity.getSenderName());
+        appendSearchValue(builder, entity.getSenderEmail());
+        appendSearchValue(builder, entity.getIsActive());
+        appendSearchValue(builder, entity.getIsDeleted());
+        return builder.toString();
+    }
+
+    private void appendSearchValue(StringBuilder builder, Object value) {
+        if (value == null) {
+            return;
+        }
+
+        String text = String.valueOf(value).trim();
+        if (text.isEmpty()) {
+            return;
+        }
+
+        if (builder.length() > 0) {
+            builder.append(' ');
+        }
+        builder.append(text);
+    }
+
+    private String resolveSenderEmail(SmtpConfig activeConfig) {
+        if (Utilities.notBlank(activeConfig.getSenderEmail())) {
+            return activeConfig.getSenderEmail().trim();
+        }
+        if (Utilities.notBlank(activeConfig.getUsername())) {
+            return activeConfig.getUsername().trim();
+        }
+        if (Utilities.notBlank(paramsUtils.getSmtpLogin())) {
+            return paramsUtils.getSmtpLogin().trim();
+        }
+        return null;
+    }
+
+    private String buildDisplayName(User currentUser) {
+        StringBuilder builder = new StringBuilder();
+        if (Utilities.notBlank(currentUser.getFirstName())) {
+            builder.append(currentUser.getFirstName().trim());
+        }
+        if (Utilities.notBlank(currentUser.getLastName())) {
+            if (builder.length() > 0) {
+                builder.append(' ');
+            }
+            builder.append(currentUser.getLastName().trim());
+        }
+        return builder.length() > 0 ? builder.toString() : currentUser.getEmail().trim();
     }
 }

@@ -138,9 +138,9 @@
                   {{ suggestedVariables().join(', ') }}
                 </p>
               }
-              @if (templateVariables().length > 0) {
+              @if (layoutVariables().length > 0) {
                 <div class="var-tags">
-                  @for (v of templateVariables(); track v) {
+                  @for (v of layoutVariables(); track v) {
                     <span class="var-tag">{{ '{{' + v + '}}' }}</span>
                   }
                 </div>
@@ -157,7 +157,7 @@
               @if (showPresetGallery()) {
                 @if (selectedActionConfig()) {
                   <div class="preset-intro">
-                    Les presets recommandes pour ce type d'action sont affiches en premier.
+                    Les presets recommandes pour ce type d'action sont affiches en premier. Si le preset contient {{ '{' + '{content}' + '}' }}, votre message actuel y sera reinjecte.
                   </div>
                 }
                 <div class="preset-gallery">
@@ -180,12 +180,43 @@
 
             <!-- Body editor -->
             <div class="form-group body-editor">
-              <label>Contenu HTML *</label>
-              <app-rich-text-editor 
-                [value]="form().bodyTemplate || ''" 
-                [variables]="templateVariables()"
-                (valueChange)="updateBody($event)">
-              </app-rich-text-editor>
+              <div class="field-header body-editor__header">
+                <label>Layout HTML *</label>
+                <div class="editor-mode-switch">
+                  <button
+                    type="button"
+                    class="editor-mode-button"
+                    [class.active]="editorMode() === 'wysiwyg'"
+                    (click)="setEditorMode('wysiwyg')">
+                    WYSIWYG
+                  </button>
+                  <button
+                    type="button"
+                    class="editor-mode-button"
+                    [class.active]="editorMode() === 'html'"
+                    (click)="setEditorMode('html')">
+                    HTML
+                  </button>
+                </div>
+              </div>
+              <p class="field-help body-editor__help">
+                Ce champ definit la structure du mail. Utilisez {{ '{' + '{content}' + '}' }} et {{ '{' + '{subtitle}' + '}' }} pour les zones editables.
+              </p>
+
+              @if (editorMode() === 'wysiwyg') {
+                <app-rich-text-editor 
+                  [value]="form().bodyTemplate || ''" 
+                  [variables]="layoutVariables()"
+                  (valueChange)="updateBody($event)">
+                </app-rich-text-editor>
+              } @else {
+                <textarea
+                  class="source-editor"
+                  rows="18"
+                  spellcheck="false"
+                  [ngModel]="form().bodyTemplate || ''"
+                  (ngModelChange)="updateField('bodyTemplate', $event)"></textarea>
+              }
             </div>
 
             <!-- Active toggle -->
@@ -213,7 +244,7 @@
           @if (form().subjectTemplate) {
             <div class="preview-subject">
               <span class="subject-label">Sujet :</span>
-              {{ form().subjectTemplate }}
+              {{ previewSubject() || form().subjectTemplate }}
             </div>
           }
         </div>
@@ -223,6 +254,71 @@
           } @else {
             <div class="preview-empty">
               <p>L'aperçu apparaîtra ici</p>
+            </div>
+          }
+
+          @if (selectedTemplate() || isNewTemplate()) {
+            <div class="preview-variable-panel">
+              <div class="preview-variable-section">
+                <div class="preview-variable-section__header">
+                  <div>
+                    <h4>Champs editables</h4>
+                    <p>Ils restent stables quand vous changez de preset.</p>
+                  </div>
+                </div>
+
+                @if (activeEditableVariableDefinitions().length > 0) {
+                  <div class="preview-variable-list">
+                    @for (definition of activeEditableVariableDefinitions(); track definition.key) {
+                      <div class="preview-variable-item">
+                        <label>{{ definition.label }}</label>
+
+                        @if (definition.type === 'richtext') {
+                          <div class="preview-variable-editor preview-variable-editor--richtext">
+                            <app-rich-text-editor
+                              [value]="getEditableVariableValue(definition.key)"
+                              [variables]="systemVariableKeys()"
+                              (valueChange)="updateEditableVariable(definition.key, $event)">
+                            </app-rich-text-editor>
+                          </div>
+                        } @else {
+                          <input
+                            type="text"
+                            [placeholder]="definition.placeholder"
+                            [ngModel]="getEditableVariableValue(definition.key)"
+                            (ngModelChange)="updateEditableVariable(definition.key, $event)">
+                        }
+
+                        <p class="preview-variable-help">{{ definition.helpText }}</p>
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  <p class="preview-variable-empty">Ce layout n'expose pas encore de champs editables. Ajoutez {{ '{' + '{content}' + '}' }} ou {{ '{' + '{subtitle}' + '}' }} dans le layout.</p>
+                }
+              </div>
+
+              <div class="preview-variable-section">
+                <div class="preview-variable-section__header">
+                  <div>
+                    <h4>Variables systeme</h4>
+                    <p>Lecture seule. Elles viennent du contexte metier ou du theme.</p>
+                  </div>
+                </div>
+
+                @if (systemVariableEntries().length > 0) {
+                  <div class="system-variable-list">
+                    @for (entry of systemVariableEntries(); track entry.key) {
+                      <div class="system-variable-item">
+                        <span class="system-variable-key">{{ '{{' + entry.key + '}}' }}</span>
+                        <span class="system-variable-value">{{ entry.value }}</span>
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  <p class="preview-variable-empty">Aucune variable systeme detectee pour ce layout.</p>
+                }
+              </div>
             </div>
           }
         </div>

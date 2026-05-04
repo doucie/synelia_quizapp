@@ -8,7 +8,7 @@ export interface SmtpConfig {
   host?: string;
   port?: number;
   username?: string;
-  passwordEncrypted?: string;
+  password?: string;
   smtpAuth?: boolean;
   starttlsEnable?: boolean;
   starttlsRequired?: boolean;
@@ -66,6 +66,14 @@ export class SmtpConfigService {
     const request = { user: this.getCurrentUserId(), datas: [{ id }] };
     return this.http.post<any>(`${this.apiUrl}/delete`, request).pipe(
       map(() => void 0),
+      catchError(err => throwError(() => err))
+    );
+  }
+
+  testActive(): Observable<string> {
+    const request = { user: this.getCurrentUserId() };
+    return this.http.post<any>(`${this.apiUrl}/test`, request).pipe(
+      map(resp => resp.status?.message || 'Email de test SMTP envoye'),
       catchError(err => throwError(() => err))
     );
   }

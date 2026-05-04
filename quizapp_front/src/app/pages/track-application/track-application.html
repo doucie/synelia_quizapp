@@ -44,9 +44,15 @@
     </div>
 
     @if (errorMessage()) {
-      <div class="error-message">
-        <span class="error-icon">⚠️</span>
-        {{ errorMessage() }}
+      <div class="error-message error-message--stacked">
+        <div class="error-message__row">
+          <span class="error-icon">⚠️</span>
+          <span>{{ errorMessage() }}</span>
+        </div>
+        <p class="error-message__hint">
+          Si le problème persiste, contactez le recruteur ou l'équipe RH pour vérifier vos informations de reprise.
+        </p>
+        <a href="mailto:recrutement&#64;synelia.com" class="error-message__link">Contacter l'équipe recrutement</a>
       </div>
     }
 
@@ -66,6 +72,13 @@
               <p>{{ app.campaignTitle }}</p>
             }
             <small>Candidature soumise le {{ app.createdAt | date:'dd/MM/yyyy' }}</small>
+
+            @if (getDisplayedTrackingCode(app)) {
+              <div class="tracking-reminder">
+                <span class="tracking-reminder__label">Code de suivi</span>
+                <strong class="tracking-reminder__value">{{ getDisplayedTrackingCode(app) }}</strong>
+              </div>
+            }
           </div>
 
           @if (stages().length > 0) {
@@ -112,6 +125,317 @@
               </div>
             </div>
           }
+
+          @if (interviewSuccessMessage()) {
+            <div class="success-message">
+              <span class="success-icon">✓</span>
+              {{ interviewSuccessMessage() }}
+            </div>
+          }
+
+          @if (interviewErrorMessage()) {
+            <div class="error-message error-message--embedded">
+              <span class="error-icon">⚠️</span>
+              {{ interviewErrorMessage() }}
+            </div>
+          }
+
+          @if (interviews().length > 0) {
+            <div class="interview-section">
+              <div class="section-heading">
+                <div>
+                  <h3>Mes entretiens</h3>
+                  <p>Confirmez le créneau proposé, refusez-le avec motif, ou demandez une autre date.</p>
+                </div>
+              </div>
+
+              <div class="interview-list">
+                @for (interview of interviews(); track interview.id) {
+                  <article class="interview-card" [class.interview-card--postponed]="interview.interviewStatus === 'POSTPONED'">
+                    <div class="interview-card__header">
+                      <div>
+                        <h4>{{ interview.interviewStart | date:'dd/MM/yyyy à HH:mm' }}</h4>
+                        <p>{{ getInterviewTypeLabel(interview.interviewType) }}</p>
+                      </div>
+
+                      <div class="interview-badges">
+                        <span class="interview-badge"
+                              [class]="'interview-badge interview-badge--' + getInterviewStatusClass(interview.interviewStatus)">
+                          {{ getInterviewStatusLabel(interview.interviewStatus) }}
+                        </span>
+                        <span class="interview-badge"
+                              [class]="'interview-badge ' + getInterviewResponseClass(interview.responseState)">
+                          {{ getInterviewResponseLabel(interview.responseState) }}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div class="interview-card__details">
+                      <div class="detail-row">
+                        <span class="detail-label">{{ interview.interviewType === 'IN_PERSON' ? 'Lieu' : 'Lien' }}</span>
+                        <span>{{ getInterviewAccessLabel(interview) }}</span>
+                      </div>
+
+                      @if (interview.interviewDuration) {
+                        <div class="detail-row">
+                          <span class="detail-label">Durée</span>
+                          <span>{{ interview.interviewDuration }} min</span>
+                        </div>
+                      }
+
+                      @if (interview.interviewNote) {
+                        <div class="detail-row detail-row--stacked">
+                          <span class="detail-label">Note</span>
+                          <span>{{ interview.interviewNote }}</span>
+                        </div>
+                      }
+
+                      @if (interview.declineReason) {
+                        <div class="detail-row detail-row--stacked detail-row--warning">
+                          <span class="detail-label">Motif de refus envoyé</span>
+                          <span>{{ interview.declineReason }}</span>
+                        </div>
+                      }
+
+                      @if (interview.alternativeDateRequested) {
+                        <div class="detail-row detail-row--stacked detail-row--info">
+                          <span class="detail-label">Nouvelle date proposée</span>
+                          <span>{{ interview.alternativeDateRequested | date:'dd/MM/yyyy à HH:mm' }}</span>
+                        </div>
+                      }
+                    </div>
+
+                    @if (interview.canRespond) {
+                      <div class="interview-card__actions">
+                        <button
+                          type="button"
+                          class="btn btn--secondary"
+                          (click)="submitInterviewAction(interview, 'ACCEPT')"
+                          [disabled]="isSubmittingInterview(interview.id)">
+                          @if (isSubmittingInterview(interview.id) && getInterviewAction(interview.id) === null) {
+                            Envoi...
+                          } @else {
+                            Je confirme ce créneau
+                          }
+                        </button>
+
+                        <button
+                          type="button"
+                          class="btn btn--ghost"
+                          (click)="setInterviewAction(interview.id, 'DECLINE')"
+                          [disabled]="isSubmittingInterview(interview.id)">
+                          Refuser
+                        </button>
+
+                        <button
+                          type="button"
+                          class="btn btn--ghost"
+                          (click)="setInterviewAction(interview.id, 'REQUEST_RESCHEDULE')"
+                          [disabled]="isSubmittingInterview(interview.id)">
+                          Demander une autre date
+                        </button>
+                      </div>
+
+                      @if (getInterviewAction(interview.id) === 'DECLINE') {
+                        <div class="interview-form">
+                          <label [for]="'declineReason-' + interview.id">Pourquoi refusez-vous ce créneau ?</label>
+                          <textarea
+                            class="interview-textarea"
+                            [id]="'declineReason-' + interview.id"
+                            [name]="'declineReason-' + interview.id"
+                            [(ngModel)]="interviewDrafts[interview.id].declineReason"
+                            rows="3"
+                            placeholder="Indiquez brièvement la raison de votre refus"></textarea>
+
+                          <div class="interview-form__actions">
+                            <button
+                              type="button"
+                              class="btn btn--primary"
+                              (click)="submitInterviewAction(interview)"
+                              [disabled]="isSubmittingInterview(interview.id)">
+                              Valider le refus
+                            </button>
+                            <button
+                              type="button"
+                              class="btn btn--ghost"
+                              (click)="cancelInterviewAction(interview.id)"
+                              [disabled]="isSubmittingInterview(interview.id)">
+                              Annuler
+                            </button>
+                          </div>
+                        </div>
+                      }
+
+                      @if (getInterviewAction(interview.id) === 'REQUEST_RESCHEDULE') {
+                        <div class="interview-form">
+                          <label [for]="'alternativeDate-' + interview.id">Nouvelle date souhaitée</label>
+                          <input
+                            class="interview-input"
+                            type="datetime-local"
+                            [id]="'alternativeDate-' + interview.id"
+                            [name]="'alternativeDate-' + interview.id"
+                            [(ngModel)]="interviewDrafts[interview.id].alternativeDateRequested">
+
+                          <div class="interview-form__actions">
+                            <button
+                              type="button"
+                              class="btn btn--primary"
+                              (click)="submitInterviewAction(interview)"
+                              [disabled]="isSubmittingInterview(interview.id)">
+                              Envoyer la demande
+                            </button>
+                            <button
+                              type="button"
+                              class="btn btn--ghost"
+                              (click)="cancelInterviewAction(interview.id)"
+                              [disabled]="isSubmittingInterview(interview.id)">
+                              Annuler
+                            </button>
+                          </div>
+                        </div>
+                      }
+                    } @else {
+                      <p class="interview-card__locked">
+                        La réponse candidat n'est plus disponible pour cet entretien.
+                      </p>
+                    }
+                  </article>
+                }
+              </div>
+            </div>
+          }
+
+          <div class="candidate-ask-section">
+            <div class="section-heading">
+              <div>
+                <h3>Demander une correction</h3>
+                <p>Vous pouvez signaler une correction sur votre identité, votre email ou votre téléphone.</p>
+              </div>
+            </div>
+
+            @if (askSuccessMessage()) {
+              <div class="success-message">
+                <span class="success-icon">✓</span>
+                {{ askSuccessMessage() }}
+              </div>
+            }
+
+            @if (askErrorMessage()) {
+              <div class="error-message error-message--embedded">
+                <span class="error-icon">⚠️</span>
+                {{ askErrorMessage() }}
+              </div>
+            }
+
+            @if (asks().length > 0) {
+              <div class="candidate-ask-list">
+                @for (ask of asks(); track ask.id) {
+                  <article class="candidate-ask-card">
+                    <div class="candidate-ask-card__header">
+                      <div>
+                        <h4>{{ getAskRequestTypeLabel(ask.requestType) }}</h4>
+                        <p>{{ getAskSummary(ask) }}</p>
+                        @if (ask.decisionReason) {
+                          <p class="candidate-ask-reason">Motif: {{ ask.decisionReason }}</p>
+                        }
+                      </div>
+
+                      <div class="candidate-ask-meta">
+                        <span class="candidate-ask-status" [class]="'candidate-ask-status ' + getAskStatusClass(ask)">
+                          {{ getAskStatusLabel(ask) }}
+                        </span>
+                        @if (ask.createdAt) {
+                          <small>Créée le {{ ask.createdAt | date:'dd/MM/yyyy à HH:mm' }}</small>
+                        }
+                      </div>
+                    </div>
+                  </article>
+                }
+              </div>
+            }
+
+            <div class="candidate-ask-form">
+              <div class="form-group">
+                <label for="candidateAskType">Type de correction</label>
+                <select
+                  id="candidateAskType"
+                  class="form-input"
+                  [ngModel]="askDraft.requestType"
+                  (ngModelChange)="onAskTypeChange($event)">
+                  <option [ngValue]="''">Choisir…</option>
+                  <option [ngValue]="'IDENTITY'">Nom / prénom</option>
+                  <option [ngValue]="'EMAIL'">Adresse email</option>
+                  <option [ngValue]="'PHONE'">Téléphone</option>
+                </select>
+              </div>
+
+              @if (askDraft.requestType === 'IDENTITY') {
+                <div class="candidate-ask-grid">
+                  <div class="form-group">
+                    <label for="candidateAskFirstName">Prénom corrigé</label>
+                    <input
+                      id="candidateAskFirstName"
+                      type="text"
+                      class="form-input"
+                      [(ngModel)]="askDraft.firstName"
+                      [ngModelOptions]="{ standalone: true }"
+                      [placeholder]="app.candidateFirstName || 'Nouveau prénom'">
+                  </div>
+
+                  <div class="form-group">
+                    <label for="candidateAskLastName">Nom corrigé</label>
+                    <input
+                      id="candidateAskLastName"
+                      type="text"
+                      class="form-input"
+                      [(ngModel)]="askDraft.lastName"
+                      [ngModelOptions]="{ standalone: true }"
+                      [placeholder]="app.candidateLastName || 'Nouveau nom'">
+                  </div>
+                </div>
+              }
+
+              @if (askDraft.requestType === 'EMAIL') {
+                <div class="form-group">
+                  <label for="candidateAskEmail">Nouvelle adresse email</label>
+                  <input
+                    id="candidateAskEmail"
+                    type="email"
+                    class="form-input"
+                    [(ngModel)]="askDraft.newEmail"
+                    [ngModelOptions]="{ standalone: true }"
+                    [placeholder]="app.candidateEmail || 'nouvelle.adresse@exemple.com'">
+                </div>
+              }
+
+              @if (askDraft.requestType === 'PHONE') {
+                <div class="form-group">
+                  <label for="candidateAskPhone">Nouveau téléphone</label>
+                  <input
+                    id="candidateAskPhone"
+                    type="text"
+                    class="form-input"
+                    [(ngModel)]="askDraft.newPhone"
+                    [ngModelOptions]="{ standalone: true }"
+                    placeholder="Nouveau numéro de téléphone">
+                </div>
+              }
+
+              <p class="candidate-ask-hint">Votre demande sera visible par l'équipe de recrutement et traitée manuellement.</p>
+
+              <button
+                type="button"
+                class="btn btn--primary"
+                (click)="submitCandidateAsk()"
+                [disabled]="submittingAsk()">
+                @if (submittingAsk()) {
+                  Envoi en cours...
+                } @else {
+                  Envoyer la demande
+                }
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     }

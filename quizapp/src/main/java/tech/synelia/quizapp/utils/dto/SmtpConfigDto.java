@@ -1,7 +1,5 @@
 package tech.synelia.quizapp.utils.dto;
 
-import java.util.Date;
-import java.util.List;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -10,6 +8,7 @@ import tech.synelia.quizapp.utils.contract.*;
 import tech.synelia.quizapp.utils.dto.customize._SmtpConfigDto;
 
 @Data
+@EqualsAndHashCode(callSuper = false)
 @ToString
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
@@ -19,7 +18,7 @@ public class SmtpConfigDto extends _SmtpConfigDto implements Cloneable {
     private String  host;
     private Integer port;
     private String  username;
-    private String  passwordEncrypted;
+    private String  password;
     private Boolean smtpAuth;
     private Boolean starttlsEnable;
     private Boolean starttlsRequired;
