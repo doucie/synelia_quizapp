@@ -18,10 +18,7 @@
     <div class="toolbar">
       <div class="toolbar-left">
         <input type="text" class="search-input" placeholder="Rechercher..." [(ngModel)]="quickSearch" (input)="onQuickSearch()" />
-        <div class="checkbox-container">
-          <input type="checkbox" id="showDeleted" class="checkbox-input" [checked]="showDeletedItems" (click)="toggleDeletedItems()" />
-          <label for="showDeleted" class="checkbox-label"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Afficher les supprimés</label>
-        </div>
+        <app-filter-checkbox inputId="showDeleted" label="Afficher les supprimés" [checked]="showDeletedItems" ariaLabel="Afficher les éléments supprimés" (checkedChange)="toggleDeletedItems()"></app-filter-checkbox>
       </div>
       <div class="toolbar-right">
         <button class="btn-secondary-pro" (click)="openAdvancedSearch()">Filtres avancés</button>
@@ -61,19 +58,19 @@
         </div>
         <div class="form-group">
           <label>Actif</label>
-          <select class="form-select" [(ngModel)]="advancedCriteria.isActive">
+          <app-filter-select [(ngModel)]="advancedCriteria.isActive">
             <option [ngValue]="undefined">Tous</option>
             <option [ngValue]="true">Actif</option>
             <option [ngValue]="false">Inactif</option>
-          </select>
+          </app-filter-select>
         </div>
         <div class="form-group">
           <label>Supprimé</label>
-          <select class="form-select" [(ngModel)]="advancedCriteria.isDeleted">
+          <app-filter-select [(ngModel)]="advancedCriteria.isDeleted">
             <option [ngValue]="undefined">Tous</option>
             <option [ngValue]="false">Non supprimé</option>
             <option [ngValue]="true">Supprimé</option>
-          </select>
+          </app-filter-select>
         </div>
         <div class="form-row-full">
           <div class="form-group-inline">
@@ -250,14 +247,10 @@
           <input type="text" class="form-input" [(ngModel)]="editFormData.colorScheme" />
         </div>
         <div class="form-group">
-          <label class="checkbox-label-form">
-            <input type="checkbox" [(ngModel)]="editFormData.isActive" /> Actif
-          </label>
+          <app-filter-checkbox class="checkbox-label-form" inputId="entities-app-config-edit-active" label="Actif" variant="inline" [(ngModel)]="editFormData.isActive" name="editAppConfigIsActive" ariaLabel="Configuration active"></app-filter-checkbox>
         </div>
         <div class="form-group">
-          <label class="checkbox-label-form">
-            <input type="checkbox" [(ngModel)]="editFormData.candidateAccountsEnabled" /> Comptes candidats activés
-          </label>
+          <app-filter-checkbox class="checkbox-label-form" inputId="entities-app-config-edit-candidate-accounts" label="Comptes candidats activés" variant="inline" [(ngModel)]="editFormData.candidateAccountsEnabled" name="editAppConfigCandidateAccountsEnabled" ariaLabel="Comptes candidats activés"></app-filter-checkbox>
         </div>
       </div>
       <div class="modal-actions">
@@ -293,14 +286,10 @@
           <input type="text" class="form-input" [(ngModel)]="createFormData.colorScheme" />
         </div>
         <div class="form-group">
-          <label class="checkbox-label-form">
-            <input type="checkbox" [(ngModel)]="createFormData.isActive" /> Actif
-          </label>
+          <app-filter-checkbox class="checkbox-label-form" inputId="entities-app-config-create-active" label="Actif" variant="inline" [(ngModel)]="createFormData.isActive" name="createAppConfigIsActive" ariaLabel="Nouvelle configuration active"></app-filter-checkbox>
         </div>
         <div class="form-group">
-          <label class="checkbox-label-form">
-            <input type="checkbox" [(ngModel)]="createFormData.candidateAccountsEnabled" /> Comptes candidats activés
-          </label>
+          <app-filter-checkbox class="checkbox-label-form" inputId="entities-app-config-create-candidate-accounts" label="Comptes candidats activés" variant="inline" [(ngModel)]="createFormData.candidateAccountsEnabled" name="createAppConfigCandidateAccountsEnabled" ariaLabel="Nouveaux comptes candidats activés"></app-filter-checkbox>
         </div>
       </div>
       <div class="modal-actions">

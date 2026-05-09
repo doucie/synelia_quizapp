@@ -14,6 +14,7 @@ import { PipelineStageService } from '../../../core/services/pipeline-stage.serv
 import { ApplicationProgressService } from '../../../core/services/application-progress.service';
 import { EntityPermissionService } from '../../../core/services/entity-permission.service';
 import { PipelineStage } from '../../../core/models/pipeline.interfaces';
+import { FilterCheckboxComponent } from '../../../shared/filter-checkbox/filter-checkbox';
 import { environment } from '../../../../environments/environment';
 
 interface CampaignAccess {
@@ -106,7 +107,7 @@ const FORM_EXHAUSTION_POLICIES: FormExhaustionOption[] = [
 @Component({
   selector: 'app-campaign-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, FilterCheckboxComponent],
   templateUrl: './campaign-detail.html',
   styleUrls: ['./campaign-detail.scss']
 })

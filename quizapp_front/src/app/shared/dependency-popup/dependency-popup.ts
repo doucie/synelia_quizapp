@@ -1,11 +1,12 @@
 import { Component, ChangeDetectionStrategy, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DependencyInfo } from '../models/interfaces';
+import { FilterCheckboxComponent } from '../filter-checkbox/filter-checkbox';
 
 @Component({
   selector: 'app-dependency-popup',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, FilterCheckboxComponent],
   templateUrl: './dependency-popup.html',
   styleUrls: ['./dependency-popup.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

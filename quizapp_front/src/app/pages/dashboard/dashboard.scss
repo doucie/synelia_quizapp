@@ -30,6 +30,25 @@
       width: 0;
       overflow: hidden;
     }
+
+    .nav-item {
+      margin: var(--spacing-xs) var(--spacing-sm);
+    }
+
+    .nav-link,
+    .nav-link--footer {
+      justify-content: center;
+      gap: 0;
+      padding: var(--spacing-md) 0;
+    }
+
+    .nav-icon {
+      margin: 0 auto;
+    }
+  }
+
+  .sidebar-footer {
+    padding: var(--spacing-sm);
   }
   
   .main-content {
@@ -381,6 +400,7 @@
   cursor: pointer;
   transition: var(--transition);
   text-align: left;
+  text-decoration: none;
   
   &:hover {
     background: var(--surface-variant);

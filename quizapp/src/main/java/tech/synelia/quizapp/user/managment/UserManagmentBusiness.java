@@ -19,6 +19,7 @@ import java.util.Map;
 
 import org.apache.commons.lang3.time.DateUtils;
 import org.apache.commons.lang3.StringUtils;
+import tech.synelia.quizapp.utils.enums.EmailActionType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -416,7 +417,7 @@ public class UserManagmentBusiness {
 			return response;
 		}
 
-		platformReadinessService.requireEmailDeliveryAvailable("PASSWORD_RESET", "password_reset", locale);
+		platformReadinessService.requireEmailDeliveryAvailable(EmailActionType.PASSWORD_RESET, locale);
 
 		Date targetTime = new Date(); // now
 		targetTime = DateUtils.addHours(targetTime, 48); // add // 48// hours
@@ -446,7 +447,7 @@ public class UserManagmentBusiness {
 			String contenu;
 
 			EmailTemplate emailTemplate = platformReadinessService.requireActiveEmailTemplate(
-					"PASSWORD_RESET", "password_reset", locale);
+						EmailActionType.PASSWORD_RESET, locale);
 			Map<String, String> vars = new HashMap<>();
 			vars.put("first_name", existingEntity.getFirstName());
 			vars.put("last_name", existingEntity.getLastName());

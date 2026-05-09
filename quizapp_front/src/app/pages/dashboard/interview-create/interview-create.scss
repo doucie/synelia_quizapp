@@ -322,10 +322,10 @@
   transition: var(--transition);
 
   .card-check {
-    input[type="checkbox"] {
-      width: 20px;
-      height: 20px;
-      cursor: pointer;
+    display: flex;
+
+    .candidate-card-checkbox {
+      display: flex;
     }
   }
 
@@ -642,47 +642,11 @@
   }
 
   .checkbox-wrapper {
-    position: relative;
     display: flex;
     align-items: center;
-    
-    input[type="checkbox"] {
-      width: 22px;
-      height: 22px;
-      cursor: pointer;
-      opacity: 0;
-      position: absolute;
-      z-index: 2;
 
-      &:checked ~ .checkbox-custom {
-        background: var(--primary);
-        border-color: var(--primary);
-
-        i {
-          opacity: 1;
-          transform: scale(1);
-        }
-      }
-    }
-
-    .checkbox-custom {
-      width: 22px;
-      height: 22px;
-      border: 2px solid var(--border-variant);
-      border-radius: var(--radius-md);
+    .evaluator-card-checkbox {
       display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--surface);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-      i {
-        color: var(--text-on-primary);
-        font-size: var(--font-size-sm);
-        opacity: 0;
-        transform: scale(0);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      }
     }
   }
 
@@ -799,16 +763,6 @@
 
     &::before {
       transform: scaleY(1);
-    }
-
-    .checkbox-custom {
-      background: var(--primary);
-      border-color: var(--primary);
-
-      i {
-        opacity: 1;
-        transform: scale(1);
-      }
     }
   }
 }

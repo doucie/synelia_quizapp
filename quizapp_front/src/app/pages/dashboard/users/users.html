@@ -239,16 +239,17 @@
           
           <div class="form-group">
             <label for="role">Rôle *</label>
-            <select 
+            <app-filter-select 
               id="role" 
               [ngModel]="userForm().role"
               (ngModelChange)="updateFormField('role', $event)"
+              ariaLabel="Sélectionner le rôle de l'utilisateur"
               required
             >
               <option value="recruiter">Recruteur</option>
               <option value="admin">Administrateur</option>
               <option value="super">Super Admin</option>
-            </select>
+            </app-filter-select>
           </div>
         </form>
       </div>

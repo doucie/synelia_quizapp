@@ -56,6 +56,7 @@ public class AppConfigBusiness implements IBasicBusiness<Request<AppConfigDto>, 
             }
 
             AppConfig entityToSave = AppConfigTransformer.INSTANCE.toEntity(dto);
+            entityToSave.setAppLink(normalizeOptionalText(dto.getAppLink()));
             entityToSave.setCreatedAt(Utilities.getCurrentDate());
             entityToSave.setCreatedBy(request.getUser());
             entityToSave.setIsDeleted(false);
@@ -106,6 +107,7 @@ public class AppConfigBusiness implements IBasicBusiness<Request<AppConfigDto>, 
 
             if (Utilities.shouldUpdate(dto.getConfigName())) entityToSave.setConfigName(dto.getConfigName());
             if (Utilities.shouldUpdate(dto.getCompanyName())) entityToSave.setCompanyName(dto.getCompanyName());
+            if (dto.getAppLink() == null || Utilities.shouldUpdate(dto.getAppLink())) entityToSave.setAppLink(normalizeOptionalText(dto.getAppLink()));
             if (dto.getLogoHtml() != null) entityToSave.setLogoHtml(dto.getLogoHtml());
             if (Utilities.shouldUpdate(dto.getPrimaryColor())) entityToSave.setPrimaryColor(dto.getPrimaryColor());
             if (Utilities.shouldUpdate(dto.getColorScheme())) entityToSave.setColorScheme(dto.getColorScheme());
@@ -203,6 +205,14 @@ public class AppConfigBusiness implements IBasicBusiness<Request<AppConfigDto>, 
 
     public AppConfig getActiveConfig() {
         return appConfigRepository.findActiveConfig(true, false);
+    }
+
+    private String normalizeOptionalText(String value) {
+        if (!Utilities.notBlank(value)) {
+            return null;
+        }
+
+        return value.trim();
     }
 
     public Response<AppConfigDto> activateConfig(Long configId, Integer userId) throws ParseException {

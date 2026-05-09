@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../../core/services/auth/auth.service';
+import { FilterCheckboxComponent } from '../../../shared/filter-checkbox/filter-checkbox';
 import { PERMISSION_CATEGORIES, PermissionCategory, PermissionDef } from '../../../core/constants/permissions.constants';
 import { SpringBootRequest, SpringBootResponse } from '../../../core/models/spring-boot.interfaces';
 
@@ -28,7 +29,7 @@ type RoleTab = 'ADMIN' | 'UTILISATEUR';
 @Component({
   selector: 'app-system-role-permissions',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, FilterCheckboxComponent],
   templateUrl: './system-role-permissions.html',
   styleUrls: ['./system-role-permissions.scss']
 })

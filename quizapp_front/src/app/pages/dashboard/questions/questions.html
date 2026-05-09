@@ -65,19 +65,19 @@
 
   <!-- Filtres avancés -->
   <div class="advanced-filters">
-    <select class="filter-select" [ngModel]="filterDifficulty()" (ngModelChange)="filterDifficulty.set($event)">
+    <app-filter-select [value]="filterDifficulty()" ariaLabel="Filtrer par difficulté" (valueChange)="onDifficultyFilterChange($event)">
       <option [ngValue]="null">Toutes difficultés</option>
       @for (level of difficultyLevels; track level) {
         <option [ngValue]="level">{{ getDifficultyLabel(level) }}</option>
       }
-    </select>
+    </app-filter-select>
 
-    <select class="filter-select" [ngModel]="filterType()" (ngModelChange)="filterType.set($event)">
+    <app-filter-select [value]="filterType()" ariaLabel="Filtrer par type" (valueChange)="onTypeFilterChange($event)">
       <option [ngValue]="null">Tous types</option>
       @for (type of questionTypes; track type) {
         <option [ngValue]="type">{{ getTypeLabel(type) }}</option>
       }
-    </select>
+    </app-filter-select>
   </div>
 
   <!-- Chargement -->
@@ -319,20 +319,20 @@
           <div class="form-row">
             <div class="form-group">
               <label for="q-type">Type</label>
-              <select id="q-type" [ngModel]="questionForm().questionType" (ngModelChange)="updateFormField('questionType', $event)">
+              <app-filter-select id="q-type" [ngModel]="questionForm().questionType" ariaLabel="Sélectionner le type de question" (ngModelChange)="updateFormField('questionType', $event)">
                 @for (type of questionTypes; track type) {
                   <option [ngValue]="type">{{ getTypeLabel(type) }}</option>
                 }
-              </select>
+              </app-filter-select>
             </div>
 
             <div class="form-group">
               <label for="q-difficulty">Difficulté</label>
-              <select id="q-difficulty" [ngModel]="questionForm().difficultyLevel" (ngModelChange)="updateFormField('difficultyLevel', $event)">
+              <app-filter-select id="q-difficulty" [ngModel]="questionForm().difficultyLevel" ariaLabel="Sélectionner la difficulté" (ngModelChange)="updateFormField('difficultyLevel', $event)">
                 @for (level of difficultyLevels; track level) {
                   <option [ngValue]="level">{{ getDifficultyLabel(level) }}</option>
                 }
-              </select>
+              </app-filter-select>
             </div>
           </div>
 
@@ -365,12 +365,12 @@
           @if (specialities().length > 0) {
             <div class="form-group">
               <label for="q-speciality">Spécialité</label>
-              <select id="q-speciality" [ngModel]="questionForm().specialityId" (ngModelChange)="updateFormField('specialityId', $event)">
+              <app-filter-select id="q-speciality" [ngModel]="questionForm().specialityId" ariaLabel="Sélectionner une spécialité" (ngModelChange)="updateFormField('specialityId', $event)">
                 <option [ngValue]="undefined">Aucune spécialité</option>
                 @for (spec of specialities(); track spec.id ?? $index) {
                   <option [ngValue]="spec.id">{{ spec.nom || spec.name || spec.specialityName }}</option>
                 }
-              </select>
+              </app-filter-select>
             </div>
           }
         </form>
@@ -449,11 +449,11 @@
           <div class="form-row">
             <div class="form-group">
               <label for="a-type">Type</label>
-              <select id="a-type" [ngModel]="answerForm().answerType" (ngModelChange)="updateAnswerFormField('answerType', $event)">
+              <app-filter-select id="a-type" [ngModel]="answerForm().answerType" ariaLabel="Sélectionner le type de réponse" (ngModelChange)="updateAnswerFormField('answerType', $event)">
                 @for (type of answerTypes; track type) {
                   <option [ngValue]="type">{{ type }}</option>
                 }
-              </select>
+              </app-filter-select>
             </div>
             <div class="form-group">
               <label for="a-order">Ordre</label>
@@ -467,14 +467,7 @@
             </div>
           </div>
           <div class="form-group">
-            <label class="checkbox-label">
-              <input
-                type="checkbox"
-                [ngModel]="answerForm().isCorrect"
-                (ngModelChange)="updateAnswerFormField('isCorrect', $event)"
-              >
-              Réponse correcte
-            </label>
+            <app-filter-checkbox inputId="question-answer-correct" label="Réponse correcte" variant="inline" [checked]="answerForm().isCorrect === true" ariaLabel="Réponse correcte" (checkedChange)="updateAnswerFormField('isCorrect', $event)"></app-filter-checkbox>
           </div>
         </form>
       </div>

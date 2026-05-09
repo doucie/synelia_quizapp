@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../../../shared/filter-select/filter-select';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { EntityCrudBase, ColumnDef } from '../../../../../shared/entity-crud-base';
@@ -12,7 +13,7 @@ import { UserPermissionOverrideCrudService, UserPermissionOverride, PagedUserPer
 @Component({
   selector: 'app-entities-user-permission-overrides',
   standalone: true,
-  imports: [CommonModule, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent, ColumnVisibilityManagerComponent],
+  imports: [FilterSelectComponent, FilterSelectOptionDirective, CommonModule, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent, ColumnVisibilityManagerComponent],
   templateUrl: './entities-user-permission-overrides.html',
   styleUrls: ['./entities-user-permission-overrides.scss']
 })

@@ -59,6 +59,7 @@ const SCHEME_MAP: Record<string, SchemeColors> = {
 export class ThemeService {
   activeConfig = signal<AppConfig | null>(null);
   companyName = signal('Synelia');
+  appLink = signal('');
   logoHtml = signal('');
   candidateAccountsEnabled = signal(false);
 
@@ -85,6 +86,7 @@ export class ThemeService {
             };
             this.activeConfig.set(normalizedConfig);
             this.companyName.set(normalizedConfig.companyName || 'Synelia');
+            this.appLink.set(normalizedConfig.appLink?.trim() || '');
             this.logoHtml.set(this.logoHtmlSanitizer.sanitizeOrEmpty(normalizedConfig.logoHtml));
             this.candidateAccountsEnabled.set(normalizedConfig.candidateAccountsEnabled === true);
             this.applyTheme(normalizedConfig);

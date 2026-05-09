@@ -8,6 +8,7 @@ import { SourceTokenService } from '../../services/source-token.service';
 import { ApplicationService, Application } from '../../core/services/application.service';
 import { FileService } from '../../core/services/file.service';
 import { SafeHtmlPipe } from '../../pipes/safe-html.pipe';
+import { FilterCheckboxComponent } from '../../shared/filter-checkbox/filter-checkbox';
 
 interface ApplicationForm {
   // Informations personnelles
@@ -31,7 +32,7 @@ interface ApplicationForm {
 
 @Component({
   selector: 'app-apply-position',
-  imports: [CommonModule, RouterModule, FormsModule, SafeHtmlPipe],
+  imports: [CommonModule, RouterModule, FormsModule, SafeHtmlPipe, FilterCheckboxComponent],
   templateUrl: './apply-position.html',
   styleUrl: './apply-position.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -188,6 +189,13 @@ export class ApplyPositionComponent implements OnInit {
       this.formData.update(data => ({ ...data, cvFile: file }));
       this.fileName.set(file.name);
     }
+  }
+
+  updateBooleanField(field: 'remoteWork' | 'relocate' | 'consent', value: boolean): void {
+    this.formData.update(data => ({
+      ...data,
+      [field]: value
+    }));
   }
 
   async onSubmit(): Promise<void> {

@@ -936,14 +936,7 @@
             @if (editAvailableEvaluators().length > 0) {
               <div class="edit-evaluator-list">
                 @for (evaluator of editAvailableEvaluators(); track evaluator.userId) {
-                  <label class="edit-evaluator-option">
-                    <input
-                      type="checkbox"
-                      [checked]="isEditEvaluatorSelected(evaluator.userId)"
-                      (change)="toggleEditEvaluator(evaluator.userId)"
-                      [disabled]="savingInterview()"
-                    />
-
+                  <app-filter-checkbox class="edit-evaluator-option" [inputId]="'interview-edit-evaluator-' + evaluator.userId" variant="inline" [checked]="isEditEvaluatorSelected(evaluator.userId)" [disabled]="savingInterview()" [ariaLabel]="getEvaluatorFullName(evaluator)" (checkedChange)="toggleEditEvaluator(evaluator.userId)">
                     <div class="edit-evaluator-meta">
                       <span class="edit-evaluator-name">{{ getEvaluatorFullName(evaluator) }}</span>
                       <span class="edit-evaluator-email">{{ evaluator.email || 'Peut évaluer cet entretien' }}</span>
@@ -952,7 +945,7 @@
                     @if (evaluator.canEvaluate) {
                       <span class="edit-evaluator-badge">Campagne</span>
                     }
-                  </label>
+                  </app-filter-checkbox>
                 }
               </div>
             } @else {
@@ -970,16 +963,7 @@
           }
         </div>
 
-        <label class="edit-checkbox">
-          <input
-            type="checkbox"
-            [ngModel]="editFormData().sendEmail"
-            (ngModelChange)="updateEditForm({ sendEmail: $event })"
-            name="editInterviewSendEmail"
-            [disabled]="savingInterview()"
-          />
-          <span>Renvoyer une convocation au candidat après mise à jour</span>
-        </label>
+        <app-filter-checkbox class="edit-checkbox" inputId="edit-interview-send-email" label="Renvoyer une convocation au candidat après mise à jour" variant="inline" [ngModel]="editFormData().sendEmail" (ngModelChange)="updateEditForm({ sendEmail: $event })" name="editInterviewSendEmail" [disabled]="savingInterview()" ariaLabel="Renvoyer une convocation au candidat après mise à jour"></app-filter-checkbox>
       </div>
 
       <div class="modal-footer">

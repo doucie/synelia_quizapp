@@ -7,6 +7,8 @@ import { EntityCrudBase, ColumnDef } from '../../../../../shared/entity-crud-bas
 import { EntityDetailPanelComponent } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
 import { DependencyPopupComponent } from '../../../../../shared/dependency-popup/dependency-popup';
 import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
+import { FilterCheckboxComponent } from '../../../../../shared/filter-checkbox/filter-checkbox';
+import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../../../shared/filter-select/filter-select';
 import { BusinessGroupCrudService, BusinessGroup, PagedBusinessGroupResponse, BusinessGroupCriteria } from '../../../../../core/services/business-group-crud.service';
 import { BusinessGroupPermissionService, BusinessGroupPermission } from '../../../../../core/services/business-group-permission.service';
 import { UserBusinessGroupService, UserBusinessGroup } from '../../../../../core/services/user-business-group.service';
@@ -14,7 +16,7 @@ import { UserBusinessGroupService, UserBusinessGroup } from '../../../../../core
 @Component({
   selector: 'app-entities-business-groups',
   standalone: true,
-  imports: [CommonModule, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent, ColumnVisibilityManagerComponent],
+  imports: [FilterSelectComponent, FilterSelectOptionDirective, CommonModule, FormsModule, FilterCheckboxComponent, EntityDetailPanelComponent, DependencyPopupComponent, ColumnVisibilityManagerComponent],
   templateUrl: './entities-business-groups.html',
   styleUrls: ['./entities-business-groups.scss']
 })

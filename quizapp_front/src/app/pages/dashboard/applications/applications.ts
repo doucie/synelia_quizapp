@@ -14,6 +14,8 @@ import { PipelineStageService } from '../../../core/services/pipeline-stage.serv
 import { ApplicationProgressService } from '../../../core/services/application-progress.service';
 import { PipelineStage, ApplicationProgress } from '../../../core/models/pipeline.interfaces';
 import { APPLICATION_STATUS, getApplicationStatusLabel, isRejectedStatus } from '../../../core/constants/application-status.constants';
+import { FilterCheckboxComponent } from '../../../shared/filter-checkbox/filter-checkbox';
+import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../shared/filter-select/filter-select';
 
 type SortOrder = 'recent' | 'oldest';
 type ViewMode = 'grid' | 'list';
@@ -27,7 +29,7 @@ interface ApplicationWithCampaign extends Application {
 @Component({
   selector: 'app-applications',
   standalone: true,
-  imports: [CommonModule, FormsModule, ClickOutsideDirective],
+  imports: [CommonModule, FormsModule, ClickOutsideDirective, FilterCheckboxComponent, FilterSelectComponent, FilterSelectOptionDirective],
   templateUrl: './applications.html',
   styleUrl: './applications.scss'
 })
@@ -91,6 +93,14 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  onStageFilterChange(value: string | number | boolean | null): void {
+    this.setStageFilter(typeof value === 'number' ? value : null);
+  }
+
+  onSharedCampaignsFilterChange(checked: boolean): void {
+    this.showOnlySharedCampaigns.set(checked);
   }
 
   /**
@@ -1040,13 +1050,6 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   unlockCampaign(): void {
     this.lockedCampaignId.set(null);
     this.router.navigate(['/dashboard/candidates']);
-  }
-
-  /**
-   * Toggle le filtre des campagnes partagées
-   */
-  toggleSharedCampaignsFilter(): void {
-    this.showOnlySharedCampaigns.set(!this.showOnlySharedCampaigns());
   }
 
   /**

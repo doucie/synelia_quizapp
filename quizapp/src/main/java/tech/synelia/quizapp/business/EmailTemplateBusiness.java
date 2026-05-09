@@ -390,7 +390,48 @@ public class EmailTemplateBusiness implements IBasicBusiness<Request<EmailTempla
         if (variables != null) {
             renderVariables.putAll(variables);
         }
+        populateLegacyCtaVariables(renderVariables);
         return renderVariables;
+    }
+
+    private void populateLegacyCtaVariables(Map<String, String> renderVariables) {
+        if (renderVariables == null || StringUtils.isNotBlank(renderVariables.get("ctaButton"))) {
+            return;
+        }
+
+        String buttonText = StringUtils.trimToEmpty(renderVariables.get("buttonText"));
+        if (StringUtils.isBlank(buttonText)) {
+            return;
+        }
+
+        String buttonLink = StringUtils.trimToEmpty(renderVariables.get("buttonLink"));
+        renderVariables.put("ctaButton", buildCtaButtonHtml(buttonText, buttonLink));
+    }
+
+    private String buildCtaButtonHtml(String buttonText, String buttonLink) {
+        String escapedButtonText = escapeHtml(buttonText);
+        if (StringUtils.isBlank(escapedButtonText)) {
+            return "";
+        }
+
+        if (StringUtils.isBlank(buttonLink)) {
+            return "<span class=\"btn\">" + escapedButtonText + "</span>";
+        }
+
+        return "<a href=\"" + escapeHtml(buttonLink) + "\" class=\"btn\">" + escapedButtonText + "</a>";
+    }
+
+    private String escapeHtml(String value) {
+        if (value == null) {
+            return "";
+        }
+
+        return value
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
     }
 
     private Map<String, String> parseEditableVariables(String editableVariablesJson) {

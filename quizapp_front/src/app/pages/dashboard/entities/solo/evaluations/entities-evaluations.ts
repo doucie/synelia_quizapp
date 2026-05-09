@@ -7,13 +7,15 @@ import { EntityCrudBase, ColumnDef } from '../../../../../shared/entity-crud-bas
 import { EntityDetailPanelComponent } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
 import { DependencyPopupComponent } from '../../../../../shared/dependency-popup/dependency-popup';
 import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
+import { FilterCheckboxComponent } from '../../../../../shared/filter-checkbox/filter-checkbox';
+import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../../../shared/filter-select/filter-select';
 import { EvaluationService, Evaluation, PagedEvaluationResponse, EvaluationSearchCriteria } from '../../../../../core/services/evaluation.service';
 import { CandidateInterviewEntityService, CandidateInterviewEntity } from '../../../../../core/services/candidate-interview-entity.service';
 
 @Component({
   selector: 'app-entities-evaluations',
   standalone: true,
-  imports: [CommonModule, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent, ColumnVisibilityManagerComponent],
+  imports: [CommonModule, FormsModule, FilterCheckboxComponent, FilterSelectComponent, FilterSelectOptionDirective, EntityDetailPanelComponent, DependencyPopupComponent, ColumnVisibilityManagerComponent],
   templateUrl: './entities-evaluations.html',
   styleUrls: ['./entities-evaluations.scss']
 })

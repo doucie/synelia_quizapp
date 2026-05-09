@@ -1,11 +1,12 @@
 import { Component, Input, Output, EventEmitter, signal, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ColumnDef } from '../entity-crud-base';
+import { FilterCheckboxComponent } from '../filter-checkbox/filter-checkbox';
 
 @Component({
   selector: 'app-column-visibility-manager',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FilterCheckboxComponent],
   templateUrl: './column-visibility-manager.html',
   styleUrls: ['./column-visibility-manager.scss']
 })

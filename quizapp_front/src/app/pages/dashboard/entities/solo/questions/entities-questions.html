@@ -31,22 +31,7 @@
           (input)="onQuickSearch()"
         />
         
-        <!-- Checkbox pour afficher les questions supprimés -->
-        <div class="checkbox-container">
-          <input 
-            type="checkbox" 
-            id="showDeleted" 
-            class="checkbox-input"
-            [checked]="showDeletedQuestions"
-            (click)="toggleDeletedQuestions()"
-          />
-          <label for="showDeleted" class="checkbox-label">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            Afficher les questions supprimés
-          </label>
-        </div>
+        <app-filter-checkbox inputId="showDeleted" label="Afficher les questions supprimés" [checked]="showDeletedQuestions" ariaLabel="Afficher les questions supprimés" (checkedChange)="toggleDeletedQuestions()"></app-filter-checkbox>
       </div>
       <div class="toolbar-right">
         <button class="btn-secondary-pro" (click)="openAdvancedSearch()">
@@ -99,22 +84,22 @@
         </div>
         <div class="form-group">
           <label>Type de question</label>
-          <select class="form-select" [(ngModel)]="advancedCriteria.questionType">
+          <app-filter-select [(ngModel)]="advancedCriteria.questionType">
             <option [ngValue]="undefined">Tous</option>
             <option value="SINGLE_CHOICE">Choix unique</option>
             <option value="MULTIPLE_CHOICE">Choix multiple</option>
             <option value="TRUE_FALSE">Vrai/Faux</option>
             <option value="TEXT">Texte libre</option>
-          </select>
+          </app-filter-select>
         </div>
         <div class="form-group">
           <label>Niveau de difficulté</label>
-          <select class="form-select" [(ngModel)]="advancedCriteria.difficultyLevel">
+          <app-filter-select [(ngModel)]="advancedCriteria.difficultyLevel">
             <option [ngValue]="undefined">Tous</option>
             <option value="EASY">Facile</option>
             <option value="MEDIUM">Moyen</option>
             <option value="HARD">Difficile</option>
-          </select>
+          </app-filter-select>
         </div>
         <div class="form-group">
           <label>Score</label>
@@ -126,20 +111,20 @@
         </div>
         <div class="form-group">
           <label>Spécialité</label>
-          <select class="form-select" [(ngModel)]="advancedCriteria.specialityId">
+          <app-filter-select [(ngModel)]="advancedCriteria.specialityId">
             <option [ngValue]="undefined">-- Tous --</option>
             @for (item of allSpecialities(); track item.id) {
               <option [ngValue]="item.id">{{ item.specialityName || '#' + item.id }}</option>
             }
-          </select>
+          </app-filter-select>
         </div>
         <div class="form-group">
           <label>Supprimé</label>
-          <select class="form-select" [(ngModel)]="advancedCriteria.isDeleted">
+          <app-filter-select [(ngModel)]="advancedCriteria.isDeleted">
             <option [ngValue]="undefined">Tous</option>
             <option [ngValue]="false">Non supprimé</option>
             <option [ngValue]="true">Supprimé</option>
-          </select>
+          </app-filter-select>
         </div>
         <!-- Date de création -->
         <div class="form-row-full">

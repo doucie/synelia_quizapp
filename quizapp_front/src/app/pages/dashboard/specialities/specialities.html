@@ -64,16 +64,17 @@
 
     @if (departments().length > 0) {
       <div class="department-filter">
-        <select
+        <app-filter-select
           class="department-select"
           [ngModel]="filterDepartment()"
+          ariaLabel="Filtrer par département"
           (ngModelChange)="filterDepartment.set($event)"
         >
           <option [ngValue]="null">Tous les départements</option>
           @for (dept of departments(); track dept.id ?? $index) {
             <option [ngValue]="dept.id">{{ dept.nom || dept.name }}</option>
           }
-        </select>
+        </app-filter-select>
       </div>
     }
   </div>
@@ -202,16 +203,17 @@
           @if (departments().length > 0) {
             <div class="form-group">
               <label for="spec-department">Département</label>
-              <select
+              <app-filter-select
                 id="spec-department"
                 [ngModel]="specialityForm().departmentId"
+                ariaLabel="Sélectionner un département"
                 (ngModelChange)="updateFormField('departmentId', $event)"
               >
                 <option [ngValue]="undefined">Aucun département</option>
                 @for (dept of departments(); track dept.id ?? $index) {
                   <option [ngValue]="dept.id">{{ dept.nom || dept.name }}</option>
                 }
-              </select>
+              </app-filter-select>
             </div>
           }
         </form>

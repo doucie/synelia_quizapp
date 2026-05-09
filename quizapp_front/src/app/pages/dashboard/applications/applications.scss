@@ -403,28 +403,6 @@
   align-items: flex-end;
 }
 
-.filter-checkbox {
-  display: flex;
-  align-items: center;
-  padding: var(--spacing-md) var(--spacing-md);
-  background: var(--surface);
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius-lg);
-  transition: var(--transition);
-
-  &:hover {
-    border-color: var(--primary);
-    background: var(--surface-secondary);
-  }
-
-  .checkbox-hint {
-    font-size: var(--font-size-sm);
-    color: var(--text-tertiary);
-    font-weight: var(--font-weight-normal);
-    margin-left: var(--spacing-xs);
-  }
-}
-
 .filter-group {
   display: flex;
   flex-direction: column;

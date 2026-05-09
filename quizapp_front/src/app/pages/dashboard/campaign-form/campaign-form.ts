@@ -12,6 +12,7 @@ import { PipelineTemplateService } from '../../../core/services/pipeline-templat
 import { PipelineStageService } from '../../../core/services/pipeline-stage.service';
 import { ApplicationProgressService } from '../../../core/services/application-progress.service';
 import { PipelineTemplate, PipelineStage } from '../../../core/models/pipeline.interfaces';
+import { FilterCheckboxComponent } from '../../../shared/filter-checkbox/filter-checkbox';
 
 interface RecruiterAccess {
   user: User;
@@ -29,7 +30,7 @@ interface RecruiterAccess {
 @Component({
   selector: 'app-campaign-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FilterCheckboxComponent],
   templateUrl: './campaign-form.component.html',
   styleUrls: ['./campaign-form.component.scss']
 })
@@ -466,21 +467,21 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
     );
   }
 
-  toggleRecruiterAccess(index: number, field: 'canEvaluate' | 'canUpdate' | 'canDelete' | 'canPlanify' | 'canAcceptPreScreen' | 'canAcceptFinal'): void {
+  toggleRecruiterAccess(index: number, field: 'canEvaluate' | 'canUpdate' | 'canDelete' | 'canPlanify' | 'canAcceptPreScreen' | 'canAcceptFinal', nextValue?: boolean): void {
     this.selectedRecruiters.update(recruiters => {
       const updated = [...recruiters];
       updated[index] = {
         ...updated[index],
-        [field]: !updated[index][field]
+        [field]: typeof nextValue === 'boolean' ? nextValue : !updated[index][field]
       };
       return updated;
     });
   }
 
-  toggleAdmin(index: number): void {
+  toggleAdmin(index: number, nextValue?: boolean): void {
     this.selectedRecruiters.update(recruiters => {
       const updated = [...recruiters];
-      const newAdminStatus = !updated[index].isAdmin;
+      const newAdminStatus = typeof nextValue === 'boolean' ? nextValue : !updated[index].isAdmin;
       
       updated[index] = {
         ...updated[index],

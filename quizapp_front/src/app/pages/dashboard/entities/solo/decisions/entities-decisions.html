@@ -18,10 +18,7 @@
     <div class="toolbar">
       <div class="toolbar-left">
         <input type="text" class="search-input" placeholder="Rechercher..." [(ngModel)]="quickSearch" (input)="onQuickSearch()" />
-        <div class="checkbox-container">
-          <input type="checkbox" id="showDeleted" class="checkbox-input" [checked]="showDeletedItems" (click)="toggleDeletedItems()" />
-          <label for="showDeleted" class="checkbox-label"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Afficher les supprimés</label>
-        </div>
+        <app-filter-checkbox inputId="showDeleted" label="Afficher les supprimés" [checked]="showDeletedItems" ariaLabel="Afficher les éléments supprimés" (checkedChange)="toggleDeletedItems()"></app-filter-checkbox>
       </div>
       <div class="toolbar-right">
         <button class="btn-secondary-pro" (click)="openAdvancedSearch()">Filtres avancés</button>
@@ -57,29 +54,29 @@
         </div>
         <div class="form-group">
           <label>Candidature</label>
-          <select class="form-select" [(ngModel)]="advancedCriteria.applicationId">
+          <app-filter-select [(ngModel)]="advancedCriteria.applicationId">
             <option [ngValue]="undefined">-- Tous --</option>
             @for (item of allApplications(); track item.id) {
               <option [ngValue]="item.id">{{ '#' + item.id + ' - ' + (item.candidateFirstName || '') + ' ' + (item.candidateLastName || '') }}</option>
             }
-          </select>
+          </app-filter-select>
         </div>
         <div class="form-group">
           <label>Utilisateur</label>
-          <select class="form-select" [(ngModel)]="advancedCriteria.userId">
+          <app-filter-select [(ngModel)]="advancedCriteria.userId">
             <option [ngValue]="undefined">-- Tous --</option>
             @for (item of allUsers(); track item.id) {
               <option [ngValue]="item.id">{{ item.firstName + ' ' + item.lastName }}</option>
             }
-          </select>
+          </app-filter-select>
         </div>
         <div class="form-group">
           <label>Supprimé</label>
-          <select class="form-select" [(ngModel)]="advancedCriteria.isDeleted">
+          <app-filter-select [(ngModel)]="advancedCriteria.isDeleted">
             <option [ngValue]="undefined">Tous</option>
             <option [ngValue]="false">Non supprimé</option>
             <option [ngValue]="true">Supprimé</option>
-          </select>
+          </app-filter-select>
         </div>
         <!-- Date de création -->
         <div class="form-row-full">
@@ -247,10 +244,10 @@
     </div>
     <div class="modal-content">
       <form class="edit-form">
-        <div class="form-group"><label class="form-label">Candidature</label><select class="form-input" [(ngModel)]="editFormData.applicationId" name="applicationId"><option [ngValue]="undefined">-- Sélectionner --</option>@for (a of allApplications(); track a.id) {<option [ngValue]="a.id">{{ a.candidateEmail }}</option>}</select></div>
-        <div class="form-group"><label class="form-label">Utilisateur</label><select class="form-input" [(ngModel)]="editFormData.userId" name="userId"><option [ngValue]="undefined">-- Sélectionner --</option>@for (u of allUsers(); track u.id) {<option [ngValue]="u.id">{{ u.email }}</option>}</select></div>
+        <div class="form-group"><label class="form-label">Candidature</label><app-filter-select [(ngModel)]="editFormData.applicationId" name="applicationId" ariaLabel="Sélectionner une candidature"><option [ngValue]="undefined">-- Sélectionner --</option>@for (a of allApplications(); track a.id) {<option [ngValue]="a.id">{{ a.candidateEmail }}</option>}</app-filter-select></div>
+        <div class="form-group"><label class="form-label">Utilisateur</label><app-filter-select [(ngModel)]="editFormData.userId" name="userId" ariaLabel="Sélectionner un utilisateur"><option [ngValue]="undefined">-- Sélectionner --</option>@for (u of allUsers(); track u.id) {<option [ngValue]="u.id">{{ u.email }}</option>}</app-filter-select></div>
         <div class="form-group"><label class="form-label">Type Décision</label><input type="text" class="form-input" [(ngModel)]="editFormData.decisionType" name="decisionType" /></div>
-        <div class="form-group"><label class="form-label"><input type="checkbox" [(ngModel)]="editFormData.isCancel" name="isCancel" /> Annulée</label></div>
+        <div class="form-group"><app-filter-checkbox class="form-label" inputId="entities-decisions-edit-cancel" label="Annulée" variant="inline" [(ngModel)]="editFormData.isCancel" name="editDecisionIsCancel" ariaLabel="Décision annulée"></app-filter-checkbox></div>
       </form>
     </div>
     <div class="modal-actions">
@@ -272,10 +269,10 @@
     </div>
     <div class="modal-content">
       <form class="edit-form">
-        <div class="form-group"><label class="form-label">Candidature</label><select class="form-input" [(ngModel)]="createFormData.applicationId" name="applicationId"><option [ngValue]="undefined">-- Sélectionner --</option>@for (a of allApplications(); track a.id) {<option [ngValue]="a.id">{{ a.candidateEmail }}</option>}</select></div>
-        <div class="form-group"><label class="form-label">Utilisateur</label><select class="form-input" [(ngModel)]="createFormData.userId" name="userId"><option [ngValue]="undefined">-- Sélectionner --</option>@for (u of allUsers(); track u.id) {<option [ngValue]="u.id">{{ u.email }}</option>}</select></div>
+        <div class="form-group"><label class="form-label">Candidature</label><app-filter-select [(ngModel)]="createFormData.applicationId" name="applicationId" ariaLabel="Sélectionner une candidature pour la nouvelle décision"><option [ngValue]="undefined">-- Sélectionner --</option>@for (a of allApplications(); track a.id) {<option [ngValue]="a.id">{{ a.candidateEmail }}</option>}</app-filter-select></div>
+        <div class="form-group"><label class="form-label">Utilisateur</label><app-filter-select [(ngModel)]="createFormData.userId" name="userId" ariaLabel="Sélectionner un utilisateur pour la nouvelle décision"><option [ngValue]="undefined">-- Sélectionner --</option>@for (u of allUsers(); track u.id) {<option [ngValue]="u.id">{{ u.email }}</option>}</app-filter-select></div>
         <div class="form-group"><label class="form-label">Type Décision</label><input type="text" class="form-input" [(ngModel)]="createFormData.decisionType" name="decisionType" /></div>
-        <div class="form-group"><label class="form-label"><input type="checkbox" [(ngModel)]="createFormData.isCancel" name="isCancel" /> Annulée</label></div>
+        <div class="form-group"><app-filter-checkbox class="form-label" inputId="entities-decisions-create-cancel" label="Annulée" variant="inline" [(ngModel)]="createFormData.isCancel" name="createDecisionIsCancel" ariaLabel="Nouvelle décision annulée"></app-filter-checkbox></div>
       </form>
     </div>
     <div class="modal-actions">

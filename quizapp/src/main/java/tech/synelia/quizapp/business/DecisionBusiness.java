@@ -23,6 +23,7 @@ import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.dto.transformer.*;
 import tech.synelia.quizapp.utils.enums.FunctionalityEnum;
+import tech.synelia.quizapp.utils.enums.EmailActionType;
 import tech.synelia.quizapp.dao.entity.Decision;
 import tech.synelia.quizapp.dao.entity.Applications;
 import tech.synelia.quizapp.dao.entity.User;
@@ -40,10 +41,6 @@ import jakarta.persistence.PersistenceContext;
 @Component
 public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Response<DecisionDto>> {
 
-    private static final String PRE_SCREEN_DECISION_ACTION = "PRE_SCREEN_DECISION";
-    private static final String PRE_SCREEN_DECISION_TEMPLATE_KEY = "pre_screen_decision";
-    private static final String FINAL_DECISION_ACTION = "FINAL_DECISION";
-    private static final String FINAL_DECISION_TEMPLATE_KEY = "final_decision";
     private static final String MAIL_SENDER_NAME = "Synelia Recrutement";
 
     @Autowired
@@ -531,9 +528,9 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
             return;
         }
 
-        String actionType = isPreScreenDecision ? PRE_SCREEN_DECISION_ACTION : FINAL_DECISION_ACTION;
-        String templateKey = isPreScreenDecision ? PRE_SCREEN_DECISION_TEMPLATE_KEY : FINAL_DECISION_TEMPLATE_KEY;
-        EmailTemplate emailTemplate = emailTemplateBusiness.findDefaultByActionTypeOrKey(actionType, templateKey);
+        EmailActionType emailAction = isPreScreenDecision ? EmailActionType.PRE_SCREEN_DECISION : EmailActionType.FINAL_DECISION;
+        String templateKey = emailAction.getTemplateKey();
+        EmailTemplate emailTemplate = emailTemplateBusiness.findDefaultByActionTypeOrKey(emailAction.name(), templateKey);
         if (emailTemplate == null || Boolean.TRUE.equals(emailTemplate.getIsDeleted()) || !Boolean.TRUE.equals(emailTemplate.getIsActive())) {
             log.info("Aucun template email actif pour la décision " + decisionType + ", envoi ignoré.");
             return;

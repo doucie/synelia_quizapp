@@ -66,8 +66,29 @@
        [attr.data-placeholder]="placeholder">
   </div>
 
-  <!-- Variable insertion toolbar -->
-  <div class="rte-variables" *ngIf="variables.length > 0">
+  <!-- Variable insertion toolbar — grouped mode -->
+  <ng-container *ngIf="variableGroups.length > 0">
+    <ng-container *ngFor="let group of variableGroups; let last = last; let first = first">
+      <hr class="rte-variables-separator" *ngIf="!first" />
+      <div class="rte-variables">
+        <span class="rte-variables-label">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          {{ group.label }} :
+        </span>
+        <button
+          type="button"
+          [class]="'rte-var-btn ' + (group.colorClass || '')"
+          *ngFor="let v of group.keys"
+          (mousedown)="$event.preventDefault()"
+          (click)="insertVariable(v)">
+          {{ '{' + '{' + v + '}' + '}' }}
+        </button>
+      </div>
+    </ng-container>
+  </ng-container>
+
+  <!-- Variable insertion toolbar — flat mode (legacy) -->
+  <div class="rte-variables" *ngIf="variables.length > 0 && variableGroups.length === 0">
     <span class="rte-variables-label">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       Variables :

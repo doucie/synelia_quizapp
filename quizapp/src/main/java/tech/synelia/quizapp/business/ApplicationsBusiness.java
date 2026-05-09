@@ -33,6 +33,7 @@ import tech.synelia.quizapp.utils.contract.IBasicBusiness;
 import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.dto.transformer.*;
+import tech.synelia.quizapp.utils.enums.EmailActionType;
 import tech.synelia.quizapp.utils.enums.FormAssignmentExhaustionPolicy;
 import tech.synelia.quizapp.utils.enums.FormAssignmentStrategy;
 import tech.synelia.quizapp.utils.enums.CandidateAskStatus;
@@ -185,7 +186,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		Map<String, Set<Integer>> pendingCandidateFormHistory = new HashMap<String, Set<Integer>>();
 
 		platformReadinessService.requireEmailDeliveryAvailable(
-				"APPLICATION_VERIFICATION", "application_verification", locale);
+				EmailActionType.APPLICATION_VERIFICATION, locale);
 		if (request.getUser() == null || request.getUser() <= 0) {
 			platformReadinessService.requireActiveLegalText("candidate_consent", locale);
 		}
@@ -768,7 +769,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		String contenu;
 
 		EmailTemplate emailTemplate = platformReadinessService.requireActiveEmailTemplate(
-				"APPLICATION_VERIFICATION", "application_verification", locale);
+				EmailActionType.APPLICATION_VERIFICATION, locale);
 		Map<String, String> vars = new HashMap<>();
 		vars.put("first_name", application.getCandidateFirstName());
 		vars.put("last_name", application.getCandidateLastName());

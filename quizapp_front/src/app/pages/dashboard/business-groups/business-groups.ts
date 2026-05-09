@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../../core/services/auth/auth.service';
+import { FilterCheckboxComponent } from '../../../shared/filter-checkbox/filter-checkbox';
 import { PERMISSION_CATEGORIES } from '../../../core/constants/permissions.constants';
 import { SpringBootRequest, SpringBootResponse } from '../../../core/models/spring-boot.interfaces';
 import { GroupChangeRequestService, GroupChangeRequest } from '../../../core/services/group-change-request.service';
@@ -39,7 +40,7 @@ type EditTab = 'info' | 'permissions' | 'members' | 'requests';
 @Component({
   selector: 'app-business-groups',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, FilterCheckboxComponent],
   templateUrl: './business-groups.html',
   styleUrls: ['./business-groups.scss']
 })

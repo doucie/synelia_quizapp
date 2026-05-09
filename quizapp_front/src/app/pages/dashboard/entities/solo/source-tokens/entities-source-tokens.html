@@ -31,22 +31,7 @@
           (input)="onQuickSearch()"
         />
         
-        <!-- Checkbox pour afficher les tokens supprimes -->
-        <div class="checkbox-container">
-          <input 
-            type="checkbox" 
-            id="showDeleted" 
-            class="checkbox-input"
-            [checked]="showDeletedSourceTokens"
-            (click)="toggleDeletedSourceTokens()"
-          />
-          <label for="showDeleted" class="checkbox-label">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            Afficher les tokens supprimes
-          </label>
-        </div>
+        <app-filter-checkbox inputId="showDeleted" label="Afficher les tokens supprimes" [checked]="showDeletedSourceTokens" ariaLabel="Afficher les tokens supprimes" (checkedChange)="toggleDeletedSourceTokens()"></app-filter-checkbox>
       </div>
       <div class="toolbar-right">
         <button class="btn-secondary-pro" (click)="openAdvancedSearch()">
@@ -129,11 +114,11 @@
         <!-- Ligne 4 : Supprime -->
         <div class="form-group">
           <label>Supprime</label>
-          <select class="form-select" [(ngModel)]="advancedCriteria.isDeleted">
+          <app-filter-select [(ngModel)]="advancedCriteria.isDeleted">
             <option [ngValue]="undefined">Tous</option>
             <option [ngValue]="false">Non supprime</option>
             <option [ngValue]="true">Supprime</option>
-          </select>
+          </app-filter-select>
         </div>
         
         <!-- Ligne 5 : Date de creation -->

@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { Subject, takeUntil } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { PERMISSION_CATEGORIES, PermissionCategory } from '../../../core/constants/permissions.constants';
+import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../shared/filter-select/filter-select';
 
 interface UserItem {
   id?: number;
@@ -44,7 +45,7 @@ interface SpringBootResponse<T> {
 @Component({
   selector: 'app-user-permissions',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, FilterSelectComponent, FilterSelectOptionDirective],
   templateUrl: './user-permissions.html',
   styleUrl: './user-permissions.scss'
 })

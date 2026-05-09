@@ -16,9 +16,9 @@ select {
   -webkit-appearance: none;
   background-image: $chevron-light;
   background-repeat: no-repeat;
-  background-position: right 0.75rem center;
+  background-position: right var(--spacing-md) center;
   background-color: var(--background);
-  padding-right: 2.25rem;
+  padding-right: calc(var(--spacing-lg) + var(--spacing-md));
 
   /* Design-system tokens */
   border: 1.5px solid var(--border);
@@ -41,17 +41,37 @@ select {
   }
 
   &:disabled {
-    background-color: var(--disabled);
-    color: var(--disabled-text);
+    background-color: var(--surface);
+    color: var(--text-disabled);
     cursor: not-allowed;
     opacity: 0.7;
   }
 
-  /* Options – supported on Chrome/Edge on Windows */
-  option {
+  option,
+  optgroup {
     background-color: var(--background);
     color: var(--text-primary);
+    font-family: var(--font-family);
     font-size: var(--font-size-sm);
+  }
+
+  optgroup {
+    font-weight: var(--font-weight-semibold);
+  }
+
+  option {
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+
+  option:checked,
+  option:hover,
+  option:focus {
+    background-color: var(--surface-secondary);
+    color: var(--text-primary);
+  }
+
+  option[disabled] {
+    color: var(--text-disabled);
   }
 }
 

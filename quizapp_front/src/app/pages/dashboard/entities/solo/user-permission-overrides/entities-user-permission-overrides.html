@@ -60,11 +60,11 @@
         </div>
         <div class="form-group">
           <label>Autorisé</label>
-          <select class="form-select" [(ngModel)]="advancedCriteria.isAllowed">
+          <app-filter-select [(ngModel)]="advancedCriteria.isAllowed">
             <option [ngValue]="undefined">Tous</option>
             <option [ngValue]="true">Autorisé</option>
             <option [ngValue]="false">Refusé</option>
-          </select>
+          </app-filter-select>
         </div>
         <div class="form-row-full">
           <div class="form-group-inline">

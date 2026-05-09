@@ -5,6 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { EntityDetailPanelComponent, DetailField } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
 import { DependencyPopupComponent } from '../../../../../shared/dependency-popup/dependency-popup';
 import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
+import { FilterCheckboxComponent } from '../../../../../shared/filter-checkbox/filter-checkbox';
+import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../../../shared/filter-select/filter-select';
 import { EntityColumnVisibilityState, ColumnDef } from '../../../../../shared/entity-column-visibility';
 import { DashboardStatsService } from '../../../../../core/services/dashboard-stats.service';
 import { DependencyInfo } from '../../../../../shared/models/interfaces';
@@ -18,7 +20,7 @@ import { QuestionService, Question } from '../../../../../core/services/question
 @Component({
   selector: 'app-entities-answers',
   standalone: true,
-  imports: [CommonModule, NgIf, NgFor, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent, ColumnVisibilityManagerComponent],
+  imports: [FilterSelectComponent, FilterSelectOptionDirective, CommonModule, NgIf, NgFor, FormsModule, FilterCheckboxComponent, EntityDetailPanelComponent, DependencyPopupComponent, ColumnVisibilityManagerComponent],
   templateUrl: './entities-answers.html',
   styleUrl: './entities-answers.scss'
 })

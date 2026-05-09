@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subject, takeUntil, forkJoin, of, catchError } from 'rxjs';
 import { AuthService, User as AuthUser } from '../../../core/services/auth/auth.service';
-import { EmailTemplateService, EmailTemplate } from '../../../core/services/email-template.service';
+import { EmailTemplateService, EmailTemplate, EMAIL_ACTION_TYPES } from '../../../core/services/email-template.service';
 import { SmtpConfigService, SmtpConfig } from '../../../core/services/smtp-config.service';
 import { LegalTextService, LegalText } from '../../../core/services/legal-text.service';
 import { AppConfigService, AppConfig, COLOR_SCHEMES } from '../../../core/services/app-config.service';
@@ -12,6 +12,8 @@ import { InvitationCodeService, InvitationCode } from '../../../core/services/in
 import { LogoHtmlSanitizerService } from '../../../core/services/logo-html-sanitizer.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { ThemeService } from '../../../core/services/theme.service';
+import { FilterCheckboxComponent } from '../../../shared/filter-checkbox/filter-checkbox';
+import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../shared/filter-select/filter-select';
 import { RichTextEditorComponent } from '../../../shared/rich-text-editor/rich-text-editor';
 
 type SettingsTab = 'emails' | 'smtp' | 'legal' | 'config' | 'invitations';
@@ -19,7 +21,7 @@ type SettingsTab = 'emails' | 'smtp' | 'legal' | 'config' | 'invitations';
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, RichTextEditorComponent],
+  imports: [CommonModule, FormsModule, FilterCheckboxComponent, FilterSelectComponent, FilterSelectOptionDirective, RichTextEditorComponent],
   templateUrl: './settings.html',
   styleUrls: ['./settings.scss']
 })
@@ -214,6 +216,14 @@ export class SettingsComponent implements OnInit, OnDestroy {
     this.router.navigate(['/dashboard/email-editor'], {
       queryParams: { mode: 'new' }
     });
+  }
+
+  getActionTypeLabel(value: string): string {
+    return EMAIL_ACTION_TYPES.find(t => t.value === value)?.label ?? value;
+  }
+
+  navigateToPresetEditor() {
+    this.router.navigate(['/dashboard/email-presets']);
   }
 
   closeTemplateEditor() {
@@ -422,7 +432,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
       this.logoMode.set(this.logoHtmlSanitizer.isImageMarkup(config.logoHtml) ? 'image' : 'code');
     } else {
       this.editingConfig.set(null);
-      this.configForm.set({ configName: '', companyName: '', logoHtml: '', primaryColor: '#7C3AED', colorScheme: 'violet', candidateAccountsEnabled: false, isActive: false });
+      this.configForm.set({ configName: '', companyName: '', appLink: '', logoHtml: '', primaryColor: '#7C3AED', colorScheme: 'violet', candidateAccountsEnabled: false, isActive: false });
       this.logoMode.set('code');
     }
     this.showConfigEditor.set(true);
@@ -463,6 +473,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
       ...form,
       configName: form.configName.trim(),
       companyName: form.companyName.trim(),
+      appLink: form.appLink?.trim() ? form.appLink.trim() : null,
       logoHtml: this.logoHtmlSanitizer.sanitize(form.logoHtml)
     };
 
@@ -502,6 +513,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.notificationService.success('Succès', `Configuration "${config.configName}" activée`);
         this.themeService.applyTheme(config);
         this.themeService.companyName.set(config.companyName || 'Synelia');
+        this.themeService.appLink.set(config.appLink?.trim() || '');
         this.themeService.logoHtml.set(this.logoHtmlSanitizer.sanitizeOrEmpty(config.logoHtml));
         this.themeService.candidateAccountsEnabled.set(config.candidateAccountsEnabled === true);
         this.themeService.activeConfig.set({

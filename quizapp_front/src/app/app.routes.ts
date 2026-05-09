@@ -521,6 +521,16 @@ export const routes: Routes = [
         path: 'email-editor/:id',
         loadComponent: () => import('./pages/dashboard/email-editor/email-editor').then(m => m.EmailEditorComponent),
         canActivate: [permissionGuard(['VIEW_EMAIL_TEMPLATE'])]
+      },
+      {
+        path: 'email-presets',
+        loadComponent: () => import('./pages/dashboard/email-editor/email-editor').then(m => m.EmailEditorComponent),
+        canActivate: [permissionGuard(['VIEW_EMAIL_TEMPLATE'])]
+      },
+      {
+        path: 'email-presets/:id',
+        loadComponent: () => import('./pages/dashboard/email-editor/email-editor').then(m => m.EmailEditorComponent),
+        canActivate: [permissionGuard(['VIEW_EMAIL_TEMPLATE'])]
       }
       // Note: L'évaluation en mode plein écran est sur /dashboard/evaluate/:link
     ]

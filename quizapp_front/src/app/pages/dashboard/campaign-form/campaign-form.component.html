@@ -351,16 +351,7 @@
 
         <div class="form-row">
           <div class="form-group checkbox-group">
-            <label class="checkbox-label">
-              <input
-                type="checkbox"
-                formControlName="allCanEvaluate"
-              />
-              <span class="checkbox-custom"></span>
-              <span class="checkbox-text">
-                Autoriser tous les recruteurs à évaluer les candidatures
-              </span>
-            </label>
+            <app-filter-checkbox class="campaign-checkbox" inputId="campaign-all-can-evaluate" label="Autoriser tous les recruteurs à évaluer les candidatures" variant="inline" formControlName="allCanEvaluate" ariaLabel="Autoriser tous les recruteurs à évaluer les candidatures"></app-filter-checkbox>
             <p class="help-text">
               Si coché, tous les recruteurs pourront évaluer les candidatures sans avoir besoin d'être ajoutés explicitement
             </p>
@@ -454,15 +445,7 @@
                     @if (recruiter.isCreator) {
                       <span class="creator-badge">Créateur</span>
                     } @else {
-                      <label class="admin-checkbox-header">
-                        <input
-                          type="checkbox"
-                          [checked]="recruiter.isAdmin"
-                          (change)="toggleAdmin(i)"
-                        />
-                        <span class="checkbox-custom"></span>
-                        <span>Administrateur</span>
-                      </label>
+                      <app-filter-checkbox class="admin-checkbox" [inputId]="'campaign-recruiter-admin-' + recruiter.user.id" label="Administrateur" variant="inline" [checked]="recruiter.isAdmin === true" ariaLabel="Administrateur" (checkedChange)="toggleAdmin(i, $event)"></app-filter-checkbox>
                       
                       <button
                         type="button"
@@ -481,65 +464,17 @@
                 </div>
 
                 <div class="recruiter-permissions">
-                  <label class="permission-label">
-                    <input
-                      type="checkbox"
-                      [checked]="recruiter.canEvaluate"
-                      (change)="toggleRecruiterAccess(i, 'canEvaluate')"
-                    />
-                    <span class="checkbox-custom"></span>
-                    <span>Peut évaluer</span>
-                  </label>
+                  <app-filter-checkbox class="permission-checkbox" [inputId]="'campaign-recruiter-can-evaluate-' + recruiter.user.id" label="Peut évaluer" variant="inline" [checked]="recruiter.canEvaluate === true" ariaLabel="Peut évaluer" (checkedChange)="toggleRecruiterAccess(i, 'canEvaluate', $event)"></app-filter-checkbox>
 
-                  <label class="permission-label">
-                    <input
-                      type="checkbox"
-                      [checked]="recruiter.canUpdate"
-                      (change)="toggleRecruiterAccess(i, 'canUpdate')"
-                    />
-                    <span class="checkbox-custom"></span>
-                    <span>Peut modifier</span>
-                  </label>
+                  <app-filter-checkbox class="permission-checkbox" [inputId]="'campaign-recruiter-can-update-' + recruiter.user.id" label="Peut modifier" variant="inline" [checked]="recruiter.canUpdate === true" ariaLabel="Peut modifier" (checkedChange)="toggleRecruiterAccess(i, 'canUpdate', $event)"></app-filter-checkbox>
 
-                  <label class="permission-label">
-                    <input
-                      type="checkbox"
-                      [checked]="recruiter.canDelete"
-                      (change)="toggleRecruiterAccess(i, 'canDelete')"
-                    />
-                    <span class="checkbox-custom"></span>
-                    <span>Peut supprimer</span>
-                  </label>
+                  <app-filter-checkbox class="permission-checkbox" [inputId]="'campaign-recruiter-can-delete-' + recruiter.user.id" label="Peut supprimer" variant="inline" [checked]="recruiter.canDelete === true" ariaLabel="Peut supprimer" (checkedChange)="toggleRecruiterAccess(i, 'canDelete', $event)"></app-filter-checkbox>
 
-                  <label class="permission-label">
-                    <input
-                      type="checkbox"
-                      [checked]="recruiter.canPlanify"
-                      (change)="toggleRecruiterAccess(i, 'canPlanify')"
-                    />
-                    <span class="checkbox-custom"></span>
-                    <span>Peut planifier</span>
-                  </label>
+                  <app-filter-checkbox class="permission-checkbox" [inputId]="'campaign-recruiter-can-planify-' + recruiter.user.id" label="Peut planifier" variant="inline" [checked]="recruiter.canPlanify === true" ariaLabel="Peut planifier" (checkedChange)="toggleRecruiterAccess(i, 'canPlanify', $event)"></app-filter-checkbox>
 
-                  <label class="permission-label">
-                    <input
-                      type="checkbox"
-                      [checked]="recruiter.canAcceptPreScreen"
-                      (change)="toggleRecruiterAccess(i, 'canAcceptPreScreen')"
-                    />
-                    <span class="checkbox-custom"></span>
-                    <span>Peut accepter (pré-sélection)</span>
-                  </label>
+                  <app-filter-checkbox class="permission-checkbox" [inputId]="'campaign-recruiter-can-accept-pre-screen-' + recruiter.user.id" label="Peut accepter (pré-sélection)" variant="inline" [checked]="recruiter.canAcceptPreScreen === true" ariaLabel="Peut accepter en pré-sélection" (checkedChange)="toggleRecruiterAccess(i, 'canAcceptPreScreen', $event)"></app-filter-checkbox>
 
-                  <label class="permission-label">
-                    <input
-                      type="checkbox"
-                      [checked]="recruiter.canAcceptFinal"
-                      (change)="toggleRecruiterAccess(i, 'canAcceptFinal')"
-                    />
-                    <span class="checkbox-custom"></span>
-                    <span>Peut accepter (final)</span>
-                  </label>
+                  <app-filter-checkbox class="permission-checkbox" [inputId]="'campaign-recruiter-can-accept-final-' + recruiter.user.id" label="Peut accepter (final)" variant="inline" [checked]="recruiter.canAcceptFinal === true" ariaLabel="Peut accepter en final" (checkedChange)="toggleRecruiterAccess(i, 'canAcceptFinal', $event)"></app-filter-checkbox>
                 </div>
               </div>
             }

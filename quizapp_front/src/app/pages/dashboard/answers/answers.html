@@ -66,19 +66,19 @@
 
   <!-- Filtres avancés -->
   <div class="advanced-filters">
-    <select class="filter-select" [ngModel]="filterCorrect()" (ngModelChange)="filterCorrect.set($event)">
+    <app-filter-select [value]="filterCorrect()" ariaLabel="Filtrer par correction" (valueChange)="onCorrectFilterChange($event)">
       <option [ngValue]="null">Toutes</option>
       <option [ngValue]="true">Correctes uniquement</option>
       <option [ngValue]="false">Incorrectes uniquement</option>
-    </select>
+    </app-filter-select>
 
     @if (questions().length > 0) {
-      <select class="filter-select" [ngModel]="filterQuestionId()" (ngModelChange)="filterQuestionId.set($event)">
+      <app-filter-select [value]="filterQuestionId()" ariaLabel="Filtrer par question" (valueChange)="onQuestionFilterChange($event)">
         <option [ngValue]="null">Toutes les questions</option>
         @for (q of questions(); track q.id ?? $index) {
           <option [ngValue]="q.id">{{ q.questionText && q.questionText.length > 50 ? q.questionText.substring(0, 50) + '...' : q.questionText }}</option>
         }
-      </select>
+      </app-filter-select>
     }
   </div>
 
@@ -246,14 +246,7 @@
           }
 
           <div class="form-group form-group--checkbox">
-            <label class="checkbox-label">
-              <input
-                type="checkbox"
-                [ngModel]="answerForm().isCorrect"
-                (ngModelChange)="updateFormField('isCorrect', $event)"
-              >
-              <span class="checkbox-text">Réponse correcte</span>
-            </label>
+            <app-filter-checkbox inputId="answers-correct" label="Réponse correcte" variant="inline" [checked]="answerForm().isCorrect === true" ariaLabel="Réponse correcte" (checkedChange)="updateFormField('isCorrect', $event)"></app-filter-checkbox>
           </div>
         </form>
       </div>

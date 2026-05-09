@@ -119,18 +119,6 @@
     cursor: default;
     opacity: 0.75;
   }
-
-  input[type="checkbox"] {
-    width: 14px;
-    height: 14px;
-    accent-color: var(--primary);
-    cursor: pointer;
-    flex-shrink: 0;
-
-    &:disabled {
-      cursor: not-allowed;
-    }
-  }
 }
 
 .option-label {

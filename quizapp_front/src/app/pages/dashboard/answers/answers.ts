@@ -6,6 +6,8 @@ import { AnswerService, Answer } from '../../../core/services/answer.service';
 import { QuestionService, Question } from '../../../core/services/question.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { FilterCheckboxComponent } from '../../../shared/filter-checkbox/filter-checkbox';
+import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../shared/filter-select/filter-select';
 
 interface AnswerFormData {
   id?: number;
@@ -19,7 +21,7 @@ interface AnswerFormData {
 @Component({
   selector: 'app-answers',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, FilterCheckboxComponent, FilterSelectComponent, FilterSelectOptionDirective],
   templateUrl: './answers.html',
   styleUrls: ['./answers.scss']
 })
@@ -69,6 +71,14 @@ export class AnswersComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  onCorrectFilterChange(value: string | number | boolean | null): void {
+    this.filterCorrect.set(typeof value === 'boolean' ? value : null);
+  }
+
+  onQuestionFilterChange(value: string | number | boolean | null): void {
+    this.filterQuestionId.set(typeof value === 'number' ? value : null);
   }
 
   filteredAnswers = computed(() => {

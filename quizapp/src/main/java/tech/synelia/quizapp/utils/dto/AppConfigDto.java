@@ -16,6 +16,7 @@ public class AppConfigDto extends _AppConfigDto implements Cloneable {
     private Long    id;
     private String  configName;
     private String  companyName;
+    private String  appLink;
     private String  logoHtml;
     private String  primaryColor;
     private String  colorScheme;

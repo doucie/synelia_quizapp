@@ -13,6 +13,8 @@ import { SourceTokenService, SourceToken } from '../../../services/source-token.
 import { InterviewParticipantService, InterviewParticipant } from '../../../core/services/interview-participant.service';
 import { EntityPermission } from '../../../core/models/permission.interfaces';
 import { APPLICATION_STATUS } from '../../../core/constants/application-status.constants';
+import { FilterCheckboxComponent } from '../../../shared/filter-checkbox/filter-checkbox';
+import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../shared/filter-select/filter-select';
 
 interface InterviewFormData {
   campaignId: number;
@@ -29,7 +31,7 @@ interface InterviewFormData {
 @Component({
   selector: 'app-interview-create',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, FilterCheckboxComponent, FilterSelectComponent, FilterSelectOptionDirective],
   templateUrl: './interview-create.html',
   styleUrl: './interview-create.scss'
 })

@@ -11,6 +11,7 @@ import tech.synelia.quizapp.dao.entity.SmtpConfig;
 import tech.synelia.quizapp.dao.repository.LegalTextRepository;
 import tech.synelia.quizapp.dao.repository.SmtpConfigRepository;
 import tech.synelia.quizapp.utils.FunctionalError;
+import tech.synelia.quizapp.utils.enums.EmailActionType;
 import tech.synelia.quizapp.utils.exception.InvalidEntityException;
 
 @Component
@@ -33,6 +34,14 @@ public class PlatformReadinessService {
         }
 
         return smtpConfig;
+    }
+
+    public EmailTemplate requireActiveEmailTemplate(EmailActionType actionType, Locale locale) {
+        return requireActiveEmailTemplate(actionType.name(), actionType.getTemplateKey(), locale);
+    }
+
+    public void requireEmailDeliveryAvailable(EmailActionType actionType, Locale locale) {
+        requireEmailDeliveryAvailable(actionType.name(), actionType.getTemplateKey(), locale);
     }
 
     public EmailTemplate requireActiveEmailTemplate(String actionType, String templateKey, Locale locale) {

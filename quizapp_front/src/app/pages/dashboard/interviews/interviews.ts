@@ -14,6 +14,7 @@ import { UserService } from '../../../core/services/user.service';
 import { APPLICATION_STATUS } from '../../../core/constants/application-status.constants';
 import { CandidateInterviewEntity, CandidateInterviewEntityService } from '../../../core/services/candidate-interview-entity.service';
 import { InterviewParticipant, InterviewParticipantService } from '../../../core/services/interview-participant.service';
+import { FilterCheckboxComponent } from '../../../shared/filter-checkbox/filter-checkbox';
 
 interface InterviewWithDetails extends Interview {
   candidateName?: string;
@@ -50,7 +51,7 @@ interface EvaluatorInfo {
 @Component({
   selector: 'app-interviews',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, FilterCheckboxComponent],
   templateUrl: './interviews.html',
   styleUrl: './interviews.scss'
 })

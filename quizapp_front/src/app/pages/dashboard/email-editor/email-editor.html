@@ -8,16 +8,25 @@
         <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
           <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
         </svg>
-        Éditeur de templates email
+        {{ editorTitle() }}
       </h1>
     </div>
     <div class="header-actions">
-      <button class="btn-secondary" (click)="newTemplate()">
+      @if (isPresetMode()) {
+        <button class="btn-secondary" (click)="navigateToTemplateManager()">
+          Templates
+        </button>
+      } @else {
+        <button class="btn-secondary" (click)="navigateToPresetManager()">
+          Presets
+        </button>
+      }
+      <button class="btn-secondary" (click)="openNewDocument()">
         <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
         Nouveau
       </button>
-      @if (selectedTemplate() || isNewTemplate()) {
-        <button class="btn-primary" (click)="save()" [disabled]="isSaving()">
+      @if (hasOpenDocument()) {
+        <button class="btn-primary" (click)="saveCurrentDocument()" [disabled]="isSaving()">
           {{ isSaving() ? 'Sauvegarde...' : 'Sauvegarder' }}
         </button>
       }
@@ -38,210 +47,329 @@
         <!-- Template list (compact) -->
         <div class="template-list">
           <div class="list-header">
-            <h3>Templates ({{ templates().length }})</h3>
+            <h3>{{ listTitle() }}</h3>
           </div>
-          <div class="list-items">
-            @for (tpl of templates(); track tpl.id) {
-              <button 
-                class="template-item"
-                [class.active]="selectedTemplate()?.id === tpl.id"
-                (click)="selectTemplate(tpl)">
-                <div class="tpl-info">
-                  <span class="tpl-key">{{ tpl.templateKey }}</span>
-                  @if (tpl.actionType) {
-                    <span class="tpl-action">{{ getActionTypeLabel(tpl.actionType) }}</span>
-                  }
-                </div>
-                <span class="tpl-status" [class.active]="tpl.isActive" [class.inactive]="!tpl.isActive">
-                  {{ tpl.isActive ? '●' : '○' }}
-                </span>
-              </button>
+          <div class="list-tools">
+            <div class="list-search">
+              <input
+                type="text"
+                [ngModel]="listSearchTerm()"
+                (ngModelChange)="updateListSearch($event)"
+                [placeholder]="listSearchPlaceholder()">
+            </div>
+
+            <select
+              class="list-select-control"
+              [ngModel]="selectedListItemId()"
+              (ngModelChange)="onListSelectionChange($event)"
+              [attr.aria-label]="listSelectAriaLabel()">
+              <option [ngValue]="undefined">
+                {{ isPresetMode() ? 'Sélectionner un preset existant' : 'Sélectionner un template existant' }}
+              </option>
+
+              @if (isPresetMode()) {
+                @for (preset of filteredPresets(); track preset.id) {
+                  <option [ngValue]="preset.id">{{ buildPresetSelectLabel(preset) }}</option>
+                }
+              } @else {
+                @for (tpl of filteredTemplates(); track tpl.id) {
+                  <option [ngValue]="tpl.id">{{ buildTemplateSelectLabel(tpl) }}</option>
+                }
+              }
+            </select>
+
+            <p class="list-meta">
+              {{ isPresetMode() ? filteredPresets().length : filteredTemplates().length }} affiché(s)
+              sur {{ isPresetMode() ? presets().length : templates().length }} chargé(s)
+            </p>
+
+            @if (listSearchTerm().trim()) {
+              <p class="list-meta">{{ visibleListCount() }} resultat(s) pour "{{ listSearchTerm().trim() }}"</p>
             }
-            @if (templates().length === 0) {
-              <p class="empty-msg">Aucun template. Créez-en un !</p>
+
+            @if (isPresetMode()) {
+              @if (selectedPreset(); as preset) {
+                <div class="list-selection-summary">
+                  <div class="tpl-info">
+                    <span class="tpl-key">{{ preset.name }}</span>
+                    <span class="tpl-action">{{ preset.category }}</span>
+                  </div>
+                  <span class="tpl-status active">{{ getPresetIcon(preset.category) }}</span>
+                </div>
+              }
+
+              @if (presets().length === 0) {
+                <p class="empty-msg">Aucun preset. Créez-en un !</p>
+              } @else if (visibleListCount() === 0 && listSearchTerm().trim()) {
+                <p class="empty-msg">Aucun preset ne correspond à votre recherche.</p>
+              }
+            } @else {
+              @if (selectedTemplate(); as tpl) {
+                <div class="list-selection-summary">
+                  <div class="tpl-info">
+                    <span class="tpl-key">{{ tpl.templateKey }}</span>
+                    @if (tpl.actionType) {
+                      <span class="tpl-action">{{ getActionTypeLabel(tpl.actionType) }}</span>
+                    }
+                  </div>
+                  <span class="tpl-status" [class.active]="tpl.isActive" [class.inactive]="!tpl.isActive">
+                    {{ tpl.isActive ? 'Actif' : 'Inactif' }}
+                  </span>
+                </div>
+              }
+
+              @if (templates().length === 0) {
+                <p class="empty-msg">Aucun template. Créez-en un !</p>
+              } @else if (visibleListCount() === 0 && listSearchTerm().trim()) {
+                <p class="empty-msg">Aucun template ne correspond à votre recherche.</p>
+              }
             }
           </div>
         </div>
 
         <!-- Editor form -->
-        @if (selectedTemplate() || isNewTemplate()) {
+        @if (hasOpenDocument()) {
           <div class="editor-form">
             <div class="form-header">
-              <h3>{{ isNewTemplate() ? 'Nouveau template' : 'Modifier : ' + form().templateKey }}</h3>
+              <h3>{{ isPresetMode() ? (isNewPreset() ? 'Nouveau preset' : 'Modifier : ' + presetForm().name) : (isNewTemplate() ? 'Nouveau template' : 'Modifier : ' + form().templateKey) }}</h3>
               <div class="form-actions">
-                @if (selectedTemplate()) {
-                  <button class="btn-icon" title="Dupliquer" (click)="duplicateTemplate()">
+                @if (isPresetMode() ? selectedPreset() : selectedTemplate()) {
+                  <button class="btn-icon" title="Dupliquer" (click)="duplicateCurrentDocument()">
                     <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
                   </button>
-                  <button class="btn-icon btn-danger" title="Supprimer" (click)="deleteTemplate()">
+                  <button class="btn-icon btn-danger" title="Supprimer" (click)="deleteCurrentDocument()">
                     <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
                   </button>
                 }
               </div>
             </div>
 
-            <!-- Row: key + action type -->
-            <div class="form-row">
-              <div class="form-group flex-2">
-                <label>Clé du template *</label>
-                <input type="text" [ngModel]="form().templateKey" (ngModelChange)="updateField('templateKey', $event)" placeholder="ex: welcome_email">
+            @if (isPresetMode()) {
+              <div class="form-row">
+                <div class="form-group flex-2">
+                  <label>Nom du preset *</label>
+                  <input type="text" [ngModel]="presetForm().name" (ngModelChange)="updatePresetField('name', $event)" placeholder="ex: Modern RH premium">
+                </div>
+                <div class="form-group flex-1">
+                  <label>Catégorie *</label>
+                  <select [ngModel]="presetForm().category" (ngModelChange)="updatePresetField('category', $event)">
+                    @for (category of presetCategories; track category) {
+                      <option [value]="category">{{ category }}</option>
+                    }
+                  </select>
+                </div>
               </div>
-              <div class="form-group flex-1">
-                <label>Type d'action</label>
-                <select [ngModel]="form().actionType" (ngModelChange)="onActionTypeChange($event)">
-                  <option value="">— Aucun —</option>
-                  @for (at of actionTypes; track at.value) {
-                    <option [value]="at.value">{{ at.label }}</option>
+
+              <div class="form-group">
+                <label>Description</label>
+                <input type="text" [ngModel]="presetForm().description" (ngModelChange)="updatePresetField('description', $event)" placeholder="Description interne du preset...">
+                <p class="field-help">Description visible dans la galerie des presets pour aider au choix du layout.</p>
+              </div>
+            } @else {
+              <!-- Row: key + action type -->
+              <div class="form-row">
+                <div class="form-group flex-2">
+                  <label>Clé du template *</label>
+                  <input type="text" [ngModel]="form().templateKey" (ngModelChange)="updateField('templateKey', $event)" placeholder="ex: welcome_email">
+                </div>
+                <div class="form-group flex-1">
+                  <label>Type d'action</label>
+                  <select [ngModel]="form().actionType" (ngModelChange)="onActionTypeChange($event)">
+                    <option value="">— Aucun —</option>
+                    @for (at of actionTypes; track at.value) {
+                      <option [value]="at.value">{{ at.label }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+
+              @if (selectedActionConfig(); as actionConfig) {
+                <div class="action-summary">
+                  <div class="action-summary__row">
+                    <span class="action-summary__label">Type selectionne</span>
+                    <strong>{{ getActionTypeLabel(form().actionType || '') }}</strong>
+                  </div>
+                  <div class="action-summary__row">
+                    <span class="action-summary__label">Cle suggeree</span>
+                    <code>{{ actionConfig.templateKey }}</code>
+                  </div>
+                  <p class="action-summary__text">{{ actionConfig.description }}</p>
+                </div>
+              }
+
+              <!-- Subject -->
+              <div class="form-group">
+                <label>Sujet *</label>
+                <input type="text" [ngModel]="form().subjectTemplate" (ngModelChange)="updateField('subjectTemplate', $event)" placeholder="ex: Bienvenue chez {companyName}">
+                <p class="field-help">Texte envoye comme objet de l'email au destinataire.</p>
+              </div>
+
+              <!-- Description -->
+              <div class="form-group">
+                <label>Description</label>
+                <input type="text" [ngModel]="form().description" (ngModelChange)="updateField('description', $event)" placeholder="Description interne...">
+                <p class="field-help">Note interne pour vous reperer dans le back-office, jamais envoyee au destinataire.</p>
+              </div>
+
+              <!-- Preset Select -->
+              <div class="preset-section">
+                <select
+                  class="list-select-control"
+                  [ngModel]="currentTemplatePreset()?.id ?? ''"
+                  (ngModelChange)="onPresetSelectChange($event)">
+                  <option value="">— Choisir un preset —</option>
+                  @for (preset of sortedPresets(); track preset.id) {
+                    <option [value]="preset.id">
+                      {{ preset.name }}{{ isPresetRecommended(preset.category) ? ' ★' : '' }}
+                    </option>
                   }
                 </select>
-              </div>
-            </div>
-
-            @if (selectedActionConfig(); as actionConfig) {
-              <div class="action-summary">
-                <div class="action-summary__row">
-                  <span class="action-summary__label">Type selectionne</span>
-                  <strong>{{ getActionTypeLabel(form().actionType || '') }}</strong>
-                </div>
-                <div class="action-summary__row">
-                  <span class="action-summary__label">Cle suggeree</span>
-                  <code>{{ actionConfig.templateKey }}</code>
-                </div>
-                <p class="action-summary__text">{{ actionConfig.description }}</p>
-              </div>
-            }
-
-            <!-- Subject -->
-            <div class="form-group">
-              <label>Sujet *</label>
-              <input type="text" [ngModel]="form().subjectTemplate" (ngModelChange)="updateField('subjectTemplate', $event)" placeholder="ex: Bienvenue chez {companyName}">
-            </div>
-
-            <!-- Description -->
-            <div class="form-group">
-              <label>Description</label>
-              <input type="text" [ngModel]="form().description" (ngModelChange)="updateField('description', $event)" placeholder="Description interne...">
-            </div>
-
-            <!-- Variables -->
-            <div class="form-group">
-              <div class="field-header">
-                <label>Variables disponibles (separees par virgule)</label>
-                <button type="button" class="field-action" (click)="resetVariablesForCurrentAction()">
-                  Reappliquer le type
-                </button>
-              </div>
-              <input type="text" [ngModel]="form().availableVariables" (ngModelChange)="updateField('availableVariables', $event)" placeholder="candidatName,companyName,...">
-              @if (selectedActionConfig()) {
-                <p class="field-help">
-                  Variables suggerees pour {{ getActionTypeLabel(form().actionType || '') }} :
-                  {{ suggestedVariables().join(', ') }}
-                </p>
-              }
-              @if (layoutVariables().length > 0) {
-                <div class="var-tags">
-                  @for (v of layoutVariables(); track v) {
-                    <span class="var-tag">{{ '{{' + v + '}}' }}</span>
-                  }
-                </div>
-              }
-            </div>
-
-            <!-- Preset Gallery Toggle -->
-            <div class="preset-section">
-              <button class="preset-toggle" (click)="showPresetGallery.set(!showPresetGallery())">
-                <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/></svg>
-                {{ showPresetGallery() ? 'Masquer les presets' : 'Choisir un preset' }}
-              </button>
-
-              @if (showPresetGallery()) {
-                @if (selectedActionConfig()) {
-                  <div class="preset-intro">
-                    Les presets recommandes pour ce type d'action sont affiches en premier. Si le preset contient {{ '{' + '{content}' + '}' }}, votre message actuel y sera reinjecte.
+                @if (currentTemplatePreset(); as currentPreset) {
+                  <div class="preset-applied">
+                    <span class="preset-applied__name">{{ currentPreset.name }}</span>
+                    <span class="preset-applied__category">{{ currentPreset.category }}</span>
+                    @if (form().actionType && form().isActive) {
+                      <span class="preset-applied__note">Preset par defaut pour {{ getActionTypeLabel(form().actionType || '') }}</span>
+                    }
                   </div>
                 }
-                <div class="preset-gallery">
-                  @for (preset of sortedPresets(); track preset.id) {
-                    <button class="preset-card" (click)="applyPreset(preset)">
-                      @if (isPresetRecommended(preset.category)) {
-                        <span class="preset-badge">Recommande</span>
-                      }
-                      <div class="preset-icon">{{ getPresetIcon(preset.category) }}</div>
-                      <div class="preset-name">{{ preset.name }}</div>
-                      <div class="preset-desc">{{ preset.description }}</div>
-                    </button>
-                  }
-                  @if (presets().length === 0) {
-                    <p class="empty-msg">Aucun preset disponible</p>
-                  }
-                </div>
-              }
-            </div>
+              </div>
+            }
 
             <!-- Body editor -->
             <div class="form-group body-editor">
               <div class="field-header body-editor__header">
                 <label>Layout HTML *</label>
-                <div class="editor-mode-switch">
-                  <button
-                    type="button"
-                    class="editor-mode-button"
-                    [class.active]="editorMode() === 'wysiwyg'"
-                    (click)="setEditorMode('wysiwyg')">
-                    WYSIWYG
-                  </button>
-                  <button
-                    type="button"
-                    class="editor-mode-button"
-                    [class.active]="editorMode() === 'html'"
-                    (click)="setEditorMode('html')">
-                    HTML
-                  </button>
+                <div class="body-editor__actions">
+                  @if (hasOpenDocument()) {
+                    <button type="button" class="var-explorer-trigger" (click)="openVarExplorer()">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                      Variables
+                    </button>
+                  }
+                  @if (editorMode() === 'html') {
+                    <button type="button" class="field-action" (click)="beautifyHtmlSource()">
+                      Beautifier HTML/CSS
+                    </button>
+                  }
+                  <div class="editor-mode-switch">
+                    <button
+                      type="button"
+                      class="editor-mode-button"
+                      [class.active]="editorMode() === 'wysiwyg'"
+                      (click)="setEditorMode('wysiwyg')">
+                      WYSIWYG
+                    </button>
+                    <button
+                      type="button"
+                      class="editor-mode-button"
+                      [class.active]="editorMode() === 'html'"
+                      (click)="setEditorMode('html')">
+                      HTML
+                    </button>
+                  </div>
                 </div>
               </div>
               <p class="field-help body-editor__help">
-                Ce champ definit la structure du mail. Utilisez {{ '{' + '{content}' + '}' }} et {{ '{' + '{subtitle}' + '}' }} pour les zones editables.
+                Ce champ definit la structure {{ isPresetMode() ? 'du preset' : 'du mail' }}. Utilisez {{ '{' + '{content}' + '}' }}, {{ '{' + '{title}' + '}' }}, {{ '{' + '{subtitle}' + '}' }}, {{ '{' + '{buttonText}' + '}' }} et {{ '{' + '{buttonLink}' + '}' }} pour les zones editables.
               </p>
 
               @if (editorMode() === 'wysiwyg') {
                 <app-rich-text-editor 
-                  [value]="form().bodyTemplate || ''" 
+                  #bodyRte
+                  [value]="currentBodyTemplate()" 
+                  layoutMode="email-document"
+                  [forcedColorSchemeMode]="uiThemeMode()"
                   [variables]="layoutVariables()"
                   (valueChange)="updateBody($event)">
                 </app-rich-text-editor>
               } @else {
-                <textarea
-                  class="source-editor"
-                  rows="18"
-                  spellcheck="false"
-                  [ngModel]="form().bodyTemplate || ''"
-                  (ngModelChange)="updateField('bodyTemplate', $event)"></textarea>
+                <div class="source-editor-shell">
+                  <div class="source-editor-highlight-layer" aria-hidden="true">
+                    <pre
+                      class="source-editor-highlight"
+                      [style.transform]="'translate(' + (-sourceEditorScrollLeft()) + 'px, ' + (-sourceEditorScrollTop()) + 'px)'"
+                      [innerHTML]="highlightedHtmlEditorValue()"></pre>
+                  </div>
+                  <textarea
+                    #sourceTextarea
+                    class="source-editor"
+                    rows="18"
+                    spellcheck="false"
+                    [ngModel]="htmlEditorValue()"
+                    (scroll)="syncSourceEditorScroll($event)"
+                    (ngModelChange)="updateHtmlSource($event)"></textarea>
+                </div>
               }
             </div>
 
-            <!-- Active toggle -->
-            <div class="form-row align-center">
-              <label class="toggle-label">
-                <input type="checkbox" [ngModel]="form().isActive" (ngModelChange)="updateField('isActive', $event)">
-                <span>Template actif</span>
-              </label>
-            </div>
+            @if (!isPresetMode()) {
+              <!-- Variables -->
+              <div class="form-group">
+                <div class="field-header">
+                  <label>Variables disponibles (separees par virgule)</label>
+                  <button type="button" class="field-action" (click)="resetVariablesForCurrentAction()">
+                    Reappliquer le type
+                  </button>
+                </div>
+                <textarea rows="3" [ngModel]="form().availableVariables" (ngModelChange)="updateField('availableVariables', $event)" placeholder="candidatName,companyName,..."></textarea>
+                @if (selectedActionConfig()) {
+                  <p class="field-help">
+                    Variables suggerees pour {{ getActionTypeLabel(form().actionType || '') }} :
+                    {{ suggestedVariables().join(', ') }}
+                  </p>
+                }
+                @if (layoutVariables().length > 0) {
+                  <div class="var-tags">
+                    @for (v of layoutVariables(); track v) {
+                      <span class="var-tag">{{ '{{' + v + '}}' }}</span>
+                    }
+                  </div>
+                }
+                <p class="field-help">Les variables listees ici viennent du contexte metier/global du template. Les zones modifiables du layout se reglent dans le panneau <strong>Champs editables</strong> a droite.</p>
+              </div>
+
+              <!-- Active toggle -->
+              <div class="form-row align-center">
+                <app-filter-checkbox class="toggle-label" inputId="email-template-active" label="Template actif" variant="inline" [ngModel]="form().isActive" ariaLabel="Template actif" (ngModelChange)="updateField('isActive', $event)"></app-filter-checkbox>
+              </div>
+            }
           </div>
         } @else {
           <div class="empty-editor">
             <svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48" opacity="0.3">
               <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
             </svg>
-            <p>Sélectionnez un template ou créez-en un nouveau</p>
+            <p>{{ emptySelectionMessage() }}</p>
           </div>
         }
       </div>
 
       <!-- RIGHT: Live Preview -->
-      <div class="preview-panel">
+      <div class="preview-panel" [class.preview-panel--collapsed]="previewPanelCollapsed()">
         <div class="preview-header">
-          <h3>Aperçu</h3>
-          @if (form().subjectTemplate) {
+          <div class="preview-header__top">
+            <h3>Aperçu</h3>
+            <div class="preview-header__actions">
+              @if (!previewPanelCollapsed()) {
+              <button type="button" class="preview-expand-button" (click)="togglePreviewExpanded()">
+                Agrandir
+              </button>
+              }
+              <button
+                type="button"
+                class="preview-collapse-btn"
+                [class.collapsed]="previewPanelCollapsed()"
+                (click)="previewPanelCollapsed.set(!previewPanelCollapsed())"
+                [attr.aria-expanded]="!previewPanelCollapsed()"
+                aria-label="Plier / déplier le panneau d'aperçu">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
+                  <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+              </button>
+            </div>
+          </div>
+          @if (!isPresetMode() && form().subjectTemplate) {
             <div class="preview-subject">
               <span class="subject-label">Sujet :</span>
               {{ previewSubject() || form().subjectTemplate }}
@@ -249,81 +377,164 @@
           }
         </div>
         <div class="preview-frame">
-          @if (previewHtml()) {
-            <div class="preview-content" [innerHTML]="previewHtml()"></div>
+          @if (previewDocument()) {
+            <iframe class="preview-content preview-iframe" sandbox="allow-popups" [srcdoc]="previewDocument()"></iframe>
           } @else {
             <div class="preview-empty">
               <p>L'aperçu apparaîtra ici</p>
             </div>
           }
 
-          @if (selectedTemplate() || isNewTemplate()) {
+          @if (hasOpenDocument()) {
             <div class="preview-variable-panel">
               <div class="preview-variable-section">
                 <div class="preview-variable-section__header">
                   <div>
                     <h4>Champs editables</h4>
-                    <p>Ils restent stables quand vous changez de preset.</p>
+                  </div>
+                  <div class="preview-variable-section__meta">
+                    <span class="preview-variable-badge preview-variable-badge--editable">Modifiable</span>
+                    <span class="preview-variable-count">{{ activeEditableVariableDefinitions().length }} champ(s)</span>
+                    <button
+                      type="button"
+                      class="preview-variable-collapse-btn"
+                      [class.collapsed]="editableVarsCollapsed()"
+                      (click)="editableVarsCollapsed.set(!editableVarsCollapsed())"
+                      [attr.aria-expanded]="!editableVarsCollapsed()"
+                      aria-label="Plier / déplier les champs éditables">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                      </svg>
+                    </button>
                   </div>
                 </div>
 
-                @if (activeEditableVariableDefinitions().length > 0) {
-                  <div class="preview-variable-list">
-                    @for (definition of activeEditableVariableDefinitions(); track definition.key) {
-                      <div class="preview-variable-item">
-                        <label>{{ definition.label }}</label>
+                @if (!editableVarsCollapsed()) {
+                  @if (activeEditableVariableDefinitions().length > 0) {
+                    <div class="preview-variable-list">
+                      @for (definition of activeEditableVariableDefinitions(); track definition.key) {
+                        <div class="preview-variable-item">
+                          <label>{{ definition.label }}</label>
+                          @if (definition.type === 'richtext') {
+                            <div class="preview-variable-editor preview-variable-editor--richtext">
+                              <app-rich-text-editor
+                                [value]="getEditableVariableValue(definition.key)"
+                                [variableGroups]="rteVariableGroups()"
+                                (valueChange)="updateEditableVariable(definition.key, $event)">
+                              </app-rich-text-editor>
+                            </div>
+                          } @else {
+                            <input
+                              type="text"
+                              [placeholder]="definition.placeholder"
+                              [ngModel]="getEditableVariableValue(definition.key)"
+                              (ngModelChange)="updateEditableVariable(definition.key, $event)">
+                          }
 
-                        @if (definition.type === 'richtext') {
-                          <div class="preview-variable-editor preview-variable-editor--richtext">
-                            <app-rich-text-editor
-                              [value]="getEditableVariableValue(definition.key)"
-                              [variables]="systemVariableKeys()"
-                              (valueChange)="updateEditableVariable(definition.key, $event)">
-                            </app-rich-text-editor>
-                          </div>
-                        } @else {
-                          <input
-                            type="text"
-                            [placeholder]="definition.placeholder"
-                            [ngModel]="getEditableVariableValue(definition.key)"
-                            (ngModelChange)="updateEditableVariable(definition.key, $event)">
-                        }
-
-                        <p class="preview-variable-help">{{ definition.helpText }}</p>
-                      </div>
-                    }
-                  </div>
-                } @else {
-                  <p class="preview-variable-empty">Ce layout n'expose pas encore de champs editables. Ajoutez {{ '{' + '{content}' + '}' }} ou {{ '{' + '{subtitle}' + '}' }} dans le layout.</p>
+                          <p class="preview-variable-help">{{ definition.helpText }}</p>
+                        </div>
+                      }
+                    </div>
+                  } @else {
+                    <p class="preview-variable-empty">Ce layout n'expose pas encore de champs éditables. Tout {{ '{' + '{placeholder}' + '}' }} absent de la liste des variables disponibles devient automatiquement un champ éditable (ex : {{ '{' + '{content}' + '}' }}, {{ '{' + '{title}' + '}' }}, {{ '{' + '{heroTitle}' + '}' }}).</p>
+                  }
                 }
               </div>
 
-              <div class="preview-variable-section">
-                <div class="preview-variable-section__header">
-                  <div>
-                    <h4>Variables systeme</h4>
-                    <p>Lecture seule. Elles viennent du contexte metier ou du theme.</p>
-                  </div>
-                </div>
-
-                @if (systemVariableEntries().length > 0) {
-                  <div class="system-variable-list">
-                    @for (entry of systemVariableEntries(); track entry.key) {
-                      <div class="system-variable-item">
-                        <span class="system-variable-key">{{ '{{' + entry.key + '}}' }}</span>
-                        <span class="system-variable-value">{{ entry.value }}</span>
-                      </div>
-                    }
-                  </div>
-                } @else {
-                  <p class="preview-variable-empty">Aucune variable systeme detectee pour ce layout.</p>
-                }
-              </div>
             </div>
           }
         </div>
       </div>
 
     </div>
+
+    @if (isPreviewExpanded() && previewDocument()) {
+      <div class="preview-modal-overlay" (click)="closePreviewExpanded()">
+        <div class="preview-modal" (click)="$event.stopPropagation()">
+          <div class="preview-modal__header">
+            <div>
+              <h3>Aperçu agrandi</h3>
+              @if (previewSubject()) {
+                <p>{{ previewSubject() }}</p>
+              }
+            </div>
+            <button type="button" class="preview-expand-button" (click)="closePreviewExpanded()">
+              Fermer
+            </button>
+          </div>
+          <iframe class="preview-modal__frame" sandbox="allow-popups" [attr.srcdoc]="previewDocument()"></iframe>
+        </div>
+      </div>
+    }
+
+    @if (varExplorerOpen()) {
+      <div class="var-explorer-overlay" (click)="varExplorerOpen.set(false)" role="dialog" aria-modal="true" aria-label="Explorateur de variables">
+        <div class="var-explorer" (click)="$event.stopPropagation()">
+          <div class="var-explorer__header">
+            <div class="var-explorer__title-row">
+              <h3>Variables disponibles</h3>
+              @if (selectedActionConfig()) {
+                <span class="var-explorer__context-badge">{{ getActionTypeLabel(form().actionType || '') }}</span>
+              }
+            </div>
+            <button type="button" class="var-explorer__close-btn" (click)="varExplorerOpen.set(false)" aria-label="Fermer">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+          <div class="var-explorer__search">
+            <input
+              type="text"
+              class="var-explorer__search-input"
+              [ngModel]="varExplorerSearch()"
+              (ngModelChange)="varExplorerSearch.set($event)"
+              placeholder="Rechercher par nom, catégorie, exemple..."
+              aria-label="Rechercher une variable">
+          </div>
+          <div class="var-explorer__body">
+            @if (filteredVarExplorerEntries().length === 0) {
+              <div class="var-explorer__empty">
+                @if (varExplorerSearch()) {
+                  <p>Aucune variable ne correspond à <em>{{ varExplorerSearch() }}</em>.</p>
+                } @else {
+                  <p>Aucune variable contextuelle disponible pour ce document.<br>Ajoutez un type d'action ou des variables au template pour les voir apparaître ici.</p>
+                }
+              </div>
+            } @else {
+              @for (entry of filteredVarExplorerEntries(); track entry.key) {
+                <div class="var-explorer__entry">
+                  <div class="var-explorer__entry-top">
+                    <code class="var-explorer__key">{{ '{{' + entry.key + '}}' }}</code>
+                    <span class="var-explorer__badge var-explorer__badge--{{ entry.group }}">{{ entry.groupLabel }}</span>
+                  </div>
+                  @if (entry.exampleValue) {
+                    <p class="var-explorer__example">{{ entry.exampleValue.length > 60 ? (entry.exampleValue | slice:0:60) + '…' : entry.exampleValue }}</p>
+                  }
+                  <div class="var-explorer__actions">
+                    <button type="button" class="var-explorer__btn-insert" (click)="insertVarFromExplorer(entry.key)">
+                      Insérer
+                    </button>
+                    <button
+                      type="button"
+                      class="var-explorer__btn-copy"
+                      [class.copied]="varExplorerCopied() === entry.key"
+                      (click)="copyVarToClipboard(entry.key)"
+                      [attr.aria-label]="'Copier ' + entry.key">
+                      @if (varExplorerCopied() === entry.key) {
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                      } @else {
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                      }
+                    </button>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+        </div>
+      </div>
+    }
   }
 </div>

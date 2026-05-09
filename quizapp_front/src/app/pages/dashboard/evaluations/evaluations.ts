@@ -13,6 +13,7 @@ import { AuthService } from '../../../core/services/auth/auth.service';
 import { UserService } from '../../../core/services/user.service';
 import { InterviewService } from '../../../core/services/interview.service';
 import { CampaignService } from '../../../core/services/campaign.service';
+import { FilterCheckboxComponent } from '../../../shared/filter-checkbox/filter-checkbox';
 
 interface EvaluatorInfo {
   id: number;
@@ -50,7 +51,7 @@ interface CandidateInfo {
 @Component({
   selector: 'app-evaluations',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, FilterCheckboxComponent],
   templateUrl: './evaluations.html',
   styleUrl: './evaluations.scss'
 })

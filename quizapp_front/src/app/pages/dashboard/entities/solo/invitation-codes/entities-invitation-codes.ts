@@ -8,6 +8,8 @@ import { EntityCrudBase, BaseSearchCriteria, BasePagedResponse, ColumnDef } from
 import { EntityDetailPanelComponent } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
 import { DependencyPopupComponent } from '../../../../../shared/dependency-popup/dependency-popup';
 import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
+import { FilterCheckboxComponent } from '../../../../../shared/filter-checkbox/filter-checkbox';
+import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../../../shared/filter-select/filter-select';
 import { InvitationCodeService, InvitationCode } from '../../../../../core/services/invitation-code.service';
 
 interface InvitationCodeCriteria extends BaseSearchCriteria {
@@ -21,7 +23,7 @@ interface PagedInvitationCodeResponse extends BasePagedResponse<InvitationCode> 
 @Component({
   selector: 'app-entities-invitation-codes',
   standalone: true,
-  imports: [CommonModule, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent, ColumnVisibilityManagerComponent],
+  imports: [FilterSelectComponent, FilterSelectOptionDirective, CommonModule, FormsModule, FilterCheckboxComponent, EntityDetailPanelComponent, DependencyPopupComponent, ColumnVisibilityManagerComponent],
   templateUrl: './entities-invitation-codes.html',
   styleUrls: ['./entities-invitation-codes.scss']
 })

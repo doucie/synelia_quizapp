@@ -7,6 +7,8 @@ import { EntityCrudBase, ColumnDef } from '../../../../../shared/entity-crud-bas
 import { EntityDetailPanelComponent } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
 import { DependencyPopupComponent } from '../../../../../shared/dependency-popup/dependency-popup';
 import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
+import { FilterCheckboxComponent } from '../../../../../shared/filter-checkbox/filter-checkbox';
+import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../../../shared/filter-select/filter-select';
 import { InterviewService, Interview, PagedInterviewResponse, InterviewSearchCriteria } from '../../../../../core/services/interview.service';
 import { EntityPermissionService } from '../../../../../core/services/entity-permission.service';
 import { EntityPermission } from '../../../../../core/models/permission.interfaces';
@@ -17,7 +19,7 @@ import { ApplicationService, Application } from '../../../../../core/services/ap
 @Component({
   selector: 'app-entities-interviews',
   standalone: true,
-  imports: [CommonModule, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent, ColumnVisibilityManagerComponent],
+  imports: [CommonModule, FormsModule, FilterCheckboxComponent, FilterSelectComponent, FilterSelectOptionDirective, EntityDetailPanelComponent, DependencyPopupComponent, ColumnVisibilityManagerComponent],
   templateUrl: './entities-interviews.html',
   styleUrls: ['./entities-interviews.scss']
 })

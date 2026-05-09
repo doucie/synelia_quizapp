@@ -7,6 +7,8 @@ import { EntityCrudBase, ColumnDef } from '../../../../../shared/entity-crud-bas
 import { EntityDetailPanelComponent } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
 import { DependencyPopupComponent } from '../../../../../shared/dependency-popup/dependency-popup';
 import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
+import { FilterCheckboxComponent } from '../../../../../shared/filter-checkbox/filter-checkbox';
+import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../../../shared/filter-select/filter-select';
 import { FormService, Form, PagedFormResponse, FormSearchCriteria } from '../../../../../core/services/form.service';
 import { FormVersionService, FormVersion } from '../../../../../core/services/form-version.service';
 import { CampaignService, Campaign } from '../../../../../core/services/campaign.service';
@@ -14,7 +16,7 @@ import { CampaignService, Campaign } from '../../../../../core/services/campaign
 @Component({
   selector: 'app-entities-forms',
   standalone: true,
-  imports: [CommonModule, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent, ColumnVisibilityManagerComponent],
+  imports: [CommonModule, FormsModule, FilterCheckboxComponent, FilterSelectComponent, FilterSelectOptionDirective, EntityDetailPanelComponent, DependencyPopupComponent, ColumnVisibilityManagerComponent],
   templateUrl: './entities-forms.html',
   styleUrls: ['./entities-forms.scss']
 })

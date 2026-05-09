@@ -168,12 +168,12 @@
           @if (editTab() === 'groups') {
             <div class="groups-section">
               <div class="add-group-form">
-                <select [ngModel]="addGroupId()" (ngModelChange)="addGroupId.set($event)">
+                <app-filter-select [ngModel]="addGroupId()" (ngModelChange)="addGroupId.set($event)" ariaLabel="Sélectionner un groupe à ajouter">
                   <option [ngValue]="null">-- Sélectionner un groupe --</option>
                   @for (group of availableGroups(); track group.id) {
                     <option [ngValue]="group.id">{{ group.groupName }}</option>
                   }
-                </select>
+                </app-filter-select>
                 <button class="btn btn-primary btn-sm" (click)="addUserToGroup()" [disabled]="!addGroupId()">
                   Ajouter au groupe
                 </button>

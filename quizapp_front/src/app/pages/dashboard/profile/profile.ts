@@ -7,11 +7,12 @@ import { UserService } from '../../../core/services/user.service';
 import { UserBusinessGroupService } from '../../../core/services/user-business-group.service';
 import { BusinessGroupCrudService, BusinessGroup } from '../../../core/services/business-group-crud.service';
 import { GroupChangeRequestService, GroupChangeRequest } from '../../../core/services/group-change-request.service';
+import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../shared/filter-select/filter-select';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, FilterSelectComponent, FilterSelectOptionDirective],
   templateUrl: './profile.html',
   styleUrls: ['./profile.scss']
 })

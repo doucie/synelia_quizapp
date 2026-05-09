@@ -1,8 +1,10 @@
 package tech.synelia.quizapp.utils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import java.util.List;
 import lombok.Data;
+import tech.synelia.quizapp.dao.entity.AppConfig;
+import tech.synelia.quizapp.dao.repository.AppConfigRepository;
 
 /**
  * BUSINESS factory
@@ -13,6 +15,9 @@ import lombok.Data;
 @Data
 @Component
 public class ParamsUtils {
+
+	@Autowired
+	private AppConfigRepository appConfigRepository;
 
 	@Value("${url.appl}")
 	private String urlAppl;
@@ -89,4 +94,13 @@ public class ParamsUtils {
 
 	@Value("${use.otp}")
 	private String useOtp;
+
+	public String getUrlAppl() {
+		AppConfig activeConfig = appConfigRepository.findActiveConfig(true, false);
+		if (activeConfig != null && Utilities.notBlank(activeConfig.getAppLink())) {
+			return activeConfig.getAppLink().trim();
+		}
+
+		return urlAppl;
+	}
 }

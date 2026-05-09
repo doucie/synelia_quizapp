@@ -6,6 +6,7 @@ import { AuthService } from '../../core/services/auth/auth.service';
 import { UserService } from '../../core/services/user.service';
 import { NotificationService, DbNotification } from '../../core/services/notification.service';
 import { ThemeService } from '../../core/services/theme.service';
+import { ThemeService as UiThemeService } from '../../core/services/theme';
 import { PermissionService } from '../../core/services/permission.service';
 import { NotificationsComponent } from '../../components/notifications/notifications.component';
 import { SafeHtmlPipe } from '../../pipes/safe-html.pipe';
@@ -377,6 +378,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private notificationService: NotificationService,
     public themeService: ThemeService,
+    private uiThemeService: UiThemeService,
     public permissionService: PermissionService,
     private renderer: Renderer2,
     @Inject(DOCUMENT) private document: Document,
@@ -471,12 +473,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
    * Initialise le thème depuis localStorage
    */
   private initializeTheme(): void {
-    const savedTheme = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-      this.isDarkMode.set(true);
-    }
+    this.isDarkMode.set(this.uiThemeService.getCurrentTheme());
   }
 
   /**
@@ -506,7 +503,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   toggleTheme(): void {
     const newTheme = !this.isDarkMode();
     this.isDarkMode.set(newTheme);
-    localStorage.setItem('theme', newTheme ? 'dark' : 'light');
+    this.uiThemeService.setDarkMode(newTheme);
   }
 
   /**

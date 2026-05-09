@@ -8,6 +8,7 @@ export interface AppConfig {
   id: number;
   configName?: string;
   companyName?: string;
+  appLink?: string | null;
   logoHtml?: string | null;
   primaryColor?: string;
   colorScheme?: string;

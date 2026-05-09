@@ -5,6 +5,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { UserService, UserManagement as User } from '../../../core/services';
 import { AuthService } from '../../../core/services/auth/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../shared/filter-select/filter-select';
 
 interface UserFormData {
   id?: number;
@@ -19,7 +20,7 @@ interface UserFormData {
 @Component({
   selector: 'app-users',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, FilterSelectComponent, FilterSelectOptionDirective],
   templateUrl: './users.html',
   styleUrls: ['./users.scss']
 })

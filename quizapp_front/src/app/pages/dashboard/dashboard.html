@@ -63,14 +63,14 @@
                       <div class="entity-group">
                         <div class="entity-group-title">{{ entityGroup.label }}</div>
                         @for (entity of entityGroup.items; track entity.id) {
-                          <button 
+                          <a 
                             class="entity-item"
                             [class.active]="activeEntityId() === entity.id"
-                            (click)="navigateToEntity(entity.id)"
+                            [routerLink]="['/dashboard/entities', entity.id]"
                             [title]="entity.label">
                             <span class="entity-icon" [innerHTML]="entity.icon | safeHtml"></span>
                             <span class="entity-label">{{ entity.label }}</span>
-                          </button>
+                          </a>
                         }
                       </div>
                     }

@@ -18,10 +18,7 @@
     <div class="toolbar">
       <div class="toolbar-left">
         <input type="text" class="search-input" placeholder="Rechercher..." [(ngModel)]="quickSearch" (input)="onQuickSearch()" />
-        <div class="checkbox-container">
-          <input type="checkbox" id="showDeleted" class="checkbox-input" [checked]="showDeletedItems" (click)="toggleDeletedItems()" />
-          <label for="showDeleted" class="checkbox-label"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Afficher les supprimés</label>
-        </div>
+        <app-filter-checkbox inputId="showDeleted" label="Afficher les supprimés" [checked]="showDeletedItems" ariaLabel="Afficher les éléments supprimés" (checkedChange)="toggleDeletedItems()"></app-filter-checkbox>
       </div>
       <div class="toolbar-right">
         <button class="btn-secondary-pro" (click)="openAdvancedSearch()">Filtres avancés</button>
@@ -57,20 +54,20 @@
         </div>
         <div class="form-group">
           <label>Candidature</label>
-          <select class="form-select" [(ngModel)]="advancedCriteria.applicationId">
+          <app-filter-select [(ngModel)]="advancedCriteria.applicationId">
             <option [ngValue]="undefined">-- Tous --</option>
             @for (item of allApplications(); track item.id) {
               <option [ngValue]="item.id">{{ '#' + item.id + ' - ' + (item.candidateFirstName || '') + ' ' + (item.candidateLastName || '') }}</option>
             }
-          </select>
+          </app-filter-select>
         </div>
         <div class="form-group">
           <label>Supprimé</label>
-          <select class="form-select" [(ngModel)]="advancedCriteria.isDeleted">
+          <app-filter-select [(ngModel)]="advancedCriteria.isDeleted">
             <option [ngValue]="undefined">Tous</option>
             <option [ngValue]="false">Non supprimé</option>
             <option [ngValue]="true">Supprimé</option>
-          </select>
+          </app-filter-select>
         </div>
         <!-- Date de création -->
         <div class="form-row-full">
@@ -303,13 +300,13 @@
     </div>
     <div class="modal-content">
       <form class="edit-form">
-        <div class="form-group"><label class="form-label">Candidature</label><select class="form-input" [(ngModel)]="editFormData.applicationId" name="applicationId"><option [ngValue]="undefined">-- Sélectionner --</option>@for (a of allApplications(); track a.id) {<option [ngValue]="a.id">{{ a.candidateEmail }}</option>}</select></div>
+        <div class="form-group"><label class="form-label">Candidature</label><app-filter-select [(ngModel)]="editFormData.applicationId" name="applicationId" ariaLabel="Sélectionner une candidature"><option [ngValue]="undefined">-- Sélectionner --</option>@for (a of allApplications(); track a.id) {<option [ngValue]="a.id">{{ a.candidateEmail }}</option>}</app-filter-select></div>
         <div class="form-group"><label class="form-label">Type de demande</label><input type="text" class="form-input" [(ngModel)]="editFormData.requestType" name="requestType" /></div>
         <div class="form-group"><label class="form-label">Prénom</label><input type="text" class="form-input" [(ngModel)]="editFormData.firstName" name="firstName" /></div>
         <div class="form-group"><label class="form-label">Nom</label><input type="text" class="form-input" [(ngModel)]="editFormData.lastName" name="lastName" /></div>
         <div class="form-group"><label class="form-label">Email</label><input type="text" class="form-input" [(ngModel)]="editFormData.newEmail" name="newEmail" /></div>
         <div class="form-group"><label class="form-label">Téléphone</label><input type="text" class="form-input" [(ngModel)]="editFormData.newPhone" name="newPhone" /></div>
-        <div class="form-group"><label class="form-label"><input type="checkbox" [(ngModel)]="editFormData.isVerified" name="isVerified" /> Vérifié</label></div>
+        <div class="form-group"><app-filter-checkbox class="form-label" inputId="entities-candidate-ask-edit-verified" label="Vérifié" variant="inline" [(ngModel)]="editFormData.isVerified" name="editCandidateAskIsVerified" ariaLabel="Demande vérifiée"></app-filter-checkbox></div>
       </form>
     </div>
     <div class="modal-actions">
@@ -331,13 +328,13 @@
     </div>
     <div class="modal-content">
       <form class="edit-form">
-        <div class="form-group"><label class="form-label">Candidature</label><select class="form-input" [(ngModel)]="createFormData.applicationId" name="applicationId"><option [ngValue]="undefined">-- Sélectionner --</option>@for (a of allApplications(); track a.id) {<option [ngValue]="a.id">{{ a.candidateEmail }}</option>}</select></div>
+        <div class="form-group"><label class="form-label">Candidature</label><app-filter-select [(ngModel)]="createFormData.applicationId" name="applicationId" ariaLabel="Sélectionner une candidature pour la nouvelle demande"><option [ngValue]="undefined">-- Sélectionner --</option>@for (a of allApplications(); track a.id) {<option [ngValue]="a.id">{{ a.candidateEmail }}</option>}</app-filter-select></div>
         <div class="form-group"><label class="form-label">Type de demande</label><input type="text" class="form-input" [(ngModel)]="createFormData.requestType" name="requestType" /></div>
         <div class="form-group"><label class="form-label">Prénom</label><input type="text" class="form-input" [(ngModel)]="createFormData.firstName" name="firstName" /></div>
         <div class="form-group"><label class="form-label">Nom</label><input type="text" class="form-input" [(ngModel)]="createFormData.lastName" name="lastName" /></div>
         <div class="form-group"><label class="form-label">Email</label><input type="text" class="form-input" [(ngModel)]="createFormData.newEmail" name="newEmail" /></div>
         <div class="form-group"><label class="form-label">Téléphone</label><input type="text" class="form-input" [(ngModel)]="createFormData.newPhone" name="newPhone" /></div>
-        <div class="form-group"><label class="form-label"><input type="checkbox" [(ngModel)]="createFormData.isVerified" name="isVerified" /> Vérifié</label></div>
+        <div class="form-group"><app-filter-checkbox class="form-label" inputId="entities-candidate-ask-create-verified" label="Vérifié" variant="inline" [(ngModel)]="createFormData.isVerified" name="createCandidateAskIsVerified" ariaLabel="Nouvelle demande vérifiée"></app-filter-checkbox></div>
       </form>
     </div>
     <div class="modal-actions">

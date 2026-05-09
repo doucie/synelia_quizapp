@@ -13,6 +13,7 @@ const paths = [
   "/api",
   "/decisions",
   "/emailTemplate",
+  "/emailTemplatePreset",
   "/emailVerificationToken",
   "/entityPermission",
   "/files",

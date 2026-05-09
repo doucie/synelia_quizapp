@@ -723,13 +723,9 @@
                 </div>
                 @for (pk of campaignPermKeys; track pk.key) {
                   <div class="perm-key-col">
-                    <label class="perm-toggle" [class.saving]="isEntityPermSaving(user.userId, pk.key)">
-                      <input type="checkbox"
-                             [checked]="hasEntityPerm(user.userId, pk.key)"
-                             (change)="toggleEntityPerm(user.userId, pk.key)"
-                             [disabled]="isEntityPermSaving(user.userId, pk.key)" />
+                    <app-filter-checkbox class="perm-toggle" [class.saving]="isEntityPermSaving(user.userId, pk.key)" [inputId]="'campaign-detail-perm-' + user.userId + '-' + pk.key" variant="inline" [checked]="hasEntityPerm(user.userId, pk.key)" [disabled]="isEntityPermSaving(user.userId, pk.key)" [ariaLabel]="pk.label + ' pour ' + user.userName" (checkedChange)="toggleEntityPerm(user.userId, pk.key)">
                       <span class="perm-check-label">{{ pk.label }}</span>
-                    </label>
+                    </app-filter-checkbox>
                   </div>
                 }
               </div>

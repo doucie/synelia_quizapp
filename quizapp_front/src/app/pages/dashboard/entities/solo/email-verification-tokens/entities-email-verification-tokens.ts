@@ -7,12 +7,14 @@ import { EntityCrudBase, ColumnDef } from '../../../../../shared/entity-crud-bas
 import { EntityDetailPanelComponent } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
 import { DependencyPopupComponent } from '../../../../../shared/dependency-popup/dependency-popup';
 import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
+import { FilterCheckboxComponent } from '../../../../../shared/filter-checkbox/filter-checkbox';
+import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../../../shared/filter-select/filter-select';
 import { EmailVerificationTokenService, EmailVerificationToken, PagedEmailVerificationTokenResponse, EmailVerificationTokenCriteria } from '../../../../../core/services/email-verification-token.service';
 
 @Component({
   selector: 'app-entities-email-verification-tokens',
   standalone: true,
-  imports: [CommonModule, FormsModule, EntityDetailPanelComponent, DependencyPopupComponent, ColumnVisibilityManagerComponent],
+  imports: [FilterSelectComponent, FilterSelectOptionDirective, CommonModule, FormsModule, FilterCheckboxComponent, EntityDetailPanelComponent, DependencyPopupComponent, ColumnVisibilityManagerComponent],
   templateUrl: './entities-email-verification-tokens.html',
   styleUrls: ['./entities-email-verification-tokens.scss']
 })

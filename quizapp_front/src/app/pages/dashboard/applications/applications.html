@@ -140,24 +140,14 @@
     </div>
 
     <div class="filters-controls">
-      <div class="filter-checkbox">
-        <div class="checkbox-container">
-          <input 
-            type="checkbox"
-            id="sharedCampaigns"
-            class="checkbox-input"
-            [checked]="showOnlySharedCampaigns()"
-            (change)="toggleSharedCampaignsFilter()"
-          />
-          <label for="sharedCampaigns" class="checkbox-label">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            Campagnes partagées uniquement
-            <span class="checkbox-hint">(où j'ai des droits)</span>
-          </label>
-        </div>
-      </div>
+      <app-filter-checkbox
+        inputId="sharedCampaigns"
+        label="Campagnes partagées uniquement"
+        hint="(où j'ai des droits)"
+        [checked]="showOnlySharedCampaigns()"
+        ariaLabel="Afficher uniquement les campagnes partagées"
+        (checkedChange)="onSharedCampaignsFilterChange($event)">
+      </app-filter-checkbox>
 
       <div class="filter-group">
         <label class="filter-label">Campagne</label>
@@ -253,16 +243,15 @@
       @if (availableStagesForFilter().length > 0) {
         <div class="filter-group">
           <label class="filter-label">Étape pipeline</label>
-          <div class="filter-select-wrapper">
-            <select class="filter-select" 
-              [value]="selectedStageFilter() ?? ''" 
-              (change)="setStageFilter($any($event.target).value ? +$any($event.target).value : null)">
-              <option value="">Toutes les étapes</option>
+          <app-filter-select
+            [value]="selectedStageFilter()"
+            ariaLabel="Filtrer par étape pipeline"
+            (valueChange)="onStageFilterChange($event)">
+              <option [ngValue]="null">Toutes les étapes</option>
               @for (stage of availableStagesForFilter(); track stage.id) {
-                <option [value]="stage.id">{{ stage.stageLabel }}</option>
+                <option [ngValue]="stage.id">{{ stage.stageLabel }}</option>
               }
-            </select>
-          </div>
+          </app-filter-select>
         </div>
       }
 

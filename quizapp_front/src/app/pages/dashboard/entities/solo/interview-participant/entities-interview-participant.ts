@@ -8,11 +8,13 @@ import { InterviewParticipantService, InterviewParticipant, PagedInterviewPartic
 import { InterviewService, Interview } from '../../../../../core/services/interview.service';
 import { UserService, User } from '../../../../../core/services/user.service';
 import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
+import { FilterCheckboxComponent } from '../../../../../shared/filter-checkbox/filter-checkbox';
+import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../../../shared/filter-select/filter-select';
 
 @Component({
   selector: 'app-entities-interview-participant',
   standalone: true,
-  imports: [CommonModule, FormsModule, ColumnVisibilityManagerComponent],
+  imports: [CommonModule, FormsModule, FilterCheckboxComponent, FilterSelectComponent, FilterSelectOptionDirective, ColumnVisibilityManagerComponent],
   templateUrl: './entities-interview-participant.html',
   styleUrls: ['./entities-interview-participant.scss']
 })

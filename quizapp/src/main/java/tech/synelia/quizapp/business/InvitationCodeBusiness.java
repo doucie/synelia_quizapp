@@ -25,6 +25,7 @@ import tech.synelia.quizapp.utils.dto.transformer.*;
 import tech.synelia.quizapp.dao.entity.InvitationCode;
 import tech.synelia.quizapp.dao.entity.EmailTemplate;
 import tech.synelia.quizapp.dao.repository.*;
+import tech.synelia.quizapp.utils.enums.EmailActionType;
 
 @Log
 @Component
@@ -64,7 +65,7 @@ public class InvitationCodeBusiness implements IBasicBusiness<Request<Invitation
         Response<InvitationCodeDto> response = new Response<>();
         List<InvitationCode> items = new ArrayList<>();
 
-		platformReadinessService.requireEmailDeliveryAvailable("INVITATION_CODE", "invitation_code", locale);
+		platformReadinessService.requireEmailDeliveryAvailable(EmailActionType.INVITATION_CODE, locale);
 
         for (InvitationCodeDto dto : request.getDatas()) {
             Map<String, Object> fieldsToVerify = new HashMap<>();
@@ -342,7 +343,7 @@ public class InvitationCodeBusiness implements IBasicBusiness<Request<Invitation
             return response;
         }
 
-		platformReadinessService.requireEmailDeliveryAvailable("INVITATION_CODE", "invitation_code", locale);
+		platformReadinessService.requireEmailDeliveryAvailable(EmailActionType.INVITATION_CODE, locale);
 
         InvitationCode invitationToSend = invitation;
         Date now = Utilities.getCurrentDate();
@@ -457,7 +458,7 @@ public class InvitationCodeBusiness implements IBasicBusiness<Request<Invitation
         String contenu;
 
         EmailTemplate emailTemplate = platformReadinessService.requireActiveEmailTemplate(
-                "INVITATION_CODE", "invitation_code", locale);
+                EmailActionType.INVITATION_CODE, locale);
     String invitationEmail = invitation.getEmail();
     String invitationCode = invitation.getCode();
     Date invitationExpiry = invitation.getExpiredAt();

@@ -35,10 +35,11 @@
                 <i class="bi bi-briefcase"></i>
                 Campagne *
               </label>
-              <select
+              <app-filter-select
                 id="campaignId"
                 [(ngModel)]="formData().campaignId"
                 name="campaignId"
+                ariaLabel="Sélectionner une campagne"
                 (change)="onCampaignChange()"
                 required
               >
@@ -48,7 +49,7 @@
                     {{ campaign.campaignTitle || campaign.campaignName }}
                   </option>
                 }
-              </select>
+              </app-filter-select>
             </div>
           </div>
         </div>
@@ -88,12 +89,7 @@
                       (click)="toggleCandidate(app.id!, $event)"
                     >
                       <div class="card-check">
-                        <input 
-                          type="checkbox" 
-                          [checked]="isCandidateSelected(app.id!)"
-                          (change)="toggleCandidate(app.id!, $event)"
-                          (click)="$event.stopPropagation()"
-                        />
+                        <app-filter-checkbox class="candidate-card-checkbox" [inputId]="'interview-create-candidate-' + app.id" variant="inline" [checked]="isCandidateSelected(app.id!)" [ariaLabel]="'Sélectionner ' + getCandidateName(app)" (click)="$event.stopPropagation()" (checkedChange)="toggleCandidate(app.id!)"></app-filter-checkbox>
                       </div>
                       <div class="candidate-avatar">
                         {{ getInitials(getCandidateName(app)) }}
@@ -276,14 +272,7 @@
                       >
                         <div class="card-header">
                           <div class="checkbox-wrapper">
-                            <input 
-                              type="checkbox" 
-                              [checked]="isEvaluatorSelected(evaluator.id!)"
-                              (click)="$event.stopPropagation()"
-                            />
-                            <div class="checkbox-custom">
-                              <i class="bi bi-check-lg"></i>
-                            </div>
+                            <app-filter-checkbox class="evaluator-card-checkbox" [inputId]="'interview-create-evaluator-' + evaluator.id" variant="inline" [checked]="isEvaluatorSelected(evaluator.id!)" [ariaLabel]="'Sélectionner ' + getEvaluatorName(evaluator)" (click)="$event.stopPropagation()" (checkedChange)="toggleEvaluator(evaluator.id!)"></app-filter-checkbox>
                           </div>
                           <div class="badge-designated">
                             <i class="bi bi-patch-check-fill"></i>

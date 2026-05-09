@@ -6,6 +6,8 @@ import { Subject, takeUntil, forkJoin } from 'rxjs';
 import { PipelineTemplateService } from '../../../core/services/pipeline-template.service';
 import { PipelineStageService } from '../../../core/services/pipeline-stage.service';
 import { PipelineTemplate, PipelineStage, StageType } from '../../../core/models/pipeline.interfaces';
+import { FilterCheckboxComponent } from '../../../shared/filter-checkbox/filter-checkbox';
+import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../shared/filter-select/filter-select';
 
 interface EditableStage {
   id?: number;
@@ -20,7 +22,7 @@ interface EditableStage {
 @Component({
   selector: 'app-pipeline-template-edit',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, FilterCheckboxComponent, FilterSelectComponent, FilterSelectOptionDirective],
   templateUrl: './pipeline-template-edit.html',
   styleUrls: ['./pipeline-template-edit.scss']
 })

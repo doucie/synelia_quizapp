@@ -30,19 +30,7 @@
         />
         
         <div class="checkbox-container">
-          <input 
-            type="checkbox" 
-            id="showDeleted" 
-            class="checkbox-input"
-            [checked]="showDeletedItems"
-            (click)="toggleDeletedItems()"
-          />
-          <label for="showDeleted" class="checkbox-label">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            Afficher les entretiens supprimés
-          </label>
+          <app-filter-checkbox inputId="showDeleted" label="Afficher les entretiens supprimés" [checked]="showDeletedItems" ariaLabel="Afficher les entretiens supprimés" (checkedChange)="toggleDeletedItems()"></app-filter-checkbox>
         </div>
       </div>
       <div class="toolbar-right">
@@ -92,29 +80,29 @@
         </div>
         <div class="form-group">
           <label>Campagne</label>
-          <select class="form-select" [(ngModel)]="advancedCriteria.campaignId">
+          <app-filter-select [(ngModel)]="advancedCriteria.campaignId">
             <option [ngValue]="undefined">-- Tous --</option>
             @for (item of allCampaigns(); track item.id) {
               <option [ngValue]="item.id">{{ item.campaignTitle || '#' + item.id }}</option>
             }
-          </select>
+          </app-filter-select>
         </div>
         <div class="form-group">
           <label>Candidature</label>
-          <select class="form-select" [(ngModel)]="advancedCriteria.applicationId">
+          <app-filter-select [(ngModel)]="advancedCriteria.applicationId">
             <option [ngValue]="undefined">-- Tous --</option>
             @for (item of allApplications(); track item.id) {
               <option [ngValue]="item.id">{{ '#' + item.id + ' - ' + (item.candidateFirstName || '') + ' ' + (item.candidateLastName || '') }}</option>
             }
-          </select>
+          </app-filter-select>
         </div>
         <div class="form-group">
           <label>Supprimé</label>
-          <select class="form-select" [(ngModel)]="advancedCriteria.isDeleted">
+          <app-filter-select [(ngModel)]="advancedCriteria.isDeleted">
             <option [ngValue]="undefined">Tous</option>
             <option [ngValue]="false">Non supprimé</option>
             <option [ngValue]="true">Supprimé</option>
-          </select>
+          </app-filter-select>
         </div>
         <!-- Date de création -->
         <div class="form-row-full">
@@ -424,10 +412,10 @@
       <form class="edit-form">
         <div class="form-group">
           <label class="form-label">Type *</label>
-          <select class="form-select" [(ngModel)]="editFormData.interviewType" name="type">
+          <app-filter-select [(ngModel)]="editFormData.interviewType" name="type" ariaLabel="Sélectionner un type d'entretien">
             <option value="ONLINE">En ligne</option>
             <option value="IN_PERSON">En personne</option>
-          </select>
+          </app-filter-select>
         </div>
         <div class="form-group">
           <label class="form-label">Date et heure</label>
@@ -443,7 +431,7 @@
         </div>
         <div class="form-group">
           <label class="form-label">Statut</label>
-          <select class="form-select" [(ngModel)]="editFormData.interviewStatus" name="status">
+          <app-filter-select [(ngModel)]="editFormData.interviewStatus" name="status" ariaLabel="Sélectionner un statut d'entretien">
             <option value="PENDING">En attente</option>
             <option value="SCHEDULED">Planifié</option>
             <option value="STARTED">En cours</option>
@@ -452,7 +440,7 @@
             <option value="FAILED">Échoué</option>
             <option value="POSTPONED">Reporté</option>
             <option value="ARCHIVED">Archivé</option>
-          </select>
+          </app-filter-select>
         </div>
         <div class="form-group">
           <label class="form-label">Notes</label>
@@ -460,12 +448,12 @@
         </div>
         <div class="form-group">
           <label class="form-label">Campagne</label>
-          <select class="form-input" [(ngModel)]="editFormData.campaignId" name="campaignId">
+          <app-filter-select [(ngModel)]="editFormData.campaignId" name="campaignId" ariaLabel="Sélectionner une campagne">
             <option [ngValue]="undefined">-- Sélectionner --</option>
             @for (c of allCampaigns(); track c.id) {
               <option [ngValue]="c.id">{{ c.campaignName }}</option>
             }
-          </select>
+          </app-filter-select>
         </div>
       </form>
     </div>
@@ -494,10 +482,10 @@
       <form class="edit-form">
         <div class="form-group">
           <label class="form-label">Type *</label>
-          <select class="form-select" [(ngModel)]="createFormData.interviewType" name="type">
+          <app-filter-select [(ngModel)]="createFormData.interviewType" name="type" ariaLabel="Sélectionner un type pour le nouvel entretien">
             <option value="ONLINE">En ligne</option>
             <option value="IN_PERSON">En personne</option>
-          </select>
+          </app-filter-select>
         </div>
         <div class="form-group">
           <label class="form-label">Date et heure</label>
@@ -517,12 +505,12 @@
         </div>
         <div class="form-group">
           <label class="form-label">Campagne</label>
-          <select class="form-input" [(ngModel)]="createFormData.campaignId" name="campaignId">
+          <app-filter-select [(ngModel)]="createFormData.campaignId" name="campaignId" ariaLabel="Sélectionner une campagne pour le nouvel entretien">
             <option [ngValue]="undefined">-- Sélectionner --</option>
             @for (c of allCampaigns(); track c.id) {
               <option [ngValue]="c.id">{{ c.campaignName }}</option>
             }
-          </select>
+          </app-filter-select>
         </div>
       </form>
     </div>

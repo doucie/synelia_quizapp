@@ -35,6 +35,7 @@ public interface AppConfigTransformer {
         dto.setId(entity.getId());
         dto.setConfigName(entity.getConfigName());
         dto.setCompanyName(entity.getCompanyName());
+        dto.setAppLink(entity.getAppLink());
         dto.setPrimaryColor(entity.getPrimaryColor());
         dto.setColorScheme(entity.getColorScheme());
         dto.setCandidateAccountsEnabled(entity.getCandidateAccountsEnabled());
@@ -59,6 +60,7 @@ public interface AppConfigTransformer {
         @Mapping(source = "dto.id", target = "id"),
         @Mapping(source = "dto.configName", target = "configName"),
         @Mapping(source = "dto.companyName", target = "companyName"),
+        @Mapping(source = "dto.appLink", target = "appLink"),
         @Mapping(source = "dto.logoHtml", target = "logoHtml"),
         @Mapping(source = "dto.primaryColor", target = "primaryColor"),
         @Mapping(source = "dto.colorScheme", target = "colorScheme"),

@@ -1,0 +1,56 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.filter-select-shell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.filter-select-control {
+  width: 100%;
+  padding: var(--spacing-sm) calc(var(--spacing-lg) + var(--spacing-md)) var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  background: var(--background);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: var(--transition);
+  appearance: none;
+
+  &:hover {
+    border-color: var(--border-hover);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 var(--spacing-xs) rgba(var(--primary-rgb), 0.1);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    color: var(--text-disabled);
+    background: var(--surface);
+  }
+}
+
+.filter-select-chevron {
+  position: absolute;
+  right: var(--spacing-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  pointer-events: none;
+
+  svg {
+    width: var(--font-size-sm);
+    height: var(--font-size-sm);
+  }
+}

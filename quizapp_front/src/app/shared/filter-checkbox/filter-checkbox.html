@@ -1,0 +1,36 @@
+<div class="filter-checkbox" [class.filter-checkbox--inline]="isInlineVariant" [class.filter-checkbox--switch]="isSwitchVariant" [class.filter-checkbox--filter]="!isInlineVariant && !isSwitchVariant" [class.filter-checkbox--transitions-ready]="transitionsReady">
+  <div class="checkbox-container">
+    <input
+      type="checkbox"
+      class="checkbox-input"
+      [id]="resolvedInputId"
+      [checked]="checked"
+      [disabled]="disabled"
+      [attr.aria-label]="resolvedAriaLabel"
+      (blur)="onInputBlur()"
+      (change)="onCheckedChange($event)"
+    />
+
+    <label [for]="resolvedInputId" class="checkbox-label">
+      @if (isSwitchVariant) {
+        <span class="checkbox-switch" aria-hidden="true"></span>
+      } @else {
+        <span class="checkbox-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M7 12.5L10.5 16L17 9.5" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+      }
+
+      <span class="checkbox-copy">
+        @if (label) {
+          <span class="checkbox-text">{{ label }}</span>
+        }
+        @if (hint) {
+          <span class="checkbox-hint">{{ hint }}</span>
+        }
+        <span class="checkbox-content"><ng-content></ng-content></span>
+      </span>
+    </label>
+  </div>
+</div>

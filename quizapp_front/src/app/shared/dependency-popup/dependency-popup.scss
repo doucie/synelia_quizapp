@@ -205,13 +205,6 @@
   color: var(--error-dark);
   cursor: pointer;
   user-select: none;
-
-  input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
-    accent-color: var(--error);
-    cursor: pointer;
-  }
 }
 
 // ── Actions ─────────────────────────────────

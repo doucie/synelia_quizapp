@@ -111,6 +111,12 @@
   }
 }
 
+.rte-email-layout {
+  display: block;
+  min-height: 100%;
+  box-sizing: border-box;
+}
+
 .rte-variables {
   display: flex;
   align-items: center;
@@ -119,6 +125,16 @@
   border-top: 1px solid var(--border);
   background: var(--surface-secondary);
   flex-wrap: wrap;
+
+  & + & {
+    border-top: none;
+  }
+}
+
+.rte-variables-separator {
+  margin: 0;
+  border: none;
+  border-top: 1px solid var(--border);
 }
 
 .rte-variables-label {
@@ -147,5 +163,38 @@
   &:hover {
     background: color-mix(in srgb, var(--primary) 18%, transparent);
     border-color: var(--primary);
+  }
+
+  &--mail {
+    border-color: color-mix(in srgb, var(--primary) 30%, transparent);
+    background: color-mix(in srgb, var(--primary) 10%, transparent);
+    color: var(--primary);
+
+    &:hover {
+      background: color-mix(in srgb, var(--primary) 20%, transparent);
+      border-color: var(--primary);
+    }
+  }
+
+  &--business {
+    border-color: color-mix(in srgb, var(--info) 30%, transparent);
+    background: color-mix(in srgb, var(--info) 10%, transparent);
+    color: var(--info);
+
+    &:hover {
+      background: color-mix(in srgb, var(--info) 20%, transparent);
+      border-color: var(--info);
+    }
+  }
+
+  &--global {
+    border-color: color-mix(in srgb, var(--success) 30%, transparent);
+    background: color-mix(in srgb, var(--success) 10%, transparent);
+    color: var(--success);
+
+    &:hover {
+      background: color-mix(in srgb, var(--success) 20%, transparent);
+      border-color: var(--success);
+    }
   }
 }

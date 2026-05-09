@@ -478,44 +478,6 @@ select.form-input {
   cursor: pointer;
   user-select: none;
   white-space: nowrap;
-
-  input[type="checkbox"] {
-    display: none;
-  }
-
-  &.active {
-    color: var(--primary);
-  }
-}
-
-.toggle-switch {
-  position: relative;
-  width: 32px;
-  height: 18px;
-  background: var(--border);
-  border-radius: 9px;
-  transition: background 0.2s ease;
-  flex-shrink: 0;
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 14px;
-    height: 14px;
-    border-radius: var(--radius-full);
-    background: var(--background);
-    transition: transform 0.2s ease;
-  }
-
-  .active & {
-    background: var(--primary);
-
-    &::after {
-      transform: translateX(14px);
-    }
-  }
 }
 
 // Modal

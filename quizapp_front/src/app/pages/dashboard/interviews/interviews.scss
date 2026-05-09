@@ -2038,18 +2038,12 @@
 
 .edit-checkbox {
   display: flex;
-  align-items: flex-start;
-  gap: var(--spacing-sm);
   padding: var(--spacing-md);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--background);
   color: var(--text-secondary);
   font-size: var(--font-size-sm);
-
-  input {
-    margin-top: 0.125rem;
-  }
 }
 
 .evaluator-edit-group {
@@ -2079,6 +2073,7 @@
   display: flex;
   align-items: flex-start;
   gap: var(--spacing-sm);
+  width: 100%;
   padding: var(--spacing-md);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -2088,10 +2083,6 @@
 
   &:hover {
     border-color: var(--primary);
-  }
-
-  input {
-    margin-top: 0.125rem;
   }
 }
 

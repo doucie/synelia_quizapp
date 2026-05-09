@@ -6,6 +6,7 @@ import { SpecialityService, Speciality } from '../../../core/services/speciality
 import { DepartmentService, Department } from '../../../core/services/department.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../shared/filter-select/filter-select';
 
 interface SpecialityFormData {
   id?: number;
@@ -17,7 +18,7 @@ interface SpecialityFormData {
 @Component({
   selector: 'app-specialities',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, FilterSelectComponent, FilterSelectOptionDirective],
   templateUrl: './specialities.html',
   styleUrls: ['./specialities.scss']
 })

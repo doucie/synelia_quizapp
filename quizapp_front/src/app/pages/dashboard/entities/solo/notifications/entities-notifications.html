@@ -18,10 +18,7 @@
     <div class="toolbar">
       <div class="toolbar-left">
         <input type="text" class="search-input" placeholder="Rechercher..." [(ngModel)]="quickSearch" (input)="onQuickSearch()" />
-        <div class="checkbox-container">
-          <input type="checkbox" id="showDeleted" class="checkbox-input" [checked]="showDeletedItems" (click)="toggleDeletedItems()" />
-          <label for="showDeleted" class="checkbox-label"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Afficher les supprimés</label>
-        </div>
+        <app-filter-checkbox inputId="showDeleted" label="Afficher les supprimés" [checked]="showDeletedItems" ariaLabel="Afficher les éléments supprimés" (checkedChange)="toggleDeletedItems()"></app-filter-checkbox>
       </div>
       <div class="toolbar-right">
         <button class="btn-secondary-pro" (click)="openAdvancedSearch()">Filtres avancés</button>
@@ -57,20 +54,20 @@
         </div>
         <div class="form-group">
           <label>Utilisateur</label>
-          <select class="form-select" [(ngModel)]="advancedCriteria.userId">
+          <app-filter-select [(ngModel)]="advancedCriteria.userId">
             <option [ngValue]="undefined">-- Tous --</option>
             @for (item of allUsers(); track item.id) {
               <option [ngValue]="item.id">{{ item.firstName + ' ' + item.lastName }}</option>
             }
-          </select>
+          </app-filter-select>
         </div>
         <div class="form-group">
           <label>Supprimé</label>
-          <select class="form-select" [(ngModel)]="advancedCriteria.isDeleted">
+          <app-filter-select [(ngModel)]="advancedCriteria.isDeleted">
             <option [ngValue]="undefined">Tous</option>
             <option [ngValue]="false">Non supprimé</option>
             <option [ngValue]="true">Supprimé</option>
-          </select>
+          </app-filter-select>
         </div>
         <!-- Date de création -->
         <div class="form-row-full">
@@ -242,11 +239,11 @@
     </div>
     <div class="modal-content">
       <form class="edit-form">
-        <div class="form-group"><label class="form-label">Utilisateur</label><select class="form-input" [(ngModel)]="editFormData.userId" name="userId"><option [ngValue]="undefined">-- Sélectionner --</option>@for (u of allUsers(); track u.id) {<option [ngValue]="u.id">{{ u.email }}</option>}</select></div>
+        <div class="form-group"><label class="form-label">Utilisateur</label><app-filter-select [(ngModel)]="editFormData.userId" name="userId" ariaLabel="Sélectionner un utilisateur"><option [ngValue]="undefined">-- Sélectionner --</option>@for (u of allUsers(); track u.id) {<option [ngValue]="u.id">{{ u.email }}</option>}</app-filter-select></div>
         <div class="form-group"><label class="form-label">Type</label><input type="text" class="form-input" [(ngModel)]="editFormData.notifType" name="notifType" /></div>
         <div class="form-group"><label class="form-label">Acteur</label><input type="number" class="form-input" [(ngModel)]="editFormData.notifActor" name="notifActor" /></div>
         <div class="form-group"><label class="form-label">Lien</label><input type="text" class="form-input" [(ngModel)]="editFormData.notifLink" name="notifLink" /></div>
-        <div class="form-group"><label class="form-label"><input type="checkbox" [(ngModel)]="editFormData.isRead" name="isRead" /> Lu</label></div>
+        <div class="form-group"><app-filter-checkbox class="form-label" inputId="entities-notifications-edit-read" label="Lu" variant="inline" [(ngModel)]="editFormData.isRead" name="editNotificationIsRead" ariaLabel="Notification lue"></app-filter-checkbox></div>
         <div class="form-group"><label class="form-label">Table</label><input type="text" class="form-input" [(ngModel)]="editFormData.objectTableName" name="objectTableName" /></div>
         <div class="form-group"><label class="form-label">Table ID</label><input type="number" class="form-input" [(ngModel)]="editFormData.objectTableId" name="objectTableId" /></div>
       </form>
@@ -270,11 +267,11 @@
     </div>
     <div class="modal-content">
       <form class="edit-form">
-        <div class="form-group"><label class="form-label">Utilisateur</label><select class="form-input" [(ngModel)]="createFormData.userId" name="userId"><option [ngValue]="undefined">-- Sélectionner --</option>@for (u of allUsers(); track u.id) {<option [ngValue]="u.id">{{ u.email }}</option>}</select></div>
+        <div class="form-group"><label class="form-label">Utilisateur</label><app-filter-select [(ngModel)]="createFormData.userId" name="userId" ariaLabel="Sélectionner un utilisateur pour la nouvelle notification"><option [ngValue]="undefined">-- Sélectionner --</option>@for (u of allUsers(); track u.id) {<option [ngValue]="u.id">{{ u.email }}</option>}</app-filter-select></div>
         <div class="form-group"><label class="form-label">Type</label><input type="text" class="form-input" [(ngModel)]="createFormData.notifType" name="notifType" /></div>
         <div class="form-group"><label class="form-label">Acteur</label><input type="number" class="form-input" [(ngModel)]="createFormData.notifActor" name="notifActor" /></div>
         <div class="form-group"><label class="form-label">Lien</label><input type="text" class="form-input" [(ngModel)]="createFormData.notifLink" name="notifLink" /></div>
-        <div class="form-group"><label class="form-label"><input type="checkbox" [(ngModel)]="createFormData.isRead" name="isRead" /> Lu</label></div>
+        <div class="form-group"><app-filter-checkbox class="form-label" inputId="entities-notifications-create-read" label="Lu" variant="inline" [(ngModel)]="createFormData.isRead" name="createNotificationIsRead" ariaLabel="Nouvelle notification lue"></app-filter-checkbox></div>
         <div class="form-group"><label class="form-label">Table</label><input type="text" class="form-input" [(ngModel)]="createFormData.objectTableName" name="objectTableName" /></div>
         <div class="form-group"><label class="form-label">Table ID</label><input type="number" class="form-input" [(ngModel)]="createFormData.objectTableId" name="objectTableId" /></div>
       </form>

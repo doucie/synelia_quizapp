@@ -18,10 +18,7 @@
     <div class="toolbar">
       <div class="toolbar-left">
         <input type="text" class="search-input" placeholder="Rechercher..." [(ngModel)]="quickSearch" (input)="onQuickSearch()" />
-        <div class="checkbox-container">
-          <input type="checkbox" id="showDeleted" class="checkbox-input" [checked]="showDeletedItems" (click)="toggleDeletedItems()" />
-          <label for="showDeleted" class="checkbox-label"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Afficher les supprimés</label>
-        </div>
+        <app-filter-checkbox inputId="showDeleted" label="Afficher les supprimés" [checked]="showDeletedItems" ariaLabel="Afficher les éléments supprimés" (checkedChange)="toggleDeletedItems()"></app-filter-checkbox>
       </div>
       <div class="toolbar-right">
         <button class="btn-secondary-pro" (click)="openAdvancedSearch()">Filtres avancés</button>
@@ -56,45 +53,45 @@
         </div>
         <div class="form-group">
           <label>Type d'étape</label>
-          <select class="form-select" [(ngModel)]="advancedCriteria.stageType">
+          <app-filter-select [(ngModel)]="advancedCriteria.stageType">
             <option [ngValue]="undefined">-- Tous --</option>
             @for (type of stageTypes; track type) {
               <option [ngValue]="type">{{ getStageTypeLabel(type) }}</option>
             }
-          </select>
+          </app-filter-select>
         </div>
         <div class="form-group">
           <label>Template</label>
-          <select class="form-select" [(ngModel)]="advancedCriteria.pipelineTemplateId">
+          <app-filter-select [(ngModel)]="advancedCriteria.pipelineTemplateId">
             <option [ngValue]="undefined">-- Tous --</option>
             @for (tpl of allTemplates(); track tpl.id) {
               <option [ngValue]="tpl.id">{{ tpl.templateName }}</option>
             }
-          </select>
+          </app-filter-select>
         </div>
         <div class="form-group">
           <label>Obligatoire</label>
-          <select class="form-select" [(ngModel)]="advancedCriteria.isRequired">
+          <app-filter-select [(ngModel)]="advancedCriteria.isRequired">
             <option [ngValue]="undefined">Tous</option>
             <option [ngValue]="true">Oui</option>
             <option [ngValue]="false">Non</option>
-          </select>
+          </app-filter-select>
         </div>
         <div class="form-group">
           <label>Éliminatoire</label>
-          <select class="form-select" [(ngModel)]="advancedCriteria.isEliminatory">
+          <app-filter-select [(ngModel)]="advancedCriteria.isEliminatory">
             <option [ngValue]="undefined">Tous</option>
             <option [ngValue]="true">Oui</option>
             <option [ngValue]="false">Non</option>
-          </select>
+          </app-filter-select>
         </div>
         <div class="form-group">
           <label>Supprimé</label>
-          <select class="form-select" [(ngModel)]="advancedCriteria.isDeleted">
+          <app-filter-select [(ngModel)]="advancedCriteria.isDeleted">
             <option [ngValue]="undefined">Tous</option>
             <option [ngValue]="false">Non supprimé</option>
             <option [ngValue]="true">Supprimé</option>
-          </select>
+          </app-filter-select>
         </div>
         <div class="form-row-full">
           <div class="form-group-inline">
@@ -291,8 +288,8 @@
             [placeholder]="getConfigPlaceholder(editFormData.stageType)"></textarea>
           <small class="form-helper">{{ getConfigHelp(editFormData.stageType) }}</small>
         </div>
-        <div class="form-group"><label class="form-label"><input type="checkbox" [(ngModel)]="editFormData.isRequired" name="isRequired" /> Obligatoire</label></div>
-        <div class="form-group"><label class="form-label"><input type="checkbox" [(ngModel)]="editFormData.isEliminatory" name="isEliminatory" /> Éliminatoire</label></div>
+        <div class="form-group"><app-filter-checkbox class="form-label" inputId="entities-pipeline-stages-edit-required" label="Obligatoire" variant="inline" [(ngModel)]="editFormData.isRequired" name="editPipelineStageIsRequired" ariaLabel="Étape obligatoire"></app-filter-checkbox></div>
+        <div class="form-group"><app-filter-checkbox class="form-label" inputId="entities-pipeline-stages-edit-eliminatory" label="Éliminatoire" variant="inline" [(ngModel)]="editFormData.isEliminatory" name="editPipelineStageIsEliminatory" ariaLabel="Étape éliminatoire"></app-filter-checkbox></div>
       </form>
     </div>
     <div class="modal-actions">
@@ -344,8 +341,8 @@
             [placeholder]="getConfigPlaceholder(createFormData.stageType)"></textarea>
           <small class="form-helper">{{ getConfigHelp(createFormData.stageType) }}</small>
         </div>
-        <div class="form-group"><label class="form-label"><input type="checkbox" [(ngModel)]="createFormData.isRequired" name="isRequired" /> Obligatoire</label></div>
-        <div class="form-group"><label class="form-label"><input type="checkbox" [(ngModel)]="createFormData.isEliminatory" name="isEliminatory" /> Éliminatoire</label></div>
+        <div class="form-group"><app-filter-checkbox class="form-label" inputId="entities-pipeline-stages-create-required" label="Obligatoire" variant="inline" [(ngModel)]="createFormData.isRequired" name="createPipelineStageIsRequired" ariaLabel="Nouvelle étape obligatoire"></app-filter-checkbox></div>
+        <div class="form-group"><app-filter-checkbox class="form-label" inputId="entities-pipeline-stages-create-eliminatory" label="Éliminatoire" variant="inline" [(ngModel)]="createFormData.isEliminatory" name="createPipelineStageIsEliminatory" ariaLabel="Nouvelle étape éliminatoire"></app-filter-checkbox></div>
       </form>
     </div>
     <div class="modal-actions">

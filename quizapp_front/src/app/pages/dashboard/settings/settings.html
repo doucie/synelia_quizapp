@@ -61,12 +61,17 @@
         <h2>Templates d'emails</h2>
         <p>Gérez les modèles d'emails envoyés par l'application</p>
       </div>
-      <button class="btn-primary" (click)="navigateToTemplateEditor()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-        </svg>
-        Nouveau template
-      </button>
+      <div class="settings__panel-header-actions">
+        <button class="btn-secondary" (click)="navigateToPresetEditor()">
+          Gérer les presets
+        </button>
+        <button class="btn-new" (click)="navigateToTemplateEditor()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Nouveau template
+        </button>
+      </div>
     </div>
 
     <div class="settings__empty" *ngIf="emailTemplates().length === 0">
@@ -96,6 +101,7 @@
             </div>
           </div>
           <div class="settings__card-body">
+            <div class="settings__card-field" *ngIf="tmpl.actionType"><span class="label">Type d'action :</span> {{ getActionTypeLabel(tmpl.actionType) }}</div>
             <div class="settings__card-field"><span class="label">Sujet :</span> {{ tmpl.subjectTemplate }}</div>
             <div class="settings__card-field" *ngIf="tmpl.description"><span class="label">Description :</span> {{ tmpl.description }}</div>
             <div class="settings__card-field" *ngIf="tmpl.availableVariables"><span class="label">Variables :</span> <code>{{ tmpl.availableVariables }}</code></div>
@@ -124,6 +130,7 @@
             <label>Corps du message (HTML) *</label>
             <app-rich-text-editor
               [value]="templateForm().bodyTemplate || ''"
+              layoutMode="email-document"
               (valueChange)="updateTemplateForm('bodyTemplate', $event)"
               [variables]="templateVariables()"
               placeholder="Contenu HTML de l'email">
@@ -138,15 +145,7 @@
             <input type="text" [ngModel]="templateForm().availableVariables" (ngModelChange)="updateTemplateForm('availableVariables', $event)" placeholder="candidat_nom, date_entretien, ...">
           </div>
           <div class="form-group checkbox">
-            <div class="checkbox-container">
-              <input type="checkbox" id="settings-template-active" class="checkbox-input" [ngModel]="templateForm().isActive" (ngModelChange)="updateTemplateForm('isActive', $event)">
-              <label for="settings-template-active" class="checkbox-label">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                Actif
-              </label>
-            </div>
+            <app-filter-checkbox class="settings-checkbox-item" inputId="settings-template-active" label="Actif" variant="inline" [checked]="templateForm().isActive === true" ariaLabel="Template actif" (checkedChange)="updateTemplateForm('isActive', $event)"></app-filter-checkbox>
           </div>
         </div>
         <div class="settings__modal-footer">
@@ -170,7 +169,7 @@
         <button class="btn-secondary" (click)="testActiveSmtp()" [disabled]="testingSmtp() || !activeSmtpConfig()">
           {{ testingSmtp() ? 'Test en cours...' : 'Tester la config active' }}
         </button>
-        <button class="btn-primary" (click)="openSmtpEditor()">
+        <button class="btn-new" (click)="openSmtpEditor()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
           </svg>
@@ -268,42 +267,10 @@
             </div>
           </div>
           <div class="form-row checkboxes">
-            <div class="checkbox-container">
-              <input type="checkbox" id="settings-smtp-auth" class="checkbox-input" [ngModel]="smtpForm().smtpAuth" (ngModelChange)="updateSmtpForm('smtpAuth', $event)">
-              <label for="settings-smtp-auth" class="checkbox-label">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                SMTP Auth
-              </label>
-            </div>
-            <div class="checkbox-container">
-              <input type="checkbox" id="settings-smtp-starttls-enable" class="checkbox-input" [ngModel]="smtpForm().starttlsEnable" (ngModelChange)="updateSmtpForm('starttlsEnable', $event)">
-              <label for="settings-smtp-starttls-enable" class="checkbox-label">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                STARTTLS
-              </label>
-            </div>
-            <div class="checkbox-container">
-              <input type="checkbox" id="settings-smtp-starttls-required" class="checkbox-input" [ngModel]="smtpForm().starttlsRequired" (ngModelChange)="updateSmtpForm('starttlsRequired', $event)">
-              <label for="settings-smtp-starttls-required" class="checkbox-label">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                STARTTLS requis
-              </label>
-            </div>
-            <div class="checkbox-container">
-              <input type="checkbox" id="settings-smtp-active" class="checkbox-input" [ngModel]="smtpForm().isActive" (ngModelChange)="updateSmtpForm('isActive', $event)">
-              <label for="settings-smtp-active" class="checkbox-label">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                Actif
-              </label>
-            </div>
+            <app-filter-checkbox class="settings-checkbox-item" inputId="settings-smtp-auth" label="SMTP Auth" variant="inline" [checked]="smtpForm().smtpAuth === true" ariaLabel="SMTP Auth" (checkedChange)="updateSmtpForm('smtpAuth', $event)"></app-filter-checkbox>
+            <app-filter-checkbox class="settings-checkbox-item" inputId="settings-smtp-starttls-enable" label="STARTTLS" variant="inline" [checked]="smtpForm().starttlsEnable === true" ariaLabel="STARTTLS" (checkedChange)="updateSmtpForm('starttlsEnable', $event)"></app-filter-checkbox>
+            <app-filter-checkbox class="settings-checkbox-item" inputId="settings-smtp-starttls-required" label="STARTTLS requis" variant="inline" [checked]="smtpForm().starttlsRequired === true" ariaLabel="STARTTLS requis" (checkedChange)="updateSmtpForm('starttlsRequired', $event)"></app-filter-checkbox>
+            <app-filter-checkbox class="settings-checkbox-item" inputId="settings-smtp-active" label="Actif" variant="inline" [checked]="smtpForm().isActive === true" ariaLabel="Configuration SMTP active" (checkedChange)="updateSmtpForm('isActive', $event)"></app-filter-checkbox>
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -337,7 +304,7 @@
         <h2>Textes juridiques</h2>
         <p>Gérez les textes de consentement, politique de confidentialité et conditions d'utilisation</p>
       </div>
-      <button class="btn-primary" (click)="openLegalEditor()">
+      <button class="btn-new" (click)="openLegalEditor()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
         </svg>
@@ -411,15 +378,7 @@
             </app-rich-text-editor>
           </div>
           <div class="form-group checkbox">
-            <div class="checkbox-container">
-              <input type="checkbox" id="settings-legal-active" class="checkbox-input" [ngModel]="legalForm().isActive" (ngModelChange)="updateLegalForm('isActive', $event)">
-              <label for="settings-legal-active" class="checkbox-label">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                Actif
-              </label>
-            </div>
+            <app-filter-checkbox class="settings-checkbox-item" inputId="settings-legal-active" label="Actif" variant="inline" [checked]="legalForm().isActive === true" ariaLabel="Texte juridique actif" (checkedChange)="updateLegalForm('isActive', $event)"></app-filter-checkbox>
           </div>
         </div>
         <div class="settings__modal-footer">
@@ -451,7 +410,7 @@
           </button>
         }
         @if (isSuper()) {
-          <button class="btn-primary" (click)="openConfigEditor()">
+          <button class="btn-new" (click)="openConfigEditor()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
             </svg>
@@ -519,6 +478,7 @@
           </div>
           <div class="settings__card-body">
             <div class="settings__card-field"><span class="label">Entreprise :</span> {{ cfg.companyName }}</div>
+            <div class="settings__card-field" *ngIf="cfg.appLink"><span class="label">Lien app :</span> {{ cfg.appLink }}</div>
             <div class="settings__card-field"><span class="label">Thème :</span> {{ cfg.colorScheme }} <span class="settings__color-dot settings__color-dot--sm" [style.background]="getSchemeColor(cfg.colorScheme || 'violet')"></span></div>
             <div class="settings__card-field"><span class="label">Couleur :</span> <code>{{ cfg.primaryColor }}</code> <span class="settings__color-dot settings__color-dot--sm" [style.background]="cfg.primaryColor"></span></div>
             <div class="settings__card-field"><span class="label">Comptes candidats :</span> {{ cfg.candidateAccountsEnabled ? 'Activés' : 'Désactivés' }}</div>
@@ -544,6 +504,11 @@
               <label>Nom de l'entreprise *</label>
               <input type="text" [ngModel]="configForm().companyName" (ngModelChange)="updateConfigForm('companyName', $event)" placeholder="Synelia">
             </div>
+          </div>
+          <div class="form-group">
+            <label>Lien public de l'application</label>
+            <input type="url" [ngModel]="configForm().appLink" (ngModelChange)="updateConfigForm('appLink', $event)" placeholder="https://app.example.com">
+            <p class="field-help">Utilisé pour la variable email {{ '{{app_link}}' }}.</p>
           </div>
           <div class="form-group">
             <label>Logo</label>
@@ -593,24 +558,8 @@
             </div>
           </div>
           <div class="form-group checkbox">
-            <div class="checkbox-container">
-              <input type="checkbox" id="settings-config-active" class="checkbox-input" [ngModel]="configForm().isActive" (ngModelChange)="updateConfigForm('isActive', $event)">
-              <label for="settings-config-active" class="checkbox-label">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                Active
-              </label>
-            </div>
-            <div class="checkbox-container">
-              <input type="checkbox" id="settings-config-candidate-accounts" class="checkbox-input" [ngModel]="configForm().candidateAccountsEnabled" (ngModelChange)="updateConfigForm('candidateAccountsEnabled', $event)">
-              <label for="settings-config-candidate-accounts" class="checkbox-label">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                Comptes candidats activés
-              </label>
-            </div>
+            <app-filter-checkbox class="settings-checkbox-item" inputId="settings-config-active" label="Active" variant="inline" [checked]="configForm().isActive === true" ariaLabel="Configuration active" (checkedChange)="updateConfigForm('isActive', $event)"></app-filter-checkbox>
+            <app-filter-checkbox class="settings-checkbox-item" inputId="settings-config-candidate-accounts" label="Comptes candidats activés" variant="inline" [checked]="configForm().candidateAccountsEnabled === true" ariaLabel="Comptes candidats activés" (checkedChange)="updateConfigForm('candidateAccountsEnabled', $event)"></app-filter-checkbox>
           </div>
         </div>
         <div class="settings__modal-footer">
@@ -624,7 +573,7 @@
   </div>
 
   <!-- ─── INVITATIONS TAB ────────────────── -->
-  <div class="settings__panel" *ngIf="activeTab() === 'invitations' && !isLoading()">
+  <div class="settings__panel settings__panel--invitations" *ngIf="activeTab() === 'invitations' && !isLoading()">
     <div class="settings__panel-header">
       <div>
         <h2 class="settings__panel-title">Codes d'invitation</h2>
@@ -652,14 +601,14 @@
               }
             </div>
           </div>
-          <div class="settings__card-meta">
+          <div class="settings__card-meta settings__card-meta--invitation">
             <span>Code: <code>{{ invitation.code }}</code></span>
             <span>Expire le: {{ invitation.expiredAt }}</span>
             @if (invitation.createdAt) {
               <span>Créé le: {{ invitation.createdAt }}</span>
             }
           </div>
-          <div class="settings__card-actions">
+          <div class="settings__card-actions settings__card-actions--invitation">
             @if (!invitation.isUsed) {
               <button class="btn-resend" (click)="resendInvitation(invitation)" title="Renvoyer l'invitation">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -697,10 +646,10 @@
             </div>
             <div class="form-group">
               <label>Rôle</label>
-              <select [ngModel]="invitationForm().role" (ngModelChange)="updateInvitationForm('role', $event)">
+              <app-filter-select [ngModel]="invitationForm().role" (ngModelChange)="updateInvitationForm('role', $event)" ariaLabel="Sélectionner le rôle de l'invitation">
                 <option value="recruiter">Recruteur</option>
                 <option value="admin">Administrateur</option>
-              </select>
+              </app-filter-select>
             </div>
           </div>
           <div class="settings__modal-footer">

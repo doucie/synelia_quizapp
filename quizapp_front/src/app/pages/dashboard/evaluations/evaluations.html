@@ -136,15 +136,7 @@
                 
                 <!-- Checkbox spéciale pour l'utilisateur connecté -->
                 @if (evaluator.id === currentUserId()) {
-                  <label class="my-finished-checkbox" (click)="$event.stopPropagation()">
-                    <input 
-                      type="checkbox" 
-                      [checked]="evaluator.hasFinished"
-                      (change)="toggleEvaluatorFinished(evaluator.id)"
-                    />
-                    <span class="checkmark"></span>
-                    <span class="checkbox-label">J'ai terminé mon évaluation</span>
-                  </label>
+                  <app-filter-checkbox class="my-finished-checkbox" [inputId]="'evaluation-finished-' + evaluator.id" label="J'ai terminé mon évaluation" variant="inline" [checked]="evaluator.hasFinished === true" ariaLabel="J'ai terminé mon évaluation" (click)="$event.stopPropagation()" (checkedChange)="toggleEvaluatorFinished(evaluator.id)"></app-filter-checkbox>
                 }
               </div>
             }

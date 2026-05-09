@@ -20,8 +20,7 @@
       </div>
       <div class="dropdown-list">
         @for (col of columns; track col.key) {
-          <label class="column-option" [class.priority-1]="col.priority === 1" [class.is-locked]="isLocked(col.key)">
-            <input type="checkbox" [checked]="isVisible(col.key)" [disabled]="isLocked(col.key)" (change)="onToggle(col.key)">
+          <app-filter-checkbox class="column-option" [class.priority-1]="col.priority === 1" [class.is-locked]="isLocked(col.key)" [inputId]="'column-visibility-' + col.key" variant="inline" [checked]="isVisible(col.key)" [disabled]="isLocked(col.key)" [ariaLabel]="col.label" (checkedChange)="onToggle(col.key)">
             <span class="option-label">{{ col.label }}</span>
             @if (isLocked(col.key)) {
               <span class="priority-badge">fixe</span>
@@ -29,7 +28,7 @@
             @if (col.priority === 1) {
               <span class="priority-badge">essentiel</span>
             }
-          </label>
+          </app-filter-checkbox>
         }
       </div>
     </div>

@@ -69,22 +69,7 @@
                 <div class="permissions-list">
                   @for (perm of group.permissions; track perm.key) {
                     <div class="permission-item" [class.saving]="saving()">
-                      <div class="checkbox-container">
-                        <input
-                          type="checkbox"
-                          [id]="'perm-' + perm.key"
-                          class="checkbox-input"
-                          [checked]="isChecked(perm.key)"
-                          (change)="togglePermission(perm.key)"
-                          [disabled]="saving()"
-                        />
-                        <label [for]="'perm-' + perm.key" class="checkbox-label">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                          </svg>
-                          {{ perm.label }}
-                        </label>
-                      </div>
+                      <app-filter-checkbox class="permission-checkbox" [inputId]="'perm-' + perm.key" [label]="perm.label" variant="inline" [checked]="isChecked(perm.key)" [disabled]="saving()" [ariaLabel]="perm.label" (checkedChange)="togglePermission(perm.key)"></app-filter-checkbox>
 
                       <div class="permission-meta">
                         <span class="permission-action">{{ getPermissionActionLabel(perm.key) }}</span>

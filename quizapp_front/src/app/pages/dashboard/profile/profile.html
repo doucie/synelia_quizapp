@@ -243,14 +243,15 @@
         <div class="profile__modal-body">
           <div class="profile__form-group">
             <label class="profile__label" for="targetGroup">Groupe cible</label>
-            <select id="targetGroup" class="profile__input profile__select"
+            <app-filter-select id="targetGroup" class="profile__input profile__select"
               [ngModel]="selectedTargetGroupId()"
+              ariaLabel="Sélectionner un groupe cible"
               (ngModelChange)="selectedTargetGroupId.set($event)">
               <option [ngValue]="null">— Sélectionner un groupe —</option>
               @for (group of getAvailableGroups(); track group.id) {
                 <option [ngValue]="group.id">{{ group.groupName }}</option>
               }
-            </select>
+            </app-filter-select>
             @if (getAvailableGroups().length === 0) {
               <p class="profile__hint">Aucun groupe disponible à rejoindre.</p>
             }

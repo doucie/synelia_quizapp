@@ -31,6 +31,7 @@ import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.dto.transformer.*;
 import tech.synelia.quizapp.utils.enums.FunctionalityEnum;
+import tech.synelia.quizapp.utils.enums.EmailActionType;
 import tech.synelia.quizapp.dao.entity.Interviews;
 import tech.synelia.quizapp.dao.entity.Campaigns;
 import tech.synelia.quizapp.dao.entity.*;
@@ -378,7 +379,7 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 		return response;
 	}
 
-	private List<InterviewsDto> buildInterviewsResponseItems(List<Interviews> interviews, Boolean isSimpleLoading, Locale locale) {
+	private List<InterviewsDto> buildInterviewsResponseItems(List<Interviews> interviews, Boolean isSimpleLoading, Locale locale) throws ParseException {
 		List<InterviewsDto> itemsDto = (Utilities.isTrue(isSimpleLoading))
 				? InterviewsTransformer.INSTANCE.toLiteDtos(interviews)
 				: InterviewsTransformer.INSTANCE.toDtos(interviews);
@@ -806,7 +807,7 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 		String contenu;
 
 		EmailTemplate emailTemplate = platformReadinessService.requireActiveEmailTemplate(
-				"INTERVIEW_INVITE", "interview_convocation", locale);
+				EmailActionType.INTERVIEW_INVITE, locale);
 		Map<String, String> vars = new HashMap<>();
 		vars.put("first_name", application.getCandidateFirstName());
 		vars.put("last_name", application.getCandidateLastName());

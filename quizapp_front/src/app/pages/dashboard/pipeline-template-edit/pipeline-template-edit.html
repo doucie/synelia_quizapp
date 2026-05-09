@@ -119,28 +119,19 @@
 
                 <div class="stage-field stage-field-type">
                   <label class="field-label">Type</label>
-                  <select class="form-input form-input-sm" [ngModel]="stage.stageType"
+                  <app-filter-select class="form-input form-input-sm" [ngModel]="stage.stageType"
+                          ariaLabel="Sélectionner le type de l'étape"
                           (ngModelChange)="updateStageField(i, 'stageType', $event)">
                     @for (type of stageTypes; track type.value) {
                       <option [value]="type.value">{{ type.label }}</option>
                     }
-                  </select>
+                  </app-filter-select>
                 </div>
 
                 <div class="stage-toggles">
-                  <label class="toggle-label" [class.active]="stage.isRequired">
-                    <input type="checkbox" [ngModel]="stage.isRequired"
-                           (ngModelChange)="updateStageField(i, 'isRequired', $event)" />
-                    <span class="toggle-switch"></span>
-                    Obligatoire
-                  </label>
+                  <app-filter-checkbox class="toggle-label" [inputId]="'pipeline-stage-required-' + i" label="Obligatoire" variant="switch" [ngModel]="stage.isRequired" ariaLabel="Étape obligatoire" (ngModelChange)="updateStageField(i, 'isRequired', $event)"></app-filter-checkbox>
 
-                  <label class="toggle-label" [class.active]="stage.isEliminatory">
-                    <input type="checkbox" [ngModel]="stage.isEliminatory"
-                           (ngModelChange)="updateStageField(i, 'isEliminatory', $event)" />
-                    <span class="toggle-switch"></span>
-                    Éliminatoire
-                  </label>
+                  <app-filter-checkbox class="toggle-label" [inputId]="'pipeline-stage-eliminatory-' + i" label="Éliminatoire" variant="switch" [ngModel]="stage.isEliminatory" ariaLabel="Étape éliminatoire" (ngModelChange)="updateStageField(i, 'isEliminatory', $event)"></app-filter-checkbox>
                 </div>
               </div>
 

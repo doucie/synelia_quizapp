@@ -31,22 +31,7 @@
           (input)="onQuickSearch()"
         />
         
-        <!-- Checkbox pour afficher les utilisateurs supprimés -->
-        <div class="checkbox-container">
-          <input 
-            type="checkbox" 
-            id="showDeleted" 
-            class="checkbox-input"
-            [checked]="showDeletedUsers"
-            (click)="toggleDeletedUsers()"
-          />
-          <label for="showDeleted" class="checkbox-label">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            Afficher les utilisateurs supprimés
-          </label>
-        </div>
+        <app-filter-checkbox inputId="showDeleted" label="Afficher les utilisateurs supprimés" [checked]="showDeletedUsers" ariaLabel="Afficher les utilisateurs supprimés" (checkedChange)="toggleDeletedUsers()"></app-filter-checkbox>
       </div>
       <div class="toolbar-right">
         <button class="btn-secondary-pro" (click)="openAdvancedSearch()">
@@ -159,30 +144,30 @@
         <!-- Ligne 4 : Rôle, Statut, Supprimé -->
         <div class="form-group">
           <label>Rôle</label>
-          <select class="form-select" [(ngModel)]="advancedCriteria.role">
+          <app-filter-select [(ngModel)]="advancedCriteria.role">
             <option value="">Tous les rôles</option>
             <option value="super">Super Administrateur</option>
             <option value="admin">Administrateur</option>
             <option value="recruiter">Recruteur</option>
-          </select>
+          </app-filter-select>
         </div>
         
         <div class="form-group">
           <label>Statut</label>
-          <select class="form-select" [(ngModel)]="advancedCriteria.isOnline">
+          <app-filter-select [(ngModel)]="advancedCriteria.isOnline">
             <option [ngValue]="undefined">Tous</option>
             <option [ngValue]="true">En ligne</option>
             <option [ngValue]="false">Hors ligne</option>
-          </select>
+          </app-filter-select>
         </div>
         
         <div class="form-group">
           <label>Supprimé</label>
-          <select class="form-select" [(ngModel)]="advancedCriteria.isDeleted">
+          <app-filter-select [(ngModel)]="advancedCriteria.isDeleted">
             <option [ngValue]="undefined">Tous</option>
             <option [ngValue]="false">Non supprimé</option>
             <option [ngValue]="true">Supprimé</option>
-          </select>
+          </app-filter-select>
         </div>
         
         <!-- Ligne 5 : Date de création -->

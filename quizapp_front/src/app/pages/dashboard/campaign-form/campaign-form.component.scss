@@ -5,69 +5,41 @@
 }
 
 .form-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
   margin-bottom: var(--spacing-xl);
-  
+
   .btn-back {
     display: inline-flex;
     align-items: center;
     gap: var(--spacing-sm);
-    padding: var(--spacing-sm) var(--spacing-md);
+    align-self: flex-start;
+    padding: 0;
     background: none;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text-primary);
-    font-size: var(--font-size-sm);
+    border: none;
+    color: var(--text-secondary);
     cursor: pointer;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
     transition: var(--transition);
-    margin-bottom: var(--spacing-md);
 
     svg {
-      width: 1.25rem;
-      height: 1.25rem;
+      width: 1.125rem;
+      height: 1.125rem;
     }
 
     &:hover {
-      background: var(--surface);
-      border-color: var(--primary);
       color: var(--primary);
     }
   }
 
   .form-title {
-    font-size: var(--font-size-3xl);
+    margin: 0;
+    font-size: clamp(1.75rem, 2vw, 2.25rem);
     font-weight: var(--font-weight-bold);
     color: var(--text-primary);
-    margin: 0;
   }
-}
-
-.loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: var(--spacing-3xl) var(--spacing-xl);
-  gap: var(--spacing-md);
-
-  .spinner {
-    width: 3rem;
-    height: 3rem;
-    border: 3px solid var(--border);
-    border-top-color: var(--primary);
-    border-radius: var(--radius-full);
-    animation: spin 1s linear infinite;
-  }
-
-  p {
-    color: var(--text-secondary);
-    font-size: var(--font-size-sm);
-  }
-}
-
-.campaign-form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xl);
 }
 
 .form-section {
@@ -103,11 +75,11 @@
   }
 
   &.two-cols {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   &.three-cols {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   @media (max-width: 768px) {
@@ -131,10 +103,10 @@
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-medium);
     color: var(--text-primary);
+  }
 
-    .required {
-      color: var(--error);
-    }
+  .required {
+    color: var(--error);
   }
 
   input[type="text"],
@@ -142,7 +114,8 @@
   input[type="date"],
   textarea,
   select {
-    padding: var(--spacing-md) var(--spacing-md);
+    width: 100%;
+    padding: var(--spacing-md);
     background: var(--background);
     border: 1px solid var(--border);
     border-radius: var(--radius);
@@ -158,28 +131,13 @@
 
     &.error {
       border-color: var(--error);
-    }
-
-    &:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
+      box-shadow: 0 0 0 3px rgba(var(--error-rgb), 0.1);
     }
   }
 
   textarea {
     resize: vertical;
-    min-height: 100px;
-    font-family: inherit;
-  }
-
-  select {
-    cursor: pointer;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 0.75rem center;
-    padding-right: 2.25rem;
-    border-radius: var(--radius-lg);
+    min-height: 120px;
   }
 
   .error-message {
@@ -195,64 +153,13 @@
 }
 
 .checkbox-group {
-  .checkbox-label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+
+  .campaign-checkbox {
     display: flex;
-    align-items: flex-start;
-    gap: var(--spacing-md);
-    cursor: pointer;
-    user-select: none;
-
-    input[type="checkbox"] {
-      // position: absolute;
-      opacity: 0;
-      pointer-events: none;
-      display: none;
-
-      &:checked + .checkbox-custom {
-        background: var(--primary);
-        border-color: var(--primary);
-
-        &::after {
-          opacity: 1;
-          transform: scale(1);
-        }
-      }
-
-      &:focus + .checkbox-custom {
-        box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
-      }
-    }
-
-    .checkbox-custom {
-      flex-shrink: 0;
-      width: 1.25rem;
-      height: 1.25rem;
-      border: 2px solid var(--border);
-      border-radius: var(--radius-sm);
-      background: var(--background);
-      position: relative;
-      transition: var(--transition);
-
-      &::after {
-        content: '';
-        position: absolute;
-        top: 2px;
-        left: 5px;
-        width: 5px;
-        height: 10px;
-        border: solid white;
-        border-width: 0 2px 2px 0;
-        transform: rotate(45deg) scale(0);
-        opacity: 0;
-        transition: var(--transition);
-      }
-    }
-
-    .checkbox-text {
-      font-size: var(--font-size-sm);
-      color: var(--text-primary);
-      line-height: 1.5;
-    }
+    align-self: flex-start;
   }
 }
 
@@ -554,7 +461,7 @@
         letter-spacing: 0.5px;
       }
 
-      .admin-checkbox-header {
+      .admin-checkbox {
         display: flex;
         align-items: center;
         gap: var(--spacing-sm);
@@ -648,53 +555,8 @@
       padding-top: var(--spacing-md);
       border-top: 1px solid var(--border);
 
-      .permission-label {
+      .permission-checkbox {
         display: flex;
-        align-items: center;
-        gap: var(--spacing-sm);
-        cursor: pointer;
-        font-size: var(--font-size-sm);
-        color: var(--text-primary);
-
-        input[type="checkbox"] {
-          // position: absolute;
-          opacity: 0;
-          pointer-events: none;
-
-          &:checked + .checkbox-custom {
-            background: var(--primary);
-            border-color: var(--primary);
-
-            &::after {
-              opacity: 1;
-              transform: scale(1);
-            }
-          }
-        }
-
-        .checkbox-custom {
-          width: 1rem;
-          height: 1rem;
-          border: 2px solid var(--border);
-          border-radius: var(--radius-sm);
-          background: var(--surface);
-          position: relative;
-          transition: var(--transition);
-
-          &::after {
-            content: '';
-            position: absolute;
-            top: 1px;
-            left: 4px;
-            width: 4px;
-            height: 8px;
-            border: solid white;
-            border-width: 0 2px 2px 0;
-            transform: rotate(45deg) scale(0);
-            opacity: 0;
-            transition: var(--transition);
-          }
-        }
       }
     }
   }

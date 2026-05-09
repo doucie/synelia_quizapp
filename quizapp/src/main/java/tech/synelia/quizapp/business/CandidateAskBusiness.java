@@ -32,6 +32,7 @@ import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.dto.transformer.*;
 import tech.synelia.quizapp.utils.enums.CandidateAskStatus;
+import tech.synelia.quizapp.utils.enums.EmailActionType;
 import tech.synelia.quizapp.dao.entity.CandidateAsk;
 import tech.synelia.quizapp.dao.entity.Applications;
 import tech.synelia.quizapp.dao.entity.*;
@@ -74,8 +75,6 @@ public class CandidateAskBusiness implements IBasicBusiness<Request<CandidateAsk
 	private SimpleDateFormat dateFormat;
 	private SimpleDateFormat dateTimeFormat;
 
-	private static final String CANDIDATE_ASK_RESULT_ACTION = "CANDIDATE_ASK_RESULT";
-	private static final String CANDIDATE_ASK_RESULT_TEMPLATE_KEY = "candidate_ask_result";
 	private static final String MAIL_SENDER_NAME = "Synelia Recrutement";
 
 	public CandidateAskBusiness() {
@@ -507,8 +506,7 @@ public class CandidateAskBusiness implements IBasicBusiness<Request<CandidateAsk
 			}
 
 			platformReadinessService.requireEmailDeliveryAvailable(
-					CANDIDATE_ASK_RESULT_ACTION,
-					CANDIDATE_ASK_RESULT_TEMPLATE_KEY,
+					EmailActionType.CANDIDATE_ASK_RESULT,
 					locale);
 
 			String action = StringUtils.trimToEmpty(dto.getAction()).toUpperCase(Locale.ROOT);
@@ -650,8 +648,8 @@ public class CandidateAskBusiness implements IBasicBusiness<Request<CandidateAsk
 		}
 
 		EmailTemplate emailTemplate = emailTemplateBusiness.findDefaultByActionTypeOrKey(
-				CANDIDATE_ASK_RESULT_ACTION,
-				CANDIDATE_ASK_RESULT_TEMPLATE_KEY);
+				EmailActionType.CANDIDATE_ASK_RESULT.name(),
+				EmailActionType.CANDIDATE_ASK_RESULT.getTemplateKey());
 		if (emailTemplate == null || Boolean.TRUE.equals(emailTemplate.getIsDeleted()) || !Boolean.TRUE.equals(emailTemplate.getIsActive())) {
 			log.warning("Aucun template actif pour la notification de candidate ask " + candidateAsk.getId());
 			return;

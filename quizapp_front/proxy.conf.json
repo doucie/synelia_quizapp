@@ -65,6 +65,12 @@
     "changeOrigin": true,
     "logLevel": "debug"
   },
+  "/emailTemplatePreset/**": {
+    "target": "http://localhost:8085",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
   "/entityPermission/**": {
     "target": "http://localhost:8085",
     "secure": false,

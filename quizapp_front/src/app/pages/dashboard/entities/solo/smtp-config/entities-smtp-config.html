@@ -18,10 +18,7 @@
     <div class="toolbar">
       <div class="toolbar-left">
         <input type="text" class="search-input" placeholder="Rechercher..." [(ngModel)]="quickSearch" (input)="onQuickSearch()" />
-        <div class="checkbox-container">
-          <input type="checkbox" id="showDeleted" class="checkbox-input" [checked]="showDeletedItems" (click)="toggleDeletedItems()" />
-          <label for="showDeleted" class="checkbox-label"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Afficher les supprimés</label>
-        </div>
+        <app-filter-checkbox inputId="showDeleted" label="Afficher les supprimés" [checked]="showDeletedItems" ariaLabel="Afficher les éléments supprimés" (checkedChange)="toggleDeletedItems()"></app-filter-checkbox>
       </div>
       <div class="toolbar-right">
         <button class="btn-secondary-pro" (click)="openAdvancedSearch()">Filtres avancés</button>
@@ -61,19 +58,19 @@
         </div>
         <div class="form-group">
           <label>Actif</label>
-          <select class="form-select" [(ngModel)]="advancedCriteria.isActive">
+          <app-filter-select [(ngModel)]="advancedCriteria.isActive">
             <option [ngValue]="undefined">Tous</option>
             <option [ngValue]="true">Actif</option>
             <option [ngValue]="false">Inactif</option>
-          </select>
+          </app-filter-select>
         </div>
         <div class="form-group">
           <label>Supprimé</label>
-          <select class="form-select" [(ngModel)]="advancedCriteria.isDeleted">
+          <app-filter-select [(ngModel)]="advancedCriteria.isDeleted">
             <option [ngValue]="undefined">Tous</option>
             <option [ngValue]="false">Non supprimé</option>
             <option [ngValue]="true">Supprimé</option>
-          </select>
+          </app-filter-select>
         </div>
         <div class="form-row-full">
           <div class="form-group-inline">
@@ -243,14 +240,10 @@
           <input type="password" class="form-input" [(ngModel)]="editFormData.password" />
         </div>
         <div class="form-group">
-          <label class="checkbox-label-form">
-            <input type="checkbox" [(ngModel)]="editFormData.starttlsEnable" /> STARTTLS
-          </label>
+          <app-filter-checkbox class="checkbox-label-form" inputId="entities-smtp-config-edit-starttls" label="STARTTLS" variant="inline" [(ngModel)]="editFormData.starttlsEnable" name="editSmtpStarttlsEnable" ariaLabel="STARTTLS activé"></app-filter-checkbox>
         </div>
         <div class="form-group">
-          <label class="checkbox-label-form">
-            <input type="checkbox" [(ngModel)]="editFormData.smtpAuth" /> Auth SMTP
-          </label>
+          <app-filter-checkbox class="checkbox-label-form" inputId="entities-smtp-config-edit-auth" label="Auth SMTP" variant="inline" [(ngModel)]="editFormData.smtpAuth" name="editSmtpAuth" ariaLabel="Authentification SMTP"></app-filter-checkbox>
         </div>
         <div class="form-group">
           <label>Nom expéditeur</label>
@@ -261,9 +254,7 @@
           <input type="text" class="form-input" [(ngModel)]="editFormData.senderEmail" />
         </div>
         <div class="form-group">
-          <label class="checkbox-label-form">
-            <input type="checkbox" [(ngModel)]="editFormData.isActive" /> Actif
-          </label>
+          <app-filter-checkbox class="checkbox-label-form" inputId="entities-smtp-config-edit-active" label="Actif" variant="inline" [(ngModel)]="editFormData.isActive" name="editSmtpIsActive" ariaLabel="Configuration SMTP active"></app-filter-checkbox>
         </div>
       </div>
       <div class="modal-actions">
@@ -295,14 +286,10 @@
           <input type="password" class="form-input" [(ngModel)]="createFormData.password" />
         </div>
         <div class="form-group">
-          <label class="checkbox-label-form">
-            <input type="checkbox" [(ngModel)]="createFormData.starttlsEnable" /> STARTTLS
-          </label>
+          <app-filter-checkbox class="checkbox-label-form" inputId="entities-smtp-config-create-starttls" label="STARTTLS" variant="inline" [(ngModel)]="createFormData.starttlsEnable" name="createSmtpStarttlsEnable" ariaLabel="Nouveau STARTTLS activé"></app-filter-checkbox>
         </div>
         <div class="form-group">
-          <label class="checkbox-label-form">
-            <input type="checkbox" [(ngModel)]="createFormData.smtpAuth" /> Auth SMTP
-          </label>
+          <app-filter-checkbox class="checkbox-label-form" inputId="entities-smtp-config-create-auth" label="Auth SMTP" variant="inline" [(ngModel)]="createFormData.smtpAuth" name="createSmtpAuth" ariaLabel="Nouvelle authentification SMTP"></app-filter-checkbox>
         </div>
         <div class="form-group">
           <label>Nom expéditeur</label>
@@ -313,9 +300,7 @@
           <input type="text" class="form-input" [(ngModel)]="createFormData.senderEmail" />
         </div>
         <div class="form-group">
-          <label class="checkbox-label-form">
-            <input type="checkbox" [(ngModel)]="createFormData.isActive" /> Actif
-          </label>
+          <app-filter-checkbox class="checkbox-label-form" inputId="entities-smtp-config-create-active" label="Actif" variant="inline" [(ngModel)]="createFormData.isActive" name="createSmtpIsActive" ariaLabel="Nouvelle configuration SMTP active"></app-filter-checkbox>
         </div>
       </div>
       <div class="modal-actions">
