@@ -280,7 +280,7 @@
                   [value]="currentBodyTemplate()" 
                   layoutMode="email-document"
                   [forcedColorSchemeMode]="uiThemeMode()"
-                  [variables]="layoutVariables()"
+                  [variableGroups]="rteVariableGroups()"
                   (valueChange)="updateBody($event)">
                 </app-rich-text-editor>
               } @else {
@@ -439,6 +439,49 @@
                     <p class="preview-variable-empty">Ce layout n'expose pas encore de champs éditables. Tout {{ '{' + '{placeholder}' + '}' }} absent de la liste des variables disponibles devient automatiquement un champ éditable (ex : {{ '{' + '{content}' + '}' }}, {{ '{' + '{title}' + '}' }}, {{ '{' + '{heroTitle}' + '}' }}).</p>
                   }
                 }
+
+                <!-- P14: Variables créées management -->
+                <div class="created-vars-section">
+                  <div class="created-vars-section__header">
+                    <span class="created-vars-label">Variables créées</span>
+                    <button type="button" class="var-explorer-trigger" (click)="showCreateVarForm.set(!showCreateVarForm())">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="12" height="12" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                      Créer
+                    </button>
+                  </div>
+
+                  @if (showCreateVarForm()) {
+                    <div class="created-var-form">
+                      <input
+                        type="text"
+                        class="created-var-form__input"
+                        placeholder="ex: heroTitle"
+                        [ngModel]="newVarKey()"
+                        (ngModelChange)="onNewVarKeyChange($event)"
+                        (keydown.enter)="addUserDefinedVariable()">
+                      @if (newVarKeyError()) {
+                        <p class="created-var-form__error">{{ newVarKeyError() }}</p>
+                      }
+                      <div class="created-var-form__actions">
+                        <button type="button" class="created-var-form__btn created-var-form__btn--add" (click)="addUserDefinedVariable()">Ajouter</button>
+                        <button type="button" class="created-var-form__btn" (click)="showCreateVarForm.set(false); newVarKey.set(''); newVarKeyError.set(null)">Annuler</button>
+                      </div>
+                    </div>
+                  }
+
+                  @if (userDefinedVariableKeys().length > 0) {
+                    <div class="created-var-tags">
+                      @for (key of userDefinedVariableKeys(); track key) {
+                        <span class="created-var-tag">
+                          <code>{{ '{{' + key + '}}' }}</code>
+                          <button type="button" class="created-var-tag__remove" (click)="removeUserDefinedVariable(key)" [attr.aria-label]="'Supprimer ' + key">×</button>
+                        </span>
+                      }
+                    </div>
+                  } @else if (!showCreateVarForm()) {
+                    <p class="created-vars-empty">Aucune variable créée. Utilisez "Créer" pour ajouter des variables libres à vos layouts.</p>
+                  }
+                </div>
               </div>
 
             </div>

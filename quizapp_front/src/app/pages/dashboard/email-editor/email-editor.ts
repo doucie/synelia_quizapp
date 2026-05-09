@@ -340,6 +340,13 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
   varExplorerOpen = signal(false);
   varExplorerSearch = signal('');
   varExplorerCopied = signal<string | null>(null);
+
+  // P14: user-defined variable management
+  userDefinedVariableKeys = signal<string[]>([]);
+  showCreateVarForm = signal(false);
+  newVarKey = signal('');
+  newVarKeyError = signal<string | null>(null);
+
   uiThemeMode = signal<'dark' | 'light'>('light');
   sourceEditorScrollTop = signal(0);
   sourceEditorScrollLeft = signal(0);
@@ -398,7 +405,16 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
       `${this.currentSubjectTemplate()}\n${this.currentBodyTemplate()}`
     );
     const businessKeys = new Set(this.templateVariables());
-    return this.getEditableKeys(placeholders, businessKeys)
+    const htmlEditableKeys = this.getEditableKeys(placeholders, businessKeys);
+    const htmlEditableSet = new Set(htmlEditableKeys);
+    // P14: include user-defined keys not yet present in the HTML
+    const extraUserKeys = this.userDefinedVariableKeys().filter(
+      k => !htmlEditableSet.has(k)
+        && !businessKeys.has(k)
+        && !HIDDEN_SYSTEM_VARIABLE_KEYS.has(k)
+        && !GLOBAL_SYSTEM_VARIABLE_KEYS.has(k)
+    );
+    return [...htmlEditableKeys, ...extraUserKeys]
       .map(key => this.getEditableVariableDescriptor(key))
       .sort((a, b) => a.sortOrder - b.sortOrder || a.key.localeCompare(b.key));
   });
@@ -483,21 +499,45 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
     );
   });
 
-  rteVariableGroups = computed<{ label: string; keys: string[]; colorClass?: string }[]>(() => {
-    const editableKeys = this.activeEditableVariableDefinitions().map(d => d.key);
-    const groups: { label: string; keys: string[]; colorClass?: string }[] = [
-      { label: 'Variables de mail', keys: editableKeys, colorClass: 'rte-var-btn--mail' }
-    ];
+  rteVariableGroups = computed<{ label: string; keys: string[]; colorClass?: string; colorVar?: string }[]>(() => {
+    const definitions = this.activeEditableVariableDefinitions();
+    const knownKeys = definitions.filter(d => d.group === 'known').map(d => d.key);
+    const dynamicKeys = definitions.filter(d => d.group === 'dynamic').map(d => d.key);
+    const groups: { label: string; keys: string[]; colorClass?: string; colorVar?: string }[] = [];
+
+    if (knownKeys.length > 0) {
+      groups.push({ label: 'Variables de mail', keys: knownKeys, colorClass: 'rte-var-btn--mail', colorVar: '--primary' });
+    }
+    if (dynamicKeys.length > 0) {
+      groups.push({ label: 'Variables créées', keys: dynamicKeys, colorClass: 'rte-var-btn--created', colorVar: '--secondary' });
+    }
 
     for (const group of this.readonlyVariableGroups()) {
       if (group.key === 'business') {
-        groups.push({ label: 'Variables metier / BDD', keys: group.entries.map(e => e.key), colorClass: 'rte-var-btn--business' });
+        groups.push({ label: 'Variables metier / BDD', keys: group.entries.map(e => e.key), colorClass: 'rte-var-btn--business', colorVar: '--info' });
       } else if (group.key === 'global') {
-        groups.push({ label: 'Variables globales / theme', keys: group.entries.map(e => e.key), colorClass: 'rte-var-btn--global' });
+        groups.push({ label: 'Variables globales / theme', keys: group.entries.map(e => e.key), colorClass: 'rte-var-btn--global', colorVar: '--success' });
       }
     }
 
-    return groups.filter(g => g.keys.length > 0);
+    return groups;
+  });
+
+  // P16: Map from variable key → CSS color variable.
+  // Used by highlightInlinePlaceholders (HTML source) and by the RTE to colorize
+  // inserted/existing {{...}} tokens per variable type.
+  placeholderColorMap = computed<Map<string, string>>(() => {
+    const map = new Map<string, string>();
+    for (const def of this.activeEditableVariableDefinitions()) {
+      map.set(def.key, def.group === 'known' ? '--primary' : '--secondary');
+    }
+    for (const group of this.readonlyVariableGroups()) {
+      const colorVar = group.key === 'global' ? '--success' : '--info';
+      for (const entry of group.entries) {
+        map.set(entry.key, colorVar);
+      }
+    }
+    return map;
   });
 
   sortedPresets = computed(() => {
@@ -656,6 +696,8 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
       isActive: tpl.isActive
     });
     this.editableVariables.set(this.resolveEditableVariables(tpl.editableVariablesJson, tpl.bodyTemplate || ''));
+    this.userDefinedVariableKeys.set(this.extractUserDefinedKeysFromJson(tpl.editableVariablesJson));
+    this.resetCreateVarForm();
     this.syncHtmlEditorValue(tpl.bodyTemplate || '');
     this.updatePreview();
 
@@ -677,6 +719,8 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
       description: preset.description
     });
     this.editableVariables.set(this.prepareEditableVariablesForPreset(preset.htmlStructure || ''));
+    this.userDefinedVariableKeys.set([]);
+    this.resetCreateVarForm();
     this.syncHtmlEditorValue(preset.htmlStructure || '');
     this.updatePreview();
 
@@ -704,6 +748,8 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
       isActive: true
     });
     this.editableVariables.set(getDefaultEditableVariables());
+    this.userDefinedVariableKeys.set([]);
+    this.resetCreateVarForm();
     this.syncHtmlEditorValue('');
     this.updatePreview();
     this.syncDefaultPresetForActionType(actionType, true);
@@ -727,6 +773,8 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
       description: ''
     });
     this.editableVariables.set(getDefaultEditableVariables());
+    this.userDefinedVariableKeys.set([]);
+    this.resetCreateVarForm();
     this.syncHtmlEditorValue('');
     this.updatePreview();
 
@@ -1241,6 +1289,8 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
       isActive: true
     });
     this.editableVariables.set(this.resolveEditableVariables(tpl.editableVariablesJson, tpl.bodyTemplate || ''));
+    this.userDefinedVariableKeys.set(this.extractUserDefinedKeysFromJson(tpl.editableVariablesJson));
+    this.resetCreateVarForm();
     const actionType = this.normalizeActionType(tpl.actionType);
     const queryParams = actionType ? { mode: 'new', actionType } : { mode: 'new' };
     this.router.navigate(['/dashboard/email-editor'], { queryParams });
@@ -1311,6 +1361,30 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
     }
   }
 
+  onNewVarKeyChange(val: string) {
+    this.newVarKey.set(val);
+    this.newVarKeyError.set(null);
+  }
+
+  addUserDefinedVariable() {
+    const key = this.newVarKey().trim();
+    const validation = this.validateUserVariableKey(key);
+    if (!validation.valid) {
+      this.newVarKeyError.set(validation.error || 'Clé invalide');
+      return;
+    }
+    this.userDefinedVariableKeys.update(keys => [...keys, key]);
+    this.newVarKey.set('');
+    this.newVarKeyError.set(null);
+    this.showCreateVarForm.set(false);
+    this.updatePreview();
+  }
+
+  removeUserDefinedVariable(key: string) {
+    this.userDefinedVariableKeys.update(keys => keys.filter(k => k !== key));
+    this.updatePreview();
+  }
+
   private insertIntoSourceTextarea(key: string) {
     const placeholder = `{{${key}}}`;
     const textarea = this.sourceTextareaRef?.nativeElement;
@@ -1325,6 +1399,44 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
     } else {
       this.updateHtmlSource(this.htmlEditorValue() + placeholder);
     }
+  }
+
+  private resetCreateVarForm() {
+    this.showCreateVarForm.set(false);
+    this.newVarKey.set('');
+    this.newVarKeyError.set(null);
+  }
+
+  private validateUserVariableKey(key: string): { valid: boolean; error?: string } {
+    if (!key || key.length < 2) {
+      return { valid: false, error: 'La clé doit contenir au moins 2 caractères' };
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(key)) {
+      return { valid: false, error: 'Caractères autorisés : lettres, chiffres, _ uniquement' };
+    }
+    const allReservedKeys = new Set<string>([
+      ...Object.keys(EDITABLE_VARIABLE_DEFINITIONS),
+      ...this.templateVariables(),
+      ...Array.from(GLOBAL_SYSTEM_VARIABLE_KEYS),
+      ...Array.from(HIDDEN_SYSTEM_VARIABLE_KEYS),
+      ...this.userDefinedVariableKeys()
+    ]);
+    if (allReservedKeys.has(key)) {
+      return { valid: false, error: 'Cette clé est déjà utilisée' };
+    }
+    return { valid: true };
+  }
+
+  private extractUserDefinedKeysFromJson(editableVariablesJson?: string): string[] {
+    if (!editableVariablesJson) return [];
+    try {
+      const parsed = JSON.parse(editableVariablesJson) as Record<string, unknown>;
+      const userKeys = parsed['__userKeys__'];
+      if (Array.isArray(userKeys)) {
+        return userKeys.filter((k): k is string => typeof k === 'string' && /^[a-zA-Z0-9_]{2,}$/.test(k));
+      }
+    } catch { /* ignore */ }
+    return [];
   }
 
   private initializeEditorFromRoute(templates: EmailTemplate[], presets: EmailTemplatePreset[]) {
@@ -1562,6 +1674,17 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
       return '';
     }
 
+    // P15: Extract {{...}} placeholders before char-by-char parsing to prevent
+    // their { and } from being misinterpreted as CSS block delimiters.
+    // Example: `border: 1px solid {{primaryColor}};` would otherwise be exploded
+    // into multiple indented lines as if {{ opened two CSS blocks.
+    const placeholderMap: string[] = [];
+    const tokenized = source.replace(/\{\{[^}]*\}\}/g, (match) => {
+      const token = `__PH_${placeholderMap.length}__`;
+      placeholderMap.push(match);
+      return token;
+    });
+
     const lines: string[] = [];
     let current = '';
     let indentLevel = 0;
@@ -1578,9 +1701,9 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
       lines.push(`${'  '.repeat(Math.max(indentLevel + indentOffset, 0))}${trimmedValue}`);
     };
 
-    for (let index = 0; index < source.length; index += 1) {
-      const character = source[index];
-      const nextCharacter = source[index + 1];
+    for (let index = 0; index < tokenized.length; index += 1) {
+      const character = tokenized[index];
+      const nextCharacter = tokenized[index + 1];
 
       if (activeQuote) {
         current += character;
@@ -1595,16 +1718,16 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
       }
 
       if (character === '/' && nextCharacter === '*') {
-        const commentEndIndex = source.indexOf('*/', index + 2);
+        const commentEndIndex = tokenized.indexOf('*/', index + 2);
         const comment = commentEndIndex >= 0
-          ? source.slice(index, commentEndIndex + 2)
-          : source.slice(index);
+          ? tokenized.slice(index, commentEndIndex + 2)
+          : tokenized.slice(index);
 
         pushLine(current);
         current = '';
         pushLine(comment);
 
-        index = commentEndIndex >= 0 ? commentEndIndex + 1 : source.length;
+        index = commentEndIndex >= 0 ? commentEndIndex + 1 : tokenized.length;
         continue;
       }
 
@@ -1662,7 +1785,14 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
     }
 
     pushLine(current);
-    return lines.join('\n');
+
+    // P15: Restore {{...}} placeholders after formatting.
+    // Done before join so highlightCssLine() receives intact {{key}} tokens.
+    let result = lines.join('\n');
+    placeholderMap.forEach((placeholder, index) => {
+      result = result.replaceAll(`__PH_${index}__`, placeholder);
+    });
+    return result;
   }
 
   private highlightSourceCode(source: string): string {
@@ -1820,8 +1950,28 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
     ].join('');
   }
 
+  // P16: Maps a CSS color variable name to the matching token-placeholder CSS class modifier.
+  // CSS classes are used instead of inline color-mix() styles to avoid Angular's [innerHTML]
+  // sanitizer stripping color-mix() values from inline style attributes.
+  private colorVarToPlaceholderClass(colorVar: string): string {
+    const classMap: Record<string, string> = {
+      '--primary':      'primary',
+      '--secondary':    'secondary',
+      '--info':         'info',
+      '--success':      'success',
+      '--text-tertiary': 'tertiary',
+    };
+    return classMap[colorVar] ?? 'tertiary';
+  }
+
   private highlightInlinePlaceholders(value: string): string {
-    return value.replace(/(\{\{\s*[^}]+\s*\}\})/g, `${this.openHighlightedToken('token-placeholder')}$1</span>`);
+    const colorMap = this.placeholderColorMap();
+    return value.replace(/\{\{\s*([^}]+?)\s*\}\}/g, (match, rawKey) => {
+      const key = rawKey.trim();
+      const colorVar = colorMap.get(key) ?? '--text-tertiary';
+      const modifier = this.colorVarToPlaceholderClass(colorVar);
+      return `<span class="token-placeholder token-placeholder--${modifier}">${match}</span>`;
+    });
   }
 
   private wrapHighlightedToken(tokenClass: string, content: string): string {
@@ -2096,14 +2246,20 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
 
   private serializeEditableVariables(): string | undefined {
     const activeDefinitions = this.activeEditableVariableDefinitions();
-    if (activeDefinitions.length === 0) {
+    const userKeys = this.userDefinedVariableKeys();
+
+    if (activeDefinitions.length === 0 && userKeys.length === 0) {
       return undefined;
     }
 
-    const payload = activeDefinitions.reduce((result, definition) => {
+    const payload: Record<string, unknown> = activeDefinitions.reduce((result, definition) => {
       result[definition.key] = this.getEditableVariableValue(definition.key);
       return result;
-    }, {} as Record<string, string>);
+    }, {} as Record<string, unknown>);
+
+    if (userKeys.length > 0) {
+      payload['__userKeys__'] = userKeys;
+    }
 
     return JSON.stringify(payload);
   }

@@ -13,7 +13,7 @@ export class RichTextEditorComponent implements AfterViewInit, OnChanges {
   @Input() value = '';
   @Input() placeholder = '';
   @Input() variables: string[] = [];
-  @Input() variableGroups: { label: string; keys: string[]; colorClass?: string }[] = [];
+  @Input() variableGroups: { label: string; keys: string[]; colorClass?: string; colorVar?: string }[] = [];
   @Input() layoutMode: 'standard' | 'email-document' = 'standard';
   @Input() forcedColorSchemeMode: 'dark' | 'light' | null = null;
   @Output() valueChange = new EventEmitter<string>();
@@ -28,7 +28,7 @@ export class RichTextEditorComponent implements AfterViewInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if ((changes['value'] || changes['layoutMode'] || changes['forcedColorSchemeMode']) && !this.internalChange && this.editorRef) {
+    if ((changes['value'] || changes['layoutMode'] || changes['forcedColorSchemeMode'] || changes['variableGroups']) && !this.internalChange && this.editorRef) {
       this.syncEditorContent(this.value || '');
     }
     this.internalChange = false;
@@ -36,7 +36,11 @@ export class RichTextEditorComponent implements AfterViewInit, OnChanges {
 
   onInput() {
     this.internalChange = true;
-    this.valueChange.emit(this.getEmittedValue(this.editorRef.nativeElement.innerHTML));
+    const rawHtml = this.editorRef.nativeElement.innerHTML;
+    // Strip rte-var spans before emitting so the stored template contains only clean {{key}}
+    // placeholders, not presentation spans that the backend email renderer should not receive.
+    const cleanHtml = rawHtml.replace(/<span\b[^>]*\brte-var\b[^>]*>\{\{([^}]+)\}\}<\/span>/g, '{{$1}}');
+    this.valueChange.emit(this.getEmittedValue(cleanHtml));
   }
 
   exec(cmd: string, value?: string) {
@@ -55,15 +59,61 @@ export class RichTextEditorComponent implements AfterViewInit, OnChanges {
     this.exec('foreColor', val);
   }
 
-  insertVariable(v: string) {
+  insertVariable(v: string, colorVar?: string) {
     this.editorRef.nativeElement.focus();
-    document.execCommand('insertHTML', false, `<span class="rte-var">{{${v}}}</span>&nbsp;`);
+    const style = colorVar ? ` style="color: var(${colorVar});"` : '';
+    // contenteditable="false" makes the span an atomic chip — the cursor cannot enter it,
+    // so typing/deleting next to a variable works correctly at the span boundary.
+    document.execCommand('insertHTML', false, `<span class="rte-var" contenteditable="false"${style}>{{${v}}}</span>&nbsp;`);
     this.onInput();
   }
 
   private syncEditorContent(value: string) {
     const editorValue = this.getEditorValue(value);
-    this.editorRef.nativeElement.innerHTML = editorValue;
+    const colorized = this.colorizeVariablesInHtml(editorValue);
+    this.editorRef.nativeElement.innerHTML = colorized;
+  }
+
+  // P16: Build a key → CSS color variable map from variableGroups' colorVar fields.
+  private buildVariableColorMap(): Map<string, string> {
+    const map = new Map<string, string>();
+    for (const group of this.variableGroups) {
+      if (group.colorVar) {
+        for (const key of group.keys) {
+          map.set(key, group.colorVar);
+        }
+      }
+    }
+    return map;
+  }
+
+  // P16: Colorize {{key}} placeholders in HTML content by wrapping them in
+  // colored rte-var spans matching the rte-var-btn badge style (color + background + border).
+  // Strips existing rte-var spans first to prevent double-wrapping on re-sync.
+  // Only processes {{key}} outside HTML tag attributes.
+  private colorizeVariablesInHtml(html: string): string {
+    const colorMap = this.buildVariableColorMap();
+    if (!colorMap.size) return html;
+    // Normalize: strip existing rte-var wrappers so we can re-apply colors
+    const normalized = html.replace(/<span\b[^>]*\brte-var\b[^>]*>(\{\{[^}]+\}\})<\/span>/g, '$1');
+    // Re-wrap {{key}} tokens in text content (not inside HTML tag attributes)
+    return normalized.replace(/(<[^>]*>)|(\{\{([^}]+)\}\})/g, (match, tag, _placeholder, key) => {
+      if (tag) return tag;
+      const trimmedKey = (key ?? '').trim();
+      const colorVar = colorMap.get(trimmedKey);
+      if (!colorVar) return match;
+      const style = [
+        `color: var(${colorVar})`,
+        `background: color-mix(in srgb, var(${colorVar}) 10%, transparent)`,
+        `border: 1px solid color-mix(in srgb, var(${colorVar}) 28%, transparent)`,
+        'border-radius: 3px',
+        'padding: 0 2px',
+        'font-family: monospace',
+        'font-size: 0.85em',
+        'white-space: nowrap'
+      ].join('; ');
+      return `<span class="rte-var" contenteditable="false" style="${style}">{{${trimmedKey}}}</span>`;
+    });
   }
 
   private getEditorValue(value: string): string {

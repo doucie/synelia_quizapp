@@ -80,7 +80,7 @@
           [class]="'rte-var-btn ' + (group.colorClass || '')"
           *ngFor="let v of group.keys"
           (mousedown)="$event.preventDefault()"
-          (click)="insertVariable(v)">
+          (click)="insertVariable(v, group.colorVar)">
           {{ '{' + '{' + v + '}' + '}' }}
         </button>
       </div>

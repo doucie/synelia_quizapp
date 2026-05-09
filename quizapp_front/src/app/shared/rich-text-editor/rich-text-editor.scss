@@ -197,4 +197,15 @@
       border-color: var(--success);
     }
   }
+
+  &--created {
+    border-color: color-mix(in srgb, var(--secondary) 30%, transparent);
+    background: color-mix(in srgb, var(--secondary) 10%, transparent);
+    color: var(--secondary);
+
+    &:hover {
+      background: color-mix(in srgb, var(--secondary) 20%, transparent);
+      border-color: var(--secondary);
+    }
+  }
 }
