@@ -30,7 +30,7 @@ public class EmailTemplatePreset implements Serializable, Cloneable {
     @Column(name = "name", nullable = false, length = 100)
     private String name;
 
-    @Column(name = "category", nullable = false, columnDefinition = "ENUM('MINIMAL','MODERN','CORPORATE','COLORFUL','DARK')")
+    @Column(name = "category", nullable = false, columnDefinition = "ENUM('MINIMAL','MODERN','CORPORATE','COLORFUL','DARK','APPLICATION_VERIFICATION','PASSWORD_RESET','INVITATION_CODE','CANDIDATE_ASK_RESULT','PRE_SCREEN_DECISION','FINAL_DECISION','INTERVIEW_INVITE','QUIZ_INVITE','WELCOME','GENERIC')")
     private String category;
 
     @Column(name = "html_structure", nullable = false, columnDefinition = "TEXT")

@@ -1,4 +1,4 @@
-import { Component, signal, computed, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+import { Component, signal, computed, effect, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -16,6 +16,7 @@ import { ThemeService as BrandingThemeService } from '../../../core/services/the
 import { ThemeService as UiThemeService } from '../../../core/services/theme';
 import { FilterCheckboxComponent } from '../../../shared/filter-checkbox/filter-checkbox';
 import { RichTextEditorComponent } from '../../../shared/rich-text-editor/rich-text-editor';
+import { VariableTokenInputComponent } from '../../../shared/variable-token-input/variable-token-input';
 
 interface EmailActionEditorConfig {
   templateKey: string;
@@ -29,7 +30,17 @@ interface EmailActionEditorConfig {
 type EmailEditorMode = 'wysiwyg' | 'html';
 type EmailEditorTarget = 'template' | 'preset';
 type EditableVariableKey = 'content' | 'subtitle' | 'title' | 'buttonText' | 'buttonLink';
-type EmailPresetCategory = 'MINIMAL' | 'MODERN' | 'CORPORATE' | 'COLORFUL' | 'DARK';
+type EmailPresetCategory =
+  | 'APPLICATION_VERIFICATION'
+  | 'PASSWORD_RESET'
+  | 'INVITATION_CODE'
+  | 'CANDIDATE_ASK_RESULT'
+  | 'PRE_SCREEN_DECISION'
+  | 'FINAL_DECISION'
+  | 'INTERVIEW_INVITE'
+  | 'QUIZ_INVITE'
+  | 'WELCOME'
+  | 'GENERIC';
 
 interface EditableVariableDescriptor {
   key: string;
@@ -193,7 +204,7 @@ const EMAIL_ACTION_EDITOR_CONFIGS: Record<EmailActionType, EmailActionEditorConf
     previewVariables: {
       tracking_code: 'AB12CD'
     },
-    recommendedPresetCategories: ['MODERN', 'MINIMAL']
+    recommendedPresetCategories: ['APPLICATION_VERIFICATION', 'GENERIC']
   },
   PASSWORD_RESET: {
     templateKey: 'password_reset',
@@ -201,7 +212,7 @@ const EMAIL_ACTION_EDITOR_CONFIGS: Record<EmailActionType, EmailActionEditorConf
     description: 'Email contenant les informations de reinitialisation du mot de passe.',
     availableVariables: ['first_name', 'last_name', 'email', 'new_password', 'app_link', 'companyName', 'currentYear'],
     previewVariables: {},
-    recommendedPresetCategories: ['CORPORATE', 'MINIMAL']
+    recommendedPresetCategories: ['PASSWORD_RESET', 'GENERIC']
   },
   INVITATION_CODE: {
     templateKey: 'invitation_code',
@@ -209,7 +220,7 @@ const EMAIL_ACTION_EDITOR_CONFIGS: Record<EmailActionType, EmailActionEditorConf
     description: 'Invitation a creer un compte via un code ou un lien d\'inscription.',
     availableVariables: ['email', 'role', 'code', 'registration_link', 'expired_at', 'app_link', 'companyName', 'currentYear'],
     previewVariables: {},
-    recommendedPresetCategories: ['MODERN', 'COLORFUL']
+    recommendedPresetCategories: ['INVITATION_CODE', 'GENERIC']
   },
   CANDIDATE_ASK_RESULT: {
     templateKey: 'candidate_ask_result',
@@ -223,7 +234,7 @@ const EMAIL_ACTION_EDITOR_CONFIGS: Record<EmailActionType, EmailActionEditorConf
       decision_reason_block: '',
       verification_notice_block: '<p>Un nouvel email de verification vient de vous etre envoye a votre nouvelle adresse afin de confirmer ce changement.</p>'
     },
-    recommendedPresetCategories: ['CORPORATE', 'MODERN']
+    recommendedPresetCategories: ['CANDIDATE_ASK_RESULT', 'GENERIC']
   },
   PRE_SCREEN_DECISION: {
     templateKey: 'pre_screen_decision',
@@ -238,7 +249,7 @@ const EMAIL_ACTION_EDITOR_CONFIGS: Record<EmailActionType, EmailActionEditorConf
       candidate_email: 'jean.dupont@example.com',
       application_status: 'PRE_SCREEN_ACCEPTED'
     },
-    recommendedPresetCategories: ['MODERN', 'CORPORATE']
+    recommendedPresetCategories: ['PRE_SCREEN_DECISION', 'GENERIC']
   },
   FINAL_DECISION: {
     templateKey: 'final_decision',
@@ -253,7 +264,7 @@ const EMAIL_ACTION_EDITOR_CONFIGS: Record<EmailActionType, EmailActionEditorConf
       candidate_email: 'jean.dupont@example.com',
       application_status: 'FINAL_ACCEPTED'
     },
-    recommendedPresetCategories: ['MODERN', 'CORPORATE']
+    recommendedPresetCategories: ['FINAL_DECISION', 'GENERIC']
   },
   INTERVIEW_INVITE: {
     templateKey: 'interview_convocation',
@@ -261,7 +272,7 @@ const EMAIL_ACTION_EDITOR_CONFIGS: Record<EmailActionType, EmailActionEditorConf
     description: 'Invitation a un entretien avec date, type, lieu ou lien de connexion.',
     availableVariables: ['first_name', 'last_name', 'campaign_title', 'interview_date', 'interview_type_text', 'location_or_link', 'additional_note', 'companyName', 'currentYear'],
     previewVariables: {},
-    recommendedPresetCategories: ['CORPORATE', 'MODERN']
+    recommendedPresetCategories: ['INTERVIEW_INVITE', 'GENERIC']
   },
   QUIZ_INVITE: {
     templateKey: 'quiz_invitation',
@@ -269,7 +280,7 @@ const EMAIL_ACTION_EDITOR_CONFIGS: Record<EmailActionType, EmailActionEditorConf
     description: 'Invitation a completer un quiz avec delai et lien d\'acces.',
     availableVariables: ['first_name', 'last_name', 'campaign_title', 'quiz_link', 'quiz_deadline', 'quiz_duration', 'companyName', 'currentYear'],
     previewVariables: {},
-    recommendedPresetCategories: ['MODERN', 'COLORFUL']
+    recommendedPresetCategories: ['QUIZ_INVITE', 'GENERIC']
   },
   WELCOME: {
     templateKey: 'welcome_email',
@@ -277,14 +288,21 @@ const EMAIL_ACTION_EDITOR_CONFIGS: Record<EmailActionType, EmailActionEditorConf
     description: 'Email de bienvenue ou de premier contact apres validation du dossier.',
     availableVariables: ['first_name', 'last_name', 'companyName', 'app_link', 'currentYear'],
     previewVariables: {},
-    recommendedPresetCategories: ['COLORFUL', 'MODERN']
+    recommendedPresetCategories: ['WELCOME', 'GENERIC']
   }
 };
+
+// P20: union of all business/available variables across every action type — used to avoid
+// mis-classifying known business vars as "user-created" when no actionType is selected yet.
+const ALL_BUSINESS_VARIABLE_KEYS = new Set<string>([
+  ...DEFAULT_TEMPLATE_VARIABLES,
+  ...Object.values(EMAIL_ACTION_EDITOR_CONFIGS).flatMap(c => c.availableVariables)
+]);
 
 @Component({
   selector: 'app-email-editor',
   standalone: true,
-  imports: [CommonModule, FilterCheckboxComponent, FormsModule, RichTextEditorComponent],
+  imports: [CommonModule, FilterCheckboxComponent, FormsModule, RichTextEditorComponent, VariableTokenInputComponent],
   templateUrl: './email-editor.html',
   styleUrls: ['./email-editor.scss']
 })
@@ -308,7 +326,18 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
   editorMode = signal<EmailEditorMode>('wysiwyg');
   editableVariables = signal<Record<string, string>>(getDefaultEditableVariables());
   listSearchTerm = signal('');
-  presetCategories: EmailPresetCategory[] = ['MINIMAL', 'MODERN', 'CORPORATE', 'COLORFUL', 'DARK'];
+  presetCategories: EmailPresetCategory[] = [
+    'APPLICATION_VERIFICATION',
+    'PASSWORD_RESET',
+    'INVITATION_CODE',
+    'CANDIDATE_ASK_RESULT',
+    'PRE_SCREEN_DECISION',
+    'FINAL_DECISION',
+    'INTERVIEW_INVITE',
+    'QUIZ_INVITE',
+    'WELCOME',
+    'GENERIC'
+  ];
 
   // Form
   form = signal<Partial<EmailTemplate>>({
@@ -343,6 +372,21 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
 
   // P14: user-defined variable management
   userDefinedVariableKeys = signal<string[]>([]);
+  // P20: auto-detected unknown {{key}} patterns found in editable variable values
+  p20AutoDetectedKeys = signal<string[]>([]);
+  // P20: keys the user has explicitly dismissed (so they don't re-appear after edits)
+  ignoredP20Keys = signal<string[]>([]);
+  // P20: auto-detected keys still visible (not ignored by user)
+  visibleP20Keys = computed(() => {
+    const ignored = new Set(this.ignoredP20Keys());
+    return this.p20AutoDetectedKeys().filter(k => !ignored.has(k));
+  });
+  // All 'dynamic' (custom/unknown) editable keys — single source of truth for the sidebar panel
+  dynamicEditableKeys = computed(() =>
+    this.activeEditableVariableDefinitions()
+      .filter(d => d.group === 'dynamic')
+      .map(d => d.key)
+  );
   showCreateVarForm = signal(false);
   newVarKey = signal('');
   newVarKeyError = signal<string | null>(null);
@@ -388,11 +432,11 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
   suggestedVariables = computed(() => this.selectedActionConfig()?.availableVariables ?? DEFAULT_TEMPLATE_VARIABLES);
 
   templateVariables = computed(() => {
-    const vars = this.isPresetMode()
-      ? DEFAULT_TEMPLATE_VARIABLES.join(',')
-      : (this.form().availableVariables || this.suggestedVariables().join(','));
-
-    return vars.split(',').map(v => v.trim()).filter(v => v.length > 0);
+    if (this.isPresetMode()) {
+      return DEFAULT_TEMPLATE_VARIABLES;
+    }
+    // Always derived from actionType config — the DB value is ignored for variable classification
+    return this.suggestedVariables();
   });
 
   layoutVariables = computed(() => {
@@ -408,7 +452,10 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
     const htmlEditableKeys = this.getEditableKeys(placeholders, businessKeys);
     const htmlEditableSet = new Set(htmlEditableKeys);
     // P14: include user-defined keys not yet present in the HTML
-    const extraUserKeys = this.userDefinedVariableKeys().filter(
+    const extraUserKeys = Array.from(new Set([
+      ...this.userDefinedVariableKeys(),
+      ...this.p20AutoDetectedKeys()
+    ])).filter(
       k => !htmlEditableSet.has(k)
         && !businessKeys.has(k)
         && !HIDDEN_SYSTEM_VARIABLE_KEYS.has(k)
@@ -523,6 +570,13 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
     return groups;
   });
 
+  // Same as rteVariableGroups but without the 'Variables de mail' group.
+  // Used in the 'content' (richtext) editable field : mail variables (title, subtitle…)
+  // are the parent fields and should not be inserted inside their own content.
+  rteContentVariableGroups = computed<{ label: string; keys: string[]; colorClass?: string; colorVar?: string }[]>(() =>
+    this.rteVariableGroups().filter(g => g.label !== 'Variables de mail')
+  );
+
   // P16: Map from variable key → CSS color variable.
   // Used by highlightInlinePlaceholders (HTML source) and by the RTE to colorize
   // inserted/existing {{...}} tokens per variable type.
@@ -627,7 +681,39 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
     public themeService: BrandingThemeService,
     private uiThemeService: UiThemeService,
     private sanitizer: DomSanitizer
-  ) {}
+  ) {
+    // P20: auto-detect unknown {{key}} patterns typed inside editable variable values
+    effect(() => {
+      const vars = this.editableVariables();
+      // Exclude ALL known business vars across every action type (not just the currently selected one)
+      // so that variables like {{first_name}} or {{role}} are never mis-classified before an
+      // actionType is selected, and the list fully recomputes when actionType changes.
+      const excludedKeys = new Set<string>([
+        ...EDITABLE_VARIABLE_KEYS,
+        ...Array.from(GLOBAL_SYSTEM_VARIABLE_KEYS),
+        ...Array.from(HIDDEN_SYSTEM_VARIABLE_KEYS),
+        ...Array.from(ALL_BUSINESS_VARIABLE_KEYS),
+        ...this.templateVariables(),
+        ...this.userDefinedVariableKeys(),
+        ...this.ignoredP20Keys()
+      ]);
+
+      const detected = new Set<string>();
+      for (const value of Object.values(vars)) {
+        if (!value) continue;
+        const plain = value.replace(/<[^>]+>/g, ' ');
+        for (const match of plain.matchAll(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g)) {
+          if (match[1] && !excludedKeys.has(match[1])) {
+            detected.add(match[1]);
+          }
+        }
+      }
+
+      // Use set() — full recompute — so that selecting/changing actionType immediately
+      // removes keys that are now recognized as business variables.
+      this.p20AutoDetectedKeys.set(Array.from(detected));
+    });
+  }
 
   ngOnInit() {
     this.initializeEditorTarget();
@@ -690,13 +776,19 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
       bodyTemplate: tpl.bodyTemplate,
       editableVariablesJson: tpl.editableVariablesJson,
       description: tpl.description,
-      availableVariables: tpl.availableVariables,
+      // Recompute from actionType config — ignore the stored DB value
+      availableVariables: (() => {
+        const at = this.normalizeActionType(tpl.actionType);
+        const cfg = at ? EMAIL_ACTION_EDITOR_CONFIGS[at] : null;
+        return (cfg?.availableVariables ?? DEFAULT_TEMPLATE_VARIABLES).join(',');
+      })(),
       actionType: tpl.actionType || '',
       presetId: tpl.presetId,
       isActive: tpl.isActive
     });
     this.editableVariables.set(this.resolveEditableVariables(tpl.editableVariablesJson, tpl.bodyTemplate || ''));
     this.userDefinedVariableKeys.set(this.extractUserDefinedKeysFromJson(tpl.editableVariablesJson));
+    this.ignoredP20Keys.set([]);
     this.resetCreateVarForm();
     this.syncHtmlEditorValue(tpl.bodyTemplate || '');
     this.updatePreview();
@@ -720,6 +812,7 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
     });
     this.editableVariables.set(this.prepareEditableVariablesForPreset(preset.htmlStructure || ''));
     this.userDefinedVariableKeys.set([]);
+    this.ignoredP20Keys.set([]);
     this.resetCreateVarForm();
     this.syncHtmlEditorValue(preset.htmlStructure || '');
     this.updatePreview();
@@ -749,6 +842,7 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
     });
     this.editableVariables.set(getDefaultEditableVariables());
     this.userDefinedVariableKeys.set([]);
+    this.ignoredP20Keys.set([]);
     this.resetCreateVarForm();
     this.syncHtmlEditorValue('');
     this.updatePreview();
@@ -774,6 +868,7 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
     });
     this.editableVariables.set(getDefaultEditableVariables());
     this.userDefinedVariableKeys.set([]);
+    this.ignoredP20Keys.set([]);
     this.resetCreateVarForm();
     this.syncHtmlEditorValue('');
     this.updatePreview();
@@ -950,7 +1045,24 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
   }
 
   buildPresetSelectLabel(preset: EmailTemplatePreset): string {
-    return `${this.getPresetIcon(preset.category)} ${preset.name} - ${preset.category}`;
+    const label = this.getPresetCategoryLabel(preset.category);
+    return `${preset.name} — ${label}`;
+  }
+
+  getPresetCategoryLabel(category: string): string {
+    switch (category) {
+      case 'APPLICATION_VERIFICATION': return 'Vérification email';
+      case 'PASSWORD_RESET':           return 'Réinitialisation';
+      case 'INVITATION_CODE':          return 'Invitation';
+      case 'CANDIDATE_ASK_RESULT':     return 'Demande candidat';
+      case 'PRE_SCREEN_DECISION':      return 'Présélection';
+      case 'FINAL_DECISION':           return 'Décision finale';
+      case 'INTERVIEW_INVITE':         return 'Convocation entretien';
+      case 'QUIZ_INVITE':              return 'Invitation quiz';
+      case 'WELCOME':                  return 'Bienvenue';
+      case 'GENERIC':                  return 'Générique';
+      default:                         return category;
+    }
   }
 
   updateField(field: keyof EmailTemplate, value: any) {
@@ -1006,8 +1118,10 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
         : current.availableVariables
     });
 
+    this.ignoredP20Keys.set([]);
     this.updatePreview();
-      this.syncDefaultPresetForActionType(nextActionType, this.canReplaceTemplateBodyFromPreset());
+    // For new templates, always apply the preset for the new actionType (even if body was manually typed)
+    this.syncDefaultPresetForActionType(nextActionType, this.isNewTemplate() || this.canReplaceTemplateBodyFromPreset());
 
     if (this.isNewTemplate()) {
       const queryParams = nextActionType ? { mode: 'new', actionType: nextActionType } : { mode: 'new' };
@@ -1322,12 +1436,17 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
 
   getPresetIcon(category: string): string {
     switch (category) {
-      case 'MINIMAL': return '○';
-      case 'MODERN': return '◆';
-      case 'CORPORATE': return '■';
-      case 'COLORFUL': return '★';
-      case 'DARK': return '●';
-      default: return '◇';
+      case 'APPLICATION_VERIFICATION': return 'VER';
+      case 'PASSWORD_RESET':           return 'PWD';
+      case 'INVITATION_CODE':          return 'INV';
+      case 'CANDIDATE_ASK_RESULT':     return 'ASK';
+      case 'PRE_SCREEN_DECISION':      return 'PRE';
+      case 'FINAL_DECISION':           return 'FIN';
+      case 'INTERVIEW_INVITE':         return 'INT';
+      case 'QUIZ_INVITE':              return 'QUI';
+      case 'WELCOME':                  return 'WEL';
+      case 'GENERIC':                  return 'GEN';
+      default:                         return '—';
     }
   }
 
@@ -1382,6 +1501,11 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
 
   removeUserDefinedVariable(key: string) {
     this.userDefinedVariableKeys.update(keys => keys.filter(k => k !== key));
+    this.updatePreview();
+  }
+
+  dismissAutoDetectedKey(key: string) {
+    this.ignoredP20Keys.update(keys => [...keys, key]);
     this.updatePreview();
   }
 
@@ -2277,8 +2401,13 @@ export class EmailEditorComponent implements OnInit, OnDestroy {
 
   private renderPreviewTemplate(template: string, variables: Record<string, string>): string {
     let result = template;
-    for (const [key, value] of Object.entries(variables)) {
-      result = result.replace(new RegExp(`\\{\\{${this.escapeRegExp(key)}\\}\\}`, 'g'), value);
+    // Two passes: the first expands editable var placeholders (title, subtitle, content…)
+    // The second resolves any system/business vars that appear inside those expanded values
+    // (e.g. {{companyName}} inside the "title" editable field value).
+    for (let pass = 0; pass < 2; pass++) {
+      for (const [key, value] of Object.entries(variables)) {
+        result = result.replace(new RegExp(`\\{\\{${this.escapeRegExp(key)}\\}\\}`, 'g'), value);
+      }
     }
 
     return result;

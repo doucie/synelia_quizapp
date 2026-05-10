@@ -1,31 +1,50 @@
 package tech.synelia.quizapp.business;
 
-import lombok.extern.java.Log;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
-
-import org.thymeleaf.context.Context;
-
-import tech.synelia.quizapp.utils.*;
-import tech.synelia.quizapp.utils.dto.*;
-import tech.synelia.quizapp.utils.exception.*;
+import lombok.extern.java.Log;
+import tech.synelia.quizapp.dao.entity.EmailTemplate;
+import tech.synelia.quizapp.dao.entity.InvitationCode;
+import tech.synelia.quizapp.dao.repository.InvitationCodeRepository;
+import tech.synelia.quizapp.dao.repository.UserRepository;
+import tech.synelia.quizapp.utils.ExceptionUtils;
+import tech.synelia.quizapp.utils.FunctionalError;
+import tech.synelia.quizapp.utils.HostingUtils;
+import tech.synelia.quizapp.utils.ParamsUtils;
+import tech.synelia.quizapp.utils.Status;
+import tech.synelia.quizapp.utils.StatusCode;
+import tech.synelia.quizapp.utils.StatusMessage;
+import tech.synelia.quizapp.utils.TechnicalError;
+import tech.synelia.quizapp.utils.Utilities;
+import tech.synelia.quizapp.utils.Validate;
 import tech.synelia.quizapp.utils.contract.IBasicBusiness;
 import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
-import tech.synelia.quizapp.utils.dto.transformer.*;
-import tech.synelia.quizapp.dao.entity.InvitationCode;
-import tech.synelia.quizapp.dao.entity.EmailTemplate;
-import tech.synelia.quizapp.dao.repository.*;
+import tech.synelia.quizapp.utils.dto.InvitationCodeDto;
+import tech.synelia.quizapp.utils.dto.transformer.InvitationCodeTransformer;
 import tech.synelia.quizapp.utils.enums.EmailActionType;
+import tech.synelia.quizapp.utils.exception.EntityNotFoundException;
+import tech.synelia.quizapp.utils.exception.InternalErrorException;
+import tech.synelia.quizapp.utils.exception.InvalidEntityException;
 
 @Log
 @Component
@@ -479,6 +498,7 @@ public class InvitationCodeBusiness implements IBasicBusiness<Request<Invitation
         subject = emailTemplateBusiness.renderSubjectTemplate(emailTemplate, vars);
         contenu = emailTemplateBusiness.renderBodyTemplate(emailTemplate, vars);
 
+        /*
         String body = "";
         Context context = new Context();
         String template = "blank";
@@ -486,8 +506,9 @@ public class InvitationCodeBusiness implements IBasicBusiness<Request<Invitation
         context.setVariable("entete", ENTETE);
         context.setVariable("titre", TITRE);
         context.setVariable("appLink", appLink);
+        */
 
-        Response<?> responseEmail = hostingUtils.sendEmail(from, toRecipients, subject, body, null, context, template, locale);
+        Response<?> responseEmail = hostingUtils.sendEmail(from, toRecipients, subject, contenu, null, null, null, locale);
         if (responseEmail.isHasError()) {
             throw new InvalidEntityException(functionalError.REQUEST_FAIL(
                     "Envoi de l'invitation impossible pour " + invitation.getEmail(),

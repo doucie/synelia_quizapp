@@ -94,7 +94,7 @@
                     <span class="tpl-key">{{ preset.name }}</span>
                     <span class="tpl-action">{{ preset.category }}</span>
                   </div>
-                  <span class="tpl-status active">{{ getPresetIcon(preset.category) }}</span>
+                  <span class="tpl-status active">{{ getPresetCategoryLabel(preset.category) }}</span>
                 </div>
               }
 
@@ -200,14 +200,24 @@
               <!-- Subject -->
               <div class="form-group">
                 <label>Sujet *</label>
-                <input type="text" [ngModel]="form().subjectTemplate" (ngModelChange)="updateField('subjectTemplate', $event)" placeholder="ex: Bienvenue chez {companyName}">
+                <app-variable-token-input
+                  [value]="form().subjectTemplate ?? ''"
+                  placeholder="ex: Bienvenue chez {{ '{' + '{companyName}' + '}' }}"
+                  [colorMap]="placeholderColorMap()"
+                  (valueChange)="updateField('subjectTemplate', $event)">
+                </app-variable-token-input>
                 <p class="field-help">Texte envoye comme objet de l'email au destinataire.</p>
               </div>
 
               <!-- Description -->
               <div class="form-group">
                 <label>Description</label>
-                <input type="text" [ngModel]="form().description" (ngModelChange)="updateField('description', $event)" placeholder="Description interne...">
+                <app-variable-token-input
+                  [value]="form().description ?? ''"
+                  placeholder="Description interne..."
+                  [colorMap]="placeholderColorMap()"
+                  (valueChange)="updateField('description', $event)">
+                </app-variable-token-input>
                 <p class="field-help">Note interne pour vous reperer dans le back-office, jamais envoyee au destinataire.</p>
               </div>
 
@@ -306,27 +316,17 @@
             @if (!isPresetMode()) {
               <!-- Variables -->
               <div class="form-group">
-                <div class="field-header">
-                  <label>Variables disponibles (separees par virgule)</label>
-                  <button type="button" class="field-action" (click)="resetVariablesForCurrentAction()">
-                    Reappliquer le type
-                  </button>
-                </div>
-                <textarea rows="3" [ngModel]="form().availableVariables" (ngModelChange)="updateField('availableVariables', $event)" placeholder="candidatName,companyName,..."></textarea>
-                @if (selectedActionConfig()) {
-                  <p class="field-help">
-                    Variables suggerees pour {{ getActionTypeLabel(form().actionType || '') }} :
-                    {{ suggestedVariables().join(', ') }}
-                  </p>
-                }
-                @if (layoutVariables().length > 0) {
+                <label>Variables disponibles</label>
+                @if (form().actionType) {
                   <div class="var-tags">
-                    @for (v of layoutVariables(); track v) {
+                    @for (v of suggestedVariables(); track v) {
                       <span class="var-tag">{{ '{{' + v + '}}' }}</span>
                     }
                   </div>
+                  <p class="field-help">Variables definies par le type d'action <strong>{{ getActionTypeLabel(form().actionType || '') }}</strong>. Non modifiables.</p>
+                } @else {
+                  <p class="field-help">Selectionnez un type d'action pour voir les variables disponibles. Sans type d'action, toutes les <code>{{ '{{clés}}' }}</code> inconnues du layout seront traitees comme des champs editables.</p>
                 }
-                <p class="field-help">Les variables listees ici viennent du contexte metier/global du template. Les zones modifiables du layout se reglent dans le panneau <strong>Champs editables</strong> a droite.</p>
               </div>
 
               <!-- Active toggle -->
@@ -419,16 +419,17 @@
                             <div class="preview-variable-editor preview-variable-editor--richtext">
                               <app-rich-text-editor
                                 [value]="getEditableVariableValue(definition.key)"
-                                [variableGroups]="rteVariableGroups()"
-                                (valueChange)="updateEditableVariable(definition.key, $event)">
+                                [variableGroups]="rteContentVariableGroups()"
+                                (valueChange)="updateEditableVariable(definition.key, $event)">  
                               </app-rich-text-editor>
                             </div>
                           } @else {
-                            <input
-                              type="text"
+                            <app-variable-token-input
+                              [value]="getEditableVariableValue(definition.key)"
                               [placeholder]="definition.placeholder"
-                              [ngModel]="getEditableVariableValue(definition.key)"
-                              (ngModelChange)="updateEditableVariable(definition.key, $event)">
+                              [colorMap]="placeholderColorMap()"
+                              (valueChange)="updateEditableVariable(definition.key, $event)">
+                            </app-variable-token-input>
                           }
 
                           <p class="preview-variable-help">{{ definition.helpText }}</p>
@@ -469,16 +470,22 @@
                     </div>
                   }
 
-                  @if (userDefinedVariableKeys().length > 0) {
+                  @if (dynamicEditableKeys().length > 0) {
                     <div class="created-var-tags">
-                      @for (key of userDefinedVariableKeys(); track key) {
+                      @for (key of dynamicEditableKeys(); track key) {
                         <span class="created-var-tag">
                           <code>{{ '{{' + key + '}}' }}</code>
-                          <button type="button" class="created-var-tag__remove" (click)="removeUserDefinedVariable(key)" [attr.aria-label]="'Supprimer ' + key">×</button>
+                          @if (userDefinedVariableKeys().includes(key)) {
+                            <button type="button" class="created-var-tag__remove" (click)="removeUserDefinedVariable(key)" [attr.aria-label]="'Supprimer ' + key">×</button>
+                          } @else if (visibleP20Keys().includes(key)) {
+                            <button type="button" class="created-var-tag__remove" (click)="dismissAutoDetectedKey(key)" [attr.aria-label]="'Ignorer ' + key">×</button>
+                          }
                         </span>
                       }
                     </div>
-                  } @else if (!showCreateVarForm()) {
+                  }
+
+                  @if (dynamicEditableKeys().length === 0 && !showCreateVarForm()) {
                     <p class="created-vars-empty">Aucune variable créée. Utilisez "Créer" pour ajouter des variables libres à vos layouts.</p>
                   }
                 </div>

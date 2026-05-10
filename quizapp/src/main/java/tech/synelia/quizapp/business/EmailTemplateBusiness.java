@@ -25,7 +25,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lombok.extern.java.Log;
+import tech.synelia.quizapp.dao.entity.AppConfig;
 import tech.synelia.quizapp.dao.entity.EmailTemplate;
+import tech.synelia.quizapp.dao.repository.AppConfigRepository;
 import tech.synelia.quizapp.dao.repository.EmailTemplateRepository;
 import tech.synelia.quizapp.utils.ExceptionUtils;
 import tech.synelia.quizapp.utils.FunctionalError;
@@ -50,6 +52,8 @@ public class EmailTemplateBusiness implements IBasicBusiness<Request<EmailTempla
 
     @Autowired
     private EmailTemplateRepository emailTemplateRepository;
+    @Autowired
+    private AppConfigRepository appConfigRepository;
     @Autowired
     private FunctionalError functionalError;
     @Autowired
@@ -273,8 +277,11 @@ public class EmailTemplateBusiness implements IBasicBusiness<Request<EmailTempla
     public String renderTemplate(String template, Map<String, String> variables) {
         if (template == null || variables == null) return template;
         String result = template;
-        for (Map.Entry<String, String> entry : variables.entrySet()) {
-            result = result.replace("{{" + entry.getKey() + "}}", entry.getValue() != null ? entry.getValue() : "");
+        // Two passes: variables introduced by first-pass expansions (e.g. {{content}} containing {{companyName}}) are resolved on the second pass
+        for (int pass = 0; pass < 2; pass++) {
+            for (Map.Entry<String, String> entry : variables.entrySet()) {
+                result = result.replace("{{" + entry.getKey() + "}}", entry.getValue() != null ? entry.getValue() : "");
+            }
         }
         return result;
     }
@@ -386,12 +393,37 @@ public class EmailTemplateBusiness implements IBasicBusiness<Request<EmailTempla
 
     private Map<String, String> buildRenderVariables(EmailTemplate emailTemplate, Map<String, String> variables) {
         Map<String, String> renderVariables = new LinkedHashMap<>();
+        populateSystemVariables(renderVariables);
         renderVariables.putAll(parseEditableVariables(emailTemplate != null ? emailTemplate.getEditableVariablesJson() : null));
         if (variables != null) {
             renderVariables.putAll(variables);
         }
         populateLegacyCtaVariables(renderVariables);
         return renderVariables;
+    }
+
+    private void populateSystemVariables(Map<String, String> renderVariables) {
+        String companyName = "Synelia";
+        String primaryColor = "#4f46e5";
+        String companyAddress = "";
+        try {
+            AppConfig activeConfig = appConfigRepository.findActiveConfig(true, false);
+            if (activeConfig != null) {
+                if (StringUtils.isNotBlank(activeConfig.getCompanyName())) {
+                    companyName = activeConfig.getCompanyName().trim();
+                }
+                if (StringUtils.isNotBlank(activeConfig.getPrimaryColor())) {
+                    primaryColor = activeConfig.getPrimaryColor().trim();
+                }
+            }
+        } catch (Exception e) {
+            log.warning("Impossible de charger la config active pour les variables systeme email: " + e.getMessage());
+        }
+        renderVariables.put("companyName", companyName);
+        renderVariables.put("currentYear", String.valueOf(java.time.Year.now().getValue()));
+        renderVariables.put("primaryColor", primaryColor);
+        renderVariables.put("signature", "Cordialement,<br>L'\u00e9quipe " + companyName);
+        renderVariables.put("companyAddress", companyAddress);
     }
 
     private void populateLegacyCtaVariables(Map<String, String> renderVariables) {

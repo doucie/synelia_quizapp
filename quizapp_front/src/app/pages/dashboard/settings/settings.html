@@ -584,45 +584,61 @@
 
     <div class="settings__list">
       @for (invitation of invitationCodes(); track invitation.id) {
-        <div class="settings__card" [class.settings__card--expired]="isExpired(invitation)" [class.settings__card--used]="invitation.isUsed">
-          <div class="settings__card-header">
-            <div class="settings__card-title">{{ invitation.email }}</div>
-            <div class="settings__card-badges">
-              <span class="settings__badge" [class.settings__badge--admin]="invitation.role === 'admin'"
-                [class.settings__badge--recruiter]="invitation.role === 'recruiter'">
-                {{ invitation.role }}
-              </span>
-              @if (invitation.isUsed) {
-                <span class="settings__badge settings__badge--used">Utilisé</span>
-              } @else if (isExpired(invitation)) {
-                <span class="settings__badge settings__badge--expired">Expiré</span>
-              } @else {
-                <span class="settings__badge settings__badge--pending">En attente</span>
+        <div class="invitation-card"
+          [class.invitation-card--expired]="isExpired(invitation)"
+          [class.invitation-card--used]="invitation.isUsed">
+          <div class="invitation-card__header">
+            <div class="invitation-card__identity">
+              <div class="invitation-card__avatar">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                </svg>
+              </div>
+              <div class="invitation-card__info">
+                <span class="invitation-card__email">{{ invitation.email }}</span>
+                <div class="invitation-card__badges">
+                  <span class="inv-badge"
+                    [class.inv-badge--admin]="invitation.role === 'admin'"
+                    [class.inv-badge--recruiter]="invitation.role === 'recruiter'">
+                    {{ invitation.role === 'admin' ? 'Administrateur' : 'Recruteur' }}
+                  </span>
+                  @if (invitation.isUsed) {
+                    <span class="inv-badge inv-badge--used">Utilisé</span>
+                  } @else if (isExpired(invitation)) {
+                    <span class="inv-badge inv-badge--expired">Expiré</span>
+                  } @else {
+                    <span class="inv-badge inv-badge--pending">En attente</span>
+                  }
+                </div>
+              </div>
+            </div>
+            <div class="invitation-card__actions">
+              @if (!invitation.isUsed) {
+                <button class="inv-action-btn inv-action-btn--resend" (click)="resendInvitation(invitation)" title="Renvoyer l'invitation">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
+                  </svg>
+                </button>
               }
+              <button class="inv-action-btn inv-action-btn--delete" (click)="deleteInvitation(invitation)" title="Supprimer">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                </svg>
+              </button>
             </div>
           </div>
-          <div class="settings__card-meta settings__card-meta--invitation">
-            <span>Code: <code>{{ invitation.code }}</code></span>
-            <span>Expire le: {{ invitation.expiredAt }}</span>
+          <div class="invitation-card__meta">
+            <span class="invitation-card__code">{{ invitation.code }}</span>
+            <span class="invitation-card__date">
+              <span class="invitation-card__date-label">Expire le</span>
+              {{ invitation.expiredAt }}
+            </span>
             @if (invitation.createdAt) {
-              <span>Créé le: {{ invitation.createdAt }}</span>
+              <span class="invitation-card__date">
+                <span class="invitation-card__date-label">Créé le</span>
+                {{ invitation.createdAt }}
+              </span>
             }
-          </div>
-          <div class="settings__card-actions settings__card-actions--invitation">
-            @if (!invitation.isUsed) {
-              <button class="btn-resend" (click)="resendInvitation(invitation)" title="Renvoyer l'invitation">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
-                </svg>
-                Renvoyer
-              </button>
-            }
-            <button class="btn-delete" (click)="deleteInvitation(invitation)" title="Supprimer">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
-              </svg>
-              Supprimer
-            </button>
           </div>
         </div>
       } @empty {

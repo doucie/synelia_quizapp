@@ -134,7 +134,18 @@ export class RichTextEditorComponent implements AfterViewInit, OnChanges {
     };
 
     const scopedStyles = this.buildScopedEditorStyles(parsed.styleBlocks);
-    return `${scopedStyles}<div class="rte-email-layout" data-rte-email-layout="true">${parsed.body}</div>`;
+    // `bgcolor="{{someVar}}"` attributes trigger the browser's legacy HTML colour-parsing algorithm
+    // which produces wrong colours (e.g. "{{primaryColor}}" → rgb(0,160,0)). The inline
+    // `style="background-color:{{someVar}}"` is crossed out as invalid CSS, so the bgcolor
+    // fallback shows instead. Override any bgcolor whose value starts with "{{" with the app
+    // primary colour so the WYSIWYG preview looks correct. This style tag lives outside
+    // [data-rte-email-layout] so it is never included in the emitted value.
+    // Additionally, .rte-var chips inside a primary-colored cell (e.g. hero headers) have
+    // `color: var(--primary)` which makes them invisible on the primary background.
+    // Force white chip style for any .rte-var descendant of a [bgcolor^="{"] container.
+    // !important in a stylesheet rule overrides inline styles (per CSS cascade rules).
+    const bgcolorVarOverride = `<style data-rte-layout-style="true">.rte-email-layout [bgcolor^="{"] { background-color: var(--primary, #6B46C1) !important; } .rte-email-layout [bgcolor^="{"] .rte-var { color: #ffffff !important; background: rgba(255,255,255,0.18) !important; border-color: rgba(255,255,255,0.38) !important; }</style>`;
+    return `${scopedStyles}${bgcolorVarOverride}<div class="rte-email-layout" data-rte-email-layout="true">${parsed.body}</div>`;
   }
 
   private getEmittedValue(editorHtml: string): string {

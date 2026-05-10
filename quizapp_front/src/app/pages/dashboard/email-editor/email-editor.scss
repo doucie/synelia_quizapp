@@ -963,19 +963,6 @@
     letter-spacing: 0.04em;
   }
 
-  input {
-    padding: var(--spacing-sm) var(--spacing-md);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    background: var(--surface);
-    color: var(--text-primary);
-    font-size: var(--font-size-sm);
-
-    &:focus {
-      outline: none;
-      border-color: var(--primary);
-    }
-  }
 }
 
 .preview-variable-editor {
@@ -1045,6 +1032,7 @@
     color: var(--secondary);
     font-family: monospace;
   }
+
 }
 
 .created-var-tag__remove {

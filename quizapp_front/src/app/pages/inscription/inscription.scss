@@ -5,176 +5,203 @@
   justify-content: center;
   background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
   padding: var(--spacing-md);
-}
 
-.inscription__container {
-  background-color: var(--color-surface);
-  border-radius: var(--border-radius-lg);
-  padding: var(--spacing-xl) var(--spacing-xl);
-  text-align: center;
-  max-width: 480px;
-  width: 100%;
-  box-shadow: var(--elevation-4);
-}
-
-.inscription__header {
-  margin-bottom: var(--spacing-lg);
-}
-
-.inscription__icon {
-  color: var(--primary);
-  margin-bottom: var(--spacing-md);
-
-  &--success {
-    color: var(--success);
-  }
-}
-
-.inscription__title {
-  font-size: var(--font-size-2xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
-  margin: 0 0 var(--spacing-sm);
-}
-
-.inscription__subtitle {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-  margin: 0;
-  line-height: 1.5;
-}
-
-.inscription__role {
-  font-weight: var(--font-weight-semibold);
-  color: var(--primary);
-}
-
-.inscription__form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-lg);
-  text-align: left;
-}
-
-.inscription__row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-md);
-}
-
-.inscription__field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-
-  label {
-    font-size: var(--font-size-xs);
-    font-weight: var(--font-weight-semibold);
-    color: var(--color-text-secondary);
-  }
-
-  input, select {
-    padding: 0.65rem 0.85rem;
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius-md);
-    font-size: var(--font-size-sm);
-    transition: border-color 0.15s ease;
-
-    &:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
-    }
-
-    &:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-  }
-}
-
-.inscription__password-wrapper {
-  position: relative;
-
-  input {
+  &__container {
+    background-color: var(--surface);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 10px 25px var(--shadow-medium);
+    padding: var(--spacing-2xl);
     width: 100%;
-    padding-right: var(--spacing-2xl);
+    max-width: 460px;
   }
-}
 
-.inscription__toggle-password {
-  position: absolute;
-  right: 0.65rem;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--color-text-secondary);
-  display: flex;
-  align-items: center;
-  padding: var(--spacing-xs);
+  &__header {
+    text-align: center;
+    margin-bottom: var(--spacing-2xl);
+  }
 
-  &:hover {
+  &__icon {
+    color: var(--primary);
+    margin-bottom: var(--spacing-md);
+
+    &--success {
+      color: var(--success);
+    }
+  }
+
+  &__title {
+    color: var(--text-primary);
+    font-size: var(--font-size-3xl);
+    font-weight: var(--font-weight-semibold);
+    margin: 0 0 var(--spacing-sm) 0;
+  }
+
+  &__subtitle {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  &__role {
+    font-weight: var(--font-weight-semibold);
     color: var(--primary);
   }
-}
 
-.inscription__error {
-  background: var(--error-light);
-  color: var(--error-dark);
-  padding: 0.65rem 0.85rem;
-  border-radius: var(--border-radius-md);
-  font-size: var(--font-size-sm);
-  border: 1px solid rgba(var(--error-rgb), 0.3);
-}
+  &__form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+    text-align: left;
+  }
 
-.inscription__btn {
-  padding: var(--spacing-md) var(--spacing-lg);
-  border-radius: var(--border-radius-md);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  border: none;
-  cursor: pointer;
-  transition: var(--transition-fast);
+  &__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+  }
 
-  &--primary {
-    background: var(--primary);
-    color: var(--white);
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
 
-    &:hover:not(:disabled) {
-      filter: brightness(0.9);
+    label {
+      color: var(--text-primary);
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-medium);
     }
 
-    &:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
+    input, select {
+      padding: var(--spacing-md);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      font-size: var(--font-size-base);
+      background-color: var(--background);
+      color: var(--text-primary);
+      transition: var(--transition);
+
+      &::placeholder {
+        color: var(--text-disabled);
+      }
+
+      &:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
     }
   }
-}
 
-.inscription__link {
-  color: var(--primary);
-  text-decoration: none;
-  display: inline-block;
-  margin-top: var(--spacing-sm);
-  font-size: var(--font-size-sm);
-  background: none;
-  border: none;
-  cursor: pointer;
+  &__password-wrapper {
+    position: relative;
 
-  &:hover {
-    text-decoration: underline;
+    input {
+      width: 100%;
+      padding-right: var(--spacing-2xl);
+      box-sizing: border-box;
+    }
+  }
+
+  &__toggle-password {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    padding: var(--spacing-xs);
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: var(--primary);
+    }
+  }
+
+  &__error {
+    background-color: rgba(var(--error-rgb), 0.1);
+    border: 1px solid var(--error);
+    color: var(--error);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    font-size: var(--font-size-sm);
+  }
+
+  &__btn {
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--radius);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    border: none;
+    cursor: pointer;
+    transition: var(--transition);
+    width: 100%;
+    margin-top: var(--spacing-md);
+
+    &--primary {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: var(--text-on-primary);
+
+      &:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px var(--shadow-medium);
+      }
+
+      &:active {
+        transform: translateY(0);
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+    }
+  }
+
+  &__link {
+    color: var(--primary);
+    text-decoration: none;
+    font-size: var(--font-size-sm);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    margin-top: var(--spacing-lg);
+    transition: var(--transition);
+
+    &:hover {
+      color: var(--primary-dark);
+      text-decoration: underline;
+    }
   }
 }
 
 @media (max-width: 480px) {
-  .inscription__row {
-    grid-template-columns: 1fr;
-  }
+  .inscription {
+    &__row {
+      grid-template-columns: 1fr;
+    }
 
-  .inscription__container {
-    padding: var(--spacing-lg) var(--spacing-lg);
+    &__container {
+      padding: var(--spacing-lg);
+    }
+
+    &__title {
+      font-size: var(--font-size-2xl);
+    }
   }
 }

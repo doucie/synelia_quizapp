@@ -43,15 +43,13 @@
       </div>
 
       <div class="inscription__form">
-        <div class="inscription__row">
-          <div class="inscription__field">
-            <label>Prénom *</label>
-            <input type="text" [ngModel]="form().firstName" (ngModelChange)="updateForm('firstName', $event)" placeholder="Votre prénom">
-          </div>
-          <div class="inscription__field">
-            <label>Nom *</label>
-            <input type="text" [ngModel]="form().lastName" (ngModelChange)="updateForm('lastName', $event)" placeholder="Votre nom">
-          </div>
+        <div class="inscription__field">
+          <label>Prénom *</label>
+          <input type="text" [ngModel]="form().firstName" (ngModelChange)="updateForm('firstName', $event)" placeholder="Votre prénom">
+        </div>
+        <div class="inscription__field">
+          <label>Nom *</label>
+          <input type="text" [ngModel]="form().lastName" (ngModelChange)="updateForm('lastName', $event)" placeholder="Votre nom">
         </div>
 
         <div class="inscription__field">
