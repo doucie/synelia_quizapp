@@ -39,8 +39,8 @@ public interface CampaignsTransformer {
 	@FullTransformerQualifier
 	@Named("toFullDto")
 	@Mappings({
-		@Mapping(source="entity.campaignStart", dateFormat="dd/MM/yyyy", target="campaignStart"),
-		@Mapping(source="entity.campaignEnd", dateFormat="dd/MM/yyyy", target="campaignEnd"),
+		@Mapping(source="entity.campaignStart", dateFormat="yyyy-MM-dd", target="campaignStart"),
+		@Mapping(source="entity.campaignEnd", dateFormat="yyyy-MM-dd", target="campaignEnd"),
 		@Mapping(source="entity.createdAt", dateFormat="dd/MM/yyyy", target="createdAt"),
 		@Mapping(source="entity.updatedAt", dateFormat="dd/MM/yyyy", target="updatedAt"),
 		@Mapping(source="entity.formAssignmentStrategy", target="formAssignmentStrategy"),
@@ -85,8 +85,8 @@ public interface CampaignsTransformer {
 		@Mapping(source="dto.campaignTitle", target="campaignTitle"),
 		@Mapping(source="dto.campaignDesc", target="campaignDesc"),
 		@Mapping(source="dto.campaignStatus", target="campaignStatus"),
-		@Mapping(source="dto.campaignStart", dateFormat="dd/MM/yyyy",target="campaignStart"),
-	@Mapping(source="dto.campaignEnd", dateFormat="dd/MM/yyyy",target="campaignEnd"),
+		@Mapping(source="dto.campaignStart", dateFormat="yyyy-MM-dd",target="campaignStart"),
+	@Mapping(source="dto.campaignEnd", dateFormat="yyyy-MM-dd",target="campaignEnd"),
 	@Mapping(source="dto.maxApply", target="maxApply"),
 	@Mapping(source="dto.allCanEvaluate", target="allCanEvaluate"),
 	@Mapping(source="dto.totalQuestions", target="totalQuestions"),

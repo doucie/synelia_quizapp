@@ -15,6 +15,7 @@ import { NotificationService } from '../../../core/services/notification.service
 import { ThemeService as BrandingThemeService } from '../../../core/services/theme.service';
 import { ThemeService as UiThemeService } from '../../../core/services/theme';
 import { FilterCheckboxComponent } from '../../../shared/filter-checkbox/filter-checkbox';
+import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../shared/filter-select/filter-select';
 import { RichTextEditorComponent } from '../../../shared/rich-text-editor/rich-text-editor';
 import { VariableTokenInputComponent } from '../../../shared/variable-token-input/variable-token-input';
 
@@ -302,7 +303,7 @@ const ALL_BUSINESS_VARIABLE_KEYS = new Set<string>([
 @Component({
   selector: 'app-email-editor',
   standalone: true,
-  imports: [CommonModule, FilterCheckboxComponent, FormsModule, RichTextEditorComponent, VariableTokenInputComponent],
+  imports: [CommonModule, FilterCheckboxComponent, FormsModule, RichTextEditorComponent, VariableTokenInputComponent, FilterSelectComponent, FilterSelectOptionDirective],
   templateUrl: './email-editor.html',
   styleUrls: ['./email-editor.scss']
 })

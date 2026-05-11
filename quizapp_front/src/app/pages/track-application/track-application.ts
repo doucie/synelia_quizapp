@@ -1,6 +1,7 @@
 import { Component, ChangeDetectionStrategy, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { FilterSelectComponent, FilterSelectOptionDirective } from '../../shared/filter-select/filter-select';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { environment } from '../../../environments/environment';
@@ -98,7 +99,7 @@ interface TrackingResponse {
 @Component({
   selector: 'app-track-application',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, FilterSelectComponent, FilterSelectOptionDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './track-application.html',
   styleUrls: ['./track-application.scss']

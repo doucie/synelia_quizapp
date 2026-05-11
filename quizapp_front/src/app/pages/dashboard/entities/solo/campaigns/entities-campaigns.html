@@ -84,7 +84,7 @@
         </div>
         <div class="form-group">
           <label>Spécialité</label>
-          <app-filter-select [(ngModel)]="advancedCriteria.specialitiesId">
+          <app-filter-select [(ngModel)]="advancedCriteria.specialityId">
             <option [ngValue]="undefined">-- Tous --</option>
             @for (item of allSpecialities(); track item.id) {
               <option [ngValue]="item.id">{{ item.specialityName || '#' + item.id }}</option>

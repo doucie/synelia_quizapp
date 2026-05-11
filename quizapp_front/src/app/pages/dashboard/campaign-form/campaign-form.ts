@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormArray, FormControl } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormArray, FormControl, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { Subject, forkJoin, of } from 'rxjs';
 import { takeUntil, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
@@ -10,9 +10,12 @@ import { SpecialityService, Speciality } from '../../../core/services/speciality
 import { AuthService } from '../../../core/services/auth/auth.service';
 import { PipelineTemplateService } from '../../../core/services/pipeline-template.service';
 import { PipelineStageService } from '../../../core/services/pipeline-stage.service';
+import { environment } from '../../../../environments/environment';
 import { ApplicationProgressService } from '../../../core/services/application-progress.service';
 import { PipelineTemplate, PipelineStage } from '../../../core/models/pipeline.interfaces';
 import { FilterCheckboxComponent } from '../../../shared/filter-checkbox/filter-checkbox';
+import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../shared/filter-select/filter-select';
+import { NotificationService } from '../../../core/services/notification.service';
 
 interface RecruiterAccess {
   user: User;
@@ -30,7 +33,7 @@ interface RecruiterAccess {
 @Component({
   selector: 'app-campaign-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FilterCheckboxComponent],
+  imports: [CommonModule, ReactiveFormsModule, FilterCheckboxComponent, FilterSelectComponent, FilterSelectOptionDirective],
   templateUrl: './campaign-form.component.html',
   styleUrls: ['./campaign-form.component.scss']
 })
@@ -89,7 +92,8 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private pipelineTemplateService: PipelineTemplateService,
     private pipelineStageService: PipelineStageService,
-    private applicationProgressService: ApplicationProgressService
+    private applicationProgressService: ApplicationProgressService,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
@@ -122,10 +126,13 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
       campaignStart: [''], // Optionnel
       campaignEnd: [''], // Optionnel
       maxApply: [null, [Validators.min(1)]],
+      markedOutOf: [null, [Validators.min(1)]],
+      formAssignmentStrategy: ['RANDOM'],
+      formAssignmentExhaustionPolicy: ['BLOCK'],
       allCanEvaluate: [false],
       specialityId: [null, Validators.required], // Ajout spécialité
       pipelineTemplateId: [null, Validators.required]
-    });
+    }, { validators: this.dateRangeValidator.bind(this) });
   }
 
   setupSearch(): void {
@@ -138,7 +145,7 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
         switchMap(query => {
           const searchQuery = (query || '').trim();
           
-          console.log('🔍 Recherche déclenchée avec:', searchQuery);
+          if (!environment.production) console.log('🔍 Recherche déclenchée avec:', searchQuery);
           
           if (searchQuery.length < 2) {
             this.searchResults.set([]);
@@ -156,21 +163,21 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
             page: 0
           };
           
-          console.log('📤 Envoi critères de recherche:', criteria);
+          if (!environment.production) console.log('📤 Envoi critères de recherche:', criteria);
           
           return this.userService.getAllUsersByCriteria(criteria);
         })
       )
       .subscribe({
         next: (response: any) => {
-          console.log('📥 Réponse reçue:', response);
+          if (!environment.production) console.log('📥 Réponse reçue:', response);
           
           if (response && response.content) {
-            console.log(`✅ ${response.content.length} utilisateurs trouvés`);
+            if (!environment.production) console.log(`✅ ${response.content.length} utilisateurs trouvés`);
             
             // DEBUG: Afficher les rôles des utilisateurs trouvés
             response.content.forEach((u: User, index: number) => {
-              console.log(`👤 Utilisateur ${index + 1}:`, {
+              if (!environment.production) console.log(`👤 Utilisateur ${index + 1}:`, {
                 nom: `${u.firstName} ${u.lastName}`,
                 email: u.email,
                 role: u.role,
@@ -184,13 +191,13 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
               const roleMatch = roles.includes(u.role?.toLowerCase() || '');
               
               if (!roleMatch) {
-                console.log(`❌ Rôle "${u.role}" non accepté pour ${u.firstName} ${u.lastName}`);
+                if (!environment.production) console.log(`❌ Rôle "${u.role}" non accepté pour ${u.firstName} ${u.lastName}`);
               }
               
               return roleMatch;
             });
             
-            console.log(`🎯 ${filteredByRole.length} recruteurs/admins après filtrage par rôle`);
+            if (!environment.production) console.log(`🎯 ${filteredByRole.length} recruteurs/admins après filtrage par rôle`);
             
             // Exclure l'utilisateur connecté de la recherche
             const currentUser = this.authService.getCurrentUser();
@@ -199,22 +206,22 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
             const filteredWithoutCurrentUser = filteredByRole.filter((u: User) => {
               const isCurrentUser = currentUserId && u.id === currentUserId;
               if (isCurrentUser) {
-                console.log(`🚫 Utilisateur connecté exclu: ${u.firstName} ${u.lastName}`);
+                if (!environment.production) console.log(`🚫 Utilisateur connecté exclu: ${u.firstName} ${u.lastName}`);
               }
               return !isCurrentUser;
             });
             
-            console.log(`👤 ${filteredWithoutCurrentUser.length} utilisateurs après exclusion de l'utilisateur connecté`);
+            if (!environment.production) console.log(`👤 ${filteredWithoutCurrentUser.length} utilisateurs après exclusion de l'utilisateur connecté`);
             
             // Filtrer les utilisateurs déjà sélectionnés
             const selectedIds = this.selectedRecruiters().map(r => r.user.id);
             const filteredUsers = filteredWithoutCurrentUser.filter((u: User) => !selectedIds.includes(u.id));
             
-            console.log(`👥 ${filteredUsers.length} utilisateurs après exclusion des déjà sélectionnés`);
+            if (!environment.production) console.log(`👥 ${filteredUsers.length} utilisateurs après exclusion des déjà sélectionnés`);
             
             // Debug: vérifier les données des utilisateurs
             if (filteredUsers.length > 0) {
-              console.log('📋 Premier utilisateur:', {
+              if (!environment.production) console.log('📋 Premier utilisateur:', {
                 id: filteredUsers[0].id,
                 email: filteredUsers[0].email,
                 firstName: filteredUsers[0].firstName,
@@ -248,7 +255,7 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
         switchMap(query => {
           const searchQuery = (query || '').trim();
           
-          console.log('🔍 Recherche spécialité:', searchQuery);
+          if (!environment.production) console.log('🔍 Recherche spécialité:', searchQuery);
           
           if (searchQuery.length < 2) {
             this.specialitySearchResults.set([]);
@@ -269,15 +276,15 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: (response: any) => {
-          console.log('📥 Spécialités reçues:', response);
+          if (!environment.production) console.log('📥 Spécialités reçues:', response);
           
           // La réponse du backend contient 'items' et non 'content'
           if (response && response.items) {
-            console.log(`✅ ${response.items.length} spécialités trouvées`);
+            if (!environment.production) console.log(`✅ ${response.items.length} spécialités trouvées`);
             this.specialitySearchResults.set(response.items);
             this.showSpecialityDropdown.set(response.items.length > 0);
           } else {
-            console.log('⚠️ Aucune spécialité dans la réponse');
+            if (!environment.production) console.log('⚠️ Aucune spécialité dans la réponse');
             this.specialitySearchResults.set([]);
             this.showSpecialityDropdown.set(false);
           }
@@ -301,7 +308,7 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
     this.specialitySearchResults.set([]);
     this.showSpecialityDropdown.set(false);
     
-    console.log('✅ Spécialité sélectionnée:', speciality);
+    if (!environment.production) console.log('✅ Spécialité sélectionnée:', speciality);
   }
 
   removeSpeciality(): void {
@@ -369,9 +376,10 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
     }
   }
 
-  onTemplateChange(event: Event): void {
-    const select = event.target as HTMLSelectElement;
-    const templateId = parseInt(select.value);
+  onTemplateSelectChange(value: string | number | boolean | null): void {
+    this.campaignForm.get('pipelineTemplateId')?.markAsTouched();
+    if (value == null || typeof value === 'boolean') return;
+    const templateId = typeof value === 'string' ? parseInt(value) : value;
     const template = this.pipelineTemplates().find(t => t.id === templateId);
     if (template) {
       // En mode édition avec un template différent → vérifier les candidats migrables
@@ -425,6 +433,10 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
   customizeTemplate(): void {
     const template = this.selectedTemplate();
     if (!template?.id) return;
+    const confirmed = window.confirm(
+      'Vous allez être redirigé vers l\'éditeur de pipeline. Les données non sauvegardées du formulaire seront perdues. Continuer ?'
+    );
+    if (!confirmed) return;
     const campaignTitle = this.campaignForm.get('campaignTitle')?.value || 'Campagne';
     const customName = `${campaignTitle} - Custom`;
     this.pipelineTemplateService.duplicate(template.id, customName)
@@ -507,14 +519,14 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (campaign) => {
-          console.log('📥 Campagne chargée:', campaign);
+          if (!environment.production) console.log('📥 Campagne chargée:', campaign);
           this.populateForm(campaign);
           this.loadCampaignRecruiters(id);
           
           // Charger la spécialité si elle existe
-          const specialityId = campaign.specialitiesId || campaign.specialityId;
+          const specialityId = campaign.specialityId;
           if (specialityId) {
-            console.log('🔍 Chargement de la spécialité ID:', specialityId);
+            if (!environment.production) console.log('🔍 Chargement de la spécialité ID:', specialityId);
             this.loadSpeciality(specialityId);
           }
           
@@ -532,7 +544,7 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (speciality: Speciality) => {
-          console.log('✅ Spécialité chargée:', speciality);
+          if (!environment.production) console.log('✅ Spécialité chargée:', speciality);
           this.selectedSpeciality.set(speciality);
           this.campaignForm.patchValue({ specialityId: speciality.id });
         },
@@ -543,17 +555,17 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
   }
 
   loadCampaignRecruiters(campaignId: number): void {
-    console.log('👥 Chargement des recruteurs pour la campagne:', campaignId);
+    if (!environment.production) console.log('👥 Chargement des recruteurs pour la campagne:', campaignId);
     
     this.campaignService.getCampaignAccess(campaignId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (accessItems) => {
-          console.log('📥 Accès recruteurs reçus:', accessItems);
+          if (!environment.production) console.log('📥 Accès recruteurs reçus:', accessItems);
           
           // Inclure TOUS les utilisateurs (créateur, admins et recruteurs)
           const recruiters: RecruiterAccess[] = accessItems.map((access: any) => {
-            console.log('🔍 Mapping access:', access);
+            if (!environment.production) console.log('🔍 Mapping access:', access);
             return {
               user: {
                 id: access.userId,
@@ -576,7 +588,7 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
             };
           });
           
-          console.log('✅ Recruteurs chargés (incluant admin):', recruiters);
+          if (!environment.production) console.log('✅ Recruteurs chargés (incluant admin):', recruiters);
           this.selectedRecruiters.set(recruiters);
           this.initialRecruiterIds.set(new Set(recruiters.filter(recruiter => !recruiter.isCreator).map(recruiter => recruiter.user.id)));
         },
@@ -594,6 +606,9 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
       campaignStart: this.formatDateForInput(campaign.campaignStart),
       campaignEnd: this.formatDateForInput(campaign.campaignEnd),
       maxApply: campaign.maxApply,
+      markedOutOf: campaign.markedOutOf,
+      formAssignmentStrategy: campaign.formAssignmentStrategy || 'RANDOM',
+      formAssignmentExhaustionPolicy: campaign.formAssignmentExhaustionPolicy || 'BLOCK',
       allCanEvaluate: campaign.allCanEvaluate,
       pipelineTemplateId: campaign.pipelineTemplateId
     });
@@ -637,6 +652,12 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
   onSubmit(): void {
     if (this.campaignForm.invalid) {
       this.markFormGroupTouched(this.campaignForm);
+      if (!environment.production) {
+        const invalidControls = Object.entries(this.campaignForm.controls)
+          .filter(([, c]) => c.invalid)
+          .map(([key, c]) => `${key}: ${JSON.stringify(c.errors)}`);
+        console.warn('⚠️ Formulaire invalide —', invalidControls);
+      }
       return;
     }
 
@@ -647,6 +668,7 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
     
     if (!currentUser) {
       console.error('❌ Utilisateur non connecté');
+      this.notificationService.error('Erreur', 'Session expirée. Veuillez vous reconnecter.');
       this.saving.set(false);
       return;
     }
@@ -658,6 +680,9 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
       campaignStart: formValue.campaignStart,
       campaignEnd: formValue.campaignEnd,
       maxApply: formValue.maxApply,
+      markedOutOf: formValue.markedOutOf,
+      formAssignmentStrategy: formValue.formAssignmentStrategy,
+      formAssignmentExhaustionPolicy: formValue.formAssignmentExhaustionPolicy,
       allCanEvaluate: formValue.allCanEvaluate,
       specialityId: formValue.specialityId,
       pipelineTemplateId: formValue.pipelineTemplateId,
@@ -670,7 +695,7 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
 
     operation$.pipe(takeUntil(this.destroy$)).subscribe({
       next: (response: any) => {
-        console.log('✅ Réponse campagne:', response);
+        if (!environment.production) console.log('✅ Réponse campagne:', response);
         
         // Extraire l'ID de la campagne créée
         let campaignId: number | null = null;
@@ -682,11 +707,11 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
         }
         
         if (campaignId) {
-          console.log('📝 Campagne créée avec ID:', campaignId);
+          if (!environment.production) console.log('📝 Campagne créée avec ID:', campaignId);
           
       this.saveCampaignAccessAndNotifications(campaignId, parseInt(currentUser.id)).subscribe({
         next: () => {
-          console.log('✅ Tous les accès et notifications sont synchronisés');
+          if (!environment.production) console.log('✅ Tous les accès et notifications sont synchronisés');
           this.saving.set(false);
           this.router.navigate(['/dashboard/campaigns']);
         },
@@ -704,13 +729,14 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('❌ Erreur sauvegarde campagne:', error);
+        this.notificationService.error('Erreur', 'Impossible de sauvegarder la campagne. Vérifiez votre connexion et réessayez.');
         this.saving.set(false);
       }
     });
   }
 
   saveCampaignAccessAndNotifications(campaignId: number, currentUserId: number) {
-    console.log('💾 Sauvegarde des accès recruteurs et notifications pour campagne:', campaignId);
+    if (!environment.production) console.log('💾 Sauvegarde des accès recruteurs et notifications pour campagne:', campaignId);
     
     const recruiters = this.selectedRecruiters();
     const allAccessData: any[] = [];
@@ -732,7 +758,7 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
       // searchString sera généré automatiquement par le backend
     };
     allAccessData.push(creatorAccess);
-    console.log('👑 Créateur ajouté avec tous les droits:', creatorAccess);
+    if (!environment.production) console.log('👑 Créateur ajouté avec tous les droits:', creatorAccess);
     
     const initialRecruiterIds = this.initialRecruiterIds();
 
@@ -776,10 +802,10 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
           this.campaignService.createNotification(notificationData)
         );
 
-        console.log('📬 Notification créée:', notificationData);
+        if (!environment.production) console.log('📬 Notification créée:', notificationData);
       }
       
-      console.log('👤 Recruteur ajouté:', accessData);
+      if (!environment.production) console.log('👤 Recruteur ajouté:', accessData);
     });
     
     // 4. Sauvegarder tous les accès et notifications en parallèle et attendre qu'ils soient tous terminés
@@ -811,5 +837,17 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
   get campaignStart() { return this.campaignForm.get('campaignStart'); }
   get campaignEnd() { return this.campaignForm.get('campaignEnd'); }
   get maxApply() { return this.campaignForm.get('maxApply'); }
+  get markedOutOf() { return this.campaignForm.get('markedOutOf'); }
+  get formAssignmentStrategy() { return this.campaignForm.get('formAssignmentStrategy'); }
+  get formAssignmentExhaustionPolicy() { return this.campaignForm.get('formAssignmentExhaustionPolicy'); }
   get allCanEvaluate() { return this.campaignForm.get('allCanEvaluate'); }
+
+  private dateRangeValidator(group: AbstractControl): ValidationErrors | null {
+    const start = group.get('campaignStart')?.value;
+    const end = group.get('campaignEnd')?.value;
+    if (start && end && new Date(end) < new Date(start)) {
+      return { dateRange: true };
+    }
+    return null;
+  }
 }

@@ -213,11 +213,11 @@
           <div class="form-row">
             <div class="form-group">
               <label for="a-type">Type</label>
-              <select id="a-type" [ngModel]="answerForm().answerType" (ngModelChange)="updateFormField('answerType', $event)">
+              <app-filter-select id="a-type" ariaLabel="Type de réponse" [ngModel]="answerForm().answerType" (ngModelChange)="updateFormField('answerType', $event)">
                 @for (type of answerTypes; track type) {
                   <option [ngValue]="type">{{ type }}</option>
                 }
-              </select>
+              </app-filter-select>
             </div>
 
             <div class="form-group">
@@ -236,12 +236,12 @@
           @if (questions().length > 0) {
             <div class="form-group">
               <label for="a-question">Question associée</label>
-              <select id="a-question" [ngModel]="answerForm().questionId" (ngModelChange)="updateFormField('questionId', $event)">
+              <app-filter-select id="a-question" ariaLabel="Question associée" [ngModel]="answerForm().questionId" (ngModelChange)="updateFormField('questionId', $event)">
                 <option [ngValue]="undefined">Aucune question</option>
                 @for (q of questions(); track q.id ?? $index) {
                   <option [ngValue]="q.id">{{ q.questionText && q.questionText.length > 80 ? q.questionText.substring(0, 80) + '...' : q.questionText }}</option>
                 }
-              </select>
+              </app-filter-select>
             </div>
           }
 

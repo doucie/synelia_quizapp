@@ -42,6 +42,12 @@
   }
 }
 
+.campaign-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+
 .form-section {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -880,7 +886,7 @@
 
 .pipeline-stages-bar {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0;
   overflow-x: auto;
   padding-bottom: var(--spacing-sm);
@@ -940,7 +946,7 @@
     height: 2px;
     background: var(--border);
     flex-shrink: 0;
-    margin-top: -var(--spacing-lg);
+    margin-top: calc(1rem - 1px); /* demi-hauteur cercle (2rem/2) − demi-hauteur connecteur (2px/2) */
   }
 }
 

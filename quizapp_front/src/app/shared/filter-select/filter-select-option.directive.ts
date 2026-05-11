@@ -1,4 +1,4 @@
-import { Directive, ElementRef, Input, Renderer2 } from '@angular/core';
+import { Directive, ElementRef, Input, Renderer2, booleanAttribute } from '@angular/core';
 
 type FilterOptionValue = string | number | boolean | null | undefined;
 
@@ -12,6 +12,9 @@ export class FilterSelectOptionDirective {
     private readonly renderer: Renderer2
   ) {}
 
+  @Input({ transform: booleanAttribute })
+  disabled = false;
+
   @Input()
   set ngValue(value: FilterOptionValue) {
     this.writeSerializedValue(value);
@@ -20,6 +23,27 @@ export class FilterSelectOptionDirective {
   @Input()
   set value(value: FilterOptionValue) {
     this.writeSerializedValue(value);
+  }
+
+  resolvedValue(): FilterOptionValue {
+    const el = this.elementRef.nativeElement;
+    const type = el.getAttribute('data-filter-select-type');
+    const val = el.getAttribute('data-filter-select-value') ?? '';
+    switch (type) {
+      case 'undefined': return undefined;
+      case 'null':      return null;
+      case 'boolean':   return val === 'true';
+      case 'number': {
+        const parsed = Number(val);
+        return Number.isNaN(parsed) ? null : parsed;
+      }
+      case 'string':    return val;
+      default:          return el.value ?? null;
+    }
+  }
+
+  label(): string {
+    return this.elementRef.nativeElement.textContent?.trim() ?? '';
   }
 
   private writeSerializedValue(value: FilterOptionValue): void {

@@ -24,7 +24,6 @@ export interface Campaign {
   markedOutOf?: number;
   isActive?: boolean;
   departmentsId?: number;
-  specialitiesId?: number;
   specialityId?: number;
   departmentName?: string;
   specialityName?: string;
@@ -69,7 +68,7 @@ export interface CampaignSearchCriteria {
   campaignName?: string;
   campaignDesc?: string;
   departmentsId?: number;
-  specialitiesId?: number;
+  specialityId?: number;
   isActive?: boolean;
   isDeleted?: boolean;
 
@@ -117,15 +116,15 @@ export class CampaignService {
   private readonly managedCampaignPermissionKeys = ['ADMIN', 'CREATOR', 'UPDATE', 'DELETE', 'EVALUATE', 'CORRECT_TEST', 'PLANIFY', 'ADVANCE_PIPELINE', 'FOLLOW'];
 
   constructor(private http: HttpClient, private questionService: QuestionService) {
-    console.log('🚀 Initialisation CampaignService');
-    console.log('📡 URL de l\'API:', this.apiUrl);
+    if (!environment.production) console.log('🚀 Initialisation CampaignService');
+    if (!environment.production) console.log('📡 URL de l\'API:', this.apiUrl);
   }
 
   /**
    * Récupère toutes les campagnes avec critères de recherche
    */
   getAllCampaignsByCriteria(criteria: CampaignSearchCriteria): Observable<PagedResponse<Campaign>> {
-    console.log('📥 Récupération des campagnes avec critères:', criteria);
+    if (!environment.production) console.log('📥 Récupération des campagnes avec critères:', criteria);
 
     // Transformer les critères pour correspondre au format backend
     const backendCriteria = {
@@ -142,19 +141,19 @@ export class CampaignService {
       data: backendCriteria // Les critères de recherche dans data
     };
 
-    console.log('🔍 Corps de la requête:', requestBody);
+    if (!environment.production) console.log('🔍 Corps de la requête:', requestBody);
 
     return this.http.post<any>(`${this.apiUrl}/getAllByCriteria`, requestBody).pipe(
       map((response: any) => {
-        console.log('🔍 Raw API Response (CAMPAIGNS):', response);
-        console.log('🔍 Response keys:', Object.keys(response));
-        console.log('🔍 Response.hasError:', response.hasError);
-        console.log('🔍 Response.status:', response.status);
-        console.log('🔍 Response.items exists:', !!response.items);
-        console.log('🔍 Response.items length:', response.items?.length);
-        console.log('🔍 Response.content exists:', !!response.content);
-        console.log('🔍 Response.content length:', response.content?.length);
-        console.log('✅ Réponse reçue:', response);
+        if (!environment.production) console.log('🔍 Raw API Response (CAMPAIGNS):', response);
+        if (!environment.production) console.log('🔍 Response keys:', Object.keys(response));
+        if (!environment.production) console.log('🔍 Response.hasError:', response.hasError);
+        if (!environment.production) console.log('🔍 Response.status:', response.status);
+        if (!environment.production) console.log('🔍 Response.items exists:', !!response.items);
+        if (!environment.production) console.log('🔍 Response.items length:', response.items?.length);
+        if (!environment.production) console.log('🔍 Response.content exists:', !!response.content);
+        if (!environment.production) console.log('🔍 Response.content length:', response.content?.length);
+        if (!environment.production) console.log('✅ Réponse reçue:', response);
 
         // Transformer la réponse backend vers le format frontend attendu
         if (!response || response.hasError) {
@@ -177,7 +176,7 @@ export class CampaignService {
         // Transformer les données en utilisant transformCampaign pour la cohérence
         const campaigns = rawCampaigns.map((c: any) => this.transformCampaign(c));
 
-        console.log('🔄 Campagnes transformées:', campaigns);
+        if (!environment.production) console.log('🔄 Campagnes transformées:', campaigns);
 
         return {
           content: campaigns,
@@ -201,7 +200,7 @@ export class CampaignService {
    * Récupère une campagne par son ID
    */
   getCampaignById(id: number): Observable<Campaign> {
-    console.log('📥 Récupération de la campagne ID:', id);
+    if (!environment.production) console.log('📥 Récupération de la campagne ID:', id);
 
     // Préparer le corps de la requête pour récupérer une campagne spécifique
     const requestBody = {
@@ -213,7 +212,7 @@ export class CampaignService {
 
     return this.http.post<any>(`${this.apiUrl}/getAllByCriteria`, requestBody).pipe(
       map(response => {
-        console.log('✅ Campagne récupérée:', response);
+        if (!environment.production) console.log('✅ Campagne récupérée:', response);
         // L'API retourne {items: [...], count: number, ...}
         if (response.items && response.items.length > 0) {
           return this.transformCampaign(response.items[0]);
@@ -228,7 +227,7 @@ export class CampaignService {
    * Crée une nouvelle campagne
    */
   createCampaign(campaign: Partial<Campaign>): Observable<any> {
-    console.log('📝 Création d\'une campagne:', campaign);
+    if (!environment.production) console.log('📝 Création d\'une campagne:', campaign);
 
     const currentUserId = this.getCurrentUserId();
     const creatorId = Number(campaign.createdBy) || currentUserId;
@@ -246,6 +245,7 @@ export class CampaignService {
       allCanEvaluate: campaign.allCanEvaluate,
       markedOutOf: campaign.markedOutOf,
       specialityId: campaign.specialityId, // Backend utilise specialityId
+      pipelineTemplateId: campaign.pipelineTemplateId,
       createdBy: creatorId,
       creatorId // Backend requiert aussi creatorId
     };
@@ -262,11 +262,11 @@ export class CampaignService {
       datas: [backendCampaign]
     };
 
-    console.log('📤 Corps de la requête création campagne:', requestBody);
+    if (!environment.production) console.log('📤 Corps de la requête création campagne:', requestBody);
 
     return this.http.post<any>(`${this.apiUrl}/create`, requestBody).pipe(
       map(response => {
-        console.log('✅ Réponse création campagne:', response);
+        if (!environment.production) console.log('✅ Réponse création campagne:', response);
         return response; // Retourner la réponse complète
       }),
       catchError(error => {
@@ -286,14 +286,9 @@ export class CampaignService {
    * Met à jour une campagne
    */
   updateCampaign(id: number, campaign: Partial<Campaign>): Observable<Campaign> {
-    console.log('📝 Mise à jour de la campagne ID:', id, campaign);
+    if (!environment.production) console.log('📝 Mise à jour de la campagne ID:', id, campaign);
 
-    // Transformer les données pour correspondre au format backend
-    const backendCampaign = {
-      ...campaign,
-      campaignTitle: campaign.campaignName,
-      campaignName: undefined // Supprimer campaignName pour éviter la confusion
-    };
+    const backendCampaign = { ...campaign };
 
     const requestBody = {
       user: this.getCurrentUserId(),
@@ -302,7 +297,7 @@ export class CampaignService {
 
     return this.http.post<any>(`${this.apiUrl}/update`, requestBody).pipe(
       map(response => {
-        console.log('✅ Campagne mise à jour:', response);
+        if (!environment.production) console.log('✅ Campagne mise à jour:', response);
         if (response.items && response.items.length > 0) {
           return this.transformCampaign(response.items[0]);
         } else {
@@ -320,7 +315,7 @@ export class CampaignService {
    * Supprime une campagne
    */
   deleteCampaign(id: number): Observable<any> {
-    console.log('🗑️ Suppression de la campagne ID:', id);
+    if (!environment.production) console.log('🗑️ Suppression de la campagne ID:', id);
 
     const requestBody = {
       user: this.getCurrentUserId(),
@@ -329,7 +324,7 @@ export class CampaignService {
 
     return this.http.post<any>(`${this.apiUrl}/delete`, requestBody).pipe(
       map(response => {
-        console.log('✅ Campagne supprimée:', response);
+        if (!environment.production) console.log('✅ Campagne supprimée:', response);
         return response;
       }),
       catchError(error => {
@@ -343,7 +338,7 @@ export class CampaignService {
    * Restaure une campagne supprimée
    */
   restoreCampaign(id: number): Observable<any> {
-    console.log('♻️ Restauration de la campagne ID:', id);
+    if (!environment.production) console.log('♻️ Restauration de la campagne ID:', id);
 
     const requestBody = {
       user: this.getCurrentUserId(),
@@ -352,7 +347,7 @@ export class CampaignService {
 
     return this.http.post<any>(`${this.apiUrl}/restore`, requestBody).pipe(
       map(response => {
-        console.log('✅ Campagne restaurée:', response);
+        if (!environment.production) console.log('✅ Campagne restaurée:', response);
         return response;
       }),
       catchError(error => {
@@ -373,7 +368,7 @@ export class CampaignService {
       return throwError(() => new Error('Utilisateur non connecté'));
     }
 
-    console.log('📥 Récupération des campagnes créées par l\'utilisateur:', currentUserId);
+    if (!environment.production) console.log('📥 Récupération des campagnes créées par l\'utilisateur:', currentUserId);
 
     const requestBody = {
       user: currentUserId.toString(),
@@ -392,7 +387,7 @@ export class CampaignService {
 
     return this.http.post<any>(`${this.apiUrl}/getByCriteria`, requestBody).pipe(
       map(response => {
-        console.log('✅ Réponse getMyCampaigns:', response);
+        if (!environment.production) console.log('✅ Réponse getMyCampaigns:', response);
         
         if (!response || (!response.items && !response.item)) {
           return {
@@ -435,7 +430,7 @@ export class CampaignService {
     const currentUserData = localStorage.getItem('user');
     const currentUserId = currentUserData ? Number(JSON.parse(currentUserData).id) || 1 : 1;
 
-    console.log('📥 Récupération des campagnes partagées pour l\'utilisateur:', currentUserId);
+    if (!environment.production) console.log('📥 Récupération des campagnes partagées pour l\'utilisateur:', currentUserId);
 
     return this.getCampaignAccessesByUser(currentUserId).pipe(
       switchMap((accesses) => {
@@ -642,7 +637,7 @@ export class CampaignService {
       updatedAt: campaign.updatedAt || campaign.updated_at || undefined,
       departmentsId: campaign.departmentsId || campaign.departments_id || undefined,
       departmentName: campaign.departmentName || campaign.department_name || undefined,
-      specialitiesId: campaign.specialityId || campaign.speciality_id || undefined,
+      specialityId: campaign.specialityId || campaign.speciality_id || undefined,
       specialityLibelle: campaign.specialityLibelle || campaign.speciality_libelle || undefined,
       specialityName: campaign.specialityLibelle || campaign.speciality_libelle || undefined,
       creatorName: campaign.creatorName || campaign.creator_name || 
@@ -660,7 +655,7 @@ export class CampaignService {
    * Synchronise les accès recruteurs d'une campagne via entity_permission.
    */
   saveCampaignAccess(accessDataArray: any[]): Observable<any> {
-    console.log('💾 Sauvegarde des accès recruteurs:', accessDataArray);
+    if (!environment.production) console.log('💾 Sauvegarde des accès recruteurs:', accessDataArray);
 
     if (!accessDataArray || accessDataArray.length === 0) {
       return of([]);
@@ -743,7 +738,7 @@ export class CampaignService {
    * Récupère les accès recruteurs pour une campagne.
    */
   getCampaignAccess(campaignId: number): Observable<any[]> {
-    console.log('📥 Récupération des accès recruteurs pour la campagne:', campaignId);
+    if (!environment.production) console.log('📥 Récupération des accès recruteurs pour la campagne:', campaignId);
 
     return this.getEntityPermissionsForCampaign(campaignId).pipe(
       map(permissions => this.mapEntityPermissionsToCampaignAccess(permissions)),
@@ -756,18 +751,18 @@ export class CampaignService {
    * Crée une notification pour un utilisateur
    */
   createNotification(notificationData: any): Observable<any> {
-    console.log('📬 Création notification:', notificationData);
+    if (!environment.production) console.log('📬 Création notification:', notificationData);
 
     const requestBody = {
       user: this.getCurrentUserId(),
       datas: [notificationData]
     };
 
-    console.log('📤 Corps de la requête notification:', requestBody);
+    if (!environment.production) console.log('📤 Corps de la requête notification:', requestBody);
 
     return this.http.post<any>(`${environment.apiUrl}/notifications/create`, requestBody).pipe(
       map(response => {
-        console.log('✅ Notification créée:', response);
+        if (!environment.production) console.log('✅ Notification créée:', response);
         return response;
       }),
       catchError(error => {
@@ -787,7 +782,7 @@ export class CampaignService {
    * Ajoute des réponses à une question (met à jour le questionId des réponses)
    */
   addAnswersToQuestion(questionId: number, answerIds: number[]): Observable<any> {
-    console.log('Ajout de réponses à la question:', { questionId, answerIds });
+    if (!environment.production) console.log('Ajout de réponses à la question:', { questionId, answerIds });
 
     // Mettre à jour chaque réponse avec le questionId
     const answers = answerIds.map(answerId => ({
@@ -802,7 +797,7 @@ export class CampaignService {
 
     return this.http.post<any>(`${environment.apiUrl}/answers/update`, requestBody).pipe(
       map(response => {
-        console.log('Réponses ajoutées à la question:', response);
+        if (!environment.production) console.log('Réponses ajoutées à la question:', response);
         return response;
       }),
       catchError(error => {
@@ -816,7 +811,7 @@ export class CampaignService {
    * Récupère tous les accès aux campagnes pour un utilisateur
    */
   getCampaignAccessesByUser(userId: number): Observable<any[]> {
-    console.log('🔍 Récupération des accès campagnes pour user:', userId);
+    if (!environment.production) console.log('🔍 Récupération des accès campagnes pour user:', userId);
 
     return this.getEntityPermissionsForUser(userId).pipe(
       map(permissions => this.mapEntityPermissionsToCampaignAccess(permissions)),
@@ -836,13 +831,13 @@ export class CampaignService {
     status: 'CAN_EDIT' | 'REQUIRES_ADMIN_MODE' | 'NO_PERMISSION';
     userRole?: string;
   }> {
-    console.log('🔐 Vérification des permissions pour la campagne:', campaignId);
+    if (!environment.production) console.log('🔐 Vérification des permissions pour la campagne:', campaignId);
 
     // Récupérer l'ID de l'utilisateur connecté depuis le localStorage
     const currentUserData = localStorage.getItem('user');
     const currentUserId = currentUserData ? JSON.parse(currentUserData).id : 1;
     
-    console.log('👤 Utilisateur connecté ID:', currentUserId);
+    if (!environment.production) console.log('👤 Utilisateur connecté ID:', currentUserId);
 
     // Ajouter le header user-id avec l'ID de l'utilisateur connecté
     const headers = new HttpHeaders({
@@ -856,18 +851,18 @@ export class CampaignService {
 
     return this.http.post<any>(`${this.apiUrl}/checkEditPermission`, requestBody, { headers }).pipe(
       map(response => {
-        console.log('✅ Réponse permissions:', response);
+        if (!environment.production) console.log('✅ Réponse permissions:', response);
         
         if (response.items && response.items.length > 0) {
           const item = response.items[0];
-          console.log('🔍 Item reçu:', item);
-          console.log('📝 campaignTitle (status):', item.campaignTitle);
-          console.log('📝 campaignDesc (userRole):', item.campaignDesc);
+          if (!environment.production) console.log('🔍 Item reçu:', item);
+          if (!environment.production) console.log('📝 campaignTitle (status):', item.campaignTitle);
+          if (!environment.production) console.log('📝 campaignDesc (userRole):', item.campaignDesc);
           
           const status = item.campaignTitle; // Le backend utilise campaignTitle pour retourner le status
           const userRole = item.campaignDesc; // Le backend utilise campaignDesc pour retourner le role
           
-          console.log('✨ Status final:', status, '| Role:', userRole);
+          if (!environment.production) console.log('✨ Status final:', status, '| Role:', userRole);
           
           return {
             status: status as 'CAN_EDIT' | 'REQUIRES_ADMIN_MODE' | 'NO_PERMISSION',
@@ -875,7 +870,7 @@ export class CampaignService {
           };
         }
         
-        console.log('⚠️ Pas d\'items dans la réponse');
+        if (!environment.production) console.log('⚠️ Pas d\'items dans la réponse');
         return { status: 'NO_PERMISSION' as const };
       }),
       catchError(error => {

@@ -169,15 +169,16 @@
             <label for="campaignStatus">
               Statut <span class="required">*</span>
             </label>
-            <select
+            <app-filter-select
               id="campaignStatus"
               formControlName="campaignStatus"
+              ariaLabel="Sélectionner un statut"
               [class.error]="campaignStatus?.invalid && campaignStatus?.touched"
             >
               @for (option of statusOptions; track option.value) {
                 <option [value]="option.value">{{ option.label }}</option>
               }
-            </select>
+            </app-filter-select>
           </div>
 
           <div class="form-group">
@@ -204,6 +205,9 @@
             />
           </div>
         </div>
+        @if (campaignForm.errors?.['dateRange'] && (campaignEnd?.touched || campaignStart?.touched)) {
+          <span class="error-message">La date de fin doit être postérieure à la date de début</span>
+        }
       </div>
 
       <!-- Modèle de pipeline -->
@@ -226,19 +230,21 @@
                 <span>Chargement des modèles...</span>
               </div>
             } @else {
-              <select
+              <app-filter-select
                 id="pipelineTemplateId"
-                [value]="selectedTemplate()?.id || ''"
-                (change)="onTemplateChange($event)"
+                ariaLabel="Sélectionner un modèle de pipeline"
+                [value]="selectedTemplate()?.id ?? null"
+                (valueChange)="onTemplateSelectChange($event)"
+                (blur)="campaignForm.get('pipelineTemplateId')?.markAsTouched()"
                 [class.error]="campaignForm.get('pipelineTemplateId')?.invalid && campaignForm.get('pipelineTemplateId')?.touched"
               >
-                <option value="" disabled>-- Choisir un modèle --</option>
+                <option [ngValue]="null" disabled>-- Choisir un modèle --</option>
                 @for (template of pipelineTemplates(); track template.id) {
-                  <option [value]="template.id">
+                  <option [ngValue]="template.id">
                     {{ template.templateName }}{{ template.isDefault ? ' (par défaut)' : '' }}
                   </option>
                 }
-              </select>
+              </app-filter-select>
               @if (campaignForm.get('pipelineTemplateId')?.invalid && campaignForm.get('pipelineTemplateId')?.touched) {
                 <span class="error-message">Le modèle de pipeline est requis</span>
               }
@@ -346,6 +352,48 @@
             @if (maxApply?.invalid && maxApply?.touched) {
               <span class="error-message">Le nombre doit être supérieur à 0</span>
             }
+          </div>
+
+          <div class="form-group">
+            <label for="markedOutOf">
+              Note maximale
+            </label>
+            <input
+              type="number"
+              id="markedOutOf"
+              formControlName="markedOutOf"
+              placeholder="Ex: 20"
+              min="1"
+              [class.error]="markedOutOf?.invalid && markedOutOf?.touched"
+            />
+            @if (markedOutOf?.invalid && markedOutOf?.touched) {
+              <span class="error-message">La note doit être supérieure à 0</span>
+            }
+          </div>
+        </div>
+
+        <div class="form-row two-cols">
+          <div class="form-group">
+            <label for="formAssignmentStrategy">
+              Stratégie d'assignation des formulaires
+            </label>
+            <app-filter-select id="formAssignmentStrategy" formControlName="formAssignmentStrategy" ariaLabel="Stratégie d'assignation des formulaires">
+              <option value="RANDOM">Aléatoire</option>
+              <option value="RANDOM_NO_REPEAT">Aléatoire sans répétition</option>
+              <option value="SEQUENTIAL">Séquentiel</option>
+              <option value="SOURCE_TOKEN">Par token source</option>
+            </app-filter-select>
+          </div>
+
+          <div class="form-group">
+            <label for="formAssignmentExhaustionPolicy">
+              Politique d'épuisement
+            </label>
+            <app-filter-select id="formAssignmentExhaustionPolicy" formControlName="formAssignmentExhaustionPolicy" ariaLabel="Politique d'épuisement">
+              <option value="BLOCK">Bloquer</option>
+              <option value="RESET">Réinitialiser</option>
+              <option value="LOOP">Répéter en boucle</option>
+            </app-filter-select>
           </div>
         </div>
 
@@ -506,7 +554,7 @@
         <button
           type="submit"
           class="btn btn-primary"
-          [disabled]="campaignForm.invalid || saving()"
+          [disabled]="saving()"
         >
           @if (saving()) {
             <span class="btn-spinner"></span>

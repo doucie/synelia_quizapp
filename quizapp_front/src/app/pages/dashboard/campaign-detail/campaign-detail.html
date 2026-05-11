@@ -466,31 +466,31 @@
           <div class="question-form">
             <div class="form-group">
               <label for="formAssignmentStrategy">Stratégie d’attribution</label>
-              <select
+              <app-filter-select
                 id="formAssignmentStrategy"
-                class="form-select"
+                ariaLabel="Stratégie d'attribution"
                 [ngModel]="selectedFormAssignmentStrategy()"
                 (ngModelChange)="selectedFormAssignmentStrategy.set($event)"
               >
                 @for (strategy of formAssignmentStrategies; track strategy.value) {
                   <option [ngValue]="strategy.value">{{ strategy.label }}</option>
                 }
-              </select>
+              </app-filter-select>
               <p class="form-helper">{{ getFormAssignmentStrategyDescription(selectedFormAssignmentStrategy()) }}</p>
             </div>
 
             <div class="form-group">
               <label for="formExhaustionPolicy">Politique d’épuisement</label>
-              <select
+              <app-filter-select
                 id="formExhaustionPolicy"
-                class="form-select"
+                ariaLabel="Politique d'épuisement"
                 [ngModel]="selectedFormExhaustionPolicy()"
                 (ngModelChange)="selectedFormExhaustionPolicy.set($event)"
               >
                 @for (policy of formExhaustionPolicies; track policy.value) {
                   <option [ngValue]="policy.value">{{ policy.label }}</option>
                 }
-              </select>
+              </app-filter-select>
               <p class="form-helper">{{ getExhaustionPolicyDescription(selectedFormExhaustionPolicy()) }}</p>
             </div>
           </div>
@@ -545,9 +545,9 @@
             </div>
             <div class="form-group">
               <label for="tokenForm">Formulaire dédié</label>
-              <select
+              <app-filter-select
                 id="tokenForm"
-                class="form-select"
+                ariaLabel="Formulaire dédié"
                 [ngModel]="newTokenFormId()"
                 (ngModelChange)="newTokenFormId.set($event)"
                 [disabled]="tokenLoading() || campaignForms().length === 0"
@@ -556,7 +556,7 @@
                 @for (form of campaignForms(); track form.id) {
                   <option [ngValue]="form.id">{{ form.formName || 'Sans nom' }}</option>
                 }
-              </select>
+              </app-filter-select>
               <p class="form-helper">Optionnel. Utilisé surtout avec la stratégie « Selon le source token ».</p>
             </div>
             <div class="form-actions">
@@ -618,8 +618,8 @@
                 <div class="token-form-mapping">
                   <label>Formulaire lié à ce token</label>
                   <div class="token-form-actions">
-                    <select
-                      class="form-select"
+                    <app-filter-select
+                      ariaLabel="Formulaire lié à ce token"
                       [ngModel]="getTokenFormSelection(token)"
                       (ngModelChange)="updateTokenFormSelection(token.id, $event)"
                       [disabled]="campaignForms().length === 0 || isTokenFormSaving(token.id)"
@@ -628,7 +628,7 @@
                       @for (form of campaignForms(); track form.id) {
                         <option [ngValue]="form.id">{{ form.formName || 'Sans nom' }}</option>
                       }
-                    </select>
+                    </app-filter-select>
                     <button
                       class="btn btn-secondary btn-inline-save"
                       (click)="saveTokenFormAssignment(token)"

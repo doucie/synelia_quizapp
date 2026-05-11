@@ -59,16 +59,11 @@ select {
     font-weight: var(--font-weight-semibold);
   }
 
-  option {
-    padding: var(--spacing-sm) var(--spacing-md);
-  }
-
-  option:checked,
-  option:hover,
-  option:focus {
-    background-color: var(--surface-secondary);
-    color: var(--text-primary);
-  }
+  // NOTE: option:hover, option:checked, option:focus sont intentionnellement absents.
+  // Quand la liste déroulante native est ouverte, l'OS (Win32, Cocoa) dessine le popup —
+  // pas le moteur CSS. Ces règles sont overridées par le bleu système Windows sur tous les
+  // navigateurs et n'ont aucun effet. option { padding } est aussi inopérant sur Firefox
+  // et macOS Safari. Ne pas les réintroduire.
 
   option[disabled] {
     color: var(--text-disabled);

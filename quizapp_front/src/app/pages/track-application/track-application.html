@@ -357,16 +357,17 @@
             <div class="candidate-ask-form">
               <div class="form-group">
                 <label for="candidateAskType">Type de correction</label>
-                <select
+                <app-filter-select
                   id="candidateAskType"
                   class="form-input"
+                  ariaLabel="Type de correction"
                   [ngModel]="askDraft.requestType"
                   (ngModelChange)="onAskTypeChange($event)">
                   <option [ngValue]="''">Choisir…</option>
                   <option [ngValue]="'IDENTITY'">Nom / prénom</option>
                   <option [ngValue]="'EMAIL'">Adresse email</option>
                   <option [ngValue]="'PHONE'">Téléphone</option>
-                </select>
+                </app-filter-select>
               </div>
 
               @if (askDraft.requestType === 'IDENTITY') {

@@ -40,6 +40,7 @@
 .checkbox-container {
   display: flex;
   align-items: center;
+  position: relative;
 }
 
 .checkbox-input {
@@ -52,6 +53,8 @@
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+  top: 0;
+  left: 0;
 }
 
 .checkbox-label {

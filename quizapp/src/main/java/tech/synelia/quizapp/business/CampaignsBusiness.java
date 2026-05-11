@@ -79,7 +79,7 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 	private SimpleDateFormat dateTimeFormat;
 
 	public CampaignsBusiness() {
-		dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+		dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 		dateTimeFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 	}
 	
@@ -112,6 +112,17 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 		fieldsToVerify.put("creatorId", dto.getCreatorId());
 			if (!Validate.RequiredValue(fieldsToVerify).isGood()) {
 				throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
+			}
+
+			// Validation: date de fin >= date de début
+			if (dto.getCampaignStart() != null && !dto.getCampaignStart().isEmpty()
+					&& dto.getCampaignEnd() != null && !dto.getCampaignEnd().isEmpty()) {
+				Date start = dateFormat.parse(dto.getCampaignStart());
+				Date end = dateFormat.parse(dto.getCampaignEnd());
+				if (end.before(start)) {
+					throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+							"La date de fin ne peut pas être antérieure à la date de début", locale));
+				}
 			}
 
 			// Verify if campaigns to insert do not exist
@@ -155,6 +166,12 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			}
 
 			dto.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(dto)));
+
+			// Validation: maxApply doit être >= 1 si fourni
+			if (dto.getMaxApply() != null && dto.getMaxApply() < 1) {
+				throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+						"La valeur maximale de candidatures doit être supérieure ou égale à 1", locale));
+			}
 
 			Campaigns entityToSave = null;
 			entityToSave = CampaignsTransformer.INSTANCE.toEntity(dto, existingUser, existingSpecialities);
@@ -293,6 +310,11 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			}
 			if (Utilities.shouldUpdate(dto.getCampaignEnd())) {
 				entityToSave.setCampaignEnd(dateFormat.parse(dto.getCampaignEnd()));
+			}
+			if (entityToSave.getCampaignStart() != null && entityToSave.getCampaignEnd() != null
+					&& entityToSave.getCampaignEnd().before(entityToSave.getCampaignStart())) {
+				throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+						"La date de fin ne peut pas être antérieure à la date de début", locale));
 			}
 			if (dto.getMaxApply() != null && dto.getMaxApply() > 0) {
 				entityToSave.setMaxApply(dto.getMaxApply());
@@ -738,6 +760,11 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			if (Utilities.shouldUpdate(dto.getCampaignEnd())) {
 				entityToSave.setCampaignEnd(dateFormat.parse(dto.getCampaignEnd()));
 			}
+			if (entityToSave.getCampaignStart() != null && entityToSave.getCampaignEnd() != null
+					&& entityToSave.getCampaignEnd().before(entityToSave.getCampaignStart())) {
+				throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+						"La date de fin ne peut pas être antérieure à la date de début", locale));
+			}
 			if (dto.getIsDeleted() != null) {
 				entityToSave.setIsDeleted(dto.getIsDeleted());
 			}
@@ -875,6 +902,11 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			}
 			if (Utilities.shouldUpdate(dto.getCampaignEnd())) {
 				entityToSave.setCampaignEnd(dateFormat.parse(dto.getCampaignEnd()));
+			}
+			if (entityToSave.getCampaignStart() != null && entityToSave.getCampaignEnd() != null
+					&& entityToSave.getCampaignEnd().before(entityToSave.getCampaignStart())) {
+				throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+						"La date de fin ne peut pas être antérieure à la date de début", locale));
 			}
 			if (dto.getIsDeleted() != null) {
 				entityToSave.setIsDeleted(dto.getIsDeleted());

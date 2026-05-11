@@ -1,17 +1,46 @@
 <div class="filter-select-shell">
-  <select
-    #selectElement
-    class="filter-select-control"
-    (change)="onNativeChange()"
-    (blur)="onSelectBlur()"
-    [disabled]="disabled"
-    [attr.aria-label]="ariaLabel">
-    <ng-content></ng-content>
-  </select>
+  <button
+    type="button"
+    class="filter-select-trigger"
+    [class.open]="isOpen()"
+    [attr.aria-expanded]="isOpen()"
+    [attr.aria-haspopup]="'listbox'"
+    [attr.aria-label]="ariaLabel"
+    [disabled]="disabled || null"
+    (click)="toggle()"
+    (blur)="onTriggerBlur()"
+    (keydown)="onTriggerKeydown($event)">
+    <span class="filter-select-label">{{ currentLabel() }}</span>
+    <span class="filter-select-chevron" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M6 9l6 6 6-6" />
+      </svg>
+    </span>
+  </button>
 
-  <span class="filter-select-chevron" aria-hidden="true">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M6 9l6 6 6-6" />
-    </svg>
-  </span>
+  @if (isOpen()) {
+    <ul
+      class="filter-select-dropdown"
+      role="listbox"
+      [attr.aria-label]="ariaLabel">
+      @for (opt of options(); track $index) {
+        <li
+          class="filter-select-option"
+          role="option"
+          [class.selected]="opt.value === value"
+          [class.disabled]="opt.disabled"
+          [class.focused]="focusedIndex() === $index"
+          [attr.aria-selected]="opt.value === value"
+          [attr.aria-disabled]="opt.disabled || null"
+          (click)="selectOption(opt)">
+          {{ opt.label }}
+        </li>
+      }
+    </ul>
+  }
+
+  <!-- Options projetées masquées — nécessaires pour que FilterSelectOptionDirective soit instanciée -->
+  <div hidden aria-hidden="true">
+    <ng-content></ng-content>
+  </div>
 </div>

@@ -58,8 +58,9 @@
                 [placeholder]="listSearchPlaceholder()">
             </div>
 
-            <select
+            <app-filter-select
               class="list-select-control"
+              ariaLabel="Sélectionner un élément"
               [ngModel]="selectedListItemId()"
               (ngModelChange)="onListSelectionChange($event)"
               [attr.aria-label]="listSelectAriaLabel()">
@@ -76,7 +77,7 @@
                   <option [ngValue]="tpl.id">{{ buildTemplateSelectLabel(tpl) }}</option>
                 }
               }
-            </select>
+            </app-filter-select>
 
             <p class="list-meta">
               {{ isPresetMode() ? filteredPresets().length : filteredTemplates().length }} affiché(s)
@@ -152,11 +153,11 @@
                 </div>
                 <div class="form-group flex-1">
                   <label>Catégorie *</label>
-                  <select [ngModel]="presetForm().category" (ngModelChange)="updatePresetField('category', $event)">
+                  <app-filter-select ariaLabel="Catégorie" [ngModel]="presetForm().category" (ngModelChange)="updatePresetField('category', $event)">
                     @for (category of presetCategories; track category) {
                       <option [value]="category">{{ category }}</option>
                     }
-                  </select>
+                  </app-filter-select>
                 </div>
               </div>
 
@@ -174,12 +175,12 @@
                 </div>
                 <div class="form-group flex-1">
                   <label>Type d'action</label>
-                  <select [ngModel]="form().actionType" (ngModelChange)="onActionTypeChange($event)">
+                  <app-filter-select ariaLabel="Type d'action" [ngModel]="form().actionType" (ngModelChange)="onActionTypeChange($event)">
                     <option value="">— Aucun —</option>
                     @for (at of actionTypes; track at.value) {
                       <option [value]="at.value">{{ at.label }}</option>
                     }
-                  </select>
+                  </app-filter-select>
                 </div>
               </div>
 
@@ -223,8 +224,9 @@
 
               <!-- Preset Select -->
               <div class="preset-section">
-                <select
+                <app-filter-select
                   class="list-select-control"
+                  ariaLabel="Choisir un preset"
                   [ngModel]="currentTemplatePreset()?.id ?? ''"
                   (ngModelChange)="onPresetSelectChange($event)">
                   <option value="">— Choisir un preset —</option>
@@ -233,7 +235,7 @@
                       {{ preset.name }}{{ isPresetRecommended(preset.category) ? ' ★' : '' }}
                     </option>
                   }
-                </select>
+                </app-filter-select>
                 @if (currentTemplatePreset(); as currentPreset) {
                   <div class="preset-applied">
                     <span class="preset-applied__name">{{ currentPreset.name }}</span>

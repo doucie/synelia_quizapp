@@ -1,0 +1,3 @@
+Prompt : 
+
+> Pour l'instant ne modifie pas le code. Pour chaque tâche principale demandée, analyse le code pour détecter les possibles incohérences et trouver la meilleure façon d'obtenir le résultat souhaité. Ensuite, dans to-do\to-do-2026-05-04.md, écrit les sous tâches à exécuter pour réaliser chaque tâche principale de façon détaillée et précise. N'hésite pas à ajouter des choses s'il y a des points bloquants qui pourraient m'avoir échappé stp. [PS : Séparer optimalement les tâches entre frontend (`/quizapp_front`) et backend (`/quizapp`)] Voici les tâches pricipales : 
