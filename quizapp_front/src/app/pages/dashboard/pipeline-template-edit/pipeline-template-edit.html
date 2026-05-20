@@ -132,6 +132,10 @@
                   <app-filter-checkbox class="toggle-label" [inputId]="'pipeline-stage-required-' + i" label="Obligatoire" variant="switch" [ngModel]="stage.isRequired" ariaLabel="Étape obligatoire" (ngModelChange)="updateStageField(i, 'isRequired', $event)"></app-filter-checkbox>
 
                   <app-filter-checkbox class="toggle-label" [inputId]="'pipeline-stage-eliminatory-' + i" label="Éliminatoire" variant="switch" [ngModel]="stage.isEliminatory" ariaLabel="Étape éliminatoire" (ngModelChange)="updateStageField(i, 'isEliminatory', $event)"></app-filter-checkbox>
+
+                  <app-filter-checkbox class="toggle-label" [inputId]="'pipeline-stage-email-required-' + i" label="Email requis" variant="switch" [ngModel]="stage.emailRequired" ariaLabel="Email requis pour cette étape" (ngModelChange)="updateStageEmailRequired(i, $event)"></app-filter-checkbox>
+
+                  <app-filter-checkbox class="toggle-label" [inputId]="'pipeline-stage-email-automatic-' + i" label="Envoi auto" variant="switch" [ngModel]="stage.emailAutomatic" [disabled]="!stage.emailRequired" ariaLabel="Envoi automatique de l'email pour cette étape" (ngModelChange)="updateStageEmailAutomatic(i, $event)"></app-filter-checkbox>
                 </div>
               </div>
 

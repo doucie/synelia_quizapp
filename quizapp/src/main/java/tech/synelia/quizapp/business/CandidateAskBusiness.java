@@ -31,6 +31,7 @@ import tech.synelia.quizapp.utils.contract.IBasicBusiness;
 import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.dto.transformer.*;
+import tech.synelia.quizapp.utils.enums.CandidateAskRequestType;
 import tech.synelia.quizapp.utils.enums.CandidateAskStatus;
 import tech.synelia.quizapp.utils.enums.EmailActionType;
 import tech.synelia.quizapp.dao.entity.CandidateAsk;
@@ -109,6 +110,14 @@ public class CandidateAskBusiness implements IBasicBusiness<Request<CandidateAsk
 			fieldsToVerify.put("applicationId", dto.getApplicationId());
 			if (!Validate.RequiredValue(fieldsToVerify).isGood()) {
 				throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
+			}
+
+			// Validation enum strict requestType (D-013)
+			dto.setRequestType(normalizeRequestType(dto.getRequestType(), locale));
+
+			// Validation enum strict askStatus (D-013) si fourni
+			if (StringUtils.isNotBlank(dto.getAskStatus())) {
+				dto.setAskStatus(normalizeAskStatus(dto.getAskStatus(), locale));
 			}
 
 			// Verify if candidateAsk to insert do not exist
@@ -211,10 +220,10 @@ public class CandidateAskBusiness implements IBasicBusiness<Request<CandidateAsk
 				entityToSave.setApplications(existingApplications);
 			}
 			if (Utilities.shouldUpdate(dto.getRequestType())) {
-				entityToSave.setRequestType(dto.getRequestType());
+				entityToSave.setRequestType(normalizeRequestType(dto.getRequestType(), locale));
 			}
 			if (Utilities.shouldUpdate(dto.getAskStatus())) {
-				entityToSave.setAskStatus(dto.getAskStatus());
+				entityToSave.setAskStatus(normalizeNullableAskStatus(dto.getAskStatus(), locale));
 			}
 			if (dto.getIsVerified() != null) {
 				entityToSave.setIsVerified(dto.getIsVerified());
@@ -636,6 +645,33 @@ public class CandidateAskBusiness implements IBasicBusiness<Request<CandidateAsk
 				throw new InternalErrorException(technicalError.INTERN_ERROR(exception.getMessage(), locale));
 			}
 		}
+	}
+
+	private String normalizeRequestType(String requestType, Locale locale) {
+		try {
+			return CandidateAskRequestType.fromValue(requestType).getValue();
+		} catch (IllegalArgumentException exception) {
+			throw new InvalidEntityException(functionalError.DATA_NOT_EXIST(
+					"requestType invalide (IDENTITY/EMAIL/PHONE) -> " + requestType,
+					locale));
+		}
+	}
+
+	private String normalizeAskStatus(String askStatus, Locale locale) {
+		try {
+			return CandidateAskStatus.fromValue(askStatus).getValue();
+		} catch (IllegalArgumentException exception) {
+			throw new InvalidEntityException(functionalError.DATA_NOT_EXIST(
+					"askStatus invalide (PENDING/APPROVED/REJECTED) -> " + askStatus,
+					locale));
+		}
+	}
+
+	private String normalizeNullableAskStatus(String askStatus, Locale locale) {
+		if (askStatus == null) {
+			return null;
+		}
+		return normalizeAskStatus(askStatus, locale);
 	}
 
 	private InvalidEntityException invalidCandidateAskRequest(String message, Locale locale) {

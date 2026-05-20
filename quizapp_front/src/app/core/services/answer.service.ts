@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+import { AuthService } from './auth/auth.service';
 
 export interface Answer {
   id?: number;
@@ -63,37 +64,36 @@ export interface PagedResponse<T> {
 export class AnswerService {
   private apiUrl = `${environment.apiUrl}/answer`;
 
-  constructor(private http: HttpClient) {}
-
-  private getUserId(): string {
-    const data = localStorage.getItem('user');
-    return data ? JSON.parse(data).id?.toString() || '1' : '1';
-  }
+  constructor(
+    private http: HttpClient,
+    private authService: AuthService
+  ) {}
 
   getAllByCriteria(criteria: AnswerSearchCriteria = {}): Observable<PagedAnswerResponse> {
-    const request = {
-      user: this.getUserId(),
-      size: criteria.size || 10,
-      index: criteria.page || 0,
-      isSimpleLoading: false,
-      data: {
-        id: criteria.idDe || '',
-        isDeleted: criteria.isDeleted !== undefined ? criteria.isDeleted.toString() : '',
-        searchString: criteria.search_string || '',
-        ...(criteria.answerText && { answerText: criteria.answerText }),
-        ...(criteria.questionId && { questionId: criteria.questionId }),
-        ...(criteria.answerOrder && { answerOrder: criteria.answerOrder }),
-        ...(criteria.isCorrect !== undefined && { isCorrect: criteria.isCorrect }),
-                ...(criteria.dateCreationDe && { dateCreationDe: criteria.dateCreationDe }),
-        ...(criteria.dateCreationA && { dateCreationA: criteria.dateCreationA }),
-        ...(criteria.dateModificationDe && { dateModificationDe: criteria.dateModificationDe }),
-        ...(criteria.dateModificationA && { dateModificationA: criteria.dateModificationA }),
-        ...(criteria.idDe && criteria.idDe.trim() && { idStart: criteria.idDe }),
-        ...(criteria.idA && criteria.idA.trim() && { idEnd: criteria.idA })
-      }
-    };
+    return this.withAuthenticatedUser(userId => {
+      const request = {
+        user: userId,
+        size: criteria.size || 10,
+        index: criteria.page || 0,
+        isSimpleLoading: false,
+        data: {
+          id: criteria.idDe || '',
+          isDeleted: criteria.isDeleted !== undefined ? criteria.isDeleted.toString() : '',
+          searchString: criteria.search_string || '',
+          ...(criteria.answerText && { answerText: criteria.answerText }),
+          ...(criteria.questionId && { questionId: criteria.questionId }),
+          ...(criteria.answerOrder && { answerOrder: criteria.answerOrder }),
+          ...(criteria.isCorrect !== undefined && { isCorrect: criteria.isCorrect }),
+          ...(criteria.dateCreationDe && { dateCreationDe: criteria.dateCreationDe }),
+          ...(criteria.dateCreationA && { dateCreationA: criteria.dateCreationA }),
+          ...(criteria.dateModificationDe && { dateModificationDe: criteria.dateModificationDe }),
+          ...(criteria.dateModificationA && { dateModificationA: criteria.dateModificationA }),
+          ...(criteria.idDe && criteria.idDe.trim() && { idStart: criteria.idDe }),
+          ...(criteria.idA && criteria.idA.trim() && { idEnd: criteria.idA })
+        }
+      };
 
-    return this.http.post<any>(`${this.apiUrl}/getAllByCriteria`, request).pipe(
+      return this.http.post<any>(`${this.apiUrl}/getAllByCriteria`, request).pipe(
       map(response => {
         if (!response || (!response.items && !response.item)) {
           return { content: [], totalElements: 0, totalPages: 0, size: criteria.size || 10, number: criteria.page || 0 };
@@ -104,7 +104,8 @@ export class AnswerService {
         return { content: items, totalElements, totalPages: Math.ceil(totalElements / pageSize), size: pageSize, number: criteria.page || 0 };
       }),
       catchError(error => { console.error('Erreur answer:', error); return throwError(() => error); })
-    );
+      );
+    });
   }
 
   /** Backward-compatible alias */
@@ -124,7 +125,7 @@ export class AnswerService {
   }
 
   create(item: Partial<Answer>): Observable<any> {
-    return this.http.post(`${this.apiUrl}/create`, { user: this.getUserId(), datas: [item] });
+    return this.withAuthenticatedUser(userId => this.http.post(`${this.apiUrl}/create`, { user: userId, datas: [item] }));
   }
 
   /** Backward-compatible alias */
@@ -133,7 +134,7 @@ export class AnswerService {
   }
 
   update(item: Partial<Answer>): Observable<any> {
-    return this.http.post(`${this.apiUrl}/update`, { user: this.getUserId(), datas: [item] });
+    return this.withAuthenticatedUser(userId => this.http.post(`${this.apiUrl}/update`, { user: userId, datas: [item] }));
   }
 
   /** Backward-compatible alias */
@@ -142,7 +143,7 @@ export class AnswerService {
   }
 
   delete(id: number): Observable<any> {
-    return this.http.post(`${this.apiUrl}/delete`, { user: this.getUserId(), datas: [{ id }] });
+    return this.withAuthenticatedUser(userId => this.http.post(`${this.apiUrl}/delete`, { user: userId, datas: [{ id }] }));
   }
 
   /** Backward-compatible alias */
@@ -151,7 +152,18 @@ export class AnswerService {
   }
 
   restore(id: number): Observable<any> {
-    return this.http.post(`${this.apiUrl}/update`, { user: this.getUserId(), datas: [{ id, isDeleted: false }] });
+    return this.withAuthenticatedUser(userId => this.http.post(`${this.apiUrl}/update`, { user: userId, datas: [{ id, isDeleted: false }] }));
+  }
+
+  /** Answers admin endpoints require a resolved authenticated user. */
+  private withAuthenticatedUser<T>(requestFactory: (userId: string) => Observable<T>): Observable<T> {
+    const userId = this.authService.getCurrentUserId();
+
+    if (!userId || userId === '0') {
+      return throwError(() => new Error('Contexte utilisateur manquant. Les appels answer nécessitent une session authentifiée.'));
+    }
+
+    return requestFactory(userId);
   }
 
   /** Backward-compatible alias */

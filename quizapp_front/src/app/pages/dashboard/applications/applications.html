@@ -307,7 +307,11 @@
     @if (displayedApplications().length > 0) {
       <div class="applications-container" [class.list-view]="viewMode() === 'list'">
         @for (app of displayedApplications(); track app.id) {
-          <article class="application-card" (click)="viewApplicationDetails(app.id!)">
+          <article
+            class="application-card"
+            [class.application-card--focused]="app.id === focusedApplicationId()"
+            [attr.id]="'application-' + app.id"
+            (click)="viewApplicationDetails(app.id!)">
             
             <!-- En-tête: Nom + ID + Status -->
             <div class="card-header-new">
@@ -503,7 +507,7 @@
                 </svg>
                 Créé le {{ formatDate(app.candidateBirthDate) }}
               </span>
-              <button class="details-button">
+              <button class="details-button" type="button" (click)="$event.stopPropagation(); viewApplicationDetails(app.id!)">
                 <span>Voir les détails</span>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <line x1="5" y1="12" x2="19" y2="12"/>

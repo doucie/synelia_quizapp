@@ -22,6 +22,8 @@ interface ApplicationWithCampaign extends Application {
   decisions?: Decision[];
 }
 
+type DecisionFilter = 'ALL' | 'SUBMITTED' | 'PRE_SCREEN' | 'FINAL';
+
 @Component({
   selector: 'app-decisions',
   standalone: true,
@@ -40,7 +42,7 @@ export class DecisionsComponent implements OnInit, OnDestroy {
   loading = signal(false);
   searchQuery = signal('');
   searchTerm = signal(''); // Nouveau signal pour la recherche moderne
-  selectedFilter = signal<'ALL' | 'SUBMITTED' | 'PRE_SCREEN' | 'FINAL'>('ALL'); // Nouveau signal pour les filtres
+  selectedFilter = signal<DecisionFilter>('ALL'); // Nouveau signal pour les filtres
   selectedApplication = signal<ApplicationWithCampaign | null>(null);
   showApplicationSuggestions = signal(false);
 
@@ -84,18 +86,7 @@ export class DecisionsComponent implements OnInit, OnDestroy {
   filteredApplications = computed(() => {
     const query = this.searchTerm().toLowerCase();
     const filter = this.selectedFilter();
-    let apps = this.applications();
-
-    // Appliquer le filtre par statut
-    if (filter !== 'ALL') {
-      if (filter === 'SUBMITTED') {
-        apps = apps.filter(app => app.applicationStatus === APPLICATION_STATUS.SUBMITTED);
-      } else if (filter === 'PRE_SCREEN') {
-        apps = apps.filter(app => app.applicationStatus?.startsWith('PRE_SCREEN') || false);
-      } else if (filter === 'FINAL') {
-        apps = apps.filter(app => app.applicationStatus?.startsWith('FINAL') || false);
-      }
-    }
+    let apps = this.applications().filter(app => this.matchesDecisionFilter(app, filter));
 
     // Appliquer la recherche textuelle
     if (query) {
@@ -924,6 +915,10 @@ export class DecisionsComponent implements OnInit, OnDestroy {
     this.selectedFilter.set(filter);
   }
 
+  getFilterCount(filter: Exclude<DecisionFilter, 'ALL'>): number {
+    return this.applications().filter(app => this.matchesDecisionFilter(app, filter)).length;
+  }
+
   /**
    * Récupère les candidatures par statut
    */
@@ -934,7 +929,7 @@ export class DecisionsComponent implements OnInit, OnDestroy {
   /**
    * Compte le nombre de décisions en attente (PRE_SCREEN_*)
    */
-  getPendingDecisionsCount(): number {
+  getPreScreenDecisionsCount(): number {
     return this.applications().filter(app =>
       app.applicationStatus?.startsWith('PRE_SCREEN') || false
     ).length;
@@ -947,6 +942,22 @@ export class DecisionsComponent implements OnInit, OnDestroy {
     return this.applications().filter(app =>
       app.applicationStatus?.startsWith('FINAL') || false
     ).length;
+  }
+
+  private matchesDecisionFilter(app: ApplicationWithCampaign, filter: DecisionFilter): boolean {
+    if (filter === 'ALL') {
+      return true;
+    }
+
+    if (filter === 'SUBMITTED') {
+      return app.applicationStatus === APPLICATION_STATUS.SUBMITTED;
+    }
+
+    if (filter === 'PRE_SCREEN') {
+      return app.applicationStatus === APPLICATION_STATUS.PRE_SCREEN_ACCEPTED;
+    }
+
+    return app.applicationStatus?.startsWith('FINAL') || false;
   }
 
   /**

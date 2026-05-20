@@ -16,7 +16,7 @@
       </div>
       <h1>Gestion des Spécialités</h1>
       <p class="page-description">
-        Administration complète des spécialités - création, modification et gestion des domaines d'expertise
+        Surface technique d'administration brute des specialites. Pour la gestion metier quotidienne et les filtres de consultation, utiliser la page Specialities.
       </p>
     </div>
 
@@ -34,6 +34,7 @@
         <app-filter-checkbox inputId="showDeleted" label="Afficher les spécialités supprimées" [checked]="showDeletedSpecialities" ariaLabel="Afficher les spécialités supprimées" (checkedChange)="toggleDeletedSpecialities()"></app-filter-checkbox>
       </div>
       <div class="toolbar-right">
+        <button class="btn-secondary-pro" (click)="openSpecialitiesWorkspace()">Page metier</button>
         <button class="btn-secondary-pro" (click)="openAdvancedSearch()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M3 6H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -238,10 +239,10 @@
         <thead>
           <tr>
             <th class="col-id" [class.col-hidden]="!isColumnVisible('id')">ID</th>
-            <th class="col-short" [class.col-hidden]="!isColumnVisible('name')">Nom de spécialité</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('nom')">Nom de spécialité</th>
             <th class="col-medium" [class.col-hidden]="!isColumnVisible('description')">Description</th>
-            <th class="col-short" [class.col-hidden]="!isColumnVisible('department')">Département</th>
-            <th class="col-date" [class.col-hidden]="!isColumnVisible('createdAt')">Créé le</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('departmentName')">Département</th>
+            <th class="col-date" [class.col-hidden]="!isColumnVisible('dateCreation')">Créé le</th>
             <th class="col-actions" [class.col-hidden]="!isColumnVisible('actions')">Actions</th>
           </tr>
         </thead>
@@ -251,18 +252,18 @@
             <td class="col-id" [class.col-hidden]="!isColumnVisible('id')">
               <span class="cell-id">#{{ speciality.id }}</span>
             </td>
-            <td class="col-short" [class.col-hidden]="!isColumnVisible('name')" [title]="speciality.nom || ''">
+            <td class="col-short" [class.col-hidden]="!isColumnVisible('nom')" [title]="speciality.nom || ''">
               <span class="cell-name">{{ speciality.nom || '-' }}</span>
             </td>
             <td class="col-medium" [class.col-hidden]="!isColumnVisible('description')" [title]="speciality.description || ''">
               <span class="cell-description" *ngIf="speciality.description">{{ speciality.description }}</span>
               <span *ngIf="!speciality.description" style="color: var(--text-secondary);">-</span>
             </td>
-            <td class="col-short" [class.col-hidden]="!isColumnVisible('department')" [title]="speciality.departmentName || ''">
+            <td class="col-short" [class.col-hidden]="!isColumnVisible('departmentName')" [title]="speciality.departmentName || ''">
               <span class="cell-department">{{ speciality.departmentName || '-' }}</span>
             </td>
-            <td class="col-date" [class.col-hidden]="!isColumnVisible('createdAt')">
-              <span class="cell-date" *ngIf="speciality.createdAt; else noDate">
+            <td class="col-date" [class.col-hidden]="!isColumnVisible('dateCreation')">
+              <span class="cell-date" *ngIf="speciality.dateCreation; else noDate">
                 {{ formatCreationDate(speciality) }}
               </span>
               <ng-template #noDate>
@@ -319,7 +320,7 @@
     <div class="pagination-container">
       <div class="pagination-info">
         <span class="results-info">
-          Affichage {{ currentPage() * pageSize() + 1 }} - {{ Math.min((currentPage() + 1) * pageSize(), totalElements()) }} 
+          Affichage {{ totalElements() ? currentPage() * pageSize() + 1 : 0 }} - {{ totalElements() ? Math.min((currentPage() + 1) * pageSize(), totalElements()) : 0 }} 
           sur {{ totalElements() }} spécialités
         </span>
         

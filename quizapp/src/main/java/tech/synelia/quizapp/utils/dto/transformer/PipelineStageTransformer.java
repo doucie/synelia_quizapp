@@ -40,6 +40,8 @@ public interface PipelineStageTransformer {
         dto.setStageOrder(entity.getStageOrder());
         dto.setIsRequired(entity.getIsRequired());
         dto.setIsEliminatory(entity.getIsEliminatory());
+        dto.setEmailRequired(entity.getEmailRequired());
+        dto.setEmailAutomatic(entity.getEmailAutomatic());
         if (entity.getPipelineTemplate() != null) {
             dto.setPipelineTemplateId(entity.getPipelineTemplate().getId());
         }
@@ -66,6 +68,8 @@ public interface PipelineStageTransformer {
         @Mapping(source = "dto.stageOrder", target = "stageOrder"),
         @Mapping(source = "dto.isRequired", target = "isRequired"),
         @Mapping(source = "dto.isEliminatory", target = "isEliminatory"),
+        @Mapping(source = "dto.emailRequired", target = "emailRequired"),
+        @Mapping(source = "dto.emailAutomatic", target = "emailAutomatic"),
         @Mapping(source = "dto.configJson", target = "configJson"),
         @Mapping(source = "dto.createdBy", target = "createdBy"),
         @Mapping(source = "dto.updatedBy", target = "updatedBy"),

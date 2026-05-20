@@ -289,7 +289,7 @@ L'équipe de recrutement
         this.campaignAccessMap.set(accessMap);
 
         const allCampaigns = response.campaigns.content || [];
-        const allowedCampaigns = this.permissionService.hasAnyPermission(['CREATE_INTERVIEWS', 'UPDATE_INTERVIEWS'])
+        const allowedCampaigns = this.permissionService.hasAnyPermission(['CREATE_INTERVIEWS', 'UPDATE_INTERVIEWS', 'PLANIFY'])
           ? allCampaigns
           : allCampaigns.filter(campaign => campaign.id && this.canPlanifyCampaign(campaign.id, accessMap));
 
@@ -484,7 +484,7 @@ L'équipe de recrutement
   }
 
   private canPlanifyCampaign(campaignId: number, accessMap = this.campaignAccessMap()): boolean {
-    if (this.permissionService.hasAnyPermission(['CREATE_INTERVIEWS', 'UPDATE_INTERVIEWS'])) {
+  if (this.permissionService.hasAnyPermission(['CREATE_INTERVIEWS', 'UPDATE_INTERVIEWS', 'PLANIFY'])) {
       return true;
     }
     const access = accessMap[campaignId];

@@ -38,6 +38,8 @@ export interface UserPermissionOverride {
 export interface EntityPermission {
   id?: number;
   userId?: number;
+  businessGroupId?: number;
+  systemRole?: string;
   entityType?: string;
   entityId?: number;
   permissionKey?: string;

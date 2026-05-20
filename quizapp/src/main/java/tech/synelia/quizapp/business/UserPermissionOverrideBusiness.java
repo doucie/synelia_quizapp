@@ -45,6 +45,10 @@ public class UserPermissionOverrideBusiness {
 			throw new InvalidEntityException(functionalError.FIELD_EMPTY("userId, functionality or isAllowed", locale));
 		}
 
+		// Validation enum strict functionality (D-013)
+		String funcUpper = normalizeFunctionality(dto.getFunctionality(), locale);
+		dto.setFunctionality(funcUpper);
+
 		User user = userRepository.findOne(dto.getUserId(), false);
 		if (user == null) {
 			throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("user id -> " + dto.getUserId(), locale));
@@ -100,6 +104,7 @@ public class UserPermissionOverrideBusiness {
 		if (dto == null || dto.getUserId() == null || Utilities.isBlank(dto.getFunctionality())) {
 			throw new InvalidEntityException(functionalError.FIELD_EMPTY("userId or functionality", locale));
 		}
+		dto.setFunctionality(normalizeFunctionality(dto.getFunctionality(), locale));
 
 		UserPermissionOverride existing = userPermissionOverrideRepository.findByUserIdAndFunctionality(
 				dto.getUserId(), dto.getFunctionality());
@@ -156,6 +161,7 @@ public class UserPermissionOverrideBusiness {
 	 */
 	public Response<UserPermissionOverrideDto> getByCriteria(Request<UserPermissionOverrideDto> request, Locale locale) throws Exception {
 		log.info("----begin get UserPermissionOverride-----");
+		normalizeCriteria(request, locale);
 		Response<UserPermissionOverrideDto> response = new Response<>();
 
 		List<UserPermissionOverride> items = userPermissionOverrideRepository.getByCriteria(request, em, locale);
@@ -190,6 +196,26 @@ public class UserPermissionOverrideBusiness {
 		}
 		log.info("----end get UserPermissionOverride-----");
 		return response;
+	}
+
+	private void normalizeCriteria(Request<UserPermissionOverrideDto> request, Locale locale) {
+		UserPermissionOverrideDto dto = request != null ? request.getData() : null;
+		if (dto == null || !Utilities.notBlank(dto.getFunctionality())) {
+			return;
+		}
+
+		dto.setFunctionality(normalizeFunctionality(dto.getFunctionality(), locale));
+	}
+
+	private String normalizeFunctionality(String functionality, Locale locale) {
+		String normalizedFunctionality = functionality.trim().toUpperCase(java.util.Locale.ROOT);
+		try {
+			return tech.synelia.quizapp.utils.enums.FunctionalityEnum.valueOf(normalizedFunctionality).name();
+		} catch (IllegalArgumentException ex) {
+			throw new InvalidEntityException(functionalError.DATA_NOT_EXIST(
+					"functionality invalide -> " + functionality,
+					locale));
+		}
 	}
 
 	/**

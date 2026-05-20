@@ -1,7 +1,5 @@
-
-
 /*
- * Java transformer for entity table campaigns 
+ * Java transformer for entity table campaigns
  * Created on 2025-08-22 ( Time 11:38:25 )
  * Generator tool : Telosys Tools Generator ( version 3.3.0 )
  * Copyright 2018 Geo. All Rights Reserved.
@@ -10,96 +8,148 @@
 package tech.synelia.quizapp.utils.dto.transformer;
 
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.mapstruct.IterableMapping;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.Mappings;
-import org.mapstruct.Named;
-import org.mapstruct.factory.Mappers;
-
-import tech.synelia.quizapp.dao.entity.*;
-import tech.synelia.quizapp.utils.contract.*;
-import tech.synelia.quizapp.utils.dto.*;
-
+import tech.synelia.quizapp.dao.entity.Campaigns;
+import tech.synelia.quizapp.dao.entity.PipelineTemplate;
+import tech.synelia.quizapp.dao.entity.Specialities;
+import tech.synelia.quizapp.dao.entity.User;
+import tech.synelia.quizapp.utils.dto.CampaignsDto;
 
 /**
  * TRANSFORMER for table "campaigns"
- * 
- * @author Geo
- *
  */
-@Mapper
 public interface CampaignsTransformer {
 
-	CampaignsTransformer INSTANCE = Mappers.getMapper(CampaignsTransformer.class);
+	CampaignsTransformer INSTANCE = new CampaignsTransformer() {
+	};
 
-	@FullTransformerQualifier
-	@Named("toFullDto")
-	@Mappings({
-		@Mapping(source="entity.campaignStart", dateFormat="yyyy-MM-dd", target="campaignStart"),
-		@Mapping(source="entity.campaignEnd", dateFormat="yyyy-MM-dd", target="campaignEnd"),
-		@Mapping(source="entity.createdAt", dateFormat="dd/MM/yyyy", target="createdAt"),
-		@Mapping(source="entity.updatedAt", dateFormat="dd/MM/yyyy", target="updatedAt"),
-		@Mapping(source="entity.formAssignmentStrategy", target="formAssignmentStrategy"),
-		@Mapping(source="entity.formAssignmentExhaustionPolicy", target="formAssignmentExhaustionPolicy"),
-		@Mapping(source="entity.user.id", target="creatorId"),
-		@Mapping(source="entity.user.firstName", target="userFirstName"),
-		@Mapping(source="entity.user.lastName", target="userLastName"),
-		@Mapping(source="entity.specialities.id", target="specialityId"),
-		@Mapping(source="entity.specialities.specialityName", target="specialityName"),
-		@Mapping(source="entity.pipelineTemplate.id", target="pipelineTemplateId"),
-		@Mapping(source="entity.pipelineTemplate.templateName", target="pipelineTemplateName"),
-	})
-	CampaignsDto toDto(Campaigns entity) throws ParseException;
+	default CampaignsDto toDto(Campaigns entity) throws ParseException {
+		if (entity == null) {
+			return null;
+		}
 
-	@Named("toLiteDto")
-    default CampaignsDto toLiteDto(Campaigns entity) {
+		CampaignsDto dto = new CampaignsDto();
+		dto.setId(entity.getId());
+		dto.setCampaignTitle(entity.getCampaignTitle());
+		dto.setCampaignDesc(entity.getCampaignDesc());
+		dto.setCampaignStatus(entity.getCampaignStatus());
+		dto.setCampaignStart(formatDate(entity.getCampaignStart(), "yyyy-MM-dd"));
+		dto.setCampaignEnd(formatDate(entity.getCampaignEnd(), "yyyy-MM-dd"));
+		dto.setMaxApply(entity.getMaxApply());
+		dto.setAllCanEvaluate(entity.getAllCanEvaluate());
+		dto.setTotalQuestions(entity.getTotalQuestions());
+		dto.setIsTimed(entity.getIsTimed());
+		dto.setIsArchived(entity.getIsArchived());
+		dto.setTimeAllForms(entity.getTimeAllForms());
+		dto.setFormAssignmentStrategy(entity.getFormAssignmentStrategy());
+		dto.setFormAssignmentExhaustionPolicy(entity.getFormAssignmentExhaustionPolicy());
+		dto.setCreatedAt(formatDate(entity.getCreatedAt(), "dd/MM/yyyy"));
+		dto.setCreatedBy(entity.getCreatedBy());
+		dto.setUpdatedAt(formatDate(entity.getUpdatedAt(), "dd/MM/yyyy"));
+		dto.setUpdatedBy(entity.getUpdatedBy());
+		dto.setIsDeleted(entity.getIsDeleted());
+		dto.setSearchString(entity.getSearchString());
+
+		if (entity.getUser() != null) {
+			dto.setCreatorId(entity.getUser().getId());
+			dto.setUserFirstName(entity.getUser().getFirstName());
+			dto.setUserLastName(entity.getUser().getLastName());
+			if (entity.getUser().getUsername() != null && !entity.getUser().getUsername().isBlank()) {
+				dto.setCreatorName(entity.getUser().getUsername());
+			}
+		}
+
+		if (entity.getSpecialities() != null) {
+			dto.setSpecialityId(entity.getSpecialities().getId());
+			dto.setSpecialityName(entity.getSpecialities().getSpecialityName());
+		}
+
+		if (entity.getPipelineTemplate() != null) {
+			dto.setPipelineTemplateId(entity.getPipelineTemplate().getId());
+			dto.setPipelineTemplateName(entity.getPipelineTemplate().getTemplateName());
+		}
+
+		return dto;
+	}
+
+	default CampaignsDto toLiteDto(Campaigns entity) {
 		if (entity == null) {
 			return null;
 		}
 		CampaignsDto dto = new CampaignsDto();
-								dto.setId( entity.getId() );
-																																																																						return dto;
-    }
+		dto.setId(entity.getId());
+		return dto;
+	}
 
-	@IterableMapping(qualifiedByName = "toFullDto")
-    List<CampaignsDto> toDtos(List<Campaigns> entities) throws ParseException;
+	default List<CampaignsDto> toDtos(List<Campaigns> entities) throws ParseException {
+		if (entities == null || entities.isEmpty()) {
+			return new ArrayList<>();
+		}
+		List<CampaignsDto> dtos = new ArrayList<>();
+		for (Campaigns entity : entities) {
+			dtos.add(toDto(entity));
+		}
+		return dtos;
+	}
 
-	@IterableMapping(qualifiedByName = "toLiteDto")
 	default List<CampaignsDto> toLiteDtos(List<Campaigns> entities) {
 		if (entities == null || entities.isEmpty()) {
 			return new ArrayList<>();
 		}
-		List<CampaignsDto> dtos = new ArrayList<CampaignsDto>();
+		List<CampaignsDto> dtos = new ArrayList<>();
 		for (Campaigns entity : entities) {
 			dtos.add(toLiteDto(entity));
 		}
 		return dtos;
 	}
 
-	@Mappings({
-		@Mapping(source="dto.id", target="id"),
-		@Mapping(source="dto.campaignTitle", target="campaignTitle"),
-		@Mapping(source="dto.campaignDesc", target="campaignDesc"),
-		@Mapping(source="dto.campaignStatus", target="campaignStatus"),
-		@Mapping(source="dto.campaignStart", dateFormat="yyyy-MM-dd",target="campaignStart"),
-	@Mapping(source="dto.campaignEnd", dateFormat="yyyy-MM-dd",target="campaignEnd"),
-	@Mapping(source="dto.maxApply", target="maxApply"),
-	@Mapping(source="dto.allCanEvaluate", target="allCanEvaluate"),
-	@Mapping(source="dto.totalQuestions", target="totalQuestions"),
-	@Mapping(source="dto.formAssignmentStrategy", target="formAssignmentStrategy"),
-	@Mapping(source="dto.formAssignmentExhaustionPolicy", target="formAssignmentExhaustionPolicy"),
-	@Mapping(source="dto.createdAt", dateFormat="dd/MM/yyyy",target="createdAt"),
-		@Mapping(source="dto.createdBy", target="createdBy"),
-		@Mapping(source="dto.updatedAt", dateFormat="dd/MM/yyyy",target="updatedAt"),
-		@Mapping(source="dto.updatedBy", target="updatedBy"),
-		@Mapping(source="dto.isDeleted", target="isDeleted"),
-		@Mapping(source="dto.searchString", target="searchString"),
-		@Mapping(source="user", target="user"),
-		@Mapping(source="specialities", target="specialities"),
-	})
-    Campaigns toEntity(CampaignsDto dto, User user, Specialities specialities) throws ParseException;
+	default Campaigns toEntity(CampaignsDto dto, User user, Specialities specialities, PipelineTemplate pipelineTemplate)
+			throws ParseException {
+		if (dto == null) {
+			return null;
+		}
+
+		Campaigns entity = new Campaigns();
+		entity.setId(dto.getId());
+		entity.setCampaignTitle(dto.getCampaignTitle());
+		entity.setCampaignDesc(dto.getCampaignDesc());
+		entity.setCampaignStatus(dto.getCampaignStatus());
+		entity.setCampaignStart(parseDate(dto.getCampaignStart(), "yyyy-MM-dd"));
+		entity.setCampaignEnd(parseDate(dto.getCampaignEnd(), "yyyy-MM-dd"));
+		entity.setMaxApply(dto.getMaxApply());
+		entity.setAllCanEvaluate(dto.getAllCanEvaluate());
+		entity.setTotalQuestions(dto.getTotalQuestions());
+		entity.setIsTimed(dto.getIsTimed());
+		entity.setIsArchived(dto.getIsArchived());
+		entity.setTimeAllForms(dto.getTimeAllForms());
+		entity.setFormAssignmentStrategy(dto.getFormAssignmentStrategy());
+		entity.setFormAssignmentExhaustionPolicy(dto.getFormAssignmentExhaustionPolicy());
+		entity.setCreatedAt(parseDate(dto.getCreatedAt(), "dd/MM/yyyy"));
+		entity.setCreatedBy(dto.getCreatedBy());
+		entity.setUpdatedAt(parseDate(dto.getUpdatedAt(), "dd/MM/yyyy"));
+		entity.setUpdatedBy(dto.getUpdatedBy());
+		entity.setIsDeleted(dto.getIsDeleted());
+		entity.setSearchString(dto.getSearchString());
+		entity.setUser(user);
+		entity.setSpecialities(specialities);
+		entity.setPipelineTemplate(pipelineTemplate);
+		return entity;
+	}
+
+	private static String formatDate(java.util.Date value, String pattern) {
+		if (value == null) {
+			return null;
+		}
+		return new SimpleDateFormat(pattern).format(value);
+	}
+
+	private static java.util.Date parseDate(String value, String pattern) throws ParseException {
+		if (value == null || value.isBlank()) {
+			return null;
+		}
+		return new SimpleDateFormat(pattern).parse(value);
+	}
 }

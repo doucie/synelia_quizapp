@@ -13,11 +13,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.http.HttpStatus;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -30,6 +33,7 @@ import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.contract.SearchParam;
 import tech.synelia.quizapp.utils.dto.transformer.*;
+import tech.synelia.quizapp.utils.enums.CampaignStatus;
 import tech.synelia.quizapp.utils.enums.FormAssignmentExhaustionPolicy;
 import tech.synelia.quizapp.utils.enums.FormAssignmentStrategy;
 import tech.synelia.quizapp.dao.entity.*;
@@ -45,6 +49,9 @@ BUSINESS for table "campaigns"
 @Component
 public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, Response<CampaignsDto>> {
 
+	private static final String CAMPAIGN_STATUS_ALLOWED_VALUES = String.join("/",
+			Arrays.stream(CampaignStatus.values()).map(CampaignStatus::getValue).toArray(String[]::new));
+
 	private Response<CampaignsDto> response;
 	@Autowired
 	private CampaignsRepository campaignsRepository;
@@ -56,6 +63,8 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 	private UserRepository userRepository;
 	@Autowired
 	private FormRepository formRepository;
+	@Autowired
+	private FormBusiness formBusiness;
 	@Autowired
 	private SpecialitiesRepository specialitiesRepository;
 	@Autowired
@@ -91,6 +100,7 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 	 * 
 	 */
 	@Override
+	@Transactional
 	public Response<CampaignsDto> create(Request<CampaignsDto> request, Locale locale)  throws ParseException, JsonProcessingException {
 		log.info("----begin create Campaigns-----");
 		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
@@ -113,6 +123,9 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			if (!Validate.RequiredValue(fieldsToVerify).isGood()) {
 				throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
 			}
+
+			// Validation enum stricte campaignStatus
+			dto.setCampaignStatus(normalizeCampaignStatus(dto.getCampaignStatus(), locale));
 
 			// Validation: date de fin >= date de début
 			if (dto.getCampaignStart() != null && !dto.getCampaignStart().isEmpty()
@@ -174,9 +187,13 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			}
 
 			Campaigns entityToSave = null;
-			entityToSave = CampaignsTransformer.INSTANCE.toEntity(dto, existingUser, existingSpecialities);
-			entityToSave.setPipelineTemplate(existingPipelineTemplate);
+			entityToSave = CampaignsTransformer.INSTANCE.toEntity(dto, existingUser, existingSpecialities, existingPipelineTemplate);
 			applyFormAssignmentConfiguration(entityToSave, dto, true, locale);
+			normalizeCampaignTimingConfiguration(entityToSave, dto);
+			if (entityToSave.getIsArchived() == null) {
+				entityToSave.setIsArchived(false);
+			}
+			validateCampaignStatusOnCreate(entityToSave, locale);
 			entityToSave.setCreatedAt(Utilities.getCurrentDate());
 			entityToSave.setCreatedBy(request.getUser());
 			entityToSave.setIsDeleted(false);
@@ -229,6 +246,7 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 	 * 
 	 */
 	@Override
+	@Transactional
 	public Response<CampaignsDto> update(Request<CampaignsDto> request, Locale locale)  throws ParseException, JsonProcessingException {
 		log.info("----begin update Campaigns-----");
 		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
@@ -268,6 +286,8 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			if (entityToSave == null) {
 				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("campaigns id -> " + dto.getId(), locale));
 			}
+			String previousCampaignStatus = entityToSave.getCampaignStatus();
+			Boolean wasArchived = entityToSave.getIsArchived();
 
 			// Verify if user exist
 			if (dto.getCreatorId() != null && dto.getCreatorId() > 0){
@@ -303,7 +323,7 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 				entityToSave.setCampaignDesc(dto.getCampaignDesc());
 			}
 			if (Utilities.shouldUpdate(dto.getCampaignStatus())) {
-				entityToSave.setCampaignStatus(dto.getCampaignStatus());
+				entityToSave.setCampaignStatus(normalizeCampaignStatus(dto.getCampaignStatus(), locale));
 			}
 			if (Utilities.shouldUpdate(dto.getCampaignStart())) {
 				entityToSave.setCampaignStart(dateFormat.parse(dto.getCampaignStart()));
@@ -322,8 +342,14 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			if (dto.getAllCanEvaluate() != null) {
 				entityToSave.setAllCanEvaluate(dto.getAllCanEvaluate());
 			}
+			if (dto.getIsArchived() != null) {
+				entityToSave.setIsArchived(dto.getIsArchived());
+			}
+			normalizeCampaignTimingConfiguration(entityToSave, dto);
 			applyFormAssignmentConfiguration(entityToSave, dto, false, locale);
 			ensureOperationalPipelineTemplate(entityToSave, locale);
+			validateCampaignLifecycleUpdate(previousCampaignStatus, wasArchived, entityToSave, locale);
+			formBusiness.applyCampaignTimeAllForms(entityToSave, request.getUser(), locale);
 			
 			// ⚠️ NE JAMAIS modifier createdBy lors d'une mise à jour !
 			// createdBy doit toujours rester l'utilisateur qui a créé la campagne initialement
@@ -382,7 +408,7 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 		}
 
 		String campaignStatus = StringUtils.upperCase(StringUtils.trimToEmpty(campaign.getCampaignStatus()));
-		if (!"ACTIVE".equals(campaignStatus)) {
+		if (!CampaignStatus.OPEN.getValue().equals(campaignStatus)) {
 			return;
 		}
 
@@ -416,6 +442,24 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 		}
 	}
 
+	private void normalizeCampaignTimingConfiguration(Campaigns campaign, CampaignsDto dto) {
+		if (campaign == null) {
+			return;
+		}
+
+		boolean timeAllForms = Boolean.TRUE.equals(campaign.getTimeAllForms());
+		if (dto != null) {
+			if (dto.getTimeAllForms() != null) {
+				timeAllForms = Boolean.TRUE.equals(dto.getTimeAllForms());
+			} else if (dto.getIsTimed() != null) {
+				timeAllForms = Boolean.TRUE.equals(dto.getIsTimed());
+			}
+		}
+
+		campaign.setTimeAllForms(timeAllForms);
+		campaign.setIsTimed(timeAllForms);
+	}
+
 	private String normalizeFormAssignmentStrategy(String value, boolean useDefaultWhenBlank, Locale locale) {
 		String trimmedValue = StringUtils.trimToNull(value);
 		if (trimmedValue == null) {
@@ -438,6 +482,129 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 		} catch (IllegalArgumentException ex) {
 			throw new InvalidEntityException(functionalError.REQUEST_FAIL("Politique d'epuisement de formulaires invalide: " + trimmedValue, locale));
 		}
+	}
+
+	private String normalizeCampaignStatus(String value, Locale locale) {
+		return resolveCampaignStatus(value, locale).getValue();
+	}
+
+	private void normalizeCampaignCriteria(Request<CampaignsDto> request, Locale locale) {
+		CampaignsDto dto = request != null ? request.getData() : null;
+		if (dto == null || StringUtils.isBlank(dto.getCampaignStatus())) {
+			return;
+		}
+
+		dto.setCampaignStatus(normalizeCampaignStatus(dto.getCampaignStatus(), locale));
+	}
+
+	private CampaignStatus resolveCampaignStatus(String value, Locale locale) {
+		try {
+			return CampaignStatus.fromValue(value);
+		} catch (IllegalArgumentException ex) {
+			throw new InvalidEntityException(functionalError.DATA_NOT_EXIST(
+					"campaignStatus invalide (" + CAMPAIGN_STATUS_ALLOWED_VALUES + ") -> " + value,
+					locale));
+		}
+	}
+
+	private void validateCampaignStatusOnCreate(Campaigns campaign, Locale locale) {
+		CampaignStatus targetStatus = resolveCampaignStatus(campaign.getCampaignStatus(), locale);
+		if (targetStatus != CampaignStatus.DRAFT) {
+			throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION(
+					"Une campagne ne peut etre creee qu'en DRAFT. La publication vers PENDING ou OPEN doit etre faite apres creation.",
+					locale));
+		}
+		if (Boolean.TRUE.equals(campaign.getIsArchived())) {
+			throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION(
+					"Une campagne ne peut pas etre creee archivee.",
+					locale));
+		}
+	}
+
+	private void validateCampaignLifecycleUpdate(String previousStatusValue, Boolean wasArchived, Campaigns campaign, Locale locale) {
+		CampaignStatus previousStatus = resolveCampaignStatus(previousStatusValue, locale);
+		CampaignStatus targetStatus = resolveCampaignStatus(campaign.getCampaignStatus(), locale);
+
+		if (!previousStatus.canTransitionTo(targetStatus)) {
+			throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION(
+					"Transition de statut interdite: " + previousStatus.getValue() + " -> " + targetStatus.getValue()
+							+ ". Transitions autorisees depuis " + previousStatus.getValue() + " : "
+							+ getAllowedCampaignTransitions(previousStatus),
+					locale));
+		}
+
+		if (previousStatus == CampaignStatus.DRAFT && targetStatus != CampaignStatus.DRAFT) {
+			validateDraftPublication(campaign, targetStatus, locale);
+		}
+
+		validateCampaignArchivalChange(wasArchived, targetStatus, campaign.getIsArchived(), locale);
+	}
+
+	private void validateDraftPublication(Campaigns campaign, CampaignStatus targetStatus, Locale locale) {
+		List<String> violations = new ArrayList<String>();
+
+		if (campaign.getSpecialities() == null || campaign.getSpecialities().getId() == null) {
+			violations.add("specialityId requis");
+		}
+		if (campaign.getPipelineTemplate() == null || campaign.getPipelineTemplate().getId() == null) {
+			violations.add("pipelineTemplateId requis");
+		}
+		if (campaign.getId() == null) {
+			violations.add("au moins un formulaire rattache");
+		} else {
+			List<Form> forms = formRepository.findByCampaignId(campaign.getId(), false);
+			if (forms == null || forms.isEmpty()) {
+				violations.add("au moins un formulaire rattache");
+			}
+		}
+		if (campaign.getCampaignStart() != null && campaign.getCampaignEnd() != null
+				&& !campaign.getCampaignEnd().after(campaign.getCampaignStart())) {
+			violations.add("campaignStart doit etre strictement avant campaignEnd");
+		}
+
+		CampaignStatus expectedTargetStatus = resolveDraftPublicationTargetStatus(campaign);
+		if (expectedTargetStatus != targetStatus) {
+			violations.add("la publication doit cibler " + expectedTargetStatus.getValue() + " pour la date de debut courante");
+		}
+
+		if (!violations.isEmpty()) {
+			throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION(
+					"Publication de campagne impossible: " + String.join("; ", violations),
+					locale));
+		}
+	}
+
+	private CampaignStatus resolveDraftPublicationTargetStatus(Campaigns campaign) {
+		LocalDate campaignStartDate = toLocalDate(campaign.getCampaignStart());
+		if (campaignStartDate != null && campaignStartDate.isAfter(LocalDate.now())) {
+			return CampaignStatus.PENDING;
+		}
+		return CampaignStatus.OPEN;
+	}
+
+	private void validateCampaignArchivalChange(Boolean wasArchived, CampaignStatus targetStatus, Boolean isArchived, Locale locale) {
+		if (Boolean.TRUE.equals(isArchived) && !Boolean.TRUE.equals(wasArchived) && targetStatus != CampaignStatus.CLOSED) {
+			throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION(
+					"L'archivage est autorise uniquement pour une campagne CLOSED.",
+					locale));
+		}
+	}
+
+	private String getAllowedCampaignTransitions(CampaignStatus sourceStatus) {
+		List<String> allowedTargets = new ArrayList<String>();
+		for (CampaignStatus candidate : CampaignStatus.values()) {
+			if (candidate != sourceStatus && sourceStatus.canTransitionTo(candidate)) {
+				allowedTargets.add(candidate.getValue());
+			}
+		}
+		return allowedTargets.isEmpty() ? "aucune" : String.join(", ", allowedTargets);
+	}
+
+	private LocalDate toLocalDate(Date date) {
+		if (date == null) {
+			return null;
+		}
+		return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 	}
 
 	private void ensureCampaignCreatorPermissions(List<Campaigns> campaigns, Integer actorUserId) {
@@ -592,6 +759,7 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 	public Response<CampaignsDto> getByCriteria(Request<CampaignsDto> request, Locale locale)  throws Exception {
 		log.info("----begin get Campaigns-----");
 		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
+		normalizeCampaignCriteria(request, locale);
 		Response<CampaignsDto> response = new Response<CampaignsDto>();
 		List<Campaigns> items 			 = campaignsRepository.getByCriteria(request, em, locale);
 
@@ -642,6 +810,7 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 	public Response<CampaignsDto> getAllByCriteria(Request<CampaignsDto> request, Locale locale)  throws Exception {
 		log.info("----begin get ALL Campaigns (including deleted)-----");
 		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
+		normalizeCampaignCriteria(request, locale);
 		Response<CampaignsDto> response = new Response<CampaignsDto>();
 
 		// Ajuster la taille de page selon les préférences utilisateur
@@ -695,6 +864,7 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 	 * @return response
 	 * 
 	 */
+	@Transactional
 	public Response<CampaignsDto> updateDeleted(Request<CampaignsDto> request, Locale locale)  throws ParseException, JsonProcessingException {
 		log.info("----begin updateDeleted Campaigns (including deleted)-----");
 		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
@@ -728,6 +898,8 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			if (entityToSave == null) {
 				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("campaigns id -> " + dto.getId(), locale));
 			}
+			String previousCampaignStatus = entityToSave.getCampaignStatus();
+			Boolean wasArchived = entityToSave.getIsArchived();
 
 			// Verify if user exist
 			if (dto.getCreatorId() != null && dto.getCreatorId() > 0){
@@ -752,7 +924,7 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 				entityToSave.setCampaignDesc(dto.getCampaignDesc());
 			}
 			if (Utilities.shouldUpdate(dto.getCampaignStatus())) {
-				entityToSave.setCampaignStatus(dto.getCampaignStatus());
+				entityToSave.setCampaignStatus(normalizeCampaignStatus(dto.getCampaignStatus(), locale));
 			}
 			if (Utilities.shouldUpdate(dto.getCampaignStart())) {
 				entityToSave.setCampaignStart(dateFormat.parse(dto.getCampaignStart()));
@@ -774,10 +946,13 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			if (dto.getAllCanEvaluate() != null) {
 				entityToSave.setAllCanEvaluate(dto.getAllCanEvaluate());
 			}
-			ensureOperationalPipelineTemplate(entityToSave, locale);
-			if (dto.getCreatedBy() != null && dto.getCreatedBy() > 0) {
-				entityToSave.setCreatedBy(dto.getCreatedBy());
+			if (dto.getIsArchived() != null) {
+				entityToSave.setIsArchived(dto.getIsArchived());
 			}
+			normalizeCampaignTimingConfiguration(entityToSave, dto);
+			ensureOperationalPipelineTemplate(entityToSave, locale);
+			validateCampaignLifecycleUpdate(previousCampaignStatus, wasArchived, entityToSave, locale);
+			formBusiness.applyCampaignTimeAllForms(entityToSave, request.getUser(), locale);
 			if (dto.getUpdatedBy() != null && dto.getUpdatedBy() > 0) {
 				entityToSave.setUpdatedBy(dto.getUpdatedBy());
 			}
@@ -836,6 +1011,7 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 	 * @return response
 	 *
 	 */
+	@Transactional
 	public Response<CampaignsDto> updateAll(Request<CampaignsDto> request, Locale locale)  throws ParseException, JsonProcessingException {
 		log.info("----begin updateAll Campaigns-----");
 		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
@@ -871,6 +1047,8 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			if (entityToSave == null) {
 				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("campaigns id -> " + dto.getId(), locale));
 			}
+			String previousCampaignStatus = entityToSave.getCampaignStatus();
+			Boolean wasArchived = entityToSave.getIsArchived();
 
 			// Verify if user exist
 			if (dto.getCreatorId() != null && dto.getCreatorId() > 0){
@@ -895,7 +1073,7 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 				entityToSave.setCampaignDesc(dto.getCampaignDesc());
 			}
 			if (Utilities.shouldUpdate(dto.getCampaignStatus())) {
-				entityToSave.setCampaignStatus(dto.getCampaignStatus());
+				entityToSave.setCampaignStatus(normalizeCampaignStatus(dto.getCampaignStatus(), locale));
 			}
 			if (Utilities.shouldUpdate(dto.getCampaignStart())) {
 				entityToSave.setCampaignStart(dateFormat.parse(dto.getCampaignStart()));
@@ -917,15 +1095,19 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			if (dto.getAllCanEvaluate() != null) {
 				entityToSave.setAllCanEvaluate(dto.getAllCanEvaluate());
 			}
-			if (dto.getCreatedBy() != null && dto.getCreatedBy() > 0) {
-				entityToSave.setCreatedBy(dto.getCreatedBy());
+			if (dto.getIsArchived() != null) {
+				entityToSave.setIsArchived(dto.getIsArchived());
 			}
+			normalizeCampaignTimingConfiguration(entityToSave, dto);
+			ensureOperationalPipelineTemplate(entityToSave, locale);
 			if (dto.getUpdatedBy() != null && dto.getUpdatedBy() > 0) {
 				entityToSave.setUpdatedBy(dto.getUpdatedBy());
 			}
 			if (Utilities.shouldUpdate(dto.getSearchString())) {
 				entityToSave.setSearchString(dto.getSearchString());
 			}
+			validateCampaignLifecycleUpdate(previousCampaignStatus, wasArchived, entityToSave, locale);
+			formBusiness.applyCampaignTimeAllForms(entityToSave, request.getUser(), locale);
 			// Après toutes les mises à jour conditionnelles...
 			entityToSave.setUpdatedAt(Utilities.getCurrentDate());
 			entityToSave.setUpdatedBy(request.getUser());
@@ -1021,7 +1203,7 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 	/**
 	 * Check if user has permission to edit a campaign
 	 * Returns:
-	 * - canEdit: true/false if user has rights via campaign_crud
+	 * - canEdit: true/false if user has direct campaign entity rights
 	 * - requiresAdminMode: true if user is ADMIN/SUPER but needs to enable admin mode
 	 * - userRole: the user's role (ADMIN/SUPER/RECRUITER)
 	 */

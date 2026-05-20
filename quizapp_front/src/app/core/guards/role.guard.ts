@@ -177,7 +177,7 @@ export const interviewCreateGuard: CanActivateFn = async (route) => {
 
   await permService.waitUntilLoaded();
 
-  if (permService.hasAnyPermission(['CREATE_INTERVIEWS', 'UPDATE_INTERVIEWS'])) {
+  if (permService.hasAnyPermission(['CREATE_INTERVIEWS', 'UPDATE_INTERVIEWS', 'PLANIFY'])) {
     return true;
   }
 

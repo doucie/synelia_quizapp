@@ -134,13 +134,13 @@
         <thead>
           <tr>
             <th class="col-id" [class.col-hidden]="!isColumnVisible('id')">ID</th>
-            <th class="col-id" [class.col-hidden]="!isColumnVisible('userId')">User ID</th>
-            <th class="col-short" [class.col-hidden]="!isColumnVisible('type')">Type</th>
-            <th class="col-short" [class.col-hidden]="!isColumnVisible('actor')">Acteur</th>
-            <th class="col-medium" [class.col-hidden]="!isColumnVisible('link')">Lien</th>
-            <th class="col-boolean" [class.col-hidden]="!isColumnVisible('read')">Lu</th>
-            <th class="col-short" [class.col-hidden]="!isColumnVisible('table')">Table</th>
-            <th class="col-id" [class.col-hidden]="!isColumnVisible('tableId')">Table ID</th>
+            <th class="col-medium" [class.col-hidden]="!isColumnVisible('userId')">Utilisateur</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('notifType')">Type</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('notifActor')">Acteur ID</th>
+            <th class="col-medium" [class.col-hidden]="!isColumnVisible('notifLink')">Lien</th>
+            <th class="col-boolean" [class.col-hidden]="!isColumnVisible('isRead')">Lu</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('objectTableName')">Table</th>
+            <th class="col-id" [class.col-hidden]="!isColumnVisible('objectTableId')">Table ID</th>
             <th class="col-date" [class.col-hidden]="!isColumnVisible('createdAt')">Créé le</th>
             <th class="col-actions" [class.col-hidden]="!isColumnVisible('actions')">Actions</th>
           </tr>
@@ -148,13 +148,13 @@
         <tbody>
           <tr *ngFor="let item of items(); trackBy: trackById" [class.row-deleted]="item.isDeleted" (click)="selectItem(item)" style="cursor: pointer;">
             <td [class.col-hidden]="!isColumnVisible('id')"><span class="cell-id">#{{ item.id }}</span></td>
-            <td [class.col-hidden]="!isColumnVisible('userId')">{{ item.userId || '-' }}</td>
-            <td [class.col-hidden]="!isColumnVisible('type')">{{ item.notifType || '-' }}</td>
-            <td [class.col-hidden]="!isColumnVisible('actor')">{{ item.notifActor || '-' }}</td>
-            <td [class.col-hidden]="!isColumnVisible('link')"><span class="cell-comment">{{ item.notifLink || '-' }}</span></td>
-            <td [class.col-hidden]="!isColumnVisible('read')"><span class="bool-badge" [class.is-true]="item.isRead" [class.is-false]="!item.isRead"><svg *ngIf="item.isRead" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><svg *ngIf="!item.isRead" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>{{ item.isRead ? 'Oui' : 'Non' }}</span></td>
-            <td [class.col-hidden]="!isColumnVisible('table')">{{ item.objectTableName || '-' }}</td>
-            <td [class.col-hidden]="!isColumnVisible('tableId')">{{ item.objectTableId || '-' }}</td>
+            <td [class.col-hidden]="!isColumnVisible('userId')">{{ getUserDisplay(item) }}</td>
+            <td [class.col-hidden]="!isColumnVisible('notifType')">{{ item.notifType || '-' }}</td>
+            <td [class.col-hidden]="!isColumnVisible('notifActor')">{{ item.notifActor ? ('#' + item.notifActor) : '-' }}</td>
+            <td [class.col-hidden]="!isColumnVisible('notifLink')"><span class="cell-comment">{{ item.notifLink || '-' }}</span></td>
+            <td [class.col-hidden]="!isColumnVisible('isRead')"><span class="bool-badge" [class.is-true]="item.isRead" [class.is-false]="!item.isRead"><svg *ngIf="item.isRead" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><svg *ngIf="!item.isRead" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>{{ item.isRead ? 'Oui' : 'Non' }}</span></td>
+            <td [class.col-hidden]="!isColumnVisible('objectTableName')">{{ item.objectTableName || '-' }}</td>
+            <td [class.col-hidden]="!isColumnVisible('objectTableId')">{{ item.objectTableId || '-' }}</td>
             <td [class.col-hidden]="!isColumnVisible('createdAt')"><span class="cell-date">{{ formatDate(item.createdAt) }}</span></td>
             <td class="actions-cell" [class.col-hidden]="!isColumnVisible('actions')" (click)="$event.stopPropagation()">
               <div class="actions-menu">
@@ -181,7 +181,7 @@
     <div class="pagination-container">
       <div class="pagination-info">
         <span class="results-info">
-          Affichage {{ currentPage() * pageSize() + 1 }} - {{ Math.min((currentPage() + 1) * pageSize(), totalElements()) }} sur {{ totalElements() }}
+          Affichage {{ totalElements() ? currentPage() * pageSize() + 1 : 0 }} - {{ totalElements() ? Math.min((currentPage() + 1) * pageSize(), totalElements()) : 0 }} sur {{ totalElements() }}
         </span>
         <div class="page-size-selector">
           <label for="pageSize">Par page:</label>

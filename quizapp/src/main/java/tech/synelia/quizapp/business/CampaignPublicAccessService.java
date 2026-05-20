@@ -26,7 +26,7 @@ import tech.synelia.quizapp.utils.exception.InvalidEntityException;
 @Component
 public class CampaignPublicAccessService {
 
-	private static final String STATUS_ACTIVE = "ACTIVE";
+	private static final String STATUS_OPEN = "OPEN";
 	private static final String STATUS_PENDING = "PENDING";
 	private static final String STATUS_CLOSED = "CLOSED";
 	private static final DateTimeFormatter DISPLAY_DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -81,7 +81,7 @@ public class CampaignPublicAccessService {
 		}
 
 		String status = StringUtils.upperCase(StringUtils.trimToEmpty(campaign.getCampaignStatus()));
-		if (!STATUS_ACTIVE.equals(status)) {
+		if (!STATUS_OPEN.equals(status)) {
 			if (STATUS_PENDING.equals(status)) {
 				throw new InvalidEntityException(functionalError.REQUEST_FAIL("Cette campagne n'est pas encore ouverte aux candidatures.", locale));
 			}

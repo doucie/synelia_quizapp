@@ -107,6 +107,11 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 				throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
 			}
 
+			// Validate candidateMark range [0, 100]
+			if (dto.getCandidateMark() != null && (dto.getCandidateMark() < 0 || dto.getCandidateMark() > 100)) {
+				throw new InvalidEntityException(functionalError.DATA_NOT_EXIST("candidateMark must be between 0 and 100 -> " + dto.getCandidateMark(), locale));
+			}
+
 			// Verify if evaluations to insert do not exist
 			Evaluations existingEntity = null;
 			if (existingEntity != null) {
@@ -230,6 +235,9 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 					"modifier cette évaluation",
 					FunctionalityEnum.UPDATE_EVALUATIONS.getValue());
 			if (dto.getCandidateMark() != null && dto.getCandidateMark() > 0) {
+				if (dto.getCandidateMark() > 100) {
+					throw new InvalidEntityException(functionalError.DATA_NOT_EXIST("candidateMark must be between 0 and 100 -> " + dto.getCandidateMark(), locale));
+				}
 				entityToSave.setCandidateMark(dto.getCandidateMark());
 			}
 			if (Utilities.shouldUpdate(dto.getRecruiterComment())) {
@@ -590,11 +598,11 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 				? application.getSourceToken().getCampaigns()
 				: null;
 
-		boolean hasGlobalRight = permissionService.hasPermission(actorUserId, globalPermission);
-		boolean hasCampaignRight = campaign != null && permissionService.hasAnyEntityPermission(
+		boolean hasCampaignScopedRight = campaign != null && permissionService.hasScopedPermission(
 				actorUserId,
 				"CAMPAIGN",
 				campaign.getId(),
+				globalPermission,
 				"ADMIN",
 				"EVALUATE");
 		boolean hasInterviewRight = permissionService.hasAnyEntityPermission(
@@ -614,7 +622,7 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 			}
 		}
 
-		if (!hasGlobalRight && !hasCampaignRight && !hasInterviewRight && !isInterviewParticipant) {
+		if (!hasCampaignScopedRight && !hasInterviewRight && !isInterviewParticipant) {
 			throw new InvalidEntityException(functionalError.REQUEST_FAIL(
 					"Accès refusé: droits insuffisants pour " + actionLabel,
 					locale));

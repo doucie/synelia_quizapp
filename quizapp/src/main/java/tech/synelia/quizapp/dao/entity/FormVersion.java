@@ -38,6 +38,9 @@ public class FormVersion implements Serializable, Cloneable {
     @Column(name="is_locked")
     private Boolean    isLocked     ;
 
+    @Column(name="random_questions", nullable=false, columnDefinition="BOOLEAN DEFAULT FALSE")
+    private Boolean    randomQuestions ;
+
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name="created_at")
     private Date       createdAt    ;

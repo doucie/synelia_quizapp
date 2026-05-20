@@ -29,7 +29,10 @@ export class LegalTextService {
       size,
       index: page,
       isSimpleLoading: false,
-      data: { ...criteria, isDeleted: criteria.isDeleted ?? false }
+      data: {
+        ...criteria,
+        ...(criteria.isDeleted !== undefined ? { isDeleted: criteria.isDeleted } : {})
+      }
     };
     return this.http.post<any>(`${this.apiUrl}/getByCriteria`, request).pipe(
       map(resp => ({
@@ -62,6 +65,10 @@ export class LegalTextService {
       map(() => void 0),
       catchError(err => throwError(() => err))
     );
+  }
+
+  restore(id: number): Observable<LegalText> {
+    return this.update({ id, isDeleted: false });
   }
 
   private getCurrentUserId(): string {

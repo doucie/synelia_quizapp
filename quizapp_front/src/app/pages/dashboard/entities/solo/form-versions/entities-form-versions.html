@@ -82,6 +82,14 @@
           </app-filter-select>
         </div>
         <div class="form-group">
+          <label>Questions aléatoires</label>
+          <app-filter-select [(ngModel)]="advancedCriteria.randomQuestions">
+            <option [ngValue]="undefined">Tous</option>
+            <option [ngValue]="true">Oui</option>
+            <option [ngValue]="false">Non</option>
+          </app-filter-select>
+        </div>
+        <div class="form-group">
           <label>Supprimé</label>
           <app-filter-select [(ngModel)]="advancedCriteria.isDeleted">
             <option [ngValue]="undefined">Tous</option>
@@ -158,6 +166,7 @@
             <th class="col-id" [class.col-hidden]="!isColumnVisible('formId')">Formulaire ID</th>
             <th class="col-boolean" [class.col-hidden]="!isColumnVisible('published')">Publié</th>
             <th class="col-boolean" [class.col-hidden]="!isColumnVisible('locked')">Verrouillé</th>
+            <th class="col-boolean" [class.col-hidden]="!isColumnVisible('randomQuestions')">Questions aléatoires</th>
             <th class="col-date" [class.col-hidden]="!isColumnVisible('createdAt')">Créé le</th>
             <th class="col-actions" [class.col-hidden]="!isColumnVisible('actions')">Actions</th>
           </tr>
@@ -170,6 +179,7 @@
             <td [class.col-hidden]="!isColumnVisible('formId')">{{ item.formId || '-' }}</td>
             <td [class.col-hidden]="!isColumnVisible('published')"><span class="bool-badge" [class.is-true]="item.isPublished" [class.is-false]="!item.isPublished"><svg *ngIf="item.isPublished" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><svg *ngIf="!item.isPublished" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>{{ item.isPublished ? 'Oui' : 'Non' }}</span></td>
             <td [class.col-hidden]="!isColumnVisible('locked')"><span class="bool-badge" [class.is-locked]="item.isLocked" [class.is-unlocked]="!item.isLocked"><svg *ngIf="item.isLocked" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><svg *ngIf="!item.isLocked" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>{{ item.isLocked ? 'Verrouillé' : 'Ouvert' }}</span></td>
+            <td [class.col-hidden]="!isColumnVisible('randomQuestions')"><span class="bool-badge" [class.is-true]="item.randomQuestions" [class.is-false]="!item.randomQuestions"><svg *ngIf="item.randomQuestions" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><svg *ngIf="!item.randomQuestions" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>{{ item.randomQuestions ? 'Oui' : 'Non' }}</span></td>
             <td [class.col-hidden]="!isColumnVisible('createdAt')"><span class="cell-date">{{ formatDate(item.createdAt) }}</span></td>
             <td class="actions-cell" [class.col-hidden]="!isColumnVisible('actions')" (click)="$event.stopPropagation()">
               <div class="actions-menu">
@@ -200,7 +210,7 @@
           </tr>
           <!-- Expansion: Questions du formulaire -->
           <tr *ngIf="isExpanded(item.id!)" class="expansion-row">
-            <td colspan="7" class="expansion-content">
+            <td colspan="8" class="expansion-content">
               <div class="children-container">
                 <div class="children-header">Questions de la version <span class="tab-count">{{ getChildren(item.id!).length }}</span></div>
                 <div *ngIf="isLoadingChildren(item.id!)" class="loading-children"><div class="loading-spinner-small"></div><span>Chargement...</span></div>
@@ -223,7 +233,7 @@
     <div class="pagination-container">
       <div class="pagination-info">
         <span class="results-info">
-          Affichage {{ currentPage() * pageSize() + 1 }} - {{ Math.min((currentPage() + 1) * pageSize(), totalElements()) }} sur {{ totalElements() }}
+          Affichage {{ totalElements() ? currentPage() * pageSize() + 1 : 0 }} - {{ totalElements() ? Math.min((currentPage() + 1) * pageSize(), totalElements()) : 0 }} sur {{ totalElements() }}
         </span>
         <div class="page-size-selector">
           <label for="pageSize">Par page:</label>
@@ -295,6 +305,7 @@
         </div>
         <div class="form-group"><app-filter-checkbox class="form-label" inputId="entities-form-versions-edit-published" label="Publié" variant="inline" [(ngModel)]="editFormData.isPublished" name="editFormVersionIsPublished" ariaLabel="Version publiée"></app-filter-checkbox></div>
         <div class="form-group"><app-filter-checkbox class="form-label" inputId="entities-form-versions-edit-locked" label="Verrouillé" variant="inline" [(ngModel)]="editFormData.isLocked" name="editFormVersionIsLocked" ariaLabel="Version verrouillée"></app-filter-checkbox></div>
+        <div class="form-group"><app-filter-checkbox class="form-label" inputId="entities-form-versions-edit-random-questions" label="Questions aléatoires" variant="inline" [(ngModel)]="editFormData.randomQuestions" name="editFormVersionRandomQuestions" ariaLabel="Version à questions aléatoires"></app-filter-checkbox></div>
       </form>
     </div>
     <div class="modal-actions">
@@ -325,6 +336,7 @@
             }
           </app-filter-select>
         </div>
+        <div class="form-group"><app-filter-checkbox class="form-label" inputId="entities-form-versions-create-random-questions" label="Questions aléatoires" variant="inline" [(ngModel)]="createFormData.randomQuestions" name="createFormVersionRandomQuestions" ariaLabel="Nouvelle version à questions aléatoires"></app-filter-checkbox></div>
       </form>
     </div>
     <div class="modal-actions">

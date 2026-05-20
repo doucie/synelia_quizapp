@@ -21,6 +21,9 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
       { key: 'CREATE_CAMPAIGNS', label: 'Créer une campagne' },
       { key: 'UPDATE_CAMPAIGNS', label: 'Modifier une campagne' },
       { key: 'DELETE_CAMPAIGNS', label: 'Supprimer une campagne' },
+      { key: 'CORRECT_TEST', label: 'Corriger les tests de campagne' },
+      { key: 'PLANIFY', label: 'Planifier sur les campagnes' },
+      { key: 'FOLLOW', label: 'Suivre les campagnes' },
     ]
   },
   {

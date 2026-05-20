@@ -75,13 +75,11 @@ export class UserPermissionsComponent implements OnInit, OnDestroy {
   addGroupId = signal<number | null>(null);
 
   isSuperAdmin = computed(() => {
-    const user = this.selectedUser();
-    return user?.userRole?.toUpperCase() === 'SUPER_ADMIN';
+    return this.normalizeSystemRole(this.selectedUser()?.userRole) === 'SUPER_ADMIN';
   });
 
   isAdmin = computed(() => {
-    const user = this.selectedUser();
-    return user?.userRole?.toUpperCase() === 'ADMIN';
+    return this.normalizeSystemRole(this.selectedUser()?.userRole) === 'ADMIN';
   });
 
   deniedFunctionalities = computed(() =>
@@ -329,22 +327,64 @@ export class UserPermissionsComponent implements OnInit, OnDestroy {
   }
 
   getRoleBadgeClass(): string {
-    const role = this.selectedUser()?.userRole?.toUpperCase();
+    const role = this.normalizeSystemRole(this.selectedUser()?.userRole);
     if (role === 'SUPER_ADMIN') return 'badge-super';
     if (role === 'ADMIN') return 'badge-admin';
     return 'badge-user';
   }
 
   getRoleLabel(): string {
-    const role = this.selectedUser()?.userRole?.toUpperCase();
+    const role = this.normalizeSystemRole(this.selectedUser()?.userRole);
     if (role === 'SUPER_ADMIN') return 'Super Admin';
     if (role === 'ADMIN') return 'Administrateur';
+    if (role === 'RECRUITER') return 'Recruteur';
+    if (role === 'CANDIDATE') return 'Candidat';
     return 'Utilisateur';
+  }
+
+  getUserCardRoleBadgeClass(user: UserItem): string {
+    const role = this.normalizeSystemRole(user.userRole);
+    if (role === 'SUPER_ADMIN') return 'badge-super';
+    if (role === 'ADMIN') return 'badge-admin';
+    return 'badge-user';
+  }
+
+  getUserCardRoleLabel(user: UserItem): string {
+    const role = this.normalizeSystemRole(user.userRole);
+    if (role === 'SUPER_ADMIN') return 'Super Admin';
+    if (role === 'ADMIN') return 'Administrateur';
+    if (role === 'RECRUITER') return 'Recruteur';
+    if (role === 'CANDIDATE') return 'Candidat';
+    return user.userRole || 'Utilisateur';
   }
 
   private toAccessType(isAllowed?: boolean): 'GRANT' | 'DENY' | undefined {
     if (isAllowed === true) return 'GRANT';
     if (isAllowed === false) return 'DENY';
     return undefined;
+  }
+
+  private normalizeSystemRole(rawRole?: string | null): string {
+    const normalizedRole = (rawRole || '').trim().toUpperCase();
+    switch (normalizedRole) {
+      case 'SUPER':
+      case 'SUPER_ADMIN':
+      case 'ROLE_SUPER':
+      case 'ROLE_SUPER_ADMIN':
+        return 'SUPER_ADMIN';
+      case 'ADMIN':
+      case 'ROLE_ADMIN':
+        return 'ADMIN';
+      case 'RECRUITER':
+      case 'UTILISATEUR':
+      case 'ROLE_RECRUITER':
+      case 'ROLE_UTILISATEUR':
+        return 'RECRUITER';
+      case 'CANDIDATE':
+      case 'ROLE_CANDIDATE':
+        return 'CANDIDATE';
+      default:
+        return normalizedRole;
+    }
   }
 }

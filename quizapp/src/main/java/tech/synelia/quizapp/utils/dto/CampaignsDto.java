@@ -25,8 +25,10 @@ import tech.synelia.quizapp.utils.dto.customize._CampaignsDto;
  *
  * @author Geo
  */
-@Data
+@Getter
+@Setter
 @ToString
+@EqualsAndHashCode(callSuper = false)
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
 public class CampaignsDto extends _CampaignsDto implements Cloneable{
@@ -42,6 +44,8 @@ public class CampaignsDto extends _CampaignsDto implements Cloneable{
     private Boolean    allCanEvaluate       ;
     private Integer    totalQuestions       ;
     private Boolean    isTimed              ;
+	private Boolean    isArchived           ;
+	private Boolean    timeAllForms         ;
 	private String     formAssignmentStrategy ;
 	private String     formAssignmentExhaustionPolicy ;
 	private String     createdAt            ;
@@ -79,6 +83,8 @@ public class CampaignsDto extends _CampaignsDto implements Cloneable{
 	private SearchParam<Boolean>  allCanEvaluateParam   ;                     
 	private SearchParam<Integer>  totalQuestionsParam   ;                     
 	private SearchParam<Boolean>  isTimedParam          ;                     
+	private SearchParam<Boolean>  isArchivedParam       ;                     
+	private SearchParam<Boolean>  timeAllFormsParam     ;                     
 	private SearchParam<String>   createdAtParam        ;                     
 	private SearchParam<Integer>  createdByParam        ;                     
 	private SearchParam<String>   updatedAtParam        ;                     

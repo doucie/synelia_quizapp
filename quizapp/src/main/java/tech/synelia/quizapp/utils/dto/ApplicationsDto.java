@@ -56,8 +56,6 @@ public class ApplicationsDto extends _ApplicationsDto implements Cloneable{
     private String     interviewDate        ;
     private String     interviewStatus      ;
     private Boolean    applicationAbandoned ;
-    private Boolean    preScreenDecisionMailSent ;
-    private Boolean    finalDecisionMailSent ;
 	private String     createdAt            ;
     private Integer    createdBy            ;
 	private String     updatedAt            ;
@@ -105,8 +103,6 @@ public class ApplicationsDto extends _ApplicationsDto implements Cloneable{
 	private SearchParam<String>   interviewDateParam    ;                     
 	private SearchParam<String>   interviewStatusParam  ;                     
 	private SearchParam<Boolean>  applicationAbandonedParam ;                     
-	private SearchParam<Boolean>  preScreenDecisionMailSentParam ;                     
-	private SearchParam<Boolean>  finalDecisionMailSentParam ;                     
 	private SearchParam<String>   createdAtParam        ;                     
 	private SearchParam<Integer>  createdByParam        ;                     
 	private SearchParam<String>   updatedAtParam        ;                     

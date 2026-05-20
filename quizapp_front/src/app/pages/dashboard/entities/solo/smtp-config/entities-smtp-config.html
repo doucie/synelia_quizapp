@@ -21,6 +21,9 @@
         <app-filter-checkbox inputId="showDeleted" label="Afficher les supprimés" [checked]="showDeletedItems" ariaLabel="Afficher les éléments supprimés" (checkedChange)="toggleDeletedItems()"></app-filter-checkbox>
       </div>
       <div class="toolbar-right">
+        <button class="btn-secondary-pro" (click)="testActiveSmtp()" [disabled]="isTestingSmtp || isLoading()">
+          {{ isTestingSmtp ? 'Test en cours...' : 'Tester la config active' }}
+        </button>
         <button class="btn-secondary-pro" (click)="openAdvancedSearch()">Filtres avancés</button>
         <button class="btn-primary-pro" (click)="openCreateDialog()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -173,7 +176,7 @@
     <div class="pagination-container">
       <div class="pagination-info">
         <span class="results-info">
-          Affichage {{ currentPage() * pageSize() + 1 }} - {{ Math.min((currentPage() + 1) * pageSize(), totalElements()) }} sur {{ totalElements() }}
+          Affichage {{ totalElements() ? currentPage() * pageSize() + 1 : 0 }} - {{ totalElements() ? Math.min((currentPage() + 1) * pageSize(), totalElements()) : 0 }} sur {{ totalElements() }}
         </span>
         <div class="page-size-selector">
           <label for="pageSize">Par page:</label>

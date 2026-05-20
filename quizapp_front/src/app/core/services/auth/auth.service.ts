@@ -179,15 +179,8 @@ export class AuthService {
   private transformUserData(apiUser: UserApiData): User {
     console.log('🔍 API User Data:', apiUser);
     console.log('🔍 User Role from API:', apiUser.userRole);
-    
-    // Mapper les rôles DB vers les noms internes frontend
-    const roleMap: Record<string, string> = {
-      'SUPER_ADMIN': 'super',
-      'ADMIN': 'admin',
-      'UTILISATEUR': 'recruiter'
-    };
-    const rawRole = apiUser.userRole || 'ADMIN';
-    const role = roleMap[rawRole] || rawRole.toLowerCase();
+    const rawRole = apiUser.userRole || 'admin';
+    const role = this.normalizeUserRole(rawRole);
     console.log('✅ Role from API (mapped):', rawRole, '→', role);
     
     return {
@@ -199,6 +192,30 @@ export class AuthService {
       adminMode: apiUser.adminMode || false,
       isDefaultPassword: apiUser.isDefaultPassword === true
     };
+  }
+
+  private normalizeUserRole(rawRole?: string | null): string {
+    const normalizedRole = (rawRole || '').trim().toUpperCase();
+    switch (normalizedRole) {
+      case 'SUPER':
+      case 'SUPER_ADMIN':
+      case 'ROLE_SUPER':
+      case 'ROLE_SUPER_ADMIN':
+      return 'super';
+      case 'ADMIN':
+      case 'ROLE_ADMIN':
+      return 'admin';
+      case 'RECRUITER':
+      case 'UTILISATEUR':
+      case 'ROLE_RECRUITER':
+      case 'ROLE_UTILISATEUR':
+      return 'recruiter';
+      case 'CANDIDATE':
+      case 'ROLE_CANDIDATE':
+      return 'candidate';
+      default:
+      return (rawRole || 'admin').toLowerCase();
+    }
   }
 
   /**

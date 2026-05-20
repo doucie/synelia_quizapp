@@ -55,7 +55,7 @@ public class Campaigns implements Serializable, Cloneable {
     @Column(name="campaign_desc", length=65535)
     private String     campaignDesc ;
 
-    @Column(name="campaign_status", nullable=false, length=7)
+    @Column(name="campaign_status", nullable=false, length=20)
     private String     campaignStatus ;
 
     @Temporal(TemporalType.TIMESTAMP)
@@ -77,6 +77,12 @@ public class Campaigns implements Serializable, Cloneable {
 
     @Column(name="is_timed", nullable=false, columnDefinition="BOOLEAN DEFAULT FALSE")
     private Boolean    isTimed      ;
+
+    @Column(name="is_archived", nullable=false, columnDefinition="BOOLEAN DEFAULT FALSE")
+    private Boolean    isArchived   ;
+
+    @Column(name="time_all_forms", nullable=false, columnDefinition="BOOLEAN DEFAULT FALSE")
+    private Boolean    timeAllForms ;
 
     @Column(name="form_assignment_strategy", length=30)
     private String     formAssignmentStrategy ;

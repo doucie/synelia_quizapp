@@ -51,8 +51,8 @@ export class EntitiesFormQuestionsComponent extends EntityCrudBase<FormQuestions
     { key: 'id', label: 'ID', priority: 1 },
     { key: 'order', label: 'Ordre', priority: 1 },
     { key: 'chronoOverride', label: 'Chrono Override', priority: 3 },
-    { key: 'versionId', label: 'Version ID', priority: 2 },
-    { key: 'questionId', label: 'Question ID', priority: 2 },
+    { key: 'versionId', label: 'Version formulaire', priority: 2 },
+    { key: 'questionId', label: 'Question', priority: 2 },
     { key: 'createdAt', label: 'Créé le', priority: 2 },
     { key: 'actions', label: 'Actions', priority: 1 },
   ];
@@ -64,4 +64,31 @@ export class EntitiesFormQuestionsComponent extends EntityCrudBase<FormQuestions
   protected performRestore(id: number): Observable<any> { return this.service.restore(id); }
   protected resetAdvancedCriteriaValues(): void { this.advancedCriteria = {}; }
   protected resetCreateFormData(): void { this.createFormData = {}; }
+
+  getFormVersionDisplay(formVersionId?: number): string {
+    if (!formVersionId) {
+      return '-';
+    }
+
+    const formVersion = this.allFormVersions().find((item) => item.id === formVersionId);
+    if (!formVersion) {
+      return `#${formVersionId}`;
+    }
+
+    return `Version ${formVersion.versionNumber} (#${formVersionId})`;
+  }
+
+  getQuestionDisplay(questionId?: number): string {
+    if (!questionId) {
+      return '-';
+    }
+
+    const question = this.allQuestions().find((item) => item.id === questionId);
+    if (!question) {
+      return `#${questionId}`;
+    }
+
+    const prefix = question.questionRef ? `${question.questionRef} - ` : `#${questionId} - `;
+    return `${prefix}${question.questionText || 'Question sans libellé'}`;
+  }
 }

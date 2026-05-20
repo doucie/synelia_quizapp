@@ -132,26 +132,6 @@ export class MeriseComponent implements OnInit, AfterViewInit {
       ]
     },
     {
-      name: 'campaign_crud', displayName: 'CampaignCrud', color: '#F97316', x: 450, y: 570,
-      columns: [
-        { name: 'id', type: 'INT UNSIGNED', pk: true },
-        { name: 'user_id', type: 'INT UNSIGNED', fk: true, fkTarget: 'user' },
-        { name: 'campaign_id', type: 'INT UNSIGNED', fk: true, fkTarget: 'campaigns' },
-        { name: 'can_update', type: 'BIT', nullable: true },
-        { name: 'can_delete', type: 'BIT', nullable: true },
-        { name: 'can_evaluate', type: 'BIT', nullable: true },
-        { name: 'follow', type: 'BIT', nullable: true },
-        { name: 'is_admin', type: 'BIT', nullable: true },
-        { name: 'is_creator', type: 'BIT', nullable: true },
-        { name: 'can_planify', type: 'BIT', nullable: true },
-        { name: 'can_accept_pre_screen', type: 'BIT', nullable: true },
-        { name: 'can_accept_final', type: 'BIT', nullable: true },
-        { name: 'created_at', type: 'DATETIME' }, { name: 'created_by', type: 'INT UNSIGNED', nullable: true },
-        { name: 'updated_at', type: 'DATETIME' }, { name: 'updated_by', type: 'INT UNSIGNED', nullable: true },
-        { name: 'is_deleted', type: 'BIT' }, { name: 'search_string', type: 'TEXT', nullable: true },
-      ]
-    },
-    {
       name: 'questions', displayName: 'Questions', color: '#84CC16', x: 50, y: 1120,
       columns: [
         { name: 'id', type: 'INT UNSIGNED', pk: true },
@@ -396,8 +376,9 @@ export class MeriseComponent implements OnInit, AfterViewInit {
     { from: 'specialities', fromColumn: 'department_id', to: 'departments', toColumn: 'id', cardinality: 'N,1', label: 'appartient à' },
     { from: 'campaigns', fromColumn: 'creator_id', to: 'user', toColumn: 'id', cardinality: 'N,1', label: 'créée par' },
     { from: 'campaigns', fromColumn: 'speciality_id', to: 'specialities', toColumn: 'id', cardinality: 'N,1', label: 'spécialité' },
-    { from: 'campaign_crud', fromColumn: 'user_id', to: 'user', toColumn: 'id', cardinality: 'N,1', label: 'utilisateur' },
-    { from: 'campaign_crud', fromColumn: 'campaign_id', to: 'campaigns', toColumn: 'id', cardinality: 'N,1', label: 'campagne' },
+    { from: 'campaign_questions', fromColumn: 'question_id', to: 'questions', toColumn: 'id', cardinality: 'N,1', label: 'question' },
+    { from: 'campaign_questions', fromColumn: 'campaign_id', to: 'campaigns', toColumn: 'id', cardinality: 'N,1', label: 'campagne' },
+    { from: 'questions', fromColumn: 'speciality_id', to: 'specialities', toColumn: 'id', cardinality: 'N,1', label: 'spécialité' },
     { from: 'campaign_questions', fromColumn: 'question_id', to: 'questions', toColumn: 'id', cardinality: 'N,1', label: 'question' },
     { from: 'campaign_questions', fromColumn: 'campaign_id', to: 'campaigns', toColumn: 'id', cardinality: 'N,1', label: 'campagne' },
     { from: 'questions', fromColumn: 'speciality_id', to: 'specialities', toColumn: 'id', cardinality: 'N,1', label: 'spécialité' },

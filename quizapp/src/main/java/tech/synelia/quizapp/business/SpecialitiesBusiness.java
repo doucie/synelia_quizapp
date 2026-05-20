@@ -95,11 +95,7 @@ public class SpecialitiesBusiness implements IBasicBusiness<Request<Specialities
 				throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
 			}
 
-			// Verify if specialities to insert do not exist
-			Specialities existingEntity = null;
-			if (existingEntity != null) {
-				throw new InternalErrorException(functionalError.DATA_EXIST("specialities id -> " + dto.getId(), locale));
-			}
+			ensureUniqueActiveSpecialityName(null, dto.getSpecialityName(), false, locale);
 
 			// Verify if departments exist
 			Departments existingDepartments = null;
@@ -186,6 +182,11 @@ public class SpecialitiesBusiness implements IBasicBusiness<Request<Specialities
 				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("specialities id -> " + dto.getId(), locale));
 			}
 
+			String nextSpecialityName = Utilities.shouldUpdate(dto.getSpecialityName()) ? dto.getSpecialityName()
+					: entityToSave.getSpecialityName();
+			Boolean nextIsDeleted = dto.getIsDeleted() != null ? dto.getIsDeleted() : entityToSave.getIsDeleted();
+			ensureUniqueActiveSpecialityName(entityToSave.getId(), nextSpecialityName, nextIsDeleted, locale);
+
 			// Verify if departments exist
 			if (dto.getDepartmentId() != null && dto.getDepartmentId() > 0){
 				Departments existingDepartments = departmentsRepository.findOne(dto.getDepartmentId(), false);
@@ -255,6 +256,23 @@ public class SpecialitiesBusiness implements IBasicBusiness<Request<Specialities
 		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
 		log.info("----end update Specialities-----");
 		return response;
+	}
+
+	private void ensureUniqueActiveSpecialityName(Integer currentId, String specialityName, Boolean isDeleted, Locale locale) {
+		if (!Utilities.notBlank(specialityName) || Boolean.TRUE.equals(isDeleted)) {
+			return;
+		}
+
+		List<Specialities> existingByName = specialitiesRepository.findBySpecialityName(specialityName, false);
+		if (existingByName == null || existingByName.isEmpty()) {
+			return;
+		}
+
+		for (Specialities existingSpeciality : existingByName) {
+			if (existingSpeciality != null && (currentId == null || !existingSpeciality.getId().equals(currentId))) {
+				throw new InternalErrorException(functionalError.DATA_EXIST("specialities specialityName -> " + specialityName, locale));
+			}
+		}
 	}
 
 	/**

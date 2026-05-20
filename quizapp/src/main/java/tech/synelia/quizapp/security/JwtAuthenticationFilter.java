@@ -12,9 +12,13 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import tech.synelia.quizapp.utils.enums.UserRole;
+
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -38,20 +42,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 if (jwtService.isTokenValid(token)) {
                     Integer userId = jwtService.extractUserId(token);
                     String systemRole = jwtService.extractSystemRole(token);
+                    UserRole normalizedRole = UserRole.fromValue(systemRole);
 
                     // Map systemRole to Spring Security authorities
                     List<SimpleGrantedAuthority> authorities = new ArrayList<>();
-                    authorities.add(new SimpleGrantedAuthority("ROLE_" + systemRole.toUpperCase()));
+                    Set<String> authorityNames = new LinkedHashSet<>();
+                    if (normalizedRole != null) {
+                        authorityNames.add("ROLE_" + normalizedRole.getSystemRole());
+                        if (UserRole.SUPER.equals(normalizedRole)) {
+                            authorityNames.add("ROLE_ADMIN");
+                            authorityNames.add("ROLE_RECRUITER");
+                        } else if (UserRole.ADMIN.equals(normalizedRole)) {
+                            authorityNames.add("ROLE_RECRUITER");
+                        }
+                    } else if (systemRole != null && !systemRole.isBlank()) {
+                        authorityNames.add("ROLE_" + systemRole.trim().toUpperCase());
+                    }
 
-                    // Backward compat: SUPER_ADMIN also gets ROLE_SUPER, ADMIN also gets ROLE_ADMIN
-                    if ("SUPER_ADMIN".equalsIgnoreCase(systemRole)) {
-                        authorities.add(new SimpleGrantedAuthority("ROLE_SUPER"));
-                        authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
-                        authorities.add(new SimpleGrantedAuthority("ROLE_RECRUITER"));
-                    } else if ("ADMIN".equalsIgnoreCase(systemRole)) {
-                        authorities.add(new SimpleGrantedAuthority("ROLE_RECRUITER"));
-                    } else if ("UTILISATEUR".equalsIgnoreCase(systemRole)) {
-                        authorities.add(new SimpleGrantedAuthority("ROLE_RECRUITER"));
+                    for (String authorityName : authorityNames) {
+                        authorities.add(new SimpleGrantedAuthority(authorityName));
                     }
 
                     var authToken = new UsernamePasswordAuthenticationToken(userId, null, authorities);

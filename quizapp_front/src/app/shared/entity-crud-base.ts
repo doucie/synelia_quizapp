@@ -85,6 +85,7 @@ export abstract class EntityCrudBase<
   quickSearch = '';
   showAdvancedSearch = false;
   showDeletedItems = true;
+  canRestoreItems = true;
 
   // ── Suppression ──────────────────────────────
   showDeleteConfirmation = false;
@@ -518,7 +519,7 @@ export abstract class EntityCrudBase<
       },
       error: (error) => {
         console.error(`Erreur lors de la création (${this.entityName}):`, error);
-        this.notificationService.error('Erreur', `Erreur lors de la création`);
+        this.notificationService.error('Erreur', this.getErrorMessage(error, 'Erreur lors de la création'));
       }
     });
   }
@@ -541,7 +542,7 @@ export abstract class EntityCrudBase<
       },
       error: (error) => {
         console.error(`Erreur lors de la modification (${this.entityName}):`, error);
-        this.notificationService.error('Erreur', `Erreur lors de la modification`);
+        this.notificationService.error('Erreur', this.getErrorMessage(error, 'Erreur lors de la modification'));
       }
     });
   }
@@ -579,7 +580,7 @@ export abstract class EntityCrudBase<
         },
         error: (error) => {
           console.error(`Erreur lors de la suppression (${this.entityName}):`, error);
-          this.notificationService.error('Erreur', `Erreur lors de la suppression`);
+          this.notificationService.error('Erreur', this.getErrorMessage(error, 'Erreur lors de la suppression'));
         }
       });
     }
@@ -594,6 +595,10 @@ export abstract class EntityCrudBase<
 
   // ── Restauration ─────────────────────────────
   confirmRestore(item: T): void {
+    if (!this.canRestoreItems) {
+      return;
+    }
+
     this.itemToRestore.set(item);
     if (!item.id) { this.showRestoreConfirmation.set(true); return; }
 
@@ -617,6 +622,10 @@ export abstract class EntityCrudBase<
   }
 
   executeRestore(): void {
+    if (!this.canRestoreItems) {
+      return;
+    }
+
     const item = this.itemToRestore();
     if (item?.id) {
       this.performRestore(item.id).subscribe({
@@ -626,7 +635,7 @@ export abstract class EntityCrudBase<
         },
         error: (error) => {
           console.error(`Erreur lors de la restauration (${this.entityName}):`, error);
-          this.notificationService.error('Erreur', `Erreur lors de la restauration`);
+          this.notificationService.error('Erreur', this.getErrorMessage(error, 'Erreur lors de la restauration'));
         }
       });
     }
@@ -672,9 +681,13 @@ export abstract class EntityCrudBase<
       },
       error: (error) => {
         console.error(`Erreur lors de la modification rapide (${this.entityName}):`, error);
-        this.notificationService.error('Erreur', `Erreur lors de la modification`);
+        this.notificationService.error('Erreur', this.getErrorMessage(error, 'Erreur lors de la modification'));
       }
     });
+  }
+
+  protected getErrorMessage(error: any, fallback: string): string {
+    return error?.error?.message || error?.message || fallback;
   }
 
   deleteFromDetail(item: T): void {
@@ -683,6 +696,10 @@ export abstract class EntityCrudBase<
   }
 
   restoreFromDetail(item: T): void {
+    if (!this.canRestoreItems) {
+      return;
+    }
+
     this.closeDetailPanel();
     this.confirmRestore(item);
   }

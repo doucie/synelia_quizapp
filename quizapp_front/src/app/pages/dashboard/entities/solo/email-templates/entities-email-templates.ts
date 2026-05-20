@@ -39,11 +39,11 @@ export class EntitiesEmailTemplatesComponent extends EntityCrudBase<EmailTemplat
 
   override allColumns: ColumnDef[] = [
     { key: 'id', label: 'ID', priority: 1 },
-    { key: 'key', label: 'Clé', priority: 1 },
-    { key: 'subject', label: 'Sujet', priority: 1 },
+    { key: 'templateKey', label: 'Clé', priority: 1 },
+    { key: 'subjectTemplate', label: 'Sujet', priority: 1 },
     { key: 'description', label: 'Description', priority: 3 },
-    { key: 'active', label: 'Actif', priority: 2 },
-    { key: 'deleted', label: 'Supprimé', priority: 3 },
+    { key: 'isActive', label: 'Actif', priority: 2 },
+    { key: 'isDeleted', label: 'Supprimé', priority: 3 },
     { key: 'createdAt', label: 'Créé le', priority: 2 },
     { key: 'actions', label: 'Actions', priority: 1 },
   ];
@@ -64,4 +64,8 @@ export class EntitiesEmailTemplatesComponent extends EntityCrudBase<EmailTemplat
   protected performRestore(id: number): Observable<any> { return this.service.update({ id, isDeleted: false }); }
   protected resetAdvancedCriteriaValues(): void { this.advancedCriteria = {}; }
   protected resetCreateFormData(): void { this.createFormData = {}; }
+
+  openEmailEditorWorkspace(): void {
+    this.router.navigate(['/dashboard/email-editor']);
+  }
 }

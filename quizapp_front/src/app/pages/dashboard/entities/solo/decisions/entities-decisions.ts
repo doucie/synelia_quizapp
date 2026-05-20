@@ -11,7 +11,14 @@ import { DependencyPopupComponent } from '../../../../../shared/dependency-popup
 import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
 import { DecisionService, Decision, PagedDecisionResponse, DecisionCriteria } from '../../../../../core/services/decision.service';
 import { ApplicationService, Application } from '../../../../../core/services/application.service';
+import { PipelineStageService } from '../../../../../core/services/pipeline-stage.service';
 import { UserService, User } from '../../../../../core/services/user.service';
+
+interface DecisionPipelineStageRef {
+  id?: number;
+  stageLabel?: string;
+  stageType?: string;
+}
 
 @Component({
   selector: 'app-entities-decisions',
@@ -23,6 +30,7 @@ import { UserService, User } from '../../../../../core/services/user.service';
 export class EntitiesDecisionsComponent extends EntityCrudBase<Decision, DecisionCriteria, PagedDecisionResponse> {
   private service = inject(DecisionService);
   private applicationService = inject(ApplicationService);
+  private pipelineStageService = inject(PipelineStageService);
   private userService = inject(UserService);
   protected override readonly router = inject(Router);
   protected override readonly pageSizeStorageKey = 'entitiesDecisionsPageSize';
@@ -30,6 +38,7 @@ export class EntitiesDecisionsComponent extends EntityCrudBase<Decision, Decisio
   protected override readonly entityTypeApi = 'decisions';
 
   allApplications = signal<Application[]>([]);
+  allPipelineStages = signal<DecisionPipelineStageRef[]>([]);
   allUsers = signal<User[]>([]);
 
   advancedCriteria: DecisionCriteria = {};
@@ -38,8 +47,8 @@ export class EntitiesDecisionsComponent extends EntityCrudBase<Decision, Decisio
 
   override allColumns: ColumnDef[] = [
     { key: 'id', label: 'ID', priority: 1 },
-    { key: 'applicationId', label: 'Application ID', priority: 1 },
-    { key: 'userId', label: 'User ID', priority: 2 },
+    { key: 'applicationId', label: 'Candidature', priority: 1 },
+    { key: 'userId', label: 'Utilisateur', priority: 2 },
     { key: 'decisionType', label: 'Type Décision', priority: 1 },
     { key: 'cancelled', label: 'Annulée', priority: 2 },
     { key: 'pipelineStage', label: 'Étape Pipeline', priority: 2 },
@@ -58,6 +67,69 @@ export class EntitiesDecisionsComponent extends EntityCrudBase<Decision, Decisio
   override ngOnInit() {
     super.ngOnInit();
     this.applicationService.getAllApplicationsByCriteria({ page: 0, size: 9999, isDeleted: false }).subscribe({ next: (res) => this.allApplications.set(res.content) });
+    this.pipelineStageService.getAllByCriteria({ page: 0, size: 9999, isDeleted: false }).subscribe({ next: (res) => this.allPipelineStages.set(res.content) });
     this.userService.getByCriteria({ page: 0, size: 9999, isDeleted: false }).subscribe({ next: (res) => this.allUsers.set(res.content) });
+  }
+
+  getApplicationDisplay(applicationId?: number): string {
+    if (!applicationId) {
+      return '-';
+    }
+
+    const application = this.allApplications().find((item) => item.id === applicationId);
+    if (!application) {
+      return `#${applicationId}`;
+    }
+
+    const fullName = [application.candidateFirstName, application.candidateLastName]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+
+    if (fullName) {
+      return `#${applicationId} - ${fullName}`;
+    }
+
+    if (application.candidateEmail) {
+      return `#${applicationId} - ${application.candidateEmail}`;
+    }
+
+    return `#${applicationId}`;
+  }
+
+  getUserDisplay(userId?: number): string {
+    if (!userId) {
+      return '-';
+    }
+
+    const user = this.allUsers().find((item) => item.id === userId);
+    if (!user) {
+      return `#${userId}`;
+    }
+
+    const fullName = [user.prenom || user.firstName, user.nom || user.lastName]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+
+    if (fullName && user.email) {
+      return `${fullName} (${user.email})`;
+    }
+
+    return fullName || user.email || `#${userId}`;
+  }
+
+  getPipelineStageDisplay(pipelineStageId?: number): string {
+    if (!pipelineStageId) {
+      return '-';
+    }
+
+    const pipelineStage = this.allPipelineStages().find((item) => item.id === pipelineStageId);
+    if (!pipelineStage) {
+      return `#${pipelineStageId}`;
+    }
+
+    const label = pipelineStage.stageLabel || pipelineStage.stageType;
+    return label ? `${label} (#${pipelineStageId})` : `#${pipelineStageId}`;
   }
 }

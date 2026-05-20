@@ -1,31 +1,63 @@
 <div class="campaigns-page">
-  <header class="page-header">
-    <h1>Gestion des Campagnes</h1>
-    <p class="page-description">
-      Créez et gérez vos campagnes de recrutement avec des quiz personnalisés
+  <section class="hero-section">
+    <p class="eyebrow">Campagnes publiques</p>
+    <h1>Accedez a votre campagne avec le code transmis par le recruteur</h1>
+    <p class="hero-copy">
+      Les candidatures publiques sont ouvertes via un code source unique. Entrez-le ici pour verifier l'acces et rejoindre directement le formulaire de candidature.
     </p>
-  </header>
+  </section>
 
-  <div class="campaigns-content">
-    <div class="campaigns-actions">
-      <button class="btn btn--primary">
-        <span class="btn-icon">➕</span>
-        Nouvelle Campagne
-      </button>
-      <button class="btn btn--secondary">
-        <span class="btn-icon">📊</span>
-        Voir les Statistiques
-      </button>
-    </div>
+  <div class="campaigns-layout">
+    <section class="token-panel">
+      <h2>Entrer un code source</h2>
+      <p class="panel-copy">
+        Le code se trouve dans votre email, votre message de contact ou le lien partage par l'equipe recrutement.
+      </p>
 
-    <div class="campaigns-list">
-      <h2>Campagnes Actives</h2>
-      <div class="empty-state">
-        <div class="empty-icon">📋</div>
-        <h3>Aucune campagne active</h3>
-        <p>Commencez par créer votre première campagne de recrutement</p>
-        <button class="btn btn--primary">Créer une Campagne</button>
-      </div>
-    </div>
+      <form class="token-form" (ngSubmit)="submitSourceToken()">
+        <label for="sourceToken">Code source a 6 caracteres</label>
+        <input
+          id="sourceToken"
+          name="sourceToken"
+          type="text"
+          inputmode="text"
+          autocomplete="one-time-code"
+          maxlength="6"
+          [ngModel]="sourceToken()"
+          (ngModelChange)="onSourceTokenChange($event)"
+          placeholder="ABC123"
+          aria-describedby="token-help"
+        />
+
+        <button class="primary-action" type="submit" [disabled]="isCheckingToken()">
+          {{ isCheckingToken() ? 'Verification en cours...' : 'Acceder au formulaire' }}
+        </button>
+      </form>
+
+      <p id="token-help" class="token-help">
+        Sans code source valide, la plateforme ne peut pas ouvrir une candidature publique.
+      </p>
+
+      @if (errorMessage()) {
+        <p class="feedback feedback--error" aria-live="polite">{{ errorMessage() }}</p>
+      }
+    </section>
+
+    <aside class="info-column">
+      <article class="info-card">
+        <h3>Vous avez deja postule ?</h3>
+        <p>
+          Retrouvez votre dossier, votre progression et vos prochaines etapes a partir de votre code de suivi et de votre email.
+        </p>
+        <a routerLink="/suivre-candidature" class="secondary-action">Suivre ma candidature</a>
+      </article>
+
+      <article class="info-card info-card--muted">
+        <h3>Pas encore de code ?</h3>
+        <p>
+          Le code source est maintenant la porte d'entree publique de chaque campagne. Contactez votre interlocuteur Synelia si vous attendez une invitation.
+        </p>
+      </article>
+    </aside>
   </div>
 </div>

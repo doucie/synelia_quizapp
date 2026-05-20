@@ -16,6 +16,8 @@ interface EditableStage {
   stageOrder: number;
   isRequired: boolean;
   isEliminatory: boolean;
+  emailRequired: boolean;
+  emailAutomatic: boolean;
   isNew?: boolean;
 }
 
@@ -105,6 +107,8 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
           stageOrder: s.stageOrder || 0,
           isRequired: !!s.isRequired,
           isEliminatory: !!s.isEliminatory,
+          emailRequired: !!s.emailRequired,
+          emailAutomatic: !!s.emailAutomatic,
           isNew: false
         })));
         this.loading.set(false);
@@ -127,6 +131,8 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
       stageOrder: newOrder,
       isRequired: false,
       isEliminatory: false,
+      emailRequired: false,
+      emailAutomatic: false,
       isNew: true
     }]);
   }
@@ -167,6 +173,34 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
 
   updateStageField(index: number, field: keyof EditableStage, value: any): void {
     this.stages.update(list => list.map((s, i) => i === index ? { ...s, [field]: value } : s));
+  }
+
+  updateStageEmailRequired(index: number, value: boolean): void {
+    this.stages.update(list => list.map((s, i) => {
+      if (i !== index) {
+        return s;
+      }
+
+      return {
+        ...s,
+        emailRequired: value,
+        emailAutomatic: value ? s.emailAutomatic : false
+      };
+    }));
+  }
+
+  updateStageEmailAutomatic(index: number, value: boolean): void {
+    this.stages.update(list => list.map((s, i) => {
+      if (i !== index) {
+        return s;
+      }
+
+      return {
+        ...s,
+        emailRequired: value ? true : s.emailRequired,
+        emailAutomatic: value
+      };
+    }));
   }
 
   getStageTypeLabel(type: StageType): string {
@@ -240,6 +274,8 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
       stageOrder: s.stageOrder,
       isRequired: s.isRequired,
       isEliminatory: s.isEliminatory,
+      emailRequired: s.emailRequired,
+      emailAutomatic: s.emailAutomatic,
       pipelineTemplateId: this.templateId
     }));
 
@@ -250,6 +286,8 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
       stageOrder: s.stageOrder,
       isRequired: s.isRequired,
       isEliminatory: s.isEliminatory,
+      emailRequired: s.emailRequired,
+      emailAutomatic: s.emailAutomatic,
       pipelineTemplateId: this.templateId
     }));
 

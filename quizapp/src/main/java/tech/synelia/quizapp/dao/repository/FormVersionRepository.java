@@ -183,6 +183,9 @@ public interface FormVersionRepository extends JpaRepository<FormVersion, Intege
 			if (dto.getIsLocked() != null) {
 				listOfQuery.add(CriteriaUtils.generateCriteria("isLocked", dto.getIsLocked(), "e.isLocked", "Boolean", dto.getIsLockedParam(), param, index, locale));
 			}
+			if (dto.getRandomQuestions() != null) {
+				listOfQuery.add(CriteriaUtils.generateCriteria("randomQuestions", dto.getRandomQuestions(), "e.randomQuestions", "Boolean", dto.getRandomQuestionsParam(), param, index, locale));
+			}
 			if (Utilities.notBlank(dto.getCreatedAt())) {
 				listOfQuery.add(CriteriaUtils.generateCriteria("createdAt", dto.getCreatedAt(), "e.createdAt", "Date", dto.getCreatedAtParam(), param, index, locale));
 			}

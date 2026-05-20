@@ -82,7 +82,7 @@ export class PipelineStageService {
     };
     return this.http.post<any>(`${this.apiUrl}/getByCriteria`, request).pipe(
       map(response => {
-        const items = response?.items || (response?.item ? [response.item] : []);
+        const items = (response?.items || (response?.item ? [response.item] : [])).map((stage: any) => this.transformStage(stage));
         const total = response?.totalCount || response?.count || items.length;
         const pageSize = criteria.size || 10;
         return { content: items, totalElements: total, totalPages: Math.ceil(total / pageSize), size: pageSize, number: criteria.page || 0 };
@@ -120,7 +120,14 @@ export class PipelineStageService {
   getByTemplate(templateId: number): Observable<PipelineStageResponse> {
     return this.http.post<PipelineStageResponse>(`${this.apiUrl}/byTemplate`, {
       user: this.getCurrentUserId(), data: { pipelineTemplateId: templateId }
-    }).pipe(catchError(this.handleError('récupération des étapes du template')));
+    }).pipe(
+      map(response => ({
+        ...response,
+        items: (response.items || []).map(stage => this.transformStage(stage)),
+        item: response.item ? this.transformStage(response.item) : response.item
+      })),
+      catchError(this.handleError('récupération des étapes du template'))
+    );
   }
 
   reorder(templateId: number, orderedStageIds: number[]): Observable<PipelineStageResponse> {
@@ -136,6 +143,29 @@ export class PipelineStageService {
       const user = localStorage.getItem('user');
       return user ? JSON.parse(user).id : undefined;
     } catch { return undefined; }
+  }
+
+  private transformStage(stage: any): PipelineStage {
+    return {
+      id: stage.id,
+      stageType: stage.stageType || stage.stage_type || undefined,
+      stageLabel: stage.stageLabel || stage.stage_label || '',
+      stageOrder: stage.stageOrder ?? stage.stage_order ?? undefined,
+      isRequired: stage.isRequired ?? stage.is_required ?? false,
+      isEliminatory: stage.isEliminatory ?? stage.is_eliminatory ?? false,
+      emailRequired: stage.emailRequired ?? stage.email_required ?? false,
+      emailAutomatic: stage.emailAutomatic ?? stage.email_automatic ?? false,
+      configJson: stage.configJson ?? stage.config_json ?? null,
+      pipelineTemplateId: stage.pipelineTemplateId ?? stage.pipeline_template_id ?? undefined,
+      pipelineTemplateName: stage.pipelineTemplateName || stage.pipeline_template_name || undefined,
+      orderedStageIds: stage.orderedStageIds || stage.ordered_stage_ids || undefined,
+      createdAt: stage.createdAt || stage.created_at || undefined,
+      createdBy: stage.createdBy || stage.created_by || undefined,
+      updatedAt: stage.updatedAt || stage.updated_at || undefined,
+      updatedBy: stage.updatedBy || stage.updated_by || undefined,
+      isDeleted: stage.isDeleted ?? stage.is_deleted ?? false,
+      searchString: stage.searchString || stage.search_string || undefined
+    };
   }
 
   private handleError(action: string) {

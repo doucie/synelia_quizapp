@@ -4,6 +4,7 @@ import { Observable, throwError, of, forkJoin } from 'rxjs';
 import { map, catchError, switchMap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { QuestionService, Question } from './question.service';
+import { CampaignStatus, DEFAULT_CAMPAIGN_STATUS, isOperationalCampaignStatus, normalizeCampaignStatus } from '../constants/campaign-status.constants';
 
 /**
  * Interface pour les données d'une campagne
@@ -13,7 +14,7 @@ export interface Campaign {
   campaignTitle?: string;
   campaignName?: string;
   campaignDesc?: string;
-  campaignStatus?: 'ACTIVE' | 'PENDING' | 'CLOSED';
+  campaignStatus?: CampaignStatus;
   formAssignmentStrategy?: 'RANDOM' | 'RANDOM_NO_REPEAT' | 'SOURCE_TOKEN' | 'SEQUENTIAL';
   formAssignmentExhaustionPolicy?: 'BLOCK' | 'RESET' | 'LOOP';
   campaignStart?: string;
@@ -21,6 +22,10 @@ export interface Campaign {
   campaignDuration?: number;
   maxApply?: number;
   allCanEvaluate?: boolean;
+  totalQuestions?: number;
+  isTimed?: boolean;
+  isArchived?: boolean;
+  timeAllForms?: boolean;
   markedOutOf?: number;
   isActive?: boolean;
   departmentsId?: number;
@@ -31,6 +36,7 @@ export interface Campaign {
   isDeleted?: boolean;
   createdAt?: string;
   createdBy?: number;
+  creatorId?: number;
   updatedAt?: string;
   creatorName?: string;
   applicationsCount?: number;
@@ -118,6 +124,25 @@ export class CampaignService {
   constructor(private http: HttpClient, private questionService: QuestionService) {
     if (!environment.production) console.log('🚀 Initialisation CampaignService');
     if (!environment.production) console.log('📡 URL de l\'API:', this.apiUrl);
+  }
+
+  private normalizeCampaignMutationInput(campaign: Partial<Campaign> & { specialitiesId?: number }): Partial<Campaign> {
+    const normalizedCampaign: Partial<Campaign> = { ...campaign };
+    const campaignTitle = campaign.campaignTitle ?? campaign.campaignName;
+    const specialityId = campaign.specialityId ?? campaign.specialitiesId;
+
+    if (campaignTitle !== undefined) {
+      normalizedCampaign.campaignTitle = campaignTitle;
+    }
+
+    if (specialityId !== undefined) {
+      normalizedCampaign.specialityId = specialityId;
+    }
+
+    delete (normalizedCampaign as Partial<Campaign> & { campaignName?: string }).campaignName;
+    delete (normalizedCampaign as Partial<Campaign> & { specialitiesId?: number }).specialitiesId;
+
+    return normalizedCampaign;
   }
 
   /**
@@ -229,23 +254,27 @@ export class CampaignService {
   createCampaign(campaign: Partial<Campaign>): Observable<any> {
     if (!environment.production) console.log('📝 Création d\'une campagne:', campaign);
 
+    const normalizedCampaign = this.normalizeCampaignMutationInput(campaign);
     const currentUserId = this.getCurrentUserId();
-    const creatorId = Number(campaign.createdBy) || currentUserId;
+    const creatorId = Number(normalizedCampaign.creatorId ?? normalizedCampaign.createdBy) || currentUserId;
 
     // Transformer les données pour correspondre au format backend
     const backendCampaign: any = {
-      campaignTitle: campaign.campaignTitle,
-      campaignDesc: campaign.campaignDesc,
-      campaignStatus: campaign.campaignStatus,
-      formAssignmentStrategy: campaign.formAssignmentStrategy,
-      formAssignmentExhaustionPolicy: campaign.formAssignmentExhaustionPolicy,
-      campaignStart: campaign.campaignStart,
-      campaignEnd: campaign.campaignEnd,
-      maxApply: campaign.maxApply,
-      allCanEvaluate: campaign.allCanEvaluate,
-      markedOutOf: campaign.markedOutOf,
-      specialityId: campaign.specialityId, // Backend utilise specialityId
-      pipelineTemplateId: campaign.pipelineTemplateId,
+      campaignTitle: normalizedCampaign.campaignTitle,
+      campaignDesc: normalizedCampaign.campaignDesc,
+      campaignStatus: normalizedCampaign.campaignStatus,
+      formAssignmentStrategy: normalizedCampaign.formAssignmentStrategy,
+      formAssignmentExhaustionPolicy: normalizedCampaign.formAssignmentExhaustionPolicy,
+      campaignStart: normalizedCampaign.campaignStart,
+      campaignEnd: normalizedCampaign.campaignEnd,
+      maxApply: normalizedCampaign.maxApply,
+      allCanEvaluate: normalizedCampaign.allCanEvaluate,
+      isTimed: normalizedCampaign.isTimed,
+      isArchived: normalizedCampaign.isArchived,
+      timeAllForms: normalizedCampaign.timeAllForms,
+      markedOutOf: normalizedCampaign.markedOutOf,
+      specialityId: normalizedCampaign.specialityId,
+      pipelineTemplateId: normalizedCampaign.pipelineTemplateId,
       createdBy: creatorId,
       creatorId // Backend requiert aussi creatorId
     };
@@ -288,7 +317,7 @@ export class CampaignService {
   updateCampaign(id: number, campaign: Partial<Campaign>): Observable<Campaign> {
     if (!environment.production) console.log('📝 Mise à jour de la campagne ID:', id, campaign);
 
-    const backendCampaign = { ...campaign };
+    const backendCampaign = this.normalizeCampaignMutationInput(campaign);
 
     const requestBody = {
       user: this.getCurrentUserId(),
@@ -424,7 +453,7 @@ export class CampaignService {
   }
 
   /**
-   * Récupère les campagnes partagées avec l'utilisateur via campaign_crud
+   * Récupère les campagnes partagées avec l'utilisateur via entity_permission.
    */
   getSharedCampaigns(criteria: CampaignSearchCriteria = {}): Observable<Campaign[]> {
     const currentUserData = localStorage.getItem('user');
@@ -578,40 +607,6 @@ export class CampaignService {
     return Array.from(permissionKeys);
   }
 
-  private getLegacyCampaignAccess(campaignId: number): Observable<any[]> {
-    const requestBody = {
-      user: this.getCurrentUserId(),
-      size: 100,
-      index: 0,
-      data: { campaignId }
-    };
-
-    return this.http.post<any>(`${environment.apiUrl}/campaignCrud/getAllByCriteria`, requestBody).pipe(
-      map(response => response.items || []),
-      catchError(error => {
-        console.error('❌ Erreur récupération accès recruteurs legacy:', error);
-        return of([]);
-      })
-    );
-  }
-
-  private getLegacyCampaignAccessesByUser(userId: number): Observable<any[]> {
-    const requestBody = {
-      user: this.getCurrentUserId(),
-      size: 1000,
-      index: 0,
-      data: { userId }
-    };
-
-    return this.http.post<any>(`${environment.apiUrl}/campaignCrud/getAllByCriteria`, requestBody).pipe(
-      map(response => response.items || []),
-      catchError(error => {
-        console.error('❌ Erreur récupération accès campagnes legacy:', error);
-        return of([]);
-      })
-    );
-  }
-
   /**
    * Transforme une campagne brute du backend vers le format frontend
    */
@@ -621,7 +616,7 @@ export class CampaignService {
       campaignTitle: campaign.campaignTitle || campaign.campaign_title || '',
       campaignName: campaign.campaignTitle || campaign.campaign_title || '',
       campaignDesc: campaign.campaignDesc || campaign.campaign_desc || '',
-      campaignStatus: (campaign.campaignStatus || campaign.campaign_status || 'PENDING').toUpperCase(),
+      campaignStatus: normalizeCampaignStatus(campaign.campaignStatus || campaign.campaign_status || DEFAULT_CAMPAIGN_STATUS),
       formAssignmentStrategy: (campaign.formAssignmentStrategy || campaign.form_assignment_strategy || 'RANDOM').toUpperCase(),
       formAssignmentExhaustionPolicy: (campaign.formAssignmentExhaustionPolicy || campaign.form_assignment_exhaustion_policy || 'BLOCK').toUpperCase(),
       campaignStart: campaign.campaignStart || campaign.campaign_start || undefined,
@@ -629,23 +624,28 @@ export class CampaignService {
       campaignDuration: campaign.campaignDuration || campaign.campaign_duration || undefined,
       maxApply: campaign.maxApply ?? campaign.max_apply ?? undefined,
       allCanEvaluate: campaign.allCanEvaluate ?? campaign.all_can_evaluate ?? false,
+      totalQuestions: campaign.totalQuestions ?? campaign.total_questions ?? campaign.questionsCount ?? campaign.questions_count ?? undefined,
+      isTimed: campaign.isTimed ?? campaign.is_timed ?? false,
+      isArchived: campaign.isArchived ?? campaign.is_archived ?? false,
+      timeAllForms: campaign.timeAllForms ?? campaign.time_all_forms ?? false,
       isDeleted: campaign.isDeleted ?? campaign.is_deleted ?? false,
       markedOutOf: campaign.markedOutOf || campaign.marked_out_of || undefined,
-      isActive: campaign.campaignStatus === 'ACTIVE' || campaign.campaign_status === 'ACTIVE',
+      isActive: isOperationalCampaignStatus(campaign.campaignStatus || campaign.campaign_status),
       createdAt: campaign.createdAt || campaign.created_at || undefined,
       createdBy: campaign.createdBy || campaign.created_by || undefined,
+      creatorId: campaign.creatorId || campaign.creator_id || campaign.createdBy || campaign.created_by || undefined,
       updatedAt: campaign.updatedAt || campaign.updated_at || undefined,
       departmentsId: campaign.departmentsId || campaign.departments_id || undefined,
       departmentName: campaign.departmentName || campaign.department_name || undefined,
       specialityId: campaign.specialityId || campaign.speciality_id || undefined,
-      specialityLibelle: campaign.specialityLibelle || campaign.speciality_libelle || undefined,
-      specialityName: campaign.specialityLibelle || campaign.speciality_libelle || undefined,
+      specialityLibelle: campaign.specialityLibelle || campaign.speciality_libelle || campaign.specialityName || campaign.speciality_name || undefined,
+      specialityName: campaign.specialityName || campaign.speciality_name || campaign.specialityLibelle || campaign.speciality_libelle || undefined,
       creatorName: campaign.creatorName || campaign.creator_name || 
                     (campaign.userFirstName && campaign.userLastName 
                       ? `${campaign.userFirstName} ${campaign.userLastName}` 
                       : undefined),
       applicationsCount: campaign.applicationsCount || campaign.applications_count || undefined,
-      questionsCount: campaign.questionsCount || campaign.questions_count || undefined,
+      questionsCount: campaign.questionsCount || campaign.questions_count || campaign.totalQuestions || campaign.total_questions || undefined,
       pipelineTemplateId: campaign.pipelineTemplateId || campaign.pipeline_template_id || undefined,
       pipelineTemplateName: campaign.pipelineTemplateName || campaign.pipeline_template_name || undefined
     };
@@ -742,8 +742,10 @@ export class CampaignService {
 
     return this.getEntityPermissionsForCampaign(campaignId).pipe(
       map(permissions => this.mapEntityPermissionsToCampaignAccess(permissions)),
-      switchMap(accesses => accesses.length > 0 ? of(accesses) : this.getLegacyCampaignAccess(campaignId)),
-      catchError(() => this.getLegacyCampaignAccess(campaignId))
+      catchError(error => {
+        console.error('❌ Erreur récupération accès recruteurs:', error);
+        return of([]);
+      })
     );
   }
 
@@ -815,8 +817,10 @@ export class CampaignService {
 
     return this.getEntityPermissionsForUser(userId).pipe(
       map(permissions => this.mapEntityPermissionsToCampaignAccess(permissions)),
-      switchMap(accesses => accesses.length > 0 ? of(accesses) : this.getLegacyCampaignAccessesByUser(userId)),
-      catchError(() => this.getLegacyCampaignAccessesByUser(userId))
+      catchError(error => {
+        console.error('❌ Erreur récupération accès campagnes:', error);
+        return of([]);
+      })
     );
   }
 

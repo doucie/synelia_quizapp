@@ -22,6 +22,7 @@ import tech.synelia.quizapp.utils.contract.IBasicBusiness;
 import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.dto.transformer.*;
+import tech.synelia.quizapp.utils.enums.DecisionType;
 import tech.synelia.quizapp.utils.enums.FunctionalityEnum;
 import tech.synelia.quizapp.utils.enums.EmailActionType;
 import tech.synelia.quizapp.dao.entity.Decision;
@@ -42,6 +43,8 @@ import jakarta.persistence.PersistenceContext;
 public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Response<DecisionDto>> {
 
     private static final String MAIL_SENDER_NAME = "Synelia Recrutement";
+    private static final String DECISION_TYPE_ALLOWED_VALUES = String.join("/",
+            Arrays.stream(DecisionType.values()).map(DecisionType::getValue).toArray(String[]::new));
 
     @Autowired
     private DecisionRepository decisionRepository;
@@ -157,7 +160,7 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
             entity.setIsDeleted(false);
 
             // Update application status based on decision
-            updateApplicationStatus(entity, request.getUser(), locale);
+            updateApplicationStatus(entity, request.getUser(), locale, Boolean.TRUE.equals(dto.getSendDecisionEmail()));
 
             Decision saved = decisionRepository.save(entity);
             items.add(saved);
@@ -173,7 +176,7 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
     /**
      * Update application status based on decision
      */
-    private void updateApplicationStatus(Decision decision, Integer actorUserId, Locale locale) {
+    private void updateApplicationStatus(Decision decision, Integer actorUserId, Locale locale, boolean sendDecisionEmailRequested) {
         if (decision.getApplication() != null && decision.getApplication().getId() != null) {
             // Fetch the full application entity
             Applications app = applicationsRepository.findOne(decision.getApplication().getId(), false);
@@ -203,7 +206,7 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
                 }
 
                 syncApplicationStatusFromDecision(latestApplication, decision, decisionActorId);
-                sendDecisionEmailIfNeeded(latestApplication, decision, decisionActorId, locale);
+                sendDecisionEmailIfNeeded(latestApplication, decision, decisionActorId, locale, sendDecisionEmailRequested);
             }
         }
     }
@@ -218,6 +221,7 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
     public Response<DecisionDto> getByCriteria(Request<DecisionDto> request, Locale locale) throws ParseException {
         log.info("----begin get Decision by criteria-----");
         Response<DecisionDto> response = new Response<>();
+        normalizeDecisionCriteria(request, locale);
 
         try {
             List<Decision> items = decisionRepository.getByCriteria(request, em, locale);
@@ -237,6 +241,8 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
                 response.setHasError(false);
                 return response;
             }
+        } catch (RuntimeException e) {
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -314,7 +320,7 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
             entity.setIsDeleted(false);
 
             Decision saved = decisionRepository.save(entity);
-            updateApplicationStatus(saved, request.getUser(), locale);
+            updateApplicationStatus(saved, request.getUser(), locale, Boolean.TRUE.equals(dto.getSendDecisionEmail()));
             items.add(saved);
         }
 
@@ -400,6 +406,19 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
             return response;
         }
 
+        // Validation enum strict decisionType (D-013)
+        DecisionType decisionType;
+        try {
+            decisionType = DecisionType.fromValue(dto.getDecisionType());
+        } catch (IllegalArgumentException exception) {
+            response.setStatus(functionalError.DATA_NOT_EXIST(
+                    "decisionType invalide (" + DECISION_TYPE_ALLOWED_VALUES + ") -> " + dto.getDecisionType(),
+                    locale));
+            response.setHasError(true);
+            return response;
+        }
+        dto.setDecisionType(decisionType.getValue());
+
         if (dto.getIsCancel() == null) {
             response.setStatus(functionalError.FIELD_EMPTY("isCancel", locale));
             response.setHasError(true);
@@ -422,6 +441,21 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
         return response;
     }
 
+    private void normalizeDecisionCriteria(Request<DecisionDto> request, Locale locale) {
+        DecisionDto dto = request != null ? request.getData() : null;
+        if (dto == null || !Utilities.notBlank(dto.getDecisionType())) {
+            return;
+        }
+
+        try {
+            dto.setDecisionType(DecisionType.fromValue(dto.getDecisionType()).getValue());
+        } catch (IllegalArgumentException exception) {
+            throw new InvalidEntityException(functionalError.DATA_NOT_EXIST(
+                    "decisionType invalide (" + DECISION_TYPE_ALLOWED_VALUES + ") -> " + dto.getDecisionType(),
+                    locale));
+        }
+    }
+
     /**
      * Met à jour le progrès pipeline pour l'étape DECISION ou PRESELECTION
      * en fonction du type de décision.
@@ -437,15 +471,11 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
         Integer templateId = campaign.getPipelineTemplate().getId();
 
         // Déterminer le type d'étape pipeline en fonction du type de décision
-        String stageType;
-        String decisionType = decision.getDecisionType();
-        if ("PRE_SCREEN_ACCEPTED".equals(decisionType) || "PRE_SCREEN_REJECTED".equals(decisionType)) {
-            stageType = "PRESELECTION";
-        } else if ("FINAL_ACCEPTED".equals(decisionType) || "FINAL_REJECTED".equals(decisionType)) {
-            stageType = "DECISION";
-        } else {
+        DecisionType decisionType = resolveDecisionType(decision.getDecisionType());
+        if (decisionType == null) {
             return false;
         }
+        String stageType = decisionType.getPipelineStageType();
 
         PipelineStage stage = pipelineStageRepository.findByTemplateIdAndStageType(templateId, stageType);
         if (stage == null) {
@@ -466,11 +496,10 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
             return false;
         }
 
-        boolean isAccepted = "PRE_SCREEN_ACCEPTED".equals(decisionType) || "FINAL_ACCEPTED".equals(decisionType);
-        if (isAccepted) {
-            applicationProgressBusiness.passStage(app.getId(), stage.getId(), actorUserId, null, decision.getDecisionType(), locale);
+        if (decisionType.isAccepted()) {
+            applicationProgressBusiness.passStage(app.getId(), stage.getId(), actorUserId, null, decisionType.getValue(), locale);
         } else {
-            applicationProgressBusiness.failStage(app.getId(), stage.getId(), actorUserId, decision.getDecisionType(), locale);
+            applicationProgressBusiness.failStage(app.getId(), stage.getId(), actorUserId, decisionType.getValue(), locale);
         }
         log.info("Pipeline stage " + stageType + " synchronisé via le moteur central pour application " + app.getId());
         return true;
@@ -481,7 +510,12 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
             return;
         }
 
-        String newStatus = decision.getDecisionType();
+        DecisionType decisionType = resolveDecisionType(decision.getDecisionType());
+        if (decisionType == null) {
+            return;
+        }
+
+        String newStatus = decisionType.getValue();
         if (Objects.equals(newStatus, application.getApplicationStatus())) {
             return;
         }
@@ -506,7 +540,7 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
         return fallbackUserId;
     }
 
-    private void sendDecisionEmailIfNeeded(Applications application, Decision decision, Integer actorUserId, Locale locale) {
+    private void sendDecisionEmailIfNeeded(Applications application, Decision decision, Integer actorUserId, Locale locale, boolean sendDecisionEmailRequested) {
         if (application == null || decision == null || Boolean.TRUE.equals(decision.getIsCancel())) {
             return;
         }
@@ -514,25 +548,30 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
             return;
         }
 
-        String decisionType = decision.getDecisionType();
-        boolean isPreScreenDecision = "PRE_SCREEN_ACCEPTED".equals(decisionType) || "PRE_SCREEN_REJECTED".equals(decisionType);
-        boolean isFinalDecision = "FINAL_ACCEPTED".equals(decisionType) || "FINAL_REJECTED".equals(decisionType);
-        if (!isPreScreenDecision && !isFinalDecision) {
+        DecisionType decisionType = resolveDecisionType(decision.getDecisionType());
+        if (decisionType == null) {
             return;
         }
 
-        if (isPreScreenDecision && Boolean.TRUE.equals(application.getPreScreenDecisionMailSent())) {
+        PipelineStage stage = resolveDecisionPipelineStage(application, decisionType);
+        boolean emailRequired = stage == null || Boolean.TRUE.equals(stage.getEmailRequired());
+        boolean emailAutomatic = stage == null || Boolean.TRUE.equals(stage.getEmailAutomatic());
+        if (!emailRequired) {
             return;
         }
-        if (isFinalDecision && Boolean.TRUE.equals(application.getFinalDecisionMailSent())) {
+        if (!emailAutomatic && !sendDecisionEmailRequested) {
             return;
         }
 
-        EmailActionType emailAction = isPreScreenDecision ? EmailActionType.PRE_SCREEN_DECISION : EmailActionType.FINAL_DECISION;
+        if (isStageMailAlreadySent(application.getId(), stage)) {
+            return;
+        }
+
+        EmailActionType emailAction = decisionType.isPreScreen() ? EmailActionType.PRE_SCREEN_DECISION : EmailActionType.FINAL_DECISION;
         String templateKey = emailAction.getTemplateKey();
         EmailTemplate emailTemplate = emailTemplateBusiness.findDefaultByActionTypeOrKey(emailAction.name(), templateKey);
         if (emailTemplate == null || Boolean.TRUE.equals(emailTemplate.getIsDeleted()) || !Boolean.TRUE.equals(emailTemplate.getIsActive())) {
-            log.info("Aucun template email actif pour la décision " + decisionType + ", envoi ignoré.");
+            log.info("Aucun template email actif pour la décision " + decisionType.getValue() + ", envoi ignoré.");
             return;
         }
 
@@ -556,9 +595,9 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
             vars.put("candidate_full_name", application.getCandidateFirstName() + " " + application.getCandidateLastName());
             vars.put("candidate_email", application.getCandidateEmail());
             vars.put("campaign_title", campaign.getCampaignTitle());
-            vars.put("decision_type", decisionType);
-            vars.put("decision_stage", isPreScreenDecision ? "preselection" : "decision_finale");
-            vars.put("decision_label", decisionType.endsWith("ACCEPTED") ? "acceptee" : "refusee");
+            vars.put("decision_type", decisionType.getValue());
+            vars.put("decision_stage", decisionType.isPreScreen() ? "preselection" : "decision_finale");
+            vars.put("decision_label", decisionType.isAccepted() ? "acceptee" : "refusee");
             vars.put("application_status", application.getApplicationStatus());
             vars.put("app_link", paramsUtils.getUrlAppl());
 
@@ -567,8 +606,8 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
 
             Context context = new Context();
             context.setVariable("contenu", contenu);
-            context.setVariable("entete", isPreScreenDecision ? "Decision de preselection" : "Decision finale");
-            context.setVariable("titre", isPreScreenDecision ? "Resultat de votre preselection" : "Resultat final de votre candidature");
+            context.setVariable("entete", decisionType.isPreScreen() ? "Decision de preselection" : "Decision finale");
+            context.setVariable("titre", decisionType.isPreScreen() ? "Resultat de votre preselection" : "Resultat final de votre candidature");
             context.setVariable("appLink", paramsUtils.getUrlAppl());
 
             Response<?> responseEmail = hostingUtils.sendEmail(from, toRecipients, subject, "", null, context, "blank", locale);
@@ -577,31 +616,54 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
                 return;
             }
 
-            if (isPreScreenDecision) {
-                application.setPreScreenDecisionMailSent(true);
-            } else {
-                application.setFinalDecisionMailSent(true);
+            if (stage != null && stage.getId() != null) {
+                applicationProgressBusiness.markStageMailSent(application.getId(), stage.getId(), actorUserId);
             }
-            application.setUpdatedAt(new Date());
-            application.setUpdatedBy(actorUserId);
-            applicationsRepository.save(application);
         } catch (Exception exception) {
             log.warning("Envoi email décision ignoré pour application " + application.getId() + ": " + exception.getMessage());
         }
     }
 
+    private PipelineStage resolveDecisionPipelineStage(Applications application, DecisionType decisionType) {
+        if (application == null || decisionType == null || application.getSourceToken() == null
+                || application.getSourceToken().getCampaigns() == null
+                || application.getSourceToken().getCampaigns().getPipelineTemplate() == null) {
+            return null;
+        }
+        Integer templateId = application.getSourceToken().getCampaigns().getPipelineTemplate().getId();
+        if (templateId == null) {
+            return null;
+        }
+        return pipelineStageRepository.findByTemplateIdAndStageType(templateId, decisionType.getPipelineStageType());
+    }
+
+    private boolean isStageMailAlreadySent(Integer applicationId, PipelineStage stage) {
+        if (applicationId == null || stage == null || stage.getId() == null) {
+            return false;
+        }
+
+        ApplicationProgress progress = applicationProgressRepository.findByApplicationIdAndPipelineStageId(applicationId, stage.getId());
+        return progress != null && Boolean.TRUE.equals(progress.getMailSent());
+    }
+
     private String resolveCancelledDecisionStatus(Decision decision) {
-        String currentDecisionType = decision.getDecisionType();
+        DecisionType currentDecisionType = resolveDecisionType(decision.getDecisionType());
         if (currentDecisionType == null) {
             return "SUBMITTED";
         }
-        if (currentDecisionType.startsWith("PRE_SCREEN")) {
-            return "SUBMITTED";
+        return currentDecisionType.getCancelledFallbackStatus();
+    }
+
+    private DecisionType resolveDecisionType(String value) {
+        if (!Utilities.notBlank(value)) {
+            return null;
         }
-        if (currentDecisionType.startsWith("FINAL")) {
-            return "PRE_SCREEN_ACCEPTED";
+        try {
+            return DecisionType.fromValue(value);
+        } catch (IllegalArgumentException exception) {
+            log.warning("decisionType inattendu ignoré: " + value);
+            return null;
         }
-        return currentDecisionType;
     }
 
     private void ensureCampaignDecisionAllowed(Integer applicationId, Integer actorUserId, Locale locale, String actionLabel, String... globalPermissions) {
@@ -618,15 +680,15 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
         }
 
         Campaigns campaign = getCampaignForApplication(application, locale);
-        boolean hasGlobalRight = permissionService.hasAnyPermission(actorUserId, globalPermissions);
-        boolean hasCampaignRight = permissionService.hasAnyEntityPermission(
-                actorUserId,
-                "CAMPAIGN",
-                campaign.getId(),
-                "ADMIN",
-                "ADVANCE_PIPELINE");
+        boolean hasScopedRight = permissionService.hasAnyScopedPermission(
+            actorUserId,
+            "CAMPAIGN",
+            campaign.getId(),
+            globalPermissions,
+            "ADMIN",
+            "ADVANCE_PIPELINE");
 
-        if (!hasGlobalRight && !hasCampaignRight) {
+        if (!hasScopedRight) {
             throw new InvalidEntityException(functionalError.REQUEST_FAIL(
                     "Accès refusé: droits insuffisants pour " + actionLabel,
                     locale));

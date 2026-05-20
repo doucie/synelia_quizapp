@@ -9,6 +9,7 @@ import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import lombok.Data;
@@ -28,6 +29,7 @@ public class EmailVerificationTokenDto implements Cloneable {
 
     private Integer    id                   ; // Primary Key
     private String     email                ;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String     token                ;
     private TokenType  tokenType            ;
     private String     expiresAt            ;

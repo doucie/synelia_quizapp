@@ -21,6 +21,7 @@ import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.business.*;
 import tech.synelia.quizapp.dao.entity.*;
 import tech.synelia.quizapp.dao.repository.*;
+import tech.synelia.quizapp.utils.enums.UserRole;
 
 @Log
 @CrossOrigin("*")
@@ -74,7 +75,8 @@ public class AuthPermissionsController {
             // Construire le DTO de réponse
             UserDto dto = new UserDto();
             dto.setId(user.getId());
-            dto.setUserRole(user.getUserRole());
+            String normalizedUserRole = UserRole.normalizeValue(user.getUserRole());
+            dto.setUserRole(normalizedUserRole != null ? normalizedUserRole : user.getUserRole());
 
             // Groupes métiers
             List<UserBusinessGroup> ubgs = userBusinessGroupRepository.findByUserId(userId);

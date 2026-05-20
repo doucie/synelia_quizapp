@@ -154,6 +154,7 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
     }
   }
   departmentToDelete: Department | null = null;
+  cascadeDeleteRequested = false;
   
   // État de la popup de restauration
   showRestoreConfirmation = signal<boolean>(false);
@@ -547,6 +548,21 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
    */
   deleteDepartment(department: Department) {
     this.departmentToDelete = department;
+    this.cascadeDeleteRequested = false;
+    this.departmentToDelete.associatedSpecialitiesCount = 0;
+    this.departmentToDelete.associatedSpecialitiesNames = [];
+    this.departmentToDelete.cascadeDelete = false;
+
+    this.departmentService.checkAssociatedSpecialities(department.id).subscribe({
+      next: (details) => {
+        this.applyAssociatedSpecialitiesInfo(department, details);
+        this.openDepartmentDeleteConfirmation(department);
+      },
+      error: () => this.openDepartmentDeleteConfirmation(department)
+    });
+  }
+
+  private openDepartmentDeleteConfirmation(department: Department): void {
     this.depService.checkDependencies('departments', department.id).subscribe({
       next: (info) => {
         if (info.totalDependencies > 0) {
@@ -561,15 +577,94 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
     });
   }
 
+  private applyAssociatedSpecialitiesInfo(department: Department, details: any): void {
+    const names = this.extractAssociatedSpecialitiesNames(details);
+    const count = this.extractAssociatedSpecialitiesCount(details, names.length);
+
+    department.associatedSpecialitiesCount = count;
+    department.associatedSpecialitiesNames = names;
+    department.cascadeDelete = false;
+  }
+
+  private extractAssociatedSpecialitiesNames(details: any): string[] {
+    const rawNames = details?.associatedSpecialitiesNames
+      ?? details?.associatedSpecialityNames
+      ?? details?.specialityNames
+      ?? details?.specialities;
+
+    if (Array.isArray(rawNames)) {
+      return rawNames
+        .map((value) => typeof value === 'string' ? value : value?.nom || value?.name || value?.specialityName)
+        .filter((value): value is string => !!value && value.trim().length > 0);
+    }
+
+    if (typeof rawNames === 'string') {
+      return rawNames
+        .split(',')
+        .map((value) => value.trim())
+        .filter((value) => value.length > 0);
+    }
+
+    return [];
+  }
+
+  private extractAssociatedSpecialitiesCount(details: any, namesCount: number): number {
+    const rawCount = details?.associatedSpecialitiesCount
+      ?? details?.associatedSpecialityCount
+      ?? details?.specialitiesCount
+      ?? details?.count;
+
+    const parsedCount = Number(rawCount);
+    if (!Number.isNaN(parsedCount) && parsedCount >= 0) {
+      return parsedCount;
+    }
+
+    return namesCount;
+  }
+
+  hasAssociatedSpecialitiesForDelete(): boolean {
+    return (this.departmentToDelete?.associatedSpecialitiesCount || 0) > 0;
+  }
+
+  getAssociatedSpecialitiesPreview(): string {
+    const names = this.departmentToDelete?.associatedSpecialitiesNames || [];
+    if (names.length === 0) {
+      return '';
+    }
+
+    const preview = names.slice(0, 3).join(', ');
+    return names.length > 3 ? `${preview}...` : preview;
+  }
+
   /**
    * Confirme la suppression d'un département
    */
   confirmDeleteDepartment() {
     if (!this.departmentToDelete) return;
+
+    const shouldCascade = this.hasAssociatedSpecialitiesForDelete();
+    if (shouldCascade && !this.cascadeDeleteRequested) {
+      this.notificationService.warning('Attention', 'Activez la suppression en cascade pour supprimer aussi les spécialités associées.');
+      return;
+    }
+
+    const deleteRequest = shouldCascade
+      ? this.departmentService.deleteWithCascade(this.departmentToDelete.id)
+      : this.departmentService.delete(this.departmentToDelete.id);
     
-    this.departmentService.delete(this.departmentToDelete.id).subscribe({
-      next: () => {
-        this.notificationService.success('Succès', `Département ${this.departmentToDelete?.nom} supprimé avec succès`);
+    deleteRequest.subscribe({
+      next: (response: any) => {
+        if (response?.hasError) {
+          this.notificationService.error('Erreur', response.status?.message || 'Erreur lors de la suppression du département');
+          this.cancelDeleteDepartment();
+          return;
+        }
+
+        const successMessage = shouldCascade
+          ? `Département ${this.departmentToDelete?.nom} et ses spécialités supprimés avec succès`
+          : `Département ${this.departmentToDelete?.nom} supprimé avec succès`;
+
+        this.notificationService.success('Succès', successMessage);
         
         // Marquer le département comme supprimé dans la liste locale
         if (this.departmentToDelete) {
@@ -596,6 +691,7 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
    */
   cancelDeleteDepartment() {
     this.showDeleteConfirmation = false;
+    this.cascadeDeleteRequested = false;
     this.departmentToDelete = null;
   }
 
@@ -725,6 +821,10 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
    */
   goBackToEntities() {
     this.router.navigate(['/dashboard/entities']);
+  }
+
+  openDepartmentsWorkspace() {
+    this.router.navigate(['/dashboard/departments']);
   }
 
   /**
@@ -996,15 +1096,16 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
 
     console.log(`🔍 Chargement des spécialités pour le département ${departmentId}...`);
 
-    // Charger TOUTES les spécialités et filtrer côté frontend par departmentId
+    // Filtrer aussi côté API pour garder une relation department -> specialities fiable.
     this.specialityService.getAll({
       page: 0,
-      size: 10000 // Charger beaucoup pour avoir toutes les spécialités
+      size: 10000,
+      departmentId
     }).subscribe({
       next: (response) => {
         console.log(`✅ Toutes les spécialités chargées:`, response.items);
         
-        // Filtrer les spécialités qui appartiennent à ce département
+        // Garder un filtre défensif côté front tant que toutes les réponses ne sont pas homogènes.
         const departmentSpecialities = response.items.filter(speciality => 
           speciality.departmentId === departmentId
         );

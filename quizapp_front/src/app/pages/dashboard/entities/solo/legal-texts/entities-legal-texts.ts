@@ -61,7 +61,7 @@ export class EntitiesLegalTextsComponent extends EntityCrudBase<LegalText, Legal
   protected performCreate(item: Partial<LegalText>): Observable<any> { return this.service.create(item); }
   protected performUpdate(item: LegalText): Observable<any> { return this.service.update(item); }
   protected performDelete(id: number): Observable<any> { return this.service.delete(id); }
-  protected performRestore(id: number): Observable<any> { return this.service.update({ id, isDeleted: false }); }
+  protected performRestore(id: number): Observable<any> { return this.service.restore(id); }
   protected resetAdvancedCriteriaValues(): void { this.advancedCriteria = {}; }
   protected resetCreateFormData(): void { this.createFormData = {}; }
 }

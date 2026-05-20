@@ -13,7 +13,7 @@
         <span class="current-page">Gestion des Templates de Pipeline</span>
       </div>
       <h1>Gestion des Templates de Pipeline</h1>
-      <p class="page-description">Administration des modèles de pipeline de recrutement</p>
+      <p class="page-description">Surface technique d'administration brute des templates. Pour la gestion metier quotidienne, utiliser la page Modeles de pipeline.</p>
     </div>
     <div class="toolbar">
       <div class="toolbar-left">
@@ -21,6 +21,7 @@
         <app-filter-checkbox inputId="showDeleted" label="Afficher les supprimés" [checked]="showDeletedItems" ariaLabel="Afficher les éléments supprimés" (checkedChange)="toggleDeletedItems()"></app-filter-checkbox>
       </div>
       <div class="toolbar-right">
+        <button class="btn-secondary-pro" (click)="openPipelineTemplatesWorkspace()">Page metier</button>
         <button class="btn-secondary-pro" (click)="openAdvancedSearch()">Filtres avancés</button>
         <button class="btn-primary-pro" (click)="openCreateDialog()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -147,11 +148,11 @@
         <thead>
           <tr>
             <th class="col-id" [class.col-hidden]="!isColumnVisible('id')">ID</th>
-            <th class="col-short" [class.col-hidden]="!isColumnVisible('name')">Nom</th>
-            <th class="col-medium" [class.col-hidden]="!isColumnVisible('description')">Description</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('templateName')">Nom</th>
+            <th class="col-medium" [class.col-hidden]="!isColumnVisible('templateDesc')">Description</th>
             <th class="col-boolean" [class.col-hidden]="!isColumnVisible('isDefault')">Par défaut</th>
-            <th class="col-boolean" [class.col-hidden]="!isColumnVisible('active')">Actif</th>
-            <th class="col-boolean" [class.col-hidden]="!isColumnVisible('locked')">Verrouillé</th>
+            <th class="col-boolean" [class.col-hidden]="!isColumnVisible('isActive')">Actif</th>
+            <th class="col-boolean" [class.col-hidden]="!isColumnVisible('isLocked')">Verrouillé</th>
             <th class="col-date" [class.col-hidden]="!isColumnVisible('createdAt')">Créé le</th>
             <th class="col-actions" [class.col-hidden]="!isColumnVisible('actions')">Actions</th>
           </tr>
@@ -159,19 +160,25 @@
         <tbody>
           <tr *ngFor="let item of items(); trackBy: trackById" [class.row-deleted]="item.isDeleted" (click)="selectItem(item)" style="cursor: pointer;">
             <td [class.col-hidden]="!isColumnVisible('id')"><span class="cell-id">#{{ item.id }}</span></td>
-            <td [class.col-hidden]="!isColumnVisible('name')">{{ item.templateName || '-' }}</td>
-            <td [class.col-hidden]="!isColumnVisible('description')">{{ item.templateDesc || '-' }}</td>
+            <td [class.col-hidden]="!isColumnVisible('templateName')">{{ item.templateName || '-' }}</td>
+            <td [class.col-hidden]="!isColumnVisible('templateDesc')">{{ item.templateDesc || '-' }}</td>
             <td [class.col-hidden]="!isColumnVisible('isDefault')"><span class="bool-badge" [class.is-true]="item.isDefault" [class.is-false]="!item.isDefault">{{ item.isDefault ? 'Oui' : 'Non' }}</span></td>
-            <td [class.col-hidden]="!isColumnVisible('active')"><span class="bool-badge" [class.is-true]="item.isActive" [class.is-false]="!item.isActive">{{ item.isActive ? 'Oui' : 'Non' }}</span></td>
-            <td [class.col-hidden]="!isColumnVisible('locked')"><span class="bool-badge" [class.is-true]="item.isLocked" [class.is-false]="!item.isLocked">{{ item.isLocked ? 'Oui' : 'Non' }}</span></td>
+            <td [class.col-hidden]="!isColumnVisible('isActive')"><span class="bool-badge" [class.is-true]="item.isActive" [class.is-false]="!item.isActive">{{ item.isActive ? 'Oui' : 'Non' }}</span></td>
+            <td [class.col-hidden]="!isColumnVisible('isLocked')"><span class="bool-badge" [class.is-true]="item.isLocked" [class.is-false]="!item.isLocked">{{ item.isLocked ? 'Oui' : 'Non' }}</span></td>
             <td [class.col-hidden]="!isColumnVisible('createdAt')"><span class="cell-date">{{ formatDate(item.createdAt) }}</span></td>
             <td class="actions-cell" [class.col-hidden]="!isColumnVisible('actions')" (click)="$event.stopPropagation()">
               <div class="actions-menu">
                 <ng-container *ngIf="!item.isDeleted">
-                  <button class="action-btn primary" (click)="openEditDialog(item)" title="Modifier" aria-label="Modifier">
+                  <button class="action-btn primary" *ngIf="canDuplicateTemplate(item)" (click)="openDuplicateModal(item)" title="Dupliquer" aria-label="Dupliquer">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 15H4C2.89543 15 2 14.1046 2 13V4C2 2.89543 2.89543 2 4 2H13C14.1046 2 15 2.89543 15 4V5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
+                  <button class="action-btn success" *ngIf="canSetDefaultTemplate(item)" (click)="openSetDefaultConfirm(item)" title="Définir par défaut" aria-label="Définir par défaut">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M22 11.08V12A10 10 0 1 1 16.07 2.86" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 4L12 14.01L9 11.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
+                  <button class="action-btn primary" *ngIf="canEditTemplate(item)" (click)="openEditDialog(item)" title="Modifier" aria-label="Modifier">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 20H21M16.5 3.5A2.12 2.12 0 0 1 19 6L7 18L3 19L4 15L16.5 3.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   </button>
-                  <button class="action-btn danger" (click)="confirmDelete(item)" title="Supprimer" aria-label="Supprimer">
+                  <button class="action-btn danger" *ngIf="canDeleteTemplate(item)" (click)="confirmDelete(item)" title="Supprimer" aria-label="Supprimer">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 6H5H21M8 6V4C8 3 9 2 10 2H14C15 2 16 3 16 4V6M19 6V20C19 21 18 22 17 22H7C6 22 5 21 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   </button>
                 </ng-container>
@@ -190,7 +197,7 @@
     <div class="pagination-container">
       <div class="pagination-info">
         <span class="results-info">
-          Affichage {{ currentPage() * pageSize() + 1 }} - {{ Math.min((currentPage() + 1) * pageSize(), totalElements()) }} sur {{ totalElements() }}
+          Affichage {{ totalElements() ? currentPage() * pageSize() + 1 : 0 }} - {{ totalElements() ? Math.min((currentPage() + 1) * pageSize(), totalElements()) : 0 }} sur {{ totalElements() }}
         </span>
         <div class="page-size-selector">
           <label for="pageSize">Par page:</label>
@@ -208,6 +215,41 @@
         </div>
         <button class="pagination-btn" [class.disabled]="!hasNextPage()" (click)="nextPage()" [disabled]="!hasNextPage()">Suivant</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Set Default Confirmation -->
+<div class="confirmation-overlay" *ngIf="showSetDefaultConfirm()" (click)="closeSetDefaultConfirm()">
+  <div class="confirmation-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header"><h3>Définir comme modèle par défaut</h3></div>
+    <div class="modal-body">
+      <p>Voulez-vous définir ce template comme modèle par défaut ?</p>
+      <div class="item-info" *ngIf="templateToSetDefault()"><strong>#{{ templateToSetDefault()?.id }} — {{ templateToSetDefault()?.templateName }}</strong></div>
+      <p>Ce modèle sera utilisé automatiquement pour les nouvelles campagnes.</p>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="closeSetDefaultConfirm()">Annuler</button>
+      <button class="btn-confirm-success" (click)="confirmSetDefault()" [disabled]="isSettingDefault">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Duplicate Confirmation -->
+<div class="confirmation-overlay" *ngIf="showDuplicateModal()" (click)="closeDuplicateModal()">
+  <div class="confirmation-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header"><h3>Dupliquer le template</h3></div>
+    <div class="modal-body">
+      <p>Dupliquer ce template avec toutes ses étapes.</p>
+      <div class="item-info" *ngIf="templateToDuplicate()"><strong>#{{ templateToDuplicate()?.id }} — {{ templateToDuplicate()?.templateName }}</strong></div>
+      <div class="form-group">
+        <label class="form-label" for="pipeline-template-duplicate-name">Nom du nouveau template</label>
+        <input id="pipeline-template-duplicate-name" type="text" class="form-input" [ngModel]="duplicateName()" (ngModelChange)="duplicateName.set($event)" />
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="closeDuplicateModal()">Annuler</button>
+      <button class="btn-confirm-success" (click)="confirmDuplicate()" [disabled]="isDuplicating || !duplicateName().trim()">Dupliquer</button>
     </div>
   </div>
 </div>
@@ -294,6 +336,8 @@
   [fields]="detailFields"
   [title]="entityName"
   [isOpen]="showDetailPanel()"
+  [canEdit]="canEditTemplate(selectedItem())"
+  [canDelete]="canDeleteTemplate(selectedItem())"
   (closePanel)="closeDetailPanel()"
   (editItem)="editFromDetail($event)"
   (deleteItem)="deleteFromDetail($event)"

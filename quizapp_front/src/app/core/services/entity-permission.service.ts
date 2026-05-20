@@ -14,7 +14,7 @@ export interface EntityPermissionResponse {
 
 /**
  * Service for entity-level permissions (campaign, interview, etc.).
- * Replaces the permission aspects of CampaignCrud and InterviewParticipant.
+ * Replaces the legacy campaign/interview permission tables.
  */
 @Injectable({
   providedIn: 'root'
@@ -32,10 +32,7 @@ export class EntityPermissionService {
     ).pipe(
       map(response => ({
         ...response,
-        items: (response.items || []).map(permission => ({
-          ...permission,
-          granted: permission.granted ?? true
-        }))
+        items: (response.items || []).map(permission => this.normalizePermission(permission))
       }))
     );
   }
@@ -103,5 +100,25 @@ export class EntityPermissionService {
       };
       next();
     });
+  }
+
+  private normalizePermission(permission: EntityPermission): EntityPermission {
+    return {
+      ...permission,
+      userId: this.toOptionalNumber((permission as any).userId ?? (permission as any).user_id),
+      businessGroupId: this.toOptionalNumber((permission as any).businessGroupId ?? (permission as any).business_group_id),
+      entityId: this.toOptionalNumber((permission as any).entityId ?? (permission as any).entity_id),
+      systemRole: (permission as any).systemRole || (permission as any).system_role || undefined,
+      granted: permission.granted ?? true
+    };
+  }
+
+  private toOptionalNumber(value: unknown): number | undefined {
+    if (value === undefined || value === null || value === '') {
+      return undefined;
+    }
+
+    const numericValue = Number(value);
+    return Number.isNaN(numericValue) ? undefined : numericValue;
   }
 }

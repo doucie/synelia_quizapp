@@ -91,11 +91,7 @@ public class DepartmentsBusiness implements IBasicBusiness<Request<DepartmentsDt
 				throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
 			}
 
-			// Verify if departments to insert do not exist
-			Departments existingEntity = null;
-			if (existingEntity != null) {
-				throw new InternalErrorException(functionalError.DATA_EXIST("departments id -> " + dto.getId(), locale));
-			}
+			ensureUniqueActiveDepartmentName(null, dto.getDepartmentName(), false, locale);
 
 			dto.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(dto)));
 
@@ -178,6 +174,11 @@ public class DepartmentsBusiness implements IBasicBusiness<Request<DepartmentsDt
 				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("departments id -> " + dto.getId(), locale));
 			}
 
+			String nextDepartmentName = Utilities.shouldUpdate(dto.getDepartmentName()) ? dto.getDepartmentName()
+					: entityToSave.getDepartmentName();
+			Boolean nextIsDeleted = dto.getIsDeleted() != null ? dto.getIsDeleted() : entityToSave.getIsDeleted();
+			ensureUniqueActiveDepartmentName(entityToSave.getId(), nextDepartmentName, nextIsDeleted, locale);
+
 			if (Utilities.shouldUpdate(dto.getDepartmentName())) {
 				entityToSave.setDepartmentName(dto.getDepartmentName());
 			}
@@ -239,6 +240,23 @@ public class DepartmentsBusiness implements IBasicBusiness<Request<DepartmentsDt
 		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
 		log.info("----end update Departments-----");
 		return response;
+	}
+
+	private void ensureUniqueActiveDepartmentName(Integer currentId, String departmentName, Boolean isDeleted, Locale locale) {
+		if (!Utilities.notBlank(departmentName) || Boolean.TRUE.equals(isDeleted)) {
+			return;
+		}
+
+		List<Departments> existingByName = departmentsRepository.findByDepartmentName(departmentName, false);
+		if (existingByName == null || existingByName.isEmpty()) {
+			return;
+		}
+
+		for (Departments existingDepartment : existingByName) {
+			if (existingDepartment != null && (currentId == null || !existingDepartment.getId().equals(currentId))) {
+				throw new InternalErrorException(functionalError.DATA_EXIST("departmentName -> " + departmentName, locale));
+			}
+		}
 	}
 
 	/**

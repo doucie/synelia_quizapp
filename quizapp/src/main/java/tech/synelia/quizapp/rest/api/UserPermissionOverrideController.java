@@ -1,24 +1,23 @@
 package tech.synelia.quizapp.rest.api;
 
-import lombok.extern.java.Log;
+import java.util.Locale;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.http.ResponseEntity;
 
 import jakarta.servlet.http.HttpServletRequest;
-
-import java.util.Locale;
-
-import tech.synelia.quizapp.utils.*;
-import tech.synelia.quizapp.utils.dto.*;
+import lombok.extern.java.Log;
+import tech.synelia.quizapp.business.UserPermissionOverrideBusiness;
+import tech.synelia.quizapp.utils.ExceptionUtils;
 import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
-import tech.synelia.quizapp.business.*;
+import tech.synelia.quizapp.utils.dto.UserPermissionOverrideDto;
 
 @Log
 @CrossOrigin("*")
@@ -34,6 +33,7 @@ public class UserPermissionOverrideController {
     @Autowired
     private UserPermissionOverrideBusiness userPermissionOverrideBusiness;
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @RequestMapping(value="/setOverride", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
     public ResponseEntity<Response<UserPermissionOverrideDto>> setOverride(@RequestBody Request<UserPermissionOverrideDto> request) throws Exception {
         log.info("start method /userPermissionOverride/setOverride");
@@ -46,6 +46,7 @@ public class UserPermissionOverrideController {
         return ResponseEntity.ok().body(response);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @RequestMapping(value="/removeOverride", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
     public ResponseEntity<Response<UserPermissionOverrideDto>> removeOverride(@RequestBody Request<UserPermissionOverrideDto> request) throws Exception {
         log.info("start method /userPermissionOverride/removeOverride");
@@ -58,6 +59,7 @@ public class UserPermissionOverrideController {
         return ResponseEntity.ok().body(response);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @RequestMapping(value="/getByUser", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
     public ResponseEntity<Response<UserPermissionOverrideDto>> getByUser(@RequestBody Request<UserPermissionOverrideDto> request) throws Exception {
         log.info("start method /userPermissionOverride/getByUser");
@@ -70,6 +72,7 @@ public class UserPermissionOverrideController {
         return ResponseEntity.ok().body(response);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @RequestMapping(value="/getByCriteria", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
     public ResponseEntity<Response<UserPermissionOverrideDto>> getByCriteria(@RequestBody Request<UserPermissionOverrideDto> request) throws Exception {
         log.info("start method /userPermissionOverride/getByCriteria");

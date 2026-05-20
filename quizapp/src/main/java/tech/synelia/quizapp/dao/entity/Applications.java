@@ -124,12 +124,6 @@ public class Applications implements Serializable, Cloneable {
     @Column(name="application_abandoned")
     private Boolean    applicationAbandoned ;
 
-    @Column(name="pre_screen_decision_mail_sent")
-    private Boolean    preScreenDecisionMailSent ;
-
-    @Column(name="final_decision_mail_sent")
-    private Boolean    finalDecisionMailSent ;
-
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name="created_at")
     private Date       createdAt    ;

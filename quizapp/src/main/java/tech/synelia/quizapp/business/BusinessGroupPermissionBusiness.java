@@ -60,7 +60,8 @@ public class BusinessGroupPermissionBusiness implements IBasicBusiness<Request<B
             }
 
             BusinessGroupPermission entity = new BusinessGroupPermission();
-            entity.setFunctionality(dto.getFunctionality());
+            String funcUpper = normalizeFunctionality(dto.getFunctionality(), locale);
+            entity.setFunctionality(funcUpper);
             if (dto.getBusinessGroupId() != null) {
                 BusinessGroup bg = new BusinessGroup();
                 bg.setId(dto.getBusinessGroupId());
@@ -107,7 +108,7 @@ public class BusinessGroupPermissionBusiness implements IBasicBusiness<Request<B
             }
 
             if (dto.getFunctionality() != null) {
-                existing.setFunctionality(dto.getFunctionality());
+                existing.setFunctionality(normalizeFunctionality(dto.getFunctionality(), locale));
             }
             if (dto.getBusinessGroupId() != null) {
                 BusinessGroup bg = new BusinessGroup();
@@ -171,6 +172,7 @@ public class BusinessGroupPermissionBusiness implements IBasicBusiness<Request<B
     public Response<BusinessGroupPermissionDto> getByCriteria(Request<BusinessGroupPermissionDto> request, Locale locale) throws ParseException {
         log.info("----begin get BusinessGroupPermission by criteria-----");
         Response<BusinessGroupPermissionDto> response = new Response<>();
+        normalizeCriteria(request, locale);
 
         try {
             List<BusinessGroupPermission> items = businessGroupPermissionRepository.getByCriteria(request, em, locale);
@@ -190,10 +192,32 @@ public class BusinessGroupPermissionBusiness implements IBasicBusiness<Request<B
                 response.setHasError(false);
                 return response;
             }
+        } catch (RuntimeException e) {
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
         log.info("----end get BusinessGroupPermission by criteria-----");
         return response;
+    }
+
+    private void normalizeCriteria(Request<BusinessGroupPermissionDto> request, Locale locale) {
+        BusinessGroupPermissionDto dto = request != null ? request.getData() : null;
+        if (dto == null || !Utilities.notBlank(dto.getFunctionality())) {
+            return;
+        }
+
+        dto.setFunctionality(normalizeFunctionality(dto.getFunctionality(), locale));
+    }
+
+    private String normalizeFunctionality(String functionality, Locale locale) {
+        String normalizedFunctionality = functionality.trim().toUpperCase(java.util.Locale.ROOT);
+        try {
+            return tech.synelia.quizapp.utils.enums.FunctionalityEnum.valueOf(normalizedFunctionality).name();
+        } catch (IllegalArgumentException ex) {
+            throw new InvalidEntityException(functionalError.DATA_NOT_EXIST(
+                    "functionality invalide -> " + functionality,
+                    locale));
+        }
     }
 }

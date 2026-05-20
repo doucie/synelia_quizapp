@@ -93,6 +93,13 @@ public class NotificationsBusiness implements IBasicBusiness<Request<Notificatio
 				throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
 			}
 
+			// Validation pattern strict notifType (D-013) -- code interne (UPPER_SNAKE_CASE) genere par le backend
+			String notifTypeUpper = dto.getNotifType().toUpperCase(java.util.Locale.ROOT);
+			if (!notifTypeUpper.matches("[A-Z][A-Z0-9_]{1,49}")) {
+				throw new InvalidEntityException(functionalError.DATA_NOT_EXIST("notifType invalide (UPPER_SNAKE_CASE attendu) -> " + dto.getNotifType(), locale));
+			}
+			dto.setNotifType(notifTypeUpper);
+
 			// Verify if notifications to insert do not exist
 			Notifications existingEntity = null;
 			if (existingEntity != null) {
@@ -192,7 +199,11 @@ public class NotificationsBusiness implements IBasicBusiness<Request<Notificatio
 				entityToSave.setUser(existingUser);
 			}
 			if (Utilities.shouldUpdate(dto.getNotifType())) {
-				entityToSave.setNotifType(dto.getNotifType());
+				String notifTypeUpper = dto.getNotifType().toUpperCase(java.util.Locale.ROOT);
+				if (!notifTypeUpper.matches("[A-Z][A-Z0-9_]{1,49}")) {
+					throw new InvalidEntityException(functionalError.DATA_NOT_EXIST("notifType invalide (UPPER_SNAKE_CASE attendu) -> " + dto.getNotifType(), locale));
+				}
+				entityToSave.setNotifType(notifTypeUpper);
 			}
 			if (dto.getNotifActor() != null && dto.getNotifActor() > 0) {
 				entityToSave.setNotifActor(dto.getNotifActor());
@@ -324,6 +335,22 @@ public class NotificationsBusiness implements IBasicBusiness<Request<Notificatio
 	public Response<NotificationsDto> getByCriteria(Request<NotificationsDto> request, Locale locale)  throws Exception {
 		log.info("----begin get Notifications-----");
 		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
+
+		// Securite : un utilisateur non-ADMIN ne peut consulter que ses propres notifications.
+		org.springframework.security.core.Authentication authForFilter = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+		boolean isPrivilegedForFilter = authForFilter != null && authForFilter.getAuthorities().stream()
+				.anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()) || "ROLE_SUPER_ADMIN".equals(a.getAuthority()));
+		if (!isPrivilegedForFilter && request.getUser() != null) {
+			if (request.getDatas() == null || request.getDatas().isEmpty()) {
+				NotificationsDto filterDto = new NotificationsDto();
+				filterDto.setUserId(request.getUser());
+				request.setDatas(new ArrayList<NotificationsDto>(java.util.Collections.singletonList(filterDto)));
+			} else {
+				for (NotificationsDto dto : request.getDatas()) {
+					dto.setUserId(request.getUser());
+				}
+			}
+		}
 		Response<NotificationsDto> response = new Response<NotificationsDto>();
 		List<Notifications> items 			 = notificationsRepository.getByCriteria(request, em, locale);
 

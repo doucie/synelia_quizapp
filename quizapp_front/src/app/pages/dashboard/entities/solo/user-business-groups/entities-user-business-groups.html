@@ -13,7 +13,7 @@
         <span class="current-page">Gestion des Utilisateurs Groupes Métier</span>
       </div>
       <h1>Gestion des Utilisateurs Groupes Métier</h1>
-      <p class="page-description">Association utilisateurs et groupes métier</p>
+      <p class="page-description">Surface technique d'administration brute des rattachements utilisateur-groupe. Pour la gestion metier des groupes d'un utilisateur, utiliser la page Permissions utilisateurs.</p>
     </div>
     <div class="toolbar">
       <div class="toolbar-left">
@@ -21,6 +21,7 @@
         <app-filter-checkbox inputId="showDeleted" label="Afficher les supprimés" [checked]="showDeletedItems" ariaLabel="Afficher les éléments supprimés" (checkedChange)="toggleDeletedItems()"></app-filter-checkbox>
       </div>
       <div class="toolbar-right">
+        <button class="btn-secondary-pro" (click)="openUserPermissionsWorkspace()">Page metier</button>
         <button class="btn-secondary-pro" (click)="openAdvancedSearch()">Filtres avancés</button>
         <button class="btn-primary-pro" (click)="openCreateDialog()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -53,12 +54,22 @@
           </div>
         </div>
         <div class="form-group">
-          <label>User ID</label>
-          <input type="number" class="form-input" [(ngModel)]="advancedCriteria.userId" placeholder="ID utilisateur" />
+          <label>Utilisateur</label>
+          <app-filter-select [(ngModel)]="advancedCriteria.userId">
+            <option [ngValue]="undefined">-- Tous --</option>
+            @for (user of allUsers(); track user.id) {
+              <option [ngValue]="user.id">{{ getUserDisplay(user.id) }}</option>
+            }
+          </app-filter-select>
         </div>
         <div class="form-group">
-          <label>Groupe Métier ID</label>
-          <input type="number" class="form-input" [(ngModel)]="advancedCriteria.businessGroupId" placeholder="ID groupe métier" />
+          <label>Groupe métier</label>
+          <app-filter-select [(ngModel)]="advancedCriteria.businessGroupId">
+            <option [ngValue]="undefined">-- Tous --</option>
+            @for (businessGroup of businessGroups(); track businessGroup.id) {
+              <option [ngValue]="businessGroup.id">{{ getBusinessGroupLabel(businessGroup.id) }}</option>
+            }
+          </app-filter-select>
         </div>
         <div class="form-group">
           <label>Supprimé</label>
@@ -133,8 +144,8 @@
         <thead>
           <tr>
             <th class="col-id" [class.col-hidden]="!isColumnVisible('id')">ID</th>
-            <th class="col-id" [class.col-hidden]="!isColumnVisible('userId')">User ID</th>
-            <th class="col-id" [class.col-hidden]="!isColumnVisible('businessGroupId')">Groupe Métier ID</th>
+            <th class="col-id" [class.col-hidden]="!isColumnVisible('userId')">Utilisateur</th>
+            <th class="col-id" [class.col-hidden]="!isColumnVisible('businessGroupId')">Groupe métier</th>
             <th class="col-date" [class.col-hidden]="!isColumnVisible('createdAt')">Créé le</th>
             <th class="col-actions" [class.col-hidden]="!isColumnVisible('actions')">Actions</th>
           </tr>
@@ -142,8 +153,8 @@
         <tbody>
           <tr *ngFor="let item of items(); trackBy: trackById" [class.row-deleted]="item.isDeleted" (click)="selectItem(item)" style="cursor: pointer;">
             <td [class.col-hidden]="!isColumnVisible('id')"><span class="cell-id">#{{ item.id }}</span></td>
-            <td [class.col-hidden]="!isColumnVisible('userId')">{{ item.userId || '-' }}</td>
-            <td [class.col-hidden]="!isColumnVisible('businessGroupId')">{{ item.businessGroupId || '-' }}</td>
+            <td [class.col-hidden]="!isColumnVisible('userId')">{{ getUserDisplay(item.userId) }}</td>
+            <td [class.col-hidden]="!isColumnVisible('businessGroupId')">{{ getBusinessGroupLabel(item.businessGroupId) }}</td>
             <td [class.col-hidden]="!isColumnVisible('createdAt')"><span class="cell-date">{{ formatDate(item.createdAt) }}</span></td>
             <td class="actions-cell" [class.col-hidden]="!isColumnVisible('actions')" (click)="$event.stopPropagation()">
               <div class="actions-menu">
@@ -170,7 +181,7 @@
     <div class="pagination-container">
       <div class="pagination-info">
         <span class="results-info">
-          Affichage {{ currentPage() * pageSize() + 1 }} - {{ Math.min((currentPage() + 1) * pageSize(), totalElements()) }} sur {{ totalElements() }}
+          Affichage {{ totalElements() ? currentPage() * pageSize() + 1 : 0 }} - {{ totalElements() ? Math.min((currentPage() + 1) * pageSize(), totalElements()) : 0 }} sur {{ totalElements() }}
         </span>
         <div class="page-size-selector">
           <label for="pageSize">Par page:</label>
@@ -198,7 +209,7 @@
     <div class="modal-header"><h3>Confirmer la suppression</h3></div>
     <div class="modal-body">
       <p>Voulez-vous supprimer cet enregistrement ?</p>
-      <div class="item-info" *ngIf="itemToDelete"><strong>#{{ itemToDelete.id }}</strong></div>
+      <div class="item-info" *ngIf="itemToDelete"><strong>#{{ itemToDelete.id }} — {{ getUserDisplay(itemToDelete.userId) }} / {{ getBusinessGroupLabel(itemToDelete.businessGroupId) }}</strong></div>
     </div>
     <div class="modal-actions">
       <button class="btn-cancel" (click)="cancelDelete()">Annuler</button>
@@ -228,8 +239,24 @@
     </div>
     <div class="modal-content">
       <form class="edit-form">
-        <div class="form-group"><label class="form-label">User ID</label><input type="number" class="form-input" [(ngModel)]="editFormData.userId" name="userId" /></div>
-        <div class="form-group"><label class="form-label">Groupe Métier ID</label><input type="number" class="form-input" [(ngModel)]="editFormData.businessGroupId" name="businessGroupId" /></div>
+        <div class="form-group">
+          <label class="form-label">Utilisateur</label>
+          <app-filter-select [(ngModel)]="editFormData.userId" name="userId" ariaLabel="Sélectionner un utilisateur">
+            <option [ngValue]="undefined">-- Sélectionner --</option>
+            @for (user of allUsers(); track user.id) {
+              <option [ngValue]="user.id">{{ getUserDisplay(user.id) }}</option>
+            }
+          </app-filter-select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Groupe métier</label>
+          <app-filter-select [(ngModel)]="editFormData.businessGroupId" name="businessGroupId" ariaLabel="Sélectionner un groupe métier">
+            <option [ngValue]="undefined">-- Sélectionner --</option>
+            @for (businessGroup of businessGroups(); track businessGroup.id) {
+              <option [ngValue]="businessGroup.id">{{ getBusinessGroupLabel(businessGroup.id) }}</option>
+            }
+          </app-filter-select>
+        </div>
       </form>
     </div>
     <div class="modal-actions">
@@ -251,8 +278,24 @@
     </div>
     <div class="modal-content">
       <form class="edit-form">
-        <div class="form-group"><label class="form-label">User ID</label><input type="number" class="form-input" [(ngModel)]="createFormData.userId" name="userId" /></div>
-        <div class="form-group"><label class="form-label">Groupe Métier ID</label><input type="number" class="form-input" [(ngModel)]="createFormData.businessGroupId" name="businessGroupId" /></div>
+        <div class="form-group">
+          <label class="form-label">Utilisateur</label>
+          <app-filter-select [(ngModel)]="createFormData.userId" name="userId" ariaLabel="Sélectionner un utilisateur pour le nouveau rattachement">
+            <option [ngValue]="undefined">-- Sélectionner --</option>
+            @for (user of allUsers(); track user.id) {
+              <option [ngValue]="user.id">{{ getUserDisplay(user.id) }}</option>
+            }
+          </app-filter-select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Groupe métier</label>
+          <app-filter-select [(ngModel)]="createFormData.businessGroupId" name="businessGroupId" ariaLabel="Sélectionner un groupe métier pour le nouveau rattachement">
+            <option [ngValue]="undefined">-- Sélectionner --</option>
+            @for (businessGroup of businessGroups(); track businessGroup.id) {
+              <option [ngValue]="businessGroup.id">{{ getBusinessGroupLabel(businessGroup.id) }}</option>
+            }
+          </app-filter-select>
+        </div>
       </form>
     </div>
     <div class="modal-actions">

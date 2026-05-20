@@ -24,7 +24,7 @@ interface DisplayPermissionCategory extends PermissionCategory {
   groups: PermissionGroup[];
 }
 
-type RoleTab = 'ADMIN' | 'UTILISATEUR';
+type RoleTab = 'ADMIN' | 'RECRUITER';
 
 @Component({
   selector: 'app-system-role-permissions',
@@ -46,7 +46,7 @@ export class SystemRolePermissionsComponent implements OnInit, OnDestroy {
 
   // Permissions par rôle : Map<functionality, boolean>
   adminPermissions = signal<Set<string>>(new Set());
-  utilisateurPermissions = signal<Set<string>>(new Set());
+  recruiterPermissions = signal<Set<string>>(new Set());
 
   constructor(
     private http: HttpClient,
@@ -59,7 +59,7 @@ export class SystemRolePermissionsComponent implements OnInit, OnDestroy {
 
   refreshPermissions(): void {
     this.loadPermissions('ADMIN');
-    this.loadPermissions('UTILISATEUR');
+    this.loadPermissions('RECRUITER');
   }
 
   ngOnDestroy(): void {
@@ -74,21 +74,21 @@ export class SystemRolePermissionsComponent implements OnInit, OnDestroy {
   isChecked(functionality: string): boolean {
     const perms = this.activeTab() === 'ADMIN'
       ? this.adminPermissions()
-      : this.utilisateurPermissions();
+      : this.recruiterPermissions();
     return perms.has(functionality);
   }
 
   countActiveInCategory(category: { permissions: { key: string }[] }): number {
     const perms = this.activeTab() === 'ADMIN'
       ? this.adminPermissions()
-      : this.utilisateurPermissions();
+      : this.recruiterPermissions();
     return category.permissions.filter(p => perms.has(p.key)).length;
   }
 
   countActiveInGroup(group: PermissionGroup): number {
     const perms = this.activeTab() === 'ADMIN'
       ? this.adminPermissions()
-      : this.utilisateurPermissions();
+      : this.recruiterPermissions();
     return group.permissions.filter(p => perms.has(p.key)).length;
   }
 
@@ -116,7 +116,7 @@ export class SystemRolePermissionsComponent implements OnInit, OnDestroy {
 
   togglePermission(functionality: string): void {
     const tab = this.activeTab();
-    const permsSignal = tab === 'ADMIN' ? this.adminPermissions : this.utilisateurPermissions;
+    const permsSignal = tab === 'ADMIN' ? this.adminPermissions : this.recruiterPermissions;
     const current = new Set(permsSignal());
 
     if (current.has(functionality)) {
@@ -143,7 +143,7 @@ export class SystemRolePermissionsComponent implements OnInit, OnDestroy {
           if (role === 'ADMIN') {
             this.adminPermissions.set(keys);
           } else {
-            this.utilisateurPermissions.set(keys);
+            this.recruiterPermissions.set(keys);
           }
         }
         this.isLoading.set(false);

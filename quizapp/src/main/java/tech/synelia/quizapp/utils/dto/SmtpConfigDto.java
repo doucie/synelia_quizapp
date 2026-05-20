@@ -2,6 +2,7 @@ package tech.synelia.quizapp.utils.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.*;
 import tech.synelia.quizapp.utils.contract.*;
@@ -18,6 +19,7 @@ public class SmtpConfigDto extends _SmtpConfigDto implements Cloneable {
     private String  host;
     private Integer port;
     private String  username;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String  password;
     private Boolean smtpAuth;
     private Boolean starttlsEnable;

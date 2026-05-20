@@ -35,7 +35,7 @@
 
 ### Couverture actuelle
 - [x] 🟢 **OK** : `/dashboard/campaigns`, `/dashboard/departments`, `/dashboard/specialities`.
-- [ ] 🔵 **[FRONT — droits]** : confirmer que ADMIN ne voit pas les boutons SMTP/app_config (séparation UI).
+- [ ] � **À IMPLÉMENTER [FULL-STACK — droits]** : ADMIN/RECRUITER doivent voir `smtp_config` + `app_config` en **lecture seule** (pas de modification ; réservé SUPER). *(cf. J.2 D-009, Z-270)*
 
 ---
 
@@ -91,9 +91,11 @@
 - [x] 🟢 **OK** : page `/suivre-candidature` ↔ `TrackApplicationComponent`.
 - [x] 🟢 **OK** : flow quiz complet (get/save/complete/touch).
 - [x] 🟢 **OK** : vérification email.
-- [ ] 🔵 **[FRONT — candidat]** : vérifier la page de candidature publique (entrée via source_token) — confirmer qu'elle existe et qu'elle est responsive.
+- [ ] � **MANQUANT [FRONT — candidat]** : page publique listant **campagnes en cours / à venir / récemment terminées** (`/campagnes`). *(cf. J.2 D-008, Z-235)*
+- [ ] 🔴 **MANQUANT [FRONT — candidat]** : bouton **"Abandonner ma candidature"** sur page suivi. *(cf. Z-330)*
+- [ ] 🟠 **INCOMPLET [BD/BACK — candidat]** : table **comptes candidats** à créer ; activation via `candidate_accounts_enabled` (admin) ; permet suivi multi-candidatures + abonnement. *(cf. Z-292)*
+- [ ] 🔵 **[FRONT — candidat]** : vérifier la page de candidature publique (entrée via source_token).
 - [ ] 🟠 **INCOMPLET [FRONT — candidat]** : l'action `InterviewResponseAction` (ACCEPT/DECLINE/REQUEST_RESCHEDULE) est définie côté FRONT — vérifier endpoint BACK correspondant.
-- [ ] 🔵 **[FRONT — candidat]** : page de configuration de compte candidat — `app_config.candidate_accounts_enabled` est en BD mais la fonctionnalité de comptes candidats est-elle vraiment activée ?
 
 ---
 

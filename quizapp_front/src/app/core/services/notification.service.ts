@@ -18,8 +18,8 @@ export interface Notification {
 export interface DbNotification {
   id: number;
   notifType: string;
-  notifActor: number;
-  notifLink: string;
+  notifActor?: number;
+  notifLink?: string;
   isRead: boolean;
   userId: number;
   objectTableName?: string; // Nom de la table de l'objet liÃ© (ex: 'campaigns', 'applications')
@@ -34,6 +34,8 @@ export interface DbNotification {
   dateModificationDe?: string;
   dateModificationA?: string;
   actorName?: string; // Nom de l'acteur (utilisateur qui a fait l'action)
+  userFirstName?: string;
+  userLastName?: string;
 }
 
 export interface NotificationSearchCriteria {
@@ -166,7 +168,7 @@ export class NotificationService {
       map(response => {
         console.log('âœ… Notifications rÃ©cupÃ©rÃ©es:', response);
         if (response && response.items) {
-          return response.items;
+          return response.items.map((item: any) => this.normalizeDbNotification(item));
         }
         return [];
       }),
@@ -278,7 +280,7 @@ export class NotificationService {
     console.log('ðŸ“¬ CrÃ©ation de plusieurs notifications BD:', notifications);
 
     const requestBody = {
-      user: 1,
+      user: this.getCurrentUserId(),
       datas: notifications.map(n => ({
         ...n,
         isRead: false
@@ -300,10 +302,8 @@ export class NotificationService {
   }
 
   getAllNotificationsByCriteria(criteria: NotificationSearchCriteria = {}): Observable<PagedNotificationResponse> {
-    const currentUserData = localStorage.getItem('user');
-    const currentUserId = currentUserData ? JSON.parse(currentUserData).id?.toString() || '1' : '1';
     const request = {
-      user: currentUserId,
+      user: this.getCurrentUserId(),
       size: criteria.size || 10,
       index: criteria.page || 0,
       isSimpleLoading: false,
@@ -326,7 +326,7 @@ export class NotificationService {
         if (!response || (!response.items && !response.item)) {
           return { content: [], totalElements: 0, totalPages: 0, size: criteria.size || 10, number: criteria.page || 0 };
         }
-        const items = response.items || (response.item ? [response.item] : []);
+        const items = (response.items || (response.item ? [response.item] : [])).map((item: any) => this.normalizeDbNotification(item));
         const totalElements = response.totalCount || response.count || items.length;
         const pageSize = criteria.size || 10;
         return { content: items, totalElements, totalPages: Math.ceil(totalElements / pageSize), size: pageSize, number: criteria.page || 0 };
@@ -335,11 +335,63 @@ export class NotificationService {
     );
   }
 
+  createNotification(item: Partial<DbNotification>): Observable<any> {
+    return this.http.post(`${environment.apiUrl}/notifications/create`, {
+      user: this.getCurrentUserId(),
+      datas: [item]
+    });
+  }
+
+  updateNotification(item: DbNotification): Observable<any> {
+    return this.http.post(`${environment.apiUrl}/notifications/update`, {
+      user: this.getCurrentUserId(),
+      datas: [item]
+    });
+  }
+
   deleteNotification(id: number): Observable<any> {
-    return this.http.post(`${environment.apiUrl}/notifications/delete`, { user: 1, datas: [{ id }] });
+    return this.http.post(`${environment.apiUrl}/notifications/delete`, { user: this.getCurrentUserId(), datas: [{ id }] });
   }
 
   restoreNotification(id: number): Observable<any> {
-    return this.http.post(`${environment.apiUrl}/notifications/update`, { user: 1, datas: [{ id, isDeleted: false }] });
+    return this.http.post(`${environment.apiUrl}/notifications/update`, { user: this.getCurrentUserId(), datas: [{ id, isDeleted: false }] });
+  }
+
+  private normalizeDbNotification(item: any): DbNotification {
+    return {
+      id: this.toNumber(item.id),
+      notifType: item.notifType || item.notif_type || '',
+      notifActor: this.toOptionalNumber(item.notifActor ?? item.notif_actor),
+      notifLink: item.notifLink || item.notif_link || undefined,
+      isRead: item.isRead ?? item.is_read ?? false,
+      userId: this.toNumber(item.userId ?? item.user_id),
+      objectTableName: item.objectTableName || item.object_table_name || undefined,
+      objectTableId: this.toOptionalNumber(item.objectTableId ?? item.object_table_id),
+      createdAt: item.createdAt || item.created_at || undefined,
+      createdBy: this.toOptionalNumber(item.createdBy ?? item.created_by),
+      updatedAt: item.updatedAt || item.updated_at || undefined,
+      updatedBy: this.toOptionalNumber(item.updatedBy ?? item.updated_by),
+      isDeleted: item.isDeleted ?? item.is_deleted ?? false,
+      dateCreationDe: item.dateCreationDe,
+      dateCreationA: item.dateCreationA,
+      dateModificationDe: item.dateModificationDe,
+      dateModificationA: item.dateModificationA,
+      actorName: item.actorName || item.actor_name || undefined,
+      userFirstName: item.userFirstName || item.user_first_name || undefined,
+      userLastName: item.userLastName || item.user_last_name || undefined
+    };
+  }
+
+  private toNumber(value: unknown): number {
+    return this.toOptionalNumber(value) || 0;
+  }
+
+  private toOptionalNumber(value: unknown): number | undefined {
+    if (value === undefined || value === null || value === '') {
+      return undefined;
+    }
+
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? undefined : parsed;
   }
 }

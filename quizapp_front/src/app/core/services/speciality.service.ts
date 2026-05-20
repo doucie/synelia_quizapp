@@ -30,6 +30,7 @@ export interface SpecialitySearchCriteria {
   idA?: string;
   nom?: string;
   description?: string;
+  departmentId?: number;
   isDeleted?: boolean;
 
   // Intervalles de dates
@@ -83,6 +84,7 @@ export class SpecialityService {
       idA: criteria.idA || '',
       specialityName: criteria.nom || '',
       specialityDesc: criteria.description || '',
+      departmentId: criteria.departmentId && criteria.departmentId > 0 ? criteria.departmentId : undefined,
       isDeleted: criteria.isDeleted !== undefined ? criteria.isDeleted : undefined, // undefined = tous, false = actifs seulement
       dateCreationDe: criteria.dateCreationDe || '',
       dateCreationA: criteria.dateCreationA || '',
@@ -154,16 +156,17 @@ export class SpecialityService {
         // Transformer la réponse du backend vers le format frontend
         const transformedSpecialities: Speciality[] = rawSpecialities.map((spec: any) => ({
           id: spec.id,
-          nom: spec.nom || spec.name || spec.specialityName || '',
+          nom: spec.nom || spec.specialityName || spec.name || '',
           description: spec.description || spec.specialityDesc || '',
-          departmentId: spec.departmentId,
-          departmentName: spec.departmentName,
+          departmentId: this.resolveDepartmentId(spec),
+          departmentName: this.resolveDepartmentName(spec),
           isDeleted: spec.isDeleted || false,
           dateCreation: spec.dateCreation || spec.createdAt,
           dateModification: spec.dateModification || spec.updatedAt,
 
           // Champs backend
-          name: spec.name || spec.specialityName,
+          specialityName: spec.specialityName || spec.name,
+          name: spec.specialityName || spec.name,
           createdAt: spec.createdAt,
           updatedAt: spec.updatedAt
         }));
@@ -246,8 +249,9 @@ export class SpecialityService {
 
     const request = {
       datas: [{
-        name: speciality.nom || speciality.name,
-        description: speciality.description,
+        specialityName: speciality.nom || speciality.specialityName || speciality.name,
+        specialityDesc: speciality.description,
+        departmentId: speciality.departmentId,
         isDeleted: false
       }],
       user: currentUserId
@@ -276,8 +280,9 @@ export class SpecialityService {
     const request = {
       datas: [{
         id: id,
-        name: speciality.nom || speciality.name,
-        description: speciality.description,
+        specialityName: speciality.nom || speciality.specialityName || speciality.name,
+        specialityDesc: speciality.description,
+        departmentId: speciality.departmentId,
         isDeleted: speciality.isDeleted
       }],
       user: currentUserId
@@ -305,8 +310,9 @@ export class SpecialityService {
     const request = {
       datas: specialities.map(speciality => ({
         id: speciality.id,
-        specialityName: speciality.nom || speciality.name,
+        specialityName: speciality.nom || speciality.specialityName || speciality.name,
         specialityDesc: speciality.description,
+        departmentId: speciality.departmentId,
         isDeleted: speciality.isDeleted,
         createdBy: (speciality as any).createdBy,
         updatedBy: (speciality as any).updatedBy,
@@ -392,16 +398,35 @@ export class SpecialityService {
     return {
       id: backendData.id,
       nom: backendData.specialityName || backendData.name,
+      specialityName: backendData.specialityName || backendData.name,
       description: backendData.specialityDesc || backendData.description,
+      departmentId: this.resolveDepartmentId(backendData),
+      departmentName: this.resolveDepartmentName(backendData),
       isDeleted: backendData.isDeleted,
       dateCreation: backendData.createdAt,
       dateModification: backendData.updatedAt,
 
       // Conserver les champs originaux du backend
-      name: backendData.specialityName,
+      name: backendData.specialityName || backendData.name,
       createdAt: backendData.createdAt,
       updatedAt: backendData.updatedAt
     };
+  }
+
+  private resolveDepartmentId(backendData: any): number | undefined {
+    return backendData.departmentId
+      ?? backendData.department?.id
+      ?? backendData.departments?.id;
+  }
+
+  private resolveDepartmentName(backendData: any): string | undefined {
+    return backendData.departmentName
+      ?? backendData.department?.departmentName
+      ?? backendData.department?.name
+      ?? backendData.department?.nom
+      ?? backendData.departments?.departmentName
+      ?? backendData.departments?.name
+      ?? backendData.departments?.nom;
   }
 
   /**

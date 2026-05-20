@@ -14,6 +14,7 @@ import { PipelineStageService } from '../../../core/services/pipeline-stage.serv
 import { ApplicationProgressService } from '../../../core/services/application-progress.service';
 import { EntityPermissionService } from '../../../core/services/entity-permission.service';
 import { PipelineStage } from '../../../core/models/pipeline.interfaces';
+import { getCampaignStatusClass, getCampaignStatusLabel } from '../../../core/constants/campaign-status.constants';
 import { FilterCheckboxComponent } from '../../../shared/filter-checkbox/filter-checkbox';
 import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../shared/filter-select/filter-select';
 import { environment } from '../../../../environments/environment';
@@ -580,21 +581,11 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   }
 
   getStatusClass(status?: string): string {
-    switch((status || 'PENDING').toLowerCase()) {
-      case 'active': return 'status-active';
-      case 'closed': return 'status-closed';
-      case 'pending': 
-      default: return 'status-pending';
-    }
+    return getCampaignStatusClass(status);
   }
 
   getStatusLabel(status?: string): string {
-    switch((status || 'PENDING').toLowerCase()) {
-      case 'active': return 'En cours';
-      case 'closed': return 'Terminée';
-      case 'pending': 
-      default: return 'En attente';
-    }
+    return getCampaignStatusLabel(status);
   }
 
   getRoleClass(role?: string): string {

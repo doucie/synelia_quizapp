@@ -39,6 +39,8 @@ public class FormQuestionsBusiness implements IBasicBusiness<Request<FormQuestio
 	@Autowired
 	private QuestionRepository questionRepository;
 	@Autowired
+	private FormBusiness formBusiness;
+	@Autowired
 	private FunctionalError functionalError;
 	@Autowired
 	private TechnicalError technicalError;
@@ -94,6 +96,7 @@ public class FormQuestionsBusiness implements IBasicBusiness<Request<FormQuestio
 			entityToSave.setCreatedAt(Utilities.getCurrentDate());
 			entityToSave.setCreatedBy(request.getUser());
 			entityToSave.setIsDeleted(false);
+			formBusiness.validateTimedFormQuestion(entityToSave.getFormVersion(), entityToSave.getQuestion(), entityToSave.getChronoOverride(), locale);
 			items.add(entityToSave);
 		}
 
@@ -170,6 +173,9 @@ public class FormQuestionsBusiness implements IBasicBusiness<Request<FormQuestio
 			}
 			if (dto.getChronoOverride() != null) {
 				entityToSave.setChronoOverride(dto.getChronoOverride());
+			}
+			if (!Boolean.TRUE.equals(entityToSave.getIsDeleted())) {
+				formBusiness.validateTimedFormQuestion(entityToSave.getFormVersion(), entityToSave.getQuestion(), entityToSave.getChronoOverride(), locale);
 			}
 			entityToSave.setUpdatedAt(Utilities.getCurrentDate());
 			entityToSave.setUpdatedBy(request.getUser());
@@ -392,6 +398,9 @@ public class FormQuestionsBusiness implements IBasicBusiness<Request<FormQuestio
 			if (dto.getIsDeleted() != null) {
 				entityToSave.setIsDeleted(dto.getIsDeleted());
 			}
+			if (!Boolean.TRUE.equals(entityToSave.getIsDeleted())) {
+				formBusiness.validateTimedFormQuestion(entityToSave.getFormVersion(), entityToSave.getQuestion(), entityToSave.getChronoOverride(), locale);
+			}
 			entityToSave.setUpdatedAt(Utilities.getCurrentDate());
 			entityToSave.setUpdatedBy(request.getUser());
 			entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(entityToSave)));
@@ -459,6 +468,9 @@ public class FormQuestionsBusiness implements IBasicBusiness<Request<FormQuestio
 			}
 			if (dto.getIsDeleted() != null) {
 				entityToSave.setIsDeleted(dto.getIsDeleted());
+			}
+			if (!Boolean.TRUE.equals(entityToSave.getIsDeleted())) {
+				formBusiness.validateTimedFormQuestion(entityToSave.getFormVersion(), entityToSave.getQuestion(), entityToSave.getChronoOverride(), locale);
 			}
 			entityToSave.setUpdatedAt(Utilities.getCurrentDate());
 			entityToSave.setUpdatedBy(request.getUser());

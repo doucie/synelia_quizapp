@@ -26,6 +26,7 @@ import tech.synelia.quizapp.rest.fact.ControllerFactory;
 @Log
 @CrossOrigin("*")
 @RestController
+@PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
 @RequestMapping(value="/pipelineStage")
 public class PipelineStageController {
 

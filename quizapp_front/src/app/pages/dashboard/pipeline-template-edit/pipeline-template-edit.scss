@@ -466,6 +466,7 @@ select.form-input {
   display: flex;
   gap: var(--spacing-md);
   align-items: flex-end;
+  flex-wrap: wrap;
   padding-bottom: 0.1rem;
 }
 

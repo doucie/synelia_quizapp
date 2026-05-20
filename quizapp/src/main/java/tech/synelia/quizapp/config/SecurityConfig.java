@@ -39,14 +39,14 @@ public class SecurityConfig {
                 .requestMatchers("/userManager/connexion").permitAll()
                 .requestMatchers("/api/qeel/**", "/ws/**").permitAll()
                     .requestMatchers("/applications/create", "/applications/verifyEmail/**", "/applications/track", "/applications/respond-interview", "/applications/submit-ask").permitAll()
-                .requestMatchers("/candidateToken/**", "/sourceToken/**").permitAll()
+                .requestMatchers("/sourceToken/validate/**", "/sourceToken/info/**").permitAll()
                 .requestMatchers("/candidateanswer/**").permitAll()
                 .requestMatchers("/legalText/getByCriteria").permitAll()
                 .requestMatchers("/invitationCode/validate").permitAll()
                 .requestMatchers("/userManager/registerWithCode").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 // Endpoints ADMIN uniquement
-                .requestMatchers("/user/set-users-online", "/user/roles-debug").hasAnyRole("ADMIN", "SUPER_ADMIN")
+                .requestMatchers("/user/set-users-online").hasAnyRole("ADMIN", "SUPER_ADMIN")
                 // Tous les autres endpoints nécessitent une authentification
                 .anyRequest().authenticated()
             )

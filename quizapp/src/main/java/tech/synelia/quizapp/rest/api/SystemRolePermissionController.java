@@ -34,6 +34,7 @@ public class SystemRolePermissionController {
     @Autowired
     private SystemRolePermissionBusiness systemRolePermissionBusiness;
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @RequestMapping(value="/getByRole", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
     public ResponseEntity<Response<SystemRolePermissionDto>> getByRole(@RequestBody Request<SystemRolePermissionDto> request) throws Exception {
         log.info("start method /systemRolePermission/getByRole");
@@ -72,6 +73,7 @@ public class SystemRolePermissionController {
         return ResponseEntity.ok().body(response);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @RequestMapping(value="/getByCriteria", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
     public ResponseEntity<Response<SystemRolePermissionDto>> getByCriteria(@RequestBody Request<SystemRolePermissionDto> request) throws Exception {
         log.info("start method /systemRolePermission/getByCriteria");

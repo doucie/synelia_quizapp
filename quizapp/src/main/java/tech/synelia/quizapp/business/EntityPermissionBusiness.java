@@ -1,5 +1,6 @@
 package tech.synelia.quizapp.business;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -14,6 +15,7 @@ import jakarta.persistence.PersistenceContext;
 import lombok.extern.java.Log;
 import tech.synelia.quizapp.dao.entity.EntityPermission;
 import tech.synelia.quizapp.dao.entity.User;
+import tech.synelia.quizapp.dao.repository.BusinessGroupRepository;
 import tech.synelia.quizapp.dao.repository.EntityPermissionRepository;
 import tech.synelia.quizapp.dao.repository.UserRepository;
 import tech.synelia.quizapp.utils.FunctionalError;
@@ -24,6 +26,9 @@ import tech.synelia.quizapp.utils.Utilities;
 import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.dto.EntityPermissionDto;
+import tech.synelia.quizapp.utils.enums.EntityPermissionKey;
+import tech.synelia.quizapp.utils.enums.EntityPermissionType;
+import tech.synelia.quizapp.utils.enums.UserRole;
 import tech.synelia.quizapp.utils.exception.EntityNotFoundException;
 import tech.synelia.quizapp.utils.exception.InvalidEntityException;
 
@@ -36,38 +41,32 @@ public class EntityPermissionBusiness {
 	@Autowired
 	private UserRepository userRepository;
 	@Autowired
+	private BusinessGroupRepository businessGroupRepository;
+	@Autowired
 	private FunctionalError functionalError;
 	@PersistenceContext
 	private EntityManager em;
 
 	/**
-	 * Accorder une permission sur une entité à un utilisateur.
+	 * Accorder une permission sur une entité pour un scope user/groupe/role.
 	 */
 	public Response<EntityPermissionDto> grantPermission(Request<EntityPermissionDto> request, Locale locale) {
 		Response<EntityPermissionDto> response = new Response<>();
 
-		EntityPermissionDto dto = request.getData();
-		if (dto == null || dto.getUserId() == null || Utilities.isBlank(dto.getEntityType())
-				|| dto.getEntityId() == null || Utilities.isBlank(dto.getPermissionKey())) {
-			throw new InvalidEntityException(functionalError.FIELD_EMPTY("userId, entityType, entityId or permissionKey", locale));
-		}
-
-		User user = userRepository.findOne(dto.getUserId(), false);
-		if (user == null) {
-			throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("user id -> " + dto.getUserId(), locale));
-		}
+		EntityPermissionDto dto = normalizeAndValidatePermissionRequest(request.getData(), locale);
+		User user = resolveUserScopeForGrant(dto, locale);
 
 		// Vérifier si cette permission existe déjà
-		EntityPermission existing = entityPermissionRepository
-				.findByUserIdAndEntityTypeAndEntityIdAndPermissionKey(
-						dto.getUserId(), dto.getEntityType(), dto.getEntityId(), dto.getPermissionKey());
+		EntityPermission existing = findExistingPermission(dto);
 
 		if (existing != null) {
 			// Si soft-deleted, réactiver
 			if (Boolean.TRUE.equals(existing.getIsDeleted())) {
+				applyScope(existing, dto, user);
 				existing.setIsDeleted(false);
 				existing.setUpdatedAt(Utilities.getCurrentDate());
 				existing.setUpdatedBy(request.getUser());
+				existing.setSearchString(buildSearchString(existing));
 				entityPermissionRepository.save(existing);
 				dto.setId(existing.getId());
 			} else {
@@ -75,13 +74,14 @@ public class EntityPermissionBusiness {
 			}
 		} else {
 			EntityPermission entity = new EntityPermission();
-			entity.setUser(user);
+			applyScope(entity, dto, user);
 			entity.setEntityType(dto.getEntityType());
 			entity.setEntityId(dto.getEntityId());
 			entity.setPermissionKey(dto.getPermissionKey());
 			entity.setIsDeleted(false);
 			entity.setCreatedAt(Utilities.getCurrentDate());
 			entity.setCreatedBy(request.getUser());
+			entity.setSearchString(buildSearchString(entity));
 			entityPermissionRepository.save(entity);
 			dto.setId(entity.getId());
 		}
@@ -97,29 +97,24 @@ public class EntityPermissionBusiness {
 	}
 
 	/**
-	 * Révoquer (soft-delete) une permission sur une entité.
+	 * Révoquer (soft-delete) une permission sur une entité pour un scope user/groupe/role.
 	 */
 	public Response<EntityPermissionDto> revokePermission(Request<EntityPermissionDto> request, Locale locale) {
 		Response<EntityPermissionDto> response = new Response<>();
 
-		EntityPermissionDto dto = request.getData();
-		if (dto == null || dto.getUserId() == null || Utilities.isBlank(dto.getEntityType())
-				|| dto.getEntityId() == null || Utilities.isBlank(dto.getPermissionKey())) {
-			throw new InvalidEntityException(functionalError.FIELD_EMPTY("userId, entityType, entityId or permissionKey", locale));
-		}
+		EntityPermissionDto dto = normalizeAndValidatePermissionRequest(request.getData(), locale);
 
-		EntityPermission existing = entityPermissionRepository
-				.findByUserIdAndEntityTypeAndEntityIdAndPermissionKey(
-						dto.getUserId(), dto.getEntityType(), dto.getEntityId(), dto.getPermissionKey());
+		EntityPermission existing = findExistingPermission(dto);
 
 		if (existing == null || Boolean.TRUE.equals(existing.getIsDeleted())) {
 			throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST(
-					"entity permission " + dto.getEntityType() + "/" + dto.getEntityId() + "/" + dto.getPermissionKey(), locale));
+					"entity permission " + dto.getEntityType() + "/" + dto.getEntityId() + "/" + dto.getPermissionKey() + " / " + buildScopeDescription(dto), locale));
 		}
 
 		existing.setIsDeleted(true);
 		existing.setUpdatedAt(Utilities.getCurrentDate());
 		existing.setUpdatedBy(request.getUser());
+		existing.setSearchString(buildSearchString(existing));
 		entityPermissionRepository.save(existing);
 
 		Status status = new Status();
@@ -129,6 +124,125 @@ public class EntityPermissionBusiness {
 		response.setHttpCode(HttpStatus.OK.value());
 		response.setStatus(status);
 		return response;
+	}
+
+	private EntityPermissionDto normalizeAndValidatePermissionRequest(EntityPermissionDto dto, Locale locale) {
+		if (dto == null || Utilities.isBlank(dto.getEntityType()) || dto.getEntityId() == null || Utilities.isBlank(dto.getPermissionKey())) {
+			throw new InvalidEntityException(functionalError.FIELD_EMPTY("entityType, entityId or permissionKey", locale));
+		}
+
+		validateSingleScope(dto, locale);
+
+		String entityTypeUpper = normalizeEntityType(dto.getEntityType(), locale);
+		String permissionKeyUpper = normalizePermissionKey(dto.getPermissionKey(), locale);
+
+		dto.setEntityType(entityTypeUpper);
+		dto.setPermissionKey(permissionKeyUpper);
+		if (Utilities.notBlank(dto.getSystemRole())) {
+			dto.setSystemRole(normalizeSystemRole(dto.getSystemRole(), locale));
+		}
+
+		return dto;
+	}
+
+	private void validateSingleScope(EntityPermissionDto dto, Locale locale) {
+		int scopeCount = 0;
+		if (dto.getUserId() != null) {
+			scopeCount++;
+		}
+		if (dto.getBusinessGroupId() != null) {
+			scopeCount++;
+		}
+		if (Utilities.notBlank(dto.getSystemRole())) {
+			scopeCount++;
+		}
+
+		if (scopeCount != 1) {
+			throw new InvalidEntityException(functionalError.FIELD_EMPTY("exactement un scope parmi userId, businessGroupId ou systemRole", locale));
+		}
+	}
+
+	private String normalizeSystemRole(String systemRole, Locale locale) {
+		String normalizedSystemRole = UserRole.normalizeSystemRole(systemRole);
+		if (normalizedSystemRole == null) {
+			throw new InvalidEntityException(functionalError.DATA_NOT_EXIST(
+					"systemRole invalide (SUPER_ADMIN/ADMIN/RECRUITER/CANDIDATE) -> " + systemRole,
+					locale));
+		}
+		return normalizedSystemRole;
+	}
+
+	private String normalizeEntityType(String entityType, Locale locale) {
+		try {
+			return EntityPermissionType.fromValue(entityType).getValue();
+		} catch (IllegalArgumentException exception) {
+			throw new InvalidEntityException(functionalError.DATA_NOT_EXIST(
+					"entityType invalide (CAMPAIGN/INTERVIEW/APPLICATION/QUIZ/FORM) -> " + entityType,
+					locale));
+		}
+	}
+
+	private String normalizePermissionKey(String permissionKey, Locale locale) {
+		try {
+			return EntityPermissionKey.fromValue(permissionKey).getValue();
+		} catch (IllegalArgumentException exception) {
+			throw new InvalidEntityException(functionalError.DATA_NOT_EXIST(
+					"permissionKey invalide (ADMIN/CREATOR/UPDATE/DELETE/EVALUATE/CORRECT_TEST/PLANIFY/ADVANCE_PIPELINE/FOLLOW) -> " + permissionKey,
+					locale));
+		}
+	}
+
+	private User resolveUserScopeForGrant(EntityPermissionDto dto, Locale locale) {
+		if (dto.getUserId() != null) {
+			User user = userRepository.findOne(dto.getUserId(), false);
+			if (user == null) {
+				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("user id -> " + dto.getUserId(), locale));
+			}
+			return user;
+		}
+
+		if (dto.getBusinessGroupId() != null && businessGroupRepository.findOne(dto.getBusinessGroupId(), false) == null) {
+			throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("businessGroup id -> " + dto.getBusinessGroupId(), locale));
+		}
+
+		return null;
+	}
+
+	private EntityPermission findExistingPermission(EntityPermissionDto dto) {
+		if (dto.getUserId() != null) {
+			return entityPermissionRepository.findByUserIdAndEntityTypeAndEntityIdAndPermissionKey(
+					dto.getUserId(), dto.getEntityType(), dto.getEntityId(), dto.getPermissionKey());
+		}
+		if (dto.getBusinessGroupId() != null) {
+			return entityPermissionRepository.findByBusinessGroupIdAndEntityTypeAndEntityIdAndPermissionKey(
+					dto.getBusinessGroupId(), dto.getEntityType(), dto.getEntityId(), dto.getPermissionKey());
+		}
+		return entityPermissionRepository.findBySystemRoleAndEntityTypeAndEntityIdAndPermissionKey(
+				dto.getSystemRole(), dto.getEntityType(), dto.getEntityId(), dto.getPermissionKey());
+	}
+
+	private void applyScope(EntityPermission entity, EntityPermissionDto dto, User user) {
+		entity.setUser(user);
+		entity.setBusinessGroupId(dto.getBusinessGroupId());
+		entity.setSystemRole(dto.getSystemRole());
+	}
+
+	private String buildSearchString(EntityPermission entity) {
+		try {
+			return Utilities.extractValuesFromJson(Utilities.convertObjectToJson(entity));
+		} catch (JsonProcessingException e) {
+			throw new IllegalStateException("Unable to build entity_permission search string", e);
+		}
+	}
+
+	private String buildScopeDescription(EntityPermissionDto dto) {
+		if (dto.getUserId() != null) {
+			return "userId=" + dto.getUserId();
+		}
+		if (dto.getBusinessGroupId() != null) {
+			return "businessGroupId=" + dto.getBusinessGroupId();
+		}
+		return "systemRole=" + dto.getSystemRole();
 	}
 
 	/**
@@ -141,6 +255,7 @@ public class EntityPermissionBusiness {
 		if (dto == null || Utilities.isBlank(dto.getEntityType()) || dto.getEntityId() == null) {
 			throw new InvalidEntityException(functionalError.FIELD_EMPTY("entityType or entityId", locale));
 		}
+		dto.setEntityType(normalizeEntityType(dto.getEntityType(), locale));
 
 		List<EntityPermission> entities = entityPermissionRepository
 				.findByEntityTypeAndEntityId(dto.getEntityType(), dto.getEntityId());
@@ -150,16 +265,20 @@ public class EntityPermissionBusiness {
 				.map(e -> {
 					EntityPermissionDto d = new EntityPermissionDto();
 					d.setId(e.getId());
-					d.setUserId(e.getUser().getId());
+					d.setUserId(e.getUser() != null ? e.getUser().getId() : null);
+					d.setBusinessGroupId(e.getBusinessGroupId());
+					d.setSystemRole(e.getSystemRole());
 					d.setEntityType(e.getEntityType());
 					d.setEntityId(e.getEntityId());
 					d.setPermissionKey(e.getPermissionKey());
 					d.setGranted(true);
-					d.setUserFirstName(e.getUser().getFirstName());
-					d.setUserLastName(e.getUser().getLastName());
-					d.setUserEmail(e.getUser().getEmail());
-					d.setUserName(e.getUser().getUsername());
-					d.setUserRole(e.getUser().getUserRole());
+					if (e.getUser() != null) {
+						d.setUserFirstName(e.getUser().getFirstName());
+						d.setUserLastName(e.getUser().getLastName());
+						d.setUserEmail(e.getUser().getEmail());
+						d.setUserName(e.getUser().getUsername());
+						d.setUserRole(e.getUser().getUserRole());
+					}
 					return d;
 				}).collect(Collectors.toList());
 
@@ -223,6 +342,7 @@ public class EntityPermissionBusiness {
 	 */
 	public Response<EntityPermissionDto> getByCriteria(Request<EntityPermissionDto> request, Locale locale) throws Exception {
 		log.info("----begin get EntityPermission-----");
+		normalizeCriteria(request, locale);
 		Response<EntityPermissionDto> response = new Response<>();
 
 		List<EntityPermission> items = entityPermissionRepository.getByCriteria(request, em, locale);
@@ -232,6 +352,8 @@ public class EntityPermissionBusiness {
 				EntityPermissionDto d = new EntityPermissionDto();
 				d.setId(e.getId());
 				d.setUserId(e.getUser() != null ? e.getUser().getId() : null);
+				d.setBusinessGroupId(e.getBusinessGroupId());
+				d.setSystemRole(e.getSystemRole());
 				d.setEntityType(e.getEntityType());
 				d.setEntityId(e.getEntityId());
 				d.setPermissionKey(e.getPermissionKey());
@@ -267,6 +389,23 @@ public class EntityPermissionBusiness {
 		}
 		log.info("----end get EntityPermission-----");
 		return response;
+	}
+
+	private void normalizeCriteria(Request<EntityPermissionDto> request, Locale locale) {
+		EntityPermissionDto dto = request != null ? request.getData() : null;
+		if (dto == null) {
+			return;
+		}
+
+		if (Utilities.notBlank(dto.getEntityType())) {
+			dto.setEntityType(normalizeEntityType(dto.getEntityType(), locale));
+		}
+		if (Utilities.notBlank(dto.getPermissionKey())) {
+			dto.setPermissionKey(normalizePermissionKey(dto.getPermissionKey(), locale));
+		}
+		if (Utilities.notBlank(dto.getSystemRole())) {
+			dto.setSystemRole(normalizeSystemRole(dto.getSystemRole(), locale));
+		}
 	}
 
 	/**

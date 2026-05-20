@@ -35,6 +35,12 @@ public class EntityPermission implements Serializable, Cloneable {
     @JoinColumn(name="user_id", referencedColumnName="id")
     private User user;
 
+    @Column(name="business_group_id")
+    private Integer businessGroupId;
+
+    @Column(name="system_role", length=20)
+    private String systemRole;
+
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name="created_at")
     private Date createdAt;

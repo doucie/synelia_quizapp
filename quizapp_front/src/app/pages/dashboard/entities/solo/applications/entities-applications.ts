@@ -16,8 +16,10 @@ import { CandidateTokenService, CandidateToken } from '../../../../../core/servi
 import { CandidateInterviewEntityService, CandidateInterviewEntity } from '../../../../../core/services/candidate-interview-entity.service';
 import { AuthService } from '../../../../../core/services/auth/auth.service';
 import { EntityPermissionService } from '../../../../../core/services/entity-permission.service';
+import { PermissionService } from '../../../../../core/services/permission.service';
 import { SourceTokenService, SourceToken, SourceTokenResponse } from '../../../../../services/source-token.service';
 import { FormVersionService, FormVersion } from '../../../../../core/services/form-version.service';
+import { getManualCorrectionStatusClass, getManualCorrectionStatusLabel, ManualCorrectionStatus } from '../../../../../core/constants/manual-correction-status.constants';
 
 @Component({
   selector: 'app-entities-applications',
@@ -34,6 +36,7 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
   private candidateInterviewEntityService = inject(CandidateInterviewEntityService);
   private authService = inject(AuthService);
   private entityPermissionService = inject(EntityPermissionService);
+  private permissionService = inject(PermissionService);
   private sourceTokenFkService = inject(SourceTokenService);
   private formVersionFkService = inject(FormVersionService);
   allSourceTokens = signal<SourceToken[]>([]);
@@ -178,22 +181,67 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
     return classes[status] || '';
   }
 
-  getManualCorrectionStatusLabel(status: string | undefined): string {
-    const labels: Record<string, string> = {
-      'NOT_REQUIRED': 'Auto-corrigé',
-      'PENDING': 'Correction requise',
-      'COMPLETED': 'Correction terminée'
-    };
-    return labels[status || ''] || status || '';
+  getManualCorrectionStatusLabel(status: ManualCorrectionStatus | string | undefined): string {
+    return getManualCorrectionStatusLabel(status);
   }
 
-  getManualCorrectionStatusClass(status: string | undefined): string {
-    const classes: Record<string, string> = {
-      'NOT_REQUIRED': 'manual-status-auto',
-      'PENDING': 'manual-status-pending',
-      'COMPLETED': 'manual-status-completed'
+  getManualCorrectionStatusClass(status: ManualCorrectionStatus | string | undefined): string {
+    return getManualCorrectionStatusClass(status);
+  }
+
+  getResolvedAskStatus(item: CandidateAsk): string {
+    return item.askStatus || (item.isVerified ? 'APPROVED' : 'PENDING');
+  }
+
+  getAskStatusLabel(item: CandidateAsk): string {
+    const labels: Record<string, string> = {
+      PENDING: 'En attente',
+      APPROVED: 'Validée',
+      REJECTED: 'Refusée'
     };
-    return classes[status || ''] || '';
+    const status = this.getResolvedAskStatus(item);
+    return labels[status] || status;
+  }
+
+  getAskStatusBadgeClass(item: CandidateAsk): string {
+    const status = this.getResolvedAskStatus(item);
+    if (status === 'APPROVED') {
+      return 'active';
+    }
+    if (status === 'REJECTED') {
+      return 'inactive';
+    }
+    return 'pending';
+  }
+
+  getAskRequestTypeLabel(item: CandidateAsk): string {
+    const labels: Record<string, string> = {
+      IDENTITY: 'Correction identité',
+      EMAIL: 'Correction email',
+      PHONE: 'Correction téléphone'
+    };
+    return labels[item.requestType || ''] || item.requestType || 'Demande candidat';
+  }
+
+  getAskRequestedSummary(item: CandidateAsk): string {
+    switch ((item.requestType || '').toUpperCase()) {
+      case 'IDENTITY': {
+        const fullName = [item.firstName, item.lastName].filter(Boolean).join(' ').trim();
+        return fullName ? `Nouvelle identité demandée : ${fullName}` : 'Nouvelle identité demandée';
+      }
+      case 'EMAIL':
+        return item.newEmail ? `Nouvel email demandé : ${item.newEmail}` : 'Nouvel email demandé';
+      case 'PHONE':
+        return item.newPhone ? `Nouveau téléphone demandé : ${item.newPhone}` : 'Nouveau téléphone demandé';
+      default: {
+        const parts = [
+          [item.firstName, item.lastName].filter(Boolean).join(' ').trim(),
+          item.newEmail,
+          item.newPhone
+        ].filter(Boolean);
+        return parts.length ? parts.join(' - ') : 'Demande candidat';
+      }
+    }
   }
 
   toggleExpansion(id: number) {
@@ -250,6 +298,10 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
   }
 
   hasManualCorrectionPermission(application: Application): boolean {
+    if (this.permissionService.hasPermission('CORRECT_TEST')) {
+      return true;
+    }
+
     const campaignId = this.getCampaignIdForApplication(application);
     if (!campaignId) {
       return false;

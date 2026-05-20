@@ -16,7 +16,7 @@
       </div>
       <h1>Gestion des Campagnes</h1>
       <p class="page-description">
-        Administration complète des campagnes - création, modification et gestion des structures
+        Surface technique d'administration brute des campagnes. Pour le pilotage metier quotidien, utiliser la page Campagnes.
       </p>
     </div>
 
@@ -34,6 +34,14 @@
         <app-filter-checkbox inputId="showDeleted" label="Afficher les campagnes supprimés" [checked]="showDeletedCampaigns" ariaLabel="Afficher les campagnes supprimés" (checkedChange)="toggleDeletedCampaigns()"></app-filter-checkbox>
       </div>
       <div class="toolbar-right">
+        <button class="btn-secondary-pro" (click)="openCampaignWorkspace()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M14 5H19V10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M10 14L19 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M19 14V19H5V5H10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Page metier
+        </button>
         <button class="btn-secondary-pro" (click)="openAdvancedSearch()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M3 6H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -83,11 +91,15 @@
           <input type="text" class="form-input" [(ngModel)]="advancedCriteria.campaignName" placeholder="Nom..." />
         </div>
         <div class="form-group">
+          <label>Description</label>
+          <input type="text" class="form-input" [(ngModel)]="advancedCriteria.campaignDesc" placeholder="Description..." />
+        </div>
+        <div class="form-group">
           <label>Spécialité</label>
           <app-filter-select [(ngModel)]="advancedCriteria.specialityId">
             <option [ngValue]="undefined">-- Tous --</option>
             @for (item of allSpecialities(); track item.id) {
-              <option [ngValue]="item.id">{{ item.specialityName || '#' + item.id }}</option>
+              <option [ngValue]="item.id">{{ item.nom || item.specialityName || '#' + item.id }}</option>
             }
           </app-filter-select>
         </div>
@@ -106,6 +118,26 @@
             <option [ngValue]="false">Non supprimé</option>
             <option [ngValue]="true">Supprimé</option>
           </app-filter-select>
+        </div>
+        <div class="form-row-full">
+          <div class="form-group-inline">
+            <label>Date de début de</label>
+            <input type="date" class="form-input-inline" [(ngModel)]="advancedCriteria.campaignStartDe" />
+          </div>
+          <span class="range-separator">à</span>
+          <div class="form-group-inline">
+            <input type="date" class="form-input-inline" [(ngModel)]="advancedCriteria.campaignStartA" />
+          </div>
+        </div>
+        <div class="form-row-full">
+          <div class="form-group-inline">
+            <label>Date de fin de</label>
+            <input type="date" class="form-input-inline" [(ngModel)]="advancedCriteria.campaignEndDe" />
+          </div>
+          <span class="range-separator">à</span>
+          <div class="form-group-inline">
+            <input type="date" class="form-input-inline" [(ngModel)]="advancedCriteria.campaignEndA" />
+          </div>
         </div>
         <!-- Date de création -->
         <div class="form-row-full">
@@ -211,13 +243,13 @@
         <thead>
           <tr>
             <th class="col-id" [class.col-hidden]="!isColumnVisible('id')">ID</th>
-            <th class="col-short" [class.col-hidden]="!isColumnVisible('name')">Nom</th>
-            <th class="col-medium" [class.col-hidden]="!isColumnVisible('description')">Description</th>
-            <th class="col-status" [class.col-hidden]="!isColumnVisible('status')">Statut</th>
-            <th class="col-short" [class.col-hidden]="!isColumnVisible('speciality')">Spécialité</th>
-            <th class="col-medium" [class.col-hidden]="!isColumnVisible('pipelineTemplate')">Template Pipeline</th>
-            <th class="col-date" [class.col-hidden]="!isColumnVisible('startDate')">Date Début</th>
-            <th class="col-date" [class.col-hidden]="!isColumnVisible('endDate')">Date Fin</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('campaignName')">Nom</th>
+            <th class="col-medium" [class.col-hidden]="!isColumnVisible('campaignDesc')">Description</th>
+            <th class="col-status" [class.col-hidden]="!isColumnVisible('campaignStatus')">Statut</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('specialityName')">Spécialité</th>
+            <th class="col-medium" [class.col-hidden]="!isColumnVisible('pipelineTemplateName')">Template Pipeline</th>
+            <th class="col-date" [class.col-hidden]="!isColumnVisible('campaignStart')">Date Début</th>
+            <th class="col-date" [class.col-hidden]="!isColumnVisible('campaignEnd')">Date Fin</th>
             <th class="col-date" [class.col-hidden]="!isColumnVisible('createdAt')">Créé le</th>
             <th class="col-actions" [class.col-hidden]="!isColumnVisible('actions')">Actions</th>
           </tr>
@@ -228,25 +260,25 @@
               <td class="col-id" [class.col-hidden]="!isColumnVisible('id')">
                 <span class="cell-id">#{{ campaign.id }}</span>
               </td>
-              <td class="col-short" [class.col-hidden]="!isColumnVisible('name')" [title]="campaign.campaignName || ''">
+              <td class="col-short" [class.col-hidden]="!isColumnVisible('campaignName')" [title]="campaign.campaignName || ''">
                 <span class="cell-name">{{ campaign.campaignName || '-' }}</span>
               </td>
-              <td class="col-medium" [class.col-hidden]="!isColumnVisible('description')" [title]="campaign.campaignDesc || ''">
+              <td class="col-medium" [class.col-hidden]="!isColumnVisible('campaignDesc')" [title]="campaign.campaignDesc || ''">
                 <span class="cell-description">{{ campaign.campaignDesc || '-' }}</span>
               </td>
-              <td class="col-status" [class.col-hidden]="!isColumnVisible('status')">
+              <td class="col-status" [class.col-hidden]="!isColumnVisible('campaignStatus')">
                 <span class="status-badge">{{ campaign.campaignStatus || '-' }}</span>
               </td>
-              <td class="col-short" [class.col-hidden]="!isColumnVisible('speciality')" [title]="campaign.specialityName || ''">
+              <td class="col-short" [class.col-hidden]="!isColumnVisible('specialityName')" [title]="campaign.specialityName || ''">
                 <span class="cell-text">{{ campaign.specialityName || '-' }}</span>
               </td>
-              <td class="col-medium" [class.col-hidden]="!isColumnVisible('pipelineTemplate')" [title]="campaign.pipelineTemplateName || ''">
+              <td class="col-medium" [class.col-hidden]="!isColumnVisible('pipelineTemplateName')" [title]="campaign.pipelineTemplateName || ''">
                 <span class="cell-text">{{ campaign.pipelineTemplateName || '-' }}</span>
               </td>
-              <td class="col-date" [class.col-hidden]="!isColumnVisible('startDate')">
+              <td class="col-date" [class.col-hidden]="!isColumnVisible('campaignStart')">
                 <span class="cell-date">{{ campaign.campaignStart || '-' }}</span>
               </td>
-              <td class="col-date" [class.col-hidden]="!isColumnVisible('endDate')">
+              <td class="col-date" [class.col-hidden]="!isColumnVisible('campaignEnd')">
                 <span class="cell-date">{{ campaign.campaignEnd || '-' }}</span>
               </td>
               <td class="col-date" [class.col-hidden]="!isColumnVisible('createdAt')">
@@ -383,17 +415,20 @@
                   <!-- Tab: Permissions -->
                   <div *ngIf="!isLoadingChildren(campaign.id) && getChildTab(campaign.id) === 'permissions'" class="children-list">
                     <div *ngIf="getCampaignPermissions(campaign.id).length === 0" class="no-children">
-                      <span>Aucune permission pour cette campagne</span>
+                      <span>Aucun acces recruteur pour cette campagne</span>
                     </div>
-                    <div *ngFor="let perm of getCampaignPermissions(campaign.id); trackBy: trackByChildId" class="child-item" [class.deleted]="perm.isDeleted">
+                    <div *ngFor="let perm of getCampaignPermissions(campaign.id); trackBy: trackByChildId" class="child-item">
                       <span class="child-id">#{{ perm.id }}</span>
-                      <span class="child-name">{{ perm.userEmail || 'User #' + perm.userId }}</span>
+                      <span class="child-name">{{ getCampaignPermissionLabel(perm) }}</span>
                       <div class="child-permissions">
                         <span class="perm-badge" [class.granted]="perm.canUpdate">Modifier</span>
                         <span class="perm-badge" [class.granted]="perm.canDelete">Supprimer</span>
                         <span class="perm-badge" [class.granted]="perm.canEvaluate">Évaluer</span>
                         <span class="perm-badge" [class.granted]="perm.canPlanify">Planifier</span>
+                        <span class="perm-badge" [class.granted]="perm.follow">Suivi</span>
+                        <span class="perm-badge" [class.granted]="hasCampaignPipelineAccess(perm)">Pipeline</span>
                         <span class="perm-badge" [class.granted]="perm.isAdmin">Admin</span>
+                        <span class="perm-badge" [class.granted]="perm.isCreator">Créateur</span>
                       </div>
                     </div>
                   </div>
@@ -409,7 +444,7 @@
     <div class="pagination-container">
       <div class="pagination-info">
         <span class="results-info">
-          Affichage {{ currentPage() * pageSize() + 1 }} - {{ Math.min((currentPage() + 1) * pageSize(), totalElements()) }} 
+          Affichage {{ totalElements() ? currentPage() * pageSize() + 1 : 0 }} - {{ totalElements() ? Math.min((currentPage() + 1) * pageSize(), totalElements()) : 0 }} 
           sur {{ totalElements() }} campagnes
         </span>
         
@@ -652,7 +687,7 @@
         </div>
         <div class="form-group">
           <label class="form-label">Spécialité</label>
-          <select class="form-input" [(ngModel)]="editFormData.specialitiesId" name="specialitiesId">
+          <select class="form-input" [(ngModel)]="editFormData.specialityId" name="specialityId">
             <option [ngValue]="undefined">-- Sélectionner --</option>
             @for (s of allSpecialities(); track s.id) {
               <option [ngValue]="s.id">{{ s.nom }}</option>
@@ -732,7 +767,7 @@
         </div>
         <div class="form-group">
           <label class="form-label">Spécialité</label>
-          <select class="form-input" [(ngModel)]="createFormData.specialitiesId" name="specialitiesId">
+          <select class="form-input" [(ngModel)]="createFormData.specialityId" name="specialityId">
             <option [ngValue]="undefined">-- Sélectionner --</option>
             @for (s of allSpecialities(); track s.id) {
               <option [ngValue]="s.id">{{ s.nom }}</option>

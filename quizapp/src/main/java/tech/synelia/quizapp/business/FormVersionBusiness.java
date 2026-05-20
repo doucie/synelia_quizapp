@@ -44,6 +44,8 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 	@Autowired
 	private AnswerRepository answerRepository;
 	@Autowired
+	private FormBusiness formBusiness;
+	@Autowired
 	private FunctionalError functionalError;
 	@Autowired
 	private TechnicalError technicalError;
@@ -93,6 +95,9 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 			}
 			if (entityToSave.getIsLocked() == null) {
 				entityToSave.setIsLocked(false);
+			}
+			if (entityToSave.getRandomQuestions() == null) {
+				entityToSave.setRandomQuestions(false);
 			}
 			if (Boolean.TRUE.equals(entityToSave.getIsPublished())) {
 				validateFormVersionCanBePublished(entityToSave, locale);
@@ -206,6 +211,9 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 			if (lockedToApply != null) {
 				entityToSave.setIsLocked(lockedToApply);
 			}
+			if (dto.getRandomQuestions() != null) {
+				entityToSave.setRandomQuestions(dto.getRandomQuestions());
+			}
 			entityToSave.setUpdatedAt(Utilities.getCurrentDate());
 			entityToSave.setUpdatedBy(request.getUser());
 			entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(entityToSave)));
@@ -251,6 +259,8 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 			throw new InvalidEntityException(functionalError.REQUEST_FAIL(
 					"La version doit etre enregistree et completee avant publication.", locale));
 		}
+
+		formBusiness.validateFormVersionTiming(formVersion, locale);
 
 		List<FormQuestions> formQuestions = formQuestionsRepository.findByFormVersionIdOrderByQuestionOrder(formVersion.getId(), false);
 		if (formQuestions == null || formQuestions.isEmpty()) {
@@ -487,6 +497,7 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 		newVersion.setVersionNumber(sourceVersion.getVersionNumber() + 1);
 		newVersion.setIsPublished(false);
 		newVersion.setIsLocked(false);
+		newVersion.setRandomQuestions(sourceVersion.getRandomQuestions());
 		newVersion.setIsDeleted(false);
 		newVersion.setCreatedAt(Utilities.getCurrentDate());
 		newVersion.setCreatedBy(userId);
@@ -644,6 +655,9 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 			if (dto.getIsLocked() != null) {
 				entityToSave.setIsLocked(dto.getIsLocked());
 			}
+			if (dto.getRandomQuestions() != null) {
+				entityToSave.setRandomQuestions(dto.getRandomQuestions());
+			}
 			if (dto.getIsDeleted() != null) {
 				entityToSave.setIsDeleted(dto.getIsDeleted());
 			}
@@ -707,6 +721,9 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 			}
 			if (dto.getIsLocked() != null) {
 				entityToSave.setIsLocked(dto.getIsLocked());
+			}
+			if (dto.getRandomQuestions() != null) {
+				entityToSave.setRandomQuestions(dto.getRandomQuestions());
 			}
 			if (dto.getIsDeleted() != null) {
 				entityToSave.setIsDeleted(dto.getIsDeleted());

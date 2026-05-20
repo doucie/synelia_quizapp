@@ -23,12 +23,6 @@
     "changeOrigin": true,
     "logLevel": "debug"
   },
-  "/campaignCrud/**": {
-    "target": "http://localhost:8085",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
   "/candidateAsk/**": {
     "target": "http://localhost:8085",
     "secure": false,

@@ -13,6 +13,7 @@ import { PipelineStageService } from '../../../core/services/pipeline-stage.serv
 import { environment } from '../../../../environments/environment';
 import { ApplicationProgressService } from '../../../core/services/application-progress.service';
 import { PipelineTemplate, PipelineStage } from '../../../core/models/pipeline.interfaces';
+import { CAMPAIGN_STATUS_OPTIONS, DEFAULT_CAMPAIGN_STATUS } from '../../../core/constants/campaign-status.constants';
 import { FilterCheckboxComponent } from '../../../shared/filter-checkbox/filter-checkbox';
 import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../shared/filter-select/filter-select';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -76,11 +77,7 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
   migrating = signal(false);
   
   // Options
-  statusOptions = [
-    { value: 'PENDING', label: 'En attente' },
-    { value: 'ACTIVE', label: 'Active' },
-    { value: 'CLOSED', label: 'Fermée' }
-  ];
+  statusOptions = CAMPAIGN_STATUS_OPTIONS;
 
   constructor(
     private fb: FormBuilder,
@@ -122,7 +119,7 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
     this.campaignForm = this.fb.group({
       campaignTitle: ['', [Validators.required, Validators.minLength(3)]],
       campaignDesc: [''], // Optionnel
-      campaignStatus: ['PENDING', Validators.required],
+      campaignStatus: [DEFAULT_CAMPAIGN_STATUS, Validators.required],
       campaignStart: [''], // Optionnel
       campaignEnd: [''], // Optionnel
       maxApply: [null, [Validators.min(1)]],
@@ -130,6 +127,8 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
       formAssignmentStrategy: ['RANDOM'],
       formAssignmentExhaustionPolicy: ['BLOCK'],
       allCanEvaluate: [false],
+      timeAllForms: [false],
+      isArchived: [false],
       specialityId: [null, Validators.required], // Ajout spécialité
       pipelineTemplateId: [null, Validators.required]
     }, { validators: this.dateRangeValidator.bind(this) });
@@ -447,7 +446,7 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
           if (newTemplate?.id) {
             this.selectTemplate(newTemplate);
             // Ouvrir l'éditeur dans un nouvel onglet
-            this.router.navigate(['/dashboard/pipeline-templates', newTemplate.id]);
+            this.router.navigate(['/dashboard/pipeline-templates', newTemplate.id, 'edit']);
           }
         }
       });
@@ -610,6 +609,8 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
       formAssignmentStrategy: campaign.formAssignmentStrategy || 'RANDOM',
       formAssignmentExhaustionPolicy: campaign.formAssignmentExhaustionPolicy || 'BLOCK',
       allCanEvaluate: campaign.allCanEvaluate,
+      timeAllForms: campaign.timeAllForms ?? false,
+      isArchived: campaign.isArchived ?? false,
       pipelineTemplateId: campaign.pipelineTemplateId
     });
 
@@ -684,6 +685,8 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
       formAssignmentStrategy: formValue.formAssignmentStrategy,
       formAssignmentExhaustionPolicy: formValue.formAssignmentExhaustionPolicy,
       allCanEvaluate: formValue.allCanEvaluate,
+      timeAllForms: formValue.timeAllForms,
+      isArchived: formValue.isArchived,
       specialityId: formValue.specialityId,
       pipelineTemplateId: formValue.pipelineTemplateId,
       createdBy: parseInt(currentUser.id)
@@ -841,6 +844,8 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
   get formAssignmentStrategy() { return this.campaignForm.get('formAssignmentStrategy'); }
   get formAssignmentExhaustionPolicy() { return this.campaignForm.get('formAssignmentExhaustionPolicy'); }
   get allCanEvaluate() { return this.campaignForm.get('allCanEvaluate'); }
+  get timeAllForms() { return this.campaignForm.get('timeAllForms'); }
+  get isArchived() { return this.campaignForm.get('isArchived'); }
 
   private dateRangeValidator(group: AbstractControl): ValidationErrors | null {
     const start = group.get('campaignStart')?.value;

@@ -175,7 +175,10 @@
               (ngModelChange)="updateFormField('nom', $event)"
               placeholder="Ex: Informatique, Ressources Humaines..."
               required
+              maxlength="255"
+              minlength="2"
             >
+            <small class="form-hint">{{ (departmentForm().nom || '').length }}/255</small>
           </div>
 
           <div class="form-group">
@@ -186,7 +189,9 @@
               (ngModelChange)="updateFormField('description', $event)"
               placeholder="Décrivez le département..."
               rows="4"
+              maxlength="2000"
             ></textarea>
+            <small class="form-hint">{{ (departmentForm().description || '').length }}/2000</small>
           </div>
         </form>
       </div>

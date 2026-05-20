@@ -308,6 +308,8 @@ public class PipelineTemplateBusiness implements IBasicBusiness<Request<Pipeline
                 newStage.setStageOrder(stage.getStageOrder());
                 newStage.setIsRequired(stage.getIsRequired());
                 newStage.setIsEliminatory(stage.getIsEliminatory());
+                newStage.setEmailRequired(stage.getEmailRequired());
+                newStage.setEmailAutomatic(stage.getEmailAutomatic());
                 newStage.setConfigJson(stage.getConfigJson());
                 newStage.setCreatedAt(Utilities.getCurrentDate());
                 newStage.setCreatedBy(userId);

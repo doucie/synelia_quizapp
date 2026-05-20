@@ -58,6 +58,12 @@ public interface _EntityPermissionRepository {
             if (dto.getUserId() != null && dto.getUserId() > 0) {
                 listOfQuery.add(CriteriaUtils.generateCriteria("userId", dto.getUserId(), "e.user.id", "Integer", dto.getUserIdParam(), param, index, locale));
             }
+            if (dto.getBusinessGroupId() != null && dto.getBusinessGroupId() > 0) {
+                listOfQuery.add(CriteriaUtils.generateCriteria("businessGroupId", dto.getBusinessGroupId(), "e.businessGroupId", "Integer", dto.getBusinessGroupIdParam(), param, index, locale));
+            }
+            if (Utilities.notBlank(dto.getSystemRole())) {
+                listOfQuery.add(CriteriaUtils.generateCriteria("systemRole", dto.getSystemRole(), "e.systemRole", "String", dto.getSystemRoleParam(), param, index, locale));
+            }
             if (dto.getIsDeleted() != null) {
                 listOfQuery.add(CriteriaUtils.generateCriteria("isDeleted", dto.getIsDeleted(), "e.isDeleted", "Boolean", dto.getIsDeletedParam(), param, index, locale));
             }
@@ -71,7 +77,7 @@ public interface _EntityPermissionRepository {
                 String sv = "%" + dto.getSearchString().toLowerCase() + "%";
                 String sp = "searchAll_" + index;
                 param.put(sp, sv);
-                listOfQuery.add("(LOWER(e.entityType) LIKE :" + sp + " OR LOWER(e.permissionKey) LIKE :" + sp + ")");
+                listOfQuery.add("(LOWER(e.entityType) LIKE :" + sp + " OR LOWER(e.permissionKey) LIKE :" + sp + " OR LOWER(COALESCE(e.systemRole, '')) LIKE :" + sp + ")");
             }
         }
         return CriteriaUtils.getCriteriaByListOfQuery(listOfQuery);

@@ -89,6 +89,8 @@ public class PipelineStageBusiness implements IBasicBusiness<Request<PipelineSta
             entityToSave.setIsDeleted(false);
             if (entityToSave.getIsRequired() == null) entityToSave.setIsRequired(true);
             if (entityToSave.getIsEliminatory() == null) entityToSave.setIsEliminatory(false);
+            if (entityToSave.getEmailRequired() == null) entityToSave.setEmailRequired(false);
+            if (entityToSave.getEmailAutomatic() == null) entityToSave.setEmailAutomatic(true);
             items.add(entityToSave);
         }
 
@@ -150,6 +152,8 @@ public class PipelineStageBusiness implements IBasicBusiness<Request<PipelineSta
             if (dto.getStageOrder() != null) entityToSave.setStageOrder(dto.getStageOrder());
             if (dto.getIsRequired() != null) entityToSave.setIsRequired(dto.getIsRequired());
             if (dto.getIsEliminatory() != null) entityToSave.setIsEliminatory(dto.getIsEliminatory());
+            if (dto.getEmailRequired() != null) entityToSave.setEmailRequired(dto.getEmailRequired());
+            if (dto.getEmailAutomatic() != null) entityToSave.setEmailAutomatic(dto.getEmailAutomatic());
                 if (Utilities.shouldUpdate(dto.getConfigJson())) entityToSave.setConfigJson(normalizedConfigJson);
             if (dto.getIsDeleted() != null) entityToSave.setIsDeleted(dto.getIsDeleted());
 
@@ -295,6 +299,15 @@ public class PipelineStageBusiness implements IBasicBusiness<Request<PipelineSta
         }
     }
 
+    private void normalizeStageCriteria(Request<PipelineStageDto> request, Locale locale) {
+        PipelineStageDto dto = request != null ? request.getData() : null;
+        if (dto == null || !Utilities.notBlank(dto.getStageType())) {
+            return;
+        }
+
+        dto.setStageType(normalizeStageType(dto.getStageType(), locale));
+    }
+
     private void validateCommonConfig(JsonNode config, Locale locale) {
         if (config.has("allowSkip") && !config.get("allowSkip").isBoolean()) {
             throw new InvalidEntityException(functionalError.REQUEST_FAIL(
@@ -337,6 +350,7 @@ public class PipelineStageBusiness implements IBasicBusiness<Request<PipelineSta
     @Override
     public Response<PipelineStageDto> getByCriteria(Request<PipelineStageDto> request, Locale locale) throws Exception {
         log.info("----begin get PipelineStage-----");
+        normalizeStageCriteria(request, locale);
         Response<PipelineStageDto> response = new Response<>();
         List<PipelineStage> items = pipelineStageRepository.getByCriteria(request, em, locale);
 

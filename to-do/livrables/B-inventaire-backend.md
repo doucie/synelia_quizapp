@@ -163,7 +163,7 @@ Le rapport subagent confirme la présence des 7 endpoints standards sur :
 
 **Bilan : 36 migrations V1_001 → V1_036 (V1_034 manquant — saut de numéro à vérifier).**
 
-- [ ] 🟡 **À CONFIRMER [BACK — migration]** : V1_034 absent — soit volontaire (réservation), soit indice de migration manquante ou supprimée.
+- [x] 🟢 **RÉSOLU** : V1_034 absent du dossier est une **suppression involontaire** ; la migration reste enregistrée en BD (`flyway_schema_history`), donc pas de problème de checksum. Optionnel : recréer un fichier placeholder. *(cf. J.1)*
 - [x] 🟢 **OK** : trajectoire schéma cohérente : creation initiale → formes → pipelines → permissions → groupes → presets emails → assignment strategies → quiz manual correction → app config evolutions.
 - [ ] 🔵 **[BACK — migration]** : extraire pour chaque migration la liste des `ALTER TABLE` (DROP COLUMN, RENAME COLUMN) — pour détecter les colonnes mortes que le code utiliserait encore. *(Hors scope de ce livrable, à faire en Phase G.)*
 

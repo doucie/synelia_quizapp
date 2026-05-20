@@ -352,10 +352,22 @@
                   <!-- Tab: Demandes -->
                   <div *ngIf="getChildTab(app.id!) === 'asks'" class="children-list">
                     <div *ngIf="getAsks(app.id!).length === 0" class="no-children"><span>Aucune demande</span></div>
-                    <div *ngFor="let child of getAsks(app.id!); trackBy: trackByChildId" class="child-item" [class.deleted]="child.isDeleted">
-                      <span class="child-id">#{{ child.id }}</span>
-                      <span class="child-name">{{ child.requestType }} - {{ child.firstName }} {{ child.lastName }}</span>
-                      <span class="child-badge" [class.active]="child.isVerified" [class.inactive]="!child.isVerified">{{ child.isVerified ? 'Vérifié' : 'En attente' }}</span>
+                    <div *ngFor="let child of getAsks(app.id!); trackBy: trackByChildId" class="child-item child-item--answer" [class.deleted]="child.isDeleted">
+                      <div class="child-answer-header">
+                        <span class="child-id">#{{ child.id }}</span>
+                        <span class="child-name">{{ getAskRequestTypeLabel(child) }}</span>
+                        <span class="child-badge"
+                              [class.active]="getAskStatusBadgeClass(child) === 'active'"
+                              [class.inactive]="getAskStatusBadgeClass(child) === 'inactive'"
+                              [class.pending]="getAskStatusBadgeClass(child) === 'pending'">
+                          {{ getAskStatusLabel(child) }}
+                        </span>
+                      </div>
+                      <div class="child-answer-body">
+                        <span class="child-answer-choice">{{ getAskRequestedSummary(child) }}</span>
+                        <span *ngIf="child.decisionReason" class="manual-correction-note">Motif : {{ child.decisionReason }}</span>
+                        <span *ngIf="child.createdAt" class="manual-correction-note">Créée le {{ formatDate(child.createdAt) }}</span>
+                      </div>
                     </div>
                   </div>
                   <!-- Tab: Tokens -->
@@ -388,7 +400,7 @@
     <div class="pagination-container">
       <div class="pagination-info">
         <span class="results-info">
-          Affichage {{ currentPage() * pageSize() + 1 }} - {{ Math.min((currentPage() + 1) * pageSize(), totalElements()) }} 
+          Affichage {{ totalElements() ? currentPage() * pageSize() + 1 : 0 }} - {{ totalElements() ? Math.min((currentPage() + 1) * pageSize(), totalElements()) : 0 }} 
           sur {{ totalElements() }} candidatures
         </span>
         

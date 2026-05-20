@@ -23,6 +23,7 @@ import tech.synelia.quizapp.business.*;
 @Log
 @CrossOrigin("*")
 @RestController
+@PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
 @RequestMapping(value="/businessGroup")
 public class BusinessGroupController {
 

@@ -25,7 +25,7 @@ import tech.synelia.quizapp.rest.fact.ControllerFactory;
 @CrossOrigin("*")
 @RestController
 @RequestMapping(value="/userBusinessGroup")
-@PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'UTILISATEUR')")
+@PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'RECRUITER')")
 public class UserBusinessGroupController {
 
     @Autowired
@@ -36,6 +36,7 @@ public class UserBusinessGroupController {
     private UserBusinessGroupBusiness userBusinessGroupBusiness;
 
     @RequestMapping(value="/create", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<Response<UserBusinessGroupDto>> create(@RequestBody Request<UserBusinessGroupDto> request) throws Exception {
         log.info("start method /userBusinessGroup/create");
         Response<UserBusinessGroupDto> response = controllerFactory.create(userBusinessGroupBusiness, request, FunctionalityEnum.CREATE_USER_BUSINESS_GROUP);
@@ -45,6 +46,7 @@ public class UserBusinessGroupController {
     }
 
     @RequestMapping(value="/update", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public Response<UserBusinessGroupDto> update(@RequestBody Request<UserBusinessGroupDto> request) throws Exception {
         log.info("start method /userBusinessGroup/update");
         Response<UserBusinessGroupDto> response = controllerFactory.update(userBusinessGroupBusiness, request, FunctionalityEnum.UPDATE_USER_BUSINESS_GROUP);
@@ -53,6 +55,7 @@ public class UserBusinessGroupController {
     }
 
     @RequestMapping(value="/delete", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public Response<UserBusinessGroupDto> delete(@RequestBody Request<UserBusinessGroupDto> request) throws Exception {
         log.info("start method /userBusinessGroup/delete");
         Response<UserBusinessGroupDto> response = controllerFactory.delete(userBusinessGroupBusiness, request, FunctionalityEnum.DELETE_USER_BUSINESS_GROUP);

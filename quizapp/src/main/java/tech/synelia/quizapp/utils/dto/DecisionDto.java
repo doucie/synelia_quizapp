@@ -45,6 +45,7 @@ public class DecisionDto implements Cloneable{
     private Integer    applicationId        ;
     private Integer    userId               ;
     private Integer    pipelineStageId      ;
+    private Boolean    sendDecisionEmail    ;
 
     // Search parameters
     private SearchParam<String>  decisionTypeParam ;

@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+import { AuthService } from './auth/auth.service';
 
 /**
  * Session-state model for interview participants.
@@ -68,82 +69,85 @@ export interface PagedInterviewParticipantResponse {
 export class InterviewParticipantService {
   private apiUrl = `${environment.apiUrl}/interviewParticipant`;
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private authService: AuthService
+  ) {}
 
   /** Get all participants for an interview */
   getByInterviewId(interviewId: number): Observable<InterviewParticipantResponse> {
-    return this.http.post<InterviewParticipantResponse>(
+    return this.withAuthenticatedUser(userId => this.http.post<InterviewParticipantResponse>(
       `${this.apiUrl}/getByCriteria`,
-      { user: 1, data: { interviewId } }
-    );
+      { user: userId, data: { interviewId } }
+    ));
   }
 
   /** Create participants for an interview (bulk) */
   createParticipants(participants: InterviewParticipant[]): Observable<any> {
-    return this.http.post(`${this.apiUrl}/create`, {
-      user: 1,
+    return this.withAuthenticatedUser(userId => this.http.post(`${this.apiUrl}/create`, {
+      user: userId,
       datas: participants
-    });
+    }));
   }
 
   /** Send presence ping (mark online + update lastPingAt) */
   sendPresencePing(participantId: number): Observable<any> {
     const formattedDate = this.formatDate(new Date());
-    return this.http.post(`${this.apiUrl}/update`, {
-      user: 1,
+    return this.withAuthenticatedUser(userId => this.http.post(`${this.apiUrl}/update`, {
+      user: userId,
       datas: [{ id: participantId, isOnline: true, lastPingAt: formattedDate }]
-    });
+    }));
   }
 
   /** Mark participant offline */
   markOffline(participantId: number): Observable<any> {
-    return this.http.post(`${this.apiUrl}/update`, {
-      user: 1,
+    return this.withAuthenticatedUser(userId => this.http.post(`${this.apiUrl}/update`, {
+      user: userId,
       datas: [{ id: participantId, isOnline: false }]
-    });
+    }));
   }
 
   /** Update hasFinished flag */
   updateHasFinished(participantId: number, hasFinished: boolean): Observable<any> {
-    return this.http.post(`${this.apiUrl}/update`, {
-      user: 1,
+    return this.withAuthenticatedUser(userId => this.http.post(`${this.apiUrl}/update`, {
+      user: userId,
       datas: [{ id: participantId, hasFinished }]
-    });
+    }));
   }
 
   /** Update full status (online + finished + ping) */
   updateStatus(participantId: number, isOnline: boolean, hasFinished: boolean): Observable<any> {
     const formattedDate = this.formatDate(new Date());
-    return this.http.post(`${this.apiUrl}/update`, {
-      user: 1,
+    return this.withAuthenticatedUser(userId => this.http.post(`${this.apiUrl}/update`, {
+      user: userId,
       datas: [{ id: participantId, isOnline, hasFinished, lastPingAt: formattedDate }]
-    });
+    }));
   }
 
   /** Entity CRUD: get all by criteria (paginated) */
   getAllByCriteria(criteria: InterviewParticipantSearchCriteria = {}): Observable<PagedInterviewParticipantResponse> {
-    const currentUserData = localStorage.getItem('user');
-    const currentUserId = currentUserData ? JSON.parse(currentUserData).id?.toString() || '1' : '1';
-    const request = {
-      user: currentUserId,
-      size: criteria.size || 10,
-      index: criteria.page || 0,
-      isSimpleLoading: false,
-      data: {
-        id: criteria.idDe || '',
-        isDeleted: criteria.isDeleted !== undefined ? criteria.isDeleted.toString() : '',
-        searchString: criteria.search_string || '',
-        ...(criteria.userId && { userId: criteria.userId }),
-        ...(criteria.interviewId && { interviewId: criteria.interviewId }),
-        ...(criteria.dateCreationDe && { dateCreationDe: criteria.dateCreationDe }),
-        ...(criteria.dateCreationA && { dateCreationA: criteria.dateCreationA }),
-        ...(criteria.dateModificationDe && { dateModificationDe: criteria.dateModificationDe }),
-        ...(criteria.dateModificationA && { dateModificationA: criteria.dateModificationA }),
-        ...(criteria.idDe && criteria.idDe.trim() && { idStart: criteria.idDe }),
-        ...(criteria.idA && criteria.idA.trim() && { idEnd: criteria.idA })
-      }
-    };
-    return this.http.post<any>(`${this.apiUrl}/getAllByCriteria`, request).pipe(
+    return this.withAuthenticatedUser(userId => {
+      const request = {
+        user: userId,
+        size: criteria.size || 10,
+        index: criteria.page || 0,
+        isSimpleLoading: false,
+        data: {
+          id: criteria.idDe || '',
+          isDeleted: criteria.isDeleted !== undefined ? criteria.isDeleted.toString() : '',
+          searchString: criteria.search_string || '',
+          ...(criteria.userId && { userId: criteria.userId }),
+          ...(criteria.interviewId && { interviewId: criteria.interviewId }),
+          ...(criteria.dateCreationDe && { dateCreationDe: criteria.dateCreationDe }),
+          ...(criteria.dateCreationA && { dateCreationA: criteria.dateCreationA }),
+          ...(criteria.dateModificationDe && { dateModificationDe: criteria.dateModificationDe }),
+          ...(criteria.dateModificationA && { dateModificationA: criteria.dateModificationA }),
+          ...(criteria.idDe && criteria.idDe.trim() && { idStart: criteria.idDe }),
+          ...(criteria.idA && criteria.idA.trim() && { idEnd: criteria.idA })
+        }
+      };
+
+      return this.http.post<any>(`${this.apiUrl}/getAllByCriteria`, request).pipe(
       map(response => {
         if (!response || (!response.items && !response.item)) {
           return { content: [], totalElements: 0, totalPages: 0, size: criteria.size || 10, number: criteria.page || 0 };
@@ -154,23 +158,35 @@ export class InterviewParticipantService {
         return { content: items, totalElements, totalPages: Math.ceil(totalElements / pageSize), size: pageSize, number: criteria.page || 0 };
       }),
       catchError(error => { console.error('Erreur interview-participant:', error); return throwError(() => error); })
-    );
+      );
+    });
   }
 
   entityCreate(item: InterviewParticipant): Observable<any> {
-    return this.http.post(`${this.apiUrl}/create`, { user: 1, datas: [item] });
+    return this.withAuthenticatedUser(userId => this.http.post(`${this.apiUrl}/create`, { user: userId, datas: [item] }));
   }
 
   entityUpdate(item: InterviewParticipant): Observable<any> {
-    return this.http.post(`${this.apiUrl}/update`, { user: 1, datas: [item] });
+    return this.withAuthenticatedUser(userId => this.http.post(`${this.apiUrl}/update`, { user: userId, datas: [item] }));
   }
 
   entityDelete(id: number): Observable<any> {
-    return this.http.post(`${this.apiUrl}/delete`, { user: 1, datas: [{ id }] });
+    return this.withAuthenticatedUser(userId => this.http.post(`${this.apiUrl}/delete`, { user: userId, datas: [{ id }] }));
   }
 
   entityRestore(id: number): Observable<any> {
-    return this.http.post(`${this.apiUrl}/update`, { user: 1, datas: [{ id, isDeleted: false }] });
+    return this.withAuthenticatedUser(userId => this.http.post(`${this.apiUrl}/update`, { user: userId, datas: [{ id, isDeleted: false }] }));
+  }
+
+  /** Every participant mutation/read requires an authenticated dashboard user. */
+  private withAuthenticatedUser<T>(requestFactory: (userId: string) => Observable<T>): Observable<T> {
+    const userId = this.authService.getCurrentUserId();
+
+    if (!userId || userId === '0') {
+      return throwError(() => new Error('Contexte utilisateur manquant. Les appels interviewParticipant nécessitent une session authentifiée.'));
+    }
+
+    return requestFactory(userId);
   }
 
   private formatDate(date: Date): string {

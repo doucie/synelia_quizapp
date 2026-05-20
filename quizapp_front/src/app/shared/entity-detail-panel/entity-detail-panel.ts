@@ -22,6 +22,9 @@ export class EntityDetailPanelComponent {
   @Input() fields: DetailField[] = [];
   @Input() title = 'Détails';
   @Input() isOpen = false;
+  @Input() canEdit = true;
+  @Input() canDelete = true;
+  @Input() canRestore = true;
 
   @Output() closePanel = new EventEmitter<void>();
   @Output() editItem = new EventEmitter<any>();
@@ -84,6 +87,10 @@ export class EntityDetailPanelComponent {
   }
 
   edit() {
+    if (!this.canEdit) {
+      return;
+    }
+
     this.editData = { ...this.entity };
     this.isEditing = true;
   }
@@ -94,13 +101,30 @@ export class EntityDetailPanelComponent {
   }
 
   save() {
+    if (!this.canEdit) {
+      return;
+    }
+
     this.saveItem.emit({ ...this.editData });
     this.isEditing = false;
     this.editData = {};
   }
 
-  delete() { this.deleteItem.emit(this.entity); }
-  restore() { this.restoreItem.emit(this.entity); }
+  delete() {
+    if (!this.canDelete) {
+      return;
+    }
+
+    this.deleteItem.emit(this.entity);
+  }
+
+  restore() {
+    if (!this.canRestore) {
+      return;
+    }
+
+    this.restoreItem.emit(this.entity);
+  }
 
   isFieldEditable(field: DetailField): boolean {
     if (field.editable === false) return false;

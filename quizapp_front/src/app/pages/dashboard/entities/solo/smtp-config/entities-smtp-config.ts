@@ -36,6 +36,7 @@ export class EntitiesSmtpConfigComponent extends EntityCrudBase<SmtpConfig, Smtp
   advancedCriteria: SmtpConfigCriteria = {};
   editFormData: SmtpConfig = {} as SmtpConfig;
   createFormData: Partial<SmtpConfig> = {};
+  isTestingSmtp = false;
 
   override allColumns: ColumnDef[] = [
     { key: 'id', label: 'ID', priority: 1 },
@@ -64,4 +65,23 @@ export class EntitiesSmtpConfigComponent extends EntityCrudBase<SmtpConfig, Smtp
   protected performRestore(id: number): Observable<any> { return this.service.update({ id, isDeleted: false }); }
   protected resetAdvancedCriteriaValues(): void { this.advancedCriteria = {}; }
   protected resetCreateFormData(): void { this.createFormData = {}; }
+
+  testActiveSmtp(): void {
+    if (this.isTestingSmtp) {
+      return;
+    }
+
+    this.isTestingSmtp = true;
+    this.service.testActive().subscribe({
+      next: (message) => {
+        this.notificationService.success('Test SMTP', message);
+        this.isTestingSmtp = false;
+      },
+      error: (error) => {
+        const message = error?.error?.status?.message || 'Erreur lors du test SMTP';
+        this.notificationService.error('Erreur', message);
+        this.isTestingSmtp = false;
+      }
+    });
+  }
 }

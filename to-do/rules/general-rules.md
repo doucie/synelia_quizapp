@@ -1,4 +1,4 @@
-## Règles à respecter
+# Règles à respecter
 
 - Séparer optimalement frontend (`/quizapp_front`) et backend (`/quizapp`)
 - S'assurer que le code soit optimisé
@@ -9,6 +9,7 @@
 - Les pages doivent être responsives
 - Regarder l'existant avant de créer quelque chose : si quelque chose de similaire existe déjà, faire la même chose
   - Backend : les endpoints se répètent (même pattern pour chaque controller)
+  - Backend : respecter aussi `to-do/rules/to-do-rules-back.md` pour la structure, les APIs de base et les garde-fous anti-spaghetti
   - Frontend : réutiliser les pages, boutons, styles existants — pattern `EntityCrudBase`
 - Convention update partiel : `""` → ignorer, `null` → mettre à null, autre → mettre à jour
 - Convention API : tout en POST, jamais de GET/PUT/DELETE

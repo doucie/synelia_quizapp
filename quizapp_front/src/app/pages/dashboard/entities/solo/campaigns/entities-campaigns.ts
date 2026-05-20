@@ -12,15 +12,15 @@ import { DashboardStatsService } from '../../../../../core/services/dashboard-st
 import { DependencyInfo } from '../../../../../shared/models/interfaces';
 import { Router, ActivatedRoute } from '@angular/router';
 
-import { CampaignService, Campaign, CampaignSearchCriteria, PagedResponse } from '../../../../../core/services/campaign.service';
+import { CampaignService, Campaign, CampaignAccessRecord, CampaignSearchCriteria, PagedResponse } from '../../../../../core/services/campaign.service';
 import { UserService } from '../../../../../core/services/user.service';
 import { FormService, Form } from '../../../../../core/services/form.service';
 import { SourceTokenService, SourceToken } from '../../../../../services/source-token.service';
-import { EntityPermissionService } from '../../../../../core/services/entity-permission.service';
-import { EntityPermission } from '../../../../../core/models/permission.interfaces';
 import { NotificationService } from '../../../../../core/services/notification.service';
 import { AuthService } from '../../../../../core/services/auth/auth.service';
 import { SpecialityService, Speciality } from '../../../../../core/services/speciality.service';
+
+type CampaignPermissionView = CampaignAccessRecord & { id: number };
 
 @Component({
   selector: 'app-entities-campaigns',
@@ -85,7 +85,7 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
   expandedCampaigns = signal<Set<number>>(new Set());
   campaignForms = signal<{[campaignId: number]: Form[]}>({});
   campaignSourceTokens = signal<{[campaignId: number]: SourceToken[]}>({});
-  campaignPermissions = signal<{[campaignId: number]: any[]}>({});
+  campaignPermissions = signal<{[campaignId: number]: CampaignPermissionView[]}>({});
   loadingChildren = signal<{[campaignId: number]: boolean}>({});
   childTab = signal<{[campaignId: number]: string}>({});
   
@@ -117,13 +117,13 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
 
   readonly allColumns: ColumnDef[] = [
     { key: 'id', label: 'ID', priority: 1 },
-    { key: 'name', label: 'Nom', priority: 1 },
-    { key: 'description', label: 'Description', priority: 3 },
-    { key: 'status', label: 'Statut', priority: 2 },
-    { key: 'speciality', label: 'Spécialité', priority: 2 },
-    { key: 'pipelineTemplate', label: 'Template Pipeline', priority: 3 },
-    { key: 'startDate', label: 'Date Début', priority: 2 },
-    { key: 'endDate', label: 'Date Fin', priority: 2 },
+    { key: 'campaignName', label: 'Nom', priority: 1 },
+    { key: 'campaignDesc', label: 'Description', priority: 3 },
+    { key: 'campaignStatus', label: 'Statut', priority: 2 },
+    { key: 'specialityName', label: 'Spécialité', priority: 2 },
+    { key: 'pipelineTemplateName', label: 'Template Pipeline', priority: 3 },
+    { key: 'campaignStart', label: 'Date Début', priority: 2 },
+    { key: 'campaignEnd', label: 'Date Fin', priority: 2 },
     { key: 'createdAt', label: 'Créé le', priority: 3 },
     { key: 'actions', label: 'Actions', priority: 1 },
   ];
@@ -177,19 +177,19 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
   // État de la popup d'édition
   showEditDialog = signal<boolean>(false);
   campaignToEdit = signal<Campaign | null>(null);
-  editFormData: { id: number; campaignName: string; campaignDesc: string; specialitiesId?: number } = {
+  editFormData: { id: number; campaignName: string; campaignDesc: string; specialityId?: number } = {
     id: 0,
     campaignName: '',
     campaignDesc: '',
-    specialitiesId: undefined
+    specialityId: undefined
   };
 
   // État de la popup de création
   showCreateDialog = signal<boolean>(false);
-  createFormData: { campaignName: string; campaignDesc: string; specialitiesId?: number } = {
+  createFormData: { campaignName: string; campaignDesc: string; specialityId?: number } = {
     campaignName: '',
     campaignDesc: '',
-    specialitiesId: undefined
+    specialityId: undefined
   };
   
 
@@ -221,7 +221,6 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
     private userService: UserService,
     private formService: FormService,
     private sourceTokenService: SourceTokenService,
-    private entityPermissionService: EntityPermissionService,
     private notificationService: NotificationService,
     private authService: AuthService,
     private router: Router,
@@ -412,7 +411,8 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
     // Réinitialiser le formulaire
     this.createFormData = {
       campaignName: '',
-      campaignDesc: ''
+      campaignDesc: '',
+      specialityId: undefined
     };
     this.showCreateDialog.set(true);
   }
@@ -424,7 +424,8 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
     this.showCreateDialog.set(false);
     this.createFormData = {
       campaignName: '',
-      campaignDesc: ''
+      campaignDesc: '',
+      specialityId: undefined
     };
   }
 
@@ -448,7 +449,8 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
 
       const newCampaign: any = await this.campaignService.createCampaign({
         campaignName: formData.campaignName.trim(),
-        campaignDesc: formData.campaignDesc.trim()
+        campaignDesc: formData.campaignDesc.trim(),
+        specialityId: formData.specialityId
       }).toPromise();
 
       console.log('✅ Campagne créée:', newCampaign);
@@ -479,7 +481,8 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
     this.editFormData = {
       id: campaign.id,
       campaignName: campaign.campaignName || '',
-      campaignDesc: campaign.campaignDesc || ''
+      campaignDesc: campaign.campaignDesc || '',
+      specialityId: campaign.specialityId
     };
     this.showEditDialog.set(true);
   }
@@ -493,7 +496,8 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
     this.editFormData = {
       id: 0,
       campaignName: '',
-      campaignDesc: ''
+      campaignDesc: '',
+      specialityId: undefined
     };
   }
 
@@ -524,7 +528,8 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
       
       const updatedCampaign: any = await this.campaignService.updateCampaign(currentCampaign.id, {
         campaignName: formData.campaignName.trim(),
-        campaignDesc: formData.campaignDesc.trim()
+        campaignDesc: formData.campaignDesc.trim(),
+        specialityId: formData.specialityId
       }).toPromise();
 
       console.log('✅ Campagne mise à jour:', updatedCampaign);
@@ -743,6 +748,13 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
     this.router.navigate(['/dashboard/entities']);
   }
 
+  /**
+   * Ouvre la page metier de reference pour les campagnes.
+   */
+  openCampaignWorkspace() {
+    this.router.navigate(['/dashboard/campaigns']);
+  }
+
 
   trackByChildId(index: number, item: any): number {
     return item.id;
@@ -959,8 +971,17 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
     return this.campaignSourceTokens()[campaignId] || [];
   }
 
-  getCampaignPermissions(campaignId: number): any[] {
+  getCampaignPermissions(campaignId: number): CampaignPermissionView[] {
     return this.campaignPermissions()[campaignId] || [];
+  }
+
+  getCampaignPermissionLabel(permission: CampaignPermissionView): string {
+    const fullName = `${permission.userFirstName || ''} ${permission.userLastName || ''}`.trim();
+    return fullName || permission.userEmail || permission.userName || `User #${permission.userId}`;
+  }
+
+  hasCampaignPipelineAccess(permission: CampaignPermissionView): boolean {
+    return permission.canAcceptPreScreen || permission.canAcceptFinal;
   }
 
   getChildTab(campaignId: number): string {
@@ -1033,25 +1054,15 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
       error: () => this.campaignSourceTokens.set({ ...this.campaignSourceTokens(), [campaignId]: [] })
     });
 
-    this.entityPermissionService.getForEntity('CAMPAIGN', campaignId).subscribe({
-      next: (res) => {
-        // Agréger les entity_permissions par userId pour compatibilité template
-        const permsMap = new Map<number, any>();
-        (res.items || []).forEach((p: EntityPermission) => {
-          if (!p.userId) return;
-          if (!permsMap.has(p.userId)) {
-            permsMap.set(p.userId, { id: p.id, userId: p.userId, canUpdate: false, canDelete: false, canEvaluate: false, canPlanify: false, isAdmin: false, isDeleted: false });
-          }
-          const entry = permsMap.get(p.userId)!;
-          if (p.granted) {
-            if (p.permissionKey === 'UPDATE') entry.canUpdate = true;
-            if (p.permissionKey === 'DELETE') entry.canDelete = true;
-            if (p.permissionKey === 'EVALUATE') entry.canEvaluate = true;
-            if (p.permissionKey === 'PLANIFY') entry.canPlanify = true;
-            if (p.permissionKey === 'ADMIN' || p.permissionKey === 'CREATOR') entry.isAdmin = true;
-          }
+    this.campaignService.getCampaignAccess(campaignId).subscribe({
+      next: (accesses) => {
+        this.campaignPermissions.set({
+          ...this.campaignPermissions(),
+          [campaignId]: accesses.map(access => ({
+            ...access,
+            id: access.userId
+          }))
         });
-        this.campaignPermissions.set({ ...this.campaignPermissions(), [campaignId]: Array.from(permsMap.values()) });
         this.loadingChildren.set({ ...this.loadingChildren(), [campaignId]: false });
       },
       error: () => {

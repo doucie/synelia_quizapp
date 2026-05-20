@@ -16,7 +16,7 @@
       </div>
       <h1>Gestion des Départements</h1>
       <p class="page-description">
-        Administration complète des départements - création, modification et gestion des structures
+        Surface technique d'administration brute des departements. Pour la gestion metier quotidienne et la vue cartes, utiliser la page Departments.
       </p>
     </div>
 
@@ -34,6 +34,7 @@
         <app-filter-checkbox inputId="showDeleted" label="Afficher les départements supprimés" [checked]="showDeletedDepartments" ariaLabel="Afficher les départements supprimés" (checkedChange)="toggleDeletedDepartments()"></app-filter-checkbox>
       </div>
       <div class="toolbar-right">
+        <button class="btn-secondary-pro" (click)="openDepartmentsWorkspace()">Page metier</button>
         <button class="btn-secondary-pro" (click)="openAdvancedSearch()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M3 6H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -440,7 +441,7 @@
     <div class="pagination-container">
       <div class="pagination-info">
         <span class="results-info">
-          Affichage {{ currentPage() * pageSize() + 1 }} - {{ Math.min((currentPage() + 1) * pageSize(), totalElements()) }} 
+          Affichage {{ totalElements() ? currentPage() * pageSize() + 1 : 0 }} - {{ totalElements() ? Math.min((currentPage() + 1) * pageSize(), totalElements()) : 0 }} 
           sur {{ totalElements() }} utilisateurs
         </span>
         
@@ -550,6 +551,31 @@
         </svg>
         Cette action est définitive et ne peut pas être annulée.
       </div>
+      <div class="warning-message" *ngIf="hasAssociatedSpecialitiesForDelete()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 9V13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M12 17H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M10.29 3.86L1.82 18A2 2 0 0 0 3.55 21H20.45A2 2 0 0 0 22.18 18L13.71 3.86A2 2 0 0 0 10.29 3.86Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Ce département a {{ departmentToDelete?.associatedSpecialitiesCount }} spécialité(s) associée(s). La suppression en cascade est requise pour continuer.
+      </div>
+      <div class="info-message" *ngIf="hasAssociatedSpecialitiesForDelete() && getAssociatedSpecialitiesPreview()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+          <path d="M12 8V12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M12 16H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Spécialités détectées: {{ getAssociatedSpecialitiesPreview() }}
+      </div>
+      <div class="form-group" *ngIf="hasAssociatedSpecialitiesForDelete()">
+        <app-filter-checkbox
+          inputId="departments-cascade-delete"
+          label="Supprimer aussi les spécialités associées"
+          [checked]="cascadeDeleteRequested"
+          ariaLabel="Supprimer aussi les spécialités associées"
+          (checkedChange)="cascadeDeleteRequested = $event">
+        </app-filter-checkbox>
+      </div>
     </div>
     
     <div class="modal-actions">
@@ -560,14 +586,14 @@
         </svg>
         Annuler
       </button>
-      <button class="btn-confirm-danger" (click)="confirmDeleteDepartment()">
+      <button class="btn-confirm-danger" (click)="confirmDeleteDepartment()" [disabled]="hasAssociatedSpecialitiesForDelete() && !cascadeDeleteRequested">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           <path d="M10 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           <path d="M14 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        Supprimer définitivement
+        {{ hasAssociatedSpecialitiesForDelete() ? 'Supprimer en cascade' : 'Supprimer définitivement' }}
       </button>
     </div>
   </div>

@@ -87,8 +87,8 @@
 - 5 URLs singulier/pluriel (cf. D.2).
 - `UserRole` valeurs incohérentes (3 sources : enum Java, Spring Security, FRONT).
 
-### 🟡 À CONFIRMER (audit nécessaire)
-- Migration V1_034 manquante (saut de numéro).
-- `qeel/*` controller — toujours utilisé ?
-- `MinioConfig` vs `quizapp/uploads/cv/` local — doublon ?
-- Comptes candidats (`candidate_accounts_enabled`) — fonctionnalité réellement activée côté UI ?
+### 🟡 À CONFIRMER (audit nécessaire — cf. livrable K)
+- ~~Migration V1_034 manquante~~ → ✅ **confirmée suppression involontaire** ; toujours enregistrée en BD (pas de conflit checksum). Aucune action.
+- `qeel/*` controller — voir audit K.13.
+- `MinioConfig` vs `quizapp/uploads/cv/` local — voir audit K.14.
+- `candidate_accounts_enabled` — ✅ **feature prévue mais non implémentée** ; activable par admin (cf. J.1).

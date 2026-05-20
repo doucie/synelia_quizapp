@@ -675,16 +675,16 @@ public class SourceTokenBusiness implements IBasicBusiness<Request<SourceTokenDt
 	}
 
 	/**
-	 * Génère un token alphanumérique unique de 6 caractères
+	 * Génère un token alphanumérique unique cryptographiquement sûr (16 caractères)
 	 * @return token unique
 	 */
 	private String generateUniqueTokenString() {
-		String chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+		String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 		StringBuilder token = new StringBuilder();
-		Random random = new Random();
+		java.security.SecureRandom random = new java.security.SecureRandom();
 
-		// Générer un token de 6 caractères
-		for (int i = 0; i < 6; i++) {
+		// Générer un token de 16 caractères (entropie ~95 bits)
+		for (int i = 0; i < 16; i++) {
 			token.append(chars.charAt(random.nextInt(chars.length())));
 		}
 

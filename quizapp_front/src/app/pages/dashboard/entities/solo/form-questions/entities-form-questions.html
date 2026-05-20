@@ -57,7 +57,7 @@
           <app-filter-select [(ngModel)]="advancedCriteria.formVersionId">
             <option [ngValue]="undefined">-- Tous --</option>
             @for (item of allFormVersions(); track item.id) {
-              <option [ngValue]="item.id">{{ 'Version ' + item.versionNumber + ' (#' + item.id + ')' }}</option>
+              <option [ngValue]="item.id">{{ getFormVersionDisplay(item.id) }}</option>
             }
           </app-filter-select>
         </div>
@@ -66,7 +66,7 @@
           <app-filter-select [(ngModel)]="advancedCriteria.questionId">
             <option [ngValue]="undefined">-- Tous --</option>
             @for (item of allQuestions(); track item.id) {
-              <option [ngValue]="item.id">{{ item.questionText || '#' + item.id }}</option>
+              <option [ngValue]="item.id">{{ getQuestionDisplay(item.id) }}</option>
             }
           </app-filter-select>
         </div>
@@ -149,8 +149,8 @@
             <th class="col-id" [class.col-hidden]="!isColumnVisible('id')">ID</th>
             <th class="col-short" [class.col-hidden]="!isColumnVisible('order')">Ordre</th>
             <th class="col-short" [class.col-hidden]="!isColumnVisible('chronoOverride')">Chrono Override</th>
-            <th class="col-id" [class.col-hidden]="!isColumnVisible('versionId')">Version ID</th>
-            <th class="col-id" [class.col-hidden]="!isColumnVisible('questionId')">Question ID</th>
+            <th class="col-id" [class.col-hidden]="!isColumnVisible('versionId')">Version formulaire</th>
+            <th class="col-id" [class.col-hidden]="!isColumnVisible('questionId')">Question</th>
             <th class="col-date" [class.col-hidden]="!isColumnVisible('createdAt')">Créé le</th>
             <th class="col-actions" [class.col-hidden]="!isColumnVisible('actions')">Actions</th>
           </tr>
@@ -160,8 +160,8 @@
             <td [class.col-hidden]="!isColumnVisible('id')"><span class="cell-id">#{{ item.id }}</span></td>
             <td [class.col-hidden]="!isColumnVisible('order')">{{ item.questionOrder || '-' }}</td>
             <td [class.col-hidden]="!isColumnVisible('chronoOverride')">{{ item.chronoOverride ? item.chronoOverride + 's' : '-' }}</td>
-            <td [class.col-hidden]="!isColumnVisible('versionId')">{{ item.formVersionId || '-' }}</td>
-            <td [class.col-hidden]="!isColumnVisible('questionId')">{{ item.questionId || '-' }}</td>
+            <td [class.col-hidden]="!isColumnVisible('versionId')">{{ getFormVersionDisplay(item.formVersionId) }}</td>
+            <td [class.col-hidden]="!isColumnVisible('questionId')">{{ getQuestionDisplay(item.questionId) }}</td>
             <td [class.col-hidden]="!isColumnVisible('createdAt')"><span class="cell-date">{{ formatDate(item.createdAt) }}</span></td>
             <td class="actions-cell" [class.col-hidden]="!isColumnVisible('actions')" (click)="$event.stopPropagation()">
               <div class="actions-menu">
@@ -188,7 +188,7 @@
     <div class="pagination-container">
       <div class="pagination-info">
         <span class="results-info">
-          Affichage {{ currentPage() * pageSize() + 1 }} - {{ Math.min((currentPage() + 1) * pageSize(), totalElements()) }} sur {{ totalElements() }}
+          Affichage {{ totalElements() ? currentPage() * pageSize() + 1 : 0 }} - {{ totalElements() ? Math.min((currentPage() + 1) * pageSize(), totalElements()) : 0 }} sur {{ totalElements() }}
         </span>
         <div class="page-size-selector">
           <label for="pageSize">Par page:</label>
@@ -252,7 +252,7 @@
           <select class="form-input" [(ngModel)]="editFormData.formVersionId" name="formVersionId">
             <option [ngValue]="null">-- Sélectionner --</option>
             @for (fv of allFormVersions(); track fv.id) {
-              <option [ngValue]="fv.id">Version {{ fv.versionNumber }} (ID #{{ fv.id }})</option>
+              <option [ngValue]="fv.id">{{ getFormVersionDisplay(fv.id) }}</option>
             }
           </select>
         </div>
@@ -260,7 +260,7 @@
           <select class="form-input" [(ngModel)]="editFormData.questionId" name="questionId">
             <option [ngValue]="null">-- Sélectionner --</option>
             @for (q of allQuestions(); track q.id) {
-              <option [ngValue]="q.id">{{ q.questionText }}</option>
+              <option [ngValue]="q.id">{{ getQuestionDisplay(q.id) }}</option>
             }
           </select>
         </div>
@@ -291,7 +291,7 @@
           <select class="form-input" [(ngModel)]="createFormData.formVersionId" name="formVersionId">
             <option [ngValue]="null">-- Sélectionner --</option>
             @for (fv of allFormVersions(); track fv.id) {
-              <option [ngValue]="fv.id">Version {{ fv.versionNumber }} (ID #{{ fv.id }})</option>
+              <option [ngValue]="fv.id">{{ getFormVersionDisplay(fv.id) }}</option>
             }
           </select>
         </div>
@@ -299,7 +299,7 @@
           <select class="form-input" [(ngModel)]="createFormData.questionId" name="questionId">
             <option [ngValue]="null">-- Sélectionner --</option>
             @for (q of allQuestions(); track q.id) {
-              <option [ngValue]="q.id">{{ q.questionText }}</option>
+              <option [ngValue]="q.id">{{ getQuestionDisplay(q.id) }}</option>
             }
           </select>
         </div>

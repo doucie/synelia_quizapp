@@ -92,20 +92,20 @@
     <!-- Normal mode footer -->
     <ng-container *ngIf="!isEditing">
       <ng-container *ngIf="!entity.isDeleted">
-        <button class="detail-btn edit" (click)="edit()">
+        <button class="detail-btn edit" *ngIf="canEdit" (click)="edit()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 20H21M16.5 3.5A2.12 2.12 0 0 1 19 6L7 18L3 19L4 15L16.5 3.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
           Modifier
         </button>
-        <button class="detail-btn delete" (click)="delete()">
+        <button class="detail-btn delete" *ngIf="canDelete" (click)="delete()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M3 6H5H21M8 6V4C8 3 9 2 10 2H14C15 2 16 3 16 4V6M19 6V20C19 21 18 22 17 22H7C6 22 5 21 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
           Supprimer
         </button>
       </ng-container>
-      <button class="detail-btn restore" *ngIf="entity.isDeleted" (click)="restore()">
+      <button class="detail-btn restore" *ngIf="canRestore && entity.isDeleted" (click)="restore()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M3 12A9 9 0 1 0 12 3M12 3L8 7L12 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>

@@ -11,6 +11,7 @@ import tech.synelia.quizapp.utils.dto.customize._FormDto;
 
 @Data
 @ToString
+@EqualsAndHashCode(callSuper = false)
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
 public class FormDto extends _FormDto implements Cloneable {
@@ -19,6 +20,7 @@ public class FormDto extends _FormDto implements Cloneable {
     private String     formName             ;
     private String     formDesc             ;
     private Boolean    isActive             ;
+    private Boolean    isTimed              ;
     private String     createdAt            ;
     private Integer    createdBy            ;
     private String     updatedAt            ;
@@ -37,6 +39,7 @@ public class FormDto extends _FormDto implements Cloneable {
     private SearchParam<String>   formNameParam          ;
     private SearchParam<String>   formDescParam          ;
     private SearchParam<Boolean>  isActiveParam          ;
+    private SearchParam<Boolean>  isTimedParam           ;
     private SearchParam<String>   createdAtParam         ;
     private SearchParam<Integer>  createdByParam         ;
     private SearchParam<String>   updatedAtParam         ;

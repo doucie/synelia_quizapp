@@ -62,6 +62,7 @@ public interface FormVersionTransformer {
 		@Mapping(source="dto.versionNumber", target="versionNumber"),
 		@Mapping(source="dto.isPublished", target="isPublished"),
 		@Mapping(source="dto.isLocked", target="isLocked"),
+		@Mapping(source="dto.randomQuestions", target="randomQuestions"),
 		@Mapping(source="dto.createdAt", dateFormat="dd/MM/yyyy", target="createdAt"),
 		@Mapping(source="dto.createdBy", target="createdBy"),
 		@Mapping(source="dto.updatedAt", dateFormat="dd/MM/yyyy", target="updatedAt"),

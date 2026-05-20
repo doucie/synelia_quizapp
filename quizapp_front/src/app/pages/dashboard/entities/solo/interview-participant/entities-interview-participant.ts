@@ -36,8 +36,8 @@ export class EntitiesInterviewParticipantComponent extends EntityCrudBase<Interv
 
   override allColumns: ColumnDef[] = [
     { key: 'id', label: 'ID', priority: 1 },
-    { key: 'userId', label: 'User ID', priority: 1 },
-    { key: 'interviewId', label: 'Interview ID', priority: 1 },
+    { key: 'userId', label: 'Utilisateur', priority: 1 },
+    { key: 'interviewId', label: 'Entretien', priority: 1 },
     { key: 'online', label: 'Online', priority: 2 },
     { key: 'finished', label: 'Finished', priority: 2 },
     { key: 'lastPing', label: 'Dernier Ping', priority: 3 },
@@ -57,5 +57,47 @@ export class EntitiesInterviewParticipantComponent extends EntityCrudBase<Interv
     super.ngOnInit();
     this.interviewService.getAllInterviewsByCriteria({ page: 0, size: 9999, isDeleted: false }).subscribe({ next: (res) => this.allInterviews.set(res.content) });
     this.userService.getByCriteria({ page: 0, size: 9999, isDeleted: false }).subscribe({ next: (res) => this.allUsers.set(res.content) });
+  }
+
+  getUserDisplay(userId?: number): string {
+    if (!userId) {
+      return '-';
+    }
+
+    const user = this.allUsers().find((item) => item.id === userId);
+    if (!user) {
+      return `#${userId}`;
+    }
+
+    const fullName = [user.prenom || user.firstName, user.nom || user.lastName]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+
+    if (fullName && user.email) {
+      return `${fullName} (${user.email})`;
+    }
+
+    return fullName || user.email || `#${userId}`;
+  }
+
+  getInterviewDisplay(interviewId?: number): string {
+    if (!interviewId) {
+      return '-';
+    }
+
+    const interview = this.allInterviews().find((item) => item.id === interviewId);
+    if (!interview) {
+      return `#${interviewId}`;
+    }
+
+    const candidateLabel = interview.candidateName || interview.candidateEmail;
+    const typeLabel = interview.interviewType || 'INTERVIEW';
+
+    if (candidateLabel) {
+      return `#${interviewId} - ${candidateLabel} (${typeLabel})`;
+    }
+
+    return `#${interviewId} - ${typeLabel}`;
   }
 }

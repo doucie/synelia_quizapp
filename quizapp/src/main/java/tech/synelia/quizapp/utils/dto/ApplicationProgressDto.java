@@ -21,6 +21,7 @@ public class ApplicationProgressDto extends _ApplicationProgressDto implements C
     private String  completedAt;
     private Double  score;
     private String  notes;
+    private Boolean mailSent;
     private String  createdAt;
     private Integer createdBy;
     private String  updatedAt;
@@ -64,6 +65,7 @@ public class ApplicationProgressDto extends _ApplicationProgressDto implements C
     private SearchParam<String>  completedAtParam;
     private SearchParam<Double>  scoreParam;
     private SearchParam<String>  notesParam;
+    private SearchParam<Boolean> mailSentParam;
     private SearchParam<String>  createdAtParam;
     private SearchParam<Integer> createdByParam;
     private SearchParam<String>  updatedAtParam;

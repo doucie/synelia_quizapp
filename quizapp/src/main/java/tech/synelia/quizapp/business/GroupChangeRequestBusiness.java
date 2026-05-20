@@ -58,6 +58,18 @@ public class GroupChangeRequestBusiness implements IBasicBusiness<Request<GroupC
                 throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
             }
 
+            // Securite : un utilisateur ne peut creer une demande que pour lui-meme ;
+            // ADMIN/SUPER_ADMIN peuvent creer pour autrui.
+            Integer requesterId = request.getUser();
+            if (requesterId != null && !requesterId.equals(dto.getUserId())) {
+                org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+                boolean isPrivileged = auth != null && auth.getAuthorities().stream()
+                        .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()) || "ROLE_SUPER_ADMIN".equals(a.getAuthority()));
+                if (!isPrivileged) {
+                    throw new InvalidEntityException(functionalError.DATA_NOT_EXIST("Vous ne pouvez creer une demande que pour vous-meme", locale));
+                }
+            }
+
             User user = userRepository.findOne(dto.getUserId(), false);
             if (user == null) {
                 response.setStatus(functionalError.DATA_NOT_EXIST("User", locale));

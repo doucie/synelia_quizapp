@@ -34,10 +34,12 @@ import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.dto.transformer.*;
 import tech.synelia.quizapp.utils.enums.EmailActionType;
+import tech.synelia.quizapp.utils.enums.CandidateAskRequestType;
 import tech.synelia.quizapp.utils.enums.FormAssignmentExhaustionPolicy;
 import tech.synelia.quizapp.utils.enums.FormAssignmentStrategy;
 import tech.synelia.quizapp.utils.enums.CandidateAskStatus;
 import tech.synelia.quizapp.utils.enums.ManualCorrectionStatus;
+import tech.synelia.quizapp.utils.enums.ProgressStatus;
 import tech.synelia.quizapp.utils.enums.QuestionType;
 import tech.synelia.quizapp.utils.enums.StageType;
 import tech.synelia.quizapp.dao.entity.Applications;
@@ -78,6 +80,8 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 	private FormVersionRepository formVersionRepository;
 	@Autowired
 	private FormRepository formRepository;
+	@Autowired
+	private FormBusiness formBusiness;
 	@Autowired
 	private QuestionRepository questionRepository;
 	@Autowired
@@ -120,6 +124,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 	private Context context;
 	private static final int TRACKING_CODE_LENGTH = 6;
 	private static final String TRACKING_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+	private static final java.security.SecureRandom TRACKING_CODE_RANDOM = new java.security.SecureRandom();
 
 	private static final class QuizScoringSummary {
 		private final Integer correctAnswersCount;
@@ -155,8 +160,6 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 	private static final int DEFAULT_QUIZ_INACTIVITY_TIMEOUT_MINUTES = 15;
 	private static final int SYSTEM_ACTOR_USER_ID = 0;
 	private static final String QUIZ_INACTIVITY_MESSAGE = "Cette candidature a été abandonnée après une période d'inactivité.";
-	private static final Set<String> TRACKED_CANDIDATE_ASK_TYPES = Collections.unmodifiableSet(
-			new HashSet<String>(Arrays.asList("IDENTITY", "EMAIL", "PHONE")));
 	private static final Set<String> NEW_APPLICATION_NOTIFICATION_PERMISSION_KEYS = Collections.unmodifiableSet(
 			new HashSet<String>(Arrays.asList("ADMIN", "CREATOR", "FOLLOW", "ADVANCE_PIPELINE")));
 	private static final Set<String> INTERVIEW_RESPONSE_NOTIFICATION_PERMISSION_KEYS = Collections.unmodifiableSet(
@@ -266,8 +269,6 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			entityToSave.setQuizLevel(null); // Sera initialisé au démarrage du quiz
 			entityToSave.setQuizManualCorrectionStatus(ManualCorrectionStatus.NOT_REQUIRED.getValue());
 			entityToSave.setApplicationAbandoned(false); // Initialiser à false
-			entityToSave.setPreScreenDecisionMailSent(false); // Initialiser à false
-			entityToSave.setFinalDecisionMailSent(false); // Initialiser à false
 			registerPendingFormAssignment(existingSourceToken, dto.getCandidateEmail(), existingFormVersion,
 					pendingAssignedFormsByCampaign, pendingCandidateFormHistory);
 			items.add(entityToSave);
@@ -1134,9 +1135,16 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		// Vérifier si des candidate_answers existent déjà pour cette application
 		List<CandidateAnswer> existingAnswers = candidateAnswerRepository.findByApplicationId(applicationId, false);
 		boolean needsInitialization = (existingAnswers == null || existingAnswers.isEmpty());
+		boolean quizResumable = isQuizResumable(application);
 		
 		log.info("Existing candidate_answers count: " + (existingAnswers != null ? existingAnswers.size() : 0));
 		log.info("Needs initialization: " + needsInitialization);
+		log.info("Quiz resumable: " + quizResumable);
+
+		Response<ApplicationsDto> resumePolicyError = rejectRandomizedQuizResume(application, !needsInitialization);
+		if (resumePolicyError != null) {
+			return resumePolicyError;
+		}
 		
 			boolean applicationChanged = false;
 
@@ -1144,7 +1152,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		if (tech.synelia.quizapp.utils.enums.QuizStatus.PENDING.getValue().equals(application.getQuizStatus())) {
 			log.info(">>> Updating status from PENDING to STARTED...");
 			application.setQuizStatus(tech.synelia.quizapp.utils.enums.QuizStatus.STARTED.getValue());
-			application.setQuizLevel(1);
+			application.setQuizLevel(quizResumable ? 1 : null);
 			applicationChanged = true;
 		} else {
 			log.info(">>> Quiz already started or completed (status: " + application.getQuizStatus() + ")");
@@ -1230,11 +1238,11 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			log.info("Nombre de questions trouvées: " + formQuestions.size());
 			
 			// 5. Calculer le temps total alloué si la campagne est chronométrée
-			Integer totalTimeAllowed = calculateTotalTimeAllowed(campaign, formQuestions);
+			Integer totalTimeAllowed = calculateTotalTimeAllowed(campaign, application.getFormVersion(), formQuestions);
 			if (timingState.timed) {
-				log.info("Campagne chronométrée - Temps total alloué: " + totalTimeAllowed + " secondes");
+				log.info("Quiz chronométré - Temps total alloué: " + totalTimeAllowed + " secondes");
 			} else {
-				log.info("Campagne non chronométrée");
+				log.info("Quiz non chronométré");
 			}
 			
 			// 6. Pour chaque question, récupérer les réponses
@@ -1303,7 +1311,8 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			quizData.put("applicationId", applicationId);
 			quizData.put("campaignId", campaign.getId());
 			quizData.put("campaignTitle", campaign.getCampaignTitle());
-			quizData.put("isTimed", campaign.getIsTimed() != null ? campaign.getIsTimed() : false);
+			quizData.put("isTimed", timingState.timed);
+			quizData.put("resumable", quizResumable);
 			if (totalTimeAllowed != null) {
 				quizData.put("totalTimeAllowed", totalTimeAllowed);
 			}
@@ -1536,6 +1545,45 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 
 	private String resolveCampaignFormAssignmentStrategy(Campaigns campaign) {
 		return StringUtils.defaultIfBlank(campaign.getFormAssignmentStrategy(), FormAssignmentStrategy.RANDOM.getValue());
+	}
+
+	private boolean isQuizResumable(Applications application) {
+		return !hasQuizRandomness(application);
+	}
+
+	private boolean hasQuizRandomness(Applications application) {
+		if (application == null) {
+			return false;
+		}
+
+		FormVersion formVersion = application.getFormVersion();
+		if (formVersion != null && Boolean.TRUE.equals(formVersion.getRandomQuestions())) {
+			return true;
+		}
+
+		Campaigns campaign = application.getSourceToken() != null ? application.getSourceToken().getCampaigns() : null;
+		if (campaign == null) {
+			return false;
+		}
+
+		String strategy = resolveCampaignFormAssignmentStrategy(campaign);
+		return FormAssignmentStrategy.RANDOM.getValue().equalsIgnoreCase(strategy)
+				|| FormAssignmentStrategy.RANDOM_NO_REPEAT.getValue().equalsIgnoreCase(strategy);
+	}
+
+	private Response<ApplicationsDto> rejectRandomizedQuizResume(Applications application, boolean hasExistingAnswers) {
+		if (application == null || !hasExistingAnswers || isQuizResumable(application)) {
+			return null;
+		}
+
+		if (!tech.synelia.quizapp.utils.enums.QuizStatus.STARTED.getValue().equals(application.getQuizStatus())) {
+			return null;
+		}
+
+		return buildErrorResponse(
+				HttpStatus.FORBIDDEN,
+				StatusCode.FUNC_REQUEST_FAIL,
+				"Ce quiz contient un tirage aleatoire et ne peut pas etre repris apres fermeture. Il doit etre termine en une seule session.");
 	}
 
 	private String resolveCampaignFormAssignmentExhaustionPolicy(Campaigns campaign) {
@@ -1772,12 +1820,16 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 					.orElse(null);
 				
 				if (fq != null && fq.getQuestionOrder() != null) {
-					application.setQuizLevel(fq.getQuestionOrder());
+					if (isQuizResumable(application)) {
+						application.setQuizLevel(fq.getQuestionOrder());
+					} else {
+						application.setQuizLevel(null);
+					}
 					application.setUpdatedAt(Utilities.getCurrentDate());
 					application.setUpdatedBy(request.getUser());
 					applicationsRepository.save(application);
 					
-					log.info("Updated quiz_level to " + fq.getQuestionOrder() + " for application " + applicationId);
+					log.info("Updated quiz_level to " + application.getQuizLevel() + " for application " + applicationId);
 				}
 			}
 			
@@ -1786,7 +1838,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			QuizTimingState updatedTimingState = resolveQuizTimingState(application, request.getUser());
 			ApplicationsDto resultDto = new ApplicationsDto();
 			resultDto.setId(applicationId);
-			resultDto.setQuizLevel(application.getQuizLevel());
+			resultDto.setQuizLevel(isQuizResumable(application) ? application.getQuizLevel() : null);
 			resultDto.setTimeElapsed(updatedTimingState.timeElapsed);
 			
 			Status status = new Status();
@@ -2185,27 +2237,11 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		return null;
 	}
 
-	private Integer calculateTotalTimeAllowed(Campaigns campaign, List<FormQuestions> formQuestions) {
-		if (campaign == null || !Boolean.TRUE.equals(campaign.getIsTimed())) {
-			return null;
-		}
-
-		int totalTimeAllowed = 0;
-		if (formQuestions != null) {
-			for (FormQuestions formQuestion : formQuestions) {
-				if (formQuestion == null || formQuestion.getQuestion() == null || Boolean.TRUE.equals(formQuestion.getQuestion().getIsDeleted())) {
-					continue;
-				}
-				Integer chrono = formQuestion.getChronoOverride() != null
-						? formQuestion.getChronoOverride()
-						: formQuestion.getQuestion().getQuestionChrono();
-				if (chrono != null && chrono > 0) {
-					totalTimeAllowed += chrono;
-				}
-			}
-		}
-
-		return totalTimeAllowed;
+	private Integer calculateTotalTimeAllowed(Campaigns campaign, FormVersion formVersion, List<FormQuestions> formQuestions) {
+		return formBusiness.calculateTotalTimeAllowed(
+				campaign,
+				formVersion != null ? formVersion.getForm() : null,
+				formQuestions);
 	}
 
 	private Integer resolveQuizInactivityTimeoutMinutes(Applications application) {
@@ -2292,7 +2328,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		}
 
 		if (!isResolvedProgressStatus(quizProgress.getProgressStatus())) {
-			quizProgress.setProgressStatus("FAILED");
+			quizProgress.setProgressStatus(ProgressStatus.FAILED.getValue());
 			if (quizProgress.getStartedAt() == null) {
 				quizProgress.setStartedAt(abandonmentAt);
 			}
@@ -2337,9 +2373,13 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 	}
 
 	private boolean isResolvedProgressStatus(String progressStatus) {
-		return "PASSED".equals(progressStatus)
-				|| "FAILED".equals(progressStatus)
-				|| "SKIPPED".equals(progressStatus);
+		return hasProgressStatus(progressStatus, ProgressStatus.PASSED)
+				|| hasProgressStatus(progressStatus, ProgressStatus.FAILED)
+				|| hasProgressStatus(progressStatus, ProgressStatus.SKIPPED);
+	}
+
+	private boolean hasProgressStatus(String progressStatus, ProgressStatus status) {
+		return progressStatus != null && status.getValue().equalsIgnoreCase(progressStatus);
 	}
 
 	private void ensurePreviousCandidatureStagePassed(Applications application, Integer actorUserId, Locale locale) {
@@ -2377,8 +2417,8 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			return;
 		}
 
-		if (!"IN_PROGRESS".equals(quizProgress.getProgressStatus())) {
-			quizProgress.setProgressStatus("IN_PROGRESS");
+		if (!hasProgressStatus(quizProgress.getProgressStatus(), ProgressStatus.IN_PROGRESS)) {
+			quizProgress.setProgressStatus(ProgressStatus.IN_PROGRESS.getValue());
 		}
 		if (quizProgress.getStartedAt() == null) {
 			quizProgress.setStartedAt(Utilities.getCurrentDate());
@@ -2431,7 +2471,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 
 		Campaigns campaign = application.getSourceToken() != null ? application.getSourceToken().getCampaigns() : null;
 		List<FormQuestions> activeFormQuestions = getActiveFormQuestions(application.getFormVersion());
-		Integer totalTimeAllowed = calculateTotalTimeAllowed(campaign, activeFormQuestions);
+		Integer totalTimeAllowed = calculateTotalTimeAllowed(campaign, application.getFormVersion(), activeFormQuestions);
 		Integer timeElapsed = syncQuizTimeElapsed(application, actorUserId);
 		if (totalTimeAllowed == null) {
 			return new QuizTimingState(false, null, timeElapsed, null, false);
@@ -2621,9 +2661,9 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		appData.put("candidateFirstName", application.getCandidateFirstName());
 		appData.put("candidateLastName", application.getCandidateLastName());
 		appData.put("candidateEmail", application.getCandidateEmail());
-		appData.put("applicationStatus", application.getApplicationStatus());
+		appData.put("applicationStatus", resolveTrackedApplicationStatus(application));
 		appData.put("quizStatus", application.getQuizStatus());
-		appData.put("applicationAbandoned", application.getApplicationAbandoned());
+		appData.put("applicationAbandoned", Boolean.TRUE.equals(application.getApplicationAbandoned()));
 		appData.put("createdAt", application.getCreatedAt());
 		appData.put("emailVerified", application.getEmailVerified());
 		appData.put("trackingCode", ensureCandidateTrackingCode(application, null));
@@ -2686,6 +2726,28 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		return result;
 	}
 
+	private String resolveTrackedApplicationStatus(Applications application) {
+		if (application == null) {
+			return "NEW";
+		}
+
+		if (Boolean.TRUE.equals(application.getApplicationAbandoned())) {
+			return "WITHDRAWN";
+		}
+
+		String normalizedStatus = StringUtils.upperCase(StringUtils.trimToEmpty(application.getApplicationStatus()));
+		if (StringUtils.endsWith(normalizedStatus, "_ARCHIVED")) {
+			normalizedStatus = StringUtils.removeEnd(normalizedStatus, "_ARCHIVED");
+		}
+
+		return switch (normalizedStatus) {
+			case "", "PENDING" -> "NEW";
+			case "FINAL_ACCEPTED" -> "ACCEPTED";
+			case "PRE_SCREEN_REJECTED", "FINAL_REJECTED" -> "REJECTED";
+			default -> "IN_PROGRESS";
+		};
+	}
+
 	@Transactional
 	public Map<String, Object> submitTrackedCandidateAsk(
 			String trackingCode,
@@ -2712,14 +2774,17 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			return result;
 		}
 
-		String normalizedRequestType = StringUtils.upperCase(StringUtils.trimToEmpty(requestType));
-		if (!TRACKED_CANDIDATE_ASK_TYPES.contains(normalizedRequestType)) {
+		CandidateAskRequestType normalizedRequestType;
+		try {
+			normalizedRequestType = CandidateAskRequestType.fromValue(requestType);
+		} catch (IllegalArgumentException exception) {
 			result.put("hasError", true);
 			result.put("message", "Le type de demande est invalide.");
 			return result;
 		}
+		String normalizedRequestTypeValue = normalizedRequestType.getValue();
 
-		if (hasPendingTrackedCandidateAsk(application.getId(), normalizedRequestType)) {
+		if (hasPendingTrackedCandidateAsk(application.getId(), normalizedRequestTypeValue)) {
 			result.put("hasError", true);
 			result.put("message", "Une demande de ce type est déjà en attente de traitement.");
 			return result;
@@ -2732,13 +2797,13 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 
 		CandidateAsk candidateAsk = new CandidateAsk();
 		candidateAsk.setApplications(application);
-		candidateAsk.setRequestType(normalizedRequestType);
+		candidateAsk.setRequestType(normalizedRequestTypeValue);
 		candidateAsk.setIsVerified(false);
 		candidateAsk.setIsDeleted(false);
 
 		String successMessage;
 		switch (normalizedRequestType) {
-			case "EMAIL":
+			case EMAIL:
 				if (StringUtils.isBlank(normalizedNewEmail)) {
 					result.put("hasError", true);
 					result.put("message", "Veuillez renseigner la nouvelle adresse email.");
@@ -2757,7 +2822,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				candidateAsk.setNewEmail(normalizedNewEmail);
 				successMessage = "Votre demande de changement d'email a bien été enregistrée.";
 				break;
-			case "PHONE":
+			case PHONE:
 				if (StringUtils.isBlank(normalizedNewPhone)) {
 					result.put("hasError", true);
 					result.put("message", "Veuillez renseigner le nouveau numéro de téléphone.");
@@ -2771,7 +2836,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				candidateAsk.setNewPhone(normalizedNewPhone);
 				successMessage = "Votre demande de changement de téléphone a bien été enregistrée.";
 				break;
-			case "IDENTITY":
+			case IDENTITY:
 				String currentFirstName = normalizeTrackedCandidateAskText(application.getCandidateFirstName());
 				String currentLastName = normalizeTrackedCandidateAskText(application.getCandidateLastName());
 				boolean firstNameChanged = StringUtils.isNotBlank(normalizedFirstName)
@@ -2987,7 +3052,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		for (int attempt = 0; attempt < 50; attempt++) {
 			StringBuilder tokenBuilder = new StringBuilder(TRACKING_CODE_LENGTH);
 			for (int index = 0; index < TRACKING_CODE_LENGTH; index++) {
-				int charIndex = ThreadLocalRandom.current().nextInt(TRACKING_CODE_ALPHABET.length());
+				int charIndex = TRACKING_CODE_RANDOM.nextInt(TRACKING_CODE_ALPHABET.length());
 				tokenBuilder.append(TRACKING_CODE_ALPHABET.charAt(charIndex));
 			}
 

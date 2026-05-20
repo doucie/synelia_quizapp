@@ -103,10 +103,10 @@ export class EntitiesSpecialitiesComponent implements OnInit, OnDestroy {
 
   readonly allColumns: ColumnDef[] = [
     { key: 'id', label: 'ID', priority: 1 },
-    { key: 'name', label: 'Nom de spécialité', priority: 1 },
+    { key: 'nom', label: 'Nom de spécialité', priority: 1 },
     { key: 'description', label: 'Description', priority: 3 },
-    { key: 'department', label: 'Département', priority: 2 },
-    { key: 'createdAt', label: 'Créé le', priority: 3 },
+    { key: 'departmentName', label: 'Département', priority: 2 },
+    { key: 'dateCreation', label: 'Créé le', priority: 3 },
     { key: 'actions', label: 'Actions', priority: 1 },
   ];
   private readonly columnVisibility = new EntityColumnVisibilityState(this.allColumns, 'column-visibility-specialities');
@@ -539,12 +539,14 @@ export class EntitiesSpecialitiesComponent implements OnInit, OnDestroy {
    * Sélectionne un département depuis la liste déroulante
    */
   selectDepartment(department: Department, formType: 'edit' | 'create'): void {
+    const departmentName = department.nom || department.name || '';
+
     if (formType === 'edit') {
       this.editFormData.departmentId = department.id;
-      this.selectedDepartmentName.set(department.name || '');
+      this.selectedDepartmentName.set(departmentName);
     } else {
       this.createFormData.departmentId = department.id;
-      this.selectedDepartmentName.set(department.name || '');
+      this.selectedDepartmentName.set(departmentName);
     }
     this.closeDepartmentDropdown();
   }
@@ -555,7 +557,7 @@ export class EntitiesSpecialitiesComponent implements OnInit, OnDestroy {
   updateSelectedDepartmentName(departmentId: number): void {
     const department = this.departments().find(d => d.id === departmentId);
     if (department) {
-      this.selectedDepartmentName.set(department.name || '');
+      this.selectedDepartmentName.set(department.nom || department.name || '');
     } else {
       this.selectedDepartmentName.set('');
     }
@@ -672,11 +674,7 @@ export class EntitiesSpecialitiesComponent implements OnInit, OnDestroy {
     if (!this.specialityToDelete) return;
 
     try {
-      // Marquer la spécialité comme supprimée via update
-      await this.specialityService.update(this.specialityToDelete.id, {
-        ...this.specialityToDelete,
-        isDeleted: true
-      }).toPromise();
+      await this.specialityService.delete(this.specialityToDelete.id).toPromise();
 
       this.notificationService.success('Succès', `Spécialité ${this.specialityToDelete?.nom || this.specialityToDelete?.name} supprimée avec succès`);
 
@@ -733,11 +731,7 @@ export class EntitiesSpecialitiesComponent implements OnInit, OnDestroy {
     if (!specialityToRestore) return;
 
     try {
-      // Restaurer la spécialité via update
-      await this.specialityService.update(specialityToRestore.id, {
-        ...specialityToRestore,
-        isDeleted: false
-      }).toPromise();
+      await this.specialityService.restore(specialityToRestore.id).toPromise();
 
       this.notificationService.success('Succès', `Spécialité ${specialityToRestore?.nom || specialityToRestore?.name} restaurée avec succès`);
 
@@ -835,6 +829,10 @@ export class EntitiesSpecialitiesComponent implements OnInit, OnDestroy {
    */
   goBackToEntities() {
     this.router.navigate(['/dashboard/entities']);
+  }
+
+  openSpecialitiesWorkspace() {
+    this.router.navigate(['/dashboard/specialities']);
   }
 
   /**

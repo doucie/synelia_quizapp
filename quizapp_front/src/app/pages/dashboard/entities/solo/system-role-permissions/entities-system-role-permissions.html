@@ -13,13 +13,14 @@
         <span class="current-page">Gestion des Permissions Rôles Système</span>
       </div>
       <h1>Gestion des Permissions Rôles Système</h1>
-      <p class="page-description">Administration des permissions de base par rôle système</p>
+      <p class="page-description">Surface technique d'administration brute des permissions par role. Pour la gestion metier par role et categories, utiliser la page dediee des permissions roles systeme.</p>
     </div>
     <div class="toolbar">
       <div class="toolbar-left">
         <input type="text" class="search-input" placeholder="Rechercher..." [(ngModel)]="quickSearch" (input)="onQuickSearch()" />
       </div>
       <div class="toolbar-right">
+        <button class="btn-secondary-pro" (click)="openSystemRolePermissionsWorkspace()">Page metier</button>
         <button class="btn-secondary-pro" (click)="openAdvancedSearch()">Filtres avancés</button>
         <button class="btn-primary-pro" (click)="openCreateDialog()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -52,11 +53,21 @@
         </div>
         <div class="form-group">
           <label>Rôle système</label>
-          <input type="text" class="form-input" [(ngModel)]="advancedCriteria.systemRole" placeholder="Ex: RECRUITER" />
+          <app-filter-select [(ngModel)]="advancedCriteria.systemRole">
+            <option [ngValue]="undefined">-- Tous --</option>
+            @for (role of systemRoleOptions; track role.value) {
+              <option [ngValue]="role.value">{{ role.label }} ({{ role.value }})</option>
+            }
+          </app-filter-select>
         </div>
         <div class="form-group">
           <label>Fonctionnalité</label>
-          <input type="text" class="form-input" [(ngModel)]="advancedCriteria.functionality" placeholder="Fonctionnalité" />
+          <app-filter-select [(ngModel)]="advancedCriteria.functionality">
+            <option [ngValue]="undefined">-- Toutes --</option>
+            @for (permission of functionalityOptions; track permission.value) {
+              <option [ngValue]="permission.value">{{ permission.label }} ({{ permission.value }})</option>
+            }
+          </app-filter-select>
         </div>
         <div class="form-row-full">
           <div class="form-group-inline">
@@ -102,8 +113,8 @@
         <thead>
           <tr>
             <th class="col-id" [class.col-hidden]="!isColumnVisible('id')">ID</th>
-            <th class="col-short" [class.col-hidden]="!isColumnVisible('role')">Rôle</th>
-            <th class="col-short" [class.col-hidden]="!isColumnVisible('feature')">Fonctionnalité</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('systemRole')">Rôle</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('functionality')">Fonctionnalité</th>
             <th class="col-date" [class.col-hidden]="!isColumnVisible('createdAt')">Créé le</th>
             <th class="col-actions" [class.col-hidden]="!isColumnVisible('actions')">Actions</th>
           </tr>
@@ -111,8 +122,8 @@
         <tbody>
           <tr *ngFor="let item of items(); trackBy: trackById" (click)="selectItem(item)" style="cursor: pointer;">
             <td [class.col-hidden]="!isColumnVisible('id')"><span class="cell-id">#{{ item.id }}</span></td>
-            <td [class.col-hidden]="!isColumnVisible('role')">{{ item.systemRole || '-' }}</td>
-            <td [class.col-hidden]="!isColumnVisible('feature')">{{ item.functionality || '-' }}</td>
+            <td [class.col-hidden]="!isColumnVisible('systemRole')">{{ getSystemRoleLabel(item.systemRole) }}</td>
+            <td [class.col-hidden]="!isColumnVisible('functionality')">{{ getFunctionalityLabel(item.functionality) }}</td>
             <td [class.col-hidden]="!isColumnVisible('createdAt')"><span class="cell-date">{{ formatDate(item.createdAt) }}</span></td>
             <td class="actions-cell" [class.col-hidden]="!isColumnVisible('actions')" (click)="$event.stopPropagation()">
               <div class="actions-menu">
@@ -132,7 +143,7 @@
     <div class="pagination-container">
       <div class="pagination-info">
         <span class="results-info">
-          Affichage {{ currentPage() * pageSize() + 1 }} - {{ Math.min((currentPage() + 1) * pageSize(), totalElements()) }} sur {{ totalElements() }}
+          Affichage {{ totalElements() ? currentPage() * pageSize() + 1 : 0 }} - {{ totalElements() ? Math.min((currentPage() + 1) * pageSize(), totalElements()) : 0 }} sur {{ totalElements() }}
         </span>
         <div class="page-size-selector">
           <label for="pageSize">Par page:</label>
@@ -190,8 +201,24 @@
     </div>
     <div class="modal-content">
       <form class="edit-form">
-        <div class="form-group"><label class="form-label">Rôle système</label><input type="text" class="form-input" [(ngModel)]="editFormData.systemRole" name="systemRole" /></div>
-        <div class="form-group"><label class="form-label">Fonctionnalité</label><input type="text" class="form-input" [(ngModel)]="editFormData.functionality" name="functionality" /></div>
+        <div class="form-group">
+          <label class="form-label">Rôle système</label>
+          <app-filter-select [(ngModel)]="editFormData.systemRole" name="systemRole" ariaLabel="Sélectionner un rôle système">
+            <option [ngValue]="undefined">-- Sélectionner --</option>
+            @for (role of systemRoleOptions; track role.value) {
+              <option [ngValue]="role.value">{{ role.label }} ({{ role.value }})</option>
+            }
+          </app-filter-select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fonctionnalité</label>
+          <app-filter-select [(ngModel)]="editFormData.functionality" name="functionality" ariaLabel="Sélectionner une fonctionnalité">
+            <option [ngValue]="undefined">-- Sélectionner --</option>
+            @for (permission of functionalityOptions; track permission.value) {
+              <option [ngValue]="permission.value">{{ permission.label }} ({{ permission.value }})</option>
+            }
+          </app-filter-select>
+        </div>
       </form>
     </div>
     <div class="modal-actions">
@@ -213,8 +240,24 @@
     </div>
     <div class="modal-content">
       <form class="edit-form">
-        <div class="form-group"><label class="form-label">Rôle système</label><input type="text" class="form-input" [(ngModel)]="createFormData.systemRole" name="systemRole" /></div>
-        <div class="form-group"><label class="form-label">Fonctionnalité</label><input type="text" class="form-input" [(ngModel)]="createFormData.functionality" name="functionality" /></div>
+        <div class="form-group">
+          <label class="form-label">Rôle système</label>
+          <app-filter-select [(ngModel)]="createFormData.systemRole" name="systemRole" ariaLabel="Sélectionner un rôle système pour la nouvelle permission">
+            <option [ngValue]="undefined">-- Sélectionner --</option>
+            @for (role of systemRoleOptions; track role.value) {
+              <option [ngValue]="role.value">{{ role.label }} ({{ role.value }})</option>
+            }
+          </app-filter-select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fonctionnalité</label>
+          <app-filter-select [(ngModel)]="createFormData.functionality" name="functionality" ariaLabel="Sélectionner une fonctionnalité pour la nouvelle permission">
+            <option [ngValue]="undefined">-- Sélectionner --</option>
+            @for (permission of functionalityOptions; track permission.value) {
+              <option [ngValue]="permission.value">{{ permission.label }} ({{ permission.value }})</option>
+            }
+          </app-filter-select>
+        </div>
       </form>
     </div>
     <div class="modal-actions">
@@ -237,6 +280,7 @@
   ]"
   [title]="'Détail de la permission rôle'"
   [isOpen]="showDetailPanel()"
+  [canRestore]="canRestoreItems"
   (closePanel)="closeDetailPanel()"
   (editItem)="openEditDialog($event)"
   (deleteItem)="confirmDelete($event)"

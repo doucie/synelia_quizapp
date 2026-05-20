@@ -53,7 +53,7 @@
 
     <div class="filter-group">
       <button class="filter-chip" [class.active]="filterStatus() === 'all'" (click)="setFilterStatus('all')">
-        Toutes ({{ displayedCampaigns().length }})
+        Toutes ({{ currentTabCount() }})
       </button>
       <button class="filter-chip status-active" [class.active]="filterStatus() === 'active'" (click)="setFilterStatus('active')">
         En cours ({{ activeCount() }})

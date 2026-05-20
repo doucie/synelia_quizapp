@@ -48,6 +48,7 @@ Controller for table "candidate_token"
 @CrossOrigin("*")
 @RestController
 @RequestMapping(value="/candidateToken")
+@org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
 public class CandidateTokenController {
 
      @Autowired

@@ -34,8 +34,8 @@ public interface DecisionTransformer {
     @FullTransformerQualifier
     @Named("toFullDto")
     @Mappings({
-        @Mapping(source="entity.createdAt", dateFormat="yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", target="createdAt"),
-        @Mapping(source="entity.updatedAt", dateFormat="yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", target="updatedAt"),
+        @Mapping(source="entity.createdAt", dateFormat="dd/MM/yyyy", target="createdAt"),
+        @Mapping(source="entity.updatedAt", dateFormat="dd/MM/yyyy", target="updatedAt"),
         @Mapping(source="entity.application.id", target="applicationId"),
         @Mapping(source="entity.user.id", target="userId"),
         @Mapping(source="entity.pipelineStage.id", target="pipelineStageId"),
@@ -66,8 +66,8 @@ public interface DecisionTransformer {
     @FullTransformerQualifier
     @Named("toFullEntity")
     @Mappings({
-        @Mapping(source="dto.createdAt", dateFormat="yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", target="createdAt"),
-        @Mapping(source="dto.updatedAt", dateFormat="yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", target="updatedAt"),
+        @Mapping(source="dto.createdAt", dateFormat="dd/MM/yyyy", target="createdAt"),
+        @Mapping(source="dto.updatedAt", dateFormat="dd/MM/yyyy", target="updatedAt"),
         @Mapping(target="application", ignore=true),
         @Mapping(target="user", ignore=true),
         @Mapping(target="pipelineStage", ignore=true),

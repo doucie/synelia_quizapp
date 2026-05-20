@@ -50,30 +50,6 @@
 			"name": "DELETE APPLICATIONS"
 		},
 		{
-			"code": "CAMPAIGN_CRUD",
-			"name": "CAMPAIGN_CRUD"
-		},
-		{
-			"code": "VIEW_CAMPAIGN_CRUD",
-			"parentCode": "CAMPAIGN_CRUD",
-			"name": "VIEW CAMPAIGN_CRUD"
-		},
-		{
-			"code": "CREATE_CAMPAIGN_CRUD",
-			"parentCode": "CAMPAIGN_CRUD",
-			"name": "CREATE CAMPAIGN_CRUD"
-		},
-		{
-			"code": "UPDATE_CAMPAIGN_CRUD",
-			"parentCode": "CAMPAIGN_CRUD",
-			"name": "UPDATE CAMPAIGN_CRUD"
-		},
-		{
-			"code": "DELETE_CAMPAIGN_CRUD",
-			"parentCode": "CAMPAIGN_CRUD",
-			"name": "DELETE CAMPAIGN_CRUD"
-		},
-		{
 			"code": "CAMPAIGN_QUESTIONS",
 			"name": "CAMPAIGN_QUESTIONS"
 		},

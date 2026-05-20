@@ -79,14 +79,11 @@ public class SmtpConfigBusiness implements IBasicBusiness<Request<SmtpConfigDto>
 
         if (!items.isEmpty()) {
             SmtpConfig activeConfigToKeep = getLastActiveConfig(items);
-            List<SmtpConfig> itemsSaved = smtpConfigRepository.saveAll(items);
-
-            if (activeConfigToKeep != null && activeConfigToKeep.getId() != null) {
-                activateConfig(activeConfigToKeep.getId(), request.getUser());
-                for (SmtpConfig savedItem : itemsSaved) {
-                    savedItem.setIsActive(activeConfigToKeep.getId().equals(savedItem.getId()));
-                }
+            normalizeSingleActiveSelection(items, activeConfigToKeep);
+            if (activeConfigToKeep != null) {
+                deactivateOtherActiveConfigs(activeConfigToKeep.getId(), request.getUser());
             }
+            List<SmtpConfig> itemsSaved = smtpConfigRepository.saveAll(items);
 
             if (itemsSaved == null) {
                 throw new InternalErrorException(functionalError.SAVE_FAIL("smtp_config", locale));
@@ -151,14 +148,11 @@ public class SmtpConfigBusiness implements IBasicBusiness<Request<SmtpConfigDto>
 
         if (!items.isEmpty()) {
             SmtpConfig activeConfigToKeep = getLastActiveConfig(items);
-            List<SmtpConfig> itemsSaved = smtpConfigRepository.saveAll(items);
-
-            if (activeConfigToKeep != null && activeConfigToKeep.getId() != null) {
-                activateConfig(activeConfigToKeep.getId(), request.getUser());
-                for (SmtpConfig savedItem : itemsSaved) {
-                    savedItem.setIsActive(activeConfigToKeep.getId().equals(savedItem.getId()));
-                }
+            normalizeSingleActiveSelection(items, activeConfigToKeep);
+            if (activeConfigToKeep != null) {
+                deactivateOtherActiveConfigs(activeConfigToKeep.getId(), request.getUser());
             }
+            List<SmtpConfig> itemsSaved = smtpConfigRepository.saveAll(items);
 
             List<SmtpConfigDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading()))
                     ? SmtpConfigTransformer.INSTANCE.toLiteDtos(itemsSaved)
@@ -329,19 +323,7 @@ public class SmtpConfigBusiness implements IBasicBusiness<Request<SmtpConfigDto>
      * Activate a config and deactivate all others.
      */
     public void activateConfig(Integer configId, Integer userId) {
-        // Deactivate only currently active configs.
-        List<SmtpConfig> activeConfigs = smtpConfigRepository.findByIsActiveAndIsDeleted(true, false);
-        for (SmtpConfig config : activeConfigs) {
-            if (!config.getId().equals(configId)) {
-                config.setIsActive(false);
-                config.setUpdatedAt(Utilities.getCurrentDate());
-                config.setUpdatedBy(userId);
-            }
-        }
-
-        if (!activeConfigs.isEmpty()) {
-            smtpConfigRepository.saveAll(activeConfigs);
-        }
+        deactivateOtherActiveConfigs(configId, userId);
 
         // Activate the requested one
         SmtpConfig toActivate = smtpConfigRepository.findOne(configId, false);
@@ -349,7 +331,43 @@ public class SmtpConfigBusiness implements IBasicBusiness<Request<SmtpConfigDto>
             toActivate.setIsActive(true);
             toActivate.setUpdatedAt(Utilities.getCurrentDate());
             toActivate.setUpdatedBy(userId);
+            toActivate.setSearchString(buildSearchString(toActivate));
             smtpConfigRepository.save(toActivate);
+        }
+    }
+
+    private void normalizeSingleActiveSelection(List<SmtpConfig> items, SmtpConfig activeConfigToKeep) {
+        if (items == null || items.isEmpty()) {
+            return;
+        }
+
+        for (SmtpConfig item : items) {
+            boolean shouldBeActive = activeConfigToKeep != null && item == activeConfigToKeep;
+            item.setIsActive(shouldBeActive);
+            item.setSearchString(buildSearchString(item));
+        }
+    }
+
+    private void deactivateOtherActiveConfigs(Integer configIdToKeep, Integer userId) {
+        List<SmtpConfig> activeConfigs = smtpConfigRepository.findByIsActiveAndIsDeleted(true, false);
+        if (activeConfigs == null || activeConfigs.isEmpty()) {
+            return;
+        }
+
+        List<SmtpConfig> configsToUpdate = new ArrayList<>();
+        for (SmtpConfig config : activeConfigs) {
+            if (configIdToKeep != null && config.getId().equals(configIdToKeep)) {
+                continue;
+            }
+            config.setIsActive(false);
+            config.setUpdatedAt(Utilities.getCurrentDate());
+            config.setUpdatedBy(userId);
+            config.setSearchString(buildSearchString(config));
+            configsToUpdate.add(config);
+        }
+
+        if (!configsToUpdate.isEmpty()) {
+            smtpConfigRepository.saveAll(configsToUpdate);
         }
     }
 

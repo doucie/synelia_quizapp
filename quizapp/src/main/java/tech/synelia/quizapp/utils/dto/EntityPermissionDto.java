@@ -7,8 +7,10 @@ import lombok.*;
 import tech.synelia.quizapp.utils.contract.*;
 import tech.synelia.quizapp.utils.dto.customize._EntityPermissionDto;
 
-@Data
+@Getter
+@Setter
 @ToString
+@EqualsAndHashCode(callSuper = false)
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
 public class EntityPermissionDto extends _EntityPermissionDto implements Cloneable {
@@ -27,6 +29,8 @@ public class EntityPermissionDto extends _EntityPermissionDto implements Cloneab
 
     // Foreign keys
     private Integer userId;
+    private Integer businessGroupId;
+    private String  systemRole;
     private String  userFirstName;
     private String  userLastName;
     private String  userEmail;
@@ -39,6 +43,8 @@ public class EntityPermissionDto extends _EntityPermissionDto implements Cloneab
     private SearchParam<Integer> entityIdParam;
     private SearchParam<String>  permissionKeyParam;
     private SearchParam<Integer> userIdParam;
+    private SearchParam<Integer> businessGroupIdParam;
+    private SearchParam<String>  systemRoleParam;
     private SearchParam<String>  createdAtParam;
     private SearchParam<Integer> createdByParam;
     private SearchParam<String>  updatedAtParam;

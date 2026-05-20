@@ -16,7 +16,7 @@
       </div>
       <h1>Gestion des Réponses</h1>
       <p class="page-description">
-        Administration complète des réponses - création, modification et suppression
+        Surface technique d'administration brute des reponses. Pour la consultation metier et la vue cartes, utiliser la page Answers.
       </p>
     </div>
 
@@ -34,6 +34,7 @@
         <app-filter-checkbox inputId="showDeleted" label="Afficher les réponses supprimées" [checked]="showDeletedAnswers" ariaLabel="Afficher les réponses supprimées" (checkedChange)="toggleDeletedAnswers()"></app-filter-checkbox>
       </div>
       <div class="toolbar-right">
+        <button class="btn-secondary-pro" (click)="openAnswersWorkspace()">Page metier</button>
         <button class="btn-secondary-pro" (click)="openAdvancedSearch()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M3 6H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -99,7 +100,7 @@
           <app-filter-select [(ngModel)]="advancedCriteria.questionId">
             <option [ngValue]="undefined">-- Tous --</option>
             @for (item of allQuestions(); track item.id) {
-              <option [ngValue]="item.id">{{ item.questionText || '#' + item.id }}</option>
+              <option [ngValue]="item.id">{{ getQuestionDisplay(item.id) }}</option>
             }
           </app-filter-select>
         </div>
@@ -206,10 +207,10 @@
           <tr>
             <th class="col-id" [class.col-hidden]="!isColumnVisible('id')">ID</th>
             <th class="col-long" [class.col-hidden]="!isColumnVisible('answerText')">Texte de la réponse</th>
-            <th class="col-id" [class.col-hidden]="!isColumnVisible('questionId')">Question ID</th>
-            <th class="col-short" [class.col-hidden]="!isColumnVisible('order')">Ordre</th>
-            <th class="col-short" [class.col-hidden]="!isColumnVisible('type')">Type</th>
-            <th class="col-boolean" [class.col-hidden]="!isColumnVisible('correct')">Correcte</th>
+            <th class="col-id" [class.col-hidden]="!isColumnVisible('questionId')">Question</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('answerOrder')">Ordre</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('answerType')">Type</th>
+            <th class="col-boolean" [class.col-hidden]="!isColumnVisible('isCorrect')">Correcte</th>
             <th class="col-date" [class.col-hidden]="!isColumnVisible('createdAt')">Créé le</th>
             <th class="col-actions" [class.col-hidden]="!isColumnVisible('actions')">Actions</th>
           </tr>
@@ -224,16 +225,15 @@
               <span class="cell-text" [title]="answer.answerText">{{ truncateText(answer.answerText, 60) }}</span>
             </td>
             <td class="col-id" [class.col-hidden]="!isColumnVisible('questionId')">
-              <span class="cell-question-id" *ngIf="answer.questionId">#{{ answer.questionId }}</span>
-              <span *ngIf="!answer.questionId" style="color: var(--text-secondary);">-</span>
+              <span class="cell-question-id" [title]="getQuestionDisplay(answer.questionId)">{{ truncateText(getQuestionDisplay(answer.questionId), 60) }}</span>
             </td>
-            <td class="col-short" [class.col-hidden]="!isColumnVisible('order')">
+            <td class="col-short" [class.col-hidden]="!isColumnVisible('answerOrder')">
               <span class="cell-order">{{ answer.answerOrder || 1 }}</span>
             </td>
-            <td class="col-short" [class.col-hidden]="!isColumnVisible('type')" [title]="answer.answerType || ''">
+            <td class="col-short" [class.col-hidden]="!isColumnVisible('answerType')" [title]="answer.answerType || ''">
               <span>{{ answer.answerType || '-' }}</span>
             </td>
-            <td class="col-boolean" [class.col-hidden]="!isColumnVisible('correct')">
+            <td class="col-boolean" [class.col-hidden]="!isColumnVisible('isCorrect')">
               <span class="bool-badge" [class.is-true]="answer.isCorrect" [class.is-false]="!answer.isCorrect">{{ answer.isCorrect ? 'Oui' : 'Non' }}</span>
             </td>
             <td class="col-date" [class.col-hidden]="!isColumnVisible('createdAt')">
@@ -284,7 +284,7 @@
     <div class="pagination-container">
       <div class="pagination-info">
         <span class="results-info">
-          Affichage {{ currentPage() * pageSize() + 1 }} - {{ Math.min((currentPage() + 1) * pageSize(), totalElements()) }} 
+          Affichage {{ totalElements() ? currentPage() * pageSize() + 1 : 0 }} - {{ totalElements() ? Math.min((currentPage() + 1) * pageSize(), totalElements()) : 0 }} 
           sur {{ totalElements() }} réponses
         </span>
         
@@ -497,7 +497,7 @@
           >
             <option value="">Sélectionner une question (optionnel)</option>
             @for (q of allQuestions(); track q.id) {
-              <option [value]="q.id">{{ q.questionText }}</option>
+              <option [value]="q.id">{{ getQuestionDisplay(q.id) }}</option>
             }
           </select>
         </div>
@@ -582,7 +582,7 @@
           >
             <option value="">Sélectionner une question (optionnel)</option>
             @for (q of allQuestions(); track q.id) {
-              <option [value]="q.id">{{ q.questionText }}</option>
+              <option [value]="q.id">{{ getQuestionDisplay(q.id) }}</option>
             }
           </select>
         </div>

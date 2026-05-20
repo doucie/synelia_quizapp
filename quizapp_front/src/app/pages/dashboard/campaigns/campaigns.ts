@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subject, takeUntil, forkJoin } from 'rxjs';
 import { CampaignService, Campaign } from '../../../core/services/campaign.service';
+import { CampaignStatusFilter, getCampaignStatusClass, getCampaignStatusLabel, matchesCampaignStatusFilter } from '../../../core/constants/campaign-status.constants';
 
 type CampaignTab = 'all' | 'my-campaigns' | 'shared';
 type ViewMode = 'grid' | 'list';
@@ -17,14 +18,14 @@ type ViewMode = 'grid' | 'list';
 })
 export class CampaignsComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
-  
+
   // Signals
   allCampaigns = signal<Campaign[]>([]);
   myCampaigns = signal<Campaign[]>([]);
   sharedCampaigns = signal<Campaign[]>([]);
   loading = signal(false);
   searchQuery = signal('');
-  filterStatus = signal<'all' | 'active' | 'pending' | 'closed'>('all');
+  filterStatus = signal<CampaignStatusFilter>('all');
   activeTab = signal<CampaignTab>('all');
   viewMode = signal<ViewMode>('grid');
   expandedCampaignId = signal<number | null>(null);
@@ -44,15 +45,14 @@ export class CampaignsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Computed - Campagnes affichées selon l'onglet actif
+   * Computed - Campagnes de base selon l'onglet actif et la recherche
    */
-  displayedCampaigns = computed(() => {
+  visibleCampaigns = computed(() => {
     const tab = this.activeTab();
     const query = this.searchQuery().toLowerCase();
-    const status = this.filterStatus();
-    
+
     let campaigns: Campaign[] = [];
-    switch(tab) {
+    switch (tab) {
       case 'all':
         campaigns = this.allCampaigns();
         break;
@@ -63,45 +63,50 @@ export class CampaignsComponent implements OnInit, OnDestroy {
         campaigns = this.sharedCampaigns();
         break;
     }
-    
+
     if (query) {
-      campaigns = campaigns.filter(campaign => 
+      campaigns = campaigns.filter(campaign =>
         (campaign.campaignTitle || '').toLowerCase().includes(query) ||
         (campaign.campaignDesc || '').toLowerCase().includes(query) ||
         (campaign.specialityLibelle || '').toLowerCase().includes(query)
       );
     }
-    
-    if (status !== 'all') {
-      campaigns = campaigns.filter(campaign => 
-        (campaign.campaignStatus || 'PENDING').toLowerCase() === status
-      );
-    }
 
     campaigns = campaigns.filter(campaign => !campaign.isDeleted);
-    
+
     return campaigns;
   });
 
+  /**
+   * Computed - Campagnes affichées selon l'onglet actif, la recherche et le filtre statut
+   */
+  displayedCampaigns = computed(() => {
+    const status = this.filterStatus();
+    const campaigns = this.visibleCampaigns();
+
+    if (status === 'all') {
+      return campaigns;
+    }
+
+    return campaigns.filter(campaign => matchesCampaignStatusFilter(campaign.campaignStatus, status));
+  });
+
+  filteredStatusCount(status: Exclude<CampaignStatusFilter, 'all'>): number {
+    return this.visibleCampaigns().filter(campaign => matchesCampaignStatusFilter(campaign.campaignStatus, status)).length;
+  }
+
+  currentTabCount = computed(() => this.visibleCampaigns().length);
   allCount = computed(() => this.allCampaigns().length);
   myCount = computed(() => this.myCampaigns().length);
   sharedCount = computed(() => this.sharedCampaigns().length);
 
-  activeCount = computed(() => 
-    this.displayedCampaigns().filter(c => c.campaignStatus === 'ACTIVE').length
-  );
-  
-  pendingCount = computed(() => 
-    this.displayedCampaigns().filter(c => c.campaignStatus === 'PENDING').length
-  );
-  
-  closedCount = computed(() => 
-    this.displayedCampaigns().filter(c => c.campaignStatus === 'CLOSED').length
-  );
+  activeCount = computed(() => this.filteredStatusCount('active'));
+  pendingCount = computed(() => this.filteredStatusCount('pending'));
+  closedCount = computed(() => this.filteredStatusCount('closed'));
 
   loadCampaigns(): void {
     this.loading.set(true);
-    
+
     forkJoin({
       all: this.campaignService.getAllCampaignsByCriteria({ size: 100, page: 0, isDeleted: false }),
       my: this.campaignService.getMyCampaigns({ size: 100, page: 0, isDeleted: false }),
@@ -111,7 +116,7 @@ export class CampaignsComponent implements OnInit, OnDestroy {
     .subscribe({
       next: (results) => {
         console.log('📦 Données brutes reçues:', results);
-        
+
         if (results.all.content && results.all.content.length > 0) {
           console.log('🔍 Exemple de campagne (toutes):', results.all.content[0]);
         }
@@ -121,7 +126,7 @@ export class CampaignsComponent implements OnInit, OnDestroy {
         if (results.shared && results.shared.length > 0) {
           console.log('🔍 Exemple de campagne (partagées):', results.shared[0]);
         }
-        
+
         this.allCampaigns.set(results.all.content || []);
         this.myCampaigns.set(results.my.content || []);
         this.sharedCampaigns.set(results.shared || []);
@@ -140,64 +145,12 @@ export class CampaignsComponent implements OnInit, OnDestroy {
     this.filterStatus.set('all');
   }
 
-  setFilterStatus(status: 'all' | 'active' | 'pending' | 'closed'): void {
+  setFilterStatus(status: CampaignStatusFilter): void {
     this.filterStatus.set(status);
   }
 
   toggleViewMode(): void {
     this.viewMode.set(this.viewMode() === 'grid' ? 'list' : 'grid');
-  }
-
-  getStatusClass(status?: string): string {
-    switch((status || 'PENDING').toLowerCase()) {
-      case 'active': return 'status-active';
-      case 'closed': return 'status-closed';
-      case 'pending': 
-      default: return 'status-pending';
-    }
-  }
-
-  getStatusLabel(status?: string): string {
-    switch((status || 'PENDING').toLowerCase()) {
-      case 'active': return 'En cours';
-      case 'closed': return 'Terminée';
-      case 'pending': 
-      default: return 'En attente';
-    }
-  }
-
-  formatDate(date?: string): string {
-    if (!date) return 'N/A';
-    return new Date(date).toLocaleDateString('fr-FR', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  }
-
-  getApplicationsCount(campaign: Campaign): number {
-    return 0; // À implémenter selon la structure de Campaign
-  }
-
-  isMyCampaign(campaign: Campaign): boolean {
-    return this.myCampaigns().some(c => c.id === campaign.id);
-  }
-
-  viewCampaignDetails(campaignId: number): void {
-    this.router.navigate(['/dashboard/campaigns', campaignId]);
-  }
-
-  toggleCampaignExpansion(event: Event, campaignId: number): void {
-    event.stopPropagation();
-    if (this.expandedCampaignId() === campaignId) {
-      this.expandedCampaignId.set(null);
-    } else {
-      this.expandedCampaignId.set(campaignId);
-    }
-  }
-
-  isCampaignExpanded(campaignId: number): boolean {
-    return this.expandedCampaignId() === campaignId;
   }
 
   refreshCampaigns(): void {
@@ -206,5 +159,42 @@ export class CampaignsComponent implements OnInit, OnDestroy {
 
   createNewCampaign(): void {
     this.router.navigate(['/dashboard/campaigns/new']);
+  }
+
+  getStatusClass(status?: string): string {
+    return getCampaignStatusClass(status);
+  }
+
+  getStatusLabel(status?: string): string {
+    return getCampaignStatusLabel(status);
+  }
+
+  formatDate(date?: string): string {
+    if (!date) {
+      return 'N/A';
+    }
+
+    return new Date(date).toLocaleDateString('fr-FR', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  }
+
+  isMyCampaign(campaign: Campaign): boolean {
+    return this.myCampaigns().some(current => current.id === campaign.id);
+  }
+
+  viewCampaignDetails(campaignId: number): void {
+    this.router.navigate(['/dashboard/campaigns', campaignId]);
+  }
+
+  toggleCampaignExpansion(event: Event, campaignId: number): void {
+    event.stopPropagation();
+    this.expandedCampaignId.set(this.expandedCampaignId() === campaignId ? null : campaignId);
+  }
+
+  isCampaignExpanded(campaignId: number): boolean {
+    return this.expandedCampaignId() === campaignId;
   }
 }

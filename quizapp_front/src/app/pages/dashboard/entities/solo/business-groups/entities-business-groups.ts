@@ -56,6 +56,10 @@ export class EntitiesBusinessGroupsComponent extends EntityCrudBase<BusinessGrou
   protected resetAdvancedCriteriaValues(): void { this.advancedCriteria = {}; }
   protected resetCreateFormData(): void { this.createFormData = {}; }
 
+  openBusinessGroupsWorkspace(): void {
+    this.router.navigate(['/dashboard/business-groups']);
+  }
+
   // --- Expansion ---
 
   toggleGroupExpansion(groupId: number) {

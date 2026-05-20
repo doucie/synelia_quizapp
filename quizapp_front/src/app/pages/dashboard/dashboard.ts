@@ -176,7 +176,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"/></svg>',
       route: '/dashboard/questions',
       roles: ['super', 'admin'],
-      permissions: ['VIEW_QUESTIONS'],
+      permissions: ['VIEW_QUESTION'],
       category: 'donnees'
     },
     {
@@ -185,7 +185,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>',
       route: '/dashboard/answers',
       roles: ['super', 'admin'],
-      permissions: ['VIEW_ANSWERS'],
+      permissions: ['VIEW_ANSWER'],
       category: 'donnees'
     },
     {
@@ -213,7 +213,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"/></svg>',
       route: '/dashboard/business-groups',
       roles: ['super'],
-      permissions: ['MANAGE_BUSINESS_GROUPS'],
+      permissions: ['MANAGE_SYSTEM_ROLES'],
       category: 'administration'
     },
     {
@@ -698,10 +698,36 @@ export class DashboardComponent implements OnInit, OnDestroy {
       title,
       message,
       type: typeMap[dbNotif.notifType] || typeMap['DEFAULT'],
-      timestamp: dbNotif.createdAt ? new Date(dbNotif.createdAt) : new Date(),
+      timestamp: this.parseNotificationTimestamp(dbNotif.createdAt),
       read: dbNotif.isRead,
       link: dbNotif.notifLink
     };
+  }
+
+  private parseNotificationTimestamp(value?: string): Date {
+    if (!value) {
+      return new Date();
+    }
+
+    const directDate = new Date(value);
+    if (!Number.isNaN(directDate.getTime())) {
+      return directDate;
+    }
+
+    const match = value.trim().match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2})(?::(\d{2}))?)?$/);
+    if (!match) {
+      return new Date();
+    }
+
+    const [, day, month, year, hours = '0', minutes = '0', seconds = '0'] = match;
+    return new Date(
+      Number(year),
+      Number(month) - 1,
+      Number(day),
+      Number(hours),
+      Number(minutes),
+      Number(seconds)
+    );
   }
 
   /**

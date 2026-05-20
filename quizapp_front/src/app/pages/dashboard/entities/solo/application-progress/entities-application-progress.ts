@@ -10,7 +10,7 @@ import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-v
 import { FilterCheckboxComponent } from '../../../../../shared/filter-checkbox/filter-checkbox';
 import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../../../shared/filter-select/filter-select';
 import { ApplicationProgressService, ApplicationProgressCriteria, PagedApplicationProgressResponse } from '../../../../../core/services/application-progress.service';
-import { ApplicationProgress, ProgressStatus } from '../../../../../core/models/pipeline.interfaces';
+import { ApplicationProgress, ProgressStatus, PROGRESS_STATUSES } from '../../../../../core/models/pipeline.interfaces';
 
 @Component({
   selector: 'app-entities-application-progress',
@@ -44,7 +44,21 @@ export class EntitiesApplicationProgressComponent extends EntityCrudBase<Applica
     { key: 'actions', label: 'Actions', priority: 1 },
   ];
 
-  progressStatuses: ProgressStatus[] = ['PENDING', 'IN_PROGRESS', 'PASSED', 'FAILED', 'SKIPPED'];
+  progressStatuses: ProgressStatus[] = [...PROGRESS_STATUSES];
+  applicationScopedView = signal<{ id: number; label: string } | null>(null);
+
+  getApplicationLabel(item: Partial<ApplicationProgress> | null | undefined): string {
+    if (!item) {
+      return '-';
+    }
+
+    const fullName = `${item.candidateFirstName || ''} ${item.candidateLastName || ''}`.trim();
+    if (fullName) {
+      return fullName;
+    }
+
+    return item.applicationId ? `#${item.applicationId}` : '-';
+  }
 
   getStatusLabel(status?: ProgressStatus | string): string {
     const labels: Record<string, string> = {
@@ -58,6 +72,76 @@ export class EntitiesApplicationProgressComponent extends EntityCrudBase<Applica
       PENDING: 'status-pending', IN_PROGRESS: 'status-in-progress', PASSED: 'status-passed', FAILED: 'status-failed', SKIPPED: 'status-skipped'
     };
     return status ? classes[status] || '' : '';
+  }
+
+  viewApplicationProgress(item: ApplicationProgress): void {
+    if (!item.applicationId) {
+      this.notificationService.warning('Attention', 'Aucune candidature parent trouvée pour cette progression.');
+      return;
+    }
+
+    const applicationId = item.applicationId;
+    const applicationLabel = this.getApplicationLabel(item);
+
+    this.isLoading.set(true);
+    this.quickSearch = '';
+    this.service.getByApplication(applicationId).subscribe({
+      next: (response) => {
+        if (response?.hasError) {
+          this.notificationService.error('Erreur', response.status?.message || 'Erreur lors du chargement des progressions de la candidature');
+          this.isLoading.set(false);
+          return;
+        }
+
+        const progressions = response.items || (response.item ? [response.item] : []);
+        this.applicationScopedView.set({ id: applicationId, label: applicationLabel });
+        this.currentPage.set(0);
+        this.items.set(progressions);
+        this.totalElements.set(progressions.length);
+        this.totalPages.set(progressions.length > 0 ? 1 : 0);
+        this.isLoading.set(false);
+        requestAnimationFrame(() => this.initAutoHideColumns());
+      },
+      error: (error) => {
+        this.notificationService.error('Erreur', this.getErrorMessage(error, 'Erreur lors du chargement des progressions de la candidature'));
+        this.isLoading.set(false);
+      }
+    });
+  }
+
+  clearApplicationScopedView(): void {
+    if (!this.applicationScopedView()) {
+      return;
+    }
+
+    this.applicationScopedView.set(null);
+    this.currentPage.set(0);
+    this.loadItems();
+  }
+
+  override onQuickSearch(): void {
+    this.applicationScopedView.set(null);
+    super.onQuickSearch();
+  }
+
+  override applyAdvancedSearch(): void {
+    this.applicationScopedView.set(null);
+    super.applyAdvancedSearch();
+  }
+
+  override resetAdvancedSearch(): void {
+    this.applicationScopedView.set(null);
+    super.resetAdvancedSearch();
+  }
+
+  override toggleDeletedItems(): void {
+    this.applicationScopedView.set(null);
+    super.toggleDeletedItems();
+  }
+
+  override onPageSizeChange(event: Event): void {
+    this.applicationScopedView.set(null);
+    super.onPageSizeChange(event);
   }
 
   protected fetchAll(criteria: ApplicationProgressCriteria): Observable<PagedApplicationProgressResponse> { return this.service.getAllByCriteria(criteria); }

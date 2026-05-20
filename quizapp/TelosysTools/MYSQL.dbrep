@@ -44,37 +44,6 @@
                 </joinColumns>
             </link>
         </table>
-        <table catalog="quizapp_db" databaseComment="" databaseType="TABLE" javaBean="CampaignCrud" name="campaign_crud" schema="">
-            <column dbAutoIncremented="true" dbComment="" dbDefaultValue="" dbName="id" dbNotNull="true" dbPosition="1" dbPrimaryKey="true" dbSize="10" dbTypeName="INT UNSIGNED" inputType="number" javaName="id" javaType="java.lang.Integer" jdbcTypeCode="4" label="Id" notNull="true" selected="true"/>
-            <column dbComment="" dbDefaultValue="0" dbName="can_update" dbNotNull="false" dbPosition="2" dbSize="1" dbTypeName="BIT" inputType="checkbox" javaName="canUpdate" javaType="java.lang.Boolean" jdbcTypeCode="-7" label="Can update" notNull="false" selected="true"/>
-            <column dbComment="" dbDefaultValue="0" dbName="can_delete" dbNotNull="false" dbPosition="3" dbSize="1" dbTypeName="BIT" inputType="checkbox" javaName="canDelete" javaType="java.lang.Boolean" jdbcTypeCode="-7" label="Can delete" notNull="false" selected="true"/>
-            <column dbComment="" dbDefaultValue="0" dbName="can_evaluate" dbNotNull="false" dbPosition="4" dbSize="1" dbTypeName="BIT" inputType="checkbox" javaName="canEvaluate" javaType="java.lang.Boolean" jdbcTypeCode="-7" label="Can evaluate" notNull="false" selected="true"/>
-            <column dbComment="" dbDefaultValue="0" dbName="follow" dbNotNull="false" dbPosition="5" dbSize="1" dbTypeName="BIT" inputType="checkbox" javaName="follow" javaType="java.lang.Boolean" jdbcTypeCode="-7" label="Follow" notNull="false" selected="true"/>
-            <column dateType="DT" dbComment="" dbDefaultValue="CURRENT_TIMESTAMP" dbName="created_at" dbNotNull="false" dbPosition="6" dbSize="19" dbTypeName="DATETIME" inputType="" javaName="createdAt" javaType="java.util.Date" jdbcTypeCode="93" label="Created at" notNull="false" selected="true"/>
-            <column dbComment="" dbDefaultValue="" dbName="created_by" dbNotNull="false" dbPosition="7" dbSize="10" dbTypeName="INT UNSIGNED" inputType="number" javaName="createdBy" javaType="java.lang.Integer" jdbcTypeCode="4" label="Created by" notNull="false" selected="true"/>
-            <column dateType="DT" dbComment="" dbDefaultValue="CURRENT_TIMESTAMP" dbName="updated_at" dbNotNull="false" dbPosition="8" dbSize="19" dbTypeName="DATETIME" inputType="" javaName="updatedAt" javaType="java.util.Date" jdbcTypeCode="93" label="Updated at" notNull="false" selected="true"/>
-            <column dbComment="" dbDefaultValue="" dbName="updated_by" dbNotNull="false" dbPosition="9" dbSize="10" dbTypeName="INT UNSIGNED" inputType="number" javaName="updatedBy" javaType="java.lang.Integer" jdbcTypeCode="4" label="Updated by" notNull="false" selected="true"/>
-            <column dbComment="" dbDefaultValue="0" dbName="is_deleted" dbNotNull="false" dbPosition="10" dbSize="1" dbTypeName="BIT" inputType="checkbox" javaName="isDeleted" javaType="java.lang.Boolean" jdbcTypeCode="-7" label="Is deleted" notNull="false" selected="true"/>
-            <column dbComment="" dbDefaultValue="" dbName="search_string" dbNotNull="false" dbPosition="11" dbSize="65535" dbTypeName="TEXT" inputType="text" javaName="searchString" javaType="java.lang.String" jdbcTypeCode="-1" label="Search string" longText="true" maxLength="65535" notNull="false" selected="true"/>
-            <column dbComment="" dbDefaultValue="" dbName="campaign_id" dbNotNull="true" dbPosition="12" dbSize="10" dbTypeName="INT UNSIGNED" inputType="number" javaName="campaignId" javaType="java.lang.Integer" jdbcTypeCode="4" label="Campaign id" notNull="true" selected="true"/>
-            <column dbComment="" dbDefaultValue="" dbName="user_id" dbNotNull="true" dbPosition="13" dbSize="10" dbTypeName="INT UNSIGNED" inputType="number" javaName="userId" javaType="java.lang.Integer" jdbcTypeCode="4" label="User id" notNull="true" selected="true"/>
-            <fk name="campaign_crud_ibfk_1">
-                <fkcol colname="campaign_id" colref="id" deferrable="7" deleterule="1" sequence="1" tablename="campaign_crud" tableref="campaigns" updaterule="1"/>
-            </fk>
-            <fk name="campaign_crud_ibfk_2">
-                <fkcol colname="user_id" colref="id" deferrable="7" deleterule="1" sequence="1" tablename="campaign_crud" tableref="user" updaterule="1"/>
-            </fk>
-            <link cardinality="ManyToOne" cascade="" fetch="DEFAULT" foreignKeyName="campaign_crud_ibfk_2" id="LINK_FK_campaign_crud_ibfk_2_O" inverseSideOf="" javaName="user" javaType="unused" joinTableName="" mappedBy="" optional="" owningSide="true" sourceTableName="campaign_crud" targetEntity="User" targetTableName="user" used="true">
-                <joinColumns>
-                    <joinColumn insertable="false" name="user_id" nullable="true" referencedColumnName="id" unique="false" updatable="false"/>
-                </joinColumns>
-            </link>
-            <link cardinality="ManyToOne" cascade="" fetch="DEFAULT" foreignKeyName="campaign_crud_ibfk_1" id="LINK_FK_campaign_crud_ibfk_1_O" inverseSideOf="" javaName="campaigns" javaType="unused" joinTableName="" mappedBy="" optional="" owningSide="true" sourceTableName="campaign_crud" targetEntity="Campaigns" targetTableName="campaigns" used="true">
-                <joinColumns>
-                    <joinColumn insertable="false" name="campaign_id" nullable="true" referencedColumnName="id" unique="false" updatable="false"/>
-                </joinColumns>
-            </link>
-        </table>
         <table catalog="quizapp_db" databaseComment="" databaseType="TABLE" javaBean="CampaignQuestions" name="campaign_questions" schema="">
             <column dbAutoIncremented="true" dbComment="" dbDefaultValue="" dbName="id" dbNotNull="true" dbPosition="1" dbPrimaryKey="true" dbSize="10" dbTypeName="INT UNSIGNED" inputType="number" javaName="id" javaType="java.lang.Integer" jdbcTypeCode="4" label="Id" notNull="true" selected="true"/>
             <column dateType="DT" dbComment="" dbDefaultValue="CURRENT_TIMESTAMP" dbName="created_at" dbNotNull="false" dbPosition="2" dbSize="19" dbTypeName="DATETIME" inputType="" javaName="createdAt" javaType="java.util.Date" jdbcTypeCode="93" label="Created at" notNull="false" selected="true"/>
@@ -131,7 +100,6 @@
                     <joinColumn insertable="false" name="creator_id" nullable="true" referencedColumnName="id" unique="false" updatable="false"/>
                 </joinColumns>
             </link>
-            <link cardinality="OneToMany" cascade="" fetch="DEFAULT" foreignKeyName="campaign_crud_ibfk_1" id="LINK_FK_campaign_crud_ibfk_1_I" inverseSideOf="LINK_FK_campaign_crud_ibfk_1_O" javaName="listOfCampaignCrud" javaType="unused" joinTableName="" mappedBy="campaigns" optional="" owningSide="false" sourceTableName="campaigns" targetEntity="CampaignCrud" targetTableName="campaign_crud" used="true"/>
             <link cardinality="OneToMany" cascade="" fetch="DEFAULT" foreignKeyName="campaign_questions_ibfk_1" id="LINK_FK_campaign_questions_ibfk_1_I" inverseSideOf="LINK_FK_campaign_questions_ibfk_1_O" javaName="listOfCampaignQuestions" javaType="unused" joinTableName="" mappedBy="campaigns" optional="" owningSide="false" sourceTableName="campaigns" targetEntity="CampaignQuestions" targetTableName="campaign_questions" used="true"/>
             <link cardinality="OneToMany" cascade="" fetch="DEFAULT" foreignKeyName="source_token_ibfk_1" id="LINK_FK_source_token_ibfk_1_I" inverseSideOf="LINK_FK_source_token_ibfk_1_O" javaName="listOfSourceToken" javaType="unused" joinTableName="" mappedBy="campaigns" optional="" owningSide="false" sourceTableName="campaigns" targetEntity="SourceToken" targetTableName="source_token" used="true"/>
             <link cardinality="OneToMany" cascade="" fetch="DEFAULT" foreignKeyName="interviews_ibfk_1" id="LINK_FK_interviews_ibfk_1_I" inverseSideOf="LINK_FK_interviews_ibfk_1_O" javaName="listOfInterviews" javaType="unused" joinTableName="" mappedBy="campaigns" optional="" owningSide="false" sourceTableName="campaigns" targetEntity="Interviews" targetTableName="interviews" used="true"/>
@@ -466,7 +434,6 @@
             <link cardinality="OneToMany" cascade="" fetch="DEFAULT" foreignKeyName="notifications_ibfk_1" id="LINK_FK_notifications_ibfk_1_I" inverseSideOf="LINK_FK_notifications_ibfk_1_O" javaName="listOfNotifications" javaType="unused" joinTableName="" mappedBy="user" optional="" owningSide="false" sourceTableName="user" targetEntity="Notifications" targetTableName="notifications" used="true"/>
             <link cardinality="OneToMany" cascade="" fetch="DEFAULT" foreignKeyName="interview_crud_ibfk_2" id="LINK_FK_interview_crud_ibfk_2_I" inverseSideOf="LINK_FK_interview_crud_ibfk_2_O" javaName="listOfInterviewCrud" javaType="unused" joinTableName="" mappedBy="user" optional="" owningSide="false" sourceTableName="user" targetEntity="InterviewCrud" targetTableName="interview_crud" used="true"/>
             <link cardinality="OneToMany" cascade="" fetch="DEFAULT" foreignKeyName="campaigns_ibfk_2" id="LINK_FK_campaigns_ibfk_2_I" inverseSideOf="LINK_FK_campaigns_ibfk_2_O" javaName="listOfCampaigns" javaType="unused" joinTableName="" mappedBy="user" optional="" owningSide="false" sourceTableName="user" targetEntity="Campaigns" targetTableName="campaigns" used="true"/>
-            <link cardinality="OneToMany" cascade="" fetch="DEFAULT" foreignKeyName="campaign_crud_ibfk_2" id="LINK_FK_campaign_crud_ibfk_2_I" inverseSideOf="LINK_FK_campaign_crud_ibfk_2_O" javaName="listOfCampaignCrud" javaType="unused" joinTableName="" mappedBy="user" optional="" owningSide="false" sourceTableName="user" targetEntity="CampaignCrud" targetTableName="campaign_crud" used="true"/>
         </table>
     </tableList>
 </root>

@@ -21,6 +21,7 @@ import tech.synelia.quizapp.utils.contract.IBasicBusiness;
 import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.dto.transformer.*;
+import tech.synelia.quizapp.utils.enums.FunctionalityEnum;
 import tech.synelia.quizapp.utils.enums.QuestionType;
 import tech.synelia.quizapp.dao.entity.*;
 import tech.synelia.quizapp.dao.repository.*;
@@ -393,8 +394,15 @@ public class CandidateAnswerBusiness implements IBasicBusiness<Request<Candidate
 		}
 
 		Campaigns campaign = resolveCampaignFromApplication(entityToSave.getApplications(), locale);
-		boolean hasCampaignRight = permissionService.hasAnyEntityPermission(actorUserId, "CAMPAIGN", campaign.getId(), "ADMIN", "CREATOR", "CORRECT_TEST");
-		if (!hasCampaignRight) {
+		boolean hasScopedRight = permissionService.hasScopedPermission(
+				actorUserId,
+				"CAMPAIGN",
+				campaign.getId(),
+				FunctionalityEnum.CORRECT_TEST.getValue(),
+				"ADMIN",
+				"CREATOR",
+				"CORRECT_TEST");
+		if (!hasScopedRight) {
 			throw new InvalidEntityException(functionalError.REQUEST_FAIL(
 					"Accès refusé: droits insuffisants pour corriger ce test.", locale));
 		}

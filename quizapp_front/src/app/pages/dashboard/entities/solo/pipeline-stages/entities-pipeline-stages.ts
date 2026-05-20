@@ -11,7 +11,7 @@ import { FilterCheckboxComponent } from '../../../../../shared/filter-checkbox/f
 import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../../../shared/filter-select/filter-select';
 import { PipelineStageService, PipelineStageCriteria, PagedPipelineStageResponse } from '../../../../../core/services/pipeline-stage.service';
 import { PipelineTemplateService } from '../../../../../core/services/pipeline-template.service';
-import { PipelineStage, PipelineTemplate, StageType } from '../../../../../core/models/pipeline.interfaces';
+import { PipelineStage, PipelineTemplate, StageType, STAGE_TYPES } from '../../../../../core/models/pipeline.interfaces';
 
 @Component({
   selector: 'app-entities-pipeline-stages',
@@ -34,19 +34,20 @@ export class EntitiesPipelineStagesComponent extends EntityCrudBase<PipelineStag
 
   override allColumns: ColumnDef[] = [
     { key: 'id', label: 'ID', priority: 1 },
-    { key: 'label', label: 'Libellé', priority: 1 },
-    { key: 'type', label: 'Type', priority: 2 },
-    { key: 'order', label: 'Ordre', priority: 2 },
-    { key: 'mandatory', label: 'Obligatoire', priority: 2 },
-    { key: 'eliminatory', label: 'Éliminatoire', priority: 2 },
-    { key: 'template', label: 'Template', priority: 2 },
-    { key: 'config', label: 'Config', priority: 3 },
+    { key: 'stageLabel', label: 'Libellé', priority: 1 },
+    { key: 'stageType', label: 'Type', priority: 2 },
+    { key: 'stageOrder', label: 'Ordre', priority: 2 },
+    { key: 'isRequired', label: 'Obligatoire', priority: 2 },
+    { key: 'isEliminatory', label: 'Éliminatoire', priority: 2 },
+    { key: 'pipelineTemplateId', label: 'Template', priority: 2 },
+    { key: 'configJson', label: 'Config', priority: 3 },
     { key: 'createdAt', label: 'Créé le', priority: 2 },
     { key: 'actions', label: 'Actions', priority: 1 },
   ];
 
   allTemplates = signal<PipelineTemplate[]>([]);
-  stageTypes: StageType[] = ['CANDIDATURE', 'QUIZ', 'PRESELECTION', 'INTERVIEW', 'TECHNICAL_TEST', 'EVALUATION', 'DECISION', 'CUSTOM'];
+  stageTypes: StageType[] = [...STAGE_TYPES];
+  templateScopedView = signal<{ id: number; name: string } | null>(null);
 
   override ngOnInit(): void {
     super.ngOnInit();
@@ -98,6 +99,88 @@ export class EntitiesPipelineStagesComponent extends EntityCrudBase<PipelineStag
       default:
         return 'Laisse vide si ce type d’étape n’a pas besoin de configuration spécifique.';
     }
+  }
+
+  viewTemplateStages(item: PipelineStage): void {
+    if (!item.pipelineTemplateId) {
+      this.notificationService.warning('Attention', 'Aucun template parent trouvé pour cette étape.');
+      return;
+    }
+
+    const templateId = item.pipelineTemplateId;
+    const templateName = this.getTemplateName(templateId);
+
+    this.isLoading.set(true);
+    this.quickSearch = '';
+    this.service.getByTemplate(templateId).subscribe({
+      next: (response) => {
+        if (response?.hasError) {
+          this.notificationService.error('Erreur', response.status?.message || 'Erreur lors du chargement des étapes du template');
+          this.isLoading.set(false);
+          return;
+        }
+
+        const stages = response.items || (response.item ? [response.item] : []);
+        this.templateScopedView.set({ id: templateId, name: templateName });
+        this.advancedCriteria.pipelineTemplateId = templateId;
+        this.currentPage.set(0);
+        this.items.set(stages);
+        this.totalElements.set(stages.length);
+        this.totalPages.set(stages.length > 0 ? 1 : 0);
+        this.isLoading.set(false);
+        requestAnimationFrame(() => this.initAutoHideColumns());
+      },
+      error: (error) => {
+        this.notificationService.error('Erreur', this.getErrorMessage(error, 'Erreur lors du chargement des étapes du template'));
+        this.isLoading.set(false);
+      }
+    });
+  }
+
+  clearTemplateScopedView(): void {
+    if (!this.templateScopedView()) {
+      return;
+    }
+
+    this.templateScopedView.set(null);
+    this.advancedCriteria.pipelineTemplateId = undefined;
+    this.currentPage.set(0);
+    this.loadItems();
+  }
+
+  openPipelineStageWorkspace(): void {
+    const scopedTemplate = this.templateScopedView();
+    if (scopedTemplate?.id) {
+      this.router.navigate(['/dashboard/pipeline-templates', scopedTemplate.id, 'edit']);
+      return;
+    }
+
+    this.router.navigate(['/dashboard/pipeline-templates']);
+  }
+
+  override onQuickSearch(): void {
+    this.templateScopedView.set(null);
+    super.onQuickSearch();
+  }
+
+  override applyAdvancedSearch(): void {
+    this.templateScopedView.set(null);
+    super.applyAdvancedSearch();
+  }
+
+  override resetAdvancedSearch(): void {
+    this.templateScopedView.set(null);
+    super.resetAdvancedSearch();
+  }
+
+  override toggleDeletedItems(): void {
+    this.templateScopedView.set(null);
+    super.toggleDeletedItems();
+  }
+
+  override onPageSizeChange(event: Event): void {
+    this.templateScopedView.set(null);
+    super.onPageSizeChange(event);
   }
 
   private normalizeConfigJson(value: string | null | undefined): string | null | undefined {

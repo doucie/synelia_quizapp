@@ -20,6 +20,7 @@ import java.util.Map;
 import org.apache.commons.lang3.time.DateUtils;
 import org.apache.commons.lang3.StringUtils;
 import tech.synelia.quizapp.utils.enums.EmailActionType;
+import tech.synelia.quizapp.utils.enums.UserRole;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -756,8 +757,15 @@ public class UserManagmentBusiness {
 		}
 
 		tech.synelia.quizapp.utils.dto.InvitationCodeDto invitation = codeResponse.getItem();
+		UserRole invitationRole = UserRole.fromValue(invitation.getRole());
+		if (invitationRole == null) {
+			response.setStatus(functionalError.INVALID_FORMAT(
+					"role invitation invalide -> " + invitation.getRole() + " (autorisé: super, admin, recruiter, candidate)", locale));
+			response.setHasError(true);
+			return response;
+		}
 
-		if (isCandidateRole(invitation.getRole()) && !areCandidateAccountsEnabled()) {
+		if (UserRole.CANDIDATE.equals(invitationRole) && !areCandidateAccountsEnabled()) {
 			response.setStatus(functionalError.DISALLOWED_OPERATION(
 					"La fonctionnalite de comptes candidats est desactivee.", locale));
 			response.setHasError(true);
@@ -787,7 +795,7 @@ public class UserManagmentBusiness {
 		newUser.setLastName(dto.getLastName());
 		newUser.setUsername(dto.getFirstName().toLowerCase() + "." + dto.getLastName().toLowerCase());
 		newUser.setPassword(Utilities.encryptWithBCrypt(dto.getPassword()));
-		newUser.setUserRole(invitation.getRole());
+		newUser.setUserRole(invitationRole.getValue());
 		newUser.setIsDefaultPassword(false);
 		newUser.setIsOnline(false);
 		newUser.setIsLocked(false);
@@ -819,7 +827,7 @@ public class UserManagmentBusiness {
 	}
 
 	private boolean isCandidateRole(String role) {
-		return UserRole.CANDIDATE.getValue().equalsIgnoreCase(StringUtils.trimToEmpty(role));
+		return UserRole.CANDIDATE.equals(UserRole.fromValue(role));
 	}
 
 	private boolean passwordMatches(User user, String rawPassword) throws Exception {

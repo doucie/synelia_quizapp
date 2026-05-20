@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApplicationService, SaveQuizAnswerPayload } from '../../core/services/application.service';
+import { ManualCorrectionStatus, normalizeManualCorrectionStatus } from '../../core/constants/manual-correction-status.constants';
 
 interface Answer {
   id: number;
@@ -66,7 +67,7 @@ export class QuizComponent implements OnInit, OnDestroy {
   // Données de l'application
   applicationId = signal<number | null>(null);
   quizToken = signal<string | null>(null);
-  quizManualCorrectionStatus = signal<string | null>(null);
+  quizManualCorrectionStatus = signal<ManualCorrectionStatus | null>(null);
   remainingTime = signal<number | null>(null);
   timeoutSubmissionInProgress = signal(false);
   
@@ -311,7 +312,7 @@ export class QuizComponent implements OnInit, OnDestroy {
           console.log('✅ Quiz soumis avec succès');
           this.clearCountdown();
           this.unregisterActivityListeners();
-          this.quizManualCorrectionStatus.set(response.items?.[0]?.quizManualCorrectionStatus || null);
+          this.quizManualCorrectionStatus.set(normalizeManualCorrectionStatus(response.items?.[0]?.quizManualCorrectionStatus));
           this.quizCompleted.set(true);
         }
       },

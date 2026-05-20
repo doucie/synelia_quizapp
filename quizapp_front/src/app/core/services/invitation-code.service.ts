@@ -35,7 +35,10 @@ export class InvitationCodeService {
       size,
       index: page,
       isSimpleLoading: false,
-      data: { ...criteria, isDeleted: criteria.isDeleted ?? false }
+      data: {
+        ...criteria,
+        ...(criteria.isDeleted !== undefined ? { isDeleted: criteria.isDeleted } : {})
+      }
     };
     return this.http.post<any>(`${this.apiUrl}/getByCriteria`, request).pipe(
       map(resp => ({

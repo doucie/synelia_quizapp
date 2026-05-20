@@ -46,6 +46,7 @@ import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.dto.ApplicationProgressDto;
 import tech.synelia.quizapp.utils.dto.transformer.ApplicationProgressTransformer;
 import tech.synelia.quizapp.utils.enums.FunctionalityEnum;
+import tech.synelia.quizapp.utils.enums.ProgressStatus;
 import tech.synelia.quizapp.utils.enums.StageType;
 import tech.synelia.quizapp.utils.exception.EntityNotFoundException;
 import tech.synelia.quizapp.utils.exception.InternalErrorException;
@@ -119,7 +120,14 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
             entityToSave.setCreatedAt(Utilities.getCurrentDate());
             entityToSave.setCreatedBy(request.getUser());
             entityToSave.setIsDeleted(false);
-            if (entityToSave.getProgressStatus() == null) entityToSave.setProgressStatus("PENDING");
+            if (entityToSave.getMailSent() == null) {
+                entityToSave.setMailSent(false);
+            }
+            if (Utilities.notBlank(entityToSave.getProgressStatus())) {
+                entityToSave.setProgressStatus(normalizeProgressStatus(entityToSave.getProgressStatus(), locale));
+            } else {
+                entityToSave.setProgressStatus(ProgressStatus.PENDING.getValue());
+            }
             items.add(entityToSave);
         }
 
@@ -162,9 +170,12 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
                 throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("application_progress id -> " + dto.getId(), locale));
             }
 
-            if (Utilities.shouldUpdate(dto.getProgressStatus())) entityToSave.setProgressStatus(dto.getProgressStatus());
+            if (Utilities.shouldUpdate(dto.getProgressStatus())) {
+                entityToSave.setProgressStatus(normalizeNullableProgressStatus(dto.getProgressStatus(), locale));
+            }
             if (dto.getScore() != null) entityToSave.setScore(dto.getScore());
             if (Utilities.shouldUpdate(dto.getNotes())) entityToSave.setNotes(dto.getNotes());
+            if (dto.getMailSent() != null) entityToSave.setMailSent(dto.getMailSent());
             if (dto.getDecidedById() != null) {
                 User decidedBy = userRepository.findOne(dto.getDecidedById(), false);
                 if (decidedBy != null) entityToSave.setDecidedBy(decidedBy);
@@ -293,7 +304,7 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
             ApplicationProgress progress = new ApplicationProgress();
             progress.setApplications(application);
             progress.setPipelineStage(stage);
-            progress.setProgressStatus("PENDING");
+            progress.setProgressStatus(ProgressStatus.PENDING.getValue());
             progress.setCreatedAt(Utilities.getCurrentDate());
             progress.setCreatedBy(userId);
             progress.setIsDeleted(false);
@@ -339,11 +350,11 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
         ApplicationProgress progress = getProgressOrThrow(applicationId, stageId, locale);
         ensureStageCanBeCompleted(progress, locale);
 
-        if (!"PASSED".equals(progress.getProgressStatus())) {
+        if (!hasProgressStatus(progress, ProgressStatus.PASSED)) {
             if (progress.getStartedAt() == null) {
                 progress.setStartedAt(Utilities.getCurrentDate());
             }
-            progress.setProgressStatus("PASSED");
+            progress.setProgressStatus(ProgressStatus.PASSED.getValue());
             progress.setCompletedAt(Utilities.getCurrentDate());
             progress.setNotes(notes);
             progress.setScore(score);
@@ -358,7 +369,7 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
             applicationProgressRepository.save(progress);
         }
 
-        activateNextPendingStage(applicationId, progress.getPipelineStage().getStageOrder(), decidedById);
+        activateNextPendingStage(applicationId, progress, decidedById);
         syncApplicationStatus(applicationId);
         return getProgressForApplication(applicationId, false, locale);
     }
@@ -382,7 +393,7 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
         if (progress.getStartedAt() == null) {
             progress.setStartedAt(Utilities.getCurrentDate());
         }
-        progress.setProgressStatus("FAILED");
+        progress.setProgressStatus(ProgressStatus.FAILED.getValue());
         progress.setCompletedAt(Utilities.getCurrentDate());
         progress.setNotes(notes);
         progress.setDecidedBy(decidedBy);
@@ -396,8 +407,8 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
             List<ApplicationProgress> allProgress = applicationProgressRepository.findByApplicationIdOrderByStageOrder(applicationId);
             for (ApplicationProgress ap : allProgress) {
                 if (ap.getPipelineStage().getStageOrder() > failedStage.getStageOrder()
-                        && "PENDING".equals(ap.getProgressStatus())) {
-                    ap.setProgressStatus("SKIPPED");
+                        && hasProgressStatus(ap, ProgressStatus.PENDING)) {
+                    ap.setProgressStatus(ProgressStatus.SKIPPED.getValue());
                     ap.setCompletedAt(Utilities.getCurrentDate());
                     ap.setNotes("Ignoré après échec d'une étape éliminatoire");
                     ap.setUpdatedAt(Utilities.getCurrentDate());
@@ -406,7 +417,7 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
                 }
             }
         } else {
-            activateNextPendingStage(applicationId, failedStage.getStageOrder(), decidedById);
+            activateNextPendingStage(applicationId, progress, decidedById);
         }
 
         syncApplicationStatus(applicationId);
@@ -434,7 +445,7 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
                     locale));
         }
 
-        progress.setProgressStatus("SKIPPED");
+        progress.setProgressStatus(ProgressStatus.SKIPPED.getValue());
         if (progress.getStartedAt() == null) {
             progress.setStartedAt(Utilities.getCurrentDate());
         }
@@ -450,7 +461,7 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
         progress.setUpdatedBy(userId);
         applicationProgressRepository.save(progress);
 
-        activateNextPendingStage(applicationId, progress.getPipelineStage().getStageOrder(), userId);
+        activateNextPendingStage(applicationId, progress, userId);
         syncApplicationStatus(applicationId);
 
         return getProgressForApplication(applicationId, false, locale);
@@ -475,12 +486,12 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
             throw new InvalidEntityException(functionalError.REQUEST_FAIL("Stage cible invalide pour le rollback du pipeline", locale));
         }
 
-        boolean hasProgressToRewind = !"PENDING".equals(targetProgress.getProgressStatus());
+        boolean hasProgressToRewind = !hasProgressStatus(targetProgress, ProgressStatus.PENDING);
         if (!hasProgressToRewind) {
             for (ApplicationProgress progress : allProgress) {
                 if (progress.getPipelineStage() != null
                         && progress.getPipelineStage().getStageOrder() > targetStageOrder
-                        && !"PENDING".equals(progress.getProgressStatus())) {
+                        && !hasProgressStatus(progress, ProgressStatus.PENDING)) {
                     hasProgressToRewind = true;
                     break;
                 }
@@ -504,7 +515,7 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
             }
 
             if (stageOrder == targetStageOrder) {
-                progress.setProgressStatus("IN_PROGRESS");
+                progress.setProgressStatus(ProgressStatus.IN_PROGRESS.getValue());
                 if (progress.getStartedAt() == null) {
                     progress.setStartedAt(Utilities.getCurrentDate());
                 }
@@ -512,13 +523,15 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
                 progress.setScore(null);
                 progress.setNotes(notes);
                 progress.setDecidedBy(null);
+                progress.setMailSent(false);
             } else {
-                progress.setProgressStatus("PENDING");
+                progress.setProgressStatus(ProgressStatus.PENDING.getValue());
                 progress.setStartedAt(null);
                 progress.setCompletedAt(null);
                 progress.setScore(null);
                 progress.setNotes(null);
                 progress.setDecidedBy(null);
+                progress.setMailSent(false);
             }
 
             progress.setUpdatedAt(Utilities.getCurrentDate());
@@ -593,7 +606,7 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
             return;
         }
 
-        if (activateIfPending && "PENDING".equals(progress.getProgressStatus())) {
+        if (activateIfPending && hasProgressStatus(progress, ProgressStatus.PENDING)) {
             activateStage(progress, userId);
         }
 
@@ -613,7 +626,7 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
             updateStageScore(applicationId, progress.getPipelineStage().getStageType(), score, userId, false);
         }
 
-        if (!"PASSED".equals(progress.getProgressStatus())) {
+        if (!hasProgressStatus(progress, ProgressStatus.PASSED)) {
             passStage(applicationId, progress.getPipelineStage().getId(), userId, score, notes, locale);
         }
     }
@@ -630,7 +643,7 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
             return;
         }
 
-        if (!"FAILED".equals(progress.getProgressStatus())) {
+        if (!hasProgressStatus(progress, ProgressStatus.FAILED)) {
             failStage(applicationId, progress.getPipelineStage().getId(), userId, failNotes, locale);
         }
     }
@@ -754,7 +767,8 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
 
                 // Compatible = au moins une étape PENDING ou IN_PROGRESS
                 boolean hasIncomplete = progress.stream()
-                        .anyMatch(ap -> "PENDING".equals(ap.getProgressStatus()) || "IN_PROGRESS".equals(ap.getProgressStatus()));
+                        .anyMatch(ap -> hasProgressStatus(ap, ProgressStatus.PENDING)
+                                || hasProgressStatus(ap, ProgressStatus.IN_PROGRESS));
                 if (hasIncomplete) {
                     migratableIds.add(app.getId());
                 }
@@ -812,7 +826,7 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
                 newProgress.setDecidedBy(oldProgress.getDecidedBy());
             } else {
                 // Nouvelle étape pas dans l'ancien pipeline → PENDING
-                newProgress.setProgressStatus("PENDING");
+                newProgress.setProgressStatus(ProgressStatus.PENDING.getValue());
             }
 
             applicationProgressRepository.save(newProgress);
@@ -855,20 +869,23 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
             PipelineStage stage = ap.getPipelineStage();
             String sType = stage != null ? stage.getStageType() : null;
 
-            if ("IN_PROGRESS".equals(pStatus)) {
+            if (hasProgressStatus(pStatus, ProgressStatus.IN_PROGRESS)) {
                 currentStageType = sType;
                 hasStarted = true;
             }
-            if ("PASSED".equals(pStatus) || "FAILED".equals(pStatus) || "SKIPPED".equals(pStatus)) {
+            if (hasProgressStatus(pStatus, ProgressStatus.PASSED)
+                    || hasProgressStatus(pStatus, ProgressStatus.FAILED)
+                    || hasProgressStatus(pStatus, ProgressStatus.SKIPPED)) {
                 hasStarted = true;
             }
-            if ("PASSED".equals(pStatus) && StageType.PRESELECTION.getValue().equals(sType)) {
+            if (hasProgressStatus(pStatus, ProgressStatus.PASSED)
+                    && StageType.PRESELECTION.getValue().equals(sType)) {
                 preselectionPassed = true;
             }
             if (!isResolvedStatus(pStatus)) {
                 allStagesResolved = false;
             }
-            if ("FAILED".equals(pStatus) && isTerminalFailure(stage)) {
+            if (hasProgressStatus(pStatus, ProgressStatus.FAILED) && isTerminalFailure(stage)) {
                 hasTerminalFailure = true;
                 failureStageType = sType;
             }
@@ -938,9 +955,20 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
         }
     }
 
-    private void activateNextPendingStage(Integer applicationId, Integer currentStageOrder, Integer userId) {
+    private void activateNextPendingStage(Integer applicationId, ApplicationProgress currentProgress, Integer userId) {
+        if (isNextStageWaitingForRequiredMail(currentProgress)) {
+            return;
+        }
+
         ApplicationProgress activeProgress = applicationProgressRepository.findCurrentStage(applicationId);
         if (activeProgress != null) {
+            return;
+        }
+
+        Integer currentStageOrder = currentProgress != null && currentProgress.getPipelineStage() != null
+                ? currentProgress.getPipelineStage().getStageOrder()
+                : null;
+        if (currentStageOrder == null) {
             return;
         }
 
@@ -959,13 +987,25 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
     }
 
     private void activateStage(ApplicationProgress progress, Integer userId) {
-        progress.setProgressStatus("IN_PROGRESS");
+        progress.setProgressStatus(ProgressStatus.IN_PROGRESS.getValue());
         if (progress.getStartedAt() == null) {
             progress.setStartedAt(Utilities.getCurrentDate());
         }
         progress.setUpdatedAt(Utilities.getCurrentDate());
         progress.setUpdatedBy(userId);
         applicationProgressRepository.save(progress);
+    }
+
+    public void markStageMailSent(Integer applicationId, Integer stageId, Integer userId) {
+        updateStageMailSent(applicationId, stageId, true, userId);
+    }
+
+    public void markStageMailSentByStageType(Integer applicationId, String stageType, Integer userId) {
+        updateStageMailSentByStageType(applicationId, stageType, true, userId);
+    }
+
+    public void clearStageMailSentByStageType(Integer applicationId, String stageType, Integer userId) {
+        updateStageMailSentByStageType(applicationId, stageType, false, userId);
     }
 
     private ApplicationProgress findProgressByStageType(Integer applicationId, String stageType) {
@@ -983,10 +1023,83 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
         return null;
     }
 
+    private void updateStageMailSentByStageType(Integer applicationId, String stageType, boolean mailSent, Integer userId) {
+        if (applicationId == null || !Utilities.notBlank(stageType)) {
+            return;
+        }
+
+        ApplicationProgress progress = findProgressByStageType(applicationId, stageType);
+        if (progress == null || progress.getId() == null) {
+            return;
+        }
+
+        updateStageMailSent(applicationId, progress.getPipelineStage() != null ? progress.getPipelineStage().getId() : null, mailSent, userId);
+    }
+
+    private void updateStageMailSent(Integer applicationId, Integer stageId, boolean mailSent, Integer userId) {
+        if (applicationId == null || stageId == null) {
+            return;
+        }
+
+        ApplicationProgress progress = applicationProgressRepository.findByApplicationIdAndPipelineStageId(applicationId, stageId);
+        if (progress == null) {
+            return;
+        }
+
+        if (Boolean.valueOf(mailSent).equals(progress.getMailSent())) {
+            if (mailSent && isResolvedStatus(progress.getProgressStatus())) {
+                activateNextPendingStage(applicationId, progress, userId);
+            }
+            return;
+        }
+
+        progress.setMailSent(mailSent);
+        progress.setUpdatedAt(Utilities.getCurrentDate());
+        progress.setUpdatedBy(userId);
+        applicationProgressRepository.save(progress);
+
+        if (mailSent && isResolvedStatus(progress.getProgressStatus())) {
+            activateNextPendingStage(applicationId, progress, userId);
+        }
+    }
+
+    private boolean isNextStageWaitingForRequiredMail(ApplicationProgress currentProgress) {
+        if (currentProgress == null || currentProgress.getPipelineStage() == null) {
+            return false;
+        }
+        return Boolean.TRUE.equals(currentProgress.getPipelineStage().getEmailRequired())
+                && !Boolean.TRUE.equals(currentProgress.getMailSent());
+    }
+
     private boolean isResolvedStatus(String progressStatus) {
-        return "PASSED".equals(progressStatus)
-                || "FAILED".equals(progressStatus)
-                || "SKIPPED".equals(progressStatus);
+        return hasProgressStatus(progressStatus, ProgressStatus.PASSED)
+                || hasProgressStatus(progressStatus, ProgressStatus.FAILED)
+                || hasProgressStatus(progressStatus, ProgressStatus.SKIPPED);
+    }
+
+    private String normalizeProgressStatus(String progressStatus, Locale locale) {
+        try {
+            return ProgressStatus.fromValue(progressStatus).getValue();
+        } catch (IllegalArgumentException exception) {
+            throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+                    "Statut de progression invalide: " + progressStatus,
+                    locale));
+        }
+    }
+
+    private String normalizeNullableProgressStatus(String progressStatus, Locale locale) {
+        if (progressStatus == null) {
+            return null;
+        }
+        return normalizeProgressStatus(progressStatus, locale);
+    }
+
+    private boolean hasProgressStatus(ApplicationProgress progress, ProgressStatus status) {
+        return progress != null && hasProgressStatus(progress.getProgressStatus(), status);
+    }
+
+    private boolean hasProgressStatus(String progressStatus, ProgressStatus status) {
+        return progressStatus != null && status.getValue().equalsIgnoreCase(progressStatus);
     }
 
     private boolean isTerminalFailure(PipelineStage stage) {
@@ -1037,18 +1150,18 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
         }
 
         Campaigns campaign = getCampaignForApplication(application, locale);
-        boolean hasGlobalRight = permissionService.hasAnyPermission(
-                userId,
+        boolean hasScopedRight = permissionService.hasAnyScopedPermission(
+            userId,
+            "CAMPAIGN",
+            campaign.getId(),
+            new String[] {
                 FunctionalityEnum.UPDATE_APPLICATION_PROGRESS.getValue(),
-                FunctionalityEnum.ADVANCE_PIPELINE.getValue());
-        boolean hasCampaignRight = permissionService.hasAnyEntityPermission(
-                userId,
-                "CAMPAIGN",
-                campaign.getId(),
-                "ADMIN",
-                "ADVANCE_PIPELINE");
+                FunctionalityEnum.ADVANCE_PIPELINE.getValue()
+            },
+            "ADMIN",
+            "ADVANCE_PIPELINE");
 
-        if (!hasGlobalRight && !hasCampaignRight) {
+        if (!hasScopedRight) {
             throw new InvalidEntityException(functionalError.REQUEST_FAIL(
                     "Accès refusé: droits insuffisants pour " + actionLabel,
                     locale));
@@ -1066,16 +1179,14 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
         }
 
         Campaigns campaign = getCampaignForApplication(application, locale);
-        boolean hasGlobalRight = permissionService.hasPermission(
-                userId,
-                FunctionalityEnum.MIGRATE_CANDIDATE_PIPELINE.getValue());
-        boolean hasCampaignRight = permissionService.hasEntityPermission(
-                userId,
-                "CAMPAIGN",
-                campaign.getId(),
-                "ADMIN");
+        boolean hasScopedRight = permissionService.hasScopedPermission(
+            userId,
+            "CAMPAIGN",
+            campaign.getId(),
+            FunctionalityEnum.MIGRATE_CANDIDATE_PIPELINE.getValue(),
+            "ADMIN");
 
-        if (!hasGlobalRight && !hasCampaignRight) {
+        if (!hasScopedRight) {
             throw new InvalidEntityException(functionalError.REQUEST_FAIL(
                     "Accès refusé: droits insuffisants pour revenir en arrière sur cette candidature",
                     locale));

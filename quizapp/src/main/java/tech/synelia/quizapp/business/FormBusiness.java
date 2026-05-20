@@ -40,6 +40,8 @@ public class FormBusiness implements IBasicBusiness<Request<FormDto>, Response<F
 	@Autowired
 	private FormVersionRepository formVersionRepository;
 	@Autowired
+	private FormQuestionsRepository formQuestionsRepository;
+	@Autowired
 	private FunctionalError functionalError;
 	@Autowired
 	private TechnicalError technicalError;
@@ -88,6 +90,8 @@ public class FormBusiness implements IBasicBusiness<Request<FormDto>, Response<F
 			if (entityToSave.getIsActive() == null) {
 				entityToSave.setIsActive(true);
 			}
+			applyTimingInheritance(entityToSave);
+			validateFormTimingConfiguration(entityToSave, locale);
 			items.add(entityToSave);
 		}
 
@@ -188,6 +192,11 @@ public class FormBusiness implements IBasicBusiness<Request<FormDto>, Response<F
 			if (dto.getIsActive() != null) {
 				entityToSave.setIsActive(dto.getIsActive());
 			}
+			if (dto.getIsTimed() != null) {
+				entityToSave.setIsTimed(dto.getIsTimed());
+			}
+			applyTimingInheritance(entityToSave);
+			validateFormTimingConfiguration(entityToSave, locale);
 			entityToSave.setUpdatedAt(Utilities.getCurrentDate());
 			entityToSave.setUpdatedBy(request.getUser());
 			entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(entityToSave)));
@@ -398,8 +407,15 @@ public class FormBusiness implements IBasicBusiness<Request<FormDto>, Response<F
 			if (dto.getIsActive() != null) {
 				entityToSave.setIsActive(dto.getIsActive());
 			}
+			if (dto.getIsTimed() != null) {
+				entityToSave.setIsTimed(dto.getIsTimed());
+			}
 			if (dto.getIsDeleted() != null) {
 				entityToSave.setIsDeleted(dto.getIsDeleted());
+			}
+			applyTimingInheritance(entityToSave);
+			if (!Boolean.TRUE.equals(entityToSave.getIsDeleted())) {
+				validateFormTimingConfiguration(entityToSave, locale);
 			}
 			entityToSave.setUpdatedAt(Utilities.getCurrentDate());
 			entityToSave.setUpdatedBy(request.getUser());
@@ -462,8 +478,15 @@ public class FormBusiness implements IBasicBusiness<Request<FormDto>, Response<F
 			if (dto.getIsActive() != null) {
 				entityToSave.setIsActive(dto.getIsActive());
 			}
+			if (dto.getIsTimed() != null) {
+				entityToSave.setIsTimed(dto.getIsTimed());
+			}
 			if (dto.getIsDeleted() != null) {
 				entityToSave.setIsDeleted(dto.getIsDeleted());
+			}
+			applyTimingInheritance(entityToSave);
+			if (!Boolean.TRUE.equals(entityToSave.getIsDeleted())) {
+				validateFormTimingConfiguration(entityToSave, locale);
 			}
 			entityToSave.setUpdatedAt(Utilities.getCurrentDate());
 			entityToSave.setUpdatedBy(request.getUser());
@@ -488,6 +511,237 @@ public class FormBusiness implements IBasicBusiness<Request<FormDto>, Response<F
 		}
 		log.info("----end updateAll Form-----");
 		return response;
+	}
+
+	@Transactional
+	public void applyCampaignTimeAllForms(Campaigns campaign, Integer actorUserId, Locale locale) {
+		if (campaign == null || campaign.getId() == null || !Boolean.TRUE.equals(campaign.getTimeAllForms())) {
+			return;
+		}
+
+		List<Form> linkedForms = formRepository.findByCampaignId(campaign.getId(), false);
+		if (linkedForms == null || linkedForms.isEmpty()) {
+			return;
+		}
+
+		List<Form> formsToSave = new ArrayList<Form>();
+		List<String> timingErrors = new ArrayList<String>();
+		for (Form form : linkedForms) {
+			if (form == null) {
+				continue;
+			}
+
+			form.setCampaigns(campaign);
+			boolean timingChanged = !Boolean.TRUE.equals(form.getIsTimed());
+			form.setIsTimed(true);
+			timingErrors.addAll(collectTimingErrorsForForm(form));
+			if (timingChanged) {
+				form.setUpdatedAt(Utilities.getCurrentDate());
+				form.setUpdatedBy(actorUserId);
+				formsToSave.add(form);
+			}
+		}
+
+		if (!timingErrors.isEmpty()) {
+			throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+					"Activation impossible du chronometrage campagne: " + String.join("; ", timingErrors),
+					locale));
+		}
+
+		if (!formsToSave.isEmpty()) {
+			formRepository.saveAll(formsToSave);
+		}
+	}
+
+	public boolean isQuizTimed(Campaigns campaign, Form form) {
+		if (campaign != null && Boolean.TRUE.equals(campaign.getTimeAllForms())) {
+			return true;
+		}
+		return isFormEffectivelyTimed(form);
+	}
+
+	public Integer calculateTotalTimeAllowed(Campaigns campaign, Form form, List<FormQuestions> formQuestions) {
+		if (!isQuizTimed(campaign, form)) {
+			return null;
+		}
+
+		int totalTimeAllowed = 0;
+		if (formQuestions != null) {
+			for (FormQuestions formQuestion : formQuestions) {
+				if (formQuestion == null || formQuestion.getQuestion() == null || Boolean.TRUE.equals(formQuestion.getQuestion().getIsDeleted())) {
+					continue;
+				}
+				Integer chrono = resolveEffectiveChrono(formQuestion.getQuestion(), formQuestion.getChronoOverride());
+				if (chrono != null && chrono > 0) {
+					totalTimeAllowed += chrono;
+				}
+			}
+		}
+
+		return totalTimeAllowed;
+	}
+
+	public void validateFormVersionTiming(FormVersion formVersion, Locale locale) {
+		if (formVersion == null || !isFormEffectivelyTimed(formVersion.getForm())) {
+			return;
+		}
+
+		List<String> timingErrors = collectTimingErrorsForFormVersion(formVersion);
+		if (!timingErrors.isEmpty()) {
+			throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+					"Chronometrage invalide: " + String.join("; ", timingErrors),
+					locale));
+		}
+	}
+
+	public void validateTimedFormQuestion(FormVersion formVersion, Question question, Integer chronoOverride, Locale locale) {
+		if (formVersion == null || !isFormEffectivelyTimed(formVersion.getForm())) {
+			return;
+		}
+
+		Integer effectiveChrono = resolveEffectiveChrono(question, chronoOverride);
+		if (effectiveChrono != null && effectiveChrono > 0) {
+			return;
+		}
+
+		throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+				"Chronometrage invalide: " + buildTimingErrorLabel(formVersion.getForm(), formVersion, question),
+				locale));
+	}
+
+	public void validateQuestionChronoUsage(Question question, Locale locale) {
+		if (question == null || question.getId() == null) {
+			return;
+		}
+
+		List<String> timingErrors = new ArrayList<String>();
+		List<FormQuestions> formQuestionLinks = formQuestionsRepository.findByQuestionId(question.getId(), false);
+		if (formQuestionLinks == null || formQuestionLinks.isEmpty()) {
+			return;
+		}
+
+		for (FormQuestions formQuestion : formQuestionLinks) {
+			if (formQuestion == null || formQuestion.getFormVersion() == null) {
+				continue;
+			}
+			FormVersion formVersion = formQuestion.getFormVersion();
+			if (!isFormEffectivelyTimed(formVersion.getForm())) {
+				continue;
+			}
+			Integer effectiveChrono = resolveEffectiveChrono(question, formQuestion.getChronoOverride());
+			if (effectiveChrono == null || effectiveChrono <= 0) {
+				timingErrors.add(buildTimingErrorLabel(formVersion.getForm(), formVersion, question));
+			}
+		}
+
+		if (!timingErrors.isEmpty()) {
+			throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+					"Chronometrage invalide: " + String.join("; ", timingErrors),
+					locale));
+		}
+	}
+
+	private void applyTimingInheritance(Form form) {
+		if (form == null) {
+			return;
+		}
+
+		if (form.getIsTimed() == null) {
+			form.setIsTimed(false);
+		}
+		if (form.getCampaigns() != null && Boolean.TRUE.equals(form.getCampaigns().getTimeAllForms())) {
+			form.setIsTimed(true);
+		}
+	}
+
+	private void validateFormTimingConfiguration(Form form, Locale locale) {
+		if (form == null || !isFormEffectivelyTimed(form)) {
+			return;
+		}
+
+		List<String> timingErrors = collectTimingErrorsForForm(form);
+		if (!timingErrors.isEmpty()) {
+			throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+					"Chronometrage invalide: " + String.join("; ", timingErrors),
+					locale));
+		}
+	}
+
+	private boolean isFormEffectivelyTimed(Form form) {
+		if (form == null) {
+			return false;
+		}
+		if (Boolean.TRUE.equals(form.getIsTimed())) {
+			return true;
+		}
+		return form.getCampaigns() != null && Boolean.TRUE.equals(form.getCampaigns().getTimeAllForms());
+	}
+
+	private List<String> collectTimingErrorsForForm(Form form) {
+		List<String> timingErrors = new ArrayList<String>();
+		if (form == null || form.getId() == null) {
+			return timingErrors;
+		}
+
+		List<FormVersion> formVersions = formVersionRepository.findByFormId(form.getId(), false);
+		if (formVersions == null || formVersions.isEmpty()) {
+			return timingErrors;
+		}
+
+		for (FormVersion formVersion : formVersions) {
+			timingErrors.addAll(collectTimingErrorsForFormVersion(formVersion));
+		}
+		return timingErrors;
+	}
+
+	private List<String> collectTimingErrorsForFormVersion(FormVersion formVersion) {
+		List<String> timingErrors = new ArrayList<String>();
+		if (formVersion == null || formVersion.getId() == null) {
+			return timingErrors;
+		}
+
+		List<FormQuestions> formQuestions = formQuestionsRepository.findByFormVersionIdOrderByQuestionOrder(formVersion.getId(), false);
+		if (formQuestions == null || formQuestions.isEmpty()) {
+			return timingErrors;
+		}
+
+		for (FormQuestions formQuestion : formQuestions) {
+			if (formQuestion == null) {
+				continue;
+			}
+
+			Question question = formQuestion.getQuestion();
+			if (question == null || Boolean.TRUE.equals(question.getIsDeleted())) {
+				continue;
+			}
+
+			Integer effectiveChrono = resolveEffectiveChrono(question, formQuestion.getChronoOverride());
+			if (effectiveChrono == null || effectiveChrono <= 0) {
+				timingErrors.add(buildTimingErrorLabel(formVersion.getForm(), formVersion, question));
+			}
+		}
+
+		return timingErrors;
+	}
+
+	private Integer resolveEffectiveChrono(Question question, Integer chronoOverride) {
+		if (chronoOverride != null) {
+			return chronoOverride;
+		}
+		return question != null ? question.getQuestionChrono() : null;
+	}
+
+	private String buildTimingErrorLabel(Form form, FormVersion formVersion, Question question) {
+		String formLabel = form != null && StringUtils.isNotBlank(form.getFormName())
+				? form.getFormName()
+				: "Formulaire sans nom";
+		String versionLabel = formVersion != null && formVersion.getVersionNumber() != null
+				? "version " + formVersion.getVersionNumber()
+				: "version non definie";
+		String questionLabel = question != null
+				? StringUtils.defaultIfBlank(question.getQuestionRef(), question.getQuestionText())
+				: "question inconnue";
+		return "formulaire '" + formLabel + "', " + versionLabel + ", question '" + questionLabel + "'";
 	}
 
 	private FormDto getFullInfos(FormDto dto, Integer size, Boolean isSimpleLoading, Locale locale) throws Exception {

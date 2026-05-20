@@ -92,6 +92,16 @@ public class EmailTemplateBusiness implements IBasicBusiness<Request<EmailTempla
             entityToSave.setCreatedBy(request.getUser());
             entityToSave.setIsDeleted(false);
             if (entityToSave.getIsActive() == null) entityToSave.setIsActive(true);
+            // Validation enum strict actionType si fourni (D-013)
+            if (entityToSave.getActionType() != null && !entityToSave.getActionType().isBlank()) {
+                String actionUpper = entityToSave.getActionType().toUpperCase(java.util.Locale.ROOT);
+                try {
+                    tech.synelia.quizapp.utils.enums.EmailActionType.valueOf(actionUpper);
+                } catch (IllegalArgumentException ex) {
+                    throw new InvalidEntityException(functionalError.DATA_NOT_EXIST("actionType invalide -> " + entityToSave.getActionType(), locale));
+                }
+                entityToSave.setActionType(actionUpper);
+            }
             ensureSingleActiveTemplatePerActionType(entityToSave, request.getUser());
             entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(entityToSave)));
             items.add(entityToSave);
@@ -146,7 +156,15 @@ public class EmailTemplateBusiness implements IBasicBusiness<Request<EmailTempla
             if (dto.getEditableVariablesJson() != null) entityToSave.setEditableVariablesJson(StringUtils.trimToNull(dto.getEditableVariablesJson()));
             if (Utilities.shouldUpdate(dto.getDescription())) entityToSave.setDescription(dto.getDescription());
             if (Utilities.shouldUpdate(dto.getAvailableVariables())) entityToSave.setAvailableVariables(dto.getAvailableVariables());
-            if (Utilities.shouldUpdate(dto.getActionType())) entityToSave.setActionType(dto.getActionType());
+            if (Utilities.shouldUpdate(dto.getActionType())) {
+                String actionUpper = dto.getActionType().toUpperCase(java.util.Locale.ROOT);
+                try {
+                    tech.synelia.quizapp.utils.enums.EmailActionType.valueOf(actionUpper);
+                } catch (IllegalArgumentException ex) {
+                    throw new InvalidEntityException(functionalError.DATA_NOT_EXIST("actionType invalide -> " + dto.getActionType(), locale));
+                }
+                entityToSave.setActionType(actionUpper);
+            }
             if (dto.getPresetId() != null) entityToSave.setPresetId(dto.getPresetId());
             if (dto.getIsActive() != null) entityToSave.setIsActive(dto.getIsActive());
             if (dto.getIsDeleted() != null) entityToSave.setIsDeleted(dto.getIsDeleted());

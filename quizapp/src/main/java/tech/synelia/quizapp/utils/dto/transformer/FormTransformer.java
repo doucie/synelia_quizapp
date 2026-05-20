@@ -9,6 +9,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 import org.mapstruct.Named;
+import org.mapstruct.ReportingPolicy;
 import org.mapstruct.factory.Mappers;
 
 import tech.synelia.quizapp.dao.entity.*;
@@ -18,7 +19,7 @@ import tech.synelia.quizapp.utils.dto.*;
 /**
  * TRANSFORMER for table "form"
  */
-@Mapper
+@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface FormTransformer {
 
 	FormTransformer INSTANCE = Mappers.getMapper(FormTransformer.class);
@@ -28,6 +29,7 @@ public interface FormTransformer {
 	@Mappings({
 		@Mapping(source="entity.createdAt", dateFormat="dd/MM/yyyy", target="createdAt"),
 		@Mapping(source="entity.updatedAt", dateFormat="dd/MM/yyyy", target="updatedAt"),
+		@Mapping(source="entity.isTimed", target="isTimed"),
 		@Mapping(source="entity.campaigns.id", target="campaignId"),
 	})
 	FormDto toDto(Form entity) throws ParseException;
@@ -50,7 +52,7 @@ public interface FormTransformer {
 		if (entities == null || entities.isEmpty()) {
 			return new ArrayList<>();
 		}
-		List<FormDto> dtos = new ArrayList<FormDto>();
+		List<FormDto> dtos = new ArrayList<>();
 		for (Form entity : entities) {
 			dtos.add(toLiteDto(entity));
 		}
@@ -62,6 +64,7 @@ public interface FormTransformer {
 		@Mapping(source="dto.formName", target="formName"),
 		@Mapping(source="dto.formDesc", target="formDesc"),
 		@Mapping(source="dto.isActive", target="isActive"),
+		@Mapping(source="dto.isTimed", target="isTimed"),
 		@Mapping(source="dto.createdAt", dateFormat="dd/MM/yyyy", target="createdAt"),
 		@Mapping(source="dto.createdBy", target="createdBy"),
 		@Mapping(source="dto.updatedAt", dateFormat="dd/MM/yyyy", target="updatedAt"),

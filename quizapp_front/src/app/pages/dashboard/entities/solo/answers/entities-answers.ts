@@ -53,7 +53,9 @@ export class EntitiesAnswersComponent implements OnInit, OnDestroy {
   saveFromDetail(data: any): void {
     this.answerService.updateAnswer(data.id, data).subscribe({
       next: () => { this.selectedItem.set(data); this.loadAnswers(); this.notificationService.success('Succès', 'Réponse modifiée'); },
-      error: () => { this.notificationService.error('Erreur', 'Erreur lors de la modification'); }
+      error: (error: any) => {
+        this.notificationService.error('Erreur', error?.error?.message || error?.message || 'Erreur lors de la modification');
+      }
     });
   }
 
@@ -99,10 +101,10 @@ export class EntitiesAnswersComponent implements OnInit, OnDestroy {
   readonly allColumns: ColumnDef[] = [
     { key: 'id', label: 'ID', priority: 1 },
     { key: 'answerText', label: 'Texte de la réponse', priority: 1 },
-    { key: 'questionId', label: 'Question ID', priority: 2 },
-    { key: 'order', label: 'Ordre', priority: 3 },
-    { key: 'type', label: 'Type', priority: 2 },
-    { key: 'correct', label: 'Correcte', priority: 2 },
+    { key: 'questionId', label: 'Question', priority: 2 },
+    { key: 'answerOrder', label: 'Ordre', priority: 3 },
+    { key: 'answerType', label: 'Type', priority: 2 },
+    { key: 'isCorrect', label: 'Correcte', priority: 2 },
     { key: 'createdAt', label: 'Créé le', priority: 3 },
     { key: 'actions', label: 'Actions', priority: 1 },
   ];
@@ -455,7 +457,7 @@ export class EntitiesAnswersComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('❌ Erreur lors de la suppression:', error);
-        this.notificationService.error('Erreur', 'Erreur lors de la suppression de la réponse');
+        this.notificationService.error('Erreur', error?.error?.message || error?.message || 'Erreur lors de la suppression de la réponse');
         this.cancelDeleteAnswer();
       }
     });
@@ -494,7 +496,7 @@ export class EntitiesAnswersComponent implements OnInit, OnDestroy {
         this.loadAnswers();
       },
       error: (error: any) => {
-        this.notificationService.error('Erreur', 'Erreur lors de la restauration de la réponse');
+        this.notificationService.error('Erreur', error?.error?.message || error?.message || 'Erreur lors de la restauration de la réponse');
         this.cancelRestoreAnswer();
       }
     });
@@ -537,6 +539,10 @@ export class EntitiesAnswersComponent implements OnInit, OnDestroy {
 
   goBackToEntities() {
     this.router.navigate(['/dashboard/entities']);
+  }
+
+  openAnswersWorkspace() {
+    this.router.navigate(['/dashboard/answers']);
   }
 
   trackByAnswerId(index: number, answer: Answer): number {
@@ -635,5 +641,17 @@ export class EntitiesAnswersComponent implements OnInit, OnDestroy {
     if (!text) return '-';
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '...';
+  }
+
+  getQuestionDisplay(questionId?: number): string {
+    if (!questionId) return '-';
+
+    const question = this.allQuestions().find((item) => item.id === questionId);
+    if (!question) {
+      return `#${questionId}`;
+    }
+
+    const prefix = question.questionRef ? `${question.questionRef} - ` : `#${questionId} - `;
+    return `${prefix}${question.questionText || 'Question sans libellé'}`;
   }
 }

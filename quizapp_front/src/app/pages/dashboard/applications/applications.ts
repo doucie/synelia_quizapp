@@ -53,6 +53,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   viewMode = signal<ViewMode>('grid');
   showOnlySharedCampaigns = signal(false); // Décochée par défaut
   lockedCampaignId = signal<number | null>(null); // Campagne verrouillée depuis l'URL
+  focusedApplicationId = signal<number | null>(null);
   
   // Signals pour modal CV
   cvPreviewUrl = signal<SafeResourceUrl | null>(null);
@@ -84,7 +85,20 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
           console.log(`🔒 Campagne verrouillée: #${campaignId}`);
           this.lockedCampaignId.set(campaignId);
         }
+
+		this.focusedApplicationId.set(null);
+		return;
+	  }
+
+	  if (fragment && fragment.startsWith('application-')) {
+		const applicationId = parseInt(fragment.replace('application-', ''), 10);
+		if (!isNaN(applicationId)) {
+		  this.focusedApplicationId.set(applicationId);
+		}
+		return;
       }
+
+	  this.focusedApplicationId.set(null);
     });
     
     this.loadData();
@@ -427,6 +441,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     
     console.log(`\n✅ ${enrichedApplications.length} candidatures enrichies et affichées`);
     this.applications.set(enrichedApplications);
+    this.scrollToFocusedApplication();
 
     // Charger les pipelines dynamiques pour chaque campagne et candidature
     const campaignTemplateIds = new Map<number, number>();
@@ -1022,7 +1037,9 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
    * Navigation vers les détails
    */
   viewApplicationDetails(applicationId: number): void {
-    this.router.navigate(['/dashboard/candidates', applicationId]);
+    this.router.navigate(['/dashboard/candidates'], {
+      fragment: `application-${applicationId}`
+    });
   }
 
   /**
@@ -1131,6 +1148,18 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     if (app.candidateCvPath) {
       window.open(app.candidateCvPath, '_blank');
     }
+  }
+
+  private scrollToFocusedApplication(): void {
+    const applicationId = this.focusedApplicationId();
+    if (applicationId == null || typeof document === 'undefined') {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      const target = document.getElementById(`application-${applicationId}`);
+      target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
   }
 
   /**
@@ -1262,7 +1291,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   }
 
   private canPlanifyInterviewForCampaign(campaignId?: number | null): boolean {
-    if (this.permissionService.hasAnyPermission(['CREATE_INTERVIEWS', 'UPDATE_INTERVIEWS'])) {
+  if (this.permissionService.hasAnyPermission(['CREATE_INTERVIEWS', 'UPDATE_INTERVIEWS', 'PLANIFY'])) {
       return true;
     }
     if (!campaignId) {

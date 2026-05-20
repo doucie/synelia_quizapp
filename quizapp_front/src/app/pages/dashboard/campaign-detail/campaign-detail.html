@@ -176,6 +176,37 @@
             </div>
           }
 
+          @if (campaign()?.timeAllForms !== undefined) {
+            <div class="meta-card">
+              <div class="meta-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+              </div>
+              <div class="meta-content">
+                <span class="meta-label">Gestion du temps</span>
+                <span class="meta-value">{{ campaign()?.timeAllForms ? 'Temps global sur tous les formulaires' : 'Temps géré par formulaire' }}</span>
+              </div>
+            </div>
+          }
+
+          @if (campaign()?.isArchived !== undefined) {
+            <div class="meta-card">
+              <div class="meta-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 8v13H3V8"></path>
+                  <path d="M1 3h22v5H1z"></path>
+                  <path d="M10 12h4"></path>
+                </svg>
+              </div>
+              <div class="meta-content">
+                <span class="meta-label">Archivage</span>
+                <span class="meta-value">{{ campaign()?.isArchived ? 'Archivée' : 'Non archivée' }}</span>
+              </div>
+            </div>
+          }
+
           @if (campaign()?.markedOutOf) {
             <div class="meta-card">
               <div class="meta-icon">

@@ -29,10 +29,15 @@ public class EmailBusiness {
     @Autowired
     private TemplateEngine templateEngine;
 
+    @Autowired
+    private MailLogService mailLogService;
+
     /**
      * Envoie un email de vérification de candidature
      */
     public void sendApplicationVerificationEmail(String toEmail, Map<String, Object> templateData) {
+        String subject = "Confirmation de réception de votre candidature - Synelia";
+        String htmlContent = null;
         try {
             log.info("Envoi d'email de vérification de candidature à : " + toEmail);
 
@@ -41,22 +46,25 @@ public class EmailBusiness {
             context.setVariables(templateData);
 
             // Générer le contenu HTML
-            String htmlContent = templateEngine.process("verification-candidature", context);
+            htmlContent = templateEngine.process("verification-candidature", context);
 
             // Créer le message
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, StandardCharsets.UTF_8.name());
 
             helper.setTo(toEmail);
-            helper.setSubject("Confirmation de réception de votre candidature - Synelia");
+            helper.setSubject(subject);
             helper.setText(htmlContent, true); // true = HTML
 
             // Envoyer l'email
             mailSender.send(message);
 
+            mailLogService.logEmailResult(toEmail, null, null, null, subject, htmlContent, true, null);
+
             log.info("Email de vérification envoyé avec succès à : " + toEmail);
 
-        } catch (MessagingException e) {
+        } catch (MessagingException | RuntimeException e) {
+            mailLogService.logEmailResult(toEmail, null, null, null, subject, htmlContent, false, e.getMessage());
             log.severe("Erreur lors de l'envoi de l'email de vérification : " + e.getMessage());
             throw new RuntimeException("Erreur lors de l'envoi de l'email", e);
         }

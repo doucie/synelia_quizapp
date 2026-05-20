@@ -10,6 +10,8 @@ import java.util.stream.Collectors;
 
 import tech.synelia.quizapp.utils.*;
 import tech.synelia.quizapp.utils.dto.*;
+import tech.synelia.quizapp.utils.enums.FunctionalityEnum;
+import tech.synelia.quizapp.utils.enums.UserRole;
 import tech.synelia.quizapp.utils.exception.*;
 import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
@@ -41,6 +43,7 @@ public class SystemRolePermissionBusiness {
 		if (Utilities.isBlank(systemRole)) {
 			throw new InvalidEntityException(functionalError.FIELD_EMPTY("systemRole", locale));
 		}
+		systemRole = normalizeSystemRole(systemRole, locale);
 
 		List<SystemRolePermission> entities = systemRolePermissionRepository.findBySystemRole(systemRole);
 		List<SystemRolePermissionDto> dtos = entities.stream().map(e -> {
@@ -74,22 +77,27 @@ public class SystemRolePermissionBusiness {
 			throw new InvalidEntityException(functionalError.FIELD_EMPTY("systemRole or functionality", locale));
 		}
 
-		if (SUPER_ADMIN.equals(dto.getSystemRole())) {
+		String normalizedSystemRole = normalizeSystemRole(dto.getSystemRole(), locale);
+		String normalizedFunctionality = normalizeFunctionality(dto.getFunctionality(), locale);
+
+		if (SUPER_ADMIN.equals(normalizedSystemRole)) {
 			throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION("Impossible de modifier les permissions de SUPER_ADMIN", locale));
 		}
 
 		// Vérifier si la permission existe déjà
-		boolean exists = systemRolePermissionRepository.existsBySystemRoleAndFunctionality(dto.getSystemRole(), dto.getFunctionality());
+		boolean exists = systemRolePermissionRepository.existsBySystemRoleAndFunctionality(normalizedSystemRole, normalizedFunctionality);
 		if (exists) {
-			throw new InternalErrorException(functionalError.DATA_EXIST("permission " + dto.getSystemRole() + "/" + dto.getFunctionality(), locale));
+			throw new InternalErrorException(functionalError.DATA_EXIST("permission " + normalizedSystemRole + "/" + normalizedFunctionality, locale));
 		}
 
 		SystemRolePermission entity = new SystemRolePermission();
-		entity.setSystemRole(dto.getSystemRole());
-		entity.setFunctionality(dto.getFunctionality());
+		entity.setSystemRole(normalizedSystemRole);
+		entity.setFunctionality(normalizedFunctionality);
 		entity.setCreatedAt(Utilities.getCurrentDate());
 		entity.setCreatedBy(request.getUser());
 		systemRolePermissionRepository.save(entity);
+		dto.setSystemRole(normalizedSystemRole);
+		dto.setFunctionality(normalizedFunctionality);
 
 		dto.setId(entity.getId());
 
@@ -115,19 +123,22 @@ public class SystemRolePermissionBusiness {
 			throw new InvalidEntityException(functionalError.FIELD_EMPTY("systemRole or functionality", locale));
 		}
 
-		if (SUPER_ADMIN.equals(dto.getSystemRole())) {
+		String normalizedSystemRole = normalizeSystemRole(dto.getSystemRole(), locale);
+		String normalizedFunctionality = normalizeFunctionality(dto.getFunctionality(), locale);
+
+		if (SUPER_ADMIN.equals(normalizedSystemRole)) {
 			throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION("Impossible de modifier les permissions de SUPER_ADMIN", locale));
 		}
 
 		// Trouver et supprimer
-		List<SystemRolePermission> allPerms = systemRolePermissionRepository.findBySystemRole(dto.getSystemRole());
+		List<SystemRolePermission> allPerms = systemRolePermissionRepository.findBySystemRole(normalizedSystemRole);
 		SystemRolePermission toRemove = allPerms.stream()
-				.filter(p -> dto.getFunctionality().equals(p.getFunctionality()))
+				.filter(p -> normalizedFunctionality.equals(p.getFunctionality()))
 				.findFirst()
 				.orElse(null);
 
 		if (toRemove == null) {
-			throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("permission " + dto.getSystemRole() + "/" + dto.getFunctionality(), locale));
+			throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("permission " + normalizedSystemRole + "/" + normalizedFunctionality, locale));
 		}
 
 		systemRolePermissionRepository.delete(toRemove);
@@ -146,6 +157,7 @@ public class SystemRolePermissionBusiness {
 	 */
 	public Response<SystemRolePermissionDto> getByCriteria(Request<SystemRolePermissionDto> request, Locale locale) throws Exception {
 		log.info("----begin get SystemRolePermission-----");
+		normalizeCriteria(request, locale);
 		Response<SystemRolePermissionDto> response = new Response<>();
 
 		List<SystemRolePermission> items = systemRolePermissionRepository.getByCriteria(request, em, locale);
@@ -181,6 +193,20 @@ public class SystemRolePermissionBusiness {
 		return response;
 	}
 
+	private void normalizeCriteria(Request<SystemRolePermissionDto> request, Locale locale) {
+		SystemRolePermissionDto dto = request != null ? request.getData() : null;
+		if (dto == null) {
+			return;
+		}
+
+		if (Utilities.notBlank(dto.getSystemRole())) {
+			dto.setSystemRole(normalizeSystemRole(dto.getSystemRole(), locale));
+		}
+		if (Utilities.notBlank(dto.getFunctionality())) {
+			dto.setFunctionality(normalizeFunctionality(dto.getFunctionality(), locale));
+		}
+	}
+
 	/**
 	 * Modifier une permission système par ID.
 	 */
@@ -201,8 +227,19 @@ public class SystemRolePermissionBusiness {
 			throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION("Impossible de modifier les permissions de SUPER_ADMIN", locale));
 		}
 
-		if (Utilities.notBlank(dto.getSystemRole())) entity.setSystemRole(dto.getSystemRole());
-		if (Utilities.notBlank(dto.getFunctionality())) entity.setFunctionality(dto.getFunctionality());
+		if (Utilities.notBlank(dto.getSystemRole())) {
+			String normalizedSystemRole = normalizeSystemRole(dto.getSystemRole(), locale);
+			if (SUPER_ADMIN.equals(normalizedSystemRole)) {
+				throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION("Impossible de modifier les permissions de SUPER_ADMIN", locale));
+			}
+			entity.setSystemRole(normalizedSystemRole);
+			dto.setSystemRole(normalizedSystemRole);
+		}
+		if (Utilities.notBlank(dto.getFunctionality())) {
+			String normalizedFunctionality = normalizeFunctionality(dto.getFunctionality(), locale);
+			entity.setFunctionality(normalizedFunctionality);
+			dto.setFunctionality(normalizedFunctionality);
+		}
 		entity.setUpdatedAt(Utilities.getCurrentDate());
 		entity.setUpdatedBy(request.getUser());
 		systemRolePermissionRepository.save(entity);
@@ -215,6 +252,27 @@ public class SystemRolePermissionBusiness {
 		response.setHttpCode(HttpStatus.OK.value());
 		response.setStatus(status);
 		return response;
+	}
+
+	private String normalizeSystemRole(String systemRole, Locale locale) {
+		String normalizedSystemRole = UserRole.normalizeSystemRole(systemRole);
+		if (normalizedSystemRole == null) {
+			throw new InvalidEntityException(functionalError.DATA_NOT_EXIST(
+					"systemRole invalide (SUPER_ADMIN/ADMIN/RECRUITER/CANDIDATE) -> " + systemRole,
+					locale));
+		}
+		return normalizedSystemRole;
+	}
+
+	private String normalizeFunctionality(String functionality, Locale locale) {
+		String normalizedFunctionality = functionality != null ? functionality.trim().toUpperCase(Locale.ROOT) : null;
+		try {
+			return FunctionalityEnum.valueOf(normalizedFunctionality).name();
+		} catch (RuntimeException exception) {
+			throw new InvalidEntityException(functionalError.DATA_NOT_EXIST(
+					"functionality invalide -> " + functionality,
+					locale));
+		}
 	}
 
 	/**

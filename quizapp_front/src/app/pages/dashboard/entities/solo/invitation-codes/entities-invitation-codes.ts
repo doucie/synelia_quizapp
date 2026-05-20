@@ -33,6 +33,7 @@ export class EntitiesInvitationCodesComponent extends EntityCrudBase<InvitationC
   protected override readonly pageSizeStorageKey = 'entitiesInvitationCodesPageSize';
   protected override readonly entityName = 'codes d\'invitation';
   protected override readonly entityTypeApi = 'invitationCode';
+  override canRestoreItems = false;
 
   advancedCriteria: InvitationCodeCriteria = {};
   editFormData: InvitationCode = {} as InvitationCode;
@@ -44,10 +45,22 @@ export class EntitiesInvitationCodesComponent extends EntityCrudBase<InvitationC
     { key: 'role', label: 'Rôle', priority: 2 },
     { key: 'code', label: 'Code', priority: 1 },
     { key: 'used', label: 'Utilisé?', priority: 2 },
-    { key: 'expiresAt', label: 'Expire le', priority: 2 },
+    { key: 'expiredAt', label: 'Expire le', priority: 2 },
     { key: 'deleted', label: 'Supprimé', priority: 3 },
     { key: 'createdAt', label: 'Créé le', priority: 2 },
     { key: 'actions', label: 'Actions', priority: 1 },
+  ];
+
+  override detailFields = [
+    { key: 'id', label: 'ID', type: 'id' as const, editable: false },
+    { key: 'email', label: 'Email', editable: false },
+    { key: 'role', label: 'Rôle', editable: false },
+    { key: 'code', label: 'Code', editable: false },
+    { key: 'isUsed', label: 'Utilisé', type: 'boolean' as const, editable: false },
+    { key: 'expiredAt', label: 'Expire le', type: 'date' as const, editable: false },
+    { key: 'isDeleted', label: 'Supprimé', type: 'boolean' as const, editable: false },
+    { key: 'createdAt', label: 'Créé le', type: 'date' as const, editable: false },
+    { key: 'updatedAt', label: 'Modifié le', type: 'date' as const, editable: false },
   ];
 
   protected fetchAll(criteria: InvitationCodeCriteria): Observable<PagedInvitationCodeResponse> {
@@ -66,4 +79,30 @@ export class EntitiesInvitationCodesComponent extends EntityCrudBase<InvitationC
   protected performRestore(id: number): Observable<any> { return throwError(() => new Error('Restore non supporté pour les codes d\'invitation')); }
   protected resetAdvancedCriteriaValues(): void { this.advancedCriteria = {}; }
   protected resetCreateFormData(): void { this.createFormData = {}; }
+
+  canResend(item: InvitationCode): boolean {
+    return !!item.id && !!item.email && !item.isDeleted && !item.isUsed;
+  }
+
+  resendInvitation(item: InvitationCode): void {
+    if (!this.canResend(item)) {
+      this.notificationService.warning('Attention', 'Seuls les codes actifs non utilisés peuvent être renvoyés.');
+      return;
+    }
+
+    this.service.resend(item.id).subscribe({
+      next: (response) => {
+        if (response.hasError) {
+          this.notificationService.error('Erreur', response.message || 'Erreur lors du renvoi du code d\'invitation');
+          return;
+        }
+
+        this.notificationService.success('Succès', response.message || 'Code d\'invitation renvoyé avec succès');
+        this.loadItems();
+      },
+      error: (error) => {
+        this.notificationService.error('Erreur', this.getErrorMessage(error, 'Erreur lors du renvoi du code d\'invitation'));
+      }
+    });
+  }
 }

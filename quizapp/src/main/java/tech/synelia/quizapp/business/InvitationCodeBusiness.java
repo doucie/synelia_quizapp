@@ -3,7 +3,6 @@ package tech.synelia.quizapp.business;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -38,6 +37,7 @@ import tech.synelia.quizapp.utils.Utilities;
 import tech.synelia.quizapp.utils.Validate;
 import tech.synelia.quizapp.utils.contract.IBasicBusiness;
 import tech.synelia.quizapp.utils.contract.Request;
+import tech.synelia.quizapp.utils.enums.UserRole;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.dto.InvitationCodeDto;
 import tech.synelia.quizapp.utils.dto.transformer.InvitationCodeTransformer;
@@ -99,11 +99,9 @@ public class InvitationCodeBusiness implements IBasicBusiness<Request<Invitation
             }
 
             // Validate role
-            String role = dto.getRole() != null ? dto.getRole() : "recruiter";
-            List<String> validRoles = Arrays.asList("admin", "recruiter");
-            if (!validRoles.contains(role)) {
-                throw new InvalidEntityException(functionalError.INVALID_FORMAT("role -> " + role + " (valeurs autorisées: admin, recruiter)", locale));
-            }
+            String role = normalizeInvitationRole(
+                    dto.getRole() != null ? dto.getRole() : UserRole.RECRUITER.getValue(),
+                    locale);
 
             // Generate unique invitation code
             String code = UUID.randomUUID().toString().replace("-", "").substring(0, 32);
@@ -184,7 +182,9 @@ public class InvitationCodeBusiness implements IBasicBusiness<Request<Invitation
             }
 
             if (Utilities.shouldUpdate(dto.getEmail())) entityToSave.setEmail(dto.getEmail());
-            if (Utilities.shouldUpdate(dto.getRole())) entityToSave.setRole(dto.getRole());
+            if (Utilities.shouldUpdate(dto.getRole())) {
+                entityToSave.setRole(normalizeInvitationRole(dto.getRole(), locale));
+            }
             if (dto.getIsUsed() != null) entityToSave.setIsUsed(dto.getIsUsed());
             entityToSave.setExpiredAt(resolveRequestedExpiry(dto.getExpiredAt(), entityToSave.getExpiredAt()));
             if (dto.getIsDeleted() != null) entityToSave.setIsDeleted(dto.getIsDeleted());
@@ -248,6 +248,16 @@ public class InvitationCodeBusiness implements IBasicBusiness<Request<Invitation
         }
         log.info("----end delete InvitationCode-----");
         return response;
+    }
+
+    private String normalizeInvitationRole(String role, Locale locale) {
+        UserRole normalizedRole = UserRole.fromValue(role);
+        if (normalizedRole != UserRole.ADMIN && normalizedRole != UserRole.RECRUITER) {
+            throw new InvalidEntityException(functionalError.DATA_NOT_EXIST(
+                    "role invalide (admin/recruiter) -> " + role,
+                    locale));
+        }
+        return normalizedRole.getValue();
     }
 
     @Override

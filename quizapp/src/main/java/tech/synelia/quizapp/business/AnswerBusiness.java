@@ -72,6 +72,13 @@ public class AnswerBusiness implements IBasicBusiness<Request<AnswerDto>, Respon
 				throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
 			}
 
+			// Validation enum strict answerType (D-013)
+			String aTypeUpper = dto.getAnswerType().toUpperCase(java.util.Locale.ROOT);
+			if (!"FIXED".equals(aTypeUpper) && !"FREE".equals(aTypeUpper)) {
+				throw new InvalidEntityException(functionalError.DATA_NOT_EXIST("answerType invalide (FIXED/FREE) -> " + dto.getAnswerType(), locale));
+			}
+			dto.setAnswerType(aTypeUpper);
+
 			// Verify if question exists
 			Question existingQuestion = null;
 			if (dto.getQuestionId() != null && dto.getQuestionId() > 0) {
@@ -162,7 +169,11 @@ public class AnswerBusiness implements IBasicBusiness<Request<AnswerDto>, Respon
 				entityToSave.setAnswerText(dto.getAnswerText());
 			}
 			if (Utilities.shouldUpdate(dto.getAnswerType())) {
-				entityToSave.setAnswerType(dto.getAnswerType());
+				String aTypeUpper = dto.getAnswerType().toUpperCase(java.util.Locale.ROOT);
+				if (!"FIXED".equals(aTypeUpper) && !"FREE".equals(aTypeUpper)) {
+					throw new InvalidEntityException(functionalError.DATA_NOT_EXIST("answerType invalide (FIXED/FREE) -> " + dto.getAnswerType(), locale));
+				}
+				entityToSave.setAnswerType(aTypeUpper);
 			}
 			if (dto.getAnswerOrder() != null) {
 				entityToSave.setAnswerOrder(dto.getAnswerOrder());
@@ -400,7 +411,11 @@ public class AnswerBusiness implements IBasicBusiness<Request<AnswerDto>, Respon
 				entityToSave.setAnswerText(dto.getAnswerText());
 			}
 			if (Utilities.shouldUpdate(dto.getAnswerType())) {
-				entityToSave.setAnswerType(dto.getAnswerType());
+				String aTypeUpper = dto.getAnswerType().toUpperCase(java.util.Locale.ROOT);
+				if (!"FIXED".equals(aTypeUpper) && !"FREE".equals(aTypeUpper)) {
+					throw new InvalidEntityException(functionalError.DATA_NOT_EXIST("answerType invalide (FIXED/FREE) -> " + dto.getAnswerType(), locale));
+				}
+				entityToSave.setAnswerType(aTypeUpper);
 			}
 			if (dto.getAnswerOrder() != null) {
 				entityToSave.setAnswerOrder(dto.getAnswerOrder());
@@ -467,7 +482,11 @@ public class AnswerBusiness implements IBasicBusiness<Request<AnswerDto>, Respon
 				entityToSave.setAnswerText(dto.getAnswerText());
 			}
 			if (Utilities.shouldUpdate(dto.getAnswerType())) {
-				entityToSave.setAnswerType(dto.getAnswerType());
+				String aTypeUpper = dto.getAnswerType().toUpperCase(java.util.Locale.ROOT);
+				if (!"FIXED".equals(aTypeUpper) && !"FREE".equals(aTypeUpper)) {
+					throw new InvalidEntityException(functionalError.DATA_NOT_EXIST("answerType invalide (FIXED/FREE) -> " + dto.getAnswerType(), locale));
+				}
+				entityToSave.setAnswerType(aTypeUpper);
 			}
 			if (dto.getAnswerOrder() != null) {
 				entityToSave.setAnswerOrder(dto.getAnswerOrder());

@@ -55,6 +55,14 @@ public class AppConfigBusiness implements IBasicBusiness<Request<AppConfigDto>, 
                 throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
             }
 
+            // Validation enum strict colorScheme (D-013) -- whitelist alignee front COLOR_SCHEMES
+            String csLower = dto.getColorScheme().toLowerCase(java.util.Locale.ROOT);
+            java.util.List<String> validSchemes = java.util.Arrays.asList("violet", "blue", "green", "red", "orange", "teal", "indigo", "rose");
+            if (!validSchemes.contains(csLower)) {
+                throw new InvalidEntityException(functionalError.DATA_NOT_EXIST("colorScheme invalide (violet/blue/green/red/orange/teal/indigo/rose) -> " + dto.getColorScheme(), locale));
+            }
+            dto.setColorScheme(csLower);
+
             AppConfig entityToSave = AppConfigTransformer.INSTANCE.toEntity(dto);
             entityToSave.setAppLink(normalizeOptionalText(dto.getAppLink()));
             entityToSave.setCreatedAt(Utilities.getCurrentDate());
@@ -110,7 +118,14 @@ public class AppConfigBusiness implements IBasicBusiness<Request<AppConfigDto>, 
             if (dto.getAppLink() == null || Utilities.shouldUpdate(dto.getAppLink())) entityToSave.setAppLink(normalizeOptionalText(dto.getAppLink()));
             if (dto.getLogoHtml() != null) entityToSave.setLogoHtml(dto.getLogoHtml());
             if (Utilities.shouldUpdate(dto.getPrimaryColor())) entityToSave.setPrimaryColor(dto.getPrimaryColor());
-            if (Utilities.shouldUpdate(dto.getColorScheme())) entityToSave.setColorScheme(dto.getColorScheme());
+            if (Utilities.shouldUpdate(dto.getColorScheme())) {
+                String csLower = dto.getColorScheme().toLowerCase(java.util.Locale.ROOT);
+                java.util.List<String> validSchemes = java.util.Arrays.asList("violet", "blue", "green", "red", "orange", "teal", "indigo", "rose");
+                if (!validSchemes.contains(csLower)) {
+                    throw new InvalidEntityException(functionalError.DATA_NOT_EXIST("colorScheme invalide (violet/blue/green/red/orange/teal/indigo/rose) -> " + dto.getColorScheme(), locale));
+                }
+                entityToSave.setColorScheme(csLower);
+            }
             if (dto.getCandidateAccountsEnabled() != null) entityToSave.setCandidateAccountsEnabled(dto.getCandidateAccountsEnabled());
             if (dto.getIsActive() != null) entityToSave.setIsActive(dto.getIsActive());
             if (dto.getIsDeleted() != null) entityToSave.setIsDeleted(dto.getIsDeleted());

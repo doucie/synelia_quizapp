@@ -1,6 +1,6 @@
 .interview-create-page {
   min-height: 100vh;
-  background: var(--surface-light);
+  background: var(--surface-secondary);
   padding: var(--spacing-xl);
 }
 
@@ -505,7 +505,7 @@
     transition: var(--transition);
 
     &.btn-secondary {
-      background: var(--surface-light);
+      background: var(--surface);
       color: var(--text-primary);
       border: 1px solid var(--border);
 

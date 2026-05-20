@@ -24,6 +24,12 @@ public interface EntityPermissionRepository extends JpaRepository<EntityPermissi
 	@Query("select e from EntityPermission e where e.user.id = :userId and e.entityType = :entityType and e.entityId = :entityId and e.permissionKey = :permissionKey")
 	EntityPermission findByUserIdAndEntityTypeAndEntityIdAndPermissionKey(@Param("userId") Integer userId, @Param("entityType") String entityType, @Param("entityId") Integer entityId, @Param("permissionKey") String permissionKey);
 
+	@Query("select e from EntityPermission e where e.businessGroupId = :businessGroupId and e.entityType = :entityType and e.entityId = :entityId and e.permissionKey = :permissionKey")
+	EntityPermission findByBusinessGroupIdAndEntityTypeAndEntityIdAndPermissionKey(@Param("businessGroupId") Integer businessGroupId, @Param("entityType") String entityType, @Param("entityId") Integer entityId, @Param("permissionKey") String permissionKey);
+
+	@Query("select e from EntityPermission e where e.systemRole = :systemRole and e.entityType = :entityType and e.entityId = :entityId and e.permissionKey = :permissionKey")
+	EntityPermission findBySystemRoleAndEntityTypeAndEntityIdAndPermissionKey(@Param("systemRole") String systemRole, @Param("entityType") String entityType, @Param("entityId") Integer entityId, @Param("permissionKey") String permissionKey);
+
 	@Query("select e from EntityPermission e where e.user.id = :userId and e.entityType = :entityType and e.entityId = :entityId")
 	List<EntityPermission> findByUserIdAndEntityTypeAndEntityId(@Param("userId") Integer userId, @Param("entityType") String entityType, @Param("entityId") Integer entityId);
 
@@ -32,6 +38,9 @@ public interface EntityPermissionRepository extends JpaRepository<EntityPermissi
 
 	@Query("select e from EntityPermission e where e.user.id = :userId")
 	List<EntityPermission> findByUserId(@Param("userId") Integer userId);
+
+	@Query("select distinct e.user.id from EntityPermission e where e.user is not null and e.user.id in :userIds and (e.isDeleted = false or e.isDeleted is null)")
+	List<Integer> findUserIdsWithEntityPermissions(@Param("userIds") List<Integer> userIds);
 
 	default List<EntityPermission> getByCriteria(Request<EntityPermissionDto> request, EntityManager em, Locale locale) throws DataAccessException, Exception {
 		String req = "select e from EntityPermission e where e IS NOT NULL";

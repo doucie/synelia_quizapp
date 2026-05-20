@@ -10,6 +10,14 @@ export interface EntityPermissionItem {
   entityId?: number;
   permissionKey?: string;
   userId?: number;
+  businessGroupId?: number;
+  systemRole?: string;
+  granted?: boolean;
+  userFirstName?: string;
+  userLastName?: string;
+  userEmail?: string;
+  userName?: string;
+  userRole?: string;
   createdAt?: string;
   createdBy?: number;
   updatedAt?: string;
@@ -22,6 +30,8 @@ export interface EntityPermissionCrudCriteria {
   entityId?: number;
   permissionKey?: string;
   userId?: number;
+  businessGroupId?: number;
+  systemRole?: string;
   page?: number;
   size?: number;
   isDeleted?: boolean;
@@ -67,11 +77,13 @@ export class EntityPermissionCrudService {
         ...(criteria.entityId && { entityId: criteria.entityId }),
         ...(criteria.permissionKey && { permissionKey: criteria.permissionKey }),
         ...(criteria.userId && { userId: criteria.userId }),
+        ...(criteria.businessGroupId && { businessGroupId: criteria.businessGroupId }),
+        ...(criteria.systemRole && { systemRole: criteria.systemRole }),
       }
     };
     return this.http.post<any>(`${this.apiUrl}/getByCriteria`, request).pipe(
       map(response => {
-        const items = response?.items || [];
+        const items = (response?.items || []).map((item: any) => this.normalizeItem(item));
         const total = response?.count || items.length;
         const pageSize = criteria.size || 10;
         return { content: items, totalElements: total, totalPages: Math.ceil(total / pageSize), size: pageSize, number: criteria.page || 0 };
@@ -81,11 +93,11 @@ export class EntityPermissionCrudService {
   }
 
   create(item: EntityPermissionItem): Observable<any> {
-    return this.http.post(`${this.apiUrl}/grant`, { user: this.getCurrentUserId(), data: item });
+    return this.http.post(`${this.apiUrl}/grant`, { user: this.getCurrentUserId(), data: this.prepareItemPayload(item) });
   }
 
   update(item: EntityPermissionItem): Observable<any> {
-    return this.http.post(`${this.apiUrl}/grant`, { user: this.getCurrentUserId(), data: item });
+    return this.http.post(`${this.apiUrl}/grant`, { user: this.getCurrentUserId(), data: this.prepareItemPayload(item) });
   }
 
   delete(id: number): Observable<any> {
@@ -94,5 +106,47 @@ export class EntityPermissionCrudService {
 
   restore(id: number): Observable<any> {
     return this.http.post(`${this.apiUrl}/grant`, { user: this.getCurrentUserId(), data: { id, isDeleted: false } });
+  }
+
+  private normalizeItem(item: any): EntityPermissionItem {
+    return {
+      id: item.id,
+      entityType: item.entityType || item.entity_type || undefined,
+      entityId: this.toOptionalNumber(item.entityId ?? item.entity_id),
+      permissionKey: item.permissionKey || item.permission_key || undefined,
+      userId: this.toOptionalNumber(item.userId ?? item.user_id),
+      businessGroupId: this.toOptionalNumber(item.businessGroupId ?? item.business_group_id),
+      systemRole: item.systemRole || item.system_role || undefined,
+      granted: item.granted ?? true,
+      userFirstName: item.userFirstName || item.user_first_name || undefined,
+      userLastName: item.userLastName || item.user_last_name || undefined,
+      userEmail: item.userEmail || item.user_email || undefined,
+      userName: item.userName || item.user_name || undefined,
+      userRole: item.userRole || item.user_role || undefined,
+      createdAt: item.createdAt || item.created_at || undefined,
+      createdBy: this.toOptionalNumber(item.createdBy ?? item.created_by),
+      updatedAt: item.updatedAt || item.updated_at || undefined,
+      updatedBy: this.toOptionalNumber(item.updatedBy ?? item.updated_by),
+      isDeleted: item.isDeleted ?? item.is_deleted ?? false
+    };
+  }
+
+  private prepareItemPayload(item: EntityPermissionItem): EntityPermissionItem {
+    const payload: EntityPermissionItem = { ...item };
+
+    if (!payload.systemRole?.trim()) {
+      delete payload.systemRole;
+    }
+
+    return payload;
+  }
+
+  private toOptionalNumber(value: unknown): number | undefined {
+    if (value === undefined || value === null || value === '') {
+      return undefined;
+    }
+
+    const numericValue = Number(value);
+    return Number.isNaN(numericValue) ? undefined : numericValue;
   }
 }

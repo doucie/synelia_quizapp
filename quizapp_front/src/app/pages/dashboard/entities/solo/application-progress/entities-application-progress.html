@@ -21,6 +21,7 @@
         <app-filter-checkbox inputId="showDeleted" label="Afficher les supprimés" [checked]="showDeletedItems" ariaLabel="Afficher les éléments supprimés" (checkedChange)="toggleDeletedItems()"></app-filter-checkbox>
       </div>
       <div class="toolbar-right">
+        <button class="btn-secondary-pro" *ngIf="applicationScopedView()" (click)="clearApplicationScopedView()">Voir toutes les progressions</button>
         <button class="btn-secondary-pro" (click)="openAdvancedSearch()">Filtres avancés</button>
         <button class="btn-primary-pro" (click)="openCreateDialog()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -118,6 +119,7 @@
         />
         <div class="stats-info" *ngIf="!isLoading()">
           <div class="stat-item"><span>Total:</span><span class="stat-number">{{ totalElements() }}</span></div>
+          <div class="stat-item" *ngIf="applicationScopedView()"><span>Candidature courante:</span><span class="stat-number">{{ applicationScopedView()?.label }}</span></div>
         </div>
       </div>
     </div>
@@ -166,6 +168,9 @@
             <td class="actions-cell" [class.col-hidden]="!isColumnVisible('actions')" (click)="$event.stopPropagation()">
               <div class="actions-menu">
                 <ng-container *ngIf="!item.isDeleted">
+                  <button class="action-btn secondary" *ngIf="item.applicationId" (click)="viewApplicationProgress(item)" title="Voir la candidature" aria-label="Voir la candidature">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 6H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
                   <button class="action-btn primary" (click)="openEditDialog(item)" title="Modifier" aria-label="Modifier">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 20H21M16.5 3.5A2.12 2.12 0 0 1 19 6L7 18L3 19L4 15L16.5 3.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   </button>
@@ -188,7 +193,7 @@
     <div class="pagination-container">
       <div class="pagination-info">
         <span class="results-info">
-          Affichage {{ currentPage() * pageSize() + 1 }} - {{ Math.min((currentPage() + 1) * pageSize(), totalElements()) }} sur {{ totalElements() }}
+            {{ applicationScopedView() ? 'Affichage 1 - ' + items().length + ' sur ' + totalElements() : 'Affichage ' + (totalElements() ? currentPage() * pageSize() + 1 : 0) + ' - ' + (totalElements() ? Math.min((currentPage() + 1) * pageSize(), totalElements()) : 0) + ' sur ' + totalElements() }}
         </span>
         <div class="page-size-selector">
           <label for="pageSize">Par page:</label>
@@ -199,7 +204,7 @@
           </div>
         </div>
       </div>
-      <div class="pagination-controls" *ngIf="totalElements() > pageSize()">
+      <div class="pagination-controls" *ngIf="!applicationScopedView() && totalElements() > pageSize()">
         <button class="pagination-btn" [class.disabled]="!hasPreviousPage()" (click)="previousPage()" [disabled]="!hasPreviousPage()">Précédent</button>
         <div class="page-numbers">
           <button *ngFor="let page of getPageNumbers()" class="page-number-btn" [class.active]="page === currentPage()" (click)="goToPage(page)">{{ page + 1 }}</button>

@@ -3,6 +3,7 @@ package tech.synelia.quizapp.utils;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -25,6 +26,7 @@ import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
 import tech.synelia.quizapp.business.EmailOperationalAlertService;
+import tech.synelia.quizapp.business.MailLogService;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.dao.entity.SmtpConfig;
 import tech.synelia.quizapp.dao.repository.SmtpConfigRepository;
@@ -39,9 +41,6 @@ import tech.synelia.quizapp.dao.repository.SmtpConfigRepository;
 public class HostingUtils {
 
 	@Autowired
-	private ParamsUtils paramsUtils;
-
-	@Autowired
 	private TemplateEngine templateEngine;
 
 	@Autowired
@@ -50,6 +49,8 @@ public class HostingUtils {
 	private FunctionalError functionalError;
 	@Autowired
 	private EmailOperationalAlertService emailOperationalAlertService;
+	@Autowired
+	private MailLogService mailLogService;
 
 	@Autowired
 	private SmtpConfigRepository smtpConfigRepository;
@@ -59,12 +60,16 @@ public class HostingUtils {
 	public <T> Response<T> sendEmail(Map<String, String> from, List<Map<String, String>> toRecipients, String subject,
 			String body, List<String> attachmentsFilesAbsolutePaths, Context context, String templateName,
 			Locale locale) {
+		Map<String, String> safeFrom = from != null ? from : new HashMap<>();
+		List<Map<String, String>> safeToRecipients = toRecipients != null ? toRecipients : List.of();
+
 		slf4jLogger.info("----begin sendEmail-----");
-		slf4jLogger.info("From: {}, To: {}, Subject: {}", from.get("email"), 
-			toRecipients.stream().map(r -> r.get("email")).toList(), subject);
+		slf4jLogger.info("From: {}, To: {}, Subject: {}", safeFrom.get("email"),
+			safeToRecipients.stream().map(r -> r.get("email")).toList(), subject);
 		
-		Response<T> response = new Response<T>();
+		Response<T> response = new Response<>();
 		JavaMailSenderImpl javaMailSender = new JavaMailSenderImpl();
+		String resolvedBody = body;
 
 		// Email delivery is only allowed when a DB SMTP config is explicitly active.
 		SmtpConfig dbConfig = null;
@@ -85,6 +90,8 @@ public class HostingUtils {
 		if (dbConfig == null || dbConfig.getHost() == null || dbConfig.getHost().trim().isEmpty()) {
 			slf4jLogger.error("No active SMTP config available in database");
 			emailOperationalAlertService.notifyMissingSmtpConfiguration();
+			mailLogService.logBulkEmailResult(safeFrom, safeToRecipients, subject, resolvedBody, false,
+					"Aucune configuration SMTP active n'est disponible pour cet envoi.");
 			response.setHasError(Boolean.TRUE);
 			response.setStatus(functionalError.DISALLOWED_OPERATION(
 					"Aucune configuration SMTP active n'est disponible pour cet envoi.", locale));
@@ -102,9 +109,9 @@ public class HostingUtils {
 			starttlsRequired = dbConfig.getStarttlsRequired() != null ? dbConfig.getStarttlsRequired() : false;
 			// Override sender info in 'from' if DB config has sender details
 			if (dbConfig.getSenderEmail() != null && !dbConfig.getSenderEmail().isEmpty()) {
-				from.put("email", dbConfig.getSenderEmail());
+				safeFrom.put("email", dbConfig.getSenderEmail());
 				if (dbConfig.getSenderName() != null && !dbConfig.getSenderName().isEmpty()) {
-					from.put("user", dbConfig.getSenderName());
+					safeFrom.put("user", dbConfig.getSenderName());
 				}
 			}
 		}
@@ -133,22 +140,22 @@ public class HostingUtils {
 				MimeMessageHelper helper = new MimeMessageHelper(message, Boolean.TRUE, "UTF-8");
 
 				// sender
-				helper.setFrom(new InternetAddress(from.get("email"), from.get("user")));
+				helper.setFrom(new InternetAddress(safeFrom.get("email"), safeFrom.get("user")));
 				// sender
 
 				// recipients
-				List<InternetAddress> to = new ArrayList<InternetAddress>();
-				for (Map<String, String> recipient : toRecipients) {
+				List<InternetAddress> to = new ArrayList<>();
+				for (Map<String, String> recipient : safeToRecipients) {
 					to.add(new InternetAddress(recipient.get("email"), recipient.get("user")));
 				}
-				helper.setTo(to.toArray(new InternetAddress[0]));
+				helper.setTo(to.toArray(InternetAddress[]::new));
 
 				// Subject and body
 				helper.setSubject(subject);
 				if (context != null && templateName != null) {
-					body = templateEngine.process(templateName, context);
+					resolvedBody = templateEngine.process(templateName, context);
 				}
-				helper.setText(body, true);
+				helper.setText(resolvedBody, true);
 
 				// Attachments
 				if (attachmentsFilesAbsolutePaths != null && !attachmentsFilesAbsolutePaths.isEmpty()) {
@@ -163,23 +170,21 @@ public class HostingUtils {
 
 				javaMailSender.send(message);
 				slf4jLogger.info("Email envoyé avec succès à: {}", 
-					toRecipients.stream().map(r -> r.get("email")).toList());
+					safeToRecipients.stream().map(r -> r.get("email")).toList());
+				mailLogService.logBulkEmailResult(safeFrom, safeToRecipients, subject, resolvedBody, true, null);
 				response.setHasError(Boolean.FALSE);
 				/// gerer les cas d'exeption de non envoi de mail
-			} catch (MessagingException e) {
-				slf4jLogger.error("Erreur MessagingException lors de l'envoi de l'email", e);
+			} catch (MessagingException | UnsupportedEncodingException | RuntimeException e) {
+				slf4jLogger.error("Erreur lors de l'envoi de l'email", e);
 				emailOperationalAlertService.notifyDeliveryFailure();
-				e.printStackTrace();
-				exceptionUtils.EXCEPTION(response, locale, e);
-			} catch (UnsupportedEncodingException e) {
-				slf4jLogger.error("Erreur UnsupportedEncodingException lors de l'envoi de l'email", e);
-				emailOperationalAlertService.notifyDeliveryFailure();
-				e.printStackTrace();
+				mailLogService.logBulkEmailResult(safeFrom, safeToRecipients, subject, resolvedBody, false, e.getMessage());
 				exceptionUtils.EXCEPTION(response, locale, e);
 			}
 		} else {
 			slf4jLogger.error("SMTP Server est null - impossible d'envoyer l'email");
 			emailOperationalAlertService.notifyMissingSmtpConfiguration();
+			mailLogService.logBulkEmailResult(safeFrom, safeToRecipients, subject, resolvedBody, false,
+					"SMTP Server est null - impossible d'envoyer l'email");
 			response.setHasError(Boolean.TRUE);
 			response.setStatus(functionalError.DISALLOWED_OPERATION(
 					"Aucune configuration SMTP active n'est disponible pour cet envoi.", locale));

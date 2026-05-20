@@ -16,15 +16,15 @@
       <div class="header-stats">
         <div class="stat-chip submitted" title="Candidatures en attente">
           <i class="bi bi-file-earmark-text"></i>
-          <span>{{ getApplicationsByStatus('SUBMITTED').length }}</span>
+          <span>{{ getFilterCount('SUBMITTED') }}</span>
         </div>
         <div class="stat-chip pending" title="En pré-sélection">
           <i class="bi bi-hourglass-split"></i>
-          <span>{{ getPendingDecisionsCount() }}</span>
+          <span>{{ getPreScreenDecisionsCount() }}</span>
         </div>
         <div class="stat-chip accepted" title="Pré-sélectionnés">
           <i class="bi bi-check-circle"></i>
-          <span>{{ getApplicationsByStatus('PRE_SCREEN_ACCEPTED').length }}</span>
+          <span>{{ getFilterCount('PRE_SCREEN') }}</span>
         </div>
         <div class="stat-chip final" title="Décisions finales">
           <i class="bi bi-trophy"></i>
@@ -57,21 +57,21 @@
           [class.active]="selectedFilter() === 'SUBMITTED'"
           (click)="setFilter('SUBMITTED')"
         >
-          En attente ({{ getPendingDecisionsCount() }})
+          En attente ({{ getFilterCount('SUBMITTED') }})
         </button>
         <button
           class="chip pending"
           [class.active]="selectedFilter() === 'PRE_SCREEN'"
           (click)="setFilter('PRE_SCREEN')"
         >
-          Pré-sélectionnés ({{ getApplicationsByStatus('PRE_SCREEN_ACCEPTED').length }})
+          Pré-sélectionnés ({{ getFilterCount('PRE_SCREEN') }})
         </button>
         <button
           class="chip final"
           [class.active]="selectedFilter() === 'FINAL'"
           (click)="setFilter('FINAL')"
         >
-          Décisions finales ({{ getFinalDecisionsCount() }})
+          Décisions finales ({{ getFilterCount('FINAL') }})
         </button>
       </div>
     </div>

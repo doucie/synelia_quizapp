@@ -6,7 +6,6 @@ const paths = [
   "/authPermissions",
   "/businessGroup",
   "/businessGroupPermission",
-  "/campaignCrud",
   "/candidateAsk",
   "/candidateInterview",
   "/candidateToken",

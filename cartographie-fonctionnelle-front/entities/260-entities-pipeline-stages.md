@@ -1,0 +1,140 @@
+# Entities Pipeline Stages
+
+## 1. Identite
+
+- Routes: `/dashboard/entities/pipeline-stages` et `/dashboard/entities/pipeline-stages/:page`
+- Guard: `authGuard` au niveau dashboard puis `permissionGuard(['MANAGE_APP_CONFIG'])`
+- Fichier TS: `quizapp_front/src/app/pages/dashboard/entities/solo/pipeline-stages/entities-pipeline-stages.ts`
+- Fichier HTML: `quizapp_front/src/app/pages/dashboard/entities/solo/pipeline-stages/entities-pipeline-stages.html`
+
+## 2. Objectif Produit
+
+La page administre les etapes composant les templates de pipeline. C'est une route `entities/*` plus riche que la moyenne, car elle embarque une vraie validation metier sur `configJson`, les types d'etapes et le template parent, mais elle reste moins complete que l'editeur detaille de pipeline qui gere ordre, drag and drop et flags email.
+
+Le slice BL-008 la pose maintenant plus explicitement comme surface technique et renvoie vers la page metier de reference du domaine pipeline: le catalogue `/dashboard/pipeline-templates`, ou directement l'editeur `/dashboard/pipeline-templates/:id/edit` quand la vue est deja ciblee sur un template.
+
+## 3. Etat Constate
+
+- [x] La page etend `EntityCrudBase` avec `PipelineStageService`.
+- [x] Le header annonce maintenant explicitement le statut de surface technique et propose un acces direct a la page metier pipeline, voire a l'editeur du template courant quand la vue est ciblee.
+- [x] Elle precharge les templates via `PipelineTemplateService.getAllByCriteria({ size: 999 })` pour les filtres et modales.
+- [x] Les filtres avances couvrent type d'etape, template, `isRequired`, `isEliminatory`, suppression et plages de dates.
+- [x] Le tableau affiche libelle, type, ordre, obligatoire, eliminatoire, template parent, presence d'un `configJson` et date de creation.
+- [x] Les modales create/edit exposent `stageLabel`, `stageType`, `stageOrder`, `pipelineTemplateId`, `configJson`, `isRequired`, `isEliminatory`.
+- [x] La route surcharge `validateCreate()` et `validateEdit()` pour imposer une vraie validation metier sur `configJson`.
+- [x] La validation encode explicitement plusieurs regles pipeline: `TECHNICAL_TEST` et `CUSTOM` exigent un JSON non vide, `passingScore` doit etre entre 0 et 100, `allowSkip` doit etre booleen, `TECHNICAL_TEST` externe exige `externalUrl`.
+- [x] `configJson` suit une normalisation claire: chaine vide -> `null`, ce qui aligne la route avec la semantique de partial update documentee dans le repo.
+- [x] Le service transforme les retours snake_case / camelCase du backend en DTO front uniforme.
+- [x] Le service expose aussi `getByTemplate()` et `reorder()`, absents de cette route CRUD.
+- [x] Les cles de colonnes sont alignees sur le DTO reel `stageLabel`, `stageType`, `stageOrder`, `isRequired`, `isEliminatory`, `pipelineTemplateId`, `configJson`.
+- [x] La route expose maintenant `getByTemplate()` comme action de ligne pour charger toutes les etapes d'un template donne dans une vue ciblee.
+- [x] Le mode `template courant` est explicite et propose un retour `Voir toutes les etapes` vers la liste CRUD standard.
+- [ ] La route ne surface pas `emailRequired` et `emailAutomatic`, pourtant presents dans le modele et essentiels au pipeline runtime.
+- [ ] La route ne propose toujours pas de reordonnancement, qui reste reserve a l'editeur detaille.
+- [ ] L'UI ne montre qu'un booleen `Config` dans le tableau, pas le contenu ni un apercu exploitable de `configJson`.
+
+## 4. Blocs UI Constates
+
+### 4.1 Header et toolbar
+
+- [x] breadcrumb retour vers `/dashboard/entities`
+- [x] sous-texte qui explicite le statut de surface technique
+- [x] bouton `Page metier` ou `Editeur du template` selon le contexte de vue
+- [x] recherche rapide `Rechercher...`
+- [x] checkbox `Afficher les supprimes`
+- [x] bouton `Voir toutes les etapes` quand une vue ciblee par template est active
+- [x] bouton `Filtres avances`
+- [x] bouton `Nouveau`
+
+### 4.2 Filtres avances
+
+- [x] plage ID `idDe` / `idA`
+- [x] filtre `stageType`
+- [x] filtre `pipelineTemplateId`
+- [x] filtre `isRequired`
+- [x] filtre `isEliminatory`
+- [x] filtre `isDeleted`
+- [x] intervalles `dateCreation*` et `dateModification*`
+- [ ] pas de filtre dedie `stageLabel`
+
+### 4.3 Tableau principal
+
+- [x] colonnes `id`, `stageLabel`, `stageType`, `stageOrder`, `isRequired`, `isEliminatory`, `pipelineTemplateId`, `configJson`, `createdAt`
+- [x] badges booleens pour obligatoire, eliminatoire et presence de configuration
+- [x] resolution du nom de template via `getTemplateName()`
+- [x] action `Voir le template` via `getByTemplate()` en plus des actions edit / delete / restore
+- [x] detail panel branche en bas de page
+- [x] popup dependances FK branche
+
+### 4.4 Modales
+
+- [x] confirmation suppression
+- [x] confirmation restauration
+- [x] creation etape pipeline
+- [x] edition etape pipeline
+- [x] aide contextuelle `config_json` selon `stageType`
+
+## 5. Donnees Affichees Ou Editees
+
+- `id`
+- `stageLabel`
+- `stageType`
+- `stageOrder`
+- `isRequired`
+- `isEliminatory`
+- `emailRequired`
+- `emailAutomatic`
+- `configJson`
+- `pipelineTemplateId`
+- `pipelineTemplateName`
+- `orderedStageIds`
+- `createdAt`
+- `updatedAt`
+- `isDeleted`
+
+## 6. Services Et Endpoints
+
+- liste CRUD via `PipelineStageService.getAllByCriteria()` -> `POST /pipelineStage/getByCriteria`
+- creation via `create()` -> `POST /pipelineStage/create`
+- edition via `update()` -> `POST /pipelineStage/update`
+- suppression via `delete()` -> `POST /pipelineStage/delete`
+- restauration via `restore()` -> `POST /pipelineStage/update`
+- lecture par template via `getByTemplate()` -> `POST /pipelineStage/byTemplate`
+- reordonnancement via `reorder()` -> `POST /pipelineStage/reorder`
+
+## 7. Ce Que Le Backend Doit Envoyer
+
+- Un `getByCriteria` pagine avec `items` ou `item`, plus `count` ou `totalCount`, compatible avec le mapping manuel du service.
+- Des etapes valides en snake_case ou camelCase, puisque le service transforme les deux.
+- Une validation metier coherente sur `configJson`, `stageType`, seuils de score et URL externes.
+- Les flags `emailRequired` et `emailAutomatic`, car ils pilotent l'avancement reel du pipeline selon les regles repo.
+- Un endpoint `reorder` stable pour les ecrans specialises qui manipulent l'ordre des etapes.
+
+## 8. Entites Metier Impliquees
+
+- `pipelineStage`
+- `pipelineTemplate`
+- `applicationProgress`
+- synchro interview/evaluation et regles de passage de stage
+- configuration `configJson` des etapes techniques et custom
+
+## 9. Questions Ou Ecarts A Qualifier
+
+- [x] Le premier garde-fou UX de BL-008 est pose: la route annonce maintenant clairement que l'editeur de template est la surface metier de reference pour l'ordre et les flags email.
+- [ ] Faut-il exposer `emailRequired` et `emailAutomatic` dans cette route ?
+- [x] La route brute renvoie implicitement vers l'editeur detaille pour le reordonnancement; ici seul `getByTemplate()` est expose.
+- [ ] Le tableau doit-il afficher un apercu lisible de `configJson` plutot qu'un simple Oui/Non ?
+- [ ] Certaines combinaisons de types/flags devraient-elles etre bloquees plus explicitement dans cette UI ?
+
+## 10. Recette Manuelle
+
+1. Ouvrir `/dashboard/entities/pipeline-stages` avec un compte autorise.
+2. Verifier que le header annonce la route comme surface technique et que `Page metier` ouvre `/dashboard/pipeline-templates`.
+3. Utiliser l'action `Voir le template` sur une etape puis verifier que le CTA devient `Editeur du template` et ouvre `/dashboard/pipeline-templates/:id/edit`.
+4. Filtrer par type d'etape, template et flags obligatoire/eliminatoire.
+5. Creer une etape `TECHNICAL_TEST` avec `configJson` valide.
+6. Verifier qu'un `configJson` invalide ou absent sur `TECHNICAL_TEST` et `CUSTOM` est refuse.
+7. Utiliser l'action `Voir le template` sur une etape et verifier le chargement cible des etapes du meme template.
+8. Revenir avec `Voir toutes les etapes` puis verifier le retour a la liste CRUD standard.
+9. Modifier une etape existante puis verifier la persistence du template parent et de l'ordre.
+10. Supprimer puis restaurer une etape.

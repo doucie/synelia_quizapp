@@ -53,12 +53,8 @@
                 <span class="user-email">{{ user.userEmail }}</span>
               </div>
             </div>
-            <span class="role-badge" [ngClass]="{
-              'badge-super': user.userRole?.toUpperCase() === 'SUPER_ADMIN',
-              'badge-admin': user.userRole?.toUpperCase() === 'ADMIN',
-              'badge-user': user.userRole?.toUpperCase() === 'UTILISATEUR'
-            }">
-              {{ user.userRole }}
+            <span class="role-badge" [ngClass]="getUserCardRoleBadgeClass(user)">
+              {{ getUserCardRoleLabel(user) }}
             </span>
           </div>
         }

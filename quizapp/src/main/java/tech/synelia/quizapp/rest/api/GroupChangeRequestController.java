@@ -44,6 +44,7 @@ public class GroupChangeRequestController {
         return ResponseEntity.created(uri).body(response);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @RequestMapping(value="/update", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
     public Response<GroupChangeRequestDto> update(@RequestBody Request<GroupChangeRequestDto> request) throws Exception {
         log.info("start method /groupChangeRequest/update");
@@ -52,6 +53,7 @@ public class GroupChangeRequestController {
         return response;
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @RequestMapping(value="/delete", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
     public Response<GroupChangeRequestDto> delete(@RequestBody Request<GroupChangeRequestDto> request) throws Exception {
         log.info("start method /groupChangeRequest/delete");

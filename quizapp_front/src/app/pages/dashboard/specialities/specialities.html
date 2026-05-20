@@ -186,7 +186,10 @@
               (ngModelChange)="updateFormField('nom', $event)"
               placeholder="Ex: Java, Angular, DevOps..."
               required
+              maxlength="255"
+              minlength="2"
             >
+            <small class="form-hint">{{ (specialityForm().nom || '').length }}/255</small>
           </div>
 
           <div class="form-group">
@@ -197,7 +200,9 @@
               (ngModelChange)="updateFormField('description', $event)"
               placeholder="Décrivez la spécialité..."
               rows="4"
+              maxlength="2000"
             ></textarea>
+            <small class="form-hint">{{ (specialityForm().description || '').length }}/2000</small>
           </div>
 
           @if (departments().length > 0) {

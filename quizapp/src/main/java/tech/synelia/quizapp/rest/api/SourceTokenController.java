@@ -53,6 +53,7 @@ Controller for table "source_token"
 @CrossOrigin("*")
 @RestController
 @RequestMapping(value="/sourceToken")
+@org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
 public class SourceTokenController {
 
      @Autowired
@@ -161,6 +162,7 @@ public class SourceTokenController {
 	 * @return Response avec isValid et les informations de la campagne
 	 */
 	@RequestMapping(value="/validate/{tokenString}", method=RequestMethod.GET, produces={"application/json"})
+	@org.springframework.security.access.prepost.PreAuthorize("permitAll()")
 	public Response<SourceTokenDto> validateToken(@org.springframework.web.bind.annotation.PathVariable("tokenString") String tokenString) {
 		log.info("start method /sourceToken/validate/" + tokenString);
 		Response<SourceTokenDto> response = new Response<>();
@@ -217,6 +219,7 @@ public class SourceTokenController {
 	 * @return Response avec les données complètes du token
 	 */
 	@RequestMapping(value="/info/{tokenString}", method=RequestMethod.GET, produces={"application/json"})
+	@org.springframework.security.access.prepost.PreAuthorize("permitAll()")
 	public Response<SourceTokenDto> getTokenInfo(@org.springframework.web.bind.annotation.PathVariable("tokenString") String tokenString) {
 		log.info("start method /sourceToken/info/" + tokenString);
 		Response<SourceTokenDto> response = new Response<>();

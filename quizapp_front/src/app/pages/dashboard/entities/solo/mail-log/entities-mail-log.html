@@ -1,0 +1,317 @@
+<div class="entities-mail-log-container">
+  <div class="header-toolbar-container">
+    <div class="page-header">
+      <div class="breadcrumb">
+        <button class="btn-back" (click)="goBackToEntities()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 12H5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 19L5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Retour aux Entités
+        </button>
+        <span class="breadcrumb-separator">/</span>
+        <span class="current-page">Gestion des Logs Email</span>
+      </div>
+      <h1>Gestion des Logs Email</h1>
+      <p class="page-description">Consultation et administration du journal d'envoi d'emails</p>
+    </div>
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <input type="text" class="search-input" placeholder="Rechercher..." [(ngModel)]="quickSearch" (input)="onQuickSearch()" />
+        <app-filter-checkbox inputId="showDeleted" label="Afficher les supprimés" [checked]="showDeletedItems" ariaLabel="Afficher les logs supprimés" (checkedChange)="toggleDeletedItems()"></app-filter-checkbox>
+      </div>
+      <div class="toolbar-right">
+        <button class="btn-secondary-pro" (click)="openAdvancedSearch()">Filtres avancés</button>
+        <button class="btn-primary-pro" (click)="openCreateDialog()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Nouveau
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="advanced-search-panel" *ngIf="showAdvancedSearch">
+    <div class="panel-header">
+      <h3>Filtres avancés</h3>
+      <button class="btn-close" (click)="openAdvancedSearch()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+    <div class="panel-content">
+      <div class="form-grid">
+        <div class="form-row-full">
+          <div class="form-group-inline">
+            <label>ID de</label>
+            <input type="text" class="form-input-inline" [(ngModel)]="advancedCriteria.idDe" placeholder="ID minimum" />
+          </div>
+          <span class="range-separator">à</span>
+          <div class="form-group-inline">
+            <input type="text" class="form-input-inline" [(ngModel)]="advancedCriteria.idA" placeholder="ID maximum" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Email destinataire</label>
+          <input type="text" class="form-input" [(ngModel)]="advancedCriteria.recipientEmail" placeholder="destinataire@example.com" />
+        </div>
+        <div class="form-group">
+          <label>Recipient User ID</label>
+          <input type="number" class="form-input" [(ngModel)]="advancedCriteria.recipientUserId" placeholder="ID utilisateur" />
+        </div>
+        <div class="form-group">
+          <label>Sender User ID</label>
+          <input type="number" class="form-input" [(ngModel)]="advancedCriteria.senderUserId" placeholder="ID expéditeur" />
+        </div>
+        <div class="form-group">
+          <label>Template ID</label>
+          <input type="number" class="form-input" [(ngModel)]="advancedCriteria.emailTemplateId" placeholder="ID template" />
+        </div>
+        <div class="form-group">
+          <label>Statut</label>
+          <input type="text" class="form-input" [(ngModel)]="advancedCriteria.status" placeholder="Ex: SENT, FAILED" />
+        </div>
+        <div class="form-group">
+          <label>Supprimé</label>
+          <app-filter-select [(ngModel)]="advancedCriteria.isDeleted">
+            <option [ngValue]="undefined">Tous</option>
+            <option [ngValue]="false">Non supprimé</option>
+            <option [ngValue]="true">Supprimé</option>
+          </app-filter-select>
+        </div>
+        <div class="form-row-full">
+          <div class="form-group-inline">
+            <label>Date de création de</label>
+            <input type="date" class="form-input-inline" [(ngModel)]="advancedCriteria.dateCreationDe" />
+          </div>
+          <span class="range-separator">à</span>
+          <div class="form-group-inline">
+            <input type="date" class="form-input-inline" [(ngModel)]="advancedCriteria.dateCreationA" />
+          </div>
+        </div>
+        <div class="form-row-full">
+          <div class="form-group-inline">
+            <label>Date de modification de</label>
+            <input type="date" class="form-input-inline" [(ngModel)]="advancedCriteria.dateModificationDe" />
+          </div>
+          <span class="range-separator">à</span>
+          <div class="form-group-inline">
+            <input type="date" class="form-input-inline" [(ngModel)]="advancedCriteria.dateModificationA" />
+          </div>
+        </div>
+      </div>
+      <div class="panel-actions">
+        <button class="btn-secondary-pro" (click)="resetAdvancedSearch()">Réinitialiser</button>
+        <button class="btn-primary-pro" (click)="applyAdvancedSearch()">Appliquer</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="entity-section">
+    <div class="section-stats">
+      <div class="stats-row">
+        <h2 class="section-title">Logs Email</h2>
+        <app-column-visibility-manager
+          [columns]="allColumns"
+          [visibleColumns]="visibleColumns()"
+          [hiddenCount]="hiddenColumnsCount()"
+          (toggleColumn)="toggleColumnVisibility($event)"
+          (showAll)="showAllColumns()"
+          (resetColumns)="resetColumnVisibility()"
+        />
+        <div class="stats-info" *ngIf="!isLoading()">
+          <div class="stat-item"><span>Total:</span><span class="stat-number">{{ totalElements() }}</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="isLoading()" class="loading-state"><div class="loading-spinner"></div><p>Chargement...</p></div>
+    <div *ngIf="!isLoading() && items().length === 0" class="empty-state"><h3>Aucun enregistrement trouvé</h3></div>
+
+    <div *ngIf="!isLoading() && items().length > 0" class="data-table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th class="col-id" [class.col-hidden]="!isColumnVisible('id')">ID</th>
+            <th class="col-medium" [class.col-hidden]="!isColumnVisible('recipientEmail')">Destinataire</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('status')">Statut</th>
+            <th class="col-id" [class.col-hidden]="!isColumnVisible('recipientUserId')">Recipient User ID</th>
+            <th class="col-id" [class.col-hidden]="!isColumnVisible('senderUserId')">Sender User ID</th>
+            <th class="col-id" [class.col-hidden]="!isColumnVisible('emailTemplateId')">Template ID</th>
+            <th class="col-date" [class.col-hidden]="!isColumnVisible('sentAt')">Envoyé le</th>
+            <th class="col-date" [class.col-hidden]="!isColumnVisible('createdAt')">Créé le</th>
+            <th class="col-actions" [class.col-hidden]="!isColumnVisible('actions')">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of items(); trackBy: trackById" [class.row-deleted]="item.isDeleted" (click)="selectItem(item)" style="cursor: pointer;">
+            <td [class.col-hidden]="!isColumnVisible('id')"><span class="cell-id">#{{ item.id }}</span></td>
+            <td [class.col-hidden]="!isColumnVisible('recipientEmail')"><span class="cell-comment">{{ item.recipientEmail || '-' }}</span></td>
+            <td [class.col-hidden]="!isColumnVisible('status')">{{ item.status || '-' }}</td>
+            <td [class.col-hidden]="!isColumnVisible('recipientUserId')">{{ item.recipientUserId || '-' }}</td>
+            <td [class.col-hidden]="!isColumnVisible('senderUserId')">{{ item.senderUserId || '-' }}</td>
+            <td [class.col-hidden]="!isColumnVisible('emailTemplateId')">{{ item.emailTemplateId || '-' }}</td>
+            <td [class.col-hidden]="!isColumnVisible('sentAt')"><span class="cell-date">{{ formatDate(item.sentAt) }}</span></td>
+            <td [class.col-hidden]="!isColumnVisible('createdAt')"><span class="cell-date">{{ formatDate(item.createdAt) }}</span></td>
+            <td class="actions-cell" [class.col-hidden]="!isColumnVisible('actions')" (click)="$event.stopPropagation()">
+              <div class="actions-menu">
+                <ng-container *ngIf="!item.isDeleted">
+                  <button class="action-btn primary" (click)="openEditDialog(item)" title="Modifier" aria-label="Modifier">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 20H21M16.5 3.5A2.12 2.12 0 0 1 19 6L7 18L3 19L4 15L16.5 3.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
+                  <button class="action-btn danger" (click)="confirmDelete(item)" title="Supprimer" aria-label="Supprimer">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 6H5H21M8 6V4C8 3 9 2 10 2H14C15 2 16 3 16 4V6M19 6V20C19 21 18 22 17 22H7C6 22 5 21 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
+                </ng-container>
+                <ng-container *ngIf="item.isDeleted">
+                  <button class="action-btn success" (click)="confirmRestore(item)" title="Restaurer" aria-label="Restaurer">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 12A9 9 0 1 0 12 3M12 3L8 7L12 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
+                </ng-container>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination-container">
+      <div class="pagination-info">
+        <span class="results-info">
+          Affichage {{ totalElements() ? currentPage() * pageSize() + 1 : 0 }} - {{ totalElements() ? Math.min((currentPage() + 1) * pageSize(), totalElements()) : 0 }} sur {{ totalElements() }}
+        </span>
+        <div class="page-size-selector">
+          <label for="pageSize">Par page:</label>
+          <div class="select-wrapper">
+            <select id="pageSize" class="page-size-select" [value]="pageSize()" (change)="onPageSizeChange($event)">
+              <option [value]="5">5</option><option [value]="10">10</option><option [value]="20">20</option><option [value]="50">50</option><option [value]="100">100</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="pagination-controls" *ngIf="totalElements() > pageSize()">
+        <button class="pagination-btn" [class.disabled]="!hasPreviousPage()" (click)="previousPage()" [disabled]="!hasPreviousPage()">Précédent</button>
+        <div class="page-numbers">
+          <button *ngFor="let page of getPageNumbers()" class="page-number-btn" [class.active]="page === currentPage()" (click)="goToPage(page)">{{ page + 1 }}</button>
+        </div>
+        <button class="pagination-btn" [class.disabled]="!hasNextPage()" (click)="nextPage()" [disabled]="!hasNextPage()">Suivant</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="confirmation-overlay" *ngIf="showDeleteConfirmation" (click)="cancelDelete()">
+  <div class="confirmation-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header"><h3>Confirmer la suppression</h3></div>
+    <div class="modal-body">
+      <p>Voulez-vous supprimer ce log email ?</p>
+      <div class="item-info" *ngIf="itemToDelete"><strong>#{{ itemToDelete.id }} — {{ itemToDelete.recipientEmail || '-' }}</strong></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="cancelDelete()">Annuler</button>
+      <button class="btn-confirm-danger" (click)="executeDelete()">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<div class="confirmation-overlay" *ngIf="showRestoreConfirmation()" (click)="cancelRestore()">
+  <div class="confirmation-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header"><h3>Confirmer la restauration</h3></div>
+    <div class="modal-body"><p>Voulez-vous restaurer ce log email ?</p></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="cancelRestore()">Annuler</button>
+      <button class="btn-confirm-success" (click)="executeRestore()">Restaurer</button>
+    </div>
+  </div>
+</div>
+
+<div class="confirmation-overlay" *ngIf="showEditDialog()" (click)="closeEditDialog()">
+  <div class="edit-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Modification</h3>
+      <button class="btn-close" (click)="closeEditDialog()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    </div>
+    <div class="modal-content">
+      <form class="edit-form">
+        <div class="form-group"><label class="form-label">Email destinataire</label><input type="text" class="form-input" [(ngModel)]="editFormData.recipientEmail" name="recipientEmail" /></div>
+        <div class="form-group"><label class="form-label">Recipient User ID</label><input type="number" class="form-input" [(ngModel)]="editFormData.recipientUserId" name="recipientUserId" /></div>
+        <div class="form-group"><label class="form-label">Sender User ID</label><input type="number" class="form-input" [(ngModel)]="editFormData.senderUserId" name="senderUserId" /></div>
+        <div class="form-group"><label class="form-label">Template ID</label><input type="number" class="form-input" [(ngModel)]="editFormData.emailTemplateId" name="emailTemplateId" /></div>
+        <div class="form-group"><label class="form-label">Sujet</label><input type="text" class="form-input" [(ngModel)]="editFormData.subject" name="subject" /></div>
+        <div class="form-group"><label class="form-label">Statut</label><input type="text" class="form-input" [(ngModel)]="editFormData.status" name="status" /></div>
+        <div class="form-group"><label class="form-label">Envoyé le</label><input type="text" class="form-input" [(ngModel)]="editFormData.sentAt" name="sentAt" placeholder="YYYY-MM-DDTHH:mm:ss" /></div>
+        <div class="form-group"><label class="form-label">Aperçu du corps</label><textarea class="form-input" [(ngModel)]="editFormData.bodyPreview" name="bodyPreview" rows="4"></textarea></div>
+        <div class="form-group"><label class="form-label">Erreur</label><textarea class="form-input" [(ngModel)]="editFormData.errorMessage" name="errorMessage" rows="3"></textarea></div>
+      </form>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-danger" (click)="deleteFromEdit()">Supprimer</button>
+      <div class="action-buttons-right">
+        <button class="btn-cancel" (click)="closeEditDialog()">Annuler</button>
+        <button class="btn-confirm-success" (click)="validateEdit()">Valider</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="confirmation-overlay" *ngIf="showCreateDialog()" (click)="closeCreateDialog()">
+  <div class="edit-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Nouveau log email</h3>
+      <button class="btn-close" (click)="closeCreateDialog()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    </div>
+    <div class="modal-content">
+      <form class="edit-form">
+        <div class="form-group"><label class="form-label">Email destinataire</label><input type="text" class="form-input" [(ngModel)]="createFormData.recipientEmail" name="createRecipientEmail" /></div>
+        <div class="form-group"><label class="form-label">Recipient User ID</label><input type="number" class="form-input" [(ngModel)]="createFormData.recipientUserId" name="createRecipientUserId" /></div>
+        <div class="form-group"><label class="form-label">Sender User ID</label><input type="number" class="form-input" [(ngModel)]="createFormData.senderUserId" name="createSenderUserId" /></div>
+        <div class="form-group"><label class="form-label">Template ID</label><input type="number" class="form-input" [(ngModel)]="createFormData.emailTemplateId" name="createEmailTemplateId" /></div>
+        <div class="form-group"><label class="form-label">Sujet</label><input type="text" class="form-input" [(ngModel)]="createFormData.subject" name="createSubject" /></div>
+        <div class="form-group"><label class="form-label">Statut</label><input type="text" class="form-input" [(ngModel)]="createFormData.status" name="createStatus" /></div>
+        <div class="form-group"><label class="form-label">Envoyé le</label><input type="text" class="form-input" [(ngModel)]="createFormData.sentAt" name="createSentAt" placeholder="YYYY-MM-DDTHH:mm:ss" /></div>
+        <div class="form-group"><label class="form-label">Aperçu du corps</label><textarea class="form-input" [(ngModel)]="createFormData.bodyPreview" name="createBodyPreview" rows="4"></textarea></div>
+        <div class="form-group"><label class="form-label">Erreur</label><textarea class="form-input" [(ngModel)]="createFormData.errorMessage" name="createErrorMessage" rows="3"></textarea></div>
+      </form>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="closeCreateDialog()">Annuler</button>
+      <button class="btn-confirm-success" (click)="validateCreate()">Créer</button>
+    </div>
+  </div>
+</div>
+
+<app-entity-detail-panel
+  [entity]="selectedItem()"
+  [fields]="[
+    { key: 'id', label: 'ID' },
+    { key: 'recipientEmail', label: 'Email destinataire' },
+    { key: 'recipientUserId', label: 'Recipient User ID' },
+    { key: 'senderUserId', label: 'Sender User ID' },
+    { key: 'emailTemplateId', label: 'Template ID' },
+    { key: 'subject', label: 'Sujet' },
+    { key: 'bodyPreview', label: 'Aperçu du corps' },
+    { key: 'status', label: 'Statut' },
+    { key: 'errorMessage', label: 'Erreur' },
+    { key: 'sentAt', label: 'Envoyé le' },
+    { key: 'isDeleted', label: 'Supprimé' },
+    { key: 'createdAt', label: 'Créé le' },
+    { key: 'createdBy', label: 'Créé par' },
+    { key: 'updatedAt', label: 'Modifié le' },
+    { key: 'updatedBy', label: 'Modifié par' }
+  ]"
+  [title]="'Détail du log email'"
+  [isOpen]="showDetailPanel()"
+  (closePanel)="closeDetailPanel()"
+  (editItem)="openEditDialog($event)"
+  (deleteItem)="confirmDelete($event)"
+  (restoreItem)="confirmRestore($event)"
+  (saveItem)="validateEdit()"
+/>
+
+<app-dependency-popup
+  [info]="dependencyInfo()!"
+  [mode]="dependencyMode()"
+  [visible]="showDependencyPopup()"
+  (cancel)="closeDependencyPopup()"
+  (confirm)="confirmDependencyAction()"
+/>

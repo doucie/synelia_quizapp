@@ -120,11 +120,11 @@
         <div class="settings__modal-body">
           <div class="form-group">
             <label>Clé du template *</label>
-            <input type="text" [ngModel]="templateForm().templateKey" (ngModelChange)="updateTemplateForm('templateKey', $event)" placeholder="ex: interview_convocation" [disabled]="!!editingTemplate()">
+            <input type="text" [ngModel]="templateForm().templateKey" (ngModelChange)="updateTemplateForm('templateKey', $event)" placeholder="ex: interview_convocation" [disabled]="!!editingTemplate()" required maxlength="100">
           </div>
           <div class="form-group">
             <label>Sujet *</label>
-            <input type="text" [ngModel]="templateForm().subjectTemplate" (ngModelChange)="updateTemplateForm('subjectTemplate', $event)" placeholder="Sujet de l'email">
+            <input type="text" [ngModel]="templateForm().subjectTemplate" (ngModelChange)="updateTemplateForm('subjectTemplate', $event)" placeholder="Sujet de l'email" required maxlength="500">
           </div>
           <div class="form-group">
             <label>Corps du message (HTML) *</label>
@@ -138,11 +138,11 @@
           </div>
           <div class="form-group">
             <label>Description</label>
-            <input type="text" [ngModel]="templateForm().description" (ngModelChange)="updateTemplateForm('description', $event)" placeholder="Description interne">
+            <input type="text" [ngModel]="templateForm().description" (ngModelChange)="updateTemplateForm('description', $event)" placeholder="Description interne" maxlength="500">
           </div>
           <div class="form-group">
             <label>Variables disponibles</label>
-            <input type="text" [ngModel]="templateForm().availableVariables" (ngModelChange)="updateTemplateForm('availableVariables', $event)" placeholder="candidat_nom, date_entretien, ...">
+            <input type="text" [ngModel]="templateForm().availableVariables" (ngModelChange)="updateTemplateForm('availableVariables', $event)" placeholder="candidat_nom, date_entretien, ..." maxlength="1000">
           </div>
           <div class="form-group checkbox">
             <app-filter-checkbox class="settings-checkbox-item" inputId="settings-template-active" label="Actif" variant="inline" [checked]="templateForm().isActive === true" ariaLabel="Template actif" (checkedChange)="updateTemplateForm('isActive', $event)"></app-filter-checkbox>
@@ -224,17 +224,17 @@
           <div class="form-row">
             <div class="form-group">
               <label>Hôte SMTP *</label>
-              <input type="text" [ngModel]="smtpForm().host" (ngModelChange)="updateSmtpForm('host', $event)" placeholder="smtp.gmail.com">
+              <input type="text" [ngModel]="smtpForm().host" (ngModelChange)="updateSmtpForm('host', $event)" placeholder="smtp.gmail.com" required maxlength="255">
             </div>
             <div class="form-group">
               <label>Port *</label>
-              <input type="number" [ngModel]="smtpForm().port" (ngModelChange)="updateSmtpForm('port', $event)" placeholder="587">
+              <input type="number" [ngModel]="smtpForm().port" (ngModelChange)="updateSmtpForm('port', $event)" placeholder="587" required min="1" max="65535">
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
               <label>Nom d'utilisateur</label>
-              <input type="text" [ngModel]="smtpForm().username" (ngModelChange)="updateSmtpForm('username', $event)" placeholder="user@gmail.com">
+              <input type="text" [ngModel]="smtpForm().username" (ngModelChange)="updateSmtpForm('username', $event)" placeholder="user@gmail.com" maxlength="255" autocomplete="username">
             </div>
             <div class="form-group">
               <label>Mot de passe</label>
@@ -259,11 +259,11 @@
           <div class="form-row">
             <div class="form-group">
               <label>Nom expéditeur</label>
-              <input type="text" [ngModel]="smtpForm().senderName" (ngModelChange)="updateSmtpForm('senderName', $event)" placeholder="Synelia RH">
+              <input type="text" [ngModel]="smtpForm().senderName" (ngModelChange)="updateSmtpForm('senderName', $event)" placeholder="Synelia RH" maxlength="255">
             </div>
             <div class="form-group">
               <label>Email expéditeur</label>
-              <input type="email" [ngModel]="smtpForm().senderEmail" (ngModelChange)="updateSmtpForm('senderEmail', $event)" placeholder="noreply@synelia.com">
+              <input type="email" [ngModel]="smtpForm().senderEmail" (ngModelChange)="updateSmtpForm('senderEmail', $event)" placeholder="noreply@synelia.com" maxlength="255">
             </div>
           </div>
           <div class="form-row checkboxes">
@@ -358,16 +358,16 @@
           <div class="form-row">
             <div class="form-group">
               <label>Clé *</label>
-              <input type="text" [ngModel]="legalForm().textKey" (ngModelChange)="updateLegalForm('textKey', $event)" placeholder="ex: candidate_consent" [disabled]="!!editingLegal()">
+              <input type="text" [ngModel]="legalForm().textKey" (ngModelChange)="updateLegalForm('textKey', $event)" placeholder="ex: candidate_consent" [disabled]="!!editingLegal()" required maxlength="100">
             </div>
             <div class="form-group">
               <label>Titre *</label>
-              <input type="text" [ngModel]="legalForm().title" (ngModelChange)="updateLegalForm('title', $event)" placeholder="Consentement candidat">
+              <input type="text" [ngModel]="legalForm().title" (ngModelChange)="updateLegalForm('title', $event)" placeholder="Consentement candidat" required maxlength="255">
             </div>
           </div>
           <div class="form-group">
             <label>Description</label>
-            <input type="text" [ngModel]="legalForm().description" (ngModelChange)="updateLegalForm('description', $event)" placeholder="Description interne">
+            <input type="text" [ngModel]="legalForm().description" (ngModelChange)="updateLegalForm('description', $event)" placeholder="Description interne" maxlength="500">
           </div>
           <div class="form-group">
             <label>Contenu (HTML) *</label>
@@ -498,16 +498,16 @@
           <div class="form-row">
             <div class="form-group">
               <label>Nom de la configuration *</label>
-              <input type="text" [ngModel]="configForm().configName" (ngModelChange)="updateConfigForm('configName', $event)" placeholder="ex: Config Production">
+              <input type="text" [ngModel]="configForm().configName" (ngModelChange)="updateConfigForm('configName', $event)" placeholder="ex: Config Production" required maxlength="100">
             </div>
             <div class="form-group">
               <label>Nom de l'entreprise *</label>
-              <input type="text" [ngModel]="configForm().companyName" (ngModelChange)="updateConfigForm('companyName', $event)" placeholder="Synelia">
+              <input type="text" [ngModel]="configForm().companyName" (ngModelChange)="updateConfigForm('companyName', $event)" placeholder="Synelia" required maxlength="255">
             </div>
           </div>
           <div class="form-group">
             <label>Lien public de l'application</label>
-            <input type="url" [ngModel]="configForm().appLink" (ngModelChange)="updateConfigForm('appLink', $event)" placeholder="https://app.example.com">
+            <input type="url" [ngModel]="configForm().appLink" (ngModelChange)="updateConfigForm('appLink', $event)" placeholder="https://app.example.com" maxlength="500">
             <p class="field-help">Utilisé pour la variable email {{ '{{app_link}}' }}.</p>
           </div>
           <div class="form-group">
@@ -554,7 +554,7 @@
             <label>Couleur primaire</label>
             <div class="color-input-row">
               <input type="color" [ngModel]="configForm().primaryColor" (ngModelChange)="updateConfigForm('primaryColor', $event)">
-              <input type="text" [ngModel]="configForm().primaryColor" (ngModelChange)="updateConfigForm('primaryColor', $event)" placeholder="#7C3AED" class="color-text-input">
+              <input type="text" [ngModel]="configForm().primaryColor" (ngModelChange)="updateConfigForm('primaryColor', $event)" placeholder="#7C3AED" class="color-text-input" maxlength="20" pattern="^#[0-9A-Fa-f]{6}$">
             </div>
           </div>
           <div class="form-group checkbox">

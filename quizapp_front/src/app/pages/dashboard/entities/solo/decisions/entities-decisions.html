@@ -57,7 +57,7 @@
           <app-filter-select [(ngModel)]="advancedCriteria.applicationId">
             <option [ngValue]="undefined">-- Tous --</option>
             @for (item of allApplications(); track item.id) {
-              <option [ngValue]="item.id">{{ '#' + item.id + ' - ' + (item.candidateFirstName || '') + ' ' + (item.candidateLastName || '') }}</option>
+              <option [ngValue]="item.id">{{ getApplicationDisplay(item.id) }}</option>
             }
           </app-filter-select>
         </div>
@@ -66,7 +66,7 @@
           <app-filter-select [(ngModel)]="advancedCriteria.userId">
             <option [ngValue]="undefined">-- Tous --</option>
             @for (item of allUsers(); track item.id) {
-              <option [ngValue]="item.id">{{ item.firstName + ' ' + item.lastName }}</option>
+              <option [ngValue]="item.id">{{ getUserDisplay(item.id) }}</option>
             }
           </app-filter-select>
         </div>
@@ -143,8 +143,8 @@
         <thead>
           <tr>
             <th class="col-id" [class.col-hidden]="!isColumnVisible('id')">ID</th>
-            <th class="col-id" [class.col-hidden]="!isColumnVisible('applicationId')">Application ID</th>
-            <th class="col-id" [class.col-hidden]="!isColumnVisible('userId')">User ID</th>
+            <th class="col-id" [class.col-hidden]="!isColumnVisible('applicationId')">Candidature</th>
+            <th class="col-id" [class.col-hidden]="!isColumnVisible('userId')">Utilisateur</th>
             <th class="col-short" [class.col-hidden]="!isColumnVisible('decisionType')">Type Décision</th>
             <th class="col-boolean" [class.col-hidden]="!isColumnVisible('cancelled')">Annulée</th>
             <th class="col-short" [class.col-hidden]="!isColumnVisible('pipelineStage')">Étape Pipeline</th>
@@ -155,11 +155,11 @@
         <tbody>
           <tr *ngFor="let item of items(); trackBy: trackById" [class.row-deleted]="item.isDeleted" (click)="selectItem(item)" style="cursor: pointer;">
             <td [class.col-hidden]="!isColumnVisible('id')"><span class="cell-id">#{{ item.id }}</span></td>
-            <td [class.col-hidden]="!isColumnVisible('applicationId')">{{ item.applicationId || '-' }}</td>
-            <td [class.col-hidden]="!isColumnVisible('userId')">{{ item.userId || '-' }}</td>
+            <td [class.col-hidden]="!isColumnVisible('applicationId')">{{ getApplicationDisplay(item.applicationId) }}</td>
+            <td [class.col-hidden]="!isColumnVisible('userId')">{{ getUserDisplay(item.userId) }}</td>
             <td [class.col-hidden]="!isColumnVisible('decisionType')">{{ item.decisionType || '-' }}</td>
             <td [class.col-hidden]="!isColumnVisible('cancelled')"><span class="bool-badge" [class.is-true]="item.isCancel" [class.is-false]="!item.isCancel"><svg *ngIf="item.isCancel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><svg *ngIf="!item.isCancel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>{{ item.isCancel ? 'Oui' : 'Non' }}</span></td>
-            <td [class.col-hidden]="!isColumnVisible('pipelineStage')">{{ item.pipelineStageId || '-' }}</td>
+            <td [class.col-hidden]="!isColumnVisible('pipelineStage')">{{ getPipelineStageDisplay(item.pipelineStageId) }}</td>
             <td [class.col-hidden]="!isColumnVisible('createdAt')"><span class="cell-date">{{ formatDate(item.createdAt) }}</span></td>
             <td class="actions-cell" [class.col-hidden]="!isColumnVisible('actions')" (click)="$event.stopPropagation()">
               <div class="actions-menu">
@@ -186,7 +186,7 @@
     <div class="pagination-container">
       <div class="pagination-info">
         <span class="results-info">
-          Affichage {{ currentPage() * pageSize() + 1 }} - {{ Math.min((currentPage() + 1) * pageSize(), totalElements()) }} sur {{ totalElements() }}
+          Affichage {{ totalElements() ? currentPage() * pageSize() + 1 : 0 }} - {{ totalElements() ? Math.min((currentPage() + 1) * pageSize(), totalElements()) : 0 }} sur {{ totalElements() }}
         </span>
         <div class="page-size-selector">
           <label for="pageSize">Par page:</label>
@@ -214,7 +214,7 @@
     <div class="modal-header"><h3>Confirmer la suppression</h3></div>
     <div class="modal-body">
       <p>Voulez-vous supprimer cet enregistrement ?</p>
-      <div class="item-info" *ngIf="itemToDelete"><strong>#{{ itemToDelete.id }}</strong></div>
+      <div class="item-info" *ngIf="itemToDelete"><strong>#{{ itemToDelete.id }} — {{ getApplicationDisplay(itemToDelete.applicationId) }} / {{ getUserDisplay(itemToDelete.userId) }}</strong></div>
     </div>
     <div class="modal-actions">
       <button class="btn-cancel" (click)="cancelDelete()">Annuler</button>
@@ -244,8 +244,8 @@
     </div>
     <div class="modal-content">
       <form class="edit-form">
-        <div class="form-group"><label class="form-label">Candidature</label><app-filter-select [(ngModel)]="editFormData.applicationId" name="applicationId" ariaLabel="Sélectionner une candidature"><option [ngValue]="undefined">-- Sélectionner --</option>@for (a of allApplications(); track a.id) {<option [ngValue]="a.id">{{ a.candidateEmail }}</option>}</app-filter-select></div>
-        <div class="form-group"><label class="form-label">Utilisateur</label><app-filter-select [(ngModel)]="editFormData.userId" name="userId" ariaLabel="Sélectionner un utilisateur"><option [ngValue]="undefined">-- Sélectionner --</option>@for (u of allUsers(); track u.id) {<option [ngValue]="u.id">{{ u.email }}</option>}</app-filter-select></div>
+        <div class="form-group"><label class="form-label">Candidature</label><app-filter-select [(ngModel)]="editFormData.applicationId" name="applicationId" ariaLabel="Sélectionner une candidature"><option [ngValue]="undefined">-- Sélectionner --</option>@for (a of allApplications(); track a.id) {<option [ngValue]="a.id">{{ getApplicationDisplay(a.id) }}</option>}</app-filter-select></div>
+        <div class="form-group"><label class="form-label">Utilisateur</label><app-filter-select [(ngModel)]="editFormData.userId" name="userId" ariaLabel="Sélectionner un utilisateur"><option [ngValue]="undefined">-- Sélectionner --</option>@for (u of allUsers(); track u.id) {<option [ngValue]="u.id">{{ getUserDisplay(u.id) }}</option>}</app-filter-select></div>
         <div class="form-group"><label class="form-label">Type Décision</label><input type="text" class="form-input" [(ngModel)]="editFormData.decisionType" name="decisionType" /></div>
         <div class="form-group"><app-filter-checkbox class="form-label" inputId="entities-decisions-edit-cancel" label="Annulée" variant="inline" [(ngModel)]="editFormData.isCancel" name="editDecisionIsCancel" ariaLabel="Décision annulée"></app-filter-checkbox></div>
       </form>
@@ -269,8 +269,8 @@
     </div>
     <div class="modal-content">
       <form class="edit-form">
-        <div class="form-group"><label class="form-label">Candidature</label><app-filter-select [(ngModel)]="createFormData.applicationId" name="applicationId" ariaLabel="Sélectionner une candidature pour la nouvelle décision"><option [ngValue]="undefined">-- Sélectionner --</option>@for (a of allApplications(); track a.id) {<option [ngValue]="a.id">{{ a.candidateEmail }}</option>}</app-filter-select></div>
-        <div class="form-group"><label class="form-label">Utilisateur</label><app-filter-select [(ngModel)]="createFormData.userId" name="userId" ariaLabel="Sélectionner un utilisateur pour la nouvelle décision"><option [ngValue]="undefined">-- Sélectionner --</option>@for (u of allUsers(); track u.id) {<option [ngValue]="u.id">{{ u.email }}</option>}</app-filter-select></div>
+        <div class="form-group"><label class="form-label">Candidature</label><app-filter-select [(ngModel)]="createFormData.applicationId" name="applicationId" ariaLabel="Sélectionner une candidature pour la nouvelle décision"><option [ngValue]="undefined">-- Sélectionner --</option>@for (a of allApplications(); track a.id) {<option [ngValue]="a.id">{{ getApplicationDisplay(a.id) }}</option>}</app-filter-select></div>
+        <div class="form-group"><label class="form-label">Utilisateur</label><app-filter-select [(ngModel)]="createFormData.userId" name="userId" ariaLabel="Sélectionner un utilisateur pour la nouvelle décision"><option [ngValue]="undefined">-- Sélectionner --</option>@for (u of allUsers(); track u.id) {<option [ngValue]="u.id">{{ getUserDisplay(u.id) }}</option>}</app-filter-select></div>
         <div class="form-group"><label class="form-label">Type Décision</label><input type="text" class="form-input" [(ngModel)]="createFormData.decisionType" name="decisionType" /></div>
         <div class="form-group"><app-filter-checkbox class="form-label" inputId="entities-decisions-create-cancel" label="Annulée" variant="inline" [(ngModel)]="createFormData.isCancel" name="createDecisionIsCancel" ariaLabel="Nouvelle décision annulée"></app-filter-checkbox></div>
       </form>

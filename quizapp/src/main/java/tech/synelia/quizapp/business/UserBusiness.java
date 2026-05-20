@@ -31,6 +31,7 @@ import tech.synelia.quizapp.utils.contract.IBasicBusiness;
 import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.dto.transformer.*;
+import tech.synelia.quizapp.utils.enums.UserRole;
 import tech.synelia.quizapp.dao.entity.*;
 import tech.synelia.quizapp.dao.repository.*;
 
@@ -54,7 +55,7 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 	@Autowired
 	private InterviewParticipantRepository interviewParticipantRepository;
 	@Autowired
-	private CampaignCrudRepository campaignCrudRepository;
+	private EntityPermissionRepository entityPermissionRepository;
 	@Autowired
 	private FunctionalError functionalError;
 	@Autowired
@@ -124,12 +125,8 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 				throw new InternalErrorException(functionalError.DATA_DUPLICATE(" email ", locale));
 			}
 
-			// Validation de userRole si fourni
 			if (Utilities.shouldUpdate(dto.getUserRole())) {
-				List<String> allowedRoles = Arrays.asList("super", "admin", "recruiter");
-				if (!allowedRoles.contains(dto.getUserRole())) {
-					throw new InvalidEntityException(functionalError.INVALID_FORMAT("userRole -> " + dto.getUserRole() + " (autorisé: super, admin, recruiter)", locale));
-				}
+				dto.setUserRole(normalizeUserRoleOrThrow(dto.getUserRole(), locale));
 			}
 
 			dto.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(dto)));
@@ -243,12 +240,7 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 				entityToSave.setIsDefaultPassword(dto.getIsDefaultPassword());
 			}
 			if (Utilities.shouldUpdate(dto.getUserRole())) {
-				// Validation des valeurs autorisées pour userRole
-				List<String> allowedRoles = Arrays.asList("super", "admin", "recruiter");
-				if (!allowedRoles.contains(dto.getUserRole())) {
-					throw new InvalidEntityException(functionalError.INVALID_FORMAT("userRole -> " + dto.getUserRole() + " (autorisé: super, admin, recruiter)", locale));
-				}
-				entityToSave.setUserRole(dto.getUserRole());
+				entityToSave.setUserRole(normalizeUserRoleOrThrow(dto.getUserRole(), locale));
 			}
 			if (dto.getIsOnline() != null) {
 				entityToSave.setIsOnline(dto.getIsOnline());
@@ -410,7 +402,7 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 				entityToSave.setIsDefaultPassword(dto.getIsDefaultPassword());
 			}
 			if (Utilities.shouldUpdate(dto.getUserRole())) {
-				entityToSave.setUserRole(dto.getUserRole());
+				entityToSave.setUserRole(normalizeUserRoleOrThrow(dto.getUserRole(), locale));
 			}
 			if (dto.getIsOnline() != null) {
 				entityToSave.setIsOnline(dto.getIsOnline());
@@ -517,9 +509,9 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 		if (!usersWithInterviews.isEmpty()) {
 			throw new InternalErrorException(functionalError.DATA_NOT_DELETABLE("interviews (" + usersWithInterviews.size() + " users)", locale));
 		}
-		List<Integer> usersWithCampaignCruds = campaignCrudRepository.findUserIdsWithCampaignCruds(userIds);
-		if (!usersWithCampaignCruds.isEmpty()) {
-			throw new InternalErrorException(functionalError.DATA_NOT_DELETABLE("campaignCruds (" + usersWithCampaignCruds.size() + " users)", locale));
+		List<Integer> usersWithEntityPermissions = entityPermissionRepository.findUserIdsWithEntityPermissions(userIds);
+		if (!usersWithEntityPermissions.isEmpty()) {
+			throw new InternalErrorException(functionalError.DATA_NOT_DELETABLE("entityPermissions (" + usersWithEntityPermissions.size() + " users)", locale));
 		}
 
 		// 4. Soft-delete en batch
@@ -760,5 +752,14 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 			user.setUpdatedAt(new Date());
 			userRepository.save(user);
 		});
+	}
+
+	private String normalizeUserRoleOrThrow(String rawUserRole, Locale locale) {
+		UserRole normalizedRole = UserRole.fromValue(rawUserRole);
+		if (normalizedRole == null) {
+			throw new InvalidEntityException(functionalError.INVALID_FORMAT(
+					"userRole -> " + rawUserRole + " (autorisé: super, admin, recruiter, candidate)", locale));
+		}
+		return normalizedRole.getValue();
 	}
 }

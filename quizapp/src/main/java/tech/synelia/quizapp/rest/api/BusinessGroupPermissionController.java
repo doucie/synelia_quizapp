@@ -25,7 +25,7 @@ import tech.synelia.quizapp.rest.fact.ControllerFactory;
 @CrossOrigin("*")
 @RestController
 @RequestMapping(value="/businessGroupPermission")
-@PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'UTILISATEUR')")
+@PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
 public class BusinessGroupPermissionController {
 
     @Autowired
@@ -36,6 +36,7 @@ public class BusinessGroupPermissionController {
     private BusinessGroupPermissionBusiness businessGroupPermissionBusiness;
 
     @RequestMapping(value="/create", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<Response<BusinessGroupPermissionDto>> create(@RequestBody Request<BusinessGroupPermissionDto> request) throws Exception {
         log.info("start method /businessGroupPermission/create");
         Response<BusinessGroupPermissionDto> response = controllerFactory.create(businessGroupPermissionBusiness, request, FunctionalityEnum.CREATE_BUSINESS_GROUP_PERMISSION);
@@ -45,6 +46,7 @@ public class BusinessGroupPermissionController {
     }
 
     @RequestMapping(value="/update", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public Response<BusinessGroupPermissionDto> update(@RequestBody Request<BusinessGroupPermissionDto> request) throws Exception {
         log.info("start method /businessGroupPermission/update");
         Response<BusinessGroupPermissionDto> response = controllerFactory.update(businessGroupPermissionBusiness, request, FunctionalityEnum.UPDATE_BUSINESS_GROUP_PERMISSION);
@@ -53,6 +55,7 @@ public class BusinessGroupPermissionController {
     }
 
     @RequestMapping(value="/delete", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public Response<BusinessGroupPermissionDto> delete(@RequestBody Request<BusinessGroupPermissionDto> request) throws Exception {
         log.info("start method /businessGroupPermission/delete");
         Response<BusinessGroupPermissionDto> response = controllerFactory.delete(businessGroupPermissionBusiness, request, FunctionalityEnum.DELETE_BUSINESS_GROUP_PERMISSION);

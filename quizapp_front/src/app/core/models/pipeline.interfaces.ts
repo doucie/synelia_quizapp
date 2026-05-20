@@ -2,6 +2,9 @@
 export type StageType = 'CANDIDATURE' | 'QUIZ' | 'PRESELECTION' | 'INTERVIEW' | 'TECHNICAL_TEST' | 'EVALUATION' | 'DECISION' | 'CUSTOM';
 export type ProgressStatus = 'PENDING' | 'IN_PROGRESS' | 'PASSED' | 'FAILED' | 'SKIPPED';
 
+export const STAGE_TYPES: StageType[] = ['CANDIDATURE', 'QUIZ', 'PRESELECTION', 'INTERVIEW', 'TECHNICAL_TEST', 'EVALUATION', 'DECISION', 'CUSTOM'];
+export const PROGRESS_STATUSES: ProgressStatus[] = ['PENDING', 'IN_PROGRESS', 'PASSED', 'FAILED', 'SKIPPED'];
+
 // ── Pipeline Template ──────────────────────────────
 export interface PipelineTemplate {
   id?: number;
@@ -27,6 +30,8 @@ export interface PipelineStage {
   stageOrder?: number;
   isRequired?: boolean;
   isEliminatory?: boolean;
+  emailRequired?: boolean;
+  emailAutomatic?: boolean;
   configJson?: string | null;
   pipelineTemplateId?: number;
   pipelineTemplateName?: string;

@@ -29,14 +29,21 @@ export class EntitiesPipelineTemplatesComponent extends EntityCrudBase<PipelineT
   advancedCriteria: PipelineTemplateCriteria = {};
   editFormData: PipelineTemplate = {};
   createFormData: Partial<PipelineTemplate> = {};
+  showDuplicateModal = signal(false);
+  showSetDefaultConfirm = signal(false);
+  templateToDuplicate = signal<PipelineTemplate | null>(null);
+  templateToSetDefault = signal<PipelineTemplate | null>(null);
+  duplicateName = signal('');
+  isDuplicating = false;
+  isSettingDefault = false;
 
   override allColumns: ColumnDef[] = [
     { key: 'id', label: 'ID', priority: 1 },
-    { key: 'name', label: 'Nom', priority: 1 },
-    { key: 'description', label: 'Description', priority: 3 },
+    { key: 'templateName', label: 'Nom', priority: 1 },
+    { key: 'templateDesc', label: 'Description', priority: 3 },
     { key: 'isDefault', label: 'Par défaut', priority: 2 },
-    { key: 'active', label: 'Actif', priority: 2 },
-    { key: 'locked', label: 'Verrouillé', priority: 2 },
+    { key: 'isActive', label: 'Actif', priority: 2 },
+    { key: 'isLocked', label: 'Verrouillé', priority: 2 },
     { key: 'createdAt', label: 'Créé le', priority: 2 },
     { key: 'actions', label: 'Actions', priority: 1 },
   ];
@@ -48,4 +55,122 @@ export class EntitiesPipelineTemplatesComponent extends EntityCrudBase<PipelineT
   protected performRestore(id: number): Observable<any> { return this.service.restore(id); }
   protected resetAdvancedCriteriaValues(): void { this.advancedCriteria = {}; }
   protected resetCreateFormData(): void { this.createFormData = {}; }
+
+  canEditTemplate(item: PipelineTemplate | null | undefined): boolean {
+    return !!item && !item.isDeleted && !item.isLocked;
+  }
+
+  canDeleteTemplate(item: PipelineTemplate | null | undefined): boolean {
+    return this.canEditTemplate(item);
+  }
+
+  canDuplicateTemplate(item: PipelineTemplate | null | undefined): boolean {
+    return !!item && !item.isDeleted;
+  }
+
+  canSetDefaultTemplate(item: PipelineTemplate | null | undefined): boolean {
+    return !!item && !item.isDeleted && !item.isDefault;
+  }
+
+  openPipelineTemplatesWorkspace(): void {
+    this.router.navigate(['/dashboard/pipeline-templates']);
+  }
+
+  openDuplicateModal(item: PipelineTemplate): void {
+    if (!this.canDuplicateTemplate(item)) {
+      return;
+    }
+
+    this.templateToDuplicate.set(item);
+    this.duplicateName.set(`${item.templateName || 'Template'} (copie)`);
+    this.showDuplicateModal.set(true);
+  }
+
+  closeDuplicateModal(): void {
+    if (this.isDuplicating) {
+      return;
+    }
+
+    this.templateToDuplicate.set(null);
+    this.duplicateName.set('');
+    this.showDuplicateModal.set(false);
+  }
+
+  confirmDuplicate(): void {
+    const template = this.templateToDuplicate();
+    const name = this.duplicateName().trim();
+
+    if (!template?.id || !name || this.isDuplicating) {
+      return;
+    }
+
+    this.isDuplicating = true;
+    this.service.duplicate(template.id, name).subscribe({
+      next: (response) => {
+        if (response?.hasError) {
+          this.notificationService.error('Erreur', response.status?.message || 'Erreur lors de la duplication du template');
+          this.isDuplicating = false;
+          return;
+        }
+
+        this.notificationService.success('Succès', response.status?.message || 'Template dupliqué avec succès');
+        this.isDuplicating = false;
+        this.templateToDuplicate.set(null);
+        this.duplicateName.set('');
+        this.showDuplicateModal.set(false);
+        this.loadItems();
+      },
+      error: (error) => {
+        this.notificationService.error('Erreur', this.getErrorMessage(error, 'Erreur lors de la duplication du template'));
+        this.isDuplicating = false;
+      }
+    });
+  }
+
+  openSetDefaultConfirm(item: PipelineTemplate): void {
+    if (!this.canSetDefaultTemplate(item)) {
+      return;
+    }
+
+    this.templateToSetDefault.set(item);
+    this.showSetDefaultConfirm.set(true);
+  }
+
+  closeSetDefaultConfirm(): void {
+    if (this.isSettingDefault) {
+      return;
+    }
+
+    this.templateToSetDefault.set(null);
+    this.showSetDefaultConfirm.set(false);
+  }
+
+  confirmSetDefault(): void {
+    const template = this.templateToSetDefault();
+
+    if (!template?.id || this.isSettingDefault) {
+      return;
+    }
+
+    this.isSettingDefault = true;
+    this.service.setDefault(template.id).subscribe({
+      next: (response) => {
+        if (response?.hasError) {
+          this.notificationService.error('Erreur', response.status?.message || 'Erreur lors de la définition du template par défaut');
+          this.isSettingDefault = false;
+          return;
+        }
+
+        this.notificationService.success('Succès', response.status?.message || 'Template défini par défaut');
+        this.isSettingDefault = false;
+        this.templateToSetDefault.set(null);
+        this.showSetDefaultConfirm.set(false);
+        this.loadItems();
+      },
+      error: (error) => {
+        this.notificationService.error('Erreur', this.getErrorMessage(error, 'Erreur lors de la définition du template par défaut'));
+        this.isSettingDefault = false;
+      }
+    });
+  }
 }

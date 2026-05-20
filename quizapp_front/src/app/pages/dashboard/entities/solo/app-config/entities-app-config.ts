@@ -11,6 +11,8 @@ import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-v
 import { FilterCheckboxComponent } from '../../../../../shared/filter-checkbox/filter-checkbox';
 import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../../../shared/filter-select/filter-select';
 import { AppConfigService, AppConfig } from '../../../../../core/services/app-config.service';
+import { LogoHtmlSanitizerService } from '../../../../../core/services/logo-html-sanitizer.service';
+import { ThemeService } from '../../../../../core/services/theme.service';
 
 interface AppConfigCriteria extends BaseSearchCriteria {
   configName?: string;
@@ -28,6 +30,8 @@ interface PagedAppConfigResponse extends BasePagedResponse<AppConfig> {}
 })
 export class EntitiesAppConfigComponent extends EntityCrudBase<AppConfig, AppConfigCriteria, PagedAppConfigResponse> {
   private service = inject(AppConfigService);
+  private logoHtmlSanitizer = inject(LogoHtmlSanitizerService);
+  private themeService = inject(ThemeService);
   protected override readonly router = inject(Router);
   protected override readonly pageSizeStorageKey = 'entitiesAppConfigPageSize';
   protected override readonly entityName = 'config application';
@@ -36,6 +40,7 @@ export class EntitiesAppConfigComponent extends EntityCrudBase<AppConfig, AppCon
   advancedCriteria: AppConfigCriteria = {};
   editFormData: AppConfig = {} as AppConfig;
   createFormData: Partial<AppConfig> = {};
+  activatingConfigId: number | null = null;
 
   override allColumns: ColumnDef[] = [
     { key: 'id', label: 'ID', priority: 1 },
@@ -64,4 +69,43 @@ export class EntitiesAppConfigComponent extends EntityCrudBase<AppConfig, AppCon
   protected performRestore(id: number): Observable<any> { return this.service.update({ id, isDeleted: false }); }
   protected resetAdvancedCriteriaValues(): void { this.advancedCriteria = {}; }
   protected resetCreateFormData(): void { this.createFormData = {}; }
+
+  canActivate(item: AppConfig): boolean {
+    return !!item.id && !item.isDeleted && !item.isActive;
+  }
+
+  activateConfig(item: AppConfig): void {
+    if (!this.canActivate(item) || this.activatingConfigId !== null) {
+      return;
+    }
+
+    if (!confirm(`Activer la configuration "${item.configName || 'sans nom'}" ?`)) {
+      return;
+    }
+
+    this.activatingConfigId = item.id;
+    this.service.activate(item.id).subscribe({
+      next: (response) => {
+        const activeConfig = {
+          ...item,
+          ...response,
+          logoHtml: this.logoHtmlSanitizer.sanitize(response?.logoHtml ?? item.logoHtml)
+        };
+
+        this.notificationService.success('Succès', `Configuration "${item.configName}" activée`);
+        this.themeService.applyTheme(activeConfig);
+        this.themeService.companyName.set(activeConfig.companyName || 'Synelia');
+        this.themeService.appLink.set(activeConfig.appLink?.trim() || '');
+        this.themeService.logoHtml.set(this.logoHtmlSanitizer.sanitizeOrEmpty(activeConfig.logoHtml));
+        this.themeService.candidateAccountsEnabled.set(activeConfig.candidateAccountsEnabled === true);
+        this.themeService.activeConfig.set(activeConfig);
+        this.activatingConfigId = null;
+        this.loadItems();
+      },
+      error: () => {
+        this.notificationService.error('Erreur', 'Erreur lors de l\'activation');
+        this.activatingConfigId = null;
+      }
+    });
+  }
 }

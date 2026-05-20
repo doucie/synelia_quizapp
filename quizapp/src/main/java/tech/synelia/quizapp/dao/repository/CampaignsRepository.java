@@ -385,6 +385,15 @@ public interface CampaignsRepository extends JpaRepository<Campaigns, Integer>, 
 			if (dto.getTotalQuestions()!= null && dto.getTotalQuestions() > 0) {
 				listOfQuery.add(CriteriaUtils.generateCriteria("totalQuestions", dto.getTotalQuestions(), "e.totalQuestions", "Integer", dto.getTotalQuestionsParam(), param, index, locale));
 			}
+			if (dto.getIsTimed() != null) {
+				listOfQuery.add(CriteriaUtils.generateCriteria("isTimed", dto.getIsTimed(), "e.isTimed", "Boolean", dto.getIsTimedParam(), param, index, locale));
+			}
+			if (dto.getIsArchived() != null) {
+				listOfQuery.add(CriteriaUtils.generateCriteria("isArchived", dto.getIsArchived(), "e.isArchived", "Boolean", dto.getIsArchivedParam(), param, index, locale));
+			}
+			if (dto.getTimeAllForms()!= null) {
+				listOfQuery.add(CriteriaUtils.generateCriteria("timeAllForms", dto.getTimeAllForms(), "e.timeAllForms", "Boolean", dto.getTimeAllFormsParam(), param, index, locale));
+			}
 			if (Utilities.notBlank(dto.getCreatedAt())) {
 				listOfQuery.add(CriteriaUtils.generateCriteria("createdAt", dto.getCreatedAt(), "e.createdAt", "Date", dto.getCreatedAtParam(), param, index, locale));
 			}

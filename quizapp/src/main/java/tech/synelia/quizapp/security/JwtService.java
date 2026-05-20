@@ -6,6 +6,8 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import tech.synelia.quizapp.utils.enums.UserRole;
+
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
@@ -27,13 +29,16 @@ public class JwtService {
     public String generateToken(Integer userId, String email, String role) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expiration);
+        UserRole normalizedRole = UserRole.fromValue(role);
+        String roleClaim = normalizedRole != null ? normalizedRole.getValue() : role;
+        String systemRoleClaim = normalizedRole != null ? normalizedRole.getSystemRole() : role;
 
         return Jwts.builder()
                 .subject(userId.toString())
                 .claims(Map.of(
                         "email", email,
-                        "role", role,
-                        "systemRole", role
+                        "role", roleClaim,
+                        "systemRole", systemRoleClaim
                 ))
                 .issuedAt(now)
                 .expiration(expiryDate)
@@ -63,11 +68,20 @@ public class JwtService {
     }
 
     public String extractRole(String token) {
-        return extractClaims(token).get("role", String.class);
+        String role = extractClaims(token).get("role", String.class);
+        String normalizedRole = UserRole.normalizeValue(role);
+        return normalizedRole != null ? normalizedRole : role;
     }
 
     public String extractSystemRole(String token) {
         String systemRole = extractClaims(token).get("systemRole", String.class);
-        return systemRole != null ? systemRole : extractRole(token);
+        String normalizedSystemRole = UserRole.normalizeSystemRole(systemRole);
+        if (normalizedSystemRole != null) {
+            return normalizedSystemRole;
+        }
+
+        String fallbackRole = extractRole(token);
+        String normalizedFallbackRole = UserRole.normalizeSystemRole(fallbackRole);
+        return normalizedFallbackRole != null ? normalizedFallbackRole : fallbackRole;
     }
 }

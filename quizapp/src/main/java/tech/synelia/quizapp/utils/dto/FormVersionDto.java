@@ -19,6 +19,7 @@ public class FormVersionDto extends _FormVersionDto implements Cloneable {
     private Integer    versionNumber        ;
     private Boolean    isPublished          ;
     private Boolean    isLocked             ;
+    private Boolean    randomQuestions      ;
     private String     createdAt            ;
     private Integer    createdBy            ;
     private String     updatedAt            ;
@@ -37,6 +38,7 @@ public class FormVersionDto extends _FormVersionDto implements Cloneable {
     private SearchParam<Integer>  versionNumberParam     ;
     private SearchParam<Boolean>  isPublishedParam       ;
     private SearchParam<Boolean>  isLockedParam          ;
+    private SearchParam<Boolean>  randomQuestionsParam   ;
     private SearchParam<String>   createdAtParam         ;
     private SearchParam<Integer>  createdByParam         ;
     private SearchParam<String>   updatedAtParam         ;

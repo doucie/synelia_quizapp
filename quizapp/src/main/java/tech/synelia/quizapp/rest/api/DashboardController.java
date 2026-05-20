@@ -23,7 +23,7 @@ import java.util.Map;
 @CrossOrigin("*")
 @RestController
 @RequestMapping(value = "/api/dashboard")
-@PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'UTILISATEUR')")
+@PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'RECRUITER')")
 public class DashboardController {
 
     private final UserRepository userRepository;
@@ -36,7 +36,7 @@ public class DashboardController {
     private final DepartmentsRepository departmentsRepository;
     private final SpecialitiesRepository specialitiesRepository;
     private final SourceTokenRepository sourceTokenRepository;
-    private final CampaignCrudRepository campaignCrudRepository;
+    private final EntityPermissionRepository entityPermissionRepository;
     private final CandidateAnswerRepository candidateAnswerRepository;
     private final CandidateAskRepository candidateAskRepository;
     private final CandidateInterviewRepository candidateInterviewRepository;
@@ -60,7 +60,7 @@ public class DashboardController {
             DepartmentsRepository departmentsRepository,
             SpecialitiesRepository specialitiesRepository,
             SourceTokenRepository sourceTokenRepository,
-            CampaignCrudRepository campaignCrudRepository,
+            EntityPermissionRepository entityPermissionRepository,
             CandidateAnswerRepository candidateAnswerRepository,
             CandidateAskRepository candidateAskRepository,
             CandidateInterviewRepository candidateInterviewRepository,
@@ -83,7 +83,7 @@ public class DashboardController {
         this.departmentsRepository = departmentsRepository;
         this.specialitiesRepository = specialitiesRepository;
         this.sourceTokenRepository = sourceTokenRepository;
-        this.campaignCrudRepository = campaignCrudRepository;
+        this.entityPermissionRepository = entityPermissionRepository;
         this.candidateAnswerRepository = candidateAnswerRepository;
         this.candidateAskRepository = candidateAskRepository;
         this.candidateInterviewRepository = candidateInterviewRepository;
@@ -114,7 +114,7 @@ public class DashboardController {
         counts.put("departments", departmentsRepository.count());
         counts.put("specialities", specialitiesRepository.count());
         counts.put("tokens", sourceTokenRepository.count());
-        counts.put("campaign-crud", campaignCrudRepository.count());
+        counts.put("entity-permissions", entityPermissionRepository.count());
         counts.put("candidate-answers", candidateAnswerRepository.count());
         counts.put("candidate-ask", candidateAskRepository.count());
         counts.put("candidate-interview", candidateInterviewRepository.count());
@@ -147,7 +147,7 @@ public class DashboardController {
         switch (entityType) {
             case "users":
                 addDep(deps, "campaigns", "Campagnes (créateur)", campaignsRepository.findByCreatorId(id, false), false);
-                addDep(deps, "campaign-crud", "Permissions campagne", campaignCrudRepository.findByUserId(id, false), false);
+                addDep(deps, "entity-permissions", "Permissions campagne", getActiveCampaignPermissionsForUser(id), false);
                 addDep(deps, "interview-participant", "Permissions entretien", interviewParticipantRepository.findByUserId(id, false), false);
                 addDep(deps, "decisions", "Décisions", decisionRepository.findByUserId(id, false), false);
                 addDep(deps, "notifications", "Notifications", notificationsRepository.findByUserId(id, false), false);
@@ -170,7 +170,7 @@ public class DashboardController {
             case "campaigns":
                 addDep(deps, "forms", "Formulaires", formRepository.findByCampaignId(id, false), false);
                 addDep(deps, "source-tokens", "Tokens source", sourceTokenRepository.findByCampaignId(id, false), false);
-                addDep(deps, "campaign-crud", "Permissions campagne", campaignCrudRepository.findByCampaignId(id, false), false);
+                addDep(deps, "entity-permissions", "Permissions campagne", getActiveCampaignPermissionsForCampaign(id), false);
                 addDep(deps, "interviews", "Entretiens", interviewsRepository.findByCampaignId(id, false), false);
                 break;
             case "forms":
@@ -334,5 +334,35 @@ public class DashboardController {
     private void addDep(List<DependencyGroup> deps, String entityType, String label, List<?> items, boolean critical) {
         int count = (items != null) ? items.size() : 0;
         deps.add(new DependencyGroup(entityType, label, count, critical));
+    }
+
+    private List<EntityPermission> getActiveCampaignPermissionsForUser(Integer userId) {
+        return filterActiveCampaignPermissions(entityPermissionRepository.findByUserId(userId));
+    }
+
+    private List<EntityPermission> getActiveCampaignPermissionsForCampaign(Integer campaignId) {
+        return filterActiveCampaignPermissions(entityPermissionRepository.findByEntityTypeAndEntityId("CAMPAIGN", campaignId));
+    }
+
+    private List<EntityPermission> filterActiveCampaignPermissions(List<EntityPermission> permissions) {
+        List<EntityPermission> activePermissions = new ArrayList<>();
+        if (permissions == null) {
+            return activePermissions;
+        }
+
+        for (EntityPermission permission : permissions) {
+            if (permission == null) {
+                continue;
+            }
+            if (!"CAMPAIGN".equalsIgnoreCase(permission.getEntityType())) {
+                continue;
+            }
+            if (Boolean.TRUE.equals(permission.getIsDeleted())) {
+                continue;
+            }
+            activePermissions.add(permission);
+        }
+
+        return activePermissions;
     }
 }

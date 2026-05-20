@@ -57,7 +57,7 @@
           <app-filter-select [(ngModel)]="advancedCriteria.userId">
             <option [ngValue]="undefined">-- Tous --</option>
             @for (item of allUsers(); track item.id) {
-              <option [ngValue]="item.id">{{ item.firstName + ' ' + item.lastName }}</option>
+              <option [ngValue]="item.id">{{ getUserDisplay(item.id) }}</option>
             }
           </app-filter-select>
         </div>
@@ -66,7 +66,7 @@
           <app-filter-select [(ngModel)]="advancedCriteria.interviewId">
             <option [ngValue]="undefined">-- Tous --</option>
             @for (item of allInterviews(); track item.id) {
-              <option [ngValue]="item.id">{{ '#' + item.id + ' (' + (item.interviewType || '') + ')' }}</option>
+              <option [ngValue]="item.id">{{ getInterviewDisplay(item.id) }}</option>
             }
           </app-filter-select>
         </div>
@@ -140,8 +140,8 @@
         <thead>
           <tr>
             <th class="col-id" [class.col-hidden]="!isColumnVisible('id')">ID</th>
-            <th class="col-id" [class.col-hidden]="!isColumnVisible('userId')">User ID</th>
-            <th class="col-id" [class.col-hidden]="!isColumnVisible('interviewId')">Interview ID</th>
+            <th class="col-id" [class.col-hidden]="!isColumnVisible('userId')">Utilisateur</th>
+            <th class="col-id" [class.col-hidden]="!isColumnVisible('interviewId')">Entretien</th>
             <th class="col-boolean" [class.col-hidden]="!isColumnVisible('online')">Online</th>
             <th class="col-boolean" [class.col-hidden]="!isColumnVisible('finished')">Finished</th>
             <th class="col-date" [class.col-hidden]="!isColumnVisible('lastPing')">Dernier Ping</th>
@@ -152,8 +152,8 @@
         <tbody>
           <tr *ngFor="let item of items(); trackBy: trackById" [class.row-deleted]="item.isDeleted" (click)="selectItem(item)" style="cursor: pointer;">
             <td [class.col-hidden]="!isColumnVisible('id')"><span class="cell-id">#{{ item.id }}</span></td>
-            <td [class.col-hidden]="!isColumnVisible('userId')">{{ item.userId || '-' }}</td>
-            <td [class.col-hidden]="!isColumnVisible('interviewId')">{{ item.interviewId || '-' }}</td>
+            <td [class.col-hidden]="!isColumnVisible('userId')">{{ getUserDisplay(item.userId) }}</td>
+            <td [class.col-hidden]="!isColumnVisible('interviewId')">{{ getInterviewDisplay(item.interviewId) }}</td>
             <td [class.col-hidden]="!isColumnVisible('online')"><span class="bool-badge" [class.is-true]="item.isOnline" [class.is-false]="!item.isOnline"><svg *ngIf="item.isOnline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><svg *ngIf="!item.isOnline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>{{ item.isOnline ? 'Oui' : 'Non' }}</span></td>
             <td [class.col-hidden]="!isColumnVisible('finished')"><span class="bool-badge" [class.is-true]="item.hasFinished" [class.is-false]="!item.hasFinished"><svg *ngIf="item.hasFinished" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><svg *ngIf="!item.hasFinished" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>{{ item.hasFinished ? 'Oui' : 'Non' }}</span></td>
             <td [class.col-hidden]="!isColumnVisible('lastPing')"><span class="cell-date">{{ formatDate(item.lastPingAt) }}</span></td>
@@ -183,7 +183,7 @@
     <div class="pagination-container">
       <div class="pagination-info">
         <span class="results-info">
-          Affichage {{ currentPage() * pageSize() + 1 }} - {{ Math.min((currentPage() + 1) * pageSize(), totalElements()) }} sur {{ totalElements() }}
+          Affichage {{ totalElements() ? currentPage() * pageSize() + 1 : 0 }} - {{ totalElements() ? Math.min((currentPage() + 1) * pageSize(), totalElements()) : 0 }} sur {{ totalElements() }}
         </span>
         <div class="page-size-selector">
           <label for="pageSize">Par page:</label>
@@ -211,7 +211,7 @@
     <div class="modal-header"><h3>Confirmer la suppression</h3></div>
     <div class="modal-body">
       <p>Voulez-vous supprimer cet enregistrement ?</p>
-      <div class="item-info" *ngIf="itemToDelete"><strong>#{{ itemToDelete.id }}</strong></div>
+      <div class="item-info" *ngIf="itemToDelete"><strong>#{{ itemToDelete.id }} — {{ getUserDisplay(itemToDelete.userId) }} / {{ getInterviewDisplay(itemToDelete.interviewId) }}</strong></div>
     </div>
     <div class="modal-actions">
       <button class="btn-cancel" (click)="cancelDelete()">Annuler</button>
@@ -241,8 +241,8 @@
     </div>
     <div class="modal-content">
       <form class="edit-form">
-        <div class="form-group"><label class="form-label">Utilisateur</label><app-filter-select [(ngModel)]="editFormData.userId" name="userId" ariaLabel="Sélectionner un utilisateur"><option [ngValue]="undefined">-- Sélectionner --</option>@for (u of allUsers(); track u.id) {<option [ngValue]="u.id">{{ u.email }}</option>}</app-filter-select></div>
-        <div class="form-group"><label class="form-label">Entretien</label><app-filter-select [(ngModel)]="editFormData.interviewId" name="interviewId" ariaLabel="Sélectionner un entretien"><option [ngValue]="undefined">-- Sélectionner --</option>@for (i of allInterviews(); track i.id) {<option [ngValue]="i.id">#{{ i.id }} - {{ i.interviewType }}</option>}</app-filter-select></div>
+        <div class="form-group"><label class="form-label">Utilisateur</label><app-filter-select [(ngModel)]="editFormData.userId" name="userId" ariaLabel="Sélectionner un utilisateur"><option [ngValue]="undefined">-- Sélectionner --</option>@for (u of allUsers(); track u.id) {<option [ngValue]="u.id">{{ getUserDisplay(u.id) }}</option>}</app-filter-select></div>
+        <div class="form-group"><label class="form-label">Entretien</label><app-filter-select [(ngModel)]="editFormData.interviewId" name="interviewId" ariaLabel="Sélectionner un entretien"><option [ngValue]="undefined">-- Sélectionner --</option>@for (i of allInterviews(); track i.id) {<option [ngValue]="i.id">{{ getInterviewDisplay(i.id) }}</option>}</app-filter-select></div>
         <div class="form-group"><app-filter-checkbox class="form-label" inputId="entities-interview-participant-edit-online" label="Online" variant="inline" [(ngModel)]="editFormData.isOnline" name="editInterviewParticipantIsOnline" ariaLabel="Participant en ligne"></app-filter-checkbox></div>
         <div class="form-group"><app-filter-checkbox class="form-label" inputId="entities-interview-participant-edit-finished" label="Finished" variant="inline" [(ngModel)]="editFormData.hasFinished" name="editInterviewParticipantHasFinished" ariaLabel="Participant terminé"></app-filter-checkbox></div>
       </form>
@@ -266,8 +266,8 @@
     </div>
     <div class="modal-content">
       <form class="edit-form">
-        <div class="form-group"><label class="form-label">Utilisateur</label><app-filter-select [(ngModel)]="createFormData.userId" name="userId" ariaLabel="Sélectionner un utilisateur pour le nouveau participant"><option [ngValue]="undefined">-- Sélectionner --</option>@for (u of allUsers(); track u.id) {<option [ngValue]="u.id">{{ u.email }}</option>}</app-filter-select></div>
-        <div class="form-group"><label class="form-label">Entretien</label><app-filter-select [(ngModel)]="createFormData.interviewId" name="interviewId" ariaLabel="Sélectionner un entretien pour le nouveau participant"><option [ngValue]="undefined">-- Sélectionner --</option>@for (i of allInterviews(); track i.id) {<option [ngValue]="i.id">#{{ i.id }} - {{ i.interviewType }}</option>}</app-filter-select></div>
+        <div class="form-group"><label class="form-label">Utilisateur</label><app-filter-select [(ngModel)]="createFormData.userId" name="userId" ariaLabel="Sélectionner un utilisateur pour le nouveau participant"><option [ngValue]="undefined">-- Sélectionner --</option>@for (u of allUsers(); track u.id) {<option [ngValue]="u.id">{{ getUserDisplay(u.id) }}</option>}</app-filter-select></div>
+        <div class="form-group"><label class="form-label">Entretien</label><app-filter-select [(ngModel)]="createFormData.interviewId" name="interviewId" ariaLabel="Sélectionner un entretien pour le nouveau participant"><option [ngValue]="undefined">-- Sélectionner --</option>@for (i of allInterviews(); track i.id) {<option [ngValue]="i.id">{{ getInterviewDisplay(i.id) }}</option>}</app-filter-select></div>
         <div class="form-group"><app-filter-checkbox class="form-label" inputId="entities-interview-participant-create-online" label="Online" variant="inline" [(ngModel)]="createFormData.isOnline" name="createInterviewParticipantIsOnline" ariaLabel="Nouveau participant en ligne"></app-filter-checkbox></div>
         <div class="form-group"><app-filter-checkbox class="form-label" inputId="entities-interview-participant-create-finished" label="Finished" variant="inline" [(ngModel)]="createFormData.hasFinished" name="createInterviewParticipantHasFinished" ariaLabel="Nouveau participant terminé"></app-filter-checkbox></div>
       </form>

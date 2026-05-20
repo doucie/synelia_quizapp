@@ -291,6 +291,15 @@ export class EntitiesComponent implements OnInit {
       color: '#EA580C'
     },
     {
+      name: 'mail-log',
+      displayName: 'Journal Emails',
+      description: 'Historique des envois, erreurs et statuts des emails sortants',
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h6v-2H4V8l8 5 8-5v4h2V6c0-1.1-.9-2-2-2zm0 2-8 5-8-5V6l8 5 8-5v0z"/><path d="M17 14v-2l-4 3 4 3v-2h3v-2h-3z"/></svg>',
+      iconType: 'svg',
+      route: '/dashboard/entities/mail-log',
+      color: '#0F766E'
+    },
+    {
       name: 'smtp-config',
       displayName: 'Configurations SMTP',
       description: 'Configuration des serveurs d\'envoi d\'emails',
@@ -439,7 +448,6 @@ export class EntitiesComponent implements OnInit {
         
       case 'campaigns':
       case 'candidates':
-      case 'applications':
       case 'interviews':
       case 'evaluations':
         if (userRole === 'super' || userRole === 'admin' || userRole === 'recruiter') {
@@ -447,6 +455,21 @@ export class EntitiesComponent implements OnInit {
           this.router.navigate([`/dashboard/${fragment}`]);
         } else {
           console.log(`❌ Accès refusé à /dashboard/${fragment}`);
+          this.router.navigate(['/dashboard'], {
+            queryParams: {
+              error: 'access_denied',
+              message: 'Accès insuffisant pour cette fonctionnalité.'
+            }
+          });
+        }
+        break;
+
+      case 'applications':
+        if (userRole === 'super' || userRole === 'admin' || userRole === 'recruiter') {
+          console.log('✅ Redirection vers /dashboard/candidates (alias applications)');
+          this.router.navigate(['/dashboard/candidates']);
+        } else {
+          console.log('❌ Accès refusé à /dashboard/candidates');
           this.router.navigate(['/dashboard'], {
             queryParams: {
               error: 'access_denied',

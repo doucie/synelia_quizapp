@@ -13,8 +13,6 @@
 ### "datas"
 \utils\contract\Request.java
 
----
-
 ## 1. User Management
 
 ### ➕ Créer un utilisateur
@@ -225,26 +223,10 @@ Note: le code de suivi public est genere automatiquement via `candidate_token`; 
 
 ---
 
-## 10. Campaign CRUD (Permissions Campagne)
+## 10. Campaign CRUD (Legacy retire)
 
-### ➕ Créer permissions campagne
-**POST** `/campaigncrud/create`
-
-```json
-{
-    "user": "1",
-    "datas": [
-        {
-            "canUpdate": true,
-            "canDelete": false,
-            "canEvaluate": true,
-            "follow": true,
-            "campaignsId": 1,
-            "userId": 1
-        }
-    ]
-}
-```
+Cette surface legacy a ete supprimee du backend et de la base.
+Les permissions ciblees campagne / entretien passent desormais par `entity_permission`.
 
 ---
 
@@ -509,7 +491,7 @@ Note: le code de suivi public est genere automatiquement via `candidate_token`; 
 7. **questionsanswers** - Association question-réponse
 8. **campaigns** - Campagnes de recrutement
 9. **campaignquestions** - Questions par campagne
-10. **campaigncrud** - Permissions sur campagnes *(legacy)*
+10. **campaigncrud** - Retire du backend et de la BD
 11. **sourcetoken** - Tokens de source
 12. **candidatetoken** - Tokens candidats
 13. **candidateask** - Demandes candidats

@@ -38,6 +38,9 @@ public class Form implements Serializable, Cloneable {
     @Column(name="is_active")
     private Boolean    isActive     ;
 
+    @Column(name="is_timed", nullable=false, columnDefinition="BOOLEAN DEFAULT FALSE")
+    private Boolean    isTimed      ;
+
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name="created_at")
     private Date       createdAt    ;

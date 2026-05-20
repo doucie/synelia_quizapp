@@ -58,6 +58,9 @@ public interface _ApplicationProgressRepository {
             if (dto.getDecidedById() != null && dto.getDecidedById() > 0) {
                 listOfQuery.add(CriteriaUtils.generateCriteria("decidedById", dto.getDecidedById(), "e.decidedBy.id", "Integer", dto.getDecidedByIdParam(), param, index, locale));
             }
+            if (dto.getMailSent() != null) {
+                listOfQuery.add(CriteriaUtils.generateCriteria("mailSent", dto.getMailSent(), "e.mailSent", "Boolean", dto.getMailSentParam(), param, index, locale));
+            }
             if (dto.getIsDeleted() != null) {
                 listOfQuery.add(CriteriaUtils.generateCriteria("isDeleted", dto.getIsDeleted(), "e.isDeleted", "Boolean", dto.getIsDeletedParam(), param, index, locale));
             }

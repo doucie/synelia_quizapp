@@ -47,6 +47,7 @@ public interface ApplicationProgressTransformer {
         dto.setId(entity.getId());
         dto.setProgressStatus(entity.getProgressStatus());
         dto.setScore(entity.getScore());
+        dto.setMailSent(entity.getMailSent());
         if (entity.getApplications() != null) {
             dto.setApplicationId(entity.getApplications().getId());
         }
@@ -77,6 +78,7 @@ public interface ApplicationProgressTransformer {
         @Mapping(source = "dto.progressStatus", target = "progressStatus"),
         @Mapping(source = "dto.score", target = "score"),
         @Mapping(source = "dto.notes", target = "notes"),
+        @Mapping(source = "dto.mailSent", target = "mailSent"),
         @Mapping(source = "dto.createdBy", target = "createdBy"),
         @Mapping(source = "dto.updatedBy", target = "updatedBy"),
         @Mapping(source = "dto.isDeleted", target = "isDeleted"),
