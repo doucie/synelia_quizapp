@@ -24,7 +24,9 @@ Le systeme actuel est partiellement bon.
 - Oui, la campagne peut basculer vers une nouvelle version, mais seulement apres publication explicite de cette nouvelle version.
 - Non, les questions heritees d'une version verrouillee ne sont pas dupliquees automatiquement lors du fork de version.
 - Non, le workflow utilisateur actuel ne permet pas de faire facilement cette duplication de question, meme si l'API backend existe.
-- Point de modelisation a clarifier: `formName` et `formDesc` sont portes par `form`, pas par `form_version`, donc leur versioning metier n'est pas encore tranche.
+- Decision de planification proposee: la duplication d'une question sur formulaire verrouille doit etre declenchee uniquement par `questionText`, `questionChrono`, `questionType`, `score` et les changements structurels de reponses/correction.
+- Decision de planification proposee: un changement limite a `difficultyLevel`, `specialityId` et/ou au commentaire additionnel ne doit pas dupliquer la question tant que ces champs sont traites comme des metadonnees non structurelles.
+- Decision de planification proposee: `formName`, `formDesc` et `isActive` restent globaux sur `form` et ne generent pas de nouvelle version; `campaignId` et `isTimed`, eux, doivent etre traites comme structurants.
 
 En pratique, le systeme protege bien l'historique, mais il ne couvre pas correctement de bout en bout le cas "je modifie un formulaire deja utilise, et tout le contenu question/reponse devient automatiquement editable dans une nouvelle version isolee".
 
@@ -147,11 +149,19 @@ Effet metier:
 
 Verdict: c'est le principal trou fonctionnel du systeme actuel.
 
+Decision proposee pour la planification:
+
+- la duplication d'une question ne doit etre declenchee que par un changement de `questionText`, `questionChrono`, `questionType`, `score`, des reponses, ou de la correction
+- un changement limite a `difficultyLevel`, `specialityId` et/ou au commentaire additionnel ne doit pas dupliquer la question
+- attention: comme `difficultyLevel` et `specialityId` vivent aujourd'hui sur `question`, il faut expliciter si ces champs sont assumes comme globaux non versionnes ou s'ils doivent etre deplaces vers un support versionne pour ne pas reecrire l'historique
+
 Taches de planification:
 
 - [ ] Mettre en place une strategie de fork selectif: sur un formulaire verrouille, ne dupliquer que les questions effectivement modifiees.
+- [ ] Formaliser la whitelist des champs qui provoquent une duplication de question: `questionText`, `questionChrono`, `questionType`, `score`, reponses, correction.
+- [ ] Formaliser la blacklist des champs qui ne provoquent pas de duplication de question: `difficultyLevel`, `specialityId`, commentaire additionnel.
 - [ ] Conserver les `question_id` existants pour toutes les questions non modifiees du nouveau formulaire.
-- [ ] Definir le diff canonique d'une question modifiee: texte, type, score, chrono, specialite, ordre, reponses, correction et champs de commentaire additionnel.
+- [ ] Decider ou vivent les champs non structurants qui ne doivent pas dupliquer la question: metadonnees globales assumees, ou snapshot porte par le lien/version.
 
 ### 5.2 La duplication ciblee de question existe, mais elle n'est pas branchee dans le workflow front
 
@@ -186,7 +196,7 @@ Effet metier:
 Taches de planification:
 
 - [ ] Brancher `duplicateQuestion` dans le workflow d'edition de composition du formulaire ou masquer cette action derriere l'enregistrement automatique du formulaire.
-- [ ] Faire en sorte que, si l'utilisateur ne modifie qu'une seule question sur un formulaire verrouille, seule cette question soit dupliquee pendant le save.
+- [ ] Faire en sorte que le workflow d'enregistrement applique la whitelist de duplication et ignore les changements non structurants (`difficultyLevel`, `specialityId`, commentaire additionnel) pour la duplication de question.
 
 ### 5.3 La campagne ne bascule pas automatiquement vers la nouvelle version apres modification
 
@@ -204,11 +214,19 @@ Conclusion:
 - si l'attendu est "modifier => nouvelle version immediatement utilisee", alors non, ce n'est pas le fonctionnement actuel
 - si l'attendu est "modifier => brouillon, puis publication explicite", alors oui, c'est coherent
 
+Risque operationnel a traiter explicitement:
+
+- si le front enchaine deux requetes distinctes du type "depublier l'ancienne" puis "publier la nouvelle", une coupure reseau entre les deux peut laisser un formulaire sans version publiee
+- ce risque ne doit pas etre gere par le client mais elimine par une commande backend unique qui effectue toute la bascule
+- constat technique utile: `form_version` ne declare aujourd'hui aucune contrainte d'unicite equivalente a "une seule version publiee par formulaire", contrairement a `form_questions` qui declare deja une `UniqueConstraint`
+
 Taches de planification:
 
-- [ ] Apres modification effective d'un formulaire verrouille, publier automatiquement la nouvelle version et depublier l'ancienne dans la meme transaction metier.
+- [ ] Apres modification effective d'un formulaire verrouille, declencher une commande backend unique qui publie la nouvelle version et depublie l'ancienne.
+- [ ] Encapsuler la depublishation des anciennes versions et la publication de la nouvelle dans une transaction serveur unique.
 - [ ] Conserver la regle metier selon laquelle la campagne ne sert que la version publiee du formulaire.
-- [ ] Verifier puis renforcer l'interdiction d'avoir plus d'une version publiee par formulaire, y compris au niveau base de donnees si necessaire.
+- [ ] Ajouter au niveau base de donnees une contrainte garantissant "au plus une version publiee non supprimee par `form_id`" (index unique conditionnel ou mecanisme equivalent selon le SGBD).
+- [ ] En cas de timeout ou d'erreur reseau cote client apres tentative de publication, recharger l'etat serveur avant toute nouvelle action au lieu de rejouer des sous-requetes de publication.
 
 ### 5.4 Point a verifier: fork + publication dans un seul update
 
@@ -252,25 +270,47 @@ Taches de planification:
 
 - [ ] Interdire la publication d'une version sans aucune question active rattachee.
 
-### 5.6 Metadonnees de formulaire non versionnees
+### 5.6 Champs portes par `form` et non par `form_version`
 
-Les champs de metadonnees `formName` et `formDesc` sont portes par l'entite `form`, pas par `form_version`.
+Les champs `formName`, `formDesc`, `isActive`, `campaignId` et `isTimed` vivent aujourd'hui sur l'entite `form`, pas sur `form_version`.
 
-Effet metier:
+Decision proposee pour la planification:
 
-- si l'utilisateur ne modifie que le titre ou la description, il n'existe pas aujourd'hui de snapshot versionne de ces informations au niveau `form_version`
-- une mise a jour du `form` peut potentiellement impacter toutes les versions qui le referencent
+- `formName`, `formDesc` et `isActive` sont des metadonnees globales et ne doivent pas generer de nouvelle version
+- `campaignId` et `isTimed` sont des champs structurants: si le `form` source est verrouille, leur modification doit produire un nouveau parent `form`, pas seulement une nouvelle `form_version`
+- pour `campaignId`, l'operation metier correcte ne doit pas etre "deplacer Form1 de Campaign1 vers Campaign2", mais "creer Form2 pour Campaign2 a partir de Form1"
 
-Question de conception ouverte:
+Affinage propose sur `campaignId`:
 
-- faut-il versionner aussi le titre et la description du formulaire, ou les considerer comme des metadonnees globales hors snapshot ?
+- il faut distinguer deux cas metier differents
+- cas A, reutilisation dans une autre campagne: si l'utilisateur est en train de creer ou modifier une campagne et veut y rattacher un `Form` deja rattache a une autre campagne, il faut dupliquer le parent `Form` et sa version courante meme si `Form1` n'est pas verrouille
+- cas B, reassociation explicite: si l'utilisateur edite directement le `Form` lui-meme et decide qu'il ne doit plus appartenir a `Campaign1` mais a `Campaign2`, on peut accepter la mutation en place de `campaignId`, y compris si des `form_version` sont verrouillees, parce que l'historique candidat reste porte par `form_version`
+- la duplication sur changement de campagne ne sert donc pas a proteger l'historique candidat; elle sert surtout a eviter qu'un meme `Form` doive etre utilise simultanement par plusieurs campagnes alors que le modele actuel n'autorise qu'un seul `campaignId`
+
+Recommendation de solution:
+
+- a court et moyen terme, la meilleure solution est de conserver le modele actuel "un `Form` appartient a une seule campagne" et d'ajouter une regle de duplication uniquement pour le cas A de reutilisation cross-campaign
+- cette solution preserve les invariants existants: recherche des formulaires par `campaignId`, validation `source_token -> form -> campaign`, et unicite de publication par `form`
+- la solution alternative "table de liaison campagne-form + `campaign_id` dans `form_version`" serait une refonte plus profonde qui change la semantique du produit: on ne versionnerait plus seulement un formulaire, mais un couple formulaire-campagne
+- cette refonte ne vaut le coup que si le besoin produit cible est reellement: "un meme formulaire logique peut etre partage simultanement par plusieurs campagnes avec des versions publiees potentiellement differentes par campagne"
+- en l'etat des besoins exprimes ici, cette refonte parait surdimensionnee par rapport au probleme a resoudre
+
+Consequences de modele:
+
+- tant que `campaignId` et `isTimed` restent portes par `form`, un simple fork de `form_version` ne suffit pas a isoler l'historique de ces champs
+- si l'on veut versionner `campaignId` et `isTimed`, il faut donc dupliquer le parent `form` puis initialiser sa version courante
+- en cas de reassociation directe du `Form` vers une autre campagne, il faut aussi traiter proprement les dependances de campagne existantes, en particulier les `source_token` et tout autre ecran qui suppose encore que le `Form` appartient a l'ancienne campagne
 
 Taches de planification:
 
-- [ ] Decider si `formName` et `formDesc` font partie du snapshot versionne que l'on souhaite figer dans le temps.
-- [ ] Solution proposee si oui: creer une nouvelle version de formulaire meme si seul le titre ou la description changent, sans dupliquer les questions inchangées.
-- [ ] Solution proposee si oui et si le modele actuel reste insuffisant: snapshotter ces metadonnees sur `form_version` ou dupliquer aussi le parent `form` pour isoler l'historique.
-- [ ] Solution proposee si non: documenter explicitement que le titre et la description sont globaux au `form` et peuvent donc varier retroactivement sur toutes les versions.
+- [ ] Formaliser que `formName`, `formDesc` et `isActive` sont non versionnants et restent modifiables en place sur `form`.
+- [ ] Si `isTimed` change sur un formulaire verrouille, creer un nouveau `form` puis une version initiale clonee de la version courante au lieu de muter le `form` historique.
+- [ ] Distinguer explicitement le cas "reutiliser un formulaire existant dans une autre campagne" du cas "reassocier un formulaire existant a une autre campagne".
+- [ ] Si une campagne tente de rattacher un `Form` deja utilise par une autre campagne, creer `Form2` rattache a `Campaign2`, puis creer `Form2_V1` comme duplicat de la version courante de `Form1`, meme si `Form1` n'est pas verrouille.
+- [ ] Si l'utilisateur modifie directement un `Form` et change volontairement son `campaignId`, autoriser la reassociation en place, y compris si des versions sont verrouillees, tant que l'on accepte que l'ancienne campagne perde ce `Form` pour les usages futurs.
+- [ ] Garantir qu'un rattachement a une nouvelle campagne ne retire jamais retroactivement `Form1` de sa campagne d'origine.
+- [ ] Lors d'une reassociation directe de `campaignId`, verifier ou migrer les dependances encore liees a l'ancienne campagne, notamment les `source_token` qui valident deja la coherence entre `form` et `campaign`.
+- [ ] Ne considerer une refonte vers une table de liaison `campaign_form` et une publication par couple (`form`, `campaign`) que si le besoin produit officiel devient le partage simultane d'un meme formulaire logique entre plusieurs campagnes.
 
 ### 5.7 Cas no-op: l'utilisateur ouvre la modification mais ne change rien
 
@@ -339,10 +379,13 @@ Donc, dans l'etat actuel:
 - [ ] Valider la regle "pas de fork si aucun diff effectif".
 - [ ] Valider la regle "fork du formulaire verrouille uniquement si diff effectif".
 - [ ] Valider la regle "duplication selective des seules questions modifiees".
-- [ ] Valider la regle "si seul le titre ou la description changent, aucune question n'est dupliquee".
-- [ ] Trancher si un changement de `formName` ou `formDesc` doit, a lui seul, creer une nouvelle version publiee du formulaire.
-- [ ] Publier automatiquement la nouvelle version apres modification effective d'un formulaire verrouille et depublier l'ancienne.
-- [ ] Interdire strictement plus d'une version publiee d'un meme formulaire.
+- [ ] Formaliser que seuls `questionText`, `questionChrono`, `questionType`, `score`, reponses et correction provoquent une duplication de question.
+- [ ] Formaliser que `difficultyLevel`, `specialityId` et le commentaire additionnel ne provoquent pas de duplication de question.
+- [ ] Formaliser que `formName`, `formDesc` et `isActive` ne generent pas de nouvelle version.
+- [ ] Formaliser que `campaignId` et `isTimed` exigent une duplication du parent `form` si la source est verrouillee.
+- [ ] Pour `campaignId`, distinguer l'ajout a une autre campagne (duplication `Form2` + `Form2_V1`) de la reassociation explicite du `Form` (mutation en place acceptee avec controles de dependances).
+- [ ] Publier la nouvelle version via une commande backend unique transactionnelle qui depublie l'ancienne dans le meme flux serveur.
+- [ ] Interdire strictement plus d'une version publiee d'un meme formulaire via le code et la base de donnees.
 - [ ] Interdire la publication d'une version vide.
 - [ ] Valider la regle de revert sur brouillon non utilise: resultat cible `Form v2` avec le meme `question_ref` logique.
 - [ ] Integrer la duplication ciblee de question dans le workflow front au lieu de laisser l'action backend orpheline.
