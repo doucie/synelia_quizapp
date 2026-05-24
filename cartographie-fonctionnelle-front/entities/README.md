@@ -17,6 +17,10 @@ Regle documentaire retenue:
 
 - [x] [370-synthese-ecarts-entities-vs-dashboard.md](./370-synthese-ecarts-entities-vs-dashboard.md)
 
+## Evolutions transversales
+
+- [x] [../evolution/400-evolution-modele-reponses-commentaires.md](../evolution/400-evolution-modele-reponses-commentaires.md)
+
 ## Backlogs transversaux
 
 - [x] [380-backlog-correctif-priorise.md](./380-backlog-correctif-priorise.md)

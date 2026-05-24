@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -6,29 +6,15 @@ import { Subject, takeUntil, forkJoin, of } from 'rxjs';
 import { Interview, InterviewService } from '../../../core/services/interview.service';
 import { Application, ApplicationService } from '../../../core/services/application.service';
 import { Campaign, CampaignService } from '../../../core/services/campaign.service';
+import { InterviewAdminService, InterviewEvaluatorOption, InterviewWithDetails } from '../../../core/services/interview-admin.service';
 import { EntityPermissionService } from '../../../core/services/entity-permission.service';
 import { EntityPermission } from '../../../core/models/permission.interfaces';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
-import { UserService } from '../../../core/services/user.service';
 import { APPLICATION_STATUS } from '../../../core/constants/application-status.constants';
-import { CandidateInterviewEntity, CandidateInterviewEntityService } from '../../../core/services/candidate-interview-entity.service';
+import { CandidateInterviewEntityService } from '../../../core/services/candidate-interview-entity.service';
 import { InterviewParticipant, InterviewParticipantService } from '../../../core/services/interview-participant.service';
 import { FilterCheckboxComponent } from '../../../shared/filter-checkbox/filter-checkbox';
-
-interface InterviewWithDetails extends Interview {
-  candidateName?: string;
-  candidateEmail?: string;
-  campaignTitle?: string;
-  applicationId?: number;
-  candidateFirstName?: string;
-  candidateLastName?: string;
-  quizScorePercent?: number;
-  candidateInterviewId?: number;
-  declineReason?: string | null;
-  alternativeDateRequested?: string | null;
-  candidateResponseState?: 'RESCHEDULE_REQUESTED' | 'DECLINED' | null;
-}
 
 interface InterviewEditFormData {
   interviewDate: string;
@@ -40,13 +26,7 @@ interface InterviewEditFormData {
   selectedEvaluatorIds: number[];
 }
 
-interface EvaluatorInfo {
-  userId: number;
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  canEvaluate: boolean;
-}
+type EvaluatorInfo = InterviewEvaluatorOption;
 
 @Component({
   selector: 'app-interviews',
@@ -57,12 +37,11 @@ interface EvaluatorInfo {
 })
 export class InterviewsComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
+  readonly interviewAdminService = inject(InterviewAdminService);
 
   // Signals
   interviews = signal<InterviewWithDetails[]>([]);
   applications = signal<Application[]>([]);
-  campaigns = signal<Map<number, Campaign>>(new Map());
-  candidateInterviews = signal<CandidateInterviewEntity[]>([]);
   loading = signal(false);
   searchTerm = signal('');
   selectedFilter = signal<'ALL' | 'SCHEDULED' | 'STARTED' | 'OVER' | 'PENDING' | 'POSTPONED'>('ALL');
@@ -110,7 +89,6 @@ export class InterviewsComponent implements OnInit, OnDestroy {
     private entityPermissionService: EntityPermissionService,
     private notificationService: NotificationService,
     private authService: AuthService,
-    private userService: UserService,
     private candidateInterviewEntityService: CandidateInterviewEntityService,
     private interviewParticipantService: InterviewParticipantService,
     private router: Router
@@ -188,29 +166,19 @@ export class InterviewsComponent implements OnInit, OnDestroy {
     }).pipe(takeUntil(this.destroy$)).subscribe({
       next: (response) => {
         const candidateInterviewItems = response.candidateInterviews.content || [];
-        this.candidateInterviews.set(candidateInterviewItems);
+        const campaignItems = ((response.campaigns as any).items || response.campaigns.content || []) as Campaign[];
+        const applicationItems = response.applications.items || [];
+        const interviewItems = response.interviews.items || [];
 
-        // Traiter les campaigns
-        const campaignsData = (response.campaigns as any).items || response.campaigns.content;
-        if (campaignsData) {
-          const campaignsMap = new Map<number, Campaign>();
-          campaignsData.forEach((campaign: Campaign) => {
-            if (campaign.id) {
-              campaignsMap.set(campaign.id, campaign);
-            }
-          });
-          this.campaigns.set(campaignsMap);
-        }
-
-        // Traiter les applications
-        if (response.applications.items) {
-          this.applications.set(response.applications.items);
-        }
-
-        // Enrichir et traiter les interviews
-        if (response.interviews.items) {
-          this.enrichInterviews(response.interviews.items, candidateInterviewItems);
-        }
+        this.applications.set(applicationItems);
+        this.interviews.set(
+          this.interviewAdminService.buildInterviewDetails(
+            interviewItems,
+            applicationItems,
+            campaignItems,
+            candidateInterviewItems
+          )
+        );
 
         this.loading.set(false);
       },
@@ -219,61 +187,6 @@ export class InterviewsComponent implements OnInit, OnDestroy {
         this.loading.set(false);
       }
     });
-  }
-
-  /**
-   * Enrichit les interviews avec les données des candidats et campagnes
-   */
-  enrichInterviews(interviews: Interview[], candidateInterviews: CandidateInterviewEntity[] = this.candidateInterviews()): void {
-    const enriched: InterviewWithDetails[] = interviews.map(interview => {
-      // Trouver l'application correspondante via applicationId
-      const application = this.applications().find(app => app.id === interview.applicationId);
-      const campaign = interview.campaignId ? this.campaigns().get(interview.campaignId) : undefined;
-      const candidateInterview = this.findCandidateInterview(interview, candidateInterviews);
-
-      return {
-        ...interview,
-        candidateName: application ? 
-          `${application.candidateFirstName || ''} ${application.candidateLastName || ''}`.trim() : 
-          'Candidat inconnu',
-        candidateEmail: application?.candidateEmail,
-        campaignTitle: campaign?.campaignTitle || campaign?.campaignName,
-        applicationId: application?.id,
-        candidateFirstName: application?.candidateFirstName,
-        candidateLastName: application?.candidateLastName,
-        quizScorePercent: application?.quizScorePercent,
-        candidateInterviewId: candidateInterview?.id,
-        declineReason: candidateInterview?.declineReason || null,
-        alternativeDateRequested: candidateInterview?.alternativeDateRequested || null,
-        candidateResponseState: this.resolveCandidateResponseState(candidateInterview)
-      };
-    });
-
-    this.interviews.set(enriched);
-  }
-
-  private findCandidateInterview(interview: Interview, candidateInterviews: CandidateInterviewEntity[]): CandidateInterviewEntity | undefined {
-    const matches = candidateInterviews.filter(candidateInterview => candidateInterview.interviewId === interview.id);
-    if (!matches.length) {
-      return undefined;
-    }
-    if (interview.applicationId) {
-      return matches.find(candidateInterview => candidateInterview.applicationId === interview.applicationId) || matches[0];
-    }
-    return matches[0];
-  }
-
-  private resolveCandidateResponseState(candidateInterview?: CandidateInterviewEntity): 'RESCHEDULE_REQUESTED' | 'DECLINED' | null {
-    if (!candidateInterview) {
-      return null;
-    }
-    if (candidateInterview.alternativeDateRequested) {
-      return 'RESCHEDULE_REQUESTED';
-    }
-    if (candidateInterview.declineReason) {
-      return 'DECLINED';
-    }
-    return null;
   }
 
   /**
@@ -425,71 +338,14 @@ export class InterviewsComponent implements OnInit, OnDestroy {
 
     this.loadingEditEvaluators.set(true);
 
-    const campaignPermissions$ = interview.campaignId
-      ? this.entityPermissionService.getForEntity('CAMPAIGN', interview.campaignId)
-      : of({ items: [] } as { items: EntityPermission[] });
-
-    forkJoin({
-      interviewPermissions: this.entityPermissionService.getForEntity('INTERVIEW', interview.id),
-      campaignPermissions: campaignPermissions$
-    }).pipe(takeUntil(this.destroy$)).subscribe({
-      next: ({ interviewPermissions, campaignPermissions }) => {
-        const grantedCampaignPermissions = (campaignPermissions.items || []).filter(permission => permission.granted);
-        this.editCampaignPermissions.set(grantedCampaignPermissions);
-
-        const selectedEvaluatorIds = this.extractGrantedPermissionUserIds(interviewPermissions.items || [], 'VIEW_EVALUATIONS');
-        const campaignEvaluatorIds = this.extractGrantedPermissionUserIds(grantedCampaignPermissions, 'EVALUATE');
-        const userIds = [...new Set([...campaignEvaluatorIds, ...selectedEvaluatorIds])];
-
+    this.interviewAdminService.getInterviewEditEvaluatorCatalog(interview.id, interview.campaignId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+      next: ({ campaignPermissions, selectedEvaluatorIds, evaluators }) => {
+        this.editCampaignPermissions.set(campaignPermissions);
         this.updateEditForm({ selectedEvaluatorIds });
-
-        if (userIds.length === 0) {
-          this.loadingEditEvaluators.set(false);
-          return;
-        }
-
-        const userRequests = userIds.map(userId => this.userService.getById(userId));
-        forkJoin(userRequests).pipe(takeUntil(this.destroy$)).subscribe({
-          next: (users) => {
-            const selectedSet = new Set(selectedEvaluatorIds);
-            const campaignSet = new Set(campaignEvaluatorIds);
-            const evaluators = userIds.map((userId, index) => {
-              const user = users[index];
-              return {
-                userId,
-                firstName: user?.firstName || user?.prenom || '',
-                lastName: user?.lastName || user?.nom || '',
-                email: user?.email || '',
-                canEvaluate: campaignSet.has(userId)
-              };
-            }).sort((left, right) => {
-              const leftSelected = selectedSet.has(left.userId) ? 1 : 0;
-              const rightSelected = selectedSet.has(right.userId) ? 1 : 0;
-              if (leftSelected !== rightSelected) {
-                return rightSelected - leftSelected;
-              }
-
-              const leftCampaign = campaignSet.has(left.userId) ? 1 : 0;
-              const rightCampaign = campaignSet.has(right.userId) ? 1 : 0;
-              if (leftCampaign !== rightCampaign) {
-                return rightCampaign - leftCampaign;
-              }
-
-              return this.getEvaluatorFullName(left).localeCompare(this.getEvaluatorFullName(right));
-            });
-
-            this.editAvailableEvaluators.set(evaluators);
-            this.loadingEditEvaluators.set(false);
-          },
-          error: (error) => {
-            console.error('Erreur lors du chargement des évaluateurs éditables:', error);
-            this.editAvailableEvaluators.set(userIds.map(userId => ({
-              userId,
-              canEvaluate: campaignEvaluatorIds.includes(userId)
-            })));
-            this.loadingEditEvaluators.set(false);
-          }
-        });
+        this.editAvailableEvaluators.set(evaluators);
+        this.loadingEditEvaluators.set(false);
       },
       error: (error) => {
         console.error('Erreur lors du chargement des évaluateurs de l\'entretien:', error);
@@ -747,65 +603,14 @@ export class InterviewsComponent implements OnInit, OnDestroy {
     if (this.loadingEvaluators()) return;
 
     this.loadingEvaluators.set(true);
-    
-    // Charger les évaluateurs de cet entretien
-    this.entityPermissionService.getForEntity('INTERVIEW', interview.id)
+
+    this.interviewAdminService.getInterviewNotificationEvaluators(interview.id)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (response) => {
-          if (!response.hasError && response.items && response.items.length > 0) {
-            const evaluatorPerms = response.items.filter((p: EntityPermission) => p.permissionKey === 'VIEW_EVALUATIONS' && p.granted);
-            
-            // Dédupliquer par userId
-            const uniquePerms = evaluatorPerms.filter((p: EntityPermission, index: number, self: EntityPermission[]) =>
-              index === self.findIndex(c => c.userId === p.userId)
-            );
-            
-            if (uniquePerms.length === 0) {
-              this.evaluatorsForInterview.set([]);
-              this.startConfirmStep.set(2);
-              this.loadingEvaluators.set(false);
-              return;
-            }
-
-            // Charger les détails de chaque utilisateur
-            const userRequests = uniquePerms.map((p: EntityPermission) => 
-              this.userService.getById(p.userId!)
-            );
-
-            forkJoin(userRequests).pipe(takeUntil(this.destroy$)).subscribe({
-              next: (users) => {
-                const evaluators: EvaluatorInfo[] = uniquePerms.map((p: EntityPermission, index: number) => {
-                  const user = users[index];
-                  return {
-                    userId: p.userId!,
-                    firstName: user?.firstName || user?.prenom || '',
-                    lastName: user?.lastName || user?.nom || '',
-                    email: user?.email || '',
-                    canEvaluate: true
-                  };
-                });
-                this.evaluatorsForInterview.set(evaluators);
-                this.startConfirmStep.set(2);
-                this.loadingEvaluators.set(false);
-              },
-              error: (error) => {
-                console.error('Erreur lors du chargement des détails utilisateurs:', error);
-                const evaluators: EvaluatorInfo[] = uniquePerms.map((p: EntityPermission) => ({
-                  userId: p.userId!,
-                  canEvaluate: true
-                }));
-                this.evaluatorsForInterview.set(evaluators);
-                this.startConfirmStep.set(2);
-                this.loadingEvaluators.set(false);
-              }
-            });
-          } else {
-            // Aucun évaluateur
-            this.evaluatorsForInterview.set([]);
-            this.startConfirmStep.set(2);
-            this.loadingEvaluators.set(false);
-          }
+        next: (evaluators) => {
+          this.evaluatorsForInterview.set(evaluators);
+          this.startConfirmStep.set(2);
+          this.loadingEvaluators.set(false);
         },
         error: (error) => {
           console.error('Erreur lors du chargement des évaluateurs:', error);
@@ -1175,46 +980,6 @@ export class InterviewsComponent implements OnInit, OnDestroy {
    */
   getEmailStatusLabel(sent: boolean | undefined): string {
     return sent ? 'Email envoyé' : 'Email non envoyé';
-  }
-
-  hasCandidateResponse(interview: InterviewWithDetails): boolean {
-    return Boolean(interview.candidateResponseState);
-  }
-
-  getCandidateResponseLabel(interview: InterviewWithDetails): string {
-    if (interview.candidateResponseState === 'RESCHEDULE_REQUESTED') {
-      return 'Le candidat demande une autre date';
-    }
-    if (interview.candidateResponseState === 'DECLINED') {
-      return 'Le candidat a refusé ce créneau';
-    }
-    return 'Aucune réponse';
-  }
-
-  getCandidateResponseClass(interview: InterviewWithDetails): string {
-    if (interview.candidateResponseState === 'RESCHEDULE_REQUESTED') {
-      return 'candidate-response-card--warning';
-    }
-    if (interview.candidateResponseState === 'DECLINED') {
-      return 'candidate-response-card--error';
-    }
-    return '';
-  }
-
-  getCandidateResponseIcon(interview: InterviewWithDetails): string {
-    if (interview.candidateResponseState === 'RESCHEDULE_REQUESTED') {
-      return 'bi-arrow-repeat';
-    }
-    if (interview.candidateResponseState === 'DECLINED') {
-      return 'bi-x-octagon';
-    }
-    return 'bi-chat-left-text';
-  }
-
-  getEditActionLabel(interview: InterviewWithDetails): string {
-    return interview.candidateResponseState === 'RESCHEDULE_REQUESTED'
-      ? 'Replanifier et renvoyer la convocation'
-      : 'Modifier le créneau';
   }
 
   /**

@@ -614,7 +614,7 @@
 			"description": "",
 			"collectionId": "project.id",
 			"responses": [],
-			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"campaignTitle\": \"\",\n\t\t\t\"campaignDesc\": \"\",\n\t\t\t\"campaignStatus\": \"\",\n\t\t\t\"campaignStart\": \"\",\n\t\t\t\"campaignEnd\": \"\",\n\t\t\t\"maxApply\": \"\",\n\t\t\t\"allCanUpdate\": \"\",\n\t\t\t\"markedOutOf\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"specialityId\": \"\",\n\t\t\t\"creatorId\": \"\"\n\t\t} \n\t]  \n}"
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"campaignTitle\": \"\",\n\t\t\t\"campaignDesc\": \"\",\n\t\t\t\"campaignStatus\": \"\",\n\t\t\t\"campaignStart\": \"\",\n\t\t\t\"campaignEnd\": \"\",\n\t\t\t\"maxApply\": \"\",\n\t\t\t\"allCanUpdate\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"specialityId\": \"\",\n\t\t\t\"creatorId\": \"\"\n\t\t} \n\t]  \n}"
 		},
 		{
 			"id": "campaigns.update",
@@ -644,7 +644,7 @@
 			"description": "",
 			"collectionId": "project.id",
 			"responses": [],
-			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"campaignTitle\": \"\",\n\t\t\t\"campaignDesc\": \"\",\n\t\t\t\"campaignStatus\": \"\",\n\t\t\t\"campaignStart\": \"\",\n\t\t\t\"campaignEnd\": \"\",\n\t\t\t\"maxApply\": \"\",\n\t\t\t\"allCanUpdate\": \"\",\n\t\t\t\"markedOutOf\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"specialityId\": \"\",\n\t\t\t\"creatorId\": \"\"\n\t\t} \n\t]  \n}"
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"campaignTitle\": \"\",\n\t\t\t\"campaignDesc\": \"\",\n\t\t\t\"campaignStatus\": \"\",\n\t\t\t\"campaignStart\": \"\",\n\t\t\t\"campaignEnd\": \"\",\n\t\t\t\"maxApply\": \"\",\n\t\t\t\"allCanUpdate\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"specialityId\": \"\",\n\t\t\t\"creatorId\": \"\"\n\t\t} \n\t]  \n}"
 		},
 		{
 			"id": "campaigns.delete",
@@ -704,7 +704,7 @@
 			"description": "",
 			"collectionId": "project.id",
 			"responses": [],
-			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"campaignTitle\": \"\",\n\t\t\"campaignDesc\": \"\",\n\t\t\"campaignStatus\": \"\",\n\t\t\"campaignStart\": \"\",\n\t\t\"campaignEnd\": \"\",\n\t\t\"maxApply\": \"\",\n\t\t\"allCanUpdate\": \"\",\n\t\t\"markedOutOf\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"specialityId\": \"\",\n\t\t\"creatorId\": \"\"\n\t}  \n}"
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"campaignTitle\": \"\",\n\t\t\"campaignDesc\": \"\",\n\t\t\"campaignStatus\": \"\",\n\t\t\"campaignStart\": \"\",\n\t\t\"campaignEnd\": \"\",\n\t\t\"maxApply\": \"\",\n\t\t\"allCanUpdate\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"specialityId\": \"\",\n\t\t\"creatorId\": \"\"\n\t}  \n}"
 		},
 		{
 			"id": "candidateAnswers.create",
@@ -1574,7 +1574,7 @@
 			"description": "",
 			"collectionId": "project.id",
 			"responses": [],
-			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"interviewLocation\": \"\",\n\t\t\t\"interviewStart\": \"\",\n\t\t\t\"interviewEnd\": \"\",\n\t\t\t\"interviewType\": \"\",\n\t\t\t\"markedOutOf\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"campaignId\": \"\"\n\t\t} \n\t]  \n}"
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"interviewLocation\": \"\",\n\t\t\t\"interviewStart\": \"\",\n\t\t\t\"interviewEnd\": \"\",\n\t\t\t\"interviewType\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"campaignId\": \"\"\n\t\t} \n\t]  \n}"
 		},
 		{
 			"id": "interviews.update",
@@ -1604,7 +1604,7 @@
 			"description": "",
 			"collectionId": "project.id",
 			"responses": [],
-			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"interviewLocation\": \"\",\n\t\t\t\"interviewStart\": \"\",\n\t\t\t\"interviewEnd\": \"\",\n\t\t\t\"interviewType\": \"\",\n\t\t\t\"markedOutOf\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"campaignId\": \"\"\n\t\t} \n\t]  \n}"
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"interviewLocation\": \"\",\n\t\t\t\"interviewStart\": \"\",\n\t\t\t\"interviewEnd\": \"\",\n\t\t\t\"interviewType\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"campaignId\": \"\"\n\t\t} \n\t]  \n}"
 		},
 		{
 			"id": "interviews.delete",
@@ -1664,7 +1664,7 @@
 			"description": "",
 			"collectionId": "project.id",
 			"responses": [],
-			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"interviewLocation\": \"\",\n\t\t\"interviewStart\": \"\",\n\t\t\"interviewEnd\": \"\",\n\t\t\"interviewType\": \"\",\n\t\t\"markedOutOf\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"campaignId\": \"\"\n\t}  \n}"
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"interviewLocation\": \"\",\n\t\t\"interviewStart\": \"\",\n\t\t\"interviewEnd\": \"\",\n\t\t\"interviewType\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"campaignId\": \"\"\n\t}  \n}"
 		},
 		{
 			"id": "notifications.create",

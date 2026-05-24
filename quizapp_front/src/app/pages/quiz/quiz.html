@@ -142,7 +142,31 @@
                   (click)="selectAnswer(currentQuestion()!.id, answer.id)"
                 >
                   <div class="radio-button" [class.checkbox]="isMultipleChoiceQuestion(currentQuestion())"></div>
-                  <div class="answer-text">{{ answer.answerContent }}</div>
+                  <div class="answer-content">
+                    <div class="answer-text">{{ answer.answerContent }}</div>
+
+                    @if (isAnswerSelected(currentQuestion()!.id, answer.id) && answer.allowAdditionalComment) {
+                      <div class="answer-comment-block" (click)="$event.stopPropagation()">
+                        <label class="answer-comment-label" [for]="'answer-comment-' + currentQuestion()!.id + '-' + answer.id">
+                          Précision complémentaire
+                        </label>
+                        <textarea
+                          class="answer-comment-input"
+                          [class.invalid]="answer.additionalCommentRequired && !hasAdditionalCommentValue(answer.id)"
+                          [id]="'answer-comment-' + currentQuestion()!.id + '-' + answer.id"
+                          rows="3"
+                          [ngModel]="getAnswerComment(answer.id)"
+                          (ngModelChange)="updateAnswerComment(answer.id, $event)"
+                          (blur)="saveAnswerComment(currentQuestion()!.id)"
+                          [placeholder]="answer.additionalCommentPlaceholder || 'Ajoutez une précision si nécessaire'"
+                        ></textarea>
+
+                        @if (answer.additionalCommentRequired && !hasAdditionalCommentValue(answer.id)) {
+                          <p class="answer-comment-error">Ce commentaire est obligatoire pour cette réponse.</p>
+                        }
+                      </div>
+                    }
+                  </div>
                 </div>
               }
             </div>

@@ -12,8 +12,10 @@ import { PipelineTemplateService } from '../../../core/services/pipeline-templat
 import { PipelineStageService } from '../../../core/services/pipeline-stage.service';
 import { environment } from '../../../../environments/environment';
 import { ApplicationProgressService } from '../../../core/services/application-progress.service';
+import { FormService, Form } from '../../../core/services/form.service';
 import { PipelineTemplate, PipelineStage } from '../../../core/models/pipeline.interfaces';
 import { CAMPAIGN_STATUS_OPTIONS, DEFAULT_CAMPAIGN_STATUS } from '../../../core/constants/campaign-status.constants';
+import { normalizeSystemRole } from '../../../core/constants/permissions.constants';
 import { FilterCheckboxComponent } from '../../../shared/filter-checkbox/filter-checkbox';
 import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../shared/filter-select/filter-select';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -40,6 +42,7 @@ interface RecruiterAccess {
 })
 export class CampaignFormComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
+  private recruiterSearchRequests$ = new Subject<string>();
   
   campaignForm!: FormGroup;
   campaignId: number | null = null;
@@ -54,6 +57,15 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
   initialRecruiterIds = signal<Set<number>>(new Set());
   showSearchDropdown = signal(false);
   searching = signal(false);
+  recruiterSearchInteracted = signal(false);
+
+  // Formulaires - Recherche et association
+  formSearchControl = new FormControl('');
+  formSearchResults = signal<Form[]>([]);
+  selectedForms = signal<Form[]>([]);
+  initialCampaignFormIds = signal<Set<number>>(new Set());
+  showFormDropdown = signal(false);
+  searchingForms = signal(false);
   
   // Spécialités - Recherche instantanée
   specialitySearchControl = new FormControl('');
@@ -90,13 +102,16 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
     private pipelineTemplateService: PipelineTemplateService,
     private pipelineStageService: PipelineStageService,
     private applicationProgressService: ApplicationProgressService,
+    private formService: FormService,
     private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
     this.initForm();
     this.setupSearch();
+    this.setupFormSearch();
     this.setupSpecialitySearch();
+    this.setupRecruiterAssignmentLock();
     this.loadSpecialityAvailability();
     this.loadPipelineTemplates();
     
@@ -123,7 +138,6 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
       campaignStart: [''], // Optionnel
       campaignEnd: [''], // Optionnel
       maxApply: [null, [Validators.min(1)]],
-      markedOutOf: [null, [Validators.min(1)]],
       formAssignmentStrategy: ['RANDOM'],
       formAssignmentExhaustionPolicy: ['BLOCK'],
       allCanEvaluate: [false],
@@ -135,23 +149,30 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
   }
 
   setupSearch(): void {
-    // Recherche instantanée avec debounce
     this.recruiterSearchControl.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(query => {
+        this.recruiterSearchInteracted.set(true);
+        if (!this.isRecruiterSearchLocked()) {
+          this.searching.set(true);
+        }
+        this.recruiterSearchRequests$.next((query || '').trim());
+      });
+
+    this.recruiterSearchRequests$
       .pipe(
         takeUntil(this.destroy$),
-        debounceTime(300), // Attendre 300ms après la dernière frappe
-        distinctUntilChanged(),
-        switchMap(query => {
-          const searchQuery = (query || '').trim();
-          
-          if (!environment.production) console.log('🔍 Recherche déclenchée avec:', searchQuery);
-          
-          if (searchQuery.length < 2) {
+        debounceTime(300),
+        switchMap(searchQuery => {
+
+          if (this.isRecruiterSearchLocked()) {
             this.searchResults.set([]);
             this.showSearchDropdown.set(false);
             this.searching.set(false);
-            return [];
+            return of(this.createEmptyUserResponse());
           }
+          
+          if (!environment.production) console.log('🔍 Recherche déclenchée avec:', searchQuery);
           
           this.searching.set(true);
           
@@ -168,7 +189,7 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
         })
       )
       .subscribe({
-        next: (response: any) => {
+        next: (response: PagedResponse<User>) => {
           if (!environment.production) console.log('📥 Réponse reçue:', response);
           
           if (response && response.content) {
@@ -185,7 +206,12 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
             });
             
             // Filtrer pour garder uniquement les recruteurs, admins et super admins
-            const filteredByRole = response.content.filter((u: User) => {
+            const filteredByRole = response.content
+              .map((u: User) => ({
+                ...u,
+                role: this.normalizeAssignableRole(u.role || u.userRole)
+              }))
+              .filter((u: User) => {
               const roles = ['recruiter', 'admin', 'super'];
               const roleMatch = roles.includes(u.role?.toLowerCase() || '');
               
@@ -234,14 +260,90 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
             this.showSearchDropdown.set(filteredUsers.length > 0);
           } else {
             console.warn('⚠️ Réponse vide ou mal formatée');
+            this.searchResults.set([]);
+            this.showSearchDropdown.set(false);
           }
           this.searching.set(false);
         },
         error: (error: any) => {
           console.error('❌ Erreur recherche utilisateurs:', error);
+          this.searchResults.set([]);
+          this.showSearchDropdown.set(false);
           this.searching.set(false);
         }
       });
+  }
+
+  setupFormSearch(): void {
+    this.formSearchControl.valueChanges
+      .pipe(
+        takeUntil(this.destroy$),
+        debounceTime(300),
+        distinctUntilChanged(),
+        switchMap(query => {
+          const searchQuery = (query || '').trim();
+
+          if (!environment.production) console.log('🔍 Recherche formulaires:', searchQuery);
+
+          if (searchQuery.length < 2) {
+            this.formSearchResults.set([]);
+            this.showFormDropdown.set(false);
+            this.searchingForms.set(false);
+            return [];
+          }
+
+          this.searchingForms.set(true);
+
+          return this.formService.getAllByCriteria({
+            search_string: searchQuery,
+            isDeleted: false,
+            size: 20,
+            page: 0
+          });
+        })
+      )
+      .subscribe({
+        next: (response) => {
+          const availableForms = (response.content || []).filter(form => this.isFormAvailableForSelection(form));
+          this.formSearchResults.set(availableForms);
+          this.showFormDropdown.set(availableForms.length > 0);
+          this.searchingForms.set(false);
+        },
+        error: (error) => {
+          console.error('❌ Erreur recherche formulaires:', error);
+          this.formSearchResults.set([]);
+          this.showFormDropdown.set(false);
+          this.searchingForms.set(false);
+        }
+      });
+  }
+
+  setupRecruiterAssignmentLock(): void {
+    const allCanEvaluateControl = this.campaignForm.get('allCanEvaluate');
+    if (!allCanEvaluateControl) {
+      return;
+    }
+
+    allCanEvaluateControl.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((enabled) => {
+        if (enabled) {
+          this.recruiterSearchControl.disable({ emitEvent: false });
+          this.recruiterSearchControl.setValue('', { emitEvent: false });
+          this.recruiterSearchInteracted.set(false);
+          this.searchResults.set([]);
+          this.showSearchDropdown.set(false);
+          this.searching.set(false);
+          return;
+        }
+
+        this.recruiterSearchControl.enable({ emitEvent: false });
+        this.recruiterSearchInteracted.set(false);
+      });
+
+    if (allCanEvaluateControl.value === true) {
+      this.recruiterSearchControl.disable({ emitEvent: false });
+    }
   }
 
   setupSpecialitySearch(): void {
@@ -453,6 +555,10 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
   }
 
   selectRecruiter(user: User): void {
+    if (this.isRecruiterSearchLocked()) {
+      return;
+    }
+
     const recruiterAccess: RecruiterAccess = {
       user,
       canEvaluate: true,  // Coché par défaut
@@ -468,8 +574,25 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
     
     // Réinitialiser la recherche
     this.recruiterSearchControl.setValue('', { emitEvent: false });
+    this.recruiterSearchInteracted.set(false);
     this.searchResults.set([]);
     this.showSearchDropdown.set(false);
+  }
+
+  selectCampaignForm(form: Form): void {
+    if (!form.id || !this.isFormAvailableForSelection(form)) {
+      return;
+    }
+
+    this.selectedForms.update(forms => [...forms, form]);
+    this.formSearchControl.setValue('', { emitEvent: false });
+    this.formSearchResults.set([]);
+    this.showFormDropdown.set(false);
+    this.searchingForms.set(false);
+  }
+
+  removeCampaignForm(index: number): void {
+    this.selectedForms.update(forms => forms.filter((_, formIndex) => formIndex !== index));
   }
 
   removeRecruiter(index: number): void {
@@ -528,6 +651,8 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
             if (!environment.production) console.log('🔍 Chargement de la spécialité ID:', specialityId);
             this.loadSpeciality(specialityId);
           }
+
+          this.loadCampaignForms(id);
           
           this.loading.set(false);
         },
@@ -572,7 +697,7 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
                 firstName: access.userFirstName || '',
                 lastName: access.userLastName || '',
                 email: access.userEmail || '',
-                role: access.userRole || 'RECRUITER',
+                role: this.normalizeAssignableRole(access.userRole || 'RECRUITER'),
                 isOnline: false
               },
               canEvaluate: access.canEvaluate || false,
@@ -597,6 +722,23 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
       });
   }
 
+  loadCampaignForms(campaignId: number): void {
+    this.formService.getAllByCriteria({ campaignId, size: 100, isDeleted: false })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          const forms = response.content || [];
+          this.selectedForms.set(forms);
+          this.initialCampaignFormIds.set(new Set(forms.map(form => Number(form.id)).filter((formId) => formId > 0)));
+        },
+        error: (error) => {
+          console.error('❌ Erreur chargement formulaires campagne:', error);
+          this.selectedForms.set([]);
+          this.initialCampaignFormIds.set(new Set());
+        }
+      });
+  }
+
   populateForm(campaign: Campaign): void {
     this.campaignForm.patchValue({
       campaignTitle: campaign.campaignTitle,
@@ -605,7 +747,6 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
       campaignStart: this.formatDateForInput(campaign.campaignStart),
       campaignEnd: this.formatDateForInput(campaign.campaignEnd),
       maxApply: campaign.maxApply,
-      markedOutOf: campaign.markedOutOf,
       formAssignmentStrategy: campaign.formAssignmentStrategy || 'RANDOM',
       formAssignmentExhaustionPolicy: campaign.formAssignmentExhaustionPolicy || 'BLOCK',
       allCanEvaluate: campaign.allCanEvaluate,
@@ -681,7 +822,6 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
       campaignStart: formValue.campaignStart,
       campaignEnd: formValue.campaignEnd,
       maxApply: formValue.maxApply,
-      markedOutOf: formValue.markedOutOf,
       formAssignmentStrategy: formValue.formAssignmentStrategy,
       formAssignmentExhaustionPolicy: formValue.formAssignmentExhaustionPolicy,
       allCanEvaluate: formValue.allCanEvaluate,
@@ -711,19 +851,22 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
         
         if (campaignId) {
           if (!environment.production) console.log('📝 Campagne créée avec ID:', campaignId);
-          
-      this.saveCampaignAccessAndNotifications(campaignId, parseInt(currentUser.id)).subscribe({
-        next: () => {
-          if (!environment.production) console.log('✅ Tous les accès et notifications sont synchronisés');
-          this.saving.set(false);
-          this.router.navigate(['/dashboard/campaigns']);
-        },
-        error: (error) => {
-          console.error('❌ Erreur lors de la sauvegarde des accès:', error);
-          this.saving.set(false);
-          this.router.navigate(['/dashboard/campaigns']);
-        }
-      });
+
+          forkJoin({
+            recruiterAccess: this.saveCampaignAccessAndNotifications(campaignId, parseInt(currentUser.id)),
+            campaignForms: this.saveCampaignForms(campaignId)
+          }).subscribe({
+            next: () => {
+              if (!environment.production) console.log('✅ Tous les accès, notifications et formulaires sont synchronisés');
+              this.saving.set(false);
+              this.router.navigate(['/dashboard/campaigns']);
+            },
+            error: (error) => {
+              console.error('❌ Erreur lors de la sauvegarde des dépendances campagne:', error);
+              this.saving.set(false);
+              this.router.navigate(['/dashboard/campaigns']);
+            }
+          });
         } else {
           console.error('❌ Impossible de récupérer l\'ID de la campagne');
           this.saving.set(false);
@@ -780,7 +923,7 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
         canPlanify: recruiter.canPlanify,
         canAcceptPreScreen: recruiter.canAcceptPreScreen,
         canAcceptFinal: recruiter.canAcceptFinal,
-        isAdmin: false,
+        isAdmin: recruiter.isAdmin === true,
         follow: recruiter.follow,
         createdBy: currentUserId
         // searchString sera généré automatiquement par le backend
@@ -818,8 +961,74 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
     return forkJoin(allOperations.length > 0 ? allOperations : [of(null)]);
   }
 
+  saveCampaignForms(campaignId: number) {
+    const selectedFormIds = new Set(
+      this.selectedForms()
+        .map(form => Number(form.id || 0))
+        .filter((formId) => formId > 0)
+    );
+
+    const attachOperations = this.selectedForms()
+      .filter(form => Boolean(form.id) && form.campaignId !== campaignId)
+      .map(form => this.formService.update({ id: form.id, campaignId }));
+
+    const detachOperations = Array.from(this.initialCampaignFormIds())
+      .filter((formId) => !selectedFormIds.has(formId))
+      .map((formId) => this.formService.update({ id: formId, campaignId: 0 }));
+
+    const operations = [...attachOperations, ...detachOperations];
+
+    return operations.length > 0 ? forkJoin(operations) : of([]);
+  }
+
   cancel(): void {
     this.router.navigate(['/dashboard/campaigns']);
+  }
+
+  showRecruiterSuggestions(): void {
+    if (this.isRecruiterSearchLocked()) {
+      return;
+    }
+
+    this.recruiterSearchInteracted.set(true);
+    this.searching.set(true);
+    this.recruiterSearchRequests$.next((this.recruiterSearchControl.value || '').trim());
+  }
+
+  isRecruiterSearchLocked(): boolean {
+    return this.allCanEvaluate?.value === true;
+  }
+
+  canRemoveCampaignForm(form: Form): boolean {
+    return true;
+  }
+
+  isPersistedCampaignForm(form: Form): boolean {
+    return Boolean(form.id) && this.initialCampaignFormIds().has(Number(form.id));
+  }
+
+  private isFormAvailableForSelection(form: Form): boolean {
+    const formId = Number(form.id || 0);
+    if (!formId) {
+      return false;
+    }
+
+    if (this.selectedForms().some(selectedForm => selectedForm.id === formId)) {
+      return false;
+    }
+
+    const currentCampaignId = this.campaignId || 0;
+    return !form.campaignId || form.campaignId === currentCampaignId;
+  }
+
+  private createEmptyUserResponse(): PagedResponse<User> {
+    return {
+      content: [],
+      totalElements: 0,
+      totalPages: 0,
+      size: 20,
+      number: 0
+    };
   }
 
   private markFormGroupTouched(formGroup: FormGroup): void {
@@ -840,12 +1049,26 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
   get campaignStart() { return this.campaignForm.get('campaignStart'); }
   get campaignEnd() { return this.campaignForm.get('campaignEnd'); }
   get maxApply() { return this.campaignForm.get('maxApply'); }
-  get markedOutOf() { return this.campaignForm.get('markedOutOf'); }
   get formAssignmentStrategy() { return this.campaignForm.get('formAssignmentStrategy'); }
   get formAssignmentExhaustionPolicy() { return this.campaignForm.get('formAssignmentExhaustionPolicy'); }
   get allCanEvaluate() { return this.campaignForm.get('allCanEvaluate'); }
   get timeAllForms() { return this.campaignForm.get('timeAllForms'); }
   get isArchived() { return this.campaignForm.get('isArchived'); }
+
+  private normalizeAssignableRole(rawRole?: string | null): string {
+    switch (normalizeSystemRole(rawRole)) {
+      case 'SUPER_ADMIN':
+        return 'super';
+      case 'ADMIN':
+        return 'admin';
+      case 'RECRUITER':
+        return 'recruiter';
+      case 'CANDIDATE':
+        return 'candidate';
+      default:
+        return (rawRole || 'recruiter').toLowerCase();
+    }
+  }
 
   private dateRangeValidator(group: AbstractControl): ValidationErrors | null {
     const start = group.get('campaignStart')?.value;

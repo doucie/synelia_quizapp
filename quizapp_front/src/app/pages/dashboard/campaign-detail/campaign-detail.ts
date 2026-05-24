@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { Subject, takeUntil } from 'rxjs';
-import { CampaignService, Campaign } from '../../../core/services/campaign.service';
+import { CampaignService, Campaign, CampaignAccessRecord } from '../../../core/services/campaign.service';
 import { SourceTokenService, SourceToken } from '../../../services/source-token.service';
 import { FormService, Form } from '../../../core/services/form.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
@@ -18,19 +18,6 @@ import { getCampaignStatusClass, getCampaignStatusLabel } from '../../../core/co
 import { FilterCheckboxComponent } from '../../../shared/filter-checkbox/filter-checkbox';
 import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../shared/filter-select/filter-select';
 import { environment } from '../../../../environments/environment';
-
-interface CampaignAccess {
-  id?: number;
-  userId: number;
-  userName?: string;
-  userEmail?: string;
-  userRole?: string;
-  canUpdate: boolean;
-  canDelete: boolean;
-  canEvaluate: boolean;
-  isAdmin: boolean;
-  follow: boolean;
-}
 
 interface EntityPerm {
   id?: number;
@@ -121,7 +108,7 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   
   campaignId = signal<number | null>(null);
   campaign = signal<Campaign | null>(null);
-  recruiters = signal<CampaignAccess[]>([]);
+  recruiters = signal<CampaignAccessRecord[]>([]);
   sourceTokens = signal<SourceToken[]>([]);
   campaignForms = signal<Form[]>([]);
   loading = signal(false);
@@ -207,7 +194,6 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
           console.log('  - End:', campaign.campaignEnd);
           console.log('  - Duration:', campaign.campaignDuration);
           console.log('  - Max Apply:', campaign.maxApply);
-          console.log('  - Marked Out Of:', campaign.markedOutOf);
           console.log('  - All Can Evaluate:', campaign.allCanEvaluate);
           console.log('  - Questions Count:', campaign.questionsCount);
           console.log('  - Applications Count:', campaign.applicationsCount);
@@ -248,30 +234,8 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (accessList) => {
           console.log('✅ Liste des accès récupérée:', accessList);
-          
-          // Transformer les données pour correspondre à l'interface CampaignAccess
-          const recruiters: CampaignAccess[] = accessList.map(access => {
-            // Construire le nom complet à partir de userFirstName et userLastName
-            const firstName = access.user_first_name || access.userFirstName || '';
-            const lastName = access.user_last_name || access.userLastName || '';
-            const fullName = `${firstName} ${lastName}`.trim();
-            
-            return {
-              id: access.id,
-              userId: access.users_id || access.userId,
-              userName: access.user_name || access.userName || fullName || 'Utilisateur inconnu',
-              userEmail: access.user_email || access.userEmail,
-              userRole: access.user_role || access.userRole,
-              canUpdate: access.can_update ?? access.canUpdate ?? false,
-              canDelete: access.can_delete ?? access.canDelete ?? false,
-              canEvaluate: access.can_evaluate ?? access.canEvaluate ?? false,
-              isAdmin: access.is_admin ?? access.isAdmin ?? false,
-              follow: access.follow ?? false
-            };
-          });
-          
-          console.log('📊 Recruteurs transformés:', recruiters);
-          this.recruiters.set(recruiters);
+
+          this.recruiters.set(accessList);
           
           // Charger les tokens de la campagne
           this.loadCampaignTokens(campaignId);

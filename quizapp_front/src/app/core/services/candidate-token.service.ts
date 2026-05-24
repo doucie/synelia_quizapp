@@ -19,6 +19,13 @@ export interface CandidateToken {
   dateModificationA?: string;
 }
 
+export interface CandidateTokenMutationPayload {
+  id?: number;
+  tokenString?: string;
+  applicationId?: number;
+  isDeleted?: boolean;
+}
+
 export interface CandidateTokenSearchCriteria {
   page?: number;
   size?: number;
@@ -84,11 +91,11 @@ export class CandidateTokenService {
     );
   }
 
-  create(item: CandidateToken): Observable<any> {
+  create(item: CandidateTokenMutationPayload): Observable<any> {
     return this.http.post(`${this.apiUrl}/create`, { user: 1, datas: [item] });
   }
 
-  update(item: CandidateToken): Observable<any> {
+  update(item: CandidateTokenMutationPayload): Observable<any> {
     return this.http.post(`${this.apiUrl}/update`, { user: 1, datas: [item] });
   }
 

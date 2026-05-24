@@ -30,6 +30,19 @@ export interface CandidateAnswer {
   dateModificationA?: string;
 }
 
+export interface CandidateAnswerMutationPayload {
+  id?: number;
+  freeTextResponse?: string;
+  isSelected?: boolean;
+  manualIsCorrect?: boolean | null;
+  manualCorrectionComment?: string | null;
+  applicationId?: number;
+  questionId?: number;
+  answerId?: number;
+  action?: string;
+  isDeleted?: boolean;
+}
+
 export interface CandidateAnswerSearchCriteria {
   page?: number;
   size?: number;
@@ -101,11 +114,11 @@ export class CandidateAnswersService {
     );
   }
 
-  create(item: CandidateAnswer): Observable<any> {
+  create(item: CandidateAnswerMutationPayload): Observable<any> {
     return this.http.post(`${this.apiUrl}/create`, { user: 1, datas: [item] });
   }
 
-  update(item: CandidateAnswer): Observable<any> {
+  update(item: CandidateAnswerMutationPayload): Observable<any> {
     return this.http.post(`${this.apiUrl}/update`, { user: 1, datas: [item] });
   }
 

@@ -176,13 +176,7 @@ public class FormBusiness implements IBasicBusiness<Request<FormDto>, Response<F
 				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("form id -> " + dto.getId(), locale));
 			}
 
-			if (dto.getCampaignId() != null && dto.getCampaignId() > 0) {
-				Campaigns existingCampaigns = campaignsRepository.findOne(dto.getCampaignId(), false);
-				if (existingCampaigns == null) {
-					throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("campaigns campaignId -> " + dto.getCampaignId(), locale));
-				}
-				entityToSave.setCampaigns(existingCampaigns);
-			}
+			applyCampaignAssociationUpdate(dto, entityToSave, locale);
 			if (Utilities.shouldUpdate(dto.getFormName())) {
 				entityToSave.setFormName(dto.getFormName());
 			}
@@ -391,13 +385,7 @@ public class FormBusiness implements IBasicBusiness<Request<FormDto>, Response<F
 				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("form id -> " + dto.getId(), locale));
 			}
 
-			if (dto.getCampaignId() != null && dto.getCampaignId() > 0) {
-				Campaigns existingCampaigns = campaignsRepository.findOne(dto.getCampaignId(), false);
-				if (existingCampaigns == null) {
-					throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("campaigns campaignId -> " + dto.getCampaignId(), locale));
-				}
-				entityToSave.setCampaigns(existingCampaigns);
-			}
+			applyCampaignAssociationUpdate(dto, entityToSave, locale);
 			if (Utilities.shouldUpdate(dto.getFormName())) {
 				entityToSave.setFormName(dto.getFormName());
 			}
@@ -639,6 +627,23 @@ public class FormBusiness implements IBasicBusiness<Request<FormDto>, Response<F
 					"Chronometrage invalide: " + String.join("; ", timingErrors),
 					locale));
 		}
+	}
+
+	private void applyCampaignAssociationUpdate(FormDto dto, Form entityToSave, Locale locale) {
+		if (dto.getCampaignId() == null) {
+			return;
+		}
+
+		if (dto.getCampaignId() > 0) {
+			Campaigns existingCampaigns = campaignsRepository.findOne(dto.getCampaignId(), false);
+			if (existingCampaigns == null) {
+				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("campaigns campaignId -> " + dto.getCampaignId(), locale));
+			}
+			entityToSave.setCampaigns(existingCampaigns);
+			return;
+		}
+
+		entityToSave.setCampaigns(null);
 	}
 
 	private void applyTimingInheritance(Form form) {

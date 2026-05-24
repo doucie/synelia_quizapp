@@ -9,6 +9,9 @@ export interface Answer {
   id?: number;
   answerText?: string;
   answerType?: string;
+  allowAdditionalComment?: boolean;
+  additionalCommentRequired?: boolean;
+  additionalCommentPlaceholder?: string;
   answerOrder?: number;
   isCorrect?: boolean;
   questionId?: number;
@@ -98,7 +101,7 @@ export class AnswerService {
         if (!response || (!response.items && !response.item)) {
           return { content: [], totalElements: 0, totalPages: 0, size: criteria.size || 10, number: criteria.page || 0 };
         }
-        const items = response.items || (response.item ? [response.item] : []);
+        const items = (response.items || (response.item ? [response.item] : [])).map((item: Answer) => this.normalizeAnswer(item));
         const totalElements = response.totalCount || response.count || items.length;
         const pageSize = criteria.size || 10;
         return { content: items, totalElements, totalPages: Math.ceil(totalElements / pageSize), size: pageSize, number: criteria.page || 0 };
@@ -125,7 +128,8 @@ export class AnswerService {
   }
 
   create(item: Partial<Answer>): Observable<any> {
-    return this.withAuthenticatedUser(userId => this.http.post(`${this.apiUrl}/create`, { user: userId, datas: [item] }));
+    const payload = this.normalizeAnswerPayload(item);
+    return this.withAuthenticatedUser(userId => this.http.post(`${this.apiUrl}/create`, { user: userId, datas: [payload] }));
   }
 
   /** Backward-compatible alias */
@@ -134,7 +138,8 @@ export class AnswerService {
   }
 
   update(item: Partial<Answer>): Observable<any> {
-    return this.withAuthenticatedUser(userId => this.http.post(`${this.apiUrl}/update`, { user: userId, datas: [item] }));
+    const payload = this.normalizeAnswerPayload(item);
+    return this.withAuthenticatedUser(userId => this.http.post(`${this.apiUrl}/update`, { user: userId, datas: [payload] }));
   }
 
   /** Backward-compatible alias */
@@ -164,6 +169,40 @@ export class AnswerService {
     }
 
     return requestFactory(userId);
+  }
+
+  private normalizeAnswer(item: Answer): Answer {
+    const allowAdditionalComment = item.allowAdditionalComment === true;
+
+    return {
+      ...item,
+      answerType: this.normalizeAnswerType(item.answerType),
+      allowAdditionalComment,
+      additionalCommentRequired: allowAdditionalComment && item.additionalCommentRequired === true,
+      additionalCommentPlaceholder: allowAdditionalComment ? (item.additionalCommentPlaceholder ?? '') : undefined
+    };
+  }
+
+  private normalizeAnswerPayload(item: Partial<Answer>): Partial<Answer> {
+    const allowAdditionalComment = item.allowAdditionalComment === true;
+
+    return {
+      ...item,
+      answerType: this.normalizeAnswerType(item.answerType),
+      allowAdditionalComment,
+      additionalCommentRequired: allowAdditionalComment && item.additionalCommentRequired === true,
+      additionalCommentPlaceholder: allowAdditionalComment ? (item.additionalCommentPlaceholder ?? '') : undefined
+    };
+  }
+
+  private normalizeAnswerType(answerType?: string): string {
+    const normalized = (answerType ?? '').trim().toUpperCase();
+
+    if (normalized === 'IMAGE' || normalized === 'CODE') {
+      return normalized;
+    }
+
+    return 'TEXT';
   }
 
   /** Backward-compatible alias */

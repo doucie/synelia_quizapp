@@ -15,6 +15,13 @@ export interface BusinessGroupPermission {
   isDeleted?: boolean;
 }
 
+export interface BusinessGroupPermissionMutationPayload {
+  id?: number;
+  functionality?: string;
+  businessGroupId?: number;
+  isDeleted?: boolean;
+}
+
 export interface BusinessGroupPermissionCriteria {
   functionality?: string;
   businessGroupId?: number;
@@ -78,11 +85,11 @@ export class BusinessGroupPermissionService {
     );
   }
 
-  create(item: BusinessGroupPermission): Observable<any> {
+  create(item: BusinessGroupPermissionMutationPayload): Observable<any> {
     return this.http.post(`${this.apiUrl}/create`, { user: this.getCurrentUserId(), datas: [item] });
   }
 
-  update(item: BusinessGroupPermission): Observable<any> {
+  update(item: BusinessGroupPermissionMutationPayload): Observable<any> {
     return this.http.post(`${this.apiUrl}/update`, { user: this.getCurrentUserId(), datas: [item] });
   }
 

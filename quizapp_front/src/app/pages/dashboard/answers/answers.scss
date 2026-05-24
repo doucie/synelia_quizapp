@@ -492,8 +492,12 @@
   border-radius: var(--radius-xl);
   width: 100%;
   max-width: 520px;
+  max-height: calc(100vh - 2 * var(--spacing-md));
   box-shadow: var(--elevation-4);
   animation: modalIn 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 
   &--small {
     max-width: 440px;
@@ -517,6 +521,7 @@
   align-items: center;
   padding: var(--spacing-lg) var(--spacing-lg);
   border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
 
   h2 {
     margin: 0;
@@ -547,6 +552,9 @@
 
 .modal-body {
   padding: var(--spacing-lg);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
 
 .modal-footer {
@@ -555,6 +563,7 @@
   gap: var(--spacing-md);
   padding: var(--spacing-md) var(--spacing-lg);
   border-top: 1px solid var(--border);
+  flex-shrink: 0;
 }
 
 /* Form */

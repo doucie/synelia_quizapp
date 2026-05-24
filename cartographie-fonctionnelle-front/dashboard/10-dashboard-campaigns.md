@@ -21,8 +21,8 @@ La page sert a piloter la liste des campagnes accessibles a l'utilisateur, avec 
 - [x] La vue bascule entre `grid` et `list`.
 - [x] La carte campagne peut s'etendre localement et ouvrir la page detail.
 - [x] La page contient un CTA `Nouvelle campagne`.
-- [ ] Verifier le comportement exact du CTA si l'utilisateur a `VIEW_CAMPAIGNS` sans `CREATE_CAMPAIGNS`.
-- [ ] Verifier la coherence entre les droits de detail, d'edition et les badges visibles dans la liste.
+- [x] Le CTA `Nouvelle campagne` et le CTA vide `Creer une campagne` sont masques si l'utilisateur n'a pas `CREATE_CAMPAIGNS`, meme si la page liste reste accessible via `VIEW_CAMPAIGNS`.
+- [x] La liste affiche maintenant un badge d'acces coherent (`Proprietaire`, `Edition`, `Consultation`, `Admin requis`) et n'expose l'action d'edition que si elle est compatible avec le guard d'edition ou le passage par le detail pour activer `adminMode`.
 
 ## 4. Blocs UI Constates
 
@@ -43,11 +43,12 @@ La page sert a piloter la liste des campagnes accessibles a l'utilisateur, avec 
 ### 4.3 Cartes de campagne
 
 - [x] Badge statut
-- [x] Badge `Proprietaire` quand la campagne est dans `myCampaigns`
+- [x] Badge d'acces `Proprietaire` / `Edition` / `Consultation` / `Admin requis` selon `myCampaigns`, les acces campagne et `adminMode`
 - [x] Titre, description, specialite, createur
 - [x] Date de debut
 - [x] Extension locale `Voir details`
 - [x] Bouton `Ouvrir la page complete`
+- [x] Bouton `Modifier` visible seulement quand l'acces d'edition est coherent avec le routing
 
 ### 4.4 Etats techniques
 
@@ -80,6 +81,7 @@ Compteurs derives cote front:
 - `CampaignService.getAllCampaignsByCriteria()` -> `POST /campaigns/getAllByCriteria`
 - `CampaignService.getMyCampaigns()` -> `POST /campaigns/getByCriteria` avec `createdBy = currentUserId`
 - `CampaignService.getSharedCampaigns()` -> derive les campagnes partagees via acces utilisateur puis recharge les campagnes par `getAllCampaignsByCriteria`
+- `CampaignService.getCampaignAccessesByUser()` + `buildCampaignAccessMap()` -> derive les badges d'acces et l'exposition de l'action `Modifier` dans la liste
 
 ## 7. Ce Que Le Backend Doit Envoyer
 
@@ -99,9 +101,14 @@ Compteurs derives cote front:
 
 ## 9. Questions Ou Ecarts A Qualifier
 
-- [ ] Le bouton `Nouvelle campagne` doit-il etre masque sans permission de creation ?
+- [x] Le bouton `Nouvelle campagne` est maintenant masque sans permission `CREATE_CAMPAIGNS`; la route `/dashboard/campaigns/new` reste guardee cote routing.
 - [ ] La notion de `campagne partagee` doit-elle etre exposee explicitement par le backend au lieu d'etre reconstruite cote front ?
 - [ ] La liste doit-elle etre paginee serveur a terme au lieu d'etre chargee en masse (`size: 100` / `1000`) ?
+
+- [ ] Vérifier la conformité entre la BD actuelle et les formulaires/cartes/filtres front réellement exposés par cette page.
+- [ ] Vérifier, si la page expose une création via modale ou inline, qu’aucun contrôle `ngModel` n’est monté dans un vrai tag `<form>` sans `name` ni configuration `standalone`, afin d’éviter un défaut Angular `NG01352` et un rendu partiel.
+- [ ] Vérifier, si la page expose des validations locales obligatoires, qu’elles relisent bien un state réellement synchronisé avec la saisie et qu’elles ne masquent pas un défaut de binding ou un décalage de contrat backend/front.
+- [ ] Vérifier, si la page expose une édition via modale ou inline, que les valeurs d’origine sont bien réhydratées dès l’ouverture et au premier rendu.
 
 ## 10. Recette Manuelle
 
@@ -110,5 +117,7 @@ Compteurs derives cote front:
 3. Rechercher une campagne par titre, description et specialite.
 4. Changer le filtre statut et verifier que le compteur correspond aux cartes visibles.
 5. Basculer `grid/list`.
-6. Ouvrir `Voir details`, puis naviguer vers `/dashboard/campaigns/:id`.
-7. Tester l'etat vide sur un onglet sans donnees.
+6. Verifier qu'une campagne propre affiche `Proprietaire`, qu'une campagne modifiable affiche `Edition`, et qu'une campagne non modifiable reste en `Consultation`.
+7. Verifier que `Modifier` n'apparait que si l'utilisateur peut editer directement, ou propose le passage par le detail si `adminMode` est requis.
+8. Ouvrir `Voir details`, puis naviguer vers `/dashboard/campaigns/:id`.
+9. Tester l'etat vide sur un onglet sans donnees.

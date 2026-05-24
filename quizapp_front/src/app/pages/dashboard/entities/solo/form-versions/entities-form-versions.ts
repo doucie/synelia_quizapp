@@ -9,7 +9,7 @@ import { DependencyPopupComponent } from '../../../../../shared/dependency-popup
 import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
 import { FilterCheckboxComponent } from '../../../../../shared/filter-checkbox/filter-checkbox';
 import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../../../shared/filter-select/filter-select';
-import { FormVersionService, FormVersion, PagedFormVersionResponse, FormVersionSearchCriteria } from '../../../../../core/services/form-version.service';
+import { FormVersionService, FormVersion, FormVersionMutationPayload, PagedFormVersionResponse, FormVersionSearchCriteria } from '../../../../../core/services/form-version.service';
 import { FormQuestionsService, FormQuestions } from '../../../../../core/services/form-questions.service';
 import { FormService, Form } from '../../../../../core/services/form.service';
 
@@ -20,7 +20,7 @@ import { FormService, Form } from '../../../../../core/services/form.service';
   templateUrl: './entities-form-versions.html',
   styleUrls: ['./entities-form-versions.scss']
 })
-export class EntitiesFormVersionsComponent extends EntityCrudBase<FormVersion, FormVersionSearchCriteria, PagedFormVersionResponse> {
+export class EntitiesFormVersionsComponent extends EntityCrudBase<FormVersion, FormVersionSearchCriteria, PagedFormVersionResponse, FormVersionMutationPayload> {
   private service = inject(FormVersionService);
   private formQuestionsService = inject(FormQuestionsService);
   protected override readonly router = inject(Router);
@@ -47,7 +47,7 @@ export class EntitiesFormVersionsComponent extends EntityCrudBase<FormVersion, F
 
   advancedCriteria: FormVersionSearchCriteria = {};
   editFormData: FormVersion = {};
-  createFormData: Partial<FormVersion> = {};
+  createFormData: FormVersionMutationPayload = {};
   override detailFields: DetailField[] = [
     { key: 'id', label: 'ID', type: 'id' },
     { key: 'versionNumber', label: 'Numéro de version' },
@@ -74,7 +74,7 @@ export class EntitiesFormVersionsComponent extends EntityCrudBase<FormVersion, F
   ];
 
   protected fetchAll(criteria: FormVersionSearchCriteria): Observable<PagedFormVersionResponse> { return this.service.getAllByCriteria(criteria); }
-  protected performCreate(item: Partial<FormVersion>): Observable<any> { return this.service.create(item as FormVersion); }
+  protected performCreate(item: FormVersionMutationPayload): Observable<any> { return this.service.create(item); }
   protected performUpdate(item: FormVersion): Observable<any> { return this.service.update(item); }
   protected performDelete(id: number): Observable<any> { return this.service.delete(id); }
   protected performRestore(id: number): Observable<any> { return this.service.restore(id); }

@@ -9,7 +9,7 @@ import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../../
 import { EntityDetailPanelComponent } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
 import { DependencyPopupComponent } from '../../../../../shared/dependency-popup/dependency-popup';
 import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
-import { CandidateTokenService, CandidateToken, PagedCandidateTokenResponse, CandidateTokenSearchCriteria } from '../../../../../core/services/candidate-token.service';
+import { CandidateTokenService, CandidateToken, CandidateTokenMutationPayload, PagedCandidateTokenResponse, CandidateTokenSearchCriteria } from '../../../../../core/services/candidate-token.service';
 import { ApplicationService, Application } from '../../../../../core/services/application.service';
 
 @Component({
@@ -19,7 +19,7 @@ import { ApplicationService, Application } from '../../../../../core/services/ap
   templateUrl: './entities-candidate-token.html',
   styleUrls: ['./entities-candidate-token.scss']
 })
-export class EntitiesCandidateTokenComponent extends EntityCrudBase<CandidateToken, CandidateTokenSearchCriteria, PagedCandidateTokenResponse> {
+export class EntitiesCandidateTokenComponent extends EntityCrudBase<CandidateToken, CandidateTokenSearchCriteria, PagedCandidateTokenResponse, CandidateTokenMutationPayload> {
   private service = inject(CandidateTokenService);
   private applicationService = inject(ApplicationService);
   protected override readonly router = inject(Router);
@@ -31,7 +31,7 @@ export class EntitiesCandidateTokenComponent extends EntityCrudBase<CandidateTok
 
   advancedCriteria: CandidateTokenSearchCriteria = {};
   editFormData: CandidateToken = {};
-  createFormData: Partial<CandidateToken> = {};
+  createFormData: CandidateTokenMutationPayload = {};
 
   override allColumns: ColumnDef[] = [
     { key: 'id', label: 'ID', priority: 1 },
@@ -42,7 +42,7 @@ export class EntitiesCandidateTokenComponent extends EntityCrudBase<CandidateTok
   ];
 
   protected fetchAll(criteria: CandidateTokenSearchCriteria): Observable<PagedCandidateTokenResponse> { return this.service.getAllByCriteria(criteria); }
-  protected performCreate(item: Partial<CandidateToken>): Observable<any> { return this.service.create(item as CandidateToken); }
+  protected performCreate(item: CandidateTokenMutationPayload): Observable<any> { return this.service.create(item); }
   protected performUpdate(item: CandidateToken): Observable<any> { return this.service.update(item); }
   protected performDelete(id: number): Observable<any> { return this.service.delete(id); }
   protected performRestore(id: number): Observable<any> { return this.service.restore(id); }

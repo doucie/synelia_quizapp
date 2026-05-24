@@ -302,7 +302,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
 
         // Pour l'enrichissement, on utilise TOUTES les campagnes
         const allCampaignsForEnrichment = results.allCampaigns.content || [];
-        const accessMap = this.buildCampaignAccessMap(results.campaignAccesses || []);
+        const accessMap = this.campaignService.buildCampaignAccessMap(results.campaignAccesses || []);
         this.campaignAccessMap.set(accessMap);
         
         // Extraire les IDs des campagnes où l'utilisateur a au moins un droit
@@ -1225,46 +1225,6 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       case 'IN_PROGRESS': return 'En cours';
       default: return 'En attente';
     }
-  }
-
-  private buildCampaignAccessMap(accesses: any[]): Record<number, CampaignAccessRecord> {
-    return accesses.reduce((map, rawAccess) => {
-      const campaignId = Number(rawAccess.campaignId || rawAccess.campaigns_id || 0);
-      if (!campaignId) {
-        return map;
-      }
-
-      const current = map[campaignId] || {
-        campaignId,
-        userId: Number(rawAccess.userId || 0),
-        userFirstName: rawAccess.userFirstName,
-        userLastName: rawAccess.userLastName,
-        userName: rawAccess.userName,
-        userEmail: rawAccess.userEmail,
-        userRole: rawAccess.userRole,
-        canUpdate: false,
-        canDelete: false,
-        canEvaluate: false,
-        canPlanify: false,
-        canAcceptPreScreen: false,
-        canAcceptFinal: false,
-        isAdmin: false,
-        isCreator: false,
-        follow: false
-      } satisfies CampaignAccessRecord;
-
-      current.canUpdate = current.canUpdate || Boolean(rawAccess.canUpdate || rawAccess.can_update);
-      current.canDelete = current.canDelete || Boolean(rawAccess.canDelete || rawAccess.can_delete);
-      current.canEvaluate = current.canEvaluate || Boolean(rawAccess.canEvaluate || rawAccess.can_evaluate);
-      current.canPlanify = current.canPlanify || Boolean(rawAccess.canPlanify || rawAccess.can_planify);
-      current.canAcceptPreScreen = current.canAcceptPreScreen || Boolean(rawAccess.canAcceptPreScreen || rawAccess.can_accept_pre_screen);
-      current.canAcceptFinal = current.canAcceptFinal || Boolean(rawAccess.canAcceptFinal || rawAccess.can_accept_final);
-      current.isAdmin = current.isAdmin || Boolean(rawAccess.isAdmin || rawAccess.is_admin);
-      current.isCreator = current.isCreator || Boolean(rawAccess.isCreator || rawAccess.is_creator);
-      current.follow = current.follow || Boolean(rawAccess.follow);
-      map[campaignId] = current;
-      return map;
-    }, {} as Record<number, CampaignAccessRecord>);
   }
 
   private hasAnyCampaignAccess(access: CampaignAccessRecord): boolean {

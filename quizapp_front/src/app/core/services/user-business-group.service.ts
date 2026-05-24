@@ -16,6 +16,14 @@ export interface UserBusinessGroup {
   isDeleted?: boolean;
 }
 
+export interface UserBusinessGroupMutationPayload {
+  id?: number;
+  userId?: number;
+  businessGroupId?: number;
+  isModerator?: boolean;
+  isDeleted?: boolean;
+}
+
 export interface UserBusinessGroupCriteria {
   userId?: number;
   businessGroupId?: number;
@@ -79,11 +87,11 @@ export class UserBusinessGroupService {
     );
   }
 
-  create(item: UserBusinessGroup): Observable<any> {
+  create(item: UserBusinessGroupMutationPayload): Observable<any> {
     return this.http.post(`${this.apiUrl}/create`, { user: this.getCurrentUserId(), datas: [item] });
   }
 
-  update(item: UserBusinessGroup): Observable<any> {
+  update(item: UserBusinessGroupMutationPayload): Observable<any> {
     return this.http.post(`${this.apiUrl}/update`, { user: this.getCurrentUserId(), datas: [item] });
   }
 

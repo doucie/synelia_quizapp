@@ -9,7 +9,7 @@ import { DependencyPopupComponent } from '../../../../../shared/dependency-popup
 import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
 import { FilterCheckboxComponent } from '../../../../../shared/filter-checkbox/filter-checkbox';
 import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../../../shared/filter-select/filter-select';
-import { CandidateInterviewEntityService, CandidateInterviewEntity, PagedCandidateInterviewResponse, CandidateInterviewSearchCriteria } from '../../../../../core/services/candidate-interview-entity.service';
+import { CandidateInterviewEntityService, CandidateInterviewEntity, CandidateInterviewEntityMutationPayload, PagedCandidateInterviewResponse, CandidateInterviewSearchCriteria } from '../../../../../core/services/candidate-interview-entity.service';
 import { EvaluationService, Evaluation } from '../../../../../core/services/evaluation.service';
 import { ApplicationService, Application } from '../../../../../core/services/application.service';
 import { InterviewService, Interview } from '../../../../../core/services/interview.service';
@@ -21,7 +21,7 @@ import { InterviewService, Interview } from '../../../../../core/services/interv
   templateUrl: './entities-candidate-interview.html',
   styleUrls: ['./entities-candidate-interview.scss']
 })
-export class EntitiesCandidateInterviewComponent extends EntityCrudBase<CandidateInterviewEntity, CandidateInterviewSearchCriteria, PagedCandidateInterviewResponse> {
+export class EntitiesCandidateInterviewComponent extends EntityCrudBase<CandidateInterviewEntity, CandidateInterviewSearchCriteria, PagedCandidateInterviewResponse, CandidateInterviewEntityMutationPayload> {
   private service = inject(CandidateInterviewEntityService);
   private evaluationService = inject(EvaluationService);
   private applicationService = inject(ApplicationService);
@@ -41,7 +41,7 @@ export class EntitiesCandidateInterviewComponent extends EntityCrudBase<Candidat
 
   advancedCriteria: CandidateInterviewSearchCriteria = {};
   editFormData: CandidateInterviewEntity = {};
-  createFormData: Partial<CandidateInterviewEntity> = {};
+  createFormData: CandidateInterviewEntityMutationPayload = {};
 
   override allColumns: ColumnDef[] = [
     { key: 'id', label: 'ID', priority: 1 },
@@ -54,7 +54,7 @@ export class EntitiesCandidateInterviewComponent extends EntityCrudBase<Candidat
   ];
 
   protected fetchAll(criteria: CandidateInterviewSearchCriteria): Observable<PagedCandidateInterviewResponse> { return this.service.getAllByCriteria(criteria); }
-  protected performCreate(item: Partial<CandidateInterviewEntity>): Observable<any> { return this.service.create(item as CandidateInterviewEntity); }
+  protected performCreate(item: CandidateInterviewEntityMutationPayload): Observable<any> { return this.service.create(item); }
   protected performUpdate(item: CandidateInterviewEntity): Observable<any> { return this.service.update(item); }
   protected performDelete(id: number): Observable<any> { return this.service.delete(id); }
   protected performRestore(id: number): Observable<any> { return this.service.restore(id); }

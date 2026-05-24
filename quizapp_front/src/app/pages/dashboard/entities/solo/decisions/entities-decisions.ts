@@ -9,7 +9,7 @@ import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../../
 import { EntityDetailPanelComponent } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
 import { DependencyPopupComponent } from '../../../../../shared/dependency-popup/dependency-popup';
 import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
-import { DecisionService, Decision, PagedDecisionResponse, DecisionCriteria } from '../../../../../core/services/decision.service';
+import { DecisionService, Decision, DecisionMutationPayload, PagedDecisionResponse, DecisionCriteria } from '../../../../../core/services/decision.service';
 import { ApplicationService, Application } from '../../../../../core/services/application.service';
 import { PipelineStageService } from '../../../../../core/services/pipeline-stage.service';
 import { UserService, User } from '../../../../../core/services/user.service';
@@ -27,7 +27,7 @@ interface DecisionPipelineStageRef {
   templateUrl: './entities-decisions.html',
   styleUrls: ['./entities-decisions.scss']
 })
-export class EntitiesDecisionsComponent extends EntityCrudBase<Decision, DecisionCriteria, PagedDecisionResponse> {
+export class EntitiesDecisionsComponent extends EntityCrudBase<Decision, DecisionCriteria, PagedDecisionResponse, DecisionMutationPayload> {
   private service = inject(DecisionService);
   private applicationService = inject(ApplicationService);
   private pipelineStageService = inject(PipelineStageService);
@@ -43,7 +43,7 @@ export class EntitiesDecisionsComponent extends EntityCrudBase<Decision, Decisio
 
   advancedCriteria: DecisionCriteria = {};
   editFormData: Decision = { decisionType: '', isCancel: false, applicationId: 0, userId: 0 };
-  createFormData: Partial<Decision> = {};
+  createFormData: DecisionMutationPayload = {};
 
   override allColumns: ColumnDef[] = [
     { key: 'id', label: 'ID', priority: 1 },
@@ -57,8 +57,8 @@ export class EntitiesDecisionsComponent extends EntityCrudBase<Decision, Decisio
   ];
 
   protected fetchAll(criteria: DecisionCriteria): Observable<PagedDecisionResponse> { return this.service.getAllDecisionsByCriteria(criteria); }
-  protected performCreate(item: Partial<Decision>): Observable<any> { return this.service.createDecision(item as Decision); }
-  protected performUpdate(item: Decision): Observable<any> { return this.service.updateDecision(item as Decision); }
+  protected performCreate(item: DecisionMutationPayload): Observable<any> { return this.service.createDecision(item); }
+  protected performUpdate(item: Decision): Observable<any> { return this.service.updateDecision(item); }
   protected performDelete(id: number): Observable<any> { return this.service.deleteDecision(id); }
   protected performRestore(id: number): Observable<any> { return this.service.restoreDecision(id); }
   protected resetAdvancedCriteriaValues(): void { this.advancedCriteria = {}; }

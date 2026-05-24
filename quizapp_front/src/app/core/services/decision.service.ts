@@ -24,6 +24,16 @@ export interface Decision {
   userName?: string;
 }
 
+export interface DecisionMutationPayload {
+  id?: number;
+  decisionType?: string;
+  isCancel?: boolean;
+  applicationId?: number;
+  userId?: number;
+  pipelineStageId?: number;
+  isDeleted?: boolean;
+}
+
 /**
  * Interface pour les données partielles de décision (pour les requêtes)
  */
@@ -48,7 +58,7 @@ export interface PartialDecision {
  */
 export interface DecisionRequest {
   user?: number;
-  datas?: Decision[];
+  datas?: DecisionMutationPayload[];
   data?: PartialDecision;
 }
 
@@ -181,7 +191,7 @@ export class DecisionService {
   /**
    * Crée une nouvelle décision
    */
-  createDecision(decision: Decision): Observable<DecisionResponse> {
+  createDecision(decision: DecisionMutationPayload): Observable<DecisionResponse> {
     const request: DecisionRequest = {
       user: this.getCurrentUserId(),
       datas: [decision]  // Le backend attend 'datas' (pluriel) avec un tableau
@@ -207,7 +217,7 @@ export class DecisionService {
   /**
    * Met à jour une décision
    */
-  updateDecision(decision: Decision): Observable<DecisionResponse> {
+  updateDecision(decision: DecisionMutationPayload): Observable<DecisionResponse> {
     const request: DecisionRequest = {
       user: this.getCurrentUserId(),
       datas: [decision]  // Array avec l'objet décision à mettre à jour

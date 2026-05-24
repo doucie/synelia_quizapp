@@ -97,6 +97,11 @@ La page sert à lister les entretiens évaluables ou déjà évalués, puis à o
 - [ ] Les évaluations terminées devraient-elles afficher plus de détail sans ouvrir le plein écran ?
 - [ ] Faut-il une distinction visuelle entre `évaluable` et `consultation seule` ?
 
+- [ ] Vérifier la conformité entre la BD actuelle et les formulaires/cartes/filtres front réellement exposés par cette page.
+- [ ] Vérifier, si la page expose une création via modale ou inline, qu’aucun contrôle `ngModel` n’est monté dans un vrai tag `<form>` sans `name` ni configuration `standalone`, afin d’éviter un défaut Angular `NG01352` et un rendu partiel.
+- [ ] Vérifier, si la page expose des validations locales obligatoires, qu’elles relisent bien un state réellement synchronisé avec la saisie et qu’elles ne masquent pas un défaut de binding ou un décalage de contrat backend/front.
+- [ ] Vérifier, si la page expose une édition via modale ou inline, que les valeurs d’origine sont bien réhydratées dès l’ouverture et au premier rendu.
+
 ## 10. Recette Manuelle
 
 1. Ouvrir `/dashboard/evaluations` avec un utilisateur ayant `VIEW_EVALUATIONS`.

@@ -11,7 +11,7 @@ import { DependencyPopupComponent } from '../../../../../shared/dependency-popup
 import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
 import { PERMISSION_CATEGORIES } from '../../../../../core/constants/permissions.constants';
 import { BusinessGroupCrudService, BusinessGroup } from '../../../../../core/services/business-group-crud.service';
-import { BusinessGroupPermissionService, BusinessGroupPermission, PagedBusinessGroupPermissionResponse, BusinessGroupPermissionCriteria } from '../../../../../core/services/business-group-permission.service';
+import { BusinessGroupPermissionService, BusinessGroupPermission, BusinessGroupPermissionMutationPayload, PagedBusinessGroupPermissionResponse, BusinessGroupPermissionCriteria } from '../../../../../core/services/business-group-permission.service';
 
 interface FunctionalityOption {
   value: string;
@@ -25,7 +25,7 @@ interface FunctionalityOption {
   templateUrl: './entities-business-group-permissions.html',
   styleUrls: ['./entities-business-group-permissions.scss']
 })
-export class EntitiesBusinessGroupPermissionsComponent extends EntityCrudBase<BusinessGroupPermission, BusinessGroupPermissionCriteria, PagedBusinessGroupPermissionResponse> {
+export class EntitiesBusinessGroupPermissionsComponent extends EntityCrudBase<BusinessGroupPermission, BusinessGroupPermissionCriteria, PagedBusinessGroupPermissionResponse, BusinessGroupPermissionMutationPayload> {
   private service = inject(BusinessGroupPermissionService);
   private businessGroupCrudService = inject(BusinessGroupCrudService);
   protected override readonly router = inject(Router);
@@ -36,7 +36,7 @@ export class EntitiesBusinessGroupPermissionsComponent extends EntityCrudBase<Bu
   readonly businessGroups = signal<BusinessGroup[]>([]);
   advancedCriteria: BusinessGroupPermissionCriteria = {};
   editFormData: BusinessGroupPermission = {};
-  createFormData: Partial<BusinessGroupPermission> = {};
+  createFormData: BusinessGroupPermissionMutationPayload = {};
   readonly functionalityOptions: FunctionalityOption[] = PERMISSION_CATEGORIES.flatMap((category) =>
     category.permissions.map((permission) => ({
       value: permission.key,
@@ -61,7 +61,7 @@ export class EntitiesBusinessGroupPermissionsComponent extends EntityCrudBase<Bu
   }
 
   protected fetchAll(criteria: BusinessGroupPermissionCriteria): Observable<PagedBusinessGroupPermissionResponse> { return this.service.getAllByCriteria(criteria); }
-  protected performCreate(item: Partial<BusinessGroupPermission>): Observable<any> { return this.service.create(item as BusinessGroupPermission); }
+  protected performCreate(item: BusinessGroupPermissionMutationPayload): Observable<any> { return this.service.create(item); }
   protected performUpdate(item: BusinessGroupPermission): Observable<any> { return this.service.update(item); }
   protected performDelete(id: number): Observable<any> { return this.service.delete(id); }
   protected performRestore(id: number): Observable<any> { return this.service.restore(id); }

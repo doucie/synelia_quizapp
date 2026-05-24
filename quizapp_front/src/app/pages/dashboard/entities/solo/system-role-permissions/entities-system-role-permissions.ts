@@ -9,7 +9,7 @@ import { EntityDetailPanelComponent } from '../../../../../shared/entity-detail-
 import { DependencyPopupComponent } from '../../../../../shared/dependency-popup/dependency-popup';
 import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
 import { PERMISSION_CATEGORIES } from '../../../../../core/constants/permissions.constants';
-import { SystemRolePermissionCrudService, SystemRolePermission, PagedSystemRolePermissionResponse, SystemRolePermissionCriteria } from '../../../../../core/services/system-role-permission-crud.service';
+import { SystemRolePermissionCrudService, SystemRolePermission, SystemRolePermissionMutationPayload, PagedSystemRolePermissionResponse, SystemRolePermissionCriteria } from '../../../../../core/services/system-role-permission-crud.service';
 
 interface SystemRoleOption {
   value: string;
@@ -28,7 +28,7 @@ interface FunctionalityOption {
   templateUrl: './entities-system-role-permissions.html',
   styleUrls: ['./entities-system-role-permissions.scss']
 })
-export class EntitiesSystemRolePermissionsComponent extends EntityCrudBase<SystemRolePermission, SystemRolePermissionCriteria, PagedSystemRolePermissionResponse> {
+export class EntitiesSystemRolePermissionsComponent extends EntityCrudBase<SystemRolePermission, SystemRolePermissionCriteria, PagedSystemRolePermissionResponse, SystemRolePermissionMutationPayload> {
   private service = inject(SystemRolePermissionCrudService);
   protected override readonly router = inject(Router);
   protected override readonly pageSizeStorageKey = 'entitiesSystemRolePermissionsPageSize';
@@ -38,7 +38,7 @@ export class EntitiesSystemRolePermissionsComponent extends EntityCrudBase<Syste
 
   advancedCriteria: SystemRolePermissionCriteria = {};
   editFormData: SystemRolePermission = {};
-  createFormData: Partial<SystemRolePermission> = {};
+  createFormData: SystemRolePermissionMutationPayload = {};
   readonly systemRoleOptions: SystemRoleOption[] = [
     { value: 'ADMIN', label: 'Administrateur' },
     { value: 'RECRUITER', label: 'Recruteur' },
@@ -62,7 +62,7 @@ export class EntitiesSystemRolePermissionsComponent extends EntityCrudBase<Syste
   ];
 
   protected fetchAll(criteria: SystemRolePermissionCriteria): Observable<PagedSystemRolePermissionResponse> { return this.service.getAllByCriteria(criteria); }
-  protected performCreate(item: Partial<SystemRolePermission>): Observable<any> { return this.service.create(item as SystemRolePermission); }
+  protected performCreate(item: SystemRolePermissionMutationPayload): Observable<any> { return this.service.create(item); }
   protected performUpdate(item: SystemRolePermission): Observable<any> { return this.service.update(item); }
   protected performDelete(id: number): Observable<any> { return this.service.delete(id); }
   protected performRestore(id: number): Observable<any> { return this.service.restore(id); }

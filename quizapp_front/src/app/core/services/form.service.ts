@@ -21,6 +21,15 @@ export interface Form {
   dateModificationA?: string;
 }
 
+export interface FormMutationPayload {
+  id?: number;
+  formName?: string;
+  formDesc?: string;
+  isActive?: boolean;
+  campaignId?: number;
+  isDeleted?: boolean;
+}
+
 export interface FormSearchCriteria {
   page?: number;
   size?: number;
@@ -51,9 +60,22 @@ export class FormService {
 
   constructor(private http: HttpClient) {}
 
+  private getCurrentUserId(): string {
+    try {
+      const currentUserData = localStorage.getItem('user');
+      if (!currentUserData) {
+        return '1';
+      }
+
+      const currentUser = JSON.parse(currentUserData);
+      return currentUser?.id?.toString() || '1';
+    } catch {
+      return '1';
+    }
+  }
+
   getAllByCriteria(criteria: FormSearchCriteria = {}): Observable<PagedFormResponse> {
-    const currentUserData = localStorage.getItem('user');
-    const currentUserId = currentUserData ? JSON.parse(currentUserData).id?.toString() || '1' : '1';
+    const currentUserId = this.getCurrentUserId();
 
     const request = {
       user: currentUserId,
@@ -90,19 +112,19 @@ export class FormService {
     );
   }
 
-  create(item: Form): Observable<any> {
-    return this.http.post(`${this.apiUrl}/create`, { user: 1, datas: [item] });
+  create(item: FormMutationPayload): Observable<any> {
+    return this.http.post(`${this.apiUrl}/create`, { user: this.getCurrentUserId(), datas: [item] });
   }
 
-  update(item: Form): Observable<any> {
-    return this.http.post(`${this.apiUrl}/update`, { user: 1, datas: [item] });
+  update(item: FormMutationPayload): Observable<any> {
+    return this.http.post(`${this.apiUrl}/update`, { user: this.getCurrentUserId(), datas: [item] });
   }
 
   delete(id: number): Observable<any> {
-    return this.http.post(`${this.apiUrl}/delete`, { user: 1, datas: [{ id }] });
+    return this.http.post(`${this.apiUrl}/delete`, { user: this.getCurrentUserId(), datas: [{ id }] });
   }
 
   restore(id: number): Observable<any> {
-    return this.http.post(`${this.apiUrl}/update`, { user: 1, datas: [{ id, isDeleted: false }] });
+    return this.http.post(`${this.apiUrl}/update`, { user: this.getCurrentUserId(), datas: [{ id, isDeleted: false }] });
   }
 }

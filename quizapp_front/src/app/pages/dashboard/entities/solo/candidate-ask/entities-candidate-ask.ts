@@ -9,7 +9,7 @@ import { DependencyPopupComponent } from '../../../../../shared/dependency-popup
 import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
 import { FilterCheckboxComponent } from '../../../../../shared/filter-checkbox/filter-checkbox';
 import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../../../shared/filter-select/filter-select';
-import { CandidateAskService, CandidateAsk, CandidateAskReviewAction, PagedCandidateAskResponse, CandidateAskSearchCriteria } from '../../../../../core/services/candidate-ask.service';
+import { CandidateAskService, CandidateAsk, CandidateAskMutationPayload, CandidateAskReviewAction, PagedCandidateAskResponse, CandidateAskSearchCriteria } from '../../../../../core/services/candidate-ask.service';
 import { ApplicationService, Application } from '../../../../../core/services/application.service';
 
 @Component({
@@ -19,7 +19,7 @@ import { ApplicationService, Application } from '../../../../../core/services/ap
   templateUrl: './entities-candidate-ask.html',
   styleUrls: ['./entities-candidate-ask.scss']
 })
-export class EntitiesCandidateAskComponent extends EntityCrudBase<CandidateAsk, CandidateAskSearchCriteria, PagedCandidateAskResponse> {
+export class EntitiesCandidateAskComponent extends EntityCrudBase<CandidateAsk, CandidateAskSearchCriteria, PagedCandidateAskResponse, CandidateAskMutationPayload> {
   private service = inject(CandidateAskService);
   private applicationService = inject(ApplicationService);
   protected override readonly router = inject(Router);
@@ -36,7 +36,7 @@ export class EntitiesCandidateAskComponent extends EntityCrudBase<CandidateAsk, 
 
   advancedCriteria: CandidateAskSearchCriteria = {};
   editFormData: CandidateAsk = {};
-  createFormData: Partial<CandidateAsk> = {};
+  createFormData: CandidateAskMutationPayload = {};
 
   override allColumns: ColumnDef[] = [
     { key: 'id', label: 'ID', priority: 1 },
@@ -53,7 +53,7 @@ export class EntitiesCandidateAskComponent extends EntityCrudBase<CandidateAsk, 
   ];
 
   protected fetchAll(criteria: CandidateAskSearchCriteria): Observable<PagedCandidateAskResponse> { return this.service.getAllByCriteria(criteria); }
-  protected performCreate(item: Partial<CandidateAsk>): Observable<any> { return this.service.create(item as CandidateAsk); }
+  protected performCreate(item: CandidateAskMutationPayload): Observable<any> { return this.service.create(item); }
   protected performUpdate(item: CandidateAsk): Observable<any> { return this.service.update(item); }
   protected performDelete(id: number): Observable<any> { return this.service.delete(id); }
   protected performRestore(id: number): Observable<any> { return this.service.restore(id); }

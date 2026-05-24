@@ -18,6 +18,9 @@ public class AnswerDto extends _AnswerDto implements Cloneable {
     private Integer    id                   ;
     private String     answerText           ;
     private String     answerType           ;
+    private Boolean    allowAdditionalComment ;
+    private Boolean    additionalCommentRequired ;
+    private String     additionalCommentPlaceholder ;
     private Integer    answerOrder          ;
     private Boolean    isCorrect            ;
     private String     createdAt            ;

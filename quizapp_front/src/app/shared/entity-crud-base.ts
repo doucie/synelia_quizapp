@@ -49,6 +49,8 @@ export interface BasePagedResponse<T> {
   totalPages: number;
 }
 
+export type CrudCreatePayload<T extends BaseEntity> = Partial<T>;
+
 /**
  * Classe abstraite pour les composants CRUD d'entités.
  *
@@ -64,7 +66,8 @@ export interface BasePagedResponse<T> {
 export abstract class EntityCrudBase<
   T extends BaseEntity,
   C extends BaseSearchCriteria,
-  R extends BasePagedResponse<T>
+  R extends BasePagedResponse<T>,
+  TCreate extends object = CrudCreatePayload<T>
 > implements OnInit, OnDestroy, AfterViewInit {
 
   // ── Signaux communs ──────────────────────────
@@ -338,14 +341,14 @@ export abstract class EntityCrudBase<
   /** Critères de recherche avancée — exposés en tant que propriété dans le composant enfant */
   abstract advancedCriteria: C;
   /** Données du formulaire de création */
-  abstract createFormData: Partial<T>;
+  abstract createFormData: TCreate;
   /** Données du formulaire d'édition */
   abstract editFormData: T;
 
   /** Appel service : récupérer les items paginés */
   protected abstract fetchAll(criteria: C): Observable<R>;
   /** Appel service : créer un item */
-  protected abstract performCreate(item: Partial<T>): Observable<any>;
+  protected abstract performCreate(item: TCreate): Observable<any>;
   /** Appel service : mettre à jour un item */
   protected abstract performUpdate(item: T): Observable<any>;
   /** Appel service : supprimer un item */

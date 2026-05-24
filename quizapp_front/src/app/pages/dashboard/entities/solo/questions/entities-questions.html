@@ -42,7 +42,7 @@
           </svg>
           Filtres avancés
         </button>
-        <button class="btn-primary-pro" (click)="createDepartment()">
+        <button class="btn-primary-pro" (click)="openCreateQuestionDialog()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 5V19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             <path d="M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -207,7 +207,7 @@
     <!-- État de chargement -->
     <div *ngIf="isLoading()" class="loading-state">
       <div class="loading-spinner"></div>
-      <p>Chargement des départements...</p>
+      <p>Chargement des questions...</p>
     </div>
 
     <!-- État vide -->
@@ -220,8 +220,8 @@
           <path d="M16 3.13C16.8604 3.35031 17.623 3.85071 18.1676 4.55332C18.7122 5.25594 19.0078 6.11684 19.0078 7.005C19.0078 7.89316 18.7122 8.75406 18.1676 9.45668C17.623 10.1593 16.8604 10.6597 16 10.88" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </div>
-      <h3>Aucun département trouvé</h3>
-      <p>Aucun département ne correspond aux critères de recherche actuels.</p>
+      <h3>Aucune question trouvée</h3>
+      <p>Aucune question ne correspond aux critères de recherche actuels.</p>
     </div>
 
     <!-- Tableau de données professionnel -->
@@ -249,7 +249,7 @@
                 <span class="cell-name">{{ question.questionText || '-' }}</span>
               </td>
               <td class="col-short" [class.col-hidden]="!isColumnVisible('speciality')">
-                <span class="cell-description">{{ question.specialityId || '-' }}</span>
+                <span class="cell-description">{{ getSpecialityLabel(question.specialityId) }}</span>
               </td>
               <td class="col-short" [class.col-hidden]="!isColumnVisible('chrono')">
                 <span class="cell-chrono">{{ question.questionChrono || '-' }}</span>
@@ -279,7 +279,7 @@
                     <button 
                       class="action-btn danger" 
                       (click)="deleteQuestion(question)"
-                      title="Supprimer le département" aria-label="Supprimer le département">
+                      title="Supprimer la question" aria-label="Supprimer la question">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -287,12 +287,12 @@
                         <path d="M14 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                       </svg>
                     </button>
-                    <!-- Bouton d'expansion pour afficher les spécialités -->
+                    <!-- Bouton d'expansion pour afficher les réponses -->
                     <button 
                       class="action-btn secondary" 
                       (click)="toggleQuestionExpansion(question.id!)"
                       [class.expanded]="isQuestionExpanded(question.id!)"
-                      title="Afficher les spécialités" aria-label="Afficher les spécialités">
+                      title="Afficher les réponses" aria-label="Afficher les réponses">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path 
                           d="M6 9L12 15L18 9" 
@@ -305,23 +305,23 @@
                     </button>
                   </ng-container>
                   
-                  <!-- Bouton de restauration pour les départements supprimés -->
+                  <!-- Bouton de restauration pour les questions supprimées -->
                   <ng-container *ngIf="question.isDeleted">
                     <button 
                       class="action-btn success" 
                       (click)="restoreQuestion(question)"
-                      title="Restaurer le département" aria-label="Restaurer le département">
+                      title="Restaurer la question" aria-label="Restaurer la question">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M3 12A9 9 0 1 0 12 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         <path d="M12 3L8 7L12 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                       </svg>
                     </button>
-                    <!-- Bouton d'expansion pour afficher les spécialités -->
+                    <!-- Bouton d'expansion pour afficher les réponses -->
                     <button 
                       class="action-btn secondary" 
                       (click)="toggleQuestionExpansion(question.id!)"
                       [class.expanded]="isQuestionExpanded(question.id!)"
-                      title="Afficher les spécialités" aria-label="Afficher les spécialités">
+                      title="Afficher les réponses" aria-label="Afficher les réponses">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path 
                           d="M6 9L12 15L18 9" 
@@ -535,7 +535,7 @@
     </div>
     
     <div class="modal-body">
-      <p>Êtes-vous certain de vouloir supprimer ce département ?</p>
+      <p>Êtes-vous certain de vouloir supprimer cette question ?</p>
       <div class="user-info" *ngIf="questionToDelete">
         <div class="user-avatar">
           {{ questionToDelete.questionText?.[0] }}
@@ -553,7 +553,7 @@
           <path d="M12 17H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           <path d="M10.29 3.86L1.82 18A2 2 0 0 0 3.55 21H20.45A2 2 0 0 0 22.18 18L13.71 3.86A2 2 0 0 0 10.29 3.86Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        Cette action est définitive et ne peut pas être annulée.
+        La question sera masquée et pourra être restaurée ultérieurement.
       </div>
     </div>
     
@@ -572,7 +572,7 @@
           <path d="M10 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           <path d="M14 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        Supprimer définitivement
+        Supprimer la question
       </button>
     </div>
   </div>
@@ -592,7 +592,7 @@
     </div>
     
     <div class="modal-body">
-      <p>Êtes-vous certain de vouloir restaurer ce département ?</p>
+      <p>Êtes-vous certain de vouloir restaurer cette question ?</p>
       <div class="user-info" *ngIf="questionToRestore()">
         <div class="user-avatar">
           {{ questionToRestore()?.questionText?.[0] }}
@@ -610,7 +610,7 @@
           <path d="M12 8V12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           <path d="M12 16H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        Le département sera réactivé et pourra à nouveau être utilisé.
+        La question sera réactivée et pourra à nouveau être utilisée.
       </div>
     </div>
     
@@ -685,10 +685,54 @@
           >
             <option value="">Sélectionner une spécialité</option>
             @for (s of allSpecialities(); track s.id) {
-              <option [value]="s.id">{{ s.nom }}</option>
+              <option [value]="s.id">{{ s.specialityName || s.nom || s.name || ('#' + s.id) }}</option>
             }
           </select>
         </div>
+
+          <div class="form-group">
+            <label for="edit-question-type" class="form-label">Type de question</label>
+            <select
+              id="edit-question-type"
+              class="form-select"
+              [(ngModel)]="editFormData.questionType"
+              name="questionType"
+            >
+              <option value="">Sélectionner un type</option>
+              <option value="SINGLE_CHOICE">Choix unique</option>
+              <option value="MULTIPLE_CHOICE">Choix multiple</option>
+              <option value="TRUE_FALSE">Vrai/Faux</option>
+              <option value="TEXT">Texte libre</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="edit-difficulty" class="form-label">Difficulté</label>
+            <select
+              id="edit-difficulty"
+              class="form-select"
+              [(ngModel)]="editFormData.difficultyLevel"
+              name="difficultyLevel"
+            >
+              <option value="">Sélectionner une difficulté</option>
+              <option value="EASY">Facile</option>
+              <option value="MEDIUM">Moyenne</option>
+              <option value="HARD">Difficile</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="edit-score" class="form-label">Score</label>
+            <input
+              type="number"
+              id="edit-score"
+              class="form-input"
+              [(ngModel)]="editFormData.score"
+              name="score"
+              placeholder="Score de la question"
+              min="0"
+            />
+          </div>
 
         <!-- Chrono (Time Limit) -->
         <div class="form-group">
@@ -773,10 +817,54 @@
           >
             <option value="">Sélectionner une spécialité</option>
             @for (s of allSpecialities(); track s.id) {
-              <option [value]="s.id">{{ s.nom }}</option>
+              <option [value]="s.id">{{ s.specialityName || s.nom || s.name || ('#' + s.id) }}</option>
             }
           </select>
         </div>
+
+          <div class="form-group">
+            <label for="create-question-type" class="form-label">Type de question</label>
+            <select
+              id="create-question-type"
+              class="form-select"
+              [(ngModel)]="createFormData.questionType"
+              name="createQuestionType"
+            >
+              <option value="">Sélectionner un type</option>
+              <option value="SINGLE_CHOICE">Choix unique</option>
+              <option value="MULTIPLE_CHOICE">Choix multiple</option>
+              <option value="TRUE_FALSE">Vrai/Faux</option>
+              <option value="TEXT">Texte libre</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="create-difficulty" class="form-label">Difficulté</label>
+            <select
+              id="create-difficulty"
+              class="form-select"
+              [(ngModel)]="createFormData.difficultyLevel"
+              name="createDifficultyLevel"
+            >
+              <option value="">Sélectionner une difficulté</option>
+              <option value="EASY">Facile</option>
+              <option value="MEDIUM">Moyenne</option>
+              <option value="HARD">Difficile</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="create-score" class="form-label">Score</label>
+            <input
+              type="number"
+              id="create-score"
+              class="form-input"
+              [(ngModel)]="createFormData.score"
+              name="createScore"
+              placeholder="Score de la question"
+              min="0"
+            />
+          </div>
 
         <!-- Chrono (Time Limit) -->
         <div class="form-group">
@@ -814,11 +902,11 @@
   </div>
 </div>
 
-<!-- Modal de création de spécialité -->
+<!-- Modal de création de réponse -->
 <div class="confirmation-overlay" *ngIf="showAnswerCreateDialog()" (click)="cancelCreateAnswer()">
   <div class="edit-modal" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h3>Ajouter une spécialité</h3>
+      <h3>Ajouter une réponse</h3>
       <button class="btn-close" (click)="cancelCreateAnswer()" aria-label="Fermer">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -829,34 +917,45 @@
 
     <div class="modal-content">
       <form class="edit-form">
-        <!-- Nom -->
         <div class="form-group">
-          <label for="specialityCreateName" class="form-label required">Nom de la spécialité</label>
+          <label for="answerCreateText" class="form-label required">Texte de la réponse</label>
           <input
-            id="specialityCreateName"
+            id="answerCreateText"
             type="text"
             class="form-input"
             [(ngModel)]="answerCreateFormData.answerText"
-            placeholder="Entrez le nom de la spécialité"
+            name="answerCreateText"
+            placeholder="Entrez le texte de la réponse"
             required
           />
         </div>
 
-        <!-- Description -->
         <div class="form-group">
-          <label for="specialityCreateDescription" class="form-label">Description</label>
-          <textarea
-            id="specialityCreateDescription"
-            class="form-textarea"
-            [(ngModel)]="answerCreateFormData.answerText"
-            placeholder="Entrez une description (optionnel)"
-            rows="3"
-          ></textarea>
+          <label for="answerCreateOrder" class="form-label">Ordre d'affichage</label>
+          <input
+            id="answerCreateOrder"
+            type="number"
+            class="form-input"
+            [(ngModel)]="answerCreateFormData.answerOrder"
+            name="answerCreateOrder"
+            placeholder="Ordre de la réponse"
+            min="0"
+          />
         </div>
 
-        <!-- Département -->
         <div class="form-group">
-          <label class="form-label">Département</label>
+          <label class="form-label">Réponse correcte</label>
+          <app-filter-checkbox
+            inputId="answerCreateIsCorrect"
+            label="Marquer cette réponse comme correcte"
+            [checked]="answerCreateFormData.isCorrect"
+            ariaLabel="Marquer cette réponse comme correcte"
+            (checkedChange)="answerCreateFormData.isCorrect = $event">
+          </app-filter-checkbox>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Question</label>
           <div class="form-input-readonly">
             {{ currentQuestionForAnswer()?.questionText }}
           </div>
@@ -872,17 +971,17 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        Créer la spécialité
+        Créer la réponse
       </button>
     </div>
   </div>
 </div>
 
-<!-- Modal de modification de spécialité -->
+<!-- Modal de modification de réponse -->
 <div class="confirmation-overlay" *ngIf="showAnswerEditDialog()" (click)="cancelEditAnswer()">
   <div class="edit-modal" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h3>Modifier la spécialité</h3>
+      <h3>Modifier la réponse</h3>
       <button class="btn-close" (click)="cancelEditAnswer()" aria-label="Fermer">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -893,34 +992,45 @@
 
     <div class="modal-content">
       <form class="edit-form">
-        <!-- Nom -->
         <div class="form-group">
-          <label for="specialityEditName" class="form-label required">Nom de la spécialité</label>
+          <label for="answerEditText" class="form-label required">Texte de la réponse</label>
           <input
-            id="specialityEditName"
+            id="answerEditText"
             type="text"
             class="form-input"
             [(ngModel)]="answerEditFormData.answerText"
-            placeholder="Entrez le nom de la spécialité"
+            name="answerEditText"
+            placeholder="Entrez le texte de la réponse"
             required
           />
         </div>
 
-        <!-- Description -->
         <div class="form-group">
-          <label for="specialityEditDescription" class="form-label">Description</label>
-          <textarea
-            id="specialityEditDescription"
-            class="form-textarea"
-            [(ngModel)]="answerEditFormData.answerText"
-            placeholder="Entrez une description (optionnel)"
-            rows="3"
-          ></textarea>
+          <label for="answerEditOrder" class="form-label">Ordre d'affichage</label>
+          <input
+            id="answerEditOrder"
+            type="number"
+            class="form-input"
+            [(ngModel)]="answerEditFormData.answerOrder"
+            name="answerEditOrder"
+            placeholder="Ordre de la réponse"
+            min="0"
+          />
         </div>
 
-        <!-- Département -->
         <div class="form-group">
-          <label class="form-label">Département</label>
+          <label class="form-label">Réponse correcte</label>
+          <app-filter-checkbox
+            inputId="answerEditIsCorrect"
+            label="Marquer cette réponse comme correcte"
+            [checked]="answerEditFormData.isCorrect"
+            ariaLabel="Marquer cette réponse comme correcte"
+            (checkedChange)="answerEditFormData.isCorrect = $event">
+          </app-filter-checkbox>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Question</label>
           <div class="form-input-readonly">
             {{ currentQuestionForAnswer()?.questionText }}
           </div>
@@ -936,13 +1046,13 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        Modifier la spécialité
+        Modifier la réponse
       </button>
     </div>
   </div>
 </div>
 
-<!-- Modal de confirmation de suppression de spécialité -->
+<!-- Modal de confirmation de suppression de réponse -->
 <div class="confirmation-overlay" *ngIf="showAnswerDeleteConfirmation()" (click)="cancelDeleteAnswer()">
   <div class="confirmation-modal" (click)="$event.stopPropagation()">
     <div class="modal-header">
@@ -963,7 +1073,7 @@
           </svg>
         </div>
         <p>Êtes-vous sûr de vouloir supprimer la réponse <strong>"{{ answerToDelete()?.answerText }}"</strong> ?</p>
-        <p class="confirmation-warning">Cette action peut être annulée en restaurant la spécialité ultérieurement.</p>
+        <p class="confirmation-warning">Cette action peut être annulée en restaurant la réponse ultérieurement.</p>
       </div>
     </div>
 
@@ -981,7 +1091,7 @@
   </div>
 </div>
 
-<!-- Modal de confirmation de restauration de spécialité -->
+<!-- Modal de confirmation de restauration de réponse -->
 <div class="confirmation-overlay" *ngIf="showAnswerRestoreConfirmation()" (click)="cancelRestoreAnswer()">
   <div class="confirmation-modal" (click)="$event.stopPropagation()">
     <div class="modal-header">
@@ -1003,8 +1113,9 @@
             <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             <path d="M8 16H3v5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
+        </div>
         <p>Êtes-vous sûr de vouloir restaurer la réponse <strong>"{{ answerToRestore()?.answerText }}"</strong> ?</p>
-        <p class="confirmation-info">La spécialité redeviendra active et visible dans les listes.</p>
+        <p class="confirmation-info">La réponse redeviendra active et visible dans les listes.</p>
       </div>
     </div>
 

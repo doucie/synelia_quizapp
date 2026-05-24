@@ -594,6 +594,9 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 				newAnswer.setQuestion(newQuestion);
 				newAnswer.setAnswerText(origAnswer.getAnswerText());
 				newAnswer.setAnswerType(origAnswer.getAnswerType());
+				newAnswer.setAllowAdditionalComment(origAnswer.getAllowAdditionalComment());
+				newAnswer.setAdditionalCommentRequired(origAnswer.getAdditionalCommentRequired());
+				newAnswer.setAdditionalCommentPlaceholder(origAnswer.getAdditionalCommentPlaceholder());
 				newAnswer.setAnswerOrder(origAnswer.getAnswerOrder());
 				newAnswer.setIsCorrect(origAnswer.getIsCorrect());
 				newAnswer.setIsDeleted(false);

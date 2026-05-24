@@ -23,6 +23,17 @@ export interface CandidateInterviewEntity {
   dateModificationA?: string;
 }
 
+export interface CandidateInterviewEntityMutationPayload {
+  id?: number;
+  interviewStart?: string;
+  interviewDuration?: number;
+  declineReason?: string | null;
+  alternativeDateRequested?: string | null;
+  applicationId?: number;
+  interviewId?: number;
+  isDeleted?: boolean;
+}
+
 export interface CandidateInterviewSearchCriteria {
   page?: number;
   size?: number;
@@ -87,11 +98,11 @@ export class CandidateInterviewEntityService {
     );
   }
 
-  create(item: CandidateInterviewEntity): Observable<any> {
+  create(item: CandidateInterviewEntityMutationPayload): Observable<any> {
     return this.http.post(`${this.apiUrl}/create`, { user: this.getCurrentUserId(), datas: [item] });
   }
 
-  update(item: CandidateInterviewEntity): Observable<any> {
+  update(item: CandidateInterviewEntityMutationPayload): Observable<any> {
     return this.http.post(`${this.apiUrl}/update`, { user: this.getCurrentUserId(), datas: [item] });
   }
 

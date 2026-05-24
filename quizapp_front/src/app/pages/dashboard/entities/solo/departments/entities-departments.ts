@@ -13,6 +13,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 
 import { DepartmentService, Department, DepartmentSearchCriteria, PagedResponse } from '../../../../../core/services/department.service';
+import { DepartmentSpecialityAdminService } from '../../../../../core/services/department-speciality-admin.service';
 import { UserService } from '../../../../../core/services/user.service';
 import { SpecialityService, Speciality } from '../../../../../core/services/speciality.service';
 import { NotificationService } from '../../../../../core/services/notification.service';
@@ -28,6 +29,7 @@ import { AuthService } from '../../../../../core/services/auth/auth.service';
 export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
   // Exposer Math pour utilisation dans le template
   Math = Math;
+  private departmentSpecialityAdminService = inject(DepartmentSpecialityAdminService);
   
   // Variable pour éviter les appels multiples
   private loadingTimeout: any;
@@ -1096,20 +1098,8 @@ export class EntitiesDepartmentsComponent implements OnInit, OnDestroy {
 
     console.log(`🔍 Chargement des spécialités pour le département ${departmentId}...`);
 
-    // Filtrer aussi côté API pour garder une relation department -> specialities fiable.
-    this.specialityService.getAll({
-      page: 0,
-      size: 10000,
-      departmentId
-    }).subscribe({
-      next: (response) => {
-        console.log(`✅ Toutes les spécialités chargées:`, response.items);
-        
-        // Garder un filtre défensif côté front tant que toutes les réponses ne sont pas homogènes.
-        const departmentSpecialities = response.items.filter(speciality => 
-          speciality.departmentId === departmentId
-        );
-        
+    this.departmentSpecialityAdminService.getDepartmentSpecialities(departmentId).subscribe({
+      next: (departmentSpecialities) => {
         console.log(`✅ Spécialités filtrées pour le département ${departmentId}:`, departmentSpecialities);
         
         // Mettre à jour les spécialités du département

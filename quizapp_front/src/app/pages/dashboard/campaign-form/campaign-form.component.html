@@ -353,23 +353,6 @@
               <span class="error-message">Le nombre doit être supérieur à 0</span>
             }
           </div>
-
-          <div class="form-group">
-            <label for="markedOutOf">
-              Note maximale
-            </label>
-            <input
-              type="number"
-              id="markedOutOf"
-              formControlName="markedOutOf"
-              placeholder="Ex: 20"
-              min="1"
-              [class.error]="markedOutOf?.invalid && markedOutOf?.touched"
-            />
-            @if (markedOutOf?.invalid && markedOutOf?.touched) {
-              <span class="error-message">La note doit être supérieure à 0</span>
-            }
-          </div>
         </div>
 
         <div class="form-row two-cols">
@@ -423,6 +406,116 @@
         </div>
       </div>
 
+      <div class="form-section">
+        <h2 class="section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="8" y1="13" x2="16" y2="13"/>
+            <line x1="8" y1="17" x2="16" y2="17"/>
+          </svg>
+          Formulaires de la campagne
+        </h2>
+
+        <p class="section-subtitle">
+          Associez un ou plusieurs formulaires existants à cette campagne. Ils seront ensuite disponibles dans le détail de campagne et pour les stratégies d'attribution.
+        </p>
+
+        <div class="recruiter-search recruiter-search-forms">
+          <div class="search-input-wrapper">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="m21 21-4.35-4.35"/>
+            </svg>
+            <input
+              type="text"
+              id="campaignFormSearch"
+              class="search-input"
+              [formControl]="formSearchControl"
+              placeholder="Rechercher un formulaire existant..."
+            />
+            @if (searchingForms()) {
+              <div class="search-spinner"></div>
+            }
+          </div>
+
+          @if (showFormDropdown() && formSearchResults().length > 0) {
+            <div class="search-dropdown">
+              @for (form of formSearchResults(); track form.id) {
+                <button
+                  type="button"
+                  class="search-result-item search-result-item-form"
+                  (click)="selectCampaignForm(form)"
+                >
+                  <div class="form-info">
+                    <div class="form-name">{{ form.formName || 'Sans nom' }}</div>
+                    <div class="form-meta">{{ form.formDesc || 'Aucune description disponible' }}</div>
+                  </div>
+                  <span class="form-status" [class.form-status-inactive]="!form.isActive">
+                    {{ form.isActive ? 'Actif' : 'Inactif' }}
+                  </span>
+                </button>
+              }
+            </div>
+          }
+
+          @if (formSearchControl.value && formSearchControl.value.length >= 2 && !searchingForms() && formSearchResults().length === 0) {
+            <div class="no-results">
+              <svg class="no-results-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              <p>Aucun formulaire disponible pour cette campagne</p>
+            </div>
+          }
+        </div>
+
+        @if (selectedForms().length > 0) {
+          <div class="selected-forms">
+            @for (form of selectedForms(); track form.id; let i = $index) {
+              <div class="selected-item selected-form-item">
+                <div class="item-info">
+                  <span class="item-name">{{ form.formName || 'Sans nom' }}</span>
+                  <span class="item-detail">{{ form.formDesc || 'Aucune description disponible' }}</span>
+                  <div class="selected-form-badges">
+                    <span class="selected-form-badge" [class.selected-form-badge-inactive]="!form.isActive">
+                      {{ form.isActive ? 'Actif' : 'Inactif' }}
+                    </span>
+                    @if (isPersistedCampaignForm(form)) {
+                      <span class="selected-form-badge selected-form-badge-linked">Déjà associé</span>
+                    }
+                  </div>
+                </div>
+
+                @if (canRemoveCampaignForm(form)) {
+                  <button
+                    type="button"
+                    class="remove-btn"
+                    (click)="removeCampaignForm(i)"
+                    title="Retirer ce formulaire"
+                    aria-label="Retirer ce formulaire"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M18 6L6 18M6 6l12 12"/>
+                    </svg>
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="empty-forms">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+            <p>Aucun formulaire associé</p>
+            <span>Ajoutez au moins un formulaire si la campagne doit diffuser un quiz.</span>
+          </div>
+        }
+      </div>
+
       <!-- Recruteurs autorisés -->
       <div class="form-section">
         <h2 class="section-title">
@@ -434,6 +527,15 @@
           Recruteurs autorisés
         </h2>
 
+        @if (isRecruiterSearchLocked()) {
+          <div class="search-disabled-state">
+            <span class="search-disabled-state__title">Recherche verrouillée</span>
+            <span class="search-disabled-state__text">
+              Tous les recruteurs sont déjà autorisés à évaluer les candidatures. Décochez cette option si vous voulez rechercher et ajouter des recruteurs explicitement.
+            </span>
+          </div>
+        }
+
         <div class="recruiter-search">
           <div class="search-input-wrapper">
             <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -443,8 +545,9 @@
             <input
               type="text"
               class="search-input"
-              placeholder="Rechercher un recruteur, admin ou super admin..."
+              [placeholder]="isRecruiterSearchLocked() ? 'Recherche désactivée tant que tous les recruteurs peuvent évaluer' : 'Rechercher un recruteur, admin ou super admin...'"
               [formControl]="recruiterSearchControl"
+              (focus)="showRecruiterSuggestions()"
             />
             @if (searching()) {
               <div class="search-spinner"></div>
@@ -474,7 +577,7 @@
             </div>
           }
           
-          @if (recruiterSearchControl.value && recruiterSearchControl.value.length >= 2 && !searching() && searchResults().length === 0) {
+          @if (!isRecruiterSearchLocked() && recruiterSearchInteracted() && !searching() && searchResults().length === 0) {
             <div class="no-results">
               <svg class="no-results-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="10"/>

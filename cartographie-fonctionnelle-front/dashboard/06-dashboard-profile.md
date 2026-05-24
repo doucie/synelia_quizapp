@@ -110,6 +110,11 @@ La page permet à l’utilisateur connecté de gérer ses informations personnel
 - [ ] Les demandes de groupe doivent-elles être approuvées dans une autre page admin dédiée ?
 - [ ] Le rôle affiché doit-il être enrichi par permissions ou groupes métier ?
 
+- [ ] Vérifier la conformité entre la BD actuelle et les formulaires/cartes/filtres front réellement exposés par cette page.
+- [ ] Vérifier, si la page expose une création via modale ou inline, qu’aucun contrôle `ngModel` n’est monté dans un vrai tag `<form>` sans `name` ni configuration `standalone`, afin d’éviter un défaut Angular `NG01352` et un rendu partiel.
+- [ ] Vérifier, si la page expose des validations locales obligatoires, qu’elles relisent bien un state réellement synchronisé avec la saisie et qu’elles ne masquent pas un défaut de binding ou un décalage de contrat backend/front.
+- [ ] Vérifier, si la page expose une édition via modale ou inline, que les valeurs d’origine sont bien réhydratées dès l’ouverture et au premier rendu.
+
 ## 10. Recette Manuelle
 
 1. Ouvrir `/dashboard/profile` avec un utilisateur connecté.

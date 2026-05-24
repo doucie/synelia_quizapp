@@ -15,6 +15,13 @@ export interface BusinessGroup {
   isDeleted?: boolean;
 }
 
+export interface BusinessGroupMutationPayload {
+  id?: number;
+  groupName?: string;
+  groupDesc?: string;
+  isDeleted?: boolean;
+}
+
 export interface BusinessGroupCriteria {
   groupName?: string;
   groupDesc?: string;
@@ -78,11 +85,11 @@ export class BusinessGroupCrudService {
     );
   }
 
-  create(item: BusinessGroup): Observable<any> {
+  create(item: BusinessGroupMutationPayload): Observable<any> {
     return this.http.post(`${this.apiUrl}/create`, { user: this.getCurrentUserId(), data: item });
   }
 
-  update(item: BusinessGroup): Observable<any> {
+  update(item: BusinessGroupMutationPayload): Observable<any> {
     return this.http.post(`${this.apiUrl}/update`, { user: this.getCurrentUserId(), data: item });
   }
 

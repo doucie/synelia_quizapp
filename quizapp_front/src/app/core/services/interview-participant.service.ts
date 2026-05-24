@@ -27,6 +27,16 @@ export interface InterviewParticipant {
   dateModificationA?: string;
 }
 
+export interface InterviewParticipantMutationPayload {
+  id?: number;
+  interviewId?: number;
+  userId?: number;
+  isOnline?: boolean;
+  hasFinished?: boolean;
+  lastPingAt?: string;
+  isDeleted?: boolean;
+}
+
 export interface InterviewParticipantResponse {
   status: { code: string; message: string };
   hasError: boolean;
@@ -162,11 +172,11 @@ export class InterviewParticipantService {
     });
   }
 
-  entityCreate(item: InterviewParticipant): Observable<any> {
+  entityCreate(item: InterviewParticipantMutationPayload): Observable<any> {
     return this.withAuthenticatedUser(userId => this.http.post(`${this.apiUrl}/create`, { user: userId, datas: [item] }));
   }
 
-  entityUpdate(item: InterviewParticipant): Observable<any> {
+  entityUpdate(item: InterviewParticipantMutationPayload): Observable<any> {
     return this.withAuthenticatedUser(userId => this.http.post(`${this.apiUrl}/update`, { user: userId, datas: [item] }));
   }
 

@@ -26,7 +26,6 @@ export interface Campaign {
   isTimed?: boolean;
   isArchived?: boolean;
   timeAllForms?: boolean;
-  markedOutOf?: number;
   isActive?: boolean;
   departmentsId?: number;
   specialityId?: number;
@@ -62,6 +61,27 @@ export interface CampaignAccessRecord {
   isAdmin: boolean;
   isCreator: boolean;
   follow: boolean;
+}
+
+interface RawEntityPermissionRecord {
+  entityType?: string;
+  entity_type?: string;
+  entityId?: number | string;
+  entity_id?: number | string;
+  userId?: number | string;
+  user_id?: number | string;
+  users_id?: number | string;
+  userFirstName?: string;
+  user_first_name?: string;
+  userLastName?: string;
+  user_last_name?: string;
+  userName?: string;
+  user_name?: string;
+  userEmail?: string;
+  user_email?: string;
+  userRole?: string;
+  user_role?: string;
+  permissionKey?: string;
 }
 
 /**
@@ -141,7 +161,6 @@ export class CampaignService {
 
     delete (normalizedCampaign as Partial<Campaign> & { campaignName?: string }).campaignName;
     delete (normalizedCampaign as Partial<Campaign> & { specialitiesId?: number }).specialitiesId;
-
     return normalizedCampaign;
   }
 
@@ -272,7 +291,6 @@ export class CampaignService {
       isTimed: normalizedCampaign.isTimed,
       isArchived: normalizedCampaign.isArchived,
       timeAllForms: normalizedCampaign.timeAllForms,
-      markedOutOf: normalizedCampaign.markedOutOf,
       specialityId: normalizedCampaign.specialityId,
       pipelineTemplateId: normalizedCampaign.pipelineTemplateId,
       createdBy: creatorId,
@@ -489,16 +507,16 @@ export class CampaignService {
     );
   }
 
-  private mapEntityPermissionsToCampaignAccess(permissions: any[]): CampaignAccessRecord[] {
+  private mapEntityPermissionsToCampaignAccess(permissions: RawEntityPermissionRecord[]): CampaignAccessRecord[] {
     const accessMap = new Map<string, CampaignAccessRecord>();
 
     for (const permission of permissions || []) {
-      if ((permission.entityType || '').toUpperCase() !== 'CAMPAIGN') {
+      if ((permission.entityType || permission.entity_type || '').toUpperCase() !== 'CAMPAIGN') {
         continue;
       }
 
-      const campaignId = Number(permission.entityId);
-      const userId = Number(permission.userId);
+      const campaignId = this.toOptionalNumber(permission.entityId ?? permission.entity_id);
+      const userId = this.toOptionalNumber(permission.userId ?? permission.user_id ?? permission.users_id);
       if (!campaignId || !userId) {
         continue;
       }
@@ -507,11 +525,11 @@ export class CampaignService {
       const entry = accessMap.get(mapKey) || {
         campaignId,
         userId,
-        userFirstName: permission.userFirstName,
-        userLastName: permission.userLastName,
-        userName: permission.userName,
-        userEmail: permission.userEmail,
-        userRole: permission.userRole,
+        userFirstName: permission.userFirstName || permission.user_first_name || undefined,
+        userLastName: permission.userLastName || permission.user_last_name || undefined,
+        userName: this.buildCampaignAccessUserName(permission, userId),
+        userEmail: permission.userEmail || permission.user_email || undefined,
+        userRole: permission.userRole || permission.user_role || undefined,
         canUpdate: false,
         canDelete: false,
         canEvaluate: false,
@@ -629,7 +647,6 @@ export class CampaignService {
       isArchived: campaign.isArchived ?? campaign.is_archived ?? false,
       timeAllForms: campaign.timeAllForms ?? campaign.time_all_forms ?? false,
       isDeleted: campaign.isDeleted ?? campaign.is_deleted ?? false,
-      markedOutOf: campaign.markedOutOf || campaign.marked_out_of || undefined,
       isActive: isOperationalCampaignStatus(campaign.campaignStatus || campaign.campaign_status),
       createdAt: campaign.createdAt || campaign.created_at || undefined,
       createdBy: campaign.createdBy || campaign.created_by || undefined,
@@ -737,7 +754,7 @@ export class CampaignService {
   /**
    * Récupère les accès recruteurs pour une campagne.
    */
-  getCampaignAccess(campaignId: number): Observable<any[]> {
+  getCampaignAccess(campaignId: number): Observable<CampaignAccessRecord[]> {
     if (!environment.production) console.log('📥 Récupération des accès recruteurs pour la campagne:', campaignId);
 
     return this.getEntityPermissionsForCampaign(campaignId).pipe(
@@ -747,6 +764,57 @@ export class CampaignService {
         return of([]);
       })
     );
+  }
+
+  buildCampaignAccessMap(accesses: CampaignAccessRecord[]): Record<number, CampaignAccessRecord> {
+    return (accesses || []).reduce((map, access) => {
+      const campaignId = access.campaignId;
+      if (!campaignId) {
+        return map;
+      }
+
+      const current = map[campaignId] || {
+        ...access,
+        canUpdate: false,
+        canDelete: false,
+        canEvaluate: false,
+        canPlanify: false,
+        canAcceptPreScreen: false,
+        canAcceptFinal: false,
+        isAdmin: false,
+        isCreator: false,
+        follow: false
+      };
+
+      current.canUpdate = current.canUpdate || access.canUpdate;
+      current.canDelete = current.canDelete || access.canDelete;
+      current.canEvaluate = current.canEvaluate || access.canEvaluate;
+      current.canPlanify = current.canPlanify || access.canPlanify;
+      current.canAcceptPreScreen = current.canAcceptPreScreen || access.canAcceptPreScreen;
+      current.canAcceptFinal = current.canAcceptFinal || access.canAcceptFinal;
+      current.isAdmin = current.isAdmin || access.isAdmin;
+      current.isCreator = current.isCreator || access.isCreator;
+      current.follow = current.follow || access.follow;
+      map[campaignId] = current;
+      return map;
+    }, {} as Record<number, CampaignAccessRecord>);
+  }
+
+  private buildCampaignAccessUserName(permission: RawEntityPermissionRecord, userId: number): string {
+    const firstName = permission.userFirstName || permission.user_first_name || '';
+    const lastName = permission.userLastName || permission.user_last_name || '';
+    const fullName = `${firstName} ${lastName}`.trim();
+
+    return permission.userName || permission.user_name || fullName || `User #${userId}`;
+  }
+
+  private toOptionalNumber(value: unknown): number | undefined {
+    if (value === undefined || value === null || value === '') {
+      return undefined;
+    }
+
+    const numericValue = Number(value);
+    return Number.isNaN(numericValue) ? undefined : numericValue;
   }
 
   /**

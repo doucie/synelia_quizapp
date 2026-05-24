@@ -9,7 +9,7 @@ import { DependencyPopupComponent } from '../../../../../shared/dependency-popup
 import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
 import { FilterCheckboxComponent } from '../../../../../shared/filter-checkbox/filter-checkbox';
 import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../../../shared/filter-select/filter-select';
-import { EmailVerificationTokenService, EmailVerificationToken, PagedEmailVerificationTokenResponse, EmailVerificationTokenCriteria } from '../../../../../core/services/email-verification-token.service';
+import { EmailVerificationTokenService, EmailVerificationToken, EmailVerificationTokenMutationPayload, PagedEmailVerificationTokenResponse, EmailVerificationTokenCriteria } from '../../../../../core/services/email-verification-token.service';
 
 @Component({
   selector: 'app-entities-email-verification-tokens',
@@ -18,7 +18,7 @@ import { EmailVerificationTokenService, EmailVerificationToken, PagedEmailVerifi
   templateUrl: './entities-email-verification-tokens.html',
   styleUrls: ['./entities-email-verification-tokens.scss']
 })
-export class EntitiesEmailVerificationTokensComponent extends EntityCrudBase<EmailVerificationToken, EmailVerificationTokenCriteria, PagedEmailVerificationTokenResponse> {
+export class EntitiesEmailVerificationTokensComponent extends EntityCrudBase<EmailVerificationToken, EmailVerificationTokenCriteria, PagedEmailVerificationTokenResponse, EmailVerificationTokenMutationPayload> {
   private service = inject(EmailVerificationTokenService);
   protected override readonly router = inject(Router);
   protected override readonly pageSizeStorageKey = 'entitiesEmailVerificationTokensPageSize';
@@ -27,7 +27,7 @@ export class EntitiesEmailVerificationTokensComponent extends EntityCrudBase<Ema
 
   advancedCriteria: EmailVerificationTokenCriteria = {};
   editFormData: EmailVerificationToken = {};
-  createFormData: Partial<EmailVerificationToken> = {};
+  createFormData: EmailVerificationTokenMutationPayload = {};
 
   override allColumns: ColumnDef[] = [
     { key: 'id', label: 'ID', priority: 1 },
@@ -41,7 +41,7 @@ export class EntitiesEmailVerificationTokensComponent extends EntityCrudBase<Ema
   ];
 
   protected fetchAll(criteria: EmailVerificationTokenCriteria): Observable<PagedEmailVerificationTokenResponse> { return this.service.getAllByCriteria(criteria); }
-  protected performCreate(item: Partial<EmailVerificationToken>): Observable<any> { return this.service.create(item as EmailVerificationToken); }
+  protected performCreate(item: EmailVerificationTokenMutationPayload): Observable<any> { return this.service.create(item); }
   protected performUpdate(item: EmailVerificationToken): Observable<any> { return this.service.update(item); }
   protected performDelete(id: number): Observable<any> { return this.service.delete(id); }
   protected performRestore(id: number): Observable<any> { return this.service.restore(id); }

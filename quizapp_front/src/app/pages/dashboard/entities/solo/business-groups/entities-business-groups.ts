@@ -9,7 +9,7 @@ import { DependencyPopupComponent } from '../../../../../shared/dependency-popup
 import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
 import { FilterCheckboxComponent } from '../../../../../shared/filter-checkbox/filter-checkbox';
 import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../../../shared/filter-select/filter-select';
-import { BusinessGroupCrudService, BusinessGroup, PagedBusinessGroupResponse, BusinessGroupCriteria } from '../../../../../core/services/business-group-crud.service';
+import { BusinessGroupCrudService, BusinessGroup, BusinessGroupMutationPayload, PagedBusinessGroupResponse, BusinessGroupCriteria } from '../../../../../core/services/business-group-crud.service';
 import { BusinessGroupPermissionService, BusinessGroupPermission } from '../../../../../core/services/business-group-permission.service';
 import { UserBusinessGroupService, UserBusinessGroup } from '../../../../../core/services/user-business-group.service';
 
@@ -20,7 +20,7 @@ import { UserBusinessGroupService, UserBusinessGroup } from '../../../../../core
   templateUrl: './entities-business-groups.html',
   styleUrls: ['./entities-business-groups.scss']
 })
-export class EntitiesBusinessGroupsComponent extends EntityCrudBase<BusinessGroup, BusinessGroupCriteria, PagedBusinessGroupResponse> {
+export class EntitiesBusinessGroupsComponent extends EntityCrudBase<BusinessGroup, BusinessGroupCriteria, PagedBusinessGroupResponse, BusinessGroupMutationPayload> {
   private service = inject(BusinessGroupCrudService);
   private permissionService = inject(BusinessGroupPermissionService);
   private userBusinessGroupService = inject(UserBusinessGroupService);
@@ -31,7 +31,7 @@ export class EntitiesBusinessGroupsComponent extends EntityCrudBase<BusinessGrou
 
   advancedCriteria: BusinessGroupCriteria = {};
   editFormData: BusinessGroup = {};
-  createFormData: Partial<BusinessGroup> = {};
+  createFormData: BusinessGroupMutationPayload = {};
 
   override allColumns: ColumnDef[] = [
     { key: 'id', label: 'ID', priority: 1 },
@@ -49,7 +49,7 @@ export class EntitiesBusinessGroupsComponent extends EntityCrudBase<BusinessGrou
   childTab = signal<{[groupId: number]: string}>({});
 
   protected fetchAll(criteria: BusinessGroupCriteria): Observable<PagedBusinessGroupResponse> { return this.service.getAllByCriteria(criteria); }
-  protected performCreate(item: Partial<BusinessGroup>): Observable<any> { return this.service.create(item as BusinessGroup); }
+  protected performCreate(item: BusinessGroupMutationPayload): Observable<any> { return this.service.create(item); }
   protected performUpdate(item: BusinessGroup): Observable<any> { return this.service.update(item); }
   protected performDelete(id: number): Observable<any> { return this.service.delete(id); }
   protected performRestore(id: number): Observable<any> { return this.service.restore(id); }

@@ -10,7 +10,7 @@ import { DependencyPopupComponent } from '../../../../../shared/dependency-popup
 import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
 import { PERMISSION_CATEGORIES } from '../../../../../core/constants/permissions.constants';
 import { UserService, User } from '../../../../../core/services/user.service';
-import { UserPermissionOverrideCrudService, UserPermissionOverride, PagedUserPermissionOverrideResponse, UserPermissionOverrideCriteria } from '../../../../../core/services/user-permission-override-crud.service';
+import { UserPermissionOverrideCrudService, UserPermissionOverride, UserPermissionOverrideMutationPayload, PagedUserPermissionOverrideResponse, UserPermissionOverrideCriteria } from '../../../../../core/services/user-permission-override-crud.service';
 
 interface FunctionalityOption {
   value: string;
@@ -24,7 +24,7 @@ interface FunctionalityOption {
   templateUrl: './entities-user-permission-overrides.html',
   styleUrls: ['./entities-user-permission-overrides.scss']
 })
-export class EntitiesUserPermissionOverridesComponent extends EntityCrudBase<UserPermissionOverride, UserPermissionOverrideCriteria, PagedUserPermissionOverrideResponse> {
+export class EntitiesUserPermissionOverridesComponent extends EntityCrudBase<UserPermissionOverride, UserPermissionOverrideCriteria, PagedUserPermissionOverrideResponse, UserPermissionOverrideMutationPayload> {
   private service = inject(UserPermissionOverrideCrudService);
   private userService = inject(UserService);
   protected override readonly router = inject(Router);
@@ -36,7 +36,7 @@ export class EntitiesUserPermissionOverridesComponent extends EntityCrudBase<Use
   readonly allUsers = signal<User[]>([]);
   advancedCriteria: UserPermissionOverrideCriteria = {};
   editFormData: UserPermissionOverride = {};
-  createFormData: Partial<UserPermissionOverride> = {};
+  createFormData: UserPermissionOverrideMutationPayload = {};
   readonly functionalityOptions: FunctionalityOption[] = PERMISSION_CATEGORIES.flatMap((category) =>
     category.permissions.map((permission) => ({
       value: permission.key,
@@ -55,7 +55,7 @@ export class EntitiesUserPermissionOverridesComponent extends EntityCrudBase<Use
   ];
 
   protected fetchAll(criteria: UserPermissionOverrideCriteria): Observable<PagedUserPermissionOverrideResponse> { return this.service.getAllByCriteria(criteria); }
-  protected performCreate(item: Partial<UserPermissionOverride>): Observable<any> { return this.service.create(item as UserPermissionOverride); }
+  protected performCreate(item: UserPermissionOverrideMutationPayload): Observable<any> { return this.service.create(item); }
   protected performUpdate(item: UserPermissionOverride): Observable<any> { return this.service.update(item); }
   protected performDelete(id: number): Observable<any> { return this.service.delete(id); }
   protected performRestore(id: number): Observable<any> { return this.service.restore(id); }

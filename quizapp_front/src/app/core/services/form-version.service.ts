@@ -22,6 +22,16 @@ export interface FormVersion {
   dateModificationA?: string;
 }
 
+export interface FormVersionMutationPayload {
+  id?: number;
+  versionNumber?: number;
+  isPublished?: boolean;
+  isLocked?: boolean;
+  randomQuestions?: boolean;
+  formId?: number;
+  isDeleted?: boolean;
+}
+
 export interface FormVersionSearchCriteria {
   page?: number;
   size?: number;
@@ -92,11 +102,11 @@ export class FormVersionService {
     );
   }
 
-  create(item: FormVersion): Observable<any> {
+  create(item: FormVersionMutationPayload): Observable<any> {
     return this.http.post(`${this.apiUrl}/create`, { user: this.getCurrentUserId(), datas: [this.prepareFormVersion(item)] });
   }
 
-  update(item: FormVersion): Observable<any> {
+  update(item: FormVersionMutationPayload): Observable<any> {
     return this.http.post(`${this.apiUrl}/update`, { user: this.getCurrentUserId(), datas: [this.prepareFormVersion(item)] });
   }
 
@@ -133,7 +143,7 @@ export class FormVersionService {
     };
   }
 
-  private prepareFormVersion(item: FormVersion): FormVersion {
+  private prepareFormVersion(item: FormVersionMutationPayload): FormVersionMutationPayload {
     return {
       ...item,
       randomQuestions: item.randomQuestions ?? false

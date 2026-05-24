@@ -15,6 +15,13 @@ export interface UserPermissionOverride {
   updatedBy?: number;
 }
 
+export interface UserPermissionOverrideMutationPayload {
+  id?: number;
+  userId?: number;
+  functionality?: string;
+  isAllowed?: boolean;
+}
+
 export interface UserPermissionOverrideCriteria {
   userId?: number;
   functionality?: string;
@@ -74,11 +81,11 @@ export class UserPermissionOverrideCrudService {
     );
   }
 
-  create(item: UserPermissionOverride): Observable<any> {
+  create(item: UserPermissionOverrideMutationPayload): Observable<any> {
     return this.http.post(`${this.apiUrl}/setOverride`, { user: this.getCurrentUserId(), data: item });
   }
 
-  update(item: UserPermissionOverride): Observable<any> {
+  update(item: UserPermissionOverrideMutationPayload): Observable<any> {
     return this.http.post(`${this.apiUrl}/setOverride`, { user: this.getCurrentUserId(), data: item });
   }
 

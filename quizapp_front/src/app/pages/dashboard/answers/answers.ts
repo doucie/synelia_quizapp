@@ -13,6 +13,9 @@ interface AnswerFormData {
   id?: number;
   answerText: string;
   answerType: string;
+  allowAdditionalComment: boolean;
+  additionalCommentRequired: boolean;
+  additionalCommentPlaceholder: string;
   answerOrder: number;
   isCorrect: boolean;
   questionId?: number;
@@ -32,7 +35,6 @@ export class AnswersComponent implements OnInit, OnDestroy {
   questions = signal<Question[]>([]);
   loading = signal(false);
   searchQuery = signal('');
-  filterStatus = signal<'all' | 'active' | 'deleted'>('all');
   filterCorrect = signal<boolean | null>(null);
   filterQuestionId = signal<number | null>(null);
 
@@ -41,7 +43,15 @@ export class AnswersComponent implements OnInit, OnDestroy {
   showDeleteModal = signal(false);
 
   // Form
-  answerForm = signal<AnswerFormData>({ answerText: '', answerType: 'TEXT', answerOrder: 1, isCorrect: false });
+  answerForm = signal<AnswerFormData>({
+    answerText: '',
+    answerType: 'TEXT',
+    allowAdditionalComment: false,
+    additionalCommentRequired: false,
+    additionalCommentPlaceholder: '',
+    answerOrder: 1,
+    isCorrect: false
+  });
   isEditMode = signal(false);
   selectedAnswer = signal<Answer | null>(null);
 
@@ -49,7 +59,7 @@ export class AnswersComponent implements OnInit, OnDestroy {
   currentUser = computed(() => this.authService.getCurrentUser());
   isAdminModeEnabled = signal(false);
 
-  answerTypes = ['TEXT', 'CODE', 'IMAGE'];
+  answerTypes = ['TEXT', 'IMAGE', 'CODE'];
 
   constructor(
     private answerService: AnswerService,
@@ -83,7 +93,6 @@ export class AnswersComponent implements OnInit, OnDestroy {
 
   filteredAnswers = computed(() => {
     const query = this.searchQuery().toLowerCase();
-    const status = this.filterStatus();
     const correct = this.filterCorrect();
     const qId = this.filterQuestionId();
     let filtered = this.answers();
@@ -92,12 +101,6 @@ export class AnswersComponent implements OnInit, OnDestroy {
       filtered = filtered.filter(a =>
         (a.answerText || '').toLowerCase().includes(query)
       );
-    }
-
-    if (status === 'active') {
-      filtered = filtered.filter(a => !a.isDeleted);
-    } else if (status === 'deleted') {
-      filtered = filtered.filter(a => a.isDeleted);
     }
 
     if (correct !== null) {
@@ -111,13 +114,11 @@ export class AnswersComponent implements OnInit, OnDestroy {
     return filtered;
   });
 
-  activeCount = computed(() => this.answers().filter(a => !a.isDeleted).length);
-  deletedCount = computed(() => this.answers().filter(a => a.isDeleted).length);
   correctCount = computed(() => this.answers().filter(a => a.isCorrect && !a.isDeleted).length);
 
   loadAnswers(): void {
     this.loading.set(true);
-    this.answerService.getAllByCriteria({ size: 100, page: 0 })
+    this.answerService.getAllByCriteria({ size: 100, page: 0, isDeleted: false })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
@@ -133,7 +134,7 @@ export class AnswersComponent implements OnInit, OnDestroy {
   }
 
   loadQuestions(): void {
-    this.questionService.getAllByCriteria({ size: 100, page: 0 })
+    this.questionService.getAllByCriteria({ size: 100, page: 0, isDeleted: false })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
@@ -162,7 +163,15 @@ export class AnswersComponent implements OnInit, OnDestroy {
       return;
     }
     this.isEditMode.set(false);
-    this.answerForm.set({ answerText: '', answerType: 'TEXT', answerOrder: 1, isCorrect: false });
+    this.answerForm.set({
+      answerText: '',
+      answerType: 'TEXT',
+      allowAdditionalComment: false,
+      additionalCommentRequired: false,
+      additionalCommentPlaceholder: '',
+      answerOrder: 1,
+      isCorrect: false
+    });
     this.showCreateEditModal.set(true);
   }
 
@@ -177,6 +186,9 @@ export class AnswersComponent implements OnInit, OnDestroy {
       id: a.id,
       answerText: a.answerText || '',
       answerType: a.answerType || 'TEXT',
+      allowAdditionalComment: a.allowAdditionalComment ?? false,
+      additionalCommentRequired: a.additionalCommentRequired ?? false,
+      additionalCommentPlaceholder: a.additionalCommentPlaceholder || '',
       answerOrder: a.answerOrder || 1,
       isCorrect: a.isCorrect || false,
       questionId: a.questionId
@@ -214,6 +226,9 @@ export class AnswersComponent implements OnInit, OnDestroy {
     const payload: Partial<Answer> = {
       answerText: form.answerText.trim(),
       answerType: form.answerType,
+      allowAdditionalComment: form.allowAdditionalComment,
+      additionalCommentRequired: form.allowAdditionalComment ? form.additionalCommentRequired : false,
+      additionalCommentPlaceholder: form.allowAdditionalComment ? form.additionalCommentPlaceholder : undefined,
       answerOrder: form.answerOrder,
       isCorrect: form.isCorrect,
       questionId: form.questionId
@@ -273,27 +288,20 @@ export class AnswersComponent implements OnInit, OnDestroy {
       });
   }
 
-  restoreAnswer(a: Answer): void {
-    if (!this.isAdminModeEnabled()) {
-      this.notificationService.warning('Accès refusé', 'Le mode admin doit être activé');
-      return;
-    }
-    if (!a.id) return;
-    this.answerService.restore(a.id)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: () => {
-          this.notificationService.success('Succès', 'Réponse restaurée');
-          this.loadAnswers();
-        },
-        error: (error) => {
-          console.error('Erreur restauration:', error);
-          this.notificationService.error('Erreur', 'Impossible de restaurer la réponse');
-        }
-      });
-  }
-
   updateFormField(field: keyof AnswerFormData, value: any): void {
-    this.answerForm.update(form => ({ ...form, [field]: value }));
+    this.answerForm.update(form => {
+      const nextForm = { ...form, [field]: value };
+
+      if (field === 'allowAdditionalComment' && value !== true) {
+        nextForm.additionalCommentRequired = false;
+        nextForm.additionalCommentPlaceholder = '';
+      }
+
+      if (field === 'additionalCommentRequired' && value === true) {
+        nextForm.allowAdditionalComment = true;
+      }
+
+      return nextForm;
+    });
   }
 }

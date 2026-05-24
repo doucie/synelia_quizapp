@@ -1,46 +1,10 @@
-import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
 import { Subject, takeUntil } from 'rxjs';
-import { environment } from '../../../../environments/environment';
-import { PERMISSION_CATEGORIES, PermissionCategory } from '../../../core/constants/permissions.constants';
+import { PERMISSION_CATEGORIES, PermissionCategory, PermissionOverrideAccessType, getSystemRoleBadgeClass, getSystemRoleLabel, normalizeSystemRole } from '../../../core/constants/permissions.constants';
+import { PermissionAdminService, PermissionAdminUser, PermissionBusinessGroupOption, PermissionUserGroupMembership } from '../../../core/services/permission-admin.service';
 import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../shared/filter-select/filter-select';
-
-interface UserItem {
-  id?: number;
-  userFirstName?: string;
-  userLastName?: string;
-  userEmail?: string;
-  userRole?: string;
-}
-
-interface UserOverride {
-  id?: number;
-  userId?: number;
-  functionality?: string;
-  isAllowed?: boolean;
-  accessType?: 'GRANT' | 'DENY';
-}
-
-interface UserGroupMembership {
-  id?: number;
-  userId?: number;
-  businessGroupId?: number;
-  groupName?: string;
-}
-
-interface SpringBootRequest<T> {
-  data?: T;
-  user?: number;
-}
-
-interface SpringBootResponse<T> {
-  hasError: boolean;
-  items?: T[];
-  item?: T;
-  status?: { message?: string };
-}
 
 @Component({
   selector: 'app-user-permissions',
@@ -52,13 +16,13 @@ interface SpringBootResponse<T> {
 export class UserPermissionsComponent implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
-  private apiUrl = environment.apiUrl;
+  private permissionAdminService = inject(PermissionAdminService);
 
   // State
-  users = signal<UserItem[]>([]);
-  selectedUser = signal<UserItem | null>(null);
-  userOverrides = signal<Map<string, 'GRANT' | 'DENY'>>(new Map());
-  userGroups = signal<UserGroupMembership[]>([]);
+  users = signal<PermissionAdminUser[]>([]);
+  selectedUser = signal<PermissionAdminUser | null>(null);
+  userOverrides = signal<Map<string, PermissionOverrideAccessType>>(new Map());
+  userGroups = signal<PermissionUserGroupMembership[]>([]);
   isLoadingUsers = signal(false);
   isLoadingDetail = signal(false);
   searchQuery = signal('');
@@ -71,15 +35,15 @@ export class UserPermissionsComponent implements OnInit, OnDestroy {
   adminBasePermissions = signal<Set<string>>(new Set());
 
   // Available groups for adding
-  availableGroups = signal<{ id: number; groupName: string }[]>([]);
+  availableGroups = signal<PermissionBusinessGroupOption[]>([]);
   addGroupId = signal<number | null>(null);
 
   isSuperAdmin = computed(() => {
-    return this.normalizeSystemRole(this.selectedUser()?.userRole) === 'SUPER_ADMIN';
+    return normalizeSystemRole(this.selectedUser()?.userRole) === 'SUPER_ADMIN';
   });
 
   isAdmin = computed(() => {
-    return this.normalizeSystemRole(this.selectedUser()?.userRole) === 'ADMIN';
+    return normalizeSystemRole(this.selectedUser()?.userRole) === 'ADMIN';
   });
 
   deniedFunctionalities = computed(() =>
@@ -104,8 +68,6 @@ export class UserPermissionsComponent implements OnInit, OnDestroy {
     );
   });
 
-  constructor(private http: HttpClient) {}
-
   ngOnInit(): void {
     this.loadUsers();
     this.loadAdminBasePermissions();
@@ -119,19 +81,18 @@ export class UserPermissionsComponent implements OnInit, OnDestroy {
 
   loadUsers(): void {
     this.isLoadingUsers.set(true);
-    const request: SpringBootRequest<any> = { data: {} };
-    this.http.post<SpringBootResponse<UserItem>>(`${this.apiUrl}/userManager/getAllByCriteria`, request)
+    this.permissionAdminService.getPermissionUsers()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (res) => {
-          this.users.set(res.items || []);
+        next: (users) => {
+          this.users.set(users);
           this.isLoadingUsers.set(false);
         },
         error: () => this.isLoadingUsers.set(false)
       });
   }
 
-  selectUser(user: UserItem): void {
+  selectUser(user: PermissionAdminUser): void {
     this.selectedUser.set(user);
     this.editTab.set('overrides');
     this.loadUserDetail(user.id!);
@@ -147,18 +108,10 @@ export class UserPermissionsComponent implements OnInit, OnDestroy {
     this.isLoadingDetail.set(true);
 
     // Load overrides
-    const overrideReq: SpringBootRequest<any> = { data: { userId } };
-    this.http.post<SpringBootResponse<UserOverride>>(`${this.apiUrl}/userPermissionOverride/getByUser`, overrideReq)
+    this.permissionAdminService.getUserOverrideMap(userId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (res) => {
-          const map = new Map<string, 'GRANT' | 'DENY'>();
-          (res.items || []).forEach(o => {
-            const accessType = o.accessType || this.toAccessType(o.isAllowed);
-            if (o.functionality && accessType) {
-              map.set(o.functionality, accessType);
-            }
-          });
+        next: (map) => {
           this.userOverrides.set(map);
           this.isLoadingDetail.set(false);
         },
@@ -166,43 +119,36 @@ export class UserPermissionsComponent implements OnInit, OnDestroy {
       });
 
     // Load user groups
-    const groupReq: SpringBootRequest<any> = { data: { userId } };
-    this.http.post<SpringBootResponse<UserGroupMembership>>(`${this.apiUrl}/userBusinessGroup/getByUser`, groupReq)
+    this.permissionAdminService.getUserGroupMemberships(userId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (res) => {
-          this.userGroups.set(res.items || []);
+        next: (memberships) => {
+          this.userGroups.set(memberships);
         }
       });
   }
 
   loadAdminBasePermissions(): void {
-    const request: SpringBootRequest<any> = { data: { systemRole: 'ADMIN' } };
-    this.http.post<SpringBootResponse<any>>(`${this.apiUrl}/systemRolePermission/getByRole`, request)
+    this.permissionAdminService.getPermissionKeysByRole('ADMIN')
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (res) => {
-          const perms = new Set<string>();
-          (res.items || []).forEach((p: any) => {
-            if (p.functionality) perms.add(p.functionality);
-          });
+        next: (perms) => {
           this.adminBasePermissions.set(perms);
         }
       });
   }
 
   loadAvailableGroups(): void {
-    const request: SpringBootRequest<any> = { data: {} };
-    this.http.post<SpringBootResponse<any>>(`${this.apiUrl}/businessGroup/getByCriteria`, request)
+    this.permissionAdminService.getAvailableBusinessGroups()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (res) => {
-          this.availableGroups.set((res.items || []).map((g: any) => ({ id: g.id, groupName: g.groupName })));
+        next: (groups) => {
+          this.availableGroups.set(groups);
         }
       });
   }
 
-  getOverrideState(functionality: string): 'default' | 'GRANT' | 'DENY' {
+  getOverrideState(functionality: string): 'default' | PermissionOverrideAccessType {
     return this.userOverrides().get(functionality) || 'default';
   }
 
@@ -222,7 +168,7 @@ export class UserPermissionsComponent implements OnInit, OnDestroy {
     if (this.isSuperAdmin()) return;
 
     const current = this.getOverrideState(functionality);
-    let next: 'default' | 'GRANT' | 'DENY';
+    let next: 'default' | PermissionOverrideAccessType;
 
     if (current === 'default') {
       next = 'GRANT';
@@ -239,13 +185,13 @@ export class UserPermissionsComponent implements OnInit, OnDestroy {
     this.applyOverride(functionality, next);
   }
 
-  setOverride(functionality: string, value: 'default' | 'GRANT' | 'DENY'): void {
+  setOverride(functionality: string, value: 'default' | PermissionOverrideAccessType): void {
     if (this.isSuperAdmin()) return;
     if (value === 'DENY' && this.isDenyDisabled(functionality)) return;
     this.applyOverride(functionality, value);
   }
 
-  private applyOverride(functionality: string, value: 'default' | 'GRANT' | 'DENY'): void {
+  private applyOverride(functionality: string, value: 'default' | PermissionOverrideAccessType): void {
     const userId = this.selectedUser()?.id;
     if (!userId) return;
 
@@ -254,9 +200,7 @@ export class UserPermissionsComponent implements OnInit, OnDestroy {
     this.savingKeys.set(saving);
 
     if (value === 'default') {
-      // Remove the override
-      const request: SpringBootRequest<any> = { data: { userId, functionality } };
-      this.http.post<SpringBootResponse<any>>(`${this.apiUrl}/userPermissionOverride/removeOverride`, request)
+      this.permissionAdminService.clearUserOverride(userId, functionality)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: () => {
@@ -268,9 +212,7 @@ export class UserPermissionsComponent implements OnInit, OnDestroy {
           error: () => this.removeSaving(functionality)
         });
     } else {
-      // Set GRANT or DENY
-      const request: SpringBootRequest<any> = { data: { userId, functionality, isAllowed: value === 'GRANT' } };
-      this.http.post<SpringBootResponse<any>>(`${this.apiUrl}/userPermissionOverride/setOverride`, request)
+      this.permissionAdminService.setUserOverride(userId, functionality, value)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: () => {
@@ -301,8 +243,7 @@ export class UserPermissionsComponent implements OnInit, OnDestroy {
     const groupId = this.addGroupId();
     if (!userId || !groupId) return;
 
-    const request: SpringBootRequest<any> = { data: { userId, businessGroupId: groupId } };
-    this.http.post<SpringBootResponse<any>>(`${this.apiUrl}/businessGroup/assignUser`, request)
+    this.permissionAdminService.assignUserToBusinessGroup(userId, groupId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
@@ -312,14 +253,13 @@ export class UserPermissionsComponent implements OnInit, OnDestroy {
       });
   }
 
-  removeUserFromGroup(membership: UserGroupMembership): void {
+  removeUserFromGroup(membership: PermissionUserGroupMembership): void {
     const userId = this.selectedUser()?.id;
     if (!userId || !membership.businessGroupId) return;
 
     if (!confirm(`Retirer cet utilisateur du groupe "${membership.groupName}" ?`)) return;
 
-    const request: SpringBootRequest<any> = { data: { userId, businessGroupId: membership.businessGroupId } };
-    this.http.post<SpringBootResponse<any>>(`${this.apiUrl}/businessGroup/removeUser`, request)
+    this.permissionAdminService.removeUserFromBusinessGroup(userId, membership.businessGroupId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => this.loadUserDetail(userId)
@@ -327,64 +267,18 @@ export class UserPermissionsComponent implements OnInit, OnDestroy {
   }
 
   getRoleBadgeClass(): string {
-    const role = this.normalizeSystemRole(this.selectedUser()?.userRole);
-    if (role === 'SUPER_ADMIN') return 'badge-super';
-    if (role === 'ADMIN') return 'badge-admin';
-    return 'badge-user';
+    return getSystemRoleBadgeClass(this.selectedUser()?.userRole);
   }
 
   getRoleLabel(): string {
-    const role = this.normalizeSystemRole(this.selectedUser()?.userRole);
-    if (role === 'SUPER_ADMIN') return 'Super Admin';
-    if (role === 'ADMIN') return 'Administrateur';
-    if (role === 'RECRUITER') return 'Recruteur';
-    if (role === 'CANDIDATE') return 'Candidat';
-    return 'Utilisateur';
+    return getSystemRoleLabel(this.selectedUser()?.userRole);
   }
 
-  getUserCardRoleBadgeClass(user: UserItem): string {
-    const role = this.normalizeSystemRole(user.userRole);
-    if (role === 'SUPER_ADMIN') return 'badge-super';
-    if (role === 'ADMIN') return 'badge-admin';
-    return 'badge-user';
+  getUserCardRoleBadgeClass(user: PermissionAdminUser): string {
+    return getSystemRoleBadgeClass(user.userRole);
   }
 
-  getUserCardRoleLabel(user: UserItem): string {
-    const role = this.normalizeSystemRole(user.userRole);
-    if (role === 'SUPER_ADMIN') return 'Super Admin';
-    if (role === 'ADMIN') return 'Administrateur';
-    if (role === 'RECRUITER') return 'Recruteur';
-    if (role === 'CANDIDATE') return 'Candidat';
-    return user.userRole || 'Utilisateur';
-  }
-
-  private toAccessType(isAllowed?: boolean): 'GRANT' | 'DENY' | undefined {
-    if (isAllowed === true) return 'GRANT';
-    if (isAllowed === false) return 'DENY';
-    return undefined;
-  }
-
-  private normalizeSystemRole(rawRole?: string | null): string {
-    const normalizedRole = (rawRole || '').trim().toUpperCase();
-    switch (normalizedRole) {
-      case 'SUPER':
-      case 'SUPER_ADMIN':
-      case 'ROLE_SUPER':
-      case 'ROLE_SUPER_ADMIN':
-        return 'SUPER_ADMIN';
-      case 'ADMIN':
-      case 'ROLE_ADMIN':
-        return 'ADMIN';
-      case 'RECRUITER':
-      case 'UTILISATEUR':
-      case 'ROLE_RECRUITER':
-      case 'ROLE_UTILISATEUR':
-        return 'RECRUITER';
-      case 'CANDIDATE':
-      case 'ROLE_CANDIDATE':
-        return 'CANDIDATE';
-      default:
-        return normalizedRole;
-    }
+  getUserCardRoleLabel(user: PermissionAdminUser): string {
+    return getSystemRoleLabel(user.userRole);
   }
 }

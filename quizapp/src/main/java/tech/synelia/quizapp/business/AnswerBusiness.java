@@ -21,6 +21,7 @@ import tech.synelia.quizapp.utils.contract.IBasicBusiness;
 import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.dto.transformer.*;
+import tech.synelia.quizapp.utils.enums.AnswerType;
 import tech.synelia.quizapp.dao.entity.*;
 import tech.synelia.quizapp.dao.repository.*;
 
@@ -72,12 +73,8 @@ public class AnswerBusiness implements IBasicBusiness<Request<AnswerDto>, Respon
 				throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
 			}
 
-			// Validation enum strict answerType (D-013)
-			String aTypeUpper = dto.getAnswerType().toUpperCase(java.util.Locale.ROOT);
-			if (!"FIXED".equals(aTypeUpper) && !"FREE".equals(aTypeUpper)) {
-				throw new InvalidEntityException(functionalError.DATA_NOT_EXIST("answerType invalide (FIXED/FREE) -> " + dto.getAnswerType(), locale));
-			}
-			dto.setAnswerType(aTypeUpper);
+			dto.setAnswerType(normalizeAnswerType(dto.getAnswerType(), locale));
+			normalizeCreateAdditionalCommentFields(dto, locale);
 
 			// Verify if question exists
 			Question existingQuestion = null;
@@ -96,6 +93,12 @@ public class AnswerBusiness implements IBasicBusiness<Request<AnswerDto>, Respon
 			entityToSave.setIsDeleted(false);
 			if (entityToSave.getIsCorrect() == null) {
 				entityToSave.setIsCorrect(false);
+			}
+			if (entityToSave.getAllowAdditionalComment() == null) {
+				entityToSave.setAllowAdditionalComment(false);
+			}
+			if (entityToSave.getAdditionalCommentRequired() == null) {
+				entityToSave.setAdditionalCommentRequired(false);
 			}
 			items.add(entityToSave);
 		}
@@ -169,11 +172,7 @@ public class AnswerBusiness implements IBasicBusiness<Request<AnswerDto>, Respon
 				entityToSave.setAnswerText(dto.getAnswerText());
 			}
 			if (Utilities.shouldUpdate(dto.getAnswerType())) {
-				String aTypeUpper = dto.getAnswerType().toUpperCase(java.util.Locale.ROOT);
-				if (!"FIXED".equals(aTypeUpper) && !"FREE".equals(aTypeUpper)) {
-					throw new InvalidEntityException(functionalError.DATA_NOT_EXIST("answerType invalide (FIXED/FREE) -> " + dto.getAnswerType(), locale));
-				}
-				entityToSave.setAnswerType(aTypeUpper);
+				entityToSave.setAnswerType(normalizeAnswerType(dto.getAnswerType(), locale));
 			}
 			if (dto.getAnswerOrder() != null) {
 				entityToSave.setAnswerOrder(dto.getAnswerOrder());
@@ -181,6 +180,7 @@ public class AnswerBusiness implements IBasicBusiness<Request<AnswerDto>, Respon
 			if (dto.getIsCorrect() != null) {
 				entityToSave.setIsCorrect(dto.getIsCorrect());
 			}
+			applyAdditionalCommentConfig(dto, entityToSave, locale);
 			entityToSave.setUpdatedAt(Utilities.getCurrentDate());
 			entityToSave.setUpdatedBy(request.getUser());
 			entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(entityToSave)));
@@ -411,11 +411,7 @@ public class AnswerBusiness implements IBasicBusiness<Request<AnswerDto>, Respon
 				entityToSave.setAnswerText(dto.getAnswerText());
 			}
 			if (Utilities.shouldUpdate(dto.getAnswerType())) {
-				String aTypeUpper = dto.getAnswerType().toUpperCase(java.util.Locale.ROOT);
-				if (!"FIXED".equals(aTypeUpper) && !"FREE".equals(aTypeUpper)) {
-					throw new InvalidEntityException(functionalError.DATA_NOT_EXIST("answerType invalide (FIXED/FREE) -> " + dto.getAnswerType(), locale));
-				}
-				entityToSave.setAnswerType(aTypeUpper);
+				entityToSave.setAnswerType(normalizeAnswerType(dto.getAnswerType(), locale));
 			}
 			if (dto.getAnswerOrder() != null) {
 				entityToSave.setAnswerOrder(dto.getAnswerOrder());
@@ -426,6 +422,7 @@ public class AnswerBusiness implements IBasicBusiness<Request<AnswerDto>, Respon
 			if (dto.getIsDeleted() != null) {
 				entityToSave.setIsDeleted(dto.getIsDeleted());
 			}
+			applyAdditionalCommentConfig(dto, entityToSave, locale);
 			entityToSave.setUpdatedAt(Utilities.getCurrentDate());
 			entityToSave.setUpdatedBy(request.getUser());
 			entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(entityToSave)));
@@ -482,11 +479,7 @@ public class AnswerBusiness implements IBasicBusiness<Request<AnswerDto>, Respon
 				entityToSave.setAnswerText(dto.getAnswerText());
 			}
 			if (Utilities.shouldUpdate(dto.getAnswerType())) {
-				String aTypeUpper = dto.getAnswerType().toUpperCase(java.util.Locale.ROOT);
-				if (!"FIXED".equals(aTypeUpper) && !"FREE".equals(aTypeUpper)) {
-					throw new InvalidEntityException(functionalError.DATA_NOT_EXIST("answerType invalide (FIXED/FREE) -> " + dto.getAnswerType(), locale));
-				}
-				entityToSave.setAnswerType(aTypeUpper);
+				entityToSave.setAnswerType(normalizeAnswerType(dto.getAnswerType(), locale));
 			}
 			if (dto.getAnswerOrder() != null) {
 				entityToSave.setAnswerOrder(dto.getAnswerOrder());
@@ -497,6 +490,7 @@ public class AnswerBusiness implements IBasicBusiness<Request<AnswerDto>, Respon
 			if (dto.getIsDeleted() != null) {
 				entityToSave.setIsDeleted(dto.getIsDeleted());
 			}
+			applyAdditionalCommentConfig(dto, entityToSave, locale);
 			entityToSave.setUpdatedAt(Utilities.getCurrentDate());
 			entityToSave.setUpdatedBy(request.getUser());
 			entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(entityToSave)));
@@ -520,6 +514,60 @@ public class AnswerBusiness implements IBasicBusiness<Request<AnswerDto>, Respon
 		}
 		log.info("----end updateAll Answer-----");
 		return response;
+	}
+
+	private String normalizeAnswerType(String rawAnswerType, Locale locale) throws InvalidEntityException {
+		String normalizedAnswerType = AnswerType.normalize(rawAnswerType);
+		if (normalizedAnswerType == null) {
+			throw new InvalidEntityException(functionalError.DATA_NOT_EXIST("answerType invalide (TEXT/IMAGE/CODE) -> " + rawAnswerType, locale));
+		}
+		return normalizedAnswerType;
+	}
+
+	private void normalizeCreateAdditionalCommentFields(AnswerDto dto, Locale locale) throws InvalidEntityException {
+		boolean allowAdditionalComment = Boolean.TRUE.equals(dto.getAllowAdditionalComment());
+		boolean additionalCommentRequired = Boolean.TRUE.equals(dto.getAdditionalCommentRequired());
+		String additionalCommentPlaceholder = StringUtils.trimToNull(dto.getAdditionalCommentPlaceholder());
+
+		validateAdditionalCommentConfiguration(allowAdditionalComment, additionalCommentRequired, locale);
+
+		if (!allowAdditionalComment) {
+			additionalCommentRequired = false;
+			additionalCommentPlaceholder = null;
+		}
+
+		dto.setAllowAdditionalComment(allowAdditionalComment);
+		dto.setAdditionalCommentRequired(additionalCommentRequired);
+		dto.setAdditionalCommentPlaceholder(additionalCommentPlaceholder);
+	}
+
+	private void applyAdditionalCommentConfig(AnswerDto dto, Answer entityToSave, Locale locale) throws InvalidEntityException {
+		boolean allowAdditionalComment = dto.getAllowAdditionalComment() != null
+			? dto.getAllowAdditionalComment()
+			: Boolean.TRUE.equals(entityToSave.getAllowAdditionalComment());
+		boolean additionalCommentRequired = dto.getAdditionalCommentRequired() != null
+			? dto.getAdditionalCommentRequired()
+			: Boolean.TRUE.equals(entityToSave.getAdditionalCommentRequired());
+		String additionalCommentPlaceholder = dto.getAdditionalCommentPlaceholder() != null
+			? StringUtils.trimToNull(dto.getAdditionalCommentPlaceholder())
+			: entityToSave.getAdditionalCommentPlaceholder();
+
+		validateAdditionalCommentConfiguration(allowAdditionalComment, additionalCommentRequired, locale);
+
+		if (!allowAdditionalComment) {
+			additionalCommentRequired = false;
+			additionalCommentPlaceholder = null;
+		}
+
+		entityToSave.setAllowAdditionalComment(allowAdditionalComment);
+		entityToSave.setAdditionalCommentRequired(additionalCommentRequired);
+		entityToSave.setAdditionalCommentPlaceholder(additionalCommentPlaceholder);
+	}
+
+	private void validateAdditionalCommentConfiguration(boolean allowAdditionalComment, boolean additionalCommentRequired, Locale locale) throws InvalidEntityException {
+		if (additionalCommentRequired && !allowAdditionalComment) {
+			throw new InvalidEntityException(functionalError.DATA_NOT_EXIST("additionalCommentRequired invalide sans allowAdditionalComment", locale));
+		}
 	}
 
 	private AnswerDto getFullInfos(AnswerDto dto, Integer size, Boolean isSimpleLoading, Locale locale) throws Exception {

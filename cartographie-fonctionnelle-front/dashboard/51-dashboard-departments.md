@@ -9,14 +9,14 @@
 
 ## 2. Objectif Produit
 
-La page sert à consulter et administrer les départements de référence utilisés dans le produit, avec possibilité de création, modification, suppression et restauration.
+La page sert à consulter et administrer les départements de référence actifs utilisés dans le produit, avec possibilité de création, modification et suppression.
 
 ## 3. Etat Constate
 
 - [x] La page est montée sans `permissionGuard` spécifique.
 - [x] Le CRUD visible est néanmoins protégé côté UI par `adminMode`.
-- [x] Les départements peuvent être filtrés entre actifs et supprimés.
-- [x] Une restauration est proposée pour les départements supprimés.
+- [x] Les départements affichés sur cette page métier sont désormais limités aux actifs.
+- [x] Aucune restauration n’est proposée sur cette page métier; ces usages sont réservés à `/dashboard/entities/departments`.
 - [x] La carte remonte aussi le nombre de spécialités associées quand disponible.
 - [ ] Vérifier si l’absence de guard dédié est volontaire ou un écart de sécurité.
 - [ ] Vérifier la stratégie de suppression en cascade avec les spécialités associées.
@@ -33,14 +33,12 @@ La page sert à consulter et administrer les départements de référence utilis
 ### 4.2 Filtres
 
 - [x] recherche texte
-- [x] filtres `Tous`, `Actifs`, `Supprimés`
 
 ### 4.3 Grille des départements
 
 - [x] carte avec initiale
 - [x] nom et description
-- [x] badge `Supprimé` si soft-delete
-- [x] actions `modifier`, `supprimer`, `restaurer` selon état
+- [x] actions `modifier`, `supprimer`
 - [x] compteur de spécialités associées
 
 ### 4.4 Modales
@@ -53,7 +51,6 @@ La page sert à consulter et administrer les départements de référence utilis
 - `id`
 - `nom` / `name`
 - `description`
-- `isDeleted`
 - `associatedSpecialitiesCount`
 - `dateCreation` / `createdAt`
 
@@ -63,15 +60,13 @@ La page sert à consulter et administrer les départements de référence utilis
 - `DepartmentService.create()` -> `/departments/create`
 - `DepartmentService.update()` -> `/departments/update`
 - `DepartmentService.delete()` -> `/departments/delete`
-- `DepartmentService.restore()` -> `/departments/restore`
 - `AuthService.getCurrentUser()` -> contrôle du `adminMode`
 
 ## 7. Ce Que Le Backend Doit Envoyer
 
-- Une liste de départements y compris le statut `isDeleted` si le front doit gérer actifs et supprimés.
+- Une liste bornée aux départements actifs (`isDeleted = false`) sur cette page métier; les supprimés et la restauration relèvent de `/dashboard/entities/departments`.
 - Un compteur fiable des spécialités associées quand il est affiché.
 - Une suppression maîtrisée quand des spécialités référencent encore le département.
-- Une restauration compatible avec les relations existantes.
 
 ## 8. Entites Metier Impliquees
 
@@ -83,6 +78,11 @@ La page sert à consulter et administrer les départements de référence utilis
 - [ ] L’accès lecture devrait-il être limité par permission dédiée, comme pour les autres pages métier ?
 - [ ] La suppression doit-elle être refusée si des spécialités restent liées, ou autoriser une cascade ?
 - [ ] Faut-il afficher plus de métadonnées d’usage avant suppression ?
+- [x] La règle métier est désormais figée: `/dashboard/departments` ne doit charger que les départements actifs et ne doit jamais exposer de restauration ni de vision des supprimés, même pour un utilisateur `SUPER`; ces usages appartiennent à `/dashboard/entities/departments`.
+- [ ] Vérifier la conformité entre la BD actuelle et les formulaires/cartes/filtres front réellement exposés par cette page.
+- [ ] Vérifier, si la page expose une création via modale ou inline, qu’aucun contrôle `ngModel` n’est monté dans un vrai tag `<form>` sans `name` ni configuration `standalone`, afin d’éviter un défaut Angular `NG01352` et un rendu partiel.
+- [ ] Vérifier, si la page expose des validations locales obligatoires, qu’elles relisent bien un state réellement synchronisé avec la saisie et qu’elles ne masquent pas un défaut de binding ou un décalage de contrat backend/front.
+- [ ] Vérifier, si la page expose une édition via modale ou inline, que les valeurs d’origine sont bien réhydratées dès l’ouverture et au premier rendu.
 
 ## 10. Recette Manuelle
 
@@ -90,5 +90,5 @@ La page sert à consulter et administrer les départements de référence utilis
 2. Vérifier l’accès effectif avec et sans mode admin.
 3. Créer un département.
 4. Modifier sa description.
-5. Le supprimer puis vérifier son apparition dans `Supprimés`.
-6. Restaurer le département et vérifier sa réapparition dans `Actifs`.
+5. Le supprimer puis vérifier qu’il disparaît de la page métier sans possibilité de restauration ici.
+6. Vérifier que la restauration éventuelle reste cantonnée à `/dashboard/entities/departments`.

@@ -29,8 +29,10 @@ L'idee est simple:
 
 ## Structure initiale
 
+- [Plan de tri par dependances](./_plan-ordre-dependances.md)
 - [Inventaire des routes](./_inventaire-routes.md)
 - [Modele de fiche page](./_modele-fiche-page.md)
+- [Evolution du modele des reponses](./evolution/400-evolution-modele-reponses-commentaires.md)
 - [Inventaire public](./public/README.md)
 - [Inventaire dashboard](./dashboard/README.md)
 - [Inventaire entities](./entities/README.md)
@@ -44,6 +46,16 @@ L'idee est simple:
 - [x] Fiches detaillees des pages publiques
 - [x] Fiches detaillees des routes dashboard montees hors `entities/solo`
 - [ ] Declinaison page par page des `entities/solo`
+
+## Re-audit au 21/05/2026
+
+- [x] Lot campagnes dashboard (`10` a `13`) revalide contre `app.routes.ts`, les composants `campaign-form*`, `campaign-detail*` et les services Angular associes.
+- [ ] Le reste du dossier n'a pas encore ete re-audite avec le meme niveau de verification croisee code / template / service.
+
+## Note de fiabilite
+
+- Un statut `[x]` dans l'inventaire signifie d'abord qu'une fiche existe pour la route, pas que chaque ligne de cette fiche a ete revalidee recemment.
+- Les cases `[ ]` peuvent representer soit de vraies questions produit encore ouvertes, soit des points qui n'avaient pas encore ete re-audites; il faut donc lire la date et le perimetre du dernier re-audit du slice concerne.
 
 ## Ordre recommande
 

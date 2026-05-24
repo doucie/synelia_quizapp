@@ -204,13 +204,15 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
   
   answerCreateFormData = {
     answerText: '',
-    answerOrder: undefined as number | undefined
+    answerOrder: undefined as number | undefined,
+    isCorrect: false
   };
   
   answerEditFormData = {
     id: 0,
     answerText: '',
-    answerOrder: undefined as number | undefined
+    answerOrder: undefined as number | undefined,
+    isCorrect: false
   };
   
   // Critères de recherche avancée
@@ -242,7 +244,7 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    console.log('🚀 Initialisation EntitiesDepartmentsComponent');
+    console.log('🚀 Initialisation EntitiesQuestionsComponent');
     this.columnVisibility.observeHost(this.hostElement.nativeElement);
     // Initialiser la taille de page avec la valeur stockée
     this.pageSize.set(this.getStoredPageSize());
@@ -331,12 +333,12 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Exécute réellement le chargement des départements
+   * Exécute réellement le chargement des questions
    */
   private performLoadQuestions() {
     this.isLoading.set(true);
     const serviceMethod = this.showDeletedQuestions ? 'incluant supprimés' : 'actifs seulement';
-    console.log(`📥 Chargement des départements (${serviceMethod})...`);
+    console.log(`📥 Chargement des questions (${serviceMethod})...`);
     console.log('🔍 Critères de recherche utilisés:', this.searchCriteria);
 
     const criteria = {
@@ -383,7 +385,7 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Recherche des départements selon les critères
+  * Recherche des questions selon les critères
    */
   searchQuestions() {
     console.log('🔍 Recherche avec critères:', this.searchCriteria);
@@ -411,9 +413,9 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Crée un nouveau département
+  * Ouvre la création d'une nouvelle question
    */
-  createDepartment() {
+  openCreateQuestionDialog() {
     // Réinitialiser le formulaire
     this.createFormData = {
       questionText: '',
@@ -442,7 +444,7 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Valide et crée un nouveau département
+  * Valide et crée une nouvelle question
    */
   async validateQuestionCreation() {
     const formData = this.createFormData;
@@ -489,18 +491,18 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Édite un département
+   * Édite une question
    */
-  editQuestion(department: Question) {
-    this.questionToEdit.set(department);
+  editQuestion(question: Question) {
+    this.questionToEdit.set(question);
     this.editFormData = {
-      id: department.id!,
-      questionText: department.questionText || '',
-      specialityId: department.specialityId,
-      questionType: department.questionType || '',
-      difficultyLevel: department.difficultyLevel || '',
-      score: department.score,
-      questionChrono: department.questionChrono
+      id: question.id!,
+      questionText: question.questionText || '',
+      specialityId: question.specialityId,
+      questionType: question.questionType || '',
+      difficultyLevel: question.difficultyLevel || '',
+      score: question.score,
+      questionChrono: question.questionChrono
     };
     this.showEditDialog.set(true);
   }
@@ -578,7 +580,7 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Supprime le département depuis la popup d'édition
+  * Supprime la question depuis la popup d'édition
    */
   deleteQuestionFromEdit() {
     const department = this.questionToEdit();
@@ -589,11 +591,11 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Affiche la popup de confirmation pour supprimer un département
+   * Affiche la popup de confirmation pour supprimer une question
    */
-  deleteQuestion(department: Question) {
-    this.questionToDelete = department;
-    this.depService.checkDependencies('questions', department.id!).subscribe({
+  deleteQuestion(question: Question) {
+    this.questionToDelete = question;
+    this.depService.checkDependencies('questions', question.id!).subscribe({
       next: (info) => {
         if (info.totalDependencies > 0) {
           this.dependencyInfo.set(info);
@@ -608,7 +610,7 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Confirme la suppression d'un département
+  * Confirme la suppression d'une question
    */
   confirmdeleteQuestion() {
     if (!this.questionToDelete) return;
@@ -631,14 +633,14 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
       },
       error: (error: any) => {
         console.error('❌ Erreur lors de la suppression:', error);
-        this.notificationService.error('Erreur', 'Erreur lors de la suppression du département');
+        this.notificationService.error('Erreur', 'Erreur lors de la suppression de la question');
         this.canceldeleteQuestion();
       }
     });
   }
 
   /**
-   * Annule la suppression d'un département
+   * Annule la suppression d'une question
    */
   canceldeleteQuestion() {
     this.showDeleteConfirmation = false;
@@ -646,11 +648,11 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Affiche la popup de confirmation pour restaurer un département supprimé
+   * Affiche la popup de confirmation pour restaurer une question supprimée
    */
-  restoreQuestion(department: Question) {
-    this.questionToRestore.set(department);
-    this.depService.checkParent('questions', department.id!).subscribe({
+  restoreQuestion(question: Question) {
+    this.questionToRestore.set(question);
+    this.depService.checkParent('questions', question.id!).subscribe({
       next: (info) => {
         if (info.deletedParents && info.deletedParents.length > 0) {
           this.dependencyInfo.set(info);
@@ -665,7 +667,7 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Confirme la restauration d'un département
+  * Confirme la restauration d'une question
    */
   confirmrestoreQuestion() {
     const questionToRestore = this.questionToRestore();
@@ -673,9 +675,9 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
     
     this.questionService.restoreQuestion(questionToRestore.id!).subscribe({
       next: (response: any) => {
-        this.notificationService.success('Succès', `Département ${questionToRestore.questionText} restauré avec succès`);
+        this.notificationService.success('Succès', `Question ${questionToRestore.questionText} restaurée avec succès`);
         
-        // Marquer le département comme restauré dans la liste locale
+        // Marquer la question comme restaurée dans la liste locale
         questionToRestore.isDeleted = false;
         
         this.cancelrestoreQuestion();
@@ -683,14 +685,14 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
         this.loadQuestions();
       },
       error: (error: any) => {
-        this.notificationService.error('Erreur', 'Erreur lors de la restauration du département');
+        this.notificationService.error('Erreur', 'Erreur lors de la restauration de la question');
         this.cancelrestoreQuestion();
       }
     });
   }
 
   /**
-   * Annule la restauration d'un département
+   * Annule la restauration d'une question
    */
   cancelrestoreQuestion() {
     this.showRestoreConfirmation.set(false);
@@ -959,14 +961,14 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Retourne le.questionTextbre de départements actifs (total réel dans la BD)
+   * Retourne le nombre de questions actives (total réel dans la BD)
    */
   getActiveDepartmentsCount(): number {
     return this.totalActiveQuestions();
   }
 
   /**
-   * Retourne le.questionTextbre de départements supprimés (total réel dans la BD)
+   * Retourne le nombre de questions supprimées (total réel dans la BD)
    */
   getDeletedDepartmentsCount(): number {
     return this.totalDeletedQuestions();
@@ -982,7 +984,7 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
       next: (response) => {
         this.totalActiveQuestions.set(response.totalElements);
       },
-      error: (error) => console.error('Erreur lors du comptage des départements actifs:', error)
+      error: (error) => console.error('Erreur lors du comptage des questions actives:', error)
     });
 
     // Compter tous (isDeleted = undefined) pour calculer les supprimés
@@ -996,8 +998,17 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
           this.totalDeletedQuestions.set(totalAll - totalActive);
         }, 100);
       },
-      error: (error) => console.error('Erreur lors du comptage total des départements:', error)
+      error: (error) => console.error('Erreur lors du comptage total des questions:', error)
     });
+  }
+
+  getSpecialityLabel(specialityId?: number): string {
+    if (!specialityId) {
+      return '-';
+    }
+
+    const speciality = this.allSpecialities().find(item => item.id === specialityId);
+    return speciality?.specialityName || speciality?.nom || speciality?.name || `#${specialityId}`;
   }
 
   /**
@@ -1074,67 +1085,70 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Crée une nouvelle spécialité dans un département
+   * Crée une nouvelle réponse dans une question
    */
   createAnswerInQuestion(question: Question) {
-    console.log('🆕 Création d\'une spécialité dans le département:', question.questionText);
+    console.log('🆕 Création d\'une réponse dans la question:', question.questionText);
     this.currentQuestionForAnswer.set(question);
     this.answerCreateFormData = {
       answerText: '',
-      answerOrder: undefined as number | undefined
+      answerOrder: undefined as number | undefined,
+      isCorrect: false
     };
     this.showAnswerCreateDialog.set(true);
   }
 
   /**
-   * Modifie une spécialité
+   * Modifie une réponse
    */
   editAnswerInQuestion(answer: Answer, question: Question) {
-    console.log('✏️ Modification de la spécialité:', answer.answerText, 'dans le département:', question.questionText);
+    console.log('✏️ Modification de la réponse:', answer.answerText, 'dans la question:', question.questionText);
     this.currentQuestionForAnswer.set(question);
     this.answerToEdit.set(answer);
     this.answerEditFormData = {
       id: answer.id!,
       answerText: answer.answerText || '',
-      answerOrder: answer.answerOrder || undefined
+      answerOrder: answer.answerOrder || undefined,
+      isCorrect: !!answer.isCorrect
     };
     this.showAnswerEditDialog.set(true);
   }
 
   /**
-   * Supprime une spécialité
+   * Supprime une réponse
    */
   deleteAnswerInQuestion(answer: Answer, question: Question) {
-    console.log('🗑️ Suppression de la spécialité:', answer.answerText, 'dans le département:', question.questionText);
+    console.log('🗑️ Suppression de la réponse:', answer.answerText, 'dans la question:', question.questionText);
     this.currentQuestionForAnswer.set(question);
     this.answerToDelete.set(answer);
     this.showAnswerDeleteConfirmation.set(true);
   }
 
   /**
-   * Restaure une spécialité supprimée
+   * Restaure une réponse supprimée
    */
   restoreAnswerInQuestion(answer: Answer, question: Question) {
-    console.log('♻️ Restauration de la spécialité:', answer.answerText, 'dans le département:', question.questionText);
+    console.log('♻️ Restauration de la réponse:', answer.answerText, 'dans la question:', question.questionText);
     this.currentQuestionForAnswer.set(question);
     this.answerToRestore.set(answer);
     this.showAnswerRestoreConfirmation.set(true);
   }
 
   /**
-   * Confirme la création d'une spécialité
+   * Confirme la création d'une réponse
    */
   async confirmCreateAnswer() {
     if (!this.currentQuestionForAnswer()) {
-      this.notificationService.error('Erreur', 'Département non trouvé');
+      this.notificationService.error('Erreur', 'Question non trouvée');
       return;
     }
 
-    const department = this.currentQuestionForAnswer()!;
+    const question = this.currentQuestionForAnswer()!;
     const answerData = {
       answerText: this.answerCreateFormData.answerText.trim(),
-      questionId: department.id,
-      answerOrder: this.answerCreateFormData.answerOrder
+      questionId: question.id,
+      answerOrder: this.answerCreateFormData.answerOrder,
+      isCorrect: this.answerCreateFormData.isCorrect
     };
 
     if (!answerData.answerText) {
@@ -1145,47 +1159,49 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
     try {
       console.log('🚀 Création de la réponse:', answerData);
       const newanswer: any = await this.answerService.createAnswer(answerData as any).toPromise();
-      console.log('✅ Spécialité créée:', newanswer);
+      console.log('✅ Réponse créée:', newanswer);
 
-      // Recharger les spécialités du département
-      this.loadQuestionAnswers(department.id!);
+      // Recharger les réponses de la question
+      this.loadQuestionAnswers(question.id!);
 
-      this.notificationService.success('Succès', 'Spécialité créée avec succès');
+      this.notificationService.success('Succès', 'Réponse créée avec succès');
       this.cancelCreateAnswer();
     } catch (error: any) {
-      console.error('❌ Erreur lors de la création de la spécialité:', error);
-      this.notificationService.error('Erreur', 'Erreur lors de la création de la spécialité');
+      console.error('❌ Erreur lors de la création de la réponse:', error);
+      this.notificationService.error('Erreur', 'Erreur lors de la création de la réponse');
     }
   }
 
   /**
-   * Annule la création d'une spécialité
+   * Annule la création d'une réponse
    */
   cancelCreateAnswer() {
     this.showAnswerCreateDialog.set(false);
     this.currentQuestionForAnswer.set(null);
     this.answerCreateFormData = {
       answerText: '',
-      answerOrder: undefined as number | undefined
+      answerOrder: undefined as number | undefined,
+      isCorrect: false
     };
   }
 
   /**
-   * Confirme la modification d'une spécialité
+   * Confirme la modification d'une réponse
    */
   async confirmEditAnswer() {
     if (!this.answerToEdit() || !this.currentQuestionForAnswer()) {
-      this.notificationService.error('Erreur', 'Spécialité ou département non trouvé');
+      this.notificationService.error('Erreur', 'Réponse ou question non trouvée');
       return;
     }
 
     const answer = this.answerToEdit()!;
-    const department = this.currentQuestionForAnswer()!;
+    const question = this.currentQuestionForAnswer()!;
     const answerData = {
       id: answer.id,
       answerText: this.answerEditFormData.answerText.trim(),
-      questionId: department.id,
-      answerOrder: this.answerEditFormData.answerOrder
+      questionId: question.id,
+      answerOrder: this.answerEditFormData.answerOrder,
+      isCorrect: this.answerEditFormData.isCorrect
     };
 
     if (!answerData.answerText) {
@@ -1196,21 +1212,21 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
     try {
       console.log('🚀 Modification de la réponse:', answer.id, answerData);
       const updatedanswer: any = await this.answerService.updateAnswer(answer.id!, answerData as any).toPromise();
-      console.log('✅ Spécialité modifiée:', updatedanswer);
+      console.log('✅ Réponse modifiée:', updatedanswer);
 
-      // Recharger les spécialités du département
-      this.loadQuestionAnswers(department.id!);
+      // Recharger les réponses de la question
+      this.loadQuestionAnswers(question.id!);
 
-      this.notificationService.success('Succès', 'Spécialité modifiée avec succès');
+      this.notificationService.success('Succès', 'Réponse modifiée avec succès');
       this.cancelEditAnswer();
     } catch (error: any) {
-      console.error('❌ Erreur lors de la modification de la spécialité:', error);
-      this.notificationService.error('Erreur', 'Erreur lors de la modification de la spécialité');
+      console.error('❌ Erreur lors de la modification de la réponse:', error);
+      this.notificationService.error('Erreur', 'Erreur lors de la modification de la réponse');
     }
   }
 
   /**
-   * Annule la modification d'une spécialité
+   * Annule la modification d'une réponse
    */
   cancelEditAnswer() {
     this.showAnswerEditDialog.set(false);
@@ -1219,40 +1235,41 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
     this.answerEditFormData = {
       id: 0,
       answerText: '',
-      answerOrder: undefined as number | undefined
+      answerOrder: undefined as number | undefined,
+      isCorrect: false
     };
   }
 
   /**
-   * Confirme la suppression d'une spécialité
+   * Confirme la suppression d'une réponse
    */
   async confirmDeleteAnswer() {
     if (!this.answerToDelete() || !this.currentQuestionForAnswer()) {
-      this.notificationService.error('Erreur', 'Spécialité ou département non trouvé');
+      this.notificationService.error('Erreur', 'Réponse ou question non trouvée');
       return;
     }
 
     const answer = this.answerToDelete()!;
-    const department = this.currentQuestionForAnswer()!;
+    const question = this.currentQuestionForAnswer()!;
 
     try {
       console.log('🚀 Suppression de la réponse:', answer.id);
       await this.answerService.deleteAnswer(answer.id!).toPromise();
       console.log('✅ Réponse supprimée');
 
-      // Recharger les spécialités du département
-      this.loadQuestionAnswers(department.id!);
+      // Recharger les réponses de la question
+      this.loadQuestionAnswers(question.id!);
 
-      this.notificationService.success('Succès', 'Spécialité supprimée avec succès');
+      this.notificationService.success('Succès', 'Réponse supprimée avec succès');
       this.cancelDeleteAnswer();
     } catch (error: any) {
-      console.error('❌ Erreur lors de la suppression de la spécialité:', error);
-      this.notificationService.error('Erreur', 'Erreur lors de la suppression de la spécialité');
+      console.error('❌ Erreur lors de la suppression de la réponse:', error);
+      this.notificationService.error('Erreur', 'Erreur lors de la suppression de la réponse');
     }
   }
 
   /**
-   * Annule la suppression d'une spécialité
+   * Annule la suppression d'une réponse
    */
   cancelDeleteAnswer() {
     this.showAnswerDeleteConfirmation.set(false);
@@ -1261,35 +1278,35 @@ export class EntitiesQuestionsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Confirme la restauration d'une spécialité
+   * Confirme la restauration d'une réponse
    */
   async confirmRestoreAnswer() {
     if (!this.answerToRestore() || !this.currentQuestionForAnswer()) {
-      this.notificationService.error('Erreur', 'Spécialité ou département non trouvé');
+      this.notificationService.error('Erreur', 'Réponse ou question non trouvée');
       return;
     }
 
     const answer = this.answerToRestore()!;
-    const department = this.currentQuestionForAnswer()!;
+    const question = this.currentQuestionForAnswer()!;
 
     try {
       console.log('🚀 Restauration de la réponse:', answer.id);
       await this.answerService.restoreAnswer(answer.id!).toPromise();
       console.log('✅ Réponse restaurée');
 
-      // Recharger les spécialités du département
-      this.loadQuestionAnswers(department.id!);
+      // Recharger les réponses de la question
+      this.loadQuestionAnswers(question.id!);
 
-      this.notificationService.success('Succès', 'Spécialité restaurée avec succès');
+      this.notificationService.success('Succès', 'Réponse restaurée avec succès');
       this.cancelRestoreAnswer();
     } catch (error: any) {
-      console.error('❌ Erreur lors de la restauration de la spécialité:', error);
-      this.notificationService.error('Erreur', 'Erreur lors de la restauration de la spécialité');
+      console.error('❌ Erreur lors de la restauration de la réponse:', error);
+      this.notificationService.error('Erreur', 'Erreur lors de la restauration de la réponse');
     }
   }
 
   /**
-   * Annule la restauration d'une spécialité
+   * Annule la restauration d'une réponse
    */
   cancelRestoreAnswer() {
     this.showAnswerRestoreConfirmation.set(false);

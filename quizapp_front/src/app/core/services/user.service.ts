@@ -624,8 +624,12 @@ export class UserService {
    * @returns Observable de l'utilisateur mis à jour
    */
   updateAdminMode(userId: number, adminMode: boolean): Observable<User> {
-    const currentUserId = localStorage.getItem('user')?.includes('id') ? 
-      JSON.parse(localStorage.getItem('user')!)?.id?.toString() : '1';
+    const rawCurrentUser = localStorage.getItem('user');
+    const currentUserId = rawCurrentUser ? JSON.parse(rawCurrentUser)?.id?.toString() : null;
+
+    if (!currentUserId) {
+      return throwError(() => new Error('Utilisateur non authentifie'));
+    }
 
     const request = {
       user: currentUserId,
@@ -637,7 +641,7 @@ export class UserService {
 
     console.log('🔧 Mise à jour du mode admin:', request);
 
-    return this.http.post<any>(`${this.apiUrl}/update`, request).pipe(
+    return this.http.put<any>(`${this.apiUrl}/update-admin-mode`, request).pipe(
       map(response => {
         console.log('✅ Mode admin mis à jour:', response);
         return response.items?.[0] || response;

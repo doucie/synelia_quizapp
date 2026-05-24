@@ -35,6 +35,15 @@ public class Answer implements Serializable, Cloneable {
     @Column(name="answer_type", length=20)
     private String     answerType   ;
 
+    @Column(name="allow_additional_comment")
+    private Boolean    allowAdditionalComment ;
+
+    @Column(name="additional_comment_required")
+    private Boolean    additionalCommentRequired ;
+
+    @Column(name="additional_comment_placeholder", length=255)
+    private String     additionalCommentPlaceholder ;
+
     @Column(name="answer_order")
     private Integer    answerOrder  ;
 

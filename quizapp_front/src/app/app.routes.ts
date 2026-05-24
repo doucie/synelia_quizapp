@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard, noAuthGuard } from './core/guards/auth.guard';
-import { permissionGuard, campaignEditGuard, campaignViewGuard, interviewCreateGuard } from './core/guards/role.guard';
+import { permissionGuard, campaignEditGuard, campaignViewGuard, interviewCreateGuard, roleGuard } from './core/guards/role.guard';
 import { sourceTokenGuard } from './core/guards/source-token.guard';
 
 export const routes: Routes = [
@@ -49,19 +49,27 @@ export const routes: Routes = [
       { path: '', redirectTo: 'overview', pathMatch: 'full' },
       {
         path: 'departments',
-        loadComponent: () => import('./pages/dashboard/departments/departments').then(m => m.DepartmentsComponent)
+        loadComponent: () => import('./pages/dashboard/departments/departments').then(m => m.DepartmentsComponent),
+        canActivate: [roleGuard, permissionGuard(['VIEW_DEPARTMENTS'])],
+        data: { roles: ['super', 'admin'] }
       },
       {
         path: 'specialities',
-        loadComponent: () => import('./pages/dashboard/specialities/specialities').then(m => m.SpecialitiesComponent)
+        loadComponent: () => import('./pages/dashboard/specialities/specialities').then(m => m.SpecialitiesComponent),
+        canActivate: [roleGuard, permissionGuard(['VIEW_SPECIALITIES'])],
+        data: { roles: ['super', 'admin'] }
       },
       {
         path: 'questions',
-        loadComponent: () => import('./pages/dashboard/questions/questions').then(m => m.QuestionsComponent)
+        loadComponent: () => import('./pages/dashboard/questions/questions').then(m => m.QuestionsComponent),
+        canActivate: [roleGuard, permissionGuard(['VIEW_QUESTION'])],
+        data: { roles: ['super', 'admin'] }
       },
       {
         path: 'answers',
-        loadComponent: () => import('./pages/dashboard/answers/answers').then(m => m.AnswersComponent)
+        loadComponent: () => import('./pages/dashboard/answers/answers').then(m => m.AnswersComponent),
+        canActivate: [roleGuard, permissionGuard(['VIEW_ANSWER'])],
+        data: { roles: ['super', 'admin'] }
       },
       { 
         path: 'overview', 

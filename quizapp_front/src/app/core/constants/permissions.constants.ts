@@ -13,6 +13,24 @@ export interface PermissionDef {
   label: string;
 }
 
+export interface PermissionGroup {
+  id: string;
+  title: string;
+  permissions: PermissionDef[];
+}
+
+export interface DisplayPermissionCategory extends PermissionCategory {
+  groups: PermissionGroup[];
+}
+
+export type PermissionOverrideAccessType = 'GRANT' | 'DENY';
+
+interface PermissionGroupDefinition {
+  id: string;
+  title: string;
+  matchers: string[];
+}
+
 export const PERMISSION_CATEGORIES: PermissionCategory[] = [
   {
     label: 'Campagnes',
@@ -158,3 +176,170 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
 
 /** Toutes les clés de permissions en liste plate */
 export const ALL_PERMISSIONS: string[] = PERMISSION_CATEGORIES.flatMap(c => c.permissions.map(p => p.key));
+
+const PERMISSION_GROUP_DEFINITIONS: Record<string, PermissionGroupDefinition[]> = {
+  Pipeline: [
+    { id: 'pipeline-templates', title: 'Templates de pipeline', matchers: ['PIPELINE_TEMPLATE'] },
+    { id: 'pipeline-stages', title: 'Étapes du pipeline', matchers: ['PIPELINE_STAGE'] },
+    { id: 'pipeline-progress', title: 'Progression des candidatures', matchers: ['APPLICATION_PROGRESS'] },
+    { id: 'pipeline-actions', title: 'Actions métier', matchers: ['ADVANCE_PIPELINE', 'MIGRATE_CANDIDATE_PIPELINE'] }
+  ],
+  Administration: [
+    { id: 'admin-app-config', title: 'Configuration application', matchers: ['APP_CONFIG'] },
+    { id: 'admin-email', title: 'Modèles email', matchers: ['EMAIL_TEMPLATE'] },
+    { id: 'admin-smtp', title: 'SMTP', matchers: ['SMTP_CONFIG'] },
+    { id: 'admin-legal', title: 'Textes légaux', matchers: ['LEGAL_TEXT'] },
+    { id: 'admin-invitation', title: 'Invitations', matchers: ['INVITATION_CODE'] }
+  ],
+  'Départements & Spécialités': [
+    { id: 'departments', title: 'Départements', matchers: ['DEPARTMENTS'] },
+    { id: 'specialities', title: 'Spécialités', matchers: ['SPECIALITIES'] }
+  ],
+  'Questions & Réponses': [
+    { id: 'questions', title: 'Questions', matchers: ['QUESTION'] },
+    { id: 'answers', title: 'Réponses', matchers: ['ANSWER'] }
+  ],
+  'Groupes & Permissions': [
+    { id: 'business-groups', title: 'Groupes métiers', matchers: ['BUSINESS_GROUP'] },
+    { id: 'system-roles', title: 'Rôles système', matchers: ['MANAGE_SYSTEM_ROLES'] },
+    { id: 'entity-permissions', title: 'Permissions entité', matchers: ['ENTITY_PERMISSION'] }
+  ]
+};
+
+export function buildDisplayPermissionCategories(categories: PermissionCategory[] = PERMISSION_CATEGORIES): DisplayPermissionCategory[] {
+  return categories.map(category => ({
+    ...category,
+    groups: buildPermissionGroups(category)
+  }));
+}
+
+export function buildPermissionGroups(category: PermissionCategory): PermissionGroup[] {
+  const definitions = PERMISSION_GROUP_DEFINITIONS[category.label];
+
+  if (!definitions) {
+    return [{ id: category.label.toLowerCase(), title: '', permissions: category.permissions }];
+  }
+
+  return createPermissionGroups(category.permissions, definitions);
+}
+
+export function getPermissionActionLabel(functionality: string): string {
+  const action = functionality.split('_')[0];
+
+  switch (action) {
+    case 'VIEW':
+      return 'Voir';
+    case 'CREATE':
+      return 'Créer';
+    case 'UPDATE':
+      return 'Modifier';
+    case 'DELETE':
+      return 'Supprimer';
+    case 'MANAGE':
+      return 'Gérer';
+    case 'ADVANCE':
+      return 'Avancer';
+    case 'MIGRATE':
+      return 'Migrer';
+    default:
+      return action;
+  }
+}
+
+export function normalizeSystemRole(rawRole?: string | null): string {
+  const normalizedRole = (rawRole || '').trim().toUpperCase();
+
+  switch (normalizedRole) {
+    case 'SUPER':
+    case 'SUPER_ADMIN':
+    case 'ROLE_SUPER':
+    case 'ROLE_SUPER_ADMIN':
+      return 'SUPER_ADMIN';
+    case 'ADMIN':
+    case 'ROLE_ADMIN':
+      return 'ADMIN';
+    case 'RECRUITER':
+    case 'UTILISATEUR':
+    case 'ROLE_RECRUITER':
+    case 'ROLE_UTILISATEUR':
+      return 'RECRUITER';
+    case 'CANDIDATE':
+    case 'ROLE_CANDIDATE':
+      return 'CANDIDATE';
+    default:
+      return normalizedRole;
+  }
+}
+
+export function getSystemRoleLabel(rawRole?: string | null): string {
+  const role = normalizeSystemRole(rawRole);
+
+  switch (role) {
+    case 'SUPER_ADMIN':
+      return 'Super Admin';
+    case 'ADMIN':
+      return 'Administrateur';
+    case 'RECRUITER':
+      return 'Recruteur';
+    case 'CANDIDATE':
+      return 'Candidat';
+    default:
+      return rawRole || 'Utilisateur';
+  }
+}
+
+export function getSystemRoleBadgeClass(rawRole?: string | null): string {
+  const role = normalizeSystemRole(rawRole);
+
+  switch (role) {
+    case 'SUPER_ADMIN':
+      return 'badge-super';
+    case 'ADMIN':
+      return 'badge-admin';
+    default:
+      return 'badge-user';
+  }
+}
+
+export function resolvePermissionOverrideAccessType(override: { accessType?: PermissionOverrideAccessType; isAllowed?: boolean }): PermissionOverrideAccessType | undefined {
+  if (override.accessType) {
+    return override.accessType;
+  }
+  if (override.isAllowed === true) {
+    return 'GRANT';
+  }
+  if (override.isAllowed === false) {
+    return 'DENY';
+  }
+  return undefined;
+}
+
+export function buildUserOverrideMap(
+  overrides: Array<{ functionality?: string; accessType?: PermissionOverrideAccessType; isAllowed?: boolean }>
+): Map<string, PermissionOverrideAccessType> {
+  const overrideMap = new Map<string, PermissionOverrideAccessType>();
+
+  for (const override of overrides || []) {
+    const accessType = resolvePermissionOverrideAccessType(override);
+    if (override.functionality && accessType) {
+      overrideMap.set(override.functionality, accessType);
+    }
+  }
+
+  return overrideMap;
+}
+
+function createPermissionGroups(
+  permissions: PermissionDef[],
+  definitions: PermissionGroupDefinition[]
+): PermissionGroup[] {
+  return definitions
+    .map(definition => ({
+      id: definition.id,
+      title: definition.title,
+      permissions: permissions.filter(permission =>
+        definition.matchers.some(matcher => permission.key.includes(matcher) || permission.key === matcher)
+      )
+    }))
+    .filter(group => group.permissions.length > 0);
+}

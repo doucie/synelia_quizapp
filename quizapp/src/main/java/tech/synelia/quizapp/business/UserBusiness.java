@@ -213,22 +213,22 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("user id -> " + dto.getId(), locale));
 			}
 
-			if (Utilities.shouldUpdate(dto.getFirstName())) {
+			if (shouldPatchString(dto.getFirstName())) {
 				entityToSave.setFirstName(dto.getFirstName());
 			}
-			if (Utilities.shouldUpdate(dto.getLastName())) {
+			if (shouldPatchString(dto.getLastName())) {
 				entityToSave.setLastName(dto.getLastName());
 			}
-			if (Utilities.shouldUpdate(dto.getUsername())) {
+			if (shouldPatchString(dto.getUsername())) {
 				entityToSave.setUsername(dto.getUsername());
 			}
-			if (Utilities.shouldUpdate(dto.getEmail())) {
+			if (shouldPatchString(dto.getEmail())) {
 				entityToSave.setEmail(dto.getEmail());
 			}
-			if (Utilities.shouldUpdate(dto.getPhone())) {
+			if (shouldPatchString(dto.getPhone())) {
 				entityToSave.setPhone(dto.getPhone());
 			}
-			if (Utilities.shouldUpdate(dto.getPassword())) {
+			if (Utilities.notBlank(dto.getPassword())) {
 				// Hasher le nouveau mot de passe avec BCrypt avant la sauvegarde
 				try {
 					entityToSave.setPassword(Utilities.encryptWithBCrypt(dto.getPassword()));
@@ -239,7 +239,7 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 			if (dto.getIsDefaultPassword() != null) {
 				entityToSave.setIsDefaultPassword(dto.getIsDefaultPassword());
 			}
-			if (Utilities.shouldUpdate(dto.getUserRole())) {
+			if (shouldPatchString(dto.getUserRole())) {
 				entityToSave.setUserRole(normalizeUserRoleOrThrow(dto.getUserRole(), locale));
 			}
 			if (dto.getIsOnline() != null) {
@@ -254,7 +254,7 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 			if (dto.getAdminMode() != null) {
 				entityToSave.setAdminMode(dto.getAdminMode());
 			}
-			if (Utilities.shouldUpdate(dto.getLastConnectionDate())) {
+			if (shouldPatchString(dto.getLastConnectionDate())) {
 				entityToSave.setLastConnectionDate(parseDate(dto.getLastConnectionDate()));
 			}
 			if (dto.getCreatedBy() != null && dto.getCreatedBy() > 0) {
@@ -263,7 +263,7 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 			if (dto.getUpdatedBy() != null && dto.getUpdatedBy() > 0) {
 				entityToSave.setUpdatedBy(dto.getUpdatedBy());
 			}
-			if (Utilities.shouldUpdate(dto.getSearchString())) {
+			if (shouldPatchString(dto.getSearchString())) {
 				entityToSave.setSearchString(dto.getSearchString());
 			}
 			/*
@@ -380,28 +380,32 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 			User entityToSave = existingEntity;
 			
 			// Mise à jour conditionnelle des champs
-			if (Utilities.shouldUpdate(dto.getFirstName())) {
+			if (shouldPatchString(dto.getFirstName())) {
 				entityToSave.setFirstName(dto.getFirstName());
 			}
-			if (Utilities.shouldUpdate(dto.getLastName())) {
+			if (shouldPatchString(dto.getLastName())) {
 				entityToSave.setLastName(dto.getLastName());
 			}
-			if (Utilities.shouldUpdate(dto.getUsername())) {
+			if (shouldPatchString(dto.getUsername())) {
 				entityToSave.setUsername(dto.getUsername());
 			}
-			if (Utilities.shouldUpdate(dto.getEmail())) {
+			if (shouldPatchString(dto.getEmail())) {
 				entityToSave.setEmail(dto.getEmail());
 			}
-			if (Utilities.shouldUpdate(dto.getPhone())) {
+			if (shouldPatchString(dto.getPhone())) {
 				entityToSave.setPhone(dto.getPhone());
 			}
-			if (Utilities.shouldUpdate(dto.getPassword())) {
-				entityToSave.setPassword(dto.getPassword());
+			if (Utilities.notBlank(dto.getPassword())) {
+				try {
+					entityToSave.setPassword(Utilities.encryptWithBCrypt(dto.getPassword()));
+				} catch (Exception e) {
+					throw new InternalErrorException(functionalError.SAVE_FAIL("password encryption", locale));
+				}
 			}
 			if (dto.getIsDefaultPassword() != null) {
 				entityToSave.setIsDefaultPassword(dto.getIsDefaultPassword());
 			}
-			if (Utilities.shouldUpdate(dto.getUserRole())) {
+			if (shouldPatchString(dto.getUserRole())) {
 				entityToSave.setUserRole(normalizeUserRoleOrThrow(dto.getUserRole(), locale));
 			}
 			if (dto.getIsOnline() != null) {
@@ -414,7 +418,7 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 			if (dto.getIsDeleted() != null) {
 				entityToSave.setIsDeleted(dto.getIsDeleted());
 			}
-			if (Utilities.shouldUpdate(dto.getLastConnectionDate())) {
+			if (shouldPatchString(dto.getLastConnectionDate())) {
 				entityToSave.setLastConnectionDate(parseDate(dto.getLastConnectionDate()));
 			}
 			if (dto.getCreatedBy() != null && dto.getCreatedBy() > 0) {
@@ -423,7 +427,7 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 			if (dto.getUpdatedBy() != null && dto.getUpdatedBy() > 0) {
 				entityToSave.setUpdatedBy(dto.getUpdatedBy());
 			}
-			if (Utilities.shouldUpdate(dto.getSearchString())) {
+			if (shouldPatchString(dto.getSearchString())) {
 				entityToSave.setSearchString(dto.getSearchString());
 			}
 
@@ -681,6 +685,50 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 		return response;
 	}
 
+	public Response<UserDto> updateAdminMode(Request<UserDto> request, Locale locale) throws Exception {
+		log.info("----begin updateAdminMode-----");
+		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
+		Response<UserDto> response = new Response<UserDto>();
+
+		for (UserDto dto : request.getDatas()) {
+			if (dto.getId() == null) {
+				throw new InvalidEntityException(functionalError.FIELD_EMPTY("user id", locale));
+			}
+			if (dto.getAdminMode() == null) {
+				throw new InvalidEntityException(functionalError.FIELD_EMPTY("adminMode", locale));
+			}
+
+			User existingUser = userRepository.findOne(dto.getId(), false);
+			if (existingUser == null) {
+				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("user id -> " + dto.getId(), locale));
+			}
+
+			existingUser.setAdminMode(dto.getAdminMode());
+			existingUser.setUpdatedAt(Utilities.getCurrentDate());
+			existingUser.setUpdatedBy(request.getUser());
+
+			User savedUser = userRepository.save(existingUser);
+			if (savedUser == null) {
+				throw new InternalErrorException(functionalError.SAVE_FAIL("user adminMode", locale));
+			}
+
+			UserDto updatedDto = UserTransformer.INSTANCE.toDto(savedUser);
+
+			Status status = new Status();
+			status.setCode(StatusCode.SUCCESS);
+			status.setMessage(StatusMessage.SUCCESS);
+
+			response.setItems(Arrays.asList(updatedDto));
+			response.setHasError(false);
+			response.setHttpCode(HttpStatus.OK.value());
+			response.setStatus(status);
+		}
+
+		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
+		log.info("----end updateAdminMode-----");
+		return response;
+	}
+
 	/**
 	 * Met à jour uniquement la préférence de taille de page pour un utilisateur
 	 *
@@ -761,5 +809,9 @@ public class UserBusiness implements IBasicBusiness<Request<UserDto>, Response<U
 					"userRole -> " + rawUserRole + " (autorisé: super, admin, recruiter, candidate)", locale));
 		}
 		return normalizedRole.getValue();
+	}
+
+	private boolean shouldPatchString(String value) {
+		return value != null && Utilities.shouldUpdate(value);
 	}
 }

@@ -104,7 +104,7 @@ export class QuestionService {
         if (!response || (!response.items && !response.item)) {
           return { content: [], totalElements: 0, totalPages: 0, size: criteria.size || 10, number: criteria.page || 0 };
         }
-        const items = response.items || (response.item ? [response.item] : []);
+        const items = (response.items || (response.item ? [response.item] : [])).map((item: Question) => this.normalizeQuestion(item));
         const totalElements = response.totalCount || response.count || items.length;
         const pageSize = criteria.size || 10;
         return { content: items, totalElements, totalPages: Math.ceil(totalElements / pageSize), size: pageSize, number: criteria.page || 0 };
@@ -124,7 +124,7 @@ export class QuestionService {
   }
 
   create(item: Partial<Question>): Observable<any> {
-    return this.http.post(`${this.apiUrl}/create`, { user: this.getUserId(), datas: [item] });
+    return this.http.post(`${this.apiUrl}/create`, { user: this.getUserId(), datas: [this.normalizeQuestionPayload(item)] });
   }
 
   /** Backward-compatible alias */
@@ -133,7 +133,7 @@ export class QuestionService {
   }
 
   update(item: Partial<Question>): Observable<any> {
-    return this.http.post(`${this.apiUrl}/update`, { user: this.getUserId(), datas: [item] });
+    return this.http.post(`${this.apiUrl}/update`, { user: this.getUserId(), datas: [this.normalizeQuestionPayload(item)] });
   }
 
   /** Backward-compatible alias */
@@ -157,5 +157,39 @@ export class QuestionService {
   /** Backward-compatible alias */
   restoreQuestion(id: number): Observable<any> {
     return this.restore(id);
+  }
+
+  private normalizeQuestion(item: Question): Question {
+    return {
+      ...item,
+      questionType: this.normalizeQuestionType(item.questionType)
+    };
+  }
+
+  private normalizeQuestionPayload(item: Partial<Question>): Partial<Question> {
+    return {
+      ...item,
+      questionType: this.normalizeQuestionType(item.questionType)
+    };
+  }
+
+  private normalizeQuestionType(questionType?: string): string {
+    const normalized = (questionType ?? '').trim().toUpperCase();
+
+    switch (normalized) {
+      case 'QCU':
+        return 'SINGLE_CHOICE';
+      case 'QCM':
+        return 'MULTIPLE_CHOICE';
+      case 'OPEN':
+        return 'TEXT';
+      case 'TRUE_FALSE':
+      case 'TEXT':
+      case 'SINGLE_CHOICE':
+      case 'MULTIPLE_CHOICE':
+        return normalized;
+      default:
+        return 'MULTIPLE_CHOICE';
+    }
   }
 }

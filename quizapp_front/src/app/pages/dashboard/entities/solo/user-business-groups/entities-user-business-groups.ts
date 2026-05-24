@@ -11,7 +11,7 @@ import { FilterCheckboxComponent } from '../../../../../shared/filter-checkbox/f
 import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../../../shared/filter-select/filter-select';
 import { BusinessGroupCrudService, BusinessGroup } from '../../../../../core/services/business-group-crud.service';
 import { UserService, User } from '../../../../../core/services/user.service';
-import { UserBusinessGroupService, UserBusinessGroup, PagedUserBusinessGroupResponse, UserBusinessGroupCriteria } from '../../../../../core/services/user-business-group.service';
+import { UserBusinessGroupService, UserBusinessGroup, UserBusinessGroupMutationPayload, PagedUserBusinessGroupResponse, UserBusinessGroupCriteria } from '../../../../../core/services/user-business-group.service';
 
 @Component({
   selector: 'app-entities-user-business-groups',
@@ -20,7 +20,7 @@ import { UserBusinessGroupService, UserBusinessGroup, PagedUserBusinessGroupResp
   templateUrl: './entities-user-business-groups.html',
   styleUrls: ['./entities-user-business-groups.scss']
 })
-export class EntitiesUserBusinessGroupsComponent extends EntityCrudBase<UserBusinessGroup, UserBusinessGroupCriteria, PagedUserBusinessGroupResponse> {
+export class EntitiesUserBusinessGroupsComponent extends EntityCrudBase<UserBusinessGroup, UserBusinessGroupCriteria, PagedUserBusinessGroupResponse, UserBusinessGroupMutationPayload> {
   private service = inject(UserBusinessGroupService);
   private userService = inject(UserService);
   private businessGroupCrudService = inject(BusinessGroupCrudService);
@@ -33,7 +33,7 @@ export class EntitiesUserBusinessGroupsComponent extends EntityCrudBase<UserBusi
   readonly businessGroups = signal<BusinessGroup[]>([]);
   advancedCriteria: UserBusinessGroupCriteria = {};
   editFormData: UserBusinessGroup = {};
-  createFormData: Partial<UserBusinessGroup> = {};
+  createFormData: UserBusinessGroupMutationPayload = {};
 
   override allColumns: ColumnDef[] = [
     { key: 'id', label: 'ID', priority: 1 },
@@ -54,7 +54,7 @@ export class EntitiesUserBusinessGroupsComponent extends EntityCrudBase<UserBusi
   }
 
   protected fetchAll(criteria: UserBusinessGroupCriteria): Observable<PagedUserBusinessGroupResponse> { return this.service.getAllByCriteria(criteria); }
-  protected performCreate(item: Partial<UserBusinessGroup>): Observable<any> { return this.service.create(item as UserBusinessGroup); }
+  protected performCreate(item: UserBusinessGroupMutationPayload): Observable<any> { return this.service.create(item); }
   protected performUpdate(item: UserBusinessGroup): Observable<any> { return this.service.update(item); }
   protected performDelete(id: number): Observable<any> { return this.service.delete(id); }
   protected performRestore(id: number): Observable<any> { return this.service.restore(id); }

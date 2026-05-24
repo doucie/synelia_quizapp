@@ -337,7 +337,7 @@ $navbar-height: 70px;
             cursor: pointer;
             transition: var(--transition);
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: var(--spacing-md);
 
             &:hover {
@@ -407,11 +407,61 @@ $navbar-height: 70px;
               }
             }
 
-            .answer-text {
-              color: var(--text-primary);
-              font-size: var(--font-size-base);
+            .answer-content {
               flex: 1;
-              line-height: 1.5;
+
+              .answer-text {
+                color: var(--text-primary);
+                font-size: var(--font-size-base);
+                line-height: 1.5;
+              }
+
+              .answer-comment-block {
+                margin-top: var(--spacing-md);
+                padding: var(--spacing-md);
+                border-radius: var(--radius);
+                background: rgba(var(--primary-rgb), 0.05);
+                border: 1px solid rgba(var(--primary-rgb), 0.14);
+                display: flex;
+                flex-direction: column;
+                gap: var(--spacing-sm);
+              }
+
+              .answer-comment-label {
+                color: var(--text-primary);
+                font-size: var(--font-size-sm);
+                font-weight: var(--font-weight-semibold);
+              }
+
+              .answer-comment-input {
+                width: 100%;
+                min-height: 96px;
+                resize: vertical;
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                padding: var(--spacing-md);
+                background: var(--background);
+                color: var(--text-primary);
+                font: inherit;
+                line-height: 1.5;
+
+                &:focus {
+                  outline: none;
+                  border-color: var(--primary);
+                  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.12);
+                }
+
+                &.invalid {
+                  border-color: var(--error);
+                  box-shadow: 0 0 0 3px rgba(var(--error-rgb), 0.12);
+                }
+              }
+
+              .answer-comment-error {
+                margin: 0;
+                color: var(--error);
+                font-size: var(--font-size-sm);
+              }
             }
           }
         }

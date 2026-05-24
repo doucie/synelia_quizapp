@@ -47,21 +47,6 @@
         (ngModelChange)="searchQuery.set($event)"
       >
     </div>
-
-    <div class="filter-chips">
-      <button class="filter-chip" [class.active]="filterStatus() === 'all'" (click)="filterStatus.set('all')">
-        <span class="chip-label">Tous</span>
-        <span class="chip-count">{{ answers().length }}</span>
-      </button>
-      <button class="filter-chip" [class.active]="filterStatus() === 'active'" (click)="filterStatus.set('active')">
-        <span class="chip-label">Actives</span>
-        <span class="chip-count">{{ activeCount() }}</span>
-      </button>
-      <button class="filter-chip" [class.active]="filterStatus() === 'deleted'" (click)="filterStatus.set('deleted')">
-        <span class="chip-label">Supprimées</span>
-        <span class="chip-count">{{ deletedCount() }}</span>
-      </button>
-    </div>
   </div>
 
   <!-- Filtres avancés -->
@@ -73,7 +58,7 @@
     </app-filter-select>
 
     @if (questions().length > 0) {
-      <app-filter-select [value]="filterQuestionId()" ariaLabel="Filtrer par question" (valueChange)="onQuestionFilterChange($event)">
+      <app-filter-select [value]="filterQuestionId()" ariaLabel="Filtrer par question" [searchable]="true" searchPlaceholder="Rechercher une question..." (valueChange)="onQuestionFilterChange($event)">
         <option [ngValue]="null">Toutes les questions</option>
         @for (q of questions(); track q.id ?? $index) {
           <option [ngValue]="q.id">{{ q.questionText && q.questionText.length > 50 ? q.questionText.substring(0, 50) + '...' : q.questionText }}</option>
@@ -95,34 +80,20 @@
     @if (filteredAnswers().length > 0) {
       <div class="answers-grid">
         @for (a of filteredAnswers(); track a.id ?? $index) {
-          <div class="answer-card" [class.deleted]="a.isDeleted" [class.correct]="a.isCorrect && !a.isDeleted">
-            @if (a.isDeleted) {
-              <div class="deleted-badge">Supprimée</div>
-            }
-
+          <div class="answer-card" [class.correct]="a.isCorrect">
             @if (isAdminModeEnabled()) {
               <div class="card-actions">
-                @if (a.isDeleted) {
-                  <button class="action-btn action-btn--restore" (click)="restoreAnswer(a); $event.stopPropagation()" title="Restaurer" aria-label="Restaurer">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M3 12a9 9 0 019-9 9.75 9.75 0 016.74 2.74L21 8"/>
-                      <path d="M21 3v5h-5"/>
-                      <path d="M21 12a9 9 0 01-9 9 9.75 9.75 0 01-6.74-2.74L3 16"/>
-                    </svg>
-                  </button>
-                } @else {
-                  <button class="action-btn action-btn--edit" (click)="openEditModal(a); $event.stopPropagation()" title="Modifier" aria-label="Modifier">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
-                      <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                    </svg>
-                  </button>
-                  <button class="action-btn action-btn--delete" (click)="openDeleteModal(a); $event.stopPropagation()" title="Supprimer" aria-label="Supprimer">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
-                    </svg>
-                  </button>
-                }
+                <button class="action-btn action-btn--edit" (click)="openEditModal(a); $event.stopPropagation()" title="Modifier" aria-label="Modifier">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                </button>
+                <button class="action-btn action-btn--delete" (click)="openDeleteModal(a); $event.stopPropagation()" title="Supprimer" aria-label="Supprimer">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                  </svg>
+                </button>
               </div>
             }
 
@@ -197,12 +168,13 @@
       </div>
 
       <div class="modal-body">
-        <form class="answer-form">
+        <div class="answer-form">
           <div class="form-group">
             <label for="a-text">Texte de la réponse *</label>
             <textarea
               id="a-text"
               [ngModel]="answerForm().answerText"
+              [ngModelOptions]="{ standalone: true }"
               (ngModelChange)="updateFormField('answerText', $event)"
               placeholder="Saisissez le texte de la réponse..."
               rows="3"
@@ -213,7 +185,7 @@
           <div class="form-row">
             <div class="form-group">
               <label for="a-type">Type</label>
-              <app-filter-select id="a-type" ariaLabel="Type de réponse" [ngModel]="answerForm().answerType" (ngModelChange)="updateFormField('answerType', $event)">
+              <app-filter-select id="a-type" ariaLabel="Type de réponse" [ngModel]="answerForm().answerType" [ngModelOptions]="{ standalone: true }" (ngModelChange)="updateFormField('answerType', $event)">
                 @for (type of answerTypes; track type) {
                   <option [ngValue]="type">{{ type }}</option>
                 }
@@ -226,6 +198,7 @@
                 type="number"
                 id="a-order"
                 [ngModel]="answerForm().answerOrder"
+                [ngModelOptions]="{ standalone: true }"
                 (ngModelChange)="updateFormField('answerOrder', $event)"
                 min="1"
                 step="1"
@@ -233,10 +206,32 @@
             </div>
           </div>
 
+          <div class="form-group form-group--checkbox">
+            <app-filter-checkbox inputId="answers-allow-comment" label="Autoriser un commentaire additionnel" variant="inline" [checked]="answerForm().allowAdditionalComment === true" ariaLabel="Autoriser un commentaire additionnel" (checkedChange)="updateFormField('allowAdditionalComment', $event)"></app-filter-checkbox>
+          </div>
+
+          @if (answerForm().allowAdditionalComment) {
+            <div class="form-group form-group--checkbox">
+              <app-filter-checkbox inputId="answers-comment-required" label="Commentaire obligatoire" variant="inline" [checked]="answerForm().additionalCommentRequired === true" ariaLabel="Commentaire obligatoire" (checkedChange)="updateFormField('additionalCommentRequired', $event)"></app-filter-checkbox>
+            </div>
+
+            <div class="form-group">
+              <label for="a-comment-placeholder">Texte d'aide du commentaire</label>
+              <input
+                type="text"
+                id="a-comment-placeholder"
+                [ngModel]="answerForm().additionalCommentPlaceholder"
+                [ngModelOptions]="{ standalone: true }"
+                (ngModelChange)="updateFormField('additionalCommentPlaceholder', $event)"
+                placeholder="Ex: Precisez votre reponse"
+              >
+            </div>
+          }
+
           @if (questions().length > 0) {
             <div class="form-group">
               <label for="a-question">Question associée</label>
-              <app-filter-select id="a-question" ariaLabel="Question associée" [ngModel]="answerForm().questionId" (ngModelChange)="updateFormField('questionId', $event)">
+              <app-filter-select id="a-question" ariaLabel="Question associée" [searchable]="true" searchPlaceholder="Rechercher une question..." [ngModel]="answerForm().questionId" [ngModelOptions]="{ standalone: true }" (ngModelChange)="updateFormField('questionId', $event)">
                 <option [ngValue]="undefined">Aucune question</option>
                 @for (q of questions(); track q.id ?? $index) {
                   <option [ngValue]="q.id">{{ q.questionText && q.questionText.length > 80 ? q.questionText.substring(0, 80) + '...' : q.questionText }}</option>
@@ -248,7 +243,7 @@
           <div class="form-group form-group--checkbox">
             <app-filter-checkbox inputId="answers-correct" label="Réponse correcte" variant="inline" [checked]="answerForm().isCorrect === true" ariaLabel="Réponse correcte" (checkedChange)="updateFormField('isCorrect', $event)"></app-filter-checkbox>
           </div>
-        </form>
+        </div>
       </div>
 
       <div class="modal-footer">

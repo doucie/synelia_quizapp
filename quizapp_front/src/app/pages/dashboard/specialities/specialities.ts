@@ -29,7 +29,6 @@ export class SpecialitiesComponent implements OnInit, OnDestroy {
   departments = signal<Department[]>([]);
   loading = signal(false);
   searchQuery = signal('');
-  filterStatus = signal<'all' | 'active' | 'deleted'>('all');
   filterDepartment = signal<number | null>(null);
 
   // Modals
@@ -70,7 +69,6 @@ export class SpecialitiesComponent implements OnInit, OnDestroy {
   // Computed
   filteredSpecialities = computed(() => {
     const query = this.searchQuery().toLowerCase();
-    const status = this.filterStatus();
     const deptId = this.filterDepartment();
     let filtered = this.specialities();
 
@@ -82,12 +80,6 @@ export class SpecialitiesComponent implements OnInit, OnDestroy {
       );
     }
 
-    if (status === 'active') {
-      filtered = filtered.filter(s => !s.isDeleted);
-    } else if (status === 'deleted') {
-      filtered = filtered.filter(s => s.isDeleted);
-    }
-
     if (deptId) {
       filtered = filtered.filter(s => s.departmentId === deptId);
     }
@@ -95,12 +87,11 @@ export class SpecialitiesComponent implements OnInit, OnDestroy {
     return filtered;
   });
 
-  activeCount = computed(() => this.specialities().filter(s => !s.isDeleted).length);
-  deletedCount = computed(() => this.specialities().filter(s => s.isDeleted).length);
+  activeCount = computed(() => this.specialities().length);
 
   loadSpecialities(): void {
     this.loading.set(true);
-    this.specialityService.getAll({ size: 100, page: 0 })
+    this.specialityService.getAll({ size: 100, page: 0, isDeleted: false })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
@@ -253,25 +244,6 @@ export class SpecialitiesComponent implements OnInit, OnDestroy {
           console.error('Erreur suppression:', error);
           this.notificationService.error('Erreur', 'Impossible de supprimer la spécialité');
           this.loading.set(false);
-        }
-      });
-  }
-
-  restoreSpeciality(spec: Speciality): void {
-    if (!this.isAdminModeEnabled()) {
-      this.notificationService.warning('Accès refusé', 'Le mode admin doit être activé');
-      return;
-    }
-    this.specialityService.restore(spec.id)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: () => {
-          this.notificationService.success('Succès', 'Spécialité restaurée');
-          this.loadSpecialities();
-        },
-        error: (error) => {
-          console.error('Erreur restauration:', error);
-          this.notificationService.error('Erreur', 'Impossible de restaurer la spécialité');
         }
       });
   }

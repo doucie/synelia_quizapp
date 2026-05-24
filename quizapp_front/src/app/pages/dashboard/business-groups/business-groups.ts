@@ -1,4 +1,4 @@
-import { Component, signal, OnInit, OnDestroy } from '@angular/core';
+import { Component, signal, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
@@ -8,6 +8,7 @@ import { FilterCheckboxComponent } from '../../../shared/filter-checkbox/filter-
 import { PERMISSION_CATEGORIES } from '../../../core/constants/permissions.constants';
 import { SpringBootRequest, SpringBootResponse } from '../../../core/models/spring-boot.interfaces';
 import { GroupChangeRequestService, GroupChangeRequest } from '../../../core/services/group-change-request.service';
+import { PermissionAdminService, PermissionBusinessGroupMember } from '../../../core/services/permission-admin.service';
 
 interface BusinessGroupItem {
   id?: number;
@@ -24,16 +25,6 @@ interface GroupPermission {
   functionality?: string;
 }
 
-interface GroupUser {
-  id?: number;
-  userId?: number;
-  businessGroupId?: number;
-  userFirstName?: string;
-  userLastName?: string;
-  userEmail?: string;
-  isModerator?: boolean;
-}
-
 type ViewMode = 'list' | 'edit';
 type EditTab = 'info' | 'permissions' | 'members' | 'requests';
 
@@ -46,6 +37,7 @@ type EditTab = 'info' | 'permissions' | 'members' | 'requests';
 })
 export class BusinessGroupsComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
+  private permissionAdminService = inject(PermissionAdminService);
 
   viewMode = signal<ViewMode>('list');
   isLoading = signal(false);
@@ -64,7 +56,7 @@ export class BusinessGroupsComponent implements OnInit, OnDestroy {
   groupPermissions = signal<Set<string>>(new Set());
 
   // Membres du groupe en cours d'édition
-  groupMembers = signal<GroupUser[]>([]);
+  groupMembers = signal<PermissionBusinessGroupMember[]>([]);
   newMemberUserId = signal('');
 
   // Demandes de changement de groupe
@@ -231,17 +223,11 @@ export class BusinessGroupsComponent implements OnInit, OnDestroy {
   // ─── Membres du groupe ─────────────────────
 
   loadGroupMembers(groupId: number): void {
-    const userId = parseInt(this.authService.getCurrentUserId());
-    const request: SpringBootRequest<any> = {
-      data: { businessGroupId: groupId },
-      user: userId
-    };
-
-    this.http.post<SpringBootResponse<GroupUser>>(
-      '/businessGroup/getUsersInGroup', request
-    ).pipe(takeUntil(this.destroy$)).subscribe({
+    this.permissionAdminService.getBusinessGroupMembers(groupId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
       next: (res) => {
-        this.groupMembers.set(res.items || []);
+        this.groupMembers.set(res);
       }
     });
   }
@@ -251,15 +237,9 @@ export class BusinessGroupsComponent implements OnInit, OnDestroy {
     const groupId = this.editingGroup().id;
     if (!memberId || !groupId) return;
 
-    const userId = parseInt(this.authService.getCurrentUserId());
-    const request: SpringBootRequest<any> = {
-      data: { userId: memberId, businessGroupId: groupId },
-      user: userId
-    };
-
-    this.http.post<SpringBootResponse<any>>(
-      '/businessGroup/assignUser', request
-    ).pipe(takeUntil(this.destroy$)).subscribe({
+    this.permissionAdminService.assignUserToBusinessGroup(memberId, groupId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
       next: (res) => {
         if (!res.hasError) {
           this.newMemberUserId.set('');
@@ -269,19 +249,13 @@ export class BusinessGroupsComponent implements OnInit, OnDestroy {
     });
   }
 
-  removeMember(member: GroupUser): void {
+  removeMember(member: PermissionBusinessGroupMember): void {
     const groupId = this.editingGroup().id;
     if (!groupId || !member.userId) return;
 
-    const userId = parseInt(this.authService.getCurrentUserId());
-    const request: SpringBootRequest<any> = {
-      data: { userId: member.userId, businessGroupId: groupId },
-      user: userId
-    };
-
-    this.http.post<SpringBootResponse<any>>(
-      '/businessGroup/removeUser', request
-    ).pipe(takeUntil(this.destroy$)).subscribe({
+    this.permissionAdminService.removeUserFromBusinessGroup(member.userId, groupId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
       next: (res) => {
         if (!res.hasError) this.loadGroupMembers(groupId);
       }

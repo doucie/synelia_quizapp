@@ -23,6 +23,20 @@ export interface MailLogItem {
   searchString?: string;
 }
 
+export interface MailLogItemMutationPayload {
+  id?: number;
+  recipientEmail?: string;
+  recipientUserId?: number;
+  senderUserId?: number;
+  emailTemplateId?: number;
+  subject?: string;
+  bodyPreview?: string;
+  status?: string;
+  errorMessage?: string;
+  sentAt?: string;
+  isDeleted?: boolean;
+}
+
 export interface MailLogCriteria {
   recipientEmail?: string;
   recipientUserId?: number;
@@ -95,14 +109,14 @@ export class MailLogCrudService {
     );
   }
 
-  create(item: MailLogItem): Observable<any> {
+  create(item: MailLogItemMutationPayload): Observable<any> {
     return this.http.post(`${this.apiUrl}/create`, {
       user: this.getCurrentUserId(),
       datas: [this.prepareItemPayload(item)]
     });
   }
 
-  update(item: MailLogItem): Observable<any> {
+  update(item: MailLogItemMutationPayload): Observable<any> {
     return this.http.post(`${this.apiUrl}/update`, {
       user: this.getCurrentUserId(),
       datas: [this.prepareItemPayload(item)]
@@ -157,8 +171,8 @@ export class MailLogCrudService {
     };
   }
 
-  private prepareItemPayload(item: MailLogItem): MailLogItem {
-    const payload: MailLogItem = { ...item };
+  private prepareItemPayload(item: MailLogItemMutationPayload): MailLogItemMutationPayload {
+    const payload: MailLogItemMutationPayload = { ...item };
 
     if (!payload.recipientEmail?.trim()) {
       delete payload.recipientEmail;

@@ -8,6 +8,8 @@ Convention de statut:
 - `[~]` inventoriee mais encore a rediger
 - `[ ]` a traiter
 
+Important: ces statuts de l'inventaire indiquent d'abord la presence d'une fiche documentaire. Ils ne garantissent pas, a eux seuls, qu'une fiche a deja ete re-auditee recemment contre le code reel.
+
 ## Public
 
 - [x] `/` -> [public/10-home.md](./public/10-home.md)

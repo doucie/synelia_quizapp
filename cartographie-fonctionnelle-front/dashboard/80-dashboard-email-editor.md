@@ -108,6 +108,11 @@ La page permet d'administrer les templates email utilises par les flux automatiq
 - [ ] Faut-il separer lecture et ecriture avec des permissions distinctes plutot qu'un simple `VIEW_EMAIL_TEMPLATE` ?
 - [ ] Le catalogue de variables et de presets recommandes doit-il venir du backend plutot que d'une config frontend statique ?
 
+- [ ] Vérifier la conformité entre la BD actuelle et les formulaires/cartes/filtres front réellement exposés par cette page.
+- [ ] Vérifier, si la page expose une création via modale ou inline, qu’aucun contrôle `ngModel` n’est monté dans un vrai tag `<form>` sans `name` ni configuration `standalone`, afin d’éviter un défaut Angular `NG01352` et un rendu partiel.
+- [ ] Vérifier, si la page expose des validations locales obligatoires, qu’elles relisent bien un state réellement synchronisé avec la saisie et qu’elles ne masquent pas un défaut de binding ou un décalage de contrat backend/front.
+- [ ] Vérifier, si la page expose une édition via modale ou inline, que les valeurs d’origine sont bien réhydratées dès l’ouverture et au premier rendu.
+
 ## 10. Recette Manuelle
 
 1. Ouvrir `/dashboard/email-editor` avec un compte autorise.

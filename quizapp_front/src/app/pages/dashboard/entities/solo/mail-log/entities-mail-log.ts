@@ -9,7 +9,7 @@ import { DependencyPopupComponent } from '../../../../../shared/dependency-popup
 import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
 import { FilterCheckboxComponent } from '../../../../../shared/filter-checkbox/filter-checkbox';
 import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../../../shared/filter-select/filter-select';
-import { MailLogCrudService, MailLogItem, MailLogCriteria, PagedMailLogResponse } from '../../../../../core/services/mail-log-crud.service';
+import { MailLogCrudService, MailLogItem, MailLogItemMutationPayload, MailLogCriteria, PagedMailLogResponse } from '../../../../../core/services/mail-log-crud.service';
 
 @Component({
   selector: 'app-entities-mail-log',
@@ -18,7 +18,7 @@ import { MailLogCrudService, MailLogItem, MailLogCriteria, PagedMailLogResponse 
   templateUrl: './entities-mail-log.html',
   styleUrls: ['./entities-mail-log.scss']
 })
-export class EntitiesMailLogComponent extends EntityCrudBase<MailLogItem, MailLogCriteria, PagedMailLogResponse> {
+export class EntitiesMailLogComponent extends EntityCrudBase<MailLogItem, MailLogCriteria, PagedMailLogResponse, MailLogItemMutationPayload> {
   private service = inject(MailLogCrudService);
   protected override readonly router = inject(Router);
   protected override readonly pageSizeStorageKey = 'entitiesMailLogPageSize';
@@ -27,7 +27,7 @@ export class EntitiesMailLogComponent extends EntityCrudBase<MailLogItem, MailLo
 
   advancedCriteria: MailLogCriteria = {};
   editFormData: MailLogItem = {};
-  createFormData: Partial<MailLogItem> = {};
+  createFormData: MailLogItemMutationPayload = {};
 
   override allColumns: ColumnDef[] = [
     { key: 'id', label: 'ID', priority: 1 },
@@ -42,7 +42,7 @@ export class EntitiesMailLogComponent extends EntityCrudBase<MailLogItem, MailLo
   ];
 
   protected fetchAll(criteria: MailLogCriteria): Observable<PagedMailLogResponse> { return this.service.getAllByCriteria(criteria); }
-  protected performCreate(item: Partial<MailLogItem>): Observable<any> { return this.service.create(item as MailLogItem); }
+  protected performCreate(item: MailLogItemMutationPayload): Observable<any> { return this.service.create(item); }
   protected performUpdate(item: MailLogItem): Observable<any> { return this.service.update(item); }
   protected performDelete(id: number): Observable<any> { return this.service.delete(id); }
   protected performRestore(id: number): Observable<any> { return this.service.restore(id); }

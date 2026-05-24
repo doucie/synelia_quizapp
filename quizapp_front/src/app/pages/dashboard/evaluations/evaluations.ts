@@ -1,31 +1,21 @@
-import { Component, OnInit, OnDestroy, signal, computed, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, ViewChild, ElementRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, takeUntil, interval, forkJoin } from 'rxjs';
 import { EvaluationService, Evaluation, CandidateInterview } from '../../../core/services/evaluation.service';
 import { EntityPermissionService } from '../../../core/services/entity-permission.service';
+import { InterviewAdminService, InterviewEvaluationEvaluator } from '../../../core/services/interview-admin.service';
 import { InterviewParticipantService, InterviewParticipant } from '../../../core/services/interview-participant.service';
 import { EntityPermission } from '../../../core/models/permission.interfaces';
 import { ApplicationService, Application } from '../../../core/services/application.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
-import { UserService } from '../../../core/services/user.service';
 import { InterviewService } from '../../../core/services/interview.service';
 import { CampaignService } from '../../../core/services/campaign.service';
 import { FilterCheckboxComponent } from '../../../shared/filter-checkbox/filter-checkbox';
 
-interface EvaluatorInfo {
-  id: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  canEvaluate: boolean;
-  isOnline: boolean;
-  hasEvaluated: boolean;
-  hasFinished: boolean; // Nouveau: a terminé son évaluation
-  isAdmin: boolean; // Admin de la campagne
-  isCreator: boolean; // Créateur de la campagne
+interface EvaluatorInfo extends InterviewEvaluationEvaluator {
   evaluation?: EvaluationMessage;
 }
 
@@ -60,6 +50,7 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
   
   private destroy$ = new Subject<void>();
   private pollingInterval = 5000; // 5 secondes pour le polling
+  private interviewAdminService = inject(InterviewAdminService);
 
   // Route params
   evaluationsLink = signal<string | null>(null);
@@ -145,7 +136,6 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
     private applicationService: ApplicationService,
     private notificationService: NotificationService,
     private authService: AuthService,
-    private userService: UserService,
     private campaignService: CampaignService
   ) {}
 
@@ -263,80 +253,17 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
         next: (response) => {
           if (!response.hasError && response.items) {
             const participants = response.items as InterviewParticipant[];
-            const now = new Date().getTime();
-            const onlineThreshold = 20000; // 20 secondes pour considérer quelqu'un comme en ligne
-
-            // Mettre à jour les évaluateurs existants avec les nouveaux statuts
-            const currentEvaluators = this.evaluators();
-            const updated = currentEvaluators.map(evaluator => {
-              const participant = participants.find(p => p.userId === evaluator.id);
-              if (participant) {
-                let isOnline = false;
-                
-                // Utiliser directement isOnline du backend si disponible
-                if (participant.isOnline === true) {
-                  // Vérifier si le ping est récent (si lastPingAt existe)
-                  if (participant.lastPingAt && participant.lastPingAt !== 'undefined' && participant.lastPingAt !== 'null') {
-                    const lastPing = this.parseBackendDate(participant.lastPingAt);
-                    if (lastPing) {
-                      const diff = now - lastPing.getTime();
-                      isOnline = diff < onlineThreshold;
-                    } else {
-                      isOnline = true;
-                    }
-                  } else {
-                    isOnline = true;
-                  }
-                }
-                
-                // L'utilisateur courant est toujours en ligne
-                if (evaluator.id === this.currentUserId()) {
-                  isOnline = true;
-                }
-                
-                // Parser hasFinished
-                const rawHasFinished = participant.hasFinished as any;
-                const hasFinished = rawHasFinished === true || rawHasFinished === 'true' || rawHasFinished === 1;
-                
-                return {
-                  ...evaluator,
-                  isOnline,
-                  hasFinished
-                };
-              }
-              return evaluator;
-            });
-            
-            this.evaluators.set(updated);
+            this.evaluators.set(
+              this.interviewAdminService.refreshEvaluationRosterStatuses(
+                this.evaluators(),
+                participants,
+                this.currentUserId()
+              ) as EvaluatorInfo[]
+            );
           }
         },
         error: (err) => console.error('Erreur refresh évaluateurs:', err)
       });
-  }
-
-  /**
-   * Parse une date du backend (format dd/MM/yyyy HH:mm:ss ou ISO)
-   */
-  private parseBackendDate(dateStr: string): Date | null {
-    if (!dateStr) return null;
-    try {
-      if (dateStr.includes('/')) {
-        const parts = dateStr.split(' ');
-        const dateParts = parts[0].split('/');
-        const timeParts = parts[1]?.split(':') || ['00', '00', '00'];
-        return new Date(
-          parseInt(dateParts[2]), 
-          parseInt(dateParts[1]) - 1, 
-          parseInt(dateParts[0]),
-          parseInt(timeParts[0]),
-          parseInt(timeParts[1]),
-          parseInt(timeParts[2] || '0')
-        );
-      }
-      return new Date(dateStr);
-    } catch {
-      return null;
-    }
   }
 
   /**
@@ -423,13 +350,32 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
           
           const perms = permissions.items || [];
           const parts = participants.items || [];
-          
-          if (perms.length > 0 || parts.length > 0) {
-            this.processEvaluators(perms, parts, interview, campaignAccesses || []);
-          } else {
-            this.error.set('Aucun évaluateur trouvé');
-            this.loading.set(false);
-          }
+
+          this.interviewAdminService.buildEvaluationRoster(
+            perms,
+            parts,
+            campaignAccesses || [],
+            currentUserId
+          ).pipe(takeUntil(this.destroy$)).subscribe({
+            next: (roster) => {
+              if (!roster.canCurrentUserEvaluate) {
+                this.error.set('Vous n\'avez pas la permission d\'évaluer cet entretien.');
+                this.loading.set(false);
+                return;
+              }
+
+              this.canEvaluate.set(true);
+              this.currentUserParticipantId.set(roster.currentUserParticipantId);
+              this.evaluators.set(roster.evaluators as EvaluatorInfo[]);
+              this.markUserOnline();
+              this.loadCandidate(interview);
+            },
+            error: (err) => {
+              console.error('Erreur lors de la préparation des évaluateurs:', err);
+              this.error.set('Erreur lors du chargement des évaluateurs');
+              this.loading.set(false);
+            }
+          });
         },
         error: (err) => {
           console.error('Erreur:', err);
@@ -437,115 +383,6 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
           this.loading.set(false);
         }
       });
-  }
-
-  /**
-   * Traite les évaluateurs à partir des permissions et participants
-   */
-  private processEvaluators(perms: EntityPermission[], participants: InterviewParticipant[], interview: any, campaignAccesses: any[]): void {
-    const currentUserId = this.currentUserId();
-    
-    // Vérifier si l'utilisateur courant peut évaluer (via entity_permission ou participant existant)
-    const userPerm = perms.find(p => p.userId === currentUserId && p.permissionKey === 'VIEW_EVALUATIONS' && p.granted);
-    const userParticipant = participants.find(p => p.userId === currentUserId);
-    
-    if (!userPerm && !userParticipant) {
-      this.error.set('Vous n\'avez pas la permission d\'évaluer cet entretien.');
-      this.loading.set(false);
-      return;
-    }
-    
-    this.canEvaluate.set(true);
-    
-    // Stocker l'ID du participant pour les mises à jour de statut
-    this.currentUserParticipantId.set(userParticipant?.id ?? null);
-    
-    // Marquer immédiatement l'utilisateur comme en ligne
-    this.markUserOnline();
-
-    // Fusionner permissions et participants pour obtenir les évaluateurs uniques
-    const evaluatorUserIds = new Set<number>();
-    perms.filter(p => p.permissionKey === 'VIEW_EVALUATIONS' && p.granted).forEach(p => { if (p.userId) evaluatorUserIds.add(p.userId); });
-    participants.forEach(p => { if (p.userId) evaluatorUserIds.add(p.userId); });
-
-    // Créer une map des participants par userId pour les données de session
-    const participantMap = new Map<number, InterviewParticipant>();
-    participants.forEach(p => { if (p.userId) participantMap.set(p.userId, p); });
-
-    // Charger les détails des utilisateurs évaluateurs
-    const now = new Date().getTime();
-    const onlineThreshold = 15000; // 15 secondes
-    
-    const evaluatorPromises = Array.from(evaluatorUserIds)
-      .map(userId => this.loadEvaluatorDetails(userId, participantMap.get(userId), campaignAccesses, now, onlineThreshold));
-
-    Promise.all(evaluatorPromises).then(evaluators => {
-      this.evaluators.set(evaluators.filter(e => e !== null) as EvaluatorInfo[]);
-      
-      // Charger le candidat
-      this.loadCandidate(interview);
-    });
-  }
-
-  /**
-   * Charge les détails d'un évaluateur
-   */
-  private async loadEvaluatorDetails(userId: number, participant: InterviewParticipant | undefined, campaignAccesses: any[], now: number, onlineThreshold: number): Promise<EvaluatorInfo | null> {
-    // Trouver les accès campagne pour cet utilisateur
-    const userAccess = campaignAccesses.find(a => a.userId === userId);
-    
-    const isAdmin = userAccess?.isAdmin === true || userAccess?.isAdmin === 1;
-    const isCreator = userAccess?.isCreator === true || userAccess?.isCreator === 1;
-    
-    // Déterminer si l'utilisateur est en ligne basé sur le participant
-    let isOnline = false;
-    if (userId === this.currentUserId()) {
-      isOnline = true;
-    } else if (participant?.lastPingAt) {
-      const lastPing = this.parseBackendDate(participant.lastPingAt);
-      if (lastPing) {
-        isOnline = (now - lastPing.getTime()) < onlineThreshold;
-      }
-    }
-    
-    // Parser hasFinished
-    const rawHasFinished = participant?.hasFinished as any;
-    const hasFinished = rawHasFinished === true || rawHasFinished === 'true' || rawHasFinished === 1;
-    
-    return new Promise((resolve) => {
-      this.userService.getById(userId)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: (user: any) => {
-            resolve({
-              id: userId,
-              firstName: user?.firstName || user?.prenom || '',
-              lastName: user?.lastName || user?.nom || '',
-              email: user?.email || '',
-              canEvaluate: true,
-              isOnline,
-              hasEvaluated: false,
-              hasFinished,
-              isAdmin,
-              isCreator
-            });
-          },
-          error: () => {
-            resolve({
-              id: userId,
-              firstName: 'Évaluateur',
-              lastName: `#${userId}`,
-              email: '',
-              canEvaluate: true,
-              isOnline,
-              hasEvaluated: false,
-              hasFinished,
-              isAdmin,
-              isCreator
-            });
-          }
-        });
-    });
   }
 
   /**

@@ -13,7 +13,8 @@ import { DependencyInfo } from '../../../../../shared/models/interfaces';
 import { Router, ActivatedRoute } from '@angular/router';
 
 import { SpecialityService, Speciality, SpecialitySearchCriteria, PagedResponse } from '../../../../../core/services/speciality.service';
-import { DepartmentService, Department, DepartmentSearchCriteria } from '../../../../../core/services/department.service';
+import { Department } from '../../../../../core/services/department.service';
+import { DepartmentSpecialityAdminService } from '../../../../../core/services/department-speciality-admin.service';
 import { NotificationService } from '../../../../../core/services/notification.service';
 import { AuthService } from '../../../../../core/services/auth/auth.service';
 
@@ -29,6 +30,7 @@ export class EntitiesSpecialitiesComponent implements OnInit, OnDestroy {
   Math = Math;
   
   private destroy$ = new Subject<void>();
+  private departmentSpecialityAdminService = inject(DepartmentSpecialityAdminService);
 
   // Detail panel
   selectedItem = signal<any>(null);
@@ -194,7 +196,6 @@ export class EntitiesSpecialitiesComponent implements OnInit, OnDestroy {
 
   constructor(
     private specialityService: SpecialityService,
-    private departmentService: DepartmentService,
     private notificationService: NotificationService,
     private authService: AuthService,
     private router: Router,
@@ -509,10 +510,10 @@ export class EntitiesSpecialitiesComponent implements OnInit, OnDestroy {
    */
   private loadDepartments(): void {
     console.log('📥 Chargement des départements...');
-    this.departmentService.getAllDepartmentsByCriteria({ isDeleted: false }).subscribe({
-      next: (response: any) => {
-        console.log('✅ Départements chargés:', response.items);
-        this.departments.set(response.items);
+    this.departmentSpecialityAdminService.getActiveDepartments().subscribe({
+      next: (departments) => {
+        console.log('✅ Départements chargés:', departments);
+        this.departments.set(departments);
       },
       error: (error: any) => {
         console.error('❌ Erreur lors du chargement des départements:', error);
@@ -539,7 +540,7 @@ export class EntitiesSpecialitiesComponent implements OnInit, OnDestroy {
    * Sélectionne un département depuis la liste déroulante
    */
   selectDepartment(department: Department, formType: 'edit' | 'create'): void {
-    const departmentName = department.nom || department.name || '';
+    const departmentName = this.departmentSpecialityAdminService.getDepartmentLabel(department);
 
     if (formType === 'edit') {
       this.editFormData.departmentId = department.id;
@@ -555,12 +556,9 @@ export class EntitiesSpecialitiesComponent implements OnInit, OnDestroy {
    * Met à jour le nom du département affiché selon l'ID sélectionné
    */
   updateSelectedDepartmentName(departmentId: number): void {
-    const department = this.departments().find(d => d.id === departmentId);
-    if (department) {
-      this.selectedDepartmentName.set(department.nom || department.name || '');
-    } else {
-      this.selectedDepartmentName.set('');
-    }
+    this.selectedDepartmentName.set(
+      this.departmentSpecialityAdminService.resolveDepartmentName(this.departments(), departmentId)
+    );
   }
 
   /**

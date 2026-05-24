@@ -25,7 +25,6 @@ export class DepartmentsComponent implements OnInit, OnDestroy {
   departments = signal<Department[]>([]);
   loading = signal(false);
   searchQuery = signal('');
-  filterStatus = signal<'all' | 'active' | 'deleted'>('all');
 
   // Modals
   showCreateEditModal = signal(false);
@@ -63,7 +62,6 @@ export class DepartmentsComponent implements OnInit, OnDestroy {
   // Computed
   filteredDepartments = computed(() => {
     const query = this.searchQuery().toLowerCase();
-    const status = this.filterStatus();
     let filtered = this.departments();
 
     if (query) {
@@ -73,21 +71,14 @@ export class DepartmentsComponent implements OnInit, OnDestroy {
       );
     }
 
-    if (status === 'active') {
-      filtered = filtered.filter(d => !d.isDeleted);
-    } else if (status === 'deleted') {
-      filtered = filtered.filter(d => d.isDeleted);
-    }
-
     return filtered;
   });
 
-  activeCount = computed(() => this.departments().filter(d => !d.isDeleted).length);
-  deletedCount = computed(() => this.departments().filter(d => d.isDeleted).length);
+  activeCount = computed(() => this.departments().length);
 
   loadDepartments(): void {
     this.loading.set(true);
-    this.departmentService.getAllDepartmentsByCriteria({ size: 100, page: 0 })
+    this.departmentService.getAllDepartmentsByCriteria({ size: 100, page: 0, isDeleted: false })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
@@ -218,25 +209,6 @@ export class DepartmentsComponent implements OnInit, OnDestroy {
           console.error('Erreur suppression:', error);
           this.notificationService.error('Erreur', 'Impossible de supprimer le département');
           this.loading.set(false);
-        }
-      });
-  }
-
-  restoreDepartment(dept: Department): void {
-    if (!this.isAdminModeEnabled()) {
-      this.notificationService.warning('Accès refusé', 'Le mode admin doit être activé');
-      return;
-    }
-    this.departmentService.restore(dept.id)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: () => {
-          this.notificationService.success('Succès', 'Département restauré');
-          this.loadDepartments();
-        },
-        error: (error) => {
-          console.error('Erreur restauration:', error);
-          this.notificationService.error('Erreur', 'Impossible de restaurer le département');
         }
       });
   }

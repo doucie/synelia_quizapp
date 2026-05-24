@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -7,6 +7,7 @@ import { Interview, InterviewService } from '../../../core/services/interview.se
 import { Application, ApplicationService } from '../../../core/services/application.service';
 import { Campaign, CampaignService, CampaignAccessRecord } from '../../../core/services/campaign.service';
 import { User, UserService } from '../../../core/services/user.service';
+import { InterviewAdminService, InterviewEvaluatorOption } from '../../../core/services/interview-admin.service';
 import { EntityPermissionService } from '../../../core/services/entity-permission.service';
 import { PermissionService } from '../../../core/services/permission.service';
 import { SourceTokenService, SourceToken } from '../../../services/source-token.service';
@@ -40,6 +41,7 @@ export class InterviewCreateComponent implements OnInit, OnDestroy {
   private prefilledCampaignId: number | null = null;
   private prefilledApplicationId: number | null = null;
   private prefilledCandidateApplied = false;
+  private interviewAdminService = inject(InterviewAdminService);
 
   // Signals
   loading = signal(false);
@@ -48,7 +50,7 @@ export class InterviewCreateComponent implements OnInit, OnDestroy {
   applications = signal<Application[]>([]);
   sourceTokens = signal<SourceToken[]>([]);
   campaignEntityPerms = signal<EntityPermission[]>([]); // Permissions entity_permission pour la campagne
-  evaluators = signal<User[]>([]); // Évaluateurs avec droit d'évaluer
+  evaluators = signal<InterviewEvaluatorOption[]>([]); // Évaluateurs désignés pour la campagne
   allUsers = signal<User[]>([]); // Tous les utilisateurs pour la recherche
   searchEvaluatorQuery = signal('');
   showEmailPreview = signal(false);
@@ -285,7 +287,7 @@ L'équipe de recrutement
       campaignAccesses: this.campaignService.getCampaignAccessesByUser(currentUserId)
     }).pipe(takeUntil(this.destroy$)).subscribe({
       next: (response) => {
-        const accessMap = this.buildCampaignAccessMap(response.campaignAccesses || []);
+        const accessMap = this.campaignService.buildCampaignAccessMap(response.campaignAccesses || []);
         this.campaignAccessMap.set(accessMap);
 
         const allCampaigns = response.campaigns.content || [];
@@ -330,7 +332,7 @@ L'équipe de recrutement
     forkJoin({
       applications: this.applicationService.getApplicationsByCriteria({}),
       sourceTokens: this.sourceTokenService.getSourceTokensByCriteria({}),
-      evaluators: this.entityPermissionService.getForEntity('CAMPAIGN', campaignId),
+      evaluatorCatalog: this.interviewAdminService.getCampaignEvaluatorCatalog(campaignId),
       allUsers: this.userService.getAllUsersByCriteria({ isDeleted: false })
     }).pipe(takeUntil(this.destroy$)).subscribe({
       next: (response) => {
@@ -349,27 +351,12 @@ L'équipe de recrutement
           this.allUsers.set(response.allUsers.content);
         }
 
-        // Traiter les évaluateurs (entity_permission)
-        if (response.evaluators.items) {
-          console.log('📋 Entity permissions reçus:', response.evaluators.items);
-          this.campaignEntityPerms.set(response.evaluators.items);
-          
-          // Extraire les userIds uniques ayant au moins une permission
-          const allPerms = response.evaluators.items.filter((p: EntityPermission) => p.granted);
-          const userIds = [...new Set(allPerms.map((p: EntityPermission) => p.userId!))].filter(id => id);
-          // Évaluateurs = ceux qui ont VIEW_EVALUATIONS
-          const canEvaluateUserIds = [...new Set(
-            allPerms.filter((p: EntityPermission) => p.permissionKey === 'EVALUATE')
-              .map((p: EntityPermission) => p.userId!)
-          )].filter(id => id);
-          
-          console.log('👥 UserIds extraits:', userIds);
-          console.log('✅ UserIds avec VIEW_EVALUATIONS:', canEvaluateUserIds);
-          
-          this.loadEvaluatorDetails(userIds, canEvaluateUserIds);
-        } else {
-          console.warn('⚠️ Aucune permission d\'entité reçue de l\'API');
-        }
+        this.campaignEntityPerms.set(response.evaluatorCatalog.campaignPermissions);
+        this.evaluators.set(response.evaluatorCatalog.evaluators);
+        this.formData.update(current => ({
+          ...current,
+          selectedEvaluators: response.evaluatorCatalog.preselectedEvaluatorIds
+        }));
 
         this.applyRouteCandidatePrefill();
 
@@ -378,40 +365,6 @@ L'équipe de recrutement
       error: (error) => {
         console.error('Erreur lors du chargement:', error);
         this.loading.set(false);
-      }
-    });
-  }
-
-  /**
-   * Charge les détails des évaluateurs
-   */
-  loadEvaluatorDetails(userIds: number[], canEvaluateUserIds: number[] = []): void {
-    console.log('🔧 loadEvaluatorDetails appelé avec userIds:', userIds);
-    
-    if (userIds.length === 0) {
-      console.warn('⚠️ Aucun userId à charger');
-      return;
-    }
-    
-    const requests = userIds.map(id => this.userService.getById(id));
-    
-    forkJoin(requests).pipe(takeUntil(this.destroy$)).subscribe({
-      next: (users) => {
-        const validUsers = users.filter(u => u !== null);
-        console.log('👥 Évaluateurs chargés:', validUsers);
-        console.log('🔍 Détails du premier évaluateur:', validUsers[0]);
-        this.evaluators.set(validUsers);
-        
-        // Pré-sélectionner les évaluateurs avec canEvaluate=true
-        if (canEvaluateUserIds.length > 0) {
-          const current = this.formData();
-          current.selectedEvaluators = canEvaluateUserIds;
-          this.formData.set({ ...current });
-          console.log('✅ Évaluateurs pré-sélectionnés:', canEvaluateUserIds);
-        }
-      },
-      error: (error) => {
-        console.error('❌ Erreur lors du chargement des évaluateurs:', error);
       }
     });
   }
@@ -441,46 +394,6 @@ L'équipe de recrutement
     }
 
     this.prefilledCandidateApplied = true;
-  }
-
-  private buildCampaignAccessMap(accesses: any[]): Record<number, CampaignAccessRecord> {
-    return accesses.reduce((map, rawAccess) => {
-      const campaignId = Number(rawAccess.campaignId || rawAccess.campaigns_id || 0);
-      if (!campaignId) {
-        return map;
-      }
-
-      const current = map[campaignId] || {
-        campaignId,
-        userId: Number(rawAccess.userId || 0),
-        userFirstName: rawAccess.userFirstName,
-        userLastName: rawAccess.userLastName,
-        userName: rawAccess.userName,
-        userEmail: rawAccess.userEmail,
-        userRole: rawAccess.userRole,
-        canUpdate: false,
-        canDelete: false,
-        canEvaluate: false,
-        canPlanify: false,
-        canAcceptPreScreen: false,
-        canAcceptFinal: false,
-        isAdmin: false,
-        isCreator: false,
-        follow: false
-      } satisfies CampaignAccessRecord;
-
-      current.canUpdate = current.canUpdate || Boolean(rawAccess.canUpdate || rawAccess.can_update);
-      current.canDelete = current.canDelete || Boolean(rawAccess.canDelete || rawAccess.can_delete);
-      current.canEvaluate = current.canEvaluate || Boolean(rawAccess.canEvaluate || rawAccess.can_evaluate);
-      current.canPlanify = current.canPlanify || Boolean(rawAccess.canPlanify || rawAccess.can_planify);
-      current.canAcceptPreScreen = current.canAcceptPreScreen || Boolean(rawAccess.canAcceptPreScreen || rawAccess.can_accept_pre_screen);
-      current.canAcceptFinal = current.canAcceptFinal || Boolean(rawAccess.canAcceptFinal || rawAccess.can_accept_final);
-      current.isAdmin = current.isAdmin || Boolean(rawAccess.isAdmin || rawAccess.is_admin);
-      current.isCreator = current.isCreator || Boolean(rawAccess.isCreator || rawAccess.is_creator);
-      current.follow = current.follow || Boolean(rawAccess.follow);
-      map[campaignId] = current;
-      return map;
-    }, {} as Record<number, CampaignAccessRecord>);
   }
 
   private canPlanifyCampaign(campaignId: number, accessMap = this.campaignAccessMap()): boolean {

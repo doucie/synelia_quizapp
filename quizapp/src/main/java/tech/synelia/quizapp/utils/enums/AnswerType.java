@@ -1,15 +1,19 @@
 package tech.synelia.quizapp.utils.enums;
 
+import java.util.Locale;
+
 /**
  * Type de réponse.
  *
  * Règles :
- * - FIXED : réponse prédéfinie (choix à cocher), utilisée avec SINGLE_CHOICE / MULTIPLE_CHOICE / TRUE_FALSE
- * - FREE  : réponse libre saisie par le candidat, utilisée avec TEXT
+ * - TEXT  : réponse textuelle classique
+ * - IMAGE : réponse représentée par une image
+ * - CODE  : réponse représentée par un extrait de code
  */
 public enum AnswerType {
-    FIXED("FIXED"),
-    FREE("FREE");
+    TEXT("TEXT"),
+    IMAGE("IMAGE"),
+    CODE("CODE");
 
     private final String value;
 
@@ -19,5 +23,29 @@ public enum AnswerType {
 
     public String getValue() {
         return value;
+    }
+
+    public static String normalize(String rawValue) {
+        if (rawValue == null) {
+            return null;
+        }
+
+        String candidate = rawValue.trim();
+        if (candidate.isEmpty()) {
+            return null;
+        }
+
+        String upperValue = candidate.toUpperCase(Locale.ROOT);
+        if ("FIXED".equals(upperValue) || "FREE".equals(upperValue)) {
+            return TEXT.getValue();
+        }
+
+        for (AnswerType answerType : values()) {
+            if (answerType.getValue().equals(upperValue)) {
+                return answerType.getValue();
+            }
+        }
+
+        return null;
     }
 }

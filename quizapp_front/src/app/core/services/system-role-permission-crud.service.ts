@@ -14,6 +14,12 @@ export interface SystemRolePermission {
   updatedBy?: number;
 }
 
+export interface SystemRolePermissionMutationPayload {
+  id?: number;
+  systemRole?: string;
+  functionality?: string;
+}
+
 export interface SystemRolePermissionCriteria {
   systemRole?: string;
   functionality?: string;
@@ -72,11 +78,11 @@ export class SystemRolePermissionCrudService {
     );
   }
 
-  create(item: SystemRolePermission): Observable<any> {
+  create(item: SystemRolePermissionMutationPayload): Observable<any> {
     return this.http.post(`${this.apiUrl}/addPermission`, { user: this.getCurrentUserId(), data: item });
   }
 
-  update(item: SystemRolePermission): Observable<any> {
+  update(item: SystemRolePermissionMutationPayload): Observable<any> {
     return this.http.post(`${this.apiUrl}/update`, { user: this.getCurrentUserId(), data: item });
   }
 

@@ -53,6 +53,9 @@ export class FilterSelectComponent implements AfterContentInit, ControlValueAcce
 
   readonly isOpen = signal(false);
   readonly focusedIndex = signal(-1);
+  readonly dropdownDirection = signal<'down' | 'up'>('down');
+  readonly dropdownMaxHeight = signal(240);
+  readonly searchQuery = signal('');
 
   @Input()
   set value(v: SelectValue) { this._value.set(v); }
@@ -61,6 +64,8 @@ export class FilterSelectComponent implements AfterContentInit, ControlValueAcce
   @Input() disabled = false;
   @Input() ariaLabel = 'Filtre';
   @Input() placeholder = '-- Sélectionner --';
+  @Input() searchable = false;
+  @Input() searchPlaceholder = 'Rechercher...';
 
   @Output() readonly valueChange = new EventEmitter<string | number | boolean | null>();
 
@@ -71,6 +76,15 @@ export class FilterSelectComponent implements AfterContentInit, ControlValueAcce
       disabled: d.disabled
     }))
   );
+
+  readonly visibleOptions = computed<SelectOption[]>(() => {
+    const query = this.searchable ? this.searchQuery().trim().toLowerCase() : '';
+    if (!query) {
+      return this.options();
+    }
+
+    return this.options().filter(option => option.label.toLowerCase().includes(query));
+  });
 
   readonly currentLabel = computed(() => {
     const current = this._value();
@@ -95,16 +109,14 @@ export class FilterSelectComponent implements AfterContentInit, ControlValueAcce
     if (this.isOpen()) {
       this.close();
     } else {
-      this.isOpen.set(true);
-      const currentIdx = this.options().findIndex(o => o.value === this._value());
-      this.focusedIndex.set(currentIdx >= 0 ? currentIdx : 0);
-      this.scrollToFocused();
+      this.openDropdown();
     }
   }
 
   close(): void {
     this.isOpen.set(false);
     this.focusedIndex.set(-1);
+    this.searchQuery.set('');
   }
 
   selectOption(opt: SelectOption): void {
@@ -123,7 +135,7 @@ export class FilterSelectComponent implements AfterContentInit, ControlValueAcce
   }
 
   onTriggerKeydown(event: KeyboardEvent): void {
-    const opts = this.options();
+    const opts = this.visibleOptions();
     switch (event.key) {
       case 'Enter':
       case ' ':
@@ -138,19 +150,17 @@ export class FilterSelectComponent implements AfterContentInit, ControlValueAcce
       case 'ArrowDown':
         event.preventDefault();
         if (!this.isOpen()) {
-          this.toggle();
+          this.openDropdown();
         } else {
-          this.focusedIndex.update(i => Math.min(i + 1, opts.length - 1));
-          this.scrollToFocused();
+          this.moveFocus(1);
         }
         break;
       case 'ArrowUp':
         event.preventDefault();
         if (!this.isOpen()) {
-          this.toggle();
+          this.openDropdown();
         } else {
-          this.focusedIndex.update(i => Math.max(i - 1, 0));
-          this.scrollToFocused();
+          this.moveFocus(-1);
         }
         break;
       case 'Escape':
@@ -167,11 +177,52 @@ export class FilterSelectComponent implements AfterContentInit, ControlValueAcce
     }
   }
 
+  onSearchInput(value: string): void {
+    this.searchQuery.set(value);
+    this.resetFocusedOption();
+    this.scrollToFocused();
+  }
+
+  onSearchKeydown(event: KeyboardEvent): void {
+    const opts = this.visibleOptions();
+
+    switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault();
+        this.moveFocus(1);
+        break;
+      case 'ArrowUp':
+        event.preventDefault();
+        this.moveFocus(-1);
+        break;
+      case 'Enter': {
+        const focused = opts[this.focusedIndex()];
+        if (focused) {
+          event.preventDefault();
+          this.selectOption(focused);
+        }
+        break;
+      }
+      case 'Escape':
+        event.preventDefault();
+        this.close();
+        this._onTouched();
+        break;
+    }
+  }
+
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     if (this.isOpen() && !this._el.nativeElement.contains(event.target as Node)) {
       this.close();
       this._onTouched();
+    }
+  }
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    if (this.isOpen()) {
+      this.updateDropdownPlacement();
     }
   }
 
@@ -189,6 +240,70 @@ export class FilterSelectComponent implements AfterContentInit, ControlValueAcce
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
+  }
+
+  private openDropdown(): void {
+    this.isOpen.set(true);
+    this.searchQuery.set('');
+    this.updateDropdownPlacement();
+    this.resetFocusedOption();
+    this.scrollToFocused();
+    if (this.searchable) {
+      this.focusSearchInput();
+    }
+  }
+
+  private resetFocusedOption(): void {
+    const opts = this.visibleOptions();
+    const currentIdx = opts.findIndex(option => option.value === this._value());
+    this.focusedIndex.set(currentIdx >= 0 ? currentIdx : (opts.length > 0 ? 0 : -1));
+  }
+
+  private moveFocus(step: number): void {
+    const opts = this.visibleOptions();
+    if (opts.length === 0) {
+      this.focusedIndex.set(-1);
+      return;
+    }
+
+    const currentIdx = this.focusedIndex();
+    const nextIdx = currentIdx < 0
+      ? (step > 0 ? 0 : opts.length - 1)
+      : Math.max(0, Math.min(currentIdx + step, opts.length - 1));
+
+    this.focusedIndex.set(nextIdx);
+    this.scrollToFocused();
+  }
+
+  private updateDropdownPlacement(): void {
+    setTimeout(() => {
+      const trigger = this._el.nativeElement.querySelector('.filter-select-trigger') as HTMLElement | null;
+      if (!trigger) {
+        return;
+      }
+
+      const rect = trigger.getBoundingClientRect();
+      const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+      const viewportMargin = 16;
+      const preferredHeight = this.searchable ? 320 : 240;
+      const spaceBelow = Math.max(0, viewportHeight - rect.bottom - viewportMargin);
+      const spaceAbove = Math.max(0, rect.top - viewportMargin);
+      const openUpwards = spaceBelow < 220 && spaceAbove > spaceBelow;
+      const availableSpace = openUpwards ? spaceAbove : spaceBelow;
+      const fallbackSpace = Math.max(spaceAbove, spaceBelow);
+      const maxHeight = availableSpace > 0 ? availableSpace : fallbackSpace;
+
+      this.dropdownDirection.set(openUpwards ? 'up' : 'down');
+      this.dropdownMaxHeight.set(Math.floor(Math.min(preferredHeight, maxHeight || preferredHeight)));
+    });
+  }
+
+  private focusSearchInput(): void {
+    setTimeout(() => {
+      const input = this._el.nativeElement.querySelector('.filter-select-search-input') as HTMLInputElement | null;
+      input?.focus();
+      input?.select();
+    });
   }
 
   private scrollToFocused(): void {

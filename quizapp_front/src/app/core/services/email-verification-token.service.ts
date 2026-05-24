@@ -18,6 +18,19 @@ export interface EmailVerificationToken {
   isDeleted?: boolean;
 }
 
+export interface EmailVerificationTokenMutationPayload {
+  id?: number;
+  email?: string;
+  token?: string;
+  tokenType?: string;
+  expiresAt?: string;
+  isUsed?: boolean;
+  usedAt?: string;
+  applicationId?: number;
+  userId?: number;
+  isDeleted?: boolean;
+}
+
 export interface EmailVerificationTokenCriteria {
   email?: string;
   tokenType?: string;
@@ -83,11 +96,11 @@ export class EmailVerificationTokenService {
     );
   }
 
-  create(item: EmailVerificationToken): Observable<any> {
+  create(item: EmailVerificationTokenMutationPayload): Observable<any> {
     return this.http.post(`${this.apiUrl}/create`, { user: this.getCurrentUserId(), datas: [item] });
   }
 
-  update(item: EmailVerificationToken): Observable<any> {
+  update(item: EmailVerificationTokenMutationPayload): Observable<any> {
     return this.http.post(`${this.apiUrl}/update`, { user: this.getCurrentUserId(), datas: [item] });
   }
 

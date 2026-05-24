@@ -9,7 +9,7 @@ import { DependencyPopupComponent } from '../../../../../shared/dependency-popup
 import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
 import { FilterCheckboxComponent } from '../../../../../shared/filter-checkbox/filter-checkbox';
 import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../../../shared/filter-select/filter-select';
-import { FormService, Form, PagedFormResponse, FormSearchCriteria } from '../../../../../core/services/form.service';
+import { FormService, Form, FormMutationPayload, PagedFormResponse, FormSearchCriteria } from '../../../../../core/services/form.service';
 import { FormVersionService, FormVersion } from '../../../../../core/services/form-version.service';
 import { CampaignService, Campaign } from '../../../../../core/services/campaign.service';
 
@@ -20,7 +20,7 @@ import { CampaignService, Campaign } from '../../../../../core/services/campaign
   templateUrl: './entities-forms.html',
   styleUrls: ['./entities-forms.scss']
 })
-export class EntitiesFormsComponent extends EntityCrudBase<Form, FormSearchCriteria, PagedFormResponse> {
+export class EntitiesFormsComponent extends EntityCrudBase<Form, FormSearchCriteria, PagedFormResponse, FormMutationPayload> {
   private service = inject(FormService);
   private formVersionService = inject(FormVersionService);
   protected override readonly router = inject(Router);
@@ -46,7 +46,7 @@ export class EntitiesFormsComponent extends EntityCrudBase<Form, FormSearchCrite
 
   advancedCriteria: FormSearchCriteria = {};
   editFormData: Form = {};
-  createFormData: Partial<Form> = {};
+  createFormData: FormMutationPayload = {};
 
   override allColumns: ColumnDef[] = [
     { key: 'id', label: 'ID', priority: 1 },
@@ -59,7 +59,7 @@ export class EntitiesFormsComponent extends EntityCrudBase<Form, FormSearchCrite
   ];
 
   protected fetchAll(criteria: FormSearchCriteria): Observable<PagedFormResponse> { return this.service.getAllByCriteria(criteria); }
-  protected performCreate(item: Partial<Form>): Observable<any> { return this.service.create(item as Form); }
+  protected performCreate(item: FormMutationPayload): Observable<any> { return this.service.create(item); }
   protected performUpdate(item: Form): Observable<any> { return this.service.update(item); }
   protected performDelete(id: number): Observable<any> { return this.service.delete(id); }
   protected performRestore(id: number): Observable<any> { return this.service.restore(id); }

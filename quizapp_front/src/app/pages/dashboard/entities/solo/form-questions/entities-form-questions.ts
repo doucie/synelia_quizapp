@@ -9,7 +9,7 @@ import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../../
 import { EntityDetailPanelComponent } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
 import { DependencyPopupComponent } from '../../../../../shared/dependency-popup/dependency-popup';
 import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
-import { FormQuestionsService, FormQuestions, PagedFormQuestionsResponse, FormQuestionsSearchCriteria } from '../../../../../core/services/form-questions.service';
+import { FormQuestionsService, FormQuestions, FormQuestionsMutationPayload, PagedFormQuestionsResponse, FormQuestionsSearchCriteria } from '../../../../../core/services/form-questions.service';
 import { FormVersionService, FormVersion } from '../../../../../core/services/form-version.service';
 import { QuestionService, Question } from '../../../../../core/services/question.service';
 
@@ -20,7 +20,7 @@ import { QuestionService, Question } from '../../../../../core/services/question
   templateUrl: './entities-form-questions.html',
   styleUrls: ['./entities-form-questions.scss']
 })
-export class EntitiesFormQuestionsComponent extends EntityCrudBase<FormQuestions, FormQuestionsSearchCriteria, PagedFormQuestionsResponse> {
+export class EntitiesFormQuestionsComponent extends EntityCrudBase<FormQuestions, FormQuestionsSearchCriteria, PagedFormQuestionsResponse, FormQuestionsMutationPayload> {
   private service = inject(FormQuestionsService);
   protected override readonly router = inject(Router);
   protected override readonly pageSizeStorageKey = 'entitiesFormQuestionsPageSize';
@@ -45,7 +45,7 @@ export class EntitiesFormQuestionsComponent extends EntityCrudBase<FormQuestions
 
   advancedCriteria: FormQuestionsSearchCriteria = {};
   editFormData: FormQuestions = {};
-  createFormData: Partial<FormQuestions> = {};
+  createFormData: FormQuestionsMutationPayload = {};
 
   override allColumns: ColumnDef[] = [
     { key: 'id', label: 'ID', priority: 1 },
@@ -58,7 +58,7 @@ export class EntitiesFormQuestionsComponent extends EntityCrudBase<FormQuestions
   ];
 
   protected fetchAll(criteria: FormQuestionsSearchCriteria): Observable<PagedFormQuestionsResponse> { return this.service.getAllByCriteria(criteria); }
-  protected performCreate(item: Partial<FormQuestions>): Observable<any> { return this.service.create(item as FormQuestions); }
+  protected performCreate(item: FormQuestionsMutationPayload): Observable<any> { return this.service.create(item); }
   protected performUpdate(item: FormQuestions): Observable<any> { return this.service.update(item); }
   protected performDelete(id: number): Observable<any> { return this.service.delete(id); }
   protected performRestore(id: number): Observable<any> { return this.service.restore(id); }

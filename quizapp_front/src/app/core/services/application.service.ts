@@ -101,6 +101,7 @@ export interface SaveQuizAnswerPayload {
   questionId: number;
   answerId?: number;
   selectedAnswerIds?: number[];
+  selectedAnswerComments?: Record<number, string | null>;
   freeTextResponse?: string | null;
 }
 
@@ -263,6 +264,7 @@ export class ApplicationService {
         questionId: payload.questionId,
         answerId: payload.answerId,
         selectedAnswerIds,
+        selectedAnswerComments: payload.selectedAnswerComments || {},
         freeTextResponse: payload.freeTextResponse ?? null,
         candidateFirstName: null,
         candidateLastName: null,

@@ -20,9 +20,9 @@ La page administre la banque de questions et embarque un sous-CRUD de reponses d
 - [x] Les reponses enfants supportent create / edit / delete / restore depuis la meme page.
 - [x] Les compteurs `actifs` et `supprimes` sont recalcules cote front.
 - [x] La page sauvegarde sa pagination uniquement en localStorage.
-- [ ] Plusieurs labels et methodes sont encore issus d'un copier-coller d'autres pages: `createDepartment()`, messages `departement`, titre `Ajouter une specialite` pour une modale de reponse.
-- [ ] Les modales question visibles n'exposent que `questionText`, `specialityId` et `questionChrono`, alors que la liste et les filtres manipulent aussi `questionType`, `difficultyLevel` et `score`.
-- [ ] La modale de creation de reponse visible dans le template semble corrompue: deux champs relies a `answerText`, libelles `specialite` / `departement`, pas de reflet propre de `answerOrder`.
+- [x] Les principaux labels et handlers visibles issus d'un copier-coller ont ete recables: ouverture de creation question, messages question/reponse, et titres de modales reponses.
+- [x] Les modales question exposent maintenant `questionText`, `specialityId`, `questionType`, `difficultyLevel`, `score` et `questionChrono`, en coherence avec la liste et les filtres.
+- [x] Les modales create/edit de reponse ont ete recablees sur les bons champs `answerText`, `answerOrder` et `isCorrect`, avec libelles question/reponse coherents.
 
 ## 4. Blocs UI Constates
 
@@ -61,8 +61,8 @@ La page administre la banque de questions et embarque un sous-CRUD de reponses d
 ### 4.5 Modales
 
 - [x] confirmation suppression / restauration question
-- [x] creation / edition question
-- [x] creation / edition / suppression / restauration reponse, avec template manifestement incoherent sur au moins une modale
+- [x] creation / edition question avec type, difficulte, score, specialite et chrono
+- [x] creation / edition / suppression / restauration reponse avec champs et libelles coherents
 
 ## 5. Donnees Affichees Ou Editees
 
@@ -116,4 +116,4 @@ La page administre la banque de questions et embarque un sous-CRUD de reponses d
 3. Creer puis editer une question.
 4. Ouvrir l'expansion d'une question et verifier ses reponses.
 5. Ajouter, modifier, supprimer puis restaurer une reponse.
-6. Verifier les libelles/modales incoherents recenses ci-dessus.
+6. Verifier la presence des champs `type`, `difficulte`, `score`, `ordre` et `reponse correcte` dans les modales corrigees.

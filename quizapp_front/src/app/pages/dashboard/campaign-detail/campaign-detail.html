@@ -207,20 +207,6 @@
             </div>
           }
 
-          @if (campaign()?.markedOutOf) {
-            <div class="meta-card">
-              <div class="meta-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                </svg>
-              </div>
-              <div class="meta-content">
-                <span class="meta-label">Note sur</span>
-                <span class="meta-value">{{ campaign()?.markedOutOf }} points</span>
-              </div>
-            </div>
-          }
-
           @if (campaign()?.questionsCount !== undefined) {
             <div class="meta-card">
               <div class="meta-icon">
@@ -323,7 +309,7 @@
 
         @if (recruiters().length > 0) {
           <div class="recruiters-grid">
-            @for (recruiter of recruiters(); track recruiter.id) {
+            @for (recruiter of recruiters(); track recruiter.userId) {
               <div class="recruiter-card">
                 <div class="recruiter-header">
                   <div class="recruiter-avatar">

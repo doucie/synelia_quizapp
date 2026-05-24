@@ -21,6 +21,15 @@ export interface FormQuestions {
   dateModificationA?: string;
 }
 
+export interface FormQuestionsMutationPayload {
+  id?: number;
+  questionOrder?: number;
+  chronoOverride?: number;
+  formVersionId?: number;
+  questionId?: number;
+  isDeleted?: boolean;
+}
+
 export interface FormQuestionsSearchCriteria {
   page?: number;
   size?: number;
@@ -90,11 +99,11 @@ export class FormQuestionsService {
     );
   }
 
-  create(item: FormQuestions): Observable<any> {
+  create(item: FormQuestionsMutationPayload): Observable<any> {
     return this.http.post(`${this.apiUrl}/create`, { user: 1, datas: [item] });
   }
 
-  update(item: FormQuestions): Observable<any> {
+  update(item: FormQuestionsMutationPayload): Observable<any> {
     return this.http.post(`${this.apiUrl}/update`, { user: 1, datas: [item] });
   }
 

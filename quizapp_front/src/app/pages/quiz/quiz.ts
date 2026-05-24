@@ -9,6 +9,10 @@ interface Answer {
   id: number;
   answerContent: string;
   answerId?: number; // ID de la réponse
+  allowAdditionalComment?: boolean;
+  additionalCommentRequired?: boolean;
+  additionalCommentPlaceholder?: string | null;
+  freeTextResponse?: string | null;
 }
 
 interface Question {
@@ -63,6 +67,7 @@ export class QuizComponent implements OnInit, OnDestroy {
   currentQuestionIndex = signal(0);
   selectedAnswers = signal<Map<number, number[]>>(new Map()); // questionId -> answerIds
   freeTextResponses = signal<Map<number, string | null>>(new Map());
+  answerComments = signal<Map<number, string | null>>(new Map());
   
   // Données de l'application
   applicationId = signal<number | null>(null);
@@ -98,7 +103,11 @@ export class QuizComponent implements OnInit, OnDestroy {
     if (this.isTextQuestion(currentQ)) {
       return !!this.normalizeTextResponse(this.freeTextResponses().get(currentQ.id) ?? null);
     }
-    return (this.selectedAnswers().get(currentQ.id)?.length || 0) > 0;
+    const selectedIds = this.selectedAnswers().get(currentQ.id) || [];
+    if (selectedIds.length === 0) {
+      return false;
+    }
+    return this.hasRequiredAdditionalComments(currentQ);
   });
 
   isLastQuestion = computed(() => {
@@ -203,19 +212,17 @@ export class QuizComponent implements OnInit, OnDestroy {
     const currentQ = this.currentQuestion();
     if (!currentQ) return;
 
+    const currentSelectedIds = this.selectedAnswers().get(questionId) || [];
     const nextSelectedIds = this.computeNextSelectedIds(currentQ, questionId, answerId);
+    const removedAnswerIds = currentSelectedIds.filter(id => !nextSelectedIds.includes(id));
+
+    if (removedAnswerIds.length > 0) {
+      this.clearAnswerComments(removedAnswerIds);
+    }
+
     this.updateSelectedAnswers(questionId, nextSelectedIds);
 
-    const answerIdsToSave = nextSelectedIds
-      .map(id => currentQ.answers.find(answer => answer.id === id)?.answerId || id)
-      .filter((id): id is number => Number.isFinite(id));
-
-    this.persistQuestionAnswer({
-      questionId,
-      answerId: answerIdsToSave.length === 1 ? answerIdsToSave[0] : undefined,
-      selectedAnswerIds: answerIdsToSave,
-      freeTextResponse: null
-    });
+    this.persistQuestionAnswer(this.buildChoiceQuestionPayload(currentQ));
   }
 
   isAnswerSelected(questionId: number, answerId: number): boolean {
@@ -236,7 +243,9 @@ export class QuizComponent implements OnInit, OnDestroy {
 
   goToPreviousQuestion(): void {
     if (this.currentQuestionIndex() > 0) {
-      this.currentQuestionIndex.set(this.currentQuestionIndex() - 1);
+      this.persistCurrentQuestionIfNeeded(() => {
+        this.currentQuestionIndex.set(this.currentQuestionIndex() - 1);
+      });
     }
   }
 
@@ -253,6 +262,31 @@ export class QuizComponent implements OnInit, OnDestroy {
     const nextResponses = new Map(this.freeTextResponses());
     nextResponses.set(questionId, value);
     this.freeTextResponses.set(nextResponses);
+  }
+
+  getAnswerComment(answerId: number): string {
+    return this.answerComments().get(answerId) ?? '';
+  }
+
+  updateAnswerComment(answerId: number, value: string): void {
+    this.handleUserActivity();
+    const nextComments = new Map(this.answerComments());
+    nextComments.set(answerId, value);
+    this.answerComments.set(nextComments);
+  }
+
+  saveAnswerComment(questionId: number): void {
+    this.handleUserActivity();
+    const question = this.findQuestionById(questionId);
+    if (!question) {
+      return;
+    }
+
+    this.persistQuestionAnswer(this.buildChoiceQuestionPayload(question));
+  }
+
+  hasAdditionalCommentValue(answerId: number): boolean {
+    return !!this.normalizeTextResponse(this.answerComments().get(answerId) ?? null);
   }
 
   saveFreeTextAnswer(questionId: number): void {
@@ -276,6 +310,11 @@ export class QuizComponent implements OnInit, OnDestroy {
     if (!question) return '';
     if (this.isTextQuestion(question)) {
       return 'Rédigez votre réponse. Elle sera corrigée manuellement.';
+    }
+    if (this.hasAdditionalCommentOption(question)) {
+      return this.isMultipleChoiceQuestion(question)
+        ? 'Sélectionnez une ou plusieurs réponses. Certaines options demandent une précision.'
+        : 'Sélectionnez une seule réponse. Certaines options demandent une précision.';
     }
     if (this.isMultipleChoiceQuestion(question)) {
       return 'Sélectionnez une ou plusieurs réponses.';
@@ -337,14 +376,20 @@ export class QuizComponent implements OnInit, OnDestroy {
   private initializeLocalState(quizData: QuizData): void {
     const nextSelectedAnswers = new Map<number, number[]>();
     const nextFreeTextResponses = new Map<number, string | null>();
+    const nextAnswerComments = new Map<number, string | null>();
 
     for (const question of quizData.questions || []) {
       nextSelectedAnswers.set(question.id, [...(question.selectedAnswerIds || [])]);
       nextFreeTextResponses.set(question.id, question.freeTextResponse ?? null);
+
+      for (const answer of question.answers || []) {
+        nextAnswerComments.set(answer.id, answer.freeTextResponse ?? null);
+      }
     }
 
     this.selectedAnswers.set(nextSelectedAnswers);
     this.freeTextResponses.set(nextFreeTextResponses);
+    this.answerComments.set(nextAnswerComments);
   }
 
   private initializeCountdown(quizData: QuizData): void {
@@ -488,8 +533,18 @@ export class QuizComponent implements OnInit, OnDestroy {
 
   private persistCurrentQuestionIfNeeded(onSuccess: () => void): void {
     const currentQ = this.currentQuestion();
-    if (!currentQ || !this.isTextQuestion(currentQ)) {
+    if (!currentQ) {
       onSuccess();
+      return;
+    }
+
+    if (!this.isTextQuestion(currentQ) && !this.hasSelectedAdditionalCommentAnswer(currentQ)) {
+      onSuccess();
+      return;
+    }
+
+    if (!this.isTextQuestion(currentQ)) {
+      this.persistQuestionAnswer(this.buildChoiceQuestionPayload(currentQ), onSuccess, true);
       return;
     }
 
@@ -535,6 +590,77 @@ export class QuizComponent implements OnInit, OnDestroy {
   private normalizeTextResponse(value: string | null | undefined): string | null {
     const normalized = (value || '').trim();
     return normalized ? normalized : null;
+  }
+
+  private hasAdditionalCommentOption(question: Question | null): boolean {
+    return (question?.answers || []).some(answer => answer.allowAdditionalComment === true);
+  }
+
+  private hasSelectedAdditionalCommentAnswer(question: Question | null): boolean {
+    if (!question) {
+      return false;
+    }
+
+    const selectedIds = new Set(this.selectedAnswers().get(question.id) || []);
+    return (question.answers || []).some(answer => selectedIds.has(answer.id) && answer.allowAdditionalComment === true);
+  }
+
+  private hasRequiredAdditionalComments(question: Question): boolean {
+    const selectedIds = new Set(this.selectedAnswers().get(question.id) || []);
+
+    return (question.answers || [])
+      .filter(answer => selectedIds.has(answer.id) && answer.allowAdditionalComment === true && answer.additionalCommentRequired === true)
+      .every(answer => this.hasAdditionalCommentValue(answer.id));
+  }
+
+  private clearAnswerComments(answerIds: number[]): void {
+    if (answerIds.length === 0) {
+      return;
+    }
+
+    const nextComments = new Map(this.answerComments());
+    for (const answerId of answerIds) {
+      nextComments.delete(answerId);
+    }
+    this.answerComments.set(nextComments);
+  }
+
+  private buildChoiceQuestionPayload(question: Question): SaveQuizAnswerPayload {
+    const selectedAnswerIds = this.resolvePersistedAnswerIds(question);
+
+    return {
+      questionId: question.id,
+      answerId: selectedAnswerIds.length === 1 ? selectedAnswerIds[0] : undefined,
+      selectedAnswerIds,
+      selectedAnswerComments: this.buildSelectedAnswerComments(question, selectedAnswerIds),
+      freeTextResponse: null
+    };
+  }
+
+  private resolvePersistedAnswerIds(question: Question): number[] {
+    return (this.selectedAnswers().get(question.id) || [])
+      .map(answerId => question.answers.find(answer => answer.id === answerId)?.answerId || answerId)
+      .filter((answerId): answerId is number => Number.isFinite(answerId));
+  }
+
+  private buildSelectedAnswerComments(question: Question, selectedAnswerIds: number[]): Record<number, string | null> {
+    const selectedAnswerIdSet = new Set(selectedAnswerIds);
+    const selectedAnswerComments: Record<number, string | null> = {};
+
+    for (const answer of question.answers || []) {
+      const persistedAnswerId = answer.answerId || answer.id;
+      if (!selectedAnswerIdSet.has(persistedAnswerId) || answer.allowAdditionalComment !== true) {
+        continue;
+      }
+
+      selectedAnswerComments[persistedAnswerId] = this.normalizeTextResponse(this.getAnswerComment(answer.id));
+    }
+
+    return selectedAnswerComments;
+  }
+
+  private findQuestionById(questionId: number): Question | null {
+    return this.quizData()?.questions.find(question => question.id === questionId) || null;
   }
 
   private formatDuration(totalSeconds: number | null): string {

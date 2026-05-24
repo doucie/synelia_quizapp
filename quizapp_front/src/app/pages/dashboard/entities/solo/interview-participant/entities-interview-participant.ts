@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { EntityCrudBase, ColumnDef } from '../../../../../shared/entity-crud-base';
-import { InterviewParticipantService, InterviewParticipant, PagedInterviewParticipantResponse, InterviewParticipantSearchCriteria } from '../../../../../core/services/interview-participant.service';
+import { InterviewParticipantService, InterviewParticipant, InterviewParticipantMutationPayload, PagedInterviewParticipantResponse, InterviewParticipantSearchCriteria } from '../../../../../core/services/interview-participant.service';
 import { InterviewService, Interview } from '../../../../../core/services/interview.service';
 import { UserService, User } from '../../../../../core/services/user.service';
 import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
@@ -18,7 +18,7 @@ import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../../
   templateUrl: './entities-interview-participant.html',
   styleUrls: ['./entities-interview-participant.scss']
 })
-export class EntitiesInterviewParticipantComponent extends EntityCrudBase<InterviewParticipant, InterviewParticipantSearchCriteria, PagedInterviewParticipantResponse> {
+export class EntitiesInterviewParticipantComponent extends EntityCrudBase<InterviewParticipant, InterviewParticipantSearchCriteria, PagedInterviewParticipantResponse, InterviewParticipantMutationPayload> {
   private service = inject(InterviewParticipantService);
   private interviewService = inject(InterviewService);
   private userService = inject(UserService);
@@ -32,7 +32,7 @@ export class EntitiesInterviewParticipantComponent extends EntityCrudBase<Interv
 
   advancedCriteria: InterviewParticipantSearchCriteria = {};
   editFormData: InterviewParticipant = { interviewId: 0, userId: 0 };
-  createFormData: Partial<InterviewParticipant> = {};
+  createFormData: InterviewParticipantMutationPayload = {};
 
   override allColumns: ColumnDef[] = [
     { key: 'id', label: 'ID', priority: 1 },
@@ -46,7 +46,7 @@ export class EntitiesInterviewParticipantComponent extends EntityCrudBase<Interv
   ];
 
   protected fetchAll(criteria: InterviewParticipantSearchCriteria): Observable<PagedInterviewParticipantResponse> { return this.service.getAllByCriteria(criteria); }
-  protected performCreate(item: Partial<InterviewParticipant>): Observable<any> { return this.service.entityCreate(item as InterviewParticipant); }
+  protected performCreate(item: InterviewParticipantMutationPayload): Observable<any> { return this.service.entityCreate(item); }
   protected performUpdate(item: InterviewParticipant): Observable<any> { return this.service.entityUpdate(item); }
   protected performDelete(id: number): Observable<any> { return this.service.entityDelete(id); }
   protected performRestore(id: number): Observable<any> { return this.service.entityRestore(id); }

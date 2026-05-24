@@ -28,6 +28,9 @@ public interface AnswerTransformer {
 	@Mappings({
 		@Mapping(source="entity.createdAt", dateFormat="dd/MM/yyyy", target="createdAt"),
 		@Mapping(source="entity.updatedAt", dateFormat="dd/MM/yyyy", target="updatedAt"),
+		@Mapping(source="entity.allowAdditionalComment", target="allowAdditionalComment"),
+		@Mapping(source="entity.additionalCommentRequired", target="additionalCommentRequired"),
+		@Mapping(source="entity.additionalCommentPlaceholder", target="additionalCommentPlaceholder"),
 		@Mapping(source="entity.question.id", target="questionId"),
 	})
 	AnswerDto toDto(Answer entity) throws ParseException;
@@ -61,6 +64,9 @@ public interface AnswerTransformer {
 		@Mapping(source="dto.id", target="id"),
 		@Mapping(source="dto.answerText", target="answerText"),
 		@Mapping(source="dto.answerType", target="answerType"),
+		@Mapping(source="dto.allowAdditionalComment", target="allowAdditionalComment"),
+		@Mapping(source="dto.additionalCommentRequired", target="additionalCommentRequired"),
+		@Mapping(source="dto.additionalCommentPlaceholder", target="additionalCommentPlaceholder"),
 		@Mapping(source="dto.answerOrder", target="answerOrder"),
 		@Mapping(source="dto.isCorrect", target="isCorrect"),
 		@Mapping(source="dto.createdAt", dateFormat="dd/MM/yyyy", target="createdAt"),

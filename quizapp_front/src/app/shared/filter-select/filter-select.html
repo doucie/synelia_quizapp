@@ -19,24 +19,44 @@
   </button>
 
   @if (isOpen()) {
-    <ul
+    <div
       class="filter-select-dropdown"
-      role="listbox"
-      [attr.aria-label]="ariaLabel">
-      @for (opt of options(); track $index) {
-        <li
-          class="filter-select-option"
-          role="option"
-          [class.selected]="opt.value === value"
-          [class.disabled]="opt.disabled"
-          [class.focused]="focusedIndex() === $index"
-          [attr.aria-selected]="opt.value === value"
-          [attr.aria-disabled]="opt.disabled || null"
-          (click)="selectOption(opt)">
-          {{ opt.label }}
-        </li>
+      [class.dropdown-up]="dropdownDirection() === 'up'"
+      [style.max-height.px]="dropdownMaxHeight()">
+      @if (searchable) {
+        <div class="filter-select-search">
+          <input
+            type="text"
+            class="filter-select-search-input"
+            [value]="searchQuery()"
+            [placeholder]="searchPlaceholder"
+            [attr.aria-label]="searchPlaceholder"
+            (input)="onSearchInput($any($event.target).value || '')"
+            (keydown)="onSearchKeydown($event)">
+        </div>
       }
-    </ul>
+
+      <ul
+        class="filter-select-options"
+        role="listbox"
+        [attr.aria-label]="ariaLabel">
+        @for (opt of visibleOptions(); track $index) {
+          <li
+            class="filter-select-option"
+            role="option"
+            [class.selected]="opt.value === value"
+            [class.disabled]="opt.disabled"
+            [class.focused]="focusedIndex() === $index"
+            [attr.aria-selected]="opt.value === value"
+            [attr.aria-disabled]="opt.disabled || null"
+            (click)="selectOption(opt)">
+            {{ opt.label }}
+          </li>
+        } @empty {
+          <li class="filter-select-empty">Aucun resultat</li>
+        }
+      </ul>
+    </div>
   }
 
   <!-- Options projetées masquées — nécessaires pour que FilterSelectOptionDirective soit instanciée -->

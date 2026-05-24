@@ -21,7 +21,7 @@ Logique retenue:
 3. Uniformiser suppression / restauration et supprimer les flux morts.
 4. Purger les fallbacks techniques de type `user: 1`.
 5. Aligner les DTO, colonnes et templates sur les routes les plus exposees.
-6. Reprendre les routes qui doublonnent deja une vraie page metier.
+6. Reporter la rationalisation des routes non bloquantes et se concentrer d'abord sur le fonctionnement normal des pages.
 
 ## 3. P0
 
@@ -247,42 +247,58 @@ Logique retenue:
 
 ## 5. P2
 
-### [ ] BL-009 Arbitrer Les Routes A Conserver, Rediriger Ou Deprecier
+### [x] BL-009 Clore L'Audit Des Routes Et Deprioriser Ce Sujet
 
 - Priorite: P2
-- Impact: simplification du frontend
-- Recadrage: ne pas traiter la dualite `dashboard/entities/*` vs `dashboard/*` comme une anomalie quand elle correspond volontairement a la separation `super-admin technique` vs `page metier`.
-- Candidats naturels:
-  - [330-entities-campaigns.md](./330-entities-campaigns.md)
-  - [70-entities-business-groups.md](./70-entities-business-groups.md)
-  - [250-entities-pipeline-templates.md](./250-entities-pipeline-templates.md)
-  - [260-entities-pipeline-stages.md](./260-entities-pipeline-stages.md)
-  - [170-entities-email-templates.md](./170-entities-email-templates.md)
-  - [310-entities-system-role-permissions.md](./310-entities-system-role-permissions.md)
-  - [320-entities-user-permission-overrides.md](./320-entities-user-permission-overrides.md)
-  - [270-entities-business-group-permissions.md](./270-entities-business-group-permissions.md)
-  - [280-entities-user-business-groups.md](./280-entities-user-business-groups.md)
+- Impact: cadrage / documentation
+- Conclusion:
+  - aucune route frontend inutile n'a ete identifiee;
+  - la dualite `dashboard/entities/*` vs `dashboard/*` est volontaire;
+  - le sujet releve d'abord de navigation et de permissions, pas de suppression de pages.
 - Livrable attendu:
-  - tableau conserver / reduire / rediriger / deprecier.
-- Cible reelle:
-  - identifier les vraies routes frontend mortes, aliases historiques inutiles ou points d'entree qui n'ont plus d'usage produit ni technique;
-  - verifier separement si certains endpoints backend anciens existent encore sans consommateur frontend utile.
+  - note de cloture courte actant qu'aucune suppression n'est necessaire.
+- Realisation:
+  - [390-audit-routes-entrees-usage.md](./390-audit-routes-entrees-usage.md) est maintenant une note de cloture concise;
+  - les ecarts de surfacing sidebar detectes pendant l'audit ont ete corriges pour `Questions`, `Reponses` et `Groupes metiers`;
+  - le backlog ne garde plus BL-009 comme chantier de rationalisation actif.
+- Critere de fin:
+  - le backlog n'ouvre plus de chantier de suppression ou de deprecation de routes sans besoin produit explicite.
 
 ### [ ] BL-010 Construire Un Vrai Pattern CRUD Type-Safe
 
 - Priorite: P2
 - Impact: maintenabilite a long terme
 - Probleme: trop de composants reimplementent le meme schema CRUD avec mapping et conventions instables.
+- Realisation en cours:
+  - `quizapp_front/src/app/shared/entity-crud-base.ts` accepte maintenant un type de payload de creation explicite via un generique dedie, au lieu d'imposer partout `Partial<T>`.
+  - `quizapp_front/src/app/core/services/entity-permission-crud.service.ts` separe desormais le DTO d'affichage `EntityPermissionItem` du payload de mutation `EntityPermissionMutationPayload`.
+  - `quizapp_front/src/app/pages/dashboard/entities/solo/entity-permissions/entities-entity-permissions.ts` consomme ce contrat type-safe et ne repose plus sur un cast force pour la creation.
+  - `candidate-ask`, `business-groups` et `form-questions` exposent eux aussi des payloads de mutation explicites cote service/composant, ce qui retire plusieurs casts `item as Entity` sur le chemin de creation.
+  - le meme contrat couvre maintenant aussi `business-group-permissions`, `user-business-groups`, `system-role-permissions` et `user-permission-overrides`, soit le sous-groupe CRUD permissions/rattachements le plus expose a ce glue code.
+  - les casts de creation encore presents sur `candidate-token`, `candidate-interview`, `candidate-answers`, `forms`, `form-versions`, `email-verification-tokens`, `mail-log`, `decisions` et `interview-participant` ont ete remplaces par des payloads de mutation explicites.
 - Livrable attendu:
   - pattern partage plus strict;
   - adaptation explicite des DTO et colonnes;
   - reduction du code de glue dans chaque route.
 
-### [ ] BL-011 Centraliser Les Mappings De Permissions Et Relations
+### [x] BL-011 Centraliser Les Mappings De Permissions Et Relations
 
 - Priorite: P2
 - Impact: coherence fonctionnelle
 - Probleme: plusieurs pages reconstruisent localement badges, relations et agregats a partir de services generiques.
+- Realisation:
+  - `quizapp_front/src/app/core/services/campaign.service.ts` normalise maintenant un `CampaignAccessRecord` unique a partir des permissions entite `CAMPAIGN`, y compris les variantes camelCase/snake_case et le fallback de nom utilisateur.
+  - `quizapp_front/src/app/pages/dashboard/campaign-detail/campaign-detail.ts` consomme directement ce contrat partage au lieu de remapper localement les acces recruteur.
+  - le helper d'agregation `campaignId -> CampaignAccessRecord` a ete remonte dans `CampaignService` et les ecrans `applications`, `decisions` et `interview-create` ont supprime leurs copies locales.
+  - `quizapp_front/src/app/core/constants/permissions.constants.ts` porte maintenant aussi la normalisation des roles systeme, la resolution `isAllowed -> GRANT/DENY`, le label d'action d'une permission et la structuration des categories/groupes d'affichage.
+  - `quizapp_front/src/app/pages/dashboard/user-permissions/user-permissions.ts` et `quizapp_front/src/app/pages/dashboard/system-role-permissions/system-role-permissions.ts` consomment desormais ces mappings partages au lieu de les reconstruire localement.
+  - `quizapp_front/src/app/core/services/permission-admin.service.ts` centralise maintenant les lectures/mutations metier `getByRole`, `getByUser`, `setOverride`, `removeOverride`, `add`, `remove`, le catalogue utilisateurs permissions et les relations `userBusinessGroup` / `businessGroup` utiles aux pages admin permissions, qui n'appellent plus directement ces endpoints HTTP.
+  - `quizapp_front/src/app/pages/dashboard/business-groups/business-groups.ts` reutilise a son tour cette facade pour les relations membres (`getUsersInGroup`, `assignUser`, `removeUser`) au lieu de recabler ces appels dans le composant.
+  - `quizapp_front/src/app/core/services/interview-admin.service.ts` centralise maintenant le catalogue d'evaluateurs des ecrans `interview-create` et `interviews` (demarrage + edition) a partir des permissions `CAMPAIGN` / `INTERVIEW`, avec resolution utilisateur et tri partage.
+  - `quizapp_front/src/app/pages/dashboard/evaluations/evaluations.ts` consomme maintenant cette meme facade pour construire le roster d'evaluateurs et rafraichir les statuts `isOnline` / `hasFinished`, au lieu de refusionner localement permissions, participants et utilisateurs.
+  - `quizapp_front/src/app/pages/dashboard/interviews/interviews.ts` delegue maintenant aussi a `quizapp_front/src/app/core/services/interview-admin.service.ts` l'enrichissement de liste (`application`, `campaign`, `candidateInterview`, statut de reponse candidat) au lieu de reconstruire ces agregats dans le composant.
+  - la presentation UI du `candidateResponseState` (label, classe visuelle, icone et libelle d'action d'edition) est maintenant normalisee dans `quizapp_front/src/app/core/services/interview-admin.service.ts`, et `interviews.html` ne s'appuie plus sur des helpers de composant dedies.
+  - `quizapp_front/src/app/core/services/department-speciality-admin.service.ts` centralise maintenant le catalogue des departements actifs, le libelle partage d'un departement et le chargement relationnel `department -> specialities`; `entities-specialities` et `entities-departments` ne reconstruisent plus ces relations localement.
 - Zones visees:
   - campagnes
   - interviews
@@ -309,7 +325,8 @@ Logique retenue:
 
 ### [ ] Lot D Rationalisation Produit
 
-- inclut BL-007, BL-008, BL-009
+- inclut BL-007, BL-008
+- BL-009 est clos sans suite corrective immediate
 
 ### [ ] Lot E Industrialisation Front
 

@@ -25,6 +25,18 @@ export interface EntityPermissionItem {
   isDeleted?: boolean;
 }
 
+export interface EntityPermissionMutationPayload {
+  id?: number;
+  entityType?: string;
+  entityId?: number;
+  permissionKey?: string;
+  userId?: number;
+  businessGroupId?: number;
+  systemRole?: string;
+  granted?: boolean;
+  isDeleted?: boolean;
+}
+
 export interface EntityPermissionCrudCriteria {
   entityType?: string;
   entityId?: number;
@@ -92,11 +104,11 @@ export class EntityPermissionCrudService {
     );
   }
 
-  create(item: EntityPermissionItem): Observable<any> {
+  create(item: EntityPermissionMutationPayload): Observable<any> {
     return this.http.post(`${this.apiUrl}/grant`, { user: this.getCurrentUserId(), data: this.prepareItemPayload(item) });
   }
 
-  update(item: EntityPermissionItem): Observable<any> {
+  update(item: EntityPermissionMutationPayload): Observable<any> {
     return this.http.post(`${this.apiUrl}/grant`, { user: this.getCurrentUserId(), data: this.prepareItemPayload(item) });
   }
 
@@ -131,8 +143,8 @@ export class EntityPermissionCrudService {
     };
   }
 
-  private prepareItemPayload(item: EntityPermissionItem): EntityPermissionItem {
-    const payload: EntityPermissionItem = { ...item };
+  private prepareItemPayload(item: EntityPermissionMutationPayload): EntityPermissionMutationPayload {
+    const payload: EntityPermissionMutationPayload = { ...item };
 
     if (!payload.systemRole?.trim()) {
       delete payload.systemRole;

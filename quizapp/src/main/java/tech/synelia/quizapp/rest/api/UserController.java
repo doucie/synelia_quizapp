@@ -22,6 +22,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
@@ -93,6 +95,58 @@ public class UserController {
 		log.info("end method /user/update");
         return response;
     }
+
+	@RequestMapping(value="/update-admin-mode", method=RequestMethod.PUT, consumes = {"application/json"}, produces={"application/json"})
+	public ResponseEntity<Response<UserDto>> updateAdminMode(@RequestBody Request<UserDto> request, Locale locale) {
+
+		slf4jLogger.info("start method updateAdminMode");
+
+		Integer authenticatedUserId = resolveAuthenticatedUserId();
+		if (authenticatedUserId == null) {
+			Response<UserDto> errorResponse = new Response<>();
+			errorResponse.setHasError(true);
+			errorResponse.setHttpCode(HttpStatus.FORBIDDEN.value());
+			errorResponse.getStatus().setCode(StatusCode.FUNC_AUTH_FAIL);
+			errorResponse.getStatus().setMessage("Utilisateur authentifie introuvable");
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
+		}
+
+		request.setUser(authenticatedUserId);
+
+		if (request.getDatas() == null || request.getDatas().isEmpty()) {
+			Response<UserDto> errorResponse = new Response<>();
+			errorResponse.setHasError(true);
+			errorResponse.setHttpCode(HttpStatus.BAD_REQUEST.value());
+			errorResponse.getStatus().setCode(StatusCode.FUNC_FIELD_EMPTY);
+			errorResponse.getStatus().setMessage("Aucune donnee a mettre a jour");
+			return ResponseEntity.badRequest().body(errorResponse);
+		}
+
+		boolean targetsAnotherUser = request.getDatas().stream()
+			.anyMatch(dto -> dto.getId() == null || !authenticatedUserId.equals(dto.getId()));
+		if (targetsAnotherUser) {
+			Response<UserDto> errorResponse = new Response<>();
+			errorResponse.setHasError(true);
+			errorResponse.setHttpCode(HttpStatus.FORBIDDEN.value());
+			errorResponse.getStatus().setCode(StatusCode.FUNC_AUTH_FAIL);
+			errorResponse.getStatus().setMessage("Le mode admin ne peut etre modifie que pour l'utilisateur courant");
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
+		}
+
+		try {
+			Response<UserDto> response = userBusiness.updateAdminMode(request, locale);
+			slf4jLogger.info("Response: {}", Utilities.convertObjectToJson(response));
+			return ResponseEntity.ok(response);
+		} catch (Exception exception) {
+			slf4jLogger.error("Exception updateAdminMode -> {}", exception.getMessage());
+			Response<UserDto> errorResponse = new Response<>();
+			errorResponse.setHasError(true);
+			errorResponse.setHttpCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
+			errorResponse.getStatus().setCode(StatusCode.FUNC_FAIL);
+			errorResponse.getStatus().setMessage(exception.getMessage());
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+		}
+	}
 
 	@RequestMapping(value="/updateAll",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
     public Response<UserDto> updateAll(@RequestBody Request<UserDto> request) throws Exception{
@@ -288,5 +342,31 @@ slf4jLogger.debug("Statistiques QEEL retournées avec succès: {} utilisateurs t
 			errorResponse.getStatus().setMessage(e.getMessage());
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
 		}
+	}
+
+	private Integer resolveAuthenticatedUserId() {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		if (authentication == null || !authentication.isAuthenticated()) {
+			return null;
+		}
+
+		Object principal = authentication.getPrincipal();
+		if (principal instanceof Integer) {
+			return (Integer) principal;
+		}
+		if (principal instanceof Number) {
+			return ((Number) principal).intValue();
+		}
+		if (principal instanceof String principalValue
+				&& !principalValue.isBlank()
+				&& !"anonymousUser".equalsIgnoreCase(principalValue)) {
+			try {
+				return Integer.valueOf(principalValue);
+			} catch (NumberFormatException exception) {
+				return null;
+			}
+		}
+
+		return null;
 	}
 }

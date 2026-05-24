@@ -9,7 +9,7 @@ import { DependencyPopupComponent } from '../../../../../shared/dependency-popup
 import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
 import { FilterCheckboxComponent } from '../../../../../shared/filter-checkbox/filter-checkbox';
 import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../../../shared/filter-select/filter-select';
-import { CandidateAnswersService, CandidateAnswer, PagedCandidateAnswerResponse, CandidateAnswerSearchCriteria } from '../../../../../core/services/candidate-answers.service';
+import { CandidateAnswersService, CandidateAnswer, CandidateAnswerMutationPayload, PagedCandidateAnswerResponse, CandidateAnswerSearchCriteria } from '../../../../../core/services/candidate-answers.service';
 import { ApplicationService, Application } from '../../../../../core/services/application.service';
 import { AnswerService, Answer } from '../../../../../core/services/answer.service';
 import { QuestionService, Question } from '../../../../../core/services/question.service';
@@ -21,7 +21,7 @@ import { QuestionService, Question } from '../../../../../core/services/question
   templateUrl: './entities-candidate-answers.html',
   styleUrls: ['./entities-candidate-answers.scss']
 })
-export class EntitiesCandidateAnswersComponent extends EntityCrudBase<CandidateAnswer, CandidateAnswerSearchCriteria, PagedCandidateAnswerResponse> {
+export class EntitiesCandidateAnswersComponent extends EntityCrudBase<CandidateAnswer, CandidateAnswerSearchCriteria, PagedCandidateAnswerResponse, CandidateAnswerMutationPayload> {
   private service = inject(CandidateAnswersService);
   private applicationService = inject(ApplicationService);
   private answerService = inject(AnswerService);
@@ -37,7 +37,7 @@ export class EntitiesCandidateAnswersComponent extends EntityCrudBase<CandidateA
 
   advancedCriteria: CandidateAnswerSearchCriteria = {};
   editFormData: CandidateAnswer = {};
-  createFormData: Partial<CandidateAnswer> = {};
+  createFormData: CandidateAnswerMutationPayload = {};
 
   override allColumns: ColumnDef[] = [
     { key: 'id', label: 'ID', priority: 1 },
@@ -51,7 +51,7 @@ export class EntitiesCandidateAnswersComponent extends EntityCrudBase<CandidateA
   ];
 
   protected fetchAll(criteria: CandidateAnswerSearchCriteria): Observable<PagedCandidateAnswerResponse> { return this.service.getAllByCriteria(criteria); }
-  protected performCreate(item: Partial<CandidateAnswer>): Observable<any> { return this.service.create(item as CandidateAnswer); }
+  protected performCreate(item: CandidateAnswerMutationPayload): Observable<any> { return this.service.create(item); }
   protected performUpdate(item: CandidateAnswer): Observable<any> { return this.service.update(item); }
   protected performDelete(id: number): Observable<any> { return this.service.delete(id); }
   protected performRestore(id: number): Observable<any> { return this.service.restore(id); }

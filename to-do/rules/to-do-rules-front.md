@@ -4,6 +4,18 @@
 
 ---
 
+- Pas de couleur en brut
+- Pas de variables sans valeurs
+- Chaque variable de couleur doit avoir une version dans chaque thème/mode existant
+- Pas d'émojis, utiliser soit des icones ou des SVGs
+- Utiliser des composants réutilisables
+- Un composant réutilisable doit seulement servir à la fonction pour laquelle il a été créé. Exemple, ne pas utiliser un composant de barre de recherche pour un select
+- S'il manque un composant pour une fonctionnalité quelconque, le créer plutôt que de recicler des composants inadaptés
+- Suivre les mêmes patterns que sur les autres pages du front, s'il y en a (Polices, tailles, color-scheme, Style de design, etc.). Cela ne veut pas dire forcément de reprendre les même structures sur absolument toutes les pages. On peut avoir des pages qui ont le même vibe, qui semblent appartenir à la même application, mais qui ont des structures différentes
+- Créer un template si une même structure doit être utilisée pour plusieurs pages
+
+---
+
 ## 1. Aucune couleur en brut (hardcoded)
 
 **INTERDIT :**

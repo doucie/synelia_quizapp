@@ -47,6 +47,9 @@ export interface Answer {
   id?: number;
   answerText?: string;
   answerType?: string;
+  allowAdditionalComment?: boolean;
+  additionalCommentRequired?: boolean;
+  additionalCommentPlaceholder?: string;
   answerOrder?: number;
   isCorrect?: boolean;
   questionId?: number;

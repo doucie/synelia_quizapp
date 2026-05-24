@@ -1289,9 +1289,17 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 					for (Answer answer : questionAnswers) {
 						if (answer != null && !answer.getIsDeleted()) {
 							Map<String, Object> answerData = new HashMap<>();
+							CandidateAnswer answerCandidateState = questionCandidateAnswers.stream()
+								.filter(item -> item != null && item.getAnswer() != null && Objects.equals(item.getAnswer().getId(), answer.getId()))
+								.findFirst()
+								.orElse(null);
 							answerData.put("id", answer.getId());
 							answerData.put("answerId", answer.getId());
 							answerData.put("answerContent", answer.getAnswerText());
+							answerData.put("allowAdditionalComment", Boolean.TRUE.equals(answer.getAllowAdditionalComment()));
+							answerData.put("additionalCommentRequired", Boolean.TRUE.equals(answer.getAdditionalCommentRequired()));
+							answerData.put("additionalCommentPlaceholder", answer.getAdditionalCommentPlaceholder());
+							answerData.put("freeTextResponse", answerCandidateState != null ? answerCandidateState.getFreeTextResponse() : null);
 							// Ne pas envoyer isCorrect au frontend pour des raisons de sécurité
 							answersData.add(answerData);
 						}
@@ -1631,6 +1639,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 	 *   - searchString: quiz_token pour validation
 	 *   - questionId: question répondue
 	 *   - selectedAnswerIds / answerId: réponses cochées
+	 *   - selectedAnswerComments: commentaires additionnels portés par answer_id
 	 *   - freeTextResponse: réponse libre éventuelle
 	 * @param locale locale
 	 * @return Response indiquant le succès ou l'échec de la sauvegarde
@@ -1667,6 +1676,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			Integer questionId = resolveQuestionId(dto);
 			Integer fallbackAnswerId = resolveAnswerId(dto);
 			List<Integer> selectedAnswerIds = resolveSelectedAnswerIds(dto, fallbackAnswerId);
+			Map<Integer, String> selectedAnswerComments = resolveSelectedAnswerComments(dto, selectedAnswerIds);
 			String freeTextResponse = StringUtils.trimToNull(dto.getFreeTextResponse());
 
 			if (questionId == null) {
@@ -1795,14 +1805,34 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 					if (ca == null || ca.getAnswer() == null || ca.getAnswer().getId() == null) {
 						continue;
 					}
-					boolean shouldBeSelected = requestedAnswerIds.contains(ca.getAnswer().getId());
-					if (!Boolean.valueOf(shouldBeSelected).equals(ca.getIsSelected())) {
+					Integer answerId = ca.getAnswer().getId();
+					boolean shouldBeSelected = requestedAnswerIds.contains(answerId);
+					String answerComment = shouldBeSelected ? StringUtils.trimToNull(selectedAnswerComments.get(answerId)) : null;
+
+					if (!Boolean.TRUE.equals(ca.getAnswer().getAllowAdditionalComment())) {
+						answerComment = null;
+					}
+
+					if (shouldBeSelected && Boolean.TRUE.equals(ca.getAnswer().getAdditionalCommentRequired()) && answerComment == null) {
+						Status status = new Status();
+						status.setCode(StatusCode.FUNC_REQUEST_FAIL);
+						status.setMessage("Un commentaire est obligatoire pour la réponse sélectionnée");
+						response.setStatus(status);
+						response.setHasError(true);
+						response.setHttpCode(HttpStatus.BAD_REQUEST.value());
+						return response;
+					}
+
+					boolean selectionChanged = !Boolean.valueOf(shouldBeSelected).equals(ca.getIsSelected());
+					boolean commentChanged = !Objects.equals(StringUtils.trimToNull(ca.getFreeTextResponse()), answerComment);
+					if (selectionChanged || commentChanged) {
 						ca.setIsSelected(shouldBeSelected);
+						ca.setFreeTextResponse(answerComment);
 						ca.setUpdatedAt(Utilities.getCurrentDate());
 						ca.setUpdatedBy(request.getUser());
 						candidateAnswerRepository.save(ca);
 						updatedCount++;
-						log.info("Updated candidate_answer ID " + ca.getId() + ": is_selected=" + shouldBeSelected);
+						log.info("Updated candidate_answer ID " + ca.getId() + ": is_selected=" + shouldBeSelected + ", has_comment=" + (answerComment != null));
 					}
 				}
 
@@ -2607,6 +2637,24 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			selectedAnswerIds.add(fallbackAnswerId);
 		}
 		return selectedAnswerIds;
+	}
+
+	private Map<Integer, String> resolveSelectedAnswerComments(ApplicationsDto dto, List<Integer> selectedAnswerIds) {
+		Map<Integer, String> selectedAnswerComments = new LinkedHashMap<Integer, String>();
+		if (dto == null || dto.getSelectedAnswerComments() == null || dto.getSelectedAnswerComments().isEmpty()) {
+			return selectedAnswerComments;
+		}
+
+		Set<Integer> allowedAnswerIds = new HashSet<Integer>(selectedAnswerIds);
+		for (Map.Entry<Integer, String> entry : dto.getSelectedAnswerComments().entrySet()) {
+			if (entry == null || entry.getKey() == null || !allowedAnswerIds.contains(entry.getKey())) {
+				continue;
+			}
+
+			selectedAnswerComments.put(entry.getKey(), StringUtils.trimToNull(entry.getValue()));
+		}
+
+		return selectedAnswerComments;
 	}
 
 	private Integer parseInteger(String value) {

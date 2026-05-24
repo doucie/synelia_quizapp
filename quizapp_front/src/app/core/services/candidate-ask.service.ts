@@ -30,6 +30,19 @@ export interface CandidateAsk {
   dateModificationA?: string;
 }
 
+export interface CandidateAskMutationPayload {
+  id?: number;
+  requestType?: CandidateAskRequestType | string;
+  isVerified?: boolean;
+  firstName?: string;
+  lastName?: string;
+  newEmail?: string;
+  newPhone?: string;
+  decisionReason?: string;
+  applicationId?: number;
+  isDeleted?: boolean;
+}
+
 export interface CandidateAskSearchCriteria {
   page?: number;
   size?: number;
@@ -101,11 +114,11 @@ export class CandidateAskService {
     );
   }
 
-  create(item: CandidateAsk): Observable<any> {
+  create(item: CandidateAskMutationPayload): Observable<any> {
     return this.http.post(`${this.apiUrl}/create`, { user: this.getCurrentUserId(), datas: [item] });
   }
 
-  update(item: CandidateAsk): Observable<any> {
+  update(item: CandidateAskMutationPayload): Observable<any> {
     return this.http.post(`${this.apiUrl}/update`, { user: this.getCurrentUserId(), datas: [item] });
   }
 

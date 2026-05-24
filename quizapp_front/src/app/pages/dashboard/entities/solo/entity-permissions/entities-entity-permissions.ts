@@ -9,7 +9,7 @@ import { DependencyPopupComponent } from '../../../../../shared/dependency-popup
 import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
 import { FilterCheckboxComponent } from '../../../../../shared/filter-checkbox/filter-checkbox';
 import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../../../shared/filter-select/filter-select';
-import { EntityPermissionCrudService, EntityPermissionItem, PagedEntityPermissionResponse, EntityPermissionCrudCriteria } from '../../../../../core/services/entity-permission-crud.service';
+import { EntityPermissionCrudService, EntityPermissionItem, EntityPermissionMutationPayload, PagedEntityPermissionResponse, EntityPermissionCrudCriteria } from '../../../../../core/services/entity-permission-crud.service';
 import { Application, ApplicationService } from '../../../../../core/services/application.service';
 import { ApiService } from '../../../../../core/services/api.service';
 import { BusinessGroup, BusinessGroupCrudService } from '../../../../../core/services/business-group-crud.service';
@@ -63,7 +63,7 @@ const SYSTEM_ROLE_OPTIONS: LabelOption[] = [
   templateUrl: './entities-entity-permissions.html',
   styleUrls: ['./entities-entity-permissions.scss']
 })
-export class EntitiesEntityPermissionsComponent extends EntityCrudBase<EntityPermissionItem, EntityPermissionCrudCriteria, PagedEntityPermissionResponse> {
+export class EntitiesEntityPermissionsComponent extends EntityCrudBase<EntityPermissionItem, EntityPermissionCrudCriteria, PagedEntityPermissionResponse, EntityPermissionMutationPayload> {
   private service = inject(EntityPermissionCrudService);
   private apiService = inject(ApiService);
   private applicationService = inject(ApplicationService);
@@ -91,7 +91,7 @@ export class EntitiesEntityPermissionsComponent extends EntityCrudBase<EntityPer
 
   advancedCriteria: EntityPermissionCrudCriteria = {};
   editFormData: EntityPermissionItem = {};
-  createFormData: Partial<EntityPermissionItem> = {};
+  createFormData: EntityPermissionMutationPayload = {};
 
   override allColumns: ColumnDef[] = [
     { key: 'id', label: 'ID', priority: 1 },
@@ -111,7 +111,7 @@ export class EntitiesEntityPermissionsComponent extends EntityCrudBase<EntityPer
   }
 
   protected fetchAll(criteria: EntityPermissionCrudCriteria): Observable<PagedEntityPermissionResponse> { return this.service.getAllByCriteria(criteria); }
-  protected performCreate(item: Partial<EntityPermissionItem>): Observable<any> { return this.service.create(item as EntityPermissionItem); }
+  protected performCreate(item: EntityPermissionMutationPayload): Observable<any> { return this.service.create(item); }
   protected performUpdate(item: EntityPermissionItem): Observable<any> { return this.service.update(item); }
   protected performDelete(id: number): Observable<any> { return this.service.delete(id); }
   protected performRestore(id: number): Observable<any> { return this.service.restore(id); }

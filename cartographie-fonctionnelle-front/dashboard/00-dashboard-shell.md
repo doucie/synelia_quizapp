@@ -70,3 +70,7 @@
 - [ ] Les permissions front de menu suffisent-elles ou faut-il un endpoint profile/permissions consolide ?
 - [ ] Les notifications du shell sont-elles purement decoratives ou contractuelles ?
 - [ ] Le menu `entities` doit-il etre documente comme une page a part ou comme une famille de pages ?
+- [ ] Vérifier la conformité entre la BD actuelle et les formulaires/cartes/filtres front réellement exposés par cette page ou par ses composants shell transverses.
+- [ ] Vérifier, si le shell ou ses sous-composants exposent une création via modale ou inline, qu’aucun contrôle `ngModel` n’est monté dans un vrai tag `<form>` sans `name` ni configuration `standalone`, afin d’éviter un défaut Angular `NG01352` et un rendu partiel.
+- [ ] Vérifier, si le shell ou ses sous-composants exposent des validations locales obligatoires, qu’elles relisent bien un state réellement synchronisé avec la saisie et qu’elles ne masquent pas un défaut de binding ou un décalage de contrat backend/front.
+- [ ] Vérifier, si le shell ou ses sous-composants exposent une édition via modale ou inline, que les valeurs d’origine sont bien réhydratées dès l’ouverture et au premier rendu.

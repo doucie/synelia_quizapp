@@ -10,6 +10,7 @@ package tech.synelia.quizapp.utils.dto;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Date;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -72,6 +73,7 @@ public class ApplicationsDto extends _ApplicationsDto implements Cloneable{
     private Integer    questionId           ;
     private Integer    answerId             ;
     private List<Integer> selectedAnswerIds ;
+    private Map<Integer, String> selectedAnswerComments ;
     private String     freeTextResponse     ;
 
     //----------------------------------------------------------------------
