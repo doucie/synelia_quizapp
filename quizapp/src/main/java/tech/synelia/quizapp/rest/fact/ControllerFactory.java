@@ -41,6 +41,11 @@ public class ControllerFactory<DTO> implements IController<DTO> {
     @Autowired
     private HttpServletRequest   requestBasic;
 
+    @FunctionalInterface
+    private interface ControllerOperation<DTO> {
+        Response<DTO> execute(Locale locale) throws Exception;
+    }
+
     @Override
     public Response<DTO> create(IBasicBusiness iBasicBusiness, Request<DTO> request, FunctionalityEnum functionalityEnum) throws Exception {
         Response<DTO> response   = new Response<DTO>();
@@ -142,6 +147,72 @@ public class ControllerFactory<DTO> implements IController<DTO> {
         } catch (TransactionSystemException e) {
             exceptionUtils.TRANSACTION_SYSTEM_EXCEPTION(response, locale, e);
         } 
+        return response;
+    }
+
+    public Response<DTO> updateDeleted(Request<DTO> request, FunctionalityEnum functionalityEnum, BusinessFactory.BusinessOperation<DTO> operation) throws Exception {
+        return handleListRequest(request, locale -> businessFactory.execute(request, functionalityEnum, locale, operation));
+    }
+
+    public Response<DTO> updateAll(Request<DTO> request, FunctionalityEnum functionalityEnum, BusinessFactory.BusinessOperation<DTO> operation) throws Exception {
+        return handleListRequest(request, locale -> businessFactory.execute(request, functionalityEnum, locale, operation));
+    }
+
+    public Response<DTO> custom(Request<DTO> request, FunctionalityEnum functionalityEnum, BusinessFactory.BusinessOperation<DTO> operation) throws Exception {
+        return handleListRequest(request, locale -> businessFactory.execute(request, functionalityEnum, locale, operation));
+    }
+
+    public Response<DTO> getAllByCriteria(Request<DTO> request, FunctionalityEnum functionalityEnum, BusinessFactory.BusinessOperation<DTO> operation) throws Exception {
+        return handleObjectRequest(request, locale -> businessFactory.execute(request, functionalityEnum, locale, operation));
+    }
+
+    private Response<DTO> handleListRequest(Request<DTO> request, ControllerOperation<DTO> operation) throws Exception {
+        Response<DTO> response = new Response<DTO>();
+        String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
+        Locale locale = Locale.of(languageID, "");
+        try {
+            response = Validate.validateList(request, response, functionalError, locale);
+            if (!response.isHasError()) {
+                response = operation.execute(locale);
+            } else {
+                log.info(String.format("Erreur| code: {} -  message: {}", response.getStatus().getCode(), response.getStatus().getMessage()));
+                return response;
+            }
+            if (!response.isHasError()) {
+                log.info(String.format("code: {} -  message: {}", StatusCode.SUCCESS, StatusMessage.SUCCESS));
+            } else {
+                log.info(String.format("Erreur| code: {} -  message: {}", response.getStatus().getCode(), response.getStatus().getMessage()));
+            }
+        } catch (CannotCreateTransactionException e) {
+            exceptionUtils.CANNOT_CREATE_TRANSACTION_EXCEPTION(response, locale, e);
+        } catch (TransactionSystemException e) {
+            exceptionUtils.TRANSACTION_SYSTEM_EXCEPTION(response, locale, e);
+        }
+        return response;
+    }
+
+    private Response<DTO> handleObjectRequest(Request<DTO> request, ControllerOperation<DTO> operation) throws Exception {
+        Response<DTO> response = new Response<DTO>();
+        String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
+        Locale locale = Locale.of(languageID, "");
+        try {
+            response = Validate.validateObject(request, response, functionalError, locale);
+            if (!response.isHasError()) {
+                response = operation.execute(locale);
+            } else {
+                log.info(String.format("Erreur| code: {} -  message: {}", response.getStatus().getCode(), response.getStatus().getMessage()));
+                return response;
+            }
+            if (!response.isHasError()) {
+                log.info(String.format("code: {} -  message: {}", StatusCode.SUCCESS, StatusMessage.SUCCESS));
+            } else {
+                log.info(String.format("Erreur| code: {} -  message: {}", response.getStatus().getCode(), response.getStatus().getMessage()));
+            }
+        } catch (CannotCreateTransactionException e) {
+            exceptionUtils.CANNOT_CREATE_TRANSACTION_EXCEPTION(response, locale, e);
+        } catch (TransactionSystemException e) {
+            exceptionUtils.TRANSACTION_SYSTEM_EXCEPTION(response, locale, e);
+        }
         return response;
     }
 }

@@ -57,6 +57,9 @@ public interface FormQuestionsRepository extends JpaRepository<FormQuestions, In
 	@Query("select e from FormQuestions e where e.formVersion.id = :formVersionId and e.isDeleted = :isDeleted order by e.questionOrder asc")
 	List<FormQuestions> findByFormVersionIdOrderByQuestionOrder(@Param("formVersionId")Integer formVersionId, @Param("isDeleted")Boolean isDeleted);
 
+	@Query("select e from FormQuestions e where e.formVersion.id = :formVersionId and e.questionOrder = :questionOrder and e.isDeleted = :isDeleted")
+	List<FormQuestions> findByFormVersionIdAndQuestionOrder(@Param("formVersionId")Integer formVersionId, @Param("questionOrder")Integer questionOrder, @Param("isDeleted")Boolean isDeleted);
+
 	default List<FormQuestions> getByCriteria(Request<FormQuestionsDto> request, EntityManager em, Locale locale) throws DataAccessException, Exception {
 		String req = "select e from FormQuestions e where e IS NOT NULL";
 		HashMap<String, java.lang.Object> param = new HashMap<String, java.lang.Object>();

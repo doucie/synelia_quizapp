@@ -9,6 +9,7 @@ export interface Form {
   formName?: string;
   formDesc?: string;
   isActive?: boolean;
+  isTimed?: boolean;
   campaignId?: number;
   createdAt?: string;
   createdBy?: number;
@@ -103,7 +104,7 @@ export class FormService {
         if (!response || (!response.items && !response.item)) {
           return { content: [], totalElements: 0, totalPages: 0, size: criteria.size || 10, number: criteria.page || 0 };
         }
-        const items = response.items || (response.item ? [response.item] : []);
+        const items = (response.items || (response.item ? [response.item] : [])).map((item: any) => this.normalizeForm(item));
         const totalElements = response.totalCount || response.count || items.length;
         const pageSize = criteria.size || 10;
         return { content: items, totalElements, totalPages: Math.ceil(totalElements / pageSize), size: pageSize, number: criteria.page || 0 };
@@ -120,11 +121,62 @@ export class FormService {
     return this.http.post(`${this.apiUrl}/update`, { user: this.getCurrentUserId(), datas: [item] });
   }
 
+  syncCampaignLinks(campaignId: number, formIds: number[]): Observable<any> {
+    return this.http.post(`${this.apiUrl}/custom`, {
+      user: this.getCurrentUserId(),
+      datas: [{ action: 'syncCampaignLinks', campaignId, formIds }]
+    });
+  }
+
+  duplicateForCampaign(sourceFormId: number, campaignId: number, duplicateName?: string): Observable<Form> {
+    return this.http.post<any>(`${this.apiUrl}/custom`, {
+      user: this.getCurrentUserId(),
+      datas: [{ action: 'duplicateForCampaign', id: sourceFormId, campaignId, ...(duplicateName ? { formName: duplicateName } : {}) }]
+    }).pipe(
+      map(response => this.extractFirstForm(response)),
+      catchError(error => { console.error('Erreur duplication form:', error); return throwError(() => error); })
+    );
+  }
+
   delete(id: number): Observable<any> {
     return this.http.post(`${this.apiUrl}/delete`, { user: this.getCurrentUserId(), datas: [{ id }] });
   }
 
   restore(id: number): Observable<any> {
     return this.http.post(`${this.apiUrl}/update`, { user: this.getCurrentUserId(), datas: [{ id, isDeleted: false }] });
+  }
+
+  private extractFirstForm(response: any): Form {
+    const item = response?.items?.[0] ?? response?.item;
+    return this.normalizeForm(item || {});
+  }
+
+  private normalizeForm(item: any): Form {
+    return {
+      id: this.toOptionalNumber(item.id),
+      formName: item.formName || item.form_name || undefined,
+      formDesc: item.formDesc || item.form_desc || undefined,
+      isActive: item.isActive ?? item.is_active ?? false,
+      isTimed: item.isTimed ?? item.is_timed ?? false,
+      campaignId: this.toOptionalNumber(item.campaignId ?? item.campaign_id),
+      createdAt: item.createdAt || item.created_at || undefined,
+      createdBy: this.toOptionalNumber(item.createdBy ?? item.created_by),
+      updatedAt: item.updatedAt || item.updated_at || undefined,
+      updatedBy: this.toOptionalNumber(item.updatedBy ?? item.updated_by),
+      isDeleted: item.isDeleted ?? item.is_deleted ?? false,
+      dateCreationDe: item.dateCreationDe || item.date_creation_de || undefined,
+      dateCreationA: item.dateCreationA || item.date_creation_a || undefined,
+      dateModificationDe: item.dateModificationDe || item.date_modification_de || undefined,
+      dateModificationA: item.dateModificationA || item.date_modification_a || undefined
+    };
+  }
+
+  private toOptionalNumber(value: unknown): number | undefined {
+    if (value === undefined || value === null || value === '') {
+      return undefined;
+    }
+
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? undefined : parsed;
   }
 }

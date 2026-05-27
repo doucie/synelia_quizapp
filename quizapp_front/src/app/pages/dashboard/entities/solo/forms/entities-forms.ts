@@ -53,18 +53,21 @@ export class EntitiesFormsComponent extends EntityCrudBase<Form, FormSearchCrite
     { key: 'name', label: 'Nom', priority: 1 },
     { key: 'description', label: 'Description', priority: 3 },
     { key: 'active', label: 'Actif', priority: 2 },
-    { key: 'campaignId', label: 'Campagne ID', priority: 2 },
     { key: 'createdAt', label: 'Créé le', priority: 2 },
     { key: 'actions', label: 'Actions', priority: 1 },
   ];
 
   protected fetchAll(criteria: FormSearchCriteria): Observable<PagedFormResponse> { return this.service.getAllByCriteria(criteria); }
-  protected performCreate(item: FormMutationPayload): Observable<any> { return this.service.create(item); }
-  protected performUpdate(item: Form): Observable<any> { return this.service.update(item); }
+  protected performCreate(item: FormMutationPayload): Observable<any> { return this.service.create(this.stripLegacyCampaignId(item)); }
+  protected performUpdate(item: Form): Observable<any> { return this.service.update(this.stripLegacyCampaignId(item)); }
   protected performDelete(id: number): Observable<any> { return this.service.delete(id); }
   protected performRestore(id: number): Observable<any> { return this.service.restore(id); }
   protected resetAdvancedCriteriaValues(): void { this.advancedCriteria = {}; }
   protected resetCreateFormData(): void { this.createFormData = {}; }
+
+  openBusinessPage(): void {
+    this.router.navigate(['/dashboard/forms']);
+  }
 
   toggleExpansion(id: number) {
     if (this.expandedItems().has(id)) {
@@ -89,4 +92,9 @@ export class EntitiesFormsComponent extends EntityCrudBase<Form, FormSearchCrite
   getChildren(id: number): FormVersion[] { return this.childData()[id] || []; }
   isLoadingChildren(id: number): boolean { return this.loadingChildren()[id] || false; }
   trackByChildId(index: number, item: any): number { return item.id; }
+
+  private stripLegacyCampaignId<T extends FormMutationPayload>(item: T): T {
+    const { campaignId: _campaignId, ...payload } = item as T & { campaignId?: number };
+    return payload as T;
+  }
 }

@@ -21,7 +21,7 @@ import lombok.ToString;
 @ToString
 @Entity
 @Table(name="form_questions", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"form_version_id", "question_id"})
+  @UniqueConstraint(columnNames = {"form_version_id", "question_id"})
 })
 public class FormQuestions implements Serializable, Cloneable {
 

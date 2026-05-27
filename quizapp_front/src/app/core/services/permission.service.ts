@@ -24,6 +24,9 @@ export class PermissionService {
   /** Promesse de chargement en cours (pour les guards) */
   private loadingPromise: Promise<void> | null = null;
 
+  /** Dernier utilisateur pour lequel un chargement a ete demande */
+  private lastRequestedUserId: number | null = null;
+
   /** SUPER_ADMIN bypass complet */
   isSuperAdmin = computed(() => this.systemRole().toUpperCase() === 'SUPER_ADMIN');
 
@@ -37,7 +40,24 @@ export class PermissionService {
    * Appelé après le login, une fois le token JWT disponible.
    */
   async loadPermissions(userId: number): Promise<void> {
-    this.loadingPromise = this._doLoadPermissions(userId);
+    if (!Number.isFinite(userId) || userId <= 0) {
+      this.reset();
+      return;
+    }
+
+    if (this.loaded() && this.lastRequestedUserId === userId) {
+      return;
+    }
+
+    if (this.loadingPromise && this.lastRequestedUserId === userId) {
+      return this.loadingPromise;
+    }
+
+    this.lastRequestedUserId = userId;
+    this.loadingPromise = this._doLoadPermissions(userId).finally(() => {
+      this.loadingPromise = null;
+    });
+
     return this.loadingPromise;
   }
 
@@ -47,7 +67,43 @@ export class PermissionService {
    */
   async waitUntilLoaded(): Promise<void> {
     if (this.loaded()) return;
-    if (this.loadingPromise) await this.loadingPromise;
+
+    const pendingLoad = this.loadingPromise ?? this.loadPermissionsFromStorage();
+    if (pendingLoad) {
+      await pendingLoad;
+    }
+  }
+
+  private loadPermissionsFromStorage(): Promise<void> | null {
+    const userId = this.getStoredUserId();
+    if (!userId) {
+      return null;
+    }
+
+    return this.loadPermissions(userId);
+  }
+
+  private getStoredUserId(): number | null {
+    const userStr = localStorage.getItem('user');
+    if (!userStr) {
+      return null;
+    }
+
+    try {
+      const parsedUser = JSON.parse(userStr) as { id?: string | number | null };
+      const rawUserId = parsedUser.id;
+      const userId = typeof rawUserId === 'number'
+        ? rawUserId
+        : Number.parseInt(rawUserId ?? '', 10);
+
+      if (!Number.isFinite(userId) || userId <= 0) {
+        return null;
+      }
+
+      return userId;
+    } catch {
+      return null;
+    }
   }
 
   private async _doLoadPermissions(userId: number): Promise<void> {
@@ -70,7 +126,11 @@ export class PermissionService {
         this.businessGroups.set(data.businessGroups || []);
         this.permissions.set(data.effectivePermissions || []);
         this.loaded.set(true);
+        return;
       }
+
+      console.warn('Chargement permissions incomplet:', response.status?.message || 'aucune permission retournee');
+      this.reset();
     } catch (error) {
       console.error('Erreur chargement permissions:', error);
       this.reset();
@@ -103,5 +163,7 @@ export class PermissionService {
     this.businessGroups.set([]);
     this.permissions.set([]);
     this.loaded.set(false);
+    this.loadingPromise = null;
+    this.lastRequestedUserId = null;
   }
 }

@@ -1,0 +1,256 @@
+<div class="entities-campaign-form-page">
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-left">
+        <h1 class="page-title">
+          <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M7 7h5" />
+            <path d="M12 7l3 3-3 3" />
+            <path d="M17 17h-5" />
+            <path d="M12 17l-3-3 3-3" />
+          </svg>
+          Entite campagne-formulaire
+        </h1>
+        <p class="page-subtitle">
+          {{ filteredLinks().length }} liaison{{ filteredLinks().length > 1 ? 's' : '' }} active{{ filteredLinks().length > 1 ? 's' : '' }}
+          · {{ sharedFormsCount() }} formulaire{{ sharedFormsCount() > 1 ? 's' : '' }} partage{{ sharedFormsCount() > 1 ? 's' : '' }}
+        </p>
+      </div>
+
+      <div class="header-actions">
+        <a class="btn btn-secondary" routerLink="/dashboard/forms">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" />
+            <path d="M14 2v6h6" />
+            <path d="M9 13h6" />
+          </svg>
+          Page metier formulaires
+        </a>
+        <button class="btn btn-secondary" (click)="loadData()" [disabled]="loading()">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9" />
+            <path d="M20 20v-5h-.581m0 0a8.003 8.003 0 01-15.357-2" />
+          </svg>
+          Actualiser
+        </button>
+        <button class="btn btn-primary" (click)="openCreateModal()">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 5v14" />
+            <path d="M5 12h14" />
+          </svg>
+          Nouvelle liaison
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="filters-section">
+    <div class="search-bar">
+      <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8" />
+        <path d="M21 21l-4.35-4.35" />
+      </svg>
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Rechercher une liaison, une campagne ou un formulaire..."
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+      >
+    </div>
+  </div>
+
+  <div class="advanced-filters">
+    <app-filter-select [value]="filterCampaignId()" ariaLabel="Filtrer par campagne" [searchable]="true" searchPlaceholder="Rechercher une campagne..." (valueChange)="onCampaignFilterChange($event)">
+      <option [ngValue]="null">Toutes les campagnes</option>
+      @for (campaign of campaigns(); track campaign.id) {
+        <option [ngValue]="campaign.id">{{ campaign.campaignTitle || campaign.campaignName }}</option>
+      }
+    </app-filter-select>
+
+    <app-filter-select [value]="filterFormId()" ariaLabel="Filtrer par formulaire" [searchable]="true" searchPlaceholder="Rechercher un formulaire..." (valueChange)="onFormFilterChange($event)">
+      <option [ngValue]="null">Tous les formulaires</option>
+      @for (form of forms(); track form.id) {
+        <option [ngValue]="form.id">{{ form.formName || ('Formulaire #' + form.id) }}</option>
+      }
+    </app-filter-select>
+  </div>
+
+  <div class="helper-banner">
+    <div>
+      Vue technique des liaisons actives materialisees par la table <strong>campaign_form</strong> et desormais pilotees par son API CRUD dediee.
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Chargement des liaisons campagne-formulaire...</p>
+    </div>
+  }
+
+  @if (!loading()) {
+    @if (filteredLinks().length > 0) {
+      <div class="links-grid">
+        @for (link of filteredLinks(); track link.key) {
+          <article class="link-card">
+            <div class="link-card-header">
+              <div class="link-identifiers">
+                <span class="meta-pill">Campagne #{{ link.campaignId }}</span>
+                <span class="meta-pill">Formulaire #{{ link.formId }}</span>
+                <span class="meta-pill">Ordre {{ link.assignmentOrder || '-' }}</span>
+              </div>
+              <div class="card-actions">
+                <button class="action-btn action-btn--edit" (click)="openEditModal(link)" title="Modifier la liaison" aria-label="Modifier la liaison">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 20H21" />
+                    <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5z" />
+                  </svg>
+                </button>
+              <button class="action-btn action-btn--delete" (click)="openDeleteModal(link)" title="Supprimer la liaison" aria-label="Supprimer la liaison">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 6h18" />
+                  <path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                  <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6" />
+                </svg>
+              </button>
+              </div>
+            </div>
+
+            <div class="link-route">
+              <div class="route-node">
+                <span class="node-label">Campagne</span>
+                <h2>{{ link.campaignName }}</h2>
+                @if (link.campaignStatus) {
+                  <span class="badge badge--campaign-status">{{ link.campaignStatus }}</span>
+                }
+              </div>
+
+              <div class="route-arrow" aria-hidden="true">→</div>
+
+              <div class="route-node">
+                <span class="node-label">Formulaire</span>
+                <h2>{{ link.formName }}</h2>
+                <p>{{ link.formDesc || 'Aucune description renseignee.' }}</p>
+              </div>
+            </div>
+
+            <div class="link-footer">
+              <span class="badge" [class.badge--active]="link.formActive" [class.badge--inactive]="!link.formActive">
+                {{ link.formActive ? 'Formulaire actif' : 'Formulaire inactif' }}
+              </span>
+              <a class="text-link" [routerLink]="['/dashboard/campaigns', link.campaignId]">Ouvrir la campagne</a>
+              <a class="text-link" routerLink="/dashboard/forms">Ouvrir les formulaires</a>
+            </div>
+          </article>
+        }
+      </div>
+    } @else {
+      <div class="empty-state">
+        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="empty-icon">
+          <path d="M7 7h5" />
+          <path d="M12 7l3 3-3 3" />
+          <path d="M17 17h-5" />
+          <path d="M12 17l-3-3 3-3" />
+        </svg>
+        <h3>Aucune liaison trouvee</h3>
+        <p>Aucune campagne active n'est actuellement reliee a un formulaire avec ces criteres.</p>
+      </div>
+    }
+  }
+</div>
+
+@if (showCreateEditModal()) {
+  <div class="modal-overlay" role="dialog" aria-modal="true" (click)="closeCreateEditModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ isEditMode() ? 'Modifier la liaison campagne-formulaire' : 'Nouvelle liaison campagne-formulaire' }}</h2>
+        <button class="modal-close" (click)="closeCreateEditModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-editor">
+          <div class="form-group">
+            <label for="campaign-link-campaign">Campagne *</label>
+            <app-filter-select id="campaign-link-campaign" ariaLabel="Selectionner une campagne" [searchable]="true" searchPlaceholder="Rechercher une campagne..." [ngModel]="linkForm().campaignId" [ngModelOptions]="{ standalone: true }" (ngModelChange)="updateLinkField('campaignId', $event)">
+              <option [ngValue]="undefined">Selectionner une campagne</option>
+              @for (campaign of campaigns(); track campaign.id) {
+                <option [ngValue]="campaign.id">{{ campaign.campaignTitle || campaign.campaignName }}</option>
+              }
+            </app-filter-select>
+          </div>
+
+          <div class="form-group">
+            <label for="campaign-link-form">Formulaire *</label>
+            <app-filter-select id="campaign-link-form" ariaLabel="Selectionner un formulaire" [searchable]="true" searchPlaceholder="Rechercher un formulaire..." [ngModel]="linkForm().formId" [ngModelOptions]="{ standalone: true }" (ngModelChange)="updateLinkField('formId', $event)">
+              <option [ngValue]="undefined">Selectionner un formulaire</option>
+              @for (form of availableFormsForSelection(); track form.id) {
+                <option [ngValue]="form.id">{{ form.formName || ('Formulaire #' + form.id) }}</option>
+              }
+            </app-filter-select>
+            <small class="field-help">La liste est filtree pour eviter les doublons deja actifs sur la campagne selectionnee.</small>
+          </div>
+
+          <div class="form-group">
+            <label for="campaign-link-order">Ordre d'affectation</label>
+            <input
+              id="campaign-link-order"
+              type="number"
+              min="1"
+              [ngModel]="linkForm().assignmentOrder"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="updateLinkField('assignmentOrder', toOptionalPositiveNumber($event))"
+              placeholder="Laisser vide pour l'ordre automatique"
+            >
+            <small class="field-help">Laisser vide pour laisser le backend appliquer l'ordre suivant disponible.</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeCreateEditModal()">Annuler</button>
+        <button class="btn btn-primary" (click)="saveLink()" [disabled]="loading()">
+          {{ isEditMode() ? 'Enregistrer' : 'Creer la liaison' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (showDeleteModal()) {
+  <div class="modal-overlay" role="dialog" aria-modal="true" (click)="closeDeleteModal()">
+    <div class="modal-content modal-content--small" (click)="$event.stopPropagation()">
+      <div class="modal-header modal-header--danger">
+        <h2>Supprimer la liaison</h2>
+        <button class="modal-close" (click)="closeDeleteModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="delete-warning">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="warning-icon">
+            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+            <path d="M12 9v4" />
+            <path d="M12 17h.01" />
+          </svg>
+          <p>Confirmez-vous la suppression de cette liaison ?</p>
+          <p class="warning-detail">
+            {{ selectedLink()?.campaignName }} → {{ selectedLink()?.formName }}
+          </p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeDeleteModal()">Annuler</button>
+        <button class="btn btn-danger" (click)="deleteLink()" [disabled]="loading()">Supprimer</button>
+      </div>
+    </div>
+  </div>
+}

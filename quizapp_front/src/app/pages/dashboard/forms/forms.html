@@ -1,0 +1,301 @@
+<div class="forms-page">
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-left">
+        <h1 class="page-title">
+          <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" />
+            <path d="M14 2v6h6" />
+            <path d="M9 13h6" />
+            <path d="M9 17h4" />
+          </svg>
+          Formulaires
+        </h1>
+        <p class="page-subtitle">
+          {{ filteredForms().length }} formulaire{{ filteredForms().length > 1 ? 's' : '' }}
+          · {{ activeFormsCount() }} actif{{ activeFormsCount() > 1 ? 's' : '' }}
+          · {{ sharedFormsCount() }} partage{{ sharedFormsCount() > 1 ? 's' : '' }}
+        </p>
+      </div>
+
+      <div class="header-actions">
+        <a class="btn btn-secondary" routerLink="/dashboard/entities/campaign-form">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M7 7h5" />
+            <path d="M12 7l3 3-3 3" />
+            <path d="M17 17h-5" />
+            <path d="M12 17l-3-3 3-3" />
+          </svg>
+          Liaisons campagne-formulaire
+        </a>
+        <button class="btn btn-secondary" (click)="loadForms()" [disabled]="loading()">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9" />
+            <path d="M20 20v-5h-.581m0 0a8.003 8.003 0 01-15.357-2" />
+          </svg>
+          Actualiser
+        </button>
+        @if (isAdminModeEnabled()) {
+          <button class="btn btn-primary" (click)="openCreateModal()">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 5v14" />
+              <path d="M5 12h14" />
+            </svg>
+            Nouveau formulaire
+          </button>
+        }
+      </div>
+    </div>
+  </header>
+
+  <div class="filters-section">
+    <div class="search-bar">
+      <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8" />
+        <path d="M21 21l-4.35-4.35" />
+      </svg>
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Rechercher un formulaire ou une campagne..."
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+      >
+    </div>
+  </div>
+
+  <div class="advanced-filters">
+    <app-filter-select [value]="filterCampaignId()" ariaLabel="Filtrer par campagne" [searchable]="true" searchPlaceholder="Rechercher une campagne..." (valueChange)="onCampaignFilterChange($event)">
+      <option [ngValue]="null">Toutes les campagnes</option>
+      @for (campaign of campaigns(); track campaign.id) {
+        <option [ngValue]="campaign.id">{{ campaign.campaignTitle || campaign.campaignName }}</option>
+      }
+    </app-filter-select>
+
+    <app-filter-select [value]="filterStatus()" ariaLabel="Filtrer par statut" (valueChange)="onStatusFilterChange($event)">
+      <option [ngValue]="'ALL'">Tous les statuts</option>
+      <option [ngValue]="'ACTIVE'">Actifs uniquement</option>
+      <option [ngValue]="'INACTIVE'">Inactifs uniquement</option>
+    </app-filter-select>
+  </div>
+
+  <div class="helper-banner">
+    <div>
+      Cette page centralise la vue et le CRUD des formulaires. Les campagnes liees proviennent exclusivement des liaisons <strong>campaign_form</strong>. Pour rattacher ou detacher un formulaire d'une campagne, utilisez l'ecran dedie des liaisons campagne-formulaire.
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Chargement des formulaires...</p>
+    </div>
+  }
+
+  @if (!loading()) {
+    @if (filteredForms().length > 0) {
+      <div class="forms-grid">
+        @for (form of filteredForms(); track form.id ?? $index) {
+          <article class="form-card" [class.inactive]="form.isActive === false">
+            @if (isAdminModeEnabled()) {
+              <div class="card-actions">
+                <button class="action-btn action-btn--edit" (click)="openEditModal(form); $event.stopPropagation()" title="Modifier" aria-label="Modifier">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 20H21" />
+                    <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5z" />
+                  </svg>
+                </button>
+                <button class="action-btn action-btn--delete" (click)="openDeleteModal(form); $event.stopPropagation()" title="Supprimer" aria-label="Supprimer">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 6h18" />
+                    <path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                    <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6" />
+                  </svg>
+                </button>
+              </div>
+            }
+
+            <div class="form-header">
+              <span class="badge" [class.badge--active]="form.isActive !== false" [class.badge--inactive]="form.isActive === false">
+                {{ form.isActive === false ? 'Inactif' : 'Actif' }}
+              </span>
+              @if (getLinkedCampaignCount(form) <= 1) {
+                <span class="badge badge--campaign">{{ getLinkedCampaignBadgeLabel(form) }}</span>
+              }
+              @if (getLinkedCampaignCount(form) > 1) {
+                <span class="badge badge--shared">{{ getLinkedCampaignCount(form) }} campagnes liees</span>
+              }
+            </div>
+
+            <h2 class="form-name">{{ form.formName || 'Formulaire sans nom' }}</h2>
+            <p class="form-description">{{ form.formDesc || 'Aucune description renseignee.' }}</p>
+
+            <div class="form-metadata">
+              <span class="meta-pill">#{{ form.id || '-' }}</span>
+              <span class="meta-pill">Creation {{ formatDate(form.createdAt) }}</span>
+              <span class="meta-pill">{{ getFormVersions(form.id).length }} version{{ getFormVersions(form.id).length > 1 ? 's' : '' }} chargee{{ getFormVersions(form.id).length > 1 ? 's' : '' }}</span>
+              <span class="meta-pill">{{ getPublishedVersionCount(form.id) }} publiee{{ getPublishedVersionCount(form.id) > 1 ? 's' : '' }}</span>
+            </div>
+
+            <div class="shared-context">
+              <div class="shared-context__header">
+                <span class="meta-pill">{{ getLinkedCampaignCount(form) }} campagne{{ getLinkedCampaignCount(form) > 1 ? 's' : '' }} liee{{ getLinkedCampaignCount(form) > 1 ? 's' : '' }}</span>
+                @if (hasSharedPublicationWarning(form)) {
+                  <span class="badge badge--warning">Publication partagee</span>
+                }
+                @if (hasSharedTimingWarning(form)) {
+                  <span class="badge badge--timing">Timing partage</span>
+                }
+              </div>
+              <p class="shared-context__list">{{ getLinkedCampaignNames(form).join(' • ') || 'Aucune campagne liee visible.' }}</p>
+              @if (hasSharedPublicationWarning(form)) {
+                <div class="publication-warning">
+                  Ce formulaire possede deja une version publiee et son evolution impacte plusieurs campagnes liees.
+                </div>
+              }
+              @if (hasSharedTimingWarning(form)) {
+                <div class="publication-warning publication-warning--timing">
+                  Le mode chronometre de ce formulaire est global pour {{ getLinkedCampaignNames(form).join(' • ') || (getLinkedCampaignCount(form) + ' campagne(s) liee(s)') }}. Si une seule campagne doit diverger, dupliquez le formulaire avant de changer son timing.
+                </div>
+              }
+            </div>
+
+            <div class="form-footer">
+              <button class="btn btn-ghost" (click)="toggleVersions(form.id)">
+                {{ isExpanded(form.id) ? 'Masquer les versions' : 'Voir les versions' }}
+              </button>
+            </div>
+
+            @if (isExpanded(form.id)) {
+              <div class="versions-panel">
+                @if (getFormVersions(form.id).length > 0) {
+                  <div class="versions-list">
+                    @for (version of getFormVersions(form.id); track version.id ?? $index) {
+                      <div class="version-item">
+                        <div>
+                          <strong>Version {{ version.versionNumber || '-' }}</strong>
+                          <div class="version-meta">{{ formatDate(version.createdAt) }}</div>
+                        </div>
+                        <div class="version-badges">
+                          <span class="badge" [class.badge--published]="version.isPublished" [class.badge--draft]="!version.isPublished">
+                            {{ version.isPublished ? 'Publiee' : 'Brouillon' }}
+                          </span>
+                          @if (version.isLocked) {
+                            <span class="badge badge--locked">Verrouillee</span>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  <div class="versions-empty">Aucune version active pour ce formulaire.</div>
+                }
+              </div>
+            }
+          </article>
+        }
+      </div>
+    } @else {
+      <div class="empty-state">
+        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="empty-icon">
+          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" />
+          <path d="M14 2v6h6" />
+          <path d="M9 13h6" />
+          <path d="M9 17h4" />
+        </svg>
+        <h3>Aucun formulaire trouve</h3>
+        <p>Aucun formulaire ne correspond a vos criteres de recherche.</p>
+      </div>
+    }
+  }
+</div>
+
+@if (showCreateEditModal()) {
+  <div class="modal-overlay" role="dialog" aria-modal="true" (click)="closeCreateEditModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ isEditMode() ? 'Modifier le formulaire' : 'Nouveau formulaire' }}</h2>
+        <button class="modal-close" (click)="closeCreateEditModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-editor">
+          <div class="form-group">
+            <label for="form-name">Nom du formulaire *</label>
+            <input
+              id="form-name"
+              type="text"
+              [ngModel]="formState().formName"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="updateFormField('formName', $event)"
+              placeholder="Ex: Evaluation technique Angular"
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="form-description">Description</label>
+            <textarea
+              id="form-description"
+              rows="4"
+              [ngModel]="formState().formDesc"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="updateFormField('formDesc', $event)"
+              placeholder="Resume metier du formulaire"
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <small class="field-help">Les rattachements campagne-formulaire se gerent maintenant depuis l'ecran dedie des liaisons campagne-formulaire.</small>
+          </div>
+
+          <div class="form-group form-group--checkbox">
+            <app-filter-checkbox inputId="forms-active" label="Formulaire actif" variant="inline" [checked]="formState().isActive" ariaLabel="Formulaire actif" (checkedChange)="updateFormField('isActive', $event)"></app-filter-checkbox>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeCreateEditModal()">Annuler</button>
+        <button class="btn btn-primary" (click)="saveForm()" [disabled]="loading()">
+          {{ isEditMode() ? 'Enregistrer' : 'Creer' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (showDeleteModal()) {
+  <div class="modal-overlay" role="dialog" aria-modal="true" (click)="closeDeleteModal()">
+    <div class="modal-content modal-content--small" (click)="$event.stopPropagation()">
+      <div class="modal-header modal-header--danger">
+        <h2>Supprimer le formulaire</h2>
+        <button class="modal-close" (click)="closeDeleteModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="delete-warning">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="warning-icon">
+            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+            <path d="M12 9v4" />
+            <path d="M12 17h.01" />
+          </svg>
+          <p>Confirmez-vous la suppression de ce formulaire ?</p>
+          <p class="warning-detail">{{ selectedForm()?.formName || 'Formulaire sans nom' }}</p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeDeleteModal()">Annuler</button>
+        <button class="btn btn-danger" (click)="deleteForm()" [disabled]="loading()">Supprimer</button>
+      </div>
+    </div>
+  </div>
+}

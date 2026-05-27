@@ -105,9 +105,7 @@ public class QuestionBusiness implements IBasicBusiness<Request<QuestionDto>, Re
 			entityToSave.setCreatedAt(Utilities.getCurrentDate());
 			entityToSave.setCreatedBy(request.getUser());
 			entityToSave.setIsDeleted(false);
-			if (entityToSave.getQuestionRef() == null || entityToSave.getQuestionRef().isEmpty()) {
-				entityToSave.setQuestionRef(UUID.randomUUID().toString());
-			}
+			entityToSave.setQuestionRef(UUID.randomUUID().toString());
 			items.add(entityToSave);
 		}
 
@@ -162,17 +160,10 @@ public class QuestionBusiness implements IBasicBusiness<Request<QuestionDto>, Re
 			if (entityToSave == null) {
 				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("question id -> " + dto.getId(), locale));
 			}
-
-			// Vérifier si la question est dans un formulaire verrouillé
-			List<FormQuestions> linkedFqs = formQuestionsRepository.findByQuestionId(entityToSave.getId(), false);
-			if (linkedFqs != null) {
-				for (FormQuestions fq : linkedFqs) {
-					if (fq.getFormVersion() != null && Boolean.TRUE.equals(fq.getFormVersion().getIsLocked())) {
-						throw new InternalErrorException(functionalError.DATA_NOT_DELETABLE(
-							"Cette question est dans un formulaire verrouillé (version " + fq.getFormVersion().getVersionNumber() + ")", locale));
-					}
-				}
+			if (hasStructuralQuestionUpdate(entityToSave, dto)) {
+				ensureQuestionIsEditable(entityToSave, locale);
 			}
+			rejectQuestionRefMutation(entityToSave, dto, locale);
 
 			if (dto.getSpecialityId() != null && dto.getSpecialityId() > 0) {
 				Specialities existingSpecialities = specialitiesRepository.findOne(dto.getSpecialityId(), false);
@@ -191,9 +182,6 @@ public class QuestionBusiness implements IBasicBusiness<Request<QuestionDto>, Re
 					throw new InvalidEntityException(functionalError.DATA_NOT_EXIST("questionType invalide (SINGLE_CHOICE/MULTIPLE_CHOICE/TRUE_FALSE/TEXT) -> " + dto.getQuestionType(), locale));
 				}
 				entityToSave.setQuestionType(qTypeUpper);
-			}
-			if (Utilities.shouldUpdate(dto.getQuestionRef())) {
-				entityToSave.setQuestionRef(dto.getQuestionRef());
 			}
 			if (Utilities.shouldUpdate(dto.getDifficultyLevel())) {
 				String diffUpper = dto.getDifficultyLevel().toUpperCase(java.util.Locale.ROOT);
@@ -419,6 +407,10 @@ public class QuestionBusiness implements IBasicBusiness<Request<QuestionDto>, Re
 			if (entityToSave == null) {
 				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("question id -> " + dto.getId(), locale));
 			}
+			if (hasStructuralQuestionUpdate(entityToSave, dto)) {
+				ensureQuestionIsEditable(entityToSave, locale);
+			}
+			rejectQuestionRefMutation(entityToSave, dto, locale);
 
 			if (dto.getSpecialityId() != null && dto.getSpecialityId() > 0) {
 				Specialities existingSpecialities = specialitiesRepository.findOne(dto.getSpecialityId(), false);
@@ -437,9 +429,6 @@ public class QuestionBusiness implements IBasicBusiness<Request<QuestionDto>, Re
 					throw new InvalidEntityException(functionalError.DATA_NOT_EXIST("questionType invalide (SINGLE_CHOICE/MULTIPLE_CHOICE/TRUE_FALSE/TEXT) -> " + dto.getQuestionType(), locale));
 				}
 				entityToSave.setQuestionType(qTypeUpper);
-			}
-			if (Utilities.shouldUpdate(dto.getQuestionRef())) {
-				entityToSave.setQuestionRef(dto.getQuestionRef());
 			}
 			if (Utilities.shouldUpdate(dto.getDifficultyLevel())) {
 				String diffUpper = dto.getDifficultyLevel().toUpperCase(java.util.Locale.ROOT);
@@ -505,6 +494,10 @@ public class QuestionBusiness implements IBasicBusiness<Request<QuestionDto>, Re
 			if (entityToSave == null) {
 				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("question id -> " + dto.getId(), locale));
 			}
+			if (hasStructuralQuestionUpdate(entityToSave, dto)) {
+				ensureQuestionIsEditable(entityToSave, locale);
+			}
+			rejectQuestionRefMutation(entityToSave, dto, locale);
 
 			if (dto.getSpecialityId() != null && dto.getSpecialityId() > 0) {
 				Specialities existingSpecialities = specialitiesRepository.findOne(dto.getSpecialityId(), false);
@@ -523,9 +516,6 @@ public class QuestionBusiness implements IBasicBusiness<Request<QuestionDto>, Re
 					throw new InvalidEntityException(functionalError.DATA_NOT_EXIST("questionType invalide (SINGLE_CHOICE/MULTIPLE_CHOICE/TRUE_FALSE/TEXT) -> " + dto.getQuestionType(), locale));
 				}
 				entityToSave.setQuestionType(qTypeUpper);
-			}
-			if (Utilities.shouldUpdate(dto.getQuestionRef())) {
-				entityToSave.setQuestionRef(dto.getQuestionRef());
 			}
 			if (Utilities.shouldUpdate(dto.getDifficultyLevel())) {
 				String diffUpper = dto.getDifficultyLevel().toUpperCase(java.util.Locale.ROOT);
@@ -570,6 +560,71 @@ public class QuestionBusiness implements IBasicBusiness<Request<QuestionDto>, Re
 		}
 		log.info("----end updateAll Question-----");
 		return response;
+	}
+
+	private boolean hasStructuralQuestionUpdate(Question question, QuestionDto dto) {
+		if (question == null || dto == null) {
+			return false;
+		}
+
+		if (Utilities.shouldUpdate(dto.getQuestionText()) && !Objects.equals(dto.getQuestionText(), question.getQuestionText())) {
+			return true;
+		}
+
+		if (dto.getQuestionType() == null) {
+			if (!Objects.equals(null, question.getQuestionType())) {
+				return true;
+			}
+		} else if (Utilities.shouldUpdate(dto.getQuestionType())) {
+			String requestedQuestionType = dto.getQuestionType().toUpperCase(java.util.Locale.ROOT);
+			if (!Objects.equals(requestedQuestionType, question.getQuestionType())) {
+				return true;
+			}
+		}
+
+		if (dto.getQuestionChrono() != null && !Objects.equals(dto.getQuestionChrono(), question.getQuestionChrono())) {
+			return true;
+		}
+
+		if (dto.getScore() != null && !Objects.equals(dto.getScore(), question.getScore())) {
+			return true;
+		}
+
+		if (dto.getIsDeleted() != null && !Objects.equals(dto.getIsDeleted(), question.getIsDeleted())) {
+			return true;
+		}
+
+		return false;
+	}
+
+	private void ensureQuestionIsEditable(Question question, Locale locale) {
+		if (question == null || question.getId() == null) {
+			return;
+		}
+
+		List<FormQuestions> linkedFqs = formQuestionsRepository.findByQuestionId(question.getId(), false);
+		if (linkedFqs == null) {
+			return;
+		}
+
+		for (FormQuestions fq : linkedFqs) {
+			if (fq.getFormVersion() != null && Boolean.TRUE.equals(fq.getFormVersion().getIsLocked())) {
+				throw new InternalErrorException(functionalError.DATA_NOT_DELETABLE(
+						"Cette question est dans un formulaire verrouille (version " + fq.getFormVersion().getVersionNumber() + ")", locale));
+			}
+		}
+	}
+
+	private void rejectQuestionRefMutation(Question question, QuestionDto dto, Locale locale) {
+		if (!Utilities.shouldUpdate(dto.getQuestionRef())) {
+			return;
+		}
+
+		String requestedQuestionRef = StringUtils.trimToNull(dto.getQuestionRef());
+		if (!Objects.equals(requestedQuestionRef, question.getQuestionRef())) {
+			throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+					"questionRef est gere par le serveur et ne peut pas etre modifie manuellement.", locale));
+		}
 	}
 
 	private QuestionDto getFullInfos(QuestionDto dto, Integer size, Boolean isSimpleLoading, Locale locale) throws Exception {

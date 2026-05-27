@@ -44,6 +44,7 @@ public class DashboardController {
     private final InterviewParticipantRepository interviewParticipantRepository;
     private final DecisionRepository decisionRepository;
     private final NotificationsRepository notificationsRepository;
+    private final CampaignFormRepository campaignFormRepository;
     private final FormRepository formRepository;
     private final FormVersionRepository formVersionRepository;
     private final FormQuestionsRepository formQuestionsRepository;
@@ -68,6 +69,7 @@ public class DashboardController {
             InterviewParticipantRepository interviewParticipantRepository,
             DecisionRepository decisionRepository,
             NotificationsRepository notificationsRepository,
+            CampaignFormRepository campaignFormRepository,
             FormRepository formRepository,
             FormVersionRepository formVersionRepository,
             FormQuestionsRepository formQuestionsRepository,
@@ -91,6 +93,7 @@ public class DashboardController {
         this.interviewParticipantRepository = interviewParticipantRepository;
         this.decisionRepository = decisionRepository;
         this.notificationsRepository = notificationsRepository;
+        this.campaignFormRepository = campaignFormRepository;
         this.formRepository = formRepository;
         this.formVersionRepository = formVersionRepository;
         this.formQuestionsRepository = formQuestionsRepository;
@@ -168,7 +171,7 @@ public class DashboardController {
                 addDep(deps, "candidate-answers", "Réponses candidat", candidateAnswerRepository.findByAnswerId(id, false), true);
                 break;
             case "campaigns":
-                addDep(deps, "forms", "Formulaires", formRepository.findByCampaignId(id, false), false);
+                addDep(deps, "forms", "Formulaires", campaignFormRepository.findActiveFormsByCampaignId(id), false);
                 addDep(deps, "source-tokens", "Tokens source", sourceTokenRepository.findByCampaignId(id, false), false);
                 addDep(deps, "entity-permissions", "Permissions campagne", getActiveCampaignPermissionsForCampaign(id), false);
                 addDep(deps, "interviews", "Entretiens", interviewsRepository.findByCampaignId(id, false), false);

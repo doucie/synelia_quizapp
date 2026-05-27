@@ -110,6 +110,12 @@ public class Applications implements Serializable, Cloneable {
     @Column(name="time_elapsed", nullable=false, columnDefinition="INT DEFAULT 0")
     private Integer    timeElapsed  ;
 
+    @Column(name="quiz_timed_snapshot", nullable=false, columnDefinition="BOOLEAN DEFAULT FALSE")
+    private Boolean    quizTimedSnapshot ;
+
+    @Column(name="quiz_total_time_allowed_snapshot")
+    private Integer    quizTotalTimeAllowedSnapshot ;
+
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name="quiz_last_activity_at")
     private Date       quizLastActivityAt ;

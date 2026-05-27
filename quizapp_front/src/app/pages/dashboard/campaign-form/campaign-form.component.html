@@ -421,6 +421,28 @@
           Associez un ou plusieurs formulaires existants à cette campagne. Ils seront ensuite disponibles dans le détail de campagne et pour les stratégies d'attribution.
         </p>
 
+        @if (hasPendingFormDuplications()) {
+          <div class="form-sharing-banner form-sharing-banner--pending">
+            <strong>Duplication en attente</strong>
+            <span>Les formulaires marqués comme copie seront créés et reliés à cette campagne au prochain enregistrement.</span>
+          </div>
+        }
+
+        @if (sharedPublicationImpacts().length > 0) {
+          <div class="form-sharing-banner form-sharing-banner--warning">
+            <strong>Publication partagée: impact multi-campagnes</strong>
+            <span>Les formulaires ci-dessous sont partagés et ont déjà une version publiée. Une publication future impactera toutes les campagnes liées.</span>
+            <ul class="form-sharing-impact-list">
+              @for (impact of sharedPublicationImpacts(); track impact.formLabel) {
+                <li>
+                  <span class="impact-form-name">{{ impact.formLabel }}</span>
+                  <span class="impact-campaigns">{{ impact.impactedCampaignNames.join(' • ') || 'Campagnes liées indisponibles' }}</span>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+
         <div class="recruiter-search recruiter-search-forms">
           <div class="search-input-wrapper">
             <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -450,6 +472,21 @@
                   <div class="form-info">
                     <div class="form-name">{{ form.formName || 'Sans nom' }}</div>
                     <div class="form-meta">{{ form.formDesc || 'Aucune description disponible' }}</div>
+                    <div class="form-context-badges">
+                      @if (getLinkedCampaignCount(form) > 0) {
+                        <span class="form-status form-status-shared">
+                          {{ getLinkedCampaignCount(form) }} campagne{{ getLinkedCampaignCount(form) > 1 ? 's' : '' }} liée{{ getLinkedCampaignCount(form) > 1 ? 's' : '' }}
+                        </span>
+                      }
+                      @if (hasSharedPublicationWarning(form)) {
+                        <span class="form-status form-status-warning">Publication partagée</span>
+                      }
+                    </div>
+                    @if (getLinkedCampaignNames(form).length > 0) {
+                      <div class="form-shared-campaigns">
+                        {{ getLinkedCampaignNames(form).join(' • ') }}
+                      </div>
+                    }
                   </div>
                   <span class="form-status" [class.form-status-inactive]="!form.isActive">
                     {{ form.isActive ? 'Actif' : 'Inactif' }}
@@ -466,14 +503,14 @@
                 <line x1="12" y1="8" x2="12" y2="12"/>
                 <line x1="12" y1="16" x2="12.01" y2="16"/>
               </svg>
-              <p>Aucun formulaire disponible pour cette campagne</p>
+              <p>Aucun formulaire correspondant a la recherche</p>
             </div>
           }
         </div>
 
         @if (selectedForms().length > 0) {
           <div class="selected-forms">
-            @for (form of selectedForms(); track form.id; let i = $index) {
+            @for (form of selectedForms(); track form.id || form.duplicateSourceFormId || $index; let i = $index) {
               <div class="selected-item selected-form-item">
                 <div class="item-info">
                   <span class="item-name">{{ form.formName || 'Sans nom' }}</span>
@@ -485,22 +522,56 @@
                     @if (isPersistedCampaignForm(form)) {
                       <span class="selected-form-badge selected-form-badge-linked">Déjà associé</span>
                     }
+                    @if (getLinkedCampaignCount(form) > 1 && !isPendingFormDuplication(form)) {
+                      <span class="selected-form-badge selected-form-badge-shared">Partagé avec {{ getLinkedCampaignCount(form) }} campagnes</span>
+                    }
+                    @if (isPendingFormDuplication(form)) {
+                      <span class="selected-form-badge selected-form-badge-queued">Copie en attente</span>
+                    }
                   </div>
+                  @if (getLinkedCampaignNames(form).length > 0) {
+                    <div class="selected-form-context">Lié à : {{ getLinkedCampaignNames(form).join(' • ') }}</div>
+                  }
+                  @if (hasSharedPublicationWarning(form)) {
+                    <div class="selected-form-warning">
+                      Ce formulaire est partagé et déjà publié. Une future publication impactera :
+                      <strong>{{ getSharedImpactCampaignNames(form).join(' • ') || (getLinkedCampaignCount(form) + ' campagne(s) liée(s)') }}</strong>.
+                      Dupliquez le formulaire pour isoler cette campagne.
+                    </div>
+                  }
+                  @if (isPendingFormDuplication(form)) {
+                    <div class="selected-form-warning selected-form-warning--pending">
+                      Cette copie remplacera le formulaire partagé pour cette campagne lors du prochain enregistrement.
+                    </div>
+                  }
                 </div>
 
-                @if (canRemoveCampaignForm(form)) {
-                  <button
-                    type="button"
-                    class="remove-btn"
-                    (click)="removeCampaignForm(i)"
-                    title="Retirer ce formulaire"
-                    aria-label="Retirer ce formulaire"
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M18 6L6 18M6 6l12 12"/>
-                    </svg>
-                  </button>
-                }
+                <div class="item-actions">
+                  @if (canDuplicateCampaignForm(form)) {
+                    <button
+                      type="button"
+                      class="secondary-action-btn"
+                      (click)="duplicateCampaignForm(i, form)"
+                      title="Créer une copie indépendante pour cette campagne"
+                    >
+                      Dupliquer pour cette campagne
+                    </button>
+                  }
+
+                  @if (canRemoveCampaignForm(form)) {
+                    <button
+                      type="button"
+                      class="remove-btn"
+                      (click)="removeCampaignForm(i)"
+                      title="Retirer ce formulaire"
+                      aria-label="Retirer ce formulaire"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6L6 18M6 6l12 12"/>
+                      </svg>
+                    </button>
+                  }
+                </div>
               </div>
             }
           </div>

@@ -27,9 +27,11 @@ import tech.synelia.quizapp.utils.contract.IBasicBusiness;
 import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.dto.transformer.*;
+import tech.synelia.quizapp.dao.entity.CampaignForm;
 import tech.synelia.quizapp.dao.entity.SourceToken;
 import tech.synelia.quizapp.dao.entity.Campaigns;
 import tech.synelia.quizapp.dao.entity.Form;
+import tech.synelia.quizapp.dao.repository.CampaignFormRepository;
 import tech.synelia.quizapp.dao.repository.SourceTokenRepository;
 import tech.synelia.quizapp.dao.repository.CampaignsRepository;
 import tech.synelia.quizapp.dao.repository.FormRepository;
@@ -50,6 +52,8 @@ public class SourceTokenBusiness implements IBasicBusiness<Request<SourceTokenDt
 	private CampaignsRepository campaignsRepository;
 	@Autowired
 	private FormRepository formRepository;
+	@Autowired
+	private CampaignFormRepository campaignFormRepository;
 	@Autowired
 	private FunctionalError functionalError;
 	@PersistenceContext
@@ -86,10 +90,6 @@ public class SourceTokenBusiness implements IBasicBusiness<Request<SourceTokenDt
 				}
 			}
 			Form existingForm = resolveSourceTokenForm(dto.getFormId(), existingCampaign, locale);
-			if (existingCampaign == null && existingForm != null) {
-				existingCampaign = existingForm.getCampaigns();
-				dto.setCampaignId(existingCampaign != null ? existingCampaign.getId() : null);
-			}
 
 			dto.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(dto)));
 
@@ -243,9 +243,6 @@ public class SourceTokenBusiness implements IBasicBusiness<Request<SourceTokenDt
 				if (dto.getFormId() > 0) {
 					Form assignedForm = resolveSourceTokenForm(dto.getFormId(), entityToSave.getCampaigns(), locale);
 					entityToSave.setForm(assignedForm);
-					if (entityToSave.getCampaigns() == null && assignedForm != null) {
-						entityToSave.setCampaigns(assignedForm.getCampaigns());
-					}
 				} else {
 					entityToSave.setForm(null);
 				}
@@ -388,9 +385,6 @@ public class SourceTokenBusiness implements IBasicBusiness<Request<SourceTokenDt
 				if (dto.getFormId() > 0) {
 					Form assignedForm = resolveSourceTokenForm(dto.getFormId(), entityToSave.getCampaigns(), locale);
 					entityToSave.setForm(assignedForm);
-					if (entityToSave.getCampaigns() == null && assignedForm != null) {
-						entityToSave.setCampaigns(assignedForm.getCampaigns());
-					}
 				} else {
 					entityToSave.setForm(null);
 				}
@@ -662,16 +656,47 @@ public class SourceTokenBusiness implements IBasicBusiness<Request<SourceTokenDt
 	 * @throws Exception
 	 */
 	public SourceTokenDto getFullInfos(SourceTokenDto dto, Integer size, Boolean isSimpleLoading, Locale locale) throws Exception {
-		// put code here
+		if (dto == null || Utilities.isTrue(isSimpleLoading)) {
+			return dto;
+		}
 
-		if (Utilities.isTrue(isSimpleLoading)) {
-			return dto;
-		}
-		if (size > 1) {
-			return dto;
-		}
+		Integer linkedCampaignCount = countActiveCampaignLinks(dto.getFormId());
+		dto.setLinkedCampaignCount(linkedCampaignCount);
+		dto.setFormShared(linkedCampaignCount != null ? linkedCampaignCount > 1 : null);
+		dto.setCampaignFormLinkActive(resolveCampaignFormLinkActive(dto));
 
 		return dto;
+	}
+
+	private Boolean resolveCampaignFormLinkActive(SourceTokenDto dto) {
+		if (dto == null || dto.getCampaignId() == null || dto.getFormId() == null) {
+			return null;
+		}
+		return hasActiveCampaignFormLink(dto.getCampaignId(), dto.getFormId());
+	}
+
+	private Integer countActiveCampaignLinks(Integer formId) {
+		if (formId == null || formId <= 0) {
+			return null;
+		}
+
+		List<CampaignForm> links = campaignFormRepository.findByFormId(formId);
+		if (links == null || links.isEmpty()) {
+			return 0;
+		}
+
+		int count = 0;
+		for (CampaignForm link : links) {
+			if (link == null || Boolean.TRUE.equals(link.getIsDeleted()) || link.getCampaigns() == null || link.getForm() == null) {
+				continue;
+			}
+			if (Boolean.TRUE.equals(link.getCampaigns().getIsDeleted()) || Boolean.TRUE.equals(link.getForm().getIsDeleted())) {
+				continue;
+			}
+			count++;
+		}
+
+		return count;
 	}
 
 	/**
@@ -710,11 +735,12 @@ public class SourceTokenBusiness implements IBasicBusiness<Request<SourceTokenDt
 			throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("form formId -> " + formId, locale));
 		}
 
-		if (existingForm.getCampaigns() == null || existingForm.getCampaigns().getId() == null) {
-			throw new InvalidEntityException(functionalError.REQUEST_FAIL("Le formulaire selectionne n'est rattache a aucune campagne", locale));
+		if (campaign == null || campaign.getId() == null) {
+			throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+					"Une campagne doit etre selectionnee pour associer un formulaire a ce source token", locale));
 		}
 
-		if (campaign != null && !existingForm.getCampaigns().getId().equals(campaign.getId())) {
+		if (!hasActiveCampaignFormLink(campaign.getId(), existingForm.getId())) {
 			throw new InvalidEntityException(functionalError.REQUEST_FAIL("Le formulaire selectionne n'appartient pas a la campagne du source token", locale));
 		}
 
@@ -722,15 +748,25 @@ public class SourceTokenBusiness implements IBasicBusiness<Request<SourceTokenDt
 	}
 
 	private void ensureExistingFormMatchesCampaign(SourceToken entityToSave, Locale locale) {
-		if (entityToSave.getForm() == null || entityToSave.getCampaigns() == null) {
+		if (entityToSave.getForm() == null) {
 			return;
 		}
 
-		if (entityToSave.getForm().getCampaigns() == null
-				|| entityToSave.getForm().getCampaigns().getId() == null
-				|| !entityToSave.getForm().getCampaigns().getId().equals(entityToSave.getCampaigns().getId())) {
+		if (entityToSave.getCampaigns() == null || entityToSave.getCampaigns().getId() == null) {
+			throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+					"Une campagne doit etre selectionnee pour associer un formulaire a ce source token", locale));
+		}
+
+		if (!hasActiveCampaignFormLink(entityToSave.getCampaigns().getId(), entityToSave.getForm().getId())) {
 			throw new InvalidEntityException(functionalError.REQUEST_FAIL("Le formulaire associe au source token ne correspond plus a la campagne selectionnee", locale));
 		}
+	}
+
+	private boolean hasActiveCampaignFormLink(Integer campaignId, Integer formId) {
+		if (campaignId == null || formId == null) {
+			return false;
+		}
+		return campaignFormRepository.countActiveLinksByCampaignIdAndFormId(campaignId, formId) > 0L;
 	}
 
 	public Response<SourceTokenDto> custom(Request<SourceTokenDto> request, Locale locale) throws JsonProcessingException {

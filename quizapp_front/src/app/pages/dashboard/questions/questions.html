@@ -352,6 +352,10 @@
             <p class="form-help">Aucune spécialité active n'est disponible. La création d'une question restera bloquée tant que ce référentiel n'est pas rétabli.</p>
           }
 
+          @if (formVersionQuestionContext()) {
+            <p class="form-help">Cette édition est rattachée au brouillon de version #{{ formVersionQuestionContext()?.formVersionId }}. Les changements structurels isoleront automatiquement la question sur ce brouillon.</p>
+          }
+
           @if (questionModalSupportsPredefinedAnswers()) {
             <section class="embedded-answers-section">
               <div class="embedded-answers-header">

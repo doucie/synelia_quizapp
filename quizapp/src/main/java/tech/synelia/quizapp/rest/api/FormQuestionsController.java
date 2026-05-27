@@ -76,9 +76,7 @@ public class FormQuestionsController {
 	@RequestMapping(value="/updateDeleted",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
 	public Response<FormQuestionsDto> updateDeleted(@RequestBody Request<FormQuestionsDto> request) throws Exception {
 		log.info("start method /formquestions/updateDeleted");
-		String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
-		Locale locale = Locale.of(languageID, "");
-		Response<FormQuestionsDto> response = formQuestionsBusiness.updateDeleted(request, locale);
+		Response<FormQuestionsDto> response = controllerFactory.updateDeleted(request, FunctionalityEnum.UPDATE_FORM_QUESTIONS, formQuestionsBusiness::updateDeleted);
 		log.info("end method /formquestions/updateDeleted");
 		return response;
 	}
@@ -86,9 +84,7 @@ public class FormQuestionsController {
 	@RequestMapping(value="/updateAll",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
 	public Response<FormQuestionsDto> updateAll(@RequestBody Request<FormQuestionsDto> request) throws Exception {
 		log.info("start method /formquestions/updateAll");
-		String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
-		Locale locale = Locale.of(languageID, "");
-		Response<FormQuestionsDto> response = formQuestionsBusiness.updateAll(request, locale);
+		Response<FormQuestionsDto> response = controllerFactory.updateAll(request, FunctionalityEnum.UPDATE_FORM_QUESTIONS, formQuestionsBusiness::updateAll);
 		log.info("end method /formquestions/updateAll");
 		return response;
 	}
@@ -112,9 +108,7 @@ public class FormQuestionsController {
 	@RequestMapping(value="/getAllByCriteria",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
 	public Response<FormQuestionsDto> getAllByCriteria(@RequestBody Request<FormQuestionsDto> request) throws Exception {
 		log.info("start method /formquestions/getAllByCriteria");
-		String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
-		Locale locale = Locale.of(languageID, "");
-		Response<FormQuestionsDto> response = formQuestionsBusiness.getAllByCriteria(request, locale);
+		Response<FormQuestionsDto> response = controllerFactory.getAllByCriteria(request, FunctionalityEnum.VIEW_FORM_QUESTIONS, formQuestionsBusiness::getAllByCriteria);
 		log.info("end method /formquestions/getAllByCriteria");
 		return response;
 	}
@@ -122,28 +116,7 @@ public class FormQuestionsController {
 	@RequestMapping(value="/custom",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
 	public Response<FormQuestionsDto> custom(@RequestBody Request<FormQuestionsDto> request) throws Exception {
 		log.info("start method /formquestions/custom");
-		Response<FormQuestionsDto> response = new Response<FormQuestionsDto>();
-		String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
-		Locale locale = Locale.of(languageID, "");
-		try {
-			response = Validate.validateList(request, response, functionalError, locale);
-			if (!response.isHasError()) {
-				response = formQuestionsBusiness.custom(request, locale);
-			} else {
-				slf4jLogger.info("Erreur| code: {} -  message: {}", response.getStatus().getCode(), response.getStatus().getMessage());
-				return response;
-			}
-			if (!response.isHasError()) {
-				slf4jLogger.info("end method custom");
-				slf4jLogger.info("code: {} -  message: {}", StatusCode.SUCCESS, StatusMessage.SUCCESS);
-			} else {
-				slf4jLogger.info("Erreur| code: {} -  message: {}", response.getStatus().getCode(), response.getStatus().getMessage());
-			}
-		} catch (CannotCreateTransactionException e) {
-			exceptionUtils.CANNOT_CREATE_TRANSACTION_EXCEPTION(response, locale, e);
-		} catch (TransactionSystemException e) {
-			exceptionUtils.TRANSACTION_SYSTEM_EXCEPTION(response, locale, e);
-		}
+		Response<FormQuestionsDto> response = controllerFactory.custom(request, FunctionalityEnum.UPDATE_FORM_QUESTIONS, formQuestionsBusiness::custom);
 		slf4jLogger.info("end method /formquestions/custom");
 		return response;
 	}

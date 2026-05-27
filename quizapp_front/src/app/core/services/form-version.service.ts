@@ -119,7 +119,7 @@ export class FormVersionService {
   }
 
   /**
-   * Custom actions: fork a locked version, duplicate a question for a version
+   * Custom actions: publish a version, fork a locked version, duplicate a question for a version
    */
   custom(action: string, formVersionId: number, questionId?: number): Observable<any> {
     const data: any = { action, id: formVersionId };

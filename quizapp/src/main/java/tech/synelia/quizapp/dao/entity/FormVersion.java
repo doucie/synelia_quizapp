@@ -13,13 +13,16 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
+import jakarta.persistence.UniqueConstraint;
 import lombok.Data;
 import lombok.ToString;
 
 @Data
 @ToString
 @Entity
-@Table(name="form_version")
+@Table(name="form_version", uniqueConstraints = {
+  @UniqueConstraint(columnNames = {"form_id", "version_number"})
+})
 public class FormVersion implements Serializable, Cloneable {
 
     private static final long serialVersionUID = 1L;

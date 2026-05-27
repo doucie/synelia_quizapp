@@ -76,9 +76,7 @@ public class FormVersionController {
 	@RequestMapping(value="/updateDeleted",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
 	public Response<FormVersionDto> updateDeleted(@RequestBody Request<FormVersionDto> request) throws Exception {
 		log.info("start method /formversion/updateDeleted");
-		String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
-		Locale locale = Locale.of(languageID, "");
-		Response<FormVersionDto> response = formVersionBusiness.updateDeleted(request, locale);
+		Response<FormVersionDto> response = controllerFactory.updateDeleted(request, FunctionalityEnum.UPDATE_FORM_VERSION, formVersionBusiness::updateDeleted);
 		log.info("end method /formversion/updateDeleted");
 		return response;
 	}
@@ -86,9 +84,7 @@ public class FormVersionController {
 	@RequestMapping(value="/updateAll",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
 	public Response<FormVersionDto> updateAll(@RequestBody Request<FormVersionDto> request) throws Exception {
 		log.info("start method /formversion/updateAll");
-		String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
-		Locale locale = Locale.of(languageID, "");
-		Response<FormVersionDto> response = formVersionBusiness.updateAll(request, locale);
+		Response<FormVersionDto> response = controllerFactory.updateAll(request, FunctionalityEnum.UPDATE_FORM_VERSION, formVersionBusiness::updateAll);
 		log.info("end method /formversion/updateAll");
 		return response;
 	}
@@ -112,9 +108,7 @@ public class FormVersionController {
 	@RequestMapping(value="/getAllByCriteria",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
 	public Response<FormVersionDto> getAllByCriteria(@RequestBody Request<FormVersionDto> request) throws Exception {
 		log.info("start method /formversion/getAllByCriteria");
-		String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
-		Locale locale = Locale.of(languageID, "");
-		Response<FormVersionDto> response = formVersionBusiness.getAllByCriteria(request, locale);
+		Response<FormVersionDto> response = controllerFactory.getAllByCriteria(request, FunctionalityEnum.VIEW_FORM_VERSION, formVersionBusiness::getAllByCriteria);
 		log.info("end method /formversion/getAllByCriteria");
 		return response;
 	}
@@ -122,28 +116,7 @@ public class FormVersionController {
 	@RequestMapping(value="/custom",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
 	public Response<FormVersionDto> custom(@RequestBody Request<FormVersionDto> request) throws Exception {
 		log.info("start method /formversion/custom");
-		Response<FormVersionDto> response = new Response<FormVersionDto>();
-		String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
-		Locale locale = Locale.of(languageID, "");
-		try {
-			response = Validate.validateList(request, response, functionalError, locale);
-			if (!response.isHasError()) {
-				response = formVersionBusiness.custom(request, locale);
-			} else {
-				slf4jLogger.info("Erreur| code: {} -  message: {}", response.getStatus().getCode(), response.getStatus().getMessage());
-				return response;
-			}
-			if (!response.isHasError()) {
-				slf4jLogger.info("end method custom");
-				slf4jLogger.info("code: {} -  message: {}", StatusCode.SUCCESS, StatusMessage.SUCCESS);
-			} else {
-				slf4jLogger.info("Erreur| code: {} -  message: {}", response.getStatus().getCode(), response.getStatus().getMessage());
-			}
-		} catch (CannotCreateTransactionException e) {
-			exceptionUtils.CANNOT_CREATE_TRANSACTION_EXCEPTION(response, locale, e);
-		} catch (TransactionSystemException e) {
-			exceptionUtils.TRANSACTION_SYSTEM_EXCEPTION(response, locale, e);
-		}
+		Response<FormVersionDto> response = controllerFactory.custom(request, FunctionalityEnum.UPDATE_FORM_VERSION, formVersionBusiness::custom);
 		slf4jLogger.info("end method /formversion/custom");
 		return response;
 	}

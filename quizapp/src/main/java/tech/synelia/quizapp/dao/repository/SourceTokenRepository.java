@@ -248,6 +248,9 @@ public interface SourceTokenRepository extends JpaRepository<SourceToken, Intege
 			if (dto.getCampaignId()!= null && dto.getCampaignId() > 0) {
 				listOfQuery.add(CriteriaUtils.generateCriteria("campaignId", dto.getCampaignId(), "e.campaigns.id", "Integer", dto.getCampaignIdParam(), param, index, locale));
 			}
+			if (dto.getFormId()!= null && dto.getFormId() > 0) {
+				listOfQuery.add(CriteriaUtils.generateCriteria("formId", dto.getFormId(), "e.form.id", "Integer", dto.getFormIdParam(), param, index, locale));
+			}
 			List<String> listOfCustomQuery = _generateCriteria(dto, param, index, locale);
 			if (Utilities.isNotEmpty(listOfCustomQuery)) {
 				listOfQuery.addAll(listOfCustomQuery);

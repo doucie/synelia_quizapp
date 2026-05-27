@@ -71,6 +71,12 @@ export const routes: Routes = [
         canActivate: [roleGuard, permissionGuard(['VIEW_ANSWER'])],
         data: { roles: ['super', 'admin'] }
       },
+      {
+        path: 'forms',
+        loadComponent: () => import('./pages/dashboard/forms/forms').then(m => m.FormsComponent),
+        canActivate: [roleGuard, permissionGuard(['VIEW_FORM'])],
+        data: { roles: ['super', 'admin'] }
+      },
       { 
         path: 'overview', 
         loadComponent: () => import('./pages/dashboard/overview/overview').then(m => m.OverviewComponent)
@@ -272,6 +278,16 @@ export const routes: Routes = [
       { 
         path: 'entities/forms', 
         loadComponent: () => import('./pages/dashboard/entities/solo/forms/entities-forms').then(m => m.EntitiesFormsComponent),
+        canActivate: [permissionGuard(['VIEW_FORM'])]
+      },
+      {
+        path: 'entities/campaign-form/:page',
+        loadComponent: () => import('./pages/dashboard/entities/solo/campaign-form/entities-campaign-form').then(m => m.EntitiesCampaignFormComponent),
+        canActivate: [permissionGuard(['VIEW_FORM'])]
+      },
+      {
+        path: 'entities/campaign-form',
+        loadComponent: () => import('./pages/dashboard/entities/solo/campaign-form/entities-campaign-form').then(m => m.EntitiesCampaignFormComponent),
         canActivate: [permissionGuard(['VIEW_FORM'])]
       },
       { 

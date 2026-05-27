@@ -42,6 +42,14 @@ public class FormBusiness implements IBasicBusiness<Request<FormDto>, Response<F
 	@Autowired
 	private FormQuestionsRepository formQuestionsRepository;
 	@Autowired
+	private QuestionRepository questionRepository;
+	@Autowired
+	private AnswerRepository answerRepository;
+	@Autowired
+	private CampaignFormRepository campaignFormRepository;
+	@Autowired
+	private FormCampaignProjectionService formCampaignProjectionService;
+	@Autowired
 	private FunctionalError functionalError;
 	@Autowired
 	private TechnicalError technicalError;
@@ -68,22 +76,12 @@ public class FormBusiness implements IBasicBusiness<Request<FormDto>, Response<F
 		for (FormDto dto : request.getDatas()) {
 			Map<String, java.lang.Object> fieldsToVerify = new HashMap<String, java.lang.Object>();
 			fieldsToVerify.put("formName", dto.getFormName());
-			fieldsToVerify.put("campaignId", dto.getCampaignId());
 			if (!Validate.RequiredValue(fieldsToVerify).isGood()) {
 				throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
 			}
 
-			// Verify if campaigns exist
-			Campaigns existingCampaigns = null;
-			if (dto.getCampaignId() != null && dto.getCampaignId() > 0) {
-				existingCampaigns = campaignsRepository.findOne(dto.getCampaignId(), false);
-				if (existingCampaigns == null) {
-					throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("campaigns campaignId -> " + dto.getCampaignId(), locale));
-				}
-			}
-
-			dto.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(dto)));
-			Form entityToSave = FormTransformer.INSTANCE.toEntity(dto, existingCampaigns);
+			Form entityToSave = FormTransformer.INSTANCE.toEntity(dto, null);
+			entityToSave.setCampaigns(null);
 			entityToSave.setCreatedAt(Utilities.getCurrentDate());
 			entityToSave.setCreatedBy(request.getUser());
 			entityToSave.setIsDeleted(false);
@@ -92,6 +90,7 @@ public class FormBusiness implements IBasicBusiness<Request<FormDto>, Response<F
 			}
 			applyTimingInheritance(entityToSave);
 			validateFormTimingConfiguration(entityToSave, locale);
+			entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(entityToSave)));
 			items.add(entityToSave);
 		}
 
@@ -158,6 +157,104 @@ public class FormBusiness implements IBasicBusiness<Request<FormDto>, Response<F
 		}
 	}
 
+	private void synchronizeCampaignFormLinks(List<Form> forms, Integer actorUserId) {
+		if (forms == null || forms.isEmpty()) {
+			return;
+		}
+
+		List<CampaignForm> linksToSave = new ArrayList<CampaignForm>();
+		Date now = Utilities.getCurrentDate();
+		for (Form form : forms) {
+			if (form == null || form.getId() == null) {
+				continue;
+			}
+
+			Integer desiredCampaignId = resolveDesiredCampaignId(form);
+			CampaignForm desiredLink = null;
+			List<CampaignForm> existingLinks = campaignFormRepository.findByFormId(form.getId());
+			if (existingLinks == null) {
+				existingLinks = Collections.emptyList();
+			}
+
+			for (CampaignForm existingLink : existingLinks) {
+				if (existingLink == null || existingLink.getCampaigns() == null || existingLink.getCampaigns().getId() == null) {
+					continue;
+				}
+
+				Integer existingCampaignId = existingLink.getCampaigns().getId();
+				if (desiredCampaignId != null && Objects.equals(existingCampaignId, desiredCampaignId)) {
+					desiredLink = existingLink;
+					if (Boolean.TRUE.equals(existingLink.getIsDeleted())) {
+						existingLink.setIsDeleted(false);
+						existingLink.setUpdatedAt(now);
+						existingLink.setUpdatedBy(actorUserId);
+						existingLink.setSearchString(buildCampaignFormSearchString(existingLink.getCampaigns(), form));
+						linksToSave.add(existingLink);
+					}
+					continue;
+				}
+
+				if (!Boolean.TRUE.equals(existingLink.getIsDeleted())) {
+					existingLink.setIsDeleted(true);
+					existingLink.setUpdatedAt(now);
+					existingLink.setUpdatedBy(actorUserId);
+					linksToSave.add(existingLink);
+				}
+			}
+
+			if (desiredCampaignId != null && desiredLink == null) {
+				CampaignForm newLink = new CampaignForm();
+				newLink.setCampaigns(form.getCampaigns());
+				newLink.setForm(form);
+				newLink.setIsDeleted(false);
+				newLink.setCreatedAt(now);
+				newLink.setCreatedBy(actorUserId);
+				newLink.setSearchString(buildCampaignFormSearchString(form.getCampaigns(), form));
+				linksToSave.add(newLink);
+			}
+		}
+
+		if (!linksToSave.isEmpty()) {
+			campaignFormRepository.saveAll(linksToSave);
+		}
+		formCampaignProjectionService.synchronizeLegacyCampaignProjection(forms, actorUserId);
+	}
+
+	private Integer resolveDesiredCampaignId(Form form) {
+		if (form == null || Boolean.TRUE.equals(form.getIsDeleted()) || form.getCampaigns() == null) {
+			return null;
+		}
+		return form.getCampaigns().getId();
+	}
+
+	private String buildCampaignFormSearchString(Campaigns campaign, Form form) {
+		if (campaign == null && form == null) {
+			return null;
+		}
+
+		List<String> tokens = new ArrayList<String>();
+		if (campaign != null) {
+			if (campaign.getId() != null) {
+				tokens.add(String.valueOf(campaign.getId()));
+			}
+			if (StringUtils.isNotBlank(campaign.getCampaignTitle())) {
+				tokens.add(campaign.getCampaignTitle());
+			}
+		}
+		if (form != null) {
+			if (form.getId() != null) {
+				tokens.add(String.valueOf(form.getId()));
+			}
+			if (StringUtils.isNotBlank(form.getFormName())) {
+				tokens.add(form.getFormName());
+			}
+			if (StringUtils.isNotBlank(form.getFormDesc())) {
+				tokens.add(form.getFormDesc());
+			}
+		}
+		return tokens.isEmpty() ? null : StringUtils.normalizeSpace(String.join(" ", tokens));
+	}
+
 	@Override
 	public Response<FormDto> update(Request<FormDto> request, Locale locale) throws ParseException, JsonProcessingException {
 		log.info("----begin update Form-----");
@@ -176,7 +273,7 @@ public class FormBusiness implements IBasicBusiness<Request<FormDto>, Response<F
 				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("form id -> " + dto.getId(), locale));
 			}
 
-			applyCampaignAssociationUpdate(dto, entityToSave, locale);
+			rejectEffectiveTimingMutationOnLockedHistory(dto, entityToSave, locale);
 			if (Utilities.shouldUpdate(dto.getFormName())) {
 				entityToSave.setFormName(dto.getFormName());
 			}
@@ -261,6 +358,7 @@ public class FormBusiness implements IBasicBusiness<Request<FormDto>, Response<F
 
 		if (!items.isEmpty()) {
 			formRepository.saveAll((Iterable<Form>) items);
+			synchronizeCampaignFormLinks(items, request.getUser());
 			Status status = new Status();
 			status.setCode(StatusCode.SUCCESS);
 			status.setMessage(StatusMessage.SUCCESS);
@@ -355,17 +453,402 @@ public class FormBusiness implements IBasicBusiness<Request<FormDto>, Response<F
 		return response;
 	}
 
+	@Transactional(rollbackFor = {RuntimeException.class, Exception.class})
 	public Response<FormDto> custom(Request<FormDto> request, Locale locale) throws Exception {
 		log.info("----begin custom FormBusiness-----");
 		Response<FormDto> response = new Response<FormDto>();
-		response.setHasError(false);
-		response.setCount(1L);
-		response.setHttpCode(HttpStatus.OK.value());
+
+		if (request.getDatas() == null || request.getDatas().isEmpty()) {
+			response.setHasError(true);
+			response.setStatus(functionalError.DATA_EMPTY("form", locale));
+			return response;
+		}
+
+		FormDto dto = request.getDatas().get(0);
+		if ("syncCampaignLinks".equalsIgnoreCase(StringUtils.trimToEmpty(dto.getAction()))) {
+			response = syncCampaignLinks(dto, request.getUser(), locale);
+		} else if ("duplicateForCampaign".equalsIgnoreCase(StringUtils.trimToEmpty(dto.getAction()))) {
+			response = duplicateForCampaign(dto, request.getUser(), request.getIsSimpleLoading(), locale);
+		} else {
+			response.setHasError(true);
+			response.setStatus(functionalError.DATA_NOT_EXIST("action -> " + dto.getAction(), locale));
+		}
+		return response;
+	}
+
+	private Response<FormDto> duplicateForCampaign(FormDto dto, Integer actorUserId, Boolean isSimpleLoading, Locale locale) throws Exception {
+		Map<String, java.lang.Object> fieldsToVerify = new HashMap<>();
+		fieldsToVerify.put("id", dto.getId());
+		fieldsToVerify.put("campaignId", dto.getCampaignId());
+		if (!Validate.RequiredValue(fieldsToVerify).isGood()) {
+			throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
+		}
+
+		Form sourceForm = formRepository.findOne(dto.getId(), false);
+		if (sourceForm == null) {
+			throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("form id -> " + dto.getId(), locale));
+		}
+
+		Campaigns targetCampaign = campaignsRepository.findOne(dto.getCampaignId(), false);
+		if (targetCampaign == null) {
+			throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("campaigns campaignId -> " + dto.getCampaignId(), locale));
+		}
+
+		Form duplicatedForm = buildDuplicatedForm(sourceForm, targetCampaign, dto.getFormName(), actorUserId);
+		duplicatedForm = formRepository.save(duplicatedForm);
+		createDuplicatedDraftVersion(sourceForm, duplicatedForm, actorUserId);
+		synchronizeCampaignFormLinks(Collections.singletonList(duplicatedForm), actorUserId);
+
+		FormDto duplicatedDto = Utilities.isTrue(isSimpleLoading)
+				? FormTransformer.INSTANCE.toLiteDto(duplicatedForm)
+				: FormTransformer.INSTANCE.toDto(duplicatedForm);
+		duplicatedDto = getFullInfos(duplicatedDto, 1, isSimpleLoading, locale);
+
+		Response<FormDto> customResponse = new Response<>();
 		Status status = new Status();
 		status.setCode(StatusCode.SUCCESS);
 		status.setMessage(StatusMessage.SUCCESS);
-		response.setStatus(status);
-		return response;
+		customResponse.setItems(Collections.singletonList(duplicatedDto));
+		customResponse.setHasError(false);
+		customResponse.setHttpCode(HttpStatus.CREATED.value());
+		customResponse.setStatus(status);
+		customResponse.setCount(1L);
+		return customResponse;
+	}
+
+	private Form buildDuplicatedForm(Form sourceForm, Campaigns targetCampaign, String requestedName, Integer actorUserId) throws JsonProcessingException {
+		Form duplicatedForm = new Form();
+		duplicatedForm.setFormName(buildDuplicatedFormName(sourceForm, targetCampaign, requestedName));
+		duplicatedForm.setFormDesc(sourceForm.getFormDesc());
+		duplicatedForm.setIsActive(sourceForm.getIsActive() != null ? sourceForm.getIsActive() : true);
+		duplicatedForm.setIsTimed(sourceForm.getIsTimed() != null ? sourceForm.getIsTimed() : false);
+		duplicatedForm.setCampaigns(targetCampaign);
+		duplicatedForm.setIsDeleted(false);
+		duplicatedForm.setCreatedAt(Utilities.getCurrentDate());
+		duplicatedForm.setCreatedBy(actorUserId);
+		duplicatedForm.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(duplicatedForm)));
+		return duplicatedForm;
+	}
+
+	private String buildDuplicatedFormName(Form sourceForm, Campaigns targetCampaign, String requestedName) {
+		if (StringUtils.isNotBlank(requestedName)) {
+			return requestedName.trim();
+		}
+
+		String baseName = sourceForm != null && StringUtils.isNotBlank(sourceForm.getFormName())
+				? sourceForm.getFormName().trim()
+				: "Formulaire";
+		String campaignName = targetCampaign != null && StringUtils.isNotBlank(targetCampaign.getCampaignTitle())
+				? targetCampaign.getCampaignTitle().trim()
+				: null;
+		return campaignName != null ? baseName + " (copie " + campaignName + ")" : baseName + " (copie)";
+	}
+
+	private void createDuplicatedDraftVersion(Form sourceForm, Form duplicatedForm, Integer actorUserId) throws JsonProcessingException {
+		FormVersion sourceVersion = resolveSourceVersionForDuplication(sourceForm);
+		FormVersion duplicatedVersion = new FormVersion();
+		duplicatedVersion.setForm(duplicatedForm);
+		duplicatedVersion.setVersionNumber(1);
+		duplicatedVersion.setIsPublished(false);
+		duplicatedVersion.setIsLocked(false);
+		duplicatedVersion.setRandomQuestions(sourceVersion != null && Boolean.TRUE.equals(sourceVersion.getRandomQuestions()));
+		duplicatedVersion.setIsDeleted(false);
+		duplicatedVersion.setCreatedAt(Utilities.getCurrentDate());
+		duplicatedVersion.setCreatedBy(actorUserId);
+		duplicatedVersion.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(duplicatedVersion)));
+		duplicatedVersion = formVersionRepository.save(duplicatedVersion);
+
+		if (sourceVersion != null) {
+			copyFormVersionComposition(sourceVersion, duplicatedVersion, actorUserId);
+		}
+	}
+
+	private FormVersion resolveSourceVersionForDuplication(Form sourceForm) {
+		if (sourceForm == null || sourceForm.getId() == null) {
+			return null;
+		}
+
+		FormVersion publishedVersion = selectHighestVersion(
+				formVersionRepository.findByFormIdAndIsPublished(sourceForm.getId(), true, false));
+		if (publishedVersion != null) {
+			return publishedVersion;
+		}
+
+		return selectHighestVersion(formVersionRepository.findByFormId(sourceForm.getId(), false));
+	}
+
+	private FormVersion selectHighestVersion(List<FormVersion> versions) {
+		if (versions == null || versions.isEmpty()) {
+			return null;
+		}
+
+		FormVersion selectedVersion = null;
+		for (FormVersion version : versions) {
+			if (version == null) {
+				continue;
+			}
+
+			if (selectedVersion == null) {
+				selectedVersion = version;
+				continue;
+			}
+
+			int selectedNumber = selectedVersion.getVersionNumber() != null ? selectedVersion.getVersionNumber() : 0;
+			int candidateNumber = version.getVersionNumber() != null ? version.getVersionNumber() : 0;
+			if (candidateNumber > selectedNumber) {
+				selectedVersion = version;
+				continue;
+			}
+
+			if (candidateNumber == selectedNumber) {
+				int selectedId = selectedVersion.getId() != null ? selectedVersion.getId() : 0;
+				int candidateId = version.getId() != null ? version.getId() : 0;
+				if (candidateId > selectedId) {
+					selectedVersion = version;
+				}
+			}
+		}
+
+		return selectedVersion;
+	}
+
+	private void copyFormVersionComposition(FormVersion sourceVersion, FormVersion duplicatedVersion, Integer actorUserId) throws JsonProcessingException {
+		List<FormQuestions> sourceLinks = formQuestionsRepository.findByFormVersionIdOrderByQuestionOrder(sourceVersion.getId(), false);
+		if (sourceLinks == null || sourceLinks.isEmpty()) {
+			return;
+		}
+
+		List<FormQuestions> duplicatedLinks = new ArrayList<FormQuestions>();
+		for (FormQuestions sourceLink : sourceLinks) {
+			if (sourceLink == null || sourceLink.getQuestion() == null) {
+				continue;
+			}
+
+			Question duplicatedQuestion = duplicateQuestionWithAnswers(sourceLink.getQuestion(), actorUserId);
+			FormQuestions duplicatedLink = new FormQuestions();
+			duplicatedLink.setFormVersion(duplicatedVersion);
+			duplicatedLink.setQuestion(duplicatedQuestion);
+			duplicatedLink.setQuestionOrder(sourceLink.getQuestionOrder());
+			duplicatedLink.setChronoOverride(sourceLink.getChronoOverride());
+			duplicatedLink.setIsDeleted(false);
+			duplicatedLink.setCreatedAt(Utilities.getCurrentDate());
+			duplicatedLink.setCreatedBy(actorUserId);
+			duplicatedLink.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(duplicatedLink)));
+			duplicatedLinks.add(duplicatedLink);
+		}
+
+		if (!duplicatedLinks.isEmpty()) {
+			formQuestionsRepository.saveAll(duplicatedLinks);
+		}
+	}
+
+	private Question duplicateQuestionWithAnswers(Question sourceQuestion, Integer actorUserId) throws JsonProcessingException {
+		Question duplicatedQuestion = new Question();
+		duplicatedQuestion.setQuestionRef(sourceQuestion.getQuestionRef() != null ? sourceQuestion.getQuestionRef() : java.util.UUID.randomUUID().toString());
+		duplicatedQuestion.setQuestionText(sourceQuestion.getQuestionText());
+		duplicatedQuestion.setQuestionChrono(sourceQuestion.getQuestionChrono());
+		duplicatedQuestion.setQuestionType(sourceQuestion.getQuestionType());
+		duplicatedQuestion.setScore(sourceQuestion.getScore());
+		duplicatedQuestion.setDifficultyLevel(sourceQuestion.getDifficultyLevel());
+		duplicatedQuestion.setSpecialities(sourceQuestion.getSpecialities());
+		duplicatedQuestion.setIsDeleted(false);
+		duplicatedQuestion.setCreatedAt(Utilities.getCurrentDate());
+		duplicatedQuestion.setCreatedBy(actorUserId);
+		duplicatedQuestion.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(duplicatedQuestion)));
+		duplicatedQuestion = questionRepository.save(duplicatedQuestion);
+
+		List<Answer> sourceAnswers = answerRepository.findByQuestionId(sourceQuestion.getId(), false);
+		if (sourceAnswers == null || sourceAnswers.isEmpty()) {
+			return duplicatedQuestion;
+		}
+
+		List<Answer> duplicatedAnswers = new ArrayList<Answer>();
+		for (Answer sourceAnswer : sourceAnswers) {
+			if (sourceAnswer == null) {
+				continue;
+			}
+
+			Answer duplicatedAnswer = new Answer();
+			duplicatedAnswer.setQuestion(duplicatedQuestion);
+			duplicatedAnswer.setAnswerText(sourceAnswer.getAnswerText());
+			duplicatedAnswer.setAnswerType(sourceAnswer.getAnswerType());
+			duplicatedAnswer.setAllowAdditionalComment(sourceAnswer.getAllowAdditionalComment());
+			duplicatedAnswer.setAdditionalCommentRequired(sourceAnswer.getAdditionalCommentRequired());
+			duplicatedAnswer.setAdditionalCommentPlaceholder(sourceAnswer.getAdditionalCommentPlaceholder());
+			duplicatedAnswer.setAnswerOrder(sourceAnswer.getAnswerOrder());
+			duplicatedAnswer.setIsCorrect(sourceAnswer.getIsCorrect());
+			duplicatedAnswer.setIsDeleted(false);
+			duplicatedAnswer.setCreatedAt(Utilities.getCurrentDate());
+			duplicatedAnswer.setCreatedBy(actorUserId);
+			duplicatedAnswer.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(duplicatedAnswer)));
+			duplicatedAnswers.add(duplicatedAnswer);
+		}
+
+		if (!duplicatedAnswers.isEmpty()) {
+			answerRepository.saveAll(duplicatedAnswers);
+		}
+
+		return duplicatedQuestion;
+	}
+
+	private Response<FormDto> syncCampaignLinks(FormDto dto, Integer actorUserId, Locale locale) throws Exception {
+		Map<String, java.lang.Object> fieldsToVerify = new HashMap<>();
+		fieldsToVerify.put("campaignId", dto.getCampaignId());
+		if (!Validate.RequiredValue(fieldsToVerify).isGood()) {
+			throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
+		}
+
+		Campaigns campaign = campaignsRepository.findOne(dto.getCampaignId(), false);
+		if (campaign == null) {
+			throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("campaigns campaignId -> " + dto.getCampaignId(), locale));
+		}
+
+		List<Form> desiredForms = loadDesiredForms(dto.getFormIds(), locale);
+		synchronizeCampaignFormLinksForCampaign(campaign, desiredForms, actorUserId);
+
+		Response<FormDto> customResponse = new Response<>();
+		Status status = new Status();
+		status.setCode(StatusCode.SUCCESS);
+		status.setMessage(StatusMessage.SUCCESS);
+		customResponse.setStatus(status);
+		customResponse.setHasError(false);
+		customResponse.setHttpCode(HttpStatus.OK.value());
+		customResponse.setItems(FormTransformer.INSTANCE.toLiteDtos(desiredForms));
+		customResponse.setCount((long) desiredForms.size());
+		return customResponse;
+	}
+
+	private List<Form> loadDesiredForms(List<Integer> rawFormIds, Locale locale) throws Exception {
+		List<Integer> desiredFormIds = sanitizeFormIds(rawFormIds);
+		List<Form> desiredForms = new ArrayList<>();
+		for (Integer formId : desiredFormIds) {
+			Form existingForm = formRepository.findOne(formId, false);
+			if (existingForm == null) {
+				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("form id -> " + formId, locale));
+			}
+			desiredForms.add(existingForm);
+		}
+		return desiredForms;
+	}
+
+	private List<Integer> sanitizeFormIds(List<Integer> rawFormIds) {
+		if (rawFormIds == null || rawFormIds.isEmpty()) {
+			return Collections.emptyList();
+		}
+
+		LinkedHashSet<Integer> uniqueFormIds = new LinkedHashSet<>();
+		for (Integer formId : rawFormIds) {
+			if (formId != null && formId > 0) {
+				uniqueFormIds.add(formId);
+			}
+		}
+		return new ArrayList<>(uniqueFormIds);
+	}
+
+	private void synchronizeCampaignFormLinksForCampaign(Campaigns campaign, List<Form> desiredForms, Integer actorUserId) {
+		if (campaign == null || campaign.getId() == null) {
+			return;
+		}
+
+		List<CampaignForm> existingLinks = campaignFormRepository.findAllByCampaignId(campaign.getId());
+		if (existingLinks == null) {
+			existingLinks = Collections.emptyList();
+		}
+
+		Map<Integer, CampaignForm> latestLinkByFormId = new LinkedHashMap<>();
+		for (CampaignForm existingLink : existingLinks) {
+			if (existingLink == null || existingLink.getForm() == null || existingLink.getForm().getId() == null) {
+				continue;
+			}
+			latestLinkByFormId.put(existingLink.getForm().getId(), existingLink);
+		}
+
+		Date now = Utilities.getCurrentDate();
+		List<CampaignForm> linksToSave = new ArrayList<>();
+		Set<Integer> desiredFormIds = new LinkedHashSet<>();
+		List<Form> impactedForms = new ArrayList<>();
+		if (desiredForms != null) {
+			impactedForms.addAll(desiredForms);
+		}
+
+		for (int index = 0; index < desiredForms.size(); index++) {
+			Form desiredForm = desiredForms.get(index);
+			if (desiredForm == null || desiredForm.getId() == null) {
+				continue;
+			}
+
+			Integer desiredFormId = desiredForm.getId();
+			desiredFormIds.add(desiredFormId);
+			Integer assignmentOrder = index + 1;
+			CampaignForm existingLink = latestLinkByFormId.get(desiredFormId);
+			String searchString = buildCampaignFormSearchString(campaign, desiredForm);
+
+			if (existingLink == null) {
+				CampaignForm newLink = new CampaignForm();
+				newLink.setCampaigns(campaign);
+				newLink.setForm(desiredForm);
+				newLink.setAssignmentOrder(assignmentOrder);
+				newLink.setIsDeleted(false);
+				newLink.setCreatedAt(now);
+				newLink.setCreatedBy(actorUserId);
+				newLink.setSearchString(searchString);
+				linksToSave.add(newLink);
+				continue;
+			}
+
+			boolean shouldSave = false;
+			if (existingLink.getCampaigns() == null || !Objects.equals(existingLink.getCampaigns().getId(), campaign.getId())) {
+				existingLink.setCampaigns(campaign);
+				shouldSave = true;
+			}
+			if (existingLink.getForm() == null || !Objects.equals(existingLink.getForm().getId(), desiredFormId)) {
+				existingLink.setForm(desiredForm);
+				shouldSave = true;
+			}
+			if (Boolean.TRUE.equals(existingLink.getIsDeleted())) {
+				existingLink.setIsDeleted(false);
+				shouldSave = true;
+			}
+			if (!Objects.equals(existingLink.getAssignmentOrder(), assignmentOrder)) {
+				existingLink.setAssignmentOrder(assignmentOrder);
+				shouldSave = true;
+			}
+			if (!Objects.equals(existingLink.getSearchString(), searchString)) {
+				existingLink.setSearchString(searchString);
+				shouldSave = true;
+			}
+
+			if (shouldSave) {
+				existingLink.setUpdatedAt(now);
+				existingLink.setUpdatedBy(actorUserId);
+				linksToSave.add(existingLink);
+			}
+		}
+
+		for (CampaignForm existingLink : existingLinks) {
+			if (existingLink == null || existingLink.getForm() == null || existingLink.getForm().getId() == null) {
+				continue;
+			}
+			impactedForms.add(existingLink.getForm());
+			if (Boolean.TRUE.equals(existingLink.getIsDeleted())) {
+				continue;
+			}
+
+			Integer existingFormId = existingLink.getForm().getId();
+			if (desiredFormIds.contains(existingFormId)) {
+				continue;
+			}
+
+			existingLink.setIsDeleted(true);
+			existingLink.setUpdatedAt(now);
+			existingLink.setUpdatedBy(actorUserId);
+			linksToSave.add(existingLink);
+		}
+
+		if (!linksToSave.isEmpty()) {
+			campaignFormRepository.saveAll(linksToSave);
+		}
+		formCampaignProjectionService.synchronizeLegacyCampaignProjection(impactedForms, actorUserId);
 	}
 
 	public Response<FormDto> updateDeleted(Request<FormDto> request, Locale locale) throws ParseException, JsonProcessingException {
@@ -385,7 +868,7 @@ public class FormBusiness implements IBasicBusiness<Request<FormDto>, Response<F
 				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("form id -> " + dto.getId(), locale));
 			}
 
-			applyCampaignAssociationUpdate(dto, entityToSave, locale);
+			rejectEffectiveTimingMutationOnLockedHistory(dto, entityToSave, locale);
 			if (Utilities.shouldUpdate(dto.getFormName())) {
 				entityToSave.setFormName(dto.getFormName());
 			}
@@ -450,13 +933,7 @@ public class FormBusiness implements IBasicBusiness<Request<FormDto>, Response<F
 				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("form id -> " + dto.getId(), locale));
 			}
 
-			if (dto.getCampaignId() != null && dto.getCampaignId() > 0) {
-				Campaigns existingCampaigns = campaignsRepository.findOne(dto.getCampaignId(), false);
-				if (existingCampaigns == null) {
-					throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("campaigns campaignId -> " + dto.getCampaignId(), locale));
-				}
-				entityToSave.setCampaigns(existingCampaigns);
-			}
+			rejectEffectiveTimingMutationOnLockedHistory(dto, entityToSave, locale);
 			if (Utilities.shouldUpdate(dto.getFormName())) {
 				entityToSave.setFormName(dto.getFormName());
 			}
@@ -629,21 +1106,47 @@ public class FormBusiness implements IBasicBusiness<Request<FormDto>, Response<F
 		}
 	}
 
-	private void applyCampaignAssociationUpdate(FormDto dto, Form entityToSave, Locale locale) {
-		if (dto.getCampaignId() == null) {
+	private void rejectEffectiveTimingMutationOnLockedHistory(FormDto dto, Form entityToSave, Locale locale) {
+		if (dto == null || entityToSave == null || entityToSave.getId() == null) {
 			return;
 		}
 
-		if (dto.getCampaignId() > 0) {
-			Campaigns existingCampaigns = campaignsRepository.findOne(dto.getCampaignId(), false);
-			if (existingCampaigns == null) {
-				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("campaigns campaignId -> " + dto.getCampaignId(), locale));
+		if (!hasLockedFormVersion(entityToSave.getId())) {
+			return;
+		}
+
+		boolean currentTimed = isFormEffectivelyTimed(entityToSave);
+		Campaigns requestedCampaign = entityToSave.getCampaigns();
+		Boolean requestedIsTimed = dto.getIsTimed() != null ? dto.getIsTimed() : entityToSave.getIsTimed();
+		boolean requestedTimed = Boolean.TRUE.equals(requestedIsTimed)
+				|| (requestedCampaign != null && Boolean.TRUE.equals(requestedCampaign.getTimeAllForms()));
+
+		if (currentTimed == requestedTimed) {
+			return;
+		}
+
+		throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+				"Le chronometrage effectif d'un formulaire deja verrouille ne peut pas etre modifie en place.",
+				locale));
+	}
+
+	private boolean hasLockedFormVersion(Integer formId) {
+		if (formId == null) {
+			return false;
+		}
+
+		List<FormVersion> formVersions = formVersionRepository.findByFormId(formId, false);
+		if (formVersions == null || formVersions.isEmpty()) {
+			return false;
+		}
+
+		for (FormVersion formVersion : formVersions) {
+			if (formVersion != null && Boolean.TRUE.equals(formVersion.getIsLocked())) {
+				return true;
 			}
-			entityToSave.setCampaigns(existingCampaigns);
-			return;
 		}
 
-		entityToSave.setCampaigns(null);
+		return false;
 	}
 
 	private void applyTimingInheritance(Form form) {
@@ -653,9 +1156,6 @@ public class FormBusiness implements IBasicBusiness<Request<FormDto>, Response<F
 
 		if (form.getIsTimed() == null) {
 			form.setIsTimed(false);
-		}
-		if (form.getCampaigns() != null && Boolean.TRUE.equals(form.getCampaigns().getTimeAllForms())) {
-			form.setIsTimed(true);
 		}
 	}
 

@@ -111,7 +111,7 @@ public class SourceTokenController {
 	@RequestMapping(value="/getAllByCriteria",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
     public Response<SourceTokenDto> getAllByCriteria(@RequestBody Request<SourceTokenDto> request) throws Exception{
     	log.info("start method /sourceToken/getAllByCriteria");
-        Response<SourceTokenDto> response = sourceTokenBusiness.getAllByCriteria(request, Locale.of((String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER"), ""));
+		Response<SourceTokenDto> response = controllerFactory.getAllByCriteria(request, FunctionalityEnum.VIEW_SOURCE_TOKEN, sourceTokenBusiness::getAllByCriteria);
 		log.info("end method /sourceToken/getAllByCriteria");
         return response;
     }
@@ -120,30 +120,7 @@ public class SourceTokenController {
 	   "application/json" }, produces = { "application/json" })
 	 public Response<SourceTokenDto> custom(@RequestBody Request<SourceTokenDto> request) throws Exception{
 	  log.info("SourceTokenDto method /$/custom");
-	  Response<SourceTokenDto> response = new Response<SourceTokenDto>();
-	  String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
-	  Locale locale = Locale.of(languageID, "");
-	  try {
-	   response = Validate.validateList(request, response, functionalError, locale);
-	   if (!response.isHasError()) {
-	    response = sourceTokenBusiness.custom(request, locale);
-	   } else {
-	    slf4jLogger.info("Erreur| code: {} -  message: {}", response.getStatus().getCode(),
-	      response.getStatus().getMessage());
-	    return response;
-	   }
-	   if (!response.isHasError()) {
-	    slf4jLogger.info("end method custom");
-	    slf4jLogger.info("code: {} -  message: {}", StatusCode.SUCCESS, StatusMessage.SUCCESS);
-	   } else {
-	    slf4jLogger.info("Erreur| code: {} -  message: {}", response.getStatus().getCode(),
-	      response.getStatus().getMessage());
-	   }
-	  } catch (CannotCreateTransactionException e) {
-	   exceptionUtils.CANNOT_CREATE_TRANSACTION_EXCEPTION(response, locale, e);
-	  } catch (TransactionSystemException e) {
-	   exceptionUtils.TRANSACTION_SYSTEM_EXCEPTION(response, locale, e);
-	  }
+	  Response<SourceTokenDto> response = controllerFactory.custom(request, FunctionalityEnum.UPDATE_SOURCE_TOKEN, sourceTokenBusiness::custom);
 	  slf4jLogger.info("end method /SourceTokenDto/custom");
 	  return response;
 	 }

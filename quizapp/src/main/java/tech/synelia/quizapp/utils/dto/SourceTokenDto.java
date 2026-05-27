@@ -50,6 +50,9 @@ public class SourceTokenDto extends _SourceTokenDto implements Cloneable{
     private String     campaignName         ; // Nom de la campagne associée (non persisté, calculé)
     private Integer    formId               ;
     private String     formName             ;
+    private Boolean    campaignFormLinkActive ;
+    private Integer    linkedCampaignCount  ;
+    private Boolean    formShared           ;
     private String     expirationDate       ;
 
     //----------------------------------------------------------------------
@@ -66,6 +69,7 @@ public class SourceTokenDto extends _SourceTokenDto implements Cloneable{
 	private SearchParam<Boolean>  isDeletedParam        ;                     
 	private SearchParam<String>   searchStringParam     ;                     
 	private SearchParam<Integer>  campaignIdParam       ;                     
+	private SearchParam<Integer>  formIdParam           ;                     
     /**
      * Default constructor
      */

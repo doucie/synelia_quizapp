@@ -211,6 +211,7 @@
             <th class="col-short" [class.col-hidden]="!isColumnVisible('name')">Nom</th>
             <th class="col-long" [class.col-hidden]="!isColumnVisible('token')">Token</th>
             <th class="col-id" [class.col-hidden]="!isColumnVisible('campaignId')">ID Campagne</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('formName')">Formulaire</th>
             <th class="col-date" [class.col-hidden]="!isColumnVisible('expiration')">Expiration</th>
             <th class="col-date" [class.col-hidden]="!isColumnVisible('createdAt')">Cree le</th>
             <th class="col-actions" [class.col-hidden]="!isColumnVisible('actions')">Actions</th>
@@ -230,6 +231,9 @@
             </td>
             <td class="col-id" [class.col-hidden]="!isColumnVisible('campaignId')">
               <span class="cell-campaign">{{ token.campaignId || token.campaigns_id || '-' }}</span>
+            </td>
+            <td class="col-short" [class.col-hidden]="!isColumnVisible('formName')" [title]="token.formName || ''">
+              <span class="cell-name">{{ token.formName || '-' }}</span>
             </td>
             <td class="col-date" [class.col-hidden]="!isColumnVisible('expiration')">
               <span class="cell-date">{{ token.expirationDate || '-' }}</span>
@@ -502,10 +506,27 @@
             class="form-input"
             [(ngModel)]="editFormData.campaignId"
             name="campaignId"
+            (ngModelChange)="onEditCampaignChange($event)"
           >
-            <option [ngValue]="undefined">-- Sélectionner --</option>
+            <option [ngValue]="null">-- Sélectionner --</option>
             @for (c of allCampaigns(); track c.id) {
               <option [ngValue]="c.id">{{ c.campaignName }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="edit-form" class="form-label">Formulaire dédié</label>
+          <select
+            id="edit-form"
+            class="form-input"
+            [(ngModel)]="editFormData.formId"
+            name="formId"
+            [disabled]="!editFormData.campaignId"
+          >
+            <option [ngValue]="null">{{ editFormData.campaignId ? '-- Aucun formulaire dédié --' : '-- Sélectionner une campagne d’abord --' }}</option>
+            @for (form of editCampaignForms(); track form.id) {
+              <option [ngValue]="form.id">{{ form.formName }}</option>
             }
           </select>
         </div>
@@ -576,10 +597,27 @@
             class="form-input"
             [(ngModel)]="createFormData.campaignId"
             name="campaignId"
+            (ngModelChange)="onCreateCampaignChange($event)"
           >
-            <option [ngValue]="undefined">-- Sélectionner --</option>
+            <option [ngValue]="null">-- Sélectionner --</option>
             @for (c of allCampaigns(); track c.id) {
               <option [ngValue]="c.id">{{ c.campaignName }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="create-form" class="form-label">Formulaire dédié</label>
+          <select
+            id="create-form"
+            class="form-input"
+            [(ngModel)]="createFormData.formId"
+            name="formId"
+            [disabled]="!createFormData.campaignId"
+          >
+            <option [ngValue]="null">{{ createFormData.campaignId ? '-- Aucun formulaire dédié --' : '-- Sélectionner une campagne d’abord --' }}</option>
+            @for (form of createCampaignForms(); track form.id) {
+              <option [ngValue]="form.id">{{ form.formName }}</option>
             }
           </select>
         </div>

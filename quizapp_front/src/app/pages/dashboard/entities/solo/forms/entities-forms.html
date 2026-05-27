@@ -13,7 +13,7 @@
         <span class="current-page">Gestion des Formulaires</span>
       </div>
       <h1>Gestion des Formulaires</h1>
-      <p class="page-description">Administration complète des formulaires</p>
+      <p class="page-description">Administration des formulaires. Les liaisons campagne-formulaire se gèrent via l'écran dédié.</p>
     </div>
     <div class="toolbar">
       <div class="toolbar-left">
@@ -21,6 +21,7 @@
         <app-filter-checkbox inputId="showDeleted" label="Afficher les supprimés" [checked]="showDeletedItems" ariaLabel="Afficher les éléments supprimés" (checkedChange)="toggleDeletedItems()"></app-filter-checkbox>
       </div>
       <div class="toolbar-right">
+        <button class="btn-secondary-pro" (click)="openBusinessPage()">Page metier</button>
         <button class="btn-secondary-pro" (click)="openAdvancedSearch()">Filtres avancés</button>
         <button class="btn-primary-pro" (click)="openCreateDialog()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -57,7 +58,7 @@
           <input type="text" class="form-input" [(ngModel)]="advancedCriteria.formName" placeholder="Nom..." />
         </div>
         <div class="form-group">
-          <label>Campagne</label>
+          <label>Campagne liée</label>
           <app-filter-select [(ngModel)]="advancedCriteria.campaignId">
             <option [ngValue]="undefined">-- Tous --</option>
             @for (item of allCampaigns(); track item.id) {
@@ -149,7 +150,6 @@
             <th class="col-short" [class.col-hidden]="!isColumnVisible('name')">Nom</th>
             <th class="col-medium" [class.col-hidden]="!isColumnVisible('description')">Description</th>
             <th class="col-boolean" [class.col-hidden]="!isColumnVisible('active')">Actif</th>
-            <th class="col-id" [class.col-hidden]="!isColumnVisible('campaignId')">Campagne ID</th>
             <th class="col-date" [class.col-hidden]="!isColumnVisible('createdAt')">Créé le</th>
             <th class="col-actions" [class.col-hidden]="!isColumnVisible('actions')">Actions</th>
           </tr>
@@ -161,7 +161,6 @@
             <td [class.col-hidden]="!isColumnVisible('name')">{{ item.formName || '-' }}</td>
             <td [class.col-hidden]="!isColumnVisible('description')">{{ item.formDesc || '-' }}</td>
             <td [class.col-hidden]="!isColumnVisible('active')"><span class="bool-badge" [class.is-true]="item.isActive" [class.is-false]="!item.isActive"><svg *ngIf="item.isActive" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><svg *ngIf="!item.isActive" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>{{ item.isActive ? 'Oui' : 'Non' }}</span></td>
-            <td [class.col-hidden]="!isColumnVisible('campaignId')">{{ item.campaignId || '-' }}</td>
             <td [class.col-hidden]="!isColumnVisible('createdAt')"><span class="cell-date">{{ formatDate(item.createdAt) }}</span></td>
             <td class="actions-cell" [class.col-hidden]="!isColumnVisible('actions')" (click)="$event.stopPropagation()">
               <div class="actions-menu">
@@ -189,7 +188,7 @@
           </tr>
           <!-- Expansion: Versions du formulaire -->
           <tr *ngIf="isExpanded(item.id!)" class="expansion-row">
-            <td colspan="7" class="expansion-content">
+            <td colspan="6" class="expansion-content">
               <div class="children-container">
                 <div class="children-header">Versions du formulaire <span class="tab-count">{{ getChildren(item.id!).length }}</span></div>
                 <div *ngIf="isLoadingChildren(item.id!)" class="loading-children"><div class="loading-spinner-small"></div><span>Chargement...</span></div>
@@ -273,14 +272,7 @@
       <form class="edit-form">
         <div class="form-group"><label class="form-label">Nom</label><input type="text" class="form-input" [(ngModel)]="editFormData.formName" name="formName" /></div>
         <div class="form-group"><label class="form-label">Description</label><textarea class="form-input" [(ngModel)]="editFormData.formDesc" name="formDesc" rows="3"></textarea></div>
-        <div class="form-group"><label class="form-label">Campagne</label>
-          <app-filter-select [(ngModel)]="editFormData.campaignId" name="campaignId" ariaLabel="Sélectionner une campagne">
-            <option [ngValue]="null">-- Sélectionner --</option>
-            @for (c of allCampaigns(); track c.id) {
-              <option [ngValue]="c.id">{{ c.campaignName }}</option>
-            }
-          </app-filter-select>
-        </div>
+        <div class="form-group"><small>Les liaisons campagne-formulaire se modifient depuis l'écran dédié `campaign_form`.</small></div>
         <div class="form-group"><app-filter-checkbox class="form-label" inputId="entities-forms-edit-active" label="Actif" variant="inline" [(ngModel)]="editFormData.isActive" name="editFormIsActive" ariaLabel="Formulaire actif"></app-filter-checkbox></div>
       </form>
     </div>
@@ -305,14 +297,7 @@
       <form class="edit-form">
         <div class="form-group"><label class="form-label">Nom</label><input type="text" class="form-input" [(ngModel)]="createFormData.formName" name="formName" /></div>
         <div class="form-group"><label class="form-label">Description</label><textarea class="form-input" [(ngModel)]="createFormData.formDesc" name="formDesc" rows="3"></textarea></div>
-        <div class="form-group"><label class="form-label">Campagne</label>
-          <app-filter-select [(ngModel)]="createFormData.campaignId" name="campaignId" ariaLabel="Sélectionner une campagne pour le nouveau formulaire">
-            <option [ngValue]="null">-- Sélectionner --</option>
-            @for (c of allCampaigns(); track c.id) {
-              <option [ngValue]="c.id">{{ c.campaignName }}</option>
-            }
-          </app-filter-select>
-        </div>
+        <div class="form-group"><small>Créez d'abord le formulaire, puis rattachez-le à une ou plusieurs campagnes via `campaign_form` si nécessaire.</small></div>
         <div class="form-group"><app-filter-checkbox class="form-label" inputId="entities-forms-create-active" label="Actif" variant="inline" [(ngModel)]="createFormData.isActive" name="createFormIsActive" ariaLabel="Nouveau formulaire actif"></app-filter-checkbox></div>
       </form>
     </div>

@@ -2,6 +2,8 @@ import { Component, OnInit, OnDestroy, signal, computed, effect } from '@angular
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil, forkJoin, Observable, of, map, switchMap } from 'rxjs';
+import { ActivatedRoute } from '@angular/router';
+import { FormVersionService } from '../../../core/services/form-version.service';
 import { QuestionService, Question } from '../../../core/services/question.service';
 import { AnswerService, Answer } from '../../../core/services/answer.service';
 import { SpecialityService, Speciality } from '../../../core/services/speciality.service';
@@ -44,6 +46,11 @@ interface QuestionDraftAnswer {
   isCorrect: boolean;
 }
 
+interface FormVersionQuestionContext {
+  formVersionId: number;
+  questionId: number;
+}
+
 @Component({
   selector: 'app-questions',
   standalone: true,
@@ -60,6 +67,9 @@ export class QuestionsComponent implements OnInit, OnDestroy {
   };
 
   private destroy$ = new Subject<void>();
+  private pendingFormVersionQuestionContext: FormVersionQuestionContext | null = null;
+  private originalQuestionFormSnapshot: QuestionFormData | null = null;
+  private originalQuestionAnswerSnapshot: QuestionDraftAnswer[] = [];
 
   questions = signal<Question[]>([]);
   specialities = signal<Speciality[]>([]);
@@ -80,6 +90,7 @@ export class QuestionsComponent implements OnInit, OnDestroy {
   deletedQuestionAnswerIds = signal<number[]>([]);
   isEditMode = signal(false);
   selectedQuestion = signal<Question | null>(null);
+  formVersionQuestionContext = signal<FormVersionQuestionContext | null>(null);
 
   // Answers inline
   answers = signal<Answer[]>([]);
@@ -123,6 +134,8 @@ export class QuestionsComponent implements OnInit, OnDestroy {
   questionModalIsTrueFalse = computed(() => this.normalizeQuestionType(this.questionForm().questionType) === 'TRUE_FALSE');
 
   constructor(
+    private route: ActivatedRoute,
+    private formVersionService: FormVersionService,
     private questionService: QuestionService,
     private answerService: AnswerService,
     private specialityService: SpecialityService,
@@ -133,6 +146,7 @@ export class QuestionsComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe(user => {
         this.isAdminModeEnabled.set(user?.adminMode || false);
+        this.tryOpenContextualQuestionEdit();
       });
     effect(() => {
       this.searchQuery();
@@ -143,6 +157,18 @@ export class QuestionsComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.route.queryParams
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(params => {
+        const questionId = this.parsePositiveInteger(params['questionId']);
+        const formVersionId = this.parsePositiveInteger(params['formVersionId']);
+
+        this.pendingFormVersionQuestionContext = questionId && formVersionId
+          ? { questionId, formVersionId }
+          : null;
+        this.tryOpenContextualQuestionEdit();
+      });
+
     this.loadAll();
     this.loadSpecialities();
   }
@@ -246,6 +272,7 @@ export class QuestionsComponent implements OnInit, OnDestroy {
           this.questions.set(questions.content || []);
           this.answers.set(answers.content || []);
           this.loading.set(false);
+          this.tryOpenContextualQuestionEdit();
         },
         error: (error) => {
           console.error('Erreur chargement:', error);
@@ -267,6 +294,7 @@ export class QuestionsComponent implements OnInit, OnDestroy {
           this.questions.set(questions.content || []);
           this.answers.set(answers.content || []);
           this.loading.set(false);
+          this.tryOpenContextualQuestionEdit();
         },
         error: (error) => {
           console.error('Erreur chargement:', error);
@@ -348,15 +376,18 @@ export class QuestionsComponent implements OnInit, OnDestroy {
       return;
     }
     this.isEditMode.set(false);
+    this.formVersionQuestionContext.set(null);
     this.questionForm.set({
       questionText: '', questionType: 'MULTIPLE_CHOICE', difficultyLevel: 'MEDIUM', score: 1, questionChrono: 60
     });
     this.deletedQuestionAnswerIds.set([]);
     this.initializeQuestionDraftAnswers('MULTIPLE_CHOICE');
+    this.originalQuestionFormSnapshot = null;
+    this.originalQuestionAnswerSnapshot = [];
     this.showCreateEditModal.set(true);
   }
 
-  openEditModal(q: Question): void {
+  openEditModal(q: Question, formVersionId?: number): void {
     if (!this.isAdminModeEnabled()) {
       this.notificationService.warning('Accès refusé', 'Le mode admin doit être activé');
       return;
@@ -374,6 +405,9 @@ export class QuestionsComponent implements OnInit, OnDestroy {
     });
     this.deletedQuestionAnswerIds.set([]);
     this.initializeQuestionDraftAnswers(q.questionType, this.answersForQuestion(q.id ?? 0));
+    this.formVersionQuestionContext.set(formVersionId && q.id ? { formVersionId, questionId: q.id } : null);
+    this.originalQuestionFormSnapshot = { ...this.questionForm() };
+    this.originalQuestionAnswerSnapshot = this.questionDraftAnswers().map(draft => ({ ...draft }));
     this.showCreateEditModal.set(true);
   }
 
@@ -382,6 +416,9 @@ export class QuestionsComponent implements OnInit, OnDestroy {
     this.questionDraftAnswers.set([]);
     this.deletedQuestionAnswerIds.set([]);
     this.selectedQuestion.set(null);
+    this.formVersionQuestionContext.set(null);
+    this.originalQuestionFormSnapshot = null;
+    this.originalQuestionAnswerSnapshot = [];
   }
 
   openDeleteModal(q: Question): void {
@@ -429,27 +466,42 @@ export class QuestionsComponent implements OnInit, OnDestroy {
     };
 
     let questionPersisted = false;
-    const request$ = this.isEditMode() && form.id
-      ? this.questionService.update({ ...payload, id: form.id })
-      : this.questionService.create(payload);
+    let questionWasIsolated = false;
 
-    request$
+    this.resolveQuestionIdForSave(normalizedQuestionType)
       .pipe(
         takeUntil(this.destroy$),
-        switchMap((response) => {
-          questionPersisted = true;
-          const questionId = form.id ?? this.extractQuestionId(response);
+        switchMap((targetQuestionId) => {
+          questionWasIsolated = Boolean(this.isEditMode() && form.id && targetQuestionId && targetQuestionId !== form.id);
 
-          if (!questionId) {
-            throw new Error('Impossible de déterminer l\'identifiant de la question sauvegardée');
-          }
+          const request$ = this.isEditMode() && targetQuestionId
+            ? this.questionService.update({ ...payload, id: targetQuestionId })
+            : this.questionService.create(payload);
 
-          return this.syncQuestionAnswers(questionId, normalizedQuestionType).pipe(map(() => questionId));
+          return request$.pipe(
+            switchMap((response) => {
+              questionPersisted = true;
+              const questionId = targetQuestionId ?? form.id ?? this.extractQuestionId(response);
+
+              if (!questionId) {
+                throw new Error('Impossible de déterminer l\'identifiant de la question sauvegardée');
+              }
+
+              return this.syncQuestionAnswers(questionId, normalizedQuestionType).pipe(map(() => questionId));
+            })
+          );
         })
       )
       .subscribe({
         next: () => {
-          this.notificationService.success('Succès', this.isEditMode() ? 'Question mise à jour avec succès' : 'Question créée avec succès');
+          this.notificationService.success(
+            'Succès',
+            questionWasIsolated
+              ? 'Question isolée puis mise à jour avec succès'
+              : this.isEditMode()
+                ? 'Question mise à jour avec succès'
+                : 'Question créée avec succès'
+          );
           this.closeCreateEditModal();
           this.loadQuestions();
         },
@@ -774,6 +826,117 @@ export class QuestionsComponent implements OnInit, OnDestroy {
   private extractQuestionId(response: any): number | undefined {
     const item = response?.item || response?.items?.[0];
     return typeof item?.id === 'number' ? item.id : undefined;
+  }
+
+  private extractEditableQuestionId(response: any): number | undefined {
+    const item = response?.item || response?.items?.[0];
+    return typeof item?.questionId === 'number' ? item.questionId : undefined;
+  }
+
+  private resolveQuestionIdForSave(normalizedQuestionType: string): Observable<number | undefined> {
+    const form = this.questionForm();
+    if (!this.isEditMode() || !form.id) {
+      return of(undefined);
+    }
+
+    const context = this.formVersionQuestionContext();
+    if (!context || context.questionId !== form.id || !this.hasStructuralContextualChanges(normalizedQuestionType)) {
+      return of(form.id);
+    }
+
+    return this.formVersionService.custom('ensureEditableQuestion', context.formVersionId, form.id).pipe(
+      map(response => this.extractEditableQuestionId(response) ?? form.id)
+    );
+  }
+
+  private hasStructuralContextualChanges(normalizedQuestionType: string): boolean {
+    return this.hasStructuralQuestionChanges(normalizedQuestionType) || this.hasStructuralAnswerChanges(normalizedQuestionType);
+  }
+
+  private hasStructuralQuestionChanges(normalizedQuestionType: string): boolean {
+    const original = this.originalQuestionFormSnapshot;
+    const current = this.questionForm();
+    if (!original) {
+      return false;
+    }
+
+    if (current.questionText.trim() !== original.questionText.trim()) {
+      return true;
+    }
+
+    if (normalizedQuestionType !== this.normalizeQuestionType(original.questionType)) {
+      return true;
+    }
+
+    if ((current.questionChrono ?? 0) !== (original.questionChrono ?? 0)) {
+      return true;
+    }
+
+    return (current.score ?? 0) !== (original.score ?? 0);
+  }
+
+  private hasStructuralAnswerChanges(normalizedQuestionType: string): boolean {
+    const original = this.originalQuestionFormSnapshot;
+    if (!original || normalizedQuestionType !== this.normalizeQuestionType(original.questionType) || normalizedQuestionType === 'TEXT') {
+      return false;
+    }
+
+    const originalAnswers = this.normalizeStructuralDraftAnswers(this.originalQuestionAnswerSnapshot);
+    const currentAnswers = this.normalizeStructuralDraftAnswers(this.questionDraftAnswers());
+    if (originalAnswers.length !== currentAnswers.length) {
+      return true;
+    }
+
+    for (let index = 0; index < originalAnswers.length; index++) {
+      const originalAnswer = originalAnswers[index];
+      const currentAnswer = currentAnswers[index];
+      if (!currentAnswer
+        || originalAnswer.id !== currentAnswer.id
+        || originalAnswer.answerText !== currentAnswer.answerText
+        || originalAnswer.answerType !== currentAnswer.answerType
+        || originalAnswer.answerOrder !== currentAnswer.answerOrder
+        || originalAnswer.isCorrect !== currentAnswer.isCorrect) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private normalizeStructuralDraftAnswers(drafts: QuestionDraftAnswer[]): Array<{
+    id: number | null;
+    answerText: string;
+    answerType: string;
+    answerOrder: number;
+    isCorrect: boolean;
+  }> {
+    return this.sortQuestionDraftAnswers(drafts).map(draft => ({
+      id: typeof draft.id === 'number' ? draft.id : null,
+      answerText: draft.answerText.trim(),
+      answerType: (draft.answerType || 'TEXT').trim().toUpperCase(),
+      answerOrder: draft.answerOrder || 0,
+      isCorrect: draft.isCorrect === true
+    }));
+  }
+
+  private tryOpenContextualQuestionEdit(): void {
+    if (!this.pendingFormVersionQuestionContext || !this.isAdminModeEnabled()) {
+      return;
+    }
+
+    const question = this.questions().find(item => item.id === this.pendingFormVersionQuestionContext?.questionId);
+    if (!question) {
+      return;
+    }
+
+    const context = this.pendingFormVersionQuestionContext;
+    this.pendingFormVersionQuestionContext = null;
+    this.openEditModal(question, context.formVersionId);
+  }
+
+  private parsePositiveInteger(value: unknown): number | null {
+    const parsed = Number(value);
+    return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
   }
 
   // ─── Answer modals ──────────────────────────────────────────────────────────

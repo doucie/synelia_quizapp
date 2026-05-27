@@ -16,7 +16,7 @@ import tech.synelia.quizapp.dao.entity.Form;
 import tech.synelia.quizapp.dao.entity.FormVersion;
 import tech.synelia.quizapp.dao.entity.SourceToken;
 import tech.synelia.quizapp.dao.repository.ApplicationsRepository;
-import tech.synelia.quizapp.dao.repository.FormRepository;
+import tech.synelia.quizapp.dao.repository.CampaignFormRepository;
 import tech.synelia.quizapp.dao.repository.FormVersionRepository;
 import tech.synelia.quizapp.dao.repository.SourceTokenRepository;
 import tech.synelia.quizapp.utils.FunctionalError;
@@ -36,7 +36,7 @@ public class CampaignPublicAccessService {
 	@Autowired
 	private ApplicationsRepository applicationsRepository;
 	@Autowired
-	private FormRepository formRepository;
+	private CampaignFormRepository campaignFormRepository;
 	@Autowired
 	private FormVersionRepository formVersionRepository;
 	@Autowired
@@ -139,7 +139,7 @@ public class CampaignPublicAccessService {
 					"Ce lien de candidature n'est pas encore configure avec un formulaire dedie.", locale));
 		}
 
-		if (assignedForm.getCampaigns() == null || !campaign.getId().equals(assignedForm.getCampaigns().getId())) {
+		if (!hasActiveCampaignFormLink(campaign.getId(), assignedForm.getId())) {
 			throw new InvalidEntityException(functionalError.REQUEST_FAIL(
 					"Le formulaire configure sur ce lien ne correspond pas a la campagne.", locale));
 		}
@@ -151,7 +151,11 @@ public class CampaignPublicAccessService {
 	}
 
 	private boolean campaignHasPublishedFormVersion(Integer campaignId) {
-		List<Form> forms = formRepository.findByCampaignId(campaignId, false);
+		if (campaignId == null) {
+			return false;
+		}
+
+		List<Form> forms = campaignFormRepository.findActiveFormsByCampaignId(campaignId);
 		if (forms == null || forms.isEmpty()) {
 			return false;
 		}
@@ -168,6 +172,13 @@ public class CampaignPublicAccessService {
 	private boolean formHasPublishedVersion(Integer formId) {
 		List<FormVersion> publishedVersions = formVersionRepository.findByFormIdAndIsPublished(formId, true, false);
 		return publishedVersions != null && !publishedVersions.isEmpty();
+	}
+
+	private boolean hasActiveCampaignFormLink(Integer campaignId, Integer formId) {
+		if (campaignId == null || formId == null) {
+			return false;
+		}
+		return campaignFormRepository.countActiveLinksByCampaignIdAndFormId(campaignId, formId) > 0L;
 	}
 
 	private LocalDate toLocalDate(Date date) {

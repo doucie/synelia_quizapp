@@ -196,7 +196,7 @@ public interface FormRepository extends JpaRepository<Form, Integer>, _FormRepos
 				listOfQuery.add(CriteriaUtils.generateCriteria("searchString", dto.getSearchString(), "e.searchString", "String", dto.getSearchStringParam(), param, index, locale));
 			}
 			if (dto.getCampaignId() != null && dto.getCampaignId() > 0) {
-				listOfQuery.add(CriteriaUtils.generateCriteria("campaignId", dto.getCampaignId(), "e.campaigns.id", "Integer", dto.getCampaignIdParam(), param, index, locale));
+				listOfQuery.add(generateCampaignLinkCriteria(dto, param, index, locale));
 			}
 			List<String> listOfCustomQuery = _generateCriteria(dto, param, index, locale);
 			if (Utilities.isNotEmpty(listOfCustomQuery)) {
@@ -204,5 +204,21 @@ public interface FormRepository extends JpaRepository<Form, Integer>, _FormRepos
 			}
 		}
 		return CriteriaUtils.getCriteriaByListOfQuery(listOfQuery);
+	}
+
+	default String generateCampaignLinkCriteria(FormDto dto, HashMap<String, java.lang.Object> param, Integer index, Locale locale) throws Exception {
+		String campaignCriteria = CriteriaUtils.generateCriteria(
+				"campaignId",
+				dto.getCampaignId(),
+				"cf.campaigns.id",
+				"Integer",
+				dto.getCampaignIdParam(),
+				param,
+				index,
+				locale);
+
+		return " exists (select cf.id from CampaignForm cf where cf.form.id = e.id and cf.isDeleted = false and cf.campaigns.isDeleted = false and "
+				+ campaignCriteria
+				+ ") ";
 	}
 }

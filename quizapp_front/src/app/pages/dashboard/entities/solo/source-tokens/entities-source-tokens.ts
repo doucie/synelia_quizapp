@@ -11,6 +11,7 @@ import { EntityColumnVisibilityState, ColumnDef } from '../../../../../shared/en
 import { DashboardStatsService } from '../../../../../core/services/dashboard-stats.service';
 import { DependencyInfo } from '../../../../../shared/models/interfaces';
 import { Router, ActivatedRoute } from '@angular/router';
+import { Form as QuizForm, FormService } from '../../../../../core/services/form.service';
 
 import { SourceTokenService, SourceToken, SourceTokenSearchCriteria, PagedSourceTokenResponse } from '../../../../../services/source-token.service';
 import { NotificationService } from '../../../../../core/services/notification.service';
@@ -100,6 +101,7 @@ export class EntitiesSourceTokensComponent implements OnInit, OnDestroy {
     { key: 'name', label: 'Nom', priority: 1 },
     { key: 'token', label: 'Token', priority: 3 },
     { key: 'campaignId', label: 'ID Campagne', priority: 2 },
+    { key: 'formName', label: 'Formulaire', priority: 2 },
     { key: 'expiration', label: 'Expiration', priority: 2 },
     { key: 'createdAt', label: 'Créé le', priority: 3 },
     { key: 'actions', label: 'Actions', priority: 1 },
@@ -123,7 +125,10 @@ export class EntitiesSourceTokensComponent implements OnInit, OnDestroy {
   // Etat de la popup de confirmation
   showDeleteConfirmation = false;  // -- FK Dropdowns --
   private campaignFkService = inject(CampaignService);
+  private formService = inject(FormService);
   allCampaigns = signal<Campaign[]>([]);
+  createCampaignForms = signal<QuizForm[]>([]);
+  editCampaignForms = signal<QuizForm[]>([]);
   // -- D�pendances FK ---------------------------
   private depService = inject(DashboardStatsService);
   dependencyInfo = signal<DependencyInfo | null>(null);
@@ -156,14 +161,16 @@ export class EntitiesSourceTokensComponent implements OnInit, OnDestroy {
   editFormData = {
     id: 0,
     sourceTokenName: '',
-    campaignId: null as number | null
+    campaignId: null as number | null,
+    formId: null as number | null
   };
 
   // Etat de la popup de creation
   showCreateDialog = signal<boolean>(false);
   createFormData = {
     sourceTokenName: '',
-    campaignId: null as number | null
+    campaignId: null as number | null,
+    formId: null as number | null
   };
   
   // Criteres de recherche avancee
@@ -282,8 +289,10 @@ export class EntitiesSourceTokensComponent implements OnInit, OnDestroy {
   createSourceToken() {
     this.createFormData = {
       sourceTokenName: '',
-      campaignId: null
+      campaignId: null,
+      formId: null
     };
+    this.createCampaignForms.set([]);
     this.showCreateDialog.set(true);
   }
 
@@ -291,8 +300,19 @@ export class EntitiesSourceTokensComponent implements OnInit, OnDestroy {
     this.showCreateDialog.set(false);
     this.createFormData = {
       sourceTokenName: '',
-      campaignId: null
+      campaignId: null,
+      formId: null
     };
+    this.createCampaignForms.set([]);
+  }
+
+  onCreateCampaignChange(campaignId: number | null): void {
+    this.createFormData = {
+      ...this.createFormData,
+      campaignId: this.normalizeOptionalId(campaignId),
+      formId: null
+    };
+    this.loadDialogForms(this.createFormData.campaignId, 'create');
   }
 
   async validateSourceTokenCreation() {
@@ -303,10 +323,16 @@ export class EntitiesSourceTokensComponent implements OnInit, OnDestroy {
       return;
     }
 
+		if (formData.formId && !formData.campaignId) {
+			this.notificationService.warning('Attention', 'Selectionnez une campagne avant de choisir un formulaire');
+			return;
+		}
+
     try {
       const newToken = await this.sourceTokenService.createSourceTokens([{
         sourceTokenName: formData.sourceTokenName.trim(),
-        campaignId: formData.campaignId || undefined
+			  campaignId: formData.campaignId || undefined,
+			  formId: formData.formId || undefined
       }]).toPromise();
 
       if (newToken && (newToken as any).hasError) {
@@ -329,8 +355,10 @@ export class EntitiesSourceTokensComponent implements OnInit, OnDestroy {
     this.editFormData = {
       id: token.id || 0,
       sourceTokenName: token.sourceTokenName || '',
-      campaignId: token.campaignId || token.campaigns_id || null
+		  campaignId: token.campaignId || token.campaigns_id || null,
+		  formId: token.formId || null
     };
+		this.loadDialogForms(this.editFormData.campaignId, 'edit');
     this.showEditDialog.set(true);
   }
 
@@ -340,9 +368,20 @@ export class EntitiesSourceTokensComponent implements OnInit, OnDestroy {
     this.editFormData = {
       id: 0,
       sourceTokenName: '',
-      campaignId: null
+		  campaignId: null,
+		  formId: null
     };
+		this.editCampaignForms.set([]);
   }
+
+	onEditCampaignChange(campaignId: number | null): void {
+		this.editFormData = {
+			...this.editFormData,
+			campaignId: this.normalizeOptionalId(campaignId),
+			formId: null
+		};
+		this.loadDialogForms(this.editFormData.campaignId, 'edit');
+	}
 
   async validateSourceTokenEdit() {
     const formData = this.editFormData;
@@ -358,11 +397,17 @@ export class EntitiesSourceTokensComponent implements OnInit, OnDestroy {
       return;
     }
 
+		if (formData.formId && !formData.campaignId) {
+			this.notificationService.warning('Attention', 'Selectionnez une campagne avant de choisir un formulaire');
+			return;
+		}
+
     try {
       const updatedToken = await this.sourceTokenService.updateSourceToken({
         id: currentToken.id!,
         sourceTokenName: formData.sourceTokenName.trim(),
-        campaignId: formData.campaignId || undefined
+			  campaignId: formData.campaignId || undefined,
+			  formId: formData.formId || undefined
       }).toPromise();
 
       if (updatedToken && (updatedToken as any).hasError) {
@@ -386,6 +431,55 @@ export class EntitiesSourceTokensComponent implements OnInit, OnDestroy {
       this.closeEditDialog();
       this.deleteSourceToken(token);
     }
+  }
+
+  private loadDialogForms(campaignId: number | null, dialog: 'create' | 'edit'): void {
+    const targetForms = dialog === 'create' ? this.createCampaignForms : this.editCampaignForms;
+    if (!campaignId) {
+      targetForms.set([]);
+      this.clearDialogFormSelection(dialog);
+      return;
+    }
+
+    this.formService.getAllByCriteria({ campaignId, size: 100, isDeleted: false })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          const forms = response.content || [];
+          targetForms.set(forms);
+          this.clearDialogFormSelectionIfUnavailable(dialog, forms);
+        },
+        error: (error) => {
+          console.error('Erreur lors du chargement des formulaires du token source:', error);
+          targetForms.set([]);
+          this.clearDialogFormSelection(dialog);
+        }
+      });
+  }
+
+  private clearDialogFormSelection(dialog: 'create' | 'edit'): void {
+    if (dialog === 'create') {
+      this.createFormData = { ...this.createFormData, formId: null };
+      return;
+    }
+
+    this.editFormData = { ...this.editFormData, formId: null };
+  }
+
+  private clearDialogFormSelectionIfUnavailable(dialog: 'create' | 'edit', forms: QuizForm[]): void {
+    const selectedFormId = dialog === 'create' ? this.createFormData.formId : this.editFormData.formId;
+    if (!selectedFormId) {
+      return;
+    }
+
+    const isStillAvailable = forms.some(form => Number(form.id) === selectedFormId);
+    if (!isStillAvailable) {
+      this.clearDialogFormSelection(dialog);
+    }
+  }
+
+  private normalizeOptionalId(value: number | null | undefined): number | null {
+    return typeof value === 'number' && value > 0 ? value : null;
   }
 
   deleteSourceToken(token: SourceToken) {

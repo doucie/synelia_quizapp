@@ -75,22 +75,29 @@ export class EntitiesFormVersionsComponent extends EntityCrudBase<FormVersion, F
 
   protected fetchAll(criteria: FormVersionSearchCriteria): Observable<PagedFormVersionResponse> { return this.service.getAllByCriteria(criteria); }
   protected performCreate(item: FormVersionMutationPayload): Observable<any> { return this.service.create(item); }
-  protected performUpdate(item: FormVersion): Observable<any> { return this.service.update(item); }
+  protected performUpdate(item: FormVersion): Observable<any> { return this.service.update(this.buildUpdatePayload(item)); }
   protected performDelete(id: number): Observable<any> { return this.service.delete(id); }
   protected performRestore(id: number): Observable<any> { return this.service.restore(id); }
   protected resetAdvancedCriteriaValues(): void { this.advancedCriteria = {}; }
   protected resetCreateFormData(): void { this.createFormData = {}; }
 
+  override openCreateDialog(): void {
+    this.notificationService.warning(
+      'Action indisponible',
+      "La creation manuelle d'une version n'est pas autorisee. Utilisez la version initiale creee automatiquement ou l'action de fork."
+    );
+  }
+
+  override validateCreate(): void {
+    this.notificationService.warning(
+      'Action indisponible',
+      "La creation manuelle d'une version n'est pas autorisee. Utilisez la version initiale creee automatiquement ou l'action de fork."
+    );
+  }
+
   override openEditDialog(item: FormVersion): void {
     this.editingLockedVersion.set(Boolean(item.isLocked));
-    super.openEditDialog(this.editingLockedVersion()
-      ? {
-          ...item,
-          versionNumber: (item.versionNumber ?? 0) + 1,
-          isPublished: false,
-          isLocked: false,
-        }
-      : item);
+    super.openEditDialog(item);
   }
 
   override closeEditDialog(): void {
@@ -103,6 +110,61 @@ export class EntitiesFormVersionsComponent extends EntityCrudBase<FormVersion, F
     this.service.custom('fork', item.id).subscribe({
       next: () => this.loadItems(),
       error: (err: any) => console.error('Erreur fork:', err)
+    });
+  }
+
+  canEditChildQuestion(item: FormVersion, child: FormQuestions): boolean {
+    return Boolean(item.id && !item.isDeleted && !item.isLocked && child.questionId && !child.isDeleted);
+  }
+
+  editChildQuestion(item: FormVersion, child: FormQuestions): void {
+    if (!item.id || !child.questionId) {
+      return;
+    }
+
+    this.router.navigate(['/dashboard/questions'], {
+      queryParams: {
+        formVersionId: item.id,
+        questionId: child.questionId
+      }
+    });
+  }
+
+  publishVersion(item: FormVersion): void {
+    if (!item.id) {
+      return;
+    }
+
+    this.service.custom('publish', item.id).subscribe({
+      next: () => {
+        this.loadItems();
+        this.notificationService.success('Succès', 'Version publiée');
+      },
+      error: (error: unknown) => {
+        this.loadItems();
+        this.notificationService.error('Erreur', this.getErrorMessage(error, 'Erreur lors de la publication de la version'));
+      }
+    });
+  }
+
+  canDuplicateChildQuestion(item: FormVersion, child: FormQuestions): boolean {
+    return Boolean(item.id && !item.isDeleted && !item.isLocked && child.questionId && !child.isDeleted);
+  }
+
+  duplicateChildQuestion(item: FormVersion, child: FormQuestions): void {
+    if (!item.id || !child.questionId) {
+      return;
+    }
+
+    this.service.custom('duplicateQuestion', item.id, child.questionId).subscribe({
+      next: () => {
+        this.loadChildren(item.id!);
+        this.loadItems();
+        this.notificationService.success('Succès', 'Question isolée sur cette version brouillon');
+      },
+      error: (error: unknown) => {
+        this.notificationService.error('Erreur', this.getErrorMessage(error, "Erreur lors de l'isolation de la question"));
+      }
     });
   }
 
@@ -129,4 +191,12 @@ export class EntitiesFormVersionsComponent extends EntityCrudBase<FormVersion, F
   getChildren(id: number): FormQuestions[] { return this.childData()[id] || []; }
   isLoadingChildren(id: number): boolean { return this.loadingChildren()[id] || false; }
   trackByChildId(index: number, item: any): number { return item.id; }
+
+  private buildUpdatePayload(item: FormVersion): FormVersionMutationPayload {
+    return {
+      id: item.id,
+      isLocked: item.isLocked,
+      randomQuestions: item.randomQuestions,
+    };
+  }
 }

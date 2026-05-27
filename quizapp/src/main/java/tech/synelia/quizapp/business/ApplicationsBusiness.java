@@ -79,7 +79,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 	@Autowired
 	private FormVersionRepository formVersionRepository;
 	@Autowired
-	private FormRepository formRepository;
+	private CampaignFormRepository campaignFormRepository;
 	@Autowired
 	private FormBusiness formBusiness;
 	@Autowired
@@ -268,6 +268,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			entityToSave.setQuizToken(null); // Sera généré après vérification email
 			entityToSave.setQuizLevel(null); // Sera initialisé au démarrage du quiz
 			entityToSave.setQuizManualCorrectionStatus(ManualCorrectionStatus.NOT_REQUIRED.getValue());
+			applyQuizTimingSnapshot(entityToSave);
 			entityToSave.setApplicationAbandoned(false); // Initialiser à false
 			registerPendingFormAssignment(existingSourceToken, dto.getCandidateEmail(), existingFormVersion,
 					pendingAssignedFormsByCampaign, pendingCandidateFormHistory);
@@ -1237,8 +1238,8 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			
 			log.info("Nombre de questions trouvées: " + formQuestions.size());
 			
-			// 5. Calculer le temps total alloué si la campagne est chronométrée
-			Integer totalTimeAllowed = calculateTotalTimeAllowed(campaign, application.getFormVersion(), formQuestions);
+			// 5. Reprendre le snapshot de temps fige sur la candidature
+			Integer totalTimeAllowed = timingState.totalTimeAllowed;
 			if (timingState.timed) {
 				log.info("Quiz chronométré - Temps total alloué: " + totalTimeAllowed + " secondes");
 			} else {
@@ -1367,9 +1368,9 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 					"La version de formulaire selectionnee n'est pas publiee.", locale));
 		}
 
-		if (formVersion.getForm() == null
-				|| formVersion.getForm().getCampaigns() == null
-				|| !sourceToken.getCampaigns().getId().equals(formVersion.getForm().getCampaigns().getId())) {
+		Integer campaignId = sourceToken.getCampaigns().getId();
+		Integer formId = formVersion.getForm() != null ? formVersion.getForm().getId() : null;
+		if (!hasActiveCampaignFormLink(campaignId, formId)) {
 			throw new InvalidEntityException(functionalError.REQUEST_FAIL("La version de formulaire selectionnee n'appartient pas a la campagne du source token", locale));
 		}
 	}
@@ -1411,20 +1412,24 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 	}
 
 	private List<FormVersion> getPublishedFormVersionsForCampaign(Integer campaignId) {
-		List<Form> forms = formRepository.findByCampaignId(campaignId, false);
-		if (forms == null || forms.isEmpty()) {
+		if (campaignId == null) {
 			return Collections.emptyList();
 		}
 
-		forms.sort(Comparator.comparing(Form::getId, Comparator.nullsLast(Integer::compareTo)));
+		List<Form> linkedForms = campaignFormRepository.findActiveFormsByCampaignId(campaignId);
+		if (linkedForms == null || linkedForms.isEmpty()) {
+			return Collections.emptyList();
+		}
+
 		List<FormVersion> publishedVersions = new ArrayList<FormVersion>();
-		for (Form form : forms) {
+		for (Form form : linkedForms) {
 			List<FormVersion> published = formVersionRepository.findByFormIdAndIsPublished(form.getId(), true, false);
 			if (published == null || published.isEmpty()) {
 				continue;
 			}
-			published.sort(Comparator.comparing(FormVersion::getVersionNumber, Comparator.nullsLast(Integer::compareTo)).reversed());
-			publishedVersions.add(published.get(0));
+			List<FormVersion> orderedPublishedVersions = new ArrayList<FormVersion>(published);
+			orderedPublishedVersions.sort(Comparator.comparing(FormVersion::getVersionNumber, Comparator.nullsLast(Integer::compareTo)).reversed());
+			publishedVersions.add(orderedPublishedVersions.get(0));
 		}
 		return publishedVersions;
 	}
@@ -1435,9 +1440,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			throw new InvalidEntityException(functionalError.REQUEST_FAIL("Aucun formulaire n'est configure pour ce source token", locale));
 		}
 
-		if (assignedForm.getCampaigns() == null
-				|| assignedForm.getCampaigns().getId() == null
-				|| !assignedForm.getCampaigns().getId().equals(campaign.getId())) {
+		if (!hasActiveCampaignFormLink(campaign != null ? campaign.getId() : null, assignedForm.getId())) {
 			throw new InvalidEntityException(functionalError.REQUEST_FAIL("Le formulaire configure sur ce source token n'appartient pas a la campagne", locale));
 		}
 
@@ -1448,6 +1451,13 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 
 		published.sort(Comparator.comparing(FormVersion::getVersionNumber, Comparator.nullsLast(Integer::compareTo)).reversed());
 		return published.get(0);
+	}
+
+	private boolean hasActiveCampaignFormLink(Integer campaignId, Integer formId) {
+		if (campaignId == null || formId == null) {
+			return false;
+		}
+		return campaignFormRepository.countActiveLinksByCampaignIdAndFormId(campaignId, formId) > 0L;
 	}
 
 	private FormVersion resolveSequentialFormVersion(
@@ -2274,6 +2284,40 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				formQuestions);
 	}
 
+	private void applyQuizTimingSnapshot(Applications application) {
+		if (application == null) {
+			return;
+		}
+
+		Campaigns campaign = application.getSourceToken() != null ? application.getSourceToken().getCampaigns() : null;
+		List<FormQuestions> activeFormQuestions = getActiveFormQuestions(application.getFormVersion());
+		Integer totalTimeAllowed = calculateTotalTimeAllowed(campaign, application.getFormVersion(), activeFormQuestions);
+		boolean timed = totalTimeAllowed != null;
+
+		application.setQuizTimedSnapshot(timed);
+		application.setQuizTotalTimeAllowedSnapshot(timed ? totalTimeAllowed : null);
+	}
+
+	private void ensureQuizTimingSnapshot(Applications application, Integer actorUserId) {
+		if (application == null) {
+			return;
+		}
+
+		boolean missingTimedSnapshot = application.getQuizTimedSnapshot() == null;
+		boolean missingTotalTimeSnapshot = Boolean.TRUE.equals(application.getQuizTimedSnapshot())
+				&& application.getQuizTotalTimeAllowedSnapshot() == null;
+		if (!missingTimedSnapshot && !missingTotalTimeSnapshot) {
+			return;
+		}
+
+		applyQuizTimingSnapshot(application);
+		if (application.getId() != null) {
+			application.setUpdatedAt(Utilities.getCurrentDate());
+			application.setUpdatedBy(actorUserId);
+			applicationsRepository.save(application);
+		}
+	}
+
 	private Integer resolveQuizInactivityTimeoutMinutes(Applications application) {
 		if (application == null || application.getId() == null) {
 			return DEFAULT_QUIZ_INACTIVITY_TIMEOUT_MINUTES;
@@ -2499,9 +2543,10 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			return new QuizTimingState(false, null, 0, null, false);
 		}
 
-		Campaigns campaign = application.getSourceToken() != null ? application.getSourceToken().getCampaigns() : null;
-		List<FormQuestions> activeFormQuestions = getActiveFormQuestions(application.getFormVersion());
-		Integer totalTimeAllowed = calculateTotalTimeAllowed(campaign, application.getFormVersion(), activeFormQuestions);
+		ensureQuizTimingSnapshot(application, actorUserId);
+		Integer totalTimeAllowed = Boolean.TRUE.equals(application.getQuizTimedSnapshot())
+				? application.getQuizTotalTimeAllowedSnapshot()
+				: null;
 		Integer timeElapsed = syncQuizTimeElapsed(application, actorUserId);
 		if (totalTimeAllowed == null) {
 			return new QuizTimingState(false, null, timeElapsed, null, false);

@@ -189,6 +189,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
       category: 'donnees'
     },
     {
+      id: 'forms',
+      label: 'Formulaires',
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zm-3 4h6v2H9v-2zm0 4h4v2H9v-2z"/></svg>',
+      route: '/dashboard/forms',
+      roles: ['super', 'admin'],
+      permissions: ['VIEW_FORM'],
+      category: 'donnees'
+    },
+    {
       id: 'pipeline-templates',
       label: 'Modèles Pipeline',
       icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 11V3h-7v3H9V3H2v8h7V8h2v10h4v3h7v-8h-7v3h-2V8h2v3h7zM7 9H4V5h3v4zm10 6h3v4h-3v-4zm0-10h3v4h-3V5z"/></svg>',
@@ -280,6 +289,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     { id: 'application-progress', label: 'Progression Candidature', icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>', group: 'pipeline' },
     // === FORMULAIRES ===
     { id: 'forms', label: 'Formulaires', icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zm-3 4h6v2H9v-2zm0 4h4v2H9v-2z"/></svg>', group: 'formulaires' },
+    { id: 'campaign-form', label: 'Campagne-Formulaire', icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 7h5v2H7zm10 10h-5v-2h5z"/><path d="M12 5l4 4-4 4V10H5V8h7V5zm0 14l-4-4 4-4v3h7v2h-7v3z"/></svg>', group: 'formulaires' },
     { id: 'form-versions', label: 'Versions Formulaire', icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>', group: 'formulaires' },
     { id: 'form-questions', label: 'Questions Formulaire', icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9h-4v4h-2v-4H9V9h4V5h2v4h4v2z"/></svg>', group: 'formulaires' },
     // === COMMUNICATION ===

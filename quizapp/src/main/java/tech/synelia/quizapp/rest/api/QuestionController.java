@@ -76,9 +76,7 @@ public class QuestionController {
 	@RequestMapping(value="/updateDeleted",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
 	public Response<QuestionDto> updateDeleted(@RequestBody Request<QuestionDto> request) throws Exception {
 		log.info("start method /question/updateDeleted");
-		String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
-		Locale locale = Locale.of(languageID, "");
-		Response<QuestionDto> response = questionBusiness.updateDeleted(request, locale);
+		Response<QuestionDto> response = controllerFactory.updateDeleted(request, FunctionalityEnum.UPDATE_QUESTION, questionBusiness::updateDeleted);
 		log.info("end method /question/updateDeleted");
 		return response;
 	}
@@ -86,9 +84,7 @@ public class QuestionController {
 	@RequestMapping(value="/updateAll",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
 	public Response<QuestionDto> updateAll(@RequestBody Request<QuestionDto> request) throws Exception {
 		log.info("start method /question/updateAll");
-		String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
-		Locale locale = Locale.of(languageID, "");
-		Response<QuestionDto> response = questionBusiness.updateAll(request, locale);
+		Response<QuestionDto> response = controllerFactory.updateAll(request, FunctionalityEnum.UPDATE_QUESTION, questionBusiness::updateAll);
 		log.info("end method /question/updateAll");
 		return response;
 	}
@@ -112,9 +108,7 @@ public class QuestionController {
 	@RequestMapping(value="/getAllByCriteria",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
 	public Response<QuestionDto> getAllByCriteria(@RequestBody Request<QuestionDto> request) throws Exception {
 		log.info("start method /question/getAllByCriteria");
-		String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
-		Locale locale = Locale.of(languageID, "");
-		Response<QuestionDto> response = questionBusiness.getAllByCriteria(request, locale);
+		Response<QuestionDto> response = controllerFactory.getAllByCriteria(request, FunctionalityEnum.VIEW_QUESTION, questionBusiness::getAllByCriteria);
 		log.info("end method /question/getAllByCriteria");
 		return response;
 	}
@@ -122,28 +116,7 @@ public class QuestionController {
 	@RequestMapping(value="/custom",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
 	public Response<QuestionDto> custom(@RequestBody Request<QuestionDto> request) throws Exception {
 		log.info("start method /question/custom");
-		Response<QuestionDto> response = new Response<QuestionDto>();
-		String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
-		Locale locale = Locale.of(languageID, "");
-		try {
-			response = Validate.validateList(request, response, functionalError, locale);
-			if (!response.isHasError()) {
-				response = questionBusiness.custom(request, locale);
-			} else {
-				slf4jLogger.info("Erreur| code: {} -  message: {}", response.getStatus().getCode(), response.getStatus().getMessage());
-				return response;
-			}
-			if (!response.isHasError()) {
-				slf4jLogger.info("end method custom");
-				slf4jLogger.info("code: {} -  message: {}", StatusCode.SUCCESS, StatusMessage.SUCCESS);
-			} else {
-				slf4jLogger.info("Erreur| code: {} -  message: {}", response.getStatus().getCode(), response.getStatus().getMessage());
-			}
-		} catch (CannotCreateTransactionException e) {
-			exceptionUtils.CANNOT_CREATE_TRANSACTION_EXCEPTION(response, locale, e);
-		} catch (TransactionSystemException e) {
-			exceptionUtils.TRANSACTION_SYSTEM_EXCEPTION(response, locale, e);
-		}
+		Response<QuestionDto> response = controllerFactory.custom(request, FunctionalityEnum.UPDATE_QUESTION, questionBusiness::custom);
 		slf4jLogger.info("end method /question/custom");
 		return response;
 	}

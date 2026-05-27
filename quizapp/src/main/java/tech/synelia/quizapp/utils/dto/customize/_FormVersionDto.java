@@ -6,8 +6,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 @JsonInclude(Include.NON_NULL)
 public class _FormVersionDto {
 	// Custom fields for custom actions
-	private String action; // "fork" or "duplicateQuestion"
-	private Integer questionId; // for duplicateQuestion action
+	private String action; // "fork", "publish", "duplicateQuestion" or "ensureEditableQuestion"
+	private Integer questionId; // request target question id, or response editable question id
 
 	public String getAction() { return action; }
 	public void setAction(String action) { this.action = action; }

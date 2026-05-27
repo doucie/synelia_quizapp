@@ -57,6 +57,12 @@ public interface FormVersionRepository extends JpaRepository<FormVersion, Intege
 	@Query("select e from FormVersion e where e.form.id = :formId and e.isDeleted = :isDeleted")
 	List<FormVersion> findByFormId(@Param("formId")Integer formId, @Param("isDeleted")Boolean isDeleted);
 
+	@Query("select e from FormVersion e where e.form.id = :formId")
+	List<FormVersion> findAllByFormId(@Param("formId")Integer formId);
+
+	@Query("select e from FormVersion e where e.form.id = :formId and e.versionNumber = :versionNumber")
+	List<FormVersion> findByFormIdAndVersionNumber(@Param("formId")Integer formId, @Param("versionNumber")Integer versionNumber);
+
 	@Query("select e from FormVersion e where e.form.id = :formId and e.isPublished = :isPublished and e.isDeleted = :isDeleted")
 	List<FormVersion> findByFormIdAndIsPublished(@Param("formId")Integer formId, @Param("isPublished")Boolean isPublished, @Param("isDeleted")Boolean isDeleted);
 

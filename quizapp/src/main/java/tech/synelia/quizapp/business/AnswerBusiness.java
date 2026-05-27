@@ -154,9 +154,10 @@ public class AnswerBusiness implements IBasicBusiness<Request<AnswerDto>, Respon
 			if (entityToSave == null) {
 				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("answer id -> " + dto.getId(), locale));
 			}
+			boolean structuralAnswerUpdate = hasStructuralAnswerUpdate(entityToSave, dto);
 
 			// Vérifier si la réponse est liée à une question dans un formulaire verrouillé
-			if (entityToSave.getQuestion() != null) {
+			if (structuralAnswerUpdate && entityToSave.getQuestion() != null) {
 				ensureQuestionIsEditable(entityToSave.getQuestion(), locale);
 			}
 
@@ -165,7 +166,9 @@ public class AnswerBusiness implements IBasicBusiness<Request<AnswerDto>, Respon
 				if (existingQuestion == null) {
 					throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("question questionId -> " + dto.getQuestionId(), locale));
 				}
-				ensureQuestionIsEditable(existingQuestion, locale);
+				if (structuralAnswerUpdate) {
+					ensureQuestionIsEditable(existingQuestion, locale);
+				}
 				entityToSave.setQuestion(existingQuestion);
 			}
 			if (Utilities.shouldUpdate(dto.getAnswerText())) {
@@ -399,11 +402,18 @@ public class AnswerBusiness implements IBasicBusiness<Request<AnswerDto>, Respon
 			if (entityToSave == null) {
 				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("answer id -> " + dto.getId(), locale));
 			}
+			boolean structuralAnswerUpdate = hasStructuralAnswerUpdate(entityToSave, dto);
+			if (structuralAnswerUpdate && entityToSave.getQuestion() != null) {
+				ensureQuestionIsEditable(entityToSave.getQuestion(), locale);
+			}
 
 			if (dto.getQuestionId() != null && dto.getQuestionId() > 0) {
 				Question existingQuestion = questionRepository.findOne(dto.getQuestionId(), false);
 				if (existingQuestion == null) {
 					throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("question questionId -> " + dto.getQuestionId(), locale));
+				}
+				if (structuralAnswerUpdate) {
+					ensureQuestionIsEditable(existingQuestion, locale);
 				}
 				entityToSave.setQuestion(existingQuestion);
 			}
@@ -467,11 +477,18 @@ public class AnswerBusiness implements IBasicBusiness<Request<AnswerDto>, Respon
 			if (entityToSave == null) {
 				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("answer id -> " + dto.getId(), locale));
 			}
+			boolean structuralAnswerUpdate = hasStructuralAnswerUpdate(entityToSave, dto);
+			if (structuralAnswerUpdate && entityToSave.getQuestion() != null) {
+				ensureQuestionIsEditable(entityToSave.getQuestion(), locale);
+			}
 
 			if (dto.getQuestionId() != null && dto.getQuestionId() > 0) {
 				Question existingQuestion = questionRepository.findOne(dto.getQuestionId(), false);
 				if (existingQuestion == null) {
 					throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("question questionId -> " + dto.getQuestionId(), locale));
+				}
+				if (structuralAnswerUpdate) {
+					ensureQuestionIsEditable(existingQuestion, locale);
 				}
 				entityToSave.setQuestion(existingQuestion);
 			}
@@ -522,6 +539,47 @@ public class AnswerBusiness implements IBasicBusiness<Request<AnswerDto>, Respon
 			throw new InvalidEntityException(functionalError.DATA_NOT_EXIST("answerType invalide (TEXT/IMAGE/CODE) -> " + rawAnswerType, locale));
 		}
 		return normalizedAnswerType;
+	}
+
+	private boolean hasStructuralAnswerUpdate(Answer answer, AnswerDto dto) {
+		if (answer == null || dto == null) {
+			return false;
+		}
+
+		Integer currentQuestionId = answer.getQuestion() != null ? answer.getQuestion().getId() : null;
+		if (dto.getQuestionId() != null && !Objects.equals(dto.getQuestionId(), currentQuestionId)) {
+			return true;
+		}
+
+		if (Utilities.shouldUpdate(dto.getAnswerText()) && !Objects.equals(dto.getAnswerText(), answer.getAnswerText())) {
+			return true;
+		}
+
+		if (dto.getAnswerType() == null) {
+			if (!Objects.equals(null, answer.getAnswerType())) {
+				return true;
+			}
+		} else if (Utilities.shouldUpdate(dto.getAnswerType())) {
+			String requestedAnswerType = AnswerType.normalize(dto.getAnswerType());
+			requestedAnswerType = requestedAnswerType != null ? requestedAnswerType : dto.getAnswerType();
+			if (!Objects.equals(requestedAnswerType, answer.getAnswerType())) {
+				return true;
+			}
+		}
+
+		if (dto.getAnswerOrder() != null && !Objects.equals(dto.getAnswerOrder(), answer.getAnswerOrder())) {
+			return true;
+		}
+
+		if (dto.getIsCorrect() != null && !Objects.equals(dto.getIsCorrect(), answer.getIsCorrect())) {
+			return true;
+		}
+
+		if (dto.getIsDeleted() != null && !Objects.equals(dto.getIsDeleted(), answer.getIsDeleted())) {
+			return true;
+		}
+
+		return false;
 	}
 
 	private void normalizeCreateAdditionalCommentFields(AnswerDto dto, Locale locale) throws InvalidEntityException {

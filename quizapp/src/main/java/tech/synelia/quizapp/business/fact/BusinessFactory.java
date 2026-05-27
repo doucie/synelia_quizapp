@@ -47,6 +47,11 @@ import tech.synelia.quizapp.business.fact.BusinessFactory;
 @Component
 public class BusinessFactory<DTO> {
 
+    @FunctionalInterface
+    public interface BusinessOperation<DTO> {
+        Response<DTO> execute(Request<DTO> request, Locale locale) throws Exception;
+    }
+
     @Autowired
     private FunctionalError functionalError;
     @Autowired
@@ -159,6 +164,30 @@ public class BusinessFactory<DTO> {
         try {
             checkUserAccess(request, functionalityEnum, locale);
             response = iBasicBusiness.getByCriteria(request, locale);
+        } catch (PermissionDeniedDataAccessException e) {
+            exceptionUtils.PERMISSION_DENIED_DATA_ACCESS_EXCEPTION(response, locale, e);
+        } catch (DataAccessResourceFailureException e) {
+            exceptionUtils.DATA_ACCESS_RESOURCE_FAILURE_EXCEPTION(response, locale, e);
+        } catch (DataAccessException e) {
+            exceptionUtils.DATA_ACCESS_EXCEPTION(response, locale, e);
+        } finally {
+            if (response.isHasError() && response.getStatus() != null) {
+                log.info(String.format("Erreur| code: {} -  message: {}", response.getStatus().getCode(), response.getStatus().getMessage()));
+                Status status  = new Status();
+                status.setMessage(response.getStatus().getMessage());
+                status.setCode(response.getStatus().getCode());
+                throw new InternalErrorException(status);
+            }
+        }
+        return response;
+    }
+
+    @Transactional(rollbackFor = {RuntimeException.class, Exception.class})
+    public Response<DTO> execute(Request<DTO> request, FunctionalityEnum functionalityEnum, Locale locale, BusinessOperation<DTO> operation) throws Exception {
+        Response<DTO> response = new Response<DTO>();
+        try {
+            checkUserAccess(request, functionalityEnum, locale);
+            response = operation.execute(request, locale);
         } catch (PermissionDeniedDataAccessException e) {
             exceptionUtils.PERMISSION_DENIED_DATA_ACCESS_EXCEPTION(response, locale, e);
         } catch (DataAccessResourceFailureException e) {

@@ -1,9 +1,11 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, Inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
+import { catchError, forkJoin, of } from 'rxjs';
 import { SafeHtmlPipe } from '../../../pipes/safe-html.pipe';
 import { AuthService } from '../../../core/services/auth/auth.service';
 import { DashboardStatsService } from '../../../core/services/dashboard-stats.service';
+import { CampaignFormService } from '../../../core/services/campaign-form.service';
 
 interface EntityInfo {
   name: string;
@@ -33,7 +35,8 @@ export class EntitiesComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private authService: AuthService,
-    private statsService: DashboardStatsService
+    private statsService: DashboardStatsService,
+    @Inject(CampaignFormService) private campaignFormService: CampaignFormService
   ) {}
 
   // Liste des entités disponibles dans la base de données
@@ -199,6 +202,15 @@ export class EntitiesComponent implements OnInit {
       iconType: 'svg',
       route: '/dashboard/entities/forms',
       color: '#0D9488'
+    },
+    {
+      name: 'campaign-form',
+      displayName: 'Campagne-Formulaire',
+      description: 'Liens actifs entre campagnes et formulaires partages',
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 7h5v2H7zm10 10h-5v-2h5z"/><path d="M12 5l4 4-4 4V10H5V8h7V5zm0 14l-4-4 4-4v3h7v2h-7v3z"/></svg>',
+      iconType: 'svg',
+      route: '/dashboard/entities/campaign-form',
+      color: '#14B8A6'
     },
     {
       name: 'form-versions',
@@ -387,13 +399,26 @@ export class EntitiesComponent implements OnInit {
   private loadEntityCounts(): void {
     this.loading.set(true);
 
-    this.statsService.getCounts().subscribe({
-      next: (counts) => {
+    forkJoin({
+      counts: this.statsService.getCounts().pipe(
+        catchError(() => of({} as Record<string, number>))
+      ),
+      campaignFormLinks: this.campaignFormService.getLinks().pipe(
+        catchError(() => of([]))
+      )
+    }).subscribe({
+      next: ({ counts, campaignFormLinks }) => {
         this.entities.forEach(entity => {
           if (counts[entity.name] !== undefined) {
             entity.count = counts[entity.name] || 0;
           }
         });
+
+        const campaignFormEntity = this.entities.find(entity => entity.name === 'campaign-form');
+        if (campaignFormEntity) {
+          campaignFormEntity.count = campaignFormLinks.length;
+        }
+
         this.loading.set(false);
       },
       error: () => {

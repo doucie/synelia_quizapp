@@ -5,6 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.http.HttpStatus;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -44,6 +45,8 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 	@Autowired
 	private AnswerRepository answerRepository;
 	@Autowired
+	private ApplicationsRepository applicationsRepository;
+	@Autowired
 	private FormBusiness formBusiness;
 	@Autowired
 	private FunctionalError functionalError;
@@ -75,6 +78,7 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 			if (!Validate.RequiredValue(fieldsToVerify).isGood()) {
 				throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
 			}
+			rejectDirectPublishedStateMutationOnStandardFlows(dto, locale);
 
 			// Verify if form exists
 			Form existingForm = null;
@@ -83,6 +87,8 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 				if (existingForm == null) {
 					throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("form formId -> " + dto.getFormId(), locale));
 				}
+				ensureManualVersionCreationAllowed(existingForm, dto, locale);
+				validateVersionNumberUniqueness(existingForm, dto.getVersionNumber(), null, locale);
 			}
 
 			dto.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(dto)));
@@ -143,7 +149,8 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 	public Response<FormVersionDto> update(Request<FormVersionDto> request, Locale locale) throws ParseException, JsonProcessingException {
 		log.info("----begin update FormVersion-----");
 		Response<FormVersionDto> response = new Response<FormVersionDto>();
-		List<FormVersion> items = new ArrayList<FormVersion>();
+		List<FormVersion> itemsToPersist = new ArrayList<FormVersion>();
+		List<FormVersion> responseItems = new ArrayList<FormVersion>();
 
 		for (FormVersionDto dto : request.getDatas()) {
 			Map<String, java.lang.Object> fieldsToVerify = new HashMap<String, java.lang.Object>();
@@ -156,11 +163,17 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 			if (sourceVersion == null) {
 				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("formVersion id -> " + dto.getId(), locale));
 			}
+			rejectDirectPublishedStateMutationOnStandardFlows(dto, locale);
+			rejectManagedVersionFieldChanges(sourceVersion, dto, locale);
+			if (!hasMeaningfulStandardUpdate(sourceVersion, dto)) {
+				responseItems.add(sourceVersion);
+				continue;
+			}
 
 			FormVersion entityToSave = sourceVersion;
 			boolean autoForkedFromLockedVersion = Boolean.TRUE.equals(sourceVersion.getIsLocked());
 			if (autoForkedFromLockedVersion) {
-				entityToSave = createForkedVersion(sourceVersion, request.getUser());
+				entityToSave = createForkedVersion(sourceVersion, request.getUser(), locale);
 			}
 
 			if (dto.getFormId() != null && dto.getFormId() > 0) {
@@ -177,30 +190,8 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 				versionNumberToApply = entityToSave.getVersionNumber();
 			}
 			if (versionNumberToApply != null) {
+				validateVersionNumberUniqueness(entityToSave.getForm(), versionNumberToApply, entityToSave.getId(), locale);
 				entityToSave.setVersionNumber(versionNumberToApply);
-			}
-
-			Boolean publishedToApply = dto.getIsPublished();
-			if (autoForkedFromLockedVersion
-					&& (publishedToApply == null || Objects.equals(publishedToApply, sourceVersion.getIsPublished()))) {
-				publishedToApply = entityToSave.getIsPublished();
-			}
-			if (publishedToApply != null) {
-				// Publication unique : dépublier les autres versions du même formulaire
-				if (publishedToApply && entityToSave.getForm() != null) {
-					validateFormVersionCanBePublished(entityToSave, locale);
-					List<FormVersion> otherVersions = formVersionRepository.findByFormIdAndIsPublished(
-						entityToSave.getForm().getId(), true, false);
-					for (FormVersion other : otherVersions) {
-						if (!other.getId().equals(entityToSave.getId())) {
-							other.setIsPublished(false);
-							other.setUpdatedAt(Utilities.getCurrentDate());
-							other.setUpdatedBy(request.getUser());
-							formVersionRepository.save(other);
-						}
-					}
-				}
-				entityToSave.setIsPublished(publishedToApply);
 			}
 
 			Boolean lockedToApply = dto.getIsLocked();
@@ -217,17 +208,21 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 			entityToSave.setUpdatedAt(Utilities.getCurrentDate());
 			entityToSave.setUpdatedBy(request.getUser());
 			entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(entityToSave)));
-			items.add(entityToSave);
+			itemsToPersist.add(entityToSave);
+			responseItems.add(entityToSave);
 		}
 
-		if (!items.isEmpty()) {
-			List<FormVersion> itemsSaved = formVersionRepository.saveAll((Iterable<FormVersion>) items);
+		if (!itemsToPersist.isEmpty()) {
+			List<FormVersion> itemsSaved = formVersionRepository.saveAll((Iterable<FormVersion>) itemsToPersist);
 			if (itemsSaved == null) {
 				throw new InternalErrorException(functionalError.SAVE_FAIL("formVersion", locale));
 			}
-			List<FormVersionDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading())) ? FormVersionTransformer.INSTANCE.toLiteDtos(itemsSaved) : FormVersionTransformer.INSTANCE.toDtos(itemsSaved);
+		}
 
-			final int size = itemsSaved.size();
+		if (!responseItems.isEmpty()) {
+			List<FormVersionDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading())) ? FormVersionTransformer.INSTANCE.toLiteDtos(responseItems) : FormVersionTransformer.INSTANCE.toDtos(responseItems);
+
+			final int size = responseItems.size();
 			List<String> listOfError = Collections.synchronizedList(new ArrayList<String>());
 			itemsDto.parallelStream().forEach(dto -> {
 				try {
@@ -264,7 +259,8 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 
 		List<FormQuestions> formQuestions = formQuestionsRepository.findByFormVersionIdOrderByQuestionOrder(formVersion.getId(), false);
 		if (formQuestions == null || formQuestions.isEmpty()) {
-			return;
+			throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+					"Publication impossible: la version doit contenir au moins une question active.", locale));
 		}
 
 		for (FormQuestions formQuestion : formQuestions) {
@@ -324,6 +320,7 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 			if (existingEntity == null) {
 				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("formVersion -> " + dto.getId(), locale));
 			}
+			ensureDirectVersionMutationAllowed(existingEntity, locale);
 
 			// Check if data is used by formQuestions
 			List<FormQuestions> listOfFormQuestions = formQuestionsRepository.findByFormVersionId(existingEntity.getId(), false);
@@ -431,6 +428,7 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 		return response;
 	}
 
+	@Transactional(rollbackFor = {RuntimeException.class, Exception.class})
 	public Response<FormVersionDto> custom(Request<FormVersionDto> request, Locale locale) throws Exception {
 		log.info("----begin custom FormVersionBusiness-----");
 		Response<FormVersionDto> response = new Response<FormVersionDto>();
@@ -440,6 +438,10 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 
 			if ("fork".equalsIgnoreCase(dto.getAction())) {
 				response = forkLockedVersion(dto, request.getUser(), locale);
+			} else if ("publish".equalsIgnoreCase(dto.getAction())) {
+				response = publishVersion(dto, request.getUser(), locale);
+			} else if ("ensureEditableQuestion".equalsIgnoreCase(dto.getAction())) {
+				response = ensureEditableQuestionForVersion(dto, request.getUser(), locale);
 			} else if ("duplicateQuestion".equalsIgnoreCase(dto.getAction())) {
 				response = duplicateQuestionForVersion(dto, request.getUser(), locale);
 			} else {
@@ -450,6 +452,49 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 		}
 
 		log.info("----end custom FormVersionBusiness-----");
+		return response;
+	}
+
+	private Response<FormVersionDto> ensureEditableQuestionForVersion(FormVersionDto dto, Integer userId, Locale locale) throws Exception {
+		FormVersion formVersion = loadEditableFormVersionForQuestionAction(dto.getId(), locale);
+		Question originalQuestion = loadExistingQuestionForQuestionAction(dto.getQuestionId(), locale);
+		FormQuestions targetFq = findFormQuestionLink(formVersion, originalQuestion.getId(), locale);
+
+		Question editableQuestion = originalQuestion;
+		if (questionRequiresIsolation(originalQuestion)) {
+			editableQuestion = duplicateQuestionWithAnswers(originalQuestion, userId);
+			relinkFormQuestion(targetFq, editableQuestion, userId);
+		}
+
+		return buildQuestionActionResponse(formVersion, editableQuestion.getId(), HttpStatus.OK.value());
+	}
+
+	private Response<FormVersionDto> publishVersion(FormVersionDto dto, Integer userId, Locale locale) throws Exception {
+		Response<FormVersionDto> response = new Response<FormVersionDto>();
+
+		if (dto.getId() == null) {
+			throw new InvalidEntityException(functionalError.FIELD_EMPTY("id", locale));
+		}
+
+		FormVersion formVersion = formVersionRepository.findOne(dto.getId(), false);
+		if (formVersion == null) {
+			throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("formVersion id -> " + dto.getId(), locale));
+		}
+
+		applyPublishedState(formVersion, true, userId, locale);
+		formVersion.setUpdatedAt(Utilities.getCurrentDate());
+		formVersion.setUpdatedBy(userId);
+		formVersion.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(formVersion)));
+		FormVersion savedVersion = formVersionRepository.save(formVersion);
+
+		FormVersionDto resultDto = FormVersionTransformer.INSTANCE.toDto(savedVersion);
+		Status status = new Status();
+		status.setCode(StatusCode.SUCCESS);
+		status.setMessage(StatusMessage.SUCCESS);
+		response.setItems(Collections.singletonList(resultDto));
+		response.setHasError(false);
+		response.setHttpCode(HttpStatus.OK.value());
+		response.setStatus(status);
 		return response;
 	}
 
@@ -476,7 +521,7 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 				"La version " + sourceVersion.getVersionNumber() + " n'est pas verrouillée, modification directe possible", locale));
 		}
 
-		FormVersion newVersion = createForkedVersion(sourceVersion, userId);
+		FormVersion newVersion = createForkedVersion(sourceVersion, userId, locale);
 
 		// 3. Return the new version
 		FormVersionDto resultDto = FormVersionTransformer.INSTANCE.toDto(newVersion);
@@ -490,11 +535,12 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 		return response;
 	}
 
-	private FormVersion createForkedVersion(FormVersion sourceVersion, Integer userId) {
+	private FormVersion createForkedVersion(FormVersion sourceVersion, Integer userId, Locale locale) {
 		// 1. Create new form_version
 		FormVersion newVersion = new FormVersion();
 		newVersion.setForm(sourceVersion.getForm());
 		newVersion.setVersionNumber(sourceVersion.getVersionNumber() + 1);
+		validateVersionNumberUniqueness(newVersion.getForm(), newVersion.getVersionNumber(), null, locale);
 		newVersion.setIsPublished(false);
 		newVersion.setIsLocked(false);
 		newVersion.setRandomQuestions(sourceVersion.getRandomQuestions());
@@ -533,18 +579,22 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 	 * 4. Returns the form_version (so frontend can reload)
 	 */
 	private Response<FormVersionDto> duplicateQuestionForVersion(FormVersionDto dto, Integer userId, Locale locale) throws Exception {
-		Response<FormVersionDto> response = new Response<FormVersionDto>();
+		FormVersion formVersion = loadEditableFormVersionForQuestionAction(dto.getId(), locale);
+		Question originalQuestion = loadExistingQuestionForQuestionAction(dto.getQuestionId(), locale);
+		FormQuestions targetFq = findFormQuestionLink(formVersion, originalQuestion.getId(), locale);
+		Question newQuestion = duplicateQuestionWithAnswers(originalQuestion, userId);
+		relinkFormQuestion(targetFq, newQuestion, userId);
+		return buildQuestionActionResponse(formVersion, newQuestion.getId(), HttpStatus.OK.value());
+	}
 
-		if (dto.getId() == null) {
+	private FormVersion loadEditableFormVersionForQuestionAction(Integer formVersionId, Locale locale) {
+		if (formVersionId == null) {
 			throw new InvalidEntityException(functionalError.FIELD_EMPTY("id (formVersionId)", locale));
 		}
-		if (dto.getQuestionId() == null) {
-			throw new InvalidEntityException(functionalError.FIELD_EMPTY("questionId", locale));
-		}
 
-		FormVersion formVersion = formVersionRepository.findOne(dto.getId(), false);
+		FormVersion formVersion = formVersionRepository.findOne(formVersionId, false);
 		if (formVersion == null) {
-			throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("formVersion id -> " + dto.getId(), locale));
+			throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("formVersion id -> " + formVersionId, locale));
 		}
 
 		if (Boolean.TRUE.equals(formVersion.getIsLocked())) {
@@ -552,26 +602,56 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 				"La version " + formVersion.getVersionNumber() + " est verrouillée, utilisez l'action 'fork' d'abord", locale));
 		}
 
-		Question originalQuestion = questionRepository.findOne(dto.getQuestionId(), false);
-		if (originalQuestion == null) {
-			throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("question id -> " + dto.getQuestionId(), locale));
+		return formVersion;
+	}
+
+	private Question loadExistingQuestionForQuestionAction(Integer questionId, Locale locale) {
+		if (questionId == null) {
+			throw new InvalidEntityException(functionalError.FIELD_EMPTY("questionId", locale));
 		}
 
-		// Find the form_questions link for this version + question
+		Question question = questionRepository.findOne(questionId, false);
+		if (question == null) {
+			throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("question id -> " + questionId, locale));
+		}
+
+		return question;
+	}
+
+	private FormQuestions findFormQuestionLink(FormVersion formVersion, Integer questionId, Locale locale) {
 		List<FormQuestions> fqLinks = formQuestionsRepository.findByFormVersionId(formVersion.getId(), false);
-		FormQuestions targetFq = null;
-		for (FormQuestions fq : fqLinks) {
-			if (fq.getQuestion() != null && fq.getQuestion().getId().equals(originalQuestion.getId())) {
-				targetFq = fq;
-				break;
+		if (fqLinks != null) {
+			for (FormQuestions fq : fqLinks) {
+				if (fq.getQuestion() != null && Objects.equals(fq.getQuestion().getId(), questionId)) {
+					return fq;
+				}
 			}
 		}
-		if (targetFq == null) {
-			throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST(
-				"form_questions (formVersion=" + formVersion.getId() + ", question=" + originalQuestion.getId() + ")", locale));
+
+		throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST(
+				"form_questions (formVersion=" + formVersion.getId() + ", question=" + questionId + ")", locale));
+	}
+
+	private boolean questionRequiresIsolation(Question question) {
+		if (question == null || question.getId() == null) {
+			return false;
 		}
 
-		// 1. Duplicate the question
+		List<FormQuestions> linkedFqs = formQuestionsRepository.findByQuestionId(question.getId(), false);
+		if (linkedFqs == null) {
+			return false;
+		}
+
+		for (FormQuestions fq : linkedFqs) {
+			if (fq.getFormVersion() != null && Boolean.TRUE.equals(fq.getFormVersion().getIsLocked())) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private Question duplicateQuestionWithAnswers(Question originalQuestion, Integer userId) {
 		Question newQuestion = new Question();
 		newQuestion.setQuestionRef(originalQuestion.getQuestionRef() != null ? originalQuestion.getQuestionRef() : java.util.UUID.randomUUID().toString());
 		newQuestion.setQuestionText(originalQuestion.getQuestionText());
@@ -585,7 +665,6 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 		newQuestion.setCreatedBy(userId);
 		newQuestion = questionRepository.save(newQuestion);
 
-		// 2. Duplicate all answers
 		List<Answer> originalAnswers = answerRepository.findByQuestionId(originalQuestion.getId(), false);
 		if (originalAnswers != null && !originalAnswers.isEmpty()) {
 			List<Answer> newAnswers = new ArrayList<Answer>();
@@ -607,24 +686,31 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 			answerRepository.saveAll(newAnswers);
 		}
 
-		// 3. Update form_questions link to point to the new question
-		targetFq.setQuestion(newQuestion);
+		return newQuestion;
+	}
+
+	private void relinkFormQuestion(FormQuestions targetFq, Question question, Integer userId) {
+		targetFq.setQuestion(question);
 		targetFq.setUpdatedAt(Utilities.getCurrentDate());
 		targetFq.setUpdatedBy(userId);
 		formQuestionsRepository.save(targetFq);
+	}
 
-		// 4. Return the form_version
+	private Response<FormVersionDto> buildQuestionActionResponse(FormVersion formVersion, Integer questionId, int httpCode) throws ParseException {
+		Response<FormVersionDto> response = new Response<FormVersionDto>();
 		FormVersionDto resultDto = FormVersionTransformer.INSTANCE.toDto(formVersion);
+		resultDto.setQuestionId(questionId);
 		Status status = new Status();
 		status.setCode(StatusCode.SUCCESS);
 		status.setMessage(StatusMessage.SUCCESS);
 		response.setItems(Collections.singletonList(resultDto));
 		response.setHasError(false);
-		response.setHttpCode(HttpStatus.OK.value());
+		response.setHttpCode(httpCode);
 		response.setStatus(status);
 		return response;
 	}
 
+	@Transactional(rollbackFor = {RuntimeException.class, Exception.class})
 	public Response<FormVersionDto> updateDeleted(Request<FormVersionDto> request, Locale locale) throws ParseException, JsonProcessingException {
 		log.info("----begin updateDeleted FormVersion-----");
 		Response<FormVersionDto> response = new Response<FormVersionDto>();
@@ -641,6 +727,10 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 			if (entityToSave == null) {
 				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("formVersion id -> " + dto.getId(), locale));
 			}
+			boolean wasDeleted = Boolean.TRUE.equals(entityToSave.getIsDeleted());
+			rejectDirectPublishedStateMutationOnStandardFlows(dto, locale);
+			rejectManagedVersionFieldChanges(entityToSave, dto, locale);
+			ensureDirectVersionMutationAllowed(entityToSave, locale);
 
 			if (dto.getFormId() != null && dto.getFormId() > 0) {
 				Form existingForm = formRepository.findOne(dto.getFormId(), false);
@@ -650,10 +740,8 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 				entityToSave.setForm(existingForm);
 			}
 			if (dto.getVersionNumber() != null) {
+				validateVersionNumberUniqueness(entityToSave.getForm(), dto.getVersionNumber(), entityToSave.getId(), locale);
 				entityToSave.setVersionNumber(dto.getVersionNumber());
-			}
-			if (dto.getIsPublished() != null) {
-				entityToSave.setIsPublished(dto.getIsPublished());
 			}
 			if (dto.getIsLocked() != null) {
 				entityToSave.setIsLocked(dto.getIsLocked());
@@ -664,6 +752,7 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 			if (dto.getIsDeleted() != null) {
 				entityToSave.setIsDeleted(dto.getIsDeleted());
 			}
+			reapplyPublishedStateOnRestore(entityToSave, wasDeleted, dto, request.getUser(), locale);
 			entityToSave.setUpdatedAt(Utilities.getCurrentDate());
 			entityToSave.setUpdatedBy(request.getUser());
 			entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(entityToSave)));
@@ -689,6 +778,7 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 		return response;
 	}
 
+	@Transactional(rollbackFor = {RuntimeException.class, Exception.class})
 	public Response<FormVersionDto> updateAll(Request<FormVersionDto> request, Locale locale) throws ParseException, JsonProcessingException {
 		log.info("----begin updateAll FormVersion-----");
 		Response<FormVersionDto> response = new Response<FormVersionDto>();
@@ -708,6 +798,10 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 			if (entityToSave == null) {
 				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("formVersion id -> " + dto.getId(), locale));
 			}
+			boolean wasDeleted = Boolean.TRUE.equals(entityToSave.getIsDeleted());
+			rejectDirectPublishedStateMutationOnStandardFlows(dto, locale);
+			rejectManagedVersionFieldChanges(entityToSave, dto, locale);
+			ensureDirectVersionMutationAllowed(entityToSave, locale);
 
 			if (dto.getFormId() != null && dto.getFormId() > 0) {
 				Form existingForm = formRepository.findOne(dto.getFormId(), false);
@@ -717,10 +811,8 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 				entityToSave.setForm(existingForm);
 			}
 			if (dto.getVersionNumber() != null) {
+				validateVersionNumberUniqueness(entityToSave.getForm(), dto.getVersionNumber(), entityToSave.getId(), locale);
 				entityToSave.setVersionNumber(dto.getVersionNumber());
-			}
-			if (dto.getIsPublished() != null) {
-				entityToSave.setIsPublished(dto.getIsPublished());
 			}
 			if (dto.getIsLocked() != null) {
 				entityToSave.setIsLocked(dto.getIsLocked());
@@ -731,6 +823,7 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 			if (dto.getIsDeleted() != null) {
 				entityToSave.setIsDeleted(dto.getIsDeleted());
 			}
+			reapplyPublishedStateOnRestore(entityToSave, wasDeleted, dto, request.getUser(), locale);
 			entityToSave.setUpdatedAt(Utilities.getCurrentDate());
 			entityToSave.setUpdatedBy(request.getUser());
 			entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(entityToSave)));
@@ -754,6 +847,132 @@ public class FormVersionBusiness implements IBasicBusiness<Request<FormVersionDt
 		}
 		log.info("----end updateAll FormVersion-----");
 		return response;
+	}
+
+	private void ensureManualVersionCreationAllowed(Form form, FormVersionDto dto, Locale locale) {
+		if (form == null || form.getId() == null) {
+			return;
+		}
+
+		List<FormVersion> existingVersions = formVersionRepository.findAllByFormId(form.getId());
+		if (existingVersions != null && !existingVersions.isEmpty()) {
+			throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+					"La creation manuelle d'une version n'est autorisee que pour un formulaire sans historique de version.", locale));
+		}
+
+		if (!Objects.equals(dto.getVersionNumber(), 1)) {
+			throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+					"La premiere version d'un formulaire doit obligatoirement etre numerotee 1.", locale));
+		}
+	}
+
+	private void validateVersionNumberUniqueness(Form form, Integer versionNumber, Integer currentId, Locale locale) {
+		if (form == null || form.getId() == null || versionNumber == null) {
+			return;
+		}
+
+		List<FormVersion> conflicts = formVersionRepository.findByFormIdAndVersionNumber(form.getId(), versionNumber);
+		if (conflicts == null) {
+			return;
+		}
+
+		for (FormVersion conflict : conflicts) {
+			if (conflict != null && !Objects.equals(conflict.getId(), currentId)) {
+				throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+						"Le numero de version " + versionNumber + " existe deja pour ce formulaire.", locale));
+			}
+		}
+	}
+
+	private void rejectManagedVersionFieldChanges(FormVersion sourceVersion, FormVersionDto dto, Locale locale) {
+		if (dto.getVersionNumber() != null && !Objects.equals(dto.getVersionNumber(), sourceVersion.getVersionNumber())) {
+			throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+					"versionNumber est gere par le serveur et ne peut pas etre modifie manuellement.", locale));
+		}
+
+		Integer sourceFormId = sourceVersion.getForm() != null ? sourceVersion.getForm().getId() : null;
+		if (dto.getFormId() != null && !Objects.equals(dto.getFormId(), sourceFormId)) {
+			throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+					"Le rattachement d'une version a un autre formulaire n'est pas autorise.", locale));
+		}
+	}
+
+	private void rejectDirectPublishedStateMutationOnStandardFlows(FormVersionDto dto, Locale locale) {
+		if (dto == null || dto.getIsPublished() == null) {
+			return;
+		}
+
+		throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+				"La publication d'une version doit passer par l'action metier dediee.", locale));
+	}
+
+	private boolean hasMeaningfulStandardUpdate(FormVersion sourceVersion, FormVersionDto dto) {
+		if (dto.getIsLocked() != null && !Objects.equals(dto.getIsLocked(), sourceVersion.getIsLocked())) {
+			return true;
+		}
+		if (dto.getRandomQuestions() != null && !Objects.equals(dto.getRandomQuestions(), sourceVersion.getRandomQuestions())) {
+			return true;
+		}
+		return dto.getIsDeleted() != null && !Objects.equals(dto.getIsDeleted(), sourceVersion.getIsDeleted());
+	}
+
+	private void reapplyPublishedStateOnRestore(
+			FormVersion formVersion,
+			boolean wasDeleted,
+			FormVersionDto dto,
+			Integer actorUserId,
+			Locale locale) {
+		if (!wasDeleted || !Boolean.FALSE.equals(dto.getIsDeleted())) {
+			return;
+		}
+
+		if (dto.getIsPublished() != null || !Boolean.TRUE.equals(formVersion.getIsPublished())) {
+			return;
+		}
+
+		applyPublishedState(formVersion, true, actorUserId, locale);
+	}
+
+	private void applyPublishedState(FormVersion formVersion, boolean published, Integer actorUserId, Locale locale) {
+		if (!published) {
+			formVersion.setIsPublished(false);
+			return;
+		}
+
+		if (formVersion.getForm() == null || formVersion.getForm().getId() == null) {
+			throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+					"La version doit etre rattachee a un formulaire avant publication.", locale));
+		}
+
+		validateFormVersionCanBePublished(formVersion, locale);
+		List<FormVersion> otherVersions = formVersionRepository.findByFormIdAndIsPublished(
+				formVersion.getForm().getId(), true, false);
+		for (FormVersion other : otherVersions) {
+			if (!Objects.equals(other.getId(), formVersion.getId())) {
+				other.setIsPublished(false);
+				other.setUpdatedAt(Utilities.getCurrentDate());
+				other.setUpdatedBy(actorUserId);
+				formVersionRepository.save(other);
+			}
+		}
+		formVersion.setIsPublished(true);
+	}
+
+	private void ensureDirectVersionMutationAllowed(FormVersion formVersion, Locale locale) {
+		if (formVersion == null) {
+			return;
+		}
+
+		if (Boolean.TRUE.equals(formVersion.getIsLocked())) {
+			throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+					"Cette version est verrouillee. Utilisez le fork controle plutot qu'une mutation directe.", locale));
+		}
+
+		List<Applications> applications = applicationsRepository.findByFormVersionId(formVersion.getId(), false);
+		if (applications != null && !applications.isEmpty()) {
+			throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+					"Cette version est deja utilisee par des candidatures et ne peut plus etre mutée directement.", locale));
+		}
 	}
 
 	private FormVersionDto getFullInfos(FormVersionDto dto, Integer size, Boolean isSimpleLoading, Locale locale) throws Exception {

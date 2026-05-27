@@ -64,6 +64,8 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 	@Autowired
 	private FormRepository formRepository;
 	@Autowired
+	private CampaignFormRepository campaignFormRepository;
+	@Autowired
 	private FormBusiness formBusiness;
 	@Autowired
 	private SpecialitiesRepository specialitiesRepository;
@@ -75,6 +77,8 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 	private PipelineTemplateRepository pipelineTemplateRepository;
 	@Autowired
 	private ApplicationProgressBusiness applicationProgressBusiness;
+	@Autowired
+	private ApplicationsRepository applicationsRepository;
 	@Autowired
 	private FunctionalError functionalError;
 	@Autowired
@@ -345,11 +349,11 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			if (dto.getIsArchived() != null) {
 				entityToSave.setIsArchived(dto.getIsArchived());
 			}
+			rejectTimeAllFormsMutationWhenAssignedFormVersionsExist(entityToSave, dto, locale);
 			normalizeCampaignTimingConfiguration(entityToSave, dto);
 			applyFormAssignmentConfiguration(entityToSave, dto, false, locale);
 			ensureOperationalPipelineTemplate(entityToSave, locale);
 			validateCampaignLifecycleUpdate(previousCampaignStatus, wasArchived, entityToSave, locale);
-			formBusiness.applyCampaignTimeAllForms(entityToSave, request.getUser(), locale);
 			
 			// ⚠️ NE JAMAIS modifier createdBy lors d'une mise à jour !
 			// createdBy doit toujours rester l'utilisateur qui a créé la campagne initialement
@@ -460,6 +464,33 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 		campaign.setIsTimed(timeAllForms);
 	}
 
+	private void rejectTimeAllFormsMutationWhenAssignedFormVersionsExist(Campaigns campaign, CampaignsDto dto, Locale locale) {
+		if (campaign == null || campaign.getId() == null || dto == null) {
+			return;
+		}
+
+		boolean currentTimeAllForms = Boolean.TRUE.equals(campaign.getTimeAllForms());
+		boolean requestedTimeAllForms = currentTimeAllForms;
+		if (dto.getTimeAllForms() != null) {
+			requestedTimeAllForms = Boolean.TRUE.equals(dto.getTimeAllForms());
+		} else if (dto.getIsTimed() != null) {
+			requestedTimeAllForms = Boolean.TRUE.equals(dto.getIsTimed());
+		}
+
+		if (currentTimeAllForms == requestedTimeAllForms) {
+			return;
+		}
+
+		Long assignedApplications = applicationsRepository.countAssignedFormVersionByCampaignId(campaign.getId(), false);
+		if (assignedApplications == null || assignedApplications <= 0L) {
+			return;
+		}
+
+		throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+				"Le chronometrage campagne ne peut pas etre modifie en place lorsqu'il existe deja des candidatures rattachees a une version de formulaire.",
+				locale));
+	}
+
 	private String normalizeFormAssignmentStrategy(String value, boolean useDefaultWhenBlank, Locale locale) {
 		String trimmedValue = StringUtils.trimToNull(value);
 		if (trimmedValue == null) {
@@ -552,7 +583,7 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 		if (campaign.getId() == null) {
 			violations.add("au moins un formulaire rattache");
 		} else {
-			List<Form> forms = formRepository.findByCampaignId(campaign.getId(), false);
+			List<Form> forms = campaignFormRepository.findActiveFormsByCampaignId(campaign.getId());
 			if (forms == null || forms.isEmpty()) {
 				violations.add("au moins un formulaire rattache");
 			}
@@ -659,6 +690,7 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 	 * 
 	 */
 	@Override
+	@Transactional
 	public Response<CampaignsDto> delete(Request<CampaignsDto> request, Locale locale) throws JsonProcessingException {
 		log.info("----begin delete Campaigns-----");
 		log.info("Request send --:> " + Utilities.convertObjectToJson(request));
@@ -703,27 +735,33 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 
 			// entityPermission
 			List<EntityPermission> listOfEntityPermission = entityPermissionRepository.findByEntityTypeAndEntityId("CAMPAIGN", existingEntity.getId());
-			if (listOfEntityPermission != null && !listOfEntityPermission.isEmpty()){
-				// Supprimer les entity_permission associées avant de soft-delete la campagne
-				for (EntityPermission ep : listOfEntityPermission) {
-					ep.setIsDeleted(true);
-				}
-				entityPermissionRepository.saveAll(listOfEntityPermission);
-			}
-			// form
-			List<Form> listOfForm = formRepository.findByCampaignId(existingEntity.getId(), false);
-			if (listOfForm != null && !listOfForm.isEmpty()){
-				throw new InternalErrorException(functionalError.DATA_NOT_DELETABLE("(" + listOfForm.size() + ")", locale));
-			}
+			List<CampaignForm> listOfCampaignForm = campaignFormRepository.findByCampaignId(existingEntity.getId());
 			// interviews
 			List<Interviews> listOfInterviews = interviewsRepository.findByCampaignId(existingEntity.getId(), false);
 			if (listOfInterviews != null && !listOfInterviews.isEmpty()){
 				throw new InternalErrorException(functionalError.DATA_NOT_DELETABLE("(" + listOfInterviews.size() + ")", locale));
 			}
+			// applications
+			Long applicationCount = applicationsRepository.countByCampaignId(existingEntity.getId(), false);
+			if (applicationCount != null && applicationCount > 0L) {
+				throw new InternalErrorException(functionalError.DATA_NOT_DELETABLE("(" + applicationCount + ")", locale));
+			}
 			// sourceToken
 			List<SourceToken> listOfSourceToken = sourceTokenRepository.findByCampaignId(existingEntity.getId(), false);
 			if (listOfSourceToken != null && !listOfSourceToken.isEmpty()){
 				throw new InternalErrorException(functionalError.DATA_NOT_DELETABLE("(" + listOfSourceToken.size() + ")", locale));
+			}
+			if (listOfEntityPermission != null && !listOfEntityPermission.isEmpty()){
+				for (EntityPermission ep : listOfEntityPermission) {
+					ep.setIsDeleted(true);
+				}
+				entityPermissionRepository.saveAll(listOfEntityPermission);
+			}
+			if (listOfCampaignForm != null && !listOfCampaignForm.isEmpty()) {
+				for (CampaignForm campaignForm : listOfCampaignForm) {
+					campaignForm.setIsDeleted(true);
+				}
+				campaignFormRepository.saveAll(listOfCampaignForm);
 			}
 
 
@@ -949,10 +987,10 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			if (dto.getIsArchived() != null) {
 				entityToSave.setIsArchived(dto.getIsArchived());
 			}
+			rejectTimeAllFormsMutationWhenAssignedFormVersionsExist(entityToSave, dto, locale);
 			normalizeCampaignTimingConfiguration(entityToSave, dto);
 			ensureOperationalPipelineTemplate(entityToSave, locale);
 			validateCampaignLifecycleUpdate(previousCampaignStatus, wasArchived, entityToSave, locale);
-			formBusiness.applyCampaignTimeAllForms(entityToSave, request.getUser(), locale);
 			if (dto.getUpdatedBy() != null && dto.getUpdatedBy() > 0) {
 				entityToSave.setUpdatedBy(dto.getUpdatedBy());
 			}
@@ -1098,6 +1136,7 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			if (dto.getIsArchived() != null) {
 				entityToSave.setIsArchived(dto.getIsArchived());
 			}
+			rejectTimeAllFormsMutationWhenAssignedFormVersionsExist(entityToSave, dto, locale);
 			normalizeCampaignTimingConfiguration(entityToSave, dto);
 			ensureOperationalPipelineTemplate(entityToSave, locale);
 			if (dto.getUpdatedBy() != null && dto.getUpdatedBy() > 0) {
@@ -1107,7 +1146,6 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 				entityToSave.setSearchString(dto.getSearchString());
 			}
 			validateCampaignLifecycleUpdate(previousCampaignStatus, wasArchived, entityToSave, locale);
-			formBusiness.applyCampaignTimeAllForms(entityToSave, request.getUser(), locale);
 			// Après toutes les mises à jour conditionnelles...
 			entityToSave.setUpdatedAt(Utilities.getCurrentDate());
 			entityToSave.setUpdatedBy(request.getUser());

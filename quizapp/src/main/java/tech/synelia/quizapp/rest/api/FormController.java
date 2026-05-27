@@ -76,9 +76,7 @@ public class FormController {
 	@RequestMapping(value="/updateDeleted",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
 	public Response<FormDto> updateDeleted(@RequestBody Request<FormDto> request) throws Exception {
 		log.info("start method /form/updateDeleted");
-		String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
-		Locale locale = Locale.of(languageID, "");
-		Response<FormDto> response = formBusiness.updateDeleted(request, locale);
+		Response<FormDto> response = controllerFactory.updateDeleted(request, FunctionalityEnum.UPDATE_FORM, formBusiness::updateDeleted);
 		log.info("end method /form/updateDeleted");
 		return response;
 	}
@@ -86,9 +84,7 @@ public class FormController {
 	@RequestMapping(value="/updateAll",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
 	public Response<FormDto> updateAll(@RequestBody Request<FormDto> request) throws Exception {
 		log.info("start method /form/updateAll");
-		String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
-		Locale locale = Locale.of(languageID, "");
-		Response<FormDto> response = formBusiness.updateAll(request, locale);
+		Response<FormDto> response = controllerFactory.updateAll(request, FunctionalityEnum.UPDATE_FORM, formBusiness::updateAll);
 		log.info("end method /form/updateAll");
 		return response;
 	}
@@ -112,9 +108,7 @@ public class FormController {
 	@RequestMapping(value="/getAllByCriteria",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
 	public Response<FormDto> getAllByCriteria(@RequestBody Request<FormDto> request) throws Exception {
 		log.info("start method /form/getAllByCriteria");
-		String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
-		Locale locale = Locale.of(languageID, "");
-		Response<FormDto> response = formBusiness.getAllByCriteria(request, locale);
+		Response<FormDto> response = controllerFactory.getAllByCriteria(request, FunctionalityEnum.VIEW_FORM, formBusiness::getAllByCriteria);
 		log.info("end method /form/getAllByCriteria");
 		return response;
 	}
@@ -122,28 +116,7 @@ public class FormController {
 	@RequestMapping(value="/custom",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
 	public Response<FormDto> custom(@RequestBody Request<FormDto> request) throws Exception {
 		log.info("start method /form/custom");
-		Response<FormDto> response = new Response<FormDto>();
-		String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
-		Locale locale = Locale.of(languageID, "");
-		try {
-			response = Validate.validateList(request, response, functionalError, locale);
-			if (!response.isHasError()) {
-				response = formBusiness.custom(request, locale);
-			} else {
-				slf4jLogger.info("Erreur| code: {} -  message: {}", response.getStatus().getCode(), response.getStatus().getMessage());
-				return response;
-			}
-			if (!response.isHasError()) {
-				slf4jLogger.info("end method custom");
-				slf4jLogger.info("code: {} -  message: {}", StatusCode.SUCCESS, StatusMessage.SUCCESS);
-			} else {
-				slf4jLogger.info("Erreur| code: {} -  message: {}", response.getStatus().getCode(), response.getStatus().getMessage());
-			}
-		} catch (CannotCreateTransactionException e) {
-			exceptionUtils.CANNOT_CREATE_TRANSACTION_EXCEPTION(response, locale, e);
-		} catch (TransactionSystemException e) {
-			exceptionUtils.TRANSACTION_SYSTEM_EXCEPTION(response, locale, e);
-		}
+		Response<FormDto> response = controllerFactory.custom(request, FunctionalityEnum.UPDATE_FORM, formBusiness::custom);
 		slf4jLogger.info("end method /form/custom");
 		return response;
 	}

@@ -15,6 +15,7 @@ export interface SourceTokenSearchCriteria {
   idDe?: string;
   idA?: string;
   campaignId?: number;
+  formId?: number;
   isDeleted?: boolean;
   dateCreationDe?: string;
   dateCreationA?: string;
@@ -43,6 +44,9 @@ export interface SourceToken {
   campaignName?: string;
   formId?: number | null;
   formName?: string | null;
+  campaignFormLinkActive?: boolean | null;
+  linkedCampaignCount?: number | null;
+  formShared?: boolean | null;
   expirationDate?: string;
   createdAt?: string;
   createdBy?: number;
@@ -254,6 +258,7 @@ export class SourceTokenService {
       data: {
         id: criteria.idDe || "",
         campaignId: criteria.campaignId || "",
+        formId: criteria.formId || "",
         isDeleted: criteria.isDeleted !== undefined ? criteria.isDeleted.toString() : "",
         searchString: criteria.search_string || "",
         

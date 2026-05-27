@@ -1,9 +1,9 @@
-import { Component, OnInit, OnDestroy, signal, computed, effect } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, effect, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormArray, FormControl, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { Subject, forkJoin, of } from 'rxjs';
-import { takeUntil, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { takeUntil, debounceTime, distinctUntilChanged, switchMap, map } from 'rxjs/operators';
 import { CampaignService, Campaign } from '../../../core/services/campaign.service';
 import { UserService, User, PagedResponse } from '../../../core/services/user.service';
 import { SpecialityService, Speciality } from '../../../core/services/speciality.service';
@@ -13,6 +13,8 @@ import { PipelineStageService } from '../../../core/services/pipeline-stage.serv
 import { environment } from '../../../../environments/environment';
 import { ApplicationProgressService } from '../../../core/services/application-progress.service';
 import { FormService, Form } from '../../../core/services/form.service';
+import { CampaignFormService, CampaignFormLink } from '../../../core/services/campaign-form.service';
+import { FormVersionService, FormVersion } from '../../../core/services/form-version.service';
 import { PipelineTemplate, PipelineStage } from '../../../core/models/pipeline.interfaces';
 import { CAMPAIGN_STATUS_OPTIONS, DEFAULT_CAMPAIGN_STATUS } from '../../../core/constants/campaign-status.constants';
 import { normalizeSystemRole } from '../../../core/constants/permissions.constants';
@@ -31,6 +33,11 @@ interface RecruiterAccess {
   follow: boolean;
   isAdmin?: boolean; // Marque si c'est un admin
   isCreator?: boolean; // Marque si c'est le créateur (non supprimable par personne)
+}
+
+interface CampaignSelectableForm extends Form {
+  duplicateSourceFormId?: number;
+  pendingDuplication?: boolean;
 }
 
 @Component({
@@ -61,11 +68,50 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
 
   // Formulaires - Recherche et association
   formSearchControl = new FormControl('');
-  formSearchResults = signal<Form[]>([]);
-  selectedForms = signal<Form[]>([]);
+  formSearchResults = signal<CampaignSelectableForm[]>([]);
+  selectedForms = signal<CampaignSelectableForm[]>([]);
   initialCampaignFormIds = signal<Set<number>>(new Set());
   showFormDropdown = signal(false);
   searchingForms = signal(false);
+  campaignFormLinks = signal<CampaignFormLink[]>([]);
+  formVersions = signal<FormVersion[]>([]);
+  linksByFormId = computed(() => {
+    const groupedLinks = new Map<number, CampaignFormLink[]>();
+    for (const link of this.campaignFormLinks()) {
+      const formId = Number(link.formId || 0);
+      if (!formId) {
+        continue;
+      }
+
+      const currentLinks = groupedLinks.get(formId) || [];
+      currentLinks.push(link);
+      groupedLinks.set(formId, currentLinks);
+    }
+    return groupedLinks;
+  });
+  versionsByFormId = computed(() => {
+    const groupedVersions = new Map<number, FormVersion[]>();
+    for (const version of this.formVersions()) {
+      const formId = Number(version.formId || 0);
+      if (!formId) {
+        continue;
+      }
+
+      const currentVersions = groupedVersions.get(formId) || [];
+      currentVersions.push(version);
+      groupedVersions.set(formId, currentVersions);
+    }
+    return groupedVersions;
+  });
+  hasPendingFormDuplications = computed(() => this.selectedForms().some(form => this.isPendingFormDuplication(form)));
+  sharedPublicationImpacts = computed(() => {
+    return this.selectedForms()
+      .filter(form => this.hasSharedPublicationWarning(form))
+      .map(form => ({
+        formLabel: form.formName || `Formulaire #${this.getReferenceFormId(form) || '?'}`,
+        impactedCampaignNames: this.getSharedImpactCampaignNames(form)
+      }));
+  });
   
   // Spécialités - Recherche instantanée
   specialitySearchControl = new FormControl('');
@@ -103,6 +149,8 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
     private pipelineStageService: PipelineStageService,
     private applicationProgressService: ApplicationProgressService,
     private formService: FormService,
+    @Inject(CampaignFormService) private campaignFormService: CampaignFormService,
+    @Inject(FormVersionService) private formVersionService: FormVersionService,
     private notificationService: NotificationService
   ) {}
 
@@ -114,6 +162,7 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
     this.setupRecruiterAssignmentLock();
     this.loadSpecialityAvailability();
     this.loadPipelineTemplates();
+    this.loadFormSharingContext();
     
     // Vérifier si on est en mode édition
     this.route.params.pipe(takeUntil(this.destroy$)).subscribe(params => {
@@ -579,7 +628,7 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
     this.showSearchDropdown.set(false);
   }
 
-  selectCampaignForm(form: Form): void {
+  selectCampaignForm(form: CampaignSelectableForm): void {
     if (!form.id || !this.isFormAvailableForSelection(form)) {
       return;
     }
@@ -593,6 +642,31 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
 
   removeCampaignForm(index: number): void {
     this.selectedForms.update(forms => forms.filter((_, formIndex) => formIndex !== index));
+    this.formSearchResults.update(forms => forms.filter(form => this.isFormAvailableForSelection(form)));
+  }
+
+  duplicateCampaignForm(index: number, form: CampaignSelectableForm): void {
+    const sourceFormId = Number(form.id || form.duplicateSourceFormId || 0);
+    if (!sourceFormId) {
+      return;
+    }
+
+    this.selectedForms.update(forms => forms.map((currentForm, currentIndex) => {
+      if (currentIndex !== index) {
+        return currentForm;
+      }
+
+      return {
+        ...currentForm,
+        id: undefined,
+        duplicateSourceFormId: sourceFormId,
+        pendingDuplication: true,
+        formName: this.buildDuplicateFormName(currentForm),
+        campaignId: this.campaignId ?? undefined
+      } satisfies CampaignSelectableForm;
+    }));
+    this.formSearchResults.update(forms => forms.filter(currentForm => this.isFormAvailableForSelection(currentForm)));
+    this.notificationService.success('Duplication planifiée', 'Une copie indépendante sera créée lors du prochain enregistrement de la campagne.');
   }
 
   removeRecruiter(index: number): void {
@@ -723,11 +797,27 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
   }
 
   loadCampaignForms(campaignId: number): void {
-    this.formService.getAllByCriteria({ campaignId, size: 100, isDeleted: false })
+    this.campaignFormService.getLinks({ campaignId, isDeleted: false })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (response) => {
-          const forms = response.content || [];
+        next: (links) => {
+          const forms = [...links]
+            .filter(link => Number(link.formId || 0) > 0)
+            .sort((left, right) => {
+              const leftOrder = left.assignmentOrder ?? Number.MAX_SAFE_INTEGER;
+              const rightOrder = right.assignmentOrder ?? Number.MAX_SAFE_INTEGER;
+              if (leftOrder !== rightOrder) {
+                return leftOrder - rightOrder;
+              }
+              return Number(left.id || 0) - Number(right.id || 0);
+            })
+            .map(link => ({
+              id: link.formId,
+              formName: link.formName,
+              formDesc: link.formDesc,
+              isActive: link.formActive,
+              campaignId: link.campaignId
+            } satisfies CampaignSelectableForm));
           this.selectedForms.set(forms);
           this.initialCampaignFormIds.set(new Set(forms.map(form => Number(form.id)).filter((formId) => formId > 0)));
         },
@@ -735,6 +825,25 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
           console.error('❌ Erreur chargement formulaires campagne:', error);
           this.selectedForms.set([]);
           this.initialCampaignFormIds.set(new Set());
+        }
+      });
+  }
+
+  loadFormSharingContext(): void {
+    forkJoin({
+      links: this.campaignFormService.getLinks({ isDeleted: false }),
+      versions: this.formVersionService.getAllByCriteria({ isDeleted: false, size: 9999, page: 0 })
+    })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: ({ links, versions }) => {
+          this.campaignFormLinks.set(links || []);
+          this.formVersions.set(versions.content || []);
+        },
+        error: (error) => {
+          console.error('❌ Erreur chargement contexte formulaires:', error);
+          this.campaignFormLinks.set([]);
+          this.formVersions.set([]);
         }
       });
   }
@@ -962,23 +1071,43 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
   }
 
   saveCampaignForms(campaignId: number) {
-    const selectedFormIds = new Set(
-      this.selectedForms()
-        .map(form => Number(form.id || 0))
-        .filter((formId) => formId > 0)
+    const formsToPersist = this.selectedForms();
+    const duplicationOperations = formsToPersist.map(form => {
+      if (!this.isPendingFormDuplication(form) || !form.duplicateSourceFormId) {
+        return of(form);
+      }
+
+      return this.formService.duplicateForCampaign(
+        form.duplicateSourceFormId,
+        campaignId,
+        form.formName
+      ).pipe(
+        map(duplicatedForm => ({
+          ...duplicatedForm,
+          pendingDuplication: false,
+          duplicateSourceFormId: undefined,
+          campaignId
+        } satisfies CampaignSelectableForm))
+      );
+    });
+
+    const persistForms$ = duplicationOperations.length > 0
+      ? forkJoin(duplicationOperations)
+      : of([] as CampaignSelectableForm[]);
+
+    return persistForms$.pipe(
+      switchMap((resolvedForms) => {
+        this.selectedForms.set(resolvedForms);
+
+        const selectedFormIds = Array.from(new Set(
+          resolvedForms
+            .map(form => Number(form.id || 0))
+            .filter((formId) => formId > 0)
+        ));
+
+        return this.formService.syncCampaignLinks(campaignId, selectedFormIds);
+      })
     );
-
-    const attachOperations = this.selectedForms()
-      .filter(form => Boolean(form.id) && form.campaignId !== campaignId)
-      .map(form => this.formService.update({ id: form.id, campaignId }));
-
-    const detachOperations = Array.from(this.initialCampaignFormIds())
-      .filter((formId) => !selectedFormIds.has(formId))
-      .map((formId) => this.formService.update({ id: formId, campaignId: 0 }));
-
-    const operations = [...attachOperations, ...detachOperations];
-
-    return operations.length > 0 ? forkJoin(operations) : of([]);
   }
 
   cancel(): void {
@@ -999,26 +1128,98 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
     return this.allCanEvaluate?.value === true;
   }
 
-  canRemoveCampaignForm(form: Form): boolean {
+  canRemoveCampaignForm(form: CampaignSelectableForm): boolean {
     return true;
   }
 
-  isPersistedCampaignForm(form: Form): boolean {
+  canDuplicateCampaignForm(form: CampaignSelectableForm): boolean {
+    const sourceFormId = Number(form.id || form.duplicateSourceFormId || 0);
+    return sourceFormId > 0 && !this.isPendingFormDuplication(form);
+  }
+
+  isPendingFormDuplication(form: CampaignSelectableForm): boolean {
+    return Boolean(form.pendingDuplication && Number(form.duplicateSourceFormId || 0) > 0);
+  }
+
+  isPersistedCampaignForm(form: CampaignSelectableForm): boolean {
     return Boolean(form.id) && this.initialCampaignFormIds().has(Number(form.id));
   }
 
-  private isFormAvailableForSelection(form: Form): boolean {
+  getLinkedCampaignCount(form: CampaignSelectableForm): number {
+    const referenceFormId = this.getReferenceFormId(form);
+    if (!referenceFormId) {
+      return 0;
+    }
+
+    return this.linksByFormId().get(referenceFormId)?.length || 0;
+  }
+
+  getLinkedCampaignNames(form: CampaignSelectableForm): string[] {
+    const referenceFormId = this.getReferenceFormId(form);
+    if (!referenceFormId) {
+      return [];
+    }
+
+    const names = (this.linksByFormId().get(referenceFormId) || [])
+      .map(link => (link.campaignName || '').trim())
+      .filter((name): name is string => name.length > 0);
+    return Array.from(new Set(names));
+  }
+
+  getSharedImpactCampaignNames(form: CampaignSelectableForm): string[] {
+    const referenceFormId = this.getReferenceFormId(form);
+    if (!referenceFormId) {
+      return [];
+    }
+
+    const currentCampaignId = Number(this.campaignId || 0);
+    const linkedNamesExcludingCurrent = (this.linksByFormId().get(referenceFormId) || [])
+      .filter(link => currentCampaignId === 0 || Number(link.campaignId || 0) !== currentCampaignId)
+      .map(link => (link.campaignName || '').trim())
+      .filter((name): name is string => name.length > 0);
+
+    const uniqueNames = Array.from(new Set(linkedNamesExcludingCurrent));
+    if (uniqueNames.length > 0) {
+      return uniqueNames;
+    }
+
+    return this.getLinkedCampaignNames(form);
+  }
+
+  hasSharedPublicationWarning(form: CampaignSelectableForm): boolean {
+    if (this.isPendingFormDuplication(form)) {
+      return false;
+    }
+
+    const referenceFormId = this.getReferenceFormId(form);
+    if (!referenceFormId || this.getLinkedCampaignCount(form) <= 1) {
+      return false;
+    }
+
+    return (this.versionsByFormId().get(referenceFormId) || []).some(version => version.isPublished === true);
+  }
+
+  private isFormAvailableForSelection(form: CampaignSelectableForm): boolean {
     const formId = Number(form.id || 0);
     if (!formId) {
       return false;
     }
 
-    if (this.selectedForms().some(selectedForm => selectedForm.id === formId)) {
-      return false;
-    }
+    return !this.selectedForms().some(selectedForm => {
+      const selectedId = Number(selectedForm.id || selectedForm.duplicateSourceFormId || 0);
+      return selectedId === formId;
+    });
+  }
 
-    const currentCampaignId = this.campaignId || 0;
-    return !form.campaignId || form.campaignId === currentCampaignId;
+  private getReferenceFormId(form: CampaignSelectableForm): number | null {
+    const formId = Number(form.id || form.duplicateSourceFormId || 0);
+    return formId > 0 ? formId : null;
+  }
+
+  private buildDuplicateFormName(form: CampaignSelectableForm): string {
+    const baseName = (form.formName || 'Formulaire').trim() || 'Formulaire';
+    const campaignTitle = (this.campaignForm.get('campaignTitle')?.value || '').trim();
+    return campaignTitle ? `${baseName} (copie ${campaignTitle})` : `${baseName} (copie)`;
   }
 
   private createEmptyUserResponse(): PagedResponse<User> {
