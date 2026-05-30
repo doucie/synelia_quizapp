@@ -582,6 +582,17 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     return this.campaignStagesMap()[app.campaignId] || [];
   }
 
+  getCurrentStage(app: ApplicationWithCampaign): PipelineStage | null {
+    const stages = this.getStagesForApp(app);
+    for (const stage of stages) {
+      const status = this.getDynamicStepStatus(app, stage.id!);
+      if (status === 'active' || status === 'pending') {
+        return stage;
+      }
+    }
+    return stages.length > 0 ? stages[stages.length - 1] : null;
+  }
+
   /**
    * Obtient le progrès d'une candidature pour une étape donnée
    */
@@ -674,12 +685,25 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Peut-on passer cette étape ? Seulement si non requise et status pending/active
+   * Peut-on passer cette étape ?
+   * Oui si elle est skippable et qu'aucun email requis n'est encore en attente.
    */
   canSkipStage(app: ApplicationWithCampaign, stage: PipelineStage): boolean {
-    if (stage.isRequired) return false;
+    if (!stage.id || !this.isStageSkippable(stage)) return false;
+    const progress = this.getProgressForStage(app.id!, stage.id);
+    if (stage.emailRequired && !Boolean(progress?.mailSent)) return false;
     const status = this.getDynamicStepStatus(app, stage.id!);
     return this.canAdvancePipelineForCampaign(app.campaignId) && (status === 'active' || status === 'pending');
+  }
+
+  getSkipActionTitle(stage: PipelineStage): string {
+    if (stage.emailRequired) {
+      return 'Ignorer cette étape après envoi de l’email requis';
+    }
+
+    return stage.isRequired
+      ? 'Ignorer cette étape (autorisé par la configuration du pipeline)'
+      : 'Ignorer cette étape';
   }
 
   /**
@@ -756,7 +780,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Passe (skip) une étape non requise
+   * Passe (skip) une étape skippable du pipeline
    */
   skipStage(app: ApplicationWithCampaign, stage: PipelineStage, event: Event): void {
     event.stopPropagation();
@@ -1193,12 +1217,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   }
 
   getCurrentStageId(app: ApplicationWithCampaign): number | null {
-    const stages = this.getStagesForApp(app);
-    for (const stage of stages) {
-      const status = this.getDynamicStepStatus(app, stage.id!);
-      if (status === 'active' || status === 'pending') return stage.id!;
-    }
-    return stages.length > 0 ? stages[stages.length - 1].id! : null;
+    return this.getCurrentStage(app)?.id || null;
   }
 
   getCurrentStageName(app: ApplicationWithCampaign): string {
@@ -1224,6 +1243,37 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       case 'COMPLETED': return 'Terminé';
       case 'IN_PROGRESS': return 'En cours';
       default: return 'En attente';
+    }
+  }
+
+  private isStageSkippable(stage: PipelineStage): boolean {
+    if (!stage) {
+      return false;
+    }
+
+    if (stage.stageType === 'CANDIDATURE' || stage.stageType === 'DECISION') {
+      return false;
+    }
+
+    if (!stage.isRequired) {
+      return true;
+    }
+
+    const config = this.readStageConfig(stage);
+    return config?.allowSkip === true;
+  }
+
+  private readStageConfig(stage: PipelineStage): { allowSkip?: boolean } | null {
+    const rawConfig = stage.configJson?.trim();
+    if (!rawConfig) {
+      return null;
+    }
+
+    try {
+      const parsed = JSON.parse(rawConfig);
+      return parsed && typeof parsed === 'object' ? parsed as { allowSkip?: boolean } : null;
+    } catch {
+      return null;
     }
   }
 

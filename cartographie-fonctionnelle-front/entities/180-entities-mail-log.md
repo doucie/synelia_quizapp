@@ -106,3 +106,11 @@ La page expose le journal d'envoi d'emails, mais sous forme de CRUD complet. Ell
 3. Ouvrir un detail panel puis tester une edition depuis ce panneau.
 4. Modifier ensuite le meme log via la modale pour comparer le comportement.
 5. Supprimer puis restaurer une ligne.
+
+## 11. Impact Cible Multi-Occurrences
+
+- [ ] documenter les nouveaux rattachements metier attendus (`applicationProgressId`, `interviewId`, `decisionId`, `notificationRuleId`, `eventCode`)
+- [ ] clarifier si cette route devient un audit en lecture prioritaire plutot qu'un vrai CRUD editable
+- [ ] faire du journal mail la source de trace des notifications critiques a la place des flags `mailSent` disperses dans le modele
+- [ ] documenter aussi `applicationId`, `requiresConfirmation`, `confirmedAt` et `confirmedBy` pour tracer les validations manuelles des envois critiques
+- [ ] distinguer clairement le role de `mail_log` par rapport a `notifications` et `audit_event` pour eviter trois journaux partiels qui se chevauchent

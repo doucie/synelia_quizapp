@@ -19,15 +19,6 @@
       </div>
 
       <div class="header-actions">
-        <a class="btn btn-secondary" routerLink="/dashboard/entities/campaign-form">
-          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M7 7h5" />
-            <path d="M12 7l3 3-3 3" />
-            <path d="M17 17h-5" />
-            <path d="M12 17l-3-3 3-3" />
-          </svg>
-          Liaisons campagne-formulaire
-        </a>
         <button class="btn btn-secondary" (click)="loadForms()" [disabled]="loading()">
           <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9" />
@@ -36,7 +27,7 @@
           Actualiser
         </button>
         @if (isAdminModeEnabled()) {
-          <button class="btn btn-primary" (click)="openCreateModal()">
+          <button class="btn btn-primary" (click)="openCreatePage()">
             <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M12 5v14" />
               <path d="M5 12h14" />
@@ -79,12 +70,6 @@
     </app-filter-select>
   </div>
 
-  <div class="helper-banner">
-    <div>
-      Cette page centralise la vue et le CRUD des formulaires. Les campagnes liees proviennent exclusivement des liaisons <strong>campaign_form</strong>. Pour rattacher ou detacher un formulaire d'une campagne, utilisez l'ecran dedie des liaisons campagne-formulaire.
-    </div>
-  </div>
-
   @if (loading()) {
     <div class="loading-state">
       <div class="spinner"></div>
@@ -99,7 +84,7 @@
           <article class="form-card" [class.inactive]="form.isActive === false">
             @if (isAdminModeEnabled()) {
               <div class="card-actions">
-                <button class="action-btn action-btn--edit" (click)="openEditModal(form); $event.stopPropagation()" title="Modifier" aria-label="Modifier">
+                <button class="action-btn action-btn--edit" (click)="openEditPage(form); $event.stopPropagation()" title="Modifier" aria-label="Modifier">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M12 20H21" />
                     <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5z" />
@@ -209,64 +194,6 @@
     }
   }
 </div>
-
-@if (showCreateEditModal()) {
-  <div class="modal-overlay" role="dialog" aria-modal="true" (click)="closeCreateEditModal()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>{{ isEditMode() ? 'Modifier le formulaire' : 'Nouveau formulaire' }}</h2>
-        <button class="modal-close" (click)="closeCreateEditModal()">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 6L6 18M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-
-      <div class="modal-body">
-        <div class="form-editor">
-          <div class="form-group">
-            <label for="form-name">Nom du formulaire *</label>
-            <input
-              id="form-name"
-              type="text"
-              [ngModel]="formState().formName"
-              [ngModelOptions]="{ standalone: true }"
-              (ngModelChange)="updateFormField('formName', $event)"
-              placeholder="Ex: Evaluation technique Angular"
-            >
-          </div>
-
-          <div class="form-group">
-            <label for="form-description">Description</label>
-            <textarea
-              id="form-description"
-              rows="4"
-              [ngModel]="formState().formDesc"
-              [ngModelOptions]="{ standalone: true }"
-              (ngModelChange)="updateFormField('formDesc', $event)"
-              placeholder="Resume metier du formulaire"
-            ></textarea>
-          </div>
-
-          <div class="form-group">
-            <small class="field-help">Les rattachements campagne-formulaire se gerent maintenant depuis l'ecran dedie des liaisons campagne-formulaire.</small>
-          </div>
-
-          <div class="form-group form-group--checkbox">
-            <app-filter-checkbox inputId="forms-active" label="Formulaire actif" variant="inline" [checked]="formState().isActive" ariaLabel="Formulaire actif" (checkedChange)="updateFormField('isActive', $event)"></app-filter-checkbox>
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button class="btn btn-secondary" (click)="closeCreateEditModal()">Annuler</button>
-        <button class="btn btn-primary" (click)="saveForm()" [disabled]="loading()">
-          {{ isEditMode() ? 'Enregistrer' : 'Creer' }}
-        </button>
-      </div>
-    </div>
-  </div>
-}
 
 @if (showDeleteModal()) {
   <div class="modal-overlay" role="dialog" aria-modal="true" (click)="closeDeleteModal()">

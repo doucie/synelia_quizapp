@@ -211,8 +211,8 @@ export class FilterSelectComponent implements AfterContentInit, ControlValueAcce
     }
   }
 
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent): void {
+  @HostListener('document:pointerdown', ['$event'])
+  onDocumentPointerDown(event: PointerEvent): void {
     if (this.isOpen() && !this._el.nativeElement.contains(event.target as Node)) {
       this.close();
       this._onTouched();

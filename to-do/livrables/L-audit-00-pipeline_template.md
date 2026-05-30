@@ -149,6 +149,16 @@
 - [x] **LPIPTEM-403** Visibilite par persona : back filtre selon permissions effectives. -- _AUDIT: permissionGuard(['MANAGE_APP_CONFIG'])._
 - [-] **LPIPTEM-404** Pas de N+1 (logs SQL verifies).
 
+### 3.G Invariants structurels et readiness du template
+
+- [ ] **LPIPTEM-430** Invariant de base : tout template editable contient exactement une etape `CANDIDATURE` en premier et une etape `DECISION` en dernier.
+- [ ] **LPIPTEM-431** Creation de template : le front et/ou le back injectent automatiquement `CANDIDATURE` et `DECISION` si l’utilisateur cree un pipeline vide.
+- [ ] **LPIPTEM-432** Edition : `CANDIDATURE` et `DECISION` ne sont ni supprimables, ni deplacables, ni convertibles vers un autre type.
+- [ ] **LPIPTEM-433** Ajout d’etape : une nouvelle etape s’insere entre les deux bornes figees, avec renumerotation coherente des `stage_order`.
+- [ ] **LPIPTEM-434** Mise en conformite : si un template existant viole ces invariants (absence, doublon, ordre incorrect), la strategie de migration/correction est definie avant rollout.
+- [ ] **LPIPTEM-435** Catalogue de types : arbitrer si `TECHNICAL_TEST` reste distinct de `QUIZ`; si non, prevoir fusion type/UI/BDD/emails avant d’autoriser encore l’edition.
+- [ ] **LPIPTEM-436** Retrait de `CUSTOM` : documenter la suppression du type cote front/back/seed et la migration des templates qui l’utilisent deja.
+- [ ] **LPIPTEM-437** Pret a produire : definir les criteres qui rendent un template reellement utilisable (types supportes, flags operants, actions disponibles, emails geres, skip gere) avant `setDefault` ou rattachement a une campagne.
 
 ## Section 4 -- Persona x Operation
 

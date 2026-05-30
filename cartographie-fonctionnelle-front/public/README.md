@@ -9,6 +9,7 @@
 - [x] [50-inscription.md](./50-inscription.md)
 - [x] [60-mot-de-passe-oublie.md](./60-mot-de-passe-oublie.md)
 - [x] [70-postuler-source-token.md](./70-postuler-source-token.md)
+- [x] [80-quiz-public.md](./80-quiz-public.md)
 
 ## Points ouverts transverses
 

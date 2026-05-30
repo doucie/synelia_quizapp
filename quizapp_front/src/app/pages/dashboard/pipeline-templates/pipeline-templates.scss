@@ -286,9 +286,13 @@
     box-shadow: 0 0 0 1px var(--primary);
   }
 
+  &.is-inactive {
+    border-style: dashed;
+  }
+
   &.is-locked {
     .card-body {
-      cursor: default;
+      cursor: pointer;
     }
   }
 }
@@ -317,6 +321,30 @@
   font-weight: var(--font-weight-semibold);
   text-transform: uppercase;
   letter-spacing: 0.02em;
+}
+
+.badge-readiness {
+  border: 1px solid transparent;
+}
+
+.badge-ready {
+  background: rgba(var(--success-rgb), 0.12);
+  color: var(--success-dark, var(--success));
+}
+
+.badge-incomplete {
+  background: rgba(var(--warning-rgb), 0.12);
+  color: var(--warning-dark);
+}
+
+.badge-warning {
+  background: rgba(var(--error-rgb), 0.1);
+  color: var(--error);
+}
+
+.badge-loading {
+  background: rgba(var(--text-secondary-rgb, 107, 114, 128), 0.12);
+  color: var(--text-secondary);
 }
 
 .badge-default {
@@ -362,6 +390,17 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.template-status-note {
+  margin: 0 0 var(--spacing-md);
+  font-size: var(--font-size-xs);
+  color: var(--warning-dark);
+  line-height: 1.4;
+}
+
+.template-card.is-locked .template-status-note {
+  color: var(--text-primary);
 }
 
 // Stages preview

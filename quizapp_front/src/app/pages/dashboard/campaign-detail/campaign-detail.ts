@@ -276,7 +276,7 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   loadCampaignForms(campaignId: number): void {
     console.log('📝 Chargement des formulaires pour la campagne:', campaignId);
     
-    this.formService.getAllByCriteria({ campaignId, size: 100, isDeleted: false })
+    this.formService.getAllByCriteria({ filterCampaignId: campaignId, size: 100, isDeleted: false })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {

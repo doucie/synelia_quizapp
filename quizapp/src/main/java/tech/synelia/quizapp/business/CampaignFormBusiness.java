@@ -59,8 +59,6 @@ public class CampaignFormBusiness implements IBasicBusiness<Request<CampaignForm
 	@Autowired
 	private FormRepository formRepository;
 	@Autowired
-	private FormCampaignProjectionService formCampaignProjectionService;
-	@Autowired
 	private FunctionalError functionalError;
 	@Autowired
 	private TechnicalError technicalError;
@@ -109,7 +107,6 @@ public class CampaignFormBusiness implements IBasicBusiness<Request<CampaignForm
 			if (itemsSaved == null) {
 				throw new InternalErrorException(functionalError.SAVE_FAIL("campaignForm", locale));
 			}
-			formCampaignProjectionService.synchronizeLegacyCampaignProjection(extractForms(itemsSaved), request.getUser());
 			List<CampaignFormDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading()))
 					? CampaignFormTransformer.INSTANCE.toLiteDtos(itemsSaved)
 					: CampaignFormTransformer.INSTANCE.toDtos(itemsSaved);
@@ -169,7 +166,6 @@ public class CampaignFormBusiness implements IBasicBusiness<Request<CampaignForm
 			if (itemsSaved == null) {
 				throw new InternalErrorException(functionalError.SAVE_FAIL("campaignForm", locale));
 			}
-			formCampaignProjectionService.synchronizeLegacyCampaignProjection(impactedForms, request.getUser());
 			List<CampaignFormDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading()))
 					? CampaignFormTransformer.INSTANCE.toLiteDtos(itemsSaved)
 					: CampaignFormTransformer.INSTANCE.toDtos(itemsSaved);
@@ -212,8 +208,6 @@ public class CampaignFormBusiness implements IBasicBusiness<Request<CampaignForm
 			entityToSave.setSearchString(buildSearchString(entityToSave.getCampaigns(), entityToSave.getForm()));
 			campaignFormRepository.save(entityToSave);
 		}
-		formCampaignProjectionService.synchronizeLegacyCampaignProjection(impactedForms, request.getUser());
-
 		if (request.getDatas() != null && !request.getDatas().isEmpty()) {
 			Status status = new Status();
 			status.setCode(StatusCode.SUCCESS);
@@ -346,7 +340,6 @@ public class CampaignFormBusiness implements IBasicBusiness<Request<CampaignForm
 			if (itemsSaved == null) {
 				throw new InternalErrorException(functionalError.SAVE_FAIL("campaignForm", locale));
 			}
-			formCampaignProjectionService.synchronizeLegacyCampaignProjection(impactedForms, request.getUser());
 			List<CampaignFormDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading()))
 					? CampaignFormTransformer.INSTANCE.toLiteDtos(itemsSaved)
 					: CampaignFormTransformer.INSTANCE.toDtos(itemsSaved);
@@ -415,7 +408,6 @@ public class CampaignFormBusiness implements IBasicBusiness<Request<CampaignForm
 			if (itemsSaved == null) {
 				throw new InternalErrorException(functionalError.SAVE_FAIL("campaignForm", locale));
 			}
-			formCampaignProjectionService.synchronizeLegacyCampaignProjection(impactedForms, request.getUser());
 			List<CampaignFormDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading()))
 					? CampaignFormTransformer.INSTANCE.toLiteDtos(itemsSaved)
 					: CampaignFormTransformer.INSTANCE.toDtos(itemsSaved);

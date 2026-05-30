@@ -102,3 +102,11 @@ La page sert d'entree principale vers l'evaluation plein ecran a partir du lien 
 3. Recharger la page directement avec l'URL tokenisee et verifier que le meme entretien est retrouve.
 4. Tester un lien invalide et verifier le message `Entretien non trouve`.
 5. Cloturer l'entretien puis verifier le retour vers `/dashboard/evaluations`.
+
+## 11. Impact Cible Multi-Occurrences
+
+- [ ] faire resoudre le lien court vers un round d'entretien precis, pas vers une evaluation globale implicite
+- [ ] documenter la coexistence de plusieurs evaluateurs et de plusieurs soumissions pour un meme entretien
+- [ ] clarifier la politique de regeneration, revocation ou expiration du lien au niveau du round d'entretien
+- [ ] aligner cette entree avec la disparition d'une etape pipeline `EVALUATION` autonome
+- [ ] recadrer `interviewEvaluationsLink` comme code ou lien de salon partage au niveau `interviews`, et non comme token porte par `candidate_interview`

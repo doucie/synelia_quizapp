@@ -10,7 +10,7 @@
 
 ## 2. Objectif Produit
 
-La page sert à créer une campagne complète avec spécialité, pipeline, paramètres de quiz, liste de recruteurs autorisés et formulaires associés, puis à synchroniser les accès et notifications associés.
+La page sert à créer une campagne complète avec spécialité, pipeline, paramètres de quiz, liste de recruteurs autorisés et formulaires associés. C'est aussi le point métier où l'utilisateur choisit quels formulaires rattacher à la campagne, sans passer par une entité technique `campaign_form` séparée.
 
 ## 3. Etat Constate
 
@@ -23,8 +23,9 @@ La page sert à créer une campagne complète avec spécialité, pipeline, param
 - [x] Les champs de stratégie d’affectation de formulaires et politique d’épuisement sont déjà exposés.
 - [x] Le bloc UI de sélection recruteurs expose bien les permissions fines, le toggle `Administrateur`, et la sauvegarde propage maintenant réellement ce statut via les accès campagne.
 - [x] Quand `allCanEvaluate` est coché, la recherche de `Recruteurs autorisés` est verrouillée et vidée pour éviter une configuration contradictoire.
+- [x] La sélection des formulaires liés fait partie du flux campagne et non d'un écran technique distinct pour l'utilisateur métier.
 - [x] La page permet désormais de rechercher et associer un ou plusieurs formulaires existants à la campagne pendant la création.
-- [x] Les formulaires déjà associés peuvent aussi être retirés depuis l'écran, la sauvegarde envoyant désormais un détachement explicite au backend.
+- [x] Quand une campagne doit diverger d'un formulaire déjà partagé, le flux prépare une duplication dédiée avant le rattachement final.
 - [x] Si aucune spécialité active n’existe, le formulaire remplace la recherche par un état vide explicite avec redirection vers la gestion des spécialités.
 - [x] Après sauvegarde, la page revient vers `/dashboard/campaigns`, y compris si la synchronisation secondaire des accès, notifications ou formulaires échoue ensuite.
 
@@ -70,13 +71,13 @@ La page sert à créer une campagne complète avec spécialité, pipeline, param
 - [x] toggle `Administrateur` qui active les droits forts et persiste l'accès `ADMIN`
 - [x] exclusion de l’utilisateur connecté de la recherche
 
-### 4.6 Formulaires de campagne
+### 4.6 Selection des formulaires de campagne
 
 - [x] recherche instantanée de formulaires existants
 - [x] ajout d’un ou plusieurs formulaires disponibles pour la campagne
-- [x] affichage des formulaires déjà associés en édition
+- [x] affichage du contexte de partage et des impacts multi-campagnes utiles avant rattachement
 - [x] persistance des nouvelles associations de formulaires à la sauvegarde
-- [x] retrait des formulaires déjà associés et persistance du détachement à la sauvegarde
+- [x] préparation d’une duplication de formulaire quand une divergence campagne-spécifique est nécessaire
 
 ## 5. Donnees Affichees Ou Editees
 
@@ -107,7 +108,9 @@ Pour les formulaires associés:
 - `formName`
 - `formDesc`
 - `isActive`
-- `campaignId`
+- `isTimed`
+- `duplicateSourceFormId`
+- `pendingDuplication`
 
 ## 6. Services Et Endpoints
 
@@ -116,7 +119,9 @@ Pour les formulaires associés:
 - `PipelineTemplateService.getAllByCriteria()` -> endpoint pipeline template de liste
 - `SpecialityService.getAll()` -> endpoint spécialités
 - `UserService.getAllUsersByCriteria()` -> endpoint utilisateurs pour recherche
-- `FormService.getAllByCriteria()` -> endpoint formulaires pour recherche et chargement des formulaires déjà liés
+- `FormService.getAllByCriteria()` -> endpoint formulaires pour recherche des formulaires disponibles
+- `CampaignFormService.getLinks()` -> lecture des liens actifs déjà portés par la campagne
+- `FormVersionService.getAllByCriteria()` -> contexte de partage et de publication des formulaires sélectionnables
 
 ### 6.2 Création et suites
 
@@ -127,7 +132,8 @@ Pour les formulaires associés:
 ### 6.3 Dépendances annexes
 
 - `AuthService.getCurrentUser()` pour `createdBy`
-- `FormService.update()` pour rattacher ou détacher explicitement les formulaires sélectionnés à la campagne créée ou éditée
+- `FormService.syncCampaignLinks()` -> synchronisation explicite des formulaires sélectionnés avec la campagne créée
+- `FormService.duplicateForCampaign()` -> duplication dédiée d’un formulaire partagé avant rattachement si la campagne doit diverger
 - `PipelineStageService` et `ApplicationProgressService` pour personnalisation / migration de pipeline
 
 ## 7. Ce Que Le Backend Doit Envoyer
@@ -136,7 +142,7 @@ Pour les formulaires associés:
 - Un contrat spécialité cohérent pour recherche et chargement.
 - Des templates pipeline actifs exploitables en liste.
 - Des résultats utilisateurs suffisamment riches pour filtrer par rôle et afficher nom / email.
-- Des formulaires disponibles filtrables par texte avec `campaignId` exploitable pour rattachement.
+- Des formulaires disponibles filtrables par texte, et des liens campagne-formulaire lisibles via `campaign_form` plutôt qu’au travers d’un `form.campaignId` exposé à l’utilisateur.
 - Une synchronisation fiable des permissions d’entité `CAMPAIGN`.
 - Une création de notification robuste pour chaque nouveau recruteur ajouté.
 
@@ -170,8 +176,8 @@ Pour les formulaires associés:
 4. Cocher `Autoriser tous les recruteurs à évaluer les candidatures` et vérifier que la recherche de recruteurs autorisés se désactive immédiatement.
 5. Décocher cette option, puis ajouter au moins un recruteur avec permissions spécifiques et tester aussi le toggle `Administrateur`.
 6. Rechercher et associer un ou plusieurs formulaires existants.
-7. En édition, retirer aussi au moins un formulaire déjà lié puis sauvegarder.
+7. Si un formulaire partagé doit diverger pour cette campagne, préparer une duplication dédiée puis vérifier que la copie est retenue à la sauvegarde.
 8. Vérifier la redirection vers la liste et l’apparition de la campagne.
 9. Contrôler que les accès campagne ont bien été créés pour les recruteurs ajoutés, y compris le statut `ADMIN` si coché.
 10. Contrôler que les formulaires ajoutés remontent sur le détail de la campagne.
-11. Contrôler qu’un formulaire retiré n’est plus rattaché à la campagne après sauvegarde.
+11. Contrôler ensuite sur l’édition campagne qu’un formulaire retiré n’est plus rattaché à la campagne après sauvegarde.

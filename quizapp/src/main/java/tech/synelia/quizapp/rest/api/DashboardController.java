@@ -1,19 +1,57 @@
 package tech.synelia.quizapp.rest.api;
 
-import lombok.extern.java.Log;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
-
-import tech.synelia.quizapp.dao.entity.*;
-import tech.synelia.quizapp.dao.repository.*;
-import tech.synelia.quizapp.utils.dto.DependencyInfoDto;
-import tech.synelia.quizapp.utils.dto.DependencyInfoDto.DependencyGroup;
-import tech.synelia.quizapp.utils.dto.DependencyInfoDto.DeletedParent;
-
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import lombok.extern.java.Log;
+import tech.synelia.quizapp.dao.entity.Answer;
+import tech.synelia.quizapp.dao.entity.CampaignForm;
+import tech.synelia.quizapp.dao.entity.Campaigns;
+import tech.synelia.quizapp.dao.entity.CandidateInterview;
+import tech.synelia.quizapp.dao.entity.Departments;
+import tech.synelia.quizapp.dao.entity.EntityPermission;
+import tech.synelia.quizapp.dao.entity.Form;
+import tech.synelia.quizapp.dao.entity.FormQuestions;
+import tech.synelia.quizapp.dao.entity.FormVersion;
+import tech.synelia.quizapp.dao.entity.Interviews;
+import tech.synelia.quizapp.dao.entity.Question;
+import tech.synelia.quizapp.dao.entity.SourceToken;
+import tech.synelia.quizapp.dao.entity.Specialities;
+import tech.synelia.quizapp.dao.repository.AnswerRepository;
+import tech.synelia.quizapp.dao.repository.ApplicationsRepository;
+import tech.synelia.quizapp.dao.repository.CampaignFormRepository;
+import tech.synelia.quizapp.dao.repository.CampaignsRepository;
+import tech.synelia.quizapp.dao.repository.CandidateAnswerRepository;
+import tech.synelia.quizapp.dao.repository.CandidateAskRepository;
+import tech.synelia.quizapp.dao.repository.CandidateInterviewRepository;
+import tech.synelia.quizapp.dao.repository.CandidateTokenRepository;
+import tech.synelia.quizapp.dao.repository.DecisionRepository;
+import tech.synelia.quizapp.dao.repository.DepartmentsRepository;
+import tech.synelia.quizapp.dao.repository.EntityPermissionRepository;
+import tech.synelia.quizapp.dao.repository.EvaluationsRepository;
+import tech.synelia.quizapp.dao.repository.FormQuestionsRepository;
+import tech.synelia.quizapp.dao.repository.FormRepository;
+import tech.synelia.quizapp.dao.repository.FormVersionRepository;
+import tech.synelia.quizapp.dao.repository.InterviewParticipantRepository;
+import tech.synelia.quizapp.dao.repository.InterviewsRepository;
+import tech.synelia.quizapp.dao.repository.InvitationCodeRepository;
+import tech.synelia.quizapp.dao.repository.NotificationsRepository;
+import tech.synelia.quizapp.dao.repository.QuestionRepository;
+import tech.synelia.quizapp.dao.repository.SourceTokenRepository;
+import tech.synelia.quizapp.dao.repository.SpecialitiesRepository;
+import tech.synelia.quizapp.dao.repository.UserRepository;
+import tech.synelia.quizapp.utils.dto.DependencyInfoDto;
+import tech.synelia.quizapp.utils.dto.DependencyInfoDto.DeletedParent;
+import tech.synelia.quizapp.utils.dto.DependencyInfoDto.DependencyGroup;
 
 /**
  * Controller for dashboard aggregated data.
@@ -271,11 +309,21 @@ public class DashboardController {
             }
             case "forms": {
                 Form entity = formRepository.findOne(id, true);
-                if (entity != null && entity.getCampaigns() != null) {
-                    Campaigns parent = campaignsRepository.findOne(entity.getCampaigns().getId(), true);
-                    if (parent != null) {
-                        deletedParents.add(new DeletedParent("campaigns", "Campagne", parent.getId(), parent.getCampaignTitle()));
+                if (entity != null) {
+                    Map<Integer, DeletedParent> deletedCampaignParents = new LinkedHashMap<>();
+                    for (CampaignForm link : campaignFormRepository.findByFormId(id)) {
+                        if (link.getCampaigns() == null) {
+                            continue;
+                        }
+
+                        Campaigns parent = campaignsRepository.findOne(link.getCampaigns().getId(), true);
+                        if (parent != null) {
+                            deletedCampaignParents.putIfAbsent(
+                                    parent.getId(),
+                                    new DeletedParent("campaigns", "Campagne", parent.getId(), parent.getCampaignTitle()));
+                        }
                     }
+                    deletedParents.addAll(deletedCampaignParents.values());
                 }
                 break;
             }

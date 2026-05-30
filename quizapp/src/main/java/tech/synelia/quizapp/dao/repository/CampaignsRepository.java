@@ -188,6 +188,9 @@ public interface CampaignsRepository extends JpaRepository<Campaigns, Integer>, 
 	@Query("select e from Campaigns e where e.specialities.id = :specialityId and e.isDeleted = :isDeleted")
 	List<Campaigns> findBySpecialityId(@Param("specialityId")Integer specialityId, @Param("isDeleted")Boolean isDeleted);
 
+	@Query("select count(e) from Campaigns e where e.pipelineTemplate.id = :templateId and e.campaignStatus = :campaignStatus and e.isDeleted = false and (e.isArchived = false or e.isArchived is null)")
+	Long countOpenByPipelineTemplateId(@Param("templateId") Integer templateId, @Param("campaignStatus") String campaignStatus);
+
 	/**
 	 * Finds List of Campaigns by using campaignsDto as a search criteria.
 	 * 

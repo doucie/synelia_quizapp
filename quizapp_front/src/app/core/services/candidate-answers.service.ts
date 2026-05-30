@@ -10,11 +10,15 @@ export interface CandidateAnswer {
   isSelected?: boolean;
   manualIsCorrect?: boolean | null;
   manualCorrectionComment?: string | null;
+  manualCorrectionScore?: number | null;
   manualCorrectedAt?: string;
   manualCorrectedBy?: number;
   applicationId?: number;
   questionId?: number;
+  questionScore?: number;
+  manualCorrectionRequired?: boolean;
   answerId?: number;
+  answerOrder?: number;
   questionText?: string;
   questionType?: string;
   answerText?: string;
@@ -36,6 +40,7 @@ export interface CandidateAnswerMutationPayload {
   isSelected?: boolean;
   manualIsCorrect?: boolean | null;
   manualCorrectionComment?: string | null;
+  manualCorrectionScore?: number | null;
   applicationId?: number;
   questionId?: number;
   answerId?: number;
@@ -132,6 +137,22 @@ export class CandidateAnswersService {
         id,
         action: 'manualCorrection',
         manualIsCorrect,
+        manualCorrectionComment: manualCorrectionComment ?? null
+      }]
+    });
+  }
+
+  manualCorrectQuestion(applicationId: number, questionId: number, manualCorrectionScore: number, manualCorrectionComment?: string | null): Observable<any> {
+    const currentUserData = localStorage.getItem('user');
+    const currentUserId = currentUserData ? JSON.parse(currentUserData).id?.toString() || '1' : '1';
+
+    return this.http.post(`${this.apiUrl}/custom`, {
+      user: currentUserId,
+      datas: [{
+        applicationId,
+        questionId,
+        action: 'manualQuestionCorrection',
+        manualCorrectionScore,
         manualCorrectionComment: manualCorrectionComment ?? null
       }]
     });

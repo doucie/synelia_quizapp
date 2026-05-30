@@ -64,7 +64,7 @@ describe('EntitiesFormsComponent', () => {
       formDesc: 'Creation sans liaison legacy',
       campaignId: 14,
       isActive: true
-    };
+    } as any;
 
     component.validateCreate();
 
@@ -82,7 +82,7 @@ describe('EntitiesFormsComponent', () => {
       formDesc: 'Edition sans reassociation directe',
       campaignId: 18,
       isActive: false
-    };
+    } as any;
 
     component.validateEdit();
 

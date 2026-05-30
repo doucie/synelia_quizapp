@@ -29,6 +29,9 @@ Le slice BL-008 la pose maintenant plus explicitement comme surface technique et
 - [x] Les cles de colonnes sont alignees sur le DTO reel `stageLabel`, `stageType`, `stageOrder`, `isRequired`, `isEliminatory`, `pipelineTemplateId`, `configJson`.
 - [x] La route expose maintenant `getByTemplate()` comme action de ligne pour charger toutes les etapes d'un template donne dans une vue ciblee.
 - [x] Le mode `template courant` est explicite et propose un retour `Voir toutes les etapes` vers la liste CRUD standard.
+- [x] Les mutations directes sont maintenant bloquees si le template parent est verrouille: la validation create/edit refuse l'action, la suppression directe est bloquee et l'UI oriente vers une correction par duplication du template.
+- [x] Les modales create/edit passent en pratique en lecture seule quand le template cible est verrouille: champs principaux, select de type, template parent, `configJson`, actions `Valider` et `Supprimer` sont desactives.
+- [x] La validation locale reprend aussi le garde-fou d'unicite fonctionnelle: `QUIZ`, `PRESELECTION`, `INTERVIEW` et `EVALUATION` ne peuvent pas etre ajoutes plusieurs fois dans le meme pipeline courant.
 - [ ] La route ne surface pas `emailRequired` et `emailAutomatic`, pourtant presents dans le modele et essentiels au pipeline runtime.
 - [ ] La route ne propose toujours pas de reordonnancement, qui reste reserve a l'editeur detaille.
 - [ ] L'UI ne montre qu'un booleen `Config` dans le tableau, pas le contenu ni un apercu exploitable de `configJson`.
@@ -73,6 +76,7 @@ Le slice BL-008 la pose maintenant plus explicitement comme surface technique et
 - [x] creation etape pipeline
 - [x] edition etape pipeline
 - [x] aide contextuelle `config_json` selon `stageType`
+- [x] message d'aide explicite quand le template cible est verrouille, avec redirection fonctionnelle vers la duplication plutot qu'une mutation directe
 
 ## 5. Donnees Affichees Ou Editees
 
@@ -107,6 +111,7 @@ Le slice BL-008 la pose maintenant plus explicitement comme surface technique et
 - Un `getByCriteria` pagine avec `items` ou `item`, plus `count` ou `totalCount`, compatible avec le mapping manuel du service.
 - Des etapes valides en snake_case ou camelCase, puisque le service transforme les deux.
 - Une validation metier coherente sur `configJson`, `stageType`, seuils de score et URL externes.
+- Une validation coherente sur les templates verrouilles et l'unicite fonctionnelle des types intermediaires actuellement resolus comme singletons (`QUIZ`, `PRESELECTION`, `INTERVIEW`, `EVALUATION`).
 - Les flags `emailRequired` et `emailAutomatic`, car ils pilotent l'avancement reel du pipeline selon les regles repo.
 - Un endpoint `reorder` stable pour les ecrans specialises qui manipulent l'ordre des etapes.
 
@@ -121,6 +126,8 @@ Le slice BL-008 la pose maintenant plus explicitement comme surface technique et
 ## 9. Questions Ou Ecarts A Qualifier
 
 - [x] Le premier garde-fou UX de BL-008 est pose: la route annonce maintenant clairement que l'editeur de template est la surface metier de reference pour l'ordre et les flags email.
+- [x] Les mutations directes sur les etapes d'un template verrouille sont maintenant bloquees ici aussi; la duplication du template reste le chemin assume.
+- [x] `QUIZ`, `PRESELECTION`, `INTERVIEW` et `EVALUATION` sont traites comme des singletons fonctionnels dans le modele courant; cette route empeche donc aussi l'introduction de doublons de ces types.
 - [ ] Faut-il exposer `emailRequired` et `emailAutomatic` dans cette route ?
 - [x] La route brute renvoie implicitement vers l'editeur detaille pour le reordonnancement; ici seul `getByTemplate()` est expose.
 - [ ] Le tableau doit-il afficher un apercu lisible de `configJson` plutot qu'un simple Oui/Non ?
@@ -138,3 +145,15 @@ Le slice BL-008 la pose maintenant plus explicitement comme surface technique et
 8. Revenir avec `Voir toutes les etapes` puis verifier le retour a la liste CRUD standard.
 9. Modifier une etape existante puis verifier la persistence du template parent et de l'ordre.
 10. Supprimer puis restaurer une etape.
+11. Tenter de creer, modifier puis supprimer une etape rattachee a un template verrouille et verifier que la page bloque l'action en orientant vers la duplication.
+12. Tenter d'ajouter un second `QUIZ`, `PRESELECTION`, `INTERVIEW` ou `EVALUATION` sur le meme template et verifier le refus immediat cote UI.
+
+## 11. Impact Cible Multi-Occurrences
+
+- [ ] retirer l'unicite fonctionnelle de `QUIZ`, `PRESELECTION` et `INTERVIEW` dans la cible documentee
+- [ ] retirer `EVALUATION` des types d'etape editables de premier niveau
+- [ ] supprimer les colonnes `emailRequired` / `emailAutomatic` du contrat cible et les remplacer par des regles de notification de stage
+- [ ] documenter le screening automatique optionnel propre a chaque stage `QUIZ`
+- [ ] documenter les grilles d'evaluation propres a chaque stage `INTERVIEW`
+- [ ] documenter la bibliotheque mutualisee de grilles d'evaluation et son versionnement, distincts du simple `configJson`
+- [ ] limiter le role de `configJson` a la configuration locale du stage, sans lui laisser redevenir un fourre-tout pour emails, grilles et regles runtime structurees

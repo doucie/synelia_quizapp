@@ -128,7 +128,7 @@
                 [ngModel]="getFreeTextResponse(currentQuestion()!.id)"
                 (ngModelChange)="updateFreeTextResponse(currentQuestion()!.id, $event)"
                 (blur)="saveFreeTextAnswer(currentQuestion()!.id)"
-                placeholder="Rédigez votre réponse ici..."
+                [placeholder]="currentQuestion()?.freeTextResponsePlaceholder || 'Rédigez votre réponse ici...'"
               ></textarea>
               <p class="text-response-note">Cette réponse sera relue et corrigée manuellement.</p>
             </div>
@@ -216,7 +216,7 @@
         </div>
         <h2>Quiz terminé !</h2>
         @if (quizManualCorrectionStatus() === 'PENDING') {
-          <p>Vos réponses ont été enregistrées. Les réponses libres seront corrigées manuellement avant finalisation du score.</p>
+          <p>Vos réponses ont été enregistrées. Certaines questions nécessitent encore une correction manuelle avant finalisation du score.</p>
         } @else {
           <p>Vos réponses ont été enregistrées avec succès.</p>
         }

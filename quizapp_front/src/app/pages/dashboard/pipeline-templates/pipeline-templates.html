@@ -60,7 +60,7 @@
   @if (!loading() && filteredTemplates().length > 0) {
     <div class="templates-grid">
       @for (template of filteredTemplates(); track template.id) {
-        <article class="template-card" [class.is-default]="template.isDefault" [class.is-locked]="template.isLocked">
+        <article class="template-card" [class.is-default]="template.isDefault" [class.is-locked]="template.isLocked" [class.is-inactive]="!template.isActive">
           <div class="card-header">
             <div class="card-badges">
               @if (template.isDefault) {
@@ -70,13 +70,22 @@
                 </span>
               }
               @if (template.isLocked) {
-                <span class="badge badge-locked" title="Verrouillé — des candidats utilisent ce pipeline">
+                <span class="badge badge-locked" title="Verrouillé — des candidats utilisent ce pipeline; l’éditeur s’ouvre désormais en lecture seule">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
                   Verrouillé
                 </span>
               }
               @if (!template.isActive) {
-                <span class="badge badge-inactive">Inactif</span>
+                <span class="badge badge-inactive">Brouillon</span>
+              }
+              @if (getTemplateReadinessState(template); as readinessState) {
+                <span class="badge badge-readiness"
+                      [class.badge-ready]="readinessState.kind === 'ready'"
+                      [class.badge-incomplete]="readinessState.kind === 'incomplete'"
+                      [class.badge-warning]="readinessState.kind === 'warning'"
+                      [class.badge-loading]="readinessState.kind === 'loading'">
+                  {{ readinessState.label }}
+                </span>
               }
             </div>
             <div class="card-menu">
@@ -91,9 +100,13 @@
             </div>
           </div>
 
-          <div class="card-body" (click)="!template.isLocked && editTemplate(template)">
+          <div class="card-body" (click)="editTemplate(template)" [title]="template.isLocked ? 'Ouvrir le détail en lecture seule' : 'Modifier ce modèle'">
             <h3 class="template-name">{{ template.templateName || 'Sans nom' }}</h3>
             <p class="template-desc">{{ template.templateDesc || 'Aucune description' }}</p>
+
+            @if (getTemplateAvailabilityHint(template); as availabilityHint) {
+              <p class="template-status-note">{{ availabilityHint }}</p>
+            }
 
             <div class="stages-preview">
               <span class="stages-count">
@@ -120,7 +133,7 @@
             <span class="footer-date">Créé le {{ formatDate(template.createdAt) }}</span>
             <div class="footer-actions">
               @if (!template.isDefault) {
-                <button class="btn btn-sm btn-outline" (click)="openSetDefaultConfirm($event, template)">Définir par défaut</button>
+                <button class="btn btn-sm btn-outline" (click)="openSetDefaultConfirm($event, template)" [disabled]="!canSetDefault(template)" [title]="getSetDefaultBlockedReason(template) || ''">Définir par défaut</button>
               }
               @if (!template.isLocked) {
                 <button class="btn btn-sm btn-primary" (click)="editTemplate(template)">
@@ -128,6 +141,10 @@
                   Modifier
                 </button>
               } @else {
+                <button class="btn btn-sm btn-outline" (click)="editTemplate(template)" title="Ouvrir le détail en lecture seule">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
+                  Voir le détail
+                </button>
                 <button class="btn btn-sm btn-outline" (click)="openDuplicateModal($event, template)" title="Dupliquez ce modèle pour le modifier">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
                   Dupliquer pour modifier
@@ -162,6 +179,7 @@
     <div class="modal-header"><h3>Dupliquer le modèle</h3></div>
     <div class="modal-body">
       <p>Dupliquer <strong>{{ templateToDuplicate()?.templateName }}</strong> avec toutes ses étapes.</p>
+      <p class="modal-hint">La copie sera créée en brouillon inactif pour être revue avant usage.</p>
       <div class="form-group">
         <label class="form-label">Nom du nouveau modèle</label>
         <input type="text" class="form-input" [ngModel]="duplicateName()" (ngModelChange)="duplicateName.set($event)" />
@@ -179,6 +197,7 @@
   <div class="modal" (click)="$event.stopPropagation()">
     <div class="modal-header"><h3>Nouveau modèle de pipeline</h3></div>
     <div class="modal-body">
+      <p class="modal-hint">Le pipeline sera créé comme brouillon inactif avec les étapes fixes <strong>Candidature</strong> et <strong>Décision</strong>.</p>
       <div class="form-group">
         <label class="form-label">Nom du modèle</label>
         <input type="text" class="form-input" [ngModel]="createName()" (ngModelChange)="createName.set($event)" placeholder="Ex: Flux technique" />

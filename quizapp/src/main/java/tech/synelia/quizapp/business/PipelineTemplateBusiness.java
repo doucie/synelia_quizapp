@@ -22,6 +22,8 @@ import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.dto.transformer.*;
 import tech.synelia.quizapp.dao.entity.*;
 import tech.synelia.quizapp.dao.repository.*;
+import tech.synelia.quizapp.utils.enums.CampaignStatus;
+import tech.synelia.quizapp.utils.enums.StageType;
 
 @Log
 @Component
@@ -31,6 +33,8 @@ public class PipelineTemplateBusiness implements IBasicBusiness<Request<Pipeline
     private PipelineTemplateRepository pipelineTemplateRepository;
     @Autowired
     private PipelineStageRepository pipelineStageRepository;
+    @Autowired
+    private CampaignsRepository campaignsRepository;
     @Autowired
     private FunctionalError functionalError;
     @Autowired
@@ -66,7 +70,7 @@ public class PipelineTemplateBusiness implements IBasicBusiness<Request<Pipeline
             entityToSave.setCreatedBy(request.getUser());
             entityToSave.setIsDeleted(false);
             if (entityToSave.getIsDefault() == null) entityToSave.setIsDefault(false);
-            if (entityToSave.getIsActive() == null) entityToSave.setIsActive(true);
+            if (entityToSave.getIsActive() == null) entityToSave.setIsActive(false);
             if (entityToSave.getIsLocked() == null) entityToSave.setIsLocked(false);
             items.add(entityToSave);
         }
@@ -76,6 +80,11 @@ public class PipelineTemplateBusiness implements IBasicBusiness<Request<Pipeline
             if (itemsSaved == null) {
                 throw new InternalErrorException(functionalError.SAVE_FAIL("pipeline_template", locale));
             }
+
+            for (PipelineTemplate savedTemplate : itemsSaved) {
+                initializeFixedStages(savedTemplate, request.getUser());
+            }
+
             List<PipelineTemplateDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading()))
                     ? PipelineTemplateTransformer.INSTANCE.toLiteDtos(itemsSaved)
                     : PipelineTemplateTransformer.INSTANCE.toDtos(itemsSaved);
@@ -113,6 +122,17 @@ public class PipelineTemplateBusiness implements IBasicBusiness<Request<Pipeline
             // Bloquer si verrouillé
             if (entityToSave.getIsLocked() != null && entityToSave.getIsLocked()) {
                 throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION("Ce pipeline est verrouillé car utilisé par des candidats", locale));
+            }
+
+            if (dto.getIsActive() != null
+                    && !dto.getIsActive()
+                    && Boolean.TRUE.equals(entityToSave.getIsActive())) {
+                ensureTemplateCanBeDisabled(entityToSave.getId(), locale);
+            }
+
+            Boolean nextIsActive = dto.getIsActive() != null ? dto.getIsActive() : entityToSave.getIsActive();
+            if (Boolean.TRUE.equals(nextIsActive)) {
+                validateTemplateReadiness(entityToSave.getId(), locale, "active");
             }
 
             if (Utilities.shouldUpdate(dto.getTemplateName())) entityToSave.setTemplateName(dto.getTemplateName());
@@ -228,6 +248,14 @@ public class PipelineTemplateBusiness implements IBasicBusiness<Request<Pipeline
             throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("pipeline_template id -> " + templateId, locale));
         }
 
+        if (!Boolean.TRUE.equals(target.getIsActive())) {
+            throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION(
+                    "Ce pipeline est inactif. Activez-le depuis l'editeur avant de le definir par defaut",
+                    locale));
+        }
+
+        validateTemplateReadiness(templateId, locale, "default");
+
         // Retirer le défaut de tous les templates
         List<PipelineTemplate> allTemplates = pipelineTemplateRepository.findByIsDeleted(false);
         for (PipelineTemplate t : allTemplates) {
@@ -290,7 +318,7 @@ public class PipelineTemplateBusiness implements IBasicBusiness<Request<Pipeline
         newTemplate.setTemplateName(newName);
         newTemplate.setTemplateDesc(source.getTemplateDesc());
         newTemplate.setIsDefault(false);
-        newTemplate.setIsActive(true);
+        newTemplate.setIsActive(false);
         newTemplate.setIsLocked(false);
         newTemplate.setCreatedAt(Utilities.getCurrentDate());
         newTemplate.setCreatedBy(userId);
@@ -318,6 +346,10 @@ public class PipelineTemplateBusiness implements IBasicBusiness<Request<Pipeline
             }
         }
 
+        if (sourceStages == null || sourceStages.isEmpty()) {
+            initializeFixedStages(savedTemplate, userId);
+        }
+
         List<PipelineTemplateDto> itemsDto = new ArrayList<>();
         itemsDto.add(PipelineTemplateTransformer.INSTANCE.toDto(savedTemplate));
 
@@ -336,6 +368,27 @@ public class PipelineTemplateBusiness implements IBasicBusiness<Request<Pipeline
     /**
      * Verrouiller un template (appelé automatiquement quand le premier application_progress est créé)
      */
+    private void initializeFixedStages(PipelineTemplate template, Integer userId) throws ParseException {
+        createFixedStage(template, StageType.CANDIDATURE, "Candidature", 1, userId);
+        createFixedStage(template, StageType.DECISION, "Décision", 2, userId);
+    }
+
+    private void createFixedStage(PipelineTemplate template, StageType stageType, String label, int stageOrder, Integer userId) throws ParseException {
+        PipelineStage stage = new PipelineStage();
+        stage.setPipelineTemplate(template);
+        stage.setStageType(stageType.getValue());
+        stage.setStageLabel(label);
+        stage.setStageOrder(stageOrder);
+        stage.setIsRequired(true);
+        stage.setIsEliminatory(false);
+        stage.setEmailRequired(false);
+        stage.setEmailAutomatic(false);
+        stage.setCreatedAt(Utilities.getCurrentDate());
+        stage.setCreatedBy(userId);
+        stage.setIsDeleted(false);
+        pipelineStageRepository.save(stage);
+    }
+
     public void lockTemplate(Integer templateId, Integer userId) throws ParseException {
         log.info("----begin lockTemplate PipelineTemplate-----");
         PipelineTemplate template = pipelineTemplateRepository.findOne(templateId, false);
@@ -346,5 +399,178 @@ public class PipelineTemplateBusiness implements IBasicBusiness<Request<Pipeline
             pipelineTemplateRepository.save(template);
         }
         log.info("----end lockTemplate PipelineTemplate-----");
+    }
+
+    private void validateTemplateReadiness(Integer templateId, Locale locale, String targetUsage) {
+        List<String> issues = collectTemplateReadinessIssues(templateId);
+        if (issues.isEmpty()) {
+            return;
+        }
+
+        String action = "active".equals(targetUsage)
+                ? "actif"
+                : "defini par defaut";
+
+        throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION(
+                "Ce pipeline ne peut pas etre " + action + " : " + String.join(" ", issues),
+                locale));
+    }
+
+    private List<String> collectTemplateReadinessIssues(Integer templateId) {
+        List<PipelineStage> stages = pipelineStageRepository.findByPipelineTemplateIdOrderByStageOrder(templateId);
+        List<String> issues = new ArrayList<>();
+
+        if (stages == null || stages.isEmpty()) {
+            issues.add("ajoutez au minimum CANDIDATURE, une etape intermediaire et DECISION.");
+            return issues;
+        }
+
+        int candidatureCount = 0;
+        int decisionCount = 0;
+        int intermediateCount = 0;
+        boolean hasBlankLabel = false;
+        boolean hasInvalidOrder = false;
+        boolean hasInvalidType = false;
+        boolean hasCustomStage = false;
+        boolean hasEmailMismatch = false;
+        boolean hasDuplicateQuiz = false;
+        boolean hasDuplicatePreselection = false;
+        boolean hasDuplicateInterview = false;
+        boolean hasDuplicateEvaluation = false;
+        Set<Integer> seenOrders = new HashSet<>();
+        Set<StageType> seenSingletonStageTypes = new HashSet<>();
+
+        for (int index = 0; index < stages.size(); index++) {
+            PipelineStage stage = stages.get(index);
+
+            Integer stageOrder = stage.getStageOrder();
+            if (stageOrder == null || stageOrder != index + 1 || !seenOrders.add(stageOrder)) {
+                hasInvalidOrder = true;
+            }
+
+            if (!Utilities.notBlank(stage.getStageLabel())) {
+                hasBlankLabel = true;
+            }
+
+            if (Boolean.TRUE.equals(stage.getEmailAutomatic()) && !Boolean.TRUE.equals(stage.getEmailRequired())) {
+                hasEmailMismatch = true;
+            }
+
+            StageType normalizedType;
+            try {
+                normalizedType = StageType.fromValue(stage.getStageType());
+            } catch (IllegalArgumentException exception) {
+                hasInvalidType = true;
+                continue;
+            }
+
+            if (normalizedType == StageType.CUSTOM) {
+                hasCustomStage = true;
+                continue;
+            }
+
+            if (normalizedType == StageType.TECHNICAL_TEST) {
+                normalizedType = StageType.QUIZ;
+            }
+
+            if (normalizedType == StageType.CANDIDATURE) {
+                candidatureCount++;
+            } else if (normalizedType == StageType.DECISION) {
+                decisionCount++;
+            } else {
+                intermediateCount++;
+
+                if (isSingletonIntermediateStageType(normalizedType) && !seenSingletonStageTypes.add(normalizedType)) {
+                    if (normalizedType == StageType.QUIZ) {
+                        hasDuplicateQuiz = true;
+                    } else if (normalizedType == StageType.PRESELECTION) {
+                        hasDuplicatePreselection = true;
+                    } else if (normalizedType == StageType.INTERVIEW) {
+                        hasDuplicateInterview = true;
+                    } else if (normalizedType == StageType.EVALUATION) {
+                        hasDuplicateEvaluation = true;
+                    }
+                }
+            }
+        }
+
+        if (candidatureCount != 1) {
+            issues.add("CANDIDATURE doit etre presente une seule fois.");
+        }
+        if (decisionCount != 1) {
+            issues.add("DECISION doit etre presente une seule fois.");
+        }
+        if (intermediateCount < 1) {
+            issues.add("ajoutez au moins une etape intermediaire entre CANDIDATURE et DECISION.");
+        }
+        if (hasBlankLabel) {
+            issues.add("chaque etape doit avoir un libelle.");
+        }
+        if (hasInvalidOrder) {
+            issues.add("les ordres d'etapes doivent etre continus et sans doublon.");
+        }
+        if (hasInvalidType) {
+            issues.add("le pipeline contient un type d'etape invalide.");
+        }
+        if (hasCustomStage) {
+            issues.add("le type CUSTOM n'est plus supporte.");
+        }
+        if (hasEmailMismatch) {
+            issues.add("une etape en envoi auto doit aussi exiger l'email.");
+        }
+        if (hasDuplicateQuiz) {
+            issues.add("QUIZ ne peut etre presente qu'une seule fois dans le pipeline actuel.");
+        }
+        if (hasDuplicatePreselection) {
+            issues.add("PRESELECTION ne peut etre presente qu'une seule fois dans le pipeline actuel.");
+        }
+        if (hasDuplicateInterview) {
+            issues.add("INTERVIEW ne peut etre presente qu'une seule fois dans le pipeline actuel.");
+        }
+        if (hasDuplicateEvaluation) {
+            issues.add("EVALUATION ne peut etre presente qu'une seule fois dans le pipeline actuel.");
+        }
+
+        if (!stages.isEmpty()) {
+            StageType firstStageType = normalizeReadinessStageType(stages.get(0).getStageType());
+            StageType lastStageType = normalizeReadinessStageType(stages.get(stages.size() - 1).getStageType());
+
+            if (firstStageType != StageType.CANDIDATURE) {
+                issues.add("CANDIDATURE doit rester en premiere position.");
+            }
+            if (lastStageType != StageType.DECISION) {
+                issues.add("DECISION doit rester en derniere position.");
+            }
+        }
+
+        return issues;
+    }
+
+    private StageType normalizeReadinessStageType(String stageType) {
+        StageType resolved = StageType.fromValue(stageType);
+        return resolved == StageType.TECHNICAL_TEST ? StageType.QUIZ : resolved;
+    }
+
+    private boolean isSingletonIntermediateStageType(StageType stageType) {
+        return stageType == StageType.QUIZ
+                || stageType == StageType.PRESELECTION
+                || stageType == StageType.INTERVIEW
+                || stageType == StageType.EVALUATION;
+    }
+
+    private void ensureTemplateCanBeDisabled(Integer templateId, Locale locale) {
+        if (templateId == null) {
+            return;
+        }
+
+        Long openCampaigns = campaignsRepository.countOpenByPipelineTemplateId(
+                templateId,
+                CampaignStatus.OPEN.getValue());
+
+        if (openCampaigns != null && openCampaigns > 0) {
+            throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION(
+                    "Ce pipeline est encore utilise par une campagne ouverte. Fermez ou reassignez la campagne avant de le desactiver.",
+                    locale));
+        }
     }
 }

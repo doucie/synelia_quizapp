@@ -19,6 +19,8 @@ La page sert à consulter et administrer les réponses de manière transverse, i
 - [x] Elle filtre les réponses par caractère correct et question liée.
 - [x] Elle permet création, modification et suppression.
 - [x] En tant que page métier `/dashboard/answers`, elle ne charge plus que les réponses actives et n’expose plus ni vision des supprimées ni restauration; ces usages sont réservés à `/dashboard/entities/answers`.
+- [x] La création / édition métier d’une réponse n’expose plus de champ `answerOrder`; l’ordre reste piloté au niveau de `/dashboard/questions`.
+- [ ] Les formats de réponse `IMAGE` et `CODE` sont identifiés, mais explicitement reportés hors du lot courant.
 - [ ] Vérifier si cette page doit vraiment rester accessible en simple mode authentifié sans permission dédiée.
 - [ ] Vérifier le recouvrement fonctionnel avec la gestion inline des réponses dans `/dashboard/questions`.
 
@@ -50,13 +52,14 @@ La page sert à consulter et administrer les réponses de manière transverse, i
 
 - [x] création / édition réponse
 - [x] suppression
+- [x] retrait du champ `answerOrder` en création / édition, avec ordre seulement affiché en lecture de contexte si nécessaire
 
 ## 5. Donnees Affichees Ou Editees
 
 - `id`
 - `answerText`
 - `answerType`
-- `answerOrder`
+- `answerOrder` (lecture seule / information de contexte; non modifiable depuis cette page métier)
 - `isCorrect`
 - `questionId`
 - `createdAt`
@@ -74,6 +77,7 @@ La page sert à consulter et administrer les réponses de manière transverse, i
 
 - Des réponses reliées à une question valide ou explicitement orphelines si ce cas est autorisé.
 - Un champ `isCorrect` stable, utilisé à la fois pour filtrer et styliser.
+- Un `answerOrder` stable en lecture, sans supposer que la page métier `/dashboard/answers` le modifie directement.
 - Un chargement borné aux réponses actives (`isDeleted = false`) sur cette page métier; les supprimées relèvent de `/dashboard/entities/answers`.
 - Un chargement des questions assez léger pour alimenter le filtre et l’affichage du rattachement.
 
@@ -91,6 +95,8 @@ La page sert à consulter et administrer les réponses de manière transverse, i
 - [x] Le rendu partiel de la modale `Nouvelle réponse` venait surtout d’une erreur Angular `NG01352`: plusieurs contrôles liés avec `ngModel` étaient montés à l’intérieur d’un vrai tag `<form>` sans `name` ni configuration `standalone`, ce qui cassait l’instanciation complète de la popup à l’ouverture. La correction appliquée sur `/dashboard/answers` a consisté à retirer ce wrapper `<form>` inutile, la page pilotant déjà tous les champs via signaux et handlers manuels.
 - [x] L’erreur `Le texte de la réponse est obligatoire` était un symptôme du même défaut Angular `NG01352` que le rendu partiel de la popup: tant que la modale montait des contrôles `ngModel` dans un `<form>` invalide, la saisie ne se propageait pas correctement jusqu’au signal `answerForm`, et `saveAnswer()` relisait donc un `answerText` vide. Une fois ce wrapper supprimé, la validation locale ne se déclenche plus à tort. La création restait ensuite bloquée par un second écart distinct de contrat (`answerType` envoyé en `TEXT/CODE/IMAGE` côté front alors que le backend exige `FIXED/FREE`), corrigé en alignant les options et valeurs par défaut du front.
 - [x] Après requalification, aucun bug distinct n’a été confirmé sur la modale `Modifier`: le flux d’édition hydrate bien `answerForm` depuis la réponse cliquée avant l’ouverture de la popup, puis le template relit directement ce signal via des `ngModel` standalone. Le faux signal venait très probablement d’une confusion avec le défaut antérieur de la modale partagée `Création / édition` causé par Angular `NG01352`; une fois le wrapper `<form>` invalide supprimé, la modale d’édition se préremplit correctement.
+- [x] La page peut modifier une réponse transverse, mais ne permet plus de changer son ordre; le réordonnancement appartient à `/dashboard/questions`.
+- [ ] Quand les formats `IMAGE` et `CODE` seront rouverts, prévoir des éditeurs dédiés; pour l’instant, garder ce besoin en backlog et hors flux courant.
 - [ ] Vérifier la conformité entre la BD actuelle et les formulaires/cartes/filtres front réellement exposés par cette page.
 - [ ] Ajouter des tests frontend complets ciblés sur `/dashboard/answers`, couvrant au minimum l’ouverture de la modale de création, l’initialisation immédiate des champs/selects, la création et le préremplissage en édition.
 
@@ -99,7 +105,7 @@ La page sert à consulter et administrer les réponses de manière transverse, i
 1. Ouvrir `/dashboard/answers`.
 2. Filtrer par réponses correctes puis par question.
 3. Créer une réponse rattachée à une question existante.
-4. Modifier son ordre et son statut `correcte`.
+4. Modifier son statut `correcte` et vérifier que l’ordre n’est plus saisissable dans la modale.
 5. La supprimer puis vérifier qu’elle disparaît de la page métier sans possibilité de restauration ici.
 6. Vérifier que la restauration éventuelle reste cantonnée à `/dashboard/entities/answers`.
 7. Vérifier la cohérence avec la sous-liste de réponses visible dans `/dashboard/questions`.

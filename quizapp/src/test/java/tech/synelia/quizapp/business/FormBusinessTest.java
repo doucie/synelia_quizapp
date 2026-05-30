@@ -1,13 +1,11 @@
 package tech.synelia.quizapp.business;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -70,14 +68,6 @@ class FormBusinessTest {
 	@InjectMocks
 	private FormBusiness formBusiness;
 
-	@BeforeEach
-	void setUpProjectionService() throws Exception {
-		FormCampaignProjectionService projectionService = new FormCampaignProjectionService();
-		injectField(projectionService, "campaignFormRepository", campaignFormRepository);
-		injectField(projectionService, "formRepository", formRepository);
-		injectField(formBusiness, "formCampaignProjectionService", projectionService);
-	}
-
 	@Test
 	void create_allowsFormWithoutCampaignAndDoesNotCreateCampaignLink() throws Exception {
 		Form savedForm = buildForm(7, false, null);
@@ -101,7 +91,6 @@ class FormBusinessTest {
 		verify(formRepository).saveAll(savedFormsCaptor.capture());
 		List<Form> savedForms = toFormList(savedFormsCaptor.getValue());
 		assertThat(savedForms).hasSize(1);
-		assertThat(savedForms.getFirst().getCampaigns()).isNull();
 		assertThat(savedForms.getFirst().getIsTimed()).isFalse();
 
 		verify(campaignsRepository, never()).findOne(any(), any());
@@ -111,35 +100,30 @@ class FormBusinessTest {
 	}
 
 	@Test
-	void create_ignoresLegacyCampaignIdAndDoesNotCreateCampaignLink() throws Exception {
-		Form savedForm = buildForm(7, false, null);
-
-		when(formRepository.saveAll(any())).thenReturn(List.of(savedForm));
-		when(formVersionRepository.findByFormId(7, false)).thenReturn(List.of());
-		when(formVersionRepository.saveAll(any())).thenAnswer(invocation -> invocation.getArgument(0));
+	void create_rejectsFilterCampaignIdMutationField() {
+		Status failureStatus = new Status();
+		failureStatus.setCode("FUNC_REQUEST_FAIL");
+		failureStatus.setMessage("filterCampaignId est reserve au filtrage des formulaires");
+		when(functionalError.REQUEST_FAIL(anyString(), any(Locale.class))).thenReturn(failureStatus);
 
 		FormDto dto = new FormDto();
 		dto.setFormName("Formulaire partage");
-		dto.setCampaignId(11);
+		dto.setFilterCampaignId(11);
 
 		Request<FormDto> request = new Request<>();
 		request.setUser(99);
 		request.setIsSimpleLoading(true);
 		request.setDatas(List.of(dto));
 
-		Response<FormDto> response = formBusiness.create(request, Locale.FRENCH);
+		InvalidEntityException exception = assertThrows(
+				InvalidEntityException.class,
+				() -> formBusiness.create(request, Locale.FRENCH));
 
-		ArgumentCaptor<Iterable<Form>> savedFormsCaptor = ArgumentCaptor.forClass(Iterable.class);
-		verify(formRepository).saveAll(savedFormsCaptor.capture());
-		List<Form> savedForms = toFormList(savedFormsCaptor.getValue());
-		assertThat(savedForms).hasSize(1);
-		assertThat(savedForms.getFirst().getCampaigns()).isNull();
-		assertThat(savedForms.getFirst().getIsTimed()).isFalse();
-
+		assertThat(exception.getStatus()).isSameAs(failureStatus);
+		verify(formRepository, never()).saveAll(any());
+		verify(formVersionRepository, never()).saveAll(any());
 		verify(campaignsRepository, never()).findOne(any(), any());
 		verify(campaignFormRepository, never()).saveAll(any());
-		assertThat(response.getItems()).hasSize(1);
-		assertThat(response.getItems().getFirst().getId()).isEqualTo(7);
 	}
 
 	@Test
@@ -197,19 +181,20 @@ class FormBusinessTest {
 	}
 
 	@Test
-	void update_ignoresLegacyCampaignIdThatWouldOtherwiseChangeEffectiveTiming() throws Exception {
-		Campaigns currentCampaign = buildCampaign(1, false);
+	void update_allowsExplicitTimedFlagWhenEffectiveTimingAlreadyComesFromSingleCampaignLink() throws Exception {
 		Campaigns timedCampaign = buildCampaign(2, true);
-		Form existingForm = buildForm(7, false, currentCampaign);
+		Form existingForm = buildForm(7, false, null);
 		FormVersion lockedVersion = buildFormVersion(existingForm, 1, true);
+		CampaignForm activeLink = buildCampaignForm(31, existingForm, timedCampaign, false);
 
 		when(formRepository.findOne(7, false)).thenReturn(existingForm);
 		when(formVersionRepository.findByFormId(7, false)).thenReturn(List.of(lockedVersion));
+		when(campaignFormRepository.findByFormId(7)).thenReturn(List.of(activeLink));
 		when(formRepository.saveAll(any())).thenAnswer(invocation -> toFormList(invocation.getArgument(0)));
 
 		FormDto dto = new FormDto();
 		dto.setId(7);
-		dto.setCampaignId(2);
+		dto.setIsTimed(true);
 
 		Request<FormDto> request = new Request<>();
 		request.setUser(99);
@@ -218,40 +203,89 @@ class FormBusinessTest {
 
 		Response<FormDto> response = formBusiness.update(request, Locale.FRENCH);
 
-		assertThat(existingForm.getCampaigns()).isSameAs(currentCampaign);
-		assertThat(existingForm.getIsTimed()).isFalse();
+		assertThat(existingForm.getIsTimed()).isTrue();
 		assertThat(response.getItems()).hasSize(1);
 		assertThat(response.getItems().getFirst().getId()).isEqualTo(7);
+	}
+
+	@Test
+	void update_rejectsFilterCampaignIdMutationField() {
+		Status failureStatus = new Status();
+		failureStatus.setCode("FUNC_REQUEST_FAIL");
+		failureStatus.setMessage("filterCampaignId est reserve au filtrage des formulaires");
+		when(functionalError.REQUEST_FAIL(anyString(), any(Locale.class))).thenReturn(failureStatus);
+
+		FormDto dto = new FormDto();
+		dto.setId(7);
+		dto.setFilterCampaignId(2);
+
+		Request<FormDto> request = new Request<>();
+		request.setUser(99);
+		request.setIsSimpleLoading(true);
+		request.setDatas(List.of(dto));
+
+		InvalidEntityException exception = assertThrows(
+				InvalidEntityException.class,
+				() -> formBusiness.update(request, Locale.FRENCH));
+
+		assertThat(exception.getStatus()).isSameAs(failureStatus);
+		verify(formRepository, never()).findOne(any(), any());
+		verify(formRepository, never()).saveAll(any());
 		verify(campaignsRepository, never()).findOne(any(), any());
 		verify(campaignFormRepository, never()).saveAll(any());
 	}
 
 	@Test
-	void update_ignoresLegacyCampaignIdWhenFormIsUnlocked() throws Exception {
-		Campaigns currentCampaign = buildCampaign(1, false);
-		Campaigns otherCampaign = buildCampaign(2, false);
-		Form existingForm = buildForm(7, false, currentCampaign);
-		FormVersion draftVersion = buildFormVersion(existingForm, 1, false);
-
-		when(formRepository.findOne(7, false)).thenReturn(existingForm);
-		when(formVersionRepository.findByFormId(7, false)).thenReturn(List.of(draftVersion));
-		when(formRepository.saveAll(any())).thenAnswer(invocation -> toFormList(invocation.getArgument(0)));
+	void updateAll_rejectsFilterCampaignIdMutationField() {
+		Status failureStatus = new Status();
+		failureStatus.setCode("FUNC_REQUEST_FAIL");
+		failureStatus.setMessage("filterCampaignId est reserve au filtrage des formulaires");
+		when(functionalError.REQUEST_FAIL(anyString(), any(Locale.class))).thenReturn(failureStatus);
 
 		FormDto dto = new FormDto();
 		dto.setId(7);
-		dto.setCampaignId(2);
+		dto.setFilterCampaignId(2);
 
 		Request<FormDto> request = new Request<>();
 		request.setUser(99);
 		request.setIsSimpleLoading(true);
 		request.setDatas(List.of(dto));
 
-		Response<FormDto> response = formBusiness.update(request, Locale.FRENCH);
+		InvalidEntityException exception = assertThrows(
+				InvalidEntityException.class,
+				() -> formBusiness.updateAll(request, Locale.FRENCH));
 
-		assertThat(existingForm.getCampaigns()).isSameAs(currentCampaign);
-		assertThat(existingForm.getIsTimed()).isFalse();
-		assertThat(response.getItems()).hasSize(1);
-		assertThat(response.getItems().getFirst().getId()).isEqualTo(7);
+		assertThat(exception.getStatus()).isSameAs(failureStatus);
+		verify(formRepository, never()).findOne(any(), any());
+		verify(formRepository, never()).saveAll(any());
+		verify(campaignsRepository, never()).findOne(any(), any());
+		verify(campaignFormRepository, never()).saveAll(any());
+	}
+
+	@Test
+	void updateDeleted_rejectsFilterCampaignIdMutationField() {
+		Status failureStatus = new Status();
+		failureStatus.setCode("FUNC_REQUEST_FAIL");
+		failureStatus.setMessage("filterCampaignId est reserve au filtrage des formulaires");
+		when(functionalError.REQUEST_FAIL(anyString(), any(Locale.class))).thenReturn(failureStatus);
+
+		FormDto dto = new FormDto();
+		dto.setId(7);
+		dto.setFilterCampaignId(2);
+		dto.setIsDeleted(true);
+
+		Request<FormDto> request = new Request<>();
+		request.setUser(99);
+		request.setIsSimpleLoading(true);
+		request.setDatas(List.of(dto));
+
+		InvalidEntityException exception = assertThrows(
+				InvalidEntityException.class,
+				() -> formBusiness.updateDeleted(request, Locale.FRENCH));
+
+		assertThat(exception.getStatus()).isSameAs(failureStatus);
+		verify(formRepository, never()).findOne(any(), any());
+		verify(formRepository, never()).saveAll(any());
 		verify(campaignsRepository, never()).findOne(any(), any());
 		verify(campaignFormRepository, never()).saveAll(any());
 	}
@@ -277,16 +311,39 @@ class FormBusinessTest {
 
 		Response<FormDto> response = formBusiness.update(request, Locale.FRENCH);
 
-		assertThat(sharedForm.getCampaigns()).isNull();
 		assertThat(sharedForm.getFormDesc()).isEqualTo("Description partagee mise a jour");
 		assertThat(response.getItems()).hasSize(1);
 		assertThat(response.getItems().getFirst().getId()).isEqualTo(7);
-		verify(campaignFormRepository, never()).findByFormId(any());
 		verify(campaignFormRepository, never()).saveAll(any());
 	}
 
 	@Test
-	void custom_syncCampaignLinks_updatesCampaignFormLinksAndReprojectsLegacyCampaignField() throws Exception {
+	void custom_syncCampaignLinks_doesNotUseFilterCampaignIdAsTargetCampaignId() {
+		Status failureStatus = new Status();
+		failureStatus.setCode("FUNC_FIELD_EMPTY");
+		failureStatus.setMessage("targetCampaignId");
+		when(functionalError.FIELD_EMPTY(anyString(), any(Locale.class))).thenReturn(failureStatus);
+
+		FormDto dto = new FormDto();
+		dto.setAction("syncCampaignLinks");
+		dto.setFilterCampaignId(11);
+		dto.setFormIds(List.of(7, 8));
+
+		Request<FormDto> request = new Request<>();
+		request.setUser(99);
+		request.setDatas(List.of(dto));
+
+		InvalidEntityException exception = assertThrows(
+				InvalidEntityException.class,
+				() -> formBusiness.custom(request, Locale.FRENCH));
+
+		assertThat(exception.getStatus()).isSameAs(failureStatus);
+		verify(campaignsRepository, never()).findOne(any(), any());
+		verify(campaignFormRepository, never()).saveAll(any());
+	}
+
+	@Test
+	void custom_syncCampaignLinks_updatesCampaignFormLinksWithoutLegacyProjection() throws Exception {
 		Campaigns targetCampaign = buildCampaign(11, false);
 		targetCampaign.setCampaignTitle("Campagne partagee");
 		Campaigns legacyCampaign = buildCampaign(2, false);
@@ -300,19 +357,12 @@ class FormBusinessTest {
 		when(campaignsRepository.findOne(11, false)).thenReturn(targetCampaign);
 		when(formRepository.findOne(7, false)).thenReturn(sharedForm);
 		when(formRepository.findOne(8, false)).thenReturn(newSharedForm);
-		when(formRepository.saveAll(any())).thenAnswer(invocation -> toFormList(invocation.getArgument(0)));
 		when(campaignFormRepository.findAllByCampaignId(11)).thenReturn(List.of(deletedLinkToReactivate, activeLinkToDetach));
 		when(campaignFormRepository.saveAll(any())).thenAnswer(invocation -> toCampaignFormList(invocation.getArgument(0)));
-		when(campaignFormRepository.findByFormId(7)).thenReturn(List.of(
-				buildCampaignForm(41, sharedForm, legacyCampaign, false),
-				deletedLinkToReactivate));
-		when(campaignFormRepository.findByFormId(8)).thenReturn(List.of(
-				buildCampaignForm(42, newSharedForm, targetCampaign, false)));
-		when(campaignFormRepository.findByFormId(9)).thenReturn(List.of(activeLinkToDetach));
 
 		FormDto dto = new FormDto();
 		dto.setAction("syncCampaignLinks");
-		dto.setCampaignId(11);
+		dto.setTargetCampaignId(11);
 		dto.setFormIds(List.of(7, 8, 7));
 
 		Request<FormDto> request = new Request<>();
@@ -347,15 +397,7 @@ class FormBusinessTest {
 					assertThat(link.getIsDeleted()).isTrue();
 				});
 
-		ArgumentCaptor<Iterable<Form>> savedFormsCaptor = ArgumentCaptor.forClass(Iterable.class);
-		verify(formRepository).saveAll(savedFormsCaptor.capture());
-		List<Form> savedForms = toFormList(savedFormsCaptor.getValue());
-		assertThat(savedForms)
-				.extracting(Form::getId)
-				.containsExactlyInAnyOrder(7, 8, 9);
-		assertThat(sharedForm.getCampaigns()).isNull();
-		assertThat(newSharedForm.getCampaigns()).isSameAs(targetCampaign);
-		assertThat(removedForm.getCampaigns()).isNull();
+		verify(formRepository, never()).saveAll(any());
 		assertThat(response.getItems()).extracting(FormDto::getId).containsExactly(7, 8);
 	}
 
@@ -399,15 +441,13 @@ class FormBusinessTest {
 		when(answerRepository.findByQuestionId(101, false)).thenReturn(List.of(sourceAnswer));
 		when(answerRepository.saveAll(any())).thenAnswer(invocation -> toAnswerList(invocation.getArgument(0)));
 		when(formQuestionsRepository.saveAll(any())).thenAnswer(invocation -> toFormQuestionList(invocation.getArgument(0)));
-		when(campaignFormRepository.findByFormId(80)).thenReturn(
-				List.of(),
-				List.of(buildCampaignForm(801, buildForm(80, true, targetCampaign), targetCampaign, false)));
+		when(campaignFormRepository.findAllByCampaignId(11)).thenReturn(List.of());
 		when(campaignFormRepository.saveAll(any())).thenAnswer(invocation -> toCampaignFormList(invocation.getArgument(0)));
 
 		FormDto dto = new FormDto();
 		dto.setAction("duplicateForCampaign");
 		dto.setId(7);
-		dto.setCampaignId(11);
+		dto.setTargetCampaignId(11);
 
 		Request<FormDto> request = new Request<>();
 		request.setUser(99);
@@ -429,7 +469,6 @@ class FormBusinessTest {
 		ArgumentCaptor<Form> savedFormCaptor = ArgumentCaptor.forClass(Form.class);
 		verify(formRepository).save(savedFormCaptor.capture());
 		Form duplicatedForm = savedFormCaptor.getValue();
-		assertThat(duplicatedForm.getCampaigns()).isSameAs(targetCampaign);
 		assertThat(duplicatedForm.getFormDesc()).isEqualTo("Description source");
 		assertThat(duplicatedForm.getFormName()).contains("copie");
 		assertThat(duplicatedForm.getIsTimed()).isTrue();
@@ -464,6 +503,42 @@ class FormBusinessTest {
 	}
 
 	@Test
+	void delete_detachesCampaignFormLinksWithoutLegacyCampaignProjection() throws Exception {
+		Campaigns linkedCampaign = buildCampaign(12, false);
+		Form existingForm = buildForm(7, false, null);
+		CampaignForm activeLink = buildCampaignForm(41, existingForm, linkedCampaign, false);
+
+		when(formRepository.findOne(7, false)).thenReturn(existingForm);
+		when(formVersionRepository.findByFormId(7, false)).thenReturn(List.of());
+		when(formRepository.saveAll(any())).thenAnswer(invocation -> toFormList(invocation.getArgument(0)));
+		when(campaignFormRepository.findByFormId(7)).thenReturn(List.of(activeLink));
+		when(campaignFormRepository.saveAll(any())).thenAnswer(invocation -> toCampaignFormList(invocation.getArgument(0)));
+
+		FormDto dto = new FormDto();
+		dto.setId(7);
+
+		Request<FormDto> request = new Request<>();
+		request.setUser(99);
+		request.setDatas(List.of(dto));
+
+		Response<FormDto> response = formBusiness.delete(request, Locale.FRENCH);
+
+		assertThat(existingForm.getIsDeleted()).isTrue();
+
+		ArgumentCaptor<Iterable<CampaignForm>> savedLinksCaptor = ArgumentCaptor.forClass(Iterable.class);
+		verify(campaignFormRepository).saveAll(savedLinksCaptor.capture());
+		List<CampaignForm> savedLinks = toCampaignFormList(savedLinksCaptor.getValue());
+		assertThat(savedLinks).singleElement().satisfies(link -> {
+			assertThat(link.getId()).isEqualTo(41);
+			assertThat(link.getIsDeleted()).isTrue();
+			assertThat(link.getForm()).isSameAs(existingForm);
+			assertThat(link.getCampaigns()).isSameAs(linkedCampaign);
+		});
+
+		assertThat(response.getHttpCode()).isEqualTo(200);
+	}
+
+	@Test
 	void update_allowsNonVersionedFormMetadataChangeInPlaceWhenLockedVersionExists() throws Exception {
 		Campaigns currentCampaign = buildCampaign(1, false);
 		Form existingForm = buildForm(7, false, currentCampaign);
@@ -491,7 +566,6 @@ class FormBusinessTest {
 		assertThat(existingForm.getFormName()).isEqualTo("Formulaire Java mis a jour");
 		assertThat(existingForm.getFormDesc()).isEqualTo("Description mise a jour");
 		assertThat(existingForm.getIsActive()).isFalse();
-		assertThat(existingForm.getCampaigns()).isSameAs(currentCampaign);
 		assertThat(response.getItems()).hasSize(1);
 		assertThat(response.getItems().getFirst().getId()).isEqualTo(7);
 	}
@@ -501,7 +575,6 @@ class FormBusinessTest {
 		form.setId(id);
 		form.setFormName("Formulaire Java");
 		form.setIsTimed(isTimed);
-		form.setCampaigns(campaign);
 		form.setIsDeleted(false);
 		return form;
 	}
@@ -602,9 +675,4 @@ class FormBusinessTest {
 		return answers;
 	}
 
-	private void injectField(Object target, String fieldName, Object value) throws Exception {
-		Field field = target.getClass().getDeclaredField(fieldName);
-		field.setAccessible(true);
-		field.set(target, value);
-	}
 }

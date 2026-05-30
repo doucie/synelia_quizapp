@@ -132,3 +132,13 @@ La page expose les progressions de candidatures dans le pipeline de recrutement.
 5. Revenir avec `Voir toutes les progressions` puis verifier le retour a la liste CRUD standard.
 6. Verifier l'affichage des noms candidat/decideur et des dates de progression.
 7. Supprimer puis restaurer une progression.
+
+## 11. Impact Cible Multi-Occurrences
+
+- [ ] retirer de la fiche cible les champs supprimes `decidedById` et `mailSent`
+- [ ] documenter les nouveaux champs de validation, skip et reouverture du round
+- [ ] faire de cette fiche la reference cartographique de l'occurrence de round reliee aux quiz, decisions et entretiens
+- [ ] exposer plus clairement l'ordre et le libelle de stage comme identite fonctionnelle du round
+- [ ] preciser que `score` est un resume du round courant, jamais un score global par `stageType`
+- [ ] documenter explicitement `validatedAt`, `validatedBy`, `validationComment`, `skippedAt`, `skippedBy`, `skipReason`, `reopenedAt`, `reopenedBy` et `reopenReason`
+- [ ] faire apparaitre `application_progress` comme l'ancre de reference commune des `application_quiz_attempt`, `interviews` et `decisions`

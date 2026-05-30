@@ -143,6 +143,16 @@
     background: var(--surface);
     color: var(--primary);
   }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+
+    &:hover {
+      background: transparent;
+      color: var(--text-secondary);
+    }
+  }
 }
 
 .btn-icon-danger:hover {
@@ -206,6 +216,10 @@
   }
 }
 
+.form-group-checkbox {
+  margin-bottom: 0;
+}
+
 .form-label {
   display: block;
   font-size: 0.825rem;
@@ -247,6 +261,93 @@
 textarea.form-input {
   resize: vertical;
   min-height: 72px;
+}
+
+.field-help {
+  margin: 0.35rem 0 0;
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.field-help-warning {
+  color: var(--warning-dark);
+}
+
+.pipeline-state-card {
+  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--background);
+
+  &.is-active {
+    border-color: rgba(var(--success-rgb), 0.35);
+    background: rgba(var(--success-rgb), 0.08);
+  }
+
+  &.is-locked {
+    border-color: rgba(var(--warning-rgb), 0.35);
+    background: rgba(var(--warning-rgb), 0.08);
+  }
+
+  &.is-warning {
+    border-color: rgba(var(--warning-rgb), 0.35);
+    background: rgba(var(--warning-rgb), 0.08);
+  }
+}
+
+.pipeline-state-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: 0.35rem;
+}
+
+.pipeline-state-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius-md);
+  background: rgba(var(--text-secondary-rgb, 107, 114, 128), 0.12);
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+
+  &.is-active {
+    background: rgba(var(--success-rgb), 0.14);
+    color: var(--success-dark, var(--success));
+  }
+
+  &.is-locked {
+    background: rgba(var(--warning-rgb), 0.14);
+    color: var(--warning-dark);
+  }
+
+  &.is-warning {
+    background: rgba(var(--warning-rgb), 0.14);
+    color: var(--warning-dark);
+  }
+}
+
+.pipeline-state-description {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+}
+
+.pipeline-readiness-list {
+  margin: var(--spacing-sm) 0 0;
+  padding-left: 1.1rem;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+
+  li + li {
+    margin-top: 0.25rem;
+  }
 }
 
 select.form-input {
@@ -396,6 +497,19 @@ select.form-input {
     background: rgba(var(--primary-rgb, 79, 70, 229), 0.04);
     box-shadow: 0 0 0 2px rgba(var(--primary-rgb, 79, 70, 229), 0.15);
   }
+
+  &.is-fixed {
+    background: rgba(var(--warning-rgb), 0.06);
+  }
+
+  &.is-readonly:not(.dragging):not(.drag-over) {
+    background: rgba(var(--surface-secondary-rgb), 0.35);
+  }
+
+  &.is-readonly:hover {
+    border-color: var(--border);
+    box-shadow: none;
+  }
 }
 
 .stage-drag-handle {
@@ -411,6 +525,15 @@ select.form-input {
 
   &:active {
     cursor: grabbing;
+  }
+
+  &.is-disabled {
+    cursor: default;
+    opacity: 0.28;
+
+    &:active {
+      cursor: default;
+    }
   }
 }
 
@@ -453,12 +576,43 @@ select.form-input {
   width: 160px;
 }
 
+.stage-static-value {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(var(--surface-secondary-rgb), 0.5);
+  color: var(--text-primary);
+  font-size: 0.825rem;
+  font-weight: var(--font-weight-medium);
+}
+
 .field-label {
   font-size: 0.7rem;
   font-weight: var(--font-weight-semibold);
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.03em;
+}
+
+.stage-fixed-hint {
+  margin: 0;
+  font-size: var(--font-size-xs);
+  color: var(--warning-dark);
+}
+
+.stage-policy-hint {
+  width: 100%;
+  margin: 0;
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.stage-policy-hint--accent {
+  color: var(--primary);
 }
 
 // Toggles
@@ -479,6 +633,19 @@ select.form-input {
   cursor: pointer;
   user-select: none;
   white-space: nowrap;
+}
+
+.stage-fixed-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-md);
+  background: rgba(var(--warning-rgb), 0.12);
+  color: var(--warning-dark);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
 }
 
 // Modal

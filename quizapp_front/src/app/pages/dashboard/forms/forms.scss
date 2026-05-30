@@ -167,19 +167,6 @@
   min-width: 0;
 }
 
-.helper-banner {
-  display: flex;
-  gap: var(--spacing-md);
-  align-items: flex-start;
-  margin-bottom: var(--spacing-lg);
-  padding: var(--spacing-md) var(--spacing-lg);
-  border-radius: var(--radius-lg);
-  border: 1px solid rgba(var(--info-rgb), 0.18);
-  background: rgba(var(--info-rgb), 0.08);
-  color: var(--text-secondary);
-  font-size: var(--font-size-sm);
-}
-
 .loading-state,
 .empty-state {
   display: flex;

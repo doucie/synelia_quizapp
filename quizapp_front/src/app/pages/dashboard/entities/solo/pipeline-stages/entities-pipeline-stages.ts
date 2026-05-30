@@ -11,7 +11,7 @@ import { FilterCheckboxComponent } from '../../../../../shared/filter-checkbox/f
 import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../../../shared/filter-select/filter-select';
 import { PipelineStageService, PipelineStageCriteria, PagedPipelineStageResponse } from '../../../../../core/services/pipeline-stage.service';
 import { PipelineTemplateService } from '../../../../../core/services/pipeline-template.service';
-import { PipelineStage, PipelineTemplate, StageType, STAGE_TYPES } from '../../../../../core/models/pipeline.interfaces';
+import { PipelineStage, PipelineTemplate, StageType, STAGE_TYPES, STAGE_TYPE_LABELS, SINGLETON_INTERMEDIATE_STAGE_TYPES, normalizePipelineStageType } from '../../../../../core/models/pipeline.interfaces';
 
 @Component({
   selector: 'app-entities-pipeline-stages',
@@ -46,6 +46,8 @@ export class EntitiesPipelineStagesComponent extends EntityCrudBase<PipelineStag
   ];
 
   allTemplates = signal<PipelineTemplate[]>([]);
+  createTemplateStages = signal<PipelineStage[]>([]);
+  editTemplateStages = signal<PipelineStage[]>([]);
   stageTypes: StageType[] = [...STAGE_TYPES];
   templateScopedView = signal<{ id: number; name: string } | null>(null);
 
@@ -63,22 +65,52 @@ export class EntitiesPipelineStagesComponent extends EntityCrudBase<PipelineStag
     return this.allTemplates().find(t => t.id === id)?.templateName || `#${id}`;
   }
 
+  isTemplateLocked(templateId?: number): boolean {
+    if (!templateId) {
+      return false;
+    }
+
+    return !!this.allTemplates().find(template => template.id === templateId)?.isLocked;
+  }
+
+  isCreateTargetLocked(): boolean {
+    return this.isTemplateLocked(this.createFormData.pipelineTemplateId);
+  }
+
+  isEditTargetLocked(): boolean {
+    return this.isTemplateLocked(this.editFormData.pipelineTemplateId);
+  }
+
+  getEditableStageTypes(currentType?: StageType, templateStages: PipelineStage[] = [], currentStageId?: number): StageType[] {
+    const usedSingletonTypes = new Set(
+      templateStages
+        .filter(stage => stage.id !== currentStageId)
+        .map(stage => normalizePipelineStageType(stage.stageType))
+        .filter((stageType): stageType is StageType => !!stageType && this.isSingletonIntermediateStageType(stageType))
+    );
+
+    const availableTypes = this.stageTypes.filter(type => !this.isSingletonIntermediateStageType(type) || !usedSingletonTypes.has(type));
+    if (!currentType || availableTypes.includes(currentType)) {
+      return availableTypes;
+    }
+
+    return [currentType, ...availableTypes];
+  }
+
   getStageTypeLabel(type?: StageType): string {
-    const labels: Record<StageType, string> = {
-      CANDIDATURE: 'Candidature', QUIZ: 'Quiz', PRESELECTION: 'Présélection', INTERVIEW: 'Entretien',
-      TECHNICAL_TEST: 'Test technique', EVALUATION: 'Évaluation', DECISION: 'Décision', CUSTOM: 'Personnalisé'
-    };
-    return type ? labels[type] || type : '-';
+    return type ? STAGE_TYPE_LABELS[type] || type : '-';
   }
 
   getConfigPlaceholder(type?: StageType): string {
     switch (type) {
+      case 'QUIZ':
+        return '{"passingScore":60,"allowSkip":false,"inactivityTimeoutMinutes":30}';
       case 'TECHNICAL_TEST':
-        return '{"testMode":"INTERNAL","passingScore":60} ou {"testMode":"EXTERNAL","externalUrl":"https://...","passingScore":60}';
+        return '{"passingScore":60,"allowSkip":false}';
       case 'EVALUATION':
         return '{"passingScore":50,"allowSkip":false}';
       case 'CUSTOM':
-        return '{"label":"Étape libre","allowSkip":true}';
+        return 'Sélectionnez un type métier supporté avant sauvegarde';
       case 'INTERVIEW':
         return '{"passingScore":50}';
       default:
@@ -88,10 +120,12 @@ export class EntitiesPipelineStagesComponent extends EntityCrudBase<PipelineStag
 
   getConfigHelp(type?: StageType): string {
     switch (type) {
+      case 'QUIZ':
+        return 'QUIZ porte désormais le besoin métier de test. Les anciens TECHNICAL_TEST sont normalisés en QUIZ à la sauvegarde.';
       case 'TECHNICAL_TEST':
-        return 'TECHNICAL_TEST exige un JSON avec testMode INTERNAL ou EXTERNAL. Si EXTERNAL, externalUrl est obligatoire.';
+        return 'Type legacy: sauvegarder cette étape la convertira en QUIZ.';
       case 'CUSTOM':
-        return 'CUSTOM exige un JSON non vide. Utilise-le pour définir le comportement métier attendu de l’étape.';
+        return 'CUSTOM n’est plus supporté. Remplacez cette valeur par un type métier explicite avant sauvegarde.';
       case 'EVALUATION':
         return 'EVALUATION peut utiliser passingScore pour définir le seuil de validation.';
       case 'INTERVIEW':
@@ -146,6 +180,45 @@ export class EntitiesPipelineStagesComponent extends EntityCrudBase<PipelineStag
     this.advancedCriteria.pipelineTemplateId = undefined;
     this.currentPage.set(0);
     this.loadItems();
+  }
+
+  override openCreateDialog(): void {
+    super.openCreateDialog();
+
+    const scopedTemplateId = this.templateScopedView()?.id;
+    if (scopedTemplateId) {
+      this.createFormData = {
+        ...this.createFormData,
+        pipelineTemplateId: scopedTemplateId
+      };
+      this.onCreateTemplateChange(scopedTemplateId);
+      return;
+    }
+
+    this.createTemplateStages.set([]);
+  }
+
+  override openEditDialog(item: PipelineStage): void {
+    super.openEditDialog(item);
+    this.onEditTemplateChange(item.pipelineTemplateId);
+  }
+
+  override closeCreateDialog(): void {
+    this.createTemplateStages.set([]);
+    super.closeCreateDialog();
+  }
+
+  override closeEditDialog(): void {
+    this.editTemplateStages.set([]);
+    super.closeEditDialog();
+  }
+
+  onCreateTemplateChange(templateId?: number): void {
+    this.loadTemplateStages(templateId, stages => this.createTemplateStages.set(stages));
+  }
+
+  onEditTemplateChange(templateId?: number): void {
+    this.loadTemplateStages(templateId, stages => this.editTemplateStages.set(stages));
   }
 
   openPipelineStageWorkspace(): void {
@@ -206,13 +279,24 @@ export class EntitiesPipelineStagesComponent extends EntityCrudBase<PipelineStag
       return 'Le template est requis';
     }
 
+    if (this.isTemplateLocked(stage.pipelineTemplateId)) {
+      return 'Ce template est verrouillé. Préparez une correction via duplication plutôt qu’en modifiant directement ses étapes.';
+    }
+
+    if (stage.stageType === 'CUSTOM') {
+      return 'CUSTOM n’est plus supporté. Choisissez un type métier explicite.';
+    }
+
+    const normalizedStageType = normalizePipelineStageType(stage.stageType);
+    if (normalizedStageType && this.isSingletonIntermediateStageType(normalizedStageType)) {
+      const templateStages = stage.id ? this.editTemplateStages() : this.createTemplateStages();
+      const duplicateExists = templateStages.some(existingStage => existingStage.id !== stage.id && normalizePipelineStageType(existingStage.stageType) === normalizedStageType);
+      if (duplicateExists) {
+        return `${this.getStageTypeLabel(normalizedStageType)} ne peut être présent qu'une seule fois dans le pipeline actuel.`;
+      }
+    }
+
     const configJson = this.normalizeConfigJson(stage.configJson);
-    if (stage.stageType === 'TECHNICAL_TEST' && !configJson) {
-      return 'TECHNICAL_TEST exige un config_json';
-    }
-    if (stage.stageType === 'CUSTOM' && !configJson) {
-      return 'CUSTOM exige un config_json';
-    }
 
     if (configJson) {
       try {
@@ -230,16 +314,6 @@ export class EntitiesPipelineStagesComponent extends EntityCrudBase<PipelineStag
 
         if (parsed['allowSkip'] !== undefined && typeof parsed['allowSkip'] !== 'boolean') {
           return 'allowSkip doit être un booléen';
-        }
-
-        if (stage.stageType === 'TECHNICAL_TEST') {
-          const testMode = String(parsed['testMode'] ?? '').toUpperCase();
-          if (testMode !== 'INTERNAL' && testMode !== 'EXTERNAL') {
-            return 'TECHNICAL_TEST attend testMode INTERNAL ou EXTERNAL';
-          }
-          if (testMode === 'EXTERNAL' && !String(parsed['externalUrl'] ?? '').trim()) {
-            return 'TECHNICAL_TEST externe: externalUrl est requis';
-          }
         }
       } catch {
         return 'config_json doit être un JSON valide';
@@ -305,6 +379,24 @@ export class EntitiesPipelineStagesComponent extends EntityCrudBase<PipelineStag
     });
   }
 
+  override confirmDelete(item: PipelineStage): void {
+    if (this.isTemplateLocked(item.pipelineTemplateId)) {
+      this.notificationService.warning('Template verrouillé', 'Ce template est verrouillé. Préparez une correction via duplication plutôt qu’en supprimant directement ses étapes.');
+      return;
+    }
+
+    super.confirmDelete(item);
+  }
+
+  override deleteFromEdit(): void {
+    if (this.isTemplateLocked(this.editFormData.pipelineTemplateId)) {
+      this.notificationService.warning('Template verrouillé', 'Ce template est verrouillé. Préparez une correction via duplication plutôt qu’en supprimant directement ses étapes.');
+      return;
+    }
+
+    super.deleteFromEdit();
+  }
+
   protected fetchAll(criteria: PipelineStageCriteria): Observable<PagedPipelineStageResponse> { return this.service.getAllByCriteria(criteria); }
   protected performCreate(item: Partial<PipelineStage>): Observable<any> { return this.service.create(item); }
   protected performUpdate(item: PipelineStage): Observable<any> { return this.service.update(item); }
@@ -312,4 +404,23 @@ export class EntitiesPipelineStagesComponent extends EntityCrudBase<PipelineStag
   protected performRestore(id: number): Observable<any> { return this.service.restore(id); }
   protected resetAdvancedCriteriaValues(): void { this.advancedCriteria = {}; }
   protected resetCreateFormData(): void { this.createFormData = {}; }
+
+  private loadTemplateStages(templateId: number | undefined, onLoaded: (stages: PipelineStage[]) => void): void {
+    if (!templateId) {
+      onLoaded([]);
+      return;
+    }
+
+    this.service.getByTemplate(templateId).subscribe({
+      next: (response) => {
+        const stages = response?.items || (response?.item ? [response.item] : []);
+        onLoaded(stages);
+      },
+      error: () => onLoaded([])
+    });
+  }
+
+  private isSingletonIntermediateStageType(stageType: StageType): boolean {
+    return SINGLETON_INTERMEDIATE_STAGE_TYPES.includes(stageType as typeof SINGLETON_INTERMEDIATE_STAGE_TYPES[number]);
+  }
 }

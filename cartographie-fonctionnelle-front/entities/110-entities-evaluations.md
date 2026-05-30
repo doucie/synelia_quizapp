@@ -104,3 +104,13 @@ La page fournit un CRUD admin brut des evaluations reliees aux `candidateIntervi
 4. Modifier la note et le commentaire.
 5. Supprimer puis restaurer une evaluation.
 6. Comparer le resultat avec les autres surfaces `dashboard/evaluations` et `dashboard/evaluate`.
+
+## 11. Impact Cible Multi-Occurrences
+
+- [ ] remplacer le couple `candidateMark` / `recruiterComment` par un modele cible `evaluation` + `evaluation_item`
+- [ ] documenter l'identite de l'evaluateur via `interview_participant_id` ou un equivalent explicite
+- [ ] retirer toute hypothese d'etape pipeline `EVALUATION` autonome et recadrer la fiche sur le sous-workflow d'entretien
+- [ ] documenter plusieurs evaluations detaillees pour un meme entretien et plusieurs criteres par evaluation
+- [ ] documenter `evaluationStatus`, `submittedAt`, `validatedAt` et `validatedBy` pour distinguer brouillon, soumission, validation et exploitation metier
+- [ ] rattacher les criteres a `pipeline_stage_evaluation_criterion` et a une version figee de bibliotheque mutualisee (`evaluation_grid_template_version`) afin d'eviter les derives retroactives
+- [ ] limiter les champs de synthese eventuels (`globalScore`, `globalComment`) a des resumes de soumission, derives des lignes `evaluation_item`

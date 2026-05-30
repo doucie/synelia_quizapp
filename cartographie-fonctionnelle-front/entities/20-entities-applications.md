@@ -112,3 +112,13 @@ La page donne une vue CRUD technique des candidatures avec un panneau d'expansio
 4. Verifier les sous-onglets `Demandes`, `Tokens` et `Entretiens`.
 5. Editer une candidature puis controler le statut envoye.
 6. Supprimer puis restaurer une candidature.
+
+## 11. Impact Cible Multi-Occurrences
+
+- [ ] supprimer du contrat cartographie les colonnes legacy retirees de `applications` (`quiz_*`, `interview_*`, `total_evaluation_*`, `application_status`)
+- [ ] exposer les nouveaux pointeurs de lecture rapide (`currentApplicationProgressId`, `currentPipelineStageId`, `lastProgressedAt`)
+- [ ] documenter les resumes derives `aggregatedQuizScore*` et `aggregatedEvaluationScore*` comme indicateurs calcules, jamais comme source primaire de verite metier
+- [ ] documenter `applicationAbandoned`, `abandonedAt`, `abandonReason` et `abandonedFromApplicationProgressId` comme verrou global de candidature avec contexte d'origine auditable
+- [ ] documenter `application_quiz_attempt` comme enfant dedie de la candidature, distinct des reponses `candidate_answer`
+- [ ] retirer toute ambiguite entre `formVersionId` de candidature et runtime quiz par round
+- [ ] preciser que `applicationStatus` ne doit plus etre lu comme la verite detaillee du pipeline, mais comme un resume eventuel derive de `application_progress`

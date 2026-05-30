@@ -13,6 +13,7 @@
 - S'il manque un composant pour une fonctionnalité quelconque, le créer plutôt que de recicler des composants inadaptés
 - Suivre les mêmes patterns que sur les autres pages du front, s'il y en a (Polices, tailles, color-scheme, Style de design, etc.). Cela ne veut pas dire forcément de reprendre les même structures sur absolument toutes les pages. On peut avoir des pages qui ont le même vibe, qui semblent appartenir à la même application, mais qui ont des structures différentes
 - Créer un template si une même structure doit être utilisée pour plusieurs pages
+- Eviter les gros blocs de texte explicatifs ou les bannières d'aide longues. L'interface doit rester intuitive avec des libellés courts, des statuts compacts et des micro-indications ciblées
 
 ---
 

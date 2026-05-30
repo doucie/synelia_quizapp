@@ -103,6 +103,9 @@
                 <div class="question-badges">
                   <span class="badge badge--type">{{ getTypeLabel(q.questionType) }}</span>
                   <span class="badge {{ getDifficultyClass(q.difficultyLevel) }}">{{ getDifficultyLabel(q.difficultyLevel) }}</span>
+                  @if (q.manualCorrectionRequired) {
+                    <span class="badge badge--manual-correction">Correction manuelle</span>
+                  }
                 </div>
               </div>
 
@@ -170,7 +173,14 @@
                         <path d="M9 11l3 3L22 4"/>
                         <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
                       </svg>
-                      Aucune réponse
+                      @if (q.questionType === 'TEXT') {
+                        <div>
+                          <div>Aucune réponse prédéfinie</div>
+                          <p class="answer-placeholder-preview">Placeholder libre: {{ getFreeTextPlaceholder(q) }}</p>
+                        </div>
+                      } @else {
+                        Aucune réponse
+                      }
                     </div>
                   }
                   @for (a of answersForQuestion(q.id ?? 0); track a.id ?? $index) {
@@ -277,83 +287,149 @@
 
       <div class="modal-body">
         <div class="question-form">
-          <div class="form-group">
-            <label for="q-text">Texte de la question *</label>
-            <textarea
-              id="q-text"
-              [ngModel]="questionForm().questionText"
-              [ngModelOptions]="{ standalone: true }"
-              (ngModelChange)="updateFormField('questionText', $event)"
-              placeholder="Saisissez le texte de la question..."
-              rows="4"
-              required
-            ></textarea>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="q-type">Type</label>
-              <app-filter-select id="q-type" [ngModel]="questionForm().questionType" [ngModelOptions]="{ standalone: true }" ariaLabel="Sélectionner le type de question" (ngModelChange)="updateFormField('questionType', $event)">
-                @for (type of questionTypes; track type) {
-                  <option [ngValue]="type">{{ getTypeLabel(type) }}</option>
-                }
-              </app-filter-select>
+          <section class="question-form__section">
+            <div class="question-form__section-header">
+              <h3 class="question-form__section-title">Question</h3>
+              <p class="question-form__section-subtitle">Le coeur de la question et son rattachement metier.</p>
             </div>
 
             <div class="form-group">
-              <label for="q-difficulty">Difficulté</label>
-              <app-filter-select id="q-difficulty" [ngModel]="questionForm().difficultyLevel" [ngModelOptions]="{ standalone: true }" ariaLabel="Sélectionner la difficulté" (ngModelChange)="updateFormField('difficultyLevel', $event)">
-                @for (level of difficultyLevels; track level) {
-                  <option [ngValue]="level">{{ getDifficultyLabel(level) }}</option>
-                }
-              </app-filter-select>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="q-score">Score</label>
-              <input
-                type="number"
-                id="q-score"
-                [ngModel]="questionForm().score"
+              <label for="q-text">Texte de la question *</label>
+              <textarea
+                id="q-text"
+                [ngModel]="questionForm().questionText"
                 [ngModelOptions]="{ standalone: true }"
-                (ngModelChange)="updateFormField('score', $event)"
-                min="0"
-                step="1"
-              >
+                (ngModelChange)="updateFormField('questionText', $event)"
+                placeholder="Saisissez le texte de la question..."
+                rows="4"
+                required
+              ></textarea>
+            </div>
+
+            <div class="question-form__grid">
+              <div class="form-group">
+                <label for="q-type">Type</label>
+                <app-filter-select id="q-type" [ngModel]="questionForm().questionType" [ngModelOptions]="{ standalone: true }" ariaLabel="Sélectionner le type de question" (ngModelChange)="updateFormField('questionType', $event)">
+                  @for (type of questionTypes; track type) {
+                    <option [ngValue]="type">{{ getTypeLabel(type) }}</option>
+                  }
+                </app-filter-select>
+              </div>
+
+              @if (specialities().length > 0) {
+                <div class="form-group">
+                  <label for="q-speciality">Spécialité *</label>
+                  <app-filter-select id="q-speciality" [ngModel]="questionForm().specialityId" [ngModelOptions]="{ standalone: true }" ariaLabel="Sélectionner une spécialité" [searchable]="true" searchPlaceholder="Rechercher une spécialité..." (ngModelChange)="updateFormField('specialityId', $event)">
+                    <option [ngValue]="undefined" disabled>Choisir une spécialité</option>
+                    @for (spec of sortedSpecialities(); track spec.id ?? $index) {
+                      <option [ngValue]="spec.id">{{ spec.nom || spec.name || spec.specialityName }}</option>
+                    }
+                  </app-filter-select>
+                </div>
+              }
+            </div>
+
+            @if (specialities().length === 0) {
+              <p class="form-help">Aucune spécialité active n'est disponible. La création d'une question restera bloquée tant que ce référentiel n'est pas rétabli.</p>
+            }
+          </section>
+
+          <section class="question-form__section">
+            <div class="question-form__section-header">
+              <h3 class="question-form__section-title">Notation et rythme</h3>
+              <p class="question-form__section-subtitle">La difficulté propose des valeurs pratiques, modifiables à tout moment.</p>
+            </div>
+
+            <div class="question-form__grid question-form__grid--three">
+              <div class="form-group">
+                <label for="q-difficulty">Difficulté</label>
+                <app-filter-select id="q-difficulty" [ngModel]="questionForm().difficultyLevel" [ngModelOptions]="{ standalone: true }" ariaLabel="Sélectionner la difficulté" (ngModelChange)="updateFormField('difficultyLevel', $event)">
+                  @for (level of difficultyLevels; track level) {
+                    <option [ngValue]="level">{{ getDifficultyLabel(level) }}</option>
+                  }
+                </app-filter-select>
+              </div>
+
+              <div class="form-group">
+                <label for="q-score">Score</label>
+                <input
+                  type="number"
+                  id="q-score"
+                  [ngModel]="questionForm().score"
+                  [ngModelOptions]="{ standalone: true }"
+                  (ngModelChange)="updateFormField('score', $event)"
+                  min="0"
+                  step="1"
+                >
+              </div>
+
+              <div class="form-group">
+                <label for="q-chrono">Chrono (secondes)</label>
+                <input
+                  type="number"
+                  id="q-chrono"
+                  [ngModel]="questionForm().questionChrono"
+                  [ngModelOptions]="{ standalone: true }"
+                  (ngModelChange)="updateFormField('questionChrono', $event)"
+                  min="0"
+                  step="5"
+                >
+              </div>
+            </div>
+
+            <div class="question-form__preset-row {{ getDifficultyPresetRowClass(questionForm().difficultyLevel) }}">
+              <div class="question-form__preset-details">
+                <p class="question-form__preset-copy">
+                  Suggestion {{ getDifficultyLabel(questionForm().difficultyLevel) }}: {{ getDifficultyPresetSummary(questionForm().difficultyLevel) }}
+                </p>
+                <p class="question-form__difficulty-description">{{ getDifficultyDescription(questionForm().difficultyLevel) }}</p>
+              </div>
+
+              @if (questionDifficultyPresetOverridden()) {
+                <button class="question-form__preset-action" type="button" (click)="applyDifficultyPreset(true)">
+                  Reappliquer la suggestion
+                </button>
+              }
             </div>
 
             <div class="form-group">
-              <label for="q-chrono">Chrono (secondes)</label>
-              <input
-                type="number"
-                id="q-chrono"
-                [ngModel]="questionForm().questionChrono"
-                [ngModelOptions]="{ standalone: true }"
-                (ngModelChange)="updateFormField('questionChrono', $event)"
-                min="0"
-                step="5"
-              >
+              <app-filter-checkbox class="checkbox-field" inputId="q-manual-correction-required" label="Correction manuelle requise" [checked]="questionForm().manualCorrectionRequired === true" ariaLabel="Correction manuelle requise" (checkedChange)="updateFormField('manualCorrectionRequired', $event)"></app-filter-checkbox>
+              <p class="form-help form-help--compact" [class.form-help--success]="questionForm().manualCorrectionRequired === true">Désactive l’attribution automatique des points pour cette question et impose une note recruteur dans l’intervalle fermé [0 ; score].</p>
             </div>
-          </div>
 
-          @if (specialities().length > 0) {
-            <div class="form-group">
-              <label for="q-speciality">Spécialité *</label>
-              <app-filter-select id="q-speciality" [ngModel]="questionForm().specialityId" [ngModelOptions]="{ standalone: true }" ariaLabel="Sélectionner une spécialité" (ngModelChange)="updateFormField('specialityId', $event)">
-                <option [ngValue]="undefined" disabled>Choisir une spécialité</option>
-                @for (spec of specialities(); track spec.id ?? $index) {
-                  <option [ngValue]="spec.id">{{ spec.nom || spec.name || spec.specialityName }}</option>
-                }
-              </app-filter-select>
-            </div>
-          } @else {
-            <p class="form-help">Aucune spécialité active n'est disponible. La création d'une question restera bloquée tant que ce référentiel n'est pas rétabli.</p>
-          }
+            @if (formVersionQuestionContext()) {
+              <p class="question-form__context-note">Brouillon de version #{{ formVersionQuestionContext()?.formVersionId }} : les changements structurels isoleront automatiquement la question.</p>
+            }
+          </section>
 
-          @if (formVersionQuestionContext()) {
-            <p class="form-help">Cette édition est rattachée au brouillon de version #{{ formVersionQuestionContext()?.formVersionId }}. Les changements structurels isoleront automatiquement la question sur ce brouillon.</p>
+          @if (questionModalSupportsAnswerJustification() || questionModalRequiresFreeTextPlaceholder()) {
+            <section class="question-form__section">
+              <div class="question-form__section-header">
+                <h3 class="question-form__section-title">Paramètres de réponse</h3>
+                <p class="question-form__section-subtitle">Ces options pilotent la saisie attendue côté candidat.</p>
+              </div>
+
+              @if (questionModalSupportsAnswerJustification()) {
+                <div class="form-group">
+                  <app-filter-checkbox class="checkbox-field" inputId="q-all-answers-justification" label="Justification obligatoire pour toutes les réponses" [checked]="questionForm().allAnswersJustificationRequired === true" ariaLabel="Justification obligatoire pour toutes les réponses" (checkedChange)="onAllAnswersJustificationRequiredChange($event)"></app-filter-checkbox>
+                  <p class="form-help form-help--compact" [class.form-help--success]="questionForm().allAnswersJustificationRequired === true">Active automatiquement le commentaire additionnel obligatoire avec le placeholder « Justifiez votre réponse » sur chaque réponse.</p>
+                </div>
+              }
+
+              @if (questionModalRequiresFreeTextPlaceholder()) {
+                <div class="form-group">
+                  <label for="q-free-text-placeholder">Placeholder de la réponse libre *</label>
+                  <input
+                    type="text"
+                    id="q-free-text-placeholder"
+                    [ngModel]="questionForm().freeTextResponsePlaceholder"
+                    [ngModelOptions]="{ standalone: true }"
+                    (ngModelChange)="updateFormField('freeTextResponsePlaceholder', $event)"
+                    placeholder="Ex: Décrivez votre démarche, vos choix et vos hypothèses"
+                  >
+                </div>
+              }
+            </section>
           }
 
           @if (questionModalSupportsPredefinedAnswers()) {
@@ -384,46 +460,39 @@
                 @for (draft of questionDraftAnswers(); track draft.draftId; let index = $index) {
                   <article class="embedded-answer-card">
                     <div class="embedded-answer-card__header">
-                      <div>
+                      <div class="embedded-answer-card__identity">
                         <h4>Réponse {{ index + 1 }}</h4>
-                        <p>Ordre {{ draft.answerOrder }}</p>
+                        @if (questionModalIsTrueFalse()) {
+                          <p>Ordre fixe</p>
+                        }
                       </div>
 
-                      @if (!questionModalIsTrueFalse()) {
-                        <button class="embedded-answer-card__remove" type="button" (click)="removeQuestionDraftAnswer(draft.draftId)" aria-label="Supprimer la réponse">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M18 6L6 18M6 6l12 12"/>
-                          </svg>
-                        </button>
-                      }
+                      <div class="embedded-answer-card__actions">
+                        @if (!questionModalIsTrueFalse()) {
+                          <button class="embedded-answer-card__action" type="button" (click)="moveQuestionDraftAnswer(draft.draftId, 'up')" [disabled]="index === 0">
+                            Monter
+                          </button>
+                          <button class="embedded-answer-card__action" type="button" (click)="moveQuestionDraftAnswer(draft.draftId, 'down')" [disabled]="index === questionDraftAnswers().length - 1">
+                            Descendre
+                          </button>
+                          <button class="embedded-answer-card__remove" type="button" (click)="removeQuestionDraftAnswer(draft.draftId)">
+                            Retirer
+                          </button>
+                        }
+                      </div>
                     </div>
 
-                    <div class="form-row">
-                      <div class="form-group">
-                        <label [for]="'draft-answer-text-' + draft.draftId">Texte de la réponse *</label>
-                        <input
-                          type="text"
-                          [id]="'draft-answer-text-' + draft.draftId"
-                          [ngModel]="draft.answerText"
-                          [ngModelOptions]="{ standalone: true }"
-                          (ngModelChange)="updateQuestionDraftAnswer(draft.draftId, 'answerText', $event)"
-                          [disabled]="questionModalIsTrueFalse()"
-                          placeholder="Saisissez le texte de la réponse..."
-                        >
-                      </div>
-
-                      <div class="form-group">
-                        <label [for]="'draft-answer-order-' + draft.draftId">Ordre</label>
-                        <input
-                          type="number"
-                          [id]="'draft-answer-order-' + draft.draftId"
-                          [ngModel]="draft.answerOrder"
-                          [ngModelOptions]="{ standalone: true }"
-                          (ngModelChange)="updateQuestionDraftAnswer(draft.draftId, 'answerOrder', $event)"
-                          [disabled]="questionModalIsTrueFalse()"
-                          min="1"
-                        >
-                      </div>
+                    <div class="form-group">
+                      <label [for]="'draft-answer-text-' + draft.draftId">Texte de la réponse *</label>
+                      <input
+                        type="text"
+                        [id]="'draft-answer-text-' + draft.draftId"
+                        [ngModel]="draft.answerText"
+                        [ngModelOptions]="{ standalone: true }"
+                        (ngModelChange)="updateQuestionDraftAnswer(draft.draftId, 'answerText', $event)"
+                        [disabled]="questionModalIsTrueFalse()"
+                        placeholder="Saisissez le texte de la réponse..."
+                      >
                     </div>
 
                     <div class="form-row">
@@ -437,17 +506,18 @@
                       </div>
 
                       <div class="form-group form-group--checkbox">
-                        <app-filter-checkbox [inputId]="'draft-answer-correct-' + draft.draftId" [label]="questionModalUsesExclusiveCorrectAnswer() ? 'Réponse correcte (unique)' : 'Réponse correcte'" variant="inline" [checked]="draft.isCorrect === true" ariaLabel="Réponse correcte" (checkedChange)="updateQuestionDraftAnswer(draft.draftId, 'isCorrect', $event)"></app-filter-checkbox>
+                        <span class="form-group__label-spacer" aria-hidden="true"></span>
+                        <app-filter-checkbox class="checkbox-field" [inputId]="'draft-answer-correct-' + draft.draftId" [label]="questionModalUsesExclusiveCorrectAnswer() ? 'Réponse correcte (unique)' : 'Réponse correcte'" [checked]="draft.isCorrect === true" ariaLabel="Réponse correcte" (checkedChange)="updateQuestionDraftAnswer(draft.draftId, 'isCorrect', $event)"></app-filter-checkbox>
                       </div>
                     </div>
 
                     <div class="form-group">
-                      <app-filter-checkbox [inputId]="'draft-answer-comment-' + draft.draftId" label="Autoriser un commentaire additionnel" variant="inline" [checked]="draft.allowAdditionalComment === true" ariaLabel="Autoriser un commentaire additionnel" (checkedChange)="updateQuestionDraftAnswer(draft.draftId, 'allowAdditionalComment', $event)"></app-filter-checkbox>
+                      <app-filter-checkbox class="checkbox-field" [inputId]="'draft-answer-comment-' + draft.draftId" label="Autoriser un commentaire additionnel" [checked]="draft.allowAdditionalComment === true" [disabled]="questionForm().allAnswersJustificationRequired" ariaLabel="Autoriser un commentaire additionnel" (checkedChange)="updateQuestionDraftAnswer(draft.draftId, 'allowAdditionalComment', $event)"></app-filter-checkbox>
                     </div>
 
                     @if (draft.allowAdditionalComment) {
                       <div class="form-group">
-                        <app-filter-checkbox [inputId]="'draft-answer-comment-required-' + draft.draftId" label="Commentaire obligatoire" variant="inline" [checked]="draft.additionalCommentRequired === true" ariaLabel="Commentaire obligatoire" (checkedChange)="updateQuestionDraftAnswer(draft.draftId, 'additionalCommentRequired', $event)"></app-filter-checkbox>
+                        <app-filter-checkbox class="checkbox-field" [inputId]="'draft-answer-comment-required-' + draft.draftId" label="Commentaire obligatoire" [checked]="draft.additionalCommentRequired === true" [disabled]="questionForm().allAnswersJustificationRequired" ariaLabel="Commentaire obligatoire" (checkedChange)="updateQuestionDraftAnswer(draft.draftId, 'additionalCommentRequired', $event)"></app-filter-checkbox>
                       </div>
 
                       <div class="form-group">
@@ -458,6 +528,7 @@
                           [ngModel]="draft.additionalCommentPlaceholder"
                           [ngModelOptions]="{ standalone: true }"
                           (ngModelChange)="updateQuestionDraftAnswer(draft.draftId, 'additionalCommentPlaceholder', $event)"
+                          [disabled]="questionForm().allAnswersJustificationRequired"
                           placeholder="Ex: Précisez votre réponse"
                         >
                       </div>
@@ -465,6 +536,17 @@
                   </article>
                 }
               </div>
+
+              @if (!questionModalIsTrueFalse()) {
+                <div class="embedded-answers-footer">
+                  <button class="btn btn-secondary btn--compact" type="button" (click)="addQuestionDraftAnswer()">
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Ajouter une réponse
+                  </button>
+                </div>
+              }
             </section>
           } @else {
             <section class="embedded-answers-section embedded-answers-section--info">
@@ -527,7 +609,7 @@
 <!-- Modal Réponse Créer/Modifier -->
 @if (showAnswerModal()) {
   <div class="modal-overlay" role="dialog" aria-modal="true" (click)="closeAnswerModal()">
-    <div class="modal-content modal-content--large" (click)="$event.stopPropagation()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h2>{{ isAnswerEditMode() ? 'Modifier la réponse' : 'Nouvelle réponse' }}</h2>
         <button class="modal-close" (click)="closeAnswerModal()">
@@ -537,48 +619,40 @@
         </button>
       </div>
       <div class="modal-body">
-        <div class="question-form">
+        <div class="answer-form">
           <div class="form-group">
             <label for="a-text">Texte de la réponse *</label>
-            <input
-              type="text"
+            <textarea
               id="a-text"
               [ngModel]="answerForm().answerText"
               [ngModelOptions]="{ standalone: true }"
               (ngModelChange)="updateAnswerFormField('answerText', $event)"
               placeholder="Saisissez le texte de la réponse..."
+              rows="3"
               required
-            >
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="a-type">Type</label>
-              <app-filter-select id="a-type" [ngModel]="answerForm().answerType" [ngModelOptions]="{ standalone: true }" ariaLabel="Sélectionner le type de réponse" (ngModelChange)="updateAnswerFormField('answerType', $event)">
-                @for (type of answerTypes; track type) {
-                  <option [ngValue]="type">{{ type }}</option>
-                }
-              </app-filter-select>
-            </div>
-            <div class="form-group">
-              <label for="a-order">Ordre</label>
-              <input
-                type="number"
-                id="a-order"
-                [ngModel]="answerForm().answerOrder"
-                [ngModelOptions]="{ standalone: true }"
-                (ngModelChange)="updateAnswerFormField('answerOrder', $event)"
-                min="1"
-              >
-            </div>
+            ></textarea>
           </div>
 
           <div class="form-group">
-            <app-filter-checkbox inputId="question-answer-allow-comment" label="Autoriser un commentaire additionnel" variant="inline" [checked]="answerForm().allowAdditionalComment === true" ariaLabel="Autoriser un commentaire additionnel" (checkedChange)="updateAnswerFormField('allowAdditionalComment', $event)"></app-filter-checkbox>
+            <label for="a-type">Type</label>
+            <app-filter-select id="a-type" [ngModel]="answerForm().answerType" [ngModelOptions]="{ standalone: true }" ariaLabel="Type de réponse" (ngModelChange)="updateAnswerFormField('answerType', $event)">
+              @for (type of answerTypes; track type) {
+                <option [ngValue]="type">{{ type }}</option>
+              }
+            </app-filter-select>
           </div>
 
+          <div class="form-group form-group--checkbox">
+            <app-filter-checkbox class="checkbox-field" inputId="question-answer-allow-comment" label="Autoriser un commentaire additionnel" [checked]="answerForm().allowAdditionalComment === true" [disabled]="answerModalQuestionRequiresJustification()" ariaLabel="Autoriser un commentaire additionnel" (checkedChange)="updateAnswerFormField('allowAdditionalComment', $event)"></app-filter-checkbox>
+          </div>
+
+          @if (answerModalQuestionRequiresJustification()) {
+            <p class="form-help form-help--compact">Cette question impose une justification sur toutes les réponses. Les paramètres ci-dessous sont verrouillés.</p>
+          }
+
           @if (answerForm().allowAdditionalComment) {
-            <div class="form-group">
-              <app-filter-checkbox inputId="question-answer-comment-required" label="Commentaire obligatoire" variant="inline" [checked]="answerForm().additionalCommentRequired === true" ariaLabel="Commentaire obligatoire" (checkedChange)="updateAnswerFormField('additionalCommentRequired', $event)"></app-filter-checkbox>
+            <div class="form-group form-group--checkbox">
+              <app-filter-checkbox class="checkbox-field" inputId="question-answer-comment-required" label="Commentaire obligatoire" [checked]="answerForm().additionalCommentRequired === true" [disabled]="answerModalQuestionRequiresJustification()" ariaLabel="Commentaire obligatoire" (checkedChange)="updateAnswerFormField('additionalCommentRequired', $event)"></app-filter-checkbox>
             </div>
 
             <div class="form-group">
@@ -589,20 +663,21 @@
                 [ngModel]="answerForm().additionalCommentPlaceholder"
                 [ngModelOptions]="{ standalone: true }"
                 (ngModelChange)="updateAnswerFormField('additionalCommentPlaceholder', $event)"
+                [disabled]="answerModalQuestionRequiresJustification()"
                 placeholder="Ex: Precisez votre reponse"
               >
             </div>
           }
 
           <div class="form-group">
-            <app-filter-checkbox inputId="question-answer-correct" label="Réponse correcte" variant="inline" [checked]="answerForm().isCorrect === true" ariaLabel="Réponse correcte" (checkedChange)="updateAnswerFormField('isCorrect', $event)"></app-filter-checkbox>
+            <app-filter-checkbox class="checkbox-field" inputId="question-answer-correct" label="Réponse correcte" [checked]="answerForm().isCorrect === true" ariaLabel="Réponse correcte" (checkedChange)="updateAnswerFormField('isCorrect', $event)"></app-filter-checkbox>
           </div>
         </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="closeAnswerModal()">Annuler</button>
-        <button class="btn btn-primary" (click)="saveAnswer()">
-          {{ isAnswerEditMode() ? 'Enregistrer' : 'Ajouter' }}
+        <button class="btn btn-primary" (click)="saveAnswer()" [disabled]="loading()">
+          {{ isAnswerEditMode() ? 'Enregistrer' : 'Créer' }}
         </button>
       </div>
     </div>

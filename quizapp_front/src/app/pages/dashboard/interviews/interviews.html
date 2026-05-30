@@ -963,7 +963,7 @@
           }
         </div>
 
-        <app-filter-checkbox class="edit-checkbox" inputId="edit-interview-send-email" label="Renvoyer une convocation au candidat après mise à jour" variant="inline" [ngModel]="editFormData().sendEmail" (ngModelChange)="updateEditForm({ sendEmail: $event })" name="editInterviewSendEmail" [disabled]="savingInterview()" ariaLabel="Renvoyer une convocation au candidat après mise à jour"></app-filter-checkbox>
+        <app-filter-checkbox class="edit-checkbox checkbox-field" inputId="edit-interview-send-email" label="Renvoyer une convocation au candidat après mise à jour" [ngModel]="editFormData().sendEmail" (ngModelChange)="updateEditForm({ sendEmail: $event })" name="editInterviewSendEmail" [disabled]="savingInterview()" ariaLabel="Renvoyer une convocation au candidat après mise à jour"></app-filter-checkbox>
       </div>
 
       <div class="modal-footer">

@@ -132,3 +132,12 @@ La page sert d'espace d'evaluation temps reel en plein ecran pour un entretien d
 3. Soumettre une evaluation puis verifier son apparition immediate dans le fil.
 4. Modifier puis supprimer cette evaluation et verifier la remise a zero de `hasFinished` pour l'utilisateur courant.
 5. Tester la cloture de l'entretien avec et sans evaluateurs encore en attente.
+
+## 11. Impact Cible Multi-Occurrences
+
+- [ ] faire de l'ecran une saisie d'evaluation par evaluateur et par critere, rattachee a un entretien lui-meme rattache a `application_progress`
+- [ ] remplacer la logique `candidateMark` / `recruiterComment` seule par une structure d'en-tete plus des lignes de criteres
+- [ ] traiter les agregats d'entretien comme des recalculs derives et non comme la source primaire du workflow
+- [ ] separer clairement `evaluation terminee`, `entretien valide` et `entretien cloture`
+- [ ] afficher l'etat de soumission de l'evaluateur via `interview_participant` et la grille de criteres versionnee utilisee par le round d'entretien
+- [ ] conserver l'entree par entretien comme session partagee d'evaluateurs, meme si plusieurs `candidate_interview` peuvent exister autour d'un meme entretien mutualise

@@ -110,6 +110,130 @@ describe('QuestionsComponent', () => {
     expect(drafts.filter(draft => draft.isCorrect)).toHaveSize(1);
   });
 
+  it('reorders and resequences draft answers without manual order entry', () => {
+    authService.emitUser({ id: 1, role: 'admin', adminMode: true });
+
+    component.openCreateModal();
+    component.addQuestionDraftAnswer();
+
+    const initialDraftIds = component.questionDraftAnswers().map(draft => draft.draftId);
+
+    component.moveQuestionDraftAnswer(initialDraftIds[2], 'up');
+
+    const movedDrafts = component.questionDraftAnswers();
+    expect(movedDrafts.map(draft => draft.answerOrder)).toEqual([1, 2, 3]);
+    expect(movedDrafts[1].draftId).toBe(initialDraftIds[2]);
+
+    component.removeQuestionDraftAnswer(movedDrafts[1].draftId);
+
+    const remainingDrafts = component.questionDraftAnswers();
+    expect(remainingDrafts.map(draft => draft.answerOrder)).toEqual([1, 2]);
+  });
+
+  it('applies difficulty suggestions without overwriting manual score changes', () => {
+    authService.emitUser({ id: 1, role: 'admin', adminMode: true });
+
+    component.openCreateModal();
+    component.updateFormField('difficultyLevel', 'EXPERT');
+
+    expect(component.questionForm().score).toBe(15);
+    expect(component.questionForm().questionChrono).toBe(150);
+
+    component.updateFormField('score', 5);
+    component.updateFormField('difficultyLevel', 'FACILE');
+
+    expect(component.questionForm().score).toBe(5);
+    expect(component.questionForm().questionChrono).toBe(30);
+
+    component.applyDifficultyPreset(true);
+
+    expect(component.questionForm().score).toBe(1);
+    expect(component.questionForm().questionChrono).toBe(30);
+  });
+
+  it('propagates justification settings to every draft answer when enabled at question level', () => {
+    authService.emitUser({ id: 1, role: 'admin', adminMode: true });
+
+    component.openCreateModal();
+    component.updateFormField('allAnswersJustificationRequired', true);
+
+    const draftId = component.questionDraftAnswers()[0].draftId;
+    component.updateQuestionDraftAnswer(draftId, 'allowAdditionalComment', false);
+
+    expect(component.questionForm().allAnswersJustificationRequired).toBeTrue();
+    expect(component.questionDraftAnswers().every(draft => draft.allowAdditionalComment)).toBeTrue();
+    expect(component.questionDraftAnswers().every(draft => draft.additionalCommentRequired)).toBeTrue();
+    expect(component.questionDraftAnswers().every(draft => draft.additionalCommentPlaceholder === 'Justifiez votre réponse')).toBeTrue();
+  });
+
+  it('can disable global justification and clear additional comments for every draft answer', () => {
+    authService.emitUser({ id: 1, role: 'admin', adminMode: true });
+    spyOn(window, 'confirm').and.returnValue(true);
+
+    component.openCreateModal();
+    component.updateFormField('allAnswersJustificationRequired', true);
+
+    component.onAllAnswersJustificationRequiredChange(false);
+
+    expect(component.questionForm().allAnswersJustificationRequired).toBeFalse();
+    expect(component.questionDraftAnswers().every(draft => draft.allowAdditionalComment === false)).toBeTrue();
+    expect(component.questionDraftAnswers().every(draft => draft.additionalCommentRequired === false)).toBeTrue();
+    expect(component.questionDraftAnswers().every(draft => draft.additionalCommentPlaceholder === '')).toBeTrue();
+  });
+
+  it('can disable global justification and keep per-answer comments when the popup answer is no', () => {
+    authService.emitUser({ id: 1, role: 'admin', adminMode: true });
+    spyOn(window, 'confirm').and.returnValue(false);
+
+    component.openCreateModal();
+    component.updateFormField('allAnswersJustificationRequired', true);
+
+    component.onAllAnswersJustificationRequiredChange(false);
+
+    expect(component.questionForm().allAnswersJustificationRequired).toBeFalse();
+    expect(component.questionDraftAnswers().every(draft => draft.allowAdditionalComment)).toBeTrue();
+    expect(component.questionDraftAnswers().every(draft => draft.additionalCommentRequired)).toBeTrue();
+    expect(component.questionDraftAnswers().every(draft => draft.additionalCommentPlaceholder === 'Justifiez votre réponse')).toBeTrue();
+  });
+
+  it('requires a free-text placeholder for TEXT questions', () => {
+    authService.emitUser({ id: 1, role: 'admin', adminMode: true });
+    component.specialities.set([{ id: 9, nom: 'Backend' } as any]);
+
+    component.openCreateModal();
+    component.updateFormField('questionText', 'Décrivez votre approche');
+    component.updateFormField('questionType', 'TEXT');
+    component.updateFormField('specialityId', 9);
+
+    component.saveQuestion();
+
+    expect(notificationService.error).toHaveBeenCalledWith('Erreur', 'Le placeholder de la réponse libre est obligatoire');
+    expect(questionService.create).not.toHaveBeenCalled();
+  });
+
+  it('sends manualCorrectionRequired when saving a question', () => {
+    authService.emitUser({ id: 1, role: 'admin', adminMode: true });
+    component.specialities.set([{ id: 9, nom: 'Backend' } as any]);
+    questionService.create.and.returnValue(of({ items: [{ id: 44 }] } as any));
+    answerService.create.and.returnValue(of({} as any));
+
+    component.openCreateModal();
+    component.updateFormField('questionText', 'Attribuez une note argumentée');
+    component.updateFormField('specialityId', 9);
+    component.updateFormField('manualCorrectionRequired', true);
+
+    const drafts = component.questionDraftAnswers();
+    component.updateQuestionDraftAnswer(drafts[0].draftId, 'answerText', 'Réponse A');
+    component.updateQuestionDraftAnswer(drafts[0].draftId, 'isCorrect', true);
+    component.updateQuestionDraftAnswer(drafts[1].draftId, 'answerText', 'Réponse B');
+
+    component.saveQuestion();
+
+    expect(questionService.create).toHaveBeenCalledWith(jasmine.objectContaining({
+      manualCorrectionRequired: true
+    }));
+  });
+
   it('isolates the question automatically when a structural change is saved from a form version context', () => {
     const question = {
       id: 7,

@@ -1044,7 +1044,7 @@ export class EntitiesCampaignsComponent implements OnInit, OnDestroy {
 
     this.loadingChildren.set({ ...this.loadingChildren(), [campaignId]: true });
 
-    this.formService.getAllByCriteria({ campaignId, size: 100 }).subscribe({
+    this.formService.getAllByCriteria({ filterCampaignId: campaignId, size: 100 }).subscribe({
       next: (res) => this.campaignForms.set({ ...this.campaignForms(), [campaignId]: res.content }),
       error: () => this.campaignForms.set({ ...this.campaignForms(), [campaignId]: [] })
     });

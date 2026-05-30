@@ -80,6 +80,11 @@ public class CampaignPublicAccessService {
 					"Cette campagne n'est pas encore ouverte: aucun pipeline de recrutement n'est configure.", locale));
 		}
 
+		if (!Boolean.TRUE.equals(campaign.getPipelineTemplate().getIsActive())) {
+			throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+					"Cette campagne n'est pas encore ouverte: le pipeline configure n'est pas actif.", locale));
+		}
+
 		String status = StringUtils.upperCase(StringUtils.trimToEmpty(campaign.getCampaignStatus()));
 		if (!STATUS_OPEN.equals(status)) {
 			if (STATUS_PENDING.equals(status)) {

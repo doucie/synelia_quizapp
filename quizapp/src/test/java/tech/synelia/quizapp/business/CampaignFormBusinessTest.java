@@ -9,11 +9,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
-import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Locale;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -54,14 +52,6 @@ class CampaignFormBusinessTest {
 
 	@InjectMocks
 	private CampaignFormBusiness campaignFormBusiness;
-
-	@BeforeEach
-	void setUpProjectionService() throws Exception {
-		FormCampaignProjectionService projectionService = new FormCampaignProjectionService();
-		injectField(projectionService, "campaignFormRepository", campaignFormRepository);
-		injectField(projectionService, "formRepository", formRepository);
-		injectField(campaignFormBusiness, "formCampaignProjectionService", projectionService);
-	}
 
 	@Test
 	void create_rejectsDuplicateActiveLink() {
@@ -130,25 +120,18 @@ class CampaignFormBusinessTest {
 	}
 
 	@Test
-	void create_clearsLegacyCampaignProjectionWhenFormBecomesShared() throws Exception {
-		Campaigns legacyCampaign = buildCampaign(2, "Campagne legacy");
+	void create_doesNotMutateLegacyFormCampaignProjectionWhenFormBecomesShared() throws Exception {
 		Campaigns sharedCampaign = buildCampaign(5, "Campagne partagee");
 		Form form = buildForm(9, "Quiz Angular", "Evaluation partagee");
-		form.setCampaigns(legacyCampaign);
-		CampaignForm legacyLink = buildCampaignForm(100, legacyCampaign, form, false);
 
 		when(campaignsRepository.findOne(5, false)).thenReturn(sharedCampaign);
 		when(formRepository.findOne(9, false)).thenReturn(form);
-		when(formRepository.saveAll(any())).thenAnswer(invocation -> toFormList(invocation.getArgument(0)));
 		when(campaignFormRepository.findByCampaignId(5)).thenReturn(List.of());
 		when(campaignFormRepository.saveAll(any())).thenAnswer(invocation -> {
 			List<CampaignForm> links = toCampaignFormList(invocation.getArgument(0));
 			links.getFirst().setId(501);
 			return links;
 		});
-		when(campaignFormRepository.findByFormId(9)).thenAnswer(invocation -> List.of(
-				legacyLink,
-				buildCampaignForm(501, sharedCampaign, form, false)));
 
 		CampaignFormDto dto = new CampaignFormDto();
 		dto.setCampaignId(5);
@@ -161,12 +144,7 @@ class CampaignFormBusinessTest {
 
 		campaignFormBusiness.create(request, Locale.FRENCH);
 
-		ArgumentCaptor<Iterable<Form>> formCaptor = ArgumentCaptor.forClass(Iterable.class);
-		verify(formRepository).saveAll(formCaptor.capture());
-		List<Form> savedForms = toFormList(formCaptor.getValue());
-		assertThat(savedForms).hasSize(1);
-		assertThat(savedForms.getFirst().getId()).isEqualTo(9);
-		assertThat(savedForms.getFirst().getCampaigns()).isNull();
+		verify(formRepository, never()).saveAll(any());
 	}
 
 	private Campaigns buildCampaign(Integer id, String title) {
@@ -202,15 +180,4 @@ class CampaignFormBusinessTest {
 		return links;
 	}
 
-	private List<Form> toFormList(Iterable<Form> iterable) {
-		List<Form> forms = new ArrayList<Form>();
-		iterable.forEach(forms::add);
-		return forms;
-	}
-
-	private void injectField(Object target, String fieldName, Object value) throws Exception {
-		Field field = target.getClass().getDeclaredField(fieldName);
-		field.setAccessible(true);
-		field.set(target, value);
-	}
 }

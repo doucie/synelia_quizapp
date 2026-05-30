@@ -303,15 +303,56 @@
                         <span class="child-id">#{{ child.id }}</span>
                         <span class="child-name">{{ child.questionText || ('Question #' + child.questionId) }}</span>
                         <span *ngIf="!isTextAnswer(child)" class="child-badge" [class.active]="child.isSelected" [class.inactive]="!child.isSelected">{{ child.isSelected ? 'Sélectionnée' : 'Non sélectionnée' }}</span>
-                        <span *ngIf="isTextAnswer(child) && child.manualIsCorrect === true" class="child-badge active">Correcte</span>
-                        <span *ngIf="isTextAnswer(child) && child.manualIsCorrect === false" class="child-badge inactive">Incorrecte</span>
-                        <span *ngIf="isTextAnswer(child) && (child.manualIsCorrect === null || child.manualIsCorrect === undefined)" class="child-badge pending">À corriger</span>
+                        <span *ngIf="child.manualCorrectionRequired && isPrimaryQuestionAnswer(app, child) && getManualQuestionCorrectionScore(child) !== ''" class="child-badge active">Note {{ getManualQuestionCorrectionScore(child) }} / {{ getManualQuestionCorrectionMaxScore(child) }}</span>
+                        <span *ngIf="child.manualCorrectionRequired && isPrimaryQuestionAnswer(app, child) && getManualQuestionCorrectionScore(child) === ''" class="child-badge pending">À corriger manuellement</span>
+                        <span *ngIf="!child.manualCorrectionRequired && isTextAnswer(child) && child.manualIsCorrect === true" class="child-badge active">Correcte</span>
+                        <span *ngIf="!child.manualCorrectionRequired && isTextAnswer(child) && child.manualIsCorrect === false" class="child-badge inactive">Incorrecte</span>
+                        <span *ngIf="!child.manualCorrectionRequired && isTextAnswer(child) && (child.manualIsCorrect === null || child.manualIsCorrect === undefined)" class="child-badge pending">À corriger</span>
                       </div>
 
                       <div class="child-answer-body">
                         <span *ngIf="!isTextAnswer(child)" class="child-answer-choice">{{ child.answerText || ('Réponse #' + child.answerId) }}</span>
 
-                        <div *ngIf="isTextAnswer(child)" class="manual-correction-card">
+                        <div *ngIf="child.manualCorrectionRequired && isPrimaryQuestionAnswer(app, child)" class="manual-correction-card">
+                          <p *ngIf="isTextAnswer(child)" class="manual-correction-response">{{ child.freeTextResponse || 'Aucune réponse libre saisie.' }}</p>
+                          <p *ngIf="!isTextAnswer(child)" class="manual-correction-note">Notation automatique désactivée pour cette question. Attribuez une note manuelle entre 0 et {{ getManualQuestionCorrectionMaxScore(child) }}.</p>
+
+                          <div *ngIf="isManualCorrectionPermissionLoading(app)" class="manual-correction-note">
+                            Vérification des droits de correction...
+                          </div>
+
+                          <div *ngIf="!isManualCorrectionPermissionLoading(app) && hasManualCorrectionPermission(app); else questionCorrectionPermissionDenied" class="manual-correction-form">
+                            <label class="manual-correction-label">Note attribuée</label>
+                            <input class="manual-correction-select manual-correction-input"
+                                   type="number"
+                                   min="0"
+                                   step="1"
+                                   [attr.max]="getManualQuestionCorrectionMaxScore(child)"
+                                   [ngModel]="getManualQuestionCorrectionScore(child)"
+                                   (ngModelChange)="updateManualQuestionCorrectionScore(child, $event)">
+
+                            <p class="manual-correction-note">Intervalle autorisé : 0 à {{ getManualQuestionCorrectionMaxScore(child) }}.</p>
+
+                            <label class="manual-correction-label">Commentaire</label>
+                            <textarea class="manual-correction-comment"
+                                      rows="3"
+                                      [ngModel]="getManualQuestionCorrectionComment(child)"
+                                      (ngModelChange)="updateManualQuestionCorrectionComment(child, $event)"
+                                      placeholder="Commentaire de correction (optionnel)"></textarea>
+
+                            <button class="action-btn primary manual-correction-save"
+                                    [disabled]="isManualQuestionCorrectionSaving(child) || getManualQuestionCorrectionScore(child) === ''"
+                                    (click)="saveManualQuestionCorrection(child)">
+                              {{ isManualQuestionCorrectionSaving(child) ? 'Enregistrement…' : 'Enregistrer la note' }}
+                            </button>
+                          </div>
+
+                          <ng-template #questionCorrectionPermissionDenied>
+                            <p class="manual-correction-note">Consultation seule. La correction manuelle requiert la permission campagne CORRECT_TEST.</p>
+                          </ng-template>
+                        </div>
+
+                        <div *ngIf="isTextAnswer(child) && !child.manualCorrectionRequired" class="manual-correction-card">
                           <p class="manual-correction-response">{{ child.freeTextResponse || 'Aucune réponse libre saisie.' }}</p>
 
                           <div *ngIf="isManualCorrectionPermissionLoading(app)" class="manual-correction-note">

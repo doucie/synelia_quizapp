@@ -159,6 +159,7 @@
 }
 
 .manual-correction-select,
+.manual-correction-input,
 .manual-correction-comment {
   width: 100%;
   border: 1px solid var(--border);
@@ -170,6 +171,7 @@
 }
 
 .manual-correction-select:focus,
+.manual-correction-input:focus,
 .manual-correction-comment:focus {
   outline: none;
   border-color: var(--primary);

@@ -104,3 +104,14 @@ La page expose le CRUD technique des entretiens avec une vue d'expansion centré
 4. Modifier un entretien `IN_PERSON` puis verifier le lieu.
 5. Ouvrir l'expansion et verifier les badges membres et les liaisons candidats.
 6. Supprimer puis restaurer un entretien.
+
+## 11. Impact Cible Multi-Occurrences
+
+- [ ] documenter `application_progress_id` comme rattachement principal de l'entretien
+- [ ] supprimer du contrat final `applicationId`, `evaluationScore`, `evaluationNumber`, `evaluationPercentage` et `interviewMailSent`
+- [ ] exposer le contexte de round (`stageLabel`, `stageOrder` ou equivalent) pour distinguer plusieurs entretiens d'une meme candidature
+- [ ] conserver `candidate_interview` comme reponse candidat, mais faire deduire la candidature de `application_progress`
+- [ ] documenter `interviews` comme conteneur de planification partage pouvant porter un ou plusieurs `candidate_interview` quand un entretien mutualise concerne plusieurs candidatures
+- [ ] conserver `interviewType` uniquement comme modalite `IN_PERSON` / `ONLINE`, sans lui redonner de semantique de round pipeline
+- [ ] conserver `interviewEvaluationsLink` au niveau `interviews` comme code ou lien de salon partage des evaluateurs, avec renommage recommande vers une semantique du type `evaluationRoomCode`
+- [ ] exposer dans l'onglet enfants la reponse candidat cible (`candidateResponseStatus`, `respondedAt`, refus, demande d'autre date) plutot qu'un simple lien candidature-entretien

@@ -74,22 +74,11 @@ public class QuestionBusiness implements IBasicBusiness<Request<QuestionDto>, Re
 				throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
 			}
 
-			// Validation enum strict questionType (D-013)
-			String qTypeUpper = dto.getQuestionType().toUpperCase(java.util.Locale.ROOT);
-			if (!"SINGLE_CHOICE".equals(qTypeUpper) && !"MULTIPLE_CHOICE".equals(qTypeUpper)
-					&& !"TRUE_FALSE".equals(qTypeUpper) && !"TEXT".equals(qTypeUpper)) {
-				throw new InvalidEntityException(functionalError.DATA_NOT_EXIST("questionType invalide (SINGLE_CHOICE/MULTIPLE_CHOICE/TRUE_FALSE/TEXT) -> " + dto.getQuestionType(), locale));
-			}
-			dto.setQuestionType(qTypeUpper);
-
-			// Validation enum strict difficultyLevel (D-013) si fourni
-			if (dto.getDifficultyLevel() != null && !dto.getDifficultyLevel().isBlank()) {
-				String diffUpper = dto.getDifficultyLevel().toUpperCase(java.util.Locale.ROOT);
-				if (!"EASY".equals(diffUpper) && !"MEDIUM".equals(diffUpper) && !"HARD".equals(diffUpper)) {
-					throw new InvalidEntityException(functionalError.DATA_NOT_EXIST("difficultyLevel invalide (EASY/MEDIUM/HARD) -> " + dto.getDifficultyLevel(), locale));
-				}
-				dto.setDifficultyLevel(diffUpper);
-			}
+			dto.setQuestionType(normalizeQuestionType(dto.getQuestionType(), locale));
+			dto.setDifficultyLevel(normalizeDifficultyLevel(dto.getDifficultyLevel(), locale));
+			dto.setAllAnswersJustificationRequired(Boolean.TRUE.equals(dto.getAllAnswersJustificationRequired()) && supportsAllAnswersJustification(dto.getQuestionType()));
+			dto.setManualCorrectionRequired(Boolean.TRUE.equals(dto.getManualCorrectionRequired()));
+			dto.setFreeTextResponsePlaceholder(StringUtils.trimToNull(dto.getFreeTextResponsePlaceholder()));
 
 			// Verify if specialities exist
 			Specialities existingSpecialities = null;
@@ -102,6 +91,7 @@ public class QuestionBusiness implements IBasicBusiness<Request<QuestionDto>, Re
 
 			dto.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(dto)));
 			Question entityToSave = QuestionTransformer.INSTANCE.toEntity(dto, existingSpecialities);
+			applyQuestionSpecificFields(entityToSave, dto, locale);
 			entityToSave.setCreatedAt(Utilities.getCurrentDate());
 			entityToSave.setCreatedBy(request.getUser());
 			entityToSave.setIsDeleted(false);
@@ -176,20 +166,12 @@ public class QuestionBusiness implements IBasicBusiness<Request<QuestionDto>, Re
 				entityToSave.setQuestionText(dto.getQuestionText());
 			}
 			if (Utilities.shouldUpdate(dto.getQuestionType())) {
-				String qTypeUpper = dto.getQuestionType().toUpperCase(java.util.Locale.ROOT);
-				if (!"SINGLE_CHOICE".equals(qTypeUpper) && !"MULTIPLE_CHOICE".equals(qTypeUpper)
-						&& !"TRUE_FALSE".equals(qTypeUpper) && !"TEXT".equals(qTypeUpper)) {
-					throw new InvalidEntityException(functionalError.DATA_NOT_EXIST("questionType invalide (SINGLE_CHOICE/MULTIPLE_CHOICE/TRUE_FALSE/TEXT) -> " + dto.getQuestionType(), locale));
-				}
-				entityToSave.setQuestionType(qTypeUpper);
+				entityToSave.setQuestionType(normalizeQuestionType(dto.getQuestionType(), locale));
 			}
 			if (Utilities.shouldUpdate(dto.getDifficultyLevel())) {
-				String diffUpper = dto.getDifficultyLevel().toUpperCase(java.util.Locale.ROOT);
-				if (!"EASY".equals(diffUpper) && !"MEDIUM".equals(diffUpper) && !"HARD".equals(diffUpper)) {
-					throw new InvalidEntityException(functionalError.DATA_NOT_EXIST("difficultyLevel invalide (EASY/MEDIUM/HARD) -> " + dto.getDifficultyLevel(), locale));
-				}
-				entityToSave.setDifficultyLevel(diffUpper);
+				entityToSave.setDifficultyLevel(normalizeDifficultyLevel(dto.getDifficultyLevel(), locale));
 			}
+			applyQuestionSpecificFields(entityToSave, dto, locale);
 			if (dto.getQuestionChrono() != null) {
 				entityToSave.setQuestionChrono(dto.getQuestionChrono());
 				formBusiness.validateQuestionChronoUsage(entityToSave, locale);
@@ -423,20 +405,12 @@ public class QuestionBusiness implements IBasicBusiness<Request<QuestionDto>, Re
 				entityToSave.setQuestionText(dto.getQuestionText());
 			}
 			if (Utilities.shouldUpdate(dto.getQuestionType())) {
-				String qTypeUpper = dto.getQuestionType().toUpperCase(java.util.Locale.ROOT);
-				if (!"SINGLE_CHOICE".equals(qTypeUpper) && !"MULTIPLE_CHOICE".equals(qTypeUpper)
-						&& !"TRUE_FALSE".equals(qTypeUpper) && !"TEXT".equals(qTypeUpper)) {
-					throw new InvalidEntityException(functionalError.DATA_NOT_EXIST("questionType invalide (SINGLE_CHOICE/MULTIPLE_CHOICE/TRUE_FALSE/TEXT) -> " + dto.getQuestionType(), locale));
-				}
-				entityToSave.setQuestionType(qTypeUpper);
+				entityToSave.setQuestionType(normalizeQuestionType(dto.getQuestionType(), locale));
 			}
 			if (Utilities.shouldUpdate(dto.getDifficultyLevel())) {
-				String diffUpper = dto.getDifficultyLevel().toUpperCase(java.util.Locale.ROOT);
-				if (!"EASY".equals(diffUpper) && !"MEDIUM".equals(diffUpper) && !"HARD".equals(diffUpper)) {
-					throw new InvalidEntityException(functionalError.DATA_NOT_EXIST("difficultyLevel invalide (EASY/MEDIUM/HARD) -> " + dto.getDifficultyLevel(), locale));
-				}
-				entityToSave.setDifficultyLevel(diffUpper);
+				entityToSave.setDifficultyLevel(normalizeDifficultyLevel(dto.getDifficultyLevel(), locale));
 			}
+			applyQuestionSpecificFields(entityToSave, dto, locale);
 			if (dto.getQuestionChrono() != null) {
 				entityToSave.setQuestionChrono(dto.getQuestionChrono());
 			}
@@ -510,20 +484,12 @@ public class QuestionBusiness implements IBasicBusiness<Request<QuestionDto>, Re
 				entityToSave.setQuestionText(dto.getQuestionText());
 			}
 			if (Utilities.shouldUpdate(dto.getQuestionType())) {
-				String qTypeUpper = dto.getQuestionType().toUpperCase(java.util.Locale.ROOT);
-				if (!"SINGLE_CHOICE".equals(qTypeUpper) && !"MULTIPLE_CHOICE".equals(qTypeUpper)
-						&& !"TRUE_FALSE".equals(qTypeUpper) && !"TEXT".equals(qTypeUpper)) {
-					throw new InvalidEntityException(functionalError.DATA_NOT_EXIST("questionType invalide (SINGLE_CHOICE/MULTIPLE_CHOICE/TRUE_FALSE/TEXT) -> " + dto.getQuestionType(), locale));
-				}
-				entityToSave.setQuestionType(qTypeUpper);
+				entityToSave.setQuestionType(normalizeQuestionType(dto.getQuestionType(), locale));
 			}
 			if (Utilities.shouldUpdate(dto.getDifficultyLevel())) {
-				String diffUpper = dto.getDifficultyLevel().toUpperCase(java.util.Locale.ROOT);
-				if (!"EASY".equals(diffUpper) && !"MEDIUM".equals(diffUpper) && !"HARD".equals(diffUpper)) {
-					throw new InvalidEntityException(functionalError.DATA_NOT_EXIST("difficultyLevel invalide (EASY/MEDIUM/HARD) -> " + dto.getDifficultyLevel(), locale));
-				}
-				entityToSave.setDifficultyLevel(diffUpper);
+				entityToSave.setDifficultyLevel(normalizeDifficultyLevel(dto.getDifficultyLevel(), locale));
 			}
+			applyQuestionSpecificFields(entityToSave, dto, locale);
 			if (dto.getQuestionChrono() != null) {
 				entityToSave.setQuestionChrono(dto.getQuestionChrono());
 			}
@@ -590,11 +556,115 @@ public class QuestionBusiness implements IBasicBusiness<Request<QuestionDto>, Re
 			return true;
 		}
 
+		if (dto.getAllAnswersJustificationRequired() != null
+				&& !Objects.equals(dto.getAllAnswersJustificationRequired(), question.getAllAnswersJustificationRequired())) {
+			return true;
+		}
+
+		if (dto.getManualCorrectionRequired() != null
+				&& !Objects.equals(dto.getManualCorrectionRequired(), question.getManualCorrectionRequired())) {
+			return true;
+		}
+
+		if (Utilities.shouldUpdate(dto.getFreeTextResponsePlaceholder())
+				&& !Objects.equals(StringUtils.trimToNull(dto.getFreeTextResponsePlaceholder()), StringUtils.trimToNull(question.getFreeTextResponsePlaceholder()))) {
+			return true;
+		}
+
 		if (dto.getIsDeleted() != null && !Objects.equals(dto.getIsDeleted(), question.getIsDeleted())) {
 			return true;
 		}
 
 		return false;
+	}
+
+	private String normalizeQuestionType(String questionType, Locale locale) {
+		String normalizedQuestionType = StringUtils.trimToEmpty(questionType).toUpperCase(java.util.Locale.ROOT);
+		if (!"SINGLE_CHOICE".equals(normalizedQuestionType)
+				&& !"MULTIPLE_CHOICE".equals(normalizedQuestionType)
+				&& !"TRUE_FALSE".equals(normalizedQuestionType)
+				&& !"TEXT".equals(normalizedQuestionType)) {
+			throw new InvalidEntityException(functionalError.DATA_NOT_EXIST(
+					"questionType invalide (SINGLE_CHOICE/MULTIPLE_CHOICE/TRUE_FALSE/TEXT) -> " + questionType, locale));
+		}
+		return normalizedQuestionType;
+	}
+
+	private String normalizeDifficultyLevel(String difficultyLevel, Locale locale) {
+		String trimmedDifficultyLevel = StringUtils.trimToNull(difficultyLevel);
+		if (trimmedDifficultyLevel == null) {
+			return null;
+		}
+
+		String normalizedDifficultyLevel = trimmedDifficultyLevel
+				.toUpperCase(java.util.Locale.ROOT)
+				.replace('-', '_')
+				.replace('É', 'E')
+				.replace('È', 'E')
+				.replace('Ê', 'E')
+				.replace('À', 'A')
+				.replace('Ù', 'U');
+
+		switch (normalizedDifficultyLevel) {
+			case "EASY":
+				return "FACILE";
+			case "MEDIUM":
+				return "MOYEN";
+			case "HARD":
+				return "DIFFICILE";
+			case "FACILE":
+			case "MOYEN_BAS":
+			case "MOYEN":
+			case "DIFFICILE":
+			case "TRES_DIFFICILE":
+			case "EXPERT":
+				return normalizedDifficultyLevel;
+			default:
+				throw new InvalidEntityException(functionalError.DATA_NOT_EXIST(
+						"difficultyLevel invalide (FACILE/MOYEN_BAS/MOYEN/DIFFICILE/TRES_DIFFICILE/EXPERT) -> " + difficultyLevel,
+						locale));
+		}
+	}
+
+	private boolean supportsAllAnswersJustification(String questionType) {
+		return "SINGLE_CHOICE".equals(questionType)
+				|| "MULTIPLE_CHOICE".equals(questionType)
+				|| "TRUE_FALSE".equals(questionType);
+	}
+
+	private void applyQuestionSpecificFields(Question entityToSave, QuestionDto dto, Locale locale) {
+		if (entityToSave == null) {
+			return;
+		}
+
+		boolean nextManualCorrectionRequired = dto != null && dto.getManualCorrectionRequired() != null
+				? Boolean.TRUE.equals(dto.getManualCorrectionRequired())
+				: Boolean.TRUE.equals(entityToSave.getManualCorrectionRequired());
+		entityToSave.setManualCorrectionRequired(nextManualCorrectionRequired);
+
+		String effectiveQuestionType = StringUtils.trimToEmpty(entityToSave.getQuestionType()).toUpperCase(java.util.Locale.ROOT);
+		if ("TEXT".equals(effectiveQuestionType)) {
+			String nextPlaceholder = dto != null && Utilities.shouldUpdate(dto.getFreeTextResponsePlaceholder())
+					? StringUtils.trimToNull(dto.getFreeTextResponsePlaceholder())
+					: StringUtils.trimToNull(entityToSave.getFreeTextResponsePlaceholder());
+			if (nextPlaceholder == null) {
+				throw new InvalidEntityException(functionalError.FIELD_EMPTY("freeTextResponsePlaceholder", locale));
+			}
+			entityToSave.setFreeTextResponsePlaceholder(nextPlaceholder);
+			entityToSave.setAllAnswersJustificationRequired(false);
+			return;
+		}
+
+		entityToSave.setFreeTextResponsePlaceholder(null);
+		if (supportsAllAnswersJustification(effectiveQuestionType)) {
+			boolean nextAllAnswersJustificationRequired = dto != null && dto.getAllAnswersJustificationRequired() != null
+					? Boolean.TRUE.equals(dto.getAllAnswersJustificationRequired())
+					: Boolean.TRUE.equals(entityToSave.getAllAnswersJustificationRequired());
+			entityToSave.setAllAnswersJustificationRequired(nextAllAnswersJustificationRequired);
+			return;
+		}
+
+		entityToSave.setAllAnswersJustificationRequired(false);
 	}
 
 	private void ensureQuestionIsEditable(Question question, Locale locale) {

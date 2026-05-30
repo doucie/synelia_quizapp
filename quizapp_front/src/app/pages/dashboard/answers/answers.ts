@@ -222,6 +222,8 @@ export class AnswersComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const answerOrder = this.resolveAnswerOrderForSave(form);
+
     this.loading.set(true);
     const payload: Partial<Answer> = {
       answerText: form.answerText.trim(),
@@ -229,7 +231,7 @@ export class AnswersComponent implements OnInit, OnDestroy {
       allowAdditionalComment: form.allowAdditionalComment,
       additionalCommentRequired: form.allowAdditionalComment ? form.additionalCommentRequired : false,
       additionalCommentPlaceholder: form.allowAdditionalComment ? form.additionalCommentPlaceholder : undefined,
-      answerOrder: form.answerOrder,
+      answerOrder,
       isCorrect: form.isCorrect,
       questionId: form.questionId
     };
@@ -303,5 +305,22 @@ export class AnswersComponent implements OnInit, OnDestroy {
 
       return nextForm;
     });
+  }
+
+  private resolveAnswerOrderForSave(form: AnswerFormData): number {
+    const selectedAnswer = this.selectedAnswer();
+    const targetQuestionId = form.questionId;
+    const currentOrder = selectedAnswer?.answerOrder || form.answerOrder || 1;
+    const keepsSameQuestion = this.isEditMode() && selectedAnswer?.questionId === targetQuestionId;
+
+    if (keepsSameQuestion || !targetQuestionId) {
+      return currentOrder;
+    }
+
+    const siblingOrders = this.answers()
+      .filter(answer => answer.questionId === targetQuestionId && answer.id !== form.id)
+      .map(answer => answer.answerOrder || 0);
+
+    return Math.max(0, ...siblingOrders) + 1;
   }
 }

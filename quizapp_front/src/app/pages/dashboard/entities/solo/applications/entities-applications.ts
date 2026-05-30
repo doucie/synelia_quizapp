@@ -21,6 +21,11 @@ import { SourceTokenService, SourceToken, SourceTokenResponse } from '../../../.
 import { FormVersionService, FormVersion } from '../../../../../core/services/form-version.service';
 import { getManualCorrectionStatusClass, getManualCorrectionStatusLabel, ManualCorrectionStatus } from '../../../../../core/constants/manual-correction-status.constants';
 
+interface QuestionManualCorrectionDraft {
+  manualCorrectionScore: number | null;
+  manualCorrectionComment: string;
+}
+
 @Component({
   selector: 'app-entities-applications',
   standalone: true,
@@ -56,6 +61,8 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
   childTab = signal<{[id: number]: string}>({});
   manualCorrectionDrafts = signal<Record<number, { manualIsCorrect: boolean | null; manualCorrectionComment: string }>>({});
   manualCorrectionSaving = signal<Set<number>>(new Set());
+  manualQuestionCorrectionDrafts = signal<Record<string, QuestionManualCorrectionDraft>>({});
+  manualQuestionCorrectionSaving = signal<Set<string>>(new Set());
   campaignPermissionKeys = signal<Record<number, string[]>>({});
   campaignPermissionLoading = signal<Set<number>>(new Set());
 
@@ -268,6 +275,7 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
       next: (r) => {
         this.childAnswers.set({ ...this.childAnswers(), [id]: r.content });
         this.seedManualCorrectionDrafts(r.content);
+        this.seedManualQuestionCorrectionDrafts(r.content);
         done();
       },
       error: () => { this.childAnswers.set({ ...this.childAnswers(), [id]: [] }); done(); }
@@ -295,6 +303,10 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
 
   isTextAnswer(answer: CandidateAnswer): boolean {
     return (answer.questionType || '').toUpperCase() === 'TEXT';
+  }
+
+  isQuestionManualCorrection(answer: CandidateAnswer): boolean {
+    return answer.manualCorrectionRequired === true;
   }
 
   hasManualCorrectionPermission(application: Application): boolean {
@@ -327,6 +339,25 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
     return this.manualCorrectionDrafts()[answer.id]?.manualCorrectionComment || '';
   }
 
+  isPrimaryQuestionAnswer(application: Application, answer: CandidateAnswer): boolean {
+    if (!application.id || !answer.questionId) {
+      return false;
+    }
+
+    const carrier = this.getQuestionManualCorrectionCarrier(application.id, answer.questionId);
+    return !!carrier?.id && carrier.id === answer.id;
+  }
+
+  getManualQuestionCorrectionScore(answer: CandidateAnswer): string {
+    const score = this.getCurrentManualQuestionCorrectionScore(answer);
+    return score === null || score === undefined ? '' : String(score);
+  }
+
+  getManualQuestionCorrectionComment(answer: CandidateAnswer): string {
+    const key = this.buildManualQuestionCorrectionKey(answer.applicationId, answer.questionId);
+    return key ? this.manualQuestionCorrectionDrafts()[key]?.manualCorrectionComment || '' : '';
+  }
+
   updateManualCorrectionDecision(answerId: number | undefined, value: string): void {
     if (!answerId) return;
     const current = this.manualCorrectionDrafts()[answerId] || { manualIsCorrect: null, manualCorrectionComment: '' };
@@ -345,6 +376,42 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
     this.manualCorrectionDrafts.set({
       ...this.manualCorrectionDrafts(),
       [answerId]: {
+        ...current,
+        manualCorrectionComment: value
+      }
+    });
+  }
+
+  updateManualQuestionCorrectionScore(answer: CandidateAnswer, value: string | number): void {
+    const key = this.buildManualQuestionCorrectionKey(answer.applicationId, answer.questionId);
+    if (!key) {
+      return;
+    }
+
+    const rawValue = typeof value === 'number' ? String(value) : value;
+    const trimmedValue = rawValue.trim();
+    const parsedValue = trimmedValue === '' ? null : Number.parseInt(trimmedValue, 10);
+    const current = this.manualQuestionCorrectionDrafts()[key] || { manualCorrectionScore: null, manualCorrectionComment: '' };
+
+    this.manualQuestionCorrectionDrafts.set({
+      ...this.manualQuestionCorrectionDrafts(),
+      [key]: {
+        ...current,
+        manualCorrectionScore: Number.isNaN(parsedValue as number) ? null : parsedValue
+      }
+    });
+  }
+
+  updateManualQuestionCorrectionComment(answer: CandidateAnswer, value: string): void {
+    const key = this.buildManualQuestionCorrectionKey(answer.applicationId, answer.questionId);
+    if (!key) {
+      return;
+    }
+
+    const current = this.manualQuestionCorrectionDrafts()[key] || { manualCorrectionScore: null, manualCorrectionComment: '' };
+    this.manualQuestionCorrectionDrafts.set({
+      ...this.manualQuestionCorrectionDrafts(),
+      [key]: {
         ...current,
         manualCorrectionComment: value
       }
@@ -383,8 +450,55 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
     });
   }
 
+  saveManualQuestionCorrection(answer: CandidateAnswer): void {
+    const key = this.buildManualQuestionCorrectionKey(answer.applicationId, answer.questionId);
+    if (!key || !answer.applicationId || !answer.questionId) {
+      return;
+    }
+
+    const draft = this.manualQuestionCorrectionDrafts()[key];
+    if (!draft || draft.manualCorrectionScore === null) {
+      this.notificationService.error('Erreur', 'Saisissez une note manuelle pour cette question.');
+      return;
+    }
+
+    const maxScore = this.getManualQuestionCorrectionMaxScore(answer);
+    if (draft.manualCorrectionScore < 0 || draft.manualCorrectionScore > maxScore) {
+      this.notificationService.error('Erreur', `La note manuelle doit être comprise entre 0 et ${maxScore}.`);
+      return;
+    }
+
+    const saving = new Set(this.manualQuestionCorrectionSaving());
+    saving.add(key);
+    this.manualQuestionCorrectionSaving.set(saving);
+
+    this.candidateAnswersService.manualCorrectQuestion(
+      answer.applicationId,
+      answer.questionId,
+      draft.manualCorrectionScore,
+      draft.manualCorrectionComment || null
+    ).subscribe({
+      next: () => {
+        this.notificationService.success('Succès', 'La note manuelle a été enregistrée.');
+        this.loadChildren(answer.applicationId!);
+        this.loadItems();
+        this.removeManualQuestionCorrectionSaving(key);
+      },
+      error: (error) => {
+        const message = error?.error?.status?.message || 'Impossible d’enregistrer la note manuelle.';
+        this.notificationService.error('Erreur', message);
+        this.removeManualQuestionCorrectionSaving(key);
+      }
+    });
+  }
+
   isManualCorrectionSaving(answerId: number | undefined): boolean {
     return answerId ? this.manualCorrectionSaving().has(answerId) : false;
+  }
+
+  isManualQuestionCorrectionSaving(answer: CandidateAnswer): boolean {
+    const key = this.buildManualQuestionCorrectionKey(answer.applicationId, answer.questionId);
+    return key ? this.manualQuestionCorrectionSaving().has(key) : false;
   }
 
   private seedManualCorrectionDrafts(answers: CandidateAnswer[]): void {
@@ -403,6 +517,37 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
       };
     }
     this.manualCorrectionDrafts.set(nextDrafts);
+  }
+
+  private seedManualQuestionCorrectionDrafts(answers: CandidateAnswer[]): void {
+    if (!answers?.length) {
+      return;
+    }
+
+    const nextDrafts = { ...this.manualQuestionCorrectionDrafts() };
+    const handledKeys = new Set<string>();
+    for (const answer of answers) {
+      if (!answer.manualCorrectionRequired) {
+        continue;
+      }
+
+      const key = this.buildManualQuestionCorrectionKey(answer.applicationId, answer.questionId);
+      if (!key || handledKeys.has(key) || nextDrafts[key]) {
+        continue;
+      }
+
+      const carrier = answer.applicationId && answer.questionId
+        ? this.getQuestionManualCorrectionCarrierFromAnswers(answers, answer.applicationId, answer.questionId)
+        : answer;
+
+      nextDrafts[key] = {
+        manualCorrectionScore: carrier?.manualCorrectionScore ?? null,
+        manualCorrectionComment: carrier?.manualCorrectionComment || ''
+      };
+      handledKeys.add(key);
+    }
+
+    this.manualQuestionCorrectionDrafts.set(nextDrafts);
   }
 
   private ensureManualCorrectionPermissionForApplicationId(applicationId: number): void {
@@ -472,5 +617,84 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
     const saving = new Set(this.manualCorrectionSaving());
     saving.delete(answerId);
     this.manualCorrectionSaving.set(saving);
+  }
+
+  private removeManualQuestionCorrectionSaving(key: string): void {
+    const saving = new Set(this.manualQuestionCorrectionSaving());
+    saving.delete(key);
+    this.manualQuestionCorrectionSaving.set(saving);
+  }
+
+  private buildManualQuestionCorrectionKey(applicationId?: number, questionId?: number): string | null {
+    return applicationId && questionId ? `${applicationId}-${questionId}` : null;
+  }
+
+  private getCurrentManualQuestionCorrectionScore(answer: CandidateAnswer): number | null {
+    const key = this.buildManualQuestionCorrectionKey(answer.applicationId, answer.questionId);
+    if (!key) {
+      return answer.manualCorrectionScore ?? null;
+    }
+
+    return this.manualQuestionCorrectionDrafts()[key]?.manualCorrectionScore ?? answer.manualCorrectionScore ?? null;
+  }
+
+  getManualQuestionCorrectionMaxScore(answer: CandidateAnswer): number {
+    return Math.max(answer.questionScore ?? 0, 0);
+  }
+
+  private getQuestionManualCorrectionCarrier(applicationId: number, questionId: number): CandidateAnswer | null {
+    return this.getQuestionManualCorrectionCarrierFromAnswers(this.getAnswers(applicationId), applicationId, questionId);
+  }
+
+  private getQuestionManualCorrectionCarrierFromAnswers(answers: CandidateAnswer[], applicationId: number, questionId: number): CandidateAnswer | null {
+    const candidates = answers.filter(item => item.applicationId === applicationId && item.questionId === questionId && item.isDeleted !== true);
+    let carrier: CandidateAnswer | null = null;
+    for (const candidate of candidates) {
+      if (!carrier || this.isBetterQuestionManualCorrectionCarrier(candidate, carrier)) {
+        carrier = candidate;
+      }
+    }
+    return carrier;
+  }
+
+  private isBetterQuestionManualCorrectionCarrier(candidate: CandidateAnswer, current: CandidateAnswer): boolean {
+    if ((candidate.manualCorrectionScore ?? null) !== null && (current.manualCorrectionScore ?? null) === null) {
+      return true;
+    }
+    if ((candidate.manualCorrectionScore ?? null) === null && (current.manualCorrectionScore ?? null) !== null) {
+      return false;
+    }
+
+    const isTextQuestion = this.isTextAnswer(candidate);
+    if (isTextQuestion) {
+      if (candidate.answerId == null && current.answerId != null) {
+        return true;
+      }
+      if (candidate.answerId != null && current.answerId == null) {
+        return false;
+      }
+    }
+
+    if (candidate.answerOrder != null && current.answerOrder != null && candidate.answerOrder !== current.answerOrder) {
+      return candidate.answerOrder < current.answerOrder;
+    }
+    if (candidate.answerOrder != null && current.answerOrder == null) {
+      return true;
+    }
+    if (candidate.answerOrder == null && current.answerOrder != null) {
+      return false;
+    }
+
+    if (candidate.answerId != null && current.answerId != null && candidate.answerId !== current.answerId) {
+      return candidate.answerId < current.answerId;
+    }
+    if (candidate.answerId != null && current.answerId == null) {
+      return true;
+    }
+    if (candidate.answerId == null && current.answerId != null) {
+      return false;
+    }
+
+    return (candidate.id ?? Number.MAX_SAFE_INTEGER) < (current.id ?? Number.MAX_SAFE_INTEGER);
   }
 }

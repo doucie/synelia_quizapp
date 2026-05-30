@@ -32,13 +32,13 @@ class FormRepositoryCriteriaTest {
 	private TypedQuery<Form> typedQuery;
 
 	@Test
-	void getAllByCriteria_filtersCampaignIdThroughCampaignFormLinks() throws Exception {
+	void getAllByCriteria_filtersByFilterCampaignIdThroughCampaignFormLinks() throws Exception {
 		FormRepository formRepository = mock(FormRepository.class, CALLS_REAL_METHODS);
 		when(em.createQuery(anyString(), eq(Form.class))).thenReturn(typedQuery);
 		when(typedQuery.getResultList()).thenReturn(List.of());
 
 		FormDto dto = new FormDto();
-		dto.setCampaignId(11);
+		dto.setFilterCampaignId(11);
 
 		Request<FormDto> request = new Request<FormDto>();
 		request.setData(dto);
@@ -47,14 +47,14 @@ class FormRepositoryCriteriaTest {
 
 		ArgumentCaptor<String> queryCaptor = ArgumentCaptor.forClass(String.class);
 		verify(em).createQuery(queryCaptor.capture(), eq(Form.class));
-		verify(typedQuery).setParameter("campaignId_0", 11);
+		verify(typedQuery).setParameter("filterCampaignId_0", 11);
 
 		assertThat(queryCaptor.getValue())
 				.contains("exists (select cf.id from CampaignForm cf")
 				.contains("cf.form.id = e.id")
 				.contains("cf.isDeleted = false")
 				.contains("cf.campaigns.isDeleted = false")
-				.contains("cf.campaigns.id = :campaignId_0")
-				.doesNotContain("e.campaigns.id = :campaignId_0");
+				.contains("cf.campaigns.id = :filterCampaignId_0")
+				.doesNotContain("e.campaigns.id = :filterCampaignId_0");
 	}
 }

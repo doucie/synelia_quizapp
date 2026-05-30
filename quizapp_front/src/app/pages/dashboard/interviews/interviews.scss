@@ -2037,13 +2037,8 @@
 }
 
 .edit-checkbox {
-  display: flex;
-  padding: var(--spacing-md);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--background);
-  color: var(--text-secondary);
-  font-size: var(--font-size-sm);
+  display: block;
+  width: 100%;
 }
 
 .evaluator-edit-group {

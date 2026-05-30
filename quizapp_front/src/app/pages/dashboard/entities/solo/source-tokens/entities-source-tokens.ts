@@ -441,7 +441,7 @@ export class EntitiesSourceTokensComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.formService.getAllByCriteria({ campaignId, size: 100, isDeleted: false })
+    this.formService.getAllByCriteria({ filterCampaignId: campaignId, size: 100, isDeleted: false })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {

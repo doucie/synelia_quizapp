@@ -41,6 +41,9 @@ public class CandidateAnswer implements Serializable, Cloneable {
     @Column(name="manual_correction_comment", length=65535)
     private String     manualCorrectionComment ;
 
+    @Column(name="manual_correction_score")
+    private Integer    manualCorrectionScore ;
+
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name="manual_corrected_at")
     private Date       manualCorrectedAt ;

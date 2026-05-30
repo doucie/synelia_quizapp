@@ -47,6 +47,15 @@ public class Question implements Serializable, Cloneable {
     @Column(name="difficulty_level", length=20)
     private String     difficultyLevel ;
 
+    @Column(name="all_answers_justification_required")
+    private Boolean    allAnswersJustificationRequired ;
+
+    @Column(name="manual_correction_required")
+    private Boolean    manualCorrectionRequired ;
+
+    @Column(name="free_text_response_placeholder", length=255)
+    private String     freeTextResponsePlaceholder ;
+
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name="created_at")
     private Date       createdAt    ;

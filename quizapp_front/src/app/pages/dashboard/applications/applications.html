@@ -334,28 +334,40 @@
                   </div>
                   <span class="pipeline-label">{{ getCurrentStageName(app) }}</span>
                   <!-- Actions de la stage courante -->
-                  @if (getCurrentStageId(app) !== null) {
+                  @if (getCurrentStage(app); as currentStage) {
                     <div class="pipeline-actions" (click)="$event.stopPropagation()">
-                      @if (canAdvanceStage(app, getCurrentStageId(app)!)) {
+                      @if (canAdvanceStage(app, currentStage.id!)) {
                         <button class="mini-action advance" 
-                          [disabled]="isActionLoading(app.id!, getCurrentStageId(app)!)"
-                          (click)="advanceStage(app, getCurrentStageId(app)!, $event)" 
+                          [disabled]="isActionLoading(app.id!, currentStage.id!)"
+                          (click)="advanceStage(app, currentStage.id!, $event)" 
                           title="Valider">
-                          @if (isActionLoading(app.id!, getCurrentStageId(app)!)) {
+                          @if (isActionLoading(app.id!, currentStage.id!)) {
                             <span class="btn-spinner"></span>
                           } @else {
                             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
                           }
                         </button>
                       }
-                      @if (canRejectStage(app, getCurrentStageId(app)!)) {
+                      @if (canRejectStage(app, currentStage.id!)) {
                         <button class="mini-action reject" 
-                          [disabled]="isActionLoading(app.id!, getCurrentStageId(app)!)"
-                          (click)="openRejectModal(app, getCurrentStageId(app)!, $event)" 
+                          [disabled]="isActionLoading(app.id!, currentStage.id!)"
+                          (click)="openRejectModal(app, currentStage.id!, $event)" 
                           title="Refuser">
                           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
                             <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                           </svg>
+                        </button>
+                      }
+                      @if (canSkipStage(app, currentStage)) {
+                        <button class="mini-action skip"
+                          [disabled]="isActionLoading(app.id!, currentStage.id!)"
+                          (click)="skipStage(app, currentStage, $event)"
+                          [title]="getSkipActionTitle(currentStage)">
+                          @if (isActionLoading(app.id!, currentStage.id!)) {
+                            <span class="btn-spinner"></span>
+                          } @else {
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="6" y1="12" x2="18" y2="12"/></svg>
+                          }
                         </button>
                       }
                     </div>

@@ -72,6 +72,18 @@ export const routes: Routes = [
         data: { roles: ['super', 'admin'] }
       },
       {
+        path: 'forms/new',
+        loadComponent: () => import('./pages/dashboard/forms/form-editor-page').then(m => m.FormEditorPageComponent),
+        canActivate: [roleGuard, permissionGuard(['CREATE_FORM'])],
+        data: { roles: ['super', 'admin'] }
+      },
+      {
+        path: 'forms/:id/edit',
+        loadComponent: () => import('./pages/dashboard/forms/form-editor-page').then(m => m.FormEditorPageComponent),
+        canActivate: [roleGuard, permissionGuard(['UPDATE_FORM'])],
+        data: { roles: ['super', 'admin'] }
+      },
+      {
         path: 'forms',
         loadComponent: () => import('./pages/dashboard/forms/forms').then(m => m.FormsComponent),
         canActivate: [roleGuard, permissionGuard(['VIEW_FORM'])],

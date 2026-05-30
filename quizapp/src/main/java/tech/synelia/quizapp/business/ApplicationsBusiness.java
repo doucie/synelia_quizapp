@@ -127,14 +127,16 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 	private static final java.security.SecureRandom TRACKING_CODE_RANDOM = new java.security.SecureRandom();
 
 	private static final class QuizScoringSummary {
-		private final Integer correctAnswersCount;
+		private final Integer quizScore;
 		private final Integer totalQuestions;
+		private final Integer totalPossibleScore;
 		private final Integer quizScorePercent;
 		private final String manualCorrectionStatus;
 
-		private QuizScoringSummary(Integer correctAnswersCount, Integer totalQuestions, Integer quizScorePercent, String manualCorrectionStatus) {
-			this.correctAnswersCount = correctAnswersCount;
+		private QuizScoringSummary(Integer quizScore, Integer totalQuestions, Integer totalPossibleScore, Integer quizScorePercent, String manualCorrectionStatus) {
+			this.quizScore = quizScore;
 			this.totalQuestions = totalQuestions;
+			this.totalPossibleScore = totalPossibleScore;
 			this.quizScorePercent = quizScorePercent;
 			this.manualCorrectionStatus = manualCorrectionStatus;
 		}
@@ -1276,6 +1278,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 					questionData.put("chrono", chrono);
 					questionData.put("selectedAnswerIds", selectedAnswerIds);
 					questionData.put("freeTextResponse", freeTextResponse);
+					questionData.put("freeTextResponsePlaceholder", question.getFreeTextResponsePlaceholder());
 
 					if (QuestionType.TEXT.getValue().equals(questionType)) {
 						questionData.put("answers", Collections.emptyList());
@@ -1983,7 +1986,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			
 			application = completeQuizInternal(application, request.getUser(), locale);
 			
-			log.info("Quiz complété pour l'application " + applicationId + " - Score: " + application.getQuizScore() + "/" + application.getTotalQuestions());
+			log.info("Quiz complété pour l'application " + applicationId + " - Score pondéré: " + application.getQuizScore() + " point(s), soit " + application.getQuizScorePercent() + "%");
 			log.info("Application status mis à jour: SUBMITTED");
 			
 			// 5. Préparer la réponse
@@ -2112,7 +2115,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		}
 
 		QuizScoringSummary summary = evaluateQuiz(application);
-		application.setQuizScore(summary.correctAnswersCount);
+		application.setQuizScore(summary.quizScore);
 		application.setTotalQuestions(summary.totalQuestions);
 		application.setQuizScorePercent(summary.quizScorePercent);
 		application.setQuizManualCorrectionStatus(summary.manualCorrectionStatus);
@@ -2126,7 +2129,8 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 	private QuizScoringSummary evaluateQuiz(Applications application) {
 		List<FormQuestions> activeFormQuestions = getActiveFormQuestions(application != null ? application.getFormVersion() : null);
 		int totalQuestions = activeFormQuestions.size();
-		int correctAnswersCount = 0;
+		int quizScore = 0;
+		int totalPossibleScore = 0;
 		boolean hasManualQuestion = false;
 		boolean hasPendingManualCorrection = false;
 
@@ -2142,7 +2146,21 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			}
 
 			String questionType = StringUtils.trimToEmpty(question.getQuestionType());
+			int questionMaxScore = Math.max(question.getScore() != null ? question.getScore() : 0, 0);
+			totalPossibleScore += questionMaxScore;
+			boolean manualCorrectionRequired = Boolean.TRUE.equals(question.getManualCorrectionRequired());
 			List<CandidateAnswer> questionCandidateAnswers = candidateAnswersByQuestion.getOrDefault(question.getId(), Collections.emptyList());
+
+			if (manualCorrectionRequired) {
+				hasManualQuestion = true;
+				CandidateAnswer manualCorrectionCarrier = resolveManualQuestionCarrier(questionType, questionCandidateAnswers);
+				if (manualCorrectionCarrier != null && manualCorrectionCarrier.getManualCorrectionScore() != null) {
+					quizScore += Math.min(Math.max(manualCorrectionCarrier.getManualCorrectionScore(), 0), questionMaxScore);
+				} else {
+					hasPendingManualCorrection = true;
+				}
+				continue;
+			}
 
 			if (QuestionType.TEXT.getValue().equals(questionType)) {
 				hasManualQuestion = true;
@@ -2155,7 +2173,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				}
 				if (freeTextCandidateAnswer != null && freeTextCandidateAnswer.getManualIsCorrect() != null) {
 					if (Boolean.TRUE.equals(freeTextCandidateAnswer.getManualIsCorrect())) {
-						correctAnswersCount++;
+						quizScore += questionMaxScore;
 					}
 				} else {
 					hasPendingManualCorrection = true;
@@ -2182,7 +2200,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 					}
 				}
 				if (!correctAnswerIds.isEmpty() && selectedAnswerIds.equals(correctAnswerIds)) {
-					correctAnswersCount++;
+					quizScore += questionMaxScore;
 				}
 				continue;
 			}
@@ -2194,7 +2212,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 							&& candidateAnswer.getAnswer() != null
 							&& selectedAnswerId.equals(candidateAnswer.getAnswer().getId())
 							&& Boolean.TRUE.equals(candidateAnswer.getAnswer().getIsCorrect())) {
-						correctAnswersCount++;
+						quizScore += questionMaxScore;
 						break;
 					}
 				}
@@ -2208,8 +2226,83 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 					: ManualCorrectionStatus.COMPLETED.getValue();
 		}
 
-		int quizScorePercent = totalQuestions > 0 ? (correctAnswersCount * 100) / totalQuestions : 0;
-		return new QuizScoringSummary(correctAnswersCount, totalQuestions, quizScorePercent, manualCorrectionStatus);
+		int quizScorePercent = totalPossibleScore > 0 ? (quizScore * 100) / totalPossibleScore : 0;
+		return new QuizScoringSummary(quizScore, totalQuestions, totalPossibleScore, quizScorePercent, manualCorrectionStatus);
+	}
+
+	private CandidateAnswer resolveManualQuestionCarrier(String questionType, List<CandidateAnswer> questionCandidateAnswers) {
+		if (questionCandidateAnswers == null || questionCandidateAnswers.isEmpty()) {
+			return null;
+		}
+
+		boolean textQuestion = QuestionType.TEXT.getValue().equalsIgnoreCase(StringUtils.trimToEmpty(questionType));
+		CandidateAnswer scoredCarrier = null;
+		CandidateAnswer fallbackCarrier = null;
+
+		for (CandidateAnswer candidateAnswer : questionCandidateAnswers) {
+			if (candidateAnswer == null || Boolean.TRUE.equals(candidateAnswer.getIsDeleted())) {
+				continue;
+			}
+			if (candidateAnswer.getManualCorrectionScore() != null
+					&& (scoredCarrier == null || isPreferredManualQuestionCarrier(candidateAnswer, scoredCarrier, textQuestion))) {
+				scoredCarrier = candidateAnswer;
+			}
+			if (fallbackCarrier == null || isPreferredManualQuestionCarrier(candidateAnswer, fallbackCarrier, textQuestion)) {
+				fallbackCarrier = candidateAnswer;
+			}
+		}
+
+		return scoredCarrier != null ? scoredCarrier : fallbackCarrier;
+	}
+
+	private boolean isPreferredManualQuestionCarrier(CandidateAnswer candidate, CandidateAnswer current, boolean textQuestion) {
+		if (candidate == null) {
+			return false;
+		}
+		if (current == null) {
+			return true;
+		}
+
+		if (textQuestion) {
+			if (candidate.getAnswer() == null && current.getAnswer() != null) {
+				return true;
+			}
+			if (candidate.getAnswer() != null && current.getAnswer() == null) {
+				return false;
+			}
+		}
+
+		Integer candidateOrder = candidate.getAnswer() != null ? candidate.getAnswer().getAnswerOrder() : null;
+		Integer currentOrder = current.getAnswer() != null ? current.getAnswer().getAnswerOrder() : null;
+		if (candidateOrder != null && currentOrder != null && !candidateOrder.equals(currentOrder)) {
+			return candidateOrder < currentOrder;
+		}
+		if (candidateOrder != null && currentOrder == null) {
+			return true;
+		}
+		if (candidateOrder == null && currentOrder != null) {
+			return false;
+		}
+
+		Integer candidateAnswerId = candidate.getAnswer() != null ? candidate.getAnswer().getId() : null;
+		Integer currentAnswerId = current.getAnswer() != null ? current.getAnswer().getId() : null;
+		if (candidateAnswerId != null && currentAnswerId != null && !candidateAnswerId.equals(currentAnswerId)) {
+			return candidateAnswerId < currentAnswerId;
+		}
+		if (candidateAnswerId != null && currentAnswerId == null) {
+			return true;
+		}
+		if (candidateAnswerId == null && currentAnswerId != null) {
+			return false;
+		}
+
+		Integer candidateId = candidate.getId();
+		Integer currentId = current.getId();
+		if (candidateId != null && currentId != null && !candidateId.equals(currentId)) {
+			return candidateId < currentId;
+		}
+
+		return false;
 	}
 
 	private List<FormQuestions> getActiveFormQuestions(FormVersion formVersion) {

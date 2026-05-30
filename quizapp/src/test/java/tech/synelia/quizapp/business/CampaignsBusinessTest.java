@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -121,7 +122,7 @@ class CampaignsBusinessTest {
 
 		assertThat(exception.getStatus()).isSameAs(failureStatus);
 		verify(campaignsRepository, never()).saveAll(any());
-		verify(formBusiness, never()).applyCampaignTimeAllForms(any(), any(), any());
+		verifyNoInteractions(formBusiness);
 	}
 
 	@Test
@@ -157,7 +158,7 @@ class CampaignsBusinessTest {
 		assertThat(existingCampaign.getIsTimed()).isTrue();
 		assertThat(response.getItems()).hasSize(1);
 		assertThat(response.getItems().getFirst().getId()).isEqualTo(11);
-		verify(formBusiness, never()).applyCampaignTimeAllForms(any(), any(), any());
+		verifyNoInteractions(formBusiness);
 	}
 
 	@Test
@@ -262,7 +263,7 @@ class CampaignsBusinessTest {
 		assertThat(existingCampaign.getIsDeleted()).isTrue();
 		assertThat(campaignFormLink.getIsDeleted()).isTrue();
 		verify(campaignFormRepository).saveAll(any());
-		verify(formRepository, never()).findByCampaignId(11, false);
+		verifyNoInteractions(formRepository);
 	}
 
 	@Test

@@ -143,3 +143,12 @@ La page sert à planifier des entretiens en masse pour plusieurs candidats d’u
 5. Tester une création avec email puis sans email.
 6. Vérifier la création des entretiens et la redirection vers `/dashboard/interviews`.
 7. Contrôler ensuite les participants et permissions sur un entretien créé.
+
+## 11. Impact Cible Multi-Occurrences
+
+- [ ] faire entrer la page sur un round `INTERVIEW` explicite et non sur une simple candidature eligibile
+- [ ] remplacer les preconditions basees sur `applicationStatus` par les preconditions du round courant dans `application_progress`
+- [ ] aligner l'envoi de convocation sur les nouvelles regles de notification du stage et sur la validation manuelle eventuelle
+- [ ] permettre plusieurs creations d'entretien pour une meme candidature tant qu'elles visent des rounds distincts ou des replanifications du meme round
+- [ ] pre-remplir la page avec le contexte de round cible (`application_progress_id`, label de stage, ordre du round) quand l'entree vient du cockpit candidature
+- [ ] clarifier si la creation multiple produit plusieurs entretiens distincts ou un entretien mutualise partage par plusieurs `candidate_interview`, selon le besoin metier retenu

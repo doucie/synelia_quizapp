@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
 import { of } from 'rxjs';
 
 import { FormsComponent } from './forms';
@@ -17,13 +18,15 @@ describe('FormsComponent', () => {
   let formVersionService: jasmine.SpyObj<FormVersionService>;
   let campaignFormService: jasmine.SpyObj<CampaignFormService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
+  let router: jasmine.SpyObj<Router>;
 
   beforeEach(async () => {
-    formService = jasmine.createSpyObj<FormService>('FormService', ['getAllByCriteria', 'create', 'update', 'delete']);
+    formService = jasmine.createSpyObj<FormService>('FormService', ['getAllByCriteria', 'delete']);
     campaignService = jasmine.createSpyObj<CampaignService>('CampaignService', ['getAllCampaignsByCriteria']);
     formVersionService = jasmine.createSpyObj<FormVersionService>('FormVersionService', ['getAllByCriteria']);
     campaignFormService = jasmine.createSpyObj<CampaignFormService>('CampaignFormService', ['getAllByCriteria']);
     notificationService = jasmine.createSpyObj<NotificationService>('NotificationService', ['success', 'error', 'warning']);
+    router = jasmine.createSpyObj<Router>('Router', ['navigate']);
 
     formService.getAllByCriteria.and.returnValue(of({ content: [] } as any));
     campaignService.getAllCampaignsByCriteria.and.returnValue(of({ content: [] } as any));
@@ -38,7 +41,8 @@ describe('FormsComponent', () => {
         { provide: FormVersionService, useValue: formVersionService },
         { provide: CampaignFormService, useValue: campaignFormService },
         { provide: AuthService, useValue: { currentUser$: of({ adminMode: true }) } },
-        { provide: NotificationService, useValue: notificationService }
+        { provide: NotificationService, useValue: notificationService },
+        { provide: Router, useValue: router }
       ]
     });
     TestBed.overrideComponent(FormsComponent, {
@@ -120,44 +124,33 @@ describe('FormsComponent', () => {
     expect(component.filteredForms()).toEqual([]);
   });
 
-  it('creates a form without requiring a legacy campaignId', () => {
-    formService.create.and.returnValue(of({ items: [{ id: 77 }] } as any));
+  it('navigates to the dedicated create page when admin mode is enabled', () => {
+    component.openCreatePage();
 
-    component.formState.set({
-      formName: 'Nouveau formulaire',
-      formDesc: 'Sans campagne initiale',
-      isActive: true
-    });
-
-    component.saveForm();
-
-    expect(notificationService.error).not.toHaveBeenCalled();
-    expect(formService.create).toHaveBeenCalledWith({
-      formName: 'Nouveau formulaire',
-      formDesc: 'Sans campagne initiale',
-      isActive: true
-    });
+    expect(router.navigate).toHaveBeenCalledWith(['/dashboard/forms/new']);
   });
 
-  it('updates a form without forwarding the legacy campaignId', () => {
-    formService.update.and.returnValue(of({ items: [{ id: 88 }] } as any));
+  it('navigates to the dedicated edit page when admin mode is enabled', () => {
+    component.openEditPage({ id: 88, formName: 'Formulaire modifie' } as any);
 
-    component.isEditMode.set(true);
-    component.formState.set({
-      id: 88,
-      formName: 'Formulaire modifie',
-      formDesc: 'Edition sans reassociation legacy',
-      isActive: false
-    });
+    expect(router.navigate).toHaveBeenCalledWith(['/dashboard/forms', 88, 'edit']);
+  });
 
-    component.saveForm();
+  it('blocks create navigation when admin mode is disabled', () => {
+    component.isAdminModeEnabled.set(false);
 
-    expect(notificationService.error).not.toHaveBeenCalled();
-    expect(formService.update).toHaveBeenCalledWith({
-      id: 88,
-      formName: 'Formulaire modifie',
-      formDesc: 'Edition sans reassociation legacy',
-      isActive: false
-    });
+    component.openCreatePage();
+
+    expect(router.navigate).not.toHaveBeenCalled();
+    expect(notificationService.warning).toHaveBeenCalledWith('Acces refuse', 'Le mode admin doit etre active pour creer un formulaire');
+  });
+
+  it('blocks edit navigation when admin mode is disabled', () => {
+    component.isAdminModeEnabled.set(false);
+
+    component.openEditPage({ id: 91, formName: 'Formulaire verrouille' } as any);
+
+    expect(router.navigate).not.toHaveBeenCalled();
+    expect(notificationService.warning).toHaveBeenCalledWith('Acces refuse', 'Le mode admin doit etre active pour modifier un formulaire');
   });
 });

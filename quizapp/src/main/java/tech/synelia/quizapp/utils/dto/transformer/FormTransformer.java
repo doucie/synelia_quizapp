@@ -12,9 +12,9 @@ import org.mapstruct.Named;
 import org.mapstruct.ReportingPolicy;
 import org.mapstruct.factory.Mappers;
 
-import tech.synelia.quizapp.dao.entity.*;
-import tech.synelia.quizapp.utils.contract.*;
-import tech.synelia.quizapp.utils.dto.*;
+import tech.synelia.quizapp.dao.entity.Form;
+import tech.synelia.quizapp.utils.contract.FullTransformerQualifier;
+import tech.synelia.quizapp.utils.dto.FormDto;
 
 /**
  * TRANSFORMER for table "form"
@@ -30,7 +30,6 @@ public interface FormTransformer {
 		@Mapping(source="entity.createdAt", dateFormat="dd/MM/yyyy", target="createdAt"),
 		@Mapping(source="entity.updatedAt", dateFormat="dd/MM/yyyy", target="updatedAt"),
 		@Mapping(source="entity.isTimed", target="isTimed"),
-		@Mapping(source="entity.campaigns.id", target="campaignId"),
 	})
 	FormDto toDto(Form entity) throws ParseException;
 
@@ -71,7 +70,6 @@ public interface FormTransformer {
 		@Mapping(source="dto.updatedBy", target="updatedBy"),
 		@Mapping(source="dto.isDeleted", target="isDeleted"),
 		@Mapping(source="dto.searchString", target="searchString"),
-		@Mapping(source="campaigns", target="campaigns"),
 	})
-	Form toEntity(FormDto dto, Campaigns campaigns) throws ParseException;
+	Form toEntity(FormDto dto) throws ParseException;
 }

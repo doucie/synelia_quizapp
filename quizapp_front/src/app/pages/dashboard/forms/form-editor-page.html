@@ -1,0 +1,751 @@
+<div class="form-editor-page">
+  <header class="page-header">
+    <div class="header-top">
+      <div class="header-title-block">
+        <p class="page-eyebrow">Formulaires</p>
+        <h1 class="page-title">{{ isEditMode() ? 'Modifier le formulaire' : 'Nouveau formulaire' }}</h1>
+
+        <div class="page-status-row">
+          @if (hasPersistedForm()) {
+            @if (workingVersion()) {
+              <span class="badge badge--info">{{ getVersionLabel(workingVersion()) }}</span>
+              @if (workingVersion()?.isPublished) {
+                <span class="badge badge--success">Publiee</span>
+              } @else {
+                <span class="badge badge--warning">Brouillon</span>
+              }
+              @if (workingVersion()?.isLocked) {
+                <span class="badge badge--danger">Verrouillee</span>
+              }
+              @if (workingVersionIsEditable()) {
+                <span class="badge badge--neutral">Editable</span>
+              }
+            } @else {
+              <span class="badge badge--neutral">Sans version</span>
+            }
+
+            <span class="badge badge--neutral">{{ linkedCampaigns().length }} campagne{{ linkedCampaigns().length > 1 ? 's' : '' }}</span>
+          } @else {
+            <span class="badge badge--warning">Brouillon initial</span>
+          }
+
+          <span class="badge badge--neutral">{{ linkedQuestions().length }} question{{ linkedQuestions().length > 1 ? 's' : '' }}</span>
+          <span class="badge" [class.badge--warning]="formState().isTimed" [class.badge--neutral]="!formState().isTimed">
+            Temps max {{ totalQuestionChronoLabel() }}
+          </span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button type="button" class="btn btn-secondary" (click)="goBack()">{{ isEditMode() ? 'Retour a la liste' : 'Annuler' }}</button>
+        <button type="button" class="btn btn-primary" (click)="save()" [disabled]="loading() || saving() || !isAdminModeEnabled()">
+          {{ getSaveButtonLabel() }}
+        </button>
+      </div>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <div class="state-card state-card--centered">
+      <div class="spinner"></div>
+      <p>Chargement du formulaire...</p>
+    </div>
+  } @else {
+    <div class="main-column">
+      <section class="editor-card">
+        <div class="section-header">
+          <h2 class="section-title">Informations generales</h2>
+        </div>
+
+        <div class="form-fields">
+          <div class="form-group">
+            <label for="form-editor-name">Nom du formulaire *</label>
+            <input
+              id="form-editor-name"
+              type="text"
+              [ngModel]="formState().formName"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="updateFormField('formName', $event)"
+              placeholder="Ex: Evaluation technique Angular"
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="form-editor-description">Description</label>
+            <textarea
+              id="form-editor-description"
+              rows="6"
+              [ngModel]="formState().formDesc"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="updateFormField('formDesc', $event)"
+              placeholder="Resume metier du formulaire"
+            ></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group form-group--checkbox">
+              <app-filter-checkbox
+                  class="checkbox-field"
+                inputId="form-editor-active"
+                label="Formulaire actif"
+                [checked]="formState().isActive"
+                ariaLabel="Formulaire actif"
+                (checkedChange)="updateFormField('isActive', $event)"
+              ></app-filter-checkbox>
+            </div>
+
+            <div class="form-group form-group--checkbox">
+              <app-filter-checkbox
+                  class="checkbox-field"
+                inputId="form-editor-timed"
+                label="Formulaire chronometre"
+                [checked]="formState().isTimed"
+                ariaLabel="Formulaire chronometre"
+                (checkedChange)="updateFormField('isTimed', $event)"
+              ></app-filter-checkbox>
+            </div>
+          </div>
+
+          <div class="form-time-summary" [class.form-time-summary--active]="formState().isTimed" [class.form-time-summary--empty]="linkedQuestions().length === 0">
+            <div>
+              <p class="form-time-summary__eyebrow">Temps maximal estime</p>
+              <p class="form-time-summary__value">{{ totalQuestionChronoLabel() }}</p>
+            </div>
+
+            <p class="form-time-summary__note">
+              @if (formState().isTimed) {
+                Le formulaire est chronometre. Le candidat devra respecter ce temps cumule base sur les chronos de chaque question.
+              } @else if (linkedQuestions().length > 0) {
+                Ce total reste informatif tant que l'option "Formulaire chronometre" n'est pas activee.
+              } @else {
+                Ajoutez des questions pour calculer automatiquement le temps maximal du formulaire.
+              }
+            </p>
+          </div>
+        </div>
+      </section>
+
+        <section class="editor-card">
+          <div class="section-heading">
+            <h2 class="section-title">Composition du formulaire</h2>
+
+            <div class="section-actions">
+              @if (canManageComposition()) {
+                <button type="button" class="btn btn-secondary" (click)="openQuestionBankModal()" [disabled]="compositionBusy()">
+                  Ajouter des questions
+                </button>
+                <button type="button" class="btn btn-primary" (click)="openCreateQuestionModal()" [disabled]="compositionBusy() || specialities().length === 0">
+                  Creer une question
+                </button>
+              }
+
+              @if (hasPersistedForm() && workingVersionIsEditable() && isAdminModeEnabled()) {
+                <button type="button" class="btn btn-secondary" (click)="publishWorkingVersion()" [disabled]="versionActionLoading()">
+                    {{ versionActionLoading() ? 'Publication...' : 'Publier' }}
+                </button>
+              } @else if (hasPersistedForm() && workingVersion() && isAdminModeEnabled()) {
+                <button type="button" class="btn btn-secondary" (click)="createEditableDraft()" [disabled]="versionActionLoading()">
+                    {{ versionActionLoading() ? 'Creation...' : 'Creer une version modifiable' }}
+                </button>
+              }
+            </div>
+          </div>
+
+          @if (compositionLoading()) {
+            <div class="state-card state-card--inline">
+              <div class="spinner spinner--small"></div>
+              <p>Chargement du brouillon de travail...</p>
+            </div>
+            } @else if (hasPersistedForm() && !workingVersion()) {
+              <p class="section-note">Aucune version disponible.</p>
+            } @else if (hasPersistedForm() && !workingVersionIsEditable()) {
+            <p class="section-note">Version verrouillee.</p>
+          } @else {
+            <div class="composition-toolbar composition-toolbar--surface">
+              <div>
+                <p class="composition-toolbar__eyebrow">Composeur de questions</p>
+                <h3 class="composition-toolbar__title">Ajoutez des questions existantes depuis une popup, puis enrichissez le brouillon sans quitter la page.</h3>
+                <p class="composition-toolbar__copy">La banque d'ajout exclut automatiquement les questions deja presentes dans ce formulaire.</p>
+              </div>
+
+              <div class="composition-toolbar__metrics">
+                <div class="composition-metric">
+                  <span class="composition-metric__label">Banque restante</span>
+                  <strong class="composition-metric__value">{{ availableQuestions().length }}</strong>
+                </div>
+
+                <div class="composition-metric" [class.composition-metric--active]="formState().isTimed">
+                  <span class="composition-metric__label">Temps max</span>
+                  <strong class="composition-metric__value">{{ totalQuestionChronoLabel() }}</strong>
+                </div>
+              </div>
+            </div>
+
+            @if (linkedQuestions().length > 0) {
+              <div class="linked-questions-list">
+                @for (item of linkedQuestions(); track item.link.id ?? item.link.questionId ?? $index; let index = $index) {
+                  <article class="linked-question-card" [class.linked-question-card--timed]="formState().isTimed">
+                    <div class="linked-question-card__hero">
+                      <div class="linked-question-card__identity">
+                        <div class="badge-row">
+                          <span class="badge badge--neutral">Ordre {{ item.link.questionOrder || index + 1 }}</span>
+                          @if (item.question?.questionRef) {
+                            <span class="badge badge--neutral">{{ item.question?.questionRef }}</span>
+                          }
+                          @if (item.question) {
+                            <span class="badge badge--info">{{ getTypeLabel(item.question.questionType) }}</span>
+                            <span class="badge {{ getDifficultyClass(item.question.difficultyLevel) }}">{{ getDifficultyLabel(item.question.difficultyLevel) }}</span>
+                            @if (item.question.manualCorrectionRequired) {
+                              <span class="badge badge--warning">Correction manuelle</span>
+                            }
+                            @if (item.question.allAnswersJustificationRequired) {
+                              <span class="badge badge--success">Justification globale</span>
+                            }
+                          }
+                          <span class="badge badge--neutral">{{ item.answers.length }} reponse{{ item.answers.length > 1 ? 's' : '' }}</span>
+                        </div>
+
+                        <h3 class="linked-question-title">
+                          {{ item.question?.questionText || ('Question #' + (item.link.questionId || '?')) }}
+                        </h3>
+
+                        @if (item.question) {
+                          <p class="linked-question-card__lead">{{ getDifficultyDescription(item.question.difficultyLevel) }}</p>
+                        }
+                      </div>
+
+                      @if (isAdminModeEnabled()) {
+                        <div class="linked-question-actions">
+                          <button type="button" class="action-btn action-btn--edit" (click)="openEditQuestionModal(item)" [disabled]="compositionBusy() || !item.question?.id" aria-label="Modifier la question">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                              <path d="M12 20H21" />
+                              <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5z" />
+                            </svg>
+                            <span>Modifier</span>
+                          </button>
+                          <button type="button" class="action-btn action-btn--delete" (click)="openRemoveQuestionModal(item)" [disabled]="compositionBusy()" aria-label="Retirer la question">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                              <path d="M3 6h18" />
+                              <path d="M8 6V4h8v2" />
+                              <path d="M19 6l-1 14H6L5 6" />
+                            </svg>
+                            <span>Retirer</span>
+                          </button>
+                          <button type="button" class="action-btn" (click)="moveLinkedQuestion(item, -1)" [disabled]="index === 0 || compositionBusy()" aria-label="Monter la question">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                              <path d="M18 15l-6-6-6 6" />
+                            </svg>
+                            <span>Monter</span>
+                          </button>
+                          <button type="button" class="action-btn" (click)="moveLinkedQuestion(item, 1)" [disabled]="index === linkedQuestions().length - 1 || compositionBusy()" aria-label="Descendre la question">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                              <path d="M6 9l6 6 6-6" />
+                            </svg>
+                            <span>Descendre</span>
+                          </button>
+                        </div>
+                      }
+                    </div>
+
+                    <div class="linked-question-card__stats">
+                      <div class="linked-question-stat">
+                        <span class="linked-question-stat__label">Specialite</span>
+                        <strong class="linked-question-stat__value">{{ getSpecialityName(item.question?.specialityId) }}</strong>
+                      </div>
+
+                      <div class="linked-question-stat">
+                        <span class="linked-question-stat__label">Chrono</span>
+                        <strong class="linked-question-stat__value">{{ item.question?.questionChrono || item.link.chronoOverride || 0 }} s</strong>
+                      </div>
+
+                      <div class="linked-question-stat">
+                        <span class="linked-question-stat__label">Score</span>
+                        <strong class="linked-question-stat__value">{{ item.question?.score || 0 }} pts</strong>
+                      </div>
+
+                      <div class="linked-question-stat">
+                        <span class="linked-question-stat__label">Candidat</span>
+                        @if (item.question?.questionType === 'TEXT' && item.question?.freeTextResponsePlaceholder) {
+                          <strong class="linked-question-stat__value">{{ item.question?.freeTextResponsePlaceholder }}</strong>
+                        } @else {
+                          <strong class="linked-question-stat__value">{{ item.answers.length }} reponse{{ item.answers.length > 1 ? 's' : '' }}</strong>
+                        }
+                      </div>
+                    </div>
+
+                    @if (item.answers.length > 0) {
+                      <div class="answer-preview-list">
+                        @for (answer of item.answers; track answer.id ?? $index) {
+                          <article class="answer-preview" [class.answer-preview--correct]="answer.isCorrect === true">
+                            <div class="answer-preview__header">
+                              <div>
+                                <span class="answer-preview__title">{{ answer.answerText || 'Reponse sans texte' }}</span>
+                                @if (answer.additionalCommentRequired) {
+                                  <p class="answer-preview__support">Justification obligatoire sur cette reponse.</p>
+                                } @else if (answer.allowAdditionalComment) {
+                                  <p class="answer-preview__support">Commentaire additionnel autorise.</p>
+                                }
+                              </div>
+
+                              <div class="badge-row">
+                                @if (answer.isCorrect) {
+                                  <span class="badge badge--success">Correcte</span>
+                                }
+                                <span class="badge badge--neutral">{{ getAnswerTypeLabel(answer.answerType) }}</span>
+                                <span class="badge badge--neutral">Ordre {{ answer.answerOrder || 0 }}</span>
+                              </div>
+                            </div>
+
+                            @if (answer.allowAdditionalComment && answer.additionalCommentPlaceholder) {
+                              <p class="answer-preview__placeholder">{{ answer.additionalCommentPlaceholder }}</p>
+                            }
+                          </article>
+                        }
+                      </div>
+                    } @else {
+                      <div class="linked-question-card__empty">
+                        @if (item.question?.questionType === 'TEXT') {
+                          <p class="form-help">Question ouverte. Placeholder candidat: {{ item.question?.freeTextResponsePlaceholder || 'A renseigner' }}.</p>
+                        } @else {
+                          <p class="form-help">Cette question n'utilise pas encore de reponses predefinies dans le brouillon courant.</p>
+                          }
+                      </div>
+                    }
+                  </article>
+                }
+              </div>
+            } @else {
+              <p class="section-note">Aucune question pour l'instant. Utilisez "Ajouter des questions" pour ouvrir la popup de selection, ou creez une nouvelle question directement dans ce composeur.</p>
+            }
+          }
+      </section>
+    </div>
+  }
+</div>
+
+@if (showQuestionBankModal()) {
+  <div class="modal-overlay" role="dialog" aria-modal="true" (click)="closeQuestionBankModal()">
+    <div class="modal-content modal-content--large" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Ajouter des questions existantes</h2>
+        <button class="modal-close" (click)="closeQuestionBankModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="question-bank-panel question-bank-panel--modal">
+          <p class="section-note">Les questions deja ajoutees au formulaire courant sont automatiquement exclues de cette selection.</p>
+
+          <div class="question-bank-filters">
+            <div class="form-group">
+              <label for="form-editor-question-search">Rechercher une question</label>
+              <input
+                id="form-editor-question-search"
+                type="text"
+                [ngModel]="questionSearchQuery()"
+                [ngModelOptions]="{ standalone: true }"
+                (ngModelChange)="onQuestionSearchQueryChange($event)"
+                placeholder="Rechercher une question existante"
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="form-editor-question-speciality">Filtrer par specialite</label>
+              <app-filter-select
+                id="form-editor-question-speciality"
+                [ngModel]="questionBankSpecialityId()"
+                [ngModelOptions]="{ standalone: true }"
+                ariaLabel="Filtrer la banque par specialite"
+                [searchable]="true"
+                searchPlaceholder="Rechercher une specialite..."
+                (ngModelChange)="onQuestionBankSpecialityChange($event)"
+              >
+                <option [ngValue]="null">Toutes les specialites</option>
+                @for (speciality of sortedSpecialities(); track speciality.id ?? $index) {
+                  <option [ngValue]="speciality.id">{{ speciality.nom || speciality.name || speciality.specialityName }}</option>
+                }
+              </app-filter-select>
+            </div>
+          </div>
+
+          <div class="question-bank-toolbar">
+            <p class="question-bank-toolbar__summary">
+              {{ availableQuestions().length }} question{{ availableQuestions().length > 1 ? 's' : '' }} disponible{{ availableQuestions().length > 1 ? 's' : '' }}
+              @if (selectedBankQuestionCount() > 0) {
+                <span> · {{ selectedBankQuestionCount() }} selectionnee{{ selectedBankQuestionCount() > 1 ? 's' : '' }}</span>
+              }
+            </p>
+
+            <div class="question-bank-toolbar__actions">
+              <button type="button" class="btn btn-secondary btn--compact" (click)="selectAllAvailableQuestions()" [disabled]="availableQuestions().length === 0 || linkMutationLoading()">
+                Tout selectionner
+              </button>
+              <button type="button" class="btn btn-secondary btn--compact" (click)="clearSelectedBankQuestions()" [disabled]="selectedBankQuestionCount() === 0">
+                Effacer la selection
+              </button>
+            </div>
+          </div>
+
+          @if (availableQuestions().length > 0) {
+            <div class="question-bank-list" aria-label="Banque de questions disponible">
+              @for (question of availableQuestions(); track question.id ?? $index) {
+                <label class="question-bank-item" [class.question-bank-item--selected]="isBankQuestionSelected(question.id)">
+                  <input
+                    class="question-bank-item__checkbox"
+                    type="checkbox"
+                    [checked]="isBankQuestionSelected(question.id)"
+                    (change)="toggleBankQuestionSelection(question.id ?? 0, $any($event.target).checked)"
+                  >
+
+                  <div class="question-bank-item__content">
+                    <div class="badge-row">
+                      @if (question.questionRef) {
+                        <span class="badge badge--neutral">{{ question.questionRef }}</span>
+                      }
+                      <span class="badge badge--info">{{ getTypeLabel(question.questionType) }}</span>
+                      <span class="badge {{ getDifficultyClass(question.difficultyLevel) }}">{{ getDifficultyLabel(question.difficultyLevel) }}</span>
+                      @if (question.manualCorrectionRequired) {
+                        <span class="badge badge--warning">Correction manuelle</span>
+                      }
+                    </div>
+
+                    <p class="question-bank-item__title">{{ question.questionText || ('Question #' + (question.id || '?')) }}</p>
+                    <p class="question-bank-item__meta">
+                      <span>Specialite: {{ getSpecialityName(question.specialityId) }}</span>
+                      <span>Score: {{ question.score || 0 }} pts</span>
+                      <span>Chrono: {{ question.questionChrono || 0 }} s</span>
+                    </p>
+                  </div>
+                </label>
+              }
+            </div>
+          } @else {
+            <p class="section-note">Aucune question disponible pour ces filtres.</p>
+          }
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeQuestionBankModal()">Annuler</button>
+        <button class="btn btn-primary" (click)="addSelectedQuestionsToVersion()" [disabled]="linkMutationLoading() || selectedBankQuestionCount() === 0">
+          Ajouter la selection
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (showQuestionModal()) {
+  <div class="modal-overlay" role="dialog" aria-modal="true" (click)="closeQuestionModal()">
+    <div class="modal-content modal-content--large" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ isQuestionEditMode() ? 'Modifier la question' : 'Nouvelle question' }}</h2>
+        <button class="modal-close" (click)="closeQuestionModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="question-form">
+          <section class="question-form__section">
+            <div class="question-form__section-header">
+              <h3 class="question-form__section-title">Question</h3>
+              <p class="question-form__section-subtitle">Le coeur de la question et son rattachement metier.</p>
+            </div>
+
+            <div class="form-group">
+              <label for="question-editor-text">Texte de la question *</label>
+              <textarea
+                id="question-editor-text"
+                [ngModel]="questionForm().questionText"
+                [ngModelOptions]="{ standalone: true }"
+                (ngModelChange)="updateQuestionField('questionText', $event)"
+                placeholder="Saisissez le texte de la question..."
+                rows="4"
+                required
+              ></textarea>
+            </div>
+
+            <div class="question-form__grid">
+              <div class="form-group">
+                <label for="question-editor-type">Type</label>
+                <app-filter-select id="question-editor-type" [ngModel]="questionForm().questionType" [ngModelOptions]="{ standalone: true }" ariaLabel="Selectionner le type de question" (ngModelChange)="updateQuestionField('questionType', $event)">
+                  @for (type of questionTypes; track type) {
+                    <option [ngValue]="type">{{ getTypeLabel(type) }}</option>
+                  }
+                </app-filter-select>
+              </div>
+
+              @if (specialities().length > 0) {
+                <div class="form-group">
+                  <label for="question-editor-speciality">Specialite *</label>
+                  <app-filter-select id="question-editor-speciality" [ngModel]="questionForm().specialityId" [ngModelOptions]="{ standalone: true }" ariaLabel="Selectionner une specialite" [searchable]="true" searchPlaceholder="Rechercher une specialite..." (ngModelChange)="updateQuestionField('specialityId', $event)">
+                    <option [ngValue]="undefined" disabled>Choisir une specialite</option>
+                    @for (speciality of sortedSpecialities(); track speciality.id ?? $index) {
+                      <option [ngValue]="speciality.id">{{ speciality.nom || speciality.name || speciality.specialityName }}</option>
+                    }
+                  </app-filter-select>
+                </div>
+              }
+            </div>
+
+            @if (specialities().length === 0) {
+              <p class="form-help">Aucune specialite active n'est disponible. La creation d'une question restera bloquee tant que ce referentiel n'est pas retabli.</p>
+            }
+          </section>
+
+          <section class="question-form__section">
+            <div class="question-form__section-header">
+              <h3 class="question-form__section-title">Notation et rythme</h3>
+              <p class="question-form__section-subtitle">La difficulte propose des valeurs pratiques, modifiables a tout moment.</p>
+            </div>
+
+            <div class="question-form__grid question-form__grid--three">
+              <div class="form-group">
+                <label for="question-editor-difficulty">Difficulte</label>
+                <app-filter-select id="question-editor-difficulty" [ngModel]="questionForm().difficultyLevel" [ngModelOptions]="{ standalone: true }" ariaLabel="Selectionner la difficulte" (ngModelChange)="updateQuestionField('difficultyLevel', $event)">
+                  @for (level of difficultyLevels; track level) {
+                    <option [ngValue]="level">{{ getDifficultyLabel(level) }}</option>
+                  }
+                </app-filter-select>
+              </div>
+
+              <div class="form-group">
+                <label for="question-editor-score">Score</label>
+                <input
+                  type="number"
+                  id="question-editor-score"
+                  [ngModel]="questionForm().score"
+                  [ngModelOptions]="{ standalone: true }"
+                  (ngModelChange)="updateQuestionField('score', $event)"
+                  min="0"
+                  step="1"
+                >
+              </div>
+
+              <div class="form-group">
+                <label for="question-editor-chrono">Chrono (secondes)</label>
+                <input
+                  type="number"
+                  id="question-editor-chrono"
+                  [ngModel]="questionForm().questionChrono"
+                  [ngModelOptions]="{ standalone: true }"
+                  (ngModelChange)="updateQuestionField('questionChrono', $event)"
+                  min="0"
+                  step="5"
+                >
+              </div>
+            </div>
+
+            <div class="question-form__preset-row {{ getDifficultyPresetRowClass(questionForm().difficultyLevel) }}">
+              <div class="question-form__preset-details">
+                <p class="question-form__preset-copy">Suggestion {{ getDifficultyLabel(questionForm().difficultyLevel) }}: {{ getDifficultyPresetSummary(questionForm().difficultyLevel) }}</p>
+                <p class="question-form__difficulty-description">{{ getDifficultyDescription(questionForm().difficultyLevel) }}</p>
+              </div>
+
+              @if (questionDifficultyPresetOverridden()) {
+                <button class="question-form__preset-action" type="button" (click)="applyDifficultyPreset(true)">
+                  Reappliquer la suggestion
+                </button>
+              }
+            </div>
+
+            <div class="form-group">
+              <app-filter-checkbox class="checkbox-field" inputId="question-editor-manual-correction" label="Correction manuelle requise" [checked]="questionForm().manualCorrectionRequired === true" ariaLabel="Correction manuelle requise" (checkedChange)="updateQuestionField('manualCorrectionRequired', $event)"></app-filter-checkbox>
+              <p class="form-help form-help--compact" [class.form-help--success]="questionForm().manualCorrectionRequired === true">Desactive l'attribution automatique des points pour cette question et impose une note recruteur comprise entre 0 et le score defini.</p>
+            </div>
+
+            @if (formVersionQuestionContext()) {
+              <p class="question-form__context-note">Brouillon de version #{{ formVersionQuestionContext()?.formVersionId }} : les changements structurels isoleront automatiquement la question.</p>
+            }
+          </section>
+
+          @if (questionModalSupportsAnswerJustification() || questionModalRequiresFreeTextPlaceholder()) {
+            <section class="question-form__section">
+              <div class="question-form__section-header">
+                <h3 class="question-form__section-title">Parametres de reponse</h3>
+                <p class="question-form__section-subtitle">Ces options pilotent la saisie attendue cote candidat.</p>
+              </div>
+
+              @if (questionModalSupportsAnswerJustification()) {
+                <div class="form-group">
+                  <app-filter-checkbox class="checkbox-field" inputId="question-editor-all-answers-justification" label="Justification obligatoire pour toutes les reponses" [checked]="questionForm().allAnswersJustificationRequired === true" ariaLabel="Justification obligatoire pour toutes les reponses" (checkedChange)="onAllAnswersJustificationRequiredChange($event)"></app-filter-checkbox>
+                  <p class="form-help form-help--compact" [class.form-help--success]="questionForm().allAnswersJustificationRequired === true">Active automatiquement le commentaire additionnel obligatoire avec le placeholder "Justifiez votre reponse" sur chaque reponse.</p>
+                </div>
+              }
+
+              @if (questionModalRequiresFreeTextPlaceholder()) {
+                <div class="form-group">
+                  <label for="question-editor-free-text-placeholder">Placeholder de la reponse libre *</label>
+                  <input
+                    type="text"
+                    id="question-editor-free-text-placeholder"
+                    [ngModel]="questionForm().freeTextResponsePlaceholder"
+                    [ngModelOptions]="{ standalone: true }"
+                    (ngModelChange)="updateQuestionField('freeTextResponsePlaceholder', $event)"
+                    placeholder="Ex: Decrivez votre demarche, vos choix et vos hypotheses"
+                  >
+                </div>
+              }
+            </section>
+          }
+
+          @if (questionModalSupportsPredefinedAnswers()) {
+            <section class="embedded-answers-section">
+              <div class="embedded-answers-header">
+                <div>
+                  <h3>Reponses associees</h3>
+                  @if (questionModalIsTrueFalse()) {
+                    <p>Le type Vrai/Faux impose exactement deux reponses predefinies avec une seule correcte.</p>
+                  } @else if (questionModalUsesExclusiveCorrectAnswer()) {
+                    <p>Une seule reponse peut etre marquee correcte pour ce type de question.</p>
+                  } @else {
+                    <p>Ajoutez les reponses qui doivent etre creees ou mises a jour en meme temps que la question.</p>
+                  }
+                </div>
+
+                @if (!questionModalIsTrueFalse()) {
+                  <button class="btn btn-secondary btn--compact" type="button" (click)="addQuestionDraftAnswer()">
+                    Ajouter une reponse
+                  </button>
+                }
+              </div>
+
+              <div class="embedded-answer-list">
+                @for (draft of questionDraftAnswers(); track draft.draftId; let index = $index) {
+                  <article class="embedded-answer-card">
+                    <div class="embedded-answer-card__header">
+                      <div class="embedded-answer-card__identity">
+                        <h4>Reponse {{ index + 1 }}</h4>
+                        @if (questionModalIsTrueFalse()) {
+                          <p>Ordre fixe</p>
+                        }
+                      </div>
+
+                      <div class="embedded-answer-card__actions">
+                        @if (!questionModalIsTrueFalse()) {
+                          <button class="embedded-answer-card__action" type="button" (click)="moveQuestionDraftAnswer(draft.draftId, 'up')" [disabled]="index === 0">Monter</button>
+                          <button class="embedded-answer-card__action" type="button" (click)="moveQuestionDraftAnswer(draft.draftId, 'down')" [disabled]="index === questionDraftAnswers().length - 1">Descendre</button>
+                          <button class="embedded-answer-card__remove" type="button" (click)="removeQuestionDraftAnswer(draft.draftId)">Retirer</button>
+                        }
+                      </div>
+                    </div>
+
+                    <div class="form-group">
+                      <label [for]="'draft-answer-text-' + draft.draftId">Texte de la reponse *</label>
+                      <input
+                        type="text"
+                        [id]="'draft-answer-text-' + draft.draftId"
+                        [ngModel]="draft.answerText"
+                        [ngModelOptions]="{ standalone: true }"
+                        (ngModelChange)="updateQuestionDraftAnswer(draft.draftId, 'answerText', $event)"
+                        [disabled]="questionModalIsTrueFalse()"
+                        placeholder="Saisissez le texte de la reponse..."
+                      >
+                    </div>
+
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label [for]="'draft-answer-type-' + draft.draftId">Format</label>
+                        <app-filter-select [id]="'draft-answer-type-' + draft.draftId" [ngModel]="draft.answerType" [ngModelOptions]="{ standalone: true }" ariaLabel="Selectionner le format de la reponse" (ngModelChange)="updateQuestionDraftAnswer(draft.draftId, 'answerType', $event)">
+                          @for (type of answerTypes; track type) {
+                            <option [ngValue]="type">{{ getAnswerTypeLabel(type) }}</option>
+                          }
+                        </app-filter-select>
+                      </div>
+
+                      <div class="form-group form-group--checkbox">
+                        <span class="form-group__label-spacer" aria-hidden="true"></span>
+                        <app-filter-checkbox class="checkbox-field" [inputId]="'draft-answer-correct-' + draft.draftId" [label]="questionModalUsesExclusiveCorrectAnswer() ? 'Reponse correcte (unique)' : 'Reponse correcte'" [checked]="draft.isCorrect === true" ariaLabel="Reponse correcte" (checkedChange)="updateQuestionDraftAnswer(draft.draftId, 'isCorrect', $event)"></app-filter-checkbox>
+                      </div>
+                    </div>
+
+                    <div class="form-group">
+                      <app-filter-checkbox class="checkbox-field" [inputId]="'draft-answer-comment-' + draft.draftId" label="Autoriser un commentaire additionnel" [checked]="draft.allowAdditionalComment === true" [disabled]="questionForm().allAnswersJustificationRequired" ariaLabel="Autoriser un commentaire additionnel" (checkedChange)="updateQuestionDraftAnswer(draft.draftId, 'allowAdditionalComment', $event)"></app-filter-checkbox>
+                    </div>
+
+                    @if (draft.allowAdditionalComment) {
+                      <div class="form-group">
+                        <app-filter-checkbox class="checkbox-field" [inputId]="'draft-answer-comment-required-' + draft.draftId" label="Commentaire obligatoire" [checked]="draft.additionalCommentRequired === true" [disabled]="questionForm().allAnswersJustificationRequired" ariaLabel="Commentaire obligatoire" (checkedChange)="updateQuestionDraftAnswer(draft.draftId, 'additionalCommentRequired', $event)"></app-filter-checkbox>
+                      </div>
+
+                      <div class="form-group">
+                        <label [for]="'draft-answer-comment-placeholder-' + draft.draftId">Texte d'aide du commentaire</label>
+                        <input
+                          type="text"
+                          [id]="'draft-answer-comment-placeholder-' + draft.draftId"
+                          [ngModel]="draft.additionalCommentPlaceholder"
+                          [ngModelOptions]="{ standalone: true }"
+                          (ngModelChange)="updateQuestionDraftAnswer(draft.draftId, 'additionalCommentPlaceholder', $event)"
+                          [disabled]="questionForm().allAnswersJustificationRequired"
+                          placeholder="Ex: Precisez votre reponse"
+                        >
+                      </div>
+                    }
+                  </article>
+                }
+              </div>
+
+              @if (!questionModalIsTrueFalse()) {
+                <div class="embedded-answers-footer">
+                  <button class="btn btn-secondary btn--compact" type="button" (click)="addQuestionDraftAnswer()">
+                    Ajouter une reponse
+                  </button>
+                </div>
+              }
+            </section>
+          } @else {
+            <section class="embedded-answers-section embedded-answers-section--info">
+              <h3>Reponses associees</h3>
+              <p>Les questions de type texte libre n'utilisent pas de reponses predefinies. Si vous passez une question existante en texte libre, ses reponses actives seront supprimees a l'enregistrement.</p>
+            </section>
+          }
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeQuestionModal()">Annuler</button>
+        <button class="btn btn-primary" (click)="saveQuestion()" [disabled]="questionSaving() || specialities().length === 0">
+          {{ questionSaving() ? 'Enregistrement...' : (isQuestionEditMode() ? 'Enregistrer' : 'Creer et ajouter') }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (showRemoveQuestionModal()) {
+  <div class="modal-overlay" role="dialog" aria-modal="true" (click)="closeRemoveQuestionModal()">
+    <div class="modal-content modal-content--small" (click)="$event.stopPropagation()">
+      <div class="modal-header modal-header--danger">
+        <h2>Retirer la question</h2>
+        <button class="modal-close" (click)="closeRemoveQuestionModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="delete-warning">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="warning-icon">
+            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+            <path d="M12 9v4" />
+            <path d="M12 17h.01" />
+          </svg>
+          <p>Confirmez-vous le retrait de cette question ?</p>
+          <p class="warning-detail">{{ selectedLinkedQuestion()?.question?.questionText || ('Question #' + (selectedLinkedQuestion()?.link?.questionId || '?')) }}</p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeRemoveQuestionModal()">Annuler</button>
+        <button class="btn btn-danger" (click)="confirmRemoveQuestionFromVersion()" [disabled]="linkMutationLoading()">Retirer</button>
+      </div>
+    </div>
+  </div>
+}

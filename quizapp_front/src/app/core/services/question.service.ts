@@ -13,6 +13,9 @@ export interface Question {
   score?: number;
   difficultyLevel?: string;
   specialityId?: number;
+  allAnswersJustificationRequired?: boolean;
+  manualCorrectionRequired?: boolean;
+  freeTextResponsePlaceholder?: string;
   createdAt?: string;
   createdBy?: number;
   updatedAt?: string;

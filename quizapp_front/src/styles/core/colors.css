@@ -75,6 +75,7 @@
   --warning-rgb: 245, 158, 11;
   --info-rgb: 59, 130, 246;
   --surface-rgb: 248, 250, 252;
+  --surface-secondary-rgb: 241, 245, 249;
   --text-secondary-rgb: 107, 114, 128;
   
   /* Hover State Colors */
@@ -152,6 +153,7 @@
   --error-rgb: 239, 68, 68;
   --success-rgb: 16, 185, 129;
   --surface-rgb: 30, 41, 59;
+  --surface-secondary-rgb: 40, 54, 73;
   
   /* Hover State Colors Dark */
   --primary-hover: var(--primary-light);

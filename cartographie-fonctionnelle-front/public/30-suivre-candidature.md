@@ -84,6 +84,7 @@ La page permet au candidat de reprendre sa candidature publiquement avec son cod
 
 - Une reponse `applications/track` contenant au minimum `application`, `stages`, `progress`, `interviews`, `asks`.
 - Un `trackingCode` public stable et univoque, distinct du `quizToken`.
+- Quand un round `QUIZ` est actionnable publiquement, une action deja resolue sur la bonne tentative `application_quiz_attempt`, avec son `quizToken` dedie et l'occurrence `application_progress` concernee.
 - Des statuts candidature deja traduits ou au moins normalises pour que le front puisse les convertir vers `NEW`, `IN_PROGRESS`, `ACCEPTED`, `REJECTED`, `WITHDRAWN`.
 - Des entretiens avec une distinction claire entre l'ID du lien candidat (`candidateInterviewId`) et l'ID metier de l'entretien.
 - Un endpoint `respond-interview` capable de refuser, accepter ou replanifier sans exposition d'autres donnees internes.
@@ -111,3 +112,14 @@ La page permet au candidat de reprendre sa candidature publiquement avec son cod
 3. Repondre a un entretien `canRespond=true` en acceptant puis en testant un refus ou une replanification.
 4. Creer une demande de correction `EMAIL` ou `PHONE`.
 5. Reouvrir la page via `?code=...&email=...` et verifier le pre-remplissage automatique.
+
+## 11. Impact Cible Multi-Occurrences
+
+- [ ] remplacer la lecture de `applicationStatus` par une chronologie de rounds issue de `application_progress`
+- [ ] afficher plusieurs quiz et plusieurs entretiens potentiels pour une meme candidature quand le pipeline le prevoit
+- [x] faire pointer chaque action publique vers une occurrence precise: tentative de quiz, invitation d'entretien, demande de correction
+- [x] conserver une separation nette entre `trackingCode` public et les tokens de tentative de quiz
+- [x] quand la page propose de reprendre un quiz, utiliser le `quizToken` de `application_quiz_attempt` deja resolu par le backend et rattache au bon `application_progress`
+- [ ] formaliser les reponses entretien sur `candidate_interview` avec un vrai statut (`PENDING`, `ACCEPTED`, `DECLINED`, `RESCHEDULE_REQUESTED`) et une date de reponse exploitable
+- [ ] ajouter un flux public explicite de retrait de candidature pilotant `applicationAbandoned`, le blocage de l'avancement et la notification des recruteurs concernes
+- [ ] exposer clairement l'etat global de candidature abandonnee comme un verrou transversal distinct de la chronologie fine des rounds

@@ -10,7 +10,11 @@
 - [x] [11-dashboard-campaigns-new.md](./11-dashboard-campaigns-new.md)
 - [x] [12-dashboard-campaign-detail.md](./12-dashboard-campaign-detail.md)
 - [x] [13-dashboard-campaign-edit.md](./13-dashboard-campaign-edit.md)
+- [x] [14-dashboard-forms.md](./14-dashboard-forms.md)
+- [x] [15-dashboard-forms-new.md](./15-dashboard-forms-new.md)
+- [x] [16-dashboard-forms-edit.md](./16-dashboard-forms-edit.md)
 - [x] [20-dashboard-candidates.md](./20-dashboard-candidates.md)
+- [x] [21-dashboard-candidate-detail.md](./21-dashboard-candidate-detail.md)
 - [x] [25-dashboard-decisions.md](./25-dashboard-decisions.md)
 - [x] [30-dashboard-interviews.md](./30-dashboard-interviews.md)
 - [x] [31-dashboard-interview-create.md](./31-dashboard-interview-create.md)
@@ -87,3 +91,5 @@
 
 - Les variantes `/dashboard/email-editor/:id` et `/dashboard/email-presets/:id` sont couvertes par les fiches principales, car elles reutilisent strictement le meme composant et la meme logique metier que leurs routes de base.
 - Les routes `/dashboard/evaluate` et `/dashboard/evaluate/:link` reutilisent aussi le meme composant, mais gardent deux fiches distinctes car leurs contrats d'entree diffÃ¨rent: `?interviewId=` pour le fallback interne, `:link` pour le lien court d'evaluation.
+- Le lot formulaires dashboard distingue maintenant la liste metier `/dashboard/forms` des routes cibles `/dashboard/forms/new` et `/dashboard/forms/:id/edit`; le rattachement ou detachement d'un formulaire a une campagne est documente comme un sous-flux des pages campagne, pas comme une page technique a exposer aux utilisateurs metier.
+- Le detail candidature cible sur `/dashboard/candidates/:id` est maintenant documente dans [21-dashboard-candidate-detail.md](./21-dashboard-candidate-detail.md); [20-dashboard-candidates.md](./20-dashboard-candidates.md) reste la fiche de la liste et du passage vers ce detail.

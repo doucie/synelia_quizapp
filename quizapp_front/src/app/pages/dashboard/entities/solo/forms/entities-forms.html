@@ -59,7 +59,7 @@
         </div>
         <div class="form-group">
           <label>Campagne liée</label>
-          <app-filter-select [(ngModel)]="advancedCriteria.campaignId">
+          <app-filter-select [(ngModel)]="advancedCriteria.filterCampaignId">
             <option [ngValue]="undefined">-- Tous --</option>
             @for (item of allCampaigns(); track item.id) {
               <option [ngValue]="item.id">{{ item.campaignTitle || '#' + item.id }}</option>

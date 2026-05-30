@@ -36,6 +36,7 @@ interface RecruiterAccess {
 }
 
 interface CampaignSelectableForm extends Form {
+	campaignId?: number;
   duplicateSourceFormId?: number;
   pendingDuplication?: boolean;
 }

@@ -20,6 +20,7 @@ public class CandidateAnswerDto extends _CandidateAnswerDto implements Cloneable
     private Boolean    isSelected           ;
     private Boolean    manualIsCorrect      ;
     private String     manualCorrectionComment ;
+    private Integer    manualCorrectionScore ;
     private String     manualCorrectedAt    ;
     private Integer    manualCorrectedBy    ;
     private String     createdAt            ;
@@ -37,8 +38,11 @@ public class CandidateAnswerDto extends _CandidateAnswerDto implements Cloneable
     private Integer    questionId           ;
     private String     questionText         ;
     private String     questionType         ;
+    private Integer    questionScore        ;
+    private Boolean    manualCorrectionRequired ;
     private String     answerText           ;
     private Integer    answerId             ;
+    private Integer    answerOrder          ;
     private String     action               ;
 
     // Search param
@@ -47,6 +51,7 @@ public class CandidateAnswerDto extends _CandidateAnswerDto implements Cloneable
     private SearchParam<Boolean>  isSelectedParam        ;
     private SearchParam<Boolean>  manualIsCorrectParam   ;
     private SearchParam<String>   manualCorrectionCommentParam ;
+    private SearchParam<Integer>  manualCorrectionScoreParam ;
     private SearchParam<String>   manualCorrectedAtParam ;
     private SearchParam<Integer>  manualCorrectedByParam ;
     private SearchParam<String>   createdAtParam         ;

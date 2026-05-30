@@ -2,11 +2,13 @@ package tech.synelia.quizapp.utils.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import lombok.*;
-
-import tech.synelia.quizapp.utils.contract.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+import tech.synelia.quizapp.utils.contract.SearchParam;
 import tech.synelia.quizapp.utils.dto.customize._FormDto;
 
 @Data
@@ -32,7 +34,8 @@ public class FormDto extends _FormDto implements Cloneable {
     private String     dateCreationA        ;
     private String     dateModificationDe   ;
     private String     dateModificationA    ;
-    private Integer    campaignId           ;
+    @JsonProperty(value = "filterCampaignId", access = JsonProperty.Access.WRITE_ONLY)
+    private Integer    filterCampaignId     ;
 
     // Search param
     private SearchParam<Integer>  idParam               ;
@@ -46,7 +49,8 @@ public class FormDto extends _FormDto implements Cloneable {
     private SearchParam<Integer>  updatedByParam         ;
     private SearchParam<Boolean>  isDeletedParam         ;
     private SearchParam<String>   searchStringParam      ;
-    private SearchParam<Integer>  campaignIdParam        ;
+    @JsonProperty("filterCampaignIdParam")
+    private SearchParam<Integer>  filterCampaignIdParam  ;
 
     public FormDto() {
         super();

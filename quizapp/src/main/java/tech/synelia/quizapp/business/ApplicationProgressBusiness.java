@@ -1,7 +1,6 @@
 package tech.synelia.quizapp.business;
 
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,12 +31,10 @@ import tech.synelia.quizapp.dao.repository.PipelineStageRepository;
 import tech.synelia.quizapp.dao.repository.PipelineTemplateRepository;
 import tech.synelia.quizapp.dao.repository.SourceTokenRepository;
 import tech.synelia.quizapp.dao.repository.UserRepository;
-import tech.synelia.quizapp.utils.ExceptionUtils;
 import tech.synelia.quizapp.utils.FunctionalError;
 import tech.synelia.quizapp.utils.Status;
 import tech.synelia.quizapp.utils.StatusCode;
 import tech.synelia.quizapp.utils.StatusMessage;
-import tech.synelia.quizapp.utils.TechnicalError;
 import tech.synelia.quizapp.utils.Utilities;
 import tech.synelia.quizapp.utils.Validate;
 import tech.synelia.quizapp.utils.contract.IBasicBusiness;
@@ -442,6 +439,12 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
         if (!isSkipAllowed(progress.getPipelineStage())) {
             throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION(
                     "Cette étape obligatoire ne peut pas être ignorée",
+                    locale));
+        }
+
+        if (isNextStageWaitingForRequiredMail(progress)) {
+            throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION(
+                    "Cette étape ne peut pas être ignorée tant que l'email requis n'a pas été envoyé",
                     locale));
         }
 
@@ -1115,6 +1118,11 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
 
     private boolean isSkipAllowed(PipelineStage stage) {
         if (stage == null) {
+            return false;
+        }
+        if (stage.getStageType() != null
+                && (StageType.CANDIDATURE.getValue().equalsIgnoreCase(stage.getStageType())
+                || StageType.DECISION.getValue().equalsIgnoreCase(stage.getStageType()))) {
             return false;
         }
         if (!Boolean.TRUE.equals(stage.getIsRequired())) {

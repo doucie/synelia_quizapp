@@ -101,3 +101,12 @@ La page fournit le CRUD technique des decisions rattachees aux candidatures, en 
 3. Creer une decision et verifier son affichage dans le tableau.
 4. Editer le flag `Annulee` puis verifier le badge booleen.
 5. Supprimer puis restaurer une decision.
+
+## 11. Impact Cible Multi-Occurrences
+
+- [ ] documenter `application_progress_id` comme ancre unique d'une decision de round
+- [ ] supprimer du contrat final `applicationId`, `pipelineStageId` et `isCancel`
+- [ ] ajouter `decisionMode` et `justification` pour distinguer decision normale, annulation, override et rollback
+- [ ] documenter plusieurs rounds `PRESELECTION` et `DECISION` sur une meme candidature sans les rabattre sur un etat global unique
+- [ ] ajouter `cancelsDecisionId` pour tracer explicitement quelle decision est annulee ou remplacee
+- [ ] conserver `decisionType` comme issue metier du round, et non comme substitut d'un statut global de candidature

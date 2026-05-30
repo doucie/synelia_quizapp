@@ -182,37 +182,22 @@
             ></textarea>
           </div>
 
-          <div class="form-row">
-            <div class="form-group">
-              <label for="a-type">Type</label>
-              <app-filter-select id="a-type" ariaLabel="Type de réponse" [ngModel]="answerForm().answerType" [ngModelOptions]="{ standalone: true }" (ngModelChange)="updateFormField('answerType', $event)">
-                @for (type of answerTypes; track type) {
-                  <option [ngValue]="type">{{ type }}</option>
-                }
-              </app-filter-select>
-            </div>
-
-            <div class="form-group">
-              <label for="a-order">Ordre</label>
-              <input
-                type="number"
-                id="a-order"
-                [ngModel]="answerForm().answerOrder"
-                [ngModelOptions]="{ standalone: true }"
-                (ngModelChange)="updateFormField('answerOrder', $event)"
-                min="1"
-                step="1"
-              >
-            </div>
+          <div class="form-group">
+            <label for="a-type">Type</label>
+            <app-filter-select id="a-type" ariaLabel="Type de réponse" [ngModel]="answerForm().answerType" [ngModelOptions]="{ standalone: true }" (ngModelChange)="updateFormField('answerType', $event)">
+              @for (type of answerTypes; track type) {
+                <option [ngValue]="type">{{ type }}</option>
+              }
+            </app-filter-select>
           </div>
 
           <div class="form-group form-group--checkbox">
-            <app-filter-checkbox inputId="answers-allow-comment" label="Autoriser un commentaire additionnel" variant="inline" [checked]="answerForm().allowAdditionalComment === true" ariaLabel="Autoriser un commentaire additionnel" (checkedChange)="updateFormField('allowAdditionalComment', $event)"></app-filter-checkbox>
+            <app-filter-checkbox class="checkbox-field" inputId="answers-allow-comment" label="Autoriser un commentaire additionnel" [checked]="answerForm().allowAdditionalComment === true" ariaLabel="Autoriser un commentaire additionnel" (checkedChange)="updateFormField('allowAdditionalComment', $event)"></app-filter-checkbox>
           </div>
 
           @if (answerForm().allowAdditionalComment) {
             <div class="form-group form-group--checkbox">
-              <app-filter-checkbox inputId="answers-comment-required" label="Commentaire obligatoire" variant="inline" [checked]="answerForm().additionalCommentRequired === true" ariaLabel="Commentaire obligatoire" (checkedChange)="updateFormField('additionalCommentRequired', $event)"></app-filter-checkbox>
+              <app-filter-checkbox class="checkbox-field" inputId="answers-comment-required" label="Commentaire obligatoire" [checked]="answerForm().additionalCommentRequired === true" ariaLabel="Commentaire obligatoire" (checkedChange)="updateFormField('additionalCommentRequired', $event)"></app-filter-checkbox>
             </div>
 
             <div class="form-group">
@@ -241,7 +226,7 @@
           }
 
           <div class="form-group form-group--checkbox">
-            <app-filter-checkbox inputId="answers-correct" label="Réponse correcte" variant="inline" [checked]="answerForm().isCorrect === true" ariaLabel="Réponse correcte" (checkedChange)="updateFormField('isCorrect', $event)"></app-filter-checkbox>
+            <app-filter-checkbox class="checkbox-field" inputId="answers-correct" label="Réponse correcte" [checked]="answerForm().isCorrect === true" ariaLabel="Réponse correcte" (checkedChange)="updateFormField('isCorrect', $event)"></app-filter-checkbox>
           </div>
         </div>
       </div>

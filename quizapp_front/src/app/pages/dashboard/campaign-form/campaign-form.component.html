@@ -382,7 +382,7 @@
 
         <div class="form-row">
           <div class="form-group checkbox-group">
-            <app-filter-checkbox class="campaign-checkbox" inputId="campaign-all-can-evaluate" label="Autoriser tous les recruteurs à évaluer les candidatures" variant="inline" formControlName="allCanEvaluate" ariaLabel="Autoriser tous les recruteurs à évaluer les candidatures"></app-filter-checkbox>
+            <app-filter-checkbox class="campaign-checkbox checkbox-field" inputId="campaign-all-can-evaluate" label="Autoriser tous les recruteurs à évaluer les candidatures" formControlName="allCanEvaluate" ariaLabel="Autoriser tous les recruteurs à évaluer les candidatures"></app-filter-checkbox>
             <p class="help-text">
               Si coché, tous les recruteurs pourront évaluer les candidatures sans avoir besoin d'être ajoutés explicitement
             </p>
@@ -391,14 +391,14 @@
 
         <div class="form-row two-cols">
           <div class="form-group checkbox-group">
-            <app-filter-checkbox class="campaign-checkbox" inputId="campaign-time-all-forms" label="Utiliser un temps global pour l'ensemble des formulaires" variant="inline" formControlName="timeAllForms" ariaLabel="Utiliser un temps global pour l'ensemble des formulaires"></app-filter-checkbox>
+            <app-filter-checkbox class="campaign-checkbox checkbox-field" inputId="campaign-time-all-forms" label="Utiliser un temps global pour l'ensemble des formulaires" formControlName="timeAllForms" ariaLabel="Utiliser un temps global pour l'ensemble des formulaires"></app-filter-checkbox>
             <p class="help-text">
               Si coché, la campagne applique un temps partagé sur tout le parcours au lieu d'un temps distinct par formulaire
             </p>
           </div>
 
           <div class="form-group checkbox-group">
-            <app-filter-checkbox class="campaign-checkbox" inputId="campaign-is-archived" label="Archiver cette campagne" variant="inline" formControlName="isArchived" ariaLabel="Archiver cette campagne"></app-filter-checkbox>
+            <app-filter-checkbox class="campaign-checkbox checkbox-field" inputId="campaign-is-archived" label="Archiver cette campagne" formControlName="isArchived" ariaLabel="Archiver cette campagne"></app-filter-checkbox>
             <p class="help-text">
               L'archivage est indépendant du statut de vie de la campagne et retire la campagne des vues actives
             </p>

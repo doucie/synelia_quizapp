@@ -2,9 +2,33 @@
   display: flex;
 }
 
+:host(.checkbox-field) {
+  display: block;
+  width: 100%;
+}
+
+:host(.form-label),
+:host(.checkbox-label-form) {
+  display: block;
+  width: 100%;
+}
+
+:host(.settings-checkbox-item) {
+  display: block;
+}
+
 .filter-checkbox {
   display: flex;
   align-items: center;
+}
+
+:host(.checkbox-field) .filter-checkbox {
+  width: 100%;
+}
+
+:host(.form-label) .filter-checkbox,
+:host(.checkbox-label-form) .filter-checkbox {
+  width: 100%;
 }
 
 .filter-checkbox--transitions-ready {
@@ -43,6 +67,15 @@
   position: relative;
 }
 
+:host(.checkbox-field) .checkbox-container {
+  width: 100%;
+}
+
+:host(.form-label) .checkbox-container,
+:host(.checkbox-label-form) .checkbox-container {
+  width: 100%;
+}
+
 .checkbox-input {
   position: absolute;
   width: 1px;
@@ -68,6 +101,15 @@
   line-height: 1.4;
 }
 
+:host(.checkbox-field) .checkbox-label {
+  width: 100%;
+}
+
+:host(.form-label) .checkbox-label,
+:host(.checkbox-label-form) .checkbox-label {
+  width: 100%;
+}
+
 .filter-checkbox--inline .checkbox-label {
   white-space: normal;
 }
@@ -82,6 +124,38 @@
   align-items: baseline;
   flex-wrap: wrap;
   gap: var(--spacing-xs);
+}
+
+:host(.checkbox-field) .checkbox-copy {
+  min-width: 0;
+}
+
+:host(.form-label) .checkbox-copy,
+:host(.checkbox-label-form) .checkbox-copy {
+  min-width: 0;
+}
+
+:host(.checkbox-field) .filter-checkbox--filter {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  min-height: 2.75rem;
+}
+
+:host(.form-label) .filter-checkbox--inline,
+:host(.checkbox-label-form) .filter-checkbox--inline,
+:host(.settings-checkbox-item) .filter-checkbox--inline {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  min-height: 2.75rem;
+}
+
+:host(.form-label) .filter-checkbox--inline:hover,
+:host(.checkbox-label-form) .filter-checkbox--inline:hover,
+:host(.settings-checkbox-item) .filter-checkbox--inline:hover {
+  border-color: var(--primary);
+  background: var(--surface-secondary);
 }
 
 .checkbox-content {
@@ -155,10 +229,10 @@
 }
 
 .checkbox-input:checked + .checkbox-label .checkbox-icon {
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  background: var(--primary);
   border-color: transparent;
   color: var(--white);
-  box-shadow: 0 6px 14px rgba(var(--primary-rgb), 0.22);
+  //box-shadow: 0 6px 14px rgba(var(--primary-rgb), 0.22);
 }
 
 .checkbox-input:checked + .checkbox-label .checkbox-switch {

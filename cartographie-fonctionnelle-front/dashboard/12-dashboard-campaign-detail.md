@@ -9,7 +9,7 @@
 
 ## 2. Objectif Produit
 
-La page sert à consulter une campagne en profondeur: métadonnées, pipeline, recruteurs participants, tokens sources, formulaires associés et permissions d’entité.
+La page sert à consulter une campagne en profondeur: métadonnées, pipeline, recruteurs participants, tokens sources, formulaires associés et permissions d’entité. La liste des formulaires liés y est consultative; l’ajout ou le retrait d’un formulaire doit renvoyer vers la création ou l’édition de campagne.
 
 ## 3. Etat Constate
 
@@ -17,10 +17,11 @@ La page sert à consulter une campagne en profondeur: métadonnées, pipeline, r
 - [x] Le header expose des actions directes `Voir les candidatures` et `Modifier`.
 - [x] Le pipeline est visualisé avec un compteur de candidats `IN_PROGRESS` par étape.
 - [x] Les recruteurs affichent leurs rôles et permissions.
-- [x] Les formulaires de campagne, la stratégie d’attribution et les tokens sources sont bien rendus et pilotés depuis la page.
+- [x] Les formulaires de campagne, la stratégie d’attribution et les tokens sources sont bien rendus depuis la page.
 - [x] Les permissions d’entité `CAMPAIGN` sont exploitées pour construire les accès.
 - [x] La matrice de permissions détaillées est bien visible et permet de toggler `UPDATE`, `DELETE`, `EVALUATE`, `CORRECT_TEST`, `PLANIFY`, `ADVANCE_PIPELINE` et `FOLLOW`.
 - [x] Les actions visibles ne sont pas toutes conditionnées dans le template: l’entrée en édition vérifie les droits au clic via `checkEditPermission()`, tandis que les mutations secondaires (tokens, affectation de formulaire par token, matrice de permissions) restent directement exposées dans l’UI.
+- [x] La cible retenue est que l’ajout ou le retrait d’un formulaire à la campagne soit fait depuis `/dashboard/campaigns/new` ou `/dashboard/campaigns/:id/edit`, pas depuis cette vue détail.
 
 ## 4. Blocs UI Constates
 
@@ -145,7 +146,7 @@ Permissions détaillées exposées dans la page:
 - `CampaignService.getCampaignById()` -> `POST /campaigns/getAllByCriteria` avec `data.id`
 - `CampaignService.getCampaignAccess()` -> reconstruit les accès via `POST /entityPermission/getForEntity`
 - `SourceTokenService.getSourceTokensByCampaign()` -> wrapper sur `POST /sourceToken/getByCriteria` avec `campaignId`
-- `FormService.getAllByCriteria({ campaignId })` -> endpoint formulaires
+- `FormService.getAllByCriteria({ filterCampaignId: campaignId })` -> endpoint formulaires filtre par campagne
 
 ### 6.2 Pipeline et permissions
 
@@ -170,7 +171,7 @@ Permissions détaillées exposées dans la page:
 - Des étapes pipeline triables avec `stageOrder`, `stageLabel`, `stageType`, `isEliminatory`.
 - Des compteurs de progression fiables ou des `ApplicationProgress` requêtables par étape.
 - Des tokens source reliés à la campagne avec identifiant stable, `tokenString` et éventuel `formId` / `formName`.
-- Des formulaires reliés à la campagne.
+- Des formulaires reliés à la campagne via `campaign_form`, lisibles sans exposer la mécanique de liaison dans l’UI.
 - Des permissions d’entité suffisamment enrichies pour afficher le nom, l’email et le rôle des utilisateurs dans la matrice.
 
 ## 8. Entites Metier Impliquees
@@ -190,6 +191,7 @@ Permissions détaillées exposées dans la page:
 - [x] Les compteurs de candidats par étape sont actuellement calculés par appels multiples côté front, un appel `ApplicationProgressService.getAllByCriteria()` par étape pipeline.
 - [ ] Faut-il masquer dans le template les actions tokens / permissions pour un viewer sans droit de mutation, au lieu de s’appuyer surtout sur les contrôles de service et backend ?
 - [ ] La matrice doit-elle aussi exposer `ADMIN` et `CREATOR`, aujourd’hui visibles surtout via les cartes recruteurs ?
+- [ ] Faut-il ajouter dans la section formulaires un CTA explicite vers l’édition campagne pour rendre plus lisible le flux `ajouter / retirer des formulaires` ?
 
 - [ ] Vérifier la conformité entre la BD actuelle et les formulaires/cartes/filtres front réellement exposés par cette page.
 - [ ] Vérifier, si la page expose une création via modale ou inline, qu’aucun contrôle `ngModel` n’est monté dans un vrai tag `<form>` sans `name` ni configuration `standalone`, afin d’éviter un défaut Angular `NG01352` et un rendu partiel.
@@ -202,7 +204,7 @@ Permissions détaillées exposées dans la page:
 2. Vérifier les métadonnées principales et le badge de statut.
 3. Contrôler le pipeline et les compteurs par étape.
 4. Vérifier la liste des recruteurs et leurs permissions.
-5. Contrôler la présence des formulaires liés et la section d’attribution des formulaires.
+5. Contrôler la présence des formulaires liés et vérifier que leur ajout ou retrait renvoie vers l’édition campagne, pas vers une surface technique dédiée.
 6. Créer un token, lui associer un formulaire puis vérifier le lien de candidature généré.
 7. Tester `Voir les candidatures` puis `Modifier`, y compris le cas où `adminMode` doit être activé.
 8. Modifier une permission dans la matrice et vérifier sa persistance après rechargement.

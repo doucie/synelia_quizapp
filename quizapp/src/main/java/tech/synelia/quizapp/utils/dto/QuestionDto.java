@@ -22,6 +22,9 @@ public class QuestionDto extends _QuestionDto implements Cloneable {
     private String     questionType         ;
     private Integer    score                ;
     private String     difficultyLevel      ;
+    private Boolean    allAnswersJustificationRequired ;
+    private Boolean    manualCorrectionRequired ;
+    private String     freeTextResponsePlaceholder ;
     private String     createdAt            ;
     private Integer    createdBy            ;
     private String     updatedAt            ;

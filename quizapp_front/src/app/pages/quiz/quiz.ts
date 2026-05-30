@@ -23,6 +23,7 @@ interface Question {
   order?: number; // Ordre de la question dans la campagne
   selectedAnswerIds?: number[];
   freeTextResponse?: string | null;
+  freeTextResponsePlaceholder?: string | null;
 }
 
 interface QuizData {

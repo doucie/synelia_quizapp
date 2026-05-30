@@ -51,9 +51,6 @@ public interface FormRepository extends JpaRepository<Form, Integer>, _FormRepos
 	@Query("select e from Form e where e.isDeleted = :isDeleted")
 	List<Form> findByIsDeleted(@Param("isDeleted")Boolean isDeleted);
 
-	@Query("select e from Form e where e.campaigns.id = :campaignId and e.isDeleted = :isDeleted")
-	List<Form> findByCampaignId(@Param("campaignId")Integer campaignId, @Param("isDeleted")Boolean isDeleted);
-
 	default List<Form> getByCriteria(Request<FormDto> request, EntityManager em, Locale locale) throws DataAccessException, Exception {
 		String req = "select e from Form e where e IS NOT NULL";
 		HashMap<String, java.lang.Object> param = new HashMap<String, java.lang.Object>();
@@ -195,7 +192,7 @@ public interface FormRepository extends JpaRepository<Form, Integer>, _FormRepos
 			if (Utilities.notBlank(dto.getSearchString())) {
 				listOfQuery.add(CriteriaUtils.generateCriteria("searchString", dto.getSearchString(), "e.searchString", "String", dto.getSearchStringParam(), param, index, locale));
 			}
-			if (dto.getCampaignId() != null && dto.getCampaignId() > 0) {
+			if (dto.getFilterCampaignId() != null && dto.getFilterCampaignId() > 0) {
 				listOfQuery.add(generateCampaignLinkCriteria(dto, param, index, locale));
 			}
 			List<String> listOfCustomQuery = _generateCriteria(dto, param, index, locale);
@@ -208,11 +205,11 @@ public interface FormRepository extends JpaRepository<Form, Integer>, _FormRepos
 
 	default String generateCampaignLinkCriteria(FormDto dto, HashMap<String, java.lang.Object> param, Integer index, Locale locale) throws Exception {
 		String campaignCriteria = CriteriaUtils.generateCriteria(
-				"campaignId",
-				dto.getCampaignId(),
+				"filterCampaignId",
+				dto.getFilterCampaignId(),
 				"cf.campaigns.id",
 				"Integer",
-				dto.getCampaignIdParam(),
+				dto.getFilterCampaignIdParam(),
 				param,
 				index,
 				locale);

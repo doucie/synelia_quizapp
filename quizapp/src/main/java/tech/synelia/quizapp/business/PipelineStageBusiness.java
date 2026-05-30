@@ -1,30 +1,49 @@
 package tech.synelia.quizapp.business;
 
-import lombok.extern.java.Log;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
-
-import tech.synelia.quizapp.utils.*;
-import tech.synelia.quizapp.utils.dto.*;
-import tech.synelia.quizapp.utils.exception.*;
+import lombok.extern.java.Log;
+import tech.synelia.quizapp.dao.entity.PipelineStage;
+import tech.synelia.quizapp.dao.entity.PipelineTemplate;
+import tech.synelia.quizapp.dao.repository.PipelineStageRepository;
+import tech.synelia.quizapp.dao.repository.PipelineTemplateRepository;
+import tech.synelia.quizapp.utils.ExceptionUtils;
+import tech.synelia.quizapp.utils.FunctionalError;
+import tech.synelia.quizapp.utils.Status;
+import tech.synelia.quizapp.utils.StatusCode;
+import tech.synelia.quizapp.utils.StatusMessage;
+import tech.synelia.quizapp.utils.TechnicalError;
+import tech.synelia.quizapp.utils.Utilities;
+import tech.synelia.quizapp.utils.Validate;
 import tech.synelia.quizapp.utils.contract.IBasicBusiness;
 import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
-import tech.synelia.quizapp.utils.dto.transformer.*;
-import tech.synelia.quizapp.dao.entity.*;
-import tech.synelia.quizapp.dao.repository.*;
+import tech.synelia.quizapp.utils.dto.PipelineStageDto;
+import tech.synelia.quizapp.utils.dto.transformer.PipelineStageTransformer;
 import tech.synelia.quizapp.utils.enums.StageType;
+import tech.synelia.quizapp.utils.exception.EntityNotFoundException;
+import tech.synelia.quizapp.utils.exception.InternalErrorException;
+import tech.synelia.quizapp.utils.exception.InvalidEntityException;
 
 @Log
 @Component
@@ -51,6 +70,7 @@ public class PipelineStageBusiness implements IBasicBusiness<Request<PipelineSta
         log.info("----begin create PipelineStage-----");
         Response<PipelineStageDto> response = new Response<>();
         List<PipelineStage> items = new ArrayList<>();
+        Set<String> createdSingletonStageKeys = new HashSet<>();
 
         for (PipelineStageDto dto : request.getDatas()) {
             Map<String, Object> fieldsToVerify = new HashMap<>();
@@ -79,7 +99,9 @@ public class PipelineStageBusiness implements IBasicBusiness<Request<PipelineSta
             }
 
             String normalizedStageType = normalizeStageType(dto.getStageType(), locale);
+            validateFixedStageCreation(normalizedStageType, locale);
             String normalizedConfigJson = validateAndNormalizeConfig(normalizedStageType, dto.getConfigJson(), locale);
+            ensureSingletonStageTypeNotDuplicated(dto.getPipelineTemplateId(), normalizedStageType, null, null, createdSingletonStageKeys, locale);
             dto.setStageType(normalizedStageType);
             dto.setConfigJson(normalizedConfigJson);
 
@@ -90,7 +112,8 @@ public class PipelineStageBusiness implements IBasicBusiness<Request<PipelineSta
             if (entityToSave.getIsRequired() == null) entityToSave.setIsRequired(true);
             if (entityToSave.getIsEliminatory() == null) entityToSave.setIsEliminatory(false);
             if (entityToSave.getEmailRequired() == null) entityToSave.setEmailRequired(false);
-            if (entityToSave.getEmailAutomatic() == null) entityToSave.setEmailAutomatic(true);
+            if (entityToSave.getEmailAutomatic() == null) entityToSave.setEmailAutomatic(false);
+            normalizeStageFlags(entityToSave);
             items.add(entityToSave);
         }
 
@@ -139,23 +162,35 @@ public class PipelineStageBusiness implements IBasicBusiness<Request<PipelineSta
                 throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION("Ce pipeline est verrouillé car utilisé par des candidats", locale));
             }
 
-                String nextStageType = Utilities.shouldUpdate(dto.getStageType())
-                    ? normalizeStageType(dto.getStageType(), locale)
+            String requestedStageType = Utilities.shouldUpdate(dto.getStageType())
+                    ? dto.getStageType()
                     : entityToSave.getStageType();
-                String nextConfigJson = Utilities.shouldUpdate(dto.getConfigJson())
+            String nextStageType = normalizeStageType(requestedStageType, locale);
+            String nextConfigJson = Utilities.shouldUpdate(dto.getConfigJson())
                     ? dto.getConfigJson()
                     : entityToSave.getConfigJson();
-                String normalizedConfigJson = validateAndNormalizeConfig(nextStageType, nextConfigJson, locale);
+            String normalizedConfigJson = validateAndNormalizeConfig(nextStageType, nextConfigJson, locale);
+                ensureSingletonStageTypeNotDuplicated(
+                    template != null ? template.getId() : null,
+                    nextStageType,
+                    entityToSave.getId(),
+                    entityToSave.getStageType(),
+                    null,
+                    locale);
 
-                if (Utilities.shouldUpdate(dto.getStageType())) entityToSave.setStageType(nextStageType);
+            if (!nextStageType.equals(entityToSave.getStageType())) entityToSave.setStageType(nextStageType);
             if (Utilities.shouldUpdate(dto.getStageLabel())) entityToSave.setStageLabel(dto.getStageLabel());
             if (dto.getStageOrder() != null) entityToSave.setStageOrder(dto.getStageOrder());
             if (dto.getIsRequired() != null) entityToSave.setIsRequired(dto.getIsRequired());
             if (dto.getIsEliminatory() != null) entityToSave.setIsEliminatory(dto.getIsEliminatory());
             if (dto.getEmailRequired() != null) entityToSave.setEmailRequired(dto.getEmailRequired());
             if (dto.getEmailAutomatic() != null) entityToSave.setEmailAutomatic(dto.getEmailAutomatic());
-                if (Utilities.shouldUpdate(dto.getConfigJson())) entityToSave.setConfigJson(normalizedConfigJson);
+            if (Utilities.shouldUpdate(dto.getConfigJson()) || !Objects.equals(entityToSave.getConfigJson(), normalizedConfigJson)) {
+                entityToSave.setConfigJson(normalizedConfigJson);
+            }
             if (dto.getIsDeleted() != null) entityToSave.setIsDeleted(dto.getIsDeleted());
+
+            normalizeStageFlags(entityToSave);
 
             entityToSave.setUpdatedAt(Utilities.getCurrentDate());
             entityToSave.setUpdatedBy(request.getUser());
@@ -204,6 +239,12 @@ public class PipelineStageBusiness implements IBasicBusiness<Request<PipelineSta
                 throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION("Ce pipeline est verrouillé car utilisé par des candidats", locale));
             }
 
+            if (isFixedBoundaryStageType(existingEntity.getStageType())) {
+                throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION(
+                        "Les étapes CANDIDATURE et DECISION sont gérées automatiquement et ne peuvent pas être supprimées",
+                        locale));
+            }
+
             existingEntity.setIsDeleted(true);
             existingEntity.setUpdatedAt(Utilities.getCurrentDate());
             existingEntity.setUpdatedBy(request.getUser());
@@ -229,12 +270,136 @@ public class PipelineStageBusiness implements IBasicBusiness<Request<PipelineSta
         }
 
         try {
-            return StageType.fromValue(stageType).getValue();
+            StageType normalizedType = StageType.fromValue(stageType);
+
+            if (StageType.CUSTOM == normalizedType) {
+                throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION(
+                        "Le type CUSTOM n'est plus supporte. Utilisez un type de pipeline metier explicite.",
+                        locale));
+            }
+
+            if (StageType.TECHNICAL_TEST == normalizedType) {
+                return StageType.QUIZ.getValue();
+            }
+
+            return normalizedType.getValue();
         } catch (IllegalArgumentException exception) {
             throw new InvalidEntityException(functionalError.REQUEST_FAIL(
                     "Type d'étape invalide: " + stageType,
                     locale));
         }
+    }
+
+    private void validateFixedStageCreation(String stageType, Locale locale) {
+        if (isFixedBoundaryStageType(stageType)) {
+            throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION(
+                    "Les étapes CANDIDATURE et DECISION sont créées automatiquement et ne peuvent pas être ajoutées manuellement",
+                    locale));
+        }
+    }
+
+    private boolean isFixedBoundaryStageType(String stageType) {
+        return StageType.CANDIDATURE.getValue().equals(stageType)
+                || StageType.DECISION.getValue().equals(stageType);
+    }
+
+    private void ensureSingletonStageTypeNotDuplicated(
+            Integer templateId,
+            String normalizedStageType,
+            Integer currentStageId,
+            String currentStageType,
+            Set<String> createdSingletonStageKeys,
+            Locale locale) {
+        if (templateId == null || !isSingletonIntermediateStageType(normalizedStageType)) {
+            return;
+        }
+
+        String currentNormalizedStageType = Utilities.notBlank(currentStageType)
+                ? normalizeStageType(currentStageType, locale)
+                : null;
+
+        if (currentStageId != null && normalizedStageType.equals(currentNormalizedStageType)) {
+            return;
+        }
+
+        if (createdSingletonStageKeys != null) {
+            String creationKey = templateId + "::" + normalizedStageType;
+            if (!createdSingletonStageKeys.add(creationKey)) {
+                throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION(
+                    normalizedStageType + " ne peut etre present qu'une seule fois dans le pipeline actuel",
+                        locale));
+            }
+        }
+
+        List<PipelineStage> existingStages = pipelineStageRepository.findByPipelineTemplateIdOrderByStageOrder(templateId);
+        if (existingStages == null || existingStages.isEmpty()) {
+            return;
+        }
+
+        for (PipelineStage existingStage : existingStages) {
+            if (existingStage == null || existingStage.getId() == null) {
+                continue;
+            }
+            if (currentStageId != null && existingStage.getId().equals(currentStageId)) {
+                continue;
+            }
+            if (normalizedStageType.equals(existingStage.getStageType())) {
+                throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION(
+                        normalizedStageType + " ne peut etre present qu'une seule fois dans le pipeline actuel",
+                        locale));
+            }
+        }
+    }
+
+    private boolean isSingletonIntermediateStageType(String stageType) {
+        return StageType.QUIZ.getValue().equals(stageType)
+                || StageType.PRESELECTION.getValue().equals(stageType)
+                || StageType.INTERVIEW.getValue().equals(stageType)
+                || StageType.EVALUATION.getValue().equals(stageType);
+    }
+
+    private void normalizeStageFlags(PipelineStage stage) {
+        if (stage == null || !Utilities.notBlank(stage.getStageType())) {
+            return;
+        }
+
+        String stageType = stage.getStageType().toUpperCase(Locale.ROOT);
+
+        if (isFixedBoundaryStageType(stageType)) {
+            stage.setIsRequired(true);
+            stage.setIsEliminatory(false);
+        }
+
+        if (StageType.CANDIDATURE.getValue().equals(stageType)) {
+            stage.setEmailRequired(false);
+            stage.setEmailAutomatic(false);
+            return;
+        }
+
+        if (StageType.PRESELECTION.getValue().equals(stageType)) {
+            stage.setIsEliminatory(true);
+        }
+
+        if (!supportsStageEmails(stageType)) {
+            stage.setEmailRequired(false);
+            stage.setEmailAutomatic(false);
+            return;
+        }
+
+        if (Boolean.TRUE.equals(stage.getEmailAutomatic())) {
+            stage.setEmailRequired(true);
+            return;
+        }
+
+        if (!Boolean.TRUE.equals(stage.getEmailRequired())) {
+            stage.setEmailAutomatic(false);
+        }
+    }
+
+    private boolean supportsStageEmails(String stageType) {
+        return StageType.PRESELECTION.getValue().equals(stageType)
+                || StageType.INTERVIEW.getValue().equals(stageType)
+                || StageType.DECISION.getValue().equals(stageType);
     }
 
     private String validateAndNormalizeConfig(String stageType, String configJson, Locale locale) {
@@ -258,36 +423,12 @@ public class PipelineStageBusiness implements IBasicBusiness<Request<PipelineSta
             validateCommonConfig(config, locale);
         }
 
-        if (StageType.TECHNICAL_TEST.getValue().equals(stageType)) {
-            if (config == null) {
-                throw new InvalidEntityException(functionalError.REQUEST_FAIL(
-                        "config_json est requis pour une étape TECHNICAL_TEST",
-                        locale));
-            }
-
-            String testMode = config.path("testMode").asText("").trim().toUpperCase(Locale.ROOT);
-            if (!"INTERNAL".equals(testMode) && !"EXTERNAL".equals(testMode)) {
-                throw new InvalidEntityException(functionalError.REQUEST_FAIL(
-                        "TECHNICAL_TEST attend un testMode INTERNAL ou EXTERNAL",
-                        locale));
-            }
-            if ("EXTERNAL".equals(testMode) && !Utilities.notBlank(config.path("externalUrl").asText(null))) {
-                throw new InvalidEntityException(functionalError.REQUEST_FAIL(
-                        "TECHNICAL_TEST externe: externalUrl est requis",
-                        locale));
-            }
-        }
-
-        if (StageType.CUSTOM.getValue().equals(stageType)) {
-            if (config == null || config.isEmpty()) {
-                throw new InvalidEntityException(functionalError.REQUEST_FAIL(
-                        "config_json est requis pour une étape CUSTOM",
-                        locale));
-            }
-        }
-
         if (config == null) {
             return null;
+        }
+
+        if (isFixedBoundaryStageType(stageType) && config instanceof ObjectNode objectConfig) {
+            objectConfig.remove("allowSkip");
         }
 
         try {
@@ -395,11 +536,33 @@ public class PipelineStageBusiness implements IBasicBusiness<Request<PipelineSta
             throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION("Ce pipeline est verrouillé car utilisé par des candidats", locale));
         }
 
+        List<PipelineStage> currentStages = pipelineStageRepository.findByPipelineTemplateIdOrderByStageOrder(templateId);
+        if (orderedStageIds == null || orderedStageIds.size() != currentStages.size()) {
+            throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+                    "Le réordonnancement doit inclure toutes les étapes actives du pipeline",
+                    locale));
+        }
+
+        PipelineStage firstStage = pipelineStageRepository.findOne(orderedStageIds.get(0), false);
+        PipelineStage lastStage = pipelineStageRepository.findOne(orderedStageIds.get(orderedStageIds.size() - 1), false);
+        if (firstStage == null || lastStage == null
+                || !StageType.CANDIDATURE.getValue().equals(firstStage.getStageType())
+                || !StageType.DECISION.getValue().equals(lastStage.getStageType())) {
+            throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION(
+                    "Le pipeline doit conserver CANDIDATURE en première position et DECISION en dernière position",
+                    locale));
+        }
+
         List<PipelineStage> updatedStages = new ArrayList<>();
         for (int i = 0; i < orderedStageIds.size(); i++) {
             PipelineStage stage = pipelineStageRepository.findOne(orderedStageIds.get(i), false);
             if (stage == null) {
                 throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("pipeline_stage id -> " + orderedStageIds.get(i), locale));
+            }
+            if (stage.getPipelineTemplate() == null || !templateId.equals(stage.getPipelineTemplate().getId())) {
+                throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+                        "Le réordonnancement contient une étape qui n'appartient pas à ce pipeline",
+                        locale));
             }
             stage.setStageOrder(i + 1);
             stage.setUpdatedAt(Utilities.getCurrentDate());

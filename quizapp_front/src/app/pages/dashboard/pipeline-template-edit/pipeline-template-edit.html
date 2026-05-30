@@ -14,7 +14,7 @@
       </div>
       <div class="header-actions">
         <button class="btn btn-secondary" (click)="goBack()">Annuler</button>
-        <button class="btn btn-primary" (click)="save()" [disabled]="saving() || !templateName().trim()">
+        <button class="btn btn-primary" (click)="save()" [disabled]="saving() || !templateName().trim() || isLockedTemplate()" [title]="isLockedTemplate() ? 'Ce template est verrouillé: préparez une correction via duplication.' : 'Enregistrer les modifications du pipeline'">
           @if (saving()) {
             <span class="btn-spinner"></span>
           }
@@ -38,13 +38,43 @@
         <h2 class="section-title">Informations générales</h2>
         <div class="form-group">
           <label class="form-label">Nom du modèle <span class="required">*</span></label>
-          <input type="text" class="form-input" [ngModel]="templateName()" (ngModelChange)="templateName.set($event)"
+          <input type="text" class="form-input" [ngModel]="templateName()" (ngModelChange)="templateName.set($event)" [disabled]="isLockedTemplate()"
                  placeholder="Ex: Flux technique senior" />
         </div>
         <div class="form-group">
           <label class="form-label">Description</label>
-          <textarea class="form-input" rows="3" [ngModel]="templateDesc()" (ngModelChange)="templateDesc.set($event)"
+          <textarea class="form-input" rows="3" [ngModel]="templateDesc()" (ngModelChange)="templateDesc.set($event)" [disabled]="isLockedTemplate()"
                     placeholder="Description du pipeline..."></textarea>
+        </div>
+
+        <div class="pipeline-state-card" [class.is-active]="templateState().kind === 'active' || templateState().kind === 'ready'" [class.is-locked]="templateState().kind === 'locked'" [class.is-warning]="templateState().kind === 'warning'">
+          <div class="pipeline-state-header">
+            <span class="pipeline-state-badge" [class.is-active]="templateState().kind === 'active' || templateState().kind === 'ready'" [class.is-locked]="templateState().kind === 'locked'" [class.is-warning]="templateState().kind === 'warning'">{{ templateState().label }}</span>
+          </div>
+          <p class="pipeline-state-description">{{ templateState().description }}</p>
+          @if (isLockedTemplate() && readinessIssues().length > 0) {
+            <p class="field-help field-help-warning">Ces écarts restent visibles pour diagnostic, mais la correction doit passer par une duplication du template verrouillé.</p>
+          }
+          @if (readinessIssues().length > 0) {
+            <ul class="pipeline-readiness-list">
+              @for (issue of readinessIssues(); track issue) {
+                <li>{{ issue }}</li>
+              }
+            </ul>
+          }
+        </div>
+
+        <div class="form-group form-group-checkbox">
+          <app-filter-checkbox
+            inputId="pipeline-template-active"
+            label="Activer ce pipeline"
+            variant="switch"
+            [ngModel]="templateActive()"
+            [disabled]="!!template()?.isLocked"
+            ariaLabel="Activer ce pipeline"
+            (ngModelChange)="templateActive.set($event)">
+          </app-filter-checkbox>
+          <p class="field-help">{{ isLockedTemplate() ? 'Ce template est désormais en lecture seule. Toute correction doit passer par duplication.' : 'Un pipeline inactif reste en brouillon. L’activation n’est autorisée que si la structure minimale est complète.' }}</p>
         </div>
       </section>
 
@@ -74,9 +104,9 @@
       <section class="stages-section">
         <div class="stages-header">
           <h2 class="section-title">Étapes du pipeline</h2>
-          <button class="btn btn-primary btn-sm" (click)="addStage()">
+          <button class="btn btn-primary btn-sm" (click)="addStage()" [disabled]="!hasAvailableStageTypeForCreation()" [title]="isLockedTemplate() ? 'Ce template est verrouillé: utilisez une duplication pour le corriger.' : (hasAvailableStageTypeForCreation() ? 'Ajouter une étape intermédiaire' : 'Tous les types intermédiaires supportés sont déjà utilisés dans ce pipeline')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 4v16m8-8H4"/></svg>
-            Ajouter une étape
+            Ajouter une étape intermédiaire
           </button>
         </div>
 
@@ -91,16 +121,18 @@
         <div class="stages-list">
           @for (stage of stages(); track stage.stageOrder; let i = $index) {
             <div class="stage-card"
+                 [class.is-fixed]="isFixedStage(stage)"
+                [class.is-readonly]="isLockedTemplate()"
                  [class.dragging]="dragIndex() === i"
                  [class.drag-over]="dragOverIndex() === i"
-                 draggable="true"
+                 [attr.draggable]="isStageReorderable(stage) ? 'true' : 'false'"
                  (dragstart)="onDragStart(i)"
                  (dragover)="onDragOver($event, i)"
                  (dragleave)="onDragLeave()"
                  (drop)="onDrop($event, i)"
                  (dragend)="onDragEnd()">
 
-              <div class="stage-drag-handle" title="Glisser pour réordonner">
+              <div class="stage-drag-handle" [class.is-disabled]="!isStageReorderable(stage)" [title]="isLockedTemplate() ? 'Template verrouillé' : (isStageReorderable(stage) ? 'Glisser pour réordonner' : 'Étape fixe')">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
                   <circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/>
                   <circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/>
@@ -111,37 +143,67 @@
               <div class="stage-order-badge">{{ i + 1 }}</div>
 
               <div class="stage-fields">
-                <div class="stage-field stage-field-label">
-                  <label class="field-label">Libellé</label>
-                  <input type="text" class="form-input form-input-sm" [ngModel]="stage.stageLabel"
-                         (ngModelChange)="updateStageField(i, 'stageLabel', $event)" placeholder="Nom de l'étape" />
-                </div>
+                @if (isFixedStage(stage)) {
+                  <div class="stage-field stage-field-label">
+                    <label class="field-label">Libellé</label>
+                    <div class="stage-static-value">{{ stage.stageLabel || getStageTypeLabel(stage.stageType) }}</div>
+                  </div>
 
-                <div class="stage-field stage-field-type">
-                  <label class="field-label">Type</label>
-                  <app-filter-select class="form-input form-input-sm" [ngModel]="stage.stageType"
-                          ariaLabel="Sélectionner le type de l'étape"
-                          (ngModelChange)="updateStageField(i, 'stageType', $event)">
-                    @for (type of stageTypes; track type.value) {
-                      <option [value]="type.value">{{ type.label }}</option>
+                  <div class="stage-field stage-field-type">
+                    <label class="field-label">Type</label>
+                    <div class="stage-static-value">{{ getStageTypeLabel(stage.stageType) }}</div>
+                  </div>
+
+                  <p class="stage-fixed-hint">Étape fixe: position, suppression et type verrouillés.</p>
+                } @else {
+                  <div class="stage-field stage-field-label">
+                    <label class="field-label">Libellé</label>
+                    <input type="text" class="form-input form-input-sm" [ngModel]="stage.stageLabel" [disabled]="isLockedTemplate()"
+                           (ngModelChange)="updateStageField(i, 'stageLabel', $event)" placeholder="Nom de l'étape" />
+                  </div>
+
+                  <div class="stage-field stage-field-type">
+                    <label class="field-label">Type</label>
+                    <app-filter-select class="form-input form-input-sm" [ngModel]="stage.stageType" [disabled]="isLockedTemplate()"
+                            ariaLabel="Sélectionner le type de l'étape"
+                            (ngModelChange)="updateStageField(i, 'stageType', $event)">
+                      @for (type of getEditableStageTypeOptions(stage); track type.value) {
+                        <option [value]="type.value">{{ type.label }}</option>
+                      }
+                    </app-filter-select>
+                  </div>
+
+                  <div class="stage-toggles">
+                    <app-filter-checkbox class="toggle-label" [inputId]="'pipeline-stage-required-' + i" label="Obligatoire" variant="switch" [ngModel]="stage.isRequired" [disabled]="isLockedTemplate()" ariaLabel="Étape obligatoire" (ngModelChange)="updateStageField(i, 'isRequired', $event)"></app-filter-checkbox>
+
+                    @if (shouldShowStageAllowSkipToggle(stage)) {
+                      <app-filter-checkbox class="toggle-label" [inputId]="'pipeline-stage-allow-skip-' + i" label="Autoriser le saut" variant="switch" [ngModel]="stage.allowSkip" [disabled]="isLockedTemplate()" ariaLabel="Autoriser le saut d'une étape obligatoire" (ngModelChange)="updateStageAllowSkip(i, $event)"></app-filter-checkbox>
                     }
-                  </app-filter-select>
-                </div>
 
-                <div class="stage-toggles">
-                  <app-filter-checkbox class="toggle-label" [inputId]="'pipeline-stage-required-' + i" label="Obligatoire" variant="switch" [ngModel]="stage.isRequired" ariaLabel="Étape obligatoire" (ngModelChange)="updateStageField(i, 'isRequired', $event)"></app-filter-checkbox>
+                    <app-filter-checkbox class="toggle-label" [inputId]="'pipeline-stage-eliminatory-' + i" label="Éliminatoire" variant="switch" [ngModel]="stage.isEliminatory" [disabled]="!isStageEliminatoryEditable(stage)" ariaLabel="Étape éliminatoire" (ngModelChange)="updateStageField(i, 'isEliminatory', $event)"></app-filter-checkbox>
 
-                  <app-filter-checkbox class="toggle-label" [inputId]="'pipeline-stage-eliminatory-' + i" label="Éliminatoire" variant="switch" [ngModel]="stage.isEliminatory" ariaLabel="Étape éliminatoire" (ngModelChange)="updateStageField(i, 'isEliminatory', $event)"></app-filter-checkbox>
+                    <app-filter-checkbox class="toggle-label" [inputId]="'pipeline-stage-email-required-' + i" label="Email requis" variant="switch" [ngModel]="stage.emailRequired" [disabled]="isLockedTemplate() || !supportsStageEmails(stage)" ariaLabel="Email requis pour cette étape" (ngModelChange)="updateStageEmailRequired(i, $event)"></app-filter-checkbox>
 
-                  <app-filter-checkbox class="toggle-label" [inputId]="'pipeline-stage-email-required-' + i" label="Email requis" variant="switch" [ngModel]="stage.emailRequired" ariaLabel="Email requis pour cette étape" (ngModelChange)="updateStageEmailRequired(i, $event)"></app-filter-checkbox>
+                    <app-filter-checkbox class="toggle-label" [inputId]="'pipeline-stage-email-automatic-' + i" label="Envoi auto" variant="switch" [ngModel]="stage.emailAutomatic" [disabled]="isLockedTemplate() || !supportsStageEmails(stage) || !stage.emailRequired" ariaLabel="Envoi automatique de l'email pour cette étape" (ngModelChange)="updateStageEmailAutomatic(i, $event)"></app-filter-checkbox>
+                  </div>
 
-                  <app-filter-checkbox class="toggle-label" [inputId]="'pipeline-stage-email-automatic-' + i" label="Envoi auto" variant="switch" [ngModel]="stage.emailAutomatic" [disabled]="!stage.emailRequired" ariaLabel="Envoi automatique de l'email pour cette étape" (ngModelChange)="updateStageEmailAutomatic(i, $event)"></app-filter-checkbox>
-                </div>
+                  @if (getStageFlagHint(stage)) {
+                    <p class="stage-policy-hint">{{ getStageFlagHint(stage) }}</p>
+                  }
+
+                  @if (getStageSkipHint(stage)) {
+                    <p class="stage-policy-hint stage-policy-hint--accent">{{ getStageSkipHint(stage) }}</p>
+                  }
+                }
               </div>
 
-              <button class="btn-icon-action btn-icon-danger" (click)="openDeleteStageConfirm(i)" title="Supprimer cette étape">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/></svg>
-              </button>
+              @if (!isFixedStage(stage)) {
+                <button class="btn-icon-action btn-icon-danger" (click)="openDeleteStageConfirm(i)" [disabled]="isLockedTemplate()" [title]="isLockedTemplate() ? 'Template verrouillé: utilisez une duplication pour retirer cette étape.' : 'Supprimer cette étape'">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/></svg>
+                </button>
+              } @else {
+                <span class="stage-fixed-badge">Fixe</span>
+              }
             </div>
           }
         </div>

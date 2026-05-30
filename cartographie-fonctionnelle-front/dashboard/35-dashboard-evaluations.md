@@ -110,3 +110,12 @@ La page sert à lister les entretiens évaluables ou déjà évalués, puis à o
 4. Ouvrir un entretien `STARTED` puis un `OVER`.
 5. Vérifier la redirection vers `/dashboard/evaluate/:link`.
 6. Contrôler la cohérence entre les scores affichés ici et l’écran d’évaluation détaillé.
+
+## 11. Impact Cible Multi-Occurrences
+
+- [ ] repositionner cette page comme liste des evaluations d'entretien, et non comme suivi d'une etape pipeline `EVALUATION` autonome
+- [ ] afficher le round d'entretien, le label de stage et l'etat de soumission par evaluateur
+- [ ] retirer les agregats mono-valeur comme source principale de lecture metier
+- [ ] rendre visible la pluralite des criteres et des evaluateurs pour un meme entretien
+- [ ] faire remonter la version de grille ou le snapshot de criteres utilise pour l'entretien, afin d'expliquer sur quelle bibliotheque mutualisee l'evaluation s'appuie
+- [ ] distinguer les resumes de soumission (`globalScore`, `globalComment`) des details de criteres et des agregats recalcules d'entretien

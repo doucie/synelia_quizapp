@@ -20,6 +20,9 @@ interface QuestionFormData {
   score: number;
   questionChrono: number;
   specialityId?: number;
+  allAnswersJustificationRequired: boolean;
+  manualCorrectionRequired: boolean;
+  freeTextResponsePlaceholder: string;
 }
 
 interface AnswerFormData {
@@ -65,6 +68,51 @@ export class QuestionsComponent implements OnInit, OnDestroy {
     TRUE_FALSE: 'Vrai/Faux',
     TEXT: 'Texte libre'
   };
+  private readonly DEFAULT_JUSTIFICATION_PLACEHOLDER = 'Justifiez votre réponse';
+  private readonly DIFFICULTY_PRESETS: Record<string, { label: string; description: string; score: number; questionChrono: number; badgeClass: string }> = {
+    FACILE: {
+      label: 'Facile',
+      description: 'Mémoriser: rappeler des faits, des définitions ou des données brutes.',
+      score: 1,
+      questionChrono: 30,
+      badgeClass: 'difficulty--facile'
+    },
+    MOYEN_BAS: {
+      label: 'Moyen-Bas',
+      description: 'Comprendre: saisir le sens d\'une information ou l\'expliquer avec ses propres mots.',
+      score: 3,
+      questionChrono: 45,
+      badgeClass: 'difficulty--moyen-bas'
+    },
+    MOYEN: {
+      label: 'Moyen',
+      description: 'Appliquer: utiliser des règles, des formules ou des concepts dans une situation concrète.',
+      score: 5,
+      questionChrono: 60,
+      badgeClass: 'difficulty--moyen'
+    },
+    DIFFICILE: {
+      label: 'Difficile',
+      description: 'Analyser: décomposer une information pour identifier les causes, les motifs ou les liens logiques.',
+      score: 7,
+      questionChrono: 90,
+      badgeClass: 'difficulty--difficile'
+    },
+    TRES_DIFFICILE: {
+      label: 'Très Difficile',
+      description: 'Évaluer: porter un jugement critique, valider une méthode ou justifier une décision.',
+      score: 10,
+      questionChrono: 120,
+      badgeClass: 'difficulty--tres-difficile'
+    },
+    EXPERT: {
+      label: 'Expert',
+      description: 'Créer: combiner plusieurs éléments pour concevoir un projet, un plan ou une solution nouvelle.',
+      score: 15,
+      questionChrono: 150,
+      badgeClass: 'difficulty--expert'
+    }
+  };
 
   private destroy$ = new Subject<void>();
   private pendingFormVersionQuestionContext: FormVersionQuestionContext | null = null;
@@ -84,13 +132,21 @@ export class QuestionsComponent implements OnInit, OnDestroy {
 
   // Form
   questionForm = signal<QuestionFormData>({
-    questionText: '', questionType: 'MULTIPLE_CHOICE', difficultyLevel: 'MEDIUM', score: 1, questionChrono: 60
+    questionText: '',
+    questionType: 'MULTIPLE_CHOICE',
+    difficultyLevel: 'MOYEN',
+    score: 5,
+    questionChrono: 60,
+    allAnswersJustificationRequired: false,
+    manualCorrectionRequired: false,
+    freeTextResponsePlaceholder: ''
   });
   questionDraftAnswers = signal<QuestionDraftAnswer[]>([]);
   deletedQuestionAnswerIds = signal<number[]>([]);
   isEditMode = signal(false);
   selectedQuestion = signal<Question | null>(null);
   formVersionQuestionContext = signal<FormVersionQuestionContext | null>(null);
+  questionFieldOverrides = signal({ score: false, questionChrono: false });
 
   // Answers inline
   answers = signal<Answer[]>([]);
@@ -123,7 +179,7 @@ export class QuestionsComponent implements OnInit, OnDestroy {
   });
   selectedQuestionHasActiveAnswers = computed(() => this.selectedQuestionActiveAnswerCount() > 0);
 
-  difficultyLevels = ['EASY', 'MEDIUM', 'HARD'];
+  difficultyLevels = Object.keys(this.DIFFICULTY_PRESETS);
   questionTypes = ['SINGLE_CHOICE', 'MULTIPLE_CHOICE', 'TRUE_FALSE', 'TEXT'];
   answerTypes = ['TEXT', 'IMAGE', 'CODE'];
   questionModalSupportsPredefinedAnswers = computed(() => this.normalizeQuestionType(this.questionForm().questionType) !== 'TEXT');
@@ -132,6 +188,16 @@ export class QuestionsComponent implements OnInit, OnDestroy {
     return questionType === 'SINGLE_CHOICE' || questionType === 'TRUE_FALSE';
   });
   questionModalIsTrueFalse = computed(() => this.normalizeQuestionType(this.questionForm().questionType) === 'TRUE_FALSE');
+  questionModalSupportsAnswerJustification = computed(() => this.isQuestionTypeWithGlobalJustification(this.questionForm().questionType));
+  questionModalRequiresFreeTextPlaceholder = computed(() => this.normalizeQuestionType(this.questionForm().questionType) === 'TEXT');
+  questionDifficultyPresetOverridden = computed(() => {
+    const overrides = this.questionFieldOverrides();
+    return overrides.score || overrides.questionChrono;
+  });
+  sortedSpecialities = computed(() => {
+    return [...this.specialities()].sort((left, right) => this.getSpecialityLabel(left).localeCompare(this.getSpecialityLabel(right), 'fr', { sensitivity: 'base' }));
+  });
+  answerModalQuestionRequiresJustification = computed(() => this.questionRequiresMandatoryJustification(this.answerForm().questionId));
 
   constructor(
     private route: ActivatedRoute,
@@ -200,7 +266,7 @@ export class QuestionsComponent implements OnInit, OnDestroy {
     }
 
     if (difficulty) {
-      filtered = filtered.filter(q => q.difficultyLevel === difficulty);
+      filtered = filtered.filter(q => this.normalizeDifficultyLevel(q.difficultyLevel) === difficulty);
     }
 
     if (type) {
@@ -269,7 +335,7 @@ export class QuestionsComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: ({ questions, answers }) => {
-          this.questions.set(questions.content || []);
+          this.questions.set(this.normalizeLoadedQuestions(questions.content || []));
           this.answers.set(answers.content || []);
           this.loading.set(false);
           this.tryOpenContextualQuestionEdit();
@@ -291,7 +357,7 @@ export class QuestionsComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: ({ questions, answers }) => {
-          this.questions.set(questions.content || []);
+          this.questions.set(this.normalizeLoadedQuestions(questions.content || []));
           this.answers.set(answers.content || []);
           this.loading.set(false);
           this.tryOpenContextualQuestionEdit();
@@ -320,16 +386,32 @@ export class QuestionsComponent implements OnInit, OnDestroy {
   getSpecialityName(specId?: number): string {
     if (!specId) return 'Non assignée';
     const spec = this.specialities().find(s => s.id === specId);
-    return spec?.nom || spec?.name || spec?.specialityName || 'Inconnue';
+    return this.getSpecialityLabel(spec) || 'Inconnue';
   }
 
   getDifficultyLabel(level?: string): string {
-    const labels: Record<string, string> = { EASY: 'Facile', MEDIUM: 'Moyen', HARD: 'Difficile' };
-    return labels[level || ''] || level || 'N/A';
+    const preset = this.DIFFICULTY_PRESETS[this.normalizeDifficultyLevel(level)];
+    return preset?.label || 'N/A';
+  }
+
+  getDifficultyDescription(level?: string): string {
+    const preset = this.DIFFICULTY_PRESETS[this.normalizeDifficultyLevel(level)];
+    return preset?.description || '';
+  }
+
+  getDifficultyPresetSummary(level?: string): string {
+    const preset = this.getDifficultyPreset(level);
+    return `${preset.score} pt${preset.score > 1 ? 's' : ''} • ${preset.questionChrono}s`;
   }
 
   getDifficultyClass(level?: string): string {
-    return 'difficulty--' + (level || 'medium').toLowerCase();
+    const preset = this.DIFFICULTY_PRESETS[this.normalizeDifficultyLevel(level)];
+    return preset?.badgeClass || 'difficulty--moyen';
+  }
+
+  getFreeTextPlaceholder(question?: Question | null): string {
+    const placeholder = question?.freeTextResponsePlaceholder?.trim();
+    return placeholder || 'Rédigez votre réponse ici...';
   }
 
   getTypeLabel(type?: string): string {
@@ -377,9 +459,8 @@ export class QuestionsComponent implements OnInit, OnDestroy {
     }
     this.isEditMode.set(false);
     this.formVersionQuestionContext.set(null);
-    this.questionForm.set({
-      questionText: '', questionType: 'MULTIPLE_CHOICE', difficultyLevel: 'MEDIUM', score: 1, questionChrono: 60
-    });
+    this.questionForm.set(this.buildDefaultQuestionForm());
+    this.questionFieldOverrides.set({ score: false, questionChrono: false });
     this.deletedQuestionAnswerIds.set([]);
     this.initializeQuestionDraftAnswers('MULTIPLE_CHOICE');
     this.originalQuestionFormSnapshot = null;
@@ -398,11 +479,15 @@ export class QuestionsComponent implements OnInit, OnDestroy {
       id: q.id,
       questionText: q.questionText || '',
       questionType: this.normalizeQuestionType(q.questionType),
-      difficultyLevel: q.difficultyLevel || 'MEDIUM',
+      difficultyLevel: this.normalizeDifficultyLevel(q.difficultyLevel),
       score: q.score || 1,
       questionChrono: q.questionChrono || 60,
-      specialityId: q.specialityId
+      specialityId: q.specialityId,
+      allAnswersJustificationRequired: q.allAnswersJustificationRequired === true,
+      manualCorrectionRequired: q.manualCorrectionRequired === true,
+      freeTextResponsePlaceholder: q.freeTextResponsePlaceholder || ''
     });
+    this.questionFieldOverrides.set({ score: true, questionChrono: true });
     this.deletedQuestionAnswerIds.set([]);
     this.initializeQuestionDraftAnswers(q.questionType, this.answersForQuestion(q.id ?? 0));
     this.formVersionQuestionContext.set(formVersionId && q.id ? { formVersionId, questionId: q.id } : null);
@@ -417,6 +502,7 @@ export class QuestionsComponent implements OnInit, OnDestroy {
     this.deletedQuestionAnswerIds.set([]);
     this.selectedQuestion.set(null);
     this.formVersionQuestionContext.set(null);
+    this.questionFieldOverrides.set({ score: false, questionChrono: false });
     this.originalQuestionFormSnapshot = null;
     this.originalQuestionAnswerSnapshot = [];
   }
@@ -438,6 +524,11 @@ export class QuestionsComponent implements OnInit, OnDestroy {
   saveQuestion(): void {
     const form = this.questionForm();
     const normalizedQuestionType = this.normalizeQuestionType(form.questionType);
+    const normalizedDifficultyLevel = this.normalizeDifficultyLevel(form.difficultyLevel);
+    const requiresGlobalJustification = this.isQuestionTypeWithGlobalJustification(normalizedQuestionType) && form.allAnswersJustificationRequired;
+    const freeTextResponsePlaceholder = normalizedQuestionType === 'TEXT'
+      ? form.freeTextResponsePlaceholder.trim()
+      : undefined;
 
     if (!form.questionText.trim()) {
       this.notificationService.error('Erreur', 'Le texte de la question est obligatoire');
@@ -446,6 +537,11 @@ export class QuestionsComponent implements OnInit, OnDestroy {
 
     if (!form.specialityId) {
       this.notificationService.error('Erreur', 'La spécialité est obligatoire');
+      return;
+    }
+
+    if (normalizedQuestionType === 'TEXT' && !freeTextResponsePlaceholder) {
+      this.notificationService.error('Erreur', 'Le placeholder de la réponse libre est obligatoire');
       return;
     }
 
@@ -459,10 +555,13 @@ export class QuestionsComponent implements OnInit, OnDestroy {
     const payload: Partial<Question> = {
       questionText: form.questionText.trim(),
       questionType: normalizedQuestionType,
-      difficultyLevel: form.difficultyLevel,
+      difficultyLevel: normalizedDifficultyLevel,
       score: form.score,
       questionChrono: form.questionChrono,
-      specialityId: form.specialityId
+      specialityId: form.specialityId,
+      allAnswersJustificationRequired: requiresGlobalJustification,
+      manualCorrectionRequired: form.manualCorrectionRequired === true,
+      freeTextResponsePlaceholder
     };
 
     let questionPersisted = false;
@@ -550,13 +649,86 @@ export class QuestionsComponent implements OnInit, OnDestroy {
   }
 
   updateFormField(field: keyof QuestionFormData, value: any): void {
+    const normalizedValue = field === 'questionType'
+      ? this.normalizeQuestionType(value)
+      : field === 'difficultyLevel'
+        ? this.normalizeDifficultyLevel(value)
+        : value;
+
     this.questionForm.update(form => ({
       ...form,
-      [field]: field === 'questionType' ? this.normalizeQuestionType(value) : value
+      [field]: normalizedValue
     }));
 
     if (field === 'questionType') {
-      this.syncQuestionDraftAnswersWithQuestionType(this.normalizeQuestionType(value));
+      const normalizedQuestionType = this.normalizeQuestionType(normalizedValue);
+      this.questionForm.update(form => ({
+        ...form,
+        allAnswersJustificationRequired: this.isQuestionTypeWithGlobalJustification(normalizedQuestionType)
+          ? form.allAnswersJustificationRequired
+          : false,
+        freeTextResponsePlaceholder: normalizedQuestionType === 'TEXT'
+          ? form.freeTextResponsePlaceholder
+          : ''
+      }));
+      this.syncQuestionDraftAnswersWithQuestionType(normalizedQuestionType);
+      return;
+    }
+
+    if (field === 'difficultyLevel') {
+      this.applyDifficultyPreset();
+      return;
+    }
+
+    if (field === 'allAnswersJustificationRequired' && normalizedValue === true) {
+      this.questionDraftAnswers.update(drafts => this.enforceQuestionAnswerRules(drafts, this.questionForm().questionType, true));
+      return;
+    }
+
+    if (field === 'score' || field === 'questionChrono') {
+      this.questionFieldOverrides.update(overrides => ({
+        ...overrides,
+        [field]: true
+      }));
+    }
+  }
+
+  onAllAnswersJustificationRequiredChange(required: boolean): void {
+    if (required) {
+      this.updateFormField('allAnswersJustificationRequired', true);
+      return;
+    }
+
+    const wasRequired = this.questionForm().allAnswersJustificationRequired === true;
+    this.updateFormField('allAnswersJustificationRequired', false);
+
+    if (!wasRequired || this.questionDraftAnswers().length === 0) {
+      return;
+    }
+
+    const shouldDisableAdditionalComments = window.confirm(
+      'La justification obligatoire va être désactivée. Voulez-vous aussi désactiver l’autorisation des commentaires additionnels sur toutes les réponses ?'
+    );
+
+    if (!shouldDisableAdditionalComments) {
+      return;
+    }
+
+    this.questionDraftAnswers.update(drafts => drafts.map(draft => this.clearDraftAdditionalCommentSettings(draft)));
+  }
+
+  applyDifficultyPreset(force = false): void {
+    const preset = this.getDifficultyPreset(this.questionForm().difficultyLevel);
+    const overrides = this.questionFieldOverrides();
+
+    this.questionForm.update(form => ({
+      ...form,
+      score: force || !overrides.score ? preset.score : form.score,
+      questionChrono: force || !overrides.questionChrono ? preset.questionChrono : form.questionChrono
+    }));
+
+    if (force) {
+      this.questionFieldOverrides.set({ score: false, questionChrono: false });
     }
   }
 
@@ -567,7 +739,32 @@ export class QuestionsComponent implements OnInit, OnDestroy {
 
     this.questionDraftAnswers.update(drafts => {
       const nextOrder = Math.max(0, ...drafts.map(draft => draft.answerOrder || 0)) + 1;
-      return this.sortQuestionDraftAnswers([...drafts, this.createQuestionDraftAnswer({ answerOrder: nextOrder })]);
+      return this.resequenceQuestionDraftAnswers([...drafts, this.createQuestionDraftAnswer({ answerOrder: nextOrder })]);
+    });
+  }
+
+  moveQuestionDraftAnswer(draftId: string, direction: 'up' | 'down'): void {
+    if (this.questionModalIsTrueFalse()) {
+      return;
+    }
+
+    this.questionDraftAnswers.update(drafts => {
+      const orderedDrafts = this.resequenceQuestionDraftAnswers(drafts);
+      const currentIndex = orderedDrafts.findIndex(draft => draft.draftId === draftId);
+      if (currentIndex < 0) {
+        return orderedDrafts;
+      }
+
+      const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+      if (targetIndex < 0 || targetIndex >= orderedDrafts.length) {
+        return orderedDrafts;
+      }
+
+      const nextDrafts = [...orderedDrafts];
+      const [movedDraft] = nextDrafts.splice(currentIndex, 1);
+      nextDrafts.splice(targetIndex, 0, movedDraft);
+
+      return this.assignQuestionDraftAnswerOrder(nextDrafts);
     });
   }
 
@@ -582,12 +779,17 @@ export class QuestionsComponent implements OnInit, OnDestroy {
       this.deletedQuestionAnswerIds.update(ids => ids.includes(draftToRemove.id!) ? ids : [...ids, draftToRemove.id!]);
     }
 
-    this.questionDraftAnswers.update(drafts => this.sortQuestionDraftAnswers(drafts.filter(draft => draft.draftId !== draftId)));
+    this.questionDraftAnswers.update(drafts => this.resequenceQuestionDraftAnswers(drafts.filter(draft => draft.draftId !== draftId)));
   }
 
   updateQuestionDraftAnswer(fieldDraftId: string, field: keyof QuestionDraftAnswer, value: string | number | boolean): void {
     const questionType = this.normalizeQuestionType(this.questionForm().questionType);
     const exclusiveCorrectAnswer = questionType === 'SINGLE_CHOICE' || questionType === 'TRUE_FALSE';
+    const justificationLocked = this.questionModalSupportsAnswerJustification() && this.questionForm().allAnswersJustificationRequired;
+
+    if (justificationLocked && (field === 'allowAdditionalComment' || field === 'additionalCommentRequired' || field === 'additionalCommentPlaceholder')) {
+      return;
+    }
 
     this.questionDraftAnswers.update(drafts => {
       let nextDrafts = drafts.map(draft => {
@@ -614,34 +816,88 @@ export class QuestionsComponent implements OnInit, OnDestroy {
         return nextDraft;
       });
 
-      if (field === 'answerOrder') {
-        nextDrafts = this.sortQuestionDraftAnswers(nextDrafts);
-      }
-
       if (questionType === 'TRUE_FALSE') {
         nextDrafts = this.buildTrueFalseDraftAnswers(nextDrafts);
       }
 
-      return nextDrafts;
+      return this.enforceQuestionAnswerRules(nextDrafts, questionType, this.questionForm().allAnswersJustificationRequired);
     });
   }
 
   private createQuestionDraftAnswer(overrides: Partial<QuestionDraftAnswer> = {}): QuestionDraftAnswer {
+    const enforceJustification = this.questionModalSupportsAnswerJustification() && this.questionForm().allAnswersJustificationRequired;
     return {
       draftId: overrides.draftId || this.createDraftId(),
       id: overrides.id,
       answerText: overrides.answerText || '',
       answerType: overrides.answerType || 'TEXT',
-      allowAdditionalComment: overrides.allowAdditionalComment === true,
-      additionalCommentRequired: overrides.additionalCommentRequired === true,
-      additionalCommentPlaceholder: overrides.additionalCommentPlaceholder || '',
+      allowAdditionalComment: enforceJustification || overrides.allowAdditionalComment === true,
+      additionalCommentRequired: enforceJustification || overrides.additionalCommentRequired === true,
+      additionalCommentPlaceholder: enforceJustification
+        ? this.DEFAULT_JUSTIFICATION_PLACEHOLDER
+        : overrides.additionalCommentPlaceholder || '',
       answerOrder: overrides.answerOrder || 1,
       isCorrect: overrides.isCorrect === true
     };
   }
 
+  getDifficultyPresetRowClass(level?: string): string {
+    return `question-form__preset-row--${this.normalizeDifficultyLevel(level).toLowerCase().replace(/_/g, '-')}`;
+  }
+
   private createDraftId(): string {
     return `draft-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  }
+
+  private buildDefaultQuestionForm(difficultyLevel = 'MOYEN'): QuestionFormData {
+    const normalizedDifficulty = this.normalizeDifficultyLevel(difficultyLevel);
+    const preset = this.getDifficultyPreset(normalizedDifficulty);
+
+    return {
+      questionText: '',
+      questionType: 'MULTIPLE_CHOICE',
+      difficultyLevel: normalizedDifficulty,
+      score: preset.score,
+      questionChrono: preset.questionChrono,
+      allAnswersJustificationRequired: false,
+      manualCorrectionRequired: false,
+      freeTextResponsePlaceholder: ''
+    };
+  }
+
+  private getDifficultyPreset(level?: string): { score: number; questionChrono: number } {
+    const preset = this.DIFFICULTY_PRESETS[this.normalizeDifficultyLevel(level)] || this.DIFFICULTY_PRESETS['MOYEN'];
+    return {
+      score: preset.score,
+      questionChrono: preset.questionChrono
+    };
+  }
+
+  private normalizeDifficultyLevel(level?: string): string {
+    const normalized = (level || 'MOYEN')
+      .trim()
+      .toUpperCase()
+      .replace(/-/g, '_')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+
+    switch (normalized) {
+      case 'EASY':
+        return 'FACILE';
+      case 'MEDIUM':
+        return 'MOYEN';
+      case 'HARD':
+        return 'DIFFICILE';
+      case 'MOYEN_BAS':
+      case 'FACILE':
+      case 'MOYEN':
+      case 'DIFFICILE':
+      case 'TRES_DIFFICILE':
+      case 'EXPERT':
+        return normalized;
+      default:
+        return 'MOYEN';
+    }
   }
 
   private initializeQuestionDraftAnswers(questionType?: string, existingAnswers: Answer[] = []): void {
@@ -672,14 +928,14 @@ export class QuestionsComponent implements OnInit, OnDestroy {
     }
 
     if (normalizedQuestionType !== 'TEXT' && mappedAnswers.length === 0) {
-      this.questionDraftAnswers.set(this.sortQuestionDraftAnswers([
+      this.questionDraftAnswers.set(this.resequenceQuestionDraftAnswers([
         this.createQuestionDraftAnswer({ answerOrder: 1 }),
         this.createQuestionDraftAnswer({ answerOrder: 2 })
       ]));
       return;
     }
 
-    this.questionDraftAnswers.set(this.sortQuestionDraftAnswers(mappedAnswers));
+    this.questionDraftAnswers.set(this.resequenceQuestionDraftAnswers(mappedAnswers));
   }
 
   private syncQuestionDraftAnswersWithQuestionType(questionType: string): void {
@@ -697,7 +953,7 @@ export class QuestionsComponent implements OnInit, OnDestroy {
         this.deletedQuestionAnswerIds.update(ids => Array.from(new Set([...ids, ...extraIds])));
       }
 
-      this.questionDraftAnswers.set(this.buildTrueFalseDraftAnswers(sortedDrafts.slice(0, 2)));
+      this.questionDraftAnswers.set(this.enforceQuestionAnswerRules(this.buildTrueFalseDraftAnswers(sortedDrafts.slice(0, 2)), questionType, this.questionForm().allAnswersJustificationRequired));
       return;
     }
 
@@ -707,8 +963,33 @@ export class QuestionsComponent implements OnInit, OnDestroy {
     }
 
     if (questionType === 'SINGLE_CHOICE') {
-      this.questionDraftAnswers.set(this.normalizeExclusiveCorrectAnswers(this.questionDraftAnswers()));
+      this.questionDraftAnswers.set(this.enforceQuestionAnswerRules(this.normalizeExclusiveCorrectAnswers(this.questionDraftAnswers()), questionType, this.questionForm().allAnswersJustificationRequired));
+      return;
     }
+
+    this.questionDraftAnswers.set(this.enforceQuestionAnswerRules(this.resequenceQuestionDraftAnswers(this.questionDraftAnswers()), questionType, this.questionForm().allAnswersJustificationRequired));
+  }
+
+  private enforceQuestionAnswerRules(drafts: QuestionDraftAnswer[], questionType?: string, allAnswersJustificationRequired = false): QuestionDraftAnswer[] {
+    if (!allAnswersJustificationRequired || !this.isQuestionTypeWithGlobalJustification(questionType)) {
+      return drafts;
+    }
+
+    return drafts.map(draft => ({
+      ...draft,
+      allowAdditionalComment: true,
+      additionalCommentRequired: true,
+      additionalCommentPlaceholder: this.DEFAULT_JUSTIFICATION_PLACEHOLDER
+    }));
+  }
+
+  private clearDraftAdditionalCommentSettings(draft: QuestionDraftAnswer): QuestionDraftAnswer {
+    return {
+      ...draft,
+      allowAdditionalComment: false,
+      additionalCommentRequired: false,
+      additionalCommentPlaceholder: ''
+    };
   }
 
   private buildTrueFalseDraftAnswers(existingDrafts: QuestionDraftAnswer[]): QuestionDraftAnswer[] {
@@ -737,6 +1018,17 @@ export class QuestionsComponent implements OnInit, OnDestroy {
     });
   }
 
+  private resequenceQuestionDraftAnswers(drafts: QuestionDraftAnswer[]): QuestionDraftAnswer[] {
+    return this.assignQuestionDraftAnswerOrder(this.sortQuestionDraftAnswers(drafts));
+  }
+
+  private assignQuestionDraftAnswerOrder(drafts: QuestionDraftAnswer[]): QuestionDraftAnswer[] {
+    return drafts.map((draft, index) => ({
+      ...draft,
+      answerOrder: index + 1
+    }));
+  }
+
   private sortQuestionDraftAnswers(drafts: QuestionDraftAnswer[]): QuestionDraftAnswer[] {
     return [...drafts].sort((left, right) => (left.answerOrder || 0) - (right.answerOrder || 0) || left.draftId.localeCompare(right.draftId));
   }
@@ -755,6 +1047,10 @@ export class QuestionsComponent implements OnInit, OnDestroy {
 
     if (drafts.some(draft => !draft.answerText.trim())) {
       return 'Le texte de chaque réponse est obligatoire';
+    }
+
+    if (drafts.some(draft => draft.allowAdditionalComment && draft.additionalCommentRequired && !draft.additionalCommentPlaceholder.trim())) {
+      return 'Le texte d\'aide du commentaire est obligatoire quand la justification est requise';
     }
 
     if (questionType === 'TRUE_FALSE') {
@@ -786,6 +1082,7 @@ export class QuestionsComponent implements OnInit, OnDestroy {
     const existingAnswerIds = this.answersForQuestion(questionId)
       .map(answer => answer.id)
       .filter((id): id is number => typeof id === 'number');
+    const requiresGlobalJustification = this.isQuestionTypeWithGlobalJustification(questionType) && this.questionForm().allAnswersJustificationRequired;
 
     if (questionType === 'TEXT') {
       existingAnswerIds.forEach(id => deletedIds.add(id));
@@ -800,9 +1097,13 @@ export class QuestionsComponent implements OnInit, OnDestroy {
         const payload: Partial<Answer> = {
           answerText: draft.answerText.trim(),
           answerType: draft.answerType,
-          allowAdditionalComment: draft.allowAdditionalComment,
-          additionalCommentRequired: draft.allowAdditionalComment ? draft.additionalCommentRequired : false,
-          additionalCommentPlaceholder: draft.allowAdditionalComment ? draft.additionalCommentPlaceholder : undefined,
+          allowAdditionalComment: requiresGlobalJustification ? true : draft.allowAdditionalComment,
+          additionalCommentRequired: requiresGlobalJustification ? true : draft.allowAdditionalComment ? draft.additionalCommentRequired : false,
+          additionalCommentPlaceholder: requiresGlobalJustification
+            ? this.DEFAULT_JUSTIFICATION_PLACEHOLDER
+            : draft.allowAdditionalComment
+              ? draft.additionalCommentPlaceholder
+              : undefined,
           answerOrder: draft.answerOrder,
           isCorrect: draft.isCorrect,
           questionId
@@ -872,7 +1173,19 @@ export class QuestionsComponent implements OnInit, OnDestroy {
       return true;
     }
 
-    return (current.score ?? 0) !== (original.score ?? 0);
+    if ((current.score ?? 0) !== (original.score ?? 0)) {
+      return true;
+    }
+
+    if ((current.allAnswersJustificationRequired ?? false) !== (original.allAnswersJustificationRequired ?? false)) {
+      return true;
+    }
+
+		if ((current.manualCorrectionRequired ?? false) !== (original.manualCorrectionRequired ?? false)) {
+			return true;
+		}
+
+    return (current.freeTextResponsePlaceholder || '').trim() !== (original.freeTextResponsePlaceholder || '').trim();
   }
 
   private hasStructuralAnswerChanges(normalizedQuestionType: string): boolean {
@@ -909,13 +1222,19 @@ export class QuestionsComponent implements OnInit, OnDestroy {
     answerType: string;
     answerOrder: number;
     isCorrect: boolean;
+    allowAdditionalComment: boolean;
+    additionalCommentRequired: boolean;
+    additionalCommentPlaceholder: string;
   }> {
     return this.sortQuestionDraftAnswers(drafts).map(draft => ({
       id: typeof draft.id === 'number' ? draft.id : null,
       answerText: draft.answerText.trim(),
       answerType: (draft.answerType || 'TEXT').trim().toUpperCase(),
       answerOrder: draft.answerOrder || 0,
-      isCorrect: draft.isCorrect === true
+      isCorrect: draft.isCorrect === true,
+      allowAdditionalComment: draft.allowAdditionalComment === true,
+      additionalCommentRequired: draft.additionalCommentRequired === true,
+      additionalCommentPlaceholder: (draft.additionalCommentPlaceholder || '').trim()
     }));
   }
 
@@ -946,14 +1265,15 @@ export class QuestionsComponent implements OnInit, OnDestroy {
       this.notificationService.warning('Accès refusé', 'Le mode admin doit être activé');
       return;
     }
+    const requiresGlobalJustification = this.questionRequiresMandatoryJustification(questionId);
     this.isAnswerEditMode.set(false);
     const existing = this.answersForQuestion(questionId);
     this.answerForm.set({
       answerText: '',
       answerType: 'TEXT',
-      allowAdditionalComment: false,
-      additionalCommentRequired: false,
-      additionalCommentPlaceholder: '',
+      allowAdditionalComment: requiresGlobalJustification,
+      additionalCommentRequired: requiresGlobalJustification,
+      additionalCommentPlaceholder: requiresGlobalJustification ? this.DEFAULT_JUSTIFICATION_PLACEHOLDER : '',
       answerOrder: existing.length + 1,
       isCorrect: false,
       questionId
@@ -966,15 +1286,16 @@ export class QuestionsComponent implements OnInit, OnDestroy {
       this.notificationService.warning('Accès refusé', 'Le mode admin doit être activé');
       return;
     }
+    const requiresGlobalJustification = this.questionRequiresMandatoryJustification(a.questionId);
     this.isAnswerEditMode.set(true);
     this.selectedAnswer.set(a);
     this.answerForm.set({
       id: a.id,
       answerText: a.answerText || '',
       answerType: a.answerType || 'TEXT',
-      allowAdditionalComment: a.allowAdditionalComment ?? false,
-      additionalCommentRequired: a.additionalCommentRequired ?? false,
-      additionalCommentPlaceholder: a.additionalCommentPlaceholder || '',
+      allowAdditionalComment: requiresGlobalJustification ? true : a.allowAdditionalComment ?? false,
+      additionalCommentRequired: requiresGlobalJustification ? true : a.additionalCommentRequired ?? false,
+      additionalCommentPlaceholder: requiresGlobalJustification ? this.DEFAULT_JUSTIFICATION_PLACEHOLDER : a.additionalCommentPlaceholder || '',
       answerOrder: a.answerOrder || 1,
       isCorrect: a.isCorrect || false,
       questionId: a.questionId
@@ -1003,6 +1324,7 @@ export class QuestionsComponent implements OnInit, OnDestroy {
 
   saveAnswer(): void {
     const form = this.answerForm();
+    const requiresGlobalJustification = this.questionRequiresMandatoryJustification(form.questionId);
     if (!form.answerText.trim()) {
       this.notificationService.error('Erreur', 'Le texte de la réponse est obligatoire');
       return;
@@ -1010,9 +1332,13 @@ export class QuestionsComponent implements OnInit, OnDestroy {
     const payload: Partial<Answer> = {
       answerText: form.answerText.trim(),
       answerType: form.answerType,
-      allowAdditionalComment: form.allowAdditionalComment,
-      additionalCommentRequired: form.allowAdditionalComment ? form.additionalCommentRequired : false,
-      additionalCommentPlaceholder: form.allowAdditionalComment ? form.additionalCommentPlaceholder : undefined,
+      allowAdditionalComment: requiresGlobalJustification ? true : form.allowAdditionalComment,
+      additionalCommentRequired: requiresGlobalJustification ? true : form.allowAdditionalComment ? form.additionalCommentRequired : false,
+      additionalCommentPlaceholder: requiresGlobalJustification
+        ? this.DEFAULT_JUSTIFICATION_PLACEHOLDER
+        : form.allowAdditionalComment
+          ? form.additionalCommentPlaceholder
+          : undefined,
       answerOrder: form.answerOrder,
       isCorrect: form.isCorrect,
       questionId: form.questionId
@@ -1069,6 +1395,14 @@ export class QuestionsComponent implements OnInit, OnDestroy {
   updateAnswerFormField(field: keyof AnswerFormData, value: any): void {
     this.answerForm.update(form => {
       const nextForm = { ...form, [field]: value };
+      const requiresGlobalJustification = this.questionRequiresMandatoryJustification(nextForm.questionId);
+
+      if (requiresGlobalJustification) {
+        nextForm.allowAdditionalComment = true;
+        nextForm.additionalCommentRequired = true;
+        nextForm.additionalCommentPlaceholder = this.DEFAULT_JUSTIFICATION_PLACEHOLDER;
+        return nextForm;
+      }
 
       if (field === 'allowAdditionalComment' && value !== true) {
         nextForm.additionalCommentRequired = false;
@@ -1094,5 +1428,36 @@ export class QuestionsComponent implements OnInit, OnDestroy {
           console.error('Erreur rechargement réponses:', error);
         }
       });
+  }
+
+  private normalizeLoadedQuestions(items: Question[]): Question[] {
+    return items.map(item => ({
+      ...item,
+      questionType: this.normalizeQuestionType(item.questionType),
+      difficultyLevel: this.normalizeDifficultyLevel(item.difficultyLevel),
+      allAnswersJustificationRequired: item.allAnswersJustificationRequired === true,
+      manualCorrectionRequired: item.manualCorrectionRequired === true,
+      freeTextResponsePlaceholder: item.freeTextResponsePlaceholder || ''
+    }));
+  }
+
+  private getSpecialityLabel(spec?: Speciality | null): string {
+    return spec?.nom || spec?.name || spec?.specialityName || '';
+  }
+
+  private isQuestionTypeWithGlobalJustification(questionType?: string): boolean {
+    const normalizedQuestionType = this.normalizeQuestionType(questionType);
+    return normalizedQuestionType === 'SINGLE_CHOICE'
+      || normalizedQuestionType === 'MULTIPLE_CHOICE'
+      || normalizedQuestionType === 'TRUE_FALSE';
+  }
+
+  private questionRequiresMandatoryJustification(questionId?: number): boolean {
+    if (!questionId) {
+      return false;
+    }
+
+    const question = this.questions().find(item => item.id === questionId);
+    return question?.allAnswersJustificationRequired === true && this.isQuestionTypeWithGlobalJustification(question.questionType);
   }
 }

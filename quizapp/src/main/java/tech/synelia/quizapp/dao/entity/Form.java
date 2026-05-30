@@ -8,8 +8,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
@@ -60,10 +58,6 @@ public class Form implements Serializable, Cloneable {
 
     @Column(name="search_string", length=65535)
     private String     searchString ;
-
-    @ManyToOne
-    @JoinColumn(name="campaign_id", referencedColumnName="id")
-    private Campaigns campaigns     ;
 
     public Form() {
 		super();

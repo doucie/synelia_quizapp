@@ -114,3 +114,10 @@ La page expose un CRUD admin brut des reponses rattachees a une candidature, qu'
 4. Creer puis modifier une liaison reponse/candidature.
 5. Supprimer puis restaurer une ligne.
 6. Comparer la route avec la correction manuelle disponible dans `/dashboard/entities/applications`.
+
+## 11. Impact Cible Multi-Occurrences
+
+- [ ] remplacer `applicationId` par `applicationQuizAttemptId` dans le contrat cible de la fiche
+- [ ] documenter la lecture des reponses par tentative de quiz et non plus par candidature globale
+- [ ] aligner la correction manuelle sur le niveau tentative/round et non sur un quiz unique par candidature
+- [ ] faire deduire la candidature, le round et le formulaire cible via `application_quiz_attempt -> application_progress -> application`, sans duplication locale de contexte

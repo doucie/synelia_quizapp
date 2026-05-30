@@ -33,7 +33,7 @@
 
 ### Champs a VERIFIER / MODIFIER
 
-- [~] **LPIPSTA-040** REVUE : Enum `stage_type varchar(50)` -- documenter valeurs (APPLICATION / QUIZ / INTERVIEW / DECISION / ...). -- _AUDIT: Pas d'unicite (stageType, pipeline_template_id) -- doublons possibles._
+- [~] **LPIPSTA-040** REVUE : Enum `stage_type varchar(50)` -- documenter valeurs actuelles (`CANDIDATURE`, `QUIZ`, `PRESELECTION`, `INTERVIEW`, `TECHNICAL_TEST`, `EVALUATION`, `DECISION`, `CUSTOM`) et arbitrer celles qui doivent rester exposables. -- _AUDIT: Pas d'unicite (stageType, pipeline_template_id) -- doublons possibles._
 
 ## Section 2 -- Taches par champ (metier + technique)
 
@@ -80,6 +80,18 @@
 - [x] **LPIPSTA-124 Alignement de type** `config_json` (`text`) : entity Java, DTO, transformer, modele TS et payload JSON conserves coherents (aller-retour teste). -- _AUDIT: **FIXED** Entity `String` (`columnDefinition="TEXT"`), DTO `String`, JSON string, modele TS `string`._
 - [x] **LPIPSTA-125 Texte long** `config_json` (text) : pas de tronquage cote DTO (`String` sans `@Column(length=255)`), textarea front, taille raisonnable cote UX. -- _AUDIT: **FIXED** DTO `String` libre sans `@Column(length=...)`; mapping `TEXT`/`MEDIUMTEXT` BD; UI utilise `<textarea>` ou `<app-rich-text-editor>` selon contexte; pas de tronquage._
 
+### Regles metier transverses
+
+- [ ] **LPIPSTA-148** `stage_type` : documenter les valeurs autorisees reellement exposables a l’utilisateur apres arbitrage produit.
+- [ ] **LPIPSTA-149** Rationalisation des types : decider si `TECHNICAL_TEST` doit fusionner avec `QUIZ`; si la separation est conservee, decrire une difference metier de bout en bout reellement supportee.
+- [ ] **LPIPSTA-150** Suppression de `CUSTOM` : retirer le type des enums front/back/BDD seeds si aucun comportement exploitable n’est assume, avec strategie de migration des donnees.
+- [ ] **LPIPSTA-151** Invariants de structure : bloquer cote back toute creation/update/reorder qui mettrait `CANDIDATURE` hors position 1 ou `DECISION` hors derniere position, ou qui creerait un doublon.
+- [ ] **LPIPSTA-152** Semantique des flags : definir pour chaque type d’etape la signification et l’etat de support reel de `isRequired`, `isEliminatory`, `emailRequired`, `emailAutomatic`.
+- [ ] **LPIPSTA-153** UX conditionnelle : masquer, verrouiller ou expliquer les flags qui n’ont pas d’effet reel pour certains types d’etape.
+- [ ] **LPIPSTA-154** Skip fonctionnel : si une etape peut etre non obligatoire, verifier qu’un vrai parcours de saut existe cote UI/dashboard et cote API; sinon l’ajouter avec permissions, journalisation et tests.
+- [ ] **LPIPSTA-155** Score / seuil : verifier quels types consomment reellement `passingScore`, puis empecher les faux parametrages sur les types non scores.
+- [ ] **LPIPSTA-156** Readiness pipeline : demontrer que chaque type restant dispose d’au moins un flux operable (action utilisateur, transition, mail eventuel, score eventuel, visibilite dashboard) avant exposition dans l’editeur.
+
 ### Champ `created_at` (datetime)
 
 - [x] **LPIPSTA-127 Alignement de type** `created_at` (`datetime`) : entity Java, DTO, transformer, modele TS et payload JSON conserves coherents (aller-retour teste). -- _AUDIT: **FIXED** Entity `LocalDateTime` (`@CreationTimestamp`), DTO `LocalDateTime`, JSON ISO 8601, modele TS `string` ISO -- cycle aller-retour conserve._
@@ -113,7 +125,6 @@
 - [x] **LPIPSTA-145 Alignement de type** `search_string` (`text`) : entity Java, DTO, transformer, modele TS et payload JSON conserves coherents (aller-retour teste). -- _AUDIT: **FIXED** Entity `String` (`@Column(columnDefinition="TEXT")`), DTO `String`, JSON string, modele TS `string` -- coherent._
 - [x] **LPIPSTA-146 Texte long** `search_string` (text) : pas de tronquage cote DTO (`String` sans `@Column(length=255)`), textarea front, taille raisonnable cote UX. -- _AUDIT: **FIXED** DTO `String` libre sans `@Column(length=...)`; mapping `TEXT`/`MEDIUMTEXT` BD; UI utilise `<textarea>` ou `<app-rich-text-editor>` selon contexte; pas de tronquage._
 - [x] **LPIPSTA-147 `search_string`** : reconstruit serveur a chaque create/update via `buildSearchString()` du Business, inclut TOUS les champs metier textuels. -- _AUDIT: **FIXED** `search_string` reconstruit serveur cote `Business.buildSearchString()` a chaque create/update via concatenation des champs textuels (`firstName + ' ' + lastName + ...`); indexe FULLTEXT BD; filtre `criteria.searchString` utilise `LIKE '%...%'` dans Repository custom._
-
 
 ## Section 3 -- Operations CRUD + actions metier
 

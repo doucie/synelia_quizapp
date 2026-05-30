@@ -149,3 +149,11 @@ La page sert à prendre et annuler des décisions sur les candidatures le long d
 4. Prendre une décision sur une étape autorisée.
 5. Vérifier la mise à jour de l’historique et des compteurs.
 6. Annuler la décision et contrôler l’état résultant.
+
+## 11. Impact Cible Multi-Occurrences
+
+- [ ] remplacer la logique de decision mono-etape par un historique de decisions rattachees a `application_progress_id`
+- [ ] distinguer clairement plusieurs rounds `PRESELECTION` sur une meme candidature
+- [ ] retirer la dependance documentaire a `applicationStatus`, `quizScorePercent`, `interviewDate`, `interviewStatus` et `evaluationScore` comme source principale
+- [ ] exiger et afficher une justification pour toute annulation, override ou rollback de decision
+- [ ] exposer `decisionMode` et `cancelsDecisionId` pour distinguer decision normale, annulation, override et rollback avec trace explicite

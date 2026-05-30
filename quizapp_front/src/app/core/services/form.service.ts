@@ -10,7 +10,6 @@ export interface Form {
   formDesc?: string;
   isActive?: boolean;
   isTimed?: boolean;
-  campaignId?: number;
   createdAt?: string;
   createdBy?: number;
   updatedAt?: string;
@@ -27,7 +26,7 @@ export interface FormMutationPayload {
   formName?: string;
   formDesc?: string;
   isActive?: boolean;
-  campaignId?: number;
+  isTimed?: boolean;
   isDeleted?: boolean;
 }
 
@@ -38,7 +37,7 @@ export interface FormSearchCriteria {
   idDe?: string;
   idA?: string;
   formName?: string;
-  campaignId?: number;
+  filterCampaignId?: number;
   isActive?: boolean;
   isDeleted?: boolean;
   dateCreationDe?: string;
@@ -77,6 +76,7 @@ export class FormService {
 
   getAllByCriteria(criteria: FormSearchCriteria = {}): Observable<PagedFormResponse> {
     const currentUserId = this.getCurrentUserId();
+    const filterCampaignId = criteria.filterCampaignId;
 
     const request = {
       user: currentUserId,
@@ -88,7 +88,7 @@ export class FormService {
         isDeleted: criteria.isDeleted !== undefined ? criteria.isDeleted.toString() : '',
         searchString: criteria.search_string || '',
         ...(criteria.formName && { formName: criteria.formName }),
-        ...(criteria.campaignId && { campaignId: criteria.campaignId }),
+        ...(filterCampaignId && { filterCampaignId }),
         ...(criteria.isActive !== undefined && { isActive: criteria.isActive }),
                 ...(criteria.dateCreationDe && { dateCreationDe: criteria.dateCreationDe }),
         ...(criteria.dateCreationA && { dateCreationA: criteria.dateCreationA }),
@@ -124,14 +124,14 @@ export class FormService {
   syncCampaignLinks(campaignId: number, formIds: number[]): Observable<any> {
     return this.http.post(`${this.apiUrl}/custom`, {
       user: this.getCurrentUserId(),
-      datas: [{ action: 'syncCampaignLinks', campaignId, formIds }]
+      datas: [{ action: 'syncCampaignLinks', targetCampaignId: campaignId, formIds }]
     });
   }
 
   duplicateForCampaign(sourceFormId: number, campaignId: number, duplicateName?: string): Observable<Form> {
     return this.http.post<any>(`${this.apiUrl}/custom`, {
       user: this.getCurrentUserId(),
-      datas: [{ action: 'duplicateForCampaign', id: sourceFormId, campaignId, ...(duplicateName ? { formName: duplicateName } : {}) }]
+      datas: [{ action: 'duplicateForCampaign', id: sourceFormId, targetCampaignId: campaignId, ...(duplicateName ? { formName: duplicateName } : {}) }]
     }).pipe(
       map(response => this.extractFirstForm(response)),
       catchError(error => { console.error('Erreur duplication form:', error); return throwError(() => error); })
@@ -158,7 +158,6 @@ export class FormService {
       formDesc: item.formDesc || item.form_desc || undefined,
       isActive: item.isActive ?? item.is_active ?? false,
       isTimed: item.isTimed ?? item.is_timed ?? false,
-      campaignId: this.toOptionalNumber(item.campaignId ?? item.campaign_id),
       createdAt: item.createdAt || item.created_at || undefined,
       createdBy: this.toOptionalNumber(item.createdBy ?? item.created_by),
       updatedAt: item.updatedAt || item.updated_at || undefined,

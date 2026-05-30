@@ -137,10 +137,14 @@ export class PipelineTemplateService {
   }
 
   private handleError(action: string) {
-    return () => of({
+    return (error: any) => of({
       hasError: true,
-      status: { code: 'ERROR', message: `Erreur lors de la ${action}` },
-      httpCode: 500
+      status: { code: 'ERROR', message: this.extractErrorMessage(error, `Erreur lors de la ${action}`) },
+      httpCode: error?.status || 500
     } as PipelineTemplateResponse);
+  }
+
+  private extractErrorMessage(error: any, fallback: string): string {
+    return error?.error?.status?.message || error?.error?.message || error?.message || fallback;
   }
 }

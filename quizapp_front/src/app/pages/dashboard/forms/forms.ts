@@ -1,30 +1,22 @@
 import { Component, Inject, OnDestroy, OnInit, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { Subject, forkJoin, takeUntil } from 'rxjs';
 import { Campaign, CampaignService } from '../../../core/services/campaign.service';
-import { Form, FormMutationPayload, FormService } from '../../../core/services/form.service';
+import { Form, FormService } from '../../../core/services/form.service';
 import { FormVersion, FormVersionService } from '../../../core/services/form-version.service';
 import { CampaignFormLink, CampaignFormService } from '../../../core/services/campaign-form.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
-import { FilterCheckboxComponent } from '../../../shared/filter-checkbox/filter-checkbox';
 import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../shared/filter-select/filter-select';
 
 type FormStatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE';
 
-interface FormEditorState {
-  id?: number;
-  formName: string;
-  formDesc: string;
-  isActive: boolean;
-}
-
 @Component({
   selector: 'app-forms',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, FilterCheckboxComponent, FilterSelectComponent, FilterSelectOptionDirective],
+  imports: [CommonModule, FormsModule, FilterSelectComponent, FilterSelectOptionDirective],
   templateUrl: './forms.html',
   styleUrls: ['./forms.scss']
 })
@@ -42,11 +34,8 @@ export class FormsComponent implements OnInit, OnDestroy {
   filterCampaignId = signal<number | null>(null);
   filterStatus = signal<FormStatusFilter>('ALL');
 
-  showCreateEditModal = signal(false);
   showDeleteModal = signal(false);
-  isEditMode = signal(false);
   selectedForm = signal<Form | null>(null);
-  formState = signal<FormEditorState>(this.getEmptyFormState());
   isAdminModeEnabled = signal(false);
 
   linksByFormId = computed(() => {
@@ -113,6 +102,7 @@ export class FormsComponent implements OnInit, OnDestroy {
   sharedFormsCount = computed(() => [...this.linksByFormId().values()].filter(links => links.length > 1).length);
 
   constructor(
+    private readonly router: Router,
     private readonly formService: FormService,
     private readonly campaignService: CampaignService,
     private readonly formVersionService: FormVersionService,
@@ -187,39 +177,26 @@ export class FormsComponent implements OnInit, OnDestroy {
       });
   }
 
-  openCreateModal(): void {
+  openCreatePage(): void {
     if (!this.isAdminModeEnabled()) {
       this.notificationService.warning('Acces refuse', 'Le mode admin doit etre active pour creer un formulaire');
       return;
     }
 
-    this.isEditMode.set(false);
-    this.selectedForm.set(null);
-    this.formState.set(this.getEmptyFormState());
-    this.showCreateEditModal.set(true);
+    this.router.navigate(['/dashboard/forms/new']);
   }
 
-  openEditModal(form: Form): void {
+  openEditPage(form: Form): void {
     if (!this.isAdminModeEnabled()) {
       this.notificationService.warning('Acces refuse', 'Le mode admin doit etre active pour modifier un formulaire');
       return;
     }
 
-    this.isEditMode.set(true);
-    this.selectedForm.set(form);
-    this.formState.set({
-      id: form.id,
-      formName: form.formName || '',
-      formDesc: form.formDesc || '',
-      isActive: form.isActive !== false
-    });
-    this.showCreateEditModal.set(true);
-  }
+    if (!form.id) {
+      return;
+    }
 
-  closeCreateEditModal(): void {
-    this.showCreateEditModal.set(false);
-    this.selectedForm.set(null);
-    this.formState.set(this.getEmptyFormState());
+    this.router.navigate(['/dashboard/forms', form.id, 'edit']);
   }
 
   openDeleteModal(form: Form): void {
@@ -235,52 +212,6 @@ export class FormsComponent implements OnInit, OnDestroy {
   closeDeleteModal(): void {
     this.showDeleteModal.set(false);
     this.selectedForm.set(null);
-  }
-
-  updateFormField<K extends keyof FormEditorState>(field: K, value: FormEditorState[K]): void {
-    this.formState.update(current => ({
-      ...current,
-      [field]: value
-    }));
-  }
-
-  saveForm(): void {
-    const state = this.formState();
-
-    if (!state.formName.trim()) {
-      this.notificationService.error('Erreur', 'Le nom du formulaire est obligatoire');
-      return;
-    }
-
-    this.loading.set(true);
-
-    const payload: FormMutationPayload = {
-      formName: state.formName.trim(),
-      formDesc: state.formDesc.trim(),
-      isActive: state.isActive
-    };
-
-    const request$ = this.isEditMode() && state.id
-      ? this.formService.update({ ...payload, id: state.id })
-      : this.formService.create(payload);
-
-    request$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: () => {
-          this.notificationService.success(
-            'Succes',
-            this.isEditMode() ? 'Formulaire modifie avec succes' : 'Formulaire cree avec succes'
-          );
-          this.closeCreateEditModal();
-          this.loadForms();
-        },
-        error: error => {
-          console.error('Erreur sauvegarde formulaire:', error);
-          this.notificationService.error('Erreur', 'Impossible de sauvegarder le formulaire');
-          this.loading.set(false);
-        }
-      });
   }
 
   deleteForm(): void {
@@ -380,14 +311,6 @@ export class FormsComponent implements OnInit, OnDestroy {
 
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('fr-FR');
-  }
-
-  private getEmptyFormState(): FormEditorState {
-    return {
-      formName: '',
-      formDesc: '',
-      isActive: true
-    };
   }
 
   private getLinkedCampaigns(form: Form): CampaignFormLink[] {

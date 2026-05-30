@@ -154,3 +154,14 @@ La page sert a planifier, filtrer, lancer et suivre les entretiens des candidats
 5. Ouvrir un entretien `STARTED` et verifier la disponibilite du bouton `Evaluer`.
 6. Verifier l'affichage d'un report candidat ou d'un refus si des donnees existent.
 7. Basculer en vue calendrier et noter les ecarts de comportement / donnees.
+
+## 11. Impact Cible Multi-Occurrences
+
+- [ ] documenter chaque entretien comme l'execution d'un round `INTERVIEW` precis, via `application_progress_id`
+- [ ] retirer la dependance a `quizScorePercent` et a `interviewMailSent` comme resumés globaux de la candidature
+- [ ] supporter plusieurs entretiens pour une meme candidature sans ambiguite de round ni de label
+- [ ] aligner la convocation et le suivi email sur les nouvelles regles de notification de stage
+- [ ] documenter `interviews` comme conteneur de session partagee pouvant porter un ou plusieurs `candidate_interview` si des entretiens mutualises sont conserves
+- [ ] conserver `interviewEvaluationsLink` au niveau de l'entretien comme code ou lien de salon partage des evaluateurs, et non comme information candidate-specifique
+- [ ] afficher explicitement `candidateResponseStatus`, `respondedAt`, `declineReason` et `alternativeDateRequested` comme etat de reponse du candidat via `candidate_interview`
+- [ ] conserver `interviewType` uniquement comme modalite `IN_PERSON` / `ONLINE`, sans lui donner de semantique de round pipeline
