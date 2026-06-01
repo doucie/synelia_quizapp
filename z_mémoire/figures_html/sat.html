@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>SAT — SyneliaQuizApp</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="page-header">
+      <div>
+        <h1>Schéma Analytique des Traitements (SAT / MOT)</h1>
+        <p class="subtitle">
+          Vue organisationnelle Merise : qui fait quoi, à quel moment, et
+          selon quel mode (<strong>manuel</strong>, <strong>interactif</strong>
+          ou <strong>automatique</strong>). Lecture verticale (phases T0 → T7),
+          colonnes par acteur. Modèle cible de l'évolution
+          <code>420-evolution-pipeline-multi-occurrences</code>.
+        </p>
+      </div>
+      <div class="legend">
+        <span class="chip"><span class="dot" style="background:var(--pivot)"></span>Manuel</span>
+        <span class="chip"><span class="dot" style="background:var(--warn)"></span>Interactif</span>
+        <span class="chip accent"><span class="dot"></span>Automatique</span>
+        <span class="chip new"><span class="dot"></span>Administrateur</span>
+      </div>
+    </header>
+
+    <div class="figure">
+      <div class="canvas" style="height: 1900px; width: 1480px; margin: 0 auto;">
+        <svg class="links" preserveAspectRatio="none"></svg>
+
+        <!-- ── Couloirs (lanes) : décor, non draggable ────────────── -->
+        <div class="sat-lane"      style="top:80px; left:170px; width:240px; height:1780px;"></div>
+        <div class="sat-lane auto" style="top:80px; left:420px; width:240px; height:1780px;"></div>
+        <div class="sat-lane alt"  style="top:80px; left:670px; width:240px; height:1780px;"></div>
+        <div class="sat-lane eval" style="top:80px; left:920px; width:200px; height:1780px;"></div>
+        <div class="sat-lane adm"  style="top:80px; left:1130px; width:200px; height:1780px;"></div>
+
+        <!-- ── Têtes de colonnes (acteurs) ────────────────────────── -->
+        <div class="entity sat-head"      data-entity="h-time" style="top:20px; left:20px;  width:130px;">Phase / Période</div>
+        <div class="entity sat-head"      data-entity="h-cand" style="top:20px; left:180px; width:220px;">Candidat</div>
+        <div class="entity sat-head auto" data-entity="h-syst" style="top:20px; left:430px; width:220px;">Système (auto)</div>
+        <div class="entity sat-head alt"  data-entity="h-recr" style="top:20px; left:680px; width:220px;">Recruteur</div>
+        <div class="entity sat-head eval" data-entity="h-eval" style="top:20px; left:930px; width:180px;">Évaluateur</div>
+        <div class="entity sat-head adm"  data-entity="h-adm"  style="top:20px; left:1140px; width:180px;">Administrateur</div>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             T0 — CONFIGURATION DU PIPELINE
+             ═══════════════════════════════════════════════════════════════ -->
+        <div class="entity sat-phase" data-entity="p0" style="top:110px; left:20px; width:130px;">T0 — Setup<br/><small>asynchrone</small></div>
+
+        <div class="entity sat-task adm" data-entity="t0-adm" style="top:110px; left:1140px; width:180px;">
+          <div class="task-title">Définir <code>pipeline_template</code></div>
+          <span class="task-meta">manuel</span>
+          <div class="task-detail">Stages, critères, règles de notification, templates d'email.</div>
+        </div>
+        <div class="entity sat-task manual" data-entity="t0-recr" style="top:110px; left:680px; width:220px;">
+          <div class="task-title">Créer la campagne</div>
+          <span class="task-meta">manuel</span>
+          <div class="task-detail">Choisit un template, attache formulaires + sources, ouvre la campagne.</div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             T1 — CANDIDATURE
+             ═══════════════════════════════════════════════════════════════ -->
+        <div class="entity sat-phase" data-entity="p1" style="top:260px; left:20px; width:130px;">T1 — Candidature<br/><small>temps réel</small></div>
+
+        <div class="entity sat-task interactive" data-entity="t1-cand" style="top:260px; left:180px; width:220px;">
+          <div class="task-title">Soumettre la candidature</div>
+          <span class="task-meta">interactif</span>
+          <div class="task-detail">Renseigne identité, CV, lettre, double opt-in email.</div>
+        </div>
+        <div class="entity sat-task auto" data-entity="t1-syst" style="top:260px; left:430px; width:220px;">
+          <div class="task-title">Créer <code>applications</code> + <code>application_progress[0]</code></div>
+          <span class="task-meta">auto</span>
+          <div class="task-detail">Résout le template, instancie les stages, audit CREATE, mail d'accusé.</div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             T2 — TENTATIVE QUIZ
+             ═══════════════════════════════════════════════════════════════ -->
+        <div class="entity sat-phase" data-entity="p2" style="top:410px; left:20px; width:130px;">T2 — Quiz<br/><small>chronométré</small></div>
+
+        <div class="entity sat-task auto" data-entity="t2-open" style="top:410px; left:430px; width:220px;">
+          <div class="task-title">Ouvrir round QUIZ</div>
+          <span class="task-meta">auto</span>
+          <div class="task-detail">Crée <code>application_quiz_attempt</code> + <code>quiz_token</code>, notifie le candidat.</div>
+        </div>
+        <div class="entity sat-task interactive" data-entity="t2-cand" style="top:410px; left:180px; width:220px;">
+          <div class="task-title">Passer le quiz</div>
+          <span class="task-meta">interactif</span>
+          <div class="task-detail">Réponses persistées via <code>candidate_answer</code> rattachées à la tentative.</div>
+        </div>
+        <div class="entity sat-task auto" data-entity="t2-score" style="top:540px; left:430px; width:220px;">
+          <div class="task-title">Calculer score + screening</div>
+          <span class="task-meta">auto</span>
+          <div class="task-detail">Agrège <code>score_percent</code>, applique <code>screening_mode</code>,
+            met à jour <code>aggregated_quiz_score</code>.</div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             T3 — PRÉSÉLECTION
+             ═══════════════════════════════════════════════════════════════ -->
+        <div class="entity sat-phase" data-entity="p3" style="top:680px; left:20px; width:130px;">T3 — Présélection<br/><small>différé</small></div>
+
+        <div class="entity sat-task manual" data-entity="t3-recr-read" style="top:680px; left:680px; width:220px;">
+          <div class="task-title">Consulter résultats QUIZ</div>
+          <span class="task-meta">manuel</span>
+          <div class="task-detail">Filtre, exporte, compare tentatives.</div>
+        </div>
+        <div class="entity sat-task manual" data-entity="t3-recr-dec" style="top:790px; left:680px; width:220px;">
+          <div class="task-title">Saisir décision PRESELECTION</div>
+          <span class="task-meta">manuel</span>
+          <div class="task-detail">Crée <code>decisions</code> sur <code>application_progress</code> courant,
+            justifie si requis.</div>
+        </div>
+        <div class="entity sat-task auto" data-entity="t3-syst" style="top:790px; left:430px; width:220px;">
+          <div class="task-title">Clôturer round + ouvrir suivant</div>
+          <span class="task-meta">auto</span>
+          <div class="task-detail">Valide <code>application_progress</code>, recalcule
+            <code>current_application_progress_id</code>, notifie.</div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             T4 — ENTRETIEN + ÉVALUATION
+             ═══════════════════════════════════════════════════════════════ -->
+        <div class="entity sat-phase" data-entity="p4" style="top:930px; left:20px; width:130px;">T4 — Entretien<br/><small>multi-acteurs</small></div>
+
+        <div class="entity sat-task manual" data-entity="t4-recr-plan" style="top:930px; left:680px; width:220px;">
+          <div class="task-title">Planifier l'entretien</div>
+          <span class="task-meta">manuel</span>
+          <div class="task-detail">Crée <code>interviews</code> rattaché au round, affecte
+            <code>interview_participant</code>.</div>
+        </div>
+        <div class="entity sat-task auto" data-entity="t4-syst-notif" style="top:930px; left:430px; width:220px;">
+          <div class="task-title">Notifier candidat + participants</div>
+          <span class="task-meta">auto</span>
+          <div class="task-detail">Mails <code>ON_INTERVIEW_PLANNED</code>, notifications in-app.</div>
+        </div>
+        <div class="entity sat-task interactive" data-entity="t4-cand-resp" style="top:1050px; left:180px; width:220px;">
+          <div class="task-title">Accepter / refuser / proposer alternative</div>
+          <span class="task-meta">interactif</span>
+          <div class="task-detail">Met à jour <code>candidate_interview.candidate_response_status</code>.</div>
+        </div>
+        <div class="entity sat-task eval" data-entity="t4-eval" style="top:1180px; left:930px; width:180px;">
+          <div class="task-title">Remplir grille d'évaluation</div>
+          <span class="task-meta">manuel</span>
+          <div class="task-detail">Crée <code>evaluations</code> + un <code>evaluation_item</code> par critère.</div>
+        </div>
+        <div class="entity sat-task auto" data-entity="t4-syst-aggr" style="top:1180px; left:430px; width:220px;">
+          <div class="task-title">Clôturer + agréger</div>
+          <span class="task-meta">auto</span>
+          <div class="task-detail">Calcule <code>aggregated_evaluation_score</code>, valide le round,
+            audit CLOSE + VALIDATE.</div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             T5 — DÉCISION FINALE
+             ═══════════════════════════════════════════════════════════════ -->
+        <div class="entity sat-phase" data-entity="p5" style="top:1340px; left:20px; width:130px;">T5 — Décision finale<br/><small>verrouillante</small></div>
+
+        <div class="entity sat-task manual" data-entity="t5-recr" style="top:1340px; left:680px; width:220px;">
+          <div class="task-title">Saisir décision DECISION</div>
+          <span class="task-meta">manuel</span>
+          <div class="task-detail">Type <code>RECRUTE</code> / <code>NON_RETENU</code>, justification finale.</div>
+        </div>
+        <div class="entity sat-task auto" data-entity="t5-syst" style="top:1340px; left:430px; width:220px;">
+          <div class="task-title">Envoyer email final + verrouiller</div>
+          <span class="task-meta">auto</span>
+          <div class="task-detail">Évalue règle <code>ON_FINAL_DECISION</code>, confirme envoi si
+            <code>requires_manual_confirmation</code>.</div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             T6 — ANNULATION / ROLLBACK (exceptionnel)
+             ═══════════════════════════════════════════════════════════════ -->
+        <div class="entity sat-phase" data-entity="p6" style="top:1490px; left:20px; width:130px;">T6 — Rollback<br/><small>exceptionnel</small></div>
+
+        <div class="entity sat-task manual" data-entity="t6-recr" style="top:1490px; left:680px; width:220px;">
+          <div class="task-title">Annuler / réouvrir une décision</div>
+          <span class="task-meta">manuel</span>
+          <div class="task-detail">Saisit <code>decision_mode = CANCEL</code> ou <code>ROLLBACK</code>
+            + <code>justification</code> + <code>cancels_decision_id</code>.</div>
+        </div>
+        <div class="entity sat-task auto" data-entity="t6-syst" style="top:1490px; left:430px; width:220px;">
+          <div class="task-title">Recalculer parcours + audit ROLLBACK</div>
+          <span class="task-meta">auto</span>
+          <div class="task-detail">Réouvre <code>application_progress</code>, recalcule
+            <code>current_application_progress_id</code>.</div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             T7 — AUDIT & SUPERVISION (transverse, asynchrone)
+             ═══════════════════════════════════════════════════════════════ -->
+        <div class="entity sat-phase" data-entity="p7" style="top:1660px; left:20px; width:130px;">T7 — Audit<br/><small>transverse</small></div>
+
+        <div class="entity sat-task auto" data-entity="t7-syst" style="top:1660px; left:430px; width:220px;">
+          <div class="task-title">Journaliser <code>audit_event</code></div>
+          <span class="task-meta">auto</span>
+          <div class="task-detail">CREATE / UPDATE / DECIDE / CANCEL / SUBMIT / CLOSE / VALIDATE
+            (asynchrone, non bloquant).</div>
+        </div>
+        <div class="entity sat-task adm" data-entity="t7-adm" style="top:1660px; left:1140px; width:180px;">
+          <div class="task-title">Consulter audit / superviser</div>
+          <span class="task-meta">manuel</span>
+          <div class="task-detail">Filtres par acteur, période, action ; export RGPD.</div>
+        </div>
+      </div>
+
+      <p class="figure-caption">
+        Figure 4 — SAT cible. Cinq couloirs d'acteurs et huit phases temporelles,
+        avec annotation du mode d'exécution (<em>manuel</em>, <em>interactif</em>,
+        <em>auto</em>) ; les flèches indiquent les passages de relais.
+      </p>
+    </div>
+  </div>
+
+  <script>
+    window.LINKS = [
+      // T0
+      { from: "t0-adm",  to: "t0-recr", dashed: true },
+      { from: "t0-recr", to: "t1-cand", dashed: true },
+
+      // T1
+      { from: "t1-cand", to: "t1-syst", strong: true },
+      { from: "t1-syst", to: "t2-open", strong: true },
+
+      // T2
+      { from: "t2-open",  to: "t2-cand",  strong: true },
+      { from: "t2-cand",  to: "t2-score", strong: true },
+      { from: "t2-score", to: "t3-recr-read", strong: true },
+
+      // T3
+      { from: "t3-recr-read", to: "t3-recr-dec", strong: true },
+      { from: "t3-recr-dec",  to: "t3-syst",     strong: true },
+      { from: "t3-syst",      to: "t4-recr-plan", strong: true },
+
+      // T4
+      { from: "t4-recr-plan", to: "t4-syst-notif", strong: true },
+      { from: "t4-syst-notif", to: "t4-cand-resp", strong: true },
+      { from: "t4-cand-resp",  to: "t4-eval",      strong: true },
+      { from: "t4-eval",       to: "t4-syst-aggr", strong: true },
+      { from: "t4-syst-aggr",  to: "t5-recr",      strong: true },
+
+      // T5
+      { from: "t5-recr", to: "t5-syst", strong: true },
+
+      // T6 (boucle exceptionnelle, retour vers T5)
+      { from: "t5-syst", to: "t6-recr", dashed: true },
+      { from: "t6-recr", to: "t6-syst", strong: true },
+      { from: "t6-syst", to: "t5-recr", dashed: true },
+
+      // T7 audit transverse : chaque opération système alimente t7-syst
+      { from: "t1-syst",      to: "t7-syst", dashed: true },
+      { from: "t2-score",     to: "t7-syst", dashed: true },
+      { from: "t3-syst",      to: "t7-syst", dashed: true },
+      { from: "t4-syst-aggr", to: "t7-syst", dashed: true },
+      { from: "t5-syst",      to: "t7-syst", dashed: true },
+      { from: "t6-syst",      to: "t7-syst", dashed: true },
+      { from: "t7-syst",      to: "t7-adm",  dashed: true },
+    ];
+  </script>
+  <script src="links.js"></script>
+</body>
+</html>

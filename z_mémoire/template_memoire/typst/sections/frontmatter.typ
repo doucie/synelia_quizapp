@@ -10,9 +10,9 @@
   #counter(page).update(1)
 
   #front-heading([Remerciements])
-  Je tiens à exprimer ma profonde gratitude à mon encadreur pédagogique, #strong[[Titre Nom Prénom]], pour son accompagnement, sa disponibilité et la qualité de ses conseils tout au long de ce travail.
+  Je tiens à exprimer ma profonde gratitude à mon encadreur pédagogique, #strong[#meta.advisor_name], pour son accompagnement, sa disponibilité et la qualité de ses conseils tout au long de ce travail.
 
-  Mes sincères remerciements s'adressent également à mon maître de stage, #strong[[Nom Prénom]], pour sa confiance, son encadrement au sein de SYNELIA et la richesse des échanges techniques et méthodologiques qui ont nourri ce projet.
+  Mes sincères remerciements s'adressent également à mon maître de stage, #strong[#meta.internship_supervisor], pour sa confiance, son encadrement au sein de SYNELIA et la richesse des échanges techniques et méthodologiques qui ont nourri ce projet.
 
   Je remercie l'ensemble de l'équipe SYNELIA pour son accueil, sa bienveillance et son implication dans le suivi du projet SyneliaQuizApp.
 
@@ -74,9 +74,15 @@
     [#strong[DTO]], [Data Transfer Object],
     [#strong[JPA]], [Java Persistence API],
     [#strong[JWT]], [JSON Web Token],
+    [#strong[MCD]], [Modèle Conceptuel de Données dans la méthode Merise],
+    [#strong[MCT]], [Modèle Conceptuel des Traitements dans la méthode Merise],
+    [#strong[MERISE]], [Méthode d'Étude et de Réalisation Informatique pour les Systèmes d'Entreprise],
+    [#strong[MLD]], [Modèle Logique de Données],
+    [#strong[MPD]], [Modèle Physique de Données],
     [#strong[MySQL]], [Système de gestion de base de données relationnelle],
     [#strong[REST]], [Style d'architecture des services web],
     [#strong[RGPD]], [Règlement Général sur la Protection des Données],
+    [#strong[SAT]], [Structure d'Accès Théorique],
     [#strong[SPA]], [Single Page Application],
     [#strong[Spring Boot]], [Framework backend Java retenu pour le projet],
     [#strong[Typst]], [Système de composition utilisé pour le mémoire],

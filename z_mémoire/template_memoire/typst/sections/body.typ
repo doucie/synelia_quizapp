@@ -1,4 +1,44 @@
-#import "../theme.typ": top-heading, part-page, note-box, page-footer, document-table
+#import "../theme.typ": top-heading, part-page, note-box, page-footer, document-table, palette
+
+#let merise-lines(..items) = grid(
+  columns: (1fr),
+  gutter: 0.08em,
+  ..items,
+)
+
+#let merise-card(title, width: 2.85cm, fill: white, body) = block(
+  width: width,
+  inset: 7pt,
+  radius: 5pt,
+  fill: fill,
+  stroke: (paint: palette.line, thickness: 0.65pt),
+)[
+  #set par(first-line-indent: 0pt, justify: false, spacing: 0.14em)
+  #text(size: 9.7pt, weight: "semibold", fill: palette.primary)[#title]
+  #v(0.15em)
+  #set text(size: 8.4pt, fill: palette.ink)
+  #body
+]
+
+#let merise-link(label, width: 0.95cm) = block(width: width)[
+  #set par(first-line-indent: 0pt, justify: false)
+  #align(center)[
+    #text(size: 8.2pt, weight: "semibold", fill: palette.secondary)[#label]
+  ]
+]
+
+#let merise-row(..items) = align(center)[
+  #grid(
+    columns: (2.85cm, 0.95cm, 2.85cm, 0.95cm, 2.85cm, 0.95cm, 2.85cm),
+    gutter: 0.14cm,
+    ..items,
+  )
+]
+
+#let merise-figure(caption, body) = figure(caption: caption)[
+  #set par(first-line-indent: 0pt, justify: false)
+  #align(center)[#body]
+]
 
 #let render-body(meta) = [
   #set page(numbering: none, footer: page-footer("1"))
@@ -176,24 +216,37 @@
 
   = Analyse des besoins
 
-  Ce chapitre a pour objectif de démontrer que la solution répond à des besoins clairement identifiés, priorisés et structurés selon une logique d'ingénierie logicielle.
+  Ce chapitre a pour objectif de démontrer que la solution répond à des besoins clairement identifiés, priorisés et structurés selon une logique d'ingénierie logicielle. Il ne s'agit pas seulement d'énumérer des fonctionnalités, mais de montrer comment les attentes des acteurs, les contraintes d'exploitation et les règles du recrutement ont été transformées en exigences cohérentes, traçables et concevables.
 
   #note-box([Sources prioritaires], [
-    - cartographies fonctionnelles
-    - z_notes/
-    - to-do/
-    - backlog métier et notes de debug significatives
+    - cahier des charges fonctionnel et plan de mémoire
+    - z_notes/ et to-do/
+    - inventaires BD, backend, frontend et personas
+    - cartographies des parcours et validations fonctionnelles
   ])
 
   == Méthodologie d'analyse
-  L'analyse des besoins a été menée selon une démarche progressive, ancrée dans les usages réels du projet plutôt que dans une modélisation abstraite déconnectée de l'implémentation. Le point de départ a été le cahier des charges fonctionnel, enrichi ensuite par les cartographies métier, les notes de debug, les listes de tâches et les observations issues des validations successives du produit. Cette approche a permis de confronter en permanence le besoin théorique, le comportement du code et les arbitrages effectivement retenus pendant le développement.
+  L'analyse des besoins a été menée selon une démarche progressive, ancrée dans les usages réels du projet plutôt que dans une modélisation abstraite déconnectée de l'implémentation. Le point de départ a été le cahier des charges fonctionnel, enrichi ensuite par les cartographies métier, les notes de debug, les listes de tâches, les inventaires techniques et les observations issues des validations successives du produit. Cette approche a permis de confronter en permanence le besoin théorique, le comportement du code et les arbitrages effectivement retenus pendant le développement.
 
-  Plusieurs parties prenantes ont implicitement structuré cette analyse. Le candidat représente l'utilisateur externe principal, avec des attentes de simplicité, de clarté et de continuité dans son parcours. Les recruteurs et évaluateurs incarnent les besoins métiers centraux liés au pilotage des campagnes, à la lecture des dossiers, à l'évaluation et à la décision. Les administrateurs, enfin, portent les exigences de configuration, de gouvernance et de maintien du système dans la durée.
+  Les besoins ont ensuite été regroupés en modules fonctionnels, puis relus à travers des critères transverses : sécurité, permissions, cohérence des états, traçabilité, qualité de l'expérience utilisateur et capacité d'évolution. Ce choix de lecture par parcours et par règles métier est particulièrement important dans un projet comme SyneliaQuizApp, où une fonctionnalité ne peut pas être correctement comprise si elle est isolée de son contexte de campagne, de permission ou de pipeline.
 
-  Méthodologiquement, les besoins ont été regroupés en modules fonctionnels, puis relus à travers des critères transverses : sécurité, permissions, cohérence des états, traçabilité, qualité de l'expérience utilisateur et capacité d'évolution. Ce choix de lecture par parcours et par règles métier est particulièrement important dans un projet comme SyneliaQuizApp, où une fonctionnalité ne peut pas être correctement comprise si elle est isolée de son contexte de campagne, de permission ou de pipeline.
+  === Parties prenantes et périmètre étudié
+  La compréhension du besoin a d'abord reposé sur l'identification des acteurs ayant une influence directe sur le système. Le mémoire retient quatre profils structurants, chacun portant des attentes propres et des risques métier spécifiques. Cette lecture par parties prenantes permet de justifier les choix d'interface, de sécurité et de structuration des modules.
+
+  #document-table(
+    columns: (1.05fr, 1.55fr, 1.55fr, 1.85fr),
+    [Acteur], [Attentes principales], [Risque métier à maîtriser], [Conséquence directe sur la conception],
+    [Candidat], [Postuler sans friction, comprendre les étapes, conserver un suivi autonome.], [Abandon en cours de parcours, incompréhension des statuts, perte de confiance dans le processus.], [Surface publique simple, sécurisée, guidée et clairement séparée des écrans internes.],
+    [Recruteur / évaluateur], [Piloter les campagnes, filtrer les dossiers, collaborer sur les entretiens et les évaluations.], [Décisions prises hors contexte, dispersion de l'information, difficulté à partager l'évaluation.], [Vues consolidées par campagne, historique d'avancement et permissions contextualisées.],
+    [Administrateur], [Gérer les utilisateurs, les référentiels et le paramétrage d'exploitation.], [Dérive des droits, données incohérentes, configuration fragile.], [Référentiels administrables, contrôle d'accès fin et traçabilité des actions techniques.],
+    [Super administrateur], [Gouverner la plateforme, superviser la sécurité et maintenir la configuration globale.], [Mauvaise gouvernance des rôles, défaut de supervision ou de paramétrage global.], [Séparation nette entre administration métier et administration de plateforme.],
+  )
+
+  === Démarche de formalisation
+  La formalisation des besoins a suivi quatre opérations complémentaires : recenser les parcours métier réels, regrouper les attentes par modules applicatifs, exprimer les règles de gestion qui conditionnent les transitions d'état, puis vérifier la cohérence de cette modélisation avec le schéma de données, les écrans existants et les validations déjà réalisées. Cette méthode a permis d'éviter une double impasse fréquente dans les mémoires techniques : d'un côté un discours purement théorique sans ancrage logiciel, de l'autre une description du code dépourvue de logique d'analyse.
 
   == Besoins fonctionnels
-  Les besoins fonctionnels du projet peuvent être structurés en plusieurs blocs applicatifs complémentaires, chacun correspondant à un segment du processus de recrutement. Cette structuration permet de relier les attentes métier aux modules effectivement conçus dans la solution et de montrer que le produit répond à une logique de parcours complet plutôt qu'à une accumulation de fonctionnalités indépendantes.
+  Les besoins fonctionnels du projet peuvent être structurés en plusieurs blocs applicatifs complémentaires, chacun correspondant à un segment du processus de recrutement. Cette structuration relie les attentes métier aux modules effectivement conçus dans la solution et montre que le produit répond à une logique de parcours complet plutôt qu'à une accumulation de fonctionnalités indépendantes.
 
   === Authentification et gestion des utilisateurs
   Le système doit permettre l'authentification des utilisateurs internes, la gestion de leurs rôles et le contrôle précis de leurs droits d'accès. Les administrateurs et recruteurs ont besoin d'accéder à des espaces différenciés, avec des permissions cohérentes selon leur responsabilité réelle. L'application doit donc gérer à la fois des droits globaux liés au rôle système et des droits contextualisés, portés par une campagne ou par une entité particulière.
@@ -201,7 +254,7 @@
   Pour les parcours publics, le besoin est différent : le candidat ne doit pas disposer d'un accès interne classique, mais d'un ensemble de points d'entrée sécurisés, restreints à sa propre candidature. Cela implique des mécanismes dédiés de vérification d'email, de codes de suivi et de liens contextualisés, distincts du modèle d'authentification des utilisateurs internes.
 
   === Gestion des données de référence
-  Le projet nécessite un socle de données de référence administrables, sans lequel le recrutement ne peut pas être structuré durablement. Cela inclut notamment les départements, les spécialités, les questions de quiz, les réponses attendues, les formulaires et plusieurs référentiels transverses nécessaires au fonctionnement métier et aux écrans d'administration.
+  Le projet nécessite un socle de données de référence administrables, sans lequel le recrutement ne peut pas être structuré durablement. Cela inclut notamment les départements, les spécialités, les questions de quiz, les réponses attendues, les formulaires, les groupes métier et plusieurs référentiels transverses nécessaires au fonctionnement métier et aux écrans d'administration.
 
   Le besoin ne porte pas seulement sur la création de ces données, mais aussi sur leur cohérence, leur réutilisation et leur évolution. Une question peut être partagée par plusieurs formulaires, un formulaire peut être versionné, et certaines données doivent être historisées indirectement pour éviter que des modifications ultérieures ne déforment la lecture des campagnes déjà utilisées. L'administration des référentiels constitue donc une base essentielle de la qualité du système.
 
@@ -213,53 +266,149 @@
   === Candidatures et suivi candidat
   Le système doit offrir un parcours de candidature public simple et fiable, permettant au candidat de renseigner ses informations, de transmettre ses pièces, de vérifier son adresse email et d'obtenir un moyen de suivi autonome de son dossier. Ce besoin est fondamental, car il conditionne à la fois la qualité de la donnée collectée et la perception du sérieux de l'entreprise par les candidats.
 
-  Au-delà de la soumission initiale, la solution doit permettre un suivi public contextualisé : consultation de l'état d'avancement, visibilité sur les actions possibles, reprise éventuelle de certaines étapes, réponse à une convocation et, lorsque la règle métier l'autorise, retrait de la candidature ou demande de correction d'information. Le système doit donc gérer une frontière claire entre les actions publiques autorisées et les opérations strictement réservées aux équipes internes.
+  Au-delà de la soumission initiale, la solution doit permettre un suivi public contextualisé : consultation de l'état d'avancement, visibilité sur les actions possibles, réponse à une convocation, et, lorsque la règle métier l'autorise, demande de correction d'information ou abandon du processus. Le système doit donc gérer une frontière claire entre les actions publiques autorisées et les opérations strictement réservées aux équipes internes.
 
   === Quiz technique
-  Le quiz technique répond à un besoin de standardisation et d'objectivation de l'évaluation initiale des candidats. L'application doit pouvoir rattacher un formulaire publié à une campagne, générer une tentative de quiz pour un candidat donné, gérer le temps imparti si nécessaire, sauvegarder les réponses et calculer un score exploitable dans la suite du pipeline.
+  Le quiz technique répond à un besoin de standardisation et d'objectivation de l'évaluation initiale des candidats. L'application doit pouvoir rattacher un formulaire publié à une campagne, présenter les questions autorisées, gérer le temps imparti si nécessaire, sauvegarder les réponses et calculer un score exploitable dans la suite du pipeline.
 
-  Dans la cible fonctionnelle retenue, ce besoin va plus loin qu'un simple test ponctuel. Le système doit également pouvoir gérer des occurrences explicites de quiz, distinguer les tentatives successives, autoriser certaines reprises dans des conditions contrôlées et articuler les résultats du quiz avec l'avancement global de la candidature. Cette capacité d'occurrence est importante pour préparer des pipelines plus riches et pour améliorer la traçabilité du parcours candidat.
+  Ce besoin va plus loin qu'un simple test ponctuel. Le système doit également distinguer l'état du quiz, la progression du candidat, la correction manuelle éventuelle et le rattachement des réponses à une version de formulaire figée. Cette exigence est déterminante pour garantir la comparabilité des résultats, la relecture des copies et la traçabilité des corrections.
 
   === Entretiens, évaluations et décisions
   Le projet doit permettre la planification d'entretiens reliés à une étape précise du pipeline, la communication de la convocation au candidat, la prise en compte de sa réponse et la mise à jour du statut correspondant. L'entretien n'est donc pas conçu comme un simple rendez-vous, mais comme un événement métier ayant des effets sur l'état du dossier, sur la disponibilité des actions et sur la suite du processus de recrutement.
 
-  L'évaluation doit être collaborative, détaillée et contextualisée. Plusieurs évaluateurs peuvent être amenés à produire des observations ou des notes à propos d'un même candidat, avec des critères plus ou moins pondérés. Enfin, le système doit permettre la prise de décision, qu'il s'agisse d'une pré-sélection, d'une décision finale, d'une annulation ou d'un retour arrière sur une occurrence donnée du pipeline. Le besoin central ici est la cohérence entre jugement métier, historisation et évolution du dossier candidat.
+  L'évaluation doit être collaborative, détaillée et contextualisée. Plusieurs évaluateurs peuvent être amenés à produire des observations ou des notes à propos d'un même candidat. Enfin, le système doit permettre la prise de décision, qu'il s'agisse d'une pré-sélection, d'une décision finale, d'une annulation ou d'un retour arrière métier. Le besoin central ici est la cohérence entre jugement, historisation et évolution du dossier candidat.
 
   === Notifications et dashboard
   Le besoin ne se limite pas à stocker des données ; il consiste aussi à faire circuler l'information au bon moment. L'application doit donc générer des notifications internes et des emails pour signaler les événements significatifs du processus : vérification, convocation, réponse candidat, résultat d'une demande, décision ou défaut de configuration critique.
 
   Parallèlement, le dashboard doit fournir des vues synthétiques permettant de suivre l'activité, de filtrer les dossiers, d'identifier les actions en attente et de faciliter le pilotage quotidien par les équipes. Le système doit ainsi rendre visibles les éléments réellement utiles à la décision, sans noyer l'utilisateur dans une masse d'informations non contextualisées.
 
+  === Matrice synthétique des besoins fonctionnels
+  Afin de transformer ces constats en cahier des charges exploitable, les besoins fonctionnels ont été reformulés sous forme de matrice. Chaque ligne exprime un objectif métier, les fonctionnalités attendues et la traduction opérationnelle qui devra être vérifiable lors de la recette.
+
+  #document-table(
+    columns: (0.8fr, 1.2fr, 1.9fr, 1.9fr),
+    [ID], [Module], [Attentes métier], [Réponse attendue du système],
+    [BF-01], [Authentification et droits], [Sécuriser les accès internes et différencier précisément les responsabilités.], [Gestion des rôles système, overrides, permissions par campagne et contrôle des accès publics.],
+    [BF-02], [Référentiels], [Disposer de données métier stables, administrables et réutilisables.], [CRUD des départements, spécialités, questions, réponses, groupes métier et paramètres transverses.],
+    [BF-03], [Campagnes], [Créer et piloter une campagne de recrutement de bout en bout.], [Configuration du cycle de vie, association d'un pipeline, génération de liens de diffusion et partage collaboratif.],
+    [BF-04], [Candidatures], [Collecter des dossiers fiables et offrir un suivi autonome au candidat.], [Soumission publique, vérification d'email, suivi par code candidat, consultation des statuts et actions publiques autorisées.],
+    [BF-05], [Quiz], [Objectiver l'évaluation initiale des candidats.], [Publication d'un formulaire versionné, passation chronométrée, sauvegarde des réponses, score, correction manuelle et historisation.],
+    [BF-06], [Entretiens et décisions], [Coordonner la suite du processus après le quiz.], [Planification, convocation, réponse candidat, évaluation collaborative, décision et mise à jour du pipeline.],
+    [BF-07], [Notifications], [Informer les acteurs au moment utile.], [Emails, notifications internes et retours d'action cohérents avec les événements métier du recrutement.],
+    [BF-08], [Pilotage], [Donner de la visibilité aux équipes RH.], [Tableaux de bord, listes filtrables, statistiques utiles et vues consolidées par campagne, dossier et intervenant.],
+  )
+
+  === Matrice acteurs et responsabilités
+  La matrice suivante synthétise la place de chaque acteur dans le système. Elle complète la vision purement fonctionnelle par une lecture centrée sur la responsabilité, indispensable dans une application gouvernée par les droits d'accès.
+
+  #document-table(
+    columns: (1.05fr, 1.8fr, 1.6fr, 1.45fr),
+    [Acteur], [Opérations principales], [Données manipulées], [Niveau de contrôle],
+    [Candidat], [Postuler, vérifier son email, passer un quiz, suivre sa candidature, répondre à un entretien.], [Son propre dossier, ses réponses, ses pièces jointes, ses statuts publics.], [Contrôle limité à son parcours personnel.],
+    [Recruteur], [Créer une campagne, suivre les candidatures, corriger un quiz, planifier un entretien, évaluer, décider.], [Campagnes assignées, candidatures, entretiens, évaluations, décisions, notifications.], [Contrôle opérationnel contextualisé par campagne et par entité.],
+    [Administrateur], [Gérer les utilisateurs, les référentiels, les permissions et les paramètres d'exploitation.], [Utilisateurs, groupes métier, référentiels, modèles d'email, paramètres fonctionnels.], [Contrôle d'administration métier.],
+    [Super administrateur], [Superviser la plateforme, les réglages globaux et la gouvernance de sécurité.], [Configuration globale, paramètres techniques, rôles système, supervision transverse.], [Contrôle maximal et structurant.],
+  )
+
+  La responsabilité générale de chaque acteur doit cependant être complétée par une lecture plus opérationnelle des droits. La matrice suivante synthétise les permissions nominales, avant prise en compte des droits contextualisés sur campagne ou sur entité.
+
+  #document-table(
+    columns: (1.95fr, 0.85fr, 0.75fr, 0.95fr, 0.8fr),
+    [Fonctionnalité], [Super], [Admin], [Recruteur], [Candidat],
+    [Connexion et tableau de bord interne], [Oui], [Oui], [Oui], [Non],
+    [Créer ou modifier un utilisateur], [Oui], [Oui], [Non], [Non],
+    [Gérer départements, spécialités, questions et réponses], [Oui], [Partiel], [Non], [Non],
+    [Créer et configurer une campagne], [Oui], [Oui], [Oui], [Non],
+    [Gérer les formulaires et leurs versions], [Oui], [Oui], [Oui], [Non],
+    [Consulter et traiter les candidatures], [Oui], [Oui], [Oui], [Non],
+    [Planifier un entretien], [Oui], [Oui], [Oui], [Non],
+    [Évaluer et décider], [Oui], [Oui], [Oui], [Non],
+    [Soumettre une candidature et passer le quiz], [Non], [Non], [Non], [Oui],
+    [Suivre sa propre candidature], [Non], [Non], [Non], [Oui],
+  )
+
   == Besoins non fonctionnels
   Les besoins non fonctionnels jouent un rôle majeur dans la réussite du projet. En matière de #strong[performance], l'application doit offrir des temps de réponse compatibles avec un usage fluide sur les opérations courantes, en particulier sur les listes de candidatures, les écrans de détail et les parcours publics. La #strong[sécurité] exige une séparation stricte entre surface publique et surface interne, un contrôle rigoureux des permissions, une validation des entrées et une protection adaptée des données personnelles et des secrets techniques.
 
-  L'#strong[ergonomie] constitue un autre besoin important, car le système s'adresse à des profils différents et doit rester compréhensible malgré la richesse du domaine métier. La #strong[maintenabilité] impose une architecture claire, un découpage modulaire, des conventions stables d'API et une capacité à faire évoluer les règles métier sans dégrader l'ensemble. La #strong[disponibilité] et la #strong[fiabilité] exigent enfin que les composants essentiels restent exploitables dans le cadre d'un usage régulier, avec des mécanismes de build et de validation reproductibles.
+  L'#strong[ergonomie] constitue un autre besoin important, car le système s'adresse à des profils différents et doit rester compréhensible malgré la richesse du domaine métier. La #strong[maintenabilité] impose une architecture claire, un découpage modulaire, des conventions stables d'API et une capacité à faire évoluer les règles métier sans dégrader l'ensemble. La #strong[disponibilité], la #strong[fiabilité] et la #strong[conformité] complètent cet ensemble, dans un contexte où les données de candidature doivent rester exploitables, auditables et protégées.
 
-  La #strong[conformité] complète cet ensemble. Dans un domaine manipulant des données de candidature, l'application doit respecter des exigences de protection des données, de conservation raisonnée, de traçabilité et de justification des décisions. Ces besoins non fonctionnels expliquent une grande partie des choix d'architecture et de modélisation présentés dans le chapitre suivant.
+  #document-table(
+    columns: (0.85fr, 1.05fr, 1.95fr, 1.55fr),
+    [ID], [Axe], [Exigence], [Critère d'acceptation],
+    [BNF-01], [Performance], [Les listes, écrans de détail et parcours candidat doivent rester fluides en usage nominal.], [Navigation sans attente perceptible sur les parcours courants et pagination exploitable sur les volumes métier.],
+    [BNF-02], [Sécurité], [Séparer rigoureusement les surfaces publique et interne, puis contrôler chaque action sensible.], [Authentification fiable, permissions vérifiées côté backend et absence d'exposition non autorisée de données RH.],
+    [BNF-03], [Fiabilité], [Garantir la cohérence des états de campagne, candidature, quiz, entretien et décision.], [Transitions d'état contrôlées, validations métier explicites et historique cohérent des opérations.],
+    [BNF-04], [Ergonomie], [Rendre l'application compréhensible pour des profils très différents.], [Écrans lisibles, vocabulaire métier homogène, parcours publics courts et tableaux de bord actionnables.],
+    [BNF-05], [Maintenabilité], [Permettre l'évolution des règles métier sans réécriture globale.], [Architecture en couches, modules identifiables, contrats d'API stables et migrations versionnées.],
+    [BNF-06], [Traçabilité], [Pouvoir justifier une décision, une correction ou une évolution d'état.], [Historique exploitable des candidatures, scores, évaluations, décisions et actions d'administration.],
+    [BNF-07], [Conformité], [Encadrer la manipulation des données personnelles et leur conservation.], [Données strictement nécessaires, droits d'accès limités, justification des décisions sensibles et audit possible.],
+  )
 
   == Diagrammes des cas d'utilisation
-  Les cas d'utilisation globaux du système peuvent être organisés par acteur principal. Pour le candidat, les usages clés sont : accéder à une campagne, soumettre une candidature, vérifier son email, passer un quiz, consulter son suivi, répondre à une convocation et solliciter certaines corrections ou actions publiques autorisées. Pour le recruteur, les cas d'utilisation majeurs sont : créer et configurer une campagne, associer des formulaires, consulter les candidatures, corriger un test si nécessaire, planifier des entretiens, saisir des évaluations et prendre des décisions.
+  Les diagrammes de cas d'utilisation permettent de représenter les interactions entre les acteurs et le système en se concentrant sur la valeur métier produite. Dans ce mémoire, ils servent à montrer la frontière entre la surface publique candidate et la surface interne de pilotage, ainsi que la spécialisation progressive des usages entre recruteur, administrateur et super administrateur.
 
-  Pour l'administrateur et le super administrateur, les cas d'utilisation se concentrent sur la gestion des référentiels, des utilisateurs, des rôles, des permissions, des templates d'emails, de la configuration SMTP, de la configuration applicative et des écrans techniques de contrôle. Ces acteurs assurent la disponibilité et la gouvernance du système plus qu'ils ne participent directement au recrutement opérationnel.
+  === Diagramme global
+  Le diagramme global doit faire apparaître quatre acteurs principaux et les macro-fonctions suivantes : gestion des utilisateurs, gestion des référentiels, gestion des campagnes, dépôt de candidature, passation de quiz, planification des entretiens, évaluation, décision et pilotage. Il synthétise l'ensemble du système, sans détailler les variantes de permission.
 
-  Les diagrammes associés, à insérer dans la version finale du mémoire, pourront être présentés selon deux niveaux : un diagramme global montrant les grandes interactions entre acteurs et système, puis des diagrammes ciblés par profil pour détailler les flux candidat, recruteur et administration. Cette organisation permettra de conserver une vue synthétique sans perdre la lisibilité des cas d'usage spécialisés.
+  #note-box([Figure à produire], [
+    Figure 3.1 : diagramme de cas d'utilisation global montrant les quatre acteurs, la séparation entre espace public candidat et espace interne, ainsi que les grands domaines fonctionnels du système.
+  ])
+
+  === Description textuelle des cas d'utilisation principaux
+  Afin de compléter le diagramme global, les cas d'utilisation majeurs ont été décrits textuellement. Cette description fait le lien entre l'attente utilisateur, le déclencheur métier et le résultat attendu par l'organisation.
+
+  #document-table(
+    columns: (0.8fr, 1.05fr, 1.35fr, 1.95fr),
+    [ID], [Acteur], [Déclencheur], [Résultat attendu],
+    [UC-01], [Candidat], [Accès à une campagne via un lien public ou un token de source.], [Le système affiche l'offre, autorise la saisie du dossier et crée une candidature exploitable par les recruteurs.],
+    [UC-02], [Candidat], [Validation d'email puis passation du quiz technique.], [Le système sécurise l'accès, enregistre les réponses, calcule l'état du quiz et rend le dossier évaluable.],
+    [UC-03], [Recruteur], [Création ou mise à jour d'une campagne de recrutement.], [La campagne est configurée avec un pipeline, un formulaire, des permissions et des informations de diffusion cohérentes.],
+    [UC-04], [Recruteur], [Planification d'un entretien à partir d'une candidature.], [Une convocation est produite, le candidat peut répondre et l'historique du pipeline est mis à jour.],
+    [UC-05], [Évaluateur], [Saisie d'une appréciation après entretien.], [L'évaluation est rattachée au bon entretien, agrégée et rendue visible au décideur légitime.],
+    [UC-06], [Administrateur], [Gestion des utilisateurs, rôles et référentiels.], [Le système maintient une base de travail propre, gouvernée et sécurisée pour l'ensemble de l'organisation.],
+    [UC-07], [Super administrateur], [Pilotage des paramètres globaux et supervision de la sécurité.], [La plateforme reste configurable, stable et auditée sur l'ensemble de ses usages.],
+  )
+
+  === Lecture par acteur
+  Dans la version finale du mémoire, le diagramme global pourra être complété par trois figures ciblées : un diagramme orienté administration, un diagramme orienté recruteur et un diagramme orienté candidat. Cette décomposition améliore la lisibilité tout en conservant la cohérence d'ensemble du modèle d'usage.
+
+  == Priorisation des besoins
+  L'ensemble des besoins identifiés ne possède pas la même criticité. Une priorisation de type MoSCoW a donc été retenue afin de distinguer les fonctionnalités indispensables à la valeur métier immédiate, celles qui renforcent l'efficacité opérationnelle et celles qui relèvent d'une extension ultérieure. Cette hiérarchisation est essentielle dans un projet de recrutement, car le cœur de valeur se situe avant tout dans la collecte fiable des candidatures, l'évaluation et la prise de décision.
+
+  #document-table(
+    columns: (0.95fr, 2.2fr, 1.65fr),
+    [Priorité], [Besoins concernés], [Justification],
+    [Must have], [Soumettre une candidature ; gérer les campagnes ; consulter les candidatures ; s'authentifier ; passer le quiz ; évaluer les candidats.], [Sans ces fonctions, le système ne remplit pas sa mission principale de recrutement.],
+    [Should have], [Planifier des entretiens ; vérifier l'email ; suivre sa candidature ; recevoir des notifications ; prendre une décision finale structurée.], [Ces fonctions complètent le workflow métier et sécurisent la qualité du processus.],
+    [Could have], [Tableaux de bord avancés ; export de données ; raffinements de diffusion et de reporting.], [Ces fonctions apportent un gain de pilotage, mais ne conditionnent pas le service minimum rendu.],
+    [Won't have], [Intégration calendrier poussée, matching avancé, automatisations non critiques hors périmètre immédiat.], [Ces éléments relèvent d'extensions futures et ne doivent pas brouiller le périmètre du noyau métier.],
+  )
 
   == Règles de gestion
-  Les règles de gestion les plus structurantes du projet peuvent être résumées selon plusieurs axes. D'abord, la campagne suit un cycle de vie contrôlé, avec des transitions autorisées entre brouillon, attente, ouverture, pause et clôture. Une campagne ouverte doit disposer d'un pipeline valide, et l'accès public dépend de règles précises comme l'état de la campagne, la validité du lien source, la fenêtre de dates et les limites de candidature.
+  Les règles de gestion constituent le noyau normatif du système. Elles expriment les contraintes qui ne peuvent pas être laissées à la seule interface et qui doivent être garanties par le modèle métier et par le backend. Leur formalisation est indispensable pour justifier ensuite les choix Merise et UML du chapitre suivant.
 
-  Ensuite, la candidature suit une logique pilotée par le pipeline. Le #raw("application_progress") constitue la source de vérité de l'avancement, tandis que certains champs visibles au niveau de la candidature jouent un rôle de miroir ou de synthèse. Les étapes peuvent être validées, échouées, parfois ignorées selon la configuration, et certaines actions comme le quiz, l'entretien ou la décision sont rattachées à des occurrences explicites du pipeline afin de préserver la cohérence métier.
-
-  Les permissions constituent un troisième pilier de règles. Une action n'est pas autorisée uniquement parce qu'un utilisateur possède un rôle global donné ; elle peut aussi dépendre d'un droit contextualisé sur une campagne ou une entité spécifique. Cette règle est particulièrement importante pour la correction des tests, la planification des entretiens, le suivi d'une campagne ou la saisie d'une évaluation.
-
-  Enfin, plusieurs règles de validation garantissent la fiabilité du système : vérification d'email avant certains accès publics, contrôle des données requises avant envoi d'email, gestion des statuts de correction de quiz, justification obligatoire pour certaines décisions critiques, et restrictions sur les mises à jour partielles afin de préserver l'intégrité des objets métier. L'ensemble de ces règles montre que la solution repose sur une modélisation orientée gouvernance autant que sur une logique de simple saisie.
+  #document-table(
+    columns: (0.8fr, 1.1fr, 2.15fr, 1.45fr),
+    [ID], [Domaine], [Règle], [Effet sur le système],
+    [RG-01], [Campagnes], [Une campagne ne peut être ouverte que si son cadre métier est cohérent : période valide, pipeline exploitable et diffusion contrôlée.], [Le backend doit bloquer les activations incohérentes et garantir l'intégrité du paramétrage.],
+    [RG-02], [Accès public], [L'accès candidat dépend de la validité du lien de diffusion, de l'état de la campagne et des limites métiers imposées.], [Les points d'entrée publics doivent vérifier le contexte avant toute création de dossier.],
+    [RG-03], [Vérification email], [Certaines actions publiques ne sont autorisées qu'après validation de l'adresse email du candidat.], [La vérification devient une précondition métier et non un simple confort d'interface.],
+    [RG-04], [Versionning formulaire], [Une version de formulaire ayant servi à une candidature ne doit plus être altérée de manière destructive.], [Le verrouillage et la publication des versions protègent la comparabilité des réponses.],
+    [RG-05], [Pipeline], [application_progress constitue la source de vérité de l'avancement d'une candidature.], [Les écrans de synthèse doivent dériver de l'historique métier plutôt que d'un seul statut simplifié.],
+    [RG-06], [Entretiens et décisions], [Un entretien, une évaluation ou une décision doivent être rattachés à la bonne candidature et à l'étape pertinente du pipeline.], [Le système conserve un historique lisible des événements qui ont conduit au verdict final.],
+    [RG-07], [Permissions], [Une action ne dépend pas seulement d'un rôle global ; elle peut aussi dépendre d'un droit contextualisé sur une campagne ou une entité.], [Les contrôles d'accès doivent être réalisés côté backend en tenant compte du contexte métier.],
+    [RG-08], [Correction quiz], [Toute correction manuelle d'une réponse doit rester identifiable, datée et attribuable.], [La traçabilité de l'évaluation technique est préservée et révisable.],
+    [RG-09], [Audit], [Les décisions critiques et certaines modifications doivent pouvoir être justifiées a posteriori.], [Le modèle doit conserver suffisamment d'informations pour soutenir la traçabilité et la conformité.],
+  )
 
   #pagebreak()
   = Conception de la solution
 
-  Ce chapitre traduit les besoins en architecture, structures de données, flux applicatifs et conventions d'implémentation.
+  Ce chapitre traduit les besoins en architecture, structures de données, flux applicatifs et conventions d'implémentation. Il expose la cible conceptuelle du système tout en l'adossant au schéma réel et aux modules effectivement identifiés dans le projet.
 
   #note-box([Point de rédaction], [
-    Rédiger ce chapitre comme si la cible multi-occurrences était totalement finalisée, conformément au cadrage retenu pour le mémoire.
+    Le chapitre expose la cible conceptuelle stabilisée en s'appuyant sur le schéma réel, afin de distinguer clairement les choix de conception, leur traduction technique et leur valeur métier.
   ])
 
   == Architecture globale du système
@@ -269,47 +418,592 @@
 
   Sur le plan logique, le backend est lui-même organisé en sous-couches lisibles : exposition web, services métier, accès aux données, sécurité, configuration et utilitaires. Cette organisation limite le couplage direct entre l'interface et la persistance. Elle permet surtout de centraliser les règles métier dans des services spécialisés, ce qui est indispensable dans un domaine où les transitions d'état, les permissions, les agrégats et les effets de bord doivent rester cohérents dans tout le système.
 
+  === Vue logique en couches
+  La vue logique suivante résume la responsabilité de chaque couche et son rôle dans la maîtrise du processus de recrutement.
+
+  #document-table(
+    columns: (1.05fr, 1.45fr, 1.95fr),
+    [Couche], [Composants principaux], [Responsabilité dans la solution],
+    [Présentation], [Pages Angular, composants partagés, formulaires, services HTTP.], [Gérer les interactions utilisateur, afficher l'état métier et transmettre les commandes au backend.],
+    [Application], [Contrôleurs REST, DTO, sécurité, orchestration métier Spring Boot.], [Recevoir les demandes, valider les droits, appliquer les règles de gestion et coordonner les traitements.],
+    [Métier], [Services de campagne, candidature, quiz, entretien, évaluation, décision, permissions.], [Centraliser les règles métier, les transitions d'état et les effets transverses.],
+    [Persistance], [Entités JPA, repositories, MySQL, migrations Flyway.], [Conserver les données, garantir l'intégrité relationnelle et versionner le schéma.],
+    [Services auxiliaires], [SMTP, MinIO, Redis, notifications.], [Supporter les besoins transverses de communication, stockage et exploitation.],
+  )
+
   == Conception de la base de données
-  La conception de la base de données suit une logique relationnelle riche, cohérente avec la nature fortement structurée du domaine. Au niveau conceptuel, les entités principales s'organisent autour de quelques noyaux : utilisateurs et permissions, campagnes et pipelines, formulaires et questions, candidatures et parcours candidat, entretiens et évaluations, décisions et notifications. Chaque noyau possède ses propres relations, mais l'ensemble converge vers la candidature comme objet pivot du recrutement.
+  La conception de la base de données suit une logique relationnelle riche, cohérente avec la nature fortement structurée du domaine. Les entités principales s'organisent autour de quelques noyaux : utilisateurs et permissions, campagnes et pipelines, formulaires et questions, candidatures et parcours candidat, entretiens et évaluations, décisions et notifications. Chaque noyau possède ses propres relations, mais l'ensemble converge vers la candidature comme objet pivot du recrutement.
 
-  Dans la cible multi-occurrences, la modélisation du pipeline joue un rôle déterminant. Une candidature n'est plus simplement associée à un statut global, mais à une série d'occurrences portées par #raw("application_progress"). Les quiz sont représentés par des tentatives explicites, les entretiens sont rattachés à une occurrence de pipeline, et les décisions elles-mêmes peuvent être ancrées sur une étape précise. Cette orientation permet de gérer proprement des répétitions, des retours arrière, des annulations et des historiques détaillés sans perdre la cohérence d'ensemble.
+  === Démarche Merise retenue
+  La démarche Merise a été retenue pour structurer la conception des données, car elle permet de distinguer clairement trois niveaux complémentaires : le niveau conceptuel, qui exprime les objets métier et leurs cardinalités ; le niveau logique, qui traduit ces objets en relations et en clés ; le niveau physique, qui tient compte des choix effectifs de stockage, de typage et d'industrialisation. Dans le cadre de ce mémoire, Merise constitue la méthode principale de conception. Les diagrammes UML ne sont envisagés qu'en complément ponctuel lorsque certains comportements dynamiques doivent être illustrés plus finement.
 
-  Au niveau logique puis physique, les principales entités manipulées sont notamment : #raw("user"), #raw("campaign"), #raw("pipeline_template"), #raw("pipeline_stage"), #raw("form"), #raw("form_version"), #raw("question"), #raw("application"), #raw("application_progress"), #raw("application_quiz_attempt"), #raw("candidate_answer"), #raw("interview"), #raw("candidate_interview"), #raw("evaluation"), #raw("decision"), #raw("notification") et les tables de permissions ou de configuration. Ce modèle relationnel soutient à la fois la traçabilité fine du processus et la production de vues synthétiques nécessaires au pilotage.
+  Le recours à Merise est particulièrement pertinent ici, car le domaine métier est fortement orienté données : une campagne comporte un pipeline, un formulaire possède plusieurs versions, une candidature progresse dans des étapes, un entretien donne lieu à des évaluations, puis à une décision. L'enjeu n'est donc pas seulement de stocker des informations, mais de faire apparaître un système cohérent de dépendances et de contraintes.
 
-  == Diagrammes de classes
-  Les diagrammes de classes du backend doivent mettre en évidence les responsabilités principales de l'application plutôt qu'une simple hiérarchie technique. La classe de démarrage de l'application ouvre naturellement l'ensemble, mais les éléments centraux de la modélisation résident surtout dans les services métier et les entités principales. Des classes comme celles qui gèrent les candidatures, les campagnes, les entretiens, les évaluations, les décisions ou les permissions incarnent les règles de gestion les plus structurantes.
+  === Modèle Conceptuel de Données (MCD)
+  Au niveau conceptuel, le système peut être lu comme un ensemble d'entités métier reliées par des associations stables. La candidature occupe une place centrale : elle est émise dans le cadre d'une campagne, s'appuie sur une version de formulaire figée, progresse dans un pipeline, reçoit éventuellement des entretiens, des évaluations et des décisions, et peut générer des notifications ou des demandes spécifiques.
 
-  Du côté métier, les services associés à la candidature, au pipeline, aux entretiens, aux évaluations, aux décisions, aux permissions et aux templates d'email doivent apparaître comme des orchestrateurs de cas d'usage. Ils coordonnent les repositories, appliquent les validations, résolvent les droits et consolident les agrégats nécessaires au frontend. Les entités JPA, quant à elles, représentent les objets persistés du système et matérialisent les relations essentielles entre campagnes, candidats, étapes de pipeline, quiz, entretiens et décisions.
+  #merise-figure([MCD global de SyneliaQuizApp])[
+    #merise-row(
+      merise-card([Campagne], fill: palette.accent_soft)[
+        #merise-lines([pilotage du recrutement], [diffusion et collaboration])
+      ],
+      [1,N →],
+      merise-card([Formulaire])[
+        #merise-lines([support du quiz], [lié à une campagne])
+      ],
+      [1,N →],
+      merise-card([VersionFormulaire])[
+        #merise-lines([fige le questionnaire], [préserve l'historique])
+      ],
+      [N,N ↔],
+      merise-card([Question])[
+        #merise-lines([banque réutilisable], [spécialisée par métier])
+      ],
+    )
+    #v(0.35cm)
+    #merise-row(
+      merise-card([Campagne])[
+        #merise-lines([porte la diffusion], [ouvre des accès publics])
+      ],
+      [1,N →],
+      merise-card([SourceToken])[
+        #merise-lines([trace la source], [contextualise l'accès])
+      ],
+      [1,N →],
+      merise-card([Candidature], fill: palette.accent_soft)[
+        #merise-lines([dossier pivot], [porte le statut global])
+      ],
+      [1,N →],
+      merise-card([Progression])[
+        #merise-lines([historique des étapes], [score, dates, notes])
+      ],
+    )
+    #v(0.35cm)
+    #merise-row(
+      merise-card([PipelineTemplate])[
+        #merise-lines([structure le parcours], [reste réutilisable])
+      ],
+      [1,N →],
+      merise-card([ÉtapePipeline])[
+        #merise-lines([définit ordre et type], [porte la config])
+      ],
+      [1,N ←],
+      merise-card([Progression])[
+        #merise-lines([matérialise l'étape], [alimente le dossier])
+      ],
+      [N,1 ←],
+      merise-card([Candidature], fill: palette.accent_soft)[
+        #merise-lines([centralise le parcours], [prépare la décision])
+      ],
+    )
+    #v(0.35cm)
+    #merise-row(
+      merise-card([Candidature], fill: palette.accent_soft)[
+        #merise-lines([peut ouvrir un entretien], [alimente l'évaluation])
+      ],
+      [1,N →],
+      merise-card([EntretienCandidat])[
+        #merise-lines([convocation et réponse], [porte le créneau])
+      ],
+      [1,N →],
+      merise-card([Évaluation])[
+        #merise-lines([appréciations collaboratives], [alimente le score])
+      ],
+    )
+    #v(0.35cm)
+    #merise-row(
+      merise-card([Candidature], fill: palette.accent_soft)[
+        #merise-lines([déclenche le verdict], [porte l'historique])
+      ],
+      [1,N →],
+      merise-card([Décision])[
+        #merise-lines([pré-sélection ou final], [annulation possible])
+      ],
+      [N,1 ←],
+      merise-card([Utilisateur])[
+        #merise-lines([acteur métier], [auteur de l'action])
+      ],
+    )
+    #v(0.35cm)
+    #merise-row(
+      merise-card([Utilisateur])[
+        #merise-lines([porte un rôle système], [agit sur des entités])
+      ],
+      [1,N →],
+      merise-card([PermissionEntité])[
+        #merise-lines([droit contextualisé], [complète le rôle global])
+      ],
+    )
+  ]
 
-  Les diagrammes pourront donc être structurés en plusieurs vues : une vue métier centrée sur les entités du recrutement, une vue applicative montrant les principales classes de service, puis éventuellement une vue plus ciblée sur les objets transverses comme les permissions, les notifications et la configuration. Cette approche rendra la conception plus lisible qu'un diagramme unique trop dense.
+  #document-table(
+    columns: (1.35fr, 1.05fr, 2fr),
+    [Association conceptuelle], [Cardinalité], [Interprétation métier],
+    [Campagne - Formulaire], [1:N], [Une campagne peut mobiliser plusieurs formulaires, chacun restant rattaché à une campagne donnée.],
+    [Formulaire - VersionFormulaire], [1:N], [Le contenu d'un formulaire évolue par versions afin de figer les questionnaires déjà utilisés.],
+    [VersionFormulaire - Question], [N:N], [Une version assemble plusieurs questions, et une question peut être réutilisée dans plusieurs versions.],
+    [PipelineTemplate - Campagne], [1:N], [Un même pipeline peut être réutilisé par plusieurs campagnes, mais une campagne active n'emploie qu'un pipeline de référence.],
+    [SourceToken - Candidature], [1:N], [Un lien de diffusion peut être à l'origine de plusieurs candidatures et permet de tracer la source d'acquisition.],
+    [Candidature - Progression], [1:N], [Le parcours d'une candidature est détaillé par étapes de progression plutôt que réduit à un seul statut global.],
+    [Candidature - RéponseCandidat], [1:N], [Les réponses du quiz sont rattachées au dossier candidat et donc historisables.],
+    [Candidature - EntretienCandidat], [1:N], [Une candidature peut donner lieu à plusieurs événements d'entretien dans le cadre de son parcours.],
+    [EntretienCandidat - Évaluation], [1:N], [Un entretien peut recevoir plusieurs évaluations, produites par différents intervenants.],
+    [Candidature - Décision], [1:N], [Plusieurs décisions peuvent jalonner le parcours, par exemple une pré-sélection puis une décision finale.],
+    [Utilisateur - PermissionEntité], [1:N], [Les droits fins ne se limitent pas au rôle global ; ils peuvent cibler une entité métier donnée.],
+  )
 
-  == Diagrammes de séquence
-  Plusieurs séquences clés peuvent être retenues pour illustrer le comportement dynamique du système. La première concerne la création d'une candidature : le candidat accède à une campagne publique, soumet ses informations, le backend valide l'éligibilité de la campagne, crée la candidature, génère un code de suivi, puis déclenche l'envoi d'un email de vérification ou de confirmation selon le contexte. Cette séquence met en évidence l'articulation entre accès public, création métier, persistance et communication sortante.
+  === Modèle Logique de Données (MLD)
+  Le modèle logique traduit les associations conceptuelles en relations concrètes, portées par des clés étrangères ou par des tables d'association. Dans SyneliaQuizApp, cette traduction est lisible dans l'inventaire de la base, notamment autour des tables campaigns, form, form_version, form_questions, applications, application_progress, candidate_interview, evaluations, decisions, campaign_crud et entity_permission.
 
-  La deuxième séquence concerne le quiz technique. Après vérification des prérequis, le système résout la bonne occurrence de quiz, fournit les questions autorisées, enregistre progressivement les réponses et calcule le résultat au moment opportun. Dans la cible multi-occurrences, cette séquence doit aussi montrer le rattachement des réponses à une tentative donnée, afin d'éviter toute ambiguïté entre score courant, historique et synthèse visible dans les écrans d'administration.
+  #merise-figure([MLD / MLDR synthétique de SyneliaQuizApp])[
+    #merise-row(
+      merise-card([campaigns], fill: palette.accent_soft)[
+        #merise-lines([PK id], [FK pipeline_template_id], [FK creator_id])
+      ],
+      [1,N →],
+      merise-card([form])[#merise-lines([PK id], [FK campaign_id])],
+      [1,N →],
+      merise-card([form_version])[#merise-lines([PK id], [FK form_id])],
+      [1,N →],
+      merise-card([form_questions])[#merise-lines([PK id], [FK form_version_id], [FK question_id])],
+    )
+    #v(0.35cm)
+    #merise-row(
+      merise-card([form_questions])[#merise-lines([compose une version], [porte ordre et chrono])],
+      [N,1 →],
+      merise-card([question])[#merise-lines([PK id], [FK speciality_id])],
+      [1,N →],
+      merise-card([answer])[#merise-lines([PK id], [FK question_id])],
+    )
+    #v(0.35cm)
+    #merise-row(
+      merise-card([applications], fill: palette.accent_soft)[#merise-lines([PK id], [FK source_token_id], [FK form_version_id])],
+      [1,N →],
+      merise-card([application_progress])[#merise-lines([PK id], [FK application_id], [FK pipeline_stage_id])],
+      [1,N →],
+      merise-card([decisions])[#merise-lines([PK id], [FK application_id], [FK user_id])],
+    )
+    #v(0.35cm)
+    #merise-row(
+      merise-card([interviews])[#merise-lines([PK id], [FK campaign_id], [FK application_id])],
+      [1,N →],
+      merise-card([candidate_interview])[#merise-lines([PK id], [FK interview_id], [FK application_id])],
+      [1,N →],
+      merise-card([evaluations])[#merise-lines([PK id], [FK candidate_interview_id])],
+    )
+    #v(0.35cm)
+    #merise-row(
+      merise-card([user])[#merise-lines([PK id], [rôle système])],
+      [1,N →],
+      merise-card([campaign_crud])[#merise-lines([PK id], [FK user_id], [FK campaign_id])],
+      [1,N →],
+      merise-card([entity_permission])[#merise-lines([PK id], [FK user_id], [cible une entité])],
+    )
+  ]
 
-  Une troisième séquence importante porte sur l'entretien et la décision. Le recruteur planifie un entretien sur une occurrence de pipeline, le candidat reçoit une convocation et peut répondre, les évaluateurs produisent ensuite leurs appréciations, puis une décision est saisie et renvoyée dans le flux d'avancement. Cette séquence illustre particulièrement bien la logique d'orchestration métier du système, dans laquelle plusieurs acteurs et plusieurs objets évoluent de manière coordonnée.
+  #document-table(
+    columns: (1.45fr, 1.6fr, 1.05fr, 1.6fr),
+    [Relation logique], [Implémentation], [Cardinalité], [Finalité métier],
+    [Campagne - pipeline], [campaigns.pipeline_template_id], [N:1], [Associer à chaque campagne un pipeline réutilisable et ordonné.],
+    [Formulaire - version], [form_version.form_id], [N:1], [Versionner les questionnaires sans perdre l'historique des campagnes déjà ouvertes.],
+    [Version - question], [form_questions(form_version_id, question_id)], [N:N], [Composer un quiz, définir l'ordre des questions et éventuellement surcharger le chrono.],
+    [Campagne - formulaire], [form.campaign_id], [N:1], [Rattacher les formulaires au contexte de campagne qui les exploite.],
+    [Candidature - source], [applications.source_token_id], [N:1], [Tracer l'origine d'une candidature et la diffusion de l'offre.],
+    [Candidature - version de formulaire], [applications.form_version_id], [N:1], [Figera la version exacte du questionnaire subie par le candidat.],
+    [Candidature - progression], [application_progress(application_id, pipeline_stage_id)], [1:N], [Historiser l'avancement par étape et conserver les scores ou notes liés à cette étape.],
+    [Candidature - entretien], [candidate_interview(application_id, interview_id)], [N:1 + N:1], [Relier un candidat à une session d'entretien et conserver sa réponse éventuelle.],
+    [Entretien - évaluation], [evaluations.candidate_interview_id], [N:1], [Consolider plusieurs appréciations sur une même occurrence d'entretien.],
+    [Candidature - décision], [decisions(application_id, pipeline_stage_id, user_id)], [N:1], [Tracer la nature de la décision, l'étape concernée et l'auteur.],
+    [Permissions contextuelles], [campaign_crud ; entity_permission ; user_permission_override], [Associations], [Exprimer des droits fins complémentaires au rôle système.],
+  )
 
-  == Diagrammes d'activités et d'états
-  Les diagrammes d'activités et d'états doivent représenter la candidature comme un processus évolutif plutôt que comme un simple enregistrement doté d'un champ de statut. L'activité globale peut être lue comme une progression entre dépôt, vérification, quiz, pré-sélection, entretien, évaluation et décision, avec des branches possibles de réussite, d'échec, d'annulation, de report ou de retrait selon les cas métier.
+  === Modèle Physique de Données (MPD)
+  Le modèle physique tient compte des choix effectivement retenus pour l'implémentation MySQL. Le schéma repose majoritairement sur des identifiants entiers non signés, des colonnes techniques homogènes d'audit, des indicateurs booléens pour les états simples et des colonnes textuelles ou numériques pour les paramètres métier. Les migrations Flyway assurent la version du schéma et rendent reproductibles les évolutions de structure.
 
-  La modélisation par états gagne en précision dans la cible retenue, car chaque étape importante du parcours possède sa propre occurrence et son propre état d'avancement. Une candidature peut ainsi avoir un état global de synthèse tout en conservant, dans son historique, plusieurs états d'étapes : en attente, en cours, réussi, échoué, ignoré, archivé, fermé ou réouvert selon la nature de l'opération. Cette conception renforce la capacité du système à expliquer les transitions réellement survenues.
+  #merise-figure([MPD synthétique des tables cœur de SyneliaQuizApp])[
+    #grid(
+      columns: (4.45cm, 4.45cm, 4.45cm),
+      gutter: 0.32cm,
+      merise-card([campaigns], width: 4.45cm, fill: palette.accent_soft)[
+        #merise-lines(
+          [id: int unsigned PK],
+          [campaign_title: varchar(255)],
+          [campaign_status: varchar(7)],
+          [pipeline_template_id: int unsigned FK],
+          [speciality_id: int unsigned FK],
+        )
+      ],
+      merise-card([form_version], width: 4.45cm)[
+        #merise-lines(
+          [id: int unsigned PK],
+          [form_id: int unsigned FK],
+          [version_number: int],
+          [is_published: bit(1)],
+          [is_locked: bit(1)],
+        )
+      ],
+      merise-card([applications], width: 4.45cm, fill: palette.accent_soft)[
+        #merise-lines(
+          [id: int unsigned PK],
+          [candidate_email: varchar],
+          [application_status: varchar(8)],
+          [quiz_status: varchar(9)],
+          [form_version_id: int unsigned FK],
+        )
+      ],
+      merise-card([application_progress], width: 4.45cm)[
+        #merise-lines(
+          [id: int unsigned PK],
+          [application_id: int unsigned FK],
+          [pipeline_stage_id: int unsigned FK],
+          [progress_status: varchar(20)],
+          [score: double],
+        )
+      ],
+      merise-card([candidate_interview], width: 4.45cm)[
+        #merise-lines(
+          [id: int unsigned PK],
+          [application_id: int unsigned FK],
+          [interview_id: int unsigned FK],
+          [interview_start: datetime],
+          [alternative_date_requested: datetime],
+        )
+      ],
+      merise-card([decisions], width: 4.45cm)[
+        #merise-lines(
+          [id: int unsigned PK],
+          [application_id: int unsigned FK],
+          [user_id: int unsigned FK],
+          [pipeline_stage_id: int unsigned FK],
+          [decision_type: varchar(50)],
+        )
+      ],
+    )
+  ]
 
-  Les diagrammes correspondants devront donc articuler deux niveaux : un niveau macro, orienté lecture métier du dossier candidat, et un niveau micro, orienté pipeline et occurrences. Cette double lecture permettra d'expliquer à la fois le comportement visible du système et les mécanismes internes qui garantissent sa cohérence.
+  #document-table(
+    columns: (1.2fr, 1.55fr, 1.75fr),
+    [Convention physique], [Implémentation retenue], [Justification],
+    [Clés primaires], [Identifiants de type int unsigned.], [Simplicité de jointure, homogénéité de schéma et compatibilité avec les conventions existantes du projet.],
+    [Colonnes d'audit], [created_at, created_by, updated_at, updated_by.], [Traçabilité technique des créations et modifications d'enregistrements.],
+    [Soft delete], [Colonne is_deleted plutôt qu'une suppression physique.], [Préserver l'historique et limiter les ruptures de cohérence sur les données liées.],
+    [Recherche], [Colonne search_string sur les tables concernées.], [Faciliter la recherche textuelle et les filtres fonctionnels sans dupliquer la logique côté interface.],
+    [Indicateurs booléens], [bit(1) ou tinyint(1) selon les tables.], [Représenter les états simples tels que is_locked, is_active, email_verified ou is_cancel.],
+    [Paramètres dynamiques], [config_json sur pipeline_stage.], [Permettre une configuration flexible des étapes sans casser le noyau relationnel.],
+    [Enums métier], [Valeurs stockées en varchar ou enum selon les cas.], [Conserver une expressivité métier tout en matérialisant progressivement les listes fermées dans le code.],
+    [Migrations], [Versionnement Flyway du schéma.], [Rendre maîtrisable l'évolution de la base dans le temps et synchroniser code et structure.],
+  )
+
+  === Dictionnaire de données du noyau métier
+  Le dictionnaire de données suivant synthétise quelques attributs structurants du noyau métier. Il ne remplace pas un inventaire exhaustif de la base, mais il matérialise les données indispensables à la compréhension du système et au raisonnement de conception.
+
+  #document-table(
+    columns: (1.4fr, 1.4fr, 1.1fr, 1.8fr),
+    [Entité], [Attribut], [Type / format], [Signification],
+    [campaigns], [campaign_title], [varchar], [Libellé métier de la campagne visible dans les écrans de pilotage.],
+    [campaigns], [campaign_status], [varchar(7)], [État de la campagne, utilisé pour contrôler son cycle de vie et sa diffusion.],
+    [campaigns], [pipeline_template_id], [FK], [Pipeline de référence appliqué à la campagne.],
+    [form_version], [version_number], [int], [Numéro de version du formulaire, garantissant l'historique des questionnaires.],
+    [form_version], [is_locked], [bit(1)], [Indique qu'une version ne doit plus être modifiée de manière destructive.],
+    [question], [question_type], [varchar(20)], [Nature de la question : choix unique, multiple ou réponse libre selon la modélisation retenue.],
+    [applications], [candidate_email], [donnée identité], [Adresse utilisée pour la vérification, la communication et l'identification du candidat.],
+    [applications], [email_verified], [tinyint(1)], [Indique si le candidat a validé son adresse email.],
+    [applications], [application_status], [varchar(8)], [Synthèse de l'état du dossier au niveau candidature.],
+    [applications], [quiz_status], [varchar(9)], [État du quiz pour la candidature : non commencé, en cours, terminé, etc.],
+    [applications], [form_version_id], [FK], [Version de formulaire effectivement subie par le candidat.],
+    [application_progress], [progress_status], [varchar(20)], [État de l'étape de pipeline concernée.],
+    [application_progress], [score], [double], [Valeur quantitative liée à l'étape, par exemple score de quiz ou résultat partiel.],
+    [pipeline_stage], [stage_type], [varchar(50)], [Nature métier de l'étape : candidature, quiz, entretien, décision, etc.],
+    [pipeline_stage], [stage_order], [int], [Ordre d'exécution de l'étape dans le pipeline.],
+    [candidate_interview], [alternative_date_requested], [datetime], [Date proposée par le candidat en cas de demande de reprogrammation.],
+    [decisions], [decision_type], [varchar(50)], [Type de décision porté sur le dossier : pré-sélection, refus, décision finale, etc.],
+  )
+
+  === Correspondance entre objets Merise et tables physiques
+  Un mémoire d'ingénierie doit montrer explicitement que les objets conceptuels ne restent pas abstraits. La matrice suivante établit donc un pont entre le vocabulaire Merise du projet et les tables réellement présentes dans l'implémentation.
+
+  #document-table(
+    columns: (1.45fr, 1.95fr, 1.95fr),
+    [Objet conceptuel], [Tables physiques], [Lecture d'implémentation],
+    [Campagne de recrutement], [campaigns ; campaign_crud ; source_token], [La campagne est prolongée par les droits collaboratifs et par les mécanismes de diffusion publique.],
+    [Formulaire versionné], [form ; form_version ; form_questions], [La stabilité du questionnaire repose sur le couple versionnement-composition.],
+    [Banque de questions], [question ; answer], [Les questions restent réutilisables et spécialisées par métier.],
+    [Dossier candidat], [applications ; candidate_answer ; application_progress], [La candidature concentre données personnelles, réponses et historique d'avancement.],
+    [Entretien], [interviews ; candidate_interview ; evaluations], [L'entretien sépare la session planifiée, la réponse candidat et l'évaluation collaborative.],
+    [Décision], [decisions], [La décision est historisée comme un objet autonome, rattaché à un auteur et à une étape.],
+    [Gouvernance des droits], [user ; system_role_permission ; entity_permission ; user_permission_override], [La sécurité combine rôles système et permissions ciblées.],
+  )
+
+  === Dépendances fonctionnelles
+  Les dépendances fonctionnelles permettent de clarifier quels attributs dépendent directement d'un identifiant donné. Elles constituent un intermédiaire important entre le dictionnaire de données et le passage vers le MLD, car elles mettent en évidence les déterminants du système et aident à raisonner sur la cohérence des relations.
+
+  #document-table(
+    columns: (1.4fr, 2.6fr),
+    [Déterminant], [Attributs dépendants ou lecture fonctionnelle],
+    [campaign_id], [campaign_title, campaign_status, campaign_start, campaign_end, pipeline_template_id, creator_id, speciality_id],
+    [form_version_id], [form_id, version_number, is_published, is_locked],
+    [question_id], [question_text, question_type, question_chrono, score, difficulty_level, speciality_id],
+    [application_id], [candidate_first_name, candidate_last_name, candidate_email, source_token_id, form_version_id, application_status, quiz_status],
+    [application_progress_id], [application_id, pipeline_stage_id, progress_status, started_at, completed_at, score, decided_by],
+    [interview_id], [campaign_id, application_id, interview_date, interview_status, interview_type, interview_mail_sent],
+    [candidate_interview_id], [application_id, interview_id, interview_start, interview_duration, decline_reason, alternative_date_requested],
+    [decision_id], [application_id, user_id, pipeline_stage_id, decision_type, is_cancel],
+  )
+
+  === Structure d'accès théorique (SAT)
+  La SAT formalise les chemins d'accès privilégiés entre les identifiants structurants du système. Dans SyneliaQuizApp, elle montre que les pivots majeurs sont la campagne pour la configuration du recrutement, la candidature pour l'exécution du parcours candidat, et la version de formulaire pour la traçabilité du quiz.
+
+  #merise-figure([Structure d'accès théorique de SyneliaQuizApp])[
+    #text(size: 9pt, weight: "semibold", fill: palette.primary)[Branche de configuration]
+    #v(0.12cm)
+    #merise-row(
+      merise-card([campaigns.id], fill: palette.accent_soft)[
+        #merise-lines([pivot de configuration])
+      ],
+      [accède à],
+      merise-card([form.id])[
+        #merise-lines([formulaire de campagne])
+      ],
+      [accède à],
+      merise-card([form_version.id])[
+        #merise-lines([version publiée])
+      ],
+      [alimente],
+      merise-card([applications.id], fill: palette.accent_soft)[
+        #merise-lines([dossier candidat])
+      ],
+    )
+    #v(0.25cm)
+    #merise-row(
+      merise-card([pipeline_template.id])[
+        #merise-lines([structure du parcours])
+      ],
+      [accède à],
+      merise-card([pipeline_stage.id])[
+        #merise-lines([étapes ordonnées])
+      ],
+      [alimente],
+      merise-card([application_progress.id])[
+        #merise-lines([historique d'étape])
+      ],
+    )
+    #v(0.32cm)
+    #text(size: 9pt, weight: "semibold", fill: palette.primary)[Branche du dossier candidat]
+    #v(0.12cm)
+    #merise-row(
+      merise-card([applications.id], fill: palette.accent_soft)[
+        #merise-lines([carrefour informationnel])
+      ],
+      [accède à],
+      merise-card([candidate_answer.id])[
+        #merise-lines([réponses enregistrées])
+      ],
+      [et à],
+      merise-card([candidate_interview.id])[
+        #merise-lines([réponse d'entretien])
+      ],
+      [alimente],
+      merise-card([evaluations.id])[
+        #merise-lines([appréciations])
+      ],
+    )
+    #v(0.25cm)
+    #merise-row(
+      merise-card([applications.id], fill: palette.accent_soft)[
+        #merise-lines([source du suivi])
+      ],
+      [accède à],
+      merise-card([application_progress.id])[
+        #merise-lines([état détaillé])
+      ],
+      [alimente],
+      merise-card([decisions.id])[
+        #merise-lines([verdict historisé])
+      ],
+    )
+    #v(0.32cm)
+    #text(size: 9pt, weight: "semibold", fill: palette.primary)[Branche de gouvernance]
+    #v(0.12cm)
+    #merise-row(
+      merise-card([user.id])[
+        #merise-lines([acteur interne])
+      ],
+      [accède à],
+      merise-card([campaign_crud.id])[
+        #merise-lines([droits sur campagne])
+      ],
+      [complété par],
+      merise-card([entity_permission.id])[
+        #merise-lines([droit sur entité])
+      ],
+      [et],
+      merise-card([user_permission_override.id])[
+        #merise-lines([surcharge individuelle])
+      ],
+    )
+  ]
+
+  #document-table(
+    columns: (1.55fr, 2.45fr),
+    [Point d'entrée], [Accès structurés dans le système],
+    [campaigns.id], [form.campaign_id ; interviews.campaign_id ; source_token.campaign_id ; campaign_crud.campaign_id],
+    [form.id], [form_version.form_id],
+    [form_version.id], [form_questions.form_version_id ; applications.form_version_id],
+    [applications.id], [candidate_answer.application_id ; application_progress.application_id ; candidate_interview.application_id ; decisions.application_id],
+    [pipeline_template.id], [pipeline_stage.pipeline_template_id ; campaigns.pipeline_template_id],
+    [interviews.id], [candidate_interview.interview_id ; interview_participant.interview_id],
+    [candidate_interview.id], [evaluations.candidate_interview_id],
+    [user.id], [campaign_crud.user_id ; decisions.user_id ; entity_permission.user_id ; user_permission_override.user_id],
+  )
+
+  Cette lecture met en évidence deux carrefours informationnels essentiels. D'une part, #raw("applications") concentre le suivi du candidat, ses réponses, ses étapes de pipeline, ses entretiens et ses décisions. D'autre part, #raw("campaigns") concentre le paramétrage global du recrutement et la gouvernance collaborative autour de la campagne.
+
+  === Modèle Conceptuel des Traitements (MCT)
+  Pour rester cohérent avec une logique Merise-first, la conception ne doit pas s'arrêter aux seules données. Les traitements majeurs du système peuvent eux aussi être formalisés à travers quelques MCT représentatifs du fonctionnement réel de SyneliaQuizApp.
+
+  #document-table(
+    columns: (1.15fr, 1.8fr, 2.0fr),
+    [MCT], [Déclencheur], [Transformation métier attendue],
+    [MCT-1 Soumission d'une candidature], [Le candidat ouvre une campagne et soumet son dossier.], [Le système contrôle le contexte de campagne, crée la candidature, rattache la version de formulaire et initialise le suivi.],
+    [MCT-2 Qualification initiale], [Le dossier est vérifié et l'accès au quiz devient possible.], [Le système gère la vérification d'email, ouvre les actions autorisées et fait progresser la candidature dans son pipeline.],
+    [MCT-3 Passation et correction du quiz], [Le candidat démarre ou termine son quiz technique.], [Les réponses sont enregistrées, le score est calculé ou bien un processus de correction manuelle est déclenché.],
+    [MCT-4 Entretien, évaluation et décision], [Le recruteur planifie un entretien ou statue sur le dossier.], [La convocation, la réponse candidat, les évaluations et la décision finale alimentent le suivi et l'historique métier.],
+  )
+
+  #merise-figure([MCT synthétique des traitements majeurs de SyneliaQuizApp])[
+    #text(size: 9pt, weight: "semibold", fill: palette.primary)[MCT-1 : Soumission d'une candidature]
+    #v(0.1cm)
+    #align(center)[
+      #grid(
+        columns: (3.65cm, 0.95cm, 4.05cm, 0.95cm, 4.05cm),
+        gutter: 0.14cm,
+        merise-card([Événement], width: 3.65cm)[#merise-lines([Le candidat ouvre la campagne], [et soumet son dossier])],
+        merise-link([déclenche]),
+        merise-card([Opération], width: 4.05cm, fill: palette.accent_soft)[#merise-lines([Contrôle du contexte], [création de la candidature], [rattachement de la version])],
+        merise-link([produit]),
+        merise-card([Résultat], width: 4.05cm)[#merise-lines([Dossier créé], [suivi initialisé], [accès public encadré])],
+      )
+    ]
+    #v(0.28cm)
+    #text(size: 9pt, weight: "semibold", fill: palette.primary)[MCT-2 : Qualification initiale]
+    #v(0.1cm)
+    #align(center)[
+      #grid(
+        columns: (3.65cm, 0.95cm, 4.05cm, 0.95cm, 4.05cm),
+        gutter: 0.14cm,
+        merise-card([Événement], width: 3.65cm)[#merise-lines([Vérification d'email], [ou action publique validée])],
+        merise-link([déclenche]),
+        merise-card([Opération], width: 4.05cm, fill: palette.accent_soft)[#merise-lines([Ouverture des actions], [mise à jour du pipeline], [préparation du quiz])],
+        merise-link([produit]),
+        merise-card([Résultat], width: 4.05cm)[#merise-lines([Candidat qualifié], [étape suivante autorisée])],
+      )
+    ]
+    #v(0.28cm)
+    #text(size: 9pt, weight: "semibold", fill: palette.primary)[MCT-3 : Passation et correction du quiz]
+    #v(0.1cm)
+    #align(center)[
+      #grid(
+        columns: (3.65cm, 0.95cm, 4.05cm, 0.95cm, 4.05cm),
+        gutter: 0.14cm,
+        merise-card([Événement], width: 3.65cm)[#merise-lines([Le candidat démarre], [ou termine le quiz])],
+        merise-link([déclenche]),
+        merise-card([Opération], width: 4.05cm, fill: palette.accent_soft)[#merise-lines([Enregistrement des réponses], [calcul du score], [ouverture d'une correction manuelle])],
+        merise-link([produit]),
+        merise-card([Résultat], width: 4.05cm)[#merise-lines([Quiz évalué], [progression mise à jour], [copie traçable])],
+      )
+    ]
+    #v(0.28cm)
+    #text(size: 9pt, weight: "semibold", fill: palette.primary)[MCT-4 : Entretien, évaluation et décision]
+    #v(0.1cm)
+    #align(center)[
+      #grid(
+        columns: (3.65cm, 0.95cm, 4.05cm, 0.95cm, 4.05cm),
+        gutter: 0.14cm,
+        merise-card([Événement], width: 3.65cm)[#merise-lines([Le recruteur planifie], [ou statue sur le dossier])],
+        merise-link([déclenche]),
+        merise-card([Opération], width: 4.05cm, fill: palette.accent_soft)[#merise-lines([Convocation], [réponse candidat], [évaluation collaborative], [saisie de décision])],
+        merise-link([produit]),
+        merise-card([Résultat], width: 4.05cm)[#merise-lines([Historique complet], [verdict traçable], [notification des acteurs])],
+      )
+    ]
+  ]
+
+  == Compléments éventuels en UML
+  Les diagrammes qui suivent ne constituent pas la colonne vertébrale de la conception. Ils peuvent être utiles en complément, notamment pour certains échanges applicatifs ou comportements dynamiques, mais ils viennent après les artefacts Merise et non avant eux.
+
+  === Diagrammes de classes
+  Les diagrammes de classes du backend doivent mettre en évidence les responsabilités principales de l'application plutôt qu'une simple hiérarchie technique. Les éléments centraux de la modélisation résident d'une part dans les entités persistées, d'autre part dans les services métier qui orchestrent les cas d'usage. Le mémoire gagnera donc en lisibilité en présentant plusieurs vues ciblées plutôt qu'un diagramme unique trop dense.
+
+  #document-table(
+    columns: (1.2fr, 1.9fr, 1.6fr),
+    [Vue de classes], [Objets à faire apparaître], [Intérêt pour le mémoire],
+    [Vue métier globale], [Campagne, Formulaire, VersionFormulaire, Question, Candidature, Progression, Entretien, Évaluation, Décision.], [Montrer le noyau fonctionnel du recrutement et les dépendances entre objets métier.],
+    [Vue utilisateurs et permissions], [Utilisateur, Groupe métier, Permission système, Permission d'entité, Override utilisateur.], [Expliquer la gouvernance des accès et la différence entre rôle global et droit contextualisé.],
+    [Vue campagnes et quiz], [Campagne, PipelineTemplate, PipelineStage, Formulaire, VersionFormulaire, Question, Réponse, RéponseCandidat.], [Mettre en évidence la préparation de l'évaluation technique et son ancrage dans la campagne.],
+    [Vue entretiens et décisions], [Entretien, EntretienCandidat, Évaluation, Décision, Notification.], [Illustrer la fin du processus de recrutement et la production du verdict.],
+    [Vue applicative], [Contrôleurs, services métier, repositories, DTO principaux.], [Montrer comment les cas d'usage sont orchestrés dans la couche backend.],
+  )
+
+  #note-box([Figures à produire], [
+    Figures recommandées : diagramme de classes global ; diagramme centré sur les permissions ; diagramme centré sur le workflow candidature, quiz, entretien et décision.
+  ])
+
+  === Diagrammes de séquence
+  Les diagrammes de séquence ont pour rôle de montrer le comportement dynamique du système et l'enchaînement réel des composants lors d'un cas d'usage. Ils sont particulièrement utiles pour expliciter les interactions entre le frontend, l'API, les services métier, la persistance et les mécanismes de notification.
+
+  #document-table(
+    columns: (1.1fr, 1.8fr, 1.8fr),
+    [Séquence], [Objets principaux], [Ce que le diagramme doit démontrer],
+    [Candidature publique], [Candidat, interface publique, API candidature, base de données, service email.], [La validation du contexte de campagne, la création du dossier, la génération des informations de suivi et la notification initiale.],
+    [Passation du quiz], [Candidat, interface quiz, API quiz, formulaire versionné, réponses candidat.], [Le chargement des questions autorisées, l'enregistrement progressif des réponses et la clôture du quiz.],
+    [Planification d'entretien], [Recruteur, API entretien, candidature, entretien, notification.], [Le rattachement de l'entretien à la bonne candidature, la production de la convocation et la mise à jour du pipeline.],
+    [Décision finale], [Recruteur, évaluateurs, API décision, candidature, progression, notification.], [L'agrégation des éléments d'évaluation, la saisie de la décision et la synchronisation des états du dossier.],
+  )
+
+  === Diagrammes d'activités et d'états
+  Les diagrammes d'activités et d'états doivent représenter la candidature comme un processus évolutif plutôt que comme un simple enregistrement doté d'un champ de statut. Cette modélisation est essentielle pour expliquer comment la logique de pipeline structure les actions possibles et comment les différents sous-états du système produisent une lecture globale du dossier.
+
+  #document-table(
+    columns: (1.1fr, 1.85fr, 1.75fr),
+    [Diagramme], [Périmètre], [Information apportée],
+    [Activité globale candidature], [Du dépôt du dossier à la décision finale.], [Vue macro du parcours candidat, des bifurcations possibles et des points de contrôle.],
+    [États de campagne], [Brouillon, ouverture, pause, clôture et variantes de diffusion.], [Conditions de disponibilité de l'offre et effets sur l'accès public.],
+    [États du quiz], [Non commencé, en cours, terminé, corrigé manuellement, invalidé.], [Règles de gestion liées à la passation et à l'évaluation technique.],
+    [États entretien / décision], [Planifié, répondu, évalué, décidé, annulé, replanifié.], [Traçabilité de la fin de parcours et cohérence des verdicts RH.],
+  )
 
   == Maquettes et interfaces
   Les maquettes et interfaces de la solution s'organisent autour de trois univers d'usage distincts. Le premier est l'espace public candidat, qui comprend les écrans de candidature, de vérification d'email, de quiz et de suivi. L'enjeu principal de cette interface est la simplicité : le candidat doit comprendre rapidement ce qu'on attend de lui, où il en est et quelles actions lui sont encore accessibles.
 
-  Le deuxième univers est celui du recruteur. Il comprend les listes de campagnes, les vues de candidatures, les écrans de planification d'entretien, les interfaces d'évaluation, les espaces de décision et les tableaux de bord. Ici, la logique d'interaction doit favoriser la lecture rapide, le filtrage, l'accès au contexte utile et la sécurisation des actions sensibles par des droits explicites ou par des confirmations adaptées.
+  Le deuxième univers est celui du recruteur. Il comprend les listes de campagnes, les vues de candidatures, les écrans de planification d'entretien, les interfaces d'évaluation, les espaces de décision, la gestion des formulaires, des versions de formulaire, des questions et des liens de diffusion. Ici, la logique d'interaction doit favoriser la lecture rapide, le filtrage, l'accès au contexte utile et la sécurisation des actions sensibles par des droits explicites ou par des confirmations adaptées.
 
   Le troisième univers est celui de l'administration. Il regroupe les référentiels, les paramètres globaux, les templates d'emails, la configuration SMTP, les permissions et certaines vues techniques du système. Les maquettes associées devront mettre en évidence une exigence particulière de lisibilité et de cohérence, car elles supportent des opérations de gouvernance dont dépend une grande partie du comportement applicatif.
 
+  #document-table(
+    columns: (1.1fr, 1.95fr, 1.55fr),
+    [Univers], [Écrans clés], [Objectif de conception],
+    [Candidat], [Candidature publique ; vérification d'email ; quiz ; suivi de candidature ; réponse entretien.], [Réduire la friction, expliciter l'état du dossier et sécuriser les actions disponibles.],
+    [Recruteur], [Campagnes ; formulaires ; versions ; questions ; candidatures ; entretiens ; évaluations ; décisions ; dashboard.], [Accélérer le traitement des dossiers et garantir la lecture du contexte métier avant action.],
+    [Administration], [Utilisateurs ; rôles ; permissions ; départements ; spécialités ; templates d'email ; paramètres globaux.], [Permettre la gouvernance, la configuration et la maintenance fonctionnelle du système.],
+  )
+
   == Conception de l'API REST
-  La conception de l'API repose sur une logique de services orientés métier. Les endpoints ne se limitent pas à un CRUD canonique ; ils exposent aussi des actions applicatives explicites, telles que la progression dans le pipeline, la réponse à un entretien, la publication d'un formulaire ou la création d'une occurrence contextuelle. Cette orientation rend l'API plus proche du langage métier du système et facilite le pilotage des cas d'usage complexes.
+  La conception de l'API repose sur une logique de services orientés métier. Les endpoints ne se limitent pas à un CRUD canonique ; ils exposent aussi des actions applicatives explicites, telles que la progression dans le pipeline, la réponse à un entretien, la publication d'un formulaire, la vérification d'un email ou la production d'une décision. Cette orientation rend l'API plus proche du langage métier du système et facilite le pilotage des cas d'usage complexes.
 
   Les échanges sont essentiellement réalisés au format JSON, via des DTO dédiés servant de contrats entre frontend et backend. Les structures de requête permettent de transmettre soit des recherches par critères, soit des objets métier à créer ou à mettre à jour, parfois regroupés dans des tableaux de données. Les réponses ont pour objectif de renvoyer des objets directement exploitables par l'interface, y compris lorsqu'elles portent des champs de synthèse ou des informations dérivées utiles à l'affichage.
 
   L'API suit également des conventions de mise à jour partielles importantes pour la stabilité du projet : certaines valeurs omises ne doivent pas être écrasées, certaines valeurs vides doivent être ignorées, et certains champs calculés ou historisés restent strictement propriétaires du backend. La gestion des erreurs doit enfin préserver un équilibre entre rigueur technique et lisibilité fonctionnelle : contrôle des entrées, refus explicite des incohérences critiques, messages exploitables pour le frontend et distinction claire entre erreur métier, erreur de validation et défaut d'infrastructure.
+
+  #document-table(
+    columns: (1.2fr, 1.95fr, 1.55fr),
+    [Famille de services], [Données et actions couvertes], [Intention de conception],
+    [Authentification et permissions], [Connexion interne, gestion des utilisateurs, rôles, groupes, overrides et permissions d'entité.], [Sécuriser l'accès et exprimer les responsabilités réelles des acteurs.],
+    [Campagnes et pipeline], [Création de campagne, paramétrage du pipeline, partage, filtrage et pilotage des dossiers.], [Faire de la campagne le centre du workflow de recrutement.],
+    [Formulaires et quiz], [Gestion des formulaires, versioning, composition des questions, passation, sauvegarde et correction.], [Garantir la comparabilité des évaluations techniques et la traçabilité des réponses.],
+    [Candidatures et parcours public], [Création du dossier, vérification d'email, suivi candidat, demandes et consultation des statuts.], [Maintenir une expérience publique simple sans sacrifier la sécurité ni la cohérence métier.],
+    [Entretiens, évaluations et décisions], [Planification, réponse candidat, saisie d'évaluation, consolidation et décision.], [Coordonner la fin du parcours de recrutement et conserver un historique explicable.],
+    [Administration et communication], [Paramètres globaux, SMTP, templates, notifications et contenus administrables.], [Assurer la gouvernance opérationnelle et la communication du système.],
+  )
 
   #part-page(
     [Troisième partie],
