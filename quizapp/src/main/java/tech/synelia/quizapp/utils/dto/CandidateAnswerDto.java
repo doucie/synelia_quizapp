@@ -35,9 +35,17 @@ public class CandidateAnswerDto extends _CandidateAnswerDto implements Cloneable
     private String     dateModificationDe   ;
     private String     dateModificationA    ;
     private Integer    applicationId        ;
+    private Integer    applicationQuizAttemptId ;
     private Integer    questionId           ;
     private String     questionText         ;
     private String     questionType         ;
+    private String     applicationQuizAttemptQuizStatus ;
+    private String     applicationQuizAttemptManualCorrectionStatus ;
+    private Double     applicationQuizAttemptScore ;
+    private Double     applicationQuizAttemptScorePercent ;
+    private String     applicationQuizAttemptLastActivityAt ;
+    private String     applicationQuizAttemptStartedAt ;
+    private String     applicationQuizAttemptCompletedAt ;
     private Integer    questionScore        ;
     private Boolean    manualCorrectionRequired ;
     private String     answerText           ;
@@ -61,6 +69,7 @@ public class CandidateAnswerDto extends _CandidateAnswerDto implements Cloneable
     private SearchParam<Boolean>  isDeletedParam         ;
     private SearchParam<String>   searchStringParam      ;
     private SearchParam<Integer>  applicationIdParam     ;
+    private SearchParam<Integer>  applicationQuizAttemptIdParam ;
     private SearchParam<Integer>  questionIdParam        ;
     private SearchParam<Integer>  answerIdParam          ;
 

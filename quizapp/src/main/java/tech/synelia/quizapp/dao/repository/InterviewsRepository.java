@@ -141,6 +141,14 @@ public interface InterviewsRepository extends JpaRepository<Interviews, Integer>
 	 */
 	@Query("select e from Interviews e where e.campaigns.id = :campaignId and e.isDeleted = :isDeleted")
 	List<Interviews> findByCampaignId(@Param("campaignId")Integer campaignId, @Param("isDeleted")Boolean isDeleted);
+	/**
+	 * Finds Interviews by using applicationId as a search criteria.
+	 * 
+	 * @param applicationId
+	 * @return A list of Interviews linked to the given application.
+	 */
+	@Query("select e from Interviews e where e.applications.id = :applicationId and e.isDeleted = :isDeleted")
+	List<Interviews> findByApplicationId(@Param("applicationId")Integer applicationId, @Param("isDeleted")Boolean isDeleted);
 
 	/**
 	 * Finds List of Interviews by using interviewsDto as a search criteria.

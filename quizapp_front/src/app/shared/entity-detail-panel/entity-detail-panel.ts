@@ -8,6 +8,7 @@ export interface DetailField {
   type?: 'text' | 'date' | 'boolean' | 'badge' | 'id';
   badgeMap?: Record<string, { label: string; cssClass: string }>;
   editable?: boolean;
+  displayValue?: (entity: any, value: any) => string;
 }
 
 @Component({
@@ -162,11 +163,16 @@ export class EntityDetailPanelComponent {
 
   formatValue(field: DetailField): string {
     const value = this.getFieldValue(field);
+    if (field.displayValue) {
+      const displayValue = field.displayValue(this.entity, value);
+      return displayValue === null || displayValue === undefined || displayValue === '' ? '-' : String(displayValue);
+    }
     if (value === null || value === undefined || value === '') return '-';
     switch (field.type) {
       case 'date': return this.formatDate(value);
       case 'boolean': return value ? 'Oui' : 'Non';
       case 'id': return '#' + value;
+      case 'badge': return field.badgeMap?.[value]?.label || value || '-';
       default: return String(value);
     }
   }

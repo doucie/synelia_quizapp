@@ -10,6 +10,7 @@ package tech.synelia.quizapp.utils.dto;
 
 import java.util.Date;
 import java.util.Date;
+import java.util.List;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -46,6 +47,8 @@ public class EvaluationsDto extends _EvaluationsDto implements Cloneable{
     private String     dateModificationDe   ;
     private String     dateModificationA    ;
     private Integer    candidateInterviewId ;
+    private Integer    interviewParticipantId ;
+    private List<EvaluationItemDto> evaluationItems ;
 
     //----------------------------------------------------------------------
     // ENTITY LINKS FIELD ( RELATIONSHIP )
@@ -62,6 +65,7 @@ public class EvaluationsDto extends _EvaluationsDto implements Cloneable{
 	private SearchParam<Boolean>  isDeletedParam        ;                     
 	private SearchParam<String>   searchStringParam     ;                     
 	private SearchParam<Integer>  candidateInterviewIdParam;                     
+	private SearchParam<Integer>  interviewParticipantIdParam;                     
     /**
      * Default constructor
      */

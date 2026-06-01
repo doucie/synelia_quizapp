@@ -201,7 +201,12 @@
             <th class="col-short" [class.col-hidden]="!isColumnVisible('email')">Email</th>
             <th class="col-short" [class.col-hidden]="!isColumnVisible('phone')">Téléphone</th>
             <th class="col-status" [class.col-hidden]="!isColumnVisible('status')">Statut</th>
-            <th class="col-short" [class.col-hidden]="!isColumnVisible('quizScore')">Score Quiz</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('quizScore')">Quiz courant</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('preselectionCurrent')">Pré-sélection courante</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('interviewCurrent')">Entretien courant</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('evaluationCurrent')">Évaluation courante</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('finalDecisionCurrent')">Décision finale courante</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('pipelineCurrent')">Étape courante</th>
             <th class="col-date" [class.col-hidden]="!isColumnVisible('createdAt')">Créé le</th>
             <th class="col-actions" [class.col-hidden]="!isColumnVisible('actions')">Actions</th>
           </tr>
@@ -222,19 +227,82 @@
               <span class="cell-phone">{{ app.candidatePhone || '-' }}</span>
             </td>
             <td [class.col-hidden]="!isColumnVisible('status')">
-              <span class="status-badge" [ngClass]="getStatusClass(app.applicationStatus)">
-                {{ getStatusLabel(app.applicationStatus) }}
+              <span class="status-badge" [ngClass]="getDisplayStatusClass(app)">
+                {{ getDisplayStatusLabel(app) }}
               </span>
             </td>
             <td [class.col-hidden]="!isColumnVisible('quizScore')">
-              <div class="cell-score-stack">
-                <span class="cell-score" *ngIf="app.quizScorePercent !== undefined">{{ app.quizScorePercent }}%</span>
-                <span *ngIf="app.quizScorePercent === undefined" style="color: var(--text-secondary);">-</span>
-                <span *ngIf="app.quizManualCorrectionStatus && app.quizManualCorrectionStatus !== 'NOT_REQUIRED'"
-                      class="manual-correction-badge"
-                      [ngClass]="getManualCorrectionStatusClass(app.quizManualCorrectionStatus)">
-                  {{ getManualCorrectionStatusLabel(app.quizManualCorrectionStatus) }}
+              <div class="cell-score-stack cell-score-stack--quiz">
+                <span *ngIf="getCurrentQuizStatus(app)" class="answer-attempt-group__status" [ngClass]="getQuizAttemptStatusClass(getCurrentQuizStatus(app))">
+                  {{ getQuizAttemptStatusLabel(getCurrentQuizStatus(app)) }}
                 </span>
+                <span class="cell-score" *ngIf="getCurrentQuizScorePercent(app) != null">{{ getCurrentQuizScorePercent(app) }}%</span>
+                <span *ngIf="!hasCurrentQuizSummary(app)" class="cell-quiz-empty">-</span>
+                <span *ngIf="getCurrentQuizManualCorrectionStatus(app)"
+                      class="manual-correction-badge"
+                      [ngClass]="getManualCorrectionStatusClass(getCurrentQuizManualCorrectionStatus(app))">
+                  {{ getManualCorrectionStatusLabel(getCurrentQuizManualCorrectionStatus(app)) }}
+                </span>
+                <button *ngIf="getCurrentQuizToken(app)"
+                        class="cell-quiz-link"
+                        (click)="copyCurrentApplicationQuizLink(app, $event)">
+                  Copier lien
+                </button>
+              </div>
+            </td>
+            <td [class.col-hidden]="!isColumnVisible('preselectionCurrent')">
+              <div class="cell-score-stack cell-score-stack--preselection">
+                <span *ngIf="getCurrentPreselectionDecisionType(app)"
+                      class="status-badge"
+                      [ngClass]="getCurrentPreselectionDecisionClass(getCurrentPreselectionDecisionType(app))">
+                  {{ getCurrentPreselectionDecisionLabel(getCurrentPreselectionDecisionType(app)) }}
+                </span>
+                <span *ngIf="getCurrentPreselectionDecisionDate(app)" class="answer-attempt-group__count">{{ getCurrentPreselectionDecisionDate(app) }}</span>
+                <span *ngIf="!hasCurrentPreselectionSummary(app)" class="cell-quiz-empty">-</span>
+              </div>
+            </td>
+            <td [class.col-hidden]="!isColumnVisible('interviewCurrent')">
+              <div class="cell-score-stack cell-score-stack--interview">
+                <span *ngIf="getCurrentInterviewStatus(app)" class="interview-status-chip" [ngClass]="getInterviewStatusClass(getCurrentInterviewStatus(app))">
+                  {{ getInterviewStatusLabel(getCurrentInterviewStatus(app)) }}
+                </span>
+                <span *ngIf="getCurrentInterviewDate(app)" class="answer-attempt-group__count">{{ getCurrentInterviewDate(app) }}</span>
+                <span *ngIf="!hasCurrentInterviewSummary(app)" class="cell-quiz-empty">-</span>
+              </div>
+            </td>
+            <td [class.col-hidden]="!isColumnVisible('evaluationCurrent')">
+              <div class="cell-score-stack cell-score-stack--evaluation">
+                <span *ngIf="getCurrentInterviewEvaluationAverageLabel(app)" class="answer-attempt-group__score">
+                  {{ getCurrentInterviewEvaluationAverageLabel(app) }}
+                </span>
+                <span *ngIf="getCurrentInterviewEvaluationSummary(app)" class="cell-current-evaluation-summary">
+                  {{ getCurrentInterviewEvaluationSummary(app) }}
+                </span>
+                <span *ngIf="!hasCurrentInterviewEvaluationSummary(app)" class="cell-quiz-empty">-</span>
+              </div>
+            </td>
+            <td [class.col-hidden]="!isColumnVisible('finalDecisionCurrent')">
+              <div class="cell-score-stack cell-score-stack--final-decision">
+                <span *ngIf="getCurrentFinalDecisionType(app)"
+                      class="status-badge"
+                      [ngClass]="getCurrentFinalDecisionClass(getCurrentFinalDecisionType(app))">
+                  {{ getCurrentFinalDecisionLabel(getCurrentFinalDecisionType(app)) }}
+                </span>
+                <span *ngIf="getCurrentFinalDecisionDate(app)" class="answer-attempt-group__count">{{ getCurrentFinalDecisionDate(app) }}</span>
+                <span *ngIf="!hasCurrentFinalDecisionSummary(app)" class="cell-quiz-empty">-</span>
+              </div>
+            </td>
+            <td [class.col-hidden]="!isColumnVisible('pipelineCurrent')">
+              <div class="cell-score-stack cell-score-stack--pipeline">
+                <span *ngIf="getCurrentPipelineStageLabel(app)" class="cell-current-stage-label">
+                  {{ getCurrentPipelineStageLabel(app) }}
+                </span>
+                <span *ngIf="getCurrentPipelineProgressStatus(app)"
+                      class="pipeline-progress-chip"
+                      [ngClass]="getPipelineProgressStatusClass(getCurrentPipelineProgressStatus(app))">
+                  {{ getPipelineProgressStatusLabel(getCurrentPipelineProgressStatus(app)) }}
+                </span>
+                <span *ngIf="!hasCurrentPipelineStageSummary(app)" class="cell-quiz-empty">-</span>
               </div>
             </td>
             <td [class.col-hidden]="!isColumnVisible('createdAt')">
@@ -285,107 +353,287 @@
           </tr>
           <!-- Expansion: Détails candidature -->
           <tr *ngIf="isExpanded(app.id!)" class="expansion-row">
-            <td colspan="8" class="expansion-content">
+            <td colspan="13" class="expansion-content">
               <div class="children-container">
-                <div class="children-tabs">
-                  <button class="children-tab" [class.active]="getChildTab(app.id!) === 'answers'" (click)="setChildTab(app.id!, 'answers')">Réponses <span class="tab-count">{{ getAnswers(app.id!).length }}</span></button>
-                  <button class="children-tab" [class.active]="getChildTab(app.id!) === 'asks'" (click)="setChildTab(app.id!, 'asks')">Demandes <span class="tab-count">{{ getAsks(app.id!).length }}</span></button>
-                  <button class="children-tab" [class.active]="getChildTab(app.id!) === 'tokens'" (click)="setChildTab(app.id!, 'tokens')">Tokens <span class="tab-count">{{ getTokens(app.id!).length }}</span></button>
-                  <button class="children-tab" [class.active]="getChildTab(app.id!) === 'interviews'" (click)="setChildTab(app.id!, 'interviews')">Entretiens <span class="tab-count">{{ getInterviews(app.id!).length }}</span></button>
+                <div class="children-toolbar">
+                  <div class="children-tabs">
+                    <button class="children-tab" [class.active]="getChildTab(app.id!) === 'answers'" (click)="setChildTab(app.id!, 'answers')">Réponses <span class="tab-count">{{ getAnswers(app.id!).length }}</span></button>
+                    <button class="children-tab" [class.active]="getChildTab(app.id!) === 'asks'" (click)="setChildTab(app.id!, 'asks')">Demandes <span class="tab-count">{{ getAsks(app.id!).length }}</span></button>
+                    <button class="children-tab" [class.active]="getChildTab(app.id!) === 'tokens'" (click)="setChildTab(app.id!, 'tokens')">Tokens <span class="tab-count">{{ getTokens(app.id!).length }}</span></button>
+                    <button class="children-tab" [class.active]="getChildTab(app.id!) === 'decisions'" (click)="setChildTab(app.id!, 'decisions')">Décisions <span class="tab-count">{{ getDecisions(app.id!).length }}</span></button>
+                    <button class="children-tab" [class.active]="getChildTab(app.id!) === 'pipeline'" (click)="setChildTab(app.id!, 'pipeline')">Pipeline <span class="tab-count">{{ getApplicationProgresses(app.id!).length }}</span></button>
+                    <button class="children-tab" [class.active]="getChildTab(app.id!) === 'interviews'" (click)="setChildTab(app.id!, 'interviews')">Entretiens <span class="tab-count">{{ getInterviews(app.id!).length }}</span></button>
+                    <button class="children-tab" [class.active]="getChildTab(app.id!) === 'evaluations'" (click)="setChildTab(app.id!, 'evaluations')">Évaluations <span class="tab-count">{{ getInterviewEvaluations(app.id!).length }}</span></button>
+                  </div>
+                  <div class="children-actions" *ngIf="app.emailVerified && !app.isDeleted">
+                    <button class="action-btn secondary children-toolbar__action"
+                            [disabled]="isQuizAttemptCreationLoading(app.id!)"
+                            (click)="createQuizAttempt(app, $event)">
+                      {{ isQuizAttemptCreationLoading(app.id!) ? 'Création…' : 'Nouvelle tentative quiz' }}
+                    </button>
+                  </div>
                 </div>
                 <div *ngIf="isLoadingChildren(app.id!)" class="loading-children"><div class="loading-spinner-small"></div><span>Chargement...</span></div>
                 <div *ngIf="!isLoadingChildren(app.id!)">
+                  <div *ngIf="getCurrentQuizAttemptGroup(app.id!) as currentQuizAttempt; else noCurrentQuizAttempt" class="quiz-attempt-summary">
+                    <div class="quiz-attempt-summary__header">
+                      <div class="quiz-attempt-summary__title-block">
+                        <span class="quiz-attempt-summary__eyebrow">Tentative quiz courante</span>
+                        <span class="quiz-attempt-summary__title">{{ currentQuizAttempt.label }}</span>
+                      </div>
+                      <button *ngIf="currentQuizAttempt.quizToken"
+                              class="action-btn secondary quiz-attempt-summary__action"
+                              (click)="copyCurrentQuizAttemptLink(app.id!, $event)">
+                        Copier le lien courant
+                      </button>
+                    </div>
+                    <div class="quiz-attempt-summary__badges">
+                      <span *ngIf="currentQuizAttempt.quizStatus" class="answer-attempt-group__status" [ngClass]="getQuizAttemptStatusClass(currentQuizAttempt.quizStatus)">
+                        {{ getQuizAttemptStatusLabel(currentQuizAttempt.quizStatus) }}
+                      </span>
+                      <span *ngIf="currentQuizAttempt.manualCorrectionStatus" class="manual-correction-badge" [ngClass]="getManualCorrectionStatusClass(currentQuizAttempt.manualCorrectionStatus)">
+                        {{ getManualCorrectionStatusLabel(currentQuizAttempt.manualCorrectionStatus) }}
+                      </span>
+                      <span class="answer-attempt-group__count">{{ currentQuizAttempt.answers.length }} réponse{{ currentQuizAttempt.answers.length > 1 ? 's' : '' }}</span>
+                      <span *ngIf="getAnswerAttemptScoreLabel(currentQuizAttempt)" class="answer-attempt-group__score">Score {{ getAnswerAttemptScoreLabel(currentQuizAttempt) }}</span>
+                    </div>
+                    <p *ngIf="getAnswerAttemptActivitySummary(currentQuizAttempt)" class="quiz-attempt-summary__meta">{{ getAnswerAttemptActivitySummary(currentQuizAttempt) }}</p>
+                    <p *ngIf="currentQuizAttempt.answers.length === 0" class="quiz-attempt-summary__meta">Tentative créée mais encore sans réponse enregistrée.</p>
+                  </div>
+
+                  <ng-template #noCurrentQuizAttempt>
+                    <div class="quiz-attempt-summary quiz-attempt-summary--empty">
+                      <span class="quiz-attempt-summary__eyebrow">Tentative quiz courante</span>
+                      <p class="quiz-attempt-summary__meta">Aucune tentative quiz explicite n’est encore disponible pour cette candidature.</p>
+                    </div>
+                  </ng-template>
+
+                  <div *ngIf="hasCurrentPreselectionSummary(app); else noCurrentPreselection" class="quiz-attempt-summary quiz-attempt-summary--empty">
+                    <span class="quiz-attempt-summary__eyebrow">Pré-sélection courante</span>
+                    <div class="quiz-attempt-summary__badges">
+                      <span *ngIf="getCurrentPreselectionDecisionType(app)"
+                            class="status-badge"
+                            [ngClass]="getCurrentPreselectionDecisionClass(getCurrentPreselectionDecisionType(app))">
+                        {{ getCurrentPreselectionDecisionLabel(getCurrentPreselectionDecisionType(app)) }}
+                      </span>
+                      <span *ngIf="getCurrentPreselectionDecisionDate(app)" class="answer-attempt-group__count">{{ getCurrentPreselectionDecisionDate(app) }}</span>
+                    </div>
+                  </div>
+
+                  <ng-template #noCurrentPreselection>
+                    <div class="quiz-attempt-summary quiz-attempt-summary--empty">
+                      <span class="quiz-attempt-summary__eyebrow">Pré-sélection courante</span>
+                      <p class="quiz-attempt-summary__meta">Aucune décision de pré-sélection explicite n’est encore disponible pour cette candidature.</p>
+                    </div>
+                  </ng-template>
+
+                  <div *ngIf="getCurrentInterview(app.id!) as currentInterview; else interviewMirrorSummary" class="quiz-attempt-summary quiz-attempt-summary--interview">
+                    <div class="quiz-attempt-summary__header">
+                      <div class="quiz-attempt-summary__title-block">
+                        <span class="quiz-attempt-summary__eyebrow">Entretien courant</span>
+                        <span class="quiz-attempt-summary__title">Entretien #{{ currentInterview.interviewId || currentInterview.id }}</span>
+                      </div>
+                    </div>
+                    <div class="quiz-attempt-summary__badges">
+                      <span *ngIf="currentInterview.interviewStatus" class="interview-status-chip" [ngClass]="getInterviewStatusClass(currentInterview.interviewStatus)">
+                        {{ getInterviewStatusLabel(currentInterview.interviewStatus) }}
+                      </span>
+                      <span *ngIf="getInterviewDisplayDate(currentInterview)" class="answer-attempt-group__count">
+                        {{ getInterviewDisplayDate(currentInterview) }}
+                      </span>
+                      <span *ngIf="currentInterview.interviewDuration" class="answer-attempt-group__count">
+                        {{ currentInterview.interviewDuration }} min
+                      </span>
+                      <span *ngIf="getInterviewEvaluationAverageLabel(currentInterview)" class="answer-attempt-group__score">
+                        {{ getInterviewEvaluationAverageLabel(currentInterview) }}
+                      </span>
+                    </div>
+                    <p *ngIf="getInterviewEvaluationSummary(currentInterview)" class="quiz-attempt-summary__meta">Évaluation courante : {{ getInterviewEvaluationSummary(currentInterview) }}</p>
+                    <p *ngIf="getInterviewResponseSummary(currentInterview)" class="quiz-attempt-summary__meta">{{ getInterviewResponseSummary(currentInterview) }}</p>
+                  </div>
+
+                  <ng-template #interviewMirrorSummary>
+                    <div *ngIf="hasCurrentInterviewSummary(app); else noCurrentInterview" class="quiz-attempt-summary quiz-attempt-summary--interview quiz-attempt-summary--empty">
+                      <span class="quiz-attempt-summary__eyebrow">Entretien courant</span>
+                      <div class="quiz-attempt-summary__badges">
+                        <span *ngIf="getCurrentInterviewStatus(app)" class="interview-status-chip" [ngClass]="getInterviewStatusClass(getCurrentInterviewStatus(app))">
+                          {{ getInterviewStatusLabel(getCurrentInterviewStatus(app)) }}
+                        </span>
+                        <span *ngIf="getCurrentInterviewDate(app)" class="answer-attempt-group__count">{{ getCurrentInterviewDate(app) }}</span>
+                        <span *ngIf="getCurrentInterviewEvaluationAverageLabel(app)" class="answer-attempt-group__score">
+                          {{ getCurrentInterviewEvaluationAverageLabel(app) }}
+                        </span>
+                      </div>
+                      <p *ngIf="getCurrentInterviewEvaluationSummary(app)" class="quiz-attempt-summary__meta">Évaluation courante : {{ getCurrentInterviewEvaluationSummary(app) }}</p>
+                    </div>
+                  </ng-template>
+
+                  <ng-template #noCurrentInterview>
+                    <div class="quiz-attempt-summary quiz-attempt-summary--interview quiz-attempt-summary--empty">
+                      <span class="quiz-attempt-summary__eyebrow">Entretien courant</span>
+                      <p class="quiz-attempt-summary__meta">Aucun entretien explicite n’est encore disponible pour cette candidature.</p>
+                    </div>
+                  </ng-template>
+
+                  <div *ngIf="hasCurrentFinalDecisionSummary(app); else noCurrentFinalDecision" class="quiz-attempt-summary quiz-attempt-summary--empty">
+                    <span class="quiz-attempt-summary__eyebrow">Décision finale courante</span>
+                    <div class="quiz-attempt-summary__badges">
+                      <span *ngIf="getCurrentFinalDecisionType(app)"
+                            class="status-badge"
+                            [ngClass]="getCurrentFinalDecisionClass(getCurrentFinalDecisionType(app))">
+                        {{ getCurrentFinalDecisionLabel(getCurrentFinalDecisionType(app)) }}
+                      </span>
+                      <span *ngIf="getCurrentFinalDecisionDate(app)" class="answer-attempt-group__count">{{ getCurrentFinalDecisionDate(app) }}</span>
+                    </div>
+                  </div>
+
+                  <ng-template #noCurrentFinalDecision>
+                    <div class="quiz-attempt-summary quiz-attempt-summary--empty">
+                      <span class="quiz-attempt-summary__eyebrow">Décision finale courante</span>
+                      <p class="quiz-attempt-summary__meta">Aucune décision finale explicite n’est encore disponible pour cette candidature.</p>
+                    </div>
+                  </ng-template>
+
+                  <div *ngIf="hasCurrentPipelineStageSummary(app); else noCurrentPipelineStage" class="quiz-attempt-summary quiz-attempt-summary--empty">
+                    <div class="quiz-attempt-summary__header">
+                      <div class="quiz-attempt-summary__title-block">
+                        <span class="quiz-attempt-summary__eyebrow">Étape pipeline courante</span>
+                        <span class="quiz-attempt-summary__title">{{ getCurrentPipelineStageLabel(app) }}</span>
+                      </div>
+                    </div>
+                    <div class="quiz-attempt-summary__badges">
+                      <span *ngIf="getCurrentPipelineProgressStatus(app)"
+                            class="pipeline-progress-chip"
+                            [ngClass]="getPipelineProgressStatusClass(getCurrentPipelineProgressStatus(app))">
+                        {{ getPipelineProgressStatusLabel(getCurrentPipelineProgressStatus(app)) }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <ng-template #noCurrentPipelineStage>
+                    <div class="quiz-attempt-summary quiz-attempt-summary--empty">
+                      <span class="quiz-attempt-summary__eyebrow">Étape pipeline courante</span>
+                      <p class="quiz-attempt-summary__meta">Aucune étape pipeline courante n’est encore disponible pour cette candidature.</p>
+                    </div>
+                  </ng-template>
+
                   <!-- Tab: Réponses -->
                   <div *ngIf="getChildTab(app.id!) === 'answers'" class="children-list">
-                    <div *ngIf="getAnswers(app.id!).length === 0" class="no-children"><span>Aucune réponse</span></div>
-                    <div *ngFor="let child of getAnswers(app.id!); trackBy: trackByChildId" class="child-item child-item--answer" [class.deleted]="child.isDeleted">
-                      <div class="child-answer-header">
-                        <span class="child-id">#{{ child.id }}</span>
-                        <span class="child-name">{{ child.questionText || ('Question #' + child.questionId) }}</span>
-                        <span *ngIf="!isTextAnswer(child)" class="child-badge" [class.active]="child.isSelected" [class.inactive]="!child.isSelected">{{ child.isSelected ? 'Sélectionnée' : 'Non sélectionnée' }}</span>
-                        <span *ngIf="child.manualCorrectionRequired && isPrimaryQuestionAnswer(app, child) && getManualQuestionCorrectionScore(child) !== ''" class="child-badge active">Note {{ getManualQuestionCorrectionScore(child) }} / {{ getManualQuestionCorrectionMaxScore(child) }}</span>
-                        <span *ngIf="child.manualCorrectionRequired && isPrimaryQuestionAnswer(app, child) && getManualQuestionCorrectionScore(child) === ''" class="child-badge pending">À corriger manuellement</span>
-                        <span *ngIf="!child.manualCorrectionRequired && isTextAnswer(child) && child.manualIsCorrect === true" class="child-badge active">Correcte</span>
-                        <span *ngIf="!child.manualCorrectionRequired && isTextAnswer(child) && child.manualIsCorrect === false" class="child-badge inactive">Incorrecte</span>
-                        <span *ngIf="!child.manualCorrectionRequired && isTextAnswer(child) && (child.manualIsCorrect === null || child.manualIsCorrect === undefined)" class="child-badge pending">À corriger</span>
+                    <div *ngIf="getAnswerAttemptGroups(app.id!).length === 0" class="no-children"><span>Aucune tentative quiz ni réponse</span></div>
+                    <div *ngFor="let group of getAnswerAttemptGroups(app.id!); trackBy: trackByAnswerAttemptGroup" class="answer-attempt-group">
+                      <div class="answer-attempt-group__header">
+                        <div class="answer-attempt-group__title-row">
+                          <span class="answer-attempt-group__title">{{ group.label }}</span>
+                          <span class="answer-attempt-group__count">{{ group.answers.length }} réponse{{ group.answers.length > 1 ? 's' : '' }}</span>
+                        </div>
+                        <div class="answer-attempt-group__badges">
+                          <span *ngIf="group.quizStatus" class="answer-attempt-group__status" [ngClass]="getQuizAttemptStatusClass(group.quizStatus)">
+                            {{ getQuizAttemptStatusLabel(group.quizStatus) }}
+                          </span>
+                          <span *ngIf="group.manualCorrectionStatus" class="manual-correction-badge" [ngClass]="getManualCorrectionStatusClass(group.manualCorrectionStatus)">
+                            {{ getManualCorrectionStatusLabel(group.manualCorrectionStatus) }}
+                          </span>
+                          <span *ngIf="getAnswerAttemptScoreLabel(group)" class="answer-attempt-group__score">Score {{ getAnswerAttemptScoreLabel(group) }}</span>
+                        </div>
+                        <div *ngIf="group.quizToken && !group.isLegacy" class="answer-attempt-group__actions">
+                          <button class="action-btn secondary answer-attempt-group__action" (click)="copyExistingQuizAttemptLink(app.id!, group, $event)">
+                            Copier le lien
+                          </button>
+                        </div>
+                        <p *ngIf="getAnswerAttemptActivitySummary(group)" class="answer-attempt-group__meta">{{ getAnswerAttemptActivitySummary(group) }}</p>
+                        <p *ngIf="group.isLegacy" class="answer-attempt-group__note">Bloc historique non encore rattaché à une tentative quiz explicite.</p>
+                        <p *ngIf="!group.isLegacy && group.answers.length === 0" class="answer-attempt-group__note">Tentative créée, aucune réponse enregistrée pour l’instant.</p>
                       </div>
 
-                      <div class="child-answer-body">
-                        <span *ngIf="!isTextAnswer(child)" class="child-answer-choice">{{ child.answerText || ('Réponse #' + child.answerId) }}</span>
-
-                        <div *ngIf="child.manualCorrectionRequired && isPrimaryQuestionAnswer(app, child)" class="manual-correction-card">
-                          <p *ngIf="isTextAnswer(child)" class="manual-correction-response">{{ child.freeTextResponse || 'Aucune réponse libre saisie.' }}</p>
-                          <p *ngIf="!isTextAnswer(child)" class="manual-correction-note">Notation automatique désactivée pour cette question. Attribuez une note manuelle entre 0 et {{ getManualQuestionCorrectionMaxScore(child) }}.</p>
-
-                          <div *ngIf="isManualCorrectionPermissionLoading(app)" class="manual-correction-note">
-                            Vérification des droits de correction...
-                          </div>
-
-                          <div *ngIf="!isManualCorrectionPermissionLoading(app) && hasManualCorrectionPermission(app); else questionCorrectionPermissionDenied" class="manual-correction-form">
-                            <label class="manual-correction-label">Note attribuée</label>
-                            <input class="manual-correction-select manual-correction-input"
-                                   type="number"
-                                   min="0"
-                                   step="1"
-                                   [attr.max]="getManualQuestionCorrectionMaxScore(child)"
-                                   [ngModel]="getManualQuestionCorrectionScore(child)"
-                                   (ngModelChange)="updateManualQuestionCorrectionScore(child, $event)">
-
-                            <p class="manual-correction-note">Intervalle autorisé : 0 à {{ getManualQuestionCorrectionMaxScore(child) }}.</p>
-
-                            <label class="manual-correction-label">Commentaire</label>
-                            <textarea class="manual-correction-comment"
-                                      rows="3"
-                                      [ngModel]="getManualQuestionCorrectionComment(child)"
-                                      (ngModelChange)="updateManualQuestionCorrectionComment(child, $event)"
-                                      placeholder="Commentaire de correction (optionnel)"></textarea>
-
-                            <button class="action-btn primary manual-correction-save"
-                                    [disabled]="isManualQuestionCorrectionSaving(child) || getManualQuestionCorrectionScore(child) === ''"
-                                    (click)="saveManualQuestionCorrection(child)">
-                              {{ isManualQuestionCorrectionSaving(child) ? 'Enregistrement…' : 'Enregistrer la note' }}
-                            </button>
-                          </div>
-
-                          <ng-template #questionCorrectionPermissionDenied>
-                            <p class="manual-correction-note">Consultation seule. La correction manuelle requiert la permission campagne CORRECT_TEST.</p>
-                          </ng-template>
+                      <div *ngFor="let child of group.answers; trackBy: trackByChildId" class="child-item child-item--answer" [class.deleted]="child.isDeleted">
+                        <div class="child-answer-header">
+                          <span class="child-id">#{{ child.id }}</span>
+                          <span class="child-name">{{ child.questionText || ('Question #' + child.questionId) }}</span>
+                          <span *ngIf="!isTextAnswer(child)" class="child-badge" [class.active]="child.isSelected" [class.inactive]="!child.isSelected">{{ child.isSelected ? 'Sélectionnée' : 'Non sélectionnée' }}</span>
+                          <span *ngIf="child.manualCorrectionRequired && isPrimaryQuestionAnswer(app, child) && getManualQuestionCorrectionScore(child) !== ''" class="child-badge active">Note {{ getManualQuestionCorrectionScore(child) }} / {{ getManualQuestionCorrectionMaxScore(child) }}</span>
+                          <span *ngIf="child.manualCorrectionRequired && isPrimaryQuestionAnswer(app, child) && getManualQuestionCorrectionScore(child) === ''" class="child-badge pending">À corriger manuellement</span>
+                          <span *ngIf="!child.manualCorrectionRequired && isTextAnswer(child) && child.manualIsCorrect === true" class="child-badge active">Correcte</span>
+                          <span *ngIf="!child.manualCorrectionRequired && isTextAnswer(child) && child.manualIsCorrect === false" class="child-badge inactive">Incorrecte</span>
+                          <span *ngIf="!child.manualCorrectionRequired && isTextAnswer(child) && (child.manualIsCorrect === null || child.manualIsCorrect === undefined)" class="child-badge pending">À corriger</span>
                         </div>
 
-                        <div *ngIf="isTextAnswer(child) && !child.manualCorrectionRequired" class="manual-correction-card">
-                          <p class="manual-correction-response">{{ child.freeTextResponse || 'Aucune réponse libre saisie.' }}</p>
+                        <div class="child-answer-body">
+                          <span *ngIf="!isTextAnswer(child)" class="child-answer-choice">{{ child.answerText || ('Réponse #' + child.answerId) }}</span>
 
-                          <div *ngIf="isManualCorrectionPermissionLoading(app)" class="manual-correction-note">
-                            Vérification des droits de correction...
+                          <div *ngIf="child.manualCorrectionRequired && isPrimaryQuestionAnswer(app, child)" class="manual-correction-card">
+                            <p *ngIf="isTextAnswer(child)" class="manual-correction-response">{{ child.freeTextResponse || 'Aucune réponse libre saisie.' }}</p>
+                            <p *ngIf="!isTextAnswer(child)" class="manual-correction-note">Notation automatique désactivée pour cette question. Attribuez une note manuelle entre 0 et {{ getManualQuestionCorrectionMaxScore(child) }}.</p>
+
+                            <div *ngIf="isManualCorrectionPermissionLoading(app)" class="manual-correction-note">
+                              Vérification des droits de correction...
+                            </div>
+
+                            <div *ngIf="!isManualCorrectionPermissionLoading(app) && hasManualCorrectionPermission(app); else questionCorrectionPermissionDenied" class="manual-correction-form">
+                              <label class="manual-correction-label">Note attribuée</label>
+                              <input class="manual-correction-select manual-correction-input"
+                                     type="number"
+                                     min="0"
+                                     step="1"
+                                     [attr.max]="getManualQuestionCorrectionMaxScore(child)"
+                                     [ngModel]="getManualQuestionCorrectionScore(child)"
+                                     (ngModelChange)="updateManualQuestionCorrectionScore(child, $event)">
+
+                              <p class="manual-correction-note">Intervalle autorisé : 0 à {{ getManualQuestionCorrectionMaxScore(child) }}.</p>
+
+                              <label class="manual-correction-label">Commentaire</label>
+                              <textarea class="manual-correction-comment"
+                                        rows="3"
+                                        [ngModel]="getManualQuestionCorrectionComment(child)"
+                                        (ngModelChange)="updateManualQuestionCorrectionComment(child, $event)"
+                                        placeholder="Commentaire de correction (optionnel)"></textarea>
+
+                              <button class="action-btn primary manual-correction-save"
+                                      [disabled]="isManualQuestionCorrectionSaving(child) || getManualQuestionCorrectionScore(child) === ''"
+                                      (click)="saveManualQuestionCorrection(child)">
+                                {{ isManualQuestionCorrectionSaving(child) ? 'Enregistrement…' : 'Enregistrer la note' }}
+                              </button>
+                            </div>
+
+                            <ng-template #questionCorrectionPermissionDenied>
+                              <p class="manual-correction-note">Consultation seule. La correction manuelle requiert la permission campagne CORRECT_TEST.</p>
+                            </ng-template>
                           </div>
 
-                          <div *ngIf="!isManualCorrectionPermissionLoading(app) && hasManualCorrectionPermission(app); else correctionPermissionDenied" class="manual-correction-form">
-                            <label class="manual-correction-label">Décision</label>
-                            <select class="manual-correction-select"
-                                    [ngModel]="getManualCorrectionDecision(child)"
-                                    (ngModelChange)="updateManualCorrectionDecision(child.id, $event)">
-                              <option value="">Choisir…</option>
-                              <option value="true">Réponse correcte</option>
-                              <option value="false">Réponse incorrecte</option>
-                            </select>
+                          <div *ngIf="isTextAnswer(child) && !child.manualCorrectionRequired" class="manual-correction-card">
+                            <p class="manual-correction-response">{{ child.freeTextResponse || 'Aucune réponse libre saisie.' }}</p>
 
-                            <label class="manual-correction-label">Commentaire</label>
-                            <textarea class="manual-correction-comment"
-                                      rows="3"
-                                      [ngModel]="getManualCorrectionComment(child)"
-                                      (ngModelChange)="updateManualCorrectionComment(child.id, $event)"
-                                      placeholder="Commentaire de correction (optionnel)"></textarea>
+                            <div *ngIf="isManualCorrectionPermissionLoading(app)" class="manual-correction-note">
+                              Vérification des droits de correction...
+                            </div>
 
-                            <button class="action-btn primary manual-correction-save"
-                                    [disabled]="isManualCorrectionSaving(child.id) || getManualCorrectionDecision(child) === ''"
-                                    (click)="saveManualCorrection(child)">
-                              {{ isManualCorrectionSaving(child.id) ? 'Enregistrement…' : 'Enregistrer la correction' }}
-                            </button>
+                            <div *ngIf="!isManualCorrectionPermissionLoading(app) && hasManualCorrectionPermission(app); else correctionPermissionDenied" class="manual-correction-form">
+                              <label class="manual-correction-label">Décision</label>
+                              <select class="manual-correction-select"
+                                      [ngModel]="getManualCorrectionDecision(child)"
+                                      (ngModelChange)="updateManualCorrectionDecision(child.id, $event)">
+                                <option value="">Choisir…</option>
+                                <option value="true">Réponse correcte</option>
+                                <option value="false">Réponse incorrecte</option>
+                              </select>
+
+                              <label class="manual-correction-label">Commentaire</label>
+                              <textarea class="manual-correction-comment"
+                                        rows="3"
+                                        [ngModel]="getManualCorrectionComment(child)"
+                                        (ngModelChange)="updateManualCorrectionComment(child.id, $event)"
+                                        placeholder="Commentaire de correction (optionnel)"></textarea>
+
+                              <button class="action-btn primary manual-correction-save"
+                                      [disabled]="isManualCorrectionSaving(child.id) || getManualCorrectionDecision(child) === ''"
+                                      (click)="saveManualCorrection(child)">
+                                {{ isManualCorrectionSaving(child.id) ? 'Enregistrement…' : 'Enregistrer la correction' }}
+                              </button>
+                            </div>
+
+                            <ng-template #correctionPermissionDenied>
+                              <p class="manual-correction-note">Consultation seule. La correction manuelle requiert la permission campagne CORRECT_TEST.</p>
+                            </ng-template>
                           </div>
-
-                          <ng-template #correctionPermissionDenied>
-                            <p class="manual-correction-note">Consultation seule. La correction manuelle requiert la permission campagne CORRECT_TEST.</p>
-                          </ng-template>
                         </div>
                       </div>
                     </div>
@@ -419,13 +667,112 @@
                       <span class="child-token">{{ child.tokenString }}</span>
                     </div>
                   </div>
+                  <!-- Tab: Décisions -->
+                  <div *ngIf="getChildTab(app.id!) === 'decisions'" class="children-list">
+                    <div *ngIf="getDecisions(app.id!).length === 0" class="no-children"><span>Aucune décision</span></div>
+                    <div *ngFor="let child of getDecisions(app.id!); trackBy: trackByChildId" class="child-item child-item--answer child-item--decision" [class.deleted]="child.isDeleted">
+                      <div class="child-answer-header">
+                        <span class="child-id">#{{ child.id }}</span>
+                        <span class="child-name">{{ getDecisionLabel(child.decisionType) }}</span>
+                        <span class="status-badge" [ngClass]="getDecisionTypeClass(child.decisionType)">
+                          {{ getDecisionLabel(child.decisionType) }}
+                        </span>
+                        <span class="child-badge" [class.pending]="child.isCancel" [class.active]="!child.isCancel">
+                          {{ getDecisionActionLabel(child.isCancel) }}
+                        </span>
+                        <span *ngIf="getDecisionOccurrenceLabel(app.id!, child)" class="child-badge">
+                          {{ getDecisionOccurrenceLabel(app.id!, child) }}
+                        </span>
+                        <span class="child-badge active" *ngIf="isDecisionCurrentOccurrence(app.id!, child)">Courante</span>
+                      </div>
+                      <div class="child-answer-body">
+                        <span *ngIf="getDecisionDisplayDate(child)" class="manual-correction-note">
+                          {{ child.isCancel ? 'Mise à jour le ' : 'Décidée le ' }}{{ getDecisionDisplayDate(child) }}
+                        </span>
+                        <span *ngIf="child.applicationProgressId" class="manual-correction-note">Occurrence #{{ child.applicationProgressId }}</span>
+                        <span *ngIf="child.userName" class="manual-correction-note">Par {{ child.userName }}</span>
+                        <p *ngIf="child.decisionMode" class="answer-attempt-group__meta">Mode : {{ getDecisionModeLabel(child) }}</p>
+                        <p *ngIf="getDecisionCancellationLabel(app.id!, child)" class="answer-attempt-group__meta">
+                          {{ getDecisionCancellationLabel(app.id!, child) }}
+                        </p>
+                        <p *ngIf="child.justification" class="answer-attempt-group__note">{{ child.justification }}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Tab: Pipeline -->
+                  <div *ngIf="getChildTab(app.id!) === 'pipeline'" class="children-list">
+                    <div *ngIf="getApplicationProgresses(app.id!).length === 0" class="no-children"><span>Aucune progression pipeline</span></div>
+                    <div *ngFor="let child of getApplicationProgresses(app.id!); trackBy: trackByChildId" class="child-item child-item--answer child-item--progress" [class.deleted]="child.isDeleted">
+                      <div class="child-answer-header">
+                        <span class="child-id">#{{ child.id }}</span>
+                        <span class="child-name">{{ getApplicationProgressStageLabel(child) }}</span>
+                        <span class="child-badge active" *ngIf="child.id === getCurrentApplicationProgress(app.id!)?.id">Courante</span>
+                        <span class="child-badge" *ngIf="child.stageOrder != null">Étape {{ child.stageOrder }}</span>
+                        <span *ngIf="child.progressStatus" class="pipeline-progress-chip" [ngClass]="getPipelineProgressStatusClass(child.progressStatus)">
+                          {{ getPipelineProgressStatusLabel(child.progressStatus) }}
+                        </span>
+                        <span class="child-badge active" *ngIf="child.mailSent">Email envoyé</span>
+                      </div>
+                      <div class="child-answer-body">
+                        <p *ngIf="child.stageType" class="answer-attempt-group__meta">Type : {{ getPipelineStageTypeLabel(child.stageType) }}</p>
+                        <p *ngIf="getApplicationProgressTimelineSummary(child)" class="answer-attempt-group__meta">{{ getApplicationProgressTimelineSummary(child) }}</p>
+                        <p *ngIf="getApplicationProgressDecisionMakerLabel(child)" class="answer-attempt-group__meta">Décidé par {{ getApplicationProgressDecisionMakerLabel(child) }}</p>
+                        <p *ngIf="child.score != null" class="answer-attempt-group__meta">Score : {{ child.score }}</p>
+                        <p *ngIf="child.notes" class="answer-attempt-group__note">{{ child.notes }}</p>
+                      </div>
+                    </div>
+                  </div>
                   <!-- Tab: Entretiens -->
                   <div *ngIf="getChildTab(app.id!) === 'interviews'" class="children-list">
                     <div *ngIf="getInterviews(app.id!).length === 0" class="no-children"><span>Aucun entretien</span></div>
-                    <div *ngFor="let child of getInterviews(app.id!); trackBy: trackByChildId" class="child-item" [class.deleted]="child.isDeleted">
-                      <span class="child-id">#{{ child.id }}</span>
-                      <span class="child-name">Entretien #{{ child.interviewId }} - {{ child.interviewStart || '-' }}</span>
-                      <span class="child-badge active" *ngIf="child.interviewDuration">{{ child.interviewDuration }} min</span>
+                    <div *ngFor="let child of getInterviews(app.id!); trackBy: trackByChildId" class="child-item child-item--answer child-item--interview" [class.deleted]="child.isDeleted">
+                      <div class="child-answer-header">
+                        <span class="child-id">#{{ child.id }}</span>
+                        <span class="child-name">Entretien #{{ child.interviewId || child.id }}</span>
+                        <span class="child-badge active" *ngIf="child.id === getCurrentInterview(app.id!)?.id">Courant</span>
+                        <span *ngIf="child.interviewStatus" class="interview-status-chip" [ngClass]="getInterviewStatusClass(child.interviewStatus)">
+                          {{ getInterviewStatusLabel(child.interviewStatus) }}
+                        </span>
+                        <span class="child-badge active" *ngIf="child.interviewDuration">{{ child.interviewDuration }} min</span>
+                      </div>
+                      <div class="child-answer-body">
+                        <p class="answer-attempt-group__meta">Prévu le {{ getInterviewDisplayDate(child) || '-' }}</p>
+                        <p *ngIf="child.interviewStart && child.interviewStart !== child.interviewDate" class="answer-attempt-group__meta">Créneau candidat : {{ child.interviewStart }}</p>
+                        <p *ngIf="getInterviewEvaluationSummary(child)" class="answer-attempt-group__meta">Évaluation : {{ getInterviewEvaluationSummary(child) }}</p>
+                        <p *ngIf="getInterviewResponseSummary(child)" class="answer-attempt-group__note">{{ getInterviewResponseSummary(child) }}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Tab: Évaluations -->
+                  <div *ngIf="getChildTab(app.id!) === 'evaluations'" class="children-list">
+                    <div *ngIf="getInterviewEvaluations(app.id!).length === 0" class="no-children"><span>Aucune évaluation</span></div>
+                    <div *ngFor="let child of getInterviewEvaluations(app.id!); trackBy: trackByChildId" class="child-item child-item--answer child-item--evaluation" [class.deleted]="child.isDeleted">
+                      <div class="child-answer-header">
+                        <span class="child-id">#{{ child.id }}</span>
+                        <span class="child-name">{{ child.interviewLabel }}</span>
+                        <span class="child-badge active" *ngIf="child.candidateInterviewId === getCurrentInterview(app.id!)?.id">Entretien courant</span>
+                        <span *ngIf="child.interviewStatus" class="interview-status-chip" [ngClass]="getInterviewStatusClass(child.interviewStatus)">
+                          {{ getInterviewStatusLabel(child.interviewStatus) }}
+                        </span>
+                        <span *ngIf="getInterviewEvaluationDisplayMark(child) != null" class="evaluation-score-pill" [ngClass]="getInterviewEvaluationScoreClass(getInterviewEvaluationDisplayMark(child))">
+                          {{ getInterviewEvaluationDisplayMark(child) }}/100
+                        </span>
+                      </div>
+                      <div class="child-answer-body">
+                        <p *ngIf="child.interviewDate" class="answer-attempt-group__meta">Prévu le {{ child.interviewDate }}</p>
+                        <p *ngIf="getInterviewEvaluationDisplayDate(child)" class="answer-attempt-group__meta">Évaluée le {{ getInterviewEvaluationDisplayDate(child) }}</p>
+                        <p *ngIf="getInterviewEvaluationEvaluatorLabel(child)" class="answer-attempt-group__meta">Par {{ getInterviewEvaluationEvaluatorLabel(child) }}</p>
+                        <p *ngIf="child.recruiterComment" class="answer-attempt-group__note">{{ child.recruiterComment }}</p>
+                        <div *ngIf="hasInterviewEvaluationItems(child)" class="evaluation-criteria-list">
+                          <div *ngFor="let item of child.evaluationItems; trackBy: trackInterviewEvaluationItem" class="evaluation-criterion-item">
+                            <div class="evaluation-criterion-row">
+                              <span class="evaluation-criterion-label">{{ getInterviewEvaluationItemLabel(item) }}</span>
+                              <span class="evaluation-criterion-value">{{ formatInterviewEvaluationItemValue(item) }}</span>
+                            </div>
+                            <p *ngIf="getInterviewEvaluationItemNote(item)" class="evaluation-criterion-note">{{ getInterviewEvaluationItemNote(item) }}</p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

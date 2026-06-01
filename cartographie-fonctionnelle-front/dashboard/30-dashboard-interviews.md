@@ -22,6 +22,7 @@ La page sert a planifier, filtrer, lancer et suivre les entretiens des candidats
 - [x] La page bascule entre vue `list` et vue `calendar`.
 - [x] Un CTA `Planifier un entretien` existe.
 - [x] Les cartes listent au minimum le candidat, la date, le lieu ou lien visio, le type et la campagne.
+- [x] Les cartes, le panneau détail et la vue calendrier jour affichent maintenant aussi le round explicite et le label de stage de l'entretien quand le contrat `interviews` les fournit.
 - [x] Des actions existent pour modifier, demarrer et evaluer selon le statut.
 - [x] La page recupere aussi des permissions d'entite et des participants pour certaines actions d'edition / demarrage.
 - [ ] Verifier la vue calendrier complete et ses ecarts par rapport a la vue liste.
@@ -51,6 +52,7 @@ La page sert a planifier, filtrer, lancer et suivre les entretiens des candidats
 - [x] Lieu ou lien visio
 - [x] Type d'entretien
 - [x] Campagne
+- [x] Round d'entretien et label de stage pipeline si disponibles
 - [x] Carte de reponse candidat si report ou refus
 - [x] Badge etat email envoye / non envoye
 - [x] Bouton `Modifier` hors `STARTED`
@@ -77,6 +79,12 @@ La page sert a planifier, filtrer, lancer et suivre les entretiens des candidats
 - `interviewMailSent`
 - `interviewNote`
 - `interviewEvaluationsLink`
+- `applicationProgressId`
+- `pipelineStageId`
+- `pipelineStageType`
+- `pipelineStageLabel`
+- `pipelineStageOrder`
+- `interviewRound`
 
 ### 5.2 Enrichissement candidature / campagne
 
@@ -105,6 +113,7 @@ La page sert a planifier, filtrer, lancer et suivre les entretiens des candidats
 - `ApplicationService.getApplicationsByCriteria()` -> `POST /applications/getByCriteria`
 - `CampaignService.getAllCampaignsByCriteria()` -> `POST /campaigns/getAllByCriteria`
 - `CandidateInterviewEntityService.getAllByCriteria()` -> `POST /candidateInterview/getAllByCriteria`
+- `InterviewService.getAllInterviews()` remonte maintenant aussi `applicationProgressId`, les métadonnées de stage pipeline et `interviewRound`
 
 ### 6.2 Actions et enrichissements
 
@@ -123,6 +132,7 @@ La page sert a planifier, filtrer, lancer et suivre les entretiens des candidats
 - Les retours candidat de type report ou refus, avec dates et motif si disponibles.
 - Les permissions d'entite suffisantes pour savoir qui peut modifier, planifier ou demarrer.
 - Les participants si la composition du jury doit etre visible / modifiable.
+- Un contexte d'occurrence fiable (`applicationProgressId`, `pipelineStageLabel`, `interviewRound`) pour distinguer plusieurs entretiens d'une meme candidature sans heuristique locale.
 
 ## 8. Entites Metier Impliquees
 
@@ -157,9 +167,9 @@ La page sert a planifier, filtrer, lancer et suivre les entretiens des candidats
 
 ## 11. Impact Cible Multi-Occurrences
 
-- [ ] documenter chaque entretien comme l'execution d'un round `INTERVIEW` precis, via `application_progress_id`
+- [x] documenter chaque entretien comme l'execution d'un round `INTERVIEW` precis, via `applicationProgressId`, `pipelineStageLabel` et `interviewRound`
 - [ ] retirer la dependance a `quizScorePercent` et a `interviewMailSent` comme resumés globaux de la candidature
-- [ ] supporter plusieurs entretiens pour une meme candidature sans ambiguite de round ni de label
+- [x] supporter plusieurs entretiens pour une meme candidature sans ambiguite de round ni de label dans la liste, le detail et la vue calendrier jour
 - [ ] aligner la convocation et le suivi email sur les nouvelles regles de notification de stage
 - [ ] documenter `interviews` comme conteneur de session partagee pouvant porter un ou plusieurs `candidate_interview` si des entretiens mutualises sont conserves
 - [ ] conserver `interviewEvaluationsLink` au niveau de l'entretien comme code ou lien de salon partage des evaluateurs, et non comme information candidate-specifique

@@ -113,6 +113,7 @@ public class Interviews implements Serializable, Cloneable {
 
 	// "campaignId" (column "campaign_id") is not defined by itself because used as FK in a link 
 	// "applicationId" (column "application_id") is not defined by itself because used as FK in a link 
+	// "applicationProgressId" (column "application_progress_id") is not defined by itself because used as FK in a link 
 
     //----------------------------------------------------------------------
     // ENTITY LINKS ( RELATIONSHIP )
@@ -124,6 +125,10 @@ public class Interviews implements Serializable, Cloneable {
     @ManyToOne
     @JoinColumn(name="application_id", referencedColumnName="id")
     private Applications applications   ;
+
+    @ManyToOne
+    @JoinColumn(name="application_progress_id", referencedColumnName="id")
+    private ApplicationProgress applicationProgress   ;
 
     //----------------------------------------------------------------------
     // CONSTRUCTOR(S)

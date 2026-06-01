@@ -7,12 +7,20 @@
 package tech.synelia.quizapp.dao.entity;
 
 import java.io.Serializable;
-import jakarta.persistence.*;
-
-import lombok.*;
-
-
 import java.util.Date;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.Temporal;
+import jakarta.persistence.TemporalType;
+import lombok.Data;
+import lombok.ToString;
 
 
 /**
@@ -47,6 +55,26 @@ public class Evaluations implements Serializable, Cloneable {
     @Column(name="recruiter_comment", length=65535)
     private String     recruiterComment ;
 
+    @Column(name="evaluation_status", length=20)
+    private String     evaluationStatus ;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name="submitted_at")
+    private Date       submittedAt    ;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name="validated_at")
+    private Date       validatedAt    ;
+
+    @Column(name="validated_by")
+    private Integer    validatedBy    ;
+
+    @Column(name="global_score")
+    private Double     globalScore    ;
+
+    @Column(name="global_comment", length=65535)
+    private String     globalComment  ;
+
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name="created_at")
     private Date       createdAt    ;
@@ -75,6 +103,10 @@ public class Evaluations implements Serializable, Cloneable {
     @ManyToOne
     @JoinColumn(name="candidate_interview_id", referencedColumnName="id")
     private CandidateInterview candidateInterview;
+
+    @ManyToOne
+    @JoinColumn(name="interview_participant_id", referencedColumnName="id")
+    private InterviewParticipant interviewParticipant;
 
     //----------------------------------------------------------------------
     // CONSTRUCTOR(S)

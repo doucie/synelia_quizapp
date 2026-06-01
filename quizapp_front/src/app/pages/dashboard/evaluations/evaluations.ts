@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, takeUntil, interval, forkJoin } from 'rxjs';
-import { EvaluationService, Evaluation, CandidateInterview } from '../../../core/services/evaluation.service';
+import { EvaluationService, Evaluation, EvaluationItem, CandidateInterview } from '../../../core/services/evaluation.service';
 import { EntityPermissionService } from '../../../core/services/entity-permission.service';
 import { InterviewAdminService, InterviewEvaluationEvaluator } from '../../../core/services/interview-admin.service';
 import { InterviewParticipantService, InterviewParticipant } from '../../../core/services/interview-participant.service';
@@ -13,6 +13,15 @@ import { NotificationService } from '../../../core/services/notification.service
 import { AuthService } from '../../../core/services/auth/auth.service';
 import { InterviewService } from '../../../core/services/interview.service';
 import { CampaignService } from '../../../core/services/campaign.service';
+import {
+  deriveCandidateMark as deriveEvaluationCandidateMark,
+  formatEvaluationItemValue as formatEvaluationItemDisplayValue,
+  getEvaluationItemLabel as getEvaluationItemDisplayLabel,
+  getEvaluationItemNote as getEvaluationItemDisplayNote,
+  hasDerivedCandidateMark as hasDerivedEvaluationCandidateMark,
+  isScoreCriterion as isScoreEvaluationCriterion,
+  resolveCandidateMark as resolveEvaluationCandidateMark
+} from '../../../core/utils/evaluation-score.utils';
 import { FilterCheckboxComponent } from '../../../shared/filter-checkbox/filter-checkbox';
 
 interface EvaluatorInfo extends InterviewEvaluationEvaluator {
@@ -28,6 +37,7 @@ interface EvaluationMessage {
   comment: string;
   createdAt: string;
   isCurrentUser: boolean;
+  evaluationItems: EvaluationItem[];
 }
 
 interface CandidateInfo {
@@ -70,11 +80,14 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
   // Form - Note sur 100
   newMark = signal<number>(50);
   newComment = signal<string>('');
+  availableEvaluationCriteria = signal<EvaluationItem[]>([]);
+  newEvaluationItems = signal<EvaluationItem[]>([]);
   
   // Mode édition
   editingEvaluationId = signal<number | null>(null);
   editMark = signal<number>(50);
   editComment = signal<string>('');
+  editEvaluationItems = signal<EvaluationItem[]>([]);
   
   // Modal de confirmation pour terminer l'entretien
   showFinishModal = signal(false);
@@ -447,13 +460,20 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
             }).pipe(takeUntil(this.destroy$)).subscribe({
               next: (createResponse) => {
                 if (!createResponse.hasError && createResponse.items?.[0]) {
+                  const createdCandidateInterviewId = createResponse.items[0].id;
                   const cand = this.candidate();
                   if (cand) {
-                    cand.candidateInterviewId = createResponse.items[0].id;
+                    cand.candidateInterviewId = createdCandidateInterviewId;
                     this.candidate.set({ ...cand });
                   }
+                  if (createdCandidateInterviewId) {
+                    this.loadEvaluations(createdCandidateInterviewId);
+                  } else {
+                    this.loading.set(false);
+                  }
+                } else {
+                  this.loading.set(false);
                 }
-                this.loading.set(false);
               },
               error: () => this.loading.set(false)
             });
@@ -467,12 +487,19 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
    * Charge les évaluations existantes
    */
   private loadEvaluations(candidateInterviewId: number): void {
-    this.evaluationService.getEvaluationsByCandidateInterviewId(candidateInterviewId)
+    forkJoin({
+      evaluationsResponse: this.evaluationService.getEvaluationsByCandidateInterviewId(candidateInterviewId),
+      criteria: this.evaluationService.getEvaluationCriteria(candidateInterviewId, this.currentUserId())
+    })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (response) => {
-          if (!response.hasError && response.items) {
-            const messages = response.items
+        next: ({ evaluationsResponse, criteria }) => {
+          const criteriaDrafts = this.buildEvaluationItemDrafts(criteria);
+          this.availableEvaluationCriteria.set(criteriaDrafts);
+          this.newEvaluationItems.set(criteriaDrafts);
+
+          if (!evaluationsResponse.hasError && evaluationsResponse.items) {
+            const messages = evaluationsResponse.items
               .filter((e: any) => !e.isDeleted)
               .map((e: any) => this.evaluationToMessage(e));
             
@@ -484,6 +511,10 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
             
             // Mettre à jour le statut des évaluateurs
             this.updateEvaluatorsStatus(messages);
+          } else {
+            this.evaluationMessages.set([]);
+            this.hasAlreadyEvaluated.set(false);
+            this.updateEvaluatorsStatus([]);
           }
           this.loading.set(false);
           this.scrollToBottom();
@@ -536,6 +567,7 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
   private evaluationToMessage(evaluation: Evaluation): EvaluationMessage {
     const evaluator = this.evaluators().find(e => e.id === evaluation.createdBy);
     const isCurrentUser = evaluation.createdBy === this.currentUserId();
+    const mark = this.resolveCandidateMark(evaluation.evaluationItems ?? [], evaluation.candidateMark);
     
     return {
       id: evaluation.id,
@@ -546,10 +578,11 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
       evaluatorInitials: evaluator 
         ? this.getInitials(`${evaluator.firstName} ${evaluator.lastName}`)
         : '??',
-      mark: evaluation.candidateMark || 0,
+      mark: mark ?? 0,
       comment: evaluation.recruiterComment || '',
       createdAt: evaluation.createdAt || '',
-      isCurrentUser
+      isCurrentUser,
+      evaluationItems: evaluation.evaluationItems ?? []
     };
   }
 
@@ -588,9 +621,14 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const mark = this.newMark();
+    const mark = this.resolveCandidateMark(this.newEvaluationItems(), this.newMark());
     const comment = this.newComment().trim();
     console.log('📝 Note:', mark, 'Commentaire:', comment);
+
+    if (mark === null) {
+      this.notificationService.warning('Attention', 'Veuillez renseigner au moins un score pour calculer la note globale');
+      return;
+    }
 
     if (!comment) {
       console.warn('⚠️ Pas de commentaire');
@@ -602,8 +640,10 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
 
     const evaluation: Evaluation = {
       candidateInterviewId: cand.candidateInterviewId,
+      interviewParticipantId: this.currentUserParticipantId() ?? undefined,
       candidateMark: mark,
-      recruiterComment: comment
+      recruiterComment: comment,
+      evaluationItems: this.serializeEvaluationItems(this.newEvaluationItems())
     };
     console.log('📤 Envoi évaluation:', evaluation, 'par utilisateur:', this.currentUserId());
 
@@ -623,7 +663,8 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
               mark: mark,
               comment: comment,
               createdAt: new Date().toISOString(),
-              isCurrentUser: true
+              isCurrentUser: true,
+              evaluationItems: evaluation.evaluationItems ?? []
             };
 
             this.evaluationMessages.update(msgs => [...msgs, message]);
@@ -633,6 +674,7 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
             // Reset form
             this.newMark.set(50);
             this.newComment.set('');
+            this.newEvaluationItems.set(this.buildEvaluationItemDrafts(this.availableEvaluationCriteria()));
             
             this.notificationService.success('Succès', 'Votre évaluation a été enregistrée');
             this.scrollToBottom();
@@ -658,6 +700,7 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
     this.editingEvaluationId.set(message.id);
     this.editMark.set(message.mark);
     this.editComment.set(message.comment);
+    this.editEvaluationItems.set(this.buildEvaluationItemDrafts(this.availableEvaluationCriteria(), message.evaluationItems));
   }
 
   /**
@@ -667,6 +710,7 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
     this.editingEvaluationId.set(null);
     this.editMark.set(50);
     this.editComment.set('');
+    this.editEvaluationItems.set([]);
   }
 
   /**
@@ -676,8 +720,13 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
     const evaluationId = this.editingEvaluationId();
     if (!evaluationId) return;
 
-    const mark = this.editMark();
+    const mark = this.resolveCandidateMark(this.editEvaluationItems(), this.editMark());
     const comment = this.editComment().trim();
+
+    if (mark === null) {
+      this.notificationService.warning('Attention', 'Veuillez renseigner au moins un score pour calculer la note globale');
+      return;
+    }
 
     if (!comment) {
       this.notificationService.warning('Attention', 'Le commentaire ne peut pas être vide');
@@ -690,8 +739,10 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
     const evaluation: Evaluation = {
       id: evaluationId,
       candidateInterviewId: cand?.candidateInterviewId,
+      interviewParticipantId: this.currentUserParticipantId() ?? undefined,
       candidateMark: mark,
-      recruiterComment: comment
+      recruiterComment: comment,
+      evaluationItems: this.serializeEvaluationItems(this.editEvaluationItems())
     };
 
     this.evaluationService.updateEvaluation(evaluation, this.currentUserId())
@@ -702,7 +753,13 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
             // Mettre à jour le message dans la liste
             this.evaluationMessages.update(msgs => 
               msgs.map(m => m.id === evaluationId 
-                ? { ...m, mark, comment, createdAt: new Date().toISOString() } 
+                ? {
+                    ...m,
+                    mark,
+                    comment,
+                    createdAt: new Date().toISOString(),
+                    evaluationItems: evaluation.evaluationItems ?? []
+                  }
                 : m
               )
             );
@@ -983,6 +1040,139 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
     if (score >= 60) return 'good';
     if (score >= 40) return 'average';
     return 'poor';
+  }
+
+  getCandidateMarkLabel(items: EvaluationItem[]): string {
+    return this.hasDerivedCandidateMark(items) ? 'Score derive /100' : 'Note /100';
+  }
+
+  getDisplayedNewMark(): number | null {
+    return this.resolveCandidateMark(this.newEvaluationItems(), this.hasDerivedCandidateMark(this.newEvaluationItems()) ? null : this.newMark());
+  }
+
+  getDisplayedEditMark(): number | null {
+    return this.resolveCandidateMark(this.editEvaluationItems(), this.hasDerivedCandidateMark(this.editEvaluationItems()) ? null : this.editMark());
+  }
+
+  isCandidateMarkDerived(items: EvaluationItem[]): boolean {
+    return this.hasDerivedCandidateMark(items);
+  }
+
+  isCandidateMarkPending(items: EvaluationItem[]): boolean {
+    return this.hasDerivedCandidateMark(items) && this.deriveCandidateMark(items) === null;
+  }
+
+  isScoreCriterion(item: EvaluationItem): boolean {
+    return isScoreEvaluationCriterion(item);
+  }
+
+  trackEvaluationItem(index: number, item: EvaluationItem): number | string {
+    return item.id ?? item.pipelineStageEvaluationCriterionId ?? index;
+  }
+
+  getEvaluationItemLabel(item: EvaluationItem): string {
+    return getEvaluationItemDisplayLabel(item);
+  }
+
+  formatEvaluationItemValue(item: EvaluationItem): string {
+    return formatEvaluationItemDisplayValue(item);
+  }
+
+  getEvaluationItemNote(item: EvaluationItem): string | null {
+    return getEvaluationItemDisplayNote(item);
+  }
+
+  updateNewEvaluationItemScore(index: number, rawValue: string): void {
+    this.newEvaluationItems.update(items => this.patchEvaluationItems(items, index, {
+      scoreValue: this.parseScoreValue(rawValue)
+    }));
+  }
+
+  updateNewEvaluationItemText(index: number, rawValue: string): void {
+    this.newEvaluationItems.update(items => this.patchEvaluationItems(items, index, {
+      textValue: rawValue
+    }));
+  }
+
+  updateEditEvaluationItemScore(index: number, rawValue: string): void {
+    this.editEvaluationItems.update(items => this.patchEvaluationItems(items, index, {
+      scoreValue: this.parseScoreValue(rawValue)
+    }));
+  }
+
+  updateEditEvaluationItemText(index: number, rawValue: string): void {
+    this.editEvaluationItems.update(items => this.patchEvaluationItems(items, index, {
+      textValue: rawValue
+    }));
+  }
+
+  private buildEvaluationItemDrafts(criteria: EvaluationItem[], existingItems: EvaluationItem[] = []): EvaluationItem[] {
+    const sourceItems = criteria.length > 0 ? criteria : existingItems;
+    const existingByCriterionId = new Map<number, EvaluationItem>();
+    existingItems.forEach(item => {
+      if (item.pipelineStageEvaluationCriterionId !== undefined && item.pipelineStageEvaluationCriterionId !== null) {
+        existingByCriterionId.set(item.pipelineStageEvaluationCriterionId, item);
+      }
+    });
+
+    return sourceItems.map(item => {
+      const existing = item.pipelineStageEvaluationCriterionId !== undefined && item.pipelineStageEvaluationCriterionId !== null
+        ? existingByCriterionId.get(item.pipelineStageEvaluationCriterionId)
+        : undefined;
+      return {
+        ...item,
+        id: existing?.id ?? item.id,
+        criterionOrder: existing?.criterionOrder ?? item.criterionOrder,
+        label: existing?.label ?? item.label,
+        criterionType: existing?.criterionType ?? item.criterionType,
+        weightSnapshot: existing?.weightSnapshot ?? item.weightSnapshot,
+        maxScoreSnapshot: existing?.maxScoreSnapshot ?? item.maxScoreSnapshot,
+        scoreValue: existing?.scoreValue ?? item.scoreValue,
+        textValue: existing?.textValue ?? item.textValue ?? ''
+      };
+    });
+  }
+
+  private serializeEvaluationItems(items: EvaluationItem[]): EvaluationItem[] {
+    const serializedItems: EvaluationItem[] = [];
+    items.forEach(item => {
+      const trimmedText = item.textValue?.trim() || '';
+      const hasScore = item.scoreValue !== undefined && item.scoreValue !== null;
+      const hasText = trimmedText.length > 0;
+      if (!item.pipelineStageEvaluationCriterionId || (!hasScore && !hasText)) {
+        return;
+      }
+      serializedItems.push({
+        ...item,
+        textValue: hasText ? trimmedText : undefined
+      });
+    });
+    return serializedItems;
+  }
+
+  private hasDerivedCandidateMark(items: EvaluationItem[]): boolean {
+    return hasDerivedEvaluationCandidateMark(items);
+  }
+
+  private resolveCandidateMark(items: EvaluationItem[], fallbackMark?: number | null): number | null {
+    return resolveEvaluationCandidateMark(items, fallbackMark);
+  }
+
+  private deriveCandidateMark(items: EvaluationItem[]): number | null {
+    return deriveEvaluationCandidateMark(items);
+  }
+
+  private patchEvaluationItems(items: EvaluationItem[], index: number, patch: Partial<EvaluationItem>): EvaluationItem[] {
+    return items.map((item, itemIndex) => itemIndex === index ? { ...item, ...patch } : item);
+  }
+
+  private parseScoreValue(rawValue: string): number | undefined {
+    const trimmed = rawValue.trim();
+    if (!trimmed) {
+      return undefined;
+    }
+    const parsedValue = Number(trimmed);
+    return Number.isFinite(parsedValue) ? parsedValue : undefined;
   }
 
   /**

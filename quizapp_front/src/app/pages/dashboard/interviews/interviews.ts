@@ -982,6 +982,22 @@ export class InterviewsComponent implements OnInit, OnDestroy {
     return sent ? 'Email envoyé' : 'Email non envoyé';
   }
 
+  hasInterviewOccurrenceContext(interview: InterviewWithDetails | null | undefined): boolean {
+    return Boolean(interview?.interviewRound || interview?.pipelineStageLabel);
+  }
+
+  getInterviewRoundLabel(interview: InterviewWithDetails | null | undefined): string {
+    return interview?.interviewRound ? `Round ${interview.interviewRound}` : '';
+  }
+
+  getInterviewStageLabel(interview: InterviewWithDetails | null | undefined): string {
+    return (interview?.pipelineStageLabel || '').trim();
+  }
+
+  getInterviewProgressLabel(interview: InterviewWithDetails | null | undefined): string {
+    return interview?.applicationProgressId != null ? `Occurrence #${interview.applicationProgressId}` : '';
+  }
+
   /**
    * Obtient le nom du candidat d'une application
    */

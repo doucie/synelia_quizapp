@@ -78,7 +78,7 @@
                 <div class="empty-state">
                   <i class="bi bi-inbox"></i>
                   <p>Aucun candidat éligible pour cette campagne</p>
-                  <small>Seuls les candidats "PRE_SCREEN_ACCEPTED" sont affichés</small>
+                  <small>Les candidatures dont l'étape runtime courante est Entretien sont affichées, avec un fallback legacy limité aux dossiers encore sans miroir pipeline.</small>
                 </div>
               } @else {
                 <div class="candidates-grid">
@@ -97,6 +97,20 @@
                       <div class="candidate-info">
                         <h4>{{ getCandidateName(app) }}</h4>
                         <p>{{ app.candidateEmail }}</p>
+                        @if (hasInterviewEligibilitySummary(app)) {
+                          <div class="candidate-runtime-summary">
+                            @if (getInterviewEligibilityStageLabel(app)) {
+                              <span class="candidate-runtime-pill candidate-runtime-pill--stage">
+                                {{ getInterviewEligibilityStageLabel(app) }}
+                              </span>
+                            }
+                            @if (getInterviewEligibilityProgressLabel(app)) {
+                              <span class="candidate-runtime-pill candidate-runtime-pill--status" [ngClass]="getInterviewEligibilityProgressClass(app)">
+                                {{ getInterviewEligibilityProgressLabel(app) }}
+                              </span>
+                            }
+                          </div>
+                        }
                         @if (app.quizScorePercent !== null && app.quizScorePercent !== undefined) {
                           <span class="score-badge">
                             Score: {{ app.quizScorePercent }}%

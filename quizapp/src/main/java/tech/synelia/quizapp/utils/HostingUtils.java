@@ -27,6 +27,7 @@ import org.thymeleaf.context.Context;
 
 import tech.synelia.quizapp.business.EmailOperationalAlertService;
 import tech.synelia.quizapp.business.MailLogService;
+import tech.synelia.quizapp.business.MailLogService.MailLogContext;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.dao.entity.SmtpConfig;
 import tech.synelia.quizapp.dao.repository.SmtpConfigRepository;
@@ -60,6 +61,13 @@ public class HostingUtils {
 	public <T> Response<T> sendEmail(Map<String, String> from, List<Map<String, String>> toRecipients, String subject,
 			String body, List<String> attachmentsFilesAbsolutePaths, Context context, String templateName,
 			Locale locale) {
+		return sendEmail(from, toRecipients, subject, body, attachmentsFilesAbsolutePaths, context, templateName, locale,
+				null);
+	}
+
+	public <T> Response<T> sendEmail(Map<String, String> from, List<Map<String, String>> toRecipients, String subject,
+			String body, List<String> attachmentsFilesAbsolutePaths, Context context, String templateName,
+			Locale locale, MailLogContext mailLogContext) {
 		Map<String, String> safeFrom = from != null ? from : new HashMap<>();
 		List<Map<String, String>> safeToRecipients = toRecipients != null ? toRecipients : List.of();
 
@@ -91,7 +99,7 @@ public class HostingUtils {
 			slf4jLogger.error("No active SMTP config available in database");
 			emailOperationalAlertService.notifyMissingSmtpConfiguration();
 			mailLogService.logBulkEmailResult(safeFrom, safeToRecipients, subject, resolvedBody, false,
-					"Aucune configuration SMTP active n'est disponible pour cet envoi.");
+					"Aucune configuration SMTP active n'est disponible pour cet envoi.", mailLogContext);
 			response.setHasError(Boolean.TRUE);
 			response.setStatus(functionalError.DISALLOWED_OPERATION(
 					"Aucune configuration SMTP active n'est disponible pour cet envoi.", locale));
@@ -171,20 +179,20 @@ public class HostingUtils {
 				javaMailSender.send(message);
 				slf4jLogger.info("Email envoyé avec succès à: {}", 
 					safeToRecipients.stream().map(r -> r.get("email")).toList());
-				mailLogService.logBulkEmailResult(safeFrom, safeToRecipients, subject, resolvedBody, true, null);
+				mailLogService.logBulkEmailResult(safeFrom, safeToRecipients, subject, resolvedBody, true, null, mailLogContext);
 				response.setHasError(Boolean.FALSE);
 				/// gerer les cas d'exeption de non envoi de mail
 			} catch (MessagingException | UnsupportedEncodingException | RuntimeException e) {
 				slf4jLogger.error("Erreur lors de l'envoi de l'email", e);
 				emailOperationalAlertService.notifyDeliveryFailure();
-				mailLogService.logBulkEmailResult(safeFrom, safeToRecipients, subject, resolvedBody, false, e.getMessage());
+				mailLogService.logBulkEmailResult(safeFrom, safeToRecipients, subject, resolvedBody, false, e.getMessage(), mailLogContext);
 				exceptionUtils.EXCEPTION(response, locale, e);
 			}
 		} else {
 			slf4jLogger.error("SMTP Server est null - impossible d'envoyer l'email");
 			emailOperationalAlertService.notifyMissingSmtpConfiguration();
 			mailLogService.logBulkEmailResult(safeFrom, safeToRecipients, subject, resolvedBody, false,
-					"SMTP Server est null - impossible d'envoyer l'email");
+					"SMTP Server est null - impossible d'envoyer l'email", mailLogContext);
 			response.setHasError(Boolean.TRUE);
 			response.setStatus(functionalError.DISALLOWED_OPERATION(
 					"Aucune configuration SMTP active n'est disponible pour cet envoi.", locale));

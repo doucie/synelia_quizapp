@@ -205,6 +205,21 @@
                         <div class="message-body">
                           {{ message.comment }}
                         </div>
+                        @if (message.evaluationItems.length > 0) {
+                          <div class="message-criteria">
+                            @for (item of message.evaluationItems; track trackEvaluationItem($index, item)) {
+                              <div class="criterion-item">
+                                <div class="criterion-main-row">
+                                  <span class="criterion-label">{{ getEvaluationItemLabel(item) }}</span>
+                                  <span class="criterion-value">{{ formatEvaluationItemValue(item) }}</span>
+                                </div>
+                                @if (getEvaluationItemNote(item); as criterionNote) {
+                                  <div class="criterion-note">{{ criterionNote }}</div>
+                                }
+                              </div>
+                            }
+                          </div>
+                        }
                         <div class="message-footer">
                           <span class="message-time">{{ formatDate(message.createdAt) }}</span>
                           <!-- Actions pour l'utilisateur courant -->
@@ -227,14 +242,15 @@
                           </div>
                           <div class="edit-row">
                             <div class="edit-score">
-                              <label>Note /100</label>
+                              <label>{{ getCandidateMarkLabel(editEvaluationItems()) }}</label>
                               <input 
                                 type="number" 
                                 min="0" 
                                 max="100"
-                                [value]="editMark()"
+                                [value]="getDisplayedEditMark() ?? ''"
                                 (input)="editMark.set(+$any($event.target).value)"
                                 class="score-field"
+                                [readOnly]="isCandidateMarkDerived(editEvaluationItems())"
                               />
                             </div>
                             <div class="edit-comment">
@@ -247,11 +263,52 @@
                               ></textarea>
                             </div>
                           </div>
+                          @if (editEvaluationItems().length > 0) {
+                            <div class="criterion-editor-section">
+                              <div class="criterion-editor-heading">Détail par critère</div>
+                              <div class="criterion-editor-list">
+                                @for (item of editEvaluationItems(); track trackEvaluationItem($index, item)) {
+                                  <div class="criterion-editor-card">
+                                    <div class="criterion-editor-title-row">
+                                      <span class="criterion-editor-title">{{ getEvaluationItemLabel(item) }}</span>
+                                      @if (item.maxScoreSnapshot !== undefined && item.maxScoreSnapshot !== null) {
+                                        <span class="criterion-editor-meta">Max {{ item.maxScoreSnapshot }}</span>
+                                      }
+                                    </div>
+                                    <div class="criterion-editor-fields" [class.text-only]="!isScoreCriterion(item)">
+                                      @if (isScoreCriterion(item)) {
+                                        <div class="criterion-score-input">
+                                          <label>Score</label>
+                                          <input
+                                            type="number"
+                                            min="0"
+                                            [max]="item.maxScoreSnapshot ?? 100"
+                                            [value]="item.scoreValue ?? ''"
+                                            (input)="updateEditEvaluationItemScore($index, $any($event.target).value)"
+                                            class="score-field"
+                                          />
+                                        </div>
+                                      }
+                                      <div class="criterion-text-input">
+                                        <label>{{ isScoreCriterion(item) ? 'Observation' : 'Valeur' }}</label>
+                                        <textarea
+                                          [value]="item.textValue ?? ''"
+                                          (input)="updateEditEvaluationItemText($index, $any($event.target).value)"
+                                          class="comment-field"
+                                          rows="2"
+                                        ></textarea>
+                                      </div>
+                                    </div>
+                                  </div>
+                                }
+                              </div>
+                            </div>
+                          }
                           <div class="edit-actions">
                             <button class="btn-cancel" (click)="cancelEditEvaluation()">
                               <i class="bi bi-x"></i> Annuler
                             </button>
-                            <button class="btn-save" (click)="saveEditEvaluation()" [disabled]="submitting() || !editComment().trim()">
+                            <button class="btn-save" (click)="saveEditEvaluation()" [disabled]="submitting() || !editComment().trim() || isCandidateMarkPending(editEvaluationItems())">
                               @if (submitting()) {
                                 <span class="spinner-small"></span>
                               } @else {
@@ -279,15 +336,16 @@
               <div class="form-row">
                 <!-- Note sur 100 -->
                 <div class="score-input">
-                  <label>Note /100</label>
+                  <label>{{ getCandidateMarkLabel(newEvaluationItems()) }}</label>
                   <input 
                     type="number" 
                     min="0" 
                     max="100"
-                    [value]="newMark()"
+                    [value]="getDisplayedNewMark() ?? ''"
                     (input)="newMark.set(+$any($event.target).value)"
                     placeholder="50"
                     class="score-field"
+                    [readOnly]="isCandidateMarkDerived(newEvaluationItems())"
                   />
                 </div>
 
@@ -306,7 +364,7 @@
                 <!-- Bouton envoyer -->
                 <button 
                   class="btn-send" 
-                  [disabled]="submitting() || !newComment().trim()"
+                  [disabled]="submitting() || !newComment().trim() || isCandidateMarkPending(newEvaluationItems())"
                   (click)="submitEvaluation()"
                 >
                   @if (submitting()) {
@@ -316,6 +374,47 @@
                   }
                 </button>
               </div>
+              @if (newEvaluationItems().length > 0) {
+                <div class="criterion-editor-section">
+                  <div class="criterion-editor-heading">Détail par critère</div>
+                  <div class="criterion-editor-list">
+                    @for (item of newEvaluationItems(); track trackEvaluationItem($index, item)) {
+                      <div class="criterion-editor-card">
+                        <div class="criterion-editor-title-row">
+                          <span class="criterion-editor-title">{{ getEvaluationItemLabel(item) }}</span>
+                          @if (item.maxScoreSnapshot !== undefined && item.maxScoreSnapshot !== null) {
+                            <span class="criterion-editor-meta">Max {{ item.maxScoreSnapshot }}</span>
+                          }
+                        </div>
+                        <div class="criterion-editor-fields" [class.text-only]="!isScoreCriterion(item)">
+                          @if (isScoreCriterion(item)) {
+                            <div class="criterion-score-input">
+                              <label>Score</label>
+                              <input
+                                type="number"
+                                min="0"
+                                [max]="item.maxScoreSnapshot ?? 100"
+                                [value]="item.scoreValue ?? ''"
+                                (input)="updateNewEvaluationItemScore($index, $any($event.target).value)"
+                                class="score-field"
+                              />
+                            </div>
+                          }
+                          <div class="criterion-text-input">
+                            <label>{{ isScoreCriterion(item) ? 'Observation' : 'Valeur' }}</label>
+                            <textarea
+                              [value]="item.textValue ?? ''"
+                              (input)="updateNewEvaluationItemText($index, $any($event.target).value)"
+                              class="comment-field"
+                              rows="2"
+                            ></textarea>
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
             </div>
           } @else if (hasAlreadyEvaluated()) {
             <div class="already-evaluated">

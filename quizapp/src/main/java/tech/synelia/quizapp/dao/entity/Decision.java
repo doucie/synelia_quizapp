@@ -70,6 +70,12 @@ public class Decision implements Serializable, Cloneable {
     @Column(name="search_string", columnDefinition="TEXT")
     private String     searchString ;
 
+    @Column(name="justification", columnDefinition="TEXT")
+    private String     justification ;
+
+    @Column(name="decision_mode", nullable=false, length=20)
+    private String     decisionMode ;
+
     //----------------------------------------------------------------------
     // ENTITY LINKS ( RELATIONSHIP )
     //----------------------------------------------------------------------
@@ -84,6 +90,14 @@ public class Decision implements Serializable, Cloneable {
     @ManyToOne
     @JoinColumn(name="pipeline_stage_id", referencedColumnName="id")
     private PipelineStage pipelineStage ;
+
+    @ManyToOne
+    @JoinColumn(name="application_progress_id", referencedColumnName="id")
+    private ApplicationProgress applicationProgress ;
+
+    @ManyToOne
+    @JoinColumn(name="cancels_decision_id", referencedColumnName="id")
+    private Decision cancelsDecision ;
 
     //----------------------------------------------------------------------
     // CONSTRUCTOR(S)

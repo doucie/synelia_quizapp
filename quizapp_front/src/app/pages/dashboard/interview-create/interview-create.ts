@@ -119,11 +119,12 @@ export class InterviewCreateComponent implements OnInit, OnDestroy {
       return [];
     }
     
-    // Filtrer les applications ayant un de ces sourceTokenIds et le bon statut
+    // Prefer the runtime current-stage mirror when available; keep a legacy fallback
+    // only for applications that still do not expose a current pipeline snapshot.
     const eligible = this.applications().filter(app => 
       app.sourceTokenId && 
       sourceTokenIds.includes(app.sourceTokenId) &&
-      app.applicationStatus === APPLICATION_STATUS.PRE_SCREEN_ACCEPTED
+      this.isInterviewEligibleApplication(app)
     );
     
     return eligible;
@@ -394,6 +395,129 @@ L'équipe de recrutement
     }
 
     this.prefilledCandidateApplied = true;
+  }
+
+  hasInterviewEligibilitySummary(app: Application): boolean {
+    return Boolean(this.getInterviewEligibilityStageLabel(app) || this.getInterviewEligibilityProgressLabel(app));
+  }
+
+  getInterviewEligibilityStageLabel(app: Application): string {
+    if (app.currentPipelineStageLabel?.trim()) {
+      return app.currentPipelineStageLabel.trim();
+    }
+
+    if (app.currentPipelineStageType) {
+      return this.getPipelineStageTypeLabel(app.currentPipelineStageType);
+    }
+
+    if (app.applicationStatus === APPLICATION_STATUS.PRE_SCREEN_ACCEPTED) {
+      return 'Pré-sélection acceptée';
+    }
+
+    return '';
+  }
+
+  getInterviewEligibilityProgressLabel(app: Application): string {
+    if (this.hasCurrentPipelineStageSummary(app)) {
+      return this.getPipelineProgressStatusLabel(app.currentPipelineProgressStatus);
+    }
+
+    if (app.applicationStatus === APPLICATION_STATUS.PRE_SCREEN_ACCEPTED) {
+      return 'Fallback legacy';
+    }
+
+    return '';
+  }
+
+  getInterviewEligibilityProgressClass(app: Application): string {
+    if (this.hasCurrentPipelineStageSummary(app)) {
+      return this.getPipelineProgressStatusClass(app.currentPipelineProgressStatus);
+    }
+
+    if (app.applicationStatus === APPLICATION_STATUS.PRE_SCREEN_ACCEPTED) {
+      return 'pipeline-progress-legacy';
+    }
+
+    return '';
+  }
+
+  private isInterviewEligibleApplication(app: Application): boolean {
+    const currentStageType = (app.currentPipelineStageType || '').toUpperCase();
+    const currentProgressStatus = (app.currentPipelineProgressStatus || '').toUpperCase();
+    const hasRuntimeStageSnapshot = this.hasCurrentPipelineStageSummary(app);
+
+    if (hasRuntimeStageSnapshot) {
+      const isCurrentInterviewStage = currentStageType === 'INTERVIEW';
+      const isSchedulableStatus = currentProgressStatus === 'IN_PROGRESS' || currentProgressStatus === 'PENDING';
+      const hasCurrentInterview = Boolean(app.interviewDate);
+
+      return isCurrentInterviewStage && isSchedulableStatus && !hasCurrentInterview;
+    }
+
+    return app.applicationStatus === APPLICATION_STATUS.PRE_SCREEN_ACCEPTED;
+  }
+
+  private hasCurrentPipelineStageSummary(app: Application): boolean {
+    return Boolean(
+      app.currentPipelineStageType?.trim()
+      || app.currentPipelineStageLabel?.trim()
+      || app.currentPipelineProgressStatus?.trim()
+    );
+  }
+
+  private getPipelineStageTypeLabel(stageType?: string | null): string {
+    switch ((stageType || '').trim().toUpperCase()) {
+      case 'CANDIDATURE':
+        return 'Candidature';
+      case 'QUIZ':
+        return 'Quiz';
+      case 'PRESELECTION':
+        return 'Pré-sélection';
+      case 'INTERVIEW':
+        return 'Entretien';
+      case 'EVALUATION':
+        return 'Évaluation';
+      case 'DECISION':
+        return 'Décision';
+      case 'TECHNICAL_TEST':
+        return 'Quiz';
+      default:
+        return stageType || '';
+    }
+  }
+
+  private getPipelineProgressStatusLabel(status?: string | null): string {
+    switch ((status || '').trim().toUpperCase()) {
+      case 'IN_PROGRESS':
+        return 'En cours';
+      case 'PENDING':
+        return 'En attente';
+      case 'PASSED':
+        return 'Réussie';
+      case 'FAILED':
+        return 'Échouée';
+      case 'SKIPPED':
+        return 'Ignorée';
+      default:
+        return status || '';
+    }
+  }
+
+  private getPipelineProgressStatusClass(status?: string | null): string {
+    switch ((status || '').trim().toUpperCase()) {
+      case 'IN_PROGRESS':
+        return 'pipeline-progress-in-progress';
+      case 'PENDING':
+        return 'pipeline-progress-pending';
+      case 'PASSED':
+        return 'pipeline-progress-passed';
+      case 'FAILED':
+        return 'pipeline-progress-failed';
+      case 'SKIPPED':
+        return 'pipeline-progress-skipped';
+      default:
+        return '';
+    }
   }
 
   private canPlanifyCampaign(campaignId: number, accessMap = this.campaignAccessMap()): boolean {

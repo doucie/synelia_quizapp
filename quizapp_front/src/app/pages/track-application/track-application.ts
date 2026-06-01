@@ -37,14 +37,40 @@ interface TrackingApplication {
   trackingCode?: string | null;
   applicationStatus: string;
   quizStatus: string;
+  applicationAbandoned?: boolean;
+  publicActionsLocked?: boolean;
+  publicLockReason?: string | null;
+  canWithdraw?: boolean;
   createdAt: string;
   emailVerified: boolean;
   campaignTitle: string;
 }
 
+interface TrackingQuiz {
+  applicationId: number;
+  applicationQuizAttemptId?: number | null;
+  applicationProgressId?: number | null;
+  pipelineStageId?: number | null;
+  pipelineStageType?: string | null;
+  pipelineStageLabel?: string | null;
+  pipelineStageOrder?: number | null;
+  quizToken: string | null;
+  quizStatus: string | null;
+  canResume: boolean;
+  startedAt: string | null;
+  completedAt: string | null;
+  lastActivityAt: string | null;
+}
+
 interface TrackingInterview {
   id: number;
+  candidateInterviewId?: number | null;
   interviewId: number;
+  applicationProgressId?: number | null;
+  pipelineStageId?: number | null;
+  pipelineStageType?: string | null;
+  pipelineStageLabel?: string | null;
+  pipelineStageOrder?: number | null;
   interviewStart: string | null;
   interviewDuration: number | null;
   interviewType: string;
@@ -90,6 +116,7 @@ interface TrackingResponse {
   hasError: boolean;
   message?: string;
   application?: TrackingApplication;
+  quiz?: TrackingQuiz | null;
   stages?: any[];
   progress?: any[];
   interviews?: TrackingInterview[];
@@ -111,6 +138,7 @@ export class TrackApplicationComponent implements OnInit {
   loading = signal(false);
   errorMessage = signal<string | null>(null);
   application = signal<TrackingApplication | null>(null);
+  quiz = signal<TrackingQuiz | null>(null);
   stages = signal<TrackingStage[]>([]);
   interviews = signal<TrackingInterview[]>([]);
   asks = signal<TrackingCandidateAsk[]>([]);
@@ -118,8 +146,11 @@ export class TrackApplicationComponent implements OnInit {
   interviewErrorMessage = signal<string | null>(null);
   askSuccessMessage = signal<string | null>(null);
   askErrorMessage = signal<string | null>(null);
+  withdrawSuccessMessage = signal<string | null>(null);
+  withdrawErrorMessage = signal<string | null>(null);
   submittingInterviewId = signal<number | null>(null);
   submittingAsk = signal(false);
+  submittingWithdraw = signal(false);
 
   selectedInterviewAction: Record<number, InterviewResponseAction | null> = {};
   interviewDrafts: Record<number, InterviewDraft> = {};
@@ -148,6 +179,7 @@ export class TrackApplicationComponent implements OnInit {
     this.loading.set(true);
     this.errorMessage.set(null);
     this.application.set(null);
+    this.quiz.set(null);
     this.stages.set([]);
     this.interviews.set([]);
     this.asks.set([]);
@@ -155,6 +187,8 @@ export class TrackApplicationComponent implements OnInit {
     this.interviewErrorMessage.set(null);
     this.askSuccessMessage.set(null);
     this.askErrorMessage.set(null);
+    this.withdrawSuccessMessage.set(null);
+    this.withdrawErrorMessage.set(null);
     this.selectedInterviewAction = {};
     this.interviewDrafts = {};
     this.askDraft = this.createEmptyAskDraft();
@@ -170,6 +204,7 @@ export class TrackApplicationComponent implements OnInit {
           return;
         }
         this.application.set(res.application || null);
+        this.quiz.set(res.quiz || null);
         // Fusionner stages + progress
         const stageList: TrackingStage[] = (res.stages || []).map((s: any) => {
           const progress = (res.progress || []).find((p: any) => p.pipelineStageId === s.id);
@@ -241,6 +276,47 @@ export class TrackApplicationComponent implements OnInit {
     return classes[status] || 'status-new';
   }
 
+  getQuizStatusLabel(status: string | null): string {
+    const labels: Record<string, string> = {
+      PENDING: 'Prêt à démarrer',
+      STARTED: 'En cours',
+      COMPLETED: 'Terminé',
+      MANUAL_CORRECTION_PENDING: 'En correction manuelle',
+      AUTO_PASSED: 'Réussi',
+      AUTO_FAILED: 'Échoué'
+    };
+
+    return status ? (labels[status] || status) : 'Indisponible';
+  }
+
+  getQuizResumeUrl(quiz: TrackingQuiz): string | null {
+    if (!quiz.quizToken) {
+      return null;
+    }
+
+    return `/quiz/${quiz.applicationId}/${quiz.quizToken}`;
+  }
+
+  getQuizOccurrenceLabel(quiz: TrackingQuiz): string | null {
+    if (quiz.pipelineStageLabel?.trim()) {
+      return quiz.pipelineStageLabel.trim();
+    }
+
+    if (quiz.pipelineStageType?.trim()) {
+      return quiz.pipelineStageType.trim().replace(/_/g, ' ');
+    }
+
+    return null;
+  }
+
+  getQuizActionLabel(quiz: TrackingQuiz): string {
+    return quiz.quizStatus === 'STARTED' ? 'Reprendre le quiz' : 'Commencer le quiz';
+  }
+
+  canWithdrawApplication(app: TrackingApplication): boolean {
+    return Boolean(app.canWithdraw) && !this.submittingWithdraw();
+  }
+
   getDisplayedTrackingCode(app: TrackingApplication): string {
     return (app.trackingCode || this.trackingCode || '').trim().toUpperCase();
   }
@@ -261,6 +337,10 @@ export class TrackApplicationComponent implements OnInit {
 
   submitCandidateAsk() {
     if (!this.application()) {
+      return;
+    }
+    if (this.arePublicActionsLocked()) {
+      this.askErrorMessage.set(this.getPublicLockReason());
       return;
     }
 
@@ -360,6 +440,10 @@ export class TrackApplicationComponent implements OnInit {
     if (!action) {
       return;
     }
+    if (this.arePublicActionsLocked()) {
+      this.interviewErrorMessage.set(this.getPublicLockReason());
+      return;
+    }
 
     const draft = this.interviewDrafts[interview.id] || { declineReason: '', alternativeDateRequested: '' };
     if (action === 'DECLINE' && !draft.declineReason.trim()) {
@@ -378,7 +462,7 @@ export class TrackApplicationComponent implements OnInit {
     this.http.post<TrackingResponse>(`${environment.apiUrl}/applications/respond-interview`, {
       trackingCode: this.trackingCode.trim(),
       email: this.email.trim(),
-      candidateInterviewId: String(interview.id),
+      candidateInterviewId: String(this.getCandidateInterviewId(interview)),
       action,
       declineReason: draft.declineReason.trim(),
       alternativeDateRequested: draft.alternativeDateRequested
@@ -403,6 +487,51 @@ export class TrackApplicationComponent implements OnInit {
 
   isSubmittingInterview(interviewId: number): boolean {
     return this.submittingInterviewId() === interviewId;
+  }
+
+  submitWithdrawal() {
+    const app = this.application();
+    if (!app || !app.canWithdraw) {
+      return;
+    }
+    if (!window.confirm('Retirer définitivement votre candidature ? Cette action bloquera les actions publiques sur ce dossier.')) {
+      return;
+    }
+
+    this.submittingWithdraw.set(true);
+    this.withdrawSuccessMessage.set(null);
+    this.withdrawErrorMessage.set(null);
+
+    this.http.post<TrackingResponse>(`${environment.apiUrl}/applications/withdraw`, {
+      trackingCode: this.trackingCode.trim(),
+      email: this.email.trim()
+    }).subscribe({
+      next: (res) => {
+        this.submittingWithdraw.set(false);
+        if (res.hasError) {
+          this.withdrawErrorMessage.set(res.message || 'Impossible de retirer votre candidature pour le moment.');
+          return;
+        }
+
+        this.withdrawSuccessMessage.set(res.message || 'Votre candidature a bien été retirée.');
+        this.application.set(res.application || null);
+        this.quiz.set(res.quiz || null);
+        this.syncInterviewState(res.interviews || []);
+        this.syncCandidateAskState(res.asks || []);
+      },
+      error: () => {
+        this.submittingWithdraw.set(false);
+        this.withdrawErrorMessage.set('Impossible de retirer votre candidature pour le moment.');
+      }
+    });
+  }
+
+  arePublicActionsLocked(): boolean {
+    return Boolean(this.application()?.publicActionsLocked);
+  }
+
+  getPublicLockReason(): string {
+    return this.application()?.publicLockReason || 'Cette candidature a été retirée. Les actions publiques ne sont plus disponibles.';
   }
 
   getInterviewTypeLabel(type: string): string {
@@ -463,13 +592,45 @@ export class TrackApplicationComponent implements OnInit {
     return interview.meetLink || 'Lien communiqué ultérieurement';
   }
 
+  getCandidateInterviewId(interview: TrackingInterview): number {
+    return interview.candidateInterviewId ?? interview.id;
+  }
+
+	getInterviewOccurrenceLabel(interview: TrackingInterview): string | null {
+		if (interview.pipelineStageLabel?.trim()) {
+			return interview.pipelineStageLabel.trim();
+		}
+
+		if (interview.pipelineStageType?.trim()) {
+			return interview.pipelineStageType.trim().replace(/_/g, ' ');
+		}
+
+		return null;
+	}
+
   private syncInterviewState(interviews: TrackingInterview[]) {
-    this.interviews.set(interviews);
-    this.selectedInterviewAction = interviews.reduce<Record<number, InterviewResponseAction | null>>((state, interview) => {
+    const sortedInterviews = [...interviews].sort((left, right) => {
+      const leftOrder = typeof left.pipelineStageOrder === 'number' ? left.pipelineStageOrder : Number.MAX_SAFE_INTEGER;
+      const rightOrder = typeof right.pipelineStageOrder === 'number' ? right.pipelineStageOrder : Number.MAX_SAFE_INTEGER;
+      if (leftOrder !== rightOrder) {
+        return leftOrder - rightOrder;
+      }
+
+      const leftStart = left.interviewStart ? new Date(left.interviewStart).getTime() : Number.MAX_SAFE_INTEGER;
+      const rightStart = right.interviewStart ? new Date(right.interviewStart).getTime() : Number.MAX_SAFE_INTEGER;
+      if (leftStart !== rightStart) {
+        return leftStart - rightStart;
+      }
+
+      return left.id - right.id;
+    });
+
+    this.interviews.set(sortedInterviews);
+    this.selectedInterviewAction = sortedInterviews.reduce<Record<number, InterviewResponseAction | null>>((state, interview) => {
       state[interview.id] = this.selectedInterviewAction[interview.id] || null;
       return state;
     }, {});
-    this.interviewDrafts = interviews.reduce<Record<number, InterviewDraft>>((state, interview) => {
+    this.interviewDrafts = sortedInterviews.reduce<Record<number, InterviewDraft>>((state, interview) => {
       state[interview.id] = this.interviewDrafts[interview.id] || {
         declineReason: interview.declineReason || '',
         alternativeDateRequested: interview.alternativeDateRequested

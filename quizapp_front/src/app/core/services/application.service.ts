@@ -40,6 +40,24 @@ export interface PagedApplicationResponse {
   number: number;
 }
 
+export interface ApplicationQuizAttemptSummary {
+  id?: number;
+  quizToken?: string;
+  quizStatus?: string;
+  manualCorrectionStatus?: ManualCorrectionStatus | string;
+  score?: number;
+  scorePercent?: number;
+  totalQuestions?: number;
+  timeElapsed?: number;
+  timedSnapshot?: boolean;
+  totalTimeAllowedSnapshot?: number;
+  lastActivityAt?: string;
+  startedAt?: string;
+  completedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 /**
  * Interface pour les données d'une application
  * Basée sur ApplicationsDto du backend
@@ -65,6 +83,16 @@ export interface Application {
   quizManualCorrectionStatus?: ManualCorrectionStatus;
   interviewDate?: string; // Date de l'entretien
   interviewStatus?: string; // Status de l'entretien
+  currentInterviewEvaluationScore?: number;
+  currentInterviewEvaluationNumber?: number;
+  currentInterviewEvaluationPercentage?: number;
+  currentPreselectionDecisionType?: string;
+  currentPreselectionDecisionDate?: string;
+  currentFinalDecisionType?: string;
+  currentFinalDecisionDate?: string;
+  currentPipelineStageType?: string;
+  currentPipelineStageLabel?: string;
+  currentPipelineProgressStatus?: string;
   createdAt?: string;
   createdBy?: number;
   updatedAt?: string;
@@ -72,6 +100,8 @@ export interface Application {
   isDeleted?: boolean;
   searchString?: string;
   sourceTokenId?: number;
+  action?: string;
+  quizAttempts?: ApplicationQuizAttemptSummary[];
 }
 
 /**
@@ -331,6 +361,37 @@ export class ApplicationService {
     });
 
     return this.http.post<ApplicationResponse>(`${this.applicationsUrl}/touch-quiz`, request, { headers });
+  }
+
+  createQuizAttempt(applicationId: number): Observable<ApplicationResponse> {
+    const currentUserData = localStorage.getItem('user');
+    const currentUserId = currentUserData ? JSON.parse(currentUserData).id?.toString() || '1' : '1';
+
+    const request = {
+      user: currentUserId,
+      data: {
+        id: applicationId,
+        action: 'CREATE_QUIZ_ATTEMPT',
+        candidateFirstName: '',
+        candidateLastName: '',
+        candidateEmail: '',
+        candidatePhone: '',
+        candidateBirthDate: ''
+      }
+    };
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    });
+
+    return this.http.post<ApplicationResponse>(`${this.applicationsUrl}/custom`, request, { headers });
+  }
+
+  getApplicationDetail(applicationId: number): Observable<Application | null> {
+    return this.getAllApplicationsByCriteria({ idDe: String(applicationId), size: 1, page: 0 }).pipe(
+      map(response => response.content?.[0] || null)
+    );
   }
 
   /**

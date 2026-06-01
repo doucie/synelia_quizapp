@@ -64,7 +64,7 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
     label: STAGE_TYPE_LABELS[value]
   }));
 
-  editableStageTypes: StageType[] = ['QUIZ', 'PRESELECTION', 'INTERVIEW', 'EVALUATION'];
+  editableStageTypes: StageType[] = ['QUIZ', 'PRESELECTION', 'INTERVIEW'];
 
   readinessIssues = computed(() => getPipelineReadinessIssues(this.stages()));
 
@@ -189,7 +189,7 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
 
     const availableTypes = this.getAvailableSingletonStageTypes();
     if (availableTypes.length === 0) {
-      this.notificationService.warning('Étapes du pipeline', 'Le modèle actuel ne supporte qu’une seule occurrence de chaque type intermédiaire métier (Quiz, Présélection, Entretien, Évaluation).');
+      this.notificationService.warning('Étapes du pipeline', 'Le modèle actuel ne supporte qu’une seule occurrence de chaque type intermédiaire métier autorisé (Quiz, Présélection, Entretien).');
       return;
     }
 

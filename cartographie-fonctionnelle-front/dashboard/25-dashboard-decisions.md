@@ -15,6 +15,7 @@ La page sert à prendre et annuler des décisions sur les candidatures le long d
 
 - [x] La page charge candidatures, source tokens, campagnes et accès campagne avant d’enrichir localement les candidatures.
 - [x] Elle recharge ensuite les décisions réelles de la candidature sélectionnée.
+- [x] À la sélection d’une candidature, elle recharge aussi le runtime quiz (`quizAttempts`) et les `candidateInterview` de cette candidature pour alimenter le panneau d’étape.
 - [x] Les filtres `ALL`, `SUBMITTED`, `PRE_SCREEN`, `FINAL` sont centralisés et les compteurs dérivent de la même logique.
 - [x] La page est organisée en trois colonnes: liste candidats, détail candidat, historique / actions.
 - [x] Les étapes du pipeline sont visualisées dynamiquement avec statut, badges et descriptions.
@@ -72,6 +73,8 @@ La page sert à prendre et annuler des décisions sur les candidatures le long d
 - `interviewDate`
 - `interviewStatus`
 - `evaluationScore`
+- `quizAttempts[]` via détail candidature pour préférer le score runtime du quiz courant
+- `CandidateInterviewEntity[]` pour préférer date / statut d’entretien et score d’évaluation runtime
 
 ### 5.2 Décision
 
@@ -104,6 +107,8 @@ La page sert à prendre et annuler des décisions sur les candidatures le long d
 - `DecisionService.getDecisionsByApplicationId()` -> `POST /decisions/getByCriteria` avec `applicationId`
 - `DecisionService.createDecision()` -> `POST /decisions/create`
 - `DecisionService.deleteDecision()` -> `POST /decisions/delete`
+- `ApplicationService.getApplicationDetail()` -> `POST /applications/getAllByCriteria` pour récupérer `quizAttempts`
+- `CandidateInterviewEntityService.getAllByCriteria()` -> `POST /candidateInterview/getAllByCriteria`
 
 ### 6.3 Enrichissements pipeline
 
@@ -116,6 +121,7 @@ La page sert à prendre et annuler des décisions sur les candidatures le long d
 - Des décisions liées à `applicationId` avec dates et auteur exploitables.
 - Des candidatures suffisamment enrichies ou enrichissables côté front via `sourceToken` et `campaign`.
 - Des statuts pipeline normalisés pour chaque étape.
+- Des détails runtime `quizAttempts` et `candidateInterview` assez riches pour que le panneau décision ne dépende plus uniquement de `quizScorePercent`, `interviewDate`, `interviewStatus` et `evaluationScore` portés par `application`.
 - Une cohérence stricte entre `applicationStatus`, décisions prises et progression pipeline.
 - Des contrôles serveur empêchant la prise de décision sur des étapes ou profils non autorisés.
 
@@ -154,6 +160,6 @@ La page sert à prendre et annuler des décisions sur les candidatures le long d
 
 - [ ] remplacer la logique de decision mono-etape par un historique de decisions rattachees a `application_progress_id`
 - [ ] distinguer clairement plusieurs rounds `PRESELECTION` sur une meme candidature
-- [ ] retirer la dependance documentaire a `applicationStatus`, `quizScorePercent`, `interviewDate`, `interviewStatus` et `evaluationScore` comme source principale
+- [~] le panneau decision prefère deja `quizAttempts` et `candidateInterview` runtime pour le quiz courant, l’entretien courant et l’évaluation courante; le fallback `Application.*` reste transitoire tant que ces enfants ne sont pas encore charges
 - [ ] exiger et afficher une justification pour toute annulation, override ou rollback de decision
 - [ ] exposer `decisionMode` et `cancelsDecisionId` pour distinguer decision normale, annulation, override et rollback avec trace explicite

@@ -127,6 +127,38 @@ public class Applications implements Serializable, Cloneable {
     @Column(name="interview_status", length=20)
     private String     interviewStatus ;
 
+    @Column(name="current_interview_evaluation_score")
+    private Integer    currentInterviewEvaluationScore ;
+
+    @Column(name="current_interview_evaluation_number")
+    private Integer    currentInterviewEvaluationNumber ;
+
+    @Column(name="current_interview_evaluation_percentage")
+    private Double     currentInterviewEvaluationPercentage ;
+
+    @Column(name="current_preselection_decision_type", length=50)
+    private String     currentPreselectionDecisionType ;
+
+    @Column(name="current_preselection_decision_date")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date       currentPreselectionDecisionDate ;
+
+    @Column(name="current_final_decision_type", length=50)
+    private String     currentFinalDecisionType ;
+
+    @Column(name="current_final_decision_date")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date       currentFinalDecisionDate ;
+
+    @Column(name="current_pipeline_stage_type", length=50)
+    private String     currentPipelineStageType ;
+
+    @Column(name="current_pipeline_stage_label", length=255)
+    private String     currentPipelineStageLabel ;
+
+    @Column(name="current_pipeline_progress_status", length=20)
+    private String     currentPipelineProgressStatus ;
+
     @Column(name="application_abandoned")
     private Boolean    applicationAbandoned ;
 

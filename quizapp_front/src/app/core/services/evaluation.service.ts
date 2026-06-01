@@ -32,11 +32,25 @@ export interface PagedEvaluationResponse {
   number: number;
 }
 
+export interface EvaluationItem {
+  id?: number;
+  pipelineStageEvaluationCriterionId?: number;
+  criterionOrder?: number;
+  label?: string;
+  criterionType?: string;
+  scoreValue?: number;
+  textValue?: string;
+  weightSnapshot?: number;
+  maxScoreSnapshot?: number;
+}
+
 export interface Evaluation {
   id?: number;
   candidateMark?: number;
   recruiterComment?: string;
   candidateInterviewId?: number;
+  interviewParticipantId?: number;
+  evaluationItems?: EvaluationItem[];
   createdAt?: string;
   createdBy?: number;
   updatedAt?: string;
@@ -138,6 +152,21 @@ export class EvaluationService {
       }
     };
     return this.http.post<EvaluationResponse>(`${this.evaluationsApiUrl}/getByCriteria`, request);
+  }
+
+  /**
+   * Récupère les critères d'évaluation du stage courant pour un candidate_interview
+   */
+  getEvaluationCriteria(candidateInterviewId: number, userId: number): Observable<EvaluationItem[]> {
+    const request = {
+      user: userId,
+      data: {
+        candidateInterviewId
+      }
+    };
+    return this.http.post<EvaluationResponse>(`${this.evaluationsApiUrl}/getCriteria`, request).pipe(
+      map(response => response.items?.[0]?.evaluationItems || [])
+    );
   }
 
   /**

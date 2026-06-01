@@ -81,6 +81,58 @@
             }
           </div>
 
+          @if (app.publicActionsLocked) {
+            <div class="error-message error-message--stacked">
+              <div class="error-message__row">
+                <span class="error-icon">⚠️</span>
+                <span>{{ app.publicLockReason || 'Cette candidature a été retirée.' }}</span>
+              </div>
+              <p class="error-message__hint">
+                Les informations de suivi restent visibles, mais les actions publiques sur ce dossier sont désormais verrouillées.
+              </p>
+            </div>
+          }
+
+          @if (withdrawSuccessMessage()) {
+            <div class="success-message">
+              <span class="success-icon">✓</span>
+              {{ withdrawSuccessMessage() }}
+            </div>
+          }
+
+          @if (withdrawErrorMessage()) {
+            <div class="error-message error-message--embedded">
+              <span class="error-icon">⚠️</span>
+              {{ withdrawErrorMessage() }}
+            </div>
+          }
+
+          @if (canWithdrawApplication(app)) {
+            <div class="current-stage-info">
+              <h3>Retirer ma candidature</h3>
+              <div class="current-stage-card">
+                <div class="step-icon">↩️</div>
+                <div class="step-content">
+                  <h4>Arrêter ma candidature</h4>
+                  <p>Vous pouvez retirer ce dossier depuis l'espace public tant qu'il est encore actif.</p>
+                  <div class="interview-card__actions">
+                    <button
+                      type="button"
+                      class="btn btn--ghost"
+                      (click)="submitWithdrawal()"
+                      [disabled]="submittingWithdraw()">
+                      @if (submittingWithdraw()) {
+                        Retrait en cours...
+                      } @else {
+                        Retirer ma candidature
+                      }
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+
           @if (stages().length > 0) {
             <div class="progress-timeline">
               <h3>Progression</h3>
@@ -121,6 +173,35 @@
                 <div class="step-content">
                   <h4>{{ current.stageLabel }}</h4>
                   <p>Cette étape est actuellement en cours de traitement.</p>
+                </div>
+              </div>
+            </div>
+          }
+
+          @if (quiz(); as trackedQuiz) {
+            <div class="current-stage-info">
+              <h3>Mon quiz</h3>
+              <div class="current-stage-card">
+                <div class="step-icon">📝</div>
+                <div class="step-content">
+                  <h4>{{ getQuizOccurrenceLabel(trackedQuiz) || 'Quiz candidat' }}</h4>
+                  <p>{{ getQuizStatusLabel(trackedQuiz.quizStatus) }}</p>
+
+                  @if (trackedQuiz.completedAt) {
+                    <small>Terminé le {{ trackedQuiz.completedAt | date:'dd/MM/yyyy à HH:mm' }}</small>
+                  } @else if (trackedQuiz.lastActivityAt) {
+                    <small>Dernière activité le {{ trackedQuiz.lastActivityAt | date:'dd/MM/yyyy à HH:mm' }}</small>
+                  } @else if (trackedQuiz.startedAt) {
+                    <small>Démarré le {{ trackedQuiz.startedAt | date:'dd/MM/yyyy à HH:mm' }}</small>
+                  }
+
+                  @if (trackedQuiz.canResume && getQuizResumeUrl(trackedQuiz); as quizUrl) {
+                    <div class="interview-card__actions">
+                      <a class="btn btn--primary" [href]="quizUrl">
+                        {{ getQuizActionLabel(trackedQuiz) }}
+                      </a>
+                    </div>
+                  }
                 </div>
               </div>
             </div>
@@ -171,6 +252,13 @@
                     </div>
 
                     <div class="interview-card__details">
+                      @if (getInterviewOccurrenceLabel(interview); as occurrenceLabel) {
+                        <div class="detail-row">
+                          <span class="detail-label">Étape pipeline</span>
+                          <span>{{ occurrenceLabel }}</span>
+                        </div>
+                      }
+
                       <div class="detail-row">
                         <span class="detail-label">{{ interview.interviewType === 'IN_PERSON' ? 'Lieu' : 'Lien' }}</span>
                         <span>{{ getInterviewAccessLabel(interview) }}</span>
@@ -355,86 +443,90 @@
             }
 
             <div class="candidate-ask-form">
-              <div class="form-group">
-                <label for="candidateAskType">Type de correction</label>
-                <app-filter-select
-                  id="candidateAskType"
-                  class="form-input"
-                  ariaLabel="Type de correction"
-                  [ngModel]="askDraft.requestType"
-                  (ngModelChange)="onAskTypeChange($event)">
-                  <option [ngValue]="''">Choisir…</option>
-                  <option [ngValue]="'IDENTITY'">Nom / prénom</option>
-                  <option [ngValue]="'EMAIL'">Adresse email</option>
-                  <option [ngValue]="'PHONE'">Téléphone</option>
-                </app-filter-select>
-              </div>
-
-              @if (askDraft.requestType === 'IDENTITY') {
-                <div class="candidate-ask-grid">
-                  <div class="form-group">
-                    <label for="candidateAskFirstName">Prénom corrigé</label>
-                    <input
-                      id="candidateAskFirstName"
-                      type="text"
-                      class="form-input"
-                      [(ngModel)]="askDraft.firstName"
-                      [ngModelOptions]="{ standalone: true }"
-                      [placeholder]="app.candidateFirstName || 'Nouveau prénom'">
-                  </div>
-
-                  <div class="form-group">
-                    <label for="candidateAskLastName">Nom corrigé</label>
-                    <input
-                      id="candidateAskLastName"
-                      type="text"
-                      class="form-input"
-                      [(ngModel)]="askDraft.lastName"
-                      [ngModelOptions]="{ standalone: true }"
-                      [placeholder]="app.candidateLastName || 'Nouveau nom'">
-                  </div>
-                </div>
-              }
-
-              @if (askDraft.requestType === 'EMAIL') {
+              @if (app.publicActionsLocked) {
+                <p class="candidate-ask-hint">{{ app.publicLockReason || 'Cette candidature a été retirée.' }}</p>
+              } @else {
                 <div class="form-group">
-                  <label for="candidateAskEmail">Nouvelle adresse email</label>
-                  <input
-                    id="candidateAskEmail"
-                    type="email"
+                  <label for="candidateAskType">Type de correction</label>
+                  <app-filter-select
+                    id="candidateAskType"
                     class="form-input"
-                    [(ngModel)]="askDraft.newEmail"
-                    [ngModelOptions]="{ standalone: true }"
-                    [placeholder]="app.candidateEmail || 'nouvelle.adresse@exemple.com'">
+                    ariaLabel="Type de correction"
+                    [ngModel]="askDraft.requestType"
+                    (ngModelChange)="onAskTypeChange($event)">
+                    <option [ngValue]="''">Choisir…</option>
+                    <option [ngValue]="'IDENTITY'">Nom / prénom</option>
+                    <option [ngValue]="'EMAIL'">Adresse email</option>
+                    <option [ngValue]="'PHONE'">Téléphone</option>
+                  </app-filter-select>
                 </div>
-              }
 
-              @if (askDraft.requestType === 'PHONE') {
-                <div class="form-group">
-                  <label for="candidateAskPhone">Nouveau téléphone</label>
-                  <input
-                    id="candidateAskPhone"
-                    type="text"
-                    class="form-input"
-                    [(ngModel)]="askDraft.newPhone"
-                    [ngModelOptions]="{ standalone: true }"
-                    placeholder="Nouveau numéro de téléphone">
-                </div>
-              }
+                @if (askDraft.requestType === 'IDENTITY') {
+                  <div class="candidate-ask-grid">
+                    <div class="form-group">
+                      <label for="candidateAskFirstName">Prénom corrigé</label>
+                      <input
+                        id="candidateAskFirstName"
+                        type="text"
+                        class="form-input"
+                        [(ngModel)]="askDraft.firstName"
+                        [ngModelOptions]="{ standalone: true }"
+                        [placeholder]="app.candidateFirstName || 'Nouveau prénom'">
+                    </div>
 
-              <p class="candidate-ask-hint">Votre demande sera visible par l'équipe de recrutement et traitée manuellement.</p>
-
-              <button
-                type="button"
-                class="btn btn--primary"
-                (click)="submitCandidateAsk()"
-                [disabled]="submittingAsk()">
-                @if (submittingAsk()) {
-                  Envoi en cours...
-                } @else {
-                  Envoyer la demande
+                    <div class="form-group">
+                      <label for="candidateAskLastName">Nom corrigé</label>
+                      <input
+                        id="candidateAskLastName"
+                        type="text"
+                        class="form-input"
+                        [(ngModel)]="askDraft.lastName"
+                        [ngModelOptions]="{ standalone: true }"
+                        [placeholder]="app.candidateLastName || 'Nouveau nom'">
+                    </div>
+                  </div>
                 }
-              </button>
+
+                @if (askDraft.requestType === 'EMAIL') {
+                  <div class="form-group">
+                    <label for="candidateAskEmail">Nouvelle adresse email</label>
+                    <input
+                      id="candidateAskEmail"
+                      type="email"
+                      class="form-input"
+                      [(ngModel)]="askDraft.newEmail"
+                      [ngModelOptions]="{ standalone: true }"
+                      [placeholder]="app.candidateEmail || 'nouvelle.adresse@exemple.com'">
+                  </div>
+                }
+
+                @if (askDraft.requestType === 'PHONE') {
+                  <div class="form-group">
+                    <label for="candidateAskPhone">Nouveau téléphone</label>
+                    <input
+                      id="candidateAskPhone"
+                      type="text"
+                      class="form-input"
+                      [(ngModel)]="askDraft.newPhone"
+                      [ngModelOptions]="{ standalone: true }"
+                      placeholder="Nouveau numéro de téléphone">
+                  </div>
+                }
+
+                <p class="candidate-ask-hint">Votre demande sera visible par l'équipe de recrutement et traitée manuellement.</p>
+
+                <button
+                  type="button"
+                  class="btn btn--primary"
+                  (click)="submitCandidateAsk()"
+                  [disabled]="submittingAsk()">
+                  @if (submittingAsk()) {
+                    Envoi en cours...
+                  } @else {
+                    Envoyer la demande
+                  }
+                </button>
+              }
             </div>
           </div>
         </div>

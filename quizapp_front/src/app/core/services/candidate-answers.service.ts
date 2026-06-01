@@ -14,6 +14,14 @@ export interface CandidateAnswer {
   manualCorrectedAt?: string;
   manualCorrectedBy?: number;
   applicationId?: number;
+  applicationQuizAttemptId?: number;
+  applicationQuizAttemptQuizStatus?: string;
+  applicationQuizAttemptManualCorrectionStatus?: string;
+  applicationQuizAttemptScore?: number;
+  applicationQuizAttemptScorePercent?: number;
+  applicationQuizAttemptLastActivityAt?: string;
+  applicationQuizAttemptStartedAt?: string;
+  applicationQuizAttemptCompletedAt?: string;
   questionId?: number;
   questionScore?: number;
   manualCorrectionRequired?: boolean;
@@ -42,6 +50,7 @@ export interface CandidateAnswerMutationPayload {
   manualCorrectionComment?: string | null;
   manualCorrectionScore?: number | null;
   applicationId?: number;
+  applicationQuizAttemptId?: number;
   questionId?: number;
   answerId?: number;
   action?: string;
@@ -55,6 +64,7 @@ export interface CandidateAnswerSearchCriteria {
   idDe?: string;
   idA?: string;
   applicationId?: number;
+  applicationQuizAttemptId?: number;
   questionId?: number;
   answerId?: number;
   isSelected?: boolean;
@@ -93,6 +103,7 @@ export class CandidateAnswersService {
         isDeleted: criteria.isDeleted !== undefined ? criteria.isDeleted.toString() : '',
         searchString: criteria.search_string || '',
         ...(criteria.applicationId && { applicationId: criteria.applicationId }),
+        ...(criteria.applicationQuizAttemptId && { applicationQuizAttemptId: criteria.applicationQuizAttemptId }),
         ...(criteria.questionId && { questionId: criteria.questionId }),
         ...(criteria.answerId && { answerId: criteria.answerId }),
         ...(criteria.isSelected !== undefined && { isSelected: criteria.isSelected }),
@@ -142,7 +153,7 @@ export class CandidateAnswersService {
     });
   }
 
-  manualCorrectQuestion(applicationId: number, questionId: number, manualCorrectionScore: number, manualCorrectionComment?: string | null): Observable<any> {
+  manualCorrectQuestion(applicationId: number, questionId: number, manualCorrectionScore: number, manualCorrectionComment?: string | null, applicationQuizAttemptId?: number | null): Observable<any> {
     const currentUserData = localStorage.getItem('user');
     const currentUserId = currentUserData ? JSON.parse(currentUserData).id?.toString() || '1' : '1';
 
@@ -150,6 +161,7 @@ export class CandidateAnswersService {
       user: currentUserId,
       datas: [{
         applicationId,
+        ...(applicationQuizAttemptId ? { applicationQuizAttemptId } : {}),
         questionId,
         action: 'manualQuestionCorrection',
         manualCorrectionScore,

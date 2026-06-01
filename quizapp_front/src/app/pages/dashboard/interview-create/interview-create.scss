@@ -366,6 +366,61 @@
       text-overflow: ellipsis;
     }
 
+    .candidate-runtime-summary {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-xs);
+      margin: 0 0 var(--spacing-sm) 0;
+    }
+
+    .candidate-runtime-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.2rem 0.5rem;
+      border-radius: var(--radius-full);
+      border: 1px solid transparent;
+      font-size: var(--font-size-xs);
+      font-weight: var(--font-weight-semibold);
+      line-height: 1.2;
+
+      &.candidate-runtime-pill--stage {
+        color: var(--primary);
+        background: rgba(var(--primary-rgb), 0.08);
+        border-color: rgba(var(--primary-rgb), 0.18);
+      }
+
+      &.candidate-runtime-pill--status.pipeline-progress-in-progress {
+        color: var(--info);
+        background: rgba(var(--info-rgb), 0.12);
+        border-color: rgba(var(--info-rgb), 0.24);
+      }
+
+      &.candidate-runtime-pill--status.pipeline-progress-pending {
+        color: var(--warning);
+        background: rgba(var(--warning-rgb), 0.12);
+        border-color: rgba(var(--warning-rgb), 0.24);
+      }
+
+      &.candidate-runtime-pill--status.pipeline-progress-passed {
+        color: var(--success);
+        background: rgba(var(--success-rgb), 0.12);
+        border-color: rgba(var(--success-rgb), 0.24);
+      }
+
+      &.candidate-runtime-pill--status.pipeline-progress-failed {
+        color: var(--danger);
+        background: rgba(var(--danger-rgb), 0.12);
+        border-color: rgba(var(--danger-rgb), 0.24);
+      }
+
+      &.candidate-runtime-pill--status.pipeline-progress-skipped,
+      &.candidate-runtime-pill--status.pipeline-progress-legacy {
+        color: var(--text-secondary);
+        background: var(--surface-light);
+        border-color: var(--border);
+      }
+    }
+
     .score-badge {
       display: inline-block;
       padding: var(--spacing-xs) var(--spacing-sm);
@@ -1541,6 +1596,10 @@
 
   .candidates-grid {
     grid-template-columns: 1fr;
+  }
+
+  .candidate-card {
+    align-items: flex-start;
   }
 
   .form-actions {

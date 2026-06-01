@@ -106,6 +106,14 @@ public class ApplicationsController {
         return response;
     }
 
+	@RequestMapping(value="/custom",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
+	public Response<ApplicationsDto> custom(@RequestBody Request<ApplicationsDto> request) throws Exception {
+		slf4jLogger.info("start method /applications/custom");
+		Response<ApplicationsDto> response = controllerFactory.custom(request, FunctionalityEnum.UPDATE_APPLICATIONS, applicationsBusiness::custom);
+		slf4jLogger.info("end method /applications/custom");
+		return response;
+	}
+
 	@RequestMapping(value="/verify-email",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
     public Response<ApplicationsDto> verifyEmail(@RequestBody Request<ApplicationsDto> request) throws Exception{
     	slf4jLogger.info("start method /applications/verify-email");
@@ -211,6 +219,18 @@ public class ApplicationsController {
 				request.get("newPhone"),
 				locale);
 		slf4jLogger.info("end method /applications/submit-ask");
+		return response;
+	}
+
+	@RequestMapping(value="/withdraw",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
+    public Map<String, Object> withdraw(@RequestBody Map<String, String> request) throws Exception{
+		slf4jLogger.info("start method /applications/withdraw");
+		Locale locale = Locale.of("fr", "");
+		Map<String, Object> response = applicationsBusiness.withdrawTrackedApplication(
+				request.get("trackingCode"),
+				request.get("email"),
+				locale);
+		slf4jLogger.info("end method /applications/withdraw");
 		return response;
 	}
 

@@ -185,6 +185,8 @@
             <th class="col-short" [class.col-hidden]="!isColumnVisible('type')">Type</th>
             <th class="col-medium" [class.col-hidden]="!isColumnVisible('location')">Lieu / Lien</th>
             <th class="col-status" [class.col-hidden]="!isColumnVisible('status')">Statut</th>
+            <th class="col-medium" [class.col-hidden]="!isColumnVisible('pipelineContext')">Contexte pipeline</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('applicationProgressId')">Occurrence</th>
             <th class="col-short" [class.col-hidden]="!isColumnVisible('campaign')">Campagne</th>
             <th class="col-short" [class.col-hidden]="!isColumnVisible('application')">Candidature</th>
             <th class="col-actions" [class.col-hidden]="!isColumnVisible('actions')">Actions</th>
@@ -212,13 +214,21 @@
                 {{ getStatusLabel(interview.interviewStatus) }}
               </span>
             </td>
+            <td [class.col-hidden]="!isColumnVisible('pipelineContext')">
+              <div class="pipeline-context-cell">
+                <span *ngIf="interview.interviewRound" class="pipeline-context-badge">{{ getInterviewRoundDisplay(interview.interviewRound) }}</span>
+                <span *ngIf="interview.pipelineStageLabel" class="pipeline-context-badge pipeline-context-badge-stage">{{ interview.pipelineStageLabel }}</span>
+                <span *ngIf="!interview.interviewRound && !interview.pipelineStageLabel">-</span>
+              </div>
+            </td>
+            <td [class.col-hidden]="!isColumnVisible('applicationProgressId')">
+              <span class="cell-occurrence">{{ getApplicationProgressDisplay(interview.applicationProgressId) }}</span>
+            </td>
             <td [class.col-hidden]="!isColumnVisible('campaign')">
-              <span *ngIf="interview.campaignId">{{ interview.campaignTitle || '#' + interview.campaignId }}</span>
-              <span *ngIf="!interview.campaignId">-</span>
+              <span>{{ getCampaignDisplay(interview.campaignId, interview.campaignTitle) }}</span>
             </td>
             <td [class.col-hidden]="!isColumnVisible('application')">
-              <span *ngIf="interview.applicationId">{{ interview.candidateName || '#' + interview.applicationId }}</span>
-              <span *ngIf="!interview.applicationId">-</span>
+              <span>{{ getApplicationDisplay(interview.applicationId, interview.candidateName) }}</span>
             </td>
             <td class="actions-cell" [class.col-hidden]="!isColumnVisible('actions')" (click)="$event.stopPropagation()">
               <div class="actions-menu">
@@ -255,7 +265,7 @@
           </tr>
           <!-- Expansion: Détails entretien -->
           <tr *ngIf="isExpanded(interview.id!)" class="expansion-row">
-            <td colspan="7" class="expansion-content">
+            <td [attr.colspan]="allColumns.length" class="expansion-content">
               <div class="children-container">
                 <div class="children-tabs">
                   <button class="children-tab" [class.active]="getChildTab(interview.id!) === 'cruds'" (click)="setChildTab(interview.id!, 'cruds')">Membres <span class="tab-count">{{ getCruds(interview.id!).length }}</span></button>
@@ -282,8 +292,20 @@
                     <div *ngIf="getCandidateInterviews(interview.id!).length === 0" class="no-children"><span>Aucun candidat</span></div>
                     <div *ngFor="let child of getCandidateInterviews(interview.id!); trackBy: trackByChildId" class="child-item" [class.deleted]="child.isDeleted">
                       <span class="child-id">#{{ child.id }}</span>
-                      <span class="child-name">Candidature #{{ child.applicationId }} - {{ child.interviewStart || '-' }}</span>
-                      <span class="child-badge active" *ngIf="child.interviewDuration">{{ child.interviewDuration }} min</span>
+                      <div class="child-main">
+                        <span class="child-name">{{ getApplicationDisplay(child.applicationId) }}</span>
+                        <div class="child-meta">
+                          <span class="child-meta-item">Entretien: {{ getCandidateInterviewDateDisplay(child) }}</span>
+                          <span *ngIf="child.interviewStatus" class="status-badge" [ngClass]="getCandidateInterviewStatusClass(child.interviewStatus)">
+                            {{ getCandidateInterviewStatusLabel(child.interviewStatus) }}
+                          </span>
+                          <span *ngIf="getCandidateInterviewDurationDisplay(child)" class="child-badge active">{{ getCandidateInterviewDurationDisplay(child) }}</span>
+                        </div>
+                        <div *ngIf="hasCandidateResponse(child)" class="child-response">
+                          <span [class]="getCandidateResponseClass(child)">{{ getCandidateResponseLabel(child) }}</span>
+                          <span *ngIf="getCandidateResponseDetail(child)" class="child-response-detail">{{ getCandidateResponseDetail(child) }}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

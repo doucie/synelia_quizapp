@@ -46,6 +46,12 @@ public interface _DecisionRepository {
             if (Utilities.notBlank(dto.getDecisionType())) {
                 listOfQuery.add(CriteriaUtils.generateCriteria("decisionType", dto.getDecisionType(), "e.decisionType", "String", dto.getDecisionTypeParam(), param, index, locale));
             }
+            if (Utilities.notBlank(dto.getDecisionMode())) {
+                listOfQuery.add(CriteriaUtils.generateCriteria("decisionMode", dto.getDecisionMode(), "e.decisionMode", "String", dto.getDecisionModeParam(), param, index, locale));
+            }
+            if (Utilities.notBlank(dto.getJustification())) {
+                listOfQuery.add(CriteriaUtils.generateCriteria("justification", dto.getJustification(), "e.justification", "String", dto.getJustificationParam(), param, index, locale));
+            }
             if (dto.getIsCancel() != null) {
                 listOfQuery.add(CriteriaUtils.generateCriteria("isCancel", dto.getIsCancel(), "e.isCancel", "Boolean", dto.getIsCancelParam(), param, index, locale));
             }
@@ -55,6 +61,15 @@ public interface _DecisionRepository {
             if (dto.getUserId() != null && dto.getUserId() > 0) {
                 listOfQuery.add(CriteriaUtils.generateCriteria("userId", dto.getUserId(), "e.user.id", "Integer", dto.getUserIdParam(), param, index, locale));
             }
+            if (dto.getPipelineStageId() != null && dto.getPipelineStageId() > 0) {
+                listOfQuery.add(CriteriaUtils.generateCriteria("pipelineStageId", dto.getPipelineStageId(), "e.pipelineStage.id", "Integer", dto.getPipelineStageIdParam(), param, index, locale));
+            }
+            if (dto.getApplicationProgressId() != null && dto.getApplicationProgressId() > 0) {
+                listOfQuery.add(CriteriaUtils.generateCriteria("applicationProgressId", dto.getApplicationProgressId(), "e.applicationProgress.id", "Integer", dto.getApplicationProgressIdParam(), param, index, locale));
+            }
+            if (dto.getCancelsDecisionId() != null && dto.getCancelsDecisionId() > 0) {
+                listOfQuery.add(CriteriaUtils.generateCriteria("cancelsDecisionId", dto.getCancelsDecisionId(), "e.cancelsDecision.id", "Integer", dto.getCancelsDecisionIdParam(), param, index, locale));
+            }
             if (dto.getIsDeleted() != null) {
                 listOfQuery.add(CriteriaUtils.generateCriteria("isDeleted", dto.getIsDeleted(), "e.isDeleted", "Boolean", dto.getIsDeletedParam(), param, index, locale));
             }
@@ -62,7 +77,11 @@ public interface _DecisionRepository {
                 String sv = "%" + dto.getSearchString().toLowerCase() + "%";
                 String sp = "searchAll_" + index;
                 param.put(sp, sv);
-                listOfQuery.add("(LOWER(e.decisionType) LIKE :" + sp + ")");
+                listOfQuery.add("(" 
+                        + "LOWER(COALESCE(e.decisionType, '')) LIKE :" + sp
+                        + " or LOWER(COALESCE(e.decisionMode, '')) LIKE :" + sp
+                        + " or LOWER(COALESCE(e.justification, '')) LIKE :" + sp
+                        + ")");
             }
             if (dto.getCreatedAt() != null && !dto.getCreatedAt().trim().isEmpty()) {
                 listOfQuery.add(CriteriaUtils.generateCriteria("createdAt", dto.getCreatedAt(), "e.createdAt", "Date", dto.getCreatedAtParam(), param, index, locale));

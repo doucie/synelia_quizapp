@@ -8,6 +8,7 @@
 
 package tech.synelia.quizapp.business;
 
+import tech.synelia.quizapp.business.MailLogService.MailLogContext;
 import lombok.extern.java.Log;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,6 +57,10 @@ public class CandidateAskBusiness implements IBasicBusiness<Request<CandidateAsk
 	private ApplicationsRepository applicationsRepository;
 	@Autowired
 	private ApplicationsBusiness applicationsBusiness;
+	@Autowired
+	private ApplicationProgressRepository applicationProgressRepository;
+	@Autowired
+	private AuditEventService auditEventService;
 	@Autowired
 	private HostingUtils hostingUtils;
 	@Autowired
@@ -513,6 +518,7 @@ public class CandidateAskBusiness implements IBasicBusiness<Request<CandidateAsk
 			if (application == null) {
 				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("applications applicationId -> " + dto.getApplicationId(), locale));
 			}
+			String beforeStateJson = buildCandidateAskAuditStateJson(candidateAsk, application);
 
 			platformReadinessService.requireEmailDeliveryAvailable(
 					EmailActionType.CANDIDATE_ASK_RESULT,
@@ -544,6 +550,13 @@ public class CandidateAskBusiness implements IBasicBusiness<Request<CandidateAsk
 			candidateAsk.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(candidateAsk)));
 			CandidateAsk savedCandidateAsk = candidateAskRepository.save(candidateAsk);
 			sendCandidateAskResultEmail(application, savedCandidateAsk, locale);
+			recordCandidateAskAuditEvent(
+					savedCandidateAsk,
+					application,
+					request.getUser(),
+					beforeStateJson,
+					buildCandidateAskAuditStateJson(savedCandidateAsk, application),
+					resolveCandidateAskAuditActionType(action));
 			itemsDto.add(getFullInfos(CandidateAskTransformer.INSTANCE.toDto(savedCandidateAsk), 1, request.getIsSimpleLoading(), locale));
 		}
 
@@ -724,13 +737,106 @@ public class CandidateAskBusiness implements IBasicBusiness<Request<CandidateAsk
 					: "Votre demande de correction a ete refusee");
 			context.setVariable("appLink", paramsUtils.getUrlAppl());
 
-			Response<?> responseEmail = hostingUtils.sendEmail(from, toRecipients, subject, "", null, context, "blank", locale);
+			Response<?> responseEmail = hostingUtils.sendEmail(
+					from,
+					toRecipients,
+					subject,
+					"",
+					null,
+					context,
+					"blank",
+					locale,
+					buildCandidateAskMailLogContext(application));
 			if (responseEmail.isHasError()) {
 				log.warning("Echec de l'envoi de l'email candidate ask pour la candidature " + application.getId());
 			}
 		} catch (Exception exception) {
 			log.warning("Envoi email candidate ask ignore pour la candidature " + application.getId() + ": " + exception.getMessage());
 		}
+	}
+
+	private MailLogContext buildCandidateAskMailLogContext(Applications application) {
+		ApplicationProgress currentProgress = resolveCandidateAskProgress(application);
+		return MailLogContext.builder()
+				.applicationId(application != null ? application.getId() : null)
+				.applicationProgressId(currentProgress != null ? currentProgress.getId() : null)
+				.eventCode("CANDIDATE_ASK_RESULT_EMAIL")
+				.requiresConfirmation(Boolean.FALSE)
+				.build();
+	}
+
+	private ApplicationProgress resolveCandidateAskProgress(Applications application) {
+		if (application == null || application.getId() == null) {
+			return null;
+		}
+
+		ApplicationProgress inProgress = applicationProgressRepository.findCurrentStage(application.getId());
+		if (inProgress != null) {
+			return inProgress;
+		}
+
+		List<ApplicationProgress> pendingStages = applicationProgressRepository.findPendingByApplicationId(application.getId());
+		if (pendingStages != null && !pendingStages.isEmpty()) {
+			return pendingStages.get(0);
+		}
+
+		return null;
+	}
+
+	private void recordCandidateAskAuditEvent(CandidateAsk candidateAsk, Applications application, Integer actorUserId, String beforeStateJson, String afterStateJson, String actionType) {
+		if (candidateAsk == null || !Utilities.notBlank(actionType)) {
+			return;
+		}
+
+		auditEventService.recordEvent(
+				application != null ? application.getId() : null,
+				resolveCandidateAskProgressId(application),
+				"CANDIDATE_ASK",
+				candidateAsk.getId() != null ? String.valueOf(candidateAsk.getId()) : "UNKNOWN",
+				actionType,
+				actorUserId,
+				candidateAsk.getDecisionReason(),
+				beforeStateJson,
+				afterStateJson);
+	}
+
+	private String resolveCandidateAskAuditActionType(String action) {
+		return "APPROVE".equalsIgnoreCase(action) ? "CANDIDATE_ASK_APPROVED" : "CANDIDATE_ASK_REJECTED";
+	}
+
+	private String buildCandidateAskAuditStateJson(CandidateAsk candidateAsk, Applications application) {
+		if (candidateAsk == null) {
+			return null;
+		}
+
+		Map<String, Object> snapshot = new LinkedHashMap<>();
+		snapshot.put("id", candidateAsk.getId());
+		snapshot.put("applicationId", application != null ? application.getId() : null);
+		snapshot.put("applicationProgressId", resolveCandidateAskProgressId(application));
+		snapshot.put("requestType", candidateAsk.getRequestType());
+		snapshot.put("askStatus", candidateAsk.getAskStatus());
+		snapshot.put("isVerified", candidateAsk.getIsVerified());
+		snapshot.put("firstName", candidateAsk.getFirstName());
+		snapshot.put("lastName", candidateAsk.getLastName());
+		snapshot.put("newEmail", candidateAsk.getNewEmail());
+		snapshot.put("newPhone", candidateAsk.getNewPhone());
+		snapshot.put("decisionReason", candidateAsk.getDecisionReason());
+		snapshot.put("isDeleted", candidateAsk.getIsDeleted());
+		snapshot.put("createdAt", candidateAsk.getCreatedAt());
+		snapshot.put("createdBy", candidateAsk.getCreatedBy());
+		snapshot.put("updatedAt", candidateAsk.getUpdatedAt());
+		snapshot.put("updatedBy", candidateAsk.getUpdatedBy());
+
+		try {
+			return Utilities.convertObjectToJson(snapshot);
+		} catch (Exception exception) {
+			throw new IllegalStateException("Impossible de serialiser l'etat d'audit de la demande candidat", exception);
+		}
+	}
+
+	private Integer resolveCandidateAskProgressId(Applications application) {
+		ApplicationProgress progress = resolveCandidateAskProgress(application);
+		return progress != null ? progress.getId() : null;
 	}
 
 	private String buildCandidateFullName(Applications application) {

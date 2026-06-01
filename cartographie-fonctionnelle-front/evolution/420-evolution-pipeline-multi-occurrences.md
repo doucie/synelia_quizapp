@@ -17,6 +17,15 @@ Perimetre: pipeline, quiz, preselection, entretiens, evaluations, decisions, ema
 
 ## 2. Probleme cible
 
+## 2 bis. Etat deja implemente sur le suivi public
+
+Les slices publics deja livres sur `/applications/track` et `/suivre-candidature` servent maintenant de point d'appui concret pour la cible multi-occurrences:
+
+- les entretiens exposes au candidat sont rattaches a leur occurrence exacte via `candidateInterviewId`, `interviewId`, `applicationProgressId` et le contexte `pipeline_stage` associe ;
+- la reponse candidat a un entretien est persistee sur `candidate_interview` (`candidate_response_status`, `responded_at`) et reverrouille proprement l'occurrence jusqu'a une nouvelle proposition ;
+- le quiz public actionnable est resolu comme une occurrence explicite (`application_quiz_attempt`) au lieu d'un simple miroir global sur `applications` ;
+- le suivi public expose maintenant un verrou transversal de candidature (`applicationAbandoned`, `publicActionsLocked`, `publicLockReason`, `canWithdraw`) et un endpoint `POST /applications/withdraw` qui retire la candidature, bloque les actions publiques dependantes et notifie les recruteurs internes.
+
 La base actuelle permet deja plusieurs lignes techniques sur certaines briques, notamment `interviews`, `candidate_interview` et `evaluations`, mais le modele metier reste majoritairement mono-occurrence.
 
 Les blocages les plus visibles dans la description BD du 2026-05-30 sont les suivants:
@@ -28,7 +37,7 @@ Les blocages les plus visibles dans la description BD du 2026-05-30 sont les sui
 - `pipeline_stage` ne porte qu'un couple `email_required` / `email_automatic`, insuffisant pour une politique email differente selon le contexte ou l'issue.
 - `candidate_answer` est encore rattache a `application_id` uniquement, ce qui ne permet pas de distinguer plusieurs quiz pour une meme candidature.
 - `evaluations` ne stocke qu'un score global (`candidate_mark`) et un commentaire global (`recruiter_comment`) par ligne, sans grille de criteres configurable par round.
-- `mail_log` existe, mais sans rattachement metier explicite a un round, une decision, un entretien ou une evaluation.
+- `mail_log` et `audit_event` existent desormais comme socle technique multi-occurrences, mais leur couverture runtime reste encore partielle selon les flux critiques; tous les emails, validations et mutations sensibles ne sont pas encore rattaches de maniere exhaustive au bon round.
 
 ## 3. Cible de modele
 
@@ -467,12 +476,43 @@ La migration doit etre menee en phases courtes avec double lecture / ecriture tr
 
 Checklist:
 
-- [ ] figer les arbitrages de `## 12` qui bloquent directement le premier lot SQL ou les contrats runtime
-- [ ] lister et nommer les enums / statuts cibles: `progress_status`, `quiz_status`, `candidate_response_status`, `interview_status`, `evaluation_status`, `decision_mode`
-- [ ] definir la regle d'agregation des resumes `aggregated_quiz_*` et `aggregated_evaluation_*`
-- [ ] definir la politique de coexistence ou d'invalidation des anciens `quizToken`
-- [ ] identifier les endpoints, jobs, scripts et batchs impactes avant la premiere migration
-- [ ] decider si `interviews.campaign_id`, `candidate_interview.interview_start` et `candidate_interview.interview_duration` sont temporaires ou cibles
+- [x] figer les arbitrages de `## 12` qui bloquent directement le premier lot SQL ou les contrats runtime
+- [x] lister et nommer les enums / statuts cibles: `progress_status`, `quiz_status`, `candidate_response_status`, `interview_status`, `evaluation_status`, `decision_mode`
+- [x] definir la regle d'agregation des resumes `aggregated_quiz_*` et `aggregated_evaluation_*`
+- [x] definir la politique de coexistence ou d'invalidation des anciens `quizToken`
+- [x] identifier les endpoints, jobs, scripts et batchs impactes avant la premiere migration
+- [x] decider si `interviews.campaign_id`, `candidate_interview.interview_start` et `candidate_interview.interview_duration` sont temporaires ou cibles
+
+Sorties figees de la phase 0:
+
+- enums / statuts cibles:
+  - `progress_status`: `PENDING`, `IN_PROGRESS`, `AWAITING_VALIDATION`, `COMPLETED`, `FAILED`, `SKIPPED`
+  - `quiz_status`: `PENDING`, `STARTED`, `COMPLETED`, `EXPIRED`, `CANCELLED`
+  - `candidate_response_status`: `PENDING`, `ACCEPTED`, `DECLINED`, `RESCHEDULE_REQUESTED`
+  - `interview_status`: `SCHEDULED`, `IN_PROGRESS`, `AWAITING_EVALUATION`, `AWAITING_VALIDATION`, `CLOSED`, `CANCELLED`
+  - `evaluation_status`: `DRAFT`, `SUBMITTED`, `VALIDATED`, `CANCELLED`
+  - `decision_mode`: `STANDARD`, `CANCEL`, `OVERRIDE`, `ROLLBACK`
+- regle d'agregation des resumes candidature:
+  - `aggregated_quiz_score` = somme des points obtenus sur les tentatives retenues; `aggregated_quiz_score_percent` = somme des points obtenus / somme des points possibles * 100
+  - on ne retient qu'une tentative active par round `application_progress`; si plusieurs tentatives existent pour un meme round, seule la tentative finale validee par le runtime est retenue dans le resume
+  - sont exclus des resumes quiz: tentatives `CANCELLED`, `EXPIRED`, tentatives d'un round `SKIPPED`, et tentatives d'un round rouvert tant que ce round n'est pas de nouveau cloture
+  - `aggregated_evaluation_score` = somme des scores de synthese retenus par entretien; `aggregated_evaluation_score_percent` = somme obtenue / somme possible * 100
+  - l'agregation evaluation se fait a partir d'un resume par entretien / round, jamais par simple somme brute de toutes les soumissions evaluateur; seules les soumissions `VALIDATED` et les entretiens clos sont retenus
+- politique de transition des `quizToken`:
+  - le `applications.quiz_token` legacy reste accepte uniquement pendant la transition, en etant backfille vers une `application_quiz_attempt` historique unique pour chaque candidature mono-quiz existante
+  - tout nouveau lien public de quiz doit etre emis sur `application_quiz_attempt.quiz_token`, jamais sur `applications.quiz_token`
+  - un token doit identifier une tentative unique; si une tentative est reinitialisee ou remplacee, l'ancien token devient invalide
+  - un token rattache a une tentative `COMPLETED`, `EXPIRED`, `CANCELLED` ou a une candidature abandonnee ne doit plus autoriser d'ecriture quiz
+- endpoints / jobs / surfaces impactes identifies avant implementation:
+  - backend public `ApplicationsController`: `/applications/verify-email`, `/applications/get-quiz`, `/applications/save-quiz-answer`, `/applications/complete-quiz`, `/applications/touch-quiz`, `/applications/progress`, `/applications/track`, `/applications/respond-interview`, `/applications/submit-ask`
+  - backend recrutement / runtime: `InterviewsController` (`create`, `update`, `finish`), `PipelineTemplateController`, `PipelineStageController`, `InterviewParticipantController`, `CandidateInterviewController`, `MailLogController`
+  - securite / exposition publique: `SecurityConfig` doit etre aligne avec les futurs endpoints publics de tentative quiz et ne doit plus s'appuyer implicitement sur `candidateanswer/**` comme surface de compatibilite quiz
+  - batch / scheduler impacte: `ApplicationsBusiness.abandonInactiveQuizApplications()` tourne deja toutes les minutes sur `applications.quiz_status = STARTED` et devra pivoter vers `application_quiz_attempt`
+  - frontend impacte: `quizapp_front/src/app/core/services/application.service.ts`, `quizapp_front/src/app/pages/quiz/quiz.ts`, `quizapp_front/src/app/pages/track-application/track-application.ts`
+  - scripts / contrats a garder alignes: migrations Flyway sous `quizapp/src/main/resources/db/migration/`, `POSTMAN_API_GUIDE.md`, collections Postman `src/main/resources/json/rest_api.postman_collection*.json`
+- statut des champs transitoires:
+  - `interviews.campaign_id` est conserve comme denormalise transitoire controle jusqu'en phase E, avec coherence obligatoire vis-a-vis de `application_progress -> application -> campaign`; il n'est pas une source de verite cible
+  - `candidate_interview.interview_start` et `candidate_interview.interview_duration` restent des snapshots transitoires tant que les flux publics et dashboards existants les lisent encore; pendant la migration ils doivent etre resynchronises depuis `interviews` et cesser d'etre traites comme source officielle
 
 Fichiers cartographie lies:
 
@@ -482,20 +522,24 @@ Fichiers cartographie lies:
 
 ### Phase A - Ajouter le schema cible sans casser l'existant
 
+Implementation SQL:
+
+- `quizapp/src/main/resources/db/migration/V1_060__add_multi_occurrence_phase_a_schema.sql`
+
 Checklist:
 
-- [ ] creer `application_quiz_attempt`
-- [ ] creer `pipeline_stage_notification_rule`
-- [ ] creer `evaluation_grid_template`, `evaluation_grid_template_version` et `evaluation_grid_template_item`
-- [ ] creer `pipeline_stage_evaluation_criterion`
-- [ ] creer `evaluation_item`
-- [ ] creer `audit_event`
-- [ ] ajouter `application_progress_id` nullable dans `interviews` et `decisions`
-- [ ] ajouter `application_quiz_attempt_id` nullable dans `candidate_answer`
-- [ ] enrichir `application_progress` pour validation, skip et reouverture
-- [ ] enrichir `applications` pour pointeurs courants, resumes derives et contexte d'abandon
-- [ ] enrichir `candidate_interview`, `interview_participant`, `evaluations` et `mail_log`
-- [ ] poser les index, contraintes de coherence et valeurs par defaut minimales sans encore supprimer les colonnes legacy
+- [x] creer `application_quiz_attempt`
+- [x] creer `pipeline_stage_notification_rule`
+- [x] creer `evaluation_grid_template`, `evaluation_grid_template_version` et `evaluation_grid_template_item`
+- [x] creer `pipeline_stage_evaluation_criterion`
+- [x] creer `evaluation_item`
+- [x] creer `audit_event`
+- [x] ajouter `application_progress_id` nullable dans `interviews` et `decisions`
+- [x] ajouter `application_quiz_attempt_id` nullable dans `candidate_answer`
+- [x] enrichir `application_progress` pour validation, skip et reouverture
+- [x] enrichir `applications` pour pointeurs courants, resumes derives et contexte d'abandon
+- [x] enrichir `candidate_interview`, `interview_participant`, `evaluations` et `mail_log`
+- [x] poser les index, contraintes de coherence et valeurs par defaut minimales sans encore supprimer les colonnes legacy
 
 Fichiers cartographie lies:
 
@@ -505,16 +549,24 @@ Fichiers cartographie lies:
 
 ### Phase B - Backfill et controles de coherence
 
+Implementation SQL:
+
+- `quizapp/src/main/resources/db/migration/V1_061__backfill_multi_occurrence_phase_b.sql`
+
+Sortie des cas a arbitrer:
+
+- journalisation dans `audit_event` avec des actions `PHASE_B_*` pour les rattachements non deterministes ou les incoherences legacy detectees
+
 Checklist:
 
-- [ ] rattacher chaque entretien existant a la bonne ligne `application_progress`
-- [ ] rattacher chaque decision existante a la bonne ligne `application_progress`
-- [ ] creer une `application_quiz_attempt` historique pour chaque candidature qui n'a connu qu'un quiz legacy
-- [ ] renseigner `candidate_answer.application_quiz_attempt_id`
-- [ ] backfiller `current_application_progress_id`, `last_progressed_at` et `abandoned_from_application_progress_id` quand l'information est reconstructible
-- [ ] recalculer une premiere fois les resumes `aggregated_quiz_*` et `aggregated_evaluation_*`
-- [ ] verifier les coherences `application_quiz_attempt.application_id` / `application_progress_id`, `interviews.application_progress_id` / `campaign_id`, `candidate_interview` / `interview`
-- [ ] sortir une liste de cas ambigus a arbitrer manuellement avant toute bascule de lecture ou d'ecriture
+- [x] rattacher chaque entretien existant a la bonne ligne `application_progress`
+- [x] rattacher chaque decision existante a la bonne ligne `application_progress`
+- [x] creer une `application_quiz_attempt` historique pour chaque candidature qui n'a connu qu'un quiz legacy
+- [x] renseigner `candidate_answer.application_quiz_attempt_id`
+- [x] backfiller `current_application_progress_id`, `last_progressed_at` et `abandoned_from_application_progress_id` quand l'information est reconstructible
+- [x] recalculer une premiere fois les resumes `aggregated_quiz_*` et `aggregated_evaluation_*`
+- [x] verifier les coherences `application_quiz_attempt.application_id` / `application_progress_id`, `interviews.application_progress_id` / `campaign_id`, `candidate_interview` / `interview`
+- [x] sortir une liste de cas ambigus a arbitrer manuellement avant toute bascule de lecture ou d'ecriture
 
 Fichiers cartographie lies:
 
@@ -527,12 +579,69 @@ Fichiers cartographie lies:
 Checklist:
 
 - [ ] faire lire la chronologie candidat depuis `application_progress` et les objets de round lies
-- [ ] faire lire le quiz public depuis `application_quiz_attempt` et non plus depuis un quiz global de candidature
+- [x] faire lire le quiz public depuis `application_quiz_attempt` et non plus depuis un quiz global de candidature
 - [ ] faire lire les ecrans candidats / detail candidat a partir des resumes recalcules et des objets runtime, pas des snapshots legacy
 - [ ] faire lire les entretiens et les decisions depuis `application_progress_id`
 - [ ] faire lire les evaluations depuis `evaluations` + `evaluation_item` + `interview_participant`
 - [ ] faire renvoyer par `applications/track` et les flux publics des actions deja resolues sur l'occurrence precise concernee
 - [ ] conserver au besoin un fallback temporaire de lecture legacy uniquement pour les dossiers encore non backfilles
+
+Statut d'implementation:
+
+- backend pose sur `ApplicationsBusiness.getQuizForApplication`: resolution d'une tentative via `application_quiz_attempt.quiz_token`, lecture du `form_version` et des `candidate_answer` par tentative avec fallback legacy par `application_id`
+- contrat public conserve: les endpoints et le JSON restent compatibles, avec exposition additionnelle de `applicationQuizAttemptId` et `applicationProgressId` dans la charge utile du quiz
+- detail candidature admin: l'onglet des reponses groupe maintenant les `candidate_answer` par `applicationQuizAttemptId` pour distinguer visuellement les tentatives et isoler le bloc legacy sans tentative explicite
+- detail candidature admin: le meme endpoint `candidateanswer/getAllByCriteria` remonte maintenant le statut, la correction manuelle, le score et les horodatages de `application_quiz_attempt`, ce qui rend les groupes de tentative lisibles sans nouvelle API dediee
+- admin candidature: une action `applications/custom` permet maintenant de creer une nouvelle `application_quiz_attempt`, de remettre le resume quiz sur cette occurrence et de copier le lien public `/quiz/{applicationId}/{quizToken}` depuis l'ecran de detail
+- detail candidature admin: la candidature recharge maintenant un resume typé de ses `application_quiz_attempt`, ce qui affiche aussi les tentatives encore vides et permet de recopier a posteriori chaque lien quiz deja genere
+- detail candidature admin: la tentative quiz explicite la plus recente est aussi mise en avant au niveau du resume de la candidature, avec statut, correction, score, activite et copie du lien courant sans devoir ouvrir d'abord l'onglet des reponses
+- liste candidatures admin: le tableau reflète maintenant le quiz courant via le miroir `applications.*` (statut, score/correction et copie du lien public courant), ce qui évite d'ouvrir chaque ligne pour identifier l'occurrence quiz active
+- detail candidature admin: l'onglet des entretiens remonte maintenant `interviewDate` et `interviewStatus` depuis `CandidateInterviewDto`, trie les occurrences par priorite métier et met en avant l'entretien courant directement dans le resume de la candidature
+- liste candidatures admin: le miroir `applications.interviewDate` / `applications.interviewStatus` est maintenant resynchronise depuis les flux entretien (create/update/delete/finish/reponse candidat), ce qui permet d'afficher l'entretien courant directement dans le tableau sans charger le detail
+- detail candidature admin: `CandidateInterviewDto` remonte maintenant aussi les metriques d'evaluation de `Interviews` (`evaluationScore`, `evaluationNumber`, `evaluationPercentage`), ce qui permet d'afficher l'evaluation courante de l'entretien courant dans le resume candidature et dans l'onglet Entretiens
+- liste candidatures admin: `applications.*` porte maintenant aussi le miroir de l'evaluation de l'entretien courant (`currentInterviewEvaluationScore`, `currentInterviewEvaluationNumber`, `currentInterviewEvaluationPercentage`), resynchronise sur les flux entretien et reponse candidat, ce qui permet d'afficher l'evaluation courante directement dans le tableau
+- public `applications/track`: chaque entretien renvoie maintenant aussi `applicationProgressId` et les metadonnees de stage (`pipelineStageId`, `pipelineStageType`, `pipelineStageLabel`, `pipelineStageOrder`), puis l'ecran public trie ces cartes par ordre d'occurrence pipeline avant fallback sur la date; un candidat peut donc rattacher chaque invitation / reponse au bon round `INTERVIEW` meme si plusieurs occurrences existent
+- public `applications/track`: les reponses candidat d'entretien lisent maintenant le statut persistant `candidate_interview.candidate_response_status` (avec fallback legacy sur `declineReason` / `alternativeDateRequested`), exposent aussi `respondedAt`, ferment `canRespond` des qu'une occurrence est deja resolue (`ACCEPTED`, `DECLINED`, `RESCHEDULE_REQUESTED`), et `InterviewsBusiness.resetCandidateInterviewResponse(...)` remet explicitement cette occurrence a `PENDING` quand un nouveau creneau est repropose
+- public `applications/track`: le contrat d'entretien distingue maintenant explicitement `candidateInterviewId` (ID du lien candidat / occurrence a poster sur `respond-interview`) et `interviewId` (ID metier de l'entretien), ce qui retire l'ambiguite precedente autour du champ generique `id` tout en gardant ce dernier pour compatibilite
+- public `applications/track`: un objet `quiz` explicite maintenant aussi la tentative publique courante (`applicationQuizAttemptId`, `applicationProgressId`, `quizToken`, statut, contexte de stage) avec une selection occurrence-aware priorisant une tentative `STARTED` ou `PENDING`, puis la page `/suivre-candidature` affiche un CTA de reprise vers `/quiz/:applicationId/:quizToken` seulement quand cette tentative est encore actionnable
+- liste/detail candidatures admin: `applications.*` porte maintenant aussi le miroir de la preselection courante (`currentPreselectionDecisionType`, `currentPreselectionDecisionDate`), recalcule depuis la derniere decision de preselection non annulee sur les flux create/update/delete/cancel de `DecisionBusiness`, ce qui permet d'afficher la preselection courante sans charger une API enfant dediee
+- liste/detail candidatures admin: `applications.*` porte maintenant aussi le miroir de la decision finale courante (`currentFinalDecisionType`, `currentFinalDecisionDate`), recalcule depuis la derniere decision finale non annulee sur les flux create/update/delete/cancel de `DecisionBusiness`, ce qui permet d'afficher la decision finale courante sans charger une API enfant dediee
+- liste/detail candidatures admin: `applications.*` porte maintenant aussi le miroir de l'etape pipeline courante (`currentPipelineStageType`, `currentPipelineStageLabel`, `currentPipelineProgressStatus`), aligne sur la meme regle que `ApplicationProgressBusiness.getCurrentStage(...)` (`IN_PROGRESS`, sinon premiere `PENDING`) et resynchronise depuis les mutations `application_progress`, ce qui permet de voir l'etape courante sans charger le pipeline enfant
+- detail candidature admin: l'ecran charge maintenant aussi l'historique `Decision` par candidature via `DecisionService.getDecisionsByApplicationId(...)`, expose un onglet `Decisions` trie du plus recent au plus ancien, remonte `applicationProgressId` depuis le backend et rattache chaque decision a son occurrence `application_progress` chargee dans le meme detail, ce qui rend visibles les rounds de preselection / decision finale et la ligne courante sans passer par la page dashboard dediee
+- dashboard decisions: la timeline runtime remonte maintenant aussi `decisionMode`, `justification` et `cancelsDecisionId`, envoie `pipelineStageId` / `applicationProgressId` sur les creations et annulations, puis affiche l'occurrence cible et la lignée d'annulation directement dans l'historique
+- dashboard decisions: les actions de decision passent maintenant par une vraie modal de justification au lieu d'un `prompt`, avec justification requise pour une annulation historisee et fermeture clavier (`Escape`) alignee sur le reste de l'ecran
+- backend decisions: `DecisionBusiness` impose maintenant aussi la `justification` pour toute decision critique (`CANCEL`, `OVERRIDE`, `ROLLBACK`), ce qui retire la dependance a la seule validation front pour l'audit
+- backend decisions: `DecisionBusiness.update(...)` refuse maintenant aussi la mutation des ancrages historises (`isCancel`, `decisionMode`, `pipelineStageId`, `applicationProgressId`, `cancelsDecisionId`) et, pour une ligne d'annulation, verrouille aussi `applicationId`, `userId` et `decisionType`; l'API n'accepte donc plus de retargeter une decision historisee hors du flux metier dedie
+- backend decisions: le endpoint `update` accepte maintenant aussi de vraies mises a jour partielles; il ne reapplique plus les validations de creation (`decisionType`, `isCancel`, `applicationId`, `userId`) quand ces champs ne sont pas fournis, resolve les permissions sur la candidature existante si besoin, et n'evalue les champs immuables que lorsqu'ils sont explicitement presents dans la requete
+- backend decisions: `DecisionBusinessTest` couvre maintenant explicitement deux non-regressions sur `update(...)`: une annulation historisee peut etre corrigee avec un payload partiel `id + justification`, tandis qu'une tentative de retargeting de `applicationProgressId` reste refusee cote serveur
+- crud generique `entities-decisions`: la creation brute est maintenant limitee aux decisions standard et renvoie les annulations historisees vers le dashboard metier, tout en laissant la `justification` editable sur les lignes existantes
+- crud generique `entities-decisions`: le tableau et le panneau detail rendent maintenant aussi `decisionMode`, `applicationProgressId`, `cancelsDecisionId` et un apercu de `justification`, ce qui rend la lecture des decisions occurrence-aware possible meme hors dashboard metier
+- crud generique `entities-decisions`: le panneau de filtres avances et le backend `getByCriteria` savent maintenant aussi filtrer par `decisionMode`, `pipelineStageId`, `applicationProgressId`, `cancelsDecisionId`, `isCancel` et texte de `justification`, tandis que la recherche rapide couvre egalement `decisionMode` et `justification`
+- crud generique `entities-decisions`: le panneau detail partage est maintenant entierement en lecture seule sur cette entite, et toute modification passe par la modal dediee de la ligne; on evite ainsi l'edition inline des champs sensibles d'une decision historisee hors du dashboard metier
+- crud generique `entities-decisions`: dans la modal d'edition, une ligne `isCancel=true` ne laisse plus modifier que la `justification`; `applicationId`, `userId` et `decisionType` restent verrouilles pour ne pas deformer une annulation historisee
+- crud generique `entities-decisions`: une ligne `isCancel=true` envoie maintenant un payload d'update minimal (`id`, `justification`) au backend, ce qui aligne la surface admin avec le nouveau contrat de mise a jour partielle
+- crud generique `entities-decisions`: une spec Angular dediee verrouille maintenant ce contrat front, en couvrant a la fois le payload minimal des annulations historisees et la conservation d'un payload complet pour une decision standard
+- dashboard metier `decisions`: une spec Angular dediee verrouille maintenant aussi les payloads de creation, avec un chemin `STANDARD` ancre sur `applicationProgressId` pour la decision courante et un chemin `CANCEL` historise qui renseigne `cancelsDecisionId` plus une `justification` trimmee
+- dashboard metier `decisions`: cette spec couvre maintenant aussi la garde de la modal d'annulation; en mode `UNDO`, aucune requete `createDecision` ne part tant que la `justification` reste vide
+- backend API `DecisionController`: un test controller HTTP verrouille maintenant le contrat JSON partiel de `/decisions/update`, en verifiant qu'un payload `datas:[{id, justification}]` traverse bien l'endpoint sans reintroduire les champs omis
+- backend API `DecisionController`: la couverture controller verrouille maintenant aussi le chemin d'erreur courant de `/decisions/update`; quand le backend remonte `hasError=true`, l'endpoint conserve le contrat HTTP existant (`200` + payload d'erreur inchangé)
+- backend API `DecisionController`: le meme niveau de couverture verrouille maintenant aussi `/decisions/create` pour une annulation historisee, en verifiant qu'un payload `CANCEL` conserve `applicationProgressId`, `decisionMode`, `cancelsDecisionId` et `justification` jusqu'a la delegation controller
+- backend API `DecisionController`: la couverture controller verrouille maintenant aussi les trois sorties d'erreur de `/decisions/create`; si la creation remonte une erreur metier, ou si elle revient sans aucune ligne creee (liste vide ou `null`), l'endpoint repond bien en `400 Bad Request`
+- shared `EntityDetailPanel`: les `detailFields` peuvent maintenant fournir un libelle calcule par champ, ce qui permet d'afficher dans le panneau detail des references metier lisibles (`Candidature`, `Occurrence`, `Decision annulee`) au lieu de simples IDs bruts
+- detail candidature admin: l'onglet `Decisions` affiche maintenant aussi `decisionMode`, `justification` et `cancelsDecisionId`, ce qui rend lisibles la decision annulee, l'occurrence ciblee et le commentaire associe directement depuis la fiche candidature
+- detail candidature admin: l'ecran charge maintenant aussi l'historique `ApplicationProgress` par candidature via `ApplicationProgressService.getByApplication(...)`, expose un onglet `Pipeline` ordonne par `stageOrder`, reutilise la meme regle de selection de l'etape courante (`IN_PROGRESS`, sinon premiere `PENDING`) et rend visibles statut, ordre, email envoye, notes et horodatages directement dans le detail candidature
+- detail candidature admin: l'ecran agrege maintenant aussi l'historique `Evaluation` a partir des `candidate_interview` deja charges, appelle `EvaluationService.getEvaluationsByCandidateInterviewId(...)` pour chaque occurrence d'entretien, expose un onglet `Evaluations` trie du plus recent au plus ancien et rend visibles note, commentaire, evaluateur et rattachement a l'entretien courant sans ajouter de nouvel endpoint backend
+- backend runtime: premier vrai slice multi-occurrences livre pour `INTERVIEW`; `V1_066__link_interviews_to_application_progress.sql` ajoute `interviews.application_progress_id`, `InterviewsBusiness` rattache chaque entretien a son `application_progress` courant sur create/update, et la fin d'entretien comme le recalcul d'evaluation resynchronisent desormais l'occurrence exacte au lieu de retomber sur la premiere etape `INTERVIEW` resolue globalement par `stageType`
+- backend runtime: deuxieme slice livre pour `PRESELECTION` / `DECISION`; `DecisionBusiness` n'utilise plus prioritairement `findByTemplateIdAndStageType(...)` pour synchroniser le pipeline et le mail, il prefere desormais le `pipelineStage` exact deja porte par `Decision`, puis l'occurrence courante resolue par `ApplicationProgressBusiness`, et ne retombe sur la resolution singleton de template qu'en dernier filet de retrocompatibilite
+- backend runtime: premier sous-slice livre pour `EVALUATION`; `EvaluationsBusiness` mappe maintenant `interviewParticipant`, `evaluationStatus` et `submittedAt`, rattache automatiquement une evaluation au `interview_participant` de l'acteur quand il existe sur l'entretien courant, et resynchronise le suivi `evaluation_status` / `evaluation_submitted_at` du participant sur create/update/delete
+- front runtime `evaluations`: le dashboard envoie maintenant aussi explicitement `interviewParticipantId` dans les payloads create/update quand `currentUserParticipantId` est connu, ce qui aligne le contrat Angular avec le nouveau write path backend sans depender uniquement de l'inference par `userId`
+- backend API `EvaluationsController`: le create aligne maintenant son contrat HTTP sur `DecisionController`; si la creation remonte `hasError=true`, ou revient sans aucune ligne creee (`null` / vide), l'endpoint repond en `400 Bad Request` au lieu de tenter de construire une reponse `201` invalide
+- backend/runtime pipeline templates: `PipelineStageBusiness` refuse maintenant la creation d'un nouveau stage top-level `EVALUATION` ainsi que la conversion d'une autre etape vers ce type, tout en laissant un ancien stage `EVALUATION` legacy editable tant qu'il conserve ce type; le meme slice corrige aussi `update(...)` pour qu'une omission de `stageType` reste une vraie omission et non une mutation `null`
+- front pipeline templates: `pipeline-template-edit` ne propose plus `EVALUATION` parmi les types intermediaires creables, mais laisse encore visible un ancien stage `EVALUATION` charge depuis un template legacy afin de pouvoir le migrer sans casser l'ecran
+- tests pipeline templates: `PipelineStageBusinessTest` verrouille l'interdiction backend create/update vers `EVALUATION` et la preservation d'un stage legacy deja existant; `pipeline-template-edit.spec.ts` verrouille le retrait de `EVALUATION` des nouveaux choix front tout en gardant visible une occurrence legacy existante
+- tests evaluations runtime: `EvaluationsBusinessTest` verrouille le chemin create normalise du dashboard, en verifiant qu'une evaluation creee par un participant s'ancre sur `interview_participant` et met a jour le suivi de depot de ce participant
+- tests evaluations runtime: `evaluations.spec.ts` verrouille maintenant aussi le contrat front du dashboard, en couvrant create et update avec un payload qui transmet explicitement `candidateInterviewId` + `interviewParticipantId`
+- tests evaluations runtime: `EvaluationsControllerTest` verrouille maintenant aussi le contrat HTTP create/update, en couvrant la transmission JSON de `interviewParticipantId` jusqu'a la delegation controller et les branches `400` du create (`hasError`, items `null`, items vides)
 
 Fichiers cartographie lies:
 
@@ -544,14 +653,60 @@ Fichiers cartographie lies:
 
 Checklist:
 
-- [ ] faire creer chaque nouvelle tentative de quiz sur `application_quiz_attempt` a partir d'un `application_progress` explicite
-- [ ] faire ecrire `save-quiz-answer`, `touch-quiz` et `complete-quiz` sur la tentative et ses reponses dediees
-- [ ] faire creer les entretiens sur `interviews.application_progress_id` et faire vivre la reponse candidat sur `candidate_interview`
-- [ ] faire ecrire les decisions sur `decisions.application_progress_id` avec `decision_mode`, justification et annulation historisee
-- [ ] faire ecrire les evaluations sur `evaluations` + `evaluation_item`, avec suivi par `interview_participant`
-- [ ] faire ecrire les notifications critiques sur `mail_log` avec references de round, et l'audit sur `audit_event`
-- [ ] recalculer ou resynchroniser `applications.*` comme resume derive, sans retransformer ces colonnes en source primaire
-- [ ] bloquer la creation de nouveaux stages `EVALUATION` dans les nouveaux templates
+- [x] faire creer chaque nouvelle tentative de quiz sur `application_quiz_attempt` a partir d'un `application_progress` explicite
+- [x] faire ecrire `save-quiz-answer`, `touch-quiz` et `complete-quiz` sur la tentative et ses reponses dediees
+- [x] faire creer les entretiens sur `interviews.application_progress_id` et faire vivre la reponse candidat sur `candidate_interview`
+- [x] faire ecrire les decisions sur `decisions.application_progress_id` avec `decision_mode`, justification et annulation historisee
+- [x] faire ecrire les evaluations sur `evaluations` + `evaluation_item`, avec suivi par `interview_participant`
+- [x] faire ecrire les notifications critiques sur `mail_log` avec references de round, et l'audit sur `audit_event`
+- [x] recalculer ou resynchroniser `applications.*` comme resume derive, sans retransformer ces colonnes en source primaire
+- [x] bloquer la creation de nouveaux stages `EVALUATION` dans les nouveaux templates
+
+Statut d'implementation:
+
+- backend pose sur `ApplicationsBusiness.saveQuizAnswer`, `touchQuizActivity` et `completeQuiz`: ecriture des `candidate_answer` par `application_quiz_attempt_id`, gestion de l'activite, du temps ecoule, du statut et de la completion sur la tentative quiz
+- creation de la tentative initiale quiz branchee sur `ApplicationsBusiness.verifyEmail`: emission du `quiz_token`, creation de `application_quiz_attempt` et rattachement explicite a l'`application_progress` de stage `QUIZ`
+- initialisation des reponses quiz alignee sur la tentative quand un `quiz_token` pointe vers `application_quiz_attempt`, avec fallback legacy conserve uniquement pour les dossiers historiques deja engages et non encore completement rattaches
+- backend pose sur `ApplicationsBusiness`: la resynchronisation du resume quiz ne force plus `applications.applicationStatus = SUBMITTED`; le helper partage `syncApplicationQuizSummaryFromAttempt(...)` repasse maintenant par `ApplicationProgressBusiness.syncApplicationStatus(...)` pour recalculer `applicationStatus` et `currentPipeline*` depuis `application_progress`, et le CRUD generique `update(...)` n'autorise plus l'ecriture directe de `applicationStatus`, `quizScore` ni des agregats `totalEvaluation*`
+- backend pose sur `ApplicationsBusiness.create(...)`: le mapper de creation n'accepte plus non plus `applicationStatus`, `quizScore` ni `totalEvaluation*` depuis `ApplicationsDto`; ces colonnes restent initialisees ou resynchronisees exclusivement par le runtime (`application_progress`, quiz attempts, evaluations) au lieu d'etre injectables a la creation
+- correction manuelle backend/front alignee sur `applicationQuizAttemptId` quand il est disponible, pour eviter les collisions de scoring ou de carrier sur plusieurs tentatives d'une meme question
+- backend pose sur `DecisionBusiness`: `Decision` mappe maintenant `applicationProgress`, `DecisionDto` expose `applicationProgressId`, et les flux create/update/sync/mail resoudent d'abord l'occurrence `application_progress` exacte avant de retomber seulement sur l'occurrence courante de meme `stageType`; le fallback singleton template `findByTemplateIdAndStageType(...)` a ete retire de ce runtime
+- backend pose sur `DecisionBusiness`: `Decision` mappe maintenant aussi `decisionMode`, `justification` et `cancelsDecision`, les creations de decision sont sauvegardees avant resynchronisation, les annulations historisees ciblent explicitement la decision annulee, rouvrent l'etape via `ApplicationProgressBusiness.rollbackStage(...)`, et les resumes courants ignorent desormais les decisions neutralisees par une ligne `CANCEL`
+- backend pose sur `mail_log`: `MailLog`, `MailLogService` et `HostingUtils` supportent maintenant `applicationId`, `applicationProgressId`, `interviewId`, `decisionId`, `eventCode` et `requiresConfirmation`; les invitations d'entretien, emails de decision, email de verification candidature et email de resultat `candidate_ask` injectent deja ce contexte pour journaliser l'execution sur l'application et, quand elle est resolvable, sur l'occurrence pipeline courante. Les derniers `sendEmail(...)` sans contexte observes a ce stade sont l'invitation d'inscription admin (`InvitationCodeBusiness`) et le mail de test SMTP (`SmtpConfigBusiness`), hors perimetre runtime candidat de cette phase
+- backend pose sur `audit_event`: le socle JPA/service existe maintenant; `DecisionBusiness` emet des evenements `DECISION_CREATED`, `DECISION_UPDATED`, `DECISION_DELETED`, `DECISION_CANCELLED`, `DECISION_OVERRIDDEN` ou `DECISION_ROLLED_BACK`, `EvaluationsBusiness` emet `EVALUATION_CREATED`, `EVALUATION_UPDATED` et `EVALUATION_DELETED`, `InterviewsBusiness` emet `INTERVIEW_CREATED`, `INTERVIEW_UPDATED`, `INTERVIEW_DELETED` et `INTERVIEW_FINISHED`, et `CandidateAskBusiness` emet maintenant aussi `CANDIDATE_ASK_APPROVED` / `CANDIDATE_ASK_REJECTED`; tous ces evenements portent `application_id`, un `application_progress_id` quand il est resolvable, et des snapshots avant/apres du runtime touche, ce qui couvre maintenant les mutations metier critiques branchees dans cette phase D
+- backend pose sur `EvaluationsBusiness`: `Evaluations` mappe maintenant aussi `interviewParticipant`, `evaluationStatus` et `submittedAt`; si l'acteur courant est present dans `interview_participant` pour l'entretien cible, la creation ou mise a jour d'evaluation rattache desormais explicitement cette ligne et resynchronise `interview_participant.evaluation_status` / `evaluation_submitted_at`
+- backend pose sur `EvaluationsBusiness`: quand le payload fournit `evaluationItems[*].pipelineStageEvaluationCriterionId`, create/update ecrivent maintenant un premier detail par critere dans `evaluation_item`, avec validation du `pipeline_stage` courant et snapshots `weight_snapshot` / `max_score_snapshot`; la suppression d'une evaluation marque aussi ses lignes `evaluation_item` comme supprimees
+- backend pose sur `EvaluationsBusiness`: la lecture enrichie charge maintenant aussi `evaluation_item` meme quand `getByCriteria` retourne plusieurs evaluations, ce qui ouvre un premier vrai read path backend pour les listes d'evaluations et plus seulement pour une lecture unitaire
+- backend pose sur `EvaluationsBusiness`: `evaluationItems` devient maintenant un set autoritaire a l'update; quand le payload envoie une liste vide ou retire un critere, les anciennes lignes `evaluation_item` absentes du payload sont marquees supprimees, ce qui evite de conserver des details obsoletes apres edition
+- backend pose sur `EvaluationsController`: `/evaluations/create` refuse maintenant les reponses metier invalides sans item cree, les tests controller verrouillent la deserialisation HTTP de `evaluationItems[*]` sur create/update, et un nouvel endpoint `/evaluations/getCriteria` expose les criteres du stage courant a partir du `candidateInterviewId`
+- front pose sur `dashboard/evaluations`: `EvaluationService` expose maintenant `interviewParticipantId`, et `submitEvaluation` / `saveEditEvaluation` l'ajoutent au payload quand `currentUserParticipantId` est resolu depuis le roster d'entretien
+- front pose sur `dashboard/evaluations`: les evaluations chargees remontent maintenant `evaluationItems` jusque dans les messages du chat et affichent en lecture seule le detail critere (label, valeur, note) quand le backend le renvoie
+- front pose sur `dashboard/evaluations`: l'ecran charge aussi les criteres du stage via `/evaluations/getCriteria`, initialise des drafts create/edit par critere et envoie maintenant `evaluationItems` sur create/update; des qu'une grille comporte des criteres scorables, le score global `candidateMark` est maintenant derive de ces items dans le payload et affiche comme score derive, avec fallback manuel conserve uniquement pour les grilles sans score
+- front pose sur `dashboard/evaluations-list`: la liste des entretiens evaluables resolve maintenant aussi les `candidateInterview`, recharge les evaluations de chaque round et affiche sur chaque carte un premier apercu de la derniere soumission (nombre de soumissions, score derive, premiers criteres) au lieu de rester limitee aux seuls agregats `evaluationScore` / `evaluationPercentage`
+- front pose sur `dashboard/evaluations-list`: la page croise maintenant aussi `interviewParticipant` et `user` pour afficher, sur chaque carte, le roster des evaluateurs et leur etat reel de soumission (`Soumis`, `Termine`, `En ligne`, `Assigne`) au lieu de reduire le suivi a un simple compteur global
+- backend/front pose sur `interviews`: le DTO d'entretien remonte maintenant aussi `applicationProgressId` et les metadonnees de son stage pipeline (`pipelineStageId`, `pipelineStageType`, `pipelineStageLabel`, `pipelineStageOrder`), ce qui permet aux vues front de se rattacher au bon `application_progress` sans remapping heuristique
+- backend/front pose sur `interviews` + `dashboard/evaluations-list`: le contrat d'entretien remonte maintenant aussi `interviewRound`, calcule cote backend a partir des occurrences d'entretien d'une meme candidature; la liste n'a donc plus besoin de reconstituer localement le round ni de faire un fetch auxiliaire `applicationProgress.byApplication` pour afficher le contexte exact de la carte
+- backend data repair: `V1_067__backfill_missing_legacy_pipeline_runtime.sql` reconstruit aussi le runtime manquant des candidatures legacy ignorees par `V1_010` (lignes `application_progress`, tentative `application_quiz_attempt`, rattachement `candidate_answer.application_quiz_attempt_id`, reliaison `interviews.application_progress_id`, recomputation des miroirs d'etape courante), ce qui ferme le trou des seeds locales qui n'avaient jamais bascule vers la chronologie pipeline
+- front pose sur `dashboard/interviews`: la page de gestion des entretiens affiche maintenant elle aussi le contexte d'occurrence directement depuis `InterviewService` (`interviewRound`, `pipelineStageLabel`, `applicationProgressId`) sur les cartes, le panneau detail et la vue calendrier jour, ce qui retire l'ambiguite visuelle entre plusieurs rounds `INTERVIEW` d'une meme candidature
+- front pose sur `dashboard/interview-create`: le selecteur des candidatures a planifier prefere maintenant `applications.currentPipelineStageType/currentPipelineProgressStatus` pour n'exposer que la vraie occurrence runtime `INTERVIEW` sans entretien courant deja resume, ne retombe sur `applicationStatus = PRE_SCREEN_ACCEPTED` qu'en filet de retrocompatibilite quand aucun miroir runtime n'est encore disponible, et affiche sur chaque carte candidate le contexte de lecture utilise (`Entretien` / `En attente`, ou fallback legacy explicite)
+- front pose sur `dashboard/entities/solo/interviews`: le CRUD generique des entretiens rend maintenant aussi le contexte pipeline de la ligne (`interviewRound`, `pipelineStageLabel`, `applicationProgressId`) dans le tableau et le panneau detail, ce qui aligne la lecture admin technique avec les vues metier deja occurrence-aware
+- front pose sur `dashboard/entities/solo/interviews`: l'onglet enfant `Candidats` lit maintenant aussi `candidateInterview.interviewDate`, `interviewStatus`, `declineReason` et `alternativeDateRequested`, ce qui remonte un vrai etat de reponse candidat par occurrence d'entretien au lieu d'un simple lien technique `applicationId + interviewStart`
+- front pose sur `dashboard/entities/solo/applications`: quand les enfants runtime sont deja charges, les résumés courants d'entretien, d'évaluation et d'étape pipeline preferent maintenant `candidateInterview` / `applicationProgress` aux miroirs `applications.interview*`, `currentInterviewEvaluation*` et `currentPipelineStage*`, ce qui reduit encore la dependance aux snapshots legacy dans la vue admin candidature
+- front pose sur `dashboard/entities/solo/applications`: les résumés courants de pré-sélection et de décision finale preferent maintenant aussi les `decisions` runtime chargées, et ignorent une décision explicitement annulée au lieu de la faire réapparaître via `currentPreselectionDecision*` ou `currentFinalDecision*`
+- front pose sur `dashboard/entities/solo/applications`: la colonne `quiz courant` prefère maintenant la tentative runtime chargée (statut, score, correction manuelle, token de lien) au miroir `applications.quiz*`, ce qui retire un autre snapshot mono-occurrence du tableau admin candidature
+- front pose sur `dashboard/entities/solo/applications`: le badge de statut global affiché dans le tableau est maintenant dérivé du runtime courant (décision finale, étape entretien, pré-sélection, quiz) avant fallback sur `applicationStatus`, ce qui réduit encore la portée métier du miroir legacy
+- front pose sur `dashboard/decisions`: le panneau d’étape recharge maintenant `quizAttempts` et `candidateInterview` à la sélection d’une candidature, puis préfère ces valeurs runtime pour le score du quiz, la date / le statut d’entretien et le score d’évaluation au lieu de laisser les miroirs `Application` dominer la lecture
+- front pose sur `dashboard/decisions`: les badges de statut candidat, les compteurs de header et les filtres `En attente` / `Pré-sélectionnés` / `Décisions finales` dérivent maintenant d'abord du runtime courant (`application_progress` chargé, puis `currentPreselectionDecisionType` / `currentFinalDecisionType` / `currentPipelineStage*`) avant fallback sur `applicationStatus`, ce qui évite de reclasser une candidature au mauvais bucket quand le snapshot legacy a divergé
+- front pose sur `dashboard/candidates`: chaque carte recharge maintenant aussi `quizAttempts` et `candidateInterview` par candidature, prefere ces valeurs runtime pour le quiz courant, le score courant, l'entretien courant et l'évaluation courante, et le CTA `Planifier` ne s'ouvre plus que sur une vraie étape pipeline `INTERVIEW` runtime courante (`active` ou `pending`), sans retomber sur `applicationStatus`, `interviewDate` ni sur le fallback visuel de fin de pipeline
+- front pose sur `dashboard/candidates`: la carte de stats `En attente` ne compte plus seulement `applications.applicationStatus === PENDING`; elle suit maintenant l'etape pipeline courante marquee `pending` quand le runtime de progression est charge, avec fallback legacy seulement avant resolution locale du pipeline
+- front pose sur `dashboard/candidates`: quand la campagne n'a pas encore resolu ses `PipelineStage[]`, le pipeline compact fallback de la carte lit maintenant `application_progress.stageOrder`, `stageType` et `progressStatus` pour ses dots et son libelle au lieu de retomber tout de suite sur le triplet legacy calcule depuis `applicationStatus`
+- front pose sur `dashboard/evaluations-list`: pour les cartes `OVER` ayant deja des soumissions rechargees, le resume principal bascule maintenant vers une synthese calculee sur les evaluations reelles (moyenne derivee `/100`, dernier score, nombre de soumissions) avec fallback legacy seulement quand aucun detail de soumission n'est disponible
+- front pose sur `dashboard/entities/applications`: l'onglet enfant `Evaluations` remonte maintenant aussi les `evaluationItems` de chaque evaluation, recalcule localement le score affiche a partir des criteres scorables quand ils existent, et expose le detail label/valeur/note par critere au lieu de rester limite au seul couple score/commentaire
+- backend/front pose sur l'edition de template pipeline: les nouveaux templates ne peuvent plus ajouter de stage top-level `EVALUATION`; le garde-fou est maintenant double (blocage UI dans `pipeline-template-edit` et refus backend dans `PipelineStageBusiness`), avec preservation minimale des stages legacy deja presents pour migration
+- backend pose sur `EvaluationsBusiness`: le recalcul des agregats apres create/update/delete resynchronise maintenant aussi le resume derive `applications.interviewDate`, `applications.interviewStatus` et `applications.currentInterviewEvaluation*` a partir de l'entretien courant selectionne avec la meme priorite multi-occurrence que les autres surfaces runtime, au lieu de laisser ces miroirs figes jusqu'a une prochaine mutation d'entretien
+- `applications.*` reste temporairement mis a jour comme resume derive miroir du runtime de tentative pour conserver la compatibilite des usages legacy existants
+- reste ouvert sur `EVALUATION`: `evaluation_item` dispose maintenant d'un premier write path, d'un premier read path backend, d'un endpoint de criteres, d'une saisie/edition front qui derive deja `candidateMark` des criteres scorables sur create/update, d'une projection admin dans `dashboard/entities/applications` et d'une liste `dashboard/evaluations-list` qui affiche deja round explicite, etat evaluateur et resume principal depuis les soumissions reelles, mais l'agregation reste encore limitee aux evaluations rechargees localement et toutes les vues admin/listes ne sont pas encore reconstruites autour de ce detail; ce slice ne ferme donc pas encore la case complete du write/read path evaluation
+- reste ouvert: les vues admin de consultation restent encore majoritairement chargees par `application_id` et non encore recomposees par round explicite, meme si la mutation de correction sait maintenant cibler une tentative
 
 Fichiers cartographie lies:
 
@@ -592,13 +747,15 @@ Fichiers cartographie lies:
 - dashboard: `cartographie-fonctionnelle-front/dashboard/20-dashboard-candidates.md`, `cartographie-fonctionnelle-front/dashboard/21-dashboard-candidate-detail.md`, `cartographie-fonctionnelle-front/dashboard/25-dashboard-decisions.md`, `cartographie-fonctionnelle-front/dashboard/30-dashboard-interviews.md`, `cartographie-fonctionnelle-front/dashboard/35-dashboard-evaluations.md`
 - public: `cartographie-fonctionnelle-front/public/30-suivre-candidature.md`, `cartographie-fonctionnelle-front/public/80-quiz-public.md`
 
-## 12. Arbitrages encore a figer
+## 12. Arbitrages figes pour demarrage
 
-- faut-il imposer techniquement l'unicite des libelles de stages actifs dans un template
-- faut-il rendre les pipelines strictement non modifiables des qu'une campagne ouverte les utilise
-- quelle politique appliquer si le pipeline d'une campagne change alors que des candidatures ont deja produit quiz, decisions et entretiens
-- comment modeliser le rollback fonctionnel: reouverture d'une ancienne etape, conservation des etapes intermediaires cloturees, ou reset partiel
-- faut-il conserver `mail_log` comme seule table d'execution email enrichie, ou introduire une table metier distincte pour les notifications de pipeline
+- il ne faut pas imposer d'unicite technique sur les libelles de stages actifs; l'identite du round reste portee par `pipeline_stage.id`, l'ordre et le contexte template, pas par un libelle unique
+- un pipeline utilise par une campagne ouverte doit etre considere comme fige operationnellement; l'evolution passe par duplication / nouvelle version de template, pas par mutation en place
+- si le pipeline d'une campagne change, les candidatures deja engagees restent rattachees a leur structure courante et ne sont pas migrees automatiquement sans procedure de migration explicite
+- le rollback fonctionnel cible est une reouverture controlee d'une ancienne ligne `application_progress`, avec conservation auditable des etapes intermediaires deja cloturees; on ne fait pas de reset global silencieux
+- pour le premier lot d'implementation, `mail_log` reste la table d'execution email enrichie; `audit_event` couvre l'audit transverse, et aucune table supplementaire de notification metier n'est introduite avant d'avoir valide ce socle
+
+A ce stade, aucun arbitrage supplementaire n'est requis pour ouvrir la phase A. Les questions restantes des sections `13` a `15` relevent de details de migration, de nettoyage ou d'evolutions futures, pas d'un blocage d'implementation immediate.
 
 ## 13. Limites residuelles apres evolution
 

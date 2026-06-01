@@ -54,6 +54,12 @@ public class InterviewsDto extends _InterviewsDto implements Cloneable{
     private String     dateModificationA    ;
     private Integer    campaignId           ;
     private Integer    applicationId        ;
+	private Integer    applicationProgressId;
+	private Integer    pipelineStageId      ;
+	private String     pipelineStageType    ;
+	private String     pipelineStageLabel   ;
+	private Integer    pipelineStageOrder   ;
+	private Integer    interviewRound       ;
 
     //----------------------------------------------------------------------
     // ENTITY LINKS FIELD ( RELATIONSHIP )

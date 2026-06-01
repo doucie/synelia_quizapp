@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { EntityCrudBase, ColumnDef } from '../../../../../shared/entity-crud-base';
+import { DetailField } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
 import { EntityDetailPanelComponent } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
 import { DependencyPopupComponent } from '../../../../../shared/dependency-popup/dependency-popup';
 import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
@@ -53,9 +54,30 @@ export class EntitiesInterviewsComponent extends EntityCrudBase<Interview, Inter
     { key: 'type', label: 'Type', priority: 2 },
     { key: 'location', label: 'Lieu / Lien', priority: 3 },
     { key: 'status', label: 'Statut', priority: 2 },
+    { key: 'pipelineContext', label: 'Contexte pipeline', priority: 2 },
+    { key: 'applicationProgressId', label: 'Occurrence', priority: 3 },
     { key: 'campaign', label: 'Campagne', priority: 2 },
     { key: 'application', label: 'Candidature', priority: 2 },
     { key: 'actions', label: 'Actions', priority: 1 },
+  ];
+
+  override detailFields: DetailField[] = [
+    { key: 'id', label: 'ID', type: 'id', editable: false },
+    { key: 'applicationId', label: 'Candidature', type: 'id', editable: false, displayValue: (entity) => this.getApplicationDisplay(entity?.applicationId, entity?.candidateName) },
+    { key: 'campaignId', label: 'Campagne', type: 'id', editable: false, displayValue: (entity) => this.getCampaignDisplay(entity?.campaignId, entity?.campaignTitle) },
+    { key: 'interviewDate', label: 'Date et heure', type: 'text', editable: false, displayValue: (entity) => this.formatDate(entity?.interviewDate) },
+    { key: 'interviewType', label: 'Type', type: 'text', displayValue: (entity) => this.getTypeLabel(entity?.interviewType) },
+    { key: 'interviewStatus', label: 'Statut', type: 'text', displayValue: (entity) => this.getStatusLabel(entity?.interviewStatus) },
+    { key: 'applicationProgressId', label: 'Occurrence pipeline', type: 'id', editable: false, displayValue: (entity) => this.getApplicationProgressDisplay(entity?.applicationProgressId) },
+    { key: 'interviewRound', label: 'Round', type: 'text', editable: false, displayValue: (entity) => this.getInterviewRoundDisplay(entity?.interviewRound) },
+    { key: 'pipelineStageLabel', label: 'Étape pipeline', type: 'text', editable: false, displayValue: (entity) => this.getPipelineStageDisplay(entity) },
+    { key: 'interviewMailSent', label: 'Invitation envoyée', type: 'boolean' },
+    { key: 'interviewLocation', label: 'Lieu', type: 'text' },
+    { key: 'meetLink', label: 'Lien visio', type: 'text' },
+    { key: 'interviewEvaluationsLink', label: 'Lien évaluation', type: 'text', editable: false },
+    { key: 'interviewNote', label: 'Note', type: 'text' },
+    { key: 'createdAt', label: 'Créé le', type: 'date', editable: false },
+    { key: 'updatedAt', label: 'Modifié le', type: 'date', editable: false },
   ];
 
   protected fetchAll(criteria: InterviewSearchCriteria): Observable<PagedInterviewResponse> {
@@ -154,6 +176,167 @@ export class EntitiesInterviewsComponent extends EntityCrudBase<Interview, Inter
       'IN_PERSON': 'En personne'
     };
     return labels[type] || type;
+  }
+
+  getCampaignDisplay(campaignId?: number, campaignTitle?: string): string {
+    if (campaignTitle?.trim()) {
+      return campaignId ? `${campaignTitle.trim()} (#${campaignId})` : campaignTitle.trim();
+    }
+
+    if (!campaignId) {
+      return '-';
+    }
+
+    const campaign = this.allCampaigns().find((item) => item.id === campaignId);
+    const label = campaign?.campaignTitle || campaign?.campaignName;
+    return label ? `${label} (#${campaignId})` : `#${campaignId}`;
+  }
+
+  getApplicationDisplay(applicationId?: number, candidateName?: string): string {
+    if (candidateName?.trim() && applicationId) {
+      return `#${applicationId} - ${candidateName.trim()}`;
+    }
+
+    if (!applicationId) {
+      return '-';
+    }
+
+    const application = this.allApplications().find((item) => item.id === applicationId);
+    if (!application) {
+      return `#${applicationId}`;
+    }
+
+    const fullName = [application.candidateFirstName, application.candidateLastName]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+
+    if (fullName) {
+      return `#${applicationId} - ${fullName}`;
+    }
+
+    return application.candidateEmail ? `#${applicationId} - ${application.candidateEmail}` : `#${applicationId}`;
+  }
+
+  getApplicationProgressDisplay(applicationProgressId?: number): string {
+    return applicationProgressId ? `Occurrence #${applicationProgressId}` : '-';
+  }
+
+  getInterviewRoundDisplay(interviewRound?: number): string {
+    return interviewRound ? `Round ${interviewRound}` : '-';
+  }
+
+  getPipelineStageDisplay(interview?: Partial<Interview> | null): string {
+    if (!interview) {
+      return '-';
+    }
+
+    const label = (interview.pipelineStageLabel || interview.pipelineStageType || '').trim();
+    const suffixParts: string[] = [];
+
+    if (interview.pipelineStageType && interview.pipelineStageType !== interview.pipelineStageLabel) {
+      suffixParts.push(interview.pipelineStageType);
+    }
+
+    if (interview.pipelineStageOrder != null) {
+      suffixParts.push(`ordre ${interview.pipelineStageOrder}`);
+    }
+
+    const suffix = suffixParts.length ? ` (${suffixParts.join(', ')})` : '';
+
+    if (label) {
+      return `${label}${suffix}`;
+    }
+
+    return interview.pipelineStageId ? `#${interview.pipelineStageId}${suffix}` : '-';
+  }
+
+  getInterviewContextDisplay(interview?: Partial<Interview> | null): string {
+    if (!interview) {
+      return '-';
+    }
+
+    const parts = [
+      interview.interviewRound ? this.getInterviewRoundDisplay(interview.interviewRound) : '',
+      interview.pipelineStageLabel || ''
+    ].filter(Boolean);
+
+    return parts.length ? parts.join(' - ') : '-';
+  }
+
+  getCandidateInterviewDateDisplay(candidateInterview?: CandidateInterviewEntity | null): string {
+    const value = candidateInterview?.interviewDate || candidateInterview?.interviewStart;
+    if (!value) {
+      return '-';
+    }
+
+    return value.includes('/') ? value : this.formatDate(value);
+  }
+
+  getCandidateInterviewStatusLabel(status?: string | null): string {
+    return status ? this.getStatusLabel(status) : 'Non répondu';
+  }
+
+  getCandidateInterviewStatusClass(status?: string | null): string {
+    return status ? this.getStatusClass(status) : '';
+  }
+
+  getCandidateResponseState(candidateInterview?: CandidateInterviewEntity | null): 'RESCHEDULE_REQUESTED' | 'DECLINED' | null {
+    if (!candidateInterview) {
+      return null;
+    }
+
+    if (candidateInterview.alternativeDateRequested) {
+      return 'RESCHEDULE_REQUESTED';
+    }
+
+    if (candidateInterview.declineReason) {
+      return 'DECLINED';
+    }
+
+    return null;
+  }
+
+  hasCandidateResponse(candidateInterview?: CandidateInterviewEntity | null): boolean {
+    return this.getCandidateResponseState(candidateInterview) !== null;
+  }
+
+  getCandidateResponseLabel(candidateInterview?: CandidateInterviewEntity | null): string {
+    const state = this.getCandidateResponseState(candidateInterview);
+    if (state === 'RESCHEDULE_REQUESTED') {
+      return 'Demande de replanification';
+    }
+    if (state === 'DECLINED') {
+      return 'Créneau refusé';
+    }
+    return 'Aucune réponse';
+  }
+
+  getCandidateResponseClass(candidateInterview?: CandidateInterviewEntity | null): string {
+    const state = this.getCandidateResponseState(candidateInterview);
+    if (state === 'RESCHEDULE_REQUESTED') {
+      return 'candidate-response-badge candidate-response-badge--warning';
+    }
+    if (state === 'DECLINED') {
+      return 'candidate-response-badge candidate-response-badge--error';
+    }
+    return 'candidate-response-badge';
+  }
+
+  getCandidateResponseDetail(candidateInterview?: CandidateInterviewEntity | null): string {
+    if (!candidateInterview) {
+      return '';
+    }
+
+    if (candidateInterview.alternativeDateRequested) {
+      return `Date demandée: ${candidateInterview.alternativeDateRequested}`;
+    }
+
+    return candidateInterview.declineReason?.trim() || '';
+  }
+
+  getCandidateInterviewDurationDisplay(candidateInterview?: CandidateInterviewEntity | null): string {
+    return candidateInterview?.interviewDuration ? `${candidateInterview.interviewDuration} min` : '';
   }
 
   toggleExpansion(id: number) {

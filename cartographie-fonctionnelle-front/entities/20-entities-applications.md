@@ -16,6 +16,10 @@ La page donne une vue CRUD technique des candidatures avec un panneau d'expansio
 - [x] La page etend `EntityCrudBase`, mais ajoute un niveau metier nettement plus riche que le pattern standard.
 - [x] Les filtres avances couvrent surtout la candidature elle-meme, plus `sourceTokenId` et `formVersionId`.
 - [x] Chaque ligne peut s'ouvrir sur 4 sous-onglets: `Reponses`, `Demandes`, `Tokens`, `Entretiens`.
+- [x] Quand les enfants runtime sont deja charges, les résumés courants d'entretien, d'évaluation et d'étape pipeline préfèrent maintenant `candidateInterview` / `applicationProgress` au miroir `applications.*`.
+- [x] Les résumés courants de pré-sélection et de décision finale préfèrent maintenant les `Decision[]` chargées; une décision explicitement annulée n'est plus réinjectée depuis les miroirs `current*Decision*`.
+- [x] La colonne `quiz courant` préfère maintenant la tentative runtime chargée (`AnswerAttemptGroup` / `applicationQuizAttempt`) pour le statut, le score, l'état de correction et le lien public, au lieu de rester bloquée sur `applications.quiz*`.
+- [x] Le badge de statut global de la ligne est maintenant un statut d'affichage dérivé du runtime courant (décision finale, étape entretien, pré-sélection, quiz) avant de retomber sur `applicationStatus` legacy.
 - [x] Les reponses texte supportent une correction manuelle inline avec commentaire.
 - [x] La correction manuelle depend soit de la permission globale `CORRECT_TEST`, soit de permissions campagne deduites via `EntityPermissionService`.
 - [x] Les demandes candidat affichent type, resume de changement, statut et motif de decision.
@@ -62,6 +66,7 @@ La page donne une vue CRUD technique des candidatures avec un panneau d'expansio
 - `sourceTokenId`
 - `formVersionId` en filtre seulement
 - sous-donnees: `CandidateAnswer[]`, `CandidateAsk[]`, `CandidateToken[]`, `CandidateInterviewEntity[]`
+- sous-donnees runtime additionnelles: `ApplicationProgress[]`, `Decision[]`, `InterviewEvaluationEntry[]`
 - brouillons de correction manuelle: `manualIsCorrect`, `manualCorrectionComment`
 
 ## 6. Services Et Endpoints
@@ -76,6 +81,8 @@ La page donne une vue CRUD technique des candidatures avec un panneau d'expansio
 - chargement des demandes enfants via `CandidateAskService.getAllByCriteria()` -> `POST /candidateAsk/getAllByCriteria`
 - chargement des tokens enfants via `CandidateTokenService.getAllByCriteria()` -> `POST /candidateToken/getAllByCriteria`
 - chargement des entretiens enfants via `CandidateInterviewEntityService.getAllByCriteria()` -> `POST /candidateInterview/getAllByCriteria`
+- chargement des occurrences pipeline via `ApplicationProgressService.getByApplication()` -> `POST /applicationProgress/getByApplication`
+- chargement des evaluations d'entretien detaillees via `EvaluationService.getEvaluationsByCandidateInterviewId()` -> `POST /evaluations/getByCriteria`
 - resolution des permissions campagne via `EntityPermissionService` et services de permissions associes
 - chargement des FK `sourceToken` et `formVersion` via `SourceTokenService` et `FormVersionService`
 
@@ -84,6 +91,8 @@ La page donne une vue CRUD technique des candidatures avec un panneau d'expansio
 - Une reponse `applications/getAllByCriteria` avec `items` et `totalCount` ou `count`.
 - Des candidatures enrichies avec statut, score quiz et etat de correction manuelle.
 - Des sous-endpoints enfants suffisamment stables pour agreger par `applicationId` sans rechargement global trop couteux.
+- Des miroirs `applications.*` compatibles en transition, mais des enfants runtime (`applicationQuizAttempt`, `candidateInterview`, `applicationProgress`, `decision`, evaluations) assez riches pour prendre le relais quand ils sont deja charges.
+- Le badge de statut affiché dans le tableau peut désormais être reconstruit côté front à partir du runtime chargé, sans dépendre exclusivement de `applicationStatus`.
 - Une permission campagne exploitable pour determiner le droit `CORRECT_TEST` au niveau d'une candidature.
 - Une semantique de statut unique entre la liste et la modale d'edition, aujourd'hui partiellement divergente.
 
@@ -118,6 +127,8 @@ La page donne une vue CRUD technique des candidatures avec un panneau d'expansio
 - [ ] supprimer du contrat cartographie les colonnes legacy retirees de `applications` (`quiz_*`, `interview_*`, `total_evaluation_*`, `application_status`)
 - [ ] exposer les nouveaux pointeurs de lecture rapide (`currentApplicationProgressId`, `currentPipelineStageId`, `lastProgressedAt`)
 - [ ] documenter les resumes derives `aggregatedQuizScore*` et `aggregatedEvaluationScore*` comme indicateurs calcules, jamais comme source primaire de verite metier
+- [~] la vue admin prefère deja les enfants runtime charges pour les résumés courants de quiz, d'entretien, d'évaluation, d'étape pipeline, de pré-sélection et de décision finale; les miroirs `applications.*` restent seulement comme compatibilité de transition
+- [~] la vue admin prefère deja les enfants runtime charges pour les résumés courants de quiz, d'entretien, d'évaluation, d'étape pipeline, de pré-sélection, de décision finale et pour le badge de statut affiché; les miroirs `applications.*` restent seulement comme compatibilité de transition
 - [ ] documenter `applicationAbandoned`, `abandonedAt`, `abandonReason` et `abandonedFromApplicationProgressId` comme verrou global de candidature avec contexte d'origine auditable
 - [ ] documenter `application_quiz_attempt` comme enfant dedie de la candidature, distinct des reponses `candidate_answer`
 - [ ] retirer toute ambiguite entre `formVersionId` de candidature et runtime quiz par round

@@ -5,8 +5,9 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Subject, takeUntil, forkJoin } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Application, ApplicationService } from '../../../core/services/application.service';
+import { Application, ApplicationQuizAttemptSummary, ApplicationService } from '../../../core/services/application.service';
 import { CampaignService, Campaign, CampaignAccessRecord } from '../../../core/services/campaign.service';
+import { CandidateInterviewEntity, CandidateInterviewEntityService } from '../../../core/services/candidate-interview-entity.service';
 import { PermissionService } from '../../../core/services/permission.service';
 import { SourceTokenService, SourceToken } from '../../../services/source-token.service';
 import { ClickOutsideDirective } from '../../../directives/click-outside.directive';
@@ -63,6 +64,10 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   // Pipeline dynamique
   campaignStagesMap = signal<Record<number, PipelineStage[]>>({});
   applicationProgressMap = signal<Record<number, ApplicationProgress[]>>({});
+  applicationQuizAttemptsMap = signal<Record<number, ApplicationQuizAttemptSummary[]>>({});
+  applicationQuizAttemptsLoadedMap = signal<Record<number, boolean>>({});
+  applicationInterviewsMap = signal<Record<number, CandidateInterviewEntity[]>>({});
+  applicationInterviewsLoadedMap = signal<Record<number, boolean>>({});
 
   constructor(
     private applicationService: ApplicationService,
@@ -73,6 +78,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     private sanitizer: DomSanitizer,
     private pipelineStageService: PipelineStageService,
     private applicationProgressService: ApplicationProgressService,
+    private candidateInterviewEntityService: CandidateInterviewEntityService,
     private permissionService: PermissionService
   ) {}
 
@@ -250,7 +256,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   totalApplications = computed(() => this.applications().length);
   
   pendingApplications = computed(() => 
-    this.applications().filter(a => a.applicationStatus === APPLICATION_STATUS.PENDING || !a.applicationStatus).length
+    this.applications().filter(a => this.isApplicationPendingInCurrentRound(a)).length
   );
   
   verifiedApplications = computed(() => 
@@ -258,7 +264,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   );
   
   completedQuizApplications = computed(() => 
-    this.applications().filter(a => a.quizStatus === 'COMPLETED').length
+    this.applications().filter(a => this.getCurrentQuizStatus(a) === 'COMPLETED').length
   );
 
   /**
@@ -266,6 +272,11 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
    */
   loadData(): void {
     this.loading.set(true);
+    this.applicationProgressMap.set({});
+    this.applicationQuizAttemptsMap.set({});
+    this.applicationQuizAttemptsLoadedMap.set({});
+    this.applicationInterviewsMap.set({});
+    this.applicationInterviewsLoadedMap.set({});
     
     // D'abord récupérer l'ID de l'utilisateur connecté
     const currentUserData = localStorage.getItem('user');
@@ -456,6 +467,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       }
       if (app.id) {
         this.loadProgressForApplication(app.id);
+        this.loadRuntimeDetailsForApplication(app.id);
       }
     });
   }
@@ -583,6 +595,16 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   }
 
   getCurrentStage(app: ApplicationWithCampaign): PipelineStage | null {
+    const resolvedStage = this.getResolvedCurrentStage(app);
+    if (resolvedStage) {
+      return resolvedStage;
+    }
+
+    const stages = this.getStagesForApp(app);
+    return stages.length > 0 ? stages[stages.length - 1] : null;
+  }
+
+  private getResolvedCurrentStage(app: ApplicationWithCampaign): PipelineStage | null {
     const stages = this.getStagesForApp(app);
     for (const stage of stages) {
       const status = this.getDynamicStepStatus(app, stage.id!);
@@ -590,7 +612,8 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
         return stage;
       }
     }
-    return stages.length > 0 ? stages[stages.length - 1] : null;
+
+    return null;
   }
 
   /**
@@ -971,7 +994,14 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   formatDate(dateString: string): string {
     if (!dateString) return 'N/A';
     try {
-      const date = new Date(dateString);
+      let timestamp = Date.parse(dateString);
+      if (Number.isNaN(timestamp)) {
+        timestamp = this.parseRuntimeTimestamp(dateString);
+      }
+      if (Number.isNaN(timestamp) || timestamp <= 0) {
+        return 'N/A';
+      }
+      const date = new Date(timestamp);
       return date.toLocaleDateString('fr-FR', {
         day: '2-digit',
         month: '2-digit',
@@ -989,10 +1019,17 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     if (!status) return 'En attente';
     
     const statusMap: { [key: string]: string } = {
+      'STARTED': 'En cours',
       'SCHEDULED': 'Planifié',
       'CONFIRMED': 'Confirmé',
       'COMPLETED': 'Effectué',
+      'OVER': 'Terminé',
+      'PASSED': 'Réussi',
+      'FAILED': 'Échoué',
+      'POSTPONED': 'Reporté',
+      'ARCHIVED': 'Archivé',
       'CANCELLED': 'Annulé',
+      'DECLINED': 'Refusé',
       'NO_SHOW': 'Absent',
       'PENDING': 'En attente'
     };
@@ -1007,10 +1044,17 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     if (!status) return 'interview-pending';
     
     const statusMap: { [key: string]: string } = {
+      'STARTED': 'interview-confirmed',
       'SCHEDULED': 'interview-scheduled',
       'CONFIRMED': 'interview-confirmed',
       'COMPLETED': 'interview-completed',
+      'OVER': 'interview-completed',
+      'PASSED': 'interview-completed',
+      'FAILED': 'interview-cancelled',
+      'POSTPONED': 'interview-pending',
+      'ARCHIVED': 'badge-neutral',
       'CANCELLED': 'interview-cancelled',
+      'DECLINED': 'interview-cancelled',
       'NO_SHOW': 'interview-no-show',
       'PENDING': 'interview-pending'
     };
@@ -1020,15 +1064,17 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
 
   /**
    * Vérifie si on peut planifier un entretien pour cette candidature
-   * Conditions: application_status = PRE_SCREEN_ACCEPTED && pas d'interview
+   * Conditions: stage runtime courante = INTERVIEW && pas d'interview runtime
    */
   canScheduleInterview(app: ApplicationWithCampaign): boolean {
-    // Peut planifier un entretien si :
-    // - pré-sélection acceptée (PRE_SCREEN_ACCEPTED)
-    // - Pas d'entretien déjà planifié
-    return this.canPlanifyInterviewForCampaign(app.campaignId)
-      && app.applicationStatus === APPLICATION_STATUS.PRE_SCREEN_ACCEPTED
-      && !app.interviewDate;
+    if (!this.canPlanifyInterviewForCampaign(app.campaignId)) {
+      return false;
+    }
+
+    const currentStageType = (this.getResolvedCurrentStage(app)?.stageType || '').toUpperCase();
+    const hasCurrentInterview = Boolean(this.getCurrentInterviewDate(app));
+
+    return currentStageType === 'INTERVIEW' && !hasCurrentInterview;
   }
 
   /**
@@ -1209,15 +1255,113 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
 
   getInterviewBadgeClass(status: string | undefined): string {
     switch (status) {
-      case 'COMPLETED': case 'DONE': return 'badge-success';
-      case 'SCHEDULED': case 'PLANNED': return 'badge-info';
-      case 'DECLINED': case 'CANCELLED': return 'badge-error';
+      case 'COMPLETED':
+      case 'DONE':
+      case 'OVER':
+      case 'PASSED':
+        return 'badge-success';
+      case 'STARTED':
+      case 'SCHEDULED':
+      case 'PLANNED':
+      case 'POSTPONED':
+        return 'badge-info';
+      case 'FAILED':
+      case 'DECLINED':
+      case 'CANCELLED':
+        return 'badge-error';
       default: return 'badge-neutral';
     }
   }
 
   getCurrentStageId(app: ApplicationWithCampaign): number | null {
     return this.getCurrentStage(app)?.id || null;
+  }
+
+  getFallbackPipelineStepStatus(app: ApplicationWithCampaign, step: number): string {
+    const progresses = this.getSortedProgressesForFallback(app);
+    if (progresses.length === 0) {
+      return this.getStepStatus(app.applicationStatus, step);
+    }
+
+    const lastIndex = progresses.length - 1;
+    const bucketStatuses = progresses.reduce<Record<number, string[]>>((acc, progress, index) => {
+      const slot = index === 0 ? 1 : index === lastIndex ? 3 : 2;
+      acc[slot].push(this.getProgressVisualStatus(progress.progressStatus));
+      return acc;
+    }, { 1: [], 2: [], 3: [] });
+
+    return this.aggregateFallbackBucketStatus(bucketStatuses[step] || []);
+  }
+
+  getFallbackPipelineLabel(app: ApplicationWithCampaign): string {
+    const progresses = this.getSortedProgressesForFallback(app);
+    if (progresses.length === 0) {
+      return this.getLegacyStageLabel(app.applicationStatus);
+    }
+
+    const currentProgress = progresses.find(progress => {
+      const visualStatus = this.getProgressVisualStatus(progress.progressStatus);
+      return visualStatus === 'active' || visualStatus === 'pending';
+    });
+
+    if (currentProgress) {
+      return this.getProgressStageLabel(currentProgress);
+    }
+
+    const lastProgress = progresses[progresses.length - 1];
+    const lastStatus = this.getProgressVisualStatus(lastProgress?.progressStatus);
+    if (lastStatus === 'completed') {
+      return 'Terminé';
+    }
+    if (lastStatus === 'rejected') {
+      return 'Refusé';
+    }
+
+    return this.getProgressStageLabel(lastProgress) || this.getLegacyStageLabel(app.applicationStatus);
+  }
+
+  isApplicationPendingInCurrentRound(app: ApplicationWithCampaign): boolean {
+    const currentStage = this.getCurrentStage(app);
+    if (currentStage?.id) {
+      return this.getDynamicStepStatus(app, currentStage.id) === 'pending';
+    }
+
+    return app.applicationStatus === APPLICATION_STATUS.PENDING || !app.applicationStatus;
+  }
+
+  getCurrentQuizStatus(app: ApplicationWithCampaign): string {
+    if (app.id && this.hasLoadedQuizRuntime(app.id)) {
+      return this.getCurrentQuizAttempt(app.id)?.quizStatus || '';
+    }
+    return app.quizStatus || '';
+  }
+
+  getCurrentQuizScorePercent(app: ApplicationWithCampaign): number | null {
+    if (app.id && this.hasLoadedQuizRuntime(app.id)) {
+      return this.getCurrentQuizAttempt(app.id)?.scorePercent ?? null;
+    }
+    return app.quizScorePercent ?? null;
+  }
+
+  getCurrentInterviewDate(app: ApplicationWithCampaign): string {
+    if (app.id && this.hasLoadedInterviewRuntime(app.id)) {
+      return this.getCurrentInterview(app.id)?.interviewDate || '';
+    }
+    return app.interviewDate || '';
+  }
+
+  getCurrentInterviewStatus(app: ApplicationWithCampaign): string {
+    if (app.id && this.hasLoadedInterviewRuntime(app.id)) {
+      return this.getCurrentInterview(app.id)?.interviewStatus || '';
+    }
+    return app.interviewStatus || '';
+  }
+
+  getCurrentEvaluationScore(app: ApplicationWithCampaign): number | null {
+    if (app.id && this.hasLoadedInterviewRuntime(app.id)) {
+      return this.getCurrentInterview(app.id)?.evaluationScore ?? null;
+    }
+    return app.evaluationScore ?? null;
   }
 
   getCurrentStageName(app: ApplicationWithCampaign): string {
@@ -1298,6 +1442,228 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     }
     const access = this.campaignAccessMap()[campaignId];
     return Boolean(access && (access.isAdmin || access.isCreator || access.canAcceptPreScreen || access.canAcceptFinal));
+  }
+
+  private loadRuntimeDetailsForApplication(applicationId: number): void {
+    if (this.hasLoadedQuizRuntime(applicationId) && this.hasLoadedInterviewRuntime(applicationId)) {
+      return;
+    }
+
+    this.applicationService.getApplicationDetail(applicationId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (applicationDetail) => {
+          this.applicationQuizAttemptsMap.set({
+            ...this.applicationQuizAttemptsMap(),
+            [applicationId]: this.sortQuizAttemptsForDisplay(applicationDetail?.quizAttempts || [])
+          });
+          this.applicationQuizAttemptsLoadedMap.set({
+            ...this.applicationQuizAttemptsLoadedMap(),
+            [applicationId]: true
+          });
+        },
+        error: () => {
+          this.applicationQuizAttemptsMap.set({
+            ...this.applicationQuizAttemptsMap(),
+            [applicationId]: []
+          });
+          this.applicationQuizAttemptsLoadedMap.set({
+            ...this.applicationQuizAttemptsLoadedMap(),
+            [applicationId]: true
+          });
+        }
+      });
+
+    this.candidateInterviewEntityService.getAllByCriteria({
+      applicationId,
+      isDeleted: false,
+      size: 100
+    }).pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          this.applicationInterviewsMap.set({
+            ...this.applicationInterviewsMap(),
+            [applicationId]: this.sortCandidateInterviewsForDisplay(response.content || [])
+          });
+          this.applicationInterviewsLoadedMap.set({
+            ...this.applicationInterviewsLoadedMap(),
+            [applicationId]: true
+          });
+        },
+        error: () => {
+          this.applicationInterviewsMap.set({
+            ...this.applicationInterviewsMap(),
+            [applicationId]: []
+          });
+          this.applicationInterviewsLoadedMap.set({
+            ...this.applicationInterviewsLoadedMap(),
+            [applicationId]: true
+          });
+        }
+      });
+  }
+
+  private hasLoadedQuizRuntime(applicationId: number): boolean {
+    return this.applicationQuizAttemptsLoadedMap()[applicationId] === true;
+  }
+
+  private hasLoadedInterviewRuntime(applicationId: number): boolean {
+    return this.applicationInterviewsLoadedMap()[applicationId] === true;
+  }
+
+  private getSortedProgressesForFallback(app: ApplicationWithCampaign): ApplicationProgress[] {
+    if (!app.id) {
+      return [];
+    }
+
+    const progresses = this.applicationProgressMap()[app.id] || [];
+    return [...progresses].sort((left, right) => {
+      const leftOrder = left.stageOrder ?? Number.MAX_SAFE_INTEGER;
+      const rightOrder = right.stageOrder ?? Number.MAX_SAFE_INTEGER;
+      if (leftOrder !== rightOrder) {
+        return leftOrder - rightOrder;
+      }
+
+      return (left.id || 0) - (right.id || 0);
+    });
+  }
+
+  private getProgressVisualStatus(progressStatus?: string | null): string {
+    switch ((progressStatus || '').trim().toUpperCase()) {
+      case 'IN_PROGRESS':
+        return 'active';
+      case 'PASSED':
+        return 'completed';
+      case 'FAILED':
+        return 'rejected';
+      case 'SKIPPED':
+        return 'skipped';
+      case 'PENDING':
+      default:
+        return 'pending';
+    }
+  }
+
+  private aggregateFallbackBucketStatus(statuses: string[]): string {
+    if (statuses.includes('rejected')) {
+      return 'rejected';
+    }
+    if (statuses.includes('active')) {
+      return 'active';
+    }
+    if (statuses.includes('pending')) {
+      return 'pending';
+    }
+    if (statuses.includes('completed')) {
+      return 'completed';
+    }
+    if (statuses.includes('skipped')) {
+      return 'skipped';
+    }
+    return 'pending';
+  }
+
+  private getProgressStageLabel(progress?: ApplicationProgress | null): string {
+    if (!progress) {
+      return '';
+    }
+
+    if (progress.stageName?.trim()) {
+      return progress.stageName;
+    }
+
+    switch ((progress.stageType || '').trim().toUpperCase()) {
+      case 'CANDIDATURE':
+        return 'Candidature';
+      case 'QUIZ':
+      case 'TECHNICAL_TEST':
+        return 'Quiz';
+      case 'PRESELECTION':
+        return 'Pré-sélection';
+      case 'INTERVIEW':
+        return 'Entretien';
+      case 'EVALUATION':
+        return 'Évaluation';
+      case 'DECISION':
+        return 'Décision';
+      default:
+        return '';
+    }
+  }
+
+  private getCurrentQuizAttempt(applicationId: number): ApplicationQuizAttemptSummary | null {
+    return this.applicationQuizAttemptsMap()[applicationId]?.[0] || null;
+  }
+
+  private getCurrentInterview(applicationId: number): CandidateInterviewEntity | null {
+    return this.applicationInterviewsMap()[applicationId]?.[0] || null;
+  }
+
+  private sortQuizAttemptsForDisplay(attempts: ApplicationQuizAttemptSummary[]): ApplicationQuizAttemptSummary[] {
+    return [...attempts].sort((left, right) => {
+      const leftTimestamp = this.parseRuntimeTimestamp(left.lastActivityAt || left.completedAt || left.startedAt || left.updatedAt || left.createdAt);
+      const rightTimestamp = this.parseRuntimeTimestamp(right.lastActivityAt || right.completedAt || right.startedAt || right.updatedAt || right.createdAt);
+      if (leftTimestamp !== rightTimestamp) {
+        return rightTimestamp - leftTimestamp;
+      }
+
+      return (right.id || 0) - (left.id || 0);
+    });
+  }
+
+  private sortCandidateInterviewsForDisplay(interviews: CandidateInterviewEntity[]): CandidateInterviewEntity[] {
+    const priority: Record<string, number> = {
+      STARTED: 0,
+      SCHEDULED: 1,
+      PENDING: 2,
+      OVER: 3,
+      PASSED: 3,
+      FAILED: 4,
+      POSTPONED: 5,
+      ARCHIVED: 6
+    };
+
+    return [...interviews].sort((left, right) => {
+      const leftPriority = priority[(left.interviewStatus || '').toUpperCase()] ?? 99;
+      const rightPriority = priority[(right.interviewStatus || '').toUpperCase()] ?? 99;
+      if (leftPriority !== rightPriority) {
+        return leftPriority - rightPriority;
+      }
+
+      const leftTimestamp = this.parseRuntimeTimestamp(left.interviewDate || left.interviewStart || left.updatedAt || left.createdAt);
+      const rightTimestamp = this.parseRuntimeTimestamp(right.interviewDate || right.interviewStart || right.updatedAt || right.createdAt);
+      if (leftTimestamp !== rightTimestamp) {
+        return rightTimestamp - leftTimestamp;
+      }
+
+      return (right.id || 0) - (left.id || 0);
+    });
+  }
+
+  private parseRuntimeTimestamp(value?: string | null): number {
+    if (!value) {
+      return 0;
+    }
+
+    const isoTimestamp = Date.parse(value);
+    if (!Number.isNaN(isoTimestamp)) {
+      return isoTimestamp;
+    }
+
+    const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2})(?::(\d{2}))?)?$/);
+    if (!match) {
+      return 0;
+    }
+
+    const [, day, month, year, hours = '00', minutes = '00', seconds = '00'] = match;
+    return new Date(
+      Number(year),
+      Number(month) - 1,
+      Number(day),
+      Number(hours),
+      Number(minutes),
+      Number(seconds)
+    ).getTime();
   }
 
   private canPlanifyInterviewForCampaign(campaignId?: number | null): boolean {

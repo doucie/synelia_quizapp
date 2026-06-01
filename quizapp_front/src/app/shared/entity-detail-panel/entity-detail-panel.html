@@ -55,15 +55,15 @@
         <!-- READ MODE -->
         <ng-template #readOnly>
           <ng-container [ngSwitch]="field.type">
-            <span *ngSwitchCase="'id'" class="detail-field-value detail-value-id">#{{ getFieldValue(field) }}</span>
+            <span *ngSwitchCase="'id'" class="detail-field-value detail-value-id">{{ formatValue(field) }}</span>
             <span *ngSwitchCase="'boolean'" class="detail-field-value detail-value-bool"
                   [class.is-true]="getFieldValue(field)" [class.is-false]="!getFieldValue(field)">
-              {{ getFieldValue(field) ? 'Oui' : 'Non' }}
+              {{ formatValue(field) }}
             </span>
             <span *ngSwitchCase="'date'" class="detail-field-value detail-value-date">{{ formatValue(field) }}</span>
             <span *ngSwitchCase="'badge'" class="detail-field-value detail-value-badge"
                   [attr.data-badge]="getFieldValue(field)">
-              {{ field.badgeMap?.[getFieldValue(field)]?.label || getFieldValue(field) || '-' }}
+              {{ formatValue(field) }}
             </span>
             <span *ngSwitchDefault class="detail-field-value detail-value-text">{{ formatValue(field) }}</span>
           </ng-container>

@@ -56,6 +56,12 @@ export interface Interview {
   updatedBy?: number;
   isDeleted?: boolean;
   campaignId?: number;
+  applicationProgressId?: number;
+  pipelineStageId?: number;
+  pipelineStageType?: string;
+  pipelineStageLabel?: string;
+  pipelineStageOrder?: number;
+  interviewRound?: number;
   
   // Données enrichies (pas dans la base)
   candidateName?: string;

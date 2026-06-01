@@ -194,6 +194,17 @@
                         </div>
                       }
 
+                      @if (hasInterviewOccurrenceContext(interview)) {
+                        <div class="stage-summary">
+                          @if (interview.interviewRound) {
+                            <span class="stage-summary__pill">{{ getInterviewRoundLabel(interview) }}</span>
+                          }
+                          @if (interview.pipelineStageLabel) {
+                            <span class="stage-summary__pill stage-summary__pill--stage">{{ getInterviewStageLabel(interview) }}</span>
+                          }
+                        </div>
+                      }
+
                       @if (interviewAdminService.hasCandidateResponse(interview.candidateResponseState)) {
                         <div class="candidate-response-card" [ngClass]="interviewAdminService.getCandidateResponsePresentation(interview.candidateResponseState).className">
                           <div class="candidate-response-card__title">
@@ -336,6 +347,25 @@
                       <span class="label">Type</span>
                       <span class="value">{{ getInterviewTypeLabel(selectedInterview()!.interviewType) }}</span>
                     </div>
+                    @if (hasInterviewOccurrenceContext(selectedInterview()!)) {
+                      <div class="detail-item">
+                        <span class="label">Contexte pipeline</span>
+                        <div class="stage-summary stage-summary--detail">
+                          @if (selectedInterview()!.interviewRound) {
+                            <span class="stage-summary__pill">{{ getInterviewRoundLabel(selectedInterview()!) }}</span>
+                          }
+                          @if (selectedInterview()!.pipelineStageLabel) {
+                            <span class="stage-summary__pill stage-summary__pill--stage">{{ getInterviewStageLabel(selectedInterview()!) }}</span>
+                          }
+                        </div>
+                      </div>
+                    }
+                    @if (selectedInterview()!.applicationProgressId != null) {
+                      <div class="detail-item">
+                        <span class="label">Occurrence pipeline</span>
+                        <span class="value">{{ getInterviewProgressLabel(selectedInterview()!) }}</span>
+                      </div>
+                    }
                     <div class="detail-item">
                       <span class="label">Notification email</span>
                       <span class="value email-status" [ngClass]="getEmailStatusClass(selectedInterview()!.interviewMailSent)">
@@ -622,6 +652,16 @@
                                     <i [class]="getInterviewTypeIcon(interview.interviewType)"></i>
                                     {{ interview.interviewLocation || 'En ligne' }}
                                   </div>
+                                  @if (hasInterviewOccurrenceContext(interview)) {
+                                    <div class="timeline-stage-summary">
+                                      @if (interview.interviewRound) {
+                                        <span class="stage-summary__pill">{{ getInterviewRoundLabel(interview) }}</span>
+                                      }
+                                      @if (interview.pipelineStageLabel) {
+                                        <span class="stage-summary__pill stage-summary__pill--stage">{{ getInterviewStageLabel(interview) }}</span>
+                                      }
+                                    </div>
+                                  }
                                 </div>
                               </div>
                               <div class="interview-status-badge" [ngClass]="getStatusClass(interview.interviewStatus)">

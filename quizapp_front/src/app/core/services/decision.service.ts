@@ -14,6 +14,10 @@ export interface Decision {
   applicationId: number;
   userId: number;
   pipelineStageId?: number;
+  applicationProgressId?: number;
+  justification?: string;
+  decisionMode?: string;
+  cancelsDecisionId?: number;
   createdAt?: string;
   createdBy?: number;
   updatedAt?: string;
@@ -31,6 +35,10 @@ export interface DecisionMutationPayload {
   applicationId?: number;
   userId?: number;
   pipelineStageId?: number;
+  applicationProgressId?: number;
+  justification?: string;
+  decisionMode?: string;
+  cancelsDecisionId?: number;
   isDeleted?: boolean;
 }
 
@@ -43,6 +51,11 @@ export interface PartialDecision {
   isCancel?: boolean;
   applicationId?: number;
   userId?: number;
+  pipelineStageId?: number;
+  applicationProgressId?: number;
+  justification?: string;
+  decisionMode?: string;
+  cancelsDecisionId?: number;
   createdAt?: string;
   createdBy?: number;
   updatedAt?: string;
@@ -83,7 +96,12 @@ export interface DecisionResponse {
 export interface DecisionCriteria {
   applicationId?: number;
   userId?: number;
+  pipelineStageId?: number;
+  applicationProgressId?: number;
+  cancelsDecisionId?: number;
   decisionType?: string;
+  decisionMode?: string;
+  justification?: string;
   isCancel?: boolean;
   page?: number;
   size?: number;
@@ -124,7 +142,12 @@ export class DecisionService {
       data: {
         applicationId: criteria.applicationId,
         userId: criteria.userId,
+        pipelineStageId: criteria.pipelineStageId,
+        applicationProgressId: criteria.applicationProgressId,
+        cancelsDecisionId: criteria.cancelsDecisionId,
         decisionType: criteria.decisionType,
+        decisionMode: criteria.decisionMode,
+        justification: criteria.justification,
         isCancel: criteria.isCancel
       } as PartialDecision
     };
@@ -326,7 +349,13 @@ export class DecisionService {
         searchString: criteria.search_string || '',
         ...(criteria.applicationId && { applicationId: criteria.applicationId }),
         ...(criteria.userId && { userId: criteria.userId }),
+        ...(criteria.pipelineStageId && { pipelineStageId: criteria.pipelineStageId }),
+        ...(criteria.applicationProgressId && { applicationProgressId: criteria.applicationProgressId }),
+        ...(criteria.cancelsDecisionId && { cancelsDecisionId: criteria.cancelsDecisionId }),
         ...(criteria.decisionType && { decisionType: criteria.decisionType }),
+        ...(criteria.decisionMode && { decisionMode: criteria.decisionMode }),
+        ...(criteria.justification && { justification: criteria.justification }),
+        ...(criteria.isCancel !== undefined && { isCancel: criteria.isCancel }),
         ...(criteria.idDe && criteria.idDe.trim() && { idStart: criteria.idDe }),
         ...(criteria.idA && criteria.idA.trim() && { idEnd: criteria.idA }),
         ...(criteria.dateCreationDe && { dateCreationDe: criteria.dateCreationDe }),

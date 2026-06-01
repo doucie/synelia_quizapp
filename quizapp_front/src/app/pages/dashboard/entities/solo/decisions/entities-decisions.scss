@@ -7,3 +7,15 @@
   background: var(--background);
   min-height: 100vh;
 }
+
+.decision-form-note {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.decision-form-note--warning {
+  color: var(--warning);
+  font-weight: var(--font-weight-semibold);
+}

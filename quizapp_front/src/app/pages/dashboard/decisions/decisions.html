@@ -115,7 +115,7 @@
                   <div class="candidate-campaign">{{ app.campaignTitle }}</div>
                   <div class="candidate-date">{{ formatDateTime(app.createdAt) }}</div>
                 </div>
-                <div class="candidate-status" [ngClass]="getStatusClass(app.applicationStatus)">
+                <div class="candidate-status" [ngClass]="getStatusClass(getApplicationDisplayStatus(app))">
                   <div class="status-dot"></div>
                 </div>
               </div>
@@ -153,8 +153,8 @@
                   </span>
                 </div>
               </div>
-              <div class="detail-status" [ngClass]="getStatusClass(selectedApplication()!.applicationStatus)">
-                {{ getStatusLabel(selectedApplication()!.applicationStatus) }}
+              <div class="detail-status" [ngClass]="getStatusClass(getApplicationDisplayStatus(selectedApplication()!))">
+                {{ getStatusLabel(getApplicationDisplayStatus(selectedApplication()!)) }}
               </div>
             </div>
 
@@ -219,10 +219,10 @@
                             <i class="bi bi-trophy"></i>
                             <div class="info-content">
                               <span class="info-label">Score du quiz</span>
-                              @if (selectedApplication()!.quizScorePercent !== null && selectedApplication()!.quizScorePercent !== undefined) {
-                                <span class="info-value" [class.success]="selectedApplication()!.quizScorePercent! >= 70" [class.warning]="selectedApplication()!.quizScorePercent! >= 50 && selectedApplication()!.quizScorePercent! < 70" [class.error]="selectedApplication()!.quizScorePercent! < 50">
+                              @if (getSelectedApplicationQuizScorePercent(selectedApplication()) !== null && getSelectedApplicationQuizScorePercent(selectedApplication()) !== undefined) {
+                                <span class="info-value" [class.success]="getSelectedApplicationQuizScorePercent(selectedApplication())! >= 70" [class.warning]="getSelectedApplicationQuizScorePercent(selectedApplication())! >= 50 && getSelectedApplicationQuizScorePercent(selectedApplication())! < 70" [class.error]="getSelectedApplicationQuizScorePercent(selectedApplication())! < 50">
                                   <i class="bi bi-bar-chart-fill"></i>
-                                  {{ selectedApplication()!.quizScorePercent }}%
+                                  {{ getSelectedApplicationQuizScorePercent(selectedApplication()) }}%
                                 </span>
                               } @else {
                                 <span class="info-value muted">
@@ -241,10 +241,10 @@
                             <i class="bi bi-calendar-event"></i>
                             <div class="info-content">
                               <span class="info-label">Date d'entretien</span>
-                              @if (selectedApplication()!.interviewDate) {
+                              @if (getSelectedApplicationInterviewDate(selectedApplication())) {
                                 <span class="info-value">
                                   <i class="bi bi-clock"></i>
-                                  {{ formatDateTime(selectedApplication()!.interviewDate) }}
+                                  {{ formatDateTime(getSelectedApplicationInterviewDate(selectedApplication())) }}
                                 </span>
                               } @else {
                                 <span class="info-value muted">
@@ -257,10 +257,10 @@
                             <i class="bi bi-clipboard-check"></i>
                             <div class="info-content">
                               <span class="info-label">Statut entretien</span>
-                              @if (selectedApplication()!.interviewStatus) {
-                                <span class="info-value" [ngClass]="getInterviewStatusClass(selectedApplication()!.interviewStatus!)">
-                                  <i [class]="getInterviewStatusIcon(selectedApplication()!.interviewStatus!)"></i>
-                                  {{ getInterviewStatusLabel(selectedApplication()!.interviewStatus!) }}
+                              @if (getSelectedApplicationInterviewStatus(selectedApplication())) {
+                                <span class="info-value" [ngClass]="getInterviewStatusClass(getSelectedApplicationInterviewStatus(selectedApplication()))">
+                                  <i [class]="getInterviewStatusIcon(getSelectedApplicationInterviewStatus(selectedApplication()))"></i>
+                                  {{ getInterviewStatusLabel(getSelectedApplicationInterviewStatus(selectedApplication())) }}
                                 </span>
                               } @else {
                                 <span class="info-value muted">
@@ -279,10 +279,10 @@
                             <i class="bi bi-star"></i>
                             <div class="info-content">
                               <span class="info-label">Score d'évaluation</span>
-                              @if (selectedApplication()!.evaluationScore !== null && selectedApplication()!.evaluationScore !== undefined) {
-                                <span class="info-value" [class.success]="selectedApplication()!.evaluationScore! >= 70" [class.warning]="selectedApplication()!.evaluationScore! >= 50 && selectedApplication()!.evaluationScore! < 70" [class.error]="selectedApplication()!.evaluationScore! < 50">
+                              @if (getSelectedApplicationEvaluationScore(selectedApplication()) !== null && getSelectedApplicationEvaluationScore(selectedApplication()) !== undefined) {
+                                <span class="info-value" [class.success]="getSelectedApplicationEvaluationScore(selectedApplication())! >= 70" [class.warning]="getSelectedApplicationEvaluationScore(selectedApplication())! >= 50 && getSelectedApplicationEvaluationScore(selectedApplication())! < 70" [class.error]="getSelectedApplicationEvaluationScore(selectedApplication())! < 50">
                                   <i class="bi bi-star-fill"></i>
-                                  {{ selectedApplication()!.evaluationScore }}/100
+                                  {{ getSelectedApplicationEvaluationScore(selectedApplication()) }}/100
                                 </span>
                               } @else {
                                 <span class="info-value muted">
@@ -297,11 +297,11 @@
                       <!-- Boutons de décision pour étapes PRESELECTION/DECISION -->
                       @if (canTakeDecisionForStage(stage)) {
                         <div class="step-actions">
-                          <button class="btn btn-success" (click)="takeDecisionForStage(stage, 'APPROVE')">
+                          <button class="btn btn-success" (click)="openDecisionModal(stage, 'APPROVE')">
                             <i class="bi bi-check-lg"></i>
                             {{ getDecisionOptionsForStage(stage).approveLabel }}
                           </button>
-                          <button class="btn btn-error" (click)="takeDecisionForStage(stage, 'CANCEL')">
+                          <button class="btn btn-error" (click)="openDecisionModal(stage, 'CANCEL')">
                             <i class="bi bi-x-lg"></i>
                             {{ getDecisionOptionsForStage(stage).cancelLabel }}
                           </button>
@@ -311,7 +311,7 @@
                       <!-- Annulation de décision -->
                       @if (canCancelDecisionForStage(stage)) {
                         <div class="step-actions">
-                          <button class="btn btn-outline" (click)="undoDecisionForStage(stage)">
+                          <button class="btn btn-outline" (click)="openUndoDecisionModal(stage)">
                             <i class="bi bi-arrow-counterclockwise"></i>
                             Annuler la décision
                           </button>
@@ -394,6 +394,28 @@
                       </span>
                       <span class="timeline-date">{{ formatDateTime(decision.createdAt) }}</span>
                     </div>
+                    @if (getDecisionOccurrenceLabel(decision) || decision.decisionMode) {
+                      <div class="timeline-footer">
+                        @if (getDecisionOccurrenceLabel(decision)) {
+                          <span>{{ getDecisionOccurrenceLabel(decision) }}</span>
+                        }
+                        @if (decision.decisionMode) {
+                          <span>{{ getDecisionModeLabel(decision) }}</span>
+                        }
+                      </div>
+                    }
+                    @if (decision.justification) {
+                      <div class="timeline-footer">
+                        <i class="bi bi-chat-left-text"></i>
+                        {{ decision.justification }}
+                      </div>
+                    }
+                    @if (decision.isCancel && getCancellationTargetLabel(decision)) {
+                      <div class="timeline-footer">
+                        <i class="bi bi-link-45deg"></i>
+                        {{ getCancellationTargetLabel(decision) }}
+                      </div>
+                    }
                     <div class="timeline-footer">
                       <i class="bi bi-person-circle"></i>
                       {{ getUserPseudo(decision.userId!) }}
@@ -408,3 +430,64 @@
     </div>
   }
 </div>
+
+@if (showDecisionModal()) {
+  <div class="decision-modal-shell" (click)="closeDecisionModal()">
+    <div class="decision-modal" role="dialog" aria-modal="true" aria-labelledby="decision-modal-title" (click)="$event.stopPropagation()">
+      <div class="decision-modal__header">
+        <div class="decision-modal__header-copy">
+          <span class="decision-modal__eyebrow">
+            {{ decisionModalMode() === 'UNDO' ? 'Annulation historisée' : 'Décision de pipeline' }}
+          </span>
+          <h3 id="decision-modal-title">{{ getDecisionModalTitle() }}</h3>
+          @if (getDecisionModalDescription()) {
+            <p class="decision-modal__description">{{ getDecisionModalDescription() }}</p>
+          }
+          @if (getDecisionModalTargetDecision(); as targetDecision) {
+            <p class="decision-modal__description">
+              Décision ciblée : {{ getDecisionLabel(targetDecision.decisionType) }} #{{ targetDecision.id }}
+            </p>
+          }
+        </div>
+        <button type="button" class="decision-modal__close" (click)="closeDecisionModal()" aria-label="Fermer la modal de décision">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+
+      <label class="decision-modal__field">
+        <span class="decision-modal__label">
+          Justification {{ isDecisionModalJustificationRequired() ? 'obligatoire' : 'optionnelle' }}
+        </span>
+        <textarea
+          rows="5"
+          class="decision-modal__textarea"
+          [ngModel]="decisionModalJustification()"
+          (ngModelChange)="decisionModalJustification.set($event ?? '')"
+          [placeholder]="getDecisionModalPlaceholder()"
+        ></textarea>
+      </label>
+
+      @if (isDecisionModalJustificationRequired()) {
+        <p class="decision-modal__hint">Une annulation historisée doit laisser une justification exploitable dans l'audit.</p>
+      }
+
+      @if (isDecisionModalJustificationRequired() && !decisionModalJustification().trim()) {
+        <p class="decision-modal__error">La justification est requise pour confirmer cette annulation.</p>
+      }
+
+      <div class="decision-modal__actions">
+        <button type="button" class="btn btn-outline" (click)="closeDecisionModal()">Fermer</button>
+        <button
+          type="button"
+          class="btn"
+          [ngClass]="decisionModalMode() === 'UNDO' || decisionModalAction() === 'CANCEL' ? 'btn-error' : 'btn-success'"
+          [disabled]="isDecisionModalSubmitDisabled()"
+          (click)="submitDecisionModal()"
+        >
+          <i class="bi" [class.bi-arrow-counterclockwise]="decisionModalMode() === 'UNDO'" [class.bi-check-lg]="decisionModalMode() !== 'UNDO'"></i>
+          {{ decisionModalMode() === 'UNDO' ? 'Confirmer l\'annulation' : 'Confirmer la décision' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

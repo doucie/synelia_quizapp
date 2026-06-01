@@ -2,10 +2,13 @@ package tech.synelia.quizapp.business;
 
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -81,6 +84,7 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
         log.info("----begin create ApplicationProgress-----");
         Response<ApplicationProgressDto> response = new Response<>();
         List<ApplicationProgress> items = new ArrayList<>();
+        Set<Integer> applicationIdsToSync = new HashSet<>();
 
         for (ApplicationProgressDto dto : request.getDatas()) {
             Map<String, Object> fieldsToVerify = new HashMap<>();
@@ -126,6 +130,7 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
                 entityToSave.setProgressStatus(ProgressStatus.PENDING.getValue());
             }
             items.add(entityToSave);
+            applicationIdsToSync.add(dto.getApplicationId());
         }
 
         if (!items.isEmpty()) {
@@ -144,6 +149,12 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
             response.setStatus(status);
             response.setItems(itemsDto);
             response.setHasError(false);
+
+            for (Integer applicationId : applicationIdsToSync) {
+                if (applicationId != null) {
+                    syncApplicationStatus(applicationId);
+                }
+            }
         }
         log.info("----end create ApplicationProgress-----");
         return response;
@@ -154,6 +165,7 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
         log.info("----begin update ApplicationProgress-----");
         Response<ApplicationProgressDto> response = new Response<>();
         List<ApplicationProgress> items = new ArrayList<>();
+        Set<Integer> applicationIdsToSync = new HashSet<>();
 
         for (ApplicationProgressDto dto : request.getDatas()) {
             Map<String, Object> fieldsToVerify = new HashMap<>();
@@ -182,6 +194,7 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
             entityToSave.setUpdatedAt(Utilities.getCurrentDate());
             entityToSave.setUpdatedBy(request.getUser());
             items.add(entityToSave);
+            applicationIdsToSync.add(entityToSave.getApplications() != null ? entityToSave.getApplications().getId() : null);
         }
 
         if (!items.isEmpty()) {
@@ -197,6 +210,12 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
             response.setHasError(false);
             response.setHttpCode(HttpStatus.OK.value());
             response.setStatus(status);
+
+            for (Integer applicationId : applicationIdsToSync) {
+                if (applicationId != null) {
+                    syncApplicationStatus(applicationId);
+                }
+            }
         }
         log.info("----end update ApplicationProgress-----");
         return response;
@@ -207,6 +226,7 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
         log.info("----begin delete ApplicationProgress-----");
         Response<ApplicationProgressDto> response = new Response<>();
         List<ApplicationProgress> items = new ArrayList<>();
+        Set<Integer> applicationIdsToSync = new HashSet<>();
 
         for (ApplicationProgressDto dto : request.getDatas()) {
             Map<String, Object> fieldsToVerify = new HashMap<>();
@@ -224,6 +244,7 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
             existingEntity.setUpdatedAt(Utilities.getCurrentDate());
             existingEntity.setUpdatedBy(request.getUser());
             items.add(existingEntity);
+            applicationIdsToSync.add(existingEntity.getApplications() != null ? existingEntity.getApplications().getId() : null);
         }
 
         if (!items.isEmpty()) {
@@ -234,6 +255,12 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
             response.setHasError(false);
             response.setHttpCode(HttpStatus.OK.value());
             response.setStatus(status);
+
+            for (Integer applicationId : applicationIdsToSync) {
+                if (applicationId != null) {
+                    syncApplicationStatus(applicationId);
+                }
+            }
         }
         log.info("----end delete ApplicationProgress-----");
         return response;
@@ -310,6 +337,8 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
 
         // Verrouiller le template
         pipelineTemplateBusiness.lockTemplate(pipelineTemplateId, userId);
+
+        syncApplicationStatus(applicationId);
 
         log.info("----end initProgressForApplication-----");
     }
@@ -551,11 +580,21 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
     }
 
     public void syncInterviewEvaluationStages(Integer applicationId, Double score, boolean interviewCompleted, Integer userId, Locale locale) throws ParseException {
+        syncInterviewEvaluationStages(applicationId, null, score, interviewCompleted, userId, locale);
+    }
+
+    public void syncInterviewEvaluationStages(
+            Integer applicationId,
+            Integer interviewProgressId,
+            Double score,
+            boolean interviewCompleted,
+            Integer userId,
+            Locale locale) throws ParseException {
         if (applicationId == null) {
             return;
         }
 
-        ApplicationProgress interviewProgress = findProgressByStageType(applicationId, StageType.INTERVIEW.getValue());
+        ApplicationProgress interviewProgress = resolveInterviewProgressOccurrence(applicationId, interviewProgressId);
         ApplicationProgress evaluationProgress = findProgressByStageType(applicationId, StageType.EVALUATION.getValue());
         if (interviewProgress == null && evaluationProgress == null) {
             return;
@@ -564,7 +603,7 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
         double normalizedScore = score != null ? score : 0d;
 
         if (evaluationProgress != null) {
-            updateStageScore(applicationId, StageType.EVALUATION.getValue(), normalizedScore, userId, false);
+            updateStageScore(evaluationProgress, normalizedScore, userId, false);
             if (!interviewCompleted) {
                 return;
             }
@@ -585,7 +624,7 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
         }
 
         if (interviewProgress != null) {
-            updateStageScore(applicationId, StageType.INTERVIEW.getValue(), normalizedScore, userId, false);
+            updateStageScore(interviewProgress, normalizedScore, userId, false);
             if (interviewCompleted) {
                 resolveScoredStage(
                         applicationId,
@@ -605,6 +644,10 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
         }
 
         ApplicationProgress progress = findProgressByStageType(applicationId, stageType);
+        updateStageScore(progress, score, userId, activateIfPending);
+    }
+
+    private void updateStageScore(ApplicationProgress progress, Double score, Integer userId, boolean activateIfPending) {
         if (progress == null) {
             return;
         }
@@ -617,7 +660,9 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
         progress.setUpdatedAt(Utilities.getCurrentDate());
         progress.setUpdatedBy(userId);
         applicationProgressRepository.save(progress);
-        syncApplicationStatus(applicationId);
+        if (progress.getApplications() != null && progress.getApplications().getId() != null) {
+            syncApplicationStatus(progress.getApplications().getId());
+        }
     }
 
     private void ensureStagePassed(Integer applicationId, ApplicationProgress progress, Integer userId, Double score, String notes, Locale locale) throws ParseException {
@@ -626,7 +671,7 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
         }
 
         if (score != null) {
-            updateStageScore(applicationId, progress.getPipelineStage().getStageType(), score, userId, false);
+            updateStageScore(progress, score, userId, false);
         }
 
         if (!hasProgressStatus(progress, ProgressStatus.PASSED)) {
@@ -639,7 +684,7 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
             return;
         }
 
-        updateStageScore(applicationId, progress.getPipelineStage().getStageType(), score, userId, false);
+        updateStageScore(progress, score, userId, false);
         double passingScore = resolvePassingScore(progress.getPipelineStage(), 50.0d);
         if (score >= passingScore) {
             ensureStagePassed(applicationId, progress, userId, score, passNotes, locale);
@@ -715,16 +760,7 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
         log.info("----begin getCurrentStage-----");
         Response<ApplicationProgressDto> response = new Response<>();
 
-        // Chercher d'abord l'étape IN_PROGRESS
-        ApplicationProgress current = applicationProgressRepository.findCurrentStage(applicationId);
-
-        // Si pas d'étape IN_PROGRESS, prendre la prochaine PENDING
-        if (current == null) {
-            List<ApplicationProgress> pending = applicationProgressRepository.findPendingByApplicationId(applicationId);
-            if (pending != null && !pending.isEmpty()) {
-                current = pending.get(0);
-            }
-        }
+        ApplicationProgress current = resolveCurrentStageProgress(applicationId);
 
         if (current != null) {
             List<ApplicationProgressDto> itemsDto = new ArrayList<>();
@@ -919,13 +955,53 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
      */
     public void syncApplicationStatus(Integer applicationId) {
         String newStatus = computeApplicationStatus(applicationId);
+        ApplicationProgress currentStage = resolveCurrentStageProgress(applicationId);
         Applications app = applicationsRepository.findOne(applicationId, false);
-        if (app != null && !newStatus.equals(app.getApplicationStatus())) {
+        if (app == null) {
+            return;
+        }
+
+        String currentStageType = currentStage != null && currentStage.getPipelineStage() != null
+                ? currentStage.getPipelineStage().getStageType()
+                : null;
+        String currentStageLabel = currentStage != null && currentStage.getPipelineStage() != null
+                ? currentStage.getPipelineStage().getStageLabel()
+                : null;
+        String currentStageProgressStatus = currentStage != null ? currentStage.getProgressStatus() : null;
+
+        boolean statusChanged = !Objects.equals(newStatus, app.getApplicationStatus());
+        boolean stageSummaryChanged = !Objects.equals(currentStageType, app.getCurrentPipelineStageType())
+                || !Objects.equals(currentStageLabel, app.getCurrentPipelineStageLabel())
+                || !Objects.equals(currentStageProgressStatus, app.getCurrentPipelineProgressStatus());
+
+        if (statusChanged) {
             app.setApplicationStatus(newStatus);
+        }
+        if (stageSummaryChanged) {
+            app.setCurrentPipelineStageType(currentStageType);
+            app.setCurrentPipelineStageLabel(currentStageLabel);
+            app.setCurrentPipelineProgressStatus(currentStageProgressStatus);
+        }
+
+        if (statusChanged || stageSummaryChanged) {
             app.setUpdatedAt(Utilities.getCurrentDate());
             applicationsRepository.save(app);
-            log.info("syncApplicationStatus: application " + applicationId + " → " + newStatus);
+            log.info("syncApplicationStatus: application " + applicationId + " → status=" + newStatus + ", stage=" + currentStageType + "/" + currentStageProgressStatus);
         }
+    }
+
+    private ApplicationProgress resolveCurrentStageProgress(Integer applicationId) {
+        ApplicationProgress current = applicationProgressRepository.findCurrentStage(applicationId);
+        if (current != null) {
+            return current;
+        }
+
+        List<ApplicationProgress> pending = applicationProgressRepository.findPendingByApplicationId(applicationId);
+        if (pending != null && !pending.isEmpty()) {
+            return pending.get(0);
+        }
+
+        return null;
     }
 
     private ApplicationProgress getProgressOrThrow(Integer applicationId, Integer stageId, Locale locale) {
@@ -1003,6 +1079,10 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
         updateStageMailSent(applicationId, stageId, true, userId);
     }
 
+    public void clearStageMailSent(Integer applicationId, Integer stageId, Integer userId) {
+        updateStageMailSent(applicationId, stageId, false, userId);
+    }
+
     public void markStageMailSentByStageType(Integer applicationId, String stageType, Integer userId) {
         updateStageMailSentByStageType(applicationId, stageType, true, userId);
     }
@@ -1011,19 +1091,69 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
         updateStageMailSentByStageType(applicationId, stageType, false, userId);
     }
 
+    public ApplicationProgress resolveProgressByStageType(Integer applicationId, String stageType) {
+        return findProgressByStageType(applicationId, stageType);
+    }
+
+    private ApplicationProgress resolveInterviewProgressOccurrence(Integer applicationId, Integer interviewProgressId) {
+        if (interviewProgressId != null) {
+            ApplicationProgress explicitProgress = applicationProgressRepository.findOne(interviewProgressId, false);
+            if (matchesStageType(explicitProgress, StageType.INTERVIEW.getValue())
+                    && explicitProgress.getApplications() != null
+                    && applicationId.equals(explicitProgress.getApplications().getId())) {
+                return explicitProgress;
+            }
+        }
+
+        return findProgressByStageType(applicationId, StageType.INTERVIEW.getValue());
+    }
+
     private ApplicationProgress findProgressByStageType(Integer applicationId, String stageType) {
         List<ApplicationProgress> progressList = applicationProgressRepository.findByApplicationIdOrderByStageOrder(applicationId);
         if (progressList == null || progressList.isEmpty()) {
             return null;
         }
 
+        List<ApplicationProgress> matchingProgress = new ArrayList<ApplicationProgress>();
         for (ApplicationProgress progress : progressList) {
-            if (progress.getPipelineStage() != null
-                    && stageType.equalsIgnoreCase(progress.getPipelineStage().getStageType())) {
+            if (matchesStageType(progress, stageType)) {
+                matchingProgress.add(progress);
+            }
+        }
+
+        if (matchingProgress.isEmpty()) {
+            return null;
+        }
+
+        ApplicationProgress currentProgress = resolveCurrentStageProgress(applicationId);
+        if (matchesStageType(currentProgress, stageType)) {
+            return currentProgress;
+        }
+
+        for (ApplicationProgress progress : matchingProgress) {
+            if (hasProgressStatus(progress, ProgressStatus.IN_PROGRESS)) {
                 return progress;
             }
         }
+
+        for (ApplicationProgress progress : matchingProgress) {
+            if (hasProgressStatus(progress, ProgressStatus.PENDING)) {
+                return progress;
+            }
+        }
+
+        for (int index = matchingProgress.size() - 1; index >= 0; index--) {
+            return matchingProgress.get(index);
+        }
+
         return null;
+    }
+
+    private boolean matchesStageType(ApplicationProgress progress, String stageType) {
+        return progress != null
+                && progress.getPipelineStage() != null
+                && Utilities.notBlank(stageType)
+                && stageType.equalsIgnoreCase(progress.getPipelineStage().getStageType());
     }
 
     private void updateStageMailSentByStageType(Integer applicationId, String stageType, boolean mailSent, Integer userId) {
@@ -1052,6 +1182,7 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
         if (Boolean.valueOf(mailSent).equals(progress.getMailSent())) {
             if (mailSent && isResolvedStatus(progress.getProgressStatus())) {
                 activateNextPendingStage(applicationId, progress, userId);
+                syncApplicationStatus(applicationId);
             }
             return;
         }
@@ -1064,6 +1195,8 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
         if (mailSent && isResolvedStatus(progress.getProgressStatus())) {
             activateNextPendingStage(applicationId, progress, userId);
         }
+
+        syncApplicationStatus(applicationId);
     }
 
     private boolean isNextStageWaitingForRequiredMail(ApplicationProgress currentProgress) {

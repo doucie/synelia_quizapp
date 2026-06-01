@@ -30,6 +30,34 @@ public class MailLog implements Serializable, Cloneable {
 	@Column(name = "recipient_email", nullable = false, length = 255)
 	private String recipientEmail;
 
+	@Column(name = "application_id")
+	private Integer applicationId;
+
+	@Column(name = "application_progress_id")
+	private Integer applicationProgressId;
+
+	@Column(name = "interview_id")
+	private Integer interviewId;
+
+	@Column(name = "decision_id")
+	private Integer decisionId;
+
+	@Column(name = "notification_rule_id")
+	private Integer notificationRuleId;
+
+	@Column(name = "event_code", nullable = false, length = 80)
+	private String eventCode = "LEGACY_UNCLASSIFIED";
+
+	@Column(name = "requires_confirmation", nullable = false)
+	private Boolean requiresConfirmation = Boolean.FALSE;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "confirmed_at")
+	private Date confirmedAt;
+
+	@Column(name = "confirmed_by")
+	private Integer confirmedBy;
+
 	@Column(name = "recipient_user_id")
 	private Integer recipientUserId;
 

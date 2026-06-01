@@ -375,11 +375,11 @@
                 } @else {
                   <!-- Fallback legacy 3 étapes compact -->
                   <div class="pipeline-dots">
-                    <div class="pipeline-dot" [ngClass]="getStepStatus(app.applicationStatus, 1)"></div>
-                    <div class="pipeline-dot" [ngClass]="getStepStatus(app.applicationStatus, 2)"></div>
-                    <div class="pipeline-dot" [ngClass]="getStepStatus(app.applicationStatus, 3)"></div>
+                    <div class="pipeline-dot" [ngClass]="getFallbackPipelineStepStatus(app, 1)"></div>
+                    <div class="pipeline-dot" [ngClass]="getFallbackPipelineStepStatus(app, 2)"></div>
+                    <div class="pipeline-dot" [ngClass]="getFallbackPipelineStepStatus(app, 3)"></div>
                   </div>
-                  <span class="pipeline-label">{{ getLegacyStageLabel(app.applicationStatus) }}</span>
+                  <span class="pipeline-label">{{ getFallbackPipelineLabel(app) }}</span>
                 }
               </div>
             </div>
@@ -447,17 +447,17 @@
               <!-- Quiz -->
               <div class="status-row">
                 <span class="status-label">Quiz</span>
-                <span class="status-badge" [ngClass]="getQuizBadgeClass(app.quizStatus)">
-                  @if (app.quizStatus === 'COMPLETED') {
+                <span class="status-badge" [ngClass]="getQuizBadgeClass(getCurrentQuizStatus(app))">
+                  @if (getCurrentQuizStatus(app) === 'COMPLETED') {
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
                     Terminé
-                  } @else if (app.quizStatus === 'IN_PROGRESS') {
+                  } @else if (getCurrentQuizStatus(app) === 'IN_PROGRESS') {
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                     En cours
-                  } @else if (app.quizStatus === 'ABANDONED') {
+                  } @else if (getCurrentQuizStatus(app) === 'ABANDONED') {
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                     Abandonné
-                  } @else if (app.quizStatus === 'NOT_REQUIRED') {
+                  } @else if (getCurrentQuizStatus(app) === 'NOT_REQUIRED') {
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
                     Non requis
                   } @else {
@@ -468,11 +468,11 @@
               </div>
 
               <!-- Score -->
-              @if (app.quizScorePercent !== null && app.quizScorePercent !== undefined) {
+              @if (getCurrentQuizScorePercent(app) !== null && getCurrentQuizScorePercent(app) !== undefined) {
                 <div class="status-row">
                   <span class="status-label">Score</span>
-                  <span class="status-badge" [ngClass]="getScoreColor(app.quizScorePercent)">
-                    {{ app.quizScorePercent }}%
+                  <span class="status-badge" [ngClass]="getScoreColor(getCurrentQuizScorePercent(app))">
+                    {{ getCurrentQuizScorePercent(app) }}%
                   </span>
                 </div>
               }
@@ -480,9 +480,9 @@
               <!-- Entretien -->
               <div class="status-row">
                 <span class="status-label">Entretien</span>
-                @if (app.interviewDate) {
-                  <span class="status-badge" [ngClass]="getInterviewBadgeClass(app.interviewStatus)">
-                    {{ getInterviewStatusLabel(app.interviewStatus) }} — {{ formatDate(app.interviewDate) }}
+                @if (getCurrentInterviewDate(app)) {
+                  <span class="status-badge" [ngClass]="getInterviewBadgeClass(getCurrentInterviewStatus(app))">
+                    {{ getInterviewStatusLabel(getCurrentInterviewStatus(app)) }} — {{ formatDate(getCurrentInterviewDate(app)) }}
                   </span>
                 } @else {
                   @if (canScheduleInterview(app)) {
@@ -499,10 +499,10 @@
               <!-- Évaluation -->
               <div class="status-row">
                 <span class="status-label">Évaluation</span>
-                @if (app.evaluationScore !== null && app.evaluationScore !== undefined && app.evaluationScore > 0) {
-                  <span class="status-badge" [ngClass]="getScoreColor(app.evaluationScore * 20)">
+                @if (getCurrentEvaluationScore(app) !== null && getCurrentEvaluationScore(app) !== undefined && getCurrentEvaluationScore(app)! > 0) {
+                  <span class="status-badge" [ngClass]="getScoreColor(getCurrentEvaluationScore(app)! * 20)">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                    {{ app.evaluationScore }}/5
+                    {{ getCurrentEvaluationScore(app) }}/5
                   </span>
                 } @else {
                   <span class="status-badge badge-neutral">Aucune</span>

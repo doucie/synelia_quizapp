@@ -39,6 +39,8 @@ public class CandidateAnswerBusiness implements IBasicBusiness<Request<Candidate
 	@Autowired
 	private ApplicationsRepository applicationsRepository;
 	@Autowired
+	private ApplicationQuizAttemptRepository applicationQuizAttemptRepository;
+	@Autowired
 	private QuestionRepository questionRepository;
 	@Autowired
 	private AnswerRepository answerRepository;
@@ -423,7 +425,11 @@ public class CandidateAnswerBusiness implements IBasicBusiness<Request<Candidate
 		entityToSave.setUpdatedBy(actorUserId);
 		entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(entityToSave)));
 		CandidateAnswer savedEntity = candidateAnswerRepository.save(entityToSave);
-		Applications updatedApplication = applicationsBusiness.refreshQuizScoringState(entityToSave.getApplications(), actorUserId);
+		Applications updatedApplication = applicationsBusiness.refreshQuizScoringState(
+				entityToSave.getApplications(),
+				entityToSave.getApplicationQuizAttempt(),
+				actorUserId,
+				locale);
 
 		CandidateAnswerDto resultDto = CandidateAnswerTransformer.INSTANCE.toDto(savedEntity);
 		if (updatedApplication != null) {
@@ -461,6 +467,8 @@ public class CandidateAnswerBusiness implements IBasicBusiness<Request<Candidate
 			throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("application id -> " + dto.getApplicationId(), locale));
 		}
 
+		ApplicationQuizAttempt quizAttempt = resolveApplicationQuizAttempt(dto.getApplicationQuizAttemptId(), application, locale);
+
 		Question question = questionRepository.findOne(dto.getQuestionId(), false);
 		if (question == null) {
 			throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("question id -> " + dto.getQuestionId(), locale));
@@ -490,11 +498,10 @@ public class CandidateAnswerBusiness implements IBasicBusiness<Request<Candidate
 					"Accès refusé: droits insuffisants pour corriger ce test.", locale));
 		}
 
-		List<CandidateAnswer> questionAnswers = candidateAnswerRepository.findByApplicationIdAndQuestionId(
-				dto.getApplicationId(),
-				dto.getQuestionId(),
-				false);
-		CandidateAnswer entityToSave = resolveQuestionManualCorrectionCarrier(application, question, questionAnswers, actorUserId);
+		List<CandidateAnswer> questionAnswers = quizAttempt != null && quizAttempt.getId() != null
+				? candidateAnswerRepository.findByApplicationQuizAttemptIdAndQuestionId(quizAttempt.getId(), dto.getQuestionId(), false)
+				: candidateAnswerRepository.findByApplicationIdAndQuestionId(dto.getApplicationId(), dto.getQuestionId(), false);
+		CandidateAnswer entityToSave = resolveQuestionManualCorrectionCarrier(application, quizAttempt, question, questionAnswers, actorUserId);
 		entityToSave.setManualCorrectionScore(dto.getManualCorrectionScore());
 		entityToSave.setManualCorrectionComment(StringUtils.trimToNull(dto.getManualCorrectionComment()));
 		entityToSave.setManualCorrectedAt(Utilities.getCurrentDate());
@@ -503,7 +510,7 @@ public class CandidateAnswerBusiness implements IBasicBusiness<Request<Candidate
 		entityToSave.setUpdatedBy(actorUserId);
 		entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(entityToSave)));
 		CandidateAnswer savedEntity = candidateAnswerRepository.save(entityToSave);
-		Applications updatedApplication = applicationsBusiness.refreshQuizScoringState(application, actorUserId, locale);
+		Applications updatedApplication = applicationsBusiness.refreshQuizScoringState(application, quizAttempt, actorUserId, locale);
 
 		CandidateAnswerDto resultDto = CandidateAnswerTransformer.INSTANCE.toDto(savedEntity);
 		if (updatedApplication != null) {
@@ -522,7 +529,24 @@ public class CandidateAnswerBusiness implements IBasicBusiness<Request<Candidate
 		return response;
 	}
 
-	private CandidateAnswer resolveQuestionManualCorrectionCarrier(Applications application, Question question, List<CandidateAnswer> questionAnswers, Integer actorUserId) {
+	private ApplicationQuizAttempt resolveApplicationQuizAttempt(Integer applicationQuizAttemptId, Applications application, Locale locale) throws Exception {
+		if (applicationQuizAttemptId == null) {
+			return null;
+		}
+
+		ApplicationQuizAttempt quizAttempt = applicationQuizAttemptRepository.findOne(applicationQuizAttemptId, false);
+		if (quizAttempt == null) {
+			throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("applicationQuizAttempt id -> " + applicationQuizAttemptId, locale));
+		}
+		if (application == null || application.getId() == null || quizAttempt.getApplications() == null
+				|| !application.getId().equals(quizAttempt.getApplications().getId())) {
+			throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+					"La tentative de quiz ne correspond pas à la candidature demandée.", locale));
+		}
+		return quizAttempt;
+	}
+
+	private CandidateAnswer resolveQuestionManualCorrectionCarrier(Applications application, ApplicationQuizAttempt quizAttempt, Question question, List<CandidateAnswer> questionAnswers, Integer actorUserId) {
 		CandidateAnswer carrier = null;
 		if (questionAnswers != null) {
 			for (CandidateAnswer candidateAnswer : questionAnswers) {
@@ -540,6 +564,7 @@ public class CandidateAnswerBusiness implements IBasicBusiness<Request<Candidate
 
 		CandidateAnswer fallbackCarrier = new CandidateAnswer();
 		fallbackCarrier.setApplications(application);
+		fallbackCarrier.setApplicationQuizAttempt(quizAttempt);
 		fallbackCarrier.setQuestion(question);
 		fallbackCarrier.setAnswer(null);
 		fallbackCarrier.setIsSelected(false);

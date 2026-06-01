@@ -123,6 +123,9 @@ public interface EvaluationsRepository extends JpaRepository<Evaluations, Intege
 	@Query("select e from Evaluations e where e.candidateInterview.id = :candidateInterviewId and e.isDeleted = :isDeleted")
 	List<Evaluations> findByCandidateInterviewId(@Param("candidateInterviewId")Integer candidateInterviewId, @Param("isDeleted")Boolean isDeleted);
 
+	@Query("select e from Evaluations e where e.interviewParticipant.id = :interviewParticipantId and e.isDeleted = :isDeleted")
+	List<Evaluations> findByInterviewParticipantId(@Param("interviewParticipantId")Integer interviewParticipantId, @Param("isDeleted")Boolean isDeleted);
+
 	/**
 	 * Calcule la somme des marks pour un interview donné
 	 */
@@ -150,6 +153,14 @@ public interface EvaluationsRepository extends JpaRepository<Evaluations, Intege
 	@Query("SELECT COUNT(e) FROM Evaluations e " +
 	       "WHERE e.candidateInterview.applications.id = :applicationId AND e.isDeleted = false")
 	Long countByApplicationId(@Param("applicationId") Integer applicationId);
+
+	@Query("SELECT COUNT(e) FROM Evaluations e " +
+	       "WHERE e.interviewParticipant.id = :interviewParticipantId AND e.isDeleted = false")
+	Long countByInterviewParticipantId(@Param("interviewParticipantId") Integer interviewParticipantId);
+
+	@Query("SELECT MAX(e.submittedAt) FROM Evaluations e " +
+	       "WHERE e.interviewParticipant.id = :interviewParticipantId AND e.isDeleted = false")
+	Date findLatestSubmittedAtByInterviewParticipantId(@Param("interviewParticipantId") Integer interviewParticipantId);
 
 	/**
 	 * Finds List of Evaluations by using evaluationsDto as a search criteria.

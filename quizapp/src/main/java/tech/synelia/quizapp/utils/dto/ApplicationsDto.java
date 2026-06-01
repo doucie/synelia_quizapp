@@ -58,6 +58,16 @@ public class ApplicationsDto extends _ApplicationsDto implements Cloneable{
     private Integer    quizTotalTimeAllowedSnapshot ;
     private String     interviewDate        ;
     private String     interviewStatus      ;
+    private Integer    currentInterviewEvaluationScore ;
+    private Integer    currentInterviewEvaluationNumber ;
+    private Double     currentInterviewEvaluationPercentage ;
+    private String     currentPreselectionDecisionType ;
+    private String     currentPreselectionDecisionDate ;
+    private String     currentFinalDecisionType ;
+    private String     currentFinalDecisionDate ;
+    private String     currentPipelineStageType ;
+    private String     currentPipelineStageLabel ;
+    private String     currentPipelineProgressStatus ;
     private Boolean    applicationAbandoned ;
 	private String     createdAt            ;
     private Integer    createdBy            ;
@@ -77,6 +87,8 @@ public class ApplicationsDto extends _ApplicationsDto implements Cloneable{
     private List<Integer> selectedAnswerIds ;
     private Map<Integer, String> selectedAnswerComments ;
     private String     freeTextResponse     ;
+    private String     action               ;
+    private List<ApplicationQuizAttemptSummaryDto> quizAttempts ;
 
     //----------------------------------------------------------------------
     // ENTITY LINKS FIELD ( RELATIONSHIP )

@@ -100,6 +100,7 @@ public class PipelineStageBusiness implements IBasicBusiness<Request<PipelineSta
 
             String normalizedStageType = normalizeStageType(dto.getStageType(), locale);
             validateFixedStageCreation(normalizedStageType, locale);
+            validateEvaluationStageTransition(normalizedStageType, null, locale);
             String normalizedConfigJson = validateAndNormalizeConfig(normalizedStageType, dto.getConfigJson(), locale);
             ensureSingletonStageTypeNotDuplicated(dto.getPipelineTemplateId(), normalizedStageType, null, null, createdSingletonStageKeys, locale);
             dto.setStageType(normalizedStageType);
@@ -162,10 +163,11 @@ public class PipelineStageBusiness implements IBasicBusiness<Request<PipelineSta
                 throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION("Ce pipeline est verrouillé car utilisé par des candidats", locale));
             }
 
-            String requestedStageType = Utilities.shouldUpdate(dto.getStageType())
+                String requestedStageType = Utilities.notBlank(dto.getStageType())
                     ? dto.getStageType()
                     : entityToSave.getStageType();
-            String nextStageType = normalizeStageType(requestedStageType, locale);
+                String nextStageType = normalizeStageType(requestedStageType, locale);
+                validateEvaluationStageTransition(nextStageType, entityToSave.getStageType(), locale);
             String nextConfigJson = Utilities.shouldUpdate(dto.getConfigJson())
                     ? dto.getConfigJson()
                     : entityToSave.getConfigJson();
@@ -296,6 +298,20 @@ public class PipelineStageBusiness implements IBasicBusiness<Request<PipelineSta
                     "Les étapes CANDIDATURE et DECISION sont créées automatiquement et ne peuvent pas être ajoutées manuellement",
                     locale));
         }
+    }
+
+    private void validateEvaluationStageTransition(String nextStageType, String currentStageType, Locale locale) {
+        if (!StageType.EVALUATION.getValue().equals(nextStageType)) {
+            return;
+        }
+
+        if (StageType.EVALUATION.getValue().equals(currentStageType)) {
+            return;
+        }
+
+        throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION(
+                "Le type EVALUATION n'est plus autorise comme etape de premier niveau. Rattachez l'evaluation au sous-workflow d'entretien.",
+                locale));
     }
 
     private boolean isFixedBoundaryStageType(String stageType) {

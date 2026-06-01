@@ -48,6 +48,12 @@ public interface InterviewsTransformer {
 		@Mapping(source="entity.updatedAt", dateFormat="dd/MM/yyyy", target="updatedAt"),
 		@Mapping(source="entity.campaigns.id", target="campaignId"),
 		@Mapping(source="entity.applications.id", target="applicationId"),
+		@Mapping(source="entity.applicationProgress.id", target="applicationProgressId"),
+		@Mapping(source="entity.applicationProgress.pipelineStage.id", target="pipelineStageId"),
+		@Mapping(source="entity.applicationProgress.pipelineStage.stageType", target="pipelineStageType"),
+		@Mapping(source="entity.applicationProgress.pipelineStage.stageLabel", target="pipelineStageLabel"),
+		@Mapping(source="entity.applicationProgress.pipelineStage.stageOrder", target="pipelineStageOrder"),
+		@Mapping(target="interviewRound", ignore=true),
 	})
 	InterviewsDto toDto(Interviews entity) throws ParseException;
 
@@ -57,7 +63,16 @@ public interface InterviewsTransformer {
 			return null;
 		}
 		InterviewsDto dto = new InterviewsDto();
-								dto.setId( entity.getId() );
+							dto.setId( entity.getId() );
+		if (entity.getApplicationProgress() != null) {
+			dto.setApplicationProgressId(entity.getApplicationProgress().getId());
+			if (entity.getApplicationProgress().getPipelineStage() != null) {
+				dto.setPipelineStageId(entity.getApplicationProgress().getPipelineStage().getId());
+				dto.setPipelineStageType(entity.getApplicationProgress().getPipelineStage().getStageType());
+				dto.setPipelineStageLabel(entity.getApplicationProgress().getPipelineStage().getStageLabel());
+				dto.setPipelineStageOrder(entity.getApplicationProgress().getPipelineStage().getStageOrder());
+			}
+		}
 																																																						return dto;
     }
 

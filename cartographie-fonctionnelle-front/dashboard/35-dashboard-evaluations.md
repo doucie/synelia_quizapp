@@ -58,6 +58,7 @@ La page sert à lister les entretiens évaluables ou déjà évalués, puis à o
 - `startedAt`
 - `endedAt`
 - `interviewEvaluationsLink`
+- `interviewRound`
 - `evaluationScore`
 - `evaluationNumber`
 - `evaluationPercentage`
@@ -75,6 +76,11 @@ La page sert à lister les entretiens évaluables ou déjà évalués, puis à o
 - `InterviewService.getAllInterviews()` -> `POST /interviews/getByCriteria`
 - `ApplicationService.getApplicationsByCriteria()` -> `POST /applications/getByCriteria`
 - `CampaignService.getMyCampaigns()` -> `POST /campaigns/getByCriteria`
+- `CandidateInterviewEntityService.getAllByCriteria()` -> `POST /candidateInterview/getAllByCriteria`
+- `EvaluationService.getEvaluationsByCandidateInterviewId()` -> `POST /evaluations/getByCriteria` avec `candidateInterviewId`
+- `InterviewParticipantService.getAllByCriteria()` -> `POST /interviewParticipant/getAllByCriteria`
+- `UserService.getByCriteria()` -> `POST /user/getByCriteria`
+- `InterviewService.getAllInterviews()` remonte maintenant aussi `applicationProgressId`, les métadonnées de stage (`pipelineStageId`, `pipelineStageType`, `pipelineStageLabel`, `pipelineStageOrder`) et le `interviewRound` explicite
 - navigation vers l’évaluation détaillée via route `/dashboard/evaluate/:link`
 
 ## 7. Ce Que Le Backend Doit Envoyer
@@ -83,6 +89,9 @@ La page sert à lister les entretiens évaluables ou déjà évalués, puis à o
 - Des statuts `STARTED` et `OVER` cohérents avec la réalité du workflow.
 - Des données d’agrégat d’évaluation suffisantes pour les cartes terminées.
 - Des campagnes et candidatures permettant d’enrichir lisiblement les entretiens.
+- Des `candidateInterview` résolubles depuis les entretiens listés et des évaluations enrichies avec `evaluationItems` pour afficher un aperçu de la dernière soumission.
+- Des `interview_participant` et des utilisateurs résolubles pour projeter l'état de soumission par évaluateur sur chaque carte.
+- Des entretiens enrichis avec leur lien exact vers `applicationProgress`, les métadonnées de stage associées et un `interviewRound` explicite pour éviter tout recalcul heuristique côté front.
 
 ## 8. Entites Metier Impliquees
 
@@ -90,11 +99,15 @@ La page sert à lister les entretiens évaluables ou déjà évalués, puis à o
 - `application`
 - `campaign`
 - `evaluation`
+- `interview_participant`
+- `user`
 
 ## 9. Questions Ou Ecarts A Qualifier
 
 - [ ] La liste devrait-elle être basée sur les campagnes suivies/partagées et non seulement `myCampaigns` ?
-- [ ] Les évaluations terminées devraient-elles afficher plus de détail sans ouvrir le plein écran ?
+- [x] Les cartes affichent maintenant un premier aperçu de la dernière soumission (nombre de soumissions, score dérivé, premiers critères) sans ouvrir le plein écran.
+- [x] Les cartes affichent maintenant aussi le roster des évaluateurs avec leur état de soumission (`Soumis`, `Terminé`, `En ligne`, `Assigné`).
+- [x] Les cartes affichent maintenant le round d'entretien explicite (`interviewRound`) et le libellé exact de l'étape `INTERVIEW` fournis par le contrat `interviews` enrichi.
 - [ ] Faut-il une distinction visuelle entre `évaluable` et `consultation seule` ?
 
 - [ ] Vérifier la conformité entre la BD actuelle et les formulaires/cartes/filtres front réellement exposés par cette page.
@@ -114,8 +127,10 @@ La page sert à lister les entretiens évaluables ou déjà évalués, puis à o
 ## 11. Impact Cible Multi-Occurrences
 
 - [ ] repositionner cette page comme liste des evaluations d'entretien, et non comme suivi d'une etape pipeline `EVALUATION` autonome
-- [ ] afficher le round d'entretien, le label de stage et l'etat de soumission par evaluateur
-- [ ] retirer les agregats mono-valeur comme source principale de lecture metier
-- [ ] rendre visible la pluralite des criteres et des evaluateurs pour un meme entretien
+- [x] afficher le round d'entretien et le label de stage
+- [x] afficher l'etat de soumission par evaluateur
+- [~] retirer les agregats mono-valeur comme source principale de lecture metier
+- [~] les cartes `OVER` basculent deja vers une moyenne derivee, un dernier score et un volume de soumissions calcules depuis les evaluations chargees; le fallback legacy reste en place quand aucune soumission detaillee n'est disponible
+- [x] rendre visible la pluralite des criteres et des evaluateurs pour un meme entretien
 - [ ] faire remonter la version de grille ou le snapshot de criteres utilise pour l'entretien, afin d'expliquer sur quelle bibliotheque mutualisee l'evaluation s'appuie
 - [ ] distinguer les resumes de soumission (`globalScore`, `globalComment`) des details de criteres et des agregats recalcules d'entretien

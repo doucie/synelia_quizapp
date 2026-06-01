@@ -70,6 +70,10 @@ public class EvaluationsController {
     public ResponseEntity<Response<EvaluationsDto>> create(@RequestBody Request<EvaluationsDto> request) throws Exception {
     	log.info("start method /evaluations/create");
         Response<EvaluationsDto> response = controllerFactory.create(evaluationsBusiness, request, FunctionalityEnum.CREATE_EVALUATIONS);
+		if (response.isHasError() || response.getItems() == null || response.getItems().isEmpty()) {
+			log.info("end method /evaluations/create with error");
+			return ResponseEntity.badRequest().body(response);
+		}
 		URI uri = ServletUriComponentsBuilder
 				.fromCurrentRequest()
 				.buildAndExpand(response.getItems().get(0))
@@ -101,6 +105,16 @@ public class EvaluationsController {
 		log.info("end method /evaluations/getByCriteria");
         return response;
     }
+
+	@RequestMapping(value="/getCriteria",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
+    public Response<EvaluationsDto> getCriteria(@RequestBody Request<EvaluationsDto> request) throws Exception{
+		log.info("start method /evaluations/getCriteria");
+		String languageID = requestBasic != null ? (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER") : null;
+		Locale locale = languageID != null ? Locale.of(languageID, "") : Locale.getDefault();
+		Response<EvaluationsDto> response = evaluationsBusiness.getCriteria(request, locale);
+		log.info("end method /evaluations/getCriteria");
+		return response;
+	}
 
 	@RequestMapping(value="/getAllByCriteria",method=RequestMethod.POST,consumes = {"application/json"},produces={"application/json"})
     public Response<EvaluationsDto> getAllByCriteria(@RequestBody Request<EvaluationsDto> request) throws Exception{

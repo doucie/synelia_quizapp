@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { EntityCrudBase, ColumnDef } from '../../../../../shared/entity-crud-base';
+import { DetailField } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
 import { FilterCheckboxComponent } from '../../../../../shared/filter-checkbox/filter-checkbox';
 import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../../../shared/filter-select/filter-select';
 import { EntityDetailPanelComponent } from '../../../../../shared/entity-detail-panel/entity-detail-panel';
@@ -43,26 +44,45 @@ export class EntitiesDecisionsComponent extends EntityCrudBase<Decision, Decisio
 
   advancedCriteria: DecisionCriteria = {};
   editFormData: Decision = { decisionType: '', isCancel: false, applicationId: 0, userId: 0 };
-  createFormData: DecisionMutationPayload = {};
+  createFormData: DecisionMutationPayload = { isCancel: false };
 
   override allColumns: ColumnDef[] = [
     { key: 'id', label: 'ID', priority: 1 },
     { key: 'applicationId', label: 'Candidature', priority: 1 },
     { key: 'userId', label: 'Utilisateur', priority: 2 },
     { key: 'decisionType', label: 'Type Décision', priority: 1 },
+    { key: 'decisionMode', label: 'Mode', priority: 2 },
+    { key: 'applicationProgressId', label: 'Occurrence', priority: 2 },
+    { key: 'cancelsDecisionId', label: 'Annule', priority: 3 },
+    { key: 'justification', label: 'Justification', priority: 3 },
     { key: 'cancelled', label: 'Annulée', priority: 2 },
     { key: 'pipelineStage', label: 'Étape Pipeline', priority: 2 },
     { key: 'createdAt', label: 'Créé le', priority: 2 },
     { key: 'actions', label: 'Actions', priority: 1 },
   ];
 
+  override detailFields: DetailField[] = [
+    { key: 'id', label: 'ID', type: 'id', editable: false },
+    { key: 'applicationId', label: 'Candidature', type: 'id', displayValue: (entity) => this.getApplicationDisplay(entity?.applicationId) },
+    { key: 'userId', label: 'Utilisateur', type: 'id', displayValue: (entity) => this.getUserDisplay(entity?.userId) },
+    { key: 'decisionType', label: 'Type décision', type: 'text' },
+    { key: 'decisionMode', label: 'Mode', type: 'text', editable: false, displayValue: (entity) => this.getDecisionModeDisplay(entity?.decisionMode) },
+    { key: 'isCancel', label: 'Annulée', type: 'boolean', editable: false },
+    { key: 'pipelineStageId', label: 'Étape pipeline', type: 'id', editable: false, displayValue: (entity) => this.getPipelineStageDisplay(entity?.pipelineStageId) },
+    { key: 'applicationProgressId', label: 'Occurrence pipeline', type: 'id', editable: false, displayValue: (entity) => this.getApplicationProgressDisplay(entity?.applicationProgressId) },
+    { key: 'cancelsDecisionId', label: 'Décision annulée ciblée', type: 'id', editable: false, displayValue: (entity) => this.getCancelsDecisionDisplay(entity?.cancelsDecisionId) },
+    { key: 'justification', label: 'Justification', type: 'text' },
+    { key: 'createdAt', label: 'Créé le', type: 'date', editable: false },
+    { key: 'updatedAt', label: 'Modifié le', type: 'date', editable: false },
+  ];
+
   protected fetchAll(criteria: DecisionCriteria): Observable<PagedDecisionResponse> { return this.service.getAllDecisionsByCriteria(criteria); }
-  protected performCreate(item: DecisionMutationPayload): Observable<any> { return this.service.createDecision(item); }
-  protected performUpdate(item: Decision): Observable<any> { return this.service.updateDecision(item); }
+  protected performCreate(item: DecisionMutationPayload): Observable<any> { return this.service.createDecision({ isCancel: false, ...item }); }
+  protected performUpdate(item: Decision): Observable<any> { return this.service.updateDecision(this.buildUpdatePayload(item)); }
   protected performDelete(id: number): Observable<any> { return this.service.deleteDecision(id); }
   protected performRestore(id: number): Observable<any> { return this.service.restoreDecision(id); }
   protected resetAdvancedCriteriaValues(): void { this.advancedCriteria = {}; }
-  protected resetCreateFormData(): void { this.createFormData = {}; }
+  protected resetCreateFormData(): void { this.createFormData = { isCancel: false }; }
 
   override ngOnInit() {
     super.ngOnInit();
@@ -131,5 +151,48 @@ export class EntitiesDecisionsComponent extends EntityCrudBase<Decision, Decisio
 
     const label = pipelineStage.stageLabel || pipelineStage.stageType;
     return label ? `${label} (#${pipelineStageId})` : `#${pipelineStageId}`;
+  }
+
+  getDecisionModeDisplay(decisionMode?: string): string {
+    switch ((decisionMode || '').trim().toUpperCase()) {
+      case 'STANDARD':
+        return 'Décision standard';
+      case 'CANCEL':
+        return 'Annulation historisée';
+      case 'OVERRIDE':
+        return 'Override';
+      case 'ROLLBACK':
+        return 'Rollback';
+      default:
+        return decisionMode || '-';
+    }
+  }
+
+  getApplicationProgressDisplay(applicationProgressId?: number): string {
+    return applicationProgressId ? `Occurrence #${applicationProgressId}` : '-';
+  }
+
+  getCancelsDecisionDisplay(cancelsDecisionId?: number): string {
+    return cancelsDecisionId ? `Décision #${cancelsDecisionId}` : '-';
+  }
+
+  getJustificationPreview(justification?: string): string {
+    if (!justification?.trim()) {
+      return '-';
+    }
+
+    const normalized = justification.trim();
+    return normalized.length > 72 ? `${normalized.slice(0, 69)}...` : normalized;
+  }
+
+  private buildUpdatePayload(item: Decision): DecisionMutationPayload {
+    if (item.isCancel) {
+      return {
+        id: item.id,
+        justification: item.justification ?? ''
+      };
+    }
+
+    return item;
   }
 }

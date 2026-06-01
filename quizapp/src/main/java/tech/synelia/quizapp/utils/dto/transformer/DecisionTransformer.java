@@ -39,6 +39,8 @@ public interface DecisionTransformer {
         @Mapping(source="entity.application.id", target="applicationId"),
         @Mapping(source="entity.user.id", target="userId"),
         @Mapping(source="entity.pipelineStage.id", target="pipelineStageId"),
+        @Mapping(source="entity.applicationProgress.id", target="applicationProgressId"),
+        @Mapping(source="entity.cancelsDecision.id", target="cancelsDecisionId"),
     })
     DecisionDto toDto(Decision entity) throws ParseException;
 
@@ -51,9 +53,13 @@ public interface DecisionTransformer {
         dto.setId(entity.getId());
         dto.setDecisionType(entity.getDecisionType());
         dto.setIsCancel(entity.getIsCancel());
+        dto.setJustification(entity.getJustification());
+        dto.setDecisionMode(entity.getDecisionMode());
         dto.setApplicationId(entity.getApplication() != null ? entity.getApplication().getId() : null);
         dto.setUserId(entity.getUser() != null ? entity.getUser().getId() : null);
         dto.setPipelineStageId(entity.getPipelineStage() != null ? entity.getPipelineStage().getId() : null);
+        dto.setApplicationProgressId(entity.getApplicationProgress() != null ? entity.getApplicationProgress().getId() : null);
+        dto.setCancelsDecisionId(entity.getCancelsDecision() != null ? entity.getCancelsDecision().getId() : null);
         return dto;
     }
 
@@ -71,6 +77,8 @@ public interface DecisionTransformer {
         @Mapping(target="application", ignore=true),
         @Mapping(target="user", ignore=true),
         @Mapping(target="pipelineStage", ignore=true),
+        @Mapping(target="applicationProgress", ignore=true),
+        @Mapping(target="cancelsDecision", ignore=true),
     })
     Decision toEntity(DecisionDto dto) throws ParseException;
 
@@ -83,6 +91,8 @@ public interface DecisionTransformer {
         entity.setId(dto.getId());
         entity.setDecisionType(dto.getDecisionType());
         entity.setIsCancel(dto.getIsCancel());
+        entity.setJustification(dto.getJustification());
+        entity.setDecisionMode(dto.getDecisionMode());
         if (dto.getApplicationId() != null) {
             Applications app = new Applications();
             app.setId(dto.getApplicationId());
@@ -97,6 +107,16 @@ public interface DecisionTransformer {
             PipelineStage stage = new PipelineStage();
             stage.setId(dto.getPipelineStageId());
             entity.setPipelineStage(stage);
+        }
+        if (dto.getApplicationProgressId() != null) {
+            ApplicationProgress progress = new ApplicationProgress();
+            progress.setId(dto.getApplicationProgressId());
+            entity.setApplicationProgress(progress);
+        }
+        if (dto.getCancelsDecisionId() != null) {
+            Decision cancelsDecision = new Decision();
+            cancelsDecision.setId(dto.getCancelsDecisionId());
+            entity.setCancelsDecision(cancelsDecision);
         }
         return entity;
     }

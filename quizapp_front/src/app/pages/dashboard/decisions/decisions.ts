@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subject, takeUntil, forkJoin, of, catchError } from 'rxjs';
-import { Application, ApplicationService } from '../../../core/services/application.service';
+import { Application, ApplicationQuizAttemptSummary, ApplicationService } from '../../../core/services/application.service';
 import { CampaignService, Campaign, CampaignAccessRecord } from '../../../core/services/campaign.service';
 import { SourceTokenService, SourceToken } from '../../../services/source-token.service';
 import { Decision, DecisionService } from '../../../core/services/decision.service';
@@ -13,6 +13,7 @@ import { PipelineStageService } from '../../../core/services/pipeline-stage.serv
 import { APPLICATION_STATUS } from '../../../core/constants/application-status.constants';
 import { ApplicationProgressService } from '../../../core/services/application-progress.service';
 import { PipelineStage, ApplicationProgress } from '../../../core/models/pipeline.interfaces';
+import { CandidateInterviewEntity, CandidateInterviewEntityService } from '../../../core/services/candidate-interview-entity.service';
 
 interface ApplicationWithCampaign extends Application {
   campaignTitle?: string;
@@ -45,10 +46,18 @@ export class DecisionsComponent implements OnInit, OnDestroy {
   selectedFilter = signal<DecisionFilter>('ALL'); // Nouveau signal pour les filtres
   selectedApplication = signal<ApplicationWithCampaign | null>(null);
   showApplicationSuggestions = signal(false);
+  selectedApplicationQuizAttempts = signal<ApplicationQuizAttemptSummary[]>([]);
+  selectedApplicationQuizAttemptsLoaded = signal(false);
+  selectedApplicationInterviews = signal<CandidateInterviewEntity[]>([]);
+  selectedApplicationInterviewsLoaded = signal(false);
 
   // Modal de décision
   showDecisionModal = signal(false);
   decisionModalStep = signal<number | null>(null);
+  decisionModalAction = signal<'APPROVE' | 'CANCEL' | null>(null);
+  decisionModalMode = signal<'DECIDE' | 'UNDO' | null>(null);
+  decisionModalTargetDecisionId = signal<number | null>(null);
+  decisionModalJustification = signal('');
 
   // Modal de prévisualisation CV
   showCvModal = signal(false);
@@ -65,6 +74,7 @@ export class DecisionsComponent implements OnInit, OnDestroy {
     private sourceTokenService: SourceTokenService,
     private decisionService: DecisionService,
     private userService: UserService,
+    private candidateInterviewEntityService: CandidateInterviewEntityService,
     private router: Router,
     private pipelineStageService: PipelineStageService,
     private applicationProgressService: ApplicationProgressService,
@@ -264,9 +274,14 @@ export class DecisionsComponent implements OnInit, OnDestroy {
     this.selectedApplication.set(application);
     this.searchQuery.set(`${application.candidateFirstName} ${application.candidateLastName} - ${application.candidateEmail}`);
     this.showApplicationSuggestions.set(false);
+    this.selectedApplicationQuizAttempts.set([]);
+    this.selectedApplicationQuizAttemptsLoaded.set(false);
+    this.selectedApplicationInterviews.set([]);
+    this.selectedApplicationInterviewsLoaded.set(false);
 
     // Charger les décisions pour cette candidature
     this.loadDecisionsForApplication(application.id!);
+    this.loadRuntimeDetailsForApplication(application.id!);
 
     // Charger le progrès pipeline (forcer le rafraîchissement)
     if (application.id) {
@@ -351,10 +366,11 @@ export class DecisionsComponent implements OnInit, OnDestroy {
   /**
    * Prend une décision pour une étape du pipeline
    */
-  takeDecisionForStage(stage: PipelineStage, action: 'APPROVE' | 'CANCEL'): void {
+  takeDecisionForStage(stage: PipelineStage, action: 'APPROVE' | 'CANCEL', justification?: string): void {
     const app = this.selectedApplication();
     if (!app) return;
     if (!this.hasDecisionPermissionForCampaign(app.campaignId)) return;
+    if (!stage.id) return;
 
     const decisionType = this.mapStageToDecisionType(stage, action === 'APPROVE');
     if (!decisionType) {
@@ -362,11 +378,17 @@ export class DecisionsComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const progress = this.getProgressForStage(app.id!, stage.id);
+
     const decision: Decision = {
       decisionType: decisionType,
       isCancel: false,
       applicationId: app.id!,
       userId: this.getCurrentUserId(),
+      pipelineStageId: stage.id,
+      applicationProgressId: progress?.id,
+      decisionMode: 'STANDARD',
+      justification: justification?.trim() || undefined,
       createdAt: new Date().toISOString(),
       createdBy: this.getCurrentUserId()
     };
@@ -423,31 +445,15 @@ export class DecisionsComponent implements OnInit, OnDestroy {
     // Trouver la dernière décision (la plus récente)
     const lastDecision = decisions[0]; // Les décisions sont triées par date décroissante
 
-    if (!lastDecision.id) return;
+    if (lastDecision.isCancel) return;
 
-    this.loading.set(true);
-    this.decisionService.deleteDecision(lastDecision.id).subscribe({
-      next: (response: any) => {
-        if (response.hasError) {
-          console.error('❌ Erreur lors de l\'annulation de la décision:', response.status.message);
-          // TODO: Afficher une notification d'erreur
-        } else {
-          console.log('✅ Décision annulée avec succès');
-          // Recharger les décisions
-          const app = this.selectedApplication();
-          if (app) {
-            this.loadDecisionsForApplication(app.id!);
-            // Recharger les candidatures pour mettre à jour le statut
-            this.loadApplications();
-          }
-        }
-        this.loading.set(false);
-      },
-      error: (error: any) => {
-        console.error('❌ Erreur lors de l\'annulation de la décision:', error);
-        this.loading.set(false);
-      }
-    });
+    const stageId = this.resolveDecisionStageId(lastDecision);
+    if (stageId == null) return;
+
+    const stage = this.getStagesForSelectedApp().find(item => item.id === stageId);
+    if (!stage) return;
+
+    this.openUndoDecisionModal(stage);
   }
 
   /**
@@ -458,6 +464,10 @@ export class DecisionsComponent implements OnInit, OnDestroy {
     this.selectedApplication.set(null);
     this.decisions.set([]);
     this.showApplicationSuggestions.set(false);
+    this.selectedApplicationQuizAttempts.set([]);
+    this.selectedApplicationQuizAttemptsLoaded.set(false);
+    this.selectedApplicationInterviews.set([]);
+    this.selectedApplicationInterviewsLoaded.set(false);
   }
 
   /**
@@ -481,6 +491,17 @@ export class DecisionsComponent implements OnInit, OnDestroy {
     }
   }
 
+  @HostListener('document:keydown.escape')
+  onEscapeKey(): void {
+    if (this.showDecisionModal()) {
+      this.closeDecisionModal();
+      return;
+    }
+    if (this.showCvModal()) {
+      this.closeCvModal();
+    }
+  }
+
   /**
    * Obtient la classe CSS pour le statut d'une étape
    */
@@ -499,6 +520,47 @@ export class DecisionsComponent implements OnInit, OnDestroy {
    */
   getCandidateName(app: ApplicationWithCampaign): string {
     return `${app.candidateFirstName || ''} ${app.candidateLastName || ''}`.trim() || 'Candidat';
+  }
+
+  getSelectedApplicationQuizScorePercent(application?: ApplicationWithCampaign | null): number | null {
+    if (this.selectedApplicationQuizAttemptsLoaded()) {
+      return this.getCurrentQuizAttempt()?.scorePercent ?? null;
+    }
+
+    return application?.quizScorePercent ?? null;
+  }
+
+  getSelectedApplicationInterviewDate(application?: ApplicationWithCampaign | null): string {
+    if (this.selectedApplicationInterviewsLoaded()) {
+      const interview = this.getCurrentInterview();
+      return interview?.interviewDate || interview?.interviewStart || '';
+    }
+
+    return application?.interviewDate || '';
+  }
+
+  getSelectedApplicationInterviewStatus(application?: ApplicationWithCampaign | null): string {
+    if (this.selectedApplicationInterviewsLoaded()) {
+      return this.getCurrentInterview()?.interviewStatus || '';
+    }
+
+    return application?.interviewStatus || '';
+  }
+
+  getSelectedApplicationEvaluationScore(application?: ApplicationWithCampaign | null): number | null {
+    if (this.selectedApplicationInterviewsLoaded()) {
+      return this.getCurrentInterview()?.evaluationPercentage ?? null;
+    }
+
+    if (application?.currentInterviewEvaluationPercentage != null) {
+      return application.currentInterviewEvaluationPercentage;
+    }
+
+    if (application?.evaluationScore == null) {
+      return null;
+    }
+
+    return application.evaluationScore > 5 ? application.evaluationScore : application.evaluationScore * 20;
   }
 
   /**
@@ -520,6 +582,107 @@ export class DecisionsComponent implements OnInit, OnDestroy {
     }
   }
 
+  private loadRuntimeDetailsForApplication(applicationId: number): void {
+    forkJoin({
+      applicationDetail: this.applicationService.getApplicationDetail(applicationId).pipe(
+        catchError(error => {
+          console.error('❌ Erreur lors du chargement du détail application:', error);
+          return of(null);
+        })
+      ),
+      candidateInterviews: this.candidateInterviewEntityService.getAllByCriteria({ applicationId, size: 100 }).pipe(
+        catchError(error => {
+          console.error('❌ Erreur lors du chargement des candidateInterview:', error);
+          return of({ content: [] } as any);
+        })
+      )
+    }).pipe(takeUntil(this.destroy$)).subscribe(({ applicationDetail, candidateInterviews }) => {
+      if (this.selectedApplication()?.id !== applicationId) {
+        return;
+      }
+
+      this.selectedApplicationQuizAttempts.set(this.sortQuizAttemptsForDisplay(applicationDetail?.quizAttempts || []));
+      this.selectedApplicationQuizAttemptsLoaded.set(true);
+      this.selectedApplicationInterviews.set(this.sortCandidateInterviewsForDisplay(candidateInterviews.content || []));
+      this.selectedApplicationInterviewsLoaded.set(true);
+    });
+  }
+
+  private getCurrentQuizAttempt(): ApplicationQuizAttemptSummary | null {
+    return this.selectedApplicationQuizAttempts()[0] || null;
+  }
+
+  private getCurrentInterview(): CandidateInterviewEntity | null {
+    return this.selectedApplicationInterviews()[0] || null;
+  }
+
+  private sortQuizAttemptsForDisplay(attempts: ApplicationQuizAttemptSummary[]): ApplicationQuizAttemptSummary[] {
+    return [...attempts].sort((left, right) => {
+      const leftTimestamp = this.parseRuntimeTimestamp(left.lastActivityAt || left.completedAt || left.startedAt || left.updatedAt || left.createdAt);
+      const rightTimestamp = this.parseRuntimeTimestamp(right.lastActivityAt || right.completedAt || right.startedAt || right.updatedAt || right.createdAt);
+      if (leftTimestamp !== rightTimestamp) {
+        return rightTimestamp - leftTimestamp;
+      }
+
+      return (right.id || 0) - (left.id || 0);
+    });
+  }
+
+  private sortCandidateInterviewsForDisplay(interviews: CandidateInterviewEntity[]): CandidateInterviewEntity[] {
+    const priority: Record<string, number> = {
+      STARTED: 0,
+      SCHEDULED: 1,
+      PENDING: 2,
+      OVER: 3,
+      PASSED: 3,
+      FAILED: 4,
+      POSTPONED: 5,
+      ARCHIVED: 6
+    };
+
+    return [...interviews].sort((left, right) => {
+      const leftPriority = priority[(left.interviewStatus || '').toUpperCase()] ?? 99;
+      const rightPriority = priority[(right.interviewStatus || '').toUpperCase()] ?? 99;
+      if (leftPriority !== rightPriority) {
+        return leftPriority - rightPriority;
+      }
+
+      const leftTimestamp = this.parseRuntimeTimestamp(left.interviewDate || left.interviewStart || left.updatedAt || left.createdAt);
+      const rightTimestamp = this.parseRuntimeTimestamp(right.interviewDate || right.interviewStart || right.updatedAt || right.createdAt);
+      if (leftTimestamp !== rightTimestamp) {
+        return rightTimestamp - leftTimestamp;
+      }
+
+      return (right.id || 0) - (left.id || 0);
+    });
+  }
+
+  private parseRuntimeTimestamp(value?: string | null): number {
+    if (!value) {
+      return 0;
+    }
+
+    const isoTimestamp = Date.parse(value);
+    if (!Number.isNaN(isoTimestamp)) {
+      return isoTimestamp;
+    }
+
+    const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2})(?::(\d{2}))?)?$/);
+    if (!match) {
+      return 0;
+    }
+
+    const [, day, month, year, hours = '00', minutes = '00', seconds = '00'] = match;
+    return new Date(
+      Number(year),
+      Number(month) - 1,
+      Number(day),
+      Number(hours),
+      Number(minutes),
+      Number(seconds)
+    ).getTime();
+  }
+
   /**
    * Obtient la classe CSS pour l'action de décision
    */
@@ -532,6 +695,154 @@ export class DecisionsComponent implements OnInit, OnDestroy {
    */
   getDecisionActionLabel(isCancel: boolean): string {
     return isCancel ? 'Annulation' : 'Décision';
+  }
+
+  getDecisionModalStage(): PipelineStage | null {
+    const stageId = this.decisionModalStep();
+    if (!stageId) {
+      return null;
+    }
+    return this.getStagesForSelectedApp().find(stage => stage.id === stageId) || null;
+  }
+
+  getDecisionModalTargetDecision(): Decision | null {
+    const targetDecisionId = this.decisionModalTargetDecisionId();
+    if (targetDecisionId == null) {
+      return null;
+    }
+    return this.selectedApplicationDecisions().find(decision => decision.id === targetDecisionId) || null;
+  }
+
+  getDecisionModalTitle(): string {
+    const stage = this.getDecisionModalStage();
+    if (!stage) {
+      return 'Décision';
+    }
+
+    if (this.decisionModalMode() === 'UNDO') {
+      return 'Annuler la décision';
+    }
+
+    const options = this.getDecisionOptionsForStage(stage);
+    return this.decisionModalAction() === 'APPROVE' ? options.approveLabel : options.cancelLabel;
+  }
+
+  getDecisionModalDescription(): string {
+    const stage = this.getDecisionModalStage();
+    if (!stage) {
+      return '';
+    }
+
+    if (this.decisionModalMode() === 'UNDO') {
+      const targetDecision = this.getDecisionModalTargetDecision();
+      if (targetDecision?.id) {
+        return `${stage.stageLabel} · annule ${this.getDecisionLabel(targetDecision.decisionType)} #${targetDecision.id}`;
+      }
+      return `${stage.stageLabel} · annulation historisée`;
+    }
+
+    return `${stage.stageLabel} · ${this.getDynamicStepDescription(stage)}`;
+  }
+
+  getDecisionModalPlaceholder(): string {
+    if (this.isDecisionModalJustificationRequired()) {
+      return 'Expliquez pourquoi cette décision doit être annulée.';
+    }
+    return 'Ajoutez un commentaire utile pour l’audit si nécessaire.';
+  }
+
+  isDecisionModalJustificationRequired(): boolean {
+    return this.decisionModalMode() === 'UNDO';
+  }
+
+  isDecisionModalSubmitDisabled(): boolean {
+    return this.loading() || (this.isDecisionModalJustificationRequired() && !this.decisionModalJustification().trim());
+  }
+
+  private getCancelledDecisionIds(decisions: Decision[]): Set<number> {
+    return new Set(
+      decisions
+        .map(decision => decision.isCancel ? decision.cancelsDecisionId : undefined)
+        .filter((id): id is number => id != null)
+    );
+  }
+
+  getLatestActiveDecisionForStage(stage: PipelineStage): Decision | null {
+    const app = this.selectedApplication();
+    if (!app?.id || !stage.id) {
+      return null;
+    }
+
+    const progress = this.getProgressForStage(app.id, stage.id);
+    const cancelledDecisionIds = this.getCancelledDecisionIds(this.selectedApplicationDecisions());
+
+    return this.selectedApplicationDecisions().find(decision => {
+      if (!decision.id || decision.isCancel || decision.isDeleted || cancelledDecisionIds.has(decision.id)) {
+        return false;
+      }
+
+      if (progress?.id != null && decision.applicationProgressId != null) {
+        return decision.applicationProgressId === progress.id;
+      }
+
+      return decision.pipelineStageId === stage.id;
+    }) || null;
+  }
+
+  getDecisionOccurrenceLabel(decision: Decision): string {
+    const app = this.selectedApplication();
+    if (!app?.id) {
+      return decision.applicationProgressId != null ? `Occurrence #${decision.applicationProgressId}` : '';
+    }
+
+    const progress = (this.applicationProgressMap()[app.id] || []).find(item => item.id === decision.applicationProgressId);
+    if (!progress) {
+      return decision.applicationProgressId != null ? `Occurrence #${decision.applicationProgressId}` : '';
+    }
+
+    if (progress.stageName && progress.stageOrder != null) {
+      return `${progress.stageName} · étape ${progress.stageOrder}`;
+    }
+    if (progress.stageName) {
+      return progress.stageName;
+    }
+    if (progress.stageOrder != null) {
+      return `Étape ${progress.stageOrder}`;
+    }
+    return progress.id != null ? `Occurrence #${progress.id}` : '';
+  }
+
+  getDecisionModeLabel(decision: Decision): string {
+    switch ((decision.decisionMode || '').trim().toUpperCase()) {
+      case 'CANCEL':
+        return 'Annulation historisée';
+      case 'OVERRIDE':
+        return 'Override';
+      case 'ROLLBACK':
+        return 'Rollback';
+      case 'STANDARD':
+        return 'Décision standard';
+      default:
+        return decision.decisionMode || '';
+    }
+  }
+
+  getCancellationTargetLabel(decision: Decision): string {
+    return decision.cancelsDecisionId != null ? `Annule la décision #${decision.cancelsDecisionId}` : '';
+  }
+
+  private resolveDecisionStageId(decision: Decision): number | null {
+    if (decision.pipelineStageId != null) {
+      return decision.pipelineStageId;
+    }
+
+    const app = this.selectedApplication();
+    if (!app?.id || decision.applicationProgressId == null) {
+      return null;
+    }
+
+    const progress = (this.applicationProgressMap()[app.id] || []).find(item => item.id === decision.applicationProgressId);
+    return progress?.pipelineStageId ?? null;
   }
 
   /**
@@ -594,31 +905,60 @@ export class DecisionsComponent implements OnInit, OnDestroy {
   /**
    * Ouvre la popup de décision pour une étape
    */
-  openDecisionModal(stageId: number): void {
+  openDecisionModal(stage: PipelineStage, action: 'APPROVE' | 'CANCEL'): void {
     if (!this.hasDecisionPermissionForSelectedApplication()) return;
-    this.decisionModalStep.set(stageId);
+    if (!stage.id) return;
+
+    this.decisionModalStep.set(stage.id);
+    this.decisionModalAction.set(action);
+    this.decisionModalMode.set('DECIDE');
+    this.decisionModalTargetDecisionId.set(null);
+    this.decisionModalJustification.set('');
+    this.showDecisionModal.set(true);
+  }
+
+  openUndoDecisionModal(stage: PipelineStage): void {
+    const app = this.selectedApplication();
+    if (!app) return;
+    if (!this.hasDecisionPermissionForCampaign(app.campaignId)) return;
+    if (!stage.id) return;
+
+    const targetDecision = this.getLatestActiveDecisionForStage(stage);
+    if (!targetDecision?.id) return;
+
+    this.decisionModalStep.set(stage.id);
+    this.decisionModalAction.set('CANCEL');
+    this.decisionModalMode.set('UNDO');
+    this.decisionModalTargetDecisionId.set(targetDecision.id);
+    this.decisionModalJustification.set('');
     this.showDecisionModal.set(true);
   }
 
   /**
    * Annule la décision pour une étape donnée (pipeline-aware)
    */
-  undoDecisionForStage(stage: PipelineStage): void {
+  undoDecisionForStage(stage: PipelineStage, justification?: string, targetDecisionOverride?: Decision | null): void {
     const app = this.selectedApplication();
     if (!app) return;
     if (!this.hasDecisionPermissionForCampaign(app.campaignId)) return;
+    if (!stage.id) return;
 
     const progress = this.getProgressForStage(app.id!, stage.id!);
     if (!progress) return;
 
-    const decisionType = this.mapStageToDecisionType(stage, progress.progressStatus === 'PASSED');
-    if (!decisionType) return;
+    const targetDecision = targetDecisionOverride || this.getLatestActiveDecisionForStage(stage);
+    if (!targetDecision?.id) return;
 
     const cancelDecision: Decision = {
-      decisionType: decisionType,
+      decisionType: targetDecision.decisionType,
       isCancel: true,
       applicationId: app.id!,
       userId: this.getCurrentUserId(),
+      pipelineStageId: stage.id,
+      applicationProgressId: progress.id,
+      decisionMode: 'CANCEL',
+      cancelsDecisionId: targetDecision.id,
+      justification: justification?.trim() || undefined,
       createdAt: new Date().toISOString(),
       createdBy: this.getCurrentUserId()
     };
@@ -631,6 +971,7 @@ export class DecisionsComponent implements OnInit, OnDestroy {
           this.loading.set(false);
         } else {
           console.log('✅ Décision annulée avec succès');
+          this.closeDecisionModal();
           this.loadApplications();
           setTimeout(() => {
             this.loadDecisionsForApplication(app.id!);
@@ -682,22 +1023,35 @@ export class DecisionsComponent implements OnInit, OnDestroy {
   closeDecisionModal(): void {
     this.showDecisionModal.set(false);
     this.decisionModalStep.set(null);
+    this.decisionModalAction.set(null);
+    this.decisionModalMode.set(null);
+    this.decisionModalTargetDecisionId.set(null);
+    this.decisionModalJustification.set('');
   }
 
   /**
-   * Prend une décision depuis la modal
+   * Soumet l'action courante de la modal
    */
-  takeDecisionFromModal(action: 'APPROVE' | 'CANCEL'): void {
-    const stageId = this.decisionModalStep();
-    if (!stageId) return;
-
-    if (!this.hasDecisionPermissionForSelectedApplication()) return;
-
-    const stages = this.getStagesForSelectedApp();
-    const stage = stages.find(s => s.id === stageId);
+  submitDecisionModal(): void {
+    const stage = this.getDecisionModalStage();
     if (!stage) return;
 
-    this.takeDecisionForStage(stage, action);
+    const justification = this.decisionModalJustification().trim();
+
+    if (this.decisionModalMode() === 'UNDO') {
+      if (!justification) {
+        return;
+      }
+      this.undoDecisionForStage(stage, justification, this.getDecisionModalTargetDecision());
+      return;
+    }
+
+    const action = this.decisionModalAction();
+    if (!action) {
+      return;
+    }
+
+    this.takeDecisionForStage(stage, action, justification);
   }
 
   private hasDecisionPermissionForSelectedApplication(): boolean {
@@ -883,7 +1237,7 @@ export class DecisionsComponent implements OnInit, OnDestroy {
    * Récupère les candidatures par statut
    */
   getApplicationsByStatus(status: string): ApplicationWithCampaign[] {
-    return this.applications().filter(app => app.applicationStatus === status);
+    return this.applications().filter(app => this.getApplicationDisplayStatus(app) === status);
   }
 
   /**
@@ -891,7 +1245,7 @@ export class DecisionsComponent implements OnInit, OnDestroy {
    */
   getPreScreenDecisionsCount(): number {
     return this.applications().filter(app =>
-      app.applicationStatus?.startsWith('PRE_SCREEN') || false
+      this.getApplicationDisplayStatus(app).startsWith('PRE_SCREEN')
     ).length;
   }
 
@@ -900,24 +1254,72 @@ export class DecisionsComponent implements OnInit, OnDestroy {
    */
   getFinalDecisionsCount(): number {
     return this.applications().filter(app =>
-      app.applicationStatus?.startsWith('FINAL') || false
+      this.getApplicationDisplayStatus(app).startsWith('FINAL')
     ).length;
   }
 
   private matchesDecisionFilter(app: ApplicationWithCampaign, filter: DecisionFilter): boolean {
+    const displayStatus = this.getApplicationDisplayStatus(app);
+
     if (filter === 'ALL') {
       return true;
     }
 
     if (filter === 'SUBMITTED') {
-      return app.applicationStatus === APPLICATION_STATUS.SUBMITTED;
+      return displayStatus === APPLICATION_STATUS.SUBMITTED;
     }
 
     if (filter === 'PRE_SCREEN') {
-      return app.applicationStatus === APPLICATION_STATUS.PRE_SCREEN_ACCEPTED;
+      return displayStatus === APPLICATION_STATUS.PRE_SCREEN_ACCEPTED;
     }
 
-    return app.applicationStatus?.startsWith('FINAL') || false;
+    return displayStatus.startsWith('FINAL');
+  }
+
+  getApplicationDisplayStatus(app?: ApplicationWithCampaign | null): string {
+    if (!app) {
+      return '';
+    }
+
+    const finalDecisionType = (app.currentFinalDecisionType || '').trim().toUpperCase();
+    if (finalDecisionType.startsWith('FINAL')) {
+      return finalDecisionType;
+    }
+
+    const currentStageType = this.getCurrentPipelineStageType(app);
+    const currentProgressStatus = this.getCurrentPipelineProgressStatus(app);
+    const isPendingPreselectionDecision = currentStageType === 'PRESELECTION'
+      && (currentProgressStatus === 'IN_PROGRESS' || currentProgressStatus === 'PENDING');
+
+    if (isPendingPreselectionDecision) {
+      return APPLICATION_STATUS.SUBMITTED;
+    }
+
+    const preselectionDecisionType = (app.currentPreselectionDecisionType || '').trim().toUpperCase();
+    if (preselectionDecisionType.startsWith('PRE_SCREEN')) {
+      return preselectionDecisionType;
+    }
+
+    return app.applicationStatus || '';
+  }
+
+  private getCurrentPipelineStageType(app?: ApplicationWithCampaign | null): string {
+    return (this.getCurrentPipelineProgress(app)?.stageType || app?.currentPipelineStageType || '').trim().toUpperCase();
+  }
+
+  private getCurrentPipelineProgressStatus(app?: ApplicationWithCampaign | null): string {
+    return (this.getCurrentPipelineProgress(app)?.progressStatus || app?.currentPipelineProgressStatus || '').trim().toUpperCase();
+  }
+
+  private getCurrentPipelineProgress(app?: ApplicationWithCampaign | null): ApplicationProgress | null {
+    if (!app?.id) {
+      return null;
+    }
+
+    const progresses = this.applicationProgressMap()[app.id] || [];
+    return progresses.find(progress => (progress.progressStatus || '').toUpperCase() === 'IN_PROGRESS')
+      || progresses.find(progress => (progress.progressStatus || '').toUpperCase() === 'PENDING')
+      || null;
   }
 
   /**

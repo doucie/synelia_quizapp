@@ -6,8 +6,13 @@ import { environment } from '../../../environments/environment';
 
 export interface CandidateInterviewEntity {
   id?: number;
+  interviewDate?: string;
+  interviewStatus?: string;
   interviewStart?: string;
   interviewDuration?: number;
+  evaluationScore?: number;
+  evaluationNumber?: number;
+  evaluationPercentage?: number;
   declineReason?: string | null;
   alternativeDateRequested?: string | null;
   applicationId?: number;

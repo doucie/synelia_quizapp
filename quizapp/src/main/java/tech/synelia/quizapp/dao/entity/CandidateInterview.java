@@ -48,6 +48,11 @@ public class CandidateInterview implements Serializable, Cloneable {
 
     @Column(name="interview_duration")
     private Integer    interviewDuration ;
+    @Column(name="candidate_response_status", length=30)
+    private String     candidateResponseStatus ;
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name="responded_at")
+    private Date       respondedAt ;
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name="created_at")

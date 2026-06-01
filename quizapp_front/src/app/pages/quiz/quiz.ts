@@ -28,6 +28,8 @@ interface Question {
 
 interface QuizData {
   applicationId: number;
+  applicationQuizAttemptId?: number;
+  applicationProgressId?: number;
   campaignId: number;
   campaignTitle: string;
   isTimed?: boolean;

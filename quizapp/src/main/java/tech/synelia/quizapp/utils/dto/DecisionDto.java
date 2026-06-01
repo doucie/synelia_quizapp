@@ -35,6 +35,8 @@ public class DecisionDto implements Cloneable{
     private Integer    updatedBy            ;
     private Boolean    isDeleted            ;
     private String     searchString         ;
+    private String     justification        ;
+    private String     decisionMode         ;
     // Champs pour les intervalles de dates (recherche avancee)
     private String     dateCreationDe       ;
     private String     dateCreationA        ;
@@ -45,6 +47,8 @@ public class DecisionDto implements Cloneable{
     private Integer    applicationId        ;
     private Integer    userId               ;
     private Integer    pipelineStageId      ;
+    private Integer    applicationProgressId;
+    private Integer    cancelsDecisionId    ;
     private Boolean    sendDecisionEmail    ;
 
     // Search parameters
@@ -56,8 +60,13 @@ public class DecisionDto implements Cloneable{
     private SearchParam<Integer> updatedByParam ;
     private SearchParam<Boolean> isDeletedParam ;
     private SearchParam<String>  searchStringParam ;
+    private SearchParam<String>  justificationParam ;
+    private SearchParam<String>  decisionModeParam ;
     private SearchParam<Integer> applicationIdParam ;
     private SearchParam<Integer> userIdParam ;
+    private SearchParam<Integer> pipelineStageIdParam ;
+    private SearchParam<Integer> applicationProgressIdParam ;
+    private SearchParam<Integer> cancelsDecisionIdParam ;
 
     //----------------------------------------------------------------------
     // CONSTRUCTOR(S)

@@ -22,6 +22,7 @@ La cartographie de la page detail dediee est maintenant portee par `21-dashboard
 - [x] La page charge un jeu composite de donnees: campagnes, acces campagne, candidatures, source tokens, pipeline et progression.
 - [x] Un bandeau `campagne verrouillee` est prevu quand l'URL contient un fragment `#campaign<id>`.
 - [x] La page expose des cartes de statistiques `Total`, `En attente`, `Verifies`, `Quiz completes`.
+- [x] La statistique `En attente` dérive maintenant de l'etape pipeline courante quand le runtime est charge (`current stage = pending`) avec fallback legacy tant que le pipeline n'est pas encore resolu localement.
 - [x] Une recherche globale est disponible.
 - [x] Des filtres existent pour `Campagnes partagees uniquement`, `Campagne`, `Source` et `Etape pipeline`.
 - [x] Les suggestions de campagnes et de sources sont interactives.
@@ -29,6 +30,9 @@ La cartographie de la page detail dediee est maintenant portee par `21-dashboard
 - [x] Les cartes candidature exposent deja des actions rapides inline sur l'etape courante: `Valider`, `Refuser` et maintenant `Ignorer` quand l'etape est reellement skippable.
 - [x] La logique front de skip est alignee sur l'API: une etape peut etre ignoree si elle n'est pas requise, ou si `configJson.allowSkip=true` meme quand `isRequired=true`.
 - [x] Une etape avec `emailRequired=true` n'affiche plus `Ignorer` tant que l'email requis n'a pas ete marque envoye, pour eviter un pipeline bloque apres skip.
+- [x] Les cartes rechargent maintenant aussi `quizAttempts` et `candidateInterview` par candidature; les lignes `Quiz`, `Score`, `Entretien` et `Evaluation` preferent ces enfants runtime au lieu des miroirs `applications.*` une fois le chargement termine.
+- [x] L'action inline `Planifier` se base maintenant uniquement sur une etape pipeline runtime courante `INTERVIEW` (`active` ou `pending`) et sur l'absence d'entretien runtime; ni `applicationStatus` ni le fallback visuel de fin de pipeline ne doivent reouvrir ce CTA.
+- [x] Quand les metadonnees `PipelineStage[]` d'une campagne ne sont pas encore resolues, le pipeline compact fallback de la carte relit maintenant `ApplicationProgress.stageOrder/stageType/progressStatus` pour ses dots et son label, au lieu de retomber directement sur `applicationStatus`.
 - [x] L'action `Voir les details` pointe encore vers `/dashboard/candidates#application-<id>` et non vers une vraie route dediee.
 - [ ] La page doit faire remonter un indicateur visible `Correction manuelle requise` sur la candidature quand le quiz est termine mais qu’au moins une question attend encore une correction recruteur.
 - [ ] Verifier visuellement toute la partie preview CV / focus candidature qui existe cote TS.
@@ -114,11 +118,16 @@ La page a besoin au minimum de:
 - liste des `ApplicationProgress`
 - relation entre candidature, etape et `progressStatus`
 
-### 5.4 Acces campagne
+### 5.4 Runtime quiz et entretien
+
+- `quizAttempts[]` sur le detail candidature recharge via `ApplicationService.getApplicationDetail()` pour resoudre le quiz courant et son score
+- `candidateInterview[]` rechargees par `applicationId` pour resoudre l'entretien courant, son statut et le score d'evaluation courant
+
+### 5.5 Acces campagne
 
 - droits ou acces permettant de savoir si une campagne est partagee et exploitable
 
-### 5.5 Contexte detail candidature
+### 5.6 Contexte detail candidature
 
 - `applicationId`
 - `campaignId`
@@ -143,6 +152,8 @@ La page a besoin au minimum de:
 
 - `PipelineStageService.getAllByCriteria()` -> `POST /pipelineStage/getAllByCriteria`
 - `ApplicationProgressService.getAllByCriteria()` -> `POST /applicationProgress/getAllByCriteria`
+- `ApplicationService.getApplicationDetail()` -> recharge `quizAttempts` pour la candidature courante
+- `CandidateInterviewEntityService.getAllByCriteria()` -> `POST /candidateInterview/getAllByCriteria` avec `applicationId`
 
 ## 7. Ce Que Le Backend Doit Envoyer
 
@@ -207,7 +218,7 @@ La page a besoin au minimum de:
 
 - [ ] remplacer les heuristiques de liste basees sur `applicationStatus`, `quizStatus` et les scores globaux par le round courant issu de `application_progress`
 - [ ] afficher plusieurs rounds `QUIZ`, `PRESELECTION` et `INTERVIEW` sur une meme candidature sans les ecraser en un statut unique
-- [ ] faire partir les quick actions du round courant et de ses preconditions reelles, pas d'un snapshot global de candidature
-- [ ] remplacer le resume quiz unique par des resumes de tentatives `application_quiz_attempt`
+- [~] les cartes preferent deja le quiz courant et l'entretien courant runtime, `Planifier` s'appuie deja uniquement sur une etape `INTERVIEW` runtime reellement courante, la stat `En attente` suit deja le round courant via `application_progress`, et le pipeline compact fallback lit deja `application_progress` quand `PipelineStage[]` manque; d'autres lectures de liste gardent encore des fallbacks legacy tant que le runtime n'est pas charge
+- [~] la carte liste lit deja le quiz courant depuis `application_quiz_attempt` via `quizAttempts`, mais n'expose pas encore plusieurs resumes de tentatives sur une meme candidature
 - [ ] exposer `aggregatedQuizScore*` et `aggregatedEvaluationScore*` seulement comme indicateurs calcules de synthese, jamais comme moteur de lecture du parcours
 - [ ] rendre visible `applicationAbandoned` comme verrou global de candidature distinct de la chronologie fine des rounds, avec blocage des quick actions quand ce verrou est actif

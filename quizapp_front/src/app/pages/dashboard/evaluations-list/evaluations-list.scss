@@ -400,10 +400,154 @@
   }
 }
 
+.info-row--evaluation-progress {
+  span {
+    font-weight: var(--font-weight-medium);
+    color: var(--info);
+  }
+}
+
+.stage-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.stage-summary__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.28rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(var(--primary-rgb), 0.08);
+  color: var(--primary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+
+  i {
+    font-size: 0.8rem;
+  }
+}
+
+.stage-summary__pill--stage {
+  background: rgba(var(--neutral-rgb), 0.12);
+  color: var(--text-primary);
+}
+
+.evaluator-roster {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.evaluator-roster__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.evaluator-roster__title {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+}
+
+.evaluator-roster__summary {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+.evaluator-roster__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.evaluator-roster__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+}
+
+.evaluator-roster__identity,
+.evaluator-roster__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.evaluator-roster__name {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+}
+
+.evaluator-roster__you {
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: var(--primary-translucent);
+  color: var(--primary);
+  font-size: 0.7rem;
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+}
+
+.evaluator-roster__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: var(--font-weight-semibold);
+  background: rgba(var(--neutral-rgb), 0.16);
+  color: var(--text-secondary);
+
+  &.submitted {
+    background: rgba(var(--success-rgb), 0.14);
+    color: var(--success);
+  }
+
+  &.finished {
+    background: rgba(var(--warning-rgb), 0.14);
+    color: var(--warning);
+  }
+
+  &.online {
+    background: rgba(var(--info-rgb), 0.14);
+    color: var(--info);
+  }
+
+  &.assigned {
+    background: rgba(var(--neutral-rgb), 0.16);
+    color: var(--text-secondary);
+  }
+}
+
+.evaluator-roster__score {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
 .card-footer {
   padding: var(--spacing-md) var(--spacing-lg);
   background: var(--surface);
   border-top: 1px solid var(--divider);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
 }
 
 .score-section {
@@ -448,6 +592,87 @@
   }
 }
 
+.evaluation-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(var(--primary-rgb), 0.14);
+  background: rgba(var(--primary-rgb), 0.05);
+}
+
+.evaluation-preview--started {
+  border-color: rgba(var(--info-rgb), 0.18);
+  background: rgba(var(--info-rgb), 0.06);
+}
+
+.evaluation-preview__header {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.evaluation-preview__title {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+}
+
+.evaluation-preview__count {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--primary);
+}
+
+.evaluation-preview__mark {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+}
+
+.evaluation-preview__mark-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+}
+
+.evaluation-preview__mark-value {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+}
+
+.evaluation-preview__criteria {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.evaluation-preview__criterion {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  padding-top: 0.45rem;
+  border-top: 1px solid rgba(var(--primary-rgb), 0.1);
+}
+
+.evaluation-preview__criterion-label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+}
+
+.evaluation-preview__criterion-value {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--primary);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .evaluations-list-page {
@@ -478,5 +703,18 @@
   
   .evaluations-grid {
     grid-template-columns: 1fr;
+  }
+
+  .score-section,
+  .stage-summary,
+  .evaluator-roster__header,
+  .evaluator-roster__item,
+  .evaluator-roster__identity,
+  .evaluator-roster__meta,
+  .evaluation-preview__header,
+  .evaluation-preview__mark,
+  .evaluation-preview__criterion {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

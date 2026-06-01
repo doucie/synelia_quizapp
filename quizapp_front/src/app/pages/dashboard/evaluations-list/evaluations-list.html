@@ -125,6 +125,22 @@
                 <i class="bi bi-chat-text"></i>
                 <span>{{ interview.interviewTitle || 'Entretien' }}</span>
               </div>
+              @if (hasInterviewStageContext(interview)) {
+                <div class="stage-summary">
+                  @if (interview.interviewRound) {
+                    <span class="stage-summary__pill">
+                      <i class="bi bi-layers"></i>
+                      Round {{ interview.interviewRound }}
+                    </span>
+                  }
+                  @if (interview.interviewStageLabel) {
+                    <span class="stage-summary__pill stage-summary__pill--stage">
+                      <i class="bi bi-signpost-2"></i>
+                      {{ interview.interviewStageLabel }}
+                    </span>
+                  }
+                </div>
+              }
               @if (interview.interviewStatus === 'STARTED' && interview.startedAt) {
                 <div class="info-row">
                   <i class="bi bi-play-circle"></i>
@@ -137,29 +153,129 @@
                   <span>Terminé le {{ formatDate(interview.endedAt) }}</span>
                 </div>
               }
+              @if ((interview.submittedEvaluationCount || 0) > 0) {
+                <div class="info-row info-row--evaluation-progress">
+                  <i class="bi bi-people"></i>
+                  <span>{{ interview.submittedEvaluationCount }} soumission(s) d'évaluation</span>
+                </div>
+              }
+              @if (hasEvaluatorStatuses(interview)) {
+                <div class="evaluator-roster">
+                  <div class="evaluator-roster__header">
+                    <span class="evaluator-roster__title">Etat des evaluateurs</span>
+                    <span class="evaluator-roster__summary">{{ getSubmittedEvaluatorCount(interview) }}/{{ interview.evaluatorStatuses?.length || 0 }} soumis</span>
+                  </div>
+                  <div class="evaluator-roster__list">
+                    @for (status of interview.evaluatorStatuses ?? []; track trackEvaluatorStatus($index, status)) {
+                      <div class="evaluator-roster__item">
+                        <div class="evaluator-roster__identity">
+                          <span class="evaluator-roster__name">{{ status.displayName }}</span>
+                          @if (status.isCurrentUser) {
+                            <span class="evaluator-roster__you">vous</span>
+                          }
+                        </div>
+                        <div class="evaluator-roster__meta">
+                          <span class="evaluator-roster__badge" [class]="getEvaluatorStatusClass(status)">
+                            {{ getEvaluatorStatusLabel(status) }}
+                          </span>
+                          @if (status.latestMark != null) {
+                            <span class="evaluator-roster__score">{{ status.latestMark }}/100</span>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
             </div>
 
             <div class="card-footer">
               @if (interview.interviewStatus === 'OVER') {
-                <div class="score-section">
-                  <div class="score-item">
-                    <span class="score-label">Score</span>
-                    <span class="score-value">{{ formatScore(interview.evaluationScore, interview.evaluationNumber) }}</span>
+                @if ((interview.submittedEvaluationCount || 0) > 0) {
+                  <div class="score-section">
+                    <div class="score-item">
+                      <span class="score-label">Moyenne derivee</span>
+                      <span class="score-value highlight">{{ formatDerivedMark(interview.submittedEvaluationAverageMark) }}</span>
+                    </div>
+                    <div class="score-item">
+                      <span class="score-label">Dernier score</span>
+                      <span class="score-value">{{ formatDerivedMark(interview.latestEvaluationMark) }}</span>
+                    </div>
+                    <div class="score-item">
+                      <span class="score-label">Soumissions</span>
+                      <span class="score-value">{{ interview.submittedEvaluationCount || 0 }}</span>
+                    </div>
                   </div>
-                  <div class="score-item">
-                    <span class="score-label">Moyenne</span>
-                    <span class="score-value highlight">{{ formatPercentage(interview.evaluationPercentage) }}</span>
+                } @else {
+                  <div class="score-section">
+                    <div class="score-item">
+                      <span class="score-label">Score</span>
+                      <span class="score-value">{{ formatScore(interview.evaluationScore, interview.evaluationNumber) }}</span>
+                    </div>
+                    <div class="score-item">
+                      <span class="score-label">Moyenne</span>
+                      <span class="score-value highlight">{{ formatPercentage(interview.evaluationPercentage) }}</span>
+                    </div>
+                    <div class="score-item">
+                      <span class="score-label">Évaluations</span>
+                      <span class="score-value">{{ interview.evaluationNumber || 0 }}</span>
+                    </div>
                   </div>
-                  <div class="score-item">
-                    <span class="score-label">Évaluations</span>
-                    <span class="score-value">{{ interview.evaluationNumber || 0 }}</span>
+                }
+                @if ((interview.submittedEvaluationCount || 0) > 0) {
+                  <div class="evaluation-preview">
+                    <div class="evaluation-preview__header">
+                      <span class="evaluation-preview__title">Derniere soumission</span>
+                      <span class="evaluation-preview__count">{{ interview.submittedEvaluationCount }} evaluateur(s)</span>
+                    </div>
+                    @if (interview.latestEvaluationMark != null) {
+                      <div class="evaluation-preview__mark">
+                        <span class="evaluation-preview__mark-label">Score derive</span>
+                        <span class="evaluation-preview__mark-value">{{ interview.latestEvaluationMark }}/100</span>
+                      </div>
+                    }
+                    @if (hasLatestEvaluationPreview(interview)) {
+                      <div class="evaluation-preview__criteria">
+                        @for (item of getLatestEvaluationPreviewItems(interview); track trackEvaluationPreviewItem($index, item)) {
+                          <div class="evaluation-preview__criterion">
+                            <span class="evaluation-preview__criterion-label">{{ getEvaluationPreviewLabel(item) }}</span>
+                            <span class="evaluation-preview__criterion-value">{{ getEvaluationPreviewValue(item) }}</span>
+                          </div>
+                        }
+                      </div>
+                    }
                   </div>
-                </div>
+                }
               } @else {
-                <div class="action-hint">
-                  <i class="bi bi-pencil-square"></i>
-                  <span>Cliquer pour évaluer</span>
-                </div>
+                @if ((interview.submittedEvaluationCount || 0) > 0) {
+                  <div class="evaluation-preview evaluation-preview--started">
+                    <div class="evaluation-preview__header">
+                      <span class="evaluation-preview__title">Progression des soumissions</span>
+                      <span class="evaluation-preview__count">{{ interview.submittedEvaluationCount }} evaluateur(s)</span>
+                    </div>
+                    @if (interview.latestEvaluationMark != null) {
+                      <div class="evaluation-preview__mark">
+                        <span class="evaluation-preview__mark-label">Dernier score derive</span>
+                        <span class="evaluation-preview__mark-value">{{ interview.latestEvaluationMark }}/100</span>
+                      </div>
+                    }
+                    @if (hasLatestEvaluationPreview(interview)) {
+                      <div class="evaluation-preview__criteria">
+                        @for (item of getLatestEvaluationPreviewItems(interview); track trackEvaluationPreviewItem($index, item)) {
+                          <div class="evaluation-preview__criterion">
+                            <span class="evaluation-preview__criterion-label">{{ getEvaluationPreviewLabel(item) }}</span>
+                            <span class="evaluation-preview__criterion-value">{{ getEvaluationPreviewValue(item) }}</span>
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  <div class="action-hint">
+                    <i class="bi bi-pencil-square"></i>
+                    <span>Cliquer pour évaluer</span>
+                  </div>
+                }
               }
             </div>
           </div>

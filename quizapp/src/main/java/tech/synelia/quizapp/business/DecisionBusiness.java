@@ -25,6 +25,7 @@ import tech.synelia.quizapp.utils.dto.transformer.*;
 import tech.synelia.quizapp.utils.enums.DecisionType;
 import tech.synelia.quizapp.utils.enums.FunctionalityEnum;
 import tech.synelia.quizapp.utils.enums.EmailActionType;
+import tech.synelia.quizapp.business.MailLogService.MailLogContext;
 import tech.synelia.quizapp.dao.entity.Decision;
 import tech.synelia.quizapp.dao.entity.Applications;
 import tech.synelia.quizapp.dao.entity.User;
@@ -43,6 +44,9 @@ import jakarta.persistence.PersistenceContext;
 public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Response<DecisionDto>> {
 
     private static final String MAIL_SENDER_NAME = "Synelia Recrutement";
+    private static final String DEFAULT_DECISION_MODE = "STANDARD";
+    private static final String CANCEL_DECISION_MODE = "CANCEL";
+    private static final Set<String> DECISION_MODE_ALLOWED_VALUES = Set.of("STANDARD", "CANCEL", "OVERRIDE", "ROLLBACK");
     private static final String DECISION_TYPE_ALLOWED_VALUES = String.join("/",
             Arrays.stream(DecisionType.values()).map(DecisionType::getValue).toArray(String[]::new));
 
@@ -80,6 +84,9 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
     private PlatformReadinessService platformReadinessService;
 
     @Autowired
+    private AuditEventService auditEventService;
+
+    @Autowired
     private FunctionalError functionalError;
     @PersistenceContext
     private EntityManager em;
@@ -100,7 +107,7 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
 
         for (DecisionDto dto : request.getDatas()) {
             // Validation
-            Response<DecisionDto> validation = validate(dto, locale);
+            Response<DecisionDto> validation = validateForCreate(dto, locale);
             if (validation.isHasError()) {
                 response.setStatus(validation.getStatus());
                 response.setHasError(true);
@@ -154,15 +161,31 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
                 stage.setId(dto.getPipelineStageId());
                 entity.setPipelineStage(stage);
             }
+            if (dto.getApplicationProgressId() != null) {
+                ApplicationProgress progress = new ApplicationProgress();
+                progress.setId(dto.getApplicationProgressId());
+                entity.setApplicationProgress(progress);
+            }
+			if (dto.getCancelsDecisionId() != null) {
+				Decision cancelsDecision = new Decision();
+				cancelsDecision.setId(dto.getCancelsDecisionId());
+				entity.setCancelsDecision(cancelsDecision);
+			}
+
+			prepareDecisionForPersistence(entity, locale);
             
             entity.setCreatedAt(new Date());
             entity.setCreatedBy(request.getUser());
             entity.setIsDeleted(false);
 
-            // Update application status based on decision
-            updateApplicationStatus(entity, request.getUser(), locale, Boolean.TRUE.equals(dto.getSendDecisionEmail()));
-
             Decision saved = decisionRepository.save(entity);
+			updateApplicationStatus(saved, request.getUser(), locale, Boolean.TRUE.equals(dto.getSendDecisionEmail()));
+            recordDecisionAuditEvent(
+                    saved,
+                    request.getUser(),
+                    null,
+                    buildDecisionAuditStateJson(saved),
+                    resolveCreateAuditActionType(saved));
             items.add(saved);
         }
 
@@ -182,18 +205,13 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
             Applications app = applicationsRepository.findOne(decision.getApplication().getId(), false);
             if (app != null) {
                 Integer decisionActorId = resolveDecisionActorId(decision, actorUserId);
-                if (Boolean.TRUE.equals(decision.getIsCancel())) {
-                    String revertedStatus = resolveCancelledDecisionStatus(decision);
-                    app.setApplicationStatus(revertedStatus);
-                    app.setUpdatedAt(new Date());
-                    app.setUpdatedBy(decisionActorId);
-                    applicationsRepository.save(app);
-                    log.info("Updated application " + app.getId() + " status to " + revertedStatus + " after decision cancellation");
-                    return;
-                }
 
                 try {
-                    updateDecisionStageProgress(app, decision, decisionActorId, locale);
+                    if (Boolean.TRUE.equals(decision.getIsCancel())) {
+                        rollbackCancelledDecisionStage(app, decision, decisionActorId, locale);
+                    } else {
+                        updateDecisionStageProgress(app, decision, decisionActorId, locale);
+                    }
                 } catch (ParseException exception) {
                     throw new InvalidEntityException(functionalError.REQUEST_FAIL(
                             "Impossible de synchroniser la décision avec le pipeline: " + exception.getMessage(),
@@ -205,8 +223,11 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
                     return;
                 }
 
-                syncApplicationStatusFromDecision(latestApplication, decision, decisionActorId);
-                sendDecisionEmailIfNeeded(latestApplication, decision, decisionActorId, locale, sendDecisionEmailRequested);
+                syncApplicationStatusFromCurrentDecisions(latestApplication, decisionActorId);
+                syncApplicationCurrentDecisionSummaries(latestApplication, decisionActorId);
+				if (!Boolean.TRUE.equals(decision.getIsCancel())) {
+					sendDecisionEmailIfNeeded(latestApplication, decision, decisionActorId, locale, sendDecisionEmailRequested);
+				}
             }
         }
     }
@@ -266,7 +287,7 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
 
         for (DecisionDto dto : request.getDatas()) {
             // Validation
-            Response<DecisionDto> validation = validate(dto, locale);
+            Response<DecisionDto> validation = validateForUpdate(dto, locale);
             if (validation.isHasError()) {
                 response.setStatus(validation.getStatus());
                 response.setHasError(true);
@@ -281,8 +302,10 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
                 return response;
             }
 
-            ensureCampaignDecisionAllowed(
-                    dto.getApplicationId(),
+                Integer applicationId = dto.getApplicationId() != null ? dto.getApplicationId() : getApplicationId(existing);
+
+                ensureCampaignDecisionAllowed(
+                    applicationId,
                     request.getUser(),
                     locale,
                     "modifier cette décision",
@@ -290,12 +313,20 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
                     FunctionalityEnum.ADVANCE_PIPELINE.getValue());
 
             Decision entity = existing;
+			String beforeStateJson = buildDecisionAuditStateJson(existing);
+            validateImmutableDecisionUpdate(existing, dto, locale);
 
-            if (Utilities.shouldUpdate(dto.getDecisionType())) {
+            if (Utilities.notBlank(dto.getDecisionType())) {
                 entity.setDecisionType(dto.getDecisionType());
             }
             if (dto.getIsCancel() != null) {
                 entity.setIsCancel(dto.getIsCancel());
+            }
+            if (dto.getJustification() != null) {
+                entity.setJustification(dto.getJustification());
+            }
+            if (dto.getDecisionMode() != null) {
+                entity.setDecisionMode(dto.getDecisionMode());
             }
 
             // Set relationships manually
@@ -314,6 +345,18 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
                 stage.setId(dto.getPipelineStageId());
                 entity.setPipelineStage(stage);
             }
+            if (dto.getApplicationProgressId() != null) {
+                ApplicationProgress progress = new ApplicationProgress();
+                progress.setId(dto.getApplicationProgressId());
+                entity.setApplicationProgress(progress);
+            }
+			if (dto.getCancelsDecisionId() != null) {
+				Decision cancelsDecision = new Decision();
+				cancelsDecision.setId(dto.getCancelsDecisionId());
+				entity.setCancelsDecision(cancelsDecision);
+			}
+
+			prepareDecisionForPersistence(entity, locale);
             
             entity.setUpdatedAt(new Date());
             entity.setUpdatedBy(request.getUser());
@@ -321,6 +364,12 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
 
             Decision saved = decisionRepository.save(entity);
             updateApplicationStatus(saved, request.getUser(), locale, Boolean.TRUE.equals(dto.getSendDecisionEmail()));
+            recordDecisionAuditEvent(
+                    saved,
+                    request.getUser(),
+                    beforeStateJson,
+                    buildDecisionAuditStateJson(saved),
+                    "DECISION_UPDATED");
             items.add(saved);
         }
 
@@ -330,6 +379,143 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
 
         log.info("----end update Decision-----");
         return response;
+    }
+
+    private void validateImmutableDecisionUpdate(Decision existing, DecisionDto dto, Locale locale) {
+        if (existing == null || dto == null) {
+            return;
+        }
+
+        if (dto.getIsCancel() != null) {
+            validateImmutableField("isCancel", existing.getIsCancel(), dto.getIsCancel(), locale);
+        }
+
+        if (dto.getDecisionMode() != null) {
+            validateImmutableField(
+                    "decisionMode",
+                    normalizeOptionalUppercaseText(existing.getDecisionMode()),
+                    normalizeOptionalUppercaseText(dto.getDecisionMode()),
+                    locale);
+        }
+
+        if (dto.getPipelineStageId() != null) {
+            validateImmutableField("pipelineStageId", getPipelineStageId(existing), dto.getPipelineStageId(), locale);
+        }
+
+        if (dto.getApplicationProgressId() != null) {
+            validateImmutableField("applicationProgressId", getApplicationProgressId(existing), dto.getApplicationProgressId(), locale);
+        }
+
+        if (dto.getCancelsDecisionId() != null) {
+            validateImmutableField("cancelsDecisionId", getCancelsDecisionId(existing), dto.getCancelsDecisionId(), locale);
+        }
+
+        if (Boolean.TRUE.equals(existing.getIsCancel())) {
+            if (dto.getApplicationId() != null) {
+                validateImmutableField("applicationId", getApplicationId(existing), dto.getApplicationId(), locale);
+            }
+            if (dto.getUserId() != null) {
+                validateImmutableField("userId", getUserId(existing), dto.getUserId(), locale);
+            }
+            if (Utilities.notBlank(dto.getDecisionType())) {
+                validateImmutableField("decisionType", existing.getDecisionType(), dto.getDecisionType(), locale);
+            }
+        }
+    }
+
+    private void validateImmutableField(String fieldName, Object existingValue, Object requestedValue, Locale locale) {
+        if (Objects.equals(existingValue, requestedValue)) {
+            return;
+        }
+
+        throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION(
+                "Le champ " + fieldName + " est immuable pour cette décision",
+                locale));
+    }
+
+    private String normalizeOptionalUppercaseText(String value) {
+        String normalized = normalizeOptionalText(value);
+        return normalized != null ? normalized.toUpperCase(Locale.ROOT) : null;
+    }
+
+    private Integer getApplicationId(Decision decision) {
+        return decision != null && decision.getApplication() != null ? decision.getApplication().getId() : null;
+    }
+
+    private Integer getUserId(Decision decision) {
+        return decision != null && decision.getUser() != null ? decision.getUser().getId() : null;
+    }
+
+    private Integer getPipelineStageId(Decision decision) {
+        return decision != null && decision.getPipelineStage() != null ? decision.getPipelineStage().getId() : null;
+    }
+
+    private Integer getApplicationProgressId(Decision decision) {
+        return decision != null && decision.getApplicationProgress() != null ? decision.getApplicationProgress().getId() : null;
+    }
+
+    private Integer getCancelsDecisionId(Decision decision) {
+        return decision != null && decision.getCancelsDecision() != null ? decision.getCancelsDecision().getId() : null;
+    }
+
+    private void recordDecisionAuditEvent(Decision decision, Integer actorUserId, String beforeStateJson, String afterStateJson, String actionType) {
+        if (decision == null || !Utilities.notBlank(actionType)) {
+            return;
+        }
+
+        auditEventService.recordEvent(
+                getApplicationId(decision),
+                getApplicationProgressId(decision),
+                "DECISION",
+                decision.getId() != null ? String.valueOf(decision.getId()) : "UNKNOWN",
+                actionType,
+                actorUserId,
+                decision.getJustification(),
+                beforeStateJson,
+                afterStateJson);
+    }
+
+    private String resolveCreateAuditActionType(Decision decision) {
+        String decisionMode = normalizeOptionalUppercaseText(decision != null ? decision.getDecisionMode() : null);
+        if (CANCEL_DECISION_MODE.equals(decisionMode) || (decision != null && Boolean.TRUE.equals(decision.getIsCancel()))) {
+            return "DECISION_CANCELLED";
+        }
+        if ("OVERRIDE".equals(decisionMode)) {
+            return "DECISION_OVERRIDDEN";
+        }
+        if ("ROLLBACK".equals(decisionMode)) {
+            return "DECISION_ROLLED_BACK";
+        }
+        return "DECISION_CREATED";
+    }
+
+    private String buildDecisionAuditStateJson(Decision decision) {
+        if (decision == null) {
+            return null;
+        }
+
+        Map<String, Object> snapshot = new LinkedHashMap<>();
+        snapshot.put("id", decision.getId());
+        snapshot.put("applicationId", getApplicationId(decision));
+        snapshot.put("userId", getUserId(decision));
+        snapshot.put("pipelineStageId", getPipelineStageId(decision));
+        snapshot.put("applicationProgressId", getApplicationProgressId(decision));
+        snapshot.put("cancelsDecisionId", getCancelsDecisionId(decision));
+        snapshot.put("decisionType", decision.getDecisionType());
+        snapshot.put("decisionMode", decision.getDecisionMode());
+        snapshot.put("isCancel", decision.getIsCancel());
+        snapshot.put("justification", decision.getJustification());
+        snapshot.put("isDeleted", decision.getIsDeleted());
+        snapshot.put("createdAt", decision.getCreatedAt());
+        snapshot.put("createdBy", decision.getCreatedBy());
+        snapshot.put("updatedAt", decision.getUpdatedAt());
+        snapshot.put("updatedBy", decision.getUpdatedBy());
+
+        try {
+            return Utilities.convertObjectToJson(snapshot);
+        } catch (Exception exception) {
+            throw new IllegalStateException("Impossible de serialiser l'etat d'audit de la decision", exception);
+        }
     }
 
     /**
@@ -354,7 +540,8 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
                 return response;
             }
 
-            Integer applicationId = existing.getApplication() != null ? existing.getApplication().getId() : null;
+			Integer applicationId = existing.getApplication() != null ? existing.getApplication().getId() : null;
+			String beforeStateJson = buildDecisionAuditStateJson(existing);
             ensureCampaignDecisionAllowed(
                     applicationId,
                     request.getUser(),
@@ -367,6 +554,20 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
             existing.setIsDeleted(true);
             existing.setUpdatedAt(new Date());
             decisionRepository.save(existing);
+
+            if (applicationId != null) {
+                Applications application = applicationsRepository.findOne(applicationId, false);
+                if (application != null) {
+                    syncApplicationCurrentDecisionSummaries(application, request.getUser());
+                }
+            }
+
+            recordDecisionAuditEvent(
+                    existing,
+                    request.getUser(),
+                    beforeStateJson,
+                    buildDecisionAuditStateJson(existing),
+                    "DECISION_DELETED");
         }
 
         response.setHasError(false);
@@ -391,7 +592,7 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
      * @param dto
      * @return response
      */
-    private Response<DecisionDto> validate(DecisionDto dto, Locale locale) {
+    private Response<DecisionDto> validateForCreate(DecisionDto dto, Locale locale) {
         Response<DecisionDto> response = new Response<DecisionDto>();
 
         if (dto == null) {
@@ -441,6 +642,39 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
         return response;
     }
 
+    private Response<DecisionDto> validateForUpdate(DecisionDto dto, Locale locale) {
+        Response<DecisionDto> response = new Response<DecisionDto>();
+
+        if (dto == null) {
+            response.setStatus(functionalError.DATA_NOT_EXIST("Decision", locale));
+            response.setHasError(true);
+            return response;
+        }
+
+        if (dto.getId() == null) {
+            response.setStatus(functionalError.FIELD_EMPTY("id", locale));
+            response.setHasError(true);
+            return response;
+        }
+
+        if (Utilities.notBlank(dto.getDecisionType())) {
+            DecisionType decisionType;
+            try {
+                decisionType = DecisionType.fromValue(dto.getDecisionType());
+            } catch (IllegalArgumentException exception) {
+                response.setStatus(functionalError.DATA_NOT_EXIST(
+                        "decisionType invalide (" + DECISION_TYPE_ALLOWED_VALUES + ") -> " + dto.getDecisionType(),
+                        locale));
+                response.setHasError(true);
+                return response;
+            }
+            dto.setDecisionType(decisionType.getValue());
+        }
+
+        response.setHasError(false);
+        return response;
+    }
+
     private void normalizeDecisionCriteria(Request<DecisionDto> request, Locale locale) {
         DecisionDto dto = request != null ? request.getData() : null;
         if (dto == null || !Utilities.notBlank(dto.getDecisionType())) {
@@ -464,58 +698,42 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
         if (app.getSourceToken() == null || app.getSourceToken().getCampaigns() == null) {
             return false;
         }
-        Campaigns campaign = app.getSourceToken().getCampaigns();
-        if (campaign.getPipelineTemplate() == null) {
-            return false;
-        }
-        Integer templateId = campaign.getPipelineTemplate().getId();
 
         // Déterminer le type d'étape pipeline en fonction du type de décision
         DecisionType decisionType = resolveDecisionType(decision.getDecisionType());
         if (decisionType == null) {
             return false;
         }
-        String stageType = decisionType.getPipelineStageType();
 
-        PipelineStage stage = pipelineStageRepository.findByTemplateIdAndStageType(templateId, stageType);
-        if (stage == null) {
-            log.info("Aucune étape " + stageType + " trouvée dans le template " + templateId);
+        ApplicationProgress progress = resolveDecisionApplicationProgress(app, decision, decisionType);
+        if (progress == null || progress.getPipelineStage() == null || progress.getPipelineStage().getId() == null) {
+            log.info("Aucune occurrence " + decisionType.getPipelineStageType() + " résolue pour l'application " + app.getId());
             return false;
         }
 
-        // Lier la décision à l'étape pipeline (optionnel, rétrocompatible)
-        if (decision.getPipelineStage() == null) {
-            decision.setPipelineStage(stage);
-            decisionRepository.save(decision);
-        }
-
-        ApplicationProgress progress = applicationProgressRepository
-                .findByApplicationIdAndPipelineStageId(app.getId(), stage.getId());
-        if (progress == null) {
-            log.info("Aucun progrès trouvé pour application " + app.getId() + " et étape " + stage.getId());
-            return false;
-        }
+        persistDecisionProgressLinkIfNeeded(decision, progress);
+        PipelineStage stage = progress.getPipelineStage();
 
         if (decisionType.isAccepted()) {
             applicationProgressBusiness.passStage(app.getId(), stage.getId(), actorUserId, null, decisionType.getValue(), locale);
         } else {
             applicationProgressBusiness.failStage(app.getId(), stage.getId(), actorUserId, decisionType.getValue(), locale);
         }
-        log.info("Pipeline stage " + stageType + " synchronisé via le moteur central pour application " + app.getId());
+        log.info("Pipeline stage " + stage.getStageType() + " synchronisé via le moteur central pour application " + app.getId());
         return true;
     }
 
-    private void syncApplicationStatusFromDecision(Applications application, Decision decision, Integer actorUserId) {
-        if (application == null || decision == null || !Utilities.notBlank(decision.getDecisionType())) {
+    private void syncApplicationStatusFromCurrentDecisions(Applications application, Integer actorUserId) {
+        if (application == null || application.getId() == null) {
             return;
         }
 
-        DecisionType decisionType = resolveDecisionType(decision.getDecisionType());
-        if (decisionType == null) {
-            return;
-        }
-
-        String newStatus = decisionType.getValue();
+        List<Decision> decisions = decisionRepository.findByApplicationId(application.getId(), false);
+        Decision currentFinalDecision = selectCurrentFinalDecision(decisions);
+        Decision currentPreselection = selectCurrentPreselection(decisions);
+        String newStatus = currentFinalDecision != null
+                ? currentFinalDecision.getDecisionType()
+                : currentPreselection != null ? currentPreselection.getDecisionType() : "SUBMITTED";
         if (Objects.equals(newStatus, application.getApplicationStatus())) {
             return;
         }
@@ -525,6 +743,92 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
         application.setUpdatedBy(actorUserId);
         applicationsRepository.save(application);
         log.info("Updated application " + application.getId() + " status to " + newStatus);
+    }
+
+    private void syncApplicationCurrentDecisionSummaries(Applications application, Integer actorUserId) {
+        if (application == null || application.getId() == null) {
+            return;
+        }
+
+        List<Decision> decisions = decisionRepository.findByApplicationId(application.getId(), false);
+        Decision currentPreselection = selectCurrentPreselection(decisions);
+        Decision currentFinalDecision = selectCurrentFinalDecision(decisions);
+        if (currentPreselection == null) {
+            application.setCurrentPreselectionDecisionType(null);
+            application.setCurrentPreselectionDecisionDate(null);
+        } else {
+            application.setCurrentPreselectionDecisionType(currentPreselection.getDecisionType());
+            application.setCurrentPreselectionDecisionDate(resolveDecisionSummaryDate(currentPreselection));
+        }
+
+        if (currentFinalDecision == null) {
+            application.setCurrentFinalDecisionType(null);
+            application.setCurrentFinalDecisionDate(null);
+        } else {
+            application.setCurrentFinalDecisionType(currentFinalDecision.getDecisionType());
+            application.setCurrentFinalDecisionDate(resolveDecisionSummaryDate(currentFinalDecision));
+        }
+
+        application.setUpdatedAt(new Date());
+        application.setUpdatedBy(actorUserId);
+        applicationsRepository.save(application);
+    }
+
+    private Decision selectCurrentPreselection(List<Decision> decisions) {
+        return selectCurrentDecision(decisions, true);
+    }
+
+    private Decision selectCurrentFinalDecision(List<Decision> decisions) {
+        return selectCurrentDecision(decisions, false);
+    }
+
+    private Decision selectCurrentDecision(List<Decision> decisions, boolean preScreen) {
+        if (decisions == null || decisions.isEmpty()) {
+            return null;
+        }
+
+        Set<Integer> cancelledDecisionIds = collectCancelledDecisionIds(decisions);
+
+        return decisions.stream()
+                .filter(Objects::nonNull)
+                .filter(decision -> !Boolean.TRUE.equals(decision.getIsDeleted()))
+                .filter(decision -> !Boolean.TRUE.equals(decision.getIsCancel()))
+                .filter(decision -> decision.getId() == null || !cancelledDecisionIds.contains(decision.getId()))
+                .filter(decision -> {
+                    DecisionType decisionType = resolveDecisionType(decision.getDecisionType());
+                    return decisionType != null && (preScreen ? decisionType.isPreScreen() : decisionType.isFinal());
+                })
+                .max(Comparator
+                        .comparing(this::resolveDecisionSummaryDate, Comparator.nullsLast(Date::compareTo))
+                        .thenComparing(Decision::getId, Comparator.nullsLast(Integer::compareTo)))
+                .orElse(null);
+    }
+
+    private Date resolveDecisionSummaryDate(Decision decision) {
+        if (decision == null) {
+            return null;
+        }
+        return decision.getUpdatedAt() != null ? decision.getUpdatedAt() : decision.getCreatedAt();
+    }
+
+    private Set<Integer> collectCancelledDecisionIds(List<Decision> decisions) {
+        Set<Integer> cancelledDecisionIds = new HashSet<>();
+        if (decisions == null || decisions.isEmpty()) {
+            return cancelledDecisionIds;
+        }
+
+        for (Decision decision : decisions) {
+            if (decision == null || Boolean.TRUE.equals(decision.getIsDeleted()) || !Boolean.TRUE.equals(decision.getIsCancel())) {
+                continue;
+            }
+
+            Decision target = loadCancelsDecision(decision);
+            if (target != null && target.getId() != null) {
+                cancelledDecisionIds.add(target.getId());
+            }
+        }
+
+        return cancelledDecisionIds;
     }
 
     private Integer resolveDecisionActorId(Decision decision, Integer fallbackUserId) {
@@ -540,6 +844,224 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
         return fallbackUserId;
     }
 
+    private void prepareDecisionForPersistence(Decision decision, Locale locale) {
+        if (decision == null) {
+            return;
+        }
+
+        decision.setJustification(normalizeOptionalText(decision.getJustification()));
+        decision.setDecisionMode(normalizeDecisionMode(decision.getDecisionMode(), Boolean.TRUE.equals(decision.getIsCancel()), locale));
+        validateDecisionJustification(decision, locale);
+        alignDecisionProgressContext(decision, locale);
+
+        if (Boolean.TRUE.equals(decision.getIsCancel())) {
+            prepareCancellationDecision(decision, locale);
+            return;
+        }
+
+        decision.setCancelsDecision(null);
+    }
+
+    private void alignDecisionProgressContext(Decision decision, Locale locale) {
+        if (decision == null || decision.getApplicationProgress() == null || decision.getApplicationProgress().getId() == null) {
+            return;
+        }
+
+        ApplicationProgress progress = applicationProgressRepository.findOne(decision.getApplicationProgress().getId(), false);
+        if (progress == null) {
+            throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("application_progress -> " + decision.getApplicationProgress().getId(), locale));
+        }
+
+        decision.setApplicationProgress(progress);
+        if (progress.getApplications() != null && progress.getApplications().getId() != null) {
+            if (decision.getApplication() != null
+                    && decision.getApplication().getId() != null
+                    && !Objects.equals(decision.getApplication().getId(), progress.getApplications().getId())) {
+                throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+                        "La décision et l'occurrence pipeline ciblée ne concernent pas la même candidature",
+                        locale));
+            }
+            decision.setApplication(progress.getApplications());
+        }
+
+        if (progress.getPipelineStage() != null && progress.getPipelineStage().getId() != null) {
+            if (decision.getPipelineStage() != null
+                    && decision.getPipelineStage().getId() != null
+                    && !Objects.equals(decision.getPipelineStage().getId(), progress.getPipelineStage().getId())) {
+                throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+                        "La décision et l'occurrence pipeline ciblée ne pointent pas vers la même étape",
+                        locale));
+            }
+            decision.setPipelineStage(progress.getPipelineStage());
+        }
+    }
+
+    private void prepareCancellationDecision(Decision decision, Locale locale) {
+        Decision target = resolveCancellationTarget(decision, locale);
+        decision.setCancelsDecision(target);
+        decision.setDecisionMode(CANCEL_DECISION_MODE);
+        decision.setDecisionType(target.getDecisionType());
+
+        if (target.getApplication() != null) {
+            decision.setApplication(target.getApplication());
+        }
+        if (target.getApplicationProgress() != null) {
+            decision.setApplicationProgress(target.getApplicationProgress());
+        }
+        if (target.getPipelineStage() != null) {
+            decision.setPipelineStage(target.getPipelineStage());
+        }
+
+        alignDecisionProgressContext(decision, locale);
+    }
+
+    private Decision resolveCancellationTarget(Decision decision, Locale locale) {
+        Decision explicitTarget = loadCancelsDecision(decision);
+        if (explicitTarget != null) {
+            validateCancellationTarget(explicitTarget, decision, locale);
+            return explicitTarget;
+        }
+
+        if (decision == null || decision.getApplication() == null || decision.getApplication().getId() == null) {
+            throw new InvalidEntityException(functionalError.FIELD_EMPTY("applicationId", locale));
+        }
+
+        DecisionType decisionType = resolveDecisionType(decision.getDecisionType());
+        List<Decision> decisions = decisionRepository.findByApplicationId(decision.getApplication().getId(), false);
+        Set<Integer> cancelledDecisionIds = collectCancelledDecisionIds(decisions);
+
+        for (Decision candidate : decisions) {
+            if (isCancellableDecisionTarget(candidate, decision, decisionType, cancelledDecisionIds)) {
+                return candidate;
+            }
+        }
+
+        throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION(
+                "Aucune décision active ne peut être annulée pour cette occurrence",
+                locale));
+    }
+
+    private Decision loadCancelsDecision(Decision decision) {
+        if (decision == null || decision.getCancelsDecision() == null || decision.getCancelsDecision().getId() == null) {
+            return null;
+        }
+        return decisionRepository.findOne(decision.getCancelsDecision().getId(), false);
+    }
+
+    private void validateCancellationTarget(Decision target, Decision cancellationDecision, Locale locale) {
+        if (target == null || Boolean.TRUE.equals(target.getIsDeleted()) || Boolean.TRUE.equals(target.getIsCancel())) {
+            throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION(
+                    "La décision cible à annuler est introuvable ou déjà invalide",
+                    locale));
+        }
+
+        if (cancellationDecision != null
+                && cancellationDecision.getApplication() != null
+                && cancellationDecision.getApplication().getId() != null
+                && (target.getApplication() == null
+                    || !Objects.equals(target.getApplication().getId(), cancellationDecision.getApplication().getId()))) {
+            throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+                    "La décision cible à annuler n'appartient pas à la même candidature",
+                    locale));
+        }
+    }
+
+    private boolean isCancellableDecisionTarget(Decision candidate, Decision cancellationDecision, DecisionType cancellationType, Set<Integer> cancelledDecisionIds) {
+        if (candidate == null || candidate.getId() == null) {
+            return false;
+        }
+        if (Boolean.TRUE.equals(candidate.getIsDeleted()) || Boolean.TRUE.equals(candidate.getIsCancel()) || cancelledDecisionIds.contains(candidate.getId())) {
+            return false;
+        }
+        if (cancellationDecision != null && cancellationDecision.getId() != null && Objects.equals(candidate.getId(), cancellationDecision.getId())) {
+            return false;
+        }
+
+        DecisionType candidateType = resolveDecisionType(candidate.getDecisionType());
+        if (candidateType == null || cancellationType == null || candidateType.isPreScreen() != cancellationType.isPreScreen()) {
+            return false;
+        }
+
+        if (cancellationDecision != null
+                && cancellationDecision.getApplicationProgress() != null
+                && cancellationDecision.getApplicationProgress().getId() != null) {
+            return candidate.getApplicationProgress() != null
+                    && Objects.equals(candidate.getApplicationProgress().getId(), cancellationDecision.getApplicationProgress().getId());
+        }
+
+        if (cancellationDecision != null
+                && cancellationDecision.getPipelineStage() != null
+                && cancellationDecision.getPipelineStage().getId() != null) {
+            return candidate.getPipelineStage() != null
+                    && Objects.equals(candidate.getPipelineStage().getId(), cancellationDecision.getPipelineStage().getId());
+        }
+
+        return true;
+    }
+
+    private String normalizeDecisionMode(String decisionMode, boolean cancellation, Locale locale) {
+        String normalizedDecisionMode = Utilities.notBlank(decisionMode)
+                ? decisionMode.trim().toUpperCase(Locale.ROOT)
+                : cancellation ? CANCEL_DECISION_MODE : DEFAULT_DECISION_MODE;
+
+        if (cancellation) {
+            return CANCEL_DECISION_MODE;
+        }
+
+        if (!DECISION_MODE_ALLOWED_VALUES.contains(normalizedDecisionMode) || CANCEL_DECISION_MODE.equals(normalizedDecisionMode)) {
+            throw new InvalidEntityException(functionalError.DATA_NOT_EXIST(
+                    "decisionMode invalide (STANDARD/CANCEL/OVERRIDE/ROLLBACK) -> " + normalizedDecisionMode,
+                    locale));
+        }
+
+        return normalizedDecisionMode;
+    }
+
+    private void validateDecisionJustification(Decision decision, Locale locale) {
+        if (decision == null) {
+            return;
+        }
+
+        String decisionMode = decision.getDecisionMode();
+        boolean requiresJustification = CANCEL_DECISION_MODE.equals(decisionMode)
+                || "OVERRIDE".equals(decisionMode)
+                || "ROLLBACK".equals(decisionMode);
+
+        if (requiresJustification && !Utilities.notBlank(decision.getJustification())) {
+            throw new InvalidEntityException(functionalError.FIELD_EMPTY("justification", locale));
+        }
+    }
+
+    private String normalizeOptionalText(String value) {
+        if (!Utilities.notBlank(value)) {
+            return null;
+        }
+        return value.trim();
+    }
+
+    private void rollbackCancelledDecisionStage(Applications application, Decision decision, Integer actorUserId, Locale locale) throws ParseException {
+        if (application == null || decision == null) {
+            return;
+        }
+
+        ApplicationProgress progress = loadDecisionApplicationProgress(decision);
+        if (progress == null) {
+            Decision target = loadCancelsDecision(decision);
+            progress = loadDecisionApplicationProgress(target);
+        }
+
+        if (progress == null || progress.getPipelineStage() == null || progress.getPipelineStage().getId() == null) {
+            return;
+        }
+
+        applicationProgressBusiness.rollbackStage(
+                application.getId(),
+                progress.getPipelineStage().getId(),
+                actorUserId,
+                decision.getJustification(),
+                locale);
+    }
+
     private void sendDecisionEmailIfNeeded(Applications application, Decision decision, Integer actorUserId, Locale locale, boolean sendDecisionEmailRequested) {
         if (application == null || decision == null || Boolean.TRUE.equals(decision.getIsCancel())) {
             return;
@@ -553,7 +1075,8 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
             return;
         }
 
-        PipelineStage stage = resolveDecisionPipelineStage(application, decisionType);
+        ApplicationProgress progress = resolveDecisionApplicationProgress(application, decision, decisionType);
+        PipelineStage stage = progress != null ? progress.getPipelineStage() : loadDecisionPipelineStage(decision);
         boolean emailRequired = stage == null || Boolean.TRUE.equals(stage.getEmailRequired());
         boolean emailAutomatic = stage == null || Boolean.TRUE.equals(stage.getEmailAutomatic());
         if (!emailRequired) {
@@ -563,7 +1086,7 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
             return;
         }
 
-        if (isStageMailAlreadySent(application.getId(), stage)) {
+        if (isStageMailAlreadySent(progress)) {
             return;
         }
 
@@ -610,13 +1133,22 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
             context.setVariable("titre", decisionType.isPreScreen() ? "Resultat de votre preselection" : "Resultat final de votre candidature");
             context.setVariable("appLink", paramsUtils.getUrlAppl());
 
-            Response<?> responseEmail = hostingUtils.sendEmail(from, toRecipients, subject, "", null, context, "blank", locale);
+            Response<?> responseEmail = hostingUtils.sendEmail(
+                    from,
+                    toRecipients,
+                    subject,
+                    "",
+                    null,
+                    context,
+                    "blank",
+                    locale,
+                    buildDecisionMailLogContext(application, progress, decision, decisionType));
             if (responseEmail.isHasError()) {
                 log.warning("Échec de l'envoi de l'email de décision pour l'application " + application.getId());
                 return;
             }
 
-            if (stage != null && stage.getId() != null) {
+            if (progress != null && stage != null && stage.getId() != null) {
                 applicationProgressBusiness.markStageMailSent(application.getId(), stage.getId(), actorUserId);
             }
         } catch (Exception exception) {
@@ -624,25 +1156,109 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
         }
     }
 
-    private PipelineStage resolveDecisionPipelineStage(Applications application, DecisionType decisionType) {
-        if (application == null || decisionType == null || application.getSourceToken() == null
-                || application.getSourceToken().getCampaigns() == null
-                || application.getSourceToken().getCampaigns().getPipelineTemplate() == null) {
-            return null;
-        }
-        Integer templateId = application.getSourceToken().getCampaigns().getPipelineTemplate().getId();
-        if (templateId == null) {
-            return null;
-        }
-        return pipelineStageRepository.findByTemplateIdAndStageType(templateId, decisionType.getPipelineStageType());
+    private MailLogContext buildDecisionMailLogContext(Applications application, ApplicationProgress progress, Decision decision, DecisionType decisionType) {
+        return MailLogContext.builder()
+                .applicationId(application != null ? application.getId() : null)
+                .applicationProgressId(progress != null ? progress.getId() : null)
+                .decisionId(decision != null ? decision.getId() : null)
+                .eventCode(resolveDecisionMailEventCode(decisionType))
+                .requiresConfirmation(Boolean.FALSE)
+                .build();
     }
 
-    private boolean isStageMailAlreadySent(Integer applicationId, PipelineStage stage) {
-        if (applicationId == null || stage == null || stage.getId() == null) {
-            return false;
+    private String resolveDecisionMailEventCode(DecisionType decisionType) {
+        if (decisionType != null && decisionType.isPreScreen()) {
+            return "PRE_SCREEN_DECISION_EMAIL";
+        }
+        return "FINAL_DECISION_EMAIL";
+    }
+
+    private ApplicationProgress resolveDecisionApplicationProgress(Applications application, Decision decision, DecisionType decisionType) {
+        ApplicationProgress explicitProgress = loadDecisionApplicationProgress(decision);
+        if (matchesDecisionProgress(explicitProgress, application, decisionType)) {
+            return explicitProgress;
         }
 
-        ApplicationProgress progress = applicationProgressRepository.findByApplicationIdAndPipelineStageId(applicationId, stage.getId());
+        PipelineStage explicitStage = loadDecisionPipelineStage(decision);
+        if (application != null && application.getId() != null && explicitStage != null && explicitStage.getId() != null
+                && matchesDecisionStageType(explicitStage, decisionType)) {
+            ApplicationProgress stageProgress = applicationProgressRepository.findByApplicationIdAndPipelineStageId(
+                    application.getId(),
+                    explicitStage.getId());
+            if (matchesDecisionProgress(stageProgress, application, decisionType)) {
+                return stageProgress;
+            }
+        }
+
+        if (application != null && application.getId() != null && decisionType != null) {
+            ApplicationProgress currentProgress = applicationProgressBusiness.resolveProgressByStageType(
+                    application.getId(),
+                    decisionType.getPipelineStageType());
+            if (matchesDecisionProgress(currentProgress, application, decisionType)) {
+                return currentProgress;
+            }
+        }
+
+        return null;
+    }
+
+    private ApplicationProgress loadDecisionApplicationProgress(Decision decision) {
+        if (decision == null || decision.getApplicationProgress() == null || decision.getApplicationProgress().getId() == null) {
+            return null;
+        }
+        return applicationProgressRepository.findOne(decision.getApplicationProgress().getId(), false);
+    }
+
+    private PipelineStage loadDecisionPipelineStage(Decision decision) {
+        if (decision == null || decision.getPipelineStage() == null || decision.getPipelineStage().getId() == null) {
+            return null;
+        }
+        return pipelineStageRepository.findOne(decision.getPipelineStage().getId(), false);
+    }
+
+    private boolean matchesDecisionStageType(PipelineStage stage, DecisionType decisionType) {
+        return stage != null
+                && decisionType != null
+                && Utilities.notBlank(stage.getStageType())
+                && decisionType.getPipelineStageType().equalsIgnoreCase(stage.getStageType());
+    }
+
+    private boolean matchesDecisionProgress(ApplicationProgress progress, Applications application, DecisionType decisionType) {
+        return progress != null
+                && application != null
+                && application.getId() != null
+                && progress.getApplications() != null
+                && Objects.equals(progress.getApplications().getId(), application.getId())
+                && matchesDecisionStageType(progress.getPipelineStage(), decisionType);
+    }
+
+    private void persistDecisionProgressLinkIfNeeded(Decision decision, ApplicationProgress progress) {
+        if (decision == null || progress == null || progress.getId() == null) {
+            return;
+        }
+
+        boolean needsSave = false;
+        if (decision.getApplicationProgress() == null || !Objects.equals(decision.getApplicationProgress().getId(), progress.getId())) {
+            decision.setApplicationProgress(progress);
+            needsSave = true;
+        }
+
+        PipelineStage stage = progress.getPipelineStage();
+        if (stage != null && stage.getId() != null
+                && (decision.getPipelineStage() == null || !Objects.equals(decision.getPipelineStage().getId(), stage.getId()))) {
+            decision.setPipelineStage(stage);
+            needsSave = true;
+        }
+
+        if (!needsSave) {
+            return;
+        }
+        if (decision.getId() != null) {
+            decisionRepository.save(decision);
+        }
+    }
+
+    private boolean isStageMailAlreadySent(ApplicationProgress progress) {
         return progress != null && Boolean.TRUE.equals(progress.getMailSent());
     }
 
