@@ -191,97 +191,87 @@
 #let cover-page(meta) = [
   #set par(first-line-indent: 0pt, justify: false)
   #align(center)[
-    #v(0.55cm)
-    #text(size: 9pt, fill: palette.muted)[Logo ENSIT · Logo du ministère de l'Éducation (optionnel)]
-    #v(1.2cm)
+    // ── Logos en-tête ──
+    #grid(
+      columns: (1fr, 1fr, 1fr),
+      gutter: 1em,
+      [
+        #align(left)[
+          #image("../../figures_html/captures/to use/logo-ensit.jpg", height: 1.6cm)
+        ]
+      ],
+      [
+        #align(center)[
+          #image("../../figures_html/captures/to use/logo-ministère-education.png", height: 5.0cm)
+        ]
+      ],
+      [
+        #align(right)[
+          #image("../../figures_html/captures/to use/logo-synelia.png", height: 1.3cm)
+        ]
+      ],
+    )
+    #v(0.3cm)
+
+    // ── École ──
     #set text(font: display_fonts)
     #text(size: 12pt, weight: "semibold", fill: palette.primary)[#meta.school]
-    #v(0.2em)
+    #v(0.12em)
     #set text(font: body_fonts)
-    #text(size: 10pt, fill: palette.secondary)[Entreprise d'accueil : #meta.company]
-    #v(1.25cm)
+    #text(size: 10pt, fill: palette.muted)[Entreprise d'accueil : #meta.company]
+    #v(0.7cm)
+
     #line(length: 58%, stroke: (paint: palette.line, thickness: 0.8pt))
-    #v(0.95cm)
+    #v(0.6cm)
+
+    // ── Diplôme ──
     #set text(font: display_fonts)
     #text(size: 13pt, weight: "semibold", fill: palette.primary)[#smallcaps[Mémoire de fin d'études]]
-    #v(0.55em)
+    #v(0.35em)
     #set text(font: body_fonts)
-    #text(size: 10.5pt)[En vue de l'obtention du #meta.diploma]
-    #v(0.15em)
+    #text(size: 11pt)[En vue de l'obtention du #meta.diploma]
+    #v(0.1em)
     #text(size: 10pt, fill: palette.muted)[Option : #meta.option]
-    #v(1.35cm)
+    #v(0.85cm)
+
+    // ── Titre ──
     #text(size: 10pt, weight: "semibold", fill: palette.muted)[#smallcaps[Thème]]
-    #v(0.45em)
-    #title-panel(meta.title, width: 86%, size: 15.8pt, ink: palette.ink)
-    #v(1.25cm)
-    #block(width: 82%)[
+    #v(0.3em)
+    #title-panel(meta.title, width: 88%, size: 14.5pt, ink: palette.ink)
+    #v(0.8cm)
+
+    // ── Bloc auteur / encadrement ──
+    #block(width: 78%, stroke: (paint: palette.line, thickness: 0.7pt), inset: 12pt, radius: 0pt)[
       #set text(font: body_fonts)
-      #set par(first-line-indent: 0pt, justify: false)
-      #line(length: 100%, stroke: (paint: palette.line, thickness: 0.6pt))
-      #v(0.7em)
       #grid(
         columns: (1fr, 1.2fr),
-        gutter: 1.5em,
+        gutter: 1.2em,
         align: left + top,
         [
-          #text(size: 9.6pt, weight: "semibold", fill: palette.muted)[Présenté par]
-          #v(0.25em)
-          #text(size: 11.2pt, weight: "semibold", fill: palette.primary)[#meta.student_name]
+          #text(size: 10pt, weight: "semibold", fill: palette.muted)[Présenté par]
+          #v(0.15em)
+          #text(size: 12pt, weight: "semibold", fill: palette.primary)[#meta.student_name]
         ],
         [
-          #text(size: 9.6pt, weight: "semibold", fill: palette.muted)[Encadrement]
-          #v(0.25em)
-          #text(size: 10pt)[Pédagogique : #meta.advisor_name]
-          #v(0.18em)
-          #text(size: 10pt)[Entreprise : #meta.internship_supervisor]
-          #v(0.12em)
-          #text(size: 9.6pt, fill: palette.muted)[#meta.internship_role]
+          #text(size: 10pt, weight: "semibold", fill: palette.muted)[Encadrement]
+          #v(0.15em)
+          #text(size: 10.5pt)[Pédagogique : #meta.advisor_name]
+          #v(0.1em)
+          #text(size: 10.5pt)[Entreprise : #meta.internship_supervisor]
+          #v(0.08em)
+          #text(size: 10pt, fill: palette.muted)[#meta.internship_role]
         ],
       )
-      #v(0.7em)
-      #text(size: 10pt, fill: palette.muted)[Année académique : #meta.academic_year]
-      #v(0.65em)
-      #line(length: 100%, stroke: (paint: palette.line, thickness: 0.6pt))
     ]
+
+    // ── Année académique HORS du bloc ──
+    #v(0.65cm)
+    #set text(font: body_fonts)
+    #text(size: 11pt, weight: "semibold", fill: palette.secondary)[Année académique : #meta.academic_year]
   ]
 ]
 
-#let title-page(meta) = [
-  #set par(first-line-indent: 0pt, justify: false)
-  #align(center)[
-    #v(1.5cm)
-    #set text(font: display_fonts)
-    #text(size: 12pt, weight: "semibold", fill: palette.primary)[#meta.school]
-    #v(0.2em)
-    #set text(font: body_fonts)
-    #text(size: 10pt, fill: palette.muted)[Entreprise d'accueil : #meta.company]
-    #v(1.7cm)
-    #set text(font: display_fonts)
-    #text(size: 13pt, weight: "semibold", fill: palette.primary)[#smallcaps[Page de garde]]
-    #v(1.0em)
-    #line(length: 45%, stroke: (paint: palette.line, thickness: 0.8pt))
-    #v(1.2cm)
-    #set text(font: body_fonts)
-    #text(size: 10pt, weight: "semibold", fill: palette.muted)[#smallcaps[Titre du mémoire]]
-    #v(0.45em)
-    #title-panel(meta.title, width: 84%, size: 15.5pt, ink: palette.primary)
-    #v(1.8cm)
-    #set text(font: body_fonts)
-    #text(size: 10.5pt)[Présenté par : #meta.student_name]
-    #v(0.35em)
-    #text(size: 10pt)[Encadreur pédagogique : #meta.advisor_name]
-    #v(0.25em)
-    #text(size: 10pt)[Maître de stage : #meta.internship_supervisor]
-    #v(0.1em)
-    #text(size: 10pt, fill: palette.muted)[#meta.internship_role]
-    #v(1.5cm)
-    #text(size: 10pt)[#meta.diploma]
-    #v(0.1em)
-    #text(size: 10pt, fill: palette.muted)[Option : #meta.option]
-    #v(1.6cm)
-    #text(size: 10pt, fill: palette.muted)[Année académique : #meta.academic_year]
-  ]
-]
+#let title-page(meta) = cover-page(meta)
 
 #let part-page(label, title, subtitle: none) = [
   #pagebreak()

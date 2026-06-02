@@ -1,0 +1,382 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="1820" height="1860" viewBox="0 0 1820 1860">
+<defs><style type="text/css"><![CDATA[
+
+
+      /* SVG export overrides */
+      .canvas { position: relative; }
+      .canvas .entity { position: absolute; }
+      html, body { background: transparent; margin: 0; padding: 0; }
+    
+]]></style></defs>
+<foreignObject x="0" y="0" width="1820" height="1860"><div xmlns="http://www.w3.org/1999/xhtml"><div xmlns="http://www.w3.org/1999/xhtml" class="canvas" style="width: 1820px; height: 1860px; margin: 0px; position: absolute; top: 0px; left: 0px; transform-origin: left top;">
+        
+
+        <!-- Templates pipeline -->
+        <div class="entity" data-entity="ptpl" style="top: 1490px; left: 200px; width: 200px;">
+          <div class="entity-head">pipeline_template</div>
+          <div class="entity-body"><ul>
+            <li><span class="name">template_name</span><span class="type">varchar(255) NN</span></li>
+            <li><span class="name">template_desc</span><span class="type">text</span></li>
+            <li><span class="name">is_default</span><span class="type">bit(1)</span></li>
+            <li><span class="name">is_active</span><span class="type">bit(1)</span></li>
+            <li><span class="name">is_locked</span><span class="type">bit(1)</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="pstage" style="top: 1180px; left: 400px; width: 230px;">
+          <div class="entity-head">pipeline_stage</div>
+          <div class="entity-body"><ul>
+            <li><span class="key fk">FK</span><span class="name">pipeline_template_id</span><span class="type">int unsigned NN</span></li>
+            <li><span class="name">stage_type</span><span class="type">varchar(50) NN</span></li>
+            <li><span class="name">stage_label</span><span class="type">varchar(255) NN</span></li>
+            <li><span class="name">stage_order</span><span class="type">int NN</span></li>
+            <li><span class="name">is_required, is_eliminatory</span><span class="type">bit(1)</span></li>
+            <li><span class="name">config_json</span><span class="type">json</span></li>
+            <li><span class="name">screening_mode</span><span class="type">varchar(20)</span></li>
+            <li><span class="name">passing_score</span><span class="type">int</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity new" data-entity="notifrule" style="top: 1240px; left: 20px; width: 200px;">
+          <div class="entity-head">pipeline_stage_notification_rule</div>
+          <div class="entity-body"><ul>
+            <li><span class="key fk">FK</span><span class="name">pipeline_stage_id</span><span class="type">int unsigned NN</span></li>
+            <li><span class="key fk">FK</span><span class="name">email_template_id</span><span class="type">int unsigned</span></li>
+            <li><span class="name">trigger_code</span><span class="type">varchar(60) NN</span></li>
+            <li><span class="name">outcome_code</span><span class="type">varchar(60)</span></li>
+            <li><span class="name">is_required, is_automatic</span><span class="type">tinyint(1)</span></li>
+            <li><span class="name">requires_manual_confirmation</span><span class="type">tinyint(1)</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity new" data-entity="crit" style="top: 1290px; left: 990px; width: 230px;">
+          <div class="entity-head">pipeline_stage_evaluation_criterion</div>
+          <div class="entity-body"><ul>
+            <li><span class="key fk">FK</span><span class="name">pipeline_stage_id</span><span class="type">int unsigned NN</span></li>
+            <li><span class="key fk">FK</span><span class="name">evaluation_grid_template_version_id</span><span class="type">int unsigned</span></li>
+            <li><span class="name">criterion_order</span><span class="type">int NN</span></li>
+            <li><span class="name">label</span><span class="type">varchar(255) NN</span></li>
+            <li><span class="name">criterion_type</span><span class="type">varchar(20) NN</span></li>
+            <li><span class="name">max_score, weight</span><span class="type">int / double</span></li>
+            <li><span class="name">is_required</span><span class="type">tinyint(1)</span></li>
+            <li><span class="name">config_json</span><span class="type">json</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity new" data-entity="grille" style="top: 1590px; left: 1020px; width: 210px;">
+          <div class="entity-head">evaluation_grid_template (+ version + item)</div>
+          <div class="entity-body"><ul>
+            <li><span class="name">name</span><span class="type">varchar(255) NN</span></li>
+            <li><span class="name">description</span><span class="type">text</span></li>
+            <li><span class="entity-divider">_template_version</span></li>
+            <li><span class="key fk">FK</span><span class="name">evaluation_grid_template_id</span></li>
+            <li><span class="name">version_number</span><span class="type">int NN</span></li>
+            <li><span class="name">is_active</span><span class="type">tinyint(1)</span></li>
+            <li><span class="entity-divider">_template_item</span></li>
+            <li><span class="key fk">FK</span><span class="name">..._version_id</span></li>
+            <li><span class="name">label, type, max_score, weight</span></li>
+          </ul></div>
+        </div>
+
+        <!-- Catalogue -->
+        <div class="entity pivot" data-entity="campaign" style="top: 1460px; left: 610px; width: 200px;">
+          <div class="entity-head">campaigns <span class="tag">pivot</span></div>
+          <div class="entity-body"><ul>
+            <li><span class="name">campaign_title</span><span class="type">varchar(255) NN</span></li>
+            <li><span class="name">campaign_status</span><span class="type">varchar(20) NN</span></li>
+            <li><span class="name">campaign_start, campaign_end</span><span class="type">datetime</span></li>
+            <li><span class="name">max_apply, total_questions</span><span class="type">int</span></li>
+            <li><span class="name">is_timed, is_archived</span><span class="type">tinyint(1)</span></li>
+            <li><span class="key fk">FK</span><span class="name">pipeline_template_id</span><span class="type">int unsigned</span></li>
+            <li><span class="key fk">FK</span><span class="name">creator_id, speciality_id</span></li>
+            <li><span class="name">form_assignment_strategy</span><span class="type">varchar(30)</span></li>
+            <li><span class="name">form_assignment_exhaustion_policy</span><span class="type">varchar(20)</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="campform" style="top: 1180px; left: 730px; width: 200px;">
+          <div class="entity-head">campaign_form</div>
+          <div class="entity-body"><ul>
+            <li><span class="key fk">FK</span><span class="name">campaign_id, form_id</span></li>
+            <li><span class="name">assignment_order</span><span class="type">int</span></li>
+            <li><span class="key fk">FK</span><span class="name">active_campaign_id, active_form_id</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="form" style="top: 980px; left: 580px; width: 200px;">
+          <div class="entity-head">form</div>
+          <div class="entity-body"><ul>
+            <li><span class="name">form_name</span><span class="type">varchar(255) NN</span></li>
+            <li><span class="name">form_desc</span><span class="type">text</span></li>
+            <li><span class="name">is_active</span><span class="type">bit(1)</span></li>
+            <li><span class="name">is_timed</span><span class="type">tinyint(1)</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="formv" style="top: 710px; left: 580px; width: 200px;">
+          <div class="entity-head">form_version</div>
+          <div class="entity-body"><ul>
+            <li><span class="key fk">FK</span><span class="name">form_id</span></li>
+            <li><span class="name">version_number</span><span class="type">int NN</span></li>
+            <li><span class="name">is_published, is_locked</span><span class="type">bit(1)</span></li>
+            <li><span class="name">random_questions</span><span class="type">tinyint(1)</span></li>
+            <li><span class="name">published_form_id</span><span class="type">int unsigned UQ</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="question" style="top: 520px; left: 1150px; width: 200px;">
+          <div class="entity-head">question</div>
+          <div class="entity-body"><ul>
+            <li><span class="name">question_text</span><span class="type">text NN</span></li>
+            <li><span class="name">question_type</span><span class="type">varchar(20)</span></li>
+            <li><span class="name">question_chrono, score</span><span class="type">int</span></li>
+            <li><span class="name">difficulty_level</span><span class="type">varchar(20)</span></li>
+            <li><span class="key fk">FK</span><span class="name">speciality_id</span></li>
+            <li><span class="name">manual_correction_required</span><span class="type">bit(1)</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="answer" style="top: 730px; left: 830px; width: 200px;">
+          <div class="entity-head">answer</div>
+          <div class="entity-body"><ul>
+            <li><span class="key fk">FK</span><span class="name">question_id</span></li>
+            <li><span class="name">answer_text</span><span class="type">text NN</span></li>
+            <li><span class="name">is_correct</span><span class="type">tinyint(1)</span></li>
+            <li><span class="name">answer_type</span><span class="type">varchar(20)</span></li>
+            <li><span class="name">answer_order</span><span class="type">int</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="fq" style="top: 1040px; left: 870px; width: 200px;">
+          <div class="entity-head">form_questions</div>
+          <div class="entity-body"><ul>
+            <li><span class="key fk">FK</span><span class="name">form_version_id, question_id</span></li>
+            <li><span class="name">question_order</span><span class="type">int</span></li>
+            <li><span class="name">chrono_override</span><span class="type">int unsigned</span></li>
+          </ul></div>
+        </div>
+
+        <!-- Candidature / pipeline -->
+        <div class="entity pivot" data-entity="appli" style="top: 650px; left: 300px; width: 210px;">
+          <div class="entity-head">applications <span class="tag">pivot</span></div>
+          <div class="entity-body"><ul>
+            <li><span class="name">candidate_first/last_name</span><span class="type">varchar(100)</span></li>
+            <li><span class="name">candidate_email</span><span class="type">varchar(255) NN</span></li>
+            <li><span class="name">candidate_phone</span><span class="type">varchar(20)</span></li>
+            <li><span class="name">candidate_cv_path</span><span class="type">varchar(1000)</span></li>
+            <li><span class="name">motivation_letter</span><span class="type">text</span></li>
+            <li><span class="name">email_verified</span><span class="type">tinyint(1)</span></li>
+            <li><span class="key fk">FK</span><span class="name">source_token_id, form_version_id</span></li>
+            <li><span class="key fk">FK</span><span class="name">current_application_progress_id</span></li>
+            <li><span class="key fk">FK</span><span class="name">current_pipeline_stage_id</span></li>
+            <li><span class="key fk">FK</span><span class="name">abandoned_from_application_progress_id</span></li>
+            <li><span class="name">aggregated_quiz_score</span><span class="type">double</span></li>
+            <li><span class="name">aggregated_evaluation_score</span><span class="type">double</span></li>
+            <li><span class="name">last_progressed_at</span><span class="type">datetime</span></li>
+            <li><span class="name">abandoned_at</span><span class="type">datetime</span></li>
+            <li><span class="name">abandon_reason</span><span class="type">varchar(500)</span></li>
+            <li><span class="name">application_abandoned</span><span class="type">tinyint(1)</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity pivot" data-entity="prog" style="top: 250px; left: 90px; width: 220px;">
+          <div class="entity-head">application_progress <span class="tag">round</span></div>
+          <div class="entity-body"><ul>
+            <li><span class="key fk">FK</span><span class="name">application_id, pipeline_stage_id</span></li>
+            <li><span class="name">progress_status</span><span class="type">varchar(20) NN</span></li>
+            <li><span class="name">started_at, completed_at</span><span class="type">datetime</span></li>
+            <li><span class="name">score</span><span class="type">double</span></li>
+            <li><span class="name">notes</span><span class="type">text</span></li>
+            <li><span class="name">validated_at</span><span class="type">datetime</span></li>
+            <li><span class="key fk">FK</span><span class="name">validated_by</span><span class="type">int unsigned</span></li>
+            <li><span class="name">validation_comment</span><span class="type">text</span></li>
+            <li><span class="name">skipped_at, skipped_by, skip_reason</span></li>
+            <li><span class="name">reopened_at, reopened_by, reopen_reason</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity new" data-entity="quizatt" style="top: 250px; left: 680px; width: 210px;">
+          <div class="entity-head">application_quiz_attempt</div>
+          <div class="entity-body"><ul>
+            <li><span class="key fk">FK</span><span class="name">application_id</span></li>
+            <li><span class="key fk">FK</span><span class="name">application_progress_id</span></li>
+            <li><span class="key fk">FK</span><span class="name">form_version_id</span></li>
+            <li><span class="name">quiz_token</span><span class="type">varchar(64) UQ</span></li>
+            <li><span class="name">quiz_status</span><span class="type">varchar(20) NN</span></li>
+            <li><span class="name">screening_mode</span><span class="type">varchar(20)</span></li>
+            <li><span class="name">screening_threshold</span><span class="type">int</span></li>
+            <li><span class="name">screening_result</span><span class="type">varchar(20)</span></li>
+            <li><span class="name">score, score_percent</span><span class="type">int / int</span></li>
+            <li><span class="name">manual_correction_status</span><span class="type">varchar(20)</span></li>
+            <li><span class="name">total_questions</span><span class="type">int</span></li>
+            <li><span class="name">time_elapsed</span><span class="type">int</span></li>
+            <li><span class="name">timed_snapshot</span><span class="type">tinyint(1)</span></li>
+            <li><span class="name">total_time_allowed_snapshot</span><span class="type">int</span></li>
+            <li><span class="name">last_activity_at, started_at, completed_at</span><span class="type">datetime</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="canswer" style="top: 270px; left: 1030px; width: 210px;">
+          <div class="entity-head">candidate_answer</div>
+          <div class="entity-body"><ul>
+            <li><span class="key fk">FK</span><span class="name">application_quiz_attempt_id</span><span class="type">int unsigned NN</span></li>
+            <li><span class="key fk">FK</span><span class="name">question_id, answer_id</span></li>
+            <li><span class="name">is_selected</span><span class="type">tinyint(1) NN</span></li>
+            <li><span class="name">free_text_response</span><span class="type">text</span></li>
+            <li><span class="name">manual_is_correct</span><span class="type">tinyint(1)</span></li>
+            <li><span class="name">manual_correction_comment</span><span class="type">text</span></li>
+            <li><span class="name">manual_correction_score</span><span class="type">int</span></li>
+            <li><span class="name">manual_corrected_at, _by</span><span class="type">timestamp / int</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="decision" style="top: 130px; left: 380px; width: 210px;">
+          <div class="entity-head">decisions</div>
+          <div class="entity-body"><ul>
+            <li><span class="key fk">FK</span><span class="name">application_progress_id</span></li>
+            <li><span class="key fk">FK</span><span class="name">user_id</span></li>
+            <li><span class="key fk">FK</span><span class="name">cancels_decision_id</span></li>
+            <li><span class="name">decision_type</span><span class="type">varchar(50) NN</span></li>
+            <li><span class="name">decision_mode</span><span class="type">varchar(20)</span></li>
+            <li><span class="name">justification</span><span class="type">text</span></li>
+          </ul></div>
+        </div>
+
+        <!-- Entretien / évaluation -->
+        <div class="entity" data-entity="candint" style="top: 1470px; left: 1270px; width: 210px;">
+          <div class="entity-head">candidate_interview</div>
+          <div class="entity-body"><ul>
+            <li><span class="key fk">FK</span><span class="name">interview_id</span></li>
+            <li><span class="name">interview_start</span><span class="type">datetime</span></li>
+            <li><span class="name">interview_duration</span><span class="type">int</span></li>
+            <li><span class="name">decline_reason</span><span class="type">varchar(500)</span></li>
+            <li><span class="name">alternative_date_requested</span><span class="type">datetime</span></li>
+            <li><span class="name">candidate_response_status</span><span class="type">varchar(30)</span></li>
+            <li><span class="name">responded_at</span><span class="type">datetime</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="interview" style="top: 770px; left: 1600px; width: 210px;">
+          <div class="entity-head">interviews</div>
+          <div class="entity-body"><ul>
+            <li><span class="key fk">FK</span><span class="name">application_progress_id</span></li>
+            <li><span class="key fk">FK</span><span class="name">campaign_id</span></li>
+            <li><span class="name">interview_date</span><span class="type">datetime NN</span></li>
+            <li><span class="name">interview_type, status</span><span class="type">varchar(20)</span></li>
+            <li><span class="name">interview_location</span><span class="type">varchar(255)</span></li>
+            <li><span class="name">meet_link</span><span class="type">varchar(500)</span></li>
+            <li><span class="name">interview_evaluations_link</span><span class="type">varchar(8)</span></li>
+            <li><span class="name">interview_note</span><span class="type">text</span></li>
+            <li><span class="name">started_at, ended_at</span><span class="type">datetime</span></li>
+            <li><span class="name">evaluation_completed_at, _by</span></li>
+            <li><span class="name">closed_at, closed_by, closure_comment</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="ipart" style="top: 240px; left: 1360px; width: 210px;">
+          <div class="entity-head">interview_participant</div>
+          <div class="entity-body"><ul>
+            <li><span class="key fk">FK</span><span class="name">interview_id, user_id</span></li>
+            <li><span class="name">can_update, can_delete, can_evaluate</span><span class="type">tinyint(1)</span></li>
+            <li><span class="name">is_admin, follow</span><span class="type">tinyint(1)</span></li>
+            <li><span class="name">is_online, has_finished</span><span class="type">tinyint(1)</span></li>
+            <li><span class="name">last_ping_at</span><span class="type">datetime</span></li>
+            <li><span class="name">evaluation_status</span><span class="type">varchar(20)</span></li>
+            <li><span class="name">evaluation_submitted_at</span><span class="type">datetime</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="eval" style="top: 620px; left: 1370px; width: 210px;">
+          <div class="entity-head">evaluations</div>
+          <div class="entity-body"><ul>
+            <li><span class="key fk">FK</span><span class="name">candidate_interview_id</span></li>
+            <li><span class="key fk">FK</span><span class="name">interview_participant_id</span></li>
+            <li><span class="name">evaluation_status</span><span class="type">varchar(20)</span></li>
+            <li><span class="name">submitted_at, validated_at, validated_by</span></li>
+            <li><span class="name">global_score</span><span class="type">double</span></li>
+            <li><span class="name">global_comment</span><span class="type">text</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity new" data-entity="evalitem" style="top: 1070px; left: 1140px; width: 210px;">
+          <div class="entity-head">evaluation_item</div>
+          <div class="entity-body"><ul>
+            <li><span class="key fk">FK</span><span class="name">evaluation_id</span></li>
+            <li><span class="key fk">FK</span><span class="name">pipeline_stage_evaluation_criterion_id</span></li>
+            <li><span class="name">score_value</span><span class="type">double</span></li>
+            <li><span class="name">text_value</span><span class="type">text</span></li>
+            <li><span class="name">weight_snapshot</span><span class="type">double</span></li>
+            <li><span class="name">max_score_snapshot</span><span class="type">int</span></li>
+          </ul></div>
+        </div>
+
+        <!-- Comms / audit -->
+        <div class="entity" data-entity="maillog" style="top: 680px; left: 10px; width: 220px;">
+          <div class="entity-head">mail_log</div>
+          <div class="entity-body"><ul>
+            <li><span class="name">recipient_email</span><span class="type">varchar(255) NN</span></li>
+            <li><span class="key fk">FK</span><span class="name">recipient_user_id, sender_user_id</span></li>
+            <li><span class="key fk">FK</span><span class="name">email_template_id</span></li>
+            <li><span class="name">subject, status, sent_at</span></li>
+            <li><span class="key fk">FK</span><span class="name">application_id, application_progress_id</span></li>
+            <li><span class="key fk">FK</span><span class="name">interview_id, decision_id, notification_rule_id</span></li>
+            <li><span class="name">event_code</span><span class="type">varchar(60)</span></li>
+            <li><span class="name">requires_confirmation, confirmed_at, confirmed_by</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity new" data-entity="audit" style="top: 0px; left: 760px; width: 220px;">
+          <div class="entity-head">audit_event</div>
+          <div class="entity-body"><ul>
+            <li><span class="key fk">FK</span><span class="name">application_id, application_progress_id</span></li>
+            <li><span class="key fk">FK</span><span class="name">actor_user_id</span></li>
+            <li><span class="name">entity_type</span><span class="type">varchar(60) NN</span></li>
+            <li><span class="name">entity_id</span><span class="type">int unsigned NN</span></li>
+            <li><span class="name">action_type</span><span class="type">varchar(60) NN</span></li>
+            <li><span class="name">justification</span><span class="type">text</span></li>
+            <li><span class="name">before_state_json</span><span class="type">json</span></li>
+            <li><span class="name">after_state_json</span><span class="type">json</span></li>
+            <li><span class="name">created_at</span><span class="type">datetime NN</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="emailtpl" style="top: 990px; left: 10px; width: 220px;">
+          <div class="entity-head">email_template</div>
+          <div class="entity-body"><ul>
+            <li><span class="name">template_key</span><span class="type">varchar(50) UQ</span></li>
+            <li><span class="name">subject_template</span><span class="type">varchar(500)</span></li>
+            <li><span class="name">body_template</span><span class="type">text NN</span></li>
+            <li><span class="name">editable_variables_json</span><span class="type">text</span></li>
+            <li><span class="name">action_type</span><span class="type">varchar(50)</span></li>
+            <li><span class="name">preset_id</span><span class="type">int</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="appcfg" style="top: 30px; left: 1360px; width: 220px;">
+          <div class="entity-head">app_config</div>
+          <div class="entity-body"><ul>
+            <li><span class="name">config_name</span><span class="type">varchar(100) NN</span></li>
+            <li><span class="name">company_name</span><span class="type">varchar(255) NN</span></li>
+            <li><span class="name">app_link</span><span class="type">varchar(500)</span></li>
+            <li><span class="name">logo_html</span><span class="type">text</span></li>
+            <li><span class="name">primary_color</span><span class="type">varchar(7)</span></li>
+            <li><span class="name">color_scheme</span><span class="type">varchar(30)</span></li>
+            <li><span class="name">candidate_accounts_enabled</span><span class="type">tinyint(1)</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="smtp" style="top: 10px; left: 1100px; width: 220px;">
+          <div class="entity-head">smtp_config</div>
+          <div class="entity-body"><ul>
+            <li><span class="name">host</span><span class="type">varchar(255) NN</span></li>
+            <li><span class="name">port</span><span class="type">int NN</span></li>
+            <li><span class="name">username</span><span class="type">varchar(255)</span></li>
+            <li><span class="name">password_encrypted</span><span class="type">varchar(500)</span></li>
+            <li><span class="name">starttls_enable, _required</span><span class="type">bit(1)</span></li>
+            <li><span class="name">sender_name, sender_email</span><span class="type">varchar(255)</span></li>
+          </ul></div>
+        </div>
+      </div></div></foreignObject>
+<g class="links-layer" fill="none"><path d="M 515.0000038146973 1369.8000030517578 C 515.0000038146973 1492.9594924002824, 300.00000381469727 1366.8405106514754, 300.00000381469727 1490" class="strong"></path><circle cx="515.0000038146973" cy="1369.8000030517578" r="6" class="anchor-handle" data-link-idx="0" data-end="A"></circle><circle cx="300.00000381469727" cy="1490" r="6" class="anchor-handle" data-link-idx="0" data-end="B"></circle><path d="M 219.99999618530273 1317.099998474121 C 312.44030461324684 1317.099998474121, 307.55969538675316 1274.900001525879, 400.00000381469727 1274.900001525879" class="strong"></path><circle cx="219.99999618530273" cy="1317.099998474121" r="6" class="anchor-handle" data-link-idx="1" data-end="A"></circle><circle cx="400.00000381469727" cy="1274.900001525879" r="6" class="anchor-handle" data-link-idx="1" data-end="B"></circle><path d="M 119.99999618530273 1240 C 119.99999618530273 1191.5, 120 1191.5, 120 1143" stroke-dasharray="5 4"></path><circle cx="119.99999618530273" cy="1240" r="6" class="anchor-handle" data-link-idx="2" data-end="A"></circle><circle cx="120" cy="1143" r="6" class="anchor-handle" data-link-idx="2" data-end="B"></circle><path d="M 1031.3999732971192 1480.4000091552734 C 1031.3999732971192 1705.87295023478, 855.4729448942038 1274.900001525879, 630.0000038146973 1274.900001525879" class="strong"></path><circle cx="1031.3999732971192" cy="1480.4000091552734" r="6" class="anchor-handle" data-link-idx="3" data-end="A"></circle><circle cx="630.0000038146973" cy="1274.900001525879" r="6" class="anchor-handle" data-link-idx="3" data-end="B"></circle><path d="M 1178.599973297119 1480.4000091552734 C 1178.599973297119 1541.402300081853, 1124.9999732971191 1528.9977090734205, 1124.9999732971191 1590" stroke-dasharray="5 4"></path><circle cx="1178.599973297119" cy="1480.4000091552734" r="6" class="anchor-handle" data-link-idx="4" data-end="A"></circle><circle cx="1124.9999732971191" cy="1590" r="6" class="anchor-handle" data-link-idx="4" data-end="B"></circle><path d="M 830.0000343322754 1279.900001525879 C 830.0000343322754 1388.1081452240064, 710.0000343322754 1351.7918563018725, 710.0000343322754 1460" class="strong"></path><circle cx="830.0000343322754" cy="1279.900001525879" r="6" class="anchor-handle" data-link-idx="5" data-end="A"></circle><circle cx="710.0000343322754" cy="1460" r="6" class="anchor-handle" data-link-idx="5" data-end="B"></circle><path d="M 830.0000343322754 1180 C 830.0000343322754 1094.2354392942698, 680.0000343322754 1182.564563757488, 680.0000343322754 1096.8000030517578" class="strong"></path><circle cx="830.0000343322754" cy="1180" r="6" class="anchor-handle" data-link-idx="6" data-end="A"></circle><circle cx="680.0000343322754" cy="1096.8000030517578" r="6" class="anchor-handle" data-link-idx="6" data-end="B"></circle><path d="M 616.0000343322754 845.5 C 616.0000343322754 919.975247565886, 680.0000343322754 905.524752434114, 680.0000343322754 980" class="strong"></path><circle cx="616.0000343322754" cy="845.5" r="6" class="anchor-handle" data-link-idx="7" data-end="A"></circle><circle cx="680.0000343322754" cy="980" r="6" class="anchor-handle" data-link-idx="7" data-end="B"></circle><path d="M 906.0000343322754 1040 C 906.0000343322754 913.4355401386314, 744.0000343322754 972.0644598613686, 744.0000343322754 845.5" class="strong"></path><circle cx="906.0000343322754" cy="1040" r="6" class="anchor-handle" data-link-idx="8" data-end="A"></circle><circle cx="744.0000343322754" cy="845.5" r="6" class="anchor-handle" data-link-idx="8" data-end="B"></circle><path d="M 1034.0000343322754 1040 C 1034.0000343322754 827.3353995371115, 1249.9999732971191 886.2646065664042, 1249.9999732971191 673.6000061035156" class="strong"></path><circle cx="1034.0000343322754" cy="1040" r="6" class="anchor-handle" data-link-idx="9" data-end="A"></circle><circle cx="1249.9999732971191" cy="673.6000061035156" r="6" class="anchor-handle" data-link-idx="9" data-end="B"></circle><path d="M 1030.0000343322754 797.75 C 1147.026619586508 797.75, 1032.9733880428864 596.8000030517578, 1149.9999732971191 596.8000030517578" class="strong"></path><circle cx="1030.0000343322754" cy="797.75" r="6" class="anchor-handle" data-link-idx="10" data-end="A"></circle><circle cx="1149.9999732971191" cy="596.8000030517578" r="6" class="anchor-handle" data-link-idx="10" data-end="B"></circle><path d="M 200.00000381469727 476.6000061035156 C 200.00000381469727 587.3434008086862, 337.8000038146973 539.2566052948295, 337.8000038146973 650" class="strong"></path><circle cx="200.00000381469727" cy="476.6000061035156" r="6" class="anchor-handle" data-link-idx="11" data-end="A"></circle><circle cx="337.8000038146973" cy="650" r="6" class="anchor-handle" data-link-idx="11" data-end="B"></circle><path d="M 310.00000381469727 435.81200500488285 C 695.9536188692957 435.81200500488285, 515.0000038146973 794.0463849454015, 515.0000038146973 1180" stroke-dasharray="5 4"></path><circle cx="310.00000381469727" cy="435.81200500488285" r="6" class="anchor-handle" data-link-idx="12" data-end="A"></circle><circle cx="515.0000038146973" cy="1180" r="6" class="anchor-handle" data-link-idx="12" data-end="B"></circle><path d="M 405.00000381469727 650 C 405.00000381469727 540.2449114126129, 270.40000381469724 586.3550946909028, 270.40000381469724 476.6000061035156" stroke-dasharray="5 4"></path><circle cx="405.00000381469727" cy="650" r="6" class="anchor-handle" data-link-idx="13" data-end="A"></circle><circle cx="270.40000381469724" cy="476.6000061035156" r="6" class="anchor-handle" data-link-idx="13" data-end="B"></circle><path d="M 717.8000343322753 567.7000122070312 C 717.8000343322753 697.2112694213736, 472.2000038146973 520.4887427856577, 472.2000038146973 650" class="strong"></path><circle cx="717.8000343322753" cy="567.7000122070312" r="6" class="anchor-handle" data-link-idx="14" data-end="A"></circle><circle cx="472.2000038146973" cy="650" r="6" class="anchor-handle" data-link-idx="14" data-end="B"></circle><path d="M 680.0000343322754 408.8500061035156 C 491.74422800762545 408.8500061035156, 498.2558101393472 339.1293357340495, 310.00000381469727 339.1293357340495" class="strong"></path><circle cx="680.0000343322754" cy="408.8500061035156" r="6" class="anchor-handle" data-link-idx="15" data-end="A"></circle><circle cx="310.00000381469727" cy="339.1293357340495" r="6" class="anchor-handle" data-link-idx="15" data-end="B"></circle><path d="M 852.2000343322754 567.7000122070312 C 852.2000343322754 679.393931609431, 680.0000343322754 598.3060805976003, 680.0000343322754 710" stroke-dasharray="5 4"></path><circle cx="852.2000343322754" cy="567.7000122070312" r="6" class="anchor-handle" data-link-idx="16" data-end="A"></circle><circle cx="680.0000343322754" cy="710" r="6" class="anchor-handle" data-link-idx="16" data-end="B"></circle><path d="M 1029.9999732971191 365.2000045776367 C 956.6765364856718 365.2000045776367, 963.3234711437227 408.8500061035156, 890.0000343322754 408.8500061035156" class="strong"></path><circle cx="1029.9999732971191" cy="365.2000045776367" r="6" class="anchor-handle" data-link-idx="17" data-end="A"></circle><circle cx="890.0000343322754" cy="408.8500061035156" r="6" class="anchor-handle" data-link-idx="17" data-end="B"></circle><path d="M 1134.9999732971191 460.40000915527344 C 1134.9999732971191 525.1633454434301, 1249.9999732971191 455.23666371184333, 1249.9999732971191 520" stroke-dasharray="5 4"></path><circle cx="1134.9999732971191" cy="460.40000915527344" r="6" class="anchor-handle" data-link-idx="18" data-end="A"></circle><circle cx="1249.9999732971191" cy="520" r="6" class="anchor-handle" data-link-idx="18" data-end="B"></circle><path d="M 380.00000381469727 207.4000015258789 C 325.5629794821127 207.4000015258789, 364.4370281472818 290.78800109863283, 310.00000381469727 290.78800109863283" class="strong"></path><circle cx="380.00000381469727" cy="207.4000015258789" r="6" class="anchor-handle" data-link-idx="19" data-end="A"></circle><circle cx="310.00000381469727" cy="290.78800109863283" r="6" class="anchor-handle" data-link-idx="19" data-end="B"></circle><path d="M 1599.9999732971191 892.3499984741211 C 907.3595439955845 892.3499984741211, 1002.6404331162319 387.4706703694661, 310.00000381469727 387.4706703694661" class="strong"></path><circle cx="1599.9999732971191" cy="892.3499984741211" r="6" class="anchor-handle" data-link-idx="20" data-end="A"></circle><circle cx="310.00000381469727" cy="387.4706703694661" r="6" class="anchor-handle" data-link-idx="20" data-end="B"></circle><path d="M 1442.1999732971192 1470 C 1442.1999732971192 1207.1493138781398, 1704.9999732971191 1277.5506830701024, 1704.9999732971191 1014.6999969482422" class="strong"></path><circle cx="1442.1999732971192" cy="1470" r="6" class="anchor-handle" data-link-idx="21" data-end="A"></circle><circle cx="1704.9999732971191" cy="1014.6999969482422" r="6" class="anchor-handle" data-link-idx="21" data-end="B"></circle><path d="M 1569.9999732971191 325.8499984741211 C 1802.106750371507 325.8499984741211, 1704.9999732971191 537.8932229256122, 1704.9999732971191 770" class="strong"></path><circle cx="1569.9999732971191" cy="325.8499984741211" r="6" class="anchor-handle" data-link-idx="22" data-end="A"></circle><circle cx="1704.9999732971191" cy="770" r="6" class="anchor-handle" data-link-idx="22" data-end="B"></circle><path d="M 1542.1999732971192 774.1999969482422 C 1542.1999732971192 1141.3106765282655, 1307.799973297119 1102.8893204199767, 1307.799973297119 1470" class="strong"></path><circle cx="1542.1999732971192" cy="774.1999969482422" r="6" class="anchor-handle" data-link-idx="23" data-end="A"></circle><circle cx="1307.799973297119" cy="1470" r="6" class="anchor-handle" data-link-idx="23" data-end="B"></circle><path d="M 1474.9999732971191 620 C 1474.9999732971191 515.7300483464168, 1464.9999732971191 515.9699486018254, 1464.9999732971191 411.6999969482422" class="strong"></path><circle cx="1474.9999732971191" cy="620" r="6" class="anchor-handle" data-link-idx="24" data-end="A"></circle><circle cx="1464.9999732971191" cy="411.6999969482422" r="6" class="anchor-handle" data-link-idx="24" data-end="B"></circle><path d="M 1244.9999732971191 1070 C 1244.9999732971191 901.1794726600021, 1407.799973297119 943.02052428824, 1407.799973297119 774.1999969482422" class="strong"></path><circle cx="1244.9999732971191" cy="1070" r="6" class="anchor-handle" data-link-idx="25" data-end="A"></circle><circle cx="1407.799973297119" cy="774.1999969482422" r="6" class="anchor-handle" data-link-idx="25" data-end="B"></circle><path d="M 1244.9999732971191 1224.1999969482422 C 1244.9999732971191 1301.5460382199378, 1104.9999732971191 1212.6539587283044, 1104.9999732971191 1290" stroke-dasharray="5 4"></path><circle cx="1244.9999732971191" cy="1224.1999969482422" r="6" class="anchor-handle" data-link-idx="26" data-end="A"></circle><circle cx="1104.9999732971191" cy="1290" r="6" class="anchor-handle" data-link-idx="26" data-end="B"></circle><path d="M 120 871.6000061035156 C 120 930.8000030517578, 120 930.8000030517578, 120 990" stroke-dasharray="5 4"></path><circle cx="120" cy="871.6000061035156" r="6" class="anchor-handle" data-link-idx="27" data-end="A"></circle><circle cx="120" cy="990" r="6" class="anchor-handle" data-link-idx="27" data-end="B"></circle><path d="M 120 680 C 120 578.1867916349602, 129.60000381469726 578.4132144685555, 129.60000381469726 476.6000061035156" stroke-dasharray="5 4"></path><circle cx="120" cy="680" r="6" class="anchor-handle" data-link-idx="28" data-end="A"></circle><circle cx="129.60000381469726" cy="476.6000061035156" r="6" class="anchor-handle" data-link-idx="28" data-end="B"></circle><path d="M 760.0000343322754 104.25 C 470.6718916120725 104.25, 200.00000381469727 -39.32814272020289, 200.00000381469727 250" stroke-dasharray="5 4"></path><circle cx="760.0000343322754" cy="104.25" r="6" class="anchor-handle" data-link-idx="29" data-end="A"></circle><circle cx="200.00000381469727" cy="250" r="6" class="anchor-handle" data-link-idx="29" data-end="B"></circle></g>
+</svg>

@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="1480" height="1900" viewBox="0 0 1480 1900">
+<defs><style type="text/css"><![CDATA[
+
+
+      /* SVG export overrides */
+      .canvas { position: relative; }
+      .canvas .entity { position: absolute; }
+      html, body { background: transparent; margin: 0; padding: 0; }
+    
+]]></style></defs>
+<foreignObject x="0" y="0" width="1480" height="1900"><div xmlns="http://www.w3.org/1999/xhtml"><div xmlns="http://www.w3.org/1999/xhtml" class="canvas" style="height: 1900px; width: 1480px; margin: 0px; position: absolute; top: 0px; left: 0px; transform-origin: left top;">
+        
+
+        <!-- ── Couloirs (lanes) : décor, non draggable ────────────── -->
+        <div class="sat-lane" style="top:80px; left:170px; width:240px; height:1780px;"></div>
+        <div class="sat-lane auto" style="top:80px; left:420px; width:240px; height:1780px;"></div>
+        <div class="sat-lane alt" style="top:80px; left:670px; width:240px; height:1780px;"></div>
+        <div class="sat-lane eval" style="top:80px; left:920px; width:200px; height:1780px;"></div>
+        <div class="sat-lane adm" style="top:80px; left:1130px; width:200px; height:1780px;"></div>
+
+        <!-- ── Têtes de colonnes (acteurs) ────────────────────────── -->
+        <div class="entity sat-head" data-entity="h-time" style="top:20px; left:20px;  width:130px;">Phase / Période</div>
+        <div class="entity sat-head" data-entity="h-cand" style="top:20px; left:180px; width:220px;">Candidat</div>
+        <div class="entity sat-head auto" data-entity="h-syst" style="top:20px; left:430px; width:220px;">Système (auto)</div>
+        <div class="entity sat-head alt" data-entity="h-recr" style="top:20px; left:680px; width:220px;">Recruteur</div>
+        <div class="entity sat-head eval" data-entity="h-eval" style="top:20px; left:930px; width:180px;">Évaluateur</div>
+        <div class="entity sat-head adm" data-entity="h-adm" style="top:20px; left:1140px; width:180px;">Administrateur</div>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             T0 — CONFIGURATION DU PIPELINE
+             ═══════════════════════════════════════════════════════════════ -->
+        <div class="entity sat-phase" data-entity="p0" style="top:110px; left:20px; width:130px;">T0 — Setup<br /><small>asynchrone</small></div>
+
+        <div class="entity sat-task adm" data-entity="t0-adm" style="top:110px; left:1140px; width:180px;">
+          <div class="task-title">Définir <code>pipeline_template</code></div>
+          <span class="task-meta">manuel</span>
+          <div class="task-detail">Stages, critères, règles de notification, templates d'email.</div>
+        </div>
+        <div class="entity sat-task manual" data-entity="t0-recr" style="top:110px; left:680px; width:220px;">
+          <div class="task-title">Créer la campagne</div>
+          <span class="task-meta">manuel</span>
+          <div class="task-detail">Choisit un template, attache formulaires + sources, ouvre la campagne.</div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             T1 — CANDIDATURE
+             ═══════════════════════════════════════════════════════════════ -->
+        <div class="entity sat-phase" data-entity="p1" style="top:260px; left:20px; width:130px;">T1 — Candidature<br /><small>temps réel</small></div>
+
+        <div class="entity sat-task interactive" data-entity="t1-cand" style="top:260px; left:180px; width:220px;">
+          <div class="task-title">Soumettre la candidature</div>
+          <span class="task-meta">interactif</span>
+          <div class="task-detail">Renseigne identité, CV, lettre, double opt-in email.</div>
+        </div>
+        <div class="entity sat-task auto" data-entity="t1-syst" style="top:260px; left:430px; width:220px;">
+          <div class="task-title">Créer <code>applications</code> + <code>application_progress[0]</code></div>
+          <span class="task-meta">auto</span>
+          <div class="task-detail">Résout le template, instancie les stages, audit CREATE, mail d'accusé.</div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             T2 — TENTATIVE QUIZ
+             ═══════════════════════════════════════════════════════════════ -->
+        <div class="entity sat-phase" data-entity="p2" style="top:410px; left:20px; width:130px;">T2 — Quiz<br /><small>chronométré</small></div>
+
+        <div class="entity sat-task auto" data-entity="t2-open" style="top: 420px; left: 430px; width: 220px;">
+          <div class="task-title">Ouvrir round QUIZ</div>
+          <span class="task-meta">auto</span>
+          <div class="task-detail">Crée <code>application_quiz_attempt</code> + <code>quiz_token</code>, notifie le candidat.</div>
+        </div>
+        <div class="entity sat-task interactive" data-entity="t2-cand" style="top:410px; left:180px; width:220px;">
+          <div class="task-title">Passer le quiz</div>
+          <span class="task-meta">interactif</span>
+          <div class="task-detail">Réponses persistées via <code>candidate_answer</code> rattachées à la tentative.</div>
+        </div>
+        <div class="entity sat-task auto" data-entity="t2-score" style="top:540px; left:430px; width:220px;">
+          <div class="task-title">Calculer score + screening</div>
+          <span class="task-meta">auto</span>
+          <div class="task-detail">Agrège <code>score_percent</code>, applique <code>screening_mode</code>,
+            met à jour <code>aggregated_quiz_score</code>.</div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             T3 — PRÉSÉLECTION
+             ═══════════════════════════════════════════════════════════════ -->
+        <div class="entity sat-phase" data-entity="p3" style="top:680px; left:20px; width:130px;">T3 — Présélection<br /><small>différé</small></div>
+
+        <div class="entity sat-task manual" data-entity="t3-recr-read" style="top:680px; left:680px; width:220px;">
+          <div class="task-title">Consulter résultats QUIZ</div>
+          <span class="task-meta">manuel</span>
+          <div class="task-detail">Filtre, exporte, compare tentatives.</div>
+        </div>
+        <div class="entity sat-task manual" data-entity="t3-recr-dec" style="top:790px; left:680px; width:220px;">
+          <div class="task-title">Saisir décision PRESELECTION</div>
+          <span class="task-meta">manuel</span>
+          <div class="task-detail">Crée <code>decisions</code> sur <code>application_progress</code> courant,
+            justifie si requis.</div>
+        </div>
+        <div class="entity sat-task auto" data-entity="t3-syst" style="top:790px; left:430px; width:220px;">
+          <div class="task-title">Clôturer round + ouvrir suivant</div>
+          <span class="task-meta">auto</span>
+          <div class="task-detail">Valide <code>application_progress</code>, recalcule
+            <code>current_application_progress_id</code>, notifie.</div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             T4 — ENTRETIEN + ÉVALUATION
+             ═══════════════════════════════════════════════════════════════ -->
+        <div class="entity sat-phase" data-entity="p4" style="top:930px; left:20px; width:130px;">T4 — Entretien<br /><small>multi-acteurs</small></div>
+
+        <div class="entity sat-task manual" data-entity="t4-recr-plan" style="top:930px; left:680px; width:220px;">
+          <div class="task-title">Planifier l'entretien</div>
+          <span class="task-meta">manuel</span>
+          <div class="task-detail">Crée <code>interviews</code> rattaché au round, affecte
+            <code>interview_participant</code>.</div>
+        </div>
+        <div class="entity sat-task auto" data-entity="t4-syst-notif" style="top:930px; left:430px; width:220px;">
+          <div class="task-title">Notifier candidat + participants</div>
+          <span class="task-meta">auto</span>
+          <div class="task-detail">Mails <code>ON_INTERVIEW_PLANNED</code>, notifications in-app.</div>
+        </div>
+        <div class="entity sat-task interactive" data-entity="t4-cand-resp" style="top:1050px; left:180px; width:220px;">
+          <div class="task-title">Accepter / refuser / proposer alternative</div>
+          <span class="task-meta">interactif</span>
+          <div class="task-detail">Met à jour <code>candidate_interview.candidate_response_status</code>.</div>
+        </div>
+        <div class="entity sat-task eval" data-entity="t4-eval" style="top:1180px; left:930px; width:180px;">
+          <div class="task-title">Remplir grille d'évaluation</div>
+          <span class="task-meta">manuel</span>
+          <div class="task-detail">Crée <code>evaluations</code> + un <code>evaluation_item</code> par critère.</div>
+        </div>
+        <div class="entity sat-task auto" data-entity="t4-syst-aggr" style="top:1180px; left:430px; width:220px;">
+          <div class="task-title">Clôturer + agréger</div>
+          <span class="task-meta">auto</span>
+          <div class="task-detail">Calcule <code>aggregated_evaluation_score</code>, valide le round,
+            audit CLOSE + VALIDATE.</div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             T5 — DÉCISION FINALE
+             ═══════════════════════════════════════════════════════════════ -->
+        <div class="entity sat-phase" data-entity="p5" style="top:1340px; left:20px; width:130px;">T5 — Décision finale<br /><small>verrouillante</small></div>
+
+        <div class="entity sat-task manual" data-entity="t5-recr" style="top:1340px; left:680px; width:220px;">
+          <div class="task-title">Saisir décision DECISION</div>
+          <span class="task-meta">manuel</span>
+          <div class="task-detail">Type <code>RECRUTE</code> / <code>NON_RETENU</code>, justification finale.</div>
+        </div>
+        <div class="entity sat-task auto" data-entity="t5-syst" style="top:1340px; left:430px; width:220px;">
+          <div class="task-title">Envoyer email final + verrouiller</div>
+          <span class="task-meta">auto</span>
+          <div class="task-detail">Évalue règle <code>ON_FINAL_DECISION</code>, confirme envoi si
+            <code>requires_manual_confirmation</code>.</div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             T6 — ANNULATION / ROLLBACK (exceptionnel)
+             ═══════════════════════════════════════════════════════════════ -->
+        <div class="entity sat-phase" data-entity="p6" style="top:1490px; left:20px; width:130px;">T6 — Rollback<br /><small>exceptionnel</small></div>
+
+        <div class="entity sat-task manual" data-entity="t6-recr" style="top:1490px; left:680px; width:220px;">
+          <div class="task-title">Annuler / réouvrir une décision</div>
+          <span class="task-meta">manuel</span>
+          <div class="task-detail">Saisit <code>decision_mode = CANCEL</code> ou <code>ROLLBACK</code>
+            + <code>justification</code> + <code>cancels_decision_id</code>.</div>
+        </div>
+        <div class="entity sat-task auto" data-entity="t6-syst" style="top:1490px; left:430px; width:220px;">
+          <div class="task-title">Recalculer parcours + audit ROLLBACK</div>
+          <span class="task-meta">auto</span>
+          <div class="task-detail">Réouvre <code>application_progress</code>, recalcule
+            <code>current_application_progress_id</code>.</div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             T7 — AUDIT & SUPERVISION (transverse, asynchrone)
+             ═══════════════════════════════════════════════════════════════ -->
+        <div class="entity sat-phase" data-entity="p7" style="top:1660px; left:20px; width:130px;">T7 — Audit<br /><small>transverse</small></div>
+
+        <div class="entity sat-task auto" data-entity="t7-syst" style="top:1660px; left:430px; width:220px;">
+          <div class="task-title">Journaliser <code>audit_event</code></div>
+          <span class="task-meta">auto</span>
+          <div class="task-detail">CREATE / UPDATE / DECIDE / CANCEL / SUBMIT / CLOSE / VALIDATE
+            (asynchrone, non bloquant).</div>
+        </div>
+        <div class="entity sat-task adm" data-entity="t7-adm" style="top:1660px; left:1140px; width:180px;">
+          <div class="task-title">Consulter audit / superviser</div>
+          <span class="task-meta">manuel</span>
+          <div class="task-detail">Filtres par acteur, période, action ; export RGPD.</div>
+        </div>
+      </div></div></foreignObject>
+<g class="links-layer" fill="none"><path d="M 1139.9999732971191 153.64373397827148 C 1019.9998371500113 153.64373397827148, 1020.0001704793832 153.24373626708984, 900.0000343322754 153.24373626708984" stroke-dasharray="5 4"></path><circle cx="1139.9999732971191" cy="153.64373397827148" r="6" class="anchor-handle" data-link-idx="0" data-end="A"></circle><circle cx="900.0000343322754" cy="153.24373626708984" r="6" class="anchor-handle" data-link-idx="0" data-end="B"></circle><path d="M 680.0000343322754 153.24373626708984 C 511.5207506687451 153.24373626708984, 360.40000381469724 91.52070107768068, 360.40000381469724 259.99998474121094" stroke-dasharray="5 4"></path><circle cx="680.0000343322754" cy="153.24373626708984" r="6" class="anchor-handle" data-link-idx="1" data-end="A"></circle><circle cx="360.40000381469724" cy="259.99998474121094" r="6" class="anchor-handle" data-link-idx="1" data-end="B"></circle><path d="M 219.60000381469726 259.99998474121094 C 219.60000381469726 99.79998474121095, 540.0000038146973 99.79998474121095, 540.0000038146973 259.99998474121094" class="strong"></path><circle cx="219.60000381469726" cy="259.99998474121094" r="6" class="anchor-handle" data-link-idx="2" data-end="A"></circle><circle cx="540.0000038146973" cy="259.99998474121094" r="6" class="anchor-handle" data-link-idx="2" data-end="B"></circle><path d="M 540.0000038146973 362.46248626708984 C 540.0000038146973 407.92325848465845, 610.4000038146972 374.53924304122046, 610.4000038146972 420.00001525878906" class="strong"></path><circle cx="540.0000038146973" cy="362.46248626708984" r="6" class="anchor-handle" data-link-idx="3" data-end="A"></circle><circle cx="610.4000038146972" cy="420.00001525878906" r="6" class="anchor-handle" data-link-idx="3" data-end="B"></circle><path d="M 469.6000038146973 420.00001525878906 C 469.6000038146973 330.0609247586067, 290.00000381469727 320.0609247586067, 290.00000381469727 410.00001525878906" class="strong"></path><circle cx="469.6000038146973" cy="420.00001525878906" r="6" class="anchor-handle" data-link-idx="4" data-end="A"></circle><circle cx="290.00000381469727" cy="410.00001525878906" r="6" class="anchor-handle" data-link-idx="4" data-end="B"></circle><path d="M 290.00000381469727 510.66251373291016 C 290.00000381469727 584.5748659470703, 356.08765160053713 558.1192649841308, 430.00000381469727 558.1192649841308" class="strong"></path><circle cx="290.00000381469727" cy="510.66251373291016" r="6" class="anchor-handle" data-link-idx="5" data-end="A"></circle><circle cx="430.00000381469727" cy="558.1192649841308" r="6" class="anchor-handle" data-link-idx="5" data-end="B"></circle><path d="M 650.0000038146973 590.3312644958496 C 733.1271555286664 590.3312644958496, 790.0000343322754 596.8728635448199, 790.0000343322754 680.0000152587891" class="strong"></path><circle cx="650.0000038146973" cy="590.3312644958496" r="6" class="anchor-handle" data-link-idx="6" data-end="A"></circle><circle cx="790.0000343322754" cy="680.0000152587891" r="6" class="anchor-handle" data-link-idx="6" data-end="B"></circle><path d="M 790.0000343322754 752.3125152587891 C 790.0000343322754 792.3125152587891, 790.0000343322754 750.0000152587891, 790.0000343322754 790.0000152587891" class="strong"></path><circle cx="790.0000343322754" cy="752.3125152587891" r="6" class="anchor-handle" data-link-idx="7" data-end="A"></circle><circle cx="790.0000343322754" cy="790.0000152587891" r="6" class="anchor-handle" data-link-idx="7" data-end="B"></circle><path d="M 680.0000343322754 840.3312644958496 C 640.0000343322754 840.3312644958496, 690.0000038146973 810.6707655334473, 650.0000038146973 810.6707655334473" class="strong"></path><circle cx="680.0000343322754" cy="840.3312644958496" r="6" class="anchor-handle" data-link-idx="8" data-end="A"></circle><circle cx="650.0000038146973" cy="810.6707655334473" r="6" class="anchor-handle" data-link-idx="8" data-end="B"></circle><path d="M 650.0000038146973 884.1667665100098 C 690.0000038146973 884.1667665100098, 640.0000343322754 945.5677658081055, 680.0000343322754 945.5677658081055" class="strong"></path><circle cx="650.0000038146973" cy="884.1667665100098" r="6" class="anchor-handle" data-link-idx="9" data-end="A"></circle><circle cx="680.0000343322754" cy="945.5677658081055" r="6" class="anchor-handle" data-link-idx="9" data-end="B"></circle><path d="M 680.0000343322754 1000.9197677612304 C 640.0000343322754 1000.9197677612304, 690.0000038146973 973.243766784668, 650.0000038146973 973.243766784668" class="strong"></path><circle cx="680.0000343322754" cy="1000.9197677612304" r="6" class="anchor-handle" data-link-idx="10" data-end="A"></circle><circle cx="650.0000038146973" cy="973.243766784668" r="6" class="anchor-handle" data-link-idx="10" data-end="B"></circle><path d="M 430.00000381469727 973.243766784668 C 350.16968112992254 973.243766784668, 290.00000381469727 970.1696925740143, 290.00000381469727 1050.000015258789" class="strong"></path><circle cx="430.00000381469727" cy="973.243766784668" r="6" class="anchor-handle" data-link-idx="11" data-end="A"></circle><circle cx="290.00000381469727" cy="1050.000015258789" r="6" class="anchor-handle" data-link-idx="11" data-end="B"></circle><path d="M 400.00000381469727 1100.431266784668 C 669.2354889364909 1100.431266784668, 660.7645492104817 1195.5677658081054, 930.0000343322754 1195.5677658081054" class="strong"></path><circle cx="400.00000381469727" cy="1100.431266784668" r="6" class="anchor-handle" data-link-idx="12" data-end="A"></circle><circle cx="930.0000343322754" cy="1195.5677658081054" r="6" class="anchor-handle" data-link-idx="12" data-end="B"></circle><path d="M 930.0000343322754 1250.9197677612306 C 787.5325729741119 1250.9197677612306, 792.4674651728608 1198.119264984131, 650.0000038146973 1198.119264984131" class="strong"></path><circle cx="930.0000343322754" cy="1250.9197677612306" r="6" class="anchor-handle" data-link-idx="13" data-end="A"></circle><circle cx="650.0000038146973" cy="1198.119264984131" r="6" class="anchor-handle" data-link-idx="13" data-end="B"></circle><path d="M 650.0000038146973 1262.5432640075683 C 729.9993114043825 1262.5432640075683, 790.0000343322754 1260.0007076691038, 790.0000343322754 1340.000015258789" class="strong"></path><circle cx="650.0000038146973" cy="1262.5432640075683" r="6" class="anchor-handle" data-link-idx="14" data-end="A"></circle><circle cx="790.0000343322754" cy="1340.000015258789" r="6" class="anchor-handle" data-link-idx="14" data-end="B"></circle><path d="M 680.0000343322754 1355.5677658081054 C 640.0000343322754 1355.5677658081054, 690.0000038146973 1390.3312644958496, 650.0000038146973 1390.3312644958496" class="strong"></path><circle cx="680.0000343322754" cy="1355.5677658081054" r="6" class="anchor-handle" data-link-idx="15" data-end="A"></circle><circle cx="650.0000038146973" cy="1390.3312644958496" r="6" class="anchor-handle" data-link-idx="15" data-end="B"></circle><path d="M 540.0000038146973 1440.6625137329102 C 540.0000038146973 1568.0734672608605, 790.0000343322754 1362.5890617308387, 790.0000343322754 1490.000015258789" stroke-dasharray="5 4"></path><circle cx="540.0000038146973" cy="1440.6625137329102" r="6" class="anchor-handle" data-link-idx="16" data-end="A"></circle><circle cx="790.0000343322754" cy="1490.000015258789" r="6" class="anchor-handle" data-link-idx="16" data-end="B"></circle><path d="M 680.0000343322754 1540.3312644958496 C 640.0000343322754 1540.3312644958496, 690.0000038146973 1584.3307640075684, 650.0000038146973 1584.3307640075684" class="strong"></path><circle cx="680.0000343322754" cy="1540.3312644958496" r="6" class="anchor-handle" data-link-idx="17" data-end="A"></circle><circle cx="650.0000038146973" cy="1584.3307640075684" r="6" class="anchor-handle" data-link-idx="17" data-end="B"></circle><path d="M 650.0000038146973 1510.7067649841308 C 702.0995399110453 1510.7067649841308, 627.9004982359273 1410.9197677612306, 680.0000343322754 1410.9197677612306" stroke-dasharray="5 4"></path><circle cx="650.0000038146973" cy="1510.7067649841308" r="6" class="anchor-handle" data-link-idx="18" data-end="A"></circle><circle cx="680.0000343322754" cy="1410.9197677612306" r="6" class="anchor-handle" data-link-idx="18" data-end="B"></circle><path d="M 650.0000038146973 311.2312355041504 C 1333.5160188293457 311.2312355041504, 1333.5160188293457 1678.2632655334473, 650.0000038146973 1678.2632655334473" stroke-dasharray="5 4"></path><circle cx="650.0000038146973" cy="311.2312355041504" r="6" class="anchor-handle" data-link-idx="19" data-end="A"></circle><circle cx="650.0000038146973" cy="1678.2632655334473" r="6" class="anchor-handle" data-link-idx="19" data-end="B"></circle><path d="M 430.00000381469727 622.5432640075684 C -97.85999694824227 622.5432640075684, -97.85999694824227 1678.2632655334473, 430.00000381469727 1678.2632655334473" stroke-dasharray="5 4"></path><circle cx="430.00000381469727" cy="622.5432640075684" r="6" class="anchor-handle" data-link-idx="20" data-end="A"></circle><circle cx="430.00000381469727" cy="1678.2632655334473" r="6" class="anchor-handle" data-link-idx="20" data-end="B"></circle><path d="M 430.00000381469727 847.4187660217285 C 3.755087229410833 847.4187660217285, 3.755087229410833 1699.9085991923014, 430.00000381469727 1699.9085991923014" stroke-dasharray="5 4"></path><circle cx="430.00000381469727" cy="847.4187660217285" r="6" class="anchor-handle" data-link-idx="21" data-end="A"></circle><circle cx="430.00000381469727" cy="1699.9085991923014" r="6" class="anchor-handle" data-link-idx="21" data-end="B"></circle><path d="M 430.00000381469727 1230.3312644958496 C 184.38866963704425 1230.3312644958496, 184.38866963704425 1721.5539328511557, 430.00000381469727 1721.5539328511557" stroke-dasharray="5 4"></path><circle cx="430.00000381469727" cy="1230.3312644958496" r="6" class="anchor-handle" data-link-idx="22" data-end="A"></circle><circle cx="430.00000381469727" cy="1721.5539328511557" r="6" class="anchor-handle" data-link-idx="22" data-end="B"></circle><path d="M 430.00000381469727 1390.3312644958496 C 253.56600280761722 1390.3312644958496, 253.56600280761722 1743.1992665100097, 430.00000381469727 1743.1992665100097" stroke-dasharray="5 4"></path><circle cx="430.00000381469727" cy="1390.3312644958496" r="6" class="anchor-handle" data-link-idx="23" data-end="A"></circle><circle cx="430.00000381469727" cy="1743.1992665100097" r="6" class="anchor-handle" data-link-idx="23" data-end="B"></circle><path d="M 540.0000038146973 1605.0375137329102 C 540.0000038146973 1645.0375137329102, 540.0000038146973 1620.000015258789, 540.0000038146973 1660.000015258789" stroke-dasharray="5 4"></path><circle cx="540.0000038146973" cy="1605.0375137329102" r="6" class="anchor-handle" data-link-idx="24" data-end="A"></circle><circle cx="540.0000038146973" cy="1660.000015258789" r="6" class="anchor-handle" data-link-idx="24" data-end="B"></circle><path d="M 650.0000038146973 1743.1992665100097 C 895.8131503564741 1743.1992665100097, 894.1868267553423 1703.243766784668, 1139.9999732971191 1703.243766784668" stroke-dasharray="5 4"></path><circle cx="650.0000038146973" cy="1743.1992665100097" r="6" class="anchor-handle" data-link-idx="25" data-end="A"></circle><circle cx="1139.9999732971191" cy="1703.243766784668" r="6" class="anchor-handle" data-link-idx="25" data-end="B"></circle></g>
+</svg>

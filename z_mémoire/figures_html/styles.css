@@ -166,6 +166,54 @@ html, body {
   border-radius: 999px;
 }
 
+/* Mode "cible" : on garde le vert pour les nouvelles entités
+   (migration 420) mais on retire le badge NOUVEAU collé au coin. */
+body.target-view .entity.new::after { content: none; display: none; }
+
+/* Bandeau "Ancien diagramme" affiché sur les pages MCD/MLD/MPD
+   d'origine pour signaler qu'elles décrivent un état pré-migration. */
+.legacy-banner {
+  margin: 0 0 18px;
+  padding: 10px 14px;
+  background: var(--warn-soft);
+  border-left: 4px solid var(--warn);
+  border-radius: 6px;
+  font-size: 12.5px;
+  color: var(--primary-strong);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.legacy-banner .legacy-badge {
+  background: var(--warn);
+  color: white;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.legacy-banner a { color: var(--primary-strong); font-weight: 600; }
+
+/* Index : badges sur les cartes (ancien / cible). */
+.card { position: relative; }
+.card .card-badge {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: 700;
+}
+.card .card-badge.legacy { background: var(--warn); color: white; }
+.card .card-badge.target { background: var(--new); color: white; }
+.card.legacy { border-color: var(--warn); }
+.card.target { border-color: var(--new); }
+
 .entity-head {
   background: var(--primary);
   color: white;
@@ -248,6 +296,7 @@ html, body {
   width: 100%;
   height: 100%;
   pointer-events: none;
+  z-index: 50; /* au-dessus de .arch-layer / .uc-package pour rester visibles */
 }
 .canvas svg.links path,
 .canvas svg.links line {
@@ -270,7 +319,22 @@ html, body {
   fill: var(--primary-strong);
   background: white;
 }
-.canvas svg.links .anchor-handle {
+.canvas svg.links text.verb {
+  font-size: 9.5px;
+  font-style: italic;
+  fill: var(--ink);
+  font-weight: 500;
+}
+/* ── Mode MCD : identifiant souligné ────────────────────── */
+.mcd-mode .entity-body li.pk-line .name {
+  text-decoration: underline;
+  font-weight: 700;
+}
+.mcd-mode .entity-body li .key {
+  display: none;   /* pas de badge pk/fk en MCD */
+}
+.canvas svg.links .anchor-handle,
+.canvas svg.anchor-handles .anchor-handle {
   fill: var(--primary);
   fill-opacity: 0;
   stroke: var(--primary);
@@ -283,15 +347,17 @@ html, body {
 body.edit-mode .canvas svg.links {
   pointer-events: none;
 }
-body.edit-mode .canvas svg.links .anchor-handle {
-  fill-opacity: 0.85;
+body.edit-mode .canvas svg.links .anchor-handle,
+body.edit-mode .canvas svg.anchor-handles .anchor-handle {
+  fill-opacity: 0.9;
   stroke-opacity: 1;
   pointer-events: all;
 }
-body.edit-mode .canvas svg.links .anchor-handle:hover {
+body.edit-mode .canvas svg.links .anchor-handle:hover,
+body.edit-mode .canvas svg.anchor-handles .anchor-handle:hover {
   fill: var(--warn);
   stroke: var(--warn);
-  r: 8;
+  r: 9;
 }
 
 /* ── MCD relation diamond (associations) ────────────────────── */
@@ -589,7 +655,7 @@ body.edit-mode .canvas [data-entity].dragging {
 .canvas-viewport {
   position: relative;
   overflow: auto;
-  max-height: 80vh;
+  /*max-height: 80vh;*/
   border: 1px dashed transparent;
   border-radius: 8px;
 }
@@ -603,7 +669,8 @@ body.edit-mode .canvas [data-entity].dragging {
 }
 .figure:fullscreen .canvas-viewport,
 .figure:-webkit-full-screen .canvas-viewport {
-  max-height: calc(100vh - 60px);
+  /*max-height: calc(100vh - 60px);*/
+  height: 100%;
 }
 
 body.is-fullscreen .page-header,
@@ -788,3 +855,306 @@ body.is-fullscreen .figure-caption { display: none; }
 .entity.sat-task.eval .task-meta { background: var(--warn-soft); color: #92400e; }
 .entity.sat-task.adm         { border-color: var(--new); }
 .entity.sat-task.adm .task-meta  { background: var(--new-soft); color: #166534; }
+
+/* ═══════════════════════════════════════════════════════════════
+   MCD CLASSIQUE – style Merise sobre, noir & blanc
+   ═══════════════════════════════════════════════════════════════ */
+.mcd-classic {
+  --mcd-border: #333;
+  --mcd-head-bg: #1a1a1a;
+  --mcd-head-fg: #ffffff;
+  --mcd-ink: #111;
+  --mcd-muted: #555;
+  --mcd-line: #888;
+  --mcd-verb: #444;
+  --mcd-card: #222;
+}
+.mcd-classic .entity {
+  background: #fff;
+  border: 1.5px solid var(--mcd-border);
+  border-radius: 0;
+  box-shadow: none;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+.mcd-classic .entity-head {
+  background: var(--mcd-head-bg);
+  color: var(--mcd-head-fg);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  justify-content: center;
+  border-radius: 0;
+  letter-spacing: 0.05em;
+  padding: 5px 10px;
+}
+.mcd-classic .entity-head .tag { display: none; }
+.mcd-classic .entity-body { padding: 5px 10px 7px; }
+.mcd-classic .entity-body ul { list-style: none; margin: 0; padding: 0; }
+.mcd-classic .entity-body li {
+  display: flex; gap: 0; align-items: baseline;
+  padding: 1px 0; white-space: nowrap;
+  font-size: 11.5px; color: var(--mcd-ink);
+}
+/* identifiant souligné */
+.mcd-classic .entity-body li.pk-line .name {
+  text-decoration: underline;
+  font-weight: 700;
+}
+/* masquer les badges pk/fk colorés */
+.mcd-classic .entity-body li .key { display: none; }
+.mcd-classic .entity-body li .name { color: var(--mcd-ink); }
+.mcd-classic .entity-body li .type { color: var(--mcd-muted); font-size: 10px; }
+.mcd-classic .entity-divider { display: none; }
+
+/* Liens MCD */
+.mcd-classic .canvas svg.links path {
+  stroke: var(--mcd-line);
+  stroke-width: 1.1;
+}
+.mcd-classic .canvas svg.links path.strong {
+  stroke: var(--mcd-border);
+  stroke-width: 1.4;
+}
+.mcd-classic .canvas svg.links text.card {
+  fill: var(--mcd-card);
+  font-weight: 700;
+  font-size: 10px;
+  font-style: normal;
+}
+.mcd-classic .canvas svg.links text.verb {
+  fill: var(--mcd-verb);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 10px;
+}
+.canvas svg.links ellipse {
+  pointer-events: none;
+}
+.mcd-classic .canvas svg.links ellipse {
+  fill: #fff;
+  stroke: #555;
+  stroke-width: 1;
+}
+.mcd-classic .canvas svg.links text.verb + rect,
+.mcd-classic .canvas svg.links rect { fill: #fff; fill-opacity: 1; }
+
+/* En-tête de page */
+.mcd-classic .page-header {
+  border-bottom: 1px solid #ccc;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+}
+.mcd-classic .page-header h1 {
+  color: var(--mcd-ink);
+  font-size: 18px;
+  font-weight: 700;
+}
+.mcd-classic .page-header .subtitle { color: var(--mcd-muted); font-size: 12px; }
+.mcd-classic .legend { display: none; }
+.mcd-classic .figure-caption {
+  color: var(--mcd-muted);
+  font-size: 11px;
+  font-style: italic;
+  text-align: center;
+  margin-top: 10px;
+}
+/* FK marqueur MLD */
+.mcd-classic .entity-body li .fk-marker {
+  color: var(--mcd-muted);
+  font-weight: 700;
+  margin-right: 2px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   UML CLASSIQUE — look standard UML (classes, flèches)
+   ═══════════════════════════════════════════════════════════════ */
+.uml-classic .cls {
+  background: #fffef9;
+  border: 1.5px solid #333;
+  border-radius: 0;
+  box-shadow: none;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+.uml-classic .cls .cls-head {
+  background: #fffef9;
+  color: #111;
+  border-bottom: 1.5px solid #333;
+  font-weight: 700;
+  font-size: 11.5px;
+  padding: 4px 8px;
+  letter-spacing: 0.02em;
+}
+.uml-classic .cls .cls-head .stereo {
+  color: #555;
+  font-weight: 500;
+  font-size: 9px;
+}
+.uml-classic .cls .cls-attrs,
+.uml-classic .cls .cls-ops {
+  padding: 4px 8px;
+  background: #fffef9;
+}
+.uml-classic .cls .cls-attrs li,
+.uml-classic .cls .cls-ops li {
+  font-size: 10.5px;
+  color: #222;
+}
+.uml-classic .cls .cls-ops {
+  border-top: 1px solid #333;
+}
+.uml-classic .cls .cls-ops li {
+  color: #444;
+}
+/* Liens UML — fins et propres */
+.uml-classic .canvas svg.links path {
+  stroke: #333;
+  stroke-width: 1;
+}
+.uml-classic .canvas svg.links path.strong {
+  stroke: #333;
+  stroke-width: 1;
+}
+.uml-classic .canvas svg.links text.card {
+  fill: #333;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SAT CLASSIQUE — style sobre pour le schéma analytique
+   ═══════════════════════════════════════════════════════════════ */
+.mcd-classic .sat-lane {
+  background: #fafafa;
+  border: 1px dashed #ccc;
+}
+.mcd-classic .sat-lane.alt,
+.mcd-classic .sat-lane.auto,
+.mcd-classic .sat-lane.eval,
+.mcd-classic .sat-lane.adm {
+  background: #fafafa;
+  border-color: #ddd;
+}
+.mcd-classic .entity.sat-head {
+  background: var(--mcd-head-bg);
+  color: var(--mcd-head-fg);
+  box-shadow: none;
+  border-radius: 0;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+.mcd-classic .entity.sat-head.alt,
+.mcd-classic .entity.sat-head.auto,
+.mcd-classic .entity.sat-head.eval,
+.mcd-classic .entity.sat-head.adm {
+  background: var(--mcd-head-bg);
+  color: var(--mcd-head-fg);
+}
+.mcd-classic .entity.sat-phase {
+  background: #eee;
+  border: 1px solid #999;
+  color: var(--mcd-ink);
+  border-radius: 0;
+  font-size: 10px;
+  letter-spacing: 0.03em;
+}
+.mcd-classic .entity.sat-task {
+  background: #fff;
+  border: 1.5px solid #999;
+  border-left: 4px solid #999;
+  border-radius: 0;
+  font-size: 11px;
+  box-shadow: none;
+}
+.mcd-classic .entity.sat-task .task-title {
+  color: var(--mcd-ink);
+  font-size: 11px;
+}
+.mcd-classic .entity.sat-task .task-meta {
+  background: #eee;
+  color: var(--mcd-muted);
+  font-size: 8px;
+  font-weight: 600;
+}
+.mcd-classic .entity.sat-task .task-detail {
+  color: var(--mcd-muted);
+  font-size: 10px;
+}
+/* Indicateurs de mode subtils en bordure gauche */
+.mcd-classic .entity.sat-task.manual      { border-left-color: #555; }
+.mcd-classic .entity.sat-task.auto        { border-left-color: #888; }
+.mcd-classic .entity.sat-task.interactive { border-left-color: #666; }
+.mcd-classic .entity.sat-task.eval        { border-left-color: #777; }
+.mcd-classic .entity.sat-task.adm         { border-left-color: #555; }
+
+/* ═══════════════════════════════════════════════════════════════
+   MCT CLASSIQUE — style sobre Merise
+   ═══════════════════════════════════════════════════════════════ */
+.mcd-classic .entity.m-event {
+  border: 1.5px solid #555;
+  background: #fff;
+  border-radius: 0;
+  box-shadow: none;
+}
+.mcd-classic .entity.m-event .entity-head {
+  background: #555;
+  color: #fff;
+  font-size: 10px;
+  letter-spacing: 0.03em;
+  border-radius: 0;
+}
+.mcd-classic .entity.m-event .entity-body {
+  color: var(--mcd-ink);
+  font-size: 10px;
+}
+.mcd-classic .entity.m-sync {
+  border: 2px solid #333;
+  background: #eee;
+  color: var(--mcd-ink);
+  clip-path: none;
+  border-radius: 0;
+}
+.mcd-classic .entity.m-sync .sync-label {
+  color: var(--mcd-muted);
+  font-size: 9px;
+}
+.mcd-classic .entity.m-sync .sync-expr {
+  color: var(--mcd-ink);
+  font-family: "Consolas", monospace;
+  font-size: 11px;
+}
+.mcd-classic .entity.m-op {
+  border: 2px solid #222;
+  background: #fff;
+  box-shadow: none;
+  border-radius: 0;
+}
+.mcd-classic .entity.m-op .entity-head {
+  background: #222;
+  color: #fff;
+  font-size: 11px;
+  border-radius: 0;
+}
+.mcd-classic .entity.m-op .entity-body li::before {
+  color: #555;
+}
+.mcd-classic .entity.m-result {
+  border: 1.5px solid #444;
+  background: #f9f9f9;
+  border-radius: 0;
+}
+.mcd-classic .entity.m-result .entity-head {
+  background: #444;
+  color: #fff;
+  font-size: 10px;
+  border-radius: 0;
+}
+.mcd-classic .entity.m-result .entity-body {
+  color: var(--mcd-ink);
+  font-size: 10px;
+}
+.mcd-classic .entity.m-result.fail {
+  border-color: #666;
+  background: #f5f5f5;
+}
+.mcd-classic .entity.m-result.fail .entity-head { background: #666; }
+.mcd-classic .entity.m-result.fail .entity-body { color: var(--mcd-muted); }

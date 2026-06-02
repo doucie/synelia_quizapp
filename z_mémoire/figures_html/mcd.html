@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
@@ -7,6 +7,10 @@
 </head>
 <body>
   <div class="page">
+    <div class="legacy-banner">
+      <span class="legacy-badge">Ancien</span>
+      <span>Ce diagramme est conservé pour mémoire : il montre l'état diff (deltas migration 420). La version cible sans deltas est <a href="mcd_cible.html">mcd_cible.html</a>.</span>
+    </div>
     <header class="page-header">
       <div>
         <h1>Modèle Conceptuel de Données (MCD)</h1>
@@ -30,7 +34,7 @@
         <svg class="links" preserveAspectRatio="none"></svg>
 
         <!-- ── Identité & permissions ─────────────────────────── -->
-        <div class="entity" data-entity="user" style="top:30px; left:40px; width:200px;">
+        <div class="entity" data-entity="user" style="top:460px; left:0px; width:200px;">
           <div class="entity-head">UTILISATEUR</div>
           <div class="entity-body"><ul>
             <li><span class="key pk">id</span><span class="name">id_utilisateur</span></li>
@@ -41,7 +45,7 @@
           </ul></div>
         </div>
 
-        <div class="entity" data-entity="bgroup" style="top:30px; left:280px; width:200px;">
+        <div class="entity" data-entity="bgroup" style="top:60px; left:290px; width:200px;">
           <div class="entity-head">GROUPE_METIER</div>
           <div class="entity-body"><ul>
             <li><span class="key pk">id</span><span class="name">id_groupe</span></li>
@@ -50,7 +54,7 @@
           </ul></div>
         </div>
 
-        <div class="entity" data-entity="perm" style="top:220px; left:280px; width:200px;">
+        <div class="entity" data-entity="perm" style="top:130px; left:0px; width:200px;">
           <div class="entity-head">PERMISSION_ENTITE</div>
           <div class="entity-body"><ul>
             <li><span class="key pk">id</span><span class="name">id_permission</span></li>
@@ -61,7 +65,7 @@
         </div>
 
         <!-- ── Templates pipeline ─────────────────────────────── -->
-        <div class="entity" data-entity="ptpl" style="top:30px; left:560px; width:200px;">
+        <div class="entity" data-entity="ptpl" style="top:890px; left:2080px; width:200px;">
           <div class="entity-head">PIPELINE_TEMPLATE</div>
           <div class="entity-body"><ul>
             <li><span class="key pk">id</span><span class="name">id_template</span></li>
@@ -70,7 +74,7 @@
           </ul></div>
         </div>
 
-        <div class="entity" data-entity="pstage" style="top:30px; left:810px; width:230px;">
+        <div class="entity" data-entity="pstage" style="top:1080px; left:1820px; width:230px;">
           <div class="entity-head">ETAPE_PIPELINE</div>
           <div class="entity-body"><ul>
             <li><span class="key pk">id</span><span class="name">id_etape</span></li>
@@ -84,7 +88,7 @@
           </ul></div>
         </div>
 
-        <div class="entity new" data-entity="notifrule" style="top:30px; left:1080px; width:200px;">
+        <div class="entity new" data-entity="notifrule" style="top:1280px; left:1110px; width:200px;">
           <div class="entity-head">REGLE_NOTIFICATION</div>
           <div class="entity-body"><ul>
             <li><span class="key pk">id</span><span class="name">id_regle</span></li>
@@ -95,7 +99,7 @@
           </ul></div>
         </div>
 
-        <div class="entity new" data-entity="grille" style="top:230px; left:560px; width:210px;">
+        <div class="entity new" data-entity="grille" style="top:340px; left:2130px; width:210px;">
           <div class="entity-head">GRILLE_EVALUATION</div>
           <div class="entity-body"><ul>
             <li><span class="key pk">id</span><span class="name">id_grille</span></li>
@@ -106,7 +110,7 @@
           </ul></div>
         </div>
 
-        <div class="entity new" data-entity="crit" style="top:230px; left:810px; width:230px;">
+        <div class="entity new" data-entity="crit" style="top:360px; left:1710px; width:230px;">
           <div class="entity-head">CRITERE_EVALUATION_ETAPE</div>
           <div class="entity-body"><ul>
             <li><span class="key pk">id</span><span class="name">id_critere</span></li>
@@ -118,7 +122,7 @@
         </div>
 
         <!-- ── Catalogue formulaires ──────────────────────────── -->
-        <div class="entity pivot" data-entity="campaign" style="top:420px; left:40px; width:200px;">
+        <div class="entity pivot" data-entity="campaign" style="top:620px; left:1740px; width:200px;">
           <div class="entity-head">CAMPAGNE <span class="tag">pivot</span></div>
           <div class="entity-body"><ul>
             <li><span class="key pk">id</span><span class="name">id_campagne</span></li>
@@ -128,7 +132,7 @@
           </ul></div>
         </div>
 
-        <div class="entity" data-entity="form" style="top:420px; left:280px; width:200px;">
+        <div class="entity" data-entity="form" style="top:550px; left:1290px; width:200px;">
           <div class="entity-head">FORMULAIRE</div>
           <div class="entity-body"><ul>
             <li><span class="key pk">id</span><span class="name">id_formulaire</span></li>
@@ -137,7 +141,7 @@
           </ul></div>
         </div>
 
-        <div class="entity" data-entity="formv" style="top:420px; left:520px; width:200px;">
+        <div class="entity" data-entity="formv" style="top:610px; left:910px; width:200px;">
           <div class="entity-head">VERSION_FORMULAIRE</div>
           <div class="entity-body"><ul>
             <li><span class="key pk">id</span><span class="name">id_version</span></li>
@@ -147,7 +151,7 @@
           </ul></div>
         </div>
 
-        <div class="entity" data-entity="question" style="top:420px; left:760px; width:200px;">
+        <div class="entity" data-entity="question" style="top:450px; left:1070px; width:200px;">
           <div class="entity-head">QUESTION</div>
           <div class="entity-body"><ul>
             <li><span class="key pk">id</span><span class="name">id_question</span></li>
@@ -157,7 +161,7 @@
           </ul></div>
         </div>
 
-        <div class="entity" data-entity="answer" style="top:420px; left:1000px; width:200px;">
+        <div class="entity" data-entity="answer" style="top:480px; left:720px; width:200px;">
           <div class="entity-head">REPONSE_POSSIBLE</div>
           <div class="entity-body"><ul>
             <li><span class="key pk">id</span><span class="name">id_reponse</span></li>
@@ -167,7 +171,7 @@
           </ul></div>
         </div>
 
-        <div class="entity" data-entity="source" style="top:610px; left:40px; width:200px;">
+        <div class="entity" data-entity="source" style="top:960px; left:1640px; width:200px;">
           <div class="entity-head">SOURCE_TOKEN</div>
           <div class="entity-body"><ul>
             <li><span class="key pk">id</span><span class="name">id_source</span></li>
@@ -177,7 +181,7 @@
         </div>
 
         <!-- ── Candidature & avancement ──────────────────────── -->
-        <div class="entity pivot" data-entity="appli" style="top:720px; left:40px; width:210px;">
+        <div class="entity pivot" data-entity="appli" style="top:800px; left:1240px; width:210px;">
           <div class="entity-head">CANDIDATURE <span class="tag">pivot</span></div>
           <div class="entity-body"><ul>
             <li><span class="key pk">id</span><span class="name">id_candidature</span></li>
@@ -192,7 +196,7 @@
           </ul></div>
         </div>
 
-        <div class="entity pivot" data-entity="prog" style="top:720px; left:300px; width:220px;">
+        <div class="entity pivot" data-entity="prog" style="top:1020px; left:500px; width:220px;">
           <div class="entity-head">AVANCEMENT <span class="tag">round runtime</span></div>
           <div class="entity-body"><ul>
             <li><span class="key pk">id</span><span class="name">id_avancement</span></li>
@@ -206,7 +210,7 @@
           </ul></div>
         </div>
 
-        <div class="entity new" data-entity="quizatt" style="top:720px; left:570px; width:210px;">
+        <div class="entity new" data-entity="quizatt" style="top:680px; left:570px; width:210px;">
           <div class="entity-head">TENTATIVE_QUIZ</div>
           <div class="entity-body"><ul>
             <li><span class="key pk">id</span><span class="name">id_tentative</span></li>
@@ -218,7 +222,7 @@
           </ul></div>
         </div>
 
-        <div class="entity" data-entity="canswer" style="top:720px; left:830px; width:210px;">
+        <div class="entity" data-entity="canswer" style="top:260px; left:650px; width:210px;">
           <div class="entity-head">REPONSE_CANDIDAT</div>
           <div class="entity-body"><ul>
             <li><span class="key pk">id</span><span class="name">id_reponse_candidat</span></li>
@@ -230,7 +234,7 @@
           </ul></div>
         </div>
 
-        <div class="entity" data-entity="decision" style="top:720px; left:1090px; width:210px;">
+        <div class="entity" data-entity="decision" style="top:460px; left:410px; width:210px;">
           <div class="entity-head">DECISION</div>
           <div class="entity-body"><ul>
             <li><span class="key pk">id</span><span class="name">id_decision</span></li>
@@ -243,7 +247,7 @@
         </div>
 
         <!-- ── Entretien & évaluation ────────────────────────── -->
-        <div class="entity" data-entity="askcand" style="top:990px; left:40px; width:210px;">
+        <div class="entity" data-entity="askcand" style="top:1110px; left:1000px; width:210px;">
           <div class="entity-head">DEMANDE_CANDIDAT</div>
           <div class="entity-body"><ul>
             <li><span class="key pk">id</span><span class="name">id_demande</span></li>
@@ -253,7 +257,7 @@
           </ul></div>
         </div>
 
-        <div class="entity" data-entity="candint" style="top:990px; left:300px; width:210px;">
+        <div class="entity" data-entity="candint" style="top:140px; left:1740px; width:210px;">
           <div class="entity-head">ENTRETIEN_CANDIDAT</div>
           <div class="entity-body"><ul>
             <li><span class="key pk">id</span><span class="name">id_entretien_candidat</span></li>
@@ -264,7 +268,7 @@
           </ul></div>
         </div>
 
-        <div class="entity" data-entity="interview" style="top:990px; left:570px; width:210px;">
+        <div class="entity" data-entity="interview" style="top:80px; left:1370px; width:210px;">
           <div class="entity-head">ENTRETIEN</div>
           <div class="entity-body"><ul>
             <li><span class="key pk">id</span><span class="name">id_entretien</span></li>
@@ -276,7 +280,7 @@
           </ul></div>
         </div>
 
-        <div class="entity" data-entity="ipart" style="top:990px; left:830px; width:210px;">
+        <div class="entity" data-entity="ipart" style="top:50px; left:660px; width:210px;">
           <div class="entity-head">PARTICIPANT_ENTRETIEN</div>
           <div class="entity-body"><ul>
             <li><span class="key pk">id</span><span class="name">id_participant</span></li>
@@ -287,7 +291,7 @@
           </ul></div>
         </div>
 
-        <div class="entity" data-entity="eval" style="top:990px; left:1090px; width:210px;">
+        <div class="entity" data-entity="eval" style="top:190px; left:970px; width:210px;">
           <div class="entity-head">EVALUATION</div>
           <div class="entity-body"><ul>
             <li><span class="key pk">id</span><span class="name">id_evaluation</span></li>
@@ -299,7 +303,7 @@
           </ul></div>
         </div>
 
-        <div class="entity new" data-entity="evalitem" style="top:1180px; left:1090px; width:210px;">
+        <div class="entity new" data-entity="evalitem" style="top:300px; left:1240px; width:210px;">
           <div class="entity-head">ITEM_EVALUATION</div>
           <div class="entity-body"><ul>
             <li><span class="key pk">id</span><span class="name">id_item</span></li>
@@ -309,7 +313,7 @@
         </div>
 
         <!-- ── Comms & audit ─────────────────────────────────── -->
-        <div class="entity" data-entity="notif" style="top:1180px; left:40px; width:210px;">
+        <div class="entity" data-entity="notif" style="top:670px; left:0px; width:210px;">
           <div class="entity-head">NOTIFICATION</div>
           <div class="entity-body"><ul>
             <li><span class="key pk">id</span><span class="name">id_notification</span></li>
@@ -318,7 +322,7 @@
           </ul></div>
         </div>
 
-        <div class="entity" data-entity="maillog" style="top:1180px; left:300px; width:220px;">
+        <div class="entity" data-entity="maillog" style="top:1300px; left:550px; width:220px;">
           <div class="entity-head">MAIL_LOG</div>
           <div class="entity-body"><ul>
             <li><span class="key pk">id</span><span class="name">id_mail</span></li>
@@ -329,7 +333,7 @@
           </ul></div>
         </div>
 
-        <div class="entity new" data-entity="audit" style="top:1180px; left:570px; width:220px;">
+        <div class="entity new" data-entity="audit" style="top:840px; left:190px; width:220px;">
           <div class="entity-head">EVENEMENT_AUDIT</div>
           <div class="entity-body"><ul>
             <li><span class="key pk">id</span><span class="name">id_evenement</span></li>

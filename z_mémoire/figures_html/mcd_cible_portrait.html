@@ -1,0 +1,492 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>MCD cible (post-420) — SyneliaQuizApp — portrait</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="target-view mcd-mode">
+  <div class="page">
+    <header class="page-header">
+      <div>
+        <h1>MCD cible — Modèle Conceptuel de Données (post-420)</h1>
+        <p class="subtitle">
+          État cible après application de l'évolution
+          <code>420-evolution-pipeline-multi-occurrences</code>.
+          Identifiants soulignés, un attribut par ligne, verbes d'association.
+        </p>
+      </div>
+      <div class="legend">
+        <span class="chip pivot"><span class="dot"></span>Pivot métier</span>
+        <span class="chip new"><span class="dot"></span>Nouvelle entité (post-420)</span>
+        <span class="chip"><span class="dot"></span>Entité existante</span>
+      </div>
+    </header>
+
+    <div class="figure">
+      <div class="canvas" style="width:1620px; height:2800px; margin: 0 auto;">
+        <svg class="links" preserveAspectRatio="none"></svg>
+
+        <!-- ════════════ IDENTITÉ & PERMISSIONS ════════════ -->
+        <div class="entity" data-entity="user" style="top:50px; left:840px; width:200px;">
+          <div class="entity-head">UTILISATEUR</div>
+          <div class="entity-body"><ul>
+            <li class="pk-line"><span class="key pk">id</span><span class="name">id</span></li>
+            <li><span class="name">nom</span></li>
+            <li><span class="name">prenom</span></li>
+            <li><span class="name">email</span></li>
+            <li><span class="name">username</span></li>
+            <li><span class="name">role_systeme</span></li>
+            <li><span class="name">est_actif</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="bgroup" style="top:230px; left:1330px; width:200px;">
+          <div class="entity-head">GROUPE_METIER</div>
+          <div class="entity-body"><ul>
+            <li class="pk-line"><span class="key pk">id</span><span class="name">id</span></li>
+            <li><span class="name">libelle</span></li>
+            <li><span class="name">description</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="perm" style="top:10px; left:1280px; width:200px;">
+          <div class="entity-head">PERMISSION_ENTITE</div>
+          <div class="entity-body"><ul>
+            <li class="pk-line"><span class="key pk">id</span><span class="name">id</span></li>
+            <li><span class="name">type_entite</span></li>
+            <li><span class="name">id_entite</span></li>
+            <li><span class="name">cle_permission</span></li>
+          </ul></div>
+        </div>
+
+        <!-- ════════════ TEMPLATES PIPELINE ════════════ -->
+        <div class="entity" data-entity="ptpl" style="top:1950px; left:80px; width:200px;">
+          <div class="entity-head">PIPELINE_TEMPLATE</div>
+          <div class="entity-body"><ul>
+            <li class="pk-line"><span class="key pk">id</span><span class="name">id</span></li>
+            <li><span class="name">libelle</span></li>
+            <li><span class="name">est_defaut</span></li>
+            <li><span class="name">actif</span></li>
+            <li><span class="name">verrou</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="pstage" style="top:1400px; left:100px; width:220px;">
+          <div class="entity-head">ETAPE_PIPELINE</div>
+          <div class="entity-body"><ul>
+            <li class="pk-line"><span class="key pk">id</span><span class="name">id</span></li>
+            <li><span class="name">stage_type</span></li>
+            <li><span class="name">stage_order</span></li>
+            <li><span class="name">is_required</span></li>
+            <li><span class="name">is_eliminatory</span></li>
+            <li><span class="name">config_json</span></li>
+            <li><span class="name">screening_mode</span></li>
+            <li><span class="name">passing_score</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity new" data-entity="notifrule" style="top:1080px; left:20px; width:220px;">
+          <div class="entity-head">REGLE_NOTIFICATION</div>
+          <div class="entity-body"><ul>
+            <li class="pk-line"><span class="key pk">id</span><span class="name">id</span></li>
+            <li><span class="name">trigger_code</span></li>
+            <li><span class="name">outcome_code</span></li>
+            <li><span class="name">is_required</span></li>
+            <li><span class="name">is_automatic</span></li>
+            <li><span class="name">requires_manual_confirmation</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity new" data-entity="grille" style="top:1950px; left:1080px; width:210px;">
+          <div class="entity-head">GRILLE_EVALUATION</div>
+          <div class="entity-body"><ul>
+            <li class="pk-line"><span class="key pk">id</span><span class="name">id</span></li>
+            <li><span class="name">libelle</span></li>
+            <li><span class="name">version_courante</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity new" data-entity="crit" style="top:1680px; left:1080px; width:230px;">
+          <div class="entity-head">CRITERE_EVALUATION_ETAPE</div>
+          <div class="entity-body"><ul>
+            <li class="pk-line"><span class="key pk">id</span><span class="name">id</span></li>
+            <li><span class="name">ordre</span></li>
+            <li><span class="name">libelle</span></li>
+            <li><span class="name">criterion_type</span></li>
+            <li><span class="name">max_score</span></li>
+            <li><span class="name">weight</span></li>
+            <li><span class="name">is_required</span></li>
+            <li><span class="name">config_json</span></li>
+          </ul></div>
+        </div>
+
+        <!-- ════════════ CAMPAGNE & FORMULAIRES ════════════ -->
+        <div class="entity pivot" data-entity="campaign" style="top:1900px; left:760px; width:200px;">
+          <div class="entity-head">CAMPAGNE</div>
+          <div class="entity-body"><ul>
+            <li class="pk-line"><span class="key pk">id</span><span class="name">id</span></li>
+            <li><span class="name">titre</span></li>
+            <li><span class="name">description</span></li>
+            <li><span class="name">statut</span></li>
+            <li><span class="name">date_debut</span></li>
+            <li><span class="name">date_fin</span></li>
+            <li><span class="name">max_apply</span></li>
+            <li><span class="name">is_timed</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="form" style="top:1340px; left:780px; width:200px;">
+          <div class="entity-head">FORMULAIRE</div>
+          <div class="entity-body"><ul>
+            <li class="pk-line"><span class="key pk">id</span><span class="name">id</span></li>
+            <li><span class="name">nom</span></li>
+            <li><span class="name">description</span></li>
+            <li><span class="name">est_actif</span></li>
+            <li><span class="name">is_timed</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="formv" style="top:900px; left:450px; width:210px;">
+          <div class="entity-head">VERSION_FORMULAIRE</div>
+          <div class="entity-body"><ul>
+            <li class="pk-line"><span class="key pk">id</span><span class="name">id</span></li>
+            <li><span class="name">numero_version</span></li>
+            <li><span class="name">publiee</span></li>
+            <li><span class="name">verrouillee</span></li>
+            <li><span class="name">randomize_questions</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="question" style="top:1080px; left:1020px; width:200px;">
+          <div class="entity-head">QUESTION</div>
+          <div class="entity-body"><ul>
+            <li class="pk-line"><span class="key pk">id</span><span class="name">id</span></li>
+            <li><span class="name">enonce</span></li>
+            <li><span class="name">type</span></li>
+            <li><span class="name">timer_seconds</span></li>
+            <li><span class="name">score</span></li>
+            <li><span class="name">correction_manuelle</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="answer" style="top:860px; left:860px; width:200px;">
+          <div class="entity-head">REPONSE_POSSIBLE</div>
+          <div class="entity-body"><ul>
+            <li class="pk-line"><span class="key pk">id</span><span class="name">id</span></li>
+            <li><span class="name">texte</span></li>
+            <li><span class="name">est_correcte</span></li>
+            <li><span class="name">type</span></li>
+            <li><span class="name">ordre</span></li>
+            <li><span class="name">commentaire</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="source" style="top:1850px; left:360px; width:200px;">
+          <div class="entity-head">SOURCE_TOKEN</div>
+          <div class="entity-body"><ul>
+            <li class="pk-line"><span class="key pk">id</span><span class="name">id</span></li>
+            <li><span class="name">code</span></li>
+            <li><span class="name">libelle</span></li>
+            <li><span class="name">date_expiration</span></li>
+          </ul></div>
+        </div>
+
+        <!-- ════════════ CANDIDATURE & AVANCEMENT ════════════ -->
+        <div class="entity pivot" data-entity="appli" style="top:1580px; left:450px; width:220px;">
+          <div class="entity-head">CANDIDATURE</div>
+          <div class="entity-body"><ul>
+            <li class="pk-line"><span class="key pk">id</span><span class="name">id</span></li>
+            <li><span class="name">nom</span></li>
+            <li><span class="name">prenom</span></li>
+            <li><span class="name">email</span></li>
+            <li><span class="name">telephone</span></li>
+            <li><span class="name">cv_path</span></li>
+            <li><span class="name">lettre_motivation</span></li>
+            <li><span class="name">date_naissance</span></li>
+            <li><span class="name">email_verified</span></li>
+            <li><span class="name">abandonnee</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity pivot" data-entity="prog" style="top:440px; left:100px; width:230px;">
+          <div class="entity-head">AVANCEMENT</div>
+          <div class="entity-body"><ul>
+            <li class="pk-line"><span class="key pk">id</span><span class="name">id</span></li>
+            <li><span class="name">progress_status</span></li>
+            <li><span class="name">started_at</span></li>
+            <li><span class="name">completed_at</span></li>
+            <li><span class="name">score</span></li>
+            <li><span class="name">notes</span></li>
+            <li><span class="name">validated_at</span></li>
+            <li><span class="name">validation_comment</span></li>
+            <li><span class="name">skipped_at</span></li>
+            <li><span class="name">skip_reason</span></li>
+            <li><span class="name">reopened_at</span></li>
+            <li><span class="name">reopen_reason</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity new" data-entity="quizatt" style="top:620px; left:580px; width:210px;">
+          <div class="entity-head">TENTATIVE_QUIZ</div>
+          <div class="entity-body"><ul>
+            <li class="pk-line"><span class="key pk">id</span><span class="name">id</span></li>
+            <li><span class="name">quiz_token</span></li>
+            <li><span class="name">quiz_status</span></li>
+            <li><span class="name">screening_mode</span></li>
+            <li><span class="name">score</span></li>
+            <li><span class="name">score_percent</span></li>
+            <li><span class="name">time_elapsed</span></li>
+            <li><span class="name">started_at</span></li>
+            <li><span class="name">completed_at</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="canswer" style="top:620px; left:1020px; width:210px;">
+          <div class="entity-head">REPONSE_CANDIDAT</div>
+          <div class="entity-body"><ul>
+            <li class="pk-line"><span class="key pk">id</span><span class="name">id</span></li>
+            <li><span class="name">is_selected</span></li>
+            <li><span class="name">free_text_response</span></li>
+            <li><span class="name">manual_is_correct</span></li>
+            <li><span class="name">manual_correction_score</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="decision" style="top:310px; left:850px; width:210px;">
+          <div class="entity-head">DECISION</div>
+          <div class="entity-body"><ul>
+            <li class="pk-line"><span class="key pk">id</span><span class="name">id</span></li>
+            <li><span class="name">decision_type</span></li>
+            <li><span class="name">justification</span></li>
+            <li><span class="name">decision_mode</span></li>
+            <li><span class="name">cancels_decision_id</span></li>
+          </ul></div>
+        </div>
+
+        <!-- ════════════ ENTRETIEN & ÉVALUATION ════════════ -->
+        <div class="entity" data-entity="askcand" style="top:1120px; left:550px; width:220px;">
+          <div class="entity-head">DEMANDE_CANDIDAT</div>
+          <div class="entity-body"><ul>
+            <li class="pk-line"><span class="key pk">id</span><span class="name">id</span></li>
+            <li><span class="name">request_type</span></li>
+            <li><span class="name">status</span></li>
+            <li><span class="name">new_first_name</span></li>
+            <li><span class="name">new_last_name</span></li>
+            <li><span class="name">new_email</span></li>
+            <li><span class="name">new_phone</span></li>
+            <li><span class="name">decision_reason</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="candint" style="top:1550px; left:1370px; width:230px;">
+          <div class="entity-head">ENTRETIEN_CANDIDAT</div>
+          <div class="entity-body"><ul>
+            <li class="pk-line"><span class="key pk">id</span><span class="name">id</span></li>
+            <li><span class="name">response_status</span></li>
+            <li><span class="name">responded_at</span></li>
+            <li><span class="name">decline_reason</span></li>
+            <li><span class="name">alternative_date</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="interview" style="top:1060px; left:1360px; width:230px;">
+          <div class="entity-head">ENTRETIEN</div>
+          <div class="entity-body"><ul>
+            <li class="pk-line"><span class="key pk">id</span><span class="name">id</span></li>
+            <li><span class="name">interview_date</span></li>
+            <li><span class="name">interview_type</span></li>
+            <li><span class="name">interview_location</span></li>
+            <li><span class="name">interview_status</span></li>
+            <li><span class="name">meet_link</span></li>
+            <li><span class="name">evaluation_room_code</span></li>
+            <li><span class="name">interview_note</span></li>
+            <li><span class="name">started_at</span></li>
+            <li><span class="name">ended_at</span></li>
+            <li><span class="name">closed_at</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="ipart" style="top:340px; left:1270px; width:230px;">
+          <div class="entity-head">PARTICIPANT_ENTRETIEN</div>
+          <div class="entity-body"><ul>
+            <li class="pk-line"><span class="key pk">id</span><span class="name">id</span></li>
+            <li><span class="name">can_edit</span></li>
+            <li><span class="name">can_delete</span></li>
+            <li><span class="name">can_evaluate</span></li>
+            <li><span class="name">evaluation_status</span></li>
+            <li><span class="name">submitted_at</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="eval" style="top:620px; left:1400px; width:210px;">
+          <div class="entity-head">EVALUATION</div>
+          <div class="entity-body"><ul>
+            <li class="pk-line"><span class="key pk">id</span><span class="name">id</span></li>
+            <li><span class="name">evaluation_status</span></li>
+            <li><span class="name">submitted_at</span></li>
+            <li><span class="name">validated_at</span></li>
+            <li><span class="name">global_score</span></li>
+            <li><span class="name">global_comment</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity new" data-entity="evalitem" style="top:1380px; left:1090px; width:210px;">
+          <div class="entity-head">ITEM_EVALUATION</div>
+          <div class="entity-body"><ul>
+            <li class="pk-line"><span class="key pk">id</span><span class="name">id</span></li>
+            <li><span class="name">score_value</span></li>
+            <li><span class="name">text_value</span></li>
+            <li><span class="name">snapshot_weight</span></li>
+            <li><span class="name">snapshot_max_score</span></li>
+          </ul></div>
+        </div>
+
+        <!-- ════════════ NOTIFICATIONS & AUDIT ════════════ -->
+        <div class="entity" data-entity="notif" style="top:70px; left:330px; width:210px;">
+          <div class="entity-head">NOTIFICATION</div>
+          <div class="entity-body"><ul>
+            <li class="pk-line"><span class="key pk">id</span><span class="name">id</span></li>
+            <li><span class="name">type</span></li>
+            <li><span class="name">lien</span></li>
+            <li><span class="name">is_read</span></li>
+            <li><span class="name">entity_type</span></li>
+            <li><span class="name">entity_id</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="maillog" style="top:800px; left:0px; width:220px;">
+          <div class="entity-head">MAIL_LOG</div>
+          <div class="entity-body"><ul>
+            <li class="pk-line"><span class="key pk">id</span><span class="name">id</span></li>
+            <li><span class="name">destinataire</span></li>
+            <li><span class="name">sujet</span></li>
+            <li><span class="name">statut</span></li>
+            <li><span class="name">event_code</span></li>
+            <li><span class="name">requires_confirmation</span></li>
+            <li><span class="name">confirmed_at</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity new" data-entity="audit" style="top:200px; left:510px; width:230px;">
+          <div class="entity-head">EVENEMENT_AUDIT</div>
+          <div class="entity-body"><ul>
+            <li class="pk-line"><span class="key pk">id</span><span class="name">id</span></li>
+            <li><span class="name">entity_type</span></li>
+            <li><span class="name">entity_id</span></li>
+            <li><span class="name">action_type</span></li>
+            <li><span class="name">actor</span></li>
+            <li><span class="name">justification</span></li>
+            <li><span class="name">before_json</span></li>
+            <li><span class="name">after_json</span></li>
+          </ul></div>
+        </div>
+
+      </div><!-- .canvas -->
+
+      <p class="figure-caption">
+        Figure 1 — MCD cible (post-420) du module recrutement.
+        Identifiant souligné, un attribut par ligne, verbes d'association entre entités.
+      </p>
+    </div><!-- .figure -->
+  </div><!-- .page -->
+
+  <script>
+    window.LINKS = [
+      // ── Identité / permissions ──
+      { from:"user",  to:"bgroup", cardFrom:"0,n", cardTo:"0,n", verb:"appartient à" },
+      { from:"bgroup",to:"perm",   cardFrom:"1,1", cardTo:"0,n", verb:"possède" },
+      { from:"user",  to:"perm",   cardFrom:"0,n", cardTo:"0,n", verb:"dispose de" },
+
+      // ── Templates pipeline ──
+      { from:"ptpl",    to:"pstage",   cardFrom:"1,1", cardTo:"1,n", strong:true, verb:"définit" },
+      { from:"pstage",  to:"notifrule",cardFrom:"1,1", cardTo:"0,n", verb:"déclenche" },
+      { from:"pstage",  to:"crit",     cardFrom:"1,1", cardTo:"0,n", verb:"évalué par" },
+      { from:"crit",    to:"grille",   cardFrom:"0,n", cardTo:"0,1", dashed:true, verb:"réfère à" },
+
+      // ── Campagne / pipeline ──
+      { from:"campaign",to:"ptpl",   cardFrom:"0,n", cardTo:"1,1", verb:"utilise" },
+      { from:"campaign",to:"form",   cardFrom:"1,n", cardTo:"1,n", verb:"propose" },
+      { from:"campaign",to:"source", cardFrom:"1,1", cardTo:"0,n", verb:"génère" },
+
+      // ── Formulaire / question ──
+      { from:"form",    to:"formv",    cardFrom:"1,1", cardTo:"1,n", strong:true, verb:"versionné en" },
+      { from:"formv",   to:"question", cardFrom:"1,n", cardTo:"1,n", verb:"contient" },
+      { from:"question",to:"answer",   cardFrom:"1,1", cardTo:"0,n", strong:true, verb:"propose" },
+
+      // ── Candidature pipeline ──
+      { from:"campaign",to:"appli", cardFrom:"1,1", cardTo:"0,n", strong:true, verb:"reçoit" },
+      { from:"appli",   to:"prog",  cardFrom:"1,1", cardTo:"1,n", strong:true, verb:"progresse via" },
+      { from:"prog",    to:"pstage",cardFrom:"0,n", cardTo:"1,1", dashed:true,
+        fromAnchor:"top", toAnchor:"bottom", verb:"instancie" },
+      { from:"source",  to:"appli", cardFrom:"1,1", cardTo:"0,n", verb:"origine de" },
+
+      // ── Quiz runtime ──
+      { from:"prog",    to:"quizatt", cardFrom:"1,1", cardTo:"0,n", strong:true, verb:"génère" },
+      { from:"quizatt", to:"formv",   cardFrom:"0,n", cardTo:"1,1", dashed:true, verb:"basé sur" },
+      { from:"quizatt", to:"canswer", cardFrom:"1,1", cardTo:"0,n", strong:true, verb:"comprend" },
+      { from:"canswer", to:"question",cardFrom:"1,n", cardTo:"1,1", verb:"répond à" },
+      { from:"canswer", to:"answer",  cardFrom:"1,n", cardTo:"0,1", verb:"choisit" },
+
+      // ── Demandes & abandon ──
+      { from:"appli", to:"askcand", cardFrom:"1,1", cardTo:"0,n", verb:"émet" },
+
+      // ── Entretien ──
+      { from:"prog",     to:"interview",cardFrom:"1,1", cardTo:"0,n", strong:true,
+        fromAnchor:"bottom", toAnchor:"top", verb:"déclenche" },
+      { from:"interview",to:"candint",  cardFrom:"1,1", cardTo:"1,n", strong:true, verb:"convoque" },
+      { from:"candint",  to:"appli",    cardFrom:"0,n", cardTo:"1,1", dashed:true,
+        fromAnchor:"left", toAnchor:"bottom", verb:"concerne" },
+      { from:"interview",to:"ipart",    cardFrom:"1,1", cardTo:"1,n", verb:"inclut" },
+      { from:"user",     to:"ipart",    cardFrom:"1,1", cardTo:"0,n", dashed:true, verb:"participe comme" },
+
+      // ── Évaluation ──
+      { from:"interview",to:"eval",     cardFrom:"1,1", cardTo:"0,n", strong:true, verb:"reçoit" },
+      { from:"eval",     to:"ipart",    cardFrom:"1,1", cardTo:"0,n", verb:"émise par" },
+      { from:"eval",     to:"evalitem", cardFrom:"1,1", cardTo:"1,n", strong:true, verb:"contient" },
+      { from:"evalitem", to:"crit",     cardFrom:"1,n", cardTo:"1,1", dashed:true,
+        fromAnchor:"right", toAnchor:"right", verb:"évalue" },
+
+      // ── Décision ──
+      { from:"prog", to:"decision", cardFrom:"1,1", cardTo:"0,n", strong:true,
+        fromAnchor:"top", toAnchor:"left", verb:"conclut par" },
+      { from:"user", to:"decision", cardFrom:"1,1", cardTo:"0,n", dashed:true, verb:"prend" },
+
+      // ── Comms / audit ──
+      { from:"user",    to:"notif",    cardFrom:"1,1", cardTo:"0,n", dashed:true, verb:"reçoit" },
+      { from:"maillog", to:"notifrule",cardFrom:"0,n", cardTo:"0,1", dashed:true,
+        fromAnchor:"top", toAnchor:"bottom", verb:"lié à" },
+      { from:"maillog", to:"prog",     cardFrom:"0,n", cardTo:"0,1", dashed:true,
+        fromAnchor:"top", toAnchor:"bottom", verb:"trace" },
+      { from:"audit",   to:"prog",     cardFrom:"0,n", cardTo:"0,1", dashed:true,
+        fromAnchor:"top", toAnchor:"bottom", verb:"trace" },
+      { from:"audit",   to:"user",     cardFrom:"1,1", cardTo:"0,n", dashed:true,
+        fromAnchor:"left", toAnchor:"bottom", verb:"concerne" },
+    ];
+  </script>
+  <script>
+/* Anchors fixed from layout export */
+(function(){ var L = window.LINKS || []; var apply = function(i,e,s){ if(!L[i])return; if(e==="A") L[i].fromAnchor=s; else L[i].toAnchor=s; };
+  apply(5,"B","left");
+  apply(15,"A","bottom");
+  apply(15,"B","top");
+  apply(17,"B","left");
+  apply(23,"A","right");
+  apply(25,"B","right");
+  apply(31,"A","bottom");
+  apply(31,"B","top");
+  apply(32,"A","right");
+  apply(32,"B","left");
+  apply(33,"B","top");
+  apply(35,"A","bottom");
+  apply(35,"B","top");
+  apply(36,"A","top");
+  apply(37,"A","bottom");
+  apply(37,"B","right");
+  apply(38,"A","right");
+  apply(38,"B","bottom");
+})();
+</script>
+<script src="links.js"></script>
+</body>
+</html>

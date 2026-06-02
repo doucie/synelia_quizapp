@@ -1,0 +1,237 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Organisation Synelia — organigramme et activités</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .org-box {
+      position: absolute;
+      background: var(--surface);
+      border: 1.5px solid var(--primary);
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+      padding: 8px 10px;
+      font-size: 11px;
+      color: var(--ink);
+      text-align: center;
+      box-sizing: border-box;
+    }
+    .org-box .role {
+      font-weight: 700;
+      font-size: 11.5px;
+      color: var(--primary-strong);
+      display: block;
+      margin-bottom: 3px;
+      letter-spacing: 0.02em;
+    }
+    .org-box .name {
+      font-size: 10.5px;
+      color: var(--muted);
+    }
+    .org-box.founder  { background: #fef3c7; border-color: var(--warn); }
+    .org-box.founder  .role { color: #78350f; }
+    .org-box.dg       { background: #ede9fe; border-color: var(--pivot); }
+    .org-box.dg       .role { color: var(--pivot); }
+    .org-box.dir      { background: var(--surface); }
+    .org-box.unit     { background: #ecfdf5; border-color: var(--new); }
+    .org-box.unit     .role { color: #047857; }
+    .org-box.expertise{ background: #e0f2fe; border-color: var(--accent); font-size: 10.5px; padding: 6px 8px; }
+    .org-box.expertise .role { color: #0369a1; font-size: 10.5px; margin-bottom: 0; }
+
+    .section-label {
+      position: absolute;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: var(--muted);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .kpi-strip {
+      display: flex;
+      gap: 14px;
+      margin: 18px 0 8px;
+      flex-wrap: wrap;
+    }
+    .kpi {
+      flex: 1 1 160px;
+      background: var(--primary-soft);
+      border-left: 4px solid var(--primary);
+      padding: 8px 12px;
+      border-radius: 6px;
+    }
+    .kpi .v {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--primary-strong);
+      display: block;
+    }
+    .kpi .l {
+      font-size: 11px;
+      color: var(--ink);
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="page-header">
+      <div>
+        <h1>Organisation et activités de Synelia</h1>
+        <p class="subtitle">
+          Organigramme de la direction du groupe Synelia (ex-Smile Group
+          Afrique), articulé avec les domaines d'expertise et les unités
+          opérationnelles qui structurent l'activité du groupe en Afrique
+          de l'Ouest.
+        </p>
+      </div>
+      <div class="legend">
+        <span class="chip"><span class="dot" style="background:var(--warn)"></span>Fondation</span>
+        <span class="chip"><span class="dot" style="background:var(--pivot)"></span>Direction générale</span>
+        <span class="chip"><span class="dot" style="background:var(--primary)"></span>Directions opérationnelles</span>
+        <span class="chip accent"><span class="dot"></span>Expertises technologiques</span>
+        <span class="chip new"><span class="dot"></span>Unités d'activité</span>
+      </div>
+    </header>
+
+    <div class="kpi-strip">
+      <div class="kpi"><span class="v">+10 ans</span><span class="l">de présence en Afrique de l'Ouest</span></div>
+      <div class="kpi"><span class="v">+110</span><span class="l">profils technologiques (local et international)</span></div>
+      <div class="kpi"><span class="v">+103</span><span class="l">projets accomplis avec succès</span></div>
+      <div class="kpi"><span class="v">90</span><span class="l">clients actifs accompagnés</span></div>
+    </div>
+
+    <div class="figure">
+      <div class="canvas" style="width:1440px; height:1080px; margin: 0 auto;">
+        <svg class="links" preserveAspectRatio="none"></svg>
+
+        <!-- ── Direction (top) ─────────────────────────────────── -->
+        <div class="section-label" style="top: 10px; left: 30px;">Direction du groupe</div>
+
+        <div class="org-box founder" data-entity="pk" style="top:40px; left:560px; width:300px;">
+          <span class="role">Administrateur Général &amp; Fondateur</span>
+          <span class="name">Patrick KOUASSI</span>
+        </div>
+
+        <div class="org-box dg" data-entity="dg" style="top:150px; left:560px; width:300px;">
+          <span class="role">Directeur Général</span>
+          <span class="name">Jorge VILANOVA</span>
+        </div>
+
+        <!-- ── 4 directeurs (ligne) ────────────────────────────── -->
+        <div class="org-box dir" data-entity="sg" style="top:290px; left:60px; width:280px;">
+          <span class="role">Secrétaire Général &amp; COO</span>
+          <span class="name">Stéphane OUATTARA</span>
+        </div>
+        <div class="org-box dir" data-entity="dint" style="top:290px; left:380px; width:280px;">
+          <span class="role">Directeur de l'International</span>
+          <span class="name">Jules HOUANTONON</span>
+        </div>
+        <div class="org-box dir" data-entity="dt" style="top:290px; left:700px; width:280px;">
+          <span class="role">Directeur Technique</span>
+          <span class="name">Ulrich FOSSOU</span>
+        </div>
+        <div class="org-box dir" data-entity="dc" style="top:290px; left:1020px; width:280px;">
+          <span class="role">Directeur Commercial</span>
+          <span class="name">Sidik OUATTARA</span>
+        </div>
+
+        <!-- ── Expertises technologiques (sous Directeur Technique) ─ -->
+        <div class="section-label" style="top: 430px; left: 30px;">Six expertises technologiques (DT)</div>
+
+        <div class="org-box expertise" data-entity="exp1" style="top:470px; left:30px; width:200px;"><span class="role">Hosting &amp; Cloud</span></div>
+        <div class="org-box expertise" data-entity="exp2" style="top:470px; left:250px; width:200px;"><span class="role">API Management</span></div>
+        <div class="org-box expertise" data-entity="exp3" style="top:470px; left:470px; width:200px;"><span class="role">Big Data &amp; Machine Learning</span></div>
+        <div class="org-box expertise" data-entity="exp4" style="top:470px; left:690px; width:200px;"><span class="role">Cybersécurité</span></div>
+        <div class="org-box expertise" data-entity="exp5" style="top:470px; left:910px; width:200px;"><span class="role">Intelligence Artificielle</span></div>
+        <div class="org-box expertise" data-entity="exp6" style="top:470px; left:1130px; width:200px;"><span class="role">Automatisation de processus</span></div>
+
+        <!-- ── Pôles d'activité (entités/services portés par le groupe) ── -->
+        <div class="section-label" style="top: 600px; left: 30px;">Unités &amp; offres d'activité</div>
+
+        <div class="org-box unit" data-entity="u1" style="top:640px; left:60px; width:260px;">
+          <span class="role">Open Digital Academy</span>
+          <span class="name">Formation et insertion des talents tech africains</span>
+        </div>
+        <div class="org-box unit" data-entity="u2" style="top:640px; left:360px; width:260px;">
+          <span class="role">Distribution Mobile Money</span>
+          <span class="name">Solutions de distribution et de monétique</span>
+        </div>
+        <div class="org-box unit" data-entity="u3" style="top:640px; left:660px; width:260px;">
+          <span class="role">Solutions sectorielles</span>
+          <span class="name">Système de gestion des ressources animales, etc.</span>
+        </div>
+        <div class="org-box unit" data-entity="u4" style="top:640px; left:960px; width:280px;">
+          <span class="role">Contrôle qualité des recrutements</span>
+          <span class="name">Cadre dans lequel s'inscrit SyneliaQuizApp</span>
+        </div>
+
+        <!-- ── Implantations internationales (sous Dir International) ── -->
+        <div class="section-label" style="top: 770px; left: 30px;">Implantations internationales (Dir. International)</div>
+
+        <div class="org-box dir" data-entity="loc1" style="top:810px; left:120px; width:200px;">
+          <span class="role">Côte d'Ivoire</span>
+          <span class="name">Siège — Abidjan (depuis 2012)</span>
+        </div>
+        <div class="org-box dir" data-entity="loc2" style="top:810px; left:360px; width:200px;">
+          <span class="role">Burkina Faso</span>
+          <span class="name">Bureau régional</span>
+        </div>
+        <div class="org-box dir" data-entity="loc3" style="top:810px; left:600px; width:200px;">
+          <span class="role">Libéria</span>
+          <span class="name">Bureau régional</span>
+        </div>
+        <div class="org-box dir" data-entity="loc4" style="top:810px; left:840px; width:280px;">
+          <span class="role">Expansion régionale</span>
+          <span class="name">Autres pays d'Afrique de l'Ouest</span>
+        </div>
+
+        <!-- ── Bandeau bas : positionnement du projet SyneliaQuizApp ── -->
+        <div class="section-label" style="top: 920px; left: 30px;">Positionnement du projet SyneliaQuizApp</div>
+        <div class="org-box" data-entity="qa" style="top:960px; left:380px; width:680px;">
+          <span class="role">SyneliaQuizApp — plateforme interne de recrutement &amp; évaluation</span>
+          <span class="name">Outillage du pôle « Contrôle qualité des recrutements » et support à la fonction RH du groupe</span>
+        </div>
+      </div>
+
+      <p class="figure-caption">
+        Figure — Organigramme et activités du groupe Synelia. Source :
+        contenu du site institutionnel collecté dans
+        <code>z_mémoire/synelia/</code>. Le projet SyneliaQuizApp se
+        rattache opérationnellement à l'offre « Contrôle qualité des
+        recrutements » et bénéficie de l'expertise technologique du pôle
+        Direction Technique.
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // Version épurée : seul le squelette de gouvernance et la dépendance du
+    // projet SyneliaQuizApp sont tracés. Les grappes (expertises, unités,
+    // implantations) restent visuellement groupées par proximité et par les
+    // intitulés de section, sans lignes pour éviter le « plat de spaghettis ».
+    window.LINKS = [
+      // Squelette de gouvernance
+      { from: "pk",   to: "dg",   strong: true },
+      { from: "dg",   to: "sg",   strong: true },
+      { from: "dg",   to: "dint", strong: true },
+      { from: "dg",   to: "dt",   strong: true },
+      { from: "dg",   to: "dc",   strong: true },
+
+      // Positionnement du projet SyneliaQuizApp
+      { from: "u4", to: "qa", strong: true },
+      { from: "dt", to: "qa", dashed: true },
+    ];
+  </script>
+  <script>
+/* Anchors fixed from layout export */
+(function(){ var L = window.LINKS || []; var apply = function(i,e,s){ if(!L[i])return; if(e==="A") L[i].fromAnchor=s; else L[i].toAnchor=s; };
+  apply(1,"B","top");
+  apply(2,"A","bottom");
+  apply(2,"B","top");
+  apply(4,"B","top");
+  apply(5,"A","right");
+})();
+</script>
+<script src="links.js"></script>
+</body>
+</html>

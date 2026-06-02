@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="1480" height="1300" viewBox="0 0 1480 1300">
+<defs><style type="text/css"><![CDATA[
+
+
+      /* SVG export overrides */
+      .canvas { position: relative; }
+      .canvas .entity { position: absolute; }
+      html, body { background: transparent; margin: 0; padding: 0; }
+    
+]]></style></defs>
+<foreignObject x="0" y="0" width="1480" height="1300"><div xmlns="http://www.w3.org/1999/xhtml"><div xmlns="http://www.w3.org/1999/xhtml" class="canvas" style="height: 1300px; width: 1480px; margin: 0px; position: absolute; top: 0px; left: 0px; transform-origin: left top;">
+        
+
+        <!-- ── Acteurs ────────────────────────────────────────────── -->
+        <div class="uc-actor" data-entity="a-cand" style="top: 200px; left: 20px; width: 130px;">
+          <span class="stick"></span>Candidat
+        </div>
+        <div class="uc-actor warn" data-entity="a-recr" style="top: 200px; left: 1330px; width: 130px;">
+          <span class="stick"></span>Recruteur / Évaluateur
+        </div>
+        <div class="uc-actor sys" data-entity="a-adm" style="top: 850px; left: 20px; width: 130px;">
+          <span class="stick"></span>Administrateur
+        </div>
+        <div class="uc-actor new" data-entity="a-sadm" style="top: 850px; left: 1330px; width: 130px;">
+          <span class="stick"></span>Super administrateur
+        </div>
+
+        <!-- ── Frontière système ──────────────────────────────────── -->
+        <div class="uc-system" style="top:30px; left:185px; width:1130px; height:1230px;">
+          <span class="sys-title">SyneliaQuizApp</span>
+        </div>
+
+        <!-- ── Paquet 1 : Parcours candidat ───────────────────────── -->
+        <div class="uc-package" style="top:60px; left:215px; width:550px; height:430px;">
+          <span class="pkg-title">Parcours candidat</span>
+        </div>
+        <div class="uc-case pivot" data-entity="uc-postuler" style="top:95px;  left:245px; width:200px;">Postuler à une campagne</div>
+        <div class="uc-case pivot" data-entity="uc-verifier" style="top:165px; left:495px; width:200px;">Vérifier son email</div>
+        <div class="uc-case pivot" data-entity="uc-quiz" style="top:235px; left:245px; width:200px;">Passer le quiz technique</div>
+        <div class="uc-case pivot" data-entity="uc-suivre" style="top:305px; left:495px; width:200px;">Suivre sa candidature</div>
+        <div class="uc-case pivot" data-entity="uc-repondre" style="top:375px; left:245px; width:200px;">Répondre à une convocation</div>
+        <div class="uc-case pivot" data-entity="uc-demander" style="top:445px; left:495px; width:200px;">Demander correction / abandon</div>
+
+        <!-- ── Paquet 2 : Pilotage recrutement ────────────────────── -->
+        <div class="uc-package" style="top:60px; left:785px; width:510px; height:430px;">
+          <span class="pkg-title">Pilotage recrutement</span>
+        </div>
+        <div class="uc-case acc" data-entity="uc-camp" style="top:95px;  left:815px; width:200px;">Gérer une campagne</div>
+        <div class="uc-case acc" data-entity="uc-form" style="top:95px;  left:1065px; width:210px;">Composer un formulaire</div>
+        <div class="uc-case acc" data-entity="uc-publier" style="top:165px; left:815px; width:200px;">Publier une version</div>
+        <div class="uc-case acc" data-entity="uc-source" style="top:165px; left:1065px; width:210px;">Diffuser des sources</div>
+        <div class="uc-case acc" data-entity="uc-suivi" style="top:235px; left:815px; width:200px;">Suivre les candidatures</div>
+        <div class="uc-case acc" data-entity="uc-corriger" style="top:235px; left:1065px; width:210px;">Corriger un quiz</div>
+        <div class="uc-case acc" data-entity="uc-planif" style="top:305px; left:815px; width:200px;">Planifier un entretien</div>
+        <div class="uc-case acc" data-entity="uc-evaluer" style="top:305px; left:1065px; width:210px;">Évaluer un candidat</div>
+        <div class="uc-case acc" data-entity="uc-decider" style="top:375px; left:815px; width:200px;">Décider sur un dossier</div>
+        <div class="uc-case acc" data-entity="uc-annuler" style="top:375px; left:1065px; width:210px;">Annuler / rouvrir une décision</div>
+        <div class="uc-case acc" data-entity="uc-partager" style="top:445px; left:940px; width:220px;">Partager une campagne</div>
+
+        <!-- ── Paquet 3 : Administration métier ───────────────────── -->
+        <div class="uc-package" style="top:540px; left:215px; width:550px; height:350px;">
+          <span class="pkg-title">Administration métier</span>
+        </div>
+        <div class="uc-case warn" data-entity="uc-users" style="top:575px; left:245px; width:200px;">Gérer les utilisateurs</div>
+        <div class="uc-case warn" data-entity="uc-roles" style="top:575px; left:495px; width:210px;">Définir rôles &amp; groupes</div>
+        <div class="uc-case warn" data-entity="uc-perm" style="top:645px; left:245px; width:200px;">Attribuer des permissions</div>
+        <div class="uc-case warn" data-entity="uc-ref" style="top:645px; left:495px; width:210px;">Gérer départements / spécialités</div>
+        <div class="uc-case warn" data-entity="uc-questions" style="top:715px; left:245px; width:200px;">Maintenir la banque de questions</div>
+        <div class="uc-case warn" data-entity="uc-mail" style="top:715px; left:495px; width:210px;">Gérer les modèles d'email</div>
+        <div class="uc-case warn" data-entity="uc-import" style="top:785px; left:370px; width:240px;">Importer / exporter des données</div>
+
+        <!-- ── Paquet 4 : Gouvernance plateforme ─────────────────── -->
+        <div class="uc-package" style="top:540px; left:785px; width:510px; height:350px;">
+          <span class="pkg-title">Gouvernance plateforme</span>
+        </div>
+        <div class="uc-case new" data-entity="uc-smtp" style="top:575px; left:815px; width:200px;">Configurer le SMTP</div>
+        <div class="uc-case new" data-entity="uc-global" style="top:575px; left:1065px; width:210px;">Paramétrer la plateforme</div>
+        <div class="uc-case new" data-entity="uc-supadmin" style="top:645px; left:815px; width:200px;">Gérer les super droits</div>
+        <div class="uc-case new" data-entity="uc-audit" style="top:645px; left:1065px; width:210px;">Consulter l'audit transverse</div>
+        <div class="uc-case new" data-entity="uc-template" style="top:715px; left:940px; width:220px;">Gérer pipelines globaux</div>
+
+        <!-- ── Paquet 5 : Tableau de bord ─────────────────────────── -->
+        <div class="uc-package" style="top:940px; left:300px; width:880px; height:280px;">
+          <span class="pkg-title">Tableaux de bord et notifications</span>
+        </div>
+        <div class="uc-case" data-entity="uc-dash" style="top:975px; left:335px; width:230px;">Consulter le tableau de bord</div>
+        <div class="uc-case" data-entity="uc-notif" style="top:975px; left:910px; width:230px;">Recevoir des notifications</div>
+        <div class="uc-case" data-entity="uc-filtre" style="top:1050px; left:335px; width:230px;">Filtrer les dossiers</div>
+        <div class="uc-case" data-entity="uc-stats" style="top:1050px; left:910px; width:230px;">Lire les statistiques</div>
+        <div class="uc-case" data-entity="uc-export" style="top:1125px; left:620px; width:240px;">Exporter une vue</div>
+      <svg xmlns="http://www.w3.org/2000/svg" class="anchor-handles" viewBox="0 0 1480 1300" style="position: absolute; left: 0px; top: 0px; width: 100%; height: 100%; pointer-events: none; z-index: 1000;"/></div></div></foreignObject>
+<g class="links-layer" fill="none"><path d="M 150.00000190734863 220.1779997253418 C 221.61027412774635 220.1779997253418, 173.38973350164818 113, 245.0000057220459 113"></path><path d="M 150.00000190734863 234.52679953002928 C 324.41332906376107 234.52679953002928, 320.5867090832116 183, 495.000036239624 183"></path><path d="M 150.00000190734863 248.8755993347168 C 197.54474768866572 248.8755993347168, 197.4552599407288 253, 245.0000057220459 253"></path><path d="M 150.00000190734863 263.2243991394043 C 325.0700922622665 263.2243991394043, 319.92994588470617 323, 495.000036239624 323"></path><path d="M 150.00000190734863 277.5731989440918 C 224.74681977739695 277.5731989440918, 170.25318785199758 393, 245.0000057220459 393"></path><path d="M 150.00000190734863 291.9219987487793 C 343.838314500456 291.9219987487793, 301.16172364651663 468.75, 495.000036239624 468.75"></path><path d="M 1329.9999752044678 220.1779997253418 C 1163.6328471615602 220.1779997253418, 1181.3671642825316 113, 1015.000036239624 113"></path><path d="M 1329.9999752044678 226.15666631062825 C 1267.0924416124271 226.15666631062825, 1337.9075087965084 113, 1274.9999752044678 113"></path><path d="M 1329.9999752044678 232.1353328959147 C 1170.595425013258 232.1353328959147, 1174.404586430834 183, 1015.000036239624 183"></path><path d="M 1329.9999752044678 238.11399948120118 C 1289.9999752044678 238.11399948120118, 1314.9999752044678 183, 1274.9999752044678 183"></path><path d="M 1329.9999752044678 244.09266606648762 C 1172.4370495639016 244.09266606648762, 1172.5629618801902 253, 1015.000036239624 253"></path><path d="M 1329.9999752044678 250.07133265177407 C 1289.9999752044678 250.07133265177407, 1314.9999752044678 253, 1274.9999752044678 253"></path><path d="M 1329.9999752044678 256.04999923706055 C 1168.9819139892636 256.04999923706055, 1176.0180974548282 323, 1015.000036239624 323"></path><path d="M 1329.9999752044678 262.028665822347 C 1288.9436005733492 262.028665822347, 1316.0563498355864 323, 1274.9999752044678 323"></path><path d="M 1329.9999752044678 268.0073324076335 C 1160.5537237707822 268.0073324076335, 1184.4462876733096 393, 1015.000036239624 393"></path><path d="M 1329.9999752044678 273.9859989929199 C 1264.445927969165 273.9859989929199, 1340.5540224397705 393, 1274.9999752044678 393"></path><path d="M 1329.9999752044678 279.9646655782064 C 1205.0981008240683 279.9646655782064, 1284.9019106200235 463, 1160.000036239624 463"></path><path d="M 1329.9999752044678 285.9433321634928 C 809.1463285722849 285.9433321634928, 1085.8536523542289 993, 565.0000057220459 993"></path><path d="M 1394.9999752044678 312.0999984741211 C 1394.9999752044678 691.6841020852307, 1025.000036239624 595.4158963888904, 1025.000036239624 975"></path><path d="M 1329.9999752044678 291.9219987487793 C 785.132556162414 291.9219987487793, 1109.8674247640997 1068, 565.0000057220459 1068"></path><path d="M 43.40000190734863 850 C 43.40000190734863 686.6816287598928, 81.68163448193866 593, 245.0000057220459 593"></path><path d="M 150.00000190734863 870.1779997253418 C 409.6503756990487 870.1779997253418, 600.000036239624 870.6503737917001, 600.000036239624 611"></path><path d="M 150.00000190734863 882.1353328959148 C 290.07179031144017 882.1353328959148, 345.0000057220459 821.0717884040915, 345.0000057220459 681"></path><path d="M 150.00000190734863 894.0926660664876 C 396.5459580244808 894.0926660664876, 600.000036239624 939.0459561171322, 600.000036239624 692.5"></path><path d="M 150.00000190734863 918.0073324076335 C 251.43741111457024 918.0073324076335, 143.5625965148243 738.75, 245.0000057220459 738.75"></path><path d="M 150.00000190734863 906.0499992370605 C 342.984020627305 906.0499992370605, 302.0160175196677 733, 495.000036239624 733"></path><path d="M 150.00000190734863 929.9646655782063 C 328.51701856021884 929.9646655782063, 490.0000057220459 999.5170166528702, 490.0000057220459 821"></path><path d="M 126.60000190734864 850 C 126.60000190734864 443.41679394255283, 503.41683018217685 1068, 910.000036239624 1068" stroke-dasharray="5 4"></path><path d="M 150.00000190734863 941.9219987487793 C 405.60340312666244 941.9219987487793, 364.3966350203102 1143, 620.000036239624 1143" stroke-dasharray="5 4"></path><path d="M 1329.9999752044678 870.1779997253418 C 1120.2068598028914 870.1779997253418, 1224.7931516412004 593, 1015.000036239624 593"></path><path d="M 1353.3999752044679 850 C 1353.3999752044679 699.3708527541896, 1169.9999752044678 761.6291472458104, 1169.9999752044678 611"></path><path d="M 1329.9999752044678 906.0499992370605 C 1131.0664035800494 906.0499992370605, 1213.9336078640424 663, 1015.000036239624 663"></path><path d="M 1436.5999752044677 850 C 1436.5999752044677 726.4245574557793, 1398.5754177486886 663, 1274.9999752044678 663"></path><path d="M 1329.9999752044678 941.9219987487793 C 1160.5514760767496 941.9219987487793, 1050.000036239624 920.4484991277182, 1050.000036239624 751"></path><path d="M 1329.9999752044678 888.1139994812012 C 863.5460067698327 888.1139994812012, 911.4539741566809 593, 445.0000057220459 593" stroke-dasharray="5 4"></path><path d="M 1329.9999752044678 923.9859989929199 C 868.6599060433824 923.9859989929199, 906.3400748831313 663, 445.0000057220459 663" stroke-dasharray="5 4"></path></g>
+</svg>

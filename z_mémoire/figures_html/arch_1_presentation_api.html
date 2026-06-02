@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Architecture 1 – Présentation & API</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .arch-layer { position:absolute; border-radius:12px; background:var(--primary-soft); border:1.5px dashed var(--primary); padding:10px 12px; font-size:11px; color:var(--primary-strong); text-transform:uppercase; letter-spacing:0.06em; font-weight:700; }
+  .arch-layer.accent { background:var(--accent-soft); border-color:var(--accent); color:#075985; }
+  .arch-layer.pivot  { background:var(--pivot-soft);  border-color:var(--pivot);  color:#4c1d95; }
+  .arch-layer .layer-tag { display:inline-block; font-size:9.5px; padding:1px 6px; border-radius:999px; background:rgba(255,255,255,0.7); margin-right:6px; }
+  .arch-box { position:absolute; background:var(--surface); border:1.5px solid var(--primary); border-radius:8px; padding:8px 10px; font-size:11.5px; color:var(--ink); box-shadow:0 2px 6px rgba(15,23,42,0.08); }
+  .arch-box .box-title { font-weight:700; font-size:11.5px; color:var(--primary-strong); margin-bottom:4px; }
+  .arch-box .box-detail { font-size:10.5px; color:var(--muted); line-height:1.35; }
+  .arch-box.accent  { border-color:var(--accent); } .arch-box.accent .box-title { color:#075985; }
+  .arch-box.pivot   { border-color:var(--pivot); }  .arch-box.pivot .box-title { color:#4c1d95; }
+  .arch-box.actor { border-color:var(--pivot); background:var(--pivot-soft); text-align:center; }
+  .arch-box.actor .box-title { color:#4c1d95; }
+</style>
+</head>
+<body>
+<div class="page">
+<header class="page-header">
+  <div>
+    <h1>Architecture 1/2 – Acteurs, Frontend Angular &amp; API REST</h1>
+    <p class="subtitle">Du navigateur jusqu'aux contrôleurs Spring Boot.</p>
+  </div>
+  <div class="legend">
+    <span class="chip"><span class="dot" style="background:var(--pivot)"></span>Acteur</span>
+    <span class="chip accent"><span class="dot"></span>Frontend Angular</span>
+    <span class="chip"><span class="dot" style="background:var(--primary)"></span>Backend Spring Boot</span>
+  </div>
+</header>
+<div class="figure">
+<div class="canvas" style="width:1320px; height:680px; margin:0 auto;">
+<svg class="links" preserveAspectRatio="none"></svg>
+
+<!-- ═══ Acteurs ═══ -->
+<div class="arch-layer pivot" style="top:10px; left:20px; width:1280px; height:90px;">
+  <span class="layer-tag">Acteurs</span> Utilisateurs et navigateur web
+</div>
+<div class="arch-box actor" data-entity="actor-cand" style="top:38px; left:60px; width:280px;">
+  <div class="box-title">Candidat</div>
+  <div class="box-detail">Parcours public : candidature, vérification d'email, quiz, suivi.</div>
+</div>
+<div class="arch-box actor" data-entity="actor-recr" style="top:38px; left:370px; width:280px;">
+  <div class="box-title">Recruteur / Évaluateur</div>
+  <div class="box-detail">Pilotage des campagnes, entretiens, évaluations, décisions.</div>
+</div>
+<div class="arch-box actor" data-entity="actor-admin" style="top:38px; left:680px; width:280px;">
+  <div class="box-title">Administrateur</div>
+  <div class="box-detail">Référentiels, utilisateurs, permissions, paramétrage.</div>
+</div>
+<div class="arch-box actor" data-entity="actor-sysadm" style="top:38px; left:990px; width:280px;">
+  <div class="box-title">Super administrateur</div>
+  <div class="box-detail">Gouvernance globale, SMTP, supervision transverse.</div>
+</div>
+
+<!-- ═══ Couche 1 – Présentation (Angular) ═══ -->
+<div class="arch-layer accent" style="top:140px; left:20px; width:1280px; height:200px;">
+  <span class="layer-tag">Couche 1 — Présentation</span> Frontend Angular (TypeScript) — proxy de dev sur /api
+</div>
+<div class="arch-box accent" data-entity="fe-pub" style="top:170px; left:50px; width:230px;">
+  <div class="box-title">Pages publiques candidat</div>
+  <div class="box-detail">Candidature, vérification, quiz, suivi, réponse entretien.</div>
+</div>
+<div class="arch-box accent" data-entity="fe-rec" style="top:170px; left:310px; width:230px;">
+  <div class="box-title">Espace recruteur</div>
+  <div class="box-detail">Campagnes, candidatures, formulaires, entretiens, évaluations.</div>
+</div>
+<div class="arch-box accent" data-entity="fe-adm" style="top:170px; left:570px; width:230px;">
+  <div class="box-title">Espace administration</div>
+  <div class="box-detail">Utilisateurs, rôles, permissions, référentiels, templates, SMTP.</div>
+</div>
+<div class="arch-box accent" data-entity="fe-comp" style="top:170px; left:830px; width:220px;">
+  <div class="box-title">Composants &amp; filtres partagés</div>
+  <div class="box-detail">Listes, formulaires réactifs, dialogues, gardes de route, intercepteurs.</div>
+</div>
+<div class="arch-box accent" data-entity="fe-svc" style="top:170px; left:1080px; width:200px;">
+  <div class="box-title">Services HTTP</div>
+  <div class="box-detail">Appels REST typés, JWT, gestion d'erreurs, état applicatif.</div>
+</div>
+
+<!-- ═══ Couche 2 – Application (REST API) ═══ -->
+<div class="arch-layer" style="top:380px; left:20px; width:1280px; height:260px;">
+  <span class="layer-tag">Couche 2 — Application</span> Contrôleurs REST Spring Boot — DTO, validations, sécurité
+</div>
+<div class="arch-box" data-entity="api-pub" style="top:415px; left:50px; width:230px;">
+  <div class="box-title">API publique candidat</div>
+  <div class="box-detail">/api/public/** : candidature, vérification, quiz, suivi.</div>
+</div>
+<div class="arch-box" data-entity="api-camp" style="top:415px; left:310px; width:230px;">
+  <div class="box-title">API campagnes et pipeline</div>
+  <div class="box-detail">CRUD campagnes, partage, sources, étapes de pipeline.</div>
+</div>
+<div class="arch-box" data-entity="api-quiz" style="top:415px; left:570px; width:230px;">
+  <div class="box-title">API formulaires et quiz</div>
+  <div class="box-detail">Formulaires, versions, questions, corrections, scores.</div>
+</div>
+<div class="arch-box" data-entity="api-ent" style="top:415px; left:830px; width:220px;">
+  <div class="box-title">API entretiens et décisions</div>
+  <div class="box-detail">Planification, réponse candidat, évaluations, décisions.</div>
+</div>
+<div class="arch-box" data-entity="api-adm" style="top:415px; left:1080px; width:200px;">
+  <div class="box-title">API administration</div>
+  <div class="box-detail">Utilisateurs, permissions, référentiels, templates, SMTP.</div>
+</div>
+<div class="arch-box pivot" data-entity="svc-sec" style="top:560px; left:300px; width:680px;">
+  <div class="box-title">Sécurité &amp; Permissions (filtre transverse)</div>
+  <div class="box-detail">Rôles système, entity_permission, campaign_crud, user_permission_override. Appliqué sur tous les endpoints.</div>
+</div>
+
+</div>
+<p class="figure-caption">Figure — Architecture 1/2 : Acteurs, Frontend Angular et API REST Spring Boot. Les flèches pleines = dépendance directe, pointillés = transverse.</p>
+</div>
+</div>
+<script>
+window.LINKS = [
+  { from:"actor-cand",  to:"fe-pub", strong:true },
+  { from:"actor-recr",  to:"fe-rec", strong:true },
+  { from:"actor-admin", to:"fe-adm", strong:true },
+  { from:"actor-sysadm",to:"fe-adm", dashed:true },
+  { from:"fe-pub", to:"fe-svc", dashed:true },
+  { from:"fe-rec", to:"fe-svc", dashed:true },
+  { from:"fe-adm", to:"fe-svc", dashed:true },
+  { from:"fe-comp",to:"fe-svc", dashed:true },
+  { from:"fe-svc",to:"api-pub", strong:true },
+  { from:"fe-svc",to:"api-camp",strong:true },
+  { from:"fe-svc",to:"api-quiz",strong:true },
+  { from:"fe-svc",to:"api-ent", strong:true },
+  { from:"fe-svc",to:"api-adm", strong:true },
+  { from:"api-pub", to:"svc-sec",dashed:true },
+  { from:"api-camp",to:"svc-sec",dashed:true },
+  { from:"api-quiz",to:"svc-sec",dashed:true },
+  { from:"api-ent", to:"svc-sec",dashed:true },
+  { from:"api-adm", to:"svc-sec",dashed:true },
+];
+</script>
+<script src="links.js"></script>
+</body>
+</html>

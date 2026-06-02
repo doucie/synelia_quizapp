@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿uFEFF<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
@@ -27,7 +27,7 @@
     </header>
 
     <div class="figure">
-      <div class="canvas" style="height: 1900px; width: 1480px; margin: 0 auto;">
+      <div class="canvas" style="width:1480px; height:1900px; margin: 0 auto;">
         <svg class="links" preserveAspectRatio="none"></svg>
 
         <!-- ── Couloirs (lanes) : décor, non draggable ────────────── -->
@@ -38,12 +38,12 @@
         <div class="sat-lane adm"  style="top:80px; left:1130px; width:200px; height:1780px;"></div>
 
         <!-- ── Têtes de colonnes (acteurs) ────────────────────────── -->
-        <div class="entity sat-head"      data-entity="h-time" style="top:20px; left:20px;  width:130px;">Phase / Période</div>
+        <div class="entity sat-head"      data-entity="h-time" style="top:20px; left:20px; width:130px;">Phase / Période</div>
         <div class="entity sat-head"      data-entity="h-cand" style="top:20px; left:180px; width:220px;">Candidat</div>
         <div class="entity sat-head auto" data-entity="h-syst" style="top:20px; left:430px; width:220px;">Système (auto)</div>
         <div class="entity sat-head alt"  data-entity="h-recr" style="top:20px; left:680px; width:220px;">Recruteur</div>
         <div class="entity sat-head eval" data-entity="h-eval" style="top:20px; left:930px; width:180px;">Évaluateur</div>
-        <div class="entity sat-head adm"  data-entity="h-adm"  style="top:20px; left:1140px; width:180px;">Administrateur</div>
+        <div class="entity sat-head adm"  data-entity="h-adm" style="top:20px; left:1140px; width:180px;">Administrateur</div>
 
         <!-- ═══════════════════════════════════════════════════════════════
              T0 — CONFIGURATION DU PIPELINE
@@ -82,7 +82,7 @@
              ═══════════════════════════════════════════════════════════════ -->
         <div class="entity sat-phase" data-entity="p2" style="top:410px; left:20px; width:130px;">T2 — Quiz<br/><small>chronométré</small></div>
 
-        <div class="entity sat-task auto" data-entity="t2-open" style="top:410px; left:430px; width:220px;">
+        <div class="entity sat-task auto" data-entity="t2-open" style="top:420px; left:430px; width:220px;">
           <div class="task-title">Ouvrir round QUIZ</div>
           <span class="task-meta">auto</span>
           <div class="task-detail">Crée <code>application_quiz_attempt</code> + <code>quiz_token</code>, notifie le candidat.</div>
@@ -261,6 +261,40 @@
       { from: "t7-syst",      to: "t7-adm",  dashed: true },
     ];
   </script>
-  <script src="links.js"></script>
+  <script>
+/* Anchors fixed from layout export */
+(function(){ var L = window.LINKS || []; var apply = function(i,e,s){ if(!L[i])return; if(e==="A") L[i].fromAnchor=s; else L[i].toAnchor=s; };
+  apply(1,"B","top");
+  apply(2,"A","top");
+  apply(2,"B","top");
+  apply(3,"A","bottom");
+  apply(4,"A","top");
+  apply(4,"B","top");
+  apply(5,"A","bottom");
+  apply(6,"B","top");
+  apply(11,"B","top");
+  apply(12,"B","left");
+  apply(14,"B","top");
+  apply(15,"A","left");
+  apply(15,"B","right");
+  apply(16,"A","bottom");
+  apply(16,"B","top");
+  apply(18,"A","right");
+  apply(18,"B","left");
+  apply(19,"A","right");
+  apply(19,"B","right");
+  apply(20,"A","left");
+  apply(20,"B","left");
+  apply(21,"A","left");
+  apply(21,"B","left");
+  apply(22,"A","left");
+  apply(22,"B","left");
+  apply(23,"A","left");
+  apply(23,"B","left");
+  apply(24,"A","bottom");
+  apply(24,"B","top");
+})();
+</script>
+<script src="links.js"></script>
 </body>
 </html>

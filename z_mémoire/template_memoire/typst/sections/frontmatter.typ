@@ -22,25 +22,9 @@
 
   #pagebreak()
   #front-heading([Résumé])
-  #note-box([À finaliser en dernier], [
-    Le résumé devra tenir sur 1 à 1,5 page maximum et synthétiser :
-
-    - le contexte du projet
-    - la problématique traitée
-    - les objectifs poursuivis
-    - la méthodologie adoptée
-    - les technologies mobilisées
-    - les résultats obtenus
-    - les mots-clés
-  ])
-
   [Insérer ici le résumé final du mémoire en français.]
 
   #front-heading([Abstract])
-  #note-box([To be finalized last], [
-    The abstract should remain concise and aligned with the final French summary.
-  ])
-
   [Insert here the final English abstract.]
 
   #pagebreak()
@@ -51,13 +35,6 @@
   #pagebreak()
   #front-heading([Avant-propos])
   L'avant-propos présente le cadre institutionnel du mémoire. Il situe le travail au regard de la formation d'ingénieur en sciences informatiques dispensée à l'ENSIT et du contexte professionnel offert par l'entreprise d'accueil SYNELIA.
-
-  #note-box([Contenu attendu], [
-    - présentation de l'ENSIT
-    - présentation de la formation et du diplôme
-    - présentation de SYNELIA
-    - cadre du stage de fin d'études
-  ])
 
   [Rédiger ici un avant-propos institutionnel, sans entrer directement dans l'analyse technique du projet.]
 
@@ -89,6 +66,4 @@
     [#strong[UML]], [Unified Modeling Language],
     [#strong[WebSocket]], [Protocole de communication bidirectionnelle en temps réel],
   )
-
-  #note-box([À enrichir], [Ajouter ici les autres sigles réellement utilisés dans le mémoire au fur et à mesure de la rédaction.])
 ]

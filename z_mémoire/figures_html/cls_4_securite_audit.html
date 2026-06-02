@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Classes UML 4 – Sécurité & Audit</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .cls { position:absolute; font-family:'Segoe UI',system-ui,sans-serif; font-size:10.5px; overflow:hidden; }
+  .cls .cls-head { background:#fffef9; color:#111; border-bottom:1.5px solid #333; font-weight:700; font-size:11px; padding:4px 8px; }
+  .cls .cls-head .stereo { color:#555; font-size:9px; font-weight:500; }
+  .cls .cls-attrs, .cls .cls-ops { padding:4px 8px; background:#fffef9; list-style:none; margin:0; }
+  .cls .cls-ops { border-top:1px solid #333; }
+  .cls .cls-attrs li, .cls .cls-ops li { color:#222; padding:1px 0; white-space:nowrap; }
+  .cls .cls-ops li { color:#444; }
+</style>
+</head>
+<body class="uml-classic">
+<div class="page">
+<header class="page-header" style="border-bottom:1px solid #ccc; margin-bottom:12px;">
+  <h1 style="color:#111;font-size:16px;">Classes UML 4/4 – Sécurité, Permissions &amp; Audit</h1>
+  <p class="subtitle" style="color:#555;font-size:11px;">Utilisateurs, groupes, permissions entité, droits campagne, notifications, journal d'audit.</p>
+</header>
+<div class="figure">
+<div class="canvas" style="width:1050px; height:580px; margin:0 auto;">
+<svg class="links" preserveAspectRatio="none"></svg>
+
+<div class="cls" data-entity="user" style="top:20px; left:400px; width:220px; border:1.5px solid #333;">
+  <div class="cls-head">User</div>
+  <ul class="cls-attrs">
+    <li>- id : Long</li><li>- firstName : String</li><li>- lastName : String</li>
+    <li>- email : String</li><li>- username : String</li><li>- systemRole : SystemRole</li><li>- estActif : boolean</li>
+  </ul>
+</div>
+
+<div class="cls" data-entity="bgroup" style="top:180px; left:20px; width:220px; border:1.5px solid #333;">
+  <div class="cls-head">BusinessGroup</div>
+  <ul class="cls-attrs"><li>- id : Long</li><li>- label : String</li><li>- description : String?</li></ul>
+</div>
+
+<div class="cls" data-entity="entperm" style="top:180px; left:400px; width:240px; border:1.5px solid #333;">
+  <div class="cls-head">EntityPermission</div>
+  <ul class="cls-attrs">
+    <li>- id : Long</li><li>- entityType : String</li><li>- entityId : Long</li><li>- permissionKey : String</li>
+  </ul>
+</div>
+
+<div class="cls" data-entity="campcrud" style="top:180px; left:780px; width:230px; border:1.5px solid #333;">
+  <div class="cls-head">CampaignCrud</div>
+  <ul class="cls-attrs">
+    <li>- id : Long</li><li>- campaignId : Long</li><li>- userId : Long</li>
+    <li>- canRead : boolean</li><li>- canWrite : boolean</li><li>- canManage : boolean</li>
+  </ul>
+</div>
+
+<div class="cls" data-entity="notif" style="top:410px; left:20px; width:230px; border:1.5px solid #333;">
+  <div class="cls-head">Notification</div>
+  <ul class="cls-attrs">
+    <li>- id : Long</li><li>- type : String</li><li>- link : String?</li><li>- isRead : boolean</li><li>- entityType : String</li><li>- entityId : Long</li>
+  </ul>
+</div>
+
+<div class="cls" data-entity="maillog" style="top:410px; left:400px; width:230px; border:1.5px solid #333;">
+  <div class="cls-head">MailLog</div>
+  <ul class="cls-attrs">
+    <li>- id : Long</li><li>- recipient : String</li><li>- subject : String</li><li>- status : String</li><li>- eventCode : String</li><li>- requiresConfirmation : boolean</li>
+  </ul>
+</div>
+
+<div class="cls" data-entity="audit" style="top:410px; left:780px; width:240px; border:1.5px solid #333;">
+  <div class="cls-head">&lt;&lt;transverse&gt;&gt;<br>AuditEvent</div>
+  <ul class="cls-attrs">
+    <li>- id : Long</li><li>- action : String</li><li>- entityType : String</li><li>- entityId : Long</li><li>- actor : String</li><li>- justification : String?</li>
+  </ul>
+</div>
+
+</div>
+<p class="figure-caption" style="color:#555;font-size:10px;text-align:center;">Classes UML 4/4 – Sécurité, Permissions, Notifications, Audit. → = association, ⇢ = dépendance.</p>
+</div>
+</div>
+<script>
+window.LINKS = [
+  { from:"user",   to:"bgroup",  cardFrom:"*",cardTo:"*", uml:"assoc" },
+  { from:"bgroup", to:"entperm", cardFrom:"1",cardTo:"*", uml:"assoc" },
+  { from:"user",   to:"entperm", cardFrom:"*",cardTo:"*", uml:"assoc" },
+  { from:"user",   to:"campcrud",cardFrom:"1",cardTo:"*", uml:"assoc" },
+  { from:"user",   to:"notif",   cardFrom:"1",cardTo:"*", uml:"depend" },
+  { from:"user",   to:"maillog", cardFrom:"1",cardTo:"*", uml:"depend" },
+  { from:"user",   to:"audit",   cardFrom:"1",cardTo:"*", uml:"depend" },
+  { from:"notif",  to:"audit",   cardFrom:"*",cardTo:"*", uml:"depend" },
+  { from:"maillog",to:"audit",   cardFrom:"*",cardTo:"*", uml:"depend" },
+];
+</script>
+<script src="links.js"></script>
+</body>
+</html>

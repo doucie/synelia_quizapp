@@ -8,15 +8,32 @@
    so reloading keeps your manual layout. Use "Réinitialiser" to drop it. */
 
 (function () {
+  // Mode capture (?capture=1) : masque la barre d'outils, supprime les marges
+  // du body et réduit l'espace blanc autour de la figure pour les captures PNG.
+  try {
+    if (/[?&]capture=1\b/.test(location.search)) {
+      const css = document.createElement("style");
+      css.textContent =
+        "html,body{background:#fff!important;margin:0!important;padding:0!important;}" +
+        ".editor-toolbar,.toolbar,#tb-collapsed,svg.anchor-handles," +
+        ".page-header,.figure-caption,.figure-title,.legend,.kpi-strip," +
+        ".page-intro,.page-footer{display:none!important;}" +
+        ".page{margin:0!important;padding:0!important;box-shadow:none!important;border:none!important;max-width:none!important;background:transparent!important;}" +
+        ".figure{margin:0!important;padding:0!important;box-shadow:none!important;background:transparent!important;border:none!important;}" +
+        ".canvas-viewport{overflow:visible!important;max-height:none!important;margin:0!important;padding:0!important;}";
+      (document.head || document.documentElement).appendChild(css);
+    }
+  } catch (e) {}
+
   const STORAGE_KEY = "figures_html:positions:" + location.pathname;
   const SIZE_KEY = "figures_html:canvas-size:" + location.pathname;
   const ZOOM_KEY = "figures_html:zoom:" + location.pathname;
   const ANCHORS_KEY = "figures_html:anchors:" + location.pathname;
   const COLLAPSED_KEY = "figures_html:tb-collapsed:" + location.pathname;
   const GRID = 10;
-  const ZOOM_STEP = 0.1;
-  const ZOOM_MIN = 0.25;
-  const ZOOM_MAX = 2.5;
+  const ZOOM_STEP = 0.01;
+  const ZOOM_MIN = 0.1;
+  const ZOOM_MAX = 3.0;
   const SIZE_STEP = 100;
   const SIDE_CYCLE = ["top", "right", "bottom", "left"];
   let snapToGrid = true;
@@ -63,7 +80,17 @@
     };
     const c1 = handle(sideA, a);
     const c2 = handle(sideB, b);
-    return `M ${a.x} ${a.y} C ${c1.x} ${c1.y}, ${c2.x} ${c2.y}, ${b.x} ${b.y}`;
+    return { d: `M ${a.x} ${a.y} C ${c1.x} ${c1.y}, ${c2.x} ${c2.y}, ${b.x} ${b.y}`, c1, c2 };
+  }
+
+  // Point milieu d'une courbe de Bézier cubique (t = 0.5)
+  function bezierMid(a, c1, c2, b) {
+    const t = 0.5;
+    const mt = 1 - t;
+    return {
+      x: mt*mt*mt*a.x + 3*mt*mt*t*c1.x + 3*mt*t*t*c2.x + t*t*t*b.x,
+      y: mt*mt*mt*a.y + 3*mt*mt*t*c1.y + 3*mt*t*t*c2.y + t*t*t*b.y
+    };
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -76,6 +103,26 @@
     const cr = canvas.getBoundingClientRect();
     svg.setAttribute("viewBox", `0 0 ${cr.width} ${cr.height}`);
     svg.innerHTML = "";
+
+    // Overlay layer that hosts anchor handles ABOVE entities, so they remain
+    // clickable in edit mode even when entities (cards, packages, layers…)
+    // visually cover them.
+    let handlesSvg = canvas.querySelector("svg.anchor-handles");
+    if (!handlesSvg) {
+      const nsHandles = "http://www.w3.org/2000/svg";
+      handlesSvg = document.createElementNS(nsHandles, "svg");
+      handlesSvg.classList.add("anchor-handles");
+      handlesSvg.style.position = "absolute";
+      handlesSvg.style.left = "0";
+      handlesSvg.style.top = "0";
+      handlesSvg.style.width = "100%";
+      handlesSvg.style.height = "100%";
+      handlesSvg.style.pointerEvents = "none"; // children re-enable it
+      handlesSvg.style.zIndex = "1000";
+      canvas.appendChild(handlesSvg);
+    }
+    handlesSvg.setAttribute("viewBox", `0 0 ${cr.width} ${cr.height}`);
+    handlesSvg.innerHTML = "";
 
     const rectOf = (key) => {
       const el = canvas.querySelector(`[data-entity="${key}"]`);
@@ -127,13 +174,33 @@
     });
 
     const ns = "http://www.w3.org/2000/svg";
+    // Définitions de marqueurs UML (flèches) — idempotent (déjà dans le DOM)
+    if (!svg.querySelector("defs")) {
+      const defs = document.createElementNS(ns, "defs");
+      defs.innerHTML =
+        '<marker id="uml-extends" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="white" stroke="#333" stroke-width="1"/></marker>' +
+        '<marker id="uml-aggregate" viewBox="0 0 14 14" refX="7" refY="7" markerWidth="8" markerHeight="8" orient="auto"><path d="M7,0 L14,7 L7,14 L0,7 Z" fill="white" stroke="#333" stroke-width="1"/></marker>' +
+        '<marker id="uml-compose" viewBox="0 0 14 14" refX="7" refY="7" markerWidth="8" markerHeight="8" orient="auto"><path d="M7,0 L14,7 L7,14 L0,7 Z" fill="#333" stroke="#333" stroke-width="1"/></marker>' +
+        '<marker id="uml-depend" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="none" stroke="#888" stroke-width="1"/></marker>' +
+        '<marker id="uml-assoc" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#555" stroke="none"/></marker>';
+      svg.appendChild(defs);
+    }
     resolved.forEach((r, i) => {
       const a = anchorPoint(r.fr, r.sideA, ratios[i].A);
       const b = anchorPoint(r.tr, r.sideB, ratios[i].B);
+      const curve = bezier(a, b, r.sideA, r.sideB);
       const path = document.createElementNS(ns, "path");
-      path.setAttribute("d", bezier(a, b, r.sideA, r.sideB));
+      path.setAttribute("d", curve.d);
       if (r.link.strong) path.classList.add("strong");
       if (r.link.dashed) path.setAttribute("stroke-dasharray", "5 4");
+      // Flèche UML
+      const uml = r.link.uml;
+      if (uml === "extends")     { path.setAttribute("marker-end", "url(#uml-extends)"); path.classList.add("uml"); }
+      else if (uml === "implement") { path.setAttribute("marker-end", "url(#uml-extends)"); path.setAttribute("stroke-dasharray","5 4"); path.classList.add("uml"); }
+      else if (uml === "aggregate") { path.setAttribute("marker-end", "url(#uml-aggregate)"); path.classList.add("uml"); }
+      else if (uml === "compose")   { path.setAttribute("marker-end", "url(#uml-compose)"); path.classList.add("uml"); }
+      else if (uml === "depend")    { path.setAttribute("marker-end", "url(#uml-depend)"); path.setAttribute("stroke-dasharray","5 4"); path.classList.add("uml"); }
+      else if (uml === "assoc")     { path.setAttribute("marker-end", "url(#uml-assoc)"); path.classList.add("uml"); }
       svg.appendChild(path);
 
       const placeLabel = (point, side, text) => {
@@ -161,19 +228,51 @@
           svg.insertBefore(bg, t);
         } catch (_) { /* getBBox can fail before paint */ }
       };
+
+      // Cardinalités aux ancres
       placeLabel(a, r.sideA, r.link.cardFrom || r.link.card);
       placeLabel(b, r.sideB, r.link.cardTo);
 
-      // Clickable anchor handles (visible only in edit mode via CSS)
+      // Verbe MCD au milieu de la courbe — ellipse d'association Merise
+      if (r.link.verb) {
+        const m = bezierMid(a, curve.c1, curve.c2, b);
+        // On estime la taille du texte pour dimensionner l'ellipse
+        const charW = 6.5;
+        const verbW = Math.max(28, r.link.verb.length * charW + 16);
+        const verbH = 22;
+        // Ellipse opaque pour couper la ligne derrière
+        const el = document.createElementNS(ns, "ellipse");
+        el.setAttribute("cx", m.x);
+        el.setAttribute("cy", m.y);
+        el.setAttribute("rx", verbW / 2);
+        el.setAttribute("ry", verbH / 2);
+        el.setAttribute("fill", "#fff");
+        el.setAttribute("stroke", "#555");
+        el.setAttribute("stroke-width", "1");
+        svg.appendChild(el);
+        // Texte du verbe
+        const vt = document.createElementNS(ns, "text");
+        vt.classList.add("verb");
+        vt.setAttribute("x", m.x);
+        vt.setAttribute("y", m.y);
+        vt.setAttribute("text-anchor", "middle");
+        vt.setAttribute("dominant-baseline", "central");
+        vt.textContent = r.link.verb;
+        svg.appendChild(vt);
+      }
+
+      // Clickable anchor handles (visible only in edit mode via CSS).
+      // Appended to the overlay SVG so they sit above entities.
       const handle = (point, end) => {
         const h = document.createElementNS(ns, "circle");
         h.setAttribute("cx", point.x);
         h.setAttribute("cy", point.y);
-        h.setAttribute("r", 6);
+        h.setAttribute("r", 7);
         h.classList.add("anchor-handle");
+        h.style.pointerEvents = "auto";
         h.dataset.linkIdx = r.idx;
         h.dataset.end = end;
-        svg.appendChild(h);
+        handlesSvg.appendChild(h);
       };
       handle(a, "A");
       handle(b, "B");
@@ -341,6 +440,116 @@
     localStorage.setItem(SIZE_KEY, JSON.stringify({ width, height }));
   }
 
+  function collectCanvasSize() {
+    const c = canvasEl();
+    if (!c) return { width: 0, height: 0 };
+    return {
+      width: parseInt(c.style.width, 10) || c.offsetWidth,
+      height: parseInt(c.style.height, 10) || c.offsetHeight,
+    };
+  }
+
+  function collectAnchorOverrides() {
+    // Return only entries that match a current LINK index, sorted by key.
+    const out = {};
+    const max = (window.LINKS || []).length;
+    Object.keys(anchorOverrides)
+      .filter((k) => {
+        const [i] = k.split("|");
+        return Number(i) < max;
+      })
+      .sort()
+      .forEach((k) => { out[k] = anchorOverrides[k]; });
+    return out;
+  }
+
+  // ── SVG export ────────────────────────────────────────────────────────────
+  async function fetchCss(href) {
+    try {
+      const r = await fetch(href);
+      if (!r.ok) return "";
+      return await r.text();
+    } catch { return ""; }
+  }
+
+  function escapeXml(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  async function exportSvg() {
+    const c = canvasEl();
+    if (!c) throw new Error("canevas introuvable");
+
+    // Measure unzoomed coordinates
+    const prevTransform = c.style.transform;
+    c.style.transform = "scale(1)";
+    const cr = c.getBoundingClientRect();
+    const width  = parseInt(c.style.width,  10) || c.offsetWidth;
+    const height = parseInt(c.style.height, 10) || c.offsetHeight;
+
+    // Re-render so the SVG paths reflect the current (unzoomed) layout
+    render();
+
+    // 1) Inline CSS from styles.css + a few extras forced for SVG context
+    const links = Array.from(document.querySelectorAll('link[rel="stylesheet"]'));
+    const cssBlobs = await Promise.all(links.map((l) => fetchCss(l.href)));
+    const inlineCss = `
+      /* SVG export overrides */
+      .canvas { position: relative; }
+      .canvas .entity { position: absolute; }
+      html, body { background: transparent; margin: 0; padding: 0; }
+    `;
+    const fullCss = cssBlobs.join("\n") + "\n" + inlineCss;
+
+    // 2) Clone the canvas HTML (entities) and strip the inner SVG (we re-emit it)
+    const clone = c.cloneNode(true);
+    const innerSvg = clone.querySelector("svg.links");
+    let svgInner = "";
+    if (innerSvg) {
+      // Use the current live svg content (already rendered) and copy attributes
+      const live = c.querySelector("svg.links");
+      svgInner = live ? live.innerHTML : "";
+      innerSvg.remove();
+    }
+
+    // Remove any toolbar / anchor handles / dragging state from the clone
+    clone.querySelectorAll(".anchor-handle, .editor-toolbar").forEach((n) => n.remove());
+    clone.classList.remove("dragging");
+    clone.style.transform = "";
+    clone.style.width = width + "px";
+    clone.style.height = height + "px";
+
+    // The clone is still an HTML node; we'll embed it via <foreignObject>
+    const htmlSerialized = new XMLSerializer().serializeToString(clone);
+
+    // 3) Build the SVG: links underneath (paths from svgInner), entities above (foreignObject)
+    const svg =
+      `<?xml version="1.0" encoding="UTF-8"?>\n` +
+      `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" ` +
+      `version="1.1" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">\n` +
+      `<defs><style type="text/css"><![CDATA[\n${fullCss}\n]]></style></defs>\n` +
+      // entities first via foreignObject (HTML), then links on top so labels stay readable
+      `<foreignObject x="0" y="0" width="${width}" height="${height}">` +
+      `<div xmlns="http://www.w3.org/1999/xhtml">${htmlSerialized}</div>` +
+      `</foreignObject>\n` +
+      `<g class="links-layer" fill="none">${svgInner}</g>\n` +
+      `</svg>\n`;
+
+    // Restore zoom
+    c.style.transform = prevTransform;
+
+    // 4) Download
+    const blob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const base = (location.pathname.split("/").pop() || "figure.html").replace(/\.html?$/i, "");
+    a.href = url;
+    a.download = base + ".svg";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
+  }
+
   function resizeCanvas(dw, dh) {
     const c = canvasEl();
     if (!c) return;
@@ -353,6 +562,7 @@
   }
 
   function applySavedZoom() {
+    if (/[?&]capture=1\b/.test(location.search)) { zoom = 1; applyZoom(); return; }
     const z = parseFloat(localStorage.getItem(ZOOM_KEY));
     if (!isNaN(z) && z >= ZOOM_MIN && z <= ZOOM_MAX) zoom = z;
     applyZoom();
@@ -361,6 +571,12 @@
   function applyZoom() {
     const c = canvasEl();
     if (!c) return;
+    // En mode capture : pas de zoom, pas de spacer, canvas dans le flux normal.
+    if (/[?&]capture=1\b/.test(location.search)) {
+      c.style.transform = "";
+      c.style.transformOrigin = "";
+      return;
+    }
     c.style.transformOrigin = "top left";
     c.style.transform = `scale(${zoom})`;
     // Reserve space in the viewport so scrollbars match the zoomed canvas
@@ -377,7 +593,9 @@
     spacer.style.height = h + "px";
     const zLabel = document.getElementById("tb-zoom-label");
     if (zLabel) zLabel.textContent = Math.round(zoom * 100) + "%";
-    localStorage.setItem(ZOOM_KEY, String(zoom));
+    if (!/[?&]capture=1\b/.test(location.search)) {
+      localStorage.setItem(ZOOM_KEY, String(zoom));
+    }
   }
 
   function setZoom(z) {
@@ -386,9 +604,51 @@
     scheduleRender();
   }
 
+  function fitToContent() {
+    const c = canvasEl();
+    const vp = c && c.parentElement;
+    if (!c || !vp) return;
+    // Reset zoom to 1 momentarily so we measure unzoomed coordinates.
+    const prevTransform = c.style.transform;
+    c.style.transform = "scale(1)";
+    const cr = c.getBoundingClientRect();
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    c.querySelectorAll("[data-entity]").forEach((el) => {
+      const r = el.getBoundingClientRect();
+      const x = r.x - cr.x, y = r.y - cr.y;
+      if (x < minX) minX = x;
+      if (y < minY) minY = y;
+      if (x + r.width  > maxX) maxX = x + r.width;
+      if (y + r.height > maxY) maxY = y + r.height;
+    });
+    const svg = c.querySelector("svg.links");
+    if (svg) {
+      svg.querySelectorAll("path, text, rect").forEach((node) => {
+        try {
+          const b = node.getBBox();
+          if (b.x < minX) minX = b.x;
+          if (b.y < minY) minY = b.y;
+          if (b.x + b.width  > maxX) maxX = b.x + b.width;
+          if (b.y + b.height > maxY) maxY = b.y + b.height;
+        } catch (_) {}
+      });
+    }
+    c.style.transform = prevTransform;
+    if (!isFinite(minX) || !isFinite(minY) || maxX <= minX || maxY <= minY) return;
+    const contentW = maxX + Math.max(0, minX); // include left margin so content stays visible
+    const contentH = maxY + Math.max(0, minY);
+    const availW = Math.max(50, vp.clientWidth  - 16);
+    const availH = Math.max(50, vp.clientHeight - 16);
+    const z = Math.min(availW / contentW, availH / contentH);
+    setZoom(Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, z)));
+  }
+
   function wrapCanvasInViewport() {
     const c = canvasEl();
     if (!c) return;
+    // En mode capture, on laisse le canvas dans le flux normal (position:relative)
+    // afin qu'il pousse la hauteur de son parent et qu'aucun spacer ne soit nécessaire.
+    if (/[?&]capture=1\b/.test(location.search)) return;
     if (c.parentElement.classList.contains("canvas-viewport")) return;
     const vp = document.createElement("div");
     vp.className = "canvas-viewport";
@@ -443,6 +703,7 @@
       <span class="tb-sep"></span>
       <button type="button" id="tb-export">Copier positions (JSON)</button>
       <button type="button" id="tb-export-html">Copier styles HTML</button>
+      <button type="button" id="tb-export-svg">Exporter SVG</button>
       <button type="button" id="tb-reset" class="danger">Réinitialiser</button>
       <span class="tb-status" id="tb-status"></span>
       </div>
@@ -475,25 +736,53 @@
       snapToGrid = e.target.checked;
     });
     bar.querySelector("#tb-export").addEventListener("click", async () => {
-      const json = JSON.stringify(collectPositions(), null, 2);
+      const payload = {
+        canvas: collectCanvasSize(),
+        positions: collectPositions(),
+        anchors: collectAnchorOverrides(),
+      };
+      const json = JSON.stringify(payload, null, 2);
       try {
         await navigator.clipboard.writeText(json);
-        flash("JSON copié dans le presse-papier");
+        flash("JSON copié (canevas + positions + ancrages)");
       } catch {
         prompt("Copie manuelle :", json);
       }
     });
     bar.querySelector("#tb-export-html").addEventListener("click", async () => {
+      const size = collectCanvasSize();
       const pos = collectPositions();
-      const lines = Object.entries(pos).map(([k, p]) =>
-        `data-entity="${k}" style="top:${p.top}px; left:${p.left}px; width:${p.width}px;"`
-      );
-      const text = lines.join("\n");
+      const anchors = collectAnchorOverrides();
+      const parts = [];
+      parts.push(`<!-- canvas: ${size.width} × ${size.height} px -->`);
+      parts.push(`<div class="canvas" style="width:${size.width}px; height:${size.height}px;">`);
+      Object.entries(pos).forEach(([k, p]) => {
+        parts.push(`  data-entity="${k}" style="top:${p.top}px; left:${p.left}px; width:${p.width}px;"`);
+      });
+      if (Object.keys(anchors).length) {
+        parts.push("");
+        parts.push("/* Ancrages à reporter dans window.LINKS (idx|A = from, idx|B = to) */");
+        Object.entries(anchors).forEach(([k, side]) => {
+          const [idx, end] = k.split("|");
+          const prop = end === "A" ? "fromAnchor" : "toAnchor";
+          parts.push(`LINKS[${idx}].${prop} = "${side}";`);
+        });
+      }
+      const text = parts.join("\n");
       try {
         await navigator.clipboard.writeText(text);
-        flash("Attributs HTML copiés");
+        flash("HTML copié (canevas + positions + ancrages)");
       } catch {
         prompt("Copie manuelle :", text);
+      }
+    });
+    bar.querySelector("#tb-export-svg").addEventListener("click", async () => {
+      try {
+        await exportSvg();
+        flash("SVG téléchargé");
+      } catch (err) {
+        console.error(err);
+        flash("Échec export SVG : " + (err && err.message ? err.message : err));
       }
     });
     bar.querySelector("#tb-reset").addEventListener("click", () => {
@@ -509,14 +798,7 @@
     bar.querySelector("#tb-zoom-in").addEventListener("click", () => setZoom(zoom + ZOOM_STEP));
     bar.querySelector("#tb-zoom-out").addEventListener("click", () => setZoom(zoom - ZOOM_STEP));
     bar.querySelector("#tb-zoom-label").addEventListener("click", () => setZoom(1));
-    bar.querySelector("#tb-zoom-fit").addEventListener("click", () => {
-      const c = canvasEl();
-      const vp = c && c.parentElement;
-      if (!c || !vp) return;
-      const cw = parseInt(c.style.width, 10) || c.offsetWidth;
-      const avail = vp.clientWidth - 24;
-      setZoom(Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, avail / cw)));
-    });
+    bar.querySelector("#tb-zoom-fit").addEventListener("click", fitToContent);
     bar.querySelector("#tb-fs").addEventListener("click", toggleFullscreen);
     bar.querySelector("#tb-w-plus").addEventListener("click", () => resizeCanvas(SIZE_STEP, 0));
     bar.querySelector("#tb-w-minus").addEventListener("click", () => resizeCanvas(-SIZE_STEP, 0));
@@ -525,8 +807,9 @@
 
     window.addEventListener("keydown", (e) => {
       if (!(e.ctrlKey || e.metaKey)) return;
-      if (e.key === "+" || e.key === "=") { e.preventDefault(); setZoom(zoom + ZOOM_STEP); }
-      else if (e.key === "-") { e.preventDefault(); setZoom(zoom - ZOOM_STEP); }
+      const step = e.shiftKey ? ZOOM_STEP * 10 : ZOOM_STEP;
+      if (e.key === "+" || e.key === "=") { e.preventDefault(); setZoom(zoom + step); }
+      else if (e.key === "-") { e.preventDefault(); setZoom(zoom - step); }
       else if (e.key === "0") { e.preventDefault(); setZoom(1); }
     });
     document.addEventListener("fullscreenchange", () => {
@@ -550,6 +833,77 @@
     window.addEventListener("pointerup", onPointerUp);
     render();
     window.addEventListener("resize", scheduleRender);
+    if (/[?&]capture=1\b/.test(location.search)) {
+      // Marqueur "JS a tourné", remplacé par BBOX:WxH si autoFitCapture réussit.
+      document.title = "CAPTURE_PENDING";
+      // Laisse 1 frame pour que les positions / liens soient mesurables, puis
+      // recadre le canvas sur la bbox réelle du contenu et publie les dims.
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          try { autoFitCapture(); } catch (e) { document.title = "CAPTURE_ERROR:" + e.message; }
+        });
+      });
+    }
+  }
+
+  function autoFitCapture() {
+    const canvas = document.querySelector(".canvas");
+    if (!canvas) return;
+    const cr = canvas.getBoundingClientRect();
+    // Considère tout enfant positionné ayant top/left inline (entities,
+    // arch-layer, packages, etc.). Ignore les overlays SVG.
+    const all = Array.from(canvas.querySelectorAll("*"));
+    const kids = all.filter(function (el) {
+      if (el.tagName === "SVG" || el.closest("svg")) return false;
+      return el.style && (el.style.top !== "" || el.style.left !== "");
+    });
+    if (!kids.length) return;
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    kids.forEach(function (el) {
+      const r = el.getBoundingClientRect();
+      const x = r.x - cr.x, y = r.y - cr.y;
+      if (x < minX) minX = x;
+      if (y < minY) minY = y;
+      if (x + r.width  > maxX) maxX = x + r.width;
+      if (y + r.height > maxY) maxY = y + r.height;
+    });
+    if (!isFinite(minX)) return;
+    const pad = 16;
+    const dx = -minX + pad;
+    const dy = -minY + pad;
+    kids.forEach(function (el) {
+      const top  = parseFloat(el.style.top)  || 0;
+      const left = parseFloat(el.style.left) || 0;
+      el.style.top  = (top  + dy) + "px";
+      el.style.left = (left + dx) + "px";
+    });
+    const newW = Math.ceil(maxX - minX + 2 * pad);
+    const newH = Math.ceil(maxY - minY + 2 * pad);
+    canvas.style.width  = newW + "px";
+    canvas.style.height = newH + "px";
+    canvas.style.margin = "0";
+    // Force tous les ancêtres jusqu'à <body> à la taille exacte du canvas
+    // pour que Edge --window-size=newW,newH capture pile la zone utile.
+    let el = canvas.parentElement;
+    while (el && el !== document.body) {
+      el.style.width = newW + "px";
+      el.style.maxWidth = "none";
+      el.style.margin = "0";
+      el.style.padding = "0";
+      el = el.parentElement;
+    }
+    document.documentElement.style.width  = newW + "px";
+    document.documentElement.style.height = newH + "px";
+    document.body.style.width  = newW + "px";
+    document.body.style.height = newH + "px";
+    document.body.style.margin = "0";
+    document.body.style.padding = "0";
+    scheduleRender();
+    const meta = document.createElement("meta");
+    meta.setAttribute("name", "capture-bbox");
+    meta.setAttribute("content", newW + "x" + newH);
+    document.head.appendChild(meta);
+    document.title = "BBOX:" + newW + "x" + newH;
   }
 
   if (document.readyState === "loading") {

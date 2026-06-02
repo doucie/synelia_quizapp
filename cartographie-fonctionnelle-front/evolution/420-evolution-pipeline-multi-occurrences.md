@@ -1,7 +1,7 @@
 # Note - Evolution du modele pipeline multi-occurrences
 
 Date: 2026-05-30
-Statut: cible BA et technique a planifier
+Statut: migration en cours ; phases A a D largement livrees, phases E et F ouvertes
 Perimetre: pipeline, quiz, preselection, entretiens, evaluations, decisions, emails, audit
 
 ## 1. Decisions retenues
@@ -578,13 +578,13 @@ Fichiers cartographie lies:
 
 Checklist:
 
-- [ ] faire lire la chronologie candidat depuis `application_progress` et les objets de round lies
+- [x] faire lire la chronologie candidat depuis `application_progress` et les objets de round lies
 - [x] faire lire le quiz public depuis `application_quiz_attempt` et non plus depuis un quiz global de candidature
-- [ ] faire lire les ecrans candidats / detail candidat a partir des resumes recalcules et des objets runtime, pas des snapshots legacy
-- [ ] faire lire les entretiens et les decisions depuis `application_progress_id`
-- [ ] faire lire les evaluations depuis `evaluations` + `evaluation_item` + `interview_participant`
-- [ ] faire renvoyer par `applications/track` et les flux publics des actions deja resolues sur l'occurrence precise concernee
-- [ ] conserver au besoin un fallback temporaire de lecture legacy uniquement pour les dossiers encore non backfilles
+- [x] faire lire les ecrans candidats / detail candidat a partir des resumes recalcules et des objets runtime, pas des snapshots legacy
+- [x] faire lire les entretiens et les decisions depuis `application_progress_id`
+- [x] faire lire les evaluations depuis `evaluations` + `evaluation_item` + `interview_participant`
+- [x] faire renvoyer par `applications/track` et les flux publics des actions deja resolues sur l'occurrence precise concernee
+- [x] conserver au besoin un fallback temporaire de lecture legacy uniquement pour les dossiers encore non backfilles
 
 Statut d'implementation:
 
@@ -707,6 +707,8 @@ Statut d'implementation:
 - `applications.*` reste temporairement mis a jour comme resume derive miroir du runtime de tentative pour conserver la compatibilite des usages legacy existants
 - reste ouvert sur `EVALUATION`: `evaluation_item` dispose maintenant d'un premier write path, d'un premier read path backend, d'un endpoint de criteres, d'une saisie/edition front qui derive deja `candidateMark` des criteres scorables sur create/update, d'une projection admin dans `dashboard/entities/applications` et d'une liste `dashboard/evaluations-list` qui affiche deja round explicite, etat evaluateur et resume principal depuis les soumissions reelles, mais l'agregation reste encore limitee aux evaluations rechargees localement et toutes les vues admin/listes ne sont pas encore reconstruites autour de ce detail; ce slice ne ferme donc pas encore la case complete du write/read path evaluation
 - reste ouvert: les vues admin de consultation restent encore majoritairement chargees par `application_id` et non encore recomposees par round explicite, meme si la mutation de correction sait maintenant cibler une tentative
+- verification 2026-06-01: backend Maven (`mvnw compile`) et frontend Angular (`ng build --configuration=development`) sont verts; la suite ciblee `DecisionBusinessTest`, `DecisionControllerTest`, `EvaluationsBusinessTest`, `EvaluationsControllerTest`, `PipelineStageBusinessTest`, `ApplicationsBusinessTest`, `InterviewsBusinessTest` (39 tests) passe sans erreur ni echec; ces validations confirment les slices C/D documentees sur le perimetre teste, mais ne suffisent pas a clore la migration complete tant que les dependances legacy, les resolutions singleton par `stageType` et les contrats publics transitoires de la phase E restent presents
+- revue 2026-06-01: les builds/tests verts valident le perimetre actuellement couvert, mais ne ferment pas la migration a eux seuls. Les dettes encore visibles dans le code sont notamment: logique singleton encore active dans `quizapp_front/src/app/core/models/pipeline.interfaces.ts` et `quizapp_front/src/app/pages/dashboard/pipeline-template-edit/pipeline-template-edit.ts`; resolutions runtime encore basees sur `stageType` dans `ApplicationProgressBusiness.resolveProgressByStageType(...)`, `ApplicationsBusiness`, `InterviewsBusiness` et `DecisionBusiness`; fallbacks dashboard/public encore branches sur `applications.applicationStatus`, `quizScorePercent`, `interviewDate`, `searchString`, `emailRequired` / `emailAutomatic`; champs transitoires encore actifs dans `Interviews` (`campaign_id`, `interview_evaluations_link`, `interview_mail_sent`, `evaluation_*`) et `PipelineStage` (`email_required`, `email_automatic`)
 
 Fichiers cartographie lies:
 
@@ -725,6 +727,33 @@ Checklist:
 - [ ] verifier que les flux publics utilisent bien un `trackingCode` distinct du `quizToken` et un token de tentative explicite
 - [ ] renommer ou nettoyer les champs gardes transitoirement s'ils creent encore une ambiguite fonctionnelle (`interview_evaluations_link`, `interviews.campaign_id`, etc.)
 
+Constat de revue 2026-06-01:
+
+- le front template continue d'imposer un modele singleton pour `QUIZ`, `PRESELECTION` et `INTERVIEW` via `pipeline.interfaces` et `pipeline-template-edit`
+- le backend runtime garde encore des resolutions par `stageType` et des retombees `findByTemplateIdAndStageType(...)` / `resolveProgressByStageType(...)` dans plusieurs flows metier
+- plusieurs dashboards recruteur continuent de fallback sur `applicationStatus`, `quizScorePercent`, `interviewDate`, `interviewStatus` et `currentInterviewEvaluation*` quand le runtime charge n'est pas encore privilegie partout
+- le contrat public quiz transporte encore le token de tentative via `searchString` cote front et cote backend, alors que le `trackingCode` suit deja une logique distincte
+- le modele pipeline continue d'exposer `emailRequired` / `emailAutomatic`, alors que la cible documentee prevoit une couche de regles de notification plus riche
+- `interviews.campaign_id` et `interview_evaluations_link` restent encore des champs transitoires actifs dans les create/update et les snapshots runtime
+- plusieurs vues admin de consultation restent chargees par `application_id`, puis regroupees cote front, au lieu d'une lecture structuree nativement par occurrence de round
+
+Travaux detailles recommandes pour solder la phase E:
+
+- [ ] remplacer `ApplicationProgressBusiness.resolveProgressByStageType(...)` / `findProgressByStageType(...)` par une resolution occurrence-aware explicite (`application_progress_id`, round courant deja charge, ou selecteur runtime plus riche) et retirer les choix "premiere occurrence de meme type"
+- [ ] supprimer les usages runtime restants de `PipelineStageRepository.findByTemplateIdAndStageType(...)`, en particulier dans `InterviewsBusiness`, puis releguer ce lookup au backfill ou a la retrocompatibilite strictement bornee
+- [ ] faire evoluer le modele front `SINGLETON_INTERMEDIATE_STAGE_TYPES` et `pipeline-template-edit` pour autoriser plusieurs `QUIZ`, plusieurs `PRESELECTION` et plusieurs `INTERVIEW`, puis adapter les specs Angular qui verrouillent encore ce modele singleton
+- [ ] auditer `ApplicationsBusiness`, `InterviewsBusiness`, `DecisionBusiness` et les helpers de synchronisation pour supprimer les derniers enchainements "stageType courant" ou "pipelineStage de template par type" encore utilises quand une occurrence exacte existe deja
+- [ ] retirer dans les ecrans recruteur les retombees directes sur `applications.applicationStatus`, `quizScorePercent`, `interviewDate`, `currentInterviewEvaluation*`, `currentPipelineStage*` et `quizToken`, notamment dans `dashboard/applications`, `dashboard/decisions`, `dashboard/interview-create`, `dashboard/interviews`, `dashboard/evaluations-list` et `dashboard/entities/solo/applications`
+- [ ] remplacer dans ces ecrans les fallbacks legacy par des lectures runtime chargees explicitement (`application_progress`, `application_quiz_attempt`, `candidate_interview`, `decision`, `evaluation_item`) ou par un resume derive dont la source est clairement documentee
+- [ ] requalifier les endpoints/listes encore charges "par application" (`getDecisionsByApplicationId`, `ApplicationProgressService.getByApplication`, etc.) en projections occurrence-aware ou en agregats assumes comme tels, pour eviter de reconstituer localement des rounds ambigus
+- [ ] verifier et verrouiller par tests les cas multi-round suivants: quiz remplace, round rouvert, decision annulee, entretien replanifie, candidature abandonnee depuis un round non terminal, et backfill partiel d'un dossier legacy
+- [ ] verifier que `aggregated_quiz_*`, `aggregated_evaluation_*`, `current_application_progress_id`, `last_progressed_at` et `abandoned_from_application_progress_id` racontent exactement la meme histoire que la chronologie affichee au candidat et au recruteur
+- [ ] sortir le token de tentative quiz du champ generique `searchString` dans le backend (`ApplicationsBusiness`) et le frontend (`ApplicationService`, `verify-email`, `quiz`, `track-application`) en introduisant un champ de contrat explicite pour le token de tentative
+- [ ] s'assurer que le code de suivi public (`trackingCode`) n'est plus jamais reutilise comme pseudo-token de quiz et que les URLs `/quiz/:applicationId/:quizToken` sont toujours construites a partir d'un token de tentative explicite et non d'un champ legacy ambigu
+- [ ] decider le sort de `interviews.campaign_id`: soit le conserver comme denormalise controle avec garde de coherence stricte, soit le retirer des mutations runtime et ne plus le valider comme ancrage metier primaire
+- [ ] renommer `interview_evaluations_link` vers une semantique metier plus juste (code de salon / room partagee), propager ce renommage dans DTO, audit, UI et tests, puis distinguer clairement ce code partage d'un futur lien individuel evaluateur si ce besoin arrive plus tard
+- [ ] preparer la sortie de `email_required` / `email_automatic` du runtime template en branchant progressivement les usages vers une vraie structure de regles de notification plutot que sur des booleens de stage
+
 Fichiers cartographie lies:
 
 - entities: `cartographie-fonctionnelle-front/entities/20-entities-applications.md`, `cartographie-fonctionnelle-front/entities/30-entities-interviews.md`, `cartographie-fonctionnelle-front/entities/110-entities-evaluations.md`, `cartographie-fonctionnelle-front/entities/180-entities-mail-log.md`, `cartographie-fonctionnelle-front/entities/230-entities-application-progress.md`, `cartographie-fonctionnelle-front/entities/260-entities-pipeline-stages.md`
@@ -740,6 +769,18 @@ Checklist:
 - [ ] retirer les fallbacks temporaires de lecture et d'ecriture encore presents dans le code
 - [ ] rejouer les controles de coherence post-migration et comparer les ecrans critiques avant / apres bascule
 - [ ] mettre a jour la cartographie si l'implementation reelle a force un ecart par rapport a cette note
+
+Travaux detailles recommandes pour solder la phase F:
+
+- [ ] preparer une migration SQL de sortie qui supprime les colonnes legacy encore redondantes une fois la phase E stabilisee, en commencant par `candidate_answer.application_id`, `decisions.application_id`, `decisions.pipeline_stage_id`, `decisions.is_cancel`, `application_progress.decided_by`, `application_progress.mail_sent`, `pipeline_stage.email_required` et `pipeline_stage.email_automatic`
+- [ ] planifier ensuite la suppression des snapshots mono-valeur de `applications` (`quiz_*`, `interview_*`, `total_evaluation_*`, `quiz_token`, `application_status` comme source runtime), avec verification prealable que toutes les vues lisent deja le runtime ou un resume derive officiel
+- [ ] supprimer apres bascule les champs legacy d'entretien encore redondants ou ambigus (`interviews.application_id`, `interview_mail_sent`, `evaluation_score`, `evaluation_number`, `evaluation_percentage`) ainsi que les usages associes dans les DTO, transformers, filtres et ecrans admin
+- [ ] nettoyer les contrats front/back qui transportent encore le token quiz via `searchString`, puis reserver `searchString` a son role generique de recherche/indexation ou le sortir completement des flux quiz publics
+- [ ] retirer du front les toggles, labels, mappers et specs encore branches sur `emailRequired` / `emailAutomatic`, sur la logique singleton des stages intermediaires, ou sur la copie de lien quiz legacy
+- [ ] supprimer les helpers et branches de fallback legacy encore presents dans `dashboard/applications`, `dashboard/decisions`, `dashboard/interview-create`, `dashboard/entities/solo/applications`, `verify-email`, `track-application` et `quiz`, une fois les read paths runtime rendus obligatoires
+- [ ] rejouer les scripts de coherence et les backfills de controle sur une base de reference, puis comparer les ecrans critiques (public quiz, suivi candidature, dashboard candidats, detail candidature, decisions, entretiens, evaluations) avant/apres suppression physique des champs
+- [ ] ajouter un scenario d'acceptation complet multi-occurrences (plusieurs quiz, plusieurs preselections, plusieurs entretiens, annulation/rollback, abandon) et l'utiliser comme gate de sortie avant d'annoncer la migration terminee
+- [ ] mettre a jour la cartographie, les contrats Postman et la documentation de migration pour refleter l'etat reel final des DTO, routes et tables encore presentes apres nettoyage
 
 Fichiers cartographie lies:
 

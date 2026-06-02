@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="1440" height="1080" viewBox="0 0 1440 1080">
+<defs><style type="text/css"><![CDATA[
+
+
+      /* SVG export overrides */
+      .canvas { position: relative; }
+      .canvas .entity { position: absolute; }
+      html, body { background: transparent; margin: 0; padding: 0; }
+    
+]]></style></defs>
+<foreignObject x="0" y="0" width="1440" height="1080"><div xmlns="http://www.w3.org/1999/xhtml"><div xmlns="http://www.w3.org/1999/xhtml" class="canvas" style="height: 1080px; width: 1440px; margin: 0px; position: absolute; top: 0px; left: 0px; transform-origin: left top;">
+        
+
+        <!-- ── Direction (top) ─────────────────────────────────── -->
+        <div class="section-label" style="top: 10px; left: 30px;">Direction du groupe</div>
+
+        <div class="org-box founder" data-entity="pk" style="top:40px; left:560px; width:300px;">
+          <span class="role">Administrateur Général &amp; Fondateur</span>
+          <span class="name">Patrick KOUASSI</span>
+        </div>
+
+        <div class="org-box dg" data-entity="dg" style="top:150px; left:560px; width:300px;">
+          <span class="role">Directeur Général</span>
+          <span class="name">Jorge VILANOVA</span>
+        </div>
+
+        <!-- ── 4 directeurs (ligne) ────────────────────────────── -->
+        <div class="org-box dir" data-entity="sg" style="top:290px; left:60px; width:280px;">
+          <span class="role">Secrétaire Général &amp; COO</span>
+          <span class="name">Stéphane OUATTARA</span>
+        </div>
+        <div class="org-box dir" data-entity="dint" style="top:290px; left:380px; width:280px;">
+          <span class="role">Directeur de l'International</span>
+          <span class="name">Jules HOUANTONON</span>
+        </div>
+        <div class="org-box dir" data-entity="dt" style="top:290px; left:700px; width:280px;">
+          <span class="role">Directeur Technique</span>
+          <span class="name">Ulrich FOSSOU</span>
+        </div>
+        <div class="org-box dir" data-entity="dc" style="top:290px; left:1020px; width:280px;">
+          <span class="role">Directeur Commercial</span>
+          <span class="name">Sidik OUATTARA</span>
+        </div>
+
+        <!-- ── Expertises technologiques (sous Directeur Technique) ─ -->
+        <div class="section-label" style="top: 430px; left: 30px;">Six expertises technologiques (DT)</div>
+
+        <div class="org-box expertise" data-entity="exp1" style="top:470px; left:30px;  width:200px;"><span class="role">Hosting &amp; Cloud</span></div>
+        <div class="org-box expertise" data-entity="exp2" style="top:470px; left:250px; width:200px;"><span class="role">API Management</span></div>
+        <div class="org-box expertise" data-entity="exp3" style="top:470px; left:470px; width:200px;"><span class="role">Big Data &amp; Machine Learning</span></div>
+        <div class="org-box expertise" data-entity="exp4" style="top:470px; left:690px; width:200px;"><span class="role">Cybersécurité</span></div>
+        <div class="org-box expertise" data-entity="exp5" style="top:470px; left:910px; width:200px;"><span class="role">Intelligence Artificielle</span></div>
+        <div class="org-box expertise" data-entity="exp6" style="top:470px; left:1130px;width:200px;"><span class="role">Automatisation de processus</span></div>
+
+        <!-- ── Pôles d'activité (entités/services portés par le groupe) ── -->
+        <div class="section-label" style="top: 600px; left: 30px;">Unités &amp; offres d'activité</div>
+
+        <div class="org-box unit" data-entity="u1" style="top:640px; left:60px;  width:260px;">
+          <span class="role">Open Digital Academy</span>
+          <span class="name">Formation et insertion des talents tech africains</span>
+        </div>
+        <div class="org-box unit" data-entity="u2" style="top:640px; left:360px; width:260px;">
+          <span class="role">Distribution Mobile Money</span>
+          <span class="name">Solutions de distribution et de monétique</span>
+        </div>
+        <div class="org-box unit" data-entity="u3" style="top:640px; left:660px; width:260px;">
+          <span class="role">Solutions sectorielles</span>
+          <span class="name">Système de gestion des ressources animales, etc.</span>
+        </div>
+        <div class="org-box unit" data-entity="u4" style="top:640px; left:960px; width:280px;">
+          <span class="role">Contrôle qualité des recrutements</span>
+          <span class="name">Cadre dans lequel s'inscrit SyneliaQuizApp</span>
+        </div>
+
+        <!-- ── Implantations internationales (sous Dir International) ── -->
+        <div class="section-label" style="top: 770px; left: 30px;">Implantations internationales (Dir. International)</div>
+
+        <div class="org-box dir" data-entity="loc1" style="top:810px; left:120px; width:200px;">
+          <span class="role">Côte d'Ivoire</span>
+          <span class="name">Siège — Abidjan (depuis 2012)</span>
+        </div>
+        <div class="org-box dir" data-entity="loc2" style="top:810px; left:360px; width:200px;">
+          <span class="role">Burkina Faso</span>
+          <span class="name">Bureau régional</span>
+        </div>
+        <div class="org-box dir" data-entity="loc3" style="top:810px; left:600px; width:200px;">
+          <span class="role">Libéria</span>
+          <span class="name">Bureau régional</span>
+        </div>
+        <div class="org-box dir" data-entity="loc4" style="top:810px; left:840px; width:280px;">
+          <span class="role">Expansion régionale</span>
+          <span class="name">Autres pays d'Afrique de l'Ouest</span>
+        </div>
+
+        <!-- ── Bandeau bas : positionnement du projet SyneliaQuizApp ── -->
+        <div class="section-label" style="top: 920px; left: 30px;">Positionnement du projet SyneliaQuizApp</div>
+        <div class="org-box" data-entity="qa" style="top:960px; left:380px; width:680px; padding:12px 16px;">
+          <span class="role">SyneliaQuizApp — plateforme interne de recrutement &amp; évaluation</span>
+          <span class="name">Outillage du pôle « Contrôle qualité des recrutements » et support à la fonction RH du groupe</span>
+        </div>
+      <svg xmlns="http://www.w3.org/2000/svg" class="anchor-handles" viewBox="0 0 1440 1080" style="position: absolute; left: 0px; top: 0px; width: 100%; height: 100%; pointer-events: none; z-index: 1000;"/></div></div></foreignObject>
+<g class="links-layer" fill="none"><path d="M 710.0000343322754 92.10000228881836 C 710.0000343322754 132.10000228881836, 710.0000343322754 110, 710.0000343322754 150" class="strong"></path><path d="M 560.0000343322754 176.05000114440918 C 371.19813437824223 176.05000114440918, 199.99999618530273 101.19810004596687, 199.99999618530273 290" class="strong"></path><path d="M 614.0000343322754 202.10000228881836 C 614.0000343322754 266.4475262018085, 520.0000038146973 225.65247608700986, 520.0000038146973 290" class="strong"></path><path d="M 806.0000343322754 202.10000228881836 C 806.0000343322754 249.2232704204583, 840.0000343322754 242.87673186836005, 840.0000343322754 290" class="strong"></path><path d="M 860.0000343322754 176.05000114440918 C 1020.4560763017967 176.05000114440918, 1159.9999732971191 129.5439580304787, 1159.9999732971191 290" class="strong"></path><path d="M 1240.0000343322754 666.0500011444092 C 1425.3213842803648 666.0500011444092, 1245.3213537627867 990.0500011444092, 1060.0000038146973 990.0500011444092" class="strong"></path><path d="M 840.0000343322754 342.10000228881836 C 840.0000343322754 656.8222665535578, 720.0000038146973 645.2777357352605, 720.0000038146973 960" stroke-dasharray="5 4"></path></g>
+</svg>
