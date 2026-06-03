@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Organigramme – Groupe Synelia</title>
+<style>
+  :root {
+    --ag:    #1e3a5f;
+    --dg:    #2563eb;
+    --sg:    #4f46e5;
+    --pmo:   #0d9488;
+    --d1:    #0284c7;
+    --d2:    #059669;
+    --d3:    #7c3aed;
+    --d4:    #d97706;
+    --d5:    #475569;
+    --bg:    #f8fafc;
+    --ink:   #1e293b;
+    --muted: #64748b;
+    --white: #ffffff;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body {
+    background: var(--bg);
+    font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+    color: var(--ink);
+    display: flex; justify-content: center; padding: 28px 20px;
+  }
+  .canvas { position:relative; width:1520px; height:800px; }
+
+  /* ── SVG ── */
+  .lines { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:0; }
+  .lines line { stroke:#94a3b8; stroke-width:1.5; fill:none; stroke-linecap:round; stroke-linejoin:round; }
+  .lines .thick  { stroke-width:2.0; stroke:#64748b; }
+  .lines .accent { stroke:var(--pmo); stroke-width:1.7; stroke-dasharray:6 3; }
+  .lines .br { stroke-width:1.2; opacity:.85; }
+  .lines .b1 { stroke:var(--d1); } .lines .b2 { stroke:var(--d2); }
+  .lines .b3 { stroke:var(--d3); } .lines .b4 { stroke:var(--d4); } .lines .b5 { stroke:var(--d5); }
+
+  /* ── Boxes ── */
+  .box {
+    position:absolute; background:var(--white); border-radius:8px;
+    box-shadow:0 2px 8px rgba(0,0,0,.05), 0 0 0 1px rgba(0,0,0,.03);
+    display:flex; flex-direction:column; justify-content:center;
+    padding:8px 12px; z-index:1; text-align:center;
+  }
+  .box .nm { font-weight:700; font-size:12.5px; letter-spacing:-0.01em; line-height:1.25; }
+  .box .rl { font-size:9.5px; color:var(--muted); margin-top:1px; }
+  .box .dp { font-size:9.2px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; margin-bottom:2px; }
+
+  .ba { border-left:5px solid var(--ag); }
+  .bd { border-left:5px solid var(--dg); background:#eff6ff; }
+  .bs { border-left:5px solid var(--sg); background:#eef2ff; }
+  .bp { border-left:5px solid var(--pmo); background:#f0fdfa; }
+  .bx { border-left:5px solid; border-radius:10px; padding:10px 13px; min-height:66px; }
+  .bu { border-left:3px solid; border-radius:6px; padding:5px 10px; box-shadow:0 1px 3px rgba(0,0,0,.035); }
+  .bu .nm { font-size:11px; } .bu .rl { font-size:8.8px; }
+
+  .x1 { border-color:var(--d1); background:#f0f9ff; } .x1 .dp{color:var(--d1);}
+  .x2 { border-color:var(--d2); background:#ecfdf5; } .x2 .dp{color:var(--d2);}
+  .x3 { border-color:var(--d3); background:#f5f3ff; } .x3 .dp{color:var(--d3);}
+  .x4 { border-color:var(--d4); background:#fffbeb; } .x4 .dp{color:var(--d4);}
+  .x5 { border-color:var(--d5); background:#f1f5f9; } .x5 .dp{color:var(--d5);}
+  .s1 { border-color:var(--d1); } .s2 { border-color:var(--d2); }
+  .s3 { border-color:var(--d3); } .s4 { border-color:var(--d4); } .s5 { border-color:var(--d5); }
+
+  .cap { position:absolute; bottom:8px; left:0; right:0; text-align:center;
+    font-size:10.5px; color:var(--muted); z-index:0; }
+</style>
+</head>
+<body>
+
+<div class="canvas">
+
+  <!-- ════════════════ SVG ════════════════ -->
+  <svg class="lines" viewBox="0 0 1520 800" preserveAspectRatio="none">
+    <!-- AG(760,54) → DG(760,98) -->
+    <line x1="760" y1="54" x2="760" y2="94" class="thick"/>
+
+    <!-- DG(760,158) → SG(760,198) -->
+    <line x1="760" y1="158" x2="760" y2="194" class="thick"/>
+
+    <!-- SG(760,252) → horizontal bar at y=340 -->
+    <line x1="760" y1="252" x2="760" y2="340" class="thick"/>
+
+    <!-- PMO branch: horizontal dashed from SG line to PMO box (same level) -->
+    <line x1="760" y1="282" x2="1000" y2="282" class="accent"/>
+
+    <!-- Horizontal distribution bar at y=340, from col1 to col5 centers -->
+    <line x1="180" y1="340" x2="1340" y2="340" class="thick"/>
+    <!-- Drops to directions (y=358) -->
+    <line x1="180" y1="340" x2="180" y2="354" class="thick"/>
+    <line x1="470" y1="340" x2="470" y2="354" class="thick"/>
+    <line x1="760" y1="340" x2="760" y2="354" class="thick"/>
+    <line x1="1050" y1="340" x2="1050" y2="354" class="thick"/>
+    <line x1="1340" y1="340" x2="1340" y2="354" class="thick"/>
+
+    <!-- Dir 1 subs -->
+    <line x1="180" y1="426" x2="180" y2="452" class="br b1"/>
+    <line x1="74" y1="452" x2="286" y2="452" class="br b1"/>
+    <line x1="74" y1="452" x2="74" y2="478" class="br b1"/>
+    <line x1="180" y1="452" x2="180" y2="478" class="br b1"/>
+    <line x1="286" y1="452" x2="286" y2="478" class="br b1"/>
+
+    <!-- Dir 2 subs -->
+    <line x1="470" y1="426" x2="470" y2="452" class="br b2"/>
+    <line x1="364" y1="452" x2="576" y2="452" class="br b2"/>
+    <line x1="364" y1="452" x2="364" y2="478" class="br b2"/>
+    <line x1="470" y1="452" x2="470" y2="478" class="br b2"/>
+    <line x1="576" y1="452" x2="576" y2="478" class="br b2"/>
+
+    <!-- Dir 3 subs (2 only) -->
+    <line x1="760" y1="426" x2="760" y2="452" class="br b3"/>
+    <line x1="660" y1="452" x2="860" y2="452" class="br b3"/>
+    <line x1="660" y1="452" x2="660" y2="478" class="br b3"/>
+    <line x1="860" y1="452" x2="860" y2="478" class="br b3"/>
+
+    <!-- Dir 4 subs -->
+    <line x1="1050" y1="426" x2="1050" y2="452" class="br b4"/>
+    <line x1="944" y1="452" x2="1156" y2="452" class="br b4"/>
+    <line x1="944" y1="452" x2="944" y2="478" class="br b4"/>
+    <line x1="1050" y1="452" x2="1050" y2="478" class="br b4"/>
+    <line x1="1156" y1="452" x2="1156" y2="478" class="br b4"/>
+
+    <!-- Dir 5 subs -->
+    <line x1="1340" y1="426" x2="1340" y2="452" class="br b5"/>
+    <line x1="1234" y1="452" x2="1446" y2="452" class="br b5"/>
+    <line x1="1234" y1="452" x2="1234" y2="478" class="br b5"/>
+    <line x1="1340" y1="452" x2="1340" y2="478" class="br b5"/>
+    <line x1="1446" y1="452" x2="1446" y2="478" class="br b5"/>
+  </svg>
+
+  <!-- ════════════════ BOXES ════════════════ -->
+
+  <!-- Niveau 0 : Administrateur Général (center=760) -->
+  <div class="box ba" style="left:620px; top:14px; width:280px; min-height:52px;">
+    <div class="dp" style="color:var(--ag);">Administrateur Général</div>
+    <div class="nm">M. Patrick Kouassi</div>
+    <div class="rl">Fondateur du Groupe</div>
+  </div>
+
+  <!-- Niveau 1 : Directeur Général (center=760) -->
+  <div class="box bd" style="left:625px; top:96px; width:270px; min-height:50px;">
+    <div class="dp" style="color:var(--dg);">Direction Générale</div>
+    <div class="nm">M. Jorge Vilanova</div>
+    <div class="rl">Directeur Général</div>
+  </div>
+
+  <!-- Niveau 2 : Secrétaire Général (center=760) -->
+  <div class="box bs" style="left:625px; top:196px; width:270px; min-height:50px;">
+    <div class="dp" style="color:var(--sg);">Secrétariat Général</div>
+    <div class="nm">M. Stéphane Ouattara</div>
+    <div class="rl">Secrétaire Général &amp; COO</div>
+  </div>
+
+  <!-- Niveau 2b : PMO Gouvernance (branché à droite du SG, au niveau du trait pointillé) -->
+  <div class="box bp" style="left:1000px; top:259px; width:220px; min-height:46px;">
+    <div class="dp" style="color:var(--pmo);">PMO Gouvernance</div>
+    <div class="nm">Mme. Seynabou</div>
+  </div>
+
+  <!-- ═══ 5 DIRECTIONS (y=356, h=68, centers: 180,470,760,1050,1340) ═══ -->
+
+  <div class="box bx x1" style="left:50px; top:356px; width:260px;">
+    <div class="dp">Direction 1</div>
+    <div class="nm">Business &amp; International</div>
+    <div class="rl">M. Jules Houantonon</div>
+  </div>
+
+  <div class="box bx x2" style="left:340px; top:356px; width:260px;">
+    <div class="dp">Direction 2</div>
+    <div class="nm">Production &amp; Expérience Client</div>
+    <div class="rl">Mme. Anah Coulibaly</div>
+  </div>
+
+  <div class="box bx x3" style="left:630px; top:356px; width:260px;">
+    <div class="dp">Direction 3</div>
+    <div class="nm">Innovation &amp; Expertise</div>
+    <div class="rl">M. Jekas</div>
+  </div>
+
+  <div class="box bx x4" style="left:920px; top:356px; width:260px;">
+    <div class="dp">Direction 4</div>
+    <div class="nm">Performance Financière &amp; Fiscalité</div>
+    <div class="rl">Mme. Fatim</div>
+  </div>
+
+  <div class="box bx x5" style="left:1210px; top:356px; width:260px;">
+    <div class="dp">Direction 5</div>
+    <div class="nm">Administration &amp; Capital Humain</div>
+    <div class="rl">Direction des Ressources</div>
+  </div>
+
+  <!-- ═══ SOUS-SERVICES (y=480, 537, 594) ═══ -->
+  <!-- Centers: 180,470,760,1050,1340 → sub left = center - 106 -->
+
+  <!-- Dir 1 -->
+  <div class="box bu s1" style="left:74px; top:480px; width:212px;">
+    <div class="nm">Direction Commerciale</div><div class="rl">M. Sidik Ouattara</div>
+  </div>
+  <div class="box bu s1" style="left:74px; top:537px; width:212px;">
+    <div class="nm">Marketing &amp; Communication</div><div class="rl">M. Kadjo</div>
+  </div>
+  <div class="box bu s1" style="left:74px; top:594px; width:212px;">
+    <div class="nm">Pays</div><div class="rl">M. Jules Houantonon</div>
+  </div>
+
+  <!-- Dir 2 -->
+  <div class="box bu s2" style="left:364px; top:480px; width:212px;">
+    <div class="nm">Direction Technique &amp; Delivery</div><div class="rl">M. Ulrich Fossou</div>
+  </div>
+  <div class="box bu s2" style="left:364px; top:537px; width:212px;">
+    <div class="nm">Bureau de Gestion de Projets</div><div class="rl">M. Laganase Ouattara</div>
+  </div>
+  <div class="box bu s2" style="left:364px; top:594px; width:212px;">
+    <div class="nm">Expérience Client</div><div class="rl">M. Koné Brahima</div>
+  </div>
+
+  <!-- Dir 3 (2 subs) -->
+  <div class="box bu s3" style="left:654px; top:480px; width:212px;">
+    <div class="nm">BU Expertise &amp; Innovation</div>
+  </div>
+  <div class="box bu s3" style="left:654px; top:542px; width:212px;">
+    <div class="nm">BU Édition Logicielle</div>
+  </div>
+
+  <!-- Dir 4 -->
+  <div class="box bu s4" style="left:944px; top:480px; width:212px;">
+    <div class="nm">Contrôle de Gestion</div>
+  </div>
+  <div class="box bu s4" style="left:944px; top:537px; width:212px;">
+    <div class="nm">Trésorerie / Comptabilité</div>
+  </div>
+  <div class="box bu s4" style="left:944px; top:594px; width:212px;">
+    <div class="nm">Fiscalité</div>
+  </div>
+
+  <!-- Dir 5 -->
+  <div class="box bu s5" style="left:1234px; top:480px; width:212px;">
+    <div class="nm">Ressources Humaines</div><div class="rl">Mme. Ornella Gossan</div>
+  </div>
+  <div class="box bu s5" style="left:1234px; top:537px; width:212px;">
+    <div class="nm">Juridique</div>
+  </div>
+  <div class="box bu s5" style="left:1234px; top:594px; width:212px;">
+    <div class="nm">Administratif</div>
+  </div>
+
+  <div class="cap">Figure — Organigramme du Groupe Synelia. Gouvernance, directions opérationnelles et services rattachés (juin 2026).</div>
+
+</div>
+</body>
+</html>

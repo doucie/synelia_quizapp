@@ -15,7 +15,7 @@ Fichier concerné : `z_mémoire/template_memoire/typst/` (theme.typ, body.typ, f
 - **Problème** : Présentation peu engageante, difficile à lire.
 - **Action** : Revoir la mise en forme du glossaire (espacement, lisibilité).
 
-### Sommaire & Table des matières
+### Sommaire, Glossaire, Bibliographie & Table des matières
 - **Action** : Mettre à jour après avoir terminé toutes les modifications du corps du mémoire.
 
 ### Bibliographie
@@ -90,3 +90,6 @@ Fichier concerné : `z_mémoire/template_memoire/typst/` (theme.typ, body.typ, f
 - [x] Année académique hors du bloc auteur/encadrement
 - [x] Retirer tous les blocs `note-box` d'aide à la rédaction
 - [x] Intégrer les 33 captures PNG dans le Typst
+
+
+
