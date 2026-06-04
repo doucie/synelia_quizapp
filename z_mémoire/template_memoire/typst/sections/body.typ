@@ -45,9 +45,10 @@
   #counter(page).update(1)
 
   #top-heading([Introduction])
+
   À l'ère du digital, la gestion du recrutement connaît une transformation profonde. Les entreprises ne peuvent plus se contenter d'un traitement fragmenté des candidatures, de validations manuelles dispersées et d'outils hétérogènes pour piloter l'ensemble du parcours candidat.
 
-  Dans ce contexte, le projet #strong[SyneliaQuizApp] a été conçu pour répondre à un besoin concret de l'entreprise SYNELIA : disposer d'une plateforme centralisée de gestion des campagnes de recrutement, de suivi des candidatures, d'évaluation technique et de coordination des intervenants internes. Cette démarche de centralisation s'inscrit dans une logique d'urbanisation des systèmes d'information, telle que définie par Longépé (2009) : remplacer des outils hétérogènes et fragmentés par un système unifié, aligné sur les processus métier de l'organisation.
+  Dans ce contexte, le projet #strong[SyneliaQuizApp] a été conçu pour répondre à un besoin concret de l'entreprise SYNELIA : disposer d'une plateforme centralisée de gestion des campagnes de recrutement, de suivi des candidatures, d'évaluation technique et de coordination des intervenants internes. Cette démarche de centralisation s'inscrit dans une logique d'urbanisation des systèmes d'information, telle que définie par Christophe Longépé dans son ouvrage *Le projet d'urbanisation du S.I.* (2009) : remplacer des outils hétérogènes et fragmentés par un système unifié, aligné sur les processus métier de l'organisation.
 
   Le recrutement occupe aujourd'hui une place stratégique dans la compétitivité des entreprises de services numériques. Dans un environnement où les profils techniques sont fortement sollicités, la capacité à identifier rapidement les bons candidats, à évaluer leurs compétences avec cohérence et à maintenir une communication fluide tout au long du processus devient un avantage organisationnel décisif. Or, dans de nombreuses structures, ces opérations restent encore dispersées entre plusieurs outils, plusieurs interlocuteurs et plusieurs supports de suivi difficilement consolidables.
 
@@ -87,7 +88,7 @@
 
   Aujourd'hui, Synelia revendique plus de dix années de présence en Afrique de l'Ouest, un effectif de plus de cent dix profils technologiques locaux et internationaux, plus de cent projets accomplis avec succès et environ quatre-vingt-dix clients actifs. Le groupe se positionne comme #emph[partenaire stratégique des entreprises qui souhaitent réussir leur transition vers un avenir numérique]. Son offre s'articule autour de six grandes expertises technologiques — Hosting and Cloud, API Management, Big Data et Machine Learning, Cybersécurité, Intelligence Artificielle et Automatisation de processus — déclinées en accompagnements sur mesure auprès d'organisations privées et publiques. Cette offre est complétée par des unités d'activité dédiées, parmi lesquelles l'#strong[Open Digital Academy] (formation et insertion des talents tech africains), la distribution Mobile Money, plusieurs solutions sectorielles (par exemple un système de gestion des ressources animales) et une offre de contrôle qualité des recrutements dans laquelle s'inscrit directement le présent projet.
 
-  L'organisation interne du groupe est portée par une équipe dirigeante restreinte mais structurée. La fondation est assurée par Patrick KOUASSI, Administrateur Général et fondateur du groupe. La direction générale est exercée par Jorge VILANOVA, appuyé par quatre directions opérationnelles complémentaires : Stéphane OUATTARA (Secrétaire Général et COO), Jules HOUANTONON (Directeur de l'International), Ulrich FOSSOU (Directeur Technique) et Sidik OUATTARA (Directeur Commercial). Cette gouvernance courte favorise un pilotage transverse, dans lequel les expertises technologiques et les unités d'activité communiquent étroitement avec les fonctions support, en particulier les ressources humaines.
+  L'organisation interne du groupe est portée par une gouvernance à trois niveaux : la Direction Générale assurée par Patrick KOUASSI, fondateur du groupe, l'Administration Générale exercée par Jorge VILANOVA, et le Secrétariat Général confié à Stéphane OUATTARA (Secrétaire Général et COO), auquel est rattaché le PMO Gouvernance. Cinq directions opérationnelles complémentaires se déploient ensuite : Business & International, Production & Expérience Client, Innovation & Expertise, Performance Financière & Fiscalité, et Administration & Capital Humain. Cette gouvernance structurée favorise un pilotage transverse, dans lequel les expertises technologiques et les unités d'activité communiquent étroitement avec les fonctions support.
 
   #figure(
     image("../../../figures_html/captures/to use/Organigramme du Groupe Synelia.png", width: 100%),
@@ -103,7 +104,7 @@
     [Activité], [Plus de 103 projets livrés et environ 90 clients actifs accompagnés.],
     [Expertises], [Hosting and Cloud, API Management, Big Data and Machine Learning, Cybersécurité, IA, Automatisation de processus.],
     [Offres dérivées], [Open Digital Academy, distribution Mobile Money, solutions sectorielles, contrôle qualité des recrutements.],
-    [Gouvernance], [Fondation Patrick KOUASSI ; DG Jorge VILANOVA ; quatre directions opérationnelles (COO, International, Technique, Commercial).],
+    [Gouvernance], [Direction Générale (Patrick KOUASSI) ; Administration Générale (Jorge VILANOVA) ; SG (Stéphane OUATTARA) ; cinq directions opérationnelles.],
   )
 
   Dans ce contexte, le recrutement n'est pas une fonction périphérique mais un levier stratégique direct. La capacité du groupe à délivrer ses six expertises technologiques, à animer son académie de formation et à honorer ses engagements clients dépend de la régularité avec laquelle il identifie, évalue et intègre de nouveaux talents — qu'il s'agisse de jeunes diplômés issus de l'Open Digital Academy, de consultants confirmés sur les expertises techniques de pointe ou de profils transverses pour les fonctions support. Le cahier des charges interne mentionne plusieurs dizaines de recrutements par an, répartis sur plusieurs spécialités et plusieurs niveaux d'expérience, ce qui crée un besoin de structuration durable que ne peut pas couvrir une logique artisanale.
@@ -111,21 +112,24 @@
   Au-delà du volume, la nature même de l'activité de Synelia impose une exigence forte sur la #emph[qualité] et la #emph[traçabilité] des recrutements. Le groupe communique sur l'excellence opérationnelle, la conformité aux normes et la sécurité de ses interventions ; il est donc cohérent que sa propre chaîne de recrutement adopte le même niveau de rigueur : critères homogènes, évaluations techniques objectivées, historique consolidé des décisions, gouvernance fine des permissions entre recruteurs et évaluateurs. C'est précisément ce besoin que vient adresser SyneliaQuizApp, en outillant le pôle « Contrôle qualité des recrutements » et en s'appuyant sur les compétences de la Direction Technique pour proposer une plateforme conforme aux standards techniques du groupe.
 
   === Le processus de recrutement traditionnel
+  #label("ref-processus")
   Dans un fonctionnement traditionnel, le processus de recrutement suit une chaîne relativement connue. Une offre ou une campagne est d'abord diffusée par différents canaux, tels que l'email, les réseaux professionnels ou les plateformes d'emploi. Les candidatures sont ensuite reçues, triées et relues manuellement selon des critères qui peuvent varier d'un recruteur à l'autre.
 
   Vient ensuite une phase d'évaluation, souvent réalisée à partir d'entretiens techniques, de questionnaires externes ou de jugements informels portés sur le dossier du candidat. Les entretiens doivent être planifiés, confirmés et suivis, ce qui multiplie les échanges. Enfin, une décision de présélection, de poursuite ou de rejet est prise, puis communiquée au candidat avec plus ou moins de formalisation.
 
-  Pris isolément, chacun de ces maillons paraît simple. Mais lorsqu'ils sont répartis entre plusieurs outils et plusieurs personnes, ils génèrent rapidement des pertes d'information, des lenteurs et une forte dépendance à la mémoire individuelle des intervenants. Comme le soulignent Chapman et Webster (2003), l'usage d'outils numériques intégrés dans le recrutement ne se limite pas à un gain de productivité : il transforme la capacité même de l'organisation à standardiser, comparer et documenter ses évaluations.
+  Pris isolément, chacun de ces maillons paraît simple. Mais lorsqu'ils sont répartis entre plusieurs outils et plusieurs personnes, ils génèrent rapidement des pertes d'information, des lenteurs et une forte dépendance à la mémoire individuelle des intervenants. Comme le soulignent D. S. Chapman et J. Webster dans leur article *The use of technologies in the recruiting, selection, and evaluation of job applicants* (2003), l'usage d'outils numériques intégrés dans le recrutement ne se limite pas à un gain de productivité : il transforme la capacité même de l'organisation à standardiser, comparer et documenter ses évaluations.
 
   === Les défis et limitations actuels
+  #label("ref-defis")
   Les principales difficultés du processus initial tiennent d'abord à la fragmentation des outils. Les candidatures peuvent arriver par plusieurs canaux, les informations sont réparties entre boîtes mail, documents partagés et fichiers de suivi, et l'historique complet d'un candidat devient difficile à reconstituer. Cette dispersion nuit directement à la réactivité et à la qualité du pilotage.
 
-  Une seconde limite concerne l'absence de standardisation des évaluations. Sans grille commune ni mécanisme homogène de test technique, la comparaison entre candidats devient moins objective et dépend fortement de l'interprétation de chaque recruteur. Stone et al. (2015) ont montré que la technologie, lorsqu'elle est correctement intégrée au processus RH, constitue un levier puissant pour réduire cette subjectivité et harmoniser les critères de sélection. Ce problème est particulièrement sensible dans un environnement où les compétences techniques doivent être évaluées avec rigueur.
+  Une seconde limite concerne l'absence de standardisation des évaluations. Sans grille commune ni mécanisme homogène de test technique, la comparaison entre candidats devient moins objective et dépend fortement de l'interprétation de chaque recruteur. D. L. Stone, D. L. Deadrick, K. M. Lukaszewski et R. Johnson, dans *The influence of technology on the future of human resource management* (2015), ont montré que la technologie, lorsqu'elle est correctement intégrée au processus RH, constitue un levier puissant pour réduire cette subjectivité et harmoniser les critères de sélection. Ce problème est particulièrement sensible dans un environnement où les compétences techniques doivent être évaluées avec rigueur.
 
   Enfin, le manque de traçabilité fragilise la gouvernance du recrutement. Il devient difficile de savoir pourquoi une décision a été prise, quelle source de candidature est la plus efficace, quel acteur est intervenu à quel moment ou quels retards affectent l'expérience candidat. La lourdeur organisationnelle qui en découle peut impacter à la fois la qualité du recrutement et l'image de l'entreprise.
 
   === La nécessité d'une solution digitale
-  Dans ce contexte, une plateforme interne unifiée apparaît comme une réponse pertinente pour plusieurs raisons. Bondarouk et Olivas-Luján (2013) qualifient cette transition de passage à un #emph[electronic HRM], où la technologie ne se contente pas de reproduire des processus papier mais redéfinit la manière dont l'organisation interagit avec ses candidats. Elle permet d'abord de centraliser les informations et d'offrir un référentiel commun à tous les acteurs du recrutement. Elle permet ensuite d'automatiser certaines opérations répétitives, comme la vérification d'email, l'envoi de notifications, la mise à disposition du quiz ou la consolidation de certains états métier.
+  #label("ref-solution-digitale")
+  Dans ce contexte, une plateforme interne unifiée apparaît comme une réponse pertinente pour plusieurs raisons. T. Bondarouk et M. R. Olivas-Luján, dans *Electronic HRM in the Smart Era* (2013), qualifient cette transition de passage à un #emph[electronic HRM], où la technologie ne se contente pas de reproduire des processus papier mais redéfinit la manière dont l'organisation interagit avec ses candidats. Elle permet d'abord de centraliser les informations et d'offrir un référentiel commun à tous les acteurs du recrutement. Elle permet ensuite d'automatiser certaines opérations répétitives, comme la vérification d'email, l'envoi de notifications, la mise à disposition du quiz ou la consolidation de certains états métier.
 
   Une telle solution favorise également la standardisation du processus. En structurant les campagnes, les statuts, les évaluations et les permissions, elle réduit la variabilité des pratiques et facilite la comparaison entre candidatures. Enfin, elle améliore la transparence du parcours candidat en donnant accès à un suivi plus clair, ce qui contribue à renforcer la qualité de l'expérience utilisateur et, par extension, l'image employeur de SYNELIA.
 
@@ -215,6 +219,7 @@
   )
 
   === Choix du framework backend
+  #label("ref-choix-backend")
   Plusieurs frameworks backend pouvaient légitimement être retenus pour porter la logique métier de SyneliaQuizApp. Le projet exige un cadre capable de soutenir un domaine fortement orienté données, de gérer une matrice de permissions complexe et d'exposer une API REST stable. L'évaluation a donc porté sur les principales options actuelles du marché.
 
   #document-table(
@@ -227,9 +232,10 @@
     [Laravel (PHP)], [Productivité rapide pour CRUD, syntaxe expressive, ORM agréable.], [Modèle de threading et de typage moins adapté à un domaine fortement transactionnel et à des permissions complexes ; positionnement plus orienté sites de gestion classiques que plateformes métier critiques.],
   )
 
-  Sur l'ensemble de la grille, #strong[Spring Boot] s'est imposé comme le choix le plus équilibré. Comme le souligne Walls (2022), il offre un cadre éprouvé en environnement professionnel, une intégration native avec Spring Security indispensable au modèle de permissions du projet, une couche de persistance JPA cohérente avec le caractère fortement relationnel du domaine, et une organisation en couches qui supporte sans difficulté la croissance du code. L'inconvénient principal, lié à la verbosité de Java, est compensé par la lisibilité durable du code et par la fiabilité accrue qu'apporte un typage statique strict dans un projet manipulant des règles de gestion sensibles. Le contexte SYNELIA, où Java reste la pile dominante, a achevé de consolider ce choix sur le plan opérationnel.
+  Sur l'ensemble de la grille, #strong[Spring Boot] s'est imposé comme le choix le plus équilibré. Comme le souligne Craig Walls dans *Spring in Action* (6ᵉ édition, 2022), il offre un cadre éprouvé en environnement professionnel, une intégration native avec Spring Security indispensable au modèle de permissions du projet, une couche de persistance JPA cohérente avec le caractère fortement relationnel du domaine, et une organisation en couches qui supporte sans difficulté la croissance du code. L'inconvénient principal, lié à la verbosité de Java, est compensé par la lisibilité durable du code et par la fiabilité accrue qu'apporte un typage statique strict dans un projet manipulant des règles de gestion sensibles. Le contexte SYNELIA, où Java reste la pile dominante, a achevé de consolider ce choix sur le plan opérationnel.
 
   === Choix du framework frontend
+  #label("ref-choix-frontend")
   Côté frontend, le projet impliquait un nombre élevé d'écrans, des parcours distincts par profil utilisateur, des règles d'affichage dépendantes des permissions, et la nécessité de maintenir une cohérence visuelle sur la durée. Trois familles de frameworks ont été comparées.
 
   #document-table(
@@ -240,9 +246,10 @@
     [Vue.js], [Bonne ergonomie, courbe d'apprentissage douce, qualité de la documentation.], [Écosystème plus restreint en contexte entreprise francophone ; intégration native de la sécurité et des grands modules métier moins structurée qu'Angular.],
   )
 
-  Le choix d'#strong[Angular] répond directement à la nature du produit. Comme le documente Freeman (2023), la richesse du domaine, la coexistence d'une surface publique candidate et d'une surface interne, la nécessité d'imposer une structure modulaire stable et le besoin d'un typage strict dès la couche présentation rendent un framework opinionné plus pertinent qu'un framework librement composable. L'usage par défaut de TypeScript, l'injection de dépendances, le routage intégré et la gestion native des formulaires réactifs apportent un cadre de travail homogène, ce qui réduit le coût de maintenance et facilite l'arrivée de nouveaux contributeurs sur le projet. React et Vue restent techniquement valables, mais leur souplesse devient un risque lorsqu'aucune équipe dédiée n'est en mesure de figer durablement les conventions transverses.
+  Le choix d'#strong[Angular] répond directement à la nature du produit. Comme le documente Adam Freeman dans *Pro Angular 16* (2023), la richesse du domaine, la coexistence d'une surface publique candidate et d'une surface interne, la nécessité d'imposer une structure modulaire stable et le besoin d'un typage strict dès la couche présentation rendent un framework opinionné plus pertinent qu'un framework librement composable. L'usage par défaut de TypeScript, l'injection de dépendances, le routage intégré et la gestion native des formulaires réactifs apportent un cadre de travail homogène, ce qui réduit le coût de maintenance et facilite l'arrivée de nouveaux contributeurs sur le projet. React et Vue restent techniquement valables, mais leur souplesse devient un risque lorsqu'aucune équipe dédiée n'est en mesure de figer durablement les conventions transverses.
 
   === Choix du système de gestion de base de données
+  #label("ref-choix-sgbd")
   Le domaine du recrutement est intrinsèquement relationnel : campagnes, formulaires, versions, candidatures, étapes, entretiens, évaluations, décisions et permissions sont liés par des contraintes d'intégrité fortes. Le choix du SGBD devait donc privilégier la cohérence transactionnelle, la richesse des types relationnels et la qualité de l'outillage de migration.
 
   #document-table(
@@ -254,7 +261,7 @@
     [MariaDB], [Compatibilité étroite avec MySQL et gouvernance communautaire.], [Aucun gain fonctionnel décisif par rapport à MySQL 8 dans le contexte du projet.],
   )
 
-  #strong[MySQL 8] a été retenu parce qu'il offre le meilleur compromis entre richesse fonctionnelle, cohérence transactionnelle et simplicité d'exploitation. Sa parfaite intégration avec JPA et Hibernate, dont Bauer et al. (2016) décrivent les principes de mapping objet-relationnel, ainsi qu'avec Flyway pour les migrations versionnées, permet d'industrialiser les évolutions de schéma, ce qui est essentiel dans un projet en évolution continue. PostgreSQL aurait été un choix techniquement défendable, mais son surplus fonctionnel n'apportait pas de valeur métier additionnelle au regard des besoins identifiés. MongoDB, en revanche, a été écarté sans ambiguïté : substituer un modèle documentaire à un domaine relationnel aussi structuré aurait conduit à déplacer dans le code applicatif les contraintes que la base sait nativement garantir, au prix d'une fragilité accrue.
+  #strong[MySQL 8] a été retenu parce qu'il offre le meilleur compromis entre richesse fonctionnelle, cohérence transactionnelle et simplicité d'exploitation. Sa parfaite intégration avec JPA et Hibernate, dont C. Bauer, G. King et G. Gregory, dans *Java Persistence with Hibernate* (2ᵉ édition, 2016), décrivent les principes de mapping objet-relationnel, ainsi qu'avec Flyway pour les migrations versionnées, permet d'industrialiser les évolutions de schéma, ce qui est essentiel dans un projet en évolution continue. PostgreSQL aurait été un choix techniquement défendable, mais son surplus fonctionnel n'apportait pas de valeur métier additionnelle au regard des besoins identifiés. MongoDB, en revanche, a été écarté sans ambiguïté : substituer un modèle documentaire à un domaine relationnel aussi structuré aurait conduit à déplacer dans le code applicatif les contraintes que la base sait nativement garantir, au prix d'une fragilité accrue.
 
   === Synthèse comparative
   La pile retenue se distingue donc moins par une supériorité absolue de chacune de ses briques que par la cohérence d'ensemble qu'elle produit. Spring Boot, Angular et MySQL partagent une logique commune : framework opinionné, typage strict, structure imposée et écosystème stable. Cette homogénéité de philosophie est, pour un projet métier de cette taille, un avantage déterminant.
@@ -289,7 +296,8 @@
   Ce chapitre a pour objectif de démontrer que la solution répond à des besoins clairement identifiés, priorisés et structurés selon une logique d'ingénierie logicielle. Il ne s'agit pas seulement d'énumérer des fonctionnalités, mais de montrer comment les attentes des acteurs, les contraintes d'exploitation et les règles du recrutement ont été transformées en exigences cohérentes, traçables et concevables.
 
   == Méthodologie d'analyse
-  L'analyse des besoins a été menée selon une démarche progressive et itérative, ancrée dans les usages réels du projet plutôt que dans une modélisation abstraite déconnectée de l'implémentation. Cette approche rejoint les principes du développement itératif et de la conception dirigée par les cas d'utilisation décrits par Larman (2005). Le point de départ a été le cahier des charges fonctionnel, enrichi ensuite par les cartographies métier, les notes de debug, les listes de tâches, les inventaires techniques et les observations issues des validations successives du produit. Cette approche a permis de confronter en permanence le besoin théorique, le comportement du code et les arbitrages effectivement retenus pendant le développement.
+  #label("ref-methodo")
+  L'analyse des besoins a été menée selon une démarche progressive et itérative, ancrée dans les usages réels du projet plutôt que dans une modélisation abstraite déconnectée de l'implémentation. Cette approche rejoint les principes du développement itératif et de la conception dirigée par les cas d'utilisation décrits par Craig Larman dans *UML et les design patterns* (2005). Le point de départ a été le cahier des charges fonctionnel, enrichi ensuite par les cartographies métier, les notes de debug, les listes de tâches, les inventaires techniques et les observations issues des validations successives du produit. Cette approche a permis de confronter en permanence le besoin théorique, le comportement du code et les arbitrages effectivement retenus pendant le développement.
 
   Les besoins ont ensuite été regroupés en modules fonctionnels, puis relus à travers des critères transverses : sécurité, permissions, cohérence des états, traçabilité, qualité de l'expérience utilisateur et capacité d'évolution. Ce choix de lecture par parcours et par règles métier est particulièrement important dans un projet comme SyneliaQuizApp, où une fonctionnalité ne peut pas être correctement comprise si elle est isolée de son contexte de campagne, de permission ou de pipeline.
 
@@ -392,9 +400,10 @@
   )
 
   == Besoins non fonctionnels
-  Les besoins non fonctionnels jouent un rôle majeur dans la réussite du projet. En matière de #strong[performance], l'application doit offrir des temps de réponse compatibles avec un usage fluide sur les opérations courantes, en particulier sur les listes de candidatures, les écrans de détail et les parcours publics. La #strong[sécurité] exige une séparation stricte entre surface publique et surface interne, une authentification robuste des utilisateurs internes et un contrôle d'accès fin sur chaque action sensible. Sur ce plan, le projet s'appuie sur les recommandations de l'OWASP (2025) pour la protection contre les vulnérabilités web courantes et sur les mécanismes de sécurité de Spring Security décrits par Spilca (2024).
+  #label("ref-besoins-nf")
+  Les besoins non fonctionnels jouent un rôle majeur dans la réussite du projet. En matière de #strong[performance], l'application doit offrir des temps de réponse compatibles avec un usage fluide sur les opérations courantes, en particulier sur les listes de candidatures, les écrans de détail et les parcours publics. La #strong[sécurité] exige une séparation stricte entre surface publique et surface interne, une authentification robuste des utilisateurs internes et un contrôle d'accès fin sur chaque action sensible. Sur ce plan, le projet s'appuie sur les recommandations du référentiel *OWASP Top 10* (OWASP Foundation, 2025) pour la protection contre les vulnérabilités web courantes et sur les mécanismes de sécurité de Spring Security décrits par Laurențiu Spilca dans *Spring Security in Action* (2ᵉ édition, 2024).
 
-  L'#strong[ergonomie] constitue un autre besoin important, car le système s'adresse à des profils différents et doit rester compréhensible malgré la richesse du domaine métier. Les critères ergonomiques de Bastien et Scapin (1993) — guidage, charge de travail, contrôle explicite, adaptabilité, gestion des erreurs, homogénéité, signifiance des codes et compatibilité — fournissent une grille de lecture pertinente pour évaluer la qualité d'une interface multi-profils comme celle de SyneliaQuizApp. La #strong[maintenabilité] impose une architecture claire, un découpage modulaire, des conventions stables d'API et une capacité à faire évoluer les règles métier sans dégrader l'ensemble. La #strong[disponibilité], la #strong[fiabilité] et la #strong[conformité] complètent cet ensemble, dans un contexte où les données de candidature doivent rester exploitables, auditables et protégées.
+  L'#strong[ergonomie] constitue un autre besoin important, car le système s'adresse à des profils différents et doit rester compréhensible malgré la richesse du domaine métier. Les critères ergonomiques de J. C. Bastien et D. L. Scapin, dans leur rapport *Ergonomical criteria for the evaluation of user interfaces* (1993), — guidage, charge de travail, contrôle explicite, adaptabilité, gestion des erreurs, homogénéité, signifiance des codes et compatibilité — fournissent une grille de lecture pertinente pour évaluer la qualité d'une interface multi-profils comme celle de SyneliaQuizApp. La #strong[maintenabilité] impose une architecture claire, un découpage modulaire, des conventions stables d'API et une capacité à faire évoluer les règles métier sans dégrader l'ensemble. La #strong[disponibilité], la #strong[fiabilité] et la #strong[conformité] complètent cet ensemble, dans un contexte où les données de candidature doivent rester exploitables, auditables et protégées.
 
   #document-table(
     columns: (0.85fr, 1.05fr, 1.95fr, 1.55fr),
@@ -453,7 +462,7 @@
     [Priorité], [Besoins concernés], [Justification],
     [Must have], [Soumettre une candidature ; gérer les campagnes ; consulter les candidatures ; s'authentifier ; passer le quiz ; évaluer les candidats.], [Sans ces fonctions, le système ne remplit pas sa mission principale de recrutement.],
     [Should have], [Planifier des entretiens ; vérifier l'email ; suivre sa candidature ; recevoir des notifications ; prendre une décision finale structurée.], [Ces fonctions complètent le workflow métier et sécurisent la qualité du processus.],
-    [Could have], [Tableaux de bord avancés ; export de données ; raffinements de diffusion et de reporting.], [Ces fonctions apportent un gain de pilotage, mais ne conditionnent pas le service minimum rendu.],
+    [Must have], [Tableaux de bord avancés ; export de données ; raffinements de diffusion et de reporting.], [Ces fonctions renforcent le pilotage opérationnel et la visibilité du processus de recrutement, conditions essentielles pour une exploitation professionnelle de la plateforme.],
     [Won't have], [Intégration calendrier poussée, matching avancé, automatisations non critiques hors périmètre immédiat.], [Ces éléments relèvent d'extensions futures et ne doivent pas brouiller le périmètre du noyau métier.],
   )
 
@@ -480,6 +489,7 @@
   Ce chapitre traduit les besoins en architecture, structures de données, flux applicatifs et conventions d'implémentation. Il expose la cible conceptuelle du système tout en l'adossant au schéma réel et aux modules effectivement identifiés dans le projet.
 
   == Architecture globale du système
+  #label("ref-archi")
 
   #figure(
     image("../../../figures_html/captures/to use/Architecture 1 – Acteurs, Frontend Angular & API REST.png", width: 100%),
@@ -491,7 +501,7 @@
   )
   La solution adopte une architecture web en couches, fondée sur une séparation nette entre l'interface utilisateur, les services métier et la persistance. Le frontend Angular constitue la couche de présentation. Il prend en charge les pages publiques candidat, les tableaux de bord internes, les composants partagés, les services d'appel API et la logique d'interaction propre à chaque profil utilisateur. Le backend Spring Boot joue le rôle de couche applicative centrale : il expose les endpoints, applique les règles métier, contrôle les permissions, orchestre les transitions de pipeline et dialogue avec la base de données.
 
-  La persistance repose sur une base relationnelle MySQL enrichie par des migrations Flyway, ce qui permet de faire évoluer le schéma de manière versionnée. Autour de ce noyau, des services auxiliaires comme Redis, MinIO ou les composants d'envoi d'emails complètent l'architecture physique lorsque le scénario métier l'exige. Cette organisation en couches, où chaque niveau possède une responsabilité clairement délimitée, s'inspire des principes de Clean Architecture formalisés par Martin (2017) : isolation du domaine métier, indépendance des interfaces et testabilité des composants. L'ensemble forme une architecture distribuée simple, mais extensible, adaptée à une application métier de taille intermédiaire.
+  La persistance repose sur une base relationnelle MySQL enrichie par des migrations Flyway, ce qui permet de faire évoluer le schéma de manière versionnée. Autour de ce noyau, des services auxiliaires comme Redis, MinIO ou les composants d'envoi d'emails complètent l'architecture physique lorsque le scénario métier l'exige. Cette organisation en couches, où chaque niveau possède une responsabilité clairement délimitée, s'inspire des principes de Clean Architecture formalisés par Robert C. Martin dans *Clean Architecture* (2017) : isolation du domaine métier, indépendance des interfaces et testabilité des composants. L'ensemble forme une architecture distribuée simple, mais extensible, adaptée à une application métier de taille intermédiaire.
 
   Sur le plan logique, le backend est lui-même organisé en sous-couches lisibles : exposition web, services métier, accès aux données, sécurité, configuration et utilitaires. Cette organisation limite le couplage direct entre l'interface et la persistance. Elle permet surtout de centraliser les règles métier dans des services spécialisés, ce qui est indispensable dans un domaine où les transitions d'état, les permissions, les agrégats et les effets de bord doivent rester cohérents dans tout le système.
 
@@ -512,6 +522,7 @@
   La conception de la base de données suit une logique relationnelle riche, cohérente avec la nature fortement structurée du domaine. Les entités principales s'organisent autour de quelques noyaux : utilisateurs et permissions, campagnes et pipelines, formulaires et questions, candidatures et parcours candidat, entretiens et évaluations, décisions et notifications. Chaque noyau possède ses propres relations, mais l'ensemble converge vers la candidature comme objet pivot du recrutement.
 
   === Démarche Merise retenue
+  #label("ref-merise")
   Le choix d'une méthode de conception ne peut être implicite dans un mémoire d'ingénieur. Deux approches dominent aujourd'hui la modélisation des systèmes d'information : la méthode #strong[Merise], structurée autour d'une séparation explicite des données et des traitements à plusieurs niveaux d'abstraction, et le langage #strong[UML], orienté objet et particulièrement adapté à la modélisation comportementale des logiciels. Avant d'en retenir une comme colonne vertébrale de la conception, ces deux approches ont été comparées au regard du domaine et des objectifs du projet.
 
   #document-table(
@@ -525,7 +536,7 @@
     [Compatibilité avec le projet], [Excellente : permet de structurer l'analyse autour de la base, qui est ici le pivot du système.], [Pertinente en complément pour décrire certains flux applicatifs.],
   )
 
-  À l'issue de cette comparaison, la méthode #strong[Merise] a été retenue comme méthode principale de conception, conformément aux principes fondateurs posés par Tardieu et al. (2003), aux guides pratiques de Gabay (2008) et aux outils conceptuels et organisationnels détaillés par Matheron (2005). Trois raisons justifient ce choix. D'abord, le domaine de SyneliaQuizApp est fortement orienté données : campagnes, pipelines, formulaires versionnés, candidatures, étapes, entretiens, évaluations et décisions s'organisent par des relations stables, qui se prêtent naturellement à une modélisation MCD/MLD/MPD. Ensuite, la séparation explicite entre données et traitements (MCD/MCT) permet d'aligner la documentation du mémoire sur le raisonnement réel suivi durant le projet : analyse du modèle de données d'abord, puis raisonnement sur les flux. Enfin, la chaîne Merise produit des artefacts visibles et hiérarchisés qui renforcent la lisibilité académique du chapitre de conception.
+  À l'issue de cette comparaison, la méthode #strong[Merise] a été retenue comme méthode principale de conception, conformément aux principes fondateurs posés par H. Tardieu, A. Rochfeld et R. Colletti dans *La méthode Merise : Principes et outils* (2003), aux guides pratiques de J. Gabay dans *Merise et UML : Guide pratique* (2008) et aux outils conceptuels et organisationnels détaillés par J. P. Matheron dans *Comprendre Merise* (2005). Trois raisons justifient ce choix. D'abord, le domaine de SyneliaQuizApp est fortement orienté données : campagnes, pipelines, formulaires versionnés, candidatures, étapes, entretiens, évaluations et décisions s'organisent par des relations stables, qui se prêtent naturellement à une modélisation MCD/MLD/MPD. Ensuite, la séparation explicite entre données et traitements (MCD/MCT) permet d'aligner la documentation du mémoire sur le raisonnement réel suivi durant le projet : analyse du modèle de données d'abord, puis raisonnement sur les flux. Enfin, la chaîne Merise produit des artefacts visibles et hiérarchisés qui renforcent la lisibilité académique du chapitre de conception.
 
   UML n'est pas pour autant écarté. Il est positionné comme un #emph[complément] mobilisé ponctuellement pour illustrer certains comportements dynamiques que Merise exprime moins finement, notamment les diagrammes de cas d'utilisation pour cartographier les acteurs et les diagrammes de séquence pour expliciter les échanges techniques entre frontend, backend et services auxiliaires. Cette articulation Merise-first / UML-complémentaire permet de cumuler les forces des deux approches sans diluer la cohérence méthodologique du mémoire.
 
@@ -534,99 +545,34 @@
   === Modèle Conceptuel de Données (MCD)
   Au niveau conceptuel, le système peut être lu comme un ensemble d'entités métier reliées par des associations stables. La candidature occupe une place centrale : elle est émise dans le cadre d'une campagne, s'appuie sur une version de formulaire figée, progresse dans un pipeline, reçoit éventuellement des entretiens, des évaluations et des décisions, et peut générer des notifications ou des demandes spécifiques.
 
-  #merise-figure([MCD global de SyneliaQuizApp])[
-    #merise-row(
-      merise-card([Campagne], fill: palette.accent_soft)[
-        #merise-lines([pilotage du recrutement], [diffusion et collaboration])
-      ],
-      [1,N →],
-      merise-card([Formulaire])[
-        #merise-lines([support du quiz], [lié à une campagne])
-      ],
-      [1,N →],
-      merise-card([VersionFormulaire])[
-        #merise-lines([fige le questionnaire], [préserve l'historique])
-      ],
-      [N,N ↔],
-      merise-card([Question])[
-        #merise-lines([banque réutilisable], [spécialisée par métier])
-      ],
-    )
-    #v(0.35cm)
-    #merise-row(
-      merise-card([Campagne])[
-        #merise-lines([porte la diffusion], [ouvre des accès publics])
-      ],
-      [1,N →],
-      merise-card([SourceToken])[
-        #merise-lines([trace la source], [contextualise l'accès])
-      ],
-      [1,N →],
-      merise-card([Candidature], fill: palette.accent_soft)[
-        #merise-lines([dossier pivot], [porte le statut global])
-      ],
-      [1,N →],
-      merise-card([Progression])[
-        #merise-lines([historique des étapes], [score, dates, notes])
-      ],
-    )
-    #v(0.35cm)
-    #merise-row(
-      merise-card([PipelineTemplate])[
-        #merise-lines([structure le parcours], [reste réutilisable])
-      ],
-      [1,N →],
-      merise-card([ÉtapePipeline])[
-        #merise-lines([définit ordre et type], [porte la config])
-      ],
-      [1,N ←],
-      merise-card([Progression])[
-        #merise-lines([matérialise l'étape], [alimente le dossier])
-      ],
-      [N,1 ←],
-      merise-card([Candidature], fill: palette.accent_soft)[
-        #merise-lines([centralise le parcours], [prépare la décision])
-      ],
-    )
-    #v(0.35cm)
-    #merise-row(
-      merise-card([Candidature], fill: palette.accent_soft)[
-        #merise-lines([peut ouvrir un entretien], [alimente l'évaluation])
-      ],
-      [1,N →],
-      merise-card([EntretienCandidat])[
-        #merise-lines([convocation et réponse], [porte le créneau])
-      ],
-      [1,N →],
-      merise-card([Évaluation])[
-        #merise-lines([appréciations collaboratives], [alimente le score])
-      ],
-    )
-    #v(0.35cm)
-    #merise-row(
-      merise-card([Candidature], fill: palette.accent_soft)[
-        #merise-lines([déclenche le verdict], [porte l'historique])
-      ],
-      [1,N →],
-      merise-card([Décision])[
-        #merise-lines([pré-sélection ou final], [annulation possible])
-      ],
-      [N,1 ←],
-      merise-card([Utilisateur])[
-        #merise-lines([acteur métier], [auteur de l'action])
-      ],
-    )
-    #v(0.35cm)
-    #merise-row(
-      merise-card([Utilisateur])[
-        #merise-lines([porte un rôle système], [agit sur des entités])
-      ],
-      [1,N →],
-      merise-card([PermissionEntité])[
-        #merise-lines([droit contextualisé], [complète le rôle global])
-      ],
-    )
-  ]
+  Les figures suivantes présentent le modèle conceptuel de données, décomposé en cinq sous-ensembles pour en faciliter la lecture.
+
+  #figure(
+    image("../../../figures_html/captures/to use/MCD 1 – Identité, groupes & permissions.png", width: 100%),
+    caption: [MCD — Identité, groupes & permissions.],
+  )
+
+  #figure(
+    image("../../../figures_html/captures/to use/MCD 2 – Campagnes, pipeline & formulaires.png", width: 100%),
+    caption: [MCD — Campagnes, pipeline & formulaires.],
+  )
+
+  #figure(
+    image("../../../figures_html/captures/to use/MCD 3 – Candidature, avancement & quiz.png", width: 100%),
+    caption: [MCD — Candidature, avancement & quiz.],
+  )
+
+  #figure(
+    image("../../../figures_html/captures/to use/MCD 4 – Entretiens & évaluations.png", width: 100%),
+    caption: [MCD — Entretiens & évaluations.],
+  )
+
+  #figure(
+    image("../../../figures_html/captures/to use/MCD 5 – Notifications, mails & audit.png", width: 100%),
+    caption: [MCD — Notifications, mails & audit.],
+  )
+
+
 
   #document-table(
     columns: (1.35fr, 1.05fr, 2fr),
@@ -647,57 +593,34 @@
   === Modèle Logique de Données (MLD)
   Le modèle logique traduit les associations conceptuelles en relations concrètes, portées par des clés étrangères ou par des tables d'association. Dans SyneliaQuizApp, cette traduction est lisible dans l'inventaire de la base, notamment autour des tables campaigns, form, form_version, form_questions, applications, application_progress, candidate_interview, evaluations, decisions, campaign_crud et entity_permission.
 
-  #merise-figure([MLD / MLDR synthétique de SyneliaQuizApp])[
-    #merise-row(
-      merise-card([campaigns], fill: palette.accent_soft)[
-        #merise-lines(
-          [id: int unsigned PK],
-          [campaign_title: varchar(255)],
-          [campaign_status: varchar(7)],
-          [pipeline_template_id: int unsigned FK],
-          [speciality_id: int unsigned FK],
-        )
-      ],
-      [1,N →],
-      merise-card([form])[#merise-lines([PK id], [FK campaign_id])],
-      [1,N →],
-      merise-card([form_version])[#merise-lines([PK id], [FK form_id])],
-      [1,N →],
-      merise-card([form_questions])[#merise-lines([PK id], [FK form_version_id], [FK question_id])],
-    )
-    #v(0.35cm)
-    #merise-row(
-      merise-card([form_questions])[#merise-lines([compose une version], [porte ordre et chrono])],
-      [N,1 →],
-      merise-card([question])[#merise-lines([PK id], [FK speciality_id])],
-      [1,N →],
-      merise-card([answer])[#merise-lines([PK id], [FK question_id])],
-    )
-    #v(0.35cm)
-    #merise-row(
-      merise-card([applications], fill: palette.accent_soft)[#merise-lines([PK id], [FK source_token_id], [FK form_version_id])],
-      [1,N →],
-      merise-card([application_progress])[#merise-lines([PK id], [FK application_id], [FK pipeline_stage_id])],
-      [1,N →],
-      merise-card([decisions])[#merise-lines([PK id], [FK application_id], [FK user_id])],
-    )
-    #v(0.35cm)
-    #merise-row(
-      merise-card([interviews])[#merise-lines([PK id], [FK campaign_id], [FK application_id])],
-      [1,N →],
-      merise-card([candidate_interview])[#merise-lines([PK id], [FK interview_id], [FK application_id])],
-      [1,N →],
-      merise-card([evaluations])[#merise-lines([PK id], [FK candidate_interview_id])],
-    )
-    #v(0.35cm)
-    #merise-row(
-      merise-card([user])[#merise-lines([PK id], [rôle système])],
-      [1,N →],
-      merise-card([campaign_crud])[#merise-lines([PK id], [FK user_id], [FK campaign_id])],
-      [1,N →],
-      merise-card([entity_permission])[#merise-lines([PK id], [FK user_id], [cible une entité])],
-    )
-  ]
+  Les figures suivantes présentent le modèle logique de données, décliné selon les mêmes sous-ensembles que le MCD.
+
+  #figure(
+    image("../../../figures_html/captures/to use/MLD 1 – Identité, groupes & permissions.png", width: 100%),
+    caption: [MLD — Identité, groupes & permissions.],
+  )
+
+  #figure(
+    image("../../../figures_html/captures/to use/MLD 2 – Campagnes, pipeline & formulaires.png", width: 100%),
+    caption: [MLD — Campagnes, pipeline & formulaires.],
+  )
+
+  #figure(
+    image("../../../figures_html/captures/to use/MLD 3 – Candidature, avancement & quiz.png", width: 100%),
+    caption: [MLD — Candidature, avancement & quiz.],
+  )
+
+  #figure(
+    image("../../../figures_html/captures/to use/MLD 4 – Entretiens & évaluations.png", width: 100%),
+    caption: [MLD — Entretiens & évaluations.],
+  )
+
+  #figure(
+    image("../../../figures_html/captures/to use/MLD 5 – Notifications, mails & audit.png", width: 100%),
+    caption: [MLD — Notifications, mails & audit.],
+  )
+
+
 
   #document-table(
     columns: (1.45fr, 1.6fr, 1.05fr, 1.6fr),
@@ -718,66 +641,34 @@
   === Modèle Physique de Données (MPD)
   Le modèle physique tient compte des choix effectivement retenus pour l'implémentation MySQL. Le schéma repose majoritairement sur des identifiants entiers non signés, des colonnes techniques homogènes d'audit, des indicateurs booléens pour les états simples et des colonnes textuelles ou numériques pour les paramètres métier. Les migrations Flyway assurent la version du schéma et rendent reproductibles les évolutions de structure.
 
-  #merise-figure([MPD synthétique des tables cœur de SyneliaQuizApp])[
-    #grid(
-      columns: (4.45cm, 4.45cm, 4.45cm),
-      gutter: 0.32cm,
-      merise-card([campaigns], width: 4.45cm, fill: palette.accent_soft)[
-        #merise-lines(
-          [id: int unsigned PK],
-          [campaign_title: varchar(255)],
-          [campaign_status: varchar(7)],
-          [pipeline_template_id: int unsigned FK],
-          [speciality_id: int unsigned FK],
-        )
-      ],
-      merise-card([form_version], width: 4.45cm)[
-        #merise-lines(
-          [id: int unsigned PK],
-          [form_id: int unsigned FK],
-          [version_number: int],
-          [is_published: bit(1)],
-          [is_locked: bit(1)],
-        )
-      ],
-      merise-card([applications], width: 4.45cm, fill: palette.accent_soft)[
-        #merise-lines(
-          [id: int unsigned PK],
-          [candidate_email: varchar],
-          [application_status: varchar(8)],
-          [quiz_status: varchar(9)],
-          [form_version_id: int unsigned FK],
-        )
-      ],
-      merise-card([application_progress], width: 4.45cm)[
-        #merise-lines(
-          [id: int unsigned PK],
-          [application_id: int unsigned FK],
-          [pipeline_stage_id: int unsigned FK],
-          [progress_status: varchar(20)],
-          [score: double],
-        )
-      ],
-      merise-card([candidate_interview], width: 4.45cm)[
-        #merise-lines(
-          [id: int unsigned PK],
-          [application_id: int unsigned FK],
-          [interview_id: int unsigned FK],
-          [interview_start: datetime],
-          [alternative_date_requested: datetime],
-        )
-      ],
-      merise-card([decisions], width: 4.45cm)[
-        #merise-lines(
-          [id: int unsigned PK],
-          [application_id: int unsigned FK],
-          [user_id: int unsigned FK],
-          [pipeline_stage_id: int unsigned FK],
-          [decision_type: varchar(50)],
-        )
-      ],
-    )
-  ]
+  Les figures suivantes présentent le modèle physique de données, reflet direct du schéma MySQL implémenté.
+
+  #figure(
+    image("../../../figures_html/captures/to use/MPD 1 – Identité, groupes & permissions.png", width: 100%),
+    caption: [MPD — Identité, groupes & permissions.],
+  )
+
+  #figure(
+    image("../../../figures_html/captures/to use/MPD 2 – Campagnes, pipeline & formulaires.png", width: 100%),
+    caption: [MPD — Campagnes, pipeline & formulaires.],
+  )
+
+  #figure(
+    image("../../../figures_html/captures/to use/MPD 3 – Candidature, avancement & quiz.png", width: 100%),
+    caption: [MPD — Candidature, avancement & quiz.],
+  )
+
+  #figure(
+    image("../../../figures_html/captures/to use/MPD 4 – Entretiens & évaluations.png", width: 100%),
+    caption: [MPD — Entretiens & évaluations.],
+  )
+
+  #figure(
+    image("../../../figures_html/captures/to use/MPD 5 – Notifications, mails & audit.png", width: 100%),
+    caption: [MPD — Notifications, mails & audit.],
+  )
+
+
 
   #document-table(
     columns: (1.2fr, 1.55fr, 1.75fr),
@@ -851,95 +742,19 @@
   === Structure d'accès théorique (SAT)
   La SAT formalise les chemins d'accès privilégiés entre les identifiants structurants du système. Dans SyneliaQuizApp, elle montre que les pivots majeurs sont la campagne pour la configuration du recrutement, la candidature pour l'exécution du parcours candidat, et la version de formulaire pour la traçabilité du quiz.
 
-  #merise-figure([Structure d'accès théorique de SyneliaQuizApp])[
-    #text(size: 9pt, weight: "semibold", fill: palette.primary)[Branche de configuration]
-    #v(0.12cm)
-    #merise-row(
-      merise-card([campaigns.id], fill: palette.accent_soft)[
-        #merise-lines([pivot de configuration])
-      ],
-      [accède à],
-      merise-card([form.id])[
-        #merise-lines([formulaire de campagne])
-      ],
-      [accède à],
-      merise-card([form_version.id])[
-        #merise-lines([version publiée])
-      ],
-      [alimente],
-      merise-card([applications.id], fill: palette.accent_soft)[
-        #merise-lines([dossier candidat])
-      ],
-    )
-    #v(0.25cm)
-    #merise-row(
-      merise-card([pipeline_template.id])[
-        #merise-lines([structure du parcours])
-      ],
-      [accède à],
-      merise-card([pipeline_stage.id])[
-        #merise-lines([étapes ordonnées])
-      ],
-      [alimente],
-      merise-card([application_progress.id])[
-        #merise-lines([historique d'étape])
-      ],
-    )
-    #v(0.32cm)
-    #text(size: 9pt, weight: "semibold", fill: palette.primary)[Branche du dossier candidat]
-    #v(0.12cm)
-    #merise-row(
-      merise-card([applications.id], fill: palette.accent_soft)[
-        #merise-lines([carrefour informationnel])
-      ],
-      [accède à],
-      merise-card([candidate_answer.id])[
-        #merise-lines([réponses enregistrées])
-      ],
-      [et à],
-      merise-card([candidate_interview.id])[
-        #merise-lines([réponse d'entretien])
-      ],
-      [alimente],
-      merise-card([evaluations.id])[
-        #merise-lines([appréciations])
-      ],
-    )
-    #v(0.25cm)
-    #merise-row(
-      merise-card([applications.id], fill: palette.accent_soft)[
-        #merise-lines([source du suivi])
-      ],
-      [accède à],
-      merise-card([application_progress.id])[
-        #merise-lines([état détaillé])
-      ],
-      [alimente],
-      merise-card([decisions.id])[
-        #merise-lines([verdict historisé])
-      ],
-    )
-    #v(0.32cm)
-    #text(size: 9pt, weight: "semibold", fill: palette.primary)[Branche de gouvernance]
-    #v(0.12cm)
-    #merise-row(
-      merise-card([user.id])[
-        #merise-lines([acteur interne])
-      ],
-      [accède à],
-      merise-card([campaign_crud.id])[
-        #merise-lines([droits sur campagne])
-      ],
-      [complété par],
-      merise-card([entity_permission.id])[
-        #merise-lines([droit sur entité])
-      ],
-      [et],
-      merise-card([user_permission_override.id])[
-        #merise-lines([surcharge individuelle])
-      ],
-    )
-  ]
+  Les figures suivantes présentent la structure d’accès théorique, décomposée en deux phases du processus de recrutement.
+
+  #figure(
+    image("../../../figures_html/captures/to use/SAT 1 – Configuration, candidature, quiz & présélection (T0 → T3).png", width: 100%),
+    caption: [SAT — Configuration, candidature, quiz & présélection (T0 → T3).],
+  )
+
+  #figure(
+    image("../../../figures_html/captures/to use/SAT 2 – Entretien, décision, rollback & audit (T4 → T7).png", width: 100%),
+    caption: [SAT — Entretien, décision, rollback & audit (T4 → T7).],
+  )
+
+
 
   #document-table(
     columns: (1.55fr, 2.45fr),
@@ -968,20 +783,24 @@
     [MCT-4 Entretien, évaluation et décision], [Le recruteur planifie un entretien ou statue sur le dossier.], [La convocation, la réponse candidat, les évaluations et la décision finale alimentent le suivi et l'historique métier.],
   )
 
-  #merise-figure([MCT synthétique des traitements majeurs de SyneliaQuizApp])[
-    #text(size: 9pt, weight: "semibold", fill: palette.primary)[MCT-1 : Soumission d'une candidature]
-    #v(0.1cm)
-    #align(center)[
-      #grid(
-        columns: (3.65cm, 0.95cm, 4.05cm, 0.95cm, 4.05cm),
-        gutter: 0.14cm,
-        merise-card([Événement], width: 3.65cm)[#merise-lines([Le candidat ouvre la campagne], [et soumet son dossier])],
-        merise-link([déclenche]),
-        merise-card([Opération], width: 4.05cm, fill: palette.accent_soft)[#merise-lines([Contrôle du contexte], [création de la candidature], [rattachement de la version])],
-        merise-link([produit]),
-        merise-card([Résultat], width: 4.05cm)[#merise-lines([Dossier créé], [suivi initialisé], [accès public encadré])],
-      )
-    ]
+  Les figures suivantes présentent le modèle conceptuel des traitements, décomposé en trois phases du cycle de recrutement.
+
+  #figure(
+    image("../../../figures_html/captures/to use/MCT 1 – Soumettre une candidature & passer le quiz (T1 + T2).png", width: 100%),
+    caption: [MCT — Soumettre une candidature & passer le quiz (T1 + T2).],
+  )
+
+  #figure(
+    image("../../../figures_html/captures/to use/MCT 2 – Conduire le cycle entretien → évaluation (T3).png", width: 100%),
+    caption: [MCT — Conduire le cycle entretien → évaluation (T3).],
+  )
+
+  #figure(
+    image("../../../figures_html/captures/to use/MCT 3 – Prononcer une décision, annuler & auditer (T4 + T5 + T6).png", width: 100%),
+    caption: [MCT — Prononcer une décision, annuler & auditer (T4 + T5 + T6).],
+  )
+
+
     #v(0.28cm)
     #text(size: 9pt, weight: "semibold", fill: palette.primary)[MCT-2 : Qualification initiale]
     #v(0.1cm)
@@ -1024,7 +843,6 @@
         merise-card([Résultat], width: 4.05cm)[#merise-lines([Historique complet], [verdict traçable], [notification des acteurs])],
       )
     ]
-  ]
 
   === Modèle Physique des Traitements (MPT)
   Le MPT descend au niveau de l'implémentation et décrit l'architecture physique des traitements : IHM (Angular), contrôleur REST (Spring Boot), service métier, couche d'accès aux données (JPA), SGBD (MySQL) et services externes mobilisés. Il met en évidence l'empilement technique réel qui supporte chaque traitement métier.
@@ -1113,20 +931,10 @@
 
   #figure(
     image("../../../figures_html/captures/to use/Diagrammes de séquence — 1. Soumission d'une candidature publique.png", width: 100%),
-    caption: [Séquence 1/4 — soumission d'une candidature publique.],
+    caption: [Séquence — soumission d'une candidature publique.],
   )
-  #figure(
-    image("../../../figures_html/captures/to use/Diagrammes de séquence — 2. Passation et soumission du quiz technique.png", width: 100%),
-    caption: [Séquence 2/4 — passation et soumission du quiz technique.],
-  )
-  #figure(
-    image("../../../figures_html/captures/to use/Diagrammes de séquence — 3. Planification et convocation d'un entretien.png", width: 100%),
-    caption: [Séquence 3/4 — planification et convocation d'un entretien.],
-  )
-  #figure(
-    image("../../../figures_html/captures/to use/Diagrammes de séquence — 4. Saisie et propagation d'une décision finale.png", width: 100%),
-    caption: [Séquence 4/4 — saisie et propagation d'une décision finale.],
-  )
+
+  Les diagrammes de séquence complémentaires (passation du quiz, planification d'entretien et décision finale) sont présentés en Annexe B.
 
   === Diagrammes d'activités et d'états
   Les diagrammes d'activités et d'états doivent représenter la candidature comme un processus évolutif plutôt que comme un simple enregistrement doté d'un champ de statut. Cette modélisation est essentielle pour expliquer comment la logique de pipeline structure les actions possibles et comment les différents sous-états du système produisent une lecture globale du dossier.
@@ -1141,7 +949,8 @@
   )
 
   == Maquettes et interfaces
-  La conception des interfaces de SyneliaQuizApp a été guidée par les principes d'ergonomie logicielle formalisés par Nogier et Bouillot (2020), qui insistent sur l'adéquation entre l'interface et le modèle mental de l'utilisateur. Les maquettes et interfaces de la solution s'organisent autour de trois univers d'usage distincts. Le premier est l'espace public candidat, qui comprend les écrans de candidature, de vérification d'email, de quiz et de suivi. L'enjeu principal de cette interface est la simplicité : le candidat doit comprendre rapidement ce qu'on attend de lui, où il en est et quelles actions lui sont encore accessibles.
+  #label("ref-maquettes")
+  La conception des interfaces de SyneliaQuizApp a été guidée par les principes d'ergonomie logicielle formalisés par J.-F. Nogier et J. Bouillot dans *Ergonomie du logiciel et design web* (6ᵉ édition, 2020), qui insistent sur l'adéquation entre l'interface et le modèle mental de l'utilisateur. Les maquettes et interfaces de la solution s'organisent autour de trois univers d'usage distincts. Le premier est l'espace public candidat, qui comprend les écrans de candidature, de vérification d'email, de quiz et de suivi. L'enjeu principal de cette interface est la simplicité : le candidat doit comprendre rapidement ce qu'on attend de lui, où il en est et quelles actions lui sont encore accessibles.
 
   Le deuxième univers est celui du recruteur. Il comprend les listes de campagnes, les vues de candidatures, les écrans de planification d'entretien, les interfaces d'évaluation, les espaces de décision, la gestion des formulaires, des versions de formulaire, des questions et des liens de diffusion. Ici, la logique d'interaction doit favoriser la lecture rapide, le filtrage, l'accès au contexte utile et la sécurisation des actions sensibles par des droits explicites ou par des confirmations adaptées.
 
@@ -1156,7 +965,8 @@
   )
 
   == Conception de l'API REST
-  La conception de l'API repose sur une logique de services orientés métier, en cohérence avec les principes architecturaux REST de Fielding (2000) et les règles de conception d'API proposées par Massé (2011). Les endpoints ne se limitent pas à un CRUD canonique ; ils exposent aussi des actions applicatives explicites, telles que la progression dans le pipeline, la réponse à un entretien, la publication d'un formulaire, la vérification d'un email ou la production d'une décision. Cette orientation rend l'API plus proche du langage métier du système et facilite le pilotage des cas d'usage complexes.
+  #label("ref-api-rest")
+  La conception de l'API repose sur une logique de services orientés métier, en cohérence avec les principes architecturaux REST de Roy T. Fielding, dans sa thèse *Architectural Styles and the Design of Network-based Software Architectures* (2000), et les règles de conception d'API proposées par M. Massé dans *REST API Design Rulebook* (2011). Les endpoints ne se limitent pas à un CRUD canonique ; ils exposent aussi des actions applicatives explicites, telles que la progression dans le pipeline, la réponse à un entretien, la publication d'un formulaire, la vérification d'un email ou la production d'une décision. Cette orientation rend l'API plus proche du langage métier du système et facilite le pilotage des cas d'usage complexes.
 
   Les échanges sont essentiellement réalisés au format JSON, via des DTO dédiés servant de contrats entre frontend et backend. Les structures de requête permettent de transmettre soit des recherches par critères, soit des objets métier à créer ou à mettre à jour, parfois regroupés dans des tableaux de données. Les réponses ont pour objectif de renvoyer des objets directement exploitables par l'interface, y compris lorsqu'elles portent des champs de synthèse ou des informations dérivées utiles à l'affichage.
 
@@ -1191,26 +1001,29 @@
   La gestion de version repose sur #strong[Git], tandis que l'exécution locale s'appuie sur des commandes simples et reproductibles. Côté backend, la présence de #raw("mvnw") et #raw("mvnw.cmd") permet de standardiser les builds Maven. Côté frontend, les scripts déclarés dans #raw("package.json") centralisent le démarrage, la compilation, le mode watch et les tests. Des fichiers de configuration comme #raw("proxy.conf.js") et #raw("proxy.conf.json") assurent en outre une communication transparente entre l'interface Angular et l'API locale pendant les phases de développement.
 
   == Technologies backend
+  #label("ref-tech-backend")
   Le backend de l'application repose sur #strong[Java 21] et sur #strong[Spring Boot 3.5.6]. Le fichier #raw("quizapp/pom.xml") confirme ce positionnement technique à travers la propriété #raw("java.version") fixée à 21 et l'utilisation du parent Spring Boot correspondant. Le projet est packagé au format #strong[WAR], ce qui permet de conserver une compatibilité de déploiement avec un serveur applicatif tout en gardant la souplesse d'un démarrage local maîtrisé.
 
   La couche web est construite avec #strong[Spring Web], qui sert de socle à l'exposition des endpoints REST. À cela s'ajoutent #strong[Spring Security] pour l'authentification et l'autorisation, #strong[Spring WebSocket] pour les fonctionnalités temps réel, ainsi que #strong[Spring Data JPA] pour la persistance relationnelle. La classe principale #raw("QuizappApplication") s'appuie également sur #raw("@EnableScheduling"), ce qui montre que l'application intègre des traitements planifiés dans son cycle d'exécution.
 
-  La persistance métier s'appuie sur #strong[MySQL] via le connecteur #raw("mysql-connector-j"), tandis que #strong[Flyway] est utilisé pour gérer les migrations de schéma de manière versionnée, conformément aux bonnes pratiques documentées par Red Gate Software (2025). Ce choix est particulièrement important dans un projet dont le modèle de données a fortement évolué, notamment autour de la candidature, des occurrences de pipeline, des quiz, des entretiens et des notifications.
+  La persistance métier s'appuie sur #strong[MySQL] via le connecteur #raw("mysql-connector-j"), tandis que #strong[Flyway] est utilisé pour gérer les migrations de schéma de manière versionnée, conformément aux bonnes pratiques documentées par Red Gate Software dans la référence officielle *Flyway Documentation* (2025). Ce choix est particulièrement important dans un projet dont le modèle de données a fortement évolué, notamment autour de la candidature, des occurrences de pipeline, des quiz, des entretiens et des notifications.
 
-  Plusieurs bibliothèques complémentaires renforcent la qualité de l'implémentation. #strong[MapStruct] réduit le coût de transformation entre entités et objets d'échange, #strong[Lombok] diminue le code répétitif, #strong[Thymeleaf] est utilisé pour les modèles d'emails, et #strong[Spring Context Support] avec #strong[Jakarta Mail] assurent la gestion des envois. Le backend intègre également des briques spécialisées telles que #strong[Spring LDAP Core], #strong[Apache POI] pour la manipulation de documents bureautiques, #strong[MinIO] pour la gestion objet via une API compatible S3, dont la documentation officielle (MinIO Inc., 2025) décrit l'intégration en environnement Java, #strong[Redis] pour le cache et les données volatiles — dont Carlson (2013) décrit les cas d'usage en complément d'une base relationnelle — et #strong[Springdoc OpenAPI] pour documenter l'API.
+  Plusieurs bibliothèques complémentaires renforcent la qualité de l'implémentation. #strong[MapStruct] réduit le coût de transformation entre entités et objets d'échange, #strong[Lombok] diminue le code répétitif, #strong[Thymeleaf] est utilisé pour les modèles d'emails, et #strong[Spring Context Support] avec #strong[Jakarta Mail] assurent la gestion des envois. Le backend intègre également des briques spécialisées telles que #strong[Spring LDAP Core], #strong[Apache POI] pour la manipulation de documents bureautiques, #strong[MinIO] pour la gestion objet via une API compatible S3, dont la documentation officielle *MinIO Object Storage Reference Guide* (MinIO Inc., 2025) décrit l'intégration en environnement Java, #strong[Redis] pour le cache et les données volatiles — dont J. L. Carlson, dans *Redis in Action* (2013), décrit les cas d'usage en complément d'une base relationnelle — et #strong[Springdoc OpenAPI] pour documenter l'API.
 
   Enfin, l'architecture serveur reste cohérente avec un projet d'ingénierie orienté maintenabilité. Le serveur Tomcat est déclaré avec le scope #raw("provided"), la pile de sécurité est centralisée, et les règles métier sont isolées dans des classes spécialisées de la couche business. Cette organisation facilite la lisibilité du code, l'écriture de tests ciblés et l'évolution progressive du produit.
 
   == Technologies frontend
+  #label("ref-tech-frontend")
   L'interface utilisateur repose sur #strong[Angular 20.2], comme l'indiquent les dépendances #raw("@angular/core"), #raw("@angular/router"), #raw("@angular/forms") et les autres modules clés du fichier #raw("quizapp_front/package.json"). Le projet est compilé avec #strong[TypeScript 5.9.2], ce qui permet de bénéficier d'un typage strict et d'une meilleure sécurisation des contrats de données entre l'interface et le backend.
 
   Le fonctionnement réactif de l'application s'appuie sur #strong[RxJS 7.8], tandis que #strong[Zone.js] reste présent pour l'intégration au modèle de détection de changements d'Angular. Le build frontend est piloté par le builder #raw("@angular/build:application"), configuré dans #raw("angular.json"). Les scripts #raw("start"), #raw("build"), #raw("watch") et #raw("test") permettent respectivement de lancer le serveur de développement, de produire un build final, de travailler en compilation continue et d'exécuter les tests unitaires.
 
-  L'interface est stylée en #strong[SCSS], choix confirmé à la fois dans les schémas Angular et dans la configuration du projet. Le cadre réactif de l'application exploite par ailleurs les #strong[Signals], nouveau modèle de réactivité fine introduit par Angular et documenté par Google (2025), qui permet d'optimiser le rafraîchissement du DOM sans déclencher une détection de changements globale — un atout pour les tableaux de bord de suivi en temps réel. La migration vers cette architecture moderne est également commentée par KodMatrix (2025) comme une évolution majeure réduisant la complexité du code pour les applications à forte densité fonctionnelle. Cette approche facilite la factorisation des styles, l'expression de variations visuelles et la structuration des pages. Le frontend adopte par ailleurs une organisation par écrans métier, visible dans le dossier #raw("src/app/pages"), avec des modules tels que #raw("apply-position"), #raw("dashboard"), #raw("quiz"), #raw("track-application") ou encore #raw("verify-email"). Ce découpage favorise une lecture directe du produit par parcours utilisateur.
+  L'interface est stylée en #strong[SCSS], choix confirmé à la fois dans les schémas Angular et dans la configuration du projet. Le cadre réactif de l'application exploite par ailleurs les #strong[Signals], nouveau modèle de réactivité fine introduit par Angular et documenté par Google dans la référence *Angular Signals: Fine-Grained Reactivity Model* (2025), qui permet d'optimiser le rafraîchissement du DOM sans déclencher une détection de changements globale — un atout pour les tableaux de bord de suivi en temps réel. La migration vers cette architecture moderne est également commentée par KodMatrix dans son article *Angular 20: Everything You Need to Know* (2025) comme une évolution majeure réduisant la complexité du code pour les applications à forte densité fonctionnelle. Cette approche facilite la factorisation des styles, l'expression de variations visuelles et la structuration des pages. Le frontend adopte par ailleurs une organisation par écrans métier, visible dans le dossier #raw("src/app/pages"), avec des modules tels que #raw("apply-position"), #raw("dashboard"), #raw("quiz"), #raw("track-application") ou encore #raw("verify-email"). Ce découpage favorise une lecture directe du produit par parcours utilisateur.
 
   Le projet frontend intègre également une couche de composants mutualisés, un espace partagé, des services applicatifs, des directives, des pipes et des éléments de configuration. Cette structuration est cohérente avec une application monopage de taille intermédiaire à forte densité fonctionnelle, dans laquelle la réutilisation d'éléments d'interface et la cohérence des interactions constituent des enjeux centraux.
 
   == Base de données
+  #label("ref-bdd")
   La base de données principale de SyneliaQuizApp est une base #strong[MySQL 8], choisie pour sa robustesse, sa large diffusion en contexte web et son adéquation avec un modèle relationnel riche. Le domaine métier du recrutement manipule en effet des objets fortement liés entre eux : campagnes, formulaires, candidatures, étapes de pipeline, tentatives de quiz, entretiens, évaluations, décisions, notifications et permissions. Un SGBDR relationnel s'impose donc naturellement pour garantir l'intégrité des relations et la cohérence des transactions.
 
   Le couplage entre le code Java et la base repose sur #strong[JPA], avec une organisation en entités et repositories. La présence du dossier #raw("quizapp/src/main/java/tech/synelia/quizapp/dao/entity") d'un côté et du dossier #raw("repository") de l'autre montre clairement cette séparation entre modélisation des tables et accès aux données. Cette approche permet d'exprimer des règles métier complexes tout en gardant un point d'entrée structuré vers la couche de persistance.
@@ -1240,7 +1053,7 @@
   Ce chapitre détaille la manière dont la solution a été concrètement construite, tant du côté backend que du côté frontend.
 
   == Organisation du code source
-  Le workspace du projet est organisé autour d'une séparation nette entre les composants applicatifs, la documentation fonctionnelle et les artefacts de pilotage. Le dossier #raw("quizapp/") contient le backend Spring Boot, tandis que #raw("quizapp_front/") regroupe l'application Angular. Autour de ces deux noyaux se trouvent des éléments de support comme #raw("docker-compose.yml"), des scripts utilitaires, des notes de travail, des cartographies fonctionnelles, des check-lists et, désormais, l'ossature du mémoire lui-même.
+  Le workspace du projet est organisé autour d'une séparation nette entre les composants applicatifs et les artefacts de support. Le dossier #raw("quizapp/") contient le backend Spring Boot, tandis que #raw("quizapp_front/") regroupe l'application Angular. Autour de ces deux noyaux se trouvent des éléments de support comme #raw("docker-compose.yml") et des scripts utilitaires facilitant le développement et le déploiement local.
 
   Le backend adopte une organisation classique mais efficace pour un projet de gestion métier. Le point d'entrée applicatif est la classe #raw("QuizappApplication"), et les responsabilités sont ensuite réparties entre plusieurs packages : #raw("business") pour la logique métier, #raw("dao") pour la persistance, #raw("rest") pour l'exposition web, #raw("security") pour la sécurité, #raw("config") pour la configuration transverse, #raw("utils") pour les utilitaires, et #raw("websocket") pour les mécanismes temps réel. Cette architecture favorise un découplage clair entre exposition, orchestration métier et accès aux données.
 
@@ -1265,9 +1078,7 @@
     [Zone du dépôt], [Contenu principal], [Responsabilité dans la solution],
     [quizapp/], [Application Spring Boot], [Centralise la logique métier, la sécurité, les accès aux données, les endpoints REST et les services transverses.],
     [quizapp_front/], [Application Angular], [Porte l'expérience utilisateur, les formulaires, les écrans métier et les flux de navigation.],
-    [z_notes/ et cartographies], [Notes techniques et documents d'analyse], [Capitalisent les comportements métiers, les correctifs apportés et les validations fonctionnelles.],
     [docker-compose.yml], [Services d'infrastructure locale], [Décrit les dépendances techniques utiles au développement et aux validations locales.],
-    [z_mémoire/], [Mémoire et supports académiques], [Documente le projet, sa démarche et les résultats obtenus dans une logique d'ingénierie et de soutenance.],
   )
 
   == Implémentation des modules fonctionnels
@@ -1279,7 +1090,8 @@
   La gestion des formulaires a été conçue avec une logique de réutilisation et de versionnement. Le rattachement entre campagne et formulaire repose sur une relation dédiée, ce qui permet de mutualiser un même formulaire entre plusieurs campagnes tout en gardant la possibilité de dupliquer ou d'isoler une version lorsqu'une divergence devient nécessaire. Les stratégies d'affectation prises en charge, comme l'attribution aléatoire, séquentielle, conditionnée par un source token ou aléatoire sans répétition, montrent que le questionnaire technique n'est pas un bloc figé mais un sous-système adaptable au contexte de recrutement.
 
   === Moteur de pipeline et progression des candidatures
-  Le pipeline de recrutement constitue l'épine dorsale du système : il définit l'ordre des étapes par lesquelles transite une candidature et conditionne les actions disponibles à chaque stade. L'implémentation repose sur une modélisation explicite des gabarits de pipeline (#raw("PipelineTemplate")), des étapes ordonnées (#raw("PipelineStage")) et de la progression effective de chaque dossier (#raw("ApplicationProgress")). Cette architecture s'inspire des principes de machine d'états et de workflow configurables, tels que décrits par Fowler (2010) dans son ouvrage sur les langages dédiés et par le standard BPMN 2.0 pour la modélisation des processus métier.
+  #label("ref-pipeline")
+  Le pipeline de recrutement constitue l'épine dorsale du système : il définit l'ordre des étapes par lesquelles transite une candidature et conditionne les actions disponibles à chaque stade. L'implémentation repose sur une modélisation explicite des gabarits de pipeline (#raw("PipelineTemplate")), des étapes ordonnées (#raw("PipelineStage")) et de la progression effective de chaque dossier (#raw("ApplicationProgress")). Cette architecture s'inspire des principes de machine d'états et de workflow configurables, tels que décrits par Martin Fowler dans *Domain-Specific Languages* (2010) et par le standard BPMN 2.0 (Object Management Group, 2013) pour la modélisation des processus métier.
 
   Concrètement, un gabarit de pipeline est rattaché à une campagne et décrit une succession typée d'étapes : candidature, quiz, entretien, évaluation, décision. Chaque étape possède un type, un ordre, des critères d'évaluation optionnels et une configuration dynamique stockée en #raw("config_json"). Lorsqu'une candidature progresse, le système crée une occurrence de progression rattachée à l'étape concernée, y inscrit les métadonnées utiles (score de quiz, notes d'entretien, statut de décision) et recalcule l'état consolidé du dossier. Ce mécanisme garantit que l'historique complet du parcours candidat reste consultable, y compris en cas de retour arrière ou de reprise après annulation.
 
@@ -1296,7 +1108,8 @@
   La correction combine deux logiques complémentaires. D'un côté, les questions objectives sont notées automatiquement à partir des réponses soumises. De l'autre, les questions nécessitant une appréciation humaine peuvent passer par un circuit de correction manuelle, avec des statuts dédiés et des permissions précises pour les recruteurs habilités. Ce compromis entre automatisation et intervention humaine est essentiel pour préserver à la fois l'efficacité opérationnelle et la pertinence de l'évaluation technique.
 
   === Sécurisation du quiz et intégrité des évaluations
-  Dans un contexte où le quiz technique joue un rôle objectivant dans la présélection des candidats, la sécurisation du processus d'évaluation constitue un enjeu à part entière. Le système intègre plusieurs mécanismes destinés à garantir l'intégrité des résultats, en s'appuyant sur les travaux de Nigam et al. (2021) qui recensent les approches de prévention et de détection de la triche dans les examens en ligne.
+  #label("ref-anti-triche")
+  Dans un contexte où le quiz technique joue un rôle objectivant dans la présélection des candidats, la sécurisation du processus d'évaluation constitue un enjeu à part entière. Le système intègre plusieurs mécanismes destinés à garantir l'intégrité des résultats, en s'appuyant sur les travaux de A. Nigam, R. Pasricha, T. Singh et P. Joseph, dans leur revue *A systematic review of research on cheating in online exams* (2021), qui recensent les approches de prévention et de détection de la triche dans les examens en ligne.
 
   Le premier niveau de sécurisation repose sur un verrouillage par token. L'accès au quiz est conditionné à la possession d'un jeton de source valide et à la vérification préalable de l'adresse email du candidat, ce qui empêche les soumissions anonymes ou non authentifiées. Le second niveau concerne la traçabilité temporelle : le système enregistre l'horodatage de début de chaque tentative, le temps écoulé et un instantané horaire au moment de la soumission, ce qui permet de détecter des anomalies de durée ou des soumissions trop rapides pour être crédibles. Un troisième niveau, plus fin, porte sur la détection d'inactivité : le frontend surveille les événements utilisateur (mouvements de souris, frappes clavier, défilement) et signale au backend les périodes d'absence prolongée, offrant ainsi un indice supplémentaire pour l'appréciation de la passation par les recruteurs.
 
@@ -1308,14 +1121,16 @@
   Les évaluations associées aux entretiens vont au-delà d'une note globale. Elles peuvent porter des critères détaillés, des pondérations et des éléments de justification, puis alimenter les agrégats utilisés dans les vues de suivi. La décision finale, qu'elle soit intermédiaire ou terminale, s'appuie ainsi sur un continuum cohérent : candidature, quiz, entretien, évaluation, décision. Cette chaîne métier renforce la lisibilité du dossier candidat pour les recruteurs et limite les pertes d'information entre étapes.
 
   === Notifications, permissions et pilotage
-  Les notifications et la gestion des permissions constituent la couche transverse qui rend l'application réellement exploitable en contexte collaboratif. Les droits ne sont pas gérés uniquement par rôle global (RBAC), mais aussi par permissions contextualisées sur une campagne ou sur une entité donnée. Cette granularité s'inspire des principes de contrôle d'accès par attributs (ABAC) formalisés par le NIST (Hu et al., 2014), où la décision d'autorisation ne dépend plus seulement du rôle de l'utilisateur mais également de son lien avec l'entité cible et du contexte opérationnel. Cette approche permet d'ouvrir certaines actions à des recruteurs ou évaluateurs ciblés sans leur accorder un accès total à l'ensemble du système.
+  #label("ref-notifications")
+  Les notifications et la gestion des permissions constituent la couche transverse qui rend l'application réellement exploitable en contexte collaboratif. Les droits ne sont pas gérés uniquement par rôle global (RBAC), mais aussi par permissions contextualisées sur une campagne ou sur une entité donnée. Cette granularité s'inspire des principes de contrôle d'accès par attributs (ABAC) formalisés par le NIST (V. C. Hu et al., *Guide to Attribute Based Access Control (ABAC)*, NIST SP 800-162, 2014), où la décision d'autorisation ne dépend plus seulement du rôle de l'utilisateur mais également de son lien avec l'entité cible et du contexte opérationnel. Cette approche permet d'ouvrir certaines actions à des recruteurs ou évaluateurs ciblés sans leur accorder un accès total à l'ensemble du système.
 
-  Sur le plan des notifications, l'architecture repose sur une logique de publication/souscription inspirée du patron de conception Observateur formalisé par Gamma et al. (1994). Les événements métier — nouvelle candidature, planification d'entretien, réponse candidat, décision — jouent le rôle de déclencheurs auxquels réagissent des composants spécialisés : templates d'email Thymeleaf pour les notifications externes, services de notification in-app pour les alertes internes, et journal de messagerie (#raw("MailLog")) pour la traçabilité des envois. Cette séparation entre l'occurrence d'un événement et les actions qu'il provoque permet d'ajouter de nouveaux canaux de notification sans modifier la logique métier sous-jacente.
+  Sur le plan des notifications, l'architecture repose sur une logique de publication/souscription inspirée du patron de conception Observateur formalisé par E. Gamma, R. Helm, R. Johnson et J. Vlissides dans *Design Patterns* (1994). Les événements métier — nouvelle candidature, planification d'entretien, réponse candidat, décision — jouent le rôle de déclencheurs auxquels réagissent des composants spécialisés : templates d'email Thymeleaf pour les notifications externes, services de notification in-app pour les alertes internes, et journal de messagerie (#raw("MailLog")) pour la traçabilité des envois. Cette séparation entre l'occurrence d'un événement et les actions qu'il provoque permet d'ajouter de nouveaux canaux de notification sans modifier la logique métier sous-jacente.
 
   En parallèle, les notifications internes et les emails transactionnels assurent la circulation des informations critiques : nouvelles candidatures, convocations à entretien, retours sur demandes candidat, décisions ou alertes d'administration. Le tableau de bord unifie enfin l'accès à ces modules en proposant une lecture opérationnelle de l'activité, des listes métier, des filtres transverses et des écrans spécialisés par domaine.
 
   === Traçabilité, audit et historisation
-  La traçabilité constitue l'un des fils conducteurs du projet et mérite d'être traitée comme un module à part entière. Dans un système où des décisions de recrutement sont prises, où des évaluations sont produites et où des permissions fines sont accordées, il ne suffit pas de stocker l'état final d'un dossier : il faut pouvoir reconstituer comment et par qui cet état a été atteint. Cette exigence rejoint les principes d'audit trail en entreprise, tels que formalisés par Johnston (2019).
+  #label("ref-audit")
+  La traçabilité constitue l'un des fils conducteurs du projet et mérite d'être traitée comme un module à part entière. Dans un système où des décisions de recrutement sont prises, où des évaluations sont produites et où des permissions fines sont accordées, il ne suffit pas de stocker l'état final d'un dossier : il faut pouvoir reconstituer comment et par qui cet état a été atteint. Cette exigence rejoint les principes d'audit trail en entreprise, tels que formalisés par R. Johnston dans *Designing an Enterprise Application Audit Trail* (2019).
 
   L'implémentation repose sur un service d'audit transverse (#raw("AuditEventService")) capable d'intercepter les mutations significatives des entités métier. Chaque événement audité enregistre l'entité concernée, l'action réalisée, l'acteur à l'origine de l'opération, un horodatage et, surtout, une représentation JSON de l'état avant et après la modification. Ce mécanisme de snapshot permet de répondre à des questions concrètes : qui a modifié le statut de cette candidature ? Quand cette évaluation a-t-elle été saisie ? Quel était le score du candidat avant la correction manuelle ? La présence de ces informations renforce à la fois la gouvernance interne du recrutement et la confiance des utilisateurs dans le système.
 
@@ -1331,16 +1146,18 @@
   Sur le plan de la synchronisation, l'application repose moins sur un rafraîchissement brut de toutes les données que sur des contrats ciblés et des miroirs métier calculés côté backend. Par exemple, certaines informations de synthèse sur l'état courant d'une candidature, d'un entretien ou d'une évaluation sont recalculées puis renvoyées pour faciliter l'affichage dans les listes et tableaux de bord. Cette stratégie améliore la réactivité perçue du front tout en conservant un centre de vérité unique côté serveur. Elle est complétée par des mécanismes transverses comme les notifications, les WebSockets et les emails, qui assurent la diffusion rapide d'informations importantes aux différents acteurs du processus.
 
   === Communication temps réel et tableaux de bord synoptiques
-  Au-delà des échanges HTTP classiques, SyneliaQuizApp intègre une couche de communication temps réel fondée sur les WebSockets. Cette brique technique, documentée notamment par Fain et Moiseev (2018) pour les architectures combinant un backend Java et un frontend Angular, permet d'établir un canal bidirectionnel persistant entre le serveur et les clients connectés.
+  #label("ref-websocket")
+  Au-delà des échanges HTTP classiques, SyneliaQuizApp intègre une couche de communication temps réel fondée sur les WebSockets. Cette brique technique, documentée notamment par Y. Fain et A. Moiseev dans *Angular Development with TypeScript* (2ᵉ édition, 2018) pour les architectures combinant un backend Java et un frontend Angular, permet d'établir un canal bidirectionnel persistant entre le serveur et les clients connectés.
 
   L'usage principal de ce canal concerne le module QEEL (tableau de bord temps réel), qui affiche des statistiques actualisées sur l'activité de la plateforme : nombre d'utilisateurs en ligne, candidatures en cours, quiz actifs et autres indicateurs de supervision. Côté backend, un handler WebSocket dédié gère les connexions au sein d'un pool thread-safe et diffuse les mises à jour aux clients abonnés. Côté frontend, un service de statistiques en ligne maintient la connexion et bascule automatiquement sur un mécanisme de polling HTTP en cas d'indisponibilité du canal WebSocket, garantissant ainsi une continuité de service.
 
   Un mécanisme de heartbeat complète ce dispositif : le client émet périodiquement un signal de présence, ce qui permet au serveur de distinguer les utilisateurs réellement actifs des connexions abandonnées. Cette approche, simple dans son principe, améliore significativement la fiabilité des indicateurs temps réel sans introduire de complexité excessive.
 
   == Exécution locale et chaîne DevOps
+  #label("ref-devops")
   Au-delà du code lui-même, la maintenabilité d'un projet de la taille de SyneliaQuizApp dépend très fortement de la reproductibilité de son environnement d'exécution. Le dépôt embarque pour cela un fichier #raw("docker-compose.yml") qui décrit deux services d'infrastructure indispensables : une instance #strong[Redis 7] (image #raw("redis:7-alpine"), port #raw("6379")) et une instance #strong[MinIO] exposée sur les ports #raw("9000") (API S3) et #raw("9001") (console d'administration), associées à des volumes persistants #raw("redis_data") et #raw("minio_data"). Chaque service déclare un #emph[healthcheck] (#raw("redis-cli ping"), #raw("mc ready local")), ce qui permet à un orchestrateur de connaître l'état réel des dépendances avant de lancer l'application.
 
-  La base #strong[MySQL] n'est pas embarquée dans la même composition : elle est consommée comme un service externe paramétrable via les propriétés Spring (#raw("spring.datasource.url"), #raw("spring.flyway.*")). Ce choix simplifie la transition vers un environnement de production où la base est généralement managée séparément, tout en autorisant en développement un démarrage MySQL standalone ou conteneurisé selon les préférences du développeur. L'isolement des dépendances via Docker Compose, couplé à une base externalisée, s'inscrit dans la logique de livraison continue défendue par Humble et Farley (2010) : un environnement reproductible, versionné et indépendant de la machine hôte.
+  La base #strong[MySQL] n'est pas embarquée dans la même composition : elle est consommée comme un service externe paramétrable via les propriétés Spring (#raw("spring.datasource.url"), #raw("spring.flyway.*")). Ce choix simplifie la transition vers un environnement de production où la base est généralement managée séparément, tout en autorisant en développement un démarrage MySQL standalone ou conteneurisé selon les préférences du développeur. L'isolement des dépendances via Docker Compose, couplé à une base externalisée, s'inscrit dans la logique de livraison continue défendue par J. Humble et D. Farley dans *Continuous Delivery* (2010) : un environnement reproductible, versionné et indépendant de la machine hôte.
 
   Le démarrage local suit une chaîne reproductible. Le backend est lancé via #raw("mvnw spring-boot:run") (ou via le script #raw("start-backend.bat")), Flyway applique automatiquement les migrations versionnées, puis le frontend est servi par #raw("npm start") qui utilise les fichiers #raw("proxy.conf.js") / #raw("proxy.conf.json") pour rediriger #raw("/api/**") vers le backend local. Cette séparation explicite — services d'infrastructure dans Docker Compose, backend et frontend exécutés directement sur la machine hôte — privilégie une boucle de retour rapide tout en restant proche d'une topologie de production.
 
@@ -1379,9 +1196,10 @@
   Ce chapitre démontre la rigueur apportée à la vérification du système et à la validation des comportements attendus.
 
   == Stratégie de tests
+  #label("ref-tests")
   La stratégie de validation adoptée dans le projet repose sur une combinaison pragmatique de vérifications automatiques et de contrôles manuels guidés par les parcours métier. L'objectif n'était pas de mettre en place une usine à tests exhaustive dès le départ, mais de sécuriser progressivement les zones les plus sensibles du système : permissions, contrats d'API, évolutions du modèle de données, parcours candidat et opérations de recrutement à forte valeur métier.
 
-  Cette stratégie s'organise selon plusieurs niveaux, dans l'esprit de la pyramide des tests et des patterns de validation formalisés par Meszaros (2007). Le premier niveau vérifie la stabilité technique du code par la compilation, les builds et les tests unitaires ciblés. Le deuxième niveau sécurise les interactions entre couches, notamment via des tests de contrôleurs, des validations de contrats JSON et des scénarios API rejoués avec Postman. Le troisième niveau correspond aux validations fonctionnelles menées sur l'interface et sur le parcours public, afin de s'assurer que les enchaînements réels restent cohérents du point de vue utilisateur.
+  Cette stratégie s'organise selon plusieurs niveaux, dans l'esprit de la pyramide des tests et des patterns de validation formalisés par G. Meszaros dans *xUnit Test Patterns* (2007). Le premier niveau vérifie la stabilité technique du code par la compilation, les builds et les tests unitaires ciblés. Le deuxième niveau sécurise les interactions entre couches, notamment via des tests de contrôleurs, des validations de contrats JSON et des scénarios API rejoués avec Postman. Le troisième niveau correspond aux validations fonctionnelles menées sur l'interface et sur le parcours public, afin de s'assurer que les enchaînements réels restent cohérents du point de vue utilisateur.
 
   #document-table(
     columns: (1.2fr, 1.45fr, 2.35fr),
@@ -1448,6 +1266,23 @@
   Le deuxième parcours est celui du recruteur. Il couvre la création d'une campagne, l'association d'un ou plusieurs formulaires, le partage d'accès avec d'autres intervenants, le suivi des candidatures, la planification des entretiens, la consultation des évaluations et la prise de décision. C'est dans ce parcours que la valeur métier de SyneliaQuizApp apparaît le plus clairement : l'information est regroupée, contextualisée et pilotable sans dépendre d'outils disparates.
 
   Le troisième parcours est celui du candidat. Il comprend la soumission de la candidature, la vérification d'email, l'accès au quiz, le suivi public de l'état d'avancement et les interactions autour des entretiens. Ce parcours est particulièrement important dans une logique de qualité de service, car il traduit concrètement la manière dont l'entreprise communique avec ses candidats et structure leur expérience.
+
+  Les figures suivantes présentent trois écrans représentatifs de l'application livrée : la page d'accueil publique, le tableau de bord de synthèse (overview) et l'écran de gestion des campagnes de recrutement.
+
+  #figure(
+    image("../../../figures_html/captures/to use/quizapp - home.png", width: 100%),
+    caption: [Page d'accueil publique de SyneliaQuizApp — présentation des campagnes ouvertes, accès au dépôt de candidature et au suivi candidat.],
+  )
+
+  #figure(
+    image("../../../figures_html/captures/to use/quizapp - dashboard - overview.png", width: 100%),
+    caption: [Tableau de bord administrateur / recruteur — synthèse des indicateurs clés, tendances de candidatures, entonnoir de conversion et distribution des évaluations.],
+  )
+
+  #figure(
+    image("../../../figures_html/captures/to use/quizapp - dashboard - campaigns.png", width: 100%),
+    caption: [Écran de gestion des campagnes de recrutement — création, configuration, partage d'accès et suivi des campagnes actives.],
+  )
 
   == Fonctionnalités implémentées
   Le tableau suivant résume les principales fonctionnalités effectivement prises en charge par la solution au terme du projet.

@@ -65,8 +65,8 @@
 
   set par(
     justify: true,
-    leading: 0.82em,
-    spacing: 1.18em,
+    leading: 0.88em,
+    spacing: 1.28em,
     first-line-indent: 1.25em,
   )
 
@@ -84,7 +84,7 @@
   )
 
   set table(
-    inset: (x: 11pt, y: 9pt),
+    inset: (x: 11pt, y: 12pt),
     stroke: (paint: palette.line, thickness: 0.6pt),
     align: left + horizon,
     fill: (x, y) => if y == 0 {
@@ -100,8 +100,9 @@
   // niveau 3 = sous-section ("1.1.1").
   set heading(numbering: "1.1.1.")
 
+  show table.cell: set text(size: 10.5pt)
   show table.cell: set par(first-line-indent: 0pt, justify: false, spacing: 0.45em)
-  show table.cell.where(y: 0): set text(fill: white, weight: "semibold")
+  show table.cell.where(y: 0): set text(fill: white, weight: "semibold", size: 10.5pt)
 
   show link: it => underline(stroke: 0.4pt + palette.accent, offset: 2pt, it)
 
@@ -143,7 +144,7 @@
   ]
 
   // Niveau 3 : sous-section, numérotée "1.1.1"
-  show heading.where(level: 3): it => block(above: 1.3em, below: 0.55em)[
+  show heading.where(level: 3): it => block(above: 1.7em, below: 0.55em)[
     #set par(first-line-indent: 0pt, justify: false)
     #set text(font: display_fonts, size: 12.5pt, weight: "bold", fill: palette.secondary)
     #if it.numbering != none [
@@ -161,6 +162,9 @@
     ]
     #it.body
   ]
+
+  // Espacement après les légendes de figure
+  show figure.caption: set block(below: 0.7em)
 
   body
 }
@@ -197,7 +201,7 @@
       gutter: 1em,
       [
         #align(left)[
-          #image("../../figures_html/captures/to use/logo-ensit.jpg", height: 1.6cm)
+          #image("../../figures_html/captures/to use/logo-ensit.png", height: 1.6cm)
         ]
       ],
       [

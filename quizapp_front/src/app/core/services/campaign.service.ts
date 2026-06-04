@@ -42,6 +42,9 @@ export interface Campaign {
   questionsCount?: number;
   pipelineTemplateId?: number;
   pipelineTemplateName?: string;
+  publicApplyEnabled?: boolean;
+  requiresSourceToken?: boolean;
+  publicStatusMessage?: string;
 }
 
 export interface CampaignAccessRecord {
@@ -235,6 +238,48 @@ export class CampaignService {
       }),
       catchError((error) => {
         console.error('❌ Erreur lors de la récupération des campagnes:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Récupère les campagnes visibles publiquement sur la page /campagnes.
+   */
+  getPublicCampaigns(): Observable<Campaign[]> {
+    return this.http.post<any>(`${this.apiUrl}/public/getAvailable`, {
+      user: 1,
+      data: {}
+    }).pipe(
+      map(response => {
+        const rawCampaigns = response?.items || [];
+        return rawCampaigns.map((campaign: any) => this.transformCampaign(campaign));
+      }),
+      catchError(error => {
+        console.error('❌ Erreur lors de la récupération des campagnes publiques:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Récupère une campagne publique par son identifiant.
+   */
+  getPublicCampaignById(id: number): Observable<Campaign> {
+    return this.http.post<any>(`${this.apiUrl}/public/getById`, {
+      user: 1,
+      data: { id }
+    }).pipe(
+      map(response => {
+        const rawCampaign = response?.item || response?.items?.[0];
+        if (!rawCampaign) {
+          throw new Error('Campagne publique introuvable');
+        }
+
+        return this.transformCampaign(rawCampaign);
+      }),
+      catchError(error => {
+        console.error('❌ Erreur lors de la récupération de la campagne publique:', error);
         return throwError(() => error);
       })
     );
@@ -664,7 +709,10 @@ export class CampaignService {
       applicationsCount: campaign.applicationsCount || campaign.applications_count || undefined,
       questionsCount: campaign.questionsCount || campaign.questions_count || campaign.totalQuestions || campaign.total_questions || undefined,
       pipelineTemplateId: campaign.pipelineTemplateId || campaign.pipeline_template_id || undefined,
-      pipelineTemplateName: campaign.pipelineTemplateName || campaign.pipeline_template_name || undefined
+      pipelineTemplateName: campaign.pipelineTemplateName || campaign.pipeline_template_name || undefined,
+      publicApplyEnabled: campaign.publicApplyEnabled ?? campaign.public_apply_enabled ?? undefined,
+      requiresSourceToken: campaign.requiresSourceToken ?? campaign.requires_source_token ?? undefined,
+      publicStatusMessage: campaign.publicStatusMessage || campaign.public_status_message || undefined
     };
   }
 

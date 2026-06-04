@@ -1,56 +1,267 @@
 <div class="dashboard-welcome">
+
+  <!-- ── Carte de bienvenue + KPI cockpit ────────────── -->
   <div class="welcome-card">
     <div class="welcome-header">
       <h2>Bienvenue, {{ currentUser()?.firstName }} !</h2>
-      <p>Tableau de bord Synelia - Rôle : <strong>{{ userRole() }}</strong></p>
+      <p>Tableau de bord Synelia – Rôle : <strong>{{ userRole() }}</strong></p>
     </div>
-    
-    <div class="stats-grid">
-      <div class="stat-card" [class.stat-card--loading]="statsLoading()">
-        <svg class="stat-icon" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-        </svg>
-        <div class="stat-content">
-          <div class="stat-number">{{ candidatesCount() }}</div>
-          <div class="stat-label">Candidatures</div>
+
+    <div class="kpi-grid">
+      <div *ngFor="let k of kpiCards(); trackBy: trackByKey"
+           class="kpi-card"
+           [class.kpi-card--loading]="loading()"
+           [attr.data-kpi]="k.key">
+        <div class="kpi-card-top">
+          <span class="kpi-icon" [attr.data-kpi]="k.key" aria-hidden="true">
+            <svg *ngIf="k.key === 'applications'" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+            <svg *ngIf="k.key === 'interviews'" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+            <svg *ngIf="k.key === 'evaluations'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><path d="M9 5a2 2 0 002 2h2a2 2 0 002-2"/><path d="M9 5a2 2 0 012-2h2a2 2 0 012 2"/><path d="M9 14l2 2 4-4"/></svg>
+            <svg *ngIf="k.key === 'decisions'" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+          </span>
+          <span class="kpi-delta" [attr.data-state]="k.deltaState" *ngIf="!loading()">
+            <svg *ngIf="k.deltaState === 'up'" class="kpi-delta-arrow" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 2l4 5H2z" fill="currentColor"/></svg>
+            <svg *ngIf="k.deltaState === 'down'" class="kpi-delta-arrow" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 10L2 5h8z" fill="currentColor"/></svg>
+            <svg *ngIf="k.deltaState === 'flat'" class="kpi-delta-arrow" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <svg *ngIf="k.deltaState === 'new'" class="kpi-delta-arrow" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="3" fill="currentColor"/></svg>
+            <span class="kpi-delta-value">{{ formatDelta(k.deltaPercent) }}</span>
+          </span>
         </div>
-      </div>
-      
-      <div class="stat-card" [class.stat-card--loading]="statsLoading()">
-        <svg class="stat-icon" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-        </svg>
-        <div class="stat-content">
-          <div class="stat-number">{{ interviewsCount() }}</div>
-          <div class="stat-label">Entretiens</div>
-        </div>
-      </div>
-      
-      <div class="stat-card" [class.stat-card--loading]="statsLoading()">
-        <svg class="stat-icon" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-        </svg>
-        <div class="stat-content">
-          <div class="stat-number">{{ evaluationsCount() }}</div>
-          <div class="stat-label">Évaluations</div>
-        </div>
-      </div>
-      
-      <div class="stat-card" [class.stat-card--loading]="statsLoading()">
-        <svg class="stat-icon" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-        </svg>
-        <div class="stat-content">
-          <div class="stat-number">{{ decisionsCount() }}</div>
-          <div class="stat-label">Décisions</div>
-        </div>
+        <div class="kpi-number">{{ k.value }}</div>
+        <div class="kpi-label">{{ k.label }}</div>
+        <div class="kpi-footnote" *ngIf="!loading()">vs mois précédent</div>
       </div>
     </div>
   </div>
-  
-  <!-- Espacement entre welcome-card et QEEL -->
-  <div style="margin-bottom: 2rem;"></div>
-  
+
+  <!-- ── Section graphiques ─────────────────────────── -->
+  <section class="charts-section">
+    <header class="charts-header">
+      <div>
+        <h3>Statistiques détaillées</h3>
+        <span class="charts-sub" *ngIf="stats() as s">
+          {{ s.kpis.applications.total }} candidature{{ s.kpis.applications.total > 1 ? 's' : '' }} active{{ s.kpis.applications.total > 1 ? 's' : '' }}
+          · {{ s.kpis.applications.currentMonth }} ce mois-ci
+        </span>
+      </div>
+      <button type="button" class="charts-refresh" (click)="reload()" [disabled]="loading()" aria-label="Rafraîchir">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+          <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+        </svg>
+        Rafraîchir
+      </button>
+    </header>
+
+    <div *ngIf="loading()" class="charts-loading">
+      <div class="chart-spinner"></div>
+      <span>Chargement des statistiques…</span>
+    </div>
+
+    <div *ngIf="loadError() && !loading()" class="charts-empty">
+      Impossible de charger les statistiques. <button type="button" class="link-btn" (click)="reload()">Réessayer</button>
+    </div>
+
+    <div *ngIf="!loading() && !loadError() && !hasData()" class="charts-empty">
+      Aucune donnée disponible pour générer des graphiques.
+    </div>
+
+    <div *ngIf="!loading() && !loadError() && hasData()" class="charts-grid">
+
+      <!-- 1. Tendance 30 derniers jours (carte large) -->
+      <article class="chart-card chart-card--full chart-card--trend">
+        <header class="chart-card-head">
+          <div class="head-text">
+            <h4>Candidatures – 30 derniers jours</h4>
+            <span class="head-sub">Pic à {{ trendMax() }} candidature{{ trendMax() > 1 ? 's' : '' }} / jour</span>
+          </div>
+          <span class="chart-badge">{{ trendTotal() }} sur la période</span>
+        </header>
+        <div class="trend-wrapper">
+          <svg viewBox="0 0 600 180" preserveAspectRatio="none" class="trend-svg" aria-hidden="true">
+            <defs>
+              <linearGradient id="trendGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--primary)" stop-opacity="0.32"/>
+                <stop offset="100%" stop-color="var(--primary)" stop-opacity="0.02"/>
+              </linearGradient>
+            </defs>
+            <line *ngFor="let gy of trendGridYs()"
+                  [attr.x1]="TREND_PAD" [attr.y1]="gy"
+                  [attr.x2]="TREND_W - TREND_PAD" [attr.y2]="gy"
+                  stroke="var(--border)" stroke-width="0.5" stroke-dasharray="3 5"/>
+            <path [attr.d]="trendArea()" fill="url(#trendGrad)"/>
+            <path [attr.d]="trendPath()" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+            <circle *ngFor="let d of trendDots()"
+                    [attr.cx]="d.cx" [attr.cy]="d.cy" r="3.5"
+                    fill="var(--primary)" stroke="var(--surface)" stroke-width="2"/>
+          </svg>
+          <div class="trend-labels">
+            <span *ngFor="let pt of trendPoints(); let i = index"
+                  class="trend-label"
+                  [class.is-visible]="shouldShowTrendLabel(i)">{{ pt.label }}</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- 2. Entonnoir de conversion (carte large) -->
+      <article class="chart-card chart-card--full chart-card--funnel">
+        <header class="chart-card-head">
+          <div class="head-text">
+            <h4>Entonnoir de conversion</h4>
+            <span class="head-sub">Du dépôt de candidature à la décision finale</span>
+          </div>
+        </header>
+        <ul class="funnel-list">
+          <li class="funnel-row" *ngFor="let step of funnelSteps(); trackBy: trackByKey">
+            <div class="funnel-meta">
+              <span class="funnel-label">{{ step.label }}</span>
+              <span class="funnel-value">{{ step.value }}</span>
+            </div>
+            <div class="funnel-track">
+              <div class="funnel-fill"
+                   [style.width.%]="step.widthPercent"
+                   [style.background]="step.color">
+                <span class="funnel-pct" *ngIf="step.widthPercent >= 18">{{ step.widthPercent }}%</span>
+              </div>
+              <span class="funnel-pct funnel-pct--outside" *ngIf="step.widthPercent < 18">{{ step.widthPercent }}%</span>
+            </div>
+          </li>
+        </ul>
+      </article>
+
+      <!-- 3. Barres : répartition par statut -->
+      <article class="chart-card chart-card--bars">
+        <header class="chart-card-head">
+          <div class="head-text">
+            <h4>Répartition par statut</h4>
+            <span class="head-sub" *ngIf="dominantStatus() as d">
+              Majoritaire : {{ d.label }} ({{ d.value }})
+            </span>
+          </div>
+          <span class="chart-card-count">{{ totalStatus() }}</span>
+        </header>
+        <ul class="bar-list">
+          <li class="bar-row" *ngFor="let bar of statusBars(); trackBy: trackByLabel">
+            <span class="bar-label" [title]="bar.label">{{ bar.label }}</span>
+            <div class="bar-track">
+              <div class="bar-fill"
+                   [style.width.%]="statusBarWidth(bar.value)"
+                   [style.background]="bar.color"></div>
+            </div>
+            <span class="bar-badge" [style.background]="bar.color">{{ bar.value }}</span>
+          </li>
+        </ul>
+      </article>
+
+      <!-- 4. Donut : statut quiz -->
+      <article class="chart-card chart-card--donut">
+        <header class="chart-card-head">
+          <div class="head-text">
+            <h4>Statut du quiz</h4>
+            <span class="head-sub" *ngIf="avgQuizScore() !== null">
+              Score moyen : {{ avgQuizScore() }}%
+            </span>
+          </div>
+          <span class="chart-card-count">{{ quizTotal() }}</span>
+        </header>
+        <div class="donut-wrapper">
+          <svg viewBox="0 0 120 120" class="donut-svg" aria-hidden="true">
+            <circle cx="60" cy="60" [attr.r]="DONUT_RADIUS"
+                    fill="none" stroke="var(--surface-secondary)" stroke-width="14"/>
+            <circle *ngFor="let slice of quizSlices(); trackBy: trackByLabel"
+                    cx="60" cy="60" [attr.r]="DONUT_RADIUS"
+                    fill="none"
+                    [attr.stroke]="slice.color"
+                    stroke-width="14"
+                    [attr.stroke-dasharray]="slice.arc + ' ' + (DONUT_CIRC - slice.arc)"
+                    [attr.stroke-dashoffset]="-slice.offset"
+                    transform="rotate(-90 60 60)"/>
+            <text x="60" y="56" text-anchor="middle" class="donut-total">{{ quizTotal() }}</text>
+            <text x="60" y="72" text-anchor="middle" class="donut-caption">total</text>
+          </svg>
+          <ul class="donut-legend">
+            <li *ngFor="let slice of quizSlices(); trackBy: trackByLabel">
+              <span class="legend-dot" [style.background]="slice.color"></span>
+              <span class="legend-label">{{ slice.label }}</span>
+              <span class="legend-value">{{ slice.value }}</span>
+            </li>
+          </ul>
+        </div>
+      </article>
+
+      <!-- 5. Histogramme : distribution des scores quiz -->
+      <article class="chart-card chart-card--score">
+        <header class="chart-card-head">
+          <div class="head-text">
+            <h4>Distribution des scores quiz</h4>
+            <span class="head-sub">{{ quizCompletedCt() }} quiz terminé{{ quizCompletedCt() > 1 ? 's' : '' }}</span>
+          </div>
+        </header>
+        <div class="histo-wrapper">
+          <div class="histo-bar-group" *ngFor="let b of scoreBuckets(); trackBy: trackByLabel">
+            <span class="histo-value">{{ b.value }}</span>
+            <div class="histo-bar-track">
+              <div class="histo-bar-fill"
+                   [style.height.%]="b.heightPercent"
+                   [style.background]="b.color"></div>
+            </div>
+            <span class="histo-label">{{ b.label }}</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- 6. Top campagnes -->
+      <article class="chart-card chart-card--campaigns">
+        <header class="chart-card-head">
+          <div class="head-text">
+            <h4>Top 5 campagnes</h4>
+            <span class="head-sub">Par nombre de candidatures</span>
+          </div>
+        </header>
+        <ul class="bar-list" *ngIf="topCampaigns().length > 0; else noCampaigns">
+          <li class="bar-row" *ngFor="let c of topCampaigns(); trackBy: trackByTitle">
+            <span class="bar-label" [title]="c.title">{{ c.title }}</span>
+            <div class="bar-track">
+              <div class="bar-fill"
+                   [style.width.%]="c.widthPercent"
+                   [style.background]="c.color"></div>
+            </div>
+            <span class="bar-badge" [style.background]="c.color">{{ c.count }}</span>
+          </li>
+        </ul>
+        <ng-template #noCampaigns>
+          <p class="chart-card-empty">Aucune campagne associée aux candidatures.</p>
+        </ng-template>
+      </article>
+
+      <!-- 7. Décisions par type -->
+      <article class="chart-card chart-card--decisions">
+        <header class="chart-card-head">
+          <div class="head-text">
+            <h4>Décisions par type</h4>
+            <span class="head-sub">Hors décisions annulées</span>
+          </div>
+          <span class="chart-card-count">{{ totalDecisions() }}</span>
+        </header>
+        <ul class="bar-list" *ngIf="decisionBars().length > 0; else noDecisions">
+          <li class="bar-row" *ngFor="let d of decisionBars(); trackBy: trackByLabel">
+            <span class="bar-label" [title]="d.label">{{ d.label }}</span>
+            <div class="bar-track">
+              <div class="bar-fill"
+                   [style.width.%]="decisionBarWidth(d.value)"
+                   [style.background]="d.color"></div>
+            </div>
+            <span class="bar-badge" [style.background]="d.color">{{ d.value }}</span>
+          </li>
+        </ul>
+        <ng-template #noDecisions>
+          <p class="chart-card-empty">Aucune décision enregistrée pour l'instant.</p>
+        </ng-template>
+      </article>
+
+    </div>
+  </section>
+
   <!-- Composant QEEL Moderne (design system intégré) -->
   <app-qeel-modern></app-qeel-modern>
 </div>

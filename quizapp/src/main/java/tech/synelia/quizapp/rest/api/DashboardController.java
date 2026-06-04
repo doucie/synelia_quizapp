@@ -1,9 +1,15 @@
 package tech.synelia.quizapp.rest.api;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalDouble;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -14,15 +20,18 @@ import org.springframework.web.bind.annotation.RestController;
 
 import lombok.extern.java.Log;
 import tech.synelia.quizapp.dao.entity.Answer;
+import tech.synelia.quizapp.dao.entity.Applications;
 import tech.synelia.quizapp.dao.entity.CampaignForm;
 import tech.synelia.quizapp.dao.entity.Campaigns;
+import tech.synelia.quizapp.dao.entity.Decision;
+import tech.synelia.quizapp.dao.entity.Evaluations;
+import tech.synelia.quizapp.dao.entity.Interviews;
 import tech.synelia.quizapp.dao.entity.CandidateInterview;
 import tech.synelia.quizapp.dao.entity.Departments;
 import tech.synelia.quizapp.dao.entity.EntityPermission;
 import tech.synelia.quizapp.dao.entity.Form;
 import tech.synelia.quizapp.dao.entity.FormQuestions;
 import tech.synelia.quizapp.dao.entity.FormVersion;
-import tech.synelia.quizapp.dao.entity.Interviews;
 import tech.synelia.quizapp.dao.entity.Question;
 import tech.synelia.quizapp.dao.entity.SourceToken;
 import tech.synelia.quizapp.dao.entity.Specialities;
@@ -168,6 +177,217 @@ public class DashboardController {
         counts.put("form-questions", formQuestionsRepository.count());
         counts.put("invitation-codes", invitationCodeRepository.count());
         return counts;
+    }
+
+    // -----------------------------------------------------------------------
+    // OVERVIEW STATS (aggregated charts for /dashboard/overview)
+    // -----------------------------------------------------------------------
+
+    @GetMapping("/overview-stats")
+    public Map<String, Object> getOverviewStats() {
+        Map<String, Object> result = new LinkedHashMap<>();
+
+        List<Applications> apps = applicationsRepository.findAll().stream()
+                .filter(a -> !Boolean.TRUE.equals(a.getIsDeleted()))
+                .collect(Collectors.toList());
+        List<Interviews> interviews = interviewsRepository.findAll().stream()
+                .filter(i -> !Boolean.TRUE.equals(i.getIsDeleted()))
+                .collect(Collectors.toList());
+        List<Evaluations> evaluations = evaluationsRepository.findAll().stream()
+                .filter(e -> !Boolean.TRUE.equals(e.getIsDeleted()))
+                .collect(Collectors.toList());
+        List<Decision> decisions = decisionRepository.findAll().stream()
+                .filter(d -> !Boolean.TRUE.equals(d.getIsDeleted()))
+                .collect(Collectors.toList());
+
+        // -- KPIs with month-over-month delta --
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.DAY_OF_MONTH, 1);
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        Date startOfMonth = cal.getTime();
+        cal.add(Calendar.MONTH, -1);
+        Date startOfPrevMonth = cal.getTime();
+
+        Map<String, Object> kpis = new LinkedHashMap<>();
+        kpis.put("applications", buildKpi(apps, Applications::getCreatedAt, startOfPrevMonth, startOfMonth));
+        kpis.put("interviews", buildKpi(interviews, Interviews::getCreatedAt, startOfPrevMonth, startOfMonth));
+        kpis.put("evaluations", buildKpi(evaluations, Evaluations::getCreatedAt, startOfPrevMonth, startOfMonth));
+        kpis.put("decisions", buildKpi(decisions, Decision::getCreatedAt, startOfPrevMonth, startOfMonth));
+        result.put("kpis", kpis);
+
+        // -- Status distribution --
+        Map<String, Long> statusDist = apps.stream()
+                .collect(Collectors.groupingBy(
+                        a -> a.getApplicationStatus() != null ? a.getApplicationStatus() : "UNKNOWN",
+                        LinkedHashMap::new,
+                        Collectors.counting()));
+        result.put("statusDistribution", toEntryList(statusDist));
+
+        // -- Quiz status distribution --
+        Map<String, Long> quizDist = apps.stream()
+                .collect(Collectors.groupingBy(
+                        a -> a.getQuizStatus() != null ? a.getQuizStatus() : "UNKNOWN",
+                        LinkedHashMap::new,
+                        Collectors.counting()));
+        result.put("quizDistribution", toEntryList(quizDist));
+
+        // -- 30-day trend on applications --
+        Calendar today = Calendar.getInstance();
+        today.set(Calendar.HOUR_OF_DAY, 0);
+        today.set(Calendar.MINUTE, 0);
+        today.set(Calendar.SECOND, 0);
+        today.set(Calendar.MILLISECOND, 0);
+        SimpleDateFormat keyFmt = new SimpleDateFormat("yyyy-MM-dd");
+        Map<String, Long> trendMap = new LinkedHashMap<>();
+        Calendar trendCal = (Calendar) today.clone();
+        trendCal.add(Calendar.DAY_OF_YEAR, -29);
+        Date trendStart = trendCal.getTime();
+        for (int i = 0; i < 30; i++) {
+            trendMap.put(keyFmt.format(trendCal.getTime()), 0L);
+            trendCal.add(Calendar.DAY_OF_YEAR, 1);
+        }
+        apps.stream()
+                .filter(a -> a.getCreatedAt() != null && !a.getCreatedAt().before(trendStart))
+                .forEach(a -> {
+                    String key = keyFmt.format(a.getCreatedAt());
+                    trendMap.computeIfPresent(key, (k, v) -> v + 1);
+                });
+        List<Map<String, Object>> trend = trendMap.entrySet().stream()
+                .map(e -> {
+                    Map<String, Object> p = new LinkedHashMap<>();
+                    p.put("date", e.getKey());
+                    p.put("count", e.getValue());
+                    return p;
+                })
+                .collect(Collectors.toList());
+        result.put("applicationsTrend", trend);
+
+        // -- Decisions breakdown (excluding cancelled) --
+        Map<String, Long> decDist = decisions.stream()
+                .filter(d -> !Boolean.TRUE.equals(d.getIsCancel()))
+                .collect(Collectors.groupingBy(
+                        d -> d.getDecisionType() != null ? d.getDecisionType() : "UNKNOWN",
+                        LinkedHashMap::new,
+                        Collectors.counting()));
+        result.put("decisionsBreakdown", toEntryList(decDist));
+
+        // -- Conversion funnel --
+        long submitted = apps.size();
+        long preselected = apps.stream().filter(a -> isAnyStatus(a.getApplicationStatus(),
+                "PRE_SCREEN", "INTERVIEW", "FINAL_AC", "FINAL_RE")).count();
+        long interviewed = apps.stream().filter(a -> isAnyStatus(a.getApplicationStatus(),
+                "INTERVIEW", "FINAL_AC", "FINAL_RE")).count();
+        long decided = apps.stream().filter(a -> isAnyStatus(a.getApplicationStatus(),
+                "FINAL_AC", "FINAL_RE")).count();
+        long accepted = apps.stream().filter(a -> isAnyStatus(a.getApplicationStatus(), "FINAL_AC")).count();
+        Map<String, Long> funnel = new LinkedHashMap<>();
+        funnel.put("submitted", submitted);
+        funnel.put("preselected", preselected);
+        funnel.put("interviewed", interviewed);
+        funnel.put("decided", decided);
+        funnel.put("accepted", accepted);
+        result.put("conversionFunnel", funnel);
+
+        // -- Top campaigns by applications count --
+        Map<String, Long> campaignCount = apps.stream()
+                .filter(a -> a.getSourceToken() != null && a.getSourceToken().getCampaigns() != null)
+                .collect(Collectors.groupingBy(
+                        a -> {
+                            String t = a.getSourceToken().getCampaigns().getCampaignTitle();
+                            return (t != null && !t.isBlank()) ? t : "(sans titre)";
+                        },
+                        Collectors.counting()));
+        List<Map<String, Object>> topCampaigns = campaignCount.entrySet().stream()
+                .sorted((a, b) -> Long.compare(b.getValue(), a.getValue()))
+                .limit(5)
+                .map(e -> {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("title", e.getKey());
+                    m.put("count", e.getValue());
+                    return m;
+                })
+                .collect(Collectors.toList());
+        result.put("topCampaigns", topCampaigns);
+
+        // -- Average quiz score (completed only) --
+        OptionalDouble avg = apps.stream()
+                .filter(a -> a.getQuizScorePercent() != null && "COMPLETED".equalsIgnoreCase(a.getQuizStatus()))
+                .mapToInt(Applications::getQuizScorePercent)
+                .average();
+        long quizCompleted = apps.stream().filter(a -> "COMPLETED".equalsIgnoreCase(a.getQuizStatus())).count();
+        result.put("avgQuizScorePercent", avg.isPresent() ? Math.round(avg.getAsDouble() * 10.0) / 10.0 : null);
+        result.put("quizCompletedCount", quizCompleted);
+
+        // -- Quiz score buckets (for completed quizzes) --
+        int[] buckets = new int[5]; // 0-20, 20-40, 40-60, 60-80, 80-100
+        apps.stream()
+                .filter(a -> a.getQuizScorePercent() != null && "COMPLETED".equalsIgnoreCase(a.getQuizStatus()))
+                .forEach(a -> {
+                    int score = a.getQuizScorePercent();
+                    int idx = Math.min(4, Math.max(0, score / 20));
+                    buckets[idx]++;
+                });
+        String[] bucketLabels = { "0-20%", "20-40%", "40-60%", "60-80%", "80-100%" };
+        List<Map<String, Object>> scoreBuckets = new ArrayList<>();
+        for (int i = 0; i < buckets.length; i++) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("key", bucketLabels[i]);
+            m.put("count", (long) buckets[i]);
+            scoreBuckets.add(m);
+        }
+        result.put("quizScoreBuckets", scoreBuckets);
+
+        return result;
+    }
+
+    private <T> Map<String, Object> buildKpi(List<T> items, Function<T, Date> getCreatedAt,
+                                              Date startOfPrevMonth, Date startOfMonth) {
+        long total = items.size();
+        long current = items.stream().filter(i -> {
+            Date d = getCreatedAt.apply(i);
+            return d != null && !d.before(startOfMonth);
+        }).count();
+        long previous = items.stream().filter(i -> {
+            Date d = getCreatedAt.apply(i);
+            return d != null && !d.before(startOfPrevMonth) && d.before(startOfMonth);
+        }).count();
+        Double delta;
+        if (previous > 0) {
+            delta = ((double) (current - previous)) / previous * 100.0;
+            delta = Math.round(delta * 10.0) / 10.0;
+        } else if (current > 0) {
+            delta = null; // signal "new" (no previous baseline)
+        } else {
+            delta = 0.0;
+        }
+        Map<String, Object> kpi = new LinkedHashMap<>();
+        kpi.put("total", total);
+        kpi.put("currentMonth", current);
+        kpi.put("previousMonth", previous);
+        kpi.put("deltaPercent", delta);
+        return kpi;
+    }
+
+    private List<Map<String, Object>> toEntryList(Map<String, Long> map) {
+        return map.entrySet().stream()
+                .map(e -> {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("key", e.getKey());
+                    m.put("count", e.getValue());
+                    return m;
+                })
+                .collect(Collectors.toList());
+    }
+
+    private boolean isAnyStatus(String status, String... prefixes) {
+        if (status == null) return false;
+        for (String p : prefixes) {
+            if (status.startsWith(p)) return true;
+        }
+        return false;
     }
 
     // -----------------------------------------------------------------------

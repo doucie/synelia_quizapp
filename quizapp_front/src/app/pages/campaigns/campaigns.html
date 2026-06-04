@@ -1,62 +1,108 @@
 <div class="campaigns-page">
-  <section class="hero-section">
-    <p class="eyebrow">Campagnes publiques</p>
-    <h1>Accedez a votre campagne avec le code transmis par le recruteur</h1>
-    <p class="hero-copy">
-      Les candidatures publiques sont ouvertes via un code source unique. Entrez-le ici pour verifier l'acces et rejoindre directement le formulaire de candidature.
-    </p>
-  </section>
+  <header class="page-header">
+    <p class="eyebrow">Postuler</p>
+    <h1>Campagnes ouvertes</h1>
+    <p class="page-header__sub">Postulez directement sur une campagne active, ou saisissez un code recruteur si vous en avez un.</p>
+  </header>
 
   <div class="campaigns-layout">
-    <section class="token-panel">
-      <h2>Entrer un code source</h2>
-      <p class="panel-copy">
-        Le code se trouve dans votre email, votre message de contact ou le lien partage par l'equipe recrutement.
-      </p>
+    <section class="campaigns-panel">
+      @if (isLoadingCampaigns()) {
+        <div class="campaign-list" aria-hidden="true">
+          @for (placeholder of [1, 2, 3]; track placeholder) {
+            <article class="campaign-card campaign-card--placeholder">
+              <div class="placeholder-line placeholder-line--title"></div>
+              <div class="placeholder-line"></div>
+              <div class="placeholder-line placeholder-line--short"></div>
+            </article>
+          }
+        </div>
+      } @else if (campaignsErrorMessage()) {
+        <div class="feedback feedback--error">{{ campaignsErrorMessage() }}</div>
+      } @else if (campaigns().length === 0) {
+        <div class="empty-state">
+          <h3>Aucune campagne visible pour le moment</h3>
+          <p>Revenez plus tard ou saisissez un code recruteur si vous en avez déjà reçu un.</p>
+        </div>
+      } @else {
+        <div class="campaign-list">
+          @for (campaign of campaigns(); track campaign.id) {
+            <article class="campaign-card" [class.campaign-card--token]="campaign.requiresSourceToken">
+              <div class="campaign-card__top">
+                <div class="campaign-card__titles">
+                  <h3>{{ campaign.campaignTitle || campaign.campaignName || 'Campagne Synelia' }}</h3>
+                  @if (campaign.specialityName || campaign.specialityLibelle) {
+                    <span class="campaign-card__specialty">{{ campaign.specialityName || campaign.specialityLibelle }}</span>
+                  }
+                </div>
+                <span class="campaign-badge" [class.campaign-badge--token]="campaign.requiresSourceToken">
+                  {{ campaign.requiresSourceToken ? 'Code requis' : 'Ouverte' }}
+                </span>
+              </div>
 
-      <form class="token-form" (ngSubmit)="submitSourceToken()">
-        <label for="sourceToken">Code source a 6 caracteres</label>
-        <input
-          id="sourceToken"
-          name="sourceToken"
-          type="text"
-          inputmode="text"
-          autocomplete="one-time-code"
-          maxlength="6"
-          [ngModel]="sourceToken()"
-          (ngModelChange)="onSourceTokenChange($event)"
-          placeholder="ABC123"
-          aria-describedby="token-help"
-        />
+              @if (campaign.campaignDesc) {
+                <p class="campaign-card__description">{{ campaign.campaignDesc }}</p>
+              }
 
-        <button class="primary-action" type="submit" [disabled]="isCheckingToken()">
-          {{ isCheckingToken() ? 'Verification en cours...' : 'Acceder au formulaire' }}
-        </button>
-      </form>
+              @if (campaign.campaignStart || campaign.campaignEnd || campaign.maxApply) {
+                <div class="campaign-meta">
+                  @if (campaign.campaignStart) {
+                    <span>Ouverture {{ campaign.campaignStart }}</span>
+                  }
+                  @if (campaign.campaignEnd) {
+                    <span>Clôture {{ campaign.campaignEnd }}</span>
+                  }
+                  @if (campaign.maxApply) {
+                    <span>{{ campaign.maxApply }} postes</span>
+                  }
+                </div>
+              }
 
-      <p id="token-help" class="token-help">
-        Sans code source valide, la plateforme ne peut pas ouvrir une candidature publique.
-      </p>
-
-      @if (errorMessage()) {
-        <p class="feedback feedback--error" aria-live="polite">{{ errorMessage() }}</p>
+              <div class="campaign-card__footer">
+                @if (campaign.publicApplyEnabled) {
+                  <a class="primary-action" [routerLink]="['/postuler/campagne', campaign.id]">Postuler</a>
+                } @else {
+                  <a class="secondary-action" href="#token-entry">Entrer un code</a>
+                }
+              </div>
+            </article>
+          }
+        </div>
       }
     </section>
 
-    <aside class="info-column">
-      <article class="info-card">
-        <h3>Vous avez deja postule ?</h3>
-        <p>
-          Retrouvez votre dossier, votre progression et vos prochaines etapes a partir de votre code de suivi et de votre email.
-        </p>
-        <a routerLink="/suivre-candidature" class="secondary-action">Suivre ma candidature</a>
-      </article>
+    <aside class="sidebar-column">
+      <section class="token-panel" id="token-entry">
+        <h2>Code recruteur</h2>
+        <p class="panel-copy">Saisissez le code à 6 caractères transmis par le recruteur pour accéder au formulaire.</p>
 
-      <article class="info-card info-card--muted">
-        <h3>Pas encore de code ?</h3>
-        <p>
-          Le code source est maintenant la porte d'entree publique de chaque campagne. Contactez votre interlocuteur Synelia si vous attendez une invitation.
-        </p>
+        <form class="token-form" (ngSubmit)="submitSourceToken()">
+          <input
+            id="sourceToken"
+            name="sourceToken"
+            type="text"
+            inputmode="text"
+            autocomplete="one-time-code"
+            maxlength="6"
+            [ngModel]="sourceToken()"
+            (ngModelChange)="onSourceTokenChange($event)"
+            placeholder="ABC123"
+            aria-label="Code recruteur à 6 caractères"
+          />
+          <button class="primary-action" type="submit" [disabled]="isCheckingToken()">
+            {{ isCheckingToken() ? 'Vérification...' : 'Accéder au formulaire' }}
+          </button>
+        </form>
+
+        @if (errorMessage()) {
+          <p class="feedback feedback--error" aria-live="polite">{{ errorMessage() }}</p>
+        }
+      </section>
+
+      <article class="info-card">
+        <h3>Vous avez déjà postulé ?</h3>
+        <p>Retrouvez votre dossier et votre progression depuis votre code de suivi.</p>
+        <a routerLink="/suivre-candidature" class="secondary-action">Suivre ma candidature</a>
       </article>
     </aside>
   </div>

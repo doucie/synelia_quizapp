@@ -80,6 +80,8 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 	@Autowired
 	private ApplicationsRepository applicationsRepository;
 	@Autowired
+	private CampaignPublicAccessService campaignPublicAccessService;
+	@Autowired
 	private FunctionalError functionalError;
 	@Autowired
 	private TechnicalError technicalError;
@@ -94,6 +96,44 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 	public CampaignsBusiness() {
 		dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 		dateTimeFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+	}
+
+	public Response<CampaignsDto> getPublicAvailableCampaigns(Locale locale) throws Exception {
+		Response<CampaignsDto> response = new Response<CampaignsDto>();
+		List<Campaigns> openCampaigns = campaignsRepository.findByCampaignStatus(CampaignStatus.OPEN.getValue(), false);
+		List<CampaignsDto> items = new ArrayList<CampaignsDto>();
+
+		for (Campaigns campaign : openCampaigns) {
+			if (!campaignPublicAccessService.canBeListedPublicly(campaign)) {
+				continue;
+			}
+
+			CampaignsDto dto = CampaignsTransformer.INSTANCE.toDto(campaign);
+			enrichPublicCampaignDto(dto, campaign);
+			items.add(dto);
+		}
+
+		response.setItems(items);
+		response.setCount((long) items.size());
+		response.setTotalCount((long) items.size());
+		response.setHasError(false);
+		response.setHttpCode(HttpStatus.OK.value());
+		return response;
+	}
+
+	public Response<CampaignsDto> getPublicCampaignById(Integer campaignId, Locale locale) throws Exception {
+		Campaigns campaign = campaignPublicAccessService.requirePublicCampaign(campaignId, locale);
+		CampaignsDto dto = CampaignsTransformer.INSTANCE.toDto(campaign);
+		enrichPublicCampaignDto(dto, campaign);
+
+		Response<CampaignsDto> response = new Response<CampaignsDto>();
+		response.setItem(dto);
+		response.setItems(List.of(dto));
+		response.setCount(1L);
+		response.setTotalCount(1L);
+		response.setHasError(false);
+		response.setHttpCode(HttpStatus.OK.value());
+		return response;
 	}
 	
 	/**
@@ -240,6 +280,15 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 		log.info("Response return --:> " + Utilities.convertObjectToJson(response));
 		log.info("----end create Campaigns-----");
 		return response;
+	}
+
+	private void enrichPublicCampaignDto(CampaignsDto dto, Campaigns campaign) {
+		boolean requiresSourceToken = campaignPublicAccessService.requiresSourceToken(campaign);
+		dto.setRequiresSourceToken(requiresSourceToken);
+		dto.setPublicApplyEnabled(!requiresSourceToken);
+		dto.setPublicStatusMessage(requiresSourceToken
+				? "Code recruteur requis pour ouvrir le formulaire."
+				: "Candidature directe disponible.");
 	}
 
 	/**

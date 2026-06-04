@@ -28,5 +28,6 @@ import tech.synelia.quizapp.utils.contract.*;
 public class _ApplicationsDto {
 
 	private String trackingCode;
+	private Integer campaignId;
 
 }

@@ -93,6 +93,7 @@ export interface Application {
   currentPipelineStageType?: string;
   currentPipelineStageLabel?: string;
   currentPipelineProgressStatus?: string;
+  applicationAbandoned?: boolean;
   createdAt?: string;
   createdBy?: number;
   updatedAt?: string;
@@ -100,6 +101,7 @@ export interface Application {
   isDeleted?: boolean;
   searchString?: string;
   sourceTokenId?: number;
+  campaignId?: number;
   action?: string;
   quizAttempts?: ApplicationQuizAttemptSummary[];
 }

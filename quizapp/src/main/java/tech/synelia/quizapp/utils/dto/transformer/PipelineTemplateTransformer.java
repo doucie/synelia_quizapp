@@ -25,6 +25,10 @@ public interface PipelineTemplateTransformer {
     @Mappings({
         @Mapping(source = "entity.createdAt", dateFormat = "dd/MM/yyyy", target = "createdAt"),
         @Mapping(source = "entity.updatedAt", dateFormat = "dd/MM/yyyy", target = "updatedAt"),
+        @Mapping(source = "entity.isActive", target = "isActive"),
+        @Mapping(source = "entity.isDefault", target = "isDefault"),
+        @Mapping(source = "entity.isLocked", target = "isLocked"),
+        @Mapping(source = "entity.isDeleted", target = "isDeleted"),
     })
     PipelineTemplateDto toDto(PipelineTemplate entity) throws ParseException;
 

@@ -16,6 +16,7 @@ import tech.synelia.quizapp.dao.entity.Form;
 import tech.synelia.quizapp.dao.entity.FormVersion;
 import tech.synelia.quizapp.dao.entity.SourceToken;
 import tech.synelia.quizapp.dao.repository.ApplicationsRepository;
+import tech.synelia.quizapp.dao.repository.CampaignsRepository;
 import tech.synelia.quizapp.dao.repository.CampaignFormRepository;
 import tech.synelia.quizapp.dao.repository.FormVersionRepository;
 import tech.synelia.quizapp.dao.repository.SourceTokenRepository;
@@ -33,6 +34,8 @@ public class CampaignPublicAccessService {
 
 	@Autowired
 	private SourceTokenRepository sourceTokenRepository;
+	@Autowired
+	private CampaignsRepository campaignsRepository;
 	@Autowired
 	private ApplicationsRepository applicationsRepository;
 	@Autowired
@@ -56,6 +59,17 @@ public class CampaignPublicAccessService {
 		return sourceToken;
 	}
 
+	public Campaigns requirePublicCampaign(Integer campaignId, Locale locale) {
+		if (campaignId == null || campaignId <= 0) {
+			throw new InvalidEntityException(functionalError.FIELD_EMPTY("campaignId", locale));
+		}
+
+		Campaigns campaign = campaignsRepository.findOne(campaignId, false);
+		ensureCampaignAllowsApplications(campaign, 0, locale);
+		ensureCampaignHasPublishedFormVersion(campaign, locale);
+		return campaign;
+	}
+
 	public void ensureSourceTokenAllowsApplications(SourceToken sourceToken, int pendingRequestApplications, Locale locale) {
 		if (sourceToken == null || Boolean.TRUE.equals(sourceToken.getIsDeleted())) {
 			throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("Lien de candidature introuvable", locale));
@@ -68,6 +82,30 @@ public class CampaignPublicAccessService {
 
 		ensureCampaignAllowsApplications(sourceToken.getCampaigns(), pendingRequestApplications, locale);
 		ensureFormAccessIsAvailable(sourceToken, locale);
+	}
+
+	public void ensureCampaignAllowsDirectApplications(Campaigns campaign, int pendingRequestApplications, Locale locale) {
+		ensureCampaignAllowsApplications(campaign, pendingRequestApplications, locale);
+		ensureCampaignHasPublishedFormVersion(campaign, locale);
+
+		if (requiresSourceToken(campaign)) {
+			throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+					"Cette campagne necessite un code transmis par le recruteur.", locale));
+		}
+	}
+
+	public boolean canBeListedPublicly(Campaigns campaign) {
+		try {
+			ensureCampaignAllowsApplications(campaign, 0, Locale.FRENCH);
+			return campaign != null && campaignHasPublishedFormVersion(campaign.getId());
+		} catch (RuntimeException exception) {
+			return false;
+		}
+	}
+
+	public boolean requiresSourceToken(Campaigns campaign) {
+		String strategy = StringUtils.upperCase(StringUtils.trimToEmpty(campaign != null ? campaign.getFormAssignmentStrategy() : null));
+		return "SOURCE_TOKEN".equals(strategy);
 	}
 
 	private void ensureCampaignAllowsApplications(Campaigns campaign, int pendingRequestApplications, Locale locale) {
@@ -122,16 +160,24 @@ public class CampaignPublicAccessService {
 		}
 	}
 
-	private void ensureFormAccessIsAvailable(SourceToken sourceToken, Locale locale) {
-		Campaigns campaign = sourceToken.getCampaigns();
+	private void ensureCampaignHasPublishedFormVersion(Campaigns campaign, Locale locale) {
 		if (campaign == null || campaign.getId() == null) {
-			return;
+			throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("Cette campagne n'est plus disponible.", locale));
 		}
 
 		if (!campaignHasPublishedFormVersion(campaign.getId())) {
 			throw new InvalidEntityException(functionalError.REQUEST_FAIL(
 					"Cette campagne n'est pas encore ouverte: aucun formulaire publie n'est disponible.", locale));
 		}
+	}
+
+	private void ensureFormAccessIsAvailable(SourceToken sourceToken, Locale locale) {
+		Campaigns campaign = sourceToken.getCampaigns();
+		if (campaign == null || campaign.getId() == null) {
+			return;
+		}
+
+		ensureCampaignHasPublishedFormVersion(campaign, locale);
 
 		String strategy = StringUtils.upperCase(StringUtils.trimToEmpty(campaign.getFormAssignmentStrategy()));
 		if (!"SOURCE_TOKEN".equals(strategy)) {

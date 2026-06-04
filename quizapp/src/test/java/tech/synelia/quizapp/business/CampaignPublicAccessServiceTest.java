@@ -21,6 +21,7 @@ import tech.synelia.quizapp.dao.entity.Form;
 import tech.synelia.quizapp.dao.entity.FormVersion;
 import tech.synelia.quizapp.dao.entity.PipelineTemplate;
 import tech.synelia.quizapp.dao.entity.SourceToken;
+import tech.synelia.quizapp.dao.repository.ApplicationsRepository;
 import tech.synelia.quizapp.dao.repository.CampaignFormRepository;
 import tech.synelia.quizapp.dao.repository.FormVersionRepository;
 import tech.synelia.quizapp.utils.FunctionalError;
@@ -30,6 +31,8 @@ import tech.synelia.quizapp.utils.exception.InvalidEntityException;
 @ExtendWith(MockitoExtension.class)
 class CampaignPublicAccessServiceTest {
 
+	@Mock
+	private ApplicationsRepository applicationsRepository;
 	@Mock
 	private CampaignFormRepository campaignFormRepository;
 	@Mock
@@ -78,6 +81,28 @@ class CampaignPublicAccessServiceTest {
 		assertThat(exception.getStatus().getMessage()).contains("ne correspond pas a la campagne");
 	}
 
+	@Test
+	void ensureCampaignAllowsDirectApplications_rejectsSourceTokenCampaigns() {
+		Campaigns campaign = buildCampaign(11, "SOURCE_TOKEN");
+		Form sharedForm = buildForm(7);
+		FormVersion publishedVersion = buildPublishedVersion(sharedForm, 3);
+
+		when(functionalError.REQUEST_FAIL(anyString(), any(Locale.class))).thenAnswer(invocation -> {
+			Status status = new Status();
+			status.setCode("FUNC_REQUEST_FAIL");
+			status.setMessage(invocation.getArgument(0));
+			return status;
+		});
+		when(campaignFormRepository.findActiveFormsByCampaignId(11)).thenReturn(List.of(sharedForm));
+		when(formVersionRepository.findByFormIdAndIsPublished(7, true, false)).thenReturn(List.of(publishedVersion));
+
+		InvalidEntityException exception = assertThrows(
+				InvalidEntityException.class,
+				() -> campaignPublicAccessService.ensureCampaignAllowsDirectApplications(campaign, 0, Locale.FRENCH));
+
+		assertThat(exception.getStatus().getMessage()).contains("necessite un code");
+	}
+
 	private Campaigns buildCampaign(Integer id, String formAssignmentStrategy) {
 		Campaigns campaign = new Campaigns();
 		campaign.setId(id);
@@ -91,6 +116,7 @@ class CampaignPublicAccessServiceTest {
 	private PipelineTemplate buildPipelineTemplate(Integer id) {
 		PipelineTemplate pipelineTemplate = new PipelineTemplate();
 		pipelineTemplate.setId(id);
+		pipelineTemplate.setIsActive(true);
 		return pipelineTemplate;
 	}
 

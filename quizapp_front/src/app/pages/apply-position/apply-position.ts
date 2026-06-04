@@ -1,33 +1,38 @@
-import { Component, ChangeDetectionStrategy, signal, OnInit, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { SourceTokenService } from '../../services/source-token.service';
-import { ApplicationService, Application } from '../../core/services/application.service';
-import { FileService } from '../../core/services/file.service';
+
+import { Application, ApplicationResponse, ApplicationService } from '../../core/services/application.service';
+import { Campaign, CampaignService } from '../../core/services/campaign.service';
+import { FileService, FileUploadResponse } from '../../core/services/file.service';
 import { SafeHtmlPipe } from '../../pipes/safe-html.pipe';
+import { SourceTokenResponse, SourceTokenService } from '../../services/source-token.service';
 import { FilterCheckboxComponent } from '../../shared/filter-checkbox/filter-checkbox';
 
 interface ApplicationForm {
-  // Informations personnelles
   firstName: string;
   lastName: string;
   email: string;
   phone: string;
   birthDate: string;
-  
-  // Documents et motivation
   cvFile: File | null;
   motivationLetter: string;
-  
-  // Préférences
   remoteWork: boolean;
   relocate: boolean;
-  
-  // Consentement
   consent: boolean;
+}
+
+interface LegalTextItem {
+  title?: string;
+  content?: string;
+  isActive?: boolean;
+}
+
+interface LegalTextResponse {
+  items?: LegalTextItem[];
 }
 
 @Component({
@@ -42,25 +47,26 @@ export class ApplyPositionComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly sourceTokenService = inject(SourceTokenService);
   private readonly applicationService = inject(ApplicationService);
+  private readonly campaignService = inject(CampaignService);
   private readonly fileService = inject(FileService);
   private readonly http = inject(HttpClient);
 
-  // Token source et informations de campagne
-  sourceToken = signal<string>('');
-  sourceTokenId = signal<number | null>(null);
-  campaignName = signal<string>('');
-  isLoadingToken = signal(true);
+  readonly sourceToken = signal('');
+  readonly sourceTokenId = signal<number | null>(null);
+  readonly campaignId = signal<number | null>(null);
+  readonly campaignName = signal('');
+  readonly isLoadingToken = signal(true);
 
-  // Textes légaux
-  consentText = signal<string>('');
-  isLoadingConsentText = signal(true);
-  platformBlockMessage = signal<string | null>(null);
-  privacyPolicyTitle = signal<string>('');
-  privacyPolicyContent = signal<string>('');
-  showPrivacyModal = signal(false);
+  readonly consentText = signal('');
+  readonly isLoadingConsentText = signal(true);
+  private readonly entryBlockMessage = signal<string | null>(null);
+  private readonly legalBlockMessage = signal<string | null>(null);
+  readonly platformBlockMessage = computed(() => this.entryBlockMessage() || this.legalBlockMessage());
+  readonly privacyPolicyTitle = signal('');
+  readonly privacyPolicyContent = signal('');
+  readonly showPrivacyModal = signal(false);
 
-  // Formulaire
-  formData = signal<ApplicationForm>({
+  readonly formData = signal<ApplicationForm>({
     firstName: '',
     lastName: '',
     email: '',
@@ -72,70 +78,103 @@ export class ApplyPositionComponent implements OnInit {
     relocate: false,
     consent: false
   });
-
-  // États
-  isSubmitting = signal(false);
-  isUploadingCv = signal(false);
-  submitSuccess = signal(false);
-  submitError = signal<string | null>(null);
-  submittedTrackingCode = signal<string | null>(null);
-  fileName = signal<string>('');
-  cvFilePath = signal<string>('');
+  readonly fileName = signal('');
+  readonly cvFilePath = signal('');
+  readonly isSubmitting = signal(false);
+  readonly isUploadingCv = signal(false);
+  readonly submitSuccess = signal(false);
+  readonly submitError = signal<string | null>(null);
+  readonly submittedTrackingCode = signal<string | null>(null);
 
   ngOnInit(): void {
-    // Récupérer le token depuis les paramètres de route
     const tokenString = this.route.snapshot.paramMap.get('sourceToken');
-    
     if (tokenString) {
-      this.sourceToken.set(tokenString);
-      
-      // Charger les informations du token
-      this.sourceTokenService.getTokenInfo(tokenString).subscribe({
-        next: (response) => {
-          if (response.items && response.items.length > 0) {
-            const tokenData = response.items[0];
-            this.campaignName.set(tokenData.campaignName || 'Campagne de recrutement');
-            this.sourceTokenId.set(tokenData.id || null);
-          }
-          this.isLoadingToken.set(false);
-        },
-        error: (error) => {
-          console.error('Erreur chargement token:', error);
-          this.campaignName.set('Campagne de recrutement Synelia');
-          this.isLoadingToken.set(false);
-        }
-      });
+      this.loadSourceTokenContext(tokenString);
     } else {
-      // Pas de token, rediriger
-      this.router.navigate(['/']);
+      const campaignIdParam = this.route.snapshot.paramMap.get('campaignId');
+      if (campaignIdParam) {
+        this.loadPublicCampaignContext(Number(campaignIdParam));
+      } else {
+        void this.router.navigate(['/campagnes']);
+        return;
+      }
     }
 
-    // Charger les textes légaux (endpoint public, pas besoin d'auth)
     this.loadLegalTexts();
   }
 
+  private loadSourceTokenContext(tokenString: string): void {
+    this.sourceToken.set(tokenString);
+
+    this.sourceTokenService.getTokenInfo(tokenString).subscribe({
+      next: (response: SourceTokenResponse) => {
+        const tokenData = response.items?.[0];
+        if (tokenData) {
+          this.campaignName.set(tokenData.campaignName || 'Campagne de recrutement');
+          this.sourceTokenId.set(tokenData.id || null);
+        } else {
+          this.campaignName.set('Campagne de recrutement Synelia');
+        }
+        this.entryBlockMessage.set(null);
+        this.isLoadingToken.set(false);
+      },
+      error: (error: unknown) => {
+        console.error('Erreur chargement token:', error);
+        this.campaignName.set('Campagne de recrutement Synelia');
+        this.isLoadingToken.set(false);
+      }
+    });
+  }
+
+  private loadPublicCampaignContext(campaignId: number): void {
+    if (!Number.isFinite(campaignId) || campaignId <= 0) {
+      this.entryBlockMessage.set('Cette campagne est introuvable ou n est plus accessible.');
+      this.isLoadingToken.set(false);
+      return;
+    }
+
+    this.campaignId.set(campaignId);
+    this.campaignService.getPublicCampaignById(campaignId).subscribe({
+      next: (campaign: Campaign) => {
+        this.campaignName.set(campaign.campaignTitle || campaign.campaignName || 'Campagne de recrutement');
+        if (campaign.publicApplyEnabled === false) {
+          this.entryBlockMessage.set(campaign.publicStatusMessage || 'Cette campagne requiert un code recruteur.');
+        } else {
+          this.entryBlockMessage.set(null);
+        }
+        this.isLoadingToken.set(false);
+      },
+      error: (error: unknown) => {
+        console.error('Erreur chargement campagne publique:', error);
+        this.entryBlockMessage.set('Cette campagne est introuvable ou n est plus accessible.');
+        this.isLoadingToken.set(false);
+      }
+    });
+  }
+
   private loadLegalTexts(): void {
-    // Charger le texte de consentement candidat
-    this.http.post<any>('/legalText/getByCriteria', {
-      size: 1, index: 0, isSimpleLoading: false,
+    this.http.post<LegalTextResponse>('/legalText/getByCriteria', {
+      size: 1,
+      index: 0,
+      isSimpleLoading: false,
       data: { textKey: 'candidate_consent', isDeleted: false }
     }).subscribe({
-      next: (res) => {
-        const item = res?.items?.[0];
+      next: (response: LegalTextResponse) => {
+        const item = response.items?.[0];
         if (item?.content && item.isActive) {
           this.consentText.set(item.content);
-          this.platformBlockMessage.set(null);
+          this.legalBlockMessage.set(null);
         } else {
-          this.platformBlockMessage.set(
+          this.legalBlockMessage.set(
             'La candidature est temporairement indisponible: le texte de consentement candidat n\'est pas configure.'
           );
         }
 
         this.isLoadingConsentText.set(false);
       },
-      error: (error) => {
+      error: (error: unknown) => {
         console.error('Erreur chargement consentement:', error);
-        this.platformBlockMessage.set(
+        this.legalBlockMessage.set(
           this.extractPlatformError(
             error,
             'La candidature est temporairement indisponible: le texte de consentement candidat est absent ou inactif.'
@@ -145,17 +184,21 @@ export class ApplyPositionComponent implements OnInit {
       }
     });
 
-    // Charger la politique de confidentialité
-    this.http.post<any>('/legalText/getByCriteria', {
-      size: 1, index: 0, isSimpleLoading: false,
+    this.http.post<LegalTextResponse>('/legalText/getByCriteria', {
+      size: 1,
+      index: 0,
+      isSimpleLoading: false,
       data: { textKey: 'privacy_policy', isDeleted: false }
     }).subscribe({
-      next: (res) => {
-        const item = res?.items?.[0];
+      next: (response: LegalTextResponse) => {
+        const item = response.items?.[0];
         if (item?.content && item.isActive) {
           this.privacyPolicyTitle.set(item.title || 'Politique de confidentialité');
           this.privacyPolicyContent.set(item.content);
         }
+      },
+      error: (error: unknown) => {
+        console.error('Erreur chargement politique de confidentialite:', error);
       }
     });
   }
@@ -170,36 +213,33 @@ export class ApplyPositionComponent implements OnInit {
   }
 
   onFileSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-      const file = input.files[0];
-      
-      // Validation du fichier
-      const validation = this.fileService.validateCvFile(file);
-      if (!validation.isValid) {
-        this.submitError.set(validation.errorMessage || 'Fichier invalide');
-        input.value = ''; // Reset input
-        return;
-      }
+    const input = event.target as HTMLInputElement | null;
+    const file = input?.files?.item(0) ?? null;
 
-      // Clear previous errors
-      this.submitError.set(null);
-      
-      // Update form data and file name
-      this.formData.update(data => ({ ...data, cvFile: file }));
-      this.fileName.set(file.name);
+    if (!input || !file) {
+      return;
     }
+
+    const validation = this.fileService.validateCvFile(file);
+    if (!validation.isValid) {
+      this.submitError.set(validation.errorMessage || 'Fichier invalide');
+      input.value = '';
+      return;
+    }
+
+    this.submitError.set(null);
+    this.formData.update((data: ApplicationForm) => ({ ...data, cvFile: file }));
+    this.fileName.set(file.name);
   }
 
   updateBooleanField(field: 'remoteWork' | 'relocate' | 'consent', value: boolean): void {
-    this.formData.update(data => ({
+    this.formData.update((data: ApplicationForm) => ({
       ...data,
       [field]: value
     }));
   }
 
   async onSubmit(): Promise<void> {
-    // Validation basique
     const data = this.formData();
 
     if (this.isLoadingConsentText()) {
@@ -211,7 +251,7 @@ export class ApplyPositionComponent implements OnInit {
       this.submitError.set(this.platformBlockMessage());
       return;
     }
-    
+
     if (!data.firstName || !data.lastName || !data.email || !data.phone || !data.birthDate) {
       this.submitError.set('Veuillez remplir tous les champs obligatoires');
       return;
@@ -229,28 +269,20 @@ export class ApplyPositionComponent implements OnInit {
 
     this.isSubmitting.set(true);
     this.submitError.set(null);
+    this.isUploadingCv.set(true);
 
     try {
-      // Étape 1 : Upload du CV sur le serveur
-      this.isUploadingCv.set(true);
-      
-      console.log('📤 Upload du CV en cours...');
-      
-      // ✅ Upload réel vers le serveur Spring Boot
-      const uploadResult = await firstValueFrom(
+      const uploadResult: FileUploadResponse = await firstValueFrom(
         this.fileService.uploadCvFile(data.cvFile, data.email)
       );
-      
-      this.isUploadingCv.set(false);
 
       if (!uploadResult.success) {
         throw new Error(uploadResult.error || 'Erreur lors de l\'upload du CV');
       }
 
-      console.log('✅ CV uploadé avec succès:', uploadResult.filePath);
       this.cvFilePath.set(uploadResult.filePath || '');
+      this.isUploadingCv.set(false);
 
-      // Étape 2 : Créer l'application
       const application: Application = {
         candidateFirstName: data.firstName,
         candidateLastName: data.lastName,
@@ -262,48 +294,44 @@ export class ApplyPositionComponent implements OnInit {
         emailVerified: false,
         applicationStatus: 'PENDING',
         sourceTokenId: this.sourceTokenId() || undefined,
-        isDeleted: false,
-        // createdAt: new Date().toISOString() // Let backend set this
+        campaignId: this.campaignId() || undefined,
+        isDeleted: false
       };
 
-      // Appel à l'API backend
-      this.applicationService.createApplication(application).subscribe({
-        next: (response) => {
-          this.isSubmitting.set(false);
-          
-          if (response.hasError || !response.items || response.items.length === 0) {
-				this.submitError.set(
-					response.status?.message || 'Erreur lors de la creation de la candidature'
-				);
-				return;
-          }
+      const response: ApplicationResponse = await firstValueFrom(
+        this.applicationService.createApplication(application)
+      );
 
-          this.submitSuccess.set(true);
-          this.submittedTrackingCode.set(response.items[0].trackingCode || null);
-          console.log('Candidature créée avec succès:', response.items[0]);
-        },
-        error: (error) => {
-          this.isSubmitting.set(false);
-          console.error('Erreur lors de la soumission:', error);
-				this.submitError.set(
-					this.extractPlatformError(
-						error,
-						'Une erreur est survenue lors de l\'envoi de votre candidature. Veuillez reessayer plus tard.'
-					)
-				);
-        }
-      });
+      if (response.hasError || !response.items || response.items.length === 0) {
+        this.submitError.set(response.status?.message || 'Erreur lors de la creation de la candidature');
+        return;
+      }
 
-    } catch (error) {
-      this.isSubmitting.set(false);
-      this.isUploadingCv.set(false);
-      console.error('Erreur:', error);
-      
+      const created = response.items[0];
+      const qt = created.quizToken || created.searchString;
+      if (qt && created.id) {
+        this.submitSuccess.set(true);
+        await this.router.navigate(['/quiz', created.id, qt]);
+        return;
+      }
+
+      this.submitSuccess.set(true);
+      this.submittedTrackingCode.set(created.trackingCode || null);
+    } catch (error: unknown) {
+      console.error('Erreur lors de la soumission:', error);
       if (error instanceof Error) {
         this.submitError.set(error.message);
       } else {
-        this.submitError.set('Une erreur inattendue s\'est produite. Veuillez réessayer.');
+        this.submitError.set(
+          this.extractPlatformError(
+            error,
+            'Une erreur est survenue lors de l\'envoi de votre candidature. Veuillez reessayer plus tard.'
+          )
+        );
       }
+    } finally {
+      this.isSubmitting.set(false);
+      this.isUploadingCv.set(false);
     }
   }
 
@@ -328,7 +356,12 @@ export class ApplyPositionComponent implements OnInit {
     this.isUploadingCv.set(false);
   }
 
-  private extractPlatformError(error: any, fallback: string): string {
-    return error?.error?.status?.message || error?.status?.message || fallback;
+  private extractPlatformError(error: unknown, fallback: string): string {
+    const platformError = error as {
+      error?: { status?: { message?: string } };
+      status?: { message?: string };
+    } | null;
+
+    return platformError?.error?.status?.message || platformError?.status?.message || fallback;
   }
 }

@@ -523,6 +523,11 @@ export const routes: Routes = [
         canActivate: [campaignViewGuard]
       },
       { 
+        path: 'candidates/:id', 
+        loadComponent: () => import('./pages/dashboard/candidate-detail/candidate-detail').then(m => m.CandidateDetailComponent),
+        canActivate: [permissionGuard(['VIEW_APPLICATIONS'])]
+      },
+      { 
         path: 'candidates', 
         loadComponent: () => import('./pages/dashboard/applications/applications').then(m => m.ApplicationsComponent),
         canActivate: [permissionGuard(['VIEW_APPLICATIONS'])]
@@ -597,6 +602,10 @@ export const routes: Routes = [
     path: 'postuler/:sourceToken',
     loadComponent: () => import('./pages/apply-position').then(m => m.ApplyPositionComponent),
     canActivate: [sourceTokenGuard]
+  },
+  {
+    path: 'postuler/campagne/:campaignId',
+    loadComponent: () => import('./pages/apply-position').then(m => m.ApplyPositionComponent)
   },
   {
     // Route pour vérifier l'email avec un token

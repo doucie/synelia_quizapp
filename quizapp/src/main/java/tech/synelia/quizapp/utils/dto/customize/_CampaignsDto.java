@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Date;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import lombok.Getter;
+import lombok.Setter;
 
 import tech.synelia.quizapp.utils.contract.*;
 
@@ -23,6 +25,12 @@ import tech.synelia.quizapp.utils.contract.*;
  *
  */
 @JsonInclude(Include.NON_NULL)
+@Getter
+@Setter
 public class _CampaignsDto {
+
+	private Boolean publicApplyEnabled;
+	private Boolean requiresSourceToken;
+	private String publicStatusMessage;
 
 }

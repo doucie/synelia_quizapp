@@ -1,0 +1,384 @@
+<div class="candidate-detail-page">
+  <!-- Loading -->
+  @if (loading()) {
+    <div class="state-block">
+      <div class="spinner"></div>
+      <p>Chargement de la candidature...</p>
+    </div>
+  }
+
+  <!-- Error -->
+  @if (!loading() && errorMessage()) {
+    <div class="state-block state-block--error">
+      <p>{{ errorMessage() }}</p>
+      <button class="btn btn-primary" (click)="goBack()">Retour à la liste</button>
+    </div>
+  }
+
+  @if (!loading() && application(); as app) {
+    <!-- ── Header ───────────────────────────────────── -->
+    <header class="detail-header">
+      <button class="btn btn-ghost btn-back" (click)="goBack()" aria-label="Retour à la liste">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M19 12H5m7-7l-7 7 7 7"/></svg>
+        Retour
+      </button>
+
+      <div class="header-identity">
+        <div class="avatar" [attr.aria-label]="candidateName()">{{ candidateInitials() }}</div>
+        <div class="header-info">
+          <h1 class="candidate-name">{{ candidateName() }}</h1>
+          <div class="header-meta">
+            <span class="meta-chip meta-chip--muted">#{{ app.id }}</span>
+            <span class="meta-chip" [class]="progressStatusClass(app.applicationStatus)">{{ statusLabel() }}</span>
+            @if (app.applicationAbandoned) {
+              <span class="meta-chip badge-error">Candidature retirée</span>
+            }
+            @if (campaign(); as c) {
+              <span class="meta-chip meta-chip--campaign">{{ c.campaignTitle || 'Campagne' }}</span>
+            }
+          </div>
+          <p class="header-sub">Étape courante : <strong>{{ currentStageLabel() }}</strong></p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button class="btn btn-ghost" (click)="refresh()" title="Rafraîchir">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M21 12a9 9 0 11-3.51-7.13L21 8M21 3v5h-5"/></svg>
+          Actualiser
+        </button>
+      </div>
+    </header>
+
+    <!-- Abandon banner -->
+    @if (app.applicationAbandoned) {
+      <div class="banner banner--error">
+        <strong>Candidature retirée par le candidat.</strong>
+        Les actions pipeline sont désactivées.
+      </div>
+    }
+
+    <!-- Inactive stages warning -->
+    @if (inactiveProgressCount() > 0) {
+      <div class="banner banner--warning">
+        <strong>Pipeline divergent :</strong>
+        cette candidature contient {{ inactiveProgressCount() }} étape(s) historique(s) absente(s) du pipeline actif de la campagne.
+        Les rounds passés ne sont jamais réécrits ; seules les étapes futures peuvent être réalignées manuellement.
+      </div>
+    }
+
+    <!-- ── Layout 2 cols ────────────────────────────── -->
+    <div class="detail-layout">
+
+      <!-- ── Colonne gauche : identité + agrégats ─── -->
+      <aside class="side-col">
+
+        <section class="card">
+          <h2 class="card-title">Identité</h2>
+          <dl class="kv-list">
+            <div class="kv-row">
+              <dt>Email</dt>
+              <dd>
+                <a [href]="'mailto:' + app.candidateEmail">{{ app.candidateEmail }}</a>
+                @if (app.emailVerified) {
+                  <span class="inline-badge badge-success">vérifié</span>
+                } @else {
+                  <span class="inline-badge badge-warning">non vérifié</span>
+                }
+              </dd>
+            </div>
+            <div class="kv-row">
+              <dt>Téléphone</dt>
+              <dd>{{ app.candidatePhone || '—' }}</dd>
+            </div>
+            <div class="kv-row">
+              <dt>Date de naissance</dt>
+              <dd>{{ app.candidateBirthDate || '—' }}</dd>
+            </div>
+            @if (app.candidateCvPath) {
+              <div class="kv-row">
+                <dt>CV</dt>
+                <dd>
+                  <button class="link-btn" (click)="viewCv()">Ouvrir dans un nouvel onglet</button>
+                </dd>
+              </div>
+            }
+          </dl>
+          @if (app.motivationLetter) {
+            <div class="motivation">
+              <h3>Lettre de motivation</h3>
+              <p>{{ app.motivationLetter }}</p>
+            </div>
+          }
+        </section>
+
+        <section class="card">
+          <h2 class="card-title">Synthèse</h2>
+          <div class="metric-grid">
+            <div class="metric">
+              <span class="metric-label">Quiz</span>
+              <span class="metric-value">
+                <span class="inline-badge" [class]="quizStatusClass()">{{ quizStatusLabel() }}</span>
+              </span>
+            </div>
+            @if (app.quizScorePercent != null) {
+              <div class="metric">
+                <span class="metric-label">Score quiz</span>
+                <span class="metric-value strong">{{ app.quizScorePercent }} %</span>
+              </div>
+            }
+            @if (app.currentInterviewEvaluationPercentage != null) {
+              <div class="metric">
+                <span class="metric-label">Évaluation entretien</span>
+                <span class="metric-value strong">{{ app.currentInterviewEvaluationPercentage }} %</span>
+              </div>
+            }
+            <div class="metric">
+              <span class="metric-label">Entretiens</span>
+              <span class="metric-value strong">{{ interviews().length }}</span>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Décisions</span>
+              <span class="metric-value strong">{{ decisions().length }}</span>
+            </div>
+          </div>
+
+          <div class="quick-actions">
+            <button class="btn btn-outline" (click)="planInterview()" [disabled]="app.applicationAbandoned">
+              Planifier un entretien
+            </button>
+            <button class="btn btn-outline" (click)="openDecision()" [disabled]="app.applicationAbandoned">
+              Prendre une décision
+            </button>
+            <button class="btn btn-outline" (click)="openQuizAnswers()">
+              Voir les réponses quiz
+            </button>
+          </div>
+        </section>
+
+        @if (campaign(); as c) {
+          <section class="card">
+            <h2 class="card-title">Campagne</h2>
+            <p class="campaign-name">{{ c.campaignTitle || '—' }}</p>
+            @if (c.pipelineTemplateId) {
+              <p class="muted">Pipeline : template #{{ c.pipelineTemplateId }}</p>
+            }
+          </section>
+        }
+      </aside>
+
+      <!-- ── Colonne droite : timeline pipeline ───── -->
+      <section class="main-col">
+        <div class="main-col-header">
+          <h2>Parcours pipeline</h2>
+          <span class="muted">{{ orderedProgress().length }} round(s)</span>
+        </div>
+
+        @if (orderedProgress().length === 0) {
+          <div class="empty-block">
+            <p>Aucune progression n'a été initialisée pour cette candidature.</p>
+          </div>
+        } @else {
+          <ol class="timeline">
+            @for (p of orderedProgress(); track p.id; let i = $index; let last = $last) {
+              <li class="timeline-item" [class.is-current]="isCurrentProgress(p)">
+                <div class="timeline-marker">
+                  <div class="marker-dot" [class]="'dot-' + (p.progressStatus || 'PENDING').toLowerCase()"></div>
+                  @if (!last) { <div class="marker-line"></div> }
+                </div>
+
+                <article class="timeline-card" [class.is-current]="isCurrentProgress(p)">
+                  <header class="tc-header" (click)="toggleExpand(p.id)">
+                    <div class="tc-header-main">
+                      <span class="tc-order">{{ i + 1 }}</span>
+                      <div class="tc-title">
+                        <h3>{{ p.stageName || ('Étape ' + (i + 1)) }}</h3>
+                        <span class="tc-type">{{ stageTypeLabel(p.stageType) }}</span>
+                      </div>
+                    </div>
+                    <div class="tc-header-meta">
+                      @if (isCurrentProgress(p)) {
+                        <span class="inline-badge badge-primary">Courante</span>
+                      }
+                      <span class="inline-badge" [class]="progressStatusClass(p.progressStatus)">
+                        {{ progressStatusLabel(p.progressStatus) }}
+                      </span>
+                      <button class="toggle-btn" [class.is-open]="isExpanded(p.id)" aria-label="Déplier / replier">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="6 9 12 15 18 9"/></svg>
+                      </button>
+                    </div>
+                  </header>
+
+                  @if (isExpanded(p.id)) {
+                    <div class="tc-body">
+                      <!-- Métadonnées du round -->
+                      <dl class="tc-meta">
+                        @if (p.startedAt) {
+                          <div><dt>Démarrée</dt><dd>{{ formatDate(p.startedAt) }}</dd></div>
+                        }
+                        @if (p.completedAt) {
+                          <div><dt>Terminée</dt><dd>{{ formatDate(p.completedAt) }}</dd></div>
+                        }
+                        @if (p.score != null) {
+                          <div><dt>Score</dt><dd>{{ p.score }}</dd></div>
+                        }
+                        @if (p.decidedByFirstName || p.decidedByLastName) {
+                          <div><dt>Validée par</dt><dd>{{ p.decidedByFirstName }} {{ p.decidedByLastName }}</dd></div>
+                        }
+                        @if (p.mailSent) {
+                          <div><dt>Email</dt><dd><span class="inline-badge badge-success">envoyé</span></dd></div>
+                        }
+                      </dl>
+
+                      @if (p.notes) {
+                        <div class="tc-notes">
+                          <span class="tc-notes-label">Notes</span>
+                          <p>{{ p.notes }}</p>
+                        </div>
+                      }
+
+                      <!-- ── Contenu spécifique : QUIZ ── -->
+                      @if (p.stageType === 'QUIZ' || p.stageType === 'TECHNICAL_TEST') {
+                        <div class="tc-section">
+                          <h4>Quiz</h4>
+                          <div class="metric-grid">
+                            <div class="metric">
+                              <span class="metric-label">Statut</span>
+                              <span class="inline-badge" [class]="quizStatusClass()">{{ quizStatusLabel() }}</span>
+                            </div>
+                            @if (app.quizScorePercent != null) {
+                              <div class="metric">
+                                <span class="metric-label">Score global</span>
+                                <span class="metric-value strong">{{ app.quizScorePercent }} %</span>
+                              </div>
+                            }
+                            @if (totalQuestions()) {
+                              <div class="metric">
+                                <span class="metric-label">Questions</span>
+                                <span class="metric-value strong">{{ totalQuestions() }}</span>
+                              </div>
+                            }
+                          </div>
+                          <button class="link-btn" (click)="openQuizAnswers()">Voir le détail des réponses →</button>
+                        </div>
+                      }
+
+                      <!-- ── Contenu spécifique : INTERVIEW ── -->
+                      @if (p.stageType === 'INTERVIEW') {
+                        <div class="tc-section">
+                          <div class="tc-section-head">
+                            <h4>Entretien(s) rattaché(s)</h4>
+                            @if (canActOnCurrent(p)) {
+                              <button class="btn btn-outline btn-sm" (click)="planInterview(getStageForProgress(p))">
+                                Planifier
+                              </button>
+                            }
+                          </div>
+                          @if (interviewsForProgress(p.id).length === 0) {
+                            <p class="muted small">Aucun entretien planifié pour ce round.</p>
+                          } @else {
+                            <ul class="sub-list">
+                              @for (it of interviewsForProgress(p.id); track it.id) {
+                                <li class="sub-item">
+                                  <div class="sub-item-main">
+                                    <strong>{{ formatDate(it.interviewDate) }}</strong>
+                                    <span class="muted">— {{ it.interviewType === 'ONLINE' ? 'En ligne' : 'Présentiel' }}</span>
+                                    @if (it.interviewLocation) {
+                                      <span class="muted"> · {{ it.interviewLocation }}</span>
+                                    }
+                                  </div>
+                                  <div class="sub-item-actions">
+                                    <span class="inline-badge" [class]="interviewStatusClass(it.interviewStatus)">{{ it.interviewStatus || '—' }}</span>
+                                    <button class="link-btn" (click)="openInterview(it)">Ouvrir</button>
+                                  </div>
+                                </li>
+                              }
+                            </ul>
+                          }
+                        </div>
+                      }
+
+                      <!-- ── Contenu spécifique : PRESELECTION / DECISION ── -->
+                      @if (p.stageType === 'PRESELECTION' || p.stageType === 'DECISION') {
+                        <div class="tc-section">
+                          <div class="tc-section-head">
+                            <h4>Décision(s)</h4>
+                            @if (canActOnCurrent(p)) {
+                              <button class="btn btn-outline btn-sm" (click)="openDecision()">Prendre une décision</button>
+                            }
+                          </div>
+                          @if (decisionsForProgress(p.id).length === 0) {
+                            <p class="muted small">Aucune décision enregistrée pour ce round.</p>
+                          } @else {
+                            <ul class="sub-list">
+                              @for (d of decisionsForProgress(p.id); track d.id) {
+                                <li class="sub-item">
+                                  <div class="sub-item-main">
+                                    <span class="inline-badge" [class]="decisionTypeClass(d.decisionType)">
+                                      {{ decisionTypeLabel(d.decisionType) }}
+                                    </span>
+                                    @if (d.userName) { <span class="muted">par {{ d.userName }}</span> }
+                                    @if (d.createdAt) { <span class="muted"> · {{ formatDate(d.createdAt) }}</span> }
+                                  </div>
+                                  @if (d.justification) {
+                                    <p class="muted small">{{ d.justification }}</p>
+                                  }
+                                </li>
+                              }
+                            </ul>
+                          }
+                        </div>
+                      }
+
+                      <!-- ── Actions sur l'étape courante ── -->
+                      @if (canActOnCurrent(p)) {
+                        <footer class="tc-actions">
+                          <button class="btn btn-success"
+                                  (click)="advanceCurrent()"
+                                  [disabled]="isActionLoading('advance-' + app.id)">
+                            Valider l'étape
+                          </button>
+                          <button class="btn btn-danger"
+                                  (click)="openRejectModal(p.pipelineStageId!)"
+                                  [disabled]="isActionLoading('fail-' + p.pipelineStageId)">
+                            Refuser
+                          </button>
+                          @if (canSkipCurrent(p)) {
+                            <button class="btn btn-outline"
+                                    (click)="skipCurrent(getStageForProgress(p)!)"
+                                    [disabled]="isActionLoading('skip-' + p.pipelineStageId)">
+                              Sauter
+                            </button>
+                          }
+                        </footer>
+                      }
+                    </div>
+                  }
+                </article>
+              </li>
+            }
+          </ol>
+        }
+      </section>
+    </div>
+  }
+
+  <!-- Reject modal -->
+  @if (showRejectModal()) {
+    <div class="modal-backdrop" (click)="cancelReject()">
+      <div class="modal" (click)="$event.stopPropagation()">
+        <h3>Refuser cette étape</h3>
+        <p class="muted small">Le candidat sera marqué comme refusé sur cette étape. Indiquez une raison (optionnelle mais recommandée).</p>
+        <textarea
+          class="modal-textarea"
+          rows="4"
+          placeholder="Raison du refus..."
+          [ngModel]="rejectReason()"
+          (ngModelChange)="rejectReason.set($event)"></textarea>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" (click)="cancelReject()">Annuler</button>
+          <button class="btn btn-danger" (click)="confirmReject()">Confirmer le refus</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

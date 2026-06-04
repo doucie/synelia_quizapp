@@ -39,6 +39,7 @@ public class SecurityConfig {
                 .requestMatchers("/userManager/connexion").permitAll()
                 .requestMatchers("/api/qeel/**", "/ws/**").permitAll()
                     .requestMatchers("/applications/create", "/applications/verifyEmail/**", "/applications/track", "/applications/respond-interview", "/applications/submit-ask").permitAll()
+                .requestMatchers("/campaigns/public/**").permitAll()
                 .requestMatchers("/sourceToken/validate/**", "/sourceToken/info/**").permitAll()
                 .requestMatchers("/candidateanswer/**").permitAll()
                 .requestMatchers("/legalText/getByCriteria").permitAll()

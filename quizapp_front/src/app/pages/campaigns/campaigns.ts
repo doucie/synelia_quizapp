@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { finalize } from 'rxjs';
+import { Campaign, CampaignService } from '../../core/services/campaign.service';
 import { SourceTokenService } from '../../services/source-token.service';
 
 @Component({
@@ -15,11 +16,47 @@ import { SourceTokenService } from '../../services/source-token.service';
 })
 export class CampaignsComponent {
   private readonly router = inject(Router);
+  private readonly campaignService = inject(CampaignService);
   private readonly sourceTokenService = inject(SourceTokenService);
 
   readonly sourceToken = signal('');
   readonly isCheckingToken = signal(false);
   readonly errorMessage = signal<string | null>(null);
+  readonly campaigns = signal<Campaign[]>([]);
+  readonly isLoadingCampaigns = signal(true);
+  readonly campaignsErrorMessage = signal<string | null>(null);
+
+  ngOnInit(): void {
+    this.loadPublicCampaigns();
+  }
+
+  private loadPublicCampaigns(): void {
+    this.isLoadingCampaigns.set(true);
+    this.campaignsErrorMessage.set(null);
+
+    this.campaignService.getPublicCampaigns()
+      .pipe(finalize(() => this.isLoadingCampaigns.set(false)))
+      .subscribe({
+        next: (campaigns) => {
+          const sortedCampaigns = [...campaigns].sort((left, right) => {
+            const leftPriority = left.publicApplyEnabled ? 0 : 1;
+            const rightPriority = right.publicApplyEnabled ? 0 : 1;
+            if (leftPriority !== rightPriority) {
+              return leftPriority - rightPriority;
+            }
+
+            return (left.campaignTitle || left.campaignName || '').localeCompare(right.campaignTitle || right.campaignName || '');
+          });
+
+          this.campaigns.set(sortedCampaigns);
+        },
+        error: (error) => {
+          console.error('Erreur chargement campagnes publiques:', error);
+          this.campaignsErrorMessage.set('Impossible de charger les campagnes pour le moment.');
+          this.campaigns.set([]);
+        }
+      });
+  }
 
   onSourceTokenChange(value: string): void {
     this.sourceToken.set(this.normalizeToken(value));

@@ -194,6 +194,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		Map<Integer, Integer> pendingApplicationsByCampaign = new HashMap<Integer, Integer>();
 		Map<Integer, Integer> pendingAssignedFormsByCampaign = new HashMap<Integer, Integer>();
 		Map<String, Set<Integer>> pendingCandidateFormHistory = new HashMap<String, Set<Integer>>();
+		List<Campaigns> effectiveCampaigns = new ArrayList<Campaigns>();
 
 		platformReadinessService.requireEmailDeliveryAvailable(
 				EmailActionType.APPLICATION_VERIFICATION, locale);
@@ -228,6 +229,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 
 			// Verify if sourceToken exist
 			SourceToken existingSourceToken = null;
+			Campaigns existingCampaign = null;
 			if (dto.getSourceTokenId() != null && dto.getSourceTokenId() > 0){
 				existingSourceToken = sourceTokenRepository.findOne(dto.getSourceTokenId(), false);
 				if (existingSourceToken == null) {
@@ -244,6 +246,16 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				if (campaignId != null) {
 					pendingApplicationsByCampaign.merge(campaignId, 1, Integer::sum);
 				}
+			} else if (dto.getCampaignId() != null && dto.getCampaignId() > 0) {
+				existingCampaign = campaignPublicAccessService.requirePublicCampaign(dto.getCampaignId(), locale);
+				int pendingApplicationsForCampaign = pendingApplicationsByCampaign.getOrDefault(existingCampaign.getId(), 0);
+				campaignPublicAccessService.ensureCampaignAllowsDirectApplications(
+						existingCampaign,
+						pendingApplicationsForCampaign,
+						locale);
+				pendingApplicationsByCampaign.merge(existingCampaign.getId(), 1, Integer::sum);
+				// Trouver ou créer le token public pour cette campagne
+				existingSourceToken = findOrCreatePublicSourceToken(existingCampaign, request.getUser());
 			}
 			// Verify if formVersion exist
 			FormVersion existingFormVersion = null;
@@ -252,10 +264,15 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				if (existingFormVersion == null) {
 					throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("formVersion formVersionId -> " + dto.getFormVersionId(), locale));
 				}
-				validateFormVersionMatchesCampaign(existingFormVersion, existingSourceToken, locale);
-			} else if (existingSourceToken != null) {
+				if (existingSourceToken != null) {
+					validateFormVersionMatchesCampaign(existingFormVersion, existingSourceToken, locale);
+				} else {
+					validateFormVersionMatchesCampaign(existingFormVersion, existingCampaign, locale);
+				}
+			} else if (existingSourceToken != null || existingCampaign != null) {
 				existingFormVersion = selectFormVersionForCandidate(
 						existingSourceToken,
+						existingCampaign,
 						dto.getCandidateEmail(),
 						null,
 						pendingAssignedFormsByCampaign,
@@ -275,10 +292,13 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			entityToSave.setQuizToken(null); // Sera généré après vérification email
 			entityToSave.setQuizLevel(null); // Sera initialisé au démarrage du quiz
 			entityToSave.setQuizManualCorrectionStatus(ManualCorrectionStatus.NOT_REQUIRED.getValue());
+			entityToSave.setTimeElapsed(0);
 			applyQuizTimingSnapshot(entityToSave);
 			entityToSave.setApplicationAbandoned(false); // Initialiser à false
-			registerPendingFormAssignment(existingSourceToken, dto.getCandidateEmail(), existingFormVersion,
+			registerPendingFormAssignment(existingSourceToken, existingCampaign, dto.getCandidateEmail(), existingFormVersion,
 					pendingAssignedFormsByCampaign, pendingCandidateFormHistory);
+			effectiveCampaigns.add(existingSourceToken != null && existingSourceToken.getCampaigns() != null
+					? existingSourceToken.getCampaigns() : existingCampaign);
 			items.add(entityToSave);
 		}
 
@@ -296,9 +316,70 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			for (Applications savedApp : itemsSaved) {
 				lockFormVersionIfNeeded(savedApp.getFormVersion(), request.getUser());
 			}
+
+			// Initialiser le progrès pipeline pour chaque application créée (sourceToken ET campagne publique)
+			for (int appIdx = 0; appIdx < itemsSaved.size(); appIdx++) {
+				Applications savedApp = itemsSaved.get(appIdx);
+				Campaigns campaign = appIdx < effectiveCampaigns.size() ? effectiveCampaigns.get(appIdx) : null;
+				if (campaign == null && savedApp.getSourceToken() != null) {
+					campaign = savedApp.getSourceToken().getCampaigns();
+				}
+				if (campaign == null || campaign.getPipelineTemplate() == null) {
+					continue;
+				}
+				try {
+					Integer templateId = campaign.getPipelineTemplate().getId();
+					applicationProgressBusiness.initProgressForApplication(savedApp.getId(), templateId, request.getUser());
+					applicationProgressBusiness.advanceToNextStage(savedApp.getId(), request.getUser(), locale);
+				} catch (Exception e) {
+					log.warning("Erreur lors de l'initialisation du pipeline pour application ID " + savedApp.getId() + ": " + e.getMessage());
+					e.printStackTrace();
+				}
+			}
+
+			// Générer quizToken si l'étape suivant CANDIDATURE est QUIZ
+			Map<Integer, String> quizTokensByAppId = new HashMap<Integer, String>();
+			for (int appIdx = 0; appIdx < itemsSaved.size(); appIdx++) {
+				Applications savedApp = itemsSaved.get(appIdx);
+				Campaigns campaign = appIdx < effectiveCampaigns.size() ? effectiveCampaigns.get(appIdx) : null;
+				if (campaign == null && savedApp.getSourceToken() != null) {
+					campaign = savedApp.getSourceToken().getCampaigns();
+				}
+				if (campaign == null || campaign.getPipelineTemplate() == null) {
+					continue;
+				}
+				try {
+					List<PipelineStage> stages = pipelineStageRepository.findByPipelineTemplateIdOrderByStageOrder(campaign.getPipelineTemplate().getId());
+					if (stages != null && stages.size() >= 2) {
+						PipelineStage secondStage = stages.get(1);
+						if ("QUIZ".equals(secondStage.getStageType()) || "TECHNICAL_TEST".equals(secondStage.getStageType())) {
+							String quizToken = java.util.UUID.randomUUID().toString().replace("-", "");
+							savedApp.setQuizToken(quizToken);
+							savedApp.setUpdatedAt(Utilities.getCurrentDate());
+							savedApp.setUpdatedBy(request.getUser());
+							applicationsRepository.save(savedApp);
+							ApplicationQuizAttempt quizAttempt = createQuizAttemptForVerifiedApplication(savedApp, quizToken, request.getUser());
+							if (quizAttempt != null) {
+								syncApplicationQuizSummaryFromAttempt(savedApp, quizAttempt, request.getUser());
+							}
+							quizTokensByAppId.put(savedApp.getId(), quizToken);
+							log.info("Quiz token généré automatiquement pour application ID " + savedApp.getId());
+						}
+					}
+				} catch (Exception e) {
+					log.warning("Erreur lors de la génération du quiz token pour application ID " + savedApp.getId() + ": " + e.getMessage());
+					e.printStackTrace();
+				}
+			}
+
 			List<ApplicationsDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading())) ? ApplicationsTransformer.INSTANCE.toLiteDtos(itemsSaved) : ApplicationsTransformer.INSTANCE.toDtos(itemsSaved);
 			for (ApplicationsDto dto : itemsDto) {
 				dto.setTrackingCode(trackingCodesByApplicationId.get(dto.getId()));
+				String qt = quizTokensByAppId.get(dto.getId());
+				if (qt != null) {
+					dto.setQuizToken(qt);
+					dto.setSearchString(qt);
+				}
 			}
 
 			final int size = itemsSaved.size();
@@ -327,26 +408,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				}
 			}
 			
-			// Initialiser le progrès pipeline pour chaque application créée
-			for (Applications savedApp : itemsSaved) {
-				try {
-					// Récupérer le pipelineTemplateId via SourceToken → Campaign
-					if (savedApp.getSourceToken() != null && savedApp.getSourceToken().getCampaigns() != null) {
-						Campaigns campaign = savedApp.getSourceToken().getCampaigns();
-						if (campaign.getPipelineTemplate() != null) {
-							Integer templateId = campaign.getPipelineTemplate().getId();
-							// Créer toutes les lignes PENDING + verrouiller le template
-							applicationProgressBusiness.initProgressForApplication(savedApp.getId(), templateId, request.getUser());
-							// Avancer la 1ère étape (CANDIDATURE) à IN_PROGRESS
-							applicationProgressBusiness.advanceToNextStage(savedApp.getId(), request.getUser(), locale);
-						}
-					}
-				} catch (Exception e) {
-					log.warning("Erreur lors de l'initialisation du pipeline pour application ID " + savedApp.getId() + ": " + e.getMessage());
-					e.printStackTrace();
-				}
-			}
-
+			// Créer le token de vérification et envoyer l'email pour chaque application créée
 			for (Applications savedApp : itemsSaved) {
 				try {
 					notifyAuthorizedRecruitersOfNewApplication(savedApp, request.getUser());
@@ -1440,7 +1502,23 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 	}
 
 	private void validateFormVersionMatchesCampaign(FormVersion formVersion, SourceToken sourceToken, Locale locale) {
-		if (formVersion == null || sourceToken == null || sourceToken.getCampaigns() == null) {
+		validateFormVersionMatchesCampaign(
+				formVersion,
+				sourceToken != null ? sourceToken.getCampaigns() : null,
+				locale,
+				"La version de formulaire selectionnee n'appartient pas a la campagne du source token");
+	}
+
+	private void validateFormVersionMatchesCampaign(FormVersion formVersion, Campaigns campaign, Locale locale) {
+		validateFormVersionMatchesCampaign(
+				formVersion,
+				campaign,
+				locale,
+				"La version de formulaire selectionnee n'appartient pas a la campagne");
+	}
+
+	private void validateFormVersionMatchesCampaign(FormVersion formVersion, Campaigns campaign, Locale locale, String errorMessage) {
+		if (formVersion == null || campaign == null || campaign.getId() == null) {
 			return;
 		}
 
@@ -1449,21 +1527,66 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 					"La version de formulaire selectionnee n'est pas publiee.", locale));
 		}
 
-		Integer campaignId = sourceToken.getCampaigns().getId();
+		Integer campaignId = campaign.getId();
 		Integer formId = formVersion.getForm() != null ? formVersion.getForm().getId() : null;
 		if (!hasActiveCampaignFormLink(campaignId, formId)) {
-			throw new InvalidEntityException(functionalError.REQUEST_FAIL("La version de formulaire selectionnee n'appartient pas a la campagne du source token", locale));
+			throw new InvalidEntityException(functionalError.REQUEST_FAIL(errorMessage, locale));
 		}
+	}
+
+	/**
+	 * Trouve ou crée un token source public pour une campagne.
+	 * Un seul token public est autorisé par campagne (is_public = true, nom = "Quiz App").
+	 */
+	private SourceToken findOrCreatePublicSourceToken(Campaigns campaign, Integer userId) {
+		if (campaign == null || campaign.getId() == null) {
+			return null;
+		}
+
+		// Chercher un token public existant pour cette campagne
+		List<SourceToken> tokens = sourceTokenRepository.findByCampaignId(campaign.getId(), false);
+		if (tokens != null) {
+			for (SourceToken token : tokens) {
+				if (Boolean.TRUE.equals(token.getIsPublic())) {
+					return token;
+				}
+			}
+		}
+
+		// Créer un nouveau token public
+		SourceToken publicToken = new SourceToken();
+		publicToken.setTokenString(generateUniqueTokenString());
+		publicToken.setSourceTokenName("Quiz App");
+		publicToken.setCampaigns(campaign);
+		publicToken.setIsPublic(true);
+		publicToken.setIsDeleted(false);
+		publicToken.setCreatedAt(Utilities.getCurrentDate());
+		publicToken.setCreatedBy(userId);
+		publicToken.setSearchString("Quiz App " + campaign.getCampaignTitle());
+
+		return sourceTokenRepository.save(publicToken);
+	}
+
+	/**
+	 * Génère une chaîne de token unique à 6 caractères.
+	 */
+	private String generateUniqueTokenString() {
+		String token;
+		do {
+			token = java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 6).toUpperCase();
+		} while (sourceTokenRepository.findByTokenString(token.toLowerCase(java.util.Locale.ROOT), false) != null);
+		return token;
 	}
 
 	private FormVersion selectFormVersionForCandidate(
 			SourceToken sourceToken,
+			Campaigns directCampaign,
 			String candidateEmail,
 			Integer applicationId,
 			Map<Integer, Integer> pendingAssignedFormsByCampaign,
 			Map<String, Set<Integer>> pendingCandidateFormHistory,
 			Locale locale) {
-		Campaigns campaign = requireCampaignForFormSelection(sourceToken, locale);
+		Campaigns campaign = requireCampaignForFormSelection(sourceToken, directCampaign, locale);
 		List<FormVersion> publishedVersions = getPublishedFormVersionsForCampaign(campaign.getId());
 		if (publishedVersions.isEmpty()) {
 			throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("Aucun formulaire publie trouve pour cette campagne", locale));
@@ -1474,6 +1597,10 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 
 		switch (strategy) {
 			case SOURCE_TOKEN:
+				if (sourceToken == null) {
+					throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+							"Cette campagne necessite un code transmis par le recruteur.", locale));
+				}
 				return resolveSourceTokenFormVersion(sourceToken, campaign, locale);
 			case SEQUENTIAL:
 				return resolveSequentialFormVersion(campaign.getId(), publishedVersions, pendingAssignedFormsByCampaign, exhaustionPolicy, locale);
@@ -1485,11 +1612,16 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		}
 	}
 
-	private Campaigns requireCampaignForFormSelection(SourceToken sourceToken, Locale locale) {
-		if (sourceToken == null || sourceToken.getCampaigns() == null || sourceToken.getCampaigns().getId() == null) {
-			throw new InvalidEntityException(functionalError.REQUEST_FAIL("Impossible de determiner la campagne pour attribuer un formulaire", locale));
+	private Campaigns requireCampaignForFormSelection(SourceToken sourceToken, Campaigns directCampaign, Locale locale) {
+		if (sourceToken != null && sourceToken.getCampaigns() != null && sourceToken.getCampaigns().getId() != null) {
+			return sourceToken.getCampaigns();
 		}
-		return sourceToken.getCampaigns();
+
+		if (directCampaign != null && directCampaign.getId() != null) {
+			return directCampaign;
+		}
+
+			throw new InvalidEntityException(functionalError.REQUEST_FAIL("Impossible de determiner la campagne pour attribuer un formulaire", locale));
 	}
 
 	private List<FormVersion> getPublishedFormVersionsForCampaign(Integer campaignId) {
@@ -1691,15 +1823,22 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 
 	private void registerPendingFormAssignment(
 			SourceToken sourceToken,
+			Campaigns directCampaign,
 			String candidateEmail,
 			FormVersion formVersion,
 			Map<Integer, Integer> pendingAssignedFormsByCampaign,
 			Map<String, Set<Integer>> pendingCandidateFormHistory) {
-		if (sourceToken == null || sourceToken.getCampaigns() == null || sourceToken.getCampaigns().getId() == null || formVersion == null) {
+		if (formVersion == null) {
 			return;
 		}
 
-		Integer campaignId = sourceToken.getCampaigns().getId();
+		Integer campaignId = sourceToken != null && sourceToken.getCampaigns() != null
+				? sourceToken.getCampaigns().getId()
+				: directCampaign != null ? directCampaign.getId() : null;
+		if (campaignId == null) {
+			return;
+		}
+
 		if (pendingAssignedFormsByCampaign != null) {
 			pendingAssignedFormsByCampaign.merge(campaignId, 1, Integer::sum);
 		}

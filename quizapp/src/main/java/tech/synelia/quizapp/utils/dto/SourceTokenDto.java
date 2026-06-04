@@ -40,6 +40,7 @@ public class SourceTokenDto extends _SourceTokenDto implements Cloneable{
 	private String     updatedAt            ;
     private Integer    updatedBy            ;
     private Boolean    isDeleted            ;
+    private Boolean    isPublic             ;
     private String     searchString         ;
     // Champs pour les intervalles de dates (recherche avancee)
     private String     dateCreationDe       ;

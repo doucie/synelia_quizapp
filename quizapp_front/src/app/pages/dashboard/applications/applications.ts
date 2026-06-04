@@ -25,6 +25,7 @@ interface ApplicationWithCampaign extends Application {
   campaignTitle?: string;
   campaignId?: number;
   sourceTokenLabel?: string;
+  applicationAbandoned?: boolean;
 }
 
 @Component({
@@ -1106,10 +1107,12 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   /**
    * Navigation vers les détails
    */
-  viewApplicationDetails(applicationId: number): void {
-    this.router.navigate(['/dashboard/candidates'], {
-      fragment: `application-${applicationId}`
-    });
+  viewApplicationDetails(applicationId: number, campaignId?: number): void {
+    const extras: any = {};
+    if (campaignId) {
+      extras.queryParams = { campaignId };
+    }
+    this.router.navigate(['/dashboard/candidates', applicationId], extras);
   }
 
   /**

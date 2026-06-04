@@ -1,10 +1,10 @@
 package tech.synelia.quizapp.business;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.groups.Tuple.tuple;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -77,6 +77,8 @@ class CampaignsBusinessTest {
 	@Mock
 	private ApplicationsRepository applicationsRepository;
 	@Mock
+	private CampaignPublicAccessService campaignPublicAccessService;
+	@Mock
 	private FunctionalError functionalError;
 	@Mock
 	private TechnicalError technicalError;
@@ -85,6 +87,33 @@ class CampaignsBusinessTest {
 
 	@InjectMocks
 	private CampaignsBusiness campaignsBusiness;
+
+	@Test
+	void getPublicAvailableCampaigns_enrichesDirectApplyAndRecruiterCodeModes() throws Exception {
+		Campaigns directCampaign = buildCampaign(11, false);
+		directCampaign.setCampaignTitle("Campagne directe");
+		directCampaign.setFormAssignmentStrategy("SEQUENTIAL");
+
+		Campaigns tokenCampaign = buildCampaign(12, false);
+		tokenCampaign.setCampaignTitle("Campagne avec code");
+		tokenCampaign.setFormAssignmentStrategy("SOURCE_TOKEN");
+
+		when(campaignsRepository.findByCampaignStatus("OPEN", false)).thenReturn(List.of(directCampaign, tokenCampaign));
+		when(campaignPublicAccessService.canBeListedPublicly(directCampaign)).thenReturn(true);
+		when(campaignPublicAccessService.canBeListedPublicly(tokenCampaign)).thenReturn(true);
+		when(campaignPublicAccessService.requiresSourceToken(directCampaign)).thenReturn(false);
+		when(campaignPublicAccessService.requiresSourceToken(tokenCampaign)).thenReturn(true);
+
+		Response<CampaignsDto> response = campaignsBusiness.getPublicAvailableCampaigns(Locale.FRENCH);
+
+		assertThat(response.isHasError()).isFalse();
+		assertThat(response.getItems()).hasSize(2);
+		assertThat(response.getItems())
+				.extracting(CampaignsDto::getCampaignTitle, CampaignsDto::getPublicApplyEnabled, CampaignsDto::getRequiresSourceToken)
+				.containsExactly(
+					tuple("Campagne directe", true, false),
+					tuple("Campagne avec code", false, true));
+	}
 
 	@Test
 	void update_rejectsTimeAllFormsChangeWhenAssignedFormVersionsExist() {

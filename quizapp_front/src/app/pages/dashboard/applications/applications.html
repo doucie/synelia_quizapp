@@ -311,7 +311,7 @@
             class="application-card"
             [class.application-card--focused]="app.id === focusedApplicationId()"
             [attr.id]="'application-' + app.id"
-            (click)="viewApplicationDetails(app.id!)">
+            (click)="viewApplicationDetails(app.id!, app.campaignId)">
             
             <!-- En-tête: Nom + ID + Status -->
             <div class="card-header-new">
@@ -496,6 +496,17 @@
                 }
               </div>
 
+              <!-- Candidature retirée -->
+              @if (app.applicationAbandoned) {
+                <div class="status-row">
+                  <span class="status-label">Statut</span>
+                  <span class="status-badge badge-error">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    Candidature retirée
+                  </span>
+                </div>
+              }
+
               <!-- Évaluation -->
               <div class="status-row">
                 <span class="status-label">Évaluation</span>
@@ -519,7 +530,7 @@
                 </svg>
                 Créé le {{ formatDate(app.candidateBirthDate) }}
               </span>
-              <button class="details-button" type="button" (click)="$event.stopPropagation(); viewApplicationDetails(app.id!)">
+              <button class="details-button" type="button" (click)="$event.stopPropagation(); viewApplicationDetails(app.id!, app.campaignId)">
                 <span>Voir les détails</span>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <line x1="5" y1="12" x2="19" y2="12"/>
