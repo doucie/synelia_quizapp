@@ -15,15 +15,36 @@
 #let sans_fonts = display_fonts
 
 #let page-footer(numbering, italic: false) = context [
-  #set text(font: body_fonts, size: 10pt, fill: palette.muted, weight: "regular")
+  #set text(font: body_fonts, size: 9pt, fill: palette.muted, weight: "regular")
   #set par(first-line-indent: 0pt, justify: false)
-  #align(center)[
-    #if italic [
-      #emph[#counter(page).display(numbering)]
-    ] else [
-      #counter(page).display(numbering)
-    ]
+  #let total = counter(page).final().first()
+  #grid(
+    columns: (1fr, 1fr, 1fr),
+    gutter: 1em,
+    align(left + horizon)[
+      Mémoire de fin d'études — ENSIT
+    ],
+    align(center + horizon)[
+      #if italic [
+        #emph[Page #counter(page).display(numbering) / #total]
+      ] else [
+        Page #counter(page).display(numbering) / #total
+      ]
+    ],
+    align(right + horizon)[
+      SyneliaQuizApp
+    ],
+  )
+]
+
+#let body-header = [
+  #set text(font: body_fonts, size: 8pt, fill: palette.muted)
+  #set par(first-line-indent: 0pt, justify: false)
+  #align(right)[
+    SyneliaQuizApp — Mémoire d'ingénieur — #emph[ENSIT 2026]
   ]
+  #v(0.2em)
+  #line(length: 100%, stroke: 0.4pt + palette.line)
 ]
 
 #let document-table(..args) = block(above: 1.1em, below: 1.25em)[
@@ -59,15 +80,15 @@
   set page(
     paper: "a4",
     margin: (top: 2.6cm, bottom: 2.5cm, x: 2.6cm),
-    numbering: none,
-    footer: none,
+    numbering: "1",
+    footer: page-footer("1"),
   )
 
   set par(
     justify: true,
     leading: 0.88em,
     spacing: 1.28em,
-    first-line-indent: 1.25em,
+    first-line-indent: 0pt,
   )
 
   set list(
@@ -248,21 +269,25 @@
     #block(width: 78%, stroke: (paint: palette.line, thickness: 0.7pt), inset: 12pt, radius: 0pt)[
       #set text(font: body_fonts)
       #grid(
-        columns: (1fr, 1.2fr),
-        gutter: 1.2em,
+        columns: (5.2em, 1fr),
+        gutter: 2em,
         align: left + top,
+        // Colonne gauche : les rôles
         [
           #text(size: 10pt, weight: "semibold", fill: palette.muted)[Présenté par]
-          #v(0.15em)
-          #text(size: 12pt, weight: "semibold", fill: palette.primary)[#meta.student_name]
+          #v(0.8em)
+          #text(size: 10pt, weight: "semibold", fill: palette.muted)[Encadreur pédagogique]
+          #v(0.8em)
+          #text(size: 10pt, weight: "semibold", fill: palette.muted)[Maître de stage]
         ],
+        // Colonne droite : les noms
         [
-          #text(size: 10pt, weight: "semibold", fill: palette.muted)[Encadrement]
+          #text(size: 12pt, weight: "semibold", fill: palette.primary)[#meta.student_name]
+          #v(0.65em)
+          #text(size: 10.5pt)[#meta.advisor_name]
+          #v(0.65em)
+          #text(size: 10.5pt)[#meta.internship_supervisor]
           #v(0.15em)
-          #text(size: 10.5pt)[Pédagogique : #meta.advisor_name]
-          #v(0.1em)
-          #text(size: 10.5pt)[Entreprise : #meta.internship_supervisor]
-          #v(0.08em)
           #text(size: 10pt, fill: palette.muted)[#meta.internship_role]
         ],
       )

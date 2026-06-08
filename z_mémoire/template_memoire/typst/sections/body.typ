@@ -1,4 +1,4 @@
-#import "../theme.typ": top-heading, part-page, note-box, page-footer, document-table, palette
+#import "../theme.typ": top-heading, part-page, note-box, page-footer, body-header, document-table, palette
 
 #let merise-lines(..items) = grid(
   columns: (1fr),
@@ -41,7 +41,7 @@
 ]
 
 #let render-body(meta) = [
-  #set page(numbering: none, footer: page-footer("1"))
+  #set page(numbering: none, header: body-header, footer: page-footer("1"))
   #counter(page).update(1)
 
   #top-heading([Introduction])

@@ -1,11 +1,19 @@
 #import "../theme.typ": cover-page, title-page, front-heading, note-box, page-footer
 
 #let render-frontmatter(meta) = [
+  // Couverture + page de garde : sans numéro
+  #set page(numbering: none, footer: none)
   #cover-page(meta)
   #pagebreak()
+
+  // Page blanche entre couverture et page de garde
+  #align(center + horizon)[~]
+  #pagebreak()
+
   #title-page(meta)
   #pagebreak()
 
+  // Pages liminaires : chiffres romains
   #set page(numbering: none, footer: page-footer("i", italic: true))
   #counter(page).update(1)
 
