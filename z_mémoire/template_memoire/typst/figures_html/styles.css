@@ -208,6 +208,7 @@ body.target-view .entity.new::after { content: none; display: none; }
   padding: 2px 8px;
   border-radius: 999px;
   font-weight: 700;
+  color: white;
 }
 .card .card-badge.legacy { background: var(--warn); color: white; }
 .card .card-badge.target { background: var(--new); color: white; }
