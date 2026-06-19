@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Pipeline de recrutement — SyneliaQuizApp</title>
+<style>
+  :root {
+    --ink: #1e293b; --muted: #64748b; --line: #cbd5e1; --surface: #fff;
+    --entry: #0ea5e9;    --entry-bg: #f0f9ff;   --entry-text: #0369a1;
+    --assess: #6366f1;   --assess-bg: #eef2ff;  --assess-text: #3730a3;
+    --decide: #ec4899;   --decide-bg: #fdf2f8;  --decide-text: #9d174d;
+    --final: #16a34a;    --final-bg: #f0fdf4;   --final-text: #166534;
+    --arrow: #94a3b8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #f5f7fb; font-family: "Inter","Segoe UI",Arial,sans-serif;
+    font-size: 13px; color: var(--ink); padding: 24px;
+  }
+  .slide {
+    width: 1120px; margin: 0 auto; background: var(--surface);
+    border: 1px solid var(--line); border-radius: 6px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.04); overflow: hidden;
+  }
+  .slide-header {
+    padding: 22px 36px 16px; border-bottom: 3px solid var(--assess);
+    display: flex; justify-content: space-between; align-items: flex-end;
+  }
+  .slide-header h1 { font-size: 20px; font-weight: 700; color: var(--ink); margin: 0 0 4px; }
+  .slide-header .sub { font-size: 11.5px; color: var(--muted); }
+  .slide-body { padding: 28px 24px 20px; }
+
+  </style>
+
+</head>
+<body>
+<div class="slide">
+  <div class="slide-header">
+    <div>
+      <h1>Pipeline de recrutement — Parcours candidat</h1>
+      <div class="sub">Étapes, règles de progression et décisions dans SyneliaQuizApp</div>
+    </div>
+    <div style="font-size:10px;color:var(--muted);text-align:right;">Mémoire de fin d'études<br>ENSIT · 2026</div>
+  </div>
+
+  <div class="slide-body">
+
+    <div class="pipeline">
+
+      <!-- ① CANDIDATURE -->
+      <div class="stage type-entry">
+        <div class="stage-head">① Candidature</div>
+        <div class="stage-body">
+          <div class="stage-icon-row">
+            <span class="stage-icon">📝</span>
+            <span class="stage-name">Candidature</span>
+          </div>
+          <div class="stage-rules">
+            Postulation via <strong>lien public</strong> ou <strong>code recruteur</strong>.<br>
+            Campagne au statut <strong>OPEN</strong> requise.
+          </div>
+        </div>
+      </div>
+
+      <div class="pipe-arrow"><div class="al"></div><div class="ah"></div></div>
+
+      <!-- ② QUIZ -->
+      <div class="stage type-assess">
+        <div class="stage-head">② Quiz</div>
+        <div class="stage-body">
+          <div class="stage-icon-row">
+            <span class="stage-icon">⏱</span>
+            <span class="stage-name">Quiz technique</span>
+          </div>
+          <div class="stage-rules">
+            <strong>Temps limité</strong>, une seule tentative.<br>
+            Si score ≥ <strong>seuil</strong> → avancement automatique.<br>
+            Correction manuelle possible.
+          </div>
+        </div>
+      </div>
+
+      <div class="pipe-arrow"><div class="al"></div><div class="ah"></div></div>
+
+      <!-- ③ PRÉSELECTION -->
+      <div class="stage type-decide">
+        <div class="stage-head">③ Présélection</div>
+        <div class="stage-body">
+          <div class="stage-icon-row">
+            <span class="stage-icon">🔍</span>
+            <span class="stage-name">Présélection</span>
+          </div>
+          <div class="stage-rules">
+            Décision <strong>PRESELECTED</strong> ou <strong>REJECTED</strong>.<br>
+            Le rejet arrête le processus.
+          </div>
+          <div class="branch-row">
+            <div class="branch accept">✓ Présélectionné → suite</div>
+            <div class="branch reject">✗ Rejeté → stop</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pipe-arrow"><div class="al"></div><div class="ah"></div></div>
+
+      <!-- ④ ENTRETIEN -->
+      <div class="stage type-assess">
+        <div class="stage-head">④ Entretien</div>
+        <div class="stage-body">
+          <div class="stage-icon-row">
+            <span class="stage-icon">🎤</span>
+            <span class="stage-name">Entretien</span>
+          </div>
+          <div class="stage-rules">
+            Planifiable <strong>après quiz validé</strong>.<br>
+            Évaluateurs multiples,<br>grille d'évaluation standardisée.
+          </div>
+        </div>
+      </div>
+
+      <div class="pipe-arrow"><div class="al"></div><div class="ah"></div></div>
+
+      <!-- ⑤ ÉVALUATION -->
+      <div class="stage type-decide">
+        <div class="stage-head">⑤ Évaluation</div>
+        <div class="stage-body">
+          <div class="stage-icon-row">
+            <span class="stage-icon">📊</span>
+            <span class="stage-name">Évaluation</span>
+          </div>
+          <div class="stage-rules">
+            Synthèse <strong>obligatoire</strong> avant décision finale.<br>
+            Recap des scores, avis recruteurs,<br>historique complet.
+          </div>
+        </div>
+      </div>
+
+      <div class="pipe-arrow"><div class="al"></div><div class="ah"></div></div>
+
+      <!-- ⑥ DÉCISION FINALE -->
+      <div class="stage type-final">
+        <div class="stage-head">⑥ Décision finale</div>
+        <div class="stage-body">
+          <div class="stage-icon-row">
+            <span class="stage-icon">✅</span>
+            <span class="stage-name">Décision</span>
+          </div>
+          <div class="stage-rules">
+            <strong>ACCEPTED</strong> ou <strong>REJECTED</strong>.<br>
+            Décision <strong>irréversible</strong> (sauf rollback admin).<br>
+            Notification automatique au candidat.
+          </div>
+          <div class="branch-row">
+            <div class="branch accept">✓ Accepté</div>
+            <div class="branch reject">✗ Rejeté</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="slide-footer">
+    <span>Mémoire de fin d'études — ENSIT · 2026</span>
+    <span>Figure — Pipeline de recrutement SyneliaQuizApp : 6 étapes, de la candidature à la décision</span>
+  </div>
+</div>
+
+</body>
+</html>

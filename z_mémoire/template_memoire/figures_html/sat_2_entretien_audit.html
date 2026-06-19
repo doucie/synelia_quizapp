@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>SAT 2 – Entretien à Audit</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="mcd-classic">
+<div class="page">
+<header class="page-header">
+  <h1>SAT 2 – Entretien, décision, rollback & audit (T4 → T7)</h1>
+  <p class="subtitle">Qui fait quoi, à quel moment. Manuel / Interactif / Automatique. Modèle cible post-420.</p>
+</header>
+<div class="figure">
+<div class="canvas" style="width:1480px; height:1020px; margin:0 auto;">
+<svg class="links" preserveAspectRatio="none"></svg>
+
+<div class="sat-lane"      style="top:70px; left:170px; width:240px; height:920px;"></div>
+<div class="sat-lane auto" style="top:70px; left:420px; width:240px; height:920px;"></div>
+<div class="sat-lane alt"  style="top:70px; left:670px; width:240px; height:920px;"></div>
+<div class="sat-lane eval" style="top:70px; left:920px; width:200px; height:920px;"></div>
+<div class="sat-lane adm"  style="top:70px; left:1130px; width:200px; height:920px;"></div>
+
+<div class="entity sat-head"      data-entity="h-time" style="top:15px; left:20px; width:130px;">Phase</div>
+<div class="entity sat-head"      data-entity="h-cand" style="top:15px; left:180px; width:220px;">Candidat</div>
+<div class="entity sat-head auto" data-entity="h-syst" style="top:15px; left:430px; width:220px;">Système (auto)</div>
+<div class="entity sat-head alt"  data-entity="h-recr" style="top:15px; left:680px; width:220px;">Recruteur</div>
+<div class="entity sat-head eval" data-entity="h-eval" style="top:15px; left:930px; width:180px;">Évaluateur</div>
+<div class="entity sat-head adm"  data-entity="h-adm" style="top:15px; left:1140px; width:180px;">Admin.</div>
+
+<!-- ═══ T4 – ENTRETIEN + ÉVALUATION ═══ -->
+<div class="entity sat-phase" data-entity="p4" style="top:100px; left:20px; width:130px;">T4 — Entretien<br/><small>multi-acteurs</small></div>
+<div class="entity sat-task manual" data-entity="t4-recr-plan" style="top:100px; left:680px; width:220px;">
+  <div class="task-title">Planifier l'entretien</div>
+  <span class="task-meta">manuel</span>
+  <div class="task-detail">Crée interviews rattaché au round, affecte interview_participant.</div>
+</div>
+<div class="entity sat-task auto" data-entity="t4-syst-notif" style="top:100px; left:430px; width:220px;">
+  <div class="task-title">Notifier candidat + participants</div>
+  <span class="task-meta">auto</span>
+  <div class="task-detail">Mails ON_INTERVIEW_PLANNED, notifications in-app.</div>
+</div>
+<div class="entity sat-task interactive" data-entity="t4-cand-resp" style="top:220px; left:180px; width:220px;">
+  <div class="task-title">Accepter / refuser / proposer alternative</div>
+  <span class="task-meta">interactif</span>
+  <div class="task-detail">Met à jour candidate_interview.candidate_response_status.</div>
+</div>
+<div class="entity sat-task eval" data-entity="t4-eval" style="top:350px; left:930px; width:180px;">
+  <div class="task-title">Remplir grille d'évaluation</div>
+  <span class="task-meta">manuel</span>
+  <div class="task-detail">Crée evaluations + un evaluation_item par critère.</div>
+</div>
+<div class="entity sat-task auto" data-entity="t4-syst-aggr" style="top:350px; left:430px; width:220px;">
+  <div class="task-title">Clôturer + agréger</div>
+  <span class="task-meta">auto</span>
+  <div class="task-detail">Calcule aggregated_evaluation_score, valide le round, audit CLOSE + VALIDATE.</div>
+</div>
+
+<!-- ═══ T5 – DÉCISION FINALE ═══ -->
+<div class="entity sat-phase" data-entity="p5" style="top:510px; left:20px; width:130px;">T5 — Décision finale<br/><small>verrouillante</small></div>
+<div class="entity sat-task manual" data-entity="t5-recr" style="top:510px; left:680px; width:220px;">
+  <div class="task-title">Saisir décision DECISION</div>
+  <span class="task-meta">manuel</span>
+  <div class="task-detail">Type RECRUTE / NON_RETENU, justification finale.</div>
+</div>
+<div class="entity sat-task auto" data-entity="t5-syst" style="top:510px; left:430px; width:220px;">
+  <div class="task-title">Envoyer email final + verrouiller</div>
+  <span class="task-meta">auto</span>
+  <div class="task-detail">Évalue règle ON_FINAL_DECISION, confirme envoi si requires_manual_confirmation.</div>
+</div>
+
+<!-- ═══ T6 – ROLLBACK ═══ -->
+<div class="entity sat-phase" data-entity="p6" style="top:660px; left:20px; width:130px;">T6 — Rollback<br/><small>exceptionnel</small></div>
+<div class="entity sat-task manual" data-entity="t6-recr" style="top:660px; left:680px; width:220px;">
+  <div class="task-title">Annuler / réouvrir une décision</div>
+  <span class="task-meta">manuel</span>
+  <div class="task-detail">decision_mode = CANCEL ou ROLLBACK + justification + cancels_decision_id.</div>
+</div>
+<div class="entity sat-task auto" data-entity="t6-syst" style="top:660px; left:430px; width:220px;">
+  <div class="task-title">Recalculer parcours + audit ROLLBACK</div>
+  <span class="task-meta">auto</span>
+  <div class="task-detail">Réouvre application_progress, recalcule current_application_progress_id.</div>
+</div>
+
+<!-- ═══ T7 – AUDIT ═══ -->
+<div class="entity sat-phase" data-entity="p7" style="top:820px; left:20px; width:130px;">T7 — Audit<br/><small>transverse</small></div>
+<div class="entity sat-task auto" data-entity="t7-syst" style="top:820px; left:430px; width:220px;">
+  <div class="task-title">Journaliser audit_event</div>
+  <span class="task-meta">auto</span>
+  <div class="task-detail">CREATE / UPDATE / DECIDE / CANCEL / SUBMIT / CLOSE / VALIDATE (asynchrone).</div>
+</div>
+<div class="entity sat-task adm" data-entity="t7-adm" style="top:820px; left:1140px; width:180px;">
+  <div class="task-title">Consulter audit / superviser</div>
+  <span class="task-meta">manuel</span>
+  <div class="task-detail">Filtres par acteur, période, action ; export RGPD.</div>
+</div>
+
+</div>
+<p class="figure-caption">Figure — SAT 2/2 : phases T4 à T7 (Entretien → Audit).</p>
+</div>
+</div>
+<script>
+window.LINKS = [
+  // T4
+  { from:"t4-recr-plan", to:"t4-syst-notif",strong:true },
+  { from:"t4-syst-notif",to:"t4-cand-resp", strong:true },
+  { from:"t4-cand-resp", to:"t4-eval",      strong:true },
+  { from:"t4-eval",      to:"t4-syst-aggr", strong:true },
+  { from:"t4-syst-aggr", to:"t5-recr",      strong:true },
+  // T5
+  { from:"t5-recr", to:"t5-syst", strong:true },
+  // T6 (boucle exceptionnelle)
+  { from:"t5-syst", to:"t6-recr", dashed:true },
+  { from:"t6-recr", to:"t6-syst", strong:true },
+  { from:"t6-syst", to:"t5-recr", dashed:true },
+  // T7 audit transverse
+  { from:"t4-syst-aggr",to:"t7-syst",dashed:true },
+  { from:"t5-syst",     to:"t7-syst",dashed:true },
+  { from:"t6-syst",     to:"t7-syst",dashed:true },
+  { from:"t7-syst",     to:"t7-adm", dashed:true },
+];
+</script>
+<script src="links.js"></script>
+</body>
+</html>

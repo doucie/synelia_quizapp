@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Chaîne d'audit — SyneliaQuizApp</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .audit-chain { display:flex; flex-direction:column; align-items:center; gap:12px; margin:24px 0; font-size:13px; }
+  .audit-step { display:flex; align-items:center; gap:16px; background:var(--surface); border:1.5px solid var(--line); border-radius:10px; padding:12px 20px; width:100%; max-width:680px; }
+  .audit-step .icon { font-size:28px; flex-shrink:0; width:48px; text-align:center; }
+  .audit-step .content { flex:1; }
+  .audit-step .title { font-weight:700; }
+  .audit-step .detail { font-size:11px; color:var(--muted); margin-top:3px; font-family:"JetBrains Mono","Consolas",monospace; }
+  .audit-arrow { font-size:20px; color:var(--muted); }
+  .audit-snapshot { background:#f8fafc; border:1px dashed var(--line); border-radius:6px; padding:8px 14px; font-size:11px; font-family:monospace; color:var(--muted); margin-top:6px; }
+  .audit-snapshot strong { color:var(--ink); }</style>
+
+</head>
+<body class="mcd-modern">
+<div class="page">
+<header class="page-header">
+  <div><h1>Chaîne de traçabilité et d'audit</h1><p class="subtitle">Mécanisme d'enregistrement et de consultation des actions dans SyneliaQuizApp</p></div>
+</header>
+<div class="figure">
+<div class="canvas" style="width:740px; height:540px; margin:0 auto;">
+
+<div class="audit-chain">
+  <div class="audit-step">
+    <span class="icon" style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:#e0f2fe;color:#0ea5e9;font-weight:700;font-size:14px;">1</span>
+    <div class="content">
+      <div class="title">1. Action utilisateur</div>
+      <div class="detail">Recruteur modifie le statut d'une candidature · Candidat soumet un quiz · Admin change un rôle</div>
+    </div>
+  </div>
+  <div class="audit-arrow">▼</div>
+  <div class="audit-step">
+    <span class="icon" style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:#eef2ff;color:#4f46e5;font-weight:700;font-size:14px;">2</span>
+    <div class="content">
+      <div class="title">2. Capture par AuditEventService</div>
+      <div class="detail">Méthode annotée @Auditable ou appel manuel → snapshot avant/après de l'entité modifiée</div>
+      <div class="audit-snapshot">
+        <strong>entity_type:</strong> "APPLICATION" &nbsp; <strong>entity_id:</strong> 142<br>
+        <strong>action:</strong> "STATUS_CHANGE" &nbsp; <strong>actor:</strong> "recruteur@synelia.com"<br>
+        <strong>before:</strong> {"status":"QUIZ_COMPLETED"}<br>
+        <strong>after:</strong> {"status":"PRE_SCREEN_ACCEPTED"}<br>
+        <strong>timestamp:</strong> 2026-05-12T14:33:00Z
+      </div>
+    </div>
+  </div>
+  <div class="audit-arrow">▼</div>
+  <div class="audit-step">
+    <span class="icon" style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:#f0fdf4;color:#16a34a;font-weight:700;font-size:14px;">3</span>
+    <div class="content">
+      <div class="title">3. Persistance dans audit_event</div>
+      <div class="detail">INSERT INTO audit_event (entity_type, entity_id, action, actor, delta_json, created_at)</div>
+    </div>
+  </div>
+  <div class="audit-arrow">▼</div>
+  <div class="audit-step">
+    <span class="icon" style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:#fef3c7;color:#d97706;font-weight:700;font-size:14px;">4</span>
+    <div class="content">
+      <div class="title">4. Consultation (Super Admin)</div>
+      <div class="detail">Dashboard d'audit : filtres par entité, action, acteur, période · Export CSV · Conformité RGPD</div>
+    </div>
+  </div>
+</div>
+
+</div>
+</div>
+<p class="figure-caption">Figure — Chaîne de traçabilité et d'audit de SyneliaQuizApp : de l'action utilisateur à la consultation des logs.</p>
+</div>
+</div>
+<script src="links.js"></script>
+
+</body>
+</html>

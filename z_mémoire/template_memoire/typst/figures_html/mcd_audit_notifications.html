@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>MCD – Notifications & Audit</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="mcd-classic">
+<div class="page">
+<header class="page-header">
+  <h1>MCD 5 – Notifications, mails & audit</h1>
+  <p class="subtitle">Traçabilité des événements, notifications utilisateur et journal des mails.</p>
+</header>
+<div class="figure">
+<div class="canvas" style="width:780px; height:400px; margin:0 auto;">
+<svg class="links" preserveAspectRatio="none"></svg>
+
+<div class="entity" data-entity="notif" style="top:20px; left:40px; width:220px;">
+  <div class="entity-head">NOTIFICATION</div>
+  <div class="entity-body"><ul>
+    <li class="pk-line"><span class="key pk">id</span><span class="name">IdNotification</span></li>
+    <li><span class="name">Type</span></li>
+    <li><span class="name">Lien</span></li>
+    <li><span class="name">EstLue</span></li>
+    <li><span class="name">TypeEntite</span></li>
+    <li><span class="name">IdEntite</span></li>
+  </ul></div>
+</div>
+
+<div class="entity" data-entity="maillog" style="top:20px; left:520px; width:240px;">
+  <div class="entity-head">MAIL_LOG</div>
+  <div class="entity-body"><ul>
+    <li class="pk-line"><span class="key pk">id</span><span class="name">IdMail</span></li>
+    <li><span class="name">Destinataire</span></li>
+    <li><span class="name">Sujet</span></li>
+    <li><span class="name">Statut</span></li>
+    <li><span class="name">CodeEvenement</span></li>
+    <li><span class="name">ConfirmationRequise</span></li>
+  </ul></div>
+</div>
+
+<div class="entity" data-entity="audit" style="top:230px; left:260px; width:250px;">
+  <div class="entity-head">EVENEMENT_AUDIT</div>
+  <div class="entity-body"><ul>
+    <li class="pk-line"><span class="key pk">id</span><span class="name">IdEvenement</span></li>
+    <li><span class="name">TypeEntite</span></li>
+    <li><span class="name">IdEntite</span></li>
+    <li><span class="name">TypeAction</span></li>
+    <li><span class="name">Acteur</span></li>
+    <li><span class="name">Justification</span></li>
+  </ul></div>
+</div>
+
+</div><!-- canvas -->
+<p class="figure-caption">Figure — MCD du sous-domaine Notifications, Mails & Audit.</p>
+</div>
+</div>
+
+<script>
+window.LINKS = [
+  { from:"maillog",to:"notif",cardFrom:"0,n",cardTo:"0,n",dashed:true, verb:"Notifier" },
+  { from:"audit",  to:"notif",cardFrom:"0,n",cardTo:"0,n",dashed:true, verb:"Tracer" },
+  { from:"audit",  to:"maillog",cardFrom:"0,n",cardTo:"0,n",dashed:true, verb:"Journaliser" },
+];
+</script>
+<script src="links.js"></script>
+</body>
+</html>

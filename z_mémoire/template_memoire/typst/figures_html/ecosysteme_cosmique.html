@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Écosystème SyneliaQuizApp — Carte orbitale</title>
+<style>
+  :root {
+    --space: #0b0d17;
+    --star: #cbd5e1;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--space); display:flex; justify-content:center; align-items:center; min-height:100vh; font-family:"Inter","Segoe UI",sans-serif; }
+  .cosmos { position:relative; width:960px; height:720px; }
+  svg { width:100%; height:100%; }
+  .legend { position:absolute; bottom:24px; right:32px; display:flex; flex-direction:column; gap:6px; }
+  .legend-item { display:flex; align-items:center; gap:10px; font-size:11px; color:#94a3b8; }
+  .legend-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .legend-ring { width:16px; height:3px; border-radius:2px; flex-shrink:0; }
+  .title-area { position:absolute; top:20px; left:32px; }
+  .title-area h1 { font-size:26px; font-weight:800; color:#f1f5f9; letter-spacing:-0.01em; margin:0; }
+  .title-area p { font-size:12px; color:#64748b; margin:4px 0 0; }</style>
+
+</head>
+<body>
+<div class="cosmos">
+  <div class="title-area">
+    <h1>Écosystème SyneliaQuizApp</h1>
+    <p>Carte orbitale — modules, flux et dépendances du noyau recrutement</p>
+  </div>
+
+  <svg viewBox="0 0 960 720" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <!-- Glow filters -->
+      <filter id="glow-core" x="-60%" y="-60%" width="220%" height="220%">
+        <feGaussianBlur stdDeviation="8" result="blur"/>
+        <feFlood flood-color="#4f46e5" flood-opacity=".6"/>
+        <feComposite in2="blur" operator="in"/>
+        <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <filter id="glow-blue" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="4" result="blur"/>
+        <feFlood flood-color="#3b82f6" flood-opacity=".5"/>
+        <feComposite in2="blur" operator="in"/>
+        <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <filter id="glow-orange" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="4" result="blur"/>
+        <feFlood flood-color="#f59e0b" flood-opacity=".5"/>
+        <feComposite in2="blur" operator="in"/>
+        <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <filter id="glow-green" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="4" result="blur"/>
+        <feFlood flood-color="#22c55e" flood-opacity=".5"/>
+        <feComposite in2="blur" operator="in"/>
+        <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <filter id="glow-purple" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="4" result="blur"/>
+        <feFlood flood-color="#a855f7" flood-opacity=".5"/>
+        <feComposite in2="blur" operator="in"/>
+        <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <filter id="glow-pink" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="4" result="blur"/>
+        <feFlood flood-color="#ec4899" flood-opacity=".5"/>
+        <feComposite in2="blur" operator="in"/>
+        <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+
+      <!-- Gradients -->
+      <radialGradient id="grad-core" cx="50%" cy="50%">
+        <stop offset="0%" stop-color="#6366f1"/>
+        <stop offset="40%" stop-color="#4f46e5"/>
+        <stop offset="100%" stop-color="#1e1b4b"/>
+      </radialGradient>
+      <radialGradient id="grad-campaigns" cx="35%" cy="35%">
+        <stop offset="0%" stop-color="#60a5fa"/>
+        <stop offset="100%" stop-color="#1d4ed8"/>
+      </radialGradient>
+      <radialGradient id="grad-candidatures" cx="35%" cy="35%">
+        <stop offset="0%" stop-color="#fbbf24"/>
+        <stop offset="100%" stop-color="#d97706"/>
+      </radialGradient>
+      <radialGradient id="grad-quiz" cx="35%" cy="35%">
+        <stop offset="0%" stop-color="#4ade80"/>
+        <stop offset="100%" stop-color="#15803d"/>
+      </radialGradient>
+      <radialGradient id="grad-entretiens" cx="35%" cy="35%">
+        <stop offset="0%" stop-color="#c084fc"/>
+        <stop offset="100%" stop-color="#7e22ce"/>
+      </radialGradient>
+      <radialGradient id="grad-decisions" cx="35%" cy="35%">
+        <stop offset="0%" stop-color="#f472b6"/>
+        <stop offset="100%" stop-color="#be185d"/>
+      </radialGradient>
+      <radialGradient id="grad-admin" cx="35%" cy="35%">
+        <stop offset="0%" stop-color="#38bdf8"/>
+        <stop offset="100%" stop-color="#0369a1"/>
+      </radialGradient>
+    </defs>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- Deep space background                                       -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <rect width="960" height="720" fill="var(--space)"/>
+    
+    <!-- Subtle nebula glow in background -->
+    <ellipse cx="480" cy="350" rx="420" ry="280" fill="url(#grad-core)" opacity=".06"/>
+    <ellipse cx="280" cy="200" rx="180" ry="120" fill="#3b82f6" opacity=".03"/>
+    <ellipse cx="700" cy="500" rx="200" ry="140" fill="#a855f7" opacity=".03"/>
+
+    <!-- Stars (randomly scattered) -->
+    <g fill="#cbd5e1" opacity=".6">
+      <circle cx="45" cy="38" r="1.2"/><circle cx="120" cy="82" r=".7"/><circle cx="200" cy="25" r="1.5"/>
+      <circle cx="310" cy="55" r=".8"/><circle cx="450" cy="18" r="1.0"/><circle cx="560" cy="42" r=".6"/>
+      <circle cx="680" cy="28" r="1.3"/><circle cx="800" cy="65" r=".9"/><circle cx="910" cy="35" r="1.1"/>
+      <circle cx="75" cy="180" r=".8"/><circle cx="180" cy="140" r="1.0"/><circle cx="850" cy="150" r=".7"/>
+      <circle cx="30" cy="350" r=".9"/><circle cx="920" cy="310" r="1.2"/><circle cx="55" cy="500" r=".7"/>
+      <circle cx="890" cy="480" r=".8"/><circle cx="100" cy="650" r="1.1"/><circle cx="840" cy="660" r=".9"/>
+      <circle cx="380" cy="680" r=".7"/><circle cx="520" cy="695" r="1.0"/><circle cx="720" cy="675" r=".8"/>
+      <circle cx="150" cy="580" r=".6"/><circle cx="780" cy="580" r="1.0"/>
+      <!-- Tiny stars -->
+      <circle cx="260" cy="100" r=".4"/><circle cx="600" cy="90" r=".5"/><circle cx="420" cy="120" r=".3"/>
+      <circle cx="760" cy="110" r=".4"/><circle cx="530" cy="640" r=".5"/><circle cx="330" cy="610" r=".3"/>
+      <circle cx="88" cy="420" r=".4"/><circle cx="900" cy="400" r=".3"/><circle cx="440" cy="50" r=".5"/>
+    </g>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- Orbital rings                                               -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <g fill="none" stroke-width=".8" opacity=".18">
+      <!-- Ring 1 (inner) - tilted -->
+      <ellipse cx="480" cy="350" rx="110" ry="90" stroke="#6366f1" stroke-dasharray="4 6" transform="rotate(-15 480 350)"/>
+      <!-- Ring 2 -->
+      <ellipse cx="480" cy="350" rx="195" ry="170" stroke="#3b82f6" stroke-dasharray="3 8" transform="rotate(10 480 350)"/>
+      <!-- Ring 3 -->
+      <ellipse cx="480" cy="350" rx="280" ry="250" stroke="#f59e0b" stroke-dasharray="5 10" transform="rotate(-8 480 350)"/>
+      <!-- Ring 4 (outer) -->
+      <ellipse cx="480" cy="350" rx="370" ry="340" stroke="#a855f7" stroke-dasharray="2 12" transform="rotate(5 480 350)"/>
+    </g>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- Connection arcs between planets (dotted trajectories)       -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <g fill="none" stroke-width="1" opacity=".25" stroke-dasharray="4 5">
+      <!-- Campaigns → Candidatures -->
+      <path d="M 350 160 Q 420 220 400 310" stroke="#3b82f6"/>
+      <!-- Candidatures → Quiz -->
+      <path d="M 480 400 Q 560 380 620 280" stroke="#f59e0b"/>
+      <!-- Quiz → Entretiens -->
+      <path d="M 660 200 Q 720 240 700 340" stroke="#22c55e"/>
+      <!-- Entretiens → Décisions -->
+      <path d="M 640 460 Q 580 520 500 560" stroke="#a855f7"/>
+      <!-- Décisions → Admin -->
+      <path d="M 400 580 Q 320 540 280 480" stroke="#ec4899"/>
+      <!-- Admin → Campaigns (cycle) -->
+      <path d="M 280 400 Q 320 300 330 190" stroke="#38bdf8"/>
+      <!-- Candidatures → Décisions (direct) -->
+      <path d="M 520 440 Q 560 500 480 560" stroke="#f472b6" opacity=".15"/>
+      <!-- Core → Quiz -->
+      <path d="M 520 380 Q 580 340 620 280" stroke="#6366f1" opacity=".2"/>
+    </g>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- Planets (modules) + Moons (sub-features)                    -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+
+    <!-- CORE: Plateforme (center, glowing) -->
+    <circle cx="480" cy="350" r="38" fill="url(#grad-core)" filter="url(#glow-core)"/>
+    <circle cx="480" cy="350" r="38" fill="none" stroke="#818cf8" stroke-width="1.5" opacity=".6"/>
+    <text x="480" y="345" text-anchor="middle" fill="#e0e7ff" font-size="11" font-weight="700">Plateforme</text>
+    <text x="480" y="360" text-anchor="middle" fill="#a5b4fc" font-size="9">Spring Boot 3.5</text>
+
+    <!-- PLANET 1: Campagnes (top-left) -->
+    <g filter="url(#glow-blue)">
+      <circle cx="320" cy="140" r="24" fill="url(#grad-campaigns)"/>
+    </g>
+    <text x="320" y="137" text-anchor="middle" fill="#dbeafe" font-size="10" font-weight="700">Campagnes</text>
+    <text x="320" y="150" text-anchor="middle" fill="#93c5fd" font-size="8">Création · Diffusion</text>
+    <!-- Moons -->
+    <circle cx="290" cy="118" r="6" fill="#60a5fa" opacity=".7"/>
+    <text x="290" y="108" text-anchor="middle" fill="#94a3b8" font-size="7">Pipeline</text>
+    <circle cx="345" cy="115" r="5" fill="#93c5fd" opacity=".6"/>
+    <text x="355" y="110" text-anchor="start" fill="#94a3b8" font-size="7">Formulaires</text>
+    <circle cx="305" cy="170" r="5" fill="#93c5fd" opacity=".5"/>
+    <text x="315" y="178" text-anchor="start" fill="#94a3b8" font-size="7">Questions</text>
+
+    <!-- PLANET 2: Candidatures (bottom-left) -->
+    <g filter="url(#glow-orange)">
+      <circle cx="400" cy="310" r="22" fill="url(#grad-candidatures)"/>
+    </g>
+    <text x="400" y="307" text-anchor="middle" fill="#fef3c7" font-size="10" font-weight="700">Candidatures</text>
+    <text x="400" y="320" text-anchor="middle" fill="#fcd34d" font-size="8">Postuler · Suivi</text>
+    <circle cx="375" cy="290" r="5" fill="#fbbf24" opacity=".6"/>
+    <text x="365" y="283" text-anchor="end" fill="#94a3b8" font-size="7">Vérification email</text>
+    <circle cx="430" cy="330" r="5" fill="#fcd34d" opacity=".5"/>
+    <text x="440" y="338" text-anchor="start" fill="#94a3b8" font-size="7">Avancement</text>
+
+    <!-- PLANET 3: Quiz (top-right) -->
+    <g filter="url(#glow-green)">
+      <circle cx="650" cy="240" r="26" fill="url(#grad-quiz)"/>
+    </g>
+    <text x="650" y="237" text-anchor="middle" fill="#dcfce7" font-size="10" font-weight="700">Quiz</text>
+    <text x="650" y="250" text-anchor="middle" fill="#86efac" font-size="8">Passation · Correction</text>
+    <circle cx="675" cy="215" r="6" fill="#4ade80" opacity=".7"/>
+    <text x="688" y="210" text-anchor="start" fill="#94a3b8" font-size="7">Tentative</text>
+    <circle cx="628" cy="270" r="5" fill="#86efac" opacity=".6"/>
+    <text x="618" y="280" text-anchor="end" fill="#94a3b8" font-size="7">Réponses</text>
+    <circle cx="680" cy="255" r="4" fill="#bbf7d0" opacity=".5"/>
+    <text x="692" y="258" text-anchor="start" fill="#94a3b8" font-size="7">Score</text>
+
+    <!-- PLANET 4: Entretiens (bottom-right) -->
+    <g filter="url(#glow-purple)">
+      <circle cx="700" cy="400" r="20" fill="url(#grad-entretiens)"/>
+    </g>
+    <text x="700" y="397" text-anchor="middle" fill="#f3e8ff" font-size="10" font-weight="700">Entretiens</text>
+    <text x="700" y="410" text-anchor="middle" fill="#d8b4fe" font-size="8">Planification</text>
+    <circle cx="720" cy="380" r="5" fill="#c084fc" opacity=".6"/>
+    <text x="732" y="378" text-anchor="start" fill="#94a3b8" font-size="7">Participants</text>
+    <circle cx="680" cy="425" r="5" fill="#a855f7" opacity=".5"/>
+    <text x="668" y="435" text-anchor="end" fill="#94a3b8" font-size="7">Évaluation</text>
+
+    <!-- PLANET 5: Décisions (bottom center) -->
+    <g filter="url(#glow-pink)">
+      <circle cx="500" cy="580" r="18" fill="url(#grad-decisions)"/>
+    </g>
+    <text x="500" y="577" text-anchor="middle" fill="#fce7f3" font-size="10" font-weight="700">Décisions</text>
+    <text x="500" y="590" text-anchor="middle" fill="#f9a8d4" font-size="8">Finales · Rollback</text>
+    <circle cx="480" cy="560" r="5" fill="#f472b6" opacity=".5"/>
+    <text x="470" y="553" text-anchor="end" fill="#94a3b8" font-size="7">Justification</text>
+
+    <!-- PLANET 6: Admin (center-left) -->
+    <g filter="url(#glow-blue)">
+      <circle cx="250" cy="460" r="18" fill="url(#grad-admin)"/>
+    </g>
+    <text x="250" y="457" text-anchor="middle" fill="#e0f2fe" font-size="10" font-weight="700">Admin</text>
+    <text x="250" y="470" text-anchor="middle" fill="#7dd3fc" font-size="8">Gouvernance</text>
+    <circle cx="235" cy="440" r="5" fill="#38bdf8" opacity=".6"/>
+    <text x="223" y="435" text-anchor="end" fill="#94a3b8" font-size="7">RBAC</text>
+    <circle cx="270" cy="480" r="5" fill="#38bdf8" opacity=".5"/>
+    <text x="280" y="488" text-anchor="start" fill="#94a3b8" font-size="7">Audit</text>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- Comet trails (data flows)                                   -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- Small animated-like trails -->
+    <g fill="none" stroke-width="1.5" opacity=".35">
+      <path d="M 344 154 Q 380 200 420 290" stroke="#60a5fa" stroke-dasharray="2 3"/>
+      <path d="M 422 320 Q 480 370 640 260" stroke="#fbbf24" stroke-dasharray="2 3"/>
+      <path d="M 670 260 Q 690 300 695 375" stroke="#4ade80" stroke-dasharray="2 3"/>
+      <path d="M 688 416 Q 620 480 510 565" stroke="#c084fc" stroke-dasharray="2 3"/>
+      <path d="M 488 565 Q 420 540 270 470" stroke="#f472b6" stroke-dasharray="2 3"/>
+      <path d="M 262 445 Q 260 300 310 160" stroke="#38bdf8" stroke-dasharray="2 3"/>
+    </g>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- Tiny satellite nodes (services)                             -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <g>
+      <!-- Notifications satellite -->
+      <circle cx="540" cy="130" r="10" fill="#1e293b" stroke="#f59e0b" stroke-width="1.2" opacity=".8"/>
+      <text x="540" y="133" text-anchor="middle" fill="#fbbf24" font-size="8" font-weight="600" style="font-weight:700;font-size:9px;">NOTIF</text>
+      <text x="540" y="152" text-anchor="middle" fill="#94a3b8" font-size="7">Notifications</text>
+      
+      <!-- Storage satellite -->
+      <circle cx="150" cy="280" r="10" fill="#1e293b" stroke="#22c55e" stroke-width="1.2" opacity=".8"/>
+      <text x="150" y="283" text-anchor="middle" fill="#4ade80" font-size="8" font-weight="600" style="font-weight:700;font-size:9px;">S3</text>
+      <text x="150" y="302" text-anchor="middle" fill="#94a3b8" font-size="7">MinIO/Redis</text>
+
+      <!-- SMTP satellite -->
+      <circle cx="800" cy="520" r="10" fill="#1e293b" stroke="#3b82f6" stroke-width="1.2" opacity=".8"/>
+      <text x="800" y="523" text-anchor="middle" fill="#60a5fa" font-size="8" font-weight="600" style="font-weight:700;font-size:9px;">SMTP</text>
+      <text x="800" y="542" text-anchor="middle" fill="#94a3b8" font-size="7">SMTP/Thymeleaf</text>
+    </g>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- Pulse dots along orbits (active processes)                  -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <g fill="#818cf8" opacity=".7">
+      <circle cx="585" cy="340" r="2.5"/>
+      <circle cx="375" cy="360" r="2"/>
+      <circle cx="290" cy="270" r="2.5"/>
+      <circle cx="670" cy="360" r="2"/>
+      <circle cx="420" cy="190" r="1.8"/>
+      <circle cx="600" cy="520" r="2.2"/>
+    </g>
+  </svg>
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="legend-item"><span class="legend-dot" style="background:linear-gradient(135deg,#60a5fa,#1d4ed8);box-shadow:0 0 8px rgba(59,130,246,.4);"></span> Campagnes</div>
+    <div class="legend-item"><span class="legend-dot" style="background:linear-gradient(135deg,#fbbf24,#d97706);box-shadow:0 0 8px rgba(245,158,11,.4);"></span> Candidatures</div>
+    <div class="legend-item"><span class="legend-dot" style="background:linear-gradient(135deg,#4ade80,#15803d);box-shadow:0 0 8px rgba(34,197,94,.4);"></span> Quiz</div>
+    <div class="legend-item"><span class="legend-dot" style="background:linear-gradient(135deg,#c084fc,#7e22ce);box-shadow:0 0 8px rgba(168,85,247,.4);"></span> Entretiens</div>
+    <div class="legend-item"><span class="legend-dot" style="background:linear-gradient(135deg,#f472b6,#be185d);box-shadow:0 0 8px rgba(236,72,153,.4);"></span> Décisions</div>
+    <div class="legend-item"><span class="legend-dot" style="background:linear-gradient(135deg,#38bdf8,#0369a1);box-shadow:0 0 8px rgba(14,165,233,.4);"></span> Administration</div>
+    <div class="legend-item" style="margin-top:4px;"><span class="legend-ring" style="background:#6366f1;opacity:.4;"></span> Flux de données entre modules</div>
+    <div class="legend-item"><span class="legend-ring" style="background:transparent;border:1px dashed #6366f1;opacity:.5;"></span> Orbite de dépendance</div>
+  </div>
+</div>
+
+<script src="links.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>MCC – Modèle Conceptuel de Communication</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .mcc-actor { position:absolute; background:#fff; border:2px solid #333; border-radius:50%; text-align:center; font-weight:700; font-size:10.5px; color:#111; display:flex; align-items:center; justify-content:center; z-index:99; }
+  .mcc-system { position:absolute; background:#f5f5f5; border:3px solid #222; border-radius:16px; text-align:center; font-weight:700; font-size:10.5px; color:#111; }
+  .mcc-ext { position:absolute; background:#fff; border:1.5px dashed #555; border-radius:10px; text-align:center; font-weight:600; font-size:10px; color:#444; display:flex; align-items:center; justify-content:center; }
+</style>
+</head>
+<body class="mcd-classic">
+<div class="page">
+<header class="page-header">
+  <h1>MCC – Modèle Conceptuel de Communication</h1>
+  <p class="subtitle">Flux d'information entre acteurs, le système SyneliaQuizApp et les services externes.</p>
+</header>
+<div class="figure">
+<div class="canvas" style="width:1020px; height:620px; margin:0 auto;">
+<svg class="links" preserveAspectRatio="none"></svg>
+
+<!-- Acteurs -->
+<div class="mcc-actor" data-entity="cand" style="top:30px; left:20px; width:120px; height:120px;">Candidat</div>
+<div class="mcc-actor" data-entity="recr" style="top:30px; left:880px; width:120px; height:120px;">Recruteur /<br/>Évaluateur</div>
+<div class="mcc-actor" data-entity="adm" style="top:400px; left:20px; width:120px; height:120px;">Administrateur</div>
+<div class="mcc-actor" data-entity="sadm" style="top:400px; left:880px; width:120px; height:120px;">Super<br/>administrateur</div>
+
+<!-- Système -->
+<div class="mcc-system" data-entity="system" style="top:120px; left:260px; width:500px; height:380px;">
+  <div style="font-size:13px; padding-top:8px;">SyneliaQuizApp</div>
+  <div style="font-size:9px; color:#555; padding:4px 12px; text-align:left; font-weight:400;">
+    Frontend Angular · API Spring Boot<br/>
+    Services métier · JPA/MySQL<br/>
+    Sécurité & Permissions · Audit
+  </div>
+</div>
+
+<!-- Services externes -->
+<div class="mcc-ext" data-entity="smtp" style="top:30px; left:380px; width:130px; height:50px;">SMTP</div>
+<div class="mcc-ext" data-entity="minio" style="top:530px; left:260px; width:130px; height:50px;">MinIO</div>
+<div class="mcc-ext" data-entity="redis" style="top:530px; left:460px; width:130px; height:50px;">Redis</div>
+<div class="mcc-ext" data-entity="mysql" style="top:530px; left:660px; width:130px; height:50px;">MySQL 8</div>
+
+<!-- Flux informationnels -->
+<div class="entity" data-entity="f1" style="top:160px; left:140px; width:120px; border:1px dashed #666; font-size:9px; text-align:center; padding:4px;">
+  <span class="name">Candidature<br/>Quiz<br/>Suivi<br/>Réponse</span>
+</div>
+<div class="entity" data-entity="f2" style="top:150px; left:760px; width:120px; border:1px dashed #666; font-size:9px; text-align:center; padding:4px;">
+  <span class="name">Campagnes<br/>Formulaires<br/>Entretiens<br/>Décisions</span>
+</div>
+<div class="entity" data-entity="f3" style="top:400px; left:140px; width:120px; border:1px dashed #666; font-size:9px; text-align:center; padding:4px;">
+  <span class="name">Utilisateurs<br/>Permissions<br/>Référentiels</span>
+</div>
+<div class="entity" data-entity="f4" style="top:400px; left:760px; width:120px; border:1px dashed #666; font-size:9px; text-align:center; padding:4px;">
+  <span class="name">SMTP<br/>Plateforme<br/>Supervision</span>
+</div>
+
+</div>
+<p class="figure-caption">Figure — MCC : flux d'information entre acteurs, système et services externes. Les flèches indiquent le sens de circulation des données.</p>
+</div>
+</div>
+<script>
+window.LINKS = [
+  // Candidat ↔ Système
+  { from:"cand",to:"f1",strong:true },
+  { from:"f1",to:"system",fromAnchor:"right",toAnchor:"left",strong:true },
+  // Recruteur ↔ Système
+  { from:"recr",to:"f2",strong:true },
+  { from:"f2",to:"system",fromAnchor:"left",toAnchor:"right",strong:true },
+  // Admin ↔ Système
+  { from:"adm",to:"f3",strong:true },
+  { from:"f3",to:"system",fromAnchor:"right",toAnchor:"left",strong:true,fromAnchor:"top",toAnchor:"bottom" },
+  // Super admin ↔ Système
+  { from:"sadm",to:"f4",strong:true },
+  { from:"f4",to:"system",fromAnchor:"left",toAnchor:"right",strong:true,fromAnchor:"top",toAnchor:"bottom" },
+  // Système ↔ Externes
+  { from:"system",to:"smtp",fromAnchor:"top",dashed:true },
+  { from:"system",to:"minio",fromAnchor:"bottom",dashed:true },
+  { from:"system",to:"redis",fromAnchor:"bottom",dashed:true },
+  { from:"system",to:"mysql",fromAnchor:"bottom",dashed:true },
+];
+</script>
+<script src="links.js"></script>
+</body>
+</html>

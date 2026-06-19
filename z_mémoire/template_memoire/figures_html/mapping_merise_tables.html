@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Mapping Merise → Tables — SyneliaQuizApp</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .mapping { display:flex; gap:40px; justify-content:center; margin:24px 0; }
+  .map-col { flex:1; max-width:340px; }
+  .map-col h3 { font-size:14px; text-align:center; color:var(--primary-strong); margin-bottom:12px; padding-bottom:6px; border-bottom:2px solid var(--primary); }
+  .map-entity { background:var(--surface); border:1.5px solid var(--line); border-radius:8px; padding:10px 14px; margin:8px 0; font-size:12px; }
+  .map-entity .name { font-weight:700; }
+  .map-entity .attrs { font-size:10.5px; color:var(--muted); margin-top:3px; }
+  .map-table { background:#f0fdf4; border:1.5px solid #16a34a; border-radius:8px; padding:10px 14px; margin:8px 0; font-size:12px; }
+  .map-table .name { font-weight:700; color:#166534; font-family:monospace; }
+  .map-table .cols { font-size:10.5px; color:var(--muted); margin-top:3px; }
+  .map-arrow { display:flex; align-items:center; justify-content:center; font-size:22px; color:var(--muted); width:60px; flex-shrink:0; }</style>
+
+</head>
+<body class="mcd-modern">
+<div class="page">
+<header class="page-header">
+  <div><h1>Mapping Entités conceptuelles → Tables physiques</h1><p class="subtitle">Correspondance entre le modèle Merise et le schéma MySQL de SyneliaQuizApp</p></div>
+</header>
+<div class="figure">
+<div class="canvas" style="width:820px; height:560px; margin:0 auto;">
+
+<div class="mapping">
+  <div class="map-col">
+    <h3>🧠 Entités Merise (MCD)</h3>
+    <div class="map-entity"><div class="name">Campagne</div><div class="attrs">titre, statut, dates, description</div></div>
+    <div class="map-entity"><div class="name">Pipeline · Étape</div><div class="attrs">type, ordre, template</div></div>
+    <div class="map-entity"><div class="name">Formulaire · Version · Question</div><div class="attrs">version, type, énoncé, réponses</div></div>
+    <div class="map-entity"><div class="name">Candidature</div><div class="attrs">email, statut, quiz_status</div></div>
+    <div class="map-entity"><div class="name">Avancement</div><div class="attrs">étape, statut, score</div></div>
+    <div class="map-entity"><div class="name">Entretien · Évaluation</div><div class="attrs">date, participant, note, critères</div></div>
+    <div class="map-entity"><div class="name">Décision</div><div class="attrs">type, justificatif, date</div></div>
+    <div class="map-entity"><div class="name">Notification · Audit</div><div class="attrs">type, destinataire, action, delta</div></div>
+  </div>
+  <div class="map-arrow">→<br>→<br>→</div>
+  <div class="map-col">
+    <h3>🗄️ Tables MySQL (MPD)</h3>
+    <div class="map-table"><div class="name">campaigns</div><div class="cols">campaign_title, campaign_status, start_date, end_date, pipeline_template_id (FK)</div></div>
+    <div class="map-table"><div class="name">pipeline_template · pipeline_stage</div><div class="cols">stage_type, stage_order, template_id (FK)</div></div>
+    <div class="map-table"><div class="name">form_version · question · answer</div><div class="cols">version_number, is_locked, question_type, answer_text</div></div>
+    <div class="map-table"><div class="name">applications</div><div class="cols">candidate_email, email_verified, application_status, quiz_status, form_version_id (FK)</div></div>
+    <div class="map-table"><div class="name">application_progress</div><div class="cols">progress_status, score, stage_id (FK), application_id (FK)</div></div>
+    <div class="map-table"><div class="name">candidate_interview · evaluation</div><div class="cols">scheduled_date, score, criteria_item_id (FK)</div></div>
+    <div class="map-table"><div class="name">decisions</div><div class="cols">decision_type, justification, decided_at, application_id (FK)</div></div>
+    <div class="map-table"><div class="name">notification · mail_log · audit_event</div><div class="cols">type, recipient, entity_type, action, actor, delta (JSON)</div></div>
+  </div>
+</div>
+
+</div>
+</div>
+<p class="figure-caption">Figure — Correspondance entre les entités conceptuelles Merise et les tables physiques MySQL de SyneliaQuizApp.</p>
+</div>
+</div>
+<script src="links.js"></script>
+
+</body>
+</html>

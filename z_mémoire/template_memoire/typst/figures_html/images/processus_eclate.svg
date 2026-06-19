@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="100%" height="100%">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF5252" />
+      <stop offset="100%" stop-color="#FF7A00" />
+    </linearGradient>
+    <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7928CA" />
+      <stop offset="100%" stop-color="#B800FF" />
+    </linearGradient>
+    <linearGradient id="grad3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0070F3" />
+      <stop offset="100%" stop-color="#00DFD8" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+  <rect width="100%" height="100%" fill="#F8FAFC" rx="16"/>
+  <g filter="url(#shadow)">
+    <path d="M 100 150 L 220 150 L 200 250 L 100 250 Z" fill="url(#grad1)" />
+    <circle cx="150" cy="200" r="6" fill="#FFFFFF" />
+    <line x1="220" y1="150" x2="200" y2="250" stroke="#F8FAFC" stroke-width="8" />
+    <path d="M 224 120 L 400 120 L 375 220 L 204 220 Z" fill="url(#grad2)" />
+    <circle cx="300" cy="170" r="6" fill="#FFFFFF" />
+    <line x1="400" y1="120" x2="375" y2="220" stroke="#F8FAFC" stroke-width="8" />
+    <path d="M 379 180 L 520 180 L 520 140 L 650 200 L 520 260 L 520 220 L 354 220 Z" fill="url(#grad3)" />
+    <circle cx="460" cy="200" r="6" fill="#FFFFFF" />
+  </g>
+  <path d="M 180 130 Q 230 90 280 100" fill="none" stroke="#94A3B8" stroke-width="3" stroke-dasharray="6,6" />
+  <path d="M 360 250 Q 400 280 450 240" fill="none" stroke="#94A3B8" stroke-width="3" stroke-dasharray="6,6" />
+  <polygon points="230,95 240,105 225,110" fill="#FF7A00" opacity="0.8" />
+  <polygon points="380,260 395,255 390,270" fill="#7928CA" opacity="0.8" />
+  <rect x="340" y="100" width="12" height="12" transform="rotate(45 340 100)" fill="#B800FF" opacity="0.6" />
+  <circle cx="550" cy="110" r="5" fill="#00DFD8" opacity="0.7" />
+  <g transform="translate(260, 290) scale(0.6)" opacity="0.25" fill="#475569">
+    <path d="M30 15 L35 5 L45 5 L50 15 L60 12 L67 20 L60 28 L68 35 L63 45 L52 42 L48 52 L38 52 L34 42 L23 45 L18 37 L26 30 L20 20 Z" />
+  </g>
+  <g transform="translate(210, 320) scale(0.4)" opacity="0.25" fill="#475569">
+    <path d="M30 15 L35 5 L45 5 L50 15 L60 12 L67 20 L60 28 L68 35 L63 45 L52 42 L48 52 L38 52 L34 42 L23 45 L18 37 L26 30 L20 20 Z" />
+  </g>
+</svg>

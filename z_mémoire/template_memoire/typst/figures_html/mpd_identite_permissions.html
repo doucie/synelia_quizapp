@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>MPD – Identité & Permissions</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="mcd-classic">
+<div class="page">
+<header class="page-header">
+  <h1>MPD 1 – Identité, groupes & permissions</h1>
+  <p class="subtitle">Modèle physique MySQL. PK soulignée, FK en #, types SQL.</p>
+</header>
+<div class="figure">
+<div class="canvas" style="width:960px; height:440px; margin:0 auto;">
+<svg class="links" preserveAspectRatio="none"></svg>
+
+<div class="entity" data-entity="user" style="top:10px; left:10px; width:320px;">
+  <div class="entity-head">UTILISATEUR</div>
+  <div class="entity-body"><ul>
+    <li class="pk-line"><span class="key pk">PK</span><span class="name">IdUtilisateur   INT UNSIGNED</span></li>
+    <li><span class="name">Nom            VARCHAR(100) NN</span></li>
+    <li><span class="name">Prenom         VARCHAR(100) NN</span></li>
+    <li><span class="name">Email          VARCHAR(255) NN</span></li>
+    <li><span class="name">Username       VARCHAR(100) NN</span></li>
+    <li><span class="name">RoleSysteme    VARCHAR(50)  NN</span></li>
+    <li><span class="name">EstActif       TINYINT(1)   NN</span></li>
+  </ul></div>
+</div>
+
+<div class="entity" data-entity="bgroup" style="top:10px; left:500px; width:300px;">
+  <div class="entity-head">GROUPE_METIER</div>
+  <div class="entity-body"><ul>
+    <li class="pk-line"><span class="key pk">PK</span><span class="name">IdGroupe       INT UNSIGNED</span></li>
+    <li><span class="name">Libelle        VARCHAR(255) NN</span></li>
+    <li><span class="name">Description    TEXT</span></li>
+  </ul></div>
+</div>
+
+<div class="entity" data-entity="perm" style="top:160px; left:10px; width:320px;">
+  <div class="entity-head">PERMISSION_ENTITE</div>
+  <div class="entity-body"><ul>
+    <li class="pk-line"><span class="key pk">PK</span><span class="name">IdPermission   INT UNSIGNED</span></li>
+    <li><span class="name">TypeEntite     VARCHAR(100) NN</span></li>
+    <li><span class="name">IdEntite       INT UNSIGNED NN</span></li>
+    <li><span class="name">ClePermission  VARCHAR(100) NN</span></li>
+  </ul></div>
+</div>
+
+<div class="entity" data-entity="ubg" style="top:290px; left:10px; width:320px;">
+  <div class="entity-head">USER_BUSINESS_GROUP</div>
+  <div class="entity-body"><ul>
+    <li class="pk-line"><span class="key pk">PF</span><span class="name"><span class="fk-marker">#</span>IdUtilisateur  INT UNSIGNED</span></li>
+    <li class="pk-line"><span class="key pk">PF</span><span class="name"><span class="fk-marker">#</span>IdGroupe      INT UNSIGNED</span></li>
+  </ul></div>
+</div>
+
+<div class="entity" data-entity="bgp" style="top:160px; left:480px; width:340px;">
+  <div class="entity-head">BUSINESS_GROUP_PERMISSION</div>
+  <div class="entity-body"><ul>
+    <li class="pk-line"><span class="key pk">PF</span><span class="name"><span class="fk-marker">#</span>IdGroupe      INT UNSIGNED</span></li>
+    <li class="pk-line"><span class="key pk">PF</span><span class="name"><span class="fk-marker">#</span>IdPermission  INT UNSIGNED</span></li>
+  </ul></div>
+</div>
+
+<div class="entity" data-entity="up" style="top:310px; left:480px; width:320px;">
+  <div class="entity-head">USER_PERMISSION_OVERRIDE</div>
+  <div class="entity-body"><ul>
+    <li class="pk-line"><span class="key pk">PF</span><span class="name"><span class="fk-marker">#</span>IdUtilisateur  INT UNSIGNED</span></li>
+    <li class="pk-line"><span class="key pk">PF</span><span class="name"><span class="fk-marker">#</span>IdPermission  INT UNSIGNED</span></li>
+  </ul></div>
+</div>
+
+</div>
+<p class="figure-caption">Figure — MPD du sous-domaine Identité & Permissions. PK = clé primaire, PF = clé primaire étrangère, NN = NOT NULL.</p>
+</div>
+</div>
+<script>
+window.LINKS = [
+  { from:"user", to:"ubg",  cardFrom:"1,1",cardTo:"0,n",strong:true },
+  { from:"bgroup",to:"ubg", cardFrom:"1,1",cardTo:"0,n",strong:true },
+  { from:"bgroup",to:"bgp", cardFrom:"1,1",cardTo:"0,n",strong:true },
+  { from:"perm",  to:"bgp", cardFrom:"1,1",cardTo:"0,n",strong:true },
+  { from:"user",  to:"up",  cardFrom:"1,1",cardTo:"0,n",strong:true },
+  { from:"perm",  to:"up",  cardFrom:"1,1",cardTo:"0,n",strong:true },
+];
+</script>
+<script src="links.js"></script>
+</body>
+</html>

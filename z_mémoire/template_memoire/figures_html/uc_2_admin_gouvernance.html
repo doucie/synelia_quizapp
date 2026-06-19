@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Cas d'utilisation 2 – Administration & Gouvernance</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .uc-actor { position:absolute; width:130px; text-align:center; font-size:11.5px; font-weight:700; color:var(--primary-strong); }
+  .uc-actor .stick { display:block; width:70px; height:90px; margin:0 auto 6px; position:relative; }
+  .uc-actor .stick::before { content:""; position:absolute; top:0; left:50%; transform:translateX(-50%); width:22px; height:22px; border:2.2px solid var(--pivot); border-radius:50%; background:var(--pivot-soft); }
+  .uc-actor .stick::after { content:""; position:absolute; top:24px; left:50%; transform:translateX(-50%); width:2.5px; height:36px; background:var(--pivot); box-shadow:-16px 8px 0 -1px var(--pivot),16px 8px 0 -1px var(--pivot),-14px 36px 0 -1px var(--pivot),14px 36px 0 -1px var(--pivot); }
+  .uc-actor.sys .stick::before { border-color:var(--accent); background:var(--accent-soft); }
+  .uc-actor.sys .stick::after { background:var(--accent); box-shadow:-16px 8px 0 -1px var(--accent),16px 8px 0 -1px var(--accent),-14px 36px 0 -1px var(--accent),14px 36px 0 -1px var(--accent); }
+  .uc-actor.new .stick::before { border-color:var(--new); background:var(--new-soft); }
+  .uc-actor.new .stick::after { background:var(--new); box-shadow:-16px 8px 0 -1px var(--new),16px 8px 0 -1px var(--new),-14px 36px 0 -1px var(--new),14px 36px 0 -1px var(--new); }
+  .uc-system { position:absolute; border:2px solid var(--primary); border-radius:18px; background:rgba(238,242,255,0.45); }
+  .uc-system .sys-title { position:absolute; top:-14px; left:24px; background:var(--surface); padding:2px 12px; font-size:12px; font-weight:700; color:var(--primary-strong); letter-spacing:0.05em; border:1px solid var(--primary); border-radius:4px; }
+  .uc-package { position:absolute; border:1.5px dashed var(--muted); border-radius:14px; background:rgba(255,255,255,0.45); }
+  .uc-package .pkg-title { position:absolute; top:-11px; left:14px; background:var(--surface); padding:1px 9px; font-size:10.5px; font-weight:700; color:var(--muted); letter-spacing:0.06em; text-transform:uppercase; border:1px solid var(--line); border-radius:4px; }
+  .uc-case { position:absolute; border:1.5px solid var(--primary); background:var(--surface); border-radius:999px; padding:8px 14px; font-size:11.5px; color:var(--primary-strong); font-weight:600; text-align:center; min-height:36px; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(15,23,42,0.06); line-height:1.3; }
+  .uc-case.warn { border-color:var(--warn); color:#92400e; background:var(--warn-soft); }
+  .uc-case.new  { border-color:var(--new);  color:#166534; background:var(--new-soft); }
+</style>
+</head>
+<body>
+<div class="page">
+<header class="page-header">
+  <div>
+    <h1>Cas d'utilisation 2/3 – Administration métier &amp; gouvernance</h1>
+    <p class="subtitle">Acteurs Administrateur et Super administrateur. Gestion des utilisateurs, permissions, SMTP, plateforme.</p>
+  </div>
+  <div class="legend">
+    <span class="chip"><span class="dot" style="background:var(--warn)"></span>Administrateur</span>
+    <span class="chip new"><span class="dot"></span>Super administrateur</span>
+  </div>
+</header>
+<div class="figure">
+<div class="canvas" style="width:1100px; height:520px; margin:0 auto;">
+<svg class="links" preserveAspectRatio="none"></svg>
+
+<div class="uc-actor sys" data-entity="a-adm"  style="top:150px; left:20px; width:130px;"><span class="stick"></span>Administrateur</div>
+<div class="uc-actor new" data-entity="a-sadm" style="top:150px; left:950px; width:130px;"><span class="stick"></span>Super<br/>administrateur</div>
+
+<div class="uc-system" style="top:30px; left:180px; width:750px; height:460px;"><span class="sys-title">SyneliaQuizApp</span></div>
+
+<!-- Paquet 3 : Administration métier -->
+<div class="uc-package" style="top:60px; left:210px; width:340px; height:400px;"><span class="pkg-title">Administration métier</span></div>
+<div class="uc-case warn" data-entity="uc-users" style="top:95px; left:240px; width:180px;">Gérer les utilisateurs</div>
+<div class="uc-case warn" data-entity="uc-roles" style="top:160px; left:330px; width:180px;">Définir rôles &amp; groupes</div>
+<div class="uc-case warn" data-entity="uc-perm" style="top:225px; left:240px; width:180px;">Attribuer permissions</div>
+<div class="uc-case warn" data-entity="uc-ref" style="top:290px; left:330px; width:185px;">Gérer départements / spécialités</div>
+<div class="uc-case warn" data-entity="uc-questions" style="top:355px; left:240px; width:200px;">Maintenir banque questions</div>
+<div class="uc-case warn" data-entity="uc-mail" style="top:355px; left:455px; width:70px;">Emails</div>
+<div class="uc-case warn" data-entity="uc-import" style="top:420px; left:310px; width:170px;">Importer / exporter</div>
+
+<!-- Paquet 4 : Gouvernance -->
+<div class="uc-package" style="top:60px; left:590px; width:320px; height:400px;"><span class="pkg-title">Gouvernance plateforme</span></div>
+<div class="uc-case new" data-entity="uc-smtp" style="top:95px; left:620px; width:180px;">Configurer le SMTP</div>
+<div class="uc-case new" data-entity="uc-global" style="top:95px; left:810px; width:80px;">Plateforme</div>
+<div class="uc-case new" data-entity="uc-supadmin" style="top:160px; left:620px; width:180px;">Gérer super droits</div>
+<div class="uc-case new" data-entity="uc-audit" style="top:160px; left:810px; width:80px;">Audit</div>
+<div class="uc-case new" data-entity="uc-template" style="top:240px; left:680px; width:170px;">Gérer pipelines globaux</div>
+
+</div>
+<p class="figure-caption">Figure — Cas d'utilisation 2/3 : Administration métier et Gouvernance plateforme. Pointillés = héritage de privilèges.</p>
+</div>
+</div>
+<script>
+window.LINKS = [
+  { from:"a-adm",to:"uc-users" },{ from:"a-adm",to:"uc-roles" },{ from:"a-adm",to:"uc-perm" },
+  { from:"a-adm",to:"uc-ref" },{ from:"a-adm",to:"uc-questions" },{ from:"a-adm",to:"uc-mail" },
+  { from:"a-adm",to:"uc-import" },
+  { from:"a-sadm",to:"uc-smtp" },{ from:"a-sadm",to:"uc-global" },{ from:"a-sadm",to:"uc-supadmin" },
+  { from:"a-sadm",to:"uc-audit" },{ from:"a-sadm",to:"uc-template" },
+  { from:"a-sadm",to:"uc-users",dashed:true },{ from:"a-sadm",to:"uc-perm",dashed:true },
+];
+</script>
+<script src="links.js"></script>
+</body>
+</html>

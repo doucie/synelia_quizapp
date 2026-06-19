@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Matrice comparative — Solutions de recrutement</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .matrix-wrap { overflow-x:auto; margin:16px 0; }
+  .matrix { width:100%; border-collapse:collapse; font-size:11.5px; line-height:1.25; border:1.5px solid #cbd5e1; }
+  .matrix th {
+    background:var(--primary-soft); color:var(--primary-strong);
+    padding:7px 10px; text-align:left; font-weight:700; font-size:11px;
+    border:1px solid #cbd5e1; white-space:nowrap;
+    text-transform:uppercase; letter-spacing:0.03em;
+  }
+  .matrix th:first-child { border-radius:6px 0 0 0; }
+  .matrix th:last-child { border-radius:0 6px 0 0; background:#dcfce7; color:#166534; }
+  .matrix td { padding:6px 10px; border:1px solid #e2e8f0; vertical-align:middle; }
+  .matrix .cat td { background:#f1f5f9; font-weight:700; font-size:10.5px; color:var(--primary-strong); text-transform:uppercase; letter-spacing:.04em; }
+  .sym-oui { color:#16a34a; font-weight:600; }
+  .sym-non { color:#dc2626; }
+  .sym-part { color:#d97706; }
+  .note { display:block; font-size:9px; color:var(--muted); font-weight:400; margin-top:1px; }
+  .cta { color:var(--accent-soft); }
+  .legend { display:flex; gap:16px; justify-content:center; margin:12px 0; font-size:10px; color:var(--muted); }
+  .legend span { display:inline-flex; align-items:center; gap:4px; }
+  .legend .dot { width:10px; height:10px; border-radius:3px; }
+</style>
+
+</head>
+<body class="mcd-modern">
+<div class="page">
+<header class="page-header">
+  <div><h1>Matrice comparative — Solutions de recrutement</h1><p class="subtitle">Positionnement de SyneliaQuizApp face aux acteurs majeurs du marché</p></div>
+</header>
+<div class="figure">
+<div class="canvas" style="width:920px; margin:0 auto;">
+
+<div class="matrix-wrap">
+<table class="matrix">
+<tr><th>Fonctionnalité</th><th>Workable</th><th>Greenhouse</th><th>HackerRank</th><th style="background:#dcfce7;color:#166534;">SyneliaQuizApp</th></tr>
+
+<tr class="cat"><td colspan="5">Gestion des campagnes</td></tr>
+<tr><td>Création de campagnes</td><td class="sym-oui">Oui</td><td class="sym-oui">Oui</td><td class="sym-non">Non</td><td class="sym-oui">Oui</td></tr>
+<tr><td>Pages publiques personnalisables</td><td class="sym-oui">Oui</td><td class="sym-oui">Oui</td><td class="sym-non">Non</td><td class="sym-oui">Oui <span class="note">Logo, couleurs, description</span></td></tr>
+<tr><td>Filtrage par métadonnées</td><td class="sym-part">~</td><td class="sym-oui">Oui</td><td class="sym-non">Non</td><td class="sym-oui">Oui <span class="note">Tags, spécialités, source</span></td></tr>
+
+<tr class="cat"><td colspan="5">Quiz et évaluation technique</td></tr>
+<tr><td>Quiz paramétrables</td><td class="sym-non">Non</td><td class="sym-non">Non</td><td class="sym-oui">Oui</td><td class="sym-oui">Oui <span class="note">QCM, texte libre, scoring</span></td></tr>
+<tr><td>Correction automatique</td><td class="sym-non">Non</td><td class="sym-non">Non</td><td class="sym-oui">Oui</td><td class="sym-oui">Oui <span class="note">Grille de notation</span></td></tr>
+<tr><td>Limite de temps par quiz</td><td class="sym-non">Non</td><td class="sym-non">Non</td><td class="sym-oui">Oui</td><td class="sym-oui">Oui</td></tr>
+
+<tr class="cat"><td colspan="5">Pipeline et workflow</td></tr>
+<tr><td>Pipeline configurable</td><td class="sym-oui">Oui</td><td class="sym-oui">Oui</td><td class="sym-part">~</td><td class="sym-oui">Oui <span class="note">Étapes, ordre, critères</span></td></tr>
+<tr><td>Changement d'étape automatique</td><td class="sym-part">~</td><td class="sym-oui">Oui</td><td class="sym-non">Non</td><td class="sym-oui">Oui <span class="note">Sur événement métier</span></td></tr>
+
+<tr class="cat"><td colspan="5">Entretiens et évaluation</td></tr>
+<tr><td>Planification d'entretiens</td><td class="sym-oui">Oui</td><td class="sym-oui">Oui</td><td class="sym-non">Non</td><td class="sym-oui">Oui</td></tr>
+<tr><td>Grille d'évaluation multi-critères</td><td class="sym-part">~</td><td class="sym-oui">Oui</td><td class="sym-non">Non</td><td class="sym-oui">Oui <span class="note">Items, pondérations, synthèse</span></td></tr>
+
+<tr class="cat"><td colspan="5">Gouvernance et sécurité</td></tr>
+<tr><td>RBAC multi-niveaux</td><td class="sym-part">~</td><td class="sym-part">~</td><td class="sym-non">Non</td><td class="sym-oui">Oui <span class="note">4 rôles, permissions par entité</span></td></tr>
+<tr><td>Traçabilité et audit</td><td class="sym-part">~</td><td class="sym-part">~</td><td class="sym-non">Non</td><td class="sym-oui">Oui <span class="note">Chaque action loguée</span></td></tr>
+
+<tr class="cat"><td colspan="5">Déploiement et coût</td></tr>
+<tr><td>Open source / auto-hébergé</td><td class="sym-non">Non</td><td class="sym-non">Non</td><td class="sym-non">Non</td><td class="sym-oui">Oui <span class="note">Code source maîtrisé</span></td></tr>
+<tr><td>Coût annuel (500 candidats)</td><td>~6 000 €</td><td>~8 500 €</td><td>~4 000 €</td><td class="sym-oui">~1 200 € <span class="note">Hébergement uniquement</span></td></tr>
+</table>
+</div>
+
+</div>
+</div>
+<p class="figure-caption">Figure — Matrice comparative des solutions de recrutement : SyneliaQuizApp couvre l'ensemble du cycle (campagnes → quiz → entretiens → décisions) avec un coût maîtrisé.</p>
+</div>
+</div>
+<script src="links.js"></script>
+
+</body>
+</html>

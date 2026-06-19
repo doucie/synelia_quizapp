@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>MCD – Campagnes & Pipeline</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="mcd-classic">
+<div class="page">
+<header class="page-header">
+  <h1>MCD 2 – Campagnes, pipeline & formulaires</h1>
+  <p class="subtitle">Gestion des campagnes, templates de pipeline, étapes, règles de notification, formulaires et questions.</p>
+</header>
+<div class="figure">
+<div class="canvas" style="width:900px; height:660px; margin:0 auto;">
+<svg class="links" preserveAspectRatio="none"></svg>
+
+<div class="entity" data-entity="campaign" style="top:20px; left:350px; width:200px;">
+  <div class="entity-head">CAMPAGNE</div>
+  <div class="entity-body"><ul>
+    <li class="pk-line"><span class="key pk">id</span><span class="name">IdCampagne</span></li>
+    <li><span class="name">Titre</span></li>
+    <li><span class="name">Statut</span></li>
+    <li><span class="name">DateDebut</span></li>
+    <li><span class="name">DateFin</span></li>
+  </ul></div>
+</div>
+
+<div class="entity" data-entity="ptpl" style="top:210px; left:20px; width:210px;">
+  <div class="entity-head">PIPELINE_TEMPLATE</div>
+  <div class="entity-body"><ul>
+    <li class="pk-line"><span class="key pk">id</span><span class="name">IdTemplate</span></li>
+    <li><span class="name">Libelle</span></li>
+    <li><span class="name">EstDefaut</span></li>
+    <li><span class="name">Actif</span></li>
+  </ul></div>
+</div>
+
+<div class="entity" data-entity="pstage" style="top:190px; left:370px; width:210px;">
+  <div class="entity-head">ETAPE_PIPELINE</div>
+  <div class="entity-body"><ul>
+    <li class="pk-line"><span class="key pk">id</span><span class="name">IdEtape</span></li>
+    <li><span class="name">TypeEtape</span></li>
+    <li><span class="name">OrdreEtape</span></li>
+    <li><span class="name">EstRequise</span></li>
+    <li><span class="name">EstEliminatoire</span></li>
+  </ul></div>
+</div>
+
+<div class="entity" data-entity="notifrule" style="top:210px; left:660px; width:230px;">
+  <div class="entity-head">REGLE_NOTIFICATION</div>
+  <div class="entity-body"><ul>
+    <li class="pk-line"><span class="key pk">id</span><span class="name">IdRegle</span></li>
+    <li><span class="name">CodeDeclencheur</span></li>
+    <li><span class="name">CodeResultat</span></li>
+    <li><span class="name">EstRequise</span></li>
+    <li><span class="name">EstAutomatique</span></li>
+  </ul></div>
+</div>
+
+<div class="entity" data-entity="form" style="top:460px; left:20px; width:200px;">
+  <div class="entity-head">FORMULAIRE</div>
+  <div class="entity-body"><ul>
+    <li class="pk-line"><span class="key pk">id</span><span class="name">IdFormulaire</span></li>
+    <li><span class="name">Nom</span></li>
+    <li><span class="name">Description</span></li>
+    <li><span class="name">EstActif</span></li>
+  </ul></div>
+</div>
+
+<div class="entity" data-entity="formv" style="top:320px; left:670px; width:220px;">
+  <div class="entity-head">VERSION_FORMULAIRE</div>
+  <div class="entity-body"><ul>
+    <li class="pk-line"><span class="key pk">id</span><span class="name">IdVersion</span></li>
+    <li><span class="name">NumeroVersion</span></li>
+    <li><span class="name">Publiee</span></li>
+    <li><span class="name">Verrouillee</span></li>
+  </ul></div>
+</div>
+
+<div class="entity" data-entity="question" style="top:480px; left:370px; width:200px;">
+  <div class="entity-head">QUESTION</div>
+  <div class="entity-body"><ul>
+    <li class="pk-line"><span class="key pk">id</span><span class="name">IdQuestion</span></li>
+    <li><span class="name">Enonce</span></li>
+    <li><span class="name">Type</span></li>
+    <li><span class="name">Score</span></li>
+  </ul></div>
+</div>
+
+<div class="entity" data-entity="answer" style="top:450px; left:660px; width:210px;">
+  <div class="entity-head">REPONSE_POSSIBLE</div>
+  <div class="entity-body"><ul>
+    <li class="pk-line"><span class="key pk">id</span><span class="name">IdReponse</span></li>
+    <li><span class="name">Texte</span></li>
+    <li><span class="name">EstCorrecte</span></li>
+    <li><span class="name">Ordre</span></li>
+  </ul></div>
+</div>
+
+<div class="entity" data-entity="source" style="top:500px; left:160px; width:200px;">
+  <div class="entity-head">SOURCE_TOKEN</div>
+  <div class="entity-body"><ul>
+    <li class="pk-line"><span class="key pk">id</span><span class="name">IdSource</span></li>
+    <li><span class="name">Code</span></li>
+    <li><span class="name">Libelle</span></li>
+  </ul></div>
+</div>
+
+</div><!-- canvas -->
+<p class="figure-caption">Figure — MCD du sous-domaine Campagnes, Pipeline & Formulaires.</p>
+</div>
+</div>
+
+<script>
+window.LINKS = [
+  { from:"campaign", to:"ptpl",     cardFrom:"0,n",cardTo:"1,1", verb:"Utiliser" },
+  { from:"ptpl",     to:"pstage",   cardFrom:"1,1",cardTo:"1,n", strong:true, verb:"Définir" },
+  { from:"pstage",   to:"notifrule",cardFrom:"1,1",cardTo:"0,n", verb:"Déclencher" },
+  { from:"campaign", to:"form",     cardFrom:"1,n",cardTo:"1,n", verb:"Proposer" },
+  { from:"form",     to:"formv",    cardFrom:"1,1",cardTo:"1,n", strong:true, verb:"Versionner" },
+  { from:"formv",    to:"question", cardFrom:"1,n",cardTo:"1,n", verb:"Contenir" },
+  { from:"question", to:"answer",   cardFrom:"1,1",cardTo:"0,n", strong:true, verb:"Proposer" },
+  { from:"campaign", to:"source",   cardFrom:"1,1",cardTo:"0,n", verb:"Générer" },
+];
+</script>
+<script src="links.js"></script>
+</body>
+</html>

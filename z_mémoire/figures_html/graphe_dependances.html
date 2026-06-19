@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Graphe de dépendances fonctionnelles</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .dep-graph { display:flex; flex-direction:column; gap:14px; margin:20px 0; font-size:12px; }
+  .dep-row { display:flex; align-items:center; gap:16px; }
+  .dep-det { background:var(--primary-soft); border:2px solid var(--primary); border-radius:10px; padding:10px 16px; font-weight:700; color:var(--primary-strong); min-width:160px; text-align:center; }
+  .dep-det.small { font-size:10.5px; padding:8px 12px; min-width:120px; }
+  .dep-arrow { color:var(--muted); font-size:18px; font-weight:700; min-width:30px; text-align:center; }
+  .dep-attrs { display:flex; flex-wrap:wrap; gap:6px; }
+  .dep-attr { background:var(--surface); border:1.5px solid var(--line); border-radius:6px; padding:6px 12px; font-size:11px; text-align:center; }
+  .dep-attr .name { font-weight:600; }
+  .dep-attr .type { font-size:9.5px; color:var(--muted); font-family:monospace; }
+  .dep-note { font-size:10px; color:var(--muted); font-style:italic; text-align:center; margin-top:4px; }
+  .dep-section { font-size:13px; font-weight:700; color:var(--ink); padding:8px 0 4px; border-bottom:1px solid var(--line); margin-top:4px; }</style>
+
+</head>
+<body class="mcd-modern">
+<div class="page">
+<header class="page-header">
+  <div><h1>Graphe de dépendances fonctionnelles</h1><p class="subtitle">Déterminants et attributs dépendants dans le noyau métier de SyneliaQuizApp</p></div>
+</header>
+<div class="figure">
+<div class="canvas" style="width:860px; height:620px; margin:0 auto;">
+
+<div class="dep-graph">
+  <div class="dep-section">Entité campaigns</div>
+  <div class="dep-row">
+    <div class="dep-det">campaign_id</div>
+    <div class="dep-arrow">→</div>
+    <div class="dep-attrs">
+      <div class="dep-attr"><div class="name">campaign_title</div><div class="type">varchar</div></div>
+      <div class="dep-attr"><div class="name">campaign_status</div><div class="type">varchar</div></div>
+      <div class="dep-attr"><div class="name">start_date</div><div class="type">datetime</div></div>
+      <div class="dep-attr"><div class="name">end_date</div><div class="type">datetime</div></div>
+      <div class="dep-attr"><div class="name">pipeline_template_id</div><div class="type">FK</div></div>
+    </div>
+  </div>
+
+  <div class="dep-section">Entité applications</div>
+  <div class="dep-row">
+    <div class="dep-det">application_id</div>
+    <div class="dep-arrow">→</div>
+    <div class="dep-attrs">
+      <div class="dep-attr"><div class="name">candidate_email</div><div class="type">varchar</div></div>
+      <div class="dep-attr"><div class="name">application_status</div><div class="type">varchar</div></div>
+      <div class="dep-attr"><div class="name">quiz_status</div><div class="type">varchar</div></div>
+      <div class="dep-attr"><div class="name">email_verified</div><div class="type">tinyint</div></div>
+      <div class="dep-attr"><div class="name">form_version_id</div><div class="type">FK</div></div>
+    </div>
+  </div>
+
+  <div class="dep-section">Entité form_version</div>
+  <div class="dep-row">
+    <div class="dep-det small">form_version_id</div>
+    <div class="dep-arrow">→</div>
+    <div class="dep-attrs">
+      <div class="dep-attr"><div class="name">version_number</div><div class="type">int</div></div>
+      <div class="dep-attr"><div class="name">is_locked</div><div class="type">bit</div></div>
+      <div class="dep-attr"><div class="name">form_id</div><div class="type">FK</div></div>
+    </div>
+  </div>
+
+  <div class="dep-section">Entité application_progress</div>
+  <div class="dep-row">
+    <div class="dep-det small">progress_id</div>
+    <div class="dep-arrow">→</div>
+    <div class="dep-attrs">
+      <div class="dep-attr"><div class="name">progress_status</div><div class="type">varchar</div></div>
+      <div class="dep-attr"><div class="name">score</div><div class="type">double</div></div>
+      <div class="dep-attr"><div class="name">stage_id</div><div class="type">FK</div></div>
+      <div class="dep-attr"><div class="name">application_id</div><div class="type">FK</div></div>
+    </div>
+  </div>
+
+  <div class="dep-section">Entité pipeline_stage</div>
+  <div class="dep-row">
+    <div class="dep-det small">stage_id</div>
+    <div class="dep-arrow">→</div>
+    <div class="dep-attrs">
+      <div class="dep-attr"><div class="name">stage_type</div><div class="type">varchar</div></div>
+      <div class="dep-attr"><div class="name">stage_order</div><div class="type">int</div></div>
+      <div class="dep-attr"><div class="name">template_id</div><div class="type">FK</div></div>
+    </div>
+  </div>
+
+  <div class="dep-section">Entité decisions</div>
+  <div class="dep-row">
+    <div class="dep-det small">decision_id</div>
+    <div class="dep-arrow">→</div>
+    <div class="dep-attrs">
+      <div class="dep-attr"><div class="name">decision_type</div><div class="type">varchar</div></div>
+      <div class="dep-attr"><div class="name">justification</div><div class="type">text</div></div>
+      <div class="dep-attr"><div class="name">application_id</div><div class="type">FK</div></div>
+    </div>
+  </div>
+</div>
+<p class="dep-note">Taille du déterminant ∝ nombre d'attributs dépendants | FK = dépendance inter-entité</p>
+
+</div>
+</div>
+<p class="figure-caption">Figure — Graphe des dépendances fonctionnelles du noyau métier : chaque déterminant (identifiant) conditionne ses attributs propres.</p>
+</div>
+</div>
+<script src="links.js"></script>
+
+</body>
+</html>

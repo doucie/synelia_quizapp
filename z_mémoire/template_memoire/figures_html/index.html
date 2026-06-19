@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Figures Merise — SyneliaQuizApp</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="page-header">
+      <div>
+        <h1>Figures Merise — SyneliaQuizApp</h1>
+        <p class="subtitle">
+          Modèle cible appliquant l'évolution
+          <code>420-evolution-pipeline-multi-occurrences</code> sur la base
+          décrite dans <code>quizapp_db_described_20260530</code>.
+          Ouvre une figure, ajuste éventuellement le zoom du navigateur, puis fais une capture.
+        </p>
+      </div>
+    </header>
+
+    <div class="cards">
+      <a class="card legacy" href="mcd.html">
+        <span class="card-badge legacy">Ancien</span>
+        <h2>1. MCD</h2>
+        <p>Modèle conceptuel : entités métier et cardinalités du noyau recrutement (état diff avec deltas migration 420).</p>
+      </a>
+      <a class="card legacy" href="mld.html">
+        <span class="card-badge legacy">Ancien</span>
+        <h2>2. MLD / MLDR</h2>
+        <p>Traduction relationnelle : tables, PK, FK et tables d'association (état diff avec deltas migration 420).</p>
+      </a>
+      <a class="card legacy" href="mpd.html">
+        <span class="card-badge legacy">Ancien</span>
+        <h2>3. MPD</h2>
+        <p>Modèle physique MySQL : types, colonnes d'audit, nouvelles tables cibles (état diff avec deltas migration 420).</p>
+      </a>
+      <a class="card target" href="mcd_cible.html">
+        <span class="card-badge target">Cible</span>
+        <h2>1bis. MCD cible</h2>
+        <p>MCD reflétant l'état cible post-migration 420 (sans deltas, nouvelles tables surlignées en vert).</p>
+      </a>
+      <a class="card target" href="mld_cible.html">
+        <span class="card-badge target">Cible</span>
+        <h2>2bis. MLD / MLDR cible</h2>
+        <p>MLD relationnel cible post-migration 420 (sans deltas, aligné sur <code>quizapp_db_cible_post_420_migration.md</code>).</p>
+      </a>
+      <a class="card target" href="mpd_cible.html">
+        <span class="card-badge target">Cible</span>
+        <h2>3bis. MPD cible</h2>
+        <p>MPD MySQL 8 cible post-migration 420 (sans deltas, aligné sur le schéma cible).</p>
+      </a>
+      <a class="card target" href="mcd_cible_portrait.html">
+        <span class="card-badge target">Cible · portrait</span>
+        <h2>1ter. MCD cible (portrait)</h2>
+        <p>Même contenu que le MCD cible, mais layout transposé (1520×2760) : liens privilégiant l'axe vertical pour des captures plus lisibles.</p>
+      </a>
+      <a class="card" href="mcd_identite_permissions.html">
+        <span class="card-badge" style="background:#444;">MCD</span>
+        <h2>1quater. Identité &amp; Permissions</h2>
+        <p>MCD classique (3 entités) — Utilisateur, Groupe métier, Permission. Identifiants soulignés, attributs francisés, associations en ellipse.</p>
+      </a>
+      <a class="card" href="mcd_campagnes_pipeline.html">
+        <span class="card-badge" style="background:#444;">MCD</span>
+        <h2>1quinquies. Campagnes &amp; Pipeline</h2>
+        <p>MCD classique (8 entités) — Campagne, Pipeline, Étapes, Formulaires, Questions, Réponses, Sources.</p>
+      </a>
+      <a class="card" href="mcd_candidature_quiz.html">
+        <span class="card-badge" style="background:#444;">MCD</span>
+        <h2>1sexies. Candidature &amp; Quiz</h2>
+        <p>MCD classique (6 entités) — Candidature, Avancement, Tentative quiz, Réponse candidat, Décision, Demande.</p>
+      </a>
+      <a class="card" href="mcd_entretien_evaluation.html">
+        <span class="card-badge" style="background:#444;">MCD</span>
+        <h2>1septies. Entretien &amp; Évaluation</h2>
+        <p>MCD classique (6 entités) — Entretien, Participant, Évaluation, Item, Critère étape.</p>
+      </a>
+      <a class="card" href="mcd_audit_notifications.html">
+        <span class="card-badge" style="background:#444;">MCD</span>
+        <h2>1octies. Audit &amp; Notifications</h2>
+        <p>MCD classique (3 entités) — Notification, Mail log, Événement audit.</p>
+      </a>
+      <a class="card" href="mld_identite_permissions.html">
+        <span class="card-badge" style="background:#555;">MLD</span>
+        <h2>1nonies. MLD Identité &amp; Permissions</h2>
+        <p>MLD classique (6 tables) — PK soulignée, #FK, tables de jonction.</p>
+      </a>
+      <a class="card" href="mld_campagnes_pipeline.html">
+        <span class="card-badge" style="background:#555;">MLD</span>
+        <h2>1decies. MLD Campagnes &amp; Pipeline</h2>
+        <p>MLD classique (11 tables) — Campagne, Pipeline, Formulaires, Questions, Réponses.</p>
+      </a>
+      <a class="card" href="mld_candidature_quiz.html">
+        <span class="card-badge" style="background:#555;">MLD</span>
+        <h2>1undecies. MLD Candidature &amp; Quiz</h2>
+        <p>MLD classique (6 tables) — Candidature, Avancement, Quiz, Réponses, Décisions.</p>
+      </a>
+      <a class="card" href="mld_entretien_evaluation.html">
+        <span class="card-badge" style="background:#555;">MLD</span>
+        <h2>1duodecies. MLD Entretien &amp; Évaluation</h2>
+        <p>MLD classique (7 tables) — Entretien, Participants, Évaluations, Items, Critères, Grille.</p>
+      </a>
+      <a class="card" href="mld_audit_notifications.html">
+        <span class="card-badge" style="background:#555;">MLD</span>
+        <h2>1terdecies. MLD Audit &amp; Notifications</h2>
+        <p>MLD classique (3 tables) — Notification, Mail log, Événement audit.</p>
+      </a>
+      <a class="card" href="mpd_identite_permissions.html">
+        <span class="card-badge" style="background:#777;">MPD</span>
+        <h2>1quaterdecies. MPD Identité &amp; Permissions</h2>
+        <p>MPD MySQL (6 tables) — types SQL, PK, FK, contraintes NN.</p>
+      </a>
+      <a class="card" href="mpd_campagnes_pipeline.html">
+        <span class="card-badge" style="background:#777;">MPD</span>
+        <h2>1quindecies. MPD Campagnes &amp; Pipeline</h2>
+        <p>MPD MySQL (11 tables) — Campagne, Pipeline, Formulaires, Questions.</p>
+      </a>
+      <a class="card" href="mpd_candidature_quiz.html">
+        <span class="card-badge" style="background:#777;">MPD</span>
+        <h2>1sexdecies. MPD Candidature &amp; Quiz</h2>
+        <p>MPD MySQL (6 tables) — Candidature, Avancement, Quiz, Décisions.</p>
+      </a>
+      <a class="card" href="mpd_entretien_evaluation.html">
+        <span class="card-badge" style="background:#777;">MPD</span>
+        <h2>1septdecies. MPD Entretien &amp; Évaluation</h2>
+        <p>MPD MySQL (7 tables) — Entretien, Participants, Évaluations, Critères.</p>
+      </a>
+      <a class="card" href="mpd_audit_notifications.html">
+        <span class="card-badge" style="background:#777;">MPD</span>
+        <h2>1octodecies. MPD Audit &amp; Notifications</h2>
+        <p>MPD MySQL (3 tables) — Notification, Mail log, Événement audit.</p>
+      </a>
+      <a class="card target" href="mld_cible_portrait.html">
+        <span class="card-badge target">Cible · portrait</span>
+        <h2>2ter. MLD / MLDR cible (portrait)</h2>
+        <p>Variante portrait du MLD cible : entités identiques, canevas vertical, idéal pour une page A4/A3 en hauteur.</p>
+      </a>
+      <a class="card target" href="mpd_cible_portrait.html">
+        <span class="card-badge target">Cible · portrait</span>
+        <h2>3ter. MPD cible (portrait)</h2>
+        <p>Variante portrait du MPD cible MySQL 8, optimisée pour capture verticale à fort DPI.</p>
+      </a>
+      <a class="card" href="sat_1_setup_preselection.html">
+        <span class="card-badge" style="background:#444;">SAT</span>
+        <h2>4a. SAT 1/2 – Setup à Présélection</h2>
+        <p>Phases T0 à T3 : configuration pipeline, candidature, quiz, présélection. Style classique B&amp;W.</p>
+      </a>
+      <a class="card" href="sat_2_entretien_audit.html">
+        <span class="card-badge" style="background:#444;">SAT</span>
+        <h2>4b. SAT 2/2 – Entretien à Audit</h2>
+        <p>Phases T4 à T7 : entretien, évaluation, décision finale, rollback, audit. Style classique B&amp;W.</p>
+      </a>
+      <a class="card" href="mct_1_candidature_quiz.html">
+        <span class="card-badge" style="background:#444;">MCT</span>
+        <h2>5a. MCT 1/3 – Candidature &amp; Quiz</h2>
+        <p>Traitements T1+T2 : soumettre candidature, passer le quiz. Événements → Synchro → Opération → Résultats.</p>
+      </a>
+      <a class="card" href="mct_2_entretien_evaluation.html">
+        <span class="card-badge" style="background:#444;">MCT</span>
+        <h2>5b. MCT 2/3 – Entretien &amp; Évaluation</h2>
+        <p>Traitement T3 : cycle entretien → évaluation (4 événements, synchro conditionnelle).</p>
+      </a>
+      <a class="card" href="mct_3_decision_audit.html">
+        <span class="card-badge" style="background:#444;">MCT</span>
+        <h2>5c. MCT 3/3 – Décision &amp; Audit</h2>
+        <p>Traitements T4+T5+T6 : décision, annulation/rollback, audit transverse.</p>
+      </a>
+      <a class="card" href="sat_1_setup_preselection.html">
+        <span class="card-badge" style="background:#444;">MOT</span>
+        <h2>5d. MOT/SAT 1/2 – Setup à Présélection</h2>
+        <p>Phases T0 à T3 : configuration, candidature, quiz, présélection. 5 couloirs acteurs.</p>
+      </a>
+      <a class="card" href="sat_2_entretien_audit.html">
+        <span class="card-badge" style="background:#444;">MOT</span>
+        <h2>5e. MOT/SAT 2/2 – Entretien à Audit</h2>
+        <p>Phases T4 à T7 : entretien, décision, rollback, audit. 5 couloirs acteurs.</p>
+      </a>
+      <a class="card" href="mpt_1_candidature_quiz.html">
+        <span class="card-badge" style="background:#555;">MPT</span>
+        <h2>5f. MPT 1/2 – Candidature &amp; Quiz</h2>
+        <p>Implémentation physique : Angular → API → Services → JPA → MySQL. Traitements T1+T2.</p>
+      </a>
+      <a class="card" href="mpt_2_entretien_decision.html">
+        <span class="card-badge" style="background:#555;">MPT</span>
+        <h2>5g. MPT 2/2 – Entretien &amp; Décision</h2>
+        <p>Implémentation physique : planification, évaluation, décision, annulation, audit. T3+T4.</p>
+      </a>
+      <a class="card" href="mcc_communication.html">
+        <span class="card-badge" style="background:#666;">MCC</span>
+        <h2>5h. MCC – Communication</h2>
+        <p>Flux d'information entre acteurs, système et services externes (SMTP, MinIO, Redis, MySQL).</p>
+      </a>
+      <a class="card" href="organigramme_synelia.html">
+        <span class="card-badge" style="background:var(--ag-badge, #1e3a5f);">ORG</span>
+        <h2>5i. Organigramme – Groupe Synelia</h2>
+        <p>Gouvernance : Administrateur Général → DG → SG → 5 directions, PMO et services rattachés.</p>
+      </a>
+      <a class="card" href="arch_1_presentation_api.html">
+        <span class="card-badge" style="background:var(--accent);">ARCH</span>
+        <h2>6a. Architecture 1/2 – Présentation &amp; API</h2>
+        <p>Acteurs, Frontend Angular et API REST Spring Boot. Couches colorées, liens descendants.</p>
+      </a>
+      <a class="card" href="arch_2_metier_infrastructure.html">
+        <span class="card-badge" style="background:var(--new);">ARCH</span>
+        <h2>6b. Architecture 2/2 – Métier &amp; Infrastructure</h2>
+        <p>Services métier, JPA/Hibernate, MySQL 8, Flyway et services auxiliaires (SMTP, MinIO, Redis).</p>
+      </a>      <a class="card" href="mct.html">
+        <h2>5. MCT</h2>
+        <p>Modèle conceptuel des traitements : événements, synchronisations, opérations et résultats.</p>
+      </a>
+      <a class="card" href="architecture.html">
+        <h2>6. Architecture</h2>
+        <p>Architecture applicative en couches : acteurs, frontend Angular, API Spring Boot, services métier, persistance JPA, MySQL 8 et services auxiliaires.</p>
+      </a>
+      <a class="card" href="use_cases.html">
+        <h2>7. Cas d'utilisation</h2>
+        <p>Diagramme UML des cas d'utilisation : quatre acteurs et paquetages fonctionnels (parcours candidat, pilotage, administration, gouvernance, dashboards).</p>
+      </a>
+      <a class="card" href="uc_1_candidat_recruteur.html">
+        <span class="card-badge" style="background:var(--pivot);">UC</span>
+        <h2>7a. UC 1/3 – Candidat &amp; Recruteur</h2>
+        <p>Parcours candidat (6 UC) et Pilotage recrutement (11 UC).</p>
+      </a>
+      <a class="card" href="uc_2_admin_gouvernance.html">
+        <span class="card-badge" style="background:var(--warn);">UC</span>
+        <h2>7b. UC 2/3 – Admin &amp; Gouvernance</h2>
+        <p>Administration métier (7 UC) et Gouvernance plateforme (5 UC).</p>
+      </a>
+      <a class="card" href="uc_3_tableaux_bord.html">
+        <span class="card-badge" style="background:var(--accent);">UC</span>
+        <h2>7c. UC 3/3 – Tableaux de bord</h2>
+        <p>Dashboards, notifications, filtres, stats et exports (5 UC transverses).</p>
+      </a>
+      <a class="card" href="cls_1_pipeline_formulaires.html">
+        <span class="card-badge" style="background:var(--primary);">CLS</span>
+        <h2>8a. Classes 1/4 – Pipeline &amp; Formulaires</h2>
+        <p>PipelineTemplate, PipelineStage, Campaign, Form, FormVersion, Question, Answer (9 classes).</p>
+      </a>
+      <a class="card" href="cls_2_candidature_quiz.html">
+        <span class="card-badge" style="background:var(--pivot);">CLS</span>
+        <h2>8b. Classes 2/4 – Candidature &amp; Quiz</h2>
+        <p>Application, ApplicationProgress, QuizAttempt, CandidateAnswer, Decision (5 classes).</p>
+      </a>
+      <a class="card" href="cls_3_entretien_evaluation.html">
+        <span class="card-badge" style="background:var(--accent);">CLS</span>
+        <h2>8c. Classes 3/4 – Entretien &amp; Évaluation</h2>
+        <p>Interview, CandidateInterview, Evaluation, InterviewParticipant (4 classes).</p>
+      </a>
+      <a class="card" href="cls_4_securite_audit.html">
+        <span class="card-badge" style="background:var(--warn);">CLS</span>
+        <h2>8d. Classes 4/4 – Sécurité &amp; Audit</h2>
+        <p>User, EntityPermission, CampaignCrud, Notification, AuditEvent (6 classes).</p>
+      </a>
+      <a class="card" href="class_diagram.html">
+        <h2>8. Diagramme de classes</h2>
+        <p>Vue métier du diagramme de classes : pivots <code>Campaign</code>, <code>Application</code>, <code>ApplicationProgress</code>, sécurité et entretiens.</p>
+      </a>
+      <a class="card" href="sequences.html">
+        <h2>9. Séquences</h2>
+        <p>Quatre diagrammes de séquence : candidature publique, passation du quiz, planification d'entretien, décision finale.</p>
+      </a>
+      <a class="card" href="organisation_synelia.html">
+        <h2>10. Organisation Synelia</h2>
+        <p>Organigramme du groupe Synelia : direction, expertises technologiques, unités d'activité et implantations, avec positionnement de SyneliaQuizApp.</p>
+      </a>
+
+      <!-- ══════ FIGURES DU MÉMOIRE (hors Merise) ══════ -->
+      <a class="card target" href="processus_recrutement_as_is.html">
+        <span class="card-badge target">Mémoire</span>
+        <h2>Processus de recrutement (AS-IS)</h2>
+        <p>État des lieux du processus de recrutement avant SyneliaQuizApp.</p>
+      </a>
+      <a class="card target" href="du_besoin_a_la_solution.html">
+        <span class="card-badge target">Mémoire</span>
+        <h2>Du besoin à la solution</h2>
+        <p>6 problèmes → 6 solutions : comment SyneliaQuizApp répond aux lacunes.</p>
+      </a>
+      <a class="card target" href="pyramide_objectifs.html">
+        <span class="card-badge target">Mémoire</span>
+        <h2>Pyramide des objectifs</h2>
+        <p>4 niveaux : Digitaliser → Automatiser → Collaborer → Piloter.</p>
+      </a>
+      <a class="card target" href="matrice_benchmark.html">
+        <span class="card-badge target">Mémoire</span>
+        <h2>Matrice de benchmark</h2>
+        <p>Comparaison des solutions de recrutement du marché.</p>
+      </a>
+      <a class="card target" href="pyramide_moscow.html">
+        <span class="card-badge target">Mémoire</span>
+        <h2>Pyramide MoSCoW</h2>
+        <p>Priorisation des besoins : MUST, SHOULD, COULD, WON'T.</p>
+      </a>
+      <a class="card target" href="stack_technique.html">
+        <span class="card-badge target">Mémoire</span>
+        <h2>Stack technique</h2>
+        <p>Architecture 3-tiers : Angular → Spring Boot → MySQL + Redis + MinIO.</p>
+      </a>
+      <a class="card target" href="machine_etats_campagne.html">
+        <span class="card-badge target">Mémoire</span>
+        <h2>Machine à états — Campagne</h2>
+        <p>Cycle de vie d'une campagne : DRAFT → PENDING → OPEN → CLOSED.</p>
+      </a>
+      <a class="card target" href="machine_etats_candidature.html">
+        <span class="card-badge target">Mémoire</span>
+        <h2>Machine à états — Candidature</h2>
+        <p>Parcours candidat : soumission → quiz → entretien → décision.</p>
+      </a>
+      <a class="card target" href="pubsub_notifications.html">
+        <span class="card-badge target">Mémoire</span>
+        <h2>Architecture de notifications</h2>
+        <p>Modèle Publication/Souscription pour le routage des événements.</p>
+      </a>
+      <a class="card target" href="pyramide_tests.html">
+        <span class="card-badge target">Mémoire</span>
+        <h2>Pyramide des tests</h2>
+        <p>Stratégie de validation : unitaires, intégration, E2E.</p>
+      </a>
+      <a class="card target" href="carte_api_endpoints.html">
+        <span class="card-badge target">Mémoire</span>
+        <h2>Carte des endpoints API</h2>
+        <p>Organisation des services REST par domaine fonctionnel.</p>
+      </a>
+      <a class="card target" href="synoptique_pipeline.html">
+        <span class="card-badge target">Mémoire</span>
+        <h2>Synoptique du pipeline</h2>
+        <p>Architecture des gabarits, étapes et progression des candidatures.</p>
+      </a>
+      <a class="card target" href="vue_ensemble_plateforme.html">
+        <span class="card-badge target">Mémoire</span>
+        <h2>Vue d'ensemble de la plateforme</h2>
+        <p>SyneliaQuizApp en un coup d'œil : contexte, architecture, modules, KPI.</p>
+      </a>
+      <a class="card target" href="fragmentation_processus.html">
+        <span class="card-badge target">Mémoire</span>
+        <h2>Fragmentation du processus</h2>
+        <p>Trois phases déconnectées — l'état des lieux avant SyneliaQuizApp.</p>
+      </a>
+      <a class="card" href="pipeline_recrutement.html">
+        <span class="card-badge" style="background:#16a34a;">Pipeline</span>
+        <h2>Pipeline de recrutement</h2>
+        <p>6 étapes : Candidature → Quiz → Présélection → Entretien → Évaluation → Décision.</p>
+      </a>
+      <a class="card" href="carte_regles_gestion.html">
+        <span class="card-badge" style="background:#6366f1;">Règles</span>
+        <h2>Règles de gestion</h2>
+        <p>11 règles métier organisées par phase du processus de recrutement.</p>
+      </a>
+      <a class="card" href="dictionnaire_donnees.html">
+        <span class="card-badge" style="background:#444;">Dict.</span>
+        <h2>Dictionnaire de données</h2>
+        <p>Dictionnaire du noyau métier : attributs, types, contraintes.</p>
+      </a>
+      <a class="card" href="pile_technologique.html">
+        <span class="card-badge" style="background:#0ea5e9;">Stack</span>
+        <h2>Pile technologique</h2>
+        <p>Vue d'ensemble des technologies utilisées dans le projet.</p>
+      </a>
+      <a class="card" href="acteurs_systeme.html">
+        <span class="card-badge" style="background:#7c3aed;">Acteurs</span>
+        <h2>Acteurs du système</h2>
+        <p>Les 4 profils d'utilisateurs et leurs interactions.</p>
+      </a>
+      <a class="card" href="defis_recrutement.html">
+        <span class="card-badge" style="background:#dc2626;">Défis</span>
+        <h2>Défis du recrutement</h2>
+        <p>Les limitations du processus actuel.</p>
+      </a>
+      <a class="card" href="stakeholder_map.html">
+        <span class="card-badge" style="background:#f59e0b;">Carte</span>
+        <h2>Stakeholder Map</h2>
+        <p>Cartographie des parties prenantes du projet.</p>
+      </a>
+      <a class="card" href="chaine_audit.html">
+        <span class="card-badge" style="background:#444;">Audit</span>
+        <h2>Chaîne d'audit</h2>
+        <p>Flux de traçabilité et journalisation des événements.</p>
+      </a>
+      <a class="card" href="graphe_dependances.html">
+        <span class="card-badge" style="background:#444;">Graphe</span>
+        <h2>Graphe de dépendances</h2>
+        <p>Dépendances entre les modules et packages du projet.</p>
+      </a>
+      <a class="card" href="radar_couverture.html">
+        <span class="card-badge" style="background:#22c55e;">Radar</span>
+        <h2>Radar de couverture</h2>
+        <p>Couverture fonctionnelle par domaine.</p>
+      </a>
+      <a class="card" href="radar_frameworks.html">
+        <span class="card-badge" style="background:#22c55e;">Radar</span>
+        <h2>Radar des frameworks</h2>
+        <p>Évaluation des technologies et frameworks utilisés.</p>
+      </a>
+      <a class="card" href="couverture_tests.html">
+        <span class="card-badge" style="background:#22c55e;">Tests</span>
+        <h2>Couverture de tests</h2>
+        <p>Vue d'ensemble de la couverture de tests du projet.</p>
+      </a>
+      <a class="card" href="sequence_pipeline.html">
+        <span class="card-badge" style="background:#444;">Séquence</span>
+        <h2>Séquence — Pipeline</h2>
+        <p>Diagramme de séquence du pipeline de recrutement.</p>
+      </a>
+      <a class="card" href="ecosysteme_cosmique.html">
+        <span class="card-badge" style="background:#7c3aed;">Écosystème</span>
+        <h2>Écosystème cosmique</h2>
+        <p>Vue globale de l'écosystème technique et fonctionnel.</p>
+      </a>
+      <a class="card" href="mapping_merise_tables.html">
+        <span class="card-badge" style="background:#444;">Mapping</span>
+        <h2>Mapping Merise → Tables</h2>
+        <p>Correspondance entre objets conceptuels Merise et tables physiques.</p>
+      </a>
+      <a class="card" href="organigramme_synelia_avec_ag.html">
+        <span class="card-badge" style="background:#1e3a5f;">ORG</span>
+        <h2>Organigramme — avec AG</h2>
+        <p>Variante avec Assemblée Générale.</p>
+      </a>
+      <a class="card legacy" href="sat.html">
+        <span class="card-badge legacy">Ancien</span>
+        <h2>SAT (version groupée)</h2>
+        <p>Structure d'accès théorique — version complète en une page.</p>
+      </a>
+    </div>
+
+    <p class="figure-caption" style="margin-top: 28px;">
+      Les captures (PNG) sont à déposer dans le dossier
+      <code>captures/</code> à côté des pages. Pour une qualité d'impression
+      irréprochable, préférez le bouton <strong>« Exporter SVG »</strong> de
+      la barre d'outils : le fichier vectoriel obtenu s'intègre directement
+      dans Typst via <code>image("figures_html/xxx.svg")</code>.
+    </p>
+  </div>
+</body>
+</html>

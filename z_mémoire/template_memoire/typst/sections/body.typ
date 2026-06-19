@@ -1,4 +1,4 @@
-#import "../theme.typ": top-heading, part-page, note-box, page-footer, body-header, document-table, palette
+﻿#import "../theme.typ": top-heading, part-page, note-box, page-footer, body-header, document-table, palette
 
 #let merise-lines(..items) = grid(
   columns: (1fr),
@@ -117,7 +117,14 @@
 
   Vient ensuite une phase d'évaluation, souvent réalisée à partir d'entretiens techniques, de questionnaires externes ou de jugements informels portés sur le dossier du candidat. Les entretiens doivent être planifiés, confirmés et suivis, ce qui multiplie les échanges. Enfin, une décision de présélection, de poursuite ou de rejet est prise, puis communiquée au candidat avec plus ou moins de formalisation.
 
-  Pris isolément, chacun de ces maillons paraît simple. Mais lorsqu'ils sont répartis entre plusieurs outils et plusieurs personnes, ils génèrent rapidement des pertes d'information, des lenteurs et une forte dépendance à la mémoire individuelle des intervenants. Comme le soulignent D. S. Chapman et J. Webster dans leur article *The use of technologies in the recruiting, selection, and evaluation of job applicants* (2003), l'usage d'outils numériques intégrés dans le recrutement ne se limite pas à un gain de productivité : il transforme la capacité même de l'organisation à standardiser, comparer et documenter ses évaluations.
+  Pris isolément, chacun de ces maillons paraît simple. Mais lorsqu'ils sont répartis entre plusieurs outils et plusieurs personnes, ils génèrent rapidement des pertes d'information, des lenteurs et une forte dépendance à la mémoire individuelle des intervenants.
+
+  #figure(
+    image("figures/processus_recrutement_as_is.png", width: 100%),
+    caption: [Processus de recrutement traditionnel — État des lieux avant la mise en place de SyneliaQuizApp.],
+  )
+
+  Comme le soulignent D. S. Chapman et J. Webster dans leur article *The use of technologies in the recruiting, selection, and evaluation of job applicants* (2003), l'usage d'outils numériques intégrés dans le recrutement ne se limite pas à un gain de productivité : il transforme la capacité même de l'organisation à standardiser, comparer et documenter ses évaluations.
 
   === Les défis et limitations actuels
   #label("ref-defis")
@@ -129,6 +136,12 @@
 
   === La nécessité d'une solution digitale
   #label("ref-solution-digitale")
+
+  #figure(
+    image("figures/du_besoin_a_la_solution.png", width: 100%),
+    caption: [Du besoin à la solution — Synthèse des problèmes identifiés et des réponses apportées par SyneliaQuizApp.],
+  )
+
   Dans ce contexte, une plateforme interne unifiée apparaît comme une réponse pertinente pour plusieurs raisons. T. Bondarouk et M. R. Olivas-Luján, dans *Electronic HRM in the Smart Era* (2013), qualifient cette transition de passage à un #emph[electronic HRM], où la technologie ne se contente pas de reproduire des processus papier mais redéfinit la manière dont l'organisation interagit avec ses candidats. Elle permet d'abord de centraliser les informations et d'offrir un référentiel commun à tous les acteurs du recrutement. Elle permet ensuite d'automatiser certaines opérations répétitives, comme la vérification d'email, l'envoi de notifications, la mise à disposition du quiz ou la consolidation de certains états métier.
 
   Une telle solution favorise également la standardisation du processus. En structurant les campagnes, les statuts, les évaluations et les permissions, elle réduit la variabilité des pratiques et facilite la comparaison entre candidatures. Enfin, elle améliore la transparence du parcours candidat en donnant accès à un suivi plus clair, ce qui contribue à renforcer la qualité de l'expérience utilisateur et, par extension, l'image employeur de SYNELIA.
@@ -137,6 +150,12 @@
   Les objectifs du projet doivent être compris à deux niveaux complémentaires. D'un côté, il existe des objectifs stratégiques liés à la transformation du processus de recrutement et à l'amélioration de la performance organisationnelle. De l'autre, le projet poursuit des objectifs opérationnels précis, directement traduits dans les modules et parcours de SyneliaQuizApp.
 
   === Objectifs généraux
+
+  #figure(
+    image("figures/pyramide_objectifs.png", width: 100%),
+    caption: [Pyramide des objectifs de SyneliaQuizApp — Du socle de digitalisation au pilotage stratégique par la donnée.],
+  )
+
   L'objectif général principal consiste à #strong[digitaliser le processus de recrutement] en remplaçant une logique éclatée par une plateforme web centralisée. Cette digitalisation vise à réduire les manipulations manuelles, à structurer les échanges et à rendre plus visibles les différentes étapes du parcours candidat.
 
   Le deuxième objectif général est #strong[d'automatiser l'évaluation technique] grâce à l'intégration d'un système de quiz configurable, permettant de pré-filtrer ou de préqualifier certains profils de manière plus homogène. Cette automatisation n'a pas vocation à remplacer totalement le jugement humain, mais à l'appuyer par un socle de vérification plus objectif.
@@ -188,7 +207,14 @@
   Il convient néanmoins de souligner que cet existant mettait déjà en évidence les besoins réels de l'entreprise. Les recruteurs avaient déjà identifié la nécessité de diffuser des campagnes, de recueillir des informations standardisées, de tester les compétences, de suivre les statuts et de produire des décisions. En ce sens, le projet SyneliaQuizApp ne part pas d'un vide fonctionnel ; il cherche plutôt à rationaliser et à intégrer des pratiques déjà présentes, mais encore insuffisamment outillées.
 
   == Benchmark des solutions existantes
-  Le marché propose aujourd'hui de nombreuses solutions de recrutement, parmi lesquelles des ATS généralistes comme Workable ou Greenhouse, ainsi que des plateformes plus spécialisées dans l'évaluation technique comme HackerRank, Codility ou TestGorilla. Les premières se distinguent généralement par leur capacité à structurer les campagnes, centraliser les candidats, suivre les statuts et produire des tableaux de bord. Les secondes mettent davantage l'accent sur la conception de tests, la notation automatisée et l'évaluation comparée des compétences.
+  Le marché propose aujourd'hui de nombreuses solutions de recrutement, parmi lesquelles des ATS généralistes comme Workable ou Greenhouse, ainsi que des plateformes plus spécialisées dans l'évaluation technique comme HackerRank, Codility ou TestGorilla.
+
+  #figure(
+    image("figures/matrice_benchmark.png", width: 100%),
+    caption: [Matrice de benchmark — Comparaison des solutions du marché et positionnement de SyneliaQuizApp.],
+  )
+
+  Les premières se distinguent généralement par leur capacité à structurer les campagnes, centraliser les candidats, suivre les statuts et produire des tableaux de bord. Les secondes mettent davantage l'accent sur la conception de tests, la notation automatisée et l'évaluation comparée des compétences.
 
   Ces solutions offrent des fonctionnalités avancées et une forte maturité produit, mais elles ne répondent pas toujours de manière optimale à un besoin interne spécifique. D'une part, elles peuvent imposer des modèles de workflow peu flexibles par rapport à l'organisation réelle de l'entreprise. D'autre part, elles introduisent souvent une dépendance à une plateforme externe, à ses coûts, à ses conventions et à ses limites de personnalisation. Enfin, lorsqu'il faut articuler très finement les permissions, les parcours publics, les états métier et les règles propres à l'entreprise, une solution générique peut s'avérer moins adaptée qu'un outil pensé sur mesure.
 
@@ -198,6 +224,11 @@
   L'état de l'art retenu pour ce projet repose sur une architecture web en couches, devenue aujourd'hui un standard pour les applications métier. Le backend est porté par un framework serveur capable d'exposer des services structurés, d'assurer la sécurité, de gérer la persistance et d'orchestrer les règles métier. Le frontend, quant à lui, s'appuie sur un framework orienté composants permettant de construire des interfaces riches, interactives et organisées autour de parcours utilisateurs distincts.
 
   Dans ce paysage, #strong[Spring Boot] s'impose comme une référence pour les applications Java orientées API. Il facilite la mise en place de services REST, l'intégration avec la sécurité, la persistance via JPA et l'organisation modulaire du code. #strong[Angular] représente de son côté une solution robuste pour les applications monopage complexes, en particulier lorsqu'il faut structurer de nombreux écrans, partager des composants et maintenir une logique de navigation cohérente entre plusieurs profils d'utilisateurs.
+
+  #figure(
+    image("figures/stack_technique.png", width: 100%),
+    caption: [Stack technique de SyneliaQuizApp — Architecture 3-tiers avec flux de données entre les couches.],
+  )
 
   La couche de données relationnelle reste également un choix pertinent pour un domaine aussi structuré que le recrutement. Une base comme #strong[MySQL] permet de modéliser proprement les relations entre campagnes, candidatures, formulaires, tentatives de quiz, entretiens, évaluations, décisions et permissions. Enfin, l'architecture #strong[REST] fournit un cadre clair pour les échanges entre frontend et backend, tandis que les principes modernes de sécurité web imposent une séparation rigoureuse entre authentification, autorisation, validation des entrées, contrôle des accès publics et protection des données sensibles.
 
@@ -330,12 +361,26 @@
   Le besoin ne porte pas seulement sur la création de ces données, mais aussi sur leur cohérence, leur réutilisation et leur évolution. Une question peut être partagée par plusieurs formulaires, un formulaire peut être versionné, et certaines données doivent être historisées indirectement pour éviter que des modifications ultérieures ne déforment la lecture des campagnes déjà utilisées. L'administration des référentiels constitue donc une base essentielle de la qualité du système.
 
   === Campagnes de recrutement
-  La campagne de recrutement constitue l'unité de pilotage centrale du système. Le besoin métier impose de pouvoir créer une campagne, définir son état de cycle de vie, lui associer un pipeline, lui rattacher un ou plusieurs formulaires, générer des liens de diffusion et partager son accès avec des collaborateurs internes selon des permissions fines.
+  La campagne de recrutement constitue l'unité de pilotage centrale du système.
+
+  #figure(
+    image("figures/machine_etats_campagne.png", width: 100%),
+    caption: [Machine à états d'une campagne de recrutement — Transitions et conditions de passage entre statuts.],
+  )
+
+  Le besoin métier impose de pouvoir créer une campagne, définir son état de cycle de vie, lui associer un pipeline, lui rattacher un ou plusieurs formulaires, générer des liens de diffusion et partager son accès avec des collaborateurs internes selon des permissions fines.
 
   La campagne doit également servir de point de convergence pour le suivi des candidatures, des entretiens, des évaluations et des décisions. Elle doit donc supporter à la fois une logique de configuration et une logique de lecture consolidée. L'entreprise attend en particulier une meilleure visibilité sur les campagnes actives, sur les profils qu'elles visent et sur les actions qu'elles autorisent aux différents intervenants.
 
   === Candidatures et suivi candidat
-  Le système doit offrir un parcours de candidature public simple et fiable, permettant au candidat de renseigner ses informations, de transmettre ses pièces, de vérifier son adresse email et d'obtenir un moyen de suivi autonome de son dossier. Ce besoin est fondamental, car il conditionne à la fois la qualité de la donnée collectée et la perception du sérieux de l'entreprise par les candidats.
+  Le système doit offrir un parcours de candidature public simple et fiable.
+
+  #figure(
+    image("figures/machine_etats_candidature.png", width: 100%),
+    caption: [Machine à états d'une candidature — Parcours complet du candidat dans le pipeline de recrutement.],
+  )
+
+  Ce besoin est fondamental, car il conditionne à la fois la qualité de la donnée collectée et la perception du sérieux de l'entreprise par les candidats.
 
   Au-delà de la soumission initiale, la solution doit permettre un suivi public contextualisé : consultation de l'état d'avancement, visibilité sur les actions possibles, réponse à une convocation, et, lorsque la règle métier l'autorise, demande de correction d'information ou abandon du processus. Le système doit donc gérer une frontière claire entre les actions publiques autorisées et les opérations strictement réservées aux équipes internes.
 
@@ -455,16 +500,15 @@
   Dans la version finale du mémoire, le diagramme global pourra être complété par trois figures ciblées : un diagramme orienté administration, un diagramme orienté recruteur et un diagramme orienté candidat. Cette décomposition améliore la lisibilité tout en conservant la cohérence d'ensemble du modèle d'usage.
 
   == Priorisation des besoins
-  L'ensemble des besoins identifiés ne possède pas la même criticité. Une priorisation de type MoSCoW a donc été retenue afin de distinguer les fonctionnalités indispensables à la valeur métier immédiate, celles qui renforcent l'efficacité opérationnelle et celles qui relèvent d'une extension ultérieure. Cette hiérarchisation est essentielle dans un projet de recrutement, car le cœur de valeur se situe avant tout dans la collecte fiable des candidatures, l'évaluation et la prise de décision.
+  L'ensemble des besoins identifiés ne possède pas la même criticité. Une priorisation de type MoSCoW a donc été retenue afin de distinguer les fonctionnalités indispensables à la valeur métier immédiate, celles qui renforcent l'efficacité opérationnelle et celles qui relèvent d'une extension ultérieure.
 
-  #document-table(
-    columns: (0.95fr, 2.2fr, 1.65fr),
-    [Priorité], [Besoins concernés], [Justification],
-    [Must have], [Soumettre une candidature ; gérer les campagnes ; consulter les candidatures ; s'authentifier ; passer le quiz ; évaluer les candidats.], [Sans ces fonctions, le système ne remplit pas sa mission principale de recrutement.],
-    [Should have], [Planifier des entretiens ; vérifier l'email ; suivre sa candidature ; recevoir des notifications ; prendre une décision finale structurée.], [Ces fonctions complètent le workflow métier et sécurisent la qualité du processus.],
-    [Must have], [Tableaux de bord avancés ; export de données ; raffinements de diffusion et de reporting.], [Ces fonctions renforcent le pilotage opérationnel et la visibilité du processus de recrutement, conditions essentielles pour une exploitation professionnelle de la plateforme.],
-    [Won't have], [Intégration calendrier poussée, matching avancé, automatisations non critiques hors périmètre immédiat.], [Ces éléments relèvent d'extensions futures et ne doivent pas brouiller le périmètre du noyau métier.],
+  #figure(
+    image("figures/pyramide_moscow.png", width: 100%),
+    caption: [Pyramide MoSCoW — Priorisation des besoins fonctionnels de SyneliaQuizApp.],
   )
+
+  Cette hiérarchisation est essentielle dans un projet de recrutement, car le cœur de valeur se situe avant tout dans la collecte fiable des candidatures, l'évaluation et la prise de décision.
+
 
   == Règles de gestion
   Les règles de gestion constituent le noyau normatif du système. Elles expriment les contraintes qui ne peuvent pas être laissées à la seule interface et qui doivent être garanties par le modèle métier et par le backend. Leur formalisation est indispensable pour justifier ensuite les choix Merise et UML du chapitre suivant.
@@ -508,15 +552,6 @@
   === Vue logique en couches
   La vue logique suivante résume la responsabilité de chaque couche et son rôle dans la maîtrise du processus de recrutement.
 
-  #document-table(
-    columns: (1.05fr, 1.45fr, 1.95fr),
-    [Couche], [Composants principaux], [Responsabilité dans la solution],
-    [Présentation], [Pages Angular, composants partagés, formulaires, services HTTP.], [Gérer les interactions utilisateur, afficher l'état métier et transmettre les commandes au backend.],
-    [Application], [Contrôleurs REST, DTO, sécurité, orchestration métier Spring Boot.], [Recevoir les demandes, valider les droits, appliquer les règles de gestion et coordonner les traitements.],
-    [Métier], [Services de campagne, candidature, quiz, entretien, évaluation, décision, permissions.], [Centraliser les règles métier, les transitions d'état et les effets transverses.],
-    [Persistance], [Entités JPA, repositories, MySQL, migrations Flyway.], [Conserver les données, garantir l'intégrité relationnelle et versionner le schéma.],
-    [Services auxiliaires], [SMTP, MinIO, Redis, notifications.], [Supporter les besoins transverses de communication, stockage et exploitation.],
-  )
 
   == Conception de la base de données
   La conception de la base de données suit une logique relationnelle riche, cohérente avec la nature fortement structurée du domaine. Les entités principales s'organisent autour de quelques noyaux : utilisateurs et permissions, campagnes et pipelines, formulaires et questions, candidatures et parcours candidat, entretiens et évaluations, décisions et notifications. Chaque noyau possède ses propres relations, mais l'ensemble converge vers la candidature comme objet pivot du recrutement.
@@ -552,43 +587,35 @@
     caption: [MCD — Identité, groupes & permissions.],
   )
 
+  Ce premier sous-ensemble modélise les utilisateurs du système, leurs rôles, les groupes métier auxquels ils appartiennent et les permissions qui leur sont accordées sur les entités. La séparation entre rôle système et permission contextualisée constitue le fondement de la gouvernance des accès.
+
   #figure(
     image("../../../figures_html/captures/to use/MCD 2 – Campagnes, pipeline & formulaires.png", width: 100%),
     caption: [MCD — Campagnes, pipeline & formulaires.],
   )
+
+  Ce sous-ensemble décrit le cœur organisationnel du recrutement : la campagne, le pipeline qui structure les étapes, les formulaires et leurs versions successives, ainsi que les questions qui les composent. Le versionnement des formulaires garantit la comparabilité des évaluations dans le temps.
 
   #figure(
     image("../../../figures_html/captures/to use/MCD 3 – Candidature, avancement & quiz.png", width: 100%),
     caption: [MCD — Candidature, avancement & quiz.],
   )
 
+  La candidature occupe une place pivot : elle est rattachée à une campagne via un jeton de source, figée sur une version de formulaire, enrichie par les réponses au quiz et suivie par une progression dans le pipeline. Ce sous-ensemble capture le parcours du candidat depuis la soumission jusqu'à l'évaluation.
+
   #figure(
     image("../../../figures_html/captures/to use/MCD 4 – Entretiens & évaluations.png", width: 100%),
     caption: [MCD — Entretiens & évaluations.],
   )
+
+  Ce sous-ensemble modélise la phase d'entretien : planification d'une session, réponse du candidat, évaluations collaboratives produites par les recruteurs. Chaque entretien est rattaché à une candidature et peut donner lieu à plusieurs évaluations détaillées.
 
   #figure(
     image("../../../figures_html/captures/to use/MCD 5 – Notifications, mails & audit.png", width: 100%),
     caption: [MCD — Notifications, mails & audit.],
   )
 
-
-
-  #document-table(
-    columns: (1.35fr, 1.05fr, 2fr),
-    [Association conceptuelle], [Cardinalité], [Interprétation métier],
-    [Campagne - Formulaire], [1:N], [Une campagne peut mobiliser plusieurs formulaires, chacun restant rattaché à une campagne donnée.],
-    [Formulaire - VersionFormulaire], [1:N], [Le contenu d'un formulaire évolue par versions afin de figer les questionnaires.],
-    [VersionFormulaire - Question], [N:N], [Une version assemble plusieurs questions, et une question peut être réutilisée dans plusieurs versions.],
-    [PipelineTemplate - Campagne], [1:N], [Un même pipeline peut être réutilisé par plusieurs campagnes, mais une campagne active n'emploie qu'un pipeline de référence.],
-    [SourceToken - Candidature], [1:N], [Un lien de diffusion peut être à l'origine de plusieurs candidatures et permet de tracer la source d'acquisition.],
-    [Candidature - Progression], [1:N], [Le parcours d'une candidature est détaillé par étapes de progression plutôt que réduit à un seul statut global.],
-    [Candidature - RéponseCandidat], [1:N], [Les réponses du quiz sont rattachées au dossier candidat et donc historisables.],
-    [Candidature - EntretienCandidat], [1:N], [Une candidature peut donner lieu à plusieurs événements d'entretien dans le cadre de son parcours.],
-    [EntretienCandidat - Évaluation], [1:N], [Un entretien peut recevoir plusieurs évaluations, produites par différents intervenants.],
-    [Candidature - Décision], [1:N], [Plusieurs décisions peuvent jalonner le parcours, par exemple une pré-sélection puis une décision finale.],
-    [Utilisateur - PermissionEntité], [1:N], [Les droits fins ne se limitent pas au rôle global ; ils peuvent cibler une entité métier donnée.],
-  )
+  Ce dernier sous-ensemble couvre les mécanismes transverses : notifications internes, emails transactionnels, journal de messagerie et piste d'audit. Ces entités assurent la traçabilité des actions et la communication avec les parties prenantes tout au long du processus.
 
   === Modèle Logique de Données (MLD)
   Le modèle logique traduit les associations conceptuelles en relations concrètes, portées par des clés étrangères ou par des tables d'association. Dans SyneliaQuizApp, cette traduction est lisible dans l'inventaire de la base, notamment autour des tables campaigns, form, form_version, form_questions, applications, application_progress, candidate_interview, evaluations, decisions, campaign_crud et entity_permission.
@@ -686,26 +713,10 @@
   === Dictionnaire de données du noyau métier
   Le dictionnaire de données suivant synthétise quelques attributs structurants du noyau métier. Il ne remplace pas un inventaire exhaustif de la base, mais il matérialise les données indispensables à la compréhension du système et au raisonnement de conception.
 
-  #document-table(
-    columns: (1.4fr, 1.4fr, 1.1fr, 1.8fr),
-    [Entité], [Attribut], [Type / format], [Signification],
-    [campaigns], [campaign_title], [varchar], [Libellé métier de la campagne visible dans les écrans de pilotage.],
-    [campaigns], [campaign_status], [varchar(7)], [État de la campagne, utilisé pour contrôler son cycle de vie et sa diffusion.],
-    [campaigns], [pipeline_template_id], [FK], [Pipeline de référence appliqué à la campagne.],
-    [form_version], [version_number], [int], [Numéro de version du formulaire, garantissant l'historique des questionnaires.],
-    [form_version], [is_locked], [bit(1)], [Indique qu'une version ne doit plus être modifiée de manière destructive.],
-    [question], [question_type], [varchar(20)], [Nature de la question : choix unique, multiple ou réponse libre selon la modélisation retenue.],
-    [applications], [candidate_email], [donnée identité], [Adresse utilisée pour la vérification, la communication et l'identification du candidat.],
-    [applications], [email_verified], [tinyint(1)], [Indique si le candidat a validé son adresse email.],
-    [applications], [application_status], [varchar(8)], [Synthèse de l'état du dossier au niveau candidature.],
-    [applications], [quiz_status], [varchar(9)], [État du quiz pour la candidature : non commencé, en cours, terminé, etc.],
-    [applications], [form_version_id], [FK], [Version de formulaire effectivement subie par le candidat.],
-    [application_progress], [progress_status], [varchar(20)], [État de l'étape de pipeline concernée.],
-    [application_progress], [score], [double], [Valeur quantitative liée à l'étape, par exemple score de quiz ou résultat partiel.],
-    [pipeline_stage], [stage_type], [varchar(50)], [Nature métier de l'étape : candidature, quiz, entretien, décision, etc.],
-    [pipeline_stage], [stage_order], [int], [Ordre d'exécution de l'étape dans le pipeline.],
-    [candidate_interview], [alternative_date_requested], [datetime], [Date proposée par le candidat en cas de demande de reprogrammation.],
-    [decisions], [decision_type], [varchar(50)], [Type de décision porté sur le dossier : pré-sélection, refus, décision finale, etc.],
+  #figure(
+    image("../../../figures_html/captures/png/dictionnaire_donnees.png", width: 100%),
+    caption: [Dictionnaire de données du noyau métier — attributs structurants des huit entités principales de SyneliaQuizApp.],
+  )
   )
 
   === Correspondance entre objets Merise et tables physiques
@@ -755,19 +766,6 @@
   )
 
 
-
-  #document-table(
-    columns: (1.55fr, 2.45fr),
-    [Point d'entrée], [Accès structurés dans le système],
-    [campaigns.id], [form.campaign_id ; interviews.campaign_id ; source_token.campaign_id ; campaign_crud.campaign_id],
-    [form.id], [form_version.form_id],
-    [form_version.id], [form_questions.form_version_id ; applications.form_version_id],
-    [applications.id], [candidate_answer.application_id ; application_progress.application_id ; candidate_interview.application_id ; decisions.application_id],
-    [pipeline_template.id], [pipeline_stage.pipeline_template_id ; campaigns.pipeline_template_id],
-    [interviews.id], [candidate_interview.interview_id ; interview_participant.interview_id],
-    [candidate_interview.id], [evaluations.candidate_interview_id],
-    [user.id], [campaign_crud.user_id ; decisions.user_id ; entity_permission.user_id ; user_permission_override.user_id],
-  )
 
   Cette lecture met en évidence deux carrefours informationnels essentiels. D'une part, #raw("applications") concentre le suivi du candidat, ses réponses, ses étapes de pipeline, ses entretiens et ses décisions. D'autre part, #raw("campaigns") concentre le paramétrage global du recrutement et la gouvernance collaborative autour de la campagne.
 
@@ -970,7 +968,14 @@
 
   Les échanges sont essentiellement réalisés au format JSON, via des DTO dédiés servant de contrats entre frontend et backend. Les structures de requête permettent de transmettre soit des recherches par critères, soit des objets métier à créer ou à mettre à jour, parfois regroupés dans des tableaux de données. Les réponses ont pour objectif de renvoyer des objets directement exploitables par l'interface, y compris lorsqu'elles portent des champs de synthèse ou des informations dérivées utiles à l'affichage.
 
-  L'API suit également des conventions de mise à jour partielles importantes pour la stabilité du projet : certaines valeurs omises ne doivent pas être écrasées, certaines valeurs vides doivent être ignorées, et certains champs calculés ou historisés restent strictement propriétaires du backend. La gestion des erreurs doit enfin préserver un équilibre entre rigueur technique et lisibilité fonctionnelle : contrôle des entrées, refus explicite des incohérences critiques, messages exploitables pour le frontend et distinction claire entre erreur métier, erreur de validation et défaut d'infrastructure.
+  L'API suit également des conventions de mise à jour partielles importantes pour la stabilité du projet : certaines valeurs omises ne doivent pas être écrasées, certaines valeurs vides doivent être ignorées, et certains champs calculés ou historisés restent strictement propriétaires du backend.
+
+  #figure(
+    image("figures/carte_api_endpoints.png", width: 100%),
+    caption: [Carte des endpoints de l'API — Organisation des services REST par domaine fonctionnel.],
+  )
+
+  La gestion des erreurs doit enfin préserver un équilibre entre rigueur technique et lisibilité fonctionnelle : contrôle des entrées, refus explicite des incohérences critiques, messages exploitables pour le frontend et distinction claire entre erreur métier, erreur de validation et défaut d'infrastructure.
 
   #document-table(
     columns: (1.2fr, 1.95fr, 1.55fr),
@@ -1093,7 +1098,14 @@
   #label("ref-pipeline")
   Le pipeline de recrutement constitue l'épine dorsale du système : il définit l'ordre des étapes par lesquelles transite une candidature et conditionne les actions disponibles à chaque stade. L'implémentation repose sur une modélisation explicite des gabarits de pipeline (#raw("PipelineTemplate")), des étapes ordonnées (#raw("PipelineStage")) et de la progression effective de chaque dossier (#raw("ApplicationProgress")). Cette architecture s'inspire des principes de machine d'états et de workflow configurables, tels que décrits par Martin Fowler dans *Domain-Specific Languages* (2010) et par le standard BPMN 2.0 (Object Management Group, 2013) pour la modélisation des processus métier.
 
-  Concrètement, un gabarit de pipeline est rattaché à une campagne et décrit une succession typée d'étapes : candidature, quiz, entretien, évaluation, décision. Chaque étape possède un type, un ordre, des critères d'évaluation optionnels et une configuration dynamique stockée en #raw("config_json"). Lorsqu'une candidature progresse, le système crée une occurrence de progression rattachée à l'étape concernée, y inscrit les métadonnées utiles (score de quiz, notes d'entretien, statut de décision) et recalcule l'état consolidé du dossier. Ce mécanisme garantit que l'historique complet du parcours candidat reste consultable, y compris en cas de retour arrière ou de reprise après annulation.
+  Concrètement, un gabarit de pipeline est rattaché à une campagne et décrit une succession typée d'étapes : candidature, quiz, entretien, évaluation, décision.
+
+  #figure(
+    image("figures/synoptique_pipeline.png", width: 100%),
+    caption: [Synoptique du pipeline de recrutement — Architecture des gabarits, étapes et progression des candidatures.],
+  )
+
+  Chaque étape possède un type, un ordre, des critères d'évaluation optionnels et une configuration dynamique stockée en #raw("config_json"). Lorsqu'une candidature progresse, le système crée une occurrence de progression rattachée à l'étape concernée, y inscrit les métadonnées utiles (score de quiz, notes d'entretien, statut de décision) et recalcule l'état consolidé du dossier. Ce mécanisme garantit que l'historique complet du parcours candidat reste consultable, y compris en cas de retour arrière ou de reprise après annulation.
 
   L'intérêt de cette approche dépasse la simple organisation séquentielle. Elle permet de décorréler le cycle de vie générique défini par le gabarit des comportements spécifiques portés par chaque étape. Ainsi, une étape de type quiz active automatiquement les composants de passation et de correction, tandis qu'une étape de type décision verrouille certaines actions publiques et déclenche les notifications de fin de parcours. Cette architecture par machines d'états et règles contextuelles confère au système une souplesse importante pour s'adapter à de futurs processus de recrutement sans remettre en cause le noyau applicatif.
 
@@ -1124,7 +1136,14 @@
   #label("ref-notifications")
   Les notifications et la gestion des permissions constituent la couche transverse qui rend l'application réellement exploitable en contexte collaboratif. Les droits ne sont pas gérés uniquement par rôle global (RBAC), mais aussi par permissions contextualisées sur une campagne ou sur une entité donnée. Cette granularité s'inspire des principes de contrôle d'accès par attributs (ABAC) formalisés par le NIST (V. C. Hu et al., *Guide to Attribute Based Access Control (ABAC)*, NIST SP 800-162, 2014), où la décision d'autorisation ne dépend plus seulement du rôle de l'utilisateur mais également de son lien avec l'entité cible et du contexte opérationnel. Cette approche permet d'ouvrir certaines actions à des recruteurs ou évaluateurs ciblés sans leur accorder un accès total à l'ensemble du système.
 
-  Sur le plan des notifications, l'architecture repose sur une logique de publication/souscription inspirée du patron de conception Observateur formalisé par E. Gamma, R. Helm, R. Johnson et J. Vlissides dans *Design Patterns* (1994). Les événements métier — nouvelle candidature, planification d'entretien, réponse candidat, décision — jouent le rôle de déclencheurs auxquels réagissent des composants spécialisés : templates d'email Thymeleaf pour les notifications externes, services de notification in-app pour les alertes internes, et journal de messagerie (#raw("MailLog")) pour la traçabilité des envois. Cette séparation entre l'occurrence d'un événement et les actions qu'il provoque permet d'ajouter de nouveaux canaux de notification sans modifier la logique métier sous-jacente.
+  Sur le plan des notifications, l'architecture repose sur une logique de publication/souscription inspirée du patron de conception Observateur.
+
+  #figure(
+    image("figures/pubsub_notifications.png", width: 100%),
+    caption: [Architecture de notifications — Modèle Publication/Souscription pour le routage des événements métier.],
+  )
+
+  Les événements métier — nouvelle candidature, planification d'entretien, réponse candidat, décision — jouent le rôle de déclencheurs auxquels réagissent des composants spécialisés : templates d'email Thymeleaf pour les notifications externes, services de notification in-app pour les alertes internes, et journal de messagerie (#raw("MailLog")) pour la traçabilité des envois. Cette séparation entre l'occurrence d'un événement et les actions qu'il provoque permet d'ajouter de nouveaux canaux de notification sans modifier la logique métier sous-jacente.
 
   En parallèle, les notifications internes et les emails transactionnels assurent la circulation des informations critiques : nouvelles candidatures, convocations à entretien, retours sur demandes candidat, décisions ou alertes d'administration. Le tableau de bord unifie enfin l'accès à ces modules en proposant une lecture opérationnelle de l'activité, des listes métier, des filtres transverses et des écrans spécialisés par domaine.
 
@@ -1199,16 +1218,15 @@
   #label("ref-tests")
   La stratégie de validation adoptée dans le projet repose sur une combinaison pragmatique de vérifications automatiques et de contrôles manuels guidés par les parcours métier. L'objectif n'était pas de mettre en place une usine à tests exhaustive dès le départ, mais de sécuriser progressivement les zones les plus sensibles du système : permissions, contrats d'API, évolutions du modèle de données, parcours candidat et opérations de recrutement à forte valeur métier.
 
-  Cette stratégie s'organise selon plusieurs niveaux, dans l'esprit de la pyramide des tests et des patterns de validation formalisés par G. Meszaros dans *xUnit Test Patterns* (2007). Le premier niveau vérifie la stabilité technique du code par la compilation, les builds et les tests unitaires ciblés. Le deuxième niveau sécurise les interactions entre couches, notamment via des tests de contrôleurs, des validations de contrats JSON et des scénarios API rejoués avec Postman. Le troisième niveau correspond aux validations fonctionnelles menées sur l'interface et sur le parcours public, afin de s'assurer que les enchaînements réels restent cohérents du point de vue utilisateur.
+  Cette stratégie s'organise selon plusieurs niveaux, dans l'esprit de la pyramide des tests et des patterns de validation.
 
-  #document-table(
-    columns: (1.2fr, 1.45fr, 2.35fr),
-    [Niveau], [Support principal], [Objectif de validation],
-    [Technique], [Compilation, build, tests ciblés], [Détecter rapidement une rupture de code, un contrat cassé ou une régression locale.],
-    [API], [Tests backend et Postman], [Vérifier les contrats HTTP, les règles métier et les réponses des endpoints critiques.],
-    [Interface], [Specs Angular et vérifications UI], [Contrôler les composants partagés, les écrans sensibles et les comportements attendus côté front.],
-    [Fonctionnel], [Scénarios métier complets], [Valider le parcours candidat, recruteur et administrateur dans des conditions proches de l'usage réel.],
+  #figure(
+    image("figures/pyramide_tests.png", width: 100%),
+    caption: [Pyramide des tests — Stratégie de validation multi-niveaux de SyneliaQuizApp.],
   )
+
+  Le premier niveau vérifie la stabilité technique du code par la compilation, les builds et les tests unitaires ciblés. Le deuxième niveau sécurise les interactions entre couches, notamment via des tests de contrôleurs, des validations de contrats JSON et des scénarios API rejoués avec Postman. Le troisième niveau correspond aux validations fonctionnelles menées sur l'interface et sur le parcours public, afin de s'assurer que les enchaînements réels restent cohérents du point de vue utilisateur.
+
 
   == Tests unitaires
   Le backend dispose d'un ensemble réel de tests unitaires et de tests de slice couvrant plusieurs zones importantes de l'application. On y trouve notamment des tests orientés métier sur les permissions, les formulaires, les questions, les entretiens, les évaluations, les tokens de source ou encore certains comportements de repository. Des tests de contrat viennent également sécuriser la sérialisation JSON de certains DTO et la cohérence d'endpoints exposés par les contrôleurs REST.

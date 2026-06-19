@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>MLD – Candidature & Avancement</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="mcd-classic">
+<div class="page">
+<header class="page-header">
+  <h1>MLD 3 – Candidature, avancement & quiz</h1>
+  <p class="subtitle">Modèle logique relationnel. PK soulignée, #FK.</p>
+</header>
+<div class="figure">
+<div class="canvas" style="width:900px; height:580px; margin:0 auto;">
+<svg class="links" preserveAspectRatio="none"></svg>
+
+<div class="entity" data-entity="appli" style="top:20px; left:340px; width:240px;">
+  <div class="entity-head">CANDIDATURE</div>
+  <div class="entity-body"><ul>
+    <li class="pk-line"><span class="key pk">id</span><span class="name">IdCandidature</span></li>
+    <li><span class="name"><span class="fk-marker">#</span>IdCampagne</span></li>
+    <li><span class="name"><span class="fk-marker">#</span>IdSource</span></li>
+    <li><span class="name">Nom</span></li>
+    <li><span class="name">Prenom</span></li>
+    <li><span class="name">Email</span></li>
+    <li><span class="name">Telephone</span></li>
+    <li><span class="name">EstAbandonnee</span></li>
+  </ul></div>
+</div>
+
+<div class="entity" data-entity="prog" style="top:160px; left:20px; width:250px;">
+  <div class="entity-head">AVANCEMENT</div>
+  <div class="entity-body"><ul>
+    <li class="pk-line"><span class="key pk">id</span><span class="name">IdAvancement</span></li>
+    <li><span class="name"><span class="fk-marker">#</span>IdCandidature</span></li>
+    <li><span class="name"><span class="fk-marker">#</span>IdEtape</span></li>
+    <li><span class="name">StatutProgression</span></li>
+    <li><span class="name">DateDebut</span></li>
+    <li><span class="name">DateFin</span></li>
+    <li><span class="name">Score</span></li>
+    <li><span class="name">DateValidation</span></li>
+  </ul></div>
+</div>
+
+<div class="entity" data-entity="quizatt" style="top:380px; left:20px; width:240px;">
+  <div class="entity-head">TENTATIVE_QUIZ</div>
+  <div class="entity-body"><ul>
+    <li class="pk-line"><span class="key pk">id</span><span class="name">IdTentative</span></li>
+    <li><span class="name"><span class="fk-marker">#</span>IdAvancement</span></li>
+    <li><span class="name"><span class="fk-marker">#</span>IdVersion</span></li>
+    <li><span class="name">TokenQuiz</span></li>
+    <li><span class="name">StatutQuiz</span></li>
+    <li><span class="name">Score</span></li>
+  </ul></div>
+</div>
+
+<div class="entity" data-entity="canswer" style="top:400px; left:380px; width:250px;">
+  <div class="entity-head">REPONSE_CANDIDAT</div>
+  <div class="entity-body"><ul>
+    <li class="pk-line"><span class="key pk">id</span><span class="name">IdReponseCandidat</span></li>
+    <li><span class="name"><span class="fk-marker">#</span>IdTentative</span></li>
+    <li><span class="name"><span class="fk-marker">#</span>IdQuestion</span></li>
+    <li><span class="name"><span class="fk-marker">#</span>IdReponse</span></li>
+    <li><span class="name">EstSelectionnee</span></li>
+    <li><span class="name">TexteLibre</span></li>
+    <li><span class="name">CorrectionManuelle</span></li>
+  </ul></div>
+</div>
+
+<div class="entity" data-entity="decision" style="top:150px; left:650px; width:230px;">
+  <div class="entity-head">DECISION</div>
+  <div class="entity-body"><ul>
+    <li class="pk-line"><span class="key pk">id</span><span class="name">IdDecision</span></li>
+    <li><span class="name"><span class="fk-marker">#</span>IdAvancement</span></li>
+    <li><span class="name"><span class="fk-marker">#</span>IdUtilisateur</span></li>
+    <li><span class="name">TypeDecision</span></li>
+    <li><span class="name">Justification</span></li>
+    <li><span class="name">ModeDecision</span></li>
+  </ul></div>
+</div>
+
+<div class="entity" data-entity="askcand" style="top:380px; left:700px; width:230px;">
+  <div class="entity-head">DEMANDE_CANDIDAT</div>
+  <div class="entity-body"><ul>
+    <li class="pk-line"><span class="key pk">id</span><span class="name">IdDemande</span></li>
+    <li><span class="name"><span class="fk-marker">#</span>IdCandidature</span></li>
+    <li><span class="name">TypeDemande</span></li>
+    <li><span class="name">Statut</span></li>
+    <li><span class="name">NouvelEmail</span></li>
+  </ul></div>
+</div>
+
+</div>
+<p class="figure-caption">Figure — MLD du sous-domaine Candidature, Avancement & Quiz.</p>
+</div>
+</div>
+<script>
+window.LINKS = [
+  { from:"appli",  to:"prog",    cardFrom:"1,1",cardTo:"1,n",strong:true, verb:"" },
+  { from:"prog",   to:"quizatt", cardFrom:"1,1",cardTo:"0,n",strong:true, verb:"" },
+  { from:"quizatt",to:"canswer", cardFrom:"1,1",cardTo:"0,n",strong:true, verb:"" },
+  { from:"prog",   to:"decision",cardFrom:"1,1",cardTo:"0,n",strong:true, verb:"" },
+  { from:"appli",  to:"askcand", cardFrom:"1,1",cardTo:"0,n",strong:true, verb:"" },
+];
+</script>
+<script src="links.js"></script>
+</body>
+</html>

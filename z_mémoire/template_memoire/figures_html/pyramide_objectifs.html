@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Pyramide des objectifs — SyneliaQuizApp</title>
+<style>
+  :root {
+    --ink: #1e293b; --muted: #64748b; --line: #cbd5e1; --surface: #fff;
+    --l1: #0ea5e9; --l1-bg: #f0f9ff; --l1-border: #bae6fd;
+    --l2: #6366f1; --l2-bg: #eef2ff; --l2-border: #c7d2fe;
+    --l3: #a855f7; --l3-bg: #faf5ff; --l3-border: #e9d5ff;
+    --l4: #ec4899; --l4-bg: #fdf2f8; --l4-border: #fbcfe8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #f5f7fb; font-family: "Inter","Segoe UI",Arial,sans-serif;
+    font-size: 13px; color: var(--ink); padding: 24px;
+  }
+  .slide {
+    width: 960px; margin: 0 auto; background: var(--surface);
+    border: 1px solid var(--line); border-radius: 6px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.04); overflow: hidden;
+  }
+  .slide-header {
+    padding: 22px 36px 16px; border-bottom: 3px solid var(--l1);
+    display: flex; justify-content: space-between; align-items: flex-end;
+  }
+  .slide-header h1 { font-size: 20px; font-weight: 700; color: var(--ink); margin: 0 0 4px; }
+  .slide-header .sub { font-size: 11.5px; color: var(--muted); }
+  .slide-body { padding: 32px 40px 28px; }
+
+  /* ── Pyramide ── */
+  .pyramid {
+    display: flex; flex-direction: column; align-items: center; gap: 0;
+  }
+  .pyramid-level {
+    display: flex; align-items: center; gap: 20px;
+    padding: 16px 22px; border-radius: 10px;
+    border: 1.5px solid #e2e8f0;
+    box-shadow: 0 1px 4px rgba(0,0,0,.03);
+    background: #fff;
+    position: relative;
+  }
+  .pyramid-level.lvl-4 { width: 58%; }
+  .pyramid-level.lvl-3 { width: 72%; }
+  .pyramid-level.lvl-2 { width: 86%; }
+  .pyramid-level.lvl-1 { width: 100%; }
+
+  /* Icône numérotée */
+  .lvl-num {
+    width: 40px; height: 40px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px; font-weight: 800; color: #fff; flex-shrink: 0;
+  }
+  .lvl-4 .lvl-num { background: var(--l4); }
+  .lvl-3 .lvl-num { background: var(--l3); }
+  .lvl-2 .lvl-num { background: var(--l2); }
+  .lvl-1 .lvl-num { background: var(--l1); }
+
+  /* Contenu */
+  .lvl-content { flex: 1; min-width: 0; }
+  .lvl-title {
+    font-size: 14px; font-weight: 700; color: var(--ink); margin: 0 0 4px;
+    letter-spacing: -0.01em;
+  }
+  .lvl-items {
+    display: flex; flex-wrap: wrap; gap: 6px;
+  }
+  .lvl-item {
+    font-size: 10px; font-weight: 500; padding: 3px 10px;
+    border-radius: 12px; white-space: nowrap;
+  }
+  .lvl-4 .lvl-item { background: var(--l4-bg); color: #9d174d; border: 1px solid var(--l4-border); }
+  .lvl-3 .lvl-item { background: var(--l3-bg); color: #6b21a8; border: 1px solid var(--l3-border); }
+  .lvl-2 .lvl-item { background: var(--l2-bg); color: #3730a3; border: 1px solid var(--l2-border); }
+  .lvl-1 .lvl-item { background: var(--l1-bg); color: #0369a1; border: 1px solid var(--l1-border); }
+
+  /* Connecteurs entre niveaux */
+  .pyramid-connector {
+    display: flex; align-items: center; justify-content: center;
+    height: 28px; gap: 12px;
+  }
+  .pyramid-connector .vline {
+    width: 2.5px; height: 100%; background: #cbd5e1;
+    border-radius: 2px;
+  }
+  .pyramid-connector .chevron-up {
+    font-size: 9px; color: #94a3b8; line-height: 1;
+  }
+
+  .slide-footer {
+    padding: 10px 36px; font-size: 9.5px; color: var(--muted);
+    border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between;
+  }
+  .legend-row {
+    display: flex; gap: 10px; justify-content: center; margin-bottom: 18px;
+  }
+  .legend-dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 2px;
+  }
+  .legend-text { font-size: 9.5px; color: var(--muted); }
+  .legend-text strong { color: var(--ink); }
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="slide-header">
+    <div>
+      <h1>Pyramide des objectifs du projet</h1>
+      <div class="sub">Hiérarchisation des objectifs de SyneliaQuizApp — du socle technique au pilotage stratégique</div>
+    </div>
+    <div style="font-size:10px;color:var(--muted);text-align:right;">Mémoire de fin d'études<br>ENSIT · 2026</div>
+  </div>
+
+  <div class="slide-body">
+
+    <!-- Légende -->
+    <div class="legend-row">
+      <div class="legend-dot" style="background:var(--l4);"></div>
+      <div class="legend-text"><strong>Piloter</strong> · décisions</div>
+      <div class="legend-dot" style="background:var(--l3);"></div>
+      <div class="legend-text"><strong>Collaborer</strong> · synergies</div>
+      <div class="legend-dot" style="background:var(--l2);"></div>
+      <div class="legend-text"><strong>Automatiser</strong> · efficacité</div>
+      <div class="legend-dot" style="background:var(--l1);"></div>
+      <div class="legend-text"><strong>Digitaliser</strong> · socle</div>
+    </div>
+
+    <div class="pyramid">
+
+      <!-- Niveau 4 : PILOTER (sommet) -->
+      <div class="pyramid-level lvl-4">
+        <div class="lvl-num">4</div>
+        <div class="lvl-content">
+          <div class="lvl-title">Piloter par la donnée</div>
+          <div class="lvl-items">
+            <span class="lvl-item">KPIs de recrutement</span>
+            <span class="lvl-item">Analyse des sources</span>
+            <span class="lvl-item">Taux de conversion</span>
+            <span class="lvl-item">Amélioration continue</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="pyramid-connector">
+        <div class="vline"></div>
+      </div>
+
+      <!-- Niveau 3 : COLLABORER -->
+      <div class="pyramid-level lvl-3">
+        <div class="lvl-num">3</div>
+        <div class="lvl-content">
+          <div class="lvl-title">Faciliter la collaboration</div>
+          <div class="lvl-items">
+            <span class="lvl-item">Évaluations multi-recruteurs</span>
+            <span class="lvl-item">Tableaux de bord partagés</span>
+            <span class="lvl-item">Notifications temps réel</span>
+            <span class="lvl-item">Traçabilité décisionnelle</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="pyramid-connector">
+        <div class="vline"></div>
+      </div>
+
+      <!-- Niveau 2 : AUTOMATISER -->
+      <div class="pyramid-level lvl-2">
+        <div class="lvl-num">2</div>
+        <div class="lvl-content">
+          <div class="lvl-title">Automatiser les évaluations</div>
+          <div class="lvl-items">
+            <span class="lvl-item">Quiz paramétrables</span>
+            <span class="lvl-item">Correction automatique</span>
+            <span class="lvl-item">Pipeline configurable</span>
+            <span class="lvl-item">Relances et notifications</span>
+            <span class="lvl-item">Scoring objectif</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="pyramid-connector">
+        <div class="vline"></div>
+      </div>
+
+      <!-- Niveau 1 : DIGITALISER (socle) -->
+      <div class="pyramid-level lvl-1">
+        <div class="lvl-num">1</div>
+        <div class="lvl-content">
+          <div class="lvl-title">Digitaliser le processus de recrutement</div>
+          <div class="lvl-items">
+            <span class="lvl-item">Plateforme web centralisée</span>
+            <span class="lvl-item">Base candidats unique</span>
+            <span class="lvl-item">Gestion des campagnes</span>
+            <span class="lvl-item">Suppression Excel / emails</span>
+            <span class="lvl-item">Portail candidat autonome</span>
+          </div>
+        </div>
+    </div>
+  </div>
+
+  <div class="slide-footer">
+    <span>Mémoire de fin d'études — ENSIT · 2026</span>
+    <span>Figure — Pyramide des objectifs de SyneliaQuizApp : digitaliser → automatiser → collaborer → piloter</span>
+  </div>
+</div>
+</body>
+</html>

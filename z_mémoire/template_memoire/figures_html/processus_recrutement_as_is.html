@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Processus de recrutement — État des lieux</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  :root {
+    --danger: #dc2626; --danger-soft: #fef2f2; --danger-border: #fecaca;
+    --warn: #d97706; --warn-soft: #fffbeb;
+    --muted: #64748b; --line: #cbd5e1; --ink: #1e293b;
+    --surface: #fff;
+    --accent: #4f46e5; --accent-soft: #eef2ff;
+  }
+
+  .slide {
+    width: 960px; margin: 0 auto; background: #fff;
+    border: 1px solid var(--line); box-shadow: 0 2px 8px rgba(0,0,0,.05);
+    border-radius: 4px; overflow: hidden;
+  }
+
+  .slide-header { padding: 20px 28px 14px; border-bottom: 3px solid var(--danger); display: flex; justify-content: space-between; align-items: flex-end; }
+  .slide-header h1 { font-size: 19px; font-weight: 700; color: var(--ink); margin: 0; }
+  .sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .tag { background: var(--danger); color: #fff; font-size: 10px; font-weight: 700; padding: 4px 12px; border-radius: 4px; letter-spacing: .05em; }
+  .problem-banner { display: flex; gap: 16px; padding: 12px 24px; background: var(--danger-soft); border-bottom: 1px solid var(--danger-border); align-items: center; }
+  .stat-badge { text-align: center; flex: 0 0 80px; }
+  .stat-badge .num { font-size: 24px; font-weight: 800; color: var(--danger); }
+  .stat-badge .label { font-size: 8.5px; color: var(--muted); }
+  .problem-statement { font-size: 11px; color: var(--ink); line-height: 1.5; flex: 1; }
+  .flow-area { padding: 16px 24px 8px; }
+  .phase-title { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 700; color: var(--ink); margin: 8px 0; }
+  .phase-title .num { width: 22px; height: 22px; background: var(--accent); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+  .chain { display: flex; align-items: center; gap: 0; margin-bottom: 6px; }
+  .tool-box { flex: 1; padding: 8px 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; text-align: center; }
+  .tool-box .name { font-size: 10.5px; font-weight: 600; color: var(--ink); }
+  .tool-box .kind { font-size: 8.5px; color: var(--muted); margin-top: 2px; }
+  .break { display: flex; align-items: center; gap: 0; flex-shrink: 0; width: 40px; }
+  .break-gap { flex: 1; height: 1px; background: #e2e8f0; }
+  .break-icon { width: 18px; height: 18px; border-radius: 50%; background: var(--danger); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; }
+  .phase-divider { height: 1px; background: #e2e8f0; margin: 8px 0; }
+  .conclusion { display: flex; align-items: center; gap: 12px; padding: 12px 24px; background: var(--accent-soft); border-top: 2px solid var(--accent); }
+  .conclusion .icon { font-size: 20px; color: var(--accent); flex-shrink: 0; }
+  .conclusion .text { font-size: 10px; color: var(--ink); line-height: 1.5; }
+  .conclusion .text strong { font-weight: 600; }
+  .slide-footer { padding: 10px 28px; font-size: 9.5px; color: var(--muted); border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; }
+</style>
+
+</head>
+<body style="background:#f5f7fb; padding:20px;">
+<div class="slide">
+
+  <!-- Header -->
+  <div class="slide-header">
+    <div>
+      <h1>Processus de recrutement actuel — Un parcours éclaté</h1>
+      <div class="sub">Comment le recrutement fonctionne aujourd'hui chez Synelia, avant la mise en place de la plateforme</div>
+    </div>
+    <div class="tag">SITUATION ACTUELLE</div>
+  </div>
+
+  <!-- Problem banner -->
+  <div class="problem-banner">
+    <div class="stat-badge">
+      <div class="num">5–7</div>
+      <div class="label">Outils distincts</div>
+    </div>
+    <div class="stat-badge">
+      <div class="num">0</div>
+      <div class="label">Standardisation</div>
+    </div>
+    <div class="stat-badge">
+      <div class="num">0 %</div>
+      <div class="label">Traçabilité</div>
+    </div>
+    <div class="problem-statement">
+      Chaque cycle de recrutement mobilise <strong>5 à 7 outils différents</strong> sans aucune communication entre eux. Les décisions reposent sur des <strong>critères subjectifs</strong>, sans historique consultable. En cas de litige, <strong>impossible de reconstituer le fil décisionnel</strong>.
+    </div>
+  </div>
+
+  <!-- Flow area -->
+  <div class="flow-area">
+
+    <!-- Phase 1 : Diffusion -->
+    <div class="phase-title">
+      <div class="num">1</div> Diffusion de l'offre
+    </div>
+    <div class="chain">
+      <div class="tool-box">
+        <div class="name">Traitement de texte</div>
+        <div class="kind">Fichier .docx</div>
+      </div>
+      <div class="break">
+        <div class="break-gap"></div>
+        <div class="break-icon" title="Rupture : aucune liaison entre les outils">!</div>
+        <div class="break-gap"></div>
+      </div>
+      <div class="tool-box">
+        <div class="name">Messagerie</div>
+        <div class="kind">Envoi groupé manuel</div>
+      </div>
+      <div class="break">
+        <div class="break-gap"></div>
+        <div class="break-icon" title="Rupture : diffusion non tracée">!</div>
+        <div class="break-gap"></div>
+      </div>
+      <div class="tool-box">
+        <div class="name">Réseaux sociaux</div>
+        <div class="kind">Publications manuelles</div>
+      </div>
+    </div>
+
+    <div class="phase-divider"></div>
+
+    <!-- Phase 2 : Réception -->
+    <div class="phase-title">
+      <div class="num">2</div> Réception et tri des candidatures
+    </div>
+    <div class="chain">
+      <div class="tool-box">
+        <div class="name">Boîte email</div>
+        <div class="kind">CV + lettres en PJ</div>
+      </div>
+      <div class="break">
+        <div class="break-gap"></div>
+        <div class="break-icon" title="Rupture : ressaissie manuelle des données">!</div>
+        <div class="break-gap"></div>
+      </div>
+      <div class="tool-box">
+        <div class="name">Tableur</div>
+        <div class="kind">Suivi manuel · Doublons</div>
+      </div>
+      <div class="break">
+        <div class="break-gap"></div>
+        <div class="break-icon" title="Rupture : fichiers dispersés">!</div>
+        <div class="break-gap"></div>
+      </div>
+      <div class="tool-box">
+        <div class="name">Dossiers partagés</div>
+        <div class="kind">Drive · NAS · Copies locales</div>
+      </div>
+    </div>
+
+    <div class="phase-divider"></div>
+
+    <!-- Phase 3 : Évaluation -->
+    <div class="phase-title">
+      <div class="num">3</div> Évaluation et décision
+    </div>
+    <div class="chain">
+      <div class="tool-box">
+        <div class="name">Formulaire externe</div>
+        <div class="kind">Google Forms · Typeform</div>
+      </div>
+      <div class="break">
+        <div class="break-gap"></div>
+        <div class="break-icon" title="Rupture : résultats déconnectés du dossier candidat">!</div>
+        <div class="break-gap"></div>
+      </div>
+      <div class="tool-box">
+        <div class="name">Appel / Visio</div>
+        <div class="kind">Notes papier · Aucune trace</div>
+      </div>
+      <div class="break">
+        <div class="break-gap"></div>
+        <div class="break-icon" title="Rupture : décision sans justification documentée">!</div>
+        <div class="break-gap"></div>
+      </div>
+      <div class="tool-box">
+        <div class="name">Décision finale</div>
+        <div class="kind">Email · Aucun archivage</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Conclusion -->
+  <div class="conclusion">
+    <div class="icon" style="font-weight:400;font-size:20px;">&#x2192;</div>
+    <div class="text">
+      <strong>Conséquence :</strong> un processus éclaté, sans standardisation ni traçabilité, qui expose l'entreprise à des <strong>risques de non-conformité RGPD</strong>, des <strong>biais de recrutement</strong>, et une <strong>perte de temps</strong> considérable pour les équipes RH. La mise en place d'une <strong>plateforme unifiée</strong> — SyneliaQuizApp — devient indispensable.
+    </div>
+    <div style="flex-shrink:0; width:160px; height:80px;">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="160" height="80" style="display:block;">
+        <defs>
+          <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FF5252"/><stop offset="100%" stop-color="#FF7A00"/></linearGradient>
+          <linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#7928CA"/><stop offset="100%" stop-color="#B800FF"/></linearGradient>
+          <linearGradient id="g3" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0070F3"/><stop offset="100%" stop-color="#00DFD8"/></linearGradient>
+          <filter id="sh" x="-10%" y="-10%" width="120%" height="120%"><feDropShadow dx="0" dy="8" stdDeviation="6" flood-opacity="0.15"/></filter>
+        </defs>
+        <rect width="800" height="400" fill="#F8FAFC" rx="16"/>
+        <g filter="url(#sh)">
+          <path d="M 100 150 L 220 150 L 200 250 L 100 250 Z" fill="url(#g1)"/>
+          <circle cx="150" cy="200" r="6" fill="#FFFFFF"/>
+          <line x1="220" y1="150" x2="200" y2="250" stroke="#F8FAFC" stroke-width="8"/>
+          <path d="M 224 120 L 400 120 L 375 220 L 204 220 Z" fill="url(#g2)"/>
+          <circle cx="300" cy="170" r="6" fill="#FFFFFF"/>
+          <line x1="400" y1="120" x2="375" y2="220" stroke="#F8FAFC" stroke-width="8"/>
+          <path d="M 379 180 L 520 180 L 520 140 L 650 200 L 520 260 L 520 220 L 354 220 Z" fill="url(#g3)"/>
+          <circle cx="460" cy="200" r="6" fill="#FFFFFF"/>
+        </g>
+        <path d="M 180 130 Q 230 90 280 100" fill="none" stroke="#94A3B8" stroke-width="3" stroke-dasharray="6,6"/>
+        <path d="M 360 250 Q 400 280 450 240" fill="none" stroke="#94A3B8" stroke-width="3" stroke-dasharray="6,6"/>
+        <polygon points="230,95 240,105 225,110" fill="#FF7A00" opacity="0.8"/>
+        <polygon points="380,260 395,255 390,270" fill="#7928CA" opacity="0.8"/>
+        <rect x="340" y="100" width="12" height="12" transform="rotate(45 340 100)" fill="#B800FF" opacity="0.6"/>
+        <circle cx="550" cy="110" r="5" fill="#00DFD8" opacity="0.7"/>
+        <g transform="translate(260, 290) scale(0.6)" opacity="0.25" fill="#475569"><path d="M30 15 L35 5 L45 5 L50 15 L60 12 L67 20 L60 28 L68 35 L63 45 L52 42 L48 52 L38 52 L34 42 L23 45 L18 37 L26 30 L20 20 Z"/></g>
+        <g transform="translate(210, 320) scale(0.4)" opacity="0.25" fill="#475569"><path d="M30 15 L35 5 L45 5 L50 15 L60 12 L67 20 L60 28 L68 35 L63 45 L52 42 L48 52 L38 52 L34 42 L23 45 L18 37 L26 30 L20 20 Z"/></g>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="slide-footer">
+    <span>Mémoire de fin d'études — ENSIT · 2026</span>
+    <span>Figure — Processus de recrutement avant SyneliaQuizApp : 3 phases, 9 outils, 6 ruptures</span>
+  </div>
+
+</div>
+
+<script src="links.js"></script>
+
+</body>
+</html>

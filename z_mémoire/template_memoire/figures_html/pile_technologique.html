@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Pile technologique — SyneliaQuizApp</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  :root {
+    --muted: #64748b; --line: #cbd5e1; --ink: #1e293b; --surface: #fff;
+    --accent: #4f46e5;
+    --tier1: #0ea5e9; --tier1-bg: #f0f9ff;
+    --tier2: #4f46e5; --tier2-bg: #eef2ff;
+    --tier3: #16a34a; --tier3-bg: #f0fdf4;
+  }
+
+  .slide {
+    width: 900px; margin: 0 auto; background: var(--surface);
+    border: 1px solid var(--line); box-shadow: 0 2px 8px rgba(0,0,0,.05);
+    border-radius: 4px; overflow: hidden;
+  }
+
+  .slide-header {
+    padding: 20px 32px 14px;
+    border-bottom: 3px solid var(--accent);
+    display: flex; justify-content: space-between; align-items: flex-end;
+  }
+  .slide-header h1 { font-size: 19px; font-weight: 700; color: var(--ink); margin: 0; }
+  .slide-header .sub { font-size: 11px; color: var(--muted); }
+
+  .stack-body { padding: 16px 24px 8px; }
+  .tier-label { font-size: 10.5px; font-weight: 700; padding: 6px 14px; margin: 12px 0 4px; border-radius: 4px; color: #fff; display: inline-block; }
+  .tier-presentation-label { background: var(--tier1); }
+  .tier-application-label { background: var(--tier2); }
+  .tier-data-label { background: var(--tier3); }
+  .layer { display: flex; align-items: center; gap: 16px; padding: 8px 14px; margin: 2px 0; border-radius: 8px; border: 1px solid #e2e8f0; }
+  .tier-presentation { border-left: 4px solid var(--tier1); background: var(--tier1-bg); }
+  .tier-application { border-left: 4px solid var(--tier2); background: var(--tier2-bg); }
+  .tier-data { border-left: 4px solid var(--tier3); background: var(--tier3-bg); }
+  .layer-left { flex: 0 0 160px; }
+  .layer-left .name { font-size: 12px; font-weight: 700; color: var(--ink); }
+  .layer-left .ver { font-size: 9px; color: var(--muted); }
+  .layer-center { flex: 1; }
+  .layer-center .desc { font-size: 10px; color: var(--ink); line-height: 1.45; }
+  .layer-center .role { font-size: 8.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin-top: 3px; }
+  .layer-connector { display: flex; align-items: center; gap: 8px; padding: 2px 0 2px 20px; }
+  .layer-connector .vline { width: 2px; height: 14px; background: #cbd5e1; }
+  .layer-connector .vlabel { font-size: 8.5px; color: var(--muted); font-weight: 500; }
+  .slide-footer { padding: 10px 32px; font-size: 9.5px; color: var(--muted); border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; }
+</style>
+
+</head>
+<body style="background:#f5f7fb; padding:20px;">
+<div class="slide">
+
+  <div class="slide-header">
+    <div>
+      <h1>Pile technologique — SyneliaQuizApp</h1>
+      <div class="sub">Architecture en couches : de la présentation web à la persistance des données</div>
+    </div>
+    <div style="font-size:10px;color:var(--muted);text-align:right;">Mémoire de fin d'études<br>ENSIT · 2026</div>
+  </div>
+
+  <div class="stack-body">
+
+    <!-- Tier: PRÉSENTATION -->
+    <div class="tier-label tier-presentation-label">Couche Présentation</div>
+
+    <div class="layer tier-presentation">
+      <div class="layer-left">
+        <div class="name">Navigateur</div>
+        <div class="ver">PWA responsive</div>
+      </div>
+      <div class="layer-center">
+        <div class="desc"><strong>Interface utilisateur</strong> — rendu côté client, responsive design, Progressive Web App. Compatible Chrome, Firefox, Edge.</div>
+        <div class="role">Client web</div>
+      </div>
+    </div>
+
+    <div class="layer-connector">
+      <div class="vline"></div>
+      <div class="vlabel">HTTP / JSON</div>
+    </div>
+
+    <div class="layer tier-presentation">
+      <div class="layer-left">
+        <div class="name">Angular 20.2</div>
+        <div class="ver">TypeScript 5.9 · SCSS</div>
+      </div>
+      <div class="layer-center">
+        <div class="desc"><strong>Framework frontend</strong> — composants standalone, RxJS pour la réactivité, lazy loading des modules, guards de routing.</div>
+        <div class="role">SPA Framework</div>
+      </div>
+    </div>
+
+    <!-- Tier: APPLICATIF -->
+    <div class="tier-label tier-application-label">Couche Applicative</div>
+
+    <div class="layer-connector">
+      <div class="vline"></div>
+      <div class="vlabel">REST / JSON · JWT</div>
+    </div>
+
+    <div class="layer tier-application">
+      <div class="layer-left">
+        <div class="name">API REST</div>
+        <div class="ver">Spring MVC · OpenAPI</div>
+      </div>
+      <div class="layer-center">
+        <div class="desc"><strong>Interface de service</strong> — endpoints REST documentés (Swagger), validation DTO, authentification JWT Bearer, gestion des rôles.</div>
+        <div class="role">Contrôleurs</div>
+      </div>
+    </div>
+
+    <div class="layer-connector">
+      <div class="vline"></div>
+      <div class="vlabel">Spring Context</div>
+    </div>
+
+    <div class="layer tier-application">
+      <div class="layer-left">
+        <div class="name">Spring Boot 3.5.6</div>
+        <div class="ver">Java 21 LTS</div>
+      </div>
+      <div class="layer-center">
+        <div class="desc"><strong>Moteur applicatif</strong> — services métier, événements asynchrones (@Async), sécurité Spring Security, scheduling, transactions.</div>
+        <div class="role">Services métier</div>
+      </div>
+    </div>
+
+    <div class="layer-connector">
+      <div class="vline"></div>
+      <div class="vlabel">JPA / Hibernate</div>
+    </div>
+
+    <div class="layer tier-application">
+      <div class="layer-left">
+        <div class="name">Hibernate 6</div>
+        <div class="ver">ORM · Cache L2</div>
+      </div>
+      <div class="layer-center">
+        <div class="desc"><strong>Mapping objet-relationnel</strong> — entités JPA, JPQL, cache de second niveau, migrations Flyway (V1_001 à V1_069).</div>
+        <div class="role">Persistance</div>
+      </div>
+    </div>
+
+    <!-- Tier: DONNÉES -->
+    <div class="tier-label tier-data-label">Couche Données & Infrastructure</div>
+
+    <div class="layer-connector">
+      <div class="vline"></div>
+      <div class="vlabel">JDBC</div>
+    </div>
+
+    <div class="layer tier-data">
+      <div class="layer-left">
+        <div class="name">MySQL 8</div>
+        <div class="ver">InnoDB · Flyway</div>
+      </div>
+      <div class="layer-center">
+        <div class="desc"><strong>Base de données relationnelle</strong> — moteur InnoDB, indexes optimisés, contraintes FK, triggers d'audit, migrations versionnées.</div>
+        <div class="role">Stockage</div>
+      </div>
+    </div>
+
+    <div class="layer-connector" style="margin-bottom:6px;">
+      <div class="vline"></div>
+      <div class="vlabel">Services auxiliaires</div>
+    </div>
+
+    <div class="layer tier-data" style="opacity:0.85;">
+      <div class="layer-left">
+        <div class="name" style="font-size:11px;">Redis 7 · MinIO · SMTP</div>
+        <div class="ver">Cache · Stockage · Email</div>
+      </div>
+      <div class="layer-center">
+        <div class="desc"><strong>Infrastructure</strong> — cache distribué (Redis), stockage objet S3-compatible (MinIO), envoi d'emails transactionnels (Thymeleaf + SMTP).</div>
+        <div class="role">Services</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="slide-footer">
+    <span>Mémoire de fin d'études — ENSIT · 2026</span>
+    <span>Figure — Pile technologique de SyneliaQuizApp : 3 couches, 7 composants</span>
+  </div>
+
+</div>
+
+<script src="links.js"></script>
+
+</body>
+</html>

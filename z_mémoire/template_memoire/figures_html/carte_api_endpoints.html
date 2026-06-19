@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Carte des endpoints API — SyneliaQuizApp</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .api-tree { font-family:"JetBrains Mono","Consolas",monospace; font-size:12px; margin:20px 0; line-height:1.8; }
+  .api-root { color:var(--primary-strong); font-weight:700; }
+  .api-branch { margin-left:16px; }
+  .api-domain { color:var(--primary); font-weight:700; }
+  .api-leaf { margin-left:32px; color:var(--ink); }
+  .api-method { display:inline-block; width:44px; font-size:10px; font-weight:700; padding:1px 4px; border-radius:3px; text-align:center; margin-right:6px; }
+  .api-method.get { background:#dcfce7; color:#166534; }
+  .api-method.post { background:#e0f2fe; color:#075985; }
+  .api-method.put { background:#fef3c7; color:#92400e; }
+  .api-method.delete { background:#fee2e2; color:#991b1b; }
+  .api-note { font-size:10px; color:var(--muted); font-style:italic; }</style>
+
+</head>
+<body class="mcd-modern">
+<div class="page">
+<header class="page-header">
+  <div><h1>Carte des endpoints de l'API REST</h1><p class="subtitle">Arborescence complète des ressources exposées par SyneliaQuizApp</p></div>
+</header>
+<div class="figure">
+<div class="canvas" style="width:780px; height:620px; margin:0 auto;">
+
+<div class="api-tree">
+<div class="api-root">/api</div>
+
+<div class="api-branch"><div class="api-domain">├─ auth/</div>
+<div class="api-leaf"><span class="api-method post">POST</span> /login, /register, /verify-email, /forgot-password</div>
+<div class="api-leaf"><span class="api-method get">GET</span> /me, /refresh-token</div></div>
+
+<div class="api-branch"><div class="api-domain">├─ campaigns/</div>
+<div class="api-leaf"><span class="api-method get">GET</span> / (liste), /{id}, /public/{slug}</div>
+<div class="api-leaf"><span class="api-method post">POST</span> / (créer)</div>
+<div class="api-leaf"><span class="api-method put">PUT</span> /{id}</div></div>
+
+<div class="api-branch"><div class="api-domain">├─ applications/</div>
+<div class="api-leaf"><span class="api-method get">GET</span> /, /{id}, /my-applications</div>
+<div class="api-leaf"><span class="api-method post">POST</span> / (postuler), /{id}/advance</div></div>
+
+<div class="api-branch"><div class="api-domain">├─ quiz/</div>
+<div class="api-leaf"><span class="api-method get">GET</span> /attempts/{id}, /questions</div>
+<div class="api-leaf"><span class="api-method post">POST</span> /start, /submit-answer, /submit-all</div></div>
+
+<div class="api-branch"><div class="api-domain">├─ interviews/</div>
+<div class="api-leaf"><span class="api-method get">GET</span> /, /{id}, /slots</div>
+<div class="api-leaf"><span class="api-method post">POST</span> /schedule, /{id}/evaluate</div></div>
+
+<div class="api-branch"><div class="api-domain">├─ evaluations/</div>
+<div class="api-leaf"><span class="api-method get">GET</span> /{id}, /criteria</div>
+<div class="api-leaf"><span class="api-method post">POST</span> /, /{id}/items</div></div>
+
+<div class="api-branch"><div class="api-domain">├─ decisions/</div>
+<div class="api-leaf"><span class="api-method get">GET</span> /{applicationId}</div>
+<div class="api-leaf"><span class="api-method post">POST</span> / (rendre une décision)</div></div>
+
+<div class="api-branch"><div class="api-domain">└─ admin/</div>
+<div class="api-leaf"><span class="api-method get">GET</span> /users, /roles, /audit-logs, /stats</div>
+<div class="api-leaf"><span class="api-method put">PUT</span> /users/{id}/roles, /settings</div>
+<div class="api-leaf"><span class="api-method delete">DELETE</span> /users/{id}</div></div>
+</div>
+
+</div>
+</div>
+<p class="figure-caption">Figure — Carte des endpoints de l'API REST de SyneliaQuizApp, organisée par domaine fonctionnel.</p>
+</div>
+</div>
+<script src="links.js"></script>
+
+</body>
+</html>

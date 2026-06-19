@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>MPD — SyneliaQuizApp</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="page">
+    <div class="legacy-banner">
+      <span class="legacy-badge">Ancien</span>
+      <span>Ce diagramme est conservé pour mémoire : il montre l'état diff (deltas migration 420). La version cible sans deltas est <a href="mpd_cible.html">mpd_cible.html</a>.</span>
+    </div>
+    <header class="page-header">
+      <div>
+        <h1>Modèle Physique de Données (MPD)</h1>
+        <p class="subtitle">
+          Schéma MySQL 8 cible. Colonnes d'audit communes
+          (<code>created_at</code>, <code>created_by</code>,
+          <code>updated_at</code>, <code>updated_by</code>,
+          <code>is_deleted</code>, <code>search_string</code>) factorisées dans la note.
+        </p>
+      </div>
+      <div class="legend">
+        <span class="chip pivot"><span class="dot"></span>Table pivot</span>
+        <span class="chip new"><span class="dot"></span>Nouvelle table</span>
+        <span class="chip"><span class="dot" style="background:var(--muted)"></span>Type MySQL</span>
+      </div>
+    </header>
+
+    <div class="figure">
+      <p style="margin: 0 0 16px; padding: 10px 14px; background: var(--primary-soft);
+                border-left: 4px solid var(--primary); border-radius: 6px; font-size: 12px;">
+        <strong>Convention MPD :</strong>
+        toutes les tables portent en plus les colonnes
+        <code>id</code> (<code>int unsigned PK AUTO_INCREMENT</code>),
+        <code>created_at datetime</code>, <code>created_by int</code>,
+        <code>updated_at datetime</code>, <code>updated_by int</code>,
+        <code>is_deleted bit(1)</code>, <code>search_string text</code>.
+        Les FK sont contraintes <code>ON DELETE RESTRICT</code> sauf mention contraire.
+      </p>
+
+      <div class="canvas" style="height: 1500px; width: 1500px; margin: 0 auto;">
+        <svg class="links" preserveAspectRatio="none"></svg>
+
+        <!-- Templates pipeline -->
+        <div class="entity" data-entity="ptpl" style="top:30px; left:40px; width:240px;">
+          <div class="entity-head">pipeline_template</div>
+          <div class="entity-body"><ul>
+            <li><span class="name">template_name</span><span class="type">varchar(255) NN</span></li>
+            <li><span class="name">template_desc</span><span class="type">text</span></li>
+            <li><span class="name">is_default</span><span class="type">bit(1)</span></li>
+            <li><span class="name">is_active</span><span class="type">bit(1)</span></li>
+            <li><span class="name">is_locked</span><span class="type">bit(1)</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="pstage" style="top:30px; left:310px; width:260px;">
+          <div class="entity-head">pipeline_stage</div>
+          <div class="entity-body"><ul>
+            <li><span class="key fk">FK</span><span class="name">pipeline_template_id</span><span class="type">int unsigned NN</span></li>
+            <li><span class="name">stage_type</span><span class="type">varchar(50) NN</span></li>
+            <li><span class="name">stage_label</span><span class="type">varchar(255) NN</span></li>
+            <li><span class="name">stage_order</span><span class="type">int NN</span></li>
+            <li><span class="name">is_required, is_eliminatory</span><span class="type">bit(1)</span></li>
+            <li><span class="name">config_json</span><span class="type">json</span></li>
+            <li class="added"><span class="key new">+</span><span class="name">screening_mode</span><span class="type">varchar(20)</span></li>
+            <li class="added"><span class="key new">+</span><span class="name">passing_score</span><span class="type">int</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity new" data-entity="notifrule" style="top:30px; left:600px; width:280px;">
+          <div class="entity-head">pipeline_stage_notification_rule</div>
+          <div class="entity-body"><ul>
+            <li><span class="key fk">FK</span><span class="name">pipeline_stage_id</span><span class="type">int unsigned NN</span></li>
+            <li><span class="key fk">FK</span><span class="name">email_template_id</span><span class="type">int unsigned</span></li>
+            <li><span class="name">trigger_code</span><span class="type">varchar(60) NN</span></li>
+            <li><span class="name">outcome_code</span><span class="type">varchar(60)</span></li>
+            <li><span class="name">is_required, is_automatic</span><span class="type">tinyint(1)</span></li>
+            <li><span class="name">requires_manual_confirmation</span><span class="type">tinyint(1)</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity new" data-entity="crit" style="top:30px; left:910px; width:280px;">
+          <div class="entity-head">pipeline_stage_evaluation_criterion</div>
+          <div class="entity-body"><ul>
+            <li><span class="key fk">FK</span><span class="name">pipeline_stage_id</span><span class="type">int unsigned NN</span></li>
+            <li><span class="key fk">FK</span><span class="name">evaluation_grid_template_version_id</span><span class="type">int unsigned</span></li>
+            <li><span class="name">criterion_order</span><span class="type">int NN</span></li>
+            <li><span class="name">label</span><span class="type">varchar(255) NN</span></li>
+            <li><span class="name">criterion_type</span><span class="type">varchar(20) NN</span></li>
+            <li><span class="name">max_score, weight</span><span class="type">int / double</span></li>
+            <li><span class="name">is_required</span><span class="type">tinyint(1)</span></li>
+            <li><span class="name">config_json</span><span class="type">json</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity new" data-entity="grille" style="top:30px; left:1220px; width:250px;">
+          <div class="entity-head">evaluation_grid_template (+ version + item)</div>
+          <div class="entity-body"><ul>
+            <li><span class="name">name</span><span class="type">varchar(255) NN</span></li>
+            <li><span class="name">description</span><span class="type">text</span></li>
+            <li><span class="entity-divider">_template_version</span></li>
+            <li><span class="key fk">FK</span><span class="name">evaluation_grid_template_id</span></li>
+            <li><span class="name">version_number</span><span class="type">int NN</span></li>
+            <li><span class="name">is_active</span><span class="type">tinyint(1)</span></li>
+            <li><span class="entity-divider">_template_item</span></li>
+            <li><span class="key fk">FK</span><span class="name">..._version_id</span></li>
+            <li><span class="name">label, type, max_score, weight</span></li>
+          </ul></div>
+        </div>
+
+        <!-- Catalogue -->
+        <div class="entity pivot" data-entity="campaign" style="top:340px; left:40px; width:260px;">
+          <div class="entity-head">campaigns <span class="tag">pivot</span></div>
+          <div class="entity-body"><ul>
+            <li><span class="name">campaign_title</span><span class="type">varchar(255) NN</span></li>
+            <li><span class="name">campaign_status</span><span class="type">varchar(20) NN</span></li>
+            <li><span class="name">campaign_start, campaign_end</span><span class="type">datetime</span></li>
+            <li><span class="name">max_apply, total_questions</span><span class="type">int</span></li>
+            <li><span class="name">is_timed, is_archived</span><span class="type">tinyint(1)</span></li>
+            <li><span class="key fk">FK</span><span class="name">pipeline_template_id</span><span class="type">int unsigned</span></li>
+            <li><span class="key fk">FK</span><span class="name">creator_id, speciality_id</span></li>
+            <li><span class="name">form_assignment_strategy</span><span class="type">varchar(30)</span></li>
+            <li><span class="name">form_assignment_exhaustion_policy</span><span class="type">varchar(20)</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="campform" style="top:340px; left:330px; width:230px;">
+          <div class="entity-head">campaign_form</div>
+          <div class="entity-body"><ul>
+            <li><span class="key fk">FK</span><span class="name">campaign_id, form_id</span></li>
+            <li><span class="name">assignment_order</span><span class="type">int</span></li>
+            <li><span class="key fk">FK</span><span class="name">active_campaign_id, active_form_id</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="form" style="top:340px; left:590px; width:230px;">
+          <div class="entity-head">form</div>
+          <div class="entity-body"><ul>
+            <li><span class="name">form_name</span><span class="type">varchar(255) NN</span></li>
+            <li><span class="name">form_desc</span><span class="type">text</span></li>
+            <li><span class="name">is_active</span><span class="type">bit(1)</span></li>
+            <li><span class="name">is_timed</span><span class="type">tinyint(1)</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="formv" style="top:340px; left:850px; width:230px;">
+          <div class="entity-head">form_version</div>
+          <div class="entity-body"><ul>
+            <li><span class="key fk">FK</span><span class="name">form_id</span></li>
+            <li><span class="name">version_number</span><span class="type">int NN</span></li>
+            <li><span class="name">is_published, is_locked</span><span class="type">bit(1)</span></li>
+            <li><span class="name">random_questions</span><span class="type">tinyint(1)</span></li>
+            <li><span class="name">published_form_id</span><span class="type">int unsigned UQ</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="question" style="top:340px; left:1110px; width:240px;">
+          <div class="entity-head">question</div>
+          <div class="entity-body"><ul>
+            <li><span class="name">question_text</span><span class="type">text NN</span></li>
+            <li><span class="name">question_type</span><span class="type">varchar(20)</span></li>
+            <li><span class="name">question_chrono, score</span><span class="type">int</span></li>
+            <li><span class="name">difficulty_level</span><span class="type">varchar(20)</span></li>
+            <li><span class="key fk">FK</span><span class="name">speciality_id</span></li>
+            <li><span class="name">manual_correction_required</span><span class="type">bit(1)</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="answer" style="top:560px; left:1110px; width:240px;">
+          <div class="entity-head">answer</div>
+          <div class="entity-body"><ul>
+            <li><span class="key fk">FK</span><span class="name">question_id</span></li>
+            <li><span class="name">answer_text</span><span class="type">text NN</span></li>
+            <li><span class="name">is_correct</span><span class="type">tinyint(1)</span></li>
+            <li><span class="name">answer_type</span><span class="type">varchar(20)</span></li>
+            <li><span class="name">answer_order</span><span class="type">int</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="fq" style="top:560px; left:850px; width:230px;">
+          <div class="entity-head">form_questions</div>
+          <div class="entity-body"><ul>
+            <li><span class="key fk">FK</span><span class="name">form_version_id, question_id</span></li>
+            <li><span class="name">question_order</span><span class="type">int</span></li>
+            <li><span class="name">chrono_override</span><span class="type">int unsigned</span></li>
+          </ul></div>
+        </div>
+
+        <!-- Candidature / pipeline -->
+        <div class="entity pivot" data-entity="appli" style="top:790px; left:40px; width:260px;">
+          <div class="entity-head">applications <span class="tag">pivot</span></div>
+          <div class="entity-body"><ul>
+            <li><span class="name">candidate_first/last_name</span><span class="type">varchar(100)</span></li>
+            <li><span class="name">candidate_email</span><span class="type">varchar(255) NN</span></li>
+            <li><span class="name">candidate_phone</span><span class="type">varchar(20)</span></li>
+            <li><span class="name">candidate_cv_path</span><span class="type">varchar(1000)</span></li>
+            <li><span class="name">motivation_letter</span><span class="type">text</span></li>
+            <li><span class="name">email_verified</span><span class="type">tinyint(1)</span></li>
+            <li><span class="key fk">FK</span><span class="name">source_token_id, form_version_id</span></li>
+            <li class="added"><span class="key new">+FK</span><span class="name">current_application_progress_id</span></li>
+            <li class="added"><span class="key new">+FK</span><span class="name">current_pipeline_stage_id</span></li>
+            <li class="added"><span class="key new">+FK</span><span class="name">abandoned_from_application_progress_id</span></li>
+            <li class="added"><span class="key new">+</span><span class="name">aggregated_quiz_score</span><span class="type">double</span></li>
+            <li class="added"><span class="key new">+</span><span class="name">aggregated_evaluation_score</span><span class="type">double</span></li>
+            <li class="added"><span class="key new">+</span><span class="name">last_progressed_at</span><span class="type">datetime</span></li>
+            <li class="added"><span class="key new">+</span><span class="name">abandoned_at</span><span class="type">datetime</span></li>
+            <li class="added"><span class="key new">+</span><span class="name">abandon_reason</span><span class="type">varchar(500)</span></li>
+            <li><span class="name">application_abandoned</span><span class="type">tinyint(1)</span></li>
+            <li class="deleted"><span class="key del">−</span><span class="name">quiz_*, interview_*, total_evaluation_*</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity pivot" data-entity="prog" style="top:790px; left:330px; width:260px;">
+          <div class="entity-head">application_progress <span class="tag">round</span></div>
+          <div class="entity-body"><ul>
+            <li><span class="key fk">FK</span><span class="name">application_id, pipeline_stage_id</span></li>
+            <li><span class="name">progress_status</span><span class="type">varchar(20) NN</span></li>
+            <li><span class="name">started_at, completed_at</span><span class="type">datetime</span></li>
+            <li><span class="name">score</span><span class="type">double</span></li>
+            <li><span class="name">notes</span><span class="type">text</span></li>
+            <li class="added"><span class="key new">+</span><span class="name">validated_at</span><span class="type">datetime</span></li>
+            <li class="added"><span class="key new">+FK</span><span class="name">validated_by</span><span class="type">int unsigned</span></li>
+            <li class="added"><span class="key new">+</span><span class="name">validation_comment</span><span class="type">text</span></li>
+            <li class="added"><span class="key new">+</span><span class="name">skipped_at, skipped_by, skip_reason</span></li>
+            <li class="added"><span class="key new">+</span><span class="name">reopened_at, reopened_by, reopen_reason</span></li>
+            <li class="deleted"><span class="key del">−</span><span class="name">decided_by, mail_sent</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity new" data-entity="quizatt" style="top:790px; left:620px; width:260px;">
+          <div class="entity-head">application_quiz_attempt</div>
+          <div class="entity-body"><ul>
+            <li><span class="key fk">FK</span><span class="name">application_id</span></li>
+            <li><span class="key fk">FK</span><span class="name">application_progress_id</span></li>
+            <li><span class="key fk">FK</span><span class="name">form_version_id</span></li>
+            <li><span class="name">quiz_token</span><span class="type">varchar(64) UQ</span></li>
+            <li><span class="name">quiz_status</span><span class="type">varchar(20) NN</span></li>
+            <li><span class="name">screening_mode</span><span class="type">varchar(20)</span></li>
+            <li><span class="name">screening_threshold</span><span class="type">int</span></li>
+            <li><span class="name">screening_result</span><span class="type">varchar(20)</span></li>
+            <li><span class="name">score, score_percent</span><span class="type">int / int</span></li>
+            <li><span class="name">manual_correction_status</span><span class="type">varchar(20)</span></li>
+            <li><span class="name">total_questions</span><span class="type">int</span></li>
+            <li><span class="name">time_elapsed</span><span class="type">int</span></li>
+            <li><span class="name">timed_snapshot</span><span class="type">tinyint(1)</span></li>
+            <li><span class="name">total_time_allowed_snapshot</span><span class="type">int</span></li>
+            <li><span class="name">last_activity_at, started_at, completed_at</span><span class="type">datetime</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="canswer" style="top:790px; left:910px; width:250px;">
+          <div class="entity-head">candidate_answer</div>
+          <div class="entity-body"><ul>
+            <li class="added"><span class="key new">+FK</span><span class="name">application_quiz_attempt_id</span><span class="type">int unsigned NN</span></li>
+            <li><span class="key fk">FK</span><span class="name">question_id, answer_id</span></li>
+            <li><span class="name">is_selected</span><span class="type">tinyint(1) NN</span></li>
+            <li><span class="name">free_text_response</span><span class="type">text</span></li>
+            <li><span class="name">manual_is_correct</span><span class="type">tinyint(1)</span></li>
+            <li><span class="name">manual_correction_comment</span><span class="type">text</span></li>
+            <li><span class="name">manual_correction_score</span><span class="type">int</span></li>
+            <li><span class="name">manual_corrected_at, _by</span><span class="type">timestamp / int</span></li>
+            <li class="deleted"><span class="key del">−FK</span><span class="name">application_id</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="decision" style="top:790px; left:1190px; width:260px;">
+          <div class="entity-head">decisions</div>
+          <div class="entity-body"><ul>
+            <li class="added"><span class="key new">+FK</span><span class="name">application_progress_id</span></li>
+            <li><span class="key fk">FK</span><span class="name">user_id</span></li>
+            <li class="added"><span class="key new">+FK</span><span class="name">cancels_decision_id</span></li>
+            <li><span class="name">decision_type</span><span class="type">varchar(50) NN</span></li>
+            <li class="added"><span class="key new">+</span><span class="name">decision_mode</span><span class="type">varchar(20)</span></li>
+            <li class="added"><span class="key new">+</span><span class="name">justification</span><span class="type">text</span></li>
+            <li class="deleted"><span class="key del">−</span><span class="name">is_cancel, application_id, pipeline_stage_id</span></li>
+          </ul></div>
+        </div>
+
+        <!-- Entretien / évaluation -->
+        <div class="entity" data-entity="candint" style="top:1130px; left:40px; width:260px;">
+          <div class="entity-head">candidate_interview</div>
+          <div class="entity-body"><ul>
+            <li><span class="key fk">FK</span><span class="name">interview_id</span></li>
+            <li><span class="name">interview_start</span><span class="type">datetime</span></li>
+            <li><span class="name">interview_duration</span><span class="type">int</span></li>
+            <li><span class="name">decline_reason</span><span class="type">varchar(500)</span></li>
+            <li><span class="name">alternative_date_requested</span><span class="type">datetime</span></li>
+            <li class="added"><span class="key new">+</span><span class="name">candidate_response_status</span><span class="type">varchar(30)</span></li>
+            <li class="added"><span class="key new">+</span><span class="name">responded_at</span><span class="type">datetime</span></li>
+            <li class="deleted"><span class="key del">−FK</span><span class="name">application_id</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="interview" style="top:1130px; left:330px; width:260px;">
+          <div class="entity-head">interviews</div>
+          <div class="entity-body"><ul>
+            <li class="added"><span class="key new">+FK</span><span class="name">application_progress_id</span></li>
+            <li><span class="key fk">FK</span><span class="name">campaign_id</span></li>
+            <li><span class="name">interview_date</span><span class="type">datetime NN</span></li>
+            <li><span class="name">interview_type, status</span><span class="type">varchar(20)</span></li>
+            <li><span class="name">interview_location</span><span class="type">varchar(255)</span></li>
+            <li><span class="name">meet_link</span><span class="type">varchar(500)</span></li>
+            <li><span class="name">interview_evaluations_link</span><span class="type">varchar(8)</span></li>
+            <li><span class="name">interview_note</span><span class="type">text</span></li>
+            <li><span class="name">started_at, ended_at</span><span class="type">datetime</span></li>
+            <li class="added"><span class="key new">+</span><span class="name">evaluation_completed_at, _by</span></li>
+            <li class="added"><span class="key new">+</span><span class="name">closed_at, closed_by, closure_comment</span></li>
+            <li class="deleted"><span class="key del">−</span><span class="name">application_id, evaluation_*, mail_sent</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="ipart" style="top:1130px; left:620px; width:240px;">
+          <div class="entity-head">interview_participant</div>
+          <div class="entity-body"><ul>
+            <li><span class="key fk">FK</span><span class="name">interview_id, user_id</span></li>
+            <li><span class="name">can_update, can_delete, can_evaluate</span><span class="type">tinyint(1)</span></li>
+            <li><span class="name">is_admin, follow</span><span class="type">tinyint(1)</span></li>
+            <li><span class="name">is_online, has_finished</span><span class="type">tinyint(1)</span></li>
+            <li><span class="name">last_ping_at</span><span class="type">datetime</span></li>
+            <li class="added"><span class="key new">+</span><span class="name">evaluation_status</span><span class="type">varchar(20)</span></li>
+            <li class="added"><span class="key new">+</span><span class="name">evaluation_submitted_at</span><span class="type">datetime</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="eval" style="top:1130px; left:890px; width:250px;">
+          <div class="entity-head">evaluations</div>
+          <div class="entity-body"><ul>
+            <li><span class="key fk">FK</span><span class="name">candidate_interview_id</span></li>
+            <li class="added"><span class="key new">+FK</span><span class="name">interview_participant_id</span></li>
+            <li class="added"><span class="key new">+</span><span class="name">evaluation_status</span><span class="type">varchar(20)</span></li>
+            <li class="added"><span class="key new">+</span><span class="name">submitted_at, validated_at, validated_by</span></li>
+            <li class="added"><span class="key new">+</span><span class="name">global_score</span><span class="type">double</span></li>
+            <li class="added"><span class="key new">+</span><span class="name">global_comment</span><span class="type">text</span></li>
+            <li class="deleted"><span class="key del">−</span><span class="name">candidate_mark, recruiter_comment</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity new" data-entity="evalitem" style="top:1130px; left:1170px; width:260px;">
+          <div class="entity-head">evaluation_item</div>
+          <div class="entity-body"><ul>
+            <li><span class="key fk">FK</span><span class="name">evaluation_id</span></li>
+            <li><span class="key fk">FK</span><span class="name">pipeline_stage_evaluation_criterion_id</span></li>
+            <li><span class="name">score_value</span><span class="type">double</span></li>
+            <li><span class="name">text_value</span><span class="type">text</span></li>
+            <li><span class="name">weight_snapshot</span><span class="type">double</span></li>
+            <li><span class="name">max_score_snapshot</span><span class="type">int</span></li>
+          </ul></div>
+        </div>
+
+        <!-- Comms / audit -->
+        <div class="entity" data-entity="maillog" style="top:1380px; left:40px; width:260px;">
+          <div class="entity-head">mail_log</div>
+          <div class="entity-body"><ul>
+            <li><span class="name">recipient_email</span><span class="type">varchar(255) NN</span></li>
+            <li><span class="key fk">FK</span><span class="name">recipient_user_id, sender_user_id</span></li>
+            <li><span class="key fk">FK</span><span class="name">email_template_id</span></li>
+            <li><span class="name">subject, status, sent_at</span></li>
+            <li class="added"><span class="key new">+FK</span><span class="name">application_id, application_progress_id</span></li>
+            <li class="added"><span class="key new">+FK</span><span class="name">interview_id, decision_id, notification_rule_id</span></li>
+            <li class="added"><span class="key new">+</span><span class="name">event_code</span><span class="type">varchar(60)</span></li>
+            <li class="added"><span class="key new">+</span><span class="name">requires_confirmation, confirmed_at, confirmed_by</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity new" data-entity="audit" style="top:1380px; left:330px; width:260px;">
+          <div class="entity-head">audit_event</div>
+          <div class="entity-body"><ul>
+            <li><span class="key fk">FK</span><span class="name">application_id, application_progress_id</span></li>
+            <li><span class="key fk">FK</span><span class="name">actor_user_id</span></li>
+            <li><span class="name">entity_type</span><span class="type">varchar(60) NN</span></li>
+            <li><span class="name">entity_id</span><span class="type">int unsigned NN</span></li>
+            <li><span class="name">action_type</span><span class="type">varchar(60) NN</span></li>
+            <li><span class="name">justification</span><span class="type">text</span></li>
+            <li><span class="name">before_state_json</span><span class="type">json</span></li>
+            <li><span class="name">after_state_json</span><span class="type">json</span></li>
+            <li><span class="name">created_at</span><span class="type">datetime NN</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="emailtpl" style="top:1380px; left:620px; width:240px;">
+          <div class="entity-head">email_template</div>
+          <div class="entity-body"><ul>
+            <li><span class="name">template_key</span><span class="type">varchar(50) UQ</span></li>
+            <li><span class="name">subject_template</span><span class="type">varchar(500)</span></li>
+            <li><span class="name">body_template</span><span class="type">text NN</span></li>
+            <li><span class="name">editable_variables_json</span><span class="type">text</span></li>
+            <li><span class="name">action_type</span><span class="type">varchar(50)</span></li>
+            <li><span class="name">preset_id</span><span class="type">int</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="appcfg" style="top:1380px; left:890px; width:260px;">
+          <div class="entity-head">app_config</div>
+          <div class="entity-body"><ul>
+            <li><span class="name">config_name</span><span class="type">varchar(100) NN</span></li>
+            <li><span class="name">company_name</span><span class="type">varchar(255) NN</span></li>
+            <li><span class="name">app_link</span><span class="type">varchar(500)</span></li>
+            <li><span class="name">logo_html</span><span class="type">text</span></li>
+            <li><span class="name">primary_color</span><span class="type">varchar(7)</span></li>
+            <li><span class="name">color_scheme</span><span class="type">varchar(30)</span></li>
+            <li><span class="name">candidate_accounts_enabled</span><span class="type">tinyint(1)</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="smtp" style="top:1380px; left:1180px; width:260px;">
+          <div class="entity-head">smtp_config</div>
+          <div class="entity-body"><ul>
+            <li><span class="name">host</span><span class="type">varchar(255) NN</span></li>
+            <li><span class="name">port</span><span class="type">int NN</span></li>
+            <li><span class="name">username</span><span class="type">varchar(255)</span></li>
+            <li><span class="name">password_encrypted</span><span class="type">varchar(500)</span></li>
+            <li><span class="name">starttls_enable, _required</span><span class="type">bit(1)</span></li>
+            <li><span class="name">sender_name, sender_email</span><span class="type">varchar(255)</span></li>
+          </ul></div>
+        </div>
+      </div>
+
+      <p class="figure-caption">
+        Figure 3 — MPD cible MySQL 8. Les colonnes vertes sont introduites par l'évolution 420.
+      </p>
+    </div>
+  </div>
+
+  <script>
+    window.LINKS = [
+      { from: "pstage", to: "ptpl", strong: true },
+      { from: "notifrule", to: "pstage", strong: true },
+      { from: "notifrule", to: "emailtpl", dashed: true,
+        fromAnchor: "bottom", toAnchor: "left" },
+      { from: "crit", to: "pstage", strong: true,
+        fromAnchor: "left", toAnchor: "right" },
+      { from: "crit", to: "grille", dashed: true,
+        fromAnchor: "right", toAnchor: "left" },
+
+      { from: "campform", to: "campaign", strong: true },
+      { from: "campform", to: "form", strong: true },
+      { from: "formv", to: "form", strong: true },
+      { from: "fq", to: "formv", strong: true },
+      { from: "fq", to: "question", strong: true },
+      { from: "answer", to: "question", strong: true },
+
+      { from: "prog", to: "appli", strong: true },
+      { from: "prog", to: "pstage", dashed: true,
+        fromAnchor: "top", toAnchor: "bottom" },
+      { from: "appli", to: "prog", dashed: true,
+        fromAnchor: "right", toAnchor: "left" },
+      { from: "quizatt", to: "appli", strong: true,
+        fromAnchor: "left", toAnchor: "right" },
+      { from: "quizatt", to: "prog", strong: true },
+      { from: "quizatt", to: "formv", dashed: true,
+        fromAnchor: "top", toAnchor: "bottom" },
+      { from: "canswer", to: "quizatt", strong: true },
+      { from: "canswer", to: "question", dashed: true,
+        fromAnchor: "top", toAnchor: "bottom" },
+
+      { from: "decision", to: "prog", strong: true,
+        fromAnchor: "top", toAnchor: "top" },
+
+      { from: "interview", to: "prog", strong: true,
+        fromAnchor: "top", toAnchor: "bottom" },
+      { from: "candint", to: "interview", strong: true },
+      { from: "ipart", to: "interview", strong: true },
+      { from: "eval", to: "candint", strong: true,
+        fromAnchor: "bottom", toAnchor: "bottom" },
+      { from: "eval", to: "ipart", strong: true },
+      { from: "evalitem", to: "eval", strong: true },
+      { from: "evalitem", to: "crit", dashed: true,
+        fromAnchor: "top", toAnchor: "bottom" },
+
+      { from: "maillog", to: "emailtpl", dashed: true,
+        fromAnchor: "right", toAnchor: "left" },
+      { from: "maillog", to: "prog", dashed: true,
+        fromAnchor: "top", toAnchor: "bottom" },
+      { from: "audit", to: "prog", dashed: true,
+        fromAnchor: "top", toAnchor: "bottom" },
+    ];
+  </script>
+  <script src="links.js"></script>
+</body>
+</html>

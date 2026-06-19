@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>SAT 1 – Setup à Présélection</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="mcd-classic">
+<div class="page">
+<header class="page-header">
+  <h1>SAT 1 – Configuration, candidature, quiz & présélection (T0 → T3)</h1>
+  <p class="subtitle">Qui fait quoi, à quel moment. Manuel / Interactif / Automatique. Modèle cible post-420.</p>
+</header>
+<div class="figure">
+<div class="canvas" style="width:1480px; height:960px; margin:0 auto;">
+<svg class="links" preserveAspectRatio="none"></svg>
+
+<div class="sat-lane"      style="top:70px; left:170px; width:240px; height:860px;"></div>
+<div class="sat-lane auto" style="top:70px; left:420px; width:240px; height:860px;"></div>
+<div class="sat-lane alt"  style="top:70px; left:670px; width:240px; height:860px;"></div>
+<div class="sat-lane eval" style="top:70px; left:920px; width:200px; height:860px;"></div>
+<div class="sat-lane adm"  style="top:70px; left:1130px; width:200px; height:860px;"></div>
+
+<div class="entity sat-head"      data-entity="h-time" style="top:15px; left:20px; width:130px;">Phase</div>
+<div class="entity sat-head"      data-entity="h-cand" style="top:15px; left:180px; width:220px;">Candidat</div>
+<div class="entity sat-head auto" data-entity="h-syst" style="top:15px; left:430px; width:220px;">Système (auto)</div>
+<div class="entity sat-head alt"  data-entity="h-recr" style="top:15px; left:680px; width:220px;">Recruteur</div>
+<div class="entity sat-head eval" data-entity="h-eval" style="top:15px; left:930px; width:180px;">Évaluateur</div>
+<div class="entity sat-head adm"  data-entity="h-adm" style="top:15px; left:1140px; width:180px;">Admin.</div>
+
+<!-- ═══ T0 – CONFIGURATION ═══ -->
+<div class="entity sat-phase" data-entity="p0" style="top:100px; left:20px; width:130px;">T0 — Setup<br/><small>asynchrone</small></div>
+<div class="entity sat-task adm" data-entity="t0-adm" style="top:100px; left:1140px; width:180px;">
+  <div class="task-title">Définir pipeline_template</div>
+  <span class="task-meta">manuel</span>
+  <div class="task-detail">Stages, critères, règles de notification.</div>
+</div>
+<div class="entity sat-task manual" data-entity="t0-recr" style="top:100px; left:680px; width:220px;">
+  <div class="task-title">Créer la campagne</div>
+  <span class="task-meta">manuel</span>
+  <div class="task-detail">Choix template, formulaires, sources, ouverture.</div>
+</div>
+
+<!-- ═══ T1 – CANDIDATURE ═══ -->
+<div class="entity sat-phase" data-entity="p1" style="top:240px; left:20px; width:130px;">T1 — Candidature<br/><small>temps réel</small></div>
+<div class="entity sat-task interactive" data-entity="t1-cand" style="top:240px; left:180px; width:220px;">
+  <div class="task-title">Soumettre candidature</div>
+  <span class="task-meta">interactif</span>
+  <div class="task-detail">Identité, CV, lettre, double opt-in email.</div>
+</div>
+<div class="entity sat-task auto" data-entity="t1-syst" style="top:240px; left:430px; width:220px;">
+  <div class="task-title">Créer applications + progress[0]</div>
+  <span class="task-meta">auto</span>
+  <div class="task-detail">Résout template, instancie stages, audit CREATE, mail accusé.</div>
+</div>
+
+<!-- ═══ T2 – QUIZ ═══ -->
+<div class="entity sat-phase" data-entity="p2" style="top:390px; left:20px; width:130px;">T2 — Quiz<br/><small>chronométré</small></div>
+<div class="entity sat-task auto" data-entity="t2-open" style="top:400px; left:430px; width:220px;">
+  <div class="task-title">Ouvrir round QUIZ</div>
+  <span class="task-meta">auto</span>
+  <div class="task-detail">Crée application_quiz_attempt + quiz_token, notifie.</div>
+</div>
+<div class="entity sat-task interactive" data-entity="t2-cand" style="top:390px; left:180px; width:220px;">
+  <div class="task-title">Passer le quiz</div>
+  <span class="task-meta">interactif</span>
+  <div class="task-detail">Réponses candidate_answer rattachées à la tentative.</div>
+</div>
+<div class="entity sat-task auto" data-entity="t2-score" style="top:520px; left:430px; width:220px;">
+  <div class="task-title">Calculer score + screening</div>
+  <span class="task-meta">auto</span>
+  <div class="task-detail">Agrège score_percent, applique screening_mode, met à jour aggregated_quiz_score.</div>
+</div>
+
+<!-- ═══ T3 – PRÉSÉLECTION ═══ -->
+<div class="entity sat-phase" data-entity="p3" style="top:660px; left:20px; width:130px;">T3 — Présélection<br/><small>différé</small></div>
+<div class="entity sat-task manual" data-entity="t3-recr-read" style="top:660px; left:680px; width:220px;">
+  <div class="task-title">Consulter résultats QUIZ</div>
+  <span class="task-meta">manuel</span>
+  <div class="task-detail">Filtre, exporte, compare tentatives.</div>
+</div>
+<div class="entity sat-task manual" data-entity="t3-recr-dec" style="top:770px; left:680px; width:220px;">
+  <div class="task-title">Saisir décision PRESELECTION</div>
+  <span class="task-meta">manuel</span>
+  <div class="task-detail">Crée decisions sur application_progress courant, justification.</div>
+</div>
+<div class="entity sat-task auto" data-entity="t3-syst" style="top:770px; left:430px; width:220px;">
+  <div class="task-title">Clôturer round + ouvrir suivant</div>
+  <span class="task-meta">auto</span>
+  <div class="task-detail">Valide application_progress, recalcule current_application_progress_id, notifie.</div>
+</div>
+
+</div>
+<p class="figure-caption">Figure — SAT 1/2 : phases T0 à T3 (Setup → Présélection).</p>
+</div>
+</div>
+<script>
+window.LINKS = [
+  { from:"t0-adm",  to:"t0-recr", dashed:true },
+  { from:"t0-recr", to:"t1-cand", dashed:true },
+  { from:"t1-cand", to:"t1-syst", strong:true },
+  { from:"t1-syst", to:"t2-open", strong:true },
+  { from:"t2-open", to:"t2-cand", strong:true },
+  { from:"t2-cand", to:"t2-score",strong:true },
+  { from:"t2-score",to:"t3-recr-read",strong:true },
+  { from:"t3-recr-read",to:"t3-recr-dec",strong:true },
+  { from:"t3-recr-dec",to:"t3-syst",strong:true },
+];
+</script>
+<script src="links.js"></script>
+</body>
+</html>

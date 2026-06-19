@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Synoptique du pipeline — SyneliaQuizApp</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  :root {
+    --accent: #4f46e5;
+    --g50: #f8fafc; --g100: #f1f5f9; --g200: #e2e8f0; --g400: #94a3b8;
+    --g600: #475569; --g800: #1e293b;
+  }
+  .syn {
+    width:1060px; margin:0 auto; background:#fff;
+    border:1px solid var(--g200); box-shadow:0 2px 8px rgba(0,0,0,.05); border-radius:4px; overflow:hidden;
+  }
+  .syn-header {
+    padding:22px 28px 14px; border-bottom:2px solid var(--accent);
+    display:flex; justify-content:space-between; align-items:flex-end;
+  }
+  .syn-header h1 { font-size:19px; font-weight:700; color:var(--g800); margin:0; }
+  .syn-header .sub { font-size:11px; color:var(--g400); }
+  .syn-footer {
+    padding:10px 28px; font-size:9.5px; color:var(--g400);
+    border-top:1px solid var(--g100); display:flex; justify-content:space-between;
+  }
+
+  /* ── Canvas ──────────────────────────────────────── */
+  .canvas { position:relative; margin:0 auto; width:1020px; height:340px; background:#fff; }
+  .entity {
+    position:absolute; border-radius:8px; border:2px solid var(--g300); background:#fff;
+    padding:8px 10px; text-align:center; display:flex; flex-direction:column; gap:1px;
+    cursor:default; user-select:none; min-width:120px;
+  }
+  .entity .pid { font-size:8px; font-weight:700; color:var(--g400); letter-spacing:.03em; }
+  .entity .lbl { font-size:10.5px; font-weight:700; color:var(--g800); }
+  .entity .sub { font-size:8.5px; color:var(--g600); }
+
+  .e-P01 { border-color:#0ea5e9; background:#f0f9ff; width:124px; }
+  .e-P02 { border-color:#f59e0b; background:#fffbeb; width:140px; }
+  .e-P03 { border-color:var(--accent); background:#eef2ff; width:144px; }
+  .e-P04 { border-color:#16a34a; background:#f0fdf4; width:134px; }
+  .e-P05 { border-color:#7c3aed; background:#f5f3ff; width:148px; }
+  .e-P06 { border-color:#ec4899; background:#fdf2f8; width:146px; }
+  .e-P07 { border-color:#14b8a6; background:#f0fdfa; width:144px; }
+  .e-P08 { border-color:#f43f5e; background:#fff1f2; width:126px; }
+
+  /* ── Explanations ────────────────────────────────── */
+  .explain-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:0; border-top:1px solid var(--g200); }
+  .explain-col { padding:16px 18px 12px; border-right:1px solid var(--g100); }
+  .explain-col:last-child { border-right:none; }
+  .explain-col h3 { font-size:12.5px; font-weight:700; color:var(--g800); margin:0 0 8px; display:flex; align-items:center; gap:8px; }
+  .explain-col h3 .dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+  .explain-col:nth-child(1) h3 .dot { background:#0ea5e9; }
+  .explain-col:nth-child(2) h3 .dot { background:var(--accent); }
+  .explain-col:nth-child(3) h3 .dot { background:#16a34a; }
+  .explain-col ul { list-style:none; padding:0; margin:0; }
+  .explain-col ul li { font-size:10.5px; color:var(--g600); line-height:1.6; padding-left:12px; position:relative; margin-bottom:3px; }
+  .explain-col ul li::before { content:"—"; position:absolute; left:0; color:var(--g400); }
+  .explain-col ul li strong { color:var(--g800); font-weight:600; }
+</style>
+</head>
+<body style="background:#f5f7fb; padding:20px;">
+<div class="syn">
+
+  <div class="syn-header">
+    <div>
+      <h1>SyneliaQuizApp — Synoptique du pipeline de recrutement</h1>
+      <div class="sub">Flux de données, traitements et acteurs — de la candidature à la décision finale</div>
+    </div>
+    <div style="font-size:10px;color:var(--g400);text-align:right;">Mémoire de fin d'études<br>ENSIT · 2026</div>
+  </div>
+
+  <!-- ══════════ CANVAS (éditable) ══════════ -->
+  <div class="figure" style="margin:0;padding:0;background:#fff;border:none;box-shadow:none;">
+  <div class="canvas" style="width:1020px; height:340px;">
+    <svg class="links" preserveAspectRatio="none"></svg>
+
+    <!-- P01 — Candidat -->
+    <div class="entity e-P01" data-entity="P01" style="left:20px; top:24px;">
+      <div class="pid">P01</div><div class="lbl">Candidat</div><div class="sub">Navigateur PWA</div>
+    </div>
+
+    <!-- P02 — Page publique -->
+    <div class="entity e-P02" data-entity="P02" style="left:195px; top:24px;">
+      <div class="pid">P02</div><div class="lbl">Page publique</div><div class="sub">Campagne · Formulaire</div>
+    </div>
+
+    <!-- P03 — API Spring Boot -->
+    <div class="entity e-P03" data-entity="P03" style="left:195px; top:190px;">
+      <div class="pid">P03</div><div class="lbl">API Spring Boot</div><div class="sub">REST · JWT · Validation DTO</div>
+    </div>
+
+    <!-- P04 — MySQL -->
+    <div class="entity e-P04" data-entity="P04" style="left:390px; top:190px;">
+      <div class="pid">P04</div><div class="lbl">Base MySQL 8</div><div class="sub">InnoDB · JPA/Hibernate</div>
+    </div>
+
+    <!-- P05 — Pipeline Engine -->
+    <div class="entity e-P05" data-entity="P05" style="left:386px; top:24px;">
+      <div class="pid">P05</div><div class="lbl">Pipeline Engine</div><div class="sub">PipelineBusiness · Stages</div>
+    </div>
+
+    <!-- P06 — Notifications -->
+    <div class="entity e-P06" data-entity="P06" style="left:586px; top:24px;">
+      <div class="pid">P06</div><div class="lbl">Notifications</div><div class="sub">Email Thymeleaf · InApp SSE</div>
+    </div>
+
+    <!-- P07 — Dashboard -->
+    <div class="entity e-P07" data-entity="P07" style="left:586px; top:190px;">
+      <div class="pid">P07</div><div class="lbl">Dashboard</div><div class="sub">Recruteur · KPI · Filtres</div>
+    </div>
+
+    <!-- P08 — Décision -->
+    <div class="entity e-P08" data-entity="P08" style="left:784px; top:115px;">
+      <div class="pid">P08</div><div class="lbl">Décision</div><div class="sub">Pré-sélection · Refus</div>
+    </div>
+
+  </div>
+  </div>
+
+  <!-- ══════════ EXPLANATIONS ══════════ -->
+  <div class="explain-row">
+    <div class="explain-col">
+      <h3><span class="dot"></span> 1. Description de la solution</h3>
+      <ul>
+        <li>Le <strong>candidat (P01)</strong> accède à la page publique de la campagne <strong>(P02)</strong> et soumet sa candidature</li>
+        <li>La requête <strong>POST /apply</strong> est reçue par l'<strong>API Spring Boot (P03)</strong> qui valide les données et émet un événement asynchrone</li>
+        <li>La candidature est <strong>persistée</strong> dans <strong>MySQL 8 (P04)</strong> via JPA/Hibernate avec transaction ACID</li>
+        <li>Le <strong>Pipeline Engine (P05)</strong> est notifié : il résout l'étape courante et applique les règles de transition</li>
+        <li>Un événement déclenche l'envoi d'un <strong>email de vérification (P06)</strong> et une notification in-app au recruteur</li>
+        <li>Le <strong>dashboard (P07)</strong> est mis à jour en temps réel via SSE ; le recruteur peut <strong>statuer (→P08)</strong></li>
+        <li>Les flux secondaires <strong>FA, FB, FC</strong> assurent la cohérence globale (email direct, lecture état pipeline, mise à jour campagne)</li>
+      </ul>
+    </div>
+    <div class="explain-col">
+      <h3><span class="dot"></span> 2. Approche technique</h3>
+      <ul>
+        <li><strong>Architecture événementielle :</strong> Spring Events + @Async découplent l'API (P03) des traitements métier (P05) et notifications (P06)</li>
+        <li><strong>Pipeline configurable :</strong> pipeline_template et pipeline_stage (stage_order) permettent des workflows sur mesure par campagne</li>
+        <li><strong>RBAC 4 niveaux :</strong> chaque endpoint vérifie le rôle avant d'autoriser l'action (Candidat, Recruteur, Admin, Super Admin)</li>
+        <li><strong>Transactions ACID :</strong> @Transactional garantit la cohérence entre application_progress (P04) et les événements émis</li>
+        <li><strong>Audit intégral :</strong> chaque transition loguée dans audit_event — entité, acteur, delta JSON avant/après</li>
+      </ul>
+    </div>
+    <div class="explain-col">
+      <h3><span class="dot"></span> 3. Impacts & Bénéfices induits</h3>
+      <ul>
+        <li><strong>Traçabilité complète :</strong> le chemin candidat→décision est horodaté — chaque acteur et chaque transition documentés</li>
+        <li><strong>Réactivité :</strong> emails et notifications SSE informent automatiquement les parties prenantes</li>
+        <li><strong>Standardisation :</strong> le pipeline (P05) impose une séquence d'étapes, éliminant les décisions arbitraires</li>
+        <li><strong>Automatisation :</strong> transition d'étape automatique sur événement (quiz complété → pré-screening)</li>
+        <li><strong>Évolutivité :</strong> nouveaux types d'étapes ajoutables au pipeline_template sans refonte</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="syn-footer">
+    <span>Mémoire de fin d'études — ENSIT · 2026</span>
+    <span>Figure — Synoptique du pipeline de recrutement (P01→P08 · 10 flux)</span>
+  </div>
+
+</div>
+
+<script>
+  /* ═══════════════════════════════════════════════════════════
+     MODE D'EMPLOI — Ouvrir ce fichier dans le navigateur :
+     1. Cliquer « Éditer » dans la barre d'outils (crayon ✏️)
+     2. GLISSER les boîtes pour les repositionner
+     3. Les poignées ● sur chaque flèche changent le côté d'ancrage
+        (clic = rotation haut → droite → bas → gauche)
+     4. Les poignées ■ (coins) ajustent le tracé de la flèche
+        (glisser pour déplacer le point de coude)
+     5. Les positions sont sauvegardées automatiquement.
+        Pour réinitialiser : cliquer « Réinitialiser ».
+        Pour exporter en SVG vectoriel : cliquer « Exporter SVG ».
+     ═══════════════════════════════════════════════════════════ */
+  window.LINKS = [
+    {from:"P01", to:"P02", verb:"F01", cardFrom:"Soumission", strong:true},
+    {from:"P02", to:"P03", verb:"F02", cardFrom:"POST /apply", strong:true},
+    {from:"P03", to:"P04", verb:"F03", cardFrom:"JPA persist"},
+    {from:"P04", to:"P05", verb:"F04", cardFrom:"Evt métier"},
+    {from:"P05", to:"P06", verb:"F05", cardFrom:"Déclencheur", strong:true},
+    {from:"P06", to:"P07", verb:"F06", cardFrom:"Push SSE"},
+    {from:"P07", to:"P08", verb:"F07", cardFrom:"Action recruteur"},
+    {from:"P03", to:"P06", verb:"FA", cardFrom:"Email direct", dashed:true},
+    {from:"P05", to:"P07", verb:"FB", cardFrom:"Lecture état", dashed:true},
+    {from:"P08", to:"P02", verb:"FC", cardFrom:"MàJ campagne", dashed:true}
+  ];
+</script>
+
+<script src="links.js"></script>
+</body>
+</html>

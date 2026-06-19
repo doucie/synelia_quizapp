@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>MLD – Identité & Permissions</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="mcd-classic">
+<div class="page">
+<header class="page-header">
+  <h1>MLD 1 – Identité, groupes & permissions</h1>
+  <p class="subtitle">Modèle logique relationnel. Clé primaire soulignée, clés étrangères précédées de #.</p>
+</header>
+<div class="figure">
+<div class="canvas" style="width:900px; height:420px; margin:0 auto;">
+<svg class="links" preserveAspectRatio="none"></svg>
+
+<div class="entity" data-entity="user" style="top:20px; left:20px; width:210px;">
+  <div class="entity-head">UTILISATEUR</div>
+  <div class="entity-body"><ul>
+    <li class="pk-line"><span class="key pk">id</span><span class="name">IdUtilisateur</span></li>
+    <li><span class="name">Nom</span></li>
+    <li><span class="name">Prenom</span></li>
+    <li><span class="name">Email</span></li>
+    <li><span class="name">Username</span></li>
+    <li><span class="name">RoleSysteme</span></li>
+  </ul></div>
+</div>
+
+<div class="entity" data-entity="bgroup" style="top:20px; left:340px; width:200px;">
+  <div class="entity-head">GROUPE_METIER</div>
+  <div class="entity-body"><ul>
+    <li class="pk-line"><span class="key pk">id</span><span class="name">IdGroupe</span></li>
+    <li><span class="name">Libelle</span></li>
+    <li><span class="name">Description</span></li>
+  </ul></div>
+</div>
+
+<div class="entity" data-entity="perm" style="top:180px; left:20px; width:230px;">
+  <div class="entity-head">PERMISSION_ENTITE</div>
+  <div class="entity-body"><ul>
+    <li class="pk-line"><span class="key pk">id</span><span class="name">IdPermission</span></li>
+    <li><span class="name">TypeEntite</span></li>
+    <li><span class="name">IdEntite</span></li>
+    <li><span class="name">ClePermission</span></li>
+  </ul></div>
+</div>
+
+<div class="entity" data-entity="ubg" style="top:170px; left:380px; width:230px;">
+  <div class="entity-head">USER_BUSINESS_GROUP</div>
+  <div class="entity-body"><ul>
+    <li class="pk-line"><span class="key pk">id</span><span class="name"><span class="fk-marker">#</span>IdUtilisateur</span></li>
+    <li><span class="name"><span class="fk-marker">#</span>IdGroupe</span></li>
+  </ul></div>
+</div>
+
+<div class="entity" data-entity="bgp" style="top:320px; left:20px; width:250px;">
+  <div class="entity-head">BUSINESS_GROUP_PERMISSION</div>
+  <div class="entity-body"><ul>
+    <li class="pk-line"><span class="key pk">id</span><span class="name"><span class="fk-marker">#</span>IdGroupe</span></li>
+    <li><span class="name"><span class="fk-marker">#</span>IdPermission</span></li>
+  </ul></div>
+</div>
+
+<div class="entity" data-entity="up" style="top:310px; left:380px; width:220px;">
+  <div class="entity-head">USER_PERMISSION</div>
+  <div class="entity-body"><ul>
+    <li class="pk-line"><span class="key pk">id</span><span class="name"><span class="fk-marker">#</span>IdUtilisateur</span></li>
+    <li><span class="name"><span class="fk-marker">#</span>IdPermission</span></li>
+  </ul></div>
+</div>
+
+</div>
+<p class="figure-caption">Figure — MLD du sous-domaine Identité & Permissions.</p>
+</div>
+</div>
+<script>
+window.LINKS = [
+  { from:"user", to:"ubg",  cardFrom:"1,1",cardTo:"0,n",strong:true, verb:"" },
+  { from:"bgroup",to:"ubg", cardFrom:"1,1",cardTo:"0,n",strong:true, verb:"" },
+  { from:"bgroup",to:"bgp", cardFrom:"1,1",cardTo:"0,n",strong:true, verb:"" },
+  { from:"perm",  to:"bgp", cardFrom:"1,1",cardTo:"0,n",strong:true, verb:"" },
+  { from:"user",  to:"up",  cardFrom:"1,1",cardTo:"0,n",strong:true, verb:"" },
+  { from:"perm",  to:"up",  cardFrom:"1,1",cardTo:"0,n",strong:true, verb:"" },
+];
+</script>
+<script src="links.js"></script>
+</body>
+</html>

@@ -1,0 +1,372 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="1620" height="2760" viewBox="0 0 1620 2760">
+<defs><style type="text/css"><![CDATA[
+
+
+      /* SVG export overrides */
+      .canvas { position: relative; }
+      .canvas .entity { position: absolute; }
+      html, body { background: transparent; margin: 0; padding: 0; }
+    
+]]></style></defs>
+<foreignObject x="0" y="0" width="1620" height="2760"><div xmlns="http://www.w3.org/1999/xhtml"><div xmlns="http://www.w3.org/1999/xhtml" class="canvas" style="width: 1620px; height: 2760px; margin: 0px; position: absolute; top: 0px; left: 0px; transform-origin: left top;">
+        
+
+        <!-- Identité / permissions -->
+        <div class="entity" data-entity="user" style="top:10px; left:860px; width:200px;">
+          <div class="entity-head">user</div>
+          <div class="entity-body"><ul>
+            <li><span class="key pk">PK</span><span class="name">id</span></li>
+            <li><span class="name">first_name, last_name</span></li>
+            <li><span class="name">email, username</span></li>
+            <li><span class="name">user_role, is_active</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="bgroup" style="top: 380px; left: 1300px; width: 200px;">
+          <div class="entity-head">business_group</div>
+          <div class="entity-body"><ul>
+            <li><span class="key pk">PK</span><span class="name">id</span></li>
+            <li><span class="name">group_name, group_desc</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="ubg" style="top: 230px; left: 1030px; width: 200px;">
+          <div class="entity-head">user_business_group</div>
+          <div class="entity-body"><ul>
+            <li><span class="key pk">PK</span><span class="name">id</span></li>
+            <li><span class="key fk">FK</span><span class="name">user_id → user</span></li>
+            <li><span class="key fk">FK</span><span class="name">business_group_id → business_group</span></li>
+            <li><span class="name">is_moderator</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="perm" style="top: 0px; left: 1420px; width: 200px;">
+          <div class="entity-head">entity_permission</div>
+          <div class="entity-body"><ul>
+            <li><span class="key pk">PK</span><span class="name">id</span></li>
+            <li><span class="key fk">FK</span><span class="name">user_id → user</span></li>
+            <li><span class="key fk">FK</span><span class="name">business_group_id</span></li>
+            <li><span class="name">entity_type, entity_id</span></li>
+            <li><span class="name">permission_key</span></li>
+          </ul></div>
+        </div>
+
+        <!-- Templates pipeline -->
+        <div class="entity" data-entity="ptpl" style="top: 1910px; left: 180px; width: 200px;">
+          <div class="entity-head">pipeline_template</div>
+          <div class="entity-body"><ul>
+            <li><span class="key pk">PK</span><span class="name">id</span></li>
+            <li><span class="name">template_name</span></li>
+            <li><span class="name">is_default, is_active, is_locked</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="pstage" style="top: 1690px; left: 90px; width: 230px;">
+          <div class="entity-head">pipeline_stage</div>
+          <div class="entity-body"><ul>
+            <li><span class="key pk">PK</span><span class="name">id</span></li>
+            <li><span class="key fk">FK</span><span class="name">pipeline_template_id</span></li>
+            <li><span class="name">stage_type, stage_label</span></li>
+            <li><span class="name">stage_order, is_required</span></li>
+            <li><span class="name">config_json</span></li>
+            <li><span class="name">screening_mode, passing_score</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity new" data-entity="notifrule" style="top: 1280px; left: 70px; width: 200px;">
+          <div class="entity-head">pipeline_stage_notification_rule</div>
+          <div class="entity-body"><ul>
+            <li><span class="key pk">PK</span><span class="name">id</span></li>
+            <li><span class="key fk">FK</span><span class="name">pipeline_stage_id</span></li>
+            <li><span class="key fk">FK</span><span class="name">email_template_id?</span></li>
+            <li><span class="name">trigger_code, outcome_code?</span></li>
+            <li><span class="name">is_required, is_automatic</span></li>
+            <li><span class="name">requires_manual_confirmation</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity new" data-entity="grille" style="top: 1670px; left: 1290px; width: 210px;">
+          <div class="entity-head">evaluation_grid_template</div>
+          <div class="entity-body"><ul>
+            <li><span class="key pk">PK</span><span class="name">id</span></li>
+            <li><span class="name">name, description</span></li>
+            <li><span class="entity-divider">_version (n)</span></li>
+            <li><span class="name">version_number, is_active</span></li>
+            <li><span class="entity-divider">_item (n)</span></li>
+            <li><span class="name">label, type, max_score, weight</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity new" data-entity="crit" style="top: 1470px; left: 1010px; width: 230px;">
+          <div class="entity-head">pipeline_stage_evaluation_criterion</div>
+          <div class="entity-body"><ul>
+            <li><span class="key pk">PK</span><span class="name">id</span></li>
+            <li><span class="key fk">FK</span><span class="name">pipeline_stage_id</span></li>
+            <li><span class="key fk">FK</span><span class="name">evaluation_grid_template_version_id?</span></li>
+            <li><span class="name">criterion_order, label</span></li>
+            <li><span class="name">criterion_type, max_score, weight</span></li>
+            <li><span class="name">is_required, config_json</span></li>
+          </ul></div>
+        </div>
+
+        <!-- Catalogue -->
+        <div class="entity pivot" data-entity="campaign" style="top: 1820px; left: 650px; width: 200px;">
+          <div class="entity-head">campaigns <span class="tag">pivot</span></div>
+          <div class="entity-body"><ul>
+            <li><span class="key pk">PK</span><span class="name">id</span></li>
+            <li><span class="key fk">FK</span><span class="name">pipeline_template_id</span></li>
+            <li><span class="key fk">FK</span><span class="name">creator_id, speciality_id</span></li>
+            <li><span class="name">campaign_title, status, dates</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="campform" style="top: 1700px; left: 900px; width: 200px;">
+          <div class="entity-head">campaign_form</div>
+          <div class="entity-body"><ul>
+            <li><span class="key pk">PK</span><span class="name">id</span></li>
+            <li><span class="key fk">FK</span><span class="name">campaign_id → campaigns</span></li>
+            <li><span class="key fk">FK</span><span class="name">form_id → form</span></li>
+            <li><span class="name">assignment_order</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="form" style="top: 1450px; left: 640px; width: 200px;">
+          <div class="entity-head">form</div>
+          <div class="entity-body"><ul>
+            <li><span class="key pk">PK</span><span class="name">id</span></li>
+            <li><span class="name">form_name, is_active, is_timed</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="formv" style="top: 940px; left: 640px; width: 200px;">
+          <div class="entity-head">form_version</div>
+          <div class="entity-body"><ul>
+            <li><span class="key pk">PK</span><span class="name">id</span></li>
+            <li><span class="key fk">FK</span><span class="name">form_id → form</span></li>
+            <li><span class="name">version_number, is_published</span></li>
+            <li><span class="name">is_locked, random_questions</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="fq" style="top: 1080px; left: 910px; width: 200px;">
+          <div class="entity-head">form_questions</div>
+          <div class="entity-body"><ul>
+            <li><span class="key pk">PK</span><span class="name">id</span></li>
+            <li><span class="key fk">FK</span><span class="name">form_version_id</span></li>
+            <li><span class="key fk">FK</span><span class="name">question_id</span></li>
+            <li><span class="name">question_order, chrono_override</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="question" style="top: 880px; left: 1100px; width: 200px;">
+          <div class="entity-head">question</div>
+          <div class="entity-body"><ul>
+            <li><span class="key pk">PK</span><span class="name">id</span></li>
+            <li><span class="key fk">FK</span><span class="name">speciality_id</span></li>
+            <li><span class="name">question_text, type, score</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="answer" style="top: 760px; left: 870px; width: 200px;">
+          <div class="entity-head">answer</div>
+          <div class="entity-body"><ul>
+            <li><span class="key pk">PK</span><span class="name">id</span></li>
+            <li><span class="key fk">FK</span><span class="name">question_id → question</span></li>
+            <li><span class="name">answer_text, is_correct</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="source" style="top: 1610px; left: 540px; width: 200px;">
+          <div class="entity-head">source_token</div>
+          <div class="entity-body"><ul>
+            <li><span class="key pk">PK</span><span class="name">id</span></li>
+            <li><span class="key fk">FK</span><span class="name">campaign_id, form_id</span></li>
+            <li><span class="name">token_string, expiration_date</span></li>
+          </ul></div>
+        </div>
+
+        <!-- Candidature / pipeline -->
+        <div class="entity pivot" data-entity="appli" style="top: 1170px; left: 370px; width: 210px;">
+          <div class="entity-head">applications <span class="tag">pivot</span></div>
+          <div class="entity-body"><ul>
+            <li><span class="key pk">PK</span><span class="name">id</span></li>
+            <li><span class="key fk">FK</span><span class="name">source_token_id</span></li>
+            <li><span class="key fk">FK</span><span class="name">form_version_id (candidature)</span></li>
+            <li><span class="key fk">FK</span><span class="name">current_application_progress_id</span></li>
+            <li><span class="key fk">FK</span><span class="name">current_pipeline_stage_id</span></li>
+            <li><span class="key fk">FK</span><span class="name">abandoned_from_application_progress_id</span></li>
+            <li><span class="name">aggregated_quiz/eval_score(_percent)</span></li>
+            <li><span class="name">last_progressed_at, abandoned_at, abandon_reason</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity pivot" data-entity="prog" style="top: 510px; left: 240px; width: 220px;">
+          <div class="entity-head">application_progress <span class="tag">round</span></div>
+          <div class="entity-body"><ul>
+            <li><span class="key pk">PK</span><span class="name">id</span></li>
+            <li><span class="key fk">FK</span><span class="name">application_id</span></li>
+            <li><span class="key fk">FK</span><span class="name">pipeline_stage_id</span></li>
+            <li><span class="name">progress_status, score</span></li>
+            <li><span class="name">started_at, completed_at</span></li>
+            <li><span class="name">validated_at, validated_by, validation_comment</span></li>
+            <li><span class="name">skipped_at/by/reason</span></li>
+            <li><span class="name">reopened_at/by/reason</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity new" data-entity="quizatt" style="top: 600px; left: 620px; width: 210px;">
+          <div class="entity-head">application_quiz_attempt</div>
+          <div class="entity-body"><ul>
+            <li><span class="key pk">PK</span><span class="name">id</span></li>
+            <li><span class="key fk">FK</span><span class="name">application_id</span></li>
+            <li><span class="key fk">FK</span><span class="name">application_progress_id</span></li>
+            <li><span class="key fk">FK</span><span class="name">form_version_id</span></li>
+            <li><span class="name">quiz_token, quiz_status</span></li>
+            <li><span class="name">screening_mode, threshold, result</span></li>
+            <li><span class="name">score(_percent), total_questions</span></li>
+            <li><span class="name">time_elapsed, timed_snapshot</span></li>
+            <li><span class="name">started_at, completed_at</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="canswer" style="top: 450px; left: 1020px; width: 210px;">
+          <div class="entity-head">candidate_answer</div>
+          <div class="entity-body"><ul>
+            <li><span class="key pk">PK</span><span class="name">id</span></li>
+            <li><span class="key fk">FK</span><span class="name">application_quiz_attempt_id</span></li>
+            <li><span class="key fk">FK</span><span class="name">question_id, answer_id</span></li>
+            <li><span class="name">is_selected, free_text_response</span></li>
+            <li><span class="name">manual_correction_*</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="decision" style="top: 240px; left: 800px; width: 210px;">
+          <div class="entity-head">decisions</div>
+          <div class="entity-body"><ul>
+            <li><span class="key pk">PK</span><span class="name">id</span></li>
+            <li><span class="key fk">FK</span><span class="name">application_progress_id</span></li>
+            <li><span class="key fk">FK</span><span class="name">user_id</span></li>
+            <li><span class="key fk">FK</span><span class="name">cancels_decision_id?</span></li>
+            <li><span class="name">decision_type</span></li>
+            <li><span class="name">decision_mode, justification?</span></li>
+          </ul></div>
+        </div>
+
+        <!-- Entretien / évaluation -->
+        <div class="entity" data-entity="askcand" style="top: 1460px; left: 310px; width: 210px;">
+          <div class="entity-head">candidate_ask</div>
+          <div class="entity-body"><ul>
+            <li><span class="key pk">PK</span><span class="name">id</span></li>
+            <li><span class="key fk">FK</span><span class="name">application_id</span></li>
+            <li><span class="name">request_type, ask_status</span></li>
+            <li><span class="name">first/last_name, new_email/phone</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="candint" style="top: 1400px; left: 1360px; width: 210px;">
+          <div class="entity-head">candidate_interview</div>
+          <div class="entity-body"><ul>
+            <li><span class="key pk">PK</span><span class="name">id</span></li>
+            <li><span class="key fk">FK</span><span class="name">interview_id → interviews</span></li>
+            <li><span class="name">interview_start, duration</span></li>
+            <li><span class="name">decline_reason, alt_date_requested</span></li>
+            <li><span class="name">candidate_response_status</span></li>
+            <li><span class="name">responded_at</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="interview" style="top: 980px; left: 1380px; width: 210px;">
+          <div class="entity-head">interviews</div>
+          <div class="entity-body"><ul>
+            <li><span class="key pk">PK</span><span class="name">id</span></li>
+            <li><span class="key fk">FK</span><span class="name">application_progress_id</span></li>
+            <li><span class="key fk">FK</span><span class="name">campaign_id</span></li>
+            <li><span class="name">interview_date, type, location</span></li>
+            <li><span class="name">meet_link, interview_status</span></li>
+            <li><span class="name">evaluation_completed_at/by</span></li>
+            <li><span class="name">closed_at/by, closure_comment</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="ipart" style="top: 480px; left: 1410px; width: 210px;">
+          <div class="entity-head">interview_participant</div>
+          <div class="entity-body"><ul>
+            <li><span class="key pk">PK</span><span class="name">id</span></li>
+            <li><span class="key fk">FK</span><span class="name">interview_id, user_id</span></li>
+            <li><span class="name">can_update/delete/evaluate</span></li>
+            <li><span class="name">evaluation_status, submitted_at</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="eval" style="top: 1160px; left: 1170px; width: 210px;">
+          <div class="entity-head">evaluations</div>
+          <div class="entity-body"><ul>
+            <li><span class="key pk">PK</span><span class="name">id</span></li>
+            <li><span class="key fk">FK</span><span class="name">candidate_interview_id</span></li>
+            <li><span class="key fk">FK</span><span class="name">interview_participant_id</span></li>
+            <li><span class="name">evaluation_status, submitted_at</span></li>
+            <li><span class="name">validated_at/by</span></li>
+            <li><span class="name">global_score?, global_comment?</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity new" data-entity="evalitem" style="top: 1270px; left: 880px; width: 210px;">
+          <div class="entity-head">evaluation_item</div>
+          <div class="entity-body"><ul>
+            <li><span class="key pk">PK</span><span class="name">id</span></li>
+            <li><span class="key fk">FK</span><span class="name">evaluation_id</span></li>
+            <li><span class="key fk">FK</span><span class="name">pipeline_stage_evaluation_criterion_id</span></li>
+            <li><span class="name">score_value, text_value</span></li>
+            <li><span class="name">weight_snapshot, max_score_snapshot</span></li>
+          </ul></div>
+        </div>
+
+        <!-- Comms & audit -->
+        <div class="entity" data-entity="notif" style="top: 0px; left: 490px; width: 210px;">
+          <div class="entity-head">notifications</div>
+          <div class="entity-body"><ul>
+            <li><span class="key pk">PK</span><span class="name">id</span></li>
+            <li><span class="key fk">FK</span><span class="name">user_id</span></li>
+            <li><span class="name">notif_type, link, is_read</span></li>
+            <li><span class="name">object_table_name, object_table_id</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="maillog" style="top: 820px; left: 60px; width: 220px;">
+          <div class="entity-head">mail_log</div>
+          <div class="entity-body"><ul>
+            <li><span class="key pk">PK</span><span class="name">id</span></li>
+            <li><span class="key fk">FK</span><span class="name">email_template_id</span></li>
+            <li><span class="key fk">FK</span><span class="name">recipient_user_id, sender_user_id</span></li>
+            <li><span class="name">recipient_email, subject, status</span></li>
+            <li><span class="key fk">FK</span><span class="name">application_id, application_progress_id</span></li>
+            <li><span class="key fk">FK</span><span class="name">interview_id, decision_id, notification_rule_id</span></li>
+            <li><span class="name">event_code, requires_confirmation</span></li>
+            <li><span class="name">confirmed_at/by</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity new" data-entity="audit" style="top: 240px; left: 410px; width: 220px;">
+          <div class="entity-head">audit_event</div>
+          <div class="entity-body"><ul>
+            <li><span class="key pk">PK</span><span class="name">id</span></li>
+            <li><span class="key fk">FK</span><span class="name">application_id?, application_progress_id?</span></li>
+            <li><span class="key fk">FK</span><span class="name">actor_user_id</span></li>
+            <li><span class="name">entity_type, entity_id</span></li>
+            <li><span class="name">action_type, justification?</span></li>
+            <li><span class="name">before_state_json, after_state_json</span></li>
+          </ul></div>
+        </div>
+
+        <div class="entity" data-entity="emailtpl" style="top: 1080px; left: 0px; width: 220px;">
+          <div class="entity-head">email_template</div>
+          <div class="entity-body"><ul>
+            <li><span class="key pk">PK</span><span class="name">id</span></li>
+            <li><span class="name">template_key, subject_template</span></li>
+            <li><span class="name">body_template, action_type</span></li>
+          </ul></div>
+        </div>
+      </div></div></foreignObject>
+<g class="links-layer" fill="none"><path d="M 1129.9999618530273 229.99998474121094 C 1129.9999618530273 156.6924387614661, 1024.0000228881836 202.0158818562097, 1024.0000228881836 128.70833587646484" class="strong"></path><rect x="1012.888916015625" y="136.93055725097656" width="22.22222328186035" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="1024.0000228881836" y="147.70833587646484" text-anchor="middle">(1,1)</text><circle cx="1129.9999618530273" cy="229.99998474121094" r="6" class="anchor-handle" data-link-idx="0" data-end="A"></circle><circle cx="1024.0000228881836" cy="128.70833587646484" r="6" class="anchor-handle" data-link-idx="0" data-end="B"></circle><path d="M 1229.9999618530273 291.10415267944336 C 1303.8913580501346 291.10415267944336, 1226.10856565592 421.25696182250977, 1299.9999618530273 421.25696182250977" class="strong"></path><rect x="1268.77783203125" y="406.4791564941406" width="22.22222328186035" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="1288.9999618530273" y="417.25696182250977" text-anchor="end">(1,1)</text><circle cx="1229.9999618530273" cy="291.10415267944336" r="6" class="anchor-handle" data-link-idx="1" data-end="A"></circle><circle cx="1299.9999618530273" cy="421.25696182250977" r="6" class="anchor-handle" data-link-idx="1" data-end="B"></circle><path d="M 1419.9999618530273 70.15277862548828 C 1238.9583548553271 70.15277862548828, 1241.0416298858838 31.367500457763672, 1060.0000228881836 31.367500457763672"></path><rect x="1069" y="16.5897216796875" width="24.30555534362793" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="1071.0000228881836" y="27.367500457763672" text-anchor="start">(0,1)</text><circle cx="1419.9999618530273" cy="70.15277862548828" r="6" class="anchor-handle" data-link-idx="2" data-end="A"></circle><circle cx="1060.0000228881836" cy="31.367500457763672" r="6" class="anchor-handle" data-link-idx="2" data-end="B"></circle><path d="M 1519.9999618530273 140.30555725097656 C 1519.9999618530273 274.33301078164226, 1399.9999618530273 245.97256172812337, 1399.9999618530273 380.00001525878906"></path><rect x="1387.8472900390625" y="358.22222900390625" width="24.30555534362793" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="1399.9999618530273" y="369.00001525878906" text-anchor="middle">(0,1)</text><circle cx="1519.9999618530273" cy="140.30555725097656" r="6" class="anchor-handle" data-link-idx="3" data-end="A"></circle><circle cx="1399.9999618530273" cy="380.00001525878906" r="6" class="anchor-handle" data-link-idx="3" data-end="B"></circle><path d="M 205.00000762939453 1846.6527404785156 C 205.00000762939453 1895.7390997499433, 279.99999237060547 1860.9137170225176, 279.99999237060547 1910.0000762939453" class="strong"></path><rect x="268.8888854980469" y="1888.222412109375" width="22.22222328186035" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="279.99999237060547" y="1899.0000762939453" text-anchor="middle">(1,1)</text><circle cx="205.00000762939453" cy="1846.6527404785156" r="6" class="anchor-handle" data-link-idx="4" data-end="A"></circle><circle cx="279.99999237060547" cy="1910.0000762939453" r="6" class="anchor-handle" data-link-idx="4" data-end="B"></circle><path d="M 170.00000762939453 1438.4027404785156 C 170.00000762939453 1565.6732378102874, 131.40000762939454 1562.729456891861, 131.40000762939454 1689.9999542236328" class="strong"></path><rect x="120.28890228271484" y="1668.2222900390625" width="22.22222328186035" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="131.40000762939454" y="1678.9999542236328" text-anchor="middle">(1,1)</text><circle cx="170.00000762939453" cy="1438.4027404785156" r="6" class="anchor-handle" data-link-idx="5" data-end="A"></circle><circle cx="131.40000762939454" cy="1689.9999542236328" r="6" class="anchor-handle" data-link-idx="5" data-end="B"></circle><path d="M 106.00000762939453 1279.9999542236328 C 106.00000762939453 1230.2652819629534, 110 1230.3457409862654, 110 1180.611068725586" stroke-dasharray="5 4"></path><rect x="97.84722137451172" y="1188.8333740234375" width="24.30555534362793" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="110" y="1199.611068725586" text-anchor="middle">(0,1)</text><circle cx="106.00000762939453" cy="1279.9999542236328" r="6" class="anchor-handle" data-link-idx="6" data-end="A"></circle><circle cx="110" cy="1180.611068725586" r="6" class="anchor-handle" data-link-idx="6" data-end="B"></circle><path d="M 1009.9999618530273 1549.2013473510742 C 648.0207834277983 1549.2013473510742, 681.9791860546236 1768.3263473510742, 320.00000762939453 1768.3263473510742" class="strong"></path><rect x="329" y="1753.5484619140625" width="22.22222328186035" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="331.00000762939453" y="1764.3263473510742" text-anchor="start">(1,1)</text><circle cx="1009.9999618530273" cy="1549.2013473510742" r="6" class="anchor-handle" data-link-idx="7" data-end="A"></circle><circle cx="320.00000762939453" cy="1768.3263473510742" r="6" class="anchor-handle" data-link-idx="7" data-end="B"></circle><path d="M 1124.9999618530273 1628.4027404785156 C 1124.9999618530273 1764.99550034462, 1394.9999618530273 1533.4071943575284, 1394.9999618530273 1669.9999542236328" stroke-dasharray="5 4"></path><rect x="1382.8472900390625" y="1648.2222900390625" width="24.30555534362793" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="1394.9999618530273" y="1658.9999542236328" text-anchor="middle">(0,1)</text><circle cx="1124.9999618530273" cy="1628.4027404785156" r="6" class="anchor-handle" data-link-idx="8" data-end="A"></circle><circle cx="1394.9999618530273" cy="1669.9999542236328" r="6" class="anchor-handle" data-link-idx="8" data-end="B"></circle><path d="M 650.0000228881836 1881.1041221618652 C 509.31162972366775 1881.1041221618652, 520.6883855351214 1960.3056335449219, 379.99999237060547 1960.3056335449219"></path><rect x="389" y="1945.52783203125" width="22.22222328186035" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="390.99999237060547" y="1956.3056335449219" text-anchor="start">(1,1)</text><circle cx="650.0000228881836" cy="1881.1041221618652" r="6" class="anchor-handle" data-link-idx="9" data-end="A"></circle><circle cx="379.99999237060547" cy="1960.3056335449219" r="6" class="anchor-handle" data-link-idx="9" data-end="B"></circle><path d="M 900.0000228881836 1761.1041221618652 C 835.0000228881836 1761.1041221618652, 915.0000228881836 1881.1041221618652, 850.0000228881836 1881.1041221618652" class="strong"></path><rect x="859" y="1866.326416015625" width="22.22222328186035" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="861.0000228881836" y="1877.1041221618652" text-anchor="start">(1,1)</text><circle cx="900.0000228881836" cy="1761.1041221618652" r="6" class="anchor-handle" data-link-idx="10" data-end="A"></circle><circle cx="850.0000228881836" cy="1881.1041221618652" r="6" class="anchor-handle" data-link-idx="10" data-end="B"></circle><path d="M 1000.0000228881836 1699.9999542236328 C 1000.0000228881836 1571.093402804275, 804.0000228881836 1661.420398770432, 804.0000228881836 1532.5138473510742" class="strong"></path><rect x="792.888916015625" y="1540.7359619140625" width="22.22222328186035" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="804.0000228881836" y="1551.5138473510742" text-anchor="middle">(1,1)</text><circle cx="1000.0000228881836" cy="1699.9999542236328" r="6" class="anchor-handle" data-link-idx="11" data-end="A"></circle><circle cx="804.0000228881836" cy="1532.5138473510742" r="6" class="anchor-handle" data-link-idx="11" data-end="B"></circle><path d="M 804.0000228881836 1060.4582901000977 C 804.0000228881836 1257.840348611081, 740.0000228881836 1252.6178957126494, 740.0000228881836 1449.9999542236328" class="strong"></path><rect x="728.888916015625" y="1428.2222900390625" width="22.22222328186035" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="740.0000228881836" y="1438.9999542236328" text-anchor="middle">(1,1)</text><circle cx="804.0000228881836" cy="1060.4582901000977" r="6" class="anchor-handle" data-link-idx="12" data-end="A"></circle><circle cx="740.0000228881836" cy="1449.9999542236328" r="6" class="anchor-handle" data-link-idx="12" data-end="B"></circle><path d="M 910.0000228881836 1141.1041221618652 C 831.3460884268358 1141.1041221618652, 918.6539573495314 1000.2291221618652, 840.0000228881836 1000.2291221618652" class="strong"></path><rect x="849" y="985.451416015625" width="22.22222328186035" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="851.0000228881836" y="996.2291221618652" text-anchor="start">(1,1)</text><circle cx="910.0000228881836" cy="1141.1041221618652" r="6" class="anchor-handle" data-link-idx="13" data-end="A"></circle><circle cx="840.0000228881836" cy="1000.2291221618652" r="6" class="anchor-handle" data-link-idx="13" data-end="B"></circle><path d="M 1010.0000228881836 1079.9999542236328 C 1010.0000228881836 973.1901597664471, 1199.9999618530273 1089.1708631827717, 1199.9999618530273 982.3610687255859" class="strong"></path><rect x="1188.888916015625" y="990.5833129882812" width="22.22222328186035" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="1199.9999618530273" y="1001.3610687255859" text-anchor="middle">(1,1)</text><circle cx="1010.0000228881836" cy="1079.9999542236328" r="6" class="anchor-handle" data-link-idx="14" data-end="A"></circle><circle cx="1199.9999618530273" cy="982.3610687255859" r="6" class="anchor-handle" data-link-idx="14" data-end="B"></circle><path d="M 1070.0000228881836 811.1805725097656 C 1117.67627285303 811.1805725097656, 1135.9999618530273 832.3237042587864, 1135.9999618530273 879.9999542236328" class="strong"></path><rect x="1124.888916015625" y="858.22216796875" width="22.22222328186035" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="1135.9999618530273" y="868.9999542236328" text-anchor="middle">(1,1)</text><circle cx="1070.0000228881836" cy="811.1805725097656" r="6" class="anchor-handle" data-link-idx="15" data-end="A"></circle><circle cx="1135.9999618530273" cy="879.9999542236328" r="6" class="anchor-handle" data-link-idx="15" data-end="B"></circle><path d="M 640.0000228881836 1712.361068725586 C 640.0000228881836 1789.3125626540043, 750.0000228881836 1743.0484602952145, 750.0000228881836 1819.9999542236328"></path><rect x="738.888916015625" y="1798.2222900390625" width="22.22222328186035" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="750.0000228881836" y="1808.9999542236328" text-anchor="middle">(1,1)</text><circle cx="640.0000228881836" cy="1712.361068725586" r="6" class="anchor-handle" data-link-idx="16" data-end="A"></circle><circle cx="750.0000228881836" cy="1819.9999542236328" r="6" class="anchor-handle" data-link-idx="16" data-end="B"></circle><path d="M 704.0000228881836 1609.9999542236328 C 704.0000228881836 1568.805000775833, 676.0000228881836 1573.708800798874, 676.0000228881836 1532.5138473510742" stroke-dasharray="5 4"></path><rect x="663.8472290039062" y="1540.7359619140625" width="24.30555534362793" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="676.0000228881836" y="1551.5138473510742" text-anchor="middle">(0,1)</text><circle cx="704.0000228881836" cy="1609.9999542236328" r="6" class="anchor-handle" data-link-idx="17" data-end="A"></circle><circle cx="676.0000228881836" cy="1532.5138473510742" r="6" class="anchor-handle" data-link-idx="17" data-end="B"></circle><path d="M 542.1999923706055 1369.847183227539 C 542.1999923706055 1491.107023529359, 576.0000228881836 1488.740113921813, 576.0000228881836 1609.9999542236328"></path><rect x="563.8472290039062" y="1588.2222900390625" width="24.30555534362793" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="576.0000228881836" y="1598.9999542236328" text-anchor="middle">(0,1)</text><circle cx="542.1999923706055" cy="1369.847183227539" r="6" class="anchor-handle" data-link-idx="18" data-end="A"></circle><circle cx="576.0000228881836" cy="1609.9999542236328" r="6" class="anchor-handle" data-link-idx="18" data-end="B"></circle><path d="M 542.1999923706055 1169.9999542236328 C 542.1999923706055 1083.5392343193632, 676.0000228881836 1146.9190100043672, 676.0000228881836 1060.4582901000977" stroke-dasharray="5 4"></path><rect x="663.8472290039062" y="1068.680419921875" width="24.30555534362793" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="676.0000228881836" y="1079.4582901000977" text-anchor="middle">(0,1)</text><circle cx="542.1999923706055" cy="1169.9999542236328" r="6" class="anchor-handle" data-link-idx="19" data-end="A"></circle><circle cx="676.0000228881836" cy="1060.4582901000977" r="6" class="anchor-handle" data-link-idx="19" data-end="B"></circle><path d="M 373.46665903727217 704.5972442626953 C 373.46665903727217 937.9309431880554, 407.7999923706055 936.6662552982727, 407.7999923706055 1169.9999542236328" class="strong"></path><rect x="396.6888732910156" y="1148.2222900390625" width="22.22222328186035" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="407.7999923706055" y="1158.9999542236328" text-anchor="middle">(1,1)</text><circle cx="373.46665903727217" cy="704.5972442626953" r="6" class="anchor-handle" data-link-idx="20" data-end="A"></circle><circle cx="407.7999923706055" cy="1169.9999542236328" r="6" class="anchor-handle" data-link-idx="20" data-end="B"></circle><path d="M 326.5333257039388 704.5972442626953 C 326.5333257039388 1197.8811644800471, 278.60000762939455 1196.716034006281, 278.60000762939455 1689.9999542236328" stroke-dasharray="5 4"></path><rect x="267.4889221191406" y="1668.2222900390625" width="22.22222328186035" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="278.60000762939455" y="1678.9999542236328" text-anchor="middle">(1,1)</text><circle cx="326.5333257039388" cy="704.5972442626953" r="6" class="anchor-handle" data-link-idx="21" data-end="A"></circle><circle cx="278.60000762939455" cy="1689.9999542236328" r="6" class="anchor-handle" data-link-idx="21" data-end="B"></circle><path d="M 452.5999923706055 1169.9999542236328 C 452.5999923706055 936.7423056679078, 420.39999237060545 937.8548928184204, 420.39999237060545 704.5972442626953" stroke-dasharray="5 4"></path><rect x="440.44720458984375" y="1148.2222900390625" width="24.30555534362793" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="452.5999923706055" y="1158.9999542236328" text-anchor="middle">(0,1)</text><circle cx="452.5999923706055" cy="1169.9999542236328" r="6" class="anchor-handle" data-link-idx="22" data-end="A"></circle><circle cx="420.39999237060545" cy="704.5972442626953" r="6" class="anchor-handle" data-link-idx="22" data-end="B"></circle><path d="M 620.0000228881836 775.8444583129883 C 413.60881520270755 775.8444583129883, 497.39999237060545 963.6087465381568, 497.39999237060545 1169.9999542236328" class="strong"></path><rect x="486.2889099121094" y="1148.2222900390625" width="22.22222328186035" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="497.39999237060545" y="1158.9999542236328" text-anchor="middle">(1,1)</text><circle cx="620.0000228881836" cy="775.8444583129883" r="6" class="anchor-handle" data-link-idx="23" data-end="A"></circle><circle cx="497.39999237060545" cy="1169.9999542236328" r="6" class="anchor-handle" data-link-idx="23" data-end="B"></circle><path d="M 620.0000228881836 638.6000149536133 C 538.4834808850135 638.6000149536133, 541.5165343737756 607.2986297607422, 459.99999237060547 607.2986297607422" class="strong"></path><rect x="469" y="592.5208740234375" width="22.22222328186035" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="470.99999237060547" y="603.2986297607422" text-anchor="start">(1,1)</text><circle cx="620.0000228881836" cy="638.6000149536133" r="6" class="anchor-handle" data-link-idx="24" data-end="A"></circle><circle cx="459.99999237060547" cy="607.2986297607422" r="6" class="anchor-handle" data-link-idx="24" data-end="B"></circle><path d="M 725.0000228881836 814.4444580078125 C 725.0000228881836 877.668627891649, 740.0000228881836 876.7757843397964, 740.0000228881836 939.9999542236328" stroke-dasharray="5 4"></path><rect x="728.888916015625" y="918.2221069335938" width="22.22222328186035" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="740.0000228881836" y="928.9999542236328" text-anchor="middle">(1,1)</text><circle cx="725.0000228881836" cy="814.4444580078125" r="6" class="anchor-handle" data-link-idx="25" data-end="A"></circle><circle cx="740.0000228881836" cy="939.9999542236328" r="6" class="anchor-handle" data-link-idx="25" data-end="B"></circle><path d="M 1019.9999618530273 520.1527938842773 C 886.6817774059361 520.1527938842773, 963.3182073352748 707.2222366333008, 830.0000228881836 707.2222366333008" class="strong"></path><rect x="839" y="692.4444580078125" width="22.22222328186035" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="841.0000228881836" y="703.2222366333008" text-anchor="start">(1,1)</text><circle cx="1019.9999618530273" cy="520.1527938842773" r="6" class="anchor-handle" data-link-idx="26" data-end="A"></circle><circle cx="830.0000228881836" cy="707.2222366333008" r="6" class="anchor-handle" data-link-idx="26" data-end="B"></circle><path d="M 1124.9999618530273 590.3055725097656 C 1124.9999618530273 750.9634658706116, 1263.9999618530273 719.3420608627869, 1263.9999618530273 879.9999542236328" stroke-dasharray="5 4"></path><rect x="1252.888916015625" y="858.22216796875" width="22.22222328186035" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="1263.9999618530273" y="868.9999542236328" text-anchor="middle">(1,1)</text><circle cx="1124.9999618530273" cy="590.3055725097656" r="6" class="anchor-handle" data-link-idx="27" data-end="A"></circle><circle cx="1263.9999618530273" cy="879.9999542236328" r="6" class="anchor-handle" data-link-idx="27" data-end="B"></circle><path d="M 414.99999237060547 1459.9999542236328 C 414.99999237060547 1414.7800412475056, 407.7999923706055 1415.0670962036663, 407.7999923706055 1369.847183227539"></path><rect x="396.6888732910156" y="1378.0694580078125" width="22.22222328186035" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="407.7999923706055" y="1388.847183227539" text-anchor="middle">(1,1)</text><circle cx="414.99999237060547" cy="1459.9999542236328" r="6" class="anchor-handle" data-link-idx="28" data-end="A"></circle><circle cx="407.7999923706055" cy="1369.847183227539" r="6" class="anchor-handle" data-link-idx="28" data-end="B"></circle><path d="M 1417.7999618530273 979.9999542236328 C 1417.7999618530273 476.57476177821945, 963.4251848160188 669.5697430419922, 459.99999237060547 669.5697430419922" class="strong"></path><rect x="469" y="654.7919921875" width="22.22222328186035" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="470.99999237060547" y="665.5697430419922" text-anchor="start">(1,1)</text><circle cx="1417.7999618530273" cy="979.9999542236328" r="6" class="anchor-handle" data-link-idx="29" data-end="A"></circle><circle cx="459.99999237060547" cy="669.5697430419922" r="6" class="anchor-handle" data-link-idx="29" data-end="B"></circle><path d="M 1532.1999618530274 1399.9999542236328 C 1532.1999618530274 1275.9837355262382, 1484.9999618530273 1280.5161729210274, 1484.9999618530273 1156.4999542236328" class="strong"></path><rect x="1473.888916015625" y="1164.7222900390625" width="22.22222328186035" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="1484.9999618530273" y="1175.4999542236328" text-anchor="middle">(1,1)</text><circle cx="1532.1999618530274" cy="1399.9999542236328" r="6" class="anchor-handle" data-link-idx="30" data-end="A"></circle><circle cx="1484.9999618530273" cy="1156.4999542236328" r="6" class="anchor-handle" data-link-idx="30" data-end="B"></circle><path d="M 1582.1999618530274 600.4583511352539 C 1582.1999618530274 790.8210499990915, 1552.1999618530274 789.6372553597952, 1552.1999618530274 979.9999542236328" class="strong"></path><rect x="1541.0888671875" y="958.2221069335938" width="22.22222328186035" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="1552.1999618530274" y="968.9999542236328" text-anchor="middle">(1,1)</text><circle cx="1582.1999618530274" cy="600.4583511352539" r="6" class="anchor-handle" data-link-idx="31" data-end="A"></circle><circle cx="1552.1999618530274" cy="979.9999542236328" r="6" class="anchor-handle" data-link-idx="31" data-end="B"></circle><path d="M 1514.9999618530273 480.00001525878906 C 1514.9999618530273 185.9337774920665, 1354.0662606549063 107.34083541870118, 1060.0000228881836 107.34083541870118" stroke-dasharray="5 4"></path><rect x="1069" y="92.56305694580078" width="22.22222328186035" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="1071.0000228881836" y="103.34083541870118" text-anchor="start">(1,1)</text><circle cx="1514.9999618530273" cy="480.00001525878906" r="6" class="anchor-handle" data-link-idx="32" data-end="A"></circle><circle cx="1060.0000228881836" cy="107.34083541870118" r="6" class="anchor-handle" data-link-idx="32" data-end="B"></circle><path d="M 1274.9999618530273 1318.4027404785156 C 1274.9999618530273 1392.1217090194657, 1397.7999618530273 1326.2809856826827, 1397.7999618530273 1399.9999542236328" class="strong"></path><rect x="1386.6888427734375" y="1378.2222900390625" width="22.22222328186035" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="1397.7999618530273" y="1388.9999542236328" text-anchor="middle">(1,1)</text><circle cx="1274.9999618530273" cy="1318.4027404785156" r="6" class="anchor-handle" data-link-idx="33" data-end="A"></circle><circle cx="1397.7999618530273" cy="1399.9999542236328" r="6" class="anchor-handle" data-link-idx="33" data-end="B"></circle><path d="M 1274.9999618530273 1159.9999542236328 C 1274.9999618530273 867.1917210800304, 1447.7999618530273 893.2665842788563, 1447.7999618530273 600.4583511352539"></path><rect x="1436.6888427734375" y="608.6806030273438" width="22.22222328186035" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="1447.7999618530273" y="619.4583511352539" text-anchor="middle">(1,1)</text><circle cx="1274.9999618530273" cy="1159.9999542236328" r="6" class="anchor-handle" data-link-idx="34" data-end="A"></circle><circle cx="1447.7999618530273" cy="600.4583511352539" r="6" class="anchor-handle" data-link-idx="34" data-end="B"></circle><path d="M 1090.0000228881836 1340.152732849121 C 1154.4033855107089 1340.152732849121, 1105.596599230502 1239.2013473510742, 1169.9999618530273 1239.2013473510742" class="strong"></path><rect x="1138.77783203125" y="1224.4234619140625" width="22.22222328186035" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="1158.9999618530273" y="1235.2013473510742" text-anchor="end">(1,1)</text><circle cx="1090.0000228881836" cy="1340.152732849121" r="6" class="anchor-handle" data-link-idx="35" data-end="A"></circle><circle cx="1169.9999618530273" cy="1239.2013473510742" r="6" class="anchor-handle" data-link-idx="35" data-end="B"></circle><path d="M 985.0000228881836 1410.3055114746094 C 985.0000228881836 1486.403161578401, 1124.9999618530273 1393.9023041198411, 1124.9999618530273 1469.9999542236328" stroke-dasharray="5 4"></path><rect x="1113.888916015625" y="1448.2222900390625" width="22.22222328186035" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="1124.9999618530273" y="1458.9999542236328" text-anchor="middle">(1,1)</text><circle cx="985.0000228881836" cy="1410.3055114746094" r="6" class="anchor-handle" data-link-idx="36" data-end="A"></circle><circle cx="1124.9999618530273" cy="1469.9999542236328" r="6" class="anchor-handle" data-link-idx="36" data-end="B"></circle><path d="M 905.0000228881836 400.15277099609375 C 905.0000228881836 634.1472789655784, 693.9945003400901 545.0275164794922, 459.99999237060547 545.0275164794922" class="strong"></path><rect x="469" y="530.249755859375" width="22.22222328186035" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="470.99999237060547" y="541.0275164794922" text-anchor="start">(1,1)</text><circle cx="905.0000228881836" cy="400.15277099609375" r="6" class="anchor-handle" data-link-idx="37" data-end="A"></circle><circle cx="459.99999237060547" cy="545.0275164794922" r="6" class="anchor-handle" data-link-idx="37" data-end="B"></circle><path d="M 905.0000228881836 239.99998474121094 C 905.0000228881836 177.92980045955696, 960.0000228881836 190.77852015811882, 960.0000228881836 128.70833587646484" stroke-dasharray="5 4"></path><rect x="948.888916015625" y="136.93055725097656" width="22.22222328186035" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="960.0000228881836" y="147.70833587646484" text-anchor="middle">(1,1)</text><circle cx="905.0000228881836" cy="239.99998474121094" r="6" class="anchor-handle" data-link-idx="38" data-end="A"></circle><circle cx="960.0000228881836" cy="128.70833587646484" r="6" class="anchor-handle" data-link-idx="38" data-end="B"></circle><path d="M 595.0000228881836 0 C 595.0000228881836 -136.96258668921647, 723.0374361989672 69.35416793823242, 860.0000228881836 69.35416793823242" stroke-dasharray="5 4"></path><rect x="828.7777709960938" y="54.57638931274414" width="22.22222328186035" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="849.0000228881836" y="65.35416793823242" text-anchor="end">(1,1)</text><circle cx="595.0000228881836" cy="0" r="6" class="anchor-handle" data-link-idx="39" data-end="A"></circle><circle cx="860.0000228881836" cy="69.35416793823242" r="6" class="anchor-handle" data-link-idx="39" data-end="B"></circle><path d="M 170.00000762939453 820.0000152587891 C 170.00000762939453 740.4230773168663, 279.5999923706055 784.1741822046181, 279.5999923706055 704.5972442626953" stroke-dasharray="5 4"></path><rect x="267.4472351074219" y="712.8194580078125" width="24.30555534362793" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="279.5999923706055" y="723.5972442626953" text-anchor="middle">(0,1)</text><circle cx="170.00000762939453" cy="820.0000152587891" r="6" class="anchor-handle" data-link-idx="40" data-end="A"></circle><circle cx="279.5999923706055" cy="704.5972442626953" r="6" class="anchor-handle" data-link-idx="40" data-end="B"></circle><path d="M 240.40000762939454 1018.0972442626953 C 240.40000762939454 1149.08769189618, 234.00000762939453 1149.009506590148, 234.00000762939453 1279.9999542236328" stroke-dasharray="5 4"></path><rect x="221.84722900390625" y="1258.2222900390625" width="24.30555534362793" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="234.00000762939453" y="1268.9999542236328" text-anchor="middle">(0,1)</text><circle cx="240.40000762939454" cy="1018.0972442626953" r="6" class="anchor-handle" data-link-idx="41" data-end="A"></circle><circle cx="234.00000762939453" cy="1279.9999542236328" r="6" class="anchor-handle" data-link-idx="41" data-end="B"></circle><path d="M 99.60000762939453 1018.0972442626953 C 99.60000762939453 1058.0972442626953, 110 1039.9999542236328, 110 1079.9999542236328" stroke-dasharray="5 4"></path><rect x="98.8888931274414" y="1058.2222900390625" width="22.22222328186035" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="110" y="1068.9999542236328" text-anchor="middle">(1,1)</text><circle cx="99.60000762939453" cy="1018.0972442626953" r="6" class="anchor-handle" data-link-idx="42" data-end="A"></circle><circle cx="110" cy="1079.9999542236328" r="6" class="anchor-handle" data-link-idx="42" data-end="B"></circle><path d="M 519.9999923706055 239.99998474121094 C 519.9999923706055 43.937587749683246, 896.0000228881836 324.77073286799254, 896.0000228881836 128.70833587646484" stroke-dasharray="5 4"></path><rect x="884.888916015625" y="136.93055725097656" width="22.22222328186035" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="896.0000228881836" y="147.70833587646484" text-anchor="middle">(1,1)</text><circle cx="519.9999923706055" cy="239.99998474121094" r="6" class="anchor-handle" data-link-idx="43" data-end="A"></circle><circle cx="896.0000228881836" cy="128.70833587646484" r="6" class="anchor-handle" data-link-idx="43" data-end="B"></circle><path d="M 519.9999923706055 398.40277099609375 C 519.9999923706055 500.08111791301076, 349.99999237060547 408.32166834187205, 349.99999237060547 510.00001525878906" stroke-dasharray="5 4"></path><rect x="337.84722900390625" y="488.22222900390625" width="24.30555534362793" height="14.44444465637207" fill="white" rx="2"></rect><text class="card" x="349.99999237060547" y="499.00001525878906" text-anchor="middle">(0,1)</text><circle cx="519.9999923706055" cy="398.40277099609375" r="6" class="anchor-handle" data-link-idx="44" data-end="A"></circle><circle cx="349.99999237060547" cy="510.00001525878906" r="6" class="anchor-handle" data-link-idx="44" data-end="B"></circle></g>
+</svg>
