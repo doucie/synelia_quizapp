@@ -1,4 +1,4 @@
-#import "../theme.typ": top-heading, palette
+﻿#import "../theme.typ": top-heading, palette
 
 #let render-backmatter(meta) = [
   #pagebreak()
@@ -108,52 +108,52 @@
   Les figures suivantes présentent des écrans additionnels de la plateforme qui n'apparaissent pas dans le corps du mémoire. Elles illustrent la richesse fonctionnelle de l'application à travers les différents modules du tableau de bord recruteur et administrateur.
 
   #figure(
-    image("../../../figures_html/captures/to use/quizapp - postuler - campagne - 1.png", width: 100%),
+    image("../captures/9-annexes/quizapp - postuler - campagne - 1.png", width: 100%),
     caption: [Page publique de dépôt de candidature — formulaire de soumission pour une campagne.],
   )
 
   #figure(
-    image("../../../figures_html/captures/to use/quizapp - quiz - 10 - 725fc7354b4b42fe8cdb56e2f64e5a1f.png", width: 100%),
+    image("../captures/9-annexes/quizapp - quiz - 10 - 725fc7354b4b42fe8cdb56e2f64e5a1f.png", width: 100%),
     caption: [Interface de passation du quiz technique — question à choix multiples avec chronomètre.],
   )
 
   #figure(
-    image("../../../figures_html/captures/to use/quizapp - dashboard - candidates.png", width: 100%),
+    image("../captures/9-annexes/quizapp - dashboard - candidates.png", width: 100%),
     caption: [Liste des candidatures — filtrage, recherche et actions contextualisées par dossier.],
   )
 
   #figure(
-    image("../../../figures_html/captures/to use/quizapp - dashboard - interviews avec exemple d'entretien terminé et en cours.png", width: 100%),
+    image("../captures/9-annexes/quizapp - dashboard - interviews avec exemple d'entretien terminé et en cours.png", width: 100%),
     caption: [Gestion des entretiens — planification, états (terminé, en cours) et actions associées.],
   )
 
   #figure(
-    image("../../../figures_html/captures/to use/quizapp - dashboard - evaluate - EVAL1AB2C.png", width: 100%),
+    image("../captures/9-annexes/quizapp - dashboard - evaluate - EVAL1AB2C.png", width: 100%),
     caption: [Écran d'évaluation collaboratif — critères détaillés, notation et commentaires par évaluateur.],
   )
 
   #figure(
-    image("../../../figures_html/captures/to use/quizapp - dashboard - decisions.png", width: 100%),
+    image("../captures/9-annexes/quizapp - dashboard - decisions.png", width: 100%),
     caption: [Module de décisions — présélection, décision finale, annulation et historique.],
   )
 
   #figure(
-    image("../../../figures_html/captures/to use/quizapp - dashboard - entities.png", width: 100%),
+    image("../captures/9-annexes/quizapp - dashboard - entities.png", width: 100%),
     caption: [Vue d'administration des entités — gestion des données de référence (départements, spécialités, etc.).],
   )
 
   #figure(
-    image("../../../figures_html/captures/to use/quizapp - dashboard - questions.png", width: 100%),
+    image("../captures/9-annexes/quizapp - dashboard - questions.png", width: 100%),
     caption: [Banque de questions — création, types de questions, réponses et niveau de difficulté.],
   )
 
   #figure(
-    image("../../../figures_html/captures/to use/quizapp - dashboard - system-role-permission.png", width: 100%),
+    image("../captures/9-annexes/quizapp - dashboard - system-role-permission.png", width: 100%),
     caption: [Gestion des permissions système — rôles, droits et overrides utilisateur.],
   )
 
   #figure(
-    image("../../../figures_html/captures/to use/quizapp - dashboard - settings # configuration app.png", width: 100%),
+    image("../captures/9-annexes/quizapp - dashboard - settings # configuration app.png", width: 100%),
     caption: [Paramétrage de l'application — configuration SMTP, modèles d'email et constantes globales.],
   )
 
@@ -162,17 +162,17 @@
   Les trois diagrammes de séquence suivants, mentionnés dans le corps du mémoire (Partie 2, § Compléments éventuels en UML), sont présentés ici en détail. Ils complètent le diagramme de soumission d'une candidature publique en documentant les interactions dynamiques entre le frontend Angular, l'API REST Spring Boot, les services métier, la couche de persistance JPA/MySQL et les mécanismes de notification.
 
   #figure(
-    image("../../../figures_html/captures/to use/Diagrammes de séquence — 2. Passation et soumission du quiz technique.png", width: 100%),
+    image("../captures/6-architecture/Diagrammes de séquence — 2. Passation et soumission du quiz technique.png", width: 100%),
     caption: [Séquence — passation et soumission du quiz technique : chargement des questions, enregistrement progressif des réponses et clôture du quiz.],
   )
 
   #figure(
-    image("../../../figures_html/captures/to use/Diagrammes de séquence — 3. Planification et convocation d'un entretien.png", width: 100%),
+    image("../captures/6-architecture/Diagrammes de séquence — 3. Planification et convocation d'un entretien.png", width: 100%),
     caption: [Séquence — planification et convocation d'un entretien : rattachement à la candidature, production de la convocation et mise à jour du pipeline.],
   )
 
   #figure(
-    image("../../../figures_html/captures/to use/Diagrammes de séquence — 4. Saisie et propagation d'une décision finale.png", width: 100%),
+    image("../captures/6-architecture/Diagrammes de séquence — 4. Saisie et propagation d'une décision finale.png", width: 100%),
     caption: [Séquence — saisie et propagation d'une décision finale : agrégation des évaluations, décision et synchronisation des états du dossier.],
   )
 

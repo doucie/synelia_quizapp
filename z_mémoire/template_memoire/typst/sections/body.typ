@@ -91,7 +91,7 @@
   L'organisation interne du groupe est portée par une gouvernance à trois niveaux : la Direction Générale assurée par Patrick KOUASSI, fondateur du groupe, l'Administration Générale exercée par Jorge VILANOVA, et le Secrétariat Général confié à Stéphane OUATTARA (Secrétaire Général et COO), auquel est rattaché le PMO Gouvernance. Cinq directions opérationnelles complémentaires se déploient ensuite : Business & International, Production & Expérience Client, Innovation & Expertise, Performance Financière & Fiscalité, et Administration & Capital Humain. Cette gouvernance structurée favorise un pilotage transverse, dans lequel les expertises technologiques et les unités d'activité communiquent étroitement avec les fonctions support.
 
   #figure(
-    image("../../../figures_html/captures/to use/Organigramme du Groupe Synelia.png", width: 100%),
+    image("../captures/7-organigrammes/Organigramme du Groupe Synelia.png", width: 100%),
     caption: [Organigramme du Groupe Synelia — Gouvernance, directions opérationnelles et services rattachés (juin 2026).],
   )
 
@@ -120,7 +120,7 @@
   Pris isolément, chacun de ces maillons paraît simple. Mais lorsqu'ils sont répartis entre plusieurs outils et plusieurs personnes, ils génèrent rapidement des pertes d'information, des lenteurs et une forte dépendance à la mémoire individuelle des intervenants.
 
   #figure(
-    image("figures/processus_recrutement_as_is.png", width: 100%),
+    image("../captures/8-figures-memoire/processus_recrutement_as_is.png", width: 100%),
     caption: [Processus de recrutement traditionnel — État des lieux avant la mise en place de SyneliaQuizApp.],
   )
 
@@ -138,7 +138,7 @@
   #label("ref-solution-digitale")
 
   #figure(
-    image("figures/du_besoin_a_la_solution.png", width: 100%),
+    image("../captures/8-figures-memoire/du_besoin_a_la_solution.png", width: 100%),
     caption: [Du besoin à la solution — Synthèse des problèmes identifiés et des réponses apportées par SyneliaQuizApp.],
   )
 
@@ -152,7 +152,7 @@
   === Objectifs généraux
 
   #figure(
-    image("figures/pyramide_objectifs.png", width: 100%),
+    image("../captures/8-figures-memoire/pyramide_objectifs.png", width: 100%),
     caption: [Pyramide des objectifs de SyneliaQuizApp — Du socle de digitalisation au pilotage stratégique par la donnée.],
   )
 
@@ -210,7 +210,7 @@
   Le marché propose aujourd'hui de nombreuses solutions de recrutement, parmi lesquelles des ATS généralistes comme Workable ou Greenhouse, ainsi que des plateformes plus spécialisées dans l'évaluation technique comme HackerRank, Codility ou TestGorilla.
 
   #figure(
-    image("figures/matrice_benchmark.png", width: 100%),
+    image("../captures/8-figures-memoire/matrice_benchmark.png", width: 100%),
     caption: [Matrice de benchmark — Comparaison des solutions du marché et positionnement de SyneliaQuizApp.],
   )
 
@@ -226,7 +226,7 @@
   Dans ce paysage, #strong[Spring Boot] s'impose comme une référence pour les applications Java orientées API. Il facilite la mise en place de services REST, l'intégration avec la sécurité, la persistance via JPA et l'organisation modulaire du code. #strong[Angular] représente de son côté une solution robuste pour les applications monopage complexes, en particulier lorsqu'il faut structurer de nombreux écrans, partager des composants et maintenir une logique de navigation cohérente entre plusieurs profils d'utilisateurs.
 
   #figure(
-    image("figures/stack_technique.png", width: 100%),
+    image("../captures/8-figures-memoire/stack_technique.png", width: 100%),
     caption: [Stack technique de SyneliaQuizApp — Architecture 3-tiers avec flux de données entre les couches.],
   )
 
@@ -364,7 +364,7 @@
   La campagne de recrutement constitue l'unité de pilotage centrale du système.
 
   #figure(
-    image("figures/machine_etats_campagne.png", width: 100%),
+    image("../captures/8-figures-memoire/machine_etats_campagne.png", width: 100%),
     caption: [Machine à états d'une campagne de recrutement — Transitions et conditions de passage entre statuts.],
   )
 
@@ -376,7 +376,7 @@
   Le système doit offrir un parcours de candidature public simple et fiable.
 
   #figure(
-    image("figures/machine_etats_candidature.png", width: 100%),
+    image("../captures/8-figures-memoire/machine_etats_candidature.png", width: 100%),
     caption: [Machine à états d'une candidature — Parcours complet du candidat dans le pipeline de recrutement.],
   )
 
@@ -469,15 +469,15 @@
   Le diagramme global doit faire apparaître quatre acteurs principaux et les macro-fonctions suivantes : gestion des utilisateurs, gestion des référentiels, gestion des campagnes, dépôt de candidature, passation de quiz, planification des entretiens, évaluation, décision et pilotage. Il synthétise l'ensemble du système, sans détailler les variantes de permission.
 
   #figure(
-    image("../../../figures_html/captures/to use/Cas d'utilisation 1 – Parcours candidat & pilotage recrutement.png", width: 100%),
+    image("../captures/6-architecture/Cas d'utilisation 1 – Parcours candidat & pilotage recrutement.png", width: 100%),
     caption: [Cas d'utilisation — parcours candidat (6 UC).],
   )
   #figure(
-    image("../../../figures_html/captures/to use/Cas d'utilisation 2 – Administration métier & gouvernance.png", width: 100%),
+    image("../captures/6-architecture/Cas d'utilisation 2 – Administration métier & gouvernance.png", width: 100%),
     caption: [Cas d'utilisation — administration métier et gouvernance plateforme (12 UC).],
   )
   #figure(
-    image("../../../figures_html/captures/to use/Cas d'utilisation 3 – Tableaux de bord, notifications & exports.png", width: 100%),
+    image("../captures/6-architecture/Cas d'utilisation 3 – Tableaux de bord, notifications & exports.png", width: 100%),
     caption: [Cas d'utilisation — tableaux de bord, notifications et exports (5 UC transverses).],
   )
 
@@ -503,7 +503,7 @@
   L'ensemble des besoins identifiés ne possède pas la même criticité. Une priorisation de type MoSCoW a donc été retenue afin de distinguer les fonctionnalités indispensables à la valeur métier immédiate, celles qui renforcent l'efficacité opérationnelle et celles qui relèvent d'une extension ultérieure.
 
   #figure(
-    image("figures/pyramide_moscow.png", width: 100%),
+    image("../captures/8-figures-memoire/pyramide_moscow.png", width: 100%),
     caption: [Pyramide MoSCoW — Priorisation des besoins fonctionnels de SyneliaQuizApp.],
   )
 
@@ -536,11 +536,11 @@
   #label("ref-archi")
 
   #figure(
-    image("../../../figures_html/captures/to use/Architecture 1 – Acteurs, Frontend Angular & API REST.png", width: 100%),
+    image("../captures/6-architecture/Architecture 1 – Acteurs, Frontend Angular & API REST.png", width: 100%),
     caption: [Architecture 1/2 — acteurs, frontend Angular et API REST Spring Boot.],
   )
   #figure(
-    image("../../../figures_html/captures/to use/Architecture 2 – Services métier, persistance & infrastructure.png", width: 100%),
+    image("../captures/6-architecture/Architecture 2 – Services métier, persistance & infrastructure.png", width: 100%),
     caption: [Architecture 2/2 — services métier, persistance JPA/MySQL et services auxiliaires (SMTP, MinIO, Redis).],
   )
   La solution adopte une architecture web en couches, fondée sur une séparation nette entre l'interface utilisateur, les services métier et la persistance. Le frontend Angular constitue la couche de présentation. Il prend en charge les pages publiques candidat, les tableaux de bord internes, les composants partagés, les services d'appel API et la logique d'interaction propre à chaque profil utilisateur. Le backend Spring Boot joue le rôle de couche applicative centrale : il expose les endpoints, applique les règles métier, contrôle les permissions, orchestre les transitions de pipeline et dialogue avec la base de données.
@@ -583,35 +583,35 @@
   Les figures suivantes présentent le modèle conceptuel de données, décomposé en cinq sous-ensembles pour en faciliter la lecture.
 
   #figure(
-    image("../../../figures_html/captures/to use/MCD 1 – Identité, groupes & permissions.png", width: 100%),
+    image("../captures/2-mcd-domaines/MCD 1 – Identité, groupes & permissions.png", width: 100%),
     caption: [MCD — Identité, groupes & permissions.],
   )
 
   Ce premier sous-ensemble modélise les utilisateurs du système, leurs rôles, les groupes métier auxquels ils appartiennent et les permissions qui leur sont accordées sur les entités. La séparation entre rôle système et permission contextualisée constitue le fondement de la gouvernance des accès.
 
   #figure(
-    image("../../../figures_html/captures/to use/MCD 2 – Campagnes, pipeline & formulaires.png", width: 100%),
+    image("../captures/2-mcd-domaines/MCD 2 – Campagnes, pipeline & formulaires.png", width: 100%),
     caption: [MCD — Campagnes, pipeline & formulaires.],
   )
 
   Ce sous-ensemble décrit le cœur organisationnel du recrutement : la campagne, le pipeline qui structure les étapes, les formulaires et leurs versions successives, ainsi que les questions qui les composent. Le versionnement des formulaires garantit la comparabilité des évaluations dans le temps.
 
   #figure(
-    image("../../../figures_html/captures/to use/MCD 3 – Candidature, avancement & quiz.png", width: 100%),
+    image("../captures/2-mcd-domaines/MCD 3 – Candidature, avancement & quiz.png", width: 100%),
     caption: [MCD — Candidature, avancement & quiz.],
   )
 
   La candidature occupe une place pivot : elle est rattachée à une campagne via un jeton de source, figée sur une version de formulaire, enrichie par les réponses au quiz et suivie par une progression dans le pipeline. Ce sous-ensemble capture le parcours du candidat depuis la soumission jusqu'à l'évaluation.
 
   #figure(
-    image("../../../figures_html/captures/to use/MCD 4 – Entretiens & évaluations.png", width: 100%),
+    image("../captures/2-mcd-domaines/MCD 4 – Entretiens & évaluations.png", width: 100%),
     caption: [MCD — Entretiens & évaluations.],
   )
 
   Ce sous-ensemble modélise la phase d'entretien : planification d'une session, réponse du candidat, évaluations collaboratives produites par les recruteurs. Chaque entretien est rattaché à une candidature et peut donner lieu à plusieurs évaluations détaillées.
 
   #figure(
-    image("../../../figures_html/captures/to use/MCD 5 – Notifications, mails & audit.png", width: 100%),
+    image("../captures/2-mcd-domaines/MCD 5 – Notifications, mails & audit.png", width: 100%),
     caption: [MCD — Notifications, mails & audit.],
   )
 
@@ -623,27 +623,27 @@
   Les figures suivantes présentent le modèle logique de données, décliné selon les mêmes sous-ensembles que le MCD.
 
   #figure(
-    image("../../../figures_html/captures/to use/MLD 1 – Identité, groupes & permissions.png", width: 100%),
+    image("../captures/3-mld-domaines/MLD 1 – Identité, groupes & permissions.png", width: 100%),
     caption: [MLD — Identité, groupes & permissions.],
   )
 
   #figure(
-    image("../../../figures_html/captures/to use/MLD 2 – Campagnes, pipeline & formulaires.png", width: 100%),
+    image("../captures/3-mld-domaines/MLD 2 – Campagnes, pipeline & formulaires.png", width: 100%),
     caption: [MLD — Campagnes, pipeline & formulaires.],
   )
 
   #figure(
-    image("../../../figures_html/captures/to use/MLD 3 – Candidature, avancement & quiz.png", width: 100%),
+    image("../captures/3-mld-domaines/MLD 3 – Candidature, avancement & quiz.png", width: 100%),
     caption: [MLD — Candidature, avancement & quiz.],
   )
 
   #figure(
-    image("../../../figures_html/captures/to use/MLD 4 – Entretiens & évaluations.png", width: 100%),
+    image("../captures/3-mld-domaines/MLD 4 – Entretiens & évaluations.png", width: 100%),
     caption: [MLD — Entretiens & évaluations.],
   )
 
   #figure(
-    image("../../../figures_html/captures/to use/MLD 5 – Notifications, mails & audit.png", width: 100%),
+    image("../captures/3-mld-domaines/MLD 5 – Notifications, mails & audit.png", width: 100%),
     caption: [MLD — Notifications, mails & audit.],
   )
 
@@ -671,27 +671,27 @@
   Les figures suivantes présentent le modèle physique de données, reflet direct du schéma MySQL implémenté.
 
   #figure(
-    image("../../../figures_html/captures/to use/MPD 1 – Identité, groupes & permissions.png", width: 100%),
+    image("../captures/4-mpd-domaines/MPD 1 – Identité, groupes & permissions.png", width: 100%),
     caption: [MPD — Identité, groupes & permissions.],
   )
 
   #figure(
-    image("../../../figures_html/captures/to use/MPD 2 – Campagnes, pipeline & formulaires.png", width: 100%),
+    image("../captures/4-mpd-domaines/MPD 2 – Campagnes, pipeline & formulaires.png", width: 100%),
     caption: [MPD — Campagnes, pipeline & formulaires.],
   )
 
   #figure(
-    image("../../../figures_html/captures/to use/MPD 3 – Candidature, avancement & quiz.png", width: 100%),
+    image("../captures/4-mpd-domaines/MPD 3 – Candidature, avancement & quiz.png", width: 100%),
     caption: [MPD — Candidature, avancement & quiz.],
   )
 
   #figure(
-    image("../../../figures_html/captures/to use/MPD 4 – Entretiens & évaluations.png", width: 100%),
+    image("../captures/4-mpd-domaines/MPD 4 – Entretiens & évaluations.png", width: 100%),
     caption: [MPD — Entretiens & évaluations.],
   )
 
   #figure(
-    image("../../../figures_html/captures/to use/MPD 5 – Notifications, mails & audit.png", width: 100%),
+    image("../captures/4-mpd-domaines/MPD 5 – Notifications, mails & audit.png", width: 100%),
     caption: [MPD — Notifications, mails & audit.],
   )
 
@@ -714,7 +714,7 @@
   Le dictionnaire de données suivant synthétise quelques attributs structurants du noyau métier. Il ne remplace pas un inventaire exhaustif de la base, mais il matérialise les données indispensables à la compréhension du système et au raisonnement de conception.
 
   #figure(
-    image("../../../figures_html/captures/png/dictionnaire_donnees.png", width: 100%),
+    image("../captures/9-annexes/dictionnaire_donnees.png", width: 100%),
     caption: [Dictionnaire de données du noyau métier — attributs structurants des huit entités principales de SyneliaQuizApp.],
   )
   )
@@ -756,12 +756,12 @@
   Les figures suivantes présentent la structure d’accès théorique, décomposée en deux phases du processus de recrutement.
 
   #figure(
-    image("../../../figures_html/captures/to use/SAT 1 – Configuration, candidature, quiz & présélection (T0 → T3).png", width: 100%),
+    image("../captures/5-traitements/SAT 1 – Configuration, candidature, quiz & présélection (T0 → T3).png", width: 100%),
     caption: [SAT — Configuration, candidature, quiz & présélection (T0 → T3).],
   )
 
   #figure(
-    image("../../../figures_html/captures/to use/SAT 2 – Entretien, décision, rollback & audit (T4 → T7).png", width: 100%),
+    image("../captures/5-traitements/SAT 2 – Entretien, décision, rollback & audit (T4 → T7).png", width: 100%),
     caption: [SAT — Entretien, décision, rollback & audit (T4 → T7).],
   )
 
@@ -784,17 +784,17 @@
   Les figures suivantes présentent le modèle conceptuel des traitements, décomposé en trois phases du cycle de recrutement.
 
   #figure(
-    image("../../../figures_html/captures/to use/MCT 1 – Soumettre une candidature & passer le quiz (T1 + T2).png", width: 100%),
+    image("../captures/5-traitements/MCT 1 – Soumettre une candidature & passer le quiz (T1 + T2).png", width: 100%),
     caption: [MCT — Soumettre une candidature & passer le quiz (T1 + T2).],
   )
 
   #figure(
-    image("../../../figures_html/captures/to use/MCT 2 – Conduire le cycle entretien → évaluation (T3).png", width: 100%),
+    image("../captures/5-traitements/MCT 2 – Conduire le cycle entretien → évaluation (T3).png", width: 100%),
     caption: [MCT — Conduire le cycle entretien → évaluation (T3).],
   )
 
   #figure(
-    image("../../../figures_html/captures/to use/MCT 3 – Prononcer une décision, annuler & auditer (T4 + T5 + T6).png", width: 100%),
+    image("../captures/5-traitements/MCT 3 – Prononcer une décision, annuler & auditer (T4 + T5 + T6).png", width: 100%),
     caption: [MCT — Prononcer une décision, annuler & auditer (T4 + T5 + T6).],
   )
 
@@ -853,11 +853,11 @@
   )
 
   #figure(
-    image("../../../figures_html/captures/to use/MPT 1 – Soumettre une candidature & passer le quiz.png", width: 100%),
+    image("../captures/5-traitements/MPT 1 – Soumettre une candidature & passer le quiz.png", width: 100%),
     caption: [MPT 1/2 — Soumettre une candidature (T1) et passer le quiz (T2). Architecture physique : IHM, API, services, JPA, MySQL et services auxiliaires.],
   )
   #figure(
-    image("../../../figures_html/captures/to use/MPT 2 – Planifier un entretien, décider & auditer.png", width: 100%),
+    image("../captures/5-traitements/MPT 2 – Planifier un entretien, décider & auditer.png", width: 100%),
     caption: [MPT 2/2 — Planifier un entretien, évaluer, décider et auditer (T3 + T4). L'audit transverse est journalisé en parallèle sur chaque opération.],
   )
 
@@ -878,7 +878,7 @@
   )
 
   #figure(
-    image("../../../figures_html/captures/to use/MCC – Modèle Conceptuel de Communication.png", width: 100%),
+    image("../captures/5-traitements/MCC – Modèle Conceptuel de Communication.png", width: 100%),
     caption: [MCC — Flux d'information entre acteurs (Candidat, Recruteur, Admin, Super admin), le système SyneliaQuizApp et les services externes (SMTP, MinIO, Redis, MySQL).],
   )
 
@@ -899,19 +899,19 @@
   )
 
   #figure(
-    image("../../../figures_html/captures/to use/Classes UML 1 – Pipeline, Campagnes & Formulaires.png", width: 100%),
+    image("../captures/6-architecture/Classes UML 1 – Pipeline, Campagnes & Formulaires.png", width: 100%),
     caption: [Classes UML 1/4 — Pipeline, Campagnes et Formulaires (9 classes).],
   )
   #figure(
-    image("../../../figures_html/captures/to use/Classes UML 2 – Candidature, Avancement & Quiz.png", width: 100%),
+    image("../captures/6-architecture/Classes UML 2 – Candidature, Avancement & Quiz.png", width: 100%),
     caption: [Classes UML 2/4 — Candidature, Avancement pipeline, Quiz et Décisions (5 classes).],
   )
   #figure(
-    image("../../../figures_html/captures/to use/Classes UML 3 – Entretiens & Évaluations.png", width: 100%),
+    image("../captures/6-architecture/Classes UML 3 – Entretiens & Évaluations.png", width: 100%),
     caption: [Classes UML 3/4 — Entretiens, Participants et Évaluations (7 classes).],
   )
   #figure(
-    image("../../../figures_html/captures/to use/Classes UML 4 – Sécurité, Permissions & Audit.png", width: 100%),
+    image("../captures/6-architecture/Classes UML 4 – Sécurité, Permissions & Audit.png", width: 100%),
     caption: [Classes UML 4/4 — Sécurité, Permissions, Notifications et Audit (7 classes).],
   )
 
@@ -928,7 +928,7 @@
   )
 
   #figure(
-    image("../../../figures_html/captures/to use/Diagrammes de séquence — 1. Soumission d'une candidature publique.png", width: 100%),
+    image("../captures/6-architecture/Diagrammes de séquence — 1. Soumission d'une candidature publique.png", width: 100%),
     caption: [Séquence — soumission d'une candidature publique.],
   )
 
@@ -971,7 +971,7 @@
   L'API suit également des conventions de mise à jour partielles importantes pour la stabilité du projet : certaines valeurs omises ne doivent pas être écrasées, certaines valeurs vides doivent être ignorées, et certains champs calculés ou historisés restent strictement propriétaires du backend.
 
   #figure(
-    image("figures/carte_api_endpoints.png", width: 100%),
+    image("../captures/8-figures-memoire/carte_api_endpoints.png", width: 100%),
     caption: [Carte des endpoints de l'API — Organisation des services REST par domaine fonctionnel.],
   )
 
@@ -1101,7 +1101,7 @@
   Concrètement, un gabarit de pipeline est rattaché à une campagne et décrit une succession typée d'étapes : candidature, quiz, entretien, évaluation, décision.
 
   #figure(
-    image("figures/synoptique_pipeline.png", width: 100%),
+    image("../captures/8-figures-memoire/synoptique_pipeline.png", width: 100%),
     caption: [Synoptique du pipeline de recrutement — Architecture des gabarits, étapes et progression des candidatures.],
   )
 
@@ -1139,7 +1139,7 @@
   Sur le plan des notifications, l'architecture repose sur une logique de publication/souscription inspirée du patron de conception Observateur.
 
   #figure(
-    image("figures/pubsub_notifications.png", width: 100%),
+    image("../captures/8-figures-memoire/pubsub_notifications.png", width: 100%),
     caption: [Architecture de notifications — Modèle Publication/Souscription pour le routage des événements métier.],
   )
 
@@ -1221,7 +1221,7 @@
   Cette stratégie s'organise selon plusieurs niveaux, dans l'esprit de la pyramide des tests et des patterns de validation.
 
   #figure(
-    image("figures/pyramide_tests.png", width: 100%),
+    image("../captures/8-figures-memoire/pyramide_tests.png", width: 100%),
     caption: [Pyramide des tests — Stratégie de validation multi-niveaux de SyneliaQuizApp.],
   )
 
@@ -1288,17 +1288,17 @@
   Les figures suivantes présentent trois écrans représentatifs de l'application livrée : la page d'accueil publique, le tableau de bord de synthèse (overview) et l'écran de gestion des campagnes de recrutement.
 
   #figure(
-    image("../../../figures_html/captures/to use/quizapp - home.png", width: 100%),
+    image("../captures/9-annexes/quizapp - home.png", width: 100%),
     caption: [Page d'accueil publique de SyneliaQuizApp — présentation des campagnes ouvertes, accès au dépôt de candidature et au suivi candidat.],
   )
 
   #figure(
-    image("../../../figures_html/captures/to use/quizapp - dashboard - overview.png", width: 100%),
+    image("../captures/9-annexes/quizapp - dashboard - overview.png", width: 100%),
     caption: [Tableau de bord administrateur / recruteur — synthèse des indicateurs clés, tendances de candidatures, entonnoir de conversion et distribution des évaluations.],
   )
 
   #figure(
-    image("../../../figures_html/captures/to use/quizapp - dashboard - campaigns.png", width: 100%),
+    image("../captures/9-annexes/quizapp - dashboard - campaigns.png", width: 100%),
     caption: [Écran de gestion des campagnes de recrutement — création, configuration, partage d'accès et suivi des campagnes actives.],
   )
 

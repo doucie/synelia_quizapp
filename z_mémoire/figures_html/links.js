@@ -7,6 +7,8 @@
    Persistence: positions are saved to localStorage under the page path,
    so reloading keeps your manual layout. Use "Réinitialiser" to drop it. */
 
+console.log("links.js v7 — new storage key, old data ignored");
+
 (function () {
   // Mode capture (?capture=1) : masque la barre d'outils, supprime les marges
   // du body et réduit l'espace blanc autour de la figure pour les captures PNG.
@@ -30,6 +32,8 @@
   const ZOOM_KEY = "figures_html:zoom:" + location.pathname;
   const ANCHORS_KEY = "figures_html:anchors:" + location.pathname;
   const COLLAPSED_KEY = "figures_html:tb-collapsed:" + location.pathname;
+  const VERSION_KEY = "figures_html:version:" + location.pathname;
+  const VERB_OFFSETS_KEY = "figures_html:verb-offsets:v2:" + location.pathname;
   const GRID = 10;
   const ZOOM_STEP = 0.01;
   const ZOOM_MIN = 0.1;
@@ -41,6 +45,8 @@
   let rafPending = false;
   let zoom = 1;
   let anchorOverrides = {}; // key "i|A" or "i|B" -> "top"/"right"/...
+  let verbOffsets = {};   // key linkIdx -> {x, y} offset from auto midpoint
+  let verbDragState = null; // { linkIdx, canvasX, canvasY, startX, startY }
 
   // ── Geometry ──────────────────────────────────────────────────────────────
   function anchorPoint(rect, side, ratio) {
@@ -65,6 +71,51 @@
     return { from: dy > 0 ? "bottom" : "top", to: dy > 0 ? "top" : "bottom" };
   }
 
+  function orthogonal(a, b, sideA, sideB, waypoint) {
+    const EXT = 30;
+    const exitPt = (pt, side) => {
+      switch (side) {
+        case "top":    return { x: pt.x, y: pt.y - EXT };
+        case "bottom": return { x: pt.x, y: pt.y + EXT };
+        case "left":   return { x: pt.x - EXT, y: pt.y };
+        case "right":  return { x: pt.x + EXT, y: pt.y };
+        default:       return pt;
+      }
+    };
+    const ea = exitPt(a, sideA);
+    const eb = exitPt(b, sideB);
+    const hor = (s) => s === "left" || s === "right";
+    const pts = [{ x: a.x, y: a.y }, ea];
+
+    if (waypoint) {
+      // Route through waypoint with right-angle bends
+      if (hor(sideA)) { pts.push({ x: waypoint.x, y: ea.y }); }
+      else            { pts.push({ x: ea.x, y: waypoint.y }); }
+      pts.push({ x: waypoint.x, y: waypoint.y });
+      if (hor(sideB)) { pts.push({ x: waypoint.x, y: eb.y }); }
+      else            { pts.push({ x: eb.x, y: waypoint.y }); }
+    } else {
+      // Auto-routing
+      if (hor(sideA) === hor(sideB)) {
+        if (hor(sideA)) {
+          const yMid = (a.y + b.y) / 2;
+          pts.push({ x: ea.x, y: yMid }, { x: eb.x, y: yMid });
+        } else {
+          const xMid = (a.x + b.x) / 2;
+          pts.push({ x: xMid, y: ea.y }, { x: xMid, y: eb.y });
+        }
+      } else {
+        pts.push({ x: ea.x, y: eb.y });
+      }
+    }
+
+    pts.push(eb, { x: b.x, y: b.y });
+    const d = pts.map((p, i) => i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`).join(' ');
+    const mid = waypoint || pts[Math.floor(pts.length / 2)];
+    return { d, mid };
+  }
+
+  // Courbes de Bézier (utilisées par défaut, sauf pages domaine mcd-classic)
   function bezier(a, b, sideA, sideB) {
     const dx = b.x - a.x;
     const dy = b.y - a.y;
@@ -80,10 +131,10 @@
     };
     const c1 = handle(sideA, a);
     const c2 = handle(sideB, b);
-    return { d: `M ${a.x} ${a.y} C ${c1.x} ${c1.y}, ${c2.x} ${c2.y}, ${b.x} ${b.y}`, c1, c2 };
+    const mid = bezierMid(a, c1, c2, b);
+    return { d: `M ${a.x} ${a.y} C ${c1.x} ${c1.y}, ${c2.x} ${c2.y}, ${b.x} ${b.y}`, c1, c2, mid };
   }
 
-  // Point milieu d'une courbe de Bézier cubique (t = 0.5)
   function bezierMid(a, c1, c2, b) {
     const t = 0.5;
     const mt = 1 - t;
@@ -188,9 +239,16 @@
     resolved.forEach((r, i) => {
       const a = anchorPoint(r.fr, r.sideA, ratios[i].A);
       const b = anchorPoint(r.tr, r.sideB, ratios[i].B);
-      const curve = bezier(a, b, r.sideA, r.sideB);
+      const isDomain = /[\/](mcd|mld|mpd)_[^/]+\.html/.test(location.pathname);
+      const wp = isDomain ? verbOffsets[r.idx] : null;
+      const curve = isDomain ? orthogonal(a, b, r.sideA, r.sideB, wp) : bezier(a, b, r.sideA, r.sideB);
       const path = document.createElementNS(ns, "path");
       path.setAttribute("d", curve.d);
+      path.setAttribute("data-link-idx", r.idx);
+      // Stocke les ancres pour mise à jour synchrone pendant drag verbes
+      path.setAttribute("data-ax", a.x); path.setAttribute("data-ay", a.y);
+      path.setAttribute("data-bx", b.x); path.setAttribute("data-by", b.y);
+      path.setAttribute("data-sideA", r.sideA); path.setAttribute("data-sideB", r.sideB);
       if (r.link.strong) path.classList.add("strong");
       if (r.link.dashed) path.setAttribute("stroke-dasharray", "5 4");
       // Flèche UML
@@ -235,11 +293,17 @@
 
       // Verbe MCD au milieu de la courbe — ellipse d'association Merise
       if (r.link.verb) {
-        const m = bezierMid(a, curve.c1, curve.c2, b);
+        const m = curve.mid;
         // On estime la taille du texte pour dimensionner l'ellipse
         const charW = 6.5;
         const verbW = Math.max(28, r.link.verb.length * charW + 16);
         const verbH = 22;
+        // Groupe déplaçable (ellipse + texte)
+        const g = document.createElementNS(ns, "g");
+        g.classList.add("verb-group");
+        g.setAttribute("data-link-idx", r.idx);
+        g.style.cursor = editMode ? "grab" : "default";
+        g.style.pointerEvents = "auto";
         // Ellipse opaque pour couper la ligne derrière
         const el = document.createElementNS(ns, "ellipse");
         el.setAttribute("cx", m.x);
@@ -249,7 +313,7 @@
         el.setAttribute("fill", "#fff");
         el.setAttribute("stroke", "#555");
         el.setAttribute("stroke-width", "1");
-        svg.appendChild(el);
+        g.appendChild(el);
         // Texte du verbe
         const vt = document.createElementNS(ns, "text");
         vt.classList.add("verb");
@@ -258,7 +322,8 @@
         vt.setAttribute("text-anchor", "middle");
         vt.setAttribute("dominant-baseline", "central");
         vt.textContent = r.link.verb;
-        svg.appendChild(vt);
+        g.appendChild(vt);
+        svg.appendChild(g);
       }
 
       // Clickable anchor handles (visible only in edit mode via CSS).
@@ -326,6 +391,10 @@
   function loadAnchorOverrides() {
     try { anchorOverrides = JSON.parse(localStorage.getItem(ANCHORS_KEY) || "{}"); }
     catch { anchorOverrides = {}; }
+  }
+  function loadVerbOffsets() {
+    try { verbOffsets = JSON.parse(localStorage.getItem(VERB_OFFSETS_KEY) || "{}"); }
+    catch { verbOffsets = {}; }
   }
   function persistAnchorOverrides() {
     localStorage.setItem(ANCHORS_KEY, JSON.stringify(anchorOverrides));
@@ -416,6 +485,58 @@
     dragState = null;
     persist();
     scheduleRender();
+  }
+
+  // ── Verb bubble drag (global handlers, synchronous DOM updates) ──────────
+  function onVerbPointerDown(e) {
+    if (!editMode) return;
+    const group = e.target.closest(".verb-group");
+    if (!group) return;
+    e.preventDefault(); e.stopPropagation();
+    const canvas = canvasEl();
+    if (!canvas) return;
+    const cr = canvas.getBoundingClientRect();
+    const ellipse = group.querySelector("ellipse");
+    if (!ellipse) return;
+    const cx = parseFloat(ellipse.getAttribute("cx")) || 0;
+    const cy = parseFloat(ellipse.getAttribute("cy")) || 0;
+    const linkIdx = parseInt(group.getAttribute("data-link-idx"), 10);
+    verbDragState = { linkIdx, canvasX: cr.x, canvasY: cr.y, startX: cx, startY: cy, group, ellipse };
+    group.style.cursor = "grabbing";
+  }
+
+  function onVerbPointerMove(e) {
+    if (!verbDragState) return;
+    const dx = (e.clientX - verbDragState.canvasX) / zoom - verbDragState.startX;
+    const dy = (e.clientY - verbDragState.canvasY) / zoom - verbDragState.startY;
+    const nx = verbDragState.startX + dx;
+    const ny = verbDragState.startY + dy;
+    verbOffsets[verbDragState.linkIdx] = { x: nx, y: ny };
+
+    // Mise à jour synchrone du path et de l'ellipse (pas de render async)
+    const path = document.querySelector('svg.links path[data-link-idx="' + verbDragState.linkIdx + '"]');
+    if (path) {
+      const a = { x: parseFloat(path.getAttribute("data-ax")), y: parseFloat(path.getAttribute("data-ay")) };
+      const b = { x: parseFloat(path.getAttribute("data-bx")), y: parseFloat(path.getAttribute("data-by")) };
+      const sa = path.getAttribute("data-sideA");
+      const sb = path.getAttribute("data-sideB");
+      const curve = orthogonal(a, b, sa, sb, { x: nx, y: ny });
+      path.setAttribute("d", curve.d);
+    }
+    // Update ellipse + text position
+    const el = verbDragState.ellipse;
+    el.setAttribute("cx", nx);
+    el.setAttribute("cy", ny);
+    const text = verbDragState.group.querySelector("text.verb");
+    if (text) { text.setAttribute("x", nx); text.setAttribute("y", ny); }
+  }
+
+  function onVerbPointerUp() {
+    if (!verbDragState) return;
+    verbDragState.group.style.cursor = editMode ? "grab" : "default";
+    verbDragState = null;
+    localStorage.setItem(VERB_OFFSETS_KEY, JSON.stringify(verbOffsets));
+    scheduleRender(); // un seul render final propre
   }
 
   // ── Canvas size + zoom + fullscreen ───────────────────────────────────────
@@ -705,6 +826,14 @@
       <button type="button" id="tb-export-html">Copier styles HTML</button>
       <button type="button" id="tb-export-svg">Exporter SVG</button>
       <button type="button" id="tb-reset" class="danger">Réinitialiser</button>
+      <span class="tb-sep"></span>
+      <label class="tb-toggle" id="tb-version-group" title="Style de la figure" style="display:none">
+        <span>Style</span>
+        <select id="tb-version">
+          <option value="classic">Classique</option>
+          <option value="moderne">Moderne</option>
+        </select>
+      </label>
       <span class="tb-status" id="tb-status"></span>
       </div>
     `;
@@ -720,6 +849,29 @@
     };
     collapseBtn.addEventListener("click", () => setCollapsed(!bar.classList.contains("collapsed")));
     setCollapsed(localStorage.getItem(COLLAPSED_KEY) === "1");
+
+    // — Version selector (only on domain MCD/MLD/MPD pages) —
+    const versionGroup = bar.querySelector("#tb-version-group");
+    const versionSelect = bar.querySelector("#tb-version");
+    const isDomain = document.body.classList.contains("mcd-classic");
+    if (isDomain && versionGroup && versionSelect) {
+      versionGroup.style.display = "";
+      const savedVersion = localStorage.getItem(VERSION_KEY) || "classic";
+      const applyVersion = (v) => {
+        if (v === "moderne") {
+          document.body.classList.remove("mcd-classic");
+        } else {
+          document.body.classList.add("mcd-classic");
+        }
+        versionSelect.value = v;
+        localStorage.setItem(VERSION_KEY, v);
+        scheduleRender();
+      };
+      versionSelect.addEventListener("change", (e) => applyVersion(e.target.value));
+      applyVersion(savedVersion);
+    } else if (versionGroup) {
+      versionGroup.style.display = "none";
+    }
 
     const status = bar.querySelector("#tb-status");
     const flash = (msg) => {
@@ -792,6 +944,8 @@
       localStorage.removeItem(ZOOM_KEY);
       localStorage.removeItem(ANCHORS_KEY);
       localStorage.removeItem(COLLAPSED_KEY);
+      localStorage.removeItem(VERSION_KEY);
+      localStorage.removeItem(VERB_OFFSETS_KEY);
       location.reload();
     });
 
@@ -826,11 +980,16 @@
     applySavedSize();
     applySavedPositions();
     loadAnchorOverrides();
+    loadVerbOffsets();
     buildToolbar();
     applySavedZoom();
     canvas.addEventListener("pointerdown", onPointerDown);
     window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
+    // Verb bubble drag — global handlers (no per-render closures)
+    document.addEventListener("pointerdown", onVerbPointerDown);
+    document.addEventListener("pointermove", onVerbPointerMove);
+    document.addEventListener("pointerup", onVerbPointerUp);
     render();
     window.addEventListener("resize", scheduleRender);
     if (/[?&]capture=1\b/.test(location.search)) {

@@ -1,4 +1,4 @@
-#let palette = (
+﻿#let palette = (
   ink: rgb("#1a202c"),
   muted: rgb("#4a5568"),
   primary: rgb("#1a365d"),
@@ -222,17 +222,17 @@
       gutter: 1em,
       [
         #align(left)[
-          #image("../../figures_html/captures/to use/logo-ensit.png", height: 1.6cm)
+          #image("captures/9-annexes/logo-ensit.png", height: 1.6cm)
         ]
       ],
       [
         #align(center)[
-          #image("../../figures_html/captures/to use/logo-ministère-education.png", height: 5.0cm)
+          #image("captures/9-annexes/logo-ministère-education.png", height: 5.0cm)
         ]
       ],
       [
         #align(right)[
-          #image("../../figures_html/captures/to use/logo-synelia.png", height: 1.3cm)
+          #image("captures/9-annexes/logo-synelia.png", height: 1.3cm)
         ]
       ],
     )
