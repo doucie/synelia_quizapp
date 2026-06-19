@@ -7,7 +7,7 @@
    Persistence: positions are saved to localStorage under the page path,
    so reloading keeps your manual layout. Use "Réinitialiser" to drop it. */
 
-console.log("links.js v7 — new storage key, old data ignored");
+console.log("links.js v11 — control point drag, verb auto-follows");
 
 (function () {
   // Mode capture (?capture=1) : masque la barre d'outils, supprime les marges
@@ -45,8 +45,8 @@ console.log("links.js v7 — new storage key, old data ignored");
   let rafPending = false;
   let zoom = 1;
   let anchorOverrides = {}; // key "i|A" or "i|B" -> "top"/"right"/...
-  let verbOffsets = {};   // key linkIdx -> {x, y} offset from auto midpoint
-  let verbDragState = null; // { linkIdx, canvasX, canvasY, startX, startY }
+  let verbOffsets = {};   // key linkIdx -> {dx, dy} relatif, ajusté via point de contrôle
+  let ctrlDragState = null; // { linkIdx, canvasX, canvasY, startX, startY }
 
   // ── Geometry ──────────────────────────────────────────────────────────────
   function anchorPoint(rect, side, ratio) {
@@ -84,16 +84,26 @@ console.log("links.js v7 — new storage key, old data ignored");
     };
     const ea = exitPt(a, sideA);
     const eb = exitPt(b, sideB);
+    const autoMid = { x: (ea.x + eb.x) / 2, y: (ea.y + eb.y) / 2 };
+    // waypoint peut être absolu {x,y} ou relatif {dx,dy}
+    let wpAbs = null;
+    if (waypoint) {
+      if (waypoint.dx !== undefined) {
+        wpAbs = { x: autoMid.x + waypoint.dx, y: autoMid.y + waypoint.dy };
+      } else {
+        wpAbs = waypoint;
+      }
+    }
     const hor = (s) => s === "left" || s === "right";
     const pts = [{ x: a.x, y: a.y }, ea];
 
-    if (waypoint) {
+    if (wpAbs) {
       // Route through waypoint with right-angle bends
-      if (hor(sideA)) { pts.push({ x: waypoint.x, y: ea.y }); }
-      else            { pts.push({ x: ea.x, y: waypoint.y }); }
-      pts.push({ x: waypoint.x, y: waypoint.y });
-      if (hor(sideB)) { pts.push({ x: waypoint.x, y: eb.y }); }
-      else            { pts.push({ x: eb.x, y: waypoint.y }); }
+      if (hor(sideA)) { pts.push({ x: wpAbs.x, y: ea.y }); }
+      else            { pts.push({ x: ea.x, y: wpAbs.y }); }
+      pts.push({ x: wpAbs.x, y: wpAbs.y });
+      if (hor(sideB)) { pts.push({ x: wpAbs.x, y: eb.y }); }
+      else            { pts.push({ x: eb.x, y: wpAbs.y }); }
     } else {
       // Auto-routing
       if (hor(sideA) === hor(sideB)) {
@@ -111,7 +121,8 @@ console.log("links.js v7 — new storage key, old data ignored");
 
     pts.push(eb, { x: b.x, y: b.y });
     const d = pts.map((p, i) => i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`).join(' ');
-    const mid = waypoint || pts[Math.floor(pts.length / 2)];
+    // Milieu entre les deux points de sortie (centré entre les entités)
+    const mid = wpAbs || autoMid;
     return { d, mid };
   }
 
@@ -291,39 +302,73 @@ console.log("links.js v7 — new storage key, old data ignored");
       placeLabel(a, r.sideA, r.link.cardFrom || r.link.card);
       placeLabel(b, r.sideB, r.link.cardTo);
 
-      // Verbe MCD au milieu de la courbe — ellipse d'association Merise
+      // Verbe MCD — ellipse d'association Merise (non déplaçable)
       if (r.link.verb) {
-        const m = curve.mid;
-        // On estime la taille du texte pour dimensionner l'ellipse
-        const charW = 6.5;
-        const verbW = Math.max(28, r.link.verb.length * charW + 16);
+        const m = curve.mid; // position du point de contrôle
+        // Position de la bulle = centrée sur le segment d'intersection
+        let vx = m.x, vy = m.y;
+        if (isDomain) {
+          const sideHor = (s) => s === "left" || s === "right";
+          if (sideHor(r.sideA) === sideHor(r.sideB)) {
+            if (sideHor(r.sideA)) {
+              // Intersection verticale → bulle au milieu du 1er segment vertical
+              const eaY = r.sideA==="top"?a.y-30:r.sideA==="bottom"?a.y+30:a.y;
+              const ebY = r.sideB==="top"?b.y-30:r.sideB==="bottom"?b.y+30:b.y;
+              const yMid = (eaY + ebY) / 2;
+              vx = m.x;
+              vy = (eaY + yMid) / 2;
+            } else {
+              // Intersection horizontale → bulle au milieu du 1er segment horizontal
+              const eaX = r.sideA==="left"?a.x-30:r.sideA==="right"?a.x+30:a.x;
+              const ebX = r.sideB==="left"?b.x-30:r.sideB==="right"?b.x+30:b.x;
+              const xMid = (eaX + ebX) / 2;
+              vx = (eaX + xMid) / 2;
+              vy = m.y;
+            }
+          }
+        }
+        const verbW = Math.max(28, r.link.verb.length * 6.5 + 16);
         const verbH = 22;
-        // Groupe déplaçable (ellipse + texte)
         const g = document.createElementNS(ns, "g");
         g.classList.add("verb-group");
         g.setAttribute("data-link-idx", r.idx);
-        g.style.cursor = editMode ? "grab" : "default";
-        g.style.pointerEvents = "auto";
-        // Ellipse opaque pour couper la ligne derrière
         const el = document.createElementNS(ns, "ellipse");
-        el.setAttribute("cx", m.x);
-        el.setAttribute("cy", m.y);
+        el.setAttribute("cx", vx);
+        el.setAttribute("cy", vy);
         el.setAttribute("rx", verbW / 2);
         el.setAttribute("ry", verbH / 2);
         el.setAttribute("fill", "#fff");
         el.setAttribute("stroke", "#555");
         el.setAttribute("stroke-width", "1");
         g.appendChild(el);
-        // Texte du verbe
         const vt = document.createElementNS(ns, "text");
         vt.classList.add("verb");
-        vt.setAttribute("x", m.x);
-        vt.setAttribute("y", m.y);
+        vt.setAttribute("x", vx);
+        vt.setAttribute("y", vy);
         vt.setAttribute("text-anchor", "middle");
         vt.setAttribute("dominant-baseline", "central");
         vt.textContent = r.link.verb;
         g.appendChild(vt);
         svg.appendChild(g);
+
+        // Point de contrôle (▪) pour ajuster le routage — draggable en mode édition
+        if (isDomain) {
+          const ctrl = document.createElementNS(ns, "rect");
+          ctrl.classList.add("ctrl-handle");
+          ctrl.setAttribute("data-link-idx", r.idx);
+          ctrl.setAttribute("x", m.x - 6);
+          ctrl.setAttribute("y", m.y - 6);
+          ctrl.setAttribute("width", "12");
+          ctrl.setAttribute("height", "12");
+          ctrl.setAttribute("rx", "2");
+          ctrl.setAttribute("fill", "var(--primary, #4f46e5)");
+          ctrl.setAttribute("stroke", "#fff");
+          ctrl.setAttribute("stroke-width", "2");
+          ctrl.setAttribute("cx", m.x); // pour lecture rapide
+          ctrl.setAttribute("cy", m.y);
+          ctrl.style.pointerEvents = "auto";
+          svg.appendChild(ctrl);
+        }
       }
 
       // Clickable anchor handles (visible only in edit mode via CSS).
@@ -393,8 +438,11 @@ console.log("links.js v7 — new storage key, old data ignored");
     catch { anchorOverrides = {}; }
   }
   function loadVerbOffsets() {
-    try { verbOffsets = JSON.parse(localStorage.getItem(VERB_OFFSETS_KEY) || "{}"); }
-    catch { verbOffsets = {}; }
+    try {
+      const raw = JSON.parse(localStorage.getItem(VERB_OFFSETS_KEY) || "{}");
+      // Migrate old absolute {x,y} to relative {dx,dy} — will be fixed on first render
+      verbOffsets = raw;
+    } catch { verbOffsets = {}; }
   }
   function persistAnchorOverrides() {
     localStorage.setItem(ANCHORS_KEY, JSON.stringify(anchorOverrides));
@@ -487,56 +535,110 @@ console.log("links.js v7 — new storage key, old data ignored");
     scheduleRender();
   }
 
-  // ── Verb bubble drag (global handlers, synchronous DOM updates) ──────────
-  function onVerbPointerDown(e) {
+  // ── Control-point drag (intersection bend handle) ─────────────────────────
+  function onCtrlPointerDown(e) {
     if (!editMode) return;
-    const group = e.target.closest(".verb-group");
-    if (!group) return;
+    const handle = e.target.closest(".ctrl-handle");
+    if (!handle) return;
     e.preventDefault(); e.stopPropagation();
     const canvas = canvasEl();
     if (!canvas) return;
     const cr = canvas.getBoundingClientRect();
-    const ellipse = group.querySelector("ellipse");
-    if (!ellipse) return;
-    const cx = parseFloat(ellipse.getAttribute("cx")) || 0;
-    const cy = parseFloat(ellipse.getAttribute("cy")) || 0;
-    const linkIdx = parseInt(group.getAttribute("data-link-idx"), 10);
-    verbDragState = { linkIdx, canvasX: cr.x, canvasY: cr.y, startX: cx, startY: cy, group, ellipse };
-    group.style.cursor = "grabbing";
+    const linkIdx = parseInt(handle.getAttribute("data-link-idx"), 10);
+    const cx = parseFloat(handle.getAttribute("cx")) || 0;
+    const cy = parseFloat(handle.getAttribute("cy")) || 0;
+    ctrlDragState = { linkIdx, canvasX: cr.x, canvasY: cr.y, startX: cx, startY: cy };
+    handle.style.cursor = "grabbing";
   }
 
-  function onVerbPointerMove(e) {
-    if (!verbDragState) return;
-    const dx = (e.clientX - verbDragState.canvasX) / zoom - verbDragState.startX;
-    const dy = (e.clientY - verbDragState.canvasY) / zoom - verbDragState.startY;
-    const nx = verbDragState.startX + dx;
-    const ny = verbDragState.startY + dy;
-    verbOffsets[verbDragState.linkIdx] = { x: nx, y: ny };
+  function onCtrlPointerMove(e) {
+    if (!ctrlDragState) return;
+    const path = document.querySelector('svg.links path[data-link-idx="' + ctrlDragState.linkIdx + '"]');
+    if (!path) return;
+    const a = { x: parseFloat(path.getAttribute("data-ax")), y: parseFloat(path.getAttribute("data-ay")) };
+    const b = { x: parseFloat(path.getAttribute("data-bx")), y: parseFloat(path.getAttribute("data-by")) };
+    const sa = path.getAttribute("data-sideA");
+    const sb = path.getAttribute("data-sideB");
+    const hor = (s) => s === "left" || s === "right";
 
-    // Mise à jour synchrone du path et de l'ellipse (pas de render async)
-    const path = document.querySelector('svg.links path[data-link-idx="' + verbDragState.linkIdx + '"]');
+    const dx = (e.clientX - ctrlDragState.canvasX) / zoom - ctrlDragState.startX;
+    const dy = (e.clientY - ctrlDragState.canvasY) / zoom - ctrlDragState.startY;
+    let nx = ctrlDragState.startX + dx;
+    let ny = ctrlDragState.startY + dy;
+
+    // Contraindre au segment d'intersection
+    if (hor(sa) === hor(sb)) {
+      if (hor(sa)) {
+        // Deux lignes horizontales → intersection verticale → déplacement horizontal uniquement
+        ny = ctrlDragState.startY;
+      } else {
+        // Deux lignes verticales → intersection horizontale → déplacement vertical uniquement
+        nx = ctrlDragState.startX;
+      }
+    }
+
+    const curve = orthogonal(a, b, sa, sb, { x: nx, y: ny });
+    path.setAttribute("d", curve.d);
+
+    // Position de la bulle = centrée sur le segment d'intersection
+    let vx, vy;
+    if (hor(sa) === hor(sb)) {
+      if (hor(sa)) {
+        // Intersection verticale : bulle au milieu du segment vertical
+        const EXT=30;
+        const eaY = sa==="top"?a.y-EXT:sa==="bottom"?a.y+EXT:a.y;
+        const ebY = sb==="top"?b.y-EXT:sb==="bottom"?b.y+EXT:b.y;
+        const yMid = (eaY + ebY) / 2;
+        // Segment vertical entre (nx, min(eaY,yMid)) et (nx, max(eaY,yMid))
+        vx = nx;
+        vy = (eaY + yMid) / 2;
+      } else {
+        // Intersection horizontale : bulle au milieu du segment horizontal
+        const EXT=30;
+        const eaX = sa==="left"?a.x-EXT:sa==="right"?a.x+EXT:a.x;
+        const ebX = sb==="left"?b.x-EXT:sb==="right"?b.x+EXT:b.x;
+        const xMid = (eaX + ebX) / 2;
+        vx = (eaX + xMid) / 2;
+        vy = ny;
+      }
+    } else {
+      // Perpendiculaire : bulle au centre entre les deux sorties
+      vx = nx;
+      vy = ny;
+    }
+
+    // Update control handle
+    const ctrl = document.querySelector('.ctrl-handle[data-link-idx="' + ctrlDragState.linkIdx + '"]');
+    if (ctrl) { ctrl.setAttribute("cx", nx); ctrl.setAttribute("cy", ny); ctrl.setAttribute("x", nx-6); ctrl.setAttribute("y", ny-6); }
+    // Update verb position (reste centrée sur le segment)
+    const verbGroup = document.querySelector('.verb-group[data-link-idx="' + ctrlDragState.linkIdx + '"]');
+    if (verbGroup) {
+      const el2 = verbGroup.querySelector("ellipse");
+      const vt2 = verbGroup.querySelector("text.verb");
+      if (el2) { el2.setAttribute("cx", vx); el2.setAttribute("cy", vy); }
+      if (vt2) { vt2.setAttribute("x", vx); vt2.setAttribute("y", vy); }
+    }
+  }
+
+  function onCtrlPointerUp() {
+    if (!ctrlDragState) return;
+    // Save as relative offset
+    const path = document.querySelector('svg.links path[data-link-idx="' + ctrlDragState.linkIdx + '"]');
     if (path) {
       const a = { x: parseFloat(path.getAttribute("data-ax")), y: parseFloat(path.getAttribute("data-ay")) };
       const b = { x: parseFloat(path.getAttribute("data-bx")), y: parseFloat(path.getAttribute("data-by")) };
       const sa = path.getAttribute("data-sideA");
       const sb = path.getAttribute("data-sideB");
-      const curve = orthogonal(a, b, sa, sb, { x: nx, y: ny });
-      path.setAttribute("d", curve.d);
+      const ea = (() => { const EXT=30; switch(sa){case"top":return{x:a.x,y:a.y-EXT};case"bottom":return{x:a.x,y:a.y+EXT};case"left":return{x:a.x-EXT,y:a.y};case"right":return{x:a.x+EXT,y:a.y};default:return a;} })();
+      const eb = (() => { const EXT=30; switch(sb){case"top":return{x:b.x,y:b.y-EXT};case"bottom":return{x:b.x,y:b.y+EXT};case"left":return{x:b.x-EXT,y:b.y};case"right":return{x:b.x+EXT,y:b.y};default:return b;} })();
+      const autoMid = { x: (ea.x + eb.x) / 2, y: (ea.y + eb.y) / 2 };
+      const curX = parseFloat(document.querySelector('.ctrl-handle[data-link-idx="' + ctrlDragState.linkIdx + '"]')?.getAttribute("cx")) || autoMid.x;
+      const curY = parseFloat(document.querySelector('.ctrl-handle[data-link-idx="' + ctrlDragState.linkIdx + '"]')?.getAttribute("cy")) || autoMid.y;
+      verbOffsets[ctrlDragState.linkIdx] = { dx: curX - autoMid.x, dy: curY - autoMid.y };
     }
-    // Update ellipse + text position
-    const el = verbDragState.ellipse;
-    el.setAttribute("cx", nx);
-    el.setAttribute("cy", ny);
-    const text = verbDragState.group.querySelector("text.verb");
-    if (text) { text.setAttribute("x", nx); text.setAttribute("y", ny); }
-  }
-
-  function onVerbPointerUp() {
-    if (!verbDragState) return;
-    verbDragState.group.style.cursor = editMode ? "grab" : "default";
-    verbDragState = null;
+    ctrlDragState = null;
     localStorage.setItem(VERB_OFFSETS_KEY, JSON.stringify(verbOffsets));
-    scheduleRender(); // un seul render final propre
+    scheduleRender();
   }
 
   // ── Canvas size + zoom + fullscreen ───────────────────────────────────────
@@ -725,6 +827,42 @@ console.log("links.js v7 — new storage key, old data ignored");
     scheduleRender();
   }
 
+  // Auto-zoom pour que le canvas tienne sans scroll au chargement
+  function autoSizeCanvas() {
+    const c = canvasEl();
+    if (!c) return;
+    // Ne pas toucher si l'utilisateur a déjà zoomé ou redimensionné
+    if (localStorage.getItem(ZOOM_KEY)) return;
+    if (localStorage.getItem(SIZE_KEY)) return;
+    // Seulement pour les petits canvases (figures domaine)
+    if (c.offsetWidth > 1200) return;
+    // Calcule la bbox du contenu et ajuste le zoom pour que tout tienne
+    const cr = c.getBoundingClientRect();
+    let minX = 0, minY = 0, maxX = cr.width, maxY = cr.height;
+    c.querySelectorAll("[data-entity]").forEach((el) => {
+      const r = el.getBoundingClientRect();
+      const x = r.x - cr.x, y = r.y - cr.y;
+      if (x < minX) minX = x;
+      if (y < minY) minY = y;
+      if (x + r.width  > maxX) maxX = x + r.width;
+      if (y + r.height > maxY) maxY = y + r.height;
+    });
+    const svg = c.querySelector("svg.links");
+    if (svg) {
+      svg.querySelectorAll("path, text, rect, ellipse").forEach((node) => {
+        try { const b = node.getBBox(); if (b.x < minX) minX = b.x; if (b.y < minY) minY = b.y; if (b.x + b.width > maxX) maxX = b.x + b.width; if (b.y + b.height > maxY) maxY = b.y + b.height; } catch (_) {}
+      });
+    }
+    const contentW = maxX - minX + 32;
+    const contentH = maxY - minY + 32;
+    const vp = c.parentElement;
+    if (!vp || contentW <= 0 || contentH <= 0) return;
+    const availW = Math.max(100, vp.clientWidth  - 16);
+    const availH = Math.max(100, vp.clientHeight - 16);
+    const z = Math.min(availW / contentW, availH / contentH, 1); // ne dépasse pas 100%
+    if (z < 1 && z > 0.7) setZoom(Math.max(ZOOM_MIN, z)); // seulement si pas trop petit
+  }
+
   function fitToContent() {
     const c = canvasEl();
     const vp = c && c.parentElement;
@@ -834,7 +972,7 @@ console.log("links.js v7 — new storage key, old data ignored");
           <option value="moderne">Moderne</option>
         </select>
       </label>
-      <span class="tb-status" id="tb-status"></span>
+      <span class="tb-status" id="tb-status">v11</span>
       </div>
     `;
     (figureEl() || document.body).appendChild(bar);
@@ -983,14 +1121,16 @@ console.log("links.js v7 — new storage key, old data ignored");
     loadVerbOffsets();
     buildToolbar();
     applySavedZoom();
+    render();
+    // Auto-size canvas to fit content (évite le scroll sur les figures domaine)
+    requestAnimationFrame(() => requestAnimationFrame(autoSizeCanvas));
     canvas.addEventListener("pointerdown", onPointerDown);
     window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
-    // Verb bubble drag — global handlers (no per-render closures)
-    document.addEventListener("pointerdown", onVerbPointerDown);
-    document.addEventListener("pointermove", onVerbPointerMove);
-    document.addEventListener("pointerup", onVerbPointerUp);
-    render();
+    // Control-point drag (intersection routing)
+    document.addEventListener("pointerdown", onCtrlPointerDown);
+    document.addEventListener("pointermove", onCtrlPointerMove);
+    document.addEventListener("pointerup", onCtrlPointerUp);
     window.addEventListener("resize", scheduleRender);
     if (/[?&]capture=1\b/.test(location.search)) {
       // Marqueur "JS a tourné", remplacé par BBOX:WxH si autoFitCapture réussit.

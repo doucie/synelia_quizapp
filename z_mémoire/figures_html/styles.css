@@ -361,6 +361,27 @@ body.edit-mode .canvas svg.anchor-handles .anchor-handle:hover {
   r: 9;
 }
 
+/* ── Control point handle (intersection routing) ────────────── */
+.canvas svg.links .ctrl-handle {
+  fill: var(--primary);
+  fill-opacity: 0;
+  stroke: var(--primary);
+  stroke-opacity: 0;
+  stroke-width: 2;
+  pointer-events: none;
+  transition: fill-opacity 0.15s, stroke-opacity 0.15s;
+}
+body.edit-mode .canvas svg.links .ctrl-handle {
+  fill-opacity: 0.85;
+  stroke-opacity: 1;
+  pointer-events: all;
+  cursor: grab;
+}
+body.edit-mode .canvas svg.links .ctrl-handle:hover {
+  fill: var(--warn);
+  stroke: var(--warn);
+}
+
 /* ── MCD relation diamond (associations) ────────────────────── */
 
 .assoc {
