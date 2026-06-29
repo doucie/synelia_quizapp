@@ -84,17 +84,20 @@ console.log("links.js v11 — control point drag, verb auto-follows");
     };
     const ea = exitPt(a, sideA);
     const eb = exitPt(b, sideB);
-    const autoMid = { x: (ea.x + eb.x) / 2, y: (ea.y + eb.y) / 2 };
+    const hor = (s) => s === "left" || s === "right";
+    // point de référence = coude par défaut (sans waypoint)
+    const ref = hor(sideA) === hor(sideB)
+      ? (hor(sideA) ? { x: eb.x, y: ea.y } : { x: ea.x, y: eb.y })
+      : { x: ea.x, y: eb.y };
     // waypoint peut être absolu {x,y} ou relatif {dx,dy}
     let wpAbs = null;
     if (waypoint) {
       if (waypoint.dx !== undefined) {
-        wpAbs = { x: autoMid.x + waypoint.dx, y: autoMid.y + waypoint.dy };
+        wpAbs = { x: ref.x + waypoint.dx, y: ref.y + waypoint.dy };
       } else {
         wpAbs = waypoint;
       }
     }
-    const hor = (s) => s === "left" || s === "right";
     const pts = [{ x: a.x, y: a.y }, ea];
 
     if (wpAbs) {
@@ -105,24 +108,37 @@ console.log("links.js v11 — control point drag, verb auto-follows");
       if (hor(sideB)) { pts.push({ x: wpAbs.x, y: eb.y }); }
       else            { pts.push({ x: eb.x, y: wpAbs.y }); }
     } else {
-      // Auto-routing
+      // Auto-routing — 1 seul coude, jamais plus
       if (hor(sideA) === hor(sideB)) {
         if (hor(sideA)) {
-          const yMid = (a.y + b.y) / 2;
-          pts.push({ x: ea.x, y: yMid }, { x: eb.x, y: yMid });
+          // Deux horizontaux → horizontal puis vertical
+          pts.push({ x: eb.x, y: ea.y });
         } else {
-          const xMid = (a.x + b.x) / 2;
-          pts.push({ x: xMid, y: ea.y }, { x: xMid, y: eb.y });
+          // Deux verticaux → vertical puis horizontal
+          pts.push({ x: ea.x, y: eb.y });
         }
       } else {
+        // Côtés opposés → coude à l'intersection
         pts.push({ x: ea.x, y: eb.y });
       }
     }
 
     pts.push(eb, { x: b.x, y: b.y });
     const d = pts.map((p, i) => i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`).join(' ');
-    // mid = point de contrôle (croisement)
-    const mid = wpAbs || autoMid;
+    // mid = point de contrôle — milieu du plus long segment (centré visuellement)
+    let mid;
+    if (wpAbs) {
+      mid = wpAbs;
+    } else {
+      // pts[1]=ea, pts[2]=coude, pts[3]=eb (si 1 coude)
+      const seg1 = Math.hypot(pts[2].x - ea.x, pts[2].y - ea.y);
+      const seg2 = Math.hypot(eb.x - pts[2].x, eb.y - pts[2].y);
+      if (seg1 >= seg2) {
+        mid = { x: (ea.x + pts[2].x) / 2, y: (ea.y + pts[2].y) / 2 };
+      } else {
+        mid = { x: (pts[2].x + eb.x) / 2, y: (pts[2].y + eb.y) / 2 };
+      }
+    }
     // verbMid = centre du 1er segment de transition (ea → pts[2])
     const verbMid = { x: (ea.x + pts[2].x) / 2, y: (ea.y + pts[2].y) / 2 };
     return { d, mid, verbMid };
@@ -506,8 +522,10 @@ console.log("links.js v11 — control point drag, verb auto-follows");
         const EXT=30;
         const ea2 = (()=>{switch(sa){case"top":return{x:a.x,y:a.y-EXT};case"bottom":return{x:a.x,y:a.y+EXT};case"left":return{x:a.x-EXT,y:a.y};case"right":return{x:a.x+EXT,y:a.y};default:return a;}})();
         const eb2 = (()=>{switch(sb){case"top":return{x:b.x,y:b.y-EXT};case"bottom":return{x:b.x,y:b.y+EXT};case"left":return{x:b.x-EXT,y:b.y};case"right":return{x:b.x+EXT,y:b.y};default:return b;}})();
-        const autoMid = {x:(ea2.x+eb2.x)/2, y:(ea2.y+eb2.y)/2};
-        if (verbOffsets[idx].dx !== undefined) wp = {x:autoMid.x+verbOffsets[idx].dx, y:autoMid.y+verbOffsets[idx].dy};
+        const ref2 = hor(sa) === hor(sb)
+          ? (hor(sa) ? { x: eb2.x, y: ea2.y } : { x: ea2.x, y: eb2.y })
+          : { x: ea2.x, y: eb2.y };
+        if (verbOffsets[idx].dx !== undefined) wp = {x:ref2.x+verbOffsets[idx].dx, y:ref2.y+verbOffsets[idx].dy};
         else wp = verbOffsets[idx];
       }
       const curve = orthogonal(a, b, sa, sb, wp);
@@ -673,10 +691,13 @@ console.log("links.js v11 — control point drag, verb auto-follows");
       const sb = path.getAttribute("data-sideB");
       const ea = (() => { const EXT=30; switch(sa){case"top":return{x:a.x,y:a.y-EXT};case"bottom":return{x:a.x,y:a.y+EXT};case"left":return{x:a.x-EXT,y:a.y};case"right":return{x:a.x+EXT,y:a.y};default:return a;} })();
       const eb = (() => { const EXT=30; switch(sb){case"top":return{x:b.x,y:b.y-EXT};case"bottom":return{x:b.x,y:b.y+EXT};case"left":return{x:b.x-EXT,y:b.y};case"right":return{x:b.x+EXT,y:b.y};default:return b;} })();
-      const autoMid = { x: (ea.x + eb.x) / 2, y: (ea.y + eb.y) / 2 };
-      const curX = parseFloat(document.querySelector('.ctrl-handle[data-link-idx="' + ctrlDragState.linkIdx + '"]')?.getAttribute("cx")) || autoMid.x;
-      const curY = parseFloat(document.querySelector('.ctrl-handle[data-link-idx="' + ctrlDragState.linkIdx + '"]')?.getAttribute("cy")) || autoMid.y;
-      verbOffsets[ctrlDragState.linkIdx] = { dx: curX - autoMid.x, dy: curY - autoMid.y };
+      const hor = (s) => s === "left" || s === "right";
+      const ref = hor(sa) === hor(sb)
+        ? (hor(sa) ? { x: eb.x, y: ea.y } : { x: ea.x, y: eb.y })
+        : { x: ea.x, y: eb.y };
+      const curX = parseFloat(document.querySelector('.ctrl-handle[data-link-idx="' + ctrlDragState.linkIdx + '"]')?.getAttribute("cx")) || ref.x;
+      const curY = parseFloat(document.querySelector('.ctrl-handle[data-link-idx="' + ctrlDragState.linkIdx + '"]')?.getAttribute("cy")) || ref.y;
+      verbOffsets[ctrlDragState.linkIdx] = { dx: curX - ref.x, dy: curY - ref.y };
     }
     ctrlDragState = null;
     localStorage.setItem(VERB_OFFSETS_KEY, JSON.stringify(verbOffsets));
