@@ -121,9 +121,11 @@ console.log("links.js v11 — control point drag, verb auto-follows");
 
     pts.push(eb, { x: b.x, y: b.y });
     const d = pts.map((p, i) => i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`).join(' ');
-    // Milieu entre les deux points de sortie (centré entre les entités)
+    // mid = point de contrôle (croisement)
     const mid = wpAbs || autoMid;
-    return { d, mid };
+    // verbMid = centre du 1er segment de transition (ea → pts[2])
+    const verbMid = { x: (ea.x + pts[2].x) / 2, y: (ea.y + pts[2].y) / 2 };
+    return { d, mid, verbMid };
   }
 
   // Courbes de Bézier (utilisées par défaut, sauf pages domaine mcd-classic)
@@ -304,37 +306,15 @@ console.log("links.js v11 — control point drag, verb auto-follows");
 
       // Verbe MCD — ellipse d'association Merise (non déplaçable)
       if (r.link.verb) {
-        const m = curve.mid; // position du point de contrôle
-        // Position de la bulle = centrée sur le segment d'intersection
-        let vx = m.x, vy = m.y;
-        if (isDomain) {
-          const sideHor = (s) => s === "left" || s === "right";
-          if (sideHor(r.sideA) === sideHor(r.sideB)) {
-            if (sideHor(r.sideA)) {
-              // Intersection verticale → bulle au milieu du 1er segment vertical
-              const eaY = r.sideA==="top"?a.y-30:r.sideA==="bottom"?a.y+30:a.y;
-              const ebY = r.sideB==="top"?b.y-30:r.sideB==="bottom"?b.y+30:b.y;
-              const yMid = (eaY + ebY) / 2;
-              vx = m.x;
-              vy = (eaY + yMid) / 2;
-            } else {
-              // Intersection horizontale → bulle au milieu du 1er segment horizontal
-              const eaX = r.sideA==="left"?a.x-30:r.sideA==="right"?a.x+30:a.x;
-              const ebX = r.sideB==="left"?b.x-30:r.sideB==="right"?b.x+30:b.x;
-              const xMid = (eaX + ebX) / 2;
-              vx = (eaX + xMid) / 2;
-              vy = m.y;
-            }
-          }
-        }
+        const m = curve.mid;   // point de contrôle = position de la bulle aussi
         const verbW = Math.max(28, r.link.verb.length * 6.5 + 16);
         const verbH = 22;
         const g = document.createElementNS(ns, "g");
         g.classList.add("verb-group");
         g.setAttribute("data-link-idx", r.idx);
         const el = document.createElementNS(ns, "ellipse");
-        el.setAttribute("cx", vx);
-        el.setAttribute("cy", vy);
+        el.setAttribute("cx", m.x);
+        el.setAttribute("cy", m.y);
         el.setAttribute("rx", verbW / 2);
         el.setAttribute("ry", verbH / 2);
         el.setAttribute("fill", "#fff");
@@ -343,8 +323,8 @@ console.log("links.js v11 — control point drag, verb auto-follows");
         g.appendChild(el);
         const vt = document.createElementNS(ns, "text");
         vt.classList.add("verb");
-        vt.setAttribute("x", vx);
-        vt.setAttribute("y", vy);
+        vt.setAttribute("x", m.x);
+        vt.setAttribute("y", m.y);
         vt.setAttribute("text-anchor", "middle");
         vt.setAttribute("dominant-baseline", "central");
         vt.textContent = r.link.verb;
@@ -479,6 +459,78 @@ console.log("links.js v11 — control point drag, verb auto-follows");
   // ── Drag-and-drop editor ──────────────────────────────────────────────────
   let dragState = null;
 
+  // Met à jour synchrone les paths et bulles des liens connectés à une entité
+  function syncLinksForEntity(entityKey) {
+    const canvas = canvasEl();
+    if (!canvas) return;
+    const cr = canvas.getBoundingClientRect();
+    const rectOf = (k) => {
+      const el = canvas.querySelector('[data-entity="' + k + '"]');
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      return { x: r.x - cr.x, y: r.y - cr.y, w: r.width, h: r.height };
+    };
+    const getSide = (link, end) => {
+      const key = link.idx + "|" + end;
+      if (anchorOverrides[key]) return anchorOverrides[key];
+      const explicit = end === "A" ? link.fromAnchor : link.toAnchor;
+      if (explicit && explicit !== "auto") return explicit;
+      const fr = rectOf(link.from), tr = rectOf(link.to);
+      if (fr && tr) {
+        const auto = autoAnchor(fr, tr);
+        return end === "A" ? auto.from : auto.to;
+      }
+      return "top";
+    };
+    const hor = (s) => s === "left" || s === "right";
+
+    (window.LINKS || []).forEach((link, idx) => {
+      if (link.from !== entityKey && link.to !== entityKey) return;
+      const path = canvas.querySelector('svg.links path[data-link-idx="' + idx + '"]');
+      if (!path) return;
+      const sa = getSide({idx, from:link.from, to:link.to, fromAnchor:link.fromAnchor, toAnchor:link.toAnchor}, "A");
+      const sb = getSide({idx, from:link.from, to:link.to, fromAnchor:link.fromAnchor, toAnchor:link.toAnchor}, "B");
+      const fr = rectOf(link.from), tr = rectOf(link.to);
+      if (!fr || !tr) return;
+      const a = anchorPoint(fr, sa, 0.5);
+      const b = anchorPoint(tr, sb, 0.5);
+
+      // Update path data attributes
+      path.setAttribute("data-ax", a.x); path.setAttribute("data-ay", a.y);
+      path.setAttribute("data-bx", b.x); path.setAttribute("data-by", b.y);
+      path.setAttribute("data-sideA", sa); path.setAttribute("data-sideB", sb);
+
+      const hasWp = verbOffsets[idx] && (verbOffsets[idx].dx !== undefined || verbOffsets[idx].x !== undefined);
+      let wp = null;
+      if (hasWp) {
+        const EXT=30;
+        const ea2 = (()=>{switch(sa){case"top":return{x:a.x,y:a.y-EXT};case"bottom":return{x:a.x,y:a.y+EXT};case"left":return{x:a.x-EXT,y:a.y};case"right":return{x:a.x+EXT,y:a.y};default:return a;}})();
+        const eb2 = (()=>{switch(sb){case"top":return{x:b.x,y:b.y-EXT};case"bottom":return{x:b.x,y:b.y+EXT};case"left":return{x:b.x-EXT,y:b.y};case"right":return{x:b.x+EXT,y:b.y};default:return b;}})();
+        const autoMid = {x:(ea2.x+eb2.x)/2, y:(ea2.y+eb2.y)/2};
+        if (verbOffsets[idx].dx !== undefined) wp = {x:autoMid.x+verbOffsets[idx].dx, y:autoMid.y+verbOffsets[idx].dy};
+        else wp = verbOffsets[idx];
+      }
+      const curve = orthogonal(a, b, sa, sb, wp);
+      path.setAttribute("d", curve.d);
+
+      // Update verb position
+      const vg = canvas.querySelector('.verb-group[data-link-idx="' + idx + '"]');
+      const ch = canvas.querySelector('.ctrl-handle[data-link-idx="' + idx + '"]');
+      if (vg) {
+        const m = curve.mid;
+        const el2 = vg.querySelector("ellipse");
+        const vt2 = vg.querySelector("text.verb");
+        if (el2) { el2.setAttribute("cx", m.x); el2.setAttribute("cy", m.y); }
+        if (vt2) { vt2.setAttribute("x", m.x); vt2.setAttribute("y", m.y); }
+        if (ch) {
+          const m = curve.mid;
+          ch.setAttribute("cx", m.x); ch.setAttribute("cy", m.y);
+          ch.setAttribute("x", m.x-6); ch.setAttribute("y", m.y-6);
+        }
+      }
+    });
+  }
+
   function onPointerDown(e) {
     if (!editMode) return;
     // Click on anchor handle? cycle side
@@ -524,6 +576,8 @@ console.log("links.js v11 — control point drag, verb auto-follows");
     y = Math.max(0, Math.min(dragState.canvasH - dragState.h, y));
     dragState.el.style.left = x + "px";
     dragState.el.style.top = y + "px";
+    // Mise à jour synchrone des liens connectés (bulles + paths)
+    syncLinksForEntity(dragState.el.getAttribute("data-entity"));
     scheduleRender();
   }
 
@@ -568,55 +622,43 @@ console.log("links.js v11 — control point drag, verb auto-follows");
 
     // Contraindre au segment d'intersection
     if (hor(sa) === hor(sb)) {
+      const EXT=30;
       if (hor(sa)) {
         // Deux lignes horizontales → intersection verticale → déplacement horizontal uniquement
         ny = ctrlDragState.startY;
+        // Clamp Y entre les deux sorties pour éviter la torsion
+        const eaY = sa==="top"?a.y-EXT:sa==="bottom"?a.y+EXT:a.y;
+        const ebY = sb==="top"?b.y-EXT:sb==="bottom"?b.y+EXT:b.y;
+        const minY = Math.min(eaY, ebY);
+        const maxY = Math.max(eaY, ebY);
+        if (ny < minY) ny = minY;
+        if (ny > maxY) ny = maxY;
       } else {
         // Deux lignes verticales → intersection horizontale → déplacement vertical uniquement
         nx = ctrlDragState.startX;
+        // Clamp X entre les deux sorties pour éviter la torsion
+        const eaX = sa==="left"?a.x-EXT:sa==="right"?a.x+EXT:a.x;
+        const ebX = sb==="left"?b.x-EXT:sb==="right"?b.x+EXT:b.x;
+        const minX = Math.min(eaX, ebX);
+        const maxX = Math.max(eaX, ebX);
+        if (nx < minX) nx = minX;
+        if (nx > maxX) nx = maxX;
       }
     }
 
     const curve = orthogonal(a, b, sa, sb, { x: nx, y: ny });
     path.setAttribute("d", curve.d);
 
-    // Position de la bulle = centrée sur le segment d'intersection
-    let vx, vy;
-    if (hor(sa) === hor(sb)) {
-      if (hor(sa)) {
-        // Intersection verticale : bulle au milieu du segment vertical
-        const EXT=30;
-        const eaY = sa==="top"?a.y-EXT:sa==="bottom"?a.y+EXT:a.y;
-        const ebY = sb==="top"?b.y-EXT:sb==="bottom"?b.y+EXT:b.y;
-        const yMid = (eaY + ebY) / 2;
-        // Segment vertical entre (nx, min(eaY,yMid)) et (nx, max(eaY,yMid))
-        vx = nx;
-        vy = (eaY + yMid) / 2;
-      } else {
-        // Intersection horizontale : bulle au milieu du segment horizontal
-        const EXT=30;
-        const eaX = sa==="left"?a.x-EXT:sa==="right"?a.x+EXT:a.x;
-        const ebX = sb==="left"?b.x-EXT:sb==="right"?b.x+EXT:b.x;
-        const xMid = (eaX + ebX) / 2;
-        vx = (eaX + xMid) / 2;
-        vy = ny;
-      }
-    } else {
-      // Perpendiculaire : bulle au centre entre les deux sorties
-      vx = nx;
-      vy = ny;
-    }
-
     // Update control handle
     const ctrl = document.querySelector('.ctrl-handle[data-link-idx="' + ctrlDragState.linkIdx + '"]');
     if (ctrl) { ctrl.setAttribute("cx", nx); ctrl.setAttribute("cy", ny); ctrl.setAttribute("x", nx-6); ctrl.setAttribute("y", ny-6); }
-    // Update verb position (reste centrée sur le segment)
+    // Update verb position (même position que le point de contrôle)
     const verbGroup = document.querySelector('.verb-group[data-link-idx="' + ctrlDragState.linkIdx + '"]');
     if (verbGroup) {
       const el2 = verbGroup.querySelector("ellipse");
       const vt2 = verbGroup.querySelector("text.verb");
-      if (el2) { el2.setAttribute("cx", vx); el2.setAttribute("cy", vy); }
-      if (vt2) { vt2.setAttribute("x", vx); vt2.setAttribute("y", vy); }
+      if (el2) { el2.setAttribute("cx", nx); el2.setAttribute("cy", ny); }
+      if (vt2) { vt2.setAttribute("x", nx); vt2.setAttribute("y", ny); }
     }
   }
 
