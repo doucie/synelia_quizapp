@@ -16,7 +16,7 @@ export default function EntityNode({ data }: NodeProps<EntityNodeData>) {
       <div
         className={clsx(
           'border-border rounded-t-2xl border-b border-solid px-3 py-2 text-xs font-semibold flex items-center justify-between',
-          variant === 'mcd' && 'bg-muted text-foreground',
+          variant === 'mcd' && 'bg-primary/10 text-primary',
           variant === 'mld' && 'bg-primary/10 text-primary',
           variant === 'mpd' && 'bg-primary/10 text-primary',
         )}

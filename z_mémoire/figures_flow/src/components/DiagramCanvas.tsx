@@ -11,6 +11,7 @@ import {
 import EntityNode from './Nodes/EntityNode'
 import RelationshipEdge from './Edges/RelationshipEdge'
 import { useDiagramPersistence, loadPositions } from '../hooks/useDiagramPersistence'
+import { applyEntityColors } from '../utils/entityColors'
 import type { DiagramDefinition } from '../types'
 
 const nodeTypes: NodeTypes = { entity: EntityNode }
@@ -25,7 +26,7 @@ interface DiagramCanvasProps {
 export default function DiagramCanvas({ diagram, showBackground, onNodesInitialized }: DiagramCanvasProps) {
   const ref = useRef<HTMLDivElement>(null)
   const initialNodes = useMemo(
-    () => (diagram ? loadPositions(diagram.id, diagram.nodes) : []),
+    () => (diagram ? applyEntityColors(loadPositions(diagram.id, diagram.nodes)) : []),
     [diagram],
   )
   const initialEdges = useMemo(() => diagram?.edges ?? [], [diagram])
