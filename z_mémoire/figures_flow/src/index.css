@@ -26,6 +26,7 @@
 
 /* Light theme */
 :root {
+  --font-sans: 'Cabinet Grotesk', system-ui, sans-serif;
   --background: 0 0% 100%;
   --foreground: 222.2 47.4% 11.2%;
   --card: 0 0% 100%;
@@ -144,7 +145,7 @@ html, body, #root {
 }
 
 body {
-  font-family: 'NT Dapper', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-family: var(--font-sans);
   background: var(--color-background);
   color: var(--color-foreground);
   transition: background-color 0.2s, color 0.2s;

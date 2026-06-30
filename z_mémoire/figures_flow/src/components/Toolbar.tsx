@@ -1,5 +1,6 @@
 import { useReactFlow } from '@xyflow/react'
 import ThemeToggle from './ThemeToggle'
+import FontSelector from './FontSelector'
 
 interface ToolbarProps {
   diagramTitle: string | null
@@ -19,7 +20,7 @@ export default function Toolbar({
   const { zoomIn, zoomOut, fitView } = useReactFlow()
 
   return (
-    <div className="flex items-center gap-1.5 border-b border-border bg-background/80 px-4 py-2 backdrop-blur">
+    <div className="relative z-20 flex items-center gap-1.5 border-b border-border bg-background/80 px-4 py-2 backdrop-blur">
       {diagramTitle && (
         <span className="text-xs font-medium text-muted-foreground">{diagramTitle}</span>
       )}
@@ -69,6 +70,7 @@ export default function Toolbar({
       >
         ↺
       </button>
+      <FontSelector />
       <ThemeToggle />
     </div>
   )
