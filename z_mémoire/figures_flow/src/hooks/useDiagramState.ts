@@ -1,0 +1,73 @@
+import { useCallback } from 'react'
+import type { EntityNode } from '../types'
+
+const STORAGE_KEY = 'figures_flow:diagram'
+
+export interface DiagramState {
+  positions: Record<string, { x: number; y: number }>
+  viewport: { x: number; y: number; zoom: number }
+}
+
+export function loadDiagramState(diagramId: string): DiagramState | null {
+  if (!diagramId) return null
+  const key = `${STORAGE_KEY}:${diagramId}`
+  try {
+    const saved = localStorage.getItem(key)
+    if (saved) return JSON.parse(saved) as DiagramState
+  } catch {
+    // ignore
+  }
+  // migration from old format (figures_flow:positions:<id>)
+  try {
+    const oldKey = `figures_flow:positions:${diagramId}`
+    const old = localStorage.getItem(oldKey)
+    if (old) {
+      const positions = JSON.parse(old) as Record<string, { x: number; y: number }>
+      const state: DiagramState = { positions, viewport: { x: 0, y: 0, zoom: 1 } }
+      localStorage.setItem(key, JSON.stringify(state))
+      localStorage.removeItem(oldKey)
+      return state
+    }
+  } catch {
+    // ignore
+  }
+  return null
+}
+
+export function loadPositions(diagramId: string, nodes: EntityNode[]): EntityNode[] {
+  const state = loadDiagramState(diagramId)
+  if (!state) return nodes
+  return nodes.map((n) => {
+    const pos = state.positions[n.id]
+    return pos ? { ...n, position: pos } : n
+  })
+}
+
+function extractPositions(nodes: EntityNode[]): Record<string, { x: number; y: number }> {
+  const positions: Record<string, { x: number; y: number }> = {}
+  for (const n of nodes) {
+    positions[n.id] = n.position
+  }
+  return positions
+}
+
+export function useDiagramState(diagramId: string) {
+  const storageKey = `${STORAGE_KEY}:${diagramId}`
+
+  const saveState = useCallback(
+    (state: DiagramState) => {
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(state))
+      } catch {
+        // ignore
+      }
+    },
+    [storageKey],
+  )
+
+  const resetState = useCallback(() => {
+    localStorage.removeItem(storageKey)
+  }, [storageKey])
+
+  return { saveState, resetState }
+}

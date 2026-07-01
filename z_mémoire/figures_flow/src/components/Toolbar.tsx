@@ -5,6 +5,8 @@ import FontSelector from './FontSelector'
 interface ToolbarProps {
   diagramTitle: string | null
   showBackground: boolean
+  fullscreen: boolean
+  onToggleFullscreen: () => void
   onToggleBackground: () => void
   onExportSvg: () => void
   onResetPositions: () => void
@@ -13,6 +15,7 @@ interface ToolbarProps {
 export default function Toolbar({
   diagramTitle,
   showBackground,
+  onToggleFullscreen,
   onToggleBackground,
   onExportSvg,
   onResetPositions,
@@ -69,6 +72,13 @@ export default function Toolbar({
         title="Réinitialiser les positions"
       >
         ↺
+      </button>
+      <button
+        onClick={onToggleFullscreen}
+        className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
+        title="Mode plein écran"
+      >
+        ⛶
       </button>
       <FontSelector />
       <ThemeToggle />
