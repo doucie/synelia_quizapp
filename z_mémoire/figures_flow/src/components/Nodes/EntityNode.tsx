@@ -2,6 +2,13 @@ import { Handle, Position, type NodeProps } from '@xyflow/react'
 import type { EntityNodeData } from '../../types'
 import { clsx } from 'clsx'
 
+function hsla(color: string | undefined, alpha: number): string | undefined {
+  if (!color) return
+  const m = color.match(/^hsl\((\d+)/)
+  if (!m) return
+  return `hsla(${m[1]}, 100%, 40%, ${alpha})`
+}
+
 export default function EntityNode({ data }: NodeProps<EntityNodeData>) {
   const { label, variant, attributes, color } = data
 
@@ -14,17 +21,15 @@ export default function EntityNode({ data }: NodeProps<EntityNodeData>) {
       style={color ? { borderColor: color } : undefined}
     >
       <div
-        className={clsx(
-          'border-border rounded-t-2xl border-b border-solid px-3 py-2 text-xs font-semibold flex items-center justify-between',
-          variant === 'mcd' && 'bg-primary/10 text-primary',
-          variant === 'mld' && 'bg-primary/10 text-primary',
-          variant === 'mpd' && 'bg-primary/10 text-primary',
-        )}
-        style={color ? { backgroundColor: `${color}18`, color } : undefined}
+        className="border-border rounded-t-2xl border-b border-solid px-3 py-2 text-xs font-semibold flex items-center justify-between"
+        style={color ? { backgroundColor: hsla(color, 0.094), color } : undefined}
       >
         <span>{label}</span>
         {(variant === 'mld' || variant === 'mpd') && (
-          <span className="rounded bg-primary/20 px-1.5 text-[10px] font-bold text-primary">
+          <span
+            className="rounded px-1.5 text-[10px] font-bold"
+            style={color ? { backgroundColor: hsla(color, 0.2), color } : undefined}
+          >
             TABLE
           </span>
         )}
@@ -34,7 +39,10 @@ export default function EntityNode({ data }: NodeProps<EntityNodeData>) {
         {attributes.map((attr, i) => (
           <div key={i} className="flex items-center gap-2 text-xs">
             {attr.isPK && (
-              <span className="rounded bg-primary/20 px-1 text-[10px] font-bold text-primary">
+              <span
+                className="rounded px-1 text-[10px] font-bold"
+                style={color ? { backgroundColor: hsla(color, 0.2), color } : undefined}
+              >
                 PK
               </span>
             )}
@@ -43,7 +51,10 @@ export default function EntityNode({ data }: NodeProps<EntityNodeData>) {
                 FK
               </span>
             )}
-            <span className={clsx(attr.isPK && 'font-bold text-primary', 'text-foreground')}>
+            <span
+              className={clsx(attr.isPK && 'font-bold')}
+              style={color && attr.isPK ? { color } : undefined}
+            >
               {attr.name}
             </span>
             {attr.type && variant === 'mpd' && (

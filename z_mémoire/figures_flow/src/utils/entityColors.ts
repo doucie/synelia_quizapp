@@ -1,15 +1,16 @@
 import type { Node } from '@xyflow/react'
 import type { EntityNodeData } from '../types'
 
-const PRIMARY_HUE = 15
+const SAFE_HUES = [
+  15, 225, 330, 285, 0, 240, 345, 300, 210, 315, 15, 270, 30, 255, 335, 275,
+]
 
 export function applyEntityColors(nodes: Node<EntityNodeData>[]): Node<EntityNodeData>[] {
-  const count = nodes.length
   return nodes.map((node, i) => ({
     ...node,
     data: {
       ...node.data,
-      color: `hsl(${Math.round(PRIMARY_HUE + i * (360 / count))}, 100%, 50%)`,
+      color: `hsl(${SAFE_HUES[i % SAFE_HUES.length]}, 100%, 40%)`,
     },
   }))
 }
