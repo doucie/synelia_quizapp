@@ -15,7 +15,7 @@ import ProcessNode from './Nodes/ProcessNode'
 import RelationshipEdge from './Edges/RelationshipEdge'
 import TraitementEdge from './Edges/TraitementEdge'
 import { loadDiagramState, useDiagramState, loadPositions, loadCardinalitySides } from '../hooks/useDiagramState'
-import { applyEntityColors, isProcessVariant } from '../utils/entityColors'
+import { applyEntityColors } from '../utils/entityColors'
 import type { DiagramDefinition, RelationshipEdgeData } from '../types'
 
 const nodeTypes: NodeTypes = { entity: EntityNode, process: ProcessNode }
@@ -33,10 +33,7 @@ export default function DiagramCanvas({ diagram, showBackground, fullscreen: _fu
   const reactFlowInstance = useReactFlow()
   const initialNodes = useMemo(() => {
     if (!diagram) return []
-    const colored = diagram.nodes.some((n) => isProcessVariant(n.data.variant))
-      ? diagram.nodes
-      : applyEntityColors(diagram.nodes)
-    return loadPositions(diagram.id, colored)
+    return loadPositions(diagram.id, applyEntityColors(diagram.nodes))
   }, [diagram])
   const initialEdges = useMemo(() => {
     if (!diagram) return []
