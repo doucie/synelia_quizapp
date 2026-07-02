@@ -1,9 +1,10 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { ReactFlowProvider } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import DiagramCanvas from './components/DiagramCanvas'
 import Sidebar from './components/Sidebar'
 import Toolbar from './components/Toolbar'
+import FullscreenOverlay from './components/FullscreenOverlay'
 import type { DiagramDefinition } from './types'
 import { diagrams } from './diagrams'
 import { exportSvg } from './utils/exportSvg'
@@ -25,6 +26,15 @@ export default function App() {
     localStorage.removeItem(key)
     window.location.reload()
   }, [activeDiagram])
+
+  useEffect(() => {
+    if (!fullscreen) return
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setFullscreen(false)
+    }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [fullscreen])
 
   return (
     <div className="flex h-screen w-screen overflow-hidden">
@@ -56,16 +66,22 @@ export default function App() {
             fullscreen={fullscreen}
             onNodesInitialized={() => {}}
           />
+          {fullscreen && (
+            <FullscreenOverlay
+              activeId={activeDiagram?.id ?? ''}
+              onSelect={setActiveDiagram}
+              diagramTitle={activeDiagram?.title ?? null}
+              showBackground={showBackground}
+              onToggleBackground={() => setShowBackground((v) => {
+                localStorage.setItem('figures_flow:background', String(!v))
+                return !v
+              })}
+              onExportSvg={handleExportSvg}
+              onResetPositions={handleResetPositions}
+              onExitFullscreen={() => setFullscreen(false)}
+            />
+          )}
         </ReactFlowProvider>
-        {fullscreen && (
-          <button
-            onClick={() => setFullscreen(false)}
-            className="absolute right-3 top-3 z-50 rounded bg-background/80 px-2 py-1 text-xs text-muted-foreground backdrop-blur hover:bg-muted"
-            title="Quitter le mode plein écran"
-          >
-            ✕
-          </button>
-        )}
       </div>
     </div>
   )
