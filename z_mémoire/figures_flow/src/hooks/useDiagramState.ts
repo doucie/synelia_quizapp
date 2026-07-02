@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 import type { EntityNode } from '../types'
 
 const STORAGE_KEY = 'figures_flow:diagram'
+const EDGE_SIDES_KEY = 'figures_flow:edge_sides'
 
 export interface DiagramState {
   positions: Record<string, { x: number; y: number }>
@@ -49,6 +50,36 @@ function extractPositions(nodes: EntityNode[]): Record<string, { x: number; y: n
     positions[n.id] = n.position
   }
   return positions
+}
+
+export interface CardinalitySides {
+  [edgeId: string]: { from?: string; to?: string }
+}
+
+export function loadCardinalitySides(diagramId: string): CardinalitySides {
+  if (!diagramId) return {}
+  try {
+    const saved = localStorage.getItem(`${EDGE_SIDES_KEY}:${diagramId}`)
+    return saved ? (JSON.parse(saved) as CardinalitySides) : {}
+  } catch {
+    return {}
+  }
+}
+
+export function setCardinalitySide(
+  diagramId: string,
+  edgeId: string,
+  which: 'from' | 'to',
+  side: string,
+) {
+  try {
+    const key = `${EDGE_SIDES_KEY}:${diagramId}`
+    const all = loadCardinalitySides(diagramId)
+    all[edgeId] = { ...all[edgeId], [which]: side }
+    localStorage.setItem(key, JSON.stringify(all))
+  } catch {
+    // ignore
+  }
 }
 
 export function useDiagramState(diagramId: string) {

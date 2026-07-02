@@ -11,13 +11,15 @@ import {
   type Viewport,
 } from '@xyflow/react'
 import EntityNode from './Nodes/EntityNode'
+import ProcessNode from './Nodes/ProcessNode'
 import RelationshipEdge from './Edges/RelationshipEdge'
-import { loadDiagramState, useDiagramState, loadPositions } from '../hooks/useDiagramState'
-import { applyEntityColors } from '../utils/entityColors'
-import type { DiagramDefinition } from '../types'
+import TraitementEdge from './Edges/TraitementEdge'
+import { loadDiagramState, useDiagramState, loadPositions, loadCardinalitySides } from '../hooks/useDiagramState'
+import { applyEntityColors, isProcessVariant } from '../utils/entityColors'
+import type { DiagramDefinition, RelationshipEdgeData } from '../types'
 
-const nodeTypes: NodeTypes = { entity: EntityNode }
-const edgeTypes: EdgeTypes = { relationship: RelationshipEdge }
+const nodeTypes: NodeTypes = { entity: EntityNode, process: ProcessNode }
+const edgeTypes: EdgeTypes = { relationship: RelationshipEdge, traitement: TraitementEdge }
 
 interface DiagramCanvasProps {
   diagram: DiagramDefinition | null
@@ -29,11 +31,33 @@ interface DiagramCanvasProps {
 export default function DiagramCanvas({ diagram, showBackground, fullscreen: _fullscreen, onNodesInitialized }: DiagramCanvasProps) {
   const ref = useRef<HTMLDivElement>(null)
   const reactFlowInstance = useReactFlow()
-  const initialNodes = useMemo(
-    () => (diagram ? applyEntityColors(loadPositions(diagram.id, diagram.nodes)) : []),
-    [diagram],
-  )
-  const initialEdges = useMemo(() => diagram?.edges ?? [], [diagram])
+  const initialNodes = useMemo(() => {
+    if (!diagram) return []
+    const colored = diagram.nodes.some((n) => isProcessVariant(n.data.variant))
+      ? diagram.nodes
+      : applyEntityColors(diagram.nodes)
+    return loadPositions(diagram.id, colored)
+  }, [diagram])
+  const initialEdges = useMemo(() => {
+    if (!diagram) return []
+    const sides = loadCardinalitySides(diagram.id)
+    return diagram.edges.map((e) => {
+      const saved = sides[e.id]
+      const cardFromSide = saved?.from as RelationshipEdgeData['cardFromSide'] | undefined
+      const cardToSide = saved?.to as RelationshipEdgeData['cardToSide'] | undefined
+      return {
+        ...e,
+        sourceHandle: cardFromSide && cardFromSide !== 'source' ? cardFromSide : undefined,
+        targetHandle: cardToSide && cardToSide !== 'source' ? cardToSide : undefined,
+        data: {
+          ...e.data,
+          diagramId: diagram.id,
+          ...(cardFromSide ? { cardFromSide } : {}),
+          ...(cardToSide ? { cardToSide } : {}),
+        },
+      }
+    })
+  }, [diagram])
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
@@ -82,6 +106,8 @@ export default function DiagramCanvas({ diagram, showBackground, fullscreen: _fu
     )
   }
 
+  const isTraitement = diagram.category === 'traitements'
+
   return (
     <div ref={ref} className="h-full w-full">
       <ReactFlow
@@ -95,7 +121,7 @@ export default function DiagramCanvas({ diagram, showBackground, fullscreen: _fu
         edgeTypes={edgeTypes}
         snapToGrid
         snapGrid={[10, 10]}
-        defaultEdgeOptions={{ type: 'relationship' }}
+        defaultEdgeOptions={{ type: isTraitement ? 'traitement' : 'relationship' }}
         panOnDrag={1}
         selectionOnDrag={false}
       >

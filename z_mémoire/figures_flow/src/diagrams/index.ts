@@ -1,7 +1,6 @@
 import type { DiagramDefinition } from '../types'
 
 import { identitePermissions as mcdIdentitePermissions } from './mcd/identite_permissions'
-import { identitePermissionsModerne as mcdIdentitePermissionsModerne } from './mcd/identite_permissions_moderne'
 import { campagnesPipeline as mcdCampagnesPipeline } from './mcd/campagnes_pipeline'
 import { candidatureQuiz as mcdCandidatureQuiz } from './mcd/candidature_quiz'
 import { entretienEvaluation as mcdEntretienEvaluation } from './mcd/entretien_evaluation'
@@ -19,9 +18,16 @@ import { candidatureQuiz as mpdCandidatureQuiz } from './mpd/candidature_quiz'
 import { entretienEvaluation as mpdEntretienEvaluation } from './mpd/entretien_evaluation'
 import { auditNotifications as mpdAuditNotifications } from './mpd/audit_notifications'
 
+import { mct1CandidatureQuiz } from './traitements/mct_1_candidature_quiz'
+import { mct2EntretienEvaluation } from './traitements/mct_2_entretien_evaluation'
+import { mct3DecisionAudit } from './traitements/mct_3_decision_audit'
+import { sat1SetupPreselection } from './traitements/sat_1_setup_preselection'
+import { sat2EntretienAudit } from './traitements/sat_2_entretien_audit'
+import { mpt1CandidatureQuiz } from './traitements/mpt_1_candidature_quiz'
+import { mpt2EntretienDecision } from './traitements/mpt_2_entretien_decision'
+
 export const diagrams: DiagramDefinition[] = [
   mcdIdentitePermissions,
-  mcdIdentitePermissionsModerne,
   mcdCampagnesPipeline,
   mcdCandidatureQuiz,
   mcdEntretienEvaluation,
@@ -36,6 +42,13 @@ export const diagrams: DiagramDefinition[] = [
   mpdCandidatureQuiz,
   mpdEntretienEvaluation,
   mpdAuditNotifications,
+  mct1CandidatureQuiz,
+  mct2EntretienEvaluation,
+  mct3DecisionAudit,
+  sat1SetupPreselection,
+  sat2EntretienAudit,
+  mpt1CandidatureQuiz,
+  mpt2EntretienDecision,
 ]
 
 export type DiagramId = (typeof diagrams)[number]['id']

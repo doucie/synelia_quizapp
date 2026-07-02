@@ -47,13 +47,16 @@ export default function EntityNode({ data }: NodeProps<EntityNodeData>) {
               </span>
             )}
             {attr.isFK && (
-              <span className="rounded bg-blue-200/60 px-1 text-[10px] font-bold text-blue-800 dark:bg-blue-800/40 dark:text-blue-300">
+              <span
+                className="rounded px-1 text-[10px] font-bold"
+                style={color ? { backgroundColor: hsla(color, 0.2), color } : undefined}
+              >
                 FK
               </span>
             )}
             <span
-              className={clsx(attr.isPK && 'font-bold')}
-              style={color && attr.isPK ? { color } : undefined}
+              className={clsx((attr.isPK || attr.isFK) && 'font-bold', 'text-foreground')}
+              style={color && (attr.isPK || attr.isFK) ? { color } : undefined}
             >
               {attr.name}
             </span>
@@ -65,14 +68,52 @@ export default function EntityNode({ data }: NodeProps<EntityNodeData>) {
       </div>
 
       <Handle
+        id="right"
         type="source"
         position={Position.Right}
         className="nodrag nopan h-[10px] w-[10px] border-none bg-gray-400"
       />
       <Handle
+        id="left"
+        type="source"
+        position={Position.Left}
+        className="nodrag nopan h-[10px] w-[10px] border-none opacity-0"
+      />
+      <Handle
+        id="top"
+        type="source"
+        position={Position.Top}
+        className="nodrag nopan h-[10px] w-[10px] border-none opacity-0"
+      />
+      <Handle
+        id="bottom"
+        type="source"
+        position={Position.Bottom}
+        className="nodrag nopan h-[10px] w-[10px] border-none opacity-0"
+      />
+      <Handle
+        id="left"
         type="target"
         position={Position.Left}
         className="nodrag nopan h-[10px] w-[10px] border-none bg-gray-400"
+      />
+      <Handle
+        id="right"
+        type="target"
+        position={Position.Right}
+        className="nodrag nopan h-[10px] w-[10px] border-none opacity-0"
+      />
+      <Handle
+        id="top"
+        type="target"
+        position={Position.Top}
+        className="nodrag nopan h-[10px] w-[10px] border-none opacity-0"
+      />
+      <Handle
+        id="bottom"
+        type="target"
+        position={Position.Bottom}
+        className="nodrag nopan h-[10px] w-[10px] border-none opacity-0"
       />
     </div>
   )

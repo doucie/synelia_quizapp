@@ -1,22 +1,24 @@
 import { useState } from 'react'
 import { diagrams } from '../diagrams'
-import type { DiagramDefinition, Variant } from '../types'
+import type { DiagramDefinition, Category } from '../types'
 
 interface SidebarProps {
   activeId: string
   onSelect: (diagram: DiagramDefinition) => void
 }
 
-const categories: { label: string; key: Variant }[] = [
+const categories: { label: string; key: Category }[] = [
   { label: 'MCD — Conceptuel', key: 'mcd' },
   { label: 'MLD — Logique', key: 'mld' },
   { label: 'MPD — Physique', key: 'mpd' },
+  { label: 'Traitements', key: 'traitements' },
 ]
 
-const categoryIcons: Record<Variant, string> = {
+const categoryIcons: Record<Category, string> = {
   mcd: '⊞',
   mld: '⊡',
   mpd: '◈',
+  traitements: '⚙',
 }
 
 export default function Sidebar({ activeId, onSelect }: SidebarProps) {
@@ -24,6 +26,7 @@ export default function Sidebar({ activeId, onSelect }: SidebarProps) {
     mcd: true,
     mld: false,
     mpd: false,
+    traitements: true,
   })
 
   const toggle = (key: string) => setExpanded((prev) => ({ ...prev, [key]: !prev[key] }))
