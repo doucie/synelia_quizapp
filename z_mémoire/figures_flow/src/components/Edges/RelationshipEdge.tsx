@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import {
   BaseEdge,
   getSmoothStepPath,
   EdgeLabelRenderer,
   useReactFlow,
+  useEdges,
   Position,
   type EdgeProps,
 } from '@xyflow/react'
@@ -28,31 +29,65 @@ const SIDE_LABELS: Record<string, string> = {
   bottom: '⬇',
 }
 
-function badgeOffset(pos: Position): { x: number; y: number } {
+function badgeOffset(pos: Position, extra = 0): { x: number; y: number } {
   switch (pos) {
     case Position.Left:
-      return { x: -38, y: -18 }
+      return { x: -38, y: -18 + extra }
     case Position.Right:
-      return { x: 2, y: -18 }
+      return { x: 2, y: -18 + extra }
     case Position.Top:
-      return { x: -18, y: -24 }
+      return { x: -18 + extra, y: -24 }
     case Position.Bottom:
-      return { x: -18, y: 2 }
+      return { x: -18 + extra, y: 2 }
   }
+}
+
+function cardinalityOffset(
+  edges: { source: string; sourceHandle: string | null | undefined; target: string; targetHandle: string | null | undefined; data?: { cardFrom?: string; cardTo?: string } }[],
+  side: 'from' | 'to',
+  nodeId: string,
+  handleId: string | null | undefined,
+  currentValue: string | undefined,
+): number {
+  const key = side === 'from' ? 'cardFrom' : 'cardTo'
+  const nodeKey = side === 'from' ? 'source' : 'target'
+  const handleKey = side === 'from' ? 'sourceHandle' : 'targetHandle'
+
+  const values: string[] = []
+  for (const e of edges) {
+    if (e[nodeKey] !== nodeId) continue
+    if (e[handleKey] !== handleId) continue
+    const v = e.data?.[key]
+    if (v) values.push(v)
+  }
+
+  const unique = [...new Set(values)].sort()
+  if (unique.length <= 1) return 0
+
+  const idx = unique.indexOf(currentValue || '')
+  if (idx === -1) return 0
+
+  const spacing = 28
+  return idx * spacing - (unique.length - 1) * spacing / 2
 }
 
 export default function RelationshipEdge({
   id,
+  source,
+  target,
   sourceX,
   sourceY,
   targetX,
   targetY,
   sourcePosition,
   targetPosition,
+  sourceHandle,
+  targetHandle,
   data,
   selected,
 }: EdgeProps<RelationshipEdgeData>) {
   const { getEdges, setEdges } = useReactFlow()
+  const allEdges = useEdges()
   const [popover, setPopover] = useState(false)
   const popoverRef = useRef<HTMLDivElement>(null)
 
@@ -112,8 +147,17 @@ export default function RelationshipEdge({
   const activeFrom = data?.cardFromSide ?? 'source'
   const activeTo = data?.cardToSide ?? 'source'
 
-  const fromOff = badgeOffset(sourcePosition)
-  const toOff = badgeOffset(targetPosition)
+  const fromCardOffset = useMemo(
+    () => cardinalityOffset(allEdges, 'from', source, sourceHandle, data?.cardFrom),
+    [allEdges, source, sourceHandle, data?.cardFrom],
+  )
+  const toCardOffset = useMemo(
+    () => cardinalityOffset(allEdges, 'to', target, targetHandle, data?.cardTo),
+    [allEdges, target, targetHandle, data?.cardTo],
+  )
+
+  const fromOff = badgeOffset(sourcePosition, fromCardOffset)
+  const toOff = badgeOffset(targetPosition, toCardOffset)
 
   return (
     <>
