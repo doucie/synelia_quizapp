@@ -53,8 +53,7 @@ export default function RelationshipEdge({
   selected,
 }: EdgeProps<RelationshipEdgeData>) {
   const { getEdges, setEdges } = useReactFlow()
-  const [popover, setPopover] = useState<'from' | 'to' | null>(null)
-  const [popoverFromEdge, setPopoverFromEdge] = useState(false)
+  const [popover, setPopover] = useState(false)
   const popoverRef = useRef<HTMLDivElement>(null)
 
   const diagramId = data?.diagramId
@@ -63,7 +62,7 @@ export default function RelationshipEdge({
     if (!popover) return
     const handleClick = (e: MouseEvent) => {
       if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
-        setPopover(null)
+        setPopover(false)
       }
     }
     document.addEventListener('mousedown', handleClick, true)
@@ -108,20 +107,17 @@ export default function RelationshipEdge({
     )
 
     if (diagramId) setCardinalitySide(diagramId, id, which, side)
-    setPopover(null)
   }
 
-  const edgeClick = () => {
-    setPopover('from')
-    setPopoverFromEdge(true)
-  }
+  const activeFrom = data?.cardFromSide ?? 'source'
+  const activeTo = data?.cardToSide ?? 'source'
 
   const fromOff = badgeOffset(sourcePosition)
   const toOff = badgeOffset(targetPosition)
 
   return (
     <>
-      <g onClick={edgeClick} style={{ cursor: 'pointer' }}>
+      <g onClick={() => setPopover(true)} style={{ cursor: 'pointer' }}>
         <BaseEdge
           id={id}
           path={edgePath}
@@ -146,7 +142,7 @@ export default function RelationshipEdge({
               justifyContent: 'center',
               pointerEvents: 'auto',
             }}
-            onClick={() => { setPopover(popover === 'from' ? null : 'from'); setPopoverFromEdge(false) }}
+            onClick={() => setPopover(true)}
           >
             <span className={badgeClass}>{data.cardFrom}</span>
           </div>
@@ -164,7 +160,7 @@ export default function RelationshipEdge({
               justifyContent: 'center',
               pointerEvents: 'auto',
             }}
-            onClick={() => { setPopover(popover === 'to' ? null : 'to'); setPopoverFromEdge(false) }}
+            onClick={() => setPopover(true)}
           >
             <span className={badgeClass}>{data.cardTo}</span>
           </div>
@@ -192,32 +188,47 @@ export default function RelationshipEdge({
             ref={popoverRef}
             style={{
               position: 'absolute',
-              left: popoverFromEdge
-                ? labelX - 2
-                : (popover === 'from' ? sourceX + fromOff.x : targetX + toOff.x) - 2,
-              top: popoverFromEdge
-                ? labelY - 52
-                : (popover === 'from' ? sourceY + fromOff.y : targetY + toOff.y) - 52,
+              left: labelX - 80,
+              top: labelY - 72,
               zIndex: 1000,
               pointerEvents: 'auto',
             }}
-            className="flex gap-0.5 rounded-lg border border-border bg-background p-1 shadow-lg"
+            className="flex flex-col gap-1 rounded-lg border border-border bg-background p-1.5 shadow-lg"
           >
-            {CARD_SIDES.map((side) => (
-              <button
-                key={side}
-                onClick={() => handleSideChange(popover, side)}
-                className={`rounded px-1.5 py-1 text-xs transition-colors hover:bg-muted ${
-                  (popover === 'from' ? data?.cardFromSide ?? 'source' : data?.cardToSide ?? 'source') ===
-                  side
-                    ? 'bg-primary/20 text-primary'
-                    : 'text-muted-foreground'
-                }`}
-                title={side}
-              >
-                {SIDE_LABELS[side]}
-              </button>
-            ))}
+            <div className="flex items-center gap-1">
+              <span className="mr-1 text-[10px] font-semibold text-muted-foreground uppercase">Source</span>
+              {CARD_SIDES.map((side) => (
+                <button
+                  key={side}
+                  onClick={() => handleSideChange('from', side)}
+                  className={`rounded px-1.5 py-1 text-xs transition-colors hover:bg-muted ${
+                    activeFrom === side
+                      ? 'bg-primary/20 text-primary'
+                      : 'text-muted-foreground'
+                  }`}
+                  title={side}
+                >
+                  {SIDE_LABELS[side]}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="mr-1 text-[10px] font-semibold text-muted-foreground uppercase">Target</span>
+              {CARD_SIDES.map((side) => (
+                <button
+                  key={side}
+                  onClick={() => handleSideChange('to', side)}
+                  className={`rounded px-1.5 py-1 text-xs transition-colors hover:bg-muted ${
+                    activeTo === side
+                      ? 'bg-primary/20 text-primary'
+                      : 'text-muted-foreground'
+                  }`}
+                  title={side}
+                >
+                  {SIDE_LABELS[side]}
+                </button>
+              ))}
+            </div>
           </div>
         )}
       </EdgeLabelRenderer>
