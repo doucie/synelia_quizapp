@@ -1,10 +1,11 @@
-import { useState } from 'react'
 import { diagrams } from '../diagrams'
 import type { DiagramDefinition, Category } from '../types'
 
 interface SidebarProps {
   activeId: string
   onSelect: (diagram: DiagramDefinition) => void
+  expanded: Record<string, boolean>
+  onToggle: (key: string) => void
 }
 
 const categories: { label: string; key: Category }[] = [
@@ -21,15 +22,7 @@ const categoryIcons: Record<Category, string> = {
   traitements: '⚙',
 }
 
-export default function Sidebar({ activeId, onSelect }: SidebarProps) {
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({
-    mcd: true,
-    mld: false,
-    mpd: false,
-    traitements: true,
-  })
-
-  const toggle = (key: string) => setExpanded((prev) => ({ ...prev, [key]: !prev[key] }))
+export default function Sidebar({ activeId, onSelect, expanded, onToggle }: SidebarProps) {
 
   return (
     <aside className="flex h-full w-[260px] flex-col border-r border-border bg-background">
@@ -42,7 +35,7 @@ export default function Sidebar({ activeId, onSelect }: SidebarProps) {
           return (
             <div key={cat.key} className="mb-1">
               <button
-                onClick={() => toggle(cat.key)}
+                onClick={() => onToggle(cat.key)}
                 className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-semibold text-foreground hover:bg-muted"
               >
                 <span className="w-4">{categoryIcons[cat.key]}</span>

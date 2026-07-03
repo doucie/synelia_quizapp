@@ -6,11 +6,19 @@ import Sidebar from './components/Sidebar'
 import Toolbar from './components/Toolbar'
 import FullscreenOverlay from './components/FullscreenOverlay'
 import type { DiagramDefinition } from './types'
-import { diagrams } from './diagrams'
+import { diagrams, getDiagram } from './diagrams'
 import { exportSvg } from './utils/exportSvg'
+import { useSidebarState } from './hooks/useSidebarState'
 
 export default function App() {
-  const [activeDiagram, setActiveDiagram] = useState<DiagramDefinition | null>(diagrams[0] ?? null)
+  const { expanded, toggle, activeDiagramId, setActiveDiagramId } = useSidebarState()
+  const [activeDiagram, setActiveDiagram] = useState<DiagramDefinition | null>(() => {
+    if (activeDiagramId) {
+      const restored = getDiagram(activeDiagramId)
+      if (restored) return restored
+    }
+    return diagrams[0] ?? null
+  })
   const [showBackground, setShowBackground] = useState(() => {
     try { return localStorage.getItem('figures_flow:background') !== 'false' } catch { return true }
   })
@@ -28,6 +36,10 @@ export default function App() {
   }, [activeDiagram])
 
   useEffect(() => {
+    if (activeDiagram) setActiveDiagramId(activeDiagram.id)
+  }, [activeDiagram, setActiveDiagramId])
+
+  useEffect(() => {
     if (!fullscreen) return
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setFullscreen(false)
@@ -42,6 +54,8 @@ export default function App() {
         <Sidebar
           activeId={activeDiagram?.id ?? ''}
           onSelect={setActiveDiagram}
+          expanded={expanded}
+          onToggle={toggle}
         />
       )}
       <div className="relative flex flex-1 flex-col">
@@ -70,6 +84,8 @@ export default function App() {
             <FullscreenOverlay
               activeId={activeDiagram?.id ?? ''}
               onSelect={setActiveDiagram}
+              expanded={expanded}
+              onToggle={toggle}
               diagramTitle={activeDiagram?.title ?? null}
               showBackground={showBackground}
               onToggleBackground={() => setShowBackground((v) => {

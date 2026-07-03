@@ -6,6 +6,8 @@ import type { DiagramDefinition } from '../types'
 interface FullscreenOverlayProps {
   activeId: string
   onSelect: (diagram: DiagramDefinition) => void
+  expanded: Record<string, boolean>
+  onToggle: (key: string) => void
   diagramTitle: string | null
   showBackground: boolean
   onToggleBackground: () => void
@@ -17,6 +19,8 @@ interface FullscreenOverlayProps {
 export default function FullscreenOverlay({
   activeId,
   onSelect,
+  expanded,
+  onToggle,
   diagramTitle,
   showBackground,
   onToggleBackground,
@@ -113,6 +117,8 @@ export default function FullscreenOverlay({
           <Sidebar
             activeId={activeId}
             onSelect={onSelect}
+            expanded={expanded}
+            onToggle={onToggle}
           />
         </div>
       )}
