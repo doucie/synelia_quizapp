@@ -25,8 +25,7 @@ export default function App() {
   const [fullscreen, setFullscreen] = useState(false)
 
   const handleExportSvg = useCallback(() => {
-    const container = document.querySelector('.react-flow')
-    exportSvg(container as HTMLElement, `${activeDiagram?.id ?? 'diagram'}.svg`)
+    exportSvg(`${activeDiagram?.id ?? 'diagram'}.svg`)
   }, [activeDiagram])
 
   const handleResetPositions = useCallback(() => {

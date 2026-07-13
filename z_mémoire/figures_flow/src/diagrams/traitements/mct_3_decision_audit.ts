@@ -3,7 +3,7 @@ import type { DiagramDefinition } from '../../types'
 export const mct3DecisionAudit: DiagramDefinition = {
   id: 'mct-3-decision-audit',
   title: 'MCT 3 — Décision, Rollback & Audit',
-  category: 'traitements',
+  category: 'reference',
   domain: 'MCT 3 — Décision, Rollback & Audit (T4+T5+T6)',
   nodes: [
     /* ═══ T4 — PRONONCER UNE DÉCISION ═══ */

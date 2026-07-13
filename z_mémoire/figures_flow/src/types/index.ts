@@ -1,6 +1,6 @@
 import type { Node, Edge } from '@xyflow/react'
 
-export type Category = 'mcd' | 'mld' | 'mpd' | 'traitements'
+export type Category = 'mcd' | 'mld' | 'mpd' | 'traitements' | 'reference'
 
 export type ProcessVariant = 'mct-event' | 'mct-sync' | 'mct-operation' | 'mct-result' | 'sat-task' | 'sat-phase' | 'sat-head' | 'sat-lane' | 'mpt-layer'
 

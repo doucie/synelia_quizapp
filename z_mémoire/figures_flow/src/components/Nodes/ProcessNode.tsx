@@ -158,10 +158,10 @@ function SatTask({ data }: { data: EntityNodeData }) {
   const mode = meta || 'manual'
   return (
     <div
-      className={clsx('flex flex-col rounded-2xl shadow-[0_7px_9px_0_rgba(0,0,0,0.02)] min-w-[200px]', 'bg-background/70')}
+      className={clsx('flex flex-col rounded-2xl shadow-[0_7px_9px_0_rgba(0,0,0,0.02)] min-w-[180px] max-w-[225px] break-words', 'bg-background/70')}
       style={color ? { border: `1.5px solid ${color}` } : { border: '1.5px solid hsl(270, 100%, 40%)' }}
     >
-      <div className="font-bold text-xs mb-1 px-3 pt-2 leading-tight" style={color ? { color } : undefined}>
+      <div className="font-bold text-xs mb-1 px-3 pt-2 leading-tight break-words" style={color ? { color } : undefined}>
         {label}
       </div>
       <div className="px-3 pb-2 flex flex-col gap-1">
@@ -172,7 +172,7 @@ function SatTask({ data }: { data: EntityNodeData }) {
           {META_LABEL[mode] || mode}
         </span>
         {detail && (
-          <div className="text-[10.5px] leading-snug text-muted-foreground">{detail}</div>
+          <div className="text-[10.5px] leading-snug text-muted-foreground break-words">{detail}</div>
         )}
       </div>
       <Handles />

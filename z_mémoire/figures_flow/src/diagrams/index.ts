@@ -19,8 +19,13 @@ import { entretienEvaluation as mpdEntretienEvaluation } from './mpd/entretien_e
 import { auditNotifications as mpdAuditNotifications } from './mpd/audit_notifications'
 
 import { mct1CandidatureQuiz } from './traitements/mct_1_candidature_quiz'
+import { mct1aCandidature } from './traitements/mct_1a_candidature'
+import { mct1bQuiz } from './traitements/mct_1b_quiz'
 import { mct2EntretienEvaluation } from './traitements/mct_2_entretien_evaluation'
 import { mct3DecisionAudit } from './traitements/mct_3_decision_audit'
+import { mct3aDecision } from './traitements/mct_3a_decision'
+import { mct3bRollback } from './traitements/mct_3b_rollback'
+import { mct3cAudit } from './traitements/mct_3c_audit'
 import { sat1SetupPreselection } from './traitements/sat_1_setup_preselection'
 import { sat2EntretienAudit } from './traitements/sat_2_entretien_audit'
 import { mpt1CandidatureQuiz } from './traitements/mpt_1_candidature_quiz'
@@ -43,8 +48,13 @@ export const diagrams: DiagramDefinition[] = [
   mpdEntretienEvaluation,
   mpdAuditNotifications,
   mct1CandidatureQuiz,
+  mct1aCandidature,
+  mct1bQuiz,
   mct2EntretienEvaluation,
   mct3DecisionAudit,
+  mct3aDecision,
+  mct3bRollback,
+  mct3cAudit,
   sat1SetupPreselection,
   sat2EntretienAudit,
   mpt1CandidatureQuiz,

@@ -13,6 +13,7 @@ const categories: { label: string; key: Category }[] = [
   { label: 'MLD — Logique', key: 'mld' },
   { label: 'MPD — Physique', key: 'mpd' },
   { label: 'Traitements', key: 'traitements' },
+  { label: 'Anciennes figures', key: 'reference' },
 ]
 
 const categoryIcons: Record<Category, string> = {
@@ -20,6 +21,7 @@ const categoryIcons: Record<Category, string> = {
   mld: '⊡',
   mpd: '◈',
   traitements: '⚙',
+  reference: '◀',
 }
 
 export default function Sidebar({ activeId, onSelect, expanded, onToggle }: SidebarProps) {

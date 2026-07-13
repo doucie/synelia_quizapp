@@ -3,7 +3,7 @@ import type { DiagramDefinition } from '../../types'
 export const mct1CandidatureQuiz: DiagramDefinition = {
   id: 'mct-1-candidature-quiz',
   title: 'MCT 1 — Candidature & Quiz',
-  category: 'traitements',
+  category: 'reference',
   domain: 'MCT 1 — Candidature & Quiz (T1+T2)',
   nodes: [
     /* ═══ T1 — SOUMETTRE CANDIDATURE ═══ */
