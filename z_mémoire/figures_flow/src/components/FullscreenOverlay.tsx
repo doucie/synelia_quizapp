@@ -12,6 +12,7 @@ interface FullscreenOverlayProps {
   showBackground: boolean
   onToggleBackground: () => void
   onExportSvg: () => void
+  onExportPositions: () => void
   onResetPositions: () => void
   onExitFullscreen: () => void
 }
@@ -25,6 +26,7 @@ export default function FullscreenOverlay({
   showBackground,
   onToggleBackground,
   onExportSvg,
+  onExportPositions,
   onResetPositions,
   onExitFullscreen,
 }: FullscreenOverlayProps) {
@@ -133,6 +135,7 @@ export default function FullscreenOverlay({
             onToggleFullscreen={onExitFullscreen}
             onToggleBackground={onToggleBackground}
             onExportSvg={onExportSvg}
+            onExportPositions={onExportPositions}
             onResetPositions={onResetPositions}
           />
         </div>

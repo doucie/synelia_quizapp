@@ -8,6 +8,7 @@ import FullscreenOverlay from './components/FullscreenOverlay'
 import type { DiagramDefinition } from './types'
 import { diagrams, getDiagram } from './diagrams'
 import { exportSvg } from './utils/exportSvg'
+import { exportPositions } from './utils/exportPositions'
 import { useSidebarState } from './hooks/useSidebarState'
 
 export default function App() {
@@ -27,6 +28,10 @@ export default function App() {
   const handleExportSvg = useCallback(() => {
     exportSvg(`${activeDiagram?.id ?? 'diagram'}.svg`)
   }, [activeDiagram])
+
+  const handleExportPositions = useCallback(() => {
+    exportPositions()
+  }, [])
 
   const handleResetPositions = useCallback(() => {
     const key = `figures_flow:diagram:${activeDiagram?.id}`
@@ -70,6 +75,7 @@ export default function App() {
                 return !v
               })}
               onExportSvg={handleExportSvg}
+              onExportPositions={handleExportPositions}
               onResetPositions={handleResetPositions}
             />
           )}
@@ -92,6 +98,7 @@ export default function App() {
                 return !v
               })}
               onExportSvg={handleExportSvg}
+              onExportPositions={handleExportPositions}
               onResetPositions={handleResetPositions}
               onExitFullscreen={() => setFullscreen(false)}
             />

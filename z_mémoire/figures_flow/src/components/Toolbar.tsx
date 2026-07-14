@@ -9,6 +9,7 @@ interface ToolbarProps {
   onToggleFullscreen: () => void
   onToggleBackground: () => void
   onExportSvg: () => void
+  onExportPositions: () => void
   onResetPositions: () => void
 }
 
@@ -18,6 +19,7 @@ export default function Toolbar({
   onToggleFullscreen,
   onToggleBackground,
   onExportSvg,
+  onExportPositions,
   onResetPositions,
 }: ToolbarProps) {
   const { zoomIn, zoomOut, fitView } = useReactFlow()
@@ -65,6 +67,13 @@ export default function Toolbar({
         title="Exporter en SVG"
       >
         Export
+      </button>
+      <button
+        onClick={onExportPositions}
+        className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
+        title="Exporter les positions"
+      >
+        ⬇
       </button>
       <button
         onClick={onResetPositions}
