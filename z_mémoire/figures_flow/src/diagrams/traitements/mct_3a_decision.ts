@@ -4,51 +4,47 @@ export const mct3aDecision: DiagramDefinition = {
   id: 'mct-3a-decision',
   title: 'MCT 3a — Décision',
   category: 'traitements',
-  domain: 'MCT 3a — T4 · Prononcer une décision (présélection ou finale)',
+  domain: 'MCT 3a — T4 · Prononcer une décision',
   nodes: [
     {
       id: 't4-e1', type: 'process', position: { x: 20, y: 20 },
-      data: { variant: 'mct-event', label: 'Round DECISION ouvert', detail: '<code>PRESELECTION</code> ou <code>DECISION</code><br/>en statut <code>OPENED</code>' },
+      data: { variant: 'mct-event', label: 'Round DECISION ouvert' },
     },
     {
       id: 't4-e2', type: 'process', position: { x: 270, y: 20 },
-      data: { variant: 'mct-event', label: 'Recruteur saisit décision', detail: 'Type = <code>RECRUTE</code> / <code>NON_RETENU</code><br/>/ <code>EN_ATTENTE</code>' },
+      data: { variant: 'mct-event', label: 'Recruteur saisit décision' },
     },
     {
       id: 't4-e3', type: 'process', position: { x: 520, y: 20 },
-      data: { variant: 'mct-event', label: 'Habilitation OK', detail: '<code>entity_permission</code><br/>= <code>CAN_DECIDE</code> sur campagne' },
+      data: { variant: 'mct-event', label: 'Habilitation OK' },
     },
     {
       id: 't4-s', type: 'process', position: { x: 230, y: 140 },
-      data: { variant: 'mct-sync', label: 'Synchronisation', expression: 't4-e1 ∧ t4-e2 ∧ t4-e3' },
+      data: { variant: 'mct-sync', label: 'ET' },
     },
     {
       id: 't4-op', type: 'process', position: { x: 80, y: 250 },
       data: {
-        variant: 'mct-operation', label: 'T4 — Prononcer une décision (présélection ou finale)',
+        variant: 'mct-operation', label: 'T4 — Prononcer une décision',
         items: [
-          'Créer <code>decisions</code> (FK <code>application_progress_id</code>, <code>decision_mode = NORMAL</code>)',
-          'Renseigner <code>justification</code> si non triviale',
-          'Valider l\'<code>application_progress</code> (<code>validated_at</code>, <code>validated_by</code>)',
-          'Recalculer <code>applications.current_application_progress_id</code> et ouvrir le round suivant',
-          'Si décision finale <code>NON_RETENU</code> : verrouiller la candidature',
-          'Évaluer règles <code>ON_PRESELECTION_*</code> / <code>ON_FINAL_DECISION</code>',
-          'Si <code>requires_manual_confirmation</code> : créer <code>mail_log</code> en attente',
-          'Émettre <code>audit_event</code> DECIDE',
+          'Créer la décision avec mode NORMAL',
+          'Valider le round et ouvrir le suivant',
+          'Si finale NON_RETENU : verrouiller la candidature',
         ],
+        emissionRules: ['Round suivant ouvert', 'Candidature finalisée', 'Confirmation manuelle'],
       },
     },
     {
       id: 't4-r1', type: 'process', position: { x: 80, y: 520 },
-      data: { variant: 'mct-result', label: 'R1 · Round suivant ouvert', detail: 'Pour décision intermédiaire :<br/>nouvelle ligne <code>application_progress</code>.' },
+      data: { variant: 'mct-result', label: 'Round suivant ouvert', rule: 'Round suivant ouvert' },
     },
     {
       id: 't4-r2', type: 'process', position: { x: 370, y: 520 },
-      data: { variant: 'mct-result', label: 'R2 · Candidature finalisée', detail: 'Décision finale <code>RECRUTE</code> /<br/><code>NON_RETENU</code> + mail final.' },
+      data: { variant: 'mct-result', label: 'Candidature finalisée', rule: 'Candidature finalisée' },
     },
     {
       id: 't4-r3', type: 'process', position: { x: 660, y: 520 },
-      data: { variant: 'mct-result', label: 'R3 · Confirmation manuelle', detail: 'Mail en attente,<br/>recruteur doit confirmer envoi.' },
+      data: { variant: 'mct-result', label: 'Confirmation manuelle', rule: 'Confirmation manuelle' },
     },
   ],
   edges: [

@@ -1,6 +1,6 @@
 import type { Node, Edge } from '@xyflow/react'
 
-export type Category = 'mcd' | 'mld' | 'mpd' | 'traitements' | 'reference'
+export type Category = 'mcd' | 'mld' | 'mpd' | 'traitements' | 'reference' | 'palette'
 
 export type ProcessVariant = 'mct-event' | 'mct-sync' | 'mct-operation' | 'mct-result' | 'sat-task' | 'sat-phase' | 'sat-head' | 'sat-lane' | 'mpt-layer'
 
@@ -23,6 +23,8 @@ export interface EntityNodeData {
   color?: string
   badge?: string
   items?: string[]
+  emissionRules?: string[]
+  rule?: string
   meta?: string
   detail?: string
   expression?: string

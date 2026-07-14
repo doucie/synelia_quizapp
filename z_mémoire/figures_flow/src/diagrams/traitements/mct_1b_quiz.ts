@@ -8,46 +8,45 @@ export const mct1bQuiz: DiagramDefinition = {
   nodes: [
     {
       id: 't2-e1', type: 'process', position: { x: 20, y: 20 },
-      data: { variant: 'mct-event', label: 'Round QUIZ ouvert', detail: '<code>application_progress</code> de type<br/><code>QUIZ</code> en statut <code>OPENED</code>' },
+      data: { variant: 'mct-event', label: 'Round QUIZ ouvert' },
     },
     {
       id: 't2-e2', type: 'process', position: { x: 270, y: 20 },
-      data: { variant: 'mct-event', label: 'Candidat ouvre /quiz/{token}', detail: 'Token de tentative résolu<br/>(ou nouvelle tentative permise)' },
+      data: { variant: 'mct-event', label: 'Candidat ouvre le quiz' },
     },
     {
       id: 't2-e3', type: 'process', position: { x: 520, y: 20 },
-      data: { variant: 'mct-event', label: 'Quota tentatives', detail: '<code>config_json.max_attempts</code><br/>non atteint' },
+      data: { variant: 'mct-event', label: 'Quota tentatives non atteint' },
     },
     {
       id: 't2-s', type: 'process', position: { x: 290, y: 140 },
-      data: { variant: 'mct-sync', label: 'Synchronisation', expression: 't2-e1 ∧ t2-e2 ∧ t2-e3' },
+      data: { variant: 'mct-sync', label: 'ET' },
     },
     {
       id: 't2-op', type: 'process', position: { x: 80, y: 250 },
       data: {
         variant: 'mct-operation', label: 'T2 — Passer le quiz du round courant',
         items: [
-          'Créer <code>application_quiz_attempt</code> (FK <code>application_progress_id</code>) + <code>quiz_token</code>',
-          'Résoudre <code>form_version</code> via <code>pipeline_stage.config_json.form_id</code>',
-          'Persister chaque <code>candidate_answer</code> (FK <code>application_quiz_attempt_id</code>)',
-          'À la complétion : agréger <code>score</code> / <code>score_percent</code> / <code>elapsed_time</code>',
-          'Appliquer <code>screening_mode = AUTO_THRESHOLD</code> (comparer à <code>passing_score</code>)',
-          'Mettre à jour <code>applications.aggregated_quiz_score(_percent)</code>',
-          'Évaluer règle <code>ON_QUIZ_COMPLETED</code> + écrire <code>audit_event</code> SUBMIT',
+          'Créer une tentative de quiz avec token unique',
+          'Résoudre le formulaire via la config du stage',
+          'Persister chaque réponse du candidat',
+          'Agréger score et pourcentage à la complétion',
+          'Appliquer le screening automatique ou manuel',
         ],
+        emissionRules: ['Score ≥ seuil', 'Score entre seuils', 'Score < seuil'],
       },
     },
     {
       id: 't2-r1', type: 'process', position: { x: 80, y: 520 },
-      data: { variant: 'mct-result', label: 'R1 · Réussi (auto)', detail: 'Round QUIZ validé,<br/>progression auto vers le round suivant,<br/>notification recruteur.' },
+      data: { variant: 'mct-result', label: 'Quiz réussi (auto)', rule: 'Score ≥ seuil' },
     },
     {
       id: 't2-r2', type: 'process', position: { x: 370, y: 520 },
-      data: { variant: 'mct-result', label: 'R2 · À corriger', detail: 'Tentative en attente de correction manuelle,<br/>notification évaluateur.' },
+      data: { variant: 'mct-result', label: 'À corriger manuellement', rule: 'Score entre seuils' },
     },
     {
       id: 't2-r3', type: 'process', position: { x: 640, y: 520 },
-      data: { variant: 'mct-result', label: 'R3 · Échec sous seuil', detail: 'Round QUIZ refusé,<br/>candidature marquée éliminée,<br/>mail <code>ON_QUIZ_FAILED</code>.', fail: true },
+      data: { variant: 'mct-result', label: 'Échec sous seuil', rule: 'Score < seuil', fail: true },
     },
   ],
   edges: [

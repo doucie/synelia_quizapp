@@ -6,10 +6,10 @@ const SAFE_HUES = [
 ]
 
 const PROCESS_HUES: Record<string, (data: EntityNodeData) => number> = {
-  'mct-event': () => 195,
-  'mct-sync': () => 30,
-  'mct-operation': () => 225,
-  'mct-result': (d) => (d.fail ? 0 : 145),
+  'mct-event': () => 270,
+  'mct-sync': () => 330,
+  'mct-operation': () => 166,
+  'mct-result': (d) => (d.fail ? 0 : 128),
   'sat-task': (d) => {
     const map: Record<string, number> = { manual: 270, interactive: 30, auto: 195, eval: 30, adm: 145 }
     return map[d.meta || ''] ?? 270
@@ -48,11 +48,13 @@ export function applyEntityColors(nodes: Node<EntityNodeData>[]): Node<EntityNod
         data: { ...node.data, color: `hsl(${hue}, 100%, 40%)` },
       }
     }
+    const hueFromLabel = node.data.label?.match(/^hsl\((\d+)/)
+    const hue = hueFromLabel ? Number(hueFromLabel[1]) : SAFE_HUES[i % SAFE_HUES.length]
     return {
       ...node,
       data: {
         ...node.data,
-        color: `hsl(${SAFE_HUES[i % SAFE_HUES.length]}, 100%, 40%)`,
+        color: `hsl(${hue}, 100%, 40%)`,
       },
     }
   })

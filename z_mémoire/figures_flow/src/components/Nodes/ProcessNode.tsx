@@ -39,13 +39,10 @@ function Handles() {
 /* ── MCT Event ─────────────────────────────────────────────── */
 
 function MctEvent({ data }: { data: EntityNodeData }) {
-  const { label, color, detail } = data
+  const { label, color } = data
   return (
-    <div className={clsx('flex flex-col rounded-2xl border border-solid shadow-[0_7px_9px_0_rgba(0,0,0,0.02)]', 'border-border bg-background/70 min-w-[200px]')} style={color ? { borderColor: color } : undefined}>
-      <div className="border-border rounded-t-2xl border-b border-solid px-3 py-2 text-xs font-semibold text-foreground" style={color ? { backgroundColor: hsla(color, 0.094), color } : undefined}>
-        {label}
-      </div>
-      <div className="bg-background relative flex flex-col gap-1 rounded-b-2xl p-3 text-xs text-foreground leading-relaxed" dangerouslySetInnerHTML={{ __html: detail || '' }} />
+    <div className={clsx('flex flex-col items-center justify-center rounded-2xl border border-solid shadow-[0_7px_9px_0_rgba(0,0,0,0.02)]', 'border-border bg-background/70 min-w-[180px] px-4 py-3')} style={color ? { borderColor: color } : undefined}>
+      <span className="text-xs font-semibold text-foreground text-center leading-snug" style={color ? { color } : undefined}>{label}</span>
       <Handles />
     </div>
   )
@@ -54,19 +51,18 @@ function MctEvent({ data }: { data: EntityNodeData }) {
 /* ── MCT Sync ──────────────────────────────────────────────── */
 
 function MctSync({ data }: { data: EntityNodeData }) {
-  const { label, color, expression } = data
+  const { color, label } = data
   return (
     <div
-      className={clsx('flex flex-col items-center justify-center px-3.5 py-2.5 text-center shadow-[0_7px_9px_0_rgba(0,0,0,0.02)]', 'bg-background/70 min-w-[240px]')}
+      className={clsx('flex flex-col items-center justify-center px-4 py-3 text-center shadow-[0_7px_9px_0_rgba(0,0,0,0.02)]', 'bg-background/70 min-w-[80px]')}
       style={{
-        border: color ? `2px solid ${color}` : '2px solid hsl(30, 100%, 40%)',
+        border: color ? `2px solid ${color}` : '2px solid hsl(330, 100%, 40%)',
         clipPath: 'polygon(0 0, 100% 0, 92% 100%, 8% 100%)',
         background: color ? hsla(color, 0.15) : undefined,
         color: color || undefined,
       }}
     >
-      <span className="text-[9.5px] font-bold uppercase tracking-wider opacity-70 block mb-1">Synchronisation</span>
-      <span className="text-xs font-bold font-mono leading-tight">{expression || label}</span>
+      <span className="text-xs font-bold uppercase tracking-wider">{label}</span>
       <Handles />
     </div>
   )
@@ -75,20 +71,31 @@ function MctSync({ data }: { data: EntityNodeData }) {
 /* ── MCT Operation ─────────────────────────────────────────── */
 
 function MctOperation({ data }: { data: EntityNodeData }) {
-  const { label, color, items } = data
+  const { label, color, items, emissionRules } = data
   return (
-    <div className={clsx('flex flex-col rounded-2xl border-2 border-solid shadow-[0_7px_9px_0_rgba(0,0,0,0.02)]', 'border-border bg-background/70')} style={color ? { borderColor: color } : undefined}>
-      <div className="border-border rounded-t-2xl border-b border-solid px-3 py-2 text-xs font-semibold text-foreground" style={color ? { backgroundColor: hsla(color, 0.094), color } : undefined}>
+    <div className={clsx('flex flex-col rounded-2xl border-2 border-solid shadow-[0_7px_9px_0_rgba(0,0,0,0.02)]', 'border-border bg-background/70 min-w-[280px]')} style={color ? { borderColor: color } : undefined}>
+      <div className="border-border rounded-t-2xl border-b-2 border-solid px-3 py-2 text-xs font-semibold text-foreground" style={color ? { backgroundColor: hsla(color, 0.094), color, borderColor: color } : { borderColor: 'hsl(var(--border))' }}>
         {label}
       </div>
-      <div className="bg-background relative flex flex-col gap-1 rounded-b-2xl p-3 text-xs leading-relaxed">
+      <div className="bg-background relative flex flex-col gap-1 p-3 text-xs leading-relaxed">
         {items?.map((item, i) => (
-          <div key={i} className="flex items-baseline gap-1.5 py-0.5">
-            <span style={color ? { color } : undefined}>▸</span>
-            <span className="text-foreground" dangerouslySetInnerHTML={{ __html: item }} />
+          <div key={i} className="flex items-start gap-1.5 py-0.5">
+            <span className="text-foreground font-medium">{i + 1}.</span>
+            <span className="text-foreground">{item}</span>
           </div>
         ))}
       </div>
+      {emissionRules && emissionRules.length > 0 && (
+        <div className="border-t-2 border-border px-3 text-[10.5px] leading-relaxed" style={color ? { backgroundColor: hsla(color, 0.06), borderColor: color } : { backgroundColor: 'hsl(var(--muted))' }}>
+          <div className="flex items-stretch">
+            {emissionRules.map((branch, i) => (
+              <div key={i} className="flex-1 flex items-center justify-center px-2 py-2 text-center" style={i > 0 ? { borderLeft: `2px solid ${color || 'hsl(var(--border))'}` } : undefined}>
+                <span className="font-medium text-foreground" dangerouslySetInnerHTML={{ __html: branch }} />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       <Handles />
     </div>
   )
@@ -97,21 +104,13 @@ function MctOperation({ data }: { data: EntityNodeData }) {
 /* ── MCT Result ────────────────────────────────────────────── */
 
 function MctResult({ data }: { data: EntityNodeData }) {
-  const { label, color, detail } = data
-  const bodyBg = color ? hsla(color, 0.15) : undefined
+  const { label, color } = data
   return (
     <div
-      className={clsx('flex flex-col border border-solid shadow-[0_7px_9px_0_rgba(0,0,0,0.02)] min-w-[200px]', 'bg-background/70')}
-      style={{
-        borderColor: color || undefined,
-        background: bodyBg,
-        borderRadius: '4px 4px 14px 14px',
-      }}
+      className="flex items-center justify-center rounded-2xl border border-solid min-w-[160px] px-3 py-2 shadow-[0_7px_9px_0_rgba(0,0,0,0.02)]"
+      style={color ? { borderColor: color, background: hsla(color, 0.094), color } : undefined}
     >
-      <div className="px-2.5 py-1.5 text-[10.5px] font-semibold text-white uppercase tracking-wider" style={color ? { background: color, borderRadius: '2px 2px 0 0' } : undefined}>
-        {label}
-      </div>
-      <div className="px-2.5 py-1.5 pb-2.5 text-[11px] leading-relaxed text-foreground" dangerouslySetInnerHTML={{ __html: detail || '' }} />
+      <span className="text-[10.5px] font-semibold uppercase tracking-wider text-center">{label}</span>
       <Handles />
     </div>
   )

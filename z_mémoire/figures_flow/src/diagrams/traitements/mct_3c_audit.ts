@@ -4,26 +4,26 @@ export const mct3cAudit: DiagramDefinition = {
   id: 'mct-3c-audit',
   title: 'MCT 3c — Audit',
   category: 'traitements',
-  domain: 'MCT 3c — T6 · Journaliser audit_event (transverse)',
+  domain: 'MCT 3c — T6 · Journaliser audit_event',
   nodes: [
     {
       id: 't6-e1', type: 'process', position: { x: 80, y: 20 },
-      data: { variant: 'mct-event', label: 'Toute opération métier', detail: 'CREATE / UPDATE / DELETE / SUBMIT / CLOSE / VALIDATE / DECIDE / CANCEL' },
+      data: { variant: 'mct-event', label: 'Toute opération métier' },
     },
     {
       id: 't6-op', type: 'process', position: { x: 80, y: 160 },
       data: {
-        variant: 'mct-operation', label: 'T6 — Journaliser audit_event (transverse)',
+        variant: 'mct-operation', label: 'T6 — Journaliser audit_event',
         items: [
-          'Sérialiser <code>before_json</code> / <code>after_json</code>',
-          'Capturer acteur, type d\'entité, identifiant',
-          'Persister <code>audit_event</code> sans bloquer l\'opération principale',
+          'Sérialiser avant/après de l\'entité',
+          'Capturer acteur et identifiant',
+          'Persister sans bloquer l\'opération',
         ],
       },
     },
     {
-      id: 't6-r1', type: 'process', position: { x: 80, y: 340 },
-      data: { variant: 'mct-result', label: 'R · Trace conservée', detail: 'Disponible pour reporting<br/>et conformité RGPD.' },
+      id: 't6-r1', type: 'process', position: { x: 80, y: 400 },
+      data: { variant: 'mct-result', label: 'Trace conservée' },
     },
   ],
   edges: [

@@ -8,36 +8,35 @@ export const mct3bRollback: DiagramDefinition = {
   nodes: [
     {
       id: 't5-e1', type: 'process', position: { x: 150, y: 20 },
-      data: { variant: 'mct-event', label: 'Décision antérieure existe', detail: '<code>decisions</code> ciblée non immuable<br/>(pas d\'ancre verrouillée)' },
+      data: { variant: 'mct-event', label: 'Décision antérieure non immuable' },
     },
     {
       id: 't5-e2', type: 'process', position: { x: 430, y: 20 },
-      data: { variant: 'mct-event', label: 'Recruteur annule / rollback', detail: 'Action <code>CANCEL</code> ou <code>ROLLBACK</code><br/>+ <code>justification</code> obligatoire' },
+      data: { variant: 'mct-event', label: 'Recruteur annule / rollback' },
     },
     {
       id: 't5-s', type: 'process', position: { x: 290, y: 140 },
-      data: { variant: 'mct-sync', label: 'Synchronisation', expression: 't5-e1 ∧ t5-e2' },
+      data: { variant: 'mct-sync', label: 'ET' },
     },
     {
       id: 't5-op', type: 'process', position: { x: 150, y: 250 },
       data: {
         variant: 'mct-operation', label: 'T5 — Annuler / réouvrir une décision',
         items: [
-          'Créer une nouvelle <code>decisions</code> avec <code>decision_mode = CANCEL</code> ou <code>ROLLBACK</code>',
-          'Renseigner <code>cancels_decision_id</code> + <code>justification</code>',
-          'Recalculer <code>applications.current_application_progress_id</code>',
-          'Réouvrir l\'<code>application_progress</code> ciblé (<code>reopened_at</code>, <code>reopened_by</code>)',
-          'Émettre <code>audit_event</code> CANCEL / ROLLBACK',
+          'Créer décision avec mode CANCEL ou ROLLBACK',
+          'Lier à la décision annulée et justifier',
+          'Réouvrir le round ciblé',
         ],
+        emissionRules: ['Parcours réouvert', 'Refus (décision ancrée)'],
       },
     },
     {
       id: 't5-r1', type: 'process', position: { x: 150, y: 500 },
-      data: { variant: 'mct-result', label: 'R1 · Parcours réouvert', detail: 'Le round redevient actif,<br/>notification recruteur.' },
+      data: { variant: 'mct-result', label: 'Parcours réouvert', rule: 'Parcours réouvert' },
     },
     {
       id: 't5-r2', type: 'process', position: { x: 480, y: 500 },
-      data: { variant: 'mct-result', label: 'R2 · Refus (décision ancrée)', detail: 'Annulation interdite,<br/>audit SECURITY.', fail: true },
+      data: { variant: 'mct-result', label: 'Refus (décision ancrée)', rule: 'Refus (décision ancrée)', fail: true },
     },
   ],
   edges: [

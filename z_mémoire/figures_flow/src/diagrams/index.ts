@@ -31,6 +31,8 @@ import { sat2EntretienAudit } from './traitements/sat_2_entretien_audit'
 import { mpt1CandidatureQuiz } from './traitements/mpt_1_candidature_quiz'
 import { mpt2EntretienDecision } from './traitements/mpt_2_entretien_decision'
 
+import { colorPalette } from './palette/color_palette'
+
 export const diagrams: DiagramDefinition[] = [
   mcdIdentitePermissions,
   mcdCampagnesPipeline,
@@ -59,6 +61,7 @@ export const diagrams: DiagramDefinition[] = [
   sat2EntretienAudit,
   mpt1CandidatureQuiz,
   mpt2EntretienDecision,
+  colorPalette,
 ]
 
 export type DiagramId = (typeof diagrams)[number]['id']
