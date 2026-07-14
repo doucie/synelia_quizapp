@@ -15,9 +15,9 @@ export const mct3cAudit: DiagramDefinition = {
       data: {
         variant: 'mct-operation', label: 'T6 — Journaliser audit_event',
         items: [
-          'Sérialiser avant/après de l\'entité',
-          'Capturer acteur et identifiant',
-          'Persister sans bloquer l\'opération',
+          'Comparer l\'état avant et après changement',
+          'Identifier qui a fait le changement',
+          'Enregistrer l\'historique sans ralentir le processus',
         ],
       },
     },

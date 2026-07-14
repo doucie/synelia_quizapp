@@ -27,11 +27,11 @@ export const mct1bQuiz: DiagramDefinition = {
       data: {
         variant: 'mct-operation', label: 'T2 — Passer le quiz du round courant',
         items: [
-          'Créer une tentative de quiz avec token unique',
-          'Résoudre le formulaire via la config du stage',
-          'Persister chaque réponse du candidat',
-          'Agréger score et pourcentage à la complétion',
-          'Appliquer le screening automatique ou manuel',
+          'Démarrer une session de quiz',
+          'Générer les questions selon la configuration',
+          'Enregistrer les réponses au fur et à mesure',
+          'Calculer le score final à la fin du quiz',
+          'Valider ou rejeter selon les règles de sélection',
         ],
         emissionRules: ['Score ≥ seuil', 'Score entre seuils', 'Score < seuil'],
       },
@@ -54,8 +54,8 @@ export const mct1bQuiz: DiagramDefinition = {
     { id: 'e-t2-e2-s', source: 't2-e2', target: 't2-s', type: 'traitement', data: { isStrong: true } },
     { id: 'e-t2-e3-s', source: 't2-e3', target: 't2-s', type: 'traitement', data: { isStrong: true } },
     { id: 'e-t2-s-op', source: 't2-s', target: 't2-op', type: 'traitement', data: { isStrong: true } },
-    { id: 'e-t2-op-r1', source: 't2-op', target: 't2-r1', type: 'traitement', data: {} },
-    { id: 'e-t2-op-r2', source: 't2-op', target: 't2-r2', type: 'traitement', data: {} },
-    { id: 'e-t2-op-r3', source: 't2-op', target: 't2-r3', type: 'traitement', data: { isDashed: true } },
+    { id: 'e-t2-op-r1', source: 't2-op', target: 't2-r1', sourceHandle: 'Score ≥ seuil', type: 'traitement', data: {} },
+    { id: 'e-t2-op-r2', source: 't2-op', target: 't2-r2', sourceHandle: 'Score entre seuils', type: 'traitement', data: {} },
+    { id: 'e-t2-op-r3', source: 't2-op', target: 't2-r3', sourceHandle: 'Score < seuil', type: 'traitement', data: { isDashed: true } },
   ],
 }

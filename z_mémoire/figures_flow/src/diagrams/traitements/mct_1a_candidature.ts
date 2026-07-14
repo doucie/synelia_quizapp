@@ -31,10 +31,10 @@ export const mct1aCandidature: DiagramDefinition = {
       data: {
         variant: 'mct-operation', label: 'T1 — Soumettre la candidature',
         items: [
-          'Créer la candidature avec snapshot identité, source et formulaire',
-          'Instancier le pipeline via le template de la campagne',
-          'Créer le premier round CANDIDATURE en statut OUVERT',
-          'Initialiser les agrégats de scores à 0',
+          'Enregistrer la candidature avec les infos du candidat',
+          'Lancer le parcours de sélection prévu par la campagne',
+          'Ouvrir la première étape du parcours',
+          'Remettre les scores à zéro',
         ],
         emissionRules: ['Candidature créée', 'Quota atteint', 'Token invalide'],
       },
@@ -58,8 +58,8 @@ export const mct1aCandidature: DiagramDefinition = {
     { id: 'e-t1-e3-s', source: 't1-e3', target: 't1-s', type: 'traitement', data: { isStrong: true } },
     { id: 'e-t1-e4-s', source: 't1-e4', target: 't1-s', type: 'traitement', data: { isStrong: true } },
     { id: 'e-t1-s-op', source: 't1-s', target: 't1-op', type: 'traitement', data: { isStrong: true } },
-    { id: 'e-t1-op-r1', source: 't1-op', target: 't1-r1', type: 'traitement', data: {} },
-    { id: 'e-t1-op-r2', source: 't1-op', target: 't1-r2', type: 'traitement', data: { isDashed: true } },
-    { id: 'e-t1-op-r3', source: 't1-op', target: 't1-r3', type: 'traitement', data: { isDashed: true } },
+    { id: 'e-t1-op-r1', source: 't1-op', target: 't1-r1', sourceHandle: 'Candidature créée', type: 'traitement', data: {} },
+    { id: 'e-t1-op-r2', source: 't1-op', target: 't1-r2', sourceHandle: 'Quota atteint', type: 'traitement', data: { isDashed: true } },
+    { id: 'e-t1-op-r3', source: 't1-op', target: 't1-r3', sourceHandle: 'Token invalide', type: 'traitement', data: { isDashed: true } },
   ],
 }

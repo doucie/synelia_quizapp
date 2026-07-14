@@ -23,9 +23,9 @@ export const mct3bRollback: DiagramDefinition = {
       data: {
         variant: 'mct-operation', label: 'T5 — Annuler / réouvrir une décision',
         items: [
-          'Créer décision avec mode CANCEL ou ROLLBACK',
-          'Lier à la décision annulée et justifier',
-          'Réouvrir le round ciblé',
+          'Annuler ou revenir sur une décision',
+          'Expliquer la raison de l\'annulation',
+          'Rouvrir l\'étape concernée',
         ],
         emissionRules: ['Parcours réouvert', 'Refus (décision ancrée)'],
       },
@@ -43,7 +43,7 @@ export const mct3bRollback: DiagramDefinition = {
     { id: 'e-t5-e1-s', source: 't5-e1', target: 't5-s', type: 'traitement', data: { isStrong: true } },
     { id: 'e-t5-e2-s', source: 't5-e2', target: 't5-s', type: 'traitement', data: { isStrong: true } },
     { id: 'e-t5-s-op', source: 't5-s', target: 't5-op', type: 'traitement', data: { isStrong: true } },
-    { id: 'e-t5-op-r1', source: 't5-op', target: 't5-r1', type: 'traitement', data: {} },
-    { id: 'e-t5-op-r2', source: 't5-op', target: 't5-r2', type: 'traitement', data: { isDashed: true } },
+    { id: 'e-t5-op-r1', source: 't5-op', target: 't5-r1', sourceHandle: 'Parcours réouvert', type: 'traitement', data: {} },
+    { id: 'e-t5-op-r2', source: 't5-op', target: 't5-r2', sourceHandle: 'Refus (décision ancrée)', type: 'traitement', data: { isDashed: true } },
   ],
 }

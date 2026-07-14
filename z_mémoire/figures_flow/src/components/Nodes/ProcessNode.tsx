@@ -72,6 +72,7 @@ function MctSync({ data }: { data: EntityNodeData }) {
 
 function MctOperation({ data }: { data: EntityNodeData }) {
   const { label, color, items, emissionRules } = data
+  const rules = emissionRules ?? []
   return (
     <div className={clsx('flex flex-col rounded-2xl border-2 border-solid shadow-[0_7px_9px_0_rgba(0,0,0,0.02)]', 'border-border bg-background/70 min-w-[280px]')} style={color ? { borderColor: color } : undefined}>
       <div className="border-border rounded-t-2xl border-b-2 border-solid px-3 py-2 text-xs font-semibold text-foreground" style={color ? { backgroundColor: hsla(color, 0.094), color, borderColor: color } : { borderColor: 'hsl(var(--border))' }}>
@@ -85,10 +86,10 @@ function MctOperation({ data }: { data: EntityNodeData }) {
           </div>
         ))}
       </div>
-      {emissionRules && emissionRules.length > 0 && (
+      {rules.length > 0 && (
         <div className="border-t-2 border-border px-3 text-[10.5px] leading-relaxed" style={color ? { backgroundColor: hsla(color, 0.06), borderColor: color } : { backgroundColor: 'hsl(var(--muted))' }}>
           <div className="flex items-stretch">
-            {emissionRules.map((branch, i) => (
+            {rules.map((branch, i) => (
               <div key={i} className="flex-1 flex items-center justify-center px-2 py-2 text-center" style={i > 0 ? { borderLeft: `2px solid ${color || 'hsl(var(--border))'}` } : undefined}>
                 <span className="font-medium text-foreground" dangerouslySetInnerHTML={{ __html: branch }} />
               </div>
@@ -96,7 +97,20 @@ function MctOperation({ data }: { data: EntityNodeData }) {
           </div>
         </div>
       )}
-      <Handles />
+      <Handle id="top" type="target" position={Position.Top} className="nodrag nopan h-[10px] w-[10px] border-none opacity-0" />
+      {rules.length > 0
+        ? rules.map((branch, i) => (
+          <Handle
+            key={branch}
+            id={branch}
+            type="source"
+            position={Position.Bottom}
+            className="nodrag nopan h-[10px] w-[10px] border-none bg-gray-400"
+            style={{ left: `${((i + 0.5) / rules.length) * 100}%` }}
+          />
+        ))
+        : <Handles />
+      }
     </div>
   )
 }

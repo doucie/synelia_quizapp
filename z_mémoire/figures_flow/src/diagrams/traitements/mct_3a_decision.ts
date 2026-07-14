@@ -27,9 +27,9 @@ export const mct3aDecision: DiagramDefinition = {
       data: {
         variant: 'mct-operation', label: 'T4 — Prononcer une décision',
         items: [
-          'Créer la décision avec mode NORMAL',
-          'Valider le round et ouvrir le suivant',
-          'Si finale NON_RETENU : verrouiller la candidature',
+          'Prendre la décision sur la candidature',
+          'Clôturer l\'étape et passer à la suivante',
+          'Si dernière étape et refus : clore définitivement',
         ],
         emissionRules: ['Round suivant ouvert', 'Candidature finalisée', 'Confirmation manuelle'],
       },
@@ -52,8 +52,8 @@ export const mct3aDecision: DiagramDefinition = {
     { id: 'e-t4-e2-s', source: 't4-e2', target: 't4-s', type: 'traitement', data: { isStrong: true } },
     { id: 'e-t4-e3-s', source: 't4-e3', target: 't4-s', type: 'traitement', data: { isStrong: true } },
     { id: 'e-t4-s-op', source: 't4-s', target: 't4-op', type: 'traitement', data: { isStrong: true } },
-    { id: 'e-t4-op-r1', source: 't4-op', target: 't4-r1', type: 'traitement', data: {} },
-    { id: 'e-t4-op-r2', source: 't4-op', target: 't4-r2', type: 'traitement', data: {} },
-    { id: 'e-t4-op-r3', source: 't4-op', target: 't4-r3', type: 'traitement', data: { isDashed: true } },
+    { id: 'e-t4-op-r1', source: 't4-op', target: 't4-r1', sourceHandle: 'Round suivant ouvert', type: 'traitement', data: {} },
+    { id: 'e-t4-op-r2', source: 't4-op', target: 't4-r2', sourceHandle: 'Candidature finalisée', type: 'traitement', data: {} },
+    { id: 'e-t4-op-r3', source: 't4-op', target: 't4-r3', sourceHandle: 'Confirmation manuelle', type: 'traitement', data: { isDashed: true } },
   ],
 }

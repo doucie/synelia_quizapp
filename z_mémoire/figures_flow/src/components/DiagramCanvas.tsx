@@ -44,8 +44,8 @@ export default function DiagramCanvas({ diagram, showBackground, fullscreen: _fu
       const cardToSide = saved?.to as RelationshipEdgeData['cardToSide'] | undefined
       return {
         ...e,
-        sourceHandle: cardFromSide && cardFromSide !== 'source' ? cardFromSide : undefined,
-        targetHandle: cardToSide && cardToSide !== 'source' ? cardToSide : undefined,
+        sourceHandle: e.sourceHandle ?? (cardFromSide && cardFromSide !== 'source' ? cardFromSide : undefined),
+        targetHandle: e.targetHandle ?? (cardToSide && cardToSide !== 'source' ? cardToSide : undefined),
         data: {
           ...e.data,
           diagramId: diagram.id,
