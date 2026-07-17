@@ -8,7 +8,7 @@ export const mct1aCandidature: DiagramDefinition = {
   nodes: [
     {
       id: 't1-e1', type: 'process', position: { x: 20, y: 20 },
-      data: { variant: 'mct-event', label: 'Lien campagne ouvert' },
+      data: { variant: 'mct-event', label: 'Campagne ouverte et accessible' },
     },
     {
       id: 't1-e2', type: 'process', position: { x: 270, y: 20 },
@@ -36,20 +36,20 @@ export const mct1aCandidature: DiagramDefinition = {
           'Ouvrir la première étape du parcours',
           'Remettre les scores à zéro',
         ],
-        emissionRules: ['Candidature créée', 'Quota atteint', 'Token invalide'],
+        emissionRules: ['OK', 'Quota atteint', 'Token invalide'],
       },
     },
     {
       id: 't1-r1', type: 'process', position: { x: 80, y: 490 },
-      data: { variant: 'mct-result', label: 'Candidature créée', rule: 'Candidature créée' },
+      data: { variant: 'mct-result', label: 'Candidature enregistrée', rule: 'OK' },
     },
     {
       id: 't1-r2', type: 'process', position: { x: 370, y: 490 },
-      data: { variant: 'mct-result', label: 'Quota atteint', rule: 'Quota atteint', fail: true },
+      data: { variant: 'mct-result', label: 'Quota dépassé', rule: 'Quota atteint', fail: true },
     },
     {
       id: 't1-r3', type: 'process', position: { x: 640, y: 490 },
-      data: { variant: 'mct-result', label: 'Token invalide', rule: 'Token invalide', fail: true },
+      data: { variant: 'mct-result', label: 'Lien invalide', rule: 'Token invalide', fail: true },
     },
   ],
   edges: [
@@ -58,7 +58,7 @@ export const mct1aCandidature: DiagramDefinition = {
     { id: 'e-t1-e3-s', source: 't1-e3', target: 't1-s', type: 'traitement', data: { isStrong: true } },
     { id: 'e-t1-e4-s', source: 't1-e4', target: 't1-s', type: 'traitement', data: { isStrong: true } },
     { id: 'e-t1-s-op', source: 't1-s', target: 't1-op', type: 'traitement', data: { isStrong: true } },
-    { id: 'e-t1-op-r1', source: 't1-op', target: 't1-r1', sourceHandle: 'Candidature créée', type: 'traitement', data: {} },
+    { id: 'e-t1-op-r1', source: 't1-op', target: 't1-r1', sourceHandle: 'OK', type: 'traitement', data: {} },
     { id: 'e-t1-op-r2', source: 't1-op', target: 't1-r2', sourceHandle: 'Quota atteint', type: 'traitement', data: { isDashed: true } },
     { id: 'e-t1-op-r3', source: 't1-op', target: 't1-r3', sourceHandle: 'Token invalide', type: 'traitement', data: { isDashed: true } },
   ],

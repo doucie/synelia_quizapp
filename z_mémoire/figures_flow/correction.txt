@@ -1,0 +1,70 @@
+MCT 1a - T1
+---
+
+- [] Lien de* campagne ouvert
+- [] "Candidature créée" n'est pas une règle d'émission. Remplacer par "OK"
+- [] Règles d'émission = OK ; Quota atteint ; Token invalide
+- [] Résultats = Candidature créée, (Vérifier ce qui se passe quand le quota est atteint et quand le Token est invalide pour trouver les résultat)
+
+
+
+---
+
+
+MCT 1b - T2
+---
+
+- [] "Round Quiz ouvert" n'est pas très compréhensible... moi même je ne comprends pas bien
+- [] "Candidat ouvre le quiz" non plus n'est pas très compréhensible
+- [] Au lieu de "Quota tentatives non atteint" on peut plutôt écrire "Quota *de tentatives non atteint"
+- [] "Passer le quiz du round courant" n'est pas non plus très compréhensible
+- [] La règle d'emission "Score entre seuils" ne fait pas vraiment sens, surtout qu'elle donne "à corriger manuellement" comme résultat. Normalement, c'est pas comme ça que le système fonctionne ou du moins, c'est pas comme ça que ça doit fonctionner. La correction manuelle ne se fait que si le formulaire nécéssite explicitement une correction manuelle. Donc la règle d'émission serait peut être "correction manuelle requise"
+ 
+
+
+---
+
+
+MCT 2
+---
+
+- [] "Entretien planifié par le recruteur" au lieu de "Recruteur planifie entretien"
+- [] Ce MCT même n'a aucun sens. Dans les évênements, le recruteur planifie l'entretien. Mais le traitement c'est "conclure le cycle entretien - evalution" et à l'intérieur même de l'opération il y a encore "planifier l'entretien" alors que c'est déjà un événement
+- [] Ce MCT est à revoir complétement.
+
+
+---
+
+
+MCT 3a - T4
+---
+
+- [] "Round DECISION ouvert" aussi n'est pas très compréhensible
+- [] "Recruteur saisit décision" ne ressemble pas vraiment à un événement valide. Je vois où on veut en venir mais faudrait peut être mettre quelque chose qui ressemble plus à un évênement
+- [] "Habilitation OK" est incompréhensible
+- [] Le traitement : "Prononcer une décision" ne ressemble pas à un traitement autant dans le titre que dans le descriptif
+- [] Ce MCT est à revoir complétement
+
+
+---
+
+
+MCT 3b - T5
+---
+
+- [] Encore une fois, l'opération contient un des événements ce qui n'est pas bon
+- [] "Annuler/rouvrir une décision" ne ressemble pas au titre d'un traitement je pense
+- [] "Refus (décision ancrée)" - c'est le système qui refuse ou c'est un acteur qui refuse ? ce n'est pas vraiment compréhensible
+
+
+---
+
+
+MCT 3c - T6
+---
+
+- Il n'y a pas d'événement, de règle d'emisssion, de résultat, de synchronisation, bref tout est mélangé
+
+
+
+- [] Le résultat ne doit pas être pareil que la règle d'emission

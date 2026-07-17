@@ -6,56 +6,52 @@ export const mct3DecisionAudit: DiagramDefinition = {
   category: 'reference',
   domain: 'MCT 3 — Décision, Rollback & Audit (T4+T5+T6)',
   nodes: [
-    /* ═══ T4 — PRONONCER UNE DÉCISION ═══ */
+    /* ═══ T4 — VALIDER LA DÉCISION DU RECRUTEUR ═══ */
     {
       id: 't4-e1', type: 'process', position: { x: 20, y: 20 },
-      data: { variant: 'mct-event', label: 'Round DECISION ouvert' },
+      data: { variant: 'mct-event', label: 'Candidat en phase de décision' },
     },
     {
-      id: 't4-e2', type: 'process', position: { x: 270, y: 20 },
-      data: { variant: 'mct-event', label: 'Recruteur saisit décision' },
+      id: 't4-e2', type: 'process', position: { x: 520, y: 20 },
+      data: { variant: 'mct-event', label: 'Décision du recruteur' },
     },
     {
-      id: 't4-e3', type: 'process', position: { x: 520, y: 20 },
-      data: { variant: 'mct-event', label: 'Habilitation OK' },
-    },
-    {
-      id: 't4-s', type: 'process', position: { x: 230, y: 140 },
+      id: 't4-s', type: 'process', position: { x: 290, y: 140 },
       data: { variant: 'mct-sync', label: 'ET' },
     },
     {
       id: 't4-op', type: 'process', position: { x: 80, y: 250 },
       data: {
-        variant: 'mct-operation', label: 'T4 — Prononcer une décision',
+        variant: 'mct-operation', label: 'Valider la décision du recruteur',
         items: [
-          'Prendre la décision sur la candidature',
-          'Clôturer l\'étape et passer à la suivante',
-          'Si dernière étape et refus : clore définitivement',
+          'Vérifier les droits du recruteur (habilitation)',
+          'Recueillir la justification de la décision',
+          'Enregistrer dans l\'audit',
         ],
-        emissionRules: ['Round suivant ouvert', 'Candidature finalisée', 'Confirmation manuelle'],
+        emissionRules: ['Décision favorable', 'Décision en sursis', 'Décision défavorable'],
       },
     },
     {
       id: 't4-r1', type: 'process', position: { x: 80, y: 520 },
-      data: { variant: 'mct-result', label: 'Round suivant ouvert', rule: 'Round suivant ouvert' },
+      data: { variant: 'mct-result', label: 'Candidat retenu', rule: 'Décision favorable' },
     },
     {
       id: 't4-r2', type: 'process', position: { x: 370, y: 520 },
-      data: { variant: 'mct-result', label: 'Candidature finalisée', rule: 'Candidature finalisée' },
+      data: { variant: 'mct-result', label: 'Candidat en attente', rule: 'Décision en sursis' },
     },
     {
       id: 't4-r3', type: 'process', position: { x: 660, y: 520 },
-      data: { variant: 'mct-result', label: 'Confirmation manuelle', rule: 'Confirmation manuelle' },
+      data: { variant: 'mct-result', label: 'Candidat refusé', rule: 'Décision défavorable', fail: true },
     },
 
-    /* ═══ T5 — ANNULER / ROLLBACK ═══ */
+    /* ═══ T5 — GÉRER LA DEMANDE D'ANNULATION ═══ */
     {
       id: 't5-e1', type: 'process', position: { x: 150, y: 720 },
       data: { variant: 'mct-event', label: 'Décision antérieure non immuable' },
     },
     {
       id: 't5-e2', type: 'process', position: { x: 430, y: 720 },
-      data: { variant: 'mct-event', label: 'Recruteur annule / rollback' },
+      data: { variant: 'mct-event', label: 'Demande d\'annulation formulée' },
     },
     {
       id: 't5-s', type: 'process', position: { x: 290, y: 840 },
@@ -64,22 +60,23 @@ export const mct3DecisionAudit: DiagramDefinition = {
     {
       id: 't5-op', type: 'process', position: { x: 150, y: 950 },
       data: {
-        variant: 'mct-operation', label: 'T5 — Annuler / réouvrir une décision',
+        variant: 'mct-operation', label: 'Gérer la demande d\'annulation',
         items: [
-          'Annuler ou revenir sur une décision',
-          'Expliquer la raison de l\'annulation',
-          'Rouvrir l\'étape concernée',
+          'Vérifier les droits du recruteur (habilitation à annuler)',
+          'Vérifier si l\'annulation est possible',
+          'Recueillir le justificatif (obligatoire)',
+          'Enregistrer dans l\'audit',
         ],
-        emissionRules: ['Parcours réouvert', 'Refus (décision ancrée)'],
+        emissionRules: ['Annulation autorisée', 'Décision immuable'],
       },
     },
     {
       id: 't5-r1', type: 'process', position: { x: 150, y: 1200 },
-      data: { variant: 'mct-result', label: 'Parcours réouvert', rule: 'Parcours réouvert' },
+      data: { variant: 'mct-result', label: 'Étape réouverte', rule: 'Annulation autorisée' },
     },
     {
       id: 't5-r2', type: 'process', position: { x: 480, y: 1200 },
-      data: { variant: 'mct-result', label: 'Refus (décision ancrée)', rule: 'Refus (décision ancrée)', fail: true },
+      data: { variant: 'mct-result', label: 'Décision inchangée', rule: 'Décision immuable', fail: true },
     },
 
     /* ═══ T6 — AUDIT TRANSVERSE ═══ */
@@ -88,36 +85,45 @@ export const mct3DecisionAudit: DiagramDefinition = {
       data: { variant: 'mct-event', label: 'Toute opération métier' },
     },
     {
+      id: 't6-s', type: 'process', position: { x: 250, y: 1490 },
+      data: { variant: 'mct-sync', label: '' },
+    },
+    {
       id: 't6-op', type: 'process', position: { x: 680, y: 20 },
       data: {
         variant: 'mct-operation', label: 'T6 — Journaliser audit_event',
         items: [
           'Comparer l\'état avant et après changement',
           'Identifier qui a fait le changement',
-          'Enregistrer l\'historique sans ralentir le processus',
+          'Enregistrer la trace dans l\'audit',
         ],
+        emissionRules: ['Opération journalisée'],
       },
     },
     {
       id: 't6-r1', type: 'process', position: { x: 730, y: 230 },
-      data: { variant: 'mct-result', label: 'Trace conservée' },
+      data: { variant: 'mct-result', label: 'Trace enregistrée', rule: 'Opération journalisée' },
     },
   ],
   edges: [
+    /* T4 edges */
     { id: 'e-t4-e1-s', source: 't4-e1', target: 't4-s', type: 'traitement', data: { isStrong: true } },
     { id: 'e-t4-e2-s', source: 't4-e2', target: 't4-s', type: 'traitement', data: { isStrong: true } },
-    { id: 'e-t4-e3-s', source: 't4-e3', target: 't4-s', type: 'traitement', data: { isStrong: true } },
     { id: 'e-t4-s-op', source: 't4-s', target: 't4-op', type: 'traitement', data: { isStrong: true } },
-    { id: 'e-t4-op-r1', source: 't4-op', target: 't4-r1', sourceHandle: 'Round suivant ouvert', type: 'traitement', data: {} },
-    { id: 'e-t4-op-r2', source: 't4-op', target: 't4-r2', sourceHandle: 'Candidature finalisée', type: 'traitement', data: {} },
-    { id: 'e-t4-op-r3', source: 't4-op', target: 't4-r3', sourceHandle: 'Confirmation manuelle', type: 'traitement', data: { isDashed: true } },
+    { id: 'e-t4-op-r1', source: 't4-op', target: 't4-r1', sourceHandle: 'Décision favorable', type: 'traitement', data: {} },
+    { id: 'e-t4-op-r2', source: 't4-op', target: 't4-r2', sourceHandle: 'Décision en sursis', type: 'traitement', data: {} },
+    { id: 'e-t4-op-r3', source: 't4-op', target: 't4-r3', sourceHandle: 'Décision défavorable', type: 'traitement', data: { isDashed: true } },
+    /* T5 edges */
     { id: 'e-t5-e1-s', source: 't5-e1', target: 't5-s', type: 'traitement', data: { isStrong: true } },
     { id: 'e-t5-e2-s', source: 't5-e2', target: 't5-s', type: 'traitement', data: { isStrong: true } },
     { id: 'e-t5-s-op', source: 't5-s', target: 't5-op', type: 'traitement', data: { isStrong: true } },
-    { id: 'e-t5-op-r1', source: 't5-op', target: 't5-r1', sourceHandle: 'Parcours réouvert', type: 'traitement', data: {} },
-    { id: 'e-t5-op-r2', source: 't5-op', target: 't5-r2', sourceHandle: 'Refus (décision ancrée)', type: 'traitement', data: { isDashed: true } },
-    { id: 'e-t6-e1-op', source: 't6-e1', target: 't6-op', type: 'traitement', data: { isStrong: true } },
+    { id: 'e-t5-op-r1', source: 't5-op', target: 't5-r1', sourceHandle: 'Annulation autorisée', type: 'traitement', data: {} },
+    { id: 'e-t5-op-r2', source: 't5-op', target: 't5-r2', sourceHandle: 'Décision immuable', type: 'traitement', data: { isDashed: true } },
+    /* T6 edges */
+    { id: 'e-t6-e1-s', source: 't6-e1', target: 't6-s', type: 'traitement', data: { isStrong: true } },
+    { id: 'e-t6-s-op', source: 't6-s', target: 't6-op', type: 'traitement', data: { isStrong: true } },
     { id: 'e-t6-op-r1', source: 't6-op', target: 't6-r1', type: 'traitement', data: {} },
+    /* Cross-section edges */
     { id: 'e-t4-op-t6-op', source: 't4-op', target: 't6-op', type: 'traitement', data: { isDashed: true } },
     { id: 'e-t5-op-t6-op', source: 't5-op', target: 't6-op', type: 'traitement', data: { isDashed: true } },
     { id: 'e-t4-r1-t5-e1', source: 't4-r1', target: 't5-e1', type: 'traitement', data: { isDashed: true } },
