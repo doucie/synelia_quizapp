@@ -7,8 +7,9 @@ import {
   useEdges,
   Position,
   type EdgeProps,
+  type Node,
 } from '@xyflow/react'
-import type { RelationshipEdgeData } from '../../types'
+import type { RelationshipEdgeData, EntityNodeData } from '../../types'
 import { setCardinalitySide } from '../../hooks/useDiagramState'
 
 const CARD_SIDES = ['source', 'left', 'right', 'top', 'bottom'] as const
@@ -27,6 +28,16 @@ const SIDE_LABELS: Record<string, string> = {
   right: '➡',
   top: '⬆',
   bottom: '⬇',
+}
+
+function getValidHandles(node: Node | undefined, handleType: 'source' | 'target'): Set<string> {
+  if (!node) return new Set(['left', 'right', 'top', 'bottom'])
+  const data = node.data as EntityNodeData
+  if (data.variant === 'mct-operation' && data.emissionRules?.length) {
+    if (handleType === 'source') return new Set(data.emissionRules)
+    return new Set(['top'])
+  }
+  return new Set(['left', 'right', 'top', 'bottom'])
 }
 
 function badgeOffset(pos: Position, extra = 0): { x: number; y: number } {
@@ -86,7 +97,7 @@ export default function RelationshipEdge({
   data,
   selected,
 }: EdgeProps<RelationshipEdgeData>) {
-  const { getEdges, setEdges } = useReactFlow()
+  const { getEdges, setEdges, getNode } = useReactFlow()
   const allEdges = useEdges()
   const [popover, setPopover] = useState(false)
   const popoverRef = useRef<HTMLDivElement>(null)
@@ -122,8 +133,13 @@ export default function RelationshipEdge({
     'inline-flex items-center justify-center rounded-full border border-border bg-background px-2 py-0.5 text-[10px] font-bold leading-none text-foreground shadow-sm cursor-pointer hover:ring-1 hover:ring-primary'
 
   const handleSideChange = (which: 'from' | 'to', side: string) => {
-    const dataKey = which === 'from' ? 'cardFromSide' : 'cardToSide'
     const handle = HANDLE_ID[side]
+    const nodeId = which === 'from' ? source : target
+    const node = getNode(nodeId)
+    const validHandles = getValidHandles(node, which === 'from' ? 'source' : 'target')
+    if (handle && !validHandles.has(handle)) return
+
+    const dataKey = which === 'from' ? 'cardFromSide' : 'cardToSide'
     const handleKey = which === 'from' ? 'sourceHandle' : 'targetHandle'
 
     const currentEdges = getEdges()
@@ -146,6 +162,11 @@ export default function RelationshipEdge({
 
   const activeFrom = data?.cardFromSide ?? 'source'
   const activeTo = data?.cardToSide ?? 'source'
+
+  const sourceNode = getNode(source)
+  const targetNode = getNode(target)
+  const validFrom = useMemo(() => getValidHandles(sourceNode, 'source'), [sourceNode])
+  const validTo = useMemo(() => getValidHandles(targetNode, 'target'), [targetNode])
 
   const fromCardOffset = useMemo(
     () => cardinalityOffset(allEdges, 'from', source, sourceHandle, data?.cardFrom),
@@ -241,37 +262,51 @@ export default function RelationshipEdge({
           >
             <div className="flex items-center gap-1">
               <span className="mr-1 text-[10px] font-semibold text-muted-foreground uppercase">Source</span>
-              {CARD_SIDES.map((side) => (
-                <button
-                  key={side}
-                  onClick={() => handleSideChange('from', side)}
-                  className={`rounded px-1.5 py-1 text-xs transition-colors hover:bg-muted ${
-                    activeFrom === side
-                      ? 'bg-primary/20 text-primary'
-                      : 'text-muted-foreground'
-                  }`}
-                  title={side}
-                >
-                  {SIDE_LABELS[side]}
-                </button>
-              ))}
+              {CARD_SIDES.map((side) => {
+                const handle = HANDLE_ID[side]
+                const disabled = handle && !validFrom.has(handle)
+                return (
+                  <button
+                    key={side}
+                    onClick={() => handleSideChange('from', side)}
+                    disabled={disabled}
+                    className={`rounded px-1.5 py-1 text-xs transition-colors hover:bg-muted ${
+                      activeFrom === side
+                        ? 'bg-primary/20 text-primary'
+                        : disabled
+                          ? 'text-muted-foreground/40 cursor-not-allowed'
+                          : 'text-muted-foreground'
+                    }`}
+                    title={side}
+                  >
+                    {SIDE_LABELS[side]}
+                  </button>
+                )
+              })}
             </div>
             <div className="flex items-center gap-1">
               <span className="mr-1 text-[10px] font-semibold text-muted-foreground uppercase">Target</span>
-              {CARD_SIDES.map((side) => (
-                <button
-                  key={side}
-                  onClick={() => handleSideChange('to', side)}
-                  className={`rounded px-1.5 py-1 text-xs transition-colors hover:bg-muted ${
-                    activeTo === side
-                      ? 'bg-primary/20 text-primary'
-                      : 'text-muted-foreground'
-                  }`}
-                  title={side}
-                >
-                  {SIDE_LABELS[side]}
-                </button>
-              ))}
+              {CARD_SIDES.map((side) => {
+                const handle = HANDLE_ID[side]
+                const disabled = handle && !validTo.has(handle)
+                return (
+                  <button
+                    key={side}
+                    onClick={() => handleSideChange('to', side)}
+                    disabled={disabled}
+                    className={`rounded px-1.5 py-1 text-xs transition-colors hover:bg-muted ${
+                      activeTo === side
+                        ? 'bg-primary/20 text-primary'
+                        : disabled
+                          ? 'text-muted-foreground/40 cursor-not-allowed'
+                          : 'text-muted-foreground'
+                    }`}
+                    title={side}
+                  >
+                    {SIDE_LABELS[side]}
+                  </button>
+                )
+              })}
             </div>
           </div>
         )}

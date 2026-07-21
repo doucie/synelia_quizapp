@@ -13,6 +13,7 @@ const categories: { label: string; key: Category }[] = [
   { label: 'MLD — Logique', key: 'mld' },
   { label: 'MPD — Physique', key: 'mpd' },
   { label: 'Traitements', key: 'traitements' },
+  { label: 'MOT', key: 'mot' },
   { label: 'Anciennes figures', key: 'reference' },
   { label: 'Palette', key: 'palette' },
 ]
@@ -22,6 +23,7 @@ const categoryIcons: Record<Category, string> = {
   mld: '⊡',
   mpd: '◈',
   traitements: '⚙',
+  mot: '☰',
   reference: '◀',
   palette: '◉',
 }

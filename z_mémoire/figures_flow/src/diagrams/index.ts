@@ -31,6 +31,9 @@ import { sat2EntretienAudit } from './traitements/sat_2_entretien_audit'
 import { mpt1CandidatureQuiz } from './traitements/mpt_1_candidature_quiz'
 import { mpt2EntretienDecision } from './traitements/mpt_2_entretien_decision'
 
+import { motOrganisationnel } from './mot/mot_organisationnel'
+import { motOrganisationnelV2 } from './mot/mot_organisationnel_v2'
+
 import { colorPalette } from './palette/color_palette'
 
 export const diagrams: DiagramDefinition[] = [
@@ -61,6 +64,8 @@ export const diagrams: DiagramDefinition[] = [
   sat2EntretienAudit,
   mpt1CandidatureQuiz,
   mpt2EntretienDecision,
+  motOrganisationnel,
+  motOrganisationnelV2,
   colorPalette,
 ]
 

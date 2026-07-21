@@ -16,10 +16,21 @@ import RelationshipEdge from './Edges/RelationshipEdge'
 import TraitementEdge from './Edges/TraitementEdge'
 import { loadDiagramState, useDiagramState, loadPositions, loadCardinalitySides } from '../hooks/useDiagramState'
 import { applyEntityColors } from '../utils/entityColors'
-import type { DiagramDefinition, RelationshipEdgeData } from '../types'
+import type { DiagramDefinition, RelationshipEdgeData, EntityNodeData } from '../types'
 
 const nodeTypes: NodeTypes = { entity: EntityNode, process: ProcessNode }
 const edgeTypes: EdgeTypes = { relationship: RelationshipEdge, traitement: TraitementEdge }
+
+function getValidHandles(nodeId: string, nodes: ReturnType<typeof useNodesState>[0], handleType: 'source' | 'target'): Set<string> {
+  const node = nodes.find((n) => n.id === nodeId)
+  if (!node) return new Set(['left', 'right', 'top', 'bottom'])
+  const data = node.data as EntityNodeData
+  if (data.variant === 'mct-operation' && data.emissionRules?.length) {
+    if (handleType === 'source') return new Set(data.emissionRules)
+    return new Set(['top'])
+  }
+  return new Set(['left', 'right', 'top', 'bottom'])
+}
 
 interface DiagramCanvasProps {
   diagram: DiagramDefinition | null
@@ -42,15 +53,17 @@ export default function DiagramCanvas({ diagram, showBackground, fullscreen: _fu
       const saved = sides[e.id]
       const cardFromSide = saved?.from as RelationshipEdgeData['cardFromSide'] | undefined
       const cardToSide = saved?.to as RelationshipEdgeData['cardToSide'] | undefined
+      const validSourceHandles = getValidHandles(e.source, diagram.nodes, 'source')
+      const validTargetHandles = getValidHandles(e.target, diagram.nodes, 'target')
       return {
         ...e,
-        sourceHandle: e.sourceHandle ?? (cardFromSide && cardFromSide !== 'source' ? cardFromSide : undefined),
-        targetHandle: e.targetHandle ?? (cardToSide && cardToSide !== 'source' ? cardToSide : undefined),
+        sourceHandle: e.sourceHandle ?? (cardFromSide && cardFromSide !== 'source' && validSourceHandles.has(cardFromSide) ? cardFromSide : undefined),
+        targetHandle: e.targetHandle ?? (cardToSide && cardToSide !== 'source' && validTargetHandles.has(cardToSide) ? cardToSide : undefined),
         data: {
           ...e.data,
           diagramId: diagram.id,
-          ...(cardFromSide ? { cardFromSide } : {}),
-          ...(cardToSide ? { cardToSide } : {}),
+          ...(cardFromSide && validSourceHandles.has(cardFromSide) ? { cardFromSide } : {}),
+          ...(cardToSide && validTargetHandles.has(cardToSide) ? { cardToSide } : {}),
         },
       }
     })

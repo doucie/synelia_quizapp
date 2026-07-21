@@ -1,6 +1,6 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { clsx } from 'clsx'
-import type { EntityNodeData } from '../../types'
+import type { EntityNodeData, MotTreatmentData } from '../../types'
 
 /* ── Helpers ───────────────────────────────────────────────── */
 
@@ -211,6 +211,111 @@ function SatLane({ data }: { data: EntityNodeData }) {
   )
 }
 
+/* ── MOT MCT Cell (mini-MCT inside a matrix cell) ────────── */
+
+const MOT_COLORS = {
+  event: 'hsl(270, 100%, 40%)',
+  sync: 'hsl(330, 100%, 40%)',
+  operation: 'hsl(166, 100%, 40%)',
+  resultOk: 'hsl(128, 100%, 40%)',
+  resultKo: 'hsl(0, 100%, 40%)',
+}
+
+function MotEvent({ label, isTrigger }: { label: string; isTrigger: boolean }) {
+  return (
+    <div
+      className="flex flex-col items-center justify-center rounded-2xl border border-solid px-2 py-1.5 text-center"
+      style={{
+        borderColor: MOT_COLORS.event,
+        opacity: isTrigger ? 1 : 0.5,
+        backgroundColor: isTrigger ? hsla(MOT_COLORS.event, 0.12) : 'transparent',
+      }}
+    >
+      <span className="text-[8px] font-semibold leading-snug" style={{ color: MOT_COLORS.event }}>{label}</span>
+    </div>
+  )
+}
+
+function MotSync({ label }: { label: string }) {
+  return (
+    <div
+      className="flex flex-col items-center justify-center px-3 py-1 text-center"
+      style={{
+        border: `2px solid ${MOT_COLORS.sync}`,
+        clipPath: 'polygon(0 0, 100% 0, 92% 100%, 8% 100%)',
+        backgroundColor: hsla(MOT_COLORS.sync, 0.15),
+        color: MOT_COLORS.sync,
+      }}
+    >
+      <span className="text-[8px] font-bold uppercase tracking-wider">{label}</span>
+    </div>
+  )
+}
+
+function MotOperation({ mctOp }: { mctOp: MotTreatmentData['mctOperation'] }) {
+  const { label, items, rules } = mctOp
+  return (
+    <div className="flex flex-col rounded-2xl border-2 border-solid" style={{ borderColor: MOT_COLORS.operation }}>
+      <div
+        className="rounded-t-2xl border-b-2 border-solid px-2 py-1 text-[8px] font-semibold"
+        style={{ backgroundColor: hsla(MOT_COLORS.operation, 0.094), color: MOT_COLORS.operation, borderColor: MOT_COLORS.operation }}
+      >
+        {label}
+      </div>
+      <div className="flex flex-col gap-0.5 px-2 py-1 text-[7px] leading-relaxed">
+        {items.map((item, i) => (
+          <div key={i} className="flex items-start gap-1">
+            <span className="text-foreground font-medium">{i + 1}.</span>
+            <span className="text-foreground">{item}</span>
+          </div>
+        ))}
+      </div>
+      {rules.length > 0 && (
+        <div className="border-t-2 px-2 text-[7px] leading-relaxed" style={{ borderColor: MOT_COLORS.operation, backgroundColor: hsla(MOT_COLORS.operation, 0.06) }}>
+          <div className="flex items-stretch">
+            {rules.map((r, i) => (
+              <div key={i} className="flex-1 flex items-center justify-center px-1 py-1 text-center" style={i > 0 ? { borderLeft: `2px solid ${MOT_COLORS.operation}` } : undefined}>
+                <span className="font-medium text-foreground">{r}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function MotResult({ label, fail }: { label: string; fail?: boolean }) {
+  const c = fail ? MOT_COLORS.resultKo : MOT_COLORS.resultOk
+  return (
+    <div
+      className="flex items-center justify-center rounded-2xl border border-solid px-2 py-1"
+      style={{ borderColor: c, background: hsla(c, 0.094), color: c }}
+    >
+      <span className="text-[7.5px] font-semibold uppercase tracking-wider text-center">{label}</span>
+    </div>
+  )
+}
+
+function MotMctCell({ treatment }: { treatment: MotTreatmentData }) {
+  const { triggeringEvent, mctEvents, mctSync, mctOperation, mctResults } = treatment
+  return (
+    <div className="relative flex flex-col items-center gap-0 py-1">
+      <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 pointer-events-none w-px bg-border" />
+      <div className="relative z-10 w-full flex flex-col items-center gap-[6px]">
+        {mctEvents.map((evt) => (
+          <MotEvent key={evt} label={evt} isTrigger={evt === triggeringEvent} />
+        ))}
+        {mctSync && <MotSync label={mctSync} />}
+        <MotOperation mctOp={mctOperation} />
+        {mctResults.map((res) => (
+          <MotResult key={res.label} label={res.label} fail={res.fail} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 /* ── MPT Layer ─────────────────────────────────────────────── */
 
 function MptLayer({ data }: { data: EntityNodeData }) {
@@ -256,6 +361,55 @@ function MptLayer({ data }: { data: EntityNodeData }) {
   )
 }
 
+/* ── MOT Matrix (acteurs × traitements grid) ─────────────── */
+
+function MotMatrix({ data }: { data: EntityNodeData }) {
+  const { color, motMatrix } = data
+  const columns = motMatrix?.columns ?? []
+  const treatments = motMatrix?.treatments ?? []
+  return (
+    <div
+      className={clsx('flex flex-col rounded-2xl border-2 border-solid shadow-[0_7px_9px_0_rgba(0,0,0,0.02)]', 'border-border bg-background/70')}
+      style={color ? { borderColor: color } : undefined}
+    >
+      <div
+        className="rounded-t-2xl border-b-2 border-solid px-4 py-2.5 text-xs font-bold text-foreground"
+        style={color ? { backgroundColor: hsla(color, 0.094), color, borderColor: color } : { borderColor: 'hsl(var(--border))' }}
+      >
+        MOT — Modèle Organisationnel de Traitement
+      </div>
+      <div className="overflow-x-auto">
+        <table className="border-collapse text-[9px] leading-relaxed">
+          <thead>
+            <tr>
+              <th className="px-3 py-2 text-left font-bold text-foreground border-b-2 border-border" style={color ? { color } : undefined}>Traitement</th>
+              {columns.map((col) => (
+                <th key={col} className="px-3 py-2 text-center font-bold text-foreground border-b-2 border-l-2 border-border min-w-[200px]" style={color ? { color } : undefined}>{col}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {treatments.map((t, i) => (
+              <tr key={t.id} style={i < treatments.length - 1 ? { borderBottom: `1px solid ${color ? hsla(color, 0.15) : 'hsl(var(--border))'}` } : undefined}>
+                <td className="px-3 py-2 align-top border-r-2 border-border" style={{ borderColor: color ? hsla(color, 0.15) : undefined }}>
+                  <div className="font-bold text-foreground">{t.id}</div>
+                  <div className="text-muted-foreground mt-0.5">{t.label}</div>
+                  <div className="text-muted-foreground italic mt-0.5">{t.nature}</div>
+                </td>
+                {columns.map((col) => (
+                  <td key={col} className="px-2 py-1 align-top border-l-2 border-border" style={{ borderColor: color ? hsla(color, 0.15) : undefined }}>
+                    {t.actor === col ? <MotMctCell treatment={t} /> : null}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
 /* ── Router ────────────────────────────────────────────────── */
 
 export default function ProcessNode({ data }: NodeProps<EntityNodeData>) {
@@ -269,6 +423,7 @@ export default function ProcessNode({ data }: NodeProps<EntityNodeData>) {
     case 'sat-task': return <SatTask data={data} />
     case 'sat-lane': return <SatLane data={data} />
     case 'mpt-layer': return <MptLayer data={data} />
+    case 'mot-matrix': return <MotMatrix data={data} />
     default: return null
   }
 }
