@@ -31,7 +31,7 @@ const categoryIcons: Record<Category, string> = {
 export default function Sidebar({ activeId, onSelect, expanded, onToggle }: SidebarProps) {
 
   return (
-    <aside className="flex h-full w-[260px] flex-col border-r border-border bg-background">
+    <aside className="relative z-10 flex h-full w-[260px] flex-col border-r border-border bg-background">
       <div className="border-border border-b px-4 py-3 text-sm font-bold text-foreground">
         Figures Flow
       </div>

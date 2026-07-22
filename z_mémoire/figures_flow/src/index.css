@@ -113,7 +113,7 @@
   --xy-edge-stroke-selected-default: #727272;
   --xy-connectionline-stroke-default: #3e3e3e;
   --xy-connectionline-stroke-width-default: 2;
-  --xy-background-color-default: #141414;
+  --xy-background-color-default: transparent;
   --xy-background-pattern-dots-color-default: #777;
   --xy-background-pattern-lines-color-default: #777;
   --xy-background-pattern-cross-color-default: #777;
@@ -154,4 +154,10 @@ body {
 .react-flow__edgelabel-renderer {
   position: relative;
   z-index: 100;
+}
+
+.mot-mct-selected {
+  outline: 2px solid hsl(15, 100%, 40%);
+  outline-offset: 4px;
+  border-radius: 8px;
 }

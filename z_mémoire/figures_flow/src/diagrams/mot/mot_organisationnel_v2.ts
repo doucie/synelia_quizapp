@@ -52,12 +52,6 @@ const t5Edges = prefixEdges(mct3bRollback.edges, 'mot-t5-')
 const t6Nodes = prefixNodes(mct3cAudit.nodes, 'mot-t6-', COL_SYSTEME, ROW_T6)
 const t6Edges = prefixEdges(mct3cAudit.edges, 'mot-t6-')
 
-const headerNodes = [
-  { id: 'mot-h-candidat', type: 'process' as const, position: { x: COL_CANDIDAT + 300, y: -80 }, data: { variant: 'sat-head' as const, label: 'Candidat' } },
-  { id: 'mot-h-recruteur', type: 'process' as const, position: { x: COL_RECRUTEUR + 300, y: -80 }, data: { variant: 'sat-head' as const, label: 'Recruteur' } },
-  { id: 'mot-h-systeme', type: 'process' as const, position: { x: COL_SYSTEME + 300, y: -80 }, data: { variant: 'sat-head' as const, label: 'Système' } },
-]
-
 export const MOT_MCT_MAP = [
   { prefix: 'mot-t1-', originalDiagramId: 'mct-1a-candidature', offsetX: COL_CANDIDAT, offsetY: ROW_T1, label: 'T1 — Soumettre la candidature' },
   { prefix: 'mot-t2-', originalDiagramId: 'mct-1b-quiz', offsetX: COL_CANDIDAT, offsetY: ROW_T2, label: 'T2 — Répondre au quiz' },
@@ -67,7 +61,7 @@ export const MOT_MCT_MAP = [
   { prefix: 'mot-t6-', originalDiagramId: 'mct-3c-audit', offsetX: COL_SYSTEME, offsetY: ROW_T6, label: 'T6 — Journaliser audit_event' },
 ]
 
-const allMotNodes = [...headerNodes, ...t1Nodes, ...t2Nodes, ...t3Nodes, ...t4Nodes, ...t5Nodes, ...t6Nodes]
+const allMotNodes = [...t1Nodes, ...t2Nodes, ...t3Nodes, ...t4Nodes, ...t5Nodes, ...t6Nodes]
 
 export function getMotOriginalPositions(): Record<string, { x: number; y: number }> {
   const positions: Record<string, { x: number; y: number }> = {}
@@ -83,7 +77,6 @@ export const motOrganisationnelV2: DiagramDefinition = {
   category: 'mot',
   domain: 'MOT — Matrice acteurs × traitements',
   nodes: [
-    ...headerNodes,
     ...t1Nodes, ...t2Nodes,
     ...t3Nodes, ...t4Nodes, ...t5Nodes,
     ...t6Nodes,

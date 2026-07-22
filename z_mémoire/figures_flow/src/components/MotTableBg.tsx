@@ -18,7 +18,7 @@ export default function MotTableBg() {
   return (
     <div
       style={{
-        width: 1700,
+        width: 2100,
         height: 2450,
         background: 'hsl(var(--background))',
         borderRadius: 12,
@@ -50,13 +50,14 @@ export default function MotTableBg() {
       >
         <colgroup>
           <col style={{ width: 150 }} />
-          <col style={{ width: 700 }} />
-          <col style={{ width: 700 }} />
+          <col style={{ width: 600 }} />
+          <col style={{ width: 600 }} />
+          <col style={{ width: 600 }} />
           <col style={{ width: 150 }} />
         </colgroup>
         <thead>
           <tr>
-            {['Temps', 'Recruteur', 'Candidat', 'Type'].map((h) => (
+            {['Temps', 'Recruteur', 'Candidat', 'Système', 'Type'].map((h) => (
               <th
                 key={h}
                 style={{
@@ -65,9 +66,9 @@ export default function MotTableBg() {
                   fontWeight: 700,
                   fontSize: 12,
                   borderBottom: `2px solid ${MOT_COLOR}`,
-                  borderLeft: h !== 'Temps' ? `1px solid ${hsla(MOT_COLOR, 0.15)}` : undefined,
+                  borderLeft: h !== 'Temps' ? `1px solid ${hsla(MOT_COLOR, 0.6)}` : undefined,
                   color: MOT_COLOR,
-                  background: hsla(MOT_COLOR, 0.06),
+                  background: hsla(MOT_COLOR, 0.18),
                 }}
               >
                 {h}
@@ -82,7 +83,7 @@ export default function MotTableBg() {
                 style={{
                   padding: '8px 12px',
                   verticalAlign: 'top',
-                  borderBottom: i < TREATMENTS.length - 1 ? `1px solid ${hsla(MOT_COLOR, 0.15)}` : undefined,
+                  borderBottom: i < TREATMENTS.length - 1 ? `1px solid ${hsla(MOT_COLOR, 0.6)}` : undefined,
                   fontWeight: 600,
                   fontSize: 10,
                   color: MOT_COLOR,
@@ -91,15 +92,15 @@ export default function MotTableBg() {
                 <div style={{ fontWeight: 700, fontSize: 11 }}>{t.id}</div>
                 <div style={{ marginTop: 2, color: 'hsl(var(--muted-foreground))' }}>{t.label}</div>
               </td>
-              {['Recruteur', 'Candidat'].map((actor) => (
+              {['Recruteur', 'Candidat', 'Système'].map((actor) => (
                 <td
                   key={actor}
                   style={{
                     height: 400,
                     verticalAlign: 'top',
                     padding: 4,
-                    borderLeft: `1px solid ${hsla(MOT_COLOR, 0.15)}`,
-                    borderBottom: i < TREATMENTS.length - 1 ? `1px solid ${hsla(MOT_COLOR, 0.15)}` : undefined,
+                    borderLeft: `1px solid ${hsla(MOT_COLOR, 0.6)}`,
+                    borderBottom: i < TREATMENTS.length - 1 ? `1px solid ${hsla(MOT_COLOR, 0.6)}` : undefined,
                   }}
                 />
               ))}
@@ -107,8 +108,8 @@ export default function MotTableBg() {
                 style={{
                   padding: '8px 12px',
                   verticalAlign: 'top',
-                  borderLeft: `1px solid ${hsla(MOT_COLOR, 0.15)}`,
-                  borderBottom: i < TREATMENTS.length - 1 ? `1px solid ${hsla(MOT_COLOR, 0.15)}` : undefined,
+                  borderLeft: `1px solid ${hsla(MOT_COLOR, 0.6)}`,
+                  borderBottom: i < TREATMENTS.length - 1 ? `1px solid ${hsla(MOT_COLOR, 0.6)}` : undefined,
                   fontSize: 10,
                   color: MOT_COLOR,
                   fontStyle: 'italic',

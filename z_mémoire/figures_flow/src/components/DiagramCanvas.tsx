@@ -96,6 +96,21 @@ export default function DiagramCanvas({ diagram, showBackground, fullscreen: _fu
 
   const { saveState } = useDiagramState(diagram?.id ?? '')
 
+  const displayNodes = useMemo(() => {
+    if (!selectedMctPrefix) return nodes
+    return nodes.map((n) => {
+      const isSelected = n.id.startsWith(selectedMctPrefix)
+      const hasClass = n.className?.includes('mot-mct-selected')
+      if (isSelected && !hasClass) {
+        return { ...n, className: `${n.className ?? ''} mot-mct-selected`.trim() }
+      }
+      if (!isSelected && hasClass) {
+        return { ...n, className: (n.className ?? '').replace('mot-mct-selected', '').trim() }
+      }
+      return n
+    })
+  }, [nodes, selectedMctPrefix])
+
   useEffect(() => {
     setNodes(initialNodes)
     setEdges(initialEdges)
@@ -250,7 +265,7 @@ export default function DiagramCanvas({ diagram, showBackground, fullscreen: _fu
         </div>
       )}
       <ReactFlow
-        nodes={nodes}
+        nodes={displayNodes}
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}

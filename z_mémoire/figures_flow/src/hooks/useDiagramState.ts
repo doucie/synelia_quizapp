@@ -134,5 +134,7 @@ export function loadMotCardinalitySides(motMap: MotMctMapEntry[]): CardinalitySi
       result[`${entry.prefix}${edgeId}`] = sides2
     }
   }
+  const motSides = loadCardinalitySides('mot-organisationnel-v2')
+  Object.assign(result, motSides)
   return result
 }
