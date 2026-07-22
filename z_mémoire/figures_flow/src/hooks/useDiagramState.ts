@@ -102,3 +102,37 @@ export function useDiagramState(diagramId: string) {
 
   return { saveState, resetState }
 }
+
+interface MotMctMapEntry {
+  prefix: string
+  originalDiagramId: string
+  offsetX: number
+  offsetY: number
+}
+
+export function loadMotPositions(nodes: EntityNode[], motMap: MotMctMapEntry[]): EntityNode[] {
+  const cached = new Map<string, DiagramState | null>()
+  return nodes.map((n) => {
+    const entry = motMap.find((e) => n.id.startsWith(e.prefix))
+    if (!entry) return n
+    if (!cached.has(entry.originalDiagramId)) {
+      cached.set(entry.originalDiagramId, loadDiagramState(entry.originalDiagramId))
+    }
+    const state = cached.get(entry.originalDiagramId)
+    if (!state) return n
+    const originalId = n.id.slice(entry.prefix.length)
+    const pos = state.positions[originalId]
+    return pos ? { ...n, position: { x: pos.x + entry.offsetX, y: pos.y + entry.offsetY } } : n
+  })
+}
+
+export function loadMotCardinalitySides(motMap: MotMctMapEntry[]): CardinalitySides {
+  const result: CardinalitySides = {}
+  for (const entry of motMap) {
+    const sides = loadCardinalitySides(entry.originalDiagramId)
+    for (const [edgeId, sides2] of Object.entries(sides)) {
+      result[`${entry.prefix}${edgeId}`] = sides2
+    }
+  }
+  return result
+}

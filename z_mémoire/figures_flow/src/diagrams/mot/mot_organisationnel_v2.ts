@@ -58,6 +58,25 @@ const headerNodes = [
   { id: 'mot-h-systeme', type: 'process' as const, position: { x: COL_SYSTEME + 300, y: -80 }, data: { variant: 'sat-head' as const, label: 'Système' } },
 ]
 
+export const MOT_MCT_MAP = [
+  { prefix: 'mot-t1-', originalDiagramId: 'mct-1a-candidature', offsetX: COL_CANDIDAT, offsetY: ROW_T1, label: 'T1 — Soumettre la candidature' },
+  { prefix: 'mot-t2-', originalDiagramId: 'mct-1b-quiz', offsetX: COL_CANDIDAT, offsetY: ROW_T2, label: 'T2 — Répondre au quiz' },
+  { prefix: 'mot-t3-', originalDiagramId: 'mct-2-entretien-evaluation', offsetX: COL_RECRUTEUR, offsetY: ROW_T3, label: 'T3 — Conduire et évaluer l\'entretien' },
+  { prefix: 'mot-t4-', originalDiagramId: 'mct-3a-decision', offsetX: COL_RECRUTEUR, offsetY: ROW_T4, label: 'T4 — Valider la décision du recruteur' },
+  { prefix: 'mot-t5-', originalDiagramId: 'mct-3b-rollback', offsetX: COL_RECRUTEUR, offsetY: ROW_T5, label: 'T5 — Gérer la demande d\'annulation' },
+  { prefix: 'mot-t6-', originalDiagramId: 'mct-3c-audit', offsetX: COL_SYSTEME, offsetY: ROW_T6, label: 'T6 — Journaliser audit_event' },
+]
+
+const allMotNodes = [...headerNodes, ...t1Nodes, ...t2Nodes, ...t3Nodes, ...t4Nodes, ...t5Nodes, ...t6Nodes]
+
+export function getMotOriginalPositions(): Record<string, { x: number; y: number }> {
+  const positions: Record<string, { x: number; y: number }> = {}
+  for (const n of allMotNodes) {
+    positions[n.id] = { x: n.position.x, y: n.position.y }
+  }
+  return positions
+}
+
 export const motOrganisationnelV2: DiagramDefinition = {
   id: 'mot-organisationnel-v2',
   title: 'MOT — Modèle Organisationnel de Traitement',
