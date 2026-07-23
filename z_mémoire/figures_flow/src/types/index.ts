@@ -65,6 +65,18 @@ export type ProcessEdgeData = RelationshipEdgeData
 
 export type ProcessEdge = Edge<ProcessEdgeData>
 
+export interface MotTableConfig {
+  colWidths: { temps: number; recruteur: number; candidat: number; systeme: number; type: number }
+  rowHeights: number[]
+  fontScale: number
+}
+
+export const DEFAULT_MOT_TABLE_CONFIG: MotTableConfig = {
+  colWidths: { temps: 150, recruteur: 600, candidat: 600, systeme: 600, type: 150 },
+  rowHeights: [400, 400, 400, 400, 400, 400],
+  fontScale: 1.0,
+}
+
 export interface DiagramDefinition {
   id: string
   title: string

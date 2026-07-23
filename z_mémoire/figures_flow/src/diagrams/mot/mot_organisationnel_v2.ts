@@ -1,4 +1,5 @@
-import type { DiagramDefinition } from '../../types'
+import type { DiagramDefinition, MotTableConfig } from '../../types'
+import { DEFAULT_MOT_TABLE_CONFIG } from '../../types'
 import { mct1aCandidature } from '../traitements/mct_1a_candidature'
 import { mct1bQuiz } from '../traitements/mct_1b_quiz'
 import { mct2EntretienEvaluation } from '../traitements/mct_2_entretien_evaluation'
@@ -6,16 +7,33 @@ import { mct3aDecision } from '../traitements/mct_3a_decision'
 import { mct3bRollback } from '../traitements/mct_3b_rollback'
 import { mct3cAudit } from '../traitements/mct_3c_audit'
 
-const COL_CANDIDAT = 0
-const COL_RECRUTEUR = 900
-const COL_SYSTEME = 1800
+export interface MotPositions {
+  colCandidat: number
+  colRecruteur: number
+  colSysteme: number
+  rowT1: number
+  rowT2: number
+  rowT3: number
+  rowT4: number
+  rowT5: number
+  rowT6: number
+}
 
-const ROW_T1 = 0
-const ROW_T2 = 700
-const ROW_T3 = 1400
-const ROW_T4 = 2100
-const ROW_T5 = 2800
-const ROW_T6 = 3500
+export function getMotPositionsFromConfig(config: MotTableConfig = DEFAULT_MOT_TABLE_CONFIG): MotPositions {
+  const c = config.colWidths
+  const r = config.rowHeights
+  return {
+    colCandidat: c.temps + c.recruteur,
+    colRecruteur: c.temps,
+    colSysteme: c.temps + c.recruteur + c.candidat,
+    rowT1: 0,
+    rowT2: r[0] ?? 400,
+    rowT3: (r[0] ?? 400) + (r[1] ?? 400),
+    rowT4: (r[0] ?? 400) + (r[1] ?? 400) + (r[2] ?? 400),
+    rowT5: (r[0] ?? 400) + (r[1] ?? 400) + (r[2] ?? 400) + (r[3] ?? 400),
+    rowT6: (r[0] ?? 400) + (r[1] ?? 400) + (r[2] ?? 400) + (r[3] ?? 400) + (r[4] ?? 400),
+  }
+}
 
 function prefixNodes(nodes: ReturnType<typeof mct1aCandidature>['nodes'], prefix: string, offsetX: number, offsetY: number) {
   return nodes.map((n) => ({
@@ -34,42 +52,52 @@ function prefixEdges(edges: ReturnType<typeof mct1aCandidature>['edges'], prefix
   }))
 }
 
-const t1Nodes = prefixNodes(mct1aCandidature.nodes, 'mot-t1-', COL_CANDIDAT, ROW_T1)
-const t1Edges = prefixEdges(mct1aCandidature.edges, 'mot-t1-')
+export function getMotMctMap(config: MotTableConfig = DEFAULT_MOT_TABLE_CONFIG) {
+  const pos = getMotPositionsFromConfig(config)
+  return [
+    { prefix: 'mot-t1-', originalDiagramId: 'mct-1a-candidature', offsetX: pos.colCandidat, offsetY: pos.rowT1, label: 'T1 — Soumettre la candidature' },
+    { prefix: 'mot-t2-', originalDiagramId: 'mct-1b-quiz', offsetX: pos.colCandidat, offsetY: pos.rowT2, label: 'T2 — Répondre au quiz' },
+    { prefix: 'mot-t3-', originalDiagramId: 'mct-2-entretien-evaluation', offsetX: pos.colRecruteur, offsetY: pos.rowT3, label: 'T3 — Conduire et évaluer l\'entretien' },
+    { prefix: 'mot-t4-', originalDiagramId: 'mct-3a-decision', offsetX: pos.colRecruteur, offsetY: pos.rowT4, label: 'T4 — Valider la décision du recruteur' },
+    { prefix: 'mot-t5-', originalDiagramId: 'mct-3b-rollback', offsetX: pos.colRecruteur, offsetY: pos.rowT5, label: 'T5 — Gérer la demande d\'annulation' },
+    { prefix: 'mot-t6-', originalDiagramId: 'mct-3c-audit', offsetX: pos.colSysteme, offsetY: pos.rowT6, label: 'T6 — Journaliser audit_event' },
+  ]
+}
 
-const t2Nodes = prefixNodes(mct1bQuiz.nodes, 'mot-t2-', COL_CANDIDAT, ROW_T2)
-const t2Edges = prefixEdges(mct1bQuiz.edges, 'mot-t2-')
+export function getMotAllNodes(config: MotTableConfig = DEFAULT_MOT_TABLE_CONFIG) {
+  const pos = getMotPositionsFromConfig(config)
+  const t1Nodes = prefixNodes(mct1aCandidature.nodes, 'mot-t1-', pos.colCandidat, pos.rowT1)
+  const t2Nodes = prefixNodes(mct1bQuiz.nodes, 'mot-t2-', pos.colCandidat, pos.rowT2)
+  const t3Nodes = prefixNodes(mct2EntretienEvaluation.nodes, 'mot-t3-', pos.colRecruteur, pos.rowT3)
+  const t4Nodes = prefixNodes(mct3aDecision.nodes, 'mot-t4-', pos.colRecruteur, pos.rowT4)
+  const t5Nodes = prefixNodes(mct3bRollback.nodes, 'mot-t5-', pos.colRecruteur, pos.rowT5)
+  const t6Nodes = prefixNodes(mct3cAudit.nodes, 'mot-t6-', pos.colSysteme, pos.rowT6)
+  return [...t1Nodes, ...t2Nodes, ...t3Nodes, ...t4Nodes, ...t5Nodes, ...t6Nodes]
+}
 
-const t3Nodes = prefixNodes(mct2EntretienEvaluation.nodes, 'mot-t3-', COL_RECRUTEUR, ROW_T3)
-const t3Edges = prefixEdges(mct2EntretienEvaluation.edges, 'mot-t3-')
-
-const t4Nodes = prefixNodes(mct3aDecision.nodes, 'mot-t4-', COL_RECRUTEUR, ROW_T4)
-const t4Edges = prefixEdges(mct3aDecision.edges, 'mot-t4-')
-
-const t5Nodes = prefixNodes(mct3bRollback.nodes, 'mot-t5-', COL_RECRUTEUR, ROW_T5)
-const t5Edges = prefixEdges(mct3bRollback.edges, 'mot-t5-')
-
-const t6Nodes = prefixNodes(mct3cAudit.nodes, 'mot-t6-', COL_SYSTEME, ROW_T6)
-const t6Edges = prefixEdges(mct3cAudit.edges, 'mot-t6-')
-
-export const MOT_MCT_MAP = [
-  { prefix: 'mot-t1-', originalDiagramId: 'mct-1a-candidature', offsetX: COL_CANDIDAT, offsetY: ROW_T1, label: 'T1 — Soumettre la candidature' },
-  { prefix: 'mot-t2-', originalDiagramId: 'mct-1b-quiz', offsetX: COL_CANDIDAT, offsetY: ROW_T2, label: 'T2 — Répondre au quiz' },
-  { prefix: 'mot-t3-', originalDiagramId: 'mct-2-entretien-evaluation', offsetX: COL_RECRUTEUR, offsetY: ROW_T3, label: 'T3 — Conduire et évaluer l\'entretien' },
-  { prefix: 'mot-t4-', originalDiagramId: 'mct-3a-decision', offsetX: COL_RECRUTEUR, offsetY: ROW_T4, label: 'T4 — Valider la décision du recruteur' },
-  { prefix: 'mot-t5-', originalDiagramId: 'mct-3b-rollback', offsetX: COL_RECRUTEUR, offsetY: ROW_T5, label: 'T5 — Gérer la demande d\'annulation' },
-  { prefix: 'mot-t6-', originalDiagramId: 'mct-3c-audit', offsetX: COL_SYSTEME, offsetY: ROW_T6, label: 'T6 — Journaliser audit_event' },
-]
-
-const allMotNodes = [...t1Nodes, ...t2Nodes, ...t3Nodes, ...t4Nodes, ...t5Nodes, ...t6Nodes]
-
-export function getMotOriginalPositions(): Record<string, { x: number; y: number }> {
+export function getMotOriginalPositions(config: MotTableConfig = DEFAULT_MOT_TABLE_CONFIG): Record<string, { x: number; y: number }> {
   const positions: Record<string, { x: number; y: number }> = {}
-  for (const n of allMotNodes) {
+  for (const n of getMotAllNodes(config)) {
     positions[n.id] = { x: n.position.x, y: n.position.y }
   }
   return positions
 }
+
+const defaultPos = getMotPositionsFromConfig()
+const t1Nodes = prefixNodes(mct1aCandidature.nodes, 'mot-t1-', defaultPos.colCandidat, defaultPos.rowT1)
+const t1Edges = prefixEdges(mct1aCandidature.edges, 'mot-t1-')
+const t2Nodes = prefixNodes(mct1bQuiz.nodes, 'mot-t2-', defaultPos.colCandidat, defaultPos.rowT2)
+const t2Edges = prefixEdges(mct1bQuiz.edges, 'mot-t2-')
+const t3Nodes = prefixNodes(mct2EntretienEvaluation.nodes, 'mot-t3-', defaultPos.colRecruteur, defaultPos.rowT3)
+const t3Edges = prefixEdges(mct2EntretienEvaluation.edges, 'mot-t3-')
+const t4Nodes = prefixNodes(mct3aDecision.nodes, 'mot-t4-', defaultPos.colRecruteur, defaultPos.rowT4)
+const t4Edges = prefixEdges(mct3aDecision.edges, 'mot-t4-')
+const t5Nodes = prefixNodes(mct3bRollback.nodes, 'mot-t5-', defaultPos.colRecruteur, defaultPos.rowT5)
+const t5Edges = prefixEdges(mct3bRollback.edges, 'mot-t5-')
+const t6Nodes = prefixNodes(mct3cAudit.nodes, 'mot-t6-', defaultPos.colSysteme, defaultPos.rowT6)
+const t6Edges = prefixEdges(mct3cAudit.edges, 'mot-t6-')
+
+export const MOT_MCT_MAP = getMotMctMap()
 
 export const motOrganisationnelV2: DiagramDefinition = {
   id: 'mot-organisationnel-v2',

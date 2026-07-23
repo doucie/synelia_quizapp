@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
-import type { EntityNode } from '../types'
+import type { EntityNode, MotTableConfig } from '../types'
+import { DEFAULT_MOT_TABLE_CONFIG } from '../types'
 
 const STORAGE_KEY = 'figures_flow:diagram'
 const EDGE_SIDES_KEY = 'figures_flow:edge_sides'
@@ -137,4 +138,27 @@ export function loadMotCardinalitySides(motMap: MotMctMapEntry[]): CardinalitySi
   const motSides = loadCardinalitySides('mot-organisationnel-v2')
   Object.assign(result, motSides)
   return result
+}
+
+const MOT_TABLE_CONFIG_KEY = 'figures_flow:mot-table-config'
+
+export function loadMotTableConfig(): MotTableConfig {
+  try {
+    const saved = localStorage.getItem(MOT_TABLE_CONFIG_KEY)
+    if (saved) {
+      const parsed = JSON.parse(saved)
+      return { ...DEFAULT_MOT_TABLE_CONFIG, ...parsed }
+    }
+  } catch {
+    // ignore
+  }
+  return DEFAULT_MOT_TABLE_CONFIG
+}
+
+export function saveMotTableConfig(config: MotTableConfig): void {
+  try {
+    localStorage.setItem(MOT_TABLE_CONFIG_KEY, JSON.stringify(config))
+  } catch {
+    // ignore
+  }
 }

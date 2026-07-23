@@ -16,12 +16,13 @@ import EntityNode from './Nodes/EntityNode'
 import ProcessNode from './Nodes/ProcessNode'
 import MotTableBg from './MotTableBg'
 import MotEditToolbar from './MotEditToolbar'
+import MotTableToolbar from './MotTableToolbar'
 import RelationshipEdge from './Edges/RelationshipEdge'
 import TraitementEdge from './Edges/TraitementEdge'
-import { loadDiagramState, useDiagramState, loadPositions, loadCardinalitySides, loadMotPositions, loadMotCardinalitySides } from '../hooks/useDiagramState'
+import { loadDiagramState, useDiagramState, loadPositions, loadCardinalitySides, loadMotPositions, loadMotCardinalitySides, loadMotTableConfig, saveMotTableConfig } from '../hooks/useDiagramState'
 import { applyEntityColors } from '../utils/entityColors'
-import { MOT_MCT_MAP, getMotOriginalPositions } from '../diagrams/mot/mot_organisationnel_v2'
-import type { DiagramDefinition, RelationshipEdgeData, EntityNodeData } from '../types'
+import { getMotMctMap, getMotOriginalPositions } from '../diagrams/mot/mot_organisationnel_v2'
+import type { DiagramDefinition, RelationshipEdgeData, EntityNodeData, MotTableConfig } from '../types'
 
 const nodeTypes: NodeTypes = { entity: EntityNode, process: ProcessNode }
 const edgeTypes: EdgeTypes = { relationship: RelationshipEdge, traitement: TraitementEdge }
@@ -49,6 +50,10 @@ export default function DiagramCanvas({ diagram, showBackground, fullscreen: _fu
   const tableRef = useRef<HTMLDivElement>(null)
   const reactFlowInstance = useReactFlow()
   const dragStartPositions = useRef<Record<string, { x: number; y: number }> | null>(null)
+  const [motTableConfig, setMotTableConfig] = useState<MotTableConfig>(() => loadMotTableConfig())
+
+  const motMap = useMemo(() => getMotMctMap(motTableConfig), [motTableConfig])
+
   const initialNodes = useMemo(() => {
     if (!diagram) return []
     let nodes = applyEntityColors(diagram.nodes)
@@ -57,17 +62,17 @@ export default function DiagramCanvas({ diagram, showBackground, fullscreen: _fu
       if (motState?.positions) {
         nodes = loadPositions('mot-organisationnel-v2', nodes)
       } else {
-        nodes = loadMotPositions(nodes, MOT_MCT_MAP)
+        nodes = loadMotPositions(nodes, motMap)
       }
     } else {
       nodes = loadPositions(diagram.id, nodes)
     }
     return nodes
-  }, [diagram])
+  }, [diagram, motMap])
   const initialEdges = useMemo(() => {
     if (!diagram) return []
     const sides = diagram.id === 'mot-organisationnel-v2'
-      ? loadMotCardinalitySides(MOT_MCT_MAP)
+      ? loadMotCardinalitySides(motMap)
       : loadCardinalitySides(diagram.id)
     return diagram.edges.map((e) => {
       const saved = sides[e.id]
@@ -87,7 +92,7 @@ export default function DiagramCanvas({ diagram, showBackground, fullscreen: _fu
         },
       }
     })
-  }, [diagram])
+  }, [diagram, motMap])
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
@@ -163,7 +168,7 @@ export default function DiagramCanvas({ diagram, showBackground, fullscreen: _fu
   const onNodeDragStart: OnNodeDrag = useCallback(
     (_event, node) => {
       if (diagram?.id !== 'mot-organisationnel-v2') return
-      const entry = MOT_MCT_MAP.find((e) => node.id.startsWith(e.prefix))
+      const entry = motMap.find((e) => node.id.startsWith(e.prefix))
       if (!entry) return
       if (editingMctPrefix === entry.prefix) return
       const positions: Record<string, { x: number; y: number }> = {}
@@ -174,14 +179,14 @@ export default function DiagramCanvas({ diagram, showBackground, fullscreen: _fu
       }
       dragStartPositions.current = positions
     },
-    [diagram, nodes, editingMctPrefix],
+    [diagram, nodes, editingMctPrefix, motMap],
   )
 
   const onNodeDrag: OnNodeDrag = useCallback(
     (_event, node) => {
       if (diagram?.id !== 'mot-organisationnel-v2') return
       if (!dragStartPositions.current) return
-      const entry = MOT_MCT_MAP.find((e) => node.id.startsWith(e.prefix))
+      const entry = motMap.find((e) => node.id.startsWith(e.prefix))
       if (!entry) return
       if (editingMctPrefix === entry.prefix) return
       const startPos = dragStartPositions.current[node.id]
@@ -198,13 +203,13 @@ export default function DiagramCanvas({ diagram, showBackground, fullscreen: _fu
         })
       )
     },
-    [diagram, setNodes, editingMctPrefix],
+    [diagram, setNodes, editingMctPrefix, motMap],
   )
 
   const onNodeClick: NodeMouseHandler = useCallback(
     (_event, node) => {
       if (diagram?.id !== 'mot-organisationnel-v2') return
-      const entry = MOT_MCT_MAP.find((e) => node.id.startsWith(e.prefix))
+      const entry = motMap.find((e) => node.id.startsWith(e.prefix))
       if (entry) {
         setSelectedMctPrefix(entry.prefix)
       } else {
@@ -212,7 +217,7 @@ export default function DiagramCanvas({ diagram, showBackground, fullscreen: _fu
         setEditingMctPrefix(null)
       }
     },
-    [diagram],
+    [diagram, motMap],
   )
 
   const onPaneClick = useCallback(() => {
@@ -222,10 +227,10 @@ export default function DiagramCanvas({ diagram, showBackground, fullscreen: _fu
 
   const resetMotPositions = useCallback(() => {
     if (!selectedMctPrefix) return
-    const entry = MOT_MCT_MAP.find((e) => e.prefix === selectedMctPrefix)
+    const entry = motMap.find((e) => e.prefix === selectedMctPrefix)
     if (!entry) return
     const mctState = loadDiagramState(entry.originalDiagramId)
-    const originalPositions = getMotOriginalPositions()
+    const originalPositions = getMotOriginalPositions(motTableConfig)
     setNodes((prev) =>
       prev.map((n) => {
         if (!n.id.startsWith(selectedMctPrefix)) return n
@@ -241,7 +246,26 @@ export default function DiagramCanvas({ diagram, showBackground, fullscreen: _fu
     setTimeout(() => {
       if (reactFlowInstance) persist(reactFlowInstance.getViewport())
     }, 0)
-  }, [selectedMctPrefix, setNodes, reactFlowInstance, persist])
+  }, [selectedMctPrefix, setNodes, reactFlowInstance, persist, motMap, motTableConfig])
+
+  const handleMotTableConfigChange = useCallback((newConfig: MotTableConfig) => {
+    setMotTableConfig(newConfig)
+    saveMotTableConfig(newConfig)
+    const newMap = getMotMctMap(newConfig)
+    const originalPositions = getMotOriginalPositions(newConfig)
+    setNodes((prev) =>
+      prev.map((n) => {
+        const entry = newMap.find((e) => n.id.startsWith(e.prefix))
+        if (!entry) return n
+        const originalId = n.id.slice(entry.prefix.length)
+        const fallbackPos = originalPositions[n.id]
+        return fallbackPos ? { ...n, position: fallbackPos } : n
+      })
+    )
+    setTimeout(() => {
+      if (reactFlowInstance) persist(reactFlowInstance.getViewport())
+    }, 0)
+  }, [setNodes, reactFlowInstance, persist])
 
   if (!diagram) {
     return (
@@ -261,7 +285,7 @@ export default function DiagramCanvas({ diagram, showBackground, fullscreen: _fu
           className="absolute top-0 left-0 origin-top-left pointer-events-none"
           style={{ zIndex: 0 }}
         >
-          <MotTableBg />
+          <MotTableBg config={motTableConfig} />
         </div>
       )}
       <ReactFlow
@@ -289,12 +313,15 @@ export default function DiagramCanvas({ diagram, showBackground, fullscreen: _fu
       </ReactFlow>
       {selectedMctPrefix && diagram.id === 'mot-organisationnel-v2' && (
         <MotEditToolbar
-          mctLabel={MOT_MCT_MAP.find((e) => e.prefix === selectedMctPrefix)?.label ?? selectedMctPrefix}
+          mctLabel={motMap.find((e) => e.prefix === selectedMctPrefix)?.label ?? selectedMctPrefix}
           isEditing={editingMctPrefix === selectedMctPrefix}
           onEdit={() => setEditingMctPrefix(selectedMctPrefix)}
           onDone={() => setEditingMctPrefix(null)}
           onReset={resetMotPositions}
         />
+      )}
+      {diagram.id === 'mot-organisationnel-v2' && (
+        <MotTableToolbar config={motTableConfig} onChange={handleMotTableConfigChange} />
       )}
     </div>
   )
