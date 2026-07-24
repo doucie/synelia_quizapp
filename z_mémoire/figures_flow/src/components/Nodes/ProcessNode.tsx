@@ -42,7 +42,7 @@ function MctEvent({ data }: { data: EntityNodeData }) {
   const { label, color } = data
   return (
     <div className={clsx('flex flex-col items-center justify-center rounded-2xl border border-solid shadow-[0_7px_9px_0_rgba(0,0,0,0.02)]', 'border-border bg-background/70 min-w-[180px] px-4 py-3')} style={color ? { borderColor: color } : undefined}>
-      <span className="text-xs font-semibold text-foreground text-center leading-snug" style={color ? { color } : undefined}>{label}</span>
+      <span className="font-semibold text-foreground text-center leading-snug" style={{ fontSize: 'calc(var(--mct-event-scale, 1) * 12px)', ...(color ? { color } : {}) }}>{label}</span>
       <Handles />
     </div>
   )
@@ -62,7 +62,7 @@ function MctSync({ data }: { data: EntityNodeData }) {
         color: color || undefined,
       }}
     >
-      <span className="text-xs font-bold uppercase tracking-wider">{label}</span>
+      <span className="font-bold uppercase tracking-wider" style={{ fontSize: 'calc(var(--mct-sync-scale, 1) * 12px)' }}>{label}</span>
       <Handles />
     </div>
   )
@@ -75,10 +75,10 @@ function MctOperation({ data }: { data: EntityNodeData }) {
   const rules = emissionRules ?? []
   return (
     <div className={clsx('flex flex-col rounded-2xl border-2 border-solid shadow-[0_7px_9px_0_rgba(0,0,0,0.02)]', 'border-border bg-background/70 min-w-[280px]')} style={color ? { borderColor: color } : undefined}>
-      <div className="border-border rounded-t-2xl border-b-2 border-solid px-3 py-2 text-xs font-semibold text-foreground" style={color ? { backgroundColor: hsla(color, 0.094), color, borderColor: color } : { borderColor: 'hsl(var(--border))' }}>
+      <div className="border-border rounded-t-2xl border-b-2 border-solid px-3 py-2 font-semibold text-foreground" style={{ fontSize: 'calc(var(--mct-operation-scale, 1) * 12px)', ...(color ? { backgroundColor: hsla(color, 0.094), color, borderColor: color } : { borderColor: 'hsl(var(--border))' }) }}>
         {label}
       </div>
-      <div className="bg-background relative flex flex-col gap-1 p-3 text-xs leading-relaxed">
+      <div className="bg-background relative flex flex-col gap-1 p-3 leading-relaxed" style={{ fontSize: 'calc(var(--mct-operation-scale, 1) * 12px)' }}>
         {items?.map((item, i) => (
           <div key={i} className="flex items-start gap-1.5 py-0.5">
             <span className="text-foreground font-medium">{i + 1}.</span>
@@ -87,7 +87,7 @@ function MctOperation({ data }: { data: EntityNodeData }) {
         ))}
       </div>
       {rules.length > 0 && (
-        <div className="border-t-2 border-border px-3 text-[10.5px] leading-relaxed" style={color ? { backgroundColor: hsla(color, 0.06), borderColor: color } : { backgroundColor: 'hsl(var(--muted))' }}>
+        <div className="border-t-2 border-border px-3 leading-relaxed" style={{ fontSize: 'calc(var(--mct-operation-scale, 1) * 10.5px)', ...(color ? { backgroundColor: hsla(color, 0.06), borderColor: color } : { backgroundColor: 'hsl(var(--muted))' }) }}>
           <div className="flex items-stretch">
             {rules.map((branch, i) => (
               <div key={i} className="flex-1 flex items-center justify-center px-2 py-2 text-center" style={i > 0 ? { borderLeft: `2px solid ${color || 'hsl(var(--border))'}` } : undefined}>
@@ -124,7 +124,7 @@ function MctResult({ data }: { data: EntityNodeData }) {
       className="flex items-center justify-center rounded-2xl border border-solid min-w-[160px] px-3 py-2 shadow-[0_7px_9px_0_rgba(0,0,0,0.02)]"
       style={color ? { borderColor: color, background: hsla(color, 0.094), color } : undefined}
     >
-      <span className="text-[10.5px] font-semibold uppercase tracking-wider text-center">{label}</span>
+      <span className="font-semibold uppercase tracking-wider text-center" style={{ fontSize: 'calc(var(--mct-result-scale, 1) * 10.5px)' }}>{label}</span>
       <Handles />
     </div>
   )
@@ -231,7 +231,7 @@ function MotEvent({ label, isTrigger }: { label: string; isTrigger: boolean }) {
         backgroundColor: isTrigger ? hsla(MOT_COLORS.event, 0.12) : 'transparent',
       }}
     >
-      <span className="text-[8px] font-semibold leading-snug" style={{ color: MOT_COLORS.event }}>{label}</span>
+      <span className="font-semibold leading-snug" style={{ fontSize: 'calc(var(--mct-event-scale, 1) * 8px)', color: MOT_COLORS.event }}>{label}</span>
     </div>
   )
 }
@@ -247,7 +247,7 @@ function MotSync({ label }: { label: string }) {
         color: MOT_COLORS.sync,
       }}
     >
-      <span className="text-[8px] font-bold uppercase tracking-wider">{label}</span>
+      <span className="font-bold uppercase tracking-wider" style={{ fontSize: 'calc(var(--mct-sync-scale, 1) * 8px)' }}>{label}</span>
     </div>
   )
 }
@@ -257,12 +257,12 @@ function MotOperation({ mctOp }: { mctOp: MotTreatmentData['mctOperation'] }) {
   return (
     <div className="flex flex-col rounded-2xl border-2 border-solid" style={{ borderColor: MOT_COLORS.operation }}>
       <div
-        className="rounded-t-2xl border-b-2 border-solid px-2 py-1 text-[8px] font-semibold"
-        style={{ backgroundColor: hsla(MOT_COLORS.operation, 0.094), color: MOT_COLORS.operation, borderColor: MOT_COLORS.operation }}
+        className="rounded-t-2xl border-b-2 border-solid px-2 py-1 font-semibold"
+        style={{ fontSize: 'calc(var(--mct-operation-scale, 1) * 8px)', backgroundColor: hsla(MOT_COLORS.operation, 0.094), color: MOT_COLORS.operation, borderColor: MOT_COLORS.operation }}
       >
         {label}
       </div>
-      <div className="flex flex-col gap-0.5 px-2 py-1 text-[7px] leading-relaxed">
+      <div className="flex flex-col gap-0.5 px-2 py-1 leading-relaxed" style={{ fontSize: 'calc(var(--mct-operation-scale, 1) * 7px)' }}>
         {items.map((item, i) => (
           <div key={i} className="flex items-start gap-1">
             <span className="text-foreground font-medium">{i + 1}.</span>
@@ -271,7 +271,7 @@ function MotOperation({ mctOp }: { mctOp: MotTreatmentData['mctOperation'] }) {
         ))}
       </div>
       {rules.length > 0 && (
-        <div className="border-t-2 px-2 text-[7px] leading-relaxed" style={{ borderColor: MOT_COLORS.operation, backgroundColor: hsla(MOT_COLORS.operation, 0.06) }}>
+        <div className="border-t-2 px-2 leading-relaxed" style={{ fontSize: 'calc(var(--mct-operation-scale, 1) * 7px)', borderColor: MOT_COLORS.operation, backgroundColor: hsla(MOT_COLORS.operation, 0.06) }}>
           <div className="flex items-stretch">
             {rules.map((r, i) => (
               <div key={i} className="flex-1 flex items-center justify-center px-1 py-1 text-center" style={i > 0 ? { borderLeft: `2px solid ${MOT_COLORS.operation}` } : undefined}>
@@ -292,7 +292,7 @@ function MotResult({ label, fail }: { label: string; fail?: boolean }) {
       className="flex items-center justify-center rounded-2xl border border-solid px-2 py-1"
       style={{ borderColor: c, background: hsla(c, 0.094), color: c }}
     >
-      <span className="text-[7.5px] font-semibold uppercase tracking-wider text-center">{label}</span>
+      <span className="font-semibold uppercase tracking-wider text-center" style={{ fontSize: 'calc(var(--mct-result-scale, 1) * 7.5px)' }}>{label}</span>
     </div>
   )
 }

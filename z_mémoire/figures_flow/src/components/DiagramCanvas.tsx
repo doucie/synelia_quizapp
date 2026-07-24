@@ -251,21 +251,34 @@ export default function DiagramCanvas({ diagram, showBackground, fullscreen: _fu
   const handleMotTableConfigChange = useCallback((newConfig: MotTableConfig) => {
     setMotTableConfig(newConfig)
     saveMotTableConfig(newConfig)
-    const newMap = getMotMctMap(newConfig)
-    const originalPositions = getMotOriginalPositions(newConfig)
-    setNodes((prev) =>
-      prev.map((n) => {
-        const entry = newMap.find((e) => n.id.startsWith(e.prefix))
-        if (!entry) return n
-        const originalId = n.id.slice(entry.prefix.length)
-        const fallbackPos = originalPositions[n.id]
-        return fallbackPos ? { ...n, position: fallbackPos } : n
-      })
-    )
+
+    const layoutChanged =
+      JSON.stringify(motTableConfig.colWidths) !== JSON.stringify(newConfig.colWidths) ||
+      JSON.stringify(motTableConfig.rowHeights) !== JSON.stringify(newConfig.rowHeights)
+
+    if (layoutChanged) {
+      const newMap = getMotMctMap(newConfig)
+      const oldOriginalPositions = getMotOriginalPositions(motTableConfig)
+      const newOriginalPositions = getMotOriginalPositions(newConfig)
+      setNodes((prev) =>
+        prev.map((n) => {
+          const entry = newMap.find((e) => n.id.startsWith(e.prefix))
+          if (!entry) return n
+          const oldOriginal = oldOriginalPositions[n.id]
+          const newOriginal = newOriginalPositions[n.id]
+          if (!newOriginal) return n
+          if (!oldOriginal) return { ...n, position: newOriginal }
+          const dx = n.position.x - oldOriginal.x
+          const dy = n.position.y - oldOriginal.y
+          return { ...n, position: { x: newOriginal.x + dx, y: newOriginal.y + dy } }
+        })
+      )
+    }
+
     setTimeout(() => {
       if (reactFlowInstance) persist(reactFlowInstance.getViewport())
     }, 0)
-  }, [setNodes, reactFlowInstance, persist])
+  }, [motTableConfig, setNodes, reactFlowInstance, persist])
 
   if (!diagram) {
     return (
@@ -278,7 +291,16 @@ export default function DiagramCanvas({ diagram, showBackground, fullscreen: _fu
   const isTraitement = diagram.category === 'traitements'
 
   return (
-    <div ref={ref} className="h-full w-full relative">
+    <div
+      ref={ref}
+      className="h-full w-full relative"
+      style={{
+        '--mct-event-scale': motTableConfig.mctFontScales.event,
+        '--mct-operation-scale': motTableConfig.mctFontScales.operation,
+        '--mct-result-scale': motTableConfig.mctFontScales.result,
+        '--mct-sync-scale': motTableConfig.mctFontScales.sync,
+      } as React.CSSProperties}
+    >
       {diagram.id === 'mot-organisationnel-v2' && (
         <div
           ref={tableRef}

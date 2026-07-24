@@ -30,6 +30,15 @@ export default function MotTableToolbar({ config, onChange }: MotTableToolbarPro
     onChange({ ...config, fontScale: Math.round(value * 100) / 100 })
   }
 
+  const updateMctFontScale = (key: keyof MotTableConfig['mctFontScales'], value: number) => {
+    onChange({ ...config, mctFontScales: { ...config.mctFontScales, [key]: Math.round(value * 100) / 100 } })
+  }
+
+  const setAllMctFontScales = (value: number) => {
+    const v = Math.round(value * 100) / 100
+    onChange({ ...config, mctFontScales: { event: v, operation: v, result: v, sync: v } })
+  }
+
   const setAllCols = (value: number) => {
     onChange({
       ...config,
@@ -144,10 +153,19 @@ export default function MotTableToolbar({ config, onChange }: MotTableToolbarPro
                 decimals={2}
                 onChange={updateFontScale}
               />
+              <SliderRow
+                label="Police MCT"
+                value={config.mctFontScales.event}
+                min={0.5}
+                max={2.0}
+                step={0.05}
+                decimals={2}
+                onChange={setAllMctFontScales}
+              />
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <div style={{ fontWeight: 600, fontSize: 10, color: 'hsl(var(--muted-foreground))', marginTop: 2 }}>Police</div>
+              <div style={{ fontWeight: 600, fontSize: 10, color: 'hsl(var(--muted-foreground))', marginTop: 2 }}>Police tableau</div>
               <SliderRow
                 label="Échelle"
                 value={config.fontScale}
@@ -157,6 +175,11 @@ export default function MotTableToolbar({ config, onChange }: MotTableToolbarPro
                 decimals={2}
                 onChange={updateFontScale}
               />
+              <div style={{ fontWeight: 600, fontSize: 10, color: 'hsl(var(--muted-foreground))', marginTop: 2 }}>Police MCT</div>
+              <SliderRow label="Event" value={config.mctFontScales.event} min={0.5} max={2.0} step={0.05} decimals={2} onChange={(v) => updateMctFontScale('event', v)} />
+              <SliderRow label="Opération" value={config.mctFontScales.operation} min={0.5} max={2.0} step={0.05} decimals={2} onChange={(v) => updateMctFontScale('operation', v)} />
+              <SliderRow label="Résultat" value={config.mctFontScales.result} min={0.5} max={2.0} step={0.05} decimals={2} onChange={(v) => updateMctFontScale('result', v)} />
+              <SliderRow label="Sync" value={config.mctFontScales.sync} min={0.5} max={2.0} step={0.05} decimals={2} onChange={(v) => updateMctFontScale('sync', v)} />
               <div style={{ fontWeight: 600, fontSize: 10, color: 'hsl(var(--muted-foreground))', marginTop: 2 }}>Colonnes</div>
               <SliderRow label="Temps" value={c.temps} min={80} max={400} onChange={(v) => updateCol('temps', v)} />
               <SliderRow label="Recruteur" value={c.recruteur} min={200} max={1200} onChange={(v) => updateCol('recruteur', v)} />
