@@ -1,5 +1,6 @@
 import type { DiagramDefinition, MotTableConfig } from '../../types'
 import { DEFAULT_MOT_TABLE_CONFIG } from '../../types'
+import { mct0bCreationCampagne } from '../traitements/mct_0b_creation_campagne'
 import { mct1aCandidature } from '../traitements/mct_1a_candidature'
 import { mct1bQuiz } from '../traitements/mct_1b_quiz'
 import { mct2EntretienEvaluation } from '../traitements/mct_2_entretien_evaluation'
@@ -11,6 +12,7 @@ export interface MotPositions {
   colCandidat: number
   colRecruteur: number
   colSysteme: number
+  rowT0: number
   rowT1: number
   rowT2: number
   rowT3: number
@@ -26,12 +28,13 @@ export function getMotPositionsFromConfig(config: MotTableConfig = DEFAULT_MOT_T
     colCandidat: c.temps + c.recruteur,
     colRecruteur: c.temps,
     colSysteme: c.temps + c.recruteur + c.candidat,
-    rowT1: 0,
-    rowT2: r[0] ?? 400,
-    rowT3: (r[0] ?? 400) + (r[1] ?? 400),
-    rowT4: (r[0] ?? 400) + (r[1] ?? 400) + (r[2] ?? 400),
-    rowT5: (r[0] ?? 400) + (r[1] ?? 400) + (r[2] ?? 400) + (r[3] ?? 400),
-    rowT6: (r[0] ?? 400) + (r[1] ?? 400) + (r[2] ?? 400) + (r[3] ?? 400) + (r[4] ?? 400),
+    rowT0: 0,
+    rowT1: r[0] ?? 400,
+    rowT2: (r[0] ?? 400) + (r[1] ?? 400),
+    rowT3: (r[0] ?? 400) + (r[1] ?? 400) + (r[2] ?? 400),
+    rowT4: (r[0] ?? 400) + (r[1] ?? 400) + (r[2] ?? 400) + (r[3] ?? 400),
+    rowT5: (r[0] ?? 400) + (r[1] ?? 400) + (r[2] ?? 400) + (r[3] ?? 400) + (r[4] ?? 400),
+    rowT6: (r[0] ?? 400) + (r[1] ?? 400) + (r[2] ?? 400) + (r[3] ?? 400) + (r[4] ?? 400) + (r[5] ?? 400),
   }
 }
 
@@ -55,6 +58,7 @@ function prefixEdges(edges: ReturnType<typeof mct1aCandidature>['edges'], prefix
 export function getMotMctMap(config: MotTableConfig = DEFAULT_MOT_TABLE_CONFIG) {
   const pos = getMotPositionsFromConfig(config)
   return [
+    { prefix: 'mot-t0-', originalDiagramId: 'mct-0b-creation-campagne', offsetX: pos.colRecruteur, offsetY: pos.rowT0, label: 'T0 — Créer la campagne' },
     { prefix: 'mot-t1-', originalDiagramId: 'mct-1a-candidature', offsetX: pos.colCandidat, offsetY: pos.rowT1, label: 'T1 — Soumettre la candidature' },
     { prefix: 'mot-t2-', originalDiagramId: 'mct-1b-quiz', offsetX: pos.colCandidat, offsetY: pos.rowT2, label: 'T2 — Répondre au quiz' },
     { prefix: 'mot-t3-', originalDiagramId: 'mct-2-entretien-evaluation', offsetX: pos.colRecruteur, offsetY: pos.rowT3, label: 'T3 — Conduire et évaluer l\'entretien' },
@@ -66,13 +70,14 @@ export function getMotMctMap(config: MotTableConfig = DEFAULT_MOT_TABLE_CONFIG) 
 
 export function getMotAllNodes(config: MotTableConfig = DEFAULT_MOT_TABLE_CONFIG) {
   const pos = getMotPositionsFromConfig(config)
+  const t0Nodes = prefixNodes(mct0bCreationCampagne.nodes, 'mot-t0-', pos.colRecruteur, pos.rowT0)
   const t1Nodes = prefixNodes(mct1aCandidature.nodes, 'mot-t1-', pos.colCandidat, pos.rowT1)
   const t2Nodes = prefixNodes(mct1bQuiz.nodes, 'mot-t2-', pos.colCandidat, pos.rowT2)
   const t3Nodes = prefixNodes(mct2EntretienEvaluation.nodes, 'mot-t3-', pos.colRecruteur, pos.rowT3)
   const t4Nodes = prefixNodes(mct3aDecision.nodes, 'mot-t4-', pos.colRecruteur, pos.rowT4)
   const t5Nodes = prefixNodes(mct3bRollback.nodes, 'mot-t5-', pos.colRecruteur, pos.rowT5)
   const t6Nodes = prefixNodes(mct3cAudit.nodes, 'mot-t6-', pos.colSysteme, pos.rowT6)
-  return [...t1Nodes, ...t2Nodes, ...t3Nodes, ...t4Nodes, ...t5Nodes, ...t6Nodes]
+  return [...t0Nodes, ...t1Nodes, ...t2Nodes, ...t3Nodes, ...t4Nodes, ...t5Nodes, ...t6Nodes]
 }
 
 export function getMotOriginalPositions(config: MotTableConfig = DEFAULT_MOT_TABLE_CONFIG): Record<string, { x: number; y: number }> {
@@ -84,6 +89,8 @@ export function getMotOriginalPositions(config: MotTableConfig = DEFAULT_MOT_TAB
 }
 
 const defaultPos = getMotPositionsFromConfig()
+const t0Nodes = prefixNodes(mct0bCreationCampagne.nodes, 'mot-t0-', defaultPos.colRecruteur, defaultPos.rowT0)
+const t0Edges = prefixEdges(mct0bCreationCampagne.edges, 'mot-t0-')
 const t1Nodes = prefixNodes(mct1aCandidature.nodes, 'mot-t1-', defaultPos.colCandidat, defaultPos.rowT1)
 const t1Edges = prefixEdges(mct1aCandidature.edges, 'mot-t1-')
 const t2Nodes = prefixNodes(mct1bQuiz.nodes, 'mot-t2-', defaultPos.colCandidat, defaultPos.rowT2)
@@ -105,11 +112,13 @@ export const motOrganisationnelV2: DiagramDefinition = {
   category: 'mot',
   domain: 'MOT — Matrice acteurs × traitements',
   nodes: [
+    ...t0Nodes,
     ...t1Nodes, ...t2Nodes,
     ...t3Nodes, ...t4Nodes, ...t5Nodes,
     ...t6Nodes,
   ],
   edges: [
+    ...t0Edges,
     ...t1Edges, ...t2Edges,
     ...t3Edges, ...t4Edges, ...t5Edges,
     ...t6Edges,

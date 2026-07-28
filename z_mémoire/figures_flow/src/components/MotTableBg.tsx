@@ -9,6 +9,7 @@ function hsla(color: string, alpha: number): string {
 }
 
 const TREATMENTS = [
+  { id: 'T0', label: 'Créer la campagne' },
   { id: 'T1', label: 'Soumettre la candidature' },
   { id: 'T2', label: 'Répondre au quiz' },
   { id: 'T3', label: 'Conduire et évaluer l\'entretien' },

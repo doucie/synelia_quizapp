@@ -18,6 +18,7 @@ import { candidatureQuiz as mpdCandidatureQuiz } from './mpd/candidature_quiz'
 import { entretienEvaluation as mpdEntretienEvaluation } from './mpd/entretien_evaluation'
 import { auditNotifications as mpdAuditNotifications } from './mpd/audit_notifications'
 
+import { mct0bCreationCampagne } from './traitements/mct_0b_creation_campagne'
 import { mct1CandidatureQuiz } from './traitements/mct_1_candidature_quiz'
 import { mct1aCandidature } from './traitements/mct_1a_candidature'
 import { mct1bQuiz } from './traitements/mct_1b_quiz'
@@ -52,6 +53,7 @@ export const diagrams: DiagramDefinition[] = [
   mpdCandidatureQuiz,
   mpdEntretienEvaluation,
   mpdAuditNotifications,
+  mct0bCreationCampagne,
   mct1CandidatureQuiz,
   mct1aCandidature,
   mct1bQuiz,

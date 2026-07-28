@@ -74,7 +74,7 @@ export interface MotTableConfig {
 
 export const DEFAULT_MOT_TABLE_CONFIG: MotTableConfig = {
   colWidths: { temps: 150, recruteur: 600, candidat: 600, systeme: 600, type: 150 },
-  rowHeights: [400, 400, 400, 400, 400, 400],
+  rowHeights: [400, 400, 400, 400, 400, 400, 400],
   fontScale: 1.0,
   mctFontScales: { event: 1.0, operation: 1.0, result: 1.0, sync: 1.0 },
 }
