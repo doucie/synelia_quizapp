@@ -32,6 +32,14 @@ import { sat2EntretienAudit } from './traitements/sat_2_entretien_audit'
 import { mpt1CandidatureQuiz } from './traitements/mpt_1_candidature_quiz'
 import { mpt2EntretienDecision } from './traitements/mpt_2_entretien_decision'
 
+import { mct0CreationCampagne as mct0CreationCampagneV2 } from './traitements/v2/mct_0_creation_campagne'
+import { mct1Candidature as mct1CandidatureV2 } from './traitements/v2/mct_1_candidature'
+import { mct2Quiz as mct2QuizV2 } from './traitements/v2/mct_2_quiz'
+import { mct3Entretien as mct3EntretienV2 } from './traitements/v2/mct_3_entretien'
+import { mct4Decision as mct4DecisionV2 } from './traitements/v2/mct_4_decision'
+import { mct5Annulation as mct5AnnulationV2 } from './traitements/v2/mct_5_annulation'
+import { mct6Audit as mct6AuditV2 } from './traitements/v2/mct_6_audit'
+
 import { motOrganisationnel } from './mot/mot_organisationnel'
 import { motOrganisationnelV2 } from './mot/mot_organisationnel_v2'
 
@@ -66,6 +74,13 @@ export const diagrams: DiagramDefinition[] = [
   sat2EntretienAudit,
   mpt1CandidatureQuiz,
   mpt2EntretienDecision,
+  mct0CreationCampagneV2,
+  mct1CandidatureV2,
+  mct2QuizV2,
+  mct3EntretienV2,
+  mct4DecisionV2,
+  mct5AnnulationV2,
+  mct6AuditV2,
   motOrganisationnel,
   motOrganisationnelV2,
   colorPalette,

@@ -8,6 +8,7 @@ const SAFE_HUES = [
 const PROCESS_HUES: Record<string, (data: EntityNodeData) => number> = {
   'mct-event': () => 270,
   'mct-sync': () => 330,
+  'mct-syncop': () => 330,
   'mct-operation': () => 166,
   'mct-result': (d) => (d.fail ? 0 : 128),
   'sat-task': (d) => {
@@ -30,7 +31,7 @@ const PROCESS_HUES: Record<string, (data: EntityNodeData) => number> = {
 }
 
 const PROCESS_VARIANTS = new Set<ProcessVariant>([
-  'mct-event', 'mct-sync', 'mct-operation', 'mct-result',
+  'mct-event', 'mct-sync', 'mct-syncop', 'mct-operation', 'mct-result',
   'sat-task', 'sat-phase', 'sat-head', 'sat-lane', 'mpt-layer',
 ])
 

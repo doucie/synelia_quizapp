@@ -57,13 +57,91 @@ function MctSync({ data }: { data: EntityNodeData }) {
       className={clsx('flex flex-col items-center justify-center px-4 py-3 text-center shadow-[0_7px_9px_0_rgba(0,0,0,0.02)]', 'bg-background/70 min-w-[80px]')}
       style={{
         border: color ? `2px solid ${color}` : '2px solid hsl(330, 100%, 40%)',
-        clipPath: 'polygon(0 0, 100% 0, 92% 100%, 8% 100%)',
+        clipPath: 'polygon(0% 0%, 100% 0%, 100% 50%, 50% 100%, 0% 50%)',
         background: color ? hsla(color, 0.15) : undefined,
         color: color || undefined,
       }}
     >
       <span className="font-bold uppercase tracking-wider" style={{ fontSize: 'calc(var(--mct-sync-scale, 1) * 12px)' }}>{label}</span>
       <Handles />
+    </div>
+  )
+}
+
+/* ── MCT Syncop (sync + operation fusionnés en un nœud) ──── */
+
+const SYNCOP_OP_COLOR = 'hsl(166, 100%, 40%)'
+
+function MctSyncop({ data }: { data: EntityNodeData }) {
+  const { label, items, emissionRules, syncLabel } = data
+  const opColor = SYNCOP_OP_COLOR
+  const rules = emissionRules ?? []
+  return (
+    <div className="flex flex-col items-center">
+      {/* Sync pentagon — couleur fixe rose Merise */}
+      <div
+        className={clsx('flex flex-col items-center justify-center px-4 py-3 text-center shadow-[0_7px_9px_0_rgba(0,0,0,0.02)]', 'bg-background/70 min-w-[80px]')}
+        style={{
+          border: '2px solid hsl(330, 100%, 40%)',
+          borderBottom: 'none',
+          clipPath: 'polygon(0% 0%, 100% 0%, 100% 50%, 50% 100%, 0% 50%)',
+          background: 'hsla(330, 100%, 40%, 0.15)',
+        }}
+      >
+        <span className="font-bold uppercase tracking-wider" style={{ fontSize: 'calc(var(--mct-sync-scale, 1) * 12px)', color: 'hsl(330, 100%, 40%)' }}>{syncLabel || ''}</span>
+      </div>
+      {/* Operation rectangle — copie exacte de MctOperation */}
+      <div
+        className={clsx('flex flex-col rounded-2xl border-2 border-solid shadow-[0_7px_9px_0_rgba(0,0,0,0.02)]', 'bg-background/70 min-w-[280px]')}
+        style={{
+          borderColor: opColor,
+        }}
+      >
+        <div
+          className="rounded-t-2xl border-b-2 border-solid px-3 py-2 font-semibold text-foreground"
+          style={{
+            fontSize: 'calc(var(--mct-operation-scale, 1) * 12px)',
+            backgroundColor: hsla(opColor, 0.094),
+            color: opColor,
+            borderColor: opColor,
+          }}
+        >
+          {label}
+        </div>
+        <div className="bg-background relative flex flex-col gap-1 p-3 leading-relaxed" style={{ fontSize: 'calc(var(--mct-operation-scale, 1) * 12px)' }}>
+          {items?.map((item, i) => (
+            <div key={i} className="flex items-start gap-1.5 py-0.5">
+              <span className="text-foreground font-medium">{i + 1}.</span>
+              <span className="text-foreground">{item}</span>
+            </div>
+          ))}
+        </div>
+        {rules.length > 0 && (
+          <div className="border-t-2 px-3 leading-relaxed" style={{ fontSize: 'calc(var(--mct-operation-scale, 1) * 10.5px)', backgroundColor: hsla(opColor, 0.06), borderColor: opColor }}>
+            <div className="flex items-stretch">
+              {rules.map((branch, i) => (
+                <div key={i} className="flex-1 flex items-center justify-center px-2 py-2 text-center" style={i > 0 ? { borderLeft: `2px solid ${opColor}` } : undefined}>
+                  <span className="font-medium text-foreground" dangerouslySetInnerHTML={{ __html: branch }} />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        <Handle id="top" type="target" position={Position.Top} className="nodrag nopan h-[10px] w-[10px] border-none opacity-0" />
+        {rules.length > 0
+          ? rules.map((branch, i) => (
+            <Handle
+              key={branch}
+              id={branch}
+              type="source"
+              position={Position.Bottom}
+              className="nodrag nopan h-[10px] w-[10px] border-none bg-gray-400"
+              style={{ left: `${((i + 0.5) / rules.length) * 100}%` }}
+            />
+          ))
+          : <Handles />
+        }
+      </div>
     </div>
   )
 }
@@ -242,7 +320,7 @@ function MotSync({ label }: { label: string }) {
       className="flex flex-col items-center justify-center px-3 py-1 text-center"
       style={{
         border: `2px solid ${MOT_COLORS.sync}`,
-        clipPath: 'polygon(0 0, 100% 0, 92% 100%, 8% 100%)',
+        clipPath: 'polygon(0% 0%, 100% 0%, 100% 50%, 50% 100%, 0% 50%)',
         backgroundColor: hsla(MOT_COLORS.sync, 0.15),
         color: MOT_COLORS.sync,
       }}
@@ -416,6 +494,7 @@ export default function ProcessNode({ data }: NodeProps<EntityNodeData>) {
   switch (data.variant) {
     case 'mct-event': return <MctEvent data={data} />
     case 'mct-sync': return <MctSync data={data} />
+    case 'mct-syncop': return <MctSyncop data={data} />
     case 'mct-operation': return <MctOperation data={data} />
     case 'mct-result': return <MctResult data={data} />
     case 'sat-head': return <SatHead data={data} />
