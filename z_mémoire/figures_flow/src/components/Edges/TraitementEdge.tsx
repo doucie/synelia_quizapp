@@ -32,8 +32,11 @@ const SIDE_LABELS: Record<string, string> = {
 function getValidHandles(node: Node | undefined, handleType: 'source' | 'target'): Set<string> {
   if (!node) return new Set(['left', 'right', 'top', 'bottom'])
   const data = node.data as EntityNodeData
-  if (data.variant === 'mct-operation' && data.emissionRules?.length) {
+  if ((data.variant === 'mct-operation' || data.variant === 'mct-syncop') && data.emissionRules?.length) {
     if (handleType === 'source') return new Set(data.emissionRules)
+    return new Set(['top'])
+  }
+  if ((data.variant === 'mct-sync' || data.variant === 'mct-syncop') && handleType === 'target') {
     return new Set(['top'])
   }
   return new Set(['left', 'right', 'top', 'bottom'])

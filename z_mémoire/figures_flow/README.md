@@ -118,6 +118,11 @@ Les noms sont **anglicisés** dans le passage MCD → MPD (ex: `candidature` →
 | 27 | MPT | Candidature & Quiz (couche) | Vue en couches candidature/quiz |
 | 28 | MPT | Entretien & Décision (couche) | Vue en couches entretien/décision |
 
+> **Note** : Une réécriture des MCT est en cours. Les versions v2 (T0–T6)
+> sont définies dans `plans/nouveaux_mct.md` et disponibles dans
+> `src/diagrams/traitements/v2/`. Les MCT v1 (n° 17–24) sont conservés
+> tels quels à titre de référence.
+
 **Légende** :
 - **MCT** (Modèle Conceptuel de Traitement) : diagrammes événement/opération/ résultat décrivant les flux métier
 - **SAT** (Sous-traitance) : diagrammes de décomposition des sous-traites
