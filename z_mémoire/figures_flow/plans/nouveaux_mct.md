@@ -23,7 +23,13 @@ Les anciennes figures sont conservées telles quelles dans `src/diagrams/traitem
 Un événement est un **déclencheur métier réel** : un fait qui se produit dans le système ou par un acteur externe. Les conditions techniques (ex: *quota non atteint*, *lien valide*) ne sont pas des événements — elles sont évaluées dans les règles d'émission de l'opération.
 
 ### Synchronisation (sync)
-La synchronisation combine **au moins deux événements** avant de déclencher une opération. En deçà, le pentagone est affiché **vide** (sans label `ET`) — l'événement unique déclenche directement l'opération.
+La synchronisation combine les événements avant de déclencher une opération.
+
+- **ET** : tous les événements sont requis (cas standard)
+- **OU** : au moins un des événements suffit
+- **Fonction logique** : combinaison comme `(A ou B) et C` — le pentagone affiche toujours `ET`/`OU` mais la règle combinée est documentée dans le diagramme
+
+En deçà de 2 événements, le pentagone est affiché **vide** (sans label) — l'événement unique déclenche directement l'opération.
 
 ### Notation `event-result-T*`
 Liaison entre traitements : un résultat de T*n* est aussi un événement déclencheur pour T*n+1*. Utilisée uniquement quand les deux traitements sont dans la **même figure** (MOT, diagramme combiné). Si les MCT sont isolés, cette notation est ignorée.
@@ -38,19 +44,21 @@ Actions **métier** uniquement (règles de gestion), pas d'actions IHM ou techni
 
 ## Parcours recrutement — vue métier
 
-Le système gère le cycle de vie d'une candidature à travers 7 traitements, du besoin de recrutement jusqu'à la décision finale :
+Le système gère le cycle de vie d'une candidature à travers 9 traitements, du besoin de recrutement jusqu'à la décision finale :
 
 | Traitement | Acteur | Objectif |
 |------------|--------|----------|
 | **T0** — Créer la campagne | Recruteur | Initialiser une campagne de recrutement avec ses dates, modèle de pipeline et droits d'accès |
 | **T1** — Candidature | Candidat | Déposer sa candidature (formulaire + CV) ; le système vérifie l'éligibilité et les quotas |
 | **T2** — Quiz | Candidat | Passer le quiz en ligne ; le système calcule le score et applique les règles de sélection |
-| **T3** — Entretien | Recruteur | Planifier et évaluer l'entretien ; consolidation des évaluations |
-| **T4** — Décision | Recruteur | Prendre la décision finale (retenu, en attente, refusé) |
-| **T5** — Annulation | Recruteur | Annuler une décision antérieure si les conditions le permettent |
-| **T6** — Audit | Système | Journaliser chaque opération métier pour traçabilité |
+| **T3** — Planification | Recruteur | Planifier un créneau d'entretien |
+| **T4** — Conduite | Recruteur | Vérifier la présence du candidat et démarrer l'entretien |
+| **T5** — Évaluation | Recruteur | Consolider les évaluations et valider l'entretien |
+| **T6** — Décision | Recruteur | Prendre la décision finale (retenu, en attente, refusé) |
+| **T7** — Annulation | Recruteur | Annuler une décision antérieure si les conditions le permettent |
+| **T8** — Audit | Système | Journaliser chaque opération métier pour traçabilité |
 
-T0, T5 et T6 sont **transverses** : T0 ouvre le processus, T5 permet de revenir en arrière, T6 s'exécute sur toute opération métier.
+T0, T7 et T8 sont **transverses** : T0 ouvre le processus, T7 permet de revenir en arrière, T8 s'exécute sur toute opération métier.
 
 ---
 
@@ -78,35 +86,35 @@ clipPath: 'polygon(0% 0%, 100% 0%, 100% 50%, 50% 100%, 0% 50%)',
 
 ### T0 — Créer la campagne
 
-```
+```markdown
 event: Besoin d'un nouveau recrutement
 sync: (pentagone vide)
-operation: Initialiser la campagne
+operation: Initialiser et ouvrir la campagne
 items:
   1. Vérifier la cohérence des dates de campagne
   2. Attribuer les droits d'accès par défaut
 rules: Toujours
-results: Campagne initialisée
+results: Campagne ouverte
 ```
 
 ### T1 — Candidature
 
-```
-event-result-T0: Campagne initialisée
-event: Formulaire renseigné
+```markdown
+event-result-T0: Campagne ouverte
+event: Formulaire envoyé
 sync: ET
 operation: Vérifier la recevabilité de la candidature
 items:
   1. Vérifier l'éligibilité du candidat
   2. Valider la disponibilité des places
 rules: Éligible ET Quota OK / Non éligible OU Quota atteint
-results: Candidat accepté pour l'étape suivante / Candidature rejetée
+results: Candidat accepté pour quiz / Candidature rejetée
 ```
 
 ### T2 — Quiz
 
-```
-event result-T1: Candidat accepté pour l'étape suivante
+```markdown
+event result-T1: Candidat accepté pour quiz
 event: Quiz soumis par le candidat
 sync: ET
 operation: Corriger le quiz
@@ -117,13 +125,41 @@ rules: Score ≥ seuil / Score < seuil
 results: Quiz validé / Quiz échoué
 ```
 
-### T3 — Entretien
+### T3 — Planification de l'entretien
 
-```
-event: Entretien planifié
-event: Évaluations soumises
+```markdown
+event-result-T2: Quiz validé
+event: Candidat accepté pour l'évaluation
 sync: ET
-operation: Évaluer l'entretien
+operation: Planifier l'entretien
+items:
+  1. Bloquer le créneau dans l'agenda
+  2. Envoyer l'invitation au candidat et aux recruteurs concernés
+rules: Toujours
+results: Entretien planifié
+```
+
+### T4 — Conduire l'entretien
+
+```markdown
+event-result-T3: Entretien planifié
+event: Date et heure de l'entretien atteintes
+sync: ET
+operation: Conduire l'entretien
+items:
+  1. Vérifier la présence du candidat
+  2. Notifier les participants
+rules: Candidat présent / Candidat absent / Report demandé
+results: Entretien en cours / Entretien annulé / Entretien reporté
+```
+
+### T5 — Évaluation
+
+```markdown
+event-result-T4: Entretien en cours
+event: Fiches d'évaluation renseignées
+sync: ET
+operation: Synthétiser et arbitrer le bilan de l'entretien
 items:
   1. Consolider les évaluations
   2. Appliquer les critères de validation
@@ -131,23 +167,26 @@ rules: Favorable / Insuffisant
 results: Entretien validé / Entretien refusé
 ```
 
-### T4 — Décision
+### T6 — Décision
 
-```
-event: Dossier prêt pour décision
+```markdown
+event-result-T5: Entretien validé
 sync: (pentagone vide)
 operation: Valider la décision
 items:
   1. Appliquer la règle de décision
 rules: Favorable / En attente / Défavorable
-results: Candidat retenu / Candidat en attente / Candidat refusé
+results: Candidat retenu (RET) / Candidat en attente (ATT) / Candidat refusé (REF)
 ```
 
-### T5 — Annulation
+### T7 — Annulation
 
-```
-event: Demande d'annulation
-sync: (pentagone vide)
+```markdown
+event-result-T6: Candidat retenu (RET)
+event-result-T6: Candidat en attente (ATT)
+event-result-T6: Candidat refusé (REF)
+event: Demande d'annulation (DA)
+sync: (RET ou ATT ou REF) et DA
 operation: Traiter l'annulation
 items:
   1. Vérifier l'éligibilité à l'annulation
@@ -155,10 +194,10 @@ rules: Autorisée / Refusée
 results: Décision annulée / Décision maintenue
 ```
 
-### T6 — Audit
+### T8 — Audit
 
-```
-event: Opération métier réalisée
+```markdown
+event: Toute opération métier réalisée
 sync: (pentagone vide)
 operation: Journaliser l'audit
 items:
@@ -176,10 +215,12 @@ results: Trace enregistrée
 - `src/diagrams/traitements/v2/mct_0_creation_campagne.ts`
 - `src/diagrams/traitements/v2/mct_1_candidature.ts`
 - `src/diagrams/traitements/v2/mct_2_quiz.ts`
-- `src/diagrams/traitements/v2/mct_3_entretien.ts`
-- `src/diagrams/traitements/v2/mct_4_decision.ts`
-- `src/diagrams/traitements/v2/mct_5_annulation.ts`
-- `src/diagrams/traitements/v2/mct_6_audit.ts`
+- `src/diagrams/traitements/v2/mct_3_planification.ts`
+- `src/diagrams/traitements/v2/mct_4_conduite_entretien.ts`
+- `src/diagrams/traitements/v2/mct_5_evaluation.ts`
+- `src/diagrams/traitements/v2/mct_6_decision.ts`
+- `src/diagrams/traitements/v2/mct_7_annulation.ts`
+- `src/diagrams/traitements/v2/mct_8_audit.ts`
 
 ### Modifier
 
@@ -191,6 +232,6 @@ results: Trace enregistrée
 
 1. Correction du clip-path sync dans `ProcessNode.tsx` (pentagone)
 2. Création du dossier `traitements/v2/`
-3. Nouveaux MCTs (T0 à T6) — un fichier par MCT
+3. Nouveaux MCTs (T0 à T8) — un fichier par MCT
 4. Mise à jour du registre `src/diagrams/index.ts`
 5. Nouveau MOT basé sur les MCTs v2
