@@ -354,7 +354,7 @@ export class QuizComponent implements OnInit, OnDestroy {
           console.log('✅ Quiz soumis avec succès');
           this.clearCountdown();
           this.unregisterActivityListeners();
-          this.quizManualCorrectionStatus.set(normalizeManualCorrectionStatus(response.items?.[0]?.quizManualCorrectionStatus));
+          this.quizManualCorrectionStatus.set(normalizeManualCorrectionStatus(response.items?.[0]?.quizAttempts?.[0]?.manualCorrectionStatus));
           this.quizCompleted.set(true);
         }
       },

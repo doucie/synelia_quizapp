@@ -184,7 +184,7 @@ export class EvaluationsListComponent implements OnInit, OnDestroy {
                 campaignTitle: campaign?.campaignTitle || 'Campagne inconnue',
                 candidateFirstName: app?.candidateFirstName,
                 candidateLastName: app?.candidateLastName,
-                quizScorePercent: app?.quizScorePercent,
+                quizScorePercent: app?.aggregatedQuizScorePercent,
                 interviewStageLabel: interview.pipelineStageLabel,
                 interviewTitle: `Entretien #${interview.id}`
               };

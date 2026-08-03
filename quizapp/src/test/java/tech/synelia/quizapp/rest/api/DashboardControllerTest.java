@@ -1,6 +1,8 @@
 package tech.synelia.quizapp.rest.api;
 
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
@@ -12,10 +14,13 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import tech.synelia.quizapp.dao.entity.ApplicationQuizAttempt;
+import tech.synelia.quizapp.dao.entity.Applications;
 import tech.synelia.quizapp.dao.entity.CampaignForm;
 import tech.synelia.quizapp.dao.entity.Campaigns;
 import tech.synelia.quizapp.dao.entity.Form;
 import tech.synelia.quizapp.dao.repository.AnswerRepository;
+import tech.synelia.quizapp.dao.repository.ApplicationQuizAttemptRepository;
 import tech.synelia.quizapp.dao.repository.ApplicationsRepository;
 import tech.synelia.quizapp.dao.repository.CampaignFormRepository;
 import tech.synelia.quizapp.dao.repository.CampaignsRepository;
@@ -47,6 +52,8 @@ class DashboardControllerTest {
 	private UserRepository userRepository;
 	@Mock
 	private ApplicationsRepository applicationsRepository;
+	@Mock
+	private ApplicationQuizAttemptRepository applicationQuizAttemptRepository;
 	@Mock
 	private InterviewsRepository interviewsRepository;
 	@Mock
@@ -143,6 +150,77 @@ class DashboardControllerTest {
 						org.assertj.core.groups.Tuple.tuple(11, "Campagne Alpha"),
 						org.assertj.core.groups.Tuple.tuple(12, "Campagne Beta"));
 		verify(campaignFormRepository).findByFormId(7);
+	}
+
+	@Test
+	@SuppressWarnings("unchecked")
+	void getOverviewStats_projectsQuizStatusFromLatestAttemptAndUsesAggregatedScores() {
+		Applications appA = buildApplication(1, 70.0d);
+		Applications appB = buildApplication(2, 90.0d);
+		Applications appC = buildApplication(3, 60.0d);
+		Applications appD = buildApplication(4, null);
+
+		when(applicationsRepository.findAll()).thenReturn(List.of(appA, appB, appC, appD));
+		when(interviewsRepository.findAll()).thenReturn(List.of());
+		when(evaluationsRepository.findAll()).thenReturn(List.of());
+		when(decisionRepository.findAll()).thenReturn(List.of());
+
+		// A: latest attempt = COMPLETED (older STARTED ignored)
+		// B: latest attempt = STARTED (older COMPLETED ignored -> excluded from score KPIs)
+		// C: no attempt at all -> excluded from quizDistribution
+		// D: latest attempt = COMPLETED but aggregated score null
+		when(applicationQuizAttemptRepository.findAll()).thenReturn(List.of(
+				buildAttempt(890, 2, "COMPLETED"),
+				buildAttempt(900, 1, "STARTED"),
+				buildAttempt(901, 1, "COMPLETED"),
+				buildAttempt(902, 2, "STARTED"),
+				buildAttempt(903, 4, "COMPLETED")));
+
+		Map<String, Object> result = dashboardController.getOverviewStats();
+
+		List<Map<String, Object>> quizDistribution = (List<Map<String, Object>>) result.get("quizDistribution");
+		assertThat(quizDistribution)
+				.extracting(entry -> entry.get("key"))
+				.containsExactlyInAnyOrder("COMPLETED", "STARTED");
+		Map<String, Long> distCounts = quizDistribution.stream()
+				.collect(java.util.stream.Collectors.toMap(
+						entry -> (String) entry.get("key"),
+						entry -> (Long) entry.get("count")));
+		assertThat(distCounts.get("COMPLETED")).isEqualTo(2L);
+		assertThat(distCounts.get("STARTED")).isEqualTo(1L);
+
+		assertThat(result.get("quizCompletedCount")).isEqualTo(2L);
+		assertThat(result.get("avgQuizScorePercent")).isEqualTo(70.0);
+
+		List<Map<String, Object>> scoreBuckets = (List<Map<String, Object>>) result.get("quizScoreBuckets");
+		Map<String, Long> bucketCounts = scoreBuckets.stream()
+				.collect(java.util.stream.Collectors.toMap(
+						entry -> (String) entry.get("key"),
+						entry -> (Long) entry.get("count")));
+		assertThat(bucketCounts.get("60-80%")).isEqualTo(1L);
+		assertThat(bucketCounts.get("80-100%")).isEqualTo(0L);
+	}
+
+	private Applications buildApplication(Integer id, Double aggregatedScorePercent) {
+		Applications app = new Applications();
+		app.setId(id);
+		app.setCandidateEmail("candidate" + id + "@example.test");
+		app.setApplicationStatus("PENDING");
+		app.setAggregatedQuizScorePercent(aggregatedScorePercent);
+		app.setCreatedAt(new Date());
+		app.setIsDeleted(false);
+		return app;
+	}
+
+	private ApplicationQuizAttempt buildAttempt(Integer id, Integer applicationId, String status) {
+		ApplicationQuizAttempt attempt = new ApplicationQuizAttempt();
+		attempt.setId(id);
+		attempt.setQuizStatus(status);
+		Applications app = new Applications();
+		app.setId(applicationId);
+		attempt.setApplications(app);
+		attempt.setIsDeleted(false);
+		return attempt;
 	}
 
 	private Campaigns buildCampaignReference(Integer id) {

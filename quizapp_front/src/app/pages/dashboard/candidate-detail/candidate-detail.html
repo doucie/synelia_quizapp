@@ -120,10 +120,10 @@
                 <span class="inline-badge" [class]="quizStatusClass()">{{ quizStatusLabel() }}</span>
               </span>
             </div>
-            @if (app.quizScorePercent != null) {
+            @if (app.aggregatedQuizScorePercent != null) {
               <div class="metric">
                 <span class="metric-label">Score quiz</span>
-                <span class="metric-value strong">{{ app.quizScorePercent }} %</span>
+                <span class="metric-value strong">{{ app.aggregatedQuizScorePercent }} %</span>
               </div>
             }
             @if (app.currentInterviewEvaluationPercentage != null) {
@@ -245,10 +245,10 @@
                               <span class="metric-label">Statut</span>
                               <span class="inline-badge" [class]="quizStatusClass()">{{ quizStatusLabel() }}</span>
                             </div>
-                            @if (app.quizScorePercent != null) {
+                            @if (app.aggregatedQuizScorePercent != null) {
                               <div class="metric">
                                 <span class="metric-label">Score global</span>
-                                <span class="metric-value strong">{{ app.quizScorePercent }} %</span>
+                                <span class="metric-value strong">{{ app.aggregatedQuizScorePercent }} %</span>
                               </div>
                             }
                             @if (totalQuestions()) {

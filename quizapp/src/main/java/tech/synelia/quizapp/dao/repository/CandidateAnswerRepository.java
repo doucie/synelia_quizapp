@@ -48,11 +48,11 @@ public interface CandidateAnswerRepository extends JpaRepository<CandidateAnswer
 	@Query("select e from CandidateAnswer e where e.isDeleted = :isDeleted")
 	List<CandidateAnswer> findByIsDeleted(@Param("isDeleted")Boolean isDeleted);
 
-	@Query("select e from CandidateAnswer e where e.applications.id = :applicationId and e.isDeleted = :isDeleted")
-	List<CandidateAnswer> findByApplicationId(@Param("applicationId")Integer applicationId, @Param("isDeleted")Boolean isDeleted);
-
 	@Query("select e from CandidateAnswer e where e.applicationQuizAttempt.id = :applicationQuizAttemptId and e.isDeleted = :isDeleted")
 	List<CandidateAnswer> findByApplicationQuizAttemptId(@Param("applicationQuizAttemptId") Integer applicationQuizAttemptId, @Param("isDeleted") Boolean isDeleted);
+
+	@Query("select e from CandidateAnswer e where e.applicationQuizAttempt.applications.id = :applicationId and e.isDeleted = :isDeleted")
+	List<CandidateAnswer> findByApplicationQuizAttemptApplicationsId(@Param("applicationId")Integer applicationId, @Param("isDeleted")Boolean isDeleted);
 
 	@Query("select e from CandidateAnswer e where e.question.id = :questionId and e.isDeleted = :isDeleted")
 	List<CandidateAnswer> findByQuestionId(@Param("questionId")Integer questionId, @Param("isDeleted")Boolean isDeleted);
@@ -60,14 +60,8 @@ public interface CandidateAnswerRepository extends JpaRepository<CandidateAnswer
 	@Query("select e from CandidateAnswer e where e.answer.id = :answerId and e.isDeleted = :isDeleted")
 	List<CandidateAnswer> findByAnswerId(@Param("answerId")Integer answerId, @Param("isDeleted")Boolean isDeleted);
 
-	@Query("select e from CandidateAnswer e where e.applications.id = :applicationId and e.answer.id = :answerId and e.isDeleted = :isDeleted")
-	CandidateAnswer findByApplicationIdAndAnswerId(@Param("applicationId")Integer applicationId, @Param("answerId")Integer answerId, @Param("isDeleted")Boolean isDeleted);
-
 	@Query("select e from CandidateAnswer e where e.applicationQuizAttempt.id = :applicationQuizAttemptId and e.answer.id = :answerId and e.isDeleted = :isDeleted")
 	CandidateAnswer findByApplicationQuizAttemptIdAndAnswerId(@Param("applicationQuizAttemptId") Integer applicationQuizAttemptId, @Param("answerId") Integer answerId, @Param("isDeleted") Boolean isDeleted);
-
-	@Query("select e from CandidateAnswer e where e.applications.id = :applicationId and e.question.id = :questionId and e.isDeleted = :isDeleted")
-	List<CandidateAnswer> findByApplicationIdAndQuestionId(@Param("applicationId")Integer applicationId, @Param("questionId")Integer questionId, @Param("isDeleted")Boolean isDeleted);
 
 	@Query("select e from CandidateAnswer e where e.applicationQuizAttempt.id = :applicationQuizAttemptId and e.question.id = :questionId and e.isDeleted = :isDeleted")
 	List<CandidateAnswer> findByApplicationQuizAttemptIdAndQuestionId(@Param("applicationQuizAttemptId") Integer applicationQuizAttemptId, @Param("questionId") Integer questionId, @Param("isDeleted") Boolean isDeleted);
@@ -209,9 +203,6 @@ public interface CandidateAnswerRepository extends JpaRepository<CandidateAnswer
 			}
 			if (Utilities.notBlank(dto.getSearchString())) {
 				listOfQuery.add(CriteriaUtils.generateCriteria("searchString", dto.getSearchString(), "e.searchString", "String", dto.getSearchStringParam(), param, index, locale));
-			}
-			if (dto.getApplicationId() != null && dto.getApplicationId() > 0) {
-				listOfQuery.add(CriteriaUtils.generateCriteria("applicationId", dto.getApplicationId(), "e.applications.id", "Integer", dto.getApplicationIdParam(), param, index, locale));
 			}
 			if (dto.getApplicationQuizAttemptId() != null && dto.getApplicationQuizAttemptId() > 0) {
 				listOfQuery.add(CriteriaUtils.generateCriteria("applicationQuizAttemptId", dto.getApplicationQuizAttemptId(), "e.applicationQuizAttempt.id", "Integer", dto.getApplicationQuizAttemptIdParam(), param, index, locale));

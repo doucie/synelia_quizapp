@@ -72,10 +72,6 @@ public class CandidateAnswer implements Serializable, Cloneable {
     private String     searchString ;
 
     @ManyToOne
-    @JoinColumn(name="application_id", referencedColumnName="id")
-    private Applications applications ;
-
-    @ManyToOne
     @JoinColumn(name="application_quiz_attempt_id", referencedColumnName="id")
     private ApplicationQuizAttempt applicationQuizAttempt ;
 

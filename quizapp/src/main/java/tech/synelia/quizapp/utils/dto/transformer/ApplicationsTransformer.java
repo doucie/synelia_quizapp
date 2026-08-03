@@ -46,8 +46,6 @@ public interface ApplicationsTransformer {
 		@Mapping(source="entity.currentFinalDecisionDate", dateFormat="dd/MM/yyyy HH:mm", target="currentFinalDecisionDate"),
 		@Mapping(source="entity.sourceToken.id", target="sourceTokenId"),
 		@Mapping(source="entity.formVersion.id", target="formVersionId"),
-		@Mapping(source="entity.quizTimedSnapshot", target="quizTimedSnapshot"),
-		@Mapping(source="entity.quizTotalTimeAllowedSnapshot", target="quizTotalTimeAllowedSnapshot"),
 	})
 	ApplicationsDto toDto(Applications entity) throws ParseException;
 
@@ -86,14 +84,12 @@ public interface ApplicationsTransformer {
 		@Mapping(source="dto.candidateBirthDate", dateFormat="yyyy-MM-dd", target="candidateBirthDate"),
 		@Mapping(source="dto.motivationLetter", target="motivationLetter"),
 		@Mapping(source="dto.emailVerified", target="emailVerified"),
-		@Mapping(target="quizScore", ignore=true),
 		@Mapping(target="totalEvaluationScore", ignore=true),
 		@Mapping(target="totalEvaluationNumber", ignore=true),
 		@Mapping(target="totalEvaluationPercentage", ignore=true),
+		@Mapping(target="aggregatedQuizScore", ignore=true),
+		@Mapping(target="aggregatedQuizScorePercent", ignore=true),
 		@Mapping(target="applicationStatus", ignore=true),
-		@Mapping(source="dto.quizManualCorrectionStatus", target="quizManualCorrectionStatus"),
-		@Mapping(source="dto.quizTimedSnapshot", target="quizTimedSnapshot"),
-		@Mapping(source="dto.quizTotalTimeAllowedSnapshot", target="quizTotalTimeAllowedSnapshot"),
 		@Mapping(target="createdAt", ignore=true), // Backend sets this
 		@Mapping(source="dto.createdBy", target="createdBy"),
 		@Mapping(target="updatedAt", ignore=true), // Backend sets this

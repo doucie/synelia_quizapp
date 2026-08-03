@@ -104,6 +104,13 @@ export class CandidateDetailComponent implements OnInit, OnDestroy {
     return attempts[0].totalQuestions || 0;
   });
 
+  /** Dernier quiz attempt (résumé attempt, source unique du statut quiz). */
+  currentQuizAttempt = computed(() => {
+    const attempts = this.application()?.quizAttempts;
+    if (!attempts || attempts.length === 0) return null;
+    return attempts[0];
+  });
+
   /** Retrouve le PipelineStage correspondant à une progression. */
   getStageForProgress(p: ApplicationProgress): PipelineStage | undefined {
     return this.stages().find(s => s.id === p.pipelineStageId);
@@ -308,20 +315,19 @@ export class CandidateDetailComponent implements OnInit, OnDestroy {
   }
 
   quizStatusClass(): string {
-    switch (this.application()?.quizStatus) {
+    switch (this.currentQuizAttempt()?.quizStatus) {
       case 'COMPLETED': return 'badge-success';
-      case 'IN_PROGRESS': return 'badge-primary';
+      case 'STARTED': return 'badge-primary';
       case 'ABANDONED': return 'badge-error';
       default: return 'badge-neutral';
     }
   }
 
   quizStatusLabel(): string {
-    switch (this.application()?.quizStatus) {
+    switch (this.currentQuizAttempt()?.quizStatus) {
       case 'COMPLETED': return 'Terminé';
-      case 'IN_PROGRESS': return 'En cours';
+      case 'STARTED': return 'En cours';
       case 'ABANDONED': return 'Abandonné';
-      case 'NOT_REQUIRED': return 'Non requis';
       default: return 'En attente';
     }
   }

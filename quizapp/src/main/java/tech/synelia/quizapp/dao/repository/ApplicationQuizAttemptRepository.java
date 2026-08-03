@@ -25,4 +25,9 @@ public interface ApplicationQuizAttemptRepository extends JpaRepository<Applicat
 	List<ApplicationQuizAttempt> findByApplicationIdOrderByIdDesc(
 			@Param("applicationId") Integer applicationId,
 			@Param("isDeleted") Boolean isDeleted);
+
+	@Query("select e from ApplicationQuizAttempt e where e.quizStatus = :quizStatus and e.isDeleted = :isDeleted and e.applications is not null and (e.applications.applicationAbandoned = false or e.applications.applicationAbandoned is null)")
+	List<ApplicationQuizAttempt> findByQuizStatusAndApplicationNotAbandoned(
+			@Param("quizStatus") String quizStatus,
+			@Param("isDeleted") Boolean isDeleted);
 }

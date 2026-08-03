@@ -1333,17 +1333,11 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   }
 
   getCurrentQuizStatus(app: ApplicationWithCampaign): string {
-    if (app.id && this.hasLoadedQuizRuntime(app.id)) {
-      return this.getCurrentQuizAttempt(app.id)?.quizStatus || '';
-    }
-    return app.quizStatus || '';
+    return app.id ? this.getCurrentQuizAttempt(app.id)?.quizStatus || '' : '';
   }
 
   getCurrentQuizScorePercent(app: ApplicationWithCampaign): number | null {
-    if (app.id && this.hasLoadedQuizRuntime(app.id)) {
-      return this.getCurrentQuizAttempt(app.id)?.scorePercent ?? null;
-    }
-    return app.quizScorePercent ?? null;
+    return app.id ? this.getCurrentQuizAttempt(app.id)?.scorePercent ?? null : null;
   }
 
   getCurrentInterviewDate(app: ApplicationWithCampaign): string {

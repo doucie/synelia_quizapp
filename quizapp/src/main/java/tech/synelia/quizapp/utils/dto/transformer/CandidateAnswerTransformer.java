@@ -30,7 +30,6 @@ public interface CandidateAnswerTransformer {
 		@Mapping(source="entity.createdAt", dateFormat="dd/MM/yyyy", target="createdAt"),
 		@Mapping(source="entity.updatedAt", dateFormat="dd/MM/yyyy", target="updatedAt"),
 		@Mapping(source="entity.manualCorrectionScore", target="manualCorrectionScore"),
-		@Mapping(source="entity.applications.id", target="applicationId"),
 		@Mapping(source="entity.applicationQuizAttempt.id", target="applicationQuizAttemptId"),
 		@Mapping(source="entity.question.id", target="questionId"),
 		@Mapping(source="entity.question.questionText", target="questionText"),
@@ -90,10 +89,9 @@ public interface CandidateAnswerTransformer {
 		@Mapping(source="dto.updatedBy", target="updatedBy"),
 		@Mapping(source="dto.isDeleted", target="isDeleted"),
 		@Mapping(source="dto.searchString", target="searchString"),
-		@Mapping(source="applications", target="applications"),
-		@Mapping(target="applicationQuizAttempt", ignore=true),
+		@Mapping(source="applicationQuizAttempt", target="applicationQuizAttempt"),
 		@Mapping(source="question", target="question"),
 		@Mapping(source="answer", target="answer"),
 	})
-	CandidateAnswer toEntity(CandidateAnswerDto dto, Applications applications, Question question, Answer answer) throws ParseException;
+	CandidateAnswer toEntity(CandidateAnswerDto dto, ApplicationQuizAttempt applicationQuizAttempt, Question question, Answer answer) throws ParseException;
 }

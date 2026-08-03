@@ -96,15 +96,6 @@ public interface ApplicationsRepository extends JpaRepository<Applications, Inte
 	@Query("select e from Applications e where e.emailVerified = :emailVerified and e.isDeleted = :isDeleted")
 	List<Applications> findByEmailVerified(@Param("emailVerified")Boolean emailVerified, @Param("isDeleted")Boolean isDeleted);
 	/**
-	 * Finds Applications by using quizScore as a search criteria.
-	 * 
-	 * @param quizScore
-	 * @return An Object Applications whose quizScore is equals to the given quizScore. If
-	 *         no Applications is found, this method returns null.
-	 */
-	@Query("select e from Applications e where e.quizScore = :quizScore and e.isDeleted = :isDeleted")
-	List<Applications> findByQuizScore(@Param("quizScore")Integer quizScore, @Param("isDeleted")Boolean isDeleted);
-	/**
 	 * Finds Applications by using totalEvaluationScore as a search criteria.
 	 * 
 	 * @param totalEvaluationScore
@@ -176,9 +167,6 @@ public interface ApplicationsRepository extends JpaRepository<Applications, Inte
 	 */
 	@Query("select e from Applications e where e.searchString = :searchString and e.isDeleted = :isDeleted")
 	List<Applications> findBySearchString(@Param("searchString")String searchString, @Param("isDeleted")Boolean isDeleted);
-
-	@Query("select e from Applications e where e.quizStatus = :quizStatus and (e.applicationAbandoned = false or e.applicationAbandoned is null) and e.isDeleted = :isDeleted")
-	List<Applications> findActiveByQuizStatus(@Param("quizStatus")String quizStatus, @Param("isDeleted")Boolean isDeleted);
 
 	/**
 	 * Finds Applications by using sourceTokenId as a search criteria.
@@ -395,9 +383,6 @@ public interface ApplicationsRepository extends JpaRepository<Applications, Inte
 			}
 			if (dto.getEmailVerified()!= null) {
 				listOfQuery.add(CriteriaUtils.generateCriteria("emailVerified", dto.getEmailVerified(), "e.emailVerified", "Boolean", dto.getEmailVerifiedParam(), param, index, locale));
-			}
-			if (dto.getQuizScore()!= null && dto.getQuizScore() > 0) {
-				listOfQuery.add(CriteriaUtils.generateCriteria("quizScore", dto.getQuizScore(), "e.quizScore", "Integer", dto.getQuizScoreParam(), param, index, locale));
 			}
 			if (dto.getTotalEvaluationScore()!= null && dto.getTotalEvaluationScore() > 0) {
 				listOfQuery.add(CriteriaUtils.generateCriteria("totalEvaluationScore", dto.getTotalEvaluationScore(), "e.totalEvaluationScore", "Float", dto.getTotalEvaluationScoreParam(), param, index, locale));

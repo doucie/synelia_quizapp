@@ -419,7 +419,7 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
               applicationId: applicationId,
               name: `${app.candidateFirstName || ''} ${app.candidateLastName || ''}`.trim() || 'Candidat',
               email: app.candidateEmail || '',
-              quizScore: app.quizScorePercent
+              quizScore: app.aggregatedQuizScorePercent
             });
           }
           

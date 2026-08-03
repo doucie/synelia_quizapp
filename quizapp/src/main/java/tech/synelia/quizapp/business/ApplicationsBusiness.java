@@ -286,14 +286,8 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			entityToSave.setCreatedAt(Utilities.getCurrentDate());
 			entityToSave.setCreatedBy(request.getUser());
 			entityToSave.setIsDeleted(false);
-			// Initialiser les champs obligatoires pour le quiz
+			// Initialiser les champs obligatoires
 			entityToSave.setEmailVerified(false);
-			entityToSave.setQuizStatus(tech.synelia.quizapp.utils.enums.QuizStatus.PENDING.getValue());
-			entityToSave.setQuizToken(null); // Sera généré après vérification email
-			entityToSave.setQuizLevel(null); // Sera initialisé au démarrage du quiz
-			entityToSave.setQuizManualCorrectionStatus(ManualCorrectionStatus.NOT_REQUIRED.getValue());
-			entityToSave.setTimeElapsed(0);
-			applyQuizTimingSnapshot(entityToSave);
 			entityToSave.setApplicationAbandoned(false); // Initialiser à false
 			registerPendingFormAssignment(existingSourceToken, existingCampaign, dto.getCandidateEmail(), existingFormVersion,
 					pendingAssignedFormsByCampaign, pendingCandidateFormHistory);
@@ -354,16 +348,17 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 						PipelineStage secondStage = stages.get(1);
 						if ("QUIZ".equals(secondStage.getStageType()) || "TECHNICAL_TEST".equals(secondStage.getStageType())) {
 							String quizToken = java.util.UUID.randomUUID().toString().replace("-", "");
-							savedApp.setQuizToken(quizToken);
-							savedApp.setUpdatedAt(Utilities.getCurrentDate());
-							savedApp.setUpdatedBy(request.getUser());
-							applicationsRepository.save(savedApp);
 							ApplicationQuizAttempt quizAttempt = createQuizAttemptForVerifiedApplication(savedApp, quizToken, request.getUser());
-							if (quizAttempt != null) {
+							if (quizAttempt == null || quizAttempt.getId() == null) {
+								log.severe("Quiz token NON émis pour l'application " + savedApp.getId() + ": aucune tentative quiz créée");
+							} else {
+								savedApp.setUpdatedAt(Utilities.getCurrentDate());
+								savedApp.setUpdatedBy(request.getUser());
+								applicationsRepository.save(savedApp);
 								syncApplicationQuizSummaryFromAttempt(savedApp, quizAttempt, request.getUser());
+								quizTokensByAppId.put(savedApp.getId(), quizToken);
+								log.info("Quiz token généré automatiquement pour application ID " + savedApp.getId());
 							}
-							quizTokensByAppId.put(savedApp.getId(), quizToken);
-							log.info("Quiz token généré automatiquement pour application ID " + savedApp.getId());
 						}
 					}
 				} catch (Exception e) {
@@ -377,7 +372,6 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				dto.setTrackingCode(trackingCodesByApplicationId.get(dto.getId()));
 				String qt = quizTokensByAppId.get(dto.getId());
 				if (qt != null) {
-					dto.setQuizToken(qt);
 					dto.setSearchString(qt);
 				}
 			}
@@ -589,7 +583,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			// -----------------------------------------------------------------------
 
 			// candidateAnswer
-			List<CandidateAnswer> listOfCandidateAnswer = candidateAnswerRepository.findByApplicationId(existingEntity.getId(), false);
+			List<CandidateAnswer> listOfCandidateAnswer = candidateAnswerRepository.findByApplicationQuizAttemptApplicationsId(existingEntity.getId(), false);
 			if (listOfCandidateAnswer != null && !listOfCandidateAnswer.isEmpty()){
 				throw new InternalErrorException(functionalError.DATA_NOT_DELETABLE("(" + listOfCandidateAnswer.size() + ")", locale));
 			}
@@ -1031,17 +1025,30 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			String quizToken = UUID.randomUUID().toString().replace("-", "");
 			log.info("Quiz token généré: " + quizToken);
 			
-			// Mettre à jour l'application: email vérifié + quiz_token + status pending
+			// Créer la tentative quiz AVANT de poser applications.quiz_token (invariant: token émis => attempt existe)
+			ApplicationQuizAttempt quizAttempt = createQuizAttemptForVerifiedApplication(application, quizToken, request.getUser());
+			if (quizAttempt == null || quizAttempt.getId() == null) {
+				log.severe("Quiz token NON émis pour l'application " + application.getId() + ": aucune tentative quiz créée (étape QUIZ absente)");
+				application.setEmailVerified(true);
+				application.setUpdatedAt(Utilities.getCurrentDate());
+				application.setUpdatedBy(request.getUser());
+				applicationsRepository.save(application);
+
+				Status status = new Status();
+				status.setCode(StatusCode.FUNC_REQUEST_FAIL);
+				status.setMessage("Email vérifié, mais aucune étape quiz exploitable pour cette candidature.");
+				response.setHttpCode(HttpStatus.OK.value());
+				response.setStatus(status);
+				response.setHasError(true);
+				return response;
+			}
+
+			// Mettre à jour l'application: email vérifié
 			application.setEmailVerified(true);
-			application.setQuizToken(quizToken);
-			application.setQuizStatus(tech.synelia.quizapp.utils.enums.QuizStatus.PENDING.getValue());
 			application.setUpdatedAt(Utilities.getCurrentDate());
 			application.setUpdatedBy(request.getUser());
 			applicationsRepository.save(application);
-			ApplicationQuizAttempt quizAttempt = createQuizAttemptForVerifiedApplication(application, quizToken, request.getUser());
-			if (quizAttempt != null) {
-				syncApplicationQuizSummaryFromAttempt(application, quizAttempt, request.getUser());
-			}
+			syncApplicationQuizSummaryFromAttempt(application, quizAttempt, request.getUser());
 			log.info("Email vérifié et quiz token généré pour l'application ID: " + application.getId());
 			
 			// Préparer la réponse avec le quiz_token dans searchString
@@ -1127,9 +1134,9 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				log.info("Processing question ID: " + questionId + " - " + question.getQuestionText());
 
 				if (QuestionType.TEXT.getValue().equals(questionType)) {
-					List<CandidateAnswer> existingQuestionAnswers = findCandidateAnswersForQuestionContext(application, quizAttempt, questionId);
+					List<CandidateAnswer> existingQuestionAnswers = findCandidateAnswersForQuestionContext(quizAttempt, questionId);
 					if (existingQuestionAnswers == null || existingQuestionAnswers.isEmpty()) {
-						CandidateAnswer candidateAnswer = buildCandidateAnswer(application, quizAttempt, question, null, userId);
+						CandidateAnswer candidateAnswer = buildCandidateAnswer(quizAttempt, question, null, userId);
 						CandidateAnswer saved = candidateAnswerRepository.save(candidateAnswer);
 						if (saved != null) {
 							totalAnswersCreated++;
@@ -1162,11 +1169,11 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 					log.info("Processing answer ID: " + answer.getId() + " for question " + questionId);
 					
 					// Vérifier si l'enregistrement existe déjà
-					CandidateAnswer existing = findCandidateAnswerForAnswerContext(application, quizAttempt, answer.getId());
+					CandidateAnswer existing = findCandidateAnswerForAnswerContext(quizAttempt, answer.getId());
 					
 					if (existing == null) {
 						// Créer un nouveau candidate_answer
-						CandidateAnswer candidateAnswer = buildCandidateAnswer(application, quizAttempt, question, answer, userId);
+						CandidateAnswer candidateAnswer = buildCandidateAnswer(quizAttempt, question, answer, userId);
 						
 						CandidateAnswer saved = candidateAnswerRepository.save(candidateAnswer);
 						if (saved != null) {
@@ -1252,14 +1259,13 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			
 		log.info("=== QUIZ START DEBUG ===");
 		log.info("Application ID: " + applicationId);
-		log.info("Application status BEFORE: " + application.getQuizStatus());
-		log.info("Application quiz_level BEFORE: " + application.getQuizLevel());
+		log.info("Quiz attempt status BEFORE: " + (quizAttempt != null ? quizAttempt.getQuizStatus() : null));
 		log.info("PENDING value: " + tech.synelia.quizapp.utils.enums.QuizStatus.PENDING.getValue());
 		log.info("STARTED value: " + tech.synelia.quizapp.utils.enums.QuizStatus.STARTED.getValue());
-		log.info("Status equals PENDING? " + tech.synelia.quizapp.utils.enums.QuizStatus.PENDING.getValue().equals(application.getQuizStatus()));
+		log.info("Attempt status equals PENDING? " + (quizAttempt != null && tech.synelia.quizapp.utils.enums.QuizStatus.PENDING.getValue().equals(quizAttempt.getQuizStatus())));
 		
 		// Vérifier si des candidate_answers existent déjà pour cette application
-		List<CandidateAnswer> existingAnswers = findCandidateAnswersForQuiz(application, quizAttempt);
+		List<CandidateAnswer> existingAnswers = findCandidateAnswersForQuiz(quizAttempt);
 		boolean needsInitialization = (existingAnswers == null || existingAnswers.isEmpty());
 		boolean quizResumable = isQuizResumable(application);
 		
@@ -1267,24 +1273,14 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		log.info("Needs initialization: " + needsInitialization);
 		log.info("Quiz resumable: " + quizResumable);
 
-		Response<ApplicationsDto> resumePolicyError = rejectRandomizedQuizResume(application, !needsInitialization);
+		Response<ApplicationsDto> resumePolicyError = rejectRandomizedQuizResume(application, quizAttempt, !needsInitialization);
 		if (resumePolicyError != null) {
 			return resumePolicyError;
 		}
 		
-			boolean applicationChanged = false;
-
-		// Si le quiz est en statut PENDING, le mettre en STARTED
-		if (tech.synelia.quizapp.utils.enums.QuizStatus.PENDING.getValue().equals(application.getQuizStatus())) {
-			log.info(">>> Updating status from PENDING to STARTED...");
-			application.setQuizStatus(tech.synelia.quizapp.utils.enums.QuizStatus.STARTED.getValue());
-			application.setQuizLevel(quizResumable ? 1 : null);
-			applicationChanged = true;
-		} else {
-			log.info(">>> Quiz already started or completed (status: " + application.getQuizStatus() + ")");
-		}
-
+		// Si le quiz est en statut PENDING, le mettre en STARTED (sur l'attempt uniquement)
 		if (quizAttempt != null && tech.synelia.quizapp.utils.enums.QuizStatus.PENDING.getValue().equals(quizAttempt.getQuizStatus())) {
+			log.info(">>> Updating status from PENDING to STARTED...");
 			quizAttempt.setQuizStatus(tech.synelia.quizapp.utils.enums.QuizStatus.STARTED.getValue());
 			if (quizAttempt.getStartedAt() == null) {
 				quizAttempt.setStartedAt(Utilities.getCurrentDate());
@@ -1293,14 +1289,6 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			quizAttempt.setUpdatedBy(request.getUser());
 			quizAttempt = applicationQuizAttemptRepository.save(quizAttempt);
 			syncApplicationQuizSummaryFromAttempt(application, quizAttempt, request.getUser());
-		}
-
-		if (applicationChanged) {
-			application.setUpdatedAt(Utilities.getCurrentDate());
-			application.setUpdatedBy(request.getUser());
-			applicationsRepository.save(application);
-			log.info(">>> Donnees quiz mises a jour pour l'application " + applicationId);
-			application = applicationsRepository.findOne(applicationId, false);
 		}
 			ensureQuizStageReady(application, request.getUser(), locale);
 			QuizTimingState timingState = resolveQuizTimingState(application, quizAttempt, request.getUser());
@@ -1319,7 +1307,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			log.info("Candidate_answers already initialized, skipping initialization");
 		}
 
-			List<CandidateAnswer> candidateAnswersForApplication = findCandidateAnswersForQuiz(application, quizAttempt);
+			List<CandidateAnswer> candidateAnswersForApplication = findCandidateAnswersForQuiz(quizAttempt);
 			Map<Integer, List<CandidateAnswer>> candidateAnswersByQuestion = groupCandidateAnswersByQuestion(candidateAnswersForApplication);
 
 			// 2. Récupérer le source token et la campagne
@@ -1802,12 +1790,12 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				|| FormAssignmentStrategy.RANDOM_NO_REPEAT.getValue().equalsIgnoreCase(strategy);
 	}
 
-	private Response<ApplicationsDto> rejectRandomizedQuizResume(Applications application, boolean hasExistingAnswers) {
+	private Response<ApplicationsDto> rejectRandomizedQuizResume(Applications application, ApplicationQuizAttempt quizAttempt, boolean hasExistingAnswers) {
 		if (application == null || !hasExistingAnswers || isQuizResumable(application)) {
 			return null;
 		}
 
-		if (!tech.synelia.quizapp.utils.enums.QuizStatus.STARTED.getValue().equals(application.getQuizStatus())) {
+		if (quizAttempt == null || !tech.synelia.quizapp.utils.enums.QuizStatus.STARTED.getValue().equals(quizAttempt.getQuizStatus())) {
 			return null;
 		}
 
@@ -1945,10 +1933,10 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			}
 			
 			// 3. Récupérer toutes les candidate_answers pour cette application et cette question
-			List<CandidateAnswer> candidateAnswers = findCandidateAnswersForQuestionContext(application, quizAttempt, questionId);
+			List<CandidateAnswer> candidateAnswers = findCandidateAnswersForQuestionContext(quizAttempt, questionId);
 			if (quizAttempt != null && candidateAnswers.isEmpty()) {
 				initializeCandidateAnswers(application, quizAttempt, request.getUser());
-				candidateAnswers = findCandidateAnswersForQuestionContext(application, quizAttempt, questionId);
+				candidateAnswers = findCandidateAnswersForQuestionContext(quizAttempt, questionId);
 			}
 			Question question = questionRepository.findOne(questionId, false);
 			if (question == null) {
@@ -1986,7 +1974,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				}
 
 				if (freeTextCandidateAnswer == null) {
-					freeTextCandidateAnswer = buildCandidateAnswer(application, quizAttempt, question, null, request.getUser());
+					freeTextCandidateAnswer = buildCandidateAnswer(quizAttempt, question, null, request.getUser());
 				}
 
 				freeTextCandidateAnswer.setFreeTextResponse(freeTextResponse);
@@ -2064,37 +2052,11 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				log.info("Updated " + updatedCount + " candidate_answers");
 			}
 			
-			// 5. Mettre à jour quiz_level avec l'ordre de la question répondue
-			FormVersion formVersion = resolveQuizFormVersion(application, quizAttempt);
-			if (formVersion != null) {
-				// Trouver l'ordre de cette question dans le formulaire
-				FormQuestions fq = formQuestionsRepository.findByFormVersionIdOrderByQuestionOrder(formVersion.getId(), false)
-					.stream()
-					.filter(f -> f.getQuestion() != null && f.getQuestion().getId().equals(questionId))
-					.findFirst()
-					.orElse(null);
-				
-				if (fq != null && fq.getQuestionOrder() != null) {
-					if (isQuizResumable(application)) {
-						application.setQuizLevel(fq.getQuestionOrder());
-					} else {
-						application.setQuizLevel(null);
-					}
-					application.setUpdatedAt(Utilities.getCurrentDate());
-					application.setUpdatedBy(request.getUser());
-					applicationsRepository.save(application);
-					
-					log.info("Updated quiz_level to " + application.getQuizLevel() + " for application " + applicationId);
-				}
-			}
-			
 			// 6. Préparer la réponse
 			touchQuizLastActivity(application, quizAttempt, request.getUser());
-			QuizTimingState updatedTimingState = resolveQuizTimingState(application, quizAttempt, request.getUser());
+			resolveQuizTimingState(application, quizAttempt, request.getUser());
 			ApplicationsDto resultDto = new ApplicationsDto();
 			resultDto.setId(applicationId);
-			resultDto.setQuizLevel(isQuizResumable(application) ? application.getQuizLevel() : null);
-			resultDto.setTimeElapsed(updatedTimingState.timeElapsed);
 			
 			Status status = new Status();
 			status.setCode(StatusCode.SUCCESS);
@@ -2199,19 +2161,14 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			
 			application = completeQuizInternal(application, quizAttempt, request.getUser(), locale);
 			
-			log.info("Quiz complété pour l'application " + applicationId + " - Score pondéré: " + application.getQuizScore() + " point(s), soit " + application.getQuizScorePercent() + "%");
+			log.info("Quiz complété pour l'application " + applicationId + " - Score pondéré: " + (quizAttempt != null ? quizAttempt.getScore() : null) + " point(s), soit " + (quizAttempt != null ? quizAttempt.getScorePercent() : null) + "%");
 			log.info("Application status mis à jour: " + application.getApplicationStatus());
 			
 			// 5. Préparer la réponse
 			ApplicationsDto resultDto = new ApplicationsDto();
 			resultDto.setId(applicationId);
-			resultDto.setQuizStatus(tech.synelia.quizapp.utils.enums.QuizStatus.COMPLETED.getValue());
 			resultDto.setApplicationStatus(application.getApplicationStatus());
-			resultDto.setQuizScore(application.getQuizScore());
-			resultDto.setTotalQuestions(application.getTotalQuestions());
-			resultDto.setQuizScorePercent(application.getQuizScorePercent());
-			resultDto.setQuizManualCorrectionStatus(application.getQuizManualCorrectionStatus());
-			resultDto.setTimeElapsed(application.getTimeElapsed());
+			resultDto = getFullInfos(resultDto, 1, false, locale);
 			
 			Status status = new Status();
 			status.setCode(StatusCode.SUCCESS);
@@ -2277,7 +2234,6 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 
 		ApplicationsDto resultDto = new ApplicationsDto();
 		resultDto.setId(application.getId());
-		resultDto.setTimeElapsed(timingState.timeElapsed);
 
 		Response<ApplicationsDto> response = new Response<ApplicationsDto>();
 		Status status = new Status();
@@ -2294,19 +2250,20 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 	@Scheduled(fixedRate = 60000)
 	@Transactional
 	public void abandonInactiveQuizApplications() {
-		List<Applications> startedApplications = applicationsRepository.findActiveByQuizStatus(
+		List<ApplicationQuizAttempt> startedAttempts = applicationQuizAttemptRepository.findByQuizStatusAndApplicationNotAbandoned(
 				tech.synelia.quizapp.utils.enums.QuizStatus.STARTED.getValue(),
 				false);
-		if (startedApplications == null || startedApplications.isEmpty()) {
+		if (startedAttempts == null || startedAttempts.isEmpty()) {
 			return;
 		}
 
-		for (Applications application : startedApplications) {
+		for (ApplicationQuizAttempt quizAttempt : startedAttempts) {
 			try {
-				markApplicationAbandonedIfQuizInactive(application, SYSTEM_ACTOR_USER_ID, Locale.FRENCH);
+				Applications application = quizAttempt != null ? quizAttempt.getApplications() : null;
+				markApplicationAbandonedIfQuizInactive(application, quizAttempt, SYSTEM_ACTOR_USER_ID, Locale.FRENCH);
 			} catch (Exception exception) {
 				log.warning("Politique d'abandon inactive ignorée pour l'application "
-						+ (application != null ? application.getId() : null)
+						+ (quizAttempt != null && quizAttempt.getApplications() != null ? quizAttempt.getApplications().getId() : null)
 						+ " : " + exception.getMessage());
 			}
 		}
@@ -2334,10 +2291,8 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		}
 
 		QuizScoringSummary summary = evaluateQuiz(application, quizAttempt);
-		application.setQuizScore(summary.quizScore);
-		application.setTotalQuestions(summary.totalQuestions);
-		application.setQuizScorePercent(summary.quizScorePercent);
-		application.setQuizManualCorrectionStatus(summary.manualCorrectionStatus);
+		application.setAggregatedQuizScore(summary.quizScore != null ? summary.quizScore.doubleValue() : null);
+		application.setAggregatedQuizScorePercent(summary.quizScorePercent != null ? summary.quizScorePercent.doubleValue() : null);
 		application.setUpdatedAt(Utilities.getCurrentDate());
 		application.setUpdatedBy(actorUserId);
 		Applications savedApplication = applicationsRepository.save(application);
@@ -2351,7 +2306,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			ApplicationQuizAttempt savedAttempt = applicationQuizAttemptRepository.save(quizAttempt);
 			syncApplicationQuizSummaryFromAttempt(savedApplication, savedAttempt, actorUserId);
 		}
-		syncQuizProgressAfterScoring(savedApplication, actorUserId, locale);
+		syncQuizProgressAfterScoring(savedApplication, quizAttempt, actorUserId, locale);
 		return applicationsRepository.findOne(savedApplication.getId(), false);
 	}
 
@@ -2371,7 +2326,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		activeFormQuestions = getActiveFormQuestions(resolvedFormVersion);
 		totalQuestions = activeFormQuestions.size();
 
-		List<CandidateAnswer> candidateAnswers = findCandidateAnswersForQuiz(application, quizAttempt);
+		List<CandidateAnswer> candidateAnswers = findCandidateAnswersForQuiz(quizAttempt);
 		Map<Integer, List<CandidateAnswer>> candidateAnswersByQuestion = groupCandidateAnswersByQuestion(candidateAnswers);
 
 		for (FormQuestions formQuestion : activeFormQuestions) {
@@ -2578,6 +2533,17 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		return applicationQuizAttemptRepository.findByApplicationIdAndQuizToken(application.getId(), quizToken, false);
 	}
 
+	private ApplicationQuizAttempt resolveLatestQuizAttempt(Integer applicationId) {
+		if (applicationId == null) {
+			return null;
+		}
+		List<ApplicationQuizAttempt> quizAttempts = applicationQuizAttemptRepository.findByApplicationIdOrderByIdDesc(applicationId, false);
+		if (quizAttempts == null || quizAttempts.isEmpty()) {
+			return null;
+		}
+		return quizAttempts.get(0);
+	}
+
 	private FormVersion resolveQuizFormVersion(Applications application, ApplicationQuizAttempt quizAttempt) {
 		if (quizAttempt != null && quizAttempt.getFormVersion() != null) {
 			return quizAttempt.getFormVersion();
@@ -2585,57 +2551,34 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		return application != null ? application.getFormVersion() : null;
 	}
 
-	private List<CandidateAnswer> findCandidateAnswersForQuizContext(Applications application, ApplicationQuizAttempt quizAttempt) {
-		if (quizAttempt != null && quizAttempt.getId() != null) {
-			List<CandidateAnswer> attemptAnswers = candidateAnswerRepository.findByApplicationQuizAttemptId(quizAttempt.getId(), false);
-			return attemptAnswers != null ? attemptAnswers : Collections.emptyList();
-		}
-
-		if (application == null || application.getId() == null) {
+	private List<CandidateAnswer> findCandidateAnswersForQuizContext(ApplicationQuizAttempt quizAttempt) {
+		if (quizAttempt == null || quizAttempt.getId() == null) {
 			return Collections.emptyList();
 		}
 
-		List<CandidateAnswer> applicationAnswers = candidateAnswerRepository.findByApplicationId(application.getId(), false);
-		return applicationAnswers != null ? applicationAnswers : Collections.emptyList();
+		List<CandidateAnswer> attemptAnswers = candidateAnswerRepository.findByApplicationQuizAttemptId(quizAttempt.getId(), false);
+		return attemptAnswers != null ? attemptAnswers : Collections.emptyList();
 	}
 
-	private List<CandidateAnswer> findCandidateAnswersForQuestionContext(Applications application, ApplicationQuizAttempt quizAttempt, Integer questionId) {
-		if (questionId == null) {
+	private List<CandidateAnswer> findCandidateAnswersForQuestionContext(ApplicationQuizAttempt quizAttempt, Integer questionId) {
+		if (quizAttempt == null || quizAttempt.getId() == null || questionId == null) {
 			return Collections.emptyList();
 		}
 
-		if (quizAttempt != null && quizAttempt.getId() != null) {
-			List<CandidateAnswer> attemptAnswers = candidateAnswerRepository.findByApplicationQuizAttemptIdAndQuestionId(quizAttempt.getId(), questionId, false);
-			return attemptAnswers != null ? attemptAnswers : Collections.emptyList();
-		}
-
-		if (application == null || application.getId() == null) {
-			return Collections.emptyList();
-		}
-
-		List<CandidateAnswer> applicationAnswers = candidateAnswerRepository.findByApplicationIdAndQuestionId(application.getId(), questionId, false);
-		return applicationAnswers != null ? applicationAnswers : Collections.emptyList();
+		List<CandidateAnswer> attemptAnswers = candidateAnswerRepository.findByApplicationQuizAttemptIdAndQuestionId(quizAttempt.getId(), questionId, false);
+		return attemptAnswers != null ? attemptAnswers : Collections.emptyList();
 	}
 
-	private CandidateAnswer findCandidateAnswerForAnswerContext(Applications application, ApplicationQuizAttempt quizAttempt, Integer answerId) {
-		if (answerId == null) {
+	private CandidateAnswer findCandidateAnswerForAnswerContext(ApplicationQuizAttempt quizAttempt, Integer answerId) {
+		if (quizAttempt == null || quizAttempt.getId() == null || answerId == null) {
 			return null;
 		}
 
-		if (quizAttempt != null && quizAttempt.getId() != null) {
-			return candidateAnswerRepository.findByApplicationQuizAttemptIdAndAnswerId(quizAttempt.getId(), answerId, false);
-		}
-
-		if (application == null || application.getId() == null) {
-			return null;
-		}
-
-		return candidateAnswerRepository.findByApplicationIdAndAnswerId(application.getId(), answerId, false);
+		return candidateAnswerRepository.findByApplicationQuizAttemptIdAndAnswerId(quizAttempt.getId(), answerId, false);
 	}
 
-	private CandidateAnswer buildCandidateAnswer(Applications application, ApplicationQuizAttempt quizAttempt, Question question, Answer answer, Integer userId) {
+	private CandidateAnswer buildCandidateAnswer(ApplicationQuizAttempt quizAttempt, Question question, Answer answer, Integer userId) {
 		CandidateAnswer candidateAnswer = new CandidateAnswer();
-		candidateAnswer.setApplications(application);
 		candidateAnswer.setApplicationQuizAttempt(quizAttempt);
 		candidateAnswer.setQuestion(question);
 		candidateAnswer.setAnswer(answer);
@@ -2646,37 +2589,13 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		return candidateAnswer;
 	}
 
-	private boolean shouldFallbackToLegacyQuizAnswers(ApplicationQuizAttempt quizAttempt) {
-		if (quizAttempt == null) {
-			return false;
-		}
-
-		return !tech.synelia.quizapp.utils.enums.QuizStatus.PENDING.getValue().equals(quizAttempt.getQuizStatus())
-				|| quizAttempt.getStartedAt() != null
-				|| quizAttempt.getCompletedAt() != null
-				|| quizAttempt.getLastActivityAt() != null;
-	}
-
-	private List<CandidateAnswer> findCandidateAnswersForQuiz(Applications application, ApplicationQuizAttempt quizAttempt) {
-		if (quizAttempt != null && quizAttempt.getId() != null) {
-			List<CandidateAnswer> attemptAnswers = findCandidateAnswersForQuizContext(application, quizAttempt);
-			if (attemptAnswers != null && !attemptAnswers.isEmpty()) {
-				return attemptAnswers;
-			}
-			if (!shouldFallbackToLegacyQuizAnswers(quizAttempt)) {
-				return Collections.emptyList();
-			}
-		}
-
-		return findCandidateAnswersForQuizContext(application, null);
+	private List<CandidateAnswer> findCandidateAnswersForQuiz(ApplicationQuizAttempt quizAttempt) {
+		return findCandidateAnswersForQuizContext(quizAttempt);
 	}
 
 	private String resolveQuizStatus(Applications application, ApplicationQuizAttempt quizAttempt) {
 		if (quizAttempt != null && Utilities.notBlank(quizAttempt.getQuizStatus())) {
 			return quizAttempt.getQuizStatus();
-		}
-		if (application != null && Utilities.notBlank(application.getQuizStatus())) {
-			return application.getQuizStatus();
 		}
 		return null;
 	}
@@ -2687,9 +2606,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		}
 
 		ApplicationQuizAttempt quizAttempt = resolveQuizAttempt(application, quizToken);
-		String expectedQuizToken = quizAttempt != null && StringUtils.isNotBlank(quizAttempt.getQuizToken())
-				? quizAttempt.getQuizToken()
-				: application.getQuizToken();
+		String expectedQuizToken = quizAttempt != null ? quizAttempt.getQuizToken() : null;
 
 		if (!StringUtils.equals(quizToken, expectedQuizToken)) {
 			return buildErrorResponse(HttpStatus.FORBIDDEN, StatusCode.FUNC_AUTH_FAIL, "Token de quiz invalide. Veuillez utiliser le lien reçu par email.");
@@ -2735,12 +2652,8 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				formQuestions);
 	}
 
-	private void applyQuizTimingSnapshot(Applications application) {
-		applyQuizTimingSnapshot(application, null);
-	}
-
 	private void applyQuizTimingSnapshot(Applications application, ApplicationQuizAttempt quizAttempt) {
-		if (application == null) {
+		if (application == null || quizAttempt == null) {
 			return;
 		}
 
@@ -2750,54 +2663,27 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		Integer totalTimeAllowed = calculateTotalTimeAllowed(campaign, formVersion, activeFormQuestions);
 		boolean timed = totalTimeAllowed != null;
 
-		if (quizAttempt != null) {
-			quizAttempt.setTimedSnapshot(timed);
-			quizAttempt.setTotalTimeAllowedSnapshot(timed ? totalTimeAllowed : null);
-			return;
-		}
-
-		application.setQuizTimedSnapshot(timed);
-		application.setQuizTotalTimeAllowedSnapshot(timed ? totalTimeAllowed : null);
-	}
-
-	private void ensureQuizTimingSnapshot(Applications application, Integer actorUserId) {
-		ensureQuizTimingSnapshot(application, null, actorUserId);
+		quizAttempt.setTimedSnapshot(timed);
+		quizAttempt.setTotalTimeAllowedSnapshot(timed ? totalTimeAllowed : null);
 	}
 
 	private void ensureQuizTimingSnapshot(Applications application, ApplicationQuizAttempt quizAttempt, Integer actorUserId) {
-		if (quizAttempt != null && quizAttempt.getId() != null) {
-			boolean missingTimedSnapshot = quizAttempt.getTimedSnapshot() == null;
-			boolean missingTotalTimeSnapshot = Boolean.TRUE.equals(quizAttempt.getTimedSnapshot())
-					&& quizAttempt.getTotalTimeAllowedSnapshot() == null;
-			if (!missingTimedSnapshot && !missingTotalTimeSnapshot) {
-				return;
-			}
-
-			applyQuizTimingSnapshot(application, quizAttempt);
-			quizAttempt.setUpdatedAt(Utilities.getCurrentDate());
-			quizAttempt.setUpdatedBy(actorUserId);
-			ApplicationQuizAttempt savedAttempt = applicationQuizAttemptRepository.save(quizAttempt);
-			syncApplicationQuizSummaryFromAttempt(application, savedAttempt, actorUserId);
+		if (quizAttempt == null || quizAttempt.getId() == null) {
 			return;
 		}
 
-		if (application == null) {
-			return;
-		}
-
-		boolean missingTimedSnapshot = application.getQuizTimedSnapshot() == null;
-		boolean missingTotalTimeSnapshot = Boolean.TRUE.equals(application.getQuizTimedSnapshot())
-				&& application.getQuizTotalTimeAllowedSnapshot() == null;
+		boolean missingTimedSnapshot = quizAttempt.getTimedSnapshot() == null;
+		boolean missingTotalTimeSnapshot = Boolean.TRUE.equals(quizAttempt.getTimedSnapshot())
+				&& quizAttempt.getTotalTimeAllowedSnapshot() == null;
 		if (!missingTimedSnapshot && !missingTotalTimeSnapshot) {
 			return;
 		}
 
-		applyQuizTimingSnapshot(application);
-		if (application.getId() != null) {
-			application.setUpdatedAt(Utilities.getCurrentDate());
-			application.setUpdatedBy(actorUserId);
-			applicationsRepository.save(application);
-		}
+		applyQuizTimingSnapshot(application, quizAttempt);
+		quizAttempt.setUpdatedAt(Utilities.getCurrentDate());
+		quizAttempt.setUpdatedBy(actorUserId);
+		ApplicationQuizAttempt savedAttempt = applicationQuizAttemptRepository.save(quizAttempt);
+		syncApplicationQuizSummaryFromAttempt(application, savedAttempt, actorUserId);
 	}
 
 	private Integer resolveQuizInactivityTimeoutMinutes(Applications application) {
@@ -2832,9 +2718,6 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		if (quizAttempt != null && quizAttempt.getLastActivityAt() != null) {
 			return quizAttempt.getLastActivityAt();
 		}
-		if (application != null && application.getQuizLastActivityAt() != null) {
-			return application.getQuizLastActivityAt();
-		}
 		if (quizAttempt != null && quizAttempt.getStartedAt() != null) {
 			return quizAttempt.getStartedAt();
 		}
@@ -2844,36 +2727,23 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		return application != null ? application.getUpdatedAt() : null;
 	}
 
-	private void touchQuizLastActivity(Applications application, Integer actorUserId) {
-		touchQuizLastActivity(application, null, actorUserId);
-	}
-
 	private void touchQuizLastActivity(Applications application, ApplicationQuizAttempt quizAttempt, Integer actorUserId) {
-		if (quizAttempt != null && quizAttempt.getId() != null) {
-			Date now = Utilities.getCurrentDate();
-			if (quizAttempt.getStartedAt() == null) {
-				quizAttempt.setStartedAt(now);
-			}
-			if (tech.synelia.quizapp.utils.enums.QuizStatus.PENDING.getValue().equals(quizAttempt.getQuizStatus())) {
-				quizAttempt.setQuizStatus(tech.synelia.quizapp.utils.enums.QuizStatus.STARTED.getValue());
-			}
-			quizAttempt.setLastActivityAt(now);
-			quizAttempt.setUpdatedAt(now);
-			quizAttempt.setUpdatedBy(actorUserId);
-			ApplicationQuizAttempt savedAttempt = applicationQuizAttemptRepository.save(quizAttempt);
-			syncApplicationQuizSummaryFromAttempt(application, savedAttempt, actorUserId);
-			return;
-		}
-
-		if (application == null || application.getId() == null) {
+		if (quizAttempt == null || quizAttempt.getId() == null) {
 			return;
 		}
 
 		Date now = Utilities.getCurrentDate();
-		application.setQuizLastActivityAt(now);
-		application.setUpdatedAt(now);
-		application.setUpdatedBy(actorUserId);
-		applicationsRepository.save(application);
+		if (quizAttempt.getStartedAt() == null) {
+			quizAttempt.setStartedAt(now);
+		}
+		if (tech.synelia.quizapp.utils.enums.QuizStatus.PENDING.getValue().equals(quizAttempt.getQuizStatus())) {
+			quizAttempt.setQuizStatus(tech.synelia.quizapp.utils.enums.QuizStatus.STARTED.getValue());
+		}
+		quizAttempt.setLastActivityAt(now);
+		quizAttempt.setUpdatedAt(now);
+		quizAttempt.setUpdatedBy(actorUserId);
+		ApplicationQuizAttempt savedAttempt = applicationQuizAttemptRepository.save(quizAttempt);
+		syncApplicationQuizSummaryFromAttempt(application, savedAttempt, actorUserId);
 	}
 
 	private boolean markApplicationAbandonedIfQuizInactive(Applications application, Integer actorUserId, Locale locale) {
@@ -2912,12 +2782,13 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		application.setUpdatedAt(now);
 		application.setUpdatedBy(actorUserId);
 		applicationsRepository.save(application);
-		markQuizProgressAsAbandoned(application, quizProgress, actorUserId, locale, now);
+		markQuizProgressAsAbandoned(application, quizAttempt, quizProgress, actorUserId, locale, now);
 		return true;
 	}
 
 	private void markQuizProgressAsAbandoned(
 			Applications application,
+			ApplicationQuizAttempt quizAttempt,
 			ApplicationProgress quizProgress,
 			Integer actorUserId,
 			Locale locale,
@@ -2932,8 +2803,8 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				quizProgress.setStartedAt(abandonmentAt);
 			}
 			quizProgress.setCompletedAt(abandonmentAt);
-			if (quizProgress.getScore() == null && application.getQuizScorePercent() != null) {
-				quizProgress.setScore(application.getQuizScorePercent().doubleValue());
+			if (quizProgress.getScore() == null && quizAttempt != null && quizAttempt.getScorePercent() != null) {
+				quizProgress.setScore(quizAttempt.getScorePercent().doubleValue());
 			}
 
 			String abandonmentNote = "Quiz abandonné pour inactivité";
@@ -3019,10 +2890,6 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		return (int) (diffMillis / 1000L);
 	}
 
-	private Integer syncQuizTimeElapsed(Applications application, Integer actorUserId) {
-		return syncQuizTimeElapsed(application, null, actorUserId);
-	}
-
 	private Integer syncQuizTimeElapsed(Applications application, ApplicationQuizAttempt quizAttempt, Integer actorUserId) {
 		if (quizAttempt != null && quizAttempt.getId() != null) {
 			int storedElapsed = quizAttempt.getTimeElapsed() != null ? quizAttempt.getTimeElapsed() : 0;
@@ -3053,84 +2920,32 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			return computedElapsed;
 		}
 
-		if (application == null || application.getId() == null) {
-			return 0;
-		}
-
-		int storedElapsed = application.getTimeElapsed() != null ? application.getTimeElapsed() : 0;
-		ApplicationProgress quizProgress = findProgressByStageType(application.getId(), StageType.QUIZ.getValue());
-		if (quizProgress == null || quizProgress.getStartedAt() == null) {
-			if (application.getTimeElapsed() == null) {
-				application.setTimeElapsed(storedElapsed);
-				application.setUpdatedAt(Utilities.getCurrentDate());
-				application.setUpdatedBy(actorUserId);
-				applicationsRepository.save(application);
-			}
-			return storedElapsed;
-		}
-
-		Date endedAt = quizProgress.getCompletedAt() != null ? quizProgress.getCompletedAt() : Utilities.getCurrentDate();
-		int computedElapsed = Math.max(storedElapsed, computeElapsedSeconds(quizProgress.getStartedAt(), endedAt));
-		if (application.getTimeElapsed() == null || computedElapsed != storedElapsed) {
-			application.setTimeElapsed(computedElapsed);
-			application.setUpdatedAt(Utilities.getCurrentDate());
-			application.setUpdatedBy(actorUserId);
-			applicationsRepository.save(application);
-		}
-		return computedElapsed;
-	}
-
-	private QuizTimingState resolveQuizTimingState(Applications application, Integer actorUserId) {
-		return resolveQuizTimingState(application, null, actorUserId);
+		return 0;
 	}
 
 	private QuizTimingState resolveQuizTimingState(Applications application, ApplicationQuizAttempt quizAttempt, Integer actorUserId) {
-		if (quizAttempt != null && quizAttempt.getId() != null) {
-			ensureQuizTimingSnapshot(application, quizAttempt, actorUserId);
-			Integer totalTimeAllowed = Boolean.TRUE.equals(quizAttempt.getTimedSnapshot())
-					? quizAttempt.getTotalTimeAllowedSnapshot()
-					: null;
-			Integer timeElapsed = syncQuizTimeElapsed(application, quizAttempt, actorUserId);
-			if (totalTimeAllowed == null) {
-				return new QuizTimingState(false, null, timeElapsed, null, false);
-			}
-
-			int clampedElapsed = Math.min(timeElapsed, totalTimeAllowed);
-			if (!Integer.valueOf(clampedElapsed).equals(quizAttempt.getTimeElapsed())) {
-				quizAttempt.setTimeElapsed(clampedElapsed);
-				quizAttempt.setUpdatedAt(Utilities.getCurrentDate());
-				quizAttempt.setUpdatedBy(actorUserId);
-				ApplicationQuizAttempt savedAttempt = applicationQuizAttemptRepository.save(quizAttempt);
-				syncApplicationQuizSummaryFromAttempt(application, savedAttempt, actorUserId);
-			}
-			return new QuizTimingState(true, totalTimeAllowed, clampedElapsed, Math.max(0, totalTimeAllowed - clampedElapsed), clampedElapsed >= totalTimeAllowed);
-		}
-
-		if (application == null) {
+		if (quizAttempt == null || quizAttempt.getId() == null) {
 			return new QuizTimingState(false, null, 0, null, false);
 		}
 
-		ensureQuizTimingSnapshot(application, actorUserId);
-		Integer totalTimeAllowed = Boolean.TRUE.equals(application.getQuizTimedSnapshot())
-				? application.getQuizTotalTimeAllowedSnapshot()
+		ensureQuizTimingSnapshot(application, quizAttempt, actorUserId);
+		Integer totalTimeAllowed = Boolean.TRUE.equals(quizAttempt.getTimedSnapshot())
+				? quizAttempt.getTotalTimeAllowedSnapshot()
 				: null;
-		Integer timeElapsed = syncQuizTimeElapsed(application, actorUserId);
+		Integer timeElapsed = syncQuizTimeElapsed(application, quizAttempt, actorUserId);
 		if (totalTimeAllowed == null) {
 			return new QuizTimingState(false, null, timeElapsed, null, false);
 		}
 
 		int clampedElapsed = Math.min(timeElapsed, totalTimeAllowed);
-		if (!Integer.valueOf(clampedElapsed).equals(application.getTimeElapsed())) {
-			application.setTimeElapsed(clampedElapsed);
-			application.setUpdatedAt(Utilities.getCurrentDate());
-			application.setUpdatedBy(actorUserId);
-			applicationsRepository.save(application);
+		if (!Integer.valueOf(clampedElapsed).equals(quizAttempt.getTimeElapsed())) {
+			quizAttempt.setTimeElapsed(clampedElapsed);
+			quizAttempt.setUpdatedAt(Utilities.getCurrentDate());
+			quizAttempt.setUpdatedBy(actorUserId);
+			ApplicationQuizAttempt savedAttempt = applicationQuizAttemptRepository.save(quizAttempt);
+			syncApplicationQuizSummaryFromAttempt(application, savedAttempt, actorUserId);
 		}
 		return new QuizTimingState(true, totalTimeAllowed, clampedElapsed, Math.max(0, totalTimeAllowed - clampedElapsed), clampedElapsed >= totalTimeAllowed);
-	}
-
-	private Applications completeQuizInternal(Applications application, Integer actorUserId, Locale locale) {
-		return completeQuizInternal(application, null, actorUserId, locale);
 	}
 
 	private Applications completeQuizInternal(Applications application, ApplicationQuizAttempt quizAttempt, Integer actorUserId, Locale locale) {
@@ -3152,8 +2967,6 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			syncApplicationQuizSummaryFromAttempt(application, quizAttempt, actorUserId);
 		}
 
-		application.setQuizLastActivityAt(now);
-		application.setQuizStatus(tech.synelia.quizapp.utils.enums.QuizStatus.COMPLETED.getValue());
 		application.setUpdatedAt(now);
 		application.setUpdatedBy(actorUserId);
 		Applications updatedApplication = refreshQuizScoringState(application, quizAttempt, actorUserId, locale != null ? locale : Locale.FRENCH);
@@ -3166,16 +2979,8 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			return;
 		}
 
-		application.setQuizStatus(quizAttempt.getQuizStatus());
-		application.setQuizToken(quizAttempt.getQuizToken());
-		application.setQuizScore(quizAttempt.getScore() != null ? quizAttempt.getScore().intValue() : null);
-		application.setTotalQuestions(quizAttempt.getTotalQuestions());
-		application.setQuizScorePercent(quizAttempt.getScorePercent() != null ? quizAttempt.getScorePercent().intValue() : null);
-		application.setQuizManualCorrectionStatus(quizAttempt.getManualCorrectionStatus());
-		application.setTimeElapsed(quizAttempt.getTimeElapsed());
-		application.setQuizTimedSnapshot(quizAttempt.getTimedSnapshot());
-		application.setQuizTotalTimeAllowedSnapshot(quizAttempt.getTotalTimeAllowedSnapshot());
-		application.setQuizLastActivityAt(quizAttempt.getLastActivityAt());
+		application.setAggregatedQuizScore(quizAttempt.getScore());
+		application.setAggregatedQuizScorePercent(quizAttempt.getScorePercent());
 		application.setUpdatedAt(Utilities.getCurrentDate());
 		application.setUpdatedBy(actorUserId);
 		applicationsRepository.save(application);
@@ -3294,30 +3099,35 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		return applicationQuizAttemptRepository.save(quizAttempt);
 	}
 
-	private void syncQuizProgressAfterScoring(Applications application, Integer actorUserId, Locale locale) {
+	private void syncQuizProgressAfterScoring(Applications application, ApplicationQuizAttempt quizAttempt, Integer actorUserId, Locale locale) {
 		if (application == null || application.getId() == null) {
 			return;
 		}
 
+		ApplicationQuizAttempt scoringAttempt = quizAttempt != null ? quizAttempt : resolveLatestQuizAttempt(application.getId());
+		if (scoringAttempt == null) {
+			return;
+		}
+
 		try {
-			if (tech.synelia.quizapp.utils.enums.QuizStatus.STARTED.getValue().equals(application.getQuizStatus())
-					|| tech.synelia.quizapp.utils.enums.QuizStatus.COMPLETED.getValue().equals(application.getQuizStatus())) {
+			if (tech.synelia.quizapp.utils.enums.QuizStatus.STARTED.getValue().equals(scoringAttempt.getQuizStatus())
+					|| tech.synelia.quizapp.utils.enums.QuizStatus.COMPLETED.getValue().equals(scoringAttempt.getQuizStatus())) {
 				ensurePreviousCandidatureStagePassed(application, actorUserId, locale);
 			}
 
-			if (application.getQuizScorePercent() != null) {
+			if (scoringAttempt.getScorePercent() != null) {
 				applicationProgressBusiness.updateStageScore(
 						application.getId(),
 						StageType.QUIZ.getValue(),
-						application.getQuizScorePercent().doubleValue(),
+						scoringAttempt.getScorePercent().doubleValue(),
 						actorUserId);
 			}
 
-			if (!tech.synelia.quizapp.utils.enums.QuizStatus.COMPLETED.getValue().equals(application.getQuizStatus())) {
+			if (!tech.synelia.quizapp.utils.enums.QuizStatus.COMPLETED.getValue().equals(scoringAttempt.getQuizStatus())) {
 				return;
 			}
 
-			if (ManualCorrectionStatus.PENDING.getValue().equals(application.getQuizManualCorrectionStatus())) {
+			if (ManualCorrectionStatus.PENDING.getValue().equals(scoringAttempt.getManualCorrectionStatus())) {
 				return;
 			}
 
@@ -3326,7 +3136,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				return;
 			}
 
-			double quizScorePercent = application.getQuizScorePercent() != null ? application.getQuizScorePercent().doubleValue() : 0.0d;
+			double quizScorePercent = scoringAttempt.getScorePercent() != null ? scoringAttempt.getScorePercent().doubleValue() : 0.0d;
 			double passingScore = applicationProgressBusiness.resolvePassingScore(quizProgress.getPipelineStage(), DEFAULT_QUIZ_PASSING_SCORE);
 			if (quizScorePercent >= passingScore) {
 				applicationProgressBusiness.passStage(
@@ -3489,7 +3299,6 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		Applications refreshedApplication = applicationsRepository.findOne(application.getId(), false);
 		Applications source = refreshedApplication != null ? refreshedApplication : application;
 		ApplicationsDto resultDto = ApplicationsTransformer.INSTANCE.toDto(source);
-		resultDto.setQuizToken(quizToken);
 		resultDto.setSearchString(quizToken);
 		resultDto.setTrackingCode(ensureCandidateTrackingCode(source, actorUserId));
 		resultDto = getFullInfos(resultDto, 1, false, locale);
@@ -3535,7 +3344,8 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		appData.put("candidateLastName", application.getCandidateLastName());
 		appData.put("candidateEmail", application.getCandidateEmail());
 		appData.put("applicationStatus", resolveTrackedApplicationStatus(application));
-		appData.put("quizStatus", application.getQuizStatus());
+		ApplicationQuizAttempt trackedQuizAttempt = resolveLatestQuizAttempt(application.getId());
+		appData.put("quizStatus", trackedQuizAttempt != null ? trackedQuizAttempt.getQuizStatus() : null);
 		appData.put("applicationAbandoned", Boolean.TRUE.equals(application.getApplicationAbandoned()));
 		appData.put("publicActionsLocked", isTrackedPublicActionsLocked(application));
 		appData.put("publicLockReason", resolveTrackedPublicLockReason(application));
@@ -4152,15 +3962,13 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 
 		List<ApplicationQuizAttempt> quizAttempts = applicationQuizAttemptRepository.findByApplicationIdOrderByIdDesc(application.getId(), false);
 		ApplicationQuizAttempt selectedAttempt = selectTrackedQuizAttempt(quizAttempts);
-		if (selectedAttempt == null && StringUtils.isBlank(application.getQuizToken())) {
+		if (selectedAttempt == null) {
 			return null;
 		}
 
 		ApplicationProgress quizProgress = resolveQuizProgress(application, selectedAttempt);
 		PipelineStage pipelineStage = quizProgress != null ? quizProgress.getPipelineStage() : null;
-		String quizToken = selectedAttempt != null && StringUtils.isNotBlank(selectedAttempt.getQuizToken())
-				? selectedAttempt.getQuizToken()
-				: application.getQuizToken();
+		String quizToken = selectedAttempt.getQuizToken();
 		String quizStatus = resolveQuizStatus(application, selectedAttempt);
 
 		Map<String, Object> quizData = new HashMap<>();
@@ -4175,7 +3983,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		quizData.put("quizStatus", quizStatus);
 		quizData.put("startedAt", selectedAttempt != null ? selectedAttempt.getStartedAt() : null);
 		quizData.put("completedAt", selectedAttempt != null ? selectedAttempt.getCompletedAt() : null);
-		quizData.put("lastActivityAt", selectedAttempt != null ? selectedAttempt.getLastActivityAt() : application.getQuizLastActivityAt());
+		quizData.put("lastActivityAt", selectedAttempt.getLastActivityAt());
 		quizData.put("canResume", canResumeTrackedQuiz(application, quizToken, quizStatus));
 		return quizData;
 	}

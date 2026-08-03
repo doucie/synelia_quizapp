@@ -187,7 +187,6 @@ class ApplicationsBusinessTest {
 		Applications application = new Applications();
 		application.setId(15);
 		application.setApplicationStatus("PENDING");
-		application.setQuizStatus("STARTED");
 
 		ApplicationQuizAttempt quizAttempt = new ApplicationQuizAttempt();
 		quizAttempt.setId(902);
@@ -213,9 +212,8 @@ class ApplicationsBusinessTest {
 		method.invoke(applicationsBusiness, application, quizAttempt, 77);
 
 		assertThat(application.getApplicationStatus()).isEqualTo("PENDING");
-		assertThat(application.getQuizStatus()).isEqualTo(tech.synelia.quizapp.utils.enums.QuizStatus.COMPLETED.getValue());
-		assertThat(application.getQuizScore()).isEqualTo(14);
-		assertThat(application.getQuizScorePercent()).isEqualTo(70);
+		assertThat(application.getAggregatedQuizScore()).isEqualTo(14.0d);
+		assertThat(application.getAggregatedQuizScorePercent()).isEqualTo(70.0d);
 		verify(applicationProgressBusiness).syncApplicationStatus(15);
 	}
 
@@ -225,7 +223,7 @@ class ApplicationsBusinessTest {
 		existingApplication.setId(15);
 		existingApplication.setCandidateFirstName("Grace");
 		existingApplication.setApplicationStatus("PENDING");
-		existingApplication.setQuizScore(12);
+		existingApplication.setAggregatedQuizScore(12.0d);
 		existingApplication.setTotalEvaluationScore(45.0f);
 		existingApplication.setTotalEvaluationNumber(2);
 		existingApplication.setTotalEvaluationPercentage(23.0d);
@@ -234,7 +232,7 @@ class ApplicationsBusinessTest {
 		dto.setId(15);
 		dto.setCandidateFirstName("Ada");
 		dto.setApplicationStatus("FORCED_STATUS");
-		dto.setQuizScore(99);
+		dto.setAggregatedQuizScore(99.0d);
 		dto.setTotalEvaluationScore(88.0f);
 		dto.setTotalEvaluationNumber(5);
 		dto.setTotalEvaluationPercentage(76.0d);
@@ -259,7 +257,7 @@ class ApplicationsBusinessTest {
 		assertThat(response.isHasError()).isFalse();
 		assertThat(existingApplication.getCandidateFirstName()).isEqualTo("Ada");
 		assertThat(existingApplication.getApplicationStatus()).isEqualTo("PENDING");
-		assertThat(existingApplication.getQuizScore()).isEqualTo(12);
+		assertThat(existingApplication.getAggregatedQuizScore()).isEqualTo(12.0d);
 		assertThat(existingApplication.getTotalEvaluationScore()).isEqualTo(45.0f);
 		assertThat(existingApplication.getTotalEvaluationNumber()).isEqualTo(2);
 		assertThat(existingApplication.getTotalEvaluationPercentage()).isEqualTo(23.0d);
@@ -273,7 +271,7 @@ class ApplicationsBusinessTest {
 		dto.setCandidateEmail("ada.lovelace@example.test");
 		dto.setCandidatePhone("0102030405");
 		dto.setApplicationStatus("FORCED_STATUS");
-		dto.setQuizScore(99);
+		dto.setAggregatedQuizScore(99.0d);
 		dto.setTotalEvaluationScore(88.0f);
 		dto.setTotalEvaluationNumber(5);
 		dto.setTotalEvaluationPercentage(76.0d);
@@ -306,7 +304,7 @@ class ApplicationsBusinessTest {
 		assertThat(capturedSavedItems).hasSize(1);
 		Applications savedApplication = capturedSavedItems.get(0);
 		assertThat(savedApplication.getApplicationStatus()).isNull();
-		assertThat(savedApplication.getQuizScore()).isNull();
+		assertThat(savedApplication.getAggregatedQuizScore()).isNull();
 		assertThat(savedApplication.getTotalEvaluationScore()).isNull();
 		assertThat(savedApplication.getTotalEvaluationNumber()).isNull();
 		assertThat(savedApplication.getTotalEvaluationPercentage()).isNull();
@@ -408,8 +406,6 @@ class ApplicationsBusinessTest {
 		application.setCandidateFirstName("Ada");
 		application.setCandidateLastName("Lovelace");
 		application.setCandidateEmail("ada.lovelace@example.test");
-		application.setQuizStatus("PENDING");
-		application.setQuizToken("legacy-token");
 
 		CandidateToken candidateToken = new CandidateToken();
 		candidateToken.setApplications(application);

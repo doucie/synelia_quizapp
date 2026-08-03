@@ -74,9 +74,6 @@ public class Applications implements Serializable, Cloneable {
     @Column(name="email_verified", nullable=false)
     private Boolean    emailVerified ;
 
-    @Column(name="quiz_score")
-    private Integer    quizScore    ;
-
     @Column(name="total_evaluation_score")
     private Float      totalEvaluationScore ;
 
@@ -89,36 +86,11 @@ public class Applications implements Serializable, Cloneable {
     @Column(name="application_status", length=50)
     private String     applicationStatus ;
 
-    @Column(name="quiz_token", length=64, unique=true)
-    private String     quizToken    ;
+    @Column(name="aggregated_quiz_score")
+    private Double     aggregatedQuizScore ;
 
-    @Column(name="quiz_status", nullable=false, length=50)
-    private String     quizStatus   ;
-
-    @Column(name="quiz_level")
-    private Integer    quizLevel    ;
-
-    @Column(name="total_questions")
-    private Integer    totalQuestions ;
-
-    @Column(name="quiz_score_percent")
-    private Integer    quizScorePercent ;
-
-    @Column(name="quiz_manual_correction_status", nullable=false, length=20)
-    private String     quizManualCorrectionStatus ;
-
-    @Column(name="time_elapsed", nullable=false, columnDefinition="INT DEFAULT 0")
-    private Integer    timeElapsed  ;
-
-    @Column(name="quiz_timed_snapshot", nullable=false, columnDefinition="BOOLEAN DEFAULT FALSE")
-    private Boolean    quizTimedSnapshot ;
-
-    @Column(name="quiz_total_time_allowed_snapshot")
-    private Integer    quizTotalTimeAllowedSnapshot ;
-
-    @Temporal(TemporalType.TIMESTAMP)
-    @Column(name="quiz_last_activity_at")
-    private Date       quizLastActivityAt ;
+    @Column(name="aggregated_quiz_score_percent")
+    private Double     aggregatedQuizScorePercent ;
 
     @Column(name="interview_date")
     @Temporal(TemporalType.TIMESTAMP)

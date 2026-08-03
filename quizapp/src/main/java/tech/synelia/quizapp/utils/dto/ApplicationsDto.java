@@ -42,20 +42,12 @@ public class ApplicationsDto extends _ApplicationsDto implements Cloneable{
     private String     candidateBirthDate   ; // Date de naissance du candidat
     private String     motivationLetter     ; // Lettre de motivation du candidat
     private Boolean    emailVerified        ;
-    private Integer    quizScore            ;
     private Float      totalEvaluationScore ;
     private Integer    totalEvaluationNumber ;
     private Double     totalEvaluationPercentage ;
     private String     applicationStatus    ;
-    private String     quizToken            ;
-    private String     quizStatus           ;
-    private Integer    quizLevel            ;
-    private Integer    totalQuestions       ;
-    private Integer    quizScorePercent     ;
-    private String     quizManualCorrectionStatus ;
-    private Integer    timeElapsed          ;
-    private Boolean    quizTimedSnapshot    ;
-    private Integer    quizTotalTimeAllowedSnapshot ;
+    private Double     aggregatedQuizScore  ;
+    private Double     aggregatedQuizScorePercent ;
     private String     interviewDate        ;
     private String     interviewStatus      ;
     private Integer    currentInterviewEvaluationScore ;
@@ -104,20 +96,12 @@ public class ApplicationsDto extends _ApplicationsDto implements Cloneable{
 	private SearchParam<String>   candidateBirthDateParam;                     
 	private SearchParam<String>   motivationLetterParam ;                     
 	private SearchParam<Boolean>  emailVerifiedParam    ;                     
-	private SearchParam<Integer>  quizScoreParam        ;                     
 	private SearchParam<Float>    totalEvaluationScoreParam ;                     
 	private SearchParam<Integer>  totalEvaluationNumberParam ;                     
 	private SearchParam<Double>   totalEvaluationPercentageParam ;                     
 	private SearchParam<String>   applicationStatusParam;                     
-	private SearchParam<String>   quizTokenParam        ;                     
-	private SearchParam<String>   quizStatusParam       ;                     
-	private SearchParam<Integer>  quizLevelParam        ;                     
-	private SearchParam<Integer>  totalQuestionsParam   ;                     
-	private SearchParam<Integer>  quizScorePercentParam ;                     
-    private SearchParam<String>   quizManualCorrectionStatusParam ;                     
-	private SearchParam<Integer>  timeElapsedParam      ;                     
-    private SearchParam<Boolean>  quizTimedSnapshotParam ;                     
-    private SearchParam<Integer>  quizTotalTimeAllowedSnapshotParam ;                     
+	private SearchParam<Double>   aggregatedQuizScoreParam;                     
+	private SearchParam<Double>   aggregatedQuizScorePercentParam;                     
 	private SearchParam<String>   interviewDateParam    ;                     
 	private SearchParam<String>   interviewStatusParam  ;                     
 	private SearchParam<Boolean>  applicationAbandonedParam ;                     

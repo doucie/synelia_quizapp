@@ -527,7 +527,7 @@ export class DecisionsComponent implements OnInit, OnDestroy {
       return this.getCurrentQuizAttempt()?.scorePercent ?? null;
     }
 
-    return application?.quizScorePercent ?? null;
+    return application?.aggregatedQuizScorePercent ?? null;
   }
 
   getSelectedApplicationInterviewDate(application?: ApplicationWithCampaign | null): string {

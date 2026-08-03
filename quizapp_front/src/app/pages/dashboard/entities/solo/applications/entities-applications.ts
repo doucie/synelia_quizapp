@@ -477,28 +477,12 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
 
   getCurrentQuizStatus(application?: Application | null): string {
     const currentAttempt = application?.id ? this.getCurrentQuizAttemptGroup(application.id) : null;
-    if (currentAttempt?.quizStatus) {
-      return currentAttempt.quizStatus;
-    }
-
-    if (application?.id && this.hasLoadedQuizRuntime(application.id)) {
-      return '';
-    }
-
-    return application?.quizStatus || '';
+    return currentAttempt?.quizStatus || '';
   }
 
   getCurrentQuizScorePercent(application?: Application | null): number | null {
     const currentAttempt = application?.id ? this.getCurrentQuizAttemptGroup(application.id) : null;
-    if (currentAttempt?.scorePercent != null) {
-      return currentAttempt.scorePercent;
-    }
-
-    if (application?.id && this.hasLoadedQuizRuntime(application.id)) {
-      return null;
-    }
-
-    return application?.quizScorePercent ?? null;
+    return currentAttempt?.scorePercent ?? null;
   }
 
   getCurrentQuizManualCorrectionStatus(application?: Application | null): string {
@@ -506,29 +490,12 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
     if (currentAttempt?.manualCorrectionStatus && currentAttempt.manualCorrectionStatus !== 'NOT_REQUIRED') {
       return currentAttempt.manualCorrectionStatus;
     }
-
-    if (application?.id && this.hasLoadedQuizRuntime(application.id)) {
-      return '';
-    }
-
-    if (application?.quizManualCorrectionStatus && application.quizManualCorrectionStatus !== 'NOT_REQUIRED') {
-      return application.quizManualCorrectionStatus;
-    }
-
     return '';
   }
 
   getCurrentQuizToken(application?: Application | null): string {
     const currentAttempt = application?.id ? this.getCurrentQuizAttemptGroup(application.id) : null;
-    if (currentAttempt?.quizToken) {
-      return currentAttempt.quizToken;
-    }
-
-    if (application?.id && this.hasLoadedQuizRuntime(application.id)) {
-      return '';
-    }
-
-    return application?.quizToken || '';
+    return currentAttempt?.quizToken || '';
   }
 
   getQuizAttemptStatusLabel(status?: string | null): string {
@@ -825,11 +792,6 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
 
   private hasLoadedDecisions(applicationId: number): boolean {
     return Object.prototype.hasOwnProperty.call(this.childDecisions(), applicationId);
-  }
-
-  private hasLoadedQuizRuntime(applicationId: number): boolean {
-    return Object.prototype.hasOwnProperty.call(this.childAnswerGroups(), applicationId)
-      || Object.prototype.hasOwnProperty.call(this.childQuizAttempts(), applicationId);
   }
 
   private getCurrentDecisionByTypes(application: Application | null | undefined, decisionTypes: string[]): Decision | null {
@@ -1540,7 +1502,7 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
     this.applicationService.createQuizAttempt(application.id).subscribe({
       next: (response) => {
         const createdApplication = response.items?.[0];
-        const quizToken = createdApplication?.quizToken || createdApplication?.searchString;
+        const quizToken = createdApplication?.searchString;
         if (quizToken) {
           const quizUrl = this.buildQuizAttemptPublicUrl(application.id!, quizToken);
           this.copyQuizAttemptLink(quizUrl);

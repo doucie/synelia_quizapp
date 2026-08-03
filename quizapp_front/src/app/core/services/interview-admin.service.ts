@@ -225,7 +225,7 @@ export class InterviewAdminService {
         applicationId: application?.id,
         candidateFirstName: application?.candidateFirstName,
         candidateLastName: application?.candidateLastName,
-        quizScorePercent: application?.quizScorePercent,
+        quizScorePercent: application?.aggregatedQuizScorePercent,
         candidateInterviewId: candidateInterview?.id,
         declineReason: candidateInterview?.declineReason || null,
         alternativeDateRequested: candidateInterview?.alternativeDateRequested || null,

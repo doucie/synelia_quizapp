@@ -19,7 +19,6 @@ export interface ApplicationSearchCriteria {
   candidateEmail?: string;
   candidatePhone?: string;
   applicationStatus?: string;
-  quizStatus?: string;
   sourceTokenId?: number;
   formVersionId?: number;
   isDeleted?: boolean;
@@ -73,14 +72,10 @@ export interface Application {
   candidateBirthDate: string;
   motivationLetter?: string;
   emailVerified?: boolean;
-  quizScore?: number;
-  quizScorePercent?: number;
+  aggregatedQuizScore?: number;
+  aggregatedQuizScorePercent?: number;
   evaluationScore?: number;
   applicationStatus?: string;
-  quizToken?: string;
-  quizStatus?: string;
-  quizLevel?: number;
-  quizManualCorrectionStatus?: ManualCorrectionStatus;
   interviewDate?: string; // Date de l'entretien
   interviewStatus?: string; // Status de l'entretien
   currentInterviewEvaluationScore?: number;
@@ -459,7 +454,6 @@ export class ApplicationService {
         candidatePhone: criteria.candidatePhone || "",
         candidateBirthDate: "",
         applicationStatus: criteria.applicationStatus || "",
-        quizStatus: criteria.quizStatus || "",
         isDeleted: criteria.isDeleted !== undefined ? criteria.isDeleted.toString() : "",
         searchString: criteria.search_string || "",
         ...(criteria.sourceTokenId && { sourceTokenId: criteria.sourceTokenId }),

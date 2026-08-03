@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.OptionalDouble;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import lombok.extern.java.Log;
 import tech.synelia.quizapp.dao.entity.Answer;
+import tech.synelia.quizapp.dao.entity.ApplicationQuizAttempt;
 import tech.synelia.quizapp.dao.entity.Applications;
 import tech.synelia.quizapp.dao.entity.CampaignForm;
 import tech.synelia.quizapp.dao.entity.Campaigns;
@@ -36,6 +38,7 @@ import tech.synelia.quizapp.dao.entity.Question;
 import tech.synelia.quizapp.dao.entity.SourceToken;
 import tech.synelia.quizapp.dao.entity.Specialities;
 import tech.synelia.quizapp.dao.repository.AnswerRepository;
+import tech.synelia.quizapp.dao.repository.ApplicationQuizAttemptRepository;
 import tech.synelia.quizapp.dao.repository.ApplicationsRepository;
 import tech.synelia.quizapp.dao.repository.CampaignFormRepository;
 import tech.synelia.quizapp.dao.repository.CampaignsRepository;
@@ -75,6 +78,7 @@ public class DashboardController {
 
     private final UserRepository userRepository;
     private final ApplicationsRepository applicationsRepository;
+    private final ApplicationQuizAttemptRepository applicationQuizAttemptRepository;
     private final InterviewsRepository interviewsRepository;
     private final EvaluationsRepository evaluationsRepository;
     private final CampaignsRepository campaignsRepository;
@@ -100,6 +104,7 @@ public class DashboardController {
     public DashboardController(
             UserRepository userRepository,
             ApplicationsRepository applicationsRepository,
+            ApplicationQuizAttemptRepository applicationQuizAttemptRepository,
             InterviewsRepository interviewsRepository,
             EvaluationsRepository evaluationsRepository,
             CampaignsRepository campaignsRepository,
@@ -124,6 +129,7 @@ public class DashboardController {
     ) {
         this.userRepository = userRepository;
         this.applicationsRepository = applicationsRepository;
+        this.applicationQuizAttemptRepository = applicationQuizAttemptRepository;
         this.interviewsRepository = interviewsRepository;
         this.evaluationsRepository = evaluationsRepository;
         this.campaignsRepository = campaignsRepository;
@@ -226,8 +232,19 @@ public class DashboardController {
                         Collectors.counting()));
         result.put("statusDistribution", toEntryList(statusDist));
 
-        // -- Quiz status distribution --
+        // -- Quiz status distribution (latest non-deleted attempt per application) --
+        Map<Integer, ApplicationQuizAttempt> latestQuizAttemptByApp = applicationQuizAttemptRepository.findAll().stream()
+                .filter(a -> !Boolean.TRUE.equals(a.getIsDeleted())
+                        && a.getApplications() != null
+                        && a.getApplications().getId() != null)
+                .collect(Collectors.toMap(
+                        a -> a.getApplications().getId(),
+                        Function.identity(),
+                        (a, b) -> a.getId() > b.getId() ? a : b,
+                        LinkedHashMap::new));
         Map<String, Long> quizDist = apps.stream()
+                .map(a -> latestQuizAttemptByApp.get(a.getId()))
+                .filter(Objects::nonNull)
                 .collect(Collectors.groupingBy(
                         a -> a.getQuizStatus() != null ? a.getQuizStatus() : "UNKNOWN",
                         LinkedHashMap::new,
@@ -312,21 +329,27 @@ public class DashboardController {
                 .collect(Collectors.toList());
         result.put("topCampaigns", topCampaigns);
 
-        // -- Average quiz score (completed only) --
+        // -- Average quiz score (completed only, aggregated score) --
         OptionalDouble avg = apps.stream()
-                .filter(a -> a.getQuizScorePercent() != null && "COMPLETED".equalsIgnoreCase(a.getQuizStatus()))
-                .mapToInt(Applications::getQuizScorePercent)
+                .filter(a -> a.getAggregatedQuizScorePercent() != null
+                        && isCompletedAttempt(latestQuizAttemptByApp.get(a.getId())))
+                .mapToDouble(Applications::getAggregatedQuizScorePercent)
                 .average();
-        long quizCompleted = apps.stream().filter(a -> "COMPLETED".equalsIgnoreCase(a.getQuizStatus())).count();
+        long quizCompleted = apps.stream()
+                .map(a -> latestQuizAttemptByApp.get(a.getId()))
+                .filter(Objects::nonNull)
+                .filter(a -> "COMPLETED".equalsIgnoreCase(a.getQuizStatus()))
+                .count();
         result.put("avgQuizScorePercent", avg.isPresent() ? Math.round(avg.getAsDouble() * 10.0) / 10.0 : null);
         result.put("quizCompletedCount", quizCompleted);
 
         // -- Quiz score buckets (for completed quizzes) --
         int[] buckets = new int[5]; // 0-20, 20-40, 40-60, 60-80, 80-100
         apps.stream()
-                .filter(a -> a.getQuizScorePercent() != null && "COMPLETED".equalsIgnoreCase(a.getQuizStatus()))
+                .filter(a -> a.getAggregatedQuizScorePercent() != null
+                        && isCompletedAttempt(latestQuizAttemptByApp.get(a.getId())))
                 .forEach(a -> {
-                    int score = a.getQuizScorePercent();
+                    int score = a.getAggregatedQuizScorePercent().intValue();
                     int idx = Math.min(4, Math.max(0, score / 20));
                     buckets[idx]++;
                 });
@@ -380,6 +403,10 @@ public class DashboardController {
                     return m;
                 })
                 .collect(Collectors.toList());
+    }
+
+    private boolean isCompletedAttempt(ApplicationQuizAttempt attempt) {
+        return attempt != null && "COMPLETED".equalsIgnoreCase(attempt.getQuizStatus());
     }
 
     private boolean isAnyStatus(String status, String... prefixes) {
@@ -445,7 +472,7 @@ public class DashboardController {
                 addDep(deps, "applications", "Candidatures", applicationsRepository.findBySourceTokenId(id, false), true);
                 break;
             case "applications":
-                addDep(deps, "candidate-answers", "Réponses candidat", candidateAnswerRepository.findByApplicationId(id, false), true);
+                addDep(deps, "candidate-answers", "Réponses candidat", candidateAnswerRepository.findByApplicationQuizAttemptApplicationsId(id, false), true);
                 addDep(deps, "candidate-ask", "Questions candidat", candidateAskRepository.findByApplicationId(id, false), true);
                 addDep(deps, "candidate-token", "Tokens candidat", candidateTokenRepository.findByApplicationId(id, false), true);
                 addDep(deps, "candidate-interview", "Entretiens candidat", candidateInterviewRepository.findByApplicationId(id, false), true);
