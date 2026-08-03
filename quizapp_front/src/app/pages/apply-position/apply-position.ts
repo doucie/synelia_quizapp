@@ -292,7 +292,6 @@ export class ApplyPositionComponent implements OnInit {
         candidateCvPath: uploadResult.filePath || undefined,
         motivationLetter: data.motivationLetter || '',
         emailVerified: false,
-        applicationStatus: 'PENDING',
         sourceTokenId: this.sourceTokenId() || undefined,
         campaignId: this.campaignId() || undefined,
         isDeleted: false

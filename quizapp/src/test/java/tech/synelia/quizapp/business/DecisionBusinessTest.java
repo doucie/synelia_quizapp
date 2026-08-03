@@ -81,7 +81,7 @@ class DecisionBusinessTest {
 	@Test
 	void update_allowsPartialJustificationChangeForHistorizedCancellation() throws Exception {
 		Campaigns campaign = buildCampaign(8);
-		Applications application = buildApplication(1, campaign, "SUBMITTED");
+		Applications application = buildApplication(1, campaign);
 		PipelineStage stage = buildPipelineStage(100, "DECISION");
 		ApplicationProgress progress = buildApplicationProgress(10, application, stage);
 		User actor = buildUser(12);
@@ -119,7 +119,7 @@ class DecisionBusinessTest {
 	@Test
 	void update_rejectsApplicationProgressRetargetingForExistingDecision() {
 		Campaigns campaign = buildCampaign(8);
-		Applications application = buildApplication(1, campaign, "PRE_SCREEN_ACCEPTED");
+		Applications application = buildApplication(1, campaign);
 		PipelineStage stage = buildPipelineStage(100, "PRESELECTION");
 		ApplicationProgress progress = buildApplicationProgress(10, application, stage);
 		Decision existingDecision = buildDecision(50, application, buildUser(12), stage, progress, false, DecisionType.PRE_SCREEN_ACCEPTED.getValue(), "STANDARD");
@@ -144,7 +144,7 @@ class DecisionBusinessTest {
 	@Test
 	void create_passesRoundReferencesToDecisionEmailLogging() throws Exception {
 		Campaigns campaign = buildCampaign(8);
-		Applications application = buildApplication(1, campaign, "SUBMITTED");
+		Applications application = buildApplication(1, campaign);
 		PipelineStage stage = buildPipelineStage(100, "PRESELECTION");
 		stage.setEmailRequired(true);
 		stage.setEmailAutomatic(false);
@@ -209,7 +209,7 @@ class DecisionBusinessTest {
 	@Test
 	void create_recordsCancellationAuditEventWithJustification() throws Exception {
 		Campaigns campaign = buildCampaign(8);
-		Applications application = buildApplication(1, campaign, "SUBMITTED");
+		Applications application = buildApplication(1, campaign);
 		PipelineStage stage = buildPipelineStage(100, "PRESELECTION");
 		ApplicationProgress progress = buildApplicationProgress(10, application, stage);
 		User decisionUser = buildUser(12);
@@ -268,14 +268,13 @@ class DecisionBusinessTest {
 		return campaign;
 	}
 
-	private Applications buildApplication(Integer id, Campaigns campaign, String applicationStatus) {
+	private Applications buildApplication(Integer id, Campaigns campaign) {
 		SourceToken sourceToken = new SourceToken();
 		sourceToken.setCampaigns(campaign);
 
 		Applications application = new Applications();
 		application.setId(id);
 		application.setIsDeleted(false);
-		application.setApplicationStatus(applicationStatus);
 		application.setCandidateFirstName("Ada");
 		application.setCandidateLastName("Lovelace");
 		application.setCandidateEmail("ada.lovelace@example.test");

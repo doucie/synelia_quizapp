@@ -374,7 +374,7 @@
 			"description": "",
 			"collectionId": "project.id",
 			"responses": [],
-			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"candidateFirstName\": \"\",\n\t\t\t\"candidateLastName\": \"\",\n\t\t\t\"candidateEmail\": \"\",\n\t\t\t\"candidatePhone\": \"\",\n\t\t\t\"candidateCvPath\": \"\",\n\t\t\t\"emailVerified\": \"\",\n\t\t\t\"quizScore\": \"\",\n\t\t\t\"evaluationScore\": \"\",\n\t\t\t\"applicationStatus\": \"\",\n\t\t\t\"visitToken\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"sourceTokenId\": \"\"\n\t\t} \n\t]  \n}"
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"candidateFirstName\": \"\",\n\t\t\t\"candidateLastName\": \"\",\n\t\t\t\"candidateEmail\": \"\",\n\t\t\t\"candidatePhone\": \"\",\n\t\t\t\"candidateCvPath\": \"\",\n\t\t\t\"emailVerified\": \"\",\n\t\t\t\"quizScore\": \"\",\n\t\t\t\"evaluationScore\": \"\",\n\t\t\t\"visitToken\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"sourceTokenId\": \"\"\n\t\t} \n\t]  \n}"
 		},
 		{
 			"id": "applications.update",
@@ -404,7 +404,7 @@
 			"description": "",
 			"collectionId": "project.id",
 			"responses": [],
-			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"candidateFirstName\": \"\",\n\t\t\t\"candidateLastName\": \"\",\n\t\t\t\"candidateEmail\": \"\",\n\t\t\t\"candidatePhone\": \"\",\n\t\t\t\"candidateCvPath\": \"\",\n\t\t\t\"emailVerified\": \"\",\n\t\t\t\"quizScore\": \"\",\n\t\t\t\"evaluationScore\": \"\",\n\t\t\t\"applicationStatus\": \"\",\n\t\t\t\"visitToken\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"sourceTokenId\": \"\"\n\t\t} \n\t]  \n}"
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"candidateFirstName\": \"\",\n\t\t\t\"candidateLastName\": \"\",\n\t\t\t\"candidateEmail\": \"\",\n\t\t\t\"candidatePhone\": \"\",\n\t\t\t\"candidateCvPath\": \"\",\n\t\t\t\"emailVerified\": \"\",\n\t\t\t\"quizScore\": \"\",\n\t\t\t\"evaluationScore\": \"\",\n\t\t\t\"visitToken\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"sourceTokenId\": \"\"\n\t\t} \n\t]  \n}"
 		},
 		{
 			"id": "applications.delete",
@@ -464,7 +464,7 @@
 			"description": "",
 			"collectionId": "project.id",
 			"responses": [],
-			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"candidateFirstName\": \"\",\n\t\t\"candidateLastName\": \"\",\n\t\t\"candidateEmail\": \"\",\n\t\t\"candidatePhone\": \"\",\n\t\t\"candidateCvPath\": \"\",\n\t\t\"emailVerified\": \"\",\n\t\t\"quizScore\": \"\",\n\t\t\"evaluationScore\": \"\",\n\t\t\"applicationStatus\": \"\",\n\t\t\"visitToken\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"sourceTokenId\": \"\"\n\t}  \n}"
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"candidateFirstName\": \"\",\n\t\t\"candidateLastName\": \"\",\n\t\t\"candidateEmail\": \"\",\n\t\t\"candidatePhone\": \"\",\n\t\t\"candidateCvPath\": \"\",\n\t\t\"emailVerified\": \"\",\n\t\t\"quizScore\": \"\",\n\t\t\"evaluationScore\": \"\",\n\t\t\"visitToken\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"sourceTokenId\": \"\"\n\t}  \n}"
 		},
 		{
 			"id": "campaignQuestions.create",

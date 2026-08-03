@@ -17,7 +17,7 @@ import {
   STAGE_TYPE_LABELS,
   normalizePipelineStageType
 } from '../../../core/models/pipeline.interfaces';
-import { getApplicationStatusLabel } from '../../../core/constants/application-status.constants';
+import { getApplicationStatusLabel, isRejectedStatus, resolveApplicationStatusFromMirrors } from '../../../core/constants/application-status.constants';
 
 type ActionKind = 'advance' | 'fail' | 'skip';
 
@@ -66,7 +66,15 @@ export class CandidateDetailComponent implements OnInit, OnDestroy {
     return ((f[0] || '') + (l[0] || '')).toUpperCase() || '?';
   });
 
-  statusLabel = computed(() => getApplicationStatusLabel(this.application()?.applicationStatus || ''));
+  statusLabel = computed(() => getApplicationStatusLabel(resolveApplicationStatusFromMirrors(this.application())));
+
+  statusClass = computed(() => {
+    const status = resolveApplicationStatusFromMirrors(this.application());
+    if (status === 'FINAL_ACCEPTED') return 'badge-success';
+    if (isRejectedStatus(status)) return 'badge-error';
+    if (status === 'PENDING' || status === 'WITHDRAWN') return 'badge-neutral';
+    return 'badge-primary';
+  });
 
   /** Progression triée chronologiquement par stageOrder puis par id. */
   orderedProgress = computed(() => {

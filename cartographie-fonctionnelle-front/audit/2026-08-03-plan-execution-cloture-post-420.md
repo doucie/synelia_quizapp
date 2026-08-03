@@ -158,22 +158,39 @@ Sortie de phase: migration V1_070 appliquee; donnees conservees (comptages avant
 
 ### Phase 2 - Statut candidat (perimetre: applications.application_status)
 
-Objectif: supprimer la derive ecrite de `application_status`.
+Objectif: supprimer la derive ecrite de `application_status`. La source de verite devient les miroirs `current_pipeline_*`/`current_preselection_*`/`current_final_decision_*` + `application_progress`/`decisions`; le statut est derive a la lecture (DTO/front).
+
+Prealables (decisions requises 2026-08-03):
+
+- [x] Arbitrage DTO statut derive (RESOLU 2026-08-03): RETRAIT TOTAL. `applicationStatus` est retire du DTO et du front; chaque ecran derive le statut d'affichage depuis les miroirs (`currentPipelineProgressStatus`, `currentPreselectionDecisionType`, `currentFinalDecisionType`). Le front est deja a ~90% sur les miroirs avec fallback `applicationStatus` -> on supprime le fallback. `application-status.constants.ts` reste pour les libelles (source = miroirs). DoD rg front = 0 sur `applicationStatus`.
+- [x] Arbitrage verification V1_071 (RESOLU 2026-08-03): RAPPORT + COMPTAGES (non bloquant). La migration inclut les comptages avant/apres (apps par statut legacy vs statut redervable depuis les miroirs backfilles) + SELECT des divergences (suffixes `_ARCHIVED`, incoherences decision/pipeline). Pas de SIGNAL strict (les valeurs legacy ne se derivent pas 1:1). Applique la regle "comptages avant/apres dans la migration" (ecart Phase 1 corrige).
 
 Taches:
 
-- [ ] `ApplicationProgressBusiness.syncApplicationStatus`: remplacer l'ecriture `app.setApplicationStatus(...)` par la mise a jour des miroirs `current_pipeline_stage_type/label/progress_status` (+ `current_application_progress_id`/`current_pipeline_stage_id`).
-- [ ] `DecisionBusiness.syncApplicationStatusFromCurrentDecisions`: idem (miroirs `current_preselection_*`/`current_final_decision_*`).
-- [ ] `ApplicationsRepository.findByApplicationStatus`: basculer sur un critere `current_pipeline_progress_status`.
-- [ ] DTO/Transformer: retirer `applicationStatus`; exposer le statut derive (computed, non persiste).
-- [ ] `DashboardController` (lignes 224-329): utiliser les miroirs.
-- [ ] Front: `application-status.constants.ts` reste pour l'affichage des libelles, mais la source change; `applications.*`, `candidate-detail.*`, `track-application.*`, `decisions.*`, `interview-create.*`.
-- [ ] `ApplicationsBusiness.resolveTrackedApplicationStatus` (3615): reecrire la derive depuis les miroirs `current_pipeline_*` + decisions (la colonne `application_status` est droppee, `getApplicationStatus()` disparait).
-- [ ] Entite JPA: retirer `applicationStatus` de `Applications.java` (89).
-- [ ] Migration `V1_071__migrate_application_status.sql`: backfill des miroirs `current_pipeline_stage_type/label/progress_status` + `current_preselection_*` + `current_final_decision_*` (colonnes V1_063-065, potentiellement NULL) depuis l'etat pipeline courant; DROP `applications.application_status`.
-- [ ] Tests: `ApplicationProgressBusinessTest`/`DecisionBusinessTest` + spec front.
+- [x] `ApplicationProgressBusiness.syncApplicationStatus` (956): supprimer `app.setApplicationStatus(newStatus)` (978); ne mettre a jour que les miroirs `current_pipeline_stage_type/label/progress_status` + `updatedAt`; `computeApplicationStatus` (895) devient inutilise (seul appelant 957) -> le retirer. (fait 2026-08-03: `computeApplicationStatus` supprime, `syncApplicationStatus` ne touche que les miroirs + `updatedAt`)
+- [x] `DecisionBusiness.syncApplicationStatusFromCurrentDecisions` (726): supprimer (ecriture `application_status` 741 + appel 226); les miroirs `current_preselection_*`/`current_final_decision_*` sont deja ecrits par `syncApplicationCurrentDecisionSummaries` (227). (fait 2026-08-03: methode supprimee, remplacee par `synchronizeApplicationAfterDecision`)
+- [x] `ApplicationsBusiness.completeQuiz` (2165, 2170): retirer le log du statut et `resultDto.setApplicationStatus(...)` (le DTO n'a plus le champ). (fait 2026-08-03)
+- [x] `ApplicationsBusiness.resolveTrackedApplicationStatus` (3416): reecrire la derive depuis les miroirs (abandon -> `WITHDRAWN`; `currentFinalDecisionType` FINAL_ACCEPTED/FINAL_REJECTED -> ACCEPTED/REJECTED; `currentPreselectionDecisionType` rejet -> REJECTED; `currentPipelineProgressStatus`/stage type -> IN_PROGRESS/NEW); renommer la cle publique `appData.applicationStatus` (3346) -> `trackedStatus` (rg front = 0). (fait 2026-08-03: derive depuis `currentFinalDecisionType`/`currentPreselectionDecisionType`/`currentPipelineProgressStatus` via `normalizeStatus`, cle `trackedStatus`)
+- [x] `DecisionBusiness` (1124): `vars.put("application_status", ...)` (template email) -> alimenter depuis les miroirs. (fait 2026-08-03: `resolveApplicationStatusMirror` = decision finale -> preselection -> progression)
+- [x] `ApplicationsRepository.findByApplicationStatus` (114-115): SUPPRIMER (code mort, 0 appelant) - pas de remplacement par critere. (fait 2026-08-03)
+- [x] `ApplicationsRepository.generateCriteria` (396-397): retirer le critere `applicationStatus`/`applicationStatusParam` (filtre admin non branche cote front, comme `quizStatus` en Phase 1). (fait 2026-08-03)
+- [x] `_ApplicationsRepository._generateCriteria` (24): remplacer `LOWER(e.applicationStatus) LIKE` par `LOWER(e.currentPipelineProgressStatus) LIKE` dans la recherche globale. (fait 2026-08-03)
+- [x] DTO/Transformer: retirer `applicationStatus` de `ApplicationsDto` (48) + `applicationStatusParam` (102); retirer le mapping `@Mapping(target="applicationStatus", ignore=true)` du `ApplicationsTransformer.toEntity` (92). (fait 2026-08-03)
+- [x] `DashboardController` (224-329): `statusDistribution` (228-233) regroupe par cle derivee des miroirs; `conversionFunnel` (296-302) bascule sur `currentPreselectionDecisionType`/`currentFinalDecisionType`/`currentPipelineStageType` (plus de `isAnyStatus(getApplicationStatus(), ...)`). (fait 2026-08-03: `resolveStatusDistributionKey`/`trimUpper` ajoutes)
+- [x] Entite JPA: retirer `applicationStatus` de `Applications.java` (86-87) -> `get/setApplicationStatus()` disparaissent. (fait 2026-08-03)
+- [x] Front: `application-status.constants.ts` reste pour l'affichage des libelles, mais la source change; `applications.*`, `candidate-detail.*`, `track-application.*`, `decisions.*`, `interview-create.*`:
+  - [x] `application.service.ts` (21, 78, 456): retirer `Application.applicationStatus` + `criteria.applicationStatus` du payload de recherche. (fait 2026-08-03)
+  - [x] `apply-position.ts` (295): retirer `applicationStatus: 'PENDING'` du payload de creation (ecriture morte, backend ignore). (fait 2026-08-03)
+  - [x] `applications.ts` (902, 938, 1286, 1302, 1323, 1332): `getStepStatus`/`getStepTooltip` alimentes par une valeur derivee des miroirs; retirer les fallbacks `app.applicationStatus`. (fait 2026-08-03)
+  - [x] `interview-create.ts` (413, 425, 437, 457) et `interviews.ts` (150-151): checks `PRE_SCREEN_ACCEPTED` -> `currentPreselectionDecisionType`. (fait 2026-08-03)
+  - [x] `candidate-detail.ts` (69) + html (32): badge derive des miroirs. (fait 2026-08-03)
+  - [x] `track-application.ts` (38) + html (64-65): `applicationStatus` -> `trackedStatus` (cle publique renommee). (fait 2026-08-03)
+  - [x] `entities-applications.ts` (280, 311): `getStatusLabel`/`getStatusClass` derives des miroirs; `entities-applications.html` (960): retirer le select d'edition (write morte). (fait 2026-08-03)
+  - [x] Specs: `applications.spec`, `decisions.spec`, `entities-applications.spec`, `interview-create.spec` - retirer/remplacer les fixtures `applicationStatus`. (fait 2026-08-03)
+- [x] Migration `V1_071__migrate_application_status.sql` (mouvement de donnees puis DROP): backfill des miroirs `current_pipeline_stage_type/label/progress_status` + `current_preselection_*` + `current_final_decision_*` (colonnes V1_063-065, potentiellement NULL) depuis l'etat pipeline courant (logique `resolveCurrentStageProgress`: ligne `IN_PROGRESS` prioritaire, sinon premier `PENDING` par `stage_order`, join `pipeline_stage`; decisions: derniere non annulee par type, join `decisions.application_id` encore present); COMPTAGES avant/apres dans la migration + rapport de divergence (suffixes `_ARCHIVED`, incoherences) non bloquant; DROP `applications.application_status`. DDL non transactionnel -> test sur copie avant application. (fait 2026-08-03, testee sur copie `quizapp_db_v1071_test` via Flyway, appliquee sur BD partagee; ecart collation report 5.c corrige par `CAST AS BINARY`, connexion Flyway vs CLI)
+- [x] Tests: `ApplicationProgressBusinessTest`/`DecisionBusinessTest` + nouveaux (`syncApplicationStatus` ecrit les miroirs sans statut; `resolveTrackedApplicationStatus` derive des miroirs) + `ApplicationsBusinessTest` (189/214/225/234/259/273/306/321/586) + `DashboardControllerTest` (208) + spec front. (fait 2026-08-03: `ApplicationProgressBusinessTest` cree (4 tests miroirs), `resolveTrackedApplicationStatus` (1 test), spec front nettoyees; 22 tests backend Phase 2 verts + 95 specs front. `QuestionBusinessTest` 3 erreurs PRE-EXISTANTES a HEAD, hors perimetre Phase 2)
 
-Sortie de phase: migration V1_071 appliquee; miroirs backfilles (donnees conservees, statut recalculable); `application_status` plus ecrit ni lu; build + tests verts; snapshot BD regenere.
+Sortie de phase: migration V1_071 appliquee (comptages avant/apres dans la migration); miroirs backfilles (donnees conservees, statut recalculable); `application_status` plus ecrit ni lu (rg backend + front = 0); build + tests verts; snapshot BD regenere. — PHASE 2 CLOTUREE (fait 2026-08-03): rg backend+front = 0 sur le champ; miroirs backfilles/appliques; build + specs verts; snapshot `quizapp_db_described_20260803.md` regenere (colonne `application_status` retiree).
 
 ### Phase 3 - Entretien / evaluation (perimetre: interviews.*, candidate_interview.*, evaluations.*)
 

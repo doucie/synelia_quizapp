@@ -956,17 +956,6 @@
           <input type="date" class="form-input" [(ngModel)]="editFormData.candidateBirthDate" name="birthDate" />
         </div>
         <div class="form-group">
-          <label class="form-label">Statut</label>
-          <select class="form-select" [(ngModel)]="editFormData.applicationStatus" name="status">
-            <option value="PENDING">En attente</option>
-            <option value="UNDER_REVIEW">En révision</option>
-            <option value="INTERVIEW_SCHEDULED">Entretien planifié</option>
-            <option value="ACCEPTED">Accepté</option>
-            <option value="REJECTED">Rejeté</option>
-            <option value="ARCHIVED">Archivé</option>
-          </select>
-        </div>
-        <div class="form-group">
           <label class="form-label">Source Token</label>
           <select class="form-input" [(ngModel)]="editFormData.sourceTokenId" name="sourceTokenId">
             <option [ngValue]="undefined">-- Sélectionner --</option>

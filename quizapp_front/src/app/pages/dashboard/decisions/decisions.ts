@@ -10,7 +10,7 @@ import { Decision, DecisionService } from '../../../core/services/decision.servi
 import { PermissionService } from '../../../core/services/permission.service';
 import { User, UserService } from '../../../core/services/user.service';
 import { PipelineStageService } from '../../../core/services/pipeline-stage.service';
-import { APPLICATION_STATUS } from '../../../core/constants/application-status.constants';
+import { APPLICATION_STATUS, resolveApplicationStatusFromMirrors } from '../../../core/constants/application-status.constants';
 import { ApplicationProgressService } from '../../../core/services/application-progress.service';
 import { PipelineStage, ApplicationProgress } from '../../../core/models/pipeline.interfaces';
 import { CandidateInterviewEntity, CandidateInterviewEntityService } from '../../../core/services/candidate-interview-entity.service';
@@ -1300,7 +1300,7 @@ export class DecisionsComponent implements OnInit, OnDestroy {
       return preselectionDecisionType;
     }
 
-    return app.applicationStatus || '';
+    return resolveApplicationStatusFromMirrors(app);
   }
 
   private getCurrentPipelineStageType(app?: ApplicationWithCampaign | null): string {

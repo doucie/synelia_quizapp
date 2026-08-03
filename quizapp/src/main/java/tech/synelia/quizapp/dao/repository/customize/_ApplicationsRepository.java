@@ -21,7 +21,7 @@ if (Utilities.notBlank(dto.getSearchString())) {
 String sv = "%" + dto.getSearchString().toLowerCase() + "%";
 String sp = "searchAll_" + (index != null ? index : "");
 param.put(sp, sv);
-listOfQuery.add("(" + "LOWER(e.candidateFirstName) LIKE :" + sp + " OR LOWER(e.candidateLastName) LIKE :" + sp + " OR LOWER(e.candidateEmail) LIKE :" + sp + " OR LOWER(e.applicationStatus) LIKE :" + sp + ")");
+listOfQuery.add("(" + "LOWER(e.candidateFirstName) LIKE :" + sp + " OR LOWER(e.candidateLastName) LIKE :" + sp + " OR LOWER(e.candidateEmail) LIKE :" + sp + " OR LOWER(e.currentPipelineProgressStatus) LIKE :" + sp + ")");
 }
 // Intervalles de dates
 if (Utilities.notBlank(dto.getDateCreationDe())) {

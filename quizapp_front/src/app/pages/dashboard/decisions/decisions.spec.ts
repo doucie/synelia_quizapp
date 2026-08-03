@@ -240,29 +240,25 @@ describe('DecisionsComponent', () => {
     expect(component.getSelectedApplicationEvaluationScore(app)).toBeNull();
   });
 
-  it('prefers runtime pipeline and current decision mirrors over applicationStatus for decision dashboard status buckets', () => {
+  it('prefers runtime pipeline and current decision mirrors for decision dashboard status buckets', () => {
     const apps = [
       {
         id: 10,
-        applicationStatus: APPLICATION_STATUS.PENDING,
         currentPipelineStageType: 'QUIZ',
         currentPipelineProgressStatus: 'PENDING'
       },
       {
         id: 11,
-        applicationStatus: APPLICATION_STATUS.PRE_SCREEN_ACCEPTED,
         currentFinalDecisionType: APPLICATION_STATUS.FINAL_REJECTED
       },
       {
         id: 12,
-        applicationStatus: APPLICATION_STATUS.SUBMITTED,
         currentPreselectionDecisionType: APPLICATION_STATUS.PRE_SCREEN_ACCEPTED,
         currentPipelineStageType: 'DECISION',
         currentPipelineProgressStatus: 'IN_PROGRESS'
       },
       {
         id: 13,
-        applicationStatus: APPLICATION_STATUS.PENDING,
         currentPreselectionDecisionType: APPLICATION_STATUS.PRE_SCREEN_REJECTED
       }
     ] as any;

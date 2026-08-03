@@ -224,10 +224,10 @@ public class DashboardController {
         kpis.put("decisions", buildKpi(decisions, Decision::getCreatedAt, startOfPrevMonth, startOfMonth));
         result.put("kpis", kpis);
 
-        // -- Status distribution --
+        // -- Status distribution (derived from runtime mirrors) --
         Map<String, Long> statusDist = apps.stream()
                 .collect(Collectors.groupingBy(
-                        a -> a.getApplicationStatus() != null ? a.getApplicationStatus() : "UNKNOWN",
+                        this::resolveStatusDistributionKey,
                         LinkedHashMap::new,
                         Collectors.counting()));
         result.put("statusDistribution", toEntryList(statusDist));
@@ -291,15 +291,15 @@ public class DashboardController {
                         Collectors.counting()));
         result.put("decisionsBreakdown", toEntryList(decDist));
 
-        // -- Conversion funnel --
+        // -- Conversion funnel (derived from runtime mirrors) --
         long submitted = apps.size();
-        long preselected = apps.stream().filter(a -> isAnyStatus(a.getApplicationStatus(),
-                "PRE_SCREEN", "INTERVIEW", "FINAL_AC", "FINAL_RE")).count();
-        long interviewed = apps.stream().filter(a -> isAnyStatus(a.getApplicationStatus(),
-                "INTERVIEW", "FINAL_AC", "FINAL_RE")).count();
-        long decided = apps.stream().filter(a -> isAnyStatus(a.getApplicationStatus(),
-                "FINAL_AC", "FINAL_RE")).count();
-        long accepted = apps.stream().filter(a -> isAnyStatus(a.getApplicationStatus(), "FINAL_AC")).count();
+        long preselected = apps.stream().filter(a -> isAnyStatus(a.getCurrentFinalDecisionType(), "FINAL_AC")
+                || isAnyStatus(a.getCurrentPreselectionDecisionType(), "PRE_SCREEN")
+                || isAnyStatus(a.getCurrentPipelineStageType(), "INTERVIEW", "EVALUATION", "DECISION")).count();
+        long interviewed = apps.stream().filter(a -> isAnyStatus(a.getCurrentFinalDecisionType(), "FINAL_AC")
+                || isAnyStatus(a.getCurrentPipelineStageType(), "INTERVIEW", "EVALUATION")).count();
+        long decided = apps.stream().filter(a -> isAnyStatus(a.getCurrentFinalDecisionType(), "FINAL_AC")).count();
+        long accepted = apps.stream().filter(a -> isAnyStatus(a.getCurrentFinalDecisionType(), "FINAL_AC")).count();
         Map<String, Long> funnel = new LinkedHashMap<>();
         funnel.put("submitted", submitted);
         funnel.put("preselected", preselected);
@@ -415,6 +415,33 @@ public class DashboardController {
             if (status.startsWith(p)) return true;
         }
         return false;
+    }
+
+    private String resolveStatusDistributionKey(Applications app) {
+        if (app == null) {
+            return "UNKNOWN";
+        }
+        String finalType = trimUpper(app.getCurrentFinalDecisionType());
+        if (finalType.length() > 0) {
+            return finalType;
+        }
+        String preType = trimUpper(app.getCurrentPreselectionDecisionType());
+        if (preType.length() > 0) {
+            return preType;
+        }
+        String stageType = trimUpper(app.getCurrentPipelineStageType());
+        if ("INTERVIEW".equals(stageType) || "EVALUATION".equals(stageType)) {
+            return "INTERVIEWING";
+        }
+        String progress = trimUpper(app.getCurrentPipelineProgressStatus());
+        if (progress.length() == 0 || "PENDING".equals(progress)) {
+            return "PENDING";
+        }
+        return "SUBMITTED";
+    }
+
+    private String trimUpper(String value) {
+        return value != null ? value.trim().toUpperCase() : "";
     }
 
     // -----------------------------------------------------------------------

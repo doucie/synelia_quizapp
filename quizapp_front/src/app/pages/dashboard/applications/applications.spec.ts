@@ -3,7 +3,6 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { of } from 'rxjs';
 
 import { ApplicationsComponent } from './applications';
-import { APPLICATION_STATUS } from '../../../core/constants/application-status.constants';
 import { ApplicationProgressService } from '../../../core/services/application-progress.service';
 import { ApplicationService } from '../../../core/services/application.service';
 import { CampaignService } from '../../../core/services/campaign.service';
@@ -128,7 +127,6 @@ describe('ApplicationsComponent', () => {
       candidateEmail: 'ada@example.com',
       candidatePhone: '0102030405',
       candidateBirthDate: '1990-01-01',
-      applicationStatus: APPLICATION_STATUS.SUBMITTED,
       interviewDate: ''
     } as any;
 
@@ -150,7 +148,7 @@ describe('ApplicationsComponent', () => {
     expect(component.canScheduleInterview(app)).toBeFalse();
   });
 
-  it('does not use the display fallback or legacy applicationStatus to allow planning', () => {
+  it('does not use the display fallback to allow planning', () => {
     const app = {
       id: 10,
       campaignId: 7,
@@ -159,7 +157,6 @@ describe('ApplicationsComponent', () => {
       candidateEmail: 'ada@example.com',
       candidatePhone: '0102030405',
       candidateBirthDate: '1990-01-01',
-      applicationStatus: APPLICATION_STATUS.PRE_SCREEN_ACCEPTED,
       interviewDate: ''
     } as any;
 
@@ -181,7 +178,7 @@ describe('ApplicationsComponent', () => {
     expect(component.canScheduleInterview(app)).toBeFalse();
   });
 
-  it('derives the pending stat from the current runtime stage instead of only applicationStatus', () => {
+  it('derives the pending stat from the current runtime stage instead of only the legacy status', () => {
     component.campaignStagesMap.set({
       7: [{ id: 21, stageType: 'INTERVIEW', stageLabel: 'Entretien technique' } as any]
     });
@@ -198,8 +195,7 @@ describe('ApplicationsComponent', () => {
         candidateLastName: 'Lovelace',
         candidateEmail: 'ada@example.com',
         candidatePhone: '0102030405',
-        candidateBirthDate: '1990-01-01',
-        applicationStatus: APPLICATION_STATUS.SUBMITTED
+        candidateBirthDate: '1990-01-01'
       } as any,
       {
         id: 11,
@@ -208,8 +204,7 @@ describe('ApplicationsComponent', () => {
         candidateLastName: 'Hopper',
         candidateEmail: 'grace@example.com',
         candidatePhone: '0102030405',
-        candidateBirthDate: '1990-01-01',
-        applicationStatus: APPLICATION_STATUS.PENDING
+        candidateBirthDate: '1990-01-01'
       } as any
     ]);
 
@@ -226,8 +221,7 @@ describe('ApplicationsComponent', () => {
       candidateLastName: 'Lovelace',
       candidateEmail: 'ada@example.com',
       candidatePhone: '0102030405',
-      candidateBirthDate: '1990-01-01',
-      applicationStatus: APPLICATION_STATUS.PENDING
+      candidateBirthDate: '1990-01-01'
     } as any;
 
     component.applicationProgressMap.set({

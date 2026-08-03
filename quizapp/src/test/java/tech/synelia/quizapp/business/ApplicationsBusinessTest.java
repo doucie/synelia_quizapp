@@ -186,7 +186,6 @@ class ApplicationsBusinessTest {
 	void syncApplicationQuizSummaryFromAttempt_recomputesDerivedStatusFromProgress() throws Exception {
 		Applications application = new Applications();
 		application.setId(15);
-		application.setApplicationStatus("PENDING");
 
 		ApplicationQuizAttempt quizAttempt = new ApplicationQuizAttempt();
 		quizAttempt.setId(902);
@@ -211,10 +210,49 @@ class ApplicationsBusinessTest {
 
 		method.invoke(applicationsBusiness, application, quizAttempt, 77);
 
-		assertThat(application.getApplicationStatus()).isEqualTo("PENDING");
 		assertThat(application.getAggregatedQuizScore()).isEqualTo(14.0d);
 		assertThat(application.getAggregatedQuizScorePercent()).isEqualTo(70.0d);
 		verify(applicationProgressBusiness).syncApplicationStatus(15);
+	}
+
+	@Test
+	void resolveTrackedApplicationStatus_derivesFromMirrors() throws Exception {
+		Method method = ApplicationsBusiness.class.getDeclaredMethod(
+				"resolveTrackedApplicationStatus",
+				Applications.class);
+		method.setAccessible(true);
+
+		Applications withdrawn = new Applications();
+		withdrawn.setApplicationAbandoned(true);
+		withdrawn.setCurrentPipelineProgressStatus("PENDING");
+		assertThat(method.invoke(applicationsBusiness, withdrawn)).isEqualTo("WITHDRAWN");
+
+		Applications accepted = new Applications();
+		accepted.setCurrentFinalDecisionType("FINAL_ACCEPTED");
+		assertThat(method.invoke(applicationsBusiness, accepted)).isEqualTo("ACCEPTED");
+
+		Applications rejectedByFinal = new Applications();
+		rejectedByFinal.setCurrentFinalDecisionType("FINAL_REJECTED");
+		assertThat(method.invoke(applicationsBusiness, rejectedByFinal)).isEqualTo("REJECTED");
+
+		Applications rejectedByPreScreen = new Applications();
+		rejectedByPreScreen.setCurrentPreselectionDecisionType("PRE_SCREEN_REJECTED");
+		assertThat(method.invoke(applicationsBusiness, rejectedByPreScreen)).isEqualTo("REJECTED");
+
+		Applications archivedRejection = new Applications();
+		archivedRejection.setCurrentPreselectionDecisionType("PRE_SCREEN_REJECTED_ARCHIVED");
+		assertThat(method.invoke(applicationsBusiness, archivedRejection)).isEqualTo("REJECTED");
+
+		Applications newApplication = new Applications();
+		assertThat(method.invoke(applicationsBusiness, newApplication)).isEqualTo("NEW");
+
+		Applications pending = new Applications();
+		pending.setCurrentPipelineProgressStatus("PENDING");
+		assertThat(method.invoke(applicationsBusiness, pending)).isEqualTo("NEW");
+
+		Applications inProgress = new Applications();
+		inProgress.setCurrentPipelineProgressStatus("IN_PROGRESS");
+		assertThat(method.invoke(applicationsBusiness, inProgress)).isEqualTo("IN_PROGRESS");
 	}
 
 	@Test
@@ -222,7 +260,6 @@ class ApplicationsBusinessTest {
 		Applications existingApplication = new Applications();
 		existingApplication.setId(15);
 		existingApplication.setCandidateFirstName("Grace");
-		existingApplication.setApplicationStatus("PENDING");
 		existingApplication.setAggregatedQuizScore(12.0d);
 		existingApplication.setTotalEvaluationScore(45.0f);
 		existingApplication.setTotalEvaluationNumber(2);
@@ -231,7 +268,6 @@ class ApplicationsBusinessTest {
 		ApplicationsDto dto = new ApplicationsDto();
 		dto.setId(15);
 		dto.setCandidateFirstName("Ada");
-		dto.setApplicationStatus("FORCED_STATUS");
 		dto.setAggregatedQuizScore(99.0d);
 		dto.setTotalEvaluationScore(88.0f);
 		dto.setTotalEvaluationNumber(5);
@@ -256,7 +292,6 @@ class ApplicationsBusinessTest {
 
 		assertThat(response.isHasError()).isFalse();
 		assertThat(existingApplication.getCandidateFirstName()).isEqualTo("Ada");
-		assertThat(existingApplication.getApplicationStatus()).isEqualTo("PENDING");
 		assertThat(existingApplication.getAggregatedQuizScore()).isEqualTo(12.0d);
 		assertThat(existingApplication.getTotalEvaluationScore()).isEqualTo(45.0f);
 		assertThat(existingApplication.getTotalEvaluationNumber()).isEqualTo(2);
@@ -270,7 +305,6 @@ class ApplicationsBusinessTest {
 		dto.setCandidateLastName("Lovelace");
 		dto.setCandidateEmail("ada.lovelace@example.test");
 		dto.setCandidatePhone("0102030405");
-		dto.setApplicationStatus("FORCED_STATUS");
 		dto.setAggregatedQuizScore(99.0d);
 		dto.setTotalEvaluationScore(88.0f);
 		dto.setTotalEvaluationNumber(5);
@@ -303,7 +337,6 @@ class ApplicationsBusinessTest {
 		assertThat(response.isHasError()).isFalse();
 		assertThat(capturedSavedItems).hasSize(1);
 		Applications savedApplication = capturedSavedItems.get(0);
-		assertThat(savedApplication.getApplicationStatus()).isNull();
 		assertThat(savedApplication.getAggregatedQuizScore()).isNull();
 		assertThat(savedApplication.getTotalEvaluationScore()).isNull();
 		assertThat(savedApplication.getTotalEvaluationNumber()).isNull();
@@ -318,7 +351,6 @@ class ApplicationsBusinessTest {
 		application.setCandidateFirstName("Ada");
 		application.setCandidateLastName("Lovelace");
 		application.setCandidateEmail("ada.lovelace@example.test");
-		application.setApplicationStatus("PENDING");
 
 		CandidateToken candidateToken = new CandidateToken();
 		candidateToken.setApplications(application);
@@ -583,7 +615,6 @@ class ApplicationsBusinessTest {
 		application.setCandidateFirstName("Ada");
 		application.setCandidateLastName("Lovelace");
 		application.setCandidateEmail("ada.lovelace@example.test");
-		application.setApplicationStatus("PENDING");
 		application.setApplicationAbandoned(false);
 
 		Campaigns campaign = new Campaigns();
@@ -634,7 +665,7 @@ class ApplicationsBusinessTest {
 		assertThat(application.getApplicationAbandoned()).isEqualTo(true);
 
 		Map<String, Object> appData = (Map<String, Object>) response.get("application");
-		assertThat(appData.get("applicationStatus")).isEqualTo("WITHDRAWN");
+		assertThat(appData.get("trackedStatus")).isEqualTo("WITHDRAWN");
 		assertThat(appData.get("applicationAbandoned")).isEqualTo(true);
 		assertThat(appData.get("publicActionsLocked")).isEqualTo(true);
 		assertThat(appData.get("canWithdraw")).isEqualTo(false);

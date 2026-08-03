@@ -7,6 +7,7 @@
 package tech.synelia.quizapp.business;
 
 import lombok.extern.java.Log;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -179,7 +180,7 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
             entity.setIsDeleted(false);
 
             Decision saved = decisionRepository.save(entity);
-			updateApplicationStatus(saved, request.getUser(), locale, Boolean.TRUE.equals(dto.getSendDecisionEmail()));
+			synchronizeApplicationAfterDecision(saved, request.getUser(), locale, Boolean.TRUE.equals(dto.getSendDecisionEmail()));
             recordDecisionAuditEvent(
                     saved,
                     request.getUser(),
@@ -197,9 +198,9 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
     }
 
     /**
-     * Update application status based on decision
+     * Synchronize application pipeline and decision mirrors based on decision
      */
-    private void updateApplicationStatus(Decision decision, Integer actorUserId, Locale locale, boolean sendDecisionEmailRequested) {
+    private void synchronizeApplicationAfterDecision(Decision decision, Integer actorUserId, Locale locale, boolean sendDecisionEmailRequested) {
         if (decision.getApplication() != null && decision.getApplication().getId() != null) {
             // Fetch the full application entity
             Applications app = applicationsRepository.findOne(decision.getApplication().getId(), false);
@@ -223,7 +224,6 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
                     return;
                 }
 
-                syncApplicationStatusFromCurrentDecisions(latestApplication, decisionActorId);
                 syncApplicationCurrentDecisionSummaries(latestApplication, decisionActorId);
 				if (!Boolean.TRUE.equals(decision.getIsCancel())) {
 					sendDecisionEmailIfNeeded(latestApplication, decision, decisionActorId, locale, sendDecisionEmailRequested);
@@ -363,7 +363,7 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
             entity.setIsDeleted(false);
 
             Decision saved = decisionRepository.save(entity);
-            updateApplicationStatus(saved, request.getUser(), locale, Boolean.TRUE.equals(dto.getSendDecisionEmail()));
+			synchronizeApplicationAfterDecision(saved, request.getUser(), locale, Boolean.TRUE.equals(dto.getSendDecisionEmail()));
             recordDecisionAuditEvent(
                     saved,
                     request.getUser(),
@@ -723,28 +723,6 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
         return true;
     }
 
-    private void syncApplicationStatusFromCurrentDecisions(Applications application, Integer actorUserId) {
-        if (application == null || application.getId() == null) {
-            return;
-        }
-
-        List<Decision> decisions = decisionRepository.findByApplicationId(application.getId(), false);
-        Decision currentFinalDecision = selectCurrentFinalDecision(decisions);
-        Decision currentPreselection = selectCurrentPreselection(decisions);
-        String newStatus = currentFinalDecision != null
-                ? currentFinalDecision.getDecisionType()
-                : currentPreselection != null ? currentPreselection.getDecisionType() : "SUBMITTED";
-        if (Objects.equals(newStatus, application.getApplicationStatus())) {
-            return;
-        }
-
-        application.setApplicationStatus(newStatus);
-        application.setUpdatedAt(new Date());
-        application.setUpdatedBy(actorUserId);
-        applicationsRepository.save(application);
-        log.info("Updated application " + application.getId() + " status to " + newStatus);
-    }
-
     private void syncApplicationCurrentDecisionSummaries(Applications application, Integer actorUserId) {
         if (application == null || application.getId() == null) {
             return;
@@ -772,6 +750,19 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
         application.setUpdatedAt(new Date());
         application.setUpdatedBy(actorUserId);
         applicationsRepository.save(application);
+    }
+
+    private String resolveApplicationStatusMirror(Applications application) {
+        if (application == null) {
+            return null;
+        }
+        if (StringUtils.isNotBlank(application.getCurrentFinalDecisionType())) {
+            return application.getCurrentFinalDecisionType();
+        }
+        if (StringUtils.isNotBlank(application.getCurrentPreselectionDecisionType())) {
+            return application.getCurrentPreselectionDecisionType();
+        }
+        return application.getCurrentPipelineProgressStatus();
     }
 
     private Decision selectCurrentPreselection(List<Decision> decisions) {
@@ -1121,7 +1112,7 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
             vars.put("decision_type", decisionType.getValue());
             vars.put("decision_stage", decisionType.isPreScreen() ? "preselection" : "decision_finale");
             vars.put("decision_label", decisionType.isAccepted() ? "acceptee" : "refusee");
-            vars.put("application_status", application.getApplicationStatus());
+            vars.put("application_status", resolveApplicationStatusMirror(application));
             vars.put("app_link", paramsUtils.getUrlAppl());
 
             String subject = emailTemplateBusiness.renderSubjectTemplate(emailTemplate, vars);

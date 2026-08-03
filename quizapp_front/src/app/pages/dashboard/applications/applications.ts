@@ -14,7 +14,7 @@ import { ClickOutsideDirective } from '../../../directives/click-outside.directi
 import { PipelineStageService } from '../../../core/services/pipeline-stage.service';
 import { ApplicationProgressService } from '../../../core/services/application-progress.service';
 import { PipelineStage, ApplicationProgress } from '../../../core/models/pipeline.interfaces';
-import { APPLICATION_STATUS, getApplicationStatusLabel, isRejectedStatus } from '../../../core/constants/application-status.constants';
+import { APPLICATION_STATUS, getApplicationStatusLabel, isRejectedStatus, resolveApplicationStatusFromMirrors } from '../../../core/constants/application-status.constants';
 import { FilterCheckboxComponent } from '../../../shared/filter-checkbox/filter-checkbox';
 import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../shared/filter-select/filter-select';
 
@@ -895,34 +895,34 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
 
   /**
    * Obtient le statut d'une étape de progression (legacy/fallback)
-   * @param applicationStatus Le statut de la candidature
+   * @param status Le statut de la candidature
    * @param step Numéro de l'étape (1: Candidature, 2: Pré-sélection, 3: Final)
    * @returns 'pending' | 'active' | 'completed' | 'rejected' | 'archived'
    */
-  getStepStatus(applicationStatus: string = 'PENDING', step: number): string {
-    const status = applicationStatus.toUpperCase();
+  getStepStatus(status: string = 'PENDING', step: number): string {
+    const normalizedStatus = status.toUpperCase();
     
     // Étape 1: Candidature (PENDING → SUBMITTED)
     if (step === 1) {
-      if (status === APPLICATION_STATUS.PENDING) return 'active';
-      if (status === APPLICATION_STATUS.PENDING_ARCHIVED) return 'archived';
+      if (normalizedStatus === APPLICATION_STATUS.PENDING) return 'active';
+      if (normalizedStatus === APPLICATION_STATUS.PENDING_ARCHIVED) return 'archived';
       return 'completed';
     }
     
     // Étape 2: Pré-sélection (PRE_SCREEN)
     if (step === 2) {
-      if (status === APPLICATION_STATUS.PENDING || status === APPLICATION_STATUS.PENDING_ARCHIVED) return 'pending';
-      if (status === APPLICATION_STATUS.SUBMITTED) return 'active';
-      if (status.startsWith('PRE_SCREEN_REJECTED')) return 'rejected';
-      if (status === APPLICATION_STATUS.PRE_SCREEN_ACCEPTED || status.startsWith('FINAL_')) return 'completed';
+      if (normalizedStatus === APPLICATION_STATUS.PENDING || normalizedStatus === APPLICATION_STATUS.PENDING_ARCHIVED) return 'pending';
+      if (normalizedStatus === APPLICATION_STATUS.SUBMITTED) return 'active';
+      if (normalizedStatus.startsWith('PRE_SCREEN_REJECTED')) return 'rejected';
+      if (normalizedStatus === APPLICATION_STATUS.PRE_SCREEN_ACCEPTED || normalizedStatus.startsWith('FINAL_')) return 'completed';
       return 'pending';
     }
     
     // Étape 3: Final (FINAL_ACCEPTED / FINAL_REJECTED)
     if (step === 3) {
-      if (!status.startsWith('FINAL_')) return 'pending';
-      if (status.startsWith('FINAL_ACCEPTED')) return 'completed';
-      if (status.startsWith('FINAL_REJECTED')) return 'rejected';
+      if (!normalizedStatus.startsWith('FINAL_')) return 'pending';
+      if (normalizedStatus.startsWith('FINAL_ACCEPTED')) return 'completed';
+      if (normalizedStatus.startsWith('FINAL_REJECTED')) return 'rejected';
       return 'pending';
     }
     
@@ -931,42 +931,42 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
 
   /**
    * Obtient le texte du tooltip pour une étape de progression
-   * @param applicationStatus Le statut de la candidature
+   * @param status Le statut de la candidature
    * @param step Numéro de l'étape (1: Candidature, 2: Pré-sélection, 3: Final)
    * @returns Le texte descriptif du tooltip
    */
-  getStepTooltip(applicationStatus: string = 'PENDING', step: number): string {
-    const status = applicationStatus.toUpperCase();
+  getStepTooltip(status: string = 'PENDING', step: number): string {
+    const normalizedStatus = status.toUpperCase();
     
     // Étape 1: Candidature
     if (step === 1) {
-      if (status === APPLICATION_STATUS.PENDING) return 'Candidature en attente d\'envoi';
-      if (status === APPLICATION_STATUS.PENDING_ARCHIVED) return 'Candidature archivée (non envoyée)';
+      if (normalizedStatus === APPLICATION_STATUS.PENDING) return 'Candidature en attente d\'envoi';
+      if (normalizedStatus === APPLICATION_STATUS.PENDING_ARCHIVED) return 'Candidature archivée (non envoyée)';
       return 'Candidature envoyée';
     }
     
     // Étape 2: Pré-sélection
     if (step === 2) {
-      if (status === APPLICATION_STATUS.PENDING || status === APPLICATION_STATUS.PENDING_ARCHIVED) 
+      if (normalizedStatus === APPLICATION_STATUS.PENDING || normalizedStatus === APPLICATION_STATUS.PENDING_ARCHIVED) 
         return 'Pré-sélection : en attente d\'envoi de candidature';
-      if (status === APPLICATION_STATUS.SUBMITTED) return 'Pré-sélection en cours';
-      if (status === APPLICATION_STATUS.PRE_SCREEN_ACCEPTED) return 'Pré-sélection acceptée';
-      if (status === APPLICATION_STATUS.PRE_SCREEN_REJECTED) return 'Pré-sélection refusée';
-      if (status === APPLICATION_STATUS.PRE_SCREEN_REJECTED_ARCHIVED) return 'Pré-sélection refusée (archivé)';
-      if (status.startsWith('FINAL_ACCEPTED')) return 'Pré-sélection acceptée';
+      if (normalizedStatus === APPLICATION_STATUS.SUBMITTED) return 'Pré-sélection en cours';
+      if (normalizedStatus === APPLICATION_STATUS.PRE_SCREEN_ACCEPTED) return 'Pré-sélection acceptée';
+      if (normalizedStatus === APPLICATION_STATUS.PRE_SCREEN_REJECTED) return 'Pré-sélection refusée';
+      if (normalizedStatus === APPLICATION_STATUS.PRE_SCREEN_REJECTED_ARCHIVED) return 'Pré-sélection refusée (archivé)';
+      if (normalizedStatus.startsWith('FINAL_ACCEPTED')) return 'Pré-sélection acceptée';
       return 'Pré-sélection en attente';
     }
     
     // Étape 3: Final
     if (step === 3) {
-      if (status === APPLICATION_STATUS.PENDING || status === APPLICATION_STATUS.PENDING_ARCHIVED || status === APPLICATION_STATUS.SUBMITTED || 
-          status.startsWith('PRE_SCREEN_REJECTED')) 
+      if (normalizedStatus === APPLICATION_STATUS.PENDING || normalizedStatus === APPLICATION_STATUS.PENDING_ARCHIVED || normalizedStatus === APPLICATION_STATUS.SUBMITTED || 
+          normalizedStatus.startsWith('PRE_SCREEN_REJECTED')) 
         return 'Décision finale : en attente de pré-sélection';
-      if (status === APPLICATION_STATUS.PRE_SCREEN_ACCEPTED) return 'Décision finale en attente';
-      if (status === APPLICATION_STATUS.FINAL_ACCEPTED) return 'Candidature acceptée ✓';
-      if (status === APPLICATION_STATUS.FINAL_ACCEPTED_ARCHIVED) return 'Candidature acceptée (archivé)';
-      if (status === APPLICATION_STATUS.FINAL_REJECTED) return 'Candidature refusée';
-      if (status === APPLICATION_STATUS.FINAL_REJECTED_ARCHIVED) return 'Candidature refusée (archivé)';
+      if (normalizedStatus === APPLICATION_STATUS.PRE_SCREEN_ACCEPTED) return 'Décision finale en attente';
+      if (normalizedStatus === APPLICATION_STATUS.FINAL_ACCEPTED) return 'Candidature acceptée ✓';
+      if (normalizedStatus === APPLICATION_STATUS.FINAL_ACCEPTED_ARCHIVED) return 'Candidature acceptée (archivé)';
+      if (normalizedStatus === APPLICATION_STATUS.FINAL_REJECTED) return 'Candidature refusée';
+      if (normalizedStatus === APPLICATION_STATUS.FINAL_REJECTED_ARCHIVED) return 'Candidature refusée (archivé)';
       return 'Décision finale en attente';
     }
     
@@ -1283,7 +1283,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   getFallbackPipelineStepStatus(app: ApplicationWithCampaign, step: number): string {
     const progresses = this.getSortedProgressesForFallback(app);
     if (progresses.length === 0) {
-      return this.getStepStatus(app.applicationStatus, step);
+      return this.getStepStatus(resolveApplicationStatusFromMirrors(app), step);
     }
 
     const lastIndex = progresses.length - 1;
@@ -1299,7 +1299,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   getFallbackPipelineLabel(app: ApplicationWithCampaign): string {
     const progresses = this.getSortedProgressesForFallback(app);
     if (progresses.length === 0) {
-      return this.getLegacyStageLabel(app.applicationStatus);
+      return this.getLegacyStageLabel(resolveApplicationStatusFromMirrors(app));
     }
 
     const currentProgress = progresses.find(progress => {
@@ -1320,7 +1320,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       return 'Refusé';
     }
 
-    return this.getProgressStageLabel(lastProgress) || this.getLegacyStageLabel(app.applicationStatus);
+    return this.getProgressStageLabel(lastProgress) || this.getLegacyStageLabel(resolveApplicationStatusFromMirrors(app));
   }
 
   isApplicationPendingInCurrentRound(app: ApplicationWithCampaign): boolean {
@@ -1329,7 +1329,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       return this.getDynamicStepStatus(app, currentStage.id) === 'pending';
     }
 
-    return app.applicationStatus === APPLICATION_STATUS.PENDING || !app.applicationStatus;
+    return resolveApplicationStatusFromMirrors(app) === 'PENDING';
   }
 
   getCurrentQuizStatus(app: ApplicationWithCampaign): string {

@@ -889,72 +889,11 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
     }
 
     /**
-     * Calculer le statut global d'une candidature depuis le progrès du pipeline.
-     * Retourne un statut compatible avec applicationStatus existant.
-     */
-    public String computeApplicationStatus(Integer applicationId) {
-        List<ApplicationProgress> progress = applicationProgressRepository.findByApplicationIdOrderByStageOrder(applicationId);
-        if (progress == null || progress.isEmpty()) return "PENDING";
-
-        String currentStageType = null;
-        boolean hasTerminalFailure = false;
-        String failureStageType = null;
-        boolean allStagesResolved = true;
-        boolean hasStarted = false;
-        boolean preselectionPassed = false;
-
-        for (ApplicationProgress ap : progress) {
-            String pStatus = ap.getProgressStatus();
-            PipelineStage stage = ap.getPipelineStage();
-            String sType = stage != null ? stage.getStageType() : null;
-
-            if (hasProgressStatus(pStatus, ProgressStatus.IN_PROGRESS)) {
-                currentStageType = sType;
-                hasStarted = true;
-            }
-            if (hasProgressStatus(pStatus, ProgressStatus.PASSED)
-                    || hasProgressStatus(pStatus, ProgressStatus.FAILED)
-                    || hasProgressStatus(pStatus, ProgressStatus.SKIPPED)) {
-                hasStarted = true;
-            }
-            if (hasProgressStatus(pStatus, ProgressStatus.PASSED)
-                    && StageType.PRESELECTION.getValue().equals(sType)) {
-                preselectionPassed = true;
-            }
-            if (!isResolvedStatus(pStatus)) {
-                allStagesResolved = false;
-            }
-            if (hasProgressStatus(pStatus, ProgressStatus.FAILED) && isTerminalFailure(stage)) {
-                hasTerminalFailure = true;
-                failureStageType = sType;
-            }
-        }
-
-        if (hasTerminalFailure) {
-            if (StageType.DECISION.getValue().equals(failureStageType)) return "FINAL_REJECTED";
-            if (StageType.PRESELECTION.getValue().equals(failureStageType)) return "PRE_SCREEN_REJECTED";
-            return "PRE_SCREEN_REJECTED";
-        }
-
-        if (allStagesResolved) return "FINAL_ACCEPTED";
-
-        if (preselectionPassed) return "PRE_SCREEN_ACCEPTED";
-
-        if (StageType.INTERVIEW.getValue().equals(currentStageType) || StageType.EVALUATION.getValue().equals(currentStageType)) {
-            return "INTERVIEWING";
-        }
-
-        if (hasStarted) return "SUBMITTED";
-
-        return "PENDING";
-    }
-
-    /**
-     * Synchronise applicationStatus depuis le progrès du pipeline.
+     * Synchronise les miroirs de résumé du pipeline (current_pipeline_*).
      * Appelé automatiquement après chaque changement de progrès.
+     * Le statut candidat global n'est plus persisté (dérivé à la lecture depuis les miroirs).
      */
     public void syncApplicationStatus(Integer applicationId) {
-        String newStatus = computeApplicationStatus(applicationId);
         ApplicationProgress currentStage = resolveCurrentStageProgress(applicationId);
         Applications app = applicationsRepository.findOne(applicationId, false);
         if (app == null) {
@@ -969,24 +908,17 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
                 : null;
         String currentStageProgressStatus = currentStage != null ? currentStage.getProgressStatus() : null;
 
-        boolean statusChanged = !Objects.equals(newStatus, app.getApplicationStatus());
         boolean stageSummaryChanged = !Objects.equals(currentStageType, app.getCurrentPipelineStageType())
                 || !Objects.equals(currentStageLabel, app.getCurrentPipelineStageLabel())
                 || !Objects.equals(currentStageProgressStatus, app.getCurrentPipelineProgressStatus());
 
-        if (statusChanged) {
-            app.setApplicationStatus(newStatus);
-        }
         if (stageSummaryChanged) {
             app.setCurrentPipelineStageType(currentStageType);
             app.setCurrentPipelineStageLabel(currentStageLabel);
             app.setCurrentPipelineProgressStatus(currentStageProgressStatus);
-        }
-
-        if (statusChanged || stageSummaryChanged) {
             app.setUpdatedAt(Utilities.getCurrentDate());
             applicationsRepository.save(app);
-            log.info("syncApplicationStatus: application " + applicationId + " → status=" + newStatus + ", stage=" + currentStageType + "/" + currentStageProgressStatus);
+            log.info("syncApplicationStatus: application " + applicationId + " → stage=" + currentStageType + "/" + currentStageProgressStatus);
         }
     }
 

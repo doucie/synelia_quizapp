@@ -29,7 +29,7 @@
           <h1 class="candidate-name">{{ candidateName() }}</h1>
           <div class="header-meta">
             <span class="meta-chip meta-chip--muted">#{{ app.id }}</span>
-            <span class="meta-chip" [class]="progressStatusClass(app.applicationStatus)">{{ statusLabel() }}</span>
+            <span class="meta-chip" [class]="statusClass()">{{ statusLabel() }}</span>
             @if (app.applicationAbandoned) {
               <span class="meta-chip badge-error">Candidature retirée</span>
             }

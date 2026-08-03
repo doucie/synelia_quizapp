@@ -11,7 +11,6 @@ import { EntityPermissionService } from '../../../core/services/entity-permissio
 import { EntityPermission } from '../../../core/models/permission.interfaces';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
-import { APPLICATION_STATUS } from '../../../core/constants/application-status.constants';
 import { CandidateInterviewEntityService } from '../../../core/services/candidate-interview-entity.service';
 import { InterviewParticipant, InterviewParticipantService } from '../../../core/services/interview-participant.service';
 import { FilterCheckboxComponent } from '../../../shared/filter-checkbox/filter-checkbox';
@@ -146,11 +145,16 @@ export class InterviewsComponent implements OnInit, OnDestroy {
    * Computed - Applications éligibles pour un entretien
    */
   eligibleApplications = computed(() => {
-    return this.applications().filter(app => 
-      app.applicationStatus === APPLICATION_STATUS.PRE_SCREEN_ACCEPTED || 
-      app.applicationStatus === APPLICATION_STATUS.INTERVIEWING
-    );
+    return this.applications().filter(app => this.isEligibleForInterview(app));
   });
+
+  private isEligibleForInterview(app: Application): boolean {
+    const preselection = (app.currentPreselectionDecisionType || '').toUpperCase();
+    if (preselection.startsWith('PRE_SCREEN_ACCEPTED')) {
+      return true;
+    }
+    return (app.currentPipelineStageType || '').toUpperCase() === 'INTERVIEW';
+  }
 
   /**
    * Charge toutes les données

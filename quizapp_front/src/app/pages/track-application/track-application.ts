@@ -35,7 +35,7 @@ interface TrackingApplication {
   candidateLastName: string;
   candidateEmail: string;
   trackingCode?: string | null;
-  applicationStatus: string;
+  trackedStatus: string;
   quizStatus: string;
   applicationAbandoned?: boolean;
   publicActionsLocked?: boolean;

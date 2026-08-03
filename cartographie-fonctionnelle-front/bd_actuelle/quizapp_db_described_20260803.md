@@ -108,7 +108,6 @@ ORDER BY
 | applications | total_evaluation_score | float | YES |  | \N | 
 | applications | total_evaluation_number | int | YES |  | \N | 
 | applications | total_evaluation_percentage | double | YES |  | \N | 
-| applications | application_status | varchar(50) | YES |  | \N | 
 | applications | interview_date | datetime | YES |  | \N | 
 | applications | interview_status | varchar(20) | YES |  | \N | 
 | applications | current_interview_evaluation_score | int | YES |  | \N | 

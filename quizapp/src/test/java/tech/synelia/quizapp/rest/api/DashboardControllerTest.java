@@ -205,7 +205,6 @@ class DashboardControllerTest {
 		Applications app = new Applications();
 		app.setId(id);
 		app.setCandidateEmail("candidate" + id + "@example.test");
-		app.setApplicationStatus("PENDING");
 		app.setAggregatedQuizScorePercent(aggregatedScorePercent);
 		app.setCreatedAt(new Date());
 		app.setIsDeleted(false);

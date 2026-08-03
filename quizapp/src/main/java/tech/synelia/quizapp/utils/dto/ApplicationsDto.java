@@ -45,7 +45,6 @@ public class ApplicationsDto extends _ApplicationsDto implements Cloneable{
     private Float      totalEvaluationScore ;
     private Integer    totalEvaluationNumber ;
     private Double     totalEvaluationPercentage ;
-    private String     applicationStatus    ;
     private Double     aggregatedQuizScore  ;
     private Double     aggregatedQuizScorePercent ;
     private String     interviewDate        ;
@@ -99,7 +98,6 @@ public class ApplicationsDto extends _ApplicationsDto implements Cloneable{
 	private SearchParam<Float>    totalEvaluationScoreParam ;                     
 	private SearchParam<Integer>  totalEvaluationNumberParam ;                     
 	private SearchParam<Double>   totalEvaluationPercentageParam ;                     
-	private SearchParam<String>   applicationStatusParam;                     
 	private SearchParam<Double>   aggregatedQuizScoreParam;                     
 	private SearchParam<Double>   aggregatedQuizScorePercentParam;                     
 	private SearchParam<String>   interviewDateParam    ;                     

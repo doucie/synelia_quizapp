@@ -89,7 +89,6 @@ public interface ApplicationsTransformer {
 		@Mapping(target="totalEvaluationPercentage", ignore=true),
 		@Mapping(target="aggregatedQuizScore", ignore=true),
 		@Mapping(target="aggregatedQuizScorePercent", ignore=true),
-		@Mapping(target="applicationStatus", ignore=true),
 		@Mapping(target="createdAt", ignore=true), // Backend sets this
 		@Mapping(source="dto.createdBy", target="createdBy"),
 		@Mapping(target="updatedAt", ignore=true), // Backend sets this

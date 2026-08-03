@@ -105,15 +105,6 @@ public interface ApplicationsRepository extends JpaRepository<Applications, Inte
 	@Query("select e from Applications e where e.totalEvaluationScore = :totalEvaluationScore and e.isDeleted = :isDeleted")
 	List<Applications> findByTotalEvaluationScore(@Param("totalEvaluationScore")Float totalEvaluationScore, @Param("isDeleted")Boolean isDeleted);
 	/**
-	 * Finds Applications by using applicationStatus as a search criteria.
-	 * 
-	 * @param applicationStatus
-	 * @return An Object Applications whose applicationStatus is equals to the given applicationStatus. If
-	 *         no Applications is found, this method returns null.
-	 */
-	@Query("select e from Applications e where e.applicationStatus = :applicationStatus and e.isDeleted = :isDeleted")
-	List<Applications> findByApplicationStatus(@Param("applicationStatus")String applicationStatus, @Param("isDeleted")Boolean isDeleted);
-	/**
 	 * Finds Applications by using createdAt as a search criteria.
 	 * 
 	 * @param createdAt
@@ -392,9 +383,6 @@ public interface ApplicationsRepository extends JpaRepository<Applications, Inte
 			}
 			if (dto.getTotalEvaluationPercentage()!= null && dto.getTotalEvaluationPercentage() > 0) {
 				listOfQuery.add(CriteriaUtils.generateCriteria("totalEvaluationPercentage", dto.getTotalEvaluationPercentage(), "e.totalEvaluationPercentage", "Double", dto.getTotalEvaluationPercentageParam(), param, index, locale));
-			}
-			if (Utilities.notBlank(dto.getApplicationStatus())) {
-				listOfQuery.add(CriteriaUtils.generateCriteria("applicationStatus", dto.getApplicationStatus(), "e.applicationStatus", "String", dto.getApplicationStatusParam(), param, index, locale));
 			}
 			if (Utilities.notBlank(dto.getCreatedAt())) {
 				listOfQuery.add(CriteriaUtils.generateCriteria("createdAt", dto.getCreatedAt(), "e.createdAt", "Date", dto.getCreatedAtParam(), param, index, locale));

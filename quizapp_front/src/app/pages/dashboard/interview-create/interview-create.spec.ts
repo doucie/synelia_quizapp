@@ -60,7 +60,6 @@ describe('InterviewCreateComponent', () => {
           candidateEmail: 'ada@example.com',
           candidatePhone: '0102030405',
           candidateBirthDate: '1815-12-10',
-          applicationStatus: 'FINAL_ACCEPTED',
           currentPipelineStageType: 'INTERVIEW',
           currentPipelineProgressStatus: 'PENDING',
           interviewDate: ''
@@ -73,7 +72,6 @@ describe('InterviewCreateComponent', () => {
           candidateEmail: 'grace@example.com',
           candidatePhone: '0607080910',
           candidateBirthDate: '1906-12-09',
-          applicationStatus: 'PRE_SCREEN_ACCEPTED',
           currentPipelineStageType: 'PRESELECTION',
           currentPipelineProgressStatus: 'IN_PROGRESS',
           interviewDate: ''
@@ -86,7 +84,7 @@ describe('InterviewCreateComponent', () => {
           candidateEmail: 'katherine@example.com',
           candidatePhone: '1112131415',
           candidateBirthDate: '1918-08-26',
-          applicationStatus: 'PRE_SCREEN_ACCEPTED',
+          currentPreselectionDecisionType: 'PRE_SCREEN_ACCEPTED',
           interviewDate: ''
         }
       ]
@@ -129,7 +127,7 @@ describe('InterviewCreateComponent', () => {
     fixture.destroy();
   });
 
-  it('prefers the current interview runtime stage over legacy applicationStatus for eligibility and route prefill', () => {
+  it('prefers the current interview runtime stage over the legacy status for eligibility and route prefill', () => {
     expect(component.eligibleApplications().map(app => app.id)).toEqual([12, 14]);
     expect(component.formData().selectedCandidates).toEqual([12]);
 

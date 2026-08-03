@@ -24,6 +24,7 @@ import { PermissionService } from '../../../../../core/services/permission.servi
 import { SourceTokenService, SourceToken, SourceTokenResponse } from '../../../../../services/source-token.service';
 import { FormVersionService, FormVersion } from '../../../../../core/services/form-version.service';
 import { getManualCorrectionStatusClass, getManualCorrectionStatusLabel, ManualCorrectionStatus } from '../../../../../core/constants/manual-correction-status.constants';
+import { resolveApplicationStatusFromMirrors } from '../../../../../core/constants/application-status.constants';
 import {
   formatEvaluationItemValue as formatEvaluationItemDisplayValue,
   getEvaluationItemLabel as getEvaluationItemDisplayLabel,
@@ -222,7 +223,8 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
       'FINAL_ACCEPTED': 'Accepté',
       'FINAL_ACCEPTED_ARCHIVED': 'Accepté (archivé)',
       'FINAL_REJECTED': 'Rejeté',
-      'FINAL_REJECTED_ARCHIVED': 'Rejeté (archivé)'
+      'FINAL_REJECTED_ARCHIVED': 'Rejeté (archivé)',
+      'WITHDRAWN': 'Retiré'
     };
     return labels[status] || status;
   }
@@ -240,7 +242,8 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
       'FINAL_ACCEPTED': 'status-final-accepted',
       'FINAL_ACCEPTED_ARCHIVED': 'status-final-accepted-archived',
       'FINAL_REJECTED': 'status-final-rejected',
-      'FINAL_REJECTED_ARCHIVED': 'status-final-rejected-archived'
+      'FINAL_REJECTED_ARCHIVED': 'status-final-rejected-archived',
+      'WITHDRAWN': 'status-withdrawn'
     };
     return classes[status] || '';
   }
@@ -277,7 +280,7 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
       return this.getCurrentPipelineStageLabel(application) || 'Décision finale';
     }
 
-    return this.getStatusLabel(application.applicationStatus);
+    return this.getStatusLabel(resolveApplicationStatusFromMirrors(application));
   }
 
   getDisplayStatusClass(application?: Application | null): string {
@@ -308,7 +311,7 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
       return 'status-submitted';
     }
 
-    return this.getStatusClass(application.applicationStatus);
+    return this.getStatusClass(resolveApplicationStatusFromMirrors(application));
   }
 
   getManualCorrectionStatusLabel(status: ManualCorrectionStatus | string | undefined): string {

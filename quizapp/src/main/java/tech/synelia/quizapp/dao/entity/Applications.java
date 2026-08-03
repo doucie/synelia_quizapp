@@ -83,9 +83,6 @@ public class Applications implements Serializable, Cloneable {
     @Column(name="total_evaluation_percentage")
     private Double     totalEvaluationPercentage ;
 
-    @Column(name="application_status", length=50)
-    private String     applicationStatus ;
-
     @Column(name="aggregated_quiz_score")
     private Double     aggregatedQuizScore ;
 

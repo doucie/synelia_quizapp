@@ -13,7 +13,6 @@ import { PermissionService } from '../../../core/services/permission.service';
 import { SourceTokenService, SourceToken } from '../../../services/source-token.service';
 import { InterviewParticipantService, InterviewParticipant } from '../../../core/services/interview-participant.service';
 import { EntityPermission } from '../../../core/models/permission.interfaces';
-import { APPLICATION_STATUS } from '../../../core/constants/application-status.constants';
 import { FilterCheckboxComponent } from '../../../shared/filter-checkbox/filter-checkbox';
 import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../shared/filter-select/filter-select';
 
@@ -410,7 +409,7 @@ L'équipe de recrutement
       return this.getPipelineStageTypeLabel(app.currentPipelineStageType);
     }
 
-    if (app.applicationStatus === APPLICATION_STATUS.PRE_SCREEN_ACCEPTED) {
+    if (this.isPreselectionAccepted(app)) {
       return 'Pré-sélection acceptée';
     }
 
@@ -422,7 +421,7 @@ L'équipe de recrutement
       return this.getPipelineProgressStatusLabel(app.currentPipelineProgressStatus);
     }
 
-    if (app.applicationStatus === APPLICATION_STATUS.PRE_SCREEN_ACCEPTED) {
+    if (this.isPreselectionAccepted(app)) {
       return 'Fallback legacy';
     }
 
@@ -434,11 +433,15 @@ L'équipe de recrutement
       return this.getPipelineProgressStatusClass(app.currentPipelineProgressStatus);
     }
 
-    if (app.applicationStatus === APPLICATION_STATUS.PRE_SCREEN_ACCEPTED) {
+    if (this.isPreselectionAccepted(app)) {
       return 'pipeline-progress-legacy';
     }
 
     return '';
+  }
+
+  private isPreselectionAccepted(app: Application): boolean {
+    return (app.currentPreselectionDecisionType || '').toUpperCase().startsWith('PRE_SCREEN_ACCEPTED');
   }
 
   private isInterviewEligibleApplication(app: Application): boolean {
@@ -454,7 +457,7 @@ L'équipe de recrutement
       return isCurrentInterviewStage && isSchedulableStatus && !hasCurrentInterview;
     }
 
-    return app.applicationStatus === APPLICATION_STATUS.PRE_SCREEN_ACCEPTED;
+    return this.isPreselectionAccepted(app);
   }
 
   private hasCurrentPipelineStageSummary(app: Application): boolean {

@@ -289,15 +289,14 @@ describe('EntitiesApplicationsComponent', () => {
     });
 
     const application = {
-      id: 10,
-      applicationStatus: 'PRE_SCREEN_ACCEPTED'
+      id: 10
     } as any;
 
     expect(component.getDisplayStatusLabel(application)).toBe('Entretien technique');
     expect(component.getDisplayStatusClass(application)).toBe('status-interviewing');
   });
 
-  it('derives the display status from the runtime final decision before the legacy application status', () => {
+  it('derives the display status from the runtime final decision before the legacy status', () => {
     component.childDecisions.set({
       10: [{
         id: 903,
@@ -308,8 +307,7 @@ describe('EntitiesApplicationsComponent', () => {
     });
 
     const application = {
-      id: 10,
-      applicationStatus: 'INTERVIEWING'
+      id: 10
     } as any;
 
     expect(component.getDisplayStatusLabel(application)).toBe('Acceptée');

@@ -213,7 +213,6 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			// fieldsToVerify.put("emailVerified", dto.getEmailVerified());
 			// fieldsToVerify.put("quizScore", dto.getQuizScore());
 			// fieldsToVerify.put("evaluationScore", dto.getEvaluationScore());
-			// fieldsToVerify.put("applicationStatus", dto.getApplicationStatus());
 			// fieldsToVerify.put("visitToken", dto.getVisitToken());
 			// fieldsToVerify.put("searchString", dto.getSearchString());
 			// fieldsToVerify.put("sourceTokenId", dto.getSourceTokenId());
@@ -480,7 +479,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			if (dto.getEmailVerified() != null) {
 				entityToSave.setEmailVerified(dto.getEmailVerified());
 			}
-			// Quiz/evaluation aggregates and applicationStatus are derived runtime mirrors.
+			// Quiz/evaluation aggregates and status are derived runtime mirrors.
 			// visit_token is legacy and no longer drives candidate resume flows.
 			if (dto.getCreatedBy() != null && dto.getCreatedBy() > 0) {
 				entityToSave.setCreatedBy(dto.getCreatedBy());
@@ -2162,12 +2161,10 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			application = completeQuizInternal(application, quizAttempt, request.getUser(), locale);
 			
 			log.info("Quiz complété pour l'application " + applicationId + " - Score pondéré: " + (quizAttempt != null ? quizAttempt.getScore() : null) + " point(s), soit " + (quizAttempt != null ? quizAttempt.getScorePercent() : null) + "%");
-			log.info("Application status mis à jour: " + application.getApplicationStatus());
 			
 			// 5. Préparer la réponse
 			ApplicationsDto resultDto = new ApplicationsDto();
 			resultDto.setId(applicationId);
-			resultDto.setApplicationStatus(application.getApplicationStatus());
 			resultDto = getFullInfos(resultDto, 1, false, locale);
 			
 			Status status = new Status();
@@ -3343,7 +3340,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		appData.put("candidateFirstName", application.getCandidateFirstName());
 		appData.put("candidateLastName", application.getCandidateLastName());
 		appData.put("candidateEmail", application.getCandidateEmail());
-		appData.put("applicationStatus", resolveTrackedApplicationStatus(application));
+		appData.put("trackedStatus", resolveTrackedApplicationStatus(application));
 		ApplicationQuizAttempt trackedQuizAttempt = resolveLatestQuizAttempt(application.getId());
 		appData.put("quizStatus", trackedQuizAttempt != null ? trackedQuizAttempt.getQuizStatus() : null);
 		appData.put("applicationAbandoned", Boolean.TRUE.equals(application.getApplicationAbandoned()));
@@ -3422,17 +3419,33 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			return "WITHDRAWN";
 		}
 
-		String normalizedStatus = StringUtils.upperCase(StringUtils.trimToEmpty(application.getApplicationStatus()));
-		if (StringUtils.endsWith(normalizedStatus, "_ARCHIVED")) {
-			normalizedStatus = StringUtils.removeEnd(normalizedStatus, "_ARCHIVED");
+		String finalDecisionType = normalizeStatus(application.getCurrentFinalDecisionType());
+		if ("FINAL_ACCEPTED".equals(finalDecisionType)) {
+			return "ACCEPTED";
+		}
+		if ("FINAL_REJECTED".equals(finalDecisionType)) {
+			return "REJECTED";
 		}
 
-		return switch (normalizedStatus) {
-			case "", "PENDING" -> "NEW";
-			case "FINAL_ACCEPTED" -> "ACCEPTED";
-			case "PRE_SCREEN_REJECTED", "FINAL_REJECTED" -> "REJECTED";
-			default -> "IN_PROGRESS";
-		};
+		String preselectionDecisionType = normalizeStatus(application.getCurrentPreselectionDecisionType());
+		if ("PRE_SCREEN_REJECTED".equals(preselectionDecisionType)) {
+			return "REJECTED";
+		}
+
+		String progressStatus = normalizeStatus(application.getCurrentPipelineProgressStatus());
+		if (StringUtils.isBlank(progressStatus) || "PENDING".equals(progressStatus)) {
+			return "NEW";
+		}
+
+		return "IN_PROGRESS";
+	}
+
+	private String normalizeStatus(String status) {
+		String normalized = StringUtils.upperCase(StringUtils.trimToEmpty(status));
+		if (StringUtils.endsWith(normalized, "_ARCHIVED")) {
+			normalized = StringUtils.removeEnd(normalized, "_ARCHIVED");
+		}
+		return normalized;
 	}
 
 	@Transactional
