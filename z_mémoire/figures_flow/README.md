@@ -118,15 +118,36 @@ Les noms sont **anglicisés** dans le passage MCD → MPD (ex: `candidature` →
 | 27 | MPT | Candidature & Quiz (couche) | Vue en couches candidature/quiz |
 | 28 | MPT | Entretien & Décision (couche) | Vue en couches entretien/décision |
 
-> **Note** : Une réécriture des MCT est en cours. Les versions v2 (T0–T6)
-> sont définies dans `plans/nouveaux_mct.md` et disponibles dans
-> `src/diagrams/traitements/v2/`. Les MCT v1 (n° 17–24) sont conservés
-> tels quels à titre de référence.
+> **Note** : `plans/nouveaux_mct.md` est la **source de vérité** pour les MCT :
+> conventions Merise corrigées + parcours en 9 traitements (T0–T8). Les MCT v1
+> (n° 17–24) sont conservés tels quels à titre de référence.
+>
+> **MCT v2** : disponibles dans `src/diagrams/traitements/v2/`. Actuellement
+> **7 fichiers (T0–T6)** — version condensée (entretien regroupé en un seul
+> traitement). La version cible du plan (`nouveaux_mct.md`) détaille T0–T8
+> (planification / conduite / évaluation séparés). **Le code n'est pas encore
+> aligné sur le plan** — c'est un travail à faire.
 
 **Légende** :
 - **MCT** (Modèle Conceptuel de Traitement) : diagrammes événement/opération/ résultat décrivant les flux métier
 - **SAT** (Sous-traitance) : diagrammes de décomposition des sous-traites
 - **MPT** (Modèle Physique de Traitement) : diagrammes en couches montrant l'empilement technique
+
+## MOT : versions
+
+Il existe plusieurs versions du MOT (Modèle Organisationnel de Traitement) — seule la plus récente compte :
+
+| Version | Fichier | Statut |
+|---------|---------|--------|
+| **MOT v1** | `src/diagrams/mot/mot_organisationnel.ts` | **Ne sert à rien → à supprimer** |
+| **MOT v2** | `src/diagrams/mot/mot_organisationnel_v2.ts` | **À garder** — c'est en quelque sorte le « v1 » réel (matrice acteurs × traitements basée sur les MCT v1) |
+| **MOT v3** | — | **À créer** — nouveau MOT basé sur les **MCT v2** (pas le MOT v2) |
+
+> **Action à faire** : supprimer `mot_organisationnel.ts` (MOT v1).
+>
+> **Action à faire** : créer le MOT v3 à partir des MCT v2. Les MCT v2
+> (`src/diagrams/traitements/v2/`) doivent être intégrés dans ce **nouveau MOT v3**,
+> pas dans le MOT v2 existant.
 
 ## Types
 
@@ -252,3 +273,33 @@ Diagrammes de traitements :
 - **MCT** (Modèle Conceptuel de Traitement) : événements (losange), synchronisations (parallelogramme), opérations (rectangle), résultats (rectangle vert/rouge). Décrivent les flux métier par traitement (T1=Soumettre candidature, T2=Passer quiz, T3=Entretien/évaluation, T4=Décision/audit)
 - **SAT** (Sous-traitance) : décomposition des sous-traites en phases/tâches
 - **MPT** (Modèle Physique de Traitement) : vue en couches montrant l'empilement technique (front, API, BDD)
+
+## Couleurs : rotation SAFE_HUES
+
+Chaque diagramme reçoit ses couleurs via `applyEntityColors()` (`src/utils/entityColors.ts`), appelé dans `DiagramCanvas.tsx` avant le rendu. Deux régimes coexistent.
+
+### Entités (MCD / MLD / MPD) — rotation
+
+La palette de référence est la constante `SAFE_HUES` (`src/utils/entityColors.ts`) :
+
+```ts
+const SAFE_HUES = [15, 225, 330, 285, 0, 240, 345, 300, 210, 315, 15, 270, 30, 255, 335, 275]
+```
+
+La couleur est attribuée par **rotation** selon la **position du nœud dans le tableau `nodes`** du diagramme :
+
+```ts
+const hue = SAFE_HUES[i % SAFE_HUES.length]   // i = index du nœud dans diagram.nodes
+```
+
+- Le hue n'est pas une propriété de l'entité : **réordonner les `nodes` change les couleurs de tout le diagramme**.
+- Si le `label` du nœud commence par `hsl(`, ce hue est extrait et utilisé à la place de la rotation (cas des swatches de la palette).
+- Le résultat final est `hsl(hue, 100%, 40%)`, consommé par `EntityNode.tsx` (bordure, header, badges via déclinaisons `hsla`).
+
+### Process (MCT / SAT / MPT) — pas de rotation
+
+Les variantes de traitements utilisent des **couleurs fixes** par variante, définies dans `PROCESS_HUES` (`src/utils/entityColors.ts`) : événement = 270, sync/syncop = 330, opération = 166, résultat = 128 (OK) / 0 (échec), puis des mappings par `meta`/`layer`/`badge` pour `sat-*` et `mpt-layer`. Le MOT (variante `mot-matrix`) n'étant pas dans `PROCESS_VARIANTS`, il passe par la rotation `SAFE_HUES`.
+
+### Note — copies divergentes
+
+Le diagramme « Palette de couleurs » (`src/diagrams/palette/color_palette.ts`) embarque sa **propre copie allongée** de `SAFE_HUES` (19 valeurs, ajoutant `128`, `166`, `100`). `entityColors.ts` reste la source de vérité ; la copie du fichier palette est une divergence à connaître.

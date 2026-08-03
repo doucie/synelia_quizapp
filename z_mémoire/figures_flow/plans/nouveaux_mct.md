@@ -5,6 +5,32 @@ Les anciennes figures sont conservées telles quelles dans `src/diagrams/traitem
 
 ---
 
+## Contexte & versions
+
+**Ce fichier est la source de vérité** pour les MCT : conventions Merise
+corrigées + parcours en **9 traitements (T0–T8)**.
+
+| Version | Fichiers | État |
+|---------|----------|------|
+| **MCT v1** | `src/diagrams/traitements/mct_*.ts` | Conservés tels quels à titre de référence |
+| **MCT v2** | `src/diagrams/traitements/v2/mct_*.ts` | **7 fichiers (T0–T6)** — version condensée (entretien regroupé), **pas encore alignée** sur le découpage T0–T8 décrit ici |
+
+### Écart plan ↔ code
+
+Le plan détaille 9 traitements : T0 création, T1 candidature, T2 quiz,
+T3 **planification**, T4 **conduite**, T5 **évaluation** (séparés), T6 décision,
+T7 annulation, T8 audit. Les fichiers v2 actuels n'en comptent que 7
+(T0–T6, l'entretien étant regroupé en un seul traitement) — l'alignement
+sur T0–T8 est **un travail à faire** (pas encore appliqué).
+
+### MOT
+
+- **MOT v1** (`src/diagrams/mot/mot_organisationnel.ts`) : ne sert à rien → **à supprimer**
+- **MOT v2** (`src/diagrams/mot/mot_organisationnel_v2.ts`) : **à garder** (matrice basée sur les MCT v1)
+- **MOT v3** : **à créer** — les MCT v2 seront intégrés dans ce **nouveau MOT v3**, pas dans le MOT v2
+
+---
+
 ## Problèmes identifiés sur les anciens MCT
 
 | Aspect | Ancien (erroné) | Correct Merise |
@@ -234,4 +260,4 @@ results: Trace enregistrée
 2. Création du dossier `traitements/v2/`
 3. Nouveaux MCTs (T0 à T8) — un fichier par MCT
 4. Mise à jour du registre `src/diagrams/index.ts`
-5. Nouveau MOT basé sur les MCTs v2
+5. Nouveau MOT v3 basé sur les MCTs v2 (pas dans le MOT v2 existant)
