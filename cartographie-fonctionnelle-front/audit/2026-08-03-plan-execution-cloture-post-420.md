@@ -1,8 +1,43 @@
 # 2026-08-03 Plan d'execution - cloture phases E/F migration 420
 
-Date: 2026-08-03
+Date: 2026-08-03 (mise a jour 2026-08-04)
+Statut: phases 1-2 cloturees (V1_070, V1_071 appliquees); phases 3-7 a executer
 
 Base: `audit/2026-08-03-audit-dependances-legacy-post-420.md` + `bd_actuelle/quizapp_db_cible_post_420_migration.md`
+
+## 0. Etat au 2026-08-04 et decisions BA
+
+Phases 1 (quiz) et 2 (statut) sont CLOTUREES (commits `8555a85`, `6b975f2`; migrations `V1_070`, `V1_071` appliquees et testees). Le snapshot `bd_actuelle/quizapp_db_described_20260804.md` reflete cet etat: `applications.quiz_*` (17 colonnes), `candidate_answer.application_id` et `applications.application_status` ont physiquement disparu.
+
+Decisions BA prises pour la suite (2026-08-04):
+
+- [x] Arbitrage 2 `interview_duration` (candidate_interview, Phase 3 - RESOLU 2026-08-04): CONSERVEE. Aucune raison metier de la supprimer. `interview_duration` est retire du perimetre de V1_072 et du doc cible (ecart cible a documenter: mise a jour `quizapp_db_cible_post_420_migration.md` section 7).
+- [x] Arbitrage 3 detail historique evaluations (Phase 3 - RESOLU 2026-08-04): MIGRATION VERS `global_score`/`global_comment` SEULE. `candidate_mark`/`recruiter_comment` sont supprimes (conformes cible §7). L'historique conserve uniquement la synthese (`global_score`/`global_comment`), pas de critere "legacy" par stage dans `evaluation_item`. Le detail par critere reste reserve aux nouvelles saisies via grilles.
+- [x] Arbitrage Phase 4 decideur (RESOLU 2026-08-04): MAPPER `validated_by`/`skipped_by`/`reopened_by` dans `ApplicationProgress.java`. Les colonnes existent deja en BD (V1_060) mais ne sont PAS mappees dans l'entite (ApplicationProgress.java fait 92 lignes, seule relation `decidedBy`). Le decideur d'une decision reste `decisions.user_id`.
+- [x] Arbitrage Phase 3 sous-phasage (RESOLU 2026-08-04, apres audit code): le runtime ne peut pas se passer de `interviews.application_id`/`campaign_id` (~15 points de coupling). Phase 3 = sous-phases 3A (ancrage + rewiring lectures + derivation DTO), 3B (ecriture duale `global_*`), V1_072 (backfills + rename + NOT NULL, apres 3B), 3C (bascule sommes + retrait champs entite + verrouillage rg/tests), V1_073 (DROPs, apres 3C), 3E (nettoyage front). `campaignId`/`applicationId` restent en ENTREE du DTO de creation (validation/permissions/template), seule la persistance s'arrete en 3C.
+- [x] Arbitrage 7 `interviews.campaign_id`/`application_id` (Phase 3 - RESOLU 2026-08-04): DROP en fin de Phase 3 (3D), apres rewiring complet + rg + tests.
+- [x] Arbitrage 8 `campaignId` creation (Phase 3 - RESOLU 2026-08-04): conserve OBLIGATOIRE en entree; seule la persistance s'arrete.
+- [x] Arbitrage 9 interviews sans occurrence INTERVIEW (Phase 3 - RESOLU 2026-08-04): comptage reel avant V1_072; si >0, backfill par CREATION de l'occurrence via le template; sinon garde-fou simple.
+- [x] Arbitrage 10 sequence `global_score` (Phase 3 - RESOLU 2026-08-04): 3 temps - ecrire les 2 colonnes (3B), backfill (V1_072), bascule des sommes (3C), DROP (V1_073).
+- [x] Arbitrage 11 `interview_mail_sent` (Phase 3 - RESOLU 2026-08-04): CONSERVEE en Phase 3 (front en dependance dure: badges, reschedule); retrait reporte en Phase 6 (derivee de `mail_log`).
+- [x] Arbitrage 12 migration SPLIT (Phase 3 - RESOLU 2026-08-04): `V1_072` (backfills + rename + NOT NULL, appliquee apres 3B) puis `V1_073` (DROPs, appliquee apres 3C) - le backfill doit preceder la bascule des sommes. Phases 4-6 renumerees (V1_074/V1_075/V1_076).
+- [x] Arbitrage 13 DTO derives lecture (Phase 3 - RESOLU 2026-08-04): `applicationId`/`campaignId` (InterviewsDto) et `interviewDate`/`interviewStatus` (ApplicationsDto) RESTENT dans les DTO, derives via `application_progress` (InterviewsTransformer.toFullDto 49-50, ApplicationsTransformer); derivation + retrait des champs d'entite deployes AVANT le DROP V1_073 (sinon Hibernate casse).
+- [x] Arbitrage 14 `applicationId` obligatoire a la creation d'interview (Phase 3 - RESOLU 2026-08-04): alignement runtime sur la cible NOT NULL; volume legacy (interviews sans `application_id`) comptabilise avant V1_072.
+- [x] Arbitrage 15 durcissements NOT NULL (Phase 3 - RESOLU 2026-08-04): `candidate_interview.interview_id` et `evaluations.candidate_interview_id` -> NOT NULL dans V1_072 (backfill si lignes NULL).
+- [ ] Arbitrage Phase 5 modelisation `pipeline_stage_notification_rule` (REPORTE): aucune entite/repo Java n'existe pour cette table (seul SQL V1_060 + `MailLog.notificationRuleId` int). La decision (entite dediee vs lecture JPQL directe) sera tranchee au moment de l'execution de la Phase 5.
+
+Blocages detectes a l'audit code (2026-08-04):
+
+1. `syncApplicationInterviewSummary` est TRIPLIQUEE: InterviewsBusiness.java:1404-1466, ApplicationsBusiness.java:2989-3066, EvaluationsBusiness.java:781-812. Les trois lisent la FK legacy `interviews.application_id`. A consolider en Phase 3.
+2. `InterviewsRepository` n'a pas encore de `findByApplicationProgressId` (seuls `findByCampaignId` 142-143 et `findByApplicationId` 150-151).
+3. `ApplicationProgress.java` ne mappe pas `validated_by`/`skipped_by`/`reopened_by` (blocage Phase 4).
+4. `pipeline_stage_notification_rule` sans modele Java (blocage Phase 5).
+5. Front: `pipeline-stage.service.ts:156-157` est le seul mapping snake_case restant (`email_required`/`email_automatic`).
+6. `InterviewsBusiness` ne peut rien faire sans `interviews.application_id`/`campaign_id`: `ensureInterviewProgressLink` (726-745) et `ensureCandidateInterviewLink` (603-646) early-return si `getApplications()==null`; `finishInterview` (1318-1373) a tout son bloc scoring/notification sous `if (interview.getApplications()!=null)`; `sendInterviewEmail` exige `getCampaigns()`. ~15 points de coupling a rewire via `application_progress` (Phase 3, sous-phase 3A) avant tout DROP.
+7. `campaignId` est OBLIGATOIRE a la creation d'interview (InterviewsBusiness:135 `fieldsToVerify`): le retirer du DTO casse la creation -> reste une entree d'entree, seule la persistance s'arrete.
+8. La creation d'interview peut aboutir SANS `application_progress_id` (InterviewsBusiness:181-183: template sans etape INTERVIEW -> simple warning): le garde-fou 0 NULL de V1_072 doit CREER l'occurrence manquante, pas seulement controler.
+9. `global_score`/`global_comment` ne sont JAMAIS ecrits aujourd'hui (seule declaration entite): la sequence doit etre ecriture duale -> backfill -> bascule des sommes (3B/3C/3D), pas un simple rename.
+10. Front bug latent: `candidate-detail.ts:466-467` navigue vers `/dashboard/evaluation` (routes reelles `dashboard/evaluate`).
 
 ## 1. Objet
 
@@ -14,255 +49,219 @@ Principe directeur (repris du doc cible §6): les identifiants de round font foi
 
 Chaque ligne = un attribut a retirer. `TYPE`: R=read, W=write, API=DTO, SEARCH=critere, FRONT=front. `REMPLACEMENT`: attribut cible ou regle. `CIBLE`: couche(s) a modifier.
 
-### 2.1 `applications` (17 colonnes)
+### 2.1 `applications` (17 colonnes) — PHASE 1 CLOTUREE
+
+La ligne complete est conservee en historique ci-dessous (tout est fait et DROP en V1_070):
 
 | Colonne actuelle | Type | Remplacement cible | Cible |
 | --- | --- | --- | --- |
 | `quiz_score` | R/W | `application_quiz_attempt.score` (detail) + `aggregated_quiz_score` (resume) | ApplicationsBusiness, DTO, Dashboard, front |
-| `quiz_status` | R/W | `application_quiz_attempt.quiz_status` (cascade existante a inverser) | ApplicationsBusiness, DTO, Dashboard, front |
-| `quiz_level` | R/W | retire; remplace par position courante du quiz (resolu au runtime via attempt + question) | ApplicationsBusiness, DTO, front |
-| `total_questions` | R/W | `application_quiz_attempt.total_questions` | ApplicationsBusiness, DTO, front |
-| `quiz_score_percent` | R/W | `application_quiz_attempt.score_percent` + `aggregated_quiz_score_percent` | ApplicationsBusiness, DTO, Dashboard, front |
-| `quiz_manual_correction_status` | R/W | `application_quiz_attempt.manual_correction_status` | ApplicationsBusiness, DTO, front |
-| `time_elapsed` | R/W | `application_quiz_attempt.time_elapsed` | ApplicationsBusiness, DTO, front |
-| `quiz_timed_snapshot` | R/W | `application_quiz_attempt.timed_snapshot` | ApplicationsBusiness, DTO |
-| `quiz_total_time_allowed_snapshot` | R/W | `application_quiz_attempt.total_time_allowed_snapshot` | ApplicationsBusiness, DTO |
-| `quiz_last_activity_at` | R/W | `application_quiz_attempt.last_activity_at` | ApplicationsBusiness, DTO |
-| `quiz_token` | R/W | `application_quiz_attempt.quiz_token` | ApplicationsBusiness, DTO, front |
-| `application_status` | R/W/SEARCH | retire; derive depuis `current_pipeline_progress_status` + `current_application_progress_id` (pas de colonne cible) | ApplicationProgressBusiness, DecisionBusiness, ApplicationsRepository, DTO, Dashboard, front |
-| `interview_date` | W | retire; lu depuis `interviews.interview_date` (via application_progress) | ApplicationsBusiness (sync), transformer, DTO, front |
-| `interview_status` | R/W | retire; lu depuis `interviews.interview_status` | ApplicationsBusiness, DTO, front |
-| `total_evaluation_score` | W | `aggregated_evaluation_score` | EvaluationsBusiness, ApplicationsBusiness, DTO |
-| `total_evaluation_number` | W | retire; `count(evaluations)` calcule a la lecture | EvaluationsBusiness, DTO |
-| `total_evaluation_percentage` | W | `aggregated_evaluation_score_percent` | EvaluationsBusiness, DTO |
+| `quiz_status` | R/W | `application_quiz_attempt.quiz_status` | idem |
+| `quiz_level` | R/W | retire (ABANDON DOCUMENTE) | idem |
+| `total_questions` | R/W | `application_quiz_attempt.total_questions` | idem |
+| `quiz_score_percent` | R/W | `application_quiz_attempt.score_percent` + `aggregated_quiz_score_percent` | idem |
+| `quiz_manual_correction_status` | R/W | `application_quiz_attempt.manual_correction_status` | idem |
+| `time_elapsed` | R/W | `application_quiz_attempt.time_elapsed` | idem |
+| `quiz_timed_snapshot` | R/W | `application_quiz_attempt.timed_snapshot` | idem |
+| `quiz_total_time_allowed_snapshot` | R/W | `application_quiz_attempt.total_time_allowed_snapshot` | idem |
+| `quiz_last_activity_at` | R/W | `application_quiz_attempt.last_activity_at` | idem |
+| `quiz_token` | R/W | `application_quiz_attempt.quiz_token` | idem |
+| `application_status` | R/W/SEARCH | retire; derive depuis les miroirs `current_pipeline_*` (PHASE 2 CLOTUREE, V1_071) | idem |
+| `interview_date` | W | retire (colonne); lu depuis `interviews.interview_date`; `interviewDate` RESTE dans le DTO application, DERIVE de l'interview courante (PHASE 3) | ApplicationsBusiness (sync), transformer, DTO, front |
+| `interview_status` | R/W | retire (colonne); lu depuis `interviews.interview_status`; `interviewStatus` RESTE dans le DTO application, DERIVE (PHASE 3) | ApplicationsBusiness, transformer, DTO, front |
+| `total_evaluation_score` | W | `aggregated_evaluation_score` (PHASE 3) | EvaluationsBusiness, ApplicationsBusiness, DTO |
+| `total_evaluation_number` | W | retire; `count(evaluations)` calcule a la lecture (PHASE 3) | EvaluationsBusiness, DTO |
+| `total_evaluation_percentage` | W | `aggregated_evaluation_score_percent` (PHASE 3) | EvaluationsBusiness, DTO |
 
-Remarque: `quiz_status`/`quiz_token` ont deja une cascade (lecture attempt d'abord, puis application). La bascule consiste a supprimer le fallback vers `applications`.
-
-### 2.2 `application_progress` (2 colonnes)
+### 2.2 `application_progress` (2 colonnes + 3 colonnes V1_060 a mapper)
 
 | Colonne actuelle | Type | Remplacement cible | Cible |
 | --- | --- | --- | --- |
-| `decided_by` | R/W | retire; decideur porte par `decisions.user_id` ancre sur `application_progress_id` (ou `validated_by`/`skipped_by` existants) | ApplicationProgressBusiness, DTO, transformer, front |
-| `mail_sent` | R/W | retire; trace dans `mail_log` + politique dans `pipeline_stage_notification_rule` | ApplicationProgressBusiness, DTO, transformer, front |
+| `decided_by` | R/W | retire; decideur porte par `decisions.user_id` + `validated_by`/`skipped_by`/`reopened_by` (colonnes V1_060 A MAPPER dans l'entite) | ApplicationProgressBusiness, DTO, transformer, front |
+| `mail_sent` | R/W | retire; trace dans `mail_log` + politique dans `pipeline_stage_notification_rule` (Phase 5) | ApplicationProgressBusiness, DTO, transformer, front |
 
 ### 2.3 `pipeline_stage` (2 colonnes)
 
 | Colonne actuelle | Type | Remplacement cible | Cible |
 | --- | --- | --- | --- |
-| `email_required` | R/W/SEARCH | `pipeline_stage_notification_rule` (nouvelle politique) | PipelineStageBusiness, PipelineTemplateBusiness, DTO, transformer, repo, front |
-| `email_automatic` | R/W/SEARCH | `pipeline_stage_notification_rule` | idem |
+| `email_required` | R/W/SEARCH | `pipeline_stage_notification_rule` (politique a modeliser, arbitrage reporte) | PipelineStageBusiness, PipelineTemplateBusiness, DTO, transformer, repo, front |
+| `email_automatic` | R/W/SEARCH | idem | idem |
 
-### 2.4 `candidate_answer` (1 colonne)
+### 2.4 `candidate_answer` (1 colonne) — PHASE 1 CLOTUREE
 
 | Colonne actuelle | Type | Remplacement cible | Cible |
 | --- | --- | --- | --- |
-| `application_id` | R/W | `application_quiz_attempt_id` (deja present + equivalents repository existants) | CandidateAnswerRepository, CandidateAnswerBusiness, ApplicationsBusiness |
+| `application_id` | R/W | `application_quiz_attempt_id` (DROP V1_070 fait) | CandidateAnswerRepository, CandidateAnswerBusiness, ApplicationsBusiness |
 
 ### 2.5 `interviews` (7 colonnes)
 
 | Colonne actuelle | Type | Remplacement cible | Cible |
 | --- | --- | --- | --- |
-| `campaign_id` | R/W/SEARCH | retire; campagne atteignable via `application_progress -> applications -> source_token -> campaigns` | InterviewsRepository, InterviewsBusiness, DTO |
-| `application_id` | R/W/SEARCH | `application_progress_id` (deja present, V1_066) | InterviewsRepository, InterviewsBusiness, ApplicationsBusiness, EvaluationsBusiness, DTO |
-| `interview_evaluations_link` | R/W | **rename** -> `evaluation_room_code` (colonne cible varchar(8)) | Interviews.java, InterviewsDto, InterviewsBusiness, front |
-| `interview_mail_sent` | R/W | retire; `mail_log` | InterviewsBusiness, DTO, front |
-| `evaluation_score` | R/W | retire; calcule depuis `evaluations` a la lecture | InterviewsBusiness, EvaluationsBusiness, DTO, front |
+| `campaign_id` | R/W/SEARCH | retire (colonne); campagne atteignable via `application_progress -> applications -> source_token -> campaigns`; `campaignId` RESTE dans le DTO, DERIVE a la lecture (InterviewsTransformer.toFullDto 49-50) | InterviewsRepository, InterviewsBusiness, InterviewsTransformer |
+| `application_id` | R/W/SEARCH | `application_progress_id` (deja present, V1_066); `applicationId` RESTE dans le DTO, DERIVE via `application_progress.applications` | InterviewsRepository, InterviewsBusiness, ApplicationsBusiness, EvaluationsBusiness, InterviewsTransformer |
+| `interview_evaluations_link` | R/W | **rename** -> `evaluation_room_code` (7 lignes backend: Interviews.java:65-66, InterviewsDto:40/74, InterviewsBusiness:326/328/1183/1221/1222) | Interviews.java, InterviewsDto, InterviewsBusiness, front |
+| `interview_mail_sent` | R/W | retire; `mail_log` (REPORTE Phase 6 - le front la lit en dur: badges, pre-verification reschedule) | InterviewsBusiness, DTO, front |
+| `evaluation_score` | R/W | retire; calcule depuis `evaluations`/`evaluation_item` a la lecture | InterviewsBusiness, EvaluationsBusiness, DTO, front |
 | `evaluation_number` | R/W | retire; `count(evaluations)` | idem |
 | `evaluation_percentage` | R/W | retire; moyenne calculee a la lecture | idem |
 
-### 2.6 `candidate_interview` (3 colonnes)
+### 2.6 `candidate_interview` (2 colonnes; `interview_duration` CONSERVEE)
 
 | Colonne actuelle | Type | Remplacement cible | Cible |
 | --- | --- | --- | --- |
-| `interview_start` | R/W | retire; utiliser `interviews.interview_date` (deja utilise par le transformer) | CandidateInterviewBusiness, InterviewsBusiness, ApplicationsBusiness, DTO, transformer, front |
-| `interview_duration` | R/W | retire; pas d'equivalent cible (a rearbitrer: porter dans la planification ou abandonner) | CandidateInterviewBusiness, DTO, transformer, front |
+| `interview_start` | R/W | retire; utiliser `interviews.interview_date` (deja utilise par le transformer, ligne 45) | CandidateInterviewBusiness, InterviewsBusiness, ApplicationsBusiness, DTO, transformer, front |
+| `interview_duration` | R/W | **CONSERVEE (decision BA 2026-08-04)** - hors perimetre 420, ecart cible a documenter | - |
 | `application_id` | R/W | retire; atteignable via `interviews.application_progress_id` | CandidateInterviewRepository, CandidateInterviewBusiness, ApplicationsBusiness, EvaluationsBusiness, DTO |
 
 ### 2.7 `evaluations` (2 colonnes)
 
 | Colonne actuelle | Type | Remplacement cible | Cible |
 | --- | --- | --- | --- |
-| `candidate_mark` | R/W/SEARCH | `evaluation_item` (detail) + `evaluations.global_score` (synthese) | EvaluationsBusiness, EvaluationsRepository, DTO, transformer, front |
+| `candidate_mark` | R/W/SEARCH | `evaluation_item` (detail) + `evaluations.global_score` (synthese); le code derive deja `candidateMark` depuis les items (`applyDerivedCandidateMark`, EvaluationsBusiness:623-633) | EvaluationsBusiness, EvaluationsRepository, DTO, transformer, front |
 | `recruiter_comment` | R/W/SEARCH | `evaluations.global_comment` | idem |
 
 ### 2.8 `decisions` (3 colonnes)
 
 | Colonne actuelle | Type | Remplacement cible | Cible |
 | --- | --- | --- | --- |
-| `is_cancel` | R/W/SEARCH | `decision_mode` = `CANCEL` (cible: STANDARD/CANCEL/OVERRIDE/ROLLBACK) | DecisionBusiness, DecisionDto, DecisionTransformer, _DecisionRepository, DashboardController, front |
-| `application_id` | R/W/SEARCH | `application_progress_id` (deja present et ecrit) | DecisionBusiness, DecisionRepository, _DecisionRepository, DTO, front |
+| `is_cancel` | R/W/SEARCH | `decision_mode` = `CANCEL` (deja implemente: entite Decision.java:76-77, `normalizeDecisionMode` 993-1008; restent 19 refs get/setIsCancel a consolider) | DecisionBusiness, DecisionDto, DecisionTransformer, _DecisionRepository, DashboardController (287), front |
+| `application_id` | R/W/SEARCH | `application_progress_id` (deja present et ecrit: 167/351/875/909/1242) | DecisionBusiness, DecisionRepository, _DecisionRepository, DTO, front |
 | `pipeline_stage_id` | R/W | `application_progress_id` | DecisionBusiness, DecisionTransformer, ApplicationProgressBusiness, front |
 
 ## 3. Inventaire des methodes de derivation a refactorer
 
 | Methode | Fichier | Colonnes legacy | Action |
 | --- | --- | --- | --- |
-| `syncApplicationQuizSummaryFromAttempt(...)` | ApplicationsBusiness.java:3164 | toutes `applications.quiz_*` | SUPPRIMER l'ecriture legacy; garder uniquement la synchro `current_*`/`aggregated_*` |
-| `syncApplicationInterviewSummary(...)` | ApplicationsBusiness.java:3187 | `interview_date`, `interview_status`, `current_interview_evaluation_*` | conserver miroirs, arreter d'ecrire `interview_date`/`interview_status` |
-| `selectCurrentInterview(...)` | ApplicationsBusiness.java | lecture `interviews.application_id` | basculer sur `application_progress_id` |
-| `getInterviewSummaryPriority(...)` | ApplicationsBusiness.java:3220 | `interview_status` (lecture) | adapter a la source interviews |
-| `syncApplicationStatus(...)` | ApplicationProgressBusiness.java:956 | `application_status` | remplacer la derive par `current_pipeline_*` miroirs |
-| `syncApplicationStatusFromCurrentDecisions(...)` | DecisionBusiness.java:726 | `application_status` | idem |
-| `resolveTrackedApplicationStatus(...)` | ApplicationsBusiness.java:3615 | `application_status` | derive DTO sans persistance; source = miroirs `current_pipeline_*` + decisions (apres Phase 2) |
-| `normalizeDecisionMode(...)` | DecisionBusiness.java:853 | `is_cancel` | consolider vers `decision_mode` |
-| `findByApplicationStatus(...)` | ApplicationsRepository.java:124 | `application_status` | remplacer par critere `current_pipeline_progress_status` |
-| `findByApplicationIdAndAnswerId/QuestionId` | CandidateAnswerRepository.java | `application_id` | supprimer; utiliser les equivalents `findByApplicationQuizAttemptId...` |
-| `findByApplicationId(...)` (CandidateAnswer) | CandidateAnswerRepository.java:51 | `application_id` | remplacer par parcours attempt |
-| `findByApplicationId(...)` (Interviews) | InterviewsRepository.java:150 | `application_id` | remplacer par `application_progress` |
-| `findByCampaignId(...)` (Interviews) | InterviewsRepository.java:142 | `campaign_id` | remplacer par `application_progress -> application -> source_token` |
-| `findByApplicationId(...)` (Decision) | DecisionRepository.java:30 | `application_id` | remplacer par `application_progress_id` |
+| `syncApplicationQuizSummaryFromAttempt(...)` | ApplicationsBusiness.java:3164 | `applications.quiz_*` | FAIT (Lot 8, Phase 1) - ecrit uniquement `aggregated_*` |
+| `syncApplicationInterviewSummary(...)` | ApplicationsBusiness.java:3187 (actuel 2989-3066) | `interview_date`, `interview_status`, `current_interview_evaluation_*` | conserver miroirs, arreter d'ecrire `interview_date`/`interview_status`, basculer synthese sur `aggregated_evaluation_*` |
+| `syncApplicationInterviewSummary(...)` (variante) | InterviewsBusiness.java:1404-1466 | `interview.getApplications()` + `getInterviewStatus()` | CONSOLIDER la triplication; lire via `application_progress` |
+| `syncApplicationInterviewSummary(...)` (variante) | EvaluationsBusiness.java:781-812 | `interviewsRepository.findByApplicationId` | idem |
+| `selectCurrentInterview(...)` | ApplicationsBusiness.java:2994 | lecture `interviews.application_id` | basculer sur `application_progress_id` |
+| `getInterviewSummaryPriority(...)` | ApplicationsBusiness.java | `interview_status` (lecture) | adapter a la source interviews |
+| `syncApplicationStatus(...)` | ApplicationProgressBusiness.java:896 | `application_status` | FAIT (Phase 2) - miroirs uniquement |
+| `resolveTrackedApplicationStatus(...)` | ApplicationsBusiness.java | `application_status` | FAIT (Phase 2) - derive miroirs, cle `trackedStatus` |
+| `normalizeDecisionMode(...)` | DecisionBusiness.java:993 | `is_cancel` | consolider vers `decision_mode`; retirer get/setIsCancel |
+| `applyDerivedCandidateMark(...)` | EvaluationsBusiness.java:623-633 | `candidate_mark` | ecrire `global_score` a la place |
+| `sumMarksByApplicationId/sumMarksByInterviewId` | EvaluationsRepository.java:132-148 | `candidate_mark` | remplacer par `global_score` |
+| `findByApplicationId(...)` (Interviews) | InterviewsRepository.java:150 | `application_id` | remplacer par `findByApplicationProgressId` |
+| `findByCampaignId(...)` (Interviews) | InterviewsRepository.java:142 | `campaign_id` | supprimer (campagne via application_progress) |
+| `findByApplicationId(...)` (Decision) | DecisionRepository.java:30 | `application_id` | remplacer par `findByApplicationProgressId` |
 | `findByApplicationId(...)` (CandidateInterview) | CandidateInterviewRepository.java:124 | `application_id` | remplacer par navigation interviews |
-| `sumMarksByApplicationId(...)` | EvaluationsRepository.java:147 | `candidate_mark` (via navigation) | remplacer par `evaluation_item` |
-| `getEmailRequired/getEmailAutomatic` | PipelineStageBusiness/PipelineTemplateBusiness/InterviewsBusiness/DecisionBusiness/ApplicationProgressBusiness | `email_*` | remplacer par `pipeline_stage_notification_rule` |
+| `findByInterviewStart` | CandidateInterviewRepository.java:51 | `interview_start` | supprimer |
+| `getEmailRequired/getEmailAutomatic` | PipelineStageBusiness (18 refs), PipelineTemplateBusiness (8), _PipelineStageRepository (6), InterviewsBusiness (722-723), DecisionBusiness (1071-1072), ApplicationProgressBusiness (1138) | `email_*` | remplacer par `pipeline_stage_notification_rule` (modelisation a trancher) |
 
 ## 4. Ordre d'execution par phase
 
-Regle d'ordre: chaque phase doit laisser le projet compilable, les tests verts, et le schema en etat testable (migration de phase appliquee). Ordre de chaque phase: 1) bascule runtime en code, 2) rg (0 reference legacy), 3) retrait entite/DTO/transformer/front, 4) ecriture de la migration de phase (mouvement de donnees puis DROP), 5) application + verification des donnees conservees (comptages avant/apres) + tests + smoke, 6) regeneration du snapshot BD. Une migration appliquee est immuable (Flyway): la bascule runtime doit etre verrouillee avant d'ecrire la migration.
+Regle d'ordre: chaque phase doit laisser le projet compilable, les tests verts, et le schema en etat testable (migration de phase appliquee). Ordre de chaque phase: 1) bascule runtime en code, 2) rg (0 reference legacy), 3) retrait entite/DTO/transformer/front, 4) ecriture de la migration de phase (mouvement de donnees puis DROP), 5) application + verification des donnees conservees (comptages avant/apres) + tests + smoke, 6) regeneration du snapshot BD. Une migration appliquee est immuable (Flyway): la bascule runtime doit etre verrouillee avant d'ecrire la migration. Exception Phase 3 (evaluations): `global_score`/`global_comment` n'etant jamais ecrits aujourd'hui, le mouvement de donnees doit preceder la bascule des sommes -> sequence ecriture duale (3B) -> backfill (V1_072) -> bascule sommes (3C) -> DROP (V1_073).
 
-### Phase 1 - Fondations multi-occurrence quiz (perimetre: applications.quiz_* + candidate_answer.application_id)
+### Phase 1 - Fondations multi-occurrence quiz — CLOTUREE (V1_070 appliquee, commit 8555a85)
 
-Objectif: arreter de lire/ecrire les colonnes quiz de `applications`; basculer tout le runtime sur `application_quiz_attempt`.
+Objectif atteint: tout le runtime quiz lit/ecrit `application_quiz_attempt`; DROP des colonnes `applications.quiz_*` + `candidate_answer.application_id`; backfills + comptages dans la migration; snapshot BD regenere. Detail des lots 1-11 conserve dans le commit.
 
-Prealables (decisions requises avant de commencer):
+### Phase 2 - Statut candidat — CLOTUREE (V1_071 appliquee, commit 6b975f2)
 
-- [x] Arbitrage 1 `quiz_level` (RESOLU 2026-08-03): ABANDON DOCUMENTE. Marqueur de progression vestigial (ordre de la derniere question repondue): ecrit a la creation (:293), au demarrage (:1281) et a chaque reponse (:2079-2081), mais jamais lu cote backend (logs + retour DTO uniquement) ni consomme par le front (declare dans l'interface DTO, jamais utilise). `quiz_level` entre dans le DROP de V1_070; suppression des ecritures + DTO/entity.
-- [x] Statut quiz Dashboard (RESOLU 2026-08-03): PROJECTION depuis `application_quiz_attempt.quiz_status`. Attempt courant = dernier non supprime (id max, `findByApplicationIdOrderByIdDesc(...).first()`). Pas de colonne additive. Candidature sans attempt = EXCLUE du `quizDistribution` (statut/score DTO null).
+Objectif atteint: `applications.application_status` plus ecrit ni lu (rg backend+front = 0); derive depuis les miroirs `current_pipeline_*`; backfill + rapport de divergence dans la migration; snapshot BD regenere.
 
-Taches:
+### Phase 3 - Entretien / evaluation (perimetre: interviews.*, candidate_interview.*, evaluations.*, applications.interview_date/interview_status/total_evaluation_*)
 
-- [x] `CandidateAnswerRepository`: supprimer `findByApplicationId`, `findByApplicationIdAndAnswerId`, `findByApplicationIdAndQuestionId`; basculer les appels (ApplicationsBusiness 2598/2616/2633, CandidateAnswerBusiness 503) sur les equivalents `findByApplicationQuizAttemptId...`; supprimer le critere `e.applications.id` de `generateCriteria` (213-214) -> `e.applicationQuizAttempt.id`. (Lot 2 fait 2026-08-03; appels ApplicationsBusiness elimines en Lot 1)
-- [x] `ApplicationsBusiness`: arreter `candidateAnswer.setApplications(...)` (2638, `buildCandidateAnswer`); supprimer les fallbacks legacy `findCandidateAnswersForQuizContext`/`findCandidateAnswersForQuestionContext`/`findCandidateAnswerForAnswerContext` (2598/2616/2633) et `shouldFallbackToLegacyQuizAnswers` (2649): l'attempt est desormais toujours requis. (Lot 1 fait 2026-08-03; + `delete:592` et `DashboardController:448` bascules sur la nouvelle `findByApplicationQuizAttemptApplicationsId`).
-- [x] `CandidateAnswerBusiness`: create/update/updateDeleted/updateAll - valider `applicationQuizAttemptId` (requis) au lieu de `applicationId`; arreter `setApplications` (177/666/741); completer `CandidateAnswerTransformer.toEntity` (ligne 94 `ignore=true`) pour mapper `applicationQuizAttempt` depuis le DTO; conserver `setApplicationQuizAttempt` dans `resolveQuestionManualCorrectionCarrier` (565-567). (Lot 2 fait 2026-08-03; fallback `setApplications(application)` du carrier retire)
-- [x] `ApplicationsBusiness.syncApplicationQuizSummaryFromAttempt` (3164): ne plus ecrire `applications.quiz_*` (3169-3175); ecrire uniquement `aggregated_quiz_score`/`aggregated_quiz_score_percent`. (Lot 3 fait 2026-08-03: ecritures miroir `quiz_*` retirees; Lot 8 fait: la methode ecrit desormais `aggregatedQuizScore`/`aggregatedQuizScorePercent` depuis l'attempt (score/scorePercent), conserve save + `syncApplicationStatus`)
-- [x] `ApplicationsBusiness` demarrage quiz (1278-1282): arreter les ecritures directes `application.setQuizStatus(STARTED)`/`setQuizLevel`; ne muter que l'attempt (1287-1296); verifier que le flux garantit un attempt avant toute ecriture (creation au start si absent). (Lot 6 fait 2026-08-03: branche miroir application supprimee, seule la mutation attempt PENDING->STARTED subsiste; bloc `applicationChanged` (save + reload) supprime; garantie attempt = Lot 7)
-- [x] Remplacer les lectures directes `application.getQuiz*()` par `quizAttempt.getQuiz*()`: 2202-2214, 3303-3329, 2935-2936, 3538, 4178, 2654-2679, 3028-3124, ET 1255-1259, 1810, 2087-2096 (`isQuizResumable`/`quizLevel`), 2788-2790 (timeout), 2835-2836 (`lastActivityAt`), 4155-4163 (fallback `quizToken`). (Lot 4 fait 2026-08-03: logs demarrage + branche PENDING->STARTED, `rejectRandomizedQuizResume`, reponse `completeQuiz`, `resolveQuizStatus`, `validateQuizSessionAccess` (`expectedQuizToken`), `resolveQuizLastActivityReference`, `markQuizProgressAsAbandoned` (score via attempt), `syncQuizProgressAfterScoring` (via attempt + helper `resolveLatestQuizAttempt`), `trackApplication` (`quizStatus`), `buildTrackedQuiz` (token/statut/lastActivity attempt-only); bloc `quiz_level` ecriture+DTO supprime (A1); lectures restantes = bloc timing miroir, reportees au Lot 6. Compile vert; 118 tests, 0 echec, 3 erreurs pre-existantes QuestionBusinessTest)
-- [x] Job planifie d'abandon `abandonInactiveQuizApplications` (2294-2313): remplacer `findActiveByQuizStatus(STARTED)` (miroir, `ApplicationsRepository` 180-181) par une requete sur les attempts (quizStatus STARTED, isDeleted=false, application non abandonnee); supprimer `findActiveByQuizStatus`. (Lot 5 fait 2026-08-03: nouvelle `ApplicationQuizAttemptRepository.findByQuizStatusAndApplicationNotAbandoned`, job itere les attempts et appelle `markApplicationAbandonedIfQuizInactive(application, attempt, ...)`; `findActiveByQuizStatus` supprime; 118 tests, 0 echec, 3 erreurs pre-existantes)
-- [x] Retirer les ecritures doubles hors `syncApplicationQuizSummaryFromAttempt`: `applyQuizTimingSnapshot` (branche application), `refreshQuizTimingState` branche application (3060-3074, 3123), `touchQuizLastActivity` branche miroir (2872-2876), `completeQuizInternal` (3155); `getQuiz` doit lire `timeElapsed` depuis l'attempt (2214). (Lot 6 fait 2026-08-03: branches application de `applyQuizTimingSnapshot`/`ensureQuizTimingSnapshot`/`syncQuizTimeElapsed`/`resolveQuizTimingState` + surcharges 1-arg retirees, `touchQuizLastActivity` miroir retire, `completeQuizInternal` miroirs `quizLastActivityAt`/`quizStatus` retires, creation `applyQuizTimingSnapshot(entityToSave)` retire; `getQuiz`/`completeQuiz` lisent `timeElapsed` depuis l'attempt. Ecritures miroir `refreshQuizScoringState` (score) reportees au Lot 8 avec la suppression des champs JPA. Compile vert; 118 tests, 0 echec, 3 erreurs pre-existantes)
-- [x] `resolveQuizStatus` (2674-2679): supprimer la branche miroir `application.getQuizStatus()`. `validateQuizSessionAccess` (2684-2695): `expectedQuizToken` depuis l'attempt uniquement. `buildTrackedQuizData` (4153-4180): token/statut/lastActivity depuis l'attempt uniquement (plus de fallback application). (Lot 4 fait 2026-08-03)
-- [x] Garantir "token emis => attempt existe" dans les 3 flux de creation de token (340-378, 1031-1049, 3480-3493): si `createQuizAttemptForVerifiedApplication` renvoie null, NE PAS poser `applications.quiz_token` (erreur explicite). (Lot 7 fait 2026-08-03: creation multi-apps -> attempt cree AVANT le `setQuizToken`, sinon log severe + token non pose + hors map; verification email -> attempt cree avant `setQuizToken`/`setQuizStatus`, si null reponse erreur explicite FUNC_REQUEST_FAIL (emailVerifie conserve) sans token; `createAdditionalQuizAttempt` deja conforme (attempt avant retour DTO, aucun `applications.quiz_token`). Compile vert; 118 tests, 0 echec, 3 erreurs pre-existantes)
-- [x] Supprimer `findByQuizScore` (`ApplicationsRepository` 105-106): methode morte sans appelant. (Lot 5 fait 2026-08-03)
-- [x] `ApplicationsBusiness`/`DashboardController` (230-235, 317-341): KPIs score/percent sur `aggregated_*`; KPIs par statut via projection attempt (dernier non supprime); candidature sans attempt exclue du `quizDistribution`; supprimer les lectures `getQuizStatus()`. (Lot 8+9 fait 2026-08-03: `DashboardController` injecte `ApplicationQuizAttemptRepository`, `latestQuizAttemptByApp` (1 requete, max id par application), `quizDistribution`/`quizCompletedCount` via projection attempt, `avgQuizScorePercent`/`quizScoreBuckets` via `aggregatedQuizScorePercent` + `isCompletedAttempt`; lecture unique a la place du N+1. Test ajoute: `DashboardControllerTest.getOverviewStats_projectsQuizStatusFromLatestAttemptAndUsesAggregatedScores` (dernier attempt non supprime prime, candidature sans attempt exclue du `quizDistribution`, score KPIs sur `aggregated_*` + attempt COMPLETED). Compile vert; 119 tests, 0 echec, 3 erreurs pre-existantes)
-- [x] DTO/Transformer: retirer `quiz_*` de `ApplicationsDto`/`ApplicationsTransformer` et les SearchParam associes (`ApplicationsRepository.generateCriteria` 399-400 `e.quizScore`, `quizStatus`/`quizLevel`/`quizToken` non mappes); exposer `aggregated_*`; retirer le filtre admin `quizStatus` (front `application.service.ts` 462 - no-op cote backend). (Lot 8 fait 2026-08-03: `ApplicationsDto` + SearchParam `quiz_*` retires, `aggregatedQuizScore`/`aggregatedQuizScorePercent` (Double) exposes; `ApplicationsTransformer` mappings `quiz_*` retires + `aggregated_*` ignores sur `toEntity` (derives backend uniquement); `generateCriteria` critere `quizScore` supprime. Reponses quiz (`answerQuiz`/`completeQuiz`/`touchQuizActivity`/`createAdditionalQuizAttempt`) ne portent plus de champs `quiz_*` du DTO: `completeQuiz` repond via `getFullInfos` -> `quizAttempts[]` (score/statut/percent), token via `searchString` + resume attempt)
-- [x] Front: mettre a jour `application.service.ts`, `applications.*`, `entities-applications.*`, `candidate-detail.*`, `quiz.*`, `track-application.*` pour lire le quiz via le resume attempt (DTO derive); basculer l'envoi de reponse sur `applicationQuizAttemptId`; simplifier les fallbacks `attempt -> miroir` (miroir supprime): `applications.ts` (1335-1347), `entities-applications` (480-531), `evaluations-list` (187), `evaluations` (422), `interview-admin` (228), `decisions` (530). (Lot 10 fait 2026-08-03: `Application` interface `quizScore`/`quizScorePercent`/`quizToken`/`quizStatus`/`quizLevel`/`quizManualCorrectionStatus` retires, `aggregatedQuizScore`/`aggregatedQuizScorePercent` ajoutes; SearchParam + filtre admin `quizStatus` (`application.service.ts` 462) retires; fallbacks `attempt -> miroir` simplifies a lecture attempt-only dans `applications.ts` (1335-1347), `entities-applications.ts` (478-532, `hasLoadedQuizRuntime` supprime), `decisions.ts` (530), `evaluations-list.ts` (187), `evaluations.ts` (422), `interview-admin.service.ts` (228), `interview-create.html` (114-116), `candidate-detail.ts/.html` (statut via `quizAttempts[0]`, score % via `aggregatedQuizScorePercent`); `quiz.ts` lit `manualCorrectionStatus` sur `quizAttempts[0]`; tokens lus via `searchString` (`apply-position.ts` 311, `entities-applications.ts` 1510). Envoi de reponse: le front envoie toujours `id` + `searchString` (token), le backend resout l'attempt -> `applicationQuizAttemptId` est purement backend (deja gere Lot 2). Build front vert + 95 tests SUCCESS (warnings SCSS budget pre-existants).)
-- [x] Entite JPA: retirer la FK `applications` de `CandidateAnswer.java` (75-76) et les champs quiz de `Applications.java` (77-120); mapper `aggregated_quiz_*`. (Lot 8 fait 2026-08-03: `Applications.java` champs `quiz_score`/`quiz_token`/`quiz_status`/`quiz_level`/`total_questions`/`quiz_score_percent`/`quiz_manual_correction_status`/`time_elapsed`/`quiz_timed_snapshot`/`quiz_total_time_allowed_snapshot`/`quiz_last_activity_at` retires; `aggregatedQuizScore`/`aggregatedQuizScorePercent` (Double) ajoutes. Lot 11 fait 2026-08-03: la FK `applications` de `CandidateAnswer.java` est RETIREE (champ + `@JoinColumn(application_id)` supprimes); `CandidateAnswerTransformer.toDto` ne mappe plus `entity.applications.id` -> `applicationId` (le `toEntity` ne le mappait deja pas, ecriture par l'attempt); `CandidateAnswerBusiness` (394/406/429) passe par `getApplicationQuizAttempt().getApplications()` (garde null attempt+application). Compile vert; tests 10/10 (CandidateAnswerBusinessTest/ApplicationsBusinessTest); 119 tests, 0 echec, 3 erreurs pre-existantes QuestionBusinessTest)
-- [x] Migration `V1_070__migrate_quiz_legacy_columns.sql` (mouvement de donnees puis DROP): (Lot 11 fait 2026-08-03, testee sur copie `quizapp_db_v1070_test` puis supprimee)
-  - backfill de repli: rattacher les `candidate_answer` a `application_quiz_attempt_id` NULL au seul attempt de leur candidature (reprendre la logique `tmp_phase_b_single_quiz_attempt` de V1_061); tout NULL restant apres backfill -> echec explicite de la migration (`SIGNAL` via procedure `v1_070_assert_answers_linked`).
-  - backfill `applications.aggregated_quiz_score(_percent)` depuis l'attempt courant (dernier non supprime, id max) - semantique runtime verifiee: apps 2/3/5/10 = score/percent de l'attempt courant, apps sans attempt = NULL.
-  - DROP conditionnel (procedure `v1_070_drop_candidate_answer_fks`, `SELECT DISTINCT` - KEY_COLUMN_USAGE renvoie 1 ligne/colonne) des FK `fk_candidate_answer_attempt_app` (composite V1_060) + `fk_ca_application` (V1_001) + `fk_candidate_answers_application` (nom reel de la BD partagee, different des scripts), puis DROP KEY `idx_candidate_answer_attempt_app`, DROP COLUMN `application_id`, MODIFY `application_quiz_attempt_id` NOT NULL, FK simple `fk_candidate_answer_attempt` sur `application_quiz_attempt(id)`.
-  - DROP `candidate_answer.application_id`; 0 reponse orpheline apres migration (22/22 rattachees).
-  - DROP `applications.quiz_score`, `quiz_token`, `quiz_status`, `quiz_level`, `total_questions`, `quiz_score_percent`, `quiz_manual_correction_status`, `time_elapsed`, `quiz_timed_snapshot`, `quiz_total_time_allowed_snapshot`, `quiz_last_activity_at` + DROP index `uk_applications_quiz_token` (arbitrages 1 et 4 tranches; `quiz_level` inclus). Verifie: 0 colonne quiz legacy restante.
-  - DDL MySQL non transactionnel: teste sur copie de la BD (mysqldump + restore, 48 tables) avant application sur la BD partagee. Erreurs trouvees/corrigees en test: noms FK reels differents des scripts (`fk_candidate_answers_application`), curseur KEY_COLUMN_USAGE duplique (DISTINCT), index auto-supprime avec la FK composite (DROP KEY conditionnel desormais inutile - l'index etait conserve).
-- [x] Tests: `ApplicationsBusinessTest` (assertions 216-218/262/309 sur `getQuizStatus()`/`getQuizScore()` a reporter sur l'attempt/aggregated), spec front. (Lot 8 fait 2026-08-03: `syncApplicationQuizSummaryFromAttempt_*` -> asserts `aggregatedQuizScore(14.0)/aggregatedQuizScorePercent(70.0)`; `update_ignoresDerivedApplicationSummaryFields` -> `aggregatedQuizScore(12.0)` inchange (ignore sur update); `create_ignoresDerivedApplicationSummaryFieldsFromDto` -> `aggregatedQuizScore` null (ignore via transformer); `trackApplication_*` -> `setQuizStatus/setQuizToken` entite retires (flux via attempts). Compile vert; 118 tests, 0 echec, 3 erreurs pre-existantes QuestionBusinessTest)
+Objectif: ancrer l'entretien sur `application_progress_id`; arreter les colonnes legacy interviews/candidate_interview; migrer la saisie evaluation vers `global_score`/`global_comment`; rename `interview_evaluations_link` -> `evaluation_room_code`; `interview_duration` CONSERVEE; `interview_mail_sent` conservee en Phase 3 (report Phase 6).
 
-Sortie de phase: migration V1_070 appliquee; donnees conservees (comptages avant/apres dans la migration); aucune reference legacy quiz (rg backend+front); build + tests verts; snapshot BD regenere.
+Sous-phasage (decide 2026-08-04 apres audit code): le runtime ne peut PAS se passer de `interviews.application_id`/`campaign_id` tant que les lectures n'ont pas ete rewirees (~15 points de coupling, dont des methodes privees profondes). Chaque sous-phase laisse le projet compilable et les tests verts. MIGRATION SPLIT: le backfill doit preceder la bascule des sommes -> `V1_072` (backfills + rename + NOT NULL) appliquee APRES 3B, `V1_073` (DROPs) appliquee APRES 3C (rg + tests). Les champs `applicationId`/`campaignId`/`interviewDate`/`interviewStatus` RESTENT dans les DTO, derives a la lecture via `application_progress`; seuls les champs entite/persistance disparaissent.
 
-### Phase 2 - Statut candidat (perimetre: applications.application_status)
+Sous-phase 3A - Ancrage runtime sur `application_progress_id` (ecriture duale):
 
-Objectif: supprimer la derive ecrite de `application_status`. La source de verite devient les miroirs `current_pipeline_*`/`current_preselection_*`/`current_final_decision_*` + `application_progress`/`decisions`; le statut est derive a la lecture (DTO/front).
+- [ ] `campaignId`/`applicationId` restent des entrees OBLIGATOIRES du DTO de creation (validation `InterviewsBusiness` 135 pour `campaignId`; RENDRE `applicationId` OBLIGATOIRE, InterviewsBusiness:170-175, meme statut que `campaignId`) et continuent d'etre PERSISTES (setCampaigns 293 / setApplications 309) pendant toute la sous-phase. Seule la PERSISTANCE s'arrete en 3C (retrait des champs d'entite), jamais la validation d'entree.
+- [ ] Rewirer les lectures pour naviguer via `interview.getApplicationProgress().getApplications()` au lieu de `interview.getApplications()`/`interview.getCampaigns()`: `ensureInterviewProgressLink` (726-745), `ensureCandidateInterviewLink` (603-646, garde 604 remplacee par la chaine progress; ligne 622 `link.setApplications` conservee en ecriture duale puis derivee du progress), `finishInterview` (1318-1373, garde `interview.getApplications()!=null` remplacee par `progress!=null`, application derivee du progress, sinon comportement actuel preserve), `sendInterviewEmail` (campagne via progress -> template), `buildInterviewRounds` (463-489), `buildInterviewMailLogContext` (1140), `recordInterviewAuditEvent`, `applyCurrentInterviewSummary`, `resolveCampaign` (1607-1616), permissions (1591-1605), `syncApplicationInterviewSummary` (InterviewsBusiness 1404-1466).
+- [ ] DERIVATION LECTURE DTO (les champs RESTENT, derives via `application_progress`; a deployer AVANT le DROP): `InterviewsTransformer.toFullDto` (49-50) -> `applicationId` depuis `applicationProgress.applications.id`, `campaignId` depuis `applicationProgress.applications.sourceToken.campaigns.id`; `ApplicationsTransformer`/`ApplicationsDto` -> `interviewDate`/`interviewStatus` derives de l'interview courante (plus des colonnes `applications.*`). Ces derivations sont le remplacement des FK une fois les colonnes DROPpees.
+- [ ] CONSOLIDER `syncApplicationInterviewSummary` (triplication InterviewsBusiness 1404-1466 / ApplicationsBusiness 2989-3066 / EvaluationsBusiness 781-812): une seule logique lisant via `application_progress_id`; arreter d'ecrire `applications.interview_date`/`interview_status`; conserver les miroirs `current_interview_evaluation_*`; basculer la synthese sur `aggregated_evaluation_score(_percent)`.
+- [ ] `ApplicationsBusiness.selectCurrentInterview` (3014-3039): basculer sur `findByApplicationProgressId` en CONSERVANT le comparateur (priorite statut + date + id, `getInterviewSummaryPriority` 3041-3066) - ce n'est PAS un simple "plus recent".
+- [ ] `interviews.evaluation_*` (InterviewsBusiness `finishInterview` 1295-1310, EvaluationsBusiness 721-723, ApplicationsBusiness 3004-3006, CandidateInterviewDto 46-48): arreter l'ecriture; calculer a la lecture depuis `evaluations`/`evaluation_item` dans le DTO/transformer.
+- [ ] Renommage `interview_evaluations_link` -> `evaluation_room_code` (backend: `Interviews.java` 65-66, `InterviewsDto` 40/74, `InterviewsBusiness` 326/328/1183/1221/1222) + generation du code; EN PROFITER pour FIXER le lookup du lien (criterium absent -> `items[0]`, remplacer par une recherche exacte). Front: `interview.service.ts` (44), `interviews.ts` (656-657/815-816), `candidate-detail.ts` (464-471), `evaluations-list.ts` (212-213), `entities-interviews.ts` (77), `interviews.html` (371), `candidate-detail.html`.
+- [ ] Fix bug latent front: `candidate-detail.ts` (466-467) navigue vers `/dashboard/evaluation` (route inexistante, routes reelles `dashboard/evaluate`).
 
-Prealables (decisions requises 2026-08-03):
+Sous-phase 3B - Evaluation: ecriture duale `global_score`/`global_comment` (les deux colonnes ne sont JAMAIS ecrites aujourd'hui, seule l'entite les declare):
 
-- [x] Arbitrage DTO statut derive (RESOLU 2026-08-03): RETRAIT TOTAL. `applicationStatus` est retire du DTO et du front; chaque ecran derive le statut d'affichage depuis les miroirs (`currentPipelineProgressStatus`, `currentPreselectionDecisionType`, `currentFinalDecisionType`). Le front est deja a ~90% sur les miroirs avec fallback `applicationStatus` -> on supprime le fallback. `application-status.constants.ts` reste pour les libelles (source = miroirs). DoD rg front = 0 sur `applicationStatus`.
-- [x] Arbitrage verification V1_071 (RESOLU 2026-08-03): RAPPORT + COMPTAGES (non bloquant). La migration inclut les comptages avant/apres (apps par statut legacy vs statut redervable depuis les miroirs backfilles) + SELECT des divergences (suffixes `_ARCHIVED`, incoherences decision/pipeline). Pas de SIGNAL strict (les valeurs legacy ne se derivent pas 1:1). Applique la regle "comptages avant/apres dans la migration" (ecart Phase 1 corrige).
+- [ ] `applyDerivedCandidateMark` (EvaluationsBusiness 623-633): ecrire `candidateMark` ET `globalScore`/`globalComment`; validation 0-100 (109-122) appliquee aux deux; `searchString` reconstruit avec `global_*`.
+- [ ] `EvaluationsDto` (36-37/59-60) + `EvaluationsTransformer` (76-77): ajouter `globalScore`/`globalComment`.
+- [ ] `EvaluationsBusiness` navigations legacy (705-710/852-853/1145-1174) rewirees via `candidate_interview -> interviews.application_progress_id` (ecriture duale conservee tant que les FK existent).
 
-Taches:
+Sous-phase 3C - Bascule des lectures (verrouillage):
 
-- [x] `ApplicationProgressBusiness.syncApplicationStatus` (956): supprimer `app.setApplicationStatus(newStatus)` (978); ne mettre a jour que les miroirs `current_pipeline_stage_type/label/progress_status` + `updatedAt`; `computeApplicationStatus` (895) devient inutilise (seul appelant 957) -> le retirer. (fait 2026-08-03: `computeApplicationStatus` supprime, `syncApplicationStatus` ne touche que les miroirs + `updatedAt`)
-- [x] `DecisionBusiness.syncApplicationStatusFromCurrentDecisions` (726): supprimer (ecriture `application_status` 741 + appel 226); les miroirs `current_preselection_*`/`current_final_decision_*` sont deja ecrits par `syncApplicationCurrentDecisionSummaries` (227). (fait 2026-08-03: methode supprimee, remplacee par `synchronizeApplicationAfterDecision`)
-- [x] `ApplicationsBusiness.completeQuiz` (2165, 2170): retirer le log du statut et `resultDto.setApplicationStatus(...)` (le DTO n'a plus le champ). (fait 2026-08-03)
-- [x] `ApplicationsBusiness.resolveTrackedApplicationStatus` (3416): reecrire la derive depuis les miroirs (abandon -> `WITHDRAWN`; `currentFinalDecisionType` FINAL_ACCEPTED/FINAL_REJECTED -> ACCEPTED/REJECTED; `currentPreselectionDecisionType` rejet -> REJECTED; `currentPipelineProgressStatus`/stage type -> IN_PROGRESS/NEW); renommer la cle publique `appData.applicationStatus` (3346) -> `trackedStatus` (rg front = 0). (fait 2026-08-03: derive depuis `currentFinalDecisionType`/`currentPreselectionDecisionType`/`currentPipelineProgressStatus` via `normalizeStatus`, cle `trackedStatus`)
-- [x] `DecisionBusiness` (1124): `vars.put("application_status", ...)` (template email) -> alimenter depuis les miroirs. (fait 2026-08-03: `resolveApplicationStatusMirror` = decision finale -> preselection -> progression)
-- [x] `ApplicationsRepository.findByApplicationStatus` (114-115): SUPPRIMER (code mort, 0 appelant) - pas de remplacement par critere. (fait 2026-08-03)
-- [x] `ApplicationsRepository.generateCriteria` (396-397): retirer le critere `applicationStatus`/`applicationStatusParam` (filtre admin non branche cote front, comme `quizStatus` en Phase 1). (fait 2026-08-03)
-- [x] `_ApplicationsRepository._generateCriteria` (24): remplacer `LOWER(e.applicationStatus) LIKE` par `LOWER(e.currentPipelineProgressStatus) LIKE` dans la recherche globale. (fait 2026-08-03)
-- [x] DTO/Transformer: retirer `applicationStatus` de `ApplicationsDto` (48) + `applicationStatusParam` (102); retirer le mapping `@Mapping(target="applicationStatus", ignore=true)` du `ApplicationsTransformer.toEntity` (92). (fait 2026-08-03)
-- [x] `DashboardController` (224-329): `statusDistribution` (228-233) regroupe par cle derivee des miroirs; `conversionFunnel` (296-302) bascule sur `currentPreselectionDecisionType`/`currentFinalDecisionType`/`currentPipelineStageType` (plus de `isAnyStatus(getApplicationStatus(), ...)`). (fait 2026-08-03: `resolveStatusDistributionKey`/`trimUpper` ajoutes)
-- [x] Entite JPA: retirer `applicationStatus` de `Applications.java` (86-87) -> `get/setApplicationStatus()` disparaissent. (fait 2026-08-03)
-- [x] Front: `application-status.constants.ts` reste pour l'affichage des libelles, mais la source change; `applications.*`, `candidate-detail.*`, `track-application.*`, `decisions.*`, `interview-create.*`:
-  - [x] `application.service.ts` (21, 78, 456): retirer `Application.applicationStatus` + `criteria.applicationStatus` du payload de recherche. (fait 2026-08-03)
-  - [x] `apply-position.ts` (295): retirer `applicationStatus: 'PENDING'` du payload de creation (ecriture morte, backend ignore). (fait 2026-08-03)
-  - [x] `applications.ts` (902, 938, 1286, 1302, 1323, 1332): `getStepStatus`/`getStepTooltip` alimentes par une valeur derivee des miroirs; retirer les fallbacks `app.applicationStatus`. (fait 2026-08-03)
-  - [x] `interview-create.ts` (413, 425, 437, 457) et `interviews.ts` (150-151): checks `PRE_SCREEN_ACCEPTED` -> `currentPreselectionDecisionType`. (fait 2026-08-03)
-  - [x] `candidate-detail.ts` (69) + html (32): badge derive des miroirs. (fait 2026-08-03)
-  - [x] `track-application.ts` (38) + html (64-65): `applicationStatus` -> `trackedStatus` (cle publique renommee). (fait 2026-08-03)
-  - [x] `entities-applications.ts` (280, 311): `getStatusLabel`/`getStatusClass` derives des miroirs; `entities-applications.html` (960): retirer le select d'edition (write morte). (fait 2026-08-03)
-  - [x] Specs: `applications.spec`, `decisions.spec`, `entities-applications.spec`, `interview-create.spec` - retirer/remplacer les fixtures `applicationStatus`. (fait 2026-08-03)
-- [x] Migration `V1_071__migrate_application_status.sql` (mouvement de donnees puis DROP): backfill des miroirs `current_pipeline_stage_type/label/progress_status` + `current_preselection_*` + `current_final_decision_*` (colonnes V1_063-065, potentiellement NULL) depuis l'etat pipeline courant (logique `resolveCurrentStageProgress`: ligne `IN_PROGRESS` prioritaire, sinon premier `PENDING` par `stage_order`, join `pipeline_stage`; decisions: derniere non annulee par type, join `decisions.application_id` encore present); COMPTAGES avant/apres dans la migration + rapport de divergence (suffixes `_ARCHIVED`, incoherences) non bloquant; DROP `applications.application_status`. DDL non transactionnel -> test sur copie avant application. (fait 2026-08-03, testee sur copie `quizapp_db_v1071_test` via Flyway, appliquee sur BD partagee; ecart collation report 5.c corrige par `CAST AS BINARY`, connexion Flyway vs CLI)
-- [x] Tests: `ApplicationProgressBusinessTest`/`DecisionBusinessTest` + nouveaux (`syncApplicationStatus` ecrit les miroirs sans statut; `resolveTrackedApplicationStatus` derive des miroirs) + `ApplicationsBusinessTest` (189/214/225/234/259/273/306/321/586) + `DashboardControllerTest` (208) + spec front. (fait 2026-08-03: `ApplicationProgressBusinessTest` cree (4 tests miroirs), `resolveTrackedApplicationStatus` (1 test), spec front nettoyees; 22 tests backend Phase 2 verts + 95 specs front. `QuestionBusinessTest` 3 erreurs PRE-EXISTANTES a HEAD, hors perimetre Phase 2)
+- [ ] Sommes `sumMarksByInterviewId`/`sumMarksByApplicationId` (EvaluationsRepository 132-148) basculees sur `global_score`; supprimer `findByCandidateMark` (50-51)/`findByRecruiterComment` (59-60); arreter les ecritures `candidateMark`/`recruiterComment`; criteres legacy retires (259-263); `_EvaluationsRepository` (24: `recruiterComment` -> `globalComment`).
+- [ ] `InterviewsRepository`: ajouter `findByApplicationProgressId`; supprimer `findByCampaignId` (142-143)/`findByApplicationId` (150-151) + criteres legacy `interviewMailSent` (262-263)/`campaignId` (286-288); appelants bascules: `DashboardController` (489/505/513), `ApplicationsBusiness`, `EvaluationsBusiness`.
+- [ ] `CandidateInterviewRepository`: supprimer `findByInterviewStart` (51-52)/`findByApplicationId` (124-125) + criteres (231-235/255-257); ecritures `interview_start`/`application_id` arretees (CandidateInterviewBusiness 201/211-215, InterviewsBusiness 624/636-637/666-667, ApplicationsBusiness 3706/3737/4052/4102/4127-4133/4375-4376); le transformer utilise deja `interviews.interview_date` (45). NE PAS toucher `interview_duration` (CONSERVEE).
+- [ ] RETRAIT DES CHAMPS D'ENTITE (a deployer AVANT le DROP V1_073, sinon Hibernate casse des que la colonne disparait): `Interviews.java` (65-66/71-72/85-92/121-127: campaigns, applications, interviewMailSent conserve, evaluation_*), `Applications.java` (77-97: total_evaluation_*, interview_date, interview_status), `Evaluations.java` (52-56), `CandidateInterview.java` (46-47/90-92, PAS interview_duration); mapper `evaluationRoomCode` et `aggregatedEvaluationScore`/`aggregatedEvaluationScorePercent`. Les DTO, eux, GARDENT les champs derives (3A). Retirer EN PARALLELE les refs de compilation: `ApplicationsRepository` (findByTotalEvaluationScore 105-106 + criteres 378-385), `ApplicationsDto` + params.
+- [ ] SEUIL DE VERROUILLAGE: `rg` backend+front = 0 reference aux getters/setters legacy cibles (hors champs DTO derives) + build + tests verts -> ensuite seulement V1_073 (DROPs).
 
-Sortie de phase: migration V1_071 appliquee (comptages avant/apres dans la migration); miroirs backfilles (donnees conservees, statut recalculable); `application_status` plus ecrit ni lu (rg backend + front = 0); build + tests verts; snapshot BD regenere. — PHASE 2 CLOTUREE (fait 2026-08-03): rg backend+front = 0 sur le champ; miroirs backfilles/appliques; build + specs verts; snapshot `quizapp_db_described_20260803.md` regenere (colonne `application_status` retiree).
+Sous-phase 3D - Migrations (testees sur copie mysqldump + restore). SPLIT en deux fichiers: le backfill DOIT preceder la bascule des sommes (3C) -> V1_072 appliquee apres 3B, V1_073 appliquee apres 3C.
 
-### Phase 3 - Entretien / evaluation (perimetre: interviews.*, candidate_interview.*, evaluations.*)
+Migration `V1_072__backfill_interview_evaluation_columns.sql` (appliquee APRES 3B, AVANT 3C):
 
-Objectif: ancrer l'entretien sur `application_progress_id`; arreter les colonnes legacy interviews/candidate_interview; migrer la saisie evaluation vers `evaluation_item`.
+- [ ] Etape 1 (garde-fou 0 NULL): COMPTAGE REEL des interviews sans `application_progress_id` ET des interviews sans `application_id` (legacy) AVANT ecriture; si >0, backfill par CREATION de l'occurrence INTERVIEW manquante (via `pipeline_stage` stage_type='INTERVIEW' du template de la campagne) puis rattachement; puis garde-fou 0 NULL.
+- [ ] Etape 2 (mouvement de donnees, regle "conserver les donnees"): `evaluations.candidate_mark` -> `global_score` et `recruiter_comment` -> `global_comment` (uniquement si `global_*` NULL); `candidate_interview.interview_start` -> `interviews.interview_date` (backfill si NULL); backfill `applications.aggregated_evaluation_*` depuis `evaluations` (dernier round); comptages avant/apres dans la migration.
+- [ ] Etape 3: RENAME `interviews.interview_evaluations_link` -> `evaluation_room_code` (MODIFY varchar(8)).
+- [ ] Etape 4 (durcissements NOT NULL, apres backfill si lignes NULL): `candidate_interview.interview_id` et `evaluations.candidate_interview_id` -> NOT NULL (alignement cible).
 
-Taches:
+Migration `V1_073__drop_interview_evaluation_columns.sql` (appliquee APRES 3C, rg + tests verrouilles):
 
-- [ ] `InterviewsBusiness` create/update: ne plus ecrire `campaign_id`/`application_id`; ecrire `application_progress_id` (existe deja: ligne 743).
-- [ ] `InterviewsRepository`: supprimer `findByCampaignId`/`findByApplicationId`; ajouter `findByApplicationProgressId`; basculer `ApplicationsBusiness.selectCurrentInterview` (3192) et `EvaluationsBusiness` (781).
-- [ ] `InterviewsBusiness` (622): `link.setApplications(interview.getApplications())` -> retrouver le link via `application_progress`.
-- [ ] Renommage `interview_evaluations_link` -> `evaluation_room_code`: entite `Interviews.java` (65-66), `InterviewsDto`, `InterviewsBusiness` (328), generation du code; front `interview.service.ts`, `entities-interviews.*`, `candidate-detail.ts`, `evaluations-list.*`, `evaluation.service.ts`.
-- [ ] `interviews.evaluation_*` (1308-1310, 1327-1329, 721-723): arreter l'ecriture; calculer a la lecture depuis `evaluations`/`evaluation_item` dans le DTO/transformer.
-- [ ] `interview_mail_sent` (193, 361, 704, 711): arreter; tracer via `mail_log`.
-- [ ] `candidate_interview`: arreter `interview_start`/`interview_duration`/`application_id` (ecritures: CandidateInterviewBusiness 201, InterviewsBusiness 624, ApplicationsBusiness 3883/3914); le transformer utilise deja `interviews.interview_date` (ligne 45).
-- [ ] `CandidateInterviewRepository.findByApplicationId` + `EvaluationsBusiness` (705-710, 852-853, 1145-1174): naviguer via `interviews.application_progress_id`.
-- [ ] Migrer la saisie `candidate_mark`/`recruiter_comment` vers `evaluation_item` + `global_score`/`global_comment` (EvaluationsBusiness 12+5 refs, EvaluationsRepository 147-155).
-- [ ] DTO/Transformer/Front: `InterviewsDto`, `CandidateInterviewDto`, `EvaluationsDto` + ecrans `interviews.*`, `interview-create.*`, `evaluations.*`, `evaluations-list.*`, `track-application.*`, `candidate-detail.*`, `entities-*`.
-- [ ] `syncApplicationInterviewSummary` (ApplicationsBusiness 3187): arreter d'ecrire `applications.interview_date`/`interview_status`; basculer la synthese sur `aggregated_evaluation_*`.
-- [ ] Entites JPA: retirer les champs legacy (`Interviews.java` 65-72/85-92/122-127, `CandidateInterview.java` 46/49/91, `Evaluations.java` 52/55, `Applications.java` `interview_date`/`interview_status`/`total_evaluation_*`); mapper `evaluation_room_code`.
-- [ ] Migration `V1_072__migrate_interview_evaluation_columns.sql` (mouvement de donnees puis DROP): garde-fou 0 NULL sur `interviews.application_progress_id`; `candidate_interview.interview_start` -> `interviews.interview_date`; `evaluations.candidate_mark`/`recruiter_comment` -> `global_score`/`global_comment` (+ detail `evaluation_item`, arbitrage 3); backfill `applications.aggregated_evaluation_*` depuis `evaluations`; RENAME `interviews.interview_evaluations_link` -> `evaluation_room_code` (MODIFY varchar(8)); DROP `interviews.campaign_id`/`application_id`/`interview_mail_sent`/`evaluation_score`/`evaluation_number`/`evaluation_percentage`; DROP `candidate_interview.interview_start`/`application_id` (+ `interview_duration` selon arbitrage 2); DROP `evaluations.candidate_mark`/`recruiter_comment`; DROP `applications.interview_date`/`interview_status`/`total_evaluation_score`/`total_evaluation_number`/`total_evaluation_percentage`.
-- [ ] Tests: `InterviewsBusinessTest`/`EvaluationsBusinessTest` + spec front.
+- [ ] Etape 5 (DROP, ordre strict): DROP des FK (dont FK composites `fk_interviews_progress_app`, pattern `fk_candidate_answers_*`) PUIS DROP COLUMN: `interviews.campaign_id`/`application_id`/`evaluation_score`/`evaluation_number`/`evaluation_percentage`; `candidate_interview.interview_start`/`application_id` (PAS `interview_duration`); `evaluations.candidate_mark`/`recruiter_comment`; `applications.interview_date`/`interview_status`/`total_evaluation_score`/`total_evaluation_number`/`total_evaluation_percentage`. DDL non transactionnel -> test sur copie avant application.
 
-Sortie de phase: migration V1_072 appliquee; entretien/runtime sur `application_progress_id`; evaluations sur `evaluation_item`/`global_score`; rename fait; donnees conservees; build + tests verts; snapshot BD regenere.
+- [ ] `interview_mail_sent` (InterviewsBusiness 191-193/357-361/704-711, InterviewsDto 42/76, InterviewsTransformer 46/101, ApplicationsBusiness 4108; front `interviews.ts` 233/292/302, `interview-create.ts` 777/806, `entities-interviews.ts` 74, `track-application.ts` 80): CONSERVEE en Phase 3 (le front la lit en dur: badges, pre-verification reschedule). Retrait REPORTE en Phase 6, derivee depuis `mail_log`.
+
+Sous-phase 3E - Nettoyage front (post-DROP; les retraits backend/entite/DTO-derivation/repo sont deja faits en 3A/3C):
+
+- [ ] DTO/Transformer/Front: retirer les champs supprimes des `InterviewsDto`, `CandidateInterviewDto`, `EvaluationsDto` + ecrans `interviews.*`, `interview-create.*`, `evaluations.*`, `evaluations-list.*`, `track-application.*`, `candidate-detail.*`, `entities-*`; normaliser `applicationsId` -> `applicationId` dans `evaluations.ts` (405/445). Les champs derives `applicationId`/`campaignId`/`interviewDate`/`interviewStatus` RESTENT dans les DTO.
+- [ ] Tests: `InterviewsBusinessTest`/`EvaluationsBusinessTest`/`ApplicationsBusinessTest` + spec front.
+
+Sortie de phase: migrations V1_072 (backfills) + V1_073 (DROPs) appliquees; entretien/runtime sur `application_progress_id`; evaluations sur `global_*`/`evaluation_item`; rename fait; `interview_duration` conservee (ecart cible documente); `interview_mail_sent` conservee (report Phase 6); DTO derives (`applicationId`/`campaignId`/`interviewDate`/`interviewStatus`) fonctionnels sans FK; donnees conservees; build + tests verts; snapshot BD regenere.
 
 ### Phase 4 - Decisions (perimetre: decisions.*, application_progress.decided_by)
 
-Objectif: ancrer les decisions sur `application_progress_id`; remplacer `is_cancel` par `decision_mode`.
+Objectif: ancrer les decisions sur `application_progress_id`; remplacer `is_cancel` par `decision_mode` (deja en place a 90%); remplacer `decided_by` par `validated_by`/`skipped_by`/`reopened_by` (a mapper).
 
 Taches:
 
-- [ ] `DecisionBusiness` create/update: ne plus ecrire `application_id`/`pipeline_stage_id` (lignes 152, 162, 336, 346, 884, 895, 906, 912, 1249); garder `application_progress_id` (deja present).
-- [ ] `DecisionRepository.findByApplicationId` + `_DecisionRepository` (59): basculer sur `application_progress_id`.
-- [ ] `normalizeDecisionMode` (853): consolider `is_cancel` -> `decision_mode`; retirer `getIsCancel/setIsCancel`.
-- [ ] `DashboardController` (270): utiliser `decision_mode != CANCEL`.
-- [ ] `application_progress.decided_by`: arreter l'ecriture (ApplicationProgressBusiness); decideur via `decisions.user_id` et `validated_by`/`skipped_by` (colonnes V1_060).
-- [ ] DTO/Transformer/Front: `DecisionDto`, `DecisionTransformer`, `entities-decisions.*`, `decisions.*`, `pipeline.interfaces.ts`.
-- [ ] Entites JPA: retirer `isCancel`/`applications`/`pipelineStage` de `Decision.java` (50/83) et `decidedBy` de `ApplicationProgress.java` (81-82).
-- [ ] Migration `V1_073__migrate_decision_columns.sql`: `is_cancel=1` -> `decision_mode='CANCEL'`; backfill `decisions.application_progress_id` (0 NULL restant) depuis l'occurrence pipeline; `application_progress.decided_by` -> `validated_by`/`skipped_by` (via `decisions.user_id`); DROP `decisions.is_cancel`/`application_id`/`pipeline_stage_id`; DROP `application_progress.decided_by`.
+- [ ] `DecisionBusiness` create/update: ne plus ecrire `application_id` (152/336/884/906) ni `pipeline_stage_id` (163/346/886/903/1240); garder `application_progress_id` (deja present: 167/351/875/909/1242); validation 867-870 compare via `progress.getApplications()`.
+- [ ] `DecisionRepository.findByApplicationId` (30-31) -> `findByApplicationProgressId`; `_DecisionRepository` criteres `applicationId` (58-59) et `pipelineStageId` (64-65) retires/remplaces; `DecisionTransformer` mappings `applicationId`/`pipelineStageId` (39/41/60) -> `applicationProgressId`.
+- [ ] `is_cancel` -> `decision_mode`: consolider les 19 refs (`DecisionBusiness` getIsCancel 211/228/390/413/480/506/844, setIsCancel 323, dto.getIsCancel 322/389/623, filtres 786/812); `DashboardController` (287): `!d.getIsCancel()` -> `!DecisionMode.CANCEL.equals(d.getDecisionMode())`; retirer get/setIsCancel de l'entite. `normalizeDecisionMode` (993-1008) deja en place.
+- [ ] `decided_by`: MAPPER `validated_by`/`skipped_by`/`reopened_by` dans `ApplicationProgress.java` (colonnes V1_060: validated_at/validated_by/validation_comment, skipped_at/skipped_by/skip_reason, reopened_at/reopened_by/reopen_reason). `ApplicationProgressBusiness`: `passStage`/`failStage` (373-456) -> `setValidatedBy`; `skipStage` (457-501) -> `setSkippedBy`; `rollbackStage` (502-577) -> `setReopenedBy`; retirer `setDecidedBy` (190/390/425/489/557/565/865) et `toEntity(..., decidedBy, ...)` (116/188). Retirer `decidedBy*` de `ApplicationProgressDto` (35/47-48), `ApplicationProgressTransformer`, `_ApplicationProgressRepository` (58-59), front `pipeline.interfaces.ts` (133/140-141), `application-progress.service.ts` (31/72), `entities-application-progress.ts/html` (43/149/167), `candidate-detail.html` (224-225), `entities-applications.ts` (1039/1044).
+- [ ] DTO/Transformer/Front: `DecisionDto` (retirer isCancel 31/56, applicationId, pipelineStageId; garder applicationProgressId + decisionMode), `DecisionTransformer`, `decision.service.ts` (13-16/34-37/51-54), `decisions.ts` (383-394/762-768/780), `decisions.html` (382-413), `entities-applications.ts` (788-814), `entities-applications.html` (680-690).
+- [ ] Entites JPA: retirer `isCancel`/`applications`/`pipelineStage` de `Decision.java` (50-51/82-84/90-92) et `decidedBy` de `ApplicationProgress.java` (80-82).
+- [ ] Migration `V1_074__migrate_decision_columns.sql`: `is_cancel=1` -> `decision_mode='CANCEL'` (backfill); backfill `decisions.application_progress_id` (0 NULL restant) depuis l'occurrence pipeline; `application_progress.decided_by` -> `validated_by`/`skipped_by`/`reopened_by` (via `decisions.user_id`); DROP `decisions.is_cancel`/`application_id`/`pipeline_stage_id` + `application_progress.decided_by`. Attention FK composite `fk_decisions_progress_app` (application_progress_id, application_id): DROP FK avant DROP COLUMN; test sur copie.
 - [ ] Tests: `DecisionBusinessTest` + spec front.
 
-Sortie de phase: migration V1_073 appliquee; decisions mono-ancrees sur `application_progress_id`; `is_cancel`/`decided_by` plus utilises; donnees conservees; build + tests verts; snapshot BD regenere.
+Sortie de phase: migration V1_074 appliquee; decisions mono-ancrees sur `application_progress_id`; `is_cancel`/`decided_by` plus utilises (rg = 0); `validated_by`/`skipped_by`/`reopened_by` mappes; donnees conservees; build + tests verts; snapshot BD regenere.
 
-### Phase 5 - Pipeline stage emails (perimetre: pipeline_stage.email_*)
+### Phase 5 - Pipeline stage emails (perimetre: pipeline_stage.email_*, application_progress.mail_sent)
 
-Objectif: deplacer la politique email vers `pipeline_stage_notification_rule`.
+Objectif: deplacer la politique email vers `pipeline_stage_notification_rule` (modelisation A TRANCER au moment de l'execution) et la trace vers `mail_log`.
 
 Taches:
 
-- [ ] Modeliser la lecture des regles de `pipeline_stage_notification_rule` (table creee en V1_060) pour remplacer `emailRequired`/`emailAutomatic`.
-- [ ] `PipelineStageBusiness` (9 refs), `PipelineTemplateBusiness` (4 refs), `_PipelineStageRepository` (3 refs), `InterviewsBusiness`/`DecisionBusiness`/`ApplicationProgressBusiness` (1 ref chacune): remplacer la lecture par la regle.
-- [ ] `application_progress.mail_sent`: arreter l'ecriture; tracer via `mail_log` (colonnes V1_060).
-- [ ] DTO/Transformer: retirer `emailRequired`/`emailAutomatic`.
-- [ ] Front: `pipeline.interfaces.ts`, `pipeline-stage.service.ts`, `pipeline-template-edit.*`.
-- [ ] Entites JPA: retirer `emailRequired`/`emailAutomatic` de `PipelineStage.java` (47/50) et `mailSent` de `ApplicationProgress.java` (49).
-- [ ] Migration `V1_074__migrate_email_rule_columns.sql`: seed `pipeline_stage_notification_rule` depuis `email_required`/`email_automatic` (regles de notification); `application_progress.mail_sent=1` -> ligne `mail_log` (si absente); DROP `pipeline_stage.email_required`/`email_automatic`; DROP `application_progress.mail_sent`.
+- [ ] [ARBITRAGE REPORTE] Modeliser `pipeline_stage_notification_rule`: (a) entite + repo + service `PipelineStageNotificationRule`, ou (b) lecture JPQL directe sur la table (sans entite). La table existe en BD (V1_060) avec `trigger_code`/`outcome_code`/`email_template_id`/`is_required`/`is_automatic`/`requires_manual_confirmation`.
+- [ ] Remplacer les lectures `getEmailRequired`/`getEmailAutomatic`: `PipelineStageBusiness` (18 refs: defaults 115-116, update 188-189, normalizeStageFlags 390-411, supportsStageEmails 415+), `PipelineTemplateBusiness` (8 refs: 339-340/384-385/455), `_PipelineStageRepository` (6 refs criteres 64-65/67-68), `InterviewsBusiness` (722-723 `shouldAutoSendInterviewInvitation`), `DecisionBusiness` (1071-1072), `ApplicationProgressBusiness` (1138 `shouldAutoSendStageEmail`).
+- [ ] `application_progress.mail_sent`: arreter l'ecriture (`ApplicationProgressBusiness` 124-125/187/558/566/1101-1131/1010-1022 `markStageMailSent`/`clearStageMailSent`/`markStageMailSentByStageType`/`clearStageMailSentByStageType`/`updateStageMailSent`; appelants `DecisionBusiness` 1143/1253, `InterviewsBusiness` 784/787/796/799); tracer via `mail_log` (table + repo + service deja en place); retirer le critere `mailSent` (`_ApplicationProgressRepository` 61-62) et le champ `mailSent` de `ApplicationProgressDto` (24).
+- [ ] DTO/Transformer: retirer `emailRequired`/`emailAutomatic` (`PipelineStageDto` 24-25/55-56, `PipelineStageTransformer`).
+- [ ] Front: `pipeline.interfaces.ts` (25-26/46/108-109), `pipeline-stage.service.ts` (156-157 = seul mapping snake_case restant), `pipeline-template-edit.ts` (14 refs chacune), `pipeline-template-edit.html` (185-187), specs.
+- [ ] Entites JPA: retirer `emailRequired`/`emailAutomatic` de `PipelineStage.java` (47-48/50-51) et `mailSent` de `ApplicationProgress.java` (49-50).
+- [ ] Migration `V1_075__migrate_email_rule_columns.sql`: seed `pipeline_stage_notification_rule` depuis `email_required`/`email_automatic`; `application_progress.mail_sent=1` -> ligne `mail_log` (si absente); DROP `pipeline_stage.email_required`/`email_automatic`; DROP `application_progress.mail_sent`. Test sur copie.
 - [ ] Tests: spec front + tests backend touches.
 
-Sortie de phase: migration V1_074 appliquee; politique email dans `pipeline_stage_notification_rule`; trace mail dans `mail_log`; donnees conservees; build + tests verts; snapshot BD regenere.
+Sortie de phase: migration V1_075 appliquee; politique email dans `pipeline_stage_notification_rule`; trace mail dans `mail_log`; donnees conservees; build + tests verts; snapshot BD regenere.
 
 ### Phase 6 - Reconciliation finale
 
-Objectif: reconciliation globale, alignement des enums, verification finale que le schema est conforme a la cible post-420.
+Objectif: reconciliation globale, alignement des enums, verification finale que le schema est conforme a la cible post-420 (hors `interview_duration` conservee).
 
 Taches:
 
-- [ ] Migration `V1_075__final_reconciliation.sql`: verifications croisees (comptages avant/apres, 0 perte), backfills residuels eventuels sur `aggregated_*`/`current_*`/`abandoned_*`.
-- [ ] Mapper les colonnes de synthese cible restantes dans les entites JPA si non faites en phase: `current_application_progress_id`, `current_pipeline_stage_id`, `last_progressed_at`, `aggregated_*`, `abandoned_at`, `abandon_reason`, `abandoned_from_application_progress_id`.
+- [ ] Migration `V1_076__final_reconciliation.sql`: verifications croisees (comptages avant/apres, 0 perte), backfills residuels eventuels sur `aggregated_*`/`current_*`/`abandoned_*`.
+- [ ] Mapper les colonnes de synthese cible restantes dans les entites JPA si non faites en phase: `current_application_progress_id`, `current_pipeline_stage_id`, `last_progressed_at`, `aggregated_evaluation_*`, `abandoned_at`, `abandon_reason`, `abandoned_from_application_progress_id` (actuellement absentes de `Applications.java`).
 - [ ] Enums: aligner `StageType` (retirer TECHNICAL_TEST/EVALUATION/CUSTOM), `ProgressStatus` (PASSED->COMPLETED, +AWAITING_VALIDATION), `QuizStatus` (+EXPIRED/CANCELLED), `InterviewStatus` (cible 6 valeurs); introduire `EvaluationStatus`, `DecisionMode`, `CandidateResponseStatus`.
 - [ ] Verifications globales: `rg` backend + front a 0 reference legacy (DoD §6).
-- [ ] Snapshot final `quizapp_db_described_*.md` + mise a jour du doc cible si besoin.
+- [ ] Snapshot final `quizapp_db_described_*.md` + mise a jour du doc cible (deviations: `candidate_interview.interview_duration` conservee).
 
-Sortie de phase: schema = cible post-420 (liste §7 du doc cible entierement traitee); code sans reference legacy; snapshots a jour.
+Sortie de phase: schema = cible post-420 (liste §7 du doc cible entierement traitee, hors deviation `interview_duration` documentee); code sans reference legacy; snapshots a jour.
 
 ### Phase 7 - Front (nettoyage final)
 
@@ -271,55 +270,67 @@ Objectif: retirer les champs legacy restants des interfaces et ecrans.
 Taches:
 
 - [ ] `pipeline.interfaces.ts`: retirer `emailRequired`, `emailAutomatic`, `mailSent`, `decidedById`, `decidedByFirstName/LastName`, `applicationId`, `pipelineStageId`.
-- [ ] Interfaces DTO cote front (application, interview, evaluation, decision, candidate-interview): retirer les champs supprimes.
+- [ ] Interfaces DTO cote front (application, interview, evaluation, decision, candidate-interview): retirer les champs supprimes (`interviewDate`/`interviewStatus`/`totalEvaluation*` sur Application, `campaignId`/`applicationId`/`interviewEvaluationsLink`/`interviewMailSent`/`evaluationScore/Number/Percentage` sur Interview, `interviewStart`/`applicationId` sur CandidateInterviewEntity (garder `interviewDuration`), `candidateMark`/`recruiterComment` sur Evaluation, `isCancel`/`applicationId`/`pipelineStageId` sur Decision).
 - [ ] Ecrans: `applications.*`, `entities-applications.*`, `interviews.*`, `interview-create.*`, `entities-interviews.*`, `evaluations.*`, `evaluations-list.*`, `entities-candidate-interview.*`, `entities-decisions.*`, `decisions.*`, `pipeline-template-edit.*`, `track-application.*`, `candidate-detail.*`, `entities-application-progress.*`.
+- [ ] Normaliser `applicationsId` -> `applicationId` dans `evaluations.ts` (405/445).
 - [ ] Specs front associes.
 
 ## 5. Risques et points a verifier
 
-- `application_status` est la dependance la plus transverse (derive ecrite ~15 endroits + Dashboard + front): sa bascule (Phase 2) est le point critique.
+- `syncApplicationInterviewSummary` est tripliquee et lit la FK legacy `interviews.application_id`: sa consolidation (Phase 3) est le point critique du runtime entretien.
+- `validated_by`/`skipped_by`/`reopened_by` existent en BD (V1_060) mais ne sont PAS mappees: la Phase 4 doit mapper l'entite AVANT le DROP de `decided_by`.
+- `pipeline_stage_notification_rule` n'a pas de modele Java: la Phase 5 est bloquee sur l'arbitrage de modelisation (reporte).
 - La regle "conserver les donnees" impose que chaque DROP soit precede du mouvement de donnees et d'une verification de comptage avant/apres dans la migration de phase.
 - Une migration appliquee est immuable (Flyway): la bascule runtime de la phase doit etre verrouillee (rg + tests verts) avant d'ecrire la migration.
-- DDL MySQL non transactionnel: chaque migration de phase (multi-ALTER) doit etre testee sur copie avant la BD partagee; ordonner DROP des FK avant DROP COLUMN.
-- `CandidateAnswerBusiness.create()` peut produire des reponses a attempt NULL (transformer ignore `applicationQuizAttempt`): le backfill de repli de V1_070 est obligatoire avant le MODIFY NOT NULL, sinon la migration echoue ou genere des reponses orphelines.
+- DDL MySQL non transactionnel: chaque migration de phase (multi-ALTER) doit etre testee sur copie avant la BD partagee; ordonner DROP des FK (y compris FK composites `fk_interviews_progress_app`, `fk_decisions_progress_app`) avant DROP COLUMN.
 - Les `SearchParam` exposes par l'API admin (`_*Repository`) seront retires en meme temps que les champs des DTO: verifier la compatibilite des filtres du front admin.
+- Phase 3: le runtime ne peut pas se passer de `interviews.application_id`/`campaign_id` (~15 points de coupling, dont `ensureInterviewProgressLink`, `ensureCandidateInterviewLink`, `finishInterview`, `sendInterviewEmail`): tout doit etre rewire via `application_progress` AVANT le DROP (sous-phase 3A), sous peine de perte silencieuse de la synthese application + notification EVALUATION_COMPLETED.
+- Phase 3: la creation d'interview peut produire `application_progress_id` NULL (template sans etape INTERVIEW -> warning only, InterviewsBusiness:181-183) et `application_id` est optionnel (170): V1_072 doit compter le volume reel (avec ET sans `application_id`) puis CREER l'occurrence manquante avant le garde-fou 0 NULL.
+- Phase 3: `global_score`/`global_comment` ne sont jamais ecrits aujourd'hui: la bascule des sommes DOIT venir APRES le backfill (V1_072 avant 3C) -> migration SPLIT, sinon l'historique affiche 0/NULL.
+- Phase 3: `selectCurrentInterview` n'est pas un simple "plus recent" (priorite statut + date + id): `findByApplicationProgressId` doit conserver le comparateur.
+- Phase 3: les DTO gardent `applicationId`/`campaignId`/`interviewDate`/`interviewStatus` derives a la lecture; le retrait des champs d'entite et la derivation doivent etre deployes AVANT le DROP V1_073 (sinon Hibernate casse des que la colonne disparait).
+- Phase 3: rendre `applicationId` OBLIGATOIRE a la creation d'interview (InterviewsBusiness:170-175) aligne le runtime sur la cible NOT NULL; volume legacy (interviews sans `application_id`) a compter et documenter avant V1_072.
 
-### Arbitrages BA (bloquants - colonnes sans cible, impossible de deplacer les donnees sans decision)
+### Arbitrages BA
 
-1. `quiz_level` (applications, Phase 1 - RESOLU 2026-08-03): ABANDON DOCUMENTE. Marqueur de progression vestigial (ordre de la derniere question repondue), ecrit mais jamais lu/consomme. Inclus dans le DROP de V1_070.
-2. `interview_duration` (candidate_interview, Phase 3): rien dans la cible. Options: conserver dans la planification (colonne cible a definir) ou abandonner avec trace d'archive. Recommandation: porter dans la planification si utilise, sinon abandon documente.
-3. Detail historique des evaluations (Phase 3): `candidate_mark` -> `global_score` est simple, mais les evaluations passees n'ont pas de critere (`evaluation_item.pipeline_stage_evaluation_criterion_id` NOT NULL). Options: creer un critere "legacy" par stage pour le detail historique, ou ne conserver que `global_score`/`global_comment` pour l'historique (les nouvelles saisies passent par les grilles).
-4. Source du statut quiz Dashboard (Phase 1 - RESOLU 2026-08-03): PROJECTION depuis `application_quiz_attempt.quiz_status` (attempt courant = dernier non supprime, id max). Pas de colonne additive.
-
-Decisions supplementaires (RESOLUES 2026-08-03):
-
-- Candidature sans attempt: EXCLUE du `quizDistribution`; `quizStatus`/score DTO null.
-- Filtre admin `quizStatus`: RETIRE (front `application.service.ts` 462 + DTO; deja no-op cote backend - seul `quizScore` etait mappe, `ApplicationsRepository` 400).
-- `quiz_token`: GARANTIR "token emis => attempt existe" dans les 3 flux de creation (340-378, 1031-1049, 3480-3493); pas de token sans attempt.
+1. `quiz_level` (applications, Phase 1 - RESOLU 2026-08-03): ABANDON DOCUMENTE. Inclus dans le DROP de V1_070.
+2. `interview_duration` (candidate_interview, Phase 3 - RESOLU 2026-08-04): CONSERVEE. Retiree du perimetre V1_072 et du doc cible (deviation documentee).
+3. Detail historique des evaluations (Phase 3 - RESOLU 2026-08-04): migration `candidate_mark`/`recruiter_comment` -> `global_score`/`global_comment` uniquement, sans critere "legacy" par stage.
+4. Source du statut quiz Dashboard (Phase 1 - RESOLU 2026-08-03): PROJECTION depuis `application_quiz_attempt.quiz_status`.
+5. Decideur de round (Phase 4 - RESOLU 2026-08-04): mapper `validated_by`/`skipped_by`/`reopened_by` dans `ApplicationProgress.java`.
+6. Modelisation `pipeline_stage_notification_rule` (Phase 5 - REPORTE): entite dediee vs lecture JPQL directe, a trancher a l'execution.
+7. Drop colonnes `interviews.campaign_id`/`application_id` (Phase 3 - RESOLU 2026-08-04): rewiring complet des lectures via `application_progress` PUIS DROP en fin de Phase 3 (V1_073), apres rg + tests.
+8. `campaignId` a la creation d'interview (Phase 3 - RESOLU 2026-08-04): conserve OBLIGATOIRE en entree du DTO (validation 135, permissions, template); seule la persistance s'arrete (3C). `applicationId` devient OBLIGATOIRE lui aussi (170-175).
+9. Interviews sans occurrence INTERVIEW (Phase 3 - RESOLU 2026-08-04): comptage reel avant V1_072 (avec et sans `application_id`); si >0, backfill par CREATION de l'occurrence via le template; sinon garde-fou simple.
+10. Sequence `global_score` (Phase 3 - RESOLU 2026-08-04): 3 temps - ecrire les 2 colonnes (3B), backfill (V1_072), bascule des sommes (3C), DROP (V1_073).
+11. `interview_mail_sent` (Phase 3 - RESOLU 2026-08-04): CONSERVEE en Phase 3 (front en dependance dure: badges, reschedule); retrait reporte en Phase 6 (derivee de `mail_log`).
+12. Migration SPLIT (Phase 3 - RESOLU 2026-08-04): `V1_072` (backfills + rename + NOT NULL) appliquee apres 3B; `V1_073` (DROPs) appliquee apres 3C. Phases 4-6 renumerees (V1_074/V1_075/V1_076).
+13. DTO derives lecture (Phase 3 - RESOLU 2026-08-04): `InterviewsDto.applicationId`/`campaignId` et `ApplicationsDto.interviewDate`/`interviewStatus` RESTENT, derives via `application_progress`; derivation + retrait des champs d'entite deployes AVANT le DROP V1_073.
+14. `applicationId` obligatoire a la creation d'interview (Phase 3 - RESOLU 2026-08-04): alignement runtime sur la cible NOT NULL; volume legacy comptabilise avant V1_072.
+15. Durcissements NOT NULL (Phase 3 - RESOLU 2026-08-04): `candidate_interview.interview_id` et `evaluations.candidate_interview_id` -> NOT NULL dans V1_072 (backfill si NULL).
 
 ## 6. Definition of done
 
-- [ ] Pour chaque phase 1-5: migration de phase appliquee; donnees verifiees conservees (comptages avant/apres dans la migration).
+- [ ] Pour chaque phase 3-5: migration de phase appliquee; donnees verifiees conservees (comptages avant/apres dans la migration).
 - [ ] Snapshot `quizapp_db_described_*.md` regenere a chaque sortie de phase.
 - [ ] `rg` sur le backend: 0 reference aux getters/setters legacy cibles (liste §2).
 - [ ] `rg` sur le front: 0 reference aux champs legacy cibles (liste §2).
 - [ ] `mvn compile` + tests backend verts.
 - [ ] Build front + specs verts.
-- [ ] Schema final conforme au doc cible §5/§7 (toutes les colonnes de la liste §7 retirees).
+- [ ] Schema final conforme au doc cible §5/§7, hors deviation documentee `candidate_interview.interview_duration` (conservee).
 
 ## 7. Dependances entre phases
 
 ```
-Phase 1 (quiz)  -> Phase 2 (statut) peut commencer en parallele (application_status
-                   ne depend pas des colonnes quiz) MAIS partage ApplicationsBusiness:
-                   preferer sequence.
-Phase 3 (entretien) depend de Phase 2 pour application_status (sync interviews
-                   utilise le statut). 
-Phase 4 (decisions) depend de Phase 3 (application_progress_id interviews).
-Phase 5 (email stage) independante; peut etre mene en parallele de 3/4.
-Migrations: une par phase (V1_070..V1_075), immuables et appliquees dans l'ordre
-                   des phases; jamais modifiees une fois appliquees.
+Phase 1 (quiz)          -> CLOTUREE (V1_070)
+Phase 2 (statut)        -> CLOTUREE (V1_071)
+Phase 3 (entretien)     depend de Phase 2 (faite); 2 migrations: V1_072 (backfills, apres 3B) + V1_073 (DROPs, apres 3C)
+Phase 4 (decisions)     depend de Phase 3 (application_progress_id interviews)
+Phase 5 (email stage)   independante; peut etre menee en parallele de 3/4
+                         (arbitrage modelisation a trancher)
+Migrations: une ou deux par phase (V1_072..V1_076), immuables et appliquees dans l'ordre
+                    des phases; jamais modifiees une fois appliquees.
 Phase 6 (reconciliation finale) apres 1-5. Phase 7 (front) en continu ou apres 6.
 ```
 
-Ordre recommande: 1 -> 2 -> 3 -> 4 -> (5 en parallele) -> 6 -> 7.
+Ordre recommande: 3 -> 4 -> (5 en parallele) -> 6 -> 7.

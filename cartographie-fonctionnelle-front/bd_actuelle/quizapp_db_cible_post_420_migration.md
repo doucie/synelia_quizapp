@@ -1,6 +1,6 @@
 # BD cible theorique - post migration 420 pipeline multi-occurrences
 
-Date: 2026-06-01
+Date: 2026-06-01 (mise a jour 2026-08-04: deviation `candidate_interview.interview_duration` conservee)
 Base de depart: `bd_actuelle/quizapp_db_described_20260601.md`
 Source cible: `evolution/420-evolution-pipeline-multi-occurrences.md`
 Statut: schema theorique cible apres cloture des phases E et F de la migration 420
@@ -277,12 +277,14 @@ Colonnes retirees physiquement en cible finale:
 Colonnes retirees physiquement en cible finale:
 
 - `interview_start`
-- `interview_duration`
 - `application_id`
+
+ECART CIBLE (decision BA 2026-08-04): `interview_duration` est CONSERVEE dans la cible finale (aucune raison metier de la supprimer). Elle n'est pas dans la liste §7.
 
 | Attribut | Type | Null | Cle | Defaut | Commentaire |
 | --- | --- | --- | --- | --- | --- |
 | `id` | `int unsigned` | NO | PRI | `\N` | identifiant technique |
+| `interview_duration` | `int` | YES |  | `\N` | duree d'entretien (CONSERVEE, decision BA 2026-08-04) |
 | `candidate_response_status` | `varchar(30)` | NO |  | `PENDING` | reponse du candidat a cette occurrence |
 | `responded_at` | `datetime` | YES |  | `\N` | horodatage de reponse |
 | `interview_id` | `int unsigned` | NO | FK | `\N` | reference `interviews.id` |
@@ -358,7 +360,7 @@ Colonnes retirees physiquement en cible finale:
 - `applications`: `quiz_score`, `total_evaluation_score`, `total_evaluation_number`, `total_evaluation_percentage`, `application_status`, `quiz_token`, `quiz_status`, `quiz_level`, `total_questions`, `quiz_score_percent`, `quiz_manual_correction_status`, `time_elapsed`, `quiz_timed_snapshot`, `quiz_total_time_allowed_snapshot`, `quiz_last_activity_at`, `interview_date`, `interview_status`
 - `candidate_answer`: `application_id`
 - `interviews`: `campaign_id`, `application_id`, `interview_evaluations_link`, `interview_mail_sent`, `evaluation_score`, `evaluation_number`, `evaluation_percentage`
-- `candidate_interview`: `interview_start`, `interview_duration`, `application_id`
+- `candidate_interview`: `interview_start`, `application_id` (ECART CIBLE 2026-08-04: `interview_duration` est CONSERVEE, decision BA)
 - `evaluations`: `candidate_mark`, `recruiter_comment`
 - `decisions`: `is_cancel`, `application_id`, `pipeline_stage_id`
 
