@@ -444,11 +444,11 @@
                       <span *ngIf="currentInterview.interviewDuration" class="answer-attempt-group__count">
                         {{ currentInterview.interviewDuration }} min
                       </span>
-                      <span *ngIf="getInterviewEvaluationAverageLabel(currentInterview)" class="answer-attempt-group__score">
-                        {{ getInterviewEvaluationAverageLabel(currentInterview) }}
+                      <span *ngIf="getCurrentInterviewEvaluationAverageLabel(app)" class="answer-attempt-group__score">
+                        {{ getCurrentInterviewEvaluationAverageLabel(app) }}
                       </span>
                     </div>
-                    <p *ngIf="getInterviewEvaluationSummary(currentInterview)" class="quiz-attempt-summary__meta">Évaluation courante : {{ getInterviewEvaluationSummary(currentInterview) }}</p>
+                    <p *ngIf="getCurrentInterviewEvaluationSummary(app)" class="quiz-attempt-summary__meta">Évaluation courante : {{ getCurrentInterviewEvaluationSummary(app) }}</p>
                     <p *ngIf="getInterviewResponseSummary(currentInterview)" class="quiz-attempt-summary__meta">{{ getInterviewResponseSummary(currentInterview) }}</p>
                   </div>
 
@@ -737,8 +737,7 @@
                       </div>
                       <div class="child-answer-body">
                         <p class="answer-attempt-group__meta">Prévu le {{ getInterviewDisplayDate(child) || '-' }}</p>
-                        <p *ngIf="child.interviewStart && child.interviewStart !== child.interviewDate" class="answer-attempt-group__meta">Créneau candidat : {{ child.interviewStart }}</p>
-                        <p *ngIf="getInterviewEvaluationSummary(child)" class="answer-attempt-group__meta">Évaluation : {{ getInterviewEvaluationSummary(child) }}</p>
+                        <p *ngIf="child.id === getCurrentInterview(app.id!)?.id && getCurrentInterviewEvaluationSummary(app)" class="answer-attempt-group__meta">Évaluation : {{ getCurrentInterviewEvaluationSummary(app) }}</p>
                         <p *ngIf="getInterviewResponseSummary(child)" class="answer-attempt-group__note">{{ getInterviewResponseSummary(child) }}</p>
                       </div>
                     </div>
@@ -762,7 +761,7 @@
                         <p *ngIf="child.interviewDate" class="answer-attempt-group__meta">Prévu le {{ child.interviewDate }}</p>
                         <p *ngIf="getInterviewEvaluationDisplayDate(child)" class="answer-attempt-group__meta">Évaluée le {{ getInterviewEvaluationDisplayDate(child) }}</p>
                         <p *ngIf="getInterviewEvaluationEvaluatorLabel(child)" class="answer-attempt-group__meta">Par {{ getInterviewEvaluationEvaluatorLabel(child) }}</p>
-                        <p *ngIf="child.recruiterComment" class="answer-attempt-group__note">{{ child.recruiterComment }}</p>
+                        <p *ngIf="child.globalComment" class="answer-attempt-group__note">{{ child.globalComment }}</p>
                         <div *ngIf="hasInterviewEvaluationItems(child)" class="evaluation-criteria-list">
                           <div *ngFor="let item of child.evaluationItems; trackBy: trackInterviewEvaluationItem" class="evaluation-criterion-item">
                             <div class="evaluation-criterion-row">

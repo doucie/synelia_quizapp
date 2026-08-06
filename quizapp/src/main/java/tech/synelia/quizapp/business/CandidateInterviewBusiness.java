@@ -119,7 +119,7 @@ public class CandidateInterviewBusiness implements IBasicBusiness<Request<Candid
 			dto.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(dto)));
 
 			CandidateInterview entityToSave = null;
-			entityToSave = CandidateInterviewTransformer.INSTANCE.toEntity(dto, existingApplications, existingInterviews);
+			entityToSave = CandidateInterviewTransformer.INSTANCE.toEntity(dto, existingInterviews);
 			entityToSave.setCreatedAt(Utilities.getCurrentDate());
 			entityToSave.setCreatedBy(request.getUser());
 			entityToSave.setIsDeleted(false);
@@ -198,7 +198,6 @@ public class CandidateInterviewBusiness implements IBasicBusiness<Request<Candid
 				if (existingApplications == null) {
 					throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("applications applicationId -> " + dto.getApplicationId(), locale));
 				}
-				entityToSave.setApplications(existingApplications);
 			}
 			// Verify if interviews exist
 			if (dto.getInterviewId() != null && dto.getInterviewId() > 0){
@@ -207,9 +206,6 @@ public class CandidateInterviewBusiness implements IBasicBusiness<Request<Candid
 					throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("interviews interviewId -> " + dto.getInterviewId(), locale));
 				}
 				entityToSave.setInterviews(existingInterviews);
-			}
-			if (Utilities.shouldUpdate(dto.getInterviewStart())) {
-				entityToSave.setInterviewStart(dateFormat.parse(dto.getInterviewStart()));
 			}
 			if (dto.getInterviewDuration() != null && dto.getInterviewDuration() > 0) {
 				entityToSave.setInterviewDuration(dto.getInterviewDuration());

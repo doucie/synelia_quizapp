@@ -62,8 +62,8 @@ public class Interviews implements Serializable, Cloneable {
     @Column(name="meet_link", length=500)
     private String     meetLink ;
 
-    @Column(name="interview_evaluations_link", length=8)
-    private String     interviewEvaluationsLink ;
+    @Column(name="evaluation_room_code", length=8)
+    private String     evaluationRoomCode ;
 
     @Column(name="interview_note", columnDefinition="TEXT")
     private String     interviewNote ;
@@ -81,15 +81,6 @@ public class Interviews implements Serializable, Cloneable {
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name="ended_at")
     private Date       endedAt      ;
-
-    @Column(name="evaluation_score")
-    private Integer    evaluationScore ; // Nombre de points total
-
-    @Column(name="evaluation_number")
-    private Integer    evaluationNumber ; // Nombre d'évaluations total
-
-    @Column(name="evaluation_percentage")
-    private Double     evaluationPercentage ; // Moyenne (evaluation_score / evaluation_number)
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name="created_at")
@@ -111,21 +102,11 @@ public class Interviews implements Serializable, Cloneable {
     @Column(name="search_string", length=65535)
     private String     searchString ;
 
-	// "campaignId" (column "campaign_id") is not defined by itself because used as FK in a link 
-	// "applicationId" (column "application_id") is not defined by itself because used as FK in a link 
 	// "applicationProgressId" (column "application_progress_id") is not defined by itself because used as FK in a link 
 
     //----------------------------------------------------------------------
     // ENTITY LINKS ( RELATIONSHIP )
     //----------------------------------------------------------------------
-    @ManyToOne
-    @JoinColumn(name="campaign_id", referencedColumnName="id")
-    private Campaigns campaigns   ;
-
-    @ManyToOne
-    @JoinColumn(name="application_id", referencedColumnName="id")
-    private Applications applications   ;
-
     @ManyToOne
     @JoinColumn(name="application_progress_id", referencedColumnName="id")
     private ApplicationProgress applicationProgress   ;

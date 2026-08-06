@@ -41,7 +41,8 @@ public interface ApplicationsTransformer {
 	@Mappings({
 		@Mapping(source="entity.createdAt", dateFormat="dd/MM/yyyy", target="createdAt"),
 		@Mapping(source="entity.updatedAt", dateFormat="dd/MM/yyyy", target="updatedAt"),
-		@Mapping(source="entity.interviewDate", dateFormat="dd/MM/yyyy HH:mm", target="interviewDate"),
+		@Mapping(target="interviewDate", ignore=true),
+		@Mapping(target="interviewStatus", ignore=true),
 		@Mapping(source="entity.currentPreselectionDecisionDate", dateFormat="dd/MM/yyyy HH:mm", target="currentPreselectionDecisionDate"),
 		@Mapping(source="entity.currentFinalDecisionDate", dateFormat="dd/MM/yyyy HH:mm", target="currentFinalDecisionDate"),
 		@Mapping(source="entity.sourceToken.id", target="sourceTokenId"),
@@ -84,11 +85,10 @@ public interface ApplicationsTransformer {
 		@Mapping(source="dto.candidateBirthDate", dateFormat="yyyy-MM-dd", target="candidateBirthDate"),
 		@Mapping(source="dto.motivationLetter", target="motivationLetter"),
 		@Mapping(source="dto.emailVerified", target="emailVerified"),
-		@Mapping(target="totalEvaluationScore", ignore=true),
-		@Mapping(target="totalEvaluationNumber", ignore=true),
-		@Mapping(target="totalEvaluationPercentage", ignore=true),
 		@Mapping(target="aggregatedQuizScore", ignore=true),
 		@Mapping(target="aggregatedQuizScorePercent", ignore=true),
+		@Mapping(target="aggregatedEvaluationScore", ignore=true),
+		@Mapping(target="aggregatedEvaluationScorePercent", ignore=true),
 		@Mapping(target="createdAt", ignore=true), // Backend sets this
 		@Mapping(source="dto.createdBy", target="createdBy"),
 		@Mapping(target="updatedAt", ignore=true), // Backend sets this

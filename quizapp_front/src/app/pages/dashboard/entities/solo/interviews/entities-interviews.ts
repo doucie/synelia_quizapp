@@ -74,7 +74,7 @@ export class EntitiesInterviewsComponent extends EntityCrudBase<Interview, Inter
     { key: 'interviewMailSent', label: 'Invitation envoyée', type: 'boolean' },
     { key: 'interviewLocation', label: 'Lieu', type: 'text' },
     { key: 'meetLink', label: 'Lien visio', type: 'text' },
-    { key: 'interviewEvaluationsLink', label: 'Lien évaluation', type: 'text', editable: false },
+    { key: 'evaluationRoomCode', label: 'Lien évaluation', type: 'text', editable: false },
     { key: 'interviewNote', label: 'Note', type: 'text' },
     { key: 'createdAt', label: 'Créé le', type: 'date', editable: false },
     { key: 'updatedAt', label: 'Modifié le', type: 'date', editable: false },
@@ -265,7 +265,7 @@ export class EntitiesInterviewsComponent extends EntityCrudBase<Interview, Inter
   }
 
   getCandidateInterviewDateDisplay(candidateInterview?: CandidateInterviewEntity | null): string {
-    const value = candidateInterview?.interviewDate || candidateInterview?.interviewStart;
+    const value = candidateInterview?.interviewDate;
     if (!value) {
       return '-';
     }

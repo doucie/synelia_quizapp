@@ -41,24 +41,6 @@ public interface EvaluationsRepository extends JpaRepository<Evaluations, Intege
 	Evaluations findOne(@Param("id")Integer id, @Param("isDeleted")Boolean isDeleted);
 
 	/**
-	 * Finds Evaluations by using candidateMark as a search criteria.
-	 * 
-	 * @param candidateMark
-	 * @return An Object Evaluations whose candidateMark is equals to the given candidateMark. If
-	 *         no Evaluations is found, this method returns null.
-	 */
-	@Query("select e from Evaluations e where e.candidateMark = :candidateMark and e.isDeleted = :isDeleted")
-	List<Evaluations> findByCandidateMark(@Param("candidateMark")Integer candidateMark, @Param("isDeleted")Boolean isDeleted);
-	/**
-	 * Finds Evaluations by using recruiterComment as a search criteria.
-	 * 
-	 * @param recruiterComment
-	 * @return An Object Evaluations whose recruiterComment is equals to the given recruiterComment. If
-	 *         no Evaluations is found, this method returns null.
-	 */
-	@Query("select e from Evaluations e where e.recruiterComment = :recruiterComment and e.isDeleted = :isDeleted")
-	List<Evaluations> findByRecruiterComment(@Param("recruiterComment")String recruiterComment, @Param("isDeleted")Boolean isDeleted);
-	/**
 	 * Finds Evaluations by using createdAt as a search criteria.
 	 * 
 	 * @param createdAt
@@ -129,9 +111,9 @@ public interface EvaluationsRepository extends JpaRepository<Evaluations, Intege
 	/**
 	 * Calcule la somme des marks pour un interview donné
 	 */
-	@Query("SELECT COALESCE(SUM(e.candidateMark), 0) FROM Evaluations e " +
+	@Query("SELECT COALESCE(SUM(e.globalScore), 0) FROM Evaluations e " +
 	       "WHERE e.candidateInterview.interviews.id = :interviewId AND e.isDeleted = false")
-	Integer sumMarksByInterviewId(@Param("interviewId") Integer interviewId);
+	Double sumMarksByInterviewId(@Param("interviewId") Integer interviewId);
 
 	/**
 	 * Compte le nombre d'évaluations pour un interview donné
@@ -143,15 +125,15 @@ public interface EvaluationsRepository extends JpaRepository<Evaluations, Intege
 	/**
 	 * Calcule la somme des marks pour tous les interviews d'une application donnée
 	 */
-	@Query("SELECT COALESCE(SUM(e.candidateMark), 0) FROM Evaluations e " +
-	       "WHERE e.candidateInterview.applications.id = :applicationId AND e.isDeleted = false")
-	Integer sumMarksByApplicationId(@Param("applicationId") Integer applicationId);
+	@Query("SELECT COALESCE(SUM(e.globalScore), 0) FROM Evaluations e " +
+	       "WHERE e.candidateInterview.interviews.applicationProgress.applications.id = :applicationId AND e.isDeleted = false")
+	Double sumMarksByApplicationId(@Param("applicationId") Integer applicationId);
 
 	/**
 	 * Compte le nombre d'évaluations pour tous les interviews d'une application donnée
 	 */
 	@Query("SELECT COUNT(e) FROM Evaluations e " +
-	       "WHERE e.candidateInterview.applications.id = :applicationId AND e.isDeleted = false")
+	       "WHERE e.candidateInterview.interviews.applicationProgress.applications.id = :applicationId AND e.isDeleted = false")
 	Long countByApplicationId(@Param("applicationId") Integer applicationId);
 
 	@Query("SELECT COUNT(e) FROM Evaluations e " +
@@ -256,11 +238,11 @@ public interface EvaluationsRepository extends JpaRepository<Evaluations, Intege
 			if (dto.getId()!= null && dto.getId() > 0) {
 				listOfQuery.add(CriteriaUtils.generateCriteria("id", dto.getId(), "e.id", "Integer", dto.getIdParam(), param, index, locale));
 			}
-			if (dto.getCandidateMark()!= null && dto.getCandidateMark() > 0) {
-				listOfQuery.add(CriteriaUtils.generateCriteria("candidateMark", dto.getCandidateMark(), "e.candidateMark", "Integer", dto.getCandidateMarkParam(), param, index, locale));
+			if (dto.getGlobalScore()!= null && dto.getGlobalScore() > 0) {
+				listOfQuery.add(CriteriaUtils.generateCriteria("globalScore", dto.getGlobalScore(), "e.globalScore", "Double", dto.getGlobalScoreParam(), param, index, locale));
 			}
-			if (Utilities.notBlank(dto.getRecruiterComment())) {
-				listOfQuery.add(CriteriaUtils.generateCriteria("recruiterComment", dto.getRecruiterComment(), "e.recruiterComment", "String", dto.getRecruiterCommentParam(), param, index, locale));
+			if (Utilities.notBlank(dto.getGlobalComment())) {
+				listOfQuery.add(CriteriaUtils.generateCriteria("globalComment", dto.getGlobalComment(), "e.globalComment", "String", dto.getGlobalCommentParam(), param, index, locale));
 			}
 			if (Utilities.notBlank(dto.getCreatedAt())) {
 				listOfQuery.add(CriteriaUtils.generateCriteria("createdAt", dto.getCreatedAt(), "e.createdAt", "Date", dto.getCreatedAtParam(), param, index, locale));

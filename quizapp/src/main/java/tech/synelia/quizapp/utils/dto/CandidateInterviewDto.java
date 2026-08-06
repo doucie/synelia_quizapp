@@ -33,7 +33,6 @@ public class CandidateInterviewDto extends _CandidateInterviewDto implements Clo
 
     private Integer    id                   ; // Primary Key
 
-	private String     interviewStart       ;
     private Integer    interviewDuration    ;
 	private String     createdAt            ;
     private Integer    createdBy            ;
@@ -43,9 +42,6 @@ public class CandidateInterviewDto extends _CandidateInterviewDto implements Clo
     private String     searchString         ;
     private String     interviewDate        ;
     private String     interviewStatus      ;
-    private Integer    evaluationScore      ;
-    private Integer    evaluationNumber     ;
-    private Double     evaluationPercentage ;
     private String     declineReason        ;
     private String     alternativeDateRequested ;
     // Champs pour les intervalles de dates (recherche avancee)
@@ -62,7 +58,6 @@ public class CandidateInterviewDto extends _CandidateInterviewDto implements Clo
 
 	// Search param
 	private SearchParam<Integer>  idParam               ;                     
-	private SearchParam<String>   interviewStartParam   ;                     
 	private SearchParam<Integer>  interviewDurationParam;                     
 	private SearchParam<String>   createdAtParam        ;                     
 	private SearchParam<Integer>  createdByParam        ;                     

@@ -533,7 +533,7 @@ export class DecisionsComponent implements OnInit, OnDestroy {
   getSelectedApplicationInterviewDate(application?: ApplicationWithCampaign | null): string {
     if (this.selectedApplicationInterviewsLoaded()) {
       const interview = this.getCurrentInterview();
-      return interview?.interviewDate || interview?.interviewStart || '';
+      return interview?.interviewDate || '';
     }
 
     return application?.interviewDate || '';
@@ -548,19 +548,11 @@ export class DecisionsComponent implements OnInit, OnDestroy {
   }
 
   getSelectedApplicationEvaluationScore(application?: ApplicationWithCampaign | null): number | null {
-    if (this.selectedApplicationInterviewsLoaded()) {
-      return this.getCurrentInterview()?.evaluationPercentage ?? null;
-    }
-
     if (application?.currentInterviewEvaluationPercentage != null) {
       return application.currentInterviewEvaluationPercentage;
     }
 
-    if (application?.evaluationScore == null) {
-      return null;
-    }
-
-    return application.evaluationScore > 5 ? application.evaluationScore : application.evaluationScore * 20;
+    return application?.aggregatedEvaluationScorePercent ?? null;
   }
 
   /**
@@ -647,8 +639,8 @@ export class DecisionsComponent implements OnInit, OnDestroy {
         return leftPriority - rightPriority;
       }
 
-      const leftTimestamp = this.parseRuntimeTimestamp(left.interviewDate || left.interviewStart || left.updatedAt || left.createdAt);
-      const rightTimestamp = this.parseRuntimeTimestamp(right.interviewDate || right.interviewStart || right.updatedAt || right.createdAt);
+      const leftTimestamp = this.parseRuntimeTimestamp(left.interviewDate || left.updatedAt || left.createdAt);
+      const rightTimestamp = this.parseRuntimeTimestamp(right.interviewDate || right.updatedAt || right.createdAt);
       if (leftTimestamp !== rightTimestamp) {
         return rightTimestamp - leftTimestamp;
       }

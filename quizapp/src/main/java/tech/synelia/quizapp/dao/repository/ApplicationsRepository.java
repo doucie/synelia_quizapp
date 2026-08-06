@@ -96,15 +96,6 @@ public interface ApplicationsRepository extends JpaRepository<Applications, Inte
 	@Query("select e from Applications e where e.emailVerified = :emailVerified and e.isDeleted = :isDeleted")
 	List<Applications> findByEmailVerified(@Param("emailVerified")Boolean emailVerified, @Param("isDeleted")Boolean isDeleted);
 	/**
-	 * Finds Applications by using totalEvaluationScore as a search criteria.
-	 * 
-	 * @param totalEvaluationScore
-	 * @return An Object Applications whose totalEvaluationScore is equals to the given totalEvaluationScore. If
-	 *         no Applications is found, this method returns null.
-	 */
-	@Query("select e from Applications e where e.totalEvaluationScore = :totalEvaluationScore and e.isDeleted = :isDeleted")
-	List<Applications> findByTotalEvaluationScore(@Param("totalEvaluationScore")Float totalEvaluationScore, @Param("isDeleted")Boolean isDeleted);
-	/**
 	 * Finds Applications by using createdAt as a search criteria.
 	 * 
 	 * @param createdAt
@@ -374,15 +365,6 @@ public interface ApplicationsRepository extends JpaRepository<Applications, Inte
 			}
 			if (dto.getEmailVerified()!= null) {
 				listOfQuery.add(CriteriaUtils.generateCriteria("emailVerified", dto.getEmailVerified(), "e.emailVerified", "Boolean", dto.getEmailVerifiedParam(), param, index, locale));
-			}
-			if (dto.getTotalEvaluationScore()!= null && dto.getTotalEvaluationScore() > 0) {
-				listOfQuery.add(CriteriaUtils.generateCriteria("totalEvaluationScore", dto.getTotalEvaluationScore(), "e.totalEvaluationScore", "Float", dto.getTotalEvaluationScoreParam(), param, index, locale));
-			}
-			if (dto.getTotalEvaluationNumber()!= null && dto.getTotalEvaluationNumber() > 0) {
-				listOfQuery.add(CriteriaUtils.generateCriteria("totalEvaluationNumber", dto.getTotalEvaluationNumber(), "e.totalEvaluationNumber", "Integer", dto.getTotalEvaluationNumberParam(), param, index, locale));
-			}
-			if (dto.getTotalEvaluationPercentage()!= null && dto.getTotalEvaluationPercentage() > 0) {
-				listOfQuery.add(CriteriaUtils.generateCriteria("totalEvaluationPercentage", dto.getTotalEvaluationPercentage(), "e.totalEvaluationPercentage", "Double", dto.getTotalEvaluationPercentageParam(), param, index, locale));
 			}
 			if (Utilities.notBlank(dto.getCreatedAt())) {
 				listOfQuery.add(CriteriaUtils.generateCriteria("createdAt", dto.getCreatedAt(), "e.createdAt", "Date", dto.getCreatedAtParam(), param, index, locale));

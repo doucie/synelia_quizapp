@@ -653,8 +653,8 @@ export class InterviewsComponent implements OnInit, OnDestroy {
       );
       
       // Construire le lien d'évaluation
-      const evaluationLink = interview.interviewEvaluationsLink 
-        ? `/dashboard/evaluate/${interview.interviewEvaluationsLink}`
+      const evaluationLink = interview.evaluationRoomCode 
+        ? `/dashboard/evaluate/${interview.evaluationRoomCode}`
         : `/dashboard/evaluate?interviewId=${interview.id}`;
 
       const notifications = uniqueEvaluators.map(evaluator => ({
@@ -812,8 +812,8 @@ export class InterviewsComponent implements OnInit, OnDestroy {
             if (userPerm) {
               // L'utilisateur a le droit d'évaluer, ouvrir dans un nouvel onglet
               let url: string;
-              if (interview.interviewEvaluationsLink) {
-                url = `/dashboard/evaluate/${interview.interviewEvaluationsLink}`;
+              if (interview.evaluationRoomCode) {
+                url = `/dashboard/evaluate/${interview.evaluationRoomCode}`;
               } else {
                 // Fallback: utiliser l'ID de l'entretien
                 url = `/dashboard/evaluate?interviewId=${interview.id}`;

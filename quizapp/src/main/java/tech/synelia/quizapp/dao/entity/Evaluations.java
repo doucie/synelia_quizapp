@@ -49,12 +49,6 @@ public class Evaluations implements Serializable, Cloneable {
     //----------------------------------------------------------------------
     // ENTITY DATA FIELDS 
     //----------------------------------------------------------------------    
-    @Column(name="candidate_mark")
-    private Integer    candidateMark ;
-
-    @Column(name="recruiter_comment", length=65535)
-    private String     recruiterComment ;
-
     @Column(name="evaluation_status", length=20)
     private String     evaluationStatus ;
 

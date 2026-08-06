@@ -106,19 +106,19 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 		List<Integer> affectedInterviewParticipantIds = new ArrayList<Integer>();
 			
 		for (EvaluationsDto dto : request.getDatas()) {
-			applyDerivedCandidateMark(dto);
+			applyDerivedGlobalScore(dto);
 			// Definir les parametres obligatoires
 			Map<String, java.lang.Object> fieldsToVerify = new HashMap<String, java.lang.Object>();
-			fieldsToVerify.put("candidateMark", dto.getCandidateMark());
-			fieldsToVerify.put("recruiterComment", dto.getRecruiterComment());
+			fieldsToVerify.put("globalScore", dto.getGlobalScore());
+			fieldsToVerify.put("globalComment", dto.getGlobalComment());
 			fieldsToVerify.put("candidateInterviewId", dto.getCandidateInterviewId());
 			if (!Validate.RequiredValue(fieldsToVerify).isGood()) {
 				throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
 			}
 
-			// Validate candidateMark range [0, 100]
-			if (dto.getCandidateMark() != null && (dto.getCandidateMark() < 0 || dto.getCandidateMark() > 100)) {
-				throw new InvalidEntityException(functionalError.DATA_NOT_EXIST("candidateMark must be between 0 and 100 -> " + dto.getCandidateMark(), locale));
+			// Validate globalScore range [0, 100]
+			if (dto.getGlobalScore() != null && (dto.getGlobalScore() < 0 || dto.getGlobalScore() > 100)) {
+				throw new InvalidEntityException(functionalError.DATA_NOT_EXIST("globalScore must be between 0 and 100 -> " + dto.getGlobalScore(), locale));
 			}
 
 			// Verify if evaluations to insert do not exist
@@ -269,21 +269,21 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 					"modifier cette évaluation",
 					FunctionalityEnum.UPDATE_EVALUATIONS.getValue());
 			InterviewParticipant interviewParticipant = resolveInterviewParticipant(dto, permissionCandidateInterview, request.getUser(), locale);
-			applyDerivedCandidateMark(dto);
+			applyDerivedGlobalScore(dto);
 			if (interviewParticipant != null) {
 				entityToSave.setInterviewParticipant(interviewParticipant);
 				affectedInterviewParticipantIds.add(interviewParticipant.getId());
 			} else if ((dto.getInterviewParticipantId() != null && dto.getInterviewParticipantId() > 0) || candidateInterviewRetargeted) {
 				entityToSave.setInterviewParticipant(null);
 			}
-			if (dto.getCandidateMark() != null) {
-				if (dto.getCandidateMark() > 100) {
-					throw new InvalidEntityException(functionalError.DATA_NOT_EXIST("candidateMark must be between 0 and 100 -> " + dto.getCandidateMark(), locale));
-				}
-				entityToSave.setCandidateMark(dto.getCandidateMark());
+			if (dto.getGlobalScore() != null && (dto.getGlobalScore() < 0 || dto.getGlobalScore() > 100)) {
+				throw new InvalidEntityException(functionalError.DATA_NOT_EXIST("globalScore must be between 0 and 100 -> " + dto.getGlobalScore(), locale));
 			}
-			if (Utilities.shouldUpdate(dto.getRecruiterComment())) {
-				entityToSave.setRecruiterComment(dto.getRecruiterComment());
+			if (dto.getGlobalScore() != null) {
+				entityToSave.setGlobalScore(dto.getGlobalScore());
+			}
+			if (Utilities.shouldUpdate(dto.getGlobalComment())) {
+				entityToSave.setGlobalComment(dto.getGlobalComment());
 			}
 			if (dto.getCreatedBy() != null && dto.getCreatedBy() > 0) {
 				entityToSave.setCreatedBy(dto.getCreatedBy());
@@ -620,17 +620,17 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 		return response;
 	}
 
-	private void applyDerivedCandidateMark(EvaluationsDto dto) {
+	private void applyDerivedGlobalScore(EvaluationsDto dto) {
 		if (dto == null) {
 			return;
 		}
-		Integer derivedCandidateMark = deriveCandidateMarkFromEvaluationItems(dto.getEvaluationItems());
-		if (derivedCandidateMark != null) {
-			dto.setCandidateMark(derivedCandidateMark);
+		Double derivedGlobalScore = deriveGlobalScoreFromEvaluationItems(dto.getEvaluationItems());
+		if (derivedGlobalScore != null) {
+			dto.setGlobalScore(derivedGlobalScore);
 		}
 	}
 
-	private Integer deriveCandidateMarkFromEvaluationItems(List<EvaluationItemDto> evaluationItems) {
+	private Double deriveGlobalScoreFromEvaluationItems(List<EvaluationItemDto> evaluationItems) {
 		if (evaluationItems == null || evaluationItems.isEmpty()) {
 			return null;
 		}
@@ -679,7 +679,7 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 		if (totalWeight <= 0d) {
 			return null;
 		}
-		return (int) Math.round((totalWeightedScore / totalWeight) * 100d);
+		return (double) Math.round((totalWeightedScore / totalWeight) * 100d);
 	}
 
 	private void recalculateEvaluationAggregates(List<Integer> candidateInterviewIds, Integer userId, Locale locale) {
@@ -702,38 +702,33 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 
 	private void recalculateEvaluationAggregatesForCandidateInterview(Integer candidateInterviewId, Integer userId, Locale locale) {
 		CandidateInterview candidateInterview = candidateInterviewRepository.findOne(candidateInterviewId, false);
-		if (candidateInterview == null || candidateInterview.getInterviews() == null || candidateInterview.getApplications() == null) {
+		if (candidateInterview == null || candidateInterview.getInterviews() == null || candidateInterview.getInterviews().getId() == null) {
 			return;
 		}
 
 		Interviews interview = interviewsRepository.findOne(candidateInterview.getInterviews().getId(), false);
-		Applications application = applicationsRepository.findOne(candidateInterview.getApplications().getId(), false);
-		if (interview == null || application == null) {
+		if (interview == null) {
+			return;
+		}
+		Applications application = resolveApplicationFromInterview(interview);
+		if (application == null) {
 			return;
 		}
 
-		Integer interviewScore = evaluationsRepository.sumMarksByInterviewId(interview.getId());
+		Double interviewScore = evaluationsRepository.sumMarksByInterviewId(interview.getId());
 		Long interviewCount = evaluationsRepository.countByInterviewId(interview.getId());
 		double interviewPercentage = interviewCount != null && interviewCount > 0
-				? (double) interviewScore / interviewCount
+				? (interviewScore != null ? interviewScore : 0d) / interviewCount
 				: 0d;
 
-		interview.setEvaluationScore(interviewScore);
-		interview.setEvaluationNumber(interviewCount != null ? interviewCount.intValue() : 0);
-		interview.setEvaluationPercentage(interviewPercentage);
-		interview.setUpdatedAt(Utilities.getCurrentDate());
-		interview.setUpdatedBy(userId);
-		interviewsRepository.save(interview);
-
-		Integer applicationScore = evaluationsRepository.sumMarksByApplicationId(application.getId());
+		Double applicationScore = evaluationsRepository.sumMarksByApplicationId(application.getId());
 		Long applicationCount = evaluationsRepository.countByApplicationId(application.getId());
 		double applicationPercentage = applicationCount != null && applicationCount > 0
-				? (double) applicationScore / applicationCount
+				? (applicationScore != null ? applicationScore : 0d) / applicationCount
 				: 0d;
 
-		application.setTotalEvaluationScore(applicationScore != null ? applicationScore.floatValue() : 0f);
-		application.setTotalEvaluationNumber(applicationCount != null ? applicationCount.intValue() : 0);
-		application.setTotalEvaluationPercentage(applicationPercentage);
+		application.setAggregatedEvaluationScore(applicationScore != null ? applicationScore : 0d);
+		application.setAggregatedEvaluationScorePercent(applicationPercentage);
 		applyCurrentInterviewSummary(application, resolveCurrentInterviewSummary(application.getId(), interview));
 		application.setUpdatedAt(Utilities.getCurrentDate());
 		application.setUpdatedBy(userId);
@@ -757,20 +752,20 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 			return;
 		}
 
-		if (currentInterview == null) {
-			application.setInterviewDate(null);
-			application.setInterviewStatus(null);
+		if (currentInterview == null || currentInterview.getId() == null) {
 			application.setCurrentInterviewEvaluationScore(null);
 			application.setCurrentInterviewEvaluationNumber(null);
 			application.setCurrentInterviewEvaluationPercentage(null);
 			return;
 		}
 
-		application.setInterviewDate(currentInterview.getInterviewDate());
-		application.setInterviewStatus(currentInterview.getInterviewStatus());
-		application.setCurrentInterviewEvaluationScore(currentInterview.getEvaluationScore());
-		application.setCurrentInterviewEvaluationNumber(currentInterview.getEvaluationNumber());
-		application.setCurrentInterviewEvaluationPercentage(currentInterview.getEvaluationPercentage());
+		Double score = evaluationsRepository.sumMarksByInterviewId(currentInterview.getId());
+		Long number = evaluationsRepository.countByInterviewId(currentInterview.getId());
+		application.setCurrentInterviewEvaluationScore(score != null ? score.intValue() : null);
+		application.setCurrentInterviewEvaluationNumber(number != null ? number.intValue() : 0);
+		application.setCurrentInterviewEvaluationPercentage(number != null && number > 0
+				? (score != null ? score : 0d) / number
+				: 0d);
 	}
 
 	private Interviews resolveCurrentInterviewSummary(Integer applicationId, Interviews fallbackInterview) {
@@ -778,62 +773,8 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 			return fallbackInterview;
 		}
 
-		Interviews currentInterview = selectCurrentInterview(interviewsRepository.findByApplicationId(applicationId, false));
+		Interviews currentInterview = applicationProgressBusiness.resolveCurrentInterviewByApplicationId(applicationId);
 		return currentInterview != null ? currentInterview : fallbackInterview;
-	}
-
-	private Interviews selectCurrentInterview(List<Interviews> interviews) {
-		if (interviews == null || interviews.isEmpty()) {
-			return null;
-		}
-
-		return interviews.stream()
-				.filter(Objects::nonNull)
-				.sorted((left, right) -> {
-					int priorityComparison = Integer.compare(getInterviewSummaryPriority(left.getInterviewStatus()), getInterviewSummaryPriority(right.getInterviewStatus()));
-					if (priorityComparison != 0) {
-						return priorityComparison;
-					}
-
-					long rightDate = right.getInterviewDate() != null ? right.getInterviewDate().getTime() : 0L;
-					long leftDate = left.getInterviewDate() != null ? left.getInterviewDate().getTime() : 0L;
-					if (leftDate != rightDate) {
-						return Long.compare(rightDate, leftDate);
-					}
-
-					return Integer.compare(
-						right.getId() != null ? right.getId() : 0,
-						left.getId() != null ? left.getId() : 0);
-				})
-				.findFirst()
-				.orElse(null);
-	}
-
-	private int getInterviewSummaryPriority(String interviewStatus) {
-		if (StringUtils.isBlank(interviewStatus)) {
-			return 99;
-		}
-
-		switch (interviewStatus.trim().toUpperCase(Locale.ROOT)) {
-			case "STARTED":
-				return 0;
-			case "SCHEDULED":
-				return 1;
-			case "POSTPONED":
-				return 2;
-			case "PENDING":
-				return 3;
-			case "OVER":
-				return 4;
-			case "PASSED":
-				return 5;
-			case "FAILED":
-				return 6;
-			case "ARCHIVED":
-				return 7;
-			default:
-				return 99;
-		}
 	}
 
 	private void ensureEvaluationAllowed(CandidateInterview candidateInterview, Integer actorUserId, Locale locale, String actionLabel, String globalPermission) {
@@ -849,9 +790,7 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 			throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("interviews id -> " + candidateInterview.getInterviews().getId(), locale));
 		}
 
-		Applications application = candidateInterview.getApplications() != null && candidateInterview.getApplications().getId() != null
-				? applicationsRepository.findOne(candidateInterview.getApplications().getId(), false)
-				: null;
+		Applications application = resolveApplicationFromInterview(interview);
 		Campaigns campaign = application != null && application.getSourceToken() != null
 				? application.getSourceToken().getCampaigns()
 				: null;
@@ -1118,8 +1057,8 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 		snapshot.put("candidateInterviewId", candidateInterview != null ? candidateInterview.getId() : null);
 		snapshot.put("interviewId", interview != null ? interview.getId() : null);
 		snapshot.put("interviewParticipantId", evaluation.getInterviewParticipant() != null ? evaluation.getInterviewParticipant().getId() : null);
-		snapshot.put("candidateMark", evaluation.getCandidateMark());
-		snapshot.put("recruiterComment", evaluation.getRecruiterComment());
+		snapshot.put("globalScore", evaluation.getGlobalScore());
+		snapshot.put("globalComment", evaluation.getGlobalComment());
 		snapshot.put("evaluationStatus", evaluation.getEvaluationStatus());
 		snapshot.put("submittedAt", evaluation.getSubmittedAt());
 		snapshot.put("isDeleted", evaluation.getIsDeleted());
@@ -1142,9 +1081,8 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 		}
 
 		CandidateInterview candidateInterview = evaluation.getCandidateInterview();
-		boolean missingApplication = candidateInterview.getApplications() == null || candidateInterview.getApplications().getId() == null;
 		boolean missingInterview = candidateInterview.getInterviews() == null || candidateInterview.getInterviews().getId() == null;
-		if (!missingApplication && !missingInterview) {
+		if (!missingInterview) {
 			return candidateInterview;
 		}
 
@@ -1166,12 +1104,30 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 		return loadedInterview != null ? loadedInterview : interview;
 	}
 
+	private Applications resolveApplicationFromInterview(Interviews interview) {
+		if (interview == null) {
+			return null;
+		}
+		if (interview.getApplicationProgress() != null && interview.getApplicationProgress().getApplications() != null) {
+			return interview.getApplicationProgress().getApplications();
+		}
+		return null;
+	}
+
 	private Integer resolveEvaluationApplicationId(Evaluations evaluation) {
 		return resolveEvaluationApplicationId(resolveEvaluationCandidateInterview(evaluation));
 	}
 
 	private Integer resolveEvaluationApplicationId(CandidateInterview candidateInterview) {
-		return candidateInterview != null && candidateInterview.getApplications() != null ? candidateInterview.getApplications().getId() : null;
+		if (candidateInterview == null) {
+			return null;
+		}
+		Interviews interview = resolveEvaluationInterview(null, candidateInterview);
+		Applications application = resolveApplicationFromInterview(interview);
+		if (application != null) {
+			return application.getId();
+		}
+		return null;
 	}
 
 	private Integer resolveEvaluationApplicationProgressId(Evaluations evaluation) {

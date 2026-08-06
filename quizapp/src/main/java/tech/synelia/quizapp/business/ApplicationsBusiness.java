@@ -75,6 +75,8 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 	@Autowired
 	private InterviewsRepository interviewsRepository;
 	@Autowired
+	private EvaluationsRepository evaluationsRepository;
+	@Autowired
 	private CandidateTokenRepository candidateTokenRepository;
 	@Autowired
 	private EmailVerificationTokenRepository emailVerificationTokenRepository;
@@ -125,6 +127,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 
 	private SimpleDateFormat dateFormat;
 	private SimpleDateFormat dateTimeFormat;
+	private SimpleDateFormat interviewSummaryDateFormat;
 	private Context context;
 	private static final int TRACKING_CODE_LENGTH = 6;
 	private static final String TRACKING_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -175,6 +178,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 	public ApplicationsBusiness() {
 		dateFormat = new SimpleDateFormat("dd/MM/yyyy");
 		dateTimeFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+		interviewSummaryDateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm");
 	}
 	
 	/**
@@ -212,7 +216,6 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			// fieldsToVerify.put("candidateCvPath", dto.getCandidateCvPath()); // CV optionnel pour le moment
 			// fieldsToVerify.put("emailVerified", dto.getEmailVerified());
 			// fieldsToVerify.put("quizScore", dto.getQuizScore());
-			// fieldsToVerify.put("evaluationScore", dto.getEvaluationScore());
 			// fieldsToVerify.put("visitToken", dto.getVisitToken());
 			// fieldsToVerify.put("searchString", dto.getSearchString());
 			// fieldsToVerify.put("sourceTokenId", dto.getSourceTokenId());
@@ -367,6 +370,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			}
 
 			List<ApplicationsDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading())) ? ApplicationsTransformer.INSTANCE.toLiteDtos(itemsSaved) : ApplicationsTransformer.INSTANCE.toDtos(itemsSaved);
+			applyDerivedInterviewSummary(itemsDto, itemsSaved);
 			for (ApplicationsDto dto : itemsDto) {
 				dto.setTrackingCode(trackingCodesByApplicationId.get(dto.getId()));
 				String qt = quizTokensByAppId.get(dto.getId());
@@ -519,6 +523,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				throw new InternalErrorException(functionalError.SAVE_FAIL("applications", locale));
 			}
 			List<ApplicationsDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading())) ? ApplicationsTransformer.INSTANCE.toLiteDtos(itemsSaved) : ApplicationsTransformer.INSTANCE.toDtos(itemsSaved);
+			applyDerivedInterviewSummary(itemsDto, itemsSaved);
 
 			final int size = itemsSaved.size();
 			List<String>  listOfError      = Collections.synchronizedList(new ArrayList<String>());
@@ -640,6 +645,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 
 		if (items != null && !items.isEmpty()) {
 			List<ApplicationsDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading())) ? ApplicationsTransformer.INSTANCE.toLiteDtos(items) : ApplicationsTransformer.INSTANCE.toDtos(items);
+			applyDerivedInterviewSummary(itemsDto, items);
 
 			final int size = items.size();
 			List<String>  listOfError      = Collections.synchronizedList(new ArrayList<String>());
@@ -690,6 +696,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 
 		if (items != null && !items.isEmpty()) {
 			List<ApplicationsDto> itemsDto = (Utilities.isTrue(request.getIsSimpleLoading())) ? ApplicationsTransformer.INSTANCE.toLiteDtos(items) : ApplicationsTransformer.INSTANCE.toDtos(items);
+			applyDerivedInterviewSummary(itemsDto, items);
 
 			final int size = items.size();
 			List<String>  listOfError      = Collections.synchronizedList(new ArrayList<String>());
@@ -747,6 +754,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		}
 
 		dto.setQuizAttempts(buildApplicationQuizAttemptSummaries(dto.getId()));
+		applyDerivedInterviewSummary(dto, applicationsRepository.findOne(dto.getId(), false));
 
 		return dto;
 	}
@@ -2991,19 +2999,19 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			return;
 		}
 
-		Interviews currentInterview = selectCurrentInterview(interviewsRepository.findByApplicationId(application.getId(), false));
-		if (currentInterview == null) {
-			application.setInterviewDate(null);
-			application.setInterviewStatus(null);
+		Interviews currentInterview = applicationProgressBusiness.resolveCurrentInterviewByApplicationId(application.getId());
+		if (currentInterview == null || currentInterview.getId() == null) {
 			application.setCurrentInterviewEvaluationScore(null);
 			application.setCurrentInterviewEvaluationNumber(null);
 			application.setCurrentInterviewEvaluationPercentage(null);
 		} else {
-			application.setInterviewDate(currentInterview.getInterviewDate());
-			application.setInterviewStatus(currentInterview.getInterviewStatus());
-			application.setCurrentInterviewEvaluationScore(currentInterview.getEvaluationScore());
-			application.setCurrentInterviewEvaluationNumber(currentInterview.getEvaluationNumber());
-			application.setCurrentInterviewEvaluationPercentage(currentInterview.getEvaluationPercentage());
+			Double score = evaluationsRepository.sumMarksByInterviewId(currentInterview.getId());
+			Long number = evaluationsRepository.countByInterviewId(currentInterview.getId());
+			application.setCurrentInterviewEvaluationScore(score != null ? score.intValue() : null);
+			application.setCurrentInterviewEvaluationNumber(number != null ? number.intValue() : 0);
+			application.setCurrentInterviewEvaluationPercentage(number != null && number > 0
+					? (score != null ? score : 0d) / number
+					: 0d);
 		}
 
 		application.setUpdatedAt(Utilities.getCurrentDate());
@@ -3065,11 +3073,85 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		}
 	}
 
+	private void applyDerivedInterviewSummary(List<ApplicationsDto> dtos, List<Applications> entities) {
+		if (dtos == null || entities == null || dtos.size() != entities.size()) {
+			return;
+		}
+
+		Map<Integer, Integer> progressIdByApplicationId = new HashMap<Integer, Integer>();
+		for (Applications entity : entities) {
+			if (entity != null && entity.getId() != null) {
+				ApplicationProgress interviewProgress = applicationProgressBusiness.resolveProgressByStageType(entity.getId(), "INTERVIEW");
+				if (interviewProgress != null && interviewProgress.getId() != null) {
+					progressIdByApplicationId.put(entity.getId(), interviewProgress.getId());
+				}
+			}
+		}
+
+		List<Integer> progressIds = new ArrayList<Integer>(new LinkedHashSet<Integer>(progressIdByApplicationId.values()));
+		Map<Integer, List<Interviews>> interviewsByProgressId = new HashMap<Integer, List<Interviews>>();
+		if (!progressIds.isEmpty()) {
+			List<Interviews> allInterviews = interviewsRepository.findByApplicationProgressIdIn(progressIds, false);
+			if (allInterviews != null) {
+				for (Interviews interview : allInterviews) {
+					if (interview != null && interview.getApplicationProgress() != null && interview.getApplicationProgress().getId() != null) {
+						List<Interviews> interviews = interviewsByProgressId.get(interview.getApplicationProgress().getId());
+						if (interviews == null) {
+							interviews = new ArrayList<Interviews>();
+							interviewsByProgressId.put(interview.getApplicationProgress().getId(), interviews);
+						}
+						interviews.add(interview);
+					}
+				}
+			}
+		}
+
+		for (int i = 0; i < dtos.size(); i++) {
+			ApplicationsDto dto = dtos.get(i);
+			Applications entity = entities.get(i);
+			if (dto == null || entity == null) {
+				continue;
+			}
+			Integer progressId = progressIdByApplicationId.get(entity.getId());
+			Interviews currentInterview = progressId != null ? selectCurrentInterview(interviewsByProgressId.get(progressId)) : null;
+			applyDerivedInterviewSummary(dto, currentInterview);
+		}
+	}
+
+	private void applyDerivedInterviewSummary(ApplicationsDto dto, Applications application) {
+		if (dto == null || application == null || application.getId() == null) {
+			return;
+		}
+		ApplicationProgress interviewProgress = applicationProgressBusiness.resolveProgressByStageType(application.getId(), "INTERVIEW");
+		if (interviewProgress == null || interviewProgress.getId() == null) {
+			dto.setInterviewDate(null);
+			dto.setInterviewStatus(null);
+			return;
+		}
+		Interviews currentInterview = selectCurrentInterview(
+				interviewsRepository.findByApplicationProgressId(interviewProgress.getId(), false));
+		applyDerivedInterviewSummary(dto, currentInterview);
+	}
+
+	private void applyDerivedInterviewSummary(ApplicationsDto dto, Interviews currentInterview) {
+		if (dto == null) {
+			return;
+		}
+		if (currentInterview == null) {
+			dto.setInterviewDate(null);
+			dto.setInterviewStatus(null);
+			return;
+		}
+		dto.setInterviewDate(currentInterview.getInterviewDate() != null
+				? interviewSummaryDateFormat.format(currentInterview.getInterviewDate())
+				: null);
+		dto.setInterviewStatus(currentInterview.getInterviewStatus());
+	}
+
 	private ApplicationQuizAttempt createQuizAttemptForVerifiedApplication(Applications application, String quizToken, Integer actorUserId) {
 		if (application == null || application.getId() == null || StringUtils.isBlank(quizToken)) {
 			return null;
 		}
-
 		ApplicationProgress quizProgress = findProgressByStageType(application.getId(), StageType.QUIZ.getValue());
 		if (quizProgress == null || quizProgress.getId() == null) {
 			log.warning("Impossible de créer une tentative quiz explicite pour l'application " + application.getId()
@@ -3668,9 +3750,14 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		}
 
 		CandidateInterview candidateInterview = candidateInterviewRepository.findOne(candidateInterviewId, false);
+		Integer linkApplicationId = candidateInterview != null
+				&& candidateInterview.getInterviews() != null
+				&& candidateInterview.getInterviews().getApplicationProgress() != null
+				&& candidateInterview.getInterviews().getApplicationProgress().getApplications() != null
+						? candidateInterview.getInterviews().getApplicationProgress().getApplications().getId()
+						: null;
 		if (candidateInterview == null
-				|| candidateInterview.getApplications() == null
-				|| !Objects.equals(candidateInterview.getApplications().getId(), application.getId())) {
+				|| !Objects.equals(linkApplicationId, application.getId())) {
 			result.put("hasError", true);
 			result.put("message", "Entretien candidat introuvable pour cette candidature.");
 			return result;
@@ -3703,7 +3790,6 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			case "ACCEPT":
 				candidateInterview.setDeclineReason(null);
 				candidateInterview.setAlternativeDateRequested(null);
-				candidateInterview.setInterviewStart(interview.getInterviewDate());
 				candidateInterview.setCandidateResponseStatus("ACCEPTED");
 				candidateInterview.setRespondedAt(now);
 				if (!"STARTED".equalsIgnoreCase(interview.getInterviewStatus())
@@ -3734,7 +3820,6 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				}
 				candidateInterview.setAlternativeDateRequested(requestedDate);
 				candidateInterview.setDeclineReason(null);
-				candidateInterview.setInterviewStart(interview.getInterviewDate());
 				candidateInterview.setCandidateResponseStatus("RESCHEDULE_REQUESTED");
 				candidateInterview.setRespondedAt(now);
 				interview.setInterviewStatus("POSTPONED");
@@ -4049,7 +4134,6 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		}
 
 		List<CandidateInterview> sortedLinks = new ArrayList<CandidateInterview>(links);
-		sortedLinks.sort(Comparator.comparing(CandidateInterview::getInterviewStart, Comparator.nullsLast(Date::compareTo)));
 		for (CandidateInterview link : sortedLinks) {
 			Interviews interview = link.getInterviews() != null && link.getInterviews().getId() != null
 					? interviewsRepository.findOne(link.getInterviews().getId(), false)
@@ -4090,7 +4174,10 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		ApplicationProgress interviewProgress = interview != null ? interview.getApplicationProgress() : null;
 		PipelineStage pipelineStage = interviewProgress != null ? interviewProgress.getPipelineStage() : null;
 		String responseState = resolveCandidateInterviewResponseState(candidateInterview);
-		boolean publicActionsLocked = candidateInterview.getApplications() != null && isTrackedPublicActionsLocked(candidateInterview.getApplications());
+		Applications linkApplication = interview != null && interview.getApplicationProgress() != null
+				? interview.getApplicationProgress().getApplications()
+				: null;
+		boolean publicActionsLocked = linkApplication != null && isTrackedPublicActionsLocked(linkApplication);
 		interviewData.put("id", candidateInterview.getId());
 		interviewData.put("candidateInterviewId", candidateInterview.getId());
 		interviewData.put("interviewId", interview.getId());
@@ -4099,7 +4186,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		interviewData.put("pipelineStageType", pipelineStage != null ? pipelineStage.getStageType() : null);
 		interviewData.put("pipelineStageLabel", pipelineStage != null ? pipelineStage.getStageLabel() : null);
 		interviewData.put("pipelineStageOrder", pipelineStage != null ? pipelineStage.getStageOrder() : null);
-		interviewData.put("interviewStart", candidateInterview.getInterviewStart() != null ? candidateInterview.getInterviewStart() : interview.getInterviewDate());
+		interviewData.put("interviewDate", interview.getInterviewDate());
 		interviewData.put("interviewDuration", candidateInterview.getInterviewDuration());
 		interviewData.put("interviewType", interview.getInterviewType());
 		interviewData.put("interviewStatus", interview.getInterviewStatus());
@@ -4129,8 +4216,8 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			return null;
 		}
 
-		Object interviewStart = interviewData.get("interviewStart");
-		return interviewStart instanceof Date ? (Date) interviewStart : null;
+		Object interviewDate = interviewData.get("interviewDate");
+		return interviewDate instanceof Date ? (Date) interviewDate : null;
 	}
 
 	private int resolveTrackedInterviewId(Map<String, Object> interviewData) {
@@ -4366,14 +4453,11 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 
 	private String buildCandidateInterviewSearchString(CandidateInterview candidateInterview) {
 		List<String> values = new ArrayList<>();
-		if (candidateInterview.getApplications() != null && candidateInterview.getApplications().getId() != null) {
-			values.add(candidateInterview.getApplications().getId().toString());
-		}
 		if (candidateInterview.getInterviews() != null && candidateInterview.getInterviews().getId() != null) {
 			values.add(candidateInterview.getInterviews().getId().toString());
 		}
-		if (candidateInterview.getInterviewStart() != null) {
-			values.add(dateTimeFormat.format(candidateInterview.getInterviewStart()));
+		if (candidateInterview.getInterviews() != null && candidateInterview.getInterviews().getInterviewDate() != null) {
+			values.add(dateTimeFormat.format(candidateInterview.getInterviews().getInterviewDate()));
 		}
 		if (StringUtils.isNotBlank(candidateInterview.getDeclineReason())) {
 			values.add(candidateInterview.getDeclineReason().trim());

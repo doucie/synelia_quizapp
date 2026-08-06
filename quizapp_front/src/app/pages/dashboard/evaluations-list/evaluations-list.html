@@ -209,16 +209,16 @@
                 } @else {
                   <div class="score-section">
                     <div class="score-item">
-                      <span class="score-label">Score</span>
-                      <span class="score-value">{{ formatScore(interview.evaluationScore, interview.evaluationNumber) }}</span>
+                      <span class="score-label">Moyenne dérivée</span>
+                      <span class="score-value highlight">{{ formatDerivedMark(interview.submittedEvaluationAverageMark) }}</span>
                     </div>
                     <div class="score-item">
-                      <span class="score-label">Moyenne</span>
-                      <span class="score-value highlight">{{ formatPercentage(interview.evaluationPercentage) }}</span>
+                      <span class="score-label">Dernier score</span>
+                      <span class="score-value">{{ formatDerivedMark(interview.latestEvaluationMark) }}</span>
                     </div>
                     <div class="score-item">
-                      <span class="score-label">Évaluations</span>
-                      <span class="score-value">{{ interview.evaluationNumber || 0 }}</span>
+                      <span class="score-label">Soumissions</span>
+                      <span class="score-value">{{ interview.submittedEvaluationCount || 0 }}</span>
                     </div>
                   </div>
                 }

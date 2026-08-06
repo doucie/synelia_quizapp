@@ -42,10 +42,6 @@ public class CandidateInterview implements Serializable, Cloneable {
     //----------------------------------------------------------------------
     // ENTITY DATA FIELDS 
     //----------------------------------------------------------------------    
-    @Temporal(TemporalType.TIMESTAMP)
-    @Column(name="interview_start")
-    private Date       interviewStart ;
-
     @Column(name="interview_duration")
     private Integer    interviewDuration ;
     @Column(name="candidate_response_status", length=30)
@@ -81,15 +77,11 @@ public class CandidateInterview implements Serializable, Cloneable {
     @Column(name="alternative_date_requested")
     private Date       alternativeDateRequested ;
 
-	// "applicationId" (column "application_id") is not defined by itself because used as FK in a link 
 	// "interviewId" (column "interview_id") is not defined by itself because used as FK in a link 
 
     //----------------------------------------------------------------------
     // ENTITY LINKS ( RELATIONSHIP )
     //----------------------------------------------------------------------
-    @ManyToOne
-    @JoinColumn(name="application_id", referencedColumnName="id")
-    private Applications applications;
     @ManyToOne
     @JoinColumn(name="interview_id", referencedColumnName="id")
     private Interviews interviews  ;

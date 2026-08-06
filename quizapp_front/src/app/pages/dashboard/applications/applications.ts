@@ -1355,10 +1355,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   }
 
   getCurrentEvaluationScore(app: ApplicationWithCampaign): number | null {
-    if (app.id && this.hasLoadedInterviewRuntime(app.id)) {
-      return this.getCurrentInterview(app.id)?.evaluationScore ?? null;
-    }
-    return app.evaluationScore ?? null;
+    return app.currentInterviewEvaluationPercentage ?? app.aggregatedEvaluationScorePercent ?? null;
   }
 
   getCurrentStageName(app: ApplicationWithCampaign): string {
@@ -1627,8 +1624,8 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
         return leftPriority - rightPriority;
       }
 
-      const leftTimestamp = this.parseRuntimeTimestamp(left.interviewDate || left.interviewStart || left.updatedAt || left.createdAt);
-      const rightTimestamp = this.parseRuntimeTimestamp(right.interviewDate || right.interviewStart || right.updatedAt || right.createdAt);
+      const leftTimestamp = this.parseRuntimeTimestamp(left.interviewDate || left.updatedAt || left.createdAt);
+      const rightTimestamp = this.parseRuntimeTimestamp(right.interviewDate || right.updatedAt || right.createdAt);
       if (leftTimestamp !== rightTimestamp) {
         return rightTimestamp - leftTimestamp;
       }

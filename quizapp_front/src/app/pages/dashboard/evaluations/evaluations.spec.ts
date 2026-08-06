@@ -107,8 +107,8 @@ describe('EvaluationsComponent', () => {
     expect(payload).toEqual(jasmine.objectContaining({
       candidateInterviewId: 55,
       interviewParticipantId: 88,
-      candidateMark: 90,
-      recruiterComment: 'Evaluation explicite',
+      globalScore: 90,
+      globalComment: 'Evaluation explicite',
       evaluationItems: [jasmine.objectContaining({
         pipelineStageEvaluationCriterionId: 501,
         criterionOrder: 1,
@@ -139,8 +139,8 @@ describe('EvaluationsComponent', () => {
       id: 701,
       candidateInterviewId: 55,
       interviewParticipantId: 88,
-      candidateMark: 81,
-      recruiterComment: 'Commentaire mis a jour',
+      globalScore: 81,
+      globalComment: 'Commentaire mis a jour',
       evaluationItems: [jasmine.objectContaining({
         pipelineStageEvaluationCriterionId: 502,
         criterionOrder: 2,
@@ -150,7 +150,7 @@ describe('EvaluationsComponent', () => {
     }));
   });
 
-   it('derives candidateMark from score criteria when editing an evaluation', () => {
+   it('derives globalScore from score criteria when editing an evaluation', () => {
      component.editingEvaluationId.set(702);
      component.editMark.set(33);
      component.editComment.set('  Ajustement derive  ');
@@ -184,8 +184,8 @@ describe('EvaluationsComponent', () => {
        id: 702,
        candidateInterviewId: 55,
        interviewParticipantId: 88,
-       candidateMark: 70,
-       recruiterComment: 'Ajustement derive'
+       globalScore: 70,
+       globalComment: 'Ajustement derive'
      }));
    });
 
@@ -205,8 +205,8 @@ describe('EvaluationsComponent', () => {
       items: [{
         id: 701,
         createdBy: 44,
-        candidateMark: 74,
-        recruiterComment: 'Evaluation detaillee',
+        globalScore: 74,
+        globalComment: 'Evaluation detaillee',
         createdAt: '2026-05-31T10:00:00Z',
         evaluationItems
       }]

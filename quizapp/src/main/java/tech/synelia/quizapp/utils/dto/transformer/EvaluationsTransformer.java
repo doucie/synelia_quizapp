@@ -73,8 +73,8 @@ public interface EvaluationsTransformer {
 
 	@Mappings({
 		@Mapping(source="dto.id", target="id"),
-		@Mapping(source="dto.candidateMark", target="candidateMark"),
-		@Mapping(source="dto.recruiterComment", target="recruiterComment"),
+		@Mapping(source="dto.globalScore", target="globalScore"),
+		@Mapping(source="dto.globalComment", target="globalComment"),
 		@Mapping(source="dto.createdAt", dateFormat="dd/MM/yyyy",target="createdAt"),
 		@Mapping(source="dto.createdBy", target="createdBy"),
 		@Mapping(source="dto.updatedAt", dateFormat="dd/MM/yyyy",target="updatedAt"),

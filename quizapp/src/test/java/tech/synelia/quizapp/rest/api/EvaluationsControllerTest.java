@@ -69,8 +69,8 @@ class EvaluationsControllerTest {
 						    {
 						      \"candidateInterviewId\": 55,
 						      \"interviewParticipantId\": 88,
-						      \"candidateMark\": 74,
-						      \"recruiterComment\": \"Evaluation explicite\"
+						      \"globalScore\": 74,
+						      \"globalComment\": \"Evaluation explicite\"
 						    }
 						  ]
 						}
@@ -101,8 +101,8 @@ class EvaluationsControllerTest {
 						    {
 						      \"candidateInterviewId\": 55,
 						      \"interviewParticipantId\": 88,
-						      \"candidateMark\": 74,
-						      \"recruiterComment\": \"Evaluation explicite\"
+						      \"globalScore\": 74,
+						      \"globalComment\": \"Evaluation explicite\"
 						    }
 						  ]
 						}
@@ -132,8 +132,8 @@ class EvaluationsControllerTest {
 						    {
 						      \"candidateInterviewId\": 55,
 						      \"interviewParticipantId\": 88,
-						      \"candidateMark\": 74,
-						      \"recruiterComment\": \"Evaluation explicite\"
+						      \"globalScore\": 74,
+						      \"globalComment\": \"Evaluation explicite\"
 						    }
 						  ]
 						}
@@ -161,8 +161,8 @@ class EvaluationsControllerTest {
 		createdEvaluation.setId(701);
 		createdEvaluation.setCandidateInterviewId(55);
 		createdEvaluation.setInterviewParticipantId(88);
-		createdEvaluation.setCandidateMark(74);
-		createdEvaluation.setRecruiterComment("Evaluation explicite");
+		createdEvaluation.setGlobalScore(74d);
+		createdEvaluation.setGlobalComment("Evaluation explicite");
 		createdEvaluation.setEvaluationItems(List.of(evaluationItem));
 
 		Response<EvaluationsDto> response = new Response<>();
@@ -193,8 +193,8 @@ class EvaluationsControllerTest {
 						          \"maxScoreSnapshot\": 5
 						        }
 						      ],
-						      \"candidateMark\": 74,
-						      \"recruiterComment\": \"Evaluation explicite\"
+						      \"globalScore\": 74,
+						      \"globalComment\": \"Evaluation explicite\"
 						    }
 						  ]
 						}
@@ -205,12 +205,12 @@ class EvaluationsControllerTest {
 				.andExpect(jsonPath("$.items[0].id").value(701))
 				.andExpect(jsonPath("$.items[0].candidateInterviewId").value(55))
 				.andExpect(jsonPath("$.items[0].interviewParticipantId").value(88))
-				.andExpect(jsonPath("$.items[0].candidateMark").value(74))
+				.andExpect(jsonPath("$.items[0].globalScore").value(74.0))
 				.andExpect(jsonPath("$.items[0].evaluationItems[0].pipelineStageEvaluationCriterionId").value(501))
 				.andExpect(jsonPath("$.items[0].evaluationItems[0].criterionOrder").value(1))
 				.andExpect(jsonPath("$.items[0].evaluationItems[0].label").value("Communication"))
 				.andExpect(jsonPath("$.items[0].evaluationItems[0].scoreValue").value(4.5))
-				.andExpect(jsonPath("$.items[0].recruiterComment").value("Evaluation explicite"));
+				.andExpect(jsonPath("$.items[0].globalComment").value("Evaluation explicite"));
 
 		ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
 		verify(controllerFactory).create(eq(evaluationsBusiness), requestCaptor.capture(), eq(FunctionalityEnum.CREATE_EVALUATIONS));
@@ -223,8 +223,8 @@ class EvaluationsControllerTest {
 		EvaluationsDto evaluation = capturedRequest.getDatas().get(0);
 		assertThat(evaluation.getCandidateInterviewId()).isEqualTo(55);
 		assertThat(evaluation.getInterviewParticipantId()).isEqualTo(88);
-		assertThat(evaluation.getCandidateMark()).isEqualTo(74);
-		assertThat(evaluation.getRecruiterComment()).isEqualTo("Evaluation explicite");
+		assertThat(evaluation.getGlobalScore()).isEqualTo(74d);
+		assertThat(evaluation.getGlobalComment()).isEqualTo("Evaluation explicite");
 		assertThat(evaluation.getEvaluationItems()).hasSize(1);
 		assertThat(evaluation.getEvaluationItems().get(0).getPipelineStageEvaluationCriterionId()).isEqualTo(501);
 		assertThat(evaluation.getEvaluationItems().get(0).getCriterionOrder()).isEqualTo(1);
@@ -248,8 +248,8 @@ class EvaluationsControllerTest {
 		updatedEvaluation.setId(701);
 		updatedEvaluation.setCandidateInterviewId(55);
 		updatedEvaluation.setInterviewParticipantId(88);
-		updatedEvaluation.setCandidateMark(81);
-		updatedEvaluation.setRecruiterComment("Commentaire mis a jour");
+		updatedEvaluation.setGlobalScore(81d);
+		updatedEvaluation.setGlobalComment("Commentaire mis a jour");
 		updatedEvaluation.setEvaluationItems(List.of(evaluationItem));
 
 		Response<EvaluationsDto> response = new Response<>();
@@ -281,8 +281,8 @@ class EvaluationsControllerTest {
 						          \"maxScoreSnapshot\": 5
 						        }
 						      ],
-						      \"candidateMark\": 81,
-						      \"recruiterComment\": \"Commentaire mis a jour\"
+						      \"globalScore\": 81,
+						      \"globalComment\": \"Commentaire mis a jour\"
 						    }
 						  ]
 						}
@@ -293,12 +293,12 @@ class EvaluationsControllerTest {
 				.andExpect(jsonPath("$.items[0].id").value(701))
 				.andExpect(jsonPath("$.items[0].candidateInterviewId").value(55))
 				.andExpect(jsonPath("$.items[0].interviewParticipantId").value(88))
-				.andExpect(jsonPath("$.items[0].candidateMark").value(81))
+				.andExpect(jsonPath("$.items[0].globalScore").value(81.0))
 				.andExpect(jsonPath("$.items[0].evaluationItems[0].pipelineStageEvaluationCriterionId").value(502))
 				.andExpect(jsonPath("$.items[0].evaluationItems[0].criterionOrder").value(2))
 				.andExpect(jsonPath("$.items[0].evaluationItems[0].label").value("Technique"))
 				.andExpect(jsonPath("$.items[0].evaluationItems[0].scoreValue").value(3.5))
-				.andExpect(jsonPath("$.items[0].recruiterComment").value("Commentaire mis a jour"));
+				.andExpect(jsonPath("$.items[0].globalComment").value("Commentaire mis a jour"));
 
 		ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
 		verify(controllerFactory).update(eq(evaluationsBusiness), requestCaptor.capture(), eq(FunctionalityEnum.UPDATE_EVALUATIONS));
@@ -312,8 +312,8 @@ class EvaluationsControllerTest {
 		assertThat(evaluation.getId()).isEqualTo(701);
 		assertThat(evaluation.getCandidateInterviewId()).isEqualTo(55);
 		assertThat(evaluation.getInterviewParticipantId()).isEqualTo(88);
-		assertThat(evaluation.getCandidateMark()).isEqualTo(81);
-		assertThat(evaluation.getRecruiterComment()).isEqualTo("Commentaire mis a jour");
+		assertThat(evaluation.getGlobalScore()).isEqualTo(81d);
+		assertThat(evaluation.getGlobalComment()).isEqualTo("Commentaire mis a jour");
 		assertThat(evaluation.getEvaluationItems()).hasSize(1);
 		assertThat(evaluation.getEvaluationItems().get(0).getPipelineStageEvaluationCriterionId()).isEqualTo(502);
 		assertThat(evaluation.getEvaluationItems().get(0).getCriterionOrder()).isEqualTo(2);
@@ -341,8 +341,8 @@ class EvaluationsControllerTest {
 						      \"id\": 701,
 						      \"candidateInterviewId\": 55,
 						      \"interviewParticipantId\": 88,
-						      \"candidateMark\": 81,
-						      \"recruiterComment\": \"Commentaire mis a jour\"
+						      \"globalScore\": 81,
+						      \"globalComment\": \"Commentaire mis a jour\"
 						    }
 						  ]
 						}

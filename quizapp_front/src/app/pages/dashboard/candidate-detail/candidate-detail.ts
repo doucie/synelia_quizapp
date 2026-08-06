@@ -463,8 +463,8 @@ export class CandidateDetailComponent implements OnInit, OnDestroy {
 
   openInterview(interview: Interview): void {
     // l'évaluation s'ouvre via le lien fourni par le backend
-    if (interview.interviewEvaluationsLink) {
-      this.router.navigate(['/dashboard/evaluation', interview.interviewEvaluationsLink]);
+    if (interview.evaluationRoomCode) {
+      this.router.navigate(['/dashboard/evaluate', interview.evaluationRoomCode]);
     } else {
       this.router.navigate(['/dashboard/interviews']);
     }

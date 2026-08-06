@@ -46,8 +46,8 @@ export interface EvaluationItem {
 
 export interface Evaluation {
   id?: number;
-  candidateMark?: number;
-  recruiterComment?: string;
+  globalScore?: number;
+  globalComment?: string;
   candidateInterviewId?: number;
   interviewParticipantId?: number;
   evaluationItems?: EvaluationItem[];
@@ -66,7 +66,6 @@ export interface Evaluation {
 
 export interface CandidateInterview {
   id?: number;
-  interviewStart?: string;
   interviewDuration?: number;
   applicationId?: number;
   interviewId?: number;
@@ -116,13 +115,13 @@ export class EvaluationService {
   constructor(private http: HttpClient) {}
 
   /**
-   * Récupère un entretien par son interviewEvaluationsLink
+   * Récupère un entretien par son evaluationRoomCode
    */
   getInterviewByEvaluationsLink(link: string): Observable<any> {
     const request = {
       user: 1,
       data: {
-        interviewEvaluationsLink: link
+        evaluationRoomCode: link
       }
     };
     return this.http.post(`${this.interviewsApiUrl}/getByCriteria`, request);

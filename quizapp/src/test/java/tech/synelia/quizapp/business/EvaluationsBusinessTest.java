@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Locale;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -14,8 +15,10 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -37,10 +40,13 @@ import tech.synelia.quizapp.dao.repository.EvaluationsRepository;
 import tech.synelia.quizapp.dao.repository.InterviewParticipantRepository;
 import tech.synelia.quizapp.dao.repository.InterviewsRepository;
 import tech.synelia.quizapp.dao.repository.PipelineStageEvaluationCriterionRepository;
+import tech.synelia.quizapp.utils.FunctionalError;
+import tech.synelia.quizapp.utils.Status;
 import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.dto.EvaluationItemDto;
 import tech.synelia.quizapp.utils.dto.EvaluationsDto;
+import tech.synelia.quizapp.utils.exception.InvalidEntityException;
 
 @ExtendWith(MockitoExtension.class)
 class EvaluationsBusinessTest {
@@ -67,6 +73,8 @@ class EvaluationsBusinessTest {
 	private PermissionService permissionService;
 	@Mock
 	private AuditEventService auditEventService;
+	@Mock
+	private FunctionalError functionalError;
 
 	@InjectMocks
 	private EvaluationsBusiness evaluationsBusiness;
@@ -76,30 +84,28 @@ class EvaluationsBusinessTest {
 		CandidateInterview candidateInterview = buildCandidateInterview(31, 17, 9, 45, 300);
 		InterviewParticipant interviewParticipant = buildInterviewParticipant(41, 17, 77);
 		Interviews interview = candidateInterview.getInterviews();
-		Applications application = candidateInterview.getApplications();
+		Applications application = interview.getApplicationProgress() != null ? interview.getApplicationProgress().getApplications() : null;
 
 		when(candidateInterviewRepository.findOne(31, false)).thenReturn(candidateInterview);
 		when(interviewsRepository.findOne(17, false)).thenReturn(interview);
-		when(applicationsRepository.findOne(9, false)).thenReturn(application);
 		when(interviewParticipantRepository.findByInterviewId(17, false)).thenReturn(List.of(interviewParticipant));
 		when(interviewParticipantRepository.findOne(41, false)).thenReturn(interviewParticipant);
 		when(interviewParticipantRepository.save(any(InterviewParticipant.class))).thenAnswer(invocation -> invocation.getArgument(0));
 		when(evaluationsRepository.saveAll(any())).thenAnswer(invocation -> assignEvaluationIds(invocation.getArgument(0), 900));
-		when(evaluationsRepository.sumMarksByInterviewId(17)).thenReturn(82);
+		when(evaluationsRepository.sumMarksByInterviewId(17)).thenReturn(82d);
 		when(evaluationsRepository.countByInterviewId(17)).thenReturn(1L);
-		when(evaluationsRepository.sumMarksByApplicationId(9)).thenReturn(82);
+		when(evaluationsRepository.sumMarksByApplicationId(9)).thenReturn(82d);
 		when(evaluationsRepository.countByApplicationId(9)).thenReturn(1L);
 		when(evaluationsRepository.countByInterviewParticipantId(41)).thenReturn(1L);
 		when(evaluationsRepository.findLatestSubmittedAtByInterviewParticipantId(41)).thenReturn(null);
-		when(interviewsRepository.save(any(Interviews.class))).thenAnswer(invocation -> invocation.getArgument(0));
 		when(applicationsRepository.save(any(Applications.class))).thenAnswer(invocation -> invocation.getArgument(0));
 		when(permissionService.hasAnyEntityPermission(eq(77), eq("INTERVIEW"), eq(17), eq("ADMIN"), eq("EVALUATE")))
 				.thenReturn(true);
 
 		EvaluationsDto dto = new EvaluationsDto();
 		dto.setCandidateInterviewId(31);
-		dto.setCandidateMark(82);
-		dto.setRecruiterComment("Bon niveau");
+		dto.setGlobalScore(82d);
+		dto.setGlobalComment("Bon niveau");
 
 		Response<EvaluationsDto> response = evaluationsBusiness.create(buildRequest(77, dto), Locale.FRENCH);
 
@@ -113,6 +119,8 @@ class EvaluationsBusinessTest {
 		assertThat(savedEvaluation.getInterviewParticipant()).isSameAs(interviewParticipant);
 		assertThat(savedEvaluation.getEvaluationStatus()).isEqualTo("SUBMITTED");
 		assertThat(savedEvaluation.getSubmittedAt()).isNotNull();
+		assertThat(savedEvaluation.getGlobalScore()).isEqualTo(82d);
+		assertThat(savedEvaluation.getGlobalComment()).isEqualTo("Bon niveau");
 
 		assertThat(interviewParticipant.getEvaluationStatus()).isEqualTo("SUBMITTED");
 		assertThat(interviewParticipant.getEvaluationSubmittedAt()).isNotNull();
@@ -121,55 +129,106 @@ class EvaluationsBusinessTest {
 	}
 
 	@Test
+	void create_rejectsGlobalScoreOutsideZeroToHundred() throws Exception {
+		Status failureStatus = new Status();
+		failureStatus.setCode("902");
+		failureStatus.setMessage("globalScore must be between 0 and 100");
+		when(functionalError.DATA_NOT_EXIST(anyString(), any(Locale.class))).thenReturn(failureStatus);
+
+		EvaluationsDto dto = new EvaluationsDto();
+		dto.setCandidateInterviewId(31);
+		dto.setGlobalScore(82d);
+		dto.setGlobalComment("Bon niveau");
+		dto.setGlobalScore(150d);
+
+		InvalidEntityException exception = assertThrows(
+				InvalidEntityException.class,
+				() -> evaluationsBusiness.create(buildRequest(77, dto), Locale.FRENCH));
+
+		assertThat(exception.getStatus().getMessage()).contains("globalScore must be between 0 and 100");
+		verifyNoInteractions(evaluationsRepository);
+	}
+
+	@Test
+	void update_rejectsGlobalScoreOutsideZeroToHundred() throws Exception {
+		Status failureStatus = new Status();
+		failureStatus.setCode("902");
+		failureStatus.setMessage("globalScore must be between 0 and 100");
+		when(functionalError.DATA_NOT_EXIST(anyString(), any(Locale.class))).thenReturn(failureStatus);
+
+		CandidateInterview candidateInterview = buildCandidateInterview(31, 17, 9, 45, 300);
+		InterviewParticipant interviewParticipant = buildInterviewParticipant(41, 17, 77);
+		Interviews interview = candidateInterview.getInterviews();
+
+		Evaluations existingEvaluation = new Evaluations();
+		existingEvaluation.setId(701);
+		existingEvaluation.setCandidateInterview(candidateInterview);
+		existingEvaluation.setGlobalScore(82d);
+		existingEvaluation.setGlobalComment("Commentaire initial");
+		existingEvaluation.setIsDeleted(false);
+
+		when(evaluationsRepository.findOne(701, false)).thenReturn(existingEvaluation);
+		when(candidateInterviewRepository.findOne(31, false)).thenReturn(candidateInterview);
+		when(interviewsRepository.findOne(17, false)).thenReturn(interview);
+		when(interviewParticipantRepository.findByInterviewId(17, false)).thenReturn(List.of(interviewParticipant));
+		when(permissionService.hasAnyEntityPermission(eq(77), eq("INTERVIEW"), eq(17), eq("ADMIN"), eq("EVALUATE")))
+				.thenReturn(false);
+
+		EvaluationsDto dto = new EvaluationsDto();
+		dto.setId(701);
+		dto.setGlobalScore(150d);
+
+		InvalidEntityException exception = assertThrows(
+				InvalidEntityException.class,
+				() -> evaluationsBusiness.update(buildRequest(77, dto), Locale.FRENCH));
+
+		assertThat(exception.getStatus().getMessage()).contains("globalScore must be between 0 and 100");
+		verify(evaluationsRepository, never()).saveAll(any());
+	}
+
+	@Test
 	void create_resyncsApplicationCurrentInterviewMirrorFromCurrentOccurrence() throws Exception {
 		CandidateInterview candidateInterview = buildCandidateInterview(31, 17, 9, 45, 300);
 		InterviewParticipant interviewParticipant = buildInterviewParticipant(41, 17, 77);
 		Interviews evaluatedInterview = candidateInterview.getInterviews();
-		Applications application = candidateInterview.getApplications();
-		Date currentInterviewDate = new Date(evaluatedInterview.getInterviewDate().getTime() + 3_600_000L);
+		Applications application = evaluatedInterview.getApplicationProgress() != null ? evaluatedInterview.getApplicationProgress().getApplications() : null;
 
 		Interviews currentInterview = new Interviews();
 		currentInterview.setId(18);
 		currentInterview.setInterviewStatus("SCHEDULED");
-		currentInterview.setInterviewDate(currentInterviewDate);
-		currentInterview.setEvaluationScore(91);
-		currentInterview.setEvaluationNumber(1);
-		currentInterview.setEvaluationPercentage(91d);
+		currentInterview.setInterviewDate(new Date(evaluatedInterview.getInterviewDate().getTime() + 3_600_000L));
 
 		when(candidateInterviewRepository.findOne(31, false)).thenReturn(candidateInterview);
 		when(interviewsRepository.findOne(17, false)).thenReturn(evaluatedInterview);
-		when(interviewsRepository.findByApplicationId(9, false)).thenReturn(List.of(evaluatedInterview, currentInterview));
-		when(applicationsRepository.findOne(9, false)).thenReturn(application);
+		when(applicationProgressBusiness.resolveCurrentInterviewByApplicationId(9)).thenReturn(currentInterview);
 		when(interviewParticipantRepository.findByInterviewId(17, false)).thenReturn(List.of(interviewParticipant));
 		when(interviewParticipantRepository.findOne(41, false)).thenReturn(interviewParticipant);
 		when(interviewParticipantRepository.save(any(InterviewParticipant.class))).thenAnswer(invocation -> invocation.getArgument(0));
 		when(evaluationsRepository.saveAll(any())).thenAnswer(invocation -> assignEvaluationIds(invocation.getArgument(0), 990));
-		when(evaluationsRepository.sumMarksByInterviewId(17)).thenReturn(82);
+		when(evaluationsRepository.sumMarksByInterviewId(17)).thenReturn(82d);
 		when(evaluationsRepository.countByInterviewId(17)).thenReturn(1L);
-		when(evaluationsRepository.sumMarksByApplicationId(9)).thenReturn(173);
+		when(evaluationsRepository.sumMarksByInterviewId(18)).thenReturn(91d);
+		when(evaluationsRepository.countByInterviewId(18)).thenReturn(1L);
+		when(evaluationsRepository.sumMarksByApplicationId(9)).thenReturn(173d);
 		when(evaluationsRepository.countByApplicationId(9)).thenReturn(2L);
 		when(evaluationsRepository.countByInterviewParticipantId(41)).thenReturn(1L);
 		when(evaluationsRepository.findLatestSubmittedAtByInterviewParticipantId(41)).thenReturn(null);
-		when(interviewsRepository.save(any(Interviews.class))).thenAnswer(invocation -> invocation.getArgument(0));
 		when(applicationsRepository.save(any(Applications.class))).thenAnswer(invocation -> invocation.getArgument(0));
 		when(permissionService.hasAnyEntityPermission(eq(77), eq("INTERVIEW"), eq(17), eq("ADMIN"), eq("EVALUATE")))
 				.thenReturn(true);
 
 		EvaluationsDto dto = new EvaluationsDto();
 		dto.setCandidateInterviewId(31);
-		dto.setCandidateMark(82);
-		dto.setRecruiterComment("Bon niveau");
+		dto.setGlobalScore(82d);
+		dto.setGlobalComment("Bon niveau");
 
 		evaluationsBusiness.create(buildRequest(77, dto), Locale.FRENCH);
 
 		ArgumentCaptor<Applications> applicationCaptor = ArgumentCaptor.forClass(Applications.class);
 		verify(applicationsRepository).save(applicationCaptor.capture());
 		Applications savedApplication = applicationCaptor.getValue();
-		assertThat(savedApplication.getTotalEvaluationScore()).isEqualTo(173f);
-		assertThat(savedApplication.getTotalEvaluationNumber()).isEqualTo(2);
-		assertThat(savedApplication.getTotalEvaluationPercentage()).isEqualTo(86.5d);
-		assertThat(savedApplication.getInterviewDate()).isEqualTo(currentInterviewDate);
-		assertThat(savedApplication.getInterviewStatus()).isEqualTo("SCHEDULED");
+		assertThat(savedApplication.getAggregatedEvaluationScore()).isEqualTo(173d);
+		assertThat(savedApplication.getAggregatedEvaluationScorePercent()).isEqualTo(86.5d);
 		assertThat(savedApplication.getCurrentInterviewEvaluationScore()).isEqualTo(91);
 		assertThat(savedApplication.getCurrentInterviewEvaluationNumber()).isEqualTo(1);
 		assertThat(savedApplication.getCurrentInterviewEvaluationPercentage()).isEqualTo(91d);
@@ -180,25 +239,23 @@ class EvaluationsBusinessTest {
 		CandidateInterview candidateInterview = buildCandidateInterview(31, 17, 9, 45, 300);
 		InterviewParticipant interviewParticipant = buildInterviewParticipant(41, 17, 77);
 		Interviews interview = candidateInterview.getInterviews();
-		Applications application = candidateInterview.getApplications();
+		Applications application = interview.getApplicationProgress() != null ? interview.getApplicationProgress().getApplications() : null;
 		PipelineStageEvaluationCriterion criterion = buildCriterion(501, 300, 1, "Communication", "SCORE", 5d, 2d);
 
 		when(candidateInterviewRepository.findOne(31, false)).thenReturn(candidateInterview);
 		when(interviewsRepository.findOne(17, false)).thenReturn(interview);
-		when(applicationsRepository.findOne(9, false)).thenReturn(application);
 		when(interviewParticipantRepository.findByInterviewId(17, false)).thenReturn(List.of(interviewParticipant));
 		when(interviewParticipantRepository.findOne(41, false)).thenReturn(interviewParticipant);
 		when(interviewParticipantRepository.save(any(InterviewParticipant.class))).thenAnswer(invocation -> invocation.getArgument(0));
 		when(evaluationsRepository.saveAll(any())).thenAnswer(invocation -> assignEvaluationIds(invocation.getArgument(0), 950));
 		when(evaluationItemRepository.saveAll(any())).thenAnswer(invocation -> invocation.getArgument(0));
 		when(pipelineStageEvaluationCriterionRepository.findOne(501, false)).thenReturn(criterion);
-		when(evaluationsRepository.sumMarksByInterviewId(17)).thenReturn(82);
+		when(evaluationsRepository.sumMarksByInterviewId(17)).thenReturn(82d);
 		when(evaluationsRepository.countByInterviewId(17)).thenReturn(1L);
-		when(evaluationsRepository.sumMarksByApplicationId(9)).thenReturn(82);
+		when(evaluationsRepository.sumMarksByApplicationId(9)).thenReturn(82d);
 		when(evaluationsRepository.countByApplicationId(9)).thenReturn(1L);
 		when(evaluationsRepository.countByInterviewParticipantId(41)).thenReturn(1L);
 		when(evaluationsRepository.findLatestSubmittedAtByInterviewParticipantId(41)).thenReturn(null);
-		when(interviewsRepository.save(any(Interviews.class))).thenAnswer(invocation -> invocation.getArgument(0));
 		when(applicationsRepository.save(any(Applications.class))).thenAnswer(invocation -> invocation.getArgument(0));
 		when(permissionService.hasAnyEntityPermission(eq(77), eq("INTERVIEW"), eq(17), eq("ADMIN"), eq("EVALUATE")))
 				.thenReturn(false);
@@ -210,8 +267,8 @@ class EvaluationsBusinessTest {
 
 		EvaluationsDto dto = new EvaluationsDto();
 		dto.setCandidateInterviewId(31);
-		dto.setCandidateMark(82);
-		dto.setRecruiterComment("Bon niveau");
+		dto.setGlobalScore(82d);
+		dto.setGlobalComment("Bon niveau");
 		dto.setEvaluationItems(List.of(itemDto));
 
 		evaluationsBusiness.create(buildRequest(77, dto), Locale.FRENCH);
@@ -230,7 +287,7 @@ class EvaluationsBusinessTest {
 		@SuppressWarnings("unchecked")
 		ArgumentCaptor<List<Evaluations>> savedCaptor = ArgumentCaptor.forClass(List.class);
 		verify(evaluationsRepository).saveAll(savedCaptor.capture());
-		assertThat(savedCaptor.getValue().get(0).getCandidateMark()).isEqualTo(90);
+		assertThat(savedCaptor.getValue().get(0).getGlobalScore()).isEqualTo(90d);
 	}
 
 	@Test
@@ -269,13 +326,12 @@ class EvaluationsBusinessTest {
 		CandidateInterview candidateInterview = buildCandidateInterview(31, 17, 9, 45, 300);
 		InterviewParticipant interviewParticipant = buildInterviewParticipant(41, 17, 77);
 		Interviews interview = candidateInterview.getInterviews();
-		Applications application = candidateInterview.getApplications();
+		Applications application = interview.getApplicationProgress() != null ? interview.getApplicationProgress().getApplications() : null;
 		PipelineStageEvaluationCriterion firstCriterion = buildCriterion(501, 300, 1, "Communication", "SCORE", 5d, 2d);
 		PipelineStageEvaluationCriterion secondCriterion = buildCriterion(502, 300, 2, "Technique", "TEXT", null, 1d);
 
 		when(candidateInterviewRepository.findOne(31, false)).thenReturn(candidateInterview);
 		when(interviewsRepository.findOne(17, false)).thenReturn(interview);
-		when(applicationsRepository.findOne(9, false)).thenReturn(application);
 		when(interviewParticipantRepository.findByInterviewId(17, false)).thenReturn(List.of(interviewParticipant));
 		when(permissionService.hasAnyEntityPermission(eq(77), eq("INTERVIEW"), eq(17), eq("ADMIN"), eq("EVALUATE")))
 				.thenReturn(false);
@@ -306,14 +362,14 @@ class EvaluationsBusinessTest {
 		CandidateInterview candidateInterview = buildCandidateInterview(31, 17, 9, 45, 300);
 		InterviewParticipant interviewParticipant = buildInterviewParticipant(41, 17, 77);
 		Interviews interview = candidateInterview.getInterviews();
-		Applications application = candidateInterview.getApplications();
+		Applications application = interview.getApplicationProgress() != null ? interview.getApplicationProgress().getApplications() : null;
 		PipelineStageEvaluationCriterion criterion = buildCriterion(501, 300, 1, "Communication", "SCORE", 5d, 2d);
 
 		Evaluations existingEvaluation = new Evaluations();
 		existingEvaluation.setId(701);
 		existingEvaluation.setCandidateInterview(candidateInterview);
-		existingEvaluation.setCandidateMark(82);
-		existingEvaluation.setRecruiterComment("Commentaire initial");
+		existingEvaluation.setGlobalScore(82d);
+		existingEvaluation.setGlobalComment("Commentaire initial");
 		existingEvaluation.setIsDeleted(false);
 
 		EvaluationItem existingItem = new EvaluationItem();
@@ -327,16 +383,14 @@ class EvaluationsBusinessTest {
 		when(evaluationsRepository.findOne(701, false)).thenReturn(existingEvaluation);
 		when(candidateInterviewRepository.findOne(31, false)).thenReturn(candidateInterview);
 		when(interviewsRepository.findOne(17, false)).thenReturn(interview);
-		when(applicationsRepository.findOne(9, false)).thenReturn(application);
 		when(interviewParticipantRepository.findByInterviewId(17, false)).thenReturn(List.of(interviewParticipant));
 		when(evaluationItemRepository.findByEvaluationId(701, false)).thenReturn(List.of(existingItem));
 		when(evaluationsRepository.saveAll(any())).thenAnswer(invocation -> invocation.getArgument(0));
 		when(evaluationItemRepository.saveAll(any())).thenAnswer(invocation -> invocation.getArgument(0));
-		when(evaluationsRepository.sumMarksByInterviewId(17)).thenReturn(82);
+		when(evaluationsRepository.sumMarksByInterviewId(17)).thenReturn(82d);
 		when(evaluationsRepository.countByInterviewId(17)).thenReturn(1L);
-		when(evaluationsRepository.sumMarksByApplicationId(9)).thenReturn(82);
+		when(evaluationsRepository.sumMarksByApplicationId(9)).thenReturn(82d);
 		when(evaluationsRepository.countByApplicationId(9)).thenReturn(1L);
-		when(interviewsRepository.save(any(Interviews.class))).thenAnswer(invocation -> invocation.getArgument(0));
 		when(applicationsRepository.save(any(Applications.class))).thenAnswer(invocation -> invocation.getArgument(0));
 		when(permissionService.hasAnyEntityPermission(eq(77), eq("INTERVIEW"), eq(17), eq("ADMIN"), eq("EVALUATE")))
 				.thenReturn(false);
@@ -361,32 +415,30 @@ class EvaluationsBusinessTest {
 		CandidateInterview candidateInterview = buildCandidateInterview(31, 17, 9, 45, 300);
 		InterviewParticipant interviewParticipant = buildInterviewParticipant(41, 17, 77);
 		Interviews interview = candidateInterview.getInterviews();
-		Applications application = candidateInterview.getApplications();
+		Applications application = interview.getApplicationProgress() != null ? interview.getApplicationProgress().getApplications() : null;
 		PipelineStageEvaluationCriterion firstCriterion = buildCriterion(501, 300, 1, "Communication", "SCORE", 5d, 2d);
 		PipelineStageEvaluationCriterion secondCriterion = buildCriterion(502, 300, 2, "Technique", "TEXT_AND_SCORE", 10d, 1d);
 
 		Evaluations existingEvaluation = new Evaluations();
 		existingEvaluation.setId(701);
 		existingEvaluation.setCandidateInterview(candidateInterview);
-		existingEvaluation.setCandidateMark(20);
-		existingEvaluation.setRecruiterComment("Commentaire initial");
+		existingEvaluation.setGlobalScore(20d);
+		existingEvaluation.setGlobalComment("Commentaire initial");
 		existingEvaluation.setIsDeleted(false);
 
 		when(evaluationsRepository.findOne(701, false)).thenReturn(existingEvaluation);
 		when(candidateInterviewRepository.findOne(31, false)).thenReturn(candidateInterview);
 		when(interviewsRepository.findOne(17, false)).thenReturn(interview);
-		when(applicationsRepository.findOne(9, false)).thenReturn(application);
 		when(interviewParticipantRepository.findByInterviewId(17, false)).thenReturn(List.of(interviewParticipant));
 		when(pipelineStageEvaluationCriterionRepository.findOne(501, false)).thenReturn(firstCriterion);
 		when(pipelineStageEvaluationCriterionRepository.findOne(502, false)).thenReturn(secondCriterion);
 		when(evaluationItemRepository.findByEvaluationId(701, false)).thenReturn(List.of());
 		when(evaluationsRepository.saveAll(any())).thenAnswer(invocation -> invocation.getArgument(0));
 		when(evaluationItemRepository.saveAll(any())).thenAnswer(invocation -> invocation.getArgument(0));
-		when(evaluationsRepository.sumMarksByInterviewId(17)).thenReturn(70);
+		when(evaluationsRepository.sumMarksByInterviewId(17)).thenReturn(70d);
 		when(evaluationsRepository.countByInterviewId(17)).thenReturn(1L);
-		when(evaluationsRepository.sumMarksByApplicationId(9)).thenReturn(70);
+		when(evaluationsRepository.sumMarksByApplicationId(9)).thenReturn(70d);
 		when(evaluationsRepository.countByApplicationId(9)).thenReturn(1L);
-		when(interviewsRepository.save(any(Interviews.class))).thenAnswer(invocation -> invocation.getArgument(0));
 		when(applicationsRepository.save(any(Applications.class))).thenAnswer(invocation -> invocation.getArgument(0));
 		when(permissionService.hasAnyEntityPermission(eq(77), eq("INTERVIEW"), eq(17), eq("ADMIN"), eq("EVALUATE")))
 				.thenReturn(false);
@@ -407,7 +459,7 @@ class EvaluationsBusinessTest {
 
 		EvaluationsDto dto = new EvaluationsDto();
 		dto.setId(701);
-		dto.setRecruiterComment("Commentaire mis a jour");
+		dto.setGlobalComment("Commentaire mis a jour");
 		dto.setEvaluationItems(List.of(firstItem, secondItem));
 
 		evaluationsBusiness.update(buildRequest(77, dto), Locale.FRENCH);
@@ -416,14 +468,15 @@ class EvaluationsBusinessTest {
 		ArgumentCaptor<List<Evaluations>> savedCaptor = ArgumentCaptor.forClass(List.class);
 		verify(evaluationsRepository).saveAll(savedCaptor.capture());
 		assertThat(savedCaptor.getValue()).hasSize(1);
-		assertThat(savedCaptor.getValue().get(0).getCandidateMark()).isEqualTo(70);
+		assertThat(savedCaptor.getValue().get(0).getGlobalScore()).isEqualTo(70d);
+		assertThat(savedCaptor.getValue().get(0).getGlobalComment()).isEqualTo("Commentaire mis a jour");
 
 		ArgumentCaptor<String> beforeStateCaptor = ArgumentCaptor.forClass(String.class);
 		ArgumentCaptor<String> afterStateCaptor = ArgumentCaptor.forClass(String.class);
 		verify(auditEventService).recordEvent(eq(9), eq(45), eq("EVALUATION"), eq("701"), eq("EVALUATION_UPDATED"), eq(77), isNull(), beforeStateCaptor.capture(), afterStateCaptor.capture());
 		assertThat(beforeStateCaptor.getValue()).contains("Commentaire initial");
 		assertThat(afterStateCaptor.getValue()).contains("Commentaire mis a jour");
-		assertThat(afterStateCaptor.getValue()).contains("\"candidateMark\":70");
+		assertThat(afterStateCaptor.getValue()).contains("\"globalScore\":70.0");
 	}
 
 	private Request<EvaluationsDto> buildRequest(Integer userId, EvaluationsDto dto) {
@@ -443,21 +496,20 @@ class EvaluationsBusinessTest {
 		interview.setId(interviewId);
 		interview.setInterviewStatus("OVER");
 		interview.setInterviewDate(new Date());
+		Applications application = new Applications();
+		application.setId(applicationId);
+		application.setIsDeleted(false);
 		if (applicationProgressId != null && pipelineStageId != null) {
 			ApplicationProgress applicationProgress = new ApplicationProgress();
 			applicationProgress.setId(applicationProgressId);
 			applicationProgress.setPipelineStage(buildPipelineStage(pipelineStageId));
+			applicationProgress.setApplications(application);
 			interview.setApplicationProgress(applicationProgress);
 		}
-
-		Applications application = new Applications();
-		application.setId(applicationId);
-		application.setIsDeleted(false);
 
 		CandidateInterview candidateInterview = new CandidateInterview();
 		candidateInterview.setId(id);
 		candidateInterview.setInterviews(interview);
-		candidateInterview.setApplications(application);
 		candidateInterview.setIsDeleted(false);
 		return candidateInterview;
 	}

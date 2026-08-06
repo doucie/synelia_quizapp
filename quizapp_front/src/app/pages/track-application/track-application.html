@@ -235,7 +235,7 @@
                   <article class="interview-card" [class.interview-card--postponed]="interview.interviewStatus === 'POSTPONED'">
                     <div class="interview-card__header">
                       <div>
-                        <h4>{{ interview.interviewStart | date:'dd/MM/yyyy à HH:mm' }}</h4>
+                        <h4>{{ interview.interviewDate | date:'dd/MM/yyyy à HH:mm' }}</h4>
                         <p>{{ getInterviewTypeLabel(interview.interviewType) }}</p>
                       </div>
 

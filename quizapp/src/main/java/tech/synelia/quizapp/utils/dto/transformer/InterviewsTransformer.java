@@ -46,8 +46,8 @@ public interface InterviewsTransformer {
 		@Mapping(source="entity.interviewMailSent", target="interviewMailSent"),
 		@Mapping(source="entity.createdAt", dateFormat="dd/MM/yyyy", target="createdAt"),
 		@Mapping(source="entity.updatedAt", dateFormat="dd/MM/yyyy", target="updatedAt"),
-		@Mapping(source="entity.campaigns.id", target="campaignId"),
-		@Mapping(source="entity.applications.id", target="applicationId"),
+		@Mapping(target="campaignId", expression="java(resolveCampaignId(entity))"),
+		@Mapping(target="applicationId", expression="java(resolveApplicationId(entity))"),
 		@Mapping(source="entity.applicationProgress.id", target="applicationProgressId"),
 		@Mapping(source="entity.applicationProgress.pipelineStage.id", target="pipelineStageId"),
 		@Mapping(source="entity.applicationProgress.pipelineStage.stageType", target="pipelineStageType"),
@@ -56,6 +56,29 @@ public interface InterviewsTransformer {
 		@Mapping(target="interviewRound", ignore=true),
 	})
 	InterviewsDto toDto(Interviews entity) throws ParseException;
+
+	default Integer resolveApplicationId(Interviews entity) {
+		if (entity == null) {
+			return null;
+		}
+		if (entity.getApplicationProgress() != null && entity.getApplicationProgress().getApplications() != null) {
+			return entity.getApplicationProgress().getApplications().getId();
+		}
+		return null;
+	}
+
+	default Integer resolveCampaignId(Interviews entity) {
+		if (entity == null) {
+			return null;
+		}
+		Applications application = entity.getApplicationProgress() != null
+				? entity.getApplicationProgress().getApplications()
+				: null;
+		if (application != null && application.getSourceToken() != null && application.getSourceToken().getCampaigns() != null) {
+			return application.getSourceToken().getCampaigns().getId();
+		}
+		return null;
+	}
 
 	@Named("toLiteDto")
     default InterviewsDto toLiteDto(Interviews entity) {
@@ -106,8 +129,6 @@ public interface InterviewsTransformer {
 		@Mapping(source="dto.updatedBy", target="updatedBy"),
 		@Mapping(source="dto.isDeleted", target="isDeleted"),
 		@Mapping(source="dto.searchString", target="searchString"),
-		@Mapping(source="campaigns", target="campaigns"),
-		@Mapping(source="applications", target="applications"),
 	})
-    Interviews toEntity(InterviewsDto dto, Campaigns campaigns, Applications applications) throws ParseException;
+    Interviews toEntity(InterviewsDto dto) throws ParseException;
 }

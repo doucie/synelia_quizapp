@@ -42,11 +42,10 @@ public class ApplicationsDto extends _ApplicationsDto implements Cloneable{
     private String     candidateBirthDate   ; // Date de naissance du candidat
     private String     motivationLetter     ; // Lettre de motivation du candidat
     private Boolean    emailVerified        ;
-    private Float      totalEvaluationScore ;
-    private Integer    totalEvaluationNumber ;
-    private Double     totalEvaluationPercentage ;
     private Double     aggregatedQuizScore  ;
     private Double     aggregatedQuizScorePercent ;
+    private Double     aggregatedEvaluationScore ;
+    private Double     aggregatedEvaluationScorePercent ;
     private String     interviewDate        ;
     private String     interviewStatus      ;
     private Integer    currentInterviewEvaluationScore ;
@@ -95,11 +94,10 @@ public class ApplicationsDto extends _ApplicationsDto implements Cloneable{
 	private SearchParam<String>   candidateBirthDateParam;                     
 	private SearchParam<String>   motivationLetterParam ;                     
 	private SearchParam<Boolean>  emailVerifiedParam    ;                     
-	private SearchParam<Float>    totalEvaluationScoreParam ;                     
-	private SearchParam<Integer>  totalEvaluationNumberParam ;                     
-	private SearchParam<Double>   totalEvaluationPercentageParam ;                     
 	private SearchParam<Double>   aggregatedQuizScoreParam;                     
 	private SearchParam<Double>   aggregatedQuizScorePercentParam;                     
+	private SearchParam<Double>   aggregatedEvaluationScoreParam;                     
+	private SearchParam<Double>   aggregatedEvaluationScorePercentParam;                     
 	private SearchParam<String>   interviewDateParam    ;                     
 	private SearchParam<String>   interviewStatusParam  ;                     
 	private SearchParam<Boolean>  applicationAbandonedParam ;                     

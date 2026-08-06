@@ -73,7 +73,8 @@ export interface Application {
   emailVerified?: boolean;
   aggregatedQuizScore?: number;
   aggregatedQuizScorePercent?: number;
-  evaluationScore?: number;
+  aggregatedEvaluationScore?: number;
+  aggregatedEvaluationScorePercent?: number;
   interviewDate?: string; // Date de l'entretien
   interviewStatus?: string; // Status de l'entretien
   currentInterviewEvaluationScore?: number;

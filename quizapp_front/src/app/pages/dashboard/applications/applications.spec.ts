@@ -57,7 +57,7 @@ describe('ApplicationsComponent', () => {
     } as any));
     candidateInterviewEntityService.getAllByCriteria.and.returnValue(of({
       content: [
-        { id: 701, interviewDate: '31/05/2026 14:00', interviewStatus: 'OVER', evaluationScore: 4.5 }
+        { id: 701, interviewDate: '31/05/2026 14:00', interviewStatus: 'OVER' }
       ]
     } as any));
 
@@ -73,7 +73,7 @@ describe('ApplicationsComponent', () => {
         quizScorePercent: 25,
         interviewDate: '01/01/2026 09:00',
         interviewStatus: 'PENDING',
-        evaluationScore: 2
+        currentInterviewEvaluationPercentage: 90
       } as any
     ], [], []);
 
@@ -82,7 +82,7 @@ describe('ApplicationsComponent', () => {
     expect(component.getCurrentQuizScorePercent(app)).toBe(82);
     expect(component.getCurrentInterviewDate(app)).toBe('31/05/2026 14:00');
     expect(component.getCurrentInterviewStatus(app)).toBe('OVER');
-    expect(component.getCurrentEvaluationScore(app)).toBe(4.5);
+    expect(component.getCurrentEvaluationScore(app)).toBe(90);
     expect(component.completedQuizApplications()).toBe(1);
   });
 
@@ -104,8 +104,7 @@ describe('ApplicationsComponent', () => {
         quizStatus: 'COMPLETED',
         quizScorePercent: 91,
         interviewDate: '01/01/2026 09:00',
-        interviewStatus: 'OVER',
-        evaluationScore: 4
+        interviewStatus: 'OVER'
       } as any
     ], [], []);
 

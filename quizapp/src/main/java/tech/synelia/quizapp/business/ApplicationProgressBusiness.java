@@ -24,12 +24,14 @@ import lombok.extern.java.Log;
 import tech.synelia.quizapp.dao.entity.ApplicationProgress;
 import tech.synelia.quizapp.dao.entity.Applications;
 import tech.synelia.quizapp.dao.entity.Campaigns;
+import tech.synelia.quizapp.dao.entity.Interviews;
 import tech.synelia.quizapp.dao.entity.PipelineStage;
 import tech.synelia.quizapp.dao.entity.PipelineTemplate;
 import tech.synelia.quizapp.dao.entity.SourceToken;
 import tech.synelia.quizapp.dao.entity.User;
 import tech.synelia.quizapp.dao.repository.ApplicationProgressRepository;
 import tech.synelia.quizapp.dao.repository.ApplicationsRepository;
+import tech.synelia.quizapp.dao.repository.InterviewsRepository;
 import tech.synelia.quizapp.dao.repository.PipelineStageRepository;
 import tech.synelia.quizapp.dao.repository.PipelineTemplateRepository;
 import tech.synelia.quizapp.dao.repository.SourceTokenRepository;
@@ -68,6 +70,8 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
     private SourceTokenRepository sourceTokenRepository;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private InterviewsRepository interviewsRepository;
     @Autowired
     private PipelineTemplateBusiness pipelineTemplateBusiness;
     @Autowired
@@ -1025,6 +1029,72 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
 
     public ApplicationProgress resolveProgressByStageType(Integer applicationId, String stageType) {
         return findProgressByStageType(applicationId, stageType);
+    }
+
+    public Interviews resolveCurrentInterviewByApplicationId(Integer applicationId) {
+        if (applicationId == null) {
+            return null;
+        }
+        ApplicationProgress interviewProgress = resolveProgressByStageType(applicationId, StageType.INTERVIEW.getValue());
+        if (interviewProgress == null || interviewProgress.getId() == null) {
+            return null;
+        }
+        List<Interviews> interviews = interviewsRepository.findByApplicationProgressId(interviewProgress.getId(), false);
+        return selectCurrentInterview(interviews);
+    }
+
+    private Interviews selectCurrentInterview(List<Interviews> interviews) {
+        if (interviews == null || interviews.isEmpty()) {
+            return null;
+        }
+
+        return interviews.stream()
+                .filter(Objects::nonNull)
+                .sorted((left, right) -> {
+                    int priorityComparison = Integer.compare(getInterviewSummaryPriority(left.getInterviewStatus()), getInterviewSummaryPriority(right.getInterviewStatus()));
+                    if (priorityComparison != 0) {
+                        return priorityComparison;
+                    }
+
+                    long rightDate = right.getInterviewDate() != null ? right.getInterviewDate().getTime() : 0L;
+                    long leftDate = left.getInterviewDate() != null ? left.getInterviewDate().getTime() : 0L;
+                    if (leftDate != rightDate) {
+                        return Long.compare(rightDate, leftDate);
+                    }
+
+                    return Integer.compare(
+                            right.getId() != null ? right.getId() : 0,
+                            left.getId() != null ? left.getId() : 0);
+                })
+                .findFirst()
+                .orElse(null);
+    }
+
+    private int getInterviewSummaryPriority(String interviewStatus) {
+        if (interviewStatus == null || interviewStatus.trim().isEmpty()) {
+            return 99;
+        }
+
+        switch (interviewStatus.trim().toUpperCase(Locale.ROOT)) {
+            case "STARTED":
+                return 0;
+            case "SCHEDULED":
+                return 1;
+            case "POSTPONED":
+                return 2;
+            case "PENDING":
+                return 3;
+            case "OVER":
+                return 4;
+            case "PASSED":
+                return 5;
+            case "FAILED":
+                return 6;
+            case "ARCHIVED":
+                return 7;
+            default:
+                return 99;
+        }
     }
 
     private ApplicationProgress resolveInterviewProgressOccurrence(Integer applicationId, Integer interviewProgressId) {

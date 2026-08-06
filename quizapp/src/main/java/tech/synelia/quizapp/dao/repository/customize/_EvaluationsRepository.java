@@ -21,7 +21,7 @@ if (Utilities.notBlank(dto.getSearchString())) {
 String sv = "%" + dto.getSearchString().toLowerCase() + "%";
 String sp = "searchAll_" + (index != null ? index : "");
 param.put(sp, sv);
-listOfQuery.add("(" + "LOWER(e.recruiterComment) LIKE :" + sp + ")");
+	listOfQuery.add("(" + "LOWER(e.globalComment) LIKE :" + sp + ")");
 }
 // Intervalles de dates
 if (Utilities.notBlank(dto.getDateCreationDe())) {

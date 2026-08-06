@@ -71,7 +71,7 @@ interface TrackingInterview {
   pipelineStageType?: string | null;
   pipelineStageLabel?: string | null;
   pipelineStageOrder?: number | null;
-  interviewStart: string | null;
+  interviewDate: string | null;
   interviewDuration: number | null;
   interviewType: string;
   interviewStatus: string;
@@ -616,8 +616,8 @@ export class TrackApplicationComponent implements OnInit {
         return leftOrder - rightOrder;
       }
 
-      const leftStart = left.interviewStart ? new Date(left.interviewStart).getTime() : Number.MAX_SAFE_INTEGER;
-      const rightStart = right.interviewStart ? new Date(right.interviewStart).getTime() : Number.MAX_SAFE_INTEGER;
+      const leftStart = left.interviewDate ? new Date(left.interviewDate).getTime() : Number.MAX_SAFE_INTEGER;
+      const rightStart = right.interviewDate ? new Date(right.interviewDate).getTime() : Number.MAX_SAFE_INTEGER;
       if (leftStart !== rightStart) {
         return leftStart - rightStart;
       }

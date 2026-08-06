@@ -42,15 +42,6 @@ public interface CandidateInterviewRepository extends JpaRepository<CandidateInt
 	CandidateInterview findOne(@Param("id")Integer id, @Param("isDeleted")Boolean isDeleted);
 
 	/**
-	 * Finds CandidateInterview by using interviewStart as a search criteria.
-	 * 
-	 * @param interviewStart
-	 * @return An Object CandidateInterview whose interviewStart is equals to the given interviewStart. If
-	 *         no CandidateInterview is found, this method returns null.
-	 */
-	@Query("select e from CandidateInterview e where e.interviewStart = :interviewStart and e.isDeleted = :isDeleted")
-	List<CandidateInterview> findByInterviewStart(@Param("interviewStart")Date interviewStart, @Param("isDeleted")Boolean isDeleted);
-	/**
 	 * Finds CandidateInterview by using interviewDuration as a search criteria.
 	 * 
 	 * @param interviewDuration
@@ -115,13 +106,13 @@ public interface CandidateInterviewRepository extends JpaRepository<CandidateInt
 	List<CandidateInterview> findBySearchString(@Param("searchString")String searchString, @Param("isDeleted")Boolean isDeleted);
 
 	/**
-	 * Finds CandidateInterview by using applicationId as a search criteria.
+	 * Finds CandidateInterview by using applicationId as a search criteria (via interview -> application_progress -> applications).
 	 * 
 	 * @param applicationId
 	 * @return An Object CandidateInterview whose applicationId is equals to the given applicationId. If
 	 *         no CandidateInterview is found, this method returns null.
 	 */
-	@Query("select e from CandidateInterview e where e.applications.id = :applicationId and e.isDeleted = :isDeleted")
+	@Query("select e from CandidateInterview e where e.interviews.applicationProgress.applications.id = :applicationId and e.isDeleted = :isDeleted")
 	List<CandidateInterview> findByApplicationId(@Param("applicationId")Integer applicationId, @Param("isDeleted")Boolean isDeleted);
 
 	/**
@@ -228,9 +219,6 @@ public interface CandidateInterviewRepository extends JpaRepository<CandidateInt
 			if (dto.getId()!= null && dto.getId() > 0) {
 				listOfQuery.add(CriteriaUtils.generateCriteria("id", dto.getId(), "e.id", "Integer", dto.getIdParam(), param, index, locale));
 			}
-			if (Utilities.notBlank(dto.getInterviewStart())) {
-				listOfQuery.add(CriteriaUtils.generateCriteria("interviewStart", dto.getInterviewStart(), "e.interviewStart", "Date", dto.getInterviewStartParam(), param, index, locale));
-			}
 			if (dto.getInterviewDuration()!= null && dto.getInterviewDuration() > 0) {
 				listOfQuery.add(CriteriaUtils.generateCriteria("interviewDuration", dto.getInterviewDuration(), "e.interviewDuration", "Integer", dto.getInterviewDurationParam(), param, index, locale));
 			}
@@ -251,9 +239,6 @@ public interface CandidateInterviewRepository extends JpaRepository<CandidateInt
 			}
 			if (Utilities.notBlank(dto.getSearchString())) {
 				listOfQuery.add(CriteriaUtils.generateCriteria("searchString", dto.getSearchString(), "e.searchString", "String", dto.getSearchStringParam(), param, index, locale));
-			}
-			if (dto.getApplicationId()!= null && dto.getApplicationId() > 0) {
-				listOfQuery.add(CriteriaUtils.generateCriteria("applicationId", dto.getApplicationId(), "e.applications.id", "Integer", dto.getApplicationIdParam(), param, index, locale));
 			}
 			if (dto.getInterviewId()!= null && dto.getInterviewId() > 0) {
 				listOfQuery.add(CriteriaUtils.generateCriteria("interviewId", dto.getInterviewId(), "e.interviews.id", "Integer", dto.getInterviewIdParam(), param, index, locale));

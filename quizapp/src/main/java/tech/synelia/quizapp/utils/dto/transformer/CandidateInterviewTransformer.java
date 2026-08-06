@@ -39,19 +39,23 @@ public interface CandidateInterviewTransformer {
 	@FullTransformerQualifier
 	@Named("toFullDto")
 	@Mappings({
-		@Mapping(source="entity.interviewStart", dateFormat="dd/MM/yyyy", target="interviewStart"),
 		@Mapping(source="entity.createdAt", dateFormat="dd/MM/yyyy", target="createdAt"),
 		@Mapping(source="entity.updatedAt", dateFormat="dd/MM/yyyy", target="updatedAt"),
 		@Mapping(source="entity.interviews.interviewDate", dateFormat="dd/MM/yyyy HH:mm", target="interviewDate"),
 		@Mapping(source="entity.interviews.interviewStatus", target="interviewStatus"),
-		@Mapping(source="entity.interviews.evaluationScore", target="evaluationScore"),
-		@Mapping(source="entity.interviews.evaluationNumber", target="evaluationNumber"),
-		@Mapping(source="entity.interviews.evaluationPercentage", target="evaluationPercentage"),
-		@Mapping(source="entity.applications.id", target="applicationId"),
+		@Mapping(target="applicationId", expression="java(resolveApplicationId(entity))"),
 		@Mapping(source="entity.interviews.id", target="interviewId"),
 		@Mapping(source="entity.alternativeDateRequested", dateFormat="dd/MM/yyyy HH:mm", target="alternativeDateRequested"),
 	})
 	CandidateInterviewDto toDto(CandidateInterview entity) throws ParseException;
+
+	default Integer resolveApplicationId(CandidateInterview entity) {
+		if (entity == null || entity.getInterviews() == null || entity.getInterviews().getApplicationProgress() == null
+				|| entity.getInterviews().getApplicationProgress().getApplications() == null) {
+			return null;
+		}
+		return entity.getInterviews().getApplicationProgress().getApplications().getId();
+	}
 
 	@Named("toLiteDto")
     default CandidateInterviewDto toLiteDto(CandidateInterview entity) {
@@ -80,7 +84,6 @@ public interface CandidateInterviewTransformer {
 
 	@Mappings({
 		@Mapping(source="dto.id", target="id"),
-		@Mapping(source="dto.interviewStart", dateFormat="dd/MM/yyyy",target="interviewStart"),
 		@Mapping(source="dto.interviewDuration", target="interviewDuration"),
 		@Mapping(source="dto.createdAt", dateFormat="dd/MM/yyyy",target="createdAt"),
 		@Mapping(source="dto.createdBy", target="createdBy"),
@@ -90,8 +93,7 @@ public interface CandidateInterviewTransformer {
 		@Mapping(source="dto.searchString", target="searchString"),
 		@Mapping(source="dto.declineReason", target="declineReason"),
 		@Mapping(source="dto.alternativeDateRequested", dateFormat="dd/MM/yyyy HH:mm", target="alternativeDateRequested"),
-		@Mapping(source="applications", target="applications"),
 		@Mapping(source="interviews", target="interviews"),
 	})
-    CandidateInterview toEntity(CandidateInterviewDto dto, Applications applications, Interviews interviews) throws ParseException;
+    CandidateInterview toEntity(CandidateInterviewDto dto, Interviews interviews) throws ParseException;
 }

@@ -74,27 +74,17 @@ public class Applications implements Serializable, Cloneable {
     @Column(name="email_verified", nullable=false)
     private Boolean    emailVerified ;
 
-    @Column(name="total_evaluation_score")
-    private Float      totalEvaluationScore ;
-
-    @Column(name="total_evaluation_number")
-    private Integer    totalEvaluationNumber ;
-
-    @Column(name="total_evaluation_percentage")
-    private Double     totalEvaluationPercentage ;
-
     @Column(name="aggregated_quiz_score")
     private Double     aggregatedQuizScore ;
 
     @Column(name="aggregated_quiz_score_percent")
     private Double     aggregatedQuizScorePercent ;
 
-    @Column(name="interview_date")
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date       interviewDate ;
+    @Column(name="aggregated_evaluation_score")
+    private Double     aggregatedEvaluationScore ;
 
-    @Column(name="interview_status", length=20)
-    private String     interviewStatus ;
+    @Column(name="aggregated_evaluation_score_percent")
+    private Double     aggregatedEvaluationScorePercent ;
 
     @Column(name="current_interview_evaluation_score")
     private Integer    currentInterviewEvaluationScore ;

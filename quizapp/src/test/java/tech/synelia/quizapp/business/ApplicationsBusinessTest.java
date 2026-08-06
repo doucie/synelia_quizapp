@@ -261,17 +261,15 @@ class ApplicationsBusinessTest {
 		existingApplication.setId(15);
 		existingApplication.setCandidateFirstName("Grace");
 		existingApplication.setAggregatedQuizScore(12.0d);
-		existingApplication.setTotalEvaluationScore(45.0f);
-		existingApplication.setTotalEvaluationNumber(2);
-		existingApplication.setTotalEvaluationPercentage(23.0d);
+		existingApplication.setAggregatedEvaluationScore(45.0d);
+		existingApplication.setAggregatedEvaluationScorePercent(23.0d);
 
 		ApplicationsDto dto = new ApplicationsDto();
 		dto.setId(15);
 		dto.setCandidateFirstName("Ada");
 		dto.setAggregatedQuizScore(99.0d);
-		dto.setTotalEvaluationScore(88.0f);
-		dto.setTotalEvaluationNumber(5);
-		dto.setTotalEvaluationPercentage(76.0d);
+		dto.setAggregatedEvaluationScore(88.0d);
+		dto.setAggregatedEvaluationScorePercent(76.0d);
 
 		Request<ApplicationsDto> request = new Request<ApplicationsDto>();
 		request.setDatas(List.of(dto));
@@ -293,9 +291,8 @@ class ApplicationsBusinessTest {
 		assertThat(response.isHasError()).isFalse();
 		assertThat(existingApplication.getCandidateFirstName()).isEqualTo("Ada");
 		assertThat(existingApplication.getAggregatedQuizScore()).isEqualTo(12.0d);
-		assertThat(existingApplication.getTotalEvaluationScore()).isEqualTo(45.0f);
-		assertThat(existingApplication.getTotalEvaluationNumber()).isEqualTo(2);
-		assertThat(existingApplication.getTotalEvaluationPercentage()).isEqualTo(23.0d);
+		assertThat(existingApplication.getAggregatedEvaluationScore()).isEqualTo(45.0d);
+		assertThat(existingApplication.getAggregatedEvaluationScorePercent()).isEqualTo(23.0d);
 	}
 
 	@Test
@@ -306,9 +303,8 @@ class ApplicationsBusinessTest {
 		dto.setCandidateEmail("ada.lovelace@example.test");
 		dto.setCandidatePhone("0102030405");
 		dto.setAggregatedQuizScore(99.0d);
-		dto.setTotalEvaluationScore(88.0f);
-		dto.setTotalEvaluationNumber(5);
-		dto.setTotalEvaluationPercentage(76.0d);
+		dto.setAggregatedEvaluationScore(88.0d);
+		dto.setAggregatedEvaluationScorePercent(76.0d);
 
 		Request<ApplicationsDto> request = new Request<ApplicationsDto>();
 		request.setDatas(List.of(dto));
@@ -338,9 +334,8 @@ class ApplicationsBusinessTest {
 		assertThat(capturedSavedItems).hasSize(1);
 		Applications savedApplication = capturedSavedItems.get(0);
 		assertThat(savedApplication.getAggregatedQuizScore()).isNull();
-		assertThat(savedApplication.getTotalEvaluationScore()).isNull();
-		assertThat(savedApplication.getTotalEvaluationNumber()).isNull();
-		assertThat(savedApplication.getTotalEvaluationPercentage()).isNull();
+		assertThat(savedApplication.getAggregatedEvaluationScore()).isNull();
+		assertThat(savedApplication.getAggregatedEvaluationScorePercent()).isNull();
 	}
 
 	@Test
@@ -366,6 +361,7 @@ class ApplicationsBusinessTest {
 		ApplicationProgress firstInterviewProgress = new ApplicationProgress();
 		firstInterviewProgress.setId(41);
 		firstInterviewProgress.setPipelineStage(firstInterviewStage);
+		firstInterviewProgress.setApplications(application);
 
 		Interviews firstInterview = new Interviews();
 		firstInterview.setId(91);
@@ -377,9 +373,7 @@ class ApplicationsBusinessTest {
 
 		CandidateInterview firstLink = new CandidateInterview();
 		firstLink.setId(1001);
-		firstLink.setApplications(application);
 		firstLink.setInterviews(firstInterview);
-		firstLink.setInterviewStart(new Date(1_800_000L));
 
 		PipelineStage secondInterviewStage = new PipelineStage();
 		secondInterviewStage.setId(702);
@@ -390,6 +384,7 @@ class ApplicationsBusinessTest {
 		ApplicationProgress secondInterviewProgress = new ApplicationProgress();
 		secondInterviewProgress.setId(52);
 		secondInterviewProgress.setPipelineStage(secondInterviewStage);
+		secondInterviewProgress.setApplications(application);
 
 		Interviews secondInterview = new Interviews();
 		secondInterview.setId(92);
@@ -401,9 +396,7 @@ class ApplicationsBusinessTest {
 
 		CandidateInterview secondLink = new CandidateInterview();
 		secondLink.setId(1002);
-		secondLink.setApplications(application);
 		secondLink.setInterviews(secondInterview);
-		secondLink.setInterviewStart(new Date(600_000L));
 
 		when(candidateTokenRepository.findByTokenStringIgnoreCase("TRACK1", false)).thenReturn(List.of(candidateToken));
 		when(candidateTokenRepository.findByApplicationId(15, false)).thenReturn(List.of(candidateToken));
@@ -504,25 +497,26 @@ class ApplicationsBusinessTest {
 		candidateToken.setTokenString("TRACK1");
 		candidateToken.setIsDeleted(false);
 
+		ApplicationProgress interviewProgress = new ApplicationProgress();
+		interviewProgress.setId(51);
+		interviewProgress.setApplications(application);
+
 		Interviews interview = new Interviews();
 		interview.setId(91);
-		interview.setApplications(application);
+		interview.setApplicationProgress(interviewProgress);
 		interview.setInterviewDate(new Date(1_800_000L));
 		interview.setInterviewStatus("PENDING");
 		interview.setInterviewType("ONLINE");
 
 		CandidateInterview candidateInterview = new CandidateInterview();
 		candidateInterview.setId(1001);
-		candidateInterview.setApplications(application);
 		candidateInterview.setInterviews(interview);
-		candidateInterview.setInterviewStart(interview.getInterviewDate());
 		candidateInterview.setCandidateResponseStatus("PENDING");
 
 		when(candidateTokenRepository.findByTokenStringIgnoreCase("TRACK1", false)).thenReturn(List.of(candidateToken));
 		when(candidateInterviewRepository.findOne(1001, false)).thenReturn(candidateInterview);
 		when(candidateInterviewRepository.findByApplicationId(15, false)).thenReturn(List.of(candidateInterview));
 		when(interviewsRepository.findOne(91, false)).thenReturn(interview);
-		when(interviewsRepository.findByApplicationId(15, false)).thenReturn(List.of(interview));
 
 		Map<String, Object> response = applicationsBusiness.respondToTrackedInterview(
 				"TRACK1",
@@ -567,25 +561,26 @@ class ApplicationsBusinessTest {
 		candidateToken.setTokenString("TRACK1");
 		candidateToken.setIsDeleted(false);
 
+		ApplicationProgress interviewProgress = new ApplicationProgress();
+		interviewProgress.setId(51);
+		interviewProgress.setApplications(application);
+
 		Interviews interview = new Interviews();
 		interview.setId(91);
-		interview.setApplications(application);
+		interview.setApplicationProgress(interviewProgress);
 		interview.setInterviewDate(new Date(1_800_000L));
 		interview.setInterviewStatus("PENDING");
 		interview.setInterviewType("ONLINE");
 
 		CandidateInterview candidateInterview = new CandidateInterview();
 		candidateInterview.setId(1001);
-		candidateInterview.setApplications(application);
 		candidateInterview.setInterviews(interview);
-		candidateInterview.setInterviewStart(interview.getInterviewDate());
 		candidateInterview.setCandidateResponseStatus("PENDING");
 
 		when(candidateTokenRepository.findByTokenStringIgnoreCase("TRACK1", false)).thenReturn(List.of(candidateToken));
 		when(candidateInterviewRepository.findOne(1001, false)).thenReturn(candidateInterview);
 		when(candidateInterviewRepository.findByApplicationId(15, false)).thenReturn(List.of(candidateInterview));
 		when(interviewsRepository.findOne(91, false)).thenReturn(interview);
-		when(interviewsRepository.findByApplicationId(15, false)).thenReturn(List.of(interview));
 
 		Map<String, Object> response = applicationsBusiness.respondToTrackedInterview(
 				"TRACK1",
@@ -631,18 +626,20 @@ class ApplicationsBusinessTest {
 		candidateToken.setTokenString("TRACK1");
 		candidateToken.setIsDeleted(false);
 
+		ApplicationProgress interviewProgress = new ApplicationProgress();
+		interviewProgress.setId(51);
+		interviewProgress.setApplications(application);
+
 		Interviews interview = new Interviews();
 		interview.setId(91);
-		interview.setApplications(application);
+		interview.setApplicationProgress(interviewProgress);
 		interview.setInterviewDate(new Date(1_800_000L));
 		interview.setInterviewStatus("PENDING");
 		interview.setInterviewType("ONLINE");
 
 		CandidateInterview candidateInterview = new CandidateInterview();
 		candidateInterview.setId(1001);
-		candidateInterview.setApplications(application);
 		candidateInterview.setInterviews(interview);
-		candidateInterview.setInterviewStart(interview.getInterviewDate());
 		candidateInterview.setCandidateResponseStatus("PENDING");
 
 		User creator = new User();

@@ -208,15 +208,14 @@ describe('DecisionsComponent', () => {
       {
         id: 701,
         interviewDate: '31/05/2026 14:00',
-        interviewStatus: 'OVER',
-        evaluationPercentage: 88
+        interviewStatus: 'OVER'
       } as any
     ]);
 
     expect(component.getSelectedApplicationQuizScorePercent(app)).toBe(82);
     expect(component.getSelectedApplicationInterviewDate(app)).toBe('31/05/2026 14:00');
     expect(component.getSelectedApplicationInterviewStatus(app)).toBe('OVER');
-    expect(component.getSelectedApplicationEvaluationScore(app)).toBe(88);
+    expect(component.getSelectedApplicationEvaluationScore(app)).toBe(35);
   });
 
   it('stops resurfacing legacy mirrors once runtime quiz and interview data are loaded but empty', () => {
@@ -224,8 +223,7 @@ describe('DecisionsComponent', () => {
       id: 10,
       quizScorePercent: 25,
       interviewDate: '01/01/2026 09:00',
-      interviewStatus: 'PENDING',
-      currentInterviewEvaluationPercentage: 35
+      interviewStatus: 'PENDING'
     } as any;
 
     component.selectedApplication.set(app);

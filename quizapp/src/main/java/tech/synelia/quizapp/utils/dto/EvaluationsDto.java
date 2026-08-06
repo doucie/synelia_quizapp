@@ -33,8 +33,8 @@ public class EvaluationsDto extends _EvaluationsDto implements Cloneable{
 
     private Integer    id                   ; // Primary Key
 
-    private Integer    candidateMark        ;
-    private String     recruiterComment     ;
+    private Double     globalScore          ;
+    private String     globalComment        ;
 	private String     createdAt            ;
     private Integer    createdBy            ;
 	private String     updatedAt            ;
@@ -56,8 +56,8 @@ public class EvaluationsDto extends _EvaluationsDto implements Cloneable{
 
 	// Search param
 	private SearchParam<Integer>  idParam               ;                     
-	private SearchParam<Integer>  candidateMarkParam    ;                     
-	private SearchParam<String>   recruiterCommentParam ;                     
+	private SearchParam<Double>   globalScoreParam      ;                     
+	private SearchParam<String>   globalCommentParam    ;                     
 	private SearchParam<String>   createdAtParam        ;                     
 	private SearchParam<Integer>  createdByParam        ;                     
 	private SearchParam<String>   updatedAtParam        ;                     

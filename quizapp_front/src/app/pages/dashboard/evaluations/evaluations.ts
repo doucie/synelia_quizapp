@@ -402,7 +402,7 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
    * Charge les infos du candidat
    */
   private loadCandidate(interview: any): void {
-    const applicationId = interview?.applicationsId || interview?.applicationId;
+    const applicationId = interview?.applicationId;
     
     if (!applicationId) {
       this.loading.set(false);
@@ -442,7 +442,7 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           let candidateInterview = response.items?.find((ci: any) => 
-            ci.applicationId === applicationId || ci.applicationsId === applicationId
+            ci.applicationId === applicationId
           );
           
           if (candidateInterview?.id) {
@@ -567,7 +567,7 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
   private evaluationToMessage(evaluation: Evaluation): EvaluationMessage {
     const evaluator = this.evaluators().find(e => e.id === evaluation.createdBy);
     const isCurrentUser = evaluation.createdBy === this.currentUserId();
-    const mark = this.resolveCandidateMark(evaluation.evaluationItems ?? [], evaluation.candidateMark);
+    const mark = this.resolveCandidateMark(evaluation.evaluationItems ?? [], evaluation.globalScore);
     
     return {
       id: evaluation.id,
@@ -579,7 +579,7 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
         ? this.getInitials(`${evaluator.firstName} ${evaluator.lastName}`)
         : '??',
       mark: mark ?? 0,
-      comment: evaluation.recruiterComment || '',
+      comment: evaluation.globalComment || '',
       createdAt: evaluation.createdAt || '',
       isCurrentUser,
       evaluationItems: evaluation.evaluationItems ?? []
@@ -641,8 +641,8 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
     const evaluation: Evaluation = {
       candidateInterviewId: cand.candidateInterviewId,
       interviewParticipantId: this.currentUserParticipantId() ?? undefined,
-      candidateMark: mark,
-      recruiterComment: comment,
+      globalScore: mark,
+      globalComment: comment,
       evaluationItems: this.serializeEvaluationItems(this.newEvaluationItems())
     };
     console.log('📤 Envoi évaluation:', evaluation, 'par utilisateur:', this.currentUserId());
@@ -740,8 +740,8 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
       id: evaluationId,
       candidateInterviewId: cand?.candidateInterviewId,
       interviewParticipantId: this.currentUserParticipantId() ?? undefined,
-      candidateMark: mark,
-      recruiterComment: comment,
+      globalScore: mark,
+      globalComment: comment,
       evaluationItems: this.serializeEvaluationItems(this.editEvaluationItems())
     };
 
@@ -910,10 +910,9 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
         next: (response) => {
           console.log('📤 finishInterview response:', response);
           if (!response.hasError && response.items?.[0]) {
-            const updatedInterview = response.items[0];
             this.notificationService.success(
               'Entretien terminé',
-              `Score moyen: ${updatedInterview.evaluationPercentage?.toFixed(1) || 0}/5 (${updatedInterview.evaluationNumber || 0} évaluations, total: ${updatedInterview.evaluationScore || 0})`
+              'L\'entretien est terminé et les scores ont été mis à jour'
             );
             this.router.navigate(['/dashboard/evaluations']);
           } else {

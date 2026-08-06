@@ -16,6 +16,13 @@ public interface _InterviewsRepository {
 default List<String> _generateCriteria(InterviewsDto dto, HashMap<String, java.lang.Object> param, Integer index, Locale locale) throws Exception {
 List<String> listOfQuery = new ArrayList<String>();
 
+// Recherche exacte du code de salle d'evaluation (lookup par lien)
+if (Utilities.notBlank(dto.getEvaluationRoomCode())) {
+String sp = "evalRoomCode_" + (index != null ? index : "");
+param.put(sp, dto.getEvaluationRoomCode());
+listOfQuery.add("e.evaluationRoomCode = :" + sp);
+}
+
 // Recherche globale (searchString)
 if (Utilities.notBlank(dto.getSearchString())) {
 String sv = "%" + dto.getSearchString().toLowerCase() + "%";

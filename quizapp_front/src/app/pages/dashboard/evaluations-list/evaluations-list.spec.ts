@@ -44,10 +44,7 @@ describe('EvaluationsListComponent', () => {
         interviewDate: '20/05/2026 09:00',
         startedAt: '2026-05-20T09:00:00Z',
         interviewStatus: 'OVER',
-        endedAt: '2026-05-31T11:00:00Z',
-        evaluationScore: 160,
-        evaluationNumber: 2,
-        evaluationPercentage: 4
+        endedAt: '2026-05-31T11:00:00Z'
       }, {
         id: 18,
         applicationId: 10,
@@ -60,10 +57,7 @@ describe('EvaluationsListComponent', () => {
         pipelineStageOrder: 5,
         interviewDate: '28/05/2026 14:00',
         startedAt: '2026-05-28T14:00:00Z',
-        interviewStatus: 'STARTED',
-        evaluationScore: 0,
-        evaluationNumber: 0,
-        evaluationPercentage: 0
+        interviewStatus: 'STARTED'
       }]
     } as any));
     applicationService.getApplicationsByCriteria.and.returnValue(of({
@@ -108,9 +102,9 @@ describe('EvaluationsListComponent', () => {
       hasError: false,
       items: candidateInterviewId === 55 ? [{
         id: 701,
-        candidateMark: 12,
+        globalScore: 12,
         interviewParticipantId: 301,
-        recruiterComment: 'Tres bon alignement',
+        globalComment: 'Tres bon alignement',
         createdAt: '2026-05-31T10:30:00Z',
         evaluationItems: [{
           pipelineStageEvaluationCriterionId: 501,

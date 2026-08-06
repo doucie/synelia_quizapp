@@ -61,8 +61,8 @@ interface InterviewEvaluationEntry {
   interviewLabel: string;
   interviewDate?: string | null;
   interviewStatus?: string | null;
-  candidateMark?: number;
-  recruiterComment?: string;
+  globalScore?: number;
+  globalComment?: string;
   evaluationItems: EvaluationItem[];
   createdAt?: string;
   updatedAt?: string;
@@ -594,7 +594,7 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
   }
 
   getInterviewDisplayDate(interview?: CandidateInterviewEntity | null): string {
-    return interview?.interviewDate || interview?.interviewStart || '';
+    return interview?.interviewDate || '';
   }
 
   getInterviewResponseSummary(interview?: CandidateInterviewEntity | null): string {
@@ -608,28 +608,6 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
       return `Refus candidat : ${interview.declineReason}`;
     }
     return '';
-  }
-
-  getInterviewEvaluationAverageLabel(interview?: CandidateInterviewEntity | null): string {
-    if (interview?.evaluationPercentage == null) {
-      return '';
-    }
-    return `Moyenne ${this.formatAttemptNumber(interview.evaluationPercentage)}`;
-  }
-
-  getInterviewEvaluationSummary(interview?: CandidateInterviewEntity | null): string {
-    if (!interview) {
-      return '';
-    }
-
-    const parts: string[] = [];
-    if (interview.evaluationScore != null) {
-      parts.push(`${this.formatAttemptNumber(interview.evaluationScore)} pts`);
-    }
-    if (interview.evaluationNumber != null) {
-      parts.push(`${this.formatAttemptNumber(interview.evaluationNumber)} évaluation${interview.evaluationNumber > 1 ? 's' : ''}`);
-    }
-    return parts.join(' - ');
   }
 
   hasCurrentQuizSummary(application: Application): boolean {
@@ -932,7 +910,7 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
   }
 
   getInterviewEvaluationDisplayMark(evaluation?: InterviewEvaluationEntry | null): number | null {
-    return resolveEvaluationCandidateMark(evaluation?.evaluationItems ?? [], evaluation?.candidateMark ?? null);
+    return resolveEvaluationCandidateMark(evaluation?.evaluationItems ?? [], evaluation?.globalScore ?? null);
   }
 
   hasInterviewEvaluationItems(evaluation?: InterviewEvaluationEntry | null): boolean {
@@ -1079,26 +1057,12 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
   }
 
   hasCurrentInterviewEvaluationSummary(application: Application): boolean {
-    const currentInterview = application.id ? this.getCurrentInterview(application.id) : null;
-    const runtimeSummary = currentInterview
-      ? this.getInterviewEvaluationAverageLabel(currentInterview) || this.getInterviewEvaluationSummary(currentInterview)
-      : '';
-
-    return !!runtimeSummary
-      || application.currentInterviewEvaluationScore != null
+    return application.currentInterviewEvaluationScore != null
       || application.currentInterviewEvaluationNumber != null
       || application.currentInterviewEvaluationPercentage != null;
   }
 
   getCurrentInterviewEvaluationAverageLabel(application?: Application | null): string {
-    if (application?.id) {
-      const currentInterview = this.getCurrentInterview(application.id);
-      const runtimeLabel = this.getInterviewEvaluationAverageLabel(currentInterview);
-      if (runtimeLabel) {
-        return runtimeLabel;
-      }
-    }
-
     if (application?.currentInterviewEvaluationPercentage == null) {
       return '';
     }
@@ -1108,14 +1072,6 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
   getCurrentInterviewEvaluationSummary(application?: Application | null): string {
     if (!application) {
       return '';
-    }
-
-    if (application.id) {
-      const currentInterview = this.getCurrentInterview(application.id);
-      const runtimeSummary = this.getInterviewEvaluationSummary(currentInterview);
-      if (runtimeSummary) {
-        return runtimeSummary;
-      }
     }
 
     const parts: string[] = [];
@@ -1189,8 +1145,8 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
       interviewLabel,
       interviewDate: this.getInterviewDisplayDate(interview),
       interviewStatus: interview.interviewStatus || null,
-      candidateMark: evaluation.candidateMark,
-      recruiterComment: evaluation.recruiterComment,
+      globalScore: evaluation.globalScore,
+      globalComment: evaluation.globalComment,
       evaluationItems: evaluation.evaluationItems ?? [],
       createdAt: evaluation.createdAt,
       updatedAt: evaluation.updatedAt,

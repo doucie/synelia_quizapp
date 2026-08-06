@@ -24,6 +24,7 @@ import tech.synelia.quizapp.dao.entity.Campaigns;
 import tech.synelia.quizapp.dao.entity.CandidateInterview;
 import tech.synelia.quizapp.dao.entity.Interviews;
 import tech.synelia.quizapp.dao.entity.PipelineStage;
+import tech.synelia.quizapp.dao.entity.SourceToken;
 import tech.synelia.quizapp.dao.repository.ApplicationsRepository;
 import tech.synelia.quizapp.dao.repository.CampaignsRepository;
 import tech.synelia.quizapp.dao.repository.CandidateInterviewRepository;
@@ -66,6 +67,7 @@ class InterviewsBusinessTest {
 		Campaigns campaign = buildCampaign(8);
 		Applications application = buildApplication(1);
 		ApplicationProgress progress = buildApplicationProgress(45, 300, 3);
+		progress.setApplications(application);
 
 		when(campaignsRepository.findOne(8, false)).thenReturn(campaign);
 		when(applicationsRepository.findOne(1, false)).thenReturn(application);
@@ -79,11 +81,9 @@ class InterviewsBusinessTest {
 		});
 		when(candidateInterviewRepository.findByInterviewId(800, false)).thenReturn(List.of());
 		when(candidateInterviewRepository.save(any(CandidateInterview.class))).thenAnswer(invocation -> invocation.getArgument(0));
-		when(interviewsRepository.findByApplicationId(1, false)).thenAnswer(invocation -> {
+		when(interviewsRepository.findByApplicationProgressId(45, false)).thenAnswer(invocation -> {
 			Interviews savedInterview = new Interviews();
 			savedInterview.setId(800);
-			savedInterview.setApplications(application);
-			savedInterview.setCampaigns(campaign);
 			savedInterview.setApplicationProgress(progress);
 			savedInterview.setInterviewStatus(InterviewStatus.SCHEDULED.getValue());
 			savedInterview.setInterviewType(InterviewType.ONLINE.getValue());
@@ -109,10 +109,13 @@ class InterviewsBusinessTest {
 		Campaigns campaign = buildCampaign(8);
 		Applications application = buildApplication(1);
 		ApplicationProgress progress = buildApplicationProgress(45, 300, 3);
+		SourceToken sourceToken = new SourceToken();
+		sourceToken.setCampaigns(campaign);
+		application.setSourceToken(sourceToken);
+		progress.setApplications(application);
+
 		Interviews interview = new Interviews();
 		interview.setId(55);
-		interview.setApplications(application);
-		interview.setCampaigns(campaign);
 		interview.setApplicationProgress(progress);
 		interview.setInterviewStatus(InterviewStatus.STARTED.getValue());
 		interview.setInterviewType(InterviewType.ONLINE.getValue());
@@ -120,12 +123,12 @@ class InterviewsBusinessTest {
 
 		when(interviewsRepository.findOne(55, false)).thenReturn(interview);
 		when(permissionService.hasAnyScopedPermission(eq(77), eq("CAMPAIGN"), eq(8), any(String[].class), any(String[].class))).thenReturn(true);
-		when(evaluationsRepository.sumMarksByInterviewId(55)).thenReturn(180);
+		when(evaluationsRepository.sumMarksByInterviewId(55)).thenReturn(180d);
 		when(evaluationsRepository.countByInterviewId(55)).thenReturn(2L);
-		when(evaluationsRepository.sumMarksByApplicationId(1)).thenReturn(180);
+		when(evaluationsRepository.sumMarksByApplicationId(1)).thenReturn(180d);
 		when(evaluationsRepository.countByApplicationId(1)).thenReturn(2L);
 		when(interviewsRepository.save(any(Interviews.class))).thenAnswer(invocation -> invocation.getArgument(0));
-		when(interviewsRepository.findByApplicationId(1, false)).thenReturn(List.of(interview));
+		when(applicationProgressBusiness.resolveCurrentInterviewByApplicationId(1)).thenReturn(interview);
 		when(applicationsRepository.save(any(Applications.class))).thenAnswer(invocation -> invocation.getArgument(0));
 		when(entityPermissionRepository.findByEntityTypeAndEntityId("CAMPAIGN", 8)).thenReturn(List.of());
 

@@ -209,8 +209,8 @@ export class EvaluationsListComponent implements OnInit, OnDestroy {
   }
 
   openEvaluation(interview: InterviewWithDetails): void {
-    if (interview.interviewEvaluationsLink) {
-      this.router.navigate(['/dashboard/evaluate', interview.interviewEvaluationsLink]);
+    if (interview.evaluationRoomCode) {
+      this.router.navigate(['/dashboard/evaluate', interview.evaluationRoomCode]);
     } else {
       this.notificationService.warning('Attention', 'Lien d\'évaluation non disponible');
     }
@@ -242,17 +242,6 @@ export class EvaluationsListComponent implements OnInit, OnDestroy {
       hour: '2-digit',
       minute: '2-digit'
     });
-  }
-
-  formatScore(score: number | undefined, total: number | undefined): string {
-    if (score === undefined || score === null) return '-';
-    if (total === undefined || total === null || total === 0) return `${score}`;
-    return `${score}/${total}`;
-  }
-
-  formatPercentage(value: number | undefined): string {
-    if (value === undefined || value === null) return '-';
-    return `${value.toFixed(1)}/5`;
   }
 
   formatDerivedMark(value: number | null | undefined): string {
@@ -472,9 +461,9 @@ export class EvaluationsListComponent implements OnInit, OnDestroy {
         submittedEvaluationCount: evaluations.length,
         submittedEvaluationAverageMark: this.deriveAverageEvaluationMark(evaluations),
         latestEvaluationMark: latestEvaluation
-          ? resolveCandidateMark(latestEvaluation.evaluationItems ?? [], latestEvaluation.candidateMark)
+          ? resolveCandidateMark(latestEvaluation.evaluationItems ?? [], latestEvaluation.globalScore)
           : null,
-        latestEvaluationComment: latestEvaluation?.recruiterComment || undefined,
+        latestEvaluationComment: latestEvaluation?.globalComment || undefined,
         latestEvaluationItems: latestEvaluation?.evaluationItems ?? [],
         latestEvaluationAt: latestEvaluation?.updatedAt || latestEvaluation?.createdAt,
         evaluatorStatuses: this.buildEvaluatorStatuses(
@@ -518,7 +507,7 @@ export class EvaluationsListComponent implements OnInit, OnDestroy {
           isOnline: !!participant.isOnline,
           isCurrentUser: participant.userId === this.currentUserId(),
           latestMark: latestParticipantEvaluation
-            ? resolveCandidateMark(latestParticipantEvaluation.evaluationItems ?? [], latestParticipantEvaluation.candidateMark)
+            ? resolveCandidateMark(latestParticipantEvaluation.evaluationItems ?? [], latestParticipantEvaluation.globalScore)
             : null
         };
       })
@@ -552,7 +541,7 @@ export class EvaluationsListComponent implements OnInit, OnDestroy {
 
   private deriveAverageEvaluationMark(evaluations: Evaluation[]): number | null {
     const marks = evaluations
-      .map(evaluation => resolveCandidateMark(evaluation.evaluationItems ?? [], evaluation.candidateMark))
+      .map(evaluation => resolveCandidateMark(evaluation.evaluationItems ?? [], evaluation.globalScore))
       .filter((mark): mark is number => mark !== undefined && mark !== null && !Number.isNaN(mark));
 
     if (marks.length === 0) {

@@ -133,22 +133,32 @@ public interface InterviewsRepository extends JpaRepository<Interviews, Integer>
 	List<Interviews> findBySearchString(@Param("searchString")String searchString, @Param("isDeleted")Boolean isDeleted);
 
 	/**
-	 * Finds Interviews by using campaignId as a search criteria.
+	 * Finds Interviews by using campaignId as a search criteria (via application_progress -> applications -> source_token).
 	 * 
 	 * @param campaignId
 	 * @return An Object Interviews whose campaignId is equals to the given campaignId. If
 	 *         no Interviews is found, this method returns null.
 	 */
-	@Query("select e from Interviews e where e.campaigns.id = :campaignId and e.isDeleted = :isDeleted")
+	@Query("select e from Interviews e where e.applicationProgress.applications.sourceToken.campaigns.id = :campaignId and e.isDeleted = :isDeleted")
 	List<Interviews> findByCampaignId(@Param("campaignId")Integer campaignId, @Param("isDeleted")Boolean isDeleted);
+
 	/**
-	 * Finds Interviews by using applicationId as a search criteria.
+	 * Finds Interviews by using applicationProgressId as a search criteria.
 	 * 
-	 * @param applicationId
-	 * @return A list of Interviews linked to the given application.
+	 * @param applicationProgressId
+	 * @return A list of Interviews linked to the given application progress.
 	 */
-	@Query("select e from Interviews e where e.applications.id = :applicationId and e.isDeleted = :isDeleted")
-	List<Interviews> findByApplicationId(@Param("applicationId")Integer applicationId, @Param("isDeleted")Boolean isDeleted);
+	@Query("select e from Interviews e where e.applicationProgress.id = :applicationProgressId and e.isDeleted = :isDeleted")
+	List<Interviews> findByApplicationProgressId(@Param("applicationProgressId")Integer applicationProgressId, @Param("isDeleted")Boolean isDeleted);
+
+	/**
+	 * Finds Interviews by using a list of applicationProgressId as a search criteria.
+	 * 
+	 * @param applicationProgressIds
+	 * @return A list of Interviews linked to the given application progresses.
+	 */
+	@Query("select e from Interviews e where e.applicationProgress.id in :applicationProgressIds and e.isDeleted = :isDeleted")
+	List<Interviews> findByApplicationProgressIdIn(@Param("applicationProgressIds")List<Integer> applicationProgressIds, @Param("isDeleted")Boolean isDeleted);
 
 	/**
 	 * Finds List of Interviews by using interviewsDto as a search criteria.
@@ -259,9 +269,6 @@ public interface InterviewsRepository extends JpaRepository<Interviews, Integer>
 			if (Utilities.notBlank(dto.getInterviewNote())) {
 				listOfQuery.add(CriteriaUtils.generateCriteria("interviewNote", dto.getInterviewNote(), "e.interviewNote", "String", dto.getInterviewNoteParam(), param, index, locale));
 			}
-			if (dto.getInterviewMailSent()!= null) {
-				listOfQuery.add(CriteriaUtils.generateCriteria("interviewMailSent", dto.getInterviewMailSent(), "e.interviewMailSent", "Boolean", dto.getInterviewMailSentParam(), param, index, locale));
-			}
 			if (Utilities.notBlank(dto.getInterviewType())) {
 				listOfQuery.add(CriteriaUtils.generateCriteria("interviewType", dto.getInterviewType(), "e.interviewType", "String", dto.getInterviewTypeParam(), param, index, locale));
 			}
@@ -282,9 +289,6 @@ public interface InterviewsRepository extends JpaRepository<Interviews, Integer>
 			}
 			if (Utilities.notBlank(dto.getSearchString())) {
 				listOfQuery.add(CriteriaUtils.generateCriteria("searchString", dto.getSearchString(), "e.searchString", "String", dto.getSearchStringParam(), param, index, locale));
-			}
-			if (dto.getCampaignId()!= null && dto.getCampaignId() > 0) {
-				listOfQuery.add(CriteriaUtils.generateCriteria("campaignId", dto.getCampaignId(), "e.campaigns.id", "Integer", dto.getCampaignIdParam(), param, index, locale));
 			}
 			List<String> listOfCustomQuery = _generateCriteria(dto, param, index, locale);
 			if (Utilities.isNotEmpty(listOfCustomQuery)) {

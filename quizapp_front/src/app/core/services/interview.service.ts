@@ -41,15 +41,12 @@ export interface Interview {
   interviewDate?: string; // Format: dd/MM/yyyy HH:mm
   interviewStatus?: 'PENDING' | 'SCHEDULED' | 'STARTED' | 'OVER' | 'PASSED' | 'FAILED' | 'POSTPONED' | 'ARCHIVED';
   meetLink?: string;
-  interviewEvaluationsLink?: string; // Lien unique pour accéder à l'évaluation
+  evaluationRoomCode?: string; // Code unique de la salle d'évaluation
   interviewNote?: string;
   interviewMailSent?: boolean;
   interviewType: 'IN_PERSON' | 'ONLINE';
   startedAt?: string; // Date/heure de début effectif de l'entretien
   endedAt?: string; // Date/heure de fin effectif de l'entretien
-  evaluationScore?: number; // Nombre de points total des évaluations
-  evaluationNumber?: number; // Nombre d'évaluations total
-  evaluationPercentage?: number; // Moyenne (evaluationScore / evaluationNumber)
   createdAt?: string;
   createdBy?: number;
   updatedAt?: string;
@@ -241,9 +238,9 @@ export class InterviewService {
   }
 
   /**
-   * Termine un entretien et calcule les scores d'évaluation
-   * Met à jour interview.interviewStatus à "OVER", ended_at, evaluationScore, evaluationNumber, evaluationPercentage
-   * Met à jour application.totalEvaluationScore, totalEvaluationNumber, totalEvaluationPercentage
+   * Termine un entretien
+   * Met à jour interview.interviewStatus à "OVER" et ended_at
+   * Met à jour application.aggregatedEvaluationScore, aggregatedEvaluationScorePercent
    */
   finishInterview(interviewId: number, userId: number): Observable<InterviewResponse> {
     const request = {

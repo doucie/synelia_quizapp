@@ -95,7 +95,7 @@ describe('EntitiesApplicationsComponent', () => {
   it('derives the displayed interview evaluation mark from criterion items', () => {
     const displayMark = component.getInterviewEvaluationDisplayMark({
       interviewLabel: 'Entretien #17',
-      candidateMark: 22,
+      globalScore: 22,
       evaluationItems: [
         {
           pipelineStageEvaluationCriterionId: 501,
@@ -128,8 +128,8 @@ describe('EntitiesApplicationsComponent', () => {
       interviewStatus: 'OVER'
     }, [{
       id: 701,
-      candidateMark: 10,
-      recruiterComment: 'Synthese globale',
+      globalScore: 10,
+      globalComment: 'Synthese globale',
       createdBy: 44,
       evaluationItems: [{
         pipelineStageEvaluationCriterionId: 501,
@@ -160,10 +160,7 @@ describe('EntitiesApplicationsComponent', () => {
         id: 55,
         interviewId: 17,
         interviewDate: '31/05/2026 10:00',
-        interviewStatus: 'OVER',
-        evaluationScore: 18,
-        evaluationNumber: 2,
-        evaluationPercentage: 9
+        interviewStatus: 'OVER'
       } as any]
     });
     component.childProgresses.set({
@@ -181,9 +178,9 @@ describe('EntitiesApplicationsComponent', () => {
       interviewDate: '01/01/2026 08:00',
       currentPipelineStageLabel: 'Pré-sélection',
       currentPipelineProgressStatus: 'PENDING',
-      currentInterviewEvaluationScore: 2,
-      currentInterviewEvaluationNumber: 1,
-      currentInterviewEvaluationPercentage: 2
+      currentInterviewEvaluationScore: 18,
+      currentInterviewEvaluationNumber: 2,
+      currentInterviewEvaluationPercentage: 9
     } as any;
 
     expect(component.getCurrentInterviewStatus(application)).toBe('OVER');
