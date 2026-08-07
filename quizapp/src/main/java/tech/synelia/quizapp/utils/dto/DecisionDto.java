@@ -28,7 +28,6 @@ public class DecisionDto implements Cloneable{
     private Integer    id                   ; // Primary Key
 
     private String     decisionType         ;
-    private Boolean    isCancel             ;
     private String     createdAt            ;
     private Integer    createdBy            ;
     private String     updatedAt            ;
@@ -46,14 +45,12 @@ public class DecisionDto implements Cloneable{
     // Foreign keys
     private Integer    applicationId        ;
     private Integer    userId               ;
-    private Integer    pipelineStageId      ;
     private Integer    applicationProgressId;
     private Integer    cancelsDecisionId    ;
     private Boolean    sendDecisionEmail    ;
 
     // Search parameters
     private SearchParam<String>  decisionTypeParam ;
-    private SearchParam<Boolean> isCancelParam ;
     private SearchParam<String>  createdAtParam ;
     private SearchParam<Integer> createdByParam ;
     private SearchParam<String>  updatedAtParam ;
@@ -64,7 +61,6 @@ public class DecisionDto implements Cloneable{
     private SearchParam<String>  decisionModeParam ;
     private SearchParam<Integer> applicationIdParam ;
     private SearchParam<Integer> userIdParam ;
-    private SearchParam<Integer> pipelineStageIdParam ;
     private SearchParam<Integer> applicationProgressIdParam ;
     private SearchParam<Integer> cancelsDecisionIdParam ;
 

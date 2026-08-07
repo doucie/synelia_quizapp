@@ -116,14 +116,8 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
                 throw new InternalErrorException(functionalError.DATA_EXIST("application_progress pour application " + dto.getApplicationId() + " et stage " + dto.getPipelineStageId(), locale));
             }
 
-            User decidedBy = null;
-            if (dto.getDecidedById() != null) {
-                decidedBy = userRepository.findOne(dto.getDecidedById(), false);
-            }
-
-            ApplicationProgress entityToSave = ApplicationProgressTransformer.INSTANCE.toEntity(dto, application, stage, decidedBy);
-            entityToSave.setCreatedAt(Utilities.getCurrentDate());
-            entityToSave.setCreatedBy(request.getUser());
+            ApplicationProgress entityToSave = ApplicationProgressTransformer.INSTANCE.toEntity(dto, application, stage);
+            entityToSave.setCreatedAt(Utilities.getCurrentDate());            entityToSave.setCreatedBy(request.getUser());
             entityToSave.setIsDeleted(false);
             if (entityToSave.getMailSent() == null) {
                 entityToSave.setMailSent(false);
@@ -189,10 +183,6 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
             if (dto.getScore() != null) entityToSave.setScore(dto.getScore());
             if (Utilities.shouldUpdate(dto.getNotes())) entityToSave.setNotes(dto.getNotes());
             if (dto.getMailSent() != null) entityToSave.setMailSent(dto.getMailSent());
-            if (dto.getDecidedById() != null) {
-                User decidedBy = userRepository.findOne(dto.getDecidedById(), false);
-                if (decidedBy != null) entityToSave.setDecidedBy(decidedBy);
-            }
             if (dto.getIsDeleted() != null) entityToSave.setIsDeleted(dto.getIsDeleted());
 
             entityToSave.setUpdatedAt(Utilities.getCurrentDate());
@@ -391,7 +381,8 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
             if (decidedById != null) {
                 User decidedBy = userRepository.findOne(decidedById, false);
                 if (decidedBy != null) {
-                    progress.setDecidedBy(decidedBy);
+                    progress.setValidatedBy(decidedBy);
+                    progress.setValidatedAt(Utilities.getCurrentDate());
                 }
             }
             progress.setUpdatedAt(Utilities.getCurrentDate());
@@ -426,7 +417,10 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
         progress.setProgressStatus(ProgressStatus.FAILED.getValue());
         progress.setCompletedAt(Utilities.getCurrentDate());
         progress.setNotes(notes);
-        progress.setDecidedBy(decidedBy);
+        if (decidedBy != null) {
+            progress.setValidatedBy(decidedBy);
+            progress.setValidatedAt(Utilities.getCurrentDate());
+        }
         progress.setUpdatedAt(Utilities.getCurrentDate());
         progress.setUpdatedBy(decidedById);
         applicationProgressRepository.save(progress);
@@ -490,7 +484,8 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
         if (userId != null) {
             User decidedBy = userRepository.findOne(userId, false);
             if (decidedBy != null) {
-                progress.setDecidedBy(decidedBy);
+                progress.setSkippedBy(decidedBy);
+                progress.setSkippedAt(Utilities.getCurrentDate());
             }
         }
         progress.setUpdatedAt(Utilities.getCurrentDate());
@@ -558,7 +553,15 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
                 progress.setCompletedAt(null);
                 progress.setScore(null);
                 progress.setNotes(notes);
-                progress.setDecidedBy(null);
+                if (userId != null) {
+                    User reopenedBy = userRepository.findOne(userId, false);
+                    progress.setReopenedBy(reopenedBy);
+                }
+                progress.setReopenedAt(Utilities.getCurrentDate());
+                progress.setValidatedBy(null);
+                progress.setValidatedAt(null);
+                progress.setSkippedBy(null);
+                progress.setSkippedAt(null);
                 progress.setMailSent(false);
             } else {
                 progress.setProgressStatus(ProgressStatus.PENDING.getValue());
@@ -566,7 +569,12 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
                 progress.setCompletedAt(null);
                 progress.setScore(null);
                 progress.setNotes(null);
-                progress.setDecidedBy(null);
+                progress.setValidatedBy(null);
+                progress.setValidatedAt(null);
+                progress.setSkippedBy(null);
+                progress.setSkippedAt(null);
+                progress.setReopenedBy(null);
+                progress.setReopenedAt(null);
                 progress.setMailSent(false);
             }
 
@@ -866,7 +874,12 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
                 newProgress.setNotes(oldProgress.getNotes());
                 newProgress.setStartedAt(oldProgress.getStartedAt());
                 newProgress.setCompletedAt(oldProgress.getCompletedAt());
-                newProgress.setDecidedBy(oldProgress.getDecidedBy());
+                newProgress.setValidatedAt(oldProgress.getValidatedAt());
+                newProgress.setValidatedBy(oldProgress.getValidatedBy());
+                newProgress.setSkippedAt(oldProgress.getSkippedAt());
+                newProgress.setSkippedBy(oldProgress.getSkippedBy());
+                newProgress.setReopenedAt(oldProgress.getReopenedAt());
+                newProgress.setReopenedBy(oldProgress.getReopenedBy());
             } else {
                 // Nouvelle étape pas dans l'ancien pipeline → PENDING
                 newProgress.setProgressStatus(ProgressStatus.PENDING.getValue());

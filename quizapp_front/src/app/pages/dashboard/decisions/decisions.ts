@@ -382,10 +382,8 @@ export class DecisionsComponent implements OnInit, OnDestroy {
 
     const decision: Decision = {
       decisionType: decisionType,
-      isCancel: false,
       applicationId: app.id!,
       userId: this.getCurrentUserId(),
-      pipelineStageId: stage.id,
       applicationProgressId: progress?.id,
       decisionMode: 'STANDARD',
       justification: justification?.trim() || undefined,
@@ -445,7 +443,7 @@ export class DecisionsComponent implements OnInit, OnDestroy {
     // Trouver la dernière décision (la plus récente)
     const lastDecision = decisions[0]; // Les décisions sont triées par date décroissante
 
-    if (lastDecision.isCancel) return;
+    if (this.isCancellationDecision(lastDecision)) return;
 
     const stageId = this.resolveDecisionStageId(lastDecision);
     if (stageId == null) return;
@@ -678,15 +676,23 @@ export class DecisionsComponent implements OnInit, OnDestroy {
   /**
    * Obtient la classe CSS pour l'action de décision
    */
-  getDecisionActionClass(isCancel: boolean): string {
-    return isCancel ? 'decision-cancel' : 'decision-approve';
+  getDecisionActionClass(decisionMode?: string): string {
+    return this.isCancellationMode(decisionMode) ? 'decision-cancel' : 'decision-approve';
   }
 
   /**
    * Obtient le label pour l'action de décision
    */
-  getDecisionActionLabel(isCancel: boolean): string {
-    return isCancel ? 'Annulation' : 'Décision';
+  getDecisionActionLabel(decisionMode?: string): string {
+    return this.isCancellationMode(decisionMode) ? 'Annulation' : 'Décision';
+  }
+
+  isCancellationDecision(decision: Decision | null | undefined): boolean {
+    return this.isCancellationMode(decision?.decisionMode);
+  }
+
+  private isCancellationMode(decisionMode?: string | null): boolean {
+    return (decisionMode || '').trim().toUpperCase() === 'CANCEL';
   }
 
   getDecisionModalStage(): PipelineStage | null {
@@ -754,7 +760,7 @@ export class DecisionsComponent implements OnInit, OnDestroy {
   private getCancelledDecisionIds(decisions: Decision[]): Set<number> {
     return new Set(
       decisions
-        .map(decision => decision.isCancel ? decision.cancelsDecisionId : undefined)
+        .map(decision => this.isCancellationDecision(decision) ? decision.cancelsDecisionId : undefined)
         .filter((id): id is number => id != null)
     );
   }
@@ -769,7 +775,7 @@ export class DecisionsComponent implements OnInit, OnDestroy {
     const cancelledDecisionIds = this.getCancelledDecisionIds(this.selectedApplicationDecisions());
 
     return this.selectedApplicationDecisions().find(decision => {
-      if (!decision.id || decision.isCancel || decision.isDeleted || cancelledDecisionIds.has(decision.id)) {
+      if (!decision.id || this.isCancellationDecision(decision) || decision.isDeleted || cancelledDecisionIds.has(decision.id)) {
         return false;
       }
 
@@ -777,7 +783,7 @@ export class DecisionsComponent implements OnInit, OnDestroy {
         return decision.applicationProgressId === progress.id;
       }
 
-      return decision.pipelineStageId === stage.id;
+      return this.resolveDecisionStageId(decision) === stage.id;
     }) || null;
   }
 
@@ -824,10 +830,6 @@ export class DecisionsComponent implements OnInit, OnDestroy {
   }
 
   private resolveDecisionStageId(decision: Decision): number | null {
-    if (decision.pipelineStageId != null) {
-      return decision.pipelineStageId;
-    }
-
     const app = this.selectedApplication();
     if (!app?.id || decision.applicationProgressId == null) {
       return null;
@@ -943,10 +945,8 @@ export class DecisionsComponent implements OnInit, OnDestroy {
 
     const cancelDecision: Decision = {
       decisionType: targetDecision.decisionType,
-      isCancel: true,
       applicationId: app.id!,
       userId: this.getCurrentUserId(),
-      pipelineStageId: stage.id,
       applicationProgressId: progress.id,
       decisionMode: 'CANCEL',
       cancelsDecisionId: targetDecision.id,

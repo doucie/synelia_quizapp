@@ -147,20 +147,10 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
             Decision entity = DecisionTransformer.INSTANCE.toEntity(dto);
             
             // Set relationships manually
-            if (dto.getApplicationId() != null) {
-                Applications app = new Applications();
-                app.setId(dto.getApplicationId());
-                entity.setApplication(app);
-            }
             if (dto.getUserId() != null) {
                 User user = new User();
                 user.setId(dto.getUserId());
                 entity.setUser(user);
-            }
-            if (dto.getPipelineStageId() != null) {
-                PipelineStage stage = new PipelineStage();
-                stage.setId(dto.getPipelineStageId());
-                entity.setPipelineStage(stage);
             }
             if (dto.getApplicationProgressId() != null) {
                 ApplicationProgress progress = new ApplicationProgress();
@@ -173,6 +163,7 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
 				entity.setCancelsDecision(cancelsDecision);
 			}
 
+			ensureDecisionApplicationMatchesProgress(dto, locale);
 			prepareDecisionForPersistence(entity, locale);
             
             entity.setCreatedAt(new Date());
@@ -201,34 +192,31 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
      * Synchronize application pipeline and decision mirrors based on decision
      */
     private void synchronizeApplicationAfterDecision(Decision decision, Integer actorUserId, Locale locale, boolean sendDecisionEmailRequested) {
-        if (decision.getApplication() != null && decision.getApplication().getId() != null) {
-            // Fetch the full application entity
-            Applications app = applicationsRepository.findOne(decision.getApplication().getId(), false);
-            if (app != null) {
-                Integer decisionActorId = resolveDecisionActorId(decision, actorUserId);
+        Applications app = resolveDecisionApplication(decision);
+        if (app != null) {
+            Integer decisionActorId = resolveDecisionActorId(decision, actorUserId);
 
-                try {
-                    if (Boolean.TRUE.equals(decision.getIsCancel())) {
-                        rollbackCancelledDecisionStage(app, decision, decisionActorId, locale);
-                    } else {
-                        updateDecisionStageProgress(app, decision, decisionActorId, locale);
-                    }
-                } catch (ParseException exception) {
-                    throw new InvalidEntityException(functionalError.REQUEST_FAIL(
-                            "Impossible de synchroniser la décision avec le pipeline: " + exception.getMessage(),
-                            locale));
+            try {
+                if (isCancelDecision(decision)) {
+                    rollbackCancelledDecisionStage(app, decision, decisionActorId, locale);
+                } else {
+                    updateDecisionStageProgress(app, decision, decisionActorId, locale);
                 }
-
-                Applications latestApplication = applicationsRepository.findOne(app.getId(), false);
-                if (latestApplication == null) {
-                    return;
-                }
-
-                syncApplicationCurrentDecisionSummaries(latestApplication, decisionActorId);
-				if (!Boolean.TRUE.equals(decision.getIsCancel())) {
-					sendDecisionEmailIfNeeded(latestApplication, decision, decisionActorId, locale, sendDecisionEmailRequested);
-				}
+            } catch (ParseException exception) {
+                throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+                        "Impossible de synchroniser la décision avec le pipeline: " + exception.getMessage(),
+                        locale));
             }
+
+            Applications latestApplication = applicationsRepository.findOne(app.getId(), false);
+            if (latestApplication == null) {
+                return;
+            }
+
+            syncApplicationCurrentDecisionSummaries(latestApplication, decisionActorId);
+			if (!isCancelDecision(decision)) {
+				sendDecisionEmailIfNeeded(latestApplication, decision, decisionActorId, locale, sendDecisionEmailRequested);
+			}
         }
     }
 
@@ -319,9 +307,6 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
             if (Utilities.notBlank(dto.getDecisionType())) {
                 entity.setDecisionType(dto.getDecisionType());
             }
-            if (dto.getIsCancel() != null) {
-                entity.setIsCancel(dto.getIsCancel());
-            }
             if (dto.getJustification() != null) {
                 entity.setJustification(dto.getJustification());
             }
@@ -330,20 +315,10 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
             }
 
             // Set relationships manually
-            if (dto.getApplicationId() != null) {
-                Applications app = new Applications();
-                app.setId(dto.getApplicationId());
-                entity.setApplication(app);
-            }
             if (dto.getUserId() != null) {
                 User user = new User();
                 user.setId(dto.getUserId());
                 entity.setUser(user);
-            }
-            if (dto.getPipelineStageId() != null) {
-                PipelineStage stage = new PipelineStage();
-                stage.setId(dto.getPipelineStageId());
-                entity.setPipelineStage(stage);
             }
             if (dto.getApplicationProgressId() != null) {
                 ApplicationProgress progress = new ApplicationProgress();
@@ -356,6 +331,7 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
 				entity.setCancelsDecision(cancelsDecision);
 			}
 
+			ensureDecisionApplicationMatchesProgress(dto, locale);
 			prepareDecisionForPersistence(entity, locale);
             
             entity.setUpdatedAt(new Date());
@@ -386,20 +362,12 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
             return;
         }
 
-        if (dto.getIsCancel() != null) {
-            validateImmutableField("isCancel", existing.getIsCancel(), dto.getIsCancel(), locale);
-        }
-
         if (dto.getDecisionMode() != null) {
             validateImmutableField(
                     "decisionMode",
                     normalizeOptionalUppercaseText(existing.getDecisionMode()),
                     normalizeOptionalUppercaseText(dto.getDecisionMode()),
                     locale);
-        }
-
-        if (dto.getPipelineStageId() != null) {
-            validateImmutableField("pipelineStageId", getPipelineStageId(existing), dto.getPipelineStageId(), locale);
         }
 
         if (dto.getApplicationProgressId() != null) {
@@ -410,7 +378,7 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
             validateImmutableField("cancelsDecisionId", getCancelsDecisionId(existing), dto.getCancelsDecisionId(), locale);
         }
 
-        if (Boolean.TRUE.equals(existing.getIsCancel())) {
+        if (isCancelDecision(existing)) {
             if (dto.getApplicationId() != null) {
                 validateImmutableField("applicationId", getApplicationId(existing), dto.getApplicationId(), locale);
             }
@@ -439,7 +407,35 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
     }
 
     private Integer getApplicationId(Decision decision) {
-        return decision != null && decision.getApplication() != null ? decision.getApplication().getId() : null;
+        Applications app = resolveDecisionApplication(decision);
+        return app != null ? app.getId() : null;
+    }
+
+    private Applications resolveDecisionApplication(Decision decision) {
+        if (decision == null || decision.getApplicationProgress() == null || decision.getApplicationProgress().getId() == null) {
+            return null;
+        }
+        ApplicationProgress progress = applicationProgressRepository.findOne(decision.getApplicationProgress().getId(), false);
+        return progress != null ? progress.getApplications() : null;
+    }
+
+    private boolean isCancelDecision(Decision decision) {
+        return decision != null && CANCEL_DECISION_MODE.equals(normalizeOptionalUppercaseText(decision.getDecisionMode()));
+    }
+
+    private void ensureDecisionApplicationMatchesProgress(DecisionDto dto, Locale locale) {
+        if (dto == null || dto.getApplicationProgressId() == null || dto.getApplicationId() == null) {
+            return;
+        }
+        ApplicationProgress progress = applicationProgressRepository.findOne(dto.getApplicationProgressId(), false);
+        if (progress != null
+                && progress.getApplications() != null
+                && progress.getApplications().getId() != null
+                && !Objects.equals(progress.getApplications().getId(), dto.getApplicationId())) {
+            throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+                    "La décision et l'occurrence pipeline ciblée ne concernent pas la même candidature",
+                    locale));
+        }
     }
 
     private Integer getUserId(Decision decision) {
@@ -447,7 +443,11 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
     }
 
     private Integer getPipelineStageId(Decision decision) {
-        return decision != null && decision.getPipelineStage() != null ? decision.getPipelineStage().getId() : null;
+        if (decision == null || decision.getApplicationProgress() == null || decision.getApplicationProgress().getId() == null) {
+            return null;
+        }
+        ApplicationProgress progress = applicationProgressRepository.findOne(decision.getApplicationProgress().getId(), false);
+        return progress != null && progress.getPipelineStage() != null ? progress.getPipelineStage().getId() : null;
     }
 
     private Integer getApplicationProgressId(Decision decision) {
@@ -477,7 +477,7 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
 
     private String resolveCreateAuditActionType(Decision decision) {
         String decisionMode = normalizeOptionalUppercaseText(decision != null ? decision.getDecisionMode() : null);
-        if (CANCEL_DECISION_MODE.equals(decisionMode) || (decision != null && Boolean.TRUE.equals(decision.getIsCancel()))) {
+        if (CANCEL_DECISION_MODE.equals(decisionMode)) {
             return "DECISION_CANCELLED";
         }
         if ("OVERRIDE".equals(decisionMode)) {
@@ -503,7 +503,6 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
         snapshot.put("cancelsDecisionId", getCancelsDecisionId(decision));
         snapshot.put("decisionType", decision.getDecisionType());
         snapshot.put("decisionMode", decision.getDecisionMode());
-        snapshot.put("isCancel", decision.getIsCancel());
         snapshot.put("justification", decision.getJustification());
         snapshot.put("isDeleted", decision.getIsDeleted());
         snapshot.put("createdAt", decision.getCreatedAt());
@@ -540,7 +539,7 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
                 return response;
             }
 
-			Integer applicationId = existing.getApplication() != null ? existing.getApplication().getId() : null;
+			Integer applicationId = getApplicationId(existing);
 			String beforeStateJson = buildDecisionAuditStateJson(existing);
             ensureCampaignDecisionAllowed(
                     applicationId,
@@ -620,8 +619,8 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
         }
         dto.setDecisionType(decisionType.getValue());
 
-        if (dto.getIsCancel() == null) {
-            response.setStatus(functionalError.FIELD_EMPTY("isCancel", locale));
+        if (!Utilities.notBlank(dto.getDecisionMode())) {
+            response.setStatus(functionalError.FIELD_EMPTY("decisionMode", locale));
             response.setHasError(true);
             return response;
         }
@@ -783,7 +782,7 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
         return decisions.stream()
                 .filter(Objects::nonNull)
                 .filter(decision -> !Boolean.TRUE.equals(decision.getIsDeleted()))
-                .filter(decision -> !Boolean.TRUE.equals(decision.getIsCancel()))
+                .filter(decision -> !isCancelDecision(decision))
                 .filter(decision -> decision.getId() == null || !cancelledDecisionIds.contains(decision.getId()))
                 .filter(decision -> {
                     DecisionType decisionType = resolveDecisionType(decision.getDecisionType());
@@ -809,7 +808,7 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
         }
 
         for (Decision decision : decisions) {
-            if (decision == null || Boolean.TRUE.equals(decision.getIsDeleted()) || !Boolean.TRUE.equals(decision.getIsCancel())) {
+            if (decision == null || Boolean.TRUE.equals(decision.getIsDeleted()) || !isCancelDecision(decision)) {
                 continue;
             }
 
@@ -841,11 +840,12 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
         }
 
         decision.setJustification(normalizeOptionalText(decision.getJustification()));
-        decision.setDecisionMode(normalizeDecisionMode(decision.getDecisionMode(), Boolean.TRUE.equals(decision.getIsCancel()), locale));
+        boolean cancellation = CANCEL_DECISION_MODE.equals(normalizeOptionalUppercaseText(decision.getDecisionMode()));
+        decision.setDecisionMode(normalizeDecisionMode(decision.getDecisionMode(), cancellation, locale));
         validateDecisionJustification(decision, locale);
         alignDecisionProgressContext(decision, locale);
 
-        if (Boolean.TRUE.equals(decision.getIsCancel())) {
+        if (cancellation) {
             prepareCancellationDecision(decision, locale);
             return;
         }
@@ -864,27 +864,6 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
         }
 
         decision.setApplicationProgress(progress);
-        if (progress.getApplications() != null && progress.getApplications().getId() != null) {
-            if (decision.getApplication() != null
-                    && decision.getApplication().getId() != null
-                    && !Objects.equals(decision.getApplication().getId(), progress.getApplications().getId())) {
-                throw new InvalidEntityException(functionalError.REQUEST_FAIL(
-                        "La décision et l'occurrence pipeline ciblée ne concernent pas la même candidature",
-                        locale));
-            }
-            decision.setApplication(progress.getApplications());
-        }
-
-        if (progress.getPipelineStage() != null && progress.getPipelineStage().getId() != null) {
-            if (decision.getPipelineStage() != null
-                    && decision.getPipelineStage().getId() != null
-                    && !Objects.equals(decision.getPipelineStage().getId(), progress.getPipelineStage().getId())) {
-                throw new InvalidEntityException(functionalError.REQUEST_FAIL(
-                        "La décision et l'occurrence pipeline ciblée ne pointent pas vers la même étape",
-                        locale));
-            }
-            decision.setPipelineStage(progress.getPipelineStage());
-        }
     }
 
     private void prepareCancellationDecision(Decision decision, Locale locale) {
@@ -893,14 +872,8 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
         decision.setDecisionMode(CANCEL_DECISION_MODE);
         decision.setDecisionType(target.getDecisionType());
 
-        if (target.getApplication() != null) {
-            decision.setApplication(target.getApplication());
-        }
         if (target.getApplicationProgress() != null) {
             decision.setApplicationProgress(target.getApplicationProgress());
-        }
-        if (target.getPipelineStage() != null) {
-            decision.setPipelineStage(target.getPipelineStage());
         }
 
         alignDecisionProgressContext(decision, locale);
@@ -913,12 +886,12 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
             return explicitTarget;
         }
 
-        if (decision == null || decision.getApplication() == null || decision.getApplication().getId() == null) {
+        if (decision == null || getApplicationId(decision) == null) {
             throw new InvalidEntityException(functionalError.FIELD_EMPTY("applicationId", locale));
         }
 
         DecisionType decisionType = resolveDecisionType(decision.getDecisionType());
-        List<Decision> decisions = decisionRepository.findByApplicationId(decision.getApplication().getId(), false);
+        List<Decision> decisions = decisionRepository.findByApplicationId(getApplicationId(decision), false);
         Set<Integer> cancelledDecisionIds = collectCancelledDecisionIds(decisions);
 
         for (Decision candidate : decisions) {
@@ -940,17 +913,16 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
     }
 
     private void validateCancellationTarget(Decision target, Decision cancellationDecision, Locale locale) {
-        if (target == null || Boolean.TRUE.equals(target.getIsDeleted()) || Boolean.TRUE.equals(target.getIsCancel())) {
+        if (target == null || Boolean.TRUE.equals(target.getIsDeleted()) || isCancelDecision(target)) {
             throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION(
                     "La décision cible à annuler est introuvable ou déjà invalide",
                     locale));
         }
 
         if (cancellationDecision != null
-                && cancellationDecision.getApplication() != null
-                && cancellationDecision.getApplication().getId() != null
-                && (target.getApplication() == null
-                    || !Objects.equals(target.getApplication().getId(), cancellationDecision.getApplication().getId()))) {
+                && getApplicationId(cancellationDecision) != null
+                && (getApplicationId(target) == null
+                    || !Objects.equals(getApplicationId(target), getApplicationId(cancellationDecision)))) {
             throw new InvalidEntityException(functionalError.REQUEST_FAIL(
                     "La décision cible à annuler n'appartient pas à la même candidature",
                     locale));
@@ -961,7 +933,7 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
         if (candidate == null || candidate.getId() == null) {
             return false;
         }
-        if (Boolean.TRUE.equals(candidate.getIsDeleted()) || Boolean.TRUE.equals(candidate.getIsCancel()) || cancelledDecisionIds.contains(candidate.getId())) {
+        if (Boolean.TRUE.equals(candidate.getIsDeleted()) || isCancelDecision(candidate) || cancelledDecisionIds.contains(candidate.getId())) {
             return false;
         }
         if (cancellationDecision != null && cancellationDecision.getId() != null && Objects.equals(candidate.getId(), cancellationDecision.getId())) {
@@ -978,13 +950,6 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
                 && cancellationDecision.getApplicationProgress().getId() != null) {
             return candidate.getApplicationProgress() != null
                     && Objects.equals(candidate.getApplicationProgress().getId(), cancellationDecision.getApplicationProgress().getId());
-        }
-
-        if (cancellationDecision != null
-                && cancellationDecision.getPipelineStage() != null
-                && cancellationDecision.getPipelineStage().getId() != null) {
-            return candidate.getPipelineStage() != null
-                    && Objects.equals(candidate.getPipelineStage().getId(), cancellationDecision.getPipelineStage().getId());
         }
 
         return true;
@@ -1054,7 +1019,7 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
     }
 
     private void sendDecisionEmailIfNeeded(Applications application, Decision decision, Integer actorUserId, Locale locale, boolean sendDecisionEmailRequested) {
-        if (application == null || decision == null || Boolean.TRUE.equals(decision.getIsCancel())) {
+        if (application == null || decision == null || isCancelDecision(decision)) {
             return;
         }
         if (!Utilities.notBlank(application.getCandidateEmail())) {
@@ -1201,10 +1166,11 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
     }
 
     private PipelineStage loadDecisionPipelineStage(Decision decision) {
-        if (decision == null || decision.getPipelineStage() == null || decision.getPipelineStage().getId() == null) {
+        if (decision == null || decision.getApplicationProgress() == null || decision.getApplicationProgress().getId() == null) {
             return null;
         }
-        return pipelineStageRepository.findOne(decision.getPipelineStage().getId(), false);
+        ApplicationProgress progress = applicationProgressRepository.findOne(decision.getApplicationProgress().getId(), false);
+        return progress != null ? progress.getPipelineStage() : null;
     }
 
     private boolean matchesDecisionStageType(PipelineStage stage, DecisionType decisionType) {
@@ -1231,13 +1197,6 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
         boolean needsSave = false;
         if (decision.getApplicationProgress() == null || !Objects.equals(decision.getApplicationProgress().getId(), progress.getId())) {
             decision.setApplicationProgress(progress);
-            needsSave = true;
-        }
-
-        PipelineStage stage = progress.getPipelineStage();
-        if (stage != null && stage.getId() != null
-                && (decision.getPipelineStage() == null || !Objects.equals(decision.getPipelineStage().getId(), stage.getId()))) {
-            decision.setPipelineStage(stage);
             needsSave = true;
         }
 

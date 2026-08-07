@@ -221,8 +221,8 @@
                         @if (p.score != null) {
                           <div><dt>Score</dt><dd>{{ p.score }}</dd></div>
                         }
-                        @if (p.decidedByFirstName || p.decidedByLastName) {
-                          <div><dt>Validée par</dt><dd>{{ p.decidedByFirstName }} {{ p.decidedByLastName }}</dd></div>
+                        @if (p.validatedByFirstName || p.validatedByLastName) {
+                          <div><dt>Validée par</dt><dd>{{ p.validatedByFirstName }} {{ p.validatedByLastName }}</dd></div>
                         }
                         @if (p.mailSent) {
                           <div><dt>Email</dt><dd><span class="inline-badge badge-success">envoyé</span></dd></div>

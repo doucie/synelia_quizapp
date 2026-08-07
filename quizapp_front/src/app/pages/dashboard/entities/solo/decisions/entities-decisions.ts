@@ -12,14 +12,7 @@ import { DependencyPopupComponent } from '../../../../../shared/dependency-popup
 import { ColumnVisibilityManagerComponent } from '../../../../../shared/column-visibility-manager/column-visibility-manager';
 import { DecisionService, Decision, DecisionMutationPayload, PagedDecisionResponse, DecisionCriteria } from '../../../../../core/services/decision.service';
 import { ApplicationService, Application } from '../../../../../core/services/application.service';
-import { PipelineStageService } from '../../../../../core/services/pipeline-stage.service';
 import { UserService, User } from '../../../../../core/services/user.service';
-
-interface DecisionPipelineStageRef {
-  id?: number;
-  stageLabel?: string;
-  stageType?: string;
-}
 
 @Component({
   selector: 'app-entities-decisions',
@@ -31,7 +24,6 @@ interface DecisionPipelineStageRef {
 export class EntitiesDecisionsComponent extends EntityCrudBase<Decision, DecisionCriteria, PagedDecisionResponse, DecisionMutationPayload> {
   private service = inject(DecisionService);
   private applicationService = inject(ApplicationService);
-  private pipelineStageService = inject(PipelineStageService);
   private userService = inject(UserService);
   protected override readonly router = inject(Router);
   protected override readonly pageSizeStorageKey = 'entitiesDecisionsPageSize';
@@ -39,12 +31,11 @@ export class EntitiesDecisionsComponent extends EntityCrudBase<Decision, Decisio
   protected override readonly entityTypeApi = 'decisions';
 
   allApplications = signal<Application[]>([]);
-  allPipelineStages = signal<DecisionPipelineStageRef[]>([]);
   allUsers = signal<User[]>([]);
 
   advancedCriteria: DecisionCriteria = {};
-  editFormData: Decision = { decisionType: '', isCancel: false, applicationId: 0, userId: 0 };
-  createFormData: DecisionMutationPayload = { isCancel: false };
+  editFormData: Decision = { decisionType: '', decisionMode: 'STANDARD', applicationId: 0, userId: 0 };
+  createFormData: DecisionMutationPayload = { decisionMode: 'STANDARD' };
 
   override allColumns: ColumnDef[] = [
     { key: 'id', label: 'ID', priority: 1 },
@@ -56,7 +47,6 @@ export class EntitiesDecisionsComponent extends EntityCrudBase<Decision, Decisio
     { key: 'cancelsDecisionId', label: 'Annule', priority: 3 },
     { key: 'justification', label: 'Justification', priority: 3 },
     { key: 'cancelled', label: 'Annulée', priority: 2 },
-    { key: 'pipelineStage', label: 'Étape Pipeline', priority: 2 },
     { key: 'createdAt', label: 'Créé le', priority: 2 },
     { key: 'actions', label: 'Actions', priority: 1 },
   ];
@@ -67,8 +57,6 @@ export class EntitiesDecisionsComponent extends EntityCrudBase<Decision, Decisio
     { key: 'userId', label: 'Utilisateur', type: 'id', displayValue: (entity) => this.getUserDisplay(entity?.userId) },
     { key: 'decisionType', label: 'Type décision', type: 'text' },
     { key: 'decisionMode', label: 'Mode', type: 'text', editable: false, displayValue: (entity) => this.getDecisionModeDisplay(entity?.decisionMode) },
-    { key: 'isCancel', label: 'Annulée', type: 'boolean', editable: false },
-    { key: 'pipelineStageId', label: 'Étape pipeline', type: 'id', editable: false, displayValue: (entity) => this.getPipelineStageDisplay(entity?.pipelineStageId) },
     { key: 'applicationProgressId', label: 'Occurrence pipeline', type: 'id', editable: false, displayValue: (entity) => this.getApplicationProgressDisplay(entity?.applicationProgressId) },
     { key: 'cancelsDecisionId', label: 'Décision annulée ciblée', type: 'id', editable: false, displayValue: (entity) => this.getCancelsDecisionDisplay(entity?.cancelsDecisionId) },
     { key: 'justification', label: 'Justification', type: 'text' },
@@ -77,17 +65,16 @@ export class EntitiesDecisionsComponent extends EntityCrudBase<Decision, Decisio
   ];
 
   protected fetchAll(criteria: DecisionCriteria): Observable<PagedDecisionResponse> { return this.service.getAllDecisionsByCriteria(criteria); }
-  protected performCreate(item: DecisionMutationPayload): Observable<any> { return this.service.createDecision({ isCancel: false, ...item }); }
+  protected performCreate(item: DecisionMutationPayload): Observable<any> { return this.service.createDecision({ decisionMode: 'STANDARD', ...item }); }
   protected performUpdate(item: Decision): Observable<any> { return this.service.updateDecision(this.buildUpdatePayload(item)); }
   protected performDelete(id: number): Observable<any> { return this.service.deleteDecision(id); }
   protected performRestore(id: number): Observable<any> { return this.service.restoreDecision(id); }
   protected resetAdvancedCriteriaValues(): void { this.advancedCriteria = {}; }
-  protected resetCreateFormData(): void { this.createFormData = { isCancel: false }; }
+  protected resetCreateFormData(): void { this.createFormData = { decisionMode: 'STANDARD' }; }
 
   override ngOnInit() {
     super.ngOnInit();
     this.applicationService.getAllApplicationsByCriteria({ page: 0, size: 9999, isDeleted: false }).subscribe({ next: (res) => this.allApplications.set(res.content) });
-    this.pipelineStageService.getAllByCriteria({ page: 0, size: 9999, isDeleted: false }).subscribe({ next: (res) => this.allPipelineStages.set(res.content) });
     this.userService.getByCriteria({ page: 0, size: 9999, isDeleted: false }).subscribe({ next: (res) => this.allUsers.set(res.content) });
   }
 
@@ -139,20 +126,6 @@ export class EntitiesDecisionsComponent extends EntityCrudBase<Decision, Decisio
     return fullName || user.email || `#${userId}`;
   }
 
-  getPipelineStageDisplay(pipelineStageId?: number): string {
-    if (!pipelineStageId) {
-      return '-';
-    }
-
-    const pipelineStage = this.allPipelineStages().find((item) => item.id === pipelineStageId);
-    if (!pipelineStage) {
-      return `#${pipelineStageId}`;
-    }
-
-    const label = pipelineStage.stageLabel || pipelineStage.stageType;
-    return label ? `${label} (#${pipelineStageId})` : `#${pipelineStageId}`;
-  }
-
   getDecisionModeDisplay(decisionMode?: string): string {
     switch ((decisionMode || '').trim().toUpperCase()) {
       case 'STANDARD':
@@ -185,8 +158,12 @@ export class EntitiesDecisionsComponent extends EntityCrudBase<Decision, Decisio
     return normalized.length > 72 ? `${normalized.slice(0, 69)}...` : normalized;
   }
 
+  isCancellation(decisionMode?: string): boolean {
+    return (decisionMode || '').trim().toUpperCase() === 'CANCEL';
+  }
+
   private buildUpdatePayload(item: Decision): DecisionMutationPayload {
-    if (item.isCancel) {
+    if (this.isCancellation(item.decisionMode)) {
       return {
         id: item.id,
         justification: item.justification ?? ''

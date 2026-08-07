@@ -40,7 +40,7 @@ export class EntitiesApplicationProgressComponent extends EntityCrudBase<Applica
     { key: 'startedAt', label: 'Démarré le', priority: 2 },
     { key: 'completedAt', label: 'Terminé le', priority: 3 },
     { key: 'notes', label: 'Notes', priority: 3 },
-    { key: 'decidedBy', label: 'Décidé par', priority: 3 },
+    { key: 'validatedBy', label: 'Validée par', priority: 3 },
     { key: 'actions', label: 'Actions', priority: 1 },
   ];
 

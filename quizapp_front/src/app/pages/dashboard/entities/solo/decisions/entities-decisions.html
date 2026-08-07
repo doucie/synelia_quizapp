@@ -85,15 +85,6 @@
           </app-filter-select>
         </div>
         <div class="form-group">
-          <label>Étape pipeline</label>
-          <app-filter-select [(ngModel)]="advancedCriteria.pipelineStageId">
-            <option [ngValue]="undefined">-- Toutes --</option>
-            @for (item of allPipelineStages(); track item.id) {
-              <option [ngValue]="item.id">{{ getPipelineStageDisplay(item.id) }}</option>
-            }
-          </app-filter-select>
-        </div>
-        <div class="form-group">
           <label>Occurrence pipeline</label>
           <input type="number" class="form-input" [(ngModel)]="advancedCriteria.applicationProgressId" placeholder="ID occurrence" min="1" />
         </div>
@@ -104,14 +95,6 @@
         <div class="form-group">
           <label>Justification</label>
           <input type="text" class="form-input" [(ngModel)]="advancedCriteria.justification" placeholder="Texte contenu dans la justification" />
-        </div>
-        <div class="form-group">
-          <label>Nature</label>
-          <app-filter-select [(ngModel)]="advancedCriteria.isCancel">
-            <option [ngValue]="undefined">Toutes</option>
-            <option [ngValue]="false">Décision standard</option>
-            <option [ngValue]="true">Décision d'annulation</option>
-          </app-filter-select>
         </div>
         <div class="form-group">
           <label>Supprimé</label>
@@ -194,7 +177,6 @@
             <th class="col-short" [class.col-hidden]="!isColumnVisible('cancelsDecisionId')">Annule</th>
             <th class="col-short" [class.col-hidden]="!isColumnVisible('justification')">Justification</th>
             <th class="col-boolean" [class.col-hidden]="!isColumnVisible('cancelled')">Annulée</th>
-            <th class="col-short" [class.col-hidden]="!isColumnVisible('pipelineStage')">Étape Pipeline</th>
             <th class="col-date" [class.col-hidden]="!isColumnVisible('createdAt')">Créé le</th>
             <th class="col-actions" [class.col-hidden]="!isColumnVisible('actions')">Actions</th>
           </tr>
@@ -209,8 +191,7 @@
             <td [class.col-hidden]="!isColumnVisible('applicationProgressId')">{{ getApplicationProgressDisplay(item.applicationProgressId) }}</td>
             <td [class.col-hidden]="!isColumnVisible('cancelsDecisionId')">{{ getCancelsDecisionDisplay(item.cancelsDecisionId) }}</td>
             <td [class.col-hidden]="!isColumnVisible('justification')" [title]="item.justification || ''">{{ getJustificationPreview(item.justification) }}</td>
-            <td [class.col-hidden]="!isColumnVisible('cancelled')"><span class="bool-badge" [class.is-true]="item.isCancel" [class.is-false]="!item.isCancel"><svg *ngIf="item.isCancel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><svg *ngIf="!item.isCancel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>{{ item.isCancel ? 'Oui' : 'Non' }}</span></td>
-            <td [class.col-hidden]="!isColumnVisible('pipelineStage')">{{ getPipelineStageDisplay(item.pipelineStageId) }}</td>
+            <td [class.col-hidden]="!isColumnVisible('cancelled')"><span class="bool-badge" [class.is-true]="isCancellation(item.decisionMode)" [class.is-false]="!isCancellation(item.decisionMode)"><svg *ngIf="isCancellation(item.decisionMode)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><svg *ngIf="!isCancellation(item.decisionMode)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>{{ isCancellation(item.decisionMode) ? 'Oui' : 'Non' }}</span></td>
             <td [class.col-hidden]="!isColumnVisible('createdAt')"><span class="cell-date">{{ formatDate(item.createdAt) }}</span></td>
             <td class="actions-cell" [class.col-hidden]="!isColumnVisible('actions')" (click)="$event.stopPropagation()">
               <div class="actions-menu">
@@ -295,13 +276,13 @@
     </div>
     <div class="modal-content">
       <form class="edit-form">
-        <div class="form-group"><label class="form-label">Candidature</label><app-filter-select [(ngModel)]="editFormData.applicationId" name="applicationId" ariaLabel="Sélectionner une candidature" [disabled]="editFormData.isCancel"><option [ngValue]="undefined">-- Sélectionner --</option>@for (a of allApplications(); track a.id) {<option [ngValue]="a.id">{{ getApplicationDisplay(a.id) }}</option>}</app-filter-select></div>
-        <div class="form-group"><label class="form-label">Utilisateur</label><app-filter-select [(ngModel)]="editFormData.userId" name="userId" ariaLabel="Sélectionner un utilisateur" [disabled]="editFormData.isCancel"><option [ngValue]="undefined">-- Sélectionner --</option>@for (u of allUsers(); track u.id) {<option [ngValue]="u.id">{{ getUserDisplay(u.id) }}</option>}</app-filter-select></div>
-        <div class="form-group"><label class="form-label">Type Décision</label><input type="text" class="form-input" [(ngModel)]="editFormData.decisionType" name="decisionType" [disabled]="editFormData.isCancel" /></div>
+        <div class="form-group"><label class="form-label">Candidature</label><app-filter-select [(ngModel)]="editFormData.applicationId" name="applicationId" ariaLabel="Sélectionner une candidature" [disabled]="isCancellation(editFormData.decisionMode)"><option [ngValue]="undefined">-- Sélectionner --</option>@for (a of allApplications(); track a.id) {<option [ngValue]="a.id">{{ getApplicationDisplay(a.id) }}</option>}</app-filter-select></div>
+        <div class="form-group"><label class="form-label">Utilisateur</label><app-filter-select [(ngModel)]="editFormData.userId" name="userId" ariaLabel="Sélectionner un utilisateur" [disabled]="isCancellation(editFormData.decisionMode)"><option [ngValue]="undefined">-- Sélectionner --</option>@for (u of allUsers(); track u.id) {<option [ngValue]="u.id">{{ getUserDisplay(u.id) }}</option>}</app-filter-select></div>
+        <div class="form-group"><label class="form-label">Type Décision</label><input type="text" class="form-input" [(ngModel)]="editFormData.decisionType" name="decisionType" [disabled]="isCancellation(editFormData.decisionMode)" /></div>
         <div class="form-group"><label class="form-label">Justification</label><textarea class="form-input" rows="4" [(ngModel)]="editFormData.justification" name="editDecisionJustification"></textarea></div>
         <div class="form-group">
-          <p class="decision-form-note" *ngIf="!editFormData.isCancel">Cette édition conserve une décision standard. Utilisez le dashboard décisions pour créer une annulation historisée.</p>
-          <p class="decision-form-note decision-form-note--warning" *ngIf="editFormData.isCancel">Cette ligne est une annulation historisée. Seule la justification reste éditable ici; la décision cible et son contexte restent gérés depuis le dashboard décisions.</p>
+          <p class="decision-form-note" *ngIf="!isCancellation(editFormData.decisionMode)">Cette édition conserve une décision standard. Utilisez le dashboard décisions pour créer une annulation historisée.</p>
+          <p class="decision-form-note decision-form-note--warning" *ngIf="isCancellation(editFormData.decisionMode)">Cette ligne est une annulation historisée. Seule la justification reste éditable ici; la décision cible et son contexte restent gérés depuis le dashboard décisions.</p>
         </div>
       </form>
     </div>

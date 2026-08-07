@@ -34,9 +34,18 @@ public interface ApplicationProgressTransformer {
         @Mapping(source = "entity.pipelineStage.stageLabel", target = "stageName"),
         @Mapping(source = "entity.pipelineStage.stageType", target = "stageType"),
         @Mapping(source = "entity.pipelineStage.stageOrder", target = "stageOrder"),
-        @Mapping(source = "entity.decidedBy.id", target = "decidedById"),
-        @Mapping(source = "entity.decidedBy.firstName", target = "decidedByFirstName"),
-        @Mapping(source = "entity.decidedBy.lastName", target = "decidedByLastName"),
+        @Mapping(source = "entity.validatedAt", dateFormat = "dd/MM/yyyy HH:mm:ss", target = "validatedAt"),
+        @Mapping(source = "entity.validatedBy.id", target = "validatedById"),
+        @Mapping(source = "entity.validatedBy.firstName", target = "validatedByFirstName"),
+        @Mapping(source = "entity.validatedBy.lastName", target = "validatedByLastName"),
+        @Mapping(source = "entity.skippedAt", dateFormat = "dd/MM/yyyy HH:mm:ss", target = "skippedAt"),
+        @Mapping(source = "entity.skippedBy.id", target = "skippedById"),
+        @Mapping(source = "entity.skippedBy.firstName", target = "skippedByFirstName"),
+        @Mapping(source = "entity.skippedBy.lastName", target = "skippedByLastName"),
+        @Mapping(source = "entity.reopenedAt", dateFormat = "dd/MM/yyyy HH:mm:ss", target = "reopenedAt"),
+        @Mapping(source = "entity.reopenedBy.id", target = "reopenedById"),
+        @Mapping(source = "entity.reopenedBy.firstName", target = "reopenedByFirstName"),
+        @Mapping(source = "entity.reopenedBy.lastName", target = "reopenedByLastName"),
     })
     ApplicationProgressDto toDto(ApplicationProgress entity) throws ParseException;
 
@@ -84,12 +93,11 @@ public interface ApplicationProgressTransformer {
         @Mapping(source = "dto.isDeleted", target = "isDeleted"),
         @Mapping(source = "applications", target = "applications"),
         @Mapping(source = "pipelineStage", target = "pipelineStage"),
-        @Mapping(source = "decidedBy", target = "decidedBy"),
         @Mapping(target = "createdAt", ignore = true),
         @Mapping(target = "updatedAt", ignore = true),
         @Mapping(target = "startedAt", ignore = true),
         @Mapping(target = "completedAt", ignore = true),
         @Mapping(target = "searchString", ignore = true),
     })
-    ApplicationProgress toEntity(ApplicationProgressDto dto, Applications applications, PipelineStage pipelineStage, User decidedBy) throws ParseException;
+    ApplicationProgress toEntity(ApplicationProgressDto dto, Applications applications, PipelineStage pipelineStage) throws ParseException;
 }

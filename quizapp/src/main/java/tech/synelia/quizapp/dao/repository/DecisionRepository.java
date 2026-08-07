@@ -27,17 +27,17 @@ public interface DecisionRepository extends JpaRepository<Decision, Integer>, _D
     @Query("select e from Decision e where e.id = :id and e.isDeleted = :isDeleted")
     Decision findOne(@Param("id") Integer id, @Param("isDeleted") Boolean isDeleted);
 
-    @Query("select e from Decision e where e.application.id = :applicationId and e.isDeleted = :isDeleted order by e.createdAt desc")
+    @Query("select e from Decision e where e.applicationProgress.applications.id = :applicationId and e.isDeleted = :isDeleted order by e.createdAt desc")
     List<Decision> findByApplicationId(@Param("applicationId") Integer applicationId, @Param("isDeleted") Boolean isDeleted);
+
+    @Query("select e from Decision e where e.applicationProgress.id = :applicationProgressId and e.isDeleted = :isDeleted order by e.createdAt desc")
+    List<Decision> findByApplicationProgressId(@Param("applicationProgressId") Integer applicationProgressId, @Param("isDeleted") Boolean isDeleted);
 
     @Query("select e from Decision e where e.user.id = :userId and e.isDeleted = :isDeleted order by e.createdAt desc")
     List<Decision> findByUserId(@Param("userId") Integer userId, @Param("isDeleted") Boolean isDeleted);
 
     @Query("select e from Decision e where e.decisionType = :decisionType and e.isDeleted = :isDeleted order by e.createdAt desc")
     List<Decision> findByDecisionType(@Param("decisionType") String decisionType, @Param("isDeleted") Boolean isDeleted);
-
-    @Query("select e from Decision e where e.isCancel = :isCancel and e.isDeleted = :isDeleted order by e.createdAt desc")
-    List<Decision> findByIsCancel(@Param("isCancel") Boolean isCancel, @Param("isDeleted") Boolean isDeleted);
 
     @Query("select e from Decision e where e.isDeleted = false order by e.createdAt desc")
     List<Decision> findAllActive();

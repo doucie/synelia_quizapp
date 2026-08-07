@@ -379,9 +379,9 @@
           } @else {
             <div class="history-timeline">
               @for (decision of selectedApplicationDecisions(); track decision.id) {
-                <div class="timeline-item" [class.cancel]="decision.isCancel">
+                <div class="timeline-item" [class.cancel]="isCancellationDecision(decision)">
                   <div class="timeline-marker">
-                    @if (decision.isCancel) {
+                    @if (isCancellationDecision(decision)) {
                       <i class="bi bi-arrow-counterclockwise"></i>
                     } @else {
                       <i class="bi bi-check-lg"></i>
@@ -410,7 +410,7 @@
                         {{ decision.justification }}
                       </div>
                     }
-                    @if (decision.isCancel && getCancellationTargetLabel(decision)) {
+                    @if (isCancellationDecision(decision) && getCancellationTargetLabel(decision)) {
                       <div class="timeline-footer">
                         <i class="bi bi-link-45deg"></i>
                         {{ getCancellationTargetLabel(decision) }}

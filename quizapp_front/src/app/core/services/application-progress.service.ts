@@ -28,7 +28,7 @@ export interface ApplicationProgressCriteria {
   applicationId?: number;
   pipelineStageId?: number;
   progressStatus?: string;
-  decidedById?: number;
+  validatedById?: number;
   isDeleted?: boolean;
   search_string?: string;
   idDe?: string;
@@ -69,7 +69,7 @@ export class ApplicationProgressService {
         ...(criteria.applicationId && { applicationId: criteria.applicationId }),
         ...(criteria.pipelineStageId && { pipelineStageId: criteria.pipelineStageId }),
         ...(criteria.progressStatus && { progressStatus: criteria.progressStatus }),
-        ...(criteria.decidedById && { decidedById: criteria.decidedById }),
+        ...(criteria.validatedById && { validatedById: criteria.validatedById }),
         ...(criteria.idDe?.trim() && { idStart: criteria.idDe }),
         ...(criteria.idA?.trim() && { idEnd: criteria.idA }),
         ...(criteria.dateCreationDe && { dateCreationDe: criteria.dateCreationDe }),

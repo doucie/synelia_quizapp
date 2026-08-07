@@ -47,9 +47,6 @@ public class Decision implements Serializable, Cloneable {
     @Column(name="decision_type", nullable=false, length=50)
     private String     decisionType ;
 
-    @Column(name="is_cancel", nullable=false)
-    private Boolean    isCancel     ;
-
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name="created_at")
     private Date       createdAt    ;
@@ -80,16 +77,8 @@ public class Decision implements Serializable, Cloneable {
     // ENTITY LINKS ( RELATIONSHIP )
     //----------------------------------------------------------------------
     @ManyToOne
-    @JoinColumn(name="application_id", referencedColumnName="id")
-    private Applications application ;
-
-    @ManyToOne
     @JoinColumn(name="user_id", referencedColumnName="id")
     private User user ;
-
-    @ManyToOne
-    @JoinColumn(name="pipeline_stage_id", referencedColumnName="id")
-    private PipelineStage pipelineStage ;
 
     @ManyToOne
     @JoinColumn(name="application_progress_id", referencedColumnName="id")

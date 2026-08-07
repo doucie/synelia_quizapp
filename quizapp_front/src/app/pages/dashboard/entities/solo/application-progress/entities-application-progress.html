@@ -146,7 +146,7 @@
             <th class="col-date" [class.col-hidden]="!isColumnVisible('startedAt')">Démarré le</th>
             <th class="col-date" [class.col-hidden]="!isColumnVisible('completedAt')">Terminé le</th>
             <th class="col-medium" [class.col-hidden]="!isColumnVisible('notes')">Notes</th>
-            <th class="col-short" [class.col-hidden]="!isColumnVisible('decidedBy')">Décidé par</th>
+            <th class="col-short" [class.col-hidden]="!isColumnVisible('validatedBy')">Validée par</th>
             <th class="col-actions" [class.col-hidden]="!isColumnVisible('actions')">Actions</th>
           </tr>
         </thead>
@@ -164,7 +164,7 @@
             <td [class.col-hidden]="!isColumnVisible('startedAt')"><span class="cell-date">{{ formatDate(item.startedAt) }}</span></td>
             <td [class.col-hidden]="!isColumnVisible('completedAt')"><span class="cell-date">{{ formatDate(item.completedAt) }}</span></td>
             <td [class.col-hidden]="!isColumnVisible('notes')">{{ item.notes ? (item.notes.length > 25 ? (item.notes | slice:0:25) + '...' : item.notes) : '-' }}</td>
-            <td [class.col-hidden]="!isColumnVisible('decidedBy')">{{ (item.decidedByFirstName || item.decidedByLastName) ? ((item.decidedByFirstName || '') + ' ' + (item.decidedByLastName || '')).trim() : '-' }}</td>
+            <td [class.col-hidden]="!isColumnVisible('validatedBy')">{{ (item.validatedByFirstName || item.validatedByLastName) ? ((item.validatedByFirstName || '') + ' ' + (item.validatedByLastName || '')).trim() : '-' }}</td>
             <td class="actions-cell" [class.col-hidden]="!isColumnVisible('actions')" (click)="$event.stopPropagation()">
               <div class="actions-menu">
                 <ng-container *ngIf="!item.isDeleted">

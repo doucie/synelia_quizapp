@@ -81,12 +81,10 @@ describe('EntitiesDecisionsComponent', () => {
   it('sends only id and justification when editing a historized cancellation', () => {
     component.editFormData = {
       id: 91,
-      isCancel: true,
       applicationId: 1,
       userId: 12,
       decisionType: 'FINAL_ACCEPTED',
       decisionMode: 'CANCEL',
-      pipelineStageId: 100,
       applicationProgressId: 10,
       cancelsDecisionId: 90,
       justification: 'Justification corrigée'
@@ -103,7 +101,6 @@ describe('EntitiesDecisionsComponent', () => {
   it('keeps the full payload when editing a standard decision', () => {
     component.editFormData = {
       id: 50,
-      isCancel: false,
       applicationId: 1,
       userId: 12,
       decisionType: 'PRE_SCREEN_ACCEPTED',
@@ -116,7 +113,6 @@ describe('EntitiesDecisionsComponent', () => {
 
     expect(decisionService.updateDecision).toHaveBeenCalledWith({
       id: 50,
-      isCancel: false,
       applicationId: 1,
       userId: 12,
       decisionType: 'PRE_SCREEN_ACCEPTED',

@@ -197,20 +197,20 @@ describe('EntitiesApplicationsComponent', () => {
         {
           id: 902,
           decisionType: 'PRE_SCREEN_ACCEPTED',
-          isCancel: false,
+          decisionMode: 'STANDARD',
           createdAt: '2026-05-31T11:00:00Z'
         } as any,
         {
           id: 901,
           decisionType: 'FINAL_ACCEPTED',
-          isCancel: true,
+          decisionMode: 'CANCEL',
           cancelsDecisionId: 900,
           updatedAt: '2026-05-31T12:00:00Z'
         } as any,
         {
           id: 900,
           decisionType: 'FINAL_ACCEPTED',
-          isCancel: false,
+          decisionMode: 'STANDARD',
           createdAt: '2026-05-31T10:00:00Z'
         } as any
       ]
@@ -280,7 +280,7 @@ describe('EntitiesApplicationsComponent', () => {
       10: [{
         id: 902,
         decisionType: 'PRE_SCREEN_ACCEPTED',
-        isCancel: false,
+        decisionMode: 'STANDARD',
         createdAt: '2026-05-31T11:00:00Z'
       } as any]
     });
@@ -298,7 +298,7 @@ describe('EntitiesApplicationsComponent', () => {
       10: [{
         id: 903,
         decisionType: 'FINAL_ACCEPTED',
-        isCancel: false,
+        decisionMode: 'STANDARD',
         createdAt: '2026-05-31T12:00:00Z'
       } as any]
     });

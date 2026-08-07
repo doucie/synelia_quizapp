@@ -284,7 +284,7 @@ public class DashboardController {
 
         // -- Decisions breakdown (excluding cancelled) --
         Map<String, Long> decDist = decisions.stream()
-                .filter(d -> !Boolean.TRUE.equals(d.getIsCancel()))
+                .filter(d -> !"CANCEL".equals(d.getDecisionMode()))
                 .collect(Collectors.groupingBy(
                         d -> d.getDecisionType() != null ? d.getDecisionType() : "UNKNOWN",
                         LinkedHashMap::new,

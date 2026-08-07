@@ -130,15 +130,21 @@ export interface ApplicationProgress {
   notes?: string;
   applicationId?: number;
   pipelineStageId?: number;
-  decidedById?: number;
+  validatedById?: number;
   // Flattened
   stageName?: string;
   stageType?: string;
   stageOrder?: number;
   candidateFirstName?: string;
   candidateLastName?: string;
-  decidedByFirstName?: string;
-  decidedByLastName?: string;
+  validatedByFirstName?: string;
+  validatedByLastName?: string;
+  skippedById?: number;
+  skippedByFirstName?: string;
+  skippedByLastName?: string;
+  reopenedById?: number;
+  reopenedByFirstName?: string;
+  reopenedByLastName?: string;
   createdAt?: string;
   createdBy?: number;
   updatedAt?: string;

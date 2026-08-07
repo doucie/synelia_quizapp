@@ -36,9 +36,8 @@ public interface DecisionTransformer {
     @Mappings({
         @Mapping(source="entity.createdAt", dateFormat="dd/MM/yyyy", target="createdAt"),
         @Mapping(source="entity.updatedAt", dateFormat="dd/MM/yyyy", target="updatedAt"),
-        @Mapping(source="entity.application.id", target="applicationId"),
+        @Mapping(source="entity.applicationProgress.applications.id", target="applicationId"),
         @Mapping(source="entity.user.id", target="userId"),
-        @Mapping(source="entity.pipelineStage.id", target="pipelineStageId"),
         @Mapping(source="entity.applicationProgress.id", target="applicationProgressId"),
         @Mapping(source="entity.cancelsDecision.id", target="cancelsDecisionId"),
     })
@@ -52,12 +51,11 @@ public interface DecisionTransformer {
         DecisionDto dto = new DecisionDto();
         dto.setId(entity.getId());
         dto.setDecisionType(entity.getDecisionType());
-        dto.setIsCancel(entity.getIsCancel());
         dto.setJustification(entity.getJustification());
         dto.setDecisionMode(entity.getDecisionMode());
-        dto.setApplicationId(entity.getApplication() != null ? entity.getApplication().getId() : null);
+        dto.setApplicationId(entity.getApplicationProgress() != null && entity.getApplicationProgress().getApplications() != null
+                ? entity.getApplicationProgress().getApplications().getId() : null);
         dto.setUserId(entity.getUser() != null ? entity.getUser().getId() : null);
-        dto.setPipelineStageId(entity.getPipelineStage() != null ? entity.getPipelineStage().getId() : null);
         dto.setApplicationProgressId(entity.getApplicationProgress() != null ? entity.getApplicationProgress().getId() : null);
         dto.setCancelsDecisionId(entity.getCancelsDecision() != null ? entity.getCancelsDecision().getId() : null);
         return dto;
@@ -74,9 +72,7 @@ public interface DecisionTransformer {
     @Mappings({
         @Mapping(source="dto.createdAt", dateFormat="dd/MM/yyyy", target="createdAt"),
         @Mapping(source="dto.updatedAt", dateFormat="dd/MM/yyyy", target="updatedAt"),
-        @Mapping(target="application", ignore=true),
         @Mapping(target="user", ignore=true),
-        @Mapping(target="pipelineStage", ignore=true),
         @Mapping(target="applicationProgress", ignore=true),
         @Mapping(target="cancelsDecision", ignore=true),
     })
@@ -90,23 +86,12 @@ public interface DecisionTransformer {
         Decision entity = new Decision();
         entity.setId(dto.getId());
         entity.setDecisionType(dto.getDecisionType());
-        entity.setIsCancel(dto.getIsCancel());
         entity.setJustification(dto.getJustification());
         entity.setDecisionMode(dto.getDecisionMode());
-        if (dto.getApplicationId() != null) {
-            Applications app = new Applications();
-            app.setId(dto.getApplicationId());
-            entity.setApplication(app);
-        }
         if (dto.getUserId() != null) {
             User user = new User();
             user.setId(dto.getUserId());
             entity.setUser(user);
-        }
-        if (dto.getPipelineStageId() != null) {
-            PipelineStage stage = new PipelineStage();
-            stage.setId(dto.getPipelineStageId());
-            entity.setPipelineStage(stage);
         }
         if (dto.getApplicationProgressId() != null) {
             ApplicationProgress progress = new ApplicationProgress();

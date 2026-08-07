@@ -126,6 +126,7 @@ class DecisionBusinessTest {
 
 		when(decisionRepository.findOne(50, false)).thenReturn(existingDecision);
 		when(applicationsRepository.findOne(1, false)).thenReturn(application);
+		when(applicationProgressRepository.findOne(10, false)).thenReturn(progress);
 		when(permissionService.hasAnyScopedPermission(eq(77), eq("CAMPAIGN"), eq(8), any(String[].class), any(String[].class))).thenReturn(true);
 		when(functionalError.DISALLOWED_OPERATION(any(String.class), eq(Locale.FRENCH))).thenAnswer(invocation -> buildStatus("FUNC_DISALLOWED", invocation.getArgument(0)));
 
@@ -186,7 +187,7 @@ class DecisionBusinessTest {
 		dto.setUserId(12);
 		dto.setApplicationProgressId(10);
 		dto.setDecisionType(DecisionType.PRE_SCREEN_ACCEPTED.getValue());
-		dto.setIsCancel(false);
+		dto.setDecisionMode("STANDARD");
 		dto.setSendDecisionEmail(true);
 
 		Response<DecisionDto> response = decisionBusiness.create(buildRequest(77, dto), Locale.FRENCH);
@@ -233,7 +234,6 @@ class DecisionBusinessTest {
 		dto.setUserId(12);
 		dto.setApplicationProgressId(10);
 		dto.setDecisionType(DecisionType.PRE_SCREEN_ACCEPTED.getValue());
-		dto.setIsCancel(true);
 		dto.setDecisionMode("CANCEL");
 		dto.setCancelsDecisionId(90);
 		dto.setJustification("Decision candidate invalidee");
@@ -323,13 +323,10 @@ class DecisionBusinessTest {
 			String decisionMode) {
 		Decision decision = new Decision();
 		decision.setId(id);
-		decision.setApplication(application);
 		decision.setUser(user);
-		decision.setPipelineStage(stage);
 		decision.setApplicationProgress(progress);
 		decision.setDecisionType(decisionType);
 		decision.setDecisionMode(decisionMode);
-		decision.setIsCancel(isCancel);
 		decision.setIsDeleted(false);
 		decision.setCreatedAt(new Date());
 		return decision;

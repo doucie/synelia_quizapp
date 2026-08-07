@@ -64,17 +64,15 @@ class DecisionControllerTest {
 						{
 						  \"user\": 44,
 						  \"datas\": [
-						    {
-						      \"decisionType\": \"PRE_SCREEN_ACCEPTED\",
-						      \"isCancel\": true,
-						      \"applicationId\": 10,
-						      \"userId\": 44,
-						      \"pipelineStageId\": 21,
-						      \"applicationProgressId\": 99,
-						      \"decisionMode\": \"CANCEL\",
-						      \"cancelsDecisionId\": 500,
-						      \"justification\": \"Audit trail mismatch\"
-						    }
+					    {
+					      \"decisionType\": \"PRE_SCREEN_ACCEPTED\",
+					      \"applicationId\": 10,
+					      \"userId\": 44,
+					      \"applicationProgressId\": 99,
+					      \"decisionMode\": \"CANCEL\",
+					      \"cancelsDecisionId\": 500,
+					      \"justification\": \"Audit trail mismatch\"
+					    }
 						  ]
 						}
 						"""))
@@ -101,17 +99,15 @@ class DecisionControllerTest {
 						{
 						  \"user\": 44,
 						  \"datas\": [
-						    {
-						      \"decisionType\": \"PRE_SCREEN_ACCEPTED\",
-						      \"isCancel\": true,
-						      \"applicationId\": 10,
-						      \"userId\": 44,
-						      \"pipelineStageId\": 21,
-						      \"applicationProgressId\": 99,
-						      \"decisionMode\": \"CANCEL\",
-						      \"cancelsDecisionId\": 500,
-						      \"justification\": \"Audit trail mismatch\"
-						    }
+					    {
+					      \"decisionType\": \"PRE_SCREEN_ACCEPTED\",
+					      \"applicationId\": 10,
+					      \"userId\": 44,
+					      \"applicationProgressId\": 99,
+					      \"decisionMode\": \"CANCEL\",
+					      \"cancelsDecisionId\": 500,
+					      \"justification\": \"Audit trail mismatch\"
+					    }
 						  ]
 						}
 						"""))
@@ -137,17 +133,15 @@ class DecisionControllerTest {
 						{
 						  \"user\": 44,
 						  \"datas\": [
-						    {
-						      \"decisionType\": \"PRE_SCREEN_ACCEPTED\",
-						      \"isCancel\": true,
-						      \"applicationId\": 10,
-						      \"userId\": 44,
-						      \"pipelineStageId\": 21,
-						      \"applicationProgressId\": 99,
-						      \"decisionMode\": \"CANCEL\",
-						      \"cancelsDecisionId\": 500,
-						      \"justification\": \"Audit trail mismatch\"
-						    }
+					    {
+					      \"decisionType\": \"PRE_SCREEN_ACCEPTED\",
+					      \"applicationId\": 10,
+					      \"userId\": 44,
+					      \"applicationProgressId\": 99,
+					      \"decisionMode\": \"CANCEL\",
+					      \"cancelsDecisionId\": 500,
+					      \"justification\": \"Audit trail mismatch\"
+					    }
 						  ]
 						}
 						"""))
@@ -163,10 +157,8 @@ class DecisionControllerTest {
 		DecisionDto createdDecision = new DecisionDto();
 		createdDecision.setId(501);
 		createdDecision.setDecisionType("PRE_SCREEN_ACCEPTED");
-		createdDecision.setIsCancel(true);
 		createdDecision.setApplicationId(10);
 		createdDecision.setUserId(44);
-		createdDecision.setPipelineStageId(21);
 		createdDecision.setApplicationProgressId(99);
 		createdDecision.setDecisionMode("CANCEL");
 		createdDecision.setCancelsDecisionId(500);
@@ -186,17 +178,15 @@ class DecisionControllerTest {
 						{
 						  \"user\": 44,
 						  \"datas\": [
-						    {
-						      \"decisionType\": \"PRE_SCREEN_ACCEPTED\",
-						      \"isCancel\": true,
-						      \"applicationId\": 10,
-						      \"userId\": 44,
-						      \"pipelineStageId\": 21,
-						      \"applicationProgressId\": 99,
-						      \"decisionMode\": \"CANCEL\",
-						      \"cancelsDecisionId\": 500,
-						      \"justification\": \"Audit trail mismatch\"
-						    }
+					    {
+					      \"decisionType\": \"PRE_SCREEN_ACCEPTED\",
+					      \"applicationId\": 10,
+					      \"userId\": 44,
+					      \"applicationProgressId\": 99,
+					      \"decisionMode\": \"CANCEL\",
+					      \"cancelsDecisionId\": 500,
+					      \"justification\": \"Audit trail mismatch\"
+					    }
 						  ]
 						}
 						"""))
@@ -219,10 +209,8 @@ class DecisionControllerTest {
 
 		DecisionDto cancellationDecision = capturedRequest.getDatas().get(0);
 		assertThat(cancellationDecision.getDecisionType()).isEqualTo("PRE_SCREEN_ACCEPTED");
-		assertThat(cancellationDecision.getIsCancel()).isTrue();
 		assertThat(cancellationDecision.getApplicationId()).isEqualTo(10);
 		assertThat(cancellationDecision.getUserId()).isEqualTo(44);
-		assertThat(cancellationDecision.getPipelineStageId()).isEqualTo(21);
 		assertThat(cancellationDecision.getApplicationProgressId()).isEqualTo(99);
 		assertThat(cancellationDecision.getDecisionMode()).isEqualTo("CANCEL");
 		assertThat(cancellationDecision.getCancelsDecisionId()).isEqualTo(500);

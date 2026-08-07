@@ -10,10 +10,8 @@ import { environment } from '../../../environments/environment';
 export interface Decision {
   id?: number;
   decisionType: string;
-  isCancel: boolean; // true = annulation, false = décision
   applicationId: number;
   userId: number;
-  pipelineStageId?: number;
   applicationProgressId?: number;
   justification?: string;
   decisionMode?: string;
@@ -31,10 +29,8 @@ export interface Decision {
 export interface DecisionMutationPayload {
   id?: number;
   decisionType?: string;
-  isCancel?: boolean;
   applicationId?: number;
   userId?: number;
-  pipelineStageId?: number;
   applicationProgressId?: number;
   justification?: string;
   decisionMode?: string;
@@ -48,10 +44,8 @@ export interface DecisionMutationPayload {
 export interface PartialDecision {
   id?: number;
   decisionType?: string;
-  isCancel?: boolean;
   applicationId?: number;
   userId?: number;
-  pipelineStageId?: number;
   applicationProgressId?: number;
   justification?: string;
   decisionMode?: string;
@@ -96,13 +90,11 @@ export interface DecisionResponse {
 export interface DecisionCriteria {
   applicationId?: number;
   userId?: number;
-  pipelineStageId?: number;
   applicationProgressId?: number;
   cancelsDecisionId?: number;
   decisionType?: string;
   decisionMode?: string;
   justification?: string;
-  isCancel?: boolean;
   page?: number;
   size?: number;
   sort?: string;
@@ -142,13 +134,11 @@ export class DecisionService {
       data: {
         applicationId: criteria.applicationId,
         userId: criteria.userId,
-        pipelineStageId: criteria.pipelineStageId,
         applicationProgressId: criteria.applicationProgressId,
         cancelsDecisionId: criteria.cancelsDecisionId,
         decisionType: criteria.decisionType,
         decisionMode: criteria.decisionMode,
-        justification: criteria.justification,
-        isCancel: criteria.isCancel
+        justification: criteria.justification
       } as PartialDecision
     };
 
@@ -304,8 +294,8 @@ export class DecisionService {
     if (criteria.decisionType) {
       params['decisionType'] = criteria.decisionType;
     }
-    if (criteria.isCancel !== undefined) {
-      params['isCancel'] = criteria.isCancel.toString();
+    if (criteria.decisionMode) {
+      params['decisionMode'] = criteria.decisionMode;
     }
     if (criteria.page !== undefined) {
       params['page'] = criteria.page.toString();
@@ -349,13 +339,11 @@ export class DecisionService {
         searchString: criteria.search_string || '',
         ...(criteria.applicationId && { applicationId: criteria.applicationId }),
         ...(criteria.userId && { userId: criteria.userId }),
-        ...(criteria.pipelineStageId && { pipelineStageId: criteria.pipelineStageId }),
         ...(criteria.applicationProgressId && { applicationProgressId: criteria.applicationProgressId }),
         ...(criteria.cancelsDecisionId && { cancelsDecisionId: criteria.cancelsDecisionId }),
         ...(criteria.decisionType && { decisionType: criteria.decisionType }),
         ...(criteria.decisionMode && { decisionMode: criteria.decisionMode }),
         ...(criteria.justification && { justification: criteria.justification }),
-        ...(criteria.isCancel !== undefined && { isCancel: criteria.isCancel }),
         ...(criteria.idDe && criteria.idDe.trim() && { idStart: criteria.idDe }),
         ...(criteria.idA && criteria.idA.trim() && { idEnd: criteria.idA }),
         ...(criteria.dateCreationDe && { dateCreationDe: criteria.dateCreationDe }),

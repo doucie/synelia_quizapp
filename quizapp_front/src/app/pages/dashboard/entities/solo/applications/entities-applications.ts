@@ -763,8 +763,8 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
     }
   }
 
-  getDecisionActionLabel(isCancel?: boolean | null): string {
-    return isCancel ? 'Annulation' : 'Décision';
+  getDecisionActionLabel(decisionMode?: string | null): string {
+    return (decisionMode || '').trim().toUpperCase() === 'CANCEL' ? 'Annulation' : 'Décision';
   }
 
   getDecisionDisplayDate(decision?: Decision | null): string {
@@ -784,12 +784,12 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
     const decisions = this.getDecisions(application.id);
     const canceledDecisionIds = new Set(
       decisions
-        .filter(decision => !!decision.isCancel && decision.cancelsDecisionId != null)
+        .filter(decision => (decision.decisionMode || '').trim().toUpperCase() === 'CANCEL' && decision.cancelsDecisionId != null)
         .map(decision => decision.cancelsDecisionId as number)
     );
 
     return decisions.find(decision => {
-      if (decision.isCancel) {
+      if ((decision.decisionMode || '').trim().toUpperCase() === 'CANCEL') {
         return false;
       }
 
@@ -1014,12 +1014,12 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
       return '';
     }
 
-    const fullName = `${progress.decidedByFirstName || ''} ${progress.decidedByLastName || ''}`.trim();
+    const fullName = `${progress.validatedByFirstName || ''} ${progress.validatedByLastName || ''}`.trim();
     if (fullName) {
       return fullName;
     }
 
-    return progress.decidedById ? `#${progress.decidedById}` : '';
+    return progress.validatedById ? `#${progress.validatedById}` : '';
   }
 
   getPipelineProgressStatusLabel(status?: string | null): string {

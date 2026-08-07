@@ -107,10 +107,8 @@ describe('DecisionsComponent', () => {
     const payload = decisionService.createDecision.calls.mostRecent().args[0];
     expect(payload).toEqual(jasmine.objectContaining({
       decisionType: APPLICATION_STATUS.FINAL_ACCEPTED,
-      isCancel: false,
       applicationId: 10,
       userId: 44,
-      pipelineStageId: 21,
       applicationProgressId: 99,
       decisionMode: 'STANDARD',
       justification: 'Ready for hire',
@@ -126,10 +124,8 @@ describe('DecisionsComponent', () => {
     const targetDecision = {
       id: 501,
       decisionType: APPLICATION_STATUS.PRE_SCREEN_ACCEPTED,
-      isCancel: false,
       applicationId: 10,
       userId: 12,
-      pipelineStageId: 21,
       applicationProgressId: 99
     } as any;
 
@@ -148,10 +144,8 @@ describe('DecisionsComponent', () => {
     const payload = decisionService.createDecision.calls.mostRecent().args[0];
     expect(payload).toEqual(jasmine.objectContaining({
       decisionType: APPLICATION_STATUS.PRE_SCREEN_ACCEPTED,
-      isCancel: true,
       applicationId: 10,
       userId: 44,
-      pipelineStageId: 21,
       applicationProgressId: 99,
       decisionMode: 'CANCEL',
       cancelsDecisionId: 501,
@@ -167,10 +161,8 @@ describe('DecisionsComponent', () => {
     const targetDecision = {
       id: 501,
       decisionType: APPLICATION_STATUS.PRE_SCREEN_ACCEPTED,
-      isCancel: false,
       applicationId: 10,
       userId: 12,
-      pipelineStageId: 21,
       applicationProgressId: 99
     } as any;
 

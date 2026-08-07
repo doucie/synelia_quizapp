@@ -77,9 +77,29 @@ public class ApplicationProgress implements Serializable, Cloneable {
     @JoinColumn(name = "pipeline_stage_id", referencedColumnName = "id")
     private PipelineStage pipelineStage;
 
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "validated_at")
+    private Date validatedAt;
+
     @ManyToOne
-    @JoinColumn(name = "decided_by", referencedColumnName = "id")
-    private User decidedBy;
+    @JoinColumn(name = "validated_by", referencedColumnName = "id")
+    private User validatedBy;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "skipped_at")
+    private Date skippedAt;
+
+    @ManyToOne
+    @JoinColumn(name = "skipped_by", referencedColumnName = "id")
+    private User skippedBy;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "reopened_at")
+    private Date reopenedAt;
+
+    @ManyToOne
+    @JoinColumn(name = "reopened_by", referencedColumnName = "id")
+    private User reopenedBy;
 
     public ApplicationProgress() {
         super();

@@ -32,7 +32,6 @@ public class ApplicationProgressDto extends _ApplicationProgressDto implements C
     // FK
     private Integer applicationId;
     private Integer pipelineStageId;
-    private Integer decidedById;
 
     // Flattened depuis PipelineStage
     private String  stageName;
@@ -43,9 +42,19 @@ public class ApplicationProgressDto extends _ApplicationProgressDto implements C
     private String  candidateFirstName;
     private String  candidateLastName;
 
-    // Flattened depuis User (decidedBy)
-    private String  decidedByFirstName;
-    private String  decidedByLastName;
+    // Flattened depuis User (validatedBy/skippedBy/reopenedBy)
+    private String  validatedAt;
+    private Integer validatedById;
+    private String  validatedByFirstName;
+    private String  validatedByLastName;
+    private String  skippedAt;
+    private Integer skippedById;
+    private String  skippedByFirstName;
+    private String  skippedByLastName;
+    private String  reopenedAt;
+    private Integer reopenedById;
+    private String  reopenedByFirstName;
+    private String  reopenedByLastName;
 
     // Migration pipeline
     private Integer campaignId;
@@ -74,7 +83,9 @@ public class ApplicationProgressDto extends _ApplicationProgressDto implements C
     private SearchParam<String>  searchStringParam;
     private SearchParam<Integer> applicationIdParam;
     private SearchParam<Integer> pipelineStageIdParam;
-    private SearchParam<Integer> decidedByIdParam;
+    private SearchParam<Integer> validatedByIdParam;
+    private SearchParam<Integer> skippedByIdParam;
+    private SearchParam<Integer> reopenedByIdParam;
 
     public ApplicationProgressDto() {
         super();

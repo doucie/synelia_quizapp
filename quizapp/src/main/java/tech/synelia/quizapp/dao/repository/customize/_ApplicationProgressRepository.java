@@ -55,8 +55,14 @@ public interface _ApplicationProgressRepository {
             if (dto.getPipelineStageId() != null && dto.getPipelineStageId() > 0) {
                 listOfQuery.add(CriteriaUtils.generateCriteria("pipelineStageId", dto.getPipelineStageId(), "e.pipelineStage.id", "Integer", dto.getPipelineStageIdParam(), param, index, locale));
             }
-            if (dto.getDecidedById() != null && dto.getDecidedById() > 0) {
-                listOfQuery.add(CriteriaUtils.generateCriteria("decidedById", dto.getDecidedById(), "e.decidedBy.id", "Integer", dto.getDecidedByIdParam(), param, index, locale));
+            if (dto.getValidatedById() != null && dto.getValidatedById() > 0) {
+                listOfQuery.add(CriteriaUtils.generateCriteria("validatedById", dto.getValidatedById(), "e.validatedBy.id", "Integer", dto.getValidatedByIdParam(), param, index, locale));
+            }
+            if (dto.getSkippedById() != null && dto.getSkippedById() > 0) {
+                listOfQuery.add(CriteriaUtils.generateCriteria("skippedById", dto.getSkippedById(), "e.skippedBy.id", "Integer", dto.getSkippedByIdParam(), param, index, locale));
+            }
+            if (dto.getReopenedById() != null && dto.getReopenedById() > 0) {
+                listOfQuery.add(CriteriaUtils.generateCriteria("reopenedById", dto.getReopenedById(), "e.reopenedBy.id", "Integer", dto.getReopenedByIdParam(), param, index, locale));
             }
             if (dto.getMailSent() != null) {
                 listOfQuery.add(CriteriaUtils.generateCriteria("mailSent", dto.getMailSent(), "e.mailSent", "Boolean", dto.getMailSentParam(), param, index, locale));

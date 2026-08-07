@@ -52,17 +52,11 @@ public interface _DecisionRepository {
             if (Utilities.notBlank(dto.getJustification())) {
                 listOfQuery.add(CriteriaUtils.generateCriteria("justification", dto.getJustification(), "e.justification", "String", dto.getJustificationParam(), param, index, locale));
             }
-            if (dto.getIsCancel() != null) {
-                listOfQuery.add(CriteriaUtils.generateCriteria("isCancel", dto.getIsCancel(), "e.isCancel", "Boolean", dto.getIsCancelParam(), param, index, locale));
-            }
             if (dto.getApplicationId() != null && dto.getApplicationId() > 0) {
-                listOfQuery.add(CriteriaUtils.generateCriteria("applicationId", dto.getApplicationId(), "e.application.id", "Integer", dto.getApplicationIdParam(), param, index, locale));
+                listOfQuery.add(CriteriaUtils.generateCriteria("applicationId", dto.getApplicationId(), "e.applicationProgress.applications.id", "Integer", dto.getApplicationIdParam(), param, index, locale));
             }
             if (dto.getUserId() != null && dto.getUserId() > 0) {
                 listOfQuery.add(CriteriaUtils.generateCriteria("userId", dto.getUserId(), "e.user.id", "Integer", dto.getUserIdParam(), param, index, locale));
-            }
-            if (dto.getPipelineStageId() != null && dto.getPipelineStageId() > 0) {
-                listOfQuery.add(CriteriaUtils.generateCriteria("pipelineStageId", dto.getPipelineStageId(), "e.pipelineStage.id", "Integer", dto.getPipelineStageIdParam(), param, index, locale));
             }
             if (dto.getApplicationProgressId() != null && dto.getApplicationProgressId() > 0) {
                 listOfQuery.add(CriteriaUtils.generateCriteria("applicationProgressId", dto.getApplicationProgressId(), "e.applicationProgress.id", "Integer", dto.getApplicationProgressIdParam(), param, index, locale));

@@ -677,9 +677,10 @@
                         <span class="status-badge" [ngClass]="getDecisionTypeClass(child.decisionType)">
                           {{ getDecisionLabel(child.decisionType) }}
                         </span>
-                        <span class="child-badge" [class.pending]="child.isCancel" [class.active]="!child.isCancel">
-                          {{ getDecisionActionLabel(child.isCancel) }}
+                        <span class="child-badge" [class.pending]="child.decisionMode === 'CANCEL'" [class.active]="child.decisionMode !== 'CANCEL'">
+                          {{ getDecisionActionLabel(child.decisionMode) }}
                         </span>
+                        <span class="child-badge child-badge--mode" [class]="child.decisionMode">{{ child.decisionMode }}</span>
                         <span *ngIf="getDecisionOccurrenceLabel(app.id!, child)" class="child-badge">
                           {{ getDecisionOccurrenceLabel(app.id!, child) }}
                         </span>
@@ -687,7 +688,7 @@
                       </div>
                       <div class="child-answer-body">
                         <span *ngIf="getDecisionDisplayDate(child)" class="manual-correction-note">
-                          {{ child.isCancel ? 'Mise à jour le ' : 'Décidée le ' }}{{ getDecisionDisplayDate(child) }}
+                          {{ (child.decisionMode || '').toUpperCase() === 'CANCEL' ? 'Mise à jour le ' : 'Décidée le ' }}{{ getDecisionDisplayDate(child) }}
                         </span>
                         <span *ngIf="child.applicationProgressId" class="manual-correction-note">Occurrence #{{ child.applicationProgressId }}</span>
                         <span *ngIf="child.userName" class="manual-correction-note">Par {{ child.userName }}</span>
