@@ -46,9 +46,6 @@ public class ApplicationProgress implements Serializable, Cloneable {
     @Column(name = "notes", length = 65535)
     private String notes;
 
-    @Column(name = "mail_sent", nullable = false)
-    private Boolean mailSent = false;
-
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "created_at")
     private Date createdAt;

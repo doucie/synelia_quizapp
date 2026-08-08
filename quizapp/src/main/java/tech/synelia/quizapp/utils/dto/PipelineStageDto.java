@@ -21,8 +21,6 @@ public class PipelineStageDto extends _PipelineStageDto implements Cloneable {
     private Integer stageOrder;
     private Boolean isRequired;
     private Boolean isEliminatory;
-    private Boolean emailRequired;
-    private Boolean emailAutomatic;
     private String  configJson;
     private String  createdAt;
     private Integer createdBy;
@@ -52,8 +50,6 @@ public class PipelineStageDto extends _PipelineStageDto implements Cloneable {
     private SearchParam<Integer> stageOrderParam;
     private SearchParam<Boolean> isRequiredParam;
     private SearchParam<Boolean> isEliminatoryParam;
-    private SearchParam<Boolean> emailRequiredParam;
-    private SearchParam<Boolean> emailAutomaticParam;
     private SearchParam<String>  configJsonParam;
     private SearchParam<String>  createdAtParam;
     private SearchParam<Integer> createdByParam;

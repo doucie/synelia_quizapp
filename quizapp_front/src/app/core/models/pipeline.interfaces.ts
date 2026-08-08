@@ -22,8 +22,6 @@ export interface PipelineStageReadinessInput {
   stageType?: StageType;
   stageLabel?: string;
   stageOrder?: number;
-  emailRequired?: boolean;
-  emailAutomatic?: boolean;
 }
 
 export function normalizePipelineStageType(stageType?: StageType): StageType | undefined {
@@ -43,7 +41,6 @@ export function getPipelineReadinessIssues(stages: PipelineStageReadinessInput[]
   const hasBlankLabel = stages.some(stage => !(stage.stageLabel || '').trim());
   const hasInvalidOrder = stages.some((stage, index) => stage.stageOrder !== index + 1);
   const hasCustomStage = stages.some(stage => stage.stageType === 'CUSTOM');
-  const hasEmailMismatch = stages.some(stage => !!stage.emailAutomatic && !stage.emailRequired);
   const duplicatedSingletonTypes = SINGLETON_INTERMEDIATE_STAGE_TYPES.filter(type => normalizedTypes.filter(normalizedType => normalizedType === type).length > 1);
 
   if (candidatureCount !== 1) {
@@ -69,9 +66,6 @@ export function getPipelineReadinessIssues(stages: PipelineStageReadinessInput[]
   }
   if (hasCustomStage) {
     issues.push('Le type CUSTOM n’est plus supporté.');
-  }
-  if (hasEmailMismatch) {
-    issues.push('Une étape en envoi auto doit aussi exiger l’email.');
   }
   if (duplicatedSingletonTypes.length > 0) {
     issues.push(`Les types ${duplicatedSingletonTypes.map(type => STAGE_TYPE_LABELS[type]).join(', ')} ne peuvent être présents qu’une seule fois dans le pipeline actuel.`);
@@ -105,8 +99,6 @@ export interface PipelineStage {
   stageOrder?: number;
   isRequired?: boolean;
   isEliminatory?: boolean;
-  emailRequired?: boolean;
-  emailAutomatic?: boolean;
   configJson?: string | null;
   pipelineTemplateId?: number;
   pipelineTemplateName?: string;
@@ -123,7 +115,6 @@ export interface PipelineStage {
 export interface ApplicationProgress {
   id?: number;
   progressStatus?: ProgressStatus;
-  mailSent?: boolean;
   startedAt?: string;
   completedAt?: string;
   score?: number;

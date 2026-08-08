@@ -64,6 +64,12 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
     private PipelineStageRepository pipelineStageRepository;
 
     @Autowired
+    private PipelineStageNotificationRuleRepository pipelineStageNotificationRuleRepository;
+
+    @Autowired
+    private MailLogRepository mailLogRepository;
+
+    @Autowired
     private ApplicationProgressRepository applicationProgressRepository;
 
     @Autowired
@@ -1033,8 +1039,10 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
 
         ApplicationProgress progress = resolveDecisionApplicationProgress(application, decision, decisionType);
         PipelineStage stage = progress != null ? progress.getPipelineStage() : loadDecisionPipelineStage(decision);
-        boolean emailRequired = stage == null || Boolean.TRUE.equals(stage.getEmailRequired());
-        boolean emailAutomatic = stage == null || Boolean.TRUE.equals(stage.getEmailAutomatic());
+        PipelineStageNotificationRule notificationRule = stage == null ? null
+                : pipelineStageNotificationRuleRepository.findFirstByPipelineStageIdAndIsDeletedFalse(stage.getId());
+        boolean emailRequired = stage == null || (notificationRule != null && Boolean.TRUE.equals(notificationRule.getIsRequired()));
+        boolean emailAutomatic = stage == null || (notificationRule != null && Boolean.TRUE.equals(notificationRule.getIsAutomatic()));
         if (!emailRequired) {
             return;
         }
@@ -1209,7 +1217,13 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
     }
 
     private boolean isStageMailAlreadySent(ApplicationProgress progress) {
-        return progress != null && Boolean.TRUE.equals(progress.getMailSent());
+        if (progress == null || progress.getId() == null) {
+            return false;
+        }
+        return mailLogRepository.existsByApplicationProgressIdAndStatusAndEventCodeIn(
+                progress.getId(),
+                "SENT",
+                List.of("PRE_SCREEN_DECISION_EMAIL", "FINAL_DECISION_EMAIL"));
     }
 
     private String resolveCancelledDecisionStatus(Decision decision) {

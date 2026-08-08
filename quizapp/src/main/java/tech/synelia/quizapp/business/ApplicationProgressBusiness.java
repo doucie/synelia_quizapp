@@ -26,12 +26,16 @@ import tech.synelia.quizapp.dao.entity.Applications;
 import tech.synelia.quizapp.dao.entity.Campaigns;
 import tech.synelia.quizapp.dao.entity.Interviews;
 import tech.synelia.quizapp.dao.entity.PipelineStage;
+import tech.synelia.quizapp.dao.entity.PipelineStageNotificationRule;
 import tech.synelia.quizapp.dao.entity.PipelineTemplate;
 import tech.synelia.quizapp.dao.entity.SourceToken;
 import tech.synelia.quizapp.dao.entity.User;
+import tech.synelia.quizapp.dao.entity.MailLog;
 import tech.synelia.quizapp.dao.repository.ApplicationProgressRepository;
 import tech.synelia.quizapp.dao.repository.ApplicationsRepository;
 import tech.synelia.quizapp.dao.repository.InterviewsRepository;
+import tech.synelia.quizapp.dao.repository.MailLogRepository;
+import tech.synelia.quizapp.dao.repository.PipelineStageNotificationRuleRepository;
 import tech.synelia.quizapp.dao.repository.PipelineStageRepository;
 import tech.synelia.quizapp.dao.repository.PipelineTemplateRepository;
 import tech.synelia.quizapp.dao.repository.SourceTokenRepository;
@@ -72,6 +76,10 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
     private UserRepository userRepository;
     @Autowired
     private InterviewsRepository interviewsRepository;
+    @Autowired
+    private MailLogRepository mailLogRepository;
+    @Autowired
+    private PipelineStageNotificationRuleRepository pipelineStageNotificationRuleRepository;
     @Autowired
     private PipelineTemplateBusiness pipelineTemplateBusiness;
     @Autowired
@@ -119,9 +127,6 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
             ApplicationProgress entityToSave = ApplicationProgressTransformer.INSTANCE.toEntity(dto, application, stage);
             entityToSave.setCreatedAt(Utilities.getCurrentDate());            entityToSave.setCreatedBy(request.getUser());
             entityToSave.setIsDeleted(false);
-            if (entityToSave.getMailSent() == null) {
-                entityToSave.setMailSent(false);
-            }
             if (Utilities.notBlank(entityToSave.getProgressStatus())) {
                 entityToSave.setProgressStatus(normalizeProgressStatus(entityToSave.getProgressStatus(), locale));
             } else {
@@ -182,7 +187,6 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
             }
             if (dto.getScore() != null) entityToSave.setScore(dto.getScore());
             if (Utilities.shouldUpdate(dto.getNotes())) entityToSave.setNotes(dto.getNotes());
-            if (dto.getMailSent() != null) entityToSave.setMailSent(dto.getMailSent());
             if (dto.getIsDeleted() != null) entityToSave.setIsDeleted(dto.getIsDeleted());
 
             entityToSave.setUpdatedAt(Utilities.getCurrentDate());
@@ -562,7 +566,7 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
                 progress.setValidatedAt(null);
                 progress.setSkippedBy(null);
                 progress.setSkippedAt(null);
-                progress.setMailSent(false);
+                cancelSentMailLogRows(progress, userId);
             } else {
                 progress.setProgressStatus(ProgressStatus.PENDING.getValue());
                 progress.setStartedAt(null);
@@ -575,7 +579,7 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
                 progress.setSkippedAt(null);
                 progress.setReopenedBy(null);
                 progress.setReopenedAt(null);
-                progress.setMailSent(false);
+                cancelSentMailLogRows(progress, userId);
             }
 
             progress.setUpdatedAt(Utilities.getCurrentDate());
@@ -1025,19 +1029,59 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
     }
 
     public void markStageMailSent(Integer applicationId, Integer stageId, Integer userId) {
-        updateStageMailSent(applicationId, stageId, true, userId);
+        ApplicationProgress progress = applicationProgressRepository.findByApplicationIdAndPipelineStageId(applicationId, stageId);
+        if (progress == null || progress.getId() == null) {
+            return;
+        }
+        if (isResolvedStatus(progress.getProgressStatus())) {
+            activateNextPendingStage(applicationId, progress, userId);
+        }
+        syncApplicationStatus(applicationId);
     }
 
     public void clearStageMailSent(Integer applicationId, Integer stageId, Integer userId) {
-        updateStageMailSent(applicationId, stageId, false, userId);
+        ApplicationProgress progress = applicationProgressRepository.findByApplicationIdAndPipelineStageId(applicationId, stageId);
+        if (progress == null || progress.getId() == null) {
+            return;
+        }
+        cancelSentMailLogRows(progress, userId);
+        syncApplicationStatus(applicationId);
     }
 
     public void markStageMailSentByStageType(Integer applicationId, String stageType, Integer userId) {
-        updateStageMailSentByStageType(applicationId, stageType, true, userId);
+        ApplicationProgress progress = findProgressByStageType(applicationId, stageType);
+        if (progress == null || progress.getId() == null) {
+            return;
+        }
+        if (isResolvedStatus(progress.getProgressStatus())) {
+            activateNextPendingStage(applicationId, progress, userId);
+        }
+        syncApplicationStatus(applicationId);
     }
 
     public void clearStageMailSentByStageType(Integer applicationId, String stageType, Integer userId) {
-        updateStageMailSentByStageType(applicationId, stageType, false, userId);
+        ApplicationProgress progress = findProgressByStageType(applicationId, stageType);
+        if (progress == null || progress.getId() == null) {
+            return;
+        }
+        cancelSentMailLogRows(progress, userId);
+        syncApplicationStatus(applicationId);
+    }
+
+    private void cancelSentMailLogRows(ApplicationProgress progress, Integer userId) {
+        if (progress == null || progress.getId() == null) {
+            return;
+        }
+        List<MailLog> sentRows = mailLogRepository.findByApplicationProgressIdAndStatus(progress.getId(), "SENT");
+        if (sentRows == null || sentRows.isEmpty()) {
+            return;
+        }
+        for (MailLog mailLog : sentRows) {
+            mailLog.setStatus("CANCELLED");
+            mailLog.setUpdatedAt(Utilities.getCurrentDate());
+            mailLog.setUpdatedBy(userId);
+        }
+        mailLogRepository.saveAll(sentRows);
     }
 
     public ApplicationProgress resolveProgressByStageType(Integer applicationId, String stageType) {
@@ -1171,55 +1215,16 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
                 && stageType.equalsIgnoreCase(progress.getPipelineStage().getStageType());
     }
 
-    private void updateStageMailSentByStageType(Integer applicationId, String stageType, boolean mailSent, Integer userId) {
-        if (applicationId == null || !Utilities.notBlank(stageType)) {
-            return;
-        }
-
-        ApplicationProgress progress = findProgressByStageType(applicationId, stageType);
-        if (progress == null || progress.getId() == null) {
-            return;
-        }
-
-        updateStageMailSent(applicationId, progress.getPipelineStage() != null ? progress.getPipelineStage().getId() : null, mailSent, userId);
-    }
-
-    private void updateStageMailSent(Integer applicationId, Integer stageId, boolean mailSent, Integer userId) {
-        if (applicationId == null || stageId == null) {
-            return;
-        }
-
-        ApplicationProgress progress = applicationProgressRepository.findByApplicationIdAndPipelineStageId(applicationId, stageId);
-        if (progress == null) {
-            return;
-        }
-
-        if (Boolean.valueOf(mailSent).equals(progress.getMailSent())) {
-            if (mailSent && isResolvedStatus(progress.getProgressStatus())) {
-                activateNextPendingStage(applicationId, progress, userId);
-                syncApplicationStatus(applicationId);
-            }
-            return;
-        }
-
-        progress.setMailSent(mailSent);
-        progress.setUpdatedAt(Utilities.getCurrentDate());
-        progress.setUpdatedBy(userId);
-        applicationProgressRepository.save(progress);
-
-        if (mailSent && isResolvedStatus(progress.getProgressStatus())) {
-            activateNextPendingStage(applicationId, progress, userId);
-        }
-
-        syncApplicationStatus(applicationId);
-    }
-
     private boolean isNextStageWaitingForRequiredMail(ApplicationProgress currentProgress) {
         if (currentProgress == null || currentProgress.getPipelineStage() == null) {
             return false;
         }
-        return Boolean.TRUE.equals(currentProgress.getPipelineStage().getEmailRequired())
-                && !Boolean.TRUE.equals(currentProgress.getMailSent());
+        PipelineStageNotificationRule notificationRule = pipelineStageNotificationRuleRepository
+                .findFirstByPipelineStageIdAndIsDeletedFalse(currentProgress.getPipelineStage().getId());
+        boolean emailRequired = notificationRule != null && Boolean.TRUE.equals(notificationRule.getIsRequired());
+        boolean mailSent = currentProgress.getId() != null
+                && mailLogRepository.existsByApplicationProgressIdAndStatus(currentProgress.getId(), "SENT");
+        return emailRequired && !mailSent;
     }
 
     private boolean isResolvedStatus(String progressStatus) {

@@ -181,15 +181,7 @@
                     }
 
                     <app-filter-checkbox class="toggle-label" [inputId]="'pipeline-stage-eliminatory-' + i" label="Éliminatoire" variant="switch" [ngModel]="stage.isEliminatory" [disabled]="!isStageEliminatoryEditable(stage)" ariaLabel="Étape éliminatoire" (ngModelChange)="updateStageField(i, 'isEliminatory', $event)"></app-filter-checkbox>
-
-                    <app-filter-checkbox class="toggle-label" [inputId]="'pipeline-stage-email-required-' + i" label="Email requis" variant="switch" [ngModel]="stage.emailRequired" [disabled]="isLockedTemplate() || !supportsStageEmails(stage)" ariaLabel="Email requis pour cette étape" (ngModelChange)="updateStageEmailRequired(i, $event)"></app-filter-checkbox>
-
-                    <app-filter-checkbox class="toggle-label" [inputId]="'pipeline-stage-email-automatic-' + i" label="Envoi auto" variant="switch" [ngModel]="stage.emailAutomatic" [disabled]="isLockedTemplate() || !supportsStageEmails(stage) || !stage.emailRequired" ariaLabel="Envoi automatique de l'email pour cette étape" (ngModelChange)="updateStageEmailAutomatic(i, $event)"></app-filter-checkbox>
                   </div>
-
-                  @if (getStageFlagHint(stage)) {
-                    <p class="stage-policy-hint">{{ getStageFlagHint(stage) }}</p>
-                  }
 
                   @if (getStageSkipHint(stage)) {
                     <p class="stage-policy-hint stage-policy-hint--accent">{{ getStageSkipHint(stage) }}</p>

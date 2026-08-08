@@ -712,7 +712,6 @@
                         <span *ngIf="child.progressStatus" class="pipeline-progress-chip" [ngClass]="getPipelineProgressStatusClass(child.progressStatus)">
                           {{ getPipelineProgressStatusLabel(child.progressStatus) }}
                         </span>
-                        <span class="child-badge active" *ngIf="child.mailSent">Email envoyé</span>
                       </div>
                       <div class="child-answer-body">
                         <p *ngIf="child.stageType" class="answer-attempt-group__meta">Type : {{ getPipelineStageTypeLabel(child.stageType) }}</p>

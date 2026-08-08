@@ -75,6 +75,8 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 	@Autowired
 	private PipelineStageRepository pipelineStageRepository;
 	@Autowired
+	private PipelineStageNotificationRuleRepository pipelineStageNotificationRuleRepository;
+	@Autowired
 	private ApplicationProgressRepository applicationProgressRepository;
 	@Autowired
 	private ApplicationProgressBusiness applicationProgressBusiness;
@@ -729,9 +731,14 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 
 	private boolean shouldAutoSendInterviewInvitation(Interviews interview) {
 		PipelineStage interviewStage = resolveInterviewPipelineStage(interview);
-		return interviewStage != null
-				&& Boolean.TRUE.equals(interviewStage.getEmailRequired())
-				&& Boolean.TRUE.equals(interviewStage.getEmailAutomatic());
+		if (interviewStage == null) {
+			return false;
+		}
+		PipelineStageNotificationRule notificationRule = pipelineStageNotificationRuleRepository
+				.findFirstByPipelineStageIdAndIsDeletedFalse(interviewStage.getId());
+		return notificationRule != null
+				&& Boolean.TRUE.equals(notificationRule.getIsRequired())
+				&& Boolean.TRUE.equals(notificationRule.getIsAutomatic());
 	}
 
 	private void ensureInterviewProgressLink(Interviews interview, Integer applicationId) {

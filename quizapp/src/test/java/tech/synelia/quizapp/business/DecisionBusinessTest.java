@@ -28,11 +28,14 @@ import tech.synelia.quizapp.dao.entity.Campaigns;
 import tech.synelia.quizapp.dao.entity.Decision;
 import tech.synelia.quizapp.dao.entity.EmailTemplate;
 import tech.synelia.quizapp.dao.entity.PipelineStage;
+import tech.synelia.quizapp.dao.entity.PipelineStageNotificationRule;
 import tech.synelia.quizapp.dao.entity.SourceToken;
 import tech.synelia.quizapp.dao.entity.User;
 import tech.synelia.quizapp.dao.repository.ApplicationProgressRepository;
 import tech.synelia.quizapp.dao.repository.ApplicationsRepository;
 import tech.synelia.quizapp.dao.repository.DecisionRepository;
+import tech.synelia.quizapp.dao.repository.MailLogRepository;
+import tech.synelia.quizapp.dao.repository.PipelineStageNotificationRuleRepository;
 import tech.synelia.quizapp.dao.repository.PipelineStageRepository;
 import tech.synelia.quizapp.dao.repository.UserRepository;
 import tech.synelia.quizapp.utils.FunctionalError;
@@ -72,6 +75,10 @@ class DecisionBusinessTest {
 	private PlatformReadinessService platformReadinessService;
 	@Mock
 	private AuditEventService auditEventService;
+	@Mock
+	private MailLogRepository mailLogRepository;
+	@Mock
+	private PipelineStageNotificationRuleRepository pipelineStageNotificationRuleRepository;
 	@Mock
 	private FunctionalError functionalError;
 
@@ -147,12 +154,12 @@ class DecisionBusinessTest {
 		Campaigns campaign = buildCampaign(8);
 		Applications application = buildApplication(1, campaign);
 		PipelineStage stage = buildPipelineStage(100, "PRESELECTION");
-		stage.setEmailRequired(true);
-		stage.setEmailAutomatic(false);
 		ApplicationProgress progress = buildApplicationProgress(10, application, stage);
 		User decisionUser = buildUser(12);
 		EmailTemplate emailTemplate = buildEmailTemplate(30);
 
+		when(pipelineStageNotificationRuleRepository.findFirstByPipelineStageIdAndIsDeletedFalse(100))
+				.thenReturn(buildNotificationRule(true, false));
 		when(permissionService.hasAnyScopedPermission(eq(77), eq("CAMPAIGN"), eq(8), any(String[].class), any(String[].class))).thenReturn(true);
 		when(applicationsRepository.findOne(1, false)).thenReturn(application);
 		when(userRepository.findOne(12, false)).thenReturn(decisionUser);
@@ -294,8 +301,17 @@ class DecisionBusinessTest {
 		progress.setId(id);
 		progress.setApplications(application);
 		progress.setPipelineStage(stage);
-		progress.setMailSent(false);
 		return progress;
+	}
+
+	private PipelineStageNotificationRule buildNotificationRule(Boolean isRequired, Boolean isAutomatic) {
+		PipelineStageNotificationRule rule = new PipelineStageNotificationRule();
+		rule.setId(500);
+		rule.setTriggerCode("STAGE_EMAIL");
+		rule.setIsRequired(isRequired);
+		rule.setIsAutomatic(isAutomatic);
+		rule.setIsDeleted(false);
+		return rule;
 	}
 
 	private EmailTemplate buildEmailTemplate(Integer id) {

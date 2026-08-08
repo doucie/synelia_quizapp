@@ -1,5 +1,6 @@
 package tech.synelia.quizapp.dao.repository;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -26,6 +27,12 @@ public interface MailLogRepository extends JpaRepository<MailLog, Integer>, _Mai
 
 	@Query("select e from MailLog e where e.isDeleted = :isDeleted")
 	List<MailLog> findByIsDeleted(@Param("isDeleted") Boolean isDeleted);
+
+	boolean existsByApplicationProgressIdAndStatus(Integer applicationProgressId, String status);
+
+	boolean existsByApplicationProgressIdAndStatusAndEventCodeIn(Integer applicationProgressId, String status, Collection<String> eventCodes);
+
+	List<MailLog> findByApplicationProgressIdAndStatus(Integer applicationProgressId, String status);
 
 	default List<MailLog> getByCriteria(Request<MailLogDto> request, EntityManager em, Locale locale)
 			throws DataAccessException, Exception {

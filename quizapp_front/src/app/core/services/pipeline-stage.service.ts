@@ -153,8 +153,6 @@ export class PipelineStageService {
       stageOrder: stage.stageOrder ?? stage.stage_order ?? undefined,
       isRequired: stage.isRequired ?? stage.is_required ?? false,
       isEliminatory: stage.isEliminatory ?? stage.is_eliminatory ?? false,
-      emailRequired: stage.emailRequired ?? stage.email_required ?? false,
-      emailAutomatic: stage.emailAutomatic ?? stage.email_automatic ?? false,
       configJson: stage.configJson ?? stage.config_json ?? null,
       pipelineTemplateId: stage.pipelineTemplateId ?? stage.pipeline_template_id ?? undefined,
       pipelineTemplateName: stage.pipelineTemplateName || stage.pipeline_template_name || undefined,

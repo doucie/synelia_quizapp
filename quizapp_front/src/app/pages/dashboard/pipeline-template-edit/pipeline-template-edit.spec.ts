@@ -66,8 +66,6 @@ function buildStage(stageType: string, stageLabel: string) {
     isRequired: true,
     allowSkip: false,
     isEliminatory: false,
-    emailRequired: false,
-    emailAutomatic: false,
     isNew: false
   };
 }

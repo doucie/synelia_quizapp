@@ -710,21 +710,16 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
 
   /**
    * Peut-on passer cette étape ?
-   * Oui si elle est skippable et qu'aucun email requis n'est encore en attente.
+   * Oui si elle est skippable et que le pipeline autorise l'avancement.
+   * Le déblocage lié aux notifications est arbitré côté backend.
    */
   canSkipStage(app: ApplicationWithCampaign, stage: PipelineStage): boolean {
     if (!stage.id || !this.isStageSkippable(stage)) return false;
-    const progress = this.getProgressForStage(app.id!, stage.id);
-    if (stage.emailRequired && !Boolean(progress?.mailSent)) return false;
     const status = this.getDynamicStepStatus(app, stage.id!);
     return this.canAdvancePipelineForCampaign(app.campaignId) && (status === 'active' || status === 'pending');
   }
 
   getSkipActionTitle(stage: PipelineStage): string {
-    if (stage.emailRequired) {
-      return 'Ignorer cette étape après envoi de l’email requis';
-    }
-
     return stage.isRequired
       ? 'Ignorer cette étape (autorisé par la configuration du pipeline)'
       : 'Ignorer cette étape';

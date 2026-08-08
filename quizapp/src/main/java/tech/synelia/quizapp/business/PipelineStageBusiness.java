@@ -112,8 +112,6 @@ public class PipelineStageBusiness implements IBasicBusiness<Request<PipelineSta
             entityToSave.setIsDeleted(false);
             if (entityToSave.getIsRequired() == null) entityToSave.setIsRequired(true);
             if (entityToSave.getIsEliminatory() == null) entityToSave.setIsEliminatory(false);
-            if (entityToSave.getEmailRequired() == null) entityToSave.setEmailRequired(false);
-            if (entityToSave.getEmailAutomatic() == null) entityToSave.setEmailAutomatic(false);
             normalizeStageFlags(entityToSave);
             items.add(entityToSave);
         }
@@ -185,8 +183,6 @@ public class PipelineStageBusiness implements IBasicBusiness<Request<PipelineSta
             if (dto.getStageOrder() != null) entityToSave.setStageOrder(dto.getStageOrder());
             if (dto.getIsRequired() != null) entityToSave.setIsRequired(dto.getIsRequired());
             if (dto.getIsEliminatory() != null) entityToSave.setIsEliminatory(dto.getIsEliminatory());
-            if (dto.getEmailRequired() != null) entityToSave.setEmailRequired(dto.getEmailRequired());
-            if (dto.getEmailAutomatic() != null) entityToSave.setEmailAutomatic(dto.getEmailAutomatic());
             if (Utilities.shouldUpdate(dto.getConfigJson()) || !Objects.equals(entityToSave.getConfigJson(), normalizedConfigJson)) {
                 entityToSave.setConfigJson(normalizedConfigJson);
             }
@@ -386,36 +382,9 @@ public class PipelineStageBusiness implements IBasicBusiness<Request<PipelineSta
             stage.setIsEliminatory(false);
         }
 
-        if (StageType.CANDIDATURE.getValue().equals(stageType)) {
-            stage.setEmailRequired(false);
-            stage.setEmailAutomatic(false);
-            return;
-        }
-
         if (StageType.PRESELECTION.getValue().equals(stageType)) {
             stage.setIsEliminatory(true);
         }
-
-        if (!supportsStageEmails(stageType)) {
-            stage.setEmailRequired(false);
-            stage.setEmailAutomatic(false);
-            return;
-        }
-
-        if (Boolean.TRUE.equals(stage.getEmailAutomatic())) {
-            stage.setEmailRequired(true);
-            return;
-        }
-
-        if (!Boolean.TRUE.equals(stage.getEmailRequired())) {
-            stage.setEmailAutomatic(false);
-        }
-    }
-
-    private boolean supportsStageEmails(String stageType) {
-        return StageType.PRESELECTION.getValue().equals(stageType)
-                || StageType.INTERVIEW.getValue().equals(stageType)
-                || StageType.DECISION.getValue().equals(stageType);
     }
 
     private String validateAndNormalizeConfig(String stageType, String configJson, Locale locale) {

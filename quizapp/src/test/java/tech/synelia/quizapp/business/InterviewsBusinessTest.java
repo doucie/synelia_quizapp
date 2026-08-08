@@ -26,11 +26,14 @@ import tech.synelia.quizapp.dao.entity.Interviews;
 import tech.synelia.quizapp.dao.entity.PipelineStage;
 import tech.synelia.quizapp.dao.entity.SourceToken;
 import tech.synelia.quizapp.dao.repository.ApplicationsRepository;
+import tech.synelia.quizapp.dao.repository.ApplicationProgressRepository;
 import tech.synelia.quizapp.dao.repository.CampaignsRepository;
 import tech.synelia.quizapp.dao.repository.CandidateInterviewRepository;
 import tech.synelia.quizapp.dao.repository.EntityPermissionRepository;
 import tech.synelia.quizapp.dao.repository.EvaluationsRepository;
 import tech.synelia.quizapp.dao.repository.InterviewsRepository;
+import tech.synelia.quizapp.dao.repository.PipelineStageRepository;
+import tech.synelia.quizapp.dao.repository.PipelineStageNotificationRuleRepository;
 import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.dto.InterviewsDto;
@@ -52,6 +55,12 @@ class InterviewsBusinessTest {
 	private ApplicationsRepository applicationsRepository;
 	@Mock
 	private EntityPermissionRepository entityPermissionRepository;
+	@Mock
+	private PipelineStageRepository pipelineStageRepository;
+	@Mock
+	private PipelineStageNotificationRuleRepository pipelineStageNotificationRuleRepository;
+	@Mock
+	private ApplicationProgressRepository applicationProgressRepository;
 	@Mock
 	private ApplicationProgressBusiness applicationProgressBusiness;
 	@Mock

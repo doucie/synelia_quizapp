@@ -137,8 +137,6 @@ class PipelineStageBusinessTest {
 		stage.setStageOrder(3);
 		stage.setIsRequired(true);
 		stage.setIsEliminatory(false);
-		stage.setEmailRequired(false);
-		stage.setEmailAutomatic(false);
 		stage.setIsDeleted(false);
 		return stage;
 	}

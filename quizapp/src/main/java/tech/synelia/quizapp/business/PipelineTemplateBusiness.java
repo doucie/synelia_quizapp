@@ -336,8 +336,6 @@ public class PipelineTemplateBusiness implements IBasicBusiness<Request<Pipeline
                 newStage.setStageOrder(stage.getStageOrder());
                 newStage.setIsRequired(stage.getIsRequired());
                 newStage.setIsEliminatory(stage.getIsEliminatory());
-                newStage.setEmailRequired(stage.getEmailRequired());
-                newStage.setEmailAutomatic(stage.getEmailAutomatic());
                 newStage.setConfigJson(stage.getConfigJson());
                 newStage.setCreatedAt(Utilities.getCurrentDate());
                 newStage.setCreatedBy(userId);
@@ -381,8 +379,6 @@ public class PipelineTemplateBusiness implements IBasicBusiness<Request<Pipeline
         stage.setStageOrder(stageOrder);
         stage.setIsRequired(true);
         stage.setIsEliminatory(false);
-        stage.setEmailRequired(false);
-        stage.setEmailAutomatic(false);
         stage.setCreatedAt(Utilities.getCurrentDate());
         stage.setCreatedBy(userId);
         stage.setIsDeleted(false);
@@ -432,7 +428,6 @@ public class PipelineTemplateBusiness implements IBasicBusiness<Request<Pipeline
         boolean hasInvalidOrder = false;
         boolean hasInvalidType = false;
         boolean hasCustomStage = false;
-        boolean hasEmailMismatch = false;
         boolean hasDuplicateQuiz = false;
         boolean hasDuplicatePreselection = false;
         boolean hasDuplicateInterview = false;
@@ -450,10 +445,6 @@ public class PipelineTemplateBusiness implements IBasicBusiness<Request<Pipeline
 
             if (!Utilities.notBlank(stage.getStageLabel())) {
                 hasBlankLabel = true;
-            }
-
-            if (Boolean.TRUE.equals(stage.getEmailAutomatic()) && !Boolean.TRUE.equals(stage.getEmailRequired())) {
-                hasEmailMismatch = true;
             }
 
             StageType normalizedType;
@@ -514,9 +505,6 @@ public class PipelineTemplateBusiness implements IBasicBusiness<Request<Pipeline
         }
         if (hasCustomStage) {
             issues.add("le type CUSTOM n'est plus supporte.");
-        }
-        if (hasEmailMismatch) {
-            issues.add("une etape en envoi auto doit aussi exiger l'email.");
         }
         if (hasDuplicateQuiz) {
             issues.add("QUIZ ne peut etre presente qu'une seule fois dans le pipeline actuel.");

@@ -224,9 +224,6 @@
                         @if (p.validatedByFirstName || p.validatedByLastName) {
                           <div><dt>Validée par</dt><dd>{{ p.validatedByFirstName }} {{ p.validatedByLastName }}</dd></div>
                         }
-                        @if (p.mailSent) {
-                          <div><dt>Email</dt><dd><span class="inline-badge badge-success">envoyé</span></dd></div>
-                        }
                       </dl>
 
                       @if (p.notes) {

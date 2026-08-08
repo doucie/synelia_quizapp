@@ -61,12 +61,6 @@ public interface _PipelineStageRepository {
             if (dto.getIsEliminatory() != null) {
                 listOfQuery.add(CriteriaUtils.generateCriteria("isEliminatory", dto.getIsEliminatory(), "e.isEliminatory", "Boolean", dto.getIsEliminatoryParam(), param, index, locale));
             }
-            if (dto.getEmailRequired() != null) {
-                listOfQuery.add(CriteriaUtils.generateCriteria("emailRequired", dto.getEmailRequired(), "e.emailRequired", "Boolean", dto.getEmailRequiredParam(), param, index, locale));
-            }
-            if (dto.getEmailAutomatic() != null) {
-                listOfQuery.add(CriteriaUtils.generateCriteria("emailAutomatic", dto.getEmailAutomatic(), "e.emailAutomatic", "Boolean", dto.getEmailAutomaticParam(), param, index, locale));
-            }
             if (dto.getPipelineTemplateId() != null && dto.getPipelineTemplateId() > 0) {
                 listOfQuery.add(CriteriaUtils.generateCriteria("pipelineTemplateId", dto.getPipelineTemplateId(), "e.pipelineTemplate.id", "Integer", dto.getPipelineTemplateIdParam(), param, index, locale));
             }

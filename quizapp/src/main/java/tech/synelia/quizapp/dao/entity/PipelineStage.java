@@ -44,12 +44,6 @@ public class PipelineStage implements Serializable, Cloneable {
     @Column(name = "is_eliminatory", nullable = false)
     private Boolean isEliminatory;
 
-    @Column(name = "email_required", nullable = false)
-    private Boolean emailRequired = false;
-
-    @Column(name = "email_automatic", nullable = false)
-    private Boolean emailAutomatic = true;
-
     @Column(name = "config_json", length = 65535)
     private String configJson;
 

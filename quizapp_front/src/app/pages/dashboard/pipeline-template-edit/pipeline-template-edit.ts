@@ -18,15 +18,11 @@ interface EditableStage {
   isRequired: boolean;
   allowSkip: boolean;
   isEliminatory: boolean;
-  emailRequired: boolean;
-  emailAutomatic: boolean;
   configJson?: string | null;
   isNew?: boolean;
 }
 
 interface StageFlagPolicy {
-  supportsEmail: boolean;
-  emailHint?: string;
   locksEliminatory: boolean;
   forcedEliminatory?: boolean;
 }
@@ -165,8 +161,6 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
           isRequired: !!s.isRequired,
           allowSkip: this.readAllowSkipFromConfig(s.configJson),
           isEliminatory: !!s.isEliminatory,
-          emailRequired: !!s.emailRequired,
-          emailAutomatic: !!s.emailAutomatic,
           configJson: s.configJson ?? null,
           isNew: false
         })));
@@ -205,8 +199,6 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
       isRequired: false,
       allowSkip: false,
       isEliminatory: false,
-      emailRequired: false,
-      emailAutomatic: false,
       configJson: null,
       isNew: true
     }));
@@ -286,42 +278,6 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
     }));
   }
 
-  updateStageEmailRequired(index: number, value: boolean): void {
-    if (this.isLockedTemplate()) {
-      return;
-    }
-
-    this.stages.update(list => list.map((s, i) => {
-      if (i !== index) {
-        return s;
-      }
-
-      return this.normalizeStageForEditor({
-        ...s,
-        emailRequired: value,
-        emailAutomatic: value ? s.emailAutomatic : false
-      });
-    }));
-  }
-
-  updateStageEmailAutomatic(index: number, value: boolean): void {
-    if (this.isLockedTemplate()) {
-      return;
-    }
-
-    this.stages.update(list => list.map((s, i) => {
-      if (i !== index) {
-        return s;
-      }
-
-      return this.normalizeStageForEditor({
-        ...s,
-        emailRequired: value ? true : s.emailRequired,
-        emailAutomatic: value
-      });
-    }));
-  }
-
   updateStageAllowSkip(index: number, value: boolean): void {
     if (this.isLockedTemplate()) {
       return;
@@ -347,27 +303,9 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
     return !this.isFixedStage(stage) && stage.isRequired;
   }
 
-  supportsStageEmails(stage: EditableStage): boolean {
-    return this.getStageFlagPolicy(stage.stageType).supportsEmail;
-  }
-
-  getStageFlagHint(stage: EditableStage): string | null {
-    return this.getStageFlagPolicy(stage.stageType).emailHint ?? null;
-  }
-
   getStageSkipHint(stage: EditableStage): string | null {
     if (this.isFixedStage(stage)) {
       return null;
-    }
-
-    if (stage.emailRequired) {
-      if (stage.isRequired && stage.allowSkip) {
-        return 'Cette étape pourra être ignorée seulement après envoi de l’email requis.';
-      }
-
-      if (!stage.isRequired) {
-        return 'Même non obligatoire, cette étape ne pourra être ignorée qu’après envoi de l’email requis.';
-      }
     }
 
     if (!stage.isRequired) {
@@ -391,18 +329,12 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
 
   private normalizeStageForEditor(stage: EditableStage): EditableStage {
     const policy = this.getStageFlagPolicy(stage.stageType);
-    const emailAutomatic = policy.supportsEmail ? !!stage.emailAutomatic : false;
-    const emailRequired = policy.supportsEmail
-      ? (emailAutomatic ? true : !!stage.emailRequired)
-      : false;
     const allowSkip = !this.isFixedStage(stage) && stage.isRequired ? !!stage.allowSkip : false;
 
     return {
       ...stage,
       allowSkip,
-      isEliminatory: policy.forcedEliminatory ?? stage.isEliminatory,
-      emailRequired,
-      emailAutomatic: emailRequired ? emailAutomatic : false
+      isEliminatory: policy.forcedEliminatory ?? stage.isEliminatory
     };
   }
 
@@ -451,40 +383,30 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
     switch (normalizedStageType) {
       case 'PRESELECTION':
         return {
-          supportsEmail: true,
-          emailHint: 'Une pré-sélection refusée clôt déjà la candidature. Les emails pilotent ici les décisions de pré-sélection.',
           locksEliminatory: true,
           forcedEliminatory: true
         };
       case 'INTERVIEW':
         return {
-          supportsEmail: true,
-          emailHint: 'Les emails pilotent l’invitation d’entretien et le déblocage de l’étape suivante.',
           locksEliminatory: false
         };
       case 'QUIZ':
       case 'EVALUATION':
         return {
-          supportsEmail: false,
-          emailHint: 'Aucun flux email métier n’est branché pour ce type d’étape aujourd’hui.',
           locksEliminatory: false
         };
       case 'CANDIDATURE':
         return {
-          supportsEmail: false,
           locksEliminatory: true,
           forcedEliminatory: false
         };
       case 'DECISION':
         return {
-          supportsEmail: true,
           locksEliminatory: true,
           forcedEliminatory: false
         };
       default:
         return {
-          supportsEmail: false,
-          emailHint: 'Aucun flux email métier n’est branché pour ce type d’étape aujourd’hui.',
           locksEliminatory: false
         };
     }
@@ -683,8 +605,6 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
       stageOrder: normalizedStage.stageOrder,
       isRequired: normalizedStage.isRequired,
       isEliminatory: normalizedStage.isEliminatory,
-      emailRequired: normalizedStage.emailRequired,
-      emailAutomatic: normalizedStage.emailAutomatic,
       configJson: this.buildStageConfigJson(normalizedStage),
       pipelineTemplateId: this.templateId
     };
