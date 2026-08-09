@@ -280,7 +280,7 @@
         background: var(--border);
       }
 
-      &.passed::after {
+      &.completed::after {
         background: var(--success);
       }
 
@@ -306,7 +306,7 @@
         }
       }
 
-      &.passed .timeline-marker {
+      &.completed .timeline-marker {
         background: var(--success);
       }
 
@@ -355,7 +355,7 @@
             color: var(--warning);
           }
 
-          &.label-passed {
+          &.label-completed {
             background: rgba(var(--success-rgb), 0.1);
             color: var(--success);
           }
@@ -389,7 +389,7 @@
         }
       }
 
-      &.passed .timeline-content h4 {
+      &.completed .timeline-content h4 {
         color: var(--success);
       }
 
@@ -475,7 +475,7 @@
       display: grid;
       gap: var(--spacing-md);
 
-      &--postponed {
+      &--cancelled {
         border-color: rgba(var(--warning-rgb), 0.45);
       }
     }
@@ -517,18 +517,23 @@
         color: var(--primary);
       }
 
-      &--postponed {
+      &--cancelled {
         background: rgba(var(--warning-rgb), 0.12);
         color: var(--warning);
       }
 
-      &--started {
+      &--in-progress {
         background: rgba(var(--info-rgb), 0.12);
         color: var(--info);
       }
 
-      &--over,
-      &--archived {
+      &--awaiting-evaluation,
+      &--awaiting-validation {
+        background: rgba(var(--warning-rgb), 0.12);
+        color: var(--warning);
+      }
+
+      &--closed {
         background: var(--surface-variant);
         color: var(--text-tertiary);
       }

@@ -232,7 +232,7 @@
 
               <div class="interview-list">
                 @for (interview of interviews(); track interview.id) {
-                  <article class="interview-card" [class.interview-card--postponed]="interview.interviewStatus === 'POSTPONED'">
+                  <article class="interview-card" [class.interview-card--cancelled]="interview.interviewStatus === 'CANCELLED'">
                     <div class="interview-card__header">
                       <div>
                         <h4>{{ interview.interviewDate | date:'dd/MM/yyyy à HH:mm' }}</h4>

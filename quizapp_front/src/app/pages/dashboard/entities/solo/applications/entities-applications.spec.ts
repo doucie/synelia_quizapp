@@ -125,7 +125,7 @@ describe('EntitiesApplicationsComponent', () => {
       id: 55,
       interviewId: 17,
       interviewDate: '2026-05-31T10:00:00Z',
-      interviewStatus: 'OVER'
+      interviewStatus: 'CLOSED'
     }, [{
       id: 701,
       globalScore: 10,
@@ -160,7 +160,7 @@ describe('EntitiesApplicationsComponent', () => {
         id: 55,
         interviewId: 17,
         interviewDate: '31/05/2026 10:00',
-        interviewStatus: 'OVER'
+        interviewStatus: 'CLOSED'
       } as any]
     });
     component.childProgresses.set({
@@ -174,7 +174,7 @@ describe('EntitiesApplicationsComponent', () => {
 
     const application = {
       id: 10,
-      interviewStatus: 'PENDING',
+      interviewStatus: 'SCHEDULED',
       interviewDate: '01/01/2026 08:00',
       currentPipelineStageLabel: 'Pré-sélection',
       currentPipelineProgressStatus: 'PENDING',
@@ -183,7 +183,7 @@ describe('EntitiesApplicationsComponent', () => {
       currentInterviewEvaluationPercentage: 9
     } as any;
 
-    expect(component.getCurrentInterviewStatus(application)).toBe('OVER');
+    expect(component.getCurrentInterviewStatus(application)).toBe('CLOSED');
     expect(component.getCurrentInterviewDate(application)).toBe('31/05/2026 10:00');
     expect(component.getCurrentInterviewEvaluationAverageLabel(application)).toBe('Moyenne 9');
     expect(component.getCurrentInterviewEvaluationSummary(application)).toBe('18 pts - 2 évaluations');

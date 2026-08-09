@@ -5,10 +5,6 @@ const MANUAL_CORRECTION_STATUS_VALUES: ManualCorrectionStatus[] = ['NOT_REQUIRED
 export function normalizeManualCorrectionStatus(value?: string | null): ManualCorrectionStatus | null {
   const normalizedValue = (value || '').trim().toUpperCase();
 
-  if (normalizedValue === 'DONE') {
-    return 'COMPLETED';
-  }
-
   if ((MANUAL_CORRECTION_STATUS_VALUES as string[]).includes(normalizedValue)) {
     return normalizedValue as ManualCorrectionStatus;
   }

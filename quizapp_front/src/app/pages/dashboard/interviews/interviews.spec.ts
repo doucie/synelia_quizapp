@@ -49,8 +49,7 @@ describe('InterviewsComponent', () => {
         interviewDate: '31/05/2026 14:00',
         interviewStatus: 'SCHEDULED',
         interviewType: 'ONLINE',
-        meetLink: 'https://meet.example.com/room',
-        interviewMailSent: true
+        meetLink: 'https://meet.example.com/room'
       }]
     } as any));
     interviewService.getStatusLabel.and.callFake((status?: string) => status || 'N/A');

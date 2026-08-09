@@ -155,7 +155,7 @@ export class DecisionsComponent implements OnInit, OnDestroy {
     if (!progress) return 'pending';
     switch (progress.progressStatus) {
       case 'IN_PROGRESS': return 'active';
-      case 'PASSED': return 'completed';
+      case 'COMPLETED': return 'completed';
       case 'FAILED': return 'rejected';
       case 'SKIPPED': return 'skipped';
       case 'PENDING':
@@ -173,7 +173,7 @@ export class DecisionsComponent implements OnInit, OnDestroy {
     if (!progress || progress.progressStatus === 'PENDING') return `${stage.stageLabel} : en attente`;
     switch (progress.progressStatus) {
       case 'IN_PROGRESS': return `${stage.stageLabel} : en cours`;
-      case 'PASSED': return `${stage.stageLabel} : validé`;
+      case 'COMPLETED': return `${stage.stageLabel} : validé`;
       case 'FAILED': return `${stage.stageLabel} : refusé`;
       case 'SKIPPED': return `${stage.stageLabel} : ignoré`;
       default: return `${stage.stageLabel}`;
@@ -1370,14 +1370,12 @@ export class DecisionsComponent implements OnInit, OnDestroy {
    */
   getInterviewStatusClass(status: string): string {
     const statusMap: Record<string, string> = {
-      'PENDING': 'warning',
       'SCHEDULED': 'info',
-      'STARTED': 'info',
-      'OVER': 'success',
-      'PASSED': 'success',
-      'FAILED': 'error',
-      'POSTPONED': 'warning',
-      'ARCHIVED': 'muted'
+      'IN_PROGRESS': 'info',
+      'AWAITING_EVALUATION': 'warning',
+      'AWAITING_VALIDATION': 'warning',
+      'CLOSED': 'success',
+      'CANCELLED': 'error'
     };
     return statusMap[status] || 'muted';
   }
@@ -1387,14 +1385,12 @@ export class DecisionsComponent implements OnInit, OnDestroy {
    */
   getInterviewStatusIcon(status: string): string {
     const iconMap: Record<string, string> = {
-      'PENDING': 'bi bi-hourglass-split',
       'SCHEDULED': 'bi bi-calendar-check',
-      'STARTED': 'bi bi-play-circle',
-      'OVER': 'bi bi-check-circle-fill',
-      'PASSED': 'bi bi-check-circle-fill',
-      'FAILED': 'bi bi-x-circle-fill',
-      'POSTPONED': 'bi bi-clock-history',
-      'ARCHIVED': 'bi bi-archive'
+      'IN_PROGRESS': 'bi bi-play-circle',
+      'AWAITING_EVALUATION': 'bi bi-hourglass-split',
+      'AWAITING_VALIDATION': 'bi bi-hourglass-split',
+      'CLOSED': 'bi bi-check-circle-fill',
+      'CANCELLED': 'bi bi-x-circle-fill'
     };
     return iconMap[status] || 'bi bi-question-circle';
   }
@@ -1404,14 +1400,12 @@ export class DecisionsComponent implements OnInit, OnDestroy {
    */
   getInterviewStatusLabel(status: string): string {
     const labelMap: Record<string, string> = {
-      'PENDING': 'En attente',
       'SCHEDULED': 'Planifié',
-      'STARTED': 'En cours',
-      'OVER': 'Terminé',
-      'PASSED': 'Réussi',
-      'FAILED': 'Échoué',
-      'POSTPONED': 'Reporté',
-      'ARCHIVED': 'Archivé'
+      'IN_PROGRESS': 'En cours',
+      'AWAITING_EVALUATION': 'Évaluation en attente',
+      'AWAITING_VALIDATION': 'Validation en attente',
+      'CLOSED': 'Clôturé',
+      'CANCELLED': 'Annulé'
     };
     return labelMap[status] || status;
   }

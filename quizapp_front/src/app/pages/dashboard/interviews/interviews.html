@@ -14,11 +14,6 @@
 
       <!-- Stats -->
       <div class="header-stats">
-        <div class="stat-chip pending">
-          <i class="bi bi-hourglass-split"></i>
-          <span>{{ getInterviewsByStatus('PENDING') }}</span>
-          <span class="stat-label">En attente</span>
-        </div>
         <div class="stat-chip scheduled">
           <i class="bi bi-calendar-event"></i>
           <span>{{ getInterviewsByStatus('SCHEDULED') }}</span>
@@ -26,17 +21,17 @@
         </div>
         <div class="stat-chip postponed">
           <i class="bi bi-arrow-repeat"></i>
-          <span>{{ getInterviewsByStatus('POSTPONED') }}</span>
+          <span>{{ getInterviewsByStatus('CANCELLED') }}</span>
           <span class="stat-label">À replanifier</span>
         </div>
         <div class="stat-chip started">
           <i class="bi bi-play-circle"></i>
-          <span>{{ getInterviewsByStatus('STARTED') }}</span>
+          <span>{{ getInterviewsByStatus('IN_PROGRESS') }}</span>
           <span class="stat-label">En cours</span>
         </div>
         <div class="stat-chip completed">
           <i class="bi bi-check-circle"></i>
-          <span>{{ getInterviewsByStatus('OVER') }}</span>
+          <span>{{ getInterviewsByStatus('CLOSED') }}</span>
           <span class="stat-label">Terminés</span>
         </div>
       </div>
@@ -70,24 +65,24 @@
         </button>
         <button
           class="chip postponed"
-          [class.active]="selectedFilter() === 'POSTPONED'"
-          (click)="setFilter('POSTPONED')"
+          [class.active]="selectedFilter() === 'CANCELLED'"
+          (click)="setFilter('CANCELLED')"
         >
-          À replanifier ({{ getInterviewsByStatus('POSTPONED') }})
+          À replanifier ({{ getInterviewsByStatus('CANCELLED') }})
         </button>
         <button
           class="chip started"
-          [class.active]="selectedFilter() === 'STARTED'"
-          (click)="setFilter('STARTED')"
+          [class.active]="selectedFilter() === 'IN_PROGRESS'"
+          (click)="setFilter('IN_PROGRESS')"
         >
-          En cours ({{ getInterviewsByStatus('STARTED') }})
+          En cours ({{ getInterviewsByStatus('IN_PROGRESS') }})
         </button>
         <button
           class="chip completed"
-          [class.active]="selectedFilter() === 'OVER'"
-          (click)="setFilter('OVER')"
+          [class.active]="selectedFilter() === 'CLOSED'"
+          (click)="setFilter('CLOSED')"
         >
-          Terminés ({{ getInterviewsByStatus('OVER') }})
+          Terminés ({{ getInterviewsByStatus('CLOSED') }})
         </button>
       </div>
 
@@ -140,7 +135,7 @@
                   <div 
                     class="interview-card"
                     [class.selected]="selectedInterview()?.id === interview.id"
-                    [class.started]="interview.interviewStatus === 'STARTED'"
+                    [class.started]="interview.interviewStatus === 'IN_PROGRESS'"
                     (click)="selectInterview(interview)"
                   >
                     <!-- Header -->
@@ -227,18 +222,10 @@
                       }
                     </div>
 
-                    <!-- Email Status -->
-                    <div class="card-email-status">
-                      <div class="email-badge" [ngClass]="getEmailStatusClass(interview.interviewMailSent)">
-                        <i class="bi" [ngClass]="interview.interviewMailSent ? 'bi-envelope-check' : 'bi-envelope-x'"></i>
-                        {{ getEmailStatusLabel(interview.interviewMailSent) }}
-                      </div>
-                    </div>
-
                     <!-- Footer -->
                     <div class="card-footer">
-                      <!-- Bouton Modifier - toujours visible sauf STARTED -->
-                      @if (interview.interviewStatus !== 'STARTED') {
+                      <!-- Bouton Modifier - toujours visible sauf IN_PROGRESS -->
+                      @if (interview.interviewStatus !== 'IN_PROGRESS') {
                         <button 
                           class="btn-action btn-edit" 
                           (click)="openEditModal(interview); $event.stopPropagation()"
@@ -261,8 +248,8 @@
                         </button>
                       }
                       
-                      <!-- Bouton Évaluer - uniquement pour STARTED -->
-                      @if (interview.interviewStatus === 'STARTED') {
+                      <!-- Bouton Évaluer - uniquement pour IN_PROGRESS -->
+                      @if (interview.interviewStatus === 'IN_PROGRESS') {
                         <button 
                           class="btn-action btn-evaluate" 
                           (click)="evaluateInterview(interview); $event.stopPropagation()"
@@ -273,8 +260,8 @@
                         </button>
                       }
                       
-                      <!-- Bouton Supprimer - masqué pendant STARTED -->
-                      @if (interview.interviewStatus !== 'STARTED') {
+                      <!-- Bouton Supprimer - masqué pendant IN_PROGRESS -->
+                      @if (interview.interviewStatus !== 'IN_PROGRESS') {
                         <button 
                           class="btn-action btn-delete" 
                           (click)="deleteInterview(interview); $event.stopPropagation()"
@@ -366,13 +353,6 @@
                         <span class="value">{{ getInterviewProgressLabel(selectedInterview()!) }}</span>
                       </div>
                     }
-                    <div class="detail-item">
-                      <span class="label">Notification email</span>
-                      <span class="value email-status" [ngClass]="getEmailStatusClass(selectedInterview()!.interviewMailSent)">
-                        <i class="bi" [ngClass]="selectedInterview()!.interviewMailSent ? 'bi-envelope-check' : 'bi-envelope-x'"></i>
-                        {{ getEmailStatusLabel(selectedInterview()!.interviewMailSent) }}
-                      </span>
-                    </div>
                     @if (selectedInterview()!.interviewLocation) {
                       <div class="detail-item">
                         <span class="label">Lieu</span>
@@ -438,7 +418,7 @@
 
                 <!-- Actions rapides -->
                 <div class="detail-actions">
-                  @if (selectedInterview()!.interviewStatus !== 'STARTED') {
+                  @if (selectedInterview()!.interviewStatus !== 'IN_PROGRESS') {
                     <button class="btn-action-full btn-edit-schedule" (click)="openEditModal(selectedInterview()!)">
                       <i class="bi bi-calendar2-week"></i>
                       {{ interviewAdminService.getCandidateResponseEditActionLabel(selectedInterview()!.candidateResponseState) }}
@@ -451,25 +431,15 @@
                     </button>
                   }
                   @if (selectedInterview()!.interviewStatus === 'SCHEDULED') {
-                    <button class="btn-action-full btn-start" (click)="changeStatus(selectedInterview()!, 'STARTED')">
+                    <button class="btn-action-full btn-start" (click)="changeStatus(selectedInterview()!, 'IN_PROGRESS')">
                       <i class="bi bi-play-circle"></i>
                       Démarrer l'entretien
                     </button>
                   }
-                  @if (selectedInterview()!.interviewStatus === 'STARTED') {
-                    <button class="btn-action-full btn-complete" (click)="changeStatus(selectedInterview()!, 'OVER')">
+                  @if (selectedInterview()!.interviewStatus === 'IN_PROGRESS') {
+                    <button class="btn-action-full btn-complete" (click)="changeStatus(selectedInterview()!, 'CLOSED')">
                       <i class="bi bi-check-circle"></i>
                       Terminer l'entretien
-                    </button>
-                  }
-                  @if (selectedInterview()!.interviewStatus === 'OVER') {
-                    <button class="btn-action-full btn-pass" (click)="changeStatus(selectedInterview()!, 'PASSED')">
-                      <i class="bi bi-hand-thumbs-up"></i>
-                      Marquer comme réussi
-                    </button>
-                    <button class="btn-action-full btn-fail" (click)="changeStatus(selectedInterview()!, 'FAILED')">
-                      <i class="bi bi-hand-thumbs-down"></i>
-                      Marquer comme échoué
                     </button>
                   }
                 </div>

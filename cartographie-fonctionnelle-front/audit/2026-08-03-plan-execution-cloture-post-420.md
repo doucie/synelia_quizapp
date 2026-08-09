@@ -279,16 +279,28 @@ Sortie de phase: schema = cible post-420 (liste §7 du doc cible entierement tra
 
 ### Phase 7 - Front (nettoyage final)
 
-Objectif: retirer les champs legacy restants des interfaces et ecrans.
+Objectif: aligner le front sur le vocabulaire cible post-420 (stage/progress/interview/quiz) et ne retirer que les champs reellement supprimes du backend. Les champs DERIVES restent (BA n°13, DECISION 2026-08-09: `interviewDate`/`interviewStatus` sur Application, `campaignId`/`applicationId`/`interviewDate`/`interviewStatus` sur Interview, `applicationId` sur Decision et sur CandidateInterview - toujours envoyes par le backend).
 
-Taches:
+Taches (plan revise a la lumiere de l'audit 2026-08-09 du front reel; les references de lignes du plan initial etaient partiellement obsoletes):
 
-- [ ] `pipeline.interfaces.ts`: retirer `emailRequired`, `emailAutomatic`, `mailSent`, `decidedById`, `decidedByFirstName/LastName`, `applicationId`, `pipelineStageId`.
-- [ ] **Vocabulaire des valeurs `interview_status` et `progress_status` cote front** (consequence de l'alignement enum Phase 6): `ProgressStatus` -> `COMPLETED` remplace `PASSED` (`pipeline.interfaces.ts` 5/19, `track-application.ts` 228/239/250, `interview-create.ts` 498/515, `interview.service.ts` 215/232, `entities-interviews.ts` 149/164); `InterviewStatus` -> nouvelles 6 valeurs (`interviews.ts` 46/115/132-133/206/231/281/521/562/675-700/709/717/950, `evaluations-list.ts` 69/80/105-119/207/221-230, `interview.service.ts` 42/213-235, `entities-interviews.ts` 49/114/147-167, `entities-applications.ts` 508-589, `track-application.ts` 313, specs associes).
-- [ ] Interfaces DTO cote front (application, interview, evaluation, decision, candidate-interview): retirer les champs supprimes (`interviewDate`/`interviewStatus`/`totalEvaluation*` sur Application, `campaignId`/`applicationId`/`interviewEvaluationsLink`/`interviewMailSent`/`evaluationScore/Number/Percentage` sur Interview, `interviewStart`/`applicationId` sur CandidateInterviewEntity (garder `interviewDuration`), `candidateMark`/`recruiterComment` sur Evaluation, `isCancel`/`applicationId`/`pipelineStageId` sur Decision).
-- [ ] Ecrans: `applications.*`, `entities-applications.*`, `interviews.*`, `interview-create.*`, `entities-interviews.*`, `evaluations.*`, `evaluations-list.*`, `entities-candidate-interview.*`, `entities-decisions.*`, `decisions.*`, `pipeline-template-edit.*`, `track-application.*`, `candidate-detail.*`, `entities-application-progress.*`.
-- [ ] Normaliser `applicationsId` -> `applicationId` dans `evaluations.ts` (405/445).
-- [ ] Specs front associes.
+- [x] (Vérif 2026-08-09) Champs deja retires par les phases 4-5: `emailRequired`/`emailAutomatic`/`mailSent`/`decidedById`/`decidedByFirstName/LastName` = 0 occurrence front. `ApplicationProgress.applicationId`/`pipelineStageId` (pipeline.interfaces.ts 122-123) = colonnes reelles (FK) -> CONSERVES. [Refs plan initiales obsoletes]
+- [x] (Vérif 2026-08-09) Champs deja retires par les phases 4-5: `emailRequired`/`emailAutomatic`/`mailSent`/`decidedById`/`decidedByFirstName/LastName` = 0 occurrence front. `ApplicationProgress.applicationId`/`pipelineStageId` (pipeline.interfaces.ts 122-123) = colonnes reelles (FK) -> CONSERVES. [Refs plan initiales obsoletes]
+- [x] **Vocabulaire des valeurs cote front** (consequence de l'alignement enum Phase 6):
+  - `ProgressStatus` -> `COMPLETED` remplace `PASSED` + ajout `AWAITING_VALIDATION` (`pipeline.interfaces.ts` 5/19, `track-application.ts` 228/239/250, `interview-create.ts` 498/515, `entities-interviews.ts` 149/164, `applications.ts` 637/653/1023/1048/1259/1524/1609, `decisions.ts` 158/176/627/1377/1394/1411, `candidate-detail.ts` 277/287/297, `entities-applications.ts` 561/583/1031/1048/1519, `entities-application-progress.ts` 65/72).
+  - `InterviewStatus` -> 6 valeurs cibles SCHEDULED/IN_PROGRESS/AWAITING_EVALUATION/AWAITING_VALIDATION/CLOSED/CANCELLED (`interview.service.ts` 42/211-235, `interviews.ts` 46/115/132-133/206/231/281/521/562/675-700/709/717/950 + html, `evaluations-list.ts` 69/80/104-119/207/221-230 + html, `entities-interviews.ts` 49/114/147-167 + html 457-464, `entities-applications.ts` 553-594, `track-application.ts` 543-561, `applications.ts` 1018-1051, `decisions.ts` 1371-1417, `candidate-detail.ts` 295-306/327-337, specs).
+  - `StageType` -> retirer `EVALUATION`/`TECHNICAL_TEST`/`CUSTOM` (`pipeline.interfaces.ts` 2-4/7-8/14-17/27-29/43/67-69, `entities-pipeline-stages.ts` 108-132/286-287, `pipeline-template-edit.ts` 58/381/394 + html, `entities-applications.ts` 262/275/297/310/953/957, `applications.ts` 1568/1574, `decisions.html` 276, `candidate-detail.html` 237). Attention: l'editeur de template propose encore EVALUATION (creation rejetee par le backend StageType sans EVALUATION); l'etape 5 existante est desormais type DECISION (label "Evaluation" conserve).t
+  - `QuizStatus` -> prendre en compte `EXPIRED`/`CANCELLED` (`track-application.ts` 313 "Reprendre/Commencer le quiz", maps affichage).
+  - Mapping semantique des actions front: `STARTED`->`IN_PROGRESS`, `OVER`->`CLOSED`, `POSTPONED`->`CANCELLED`, `ARCHIVED`->`CLOSED`.
+- [x] **Refus de replanification** (interviews.ts 521): `interviewStatus: 'ARCHIVED'` (valeur invalide backend depuis Phase 6 -> 500) -> `'CLOSED'` (DECISION 2026-08-09, coherent avec la clôture de la demande candidat).
+- [x] **Regle de readiness front** (pipeline.interfaces.ts 49): `decisionCount !== 1` -> `decisionCount < 1` (backend 2026-08-08: au moins 1 DECISION, doublons autorises; template reel = 2 DECISION).
+- [x] **Badges `interviewMailSent` retires** (`interviews.html` 232-234/371-373, `interviews.ts` 233/292/302, `interview-create.ts` 777/806, `entities-interviews.ts` 74, `track-application.ts` 80, `interview.service.ts` 46, specs `interviews.spec.ts` 53/`entities-interviews.spec.ts` 51): le backend ne l'expose plus.
+- [x] Interfaces DTO cote front: CONSERVER les champs derives (BA n°13, DECISION 2026-08-09) — `interviewDate`/`interviewStatus` (Application), `campaignId`/`applicationId`/`interviewDate`/`interviewStatus` (Interview), `applicationId` (Decision), `applicationId` (CandidateInterview, derive via `CandidateInterviewTransformer.resolveApplicationId`); les champs reellement supprimes (`totalEvaluation*`, `interviewEvaluationsLink`, `evaluationScore/Number/Percentage`, `candidateMark`/`recruiterComment`, `isCancel`, `interviewStart`) sont deja absents du front -> verification seule.
+- [x] `merise.ts` (page schema BD statique): mettre a jour vers le schema final post-420 (retirer `interview_mail_sent`/`is_cancel`/`total_evaluation_*`/`candidate_mark`/`recruiter_comment`/`interview_start`/`pre_screen|final_decision_mail_sent`/`application_status`/`mail_sent`) (DECISION 2026-08-09).
+- [x] Ecrans restants + divers: `applications.*`, `entities-applications.*`, `interviews.*`, `interview-create.*`, `entities-interviews.*`, `evaluations.*`, `evaluations-list.*`, `entities-candidate-interview.*`, `entities-decisions.*`, `decisions.*`, `pipeline-template-edit.*`, `pipeline-templates.*`, `track-application.*`, `candidate-detail.*`, `entities-application-progress.*`, `entities-pipeline-stages.*`; `manual-correction-status.constants.ts` (retirer la normalisation `DONE` -> `COMPLETED`; enum backend = NOT_REQUIRED/PENDING/COMPLETED); README `interviews/README.md`.
+- [x] Normaliser `applicationsId` -> `applicationId` dans `evaluations.ts` (405/445): DEJA FAIT (0 occurrence).
+- [x] Specs front associes: `interviews.spec.ts`, `entities-interviews.spec.ts`, `applications.spec.ts`, `decisions.spec.ts`, `entities-applications.spec.ts`, `evaluations-list.spec.ts`, `interview-create.spec.ts`, `pipeline-template-edit.spec.ts`.
+
+Sortie de phase: front aligne sur le vocabulaire cible post-420 (stage/progress/interview/quiz); readiness coherente avec le backend; champs derives conserves; champs supprimes absents; `merise.ts` a jour; `rg` front = 0 legacy; `ng build` + specs verts. (VALIDE 2026-08-09: `ng build --configuration development` OK + 95/95 specs verts + `rg` front = 0 legacy.)
 
 ## 5. Risques et points a verifier
 
@@ -323,16 +335,17 @@ Taches:
 13. DTO derives lecture (Phase 3 - RESOLU 2026-08-04): `InterviewsDto.applicationId`/`campaignId` et `ApplicationsDto.interviewDate`/`interviewStatus` RESTENT, derives via `application_progress`; derivation + retrait des champs d'entite deployes AVANT le DROP V1_073.
 14. `applicationId` obligatoire a la creation d'interview (Phase 3 - RESOLU 2026-08-04): alignement runtime sur la cible NOT NULL; volume legacy comptabilise avant V1_072.
 15. Durcissements NOT NULL (Phase 3 - RESOLU 2026-08-04): `candidate_interview.interview_id` et `evaluations.candidate_interview_id` -> NOT NULL dans V1_072 (backfill si NULL).
+16. Phase 7 (RESOLU 2026-08-09): (a) les champs derives front sont CONSERVES (BA n°13) — `interviewDate`/`interviewStatus`/`campaignId`/`applicationId` sur Interview, `interviewDate`/`interviewStatus` sur Application, `applicationId` sur Decision, `applicationId` sur CandidateInterview (derive `resolveApplicationId`) ; (b) la page `merise.ts` est mise a jour vers le schema final (plus de noms legacy) ; (c) le refus de replanification envoie `CLOSED` (remplace `ARCHIVED`, invalide backend).
 
 ## 6. Definition of done
 
-- [ ] Pour chaque phase 3-5: migration de phase appliquee; donnees verifiees conservees (comptages avant/apres dans la migration).
-- [ ] Snapshot `quizapp_db_described_*.md` regenere a chaque sortie de phase.
-- [ ] `rg` sur le backend: 0 reference aux getters/setters legacy cibles (liste §2).
-- [ ] `rg` sur le front: 0 reference aux champs legacy cibles (liste §2).
-- [ ] `mvn compile` + tests backend verts.
-- [ ] Build front + specs verts.
-- [ ] Schema final conforme au doc cible §5/§7, hors deviation documentee `candidate_interview.interview_duration` (conservee).
+- [x] Pour chaque phase 3-6: migration de phase appliquee; donnees verifiees conservees (comptages avant/apres dans la migration). [Phases 3-5: SORTIE VALIDEE 2026-08-07; Phase 6: SORTIE VALIDEE 2026-08-08]
+- [x] Snapshot `quizapp_db_described_*.md` regenere a chaque sortie de phase. [Dernier: `quizapp_db_described_20260809.md` post V1_077]
+- [x] `rg` sur le backend: 0 reference aux getters/setters legacy cibles (liste §2). [FAIT 2026-08-08; seuls restes legitimes: code evenement audit `"EVALUATION"` + tests negatifs]
+- [ ] `rg` sur le front: 0 reference aux champs legacy cibles (liste §2). [Phase 7]
+- [x] `mvn compile` + tests backend verts. [FAIT 2026-08-08: 123 tests OK; 3 echecs PRE-EXISTANTS hors perimetre `QuestionBusinessTest`; QuizappApplicationTests OK (ddl-auto=validate)]
+- [ ] Build front + specs verts. [Phase 7]
+- [x] Schema final conforme au doc cible §5/§7, hors deviation documentee `candidate_interview.interview_duration` (conservee). [FAIT 2026-08-08: V1_077 -> plus aucune colonne §7 restante]
 
 ## 7. Dependances entre phases
 
@@ -347,5 +360,6 @@ Migrations: une ou deux par phase (V1_072..V1_077), immuables et appliquees dans
                     des phases; jamais modifiees une fois appliquees.
 Phase 6 (reconciliation finale) apres 1-5. Phase 7 (front) en continu ou apres 6.
 ```
+[Phases 1-6 CLOTUREES: V1_070/V1_071/V1_072+V1_073/V1_074/V1_075/V1_076+V1_077 appliquees (commits `8555a85`/`6b975f2`/`2915a8b`/`4ad9b15`/`5421dcb`/`c15d6a3`). Phase 7 en cours: plan revise 2026-08-09]
 
 Ordre recommande: 3 -> 4 -> (5 en parallele) -> 6 -> 7.

@@ -62,14 +62,14 @@ export class EntitiesApplicationProgressComponent extends EntityCrudBase<Applica
 
   getStatusLabel(status?: ProgressStatus | string): string {
     const labels: Record<string, string> = {
-      PENDING: 'En attente', IN_PROGRESS: 'En cours', PASSED: 'Réussi', FAILED: 'Échoué', SKIPPED: 'Ignoré'
+      PENDING: 'En attente', IN_PROGRESS: 'En cours', COMPLETED: 'Validé', AWAITING_VALIDATION: 'À valider', FAILED: 'Échoué', SKIPPED: 'Ignoré'
     };
     return status ? labels[status] || status : '-';
   }
 
   getStatusClass(status?: ProgressStatus | string): string {
     const classes: Record<string, string> = {
-      PENDING: 'status-pending', IN_PROGRESS: 'status-in-progress', PASSED: 'status-passed', FAILED: 'status-failed', SKIPPED: 'status-skipped'
+      PENDING: 'status-pending', IN_PROGRESS: 'status-in-progress', COMPLETED: 'status-completed', AWAITING_VALIDATION: 'status-awaiting-validation', FAILED: 'status-failed', SKIPPED: 'status-skipped'
     };
     return status ? classes[status] || '' : '';
   }

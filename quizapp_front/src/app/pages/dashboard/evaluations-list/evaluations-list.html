@@ -54,17 +54,17 @@
         </button>
         <button
           class="chip started"
-          [class.active]="selectedFilter() === 'STARTED'"
-          (click)="setFilter('STARTED')"
+          [class.active]="selectedFilter() === 'IN_PROGRESS'"
+          (click)="setFilter('IN_PROGRESS')"
         >
           En cours ({{ inProgressCount() }})
         </button>
         <button
           class="chip completed"
-          [class.active]="selectedFilter() === 'OVER'"
-          (click)="setFilter('OVER')"
+          [class.active]="selectedFilter() === 'CLOSED'"
+          (click)="setFilter('CLOSED')"
         >
-          Terminés ({{ completedCount() }})
+          Clôturés ({{ completedCount() }})
         </button>
       </div>
 
@@ -100,7 +100,7 @@
     } @else {
       <div class="evaluations-grid">
         @for (interview of filteredInterviews(); track interview.id) {
-          <div class="evaluation-card" [class.completed]="interview.interviewStatus === 'OVER'" (click)="openEvaluation(interview)">
+          <div class="evaluation-card" [class.completed]="interview.interviewStatus === 'CLOSED'" (click)="openEvaluation(interview)">
             <div class="card-header">
               <div class="candidate-info">
                 <div class="candidate-avatar">
@@ -141,13 +141,13 @@
                   }
                 </div>
               }
-              @if (interview.interviewStatus === 'STARTED' && interview.startedAt) {
+              @if (interview.interviewStatus === 'IN_PROGRESS' && interview.startedAt) {
                 <div class="info-row">
                   <i class="bi bi-play-circle"></i>
                   <span>Démarré le {{ formatDate(interview.startedAt) }}</span>
                 </div>
               }
-              @if (interview.interviewStatus === 'OVER' && interview.endedAt) {
+              @if (interview.interviewStatus === 'CLOSED' && interview.endedAt) {
                 <div class="info-row">
                   <i class="bi bi-check-circle"></i>
                   <span>Terminé le {{ formatDate(interview.endedAt) }}</span>
@@ -190,7 +190,7 @@
             </div>
 
             <div class="card-footer">
-              @if (interview.interviewStatus === 'OVER') {
+              @if (interview.interviewStatus === 'CLOSED') {
                 @if ((interview.submittedEvaluationCount || 0) > 0) {
                   <div class="score-section">
                     <div class="score-item">

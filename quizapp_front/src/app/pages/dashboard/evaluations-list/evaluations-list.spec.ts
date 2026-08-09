@@ -43,7 +43,7 @@ describe('EvaluationsListComponent', () => {
         pipelineStageOrder: 3,
         interviewDate: '20/05/2026 09:00',
         startedAt: '2026-05-20T09:00:00Z',
-        interviewStatus: 'OVER',
+        interviewStatus: 'CLOSED',
         endedAt: '2026-05-31T11:00:00Z'
       }, {
         id: 18,
@@ -57,7 +57,7 @@ describe('EvaluationsListComponent', () => {
         pipelineStageOrder: 5,
         interviewDate: '28/05/2026 14:00',
         startedAt: '2026-05-28T14:00:00Z',
-        interviewStatus: 'STARTED'
+        interviewStatus: 'IN_PROGRESS'
       }]
     } as any));
     applicationService.getApplicationsByCriteria.and.returnValue(of({

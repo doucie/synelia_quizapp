@@ -454,14 +454,12 @@
         <div class="form-group">
           <label class="form-label">Statut</label>
           <app-filter-select [(ngModel)]="editFormData.interviewStatus" name="status" ariaLabel="Sélectionner un statut d'entretien">
-            <option value="PENDING">En attente</option>
             <option value="SCHEDULED">Planifié</option>
-            <option value="STARTED">En cours</option>
-            <option value="OVER">Terminé</option>
-            <option value="PASSED">Réussi</option>
-            <option value="FAILED">Échoué</option>
-            <option value="POSTPONED">Reporté</option>
-            <option value="ARCHIVED">Archivé</option>
+            <option value="IN_PROGRESS">En cours</option>
+            <option value="AWAITING_EVALUATION">En attente d'évaluation</option>
+            <option value="AWAITING_VALIDATION">En attente de validation</option>
+            <option value="CLOSED">Clôturé</option>
+            <option value="CANCELLED">Annulé</option>
           </app-filter-select>
         </div>
         <div class="form-group">

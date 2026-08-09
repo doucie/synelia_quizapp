@@ -36,16 +36,20 @@ const PALETTE = [
 const QUIZ_COLORS: Record<string, string> = {
   COMPLETED:    'var(--success)',
   IN_PROGRESS:  'var(--info)',
-  ABANDONED:    'var(--error)',
-  NOT_STARTED:  'var(--text-tertiary)',
+  STARTED:      'var(--info)',
+  PENDING:      'var(--text-tertiary)',
+  EXPIRED:      'var(--error)',
+  CANCELLED:    'var(--error)',
   NOT_REQUIRED: 'var(--primary-light)'
 };
 
 const QUIZ_LABELS: Record<string, string> = {
   COMPLETED:    'Terminé',
   IN_PROGRESS:  'En cours',
-  ABANDONED:    'Abandonné',
-  NOT_STARTED:  'Non démarré',
+  STARTED:      'En cours',
+  PENDING:      'En attente',
+  EXPIRED:      'Expiré',
+  CANCELLED:    'Annulé',
   NOT_REQUIRED: 'Non requis'
 };
 

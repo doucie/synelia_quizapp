@@ -46,7 +46,7 @@ export class EntitiesInterviewsComponent extends EntityCrudBase<Interview, Inter
 
   advancedCriteria: InterviewSearchCriteria = {};
   editFormData: Interview = { interviewType: 'ONLINE' };
-  createFormData: Partial<Interview> = { interviewType: 'ONLINE', interviewStatus: 'PENDING' };
+  createFormData: Partial<Interview> = { interviewType: 'ONLINE', interviewStatus: 'SCHEDULED' };
 
   override allColumns: ColumnDef[] = [
     { key: 'id', label: 'ID', priority: 1 },
@@ -71,7 +71,6 @@ export class EntitiesInterviewsComponent extends EntityCrudBase<Interview, Inter
     { key: 'applicationProgressId', label: 'Occurrence pipeline', type: 'id', editable: false, displayValue: (entity) => this.getApplicationProgressDisplay(entity?.applicationProgressId) },
     { key: 'interviewRound', label: 'Round', type: 'text', editable: false, displayValue: (entity) => this.getInterviewRoundDisplay(entity?.interviewRound) },
     { key: 'pipelineStageLabel', label: 'Étape pipeline', type: 'text', editable: false, displayValue: (entity) => this.getPipelineStageDisplay(entity) },
-    { key: 'interviewMailSent', label: 'Invitation envoyée', type: 'boolean' },
     { key: 'interviewLocation', label: 'Lieu', type: 'text' },
     { key: 'meetLink', label: 'Lien visio', type: 'text' },
     { key: 'evaluationRoomCode', label: 'Lien évaluation', type: 'text', editable: false },
@@ -111,7 +110,7 @@ export class EntitiesInterviewsComponent extends EntityCrudBase<Interview, Inter
   }
 
   protected resetCreateFormData(): void {
-    this.createFormData = { interviewType: 'ONLINE', interviewStatus: 'PENDING' };
+    this.createFormData = { interviewType: 'ONLINE', interviewStatus: 'SCHEDULED' };
   }
 
   override validateCreate(): void {
@@ -142,14 +141,12 @@ export class EntitiesInterviewsComponent extends EntityCrudBase<Interview, Inter
   getStatusLabel(status: string | undefined): string {
     if (!status) return '-';
     const labels: Record<string, string> = {
-      'PENDING': 'En attente',
       'SCHEDULED': 'Planifié',
-      'STARTED': 'En cours',
-      'OVER': 'Terminé',
-      'PASSED': 'Réussi',
-      'FAILED': 'Échoué',
-      'POSTPONED': 'Reporté',
-      'ARCHIVED': 'Archivé'
+      'IN_PROGRESS': 'En cours',
+      'AWAITING_EVALUATION': 'En attente d’évaluation',
+      'AWAITING_VALIDATION': 'En attente de validation',
+      'CLOSED': 'Clôturé',
+      'CANCELLED': 'Annulé'
     };
     return labels[status] || status;
   }
@@ -157,14 +154,12 @@ export class EntitiesInterviewsComponent extends EntityCrudBase<Interview, Inter
   getStatusClass(status: string | undefined): string {
     if (!status) return '';
     const classes: Record<string, string> = {
-      'PENDING': 'status-pending',
       'SCHEDULED': 'status-scheduled',
-      'STARTED': 'status-started',
-      'OVER': 'status-over',
-      'PASSED': 'status-passed',
-      'FAILED': 'status-failed',
-      'POSTPONED': 'status-postponed',
-      'ARCHIVED': 'status-archived'
+      'IN_PROGRESS': 'status-in-progress',
+      'AWAITING_EVALUATION': 'status-awaiting-evaluation',
+      'AWAITING_VALIDATION': 'status-awaiting-validation',
+      'CLOSED': 'status-closed',
+      'CANCELLED': 'status-cancelled'
     };
     return classes[status] || '';
   }

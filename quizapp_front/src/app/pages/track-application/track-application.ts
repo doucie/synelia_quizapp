@@ -77,7 +77,6 @@ interface TrackingInterview {
   interviewStatus: string;
   interviewLocation: string | null;
   meetLink: string | null;
-  interviewMailSent: boolean;
   interviewNote: string | null;
   declineReason: string | null;
   alternativeDateRequested: string | null;
@@ -225,7 +224,7 @@ export class TrackApplicationComponent implements OnInit {
     if (!stage.progress) return '⏳';
     switch (stage.progress.progressStatus) {
       case 'IN_PROGRESS': return '🔄';
-      case 'PASSED': return '✅';
+      case 'COMPLETED': return '✅';
       case 'FAILED': return '❌';
       case 'SKIPPED': return '⏭️';
       default: return '⏳';
@@ -236,7 +235,7 @@ export class TrackApplicationComponent implements OnInit {
     if (!stage.progress) return 'pending';
     switch (stage.progress.progressStatus) {
       case 'IN_PROGRESS': return 'in-progress';
-      case 'PASSED': return 'passed';
+      case 'COMPLETED': return 'completed';
       case 'FAILED': return 'failed';
       case 'SKIPPED': return 'skipped';
       default: return 'pending';
@@ -247,7 +246,7 @@ export class TrackApplicationComponent implements OnInit {
     if (!stage.progress) return 'En attente';
     switch (stage.progress.progressStatus) {
       case 'IN_PROGRESS': return 'En cours';
-      case 'PASSED': return 'Réussi';
+      case 'COMPLETED': return 'Réussi';
       case 'FAILED': return 'Échoué';
       case 'SKIPPED': return 'Ignoré';
       default: return 'En attente';
@@ -281,9 +280,8 @@ export class TrackApplicationComponent implements OnInit {
       PENDING: 'Prêt à démarrer',
       STARTED: 'En cours',
       COMPLETED: 'Terminé',
-      MANUAL_CORRECTION_PENDING: 'En correction manuelle',
-      AUTO_PASSED: 'Réussi',
-      AUTO_FAILED: 'Échoué'
+      EXPIRED: 'Expiré',
+      CANCELLED: 'Annulé'
     };
 
     return status ? (labels[status] || status) : 'Indisponible';
@@ -540,12 +538,12 @@ export class TrackApplicationComponent implements OnInit {
 
   getInterviewStatusLabel(status: string): string {
     const labels: Record<string, string> = {
-      PENDING: 'En préparation',
       SCHEDULED: 'Planifié',
-      STARTED: 'En cours',
-      OVER: 'Terminé',
-      POSTPONED: 'Replanification demandée',
-      ARCHIVED: 'Archivé'
+      IN_PROGRESS: 'En cours',
+      AWAITING_EVALUATION: 'En attente d’évaluation',
+      AWAITING_VALIDATION: 'En attente de validation',
+      CLOSED: 'Terminé',
+      CANCELLED: 'Replanification demandée'
     };
 
     return labels[status] || status;
@@ -553,12 +551,12 @@ export class TrackApplicationComponent implements OnInit {
 
   getInterviewStatusClass(status: string): string {
     const classes: Record<string, string> = {
-      PENDING: 'pending',
       SCHEDULED: 'scheduled',
-      STARTED: 'started',
-      OVER: 'over',
-      POSTPONED: 'postponed',
-      ARCHIVED: 'archived'
+      IN_PROGRESS: 'in-progress',
+      AWAITING_EVALUATION: 'awaiting-evaluation',
+      AWAITING_VALIDATION: 'awaiting-validation',
+      CLOSED: 'closed',
+      CANCELLED: 'cancelled'
     };
 
     return classes[status] || 'pending';

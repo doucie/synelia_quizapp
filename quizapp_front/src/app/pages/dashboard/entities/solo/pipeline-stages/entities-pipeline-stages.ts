@@ -11,7 +11,7 @@ import { FilterCheckboxComponent } from '../../../../../shared/filter-checkbox/f
 import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../../../shared/filter-select/filter-select';
 import { PipelineStageService, PipelineStageCriteria, PagedPipelineStageResponse } from '../../../../../core/services/pipeline-stage.service';
 import { PipelineTemplateService } from '../../../../../core/services/pipeline-template.service';
-import { PipelineStage, PipelineTemplate, StageType, STAGE_TYPES, STAGE_TYPE_LABELS, SINGLETON_INTERMEDIATE_STAGE_TYPES, normalizePipelineStageType } from '../../../../../core/models/pipeline.interfaces';
+import { PipelineStage, PipelineTemplate, StageType, STAGE_TYPES, STAGE_TYPE_LABELS, SINGLETON_INTERMEDIATE_STAGE_TYPES } from '../../../../../core/models/pipeline.interfaces';
 
 @Component({
   selector: 'app-entities-pipeline-stages',
@@ -85,7 +85,7 @@ export class EntitiesPipelineStagesComponent extends EntityCrudBase<PipelineStag
     const usedSingletonTypes = new Set(
       templateStages
         .filter(stage => stage.id !== currentStageId)
-        .map(stage => normalizePipelineStageType(stage.stageType))
+        .map(stage => stage.stageType)
         .filter((stageType): stageType is StageType => !!stageType && this.isSingletonIntermediateStageType(stageType))
     );
 
@@ -105,12 +105,6 @@ export class EntitiesPipelineStagesComponent extends EntityCrudBase<PipelineStag
     switch (type) {
       case 'QUIZ':
         return '{"passingScore":60,"allowSkip":false,"inactivityTimeoutMinutes":30}';
-      case 'TECHNICAL_TEST':
-        return '{"passingScore":60,"allowSkip":false}';
-      case 'EVALUATION':
-        return '{"passingScore":50,"allowSkip":false}';
-      case 'CUSTOM':
-        return 'Sélectionnez un type métier supporté avant sauvegarde';
       case 'INTERVIEW':
         return '{"passingScore":50}';
       default:
@@ -121,15 +115,9 @@ export class EntitiesPipelineStagesComponent extends EntityCrudBase<PipelineStag
   getConfigHelp(type?: StageType): string {
     switch (type) {
       case 'QUIZ':
-        return 'QUIZ porte désormais le besoin métier de test. Les anciens TECHNICAL_TEST sont normalisés en QUIZ à la sauvegarde.';
-      case 'TECHNICAL_TEST':
-        return 'Type legacy: sauvegarder cette étape la convertira en QUIZ.';
-      case 'CUSTOM':
-        return 'CUSTOM n’est plus supporté. Remplacez cette valeur par un type métier explicite avant sauvegarde.';
-      case 'EVALUATION':
-        return 'EVALUATION peut utiliser passingScore pour définir le seuil de validation.';
+        return 'QUIZ porte le besoin métier de test et peut utiliser passingScore pour définir le seuil de validation.';
       case 'INTERVIEW':
-        return 'INTERVIEW peut utiliser passingScore pour définir le seuil de validation si aucune étape EVALUATION n’existe.';
+        return 'INTERVIEW peut utiliser passingScore pour définir le seuil de validation.';
       default:
         return 'Laisse vide si ce type d’étape n’a pas besoin de configuration spécifique.';
     }
@@ -283,16 +271,11 @@ export class EntitiesPipelineStagesComponent extends EntityCrudBase<PipelineStag
       return 'Ce template est verrouillé. Préparez une correction via duplication plutôt qu’en modifiant directement ses étapes.';
     }
 
-    if (stage.stageType === 'CUSTOM') {
-      return 'CUSTOM n’est plus supporté. Choisissez un type métier explicite.';
-    }
-
-    const normalizedStageType = normalizePipelineStageType(stage.stageType);
-    if (normalizedStageType && this.isSingletonIntermediateStageType(normalizedStageType)) {
+    if (stage.stageType && this.isSingletonIntermediateStageType(stage.stageType)) {
       const templateStages = stage.id ? this.editTemplateStages() : this.createTemplateStages();
-      const duplicateExists = templateStages.some(existingStage => existingStage.id !== stage.id && normalizePipelineStageType(existingStage.stageType) === normalizedStageType);
+      const duplicateExists = templateStages.some(existingStage => existingStage.id !== stage.id && existingStage.stageType === stage.stageType);
       if (duplicateExists) {
-        return `${this.getStageTypeLabel(normalizedStageType)} ne peut être présent qu'une seule fois dans le pipeline actuel.`;
+        return `${this.getStageTypeLabel(stage.stageType)} ne peut être présent qu'une seule fois dans le pipeline actuel.`;
       }
     }
 

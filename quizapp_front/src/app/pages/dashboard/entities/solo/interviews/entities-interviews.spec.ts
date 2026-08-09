@@ -47,8 +47,7 @@ describe('EntitiesInterviewsComponent', () => {
         pipelineStageType: 'INTERVIEW',
         pipelineStageLabel: 'Entretien technique',
         pipelineStageOrder: 5,
-        interviewRound: 2,
-        interviewMailSent: true
+        interviewRound: 2
       }],
       totalElements: 1,
       totalPages: 1,
@@ -66,7 +65,7 @@ describe('EntitiesInterviewsComponent', () => {
         interviewId: 18,
         applicationId: 10,
         interviewDate: '31/05/2026 14:00',
-        interviewStatus: 'POSTPONED',
+        interviewStatus: 'CANCELLED',
         interviewDuration: 45,
         alternativeDateRequested: '03/06/2026 10:30',
         declineReason: null
@@ -134,7 +133,7 @@ describe('EntitiesInterviewsComponent', () => {
 
     expect(expandedText).toContain('Ada Lovelace');
     expect(expandedText).toContain('Entretien: 31/05/2026 14:00');
-    expect(expandedText).toContain('Reporté');
+    expect(expandedText).toContain('Annulé');
     expect(expandedText).toContain('45 min');
     expect(expandedText).toContain('Demande de replanification');
     expect(expandedText).toContain('Date demandée: 03/06/2026 10:30');

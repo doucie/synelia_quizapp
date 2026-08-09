@@ -98,49 +98,32 @@
   border: 1px solid transparent;
   white-space: nowrap;
 
-  &.status-pending {
-    background-color: rgba(var(--warning-rgb), 0.1);
-    color: rgba(var(--warning-rgb), 1);
-    border-color: rgba(var(--warning-rgb), 0.2);
-  }
-
   &.status-scheduled {
     background-color: rgba(var(--info-rgb), 0.1);
     color: rgba(var(--info-rgb), 1);
     border-color: rgba(var(--info-rgb), 0.2);
   }
 
-  &.status-started {
+  &.status-in-progress {
     background-color: rgba(var(--success-rgb), 0.1);
     color: rgba(var(--success-rgb), 1);
     border-color: rgba(var(--success-rgb), 0.2);
   }
 
-  &.status-over {
-    background-color: rgba(147, 51, 234, 0.1);
-    color: rgba(147, 51, 234, 1);
-    border-color: rgba(147, 51, 234, 0.2);
-  }
-
-  &.status-passed {
-    background-color: rgba(var(--success-rgb), 0.1);
-    color: rgba(var(--success-rgb), 1);
-    border-color: rgba(var(--success-rgb), 0.2);
-  }
-
-  &.status-failed {
-    background-color: rgba(var(--error-rgb), 0.1);
-    color: rgba(var(--error-rgb), 1);
-    border-color: rgba(var(--error-rgb), 0.2);
-  }
-
-  &.status-postponed {
+  &.status-awaiting-evaluation,
+  &.status-awaiting-validation {
     background-color: rgba(var(--warning-rgb), 0.1);
     color: rgba(var(--warning-rgb), 1);
     border-color: rgba(var(--warning-rgb), 0.2);
   }
 
-  &.status-archived {
+  &.status-closed {
+    background-color: rgba(147, 51, 234, 0.1);
+    color: rgba(147, 51, 234, 1);
+    border-color: rgba(147, 51, 234, 0.2);
+  }
+
+  &.status-cancelled {
     background-color: rgba(var(--text-secondary-rgb, 107, 114, 128), 0.1);
     color: rgba(var(--text-secondary-rgb, 107, 114, 128), 1);
     border-color: rgba(var(--text-secondary-rgb, 107, 114, 128), 0.2);

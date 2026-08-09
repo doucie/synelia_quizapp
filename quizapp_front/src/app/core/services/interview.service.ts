@@ -39,11 +39,10 @@ export interface Interview {
   id?: number;
   interviewLocation?: string;
   interviewDate?: string; // Format: dd/MM/yyyy HH:mm
-  interviewStatus?: 'PENDING' | 'SCHEDULED' | 'STARTED' | 'OVER' | 'PASSED' | 'FAILED' | 'POSTPONED' | 'ARCHIVED';
+  interviewStatus?: 'SCHEDULED' | 'IN_PROGRESS' | 'AWAITING_EVALUATION' | 'AWAITING_VALIDATION' | 'CLOSED' | 'CANCELLED';
   meetLink?: string;
   evaluationRoomCode?: string; // Code unique de la salle d'évaluation
   interviewNote?: string;
-  interviewMailSent?: boolean;
   interviewType: 'IN_PERSON' | 'ONLINE';
   startedAt?: string; // Date/heure de début effectif de l'entretien
   endedAt?: string; // Date/heure de fin effectif de l'entretien
@@ -208,14 +207,12 @@ export class InterviewService {
    */
   getStatusLabel(status: string): string {
     const labels: Record<string, string> = {
-      'PENDING': 'En attente',
       'SCHEDULED': 'Planifié',
-      'STARTED': 'En cours',
-      'OVER': 'Terminé',
-      'PASSED': 'Réussi',
-      'FAILED': 'Échoué',
-      'POSTPONED': 'Reporté',
-      'ARCHIVED': 'Archivé'
+      'IN_PROGRESS': 'En cours',
+      'AWAITING_EVALUATION': 'En attente d’évaluation',
+      'AWAITING_VALIDATION': 'En attente de validation',
+      'CLOSED': 'Clôturé',
+      'CANCELLED': 'Annulé'
     };
     return labels[status] || status;
   }
@@ -225,21 +222,19 @@ export class InterviewService {
    */
   getStatusClass(status: string): string {
     const classes: Record<string, string> = {
-      'PENDING': 'warning',
       'SCHEDULED': 'info',
-      'STARTED': 'started',
-      'OVER': 'success',
-      'PASSED': 'success',
-      'FAILED': 'error',
-      'POSTPONED': 'warning',
-      'ARCHIVED': 'muted'
+      'IN_PROGRESS': 'started',
+      'AWAITING_EVALUATION': 'warning',
+      'AWAITING_VALIDATION': 'warning',
+      'CLOSED': 'success',
+      'CANCELLED': 'muted'
     };
     return classes[status] || 'muted';
   }
 
   /**
    * Termine un entretien
-   * Met à jour interview.interviewStatus à "OVER" et ended_at
+   * Met à jour interview.interviewStatus à "CLOSED" et ended_at
    * Met à jour application.aggregatedEvaluationScore, aggregatedEvaluationScorePercent
    */
   finishInterview(interviewId: number, userId: number): Observable<InterviewResponse> {

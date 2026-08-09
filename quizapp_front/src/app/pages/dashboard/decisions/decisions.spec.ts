@@ -186,7 +186,7 @@ describe('DecisionsComponent', () => {
       id: 10,
       quizScorePercent: 25,
       interviewDate: '01/01/2026 09:00',
-      interviewStatus: 'PENDING',
+      interviewStatus: 'SCHEDULED',
       currentInterviewEvaluationPercentage: 35
     } as any;
 
@@ -200,13 +200,13 @@ describe('DecisionsComponent', () => {
       {
         id: 701,
         interviewDate: '31/05/2026 14:00',
-        interviewStatus: 'OVER'
+        interviewStatus: 'CLOSED'
       } as any
     ]);
 
     expect(component.getSelectedApplicationQuizScorePercent(app)).toBe(82);
     expect(component.getSelectedApplicationInterviewDate(app)).toBe('31/05/2026 14:00');
-    expect(component.getSelectedApplicationInterviewStatus(app)).toBe('OVER');
+    expect(component.getSelectedApplicationInterviewStatus(app)).toBe('CLOSED');
     expect(component.getSelectedApplicationEvaluationScore(app)).toBe(35);
   });
 
@@ -215,7 +215,7 @@ describe('DecisionsComponent', () => {
       id: 10,
       quizScorePercent: 25,
       interviewDate: '01/01/2026 09:00',
-      interviewStatus: 'PENDING'
+      interviewStatus: 'SCHEDULED'
     } as any;
 
     component.selectedApplication.set(app);

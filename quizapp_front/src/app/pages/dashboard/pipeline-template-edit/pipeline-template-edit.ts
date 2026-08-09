@@ -378,7 +378,7 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
   }
 
   private getStageFlagPolicy(stageType: StageType): StageFlagPolicy {
-    const normalizedStageType = stageType === 'TECHNICAL_TEST' ? 'QUIZ' : stageType;
+    const normalizedStageType = stageType as StageType;
 
     switch (normalizedStageType) {
       case 'PRESELECTION':
@@ -391,7 +391,6 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
           locksEliminatory: false
         };
       case 'QUIZ':
-      case 'EVALUATION':
         return {
           locksEliminatory: false
         };

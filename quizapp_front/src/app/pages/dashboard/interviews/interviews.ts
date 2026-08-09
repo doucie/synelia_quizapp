@@ -43,7 +43,7 @@ export class InterviewsComponent implements OnInit, OnDestroy {
   applications = signal<Application[]>([]);
   loading = signal(false);
   searchTerm = signal('');
-  selectedFilter = signal<'ALL' | 'SCHEDULED' | 'STARTED' | 'OVER' | 'PENDING' | 'POSTPONED'>('ALL');
+  selectedFilter = signal<'ALL' | 'SCHEDULED' | 'IN_PROGRESS' | 'CLOSED' | 'CANCELLED'>('ALL');
   selectedInterview = signal<InterviewWithDetails | null>(null);
   
   // Modal de création/édition - Désactivé, on utilise une page dédiée maintenant
@@ -129,8 +129,8 @@ export class InterviewsComponent implements OnInit, OnDestroy {
     }
 
     return items.sort((a, b) => {
-      const priorityA = a.interviewStatus === 'POSTPONED' ? 1 : 0;
-      const priorityB = b.interviewStatus === 'POSTPONED' ? 1 : 0;
+      const priorityA = a.interviewStatus === 'CANCELLED' ? 1 : 0;
+      const priorityB = b.interviewStatus === 'CANCELLED' ? 1 : 0;
       if (priorityA !== priorityB) {
         return priorityB - priorityA;
       }
@@ -203,7 +203,7 @@ export class InterviewsComponent implements OnInit, OnDestroy {
   /**
    * Définit le filtre actif
    */
-  setFilter(filter: 'ALL' | 'SCHEDULED' | 'STARTED' | 'OVER' | 'PENDING' | 'POSTPONED'): void {
+  setFilter(filter: 'ALL' | 'SCHEDULED' | 'IN_PROGRESS' | 'CLOSED' | 'CANCELLED'): void {
     this.selectedFilter.set(filter);
   }
 
@@ -228,9 +228,8 @@ export class InterviewsComponent implements OnInit, OnDestroy {
       interviewLocation: interview.interviewLocation || '',
       meetLink: interview.meetLink || '',
       interviewNote: interview.interviewNote || '',
-      sendEmail: interview.interviewStatus === 'POSTPONED'
-        || Boolean(interview.alternativeDateRequested)
-        || interview.interviewMailSent === false,
+      sendEmail: interview.interviewStatus === 'CANCELLED'
+        || Boolean(interview.alternativeDateRequested),
       selectedEvaluatorIds: []
     });
     this.showInterviewEditModal.set(true);
@@ -278,7 +277,7 @@ export class InterviewsComponent implements OnInit, OnDestroy {
       campaignId: interview.campaignId,
       interviewType: interview.interviewType,
       interviewDate: `${form.interviewDate.split('-').reverse().join('/')} ${form.interviewTime}`,
-      interviewStatus: interview.interviewStatus === 'POSTPONED' ? 'SCHEDULED' : interview.interviewStatus,
+      interviewStatus: interview.interviewStatus === 'CANCELLED' ? 'SCHEDULED' : interview.interviewStatus,
       interviewNote: form.interviewNote.trim() || interview.interviewNote
     };
 
@@ -288,9 +287,6 @@ export class InterviewsComponent implements OnInit, OnDestroy {
     if (interview.interviewType === 'ONLINE') {
       updatedInterview.meetLink = form.meetLink.trim();
     }
-    if (form.sendEmail) {
-      updatedInterview.interviewMailSent = true;
-    }
 
     this.savingInterview.set(true);
     this.loading.set(true);
@@ -299,8 +295,7 @@ export class InterviewsComponent implements OnInit, OnDestroy {
         if (!response.hasError) {
           const invitationRequested = Boolean(form.sendEmail);
           const invitationDeliveryFailed = invitationRequested && (
-            response.items?.[0]?.interviewMailSent === false
-            || Boolean(response.status?.message && response.status.message !== 'Opération effectuée avec succès')
+            Boolean(response.status?.message && response.status.message !== 'Opération effectuée avec succès')
           );
 
           this.syncInterviewEvaluators(interview, form.selectedEvaluatorIds, (syncFailed) => {
@@ -518,7 +513,7 @@ export class InterviewsComponent implements OnInit, OnDestroy {
     const updatedInterview: Interview = {
       id: interview.id,
       interviewType: interview.interviewType,
-      interviewStatus: 'ARCHIVED',
+      interviewStatus: 'CLOSED',
       interviewNote: interview.interviewNote
     };
 
@@ -528,7 +523,7 @@ export class InterviewsComponent implements OnInit, OnDestroy {
         if (!response.hasError) {
           this.notificationService.success(
             'Demande refusée',
-            'La demande de replanification a été refusée et l\'entretien a été archivé.'
+            'La demande de replanification a été refusée et l\'entretien a été clôturé.'
           );
           this.selectedInterview.set(null);
           this.loadData();
@@ -559,7 +554,7 @@ export class InterviewsComponent implements OnInit, OnDestroy {
     if (!interview.id) return;
 
     // Si on veut démarrer l'entretien, on ouvre la modale de confirmation
-    if (newStatus === 'STARTED') {
+    if (newStatus === 'IN_PROGRESS') {
       this.openStartConfirmation(interview);
       return;
     }
@@ -672,17 +667,17 @@ export class InterviewsComponent implements OnInit, OnDestroy {
           next: () => {
             console.log('✅ Notifications envoyées aux évaluateurs');
             // Maintenant changer le statut de l'entretien
-            this.updateInterviewStatus(interview, 'STARTED');
+            this.updateInterviewStatus(interview, 'IN_PROGRESS');
           },
           error: (error) => {
             console.error('❌ Erreur lors de l\'envoi des notifications:', error);
             // On change quand même le statut même si les notifications échouent
-            this.updateInterviewStatus(interview, 'STARTED');
+            this.updateInterviewStatus(interview, 'IN_PROGRESS');
           }
         });
     } else {
       // Pas d'évaluateurs, on change directement le statut
-      this.updateInterviewStatus(interview, 'STARTED');
+      this.updateInterviewStatus(interview, 'IN_PROGRESS');
     }
   }
 
@@ -701,12 +696,12 @@ export class InterviewsComponent implements OnInit, OnDestroy {
     };
 
     // Ajouter startedAt si on démarre l'entretien
-    if (newStatus === 'STARTED') {
+    if (newStatus === 'IN_PROGRESS') {
       updated.startedAt = formattedNow;
     }
     
     // Ajouter endedAt si on termine l'entretien
-    if (newStatus === 'OVER') {
+    if (newStatus === 'CLOSED') {
       updated.endedAt = formattedNow;
     }
 
@@ -714,7 +709,7 @@ export class InterviewsComponent implements OnInit, OnDestroy {
     this.interviewService.updateInterview(updated).subscribe({
       next: (response) => {
         if (!response.hasError) {
-          if (newStatus === 'STARTED') {
+          if (newStatus === 'IN_PROGRESS') {
             this.notificationService.success(
               'Entretien démarré',
               'L\'entretien a été démarré avec succès. Les évaluateurs ont été notifiés.'
@@ -970,20 +965,6 @@ export class InterviewsComponent implements OnInit, OnDestroy {
       'ONLINE': 'En ligne'
     };
     return labels[type || 'IN_PERSON'] || 'Non spécifié';
-  }
-
-  /**
-   * Obtient la classe CSS pour le statut d'envoi d'email
-   */
-  getEmailStatusClass(sent: boolean | undefined): string {
-    return sent ? 'email-sent' : 'email-pending';
-  }
-
-  /**
-   * Obtient le libellé pour le statut d'envoi d'email
-   */
-  getEmailStatusLabel(sent: boolean | undefined): string {
-    return sent ? 'Email envoyé' : 'Email non envoyé';
   }
 
   hasInterviewOccurrenceContext(interview: InterviewWithDetails | null | undefined): boolean {

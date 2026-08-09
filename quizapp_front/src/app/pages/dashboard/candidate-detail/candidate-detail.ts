@@ -14,8 +14,7 @@ import { DecisionService, Decision } from '../../../core/services/decision.servi
 import {
   PipelineStage,
   ApplicationProgress,
-  STAGE_TYPE_LABELS,
-  normalizePipelineStageType
+  STAGE_TYPE_LABELS
 } from '../../../core/models/pipeline.interfaces';
 import { getApplicationStatusLabel, isRejectedStatus, resolveApplicationStatusFromMirrors } from '../../../core/constants/application-status.constants';
 
@@ -268,39 +267,39 @@ export class CandidateDetailComponent implements OnInit, OnDestroy {
   // ── Helpers UI ──────────────────────────────────────
   stageTypeLabel(type: string | undefined): string {
     if (!type) return '—';
-    const norm = normalizePipelineStageType(type as any) || type;
-    return STAGE_TYPE_LABELS[norm as keyof typeof STAGE_TYPE_LABELS] || type;
+    return STAGE_TYPE_LABELS[type as keyof typeof STAGE_TYPE_LABELS] || type;
   }
 
   progressStatusClass(status: string | undefined): string {
     switch (status) {
-      case 'PASSED': return 'badge-success';
+      case 'COMPLETED': return 'badge-success';
       case 'FAILED': return 'badge-error';
       case 'SKIPPED': return 'badge-warning';
       case 'IN_PROGRESS': return 'badge-primary';
+      case 'AWAITING_VALIDATION': return 'badge-warning';
       default: return 'badge-neutral';
     }
   }
 
   progressStatusLabel(status: string | undefined): string {
     switch (status) {
-      case 'PASSED': return 'Validée';
+      case 'COMPLETED': return 'Validée';
       case 'FAILED': return 'Refusée';
       case 'SKIPPED': return 'Sautée';
       case 'IN_PROGRESS': return 'En cours';
+      case 'AWAITING_VALIDATION': return 'À valider';
       default: return 'En attente';
     }
   }
 
   interviewStatusClass(status: string | undefined): string {
     switch (status) {
-      case 'PASSED': return 'badge-success';
-      case 'FAILED': return 'badge-error';
       case 'SCHEDULED':
-      case 'STARTED': return 'badge-primary';
-      case 'POSTPONED': return 'badge-warning';
-      case 'OVER': return 'badge-info';
-      case 'ARCHIVED': return 'badge-neutral';
+      case 'IN_PROGRESS': return 'badge-primary';
+      case 'AWAITING_EVALUATION':
+      case 'AWAITING_VALIDATION': return 'badge-warning';
+      case 'CLOSED': return 'badge-info';
+      case 'CANCELLED': return 'badge-neutral';
       default: return 'badge-neutral';
     }
   }
@@ -326,7 +325,8 @@ export class CandidateDetailComponent implements OnInit, OnDestroy {
     switch (this.currentQuizAttempt()?.quizStatus) {
       case 'COMPLETED': return 'badge-success';
       case 'STARTED': return 'badge-primary';
-      case 'ABANDONED': return 'badge-error';
+      case 'EXPIRED': return 'badge-warning';
+      case 'CANCELLED': return 'badge-error';
       default: return 'badge-neutral';
     }
   }
@@ -335,7 +335,8 @@ export class CandidateDetailComponent implements OnInit, OnDestroy {
     switch (this.currentQuizAttempt()?.quizStatus) {
       case 'COMPLETED': return 'Terminé';
       case 'STARTED': return 'En cours';
-      case 'ABANDONED': return 'Abandonné';
+      case 'EXPIRED': return 'Expiré';
+      case 'CANCELLED': return 'Abandonné';
       default: return 'En attente';
     }
   }

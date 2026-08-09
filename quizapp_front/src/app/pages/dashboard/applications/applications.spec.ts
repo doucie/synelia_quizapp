@@ -57,7 +57,7 @@ describe('ApplicationsComponent', () => {
     } as any));
     candidateInterviewEntityService.getAllByCriteria.and.returnValue(of({
       content: [
-        { id: 701, interviewDate: '31/05/2026 14:00', interviewStatus: 'OVER' }
+        { id: 701, interviewDate: '31/05/2026 14:00', interviewStatus: 'CLOSED' }
       ]
     } as any));
 
@@ -72,7 +72,7 @@ describe('ApplicationsComponent', () => {
         quizStatus: 'PENDING',
         quizScorePercent: 25,
         interviewDate: '01/01/2026 09:00',
-        interviewStatus: 'PENDING',
+        interviewStatus: 'SCHEDULED',
         currentInterviewEvaluationPercentage: 90
       } as any
     ], [], []);
@@ -81,7 +81,7 @@ describe('ApplicationsComponent', () => {
     expect(component.getCurrentQuizStatus(app)).toBe('COMPLETED');
     expect(component.getCurrentQuizScorePercent(app)).toBe(82);
     expect(component.getCurrentInterviewDate(app)).toBe('31/05/2026 14:00');
-    expect(component.getCurrentInterviewStatus(app)).toBe('OVER');
+    expect(component.getCurrentInterviewStatus(app)).toBe('CLOSED');
     expect(component.getCurrentEvaluationScore(app)).toBe(90);
     expect(component.completedQuizApplications()).toBe(1);
   });
@@ -104,7 +104,7 @@ describe('ApplicationsComponent', () => {
         quizStatus: 'COMPLETED',
         quizScorePercent: 91,
         interviewDate: '01/01/2026 09:00',
-        interviewStatus: 'OVER'
+        interviewStatus: 'CLOSED'
       } as any
     ], [], []);
 
@@ -167,8 +167,8 @@ describe('ApplicationsComponent', () => {
     });
     component.applicationProgressMap.set({
       10: [
-        { id: 900, pipelineStageId: 11, progressStatus: 'PASSED' } as any,
-        { id: 901, pipelineStageId: 21, progressStatus: 'PASSED' } as any
+        { id: 900, pipelineStageId: 11, progressStatus: 'COMPLETED' } as any,
+        { id: 901, pipelineStageId: 21, progressStatus: 'COMPLETED' } as any
       ]
     });
     component.applicationInterviewsLoadedMap.set({ 10: true });
@@ -225,7 +225,7 @@ describe('ApplicationsComponent', () => {
 
     component.applicationProgressMap.set({
       10: [
-        { id: 901, stageOrder: 1, stageType: 'CANDIDATURE', progressStatus: 'PASSED', stageName: 'Candidature' } as any,
+        { id: 901, stageOrder: 1, stageType: 'CANDIDATURE', progressStatus: 'COMPLETED', stageName: 'Candidature' } as any,
         { id: 902, stageOrder: 2, stageType: 'INTERVIEW', progressStatus: 'IN_PROGRESS', stageName: 'Entretien technique' } as any,
         { id: 903, stageOrder: 3, stageType: 'DECISION', progressStatus: 'PENDING', stageName: 'Décision finale' } as any
       ]

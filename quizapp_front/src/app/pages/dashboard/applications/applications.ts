@@ -634,7 +634,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     if (!progress) return 'pending';
     switch (progress.progressStatus) {
       case 'IN_PROGRESS': return 'active';
-      case 'PASSED': return 'completed';
+      case 'COMPLETED': return 'completed';
       case 'FAILED': return 'rejected';
       case 'SKIPPED': return 'skipped';
       case 'PENDING':
@@ -650,7 +650,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     if (!progress || progress.progressStatus === 'PENDING') return `${stage.stageLabel} : en attente`;
     switch (progress.progressStatus) {
       case 'IN_PROGRESS': return `${stage.stageLabel} : en cours`;
-      case 'PASSED': return `${stage.stageLabel} : validé`;
+      case 'COMPLETED': return `${stage.stageLabel} : validé`;
       case 'FAILED': return `${stage.stageLabel} : refusé`;
       case 'SKIPPED': return `${stage.stageLabel} : ignoré`;
       default: return `${stage.stageLabel}`;
@@ -1015,19 +1015,12 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     if (!status) return 'En attente';
     
     const statusMap: { [key: string]: string } = {
-      'STARTED': 'En cours',
       'SCHEDULED': 'Planifié',
-      'CONFIRMED': 'Confirmé',
-      'COMPLETED': 'Effectué',
-      'OVER': 'Terminé',
-      'PASSED': 'Réussi',
-      'FAILED': 'Échoué',
-      'POSTPONED': 'Reporté',
-      'ARCHIVED': 'Archivé',
-      'CANCELLED': 'Annulé',
-      'DECLINED': 'Refusé',
-      'NO_SHOW': 'Absent',
-      'PENDING': 'En attente'
+      'IN_PROGRESS': 'En cours',
+      'AWAITING_EVALUATION': 'Évaluation en attente',
+      'AWAITING_VALIDATION': 'Validation en attente',
+      'CLOSED': 'Clôturé',
+      'CANCELLED': 'Annulé'
     };
     
     return statusMap[status] || status;
@@ -1040,19 +1033,12 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     if (!status) return 'interview-pending';
     
     const statusMap: { [key: string]: string } = {
-      'STARTED': 'interview-confirmed',
       'SCHEDULED': 'interview-scheduled',
-      'CONFIRMED': 'interview-confirmed',
-      'COMPLETED': 'interview-completed',
-      'OVER': 'interview-completed',
-      'PASSED': 'interview-completed',
-      'FAILED': 'interview-cancelled',
-      'POSTPONED': 'interview-pending',
-      'ARCHIVED': 'badge-neutral',
-      'CANCELLED': 'interview-cancelled',
-      'DECLINED': 'interview-cancelled',
-      'NO_SHOW': 'interview-no-show',
-      'PENDING': 'interview-pending'
+      'IN_PROGRESS': 'interview-confirmed',
+      'AWAITING_EVALUATION': 'interview-pending',
+      'AWAITING_VALIDATION': 'interview-pending',
+      'CLOSED': 'interview-completed',
+      'CANCELLED': 'interview-cancelled'
     };
     
     return statusMap[status] || 'interview-pending';
@@ -1244,8 +1230,10 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   getQuizBadgeClass(status: string | undefined): string {
     switch (status) {
       case 'COMPLETED': return 'badge-success';
-      case 'IN_PROGRESS': return 'badge-info';
-      case 'ABANDONED': return 'badge-error';
+      case 'IN_PROGRESS':
+      case 'STARTED': return 'badge-info';
+      case 'EXPIRED':
+      case 'CANCELLED': return 'badge-error';
       case 'NOT_REQUIRED': return 'badge-neutral';
       default: return 'badge-info';
     }
@@ -1253,18 +1241,14 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
 
   getInterviewBadgeClass(status: string | undefined): string {
     switch (status) {
-      case 'COMPLETED':
-      case 'DONE':
-      case 'OVER':
-      case 'PASSED':
+      case 'CLOSED':
         return 'badge-success';
-      case 'STARTED':
+      case 'IN_PROGRESS':
       case 'SCHEDULED':
-      case 'PLANNED':
-      case 'POSTPONED':
         return 'badge-info';
-      case 'FAILED':
-      case 'DECLINED':
+      case 'AWAITING_EVALUATION':
+      case 'AWAITING_VALIDATION':
+        return 'badge-warning';
       case 'CANCELLED':
         return 'badge-error';
       default: return 'badge-neutral';
@@ -1521,7 +1505,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     switch ((progressStatus || '').trim().toUpperCase()) {
       case 'IN_PROGRESS':
         return 'active';
-      case 'PASSED':
+      case 'COMPLETED':
         return 'completed';
       case 'FAILED':
         return 'rejected';
@@ -1565,14 +1549,11 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       case 'CANDIDATURE':
         return 'Candidature';
       case 'QUIZ':
-      case 'TECHNICAL_TEST':
         return 'Quiz';
       case 'PRESELECTION':
         return 'Pré-sélection';
       case 'INTERVIEW':
         return 'Entretien';
-      case 'EVALUATION':
-        return 'Évaluation';
       case 'DECISION':
         return 'Décision';
       default:

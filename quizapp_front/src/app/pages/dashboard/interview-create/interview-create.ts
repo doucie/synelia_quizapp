@@ -478,12 +478,8 @@ L'équipe de recrutement
         return 'Pré-sélection';
       case 'INTERVIEW':
         return 'Entretien';
-      case 'EVALUATION':
-        return 'Évaluation';
       case 'DECISION':
         return 'Décision';
-      case 'TECHNICAL_TEST':
-        return 'Quiz';
       default:
         return stageType || '';
     }
@@ -495,7 +491,9 @@ L'équipe de recrutement
         return 'En cours';
       case 'PENDING':
         return 'En attente';
-      case 'PASSED':
+      case 'AWAITING_VALIDATION':
+        return 'À valider';
+      case 'COMPLETED':
         return 'Réussie';
       case 'FAILED':
         return 'Échouée';
@@ -512,8 +510,10 @@ L'équipe de recrutement
         return 'pipeline-progress-in-progress';
       case 'PENDING':
         return 'pipeline-progress-pending';
-      case 'PASSED':
-        return 'pipeline-progress-passed';
+      case 'AWAITING_VALIDATION':
+        return 'pipeline-progress-awaiting-validation';
+      case 'COMPLETED':
+        return 'pipeline-progress-completed';
       case 'FAILED':
         return 'pipeline-progress-failed';
       case 'SKIPPED':
@@ -745,7 +745,6 @@ L'équipe de recrutement
   createInterviews(): void {
     const form = this.formData();
     const dateTime = `${form.interviewDate.split('-').reverse().join('/')} ${form.interviewTime}`;
-    const shouldSendEmail = this.sendEmail();
 
     this.loading.set(true);
 
@@ -774,7 +773,6 @@ L'équipe de recrutement
         meetLink: form.meetLink || undefined,
         interviewNote: form.interviewNote || undefined,
         interviewStatus: 'SCHEDULED',
-        interviewMailSent: shouldSendEmail,
         isDeleted: false
       };
 
@@ -802,14 +800,11 @@ L'équipe de recrutement
           .filter(r => !r.hasError && r.items && r.items.length > 0)
           .map(r => r.items[0].id!)
           .filter(id => id !== undefined);
-        const failedEmailCount = shouldSendEmail
-          ? interviewResponses.filter(r => r.items?.[0]?.interviewMailSent === false).length
-          : 0;
 
         console.log('✅ Entretiens créés:', createdInterviewIds);
 
         // Créer les participants pour chaque entretien
-        this.createInterviewParticipants(createdInterviewIds, failedEmailCount);
+        this.createInterviewParticipants(createdInterviewIds);
       },
       error: (error) => {
         console.error('❌ Erreur lors de la création des entretiens:', error);
@@ -822,7 +817,7 @@ L'équipe de recrutement
   /**
    * Crée les participants d'entretien et copie les permissions d'entité
    */
-  createInterviewParticipants(interviewIds: number[], failedEmailCount = 0): void {
+  createInterviewParticipants(interviewIds: number[]): void {
     const form = this.formData();
     const allParticipants: InterviewParticipant[] = [];
 
@@ -857,21 +852,21 @@ L'équipe de recrutement
 
                 if (permKeys.length > 0) {
                   this.entityPermissionService.grantBulk([userId], 'INTERVIEW', interviewId, permKeys).subscribe({
-                    next: () => { permsDone++; this.checkPermsDone(permsDone, totalPerms, interviewIds.length, failedEmailCount); },
-                    error: () => { permsDone++; this.checkPermsDone(permsDone, totalPerms, interviewIds.length, failedEmailCount); }
+                    next: () => { permsDone++; this.checkPermsDone(permsDone, totalPerms, interviewIds.length); },
+                    error: () => { permsDone++; this.checkPermsDone(permsDone, totalPerms, interviewIds.length); }
                   });
                 } else {
                   // Pas de permission campaign → accorder VIEW_EVALUATIONS par défaut
                   this.entityPermissionService.grant(userId, 'INTERVIEW', interviewId, 'VIEW_EVALUATIONS').subscribe({
-                    next: () => { permsDone++; this.checkPermsDone(permsDone, totalPerms, interviewIds.length, failedEmailCount); },
-                    error: () => { permsDone++; this.checkPermsDone(permsDone, totalPerms, interviewIds.length, failedEmailCount); }
+                    next: () => { permsDone++; this.checkPermsDone(permsDone, totalPerms, interviewIds.length); },
+                    error: () => { permsDone++; this.checkPermsDone(permsDone, totalPerms, interviewIds.length); }
                   });
                 }
               } else {
                 // Évaluateur supplémentaire → seulement VIEW_EVALUATIONS
                 this.entityPermissionService.grant(userId, 'INTERVIEW', interviewId, 'VIEW_EVALUATIONS').subscribe({
-                  next: () => { permsDone++; this.checkPermsDone(permsDone, totalPerms, interviewIds.length, failedEmailCount); },
-                  error: () => { permsDone++; this.checkPermsDone(permsDone, totalPerms, interviewIds.length, failedEmailCount); }
+                  next: () => { permsDone++; this.checkPermsDone(permsDone, totalPerms, interviewIds.length); },
+                  error: () => { permsDone++; this.checkPermsDone(permsDone, totalPerms, interviewIds.length); }
                 });
               }
             });
@@ -880,7 +875,7 @@ L'équipe de recrutement
           // Si pas de permissions à copier, terminer directement
           if (totalPerms === 0) {
             this.loading.set(false);
-            alert(this.buildInterviewCreationSuccessMessage(interviewIds.length, failedEmailCount));
+            alert(this.buildInterviewCreationSuccessMessage(interviewIds.length));
             this.router.navigate(['/dashboard/interviews']);
           }
         },
@@ -893,7 +888,7 @@ L'équipe de recrutement
       });
     } else {
       this.loading.set(false);
-      alert(this.buildInterviewCreationSuccessMessage(interviewIds.length, failedEmailCount));
+      alert(this.buildInterviewCreationSuccessMessage(interviewIds.length));
       this.router.navigate(['/dashboard/interviews']);
     }
   }
@@ -901,21 +896,17 @@ L'équipe de recrutement
   /**
    * Vérifie si toutes les permissions d'entité ont été copiées
    */
-  private checkPermsDone(done: number, total: number, interviewCount: number, failedEmailCount = 0): void {
+  private checkPermsDone(done: number, total: number, interviewCount: number): void {
     if (done >= total) {
       this.loading.set(false);
-      alert(this.buildInterviewCreationSuccessMessage(interviewCount, failedEmailCount));
+      alert(this.buildInterviewCreationSuccessMessage(interviewCount));
       this.router.navigate(['/dashboard/interviews']);
     }
   }
 
-  private buildInterviewCreationSuccessMessage(interviewCount: number, failedEmailCount: number): string {
+  private buildInterviewCreationSuccessMessage(interviewCount: number): string {
     if (!this.sendEmail()) {
       return `${interviewCount} entretien(s) créé(s) avec succès sans envoi d'emails !`;
-    }
-
-    if (failedEmailCount > 0) {
-      return `${interviewCount} entretien(s) créé(s) avec succès, mais ${failedEmailCount} convocation(s) n'ont pas pu être envoyée(s). Vous pourrez les renvoyer depuis la liste des entretiens.`;
     }
 
     return `${interviewCount} entretien(s) créé(s) avec succès avec envoi d'emails !`;

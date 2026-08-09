@@ -259,7 +259,7 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
     }
 
     const currentStageType = this.getCurrentPipelineStageType(application);
-    if (currentStageType === 'INTERVIEW' || currentStageType === 'EVALUATION' || this.getCurrentInterviewStatus(application)) {
+    if (currentStageType === 'INTERVIEW' || this.getCurrentInterviewStatus(application)) {
       return this.getCurrentPipelineStageLabel(application) || 'Entretien';
     }
 
@@ -272,7 +272,7 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
       return this.getCurrentPipelineStageLabel(application) || 'Pré-sélection';
     }
 
-    if (currentStageType === 'QUIZ' || currentStageType === 'TECHNICAL_TEST' || this.hasCurrentQuizSummary(application)) {
+    if (currentStageType === 'QUIZ' || this.hasCurrentQuizSummary(application)) {
       return this.getCurrentPipelineStageLabel(application) || 'Quiz';
     }
 
@@ -294,7 +294,7 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
     }
 
     const currentStageType = this.getCurrentPipelineStageType(application);
-    if (currentStageType === 'INTERVIEW' || currentStageType === 'EVALUATION' || this.getCurrentInterviewStatus(application)) {
+    if (currentStageType === 'INTERVIEW' || this.getCurrentInterviewStatus(application)) {
       return 'status-interviewing';
     }
 
@@ -307,7 +307,7 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
       return 'status-pending';
     }
 
-    if (currentStageType === 'QUIZ' || currentStageType === 'TECHNICAL_TEST' || this.hasCurrentQuizSummary(application)) {
+    if (currentStageType === 'QUIZ' || this.hasCurrentQuizSummary(application)) {
       return 'status-submitted';
     }
 
@@ -550,22 +550,18 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
 
   getInterviewStatusLabel(status?: string | null): string {
     switch ((status || '').trim().toUpperCase()) {
-      case 'PENDING':
-        return 'En attente';
       case 'SCHEDULED':
         return 'Planifié';
-      case 'STARTED':
+      case 'IN_PROGRESS':
         return 'En cours';
-      case 'OVER':
-        return 'Terminé';
-      case 'PASSED':
-        return 'Réussi';
-      case 'FAILED':
-        return 'Échoué';
-      case 'POSTPONED':
-        return 'Reporté';
-      case 'ARCHIVED':
-        return 'Archivé';
+      case 'AWAITING_EVALUATION':
+        return 'Évaluation en attente';
+      case 'AWAITING_VALIDATION':
+        return 'Validation en attente';
+      case 'CLOSED':
+        return 'Clôturé';
+      case 'CANCELLED':
+        return 'Annulé';
       default:
         return status || '';
     }
@@ -573,21 +569,17 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
 
   getInterviewStatusClass(status?: string | null): string {
     switch ((status || '').trim().toUpperCase()) {
-      case 'PENDING':
-        return 'interview-status-pending';
       case 'SCHEDULED':
         return 'interview-status-scheduled';
-      case 'STARTED':
+      case 'IN_PROGRESS':
         return 'interview-status-started';
-      case 'OVER':
-      case 'PASSED':
-        return 'interview-status-over';
-      case 'FAILED':
-        return 'interview-status-failed';
-      case 'POSTPONED':
+      case 'AWAITING_EVALUATION':
+      case 'AWAITING_VALIDATION':
         return 'interview-status-postponed';
-      case 'ARCHIVED':
-        return 'interview-status-archived';
+      case 'CLOSED':
+        return 'interview-status-over';
+      case 'CANCELLED':
+        return 'interview-status-failed';
       default:
         return '';
     }
@@ -950,12 +942,8 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
         return 'Pré-sélection';
       case 'INTERVIEW':
         return 'Entretien';
-      case 'EVALUATION':
-        return 'Évaluation';
       case 'DECISION':
         return 'Décision';
-      case 'TECHNICAL_TEST':
-        return 'Quiz';
       default:
         return stageType || '';
     }
@@ -1028,8 +1016,8 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
         return 'En cours';
       case 'PENDING':
         return 'En attente';
-      case 'PASSED':
-        return 'Réussie';
+      case 'COMPLETED':
+        return 'Validée';
       case 'FAILED':
         return 'Échouée';
       case 'SKIPPED':
@@ -1045,8 +1033,10 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
         return 'pipeline-progress-in-progress';
       case 'PENDING':
         return 'pipeline-progress-pending';
-      case 'PASSED':
-        return 'pipeline-progress-passed';
+      case 'COMPLETED':
+        return 'pipeline-progress-completed';
+      case 'AWAITING_VALIDATION':
+        return 'pipeline-progress-awaiting-validation';
       case 'FAILED':
         return 'pipeline-progress-failed';
       case 'SKIPPED':

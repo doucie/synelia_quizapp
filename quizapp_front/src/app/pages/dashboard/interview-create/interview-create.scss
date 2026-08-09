@@ -401,10 +401,16 @@
         border-color: rgba(var(--warning-rgb), 0.24);
       }
 
-      &.candidate-runtime-pill--status.pipeline-progress-passed {
+      &.candidate-runtime-pill--status.pipeline-progress-completed {
         color: var(--success);
         background: rgba(var(--success-rgb), 0.12);
         border-color: rgba(var(--success-rgb), 0.24);
+      }
+
+      &.candidate-runtime-pill--status.pipeline-progress-awaiting-validation {
+        color: var(--warning);
+        background: rgba(var(--warning-rgb), 0.12);
+        border-color: rgba(var(--warning-rgb), 0.24);
       }
 
       &.candidate-runtime-pill--status.pipeline-progress-failed {

@@ -23,9 +23,13 @@
     background-color: var(--color-info-light);
     color: var(--color-info-dark);
   }
-  &.status-passed {
+  &.status-completed {
     background-color: var(--color-success-light);
     color: var(--color-success-dark);
+  }
+  &.status-awaiting-validation {
+    background-color: var(--color-warning-light);
+    color: var(--color-warning-dark);
   }
   &.status-failed {
     background-color: var(--color-danger-light);

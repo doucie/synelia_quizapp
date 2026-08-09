@@ -66,18 +66,18 @@ export class EvaluationsListComponent implements OnInit, OnDestroy {
   campaigns = signal<Map<number, Campaign>>(new Map());
   loading = signal(false);
   searchTerm = signal('');
-  selectedFilter = signal<'ALL' | 'STARTED' | 'OVER'>('ALL');
+  selectedFilter = signal<'ALL' | 'IN_PROGRESS' | 'CLOSED'>('ALL');
   currentUserId = signal<number>(0);
 
-  // Computed: interviews filtrés (seulement STARTED et OVER pour les évaluations)
+  // Computed: interviews filtrés (seulement IN_PROGRESS et CLOSED pour les évaluations)
   filteredInterviews = computed(() => {
     const term = this.searchTerm().toLowerCase();
     const filter = this.selectedFilter();
     
     return this.interviews()
       .filter(interview => {
-        // Seulement les entretiens qui peuvent être évalués (STARTED ou OVER)
-        if (!['STARTED', 'OVER'].includes(interview.interviewStatus || '')) {
+        // Seulement les entretiens qui peuvent être évalués (IN_PROGRESS ou CLOSED)
+        if (!['IN_PROGRESS', 'CLOSED'].includes(interview.interviewStatus || '')) {
           return false;
         }
         
@@ -101,22 +101,22 @@ export class EvaluationsListComponent implements OnInit, OnDestroy {
         return true;
       })
       .sort((a, b) => {
-        // Trier par date de fin décroissante pour OVER, puis par date de début pour STARTED
-        if (a.interviewStatus === 'OVER' && b.interviewStatus === 'OVER') {
+        // Trier par date de fin décroissante pour CLOSED, puis par date de début pour IN_PROGRESS
+        if (a.interviewStatus === 'CLOSED' && b.interviewStatus === 'CLOSED') {
           return new Date(b.endedAt || 0).getTime() - new Date(a.endedAt || 0).getTime();
         }
-        if (a.interviewStatus === 'STARTED' && b.interviewStatus === 'STARTED') {
+        if (a.interviewStatus === 'IN_PROGRESS' && b.interviewStatus === 'IN_PROGRESS') {
           return new Date(b.startedAt || 0).getTime() - new Date(a.startedAt || 0).getTime();
         }
-        // STARTED avant OVER
-        return a.interviewStatus === 'STARTED' ? -1 : 1;
+        // IN_PROGRESS avant CLOSED
+        return a.interviewStatus === 'IN_PROGRESS' ? -1 : 1;
       });
   });
 
   // Stats
-  totalEvaluations = computed(() => this.interviews().filter(i => ['STARTED', 'OVER'].includes(i.interviewStatus || '')).length);
-  inProgressCount = computed(() => this.interviews().filter(i => i.interviewStatus === 'STARTED').length);
-  completedCount = computed(() => this.interviews().filter(i => i.interviewStatus === 'OVER').length);
+  totalEvaluations = computed(() => this.interviews().filter(i => ['IN_PROGRESS', 'CLOSED'].includes(i.interviewStatus || '')).length);
+  inProgressCount = computed(() => this.interviews().filter(i => i.interviewStatus === 'IN_PROGRESS').length);
+  completedCount = computed(() => this.interviews().filter(i => i.interviewStatus === 'CLOSED').length);
 
   constructor(
     private router: Router,
@@ -204,7 +204,7 @@ export class EvaluationsListComponent implements OnInit, OnDestroy {
       });
   }
 
-  setFilter(filter: 'ALL' | 'STARTED' | 'OVER'): void {
+  setFilter(filter: 'ALL' | 'IN_PROGRESS' | 'CLOSED'): void {
     this.selectedFilter.set(filter);
   }
 
@@ -218,16 +218,16 @@ export class EvaluationsListComponent implements OnInit, OnDestroy {
 
   getStatusLabel(status: string | undefined): string {
     switch (status) {
-      case 'STARTED': return 'En cours';
-      case 'OVER': return 'Terminé';
+      case 'IN_PROGRESS': return 'En cours';
+      case 'CLOSED': return 'Clôturé';
       default: return status || 'Inconnu';
     }
   }
 
   getStatusClass(status: string | undefined): string {
     switch (status) {
-      case 'STARTED': return 'started';
-      case 'OVER': return 'completed';
+      case 'IN_PROGRESS': return 'started';
+      case 'CLOSED': return 'completed';
       default: return '';
     }
   }

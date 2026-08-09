@@ -40,7 +40,7 @@ describe('PipelineTemplateEditComponent', () => {
     component.addStage();
 
     expect(component.stages().map(stage => stage.stageType)).toEqual(['CANDIDATURE', 'QUIZ', 'DECISION']);
-    expect(component.editableStageTypes).not.toContain('EVALUATION');
+    expect(component.editableStageTypes as string[]).not.toContain('EVALUATION');
   });
 
   it('keeps legacy EVALUATION selectable only for an existing legacy evaluation stage', () => {
@@ -53,8 +53,8 @@ describe('PipelineTemplateEditComponent', () => {
 
     const options = component.getEditableStageTypeOptions(legacyEvaluationStage as any);
 
-    expect(options.map(option => option.value)).toContain('EVALUATION');
-    expect(options.filter(option => option.value === 'EVALUATION')).toHaveSize(1);
+    expect(options.map(option => option.value as string)).toContain('EVALUATION');
+    expect(options.filter(option => (option.value as string) === 'EVALUATION')).toHaveSize(1);
   });
 });
 

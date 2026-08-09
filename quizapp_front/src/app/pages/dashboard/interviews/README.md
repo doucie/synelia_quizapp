@@ -6,15 +6,15 @@ Page moderne pour gérer les entretiens avec les candidats pré-sélectionnés. 
 ## Fonctionnalités
 
 ### 1. Vue d'ensemble
-- **Statistiques en temps réel** : Nombre d'entretiens en attente, planifiés, en cours et terminés
+- **Statistiques en temps réel** : Nombre d'entretiens planifiés, en cours, clôturés et annulés
 - **Recherche avancée** : Recherche par nom de candidat, email, campagne ou lieu
-- **Filtres intelligents** : Filtrage par statut (Tous, Planifiés, En cours, Terminés)
+- **Filtres intelligents** : Filtrage par statut (Tous, Planifiés, En cours, Clôturés, Annulés)
 
 ### 2. Gestion des entretiens
 - **Créer un entretien** : Planifier un nouvel entretien pour un candidat éligible
 - **Modifier un entretien** : Mettre à jour les informations d'un entretien existant
 - **Supprimer un entretien** : Annuler un entretien
-- **Changer le statut** : Démarrer, terminer, marquer comme réussi/échoué
+- **Changer le statut** : Démarrer un entretien, clôturer un entretien terminé
 
 ### 3. Éligibilité des candidats
 Seuls les candidats ayant les statuts suivants peuvent avoir un entretien planifié :
@@ -31,14 +31,12 @@ Pour chaque entretien, vous pouvez gérer :
 - **Notation** : Score maximum pour l'évaluation
 
 ### 5. Statuts d'entretien
-- `PENDING` : En attente de planification
 - `SCHEDULED` : Planifié
-- `STARTED` : En cours
-- `OVER` : Terminé
-- `PASSED` : Réussi
-- `FAILED` : Échoué
-- `POSTPONED` : Reporté
-- `ARCHIVED` : Archivé
+- `IN_PROGRESS` : En cours
+- `AWAITING_EVALUATION` : Évaluation en attente
+- `AWAITING_VALIDATION` : Validation en attente
+- `CLOSED` : Clôturé
+- `CANCELLED` : Annulé
 
 ## Structure des fichiers
 
@@ -80,9 +78,8 @@ quizapp_front/src/app/
 3. Enregistrer
 
 ### Changer le statut
-- **Démarrer** : Bouton play sur les entretiens planifiés
-- **Terminer** : Bouton check sur les entretiens en cours
-- **Évaluer** : Boutons réussi/échoué sur les entretiens terminés
+- **Démarrer** : Bouton play sur les entretiens planifiés (passe à `IN_PROGRESS`)
+- **Clôturer** : Bouton check sur les entretiens en cours (passe à `CLOSED`)
 
 ## Intégration Backend
 Le service utilise l'API REST suivante :
