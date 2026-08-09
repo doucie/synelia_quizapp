@@ -35,11 +35,13 @@ import tech.synelia.quizapp.utils.contract.IBasicBusiness;
 import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.dto.transformer.*;
-import tech.synelia.quizapp.utils.enums.EmailActionType;
 import tech.synelia.quizapp.utils.enums.CandidateAskRequestType;
+import tech.synelia.quizapp.utils.enums.CandidateResponseStatus;
+import tech.synelia.quizapp.utils.enums.EmailActionType;
 import tech.synelia.quizapp.utils.enums.FormAssignmentExhaustionPolicy;
 import tech.synelia.quizapp.utils.enums.FormAssignmentStrategy;
 import tech.synelia.quizapp.utils.enums.CandidateAskStatus;
+import tech.synelia.quizapp.utils.enums.InterviewStatus;
 import tech.synelia.quizapp.utils.enums.ManualCorrectionStatus;
 import tech.synelia.quizapp.utils.enums.ProgressStatus;
 import tech.synelia.quizapp.utils.enums.QuestionType;
@@ -348,7 +350,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 					List<PipelineStage> stages = pipelineStageRepository.findByPipelineTemplateIdOrderByStageOrder(campaign.getPipelineTemplate().getId());
 					if (stages != null && stages.size() >= 2) {
 						PipelineStage secondStage = stages.get(1);
-						if ("QUIZ".equals(secondStage.getStageType()) || "TECHNICAL_TEST".equals(secondStage.getStageType())) {
+						if ("QUIZ".equals(secondStage.getStageType())) {
 							String quizToken = java.util.UUID.randomUUID().toString().replace("-", "");
 							ApplicationQuizAttempt quizAttempt = createQuizAttemptForVerifiedApplication(savedApp, quizToken, request.getUser());
 							if (quizAttempt == null || quizAttempt.getId() == null) {
@@ -2832,7 +2834,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 	}
 
 	private boolean isResolvedProgressStatus(String progressStatus) {
-		return hasProgressStatus(progressStatus, ProgressStatus.PASSED)
+		return hasProgressStatus(progressStatus, ProgressStatus.COMPLETED)
 				|| hasProgressStatus(progressStatus, ProgressStatus.FAILED)
 				|| hasProgressStatus(progressStatus, ProgressStatus.SKIPPED);
 	}
@@ -3052,22 +3054,18 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		}
 
 		switch (interviewStatus.trim().toUpperCase(Locale.ROOT)) {
-			case "STARTED":
+			case "IN_PROGRESS":
 				return 0;
 			case "SCHEDULED":
 				return 1;
-			case "POSTPONED":
+			case "AWAITING_EVALUATION":
 				return 2;
-			case "PENDING":
+			case "AWAITING_VALIDATION":
 				return 3;
-			case "OVER":
+			case "CLOSED":
 				return 4;
-			case "PASSED":
+			case "CANCELLED":
 				return 5;
-			case "FAILED":
-				return 6;
-			case "ARCHIVED":
-				return 7;
 			default:
 				return 99;
 		}
@@ -3771,7 +3769,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			result.put("message", "Entretien introuvable.");
 			return result;
 		}
-		if ("OVER".equalsIgnoreCase(interview.getInterviewStatus()) || "ARCHIVED".equalsIgnoreCase(interview.getInterviewStatus())) {
+		if (InterviewStatus.CLOSED.getValue().equalsIgnoreCase(interview.getInterviewStatus())) {
 			result.put("hasError", true);
 			result.put("message", "Cet entretien ne peut plus être modifié.");
 			return result;
@@ -3790,11 +3788,11 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			case "ACCEPT":
 				candidateInterview.setDeclineReason(null);
 				candidateInterview.setAlternativeDateRequested(null);
-				candidateInterview.setCandidateResponseStatus("ACCEPTED");
+				candidateInterview.setCandidateResponseStatus(CandidateResponseStatus.ACCEPTED.getValue());
 				candidateInterview.setRespondedAt(now);
-				if (!"STARTED".equalsIgnoreCase(interview.getInterviewStatus())
-						&& !"OVER".equalsIgnoreCase(interview.getInterviewStatus())) {
-					interview.setInterviewStatus("SCHEDULED");
+				if (!InterviewStatus.IN_PROGRESS.getValue().equalsIgnoreCase(interview.getInterviewStatus())
+						&& !InterviewStatus.CLOSED.getValue().equalsIgnoreCase(interview.getInterviewStatus())) {
+					interview.setInterviewStatus(InterviewStatus.SCHEDULED.getValue());
 				}
 				successMessage = "Votre entretien est confirmé.";
 				break;
@@ -3806,7 +3804,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				}
 				candidateInterview.setDeclineReason(declineReason.trim());
 				candidateInterview.setAlternativeDateRequested(null);
-				candidateInterview.setCandidateResponseStatus("DECLINED");
+				candidateInterview.setCandidateResponseStatus(CandidateResponseStatus.DECLINED.getValue());
 				candidateInterview.setRespondedAt(now);
 				successMessage = "Votre refus a bien été transmis.";
 				recruiterNotificationType = "INTERVIEW_DECLINED";
@@ -3820,9 +3818,9 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				}
 				candidateInterview.setAlternativeDateRequested(requestedDate);
 				candidateInterview.setDeclineReason(null);
-				candidateInterview.setCandidateResponseStatus("RESCHEDULE_REQUESTED");
+				candidateInterview.setCandidateResponseStatus(CandidateResponseStatus.RESCHEDULE_REQUESTED.getValue());
 				candidateInterview.setRespondedAt(now);
-				interview.setInterviewStatus("POSTPONED");
+				interview.setInterviewStatus(InterviewStatus.CANCELLED.getValue());
 				successMessage = "Votre demande de replanification a bien été transmise.";
 				recruiterNotificationType = "INTERVIEW_RESCHEDULE_REQUESTED";
 				break;
@@ -4192,7 +4190,6 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		interviewData.put("interviewStatus", interview.getInterviewStatus());
 		interviewData.put("interviewLocation", interview.getInterviewLocation());
 		interviewData.put("meetLink", interview.getMeetLink());
-		interviewData.put("interviewMailSent", interview.getInterviewMailSent());
 		interviewData.put("interviewNote", interview.getInterviewNote());
 		interviewData.put("declineReason", candidateInterview.getDeclineReason());
 		interviewData.put("alternativeDateRequested", candidateInterview.getAlternativeDateRequested());
@@ -4231,7 +4228,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 
 	private String resolveCandidateInterviewResponseState(CandidateInterview candidateInterview) {
 		if (candidateInterview == null) {
-			return "PENDING";
+			return CandidateResponseStatus.PENDING.getValue();
 		}
 
 		String persistedResponseState = StringUtils.upperCase(StringUtils.trimToNull(candidateInterview.getCandidateResponseStatus()), Locale.ROOT);
@@ -4243,25 +4240,25 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				case "RESCHEDULE_REQUESTED":
 					return persistedResponseState;
 				case "REQUEST_RESCHEDULE":
-					return "RESCHEDULE_REQUESTED";
+					return CandidateResponseStatus.RESCHEDULE_REQUESTED.getValue();
 				default:
 					break;
 			}
 		}
 		if (candidateInterview.getAlternativeDateRequested() != null) {
-			return "RESCHEDULE_REQUESTED";
+			return CandidateResponseStatus.RESCHEDULE_REQUESTED.getValue();
 		}
 		if (StringUtils.isNotBlank(candidateInterview.getDeclineReason())) {
-			return "DECLINED";
+			return CandidateResponseStatus.DECLINED.getValue();
 		}
-		return "PENDING";
+		return CandidateResponseStatus.PENDING.getValue();
 	}
 
 	private boolean canRespondToTrackedInterview(String responseState, Interviews interview) {
 		if (interview == null) {
 			return false;
 		}
-		if ("OVER".equalsIgnoreCase(interview.getInterviewStatus()) || "ARCHIVED".equalsIgnoreCase(interview.getInterviewStatus())) {
+		if (InterviewStatus.CLOSED.getValue().equalsIgnoreCase(interview.getInterviewStatus())) {
 			return false;
 		}
 		return "PENDING".equalsIgnoreCase(StringUtils.defaultString(responseState, "PENDING"));

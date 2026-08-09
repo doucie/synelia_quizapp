@@ -494,7 +494,7 @@ class EvaluationsBusinessTest {
 	private CandidateInterview buildCandidateInterview(Integer id, Integer interviewId, Integer applicationId, Integer applicationProgressId, Integer pipelineStageId) {
 		Interviews interview = new Interviews();
 		interview.setId(interviewId);
-		interview.setInterviewStatus("OVER");
+		interview.setInterviewStatus("CLOSED");
 		interview.setInterviewDate(new Date());
 		Applications application = new Applications();
 		application.setId(applicationId);

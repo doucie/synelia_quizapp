@@ -23,6 +23,7 @@ import tech.synelia.quizapp.utils.contract.IBasicBusiness;
 import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.dto.transformer.*;
+import tech.synelia.quizapp.utils.enums.DecisionMode;
 import tech.synelia.quizapp.utils.enums.DecisionType;
 import tech.synelia.quizapp.utils.enums.FunctionalityEnum;
 import tech.synelia.quizapp.utils.enums.EmailActionType;
@@ -45,9 +46,11 @@ import jakarta.persistence.PersistenceContext;
 public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Response<DecisionDto>> {
 
     private static final String MAIL_SENDER_NAME = "Synelia Recrutement";
-    private static final String DEFAULT_DECISION_MODE = "STANDARD";
-    private static final String CANCEL_DECISION_MODE = "CANCEL";
-    private static final Set<String> DECISION_MODE_ALLOWED_VALUES = Set.of("STANDARD", "CANCEL", "OVERRIDE", "ROLLBACK");
+    private static final Set<String> DECISION_MODE_ALLOWED_VALUES = Set.of(
+            DecisionMode.STANDARD.getValue(),
+            DecisionMode.CANCEL.getValue(),
+            DecisionMode.OVERRIDE.getValue(),
+            DecisionMode.ROLLBACK.getValue());
     private static final String DECISION_TYPE_ALLOWED_VALUES = String.join("/",
             Arrays.stream(DecisionType.values()).map(DecisionType::getValue).toArray(String[]::new));
 
@@ -426,7 +429,7 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
     }
 
     private boolean isCancelDecision(Decision decision) {
-        return decision != null && CANCEL_DECISION_MODE.equals(normalizeOptionalUppercaseText(decision.getDecisionMode()));
+        return decision != null && DecisionMode.CANCEL.getValue().equals(normalizeOptionalUppercaseText(decision.getDecisionMode()));
     }
 
     private void ensureDecisionApplicationMatchesProgress(DecisionDto dto, Locale locale) {
@@ -483,13 +486,13 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
 
     private String resolveCreateAuditActionType(Decision decision) {
         String decisionMode = normalizeOptionalUppercaseText(decision != null ? decision.getDecisionMode() : null);
-        if (CANCEL_DECISION_MODE.equals(decisionMode)) {
+        if (DecisionMode.CANCEL.getValue().equals(decisionMode)) {
             return "DECISION_CANCELLED";
         }
-        if ("OVERRIDE".equals(decisionMode)) {
+        if (DecisionMode.OVERRIDE.getValue().equals(decisionMode)) {
             return "DECISION_OVERRIDDEN";
         }
-        if ("ROLLBACK".equals(decisionMode)) {
+        if (DecisionMode.ROLLBACK.getValue().equals(decisionMode)) {
             return "DECISION_ROLLED_BACK";
         }
         return "DECISION_CREATED";
@@ -846,7 +849,7 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
         }
 
         decision.setJustification(normalizeOptionalText(decision.getJustification()));
-        boolean cancellation = CANCEL_DECISION_MODE.equals(normalizeOptionalUppercaseText(decision.getDecisionMode()));
+        boolean cancellation = DecisionMode.CANCEL.getValue().equals(normalizeOptionalUppercaseText(decision.getDecisionMode()));
         decision.setDecisionMode(normalizeDecisionMode(decision.getDecisionMode(), cancellation, locale));
         validateDecisionJustification(decision, locale);
         alignDecisionProgressContext(decision, locale);
@@ -875,7 +878,7 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
     private void prepareCancellationDecision(Decision decision, Locale locale) {
         Decision target = resolveCancellationTarget(decision, locale);
         decision.setCancelsDecision(target);
-        decision.setDecisionMode(CANCEL_DECISION_MODE);
+        decision.setDecisionMode(DecisionMode.CANCEL.getValue());
         decision.setDecisionType(target.getDecisionType());
 
         if (target.getApplicationProgress() != null) {
@@ -964,13 +967,13 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
     private String normalizeDecisionMode(String decisionMode, boolean cancellation, Locale locale) {
         String normalizedDecisionMode = Utilities.notBlank(decisionMode)
                 ? decisionMode.trim().toUpperCase(Locale.ROOT)
-                : cancellation ? CANCEL_DECISION_MODE : DEFAULT_DECISION_MODE;
+                : cancellation ? DecisionMode.CANCEL.getValue() : DecisionMode.STANDARD.getValue();
 
         if (cancellation) {
-            return CANCEL_DECISION_MODE;
+            return DecisionMode.CANCEL.getValue();
         }
 
-        if (!DECISION_MODE_ALLOWED_VALUES.contains(normalizedDecisionMode) || CANCEL_DECISION_MODE.equals(normalizedDecisionMode)) {
+        if (!DECISION_MODE_ALLOWED_VALUES.contains(normalizedDecisionMode) || DecisionMode.CANCEL.getValue().equals(normalizedDecisionMode)) {
             throw new InvalidEntityException(functionalError.DATA_NOT_EXIST(
                     "decisionMode invalide (STANDARD/CANCEL/OVERRIDE/ROLLBACK) -> " + normalizedDecisionMode,
                     locale));
@@ -985,9 +988,9 @@ public class DecisionBusiness implements IBasicBusiness<Request<DecisionDto>, Re
         }
 
         String decisionMode = decision.getDecisionMode();
-        boolean requiresJustification = CANCEL_DECISION_MODE.equals(decisionMode)
-                || "OVERRIDE".equals(decisionMode)
-                || "ROLLBACK".equals(decisionMode);
+        boolean requiresJustification = DecisionMode.CANCEL.getValue().equals(decisionMode)
+                || DecisionMode.OVERRIDE.getValue().equals(decisionMode)
+                || DecisionMode.ROLLBACK.getValue().equals(decisionMode);
 
         if (requiresJustification && !Utilities.notBlank(decision.getJustification())) {
             throw new InvalidEntityException(functionalError.FIELD_EMPTY("justification", locale));

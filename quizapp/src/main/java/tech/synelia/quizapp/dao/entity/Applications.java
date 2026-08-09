@@ -121,6 +121,26 @@ public class Applications implements Serializable, Cloneable {
     @Column(name="application_abandoned")
     private Boolean    applicationAbandoned ;
 
+    @Column(name="current_application_progress_id")
+    private Integer    currentApplicationProgressId ;
+
+    @Column(name="current_pipeline_stage_id")
+    private Integer    currentPipelineStageId ;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name="last_progressed_at")
+    private Date       lastProgressedAt ;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name="abandoned_at")
+    private Date       abandonedAt ;
+
+    @Column(name="abandon_reason", columnDefinition="TEXT")
+    private String     abandonReason ;
+
+    @Column(name="abandoned_from_application_progress_id")
+    private Integer    abandonedFromApplicationProgressId ;
+
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name="created_at")
     private Date       createdAt    ;

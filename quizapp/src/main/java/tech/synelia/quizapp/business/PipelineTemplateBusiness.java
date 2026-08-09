@@ -427,11 +427,9 @@ public class PipelineTemplateBusiness implements IBasicBusiness<Request<Pipeline
         boolean hasBlankLabel = false;
         boolean hasInvalidOrder = false;
         boolean hasInvalidType = false;
-        boolean hasCustomStage = false;
         boolean hasDuplicateQuiz = false;
         boolean hasDuplicatePreselection = false;
         boolean hasDuplicateInterview = false;
-        boolean hasDuplicateEvaluation = false;
         Set<Integer> seenOrders = new HashSet<>();
         Set<StageType> seenSingletonStageTypes = new HashSet<>();
 
@@ -455,15 +453,6 @@ public class PipelineTemplateBusiness implements IBasicBusiness<Request<Pipeline
                 continue;
             }
 
-            if (normalizedType == StageType.CUSTOM) {
-                hasCustomStage = true;
-                continue;
-            }
-
-            if (normalizedType == StageType.TECHNICAL_TEST) {
-                normalizedType = StageType.QUIZ;
-            }
-
             if (normalizedType == StageType.CANDIDATURE) {
                 candidatureCount++;
             } else if (normalizedType == StageType.DECISION) {
@@ -478,8 +467,6 @@ public class PipelineTemplateBusiness implements IBasicBusiness<Request<Pipeline
                         hasDuplicatePreselection = true;
                     } else if (normalizedType == StageType.INTERVIEW) {
                         hasDuplicateInterview = true;
-                    } else if (normalizedType == StageType.EVALUATION) {
-                        hasDuplicateEvaluation = true;
                     }
                 }
             }
@@ -488,8 +475,8 @@ public class PipelineTemplateBusiness implements IBasicBusiness<Request<Pipeline
         if (candidatureCount != 1) {
             issues.add("CANDIDATURE doit etre presente une seule fois.");
         }
-        if (decisionCount != 1) {
-            issues.add("DECISION doit etre presente une seule fois.");
+        if (decisionCount < 1) {
+            issues.add("ajoutez au minimum une etape DECISION.");
         }
         if (intermediateCount < 1) {
             issues.add("ajoutez au moins une etape intermediaire entre CANDIDATURE et DECISION.");
@@ -503,9 +490,6 @@ public class PipelineTemplateBusiness implements IBasicBusiness<Request<Pipeline
         if (hasInvalidType) {
             issues.add("le pipeline contient un type d'etape invalide.");
         }
-        if (hasCustomStage) {
-            issues.add("le type CUSTOM n'est plus supporte.");
-        }
         if (hasDuplicateQuiz) {
             issues.add("QUIZ ne peut etre presente qu'une seule fois dans le pipeline actuel.");
         }
@@ -514,9 +498,6 @@ public class PipelineTemplateBusiness implements IBasicBusiness<Request<Pipeline
         }
         if (hasDuplicateInterview) {
             issues.add("INTERVIEW ne peut etre presente qu'une seule fois dans le pipeline actuel.");
-        }
-        if (hasDuplicateEvaluation) {
-            issues.add("EVALUATION ne peut etre presente qu'une seule fois dans le pipeline actuel.");
         }
 
         if (!stages.isEmpty()) {
@@ -535,15 +516,13 @@ public class PipelineTemplateBusiness implements IBasicBusiness<Request<Pipeline
     }
 
     private StageType normalizeReadinessStageType(String stageType) {
-        StageType resolved = StageType.fromValue(stageType);
-        return resolved == StageType.TECHNICAL_TEST ? StageType.QUIZ : resolved;
+        return StageType.fromValue(stageType);
     }
 
     private boolean isSingletonIntermediateStageType(StageType stageType) {
         return stageType == StageType.QUIZ
                 || stageType == StageType.PRESELECTION
-                || stageType == StageType.INTERVIEW
-                || stageType == StageType.EVALUATION;
+                || stageType == StageType.INTERVIEW;
     }
 
     private void ensureTemplateCanBeDisabled(Integer templateId, Locale locale) {

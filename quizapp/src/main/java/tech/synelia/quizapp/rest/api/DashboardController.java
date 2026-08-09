@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.extern.java.Log;
+import tech.synelia.quizapp.utils.enums.DecisionMode;
 import tech.synelia.quizapp.dao.entity.Answer;
 import tech.synelia.quizapp.dao.entity.ApplicationQuizAttempt;
 import tech.synelia.quizapp.dao.entity.Applications;
@@ -284,7 +285,7 @@ public class DashboardController {
 
         // -- Decisions breakdown (excluding cancelled) --
         Map<String, Long> decDist = decisions.stream()
-                .filter(d -> !"CANCEL".equals(d.getDecisionMode()))
+                .filter(d -> !DecisionMode.CANCEL.getValue().equals(d.getDecisionMode()))
                 .collect(Collectors.groupingBy(
                         d -> d.getDecisionType() != null ? d.getDecisionType() : "UNKNOWN",
                         LinkedHashMap::new,
@@ -295,9 +296,9 @@ public class DashboardController {
         long submitted = apps.size();
         long preselected = apps.stream().filter(a -> isAnyStatus(a.getCurrentFinalDecisionType(), "FINAL_AC")
                 || isAnyStatus(a.getCurrentPreselectionDecisionType(), "PRE_SCREEN")
-                || isAnyStatus(a.getCurrentPipelineStageType(), "INTERVIEW", "EVALUATION", "DECISION")).count();
+                || isAnyStatus(a.getCurrentPipelineStageType(), "INTERVIEW", "DECISION")).count();
         long interviewed = apps.stream().filter(a -> isAnyStatus(a.getCurrentFinalDecisionType(), "FINAL_AC")
-                || isAnyStatus(a.getCurrentPipelineStageType(), "INTERVIEW", "EVALUATION")).count();
+                || isAnyStatus(a.getCurrentPipelineStageType(), "INTERVIEW")).count();
         long decided = apps.stream().filter(a -> isAnyStatus(a.getCurrentFinalDecisionType(), "FINAL_AC")).count();
         long accepted = apps.stream().filter(a -> isAnyStatus(a.getCurrentFinalDecisionType(), "FINAL_AC")).count();
         Map<String, Long> funnel = new LinkedHashMap<>();
@@ -430,7 +431,7 @@ public class DashboardController {
             return preType;
         }
         String stageType = trimUpper(app.getCurrentPipelineStageType());
-        if ("INTERVIEW".equals(stageType) || "EVALUATION".equals(stageType)) {
+        if ("INTERVIEW".equals(stageType)) {
             return "INTERVIEWING";
         }
         String progress = trimUpper(app.getCurrentPipelineProgressStatus());

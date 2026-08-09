@@ -3,7 +3,8 @@ package tech.synelia.quizapp.utils.enums;
 public enum ProgressStatus {
     PENDING("PENDING"),
     IN_PROGRESS("IN_PROGRESS"),
-    PASSED("PASSED"),
+    AWAITING_VALIDATION("AWAITING_VALIDATION"),
+    COMPLETED("COMPLETED"),
     FAILED("FAILED"),
     SKIPPED("SKIPPED");
 

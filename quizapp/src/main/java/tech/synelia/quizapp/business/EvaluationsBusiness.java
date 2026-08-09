@@ -29,7 +29,9 @@ import tech.synelia.quizapp.utils.contract.IBasicBusiness;
 import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.dto.transformer.*;
+import tech.synelia.quizapp.utils.enums.EvaluationStatus;
 import tech.synelia.quizapp.utils.enums.FunctionalityEnum;
+import tech.synelia.quizapp.utils.enums.InterviewStatus;
 import tech.synelia.quizapp.dao.entity.Evaluations;
 import tech.synelia.quizapp.dao.entity.CandidateInterview;
 import tech.synelia.quizapp.dao.entity.*;
@@ -45,7 +47,6 @@ BUSINESS for table "evaluations"
 public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDto>, Response<EvaluationsDto>> {
 
 	private static final Logger log = Logger.getLogger(EvaluationsBusiness.class.getName());
-	private static final String EVALUATION_STATUS_SUBMITTED = "SUBMITTED";
 
 	private Response<EvaluationsDto> response;
 	@Autowired
@@ -150,7 +151,7 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 			entityToSave.setCreatedAt(submittedAt);
 			entityToSave.setCreatedBy(request.getUser());
 			entityToSave.setIsDeleted(false);
-			entityToSave.setEvaluationStatus(EVALUATION_STATUS_SUBMITTED);
+			entityToSave.setEvaluationStatus(EvaluationStatus.SUBMITTED.getValue());
 			entityToSave.setSubmittedAt(submittedAt);
 			items.add(entityToSave);
 			affectedCandidateInterviewIds.add(dto.getCandidateInterviewId());
@@ -302,7 +303,7 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 			entityToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(dto)));
 			entityToSave.setUpdatedBy(request.getUser());
 			if (!Utilities.notBlank(entityToSave.getEvaluationStatus())) {
-				entityToSave.setEvaluationStatus(EVALUATION_STATUS_SUBMITTED);
+				entityToSave.setEvaluationStatus(EvaluationStatus.SUBMITTED.getValue());
 			}
 			if (entityToSave.getSubmittedAt() == null) {
 				entityToSave.setSubmittedAt(entityToSave.getUpdatedAt());
@@ -739,7 +740,7 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 					application.getId(),
 					interview.getApplicationProgress() != null ? interview.getApplicationProgress().getId() : null,
 					interviewPercentage,
-					"OVER".equalsIgnoreCase(interview.getInterviewStatus()),
+					InterviewStatus.CLOSED.getValue().equalsIgnoreCase(interview.getInterviewStatus()),
 					userId,
 					locale);
 		} catch (ParseException exception) {
@@ -1180,7 +1181,7 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 
 			Long activeEvaluations = evaluationsRepository.countByInterviewParticipantId(interviewParticipantId);
 			if (activeEvaluations != null && activeEvaluations > 0) {
-				participant.setEvaluationStatus(EVALUATION_STATUS_SUBMITTED);
+				participant.setEvaluationStatus(EvaluationStatus.SUBMITTED.getValue());
 				Date latestSubmittedAt = evaluationsRepository.findLatestSubmittedAtByInterviewParticipantId(interviewParticipantId);
 				participant.setEvaluationSubmittedAt(latestSubmittedAt != null ? latestSubmittedAt : Utilities.getCurrentDate());
 			} else {

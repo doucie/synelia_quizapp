@@ -1,12 +1,12 @@
 package tech.synelia.quizapp.utils.enums;
 
 public enum InterviewStatus {
-    PENDING("PENDING"),
     SCHEDULED("SCHEDULED"),
-    STARTED("STARTED"),
-    OVER("OVER"),
-    POSTPONED("POSTPONED"),
-    ARCHIVED("ARCHIVED");
+    IN_PROGRESS("IN_PROGRESS"),
+    AWAITING_EVALUATION("AWAITING_EVALUATION"),
+    AWAITING_VALIDATION("AWAITING_VALIDATION"),
+    CLOSED("CLOSED"),
+    CANCELLED("CANCELLED");
 
     private final String value;
 

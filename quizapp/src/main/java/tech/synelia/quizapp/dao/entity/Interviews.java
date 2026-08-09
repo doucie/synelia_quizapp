@@ -68,9 +68,6 @@ public class Interviews implements Serializable, Cloneable {
     @Column(name="interview_note", columnDefinition="TEXT")
     private String     interviewNote ;
 
-    @Column(name="interview_mail_sent", nullable=false)
-    private Boolean    interviewMailSent = false ;
-
     @Column(name="interview_type", length=20, nullable=false)
     private String     interviewType ; // IN_PERSON, ONLINE
 

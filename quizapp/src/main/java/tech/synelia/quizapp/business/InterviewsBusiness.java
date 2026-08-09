@@ -30,6 +30,7 @@ import tech.synelia.quizapp.utils.contract.IBasicBusiness;
 import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.dto.transformer.*;
+import tech.synelia.quizapp.utils.enums.CandidateResponseStatus;
 import tech.synelia.quizapp.utils.enums.FunctionalityEnum;
 import tech.synelia.quizapp.utils.enums.EmailActionType;
 import tech.synelia.quizapp.utils.enums.InterviewStatus;
@@ -78,6 +79,8 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 	private PipelineStageNotificationRuleRepository pipelineStageNotificationRuleRepository;
 	@Autowired
 	private ApplicationProgressRepository applicationProgressRepository;
+	@Autowired
+	private MailLogRepository mailLogRepository;
 	@Autowired
 	private ApplicationProgressBusiness applicationProgressBusiness;
 	@Autowired
@@ -191,9 +194,7 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 			Interviews entityToSave = null;
 			entityToSave = InterviewsTransformer.INSTANCE.toEntity(dto);
 			ensureInterviewProgressLink(entityToSave, dto.getApplicationId());
-			boolean shouldSendInvitation = Boolean.TRUE.equals(dto.getInterviewMailSent())
-					|| shouldAutoSendInterviewInvitation(entityToSave);
-			entityToSave.setInterviewMailSent(false);
+			boolean shouldSendInvitation = shouldAutoSendInterviewInvitation(entityToSave);
 			entityToSave.setCreatedAt(Utilities.getCurrentDate());
 			entityToSave.setCreatedBy(request.getUser());
 			entityToSave.setIsDeleted(false);
@@ -326,9 +327,9 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 				dto.setInterviewStatus(statusUpper);
 				entityToSave.setInterviewStatus(statusUpper);
 				
-				// Générer automatiquement le code de la salle d'évaluation quand le statut passe à STARTED
-				if (InterviewStatus.STARTED.getValue().equals(statusUpper) && 
-				    (currentInterviewStatus == null || !InterviewStatus.STARTED.getValue().equalsIgnoreCase(currentInterviewStatus)) &&
+				// Générer automatiquement le code de la salle d'évaluation quand le statut passe à IN_PROGRESS
+				if (InterviewStatus.IN_PROGRESS.getValue().equals(statusUpper) && 
+				    (currentInterviewStatus == null || !InterviewStatus.IN_PROGRESS.getValue().equalsIgnoreCase(currentInterviewStatus)) &&
 				    (entityToSave.getEvaluationRoomCode() == null || entityToSave.getEvaluationRoomCode().isEmpty())) {
 					String evaluationRoomCode = generateUniqueEvaluationRoomCode();
 					entityToSave.setEvaluationRoomCode(evaluationRoomCode);
@@ -346,8 +347,8 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 				entityToSave.setInterviewType(normalizedInterviewType);
 			}
 			boolean shouldCloseRescheduleRequest = Utilities.shouldUpdate(dto.getInterviewStatus())
-					&& InterviewStatus.ARCHIVED.getValue().equalsIgnoreCase(dto.getInterviewStatus())
-					&& InterviewStatus.POSTPONED.getValue().equalsIgnoreCase(currentInterviewStatus);
+					&& InterviewStatus.CLOSED.getValue().equalsIgnoreCase(dto.getInterviewStatus())
+					&& InterviewStatus.CANCELLED.getValue().equalsIgnoreCase(currentInterviewStatus);
 			Integer effectiveApplicationId = dto.getApplicationId() != null && dto.getApplicationId() > 0
 					? dto.getApplicationId()
 					: (resolveInterviewApplication(entityToSave) != null ? resolveInterviewApplication(entityToSave).getId() : null);
@@ -367,12 +368,9 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 					|| !Objects.equals(originalMeetLink, entityToSave.getMeetLink())
 					|| !Objects.equals(originalInterviewLocation, entityToSave.getInterviewLocation());
 			boolean autoSendInvitation = shouldAutoSendInterviewInvitation(entityToSave);
-			boolean shouldSendInvitation = (Boolean.TRUE.equals(dto.getInterviewMailSent()) || autoSendInvitation)
-					&& (!Boolean.TRUE.equals(entityToSave.getInterviewMailSent()) || invitationContentChanged);
+			boolean shouldSendInvitation = autoSendInvitation
+					&& (!interviewInvitationMailAlreadySent(entityToSave) || invitationContentChanged);
 			boolean shouldResetCandidateResponse = interviewScheduleChanged || shouldSendInvitation || shouldCloseRescheduleRequest;
-			if (shouldSendInvitation || invitationContentChanged) {
-				entityToSave.setInterviewMailSent(false);
-			}
 			if (dto.getCreatedBy() != null && dto.getCreatedBy() > 0) {
 				entityToSave.setCreatedBy(dto.getCreatedBy());
 			}
@@ -650,7 +648,7 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 		if (existingLink == null) {
 			CandidateInterview link = new CandidateInterview();
 			link.setInterviews(interview);
-			link.setCandidateResponseStatus("PENDING");
+			link.setCandidateResponseStatus(CandidateResponseStatus.PENDING.getValue());
 			link.setRespondedAt(null);
 			link.setCreatedAt(Utilities.getCurrentDate());
 			link.setCreatedBy(actorUserId);
@@ -687,8 +685,8 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 				link.setDeclineReason(null);
 				updated = true;
 			}
-			if (!"PENDING".equalsIgnoreCase(StringUtils.defaultString(link.getCandidateResponseStatus(), "PENDING"))) {
-				link.setCandidateResponseStatus("PENDING");
+			if (!CandidateResponseStatus.PENDING.getValue().equalsIgnoreCase(StringUtils.defaultString(link.getCandidateResponseStatus(), CandidateResponseStatus.PENDING.getValue()))) {
+				link.setCandidateResponseStatus(CandidateResponseStatus.PENDING.getValue());
 				updated = true;
 			}
 			if (link.getRespondedAt() != null) {
@@ -714,16 +712,10 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 		}
 		try {
 			sendInterviewEmail(interview, locale);
-			interview.setInterviewMailSent(true);
-			interview.setUpdatedAt(Utilities.getCurrentDate());
-			interviewsRepository.save(interview);
 			markInterviewStageMailSent(interview);
 			log.info("Email d'entretien envoyé avec succès pour l'interview ID: " + interview.getId());
 			return true;
 		} catch (Exception e) {
-			interview.setInterviewMailSent(false);
-			interview.setUpdatedAt(Utilities.getCurrentDate());
-			interviewsRepository.save(interview);
 			log.warning("Échec de l'envoi de l'email pour l'interview ID: " + interview.getId() + " - " + e.getMessage());
 			return false;
 		}
@@ -739,6 +731,17 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 		return notificationRule != null
 				&& Boolean.TRUE.equals(notificationRule.getIsRequired())
 				&& Boolean.TRUE.equals(notificationRule.getIsAutomatic());
+	}
+
+	private boolean interviewInvitationMailAlreadySent(Interviews interview) {
+		if (interview == null || interview.getApplicationProgress() == null
+				|| interview.getApplicationProgress().getId() == null) {
+			return false;
+		}
+		return mailLogRepository.existsByApplicationProgressIdAndStatusAndEventCodeIn(
+				interview.getApplicationProgress().getId(),
+				"SENT",
+				List.of("INTERVIEW_INVITATION_EMAIL"));
 	}
 
 	private void ensureInterviewProgressLink(Interviews interview, Integer applicationId) {
@@ -1197,7 +1200,6 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 		snapshot.put("interviewLocation", interview.getInterviewLocation());
 		snapshot.put("meetLink", interview.getMeetLink());
 		snapshot.put("interviewNote", interview.getInterviewNote());
-		snapshot.put("interviewMailSent", interview.getInterviewMailSent());
 		snapshot.put("evaluationRoomCode", interview.getEvaluationRoomCode());
 		snapshot.put("startedAt", interview.getStartedAt());
 		snapshot.put("endedAt", interview.getEndedAt());
@@ -1310,7 +1312,7 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 					new String[] {"ADMIN", "PLANIFY", "EVALUATE"});
 			
 			// Si l'interview est déjà terminé, retourner un succès (idempotent)
-			if (InterviewStatus.OVER.getValue().equals(interview.getInterviewStatus())) {
+			if (InterviewStatus.CLOSED.getValue().equals(interview.getInterviewStatus())) {
 				log.info("Interview " + dto.getId() + " est déjà terminé, retour succès (idempotent)");
 				InterviewsDto resultDto = InterviewsTransformer.INSTANCE.toDto(interview);
 				List<InterviewsDto> resultList = new ArrayList<>();
@@ -1337,7 +1339,7 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 			        ", Number: " + evaluationNumber + ", Percentage: " + evaluationPercentage);
 			
 			// Mettre à jour l'interview
-			interview.setInterviewStatus(InterviewStatus.OVER.getValue());
+			interview.setInterviewStatus(InterviewStatus.CLOSED.getValue());
 			interview.setEndedAt(new Date());
 			interview.setUpdatedAt(new Date());
 			interview.setUpdatedBy(request.getUser());

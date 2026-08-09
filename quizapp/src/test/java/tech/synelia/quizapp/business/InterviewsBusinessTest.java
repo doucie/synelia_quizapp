@@ -126,7 +126,7 @@ class InterviewsBusinessTest {
 		Interviews interview = new Interviews();
 		interview.setId(55);
 		interview.setApplicationProgress(progress);
-		interview.setInterviewStatus(InterviewStatus.STARTED.getValue());
+		interview.setInterviewStatus(InterviewStatus.IN_PROGRESS.getValue());
 		interview.setInterviewType(InterviewType.ONLINE.getValue());
 		interview.setInterviewDate(new Date());
 
@@ -150,8 +150,8 @@ class InterviewsBusinessTest {
 		ArgumentCaptor<String> beforeStateCaptor = ArgumentCaptor.forClass(String.class);
 		ArgumentCaptor<String> afterStateCaptor = ArgumentCaptor.forClass(String.class);
 		verify(auditEventService).recordEvent(eq(1), eq(45), eq("INTERVIEW"), eq("55"), eq("INTERVIEW_FINISHED"), eq(77), isNull(), beforeStateCaptor.capture(), afterStateCaptor.capture());
-		assertThat(beforeStateCaptor.getValue()).contains("STARTED");
-		assertThat(afterStateCaptor.getValue()).contains("OVER");
+		assertThat(beforeStateCaptor.getValue()).contains("IN_PROGRESS");
+		assertThat(afterStateCaptor.getValue()).contains("CLOSED");
 	}
 
 	private Request<InterviewsDto> buildRequest(Integer userId, InterviewsDto dto) {

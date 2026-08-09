@@ -50,15 +50,15 @@ class PipelineStageBusinessTest {
 	private PipelineStageBusiness pipelineStageBusiness;
 
 	@Test
-	void create_rejectsNewEvaluationTopLevelStage() {
+	void create_rejectsUnknownStageType() {
 		PipelineTemplate template = buildTemplate(11, false);
 		when(pipelineTemplateRepository.findOne(11, false)).thenReturn(template);
-		when(functionalError.DISALLOWED_OPERATION(anyString(), eq(Locale.FRENCH)))
-				.thenAnswer(invocation -> buildStatus("FUNC_DISALLOWED", invocation.getArgument(0)));
+		when(functionalError.REQUEST_FAIL(anyString(), eq(Locale.FRENCH)))
+				.thenAnswer(invocation -> buildStatus("FUNC_REQUEST_FAIL", invocation.getArgument(0)));
 
 		PipelineStageDto dto = new PipelineStageDto();
 		dto.setPipelineTemplateId(11);
-		dto.setStageType(StageType.EVALUATION.getValue());
+		dto.setStageType("EVALUATION");
 		dto.setStageLabel("Evaluation legacy");
 		dto.setStageOrder(3);
 
@@ -71,17 +71,17 @@ class PipelineStageBusinessTest {
 	}
 
 	@Test
-	void update_rejectsChangingAnotherStageToEvaluation() {
+	void update_rejectsChangingAnotherStageToUnknownType() {
 		PipelineTemplate template = buildTemplate(11, false);
 		PipelineStage existingStage = buildStage(21, template, StageType.INTERVIEW.getValue(), "Entretien");
 
 		when(pipelineStageRepository.findOne(21, false)).thenReturn(existingStage);
-		when(functionalError.DISALLOWED_OPERATION(anyString(), eq(Locale.FRENCH)))
-				.thenAnswer(invocation -> buildStatus("FUNC_DISALLOWED", invocation.getArgument(0)));
+		when(functionalError.REQUEST_FAIL(anyString(), eq(Locale.FRENCH)))
+				.thenAnswer(invocation -> buildStatus("FUNC_REQUEST_FAIL", invocation.getArgument(0)));
 
 		PipelineStageDto dto = new PipelineStageDto();
 		dto.setId(21);
-		dto.setStageType(StageType.EVALUATION.getValue());
+		dto.setStageType("EVALUATION");
 
 		InvalidEntityException exception = assertThrows(
 				InvalidEntityException.class,
@@ -92,23 +92,23 @@ class PipelineStageBusinessTest {
 	}
 
 	@Test
-	void update_allowsLegacyEvaluationStageToKeepItsType() throws Exception {
+	void update_preservesStageTypeWhenOnlyLabelChanges() throws Exception {
 		PipelineTemplate template = buildTemplate(11, false);
-		PipelineStage existingStage = buildStage(21, template, StageType.EVALUATION.getValue(), "Evaluation historique");
+		PipelineStage existingStage = buildStage(21, template, StageType.INTERVIEW.getValue(), "Entretien");
 
 		when(pipelineStageRepository.findOne(21, false)).thenReturn(existingStage);
 		when(pipelineStageRepository.saveAll(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
 		PipelineStageDto dto = new PipelineStageDto();
 		dto.setId(21);
-		dto.setStageLabel("Evaluation archivee");
+		dto.setStageLabel("Entretien archive");
 
 		Response<PipelineStageDto> response = pipelineStageBusiness.update(buildRequest(77, dto, true), Locale.FRENCH);
 
 		assertThat(response.isHasError()).isFalse();
 		assertThat(response.getItems()).hasSize(1);
-		assertThat(existingStage.getStageType()).isEqualTo(StageType.EVALUATION.getValue());
-		assertThat(existingStage.getStageLabel()).isEqualTo("Evaluation archivee");
+		assertThat(existingStage.getStageType()).isEqualTo(StageType.INTERVIEW.getValue());
+		assertThat(existingStage.getStageLabel()).isEqualTo("Entretien archive");
 		verify(pipelineStageRepository).saveAll(any());
 	}
 

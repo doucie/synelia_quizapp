@@ -374,11 +374,11 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
         ApplicationProgress progress = getProgressOrThrow(applicationId, stageId, locale);
         ensureStageCanBeCompleted(progress, locale);
 
-        if (!hasProgressStatus(progress, ProgressStatus.PASSED)) {
+        if (!hasProgressStatus(progress, ProgressStatus.COMPLETED)) {
             if (progress.getStartedAt() == null) {
                 progress.setStartedAt(Utilities.getCurrentDate());
             }
-            progress.setProgressStatus(ProgressStatus.PASSED.getValue());
+            progress.setProgressStatus(ProgressStatus.COMPLETED.getValue());
             progress.setCompletedAt(Utilities.getCurrentDate());
             progress.setNotes(notes);
             progress.setScore(score);
@@ -611,46 +611,22 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
         }
 
         ApplicationProgress interviewProgress = resolveInterviewProgressOccurrence(applicationId, interviewProgressId);
-        ApplicationProgress evaluationProgress = findProgressByStageType(applicationId, StageType.EVALUATION.getValue());
-        if (interviewProgress == null && evaluationProgress == null) {
+        if (interviewProgress == null) {
             return;
         }
 
         double normalizedScore = score != null ? score : 0d;
 
-        if (evaluationProgress != null) {
-            updateStageScore(evaluationProgress, normalizedScore, userId, false);
-            if (!interviewCompleted) {
-                return;
-            }
-
-            if (interviewProgress != null) {
-                ensureStagePassed(applicationId, interviewProgress, userId, null, "Entretien terminé", locale);
-            }
-
+        updateStageScore(interviewProgress, normalizedScore, userId, false);
+        if (interviewCompleted) {
             resolveScoredStage(
                     applicationId,
-                    evaluationProgress,
+                    interviewProgress,
                     normalizedScore,
                     userId,
                     locale,
-                    "Évaluation validée",
-                    "Évaluation insuffisante");
-            return;
-        }
-
-        if (interviewProgress != null) {
-            updateStageScore(interviewProgress, normalizedScore, userId, false);
-            if (interviewCompleted) {
-                resolveScoredStage(
-                        applicationId,
-                        interviewProgress,
-                        normalizedScore,
-                        userId,
-                        locale,
-                        "Entretien validé",
-                        "Entretien échoué");
-            }
+                    "Entretien validé",
+                    "Entretien échoué");
         }
     }
 
@@ -690,7 +666,7 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
             updateStageScore(progress, score, userId, false);
         }
 
-        if (!hasProgressStatus(progress, ProgressStatus.PASSED)) {
+        if (!hasProgressStatus(progress, ProgressStatus.COMPLETED)) {
             passStage(applicationId, progress.getPipelineStage().getId(), userId, score, notes, locale);
         }
     }
@@ -1133,22 +1109,18 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
         }
 
         switch (interviewStatus.trim().toUpperCase(Locale.ROOT)) {
-            case "STARTED":
+            case "IN_PROGRESS":
                 return 0;
             case "SCHEDULED":
                 return 1;
-            case "POSTPONED":
+            case "AWAITING_EVALUATION":
                 return 2;
-            case "PENDING":
+            case "AWAITING_VALIDATION":
                 return 3;
-            case "OVER":
+            case "CLOSED":
                 return 4;
-            case "PASSED":
+            case "CANCELLED":
                 return 5;
-            case "FAILED":
-                return 6;
-            case "ARCHIVED":
-                return 7;
             default:
                 return 99;
         }
@@ -1228,7 +1200,7 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
     }
 
     private boolean isResolvedStatus(String progressStatus) {
-        return hasProgressStatus(progressStatus, ProgressStatus.PASSED)
+        return hasProgressStatus(progressStatus, ProgressStatus.COMPLETED)
                 || hasProgressStatus(progressStatus, ProgressStatus.FAILED)
                 || hasProgressStatus(progressStatus, ProgressStatus.SKIPPED);
     }

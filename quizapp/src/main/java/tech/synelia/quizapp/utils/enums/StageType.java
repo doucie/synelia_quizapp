@@ -5,10 +5,7 @@ public enum StageType {
     QUIZ("QUIZ"),
     PRESELECTION("PRESELECTION"),
     INTERVIEW("INTERVIEW"),
-    TECHNICAL_TEST("TECHNICAL_TEST"),
-    EVALUATION("EVALUATION"),
-    DECISION("DECISION"),
-    CUSTOM("CUSTOM");
+    DECISION("DECISION");
 
     private final String value;
 

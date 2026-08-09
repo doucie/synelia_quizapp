@@ -193,7 +193,7 @@ class ApplicationsBusinessTest {
 		quizAttempt.setScore(14.0d);
 		quizAttempt.setTotalQuestions(20);
 		quizAttempt.setScorePercent(70.0d);
-		quizAttempt.setManualCorrectionStatus("DONE");
+		quizAttempt.setManualCorrectionStatus("COMPLETED");
 		quizAttempt.setTimeElapsed(1800);
 		quizAttempt.setTimedSnapshot(true);
 		quizAttempt.setTotalTimeAllowedSnapshot(2400);
@@ -369,7 +369,6 @@ class ApplicationsBusinessTest {
 		firstInterview.setInterviewDate(new Date(1_800_000L));
 		firstInterview.setInterviewStatus("SCHEDULED");
 		firstInterview.setInterviewType("ONLINE");
-		firstInterview.setInterviewMailSent(Boolean.TRUE);
 
 		CandidateInterview firstLink = new CandidateInterview();
 		firstLink.setId(1001);
@@ -392,7 +391,6 @@ class ApplicationsBusinessTest {
 		secondInterview.setInterviewDate(new Date(600_000L));
 		secondInterview.setInterviewStatus("PENDING");
 		secondInterview.setInterviewType("ONLINE");
-		secondInterview.setInterviewMailSent(Boolean.TRUE);
 
 		CandidateInterview secondLink = new CandidateInterview();
 		secondLink.setId(1002);
@@ -599,7 +597,7 @@ class ApplicationsBusinessTest {
 		assertThat(interviewPayload.get("alternativeDateRequested")).isNotNull();
 		assertThat(candidateInterview.getCandidateResponseStatus()).isEqualTo("RESCHEDULE_REQUESTED");
 		assertThat(candidateInterview.getRespondedAt()).isNotNull();
-		assertThat(interview.getInterviewStatus()).isEqualTo("POSTPONED");
+		assertThat(interview.getInterviewStatus()).isEqualTo("CANCELLED");
 	}
 
 	@Test

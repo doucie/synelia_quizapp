@@ -17,7 +17,17 @@ public enum QuizStatus {
     /**
      * Quiz has been completed
      */
-    COMPLETED("COMPLETED");
+    COMPLETED("COMPLETED"),
+    
+    /**
+     * Quiz expired (deadline passed without completion)
+     */
+    EXPIRED("EXPIRED"),
+    
+    /**
+     * Quiz cancelled (abandoned or invalidated)
+     */
+    CANCELLED("CANCELLED");
 
     private final String value;
 
