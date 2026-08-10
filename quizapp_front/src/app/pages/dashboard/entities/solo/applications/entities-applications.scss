@@ -404,32 +404,27 @@
   font-weight: var(--font-weight-semibold);
   border: 1px solid transparent;
 
-  &.interview-status-pending {
-    background: rgba(var(--warning-rgb), 0.12);
-    color: var(--warning);
-    border-color: rgba(var(--warning-rgb), 0.25);
-  }
-
   &.interview-status-scheduled,
-  &.interview-status-started {
+  &.interview-status-in-progress {
     background: rgba(var(--primary-rgb), 0.12);
     color: var(--primary);
     border-color: rgba(var(--primary-rgb), 0.25);
   }
 
-  &.interview-status-over {
-    background: rgba(var(--success-rgb), 0.12);
-    color: var(--success);
-    border-color: rgba(var(--success-rgb), 0.25);
-  }
-
-  &.interview-status-postponed {
+  &.interview-status-awaiting-evaluation,
+  &.interview-status-awaiting-validation {
     background: rgba(var(--info-rgb), 0.12);
     color: var(--info);
     border-color: rgba(var(--info-rgb), 0.25);
   }
 
-  &.interview-status-failed {
+  &.interview-status-closed {
+    background: rgba(var(--success-rgb), 0.12);
+    color: var(--success);
+    border-color: rgba(var(--success-rgb), 0.25);
+  }
+
+  &.interview-status-cancelled {
     background: rgba(var(--error-rgb), 0.12);
     color: rgba(var(--error-rgb), 1);
     border-color: rgba(var(--error-rgb), 0.25);

@@ -316,9 +316,13 @@
   box-shadow: 0 0 0 2px var(--border);
 }
 
-.dot-passed    { background: var(--success); box-shadow: 0 0 0 2px var(--success); }
+.dot-completed { background: var(--success); box-shadow: 0 0 0 2px var(--success); }
 .dot-failed    { background: var(--error);   box-shadow: 0 0 0 2px var(--error); }
 .dot-skipped   { background: var(--warning); box-shadow: 0 0 0 2px var(--warning); }
+.dot-awaiting_validation {
+  background: var(--info);
+  box-shadow: 0 0 0 2px var(--info), 0 0 0 6px color-mix(in srgb, var(--info) 20%, transparent);
+}
 .dot-in_progress {
   background: var(--primary);
   box-shadow: 0 0 0 2px var(--primary), 0 0 0 6px color-mix(in srgb, var(--primary) 20%, transparent);

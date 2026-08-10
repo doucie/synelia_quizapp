@@ -572,14 +572,15 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
       case 'SCHEDULED':
         return 'interview-status-scheduled';
       case 'IN_PROGRESS':
-        return 'interview-status-started';
+        return 'interview-status-in-progress';
       case 'AWAITING_EVALUATION':
+        return 'interview-status-awaiting-evaluation';
       case 'AWAITING_VALIDATION':
-        return 'interview-status-postponed';
+        return 'interview-status-awaiting-validation';
       case 'CLOSED':
-        return 'interview-status-over';
+        return 'interview-status-closed';
       case 'CANCELLED':
-        return 'interview-status-failed';
+        return 'interview-status-cancelled';
       default:
         return '';
     }

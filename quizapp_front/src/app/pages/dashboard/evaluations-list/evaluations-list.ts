@@ -226,7 +226,7 @@ export class EvaluationsListComponent implements OnInit, OnDestroy {
 
   getStatusClass(status: string | undefined): string {
     switch (status) {
-      case 'IN_PROGRESS': return 'started';
+      case 'IN_PROGRESS': return 'in-progress';
       case 'CLOSED': return 'completed';
       default: return '';
     }

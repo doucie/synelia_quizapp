@@ -19,12 +19,12 @@
           <span>{{ getInterviewsByStatus('SCHEDULED') }}</span>
           <span class="stat-label">Planifiés</span>
         </div>
-        <div class="stat-chip postponed">
+        <div class="stat-chip cancelled">
           <i class="bi bi-arrow-repeat"></i>
           <span>{{ getInterviewsByStatus('CANCELLED') }}</span>
-          <span class="stat-label">À replanifier</span>
+          <span class="stat-label">Annulés</span>
         </div>
-        <div class="stat-chip started">
+        <div class="stat-chip in-progress">
           <i class="bi bi-play-circle"></i>
           <span>{{ getInterviewsByStatus('IN_PROGRESS') }}</span>
           <span class="stat-label">En cours</span>
@@ -64,14 +64,14 @@
           Planifiés ({{ getInterviewsByStatus('SCHEDULED') }})
         </button>
         <button
-          class="chip postponed"
+          class="chip cancelled"
           [class.active]="selectedFilter() === 'CANCELLED'"
           (click)="setFilter('CANCELLED')"
         >
-          À replanifier ({{ getInterviewsByStatus('CANCELLED') }})
+          Annulés ({{ getInterviewsByStatus('CANCELLED') }})
         </button>
         <button
-          class="chip started"
+          class="chip in-progress"
           [class.active]="selectedFilter() === 'IN_PROGRESS'"
           (click)="setFilter('IN_PROGRESS')"
         >
@@ -135,7 +135,7 @@
                   <div 
                     class="interview-card"
                     [class.selected]="selectedInterview()?.id === interview.id"
-                    [class.started]="interview.interviewStatus === 'IN_PROGRESS'"
+                    [class.in-progress]="interview.interviewStatus === 'IN_PROGRESS'"
                     (click)="selectInterview(interview)"
                   >
                     <!-- Header -->

@@ -683,7 +683,7 @@ export class InterviewsComponent implements OnInit, OnDestroy {
 
   /**
    * Met à jour le statut d'une interview (méthode interne)
-   * Ajoute startedAt si le statut passe à STARTED, endedAt si le statut passe à OVER
+   * Ajoute startedAt si le statut passe à IN_PROGRESS, endedAt si le statut passe à CLOSED
    */
   private updateInterviewStatus(interview: InterviewWithDetails, newStatus: string): void {
     const now = new Date();

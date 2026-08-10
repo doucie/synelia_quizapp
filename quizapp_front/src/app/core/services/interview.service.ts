@@ -223,7 +223,7 @@ export class InterviewService {
   getStatusClass(status: string): string {
     const classes: Record<string, string> = {
       'SCHEDULED': 'info',
-      'IN_PROGRESS': 'started',
+      'IN_PROGRESS': 'in-progress',
       'AWAITING_EVALUATION': 'warning',
       'AWAITING_VALIDATION': 'warning',
       'CLOSED': 'success',

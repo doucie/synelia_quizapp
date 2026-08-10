@@ -19,7 +19,7 @@
           <span>{{ totalEvaluations() }}</span>
           <span class="stat-label">Total</span>
         </div>
-        <div class="stat-chip started">
+        <div class="stat-chip in-progress">
           <i class="bi bi-play-circle"></i>
           <span>{{ inProgressCount() }}</span>
           <span class="stat-label">En cours</span>
@@ -53,7 +53,7 @@
           Tous ({{ totalEvaluations() }})
         </button>
         <button
-          class="chip started"
+          class="chip in-progress"
           [class.active]="selectedFilter() === 'IN_PROGRESS'"
           (click)="setFilter('IN_PROGRESS')"
         >
@@ -248,7 +248,7 @@
                 }
               } @else {
                 @if ((interview.submittedEvaluationCount || 0) > 0) {
-                  <div class="evaluation-preview evaluation-preview--started">
+                  <div class="evaluation-preview evaluation-preview--in-progress">
                     <div class="evaluation-preview__header">
                       <span class="evaluation-preview__title">Progression des soumissions</span>
                       <span class="evaluation-preview__count">{{ interview.submittedEvaluationCount }} evaluateur(s)</span>

@@ -160,18 +160,18 @@
     }
   }
 
-  &.postponed {
-    background: rgba(var(--warning-rgb), 0.1);
-    color: var(--warning);
-    border-color: rgba(var(--warning-rgb), 0.2);
+  &.cancelled {
+    background: rgba(var(--error-rgb), 0.1);
+    color: var(--error);
+    border-color: rgba(var(--error-rgb), 0.2);
 
     &:hover {
-      background: rgba(var(--warning-rgb), 0.15);
+      background: rgba(var(--error-rgb), 0.15);
       transform: translateY(-2px);
     }
   }
 
-  &.started {
+  &.in-progress {
     background: rgba(var(--primary-rgb), 0.1);
     color: var(--primary);
     border-color: rgba(var(--primary-rgb), 0.2);
@@ -268,13 +268,13 @@
     border-color: var(--info);
   }
 
-  &.postponed.active {
-    background: var(--warning);
-    border-color: var(--warning);
+  &.cancelled.active {
+    background: var(--error);
+    border-color: var(--error);
     color: var(--white);
   }
 
-  &.started.active {
+  &.in-progress.active {
     background: var(--primary);
     border-color: var(--primary);
   }
@@ -363,7 +363,7 @@
   }
 
   // Animation pour les entretiens en cours
-  &.started {
+  &.in-progress {
     border-color: var(--primary);
     background: linear-gradient(135deg, var(--surface) 0%, rgba(var(--primary-rgb), 0.08) 100%);
     animation: pulse-ring 2s infinite;
@@ -463,7 +463,7 @@
   }
 
   // Badge pour statut "En cours" avec icône recording - style rouge
-  &.started {
+  &.in-progress {
     background: linear-gradient(135deg, rgba(var(--error-rgb), 0.15), rgba(var(--error-rgb), 0.15));
     color: var(--error);
     border: 1px solid rgba(var(--error-rgb), 0.3);
@@ -1698,7 +1698,7 @@
       background: var(--info);
     }
 
-    &.started {
+    &.in-progress {
       background: var(--primary);
     }
 
@@ -1826,7 +1826,7 @@
     border-left-color: var(--info);
   }
 
-  &.started {
+  &.in-progress {
     border-left-color: var(--primary);
     background: linear-gradient(90deg, rgba(var(--primary-rgb), 0.08) 0%, var(--surface) 30%);
     position: relative;
@@ -1927,7 +1927,7 @@
       color: var(--info-dark);
     }
 
-    &.started {
+    &.in-progress {
       background: rgba(var(--primary-rgb), 0.1);
       color: var(--primary-dark);
     }

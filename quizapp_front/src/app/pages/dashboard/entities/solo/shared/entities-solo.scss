@@ -2404,24 +2404,6 @@ tr.deleted {
     border: 1px solid var(--border);
   }
   
-  // Badge "En cours" avec animation
-  &.started {
-    background: linear-gradient(135deg, color-mix(in srgb, var(--error) 15%, transparent), color-mix(in srgb, var(--error-dark) 15%, transparent));
-    color: var(--error);
-    border: 1px solid color-mix(in srgb, var(--error) 30%, transparent);
-    font-weight: var(--font-weight-bold);
-    
-    &::before {
-      content: '';
-      width: 8px;
-      height: 8px;
-      border-radius: var(--radius-full);
-      background: var(--error);
-      animation: recording-blink 1.2s infinite;
-      flex-shrink: 0;
-    }
-  }
-  
   // Variantes online/offline (pour utilisateurs)
   &.online {
     background: color-mix(in srgb, var(--success) 10%, transparent);
@@ -2485,51 +2467,10 @@ tr.deleted {
     border: 1px solid color-mix(in srgb, var(--info) 20%, transparent);
   }
 
-  &.status-started {
-    background: color-mix(in srgb, var(--primary) 15%, transparent);
-    color: var(--primary-dark);
-    border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
-    
-    &::before {
-      content: '';
-      width: 8px;
-      height: 8px;
-      border-radius: var(--radius-full);
-      background: var(--primary);
-      animation: recording-blink 1.2s infinite;
-      flex-shrink: 0;
-    }
-  }
-
-  &.status-over {
-    background: var(--surface-variant);
-    color: var(--text-secondary);
-    border: 1px solid var(--border);
-  }
-
-  &.status-passed {
-    background: color-mix(in srgb, var(--success) 10%, transparent);
-    color: var(--success-dark);
-    border: 1px solid color-mix(in srgb, var(--success) 20%, transparent);
-  }
-
   &.status-failed {
     background: color-mix(in srgb, var(--error) 10%, transparent);
     color: var(--error-dark);
     border: 1px solid color-mix(in srgb, var(--error) 20%, transparent);
-  }
-
-  &.status-postponed {
-    background: color-mix(in srgb, var(--warning) 10%, transparent);
-    color: var(--warning-dark);
-    border: 1px solid color-mix(in srgb, var(--warning) 20%, transparent);
-  }
-
-  &.status-archived {
-    background: var(--surface-variant);
-    color: var(--text-tertiary);
-    border: 1px solid var(--border);
-    opacity: 0.8;
   }
 
   // â”€â”€ Interview type badges â”€â”€

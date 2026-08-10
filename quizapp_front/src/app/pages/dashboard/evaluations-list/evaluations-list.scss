@@ -94,7 +94,7 @@
     color: var(--primary);
   }
   
-  &.started {
+  &.in-progress {
     background: rgba(var(--info-rgb), 0.1);
     border-color: var(--info);
     color: var(--info);
@@ -172,7 +172,7 @@
     border-color: var(--primary);
   }
   
-  &.started.active {
+  &.in-progress.active {
     background: var(--info);
     border-color: var(--info);
   }
@@ -362,7 +362,7 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   
-  &.started {
+  &.in-progress {
     background: rgba(var(--info-rgb), 0.1);
     color: var(--info);
   }
@@ -602,7 +602,7 @@
   background: rgba(var(--primary-rgb), 0.05);
 }
 
-.evaluation-preview--started {
+.evaluation-preview--in-progress {
   border-color: rgba(var(--info-rgb), 0.18);
   background: rgba(var(--info-rgb), 0.06);
 }
