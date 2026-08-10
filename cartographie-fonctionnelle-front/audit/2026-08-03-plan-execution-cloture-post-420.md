@@ -302,6 +302,20 @@ Taches (plan revise a la lumiere de l'audit 2026-08-09 du front reel; les refere
 
 Sortie de phase: front aligne sur le vocabulaire cible post-420 (stage/progress/interview/quiz); readiness coherente avec le backend; champs derives conserves; champs supprimes absents; `merise.ts` a jour; `rg` front = 0 legacy; `ng build` + specs verts. (VALIDE 2026-08-09: `ng build --configuration development` OK + 95/95 specs verts + `rg` front = 0 legacy.)
 
+### Phase 7bis - Rattrapage vocabulaire CSS + fix timeline (2026-08-10)
+
+Revu final 2026-08-10 apres cloture de la phase 7: les VALEURS d'enum sont toutes cibles (0 spec legacy), mais il reste des NOMS DE CLASSES CSS legacy (le DoD "rg front = 0 legacy" n'est pas strictement satisfait) + une regression visuelle. Perimetre valide par l'utilisateur: nettoyage complet.
+
+Taches:
+
+- [ ] **A. Fix fonctionnel timeline candidat** (`candidate-detail.html` 185 genere `dot-` + `progressStatus.toLowerCase()`): `candidate-detail.scss` 319 `.dot-passed` (mort depuis le passage a `COMPLETED`) -> renommer en `.dot-completed` + AJOUTER `.dot-awaiting_validation` (sinon les ronds COMPLETED/AWAITING_VALIDATION perdent leur style).
+- [ ] **B. Chips interview `entities-applications` -> 6 valeurs cibles** (`entities-applications.ts` 570-586 `getInterviewStatusClass`): `interview-status-started` -> `interview-status-in-progress`, `-postponed` -> `-awaiting-evaluation`/`-awaiting-validation`, `-over` -> `-closed`, `-failed` -> `-cancelled`; `entities-applications.scss` 397-437 `.interview-status-chip`: renommer les selecteurs + supprimer `.interview-status-pending` (jamais emis).
+- [ ] **C. Classes `started`/`postponed` -> `in-progress`/`cancelled`** (le chip "postponed" compte desormais `CANCELLED` -> relabel "A replanifier" -> "Annules"): `interview.service.ts` 226, `interviews.html` 22/25/27/67/74/138, `interviews.scss` 163/174/271/277/366/466/1701/1829/1930, `evaluations-list.ts` 229, `evaluations-list.html` 22/56/251, `evaluations-list.scss` 97/175/365/605 (+ `evaluation-preview--started` -> `--in-progress`); commentaire stale `interviews.ts` 686 (STARTED/OVER -> IN_PROGRESS/CLOSED).
+- [ ] **D. Selecteurs morts**: `entities-solo.scss` 2408 (`&.started`) / 2488 (`status-started`) / 2504 (`status-over`) / 2510 (`status-passed`) / 2522 (`status-postponed`) / 2528 (`status-archived`) a supprimer (conserver `status-scheduled` 2482 et `status-failed` 2516, encore utilises); `applications.scss` 1266-1278 (`.quiz-status-badge.quiz-completed/in_progress/not_started`) + 2538-2550 (`.status-tag.quiz.quiz-*`, dont `quiz-not_started`) - l'HTML utilise `badge-*` via `getQuizBadgeClass`.
+- [ ] **E. Verification + cloture**: `grep` final = 0 occurrence (`-passed`, `-postponed`, `status-over`, `status-started`, `quiz-not_started`, `dot-passed`, classes `started`/`postponed` emises hors `startedAt` legitime, `interview-status-started|over|postponed|failed`) -> `ng build --configuration development` -> `ng test --watch=false --browsers=ChromeHeadless` (95 specs) -> commit de cloture 7bis.
+
+Sortie de phase 7bis: `rg` front = 0 legacy strict (valeur OU classe CSS), fix timeline candidat COMPLETED/AWAITING_VALIDATION, `ng build` + specs verts.
+
 ## 5. Risques et points a verifier
 
 - `syncApplicationInterviewSummary` est tripliquee et lit la FK legacy `interviews.application_id`: sa consolidation (Phase 3) est le point critique du runtime entretien.
