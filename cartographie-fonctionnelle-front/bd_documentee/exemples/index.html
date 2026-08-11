@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>quizapp_db — Mini-BD fictive</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="page-header">
+    <div class="header-inner">
+      <h1 id="page-title"></h1>
+      <p class="page-subtitle" id="page-subtitle"></p>
+      <p class="page-source" id="page-source"></p>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="search-box">
+        <input type="search" id="search-input" placeholder="Rechercher une table…" autocomplete="off" />
+      </div>
+      <nav id="nav"></nav>
+    </aside>
+
+    <main class="content" id="content">
+      <div class="legend">
+        <span class="legend-label">Légende des clés :</span>
+        <span><span class="dot dot-pk"></span>Clé primaire (PRI)</span>
+        <span><span class="dot dot-fk"></span>Clé étrangère cliquable (FK)</span>
+        <span><span class="dot dot-uni"></span>Clé unique (UNI)</span>
+        <span><span class="dot dot-null"></span>Valeur NULL</span>
+      </div>
+    </main>
+  </div>
+
+  <footer class="page-footer" id="footer"></footer>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
