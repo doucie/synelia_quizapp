@@ -19,6 +19,7 @@ Important: ces statuts de l'inventaire indiquent d'abord la presence d'une fiche
 - [x] `/inscription` -> [public/50-inscription.md](./public/50-inscription.md)
 - [x] `/mot-de-passe-oublie` -> [public/60-mot-de-passe-oublie.md](./public/60-mot-de-passe-oublie.md)
 - [x] `/postuler/:sourceToken` -> [public/70-postuler-source-token.md](./public/70-postuler-source-token.md)
+- [x] `/postuler/campagne/:campaignId` -> [public/70-postuler-source-token.md](./public/70-postuler-source-token.md) (meme composant `ApplyPositionComponent`, mode campagne ouverte — sans guard)
 
 ## Dashboard Shell Et Pages Metier
 
