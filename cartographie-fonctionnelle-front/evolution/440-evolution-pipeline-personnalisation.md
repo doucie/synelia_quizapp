@@ -69,7 +69,7 @@ Frontend :
 
 Socle : fiche 41 §5.5 et section 4 de la présente note. C'est le chantier qui remplace le verrou binaire. Détail du mécanisme : section 4.
 
-- [ ] **Migration `V1_081__add_pipeline_stage_is_active.sql`** :
+- [ ] **Migration `V1_082__add_pipeline_stage_is_active.sql`** :
   - `is_active` BIT NOT NULL DEFAULT 1 ;
   - colonne générée `active_slot = IF(is_active, stage_order, NULL)` ;
   - `UNIQUE(pipeline_template_id, active_slot)` — au plus une révision active par slot ;
@@ -138,8 +138,8 @@ Pipeline `[CANDIDATURE, QUIZ, INTERVIEW, DECISION]`, 5 candidats ont passé le Q
 
 ## 5. Numérotation des migrations
 
-- **430 (inchangée)** : `V1_078__add_grid_lock_usage_schema.sql`, `V1_079__backfill_grid_usage_phase_b.sql`, `V1_080__drop_stage_evaluation_criterion.sql`.
-- **440** : `V1_081__add_pipeline_stage_is_active.sql` (Lot B).
+- **430 (révisée)** : `V1_078__add_grid_lock_usage_schema.sql`, `V1_079__backfill_grid_usage_phase_b.sql`, `V1_080__drop_stage_evaluation_criterion.sql` + `V1_081__fix_content_hash_varchar.sql` (correction CHAR→VARCHAR de `content_hash` pour la validation Hibernate).
+- **440** : `V1_082__add_pipeline_stage_is_active.sql` (Lot B).
 - Lot 0 (corrections), Lot A (multi-rounds), Lot C (règles email) : **aucune migration**.
 
 ## 6. Checklist transverse
@@ -176,7 +176,7 @@ Pipeline `[CANDIDATURE, QUIZ, INTERVIEW, DECISION]`, 5 candidats ont passé le Q
 - `quizapp/src/main/java/tech/synelia/quizapp/business/PipelineTemplateBusiness.java`, `PipelineStageBusiness.java`, `ApplicationProgressBusiness.java`, `ApplicationsBusiness.java`, `InterviewsBusiness.java`, `DecisionBusiness.java`
 - `quizapp/src/main/java/tech/synelia/quizapp/dao/repository/PipelineStageRepository.java`, `PipelineStageNotificationRuleRepository.java` (existant), `ApplicationProgressRepository.java`
 - `quizapp/src/main/java/tech/synelia/quizapp/dao/entity/PipelineStageNotificationRule.java` (existant — CRUD à créer)
-- `quizapp/src/main/resources/db/migration/` : prochain script `V1_081__add_pipeline_stage_is_active.sql`
+- `quizapp/src/main/resources/db/migration/` : prochain script `V1_082__add_pipeline_stage_is_active.sql` (le `V1_081__fix_content_hash_varchar.sql` est déjà pris par la correction de la 430)
 - `quizapp_front/src/app/pages/dashboard/pipeline-templates/`, `pipeline-template-edit/`
 - `quizapp_front/src/app/core/services/pipeline-template.service.ts`, `pipeline-stage.service.ts`, `core/models/pipeline.interfaces.ts`, `app.routes.ts` (L555-564), `core/guards/role.guard.ts` (L56-82), `pages/dashboard/dashboard.ts` (menu, L201-207)
 - `cartographie-fonctionnelle-front/bd_documentee/quizapp_db_documentation_20260810.md`, `bd_documentee/exemples/data.js`

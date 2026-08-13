@@ -664,7 +664,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 | version_label | varchar(255) | YES |  | \N | Libellé de la version. |
 | is_published | tinyint(1) | NO |  | 0 | Indique si la version est publiée. |
 | published_at | datetime | YES |  | \N | Date de publication de la version. |
-| content_hash | char(64) | YES | UNI | \N | Empreinte SHA-256 (hex) de l'ensemble ordonné des items de la version (forme canonique) ; UNIQUE — une seule version par contenu. |
+| content_hash | varchar(64) | YES | UNI | \N | Empreinte SHA-256 (hex) de l'ensemble ordonné des items de la version (forme canonique) ; UNIQUE — une seule version par contenu. |
 | locked_at | datetime | YES |  | \N | Verrou d'usage : posé à la première evaluation_item réellement saisie qui référence un item de la version ; `is_locked` = `locked_at` non nul. |
 | created_at | datetime | YES |  | \N | Date de création de la ligne (audit). |
 | created_by | int | YES |  | \N | Auteur de la création de la ligne (audit). |

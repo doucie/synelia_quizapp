@@ -54,7 +54,7 @@ Le verrou est **global** : une version utilisée reste verrouillée même si l'�
 
 ### 3.2 Mécanisme technique
 
-- `content_hash` CHAR(64) **UNIQUE** sur `evaluation_grid_template_version` : empreinte SHA-256 (hex) de l'**ensemble ordonné** des items de la version. **L'id de la version n'en fait pas partie** (empreinte de contenu, pas identité) : deux versions au contenu identique ont le même hash, c'est le mécanisme de la Règle C. L'ordre compte : deux grilles identiques mais dans un ordre différent ne partagent pas le même hash.
+- `content_hash` VARCHAR(64) **UNIQUE** sur `evaluation_grid_template_version` : empreinte SHA-256 (hex) de l'**ensemble ordonné** des items de la version. **L'id de la version n'en fait pas partie** (empreinte de contenu, pas identité) : deux versions au contenu identique ont le même hash, c'est le mécanisme de la Règle C. L'ordre compte : deux grilles identiques mais dans un ordre différent ne partagent pas le même hash.
 - Empreinte par item : `criterion_order` | `label` | `criterion_type` | `max_score` | `weight` | `is_required` | `config_json`. Calcul sur **forme canonique** : `config_json` normalisé (clés triées, sans espaces superflus), labels trimés, `DOUBLE` arrondis à précision fixe, règle explicite `NULL` vs `0`. Hash global = hash de la concaténation ordonnée des hash d'items.
 - `locked_at` datetime **nullable** sur `evaluation_grid_template_version` : posé **transactionnellement** à la création de la première `evaluation_item` réellement saisie qui référence la version (DRAFT avec item, soumise ou validée). `is_locked` = `locked_at IS NOT NULL`. **Un brouillon vide ne pose pas le verrou** : on ne matérialise jamais de lignes d'item tant que l'évaluateur n'a rien saisi.
 - Le lien de référence est la version : `pipeline_stage.evaluation_grid_template_version_id` → une version ; `evaluation_item.evaluation_grid_template_item_id` → un item de la version. Comme la version est verrouillée à l'usage, ses items ne peuvent plus être modifiés après coup — **l'immutabilité des items d'une version verrouillée est une règle applicative** (la base n'empêche pas un `UPDATE` direct sur un item ; un trigger peut la renforcer).
@@ -98,7 +98,7 @@ Ne pas ajouter de table de liaison : une étape = une grille.
 
 Ajouter :
 
-- `content_hash` CHAR(64) **NULL**, contrainte **UNIQUE** (une seule version par contenu). Empreinte de contenu calculée sur les items (forme canonique), **sans l'id de la version**. Défaut `\N` tant que le backfill n'a pas calculé les hash.
+- `content_hash` VARCHAR(64) **NULL**, contrainte **UNIQUE** (une seule version par contenu). Empreinte de contenu calculée sur les items (forme canonique), **sans l'id de la version**. Défaut `\N` tant que le backfill n'a pas calculé les hash.
 - `locked_at` datetime **nullable** — posé à la première `evaluation_item` réellement saisie (brouillon vide non verrouillant). `is_locked` = `locked_at IS NOT NULL`.
 
 Conserver : `is_published`, `published_at` (= disponibilité pour les étapes, indépendant du verrou).
@@ -144,7 +144,7 @@ Script SQL de référence : `quizapp/src/main/resources/db/migration/V1_078__add
 Checklist :
 
 - [x] `ALTER TABLE pipeline_stage ADD COLUMN evaluation_grid_template_version_id int unsigned NULL`, FK → `evaluation_grid_template_version(id)`, index.
-- [x] `ALTER TABLE evaluation_grid_template_version ADD COLUMN content_hash CHAR(64) NULL`, index **UNIQUE** sur `content_hash`.
+- [x] `ALTER TABLE evaluation_grid_template_version ADD COLUMN content_hash CHAR(64) NULL`, index **UNIQUE** sur `content_hash`. *(Type corrigé en `VARCHAR(64)` par `V1_081` — l'entité `@Column(length=64)` attend `varchar(64)` et la validation Hibernate échouait sur `char(64)`.)*
 - [x] `ALTER TABLE evaluation_grid_template_version ADD COLUMN locked_at datetime NULL`.
 - [x] `ALTER TABLE evaluation_item ADD COLUMN evaluation_grid_template_item_id int unsigned NULL`, FK + index. (Ajout d'une colonne nullable, sans recâbler tout de suite : les lignes restent lisibles.)
 - [x] Vérifier que l'existant n'est pas cassé : aucun `NOT NULL`, aucune suppression, aucune contrainte bloquante.
