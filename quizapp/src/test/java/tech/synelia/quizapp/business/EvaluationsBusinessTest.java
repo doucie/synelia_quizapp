@@ -25,21 +25,23 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import tech.synelia.quizapp.dao.entity.ApplicationProgress;
 import tech.synelia.quizapp.dao.entity.Applications;
 import tech.synelia.quizapp.dao.entity.CandidateInterview;
+import tech.synelia.quizapp.dao.entity.EvaluationGridTemplateItem;
+import tech.synelia.quizapp.dao.entity.EvaluationGridTemplateVersion;
 import tech.synelia.quizapp.dao.entity.EvaluationItem;
 import tech.synelia.quizapp.dao.entity.Evaluations;
 import tech.synelia.quizapp.dao.entity.InterviewParticipant;
 import tech.synelia.quizapp.dao.entity.Interviews;
 import tech.synelia.quizapp.dao.entity.PipelineStage;
-import tech.synelia.quizapp.dao.entity.PipelineStageEvaluationCriterion;
 import tech.synelia.quizapp.dao.entity.User;
 import tech.synelia.quizapp.dao.repository.ApplicationProgressRepository;
 import tech.synelia.quizapp.dao.repository.ApplicationsRepository;
 import tech.synelia.quizapp.dao.repository.CandidateInterviewRepository;
+import tech.synelia.quizapp.dao.repository.EvaluationGridTemplateItemRepository;
+import tech.synelia.quizapp.dao.repository.EvaluationGridTemplateVersionRepository;
 import tech.synelia.quizapp.dao.repository.EvaluationItemRepository;
 import tech.synelia.quizapp.dao.repository.EvaluationsRepository;
 import tech.synelia.quizapp.dao.repository.InterviewParticipantRepository;
 import tech.synelia.quizapp.dao.repository.InterviewsRepository;
-import tech.synelia.quizapp.dao.repository.PipelineStageEvaluationCriterionRepository;
 import tech.synelia.quizapp.utils.FunctionalError;
 import tech.synelia.quizapp.utils.Status;
 import tech.synelia.quizapp.utils.contract.Request;
@@ -62,7 +64,9 @@ class EvaluationsBusinessTest {
 	@Mock
 	private EvaluationItemRepository evaluationItemRepository;
 	@Mock
-	private PipelineStageEvaluationCriterionRepository pipelineStageEvaluationCriterionRepository;
+	private EvaluationGridTemplateVersionRepository evaluationGridTemplateVersionRepository;
+	@Mock
+	private EvaluationGridTemplateItemRepository evaluationGridTemplateItemRepository;
 	@Mock
 	private InterviewsRepository interviewsRepository;
 	@Mock
@@ -235,12 +239,13 @@ class EvaluationsBusinessTest {
 	}
 
 	@Test
-	void create_persistsEvaluationItemsWithCriterionSnapshots() throws Exception {
+	void create_persistsEvaluationItemsWithGridItemSnapshotsAndLocksVersion() throws Exception {
 		CandidateInterview candidateInterview = buildCandidateInterview(31, 17, 9, 45, 300);
 		InterviewParticipant interviewParticipant = buildInterviewParticipant(41, 17, 77);
 		Interviews interview = candidateInterview.getInterviews();
 		Applications application = interview.getApplicationProgress() != null ? interview.getApplicationProgress().getApplications() : null;
-		PipelineStageEvaluationCriterion criterion = buildCriterion(501, 300, 1, "Communication", "SCORE", 5d, 2d);
+		EvaluationGridTemplateVersion gridVersion = buildGridVersion(10);
+		EvaluationGridTemplateItem gridItem = buildGridItem(501, 10, 1, "Communication", "SCORE", 5d, 2d);
 
 		when(candidateInterviewRepository.findOne(31, false)).thenReturn(candidateInterview);
 		when(interviewsRepository.findOne(17, false)).thenReturn(interview);
@@ -249,7 +254,10 @@ class EvaluationsBusinessTest {
 		when(interviewParticipantRepository.save(any(InterviewParticipant.class))).thenAnswer(invocation -> invocation.getArgument(0));
 		when(evaluationsRepository.saveAll(any())).thenAnswer(invocation -> assignEvaluationIds(invocation.getArgument(0), 950));
 		when(evaluationItemRepository.saveAll(any())).thenAnswer(invocation -> invocation.getArgument(0));
-		when(pipelineStageEvaluationCriterionRepository.findOne(501, false)).thenReturn(criterion);
+		when(evaluationGridTemplateVersionRepository.findOne(10, false)).thenReturn(gridVersion);
+		when(evaluationGridTemplateVersionRepository.save(any(EvaluationGridTemplateVersion.class))).thenAnswer(invocation -> invocation.getArgument(0));
+		when(evaluationGridTemplateItemRepository.findOne(501, false)).thenReturn(gridItem);
+		when(evaluationGridTemplateItemRepository.findByEvaluationGridTemplateVersionId(10, false)).thenReturn(List.of(gridItem));
 		when(evaluationsRepository.sumMarksByInterviewId(17)).thenReturn(82d);
 		when(evaluationsRepository.countByInterviewId(17)).thenReturn(1L);
 		when(evaluationsRepository.sumMarksByApplicationId(9)).thenReturn(82d);
@@ -261,7 +269,7 @@ class EvaluationsBusinessTest {
 				.thenReturn(false);
 
 		EvaluationItemDto itemDto = new EvaluationItemDto();
-		itemDto.setPipelineStageEvaluationCriterionId(501);
+		itemDto.setEvaluationGridTemplateItemId(501);
 		itemDto.setScoreValue(4.5d);
 		itemDto.setTextValue("Bonne communication");
 
@@ -278,11 +286,15 @@ class EvaluationsBusinessTest {
 		verify(evaluationItemRepository).saveAll(savedItemsCaptor.capture());
 		EvaluationItem savedItem = savedItemsCaptor.getValue().get(0);
 		assertThat(savedItem.getEvaluation()).isNotNull();
-		assertThat(savedItem.getPipelineStageEvaluationCriterion()).isSameAs(criterion);
+		assertThat(savedItem.getEvaluationGridTemplateItem()).isSameAs(gridItem);
 		assertThat(savedItem.getScoreValue()).isEqualTo(4.5d);
 		assertThat(savedItem.getTextValue()).isEqualTo("Bonne communication");
 		assertThat(savedItem.getWeightSnapshot()).isEqualTo(2d);
 		assertThat(savedItem.getMaxScoreSnapshot()).isEqualTo(5d);
+
+		ArgumentCaptor<EvaluationGridTemplateVersion> versionCaptor = ArgumentCaptor.forClass(EvaluationGridTemplateVersion.class);
+		verify(evaluationGridTemplateVersionRepository).save(versionCaptor.capture());
+		assertThat(versionCaptor.getValue().getLockedAt()).isNotNull();
 
 		@SuppressWarnings("unchecked")
 		ArgumentCaptor<List<Evaluations>> savedCaptor = ArgumentCaptor.forClass(List.class);
@@ -292,10 +304,10 @@ class EvaluationsBusinessTest {
 
 	@Test
 	void getFullInfos_loadsEvaluationItemsEvenWhenMultipleEvaluationsAreReturned() throws Exception {
-		PipelineStageEvaluationCriterion criterion = buildCriterion(501, 300, 1, "Communication", "SCORE", 5d, 2d);
+		EvaluationGridTemplateItem gridItem = buildGridItem(501, 10, 1, "Communication", "SCORE", 5d, 2d);
 		EvaluationItem item = new EvaluationItem();
 		item.setId(801);
-		item.setPipelineStageEvaluationCriterion(criterion);
+		item.setEvaluationGridTemplateItem(gridItem);
 		item.setScoreValue(4.5d);
 		item.setTextValue("Bonne communication");
 		item.setWeightSnapshot(2d);
@@ -310,7 +322,7 @@ class EvaluationsBusinessTest {
 
 		assertThat(fullDto.getEvaluationItems()).hasSize(1);
 		assertThat(fullDto.getEvaluationItems().get(0).getId()).isEqualTo(801);
-		assertThat(fullDto.getEvaluationItems().get(0).getPipelineStageEvaluationCriterionId()).isEqualTo(501);
+		assertThat(fullDto.getEvaluationItems().get(0).getEvaluationGridTemplateItemId()).isEqualTo(501);
 		assertThat(fullDto.getEvaluationItems().get(0).getCriterionOrder()).isEqualTo(1);
 		assertThat(fullDto.getEvaluationItems().get(0).getLabel()).isEqualTo("Communication");
 		assertThat(fullDto.getEvaluationItems().get(0).getCriterionType()).isEqualTo("SCORE");
@@ -327,15 +339,17 @@ class EvaluationsBusinessTest {
 		InterviewParticipant interviewParticipant = buildInterviewParticipant(41, 17, 77);
 		Interviews interview = candidateInterview.getInterviews();
 		Applications application = interview.getApplicationProgress() != null ? interview.getApplicationProgress().getApplications() : null;
-		PipelineStageEvaluationCriterion firstCriterion = buildCriterion(501, 300, 1, "Communication", "SCORE", 5d, 2d);
-		PipelineStageEvaluationCriterion secondCriterion = buildCriterion(502, 300, 2, "Technique", "TEXT", null, 1d);
+		EvaluationGridTemplateVersion gridVersion = buildGridVersion(10);
+		EvaluationGridTemplateItem firstGridItem = buildGridItem(501, 10, 1, "Communication", "SCORE", 5d, 2d);
+		EvaluationGridTemplateItem secondGridItem = buildGridItem(502, 10, 2, "Technique", "TEXT", null, 1d);
 
 		when(candidateInterviewRepository.findOne(31, false)).thenReturn(candidateInterview);
 		when(interviewsRepository.findOne(17, false)).thenReturn(interview);
 		when(interviewParticipantRepository.findByInterviewId(17, false)).thenReturn(List.of(interviewParticipant));
 		when(permissionService.hasAnyEntityPermission(eq(77), eq("INTERVIEW"), eq(17), eq("ADMIN"), eq("EVALUATE")))
 				.thenReturn(false);
-		when(pipelineStageEvaluationCriterionRepository.findByPipelineStageId(300, false)).thenReturn(List.of(firstCriterion, secondCriterion));
+		when(evaluationGridTemplateVersionRepository.findOne(10, false)).thenReturn(gridVersion);
+		when(evaluationGridTemplateItemRepository.findByEvaluationGridTemplateVersionId(10, false)).thenReturn(List.of(firstGridItem, secondGridItem));
 
 		Request<EvaluationsDto> request = new Request<>();
 		request.setUser(77);
@@ -349,11 +363,11 @@ class EvaluationsBusinessTest {
 		assertThat(response.getItems()).hasSize(1);
 		assertThat(response.getItems().get(0).getCandidateInterviewId()).isEqualTo(31);
 		assertThat(response.getItems().get(0).getEvaluationItems()).hasSize(2);
-		assertThat(response.getItems().get(0).getEvaluationItems().get(0).getPipelineStageEvaluationCriterionId()).isEqualTo(501);
+		assertThat(response.getItems().get(0).getEvaluationItems().get(0).getEvaluationGridTemplateItemId()).isEqualTo(501);
 		assertThat(response.getItems().get(0).getEvaluationItems().get(0).getCriterionOrder()).isEqualTo(1);
 		assertThat(response.getItems().get(0).getEvaluationItems().get(0).getLabel()).isEqualTo("Communication");
 		assertThat(response.getItems().get(0).getEvaluationItems().get(0).getMaxScoreSnapshot()).isEqualTo(5d);
-		assertThat(response.getItems().get(0).getEvaluationItems().get(1).getPipelineStageEvaluationCriterionId()).isEqualTo(502);
+		assertThat(response.getItems().get(0).getEvaluationItems().get(1).getEvaluationGridTemplateItemId()).isEqualTo(502);
 		assertThat(response.getItems().get(0).getEvaluationItems().get(1).getCriterionType()).isEqualTo("TEXT");
 	}
 
@@ -363,7 +377,7 @@ class EvaluationsBusinessTest {
 		InterviewParticipant interviewParticipant = buildInterviewParticipant(41, 17, 77);
 		Interviews interview = candidateInterview.getInterviews();
 		Applications application = interview.getApplicationProgress() != null ? interview.getApplicationProgress().getApplications() : null;
-		PipelineStageEvaluationCriterion criterion = buildCriterion(501, 300, 1, "Communication", "SCORE", 5d, 2d);
+		EvaluationGridTemplateItem gridItem = buildGridItem(501, 10, 1, "Communication", "SCORE", 5d, 2d);
 
 		Evaluations existingEvaluation = new Evaluations();
 		existingEvaluation.setId(701);
@@ -375,7 +389,7 @@ class EvaluationsBusinessTest {
 		EvaluationItem existingItem = new EvaluationItem();
 		existingItem.setId(801);
 		existingItem.setEvaluation(existingEvaluation);
-		existingItem.setPipelineStageEvaluationCriterion(criterion);
+		existingItem.setEvaluationGridTemplateItem(gridItem);
 		existingItem.setScoreValue(4.5d);
 		existingItem.setTextValue("Bonne communication");
 		existingItem.setIsDeleted(false);
@@ -416,8 +430,9 @@ class EvaluationsBusinessTest {
 		InterviewParticipant interviewParticipant = buildInterviewParticipant(41, 17, 77);
 		Interviews interview = candidateInterview.getInterviews();
 		Applications application = interview.getApplicationProgress() != null ? interview.getApplicationProgress().getApplications() : null;
-		PipelineStageEvaluationCriterion firstCriterion = buildCriterion(501, 300, 1, "Communication", "SCORE", 5d, 2d);
-		PipelineStageEvaluationCriterion secondCriterion = buildCriterion(502, 300, 2, "Technique", "TEXT_AND_SCORE", 10d, 1d);
+		EvaluationGridTemplateVersion gridVersion = buildGridVersion(10);
+		EvaluationGridTemplateItem firstGridItem = buildGridItem(501, 10, 1, "Communication", "SCORE", 5d, 2d);
+		EvaluationGridTemplateItem secondGridItem = buildGridItem(502, 10, 2, "Technique", "TEXT_AND_SCORE", 10d, 1d);
 
 		Evaluations existingEvaluation = new Evaluations();
 		existingEvaluation.setId(701);
@@ -430,8 +445,9 @@ class EvaluationsBusinessTest {
 		when(candidateInterviewRepository.findOne(31, false)).thenReturn(candidateInterview);
 		when(interviewsRepository.findOne(17, false)).thenReturn(interview);
 		when(interviewParticipantRepository.findByInterviewId(17, false)).thenReturn(List.of(interviewParticipant));
-		when(pipelineStageEvaluationCriterionRepository.findOne(501, false)).thenReturn(firstCriterion);
-		when(pipelineStageEvaluationCriterionRepository.findOne(502, false)).thenReturn(secondCriterion);
+		when(evaluationGridTemplateVersionRepository.findOne(10, false)).thenReturn(gridVersion);
+		when(evaluationGridTemplateVersionRepository.save(any(EvaluationGridTemplateVersion.class))).thenAnswer(invocation -> invocation.getArgument(0));
+		when(evaluationGridTemplateItemRepository.findByEvaluationGridTemplateVersionId(10, false)).thenReturn(List.of(firstGridItem, secondGridItem));
 		when(evaluationItemRepository.findByEvaluationId(701, false)).thenReturn(List.of());
 		when(evaluationsRepository.saveAll(any())).thenAnswer(invocation -> invocation.getArgument(0));
 		when(evaluationItemRepository.saveAll(any())).thenAnswer(invocation -> invocation.getArgument(0));
@@ -444,14 +460,14 @@ class EvaluationsBusinessTest {
 				.thenReturn(false);
 
 		EvaluationItemDto firstItem = new EvaluationItemDto();
-		firstItem.setPipelineStageEvaluationCriterionId(501);
+		firstItem.setEvaluationGridTemplateItemId(501);
 		firstItem.setCriterionType("SCORE");
 		firstItem.setScoreValue(4d);
 		firstItem.setMaxScoreSnapshot(5d);
 		firstItem.setWeightSnapshot(2d);
 
 		EvaluationItemDto secondItem = new EvaluationItemDto();
-		secondItem.setPipelineStageEvaluationCriterionId(502);
+		secondItem.setEvaluationGridTemplateItemId(502);
 		secondItem.setCriterionType("TEXT_AND_SCORE");
 		secondItem.setScoreValue(5d);
 		secondItem.setMaxScoreSnapshot(10d);
@@ -532,21 +548,32 @@ class EvaluationsBusinessTest {
 	private PipelineStage buildPipelineStage(Integer id) {
 		PipelineStage pipelineStage = new PipelineStage();
 		pipelineStage.setId(id);
+		pipelineStage.setEvaluationGridTemplateVersionId(10);
 		return pipelineStage;
 	}
 
-	private PipelineStageEvaluationCriterion buildCriterion(Integer id, Integer pipelineStageId, Integer criterionOrder, String label, String criterionType, Double maxScore, Double weight) {
-		PipelineStageEvaluationCriterion criterion = new PipelineStageEvaluationCriterion();
-		criterion.setId(id);
-		criterion.setPipelineStage(buildPipelineStage(pipelineStageId));
-		criterion.setCriterionOrder(criterionOrder);
-		criterion.setLabel(label);
-		criterion.setCriterionType(criterionType);
-		criterion.setMaxScore(maxScore);
-		criterion.setWeight(weight);
-		criterion.setIsDeleted(false);
-		criterion.setIsRequired(true);
-		return criterion;
+	private EvaluationGridTemplateVersion buildGridVersion(Integer id) {
+		EvaluationGridTemplateVersion gridVersion = new EvaluationGridTemplateVersion();
+		gridVersion.setId(id);
+		gridVersion.setEvaluationGridTemplateId(1);
+		gridVersion.setVersionNumber(1);
+		gridVersion.setIsPublished(true);
+		gridVersion.setIsDeleted(false);
+		return gridVersion;
+	}
+
+	private EvaluationGridTemplateItem buildGridItem(Integer id, Integer gridVersionId, Integer criterionOrder, String label, String criterionType, Double maxScore, Double weight) {
+		EvaluationGridTemplateItem gridItem = new EvaluationGridTemplateItem();
+		gridItem.setId(id);
+		gridItem.setEvaluationGridTemplateVersionId(gridVersionId);
+		gridItem.setCriterionOrder(criterionOrder);
+		gridItem.setLabel(label);
+		gridItem.setCriterionType(criterionType);
+		gridItem.setMaxScore(maxScore);
+		gridItem.setWeight(weight);
+		gridItem.setIsDeleted(false);
+		gridItem.setIsRequired(true);
+		return gridItem;
 	}
 
 	private List<Evaluations> assignEvaluationIds(List<Evaluations> evaluations, int firstId) {

@@ -98,7 +98,7 @@ describe('EntitiesApplicationsComponent', () => {
       globalScore: 22,
       evaluationItems: [
         {
-          pipelineStageEvaluationCriterionId: 501,
+          evaluationGridTemplateItemId: 501,
           criterionType: 'SCORE',
           scoreValue: 4.5,
           maxScoreSnapshot: 5,
@@ -106,7 +106,7 @@ describe('EntitiesApplicationsComponent', () => {
           label: 'Communication'
         },
         {
-          pipelineStageEvaluationCriterionId: 502,
+          evaluationGridTemplateItemId: 502,
           criterionType: 'TEXT_AND_SCORE',
           scoreValue: 6,
           maxScoreSnapshot: 10,
@@ -132,7 +132,7 @@ describe('EntitiesApplicationsComponent', () => {
       globalComment: 'Synthese globale',
       createdBy: 44,
       evaluationItems: [{
-        pipelineStageEvaluationCriterionId: 501,
+        evaluationGridTemplateItemId: 501,
         criterionOrder: 1,
         label: 'Communication',
         criterionType: 'SCORE',
@@ -145,7 +145,7 @@ describe('EntitiesApplicationsComponent', () => {
     expect(entries).toHaveSize(1);
     expect(entries[0].evaluationItems).toEqual(jasmine.arrayContaining([
       jasmine.objectContaining({
-        pipelineStageEvaluationCriterionId: 501,
+        evaluationGridTemplateItemId: 501,
         label: 'Communication',
         scoreValue: 4,
         textValue: 'Claire'

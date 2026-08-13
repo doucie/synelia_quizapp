@@ -1,4 +1,4 @@
-/* Mini-BD fictive — quizapp_db (48 tables, 9 familles)
+/* Mini-BD fictive — quizapp_db (47 tables, 9 familles)
  * Colonnes et ordre conformes au snapshot : bd_documentee/quizapp_db_documentation_20260810.md
  * NULL (valeurs \N du snapshot) est représenté par `null`.
  * Valeurs `bit` représentées par 0/1.
@@ -26,30 +26,18 @@ window.BD_EXEMPLES = {
           num: 2,
           nom: "pipeline_stage",
           description: "Une étape du processus (candidature, quiz, présélection, entretien, décision) dans un gabarit de pipeline.",
-          notes: ["stage_type est une énumération : CANDIDATURE, QUIZ, PRESELECTION, INTERVIEW, DECISION (EVALUATION a été fusionné dans DECISION)."],
-          colonnes: ["id", "pipeline_template_id", "stage_type", "stage_label", "stage_order", "is_required", "is_eliminatory", "config_json", "created_at", "created_by", "updated_at", "updated_by", "is_deleted", "search_string"],
+          notes: ["stage_type est une énumération : CANDIDATURE, QUIZ, PRESELECTION, INTERVIEW, DECISION (EVALUATION a été fusionné dans DECISION).", "L'étape 4 (Entretien) est rattachée à la grille « Grille entretien RH » (evaluation_grid_template_version_id = 1) ; les autres étapes n'ont pas de grille."],
+          colonnes: ["id", "pipeline_template_id", "stage_type", "stage_label", "stage_order", "is_required", "is_eliminatory", "config_json", "evaluation_grid_template_version_id", "created_at", "created_by", "updated_at", "updated_by", "is_deleted", "search_string"],
           lignes: [
-            [1, 1, "CANDIDATURE", "Candidature", 1, 1, 0, null, "2026-07-01 09:00", 1, null, null, 0, "candidature"],
-            [2, 1, "QUIZ", "Quiz technique", 2, 1, 1, "{\"duration\":20}", "2026-07-01 09:00", 1, null, null, 0, "quiz technique"],
-            [3, 1, "PRESELECTION", "Présélection", 3, 1, 0, null, "2026-07-01 09:00", 1, null, null, 0, "présélection"],
-            [4, 1, "INTERVIEW", "Entretien", 4, 1, 0, null, "2026-07-01 09:00", 1, null, null, 0, "entretien"],
-            [5, 1, "DECISION", "Décision", 5, 1, 0, null, "2026-07-01 09:00", 1, null, null, 0, "décision"]
+            [1, 1, "CANDIDATURE", "Candidature", 1, 1, 0, null, null, "2026-07-01 09:00", 1, null, null, 0, "candidature"],
+            [2, 1, "QUIZ", "Quiz technique", 2, 1, 1, "{\"duration\":20}", null, "2026-07-01 09:00", 1, null, null, 0, "quiz technique"],
+            [3, 1, "PRESELECTION", "Présélection", 3, 1, 0, null, null, "2026-07-01 09:00", 1, null, null, 0, "présélection"],
+            [4, 1, "INTERVIEW", "Entretien", 4, 1, 0, null, 1, "2026-07-01 09:00", 1, null, null, 0, "entretien"],
+            [5, 1, "DECISION", "Décision", 5, 1, 0, null, null, "2026-07-01 09:00", 1, null, null, 0, "décision"]
           ]
         },
         {
           num: 3,
-          nom: "pipeline_stage_evaluation_criterion",
-          description: "Un critère de notation défini pour une étape d'évaluation (entretien) : ce qu'on évalue et son poids dans la note.",
-          notes: ["Les critères de l'étape 4 (Entretien) sont issus de la grille « Grille entretien RH » (evaluation_grid_template_version_id = 1)."],
-          colonnes: ["id", "pipeline_stage_id", "evaluation_grid_template_version_id", "criterion_order", "label", "criterion_type", "max_score", "weight", "is_required", "config_json", "created_at", "created_by", "updated_at", "updated_by", "is_deleted", "search_string"],
-          lignes: [
-            [1, 4, 1, 1, "Communication", "SCORE", 5, 1, 1, null, "2026-07-05 09:00", 2, null, null, 0, "communication"],
-            [2, 4, 1, 2, "Motivation", "SCORE", 5, 2, 1, null, "2026-07-05 09:00", 2, null, null, 0, "motivation"],
-            [3, 4, 1, 3, "Commentaires", "TEXT", null, null, 0, null, "2026-07-05 09:00", 2, null, null, 0, "commentaires"]
-          ]
-        },
-        {
-          num: 4,
           nom: "pipeline_stage_notification_rule",
           description: "La règle de notification d'une étape : quel email envoyer, à quel déclencheur, et si l'envoi est automatique.",
           notes: ["C'est ici que vit la politique d'emailing par étape (anciennement pipeline_stage.email_required / email_automatic, supprimées)."],
@@ -66,7 +54,7 @@ window.BD_EXEMPLES = {
       nom: "2. Campagnes & référentiels",
       tables: [
         {
-          num: 5,
+          num: 4,
           nom: "campaigns",
           description: "Une campagne de recrutement : un poste à pourvoir avec son pipeline, ses dates et ses paramètres.",
           notes: ["total_questions, is_timed, time_all_forms et all_can_evaluate sont des champs adjacents conservés hors périmètre strict 420."],
@@ -76,7 +64,7 @@ window.BD_EXEMPLES = {
           ]
         },
         {
-          num: 6,
+          num: 5,
           nom: "campaign_form",
           description: "Le lien entre une campagne et un formulaire : quel formulaire est attribué à la campagne et dans quel ordre.",
           notes: [],
@@ -86,7 +74,7 @@ window.BD_EXEMPLES = {
           ]
         },
         {
-          num: 7,
+          num: 6,
           nom: "source_token",
           description: "Un code source de recrutement : permet de tracer d'où viennent les candidatures d'une campagne.",
           notes: [],
@@ -97,7 +85,7 @@ window.BD_EXEMPLES = {
           ]
         },
         {
-          num: 8,
+          num: 7,
           nom: "departments",
           description: "Un département de l'entreprise, référentiel utilisé pour classer les spécialités.",
           notes: [],
@@ -107,7 +95,7 @@ window.BD_EXEMPLES = {
           ]
         },
         {
-          num: 9,
+          num: 8,
           nom: "specialities",
           description: "Une spécialité métier rattachée à un département (ex. « Développement », « Marketing »).",
           notes: [],
@@ -122,7 +110,7 @@ window.BD_EXEMPLES = {
       nom: "3. Candidature",
       tables: [
         {
-          num: 10,
+          num: 9,
           nom: "applications",
           description: "La candidature d'un candidat à une campagne : son identité, son état courant et ses synthèses de progression.",
           notes: ["Table de résumé et de pointeurs courants ; la progression détaillée vit dans application_progress. Les colonnes current_* et aggregated_* sont dérivées."],
@@ -132,7 +120,7 @@ window.BD_EXEMPLES = {
           ]
         },
         {
-          num: 11,
+          num: 10,
           nom: "application_progress",
           description: "Une étape (round) du pipeline pour une candidature : son statut, son score, et ses décisions de validation / skip / réouverture.",
           notes: ["Les traces de décision vivent dans validated_by / skipped_by / reopened_by (decided_by supprimée) ; la trace mail dérive de mail_log."],
@@ -146,7 +134,7 @@ window.BD_EXEMPLES = {
           ]
         },
         {
-          num: 12,
+          num: 11,
           nom: "candidate_token",
           description: "Un code d'accès à 6 caractères qui permet à un candidat de retrouver sa candidature.",
           notes: [],
@@ -156,7 +144,7 @@ window.BD_EXEMPLES = {
           ]
         },
         {
-          num: 13,
+          num: 12,
           nom: "candidate_ask",
           description: "Une demande faite par un candidat (changement d'identité, d'email ou de téléphone) en attente de décision.",
           notes: [],
@@ -172,7 +160,7 @@ window.BD_EXEMPLES = {
       nom: "4. Quiz",
       tables: [
         {
-          num: 14,
+          num: 13,
           nom: "form",
           description: "Un formulaire (questionnaire) de quiz.",
           notes: [],
@@ -182,7 +170,7 @@ window.BD_EXEMPLES = {
           ]
         },
         {
-          num: 15,
+          num: 14,
           nom: "form_version",
           description: "Une version d'un formulaire : le contenu évolue par versions que l'on publie puis verrouille.",
           notes: [],
@@ -192,7 +180,7 @@ window.BD_EXEMPLES = {
           ]
         },
         {
-          num: 16,
+          num: 15,
           nom: "form_questions",
           description: "Le lien entre une version de formulaire et une question : position de la question et temps imparti.",
           notes: [],
@@ -205,7 +193,7 @@ window.BD_EXEMPLES = {
           ]
         },
         {
-          num: 17,
+          num: 16,
           nom: "question",
           description: "Une question de quiz : son énoncé, son type, sa difficulté et le score qu'elle rapporte.",
           notes: [],
@@ -218,7 +206,7 @@ window.BD_EXEMPLES = {
           ]
         },
         {
-          num: 18,
+          num: 17,
           nom: "answer",
           description: "Une réponse possible à une question de quiz (bonne ou mauvaise, avec texte et options de commentaire).",
           notes: [],
@@ -237,7 +225,7 @@ window.BD_EXEMPLES = {
           ]
         },
         {
-          num: 19,
+          num: 18,
           nom: "application_quiz_attempt",
           description: "Une tentative de quiz passée par un candidat pour une étape de quiz : statut, score, chronomètre et correction manuelle.",
           notes: [],
@@ -247,7 +235,7 @@ window.BD_EXEMPLES = {
           ]
         },
         {
-          num: 20,
+          num: 19,
           nom: "candidate_answer",
           description: "La réponse donnée par un candidat à une question lors d'une tentative de quiz, avec l'éventuelle correction manuelle.",
           notes: ["Q2 était MULTIPLE_CHOICE : Alice a coché Spring Boot mais pas Spring Security (ligne 3, is_selected = 0) — elle perd 1 point."],
@@ -266,7 +254,7 @@ window.BD_EXEMPLES = {
       nom: "5. Entretien & évaluation",
       tables: [
         {
-          num: 21,
+          num: 20,
           nom: "interviews",
           description: "Un entretien planifié pour une étape « entretien » : sa date, son type, son statut et sa salle d'évaluation partagée.",
           notes: ["application_progress_id est nullable dans la base (0 NULL actuellement, durcissement NOT NULL reporté). evaluation_room_code remplace l'ancienne interview_evaluations_link."],
@@ -276,7 +264,7 @@ window.BD_EXEMPLES = {
           ]
         },
         {
-          num: 22,
+          num: 21,
           nom: "candidate_interview",
           description: "La réponse d'un candidat à une convocation d'entretien : acceptation, refus ou demande de replanification.",
           notes: ["interview_duration est conservée par décision BA 2026-08-04 (écart cible documenté)."],
@@ -286,7 +274,7 @@ window.BD_EXEMPLES = {
           ]
         },
         {
-          num: 23,
+          num: 22,
           nom: "interview_participant",
           description: "Un participant (recruteur) à un entretien : ses droits et l'état de son évaluation.",
           notes: [],
@@ -297,7 +285,7 @@ window.BD_EXEMPLES = {
           ]
         },
         {
-          num: 24,
+          num: 23,
           nom: "evaluations",
           description: "L'évaluation d'un entretien par un participant évaluateur : score global, commentaire global et statut.",
           notes: ["interview_participant_id est nullable (durcissement NOT NULL reporté). Chaque évaluateur a sa propre ligne pour le même candidate_interview."],
@@ -308,11 +296,11 @@ window.BD_EXEMPLES = {
           ]
         },
         {
-          num: 25,
+          num: 24,
           nom: "evaluation_item",
           description: "La note attribuée par un évaluateur sur un critère précis d'une grille d'évaluation.",
-          notes: ["Les snapshots (weight_snapshot / max_score_snapshot) figent la grille au moment de la note, même si elle change ensuite."],
-          colonnes: ["id", "evaluation_id", "pipeline_stage_evaluation_criterion_id", "score_value", "text_value", "weight_snapshot", "max_score_snapshot", "created_at", "created_by", "updated_at", "updated_by", "is_deleted", "search_string"],
+          notes: ["Les snapshots (weight_snapshot / max_score_snapshot) figent la grille au moment de la note, même si elle change ensuite.", "Chaque ligne pointe un item de la grille v1 (evaluation_grid_template_item_id 1–3) ; ancienne colonne pipeline_stage_evaluation_criterion_id supprimée (note 430)."],
+          colonnes: ["id", "evaluation_id", "evaluation_grid_template_item_id", "score_value", "text_value", "weight_snapshot", "max_score_snapshot", "created_at", "created_by", "updated_at", "updated_by", "is_deleted", "search_string"],
           lignes: [
             [1, 1, 1, 4.0, null, 1, 5, "2026-08-05 14:35", 2, null, null, 0, null],
             [2, 1, 2, 3.5, null, 2, 5, "2026-08-05 14:35", 2, null, null, 0, null],
@@ -323,7 +311,7 @@ window.BD_EXEMPLES = {
           ]
         },
         {
-          num: 26,
+          num: 25,
           nom: "evaluation_grid_template",
           description: "Un modèle de grille d'évaluation réutilisable d'une campagne à l'autre.",
           notes: [],
@@ -334,18 +322,18 @@ window.BD_EXEMPLES = {
           ]
         },
         {
-          num: 27,
+          num: 26,
           nom: "evaluation_grid_template_version",
           description: "Une version d'un modèle de grille d'évaluation (on publie une version avant de l'utiliser).",
-          notes: [],
-          colonnes: ["id", "evaluation_grid_template_id", "version_number", "version_label", "is_published", "published_at", "created_at", "created_by", "updated_at", "updated_by", "is_deleted", "search_string"],
+          notes: ["content_hash (empreinte de contenu, forme canonique) est UNIQUE : une seule version par contenu.", "locked_at est posé à la première evaluation_item réellement saisie : la v1 est verrouillée (utilisée), la v2 (non publiée, non utilisée) ne l'est pas."],
+          colonnes: ["id", "evaluation_grid_template_id", "version_number", "version_label", "is_published", "published_at", "content_hash", "locked_at", "created_at", "created_by", "updated_at", "updated_by", "is_deleted", "search_string"],
           lignes: [
-            [1, 1, 1, "v1", 1, "2026-07-05 10:00", "2026-07-05 09:00", 2, null, null, 0, "v1 grille"],
-            [2, 1, 2, "v2 (ajout critère Autonomie)", 0, null, "2026-07-20 09:00", 2, null, null, 0, "v2 grille"]
+            [1, 1, 1, "v1", 1, "2026-07-05 10:00", "9a8b7c6d5e4f30291a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f7081", "2026-08-05 14:35", "2026-07-05 09:00", 2, null, null, 0, "v1 grille"],
+            [2, 1, 2, "v2 (ajout critère Autonomie)", 0, null, "0f1e2d3c4b5a69788796a5b4c3d2e1f011223344556677889900aabbccddeeff", null, "2026-07-20 09:00", 2, null, null, 0, "v2 grille"]
           ]
         },
         {
-          num: 28,
+          num: 27,
           nom: "evaluation_grid_template_item",
           description: "Un critère défini dans une version de grille d'évaluation : intitulé, note maximale et poids.",
           notes: [],
@@ -362,7 +350,7 @@ window.BD_EXEMPLES = {
       nom: "6. Décisions",
       tables: [
         {
-          num: 29,
+          num: 28,
           nom: "decisions",
           description: "La décision prise sur une étape (présélection ou décision finale) : le verdict métier, le mode technique et l'acteur.",
           notes: ["application_progress_id est NOT NULL (décision mono-ancrée). Décision 3 = OVERRIDE qui annule la décision 2 (cancels_decision_id)."],
@@ -379,7 +367,7 @@ window.BD_EXEMPLES = {
       nom: "7. Emailing",
       tables: [
         {
-          num: 30,
+          num: 29,
           nom: "email_template",
           description: "Un modèle d'email configurable (sujet, corps, variables) réutilisé par les notifications du processus.",
           notes: [],
@@ -391,7 +379,7 @@ window.BD_EXEMPLES = {
           ]
         },
         {
-          num: 31,
+          num: 30,
           nom: "email_template_preset",
           description: "Un gabarit visuel d'email (style et structure HTML) prêt à l'emploi.",
           notes: ["category est un type MySQL enum(...) ; la liste complète est en annexe du doc."],
@@ -402,7 +390,7 @@ window.BD_EXEMPLES = {
           ]
         },
         {
-          num: 32,
+          num: 31,
           nom: "mail_log",
           description: "La trace de chaque email envoyé ou à envoyer : destinataire, événement, statut et contexte métier.",
           notes: ["event_code doit être explicite (APPLICATION_VERIFICATION_EMAIL, INTERVIEW_INVITATION_EMAIL, QUIZ_INVITE_EMAIL...) ; LEGACY_UNCLASSIFIED n'est qu'un défaut de compatibilité."],
@@ -415,7 +403,7 @@ window.BD_EXEMPLES = {
           ]
         },
         {
-          num: 33,
+          num: 32,
           nom: "smtp_config",
           description: "La configuration du serveur SMTP utilisé pour envoyer les emails de la plateforme.",
           notes: [],
@@ -425,7 +413,7 @@ window.BD_EXEMPLES = {
           ]
         },
         {
-          num: 34,
+          num: 33,
           nom: "email_verification_tokens",
           description: "Un jeton envoyé par email pour vérifier une adresse (candidature ou compte utilisateur).",
           notes: [],
@@ -441,7 +429,7 @@ window.BD_EXEMPLES = {
       nom: "8. Utilisateurs & permissions",
       tables: [
         {
-          num: 35,
+          num: 34,
           nom: "user",
           description: "Un utilisateur de la plateforme (recruteur, administrateur, candidat).",
           notes: [],
@@ -454,7 +442,7 @@ window.BD_EXEMPLES = {
           ]
         },
         {
-          num: 36,
+          num: 35,
           nom: "business_group",
           description: "Un groupe d'utilisateurs (équipe) qui partage des permissions sur le processus.",
           notes: [],
@@ -464,7 +452,7 @@ window.BD_EXEMPLES = {
           ]
         },
         {
-          num: 37,
+          num: 36,
           nom: "business_group_permission",
           description: "Une permission accordée à un groupe sur une fonctionnalité de la plateforme.",
           notes: [],
@@ -475,7 +463,7 @@ window.BD_EXEMPLES = {
           ]
         },
         {
-          num: 38,
+          num: 37,
           nom: "user_business_group",
           description: "L'appartenance d'un utilisateur à un groupe, avec son éventuel rôle de modérateur.",
           notes: [],
@@ -486,7 +474,7 @@ window.BD_EXEMPLES = {
           ]
         },
         {
-          num: 39,
+          num: 38,
           nom: "user_permission_override",
           description: "Une exception individuelle de permission (autorisée ou bloquée) appliquée à un utilisateur précis.",
           notes: [],
@@ -496,7 +484,7 @@ window.BD_EXEMPLES = {
           ]
         },
         {
-          num: 40,
+          num: 39,
           nom: "system_role_permission",
           description: "Une permission accordée à un rôle système (super admin, admin, recruteur).",
           notes: [],
@@ -508,7 +496,7 @@ window.BD_EXEMPLES = {
           ]
         },
         {
-          num: 41,
+          num: 40,
           nom: "entity_permission",
           description: "Une permission portant sur une entité précise (par exemple un entretien donné), accordée à un utilisateur, un groupe ou un rôle.",
           notes: [],
@@ -520,7 +508,7 @@ window.BD_EXEMPLES = {
           ]
         },
         {
-          num: 42,
+          num: 41,
           nom: "group_change_request",
           description: "Une demande d'un utilisateur de changer de groupe, en attente de traitement.",
           notes: [],
@@ -530,7 +518,7 @@ window.BD_EXEMPLES = {
           ]
         },
         {
-          num: 43,
+          num: 42,
           nom: "invitation_code",
           description: "Un code d'invitation permettant de créer un compte recruteur.",
           notes: [],
@@ -545,7 +533,7 @@ window.BD_EXEMPLES = {
       nom: "9. Plateforme transverse",
       tables: [
         {
-          num: 44,
+          num: 43,
           nom: "app_config",
           description: "La configuration générale de la plateforme : nom de l'entreprise, logo, couleurs et activation des comptes candidats.",
           notes: [],
@@ -555,7 +543,7 @@ window.BD_EXEMPLES = {
           ]
         },
         {
-          num: 45,
+          num: 44,
           nom: "legal_text",
           description: "Les textes légaux (CGU, confidentialité, mentions) affichés aux utilisateurs.",
           notes: [],
@@ -566,7 +554,7 @@ window.BD_EXEMPLES = {
           ]
         },
         {
-          num: 46,
+          num: 45,
           nom: "notifications",
           description: "Une notification interne affichée à un utilisateur dans l'application.",
           notes: [],
@@ -577,7 +565,7 @@ window.BD_EXEMPLES = {
           ]
         },
         {
-          num: 47,
+          num: 46,
           nom: "audit_event",
           description: "La trace d'une action métier : qui a fait quoi, quand, sur quelle entité, avec l'état avant / après.",
           notes: [],
@@ -589,7 +577,7 @@ window.BD_EXEMPLES = {
           ]
         },
         {
-          num: 48,
+          num: 47,
           nom: "flyway_schema_history",
           description: "L'historique des migrations de schéma appliquées par Flyway (table technique, non métier).",
           notes: [],
@@ -622,12 +610,12 @@ window.BD_EXEMPLES.cles = {
     form_version: ["published_form_id"],
     business_group: ["group_name"],
     legal_text: ["text_key"],
-    application_quiz_attempt: ["quiz_token"]
+    application_quiz_attempt: ["quiz_token"],
+    evaluation_grid_template_version: ["content_hash"]
   },
   fk: {
     "pipeline_stage:pipeline_template_id": "pipeline_template",
-    "pipeline_stage_evaluation_criterion:pipeline_stage_id": "pipeline_stage",
-    "pipeline_stage_evaluation_criterion:evaluation_grid_template_version_id": "evaluation_grid_template_version",
+    "pipeline_stage:evaluation_grid_template_version_id": "evaluation_grid_template_version",
     "pipeline_stage_notification_rule:pipeline_stage_id": "pipeline_stage",
     "pipeline_stage_notification_rule:email_template_id": "email_template",
     "campaigns:pipeline_template_id": "pipeline_template",
@@ -666,7 +654,7 @@ window.BD_EXEMPLES.cles = {
     "evaluations:candidate_interview_id": "candidate_interview",
     "evaluations:interview_participant_id": "interview_participant",
     "evaluation_item:evaluation_id": "evaluations",
-    "evaluation_item:pipeline_stage_evaluation_criterion_id": "pipeline_stage_evaluation_criterion",
+    "evaluation_item:evaluation_grid_template_item_id": "evaluation_grid_template_item",
     "evaluation_grid_template_version:evaluation_grid_template_id": "evaluation_grid_template",
     "evaluation_grid_template_item:evaluation_grid_template_version_id": "evaluation_grid_template_version",
     "decisions:user_id": "user",

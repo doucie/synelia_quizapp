@@ -13,6 +13,6 @@ public interface EvaluationItemRepository extends JpaRepository<EvaluationItem, 
 	@Query("select e from EvaluationItem e where e.id = :id and e.isDeleted = :isDeleted")
 	EvaluationItem findOne(@Param("id") Integer id, @Param("isDeleted") Boolean isDeleted);
 
-	@Query("select e from EvaluationItem e where e.evaluation.id = :evaluationId and e.isDeleted = :isDeleted order by e.pipelineStageEvaluationCriterion.criterionOrder asc")
+	@Query("select e from EvaluationItem e where e.evaluation.id = :evaluationId and e.isDeleted = :isDeleted order by e.evaluationGridTemplateItem.criterionOrder asc")
 	List<EvaluationItem> findByEvaluationId(@Param("evaluationId") Integer evaluationId, @Param("isDeleted") Boolean isDeleted);
 }

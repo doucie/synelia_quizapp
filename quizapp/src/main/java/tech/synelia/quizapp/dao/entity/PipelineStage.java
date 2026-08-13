@@ -47,6 +47,9 @@ public class PipelineStage implements Serializable, Cloneable {
     @Column(name = "config_json", length = 65535)
     private String configJson;
 
+    @Column(name = "evaluation_grid_template_version_id")
+    private Integer evaluationGridTemplateVersionId;
+
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "created_at")
     private Date createdAt;

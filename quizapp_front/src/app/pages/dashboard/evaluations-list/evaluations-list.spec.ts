@@ -107,14 +107,14 @@ describe('EvaluationsListComponent', () => {
         globalComment: 'Tres bon alignement',
         createdAt: '2026-05-31T10:30:00Z',
         evaluationItems: [{
-          pipelineStageEvaluationCriterionId: 501,
+          evaluationGridTemplateItemId: 501,
           label: 'Communication',
           criterionType: 'SCORE',
           scoreValue: 4.5,
           maxScoreSnapshot: 5,
           weightSnapshot: 2
         }, {
-          pipelineStageEvaluationCriterionId: 502,
+          evaluationGridTemplateItemId: 502,
           label: 'Technique',
           criterionType: 'TEXT_AND_SCORE',
           scoreValue: 8,
@@ -187,7 +187,7 @@ describe('EvaluationsListComponent', () => {
     expect(interview.interviewStageLabel).toBe('Entretien RH');
     expect(interview.latestEvaluationItems).toEqual(jasmine.arrayContaining([
       jasmine.objectContaining({
-        pipelineStageEvaluationCriterionId: 501,
+        evaluationGridTemplateItemId: 501,
         label: 'Communication',
         scoreValue: 4.5
       })

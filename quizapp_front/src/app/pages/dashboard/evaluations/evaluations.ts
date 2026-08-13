@@ -1066,7 +1066,7 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
   }
 
   trackEvaluationItem(index: number, item: EvaluationItem): number | string {
-    return item.id ?? item.pipelineStageEvaluationCriterionId ?? index;
+    return item.id ?? item.evaluationGridTemplateItemId ?? index;
   }
 
   getEvaluationItemLabel(item: EvaluationItem): string {
@@ -1107,16 +1107,16 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
 
   private buildEvaluationItemDrafts(criteria: EvaluationItem[], existingItems: EvaluationItem[] = []): EvaluationItem[] {
     const sourceItems = criteria.length > 0 ? criteria : existingItems;
-    const existingByCriterionId = new Map<number, EvaluationItem>();
+    const existingByGridItemId = new Map<number, EvaluationItem>();
     existingItems.forEach(item => {
-      if (item.pipelineStageEvaluationCriterionId !== undefined && item.pipelineStageEvaluationCriterionId !== null) {
-        existingByCriterionId.set(item.pipelineStageEvaluationCriterionId, item);
+      if (item.evaluationGridTemplateItemId !== undefined && item.evaluationGridTemplateItemId !== null) {
+        existingByGridItemId.set(item.evaluationGridTemplateItemId, item);
       }
     });
 
     return sourceItems.map(item => {
-      const existing = item.pipelineStageEvaluationCriterionId !== undefined && item.pipelineStageEvaluationCriterionId !== null
-        ? existingByCriterionId.get(item.pipelineStageEvaluationCriterionId)
+      const existing = item.evaluationGridTemplateItemId !== undefined && item.evaluationGridTemplateItemId !== null
+        ? existingByGridItemId.get(item.evaluationGridTemplateItemId)
         : undefined;
       return {
         ...item,
@@ -1138,7 +1138,7 @@ export class EvaluationsComponent implements OnInit, OnDestroy {
       const trimmedText = item.textValue?.trim() || '';
       const hasScore = item.scoreValue !== undefined && item.scoreValue !== null;
       const hasText = trimmedText.length > 0;
-      if (!item.pipelineStageEvaluationCriterionId || (!hasScore && !hasText)) {
+      if (!item.evaluationGridTemplateItemId || (!hasScore && !hasText)) {
         return;
       }
       serializedItems.push({

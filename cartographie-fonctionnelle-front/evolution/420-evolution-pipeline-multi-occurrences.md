@@ -4,6 +4,8 @@ Date: 2026-05-30
 Statut: migration en cours ; phases A a D largement livrees, phases E et F ouvertes
 Perimetre: pipeline, quiz, preselection, entretiens, evaluations, decisions, emails, audit
 
+> Mis a jour (note 430) : la partie « criteres effectifs sur le stage » via `pipeline_stage_evaluation_criterion` est remplacee par un rattachement direct `pipeline_stage.evaluation_grid_template_version_id` (verrou au premier usage, deduplication par contenu) — voir `430-evolution-grilles-verrou-usage.md`. La table `pipeline_stage_evaluation_criterion` a ete creee puis supprimee (V1_080).
+
 ## 1. Decisions retenues
 
 - `CANDIDATURE` et `DECISION` restent des singletons de pipeline.
@@ -71,7 +73,7 @@ Ajouter:
   - `is_automatic`
   - `requires_manual_confirmation`
 - une vraie bibliotheque mutualisee de grilles d'evaluation, reutilisable entre plusieurs templates, par exemple `evaluation_grid_template`, `evaluation_grid_template_version` et `evaluation_grid_template_item`
-- une structure de criteres effectifs sur le stage, par exemple `pipeline_stage_evaluation_criterion`, qui reference soit une version de bibliotheque, soit un snapshot importe, avec au minimum:
+- une structure de criteres effectifs sur le stage, par exemple `pipeline_stage_evaluation_criterion` — **design remplace par la note 430** (`430-evolution-grilles-verrou-usage.md`) : plus de copie par etape, `pipeline_stage` pointe directement `evaluation_grid_template_version_id`, les criteres vivent dans `evaluation_grid_template_item` ; la table a ete creee puis supprimee (V1_080). Description historique conservee :
   - `pipeline_stage_id`
   - `evaluation_grid_template_version_id` nullable
   - `criterion_order`
@@ -324,7 +326,7 @@ Ajouter aussi:
 
 - une table de detail par critere, par exemple `evaluation_item`, avec au minimum:
   - `evaluation_id`
-  - `pipeline_stage_evaluation_criterion_id`
+  - `pipeline_stage_evaluation_criterion_id` — **remplace par `evaluation_grid_template_item_id` (note 430, V1_080)**
   - `score_value` nullable
   - `text_value` nullable
   - `weight_snapshot` nullable
@@ -422,7 +424,7 @@ Raison:
 
 ## 6. Checklist base de donnees
 
-- creer les tables `application_quiz_attempt`, `pipeline_stage_notification_rule`, `pipeline_stage_evaluation_criterion` et `evaluation_item`
+- creer les tables `application_quiz_attempt`, `pipeline_stage_notification_rule`, `pipeline_stage_evaluation_criterion` — **creee puis supprimee par la note 430 (V1_080), ne plus recreer** — et `evaluation_item`
 - creer aussi la bibliotheque mutualisee de grilles d'evaluation (`evaluation_grid_template`, version(s), items)
 - ajouter `application_progress_id` dans `interviews` et `decisions`
 - ajouter `application_quiz_attempt_id` dans `candidate_answer`
@@ -531,7 +533,7 @@ Checklist:
 - [x] creer `application_quiz_attempt`
 - [x] creer `pipeline_stage_notification_rule`
 - [x] creer `evaluation_grid_template`, `evaluation_grid_template_version` et `evaluation_grid_template_item`
-- [x] creer `pipeline_stage_evaluation_criterion`
+- [x] creer `pipeline_stage_evaluation_criterion` — **historique : supprimee par la note 430 (V1_080)**
 - [x] creer `evaluation_item`
 - [x] creer `audit_event`
 - [x] ajouter `application_progress_id` nullable dans `interviews` et `decisions`

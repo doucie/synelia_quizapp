@@ -66,8 +66,8 @@ public class EvaluationItem implements Serializable, Cloneable {
 	private Evaluations evaluation;
 
 	@ManyToOne
-	@JoinColumn(name = "pipeline_stage_evaluation_criterion_id", referencedColumnName = "id")
-	private PipelineStageEvaluationCriterion pipelineStageEvaluationCriterion;
+	@JoinColumn(name = "evaluation_grid_template_item_id", referencedColumnName = "id")
+	private EvaluationGridTemplateItem evaluationGridTemplateItem;
 
 	@Override
 	public Object clone() throws CloneNotSupportedException {

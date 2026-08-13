@@ -58,7 +58,9 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 	@Autowired
 	private EvaluationItemRepository evaluationItemRepository;
 	@Autowired
-	private PipelineStageEvaluationCriterionRepository pipelineStageEvaluationCriterionRepository;
+	private EvaluationGridTemplateVersionRepository evaluationGridTemplateVersionRepository;
+	@Autowired
+	private EvaluationGridTemplateItemRepository evaluationGridTemplateItemRepository;
 	@Autowired
 	private InterviewsRepository interviewsRepository;
 	@Autowired
@@ -647,20 +649,20 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 			Double maxScoreSnapshot = evaluationItem.getMaxScoreSnapshot();
 			Double weightSnapshot = evaluationItem.getWeightSnapshot();
 			if ((criterionType == null || maxScoreSnapshot == null || weightSnapshot == null || weightSnapshot <= 0d)
-					&& evaluationItem.getPipelineStageEvaluationCriterionId() != null
-					&& evaluationItem.getPipelineStageEvaluationCriterionId() > 0) {
-				PipelineStageEvaluationCriterion criterion = pipelineStageEvaluationCriterionRepository.findOne(
-						evaluationItem.getPipelineStageEvaluationCriterionId(),
+					&& evaluationItem.getEvaluationGridTemplateItemId() != null
+					&& evaluationItem.getEvaluationGridTemplateItemId() > 0) {
+				EvaluationGridTemplateItem gridItem = evaluationGridTemplateItemRepository.findOne(
+						evaluationItem.getEvaluationGridTemplateItemId(),
 						false);
-				if (criterion != null) {
+				if (gridItem != null) {
 					if (criterionType == null) {
-						criterionType = criterion.getCriterionType();
+						criterionType = gridItem.getCriterionType();
 					}
 					if (maxScoreSnapshot == null) {
-						maxScoreSnapshot = criterion.getMaxScore();
+						maxScoreSnapshot = gridItem.getMaxScore();
 					}
 					if (weightSnapshot == null || weightSnapshot <= 0d) {
-						weightSnapshot = criterion.getWeight();
+						weightSnapshot = gridItem.getWeight();
 					}
 				}
 			}
@@ -879,60 +881,87 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 		}
 
 		PipelineStage pipelineStage = resolveEvaluationPipelineStage(evaluation, locale);
-		Map<Integer, EvaluationItem> existingItemsByCriterionId = new HashMap<Integer, EvaluationItem>();
+		Map<Integer, EvaluationItem> existingItemsByGridItemId = new HashMap<Integer, EvaluationItem>();
 		List<EvaluationItem> existingItems = evaluationItemRepository.findByEvaluationId(evaluation.getId(), false);
 		if (existingItems != null) {
 			for (EvaluationItem existingItem : existingItems) {
-				if (existingItem.getPipelineStageEvaluationCriterion() != null && existingItem.getPipelineStageEvaluationCriterion().getId() != null) {
-					existingItemsByCriterionId.put(existingItem.getPipelineStageEvaluationCriterion().getId(), existingItem);
+				if (existingItem.getEvaluationGridTemplateItem() != null && existingItem.getEvaluationGridTemplateItem().getId() != null) {
+					existingItemsByGridItemId.put(existingItem.getEvaluationGridTemplateItem().getId(), existingItem);
+				}
+			}
+		}
+
+		List<EvaluationItemDto> providedItems = sourceDto.getEvaluationItems();
+		EvaluationGridTemplateVersion gridVersion = null;
+		Map<Integer, EvaluationGridTemplateItem> versionItemsById = new HashMap<Integer, EvaluationGridTemplateItem>();
+		if (providedItems != null && !providedItems.isEmpty()) {
+			if (pipelineStage.getEvaluationGridTemplateVersionId() == null) {
+				throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+						"L'etape courante de l'entretien n'est rattachee a aucune grille d'evaluation",
+						locale));
+			}
+			gridVersion = evaluationGridTemplateVersionRepository.findOne(pipelineStage.getEvaluationGridTemplateVersionId(), false);
+			if (gridVersion == null) {
+				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("evaluationGridTemplateVersion id -> " + pipelineStage.getEvaluationGridTemplateVersionId(), locale));
+			}
+			List<EvaluationGridTemplateItem> versionItems = evaluationGridTemplateItemRepository.findByEvaluationGridTemplateVersionId(gridVersion.getId(), false);
+			if (versionItems != null) {
+				for (EvaluationGridTemplateItem gridItem : versionItems) {
+					versionItemsById.put(gridItem.getId(), gridItem);
 				}
 			}
 		}
 
 		Date now = Utilities.getCurrentDate();
 		List<EvaluationItem> itemsToSave = new ArrayList<EvaluationItem>();
-		Set<Integer> providedCriterionIds = new HashSet<Integer>();
-		for (EvaluationItemDto itemDto : sourceDto.getEvaluationItems()) {
-			if (itemDto == null || itemDto.getPipelineStageEvaluationCriterionId() == null || itemDto.getPipelineStageEvaluationCriterionId() <= 0) {
-				throw new InvalidEntityException(functionalError.FIELD_EMPTY("evaluationItems.pipelineStageEvaluationCriterionId", locale));
-			}
+		Set<Integer> providedGridItemIds = new HashSet<Integer>();
+		boolean hasActuallyEnteredItem = false;
+		if (providedItems != null) {
+			for (EvaluationItemDto itemDto : providedItems) {
+				if (itemDto == null || itemDto.getEvaluationGridTemplateItemId() == null || itemDto.getEvaluationGridTemplateItemId() <= 0) {
+					throw new InvalidEntityException(functionalError.FIELD_EMPTY("evaluationItems.evaluationGridTemplateItemId", locale));
+				}
 
-			PipelineStageEvaluationCriterion criterion = pipelineStageEvaluationCriterionRepository.findOne(itemDto.getPipelineStageEvaluationCriterionId(), false);
-			if (criterion == null) {
-				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("pipelineStageEvaluationCriterion id -> " + itemDto.getPipelineStageEvaluationCriterionId(), locale));
-			}
-			if (criterion.getPipelineStage() == null || !Objects.equals(criterion.getPipelineStage().getId(), pipelineStage.getId())) {
-				throw new InvalidEntityException(functionalError.REQUEST_FAIL(
-						"Le critere d'evaluation ne correspond pas au stage courant de l'entretien",
-						locale));
-			}
+				EvaluationGridTemplateItem gridItem = versionItemsById.get(itemDto.getEvaluationGridTemplateItemId());
+				if (gridItem == null) {
+					throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("evaluationGridTemplateItem id -> " + itemDto.getEvaluationGridTemplateItemId(), locale));
+				}
+				if (!Objects.equals(gridItem.getEvaluationGridTemplateVersionId(), gridVersion.getId())) {
+					throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+							"L'item de grille ne correspond pas a la grille du stage courant de l'entretien",
+							locale));
+				}
 
-			EvaluationItem itemToSave = existingItemsByCriterionId.get(criterion.getId());
-			if (itemToSave == null) {
-				itemToSave = new EvaluationItem();
-				itemToSave.setEvaluation(evaluation);
-				itemToSave.setPipelineStageEvaluationCriterion(criterion);
-				itemToSave.setCreatedAt(now);
-				itemToSave.setCreatedBy(actorUserId);
-				itemToSave.setIsDeleted(false);
-			}
+				boolean actuallyEntered = itemDto.getScoreValue() != null || Utilities.notBlank(itemDto.getTextValue());
+				hasActuallyEnteredItem = hasActuallyEnteredItem || actuallyEntered;
 
-			itemToSave.setScoreValue(itemDto.getScoreValue());
-			itemToSave.setTextValue(Utilities.notBlank(itemDto.getTextValue()) ? itemDto.getTextValue().trim() : null);
-			itemToSave.setWeightSnapshot(criterion.getWeight());
-			itemToSave.setMaxScoreSnapshot(criterion.getMaxScore());
-			itemToSave.setUpdatedAt(now);
-			itemToSave.setUpdatedBy(actorUserId);
-			itemToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(itemDto)));
-			itemsToSave.add(itemToSave);
-			providedCriterionIds.add(criterion.getId());
+				EvaluationItem itemToSave = existingItemsByGridItemId.get(gridItem.getId());
+				if (itemToSave == null) {
+					itemToSave = new EvaluationItem();
+					itemToSave.setEvaluation(evaluation);
+					itemToSave.setEvaluationGridTemplateItem(gridItem);
+					itemToSave.setCreatedAt(now);
+					itemToSave.setCreatedBy(actorUserId);
+					itemToSave.setIsDeleted(false);
+				}
+
+				itemToSave.setScoreValue(itemDto.getScoreValue());
+				itemToSave.setTextValue(Utilities.notBlank(itemDto.getTextValue()) ? itemDto.getTextValue().trim() : null);
+				itemToSave.setWeightSnapshot(gridItem.getWeight());
+				itemToSave.setMaxScoreSnapshot(gridItem.getMaxScore());
+				itemToSave.setUpdatedAt(now);
+				itemToSave.setUpdatedBy(actorUserId);
+				itemToSave.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(itemDto)));
+				itemsToSave.add(itemToSave);
+				providedGridItemIds.add(gridItem.getId());
+			}
 		}
 
-		for (EvaluationItem existingItem : existingItemsByCriterionId.values()) {
-			if (existingItem.getPipelineStageEvaluationCriterion() == null || existingItem.getPipelineStageEvaluationCriterion().getId() == null) {
+		for (EvaluationItem existingItem : existingItemsByGridItemId.values()) {
+			if (existingItem.getEvaluationGridTemplateItem() == null || existingItem.getEvaluationGridTemplateItem().getId() == null) {
 				continue;
 			}
-			if (!providedCriterionIds.contains(existingItem.getPipelineStageEvaluationCriterion().getId())) {
+			if (!providedGridItemIds.contains(existingItem.getEvaluationGridTemplateItem().getId())) {
 				existingItem.setIsDeleted(true);
 				existingItem.setUpdatedAt(now);
 				existingItem.setUpdatedBy(actorUserId);
@@ -942,6 +971,27 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 
 		if (!itemsToSave.isEmpty()) {
 			evaluationItemRepository.saveAll(itemsToSave);
+		}
+
+		if (hasActuallyEnteredItem && gridVersion != null && gridVersion.getLockedAt() == null) {
+			gridVersion.setLockedAt(now);
+			gridVersion.setUpdatedAt(now);
+			gridVersion.setUpdatedBy(actorUserId);
+			evaluationGridTemplateVersionRepository.save(gridVersion);
+			recordGridVersionLockedAudit(evaluation, actorUserId);
+		}
+	}
+
+	private void recordGridVersionLockedAudit(Evaluations evaluation, Integer actorUserId) {
+		try {
+			recordEvaluationAuditEvent(
+					evaluation,
+					actorUserId,
+					null,
+					buildEvaluationAuditStateJson(evaluation),
+					"GRID_VERSION_LOCKED");
+		} catch (Exception exception) {
+			log.warning("Echec d'audit GRID_VERSION_LOCKED: " + exception.getMessage());
 		}
 	}
 
@@ -958,20 +1008,28 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 
 	private List<EvaluationItemDto> loadStageCriteria(CandidateInterview candidateInterview, Locale locale) {
 		PipelineStage pipelineStage = resolvePipelineStageForCandidateInterview(candidateInterview, locale);
-		List<PipelineStageEvaluationCriterion> criteria = pipelineStageEvaluationCriterionRepository.findByPipelineStageId(pipelineStage.getId(), false);
-		if (criteria == null || criteria.isEmpty()) {
+		if (pipelineStage.getEvaluationGridTemplateVersionId() == null) {
+			return List.of();
+		}
+		EvaluationGridTemplateVersion gridVersion = evaluationGridTemplateVersionRepository.findOne(pipelineStage.getEvaluationGridTemplateVersionId(), false);
+		if (gridVersion == null) {
+			return List.of();
+		}
+
+		List<EvaluationGridTemplateItem> gridItems = evaluationGridTemplateItemRepository.findByEvaluationGridTemplateVersionId(gridVersion.getId(), false);
+		if (gridItems == null || gridItems.isEmpty()) {
 			return List.of();
 		}
 
 		List<EvaluationItemDto> dtos = new ArrayList<EvaluationItemDto>();
-		for (PipelineStageEvaluationCriterion criterion : criteria) {
+		for (EvaluationGridTemplateItem gridItem : gridItems) {
 			EvaluationItemDto dto = new EvaluationItemDto();
-			dto.setPipelineStageEvaluationCriterionId(criterion.getId());
-			dto.setCriterionOrder(criterion.getCriterionOrder());
-			dto.setLabel(criterion.getLabel());
-			dto.setCriterionType(criterion.getCriterionType());
-			dto.setWeightSnapshot(criterion.getWeight());
-			dto.setMaxScoreSnapshot(criterion.getMaxScore());
+			dto.setEvaluationGridTemplateItemId(gridItem.getId());
+			dto.setCriterionOrder(gridItem.getCriterionOrder());
+			dto.setLabel(gridItem.getLabel());
+			dto.setCriterionType(gridItem.getCriterionType());
+			dto.setWeightSnapshot(gridItem.getWeight());
+			dto.setMaxScoreSnapshot(gridItem.getMaxScore());
 			dtos.add(dto);
 		}
 		return dtos;
@@ -1153,11 +1211,11 @@ public class EvaluationsBusiness implements IBasicBusiness<Request<EvaluationsDt
 			dto.setTextValue(item.getTextValue());
 			dto.setWeightSnapshot(item.getWeightSnapshot());
 			dto.setMaxScoreSnapshot(item.getMaxScoreSnapshot());
-			if (item.getPipelineStageEvaluationCriterion() != null) {
-				dto.setPipelineStageEvaluationCriterionId(item.getPipelineStageEvaluationCriterion().getId());
-				dto.setCriterionOrder(item.getPipelineStageEvaluationCriterion().getCriterionOrder());
-				dto.setLabel(item.getPipelineStageEvaluationCriterion().getLabel());
-				dto.setCriterionType(item.getPipelineStageEvaluationCriterion().getCriterionType());
+			if (item.getEvaluationGridTemplateItem() != null) {
+				dto.setEvaluationGridTemplateItemId(item.getEvaluationGridTemplateItem().getId());
+				dto.setCriterionOrder(item.getEvaluationGridTemplateItem().getCriterionOrder());
+				dto.setLabel(item.getEvaluationGridTemplateItem().getLabel());
+				dto.setCriterionType(item.getEvaluationGridTemplateItem().getCriterionType());
 			}
 			dtos.add(dto);
 		}

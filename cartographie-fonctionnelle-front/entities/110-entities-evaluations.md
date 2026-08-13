@@ -112,5 +112,5 @@ La page fournit un CRUD admin brut des evaluations reliees aux `candidateIntervi
 - [ ] retirer toute hypothese d'etape pipeline `EVALUATION` autonome et recadrer la fiche sur le sous-workflow d'entretien
 - [ ] documenter plusieurs evaluations detaillees pour un meme entretien et plusieurs criteres par evaluation
 - [ ] documenter `evaluationStatus`, `submittedAt`, `validatedAt` et `validatedBy` pour distinguer brouillon, soumission, validation et exploitation metier
-- [ ] rattacher les criteres a `pipeline_stage_evaluation_criterion` et a une version figee de bibliotheque mutualisee (`evaluation_grid_template_version`) afin d'eviter les derives retroactives
+- [x] rattacher les criteres a la grille versionnee (`evaluation_grid_template_version` / `evaluation_grid_template_item`, verrou a l'usage) et l'`evaluation_item` a `evaluation_grid_template_item_id` — design retenu par la note 430 (`pipeline_stage_evaluation_criterion` supprimee)
 - [ ] limiter les champs de synthese eventuels (`globalScore`, `globalComment`) a des resumes de soumission, derives des lignes `evaluation_item`

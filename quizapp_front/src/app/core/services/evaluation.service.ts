@@ -34,7 +34,7 @@ export interface PagedEvaluationResponse {
 
 export interface EvaluationItem {
   id?: number;
-  pipelineStageEvaluationCriterionId?: number;
+  evaluationGridTemplateItemId?: number;
   criterionOrder?: number;
   label?: string;
   criterionType?: string;

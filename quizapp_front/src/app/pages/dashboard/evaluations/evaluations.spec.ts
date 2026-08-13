@@ -91,7 +91,7 @@ describe('EvaluationsComponent', () => {
     component.newMark.set(74);
     component.newComment.set('  Evaluation explicite  ');
     component.newEvaluationItems.set([{
-      pipelineStageEvaluationCriterionId: 501,
+      evaluationGridTemplateItemId: 501,
       criterionOrder: 1,
       label: 'Communication',
       criterionType: 'SCORE',
@@ -110,7 +110,7 @@ describe('EvaluationsComponent', () => {
       globalScore: 90,
       globalComment: 'Evaluation explicite',
       evaluationItems: [jasmine.objectContaining({
-        pipelineStageEvaluationCriterionId: 501,
+        evaluationGridTemplateItemId: 501,
         criterionOrder: 1,
         label: 'Communication',
         scoreValue: 4.5,
@@ -124,7 +124,7 @@ describe('EvaluationsComponent', () => {
     component.editMark.set(81);
     component.editComment.set('  Commentaire mis a jour  ');
     component.editEvaluationItems.set([{
-      pipelineStageEvaluationCriterionId: 502,
+      evaluationGridTemplateItemId: 502,
       criterionOrder: 2,
       label: 'Technique',
       criterionType: 'TEXT',
@@ -142,7 +142,7 @@ describe('EvaluationsComponent', () => {
       globalScore: 81,
       globalComment: 'Commentaire mis a jour',
       evaluationItems: [jasmine.objectContaining({
-        pipelineStageEvaluationCriterionId: 502,
+        evaluationGridTemplateItemId: 502,
         criterionOrder: 2,
         label: 'Technique',
         textValue: 'Solide sur le coeur métier'
@@ -156,7 +156,7 @@ describe('EvaluationsComponent', () => {
      component.editComment.set('  Ajustement derive  ');
      component.editEvaluationItems.set([
        {
-         pipelineStageEvaluationCriterionId: 501,
+         evaluationGridTemplateItemId: 501,
          criterionOrder: 1,
          label: 'Communication',
          criterionType: 'SCORE',
@@ -165,7 +165,7 @@ describe('EvaluationsComponent', () => {
          weightSnapshot: 2
        },
        {
-         pipelineStageEvaluationCriterionId: 502,
+         evaluationGridTemplateItemId: 502,
          criterionOrder: 2,
          label: 'Technique',
          criterionType: 'TEXT_AND_SCORE',
@@ -192,7 +192,7 @@ describe('EvaluationsComponent', () => {
   it('loads evaluationItems into chat messages when evaluations are fetched', () => {
     const evaluationItems: EvaluationItem[] = [{
       id: 801,
-      pipelineStageEvaluationCriterionId: 501,
+      evaluationGridTemplateItemId: 501,
       criterionOrder: 1,
       label: 'Communication',
       criterionType: 'SCORE',
@@ -212,7 +212,7 @@ describe('EvaluationsComponent', () => {
       }]
     } as any));
     evaluationService.getEvaluationCriteria.and.returnValue(of([{
-      pipelineStageEvaluationCriterionId: 501,
+      evaluationGridTemplateItemId: 501,
       criterionOrder: 1,
       label: 'Communication',
       criterionType: 'SCORE',
@@ -224,7 +224,7 @@ describe('EvaluationsComponent', () => {
     expect(component.evaluationMessages()).toHaveSize(1);
     expect(component.newEvaluationItems()).toEqual(jasmine.arrayContaining([
       jasmine.objectContaining({
-        pipelineStageEvaluationCriterionId: 501,
+        evaluationGridTemplateItemId: 501,
         criterionOrder: 1,
         label: 'Communication'
       })
@@ -234,7 +234,7 @@ describe('EvaluationsComponent', () => {
       comment: 'Evaluation detaillee',
       evaluationItems: jasmine.arrayContaining([
         jasmine.objectContaining({
-          pipelineStageEvaluationCriterionId: 501,
+          evaluationGridTemplateItemId: 501,
           criterionOrder: 1,
           label: 'Communication',
           scoreValue: 4.5,

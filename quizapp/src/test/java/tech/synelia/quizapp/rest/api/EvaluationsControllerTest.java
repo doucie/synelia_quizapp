@@ -149,7 +149,7 @@ class EvaluationsControllerTest {
 	void create_acceptsParticipantAnchoredPayloadOverHttp() throws Exception {
 		EvaluationItemDto evaluationItem = new EvaluationItemDto();
 		evaluationItem.setId(801);
-		evaluationItem.setPipelineStageEvaluationCriterionId(501);
+		evaluationItem.setEvaluationGridTemplateItemId(501);
 		evaluationItem.setCriterionOrder(1);
 		evaluationItem.setLabel("Communication");
 		evaluationItem.setCriterionType("SCORE");
@@ -184,7 +184,7 @@ class EvaluationsControllerTest {
 						      \"interviewParticipantId\": 88,
 						      \"evaluationItems\": [
 						        {
-						          \"pipelineStageEvaluationCriterionId\": 501,
+						          \"evaluationGridTemplateItemId\": 501,
 						          \"criterionOrder\": 1,
 						          \"label\": \"Communication\",
 						          \"criterionType\": \"SCORE\",
@@ -206,7 +206,7 @@ class EvaluationsControllerTest {
 				.andExpect(jsonPath("$.items[0].candidateInterviewId").value(55))
 				.andExpect(jsonPath("$.items[0].interviewParticipantId").value(88))
 				.andExpect(jsonPath("$.items[0].globalScore").value(74.0))
-				.andExpect(jsonPath("$.items[0].evaluationItems[0].pipelineStageEvaluationCriterionId").value(501))
+				.andExpect(jsonPath("$.items[0].evaluationItems[0].evaluationGridTemplateItemId").value(501))
 				.andExpect(jsonPath("$.items[0].evaluationItems[0].criterionOrder").value(1))
 				.andExpect(jsonPath("$.items[0].evaluationItems[0].label").value("Communication"))
 				.andExpect(jsonPath("$.items[0].evaluationItems[0].scoreValue").value(4.5))
@@ -226,7 +226,7 @@ class EvaluationsControllerTest {
 		assertThat(evaluation.getGlobalScore()).isEqualTo(74d);
 		assertThat(evaluation.getGlobalComment()).isEqualTo("Evaluation explicite");
 		assertThat(evaluation.getEvaluationItems()).hasSize(1);
-		assertThat(evaluation.getEvaluationItems().get(0).getPipelineStageEvaluationCriterionId()).isEqualTo(501);
+		assertThat(evaluation.getEvaluationItems().get(0).getEvaluationGridTemplateItemId()).isEqualTo(501);
 		assertThat(evaluation.getEvaluationItems().get(0).getCriterionOrder()).isEqualTo(1);
 		assertThat(evaluation.getEvaluationItems().get(0).getLabel()).isEqualTo("Communication");
 		assertThat(evaluation.getEvaluationItems().get(0).getScoreValue()).isEqualTo(4.5d);
@@ -236,7 +236,7 @@ class EvaluationsControllerTest {
 	void update_acceptsParticipantAnchoredPayloadOverHttp() throws Exception {
 		EvaluationItemDto evaluationItem = new EvaluationItemDto();
 		evaluationItem.setId(802);
-		evaluationItem.setPipelineStageEvaluationCriterionId(502);
+		evaluationItem.setEvaluationGridTemplateItemId(502);
 		evaluationItem.setCriterionOrder(2);
 		evaluationItem.setLabel("Technique");
 		evaluationItem.setCriterionType("SCORE");
@@ -272,7 +272,7 @@ class EvaluationsControllerTest {
 						      \"interviewParticipantId\": 88,
 						      \"evaluationItems\": [
 						        {
-						          \"pipelineStageEvaluationCriterionId\": 502,
+						          \"evaluationGridTemplateItemId\": 502,
 						          \"criterionOrder\": 2,
 						          \"label\": \"Technique\",
 						          \"criterionType\": \"SCORE\",
@@ -294,7 +294,7 @@ class EvaluationsControllerTest {
 				.andExpect(jsonPath("$.items[0].candidateInterviewId").value(55))
 				.andExpect(jsonPath("$.items[0].interviewParticipantId").value(88))
 				.andExpect(jsonPath("$.items[0].globalScore").value(81.0))
-				.andExpect(jsonPath("$.items[0].evaluationItems[0].pipelineStageEvaluationCriterionId").value(502))
+				.andExpect(jsonPath("$.items[0].evaluationItems[0].evaluationGridTemplateItemId").value(502))
 				.andExpect(jsonPath("$.items[0].evaluationItems[0].criterionOrder").value(2))
 				.andExpect(jsonPath("$.items[0].evaluationItems[0].label").value("Technique"))
 				.andExpect(jsonPath("$.items[0].evaluationItems[0].scoreValue").value(3.5))
@@ -315,7 +315,7 @@ class EvaluationsControllerTest {
 		assertThat(evaluation.getGlobalScore()).isEqualTo(81d);
 		assertThat(evaluation.getGlobalComment()).isEqualTo("Commentaire mis a jour");
 		assertThat(evaluation.getEvaluationItems()).hasSize(1);
-		assertThat(evaluation.getEvaluationItems().get(0).getPipelineStageEvaluationCriterionId()).isEqualTo(502);
+		assertThat(evaluation.getEvaluationItems().get(0).getEvaluationGridTemplateItemId()).isEqualTo(502);
 		assertThat(evaluation.getEvaluationItems().get(0).getCriterionOrder()).isEqualTo(2);
 		assertThat(evaluation.getEvaluationItems().get(0).getLabel()).isEqualTo("Technique");
 		assertThat(evaluation.getEvaluationItems().get(0).getScoreValue()).isEqualTo(3.5d);
@@ -359,7 +359,7 @@ class EvaluationsControllerTest {
 	@Test
 	void getCriteria_returnsStageCriteriaOverHttp() throws Exception {
 		EvaluationItemDto evaluationItem = new EvaluationItemDto();
-		evaluationItem.setPipelineStageEvaluationCriterionId(501);
+		evaluationItem.setEvaluationGridTemplateItemId(501);
 		evaluationItem.setCriterionOrder(1);
 		evaluationItem.setLabel("Communication");
 		evaluationItem.setCriterionType("SCORE");
@@ -391,7 +391,7 @@ class EvaluationsControllerTest {
 				.andExpect(content().contentTypeCompatibleWith(APPLICATION_JSON))
 				.andExpect(jsonPath("$.hasError").value(false))
 				.andExpect(jsonPath("$.items[0].candidateInterviewId").value(55))
-				.andExpect(jsonPath("$.items[0].evaluationItems[0].pipelineStageEvaluationCriterionId").value(501))
+				.andExpect(jsonPath("$.items[0].evaluationItems[0].evaluationGridTemplateItemId").value(501))
 				.andExpect(jsonPath("$.items[0].evaluationItems[0].criterionOrder").value(1))
 				.andExpect(jsonPath("$.items[0].evaluationItems[0].label").value("Communication"))
 				.andExpect(jsonPath("$.items[0].evaluationItems[0].criterionType").value("SCORE"))

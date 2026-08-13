@@ -20,7 +20,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 
 ## Sommaire des familles
 
-1. **Pipeline (gabarits)** : `pipeline_template`, `pipeline_stage`, `pipeline_stage_evaluation_criterion`, `pipeline_stage_notification_rule`
+1. **Pipeline (gabarits)** : `pipeline_template`, `pipeline_stage`, `pipeline_stage_notification_rule`
 2. **Campagnes & référentiels** : `campaigns`, `campaign_form`, `source_token`, `departments`, `specialities`
 3. **Candidature** : `applications`, `application_progress`, `candidate_token`, `candidate_ask`
 4. **Quiz** : `form`, `form_version`, `form_questions`, `question`, `answer`, `application_quiz_attempt`, `candidate_answer`
@@ -67,6 +67,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 | is_required | bit(1) | NO |  | b'1' | Indique si l'étape est obligatoire (ne peut pas être passée). |
 | is_eliminatory | bit(1) | NO |  | b'0' | Indique si échouer cette étape élimine définitivement le candidat. |
 | config_json | text | YES |  | \N | Configuration de l'étape (screening quiz, règles, etc.). |
+| evaluation_grid_template_version_id | int unsigned | YES | MUL | \N | Version de grille d'évaluation utilisée par cette étape d'évaluation (nullable : étape sans évaluation). |
 | created_at | datetime | YES |  | \N | Date de création de la ligne (audit). |
 | created_by | int | YES |  | \N | Auteur de la création de la ligne (audit). |
 | updated_at | datetime | YES |  | \N | Date de la dernière modification (audit). |
@@ -77,30 +78,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 **Notes :**
 - `stage_type` est une énumération (valeurs en annexe) ; `EVALUATION` n'est plus un type d'étape, il a été fusionné dans `DECISION`.
 
-## Table 3 — `pipeline_stage_evaluation_criterion`
-
-> Un critère de notation défini pour une étape d'évaluation (entretien) : ce qu'on évalue et son poids dans la note.
-
-| Attribut | Type | Null | Clé | Défaut | Explication |
-| --- | --- | --- | --- | --- | --- |
-| id | int unsigned | NO | PRI | \N | Identifiant technique du critère. |
-| pipeline_stage_id | int unsigned | NO | MUL | \N | Étape d'évaluation à laquelle le critère est rattaché. |
-| evaluation_grid_template_version_id | int unsigned | YES | MUL | \N | Version de grille d'évaluation liée (optionnelle). |
-| criterion_order | int | NO |  | \N | Position du critère dans la grille d'évaluation. |
-| label | varchar(255) | NO |  | \N | Intitulé du critère (ex. « Communication »). |
-| criterion_type | varchar(20) | NO |  | \N | Type de critère (note, texte, etc.). |
-| max_score | double | YES |  | \N | Note maximale possible pour ce critère. |
-| weight | double | YES |  | \N | Poids du critère dans le calcul de la note globale. |
-| is_required | tinyint(1) | NO |  | 1 | Indique si le critère doit être obligatoirement renseigné. |
-| config_json | text | YES |  | \N | Configuration libre du critère. |
-| created_at | datetime | YES |  | \N | Date de création de la ligne (audit). |
-| created_by | int | YES |  | \N | Auteur de la création de la ligne (audit). |
-| updated_at | datetime | YES |  | \N | Date de la dernière modification (audit). |
-| updated_by | int | YES |  | \N | Auteur de la dernière modification (audit). |
-| is_deleted | tinyint(1) | NO |  | 0 | Suppression logique de la ligne. |
-| search_string | text | YES |  | \N | Zone libre de recherche / index plein texte. |
-
-## Table 4 — `pipeline_stage_notification_rule`
+## Table 3 — `pipeline_stage_notification_rule`
 
 > La règle de notification d'une étape : quel email envoyer, à quel déclencheur, et si l'envoi est automatique.
 
@@ -128,7 +106,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 
 # 2. Campagnes & référentiels
 
-## Table 5 — `campaigns`
+## Table 4 — `campaigns`
 
 > Une campagne de recrutement : un poste à pourvoir avec son pipeline, ses dates et ses paramètres.
 
@@ -161,7 +139,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 **Notes :**
 - `total_questions`, `is_timed`, `time_all_forms` et `all_can_evaluate` sont des champs adjacents conservés hors périmètre strict 420.
 
-## Table 6 — `campaign_form`
+## Table 5 — `campaign_form`
 
 > Le lien entre une campagne et un formulaire : quel formulaire est attribué à la campagne et dans quel ordre.
 
@@ -180,7 +158,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 | active_campaign_id | int unsigned | YES | MUL | \N | Identifiant de la campagne active (dénormalisation). |
 | active_form_id | int unsigned | YES |  | \N | Identifiant du formulaire actif (dénormalisation). |
 
-## Table 7 — `source_token`
+## Table 6 — `source_token`
 
 > Un code source de recrutement : permet de tracer d'où viennent les candidatures d'une campagne.
 
@@ -200,7 +178,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 | search_string | text | YES |  | \N | Zone libre de recherche / index plein texte. |
 | is_public | tinyint(1) | NO |  | 0 | Indique si le code est public (accessible sans invitation). |
 
-## Table 8 — `departments`
+## Table 7 — `departments`
 
 > Un département de l'entreprise, référentiel utilisé pour classer les spécialités.
 
@@ -216,7 +194,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 | is_deleted | tinyint(1) | YES |  | \N | Suppression logique de la ligne. |
 | search_string | text | YES |  | \N | Zone libre de recherche / index plein texte. |
 
-## Table 9 — `specialities`
+## Table 8 — `specialities`
 
 > Une spécialité métier rattachée à un département (ex. « Développement », « Marketing »).
 
@@ -237,7 +215,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 
 # 3. Candidature
 
-## Table 10 — `applications`
+## Table 9 — `applications`
 
 > La candidature d'un candidat à une campagne : son identité, son état courant et ses synthèses de progression.
 
@@ -286,7 +264,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 - `applications` est une table de résumé et de pointeurs courants ; la progression détaillée vit dans `application_progress`.
 - Les anciennes colonnes quiz/interview mono-occurrence (`quiz_status`, `interview_date`, etc.) ont été supprimées ; les synthèses sont désormais les colonnes `aggregated_*` et `current_*`.
 
-## Table 11 — `application_progress`
+## Table 10 — `application_progress`
 
 > Une étape (round) du pipeline pour une candidature : son statut, son score, et ses décisions de validation / skip / réouverture.
 
@@ -320,7 +298,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 - `decided_by` (ancienne colonne) a été supprimée : les traces de décision vivent maintenant dans `validated_by` / `skipped_by` / `reopened_by`.
 - `mail_sent` (ancienne colonne) a été supprimée : la trace mail dérive de `mail_log`.
 
-## Table 12 — `candidate_token`
+## Table 11 — `candidate_token`
 
 > Un code d'accès à 6 caractères qui permet à un candidat de retrouver sa candidature.
 
@@ -336,7 +314,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 | is_deleted | tinyint(1) | YES |  | \N | Suppression logique de la ligne. |
 | search_string | text | YES |  | \N | Zone libre de recherche / index plein texte. |
 
-## Table 13 — `candidate_ask`
+## Table 12 — `candidate_ask`
 
 > Une demande faite par un candidat (changement d'identité, d'email ou de téléphone) en attente de décision.
 
@@ -363,7 +341,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 
 # 4. Quiz
 
-## Table 14 — `form`
+## Table 13 — `form`
 
 > Un formulaire (questionnaire) de quiz.
 
@@ -381,7 +359,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 | is_deleted | bit(1) | YES |  | b'0' | Suppression logique de la ligne. |
 | search_string | text | YES |  | \N | Zone libre de recherche / index plein texte. |
 
-## Table 15 — `form_version`
+## Table 14 — `form_version`
 
 > Une version d'un formulaire : le contenu évolue par versions que l'on publie puis verrouille.
 
@@ -401,7 +379,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 | search_string | text | YES |  | \N | Zone libre de recherche / index plein texte. |
 | published_form_id | int unsigned | YES | UNI | \N | Référence vers le formulaire publié correspondant. |
 
-## Table 16 — `form_questions`
+## Table 15 — `form_questions`
 
 > Le lien entre une version de formulaire et une question : position de la question et temps imparti.
 
@@ -419,7 +397,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 | is_deleted | bit(1) | YES |  | b'0' | Suppression logique de la ligne. |
 | search_string | text | YES |  | \N | Zone libre de recherche / index plein texte. |
 
-## Table 17 — `question`
+## Table 16 — `question`
 
 > Une question de quiz : son énoncé, son type, sa difficulté et le score qu'elle rapporte.
 
@@ -443,7 +421,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 | is_deleted | tinyint(1) | YES |  | \N | Suppression logique de la ligne. |
 | search_string | text | YES |  | \N | Zone libre de recherche / index plein texte. |
 
-## Table 18 — `answer`
+## Table 17 — `answer`
 
 > Une réponse possible à une question de quiz (bonne ou mauvaise, avec texte et options de commentaire).
 
@@ -465,7 +443,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 | is_deleted | tinyint(1) | YES |  | \N | Suppression logique de la ligne. |
 | search_string | text | YES |  | \N | Zone libre de recherche / index plein texte. |
 
-## Table 19 — `application_quiz_attempt`
+## Table 18 — `application_quiz_attempt`
 
 > Une tentative de quiz passée par un candidat pour une étape de quiz : statut, score, chronomètre et correction manuelle.
 
@@ -497,7 +475,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 | is_deleted | tinyint(1) | NO |  | 0 | Suppression logique de la ligne. |
 | search_string | text | YES |  | \N | Zone libre de recherche / index plein texte. |
 
-## Table 20 — `candidate_answer`
+## Table 19 — `candidate_answer`
 
 > La réponse donnée par un candidat à une question lors d'une tentative de quiz, avec l'éventuelle correction manuelle.
 
@@ -525,7 +503,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 
 # 5. Entretien & évaluation
 
-## Table 21 — `interviews`
+## Table 20 — `interviews`
 
 > Un entretien planifié pour une étape « entretien » : sa date, son type, son statut et sa salle d'évaluation partagée.
 
@@ -558,7 +536,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 - `application_progress_id` est **nullable** dans la base alors que le doc cible prévoit NOT NULL (ancre unique du round) ; les données actuelles ont **0 NULL**, mais le durcissement est reporté.
 - `evaluation_room_code` remplace l'ancienne colonne `interview_evaluations_link` (renommée).
 
-## Table 22 — `candidate_interview`
+## Table 21 — `candidate_interview`
 
 > La réponse d'un candidat à une convocation d'entretien : acceptation, refus ou demande de replanification.
 
@@ -581,7 +559,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 **Notes :**
 - `interview_duration` est conservée : c'est un écart cible validé par décision BA 2026-08-04 (elle n'était pas prévue dans la cible finale).
 
-## Table 23 — `interview_participant`
+## Table 22 — `interview_participant`
 
 > Un participant (recruteur) à un entretien : ses droits et l'état de son évaluation.
 
@@ -607,7 +585,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 | is_deleted | tinyint(1) | YES |  | \N | Suppression logique de la ligne. |
 | search_string | text | YES |  | \N | Zone libre de recherche / index plein texte. |
 
-## Table 24 — `evaluations`
+## Table 23 — `evaluations`
 
 > L'évaluation d'un entretien par un participant évaluateur : score global, commentaire global et statut.
 
@@ -633,7 +611,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 - `interview_participant_id` est **nullable** alors que le doc cible prévoit NOT NULL (évaluateur explicite) ; le durcissement est reporté.
 - `global_score` / `global_comment` remplacent les anciennes colonnes `candidate_mark` / `recruiter_comment` (supprimées).
 
-## Table 25 — `evaluation_item`
+## Table 24 — `evaluation_item`
 
 > La note attribuée par un évaluateur sur un critère précis d'une grille d'évaluation.
 
@@ -641,7 +619,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 | --- | --- | --- | --- | --- | --- |
 | id | int unsigned | NO | PRI | \N | Identifiant technique de la note de critère. |
 | evaluation_id | int unsigned | NO | MUL | \N | Évaluation concernée. |
-| pipeline_stage_evaluation_criterion_id | int unsigned | NO | MUL | \N | Critère évalué. |
+| evaluation_grid_template_item_id | int unsigned | NO | MUL | \N | Item de grille d'évaluation évalué. |
 | score_value | double | YES |  | \N | Note attribuée pour ce critère. |
 | text_value | text | YES |  | \N | Commentaire texte (si le critère est de type texte). |
 | weight_snapshot | double | YES |  | \N | Poids du critère au moment de l'évaluation (figé). |
@@ -653,7 +631,11 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 | is_deleted | tinyint(1) | NO |  | 0 | Suppression logique de la ligne. |
 | search_string | text | YES |  | \N | Zone libre de recherche / index plein texte. |
 
-## Table 26 — `evaluation_grid_template`
+**Notes :**
+- Colonne renommée (`pipeline_stage_evaluation_criterion_id` → `evaluation_grid_template_item_id`) et passée `NOT NULL` lors du rebranchement sur les grilles versionnées (Phase C/D, note 430).
+- UNIQUE sur `(evaluation_id, evaluation_grid_template_item_id)` : une évaluation ne note pas deux fois le même item de grille.
+
+## Table 25 — `evaluation_grid_template`
 
 > Un modèle de grille d'évaluation réutilisable d'une campagne à l'autre.
 
@@ -670,7 +652,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 | is_deleted | tinyint(1) | NO |  | 0 | Suppression logique de la ligne. |
 | search_string | text | YES |  | \N | Zone libre de recherche / index plein texte. |
 
-## Table 27 — `evaluation_grid_template_version`
+## Table 26 — `evaluation_grid_template_version`
 
 > Une version d'un modèle de grille d'évaluation (on publie une version avant de l'utiliser).
 
@@ -682,6 +664,8 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 | version_label | varchar(255) | YES |  | \N | Libellé de la version. |
 | is_published | tinyint(1) | NO |  | 0 | Indique si la version est publiée. |
 | published_at | datetime | YES |  | \N | Date de publication de la version. |
+| content_hash | char(64) | YES | UNI | \N | Empreinte SHA-256 (hex) de l'ensemble ordonné des items de la version (forme canonique) ; UNIQUE — une seule version par contenu. |
+| locked_at | datetime | YES |  | \N | Verrou d'usage : posé à la première evaluation_item réellement saisie qui référence un item de la version ; `is_locked` = `locked_at` non nul. |
 | created_at | datetime | YES |  | \N | Date de création de la ligne (audit). |
 | created_by | int | YES |  | \N | Auteur de la création de la ligne (audit). |
 | updated_at | datetime | YES |  | \N | Date de la dernière modification (audit). |
@@ -689,7 +673,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 | is_deleted | tinyint(1) | NO |  | 0 | Suppression logique de la ligne. |
 | search_string | text | YES |  | \N | Zone libre de recherche / index plein texte. |
 
-## Table 28 — `evaluation_grid_template_item`
+## Table 27 — `evaluation_grid_template_item`
 
 > Un critère défini dans une version de grille d'évaluation : intitulé, note maximale et poids.
 
@@ -715,7 +699,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 
 # 6. Décisions
 
-## Table 29 — `decisions`
+## Table 28 — `decisions`
 
 > La décision prise sur une étape (présélection ou décision finale) : le verdict métier, le mode technique et l'acteur.
 
@@ -743,7 +727,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 
 # 7. Emailing
 
-## Table 30 — `email_template`
+## Table 29 — `email_template`
 
 > Un modèle d'email configurable (sujet, corps, variables) réutilisé par les notifications du processus.
 
@@ -766,7 +750,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 | is_deleted | bit(1) | YES |  | b'0' | Suppression logique de la ligne. |
 | search_string | text | YES |  | \N | Zone libre de recherche / index plein texte. |
 
-## Table 31 — `email_template_preset`
+## Table 30 — `email_template_preset`
 
 > Un gabarit visuel d'email (style et structure HTML) prêt à l'emploi.
 
@@ -785,7 +769,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 **Notes :**
 - `category` est un type MySQL `enum(...)` ; la liste complète des valeurs est donnée en annexe.
 
-## Table 32 — `mail_log`
+## Table 31 — `mail_log`
 
 > La trace de chaque email envoyé ou à envoyer : destinataire, événement, statut et contexte métier.
 
@@ -820,7 +804,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 **Notes :**
 - `event_code` a un défaut de compatibilité `LEGACY_UNCLASSIFIED`, mais tous les flux doivent renseigner un code explicite (ex. `APPLICATION_VERIFICATION_EMAIL`, `CANDIDATE_ASK_RESULT_EMAIL`, `INTERVIEW_INVITATION_EMAIL`, plus les codes du type `<EVENEMENT>_EMAIL`).
 
-## Table 33 — `smtp_config`
+## Table 32 — `smtp_config`
 
 > La configuration du serveur SMTP utilisé pour envoyer les emails de la plateforme.
 
@@ -847,7 +831,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 | is_deleted | bit(1) | YES |  | b'0' | Suppression logique de la ligne. |
 | search_string | text | YES |  | \N | Zone libre de recherche / index plein texte. |
 
-## Table 34 — `email_verification_tokens`
+## Table 33 — `email_verification_tokens`
 
 > Un jeton envoyé par email pour vérifier une adresse (candidature ou compte utilisateur).
 
@@ -868,7 +852,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 
 # 8. Utilisateurs & permissions
 
-## Table 35 — `user`
+## Table 34 — `user`
 
 > Un utilisateur de la plateforme (recruteur, administrateur, candidat).
 
@@ -895,7 +879,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 | is_deleted | tinyint(1) | YES |  | \N | Suppression logique de la ligne. |
 | search_string | text | YES |  | \N | Zone libre de recherche / index plein texte. |
 
-## Table 36 — `business_group`
+## Table 35 — `business_group`
 
 > Un groupe d'utilisateurs (équipe) qui partage des permissions sur le processus.
 
@@ -911,7 +895,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 | is_deleted | tinyint(1) | YES |  | 0 | Suppression logique de la ligne. |
 | search_string | text | YES |  | \N | Zone libre de recherche / index plein texte. |
 
-## Table 37 — `business_group_permission`
+## Table 36 — `business_group_permission`
 
 > Une permission accordée à un groupe sur une fonctionnalité de la plateforme.
 
@@ -926,7 +910,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 | updated_by | int | YES |  | \N | Auteur de la dernière modification (audit). |
 | is_deleted | tinyint(1) | YES |  | 0 | Suppression logique de la ligne. |
 
-## Table 38 — `user_business_group`
+## Table 37 — `user_business_group`
 
 > L'appartenance d'un utilisateur à un groupe, avec son éventuel rôle de modérateur.
 
@@ -942,7 +926,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 | is_deleted | tinyint(1) | YES |  | 0 | Suppression logique de la ligne. |
 | is_moderator | tinyint(1) | NO |  | 0 | Indique si l'utilisateur est modérateur du groupe. |
 
-## Table 39 — `user_permission_override`
+## Table 38 — `user_permission_override`
 
 > Une exception individuelle de permission (autorisée ou bloquée) appliquée à un utilisateur précis.
 
@@ -958,7 +942,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 | updated_by | int | YES |  | \N | Auteur de la dernière modification (audit). |
 | is_deleted | tinyint(1) | YES |  | 0 | Suppression logique de la ligne. |
 
-## Table 40 — `system_role_permission`
+## Table 39 — `system_role_permission`
 
 > Une permission accordée à un rôle système (super admin, admin, recruteur).
 
@@ -973,7 +957,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 | updated_by | int | YES |  | \N | Auteur de la dernière modification (audit). |
 | is_deleted | tinyint(1) | YES |  | 0 | Suppression logique de la ligne. |
 
-## Table 41 — `entity_permission`
+## Table 40 — `entity_permission`
 
 > Une permission portant sur une entité précise (par exemple un entretien donné), accordée à un utilisateur, un groupe ou un rôle.
 
@@ -993,7 +977,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 | is_deleted | tinyint(1) | YES |  | 0 | Suppression logique de la ligne. |
 | search_string | text | YES |  | \N | Zone libre de recherche / index plein texte. |
 
-## Table 42 — `group_change_request`
+## Table 41 — `group_change_request`
 
 > Une demande d'un utilisateur de changer de groupe, en attente de traitement.
 
@@ -1013,7 +997,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 | updated_by | int unsigned | YES |  | \N | Auteur de la dernière modification (audit). |
 | is_deleted | tinyint(1) | NO |  | 0 | Suppression logique de la ligne. |
 
-## Table 43 — `invitation_code`
+## Table 42 — `invitation_code`
 
 > Un code d'invitation permettant de créer un compte recruteur.
 
@@ -1036,7 +1020,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 
 # 9. Plateforme transverse
 
-## Table 44 — `app_config`
+## Table 43 — `app_config`
 
 > La configuration générale de la plateforme : nom de l'entreprise, logo, couleurs et activation des comptes candidats.
 
@@ -1057,7 +1041,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 | updated_by | bigint | YES |  | \N | Auteur de la dernière modification (audit). |
 | is_deleted | bit(1) | NO |  | b'0' | Suppression logique de la ligne. |
 
-## Table 45 — `legal_text`
+## Table 44 — `legal_text`
 
 > Les textes légaux (CGU, confidentialité, mentions) affichés aux utilisateurs.
 
@@ -1076,7 +1060,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 | is_deleted | bit(1) | YES |  | b'0' | Suppression logique de la ligne. |
 | search_string | text | YES |  | \N | Zone libre de recherche / index plein texte. |
 
-## Table 46 — `notifications`
+## Table 45 — `notifications`
 
 > Une notification interne affichée à un utilisateur dans l'application.
 
@@ -1097,7 +1081,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 | is_deleted | tinyint(1) | YES |  | \N | Suppression logique de la ligne. |
 | search_string | text | YES |  | \N | Zone libre de recherche / index plein texte. |
 
-## Table 47 — `audit_event`
+## Table 46 — `audit_event`
 
 > La trace d'une action métier : qui a fait quoi, quand, sur quelle entité, avec l'état avant / après.
 
@@ -1115,7 +1099,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 | after_state_json | longtext | YES |  | \N | État de l'entité après l'action (JSON). |
 | created_at | datetime | NO | MUL | CURRENT_TIMESTAMP | Date et heure de l'action (audit). |
 
-## Table 48 — `flyway_schema_history`
+## Table 47 — `flyway_schema_history`
 
 > L'historique des migrations de schéma appliquées par Flyway (table technique, non métier).
 
@@ -1163,5 +1147,4 @@ Valeurs confirmées dans les enums backend (`quizapp/src/main/java/tech/synelia/
 | invitation_code | role | RECRUITER (défaut `recruiter`) |
 | email_verification_tokens | token_type | APPLICATION_VERIFICATION (défaut) ; PASSWORD_RESET et autres — à confirmer |
 | email_template_preset | category | MINIMAL, MODERN, CORPORATE, COLORFUL, DARK, APPLICATION_VERIFICATION, PASSWORD_RESET, INVITATION_CODE, CANDIDATE_ASK_RESULT, PRE_SCREEN_DECISION, FINAL_DECISION, INTERVIEW_INVITE, QUIZ_INVITE, WELCOME, GENERIC |
-| pipeline_stage_evaluation_criterion | criterion_type | Type de critère (note, texte...) — à confirmer |
 | evaluation_grid_template_item | criterion_type | Type de critère (note, texte...) — à confirmer |

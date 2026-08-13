@@ -14,7 +14,7 @@ import lombok.ToString;
 public class EvaluationItemDto implements Cloneable {
 
 	private Integer id;
-	private Integer pipelineStageEvaluationCriterionId;
+	private Integer evaluationGridTemplateItemId;
 	private Integer criterionOrder;
 	private String label;
 	private String criterionType;

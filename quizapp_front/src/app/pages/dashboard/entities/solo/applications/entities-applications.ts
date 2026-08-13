@@ -911,7 +911,7 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
   }
 
   trackInterviewEvaluationItem(index: number, item: EvaluationItem): number | string {
-    return item.id ?? item.pipelineStageEvaluationCriterionId ?? index;
+    return item.id ?? item.evaluationGridTemplateItemId ?? index;
   }
 
   getInterviewEvaluationItemLabel(item: EvaluationItem): string {

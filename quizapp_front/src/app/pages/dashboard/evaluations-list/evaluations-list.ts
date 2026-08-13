@@ -269,7 +269,7 @@ export class EvaluationsListComponent implements OnInit, OnDestroy {
   }
 
   trackEvaluationPreviewItem(index: number, item: EvaluationItem): number | string {
-    return item.id ?? item.pipelineStageEvaluationCriterionId ?? index;
+    return item.id ?? item.evaluationGridTemplateItemId ?? index;
   }
 
   trackEvaluatorStatus(index: number, status: EvaluatorSubmissionStatus): number {

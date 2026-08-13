@@ -1,7 +1,7 @@
 # Note — Évolution des grilles d'évaluation : versionnage par verrou à l'usage et réutilisation par contenu
 
 **Date :** 2026-08-11
-**Statut :** Cible d'architecture retenue, non implémentée
+**Statut :** Implémentée (Phases 0–D) ; services de versionnage (Règles B/C/D) et CRUD de la bibliothèque de grilles portés par la note 440
 **Périmètre :** `pipeline_stage`, `pipeline_stage_evaluation_criterion`, `evaluation_grid_template`, `evaluation_grid_template_version`, `evaluation_grid_template_item`, `evaluations`, `evaluation_item`, doc `bd_documentee` et page d'exemples
 
 > Cette note remplace et corrige la partie « critères effectifs sur le stage » de la note 420 (`pipeline_stage_evaluation_criterion`) : la copie par étape est abandonnée au profit d'un rattachement direct étape → version de grille, avec verrou au premier usage et déduplication par contenu.
@@ -143,11 +143,11 @@ Script SQL de référence : `quizapp/src/main/resources/db/migration/V1_078__add
 
 Checklist :
 
-- [ ] `ALTER TABLE pipeline_stage ADD COLUMN evaluation_grid_template_version_id int unsigned NULL`, FK → `evaluation_grid_template_version(id)`, index.
-- [ ] `ALTER TABLE evaluation_grid_template_version ADD COLUMN content_hash CHAR(64) NULL`, index **UNIQUE** sur `content_hash`.
-- [ ] `ALTER TABLE evaluation_grid_template_version ADD COLUMN locked_at datetime NULL`.
-- [ ] `ALTER TABLE evaluation_item ADD COLUMN evaluation_grid_template_item_id int unsigned NULL`, FK + index. (Ajout d'une colonne nullable, sans recâbler tout de suite : les lignes restent lisibles.)
-- [ ] Vérifier que l'existant n'est pas cassé : aucun `NOT NULL`, aucune suppression, aucune contrainte bloquante.
+- [x] `ALTER TABLE pipeline_stage ADD COLUMN evaluation_grid_template_version_id int unsigned NULL`, FK → `evaluation_grid_template_version(id)`, index.
+- [x] `ALTER TABLE evaluation_grid_template_version ADD COLUMN content_hash CHAR(64) NULL`, index **UNIQUE** sur `content_hash`.
+- [x] `ALTER TABLE evaluation_grid_template_version ADD COLUMN locked_at datetime NULL`.
+- [x] `ALTER TABLE evaluation_item ADD COLUMN evaluation_grid_template_item_id int unsigned NULL`, FK + index. (Ajout d'une colonne nullable, sans recâbler tout de suite : les lignes restent lisibles.)
+- [x] Vérifier que l'existant n'est pas cassé : aucun `NOT NULL`, aucune suppression, aucune contrainte bloquante.
 
 ### Phase B — Backfill et contrôles de cohérence
 
@@ -157,32 +157,36 @@ Objectif : reconstituer les données depuis `pipeline_stage_evaluation_criterion
 
 Checklist :
 
-- [ ] **Reconstruire les versions par étape** : pour chaque `pipeline_stage` ayant des `pipeline_stage_evaluation_criterion`, créer (si besoin) une `evaluation_grid_template_version` qui regroupe ses critères, en réutilisant la version d'origine quand tous les critères de l'étape portent le même `evaluation_grid_template_version_id` et sont identiques aux items de cette version.
-- [ ] **Fusion par contenu pendant la migration** : calculer le `content_hash` dès la reconstruction et fusionner les étapes dont le contenu reconstruit est identique (une seule version pour plusieurs étapes) — évite de gonfler le nombre de versions.
-- [ ] **Table de correspondance réversible** : créer une table temporaire `legacy_criterion_mapping` (`old_pipeline_stage_evaluation_criterion_id`, `new_evaluation_grid_template_item_id`) qui sert de source unique au rebranchement d'`evaluation_item`. Elle permet la vérification et la reprise sans risque.
-- [ ] **Rattacher l'étape** : renseigner `pipeline_stage.evaluation_grid_template_version_id` pour chaque étape reconstruite.
-- [ ] **Isoler les cas non déterministes** : tout ce qui ne matche pas proprement (critères saisis à la main, poids modifiés, `criterion_order` dupliqué, label modifié) est extrait dans une **liste d'arbitrage** (journalisée en `audit_event`, actions `PHASE_B_*`) et doit être tranché **manuellement avant** le rebranchement final.
-- [ ] **Rebrancher `evaluation_item`** à partir de `legacy_criterion_mapping` uniquement ; jamais de devinette dans le script.
-- [ ] **Renseigner `locked_at`** : pour chaque version ayant au moins une `evaluation_item` référencée, poser `locked_at`.
-- [ ] **Contrôles de cohérence obligatoires** (dans une transaction annulable) :
+- [x] **Reconstruire les versions par étape** : pour chaque `pipeline_stage` ayant des `pipeline_stage_evaluation_criterion`, créer (si besoin) une `evaluation_grid_template_version` qui regroupe ses critères, en réutilisant la version d'origine quand tous les critères de l'étape portent le même `evaluation_grid_template_version_id` et sont identiques aux items de cette version.
+- [x] **Fusion par contenu pendant la migration** : calculer le `content_hash` dès la reconstruction et fusionner les étapes dont le contenu reconstruit est identique (une seule version pour plusieurs étapes) — évite de gonfler le nombre de versions.
+- [x] **Table de correspondance réversible** : créer une table temporaire `legacy_criterion_mapping` (`old_pipeline_stage_evaluation_criterion_id`, `new_evaluation_grid_template_item_id`) qui sert de source unique au rebranchement d'`evaluation_item`. Elle permet la vérification et la reprise sans risque.
+- [x] **Rattacher l'étape** : renseigner `pipeline_stage.evaluation_grid_template_version_id` pour chaque étape reconstruite.
+- [x] **Isoler les cas non déterministes** : tout ce qui ne matche pas proprement (critères saisis à la main, poids modifiés, `criterion_order` dupliqué, label modifié) est extrait dans une **liste d'arbitrage** (journalisée en `audit_event`, actions `PHASE_B_*`) et doit être tranché **manuellement avant** le rebranchement final.
+- [x] **Rebrancher `evaluation_item`** à partir de `legacy_criterion_mapping` uniquement ; jamais de devinette dans le script.
+- [x] **Renseigner `locked_at`** : pour chaque version ayant au moins une `evaluation_item` référencée, poser `locked_at`.
+- [x] **Contrôles de cohérence obligatoires** (dans une transaction annulable) :
   - `COUNT(evaluation_item)` avant = après (aucune ligne perdue) ;
   - aucune `evaluation_item` orpheline (toutes pointent un item existant) ;
   - aucune étape `INTERVIEW` sans grille si des évaluations existent ;
   - `content_hash` cohérent avec le contenu des items (recalcul de contrôle) ;
   - `locked_at` non nul sur toute version référencée par une `evaluation_item`, nul sinon.
-- [ ] Sortir une liste de cas ambigus à arbitrer manuellement avant toute bascule.
+- [x] Sortir une liste de cas ambigus à arbitrer manuellement avant toute bascule. (Sur le jeu de référence : 0 cas — tables sources vides, `PHASE_B_COMPLETED` en audit.)
+
+> Validation effectuée : script testé sur base jetable (réutilisation, reconstruction, fusion par contenu, `criterion_order` dupliqué → arbitrage, verrou `locked_at`, garde 7.3 SIGNAL) puis appliqué au dev DB (`1.079`, checksum aligné). Aucun drift fichier/base.
 
 ### Phase C — Bascule lecture / écriture (backend)
 
 Checklist :
 
-- [ ] Lecture du formulaire d'évaluation d'une étape : `loadStageCriteria` (`EvaluationsBusiness.java:959-978`) passe par `pipeline_stage.evaluation_grid_template_version_id` → items de la version (au lieu de `pipeline_stage_evaluation_criterion`).
-- [ ] Fallback de score : `deriveGlobalScoreFromEvaluationItems` (`EvaluationsBusiness.java:650-666`) ne charge plus le critère via `PipelineStageEvaluationCriterionRepository`, mais via l'item de grille.
-- [ ] Écriture : création d'`evaluation_item` sur `evaluation_grid_template_item_id`.
-- [ ] Pose de `locked_at` transactionnelle à la **première `evaluation_item` réellement saisie** (brouillon vide non verrouillant) ; refus d'écriture sur une version verrouillée ; interdiction de modifier/supprimer un item d'une version verrouillée.
-- [ ] Services de versionnage (Règles B/C/D) : `content_hash` sur forme canonique, réutilisation par contenu, repointage. **Le CRUD de la bibliothèque de grilles + l'éditeur (picker grille → version) sont portés par la note 440**, qui consomme ces services ; la présente note n'implémente que le mécanisme de données.
-- [ ] Renommer le contrat API `pipelineStageEvaluationCriterionId` → `evaluationGridTemplateItemId` : `EvaluationItemDto`, `evaluation.service.ts`, `evaluations.ts`, `entities-applications.ts`, `evaluations-list.ts` + specs back (`EvaluationsBusinessTest`, `EvaluationsControllerTest`) et front (`evaluations.spec.ts`, `entities-applications.spec.ts`, `evaluations-list.spec.ts`).
-- [ ] Supprimer les lectures/écritures résiduelles sur `pipeline_stage_evaluation_criterion` (entité, repository, `EvaluationsBusiness`).
+- [x] Lecture du formulaire d'évaluation d'une étape : `loadStageCriteria` (`EvaluationsBusiness.java:1009-1036`) passe par `pipeline_stage.evaluation_grid_template_version_id` → items de la version (au lieu de `pipeline_stage_evaluation_criterion`).
+- [x] Fallback de score : `deriveGlobalScoreFromEvaluationItems` (`EvaluationsBusiness.java:636-681`) ne charge plus le critère via `PipelineStageEvaluationCriterionRepository`, mais via l'item de grille.
+- [x] Écriture : création d'`evaluation_item` sur `evaluation_grid_template_item_id` (avec validation « l'item appartient bien à la grille du stage courant »).
+- [x] Pose de `locked_at` transactionnelle à la **première `evaluation_item` réellement saisie** (score ou texte non vides ; brouillon vide non verrouillant) : garantie par la transaction `BusinessFactory.create/update` (`@Transactional(rollbackFor=...)`), avec audit `GRID_VERSION_LOCKED`. Le **refus d'écriture sur une version verrouillée** et **l'immutabilité des items d'une version verrouillée** sont des gardes du CRUD de la bibliothèque de grilles → **note 440**.
+- [ ] Services de versionnage (Règles B/C/D) : `content_hash` sur forme canonique, réutilisation par contenu, repointage. **Reportés à la note 440** (décision de périmètre : aucun appelant n'existe encore ; la 440 les consommera avec son CRUD). Le mécanisme de données (colonnes `content_hash` UNIQUE + `locked_at`, verrou à l'usage) est en place.
+- [x] Renommer le contrat API `pipelineStageEvaluationCriterionId` → `evaluationGridTemplateItemId` : `EvaluationItemDto`, `evaluation.service.ts`, `evaluations.ts`, `entities-applications.ts`, `evaluations-list.ts` + specs back (`EvaluationsBusinessTest`, `EvaluationsControllerTest`) et front (`evaluations.spec.ts`, `entities-applications.spec.ts`, `evaluations-list.spec.ts`).
+- [x] Supprimer les lectures/écritures résiduelles sur `pipeline_stage_evaluation_criterion` (entité, repository, `EvaluationsBusiness`).
+
+> Validation effectuée : compile backend OK, `EvaluationsBusinessTest` (9 tests, dont verrou `locked_at`) et `EvaluationsControllerTest` (7 tests) verts ; typecheck front (`tsc --noEmit` sur `tsconfig.spec.json`) OK. Création des entités/repos grille (`EvaluationGridTemplateVersion`, `EvaluationGridTemplateItem`) et du champ `PipelineStage.evaluationGridTemplateVersionId`.
 
 ### Phase D — Suppression
 
@@ -190,48 +194,51 @@ Script SQL de référence : `quizapp/src/main/resources/db/migration/V1_080__dro
 
 Checklist :
 
-- [ ] Vérifier qu'aucune lecture ni écriture ne référence plus `pipeline_stage_evaluation_criterion`.
-- [ ] Sur `evaluation_item` : créer le UNIQUE `(evaluation_id, evaluation_grid_template_item_id)` (après backfill complet), puis drop de la FK `fk_evaluation_item_criterion`, de l'index `idx_evaluation_item_criterion`, du UNIQUE `uk_evaluation_item_criterion` et de la colonne `pipeline_stage_evaluation_criterion_id`.
-- [ ] `DROP TABLE legacy_criterion_mapping`.
-- [ ] `DROP TABLE pipeline_stage_evaluation_criterion`.
-- [ ] Mettre à jour le doc `bd_documentee` et la page d'exemples (section 8).
+- [x] Vérifier qu'aucune lecture ni écriture ne référence plus `pipeline_stage_evaluation_criterion` (grep : 0 occurrence dans `src/main` et `src/test`, entité/repo/business supprimés en Phase C).
+- [x] Sur `evaluation_item` : créer le UNIQUE `(evaluation_id, evaluation_grid_template_item_id)` (après backfill complet), puis drop de la FK `fk_evaluation_item_criterion`, de l'index `idx_evaluation_item_criterion`, du UNIQUE `uk_evaluation_item_criterion` et de la colonne `pipeline_stage_evaluation_criterion_id` (en plus : passage `evaluation_grid_template_item_id` à `NOT NULL`, pré-vérifié).
+- [x] `DROP TABLE legacy_criterion_mapping`.
+- [x] `DROP TABLE pipeline_stage_evaluation_criterion`.
+- [x] Mettre à jour le doc `bd_documentee` et la page d'exemples (section 8).
+
+> Validation effectuée : V1_080 appliquée sur le dev (`localhost:3306/quizapp_db`) — tables supprimées, colonne basculée `NOT NULL`, UNIQUE recréé, `content_hash` UNIQUE intact, `flyway_schema_history` vert (1.080), audit `PHASE_D_COMPLETED`. Script robuste : suppressions conditionnelles (`information_schema`), re-run après échec partiel possible ; le nouveau UNIQUE est créé **avant** le drop de l'ancien (il couvre la FK `evaluation_item → evaluations` via `evaluation_id`).
 
 ## 7. Checklist base de données
 
-- [ ] colonne `pipeline_stage.evaluation_grid_template_version_id` (nullable, FK, index)
-- [ ] colonnes `content_hash` (UNIQUE, forme canonique, sans id de version) et `locked_at` sur `evaluation_grid_template_version`
-- [ ] colonne `evaluation_item.evaluation_grid_template_item_id` + FK + index
-- [ ] UNIQUE `(evaluation_id, evaluation_grid_template_item_id)` recréé sur `evaluation_item` (Phase D)
-- [ ] table temporaire `legacy_criterion_mapping` pour le rebranchement réversible
-- [ ] backfill des versions (avec fusion par contenu), du rattachement étape, du `content_hash`, du rebranchement `evaluation_item`, du `locked_at`
-- [ ] arbitrage manuel des cas non déterministes avant rebranchement final
-- [ ] contrôles de cohérence Phase B (aucune perte, aucun orphelin, hash valides, transaction annulable)
-- [ ] bascule lecture/écriture backend (Règles A–D, verrou à la première item saisie, immutabilité des items verrouillés) + renommage du contrat API
-- [ ] nettoyage des orphelins (immédiat au repointage + balayage périodique)
-- [ ] Phase D sur `evaluation_item` : drop FK `fk_evaluation_item_criterion`, index `idx_evaluation_item_criterion`, UNIQUE `uk_evaluation_item_criterion`, colonne `pipeline_stage_evaluation_criterion_id`
-- [ ] `DROP TABLE legacy_criterion_mapping` puis `DROP TABLE pipeline_stage_evaluation_criterion`
-- [ ] index / contraintes UNIQUE sur `content_hash` vérifiés après migration
+- [x] colonne `pipeline_stage.evaluation_grid_template_version_id` (nullable, FK, index)
+- [x] colonnes `content_hash` (UNIQUE, forme canonique, sans id de version) et `locked_at` sur `evaluation_grid_template_version`
+- [x] colonne `evaluation_item.evaluation_grid_template_item_id` + FK + index
+- [x] UNIQUE `(evaluation_id, evaluation_grid_template_item_id)` recréé sur `evaluation_item` (Phase D)
+- [x] table temporaire `legacy_criterion_mapping` pour le rebranchement réversible
+- [x] backfill des versions (avec fusion par contenu), du rattachement étape, du `content_hash`, du rebranchement `evaluation_item`, du `locked_at`
+- [x] arbitrage manuel des cas non déterministes avant rebranchement final (aucun cas sur le jeu de référence)
+- [x] contrôles de cohérence Phase B (aucune perte, aucun orphelin, hash valides, transaction annulable)
+- [x] bascule lecture/écriture backend (verrou à la première item saisie, transactionnel) + renommage du contrat API (Règles B/C/D reportées à la note 440)
+- [ ] nettoyage des orphelins (immédiat au repointage + balayage périodique) — **note 440** (le repointage relève des Règles B/C/D)
+- [x] Phase D sur `evaluation_item` : drop FK `fk_evaluation_item_criterion`, index `idx_evaluation_item_criterion`, UNIQUE `uk_evaluation_item_criterion`, colonne `pipeline_stage_evaluation_criterion_id`
+- [x] `DROP TABLE legacy_criterion_mapping` puis `DROP TABLE pipeline_stage_evaluation_criterion`
+- [x] index / contraintes UNIQUE sur `content_hash` vérifiés après migration
 
 ## 8. Checklist documentation (doc + page d'exemples)
 
-- [ ] `cartographie-fonctionnelle-front/bd_documentee/quizapp_db_documentation_20260810.md` :
+- [x] `cartographie-fonctionnelle-front/bd_documentee/quizapp_db_documentation_20260810.md` :
   - retirer la table 3 `pipeline_stage_evaluation_criterion` (et sa famille si elle devient vide) ;
   - ajouter `evaluation_grid_template_version_id` à `pipeline_stage` ;
   - ajouter `content_hash` / `locked_at` à `evaluation_grid_template_version` ;
   - remplacer la FK `pipeline_stage_evaluation_criterion_id` par `evaluation_grid_template_item_id` sur `evaluation_item` ;
   - retirer `pipeline_stage_evaluation_criterion.criterion_type` de la liste des enums.
-- [ ] `cartographie-fonctionnelle-front/bd_documentee/exemples/data.js` :
+- [x] `cartographie-fonctionnelle-front/bd_documentee/exemples/data.js` :
   - retirer la table 3 de la famille « Pipeline » (48 → 47 tables) ;
   - étape 4 (`INTERVIEW`) → `evaluation_grid_template_version_id = 1` ;
   - ajouter `content_hash` aux versions de grille (v1, v2 non publiée) ;
   - `evaluation_item` pointe les items 1–3 de la grille v1 ;
   - mettre à jour le bloc `cles` (supprimer les FK de `pipeline_stage_evaluation_criterion`, ajouter `pipeline_stage:evaluation_grid_template_version_id` et `evaluation_item:evaluation_grid_template_item_id`).
-- [ ] Front : renommer `pipelineStageEvaluationCriterionId` → `evaluationGridTemplateItemId` dans `core/services/evaluation.service.ts`, `pages/dashboard/evaluations/evaluations.ts`, `pages/dashboard/entities/solo/applications/entities-applications.ts`, `pages/dashboard/evaluations-list/evaluations-list.ts` + specs.
-- [ ] Page d'exemples : rien de spécifique si les données suffisent ; vérifier la légende et les liens FK après mise à jour des données.
+- [x] Front : renommer `pipelineStageEvaluationCriterionId` → `evaluationGridTemplateItemId` dans `core/services/evaluation.service.ts`, `pages/dashboard/evaluations/evaluations.ts`, `pages/dashboard/entities/solo/applications/entities-applications.ts`, `pages/dashboard/evaluations-list/evaluations-list.ts` + specs.
+- [x] Page d'exemples : rien de spécifique si les données suffisent ; vérifier la légende et les liens FK après mise à jour des données (`node --check` OK, 47 tables, lignes cohérentes, aucun lien FK vers une table inexistante).
 
 ## 9. Points d'attention pour éviter les erreurs
 
 - **Le `content_hash` ne contient jamais l'id de la version** : c'est une empreinte de contenu. Deux versions au contenu identique partagent le même hash, c'est le mécanisme de la Règle C.
+- **Collation explicite sur les hash temporaires** : `SHA2()` renvoie une chaîne dans la collation de **connexion** (mysql CLI vs JDBC/Flyway ≠ collation des colonnes `utf8mb4_unicode_ci`) → toute comparaison `<>` entre un `content_hash` de colonne et un hash de table temporaire lève une erreur 1267 « illegal mix of collations ». Déclarer les colonnes temporaires en `CHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci` (piège rencontré en Phase B).
 - **Normalisation canonique obligatoire avant le hash** : `config_json` (clés triées, sans espaces superflus), labels trimés, `DOUBLE` arrondis à précision fixe, `NULL` vs `0` explicite. Sinon un enregistrement sans vrai changement crée une fausse nouvelle version (l'inverse de la Règle B).
 - **Ne jamais modifier une version verrouillée** : toute personnalisation d'une grille utilisée passe par une nouvelle version (Règle A). Idem pour les **items** d'une version verrouillée : immutables (règle applicative, trigger en renfort).
 - **Le verrou se pose à la première `evaluation_item` réellement saisie** : ne jamais matérialiser de lignes d'item tant que l'évaluateur n'a rien saisi, sinon verrouillage prématuré.
@@ -244,8 +251,8 @@ Checklist :
 
 ## 10. Fichiers cartographie liés
 
-- `cartographie-fonctionnelle-front/evolution/420-evolution-pipeline-multi-occurrences.md` : section 4.1 (création de `pipeline_stage_evaluation_criterion`) à corriger/relire — cible désormais remplacée par la présente note.
+- `cartographie-fonctionnelle-front/evolution/420-evolution-pipeline-multi-occurrences.md` : section 4.1 et références à `pipeline_stage_evaluation_criterion` corrigées — design remplacé par la présente note, table supprimée (V1_080).
 - `cartographie-fonctionnelle-front/evolution/440-evolution-pipeline-personnalisation.md` : **dépendance** — le CRUD de la bibliothèque de grilles (entités, repos, business, endpoints, UI, éditeur « picker grille → version ») est porté par la note 440, qui consomme les services de versionnage (Règles B/C/D) fournis par la présente note.
 - `cartographie-fonctionnelle-front/bd_documentee/quizapp_db_documentation_20260810.md`
 - `cartographie-fonctionnelle-front/bd_documentee/exemples/data.js`, `exemples/app.js`, `exemples/index.html`, `exemples/style.css`
-- `quizapp/src/main/resources/db/migration/` : scripts Flyway `V1_078__…`, `V1_079__…`, `V1_080__…` (à créer à l'implémentation).
+- `quizapp/src/main/resources/db/migration/` : scripts Flyway `V1_078__add_grid_lock_usage_schema.sql`, `V1_079__backfill_grid_usage_phase_b.sql`, `V1_080__drop_stage_evaluation_criterion.sql` (créés et appliqués).
