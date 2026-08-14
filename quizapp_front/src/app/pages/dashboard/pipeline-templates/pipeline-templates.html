@@ -70,9 +70,9 @@
                 </span>
               }
               @if (template.isLocked) {
-                <span class="badge badge-locked" title="Verrouillé — des candidats utilisent ce pipeline; l’éditeur s’ouvre désormais en lecture seule">
+                <span class="badge badge-locked" title="Utilisé — des candidats sont déjà passés par ce pipeline; les étapes atteintes sont verrouillées, le reste reste modifiable">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-                  Verrouillé
+                  Utilisé
                 </span>
               }
               @if (!template.isActive) {
@@ -100,7 +100,7 @@
             </div>
           </div>
 
-          <div class="card-body" (click)="editTemplate(template)" [title]="template.isLocked ? 'Ouvrir le détail en lecture seule' : 'Modifier ce modèle'">
+          <div class="card-body" (click)="editTemplate(template)" [title]="'Modifier ce modèle'">
             <h3 class="template-name">{{ template.templateName || 'Sans nom' }}</h3>
             <p class="template-desc">{{ template.templateDesc || 'Aucune description' }}</p>
 
@@ -135,21 +135,10 @@
               @if (!template.isDefault) {
                 <button class="btn btn-sm btn-outline" (click)="openSetDefaultConfirm($event, template)" [disabled]="!canSetDefault(template)" [title]="getSetDefaultBlockedReason(template) || ''">Définir par défaut</button>
               }
-              @if (!template.isLocked) {
-                <button class="btn btn-sm btn-primary" (click)="editTemplate(template)">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                  Modifier
-                </button>
-              } @else {
-                <button class="btn btn-sm btn-outline" (click)="editTemplate(template)" title="Ouvrir le détail en lecture seule">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
-                  Voir le détail
-                </button>
-                <button class="btn btn-sm btn-outline" (click)="openDuplicateModal($event, template)" title="Dupliquez ce modèle pour le modifier">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-                  Dupliquer pour modifier
-                </button>
-              }
+              <button class="btn btn-sm btn-primary" (click)="editTemplate(template)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                Modifier
+              </button>
             </div>
           </div>
         </article>

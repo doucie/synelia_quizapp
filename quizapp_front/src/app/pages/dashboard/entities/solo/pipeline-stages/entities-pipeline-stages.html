@@ -159,6 +159,7 @@
             <th class="col-short" [class.col-hidden]="!isColumnVisible('stageLabel')">Libellé</th>
             <th class="col-short" [class.col-hidden]="!isColumnVisible('stageType')">Type</th>
             <th class="col-short" [class.col-hidden]="!isColumnVisible('stageOrder')">Ordre</th>
+            <th class="col-boolean" [class.col-hidden]="!isColumnVisible('isActive')">Active</th>
             <th class="col-boolean" [class.col-hidden]="!isColumnVisible('isRequired')">Obligatoire</th>
             <th class="col-boolean" [class.col-hidden]="!isColumnVisible('isEliminatory')">Éliminatoire</th>
             <th class="col-short" [class.col-hidden]="!isColumnVisible('pipelineTemplateId')">Template</th>
@@ -173,6 +174,7 @@
             <td [class.col-hidden]="!isColumnVisible('stageLabel')">{{ item.stageLabel || '-' }}</td>
             <td [class.col-hidden]="!isColumnVisible('stageType')">{{ getStageTypeLabel(item.stageType) }}</td>
             <td [class.col-hidden]="!isColumnVisible('stageOrder')">{{ item.stageOrder ?? '-' }}</td>
+            <td [class.col-hidden]="!isColumnVisible('isActive')"><span class="bool-badge" [class.is-true]="item.isActive" [class.is-false]="!item.isActive">{{ item.isActive ? 'Oui' : 'Non' }}</span></td>
             <td [class.col-hidden]="!isColumnVisible('isRequired')"><span class="bool-badge" [class.is-true]="item.isRequired" [class.is-false]="!item.isRequired">{{ item.isRequired ? 'Oui' : 'Non' }}</span></td>
             <td [class.col-hidden]="!isColumnVisible('isEliminatory')"><span class="bool-badge" [class.is-true]="item.isEliminatory" [class.is-false]="!item.isEliminatory">{{ item.isEliminatory ? 'Oui' : 'Non' }}</span></td>
             <td [class.col-hidden]="!isColumnVisible('pipelineTemplateId')">{{ getTemplateName(item.pipelineTemplateId) }}</td>
@@ -264,27 +266,27 @@
     </div>
     <div class="modal-content">
       <form class="edit-form">
-        <div class="form-group"><label class="form-label">Libellé</label><input type="text" class="form-input" [(ngModel)]="editFormData.stageLabel" name="stageLabel" [disabled]="isEditTargetLocked()" /></div>
+        <div class="form-group"><label class="form-label">Libellé</label><input type="text" class="form-input" [(ngModel)]="editFormData.stageLabel" name="stageLabel" [disabled]="isEditStageLocked()" /></div>
         <div class="form-group">
           <label class="form-label">Type</label>
-          <select class="form-input" [(ngModel)]="editFormData.stageType" name="stageType" [disabled]="isEditTargetLocked()">
+          <select class="form-input" [(ngModel)]="editFormData.stageType" name="stageType" [disabled]="isEditStageLocked()">
             <option [ngValue]="undefined">-- Sélectionner --</option>
             @for (type of getEditableStageTypes(editFormData.stageType, editTemplateStages(), editFormData.id); track type) {
               <option [ngValue]="type">{{ getStageTypeLabel(type) }}</option>
             }
           </select>
         </div>
-        <div class="form-group"><label class="form-label">Ordre</label><input type="number" class="form-input" [(ngModel)]="editFormData.stageOrder" name="stageOrder" [disabled]="isEditTargetLocked()" /></div>
+        <div class="form-group"><label class="form-label">Ordre</label><input type="number" class="form-input" [(ngModel)]="editFormData.stageOrder" name="stageOrder" [disabled]="isEditStageLocked()" /></div>
         <div class="form-group">
           <label class="form-label">Template</label>
-          <select class="form-input" [(ngModel)]="editFormData.pipelineTemplateId" name="pipelineTemplateId" [disabled]="isEditTargetLocked()" (ngModelChange)="onEditTemplateChange($event)">
+          <select class="form-input" [(ngModel)]="editFormData.pipelineTemplateId" name="pipelineTemplateId" [disabled]="isEditStageLocked()" (ngModelChange)="onEditTemplateChange($event)">
             <option [ngValue]="undefined">-- Sélectionner --</option>
             @for (tpl of allTemplates(); track tpl.id) {
               <option [ngValue]="tpl.id">{{ tpl.templateName }}</option>
             }
           </select>
-          @if (isEditTargetLocked()) {
-            <small class="form-helper">Template verrouillé: cette étape reste consultable ici, mais sa correction passe par une duplication du pipeline.</small>
+          @if (editFormData.isLocked) {
+            <small class="form-helper">Étape déjà atteinte par des candidatures: l’enregistrement créera une nouvelle révision active.</small>
           }
         </div>
         <div class="form-group">
@@ -293,20 +295,20 @@
             class="form-input"
             rows="5"
             [(ngModel)]="editFormData.configJson"
-            name="configJson"
-            [disabled]="isEditTargetLocked()"
+            name="configJsonEdit"
+            [disabled]="isEditStageLocked()"
             [placeholder]="getConfigPlaceholder(editFormData.stageType)"></textarea>
           <small class="form-helper">{{ getConfigHelp(editFormData.stageType) }}</small>
         </div>
-        <div class="form-group"><app-filter-checkbox class="form-label" inputId="entities-pipeline-stages-edit-required" label="Obligatoire" variant="inline" [(ngModel)]="editFormData.isRequired" [disabled]="isEditTargetLocked()" name="editPipelineStageIsRequired" ariaLabel="Étape obligatoire"></app-filter-checkbox></div>
-        <div class="form-group"><app-filter-checkbox class="form-label" inputId="entities-pipeline-stages-edit-eliminatory" label="Éliminatoire" variant="inline" [(ngModel)]="editFormData.isEliminatory" [disabled]="isEditTargetLocked()" name="editPipelineStageIsEliminatory" ariaLabel="Étape éliminatoire"></app-filter-checkbox></div>
+        <div class="form-group"><app-filter-checkbox class="form-label" inputId="entities-pipeline-stages-edit-required" label="Obligatoire" variant="inline" [(ngModel)]="editFormData.isRequired" [disabled]="isEditStageLocked()" name="editPipelineStageIsRequired" ariaLabel="Étape obligatoire"></app-filter-checkbox></div>
+        <div class="form-group"><app-filter-checkbox class="form-label" inputId="entities-pipeline-stages-edit-eliminatory" label="Éliminatoire" variant="inline" [(ngModel)]="editFormData.isEliminatory" [disabled]="isEditStageLocked()" name="editPipelineStageIsEliminatory" ariaLabel="Étape éliminatoire"></app-filter-checkbox></div>
       </form>
     </div>
     <div class="modal-actions">
-      <button class="btn-danger" (click)="deleteFromEdit()" [disabled]="isEditTargetLocked()">Supprimer</button>
+      <button class="btn-danger" (click)="deleteFromEdit()">Supprimer</button>
       <div class="action-buttons-right">
         <button class="btn-cancel" (click)="closeEditDialog()">Annuler</button>
-        <button class="btn-confirm-success" (click)="validateEdit()" [disabled]="isEditTargetLocked()">Valider</button>
+        <button class="btn-confirm-success" (click)="validateEdit()">Valider</button>
       </div>
     </div>
   </div>
@@ -321,17 +323,17 @@
     </div>
     <div class="modal-content">
       <form class="edit-form">
-        <div class="form-group"><label class="form-label">Libellé</label><input type="text" class="form-input" [(ngModel)]="createFormData.stageLabel" name="stageLabel" [disabled]="isCreateTargetLocked()" /></div>
+        <div class="form-group"><label class="form-label">Libellé</label><input type="text" class="form-input" [(ngModel)]="createFormData.stageLabel" name="stageLabel" /></div>
         <div class="form-group">
           <label class="form-label">Type</label>
-          <select class="form-input" [(ngModel)]="createFormData.stageType" name="stageType" [disabled]="isCreateTargetLocked()">
+          <select class="form-input" [(ngModel)]="createFormData.stageType" name="stageType">
             <option [ngValue]="undefined">-- Sélectionner --</option>
             @for (type of getEditableStageTypes(createFormData.stageType, createTemplateStages()); track type) {
               <option [ngValue]="type">{{ getStageTypeLabel(type) }}</option>
             }
           </select>
         </div>
-        <div class="form-group"><label class="form-label">Ordre</label><input type="number" class="form-input" [(ngModel)]="createFormData.stageOrder" name="stageOrder" [disabled]="isCreateTargetLocked()" /></div>
+        <div class="form-group"><label class="form-label">Ordre</label><input type="number" class="form-input" [(ngModel)]="createFormData.stageOrder" name="stageOrder" /></div>
         <div class="form-group">
           <label class="form-label">Template</label>
           <select class="form-input" [(ngModel)]="createFormData.pipelineTemplateId" name="pipelineTemplateId" (ngModelChange)="onCreateTemplateChange($event)">
@@ -341,7 +343,7 @@
             }
           </select>
           @if (isCreateTargetLocked()) {
-            <small class="form-helper">Template verrouillé: créez d'abord une duplication du pipeline avant d'ajouter une nouvelle étape.</small>
+            <small class="form-helper">Template déjà utilisé: la nouvelle étape sera créée comme nouvelle révision active au rang indiqué.</small>
           }
         </div>
         <div class="form-group">
@@ -351,18 +353,17 @@
             rows="5"
             [(ngModel)]="createFormData.configJson"
             name="configJsonCreate"
-            [disabled]="isCreateTargetLocked()"
             [placeholder]="getConfigPlaceholder(createFormData.stageType)"></textarea>
           <small class="form-helper">{{ getConfigHelp(createFormData.stageType) }}</small>
         </div>
-        <div class="form-group"><app-filter-checkbox class="form-label" inputId="entities-pipeline-stages-create-required" label="Obligatoire" variant="inline" [(ngModel)]="createFormData.isRequired" [disabled]="isCreateTargetLocked()" name="createPipelineStageIsRequired" ariaLabel="Nouvelle étape obligatoire"></app-filter-checkbox></div>
-        <div class="form-group"><app-filter-checkbox class="form-label" inputId="entities-pipeline-stages-create-eliminatory" label="Éliminatoire" variant="inline" [(ngModel)]="createFormData.isEliminatory" [disabled]="isCreateTargetLocked()" name="createPipelineStageIsEliminatory" ariaLabel="Nouvelle étape éliminatoire"></app-filter-checkbox></div>
+        <div class="form-group"><app-filter-checkbox class="form-label" inputId="entities-pipeline-stages-create-required" label="Obligatoire" variant="inline" [(ngModel)]="createFormData.isRequired" name="createPipelineStageIsRequired" ariaLabel="Nouvelle étape obligatoire"></app-filter-checkbox></div>
+        <div class="form-group"><app-filter-checkbox class="form-label" inputId="entities-pipeline-stages-create-eliminatory" label="Éliminatoire" variant="inline" [(ngModel)]="createFormData.isEliminatory" name="createPipelineStageIsEliminatory" ariaLabel="Nouvelle étape éliminatoire"></app-filter-checkbox></div>
       </form>
     </div>
     <div class="modal-actions">
       <div class="action-buttons-right">
         <button class="btn-cancel" (click)="closeCreateDialog()">Annuler</button>
-        <button class="btn-confirm-success" (click)="validateCreate()" [disabled]="isCreateTargetLocked()">Créer</button>
+        <button class="btn-confirm-success" (click)="validateCreate()">Créer</button>
       </div>
     </div>
   </div>

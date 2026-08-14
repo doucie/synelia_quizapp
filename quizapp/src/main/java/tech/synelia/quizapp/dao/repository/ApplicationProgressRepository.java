@@ -30,6 +30,9 @@ public interface ApplicationProgressRepository extends JpaRepository<Application
     @Query("select e from ApplicationProgress e where e.applications.id = :applicationId and e.pipelineStage.id = :stageId and e.isDeleted = false")
     ApplicationProgress findByApplicationIdAndPipelineStageId(@Param("applicationId") Integer applicationId, @Param("stageId") Integer stageId);
 
+    @Query("select distinct e.pipelineStage.id from ApplicationProgress e where e.pipelineStage.id in :stageIds and e.isDeleted = false and e.progressStatus <> 'PENDING'")
+    List<Integer> findUsedStageIds(@Param("stageIds") java.util.Collection<Integer> stageIds);
+
     @Query("select e from ApplicationProgress e where e.pipelineStage.id = :stageId and e.progressStatus = :status and e.isDeleted = false")
     List<ApplicationProgress> findByPipelineStageIdAndProgressStatus(@Param("stageId") Integer stageId, @Param("status") String status);
 

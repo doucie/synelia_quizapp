@@ -128,6 +128,24 @@ public class PipelineStageController {
         return ResponseEntity.ok().body(response);
     }
 
+    @RequestMapping(value="/saveTemplateStages", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
+    public ResponseEntity<Response<PipelineStageDto>> saveTemplateStages(@RequestBody Request<PipelineStageDto> request) throws Exception {
+        log.info("start method /pipelineStage/saveTemplateStages");
+        Response<PipelineStageDto> response = new Response<>();
+        try {
+            PipelineStageDto dto = request.getData();
+            if (dto == null || dto.getPipelineTemplateId() == null) {
+                response.setHasError(true);
+                return ResponseEntity.ok().body(response);
+            }
+            List<PipelineStageDto> stages = request.getDatas() != null ? request.getDatas() : new java.util.ArrayList<>();
+            response = pipelineStageBusiness.saveTemplateStages(dto.getPipelineTemplateId(), stages, request.getUser(), locale(requestBasic));
+        } catch (Exception e) {
+            exceptionUtils.EXCEPTION(response, locale(requestBasic), e);
+        }
+        return ResponseEntity.ok().body(response);
+    }
+
     private Locale locale(HttpServletRequest request) {
         return request.getLocale();
     }

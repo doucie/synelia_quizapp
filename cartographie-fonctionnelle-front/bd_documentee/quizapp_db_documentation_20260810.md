@@ -64,6 +64,8 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 | stage_type | varchar(50) | NO |  | \N | Type métier de l'étape (CANDIDATURE, QUIZ, PRESELECTION, INTERVIEW, DECISION). |
 | stage_label | varchar(255) | NO |  | \N | Libellé affiché de l'étape. |
 | stage_order | int | NO |  | \N | Position de l'étape dans le pipeline. |
+| is_active | bit(1) | NO |  | b'1' | Révision active (`1`) ou historique inactive (`0`). Au plus une révision active par slot. |
+| active_slot | int | YES | MUL | \N | Colonne générée `IF(is_active, stage_order, NULL)` ; supporte `UNIQUE(pipeline_template_id, active_slot)`. |
 | is_required | bit(1) | NO |  | b'1' | Indique si l'étape est obligatoire (ne peut pas être passée). |
 | is_eliminatory | bit(1) | NO |  | b'0' | Indique si échouer cette étape élimine définitivement le candidat. |
 | config_json | text | YES |  | \N | Configuration de l'étape (screening quiz, règles, etc.). |
@@ -77,6 +79,8 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 
 **Notes :**
 - `stage_type` est une énumération (valeurs en annexe) ; `EVALUATION` n'est plus un type d'étape, il a été fusionné dans `DECISION`.
+- `is_active` + `active_slot` (colonne générée) + `UNIQUE(pipeline_template_id, active_slot)` portent le versionnage fin des étapes (440 Lot B) : un slot a au plus une révision active, les révisions inactives restent en historique sans unicité.
+- Le verrou d'étape n'est pas stocké : une étape est considérée utilisée (`locked`) s'il existe un `application_progress` qui la référence avec un statut différent de `PENDING` (dérivé via `ApplicationProgressRepository.findUsedStageIds`).
 
 ## Table 3 — `pipeline_stage_notification_rule`
 

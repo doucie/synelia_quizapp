@@ -290,7 +290,7 @@ export class PipelineTemplatesComponent implements OnInit, OnDestroy {
     const issues = this.getTemplateReadinessIssues(template);
 
     if (template.isLocked && issues.length > 0) {
-      return { label: 'Legacy à nettoyer', kind: 'warning' };
+      return { label: 'Écarts à corriger', kind: 'warning' };
     }
 
     if (template.isActive && issues.length > 0) {
@@ -337,7 +337,7 @@ export class PipelineTemplatesComponent implements OnInit, OnDestroy {
     const issues = this.getTemplateReadinessIssues(template);
     if (issues.length > 0) {
       if (template.isLocked) {
-        return `${issues.length} écart(s) legacy détecté(s): consultez le détail en lecture seule puis dupliquez ce template pour corriger ces points.`;
+        return `${issues.length} écart(s) détecté(s): corrigeables directement, les étapes déjà atteintes seront verrouillées.`;
       }
 
       return template.isActive
@@ -350,7 +350,7 @@ export class PipelineTemplatesComponent implements OnInit, OnDestroy {
     }
 
     if (template.isLocked) {
-      return 'Template verrouillé: consultez-le en lecture seule ou dupliquez-le pour préparer une nouvelle variante.';
+      return 'Template utilisé: les étapes déjà atteintes sont verrouillées, les autres restent modifiables directement.';
     }
 
     return null;

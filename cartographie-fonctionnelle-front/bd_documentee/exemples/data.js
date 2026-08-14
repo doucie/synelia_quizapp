@@ -26,14 +26,15 @@ window.BD_EXEMPLES = {
           num: 2,
           nom: "pipeline_stage",
           description: "Une étape du processus (candidature, quiz, présélection, entretien, décision) dans un gabarit de pipeline.",
-          notes: ["stage_type est une énumération : CANDIDATURE, QUIZ, PRESELECTION, INTERVIEW, DECISION (EVALUATION a été fusionné dans DECISION).", "L'étape 4 (Entretien) est rattachée à la grille « Grille entretien RH » (evaluation_grid_template_version_id = 1) ; les autres étapes n'ont pas de grille."],
-          colonnes: ["id", "pipeline_template_id", "stage_type", "stage_label", "stage_order", "is_required", "is_eliminatory", "config_json", "evaluation_grid_template_version_id", "created_at", "created_by", "updated_at", "updated_by", "is_deleted", "search_string"],
+          notes: ["stage_type est une énumération : CANDIDATURE, QUIZ, PRESELECTION, INTERVIEW, DECISION (EVALUATION a été fusionné dans DECISION).", "L'étape 4 (Entretien) est rattachée à la grille « Grille entretien RH » (evaluation_grid_template_version_id = 1) ; les autres étapes n'ont pas de grille.", "is_active / active_slot portent le versionnage fin des étapes (440 Lot B) : au plus une révision active par slot ; l'étape 3 (Présélection) montre une révision inactive (is_active=0) + une nouvelle révision active au même slot."],
+          colonnes: ["id", "pipeline_template_id", "stage_type", "stage_label", "stage_order", "is_active", "active_slot", "is_required", "is_eliminatory", "config_json", "evaluation_grid_template_version_id", "created_at", "created_by", "updated_at", "updated_by", "is_deleted", "search_string"],
           lignes: [
-            [1, 1, "CANDIDATURE", "Candidature", 1, 1, 0, null, null, "2026-07-01 09:00", 1, null, null, 0, "candidature"],
-            [2, 1, "QUIZ", "Quiz technique", 2, 1, 1, "{\"duration\":20}", null, "2026-07-01 09:00", 1, null, null, 0, "quiz technique"],
-            [3, 1, "PRESELECTION", "Présélection", 3, 1, 0, null, null, "2026-07-01 09:00", 1, null, null, 0, "présélection"],
-            [4, 1, "INTERVIEW", "Entretien", 4, 1, 0, null, 1, "2026-07-01 09:00", 1, null, null, 0, "entretien"],
-            [5, 1, "DECISION", "Décision", 5, 1, 0, null, null, "2026-07-01 09:00", 1, null, null, 0, "décision"]
+            [1, 1, "CANDIDATURE", "Candidature", 1, 1, 1, 1, 0, null, null, "2026-07-01 09:00", 1, null, null, 0, "candidature"],
+            [2, 1, "QUIZ", "Quiz technique", 2, 1, 2, 1, 1, "{\"duration\":20}", null, "2026-07-01 09:00", 1, null, null, 0, "quiz technique"],
+            [3, 1, "PRESELECTION", "Présélection (révision 1)", 3, 0, null, 1, 0, null, null, "2026-07-01 09:00", 1, null, null, 0, "présélection"],
+            [31, 1, "PRESELECTION", "Présélection révisée", 3, 1, 3, 1, 0, null, null, "2026-07-10 14:00", 2, null, null, 0, "présélection révisée"],
+            [4, 1, "INTERVIEW", "Entretien", 4, 1, 4, 1, 0, null, 1, "2026-07-01 09:00", 1, null, null, 0, "entretien"],
+            [5, 1, "DECISION", "Décision", 5, 1, 5, 1, 0, null, null, "2026-07-01 09:00", 1, null, null, 0, "décision"]
           ]
         },
         {

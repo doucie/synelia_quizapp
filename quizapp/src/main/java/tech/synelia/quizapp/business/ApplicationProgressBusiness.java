@@ -312,7 +312,7 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
             return;
         }
 
-        List<PipelineStage> stages = pipelineStageRepository.findByPipelineTemplateIdOrderByStageOrder(pipelineTemplateId);
+        List<PipelineStage> stages = pipelineStageRepository.findActiveByTemplateIdOrderByStageOrder(pipelineTemplateId);
         if (stages == null || stages.isEmpty()) {
             log.warning("Aucune étape trouvée pour le template: " + pipelineTemplateId);
             return;
@@ -827,7 +827,7 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
         }
 
         // Récupérer les stages du nouveau template
-        List<PipelineStage> newStages = pipelineStageRepository.findByPipelineTemplateIdOrderByStageOrder(newTemplateId);
+        List<PipelineStage> newStages = pipelineStageRepository.findActiveByTemplateIdOrderByStageOrder(newTemplateId);
 
         // Supprimer les anciens progrès (soft delete)
         for (ApplicationProgress ap : currentProgress) {

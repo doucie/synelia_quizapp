@@ -14,7 +14,7 @@
       </div>
       <div class="header-actions">
         <button class="btn btn-secondary" (click)="goBack()">Annuler</button>
-        <button class="btn btn-primary" (click)="save()" [disabled]="saving() || !templateName().trim() || isLockedTemplate()" [title]="isLockedTemplate() ? 'Ce template est verrouillé: préparez une correction via duplication.' : 'Enregistrer les modifications du pipeline'">
+        <button class="btn btn-primary" (click)="save()" [disabled]="saving() || !templateName().trim()">
           @if (saving()) {
             <span class="btn-spinner"></span>
           }
@@ -38,12 +38,12 @@
         <h2 class="section-title">Informations générales</h2>
         <div class="form-group">
           <label class="form-label">Nom du modèle <span class="required">*</span></label>
-          <input type="text" class="form-input" [ngModel]="templateName()" (ngModelChange)="templateName.set($event)" [disabled]="isLockedTemplate()"
+          <input type="text" class="form-input" [ngModel]="templateName()" (ngModelChange)="templateName.set($event)"
                  placeholder="Ex: Flux technique senior" />
         </div>
         <div class="form-group">
           <label class="form-label">Description</label>
-          <textarea class="form-input" rows="3" [ngModel]="templateDesc()" (ngModelChange)="templateDesc.set($event)" [disabled]="isLockedTemplate()"
+          <textarea class="form-input" rows="3" [ngModel]="templateDesc()" (ngModelChange)="templateDesc.set($event)"
                     placeholder="Description du pipeline..."></textarea>
         </div>
 
@@ -53,7 +53,7 @@
           </div>
           <p class="pipeline-state-description">{{ templateState().description }}</p>
           @if (isLockedTemplate() && readinessIssues().length > 0) {
-            <p class="field-help field-help-warning">Ces écarts restent visibles pour diagnostic, mais la correction doit passer par une duplication du template verrouillé.</p>
+            <p class="field-help field-help-warning">Ces écarts restent corrigibles directement: les étapes déjà atteintes seront verrouillées, les autres restent modifiables.</p>
           }
           @if (readinessIssues().length > 0) {
             <ul class="pipeline-readiness-list">
@@ -70,11 +70,10 @@
             label="Activer ce pipeline"
             variant="switch"
             [ngModel]="templateActive()"
-            [disabled]="!!template()?.isLocked"
             ariaLabel="Activer ce pipeline"
             (ngModelChange)="templateActive.set($event)">
           </app-filter-checkbox>
-          <p class="field-help">{{ isLockedTemplate() ? 'Ce template est désormais en lecture seule. Toute correction doit passer par duplication.' : 'Un pipeline inactif reste en brouillon. L’activation n’est autorisée que si la structure minimale est complète.' }}</p>
+          <p class="field-help">{{ isLockedTemplate() ? 'Ce pipeline est utilisé par des candidatures: vous pouvez encore le corriger, les étapes déjà atteintes seront verrouillées.' : 'Un pipeline inactif reste en brouillon. L’activation n’est autorisée que si la structure minimale est complète.' }}</p>
         </div>
       </section>
 
@@ -104,7 +103,7 @@
       <section class="stages-section">
         <div class="stages-header">
           <h2 class="section-title">Étapes du pipeline</h2>
-          <button class="btn btn-primary btn-sm" (click)="addStage()" [disabled]="isLockedTemplate()" [title]="isLockedTemplate() ? 'Ce template est verrouillé: utilisez une duplication pour le corriger.' : 'Ajouter une étape intermédiaire'">
+          <button class="btn btn-primary btn-sm" (click)="addStage()" title="Ajouter une étape intermédiaire">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 4v16m8-8H4"/></svg>
             Ajouter une étape intermédiaire
           </button>
@@ -122,7 +121,7 @@
           @for (stage of stages(); track stage.uid; let i = $index) {
             <div class="stage-card"
                  [class.is-fixed]="isFixedStage(stage)"
-                [class.is-readonly]="isLockedTemplate()"
+                 [class.is-readonly]="isStageLocked(stage)"
                  [class.dragging]="dragIndex() === i"
                  [class.drag-over]="dragOverIndex() === i"
                  [attr.draggable]="isStageReorderable(stage) ? 'true' : 'false'"
@@ -132,7 +131,7 @@
                  (drop)="onDrop($event, i)"
                  (dragend)="onDragEnd()">
 
-              <div class="stage-drag-handle" [class.is-disabled]="!isStageReorderable(stage)" [title]="isLockedTemplate() ? 'Template verrouillé' : (isStageReorderable(stage) ? 'Glisser pour réordonner' : 'Étape fixe')">
+              <div class="stage-drag-handle" [class.is-disabled]="!isStageReorderable(stage)" [title]="isStageReorderable(stage) ? 'Glisser pour réordonner' : 'Étape fixe'">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
                   <circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/>
                   <circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/>
@@ -158,13 +157,13 @@
                 } @else {
                   <div class="stage-field stage-field-label">
                     <label class="field-label">Libellé</label>
-                    <input type="text" class="form-input form-input-sm" [ngModel]="stage.stageLabel" [disabled]="isLockedTemplate()"
+                    <input type="text" class="form-input form-input-sm" [ngModel]="stage.stageLabel" [disabled]="isStageLocked(stage)"
                            (ngModelChange)="updateStageField(i, 'stageLabel', $event)" placeholder="Nom de l'étape" />
                   </div>
 
                   <div class="stage-field stage-field-type">
                     <label class="field-label">Type</label>
-                    <app-filter-select class="form-input form-input-sm" [ngModel]="stage.stageType" [disabled]="isLockedTemplate()"
+                    <app-filter-select class="form-input form-input-sm" [ngModel]="stage.stageType" [disabled]="isStageLocked(stage)"
                             ariaLabel="Sélectionner le type de l'étape"
                             (ngModelChange)="updateStageField(i, 'stageType', $event)">
                       @for (type of getEditableStageTypeOptions(stage); track type.value) {
@@ -174,28 +173,35 @@
                   </div>
 
                   <div class="stage-toggles">
-                    <app-filter-checkbox class="toggle-label" [inputId]="'pipeline-stage-required-' + i" label="Obligatoire" variant="switch" [ngModel]="stage.isRequired" [disabled]="isLockedTemplate()" ariaLabel="Étape obligatoire" (ngModelChange)="updateStageField(i, 'isRequired', $event)"></app-filter-checkbox>
+                    <app-filter-checkbox class="toggle-label" [inputId]="'pipeline-stage-required-' + i" label="Obligatoire" variant="switch" [ngModel]="stage.isRequired" [disabled]="isStageLocked(stage)" ariaLabel="Étape obligatoire" (ngModelChange)="updateStageField(i, 'isRequired', $event)"></app-filter-checkbox>
 
                     @if (shouldShowStageAllowSkipToggle(stage)) {
-                      <app-filter-checkbox class="toggle-label" [inputId]="'pipeline-stage-allow-skip-' + i" label="Autoriser le saut" variant="switch" [ngModel]="stage.allowSkip" [disabled]="isLockedTemplate()" ariaLabel="Autoriser le saut d'une étape obligatoire" (ngModelChange)="updateStageAllowSkip(i, $event)"></app-filter-checkbox>
+                      <app-filter-checkbox class="toggle-label" [inputId]="'pipeline-stage-allow-skip-' + i" label="Autoriser le saut" variant="switch" [ngModel]="stage.allowSkip" [disabled]="isStageLocked(stage)" ariaLabel="Autoriser le saut d'une étape obligatoire" (ngModelChange)="updateStageAllowSkip(i, $event)"></app-filter-checkbox>
                     }
 
                     <app-filter-checkbox class="toggle-label" [inputId]="'pipeline-stage-eliminatory-' + i" label="Éliminatoire" variant="switch" [ngModel]="stage.isEliminatory" [disabled]="!isStageEliminatoryEditable(stage)" ariaLabel="Étape éliminatoire" (ngModelChange)="updateStageField(i, 'isEliminatory', $event)"></app-filter-checkbox>
                   </div>
 
-                  @if (getStageSkipHint(stage)) {
+                  @if (getStageLockHint(stage)) {
+                    <p class="stage-policy-hint stage-policy-hint--accent">{{ getStageLockHint(stage) }}</p>
+                  } @else if (getStageSkipHint(stage)) {
                     <p class="stage-policy-hint stage-policy-hint--accent">{{ getStageSkipHint(stage) }}</p>
                   }
                 }
               </div>
 
-              @if (!isFixedStage(stage)) {
-                <button class="btn-icon-action btn-icon-danger" (click)="openDeleteStageConfirm(i)" [disabled]="isLockedTemplate()" [title]="isLockedTemplate() ? 'Template verrouillé: utilisez une duplication pour retirer cette étape.' : 'Supprimer cette étape'">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/></svg>
-                </button>
-              } @else {
-                <span class="stage-fixed-badge">Fixe</span>
-              }
+              <div class="stage-side-actions">
+                @if (isStageLocked(stage)) {
+                  <span class="stage-locked-badge" title="Étape déjà atteinte par des candidatures">Utilisée</span>
+                }
+                @if (!isFixedStage(stage)) {
+                  <button class="btn-icon-action btn-icon-danger" (click)="openDeleteStageConfirm(i)" [title]="isStageLocked(stage) ? 'Retirer cette étape (archivée si déjà utilisée)' : 'Supprimer cette étape'">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/></svg>
+                  </button>
+                } @else {
+                  <span class="stage-fixed-badge">Fixe</span>
+                }
+              </div>
             </div>
           }
         </div>
@@ -209,8 +215,8 @@
   <div class="modal" (click)="$event.stopPropagation()">
     <div class="modal-header"><h3>Supprimer cette étape</h3></div>
     <div class="modal-body">
-      <p>Voulez-vous supprimer cette étape du pipeline ?</p>
-      <p class="modal-hint modal-hint-danger">Les étapes restantes seront renumérotées automatiquement.</p>
+      <p>Voulez-vous retirer cette étape du pipeline ?</p>
+      <p class="modal-hint modal-hint-danger">Les étapes restantes seront renumérotées automatiquement. Une étape déjà utilisée par des candidatures sera archivée, pas supprimée.</p>
     </div>
     <div class="modal-actions">
       <button class="btn btn-secondary" (click)="closeDeleteStageConfirm()">Annuler</button>

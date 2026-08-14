@@ -86,6 +86,8 @@ export interface PipelineStage {
   pipelineTemplateId?: number;
   pipelineTemplateName?: string;
   orderedStageIds?: number[];
+  isActive?: boolean;
+  isLocked?: boolean;
   createdAt?: string;
   createdBy?: number;
   updatedAt?: string;

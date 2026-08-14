@@ -27,6 +27,7 @@ public interface PipelineStageTransformer {
         @Mapping(source = "entity.updatedAt", dateFormat = "dd/MM/yyyy", target = "updatedAt"),
         @Mapping(source = "entity.pipelineTemplate.id", target = "pipelineTemplateId"),
         @Mapping(source = "entity.pipelineTemplate.templateName", target = "pipelineTemplateName"),
+        @Mapping(target = "isLocked", ignore = true),
     })
     PipelineStageDto toDto(PipelineStage entity) throws ParseException;
 
@@ -40,6 +41,7 @@ public interface PipelineStageTransformer {
         dto.setStageOrder(entity.getStageOrder());
         dto.setIsRequired(entity.getIsRequired());
         dto.setIsEliminatory(entity.getIsEliminatory());
+        dto.setIsActive(entity.getIsActive());
         if (entity.getPipelineTemplate() != null) {
             dto.setPipelineTemplateId(entity.getPipelineTemplate().getId());
         }
@@ -74,6 +76,7 @@ public interface PipelineStageTransformer {
         @Mapping(target = "createdAt", ignore = true),
         @Mapping(target = "updatedAt", ignore = true),
         @Mapping(target = "searchString", ignore = true),
+        @Mapping(target = "isActive", ignore = true),
     })
     PipelineStage toEntity(PipelineStageDto dto, PipelineTemplate pipelineTemplate) throws ParseException;
 }

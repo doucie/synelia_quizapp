@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subject, takeUntil, forkJoin, of } from 'rxjs';
+import { Subject, takeUntil, forkJoin } from 'rxjs';
 import { PipelineTemplateService } from '../../../core/services/pipeline-template.service';
 import { PipelineStageService } from '../../../core/services/pipeline-stage.service';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -21,6 +21,7 @@ interface EditableStage {
   isEliminatory: boolean;
   configJson?: string | null;
   isNew?: boolean;
+  isLocked?: boolean;
 }
 
 interface StageFlagPolicy {
@@ -71,10 +72,10 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
 
     if (template?.isLocked) {
       return {
-        label: issues.length > 0 ? 'Verrouillé avec écarts legacy' : 'Verrouillé',
+        label: issues.length > 0 ? 'Utilisé avec écarts à corriger' : 'Utilisé',
         description: issues.length > 0
-          ? 'Ce pipeline est déjà utilisé par des candidatures et contient encore des incohérences structurelles legacy. Corrigez-les via duplication plutôt que sur cette version.'
-          : 'Ce pipeline est déjà utilisé par des candidatures. Préparez une nouvelle version via duplication.',
+          ? 'Ce pipeline est déjà utilisé par des candidatures. Les étapes déjà atteintes sont verrouillées (toute modification crée une nouvelle révision); corrigez directement les écarts ci-dessous.'
+          : 'Ce pipeline est déjà utilisé par des candidatures. Les étapes déjà atteintes sont verrouillées: leur modification crée une nouvelle révision, le retrait les archive.',
         kind: 'locked'
       } as const;
     }
@@ -164,7 +165,8 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
           allowSkip: this.readAllowSkipFromConfig(s.configJson),
           isEliminatory: !!s.isEliminatory,
           configJson: s.configJson ?? null,
-          isNew: false
+          isNew: false,
+          isLocked: !!s.isLocked
         })));
         this.loading.set(false);
       },
@@ -178,11 +180,6 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
   // ── Stage management ──
 
   addStage(): void {
-    if (this.isLockedTemplate()) {
-      this.notificationService.warning('Pipeline verrouillé', 'Ce template est déjà utilisé. Préparez une correction via duplication plutôt qu’en le modifiant directement.');
-      return;
-    }
-
     const current = this.stages();
     const decisionIndex = current.findIndex(stage => stage.stageType === 'DECISION');
     const insertIndex = decisionIndex >= 0 ? decisionIndex : current.length;
@@ -204,11 +201,6 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
   }
 
   openDeleteStageConfirm(index: number): void {
-    if (this.isLockedTemplate()) {
-      this.notificationService.warning('Pipeline verrouillé', 'Ce template est déjà utilisé. Préparez une correction via duplication plutôt qu’en le modifiant directement.');
-      return;
-    }
-
     if (this.isFixedStage(this.stages()[index])) {
       this.notificationService.warning('Étape fixe', 'Les étapes Candidature et Décision ne peuvent pas être supprimées.');
       return;
@@ -224,29 +216,12 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
   }
 
   confirmDeleteStage(): void {
-    if (this.isLockedTemplate()) {
-      this.closeDeleteStageConfirm();
-      return;
-    }
-
     const index = this.stageToDeleteIndex();
     if (index === null) return;
-    const stage = this.stages()[index];
 
-    if (stage.id && !stage.isNew) {
-      this.stageService.delete(stage.id)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe((response) => {
-          if (response.hasError) {
-            this.notificationService.error('Étapes du pipeline', response.status.message || 'Impossible de supprimer cette étape.');
-            return;
-          }
-
-          this.removeStageFromList(index);
-        });
-    } else {
-      this.removeStageFromList(index);
-    }
+    // Le retrait est appliqué localement; le moteur (saveTemplateStages) gère le
+    // soft-delete (étape libre) ou l'archivage (étape déjà atteinte).
+    this.removeStageFromList(index);
     this.showDeleteStageConfirm.set(false);
   }
 
@@ -258,11 +233,12 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
   }
 
   updateStageField(index: number, field: keyof EditableStage, value: any): void {
-    if (this.isLockedTemplate()) {
+    const stage = this.stages()[index];
+    if (this.isStageLocked(stage)) {
       return;
     }
 
-    if (this.isFixedStage(this.stages()[index]) && (field === 'stageLabel' || field === 'stageType')) {
+    if (this.isFixedStage(stage) && (field === 'stageLabel' || field === 'stageType')) {
       return;
     }
 
@@ -276,7 +252,7 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
   }
 
   updateStageAllowSkip(index: number, value: boolean): void {
-    if (this.isLockedTemplate()) {
+    if (this.isStageLocked(this.stages()[index])) {
       return;
     }
 
@@ -293,7 +269,7 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
   }
 
   isStageEliminatoryEditable(stage: EditableStage): boolean {
-    return !this.isLockedTemplate() && !this.isFixedStage(stage) && !this.getStageFlagPolicy(stage.stageType).locksEliminatory;
+    return !this.isStageLocked(stage) && !this.isFixedStage(stage) && !this.getStageFlagPolicy(stage.stageType).locksEliminatory;
   }
 
   shouldShowStageAllowSkipToggle(stage: EditableStage): boolean {
@@ -321,7 +297,7 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
   }
 
   hasAvailableStageTypeForCreation(): boolean {
-    return !this.isLockedTemplate();
+    return true;
   }
 
   private newStageUid(): string {
@@ -420,8 +396,20 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
     return stage.stageType === 'CANDIDATURE' || stage.stageType === 'DECISION';
   }
 
+  isStageLocked(stage: EditableStage): boolean {
+    return !!stage.isLocked;
+  }
+
+  getStageLockHint(stage: EditableStage): string | null {
+    if (!this.isStageLocked(stage)) {
+      return null;
+    }
+
+    return 'Étape déjà atteinte par des candidatures: ses champs sont verrouillés. Toute modification enregistrée créera une nouvelle révision, le retrait l’archivera.';
+  }
+
   isStageReorderable(stage: EditableStage): boolean {
-    return !this.isLockedTemplate() && !this.isFixedStage(stage);
+    return !this.isFixedStage(stage);
   }
 
   // ── Drag & drop ──
@@ -474,11 +462,6 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
   // ── Save ──
 
   save(): void {
-    if (this.isLockedTemplate()) {
-      this.notificationService.warning('Pipeline verrouillé', 'Ce template est déjà utilisé. Préparez une correction via duplication plutôt qu’en le modifiant directement.');
-      return;
-    }
-
     const name = this.templateName().trim();
     const desc = this.templateDesc().trim();
     const currentTemplate = this.template();
@@ -529,47 +512,25 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
   }
 
   private saveStages(onSuccess: () => void): void {
-    const currentStages = this.stages();
-    const existingStages = currentStages.filter(s => s.id && !s.isNew);
-    const newStages = currentStages.filter(s => s.isNew || !s.id);
+    const payloads = this.stages().map(stage => this.toStagePayload(stage));
 
-    const updates = existingStages.map(stage => this.stageService.update(this.toStagePayload(stage)));
-    const creates = newStages.map(stage => this.stageService.create(this.toStagePayload(stage)));
+    this.stageService.saveTemplateStages(this.templateId, payloads)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          if (response.hasError) {
+            this.notificationService.error('Pipeline', response.status.message || 'Impossible d’enregistrer les étapes du pipeline.');
+            this.saving.set(false);
+            return;
+          }
 
-    if (updates.length === 0 && creates.length === 0) {
-      this.reorderAndFinish(onSuccess);
-      return;
-    }
-
-    forkJoin({
-      updates: updates.length > 0 ? forkJoin(updates) : of([]),
-      creates: creates.length > 0 ? forkJoin(creates) : of([])
-    }).pipe(takeUntil(this.destroy$)).subscribe({
-      next: ({ updates: updateResponses, creates: createResponses }) => {
-        const stageError = [...updateResponses, ...createResponses].find(response => response.hasError);
-        if (stageError) {
-          this.notificationService.error('Pipeline', stageError.status.message || 'Impossible d’enregistrer les étapes du pipeline.');
+          onSuccess();
+        },
+        error: () => {
+          this.notificationService.error('Pipeline', 'Impossible d’enregistrer les étapes du pipeline.');
           this.saving.set(false);
-          return;
         }
-
-        if (createResponses.length > 0) {
-          this.attachCreatedStageIds(createResponses);
-        }
-
-        if (this.stages().some(stage => !stage.id)) {
-          this.notificationService.error('Pipeline', 'Impossible de réordonner le pipeline: au moins une étape créée n’a pas retourné d’identifiant.');
-          this.saving.set(false);
-          return;
-        }
-
-        this.reorderAndFinish(onSuccess);
-      },
-      error: () => {
-        this.notificationService.error('Pipeline', 'Impossible d’enregistrer les étapes du pipeline.');
-        this.saving.set(false);
-      }
-    });
+      });
   }
 
   private toStagePayload(stage: EditableStage): PipelineStage {
@@ -585,55 +546,6 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
       configJson: this.buildStageConfigJson(normalizedStage),
       pipelineTemplateId: this.templateId
     };
-  }
-
-  private attachCreatedStageIds(createResponses: { item?: PipelineStage; items?: PipelineStage[] }[]): void {
-    const createdIds = createResponses.map(response => response.item?.id || response.items?.[0]?.id);
-    let createdIndex = 0;
-
-    this.stages.update(list => list.map(stage => {
-      if (stage.id) {
-        return stage;
-      }
-
-      const nextId = createdIds[createdIndex++];
-      return {
-        ...stage,
-        id: nextId,
-        isNew: false
-      };
-    }));
-  }
-
-  private reorderAndFinish(onSuccess: () => void): void {
-    const ids = this.stages().map(stage => stage.id).filter((id): id is number => typeof id === 'number');
-    if (ids.length !== this.stages().length) {
-      this.notificationService.error('Pipeline', 'Impossible de réordonner le pipeline: certaines étapes ne sont pas encore identifiées par le backend.');
-      this.saving.set(false);
-      return;
-    }
-
-    if (ids.length > 0) {
-      this.stageService.reorder(this.templateId, ids)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: (response) => {
-            if (response.hasError) {
-              this.notificationService.error('Pipeline', response.status.message || 'Impossible de réordonner les étapes du pipeline.');
-              this.saving.set(false);
-              return;
-            }
-
-            onSuccess();
-          },
-          error: () => {
-            this.notificationService.error('Pipeline', 'Impossible de réordonner les étapes du pipeline.');
-            this.saving.set(false);
-          }
-        });
-    } else {
-      onSuccess();
-    }
   }
 
   private onSaveComplete(): void {

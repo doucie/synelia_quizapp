@@ -24,13 +24,16 @@ public interface PipelineStageRepository extends JpaRepository<PipelineStage, In
     @Query("select e from PipelineStage e where e.id = :id and e.isDeleted = :isDeleted")
     PipelineStage findOne(@Param("id") Integer id, @Param("isDeleted") Boolean isDeleted);
 
-    @Query("select e from PipelineStage e where e.pipelineTemplate.id = :templateId and e.isDeleted = false order by e.stageOrder")
-    List<PipelineStage> findByPipelineTemplateIdOrderByStageOrder(@Param("templateId") Integer templateId);
+    @Query("select e from PipelineStage e where e.pipelineTemplate.id = :templateId and e.isDeleted = false and e.isActive = true order by e.stageOrder")
+    List<PipelineStage> findActiveByTemplateIdOrderByStageOrder(@Param("templateId") Integer templateId);
 
-    @Query("select count(e) from PipelineStage e where e.pipelineTemplate.id = :templateId and e.isDeleted = false")
-    Long countByPipelineTemplateId(@Param("templateId") Integer templateId);
+    @Query("select e from PipelineStage e where e.pipelineTemplate.id = :templateId and e.isDeleted = false and e.isActive = false order by e.stageOrder")
+    List<PipelineStage> findInactiveRevisions(@Param("templateId") Integer templateId);
 
-    @Query("select count(e) from PipelineStage e where e.pipelineTemplate.id = :templateId and e.stageType = :stageType and e.isDeleted = false")
+    @Query("select count(e) from PipelineStage e where e.pipelineTemplate.id = :templateId and e.isDeleted = false and e.isActive = true")
+    Long countActiveByTemplateId(@Param("templateId") Integer templateId);
+
+    @Query("select count(e) from PipelineStage e where e.pipelineTemplate.id = :templateId and e.stageType = :stageType and e.isDeleted = false and e.isActive = true")
     Long countByTemplateIdAndStageType(@Param("templateId") Integer templateId, @Param("stageType") String stageType);
 
     default List<PipelineStage> getByCriteria(Request<PipelineStageDto> request, EntityManager em, Locale locale) throws DataAccessException, Exception {

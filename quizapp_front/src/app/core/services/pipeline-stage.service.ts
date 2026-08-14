@@ -136,6 +136,25 @@ export class PipelineStageService {
     }).pipe(catchError(this.handleError('réordonnancement des étapes')));
   }
 
+  /**
+   * Enregistrement de la configuration cible du pipeline (versionnage fin).
+   * Le front n'envoie que la liste ordonnée des étapes actives.
+   */
+  saveTemplateStages(templateId: number, stages: PipelineStage[]): Observable<PipelineStageResponse> {
+    return this.http.post<PipelineStageResponse>(`${this.apiUrl}/saveTemplateStages`, {
+      user: this.getCurrentUserId(),
+      data: { pipelineTemplateId: templateId },
+      datas: stages
+    }).pipe(
+      map(response => ({
+        ...response,
+        items: (response.items || []).map(stage => this.transformStage(stage)),
+        item: response.item ? this.transformStage(response.item) : response.item
+      })),
+      catchError(this.handleError('enregistrement des étapes du pipeline'))
+    );
+  }
+
   // ── Utilitaires ────────────────────────────────────
 
   private getCurrentUserId(): number | undefined {
@@ -157,6 +176,8 @@ export class PipelineStageService {
       pipelineTemplateId: stage.pipelineTemplateId ?? stage.pipeline_template_id ?? undefined,
       pipelineTemplateName: stage.pipelineTemplateName || stage.pipeline_template_name || undefined,
       orderedStageIds: stage.orderedStageIds || stage.ordered_stage_ids || undefined,
+      isActive: stage.isActive ?? stage.is_active ?? undefined,
+      isLocked: stage.isLocked ?? stage.is_locked ?? undefined,
       createdAt: stage.createdAt || stage.created_at || undefined,
       createdBy: stage.createdBy || stage.created_by || undefined,
       updatedAt: stage.updatedAt || stage.updated_at || undefined,

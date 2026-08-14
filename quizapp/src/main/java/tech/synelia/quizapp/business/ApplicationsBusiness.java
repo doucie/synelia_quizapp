@@ -347,7 +347,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 					continue;
 				}
 				try {
-					List<PipelineStage> stages = pipelineStageRepository.findByPipelineTemplateIdOrderByStageOrder(campaign.getPipelineTemplate().getId());
+					List<PipelineStage> stages = pipelineStageRepository.findActiveByTemplateIdOrderByStageOrder(campaign.getPipelineTemplate().getId());
 					if (stages != null && stages.size() >= 2) {
 						PipelineStage secondStage = stages.get(1);
 						if ("QUIZ".equals(secondStage.getStageType())) {
@@ -3455,7 +3455,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		// 5. Étapes du pipeline
 		List<Map<String, Object>> stages = new ArrayList<>();
 		if (pipelineTemplateId != null) {
-			List<PipelineStage> pipelineStages = pipelineStageRepository.findByPipelineTemplateIdOrderByStageOrder(pipelineTemplateId);
+			List<PipelineStage> pipelineStages = pipelineStageRepository.findActiveByTemplateIdOrderByStageOrder(pipelineTemplateId);
 			if (pipelineStages != null) {
 				for (PipelineStage stage : pipelineStages) {
 					Map<String, Object> stageData = new HashMap<>();

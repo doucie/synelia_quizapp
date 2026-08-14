@@ -121,11 +121,6 @@ public class PipelineTemplateBusiness implements IBasicBusiness<Request<Pipeline
                 throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("pipeline_template id -> " + dto.getId(), locale));
             }
 
-            // Bloquer si verrouillé
-            if (entityToSave.getIsLocked() != null && entityToSave.getIsLocked()) {
-                throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION("Ce pipeline est verrouillé car utilisé par des candidats", locale));
-            }
-
             if (dto.getIsActive() != null
                     && !dto.getIsActive()
                     && Boolean.TRUE.equals(entityToSave.getIsActive())) {
@@ -330,8 +325,8 @@ public class PipelineTemplateBusiness implements IBasicBusiness<Request<Pipeline
         newTemplate.setIsDeleted(false);
         PipelineTemplate savedTemplate = pipelineTemplateRepository.save(newTemplate);
 
-        // Dupliquer les étapes
-        List<PipelineStage> sourceStages = pipelineStageRepository.findByPipelineTemplateIdOrderByStageOrder(templateId);
+        // Dupliquer les étapes actives (la config visible du template)
+        List<PipelineStage> sourceStages = pipelineStageRepository.findActiveByTemplateIdOrderByStageOrder(templateId);
         if (sourceStages != null) {
             for (PipelineStage stage : sourceStages) {
                 PipelineStage newStage = new PipelineStage();
@@ -342,6 +337,7 @@ public class PipelineTemplateBusiness implements IBasicBusiness<Request<Pipeline
                 newStage.setIsRequired(stage.getIsRequired());
                 newStage.setIsEliminatory(stage.getIsEliminatory());
                 newStage.setConfigJson(stage.getConfigJson());
+                newStage.setIsActive(true);
                 newStage.setCreatedAt(Utilities.getCurrentDate());
                 newStage.setCreatedBy(userId);
                 newStage.setIsDeleted(false);
@@ -403,6 +399,7 @@ public class PipelineTemplateBusiness implements IBasicBusiness<Request<Pipeline
         stage.setStageOrder(stageOrder);
         stage.setIsRequired(true);
         stage.setIsEliminatory(false);
+        stage.setIsActive(true);
         stage.setCreatedAt(Utilities.getCurrentDate());
         stage.setCreatedBy(userId);
         stage.setIsDeleted(false);
@@ -437,7 +434,7 @@ public class PipelineTemplateBusiness implements IBasicBusiness<Request<Pipeline
     }
 
     private List<String> collectTemplateReadinessIssues(Integer templateId) {
-        List<PipelineStage> stages = pipelineStageRepository.findByPipelineTemplateIdOrderByStageOrder(templateId);
+        List<PipelineStage> stages = pipelineStageRepository.findActiveByTemplateIdOrderByStageOrder(templateId);
         List<String> issues = new ArrayList<>();
 
         if (stages == null || stages.isEmpty()) {

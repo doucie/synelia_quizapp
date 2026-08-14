@@ -37,6 +37,7 @@ export class EntitiesPipelineStagesComponent extends EntityCrudBase<PipelineStag
     { key: 'stageLabel', label: 'Libellé', priority: 1 },
     { key: 'stageType', label: 'Type', priority: 2 },
     { key: 'stageOrder', label: 'Ordre', priority: 2 },
+    { key: 'isActive', label: 'Active', priority: 2 },
     { key: 'isRequired', label: 'Obligatoire', priority: 2 },
     { key: 'isEliminatory', label: 'Éliminatoire', priority: 2 },
     { key: 'pipelineTemplateId', label: 'Template', priority: 2 },
@@ -77,8 +78,8 @@ export class EntitiesPipelineStagesComponent extends EntityCrudBase<PipelineStag
     return this.isTemplateLocked(this.createFormData.pipelineTemplateId);
   }
 
-  isEditTargetLocked(): boolean {
-    return this.isTemplateLocked(this.editFormData.pipelineTemplateId);
+  isEditStageLocked(): boolean {
+    return !!this.editFormData.isLocked;
   }
 
   getEditableStageTypes(currentType?: StageType, templateStages: PipelineStage[] = [], currentStageId?: number): StageType[] {
@@ -260,10 +261,6 @@ export class EntitiesPipelineStagesComponent extends EntityCrudBase<PipelineStag
       return 'Le template est requis';
     }
 
-    if (this.isTemplateLocked(stage.pipelineTemplateId)) {
-      return 'Ce template est verrouillé. Préparez une correction via duplication plutôt qu’en modifiant directement ses étapes.';
-    }
-
     const configJson = this.normalizeConfigJson(stage.configJson);
 
     if (configJson) {
@@ -348,18 +345,16 @@ export class EntitiesPipelineStagesComponent extends EntityCrudBase<PipelineStag
   }
 
   override confirmDelete(item: PipelineStage): void {
-    if (this.isTemplateLocked(item.pipelineTemplateId)) {
-      this.notificationService.warning('Template verrouillé', 'Ce template est verrouillé. Préparez une correction via duplication plutôt qu’en supprimant directement ses étapes.');
-      return;
+    if (item.isLocked) {
+      this.notificationService.warning('Étape déjà atteinte', 'Cette étape est utilisée par des candidatures: elle sera archivée (désactivée) plutôt que supprimée.');
     }
 
     super.confirmDelete(item);
   }
 
   override deleteFromEdit(): void {
-    if (this.isTemplateLocked(this.editFormData.pipelineTemplateId)) {
-      this.notificationService.warning('Template verrouillé', 'Ce template est verrouillé. Préparez une correction via duplication plutôt qu’en supprimant directement ses étapes.');
-      return;
+    if (this.editFormData.isLocked) {
+      this.notificationService.warning('Étape déjà atteinte', 'Cette étape est utilisée par des candidatures: elle sera archivée (désactivée) plutôt que supprimée.');
     }
 
     super.deleteFromEdit();

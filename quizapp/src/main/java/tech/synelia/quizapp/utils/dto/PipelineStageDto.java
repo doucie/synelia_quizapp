@@ -21,7 +21,10 @@ public class PipelineStageDto extends _PipelineStageDto implements Cloneable {
     private Integer stageOrder;
     private Boolean isRequired;
     private Boolean isEliminatory;
+    private Boolean isActive;
+    private Boolean isLocked;
     private String  configJson;
+    private Integer evaluationGridTemplateVersionId;
     private String  createdAt;
     private Integer createdBy;
     private String  updatedAt;
@@ -50,6 +53,7 @@ public class PipelineStageDto extends _PipelineStageDto implements Cloneable {
     private SearchParam<Integer> stageOrderParam;
     private SearchParam<Boolean> isRequiredParam;
     private SearchParam<Boolean> isEliminatoryParam;
+    private SearchParam<Boolean> isActiveParam;
     private SearchParam<String>  configJsonParam;
     private SearchParam<String>  createdAtParam;
     private SearchParam<Integer> createdByParam;

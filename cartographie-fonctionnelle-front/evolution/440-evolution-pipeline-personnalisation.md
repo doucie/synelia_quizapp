@@ -1,7 +1,7 @@
 # Note — Plan d'implémentation : personnalisation avancée du pipeline
 
 **Date :** 2026-08-12
-**Statut :** En cours (Lot 0 et Lot A livrés) — corrections, permissions/rescapés front, track-by composite et multi-rounds implémentés ; lots B (versionnage), C (règles email) et D (grille) non implémentés. Code du Lot 0 + Lot A dans le working tree (commit associé).
+**Statut :** En cours (Lot 0, Lot A et Lot B livrés) — corrections, permissions/rescapés front, track-by composite et multi-rounds implémentés ; versionnage fin des étapes (Lot B) livré côté backend + frontend ; lots C (règles email) et D (grille) non implémentés. Code dans le working tree (commit associé).
 **Périmètre :** `pipeline_template`, `pipeline_stage`, `pipeline_stage_notification_rule`, runtime `application_progress` / `application_quiz_attempt` / `interviews` / `decision`, front `pipeline-templates` / `pipeline-template-edit`, permissions, migrations Flyway, doc `bd_documentee` et page d'exemples
 
 > Cette note coordonne les 5 limites identifiées du pipeline personnalisable (verdict : fonctionnel en mono-round) et fixe le plan de livraison en 6 lots. Elle s'appuie sur la note 420 (multi-occurrences) et la note 430 (grilles à verrou à l'usage) : elle ne les remplace pas, elle les orchestre et les complète (versionnage des étapes, règles de notification éditables, corrections).
@@ -74,17 +74,17 @@ Frontend :
 
 Socle : fiche 41 §5.5 et section 4 de la présente note. C'est le chantier qui remplace le verrou binaire. Détail du mécanisme : section 4.
 
-- [ ] **Migration `V1_082__add_pipeline_stage_is_active.sql`** :
+- [x] **Migration `V1_082__add_pipeline_stage_is_active.sql`** :
   - `is_active` BIT NOT NULL DEFAULT 1 ;
   - colonne générée `active_slot = IF(is_active, stage_order, NULL)` ;
   - `UNIQUE(pipeline_template_id, active_slot)` — au plus une révision active par slot ;
   - backfill : toutes les étapes existantes actives (comportement inchangé à la migration).
-- [ ] **Entité/DTO/transformer** `PipelineStage` : ajouter `isActive`.
-- [ ] **Repository** : requêtes actives (`findActiveByTemplateIdOrderByStageOrder`, `countActiveByTemplateId`, `findInactiveRevisions`), helper de verrou dérivé (`existsProgressOnStage`) via `ApplicationProgressRepository`.
-- [ ] **Algorithme d'édition** (`PipelineTemplateBusiness.update` + `PipelineStageBusiness.update`) : diff entre révisions actives (par `stage_order`) et config cible envoyée — voir section 4.3. Supprimer le blocage global `is_locked`.
-- [ ] **Readiness / activation / reorder** : évaluation sur les **révisions actives** uniquement.
-- [ ] Frontend : l'éditeur charge et sauvegarde les actifs uniquement ; badge verrou **par étape** ; réordonner = réordonner les actifs ; `isActive` dans `pipeline.interfaces.ts`.
-- [ ] Tests : étape verrouillée modifiée → nouvelle révision ; réactivation d'une révision inactive identique ; slot retiré → désactivation (pas de suppression) ; readiness sur actifs.
+- [x] **Entité/DTO/transformer** `PipelineStage` : ajouter `isActive`.
+- [x] **Repository** : requêtes actives (`findActiveByTemplateIdOrderByStageOrder`, `countActiveByTemplateId`, `findInactiveRevisions`), helper de verrou dérivé (`findUsedStageIds`) via `ApplicationProgressRepository`.
+- [x] **Algorithme d'édition** (`PipelineStageBusiness.applyTargetConfig` + `saveTemplateStages`) : diff entre révisions actives (par `stage_order`) et config cible envoyée — voir section 4.3. Supprimer le blocage global `is_locked`.
+- [x] **Readiness / activation / reorder** : évaluation sur les **révisions actives** uniquement.
+- [x] Frontend : l'éditeur charge et sauvegarde les actifs uniquement ; badge verrou **par étape** ; réordonner = réordonner les actifs ; `isActive`/`isLocked` dans `pipeline.interfaces.ts`.
+- [x] Tests : étape verrouillée modifiée → nouvelle révision ; réactivation d'une révision inactive identique ; slot retiré → désactivation (pas de suppression) ; readiness sur actifs.
 
 ### Lot C — Règles de notification éditables (item 3)
 
@@ -156,7 +156,11 @@ Pipeline `[CANDIDATURE, QUIZ, INTERVIEW, DECISION]`, 5 candidats ont passé le Q
   - `ApplicationProgressBusinessTest` : résolution par occurrence (multi-rounds) — **fait** ;
   - `InterviewsBusinessTest` : 2e round d'entretien — **fait** ;
   - `pipeline-template-edit.spec.ts` : multi-rounds — **fait**.
-- [ ] Tests restants (lots B/C/D) : `PipelineTemplateBusinessTest` (readiness sur actifs, create inactive, delete garde campagne, duplicate copie règles) ; `pipeline-templates.spec.ts` (aperçu = actifs, permissions).
+- [x] Tests du Lot B :
+  - `PipelineStageBusinessTest` (réécrit, moteur `saveTemplateStages`/`applyTargetConfig`) — **fait** ;
+  - `PipelineTemplateBusinessTest` (create inactif, readiness sur actifs, update déverrouillé, delete gardé) — **fait** ;
+  - `pipeline-template-edit.spec.ts` (verrou par étape, save bulk `saveTemplateStages`, reorder local) — **fait**.
+- [ ] Tests restants (lots C/D) : `pipeline-templates.spec.ts` (aperçu = actifs, permissions).
 - [ ] Mettre à jour les notes :
   - cocher les phases E/F de la note 420 (résolutions par occurrence, sortie de `email_required`/`email_automatic`) — **fait (note 420)**, reste : sortie `email_required`/`email_automatic` à vérifier ;
   - enrichir la 430 avec l'intégration éditeur (section « Grille d'évaluation ») ;

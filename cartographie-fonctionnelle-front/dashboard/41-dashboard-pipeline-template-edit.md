@@ -38,7 +38,7 @@ La cible n'est plus un gel global du template au premier candidat, mais un versi
 - [ ] Finaliser la matrice complete des flags par type d'etape; un premier garde-fou est livre, le flux de skip minimal est branche et l'editeur expose maintenant `Autoriser le saut`, mais le cadrage total de `Obligatoire` reste a terminer.
 - [ ] Définir une grille explicite `pipeline prêt à produire` au-delà du garde-fou minimal déjà en place (bornes, ordre, une étape intermédiaire, types supportés, cohérence email minimale).
 - [x] Ajouter une activation explicite du pipeline dans cette page, au lieu de laisser le backend rendre le template actif dès sa creation.
-- [ ] Remplacer le verrouillage binaire du template par une strategie de revisions de stages: `pipeline_stage.isActive` persiste la revision active, tandis que le verrouillage d'etape est derive de son usage reel par les candidats.
+- [x] Remplacer le verrouillage binaire du template par une strategie de revisions de stages: `pipeline_stage.isActive` persiste la revision active, tandis que le verrouillage d'etape est derive de son usage reel par les candidats.
 
 ## 4. Blocs UI Constates
 
@@ -147,34 +147,37 @@ La cible n'est plus un gel global du template au premier candidat, mais un versi
 - activation explicite par l'utilisateur via une checkbox ou action equivalente sur cette page
 - un garde-fou minimal bloque deja l'activation tant que le pipeline n'a pas `CANDIDATURE` en tete, `DECISION` en fin, au moins une etape intermediaire, des types supportes, des libelles non vides et une coherence email minimale
 - la desactivation doit maintenant aussi respecter l'usage operationnel existant: un template rattaché a une campagne ouverte ne peut plus repasser en brouillon tant que cette campagne n'est pas fermee ou reassignee
-- une fois le template utilise par un candidat, verrouillage et evolution ulterieure uniquement par duplication
-- l'editeur reste alors en lecture seule: les incoherences structurelles legacy restent visibles pour diagnostic, mais les corrections passent par une duplication plutot que par une reecriture directe
+- une fois le template utilise par un candidat, le verrouillage n'est plus global: seules les etapes reellement atteintes sont verrouillees et evoluent par revisions actives/inactives; les etapes futures restent editables sur place
+- l'editeur reste donc pleinement utilisable sur un template verrouille: les champs d'une etape utilisee sont desactives (badge `Utilisee`), les autres restent modifiables et la sauvegarde passe par un unique `saveTemplateStages` qui applique le diff ordre par ordre cote backend
 
-### 5.5 Cible versionning des stages
+### 5.5 Cible versionning des stages (livré avec la 440, Lot B)
 
 - la version visible d'un pipeline correspond a la liste des `pipeline_stage` avec `isActive=true`, ordonnes par `stageOrder`
-- un stage est considere `locked` non pas parce qu'il existe dans `application_progress`, mais parce qu'au moins une candidature l'a reellement atteint: statut `IN_PROGRESS`, `PASSED`, `FAILED` ou `SKIPPED`
+- un stage est considere `locked` non pas parce qu'il existe dans `application_progress`, mais parce qu'au moins une candidature l'a reellement atteint: statut `IN_PROGRESS`, `PASSED`, `FAILED` ou `SKIPPED` (`findUsedStageIds` du `ApplicationProgressRepository`)
 - un stage actif non locke peut etre modifie sur place
 - un stage actif locke ne doit plus etre reecrit: en cas de changement, il devient `isActive=false` et une revision active de remplacement est creee ou reactivee
-- si un ordre disparait du pipeline cible et que son stage actif n'est pas locke, il peut etre retire ou desactive; s'il est locke, il doit seulement devenir inactif
-- si la configuration cible demandee par l'utilisateur correspond a une revision inactive deja presente pour le meme `pipeline_template_id` et `stageOrder`, le backend doit la reactiver automatiquement au lieu d'en creer une nouvelle
-- les pages metier n'exposent jamais les revisions inactives: le front envoie seulement la configuration cible visible, puis le backend decide seul s'il faut modifier, creer, desactiver ou reactiver une revision existante
+- si un ordre disparait du pipeline cible et que son stage actif n'est pas locke, il est soft-delete; s'il est locke, il devient seulement inactif (historique conserve)
+- si la configuration cible demandee par l'utilisateur correspond a une revision inactive deja presente pour le meme `pipeline_template_id` et `stageOrder`, le backend la reactive automatiquement au lieu d'en creer une nouvelle
+- les pages metier n'exposent jamais les revisions inactives: le front envoie seulement la configuration cible visible (`POST /pipelineStage/saveTemplateStages`), puis le backend (`PipelineStageBusiness.applyTargetConfig`) decide seul s'il faut modifier, creer, desactiver ou reactiver une revision existante
+- le verrou du template (`is_locked`) est conserve en base mais ne bloque plus l'edition: seules les etapes utilisees sont verrouillees dans l'editeur
+- readiness, activation et reorder sont evalues sur les revisions actives uniquement
 
-### 5.6 Limite structurelle a arbitrer
+### 5.6 Limite structurelle a arbitrer (résolue via `active_slot`)
 
 - la regle metier cible n'est pas `UNIQUE (pipeline_template_id, stage_order, is_active)`; elle est `au plus une revision active` pour un couple `(pipeline_template_id, stageOrder)`
 - les revisions inactives doivent pouvoir coexister en plusieurs exemplaires pour un meme ordre si l'historique le necessite
-- techniquement, il faut donc une contrainte partielle ou un mecanisme equivalent qui n'unicise que les lignes `isActive=true` pour un slot donne; une simple cle composite avec `is_active` ne convient pas
+- solution retenue: colonne generee `active_slot = IF(is_active, stage_order, NULL)` + index unique `UNIQUE(pipeline_template_id, active_slot)` — la colonne generee vaut `NULL` sur les lignes inactives (non unicisees), et `stage_order` sur les actives (unicite garantie)
 
 ## 6. Services Et Endpoints
 
 - `PipelineTemplateService.getAllByCriteria()` -> `/pipelineTemplate/getAllByCriteria`
 - `PipelineTemplateService.update()` -> `/pipelineTemplate/update`
 - `PipelineStageService.getByTemplate()` -> `/pipelineStage/getByTemplate`
+- `PipelineStageService.saveTemplateStages(templateId, stages)` -> `POST /pipelineStage/saveTemplateStages` — diff ordre par ordre entre actifs courants et configuration cible (revisions)
 - `PipelineStageService.create()` -> `/pipelineStage/create`
 - `PipelineStageService.update()` -> `/pipelineStage/update`
 - `PipelineStageService.delete()` -> `/pipelineStage/delete`
-- `PipelineStageService.reorder(templateId, ids)` -> endpoint de réordonnancement des étapes
+- `PipelineStageService.reorder(templateId, ids)` -> endpoint de réordonnancement des étapes (non utilisé par l'éditeur Lot B)
 
 ## 7. Ce Que Le Backend Doit Envoyer
 
@@ -206,7 +209,7 @@ La cible n'est plus un gel global du template au premier candidat, mais un versi
 - [ ] Le verrouillage actuel au premier `application_progress` suffit-il, ou faut-il verrouiller plus tot des qu'un template est rattache a une campagne active ?
 - [x] L'editeur affiche deja un etat visible, une checkbox d'activation et la liste des blocages minimaux; il reste a definir la readiness detaillee avant de parler de `Pret a produire` complet.
 - [x] Le lock d'etape doit etre derive de `progressStatus != PENDING`.
-- [ ] Quel mecanisme technique porte l'invariant `un seul stage actif par (pipeline_template_id, stageOrder)` sans bloquer plusieurs revisions inactives du meme slot ?
+- [x] Quel mecanisme technique porte l'invariant `un seul stage actif par (pipeline_template_id, stageOrder)` sans bloquer plusieurs revisions inactives du meme slot ? — colonne generee `active_slot` + `UNIQUE(pipeline_template_id, active_slot)` (V1_082).
 
 - [ ] Vérifier la conformité entre la BD actuelle et les formulaires/cartes/filtres front réellement exposés par cette page.
 - [ ] Vérifier, si la page expose une création via modale ou inline, qu’aucun contrôle `ngModel` n’est monté dans un vrai tag `<form>` sans `name` ni configuration `standalone`, afin d’éviter un défaut Angular `NG01352` et un rendu partiel.
@@ -237,10 +240,10 @@ La cible n'est plus un gel global du template au premier candidat, mais un versi
 - [ ] Etablir une grille `pipeline prêt à produire` avant mise en service: transitions, mails, scoring, skip, quick actions et cohérence front/back.
 - [ ] Étendre le garde-fou d'activation au-delà de la readiness minimale déjà livrée pour couvrir la grille métier complète de mise en service.
 - [ ] Etendre les garde-fous `isActive=false` au-dela de ce qui est deja bloque (`setDefault`, campagnes ouvertes, acces candidat/public) pour couvrir les autres points d'entree restants.
-- [ ] Ajouter `isActive` sur `pipeline_stage`, faire evoluer l'unicite de `stageOrder` et definir si le verrouillage d'etape est calcule ou persiste.
-- [ ] Implementer l'algorithme d'edition ordre par ordre: inchange -> conserver, change non locke -> modifier, change locke -> desactiver puis creer/reactiver la revision cible.
-- [ ] Definir la politique de suppression d'etape: suppression reelle uniquement pour stage non locke, sinon bascule inactive.
-- [ ] Definir la politique backend de reactivation automatique d'une ancienne revision: si la configuration cible visible correspond a un stage inactif deja existant pour le meme slot, le reactiver plutot qu'en creer un autre, sans jamais exposer les revisions a l'utilisateur metier.
+- [x] Ajouter `isActive` sur `pipeline_stage`, faire evoluer l'unicite de `stageOrder` et definir si le verrouillage d'etape est calcule ou persiste.
+- [x] Implementer l'algorithme d'edition ordre par ordre: inchange -> conserver, change non locke -> modifier, change locke -> desactiver puis creer/reactiver la revision cible.
+- [x] Definir la politique de suppression d'etape: suppression reelle uniquement pour stage non locke, sinon bascule inactive.
+- [x] Definir la politique backend de reactivation automatique d'une ancienne revision: si la configuration cible visible correspond a un stage inactif deja existant pour le meme slot, le reactiver plutot qu'en creer un autre, sans jamais exposer les revisions a l'utilisateur metier.
 
 ## 12. Impact Cible Multi-Occurrences
 
