@@ -1,7 +1,7 @@
 # Note — Plan d'implémentation : personnalisation avancée du pipeline
 
 **Date :** 2026-08-12
-**Statut :** Cible d'architecture retenue, plan de livraison non implémenté
+**Statut :** En cours (Lot 0 et Lot A livrés) — corrections, permissions/rescapés front, track-by composite et multi-rounds implémentés ; lots B (versionnage), C (règles email) et D (grille) non implémentés. Code du Lot 0 + Lot A dans le working tree (commit associé).
 **Périmètre :** `pipeline_template`, `pipeline_stage`, `pipeline_stage_notification_rule`, runtime `application_progress` / `application_quiz_attempt` / `interviews` / `decision`, front `pipeline-templates` / `pipeline-template-edit`, permissions, migrations Flyway, doc `bd_documentee` et page d'exemples
 
 > Cette note coordonne les 5 limites identifiées du pipeline personnalisable (verdict : fonctionnel en mono-round) et fixe le plan de livraison en 6 lots. Elle s'appuie sur la note 420 (multi-occurrences) et la note 430 (grilles à verrou à l'usage) : elle ne les remplace pas, elle les orchestre et les complète (versionnage des étapes, règles de notification éditables, corrections).
@@ -31,17 +31,17 @@ Le pipeline personnalisable est **fonctionnel et implémenté en mono-round** : 
 
 Indépendant, livrable en premier, sans migration.
 
-- [ ] **`create()` n'impose pas la readiness** (`PipelineTemplateBusiness.create`, ~L50-102) : forcer `isActive=false` à la création ; l'activation passe par le `setDefault()`/activation vérifiés (cohérent avec la fiche 41).
-- [ ] **`delete()` sans garde campagne ouverte** (`~L168-207`) : réutiliser la vérification de `ensureTemplateCanBeDisabled` avant suppression.
-- [ ] **`duplicate()` ne copie pas les règles de notification** : copier les `pipeline_stage_notification_rule` de chaque étape dans le duplicate.
-- [ ] **`update()` n'impose pas les bornes** (`PipelineStageBusiness.update`) : interdire de re-typer CANDIDATURE/DECISION et garantir la position tête/queue, y compris via un update direct d'API.
-- [ ] **Permissions front incohérentes** :
+- [x] **`create()` n'impose pas la readiness** (`PipelineTemplateBusiness.create`, ~L50-102) : forcer `isActive=false` à la création ; l'activation passe par le `setDefault()`/activation vérifiés (cohérent avec la fiche 41).
+- [x] **`delete()` sans garde campagne ouverte** (`~L168-207`) : réutiliser la vérification de `ensureTemplateCanBeDisabled` avant suppression.
+- [x] **`duplicate()` ne copie pas les règles de notification** : copier les `pipeline_stage_notification_rule` de chaque étape dans le duplicate.
+- [x] **`update()` n'impose pas les bornes** (`PipelineStageBusiness.update`) : interdire de re-typer CANDIDATURE/DECISION et garantir la position tête/queue, y compris via un update direct d'API.
+- [x] **Permissions front incohérentes** :
   - route édit `pipeline-templates/:id/edit` : accepter `VIEW_PIPELINE_TEMPLATE` (lecture seule — l'éditeur gère déjà le mode verrouillé) en plus de `UPDATE_PIPELINE_TEMPLATE` ;
   - menu latéral (`dashboard.ts` L201-207) : aligner la permission d'affichage sur `VIEW_PIPELINE_TEMPLATE` ;
   - les mutations restent protégées côté backend (aucun relâchement de droits d'écriture).
-- [ ] **Rescapés EVALUATION** (`pipeline-template-edit.ts` ~L424-431) : retirer la fallback dropdown `EVALUATION` et le label legacy (données déjà migrées par V1_076).
-- [ ] **`track by stageOrder`** → composite `id || uid` dans `pipeline-template-edit.html` L88/L122 et `pipeline-templates.html` L120 (évite la perte de focus/state, devient indispensable en multi-rounds).
-- [ ] Vérifier l'ordre de déactivation dans `save()` (`pipeline-template-edit.ts` ~L525-528) : la déactivation avant sauvegarde des étapes peut laisser le template désactivé si une étape échoue — documenter ou améliorer.
+- [x] **Rescapés EVALUATION** (`pipeline-template-edit.ts` ~L424-431) : retirer la fallback dropdown `EVALUATION` et le label legacy (données déjà migrées par V1_076).
+- [x] **`track by stageOrder`** → composite `id || uid` dans `pipeline-template-edit.html` L88/L122 et `pipeline-templates.html` L120 (évite la perte de focus/state, devient indispensable en multi-rounds).
+- [x] Vérifier l'ordre de déactivation dans `save()` (`pipeline-template-edit.ts` ~L525-528) : la déactivation avant sauvegarde des étapes peut laisser le template désactivé si une étape échoue — documenter ou améliorer.
 
 ### Lot A — Multi-rounds (item 1)
 
@@ -49,21 +49,26 @@ Socle : note 420 (phases A-F). Aucune migration de schéma (la multiplicité est
 
 Backend :
 
-- [ ] **Lever le verrou singleton** :
-  - retirer QUIZ/PRESELECTION/INTERVIEW de `ensureSingletonStageTypeNotDuplicated` (`PipelineStageBusiness` L291-342) et de `validateTemplateReadiness` (`PipelineTemplateBusiness` L463-501) ;
-  - conserver l'unicité CANDIDATURE/DECISION (bornes), l'ordre continu et « ≥1 étape intermédiaire ».
-- [ ] **Runtime occurrence-aware** (le cœur du chantier, détaillé en phase E de la 420) :
-  - `ApplicationProgressBusiness` (~L1071, L1132, L1139) et `ApplicationsBusiness` (~L2701-3211) résolvent par `stageType` → résoudre par **occurrence** : `application_progress.pipeline_stage_id`, la progress déjà chargée, ou la prochaine étape en attente par `stage_order` ;
-  - `InterviewsBusiness` L185/L796 (`findByTemplateIdAndStageType`) : remplacer par la résolution de l'étape par id/ordre (l'interview porte déjà son `application_progress_id`) ;
-  - `PipelineStageRepository.findByTemplateIdAndStageType` (L34) : conserver pour compat/backfill ou supprimer après vérification des usages.
-- [ ] Tests : templates à 2 quiz / 2 entretiens / 2 présélections (readiness OK, runtime qui crée et skip le 2e round correctement).
+- [x] **Lever le verrou singleton** :
+  - `ensureSingletonStageTypeNotDuplicated` et `isSingletonIntermediateStageType` **supprimés** de `PipelineStageBusiness` (create et update) ;
+  - doublons QUIZ/PRESELECTION/INTERVIEW **retirés** de `validateTemplateReadiness` (`PipelineTemplateBusiness`) ;
+  - unicité CANDIDATURE/DECISION (bornes), ordre continu et « ≥1 étape intermédiaire » **conservés** — bornes désormais imposées aussi via update direct d'API (`update_rejectsRetypingBoundaryStage`, `update_rejectsMovingBoundaryStageFromHeadOrTail`).
+- [x] **Runtime occurrence-aware** (le cœur du chantier, détaillé en phase E de la 420) :
+  - `ApplicationProgressBusiness` : `listProgressOccurrences(applicationId, stageType)` public (L1142), `findProgressByStageType` délègue désormais à la liste d'occurrences ; `updateStageScore` rendu public pour le scoring par occurrence ;
+  - `ApplicationsBusiness` : la notation quiz passe par `resolveQuizProgress` (occurrence déjà chargée) au lieu d'une résolution par type seule (L3192-3212) ;
+  - `InterviewsBusiness` : le calcul des rounds itère sur `listProgressOccurrences(applicationId, "INTERVIEW")` avec `roundOffset` (L488-508) ; `findByTemplateIdAndStageType` remplacé par `countByTemplateIdAndStageType` (L185) et la résolution d'étape par `application_progress` (L796) ;
+  - `PipelineStageRepository.findByTemplateIdAndStageType` → **`countByTemplateIdAndStageType`** (L34) ; plus aucun usage du singleton dans le code (grep = 0).
+- [x] Tests : templates à 2 quiz / 2 entretiens / 2 présélections (readiness OK, runtime qui crée et skip le 2e round correctement) :
+  - `PipelineStageBusinessTest` : `create_allowsMultipleOccurrencesOfIntermediateStageTypes`, `update_allowsRetypingStageToAnAlreadyUsedIntermediateType`, bornes ;
+  - `ApplicationProgressBusinessTest` : `listProgressOccurrences_returnsAllOccurrencesInStageOrder`, `resolveProgressByStageType_prefersNextPendingRoundOccurrence` ;
+  - `InterviewsBusinessTest` : `create_linksInterviewToActiveInterviewRoundOccurrence` (2e round d'entretien).
 
 Frontend :
 
-- [ ] `pipeline.interfaces.ts` `SINGLETON_INTERMEDIATE_STAGE_TYPES` : retirer la contrainte d'unicité.
-- [ ] `getEditableStageTypeOptions` (`pipeline-template-edit.ts` L414-432) : autoriser un type déjà utilisé dans le template.
-- [ ] `addStage()` / `hasAvailableStageTypeForCreation` (~L184-188, L326-328) : toujours disponible.
-- [ ] Mettre à jour les specs associées (`pipeline-template-edit.spec.ts`, `pipeline-templates.spec.ts`).
+- [x] `pipeline.interfaces.ts` `SINGLETON_INTERMEDIATE_STAGE_TYPES` : **constante et contrainte d'unicité supprimées** (`getPipelineReadinessIssues` ne limite plus que `CANDIDATURE == 1` et `DECISION >= 1`).
+- [x] `getEditableStageTypeOptions` (`pipeline-template-edit.ts`) : un type déjà utilisé dans le template est à nouveau proposé (specs `still offers an already used intermediate type in editable options`).
+- [x] `addStage()` / `hasAvailableStageTypeForCreation` : toujours disponible (hors template verrouillé) — spec `allows adding a second QUIZ round (multi-rounds)`.
+- [x] Mettre à jour les specs associées : `pipeline-template-edit.spec.ts` couvert (multi-rounds) ; `pipeline-templates.spec.ts` **non mis à jour** (résidu à traiter).
 
 ### Lot B — Versionnage fin des étapes (item 2)
 
@@ -144,17 +149,16 @@ Pipeline `[CANDIDATURE, QUIZ, INTERVIEW, DECISION]`, 5 candidats ont passé le Q
 
 ## 6. Checklist transverse
 
-- [ ] `mvnw compile` + tests backend (spring-boot) verts.
-- [ ] `ng build --configuration=development` sans erreur.
-- [ ] Tests à couvrir :
-  - `PipelineStageBusinessTest` : bornes, re-typage interdit, révisions (Lot B), multi-types (Lot A) ;
-  - `PipelineTemplateBusinessTest` : readiness sur actifs, create inactive, delete garde campagne, duplicate copie règles ;
-  - `ApplicationProgressBusinessTest` : résolution par occurrence (multi-rounds), skip/email ;
-  - `InterviewsBusinessTest` : 2e round d'entretien ;
-  - `pipeline-template-edit.spec.ts` : multi-rounds + versionnage + panneau règles email ;
-  - `pipeline-templates.spec.ts` : aperçu = actifs, permissions.
+- [x] `mvnw compile` + tests backend (spring-boot) verts.
+- [x] `ng build --configuration=development` sans erreur.
+- [x] Tests à couvrir (Lot A) :
+  - `PipelineStageBusinessTest` : bornes, re-typage interdit, multi-types — **fait** ;
+  - `ApplicationProgressBusinessTest` : résolution par occurrence (multi-rounds) — **fait** ;
+  - `InterviewsBusinessTest` : 2e round d'entretien — **fait** ;
+  - `pipeline-template-edit.spec.ts` : multi-rounds — **fait**.
+- [ ] Tests restants (lots B/C/D) : `PipelineTemplateBusinessTest` (readiness sur actifs, create inactive, delete garde campagne, duplicate copie règles) ; `pipeline-templates.spec.ts` (aperçu = actifs, permissions).
 - [ ] Mettre à jour les notes :
-  - cocher les phases E/F de la note 420 (résolutions par occurrence, sortie de `email_required`/`email_automatic`) ;
+  - cocher les phases E/F de la note 420 (résolutions par occurrence, sortie de `email_required`/`email_automatic`) — **fait (note 420)**, reste : sortie `email_required`/`email_automatic` à vérifier ;
   - enrichir la 430 avec l'intégration éditeur (section « Grille d'évaluation ») ;
   - fiches cartographie 40/41 ; entités 260-pipeline-stages, 110-evaluations, 230-application-progress.
 - [ ] Mini-BD `bd_documentee/exemples/data.js` : exemple multi-rounds (2 INTERVIEW), règles de notification, grille liée, `is_active`/`active_slot` — cohérent avec la 430 (section 8).
@@ -162,7 +166,7 @@ Pipeline `[CANDIDATURE, QUIZ, INTERVIEW, DECISION]`, 5 candidats ont passé le Q
 
 ## 7. Points d'attention
 
-- **Résolution par type → par occurrence** : c'est le risque principal du Lot A — toute résolution `findByStageType` laissée en place casserait les rounds multiples. Grepper `findByTemplateIdAndStageType` / `findProgressByStageType` avant de considérer le chantier fini.
+- **Résolution par type → par occurrence** : c'est le risque principal du Lot A — toute résolution `findByStageType` laissée en place casserait les rounds multiples. **Vérifié sur le Lot A livré** : `findByTemplateIdAndStageType` = 0 usage (remplacé par `countByTemplateIdAndStageType`) ; les `findProgressByStageType` restants délèguent tous à `resolveProgressByStageType`/`listProgressOccurrences` (occurrence-aware) — seules les résolutions de bornes CANDIDATURE/DECISION restent par type.
 - **UNIQUE(template_id, active_slot)** : l'ordre des opérations du Lot B doit garantir qu'un slot ne porte jamais deux actifs à l'instant T (transaction + verrouillage de ligne).
 - **Révisions inactives jamais repointées** : une candidature passée lit sa révision d'origine ; interdire tout repointage d'`application_progress`.
 - **`duplicate()`** : copier étapes + règles de notification + (si actif) grille liée — sinon le duplicata perd la config.

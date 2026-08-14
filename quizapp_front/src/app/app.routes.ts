@@ -560,7 +560,7 @@ export const routes: Routes = [
       { 
         path: 'pipeline-templates/:id/edit', 
         loadComponent: () => import('./pages/dashboard/pipeline-template-edit/pipeline-template-edit').then(m => m.PipelineTemplateEditComponent),
-        canActivate: [permissionGuard(['UPDATE_PIPELINE_TEMPLATE'])]
+        canActivate: [permissionGuard(['VIEW_PIPELINE_TEMPLATE', 'UPDATE_PIPELINE_TEMPLATE'])]
       },
       {
         path: 'email-editor',

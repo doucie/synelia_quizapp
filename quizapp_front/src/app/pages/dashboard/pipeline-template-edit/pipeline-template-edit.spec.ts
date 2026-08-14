@@ -43,7 +43,7 @@ describe('PipelineTemplateEditComponent', () => {
     expect(component.editableStageTypes as string[]).not.toContain('EVALUATION');
   });
 
-  it('keeps legacy EVALUATION selectable only for an existing legacy evaluation stage', () => {
+  it('does not offer EVALUATION for an existing legacy evaluation stage', () => {
     const legacyEvaluationStage = buildStage('EVALUATION', 'Evaluation legacy');
     component.stages.set([
       buildStage('CANDIDATURE', 'Candidature'),
@@ -53,8 +53,48 @@ describe('PipelineTemplateEditComponent', () => {
 
     const options = component.getEditableStageTypeOptions(legacyEvaluationStage as any);
 
-    expect(options.map(option => option.value as string)).toContain('EVALUATION');
-    expect(options.filter(option => (option.value as string) === 'EVALUATION')).toHaveSize(1);
+    expect(options.map(option => option.value as string)).not.toContain('EVALUATION');
+  });
+
+  it('allows adding a second QUIZ round (multi-rounds)', () => {
+    component.stages.set([
+      buildStage('CANDIDATURE', 'Candidature'),
+      buildStage('QUIZ', 'Quiz round 1'),
+      buildStage('DECISION', 'Decision')
+    ] as any);
+
+    component.addStage();
+
+    expect(component.stages().map(stage => stage.stageType)).toEqual(['CANDIDATURE', 'QUIZ', 'QUIZ', 'DECISION']);
+  });
+
+  it('still offers an already used intermediate type in editable options', () => {
+    const quizRound1 = buildStage('QUIZ', 'Quiz round 1');
+    component.stages.set([
+      buildStage('CANDIDATURE', 'Candidature'),
+      quizRound1,
+      buildStage('DECISION', 'Decision')
+    ] as any);
+
+    const options = component.getEditableStageTypeOptions(quizRound1 as any);
+
+    expect(options.map(option => option.value as string)).toContain('QUIZ');
+    expect(options.map(option => option.value as string)).toContain('INTERVIEW');
+    expect(options.map(option => option.value as string)).not.toContain('CANDIDATURE');
+    expect(options.map(option => option.value as string)).not.toContain('DECISION');
+  });
+
+  it('reports no duplicated-singleton readiness issue for two QUIZ stages', () => {
+    component.stages.set([
+      { ...buildStage('CANDIDATURE', 'Candidature'), stageOrder: 1 },
+      { ...buildStage('QUIZ', 'Quiz round 1'), stageOrder: 2 },
+      { ...buildStage('QUIZ', 'Quiz round 2'), stageOrder: 3 },
+      { ...buildStage('DECISION', 'Decision'), stageOrder: 4 }
+    ] as any);
+
+    const issues = component.readinessIssues();
+
+    expect(issues.length).toBe(0);
   });
 });
 

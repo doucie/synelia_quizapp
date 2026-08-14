@@ -34,6 +34,8 @@ public class PipelineTemplateBusiness implements IBasicBusiness<Request<Pipeline
     @Autowired
     private PipelineStageRepository pipelineStageRepository;
     @Autowired
+    private PipelineStageNotificationRuleRepository pipelineStageNotificationRuleRepository;
+    @Autowired
     private CampaignsRepository campaignsRepository;
     @Autowired
     private FunctionalError functionalError;
@@ -70,7 +72,7 @@ public class PipelineTemplateBusiness implements IBasicBusiness<Request<Pipeline
             entityToSave.setCreatedBy(request.getUser());
             entityToSave.setIsDeleted(false);
             if (entityToSave.getIsDefault() == null) entityToSave.setIsDefault(false);
-            if (entityToSave.getIsActive() == null) entityToSave.setIsActive(false);
+            entityToSave.setIsActive(false);
             if (entityToSave.getIsLocked() == null) entityToSave.setIsLocked(false);
             items.add(entityToSave);
         }
@@ -186,6 +188,9 @@ public class PipelineTemplateBusiness implements IBasicBusiness<Request<Pipeline
             if (existingEntity.getIsLocked() != null && existingEntity.getIsLocked()) {
                 throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION("Ce pipeline est verrouillé car utilisé par des candidats", locale));
             }
+
+            // Garde campagne ouverte
+            ensureTemplateCanBeDisabled(dto.getId(), locale);
 
             existingEntity.setIsDeleted(true);
             existingEntity.setUpdatedAt(Utilities.getCurrentDate());
@@ -340,7 +345,26 @@ public class PipelineTemplateBusiness implements IBasicBusiness<Request<Pipeline
                 newStage.setCreatedAt(Utilities.getCurrentDate());
                 newStage.setCreatedBy(userId);
                 newStage.setIsDeleted(false);
-                pipelineStageRepository.save(newStage);
+                PipelineStage savedNewStage = pipelineStageRepository.save(newStage);
+
+                List<PipelineStageNotificationRule> sourceRules = pipelineStageNotificationRuleRepository
+                        .findByPipelineStageIdAndIsDeletedFalseOrderByIdAsc(stage.getId());
+                if (sourceRules != null) {
+                    for (PipelineStageNotificationRule rule : sourceRules) {
+                        PipelineStageNotificationRule newRule = new PipelineStageNotificationRule();
+                        newRule.setPipelineStage(savedNewStage);
+                        newRule.setTriggerCode(rule.getTriggerCode());
+                        newRule.setOutcomeCode(rule.getOutcomeCode());
+                        newRule.setEmailTemplateId(rule.getEmailTemplateId());
+                        newRule.setIsRequired(rule.getIsRequired());
+                        newRule.setIsAutomatic(rule.getIsAutomatic());
+                        newRule.setRequiresManualConfirmation(rule.getRequiresManualConfirmation());
+                        newRule.setCreatedAt(Utilities.getCurrentDate());
+                        newRule.setCreatedBy(userId);
+                        newRule.setIsDeleted(false);
+                        pipelineStageNotificationRuleRepository.save(newRule);
+                    }
+                }
             }
         }
 
@@ -427,11 +451,7 @@ public class PipelineTemplateBusiness implements IBasicBusiness<Request<Pipeline
         boolean hasBlankLabel = false;
         boolean hasInvalidOrder = false;
         boolean hasInvalidType = false;
-        boolean hasDuplicateQuiz = false;
-        boolean hasDuplicatePreselection = false;
-        boolean hasDuplicateInterview = false;
         Set<Integer> seenOrders = new HashSet<>();
-        Set<StageType> seenSingletonStageTypes = new HashSet<>();
 
         for (int index = 0; index < stages.size(); index++) {
             PipelineStage stage = stages.get(index);
@@ -459,16 +479,6 @@ public class PipelineTemplateBusiness implements IBasicBusiness<Request<Pipeline
                 decisionCount++;
             } else {
                 intermediateCount++;
-
-                if (isSingletonIntermediateStageType(normalizedType) && !seenSingletonStageTypes.add(normalizedType)) {
-                    if (normalizedType == StageType.QUIZ) {
-                        hasDuplicateQuiz = true;
-                    } else if (normalizedType == StageType.PRESELECTION) {
-                        hasDuplicatePreselection = true;
-                    } else if (normalizedType == StageType.INTERVIEW) {
-                        hasDuplicateInterview = true;
-                    }
-                }
             }
         }
 
@@ -490,15 +500,6 @@ public class PipelineTemplateBusiness implements IBasicBusiness<Request<Pipeline
         if (hasInvalidType) {
             issues.add("le pipeline contient un type d'etape invalide.");
         }
-        if (hasDuplicateQuiz) {
-            issues.add("QUIZ ne peut etre presente qu'une seule fois dans le pipeline actuel.");
-        }
-        if (hasDuplicatePreselection) {
-            issues.add("PRESELECTION ne peut etre presente qu'une seule fois dans le pipeline actuel.");
-        }
-        if (hasDuplicateInterview) {
-            issues.add("INTERVIEW ne peut etre presente qu'une seule fois dans le pipeline actuel.");
-        }
 
         if (!stages.isEmpty()) {
             StageType firstStageType = normalizeReadinessStageType(stages.get(0).getStageType());
@@ -517,12 +518,6 @@ public class PipelineTemplateBusiness implements IBasicBusiness<Request<Pipeline
 
     private StageType normalizeReadinessStageType(String stageType) {
         return StageType.fromValue(stageType);
-    }
-
-    private boolean isSingletonIntermediateStageType(StageType stageType) {
-        return stageType == StageType.QUIZ
-                || stageType == StageType.PRESELECTION
-                || stageType == StageType.INTERVIEW;
     }
 
     private void ensureTemplateCanBeDisabled(Integer templateId, Locale locale) {

@@ -30,8 +30,8 @@ public interface PipelineStageRepository extends JpaRepository<PipelineStage, In
     @Query("select count(e) from PipelineStage e where e.pipelineTemplate.id = :templateId and e.isDeleted = false")
     Long countByPipelineTemplateId(@Param("templateId") Integer templateId);
 
-    @Query("select e from PipelineStage e where e.pipelineTemplate.id = :templateId and e.stageType = :stageType and e.isDeleted = false")
-    PipelineStage findByTemplateIdAndStageType(@Param("templateId") Integer templateId, @Param("stageType") String stageType);
+    @Query("select count(e) from PipelineStage e where e.pipelineTemplate.id = :templateId and e.stageType = :stageType and e.isDeleted = false")
+    Long countByTemplateIdAndStageType(@Param("templateId") Integer templateId, @Param("stageType") String stageType);
 
     default List<PipelineStage> getByCriteria(Request<PipelineStageDto> request, EntityManager em, Locale locale) throws DataAccessException, Exception {
         String req = "select e from PipelineStage e where e IS NOT NULL";

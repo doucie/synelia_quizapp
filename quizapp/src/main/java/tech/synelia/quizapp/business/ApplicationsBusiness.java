@@ -3192,12 +3192,22 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				ensurePreviousCandidatureStagePassed(application, actorUserId, locale);
 			}
 
+			ApplicationProgress quizProgress = resolveQuizProgress(application, scoringAttempt);
+
 			if (scoringAttempt.getScorePercent() != null) {
-				applicationProgressBusiness.updateStageScore(
-						application.getId(),
-						StageType.QUIZ.getValue(),
-						scoringAttempt.getScorePercent().doubleValue(),
-						actorUserId);
+				if (quizProgress != null) {
+					applicationProgressBusiness.updateStageScore(
+							quizProgress,
+							scoringAttempt.getScorePercent().doubleValue(),
+							actorUserId,
+							true);
+				} else {
+					applicationProgressBusiness.updateStageScore(
+							application.getId(),
+							StageType.QUIZ.getValue(),
+							scoringAttempt.getScorePercent().doubleValue(),
+							actorUserId);
+				}
 			}
 
 			if (!tech.synelia.quizapp.utils.enums.QuizStatus.COMPLETED.getValue().equals(scoringAttempt.getQuizStatus())) {
@@ -3208,7 +3218,6 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				return;
 			}
 
-			ApplicationProgress quizProgress = findProgressByStageType(application.getId(), StageType.QUIZ.getValue());
 			if (quizProgress == null || quizProgress.getPipelineStage() == null || isResolvedProgressStatus(quizProgress.getProgressStatus())) {
 				return;
 			}

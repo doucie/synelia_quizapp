@@ -4,7 +4,6 @@ export type StageType = SupportedStageType;
 export type ProgressStatus = 'PENDING' | 'IN_PROGRESS' | 'AWAITING_VALIDATION' | 'COMPLETED' | 'FAILED' | 'SKIPPED';
 
 export const STAGE_TYPES: SupportedStageType[] = ['CANDIDATURE', 'QUIZ', 'PRESELECTION', 'INTERVIEW', 'DECISION'];
-export const SINGLETON_INTERMEDIATE_STAGE_TYPES: SupportedStageType[] = ['QUIZ', 'PRESELECTION', 'INTERVIEW'];
 export const STAGE_TYPE_LABELS: Record<StageType, string> = {
   CANDIDATURE: 'Candidature',
   QUIZ: 'Quiz',
@@ -31,7 +30,6 @@ export function getPipelineReadinessIssues(stages: PipelineStageReadinessInput[]
   const intermediateCount = stages.filter(stage => stage.stageType !== 'CANDIDATURE' && stage.stageType !== 'DECISION').length;
   const hasBlankLabel = stages.some(stage => !(stage.stageLabel || '').trim());
   const hasInvalidOrder = stages.some((stage, index) => stage.stageOrder !== index + 1);
-  const duplicatedSingletonTypes = SINGLETON_INTERMEDIATE_STAGE_TYPES.filter(type => stages.filter(stage => stage.stageType === type).length > 1);
 
   if (candidatureCount !== 1) {
     issues.push('Candidature doit être présente une seule fois.');
@@ -53,9 +51,6 @@ export function getPipelineReadinessIssues(stages: PipelineStageReadinessInput[]
   }
   if (hasInvalidOrder) {
     issues.push('Les ordres d’étapes doivent rester continus.');
-  }
-  if (duplicatedSingletonTypes.length > 0) {
-    issues.push(`Les types ${duplicatedSingletonTypes.map(type => STAGE_TYPE_LABELS[type]).join(', ')} ne peuvent être présents qu’une seule fois dans le pipeline actuel.`);
   }
 
   return issues;
@@ -81,6 +76,7 @@ export interface PipelineTemplate {
 // ── Pipeline Stage ─────────────────────────────────
 export interface PipelineStage {
   id?: number;
+  uid?: string;
   stageType?: StageType;
   stageLabel?: string;
   stageOrder?: number;

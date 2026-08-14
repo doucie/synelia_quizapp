@@ -9,6 +9,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -110,6 +111,146 @@ class PipelineStageBusinessTest {
 		assertThat(existingStage.getStageType()).isEqualTo(StageType.INTERVIEW.getValue());
 		assertThat(existingStage.getStageLabel()).isEqualTo("Entretien archive");
 		verify(pipelineStageRepository).saveAll(any());
+	}
+
+	@Test
+	void update_rejectsRetypingBoundaryStage() {
+		PipelineTemplate template = buildTemplate(11, false);
+		PipelineStage existingStage = buildStage(21, template, StageType.CANDIDATURE.getValue(), "Candidature");
+
+		when(pipelineStageRepository.findOne(21, false)).thenReturn(existingStage);
+		when(functionalError.DISALLOWED_OPERATION(anyString(), eq(Locale.FRENCH)))
+				.thenAnswer(invocation -> buildStatus("FUNC_DISALLOWED_OPERATION", invocation.getArgument(0)));
+
+		PipelineStageDto dto = new PipelineStageDto();
+		dto.setId(21);
+		dto.setStageType(StageType.INTERVIEW.getValue());
+
+		InvalidEntityException exception = assertThrows(
+				InvalidEntityException.class,
+				() -> pipelineStageBusiness.update(buildRequest(77, dto, false), Locale.FRENCH));
+
+		assertThat(exception.getStatus().getMessage()).contains("bornes fixes");
+		verify(pipelineStageRepository, never()).saveAll(any());
+	}
+
+	@Test
+	void update_rejectsMovingBoundaryStageFromHeadOrTail() {
+		PipelineTemplate template = buildTemplate(11, false);
+		PipelineStage candidature = buildStage(21, template, StageType.CANDIDATURE.getValue(), "Candidature");
+		candidature.setStageOrder(1);
+		PipelineStage quiz = buildStage(23, template, StageType.QUIZ.getValue(), "Quiz");
+		quiz.setStageOrder(2);
+		PipelineStage decision = buildStage(22, template, StageType.DECISION.getValue(), "Decision");
+		decision.setStageOrder(3);
+
+		when(pipelineStageRepository.findOne(21, false)).thenReturn(candidature);
+		when(pipelineStageRepository.findOne(22, false)).thenReturn(decision);
+		when(pipelineStageRepository.findByPipelineTemplateIdOrderByStageOrder(11))
+				.thenReturn(List.of(candidature, quiz, decision));
+		when(functionalError.DISALLOWED_OPERATION(anyString(), eq(Locale.FRENCH)))
+				.thenAnswer(invocation -> buildStatus("FUNC_DISALLOWED_OPERATION", invocation.getArgument(0)));
+
+		PipelineStageDto candidatureDto = new PipelineStageDto();
+		candidatureDto.setId(21);
+		candidatureDto.setStageOrder(3);
+
+		InvalidEntityException headException = assertThrows(
+				InvalidEntityException.class,
+				() -> pipelineStageBusiness.update(buildRequest(77, candidatureDto, false), Locale.FRENCH));
+		assertThat(headException.getStatus().getMessage()).contains("tête");
+
+		PipelineStageDto decisionDto = new PipelineStageDto();
+		decisionDto.setId(22);
+		decisionDto.setStageOrder(2);
+
+		InvalidEntityException tailException = assertThrows(
+				InvalidEntityException.class,
+				() -> pipelineStageBusiness.update(buildRequest(77, decisionDto, false), Locale.FRENCH));
+		assertThat(tailException.getStatus().getMessage()).contains("queue");
+
+		verify(pipelineStageRepository, never()).saveAll(any());
+	}
+
+	@Test
+	void update_allowsBoundaryStageToMoveToTailWhenStagesAreCreatedInParallel() throws Exception {
+		PipelineTemplate template = buildTemplate(11, false);
+		PipelineStage candidature = buildStage(21, template, StageType.CANDIDATURE.getValue(), "Candidature");
+		candidature.setStageOrder(1);
+		PipelineStage quiz = buildStage(23, template, StageType.QUIZ.getValue(), "Quiz");
+		quiz.setStageOrder(2);
+		PipelineStage decision = buildStage(22, template, StageType.DECISION.getValue(), "Decision");
+		decision.setStageOrder(3);
+
+		when(pipelineStageRepository.findOne(22, false)).thenReturn(decision);
+		when(pipelineStageRepository.findByPipelineTemplateIdOrderByStageOrder(11))
+				.thenReturn(List.of(candidature, quiz, decision));
+		when(pipelineStageRepository.saveAll(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+		PipelineStageDto decisionDto = new PipelineStageDto();
+		decisionDto.setId(22);
+		decisionDto.setStageOrder(4);
+
+		Response<PipelineStageDto> response = pipelineStageBusiness.update(buildRequest(77, decisionDto, true), Locale.FRENCH);
+
+		assertThat(response.isHasError()).isFalse();
+		assertThat(decision.getStageOrder()).isEqualTo(4);
+		verify(pipelineStageRepository).saveAll(any());
+	}
+
+	@Test
+	void create_allowsMultipleOccurrencesOfIntermediateStageTypes() throws Exception {
+		PipelineTemplate template = buildTemplate(11, false);
+		when(pipelineTemplateRepository.findOne(11, false)).thenReturn(template);
+		when(pipelineStageRepository.saveAll(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+		Request<PipelineStageDto> request = new Request<>();
+		request.setUser(77);
+		request.setIsSimpleLoading(true);
+
+		List<PipelineStageDto> dtos = new ArrayList<>();
+		int order = 1;
+		for (String[] spec : new String[][] {
+				{StageType.QUIZ.getValue(), "Quiz round 1"},
+				{StageType.QUIZ.getValue(), "Quiz round 2"},
+				{StageType.PRESELECTION.getValue(), "Présélection round 1"},
+				{StageType.PRESELECTION.getValue(), "Présélection round 2"},
+				{StageType.INTERVIEW.getValue(), "Entretien round 1"},
+				{StageType.INTERVIEW.getValue(), "Entretien round 2"}
+		}) {
+			PipelineStageDto dto = new PipelineStageDto();
+			dto.setPipelineTemplateId(11);
+			dto.setStageType(spec[0]);
+			dto.setStageLabel(spec[1]);
+			dto.setStageOrder(order++);
+			dtos.add(dto);
+		}
+		request.setDatas(dtos);
+
+		Response<PipelineStageDto> response = pipelineStageBusiness.create(request, Locale.FRENCH);
+
+		assertThat(response.isHasError()).isFalse();
+		assertThat(response.getItems()).hasSize(6);
+		verify(pipelineStageRepository).saveAll(any());
+	}
+
+	@Test
+	void update_allowsRetypingStageToAnAlreadyUsedIntermediateType() throws Exception {
+		PipelineTemplate template = buildTemplate(11, false);
+		PipelineStage existingStage = buildStage(21, template, StageType.PRESELECTION.getValue(), "Présélection");
+
+		when(pipelineStageRepository.findOne(21, false)).thenReturn(existingStage);
+		when(pipelineStageRepository.saveAll(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+		PipelineStageDto dto = new PipelineStageDto();
+		dto.setId(21);
+		dto.setStageType(StageType.QUIZ.getValue());
+
+		Response<PipelineStageDto> response = pipelineStageBusiness.update(buildRequest(77, dto, true), Locale.FRENCH);
+
+		assertThat(response.isHasError()).isFalse();
+		assertThat(existingStage.getStageType()).isEqualTo(StageType.QUIZ.getValue());
+		verify(pipelineStageRepository, never()).findByPipelineTemplateIdOrderByStageOrder(any());
 	}
 
 	private Request<PipelineStageDto> buildRequest(Integer userId, PipelineStageDto dto, boolean simpleLoading) {

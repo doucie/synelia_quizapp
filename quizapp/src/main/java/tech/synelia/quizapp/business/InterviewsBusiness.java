@@ -182,9 +182,9 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 			
 			// Vérifier qu'une étape INTERVIEW existe dans le template de la campagne
 			if (existingCampaigns != null && existingCampaigns.getPipelineTemplate() != null) {
-				PipelineStage interviewStage = pipelineStageRepository.findByTemplateIdAndStageType(
+				Long interviewStageCount = pipelineStageRepository.countByTemplateIdAndStageType(
 						existingCampaigns.getPipelineTemplate().getId(), "INTERVIEW");
-				if (interviewStage == null) {
+				if (interviewStageCount == null || interviewStageCount <= 0) {
 					log.warning("Aucune étape INTERVIEW dans le template de la campagne " + existingCampaigns.getId());
 				}
 			}
@@ -488,17 +488,21 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 		}
 
 		for (Integer applicationId : applicationIds) {
-			ApplicationProgress progress = applicationProgressBusiness.resolveProgressByStageType(applicationId, "INTERVIEW");
-			if (progress == null || progress.getId() == null) {
-				continue;
-			}
-			List<Interviews> applicationInterviews = interviewsRepository.findByApplicationProgressId(progress.getId(), false);
-			List<Interviews> orderedInterviews = sortInterviewsForRound(applicationInterviews);
-			for (int index = 0; index < orderedInterviews.size(); index++) {
-				Interviews interview = orderedInterviews.get(index);
-				if (interview != null && interview.getId() != null) {
-					roundsByInterviewId.put(interview.getId(), index + 1);
+			List<ApplicationProgress> interviewOccurrences = applicationProgressBusiness.listProgressOccurrences(applicationId, "INTERVIEW");
+			int roundOffset = 0;
+			for (ApplicationProgress progress : interviewOccurrences) {
+				if (progress == null || progress.getId() == null) {
+					continue;
 				}
+				List<Interviews> applicationInterviews = interviewsRepository.findByApplicationProgressId(progress.getId(), false);
+				List<Interviews> orderedInterviews = sortInterviewsForRound(applicationInterviews);
+				for (int index = 0; index < orderedInterviews.size(); index++) {
+					Interviews interview = orderedInterviews.get(index);
+					if (interview != null && interview.getId() != null) {
+						roundsByInterviewId.put(interview.getId(), roundOffset + index + 1);
+					}
+				}
+				roundOffset += orderedInterviews.size();
 			}
 		}
 
@@ -785,15 +789,15 @@ public class InterviewsBusiness implements IBasicBusiness<Request<InterviewsDto>
 				&& interview.getApplicationProgress().getPipelineStage() != null) {
 			return interview.getApplicationProgress().getPipelineStage();
 		}
-		Campaigns campaign = resolveCampaignQuietly(interview);
-		if (campaign == null || campaign.getPipelineTemplate() == null) {
+		Integer applicationId = resolveInterviewApplicationId(interview);
+		if (applicationId == null) {
 			return null;
 		}
-		Integer templateId = campaign.getPipelineTemplate().getId();
-		if (templateId == null) {
+		ApplicationProgress interviewProgress = applicationProgressBusiness.resolveProgressByStageType(applicationId, "INTERVIEW");
+		if (interviewProgress == null) {
 			return null;
 		}
-		return pipelineStageRepository.findByTemplateIdAndStageType(templateId, "INTERVIEW");
+		return interviewProgress.getPipelineStage();
 	}
 
 	private void markInterviewStageMailSent(Interviews interview) {

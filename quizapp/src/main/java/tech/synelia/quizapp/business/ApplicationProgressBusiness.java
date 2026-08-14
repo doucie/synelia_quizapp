@@ -639,7 +639,7 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
         updateStageScore(progress, score, userId, activateIfPending);
     }
 
-    private void updateStageScore(ApplicationProgress progress, Double score, Integer userId, boolean activateIfPending) {
+    public void updateStageScore(ApplicationProgress progress, Double score, Integer userId, boolean activateIfPending) {
         if (progress == null) {
             return;
         }
@@ -1139,19 +1139,27 @@ public class ApplicationProgressBusiness implements IBasicBusiness<Request<Appli
         return findProgressByStageType(applicationId, StageType.INTERVIEW.getValue());
     }
 
-    private ApplicationProgress findProgressByStageType(Integer applicationId, String stageType) {
+    public List<ApplicationProgress> listProgressOccurrences(Integer applicationId, String stageType) {
+        if (applicationId == null || !Utilities.notBlank(stageType)) {
+            return new ArrayList<>();
+        }
+
         List<ApplicationProgress> progressList = applicationProgressRepository.findByApplicationIdOrderByStageOrder(applicationId);
         if (progressList == null || progressList.isEmpty()) {
-            return null;
+            return new ArrayList<>();
         }
 
-        List<ApplicationProgress> matchingProgress = new ArrayList<ApplicationProgress>();
+        List<ApplicationProgress> occurrences = new ArrayList<>();
         for (ApplicationProgress progress : progressList) {
             if (matchesStageType(progress, stageType)) {
-                matchingProgress.add(progress);
+                occurrences.add(progress);
             }
         }
+        return occurrences;
+    }
 
+    private ApplicationProgress findProgressByStageType(Integer applicationId, String stageType) {
+        List<ApplicationProgress> matchingProgress = listProgressOccurrences(applicationId, stageType);
         if (matchingProgress.isEmpty()) {
             return null;
         }

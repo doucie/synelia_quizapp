@@ -6,12 +6,13 @@ import { Subject, takeUntil, forkJoin, of } from 'rxjs';
 import { PipelineTemplateService } from '../../../core/services/pipeline-template.service';
 import { PipelineStageService } from '../../../core/services/pipeline-stage.service';
 import { NotificationService } from '../../../core/services/notification.service';
-import { PipelineTemplate, PipelineStage, StageType, STAGE_TYPES, STAGE_TYPE_LABELS, SINGLETON_INTERMEDIATE_STAGE_TYPES, getPipelineReadinessIssues } from '../../../core/models/pipeline.interfaces';
+import { PipelineTemplate, PipelineStage, StageType, STAGE_TYPES, STAGE_TYPE_LABELS, getPipelineReadinessIssues } from '../../../core/models/pipeline.interfaces';
 import { FilterCheckboxComponent } from '../../../shared/filter-checkbox/filter-checkbox';
 import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../shared/filter-select/filter-select';
 
 interface EditableStage {
   id?: number;
+  uid: string;
   stageLabel: string;
   stageType: StageType;
   stageOrder: number;
@@ -155,6 +156,7 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
         const rawStages = (stages.items || []).sort((a, b) => (a.stageOrder || 0) - (b.stageOrder || 0));
         this.stages.set(rawStages.map(s => this.normalizeStageForEditor({
           id: s.id,
+          uid: 'stage-' + s.id,
           stageLabel: s.stageLabel || '',
           stageType: (s.stageType || 'PRESELECTION') as StageType,
           stageOrder: s.stageOrder || 0,
@@ -181,20 +183,15 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const availableTypes = this.getAvailableSingletonStageTypes();
-    if (availableTypes.length === 0) {
-      this.notificationService.warning('Étapes du pipeline', 'Le modèle actuel ne supporte qu’une seule occurrence de chaque type intermédiaire métier autorisé (Quiz, Présélection, Entretien).');
-      return;
-    }
-
     const current = this.stages();
     const decisionIndex = current.findIndex(stage => stage.stageType === 'DECISION');
     const insertIndex = decisionIndex >= 0 ? decisionIndex : current.length;
     const nextList = [...current];
 
     nextList.splice(insertIndex, 0, this.normalizeStageForEditor({
+      uid: this.newStageUid(),
       stageLabel: '',
-      stageType: availableTypes[0],
+      stageType: this.editableStageTypes[0],
       stageOrder: 0,
       isRequired: false,
       allowSkip: false,
@@ -320,11 +317,15 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
   }
 
   getStageTypeLabel(type: StageType): string {
-    return STAGE_TYPE_LABELS[type] || type;
+    return STAGE_TYPE_LABELS[type];
   }
 
   hasAvailableStageTypeForCreation(): boolean {
-    return !this.isLockedTemplate() && this.getAvailableSingletonStageTypes().length > 0;
+    return !this.isLockedTemplate();
+  }
+
+  private newStageUid(): string {
+    return 'new-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
   }
 
   private normalizeStageForEditor(stage: EditableStage): EditableStage {
@@ -412,41 +413,11 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
   }
 
   getEditableStageTypeOptions(stage: EditableStage): { value: StageType; label: string }[] {
-    const usedSingletonTypes = new Set(
-      this.stages()
-        .filter(existingStage => existingStage !== stage)
-        .map(existingStage => existingStage.stageType)
-        .filter((stageType): stageType is StageType => this.isSingletonIntermediateStageType(stageType))
-    );
-    const supported = this.stageTypes.filter(type => this.editableStageTypes.includes(type.value)
-      && (!this.isSingletonIntermediateStageType(type.value) || !usedSingletonTypes.has(type.value)));
-
-    if (this.isFixedStage(stage) || supported.some(type => type.value === stage.stageType)) {
-      return supported;
-    }
-
-    return [
-      { value: stage.stageType, label: this.getStageTypeLabel(stage.stageType) },
-      ...supported
-    ];
+    return this.stageTypes.filter(type => this.editableStageTypes.includes(type.value));
   }
 
   isFixedStage(stage: EditableStage): boolean {
     return stage.stageType === 'CANDIDATURE' || stage.stageType === 'DECISION';
-  }
-
-  private getAvailableSingletonStageTypes(): StageType[] {
-    const usedTypes = new Set(
-      this.stages()
-        .map(stage => stage.stageType)
-        .filter((stageType): stageType is StageType => this.isSingletonIntermediateStageType(stageType))
-    );
-
-    return this.editableStageTypes.filter(stageType => !usedTypes.has(stageType));
-  }
-
-  private isSingletonIntermediateStageType(stageType: StageType): boolean {
-    return SINGLETON_INTERMEDIATE_STAGE_TYPES.includes(stageType as typeof SINGLETON_INTERMEDIATE_STAGE_TYPES[number]);
   }
 
   isStageReorderable(stage: EditableStage): boolean {
@@ -522,6 +493,13 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
 
     this.saving.set(true);
 
+    // Ordre de sauvegarde : cas de déactivation.
+    // On persiste d'abord le template (nom, description, isActive=false), puis les étapes :
+    // cela garantit qu'un template dont les étapes ne peuvent plus être synchronisées
+    // (données legacy, validation backend) peut toujours être désactivé. Risque assumé :
+    // si la sauvegarde des étapes échoue ensuite, le template reste désactivé avec les
+    // anciennes étapes — l'utilisateur est notifié de l'erreur. Le cas inverse (activation)
+    // reste transactionnel : les étapes sont sauvées avant l'activation.
     if (isCurrentlyActive && !shouldBeActive) {
       this.updateTemplateInfo(name, desc, () => this.saveStages(() => this.onSaveComplete()));
       return;

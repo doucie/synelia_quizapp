@@ -85,7 +85,7 @@
           <p class="preview-empty">Ajoutez des étapes ci-dessous pour voir l'aperçu</p>
         } @else {
           <div class="pipeline-preview">
-            @for (stage of stages(); track stage.stageOrder; let i = $index) {
+            @for (stage of stages(); track stage.uid; let i = $index) {
               <div class="preview-step" [class.required]="stage.isRequired" [class.eliminatory]="stage.isEliminatory">
                 <div class="preview-dot">
                   <span class="preview-order">{{ i + 1 }}</span>
@@ -104,7 +104,7 @@
       <section class="stages-section">
         <div class="stages-header">
           <h2 class="section-title">Étapes du pipeline</h2>
-          <button class="btn btn-primary btn-sm" (click)="addStage()" [disabled]="!hasAvailableStageTypeForCreation()" [title]="isLockedTemplate() ? 'Ce template est verrouillé: utilisez une duplication pour le corriger.' : (hasAvailableStageTypeForCreation() ? 'Ajouter une étape intermédiaire' : 'Tous les types intermédiaires supportés sont déjà utilisés dans ce pipeline')">
+          <button class="btn btn-primary btn-sm" (click)="addStage()" [disabled]="isLockedTemplate()" [title]="isLockedTemplate() ? 'Ce template est verrouillé: utilisez une duplication pour le corriger.' : 'Ajouter une étape intermédiaire'">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 4v16m8-8H4"/></svg>
             Ajouter une étape intermédiaire
           </button>
@@ -119,7 +119,7 @@
         }
 
         <div class="stages-list">
-          @for (stage of stages(); track stage.stageOrder; let i = $index) {
+          @for (stage of stages(); track stage.uid; let i = $index) {
             <div class="stage-card"
                  [class.is-fixed]="isFixedStage(stage)"
                 [class.is-readonly]="isLockedTemplate()"

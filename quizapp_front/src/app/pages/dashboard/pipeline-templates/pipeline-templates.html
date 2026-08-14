@@ -117,7 +117,7 @@
 
             @if (getStages(template.id).length > 0) {
               <div class="stages-bar">
-                @for (stage of getStages(template.id); track stage.id; let i = $index) {
+                @for (stage of getStages(template.id); track (stage.id ?? stage.uid); let i = $index) {
                   <div class="stage-dot" [title]="stage.stageLabel || ''" [class.required]="stage.isRequired" [class.eliminatory]="stage.isEliminatory">
                     <span class="stage-order">{{ i + 1 }}</span>
                   </div>

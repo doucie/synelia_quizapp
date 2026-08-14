@@ -11,7 +11,7 @@ import { FilterCheckboxComponent } from '../../../../../shared/filter-checkbox/f
 import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../../../shared/filter-select/filter-select';
 import { PipelineStageService, PipelineStageCriteria, PagedPipelineStageResponse } from '../../../../../core/services/pipeline-stage.service';
 import { PipelineTemplateService } from '../../../../../core/services/pipeline-template.service';
-import { PipelineStage, PipelineTemplate, StageType, STAGE_TYPES, STAGE_TYPE_LABELS, SINGLETON_INTERMEDIATE_STAGE_TYPES } from '../../../../../core/models/pipeline.interfaces';
+import { PipelineStage, PipelineTemplate, StageType, STAGE_TYPES, STAGE_TYPE_LABELS } from '../../../../../core/models/pipeline.interfaces';
 
 @Component({
   selector: 'app-entities-pipeline-stages',
@@ -82,14 +82,7 @@ export class EntitiesPipelineStagesComponent extends EntityCrudBase<PipelineStag
   }
 
   getEditableStageTypes(currentType?: StageType, templateStages: PipelineStage[] = [], currentStageId?: number): StageType[] {
-    const usedSingletonTypes = new Set(
-      templateStages
-        .filter(stage => stage.id !== currentStageId)
-        .map(stage => stage.stageType)
-        .filter((stageType): stageType is StageType => !!stageType && this.isSingletonIntermediateStageType(stageType))
-    );
-
-    const availableTypes = this.stageTypes.filter(type => !this.isSingletonIntermediateStageType(type) || !usedSingletonTypes.has(type));
+    const availableTypes = this.stageTypes;
     if (!currentType || availableTypes.includes(currentType)) {
       return availableTypes;
     }
@@ -271,14 +264,6 @@ export class EntitiesPipelineStagesComponent extends EntityCrudBase<PipelineStag
       return 'Ce template est verrouillé. Préparez une correction via duplication plutôt qu’en modifiant directement ses étapes.';
     }
 
-    if (stage.stageType && this.isSingletonIntermediateStageType(stage.stageType)) {
-      const templateStages = stage.id ? this.editTemplateStages() : this.createTemplateStages();
-      const duplicateExists = templateStages.some(existingStage => existingStage.id !== stage.id && existingStage.stageType === stage.stageType);
-      if (duplicateExists) {
-        return `${this.getStageTypeLabel(stage.stageType)} ne peut être présent qu'une seule fois dans le pipeline actuel.`;
-      }
-    }
-
     const configJson = this.normalizeConfigJson(stage.configJson);
 
     if (configJson) {
@@ -401,9 +386,5 @@ export class EntitiesPipelineStagesComponent extends EntityCrudBase<PipelineStag
       },
       error: () => onLoaded([])
     });
-  }
-
-  private isSingletonIntermediateStageType(stageType: StageType): boolean {
-    return SINGLETON_INTERMEDIATE_STAGE_TYPES.includes(stageType as typeof SINGLETON_INTERMEDIATE_STAGE_TYPES[number]);
   }
 }

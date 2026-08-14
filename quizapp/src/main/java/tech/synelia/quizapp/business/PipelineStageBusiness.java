@@ -4,12 +4,10 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -70,7 +68,6 @@ public class PipelineStageBusiness implements IBasicBusiness<Request<PipelineSta
         log.info("----begin create PipelineStage-----");
         Response<PipelineStageDto> response = new Response<>();
         List<PipelineStage> items = new ArrayList<>();
-        Set<String> createdSingletonStageKeys = new HashSet<>();
 
         for (PipelineStageDto dto : request.getDatas()) {
             Map<String, Object> fieldsToVerify = new HashMap<>();
@@ -101,7 +98,6 @@ public class PipelineStageBusiness implements IBasicBusiness<Request<PipelineSta
             String normalizedStageType = normalizeStageType(dto.getStageType(), locale);
             validateFixedStageCreation(normalizedStageType, locale);
             String normalizedConfigJson = validateAndNormalizeConfig(normalizedStageType, dto.getConfigJson(), locale);
-            ensureSingletonStageTypeNotDuplicated(dto.getPipelineTemplateId(), normalizedStageType, null, null, createdSingletonStageKeys, locale);
             dto.setStageType(normalizedStageType);
             dto.setConfigJson(normalizedConfigJson);
 
@@ -164,17 +160,53 @@ public class PipelineStageBusiness implements IBasicBusiness<Request<PipelineSta
                     ? dto.getStageType()
                     : entityToSave.getStageType();
                 String nextStageType = normalizeStageType(requestedStageType, locale);
+
+                // Les bornes CANDIDATURE/DECISION sont fixes : impossible de les re-typer
+                // ou d'en créer via un update direct d'API
+                if (isFixedBoundaryStageType(nextStageType) != isFixedBoundaryStageType(entityToSave.getStageType())) {
+                    throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION(
+                            "Les étapes CANDIDATURE et DECISION sont des bornes fixes : leur type ne peut pas être modifié ni réassigné",
+                            locale));
+                }
+
+                // Garantir la position tête/queue, y compris via un update direct d'API.
+                // Les étapes créées en parallèle d'une sauvegarde ne sont pas encore en base :
+                // DECISION doit donc rester strictement après toutes les étapes existantes,
+                // sans exiger un numéro d'ordre absolu.
+                if (dto.getStageOrder() != null && isFixedBoundaryStageType(nextStageType)) {
+                    if (StageType.CANDIDATURE.getValue().equals(nextStageType) && dto.getStageOrder() != 1) {
+                        throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION(
+                                "L'étape CANDIDATURE doit rester en tête du pipeline (stageOrder 1)",
+                                locale));
+                    }
+                    if (StageType.DECISION.getValue().equals(nextStageType) && template != null) {
+                        List<PipelineStage> templateStages = pipelineStageRepository
+                                .findByPipelineTemplateIdOrderByStageOrder(template.getId());
+                        int maxOtherStageOrder = 0;
+                        if (templateStages != null) {
+                            for (PipelineStage templateStage : templateStages) {
+                                if (templateStage == null || templateStage.getId() == null
+                                        || templateStage.getId().equals(entityToSave.getId())) {
+                                    continue;
+                                }
+                                if (templateStage.getStageOrder() != null
+                                        && templateStage.getStageOrder() > maxOtherStageOrder) {
+                                    maxOtherStageOrder = templateStage.getStageOrder();
+                                }
+                            }
+                        }
+                        if (dto.getStageOrder() <= maxOtherStageOrder) {
+                            throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION(
+                                    "L'étape DECISION doit rester en queue du pipeline (après le stageOrder " + maxOtherStageOrder + ")",
+                                    locale));
+                        }
+                    }
+                }
+
             String nextConfigJson = Utilities.shouldUpdate(dto.getConfigJson())
                     ? dto.getConfigJson()
                     : entityToSave.getConfigJson();
             String normalizedConfigJson = validateAndNormalizeConfig(nextStageType, nextConfigJson, locale);
-                ensureSingletonStageTypeNotDuplicated(
-                    template != null ? template.getId() : null,
-                    nextStageType,
-                    entityToSave.getId(),
-                    entityToSave.getStageType(),
-                    null,
-                    locale);
 
             if (!nextStageType.equals(entityToSave.getStageType())) entityToSave.setStageType(nextStageType);
             if (Utilities.shouldUpdate(dto.getStageLabel())) entityToSave.setStageLabel(dto.getStageLabel());
@@ -286,60 +318,6 @@ public class PipelineStageBusiness implements IBasicBusiness<Request<PipelineSta
     private boolean isFixedBoundaryStageType(String stageType) {
         return StageType.CANDIDATURE.getValue().equals(stageType)
                 || StageType.DECISION.getValue().equals(stageType);
-    }
-
-    private void ensureSingletonStageTypeNotDuplicated(
-            Integer templateId,
-            String normalizedStageType,
-            Integer currentStageId,
-            String currentStageType,
-            Set<String> createdSingletonStageKeys,
-            Locale locale) {
-        if (templateId == null || !isSingletonIntermediateStageType(normalizedStageType)) {
-            return;
-        }
-
-        String currentNormalizedStageType = Utilities.notBlank(currentStageType)
-                ? normalizeStageType(currentStageType, locale)
-                : null;
-
-        if (currentStageId != null && normalizedStageType.equals(currentNormalizedStageType)) {
-            return;
-        }
-
-        if (createdSingletonStageKeys != null) {
-            String creationKey = templateId + "::" + normalizedStageType;
-            if (!createdSingletonStageKeys.add(creationKey)) {
-                throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION(
-                    normalizedStageType + " ne peut etre present qu'une seule fois dans le pipeline actuel",
-                        locale));
-            }
-        }
-
-        List<PipelineStage> existingStages = pipelineStageRepository.findByPipelineTemplateIdOrderByStageOrder(templateId);
-        if (existingStages == null || existingStages.isEmpty()) {
-            return;
-        }
-
-        for (PipelineStage existingStage : existingStages) {
-            if (existingStage == null || existingStage.getId() == null) {
-                continue;
-            }
-            if (currentStageId != null && existingStage.getId().equals(currentStageId)) {
-                continue;
-            }
-            if (normalizedStageType.equals(existingStage.getStageType())) {
-                throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION(
-                        normalizedStageType + " ne peut etre present qu'une seule fois dans le pipeline actuel",
-                        locale));
-            }
-        }
-    }
-
-    private boolean isSingletonIntermediateStageType(String stageType) {
-        return StageType.QUIZ.getValue().equals(stageType)
-                || StageType.PRESELECTION.getValue().equals(stageType)
-                || StageType.INTERVIEW.getValue().equals(stageType);
     }
 
     private void normalizeStageFlags(PipelineStage stage) {
