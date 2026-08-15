@@ -1452,7 +1452,7 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
     this.applicationService.createQuizAttempt(application.id).subscribe({
       next: (response) => {
         const createdApplication = response.items?.[0];
-        const quizToken = createdApplication?.searchString;
+        const quizToken = createdApplication?.quizToken ?? createdApplication?.searchString;
         if (quizToken) {
           const quizUrl = this.buildQuizAttemptPublicUrl(application.id!, quizToken);
           this.copyQuizAttemptLink(quizUrl);

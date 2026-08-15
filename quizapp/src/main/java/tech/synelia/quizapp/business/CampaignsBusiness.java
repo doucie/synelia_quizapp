@@ -230,6 +230,12 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 						"La valeur maximale de candidatures doit être supérieure ou égale à 1", locale));
 			}
 
+			// Validation: maxAttempts doit être >= 1 si fourni (limite de tentatives quiz)
+			if (dto.getMaxAttempts() != null && dto.getMaxAttempts() < 1) {
+				throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+						"La valeur maximale de tentatives quiz doit être supérieure ou égale à 1", locale));
+			}
+
 			Campaigns entityToSave = null;
 			entityToSave = CampaignsTransformer.INSTANCE.toEntity(dto, existingUser, existingSpecialities, existingPipelineTemplate);
 			applyFormAssignmentConfiguration(entityToSave, dto, true, locale);
@@ -391,6 +397,13 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			}
 			if (dto.getMaxApply() != null && dto.getMaxApply() > 0) {
 				entityToSave.setMaxApply(dto.getMaxApply());
+			}
+			if (dto.getMaxAttempts() != null) {
+				if (dto.getMaxAttempts() < 1) {
+					throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+							"La valeur maximale de tentatives quiz doit être supérieure ou égale à 1", locale));
+				}
+				entityToSave.setMaxAttempts(dto.getMaxAttempts());
 			}
 			if (dto.getAllCanEvaluate() != null) {
 				entityToSave.setAllCanEvaluate(dto.getAllCanEvaluate());
@@ -1030,6 +1043,13 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			if (dto.getMaxApply() != null && dto.getMaxApply() > 0) {
 				entityToSave.setMaxApply(dto.getMaxApply());
 			}
+			if (dto.getMaxAttempts() != null) {
+				if (dto.getMaxAttempts() < 1) {
+					throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+							"La valeur maximale de tentatives quiz doit être supérieure ou égale à 1", locale));
+				}
+				entityToSave.setMaxAttempts(dto.getMaxAttempts());
+			}
 			if (dto.getAllCanEvaluate() != null) {
 				entityToSave.setAllCanEvaluate(dto.getAllCanEvaluate());
 			}
@@ -1178,6 +1198,13 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			}
 			if (dto.getMaxApply() != null && dto.getMaxApply() > 0) {
 				entityToSave.setMaxApply(dto.getMaxApply());
+			}
+			if (dto.getMaxAttempts() != null) {
+				if (dto.getMaxAttempts() < 1) {
+					throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+							"La valeur maximale de tentatives quiz doit être supérieure ou égale à 1", locale));
+				}
+				entityToSave.setMaxAttempts(dto.getMaxAttempts());
 			}
 			if (dto.getAllCanEvaluate() != null) {
 				entityToSave.setAllCanEvaluate(dto.getAllCanEvaluate());

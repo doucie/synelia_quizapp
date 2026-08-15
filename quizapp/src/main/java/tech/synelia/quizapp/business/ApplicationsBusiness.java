@@ -377,7 +377,8 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				dto.setTrackingCode(trackingCodesByApplicationId.get(dto.getId()));
 				String qt = quizTokensByAppId.get(dto.getId());
 				if (qt != null) {
-					dto.setSearchString(qt);
+					dto.setQuizToken(qt);
+					dto.setHasQuizStage(true);
 				}
 			}
 
@@ -756,9 +757,19 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		}
 
 		dto.setQuizAttempts(buildApplicationQuizAttemptSummaries(dto.getId()));
+		applyAttemptLimits(dto, applicationsRepository.findOne(dto.getId(), false));
 		applyDerivedInterviewSummary(dto, applicationsRepository.findOne(dto.getId(), false));
 
 		return dto;
+	}
+
+	private void applyAttemptLimits(ApplicationsDto dto, Applications application) {
+		if (dto == null || application == null || application.getId() == null) {
+			return;
+		}
+		dto.setAttemptsUsed((int) applicationQuizAttemptRepository.countByApplicationId(application.getId(), false));
+		Campaigns campaign = application.getSourceToken() != null ? application.getSourceToken().getCampaigns() : null;
+		dto.setMaxAttempts(campaign != null && campaign.getMaxAttempts() != null ? campaign.getMaxAttempts() : 1);
 	}
 
 	private List<ApplicationQuizAttemptSummaryDto> buildApplicationQuizAttemptSummaries(Integer applicationId) {
@@ -1037,18 +1048,26 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			// Créer la tentative quiz AVANT de poser applications.quiz_token (invariant: token émis => attempt existe)
 			ApplicationQuizAttempt quizAttempt = createQuizAttemptForVerifiedApplication(application, quizToken, request.getUser());
 			if (quizAttempt == null || quizAttempt.getId() == null) {
-				log.severe("Quiz token NON émis pour l'application " + application.getId() + ": aucune tentative quiz créée (étape QUIZ absente)");
+				log.warning("Aucune tentative quiz créée pour l'application " + application.getId() + " (étape QUIZ absente) — email vérifié sans quiz");
 				application.setEmailVerified(true);
 				application.setUpdatedAt(Utilities.getCurrentDate());
 				application.setUpdatedBy(request.getUser());
 				applicationsRepository.save(application);
 
+				// Succès : email vérifié sans étape quiz (flux normal pour CANDIDATURE → INTERVIEW → DECISION)
+				ApplicationsDto resultDto = ApplicationsTransformer.INSTANCE.toDto(application);
+				resultDto.setTrackingCode(ensureCandidateTrackingCode(application, request.getUser()));
+				resultDto.setQuizToken(null);
+				resultDto.setHasQuizStage(false);
+				resultDto = getFullInfos(resultDto, 1, false, locale);
+
 				Status status = new Status();
-				status.setCode(StatusCode.FUNC_REQUEST_FAIL);
-				status.setMessage("Email vérifié, mais aucune étape quiz exploitable pour cette candidature.");
+				status.setCode(StatusCode.SUCCESS);
+				status.setMessage("Email vérifié avec succès");
 				response.setHttpCode(HttpStatus.OK.value());
 				response.setStatus(status);
-				response.setHasError(true);
+				response.setItems(Arrays.asList(resultDto));
+				response.setHasError(false);
 				return response;
 			}
 
@@ -1060,9 +1079,10 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			syncApplicationQuizSummaryFromAttempt(application, quizAttempt, request.getUser());
 			log.info("Email vérifié et quiz token généré pour l'application ID: " + application.getId());
 			
-			// Préparer la réponse avec le quiz_token dans searchString
+			// Préparer la réponse avec le quiz_token dans un champ de contrat explicite
 			ApplicationsDto resultDto = ApplicationsTransformer.INSTANCE.toDto(application);
-			resultDto.setSearchString(quizToken); // Retourner le quiz_token au frontend
+			resultDto.setQuizToken(quizToken);
+			resultDto.setHasQuizStage(true);
 			resultDto.setTrackingCode(ensureCandidateTrackingCode(application, request.getUser()));
 			resultDto = getFullInfos(resultDto, 1, false, locale);
 			
@@ -1239,7 +1259,9 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				return response;
 			}
 			
-			if (Utilities.isBlank(dto.getSearchString())) {
+			Integer applicationId = dto.getId();
+			String quizToken = resolveQuizToken(dto);
+			if (Utilities.isBlank(quizToken)) {
 				Status status = new Status();
 				status.setCode(StatusCode.FUNC_FIELD_EMPTY);
 				status.setMessage("Token de quiz manquant");
@@ -1248,9 +1270,6 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				response.setHttpCode(HttpStatus.BAD_REQUEST.value());
 				return response;
 			}
-			
-			Integer applicationId = dto.getId();
-			String quizToken = dto.getSearchString();
 			log.info("Récupération du quiz pour l'application ID: " + applicationId + " avec token");
 			
 			// 1. Récupérer l'application et valider le quiz_token
@@ -1469,7 +1488,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			quizData.put("remainingTime", timingState.remainingTime);
 			quizData.put("quizStatus", resolveQuizStatus(application, quizAttempt));
 			quizData.put("questions", questionsWithAnswers);
-			resultDto.setSearchString(Utilities.convertObjectToJson(quizData));
+			resultDto.setQuizData(Utilities.convertObjectToJson(quizData));
 			
 			Status status = new Status();
 			status.setCode(StatusCode.SUCCESS);
@@ -1890,16 +1909,6 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				return response;
 			}
 			
-			if (Utilities.isBlank(dto.getSearchString())) {
-				Status status = new Status();
-				status.setCode(StatusCode.FUNC_FIELD_EMPTY);
-				status.setMessage("Token de quiz manquant");
-				response.setStatus(status);
-				response.setHasError(true);
-				response.setHttpCode(HttpStatus.BAD_REQUEST.value());
-				return response;
-			}
-			
 			Integer questionId = resolveQuestionId(dto);
 			Integer fallbackAnswerId = resolveAnswerId(dto);
 			List<Integer> selectedAnswerIds = resolveSelectedAnswerIds(dto, fallbackAnswerId);
@@ -1915,9 +1924,18 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				response.setHttpCode(HttpStatus.BAD_REQUEST.value());
 				return response;
 			}
-			
+
 			Integer applicationId = dto.getId();
-			String quizToken = dto.getSearchString();
+			String quizToken = resolveQuizToken(dto);
+			if (Utilities.isBlank(quizToken)) {
+				Status status = new Status();
+				status.setCode(StatusCode.FUNC_FIELD_EMPTY);
+				status.setMessage("Token de quiz manquant");
+				response.setStatus(status);
+				response.setHasError(true);
+				response.setHttpCode(HttpStatus.BAD_REQUEST.value());
+				return response;
+			}
 			
 			log.info("Saving quiz answer for application " + applicationId + ", question " + questionId + ", selected=" + selectedAnswerIds);
 			
@@ -2131,7 +2149,9 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				return response;
 			}
 			
-			if (Utilities.isBlank(dto.getSearchString())) {
+			Integer applicationId = dto.getId();
+			String quizToken = resolveQuizToken(dto);
+			if (Utilities.isBlank(quizToken)) {
 				Status status = new Status();
 				status.setCode(StatusCode.FUNC_FIELD_EMPTY);
 				status.setMessage("Token de quiz manquant");
@@ -2140,9 +2160,6 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				response.setHttpCode(HttpStatus.BAD_REQUEST.value());
 				return response;
 			}
-			
-			Integer applicationId = dto.getId();
-			String quizToken = dto.getSearchString();
 			
 			log.info("Completion du quiz pour l'application " + applicationId);
 			
@@ -2214,13 +2231,14 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		if (dto == null || dto.getId() == null) {
 			return buildErrorResponse(HttpStatus.BAD_REQUEST, StatusCode.FUNC_FIELD_EMPTY, "ID de l'application manquant");
 		}
-		if (Utilities.isBlank(dto.getSearchString())) {
+		String quizToken = resolveQuizToken(dto);
+		if (Utilities.isBlank(quizToken)) {
 			return buildErrorResponse(HttpStatus.BAD_REQUEST, StatusCode.FUNC_FIELD_EMPTY, "Token de quiz manquant");
 		}
 
 		Applications application = applicationsRepository.findOne(dto.getId(), false);
-		ApplicationQuizAttempt quizAttempt = resolveQuizAttempt(application, dto.getSearchString());
-		Response<ApplicationsDto> accessError = validateQuizSessionAccess(application, dto.getSearchString(), true);
+		ApplicationQuizAttempt quizAttempt = resolveQuizAttempt(application, quizToken);
+		Response<ApplicationsDto> accessError = validateQuizSessionAccess(application, quizToken, true);
 		if (accessError != null) {
 			return accessError;
 		}
@@ -2538,6 +2556,14 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		}
 
 		return applicationQuizAttemptRepository.findByApplicationIdAndQuizToken(application.getId(), quizToken, false);
+	}
+
+	private String resolveQuizToken(ApplicationsDto dto) {
+		if (dto == null) {
+			return null;
+		}
+		String quizToken = StringUtils.trimToNull(dto.getQuizToken());
+		return quizToken != null ? quizToken : StringUtils.trimToNull(dto.getSearchString());
 	}
 
 	private ApplicationQuizAttempt resolveLatestQuizAttempt(Integer applicationId) {
@@ -3373,6 +3399,17 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 					"L'email doit etre verifie avant de creer une nouvelle tentative de quiz.", locale));
 		}
 
+		// A.3 Limite de tentatives quiz (campaigns.max_attempts, défaut 1) :
+		// compte les tentatives réellement créées (hors reprises, qui passent par la
+		// même tentative via get-quiz et non par cette création additionnelle).
+		Campaigns campaign = application.getSourceToken() != null ? application.getSourceToken().getCampaigns() : null;
+		Integer maxAttempts = campaign != null && campaign.getMaxAttempts() != null ? campaign.getMaxAttempts() : 1;
+		long launchedAttempts = applicationQuizAttemptRepository.countByApplicationId(application.getId(), false);
+		if (launchedAttempts >= maxAttempts) {
+			throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+					"Limite de tentatives quiz atteinte (" + maxAttempts + "). Aucune nouvelle tentative ne peut etre creee.", locale));
+		}
+
 		String quizToken = UUID.randomUUID().toString().replace("-", "");
 
 		ApplicationQuizAttempt quizAttempt = createQuizAttemptForVerifiedApplication(application, quizToken, actorUserId);
@@ -3385,7 +3422,8 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		Applications refreshedApplication = applicationsRepository.findOne(application.getId(), false);
 		Applications source = refreshedApplication != null ? refreshedApplication : application;
 		ApplicationsDto resultDto = ApplicationsTransformer.INSTANCE.toDto(source);
-		resultDto.setSearchString(quizToken);
+		resultDto.setQuizToken(quizToken);
+		resultDto.setHasQuizStage(true);
 		resultDto.setTrackingCode(ensureCandidateTrackingCode(source, actorUserId));
 		resultDto = getFullInfos(resultDto, 1, false, locale);
 

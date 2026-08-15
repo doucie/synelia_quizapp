@@ -176,11 +176,12 @@ export class QuizComponent implements OnInit, OnDestroy {
           return;
         }
 
-        // Les données du quiz sont dans searchString en JSON
+        // Les données du quiz sont dans quizData (JSON), fallback legacy searchString
         const item = response.items[0];
-        if (item.searchString) {
+        const quizPayload = item.quizData ?? item.searchString;
+        if (quizPayload) {
           try {
-            const parsedData = JSON.parse(item.searchString) as QuizData;
+            const parsedData = JSON.parse(quizPayload) as QuizData;
             this.quizData.set(parsedData);
             this.initializeLocalState(parsedData);
             this.initializeCountdown(parsedData);

@@ -41,6 +41,7 @@ public class CampaignsDto extends _CampaignsDto implements Cloneable{
 	private String     campaignStart        ;
 	private String     campaignEnd          ;
     private Integer    maxApply             ;
+    private Integer    maxAttempts          ;
     private Boolean    allCanEvaluate       ;
     private Integer    totalQuestions       ;
     private Boolean    isTimed              ;

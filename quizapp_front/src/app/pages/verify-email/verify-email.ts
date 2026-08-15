@@ -21,6 +21,7 @@ export class VerifyEmailComponent implements OnInit {
   verificationError = signal<string | null>(null);
   token = signal<string>('');
   trackingCode = signal<string | null>(null);
+  hasQuizStage = signal(false);
 
   ngOnInit(): void {
     // Récupérer le token depuis l'URL
@@ -51,15 +52,23 @@ export class VerifyEmailComponent implements OnInit {
         // Succès !
         this.verificationSuccess.set(true);
         
-        // Récupérer le quiz_token depuis searchString
         const application = response.items[0];
         this.trackingCode.set(application.trackingCode || null);
-        const quizToken = application.searchString; // Le backend retourne le quiz_token dans searchString
-        
-        // Rediriger vers le QCM après 3 secondes avec applicationId et quizToken
-        setTimeout(() => {
-          this.router.navigate(['/quiz', application.id, quizToken]);
-        }, 3000);
+        const quizToken = application.quizToken ?? application.searchString; // Contrat explicite, fallback legacy
+        const hasQuizStage = application.hasQuizStage ?? !!quizToken;
+        this.hasQuizStage.set(hasQuizStage);
+
+        if (hasQuizStage && quizToken) {
+          // Rediriger vers le QCM après 3 secondes avec applicationId et quizToken
+          setTimeout(() => {
+            this.router.navigate(['/quiz', application.id, quizToken]);
+          }, 3000);
+        } else {
+          // Pas d'étape quiz : proposer le suivi de candidature
+          setTimeout(() => {
+            this.router.navigate(['/suivre-candidature']);
+          }, 3000);
+        }
       },
       error: (error) => {
         this.isVerifying.set(false);

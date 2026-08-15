@@ -22,6 +22,23 @@ import tech.synelia.quizapp.security.JwtAuthenticationFilter;
 @EnableMethodSecurity
 public class SecurityConfig {
 
+    /**
+     * Endpoints publics du parcours candidat (sans authentification JWT).
+     * Source de vérité exposée pour les tests de couverture (A.1).
+     */
+    public static final String[] PUBLIC_APPLICATION_ENDPOINTS = {
+        "/applications/create",
+        "/applications/verify-email",
+        "/applications/get-quiz",
+        "/applications/save-quiz-answer",
+        "/applications/complete-quiz",
+        "/applications/touch-quiz",
+        "/applications/withdraw",
+        "/applications/track",
+        "/applications/respond-interview",
+        "/applications/submit-ask"
+    };
+
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
@@ -38,7 +55,7 @@ public class SecurityConfig {
                 // Endpoints publics (connexion, candidature, QEEL, Swagger)
                 .requestMatchers("/userManager/connexion").permitAll()
                 .requestMatchers("/api/qeel/**", "/ws/**").permitAll()
-                    .requestMatchers("/applications/create", "/applications/verifyEmail/**", "/applications/track", "/applications/respond-interview", "/applications/submit-ask").permitAll()
+                    .requestMatchers(PUBLIC_APPLICATION_ENDPOINTS).permitAll()
                 .requestMatchers("/campaigns/public/**").permitAll()
                 .requestMatchers("/sourceToken/validate/**", "/sourceToken/info/**").permitAll()
                 .requestMatchers("/candidateanswer/**").permitAll()

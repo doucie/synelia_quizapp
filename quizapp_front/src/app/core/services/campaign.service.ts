@@ -21,6 +21,7 @@ export interface Campaign {
   campaignEnd?: string;
   campaignDuration?: number;
   maxApply?: number;
+  maxAttempts?: number;
   allCanEvaluate?: boolean;
   totalQuestions?: number;
   isTimed?: boolean;
@@ -332,6 +333,7 @@ export class CampaignService {
       campaignStart: normalizedCampaign.campaignStart,
       campaignEnd: normalizedCampaign.campaignEnd,
       maxApply: normalizedCampaign.maxApply,
+      maxAttempts: normalizedCampaign.maxAttempts,
       allCanEvaluate: normalizedCampaign.allCanEvaluate,
       isTimed: normalizedCampaign.isTimed,
       isArchived: normalizedCampaign.isArchived,
@@ -686,6 +688,7 @@ export class CampaignService {
       campaignEnd: campaign.campaignEnd || campaign.campaign_end || undefined,
       campaignDuration: campaign.campaignDuration || campaign.campaign_duration || undefined,
       maxApply: campaign.maxApply ?? campaign.max_apply ?? undefined,
+      maxAttempts: campaign.maxAttempts ?? campaign.max_attempts ?? undefined,
       allCanEvaluate: campaign.allCanEvaluate ?? campaign.all_can_evaluate ?? false,
       totalQuestions: campaign.totalQuestions ?? campaign.total_questions ?? campaign.questionsCount ?? campaign.questions_count ?? undefined,
       isTimed: campaign.isTimed ?? campaign.is_timed ?? false,

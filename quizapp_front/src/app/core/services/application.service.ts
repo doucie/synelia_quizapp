@@ -94,6 +94,11 @@ export interface Application {
   updatedBy?: number;
   isDeleted?: boolean;
   searchString?: string;
+  quizToken?: string;
+  hasQuizStage?: boolean;
+  quizData?: string;
+  attemptsUsed?: number;
+  maxAttempts?: number;
   sourceTokenId?: number;
   campaignId?: number;
   action?: string;
@@ -260,7 +265,7 @@ export class ApplicationService {
       user: 1,
       data: {
         id: applicationId,
-        searchString: quizToken, // Le quiz_token est passé dans searchString pour validation
+        quizToken: quizToken,
         candidateFirstName: null,
         candidateLastName: null,
         candidateEmail: null,
@@ -286,7 +291,7 @@ export class ApplicationService {
       user: 1,
       data: {
         id: applicationId,
-        searchString: quizToken,
+        quizToken: quizToken,
         questionId: payload.questionId,
         answerId: payload.answerId,
         selectedAnswerIds,
@@ -320,7 +325,7 @@ export class ApplicationService {
       user: 1,
       data: {
         id: applicationId,
-        searchString: quizToken,
+        quizToken: quizToken,
         candidateFirstName: null,
         candidateLastName: null,
         candidateEmail: null,
@@ -342,7 +347,7 @@ export class ApplicationService {
       user: 1,
       data: {
         id: applicationId,
-        searchString: quizToken,
+        quizToken: quizToken,
         candidateFirstName: null,
         candidateLastName: null,
         candidateEmail: null,

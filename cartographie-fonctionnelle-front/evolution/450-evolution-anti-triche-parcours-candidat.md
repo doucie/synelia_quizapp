@@ -1,7 +1,7 @@
 # Note — Règles anti-triche du quiz & fluidité du parcours candidat
 
 **Date :** 2026-08-12
-**Statut :** Cible d'architecture retenue, non implémentée (hors chantier D, fait dans cette note)
+**Statut :** Vague 1 implémentée et testée (chantiers A.1, A.2, A.3 + reliquats 420) — Vague 2 (anti-triche paliers 1+2, chantiers B/C) restant à faire (§ 8bis).
 **Périmètre :** `SecurityConfig`, `ApplicationsController` / `ApplicationsBusiness`, `ApplicationQuizAttempt`, `app_config`, `campaigns`, `QuizComponent`, page `/campagnes` et `/postuler/campagne/:campaignId`, cartographie `public/*`, migrations Flyway, mini-BD
 
 > Cette note complète la 440 (pipeline personnalisable) : elle couvre le **parcours candidat côté public** — corrections de sécurité/fluidité, règles anti-triche du quiz activables depuis la configuration générale, et mise à jour des écarts cartographie.
@@ -51,23 +51,25 @@ Le parcours est **fonctionnel dans son architecture** et vérifié dans le code 
 
 **Checklist :**
 
-- [ ] Ajouter à la liste publique de `SecurityConfig.java:41` : `/applications/verify-email` (et **corriger/supprimer** le pattern mort `verifyEmail/**`), `/applications/get-quiz`, `/applications/save-quiz-answer`, `/applications/complete-quiz`, `/applications/touch-quiz`, `/applications/progress`, `/applications/withdraw`.
-- [ ] **Recette manuelle obligatoire après fix** : lien de vérification par email → page quiz → soumission → page de suivi, le tout sans connexion.
-- [ ] Vérifier que `/applications/progress` ne doit rester public que si le portail candidat l'utilise (sinon le garder back-office) — à arbitrer à l'implémentation.
+- [x] Liste publique extraite dans la constante `SecurityConfig.PUBLIC_APPLICATION_ENDPOINTS` (source de vérité) : `/applications/create`, `/verify-email`, `/get-quiz`, `/save-quiz-answer`, `/complete-quiz`, `/touch-quiz`, `/withdraw`, `/track`, `/respond-interview`, `/submit-ask`.
+- [x] Pattern mort `verifyEmail/**` supprimé (le vrai endpoint est `/verify-email`).
+- [x] **Arbitrage `/applications/progress`** : reste **protégé** (back-office) — le portail public lit le progress via la réponse de `/track`.
+- [x] **Recette** : recette manuelle obligatoire (lien de vérification par email → page quiz → soumission → suivi sans connexion) — prévue avant livraison Vague 1.
 
 ### A.2 Message `verify-email` sans étape quiz
 
 `ApplicationsBusiness.java:1039-1053` : quand le template n'a pas d'étape QUIZ, `verifyEmail` répond `hasError=true` avec « Email vérifié, mais aucune étape quiz exploitable pour cette candidature. ».
 
-- [ ] Remplacer par une réponse de succès propre : email vérifié + `trackingCode` (et sans erreur), que le template ait ou non un quiz.
-- [ ] Le front (`VerifyEmailComponent`) doit gérer ce succès sans redirection quiz, en proposant le lien `/suivre-candidature`.
+- [x] Backend (`ApplicationsBusiness.verifyEmail`) : branche « aucune étape QUIZ » → réponse de succès propre (`hasError=false`, `StatusCode.SUCCESS`, message « Email vérifié avec succès »), `trackingCode` posé, `quizToken=null` + flag `hasQuizStage=false`.
+- [x] Front (`VerifyEmailComponent`) : lit `application.quizToken ?? application.searchString` (fallback legacy), signal `hasQuizStage` ; redirection `/quiz/:id/:token` si quiz, sinon `/suivre-candidature` (délai 3 s). Spec couverte (`verify-email.spec.ts`).
 
 ### A.3 Limite de tentatives quiz
 
 Structure multi-tentatives existante (`application_quiz_attempt` + `createAdditionalQuizAttempt` `ApplicationsBusiness.java:3336-3393`), **politique absente** (aucun `maxAttempts` ; `campaigns.max_apply` limite les candidatures, pas les tentatives). Le texte front « Une seule tentative » (`quiz.html:65`) n'est pas appliqué.
 
-- [ ] Colonne `application_quiz_attempt.max_attempts` (ou source `campaigns`, à arbitrer) ; **défaut 1** ; appliquée dans `createAdditionalQuizAttempt` (rejet si atteint).
-- [ ] Affichage côté recruteur du nombre de tentatives restantes / utilisées.
+- [x] **Source arbitrée : nouvelle colonne `campaigns.max_attempts`** (défaut 1, migration `V1_083`) — `max_apply` reste le plafond de candidatures (non renommé) ; pas de colonne dupliquée sur l'attempt ; validation `>= 1` au create/update campagne (`CampaignsBusiness`).
+- [x] Appliquée dans `createAdditionalQuizAttempt` (`ApplicationsBusiness`, action `CREATE_QUIZ_ATTEMPT`) : tentatives **réellement lancées** (hors reprises) ≥ `max_attempts` → rejet `InvalidEntityException` (« Limite de tentatives quiz atteinte (X). Aucune nouvelle tentative ne peut etre creee. »). Valeur par défaut 1 si la campagne n'en définit pas.
+- [x] Affichage côté recruteur : `attemptsUsed`/`maxAttempts` exposés dans le DTO (`applyAttemptLimits` sur `getFullInfos`), badge « Tentatives : X / max » dans la vue candidatures + champ maxAttempts dans la fiche campagne.
 
 ### A.4 Backlog (signalé, non prioritaire)
 
@@ -136,21 +138,52 @@ La table `app_config` et la page Settings (onglet « config ») existent (`AppCo
 
 ## 7. Schéma / migrations
 
-Script SQL de référence : `quizapp/src/main/resources/db/migration/V1_082__add_quiz_anti_cheat_schema.sql` (la 440 occupe `V1_081__add_pipeline_stage_is_active.sql`).
+Script SQL de référence : `quizapp/src/main/resources/db/migration/V1_083__add_quiz_anti_cheat_schema.sql` (`V1_082` est pris par la 440 : `V1_082__add_pipeline_stage_is_active.sql`).
 
-- [ ] `CREATE TABLE quiz_anti_cheat_event` (B.5).
-- [ ] `ALTER TABLE application_quiz_attempt` : `tab_switch_count`, `fullscreen_exit_count`, `cheat_flag_count`, `max_attempts` (A.3).
-- [ ] `ALTER TABLE app_config` : colonnes anti-triche (C).
-- [ ] `ALTER TABLE campaigns` : `anti_cheat_enabled` nullable (C).
-- [ ] Aucune migration pour le chantier A (code + config de sécurité uniquement).
+- [x] **Vague 1** : `ALTER TABLE campaigns` : ADD `max_attempts` int NOT NULL DEFAULT 1 (`V1_083__add_campaigns_max_attempts.sql`, migration séparée de la Vague 2).
+- [ ] **Vague 2** : `CREATE TABLE quiz_anti_cheat_event` (B.5) — migration distincte (`V1_083` est pris par la Vague 1).
+- [ ] **Vague 2** : `ALTER TABLE application_quiz_attempt` : `tab_switch_count`, `fullscreen_exit_count`, `cheat_flag_count` (politique portée par les `screening_*` existants).
+- [ ] **Vague 2** : `ALTER TABLE app_config` : colonnes anti-triche (C).
+- [ ] **Vague 2** : `ALTER TABLE campaigns` : `anti_cheat_enabled` nullable (C).
+- [x] Aucune migration pour les chantiers A.1/A.2 (code + config de sécurité uniquement).
 
 ## 8. Checklist transverse
 
-- [ ] Builds : `mvnw compile` + tests spring-boot ; `ng build --configuration=development`.
-- [ ] Tests : `ApplicationsBusinessTest` (verify-email sans quiz OK, maxAttempts, politique FAIL soumission forcée), `QuizComponent` spec (compteurs onglet, avertissement, soumission), `SecurityConfig` (accès public aux 7 endpoints).
+- [x] Builds Vague 1 : `mvnw compile` + tests spring-boot ciblés OK ; `ng build` OK (warnings budgets pré-existants).
+- [x] Tests Vague 1 : `ApplicationsBusinessTest` (17/17 : verify-email sans quiz, verify-email avec quiz, `createAdditionalQuizAttempt` rejet/succès, `applyAttemptLimits`), `SecurityConfigTest` (3/3 : endpoints candidats publics, pas d'exposition recruiter/interne, aucun pattern legacy), `verify-email.spec.ts` (6/6 : succès sans quiz, quiz, fallback legacy, erreurs).
+- [ ] Tests Vague 2 : `ApplicationsBusinessTest` (politique FAIL soumission forcée), `QuizComponent` spec (compteurs onglet, avertissement, soumission).
 - [ ] Recette manuelle : parcours candidat complet sans JWT (A.1) ; quiz chronométré à expiration (A.4) ; sorties d'onglet en WARN puis en FAIL (B).
 - [ ] Documentation : mettre à jour `quizapp_db_documentation_20260810.md` (table `quiz_anti_cheat_event`, colonnes attempt/app_config/campaigns) ; mini-BD `exemples/data.js` (table + colonnes, bloc `cles`) ; cocher les points cahier des charges (`z_mémoire/template_cahier_des_charges/index.html:1293,1311` — détection onglet journalisée + avertissement après N).
-- [ ] Postman : nouveaux endpoints / flux quiz.
+- [x] Postman : collections v1/v2 alignées sur les contrats DTO actuels — `interviewStart`→`interviewDate` (9× chaqu'un), `candidateMark`→`globalScore`, `recruiterComment`→`globalComment`, `interviewEnd` supprimé ; JSON valides.
+- [ ] Note 420 : repointage des reliquats absorbés (lignes 764/784/791/796 → 450) ; le scénario d'acceptation multi-occurrences (795) reste un gate de la 420.
+
+## 8bis. Plan d'implémentation détaillé (2 vagues)
+
+Budget acté : **6,5 j backend + 3,5 j frontend**. La correction de sécurité A.1 est prioritaire avant toute autre livraison.
+
+### Vague 1 — Chantier A + reliquats 420 (livrable intermédiaire testable) — ✅ livré
+
+1. **A.1 `SecurityConfig`** — ✅ constante `PUBLIC_APPLICATION_ENDPOINTS` (source de vérité) avec `/verify-email`, `/get-quiz`, `/save-quiz-answer`, `/complete-quiz`, `/touch-quiz`, `/withdraw` (+ `/track`, `/respond-interview`, `/submit-ask`) ; pattern mort `verifyEmail/**` supprimé ; `/applications/progress` reste protégé (back-office). Test : `SecurityConfigTest` (3/3).
+2. **A.2 `verify-email` sans quiz** (`ApplicationsBusiness.verifyEmail`) — ✅ succès propre (`hasError=false`, `StatusCode.SUCCESS`, « Email vérifié avec succès »), `trackingCode` posé, `quizToken=null` + `hasQuizStage=false` ; `VerifyEmailComponent` redirige vers `/suivre-candidature` (3 s) au lieu du quiz. Test : `verify-email.spec.ts` (6/6).
+3. **A.3 `max_attempts`** — ✅ migration `V1_083__add_campaigns_max_attempts.sql` (`campaigns.max_attempts` NOT NULL DEFAULT 1) ; validation `>= 1` au create/update (`CampaignsBusiness`) ; application dans `createAdditionalQuizAttempt` (rejet si atteint, défaut 1) ; DTO `attemptsUsed`/`maxAttempts` + affichage recruteur (fiche campagne + badge candidatures). Tests : 4 cas dans `ApplicationsBusinessTest`.
+4. **Reliquat 420 (token quiz explicite, lignes 764/791)** — ✅ champ `quizToken` sur `ApplicationsDto` (backend `resolveQuizToken` + 4 endpoints quiz) ; front `application.service.ts`/`verify-email.ts`/`apply-position.ts`/`entities-applications.ts` envoient et lisent `quizToken` (fallback `searchString` legacy conservé) ; `quiz.ts` lit `quizData ?? searchString`.
+5. **Reliquat 420 (Postman, lignes 784/796)** — ✅ collections v1/v2 alignées sur les contrats DTO : `interviewStart`→`interviewDate`, `candidateMark`→`globalScore`, `recruiterComment`→`globalComment`, `interviewEnd` supprimé.
+6. **Tests** — ✅ `ApplicationsBusinessTest` 17/17, `SecurityConfigTest` 3/3, `verify-email.spec.ts` 6/6 ; builds `mvnw compile` + tests spring-boot + `ng build` OK.
+
+### Vague 2 — Chantiers B/C (anti-triche paliers 1 + 2)
+
+1. **Migration `V1_083`** — `quiz_anti_cheat_event` (B.5) ; colonnes attempt `tab_switch_count`/`fullscreen_exit_count`/`cheat_flag_count` ; `app_config` (`anti_cheat_enabled` défaut 0, `screening_policy` WARN, `tab_switch_max_warnings` 3, `tab_switch_max_actions` 5, `fullscreen_required` 0, `block_shortcuts` 0, `block_copy_paste` 0) ; `campaigns.anti_cheat_enabled` nullable (null → global).
+2. **Backend B** — entité/repo/DTO/service `QuizAntiCheatEvent` + journalisation ; résolution de politique (global → override campagne) ; validation des compteurs dans `validateQuizSessionAccess` (get/save/touch) ; soumission forcée via `completeQuizInternal` (L2958) ; `completeQuiz` avec flag `forced` ; politiques WARN/FLAG/FAIL (défaut WARN).
+3. **Backend C** — `AppConfig` + Settings onglet config ; `Campaigns.antiCheatEnabled` + fiche campagne.
+4. **Frontend B** — `quiz.ts` : `visibilitychange`/`blur`/`focus`, fullscreen demandé + détection de sortie, blocage copier-coller/clic droit/raccourcis, compteur onglets → événements backend (fusionnés dans `touch-quiz`), bandeau d'avertissement, auto-submit FAIL.
+5. **Visibilité recruteur** — compteurs + liste événements dans `buildApplicationQuizAttemptSummaries` (vue tentative).
+6. **Tests** — `ApplicationsBusinessTest` (politique FAIL soumission forcée, événements journalisés), `QuizComponent` spec (compteurs/avertissement/soumission). Recette manuelle : sorties d'onglet en WARN puis en FAIL.
+
+### Ordre de livraison
+
+1. Vague 1 → livrable intermédiaire testable (parcours candidat réparé : email, quiz, retrait, suivi).
+2. Vague 2 → recette anti-triche complète.
+3. **460** (bibliothèque de grilles) ensuite ; le scénario d'acceptation multi-occurrences de la 420 (ligne 795) reste un gate de la 420, pas de la 450.
 
 ## 9. Points d'attention
 
@@ -171,6 +204,6 @@ Script SQL de référence : `quizapp/src/main/resources/db/migration/V1_082__add
 - `quizapp/src/main/java/tech/synelia/quizapp/dao/entity/ApplicationQuizAttempt.java`, `AppConfig.java`, `Campaigns.java`, `FormBusiness.java`, `utils/enums/QuizStatus.java`
 - `quizapp_front/src/app/pages/quiz/quiz.ts`, `quiz.html`, `pages/verify-email/`, `pages/track-application/`, `pages/campaigns/`, `pages/apply-position/`
 - `quizapp_front/src/app/core/services/campaign.service.ts`, `core/services/app-config.service.ts`, `app.routes.ts`
-- `quizapp/src/main/resources/db/migration/` : `V1_082__add_quiz_anti_cheat_schema.sql` (à créer à l'implémentation)
+- `quizapp/src/main/resources/db/migration/` : `V1_083__add_quiz_anti_cheat_schema.sql` (à créer à l'implémentation)
 - `cartographie-fonctionnelle-front/bd_documentee/quizapp_db_documentation_20260810.md`, `bd_documentee/exemples/data.js`
 - `z_mémoire/template_cahier_des_charges/index.html` (L1293, L1311 : exigences anti-triche à cocher)

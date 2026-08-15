@@ -22,7 +22,11 @@
         @if (trackingCode()) {
           <p class="tracking-code-reminder">Code de suivi à conserver : <strong>{{ trackingCode() }}</strong></p>
         }
-        <p class="redirect-message">Vous allez être redirigé vers le questionnaire dans quelques instants...</p>
+        @if (hasQuizStage()) {
+          <p class="redirect-message">Vous allez être redirigé vers le questionnaire dans quelques instants...</p>
+        } @else {
+          <p class="redirect-message">Vous allez être redirigé vers le suivi de votre candidature dans quelques instants...</p>
+        }
       </div>
     }
 

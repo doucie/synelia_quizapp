@@ -69,6 +69,9 @@ public class Campaigns implements Serializable, Cloneable {
     @Column(name="max_apply")
     private Integer    maxApply     ;
 
+    @Column(name="max_attempts")
+    private Integer    maxAttempts  ;
+
     @Column(name="all_can_evaluate", nullable=false)
     private Boolean    allCanEvaluate ;
 

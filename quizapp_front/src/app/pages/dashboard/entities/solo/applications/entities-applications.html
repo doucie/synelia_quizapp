@@ -387,6 +387,9 @@
                         Copier le lien courant
                       </button>
                     </div>
+                    <div *ngIf="app.attemptsUsed != null" class="quiz-attempt-summary__badges">
+                      <span class="answer-attempt-group__count">Tentatives : {{ app.attemptsUsed }} / {{ app.maxAttempts ?? 1 }}</span>
+                    </div>
                     <div class="quiz-attempt-summary__badges">
                       <span *ngIf="currentQuizAttempt.quizStatus" class="answer-attempt-group__status" [ngClass]="getQuizAttemptStatusClass(currentQuizAttempt.quizStatus)">
                         {{ getQuizAttemptStatusLabel(currentQuizAttempt.quizStatus) }}

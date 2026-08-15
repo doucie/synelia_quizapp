@@ -176,6 +176,21 @@
             </div>
           }
 
+          @if (campaign()?.maxAttempts !== undefined) {
+            <div class="meta-card">
+              <div class="meta-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 4v6h6"></path>
+                  <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                </svg>
+              </div>
+              <div class="meta-content">
+                <span class="meta-label">Tentatives quiz max</span>
+                <span class="meta-value">{{ campaign()?.maxAttempts ?? 1 }}</span>
+              </div>
+            </div>
+          }
+
           @if (campaign()?.timeAllForms !== undefined) {
             <div class="meta-card">
               <div class="meta-icon">

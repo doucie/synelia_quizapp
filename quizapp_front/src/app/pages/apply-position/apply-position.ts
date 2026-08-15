@@ -307,8 +307,9 @@ export class ApplyPositionComponent implements OnInit {
       }
 
       const created = response.items[0];
-      const qt = created.searchString;
-      if (qt && created.id) {
+      const qt = created.quizToken ?? created.searchString;
+      const hasQuizStage = created.hasQuizStage ?? !!qt;
+      if (qt && created.id && hasQuizStage) {
         this.submitSuccess.set(true);
         await this.router.navigate(['/quiz', created.id, qt]);
         return;

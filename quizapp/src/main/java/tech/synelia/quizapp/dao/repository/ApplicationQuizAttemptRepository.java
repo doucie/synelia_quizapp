@@ -30,4 +30,9 @@ public interface ApplicationQuizAttemptRepository extends JpaRepository<Applicat
 	List<ApplicationQuizAttempt> findByQuizStatusAndApplicationNotAbandoned(
 			@Param("quizStatus") String quizStatus,
 			@Param("isDeleted") Boolean isDeleted);
+
+	@Query("select count(e) from ApplicationQuizAttempt e where e.applications.id = :applicationId and e.isDeleted = :isDeleted")
+	long countByApplicationId(
+			@Param("applicationId") Integer applicationId,
+			@Param("isDeleted") Boolean isDeleted);
 }

@@ -353,6 +353,26 @@
               <span class="error-message">Le nombre doit être supérieur à 0</span>
             }
           </div>
+
+          <div class="form-group">
+            <label for="maxAttempts">
+              Nombre maximum de tentatives quiz
+            </label>
+            <input
+              type="number"
+              id="maxAttempts"
+              formControlName="maxAttempts"
+              placeholder="1"
+              min="1"
+              [class.error]="maxAttempts?.invalid && maxAttempts?.touched"
+            />
+            <p class="help-text">
+              Nombre maximal de tentatives quiz réellement lancées par candidat (défaut : 1)
+            </p>
+            @if (maxAttempts?.invalid && maxAttempts?.touched) {
+              <span class="error-message">Le nombre doit être supérieur à 0</span>
+            }
+          </div>
         </div>
 
         <div class="form-row two-cols">

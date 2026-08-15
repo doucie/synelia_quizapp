@@ -39,6 +39,7 @@ public interface CampaignsTransformer {
 		dto.setCampaignStart(formatDate(entity.getCampaignStart(), "yyyy-MM-dd"));
 		dto.setCampaignEnd(formatDate(entity.getCampaignEnd(), "yyyy-MM-dd"));
 		dto.setMaxApply(entity.getMaxApply());
+		dto.setMaxAttempts(entity.getMaxAttempts());
 		dto.setAllCanEvaluate(entity.getAllCanEvaluate());
 		dto.setTotalQuestions(entity.getTotalQuestions());
 		dto.setIsTimed(entity.getIsTimed());
@@ -120,6 +121,7 @@ public interface CampaignsTransformer {
 		entity.setCampaignStart(parseDate(dto.getCampaignStart(), "yyyy-MM-dd"));
 		entity.setCampaignEnd(parseDate(dto.getCampaignEnd(), "yyyy-MM-dd"));
 		entity.setMaxApply(dto.getMaxApply());
+		entity.setMaxAttempts(dto.getMaxAttempts());
 		entity.setAllCanEvaluate(dto.getAllCanEvaluate());
 		entity.setTotalQuestions(dto.getTotalQuestions());
 		entity.setIsTimed(dto.getIsTimed());

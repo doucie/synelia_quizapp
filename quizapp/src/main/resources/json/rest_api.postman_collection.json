@@ -997,7 +997,7 @@
 			"description": "",
 			"collectionId": "project.id",
 			"responses": [],
-			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"interviewStart\": \"\",\n\t\t\t\"interviewDuration\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"applicationId\": \"\",\n\t\t\t\"interviewId\": \"\"\n\t\t} \n\t]  \n}"
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"interviewDate\": \"\",\n\t\t\t\"interviewDuration\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"applicationId\": \"\",\n\t\t\t\"interviewId\": \"\"\n\t\t} \n\t]  \n}"
 		},
 		{
 			"id": "candidateInterview.update",
@@ -1027,7 +1027,7 @@
 			"description": "",
 			"collectionId": "project.id",
 			"responses": [],
-			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"interviewStart\": \"\",\n\t\t\t\"interviewDuration\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"applicationId\": \"\",\n\t\t\t\"interviewId\": \"\"\n\t\t} \n\t]  \n}"
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"interviewDate\": \"\",\n\t\t\t\"interviewDuration\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"applicationId\": \"\",\n\t\t\t\"interviewId\": \"\"\n\t\t} \n\t]  \n}"
 		},
 		{
 			"id": "candidateInterview.delete",
@@ -1087,7 +1087,7 @@
 			"description": "",
 			"collectionId": "project.id",
 			"responses": [],
-			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"interviewStart\": \"\",\n\t\t\"interviewDuration\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"applicationId\": \"\",\n\t\t\"interviewId\": \"\"\n\t}  \n}"
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"interviewDate\": \"\",\n\t\t\"interviewDuration\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"applicationId\": \"\",\n\t\t\"interviewId\": \"\"\n\t}  \n}"
 		},
 		{
 			"id": "candidateToken.create",
@@ -1357,7 +1357,7 @@
 			"description": "",
 			"collectionId": "project.id",
 			"responses": [],
-			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"candidateMark\": \"\",\n\t\t\t\"recruiterComment\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"candidateInterviewId\": \"\"\n\t\t} \n\t]  \n}"
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"globalScore\": \"\",\n\t\t\t\"globalComment\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"candidateInterviewId\": \"\"\n\t\t} \n\t]  \n}"
 		},
 		{
 			"id": "evaluations.update",
@@ -1387,7 +1387,7 @@
 			"description": "",
 			"collectionId": "project.id",
 			"responses": [],
-			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"candidateMark\": \"\",\n\t\t\t\"recruiterComment\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"candidateInterviewId\": \"\"\n\t\t} \n\t]  \n}"
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"globalScore\": \"\",\n\t\t\t\"globalComment\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"candidateInterviewId\": \"\"\n\t\t} \n\t]  \n}"
 		},
 		{
 			"id": "evaluations.delete",
@@ -1447,7 +1447,7 @@
 			"description": "",
 			"collectionId": "project.id",
 			"responses": [],
-			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"candidateMark\": \"\",\n\t\t\"recruiterComment\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"candidateInterviewId\": \"\"\n\t}  \n}"
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"globalScore\": \"\",\n\t\t\"globalComment\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"candidateInterviewId\": \"\"\n\t}  \n}"
 		},
 		{
 			"id": "interviewCrud.create",
@@ -1597,7 +1597,7 @@
 			"description": "",
 			"collectionId": "project.id",
 			"responses": [],
-			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"interviewLocation\": \"\",\n\t\t\t\"interviewStart\": \"\",\n\t\t\t\"interviewEnd\": \"\",\n\t\t\t\"interviewType\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"campaignId\": \"\"\n\t\t} \n\t]  \n}"
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"interviewLocation\": \"\",\n\t\t\t\"interviewDate\": \"\",\n\t\t\t\"interviewType\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"campaignId\": \"\"\n\t\t} \n\t]  \n}"
 		},
 		{
 			"id": "interviews.update",
@@ -1627,7 +1627,7 @@
 			"description": "",
 			"collectionId": "project.id",
 			"responses": [],
-			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"interviewLocation\": \"\",\n\t\t\t\"interviewStart\": \"\",\n\t\t\t\"interviewEnd\": \"\",\n\t\t\t\"interviewType\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"campaignId\": \"\"\n\t\t} \n\t]  \n}"
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"interviewLocation\": \"\",\n\t\t\t\"interviewDate\": \"\",\n\t\t\t\"interviewType\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"campaignId\": \"\"\n\t\t} \n\t]  \n}"
 		},
 		{
 			"id": "interviews.delete",
@@ -1687,7 +1687,7 @@
 			"description": "",
 			"collectionId": "project.id",
 			"responses": [],
-			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"interviewLocation\": \"\",\n\t\t\"interviewStart\": \"\",\n\t\t\"interviewEnd\": \"\",\n\t\t\"interviewType\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"campaignId\": \"\"\n\t}  \n}"
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"interviewLocation\": \"\",\n\t\t\"interviewDate\": \"\",\n\t\t\"interviewType\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"campaignId\": \"\"\n\t}  \n}"
 		},
 		{
 			"id": "notifications.create",

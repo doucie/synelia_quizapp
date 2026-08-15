@@ -5,8 +5,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -52,10 +54,14 @@ import tech.synelia.quizapp.dao.repository.NotificationsRepository;
 import tech.synelia.quizapp.dao.repository.UserRepository;
 import tech.synelia.quizapp.utils.HostingUtils;
 import tech.synelia.quizapp.utils.ParamsUtils;
+import tech.synelia.quizapp.utils.FunctionalError;
+import tech.synelia.quizapp.utils.StatusCode;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.dto.ApplicationsDto;
 import tech.synelia.quizapp.utils.enums.EmailActionType;
+import tech.synelia.quizapp.utils.enums.StageType;
+import tech.synelia.quizapp.utils.exception.InvalidEntityException;
 
 @ExtendWith(MockitoExtension.class)
 class ApplicationsBusinessTest {
@@ -98,6 +104,8 @@ class ApplicationsBusinessTest {
 	private ApplicationsRepository applicationsRepository;
 	@Mock
 	private ApplicationProgressBusiness applicationProgressBusiness;
+	@Mock
+	private FunctionalError functionalError;
 
 	@InjectMocks
 	private ApplicationsBusiness applicationsBusiness;
@@ -694,6 +702,267 @@ class ApplicationsBusinessTest {
 				Locale.FRENCH);
 		assertThat(interviewResponse.get("hasError")).isEqualTo(true);
 		assertThat(interviewResponse.get("message")).isEqualTo("Cette candidature a été retirée. Les actions publiques ne sont plus disponibles.");
+	}
+
+	@Test
+	void verifyEmail_withoutQuizStage_returnsSuccessWithoutQuizToken() throws Exception {
+		Applications application = new Applications();
+		application.setId(15);
+		application.setCandidateEmail("ada.lovelace@example.test");
+		application.setEmailVerified(false);
+
+		Campaigns campaign = new Campaigns();
+		campaign.setId(44);
+		campaign.setMaxAttempts(3);
+
+		SourceToken sourceToken = new SourceToken();
+		sourceToken.setCampaigns(campaign);
+		application.setSourceToken(sourceToken);
+
+		CandidateToken existingTrackingToken = new CandidateToken();
+		existingTrackingToken.setId(410);
+		existingTrackingToken.setTokenString("TRACK1");
+		existingTrackingToken.setIsDeleted(false);
+		existingTrackingToken.setApplications(application);
+
+		EmailVerificationToken verificationToken = new EmailVerificationToken();
+		verificationToken.setId(300);
+		verificationToken.setToken("VERIFY-TOKEN-ABC");
+		verificationToken.setTokenType(EmailVerificationToken.TokenType.APPLICATION_VERIFICATION);
+		verificationToken.setIsUsed(false);
+		verificationToken.setExpiresAt(new Date(System.currentTimeMillis() + 3_600_000L));
+		verificationToken.setApplication(application);
+
+		when(emailVerificationTokenRepository.findByToken("VERIFY-TOKEN-ABC")).thenReturn(Optional.of(verificationToken));
+		when(applicationProgressBusiness.resolveProgressByStageType(15, StageType.QUIZ.getValue())).thenReturn(null);
+		when(candidateTokenRepository.findByApplicationId(15, false)).thenReturn(List.of(existingTrackingToken));
+		when(applicationsRepository.findOne(15, false)).thenReturn(application);
+		when(applicationQuizAttemptRepository.findByApplicationIdOrderByIdDesc(15, false)).thenReturn(List.of());
+		when(applicationQuizAttemptRepository.countByApplicationId(15, false)).thenReturn(0L);
+
+		ApplicationsDto dto = new ApplicationsDto();
+		dto.setSearchString("VERIFY-TOKEN-ABC");
+		Request<ApplicationsDto> request = new Request<ApplicationsDto>();
+		request.setData(dto);
+		request.setUser(77);
+
+		Response<ApplicationsDto> response = applicationsBusiness.verifyEmail(request, Locale.FRENCH);
+
+		assertThat(response.isHasError()).isFalse();
+		assertThat(response.getStatus().getCode()).isEqualTo(StatusCode.SUCCESS);
+		assertThat(response.getStatus().getMessage()).isEqualTo("Email vérifié avec succès");
+		assertThat(response.getItems()).hasSize(1);
+
+		ApplicationsDto resultDto = response.getItems().get(0);
+		assertThat(resultDto.getQuizToken()).isNull();
+		assertThat(resultDto.getHasQuizStage()).isFalse();
+		assertThat(resultDto.getTrackingCode()).isEqualTo("TRACK1");
+		assertThat(resultDto.getAttemptsUsed()).isEqualTo(0);
+		assertThat(resultDto.getMaxAttempts()).isEqualTo(3);
+		assertThat(application.getEmailVerified()).isTrue();
+		verify(applicationsRepository).save(application);
+	}
+
+	@Test
+	void verifyEmail_withQuizStage_returnsQuizTokenAndHasQuizStage() throws Exception {
+		Applications application = new Applications();
+		application.setId(15);
+		application.setCandidateEmail("ada.lovelace@example.test");
+		application.setEmailVerified(false);
+
+		Campaigns campaign = new Campaigns();
+		campaign.setId(44);
+		campaign.setMaxAttempts(3);
+
+		SourceToken sourceToken = new SourceToken();
+		sourceToken.setCampaigns(campaign);
+		application.setSourceToken(sourceToken);
+
+		CandidateToken existingTrackingToken = new CandidateToken();
+		existingTrackingToken.setId(410);
+		existingTrackingToken.setTokenString("TRACK1");
+		existingTrackingToken.setIsDeleted(false);
+		existingTrackingToken.setApplications(application);
+
+		ApplicationProgress quizProgress = new ApplicationProgress();
+		quizProgress.setId(77);
+
+		ApplicationQuizAttempt savedAttempt = new ApplicationQuizAttempt();
+		savedAttempt.setId(901);
+
+		EmailVerificationToken verificationToken = new EmailVerificationToken();
+		verificationToken.setId(300);
+		verificationToken.setToken("VERIFY-TOKEN-QUIZ");
+		verificationToken.setTokenType(EmailVerificationToken.TokenType.APPLICATION_VERIFICATION);
+		verificationToken.setIsUsed(false);
+		verificationToken.setExpiresAt(new Date(System.currentTimeMillis() + 3_600_000L));
+		verificationToken.setApplication(application);
+
+		when(emailVerificationTokenRepository.findByToken("VERIFY-TOKEN-QUIZ")).thenReturn(Optional.of(verificationToken));
+		when(applicationProgressBusiness.resolveProgressByStageType(15, StageType.QUIZ.getValue())).thenReturn(quizProgress);
+		when(applicationQuizAttemptRepository.save(any(ApplicationQuizAttempt.class))).thenReturn(savedAttempt);
+		when(applicationsRepository.save(any(Applications.class))).thenAnswer(invocation -> invocation.getArgument(0));
+		when(candidateTokenRepository.findByApplicationId(15, false)).thenReturn(List.of(existingTrackingToken));
+		when(applicationsRepository.findOne(15, false)).thenReturn(application);
+		when(applicationQuizAttemptRepository.findByApplicationIdOrderByIdDesc(15, false)).thenReturn(List.of());
+		when(applicationQuizAttemptRepository.countByApplicationId(15, false)).thenReturn(0L);
+
+		ApplicationsDto dto = new ApplicationsDto();
+		dto.setSearchString("VERIFY-TOKEN-QUIZ");
+		Request<ApplicationsDto> request = new Request<ApplicationsDto>();
+		request.setData(dto);
+		request.setUser(77);
+
+		Response<ApplicationsDto> response = applicationsBusiness.verifyEmail(request, Locale.FRENCH);
+
+		assertThat(response.isHasError()).isFalse();
+		assertThat(response.getStatus().getCode()).isEqualTo(StatusCode.SUCCESS);
+		assertThat(response.getItems()).hasSize(1);
+
+		ApplicationsDto resultDto = response.getItems().get(0);
+		assertThat(resultDto.getQuizToken()).isNotBlank();
+		assertThat(resultDto.getHasQuizStage()).isTrue();
+		assertThat(resultDto.getTrackingCode()).isEqualTo("TRACK1");
+	}
+
+	@Test
+	void customCreateQuizAttempt_rejectsWhenMaxAttemptsReached() throws Exception {
+		Applications application = new Applications();
+		application.setId(15);
+		application.setEmailVerified(true);
+
+		Campaigns campaign = new Campaigns();
+		campaign.setId(44);
+		campaign.setMaxAttempts(2);
+
+		SourceToken sourceToken = new SourceToken();
+		sourceToken.setCampaigns(campaign);
+		application.setSourceToken(sourceToken);
+
+		when(applicationsRepository.findOne(15, false)).thenReturn(application);
+		when(applicationQuizAttemptRepository.countByApplicationId(15, false)).thenReturn(2L);
+		when(functionalError.REQUEST_FAIL(anyString(), any(Locale.class))).thenReturn(new tech.synelia.quizapp.utils.Status());
+
+		ApplicationsDto dto = new ApplicationsDto();
+		dto.setId(15);
+		dto.setAction("CREATE_QUIZ_ATTEMPT");
+		Request<ApplicationsDto> request = new Request<ApplicationsDto>();
+		request.setData(dto);
+		request.setUser(77);
+
+		assertThatThrownBy(() -> applicationsBusiness.custom(request, Locale.FRENCH))
+				.isInstanceOf(InvalidEntityException.class);
+
+		verify(functionalError).REQUEST_FAIL(
+				eq("Limite de tentatives quiz atteinte (2). Aucune nouvelle tentative ne peut etre creee."),
+				any(Locale.class));
+	}
+
+	@Test
+	void customCreateQuizAttempt_succeedsWhenUnderMaxAttempts() throws Exception {
+		Applications application = new Applications();
+		application.setId(15);
+		application.setCandidateEmail("ada.lovelace@example.test");
+		application.setEmailVerified(true);
+
+		Campaigns campaign = new Campaigns();
+		campaign.setId(44);
+		campaign.setMaxAttempts(2);
+
+		SourceToken sourceToken = new SourceToken();
+		sourceToken.setCampaigns(campaign);
+		application.setSourceToken(sourceToken);
+
+		CandidateToken existingTrackingToken = new CandidateToken();
+		existingTrackingToken.setId(410);
+		existingTrackingToken.setTokenString("TRACK1");
+		existingTrackingToken.setIsDeleted(false);
+		existingTrackingToken.setApplications(application);
+
+		ApplicationProgress quizProgress = new ApplicationProgress();
+		quizProgress.setId(77);
+
+		ApplicationQuizAttempt savedAttempt = new ApplicationQuizAttempt();
+		savedAttempt.setId(901);
+
+		when(applicationsRepository.findOne(15, false)).thenReturn(application);
+		when(applicationQuizAttemptRepository.countByApplicationId(15, false)).thenReturn(0L);
+		when(applicationProgressBusiness.resolveProgressByStageType(15, StageType.QUIZ.getValue())).thenReturn(quizProgress);
+		when(applicationQuizAttemptRepository.save(any(ApplicationQuizAttempt.class))).thenReturn(savedAttempt);
+		when(applicationsRepository.save(any(Applications.class))).thenAnswer(invocation -> invocation.getArgument(0));
+		when(candidateTokenRepository.findByApplicationId(15, false)).thenReturn(List.of(existingTrackingToken));
+		when(applicationQuizAttemptRepository.findByApplicationIdOrderByIdDesc(15, false)).thenReturn(List.of());
+
+		ApplicationsDto dto = new ApplicationsDto();
+		dto.setId(15);
+		dto.setAction("CREATE_QUIZ_ATTEMPT");
+		Request<ApplicationsDto> request = new Request<ApplicationsDto>();
+		request.setData(dto);
+		request.setUser(77);
+
+		Response<ApplicationsDto> response = applicationsBusiness.custom(request, Locale.FRENCH);
+
+		assertThat(response.isHasError()).isFalse();
+		assertThat(response.getStatus().getCode()).isEqualTo(StatusCode.SUCCESS);
+		assertThat(response.getStatus().getMessage()).isEqualTo("Nouvelle tentative quiz creee avec succes");
+		assertThat(response.getItems()).hasSize(1);
+
+		ApplicationsDto resultDto = response.getItems().get(0);
+		assertThat(resultDto.getQuizToken()).isNotBlank();
+		assertThat(resultDto.getHasQuizStage()).isTrue();
+		assertThat(resultDto.getTrackingCode()).isEqualTo("TRACK1");
+		verify(applicationQuizAttemptRepository).save(any(ApplicationQuizAttempt.class));
+	}
+
+	@Test
+	void applyAttemptLimits_setsAttemptsUsedAndMaxAttemptsFromCampaign() throws Exception {
+		Applications application = new Applications();
+		application.setId(15);
+
+		Campaigns campaign = new Campaigns();
+		campaign.setId(44);
+		campaign.setMaxAttempts(5);
+
+		SourceToken sourceToken = new SourceToken();
+		sourceToken.setCampaigns(campaign);
+		application.setSourceToken(sourceToken);
+
+		when(applicationQuizAttemptRepository.countByApplicationId(15, false)).thenReturn(3L);
+
+		ApplicationsDto dto = new ApplicationsDto();
+		dto.setId(15);
+
+		Method method = ApplicationsBusiness.class.getDeclaredMethod("applyAttemptLimits", ApplicationsDto.class, Applications.class);
+		method.setAccessible(true);
+		method.invoke(applicationsBusiness, dto, application);
+
+		assertThat(dto.getAttemptsUsed()).isEqualTo(3);
+		assertThat(dto.getMaxAttempts()).isEqualTo(5);
+	}
+
+	@Test
+	void applyAttemptLimits_defaultsMaxAttemptsToOneWhenCampaignHasNoLimit() throws Exception {
+		Applications application = new Applications();
+		application.setId(15);
+
+		Campaigns campaign = new Campaigns();
+		campaign.setId(44);
+
+		SourceToken sourceToken = new SourceToken();
+		sourceToken.setCampaigns(campaign);
+		application.setSourceToken(sourceToken);
+
+		when(applicationQuizAttemptRepository.countByApplicationId(15, false)).thenReturn(0L);
+
+		ApplicationsDto dto = new ApplicationsDto();
+		dto.setId(15);
+
+		Method method = ApplicationsBusiness.class.getDeclaredMethod("applyAttemptLimits", ApplicationsDto.class, Applications.class);
+		method.setAccessible(true);
+		method.invoke(applicationsBusiness, dto, application);
+
+		assertThat(dto.getAttemptsUsed()).isEqualTo(0);
+		assertThat(dto.getMaxAttempts()).isEqualTo(1);
 	}
 
 	private Form buildForm(Integer id, String formName) {

@@ -65,6 +65,11 @@ public class ApplicationsDto extends _ApplicationsDto implements Cloneable{
     private Integer    updatedBy            ;
     private Boolean    isDeleted            ;
     private String     searchString         ;
+    private String     quizToken            ; // Token de tentative quiz (contrat explicite, distinct de searchString)
+    private Boolean    hasQuizStage         ; // true si l'application dispose d'une étape QUIZ exploitable
+    private String     quizData             ; // Payload JSON des données du quiz (get-quiz), distinct du token
+    private Integer    attemptsUsed         ; // Tentatives quiz réellement lancées (vue recruteur)
+    private Integer    maxAttempts          ; // Limite de tentatives quiz de la campagne (vue recruteur)
     // Champs pour les intervalles de dates (recherche avancee)
     private String     dateCreationDe       ;
     private String     dateCreationA        ;
