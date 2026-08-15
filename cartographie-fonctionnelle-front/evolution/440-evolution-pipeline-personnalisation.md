@@ -1,7 +1,7 @@
 # Note — Plan d'implémentation : personnalisation avancée du pipeline
 
 **Date :** 2026-08-12 (mise à jour 2026-08-14)
-**Statut :** En cours (Lots 0 → D livrés) — corrections, permissions/rescapés front, track-by composite, multi-rounds (Lot A) et versionnage fin des étapes (Lot B) livrés backend + frontend ; règles de notification éditables (Lot C) et grille d'évaluation par étape INTERVIEW (Lot D) livrés backend + frontend. Code dans le working tree (commit associé).
+**Statut :** Terminée (Lots 0 → D livrés, commit `fcab9de`) — corrections, permissions/rescapés front, track-by composite, multi-rounds (Lot A), versionnage fin des étapes (Lot B), règles de notification éditables (Lot C) et grille d'évaluation par étape INTERVIEW (Lot D) livrés backend + frontend. Le runtime de lecture de la grille est assuré par le socle 430 ; le CRUD de la bibliothèque de grilles (Règles B/C/D, nettoyage des orphelins) est **hors périmètre** et re-pointé vers la note 460.
 **Périmètre :** `pipeline_template`, `pipeline_stage`, `pipeline_stage_notification_rule`, runtime `application_progress` / `application_quiz_attempt` / `interviews` / `decision`, front `pipeline-templates` / `pipeline-template-edit`, permissions, migrations Flyway, doc `bd_documentee` et page d'exemples
 
 > Cette note coordonne les 5 limites identifiées du pipeline personnalisable (verdict : fonctionnel en mono-round) et fixe le plan de livraison en 6 lots. Elle s'appuie sur la note 420 (multi-occurrences) et la note 430 (grilles à verrou à l'usage) : elle ne les remplace pas, elle les orchestre et les complète (versionnage des étapes, règles de notification éditables, corrections).
@@ -68,7 +68,7 @@ Frontend :
 - [x] `pipeline.interfaces.ts` `SINGLETON_INTERMEDIATE_STAGE_TYPES` : **constante et contrainte d'unicité supprimées** (`getPipelineReadinessIssues` ne limite plus que `CANDIDATURE == 1` et `DECISION >= 1`).
 - [x] `getEditableStageTypeOptions` (`pipeline-template-edit.ts`) : un type déjà utilisé dans le template est à nouveau proposé (specs `still offers an already used intermediate type in editable options`).
 - [x] `addStage()` / `hasAvailableStageTypeForCreation` : toujours disponible (hors template verrouillé) — spec `allows adding a second QUIZ round (multi-rounds)`.
-- [x] Mettre à jour les specs associées : `pipeline-template-edit.spec.ts` couvert (multi-rounds) ; `pipeline-templates.spec.ts` **non mis à jour** (résidu à traiter).
+- [x] Mettre à jour les specs associées : `pipeline-template-edit.spec.ts` couvert (multi-rounds) ; `pipeline-templates.spec.ts` couvert à la clôture (14 tests : aperçu = actifs via `getByTemplate`, états readiness, filtre, create brouillon, duplicate, setDefault, delete).
 
 ### Lot B — Versionnage fin des étapes (item 2)
 
@@ -100,8 +100,9 @@ Socle : note 430 (phases A-C : colonne `evaluation_grid_template_version_id`, ha
 
 - [x] **Éditeur** : section « Grille d'évaluation » sur les étapes INTERVIEW — picker grille → version (catalogue `POST /evaluationGrid/templates` : templates actifs + versions publiées), lecture seule si l'étape est verrouillée (Lot B), nettoyage du champ si le type quitte INTERVIEW.
 - [x] **Backend** : poser `pipeline_stage.evaluation_grid_template_version_id` via l'update d'étape (`saveTemplateStages`/`applyTargetConfig`), validation 430 (`validateEvaluationGrid` dans `PipelineStageBusiness` : grille uniquement sur INTERVIEW, version existante). Tests : `PipelineStageBusinessTest` (acceptation sur INTERVIEW, refus sur QUIZ, version inexistante refusée).
-- [ ] **Runtime** : la grille de notation est lue via l'étape (déjà cible de 430).
+- [x] **Runtime** : la grille de notation est lue via l'étape — socle 430 Phase C (`EvaluationsBusiness.loadStageCriteria` L1009-1036 passe par `pipeline_stage.evaluation_grid_template_version_id`, `deriveGlobalScoreFromEvaluationItems` L636-681).
 - [x] Couplage : la colonne grille « voyage » avec les révisions d'étape du Lot B (une révision porte sa propre version de grille) — vérifié par test sur la persistance du champ via le diff.
+- **Hors périmètre 440** : le CRUD de la bibliothèque de grilles (créer/éditer des grilles et versions), les Règles B/C/D de versionnage (`content_hash` forme canonique, réutilisation par contenu, repointage) et le nettoyage des orphelins — re-pointés vers la note 460. Le Lot D ne fournit que le picker lecture seule (`POST /evaluationGrid/templates`), le backend pose + validation `validateEvaluationGrid`, et la persistance via le diff.
 
 ## 4. Mécanisme du versionnage fin des étapes (Lot B)
 
@@ -187,6 +188,7 @@ Pipeline `[CANDIDATURE, QUIZ, INTERVIEW, DECISION]`, 5 candidats ont passé le Q
 
 - `cartographie-fonctionnelle-front/evolution/420-evolution-pipeline-multi-occurrences.md` : phases E/F à cocher, cible multi-rounds.
 - `cartographie-fonctionnelle-front/evolution/430-evolution-grilles-verrou-usage.md` : socle du Lot D.
+- `cartographie-fonctionnelle-front/evolution/460-evolution-bibliotheque-grilles.md` : CRUD de la bibliothèque de grilles + Règles B/C/D + nettoyage des orphelins (hors périmètre 440, re-pointés).
 - `quizapp/src/main/java/tech/synelia/quizapp/business/PipelineTemplateBusiness.java`, `PipelineStageBusiness.java`, `ApplicationProgressBusiness.java`, `ApplicationsBusiness.java`, `InterviewsBusiness.java`, `DecisionBusiness.java`
 - `quizapp/src/main/java/tech/synelia/quizapp/business/PipelineStageNotificationRuleBusiness.java`, `EvaluationGridBusiness.java` (Lot C/D)
 - `quizapp/src/main/java/tech/synelia/quizapp/rest/api/PipelineStageNotificationRuleController.java`, `EvaluationGridController.java` (Lot C/D)

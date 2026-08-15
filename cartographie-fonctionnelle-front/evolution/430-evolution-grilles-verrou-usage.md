@@ -1,7 +1,7 @@
 # Note — Évolution des grilles d'évaluation : versionnage par verrou à l'usage et réutilisation par contenu
 
 **Date :** 2026-08-11
-**Statut :** Implémentée (Phases 0–D) ; services de versionnage (Règles B/C/D) et CRUD de la bibliothèque de grilles portés par la note 440
+**Statut :** Implémentée (Phases 0–D) ; services de versionnage (Règles B/C/D) et CRUD de la bibliothèque de grilles portés par la note 460
 **Périmètre :** `pipeline_stage`, `pipeline_stage_evaluation_criterion`, `evaluation_grid_template`, `evaluation_grid_template_version`, `evaluation_grid_template_item`, `evaluations`, `evaluation_item`, doc `bd_documentee` et page d'exemples
 
 > Cette note remplace et corrige la partie « critères effectifs sur le stage » de la note 420 (`pipeline_stage_evaluation_criterion`) : la copie par étape est abandonnée au profit d'un rattachement direct étape → version de grille, avec verrou au premier usage et déduplication par contenu.
@@ -23,7 +23,7 @@
 - [x] **Nettoyage des versions orphelines** (créées puis abandonnées) : suppression logique immédiate au repointage + balayage de sécurité périodique. Jamais de suppression physique ; jamais de nettoyage des versions publiées.
 - [x] **Backfill** : rebranchement déterministe via le lien d'origine, cas ambigus extraits pour **arbitrage manuel**, table de correspondance réversible, et fusion par contenu pendant la migration.
 - [x] **Contrat API renommé** : `pipelineStageEvaluationCriterionId` → `evaluationGridTemplateItemId` (DTO, front et tests), décidé en revue — le champ ne pointe plus un critère d'étape mais un item de grille.
-- [x] **Périmètre** : le CRUD de la bibliothèque de grilles (entités, repos, business, endpoints, UI, éditeur « picker grille → version ») est **porté par la note 440** ; la présente note fournit le mécanisme de versionnage (Règles B/C/D) et la bascule de l'évaluation, pas le CRUD ni l'UI.
+- [x] **Périmètre** : le CRUD de la bibliothèque de grilles (entités, repos, business, endpoints, UI, éditeur « picker grille → version ») est **porté par la note 460** ; la présente note fournit le mécanisme de versionnage (Règles B/C/D) et la bascule de l'évaluation, pas le CRUD ni l'UI.
 
 ## 2. Problème cible
 
@@ -181,8 +181,8 @@ Checklist :
 - [x] Lecture du formulaire d'évaluation d'une étape : `loadStageCriteria` (`EvaluationsBusiness.java:1009-1036`) passe par `pipeline_stage.evaluation_grid_template_version_id` → items de la version (au lieu de `pipeline_stage_evaluation_criterion`).
 - [x] Fallback de score : `deriveGlobalScoreFromEvaluationItems` (`EvaluationsBusiness.java:636-681`) ne charge plus le critère via `PipelineStageEvaluationCriterionRepository`, mais via l'item de grille.
 - [x] Écriture : création d'`evaluation_item` sur `evaluation_grid_template_item_id` (avec validation « l'item appartient bien à la grille du stage courant »).
-- [x] Pose de `locked_at` transactionnelle à la **première `evaluation_item` réellement saisie** (score ou texte non vides ; brouillon vide non verrouillant) : garantie par la transaction `BusinessFactory.create/update` (`@Transactional(rollbackFor=...)`), avec audit `GRID_VERSION_LOCKED`. Le **refus d'écriture sur une version verrouillée** et **l'immutabilité des items d'une version verrouillée** sont des gardes du CRUD de la bibliothèque de grilles → **note 440**.
-- [ ] Services de versionnage (Règles B/C/D) : `content_hash` sur forme canonique, réutilisation par contenu, repointage. **Reportés à la note 440** (décision de périmètre : aucun appelant n'existe encore ; la 440 les consommera avec son CRUD). Le mécanisme de données (colonnes `content_hash` UNIQUE + `locked_at`, verrou à l'usage) est en place.
+- [x] Pose de `locked_at` transactionnelle à la **première `evaluation_item` réellement saisie** (score ou texte non vides ; brouillon vide non verrouillant) : garantie par la transaction `BusinessFactory.create/update` (`@Transactional(rollbackFor=...)`), avec audit `GRID_VERSION_LOCKED`. Le **refus d'écriture sur une version verrouillée** et **l'immutabilité des items d'une version verrouillée** sont des gardes du CRUD de la bibliothèque de grilles → **note 460**.
+- [ ] Services de versionnage (Règles B/C/D) : `content_hash` sur forme canonique, réutilisation par contenu, repointage. **Reportés à la note 460** (décision de périmètre : aucun appelant n'existe encore ; la 460 les consommera avec son CRUD). Le mécanisme de données (colonnes `content_hash` UNIQUE + `locked_at`, verrou à l'usage) est en place.
 - [x] Renommer le contrat API `pipelineStageEvaluationCriterionId` → `evaluationGridTemplateItemId` : `EvaluationItemDto`, `evaluation.service.ts`, `evaluations.ts`, `entities-applications.ts`, `evaluations-list.ts` + specs back (`EvaluationsBusinessTest`, `EvaluationsControllerTest`) et front (`evaluations.spec.ts`, `entities-applications.spec.ts`, `evaluations-list.spec.ts`).
 - [x] Supprimer les lectures/écritures résiduelles sur `pipeline_stage_evaluation_criterion` (entité, repository, `EvaluationsBusiness`).
 
@@ -211,7 +211,7 @@ Le rattachement d'une grille à une étape est choisi dans l'éditeur de templat
 - Lecture seule si l'étape est verrouillée (Lot B, note 440) : le picker est désactivé, la valeur conservée.
 - Le champ `evaluationGridTemplateVersionId` voyage avec la révision d'étape (diff du Lot B) et est persisté par `applyTargetConfig` ; en base c'est `pipeline_stage.evaluation_grid_template_version_id` (FK nullable, indexée).
 - Backend : `PipelineStageBusiness.validateTargetStages` → `validateEvaluationGrid` n'accepte le champ que sur `stageType=INTERVIEW` (`DISALLOWED_OPERATION` sinon) et vérifie l'existence de la version (`evaluationGridTemplateVersionRepository.findOne(id, false)` → `EntityNotFoundException` / `DATA_NOT_EXIST` sinon).
-- Garde de la Règle A : le picker ne propose que des versions **publiées** ; modifier le contenu d'une version verrouillée relève du CRUD de la bibliothèque de grilles (note 440), jamais de l'éditeur de pipeline.
+- Garde de la Règle A : le picker ne propose que des versions **publiées** ; modifier le contenu d'une version verrouillée relève du CRUD de la bibliothèque de grilles (note 460), jamais de l'éditeur de pipeline.
 - Tests : `PipelineStageBusinessTest` (grille acceptée sur INTERVIEW, refusée sur QUIZ, version inexistante refusée, persistance via le diff) et `pipeline-template-edit.spec.ts` (payload `evaluationGridTemplateVersionId`, nettoyage hors INTERVIEW) — verts.
 
 ## 8. Checklist base de données
@@ -224,8 +224,8 @@ Le rattachement d'une grille à une étape est choisi dans l'éditeur de templat
 - [x] backfill des versions (avec fusion par contenu), du rattachement étape, du `content_hash`, du rebranchement `evaluation_item`, du `locked_at`
 - [x] arbitrage manuel des cas non déterministes avant rebranchement final (aucun cas sur le jeu de référence)
 - [x] contrôles de cohérence Phase B (aucune perte, aucun orphelin, hash valides, transaction annulable)
-- [x] bascule lecture/écriture backend (verrou à la première item saisie, transactionnel) + renommage du contrat API (Règles B/C/D reportées à la note 440)
-- [ ] nettoyage des orphelins (immédiat au repointage + balayage périodique) — **note 440** (le repointage relève des Règles B/C/D)
+- [x] bascule lecture/écriture backend (verrou à la première item saisie, transactionnel) + renommage du contrat API (Règles B/C/D reportées à la note 460)
+- [ ] nettoyage des orphelins (immédiat au repointage + balayage périodique) — **note 460** (le repointage relève des Règles B/C/D)
 - [x] Phase D sur `evaluation_item` : drop FK `fk_evaluation_item_criterion`, index `idx_evaluation_item_criterion`, UNIQUE `uk_evaluation_item_criterion`, colonne `pipeline_stage_evaluation_criterion_id`
 - [x] `DROP TABLE legacy_criterion_mapping` puis `DROP TABLE pipeline_stage_evaluation_criterion`
 - [x] index / contraintes UNIQUE sur `content_hash` vérifiés après migration
@@ -264,7 +264,8 @@ Le rattachement d'une grille à une étape est choisi dans l'éditeur de templat
 ## 11. Fichiers cartographie liés
 
 - `cartographie-fonctionnelle-front/evolution/420-evolution-pipeline-multi-occurrences.md` : section 4.1 et références à `pipeline_stage_evaluation_criterion` corrigées — design remplacé par la présente note, table supprimée (V1_080).
-- `cartographie-fonctionnelle-front/evolution/440-evolution-pipeline-personnalisation.md` : **dépendance** — le CRUD de la bibliothèque de grilles (entités, repos, business, endpoints, UI, éditeur « picker grille → version ») est porté par la note 440, qui consomme les services de versionnage (Règles B/C/D) fournis par la présente note.
+- `cartographie-fonctionnelle-front/evolution/440-evolution-pipeline-personnalisation.md` : **dépendance** — le rattachement d'une grille à une étape INTERVIEW via l'éditeur de template (section 7 de la présente note).
+- `cartographie-fonctionnelle-front/evolution/460-evolution-bibliotheque-grilles.md` : **dépendance** — le CRUD de la bibliothèque de grilles (entités, repos, business, endpoints, UI) est porté par la note 460, qui consomme les services de versionnage (Règles B/C/D) fournis par la présente note.
 - `cartographie-fonctionnelle-front/bd_documentee/quizapp_db_documentation_20260810.md`
 - `cartographie-fonctionnelle-front/bd_documentee/exemples/data.js`, `exemples/app.js`, `exemples/index.html`, `exemples/style.css`
 - `quizapp/src/main/resources/db/migration/` : scripts Flyway `V1_078__add_grid_lock_usage_schema.sql`, `V1_079__backfill_grid_usage_phase_b.sql`, `V1_080__drop_stage_evaluation_criterion.sql` (créés et appliqués).
