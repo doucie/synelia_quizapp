@@ -29,6 +29,7 @@ La page sert à gérer le catalogue des modèles de pipeline de recrutement: vis
 - [x] Cote frontend, la liste expose maintenant un état de readiness minimale par carte (`Prêt à activer`, `À compléter`, `Incomplet`) calculé sur les étapes chargées, avec le même garde-fou structurel que l’éditeur.
 - [x] Cote frontend, la liste propose désormais toujours `Modifier`: un template utilisé s'ouvre directement dans l'éditeur qui verrouille les étapes atteintes et laisse les autres éditables.
 - [x] Le backend détermine le verrou d'étape par usage réel (`findUsedStageIds`, statut `!= PENDING` dans `application_progress`); le verrou template (`is_locked`) est conservé en base mais ne bloque plus l'édition.
+- [x] Les configurations détaillées d'une étape (règles de notification et grille d'évaluation des étapes INTERVIEW) sont désormais éditables depuis l'éditeur (`pipeline-template-edit`, 440 Lots C/D) ; cette liste reste l'accès au catalogue et au niveau de readiness.
 - [x] Vérifier si la suppression est logique ou physique côté backend — suppression logique (soft-delete) via `deleted=1`; un template utilisé reste bloqué en suppression.
 - [x] Bloquer `Definir par defaut` tant qu'un template actif ne respecte pas les invariants structurels minimaux; la grille complète `pipeline pret a produire` reste à formaliser.
 - [x] Créer les nouveaux templates en brouillon inactif tant que l'utilisateur n'a pas explicitement termine la configuration et active le pipeline.

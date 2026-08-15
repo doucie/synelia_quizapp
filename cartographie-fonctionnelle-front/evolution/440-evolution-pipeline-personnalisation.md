@@ -1,7 +1,7 @@
 # Note — Plan d'implémentation : personnalisation avancée du pipeline
 
-**Date :** 2026-08-12
-**Statut :** En cours (Lot 0, Lot A et Lot B livrés) — corrections, permissions/rescapés front, track-by composite et multi-rounds implémentés ; versionnage fin des étapes (Lot B) livré côté backend + frontend ; lots C (règles email) et D (grille) non implémentés. Code dans le working tree (commit associé).
+**Date :** 2026-08-12 (mise à jour 2026-08-14)
+**Statut :** En cours (Lots 0 → D livrés) — corrections, permissions/rescapés front, track-by composite, multi-rounds (Lot A) et versionnage fin des étapes (Lot B) livrés backend + frontend ; règles de notification éditables (Lot C) et grille d'évaluation par étape INTERVIEW (Lot D) livrés backend + frontend. Code dans le working tree (commit associé).
 **Périmètre :** `pipeline_template`, `pipeline_stage`, `pipeline_stage_notification_rule`, runtime `application_progress` / `application_quiz_attempt` / `interviews` / `decision`, front `pipeline-templates` / `pipeline-template-edit`, permissions, migrations Flyway, doc `bd_documentee` et page d'exemples
 
 > Cette note coordonne les 5 limites identifiées du pipeline personnalisable (verdict : fonctionnel en mono-round) et fixe le plan de livraison en 6 lots. Elle s'appuie sur la note 420 (multi-occurrences) et la note 430 (grilles à verrou à l'usage) : elle ne les remplace pas, elle les orchestre et les complète (versionnage des étapes, règles de notification éditables, corrections).
@@ -90,18 +90,18 @@ Socle : fiche 41 §5.5 et section 4 de la présente note. C'est le chantier qui 
 
 Aucune migration (table + entité + repo existants).
 
-- [ ] **Backend** : Business + DTO + transformer + Controller sur `pipeline_stage_notification_rule` ; endpoints GET par étape / create / update / delete logique ; validations (trigger_code enum, outcome_code nullable, email_template_id FK, `is_automatic ⇒ is_required`) ; runtime actuel compatible (`ApplicationProgressBusiness` L1194, `DecisionBusiness` L1045, `InterviewsBusiness` L729).
-- [ ] **Frontend** : panneau « Règles de notification » par étape dans l'éditeur (trigger, outcome, modèle d'email, required/automatic/manual), add/edit/delete, picker de modèles d'email (endpoint générique existant).
-- [ ] Couplage avec Lot 0 : la copie des règles dans `duplicate()`.
+- [x] **Backend** : Business + DTO + transformer + Controller sur `pipeline_stage_notification_rule` ; endpoints GET par étape (`/byStage`), create / update / delete logique, `saveStageRules` (remplacement bulk), `getByCriteria` ; validations (trigger_code enum `STAGE_EMAIL` par défaut, outcome_code normalisé sur `StageType`, email_template_id FK, `is_automatic ⇒ is_required`) ; runtime actuel compatible (`ApplicationProgressBusiness` L1194, `DecisionBusiness` L1045, `InterviewsBusiness` L729). Tests : `PipelineStageNotificationRuleBusinessTest` (11 tests).
+- [x] **Frontend** : panneau « Règles de notification » par étape dans l'éditeur (déclencheur, issue, modèle d'email, required/automatic/manual), add/edit/delete, picker de modèles d'email (endpoint générique existant), enregistrement bulk via `POST /pipelineStageNotificationRule/saveStageRules`. Tests : `pipeline-template-edit.spec.ts` (chargement, brouillon, save bulk, étape non enregistrée).
+- [x] Couplage avec Lot 0 : la copie des règles dans `duplicate()`.
 
 ### Lot D — Grille d'évaluation par étape INTERVIEW (item 4)
 
 Socle : note 430 (phases A-C : colonne `evaluation_grid_template_version_id`, hash, verrou à l'usage).
 
-- [ ] **Éditeur** : section « Grille d'évaluation » sur les étapes INTERVIEW — picker grille → version, règles 430 (grille inutilisée → modifiable sur place ; utilisée → nouvelle version ou repointage) ; lecture seule si l'étape est verrouillée (Lot B).
-- [ ] **Backend** : poser `pipeline_stage.evaluation_grid_template_version_id` via l'update d'étape, validations 430.
+- [x] **Éditeur** : section « Grille d'évaluation » sur les étapes INTERVIEW — picker grille → version (catalogue `POST /evaluationGrid/templates` : templates actifs + versions publiées), lecture seule si l'étape est verrouillée (Lot B), nettoyage du champ si le type quitte INTERVIEW.
+- [x] **Backend** : poser `pipeline_stage.evaluation_grid_template_version_id` via l'update d'étape (`saveTemplateStages`/`applyTargetConfig`), validation 430 (`validateEvaluationGrid` dans `PipelineStageBusiness` : grille uniquement sur INTERVIEW, version existante). Tests : `PipelineStageBusinessTest` (acceptation sur INTERVIEW, refus sur QUIZ, version inexistante refusée).
 - [ ] **Runtime** : la grille de notation est lue via l'étape (déjà cible de 430).
-- [ ] Couplage : la colonne grille « voyage » avec les révisions d'étape du Lot B (une révision porte sa propre version de grille).
+- [x] Couplage : la colonne grille « voyage » avec les révisions d'étape du Lot B (une révision porte sa propre version de grille) — vérifié par test sur la persistance du champ via le diff.
 
 ## 4. Mécanisme du versionnage fin des étapes (Lot B)
 
@@ -145,11 +145,11 @@ Pipeline `[CANDIDATURE, QUIZ, INTERVIEW, DECISION]`, 5 candidats ont passé le Q
 
 - **430 (révisée)** : `V1_078__add_grid_lock_usage_schema.sql`, `V1_079__backfill_grid_usage_phase_b.sql`, `V1_080__drop_stage_evaluation_criterion.sql` + `V1_081__fix_content_hash_varchar.sql` (correction CHAR→VARCHAR de `content_hash` pour la validation Hibernate).
 - **440** : `V1_082__add_pipeline_stage_is_active.sql` (Lot B).
-- Lot 0 (corrections), Lot A (multi-rounds), Lot C (règles email) : **aucune migration**.
+- Lot 0 (corrections), Lot A (multi-rounds), Lot C (règles email), Lot D (grille) : **aucune migration** (colonnes `evaluation_grid_template_version_id` et tables de règles déjà présentes, V1_078 et V1_075/V1_076).
 
 ## 6. Checklist transverse
 
-- [x] `mvnw compile` + tests backend (spring-boot) verts.
+- [x] `mvnw compile` + tests backend (spring-boot) : 159 tests, dont 3 échecs pré-existants `QuestionBusinessTest` (hors périmètre 440).
 - [x] `ng build --configuration=development` sans erreur.
 - [x] Tests à couvrir (Lot A) :
   - `PipelineStageBusinessTest` : bornes, re-typage interdit, multi-types — **fait** ;
@@ -160,13 +160,19 @@ Pipeline `[CANDIDATURE, QUIZ, INTERVIEW, DECISION]`, 5 candidats ont passé le Q
   - `PipelineStageBusinessTest` (réécrit, moteur `saveTemplateStages`/`applyTargetConfig`) — **fait** ;
   - `PipelineTemplateBusinessTest` (create inactif, readiness sur actifs, update déverrouillé, delete gardé) — **fait** ;
   - `pipeline-template-edit.spec.ts` (verrou par étape, save bulk `saveTemplateStages`, reorder local) — **fait**.
-- [ ] Tests restants (lots C/D) : `pipeline-templates.spec.ts` (aperçu = actifs, permissions).
-- [ ] Mettre à jour les notes :
-  - cocher les phases E/F de la note 420 (résolutions par occurrence, sortie de `email_required`/`email_automatic`) — **fait (note 420)**, reste : sortie `email_required`/`email_automatic` à vérifier ;
-  - enrichir la 430 avec l'intégration éditeur (section « Grille d'évaluation ») ;
-  - fiches cartographie 40/41 ; entités 260-pipeline-stages, 110-evaluations, 230-application-progress.
-- [ ] Mini-BD `bd_documentee/exemples/data.js` : exemple multi-rounds (2 INTERVIEW), règles de notification, grille liée, `is_active`/`active_slot` — cohérent avec la 430 (section 8).
-- [ ] Collections Postman des nouveaux endpoints (Lot C).
+- [x] Tests du Lot C (règles de notification) :
+  - `PipelineStageNotificationRuleBusinessTest` (11 tests : create/update/delete, `saveStageRules` bulk, `getByStage`, validations) — **fait** ;
+  - `pipeline-template-edit.spec.ts` (brouillon de règle, suppression locale, `saveStageRules`, étape non enregistrée) — **fait**.
+- [x] Tests du Lot D (grille) :
+  - `PipelineStageBusinessTest` (grille acceptée sur INTERVIEW, refusée sur QUIZ, version inexistante refusée, persistance via le diff) — **fait** ;
+  - `pipeline-template-edit.spec.ts` (payload `evaluationGridTemplateVersionId`, nettoyage quand le type quitte INTERVIEW) — **fait**.
+- [x] Tests restants (lots C/D) : `pipeline-templates.spec.ts` (14 tests : aperçu = actifs via `getByTemplate`, états readiness, filtre, create brouillon, duplicate, setDefault, delete) — **fait**.
+- [x] Mettre à jour les notes :
+  - cocher les phases E/F de la note 420 (résolutions par occurrence, sortie de `email_required`/`email_automatic`) — **fait** (note 420, fiche 41) ;
+  - enrichir la 430 avec l'intégration éditeur (section « Grille d'évaluation ») — **fait (430, section 7)** ;
+  - fiches cartographie 40/41 ; entités 260-pipeline-stages, 110-evaluations, 230-application-progress — **fait**.
+- [x] Mini-BD `bd_documentee/exemples/data.js` : exemple multi-rounds (2 INTERVIEW), règles de notification, grille liée, `is_active`/`active_slot` — cohérent avec la 430 (section 9).
+- [x] Collections Postman des nouveaux endpoints (Lot C : `pipelineStageNotificationRule`, Lot D : `evaluationGrid/templates`) — **fait** (v1 + v2, 20 dossiers/79 requêtes, parité vérifiée ; correction au passage de 2 lignes `"raw"` orphelines qui invalidaient le JSON v2 pré-existant).
 
 ## 7. Points d'attention
 
@@ -182,9 +188,12 @@ Pipeline `[CANDIDATURE, QUIZ, INTERVIEW, DECISION]`, 5 candidats ont passé le Q
 - `cartographie-fonctionnelle-front/evolution/420-evolution-pipeline-multi-occurrences.md` : phases E/F à cocher, cible multi-rounds.
 - `cartographie-fonctionnelle-front/evolution/430-evolution-grilles-verrou-usage.md` : socle du Lot D.
 - `quizapp/src/main/java/tech/synelia/quizapp/business/PipelineTemplateBusiness.java`, `PipelineStageBusiness.java`, `ApplicationProgressBusiness.java`, `ApplicationsBusiness.java`, `InterviewsBusiness.java`, `DecisionBusiness.java`
-- `quizapp/src/main/java/tech/synelia/quizapp/dao/repository/PipelineStageRepository.java`, `PipelineStageNotificationRuleRepository.java` (existant), `ApplicationProgressRepository.java`
-- `quizapp/src/main/java/tech/synelia/quizapp/dao/entity/PipelineStageNotificationRule.java` (existant — CRUD à créer)
+- `quizapp/src/main/java/tech/synelia/quizapp/business/PipelineStageNotificationRuleBusiness.java`, `EvaluationGridBusiness.java` (Lot C/D)
+- `quizapp/src/main/java/tech/synelia/quizapp/rest/api/PipelineStageNotificationRuleController.java`, `EvaluationGridController.java` (Lot C/D)
+- `quizapp/src/main/java/tech/synelia/quizapp/dao/repository/PipelineStageRepository.java`, `PipelineStageNotificationRuleRepository.java` (existant — CRUD ajouté), `EvaluationGridTemplateRepository.java` (nouveau), `ApplicationProgressRepository.java`
+- `quizapp/src/main/java/tech/synelia/quizapp/dao/entity/PipelineStageNotificationRule.java` (existant — CRUD à créer), `EvaluationGridTemplate.java` (nouveau)
+- `quizapp/src/main/java/tech/synelia/quizapp/utils/dto/PipelineStageNotificationRuleDto.java`, `utils/dto/transformer/PipelineStageNotificationRuleTransformer.java`, `utils/enums/NotificationTrigger.java`, `utils/dto/EvaluationGridTemplateDto.java`, `utils/dto/EvaluationGridTemplateVersionDto.java`
 - `quizapp/src/main/resources/db/migration/` : prochain script `V1_082__add_pipeline_stage_is_active.sql` (le `V1_081__fix_content_hash_varchar.sql` est déjà pris par la correction de la 430)
 - `quizapp_front/src/app/pages/dashboard/pipeline-templates/`, `pipeline-template-edit/`
-- `quizapp_front/src/app/core/services/pipeline-template.service.ts`, `pipeline-stage.service.ts`, `core/models/pipeline.interfaces.ts`, `app.routes.ts` (L555-564), `core/guards/role.guard.ts` (L56-82), `pages/dashboard/dashboard.ts` (menu, L201-207)
+- `quizapp_front/src/app/core/services/pipeline-template.service.ts`, `pipeline-stage.service.ts`, `pipeline-stage-notification-rule.service.ts` (nouveau), `evaluation-grid.service.ts` (nouveau), `email-template.service.ts`, `core/models/pipeline.interfaces.ts`, `app.routes.ts` (L555-564), `core/guards/role.guard.ts` (L56-82), `pages/dashboard/dashboard.ts` (menu, L201-207)
 - `cartographie-fonctionnelle-front/bd_documentee/quizapp_db_documentation_20260810.md`, `bd_documentee/exemples/data.js`

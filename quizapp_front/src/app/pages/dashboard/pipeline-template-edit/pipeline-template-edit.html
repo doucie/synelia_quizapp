@@ -154,6 +154,11 @@
                   </div>
 
                   <p class="stage-fixed-hint">Étape fixe: position, suppression et type verrouillés.</p>
+
+                  <button class="btn btn-outline btn-sm stage-rules-button" (click)="openRuleEditor(i)" title="Configurer les règles de notification">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M4 4h16v12H7l-3 3V4z"/></svg>
+                    Règles de notification
+                  </button>
                 } @else {
                   <div class="stage-field stage-field-label">
                     <label class="field-label">Libellé</label>
@@ -187,6 +192,28 @@
                   } @else if (getStageSkipHint(stage)) {
                     <p class="stage-policy-hint stage-policy-hint--accent">{{ getStageSkipHint(stage) }}</p>
                   }
+
+                  @if (stage.stageType === 'INTERVIEW') {
+                    <div class="stage-field stage-field-grid">
+                      <label class="field-label">Grille d'évaluation</label>
+                      <select class="form-input form-input-sm" [ngModel]="stage.evaluationGridTemplateVersionId" [disabled]="isStageLocked(stage)"
+                              ariaLabel="Sélectionner la grille d'évaluation"
+                              (ngModelChange)="updateStageField(i, 'evaluationGridTemplateVersionId', $event ?? undefined)">
+                        <option [ngValue]="null">Aucune grille</option>
+                        @for (option of gridVersionOptions(); track option.id) {
+                          <option [ngValue]="option.id">{{ option.label }}</option>
+                        }
+                      </select>
+                      @if (gridVersionOptions().length === 0) {
+                        <p class="field-help">Aucune grille d'évaluation publiée n'est disponible.</p>
+                      }
+                    </div>
+                  }
+
+                  <button class="btn btn-outline btn-sm stage-rules-button" (click)="openRuleEditor(i)" title="Configurer les règles de notification">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M4 4h16v12H7l-3 3V4z"/></svg>
+                    Règles de notification
+                  </button>
                 }
               </div>
 
@@ -224,3 +251,118 @@
     </div>
   </div>
 </div>
+
+<!-- Modale Règles de notification -->
+@if (ruleEditorStageIndex() !== null && currentRuleStage()) {
+  <div class="modal-overlay" (click)="closeRuleEditor()">
+    <div class="modal modal-rules" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Règles de notification — {{ currentRuleStage()?.stageLabel }}</h3>
+      </div>
+      <div class="modal-body">
+        <p class="modal-hint">Ces règles déclenchent des courriels selon l'issue de l'étape. L'enregistrement remplace l'ensemble des règles actuelles de l'étape.</p>
+
+        @if (ruleDraft().length === 0) {
+          <p class="preview-empty">Aucune règle définie pour cette étape.</p>
+        } @else {
+          <div class="rule-list">
+            @for (rule of ruleDraft(); track $index; let rIndex = $index) {
+              <div class="rule-row">
+                <div class="rule-row-info">
+                  <span class="rule-badge">{{ getTriggerLabel(rule.triggerCode) }}</span>
+                  <span class="rule-outcome">{{ getOutcomeLabel(rule.outcomeCode) }}</span>
+                  <span class="rule-template">{{ getRuleEmailLabel(rule) }}</span>
+                  <span class="rule-flags">
+                    @if (rule.isRequired) { <span class="rule-flag">obligatoire</span> }
+                    @if (rule.isAutomatic) { <span class="rule-flag">envoi auto</span> }
+                    @if (rule.requiresManualConfirmation) { <span class="rule-flag">confirmation manuelle</span> }
+                  </span>
+                </div>
+                <div class="rule-row-actions">
+                  <button class="btn-icon-action" (click)="startEditRule(rIndex)" title="Modifier cette règle">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M17 3a2.8 2.8 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+                  </button>
+                  <button class="btn-icon-action btn-icon-danger" (click)="removeRule(rIndex)" title="Retirer cette règle">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/></svg>
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        @if (!ruleFormOpen()) {
+          <button class="btn btn-secondary btn-sm" (click)="startAddRule()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 4v16m8-8H4"/></svg>
+            Ajouter une règle
+          </button>
+        }
+
+        @if (ruleFormOpen() && ruleForm()) {
+          <div class="rule-form">
+            <div class="form-group">
+              <label class="form-label">Déclencheur</label>
+              <select class="form-input form-input-sm" [ngModel]="ruleForm()?.triggerCode" ariaLabel="Déclencheur de la règle"
+                      (ngModelChange)="updateRuleForm('triggerCode', $event)">
+                @for (trigger of ruleTriggers; track trigger.value) {
+                  <option [value]="trigger.value">{{ trigger.label }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Issue de l'étape</label>
+              <select class="form-input form-input-sm" [ngModel]="ruleForm()?.outcomeCode" ariaLabel="Issue de l'étape"
+                      (ngModelChange)="updateRuleForm('outcomeCode', $event)">
+                <option [ngValue]="null">Toute issue</option>
+                @for (type of stageTypes; track type.value) {
+                  <option [ngValue]="type.value">{{ type.label }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Modèle de courriel <span class="required">*</span></label>
+              <select class="form-input form-input-sm" [ngModel]="ruleForm()?.emailTemplateId" ariaLabel="Modèle de courriel"
+                      (ngModelChange)="updateRuleForm('emailTemplateId', $event ?? undefined)">
+                <option [ngValue]="null">Sélectionner un modèle</option>
+                @for (template of emailTemplates(); track template.id) {
+                  <option [ngValue]="template.id">{{ template.templateKey || 'Modèle' }} — {{ template.subjectTemplate || '' }}</option>
+                }
+              </select>
+              @if (emailTemplates().length === 0) {
+                <p class="field-help">Aucun modèle de courriel disponible. Créez-en un depuis la gestion des modèles.</p>
+              }
+            </div>
+            <div class="rule-form-toggles">
+              <label class="rule-form-toggle">
+                <input type="checkbox" [ngModel]="ruleForm()?.isRequired" (ngModelChange)="updateRuleForm('isRequired', !!$event)" />
+                <span>Courriel obligatoire</span>
+              </label>
+              <label class="rule-form-toggle">
+                <input type="checkbox" [ngModel]="ruleForm()?.isAutomatic" (ngModelChange)="updateRuleForm('isAutomatic', !!$event)" />
+                <span>Envoi automatique</span>
+              </label>
+              <label class="rule-form-toggle">
+                <input type="checkbox" [ngModel]="ruleForm()?.requiresManualConfirmation" (ngModelChange)="updateRuleForm('requiresManualConfirmation', !!$event)" />
+                <span>Confirmation manuelle requise</span>
+              </label>
+            </div>
+            <p class="modal-hint">Un courriel automatique doit toujours être obligatoire.</p>
+            <div class="modal-actions">
+              <button class="btn btn-secondary" (click)="cancelRuleForm()">Annuler</button>
+              <button class="btn btn-primary" (click)="applyRuleForm()">Valider la règle</button>
+            </div>
+          </div>
+        }
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" (click)="closeRuleEditor()">Fermer</button>
+        <button class="btn btn-primary" (click)="saveRules()" [disabled]="savingRules() || ruleFormOpen()">
+          @if (savingRules()) {
+            <span class="btn-spinner"></span>
+          }
+          Enregistrer les règles
+        </button>
+      </div>
+    </div>
+  </div>
+}

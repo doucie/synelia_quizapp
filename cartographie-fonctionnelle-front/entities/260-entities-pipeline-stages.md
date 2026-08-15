@@ -32,6 +32,7 @@ Le slice BL-008 la pose maintenant plus explicitement comme surface technique et
 - [x] Les mutations directes sur une etape reellement atteinte par des candidats (`isLocked`) sont bloquees: l'edition desactives ses champs, la suppression l'archive (passe en revision inactive) au lieu de la supprimer; les etapes jamais atteintes restent mutables meme sur un template deja utilise (440 Lot B).
 - [x] Les modales create/edit desactivent les champs quand l'etape editee est `isLocked` (libelle, type, ordre, template parent, `configJson`, `Obligatoire`, `Eliminatoire`, actions `Valider`/`Supprimer`); un message d'aide l'indique.
 - [x] La validation locale reprend aussi le garde-fou d'unicite fonctionnelle: `QUIZ`, `PRESELECTION`, `INTERVIEW` et `EVALUATION` ne peuvent pas etre ajoutes plusieurs fois dans le meme pipeline courant — unicite retiree en cible multi-rounds (420/440 Lot A), la page CRUD affiche un badge `isActive` (revision active / archivee).
+- [x] Le modele porte aussi `evaluationGridTemplateVersionId` (grille d'evaluation rattachee, INTERVIEW uniquement) et la politique email vit dans `pipeline_stage_notification_rule` (règles de notification) : ces deux configurations sont editees dans la page metier `pipeline-template-edit` (440 Lots C/D), pas dans cette surface CRUD technique.
 - [ ] La route ne surface pas `emailRequired` et `emailAutomatic`, pourtant presents dans le modele et essentiels au pipeline runtime.
 - [ ] La route ne propose toujours pas de reordonnancement, qui reste reserve a l'editeur detaille.
 - [ ] L'UI ne montre qu'un booleen `Config` dans le tableau, pas le contenu ni un apercu exploitable de `configJson`.
@@ -91,6 +92,7 @@ Le slice BL-008 la pose maintenant plus explicitement comme surface technique et
 - `emailAutomatic`
 - `isActive` (revision active / archivee)
 - `isLocked` (etape atteinte par au moins une candidature)
+- `evaluationGridTemplateVersionId` (grille d'evaluation rattachee, INTERVIEW uniquement)
 - `configJson`
 - `pipelineTemplateId`
 - `pipelineTemplateName`

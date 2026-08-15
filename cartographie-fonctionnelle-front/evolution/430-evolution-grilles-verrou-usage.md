@@ -198,11 +198,23 @@ Checklist :
 - [x] Sur `evaluation_item` : créer le UNIQUE `(evaluation_id, evaluation_grid_template_item_id)` (après backfill complet), puis drop de la FK `fk_evaluation_item_criterion`, de l'index `idx_evaluation_item_criterion`, du UNIQUE `uk_evaluation_item_criterion` et de la colonne `pipeline_stage_evaluation_criterion_id` (en plus : passage `evaluation_grid_template_item_id` à `NOT NULL`, pré-vérifié).
 - [x] `DROP TABLE legacy_criterion_mapping`.
 - [x] `DROP TABLE pipeline_stage_evaluation_criterion`.
-- [x] Mettre à jour le doc `bd_documentee` et la page d'exemples (section 8).
+- [x] Mettre à jour le doc `bd_documentee` et la page d'exemples (section 9).
 
 > Validation effectuée : V1_080 appliquée sur le dev (`localhost:3306/quizapp_db`) — tables supprimées, colonne basculée `NOT NULL`, UNIQUE recréé, `content_hash` UNIQUE intact, `flyway_schema_history` vert (1.080), audit `PHASE_D_COMPLETED`. Script robuste : suppressions conditionnelles (`information_schema`), re-run après échec partiel possible ; le nouveau UNIQUE est créé **avant** le drop de l'ancien (il couvre la FK `evaluation_item → evaluations` via `evaluation_id`).
 
-## 7. Checklist base de données
+## 7. Intégration éditeur « Grille d'évaluation » (portée note 440, Lot D)
+
+Le rattachement d'une grille à une étape est choisi dans l'éditeur de template (`pipeline-template-edit`), qui dépend de la présente note :
+
+- La section « Grille d'évaluation » n'apparaît que sur les étapes `INTERVIEW` ; pour toute autre étape le champ est masqué, et côté front il est **nettoyé** si le type quitte INTERVIEW.
+- Picker grille → version : chargé via le catalogue `POST /evaluationGrid/templates` (templates actifs + versions publiées). On choisit d'abord une grille, puis une version publiée de cette grille ; si aucune version n'est disponible, un message d'aide s'affiche.
+- Lecture seule si l'étape est verrouillée (Lot B, note 440) : le picker est désactivé, la valeur conservée.
+- Le champ `evaluationGridTemplateVersionId` voyage avec la révision d'étape (diff du Lot B) et est persisté par `applyTargetConfig` ; en base c'est `pipeline_stage.evaluation_grid_template_version_id` (FK nullable, indexée).
+- Backend : `PipelineStageBusiness.validateTargetStages` → `validateEvaluationGrid` n'accepte le champ que sur `stageType=INTERVIEW` (`DISALLOWED_OPERATION` sinon) et vérifie l'existence de la version (`evaluationGridTemplateVersionRepository.findOne(id, false)` → `EntityNotFoundException` / `DATA_NOT_EXIST` sinon).
+- Garde de la Règle A : le picker ne propose que des versions **publiées** ; modifier le contenu d'une version verrouillée relève du CRUD de la bibliothèque de grilles (note 440), jamais de l'éditeur de pipeline.
+- Tests : `PipelineStageBusinessTest` (grille acceptée sur INTERVIEW, refusée sur QUIZ, version inexistante refusée, persistance via le diff) et `pipeline-template-edit.spec.ts` (payload `evaluationGridTemplateVersionId`, nettoyage hors INTERVIEW) — verts.
+
+## 8. Checklist base de données
 
 - [x] colonne `pipeline_stage.evaluation_grid_template_version_id` (nullable, FK, index)
 - [x] colonnes `content_hash` (UNIQUE, forme canonique, sans id de version) et `locked_at` sur `evaluation_grid_template_version`
@@ -218,7 +230,7 @@ Checklist :
 - [x] `DROP TABLE legacy_criterion_mapping` puis `DROP TABLE pipeline_stage_evaluation_criterion`
 - [x] index / contraintes UNIQUE sur `content_hash` vérifiés après migration
 
-## 8. Checklist documentation (doc + page d'exemples)
+## 9. Checklist documentation (doc + page d'exemples)
 
 - [x] `cartographie-fonctionnelle-front/bd_documentee/quizapp_db_documentation_20260810.md` :
   - retirer la table 3 `pipeline_stage_evaluation_criterion` (et sa famille si elle devient vide) ;
@@ -235,7 +247,7 @@ Checklist :
 - [x] Front : renommer `pipelineStageEvaluationCriterionId` → `evaluationGridTemplateItemId` dans `core/services/evaluation.service.ts`, `pages/dashboard/evaluations/evaluations.ts`, `pages/dashboard/entities/solo/applications/entities-applications.ts`, `pages/dashboard/evaluations-list/evaluations-list.ts` + specs.
 - [x] Page d'exemples : rien de spécifique si les données suffisent ; vérifier la légende et les liens FK après mise à jour des données (`node --check` OK, 47 tables, lignes cohérentes, aucun lien FK vers une table inexistante).
 
-## 9. Points d'attention pour éviter les erreurs
+## 10. Points d'attention pour éviter les erreurs
 
 - **Le `content_hash` ne contient jamais l'id de la version** : c'est une empreinte de contenu. Deux versions au contenu identique partagent le même hash, c'est le mécanisme de la Règle C.
 - **Collation explicite sur les hash temporaires** : `SHA2()` renvoie une chaîne dans la collation de **connexion** (mysql CLI vs JDBC/Flyway ≠ collation des colonnes `utf8mb4_unicode_ci`) → toute comparaison `<>` entre un `content_hash` de colonne et un hash de table temporaire lève une erreur 1267 « illegal mix of collations ». Déclarer les colonnes temporaires en `CHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci` (piège rencontré en Phase B).
@@ -249,7 +261,7 @@ Checklist :
 - **Snapshots** : `weight_snapshot` / `max_score_snapshot` d'`evaluation_item` restent la ceinture-bretelles d'affichage des évaluations historiques.
 - **Audit** : journaliser en `audit_event` (actions `PHASE_B_*`, puis `GRID_*` au runtime) la pose du verrou, les repointages, les nettoyages d'orphelins et les créations de versions.
 
-## 10. Fichiers cartographie liés
+## 11. Fichiers cartographie liés
 
 - `cartographie-fonctionnelle-front/evolution/420-evolution-pipeline-multi-occurrences.md` : section 4.1 et références à `pipeline_stage_evaluation_criterion` corrigées — design remplacé par la présente note, table supprimée (V1_080).
 - `cartographie-fonctionnelle-front/evolution/440-evolution-pipeline-personnalisation.md` : **dépendance** — le CRUD de la bibliothèque de grilles (entités, repos, business, endpoints, UI, éditeur « picker grille → version ») est porté par la note 440, qui consomme les services de versionnage (Règles B/C/D) fournis par la présente note.

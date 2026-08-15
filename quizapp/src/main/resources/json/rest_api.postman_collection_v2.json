@@ -172,7 +172,6 @@
                                 "value": "application/json"
                             }
                         ],
-                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"campaignTitle\": \"\",\n\t\t\t\"campaignDesc\": \"\",\n\t\t\t\"campaignStatus\": \"\",\n\t\t\t\"campaignStart\": \"\",\n\t\t\t\"campaignEnd\": \"\",\n\t\t\t\"maxApply\": \"\",\n\t\t\t\"allCanUpdate\": \"\",\n\t\t\t\"searchString\": \"\",\n\t\t\t\"specialityId\": \"\",\n\t\t\t\"creatorId\": \"\"\n\t\t} \n\t]  \n}"
                         "body": {
                             "mode": "raw",
                             "raw": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"campaignId\": \"\",\n\t\t\"questionId\": \"\"\n\t}  \n}"
@@ -184,7 +183,6 @@
                 {
                     "name": "campaignQuestions-create",
                     "request": {
-                            "raw": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"campaignTitle\": \"\",\n\t\t\"campaignDesc\": \"\",\n\t\t\"campaignStatus\": \"\",\n\t\t\"campaignStart\": \"\",\n\t\t\"campaignEnd\": \"\",\n\t\t\"maxApply\": \"\",\n\t\t\"allCanUpdate\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\",\n\t\t\"specialityId\": \"\",\n\t\t\t\"creatorId\": \"\"\n\t}  \n}"
                         "header": [
                             {
                                 "key": "Content-Type",
@@ -1390,8 +1388,144 @@
                     },
                     "response": []
                 }
+             ]
+      		},
+        {
+            "name": "pipelineStageNotificationRule",
+            "item": [
+                {
+                    "name": "pipelineStageNotificationRule-getByCriteria",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"triggerCode\": \"\",\n\t\t\"outcomeCode\": \"\",\n\t\t\"emailTemplateId\": \"\",\n\t\t\"isRequired\": \"\",\n\t\t\"isAutomatic\": \"\",\n\t\t\"requiresManualConfirmation\": \"\",\n\t\t\"pipelineStageId\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\"\n\t}  \n}"
+                        },
+                        "url": "{{main_url}}/pipelineStageNotificationRule/getByCriteria"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "pipelineStageNotificationRule-create",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"pipelineStageId\": \"\",\n\t\t\t\"triggerCode\": \"STAGE_EMAIL\",\n\t\t\t\"outcomeCode\": \"\",\n\t\t\t\"emailTemplateId\": \"\",\n\t\t\t\"isRequired\": true,\n\t\t\t\"isAutomatic\": false,\n\t\t\t\"requiresManualConfirmation\": false\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/pipelineStageNotificationRule/create"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "pipelineStageNotificationRule-update",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"pipelineStageId\": \"\",\n\t\t\t\"triggerCode\": \"STAGE_EMAIL\",\n\t\t\t\"outcomeCode\": \"\",\n\t\t\t\"emailTemplateId\": \"\",\n\t\t\t\"isRequired\": true,\n\t\t\t\"isAutomatic\": false\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/pipelineStageNotificationRule/update"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "pipelineStageNotificationRule-delete",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/pipelineStageNotificationRule/delete"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "pipelineStageNotificationRule-byStage",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"data\":{\n  \t\t\"pipelineStageId\": \"\"\n\t}  \n}"
+                        },
+                        "url": "{{main_url}}/pipelineStageNotificationRule/byStage"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "pipelineStageNotificationRule-saveStageRules",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\",\n\t\"data\":{\n  \t\t\"pipelineStageId\": \"\"\n\t},\n\t\"datas\":[\n\t\t{\n  \t\t\t\"triggerCode\": \"STAGE_EMAIL\",\n\t\t\t\"outcomeCode\": \"\",\n\t\t\t\"emailTemplateId\": \"\",\n\t\t\t\"isRequired\": true,\n\t\t\t\"isAutomatic\": false\n\t\t} \n\t]  \n}"
+                        },
+                        "url": "{{main_url}}/pipelineStageNotificationRule/saveStageRules"
+                    },
+                    "response": []
+                }
             ]
-     		}
+        },
+        {
+            "name": "evaluationGrid",
+            "item": [
+                {
+                    "name": "evaluationGrid-templates",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"user\":\"1\"\n}"
+                        },
+                        "url": "{{main_url}}/evaluationGrid/templates"
+                    },
+                    "response": []
+                }
+            ]
+        }
     ],
      "variable": [
         {

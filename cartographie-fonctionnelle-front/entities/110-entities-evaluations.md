@@ -82,6 +82,7 @@ La page fournit un CRUD admin brut des evaluations reliees aux `candidateIntervi
 - Des evaluations contenant `candidateMark`, `recruiterComment`, `candidateInterviewId`, `isDeleted` et les dates.
 - Une liste `candidateInterview` active pour alimenter les selects FK.
 - Un contrat filtre coherent: si l'UI expose `candidateInterviewId`, l'endpoint `getAllByCriteria` doit le consommer.
+- La grille du formulaire provient de la version liee a l'etape `INTERVIEW` du round : `pipeline_stage.evaluation_grid_template_version_id`, choisie dans l'editeur de template (440 Lot D) et verrouillee a l'usage (430).
 
 ## 8. Entites Metier Impliquees
 
@@ -113,4 +114,5 @@ La page fournit un CRUD admin brut des evaluations reliees aux `candidateIntervi
 - [ ] documenter plusieurs evaluations detaillees pour un meme entretien et plusieurs criteres par evaluation
 - [ ] documenter `evaluationStatus`, `submittedAt`, `validatedAt` et `validatedBy` pour distinguer brouillon, soumission, validation et exploitation metier
 - [x] rattacher les criteres a la grille versionnee (`evaluation_grid_template_version` / `evaluation_grid_template_item`, verrou a l'usage) et l'`evaluation_item` a `evaluation_grid_template_item_id` — design retenu par la note 430 (`pipeline_stage_evaluation_criterion` supprimee)
+- [x] documenter la provenance de la grille : `pipeline_stage.evaluation_grid_template_version_id` (etape `INTERVIEW` du round, choisie dans `pipeline-template-edit`, 440 Lot D), verrouillee a l'usage (430)
 - [ ] limiter les champs de synthese eventuels (`globalScore`, `globalComment`) a des resumes de soumission, derives des lignes `evaluation_item`

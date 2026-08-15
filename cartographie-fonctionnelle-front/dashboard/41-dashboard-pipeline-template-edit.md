@@ -39,6 +39,8 @@ La cible n'est plus un gel global du template au premier candidat, mais un versi
 - [ ] Définir une grille explicite `pipeline prêt à produire` au-delà du garde-fou minimal déjà en place (bornes, ordre, une étape intermédiaire, types supportés, cohérence email minimale).
 - [x] Ajouter une activation explicite du pipeline dans cette page, au lieu de laisser le backend rendre le template actif dès sa creation.
 - [x] Remplacer le verrouillage binaire du template par une strategie de revisions de stages: `pipeline_stage.isActive` persiste la revision active, tandis que le verrouillage d'etape est derive de son usage reel par les candidats.
+- [x] Chaque étape enregistrée expose un bouton `Règles de notification` ouvrant une modale CRUD sur `pipeline_stage_notification_rule` (déclencheur `STAGE_EMAIL`, issue `StageType` optionnelle, modèle de courriel, flags obligatoire/automatique/confirmation manuelle) ; l'enregistrement remplace l'ensemble des règles de l'étape (`POST /pipelineStageNotificationRule/saveStageRules`) — 440 Lot C.
+- [x] Les étapes `INTERVIEW` exposent un picker `Grille d'évaluation` (template → version publiée, catalogue `POST /evaluationGrid/templates`) persistant `pipeline_stage.evaluationGridTemplateVersionId` ; la grille n'est autorisée que sur INTERVIEW (validation backend) et le champ est nettoyé si le type quitte INTERVIEW — 440 Lot D.
 
 ## 4. Blocs UI Constates
 
@@ -72,6 +74,8 @@ La cible n'est plus un gel global du template au premier candidat, mais un versi
 - [x] switch `Autoriser le saut` visible pour une étape obligatoire editable, avec persistance dans `configJson.allowSkip`
 - [x] blocage visuel des combinaisons sans effet: `PRESELECTION` garde `Éliminatoire`, les emails sont editionnables seulement pour les types raccordes, avec un hint de comportement
 - [x] suppression avec confirmation
+- [x] bouton `Règles de notification` par étape enregistrée + modale CRUD (déclencheur, issue, modèle de courriel, required/automatic/manual) — 440 Lot C
+- [x] picker `Grille d'évaluation` (template → version publiée) sur les étapes `INTERVIEW`, lecture seule si étape verrouillée — 440 Lot D
 
 ## 5. Donnees Affichees Ou Editees
 
@@ -95,7 +99,9 @@ La cible n'est plus un gel global du template au premier candidat, mais un versi
 - `isEliminatory`
 - `emailRequired`
 - `emailAutomatic`
+- `evaluationGridTemplateVersionId` cible sur `pipeline_stage` (grille d'évaluation, INTERVIEW uniquement)
 - `pipelineTemplateId`
+- règles de notification (`PipelineStageNotificationRule[]`, modale dédiée)
 
 ### 5.3 Cadrage fonctionnel attendu des types et flags
 
@@ -161,6 +167,15 @@ La cible n'est plus un gel global du template au premier candidat, mais un versi
 - les pages metier n'exposent jamais les revisions inactives: le front envoie seulement la configuration cible visible (`POST /pipelineStage/saveTemplateStages`), puis le backend (`PipelineStageBusiness.applyTargetConfig`) decide seul s'il faut modifier, creer, desactiver ou reactiver une revision existante
 - le verrou du template (`is_locked`) est conserve en base mais ne bloque plus l'edition: seules les etapes utilisees sont verrouillees dans l'editeur
 - readiness, activation et reorder sont evalues sur les revisions actives uniquement
+- la grille d'evaluation (`evaluationGridTemplateVersionId`) voyage avec la revision: chaque revision d'etape porte sa propre version de grille, et la grille n'est acceptee que sur les etapes `INTERVIEW` (validation backend `validateEvaluationGrid`)
+
+### 5.7 Regles de notification d'etape (livre avec la 440, Lot C)
+
+- chaque etape enregistree du pipeline peut porter des regles de notification (`pipeline_stage_notification_rule`) ; les regles sont des donnees de configuration distinctes des revisions d'etape
+- une regle = declencheur (`STAGE_EMAIL`), issue de l'etape optionnelle (`outcome_code`, valeur `StageType`), modele de courriel (`email_template_id`), et flags `isRequired` / `isAutomatic` / `requiresManualConfirmation`
+- un envoi automatique exige un courriel obligatoire (`is_automatic => is_required`, controle backend)
+- la modale charge les regles de l'etape (`POST /pipelineStageNotificationRule/byStage`) et les enregistre en remplacement global (`POST /pipelineStageNotificationRule/saveStageRules` : toute regle absente de la liste est desactivee)
+- la politique runtime (blocage du skip tant qu'un mail requis non envoye, envoi automatique des invitations) reste portee par `ApplicationProgressBusiness`, `InterviewsBusiness` et `DecisionBusiness` et lit la regle active de l'etape
 
 ### 5.6 Limite structurelle a arbitrer (résolue via `active_slot`)
 
@@ -178,6 +193,10 @@ La cible n'est plus un gel global du template au premier candidat, mais un versi
 - `PipelineStageService.update()` -> `/pipelineStage/update`
 - `PipelineStageService.delete()` -> `/pipelineStage/delete`
 - `PipelineStageService.reorder(templateId, ids)` -> endpoint de réordonnancement des étapes (non utilisé par l'éditeur Lot B)
+- `PipelineStageNotificationRuleService.getByStage()` -> `POST /pipelineStageNotificationRule/byStage` (règles actives d'une étape) — 440 Lot C
+- `PipelineStageNotificationRuleService.saveStageRules()` -> `POST /pipelineStageNotificationRule/saveStageRules` (remplacement bulk) — 440 Lot C
+- `EmailTemplateService.getByCriteria()` -> `POST /emailTemplate/getByCriteria` (picker de modèles de courriel)
+- `EvaluationGridService.getTemplates()` -> `POST /evaluationGrid/templates` (catalogue templates actifs + versions publiées) — 440 Lot D
 
 ## 7. Ce Que Le Backend Doit Envoyer
 
@@ -252,7 +271,7 @@ La cible actee par l'audit du 2026-05-30 invalide une partie du cadrage actuel d
 - [ ] autoriser plusieurs rounds `QUIZ`, `PRESELECTION` et `INTERVIEW` dans un meme template
 - [ ] retirer `EVALUATION` de la liste des types d'etape editables de premier niveau
 - [ ] retirer toute exposition de `allowSkip` sur un round obligatoire
-- [ ] remplacer les flags `emailRequired` / `emailAutomatic` par un vrai modele de regles de notification de round
-- [ ] permettre a chaque stage `QUIZ` de porter un screening automatique optionnel, independant des autres quiz du meme pipeline
-- [ ] permettre a chaque stage `INTERVIEW` de definir sa propre grille d'evaluation et ses criteres
-- [ ] permettre a un stage `INTERVIEW` de reutiliser une grille mutualisee versionnee ou d'en figer un snapshot, sans reecrire retroactivement les campagnes deja ouvertes
+- [x] remplacer les flags `emailRequired` / `emailAutomatic` par un vrai modele de regles de notification de round — modale règles de notification livre (440 Lot C)
+- [x] permettre a chaque stage `QUIZ` de porter un screening automatique optionnel, independant des autres quiz du meme pipeline
+- [x] permettre a chaque stage `INTERVIEW` de definir sa propre grille d'evaluation et ses criteres — picker grille→version livre (440 Lot D)
+- [x] permettre a un stage `INTERVIEW` de reutiliser une grille mutualisee versionnee ou d'en figer un snapshot, sans reecrire retroactivement les campagnes deja ouvertes — rattachement par version (catalogue 430), reste la lecture runtime cote evaluations

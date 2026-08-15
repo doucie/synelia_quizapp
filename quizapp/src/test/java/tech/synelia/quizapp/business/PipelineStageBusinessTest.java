@@ -27,7 +27,9 @@ import org.mockito.quality.Strictness;
 
 import tech.synelia.quizapp.dao.entity.PipelineStage;
 import tech.synelia.quizapp.dao.entity.PipelineTemplate;
+import tech.synelia.quizapp.dao.entity.EvaluationGridTemplateVersion;
 import tech.synelia.quizapp.dao.repository.ApplicationProgressRepository;
+import tech.synelia.quizapp.dao.repository.EvaluationGridTemplateVersionRepository;
 import tech.synelia.quizapp.dao.repository.PipelineStageRepository;
 import tech.synelia.quizapp.dao.repository.PipelineTemplateRepository;
 import tech.synelia.quizapp.utils.ExceptionUtils;
@@ -38,6 +40,7 @@ import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.dto.PipelineStageDto;
 import tech.synelia.quizapp.utils.enums.StageType;
+import tech.synelia.quizapp.utils.exception.EntityNotFoundException;
 import tech.synelia.quizapp.utils.exception.InvalidEntityException;
 
 @ExtendWith(MockitoExtension.class)
@@ -50,6 +53,8 @@ class PipelineStageBusinessTest {
 	private PipelineTemplateRepository pipelineTemplateRepository;
 	@Mock
 	private ApplicationProgressRepository applicationProgressRepository;
+	@Mock
+	private EvaluationGridTemplateVersionRepository evaluationGridTemplateVersionRepository;
 	@Mock
 	private FunctionalError functionalError;
 	@Mock
@@ -441,6 +446,74 @@ class PipelineStageBusinessTest {
 		assertThat(response.getItems()).hasSize(4);
 		assertThat(response.getItems()).extracting(PipelineStageDto::getStageLabel)
 				.containsExactly("Candidature", "Quiz V2", "Test", "Decision");
+	}
+
+	@Test
+	void saveTemplateStages_rejectsGridOnNonInterviewStage() {
+		PipelineTemplate template = buildTemplate(11, false);
+		when(pipelineTemplateRepository.findOne(11, false)).thenReturn(template);
+		dbStages.addAll(List.of(
+				buildStage(20, template, StageType.CANDIDATURE.getValue(), "Candidature", 1),
+				buildStage(22, template, StageType.DECISION.getValue(), "Decision", 2)));
+
+		PipelineStageDto quizDto = toTarget(null, StageType.QUIZ.getValue(), "Quiz", 2);
+		quizDto.setEvaluationGridTemplateVersionId(500);
+		List<PipelineStageDto> targets = List.of(
+				toTarget(20, StageType.CANDIDATURE.getValue(), "Candidature", 1),
+				quizDto,
+				toTarget(22, StageType.DECISION.getValue(), "Decision", 3));
+
+		InvalidEntityException exception = assertThrows(
+				InvalidEntityException.class,
+				() -> pipelineStageBusiness.saveTemplateStages(11, targets, 77, Locale.FRENCH));
+
+		assertThat(exception.getStatus().getMessage()).contains("INTERVIEW");
+	}
+
+	@Test
+	void saveTemplateStages_rejectsInexistentGridVersion() {
+		PipelineTemplate template = buildTemplate(11, false);
+		when(pipelineTemplateRepository.findOne(11, false)).thenReturn(template);
+		dbStages.addAll(List.of(
+				buildStage(20, template, StageType.CANDIDATURE.getValue(), "Candidature", 1),
+				buildStage(22, template, StageType.DECISION.getValue(), "Decision", 2)));
+		when(evaluationGridTemplateVersionRepository.findOne(500, false)).thenReturn(null);
+
+		PipelineStageDto interviewDto = toTarget(null, StageType.INTERVIEW.getValue(), "Entretien", 2);
+		interviewDto.setEvaluationGridTemplateVersionId(500);
+		List<PipelineStageDto> targets = List.of(
+				toTarget(20, StageType.CANDIDATURE.getValue(), "Candidature", 1),
+				interviewDto,
+				toTarget(22, StageType.DECISION.getValue(), "Decision", 3));
+
+		EntityNotFoundException exception = assertThrows(
+				EntityNotFoundException.class,
+				() -> pipelineStageBusiness.saveTemplateStages(11, targets, 77, Locale.FRENCH));
+
+		assertThat(exception.getStatus().getMessage()).contains("500");
+	}
+
+	@Test
+	void saveTemplateStages_acceptsGridOnInterviewStage() throws Exception {
+		PipelineTemplate template = buildTemplate(11, false);
+		when(pipelineTemplateRepository.findOne(11, false)).thenReturn(template);
+		dbStages.addAll(List.of(
+				buildStage(20, template, StageType.CANDIDATURE.getValue(), "Candidature", 1),
+				buildStage(22, template, StageType.DECISION.getValue(), "Decision", 2)));
+		when(evaluationGridTemplateVersionRepository.findOne(500, false)).thenReturn(new EvaluationGridTemplateVersion());
+
+		PipelineStageDto interviewDto = toTarget(null, StageType.INTERVIEW.getValue(), "Entretien", 2);
+		interviewDto.setEvaluationGridTemplateVersionId(500);
+		List<PipelineStageDto> targets = List.of(
+				toTarget(20, StageType.CANDIDATURE.getValue(), "Candidature", 1),
+				interviewDto,
+				toTarget(22, StageType.DECISION.getValue(), "Decision", 3));
+
+		Response<PipelineStageDto> response = pipelineStageBusiness.saveTemplateStages(11, targets, 77, Locale.FRENCH);
+
+		assertThat(response.isHasError()).isFalse();
+		assertThat(response.getItems()).hasSize(3);
+		assertThat(response.getItems().get(1).getEvaluationGridTemplateVersionId()).isEqualTo(500);
 	}
 
 	private Request<PipelineStageDto> buildRequest(Integer userId, PipelineStageDto dto, boolean simpleLoading) {

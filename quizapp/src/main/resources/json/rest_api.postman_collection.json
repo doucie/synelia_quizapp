@@ -223,6 +223,29 @@
 				"user.delete"
 			],
 			"owner": "1151918"
+		},
+		{
+			"id": "pipelineStageNotificationRule.id",
+			"name": "pipelineStageNotificationRule",
+			"description": "",
+			"order": [
+				"pipelineStageNotificationRule.getByCriteria",
+				"pipelineStageNotificationRule.create",
+				"pipelineStageNotificationRule.update",
+				"pipelineStageNotificationRule.delete",
+				"pipelineStageNotificationRule.byStage",
+				"pipelineStageNotificationRule.saveStageRules"
+			],
+			"owner": "1151918"
+		},
+		{
+			"id": "evaluationGrid.id",
+			"name": "evaluationGrid",
+			"description": "",
+			"order": [
+				"evaluationGrid.templates"
+			],
+			"owner": "1151918"
 		}
 	],
 	"requests": [
@@ -2385,6 +2408,216 @@
 			"collectionId": "project.id",
 			"responses": [],
 			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"firstName\": \"\",\n\t\t\"lastName\": \"\",\n\t\t\"username\": \"\",\n\t\t\"email\": \"\",\n\t\t\"phone\": \"\",\n\t\t\"password\": \"\",\n\t\t\"isDefaultPassword\": \"\",\n\t\t\"userRole\": \"\",\n\t\t\"isOnline\": \"\",\n\t\t\"isLocked\": \"\",\n\t\t\"lastConnectionDate\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\"\n\t}  \n}"
+		},
+		{
+			"id": "pipelineStageNotificationRule.getByCriteria",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/pipelineStageNotificationRule/getByCriteria",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439015040,
+			"name": "pipelineStageNotificationRule-getByCriteria",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"isSimpleLoading\":false,\n\t\"data\":{\n  \t\t\"id\": \"\",\n\t\t\"triggerCode\": \"\",\n\t\t\"outcomeCode\": \"\",\n\t\t\"emailTemplateId\": \"\",\n\t\t\"isRequired\": \"\",\n\t\t\"isAutomatic\": \"\",\n\t\t\"requiresManualConfirmation\": \"\",\n\t\t\"pipelineStageId\": \"\",\n\t\t\"createdAt\": \"\",\n\t\t\"createdBy\": \"\",\n\t\t\"updatedAt\": \"\",\n\t\t\"updatedBy\": \"\",\n\t\t\"isDeleted\": \"\",\n\t\t\"searchString\": \"\"\n\t}  \n}"
+		},
+		{
+			"id": "pipelineStageNotificationRule.create",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/pipelineStageNotificationRule/create",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439015040,
+			"name": "pipelineStageNotificationRule-create",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"pipelineStageId\": \"\",\n\t\t\t\"triggerCode\": \"STAGE_EMAIL\",\n\t\t\t\"outcomeCode\": \"\",\n\t\t\t\"emailTemplateId\": \"\",\n\t\t\t\"isRequired\": true,\n\t\t\t\"isAutomatic\": false,\n\t\t\t\"requiresManualConfirmation\": false\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "pipelineStageNotificationRule.update",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/pipelineStageNotificationRule/update",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439015040,
+			"name": "pipelineStageNotificationRule-update",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\",\n\t\t\t\"pipelineStageId\": \"\",\n\t\t\t\"triggerCode\": \"STAGE_EMAIL\",\n\t\t\t\"outcomeCode\": \"\",\n\t\t\t\"emailTemplateId\": \"\",\n\t\t\t\"isRequired\": true,\n\t\t\t\"isAutomatic\": false\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "pipelineStageNotificationRule.delete",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/pipelineStageNotificationRule/delete",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439015040,
+			"name": "pipelineStageNotificationRule-delete",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"datas\":[\n\t\t{\n  \t\t\t\"id\": \"\"\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "pipelineStageNotificationRule.byStage",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/pipelineStageNotificationRule/byStage",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439015040,
+			"name": "pipelineStageNotificationRule-byStage",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"data\":{\n  \t\t\"pipelineStageId\": \"\"\n\t}  \n}"
+		},
+		{
+			"id": "pipelineStageNotificationRule.saveStageRules",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/pipelineStageNotificationRule/saveStageRules",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439015040,
+			"name": "pipelineStageNotificationRule-saveStageRules",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\",\n\t\"data\":{\n  \t\t\"pipelineStageId\": \"\"\n\t},\n\t\"datas\":[\n\t\t{\n  \t\t\t\"triggerCode\": \"STAGE_EMAIL\",\n\t\t\t\"outcomeCode\": \"\",\n\t\t\t\"emailTemplateId\": \"\",\n\t\t\t\"isRequired\": true,\n\t\t\t\"isAutomatic\": false\n\t\t} \n\t]  \n}"
+		},
+		{
+			"id": "evaluationGrid.templates",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "{{main_url}}/evaluationGrid/templates",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1497439015040,
+			"name": "evaluationGrid-templates",
+			"description": "",
+			"collectionId": "project.id",
+			"responses": [],
+			"rawModeData": "{\n\t\"user\":\"1\"\n}"
 		}
 	]
 }

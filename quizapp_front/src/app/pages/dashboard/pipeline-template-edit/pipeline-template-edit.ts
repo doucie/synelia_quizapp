@@ -5,8 +5,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, takeUntil, forkJoin } from 'rxjs';
 import { PipelineTemplateService } from '../../../core/services/pipeline-template.service';
 import { PipelineStageService } from '../../../core/services/pipeline-stage.service';
+import { PipelineStageNotificationRuleService } from '../../../core/services/pipeline-stage-notification-rule.service';
+import { EmailTemplateService, EmailTemplate } from '../../../core/services/email-template.service';
+import { EvaluationGridService, EvaluationGridTemplate } from '../../../core/services/evaluation-grid.service';
 import { NotificationService } from '../../../core/services/notification.service';
-import { PipelineTemplate, PipelineStage, StageType, STAGE_TYPES, STAGE_TYPE_LABELS, getPipelineReadinessIssues } from '../../../core/models/pipeline.interfaces';
+import { PipelineTemplate, PipelineStage, StageType, STAGE_TYPES, STAGE_TYPE_LABELS, PipelineStageNotificationRule, NOTIFICATION_TRIGGERS, getPipelineReadinessIssues } from '../../../core/models/pipeline.interfaces';
 import { FilterCheckboxComponent } from '../../../shared/filter-checkbox/filter-checkbox';
 import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../shared/filter-select/filter-select';
 
@@ -20,6 +23,7 @@ interface EditableStage {
   allowSkip: boolean;
   isEliminatory: boolean;
   configJson?: string | null;
+  evaluationGridTemplateVersionId?: number;
   isNew?: boolean;
   isLocked?: boolean;
 }
@@ -56,6 +60,20 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
 
   showDeleteStageConfirm = signal(false);
   stageToDeleteIndex = signal<number | null>(null);
+
+  // catalogs
+  emailTemplates = signal<EmailTemplate[]>([]);
+  gridTemplates = signal<EvaluationGridTemplate[]>([]);
+
+  // règle de notification editor
+  ruleEditorStageIndex = signal<number | null>(null);
+  ruleDraft = signal<PipelineStageNotificationRule[]>([]);
+  ruleFormOpen = signal(false);
+  ruleEditingIndex = signal<number | null>(null);
+  ruleForm = signal<PipelineStageNotificationRule | null>(null);
+  savingRules = signal(false);
+
+  ruleTriggers = NOTIFICATION_TRIGGERS;
 
   stageTypes: { value: StageType; label: string }[] = STAGE_TYPES.map((value) => ({
     value,
@@ -123,7 +141,10 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
     private router: Router,
     private templateService: PipelineTemplateService,
     private stageService: PipelineStageService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private ruleService: PipelineStageNotificationRuleService,
+    private emailTemplateService: EmailTemplateService,
+    private gridService: EvaluationGridService
   ) {}
 
   ngOnInit(): void {
@@ -134,6 +155,19 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
     }
     this.templateId = +id;
     this.loadTemplate();
+    this.loadRuleCatalogs();
+  }
+
+  private loadRuleCatalogs(): void {
+    forkJoin({
+      emailTemplates: this.emailTemplateService.getByCriteria({}, 0, 200),
+      gridTemplates: this.gridService.getTemplates()
+    }).pipe(takeUntil(this.destroy$)).subscribe({
+      next: ({ emailTemplates, gridTemplates }) => {
+        this.emailTemplates.set(emailTemplates.items || []);
+        this.gridTemplates.set(gridTemplates);
+      }
+    });
   }
 
   ngOnDestroy(): void {
@@ -165,6 +199,7 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
           allowSkip: this.readAllowSkipFromConfig(s.configJson),
           isEliminatory: !!s.isEliminatory,
           configJson: s.configJson ?? null,
+          evaluationGridTemplateVersionId: s.evaluationGridTemplateVersionId,
           isNew: false,
           isLocked: !!s.isLocked
         })));
@@ -242,12 +277,16 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const nextFieldValue = field === 'stageType' && value !== 'INTERVIEW'
+      ? { [field]: value, evaluationGridTemplateVersionId: undefined }
+      : { [field]: value };
+
     this.stages.update(list => list.map((s, i) => {
       if (i !== index) {
         return s;
       }
 
-      return this.normalizeStageForEditor({ ...s, [field]: value });
+      return this.normalizeStageForEditor({ ...s, ...nextFieldValue });
     }));
   }
 
@@ -544,6 +583,7 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
       isRequired: normalizedStage.isRequired,
       isEliminatory: normalizedStage.isEliminatory,
       configJson: this.buildStageConfigJson(normalizedStage),
+      evaluationGridTemplateVersionId: normalizedStage.evaluationGridTemplateVersionId,
       pipelineTemplateId: this.templateId
     };
   }
@@ -552,6 +592,192 @@ export class PipelineTemplateEditComponent implements OnInit, OnDestroy {
     this.saving.set(false);
     this.notificationService.success('Pipeline enregistré', 'Le modèle de pipeline a été mis à jour.');
     this.loadTemplate();
+  }
+
+  // ── Grille d'évaluation ──
+
+  gridVersionOptions(): { id: number; label: string }[] {
+    const options: { id: number; label: string }[] = [];
+    for (const template of this.gridTemplates()) {
+      for (const version of template.versions || []) {
+        if (version.isPublished) {
+          options.push({
+            id: version.id,
+            label: `${template.templateName || 'Grille'} — ${version.versionLabel || 'Version ' + (version.versionNumber ?? '')}`
+          });
+        }
+      }
+    }
+    return options;
+  }
+
+  // ── Règles de notification ──
+
+  currentRuleStage(): EditableStage | null {
+    const index = this.ruleEditorStageIndex();
+    return index === null ? null : this.stages()[index] || null;
+  }
+
+  openRuleEditor(index: number): void {
+    const stage = this.stages()[index];
+    if (!stage.id) {
+      this.notificationService.warning('Étape non enregistrée', 'Enregistrez d’abord le pipeline pour configurer les règles de notification de cette étape.');
+      return;
+    }
+
+    this.ruleEditorStageIndex.set(index);
+    this.ruleForm.set(null);
+    this.ruleFormOpen.set(false);
+    this.ruleEditingIndex.set(null);
+    this.ruleService.getByStage(stage.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          if (response.hasError) {
+            this.notificationService.error('Règles de notification', response.status.message || 'Impossible de charger les règles.');
+            this.ruleEditorStageIndex.set(null);
+            return;
+          }
+          this.ruleDraft.set((response.items || []).map(rule => ({ ...rule, isRequired: !!rule.isRequired, isAutomatic: !!rule.isAutomatic, requiresManualConfirmation: !!rule.requiresManualConfirmation })));
+        },
+        error: () => {
+          this.notificationService.error('Règles de notification', 'Impossible de charger les règles.');
+          this.ruleEditorStageIndex.set(null);
+        }
+      });
+  }
+
+  closeRuleEditor(): void {
+    this.ruleEditorStageIndex.set(null);
+    this.ruleDraft.set([]);
+    this.ruleForm.set(null);
+    this.ruleFormOpen.set(false);
+    this.ruleEditingIndex.set(null);
+  }
+
+  startAddRule(): void {
+    this.ruleEditingIndex.set(null);
+    this.ruleForm.set({
+      triggerCode: 'STAGE_EMAIL',
+      outcomeCode: undefined,
+      emailTemplateId: undefined,
+      isRequired: false,
+      isAutomatic: false,
+      requiresManualConfirmation: false
+    });
+    this.ruleFormOpen.set(true);
+  }
+
+  startEditRule(index: number): void {
+    const draft = this.ruleDraft()[index];
+    if (!draft) {
+      return;
+    }
+    this.ruleEditingIndex.set(index);
+    this.ruleForm.set({ ...draft });
+    this.ruleFormOpen.set(true);
+  }
+
+  cancelRuleForm(): void {
+    this.ruleForm.set(null);
+    this.ruleFormOpen.set(false);
+    this.ruleEditingIndex.set(null);
+  }
+
+  updateRuleForm(field: keyof PipelineStageNotificationRule, value: any): void {
+    this.ruleForm.update(form => (form ? { ...form, [field]: value } : form));
+  }
+
+  applyRuleForm(): void {
+    const form = this.ruleForm();
+    if (!form) {
+      return;
+    }
+    if (!form.emailTemplateId) {
+      this.notificationService.warning('Règle incomplète', 'Sélectionnez un modèle de courriel pour la règle.');
+      return;
+    }
+
+    const rule: PipelineStageNotificationRule = {
+      id: form.id,
+      triggerCode: form.triggerCode || 'STAGE_EMAIL',
+      outcomeCode: form.outcomeCode,
+      emailTemplateId: form.emailTemplateId,
+      isRequired: !!form.isRequired,
+      isAutomatic: !!form.isAutomatic,
+      requiresManualConfirmation: !!form.requiresManualConfirmation
+    };
+
+    this.ruleDraft.update(draft => {
+      const next = [...draft];
+      const editingIndex = this.ruleEditingIndex();
+      if (editingIndex !== null && next[editingIndex]) {
+        next[editingIndex] = rule;
+      } else {
+        next.push(rule);
+      }
+      return next;
+    });
+
+    this.ruleForm.set(null);
+    this.ruleFormOpen.set(false);
+    this.ruleEditingIndex.set(null);
+  }
+
+  removeRule(index: number): void {
+    this.ruleDraft.update(draft => draft.filter((_, i) => i !== index));
+  }
+
+  saveRules(): void {
+    const stage = this.currentRuleStage();
+    if (!stage?.id) {
+      return;
+    }
+    if (this.ruleFormOpen()) {
+      this.notificationService.warning('Règle en cours', 'Validez ou annulez la règle en cours de saisie avant d’enregistrer.');
+      return;
+    }
+
+    this.savingRules.set(true);
+    this.ruleService.saveStageRules(stage.id, this.ruleDraft())
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          this.savingRules.set(false);
+          if (response.hasError) {
+            this.notificationService.error('Règles de notification', response.status.message || 'Impossible d’enregistrer les règles.');
+            return;
+          }
+          this.notificationService.success('Règles de notification', 'Les règles de l’étape ont été enregistrées.');
+          this.closeRuleEditor();
+        },
+        error: () => {
+          this.savingRules.set(false);
+          this.notificationService.error('Règles de notification', 'Impossible d’enregistrer les règles.');
+        }
+      });
+  }
+
+  getOutcomeLabel(code?: string): string {
+    if (!code) {
+      return 'Toute issue';
+    }
+    return (STAGE_TYPE_LABELS as Record<string, string>)[code] || code;
+  }
+
+  getRuleEmailLabel(rule: PipelineStageNotificationRule): string {
+    if (rule.emailTemplateName) {
+      return rule.emailTemplateName;
+    }
+    const template = this.emailTemplates().find(t => t.id === rule.emailTemplateId);
+    return template ? (template.templateKey || 'Modèle de courriel') : '—';
+  }
+
+  getTriggerLabel(code?: string): string {
+    if (!code) {
+      return '—';
+    }
+    return this.ruleTriggers.find(trigger => trigger.value === code)?.label || code;
   }
 
   goBack(): void {

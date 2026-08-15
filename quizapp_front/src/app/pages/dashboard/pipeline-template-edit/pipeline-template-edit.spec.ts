@@ -5,6 +5,9 @@ import { PipelineTemplateEditComponent } from './pipeline-template-edit';
 import { NotificationService } from '../../../core/services/notification.service';
 import { PipelineStageService } from '../../../core/services/pipeline-stage.service';
 import { PipelineTemplateService } from '../../../core/services/pipeline-template.service';
+import { PipelineStageNotificationRuleService } from '../../../core/services/pipeline-stage-notification-rule.service';
+import { EmailTemplateService } from '../../../core/services/email-template.service';
+import { EvaluationGridService } from '../../../core/services/evaluation-grid.service';
 
 describe('PipelineTemplateEditComponent', () => {
   let component: PipelineTemplateEditComponent;
@@ -12,6 +15,9 @@ describe('PipelineTemplateEditComponent', () => {
   let templateService: jasmine.SpyObj<PipelineTemplateService>;
   let stageService: jasmine.SpyObj<PipelineStageService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
+  let ruleService: jasmine.SpyObj<PipelineStageNotificationRuleService>;
+  let emailTemplateService: jasmine.SpyObj<EmailTemplateService>;
+  let gridService: jasmine.SpyObj<EvaluationGridService>;
 
   beforeEach(() => {
     const route = {
@@ -26,13 +32,19 @@ describe('PipelineTemplateEditComponent', () => {
     templateService = jasmine.createSpyObj<PipelineTemplateService>('PipelineTemplateService', ['getAllByCriteria', 'update']);
     stageService = jasmine.createSpyObj<PipelineStageService>('PipelineStageService', ['getByTemplate', 'delete', 'update', 'create', 'reorder', 'saveTemplateStages']);
     notificationService = jasmine.createSpyObj<NotificationService>('NotificationService', ['warning', 'error', 'success']);
+    ruleService = jasmine.createSpyObj<PipelineStageNotificationRuleService>('PipelineStageNotificationRuleService', ['getByStage', 'saveStageRules']);
+    emailTemplateService = jasmine.createSpyObj<EmailTemplateService>('EmailTemplateService', ['getByCriteria']);
+    gridService = jasmine.createSpyObj<EvaluationGridService>('EvaluationGridService', ['getTemplates']);
 
     component = new PipelineTemplateEditComponent(
       route,
       router,
       templateService,
       stageService,
-      notificationService
+      notificationService,
+      ruleService,
+      emailTemplateService,
+      gridService
     );
   });
 
@@ -157,6 +169,96 @@ describe('PipelineTemplateEditComponent', () => {
 
     expect(component.stages().map(stage => stage.uid)).toEqual(['c', 'd']);
     expect(stageService.delete).not.toHaveBeenCalled();
+  });
+
+  it('warns and does not load rules for a not-yet-saved stage', () => {
+    component.stages.set([
+      { ...buildStage('QUIZ', 'Quiz round 1'), uid: 'q' }
+    ] as any);
+
+    component.openRuleEditor(0);
+
+    expect(ruleService.getByStage).not.toHaveBeenCalled();
+    expect(notificationService.warning).toHaveBeenCalled();
+  });
+
+  it('loads rules when opening the rule editor of a saved stage', () => {
+    (ruleService.getByStage as jasmine.Spy).and.returnValue(of({ hasError: false, items: [{ id: 1, emailTemplateId: 3 }] }));
+    component.stages.set([
+      { ...buildStage('QUIZ', 'Quiz round 1'), uid: 'q', id: 21 }
+    ] as any);
+
+    component.openRuleEditor(0);
+
+    expect(ruleService.getByStage).toHaveBeenCalledWith(21);
+    expect(component.ruleDraft()).toHaveSize(1);
+  });
+
+  it('adds a rule to the draft through the rule form', () => {
+    component.ruleDraft.set([]);
+    component.ruleForm.set(null);
+    component.ruleFormOpen.set(false);
+
+    component.startAddRule();
+    component.updateRuleForm('emailTemplateId', 3);
+    component.updateRuleForm('outcomeCode', 'DECISION');
+    component.updateRuleForm('isRequired', true);
+    component.applyRuleForm();
+
+    expect(component.ruleDraft()).toHaveSize(1);
+    expect(component.ruleDraft()[0].emailTemplateId).toBe(3);
+    expect(component.ruleDraft()[0].isRequired).toBeTrue();
+    expect(component.ruleFormOpen()).toBeFalse();
+  });
+
+  it('rejects a rule form without an email template', () => {
+    component.startAddRule();
+    component.applyRuleForm();
+
+    expect(component.ruleDraft()).toHaveSize(0);
+    expect(notificationService.warning).toHaveBeenCalled();
+  });
+
+  it('removes a rule from the draft', () => {
+    component.ruleDraft.set([{ id: 1, triggerCode: 'STAGE_EMAIL', emailTemplateId: 3 }]);
+    component.removeRule(0);
+
+    expect(component.ruleDraft()).toHaveSize(0);
+  });
+
+  it('saves the draft rules as a bulk replacement for the stage', () => {
+    (ruleService.saveStageRules as jasmine.Spy).and.returnValue(of({ hasError: false }));
+    component.stages.set([
+      { ...buildStage('QUIZ', 'Quiz round 1'), uid: 'q', id: 21 }
+    ] as any);
+    component.ruleEditorStageIndex.set(0);
+    component.ruleDraft.set([
+      { id: 1, triggerCode: 'STAGE_EMAIL', emailTemplateId: 3, isRequired: true },
+      { triggerCode: 'STAGE_EMAIL', emailTemplateId: 4 }
+    ]);
+
+    component.saveRules();
+
+    expect(ruleService.saveStageRules).toHaveBeenCalledWith(21, jasmine.any(Array));
+    expect(component.ruleEditorStageIndex()).toBeNull();
+  });
+
+  it('includes the evaluation grid version in the stage payload and clears it when the type leaves INTERVIEW', () => {
+    const stage: any = {
+      ...buildStage('INTERVIEW', 'Entretien'),
+      uid: 'i',
+      id: 25,
+      evaluationGridTemplateVersionId: 500
+    };
+    component.stages.set([stage]);
+
+    component.updateStageField(0, 'stageType', 'QUIZ');
+
+    expect(component.stages()[0].evaluationGridTemplateVersionId).toBeUndefined();
+    expect(component.stages()[0].stageType).toBe('QUIZ');
+
+    const payload = (component as any).toStagePayload(component.stages()[0]);
+    expect(payload.evaluationGridTemplateVersionId).toBeUndefined();
   });
 });
 

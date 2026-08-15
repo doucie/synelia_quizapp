@@ -86,8 +86,36 @@ export interface PipelineStage {
   pipelineTemplateId?: number;
   pipelineTemplateName?: string;
   orderedStageIds?: number[];
+  evaluationGridTemplateVersionId?: number;
   isActive?: boolean;
   isLocked?: boolean;
+  createdAt?: string;
+  createdBy?: number;
+  updatedAt?: string;
+  updatedBy?: number;
+  isDeleted?: boolean;
+  searchString?: string;
+}
+
+// ── Rule de notification d'étape ───────────────────
+export type NotificationTrigger = 'STAGE_EMAIL';
+export type NotificationOutcome = StageType;
+
+export const NOTIFICATION_TRIGGERS: { value: NotificationTrigger; label: string }[] = [
+  { value: 'STAGE_EMAIL', label: 'Envoi de courriel' }
+];
+
+export interface PipelineStageNotificationRule {
+  id?: number;
+  triggerCode?: NotificationTrigger;
+  outcomeCode?: NotificationOutcome;
+  emailTemplateId?: number;
+  isRequired?: boolean;
+  isAutomatic?: boolean;
+  requiresManualConfirmation?: boolean;
+  pipelineStageId?: number;
+  pipelineStageLabel?: string;
+  emailTemplateName?: string;
   createdAt?: string;
   createdBy?: number;
   updatedAt?: string;

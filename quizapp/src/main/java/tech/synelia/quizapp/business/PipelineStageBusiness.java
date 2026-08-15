@@ -29,6 +29,7 @@ import lombok.extern.java.Log;
 import tech.synelia.quizapp.dao.entity.PipelineStage;
 import tech.synelia.quizapp.dao.entity.PipelineTemplate;
 import tech.synelia.quizapp.dao.repository.ApplicationProgressRepository;
+import tech.synelia.quizapp.dao.repository.EvaluationGridTemplateVersionRepository;
 import tech.synelia.quizapp.dao.repository.PipelineStageRepository;
 import tech.synelia.quizapp.dao.repository.PipelineTemplateRepository;
 import tech.synelia.quizapp.utils.ExceptionUtils;
@@ -59,6 +60,8 @@ public class PipelineStageBusiness implements IBasicBusiness<Request<PipelineSta
     private PipelineTemplateRepository pipelineTemplateRepository;
     @Autowired
     private ApplicationProgressRepository applicationProgressRepository;
+    @Autowired
+    private EvaluationGridTemplateVersionRepository evaluationGridTemplateVersionRepository;
     @Autowired
     private FunctionalError functionalError;
     @Autowired
@@ -501,6 +504,7 @@ public class PipelineStageBusiness implements IBasicBusiness<Request<PipelineSta
             if (!Utilities.notBlank(target.getStageLabel())) {
                 throw new InvalidEntityException(functionalError.FIELD_EMPTY("stageLabel", locale));
             }
+            validateEvaluationGrid(target, locale);
             if (isFixedBoundaryStageType(target.getStageType())) {
                 if (target.getId() == null) {
                     throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION(
@@ -537,6 +541,21 @@ public class PipelineStageBusiness implements IBasicBusiness<Request<PipelineSta
         if (!StageType.DECISION.getValue().equals(targets.get(targets.size() - 1).getStageType())) {
             throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION(
                     "DECISION doit rester en derniere position", locale));
+        }
+    }
+
+    private void validateEvaluationGrid(PipelineStageDto target, Locale locale) {
+        if (target.getEvaluationGridTemplateVersionId() == null) {
+            return;
+        }
+        if (!StageType.INTERVIEW.getValue().equals(target.getStageType())) {
+            throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION(
+                    "La grille d'evaluation ne peut etre rattachee qu'a une etape INTERVIEW",
+                    locale));
+        }
+        if (evaluationGridTemplateVersionRepository.findOne(target.getEvaluationGridTemplateVersionId(), false) == null) {
+            throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST(
+                    "evaluation_grid_template_version id -> " + target.getEvaluationGridTemplateVersionId(), locale));
         }
     }
 

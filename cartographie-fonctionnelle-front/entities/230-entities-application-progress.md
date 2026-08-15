@@ -106,7 +106,7 @@ La page expose les progressions de candidatures dans le pipeline de recrutement.
 - Les champs flattenes de lecture (`stageName`, `stageType`, noms candidat, noms decideur) pour rendre le tableau lisible.
 - Des statuts pipeline coherents avec la logique centrale (`PENDING`, `IN_PROGRESS`, `PASSED`, `FAILED`, `SKIPPED`).
 - Une synchro fiable avec les etapes interview/evaluation et les regles de stage requises ou skippables.
-- Les informations necessaires a la logique mail de stage si le back continue a s'appuyer sur `mailSent` pour liberer la suite du pipeline.
+- La politique email de stage ne passe plus par des flags sur l'etape ni par `mailSent` : elle vit dans `pipeline_stage_notification_rule` (regles `STAGE_EMAIL`, `isRequired`/`isAutomatic`, `outcomeCode`), editee dans `pipeline-template-edit` (440 Lot C) — `ApplicationProgressBusiness.isNextStageWaitingForRequiredMail` bloque l'etape suivante tant que le mail obligatoire n'est pas envoye, `InterviewsBusiness.shouldAutoSendInterviewInvitation` declenche l'envoi si `isRequired && isAutomatic`.
 
 ## 8. Entites Metier Impliquees
 
@@ -136,6 +136,7 @@ La page expose les progressions de candidatures dans le pipeline de recrutement.
 ## 11. Impact Cible Multi-Occurrences
 
 - [ ] retirer de la fiche cible les champs supprimes `decidedById` et `mailSent`
+- [x] remplacer la logique mail de stage (`emailRequired`/`emailAutomatic`, `mailSent`) par `pipeline_stage_notification_rule` (440 Lot C) et la grille d'evaluation par `pipeline_stage.evaluation_grid_template_version_id` (440 Lot D, etapes `INTERVIEW` uniquement)
 - [ ] documenter les nouveaux champs de validation, skip et reouverture du round
 - [ ] faire de cette fiche la reference cartographique de l'occurrence de round reliee aux quiz, decisions et entretiens
 - [ ] exposer plus clairement l'ordre et le libelle de stage comme identite fonctionnelle du round

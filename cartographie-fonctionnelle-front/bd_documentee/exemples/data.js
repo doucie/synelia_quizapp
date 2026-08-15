@@ -26,7 +26,7 @@ window.BD_EXEMPLES = {
           num: 2,
           nom: "pipeline_stage",
           description: "Une étape du processus (candidature, quiz, présélection, entretien, décision) dans un gabarit de pipeline.",
-          notes: ["stage_type est une énumération : CANDIDATURE, QUIZ, PRESELECTION, INTERVIEW, DECISION (EVALUATION a été fusionné dans DECISION).", "L'étape 4 (Entretien) est rattachée à la grille « Grille entretien RH » (evaluation_grid_template_version_id = 1) ; les autres étapes n'ont pas de grille.", "is_active / active_slot portent le versionnage fin des étapes (440 Lot B) : au plus une révision active par slot ; l'étape 3 (Présélection) montre une révision inactive (is_active=0) + une nouvelle révision active au même slot."],
+          notes: ["stage_type est une énumération : CANDIDATURE, QUIZ, PRESELECTION, INTERVIEW, DECISION (EVALUATION a été fusionné dans DECISION).", "Exemple multi-rounds (440 Lot A) : deux rounds INTERVIEW (étape 4 « Entretien » et étape 6 « Entretien RH »), tous deux rattachés à la grille « Grille entretien RH » (evaluation_grid_template_version_id = 1).", "is_active / active_slot portent le versionnage fin des étapes (440 Lot B) : au plus une révision active par slot ; l'étape 3 (Présélection) montre une révision inactive (is_active=0) + une nouvelle révision active au même slot."],
           colonnes: ["id", "pipeline_template_id", "stage_type", "stage_label", "stage_order", "is_active", "active_slot", "is_required", "is_eliminatory", "config_json", "evaluation_grid_template_version_id", "created_at", "created_by", "updated_at", "updated_by", "is_deleted", "search_string"],
           lignes: [
             [1, 1, "CANDIDATURE", "Candidature", 1, 1, 1, 1, 0, null, null, "2026-07-01 09:00", 1, null, null, 0, "candidature"],
@@ -34,19 +34,20 @@ window.BD_EXEMPLES = {
             [3, 1, "PRESELECTION", "Présélection (révision 1)", 3, 0, null, 1, 0, null, null, "2026-07-01 09:00", 1, null, null, 0, "présélection"],
             [31, 1, "PRESELECTION", "Présélection révisée", 3, 1, 3, 1, 0, null, null, "2026-07-10 14:00", 2, null, null, 0, "présélection révisée"],
             [4, 1, "INTERVIEW", "Entretien", 4, 1, 4, 1, 0, null, 1, "2026-07-01 09:00", 1, null, null, 0, "entretien"],
-            [5, 1, "DECISION", "Décision", 5, 1, 5, 1, 0, null, null, "2026-07-01 09:00", 1, null, null, 0, "décision"]
+            [6, 1, "INTERVIEW", "Entretien RH", 5, 1, 5, 1, 0, null, 1, "2026-07-15 09:00", 2, null, null, 0, "entretien rh"],
+            [7, 1, "DECISION", "Décision", 6, 1, 6, 1, 0, null, null, "2026-07-01 09:00", 1, null, null, 0, "décision"]
           ]
         },
         {
           num: 3,
           nom: "pipeline_stage_notification_rule",
           description: "La règle de notification d'une étape : quel email envoyer, à quel déclencheur, et si l'envoi est automatique.",
-          notes: ["C'est ici que vit la politique d'emailing par étape (anciennement pipeline_stage.email_required / email_automatic, supprimées)."],
+          notes: ["C'est ici que vit la politique d'emailing par étape (anciennement pipeline_stage.email_required / email_automatic, supprimées).", "Depuis le CRUD 440 Lot C, trigger_code est normalisé sur STAGE_EMAIL et outcome_code est une valeur StageType (nullable) : la règle 3 déclenche l'envoi de la décision finale de l'étape 7 (DECISION)."],
           colonnes: ["id", "pipeline_stage_id", "trigger_code", "outcome_code", "email_template_id", "is_required", "is_automatic", "requires_manual_confirmation", "created_at", "created_by", "updated_at", "updated_by", "is_deleted", "search_string"],
           lignes: [
-            [1, 2, "QUIZ_INVITED", null, 3, 0, 1, 0, "2026-07-06 09:00", 2, null, null, 0, "quiz invité"],
-            [2, 4, "INTERVIEW_SCHEDULED", null, 1, 1, 1, 0, "2026-07-06 09:00", 2, null, null, 0, "entretien planifié"],
-            [3, 5, "DECISION_TAKEN", "REJECTED", 1, 0, 0, 1, "2026-07-06 09:00", 2, null, null, 0, "décision refus"]
+            [1, 2, "STAGE_EMAIL", null, 3, 0, 1, 0, "2026-07-06 09:00", 2, null, null, 0, "quiz invité"],
+            [2, 4, "STAGE_EMAIL", null, 1, 1, 1, 0, "2026-07-06 09:00", 2, null, null, 0, "entretien planifié"],
+            [3, 7, "STAGE_EMAIL", "REJECTED", 1, 0, 0, 1, "2026-07-06 09:00", 2, null, null, 0, "décision refus"]
           ]
         }
       ]
@@ -117,7 +118,7 @@ window.BD_EXEMPLES = {
           notes: ["Table de résumé et de pointeurs courants ; la progression détaillée vit dans application_progress. Les colonnes current_* et aggregated_* sont dérivées."],
           colonnes: ["id", "candidate_first_name", "candidate_last_name", "candidate_email", "candidate_phone", "candidate_cv_path", "candidate_birth_date", "motivation_letter", "email_verified", "current_interview_evaluation_score", "current_interview_evaluation_number", "current_interview_evaluation_percentage", "current_preselection_decision_type", "current_preselection_decision_date", "current_final_decision_type", "current_final_decision_date", "current_pipeline_stage_type", "current_pipeline_stage_label", "current_pipeline_progress_status", "application_abandoned", "abandoned_at", "abandon_reason", "abandoned_from_application_progress_id", "source_token_id", "form_version_id", "current_application_progress_id", "current_pipeline_stage_id", "last_progressed_at", "aggregated_quiz_score", "aggregated_quiz_score_percent", "aggregated_evaluation_score", "aggregated_evaluation_score_percent", "created_at", "created_by", "updated_at", "updated_by", "is_deleted", "search_string"],
           lignes: [
-            [1, "Alice", "Martin", "alice.martin@mail.com", "0612345678", "/cvs/alice-martin.pdf", "1994-03-15", "Motivée par les systèmes distribués", 1, 73, 2, 73.0, "ACCEPTED", "2026-08-04 11:00", "REJECTED", "2026-08-08 09:00", "DECISION", "Décision", "COMPLETED", 0, null, null, null, 1, 1, 5, 5, "2026-08-07 17:00", 4.0, 80.0, 73.0, 73.0, "2026-08-02 10:15", 4, "2026-08-08 09:00", 2, 0, "alice martin backend"]
+            [1, "Alice", "Martin", "alice.martin@mail.com", "0612345678", "/cvs/alice-martin.pdf", "1994-03-15", "Motivée par les systèmes distribués", 1, 73, 2, 73.0, "ACCEPTED", "2026-08-04 11:00", "REJECTED", "2026-08-08 09:00", "DECISION", "Décision", "COMPLETED", 0, null, null, null, 1, 1, 5, 7, "2026-08-07 17:00", 4.0, 80.0, 73.0, 73.0, "2026-08-02 10:15", 4, "2026-08-08 09:00", 2, 0, "alice martin backend"]
           ]
         },
         {
@@ -131,7 +132,7 @@ window.BD_EXEMPLES = {
             [2, 1, 2, "COMPLETED", "2026-08-03 09:00", "2026-08-03 09:09", 4.0, "Quiz passé en 9 min", "2026-08-03 09:00", 4, null, null, 0, "quiz complété", "2026-08-03 09:15", 2, "Quiz validé", null, null, null, null, null, null],
             [3, 1, 3, "COMPLETED", "2026-08-04 09:00", "2026-08-04 11:00", null, null, "2026-08-04 09:00", 2, null, null, 0, "présélection", "2026-08-04 11:00", 2, "Présélection validée", null, null, null, null, null, null],
             [4, 1, 4, "COMPLETED", "2026-08-05 14:02", "2026-08-05 16:10", 73.0, null, "2026-08-04 09:00", 2, null, null, 0, "entretien", "2026-08-06 09:00", 2, "Entretien validé", null, null, null, null, null, null],
-            [5, 1, 5, "COMPLETED", "2026-08-06 09:00", "2026-08-08 09:00", null, null, "2026-08-06 09:00", 2, null, null, 0, "décision", "2026-08-08 09:00", 2, "Décision finale", null, null, null, null, null, null]
+            [5, 1, 7, "COMPLETED", "2026-08-06 09:00", "2026-08-08 09:00", null, null, "2026-08-06 09:00", 2, null, null, 0, "décision", "2026-08-08 09:00", 2, "Décision finale", null, null, null, null, null, null]
           ]
         },
         {
@@ -398,9 +399,9 @@ window.BD_EXEMPLES = {
           colonnes: ["id", "recipient_email", "application_id", "application_progress_id", "interview_id", "decision_id", "notification_rule_id", "event_code", "requires_confirmation", "confirmed_at", "confirmed_by", "recipient_user_id", "sender_user_id", "email_template_id", "subject", "body_preview", "status", "error_message", "sent_at", "created_at", "created_by", "updated_at", "updated_by", "is_deleted", "search_string"],
           lignes: [
             [1, "alice.martin@mail.com", 1, null, null, null, null, "APPLICATION_VERIFICATION_EMAIL", 0, null, null, 4, 2, 2, "Vérifiez votre adresse email", "Cliquez pour confirmer votre email", "SENT", null, "2026-08-02 10:20", "2026-08-02 10:20", null, null, null, 0, "vérification email"],
-            [2, "alice.martin@mail.com", 1, 2, null, null, null, "QUIZ_INVITE_EMAIL", 0, null, null, 4, 2, 3, "Votre quiz technique", "Bonjour Alice, voici votre lien de quiz", "SENT", null, "2026-08-03 08:00", "2026-08-03 08:00", null, null, null, 0, "quiz email"],
+            [2, "alice.martin@mail.com", 1, 2, null, null, 1, "QUIZ_INVITE_EMAIL", 0, null, null, 4, 2, 3, "Votre quiz technique", "Bonjour Alice, voici votre lien de quiz", "SENT", null, "2026-08-03 08:00", "2026-08-03 08:00", null, null, null, 0, "quiz email"],
             [3, "alice.martin@mail.com", 1, 4, 1, null, 2, "INTERVIEW_INVITATION_EMAIL", 1, "2026-08-04 10:00", 2, 4, 2, 1, "Invitation entretien", "Bonjour Alice, vous êtes invité(e) le 05/08", "SENT", null, "2026-08-04 10:05", "2026-08-04 09:00", 2, null, null, 0, "invitation entretien"],
-            [4, "alice.martin@mail.com", 1, 5, null, 3, null, "FINAL_DECISION_EMAIL", 0, null, null, 4, 2, 1, "Décision — Alice Martin", "Suite à votre entretien...", "PENDING", null, null, "2026-08-08 09:00", 2, null, null, 0, "décision email"]
+            [4, "alice.martin@mail.com", 1, 5, null, 3, 3, "FINAL_DECISION_EMAIL", 0, null, null, 4, 2, 1, "Décision — Alice Martin", "Suite à votre entretien...", "PENDING", null, null, "2026-08-08 09:00", 2, null, null, 0, "décision email"]
           ]
         },
         {

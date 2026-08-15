@@ -176,6 +176,7 @@ export class PipelineStageService {
       pipelineTemplateId: stage.pipelineTemplateId ?? stage.pipeline_template_id ?? undefined,
       pipelineTemplateName: stage.pipelineTemplateName || stage.pipeline_template_name || undefined,
       orderedStageIds: stage.orderedStageIds || stage.ordered_stage_ids || undefined,
+      evaluationGridTemplateVersionId: stage.evaluationGridTemplateVersionId ?? stage.evaluation_grid_template_version_id ?? undefined,
       isActive: stage.isActive ?? stage.is_active ?? undefined,
       isLocked: stage.isLocked ?? stage.is_locked ?? undefined,
       createdAt: stage.createdAt || stage.created_at || undefined,
