@@ -242,6 +242,44 @@ $navbar-height: 70px;
 
     // Contenu du quiz
     .quiz-content {
+      .anti-cheat-banner {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-md) var(--spacing-lg);
+        margin-bottom: var(--spacing-lg);
+        border-radius: var(--radius);
+        background: rgba(var(--warning-rgb), 0.12);
+        border: 1px solid var(--warning);
+        color: var(--warning);
+
+        &.danger {
+          background: rgba(var(--error-rgb), 0.12);
+          border-color: var(--error);
+          color: var(--error);
+        }
+
+        .anti-cheat-banner-icon {
+          flex-shrink: 0;
+          width: 20px;
+          height: 20px;
+          margin-top: 2px;
+
+          svg {
+            width: 100%;
+            height: 100%;
+            stroke: currentColor;
+          }
+        }
+
+        p {
+          margin: 0;
+          font-size: var(--font-size-sm);
+          font-weight: var(--font-weight-medium);
+          line-height: 1.5;
+        }
+      }
+
       .progress-section {
         margin-bottom: var(--spacing-xl);
         padding: var(--spacing-lg);

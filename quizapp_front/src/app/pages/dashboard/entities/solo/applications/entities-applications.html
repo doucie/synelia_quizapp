@@ -400,6 +400,14 @@
                       <span class="answer-attempt-group__count">{{ currentQuizAttempt.answers.length }} réponse{{ currentQuizAttempt.answers.length > 1 ? 's' : '' }}</span>
                       <span *ngIf="getAnswerAttemptScoreLabel(currentQuizAttempt)" class="answer-attempt-group__score">Score {{ getAnswerAttemptScoreLabel(currentQuizAttempt) }}</span>
                     </div>
+                    <div *ngIf="getScreeningResultLabel(currentQuizAttempt.screeningResult) || hasAntiCheatCounters(currentQuizAttempt)" class="quiz-attempt-summary__badges quiz-attempt-summary__badges--anti-cheat">
+                      <span *ngIf="getScreeningResultLabel(currentQuizAttempt.screeningResult)" class="status-badge" [ngClass]="getScreeningResultClass(currentQuizAttempt.screeningResult)">
+                        {{ getScreeningResultLabel(currentQuizAttempt.screeningResult) }}
+                      </span>
+                      <span *ngIf="currentQuizAttempt.tabSwitchCount" class="answer-attempt-group__count">Onglets : {{ currentQuizAttempt.tabSwitchCount }}</span>
+                      <span *ngIf="currentQuizAttempt.fullscreenExitCount" class="answer-attempt-group__count">Plein écran : {{ currentQuizAttempt.fullscreenExitCount }}</span>
+                      <span *ngIf="currentQuizAttempt.cheatFlagCount" class="answer-attempt-group__count">Signalements : {{ currentQuizAttempt.cheatFlagCount }}</span>
+                    </div>
                     <p *ngIf="getAnswerAttemptActivitySummary(currentQuizAttempt)" class="quiz-attempt-summary__meta">{{ getAnswerAttemptActivitySummary(currentQuizAttempt) }}</p>
                     <p *ngIf="currentQuizAttempt.answers.length === 0" class="quiz-attempt-summary__meta">Tentative créée mais encore sans réponse enregistrée.</p>
                   </div>

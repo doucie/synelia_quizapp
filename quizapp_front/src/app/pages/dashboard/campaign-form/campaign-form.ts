@@ -189,6 +189,7 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
       campaignEnd: [''], // Optionnel
       maxApply: [null, [Validators.min(1)]],
       maxAttempts: [null, [Validators.min(1)]],
+      antiCheatEnabled: [null],
       formAssignmentStrategy: ['RANDOM'],
       formAssignmentExhaustionPolicy: ['BLOCK'],
       allCanEvaluate: [false],
@@ -859,6 +860,7 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
       campaignEnd: this.formatDateForInput(campaign.campaignEnd),
       maxApply: campaign.maxApply,
       maxAttempts: campaign.maxAttempts,
+      antiCheatEnabled: campaign.antiCheatEnabled ?? null,
       formAssignmentStrategy: campaign.formAssignmentStrategy || 'RANDOM',
       formAssignmentExhaustionPolicy: campaign.formAssignmentExhaustionPolicy || 'BLOCK',
       allCanEvaluate: campaign.allCanEvaluate,
@@ -935,6 +937,7 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
       campaignEnd: formValue.campaignEnd,
       maxApply: formValue.maxApply,
       maxAttempts: formValue.maxAttempts,
+      antiCheatEnabled: formValue.antiCheatEnabled ?? null,
       formAssignmentStrategy: formValue.formAssignmentStrategy,
       formAssignmentExhaustionPolicy: formValue.formAssignmentExhaustionPolicy,
       allCanEvaluate: formValue.allCanEvaluate,
@@ -1255,6 +1258,7 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
   get campaignEnd() { return this.campaignForm.get('campaignEnd'); }
   get maxApply() { return this.campaignForm.get('maxApply'); }
   get maxAttempts() { return this.campaignForm.get('maxAttempts'); }
+  get antiCheatEnabled() { return this.campaignForm.get('antiCheatEnabled'); }
   get formAssignmentStrategy() { return this.campaignForm.get('formAssignmentStrategy'); }
   get formAssignmentExhaustionPolicy() { return this.campaignForm.get('formAssignmentExhaustionPolicy'); }
   get allCanEvaluate() { return this.campaignForm.get('allCanEvaluate'); }

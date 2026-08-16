@@ -45,6 +45,7 @@ public interface CampaignsTransformer {
 		dto.setIsTimed(entity.getIsTimed());
 		dto.setIsArchived(entity.getIsArchived());
 		dto.setTimeAllForms(entity.getTimeAllForms());
+		dto.setAntiCheatEnabled(entity.getAntiCheatEnabled());
 		dto.setFormAssignmentStrategy(entity.getFormAssignmentStrategy());
 		dto.setFormAssignmentExhaustionPolicy(entity.getFormAssignmentExhaustionPolicy());
 		dto.setCreatedAt(formatDate(entity.getCreatedAt(), "dd/MM/yyyy"));
@@ -127,6 +128,7 @@ public interface CampaignsTransformer {
 		entity.setIsTimed(dto.getIsTimed());
 		entity.setIsArchived(dto.getIsArchived());
 		entity.setTimeAllForms(dto.getTimeAllForms());
+		entity.setAntiCheatEnabled(dto.getAntiCheatEnabled());
 		entity.setFormAssignmentStrategy(dto.getFormAssignmentStrategy());
 		entity.setFormAssignmentExhaustionPolicy(dto.getFormAssignmentExhaustionPolicy());
 		entity.setCreatedAt(parseDate(dto.getCreatedAt(), "dd/MM/yyyy"));

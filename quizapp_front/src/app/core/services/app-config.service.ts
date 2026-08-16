@@ -13,6 +13,13 @@ export interface AppConfig {
   primaryColor?: string;
   colorScheme?: string;
   candidateAccountsEnabled?: boolean;
+  antiCheatEnabled?: boolean;
+  screeningPolicy?: string;
+  tabSwitchMaxWarnings?: number;
+  tabSwitchMaxActions?: number;
+  fullscreenRequired?: boolean;
+  blockShortcuts?: boolean;
+  blockCopyPaste?: boolean;
   isActive?: boolean;
   isDeleted?: boolean;
   createdAt?: string;

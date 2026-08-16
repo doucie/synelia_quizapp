@@ -1,7 +1,7 @@
 # Note — Règles anti-triche du quiz & fluidité du parcours candidat
 
 **Date :** 2026-08-12
-**Statut :** Vague 1 implémentée et testée (chantiers A.1, A.2, A.3 + reliquats 420) — Vague 2 (anti-triche paliers 1+2, chantiers B/C) restant à faire (§ 8bis).
+**Statut :** Vague 1 implémentée et testée (chantiers A.1, A.2, A.3 + reliquats 420) — Vague 2 (anti-triche paliers 1+2, chantiers B/C) implémentée et testée (§ 8bis), reste recette manuelle + doc BD/cahier des charges (§ 8).
 **Périmètre :** `SecurityConfig`, `ApplicationsController` / `ApplicationsBusiness`, `ApplicationQuizAttempt`, `app_config`, `campaigns`, `QuizComponent`, page `/campagnes` et `/postuler/campagne/:campaignId`, cartographie `public/*`, migrations Flyway, mini-BD
 
 > Cette note complète la 440 (pipeline personnalisable) : elle couvre le **parcours candidat côté public** — corrections de sécurité/fluidité, règles anti-triche du quiz activables depuis la configuration générale, et mise à jour des écarts cartographie.
@@ -117,16 +117,16 @@ Structure multi-tentatives existante (`application_quiz_attempt` + `createAdditi
 
 La table `app_config` et la page Settings (onglet « config ») existent (`AppConfig.java`, `settings.html:499-562`) mais **sans aucun réglage anti-triche**.
 
-- [ ] **Colonnes `app_config`** :
+- [x] **Colonnes `app_config`** :
   - `anti_cheat_enabled` bit — interrupteur global ;
   - `screening_policy` varchar — `WARN` / `FLAG` / `FAIL` (défaut `WARN`) ;
   - `tab_switch_max_warnings` int (défaut 3) ;
   - `tab_switch_max_actions` int (défaut 5) ;
   - `fullscreen_required` bit ;
   - `block_shortcuts` bit ; `block_copy_paste` bit.
-- [ ] **Override `campaigns`** : `anti_cheat_enabled` bit nullable (null → suit le global), cohérent avec `is_timed`/`time_all_forms` déjà sur la campagne (`Campaigns.java:78-91`).
-- [ ] **UI** : onglet « config » de Settings + section dans la fiche campagne ; libellés explicites côté candidat pour les avertissements.
-- [ ] Couplage avec la 440 Lot C (règles de notification éditables) : aucun impact direct, les deux restent orthogonaux.
+- [x] **Override `campaigns`** : `anti_cheat_enabled` bit nullable (null → suit le global), cohérent avec `is_timed`/`time_all_forms` déjà sur la campagne (`Campaigns.java:78-91`).
+- [x] **UI** : onglet « config » de Settings + section dans la fiche campagne ; libellés explicites côté candidat pour les avertissements.
+- [x] Couplage avec la 440 Lot C (règles de notification éditables) : aucun impact direct, les deux restent orthogonaux.
 
 ## 6. Chantier D — Mise à jour cartographie parcours candidat (fait dans cette note)
 
@@ -138,20 +138,20 @@ La table `app_config` et la page Settings (onglet « config ») existent (`AppCo
 
 ## 7. Schéma / migrations
 
-Script SQL de référence : `quizapp/src/main/resources/db/migration/V1_083__add_quiz_anti_cheat_schema.sql` (`V1_082` est pris par la 440 : `V1_082__add_pipeline_stage_is_active.sql`).
+Script SQL de référence : `quizapp/src/main/resources/db/migration/V1_084__add_quiz_anti_cheat_schema.sql` (`V1_083` est pris par la Vague 1 `max_attempts`).
 
 - [x] **Vague 1** : `ALTER TABLE campaigns` : ADD `max_attempts` int NOT NULL DEFAULT 1 (`V1_083__add_campaigns_max_attempts.sql`, migration séparée de la Vague 2).
-- [ ] **Vague 2** : `CREATE TABLE quiz_anti_cheat_event` (B.5) — migration distincte (`V1_083` est pris par la Vague 1).
-- [ ] **Vague 2** : `ALTER TABLE application_quiz_attempt` : `tab_switch_count`, `fullscreen_exit_count`, `cheat_flag_count` (politique portée par les `screening_*` existants).
-- [ ] **Vague 2** : `ALTER TABLE app_config` : colonnes anti-triche (C).
-- [ ] **Vague 2** : `ALTER TABLE campaigns` : `anti_cheat_enabled` nullable (C).
+- [x] **Vague 2** : `CREATE TABLE quiz_anti_cheat_event` (B.5) — `V1_084__add_quiz_anti_cheat_schema.sql` (`search_string` TEXT pour compatibilité utf8mb4, entrée corrigée).
+- [x] **Vague 2** : `ALTER TABLE application_quiz_attempt` : `tab_switch_count`, `fullscreen_exit_count`, `cheat_flag_count` (politique portée par les `screening_*` existants).
+- [x] **Vague 2** : `ALTER TABLE app_config` : colonnes anti-triche (C).
+- [x] **Vague 2** : `ALTER TABLE campaigns` : `anti_cheat_enabled` nullable (C).
 - [x] Aucune migration pour les chantiers A.1/A.2 (code + config de sécurité uniquement).
 
 ## 8. Checklist transverse
 
 - [x] Builds Vague 1 : `mvnw compile` + tests spring-boot ciblés OK ; `ng build` OK (warnings budgets pré-existants).
 - [x] Tests Vague 1 : `ApplicationsBusinessTest` (17/17 : verify-email sans quiz, verify-email avec quiz, `createAdditionalQuizAttempt` rejet/succès, `applyAttemptLimits`), `SecurityConfigTest` (3/3 : endpoints candidats publics, pas d'exposition recruiter/interne, aucun pattern legacy), `verify-email.spec.ts` (6/6 : succès sans quiz, quiz, fallback legacy, erreurs).
-- [ ] Tests Vague 2 : `ApplicationsBusinessTest` (politique FAIL soumission forcée), `QuizComponent` spec (compteurs onglet, avertissement, soumission).
+- [x] Tests Vague 2 : `ApplicationsBusinessTest` 20/20 — 3 tests `applyAntiCheatPolicy_*` (désactivé, WARN persist/incrémente, FAIL soumission forcée) ; `QuizappApplicationTests` (contexte Spring+Flyway) 1/1 ; `ng build` OK. Spec `QuizComponent` (compteurs onglet, avertissement, soumission) non couverte pour l'instant.
 - [ ] Recette manuelle : parcours candidat complet sans JWT (A.1) ; quiz chronométré à expiration (A.4) ; sorties d'onglet en WARN puis en FAIL (B).
 - [ ] Documentation : mettre à jour `quizapp_db_documentation_20260810.md` (table `quiz_anti_cheat_event`, colonnes attempt/app_config/campaigns) ; mini-BD `exemples/data.js` (table + colonnes, bloc `cles`) ; cocher les points cahier des charges (`z_mémoire/template_cahier_des_charges/index.html:1293,1311` — détection onglet journalisée + avertissement après N).
 - [x] Postman : collections v1/v2 alignées sur les contrats DTO actuels — `interviewStart`→`interviewDate` (9× chaqu'un), `candidateMark`→`globalScore`, `recruiterComment`→`globalComment`, `interviewEnd` supprimé ; JSON valides.
@@ -170,14 +170,14 @@ Budget acté : **6,5 j backend + 3,5 j frontend**. La correction de sécurité A
 5. **Reliquat 420 (Postman, lignes 784/796)** — ✅ collections v1/v2 alignées sur les contrats DTO : `interviewStart`→`interviewDate`, `candidateMark`→`globalScore`, `recruiterComment`→`globalComment`, `interviewEnd` supprimé.
 6. **Tests** — ✅ `ApplicationsBusinessTest` 17/17, `SecurityConfigTest` 3/3, `verify-email.spec.ts` 6/6 ; builds `mvnw compile` + tests spring-boot + `ng build` OK.
 
-### Vague 2 — Chantiers B/C (anti-triche paliers 1 + 2)
+### Vague 2 — Chantiers B/C (anti-triche paliers 1 + 2) — ✅ livré
 
-1. **Migration `V1_083`** — `quiz_anti_cheat_event` (B.5) ; colonnes attempt `tab_switch_count`/`fullscreen_exit_count`/`cheat_flag_count` ; `app_config` (`anti_cheat_enabled` défaut 0, `screening_policy` WARN, `tab_switch_max_warnings` 3, `tab_switch_max_actions` 5, `fullscreen_required` 0, `block_shortcuts` 0, `block_copy_paste` 0) ; `campaigns.anti_cheat_enabled` nullable (null → global).
-2. **Backend B** — entité/repo/DTO/service `QuizAntiCheatEvent` + journalisation ; résolution de politique (global → override campagne) ; validation des compteurs dans `validateQuizSessionAccess` (get/save/touch) ; soumission forcée via `completeQuizInternal` (L2958) ; `completeQuiz` avec flag `forced` ; politiques WARN/FLAG/FAIL (défaut WARN).
-3. **Backend C** — `AppConfig` + Settings onglet config ; `Campaigns.antiCheatEnabled` + fiche campagne.
-4. **Frontend B** — `quiz.ts` : `visibilitychange`/`blur`/`focus`, fullscreen demandé + détection de sortie, blocage copier-coller/clic droit/raccourcis, compteur onglets → événements backend (fusionnés dans `touch-quiz`), bandeau d'avertissement, auto-submit FAIL.
-5. **Visibilité recruteur** — compteurs + liste événements dans `buildApplicationQuizAttemptSummaries` (vue tentative).
-6. **Tests** — `ApplicationsBusinessTest` (politique FAIL soumission forcée, événements journalisés), `QuizComponent` spec (compteurs/avertissement/soumission). Recette manuelle : sorties d'onglet en WARN puis en FAIL.
+1. **Migration `V1_084`** — ✅ `quiz_anti_cheat_event` (B.5) ; colonnes attempt `tab_switch_count`/`fullscreen_exit_count`/`cheat_flag_count` ; `app_config` (`anti_cheat_enabled` défaut 0, `screening_policy` WARN, `tab_switch_max_warnings` 3, `tab_switch_max_actions` 5, `fullscreen_required` 0, `block_shortcuts` 0, `block_copy_paste` 0) ; `campaigns.anti_cheat_enabled` nullable (null → global). `search_string` en `TEXT` (utf8mb4), entrée d'échec purgée de l'historique Flyway.
+2. **Backend B** — ✅ entité/repo/DTO/service `QuizAntiCheatEvent` + journalisation ; résolution de politique (global → override campagne) ; validation des compteurs dans get/save/touch (`applyAntiCheatPolicyOnAccess`) ; soumission forcée via `completeQuizInternal` + 403 `FUNC_REQUEST_FAIL` ; politiques WARN/FLAG/FAIL (défaut WARN) ; `quizData.antiCheat` au client ; `touchQuiz` renvoie les `quizAttempts` rafraîchis.
+3. **Backend C** — ✅ `AppConfig` (+8 champs, défauts au create, `validateScreeningPolicy`, update si non null) + Settings onglet config (toggle global, politique, seuils, pleins écran/raccourcis/copier-coller) ; `Campaigns.antiCheatEnabled` + fiche campagne (select tri-état : suit le global / activé / désactivé).
+4. **Frontend B** — ✅ `quiz.ts` : `visibilitychange`→`TAB_SWITCH`, sortie fullscreen→`FULLSCREEN_EXIT`+re-tentative, blocage copier-coller/raccourcis selon `blockCopyPaste`/`blockShortcuts`, événements accumulés → `pendingAntiCheatEvents` flushés dans get/save/touch (debounce 2 s), bandeau d'avertissement avec décompte `antiCheatWarningsLeft` (danger à 0), soumission forcée FAIL via `handleBlockingQuizError`.
+5. **Visibilité recruteur** — ✅ compteurs + `screeningResult` dans `buildApplicationQuizAttemptSummaries` (vue tentative `entities-applications.html` : badge Anti-triche conforme/signalé/échec + compteurs onglets/plein écran/signalements).
+6. **Tests** — ✅ `ApplicationsBusinessTest` 20/20 (3 tests `applyAntiCheatPolicy_*` : désactivé, WARN persist/incrémente, FAIL soumission forcée), `QuizappApplicationTests` 1/1, `ng build` OK. Spec `QuizComponent` (compteurs/avertissement/soumission) et recette manuelle (sorties d'onglet WARN puis FAIL) restent à faire.
 
 ### Ordre de livraison
 

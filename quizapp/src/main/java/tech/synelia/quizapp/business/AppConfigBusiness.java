@@ -71,6 +71,14 @@ public class AppConfigBusiness implements IBasicBusiness<Request<AppConfigDto>, 
             if (entityToSave.getIsActive() == null) entityToSave.setIsActive(false);
             if (entityToSave.getCandidateAccountsEnabled() == null) entityToSave.setCandidateAccountsEnabled(false);
             if (entityToSave.getCompanyName() == null) entityToSave.setCompanyName("Synelia");
+            if (entityToSave.getAntiCheatEnabled() == null) entityToSave.setAntiCheatEnabled(false);
+            if (entityToSave.getScreeningPolicy() == null) entityToSave.setScreeningPolicy("WARN");
+            if (entityToSave.getTabSwitchMaxWarnings() == null) entityToSave.setTabSwitchMaxWarnings(3);
+            if (entityToSave.getTabSwitchMaxActions() == null) entityToSave.setTabSwitchMaxActions(5);
+            if (entityToSave.getFullscreenRequired() == null) entityToSave.setFullscreenRequired(false);
+            if (entityToSave.getBlockShortcuts() == null) entityToSave.setBlockShortcuts(false);
+            if (entityToSave.getBlockCopyPaste() == null) entityToSave.setBlockCopyPaste(false);
+            validateScreeningPolicy(entityToSave.getScreeningPolicy(), locale);
             items.add(entityToSave);
         }
 
@@ -127,6 +135,16 @@ public class AppConfigBusiness implements IBasicBusiness<Request<AppConfigDto>, 
                 entityToSave.setColorScheme(csLower);
             }
             if (dto.getCandidateAccountsEnabled() != null) entityToSave.setCandidateAccountsEnabled(dto.getCandidateAccountsEnabled());
+            if (dto.getAntiCheatEnabled() != null) entityToSave.setAntiCheatEnabled(dto.getAntiCheatEnabled());
+            if (dto.getScreeningPolicy() != null) {
+                validateScreeningPolicy(dto.getScreeningPolicy(), locale);
+                entityToSave.setScreeningPolicy(dto.getScreeningPolicy());
+            }
+            if (dto.getTabSwitchMaxWarnings() != null) entityToSave.setTabSwitchMaxWarnings(dto.getTabSwitchMaxWarnings());
+            if (dto.getTabSwitchMaxActions() != null) entityToSave.setTabSwitchMaxActions(dto.getTabSwitchMaxActions());
+            if (dto.getFullscreenRequired() != null) entityToSave.setFullscreenRequired(dto.getFullscreenRequired());
+            if (dto.getBlockShortcuts() != null) entityToSave.setBlockShortcuts(dto.getBlockShortcuts());
+            if (dto.getBlockCopyPaste() != null) entityToSave.setBlockCopyPaste(dto.getBlockCopyPaste());
             if (dto.getIsActive() != null) entityToSave.setIsActive(dto.getIsActive());
             if (dto.getIsDeleted() != null) entityToSave.setIsDeleted(dto.getIsDeleted());
 
@@ -220,6 +238,17 @@ public class AppConfigBusiness implements IBasicBusiness<Request<AppConfigDto>, 
 
     public AppConfig getActiveConfig() {
         return appConfigRepository.findActiveConfig(true, false);
+    }
+
+    private void validateScreeningPolicy(String policy, Locale locale) {
+        if (policy == null) {
+            return;
+        }
+        String normalized = policy.trim().toUpperCase(java.util.Locale.ROOT);
+        if (!java.util.Arrays.asList("WARN", "FLAG", "FAIL").contains(normalized)) {
+            throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+                    "screeningPolicy invalide (WARN/FLAG/FAIL) -> " + policy, locale));
+        }
     }
 
     private String normalizeOptionalText(String value) {

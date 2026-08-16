@@ -82,6 +82,12 @@
               <li>Le chronomètre démarre dès l'ouverture de cette page et le quiz sera soumis automatiquement à l'expiration.</li>
             }
             <li>Cliquez sur "Soumettre" à la dernière question pour terminer</li>
+            @if (antiCheatActive()) {
+              <li>Ce quiz est surveillé : ne quittez pas cette page pendant le quiz.</li>
+              @if (quizData()?.antiCheat?.fullscreenRequired) {
+                <li>Le quiz s'affichera en plein écran : n'en sortez pas avant la fin.</li>
+              }
+            }
           </ul>
         </div>
 
@@ -96,6 +102,17 @@
   @else if (quizStarted() && !quizCompleted() && currentQuestion()) {
     <div class="quiz-card">
       <div class="quiz-content">
+        @if (antiCheatBanner()) {
+          <div class="anti-cheat-banner" [class.danger]="antiCheatWarningsLeft() === 0">
+            <div class="anti-cheat-banner-icon">
+              <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+              </svg>
+            </div>
+            <p>{{ antiCheatBanner() }}</p>
+          </div>
+        }
+
         <!-- Section de progression -->
         <div class="progress-section">
           <div class="progress-header">

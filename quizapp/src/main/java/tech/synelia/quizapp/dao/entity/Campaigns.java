@@ -87,6 +87,9 @@ public class Campaigns implements Serializable, Cloneable {
     @Column(name="time_all_forms", nullable=false, columnDefinition="BOOLEAN DEFAULT FALSE")
     private Boolean    timeAllForms ;
 
+    @Column(name="anti_cheat_enabled", columnDefinition="BOOLEAN")
+    private Boolean    antiCheatEnabled ;
+
     @Column(name="form_assignment_strategy", length=30)
     private String     formAssignmentStrategy ;
 

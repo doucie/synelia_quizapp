@@ -69,6 +69,11 @@ export class SettingsComponent implements OnInit, OnDestroy {
   showConfigEditor = signal(false);
   savingConfig = signal(false);
   colorSchemes = COLOR_SCHEMES;
+  screeningPolicies = [
+    { key: 'WARN', label: 'Avertir' },
+    { key: 'FLAG', label: 'Marquer (FLAG)' },
+    { key: 'FAIL', label: 'Échouer automatiquement' }
+  ];
   previewingConfig = signal<AppConfig | null>(null);
   logoMode = signal<'code' | 'image'>('code');
   sanitizedLogoPreview = computed(() => this.logoHtmlSanitizer.sanitizeOrEmpty(this.configForm().logoHtml));
@@ -432,7 +437,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
       this.logoMode.set(this.logoHtmlSanitizer.isImageMarkup(config.logoHtml) ? 'image' : 'code');
     } else {
       this.editingConfig.set(null);
-      this.configForm.set({ configName: '', companyName: '', appLink: '', logoHtml: '', primaryColor: '#7C3AED', colorScheme: 'violet', candidateAccountsEnabled: false, isActive: false });
+      this.configForm.set({ configName: '', companyName: '', appLink: '', logoHtml: '', primaryColor: '#7C3AED', colorScheme: 'violet', candidateAccountsEnabled: false, antiCheatEnabled: false, screeningPolicy: 'WARN', tabSwitchMaxWarnings: 3, tabSwitchMaxActions: 5, fullscreenRequired: false, blockShortcuts: false, blockCopyPaste: false, isActive: false });
       this.logoMode.set('code');
     }
     this.showConfigEditor.set(true);
@@ -528,6 +533,10 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
   getSchemeColor(schemeKey: string): string {
     return this.colorSchemes.find(s => s.key === schemeKey)?.primary || '#7C3AED';
+  }
+
+  getScreeningPolicyLabel(policy?: string): string {
+    return this.screeningPolicies.find(p => p.key === policy)?.label ?? policy ?? '—';
   }
 
   private reloadConfigs() {

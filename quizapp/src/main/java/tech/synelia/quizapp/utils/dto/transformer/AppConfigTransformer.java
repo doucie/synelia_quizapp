@@ -39,6 +39,13 @@ public interface AppConfigTransformer {
         dto.setPrimaryColor(entity.getPrimaryColor());
         dto.setColorScheme(entity.getColorScheme());
         dto.setCandidateAccountsEnabled(entity.getCandidateAccountsEnabled());
+        dto.setAntiCheatEnabled(entity.getAntiCheatEnabled());
+        dto.setScreeningPolicy(entity.getScreeningPolicy());
+        dto.setTabSwitchMaxWarnings(entity.getTabSwitchMaxWarnings());
+        dto.setTabSwitchMaxActions(entity.getTabSwitchMaxActions());
+        dto.setFullscreenRequired(entity.getFullscreenRequired());
+        dto.setBlockShortcuts(entity.getBlockShortcuts());
+        dto.setBlockCopyPaste(entity.getBlockCopyPaste());
         dto.setIsActive(entity.getIsActive());
         return dto;
     }
@@ -65,6 +72,13 @@ public interface AppConfigTransformer {
         @Mapping(source = "dto.primaryColor", target = "primaryColor"),
         @Mapping(source = "dto.colorScheme", target = "colorScheme"),
         @Mapping(source = "dto.candidateAccountsEnabled", target = "candidateAccountsEnabled"),
+        @Mapping(source = "dto.antiCheatEnabled", target = "antiCheatEnabled"),
+        @Mapping(source = "dto.screeningPolicy", target = "screeningPolicy"),
+        @Mapping(source = "dto.tabSwitchMaxWarnings", target = "tabSwitchMaxWarnings"),
+        @Mapping(source = "dto.tabSwitchMaxActions", target = "tabSwitchMaxActions"),
+        @Mapping(source = "dto.fullscreenRequired", target = "fullscreenRequired"),
+        @Mapping(source = "dto.blockShortcuts", target = "blockShortcuts"),
+        @Mapping(source = "dto.blockCopyPaste", target = "blockCopyPaste"),
         @Mapping(source = "dto.isActive", target = "isActive"),
         @Mapping(source = "dto.createdBy", target = "createdBy"),
         @Mapping(source = "dto.updatedBy", target = "updatedBy"),

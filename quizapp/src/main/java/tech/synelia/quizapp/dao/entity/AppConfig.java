@@ -42,6 +42,27 @@ public class AppConfig {
     @Column(name = "candidate_accounts_enabled", nullable = false)
     private Boolean candidateAccountsEnabled;
 
+    @Column(name = "anti_cheat_enabled", nullable = false)
+    private Boolean antiCheatEnabled;
+
+    @Column(name = "screening_policy", nullable = false, length = 10)
+    private String screeningPolicy;
+
+    @Column(name = "tab_switch_max_warnings")
+    private Integer tabSwitchMaxWarnings;
+
+    @Column(name = "tab_switch_max_actions")
+    private Integer tabSwitchMaxActions;
+
+    @Column(name = "fullscreen_required", nullable = false)
+    private Boolean fullscreenRequired;
+
+    @Column(name = "block_shortcuts", nullable = false)
+    private Boolean blockShortcuts;
+
+    @Column(name = "block_copy_paste", nullable = false)
+    private Boolean blockCopyPaste;
+
     @Column(name = "is_active")
     private Boolean isActive;
 

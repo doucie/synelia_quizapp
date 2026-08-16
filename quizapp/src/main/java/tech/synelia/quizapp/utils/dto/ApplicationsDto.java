@@ -84,6 +84,9 @@ public class ApplicationsDto extends _ApplicationsDto implements Cloneable{
     private String     freeTextResponse     ;
     private String     action               ;
     private List<ApplicationQuizAttemptSummaryDto> quizAttempts ;
+    // Payload d'événements anti-triche envoyé par le front (touch-quiz), et
+    // visibilité recruteur : compteurs portés par le résumé de tentative.
+    private List<QuizAntiCheatEventDto> antiCheatEvents ;
 
     //----------------------------------------------------------------------
     // ENTITY LINKS FIELD ( RELATIONSHIP )

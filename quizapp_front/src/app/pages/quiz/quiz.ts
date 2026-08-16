@@ -38,6 +38,28 @@ interface QuizData {
   remainingTime?: number;
   quizStatus?: string;
   questions: Question[];
+  antiCheat?: AntiCheatConfig;
+}
+
+interface AntiCheatConfig {
+  enabled?: boolean;
+  policy?: 'WARN' | 'FLAG' | 'FAIL';
+  tabSwitchMaxWarnings?: number;
+  tabSwitchMaxActions?: number;
+  fullscreenRequired?: boolean;
+  blockShortcuts?: boolean;
+  blockCopyPaste?: boolean;
+  tabSwitchCount?: number;
+  fullscreenExitCount?: number;
+  cheatFlagCount?: number;
+  screeningMode?: string;
+  screeningResult?: string;
+}
+
+interface QuizAntiCheatEvent {
+  eventType: string;
+  occurredAt?: string;
+  metadata?: string | null;
 }
 
 @Component({
@@ -82,6 +104,20 @@ export class QuizComponent implements OnInit, OnDestroy {
   // État du quiz
   quizStarted = signal(false);
   quizCompleted = signal(false);
+
+  // Anti-triche (évolution 450, chantier B)
+  antiCheatWarningCount = signal(0);
+  antiCheatBanner = signal<string | null>(null);
+
+  antiCheatActive = computed(() => !!this.quizData()?.antiCheat?.enabled);
+  antiCheatPolicy = computed(() => this.quizData()?.antiCheat?.policy || 'WARN');
+  antiCheatWarningsLeft = computed(() => {
+    const maxWarnings = this.quizData()?.antiCheat?.tabSwitchMaxWarnings;
+    if (!maxWarnings) {
+      return null;
+    }
+    return Math.max(0, maxWarnings - this.antiCheatWarningCount());
+  });
   
   // Computed
   currentQuestion = computed(() => {
@@ -161,6 +197,7 @@ export class QuizComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.clearCountdown();
     this.unregisterActivityListeners();
+    this.unregisterAntiCheatListeners();
   }
 
   private loadQuiz(applicationId: number, quizToken: string): void {
@@ -209,6 +246,13 @@ export class QuizComponent implements OnInit, OnDestroy {
     }
     this.handleUserActivity(true);
     this.quizStarted.set(true);
+
+    if (this.antiCheatActive()) {
+      this.registerAntiCheatListeners();
+      if (this.quizData()?.antiCheat?.fullscreenRequired && !document.fullscreenElement) {
+        this.enterFullscreen().catch(() => { /* refus utilisateur : la sortie sera journalisée */ });
+      }
+    }
   }
 
   selectAnswer(questionId: number, answerId: number): void {
@@ -486,29 +530,216 @@ export class QuizComponent implements OnInit, OnDestroy {
     }
 
     const now = Date.now();
-    if (!force && now - this.lastActivityPingAt < this.activityPingIntervalMs) {
+    if (!force && now - this.lastActivityPingAt < this.activityPingIntervalMs && this.pendingAntiCheatEvents.length === 0) {
       return;
     }
 
+    const eventsToSend = this.pendingAntiCheatEvents;
+    this.pendingAntiCheatEvents = [];
+
     this.lastActivityPingAt = now;
-    this.applicationService.touchQuiz(appId, token).subscribe({
+    this.applicationService.touchQuiz(appId, token, eventsToSend).subscribe({
       next: (response) => {
         if (response.hasError) {
           this.handleBlockingQuizError(response.status?.message || 'Cette session de quiz n’est plus accessible.');
+          return;
         }
+        this.syncAntiCheatCountersFromResponse(response.items?.[0]?.quizAttempts);
       },
       error: (error) => {
+        this.pendingAntiCheatEvents = [...eventsToSend, ...this.pendingAntiCheatEvents];
         console.error('Erreur lors du ping d’activité quiz:', error);
       }
     });
   }
 
+  private syncAntiCheatCountersFromResponse(quizAttempts: Array<{ tabSwitchCount?: number; fullscreenExitCount?: number; cheatFlagCount?: number; screeningResult?: string }> | undefined): void {
+    if (!quizAttempts || quizAttempts.length === 0) {
+      return;
+    }
+
+    const attempt = quizAttempts[0];
+    const totalWarnings = (attempt.tabSwitchCount || 0) + (attempt.fullscreenExitCount || 0);
+    this.antiCheatWarningCount.set(totalWarnings);
+
+    if (totalWarnings === 0) {
+      this.antiCheatBanner.set(null);
+      return;
+    }
+
+    if (attempt.screeningResult === 'FAILED') {
+      this.antiCheatBanner.set('Une infraction aux règles a été détectée. Le quiz a été soumis automatiquement.');
+      return;
+    }
+
+    const policy = this.antiCheatPolicy();
+    const warningsLeft = this.antiCheatWarningsLeft();
+
+    if (policy === 'WARN' && warningsLeft != null && warningsLeft === 0) {
+      this.antiCheatBanner.set('Dernier avertissement avant soumission automatique du quiz.');
+    } else if (policy === 'WARN' && warningsLeft != null) {
+      this.antiCheatBanner.set(`Avertissement : ${warningsLeft} sortie(s) de l'onglet tolérée(s) avant soumission automatique.`);
+    } else {
+      this.antiCheatBanner.set('Un changement d’onglet ou de fenêtre a été détecté. Veuillez rester sur cette page.');
+    }
+  }
+
   private handleBlockingQuizError(message: string): void {
     this.clearCountdown();
     this.unregisterActivityListeners();
+    this.unregisterAntiCheatListeners();
     this.timeoutSubmissionInProgress.set(false);
     this.hasError.set(true);
     this.errorMessage.set(message);
+  }
+
+  // ─── Anti-triche : détection (chantier B) ───────────────────────────────────
+
+  private readonly antiCheatVisibilityHandler = () => this.handleAntiCheatVisibilityChange();
+  private readonly antiCheatFullscreenHandler = () => this.handleAntiCheatFullscreenChange();
+  private readonly antiCheatKeydownHandler = (event: KeyboardEvent) => this.handleAntiCheatKeydown(event);
+  private readonly antiCheatClipboardHandler = (event: ClipboardEvent | Event) => this.handleAntiCheatClipboard(event);
+
+  private registerAntiCheatListeners(): void {
+    if (!this.antiCheatActive() || this.antiCheatListenersRegistered) {
+      return;
+    }
+
+    document.addEventListener('visibilitychange', this.antiCheatVisibilityHandler);
+    document.addEventListener('fullscreenchange', this.antiCheatFullscreenHandler);
+    document.addEventListener('keydown', this.antiCheatKeydownHandler);
+    document.addEventListener('copy', this.antiCheatClipboardHandler);
+    document.addEventListener('cut', this.antiCheatClipboardHandler);
+    document.addEventListener('paste', this.antiCheatClipboardHandler);
+    this.antiCheatListenersRegistered = true;
+  }
+
+  private unregisterAntiCheatListeners(): void {
+    if (!this.antiCheatListenersRegistered) {
+      return;
+    }
+
+    document.removeEventListener('visibilitychange', this.antiCheatVisibilityHandler);
+    document.removeEventListener('fullscreenchange', this.antiCheatFullscreenHandler);
+    document.removeEventListener('keydown', this.antiCheatKeydownHandler);
+    document.removeEventListener('copy', this.antiCheatClipboardHandler);
+    document.removeEventListener('cut', this.antiCheatClipboardHandler);
+    document.removeEventListener('paste', this.antiCheatClipboardHandler);
+    this.antiCheatListenersRegistered = false;
+  }
+
+  private handleAntiCheatVisibilityChange(): void {
+    if (this.quizCompleted() || this.hasError() || this.timeoutSubmissionInProgress()) {
+      return;
+    }
+
+    if (document.visibilityState === 'hidden' && this.quizStarted()) {
+      this.recordAntiCheatEvent('TAB_SWITCH', 'visibilitychange');
+    }
+  }
+
+  private handleAntiCheatFullscreenChange(): void {
+    if (this.quizCompleted() || this.hasError() || this.timeoutSubmissionInProgress()) {
+      return;
+    }
+
+    const fullscreenRequired = this.quizData()?.antiCheat?.fullscreenRequired;
+    if (fullscreenRequired && this.quizStarted() && !document.fullscreenElement) {
+      this.recordAntiCheatEvent('FULLSCREEN_EXIT', 'fullscreenchange');
+      this.enterFullscreen().catch(() => {});
+    }
+  }
+
+  private handleAntiCheatKeydown(event: KeyboardEvent): void {
+    if (!this.quizStarted() || this.quizCompleted() || this.hasError()) {
+      return;
+    }
+
+    const antiCheat = this.quizData()?.antiCheat;
+    if (!antiCheat) {
+      return;
+    }
+
+    const mod = event.ctrlKey || event.metaKey;
+    const key = (event.key || '').toLowerCase();
+
+    if (antiCheat.blockCopyPaste && mod && ['c', 'x', 'v'].includes(key)) {
+      event.preventDefault();
+      this.recordAntiCheatEvent('COPY_PASTE', `keyboard:${key}`);
+      return;
+    }
+
+    if (antiCheat.blockShortcuts) {
+      const navigationShortcut = mod && ['p', 's', 'u', 'f', 'n', 't', 'w'].includes(key);
+      const devToolShortcut = mod && event.shiftKey && ['i', 'j', 'c', 'k'].includes(key);
+      if (navigationShortcut || devToolShortcut || key === 'f12') {
+        event.preventDefault();
+      }
+    }
+  }
+
+  private handleAntiCheatClipboard(event: ClipboardEvent | Event): void {
+    if (!this.quizStarted() || this.quizCompleted() || this.hasError()) {
+      return;
+    }
+
+    if (this.quizData()?.antiCheat?.blockCopyPaste) {
+      event.preventDefault();
+      this.recordAntiCheatEvent('COPY_PASTE', 'clipboard');
+    }
+  }
+
+  private recordAntiCheatEvent(eventType: string, metadata?: string): void {
+    if (!this.antiCheatActive() || this.quizCompleted() || this.hasError() || !this.quizStarted()) {
+      return;
+    }
+
+    this.pendingAntiCheatEvents.push({
+      eventType,
+      occurredAt: this.formatServerDateTime(new Date()),
+      metadata: metadata || null
+    });
+
+    this.antiCheatWarningCount.update(count => count + 1);
+    this.updateAntiCheatBanner();
+    this.flushAntiCheatEvents();
+  }
+
+  private flushAntiCheatEvents(): void {
+    const now = Date.now();
+    if (now - this.lastAntiCheatFlushAt < 2000) {
+      return;
+    }
+    this.lastAntiCheatFlushAt = now;
+    this.handleUserActivity(true);
+  }
+
+  private updateAntiCheatBanner(): void {
+    const policy = this.antiCheatPolicy();
+    const warningsLeft = this.antiCheatWarningsLeft();
+
+    if (policy === 'WARN' && warningsLeft != null && warningsLeft === 0) {
+      this.antiCheatBanner.set('Dernier avertissement avant soumission automatique du quiz.');
+      return;
+    }
+    if (policy === 'WARN' && warningsLeft != null) {
+      this.antiCheatBanner.set(`Avertissement : ${warningsLeft} sortie(s) de l'onglet tolérée(s) avant soumission automatique.`);
+      return;
+    }
+    this.antiCheatBanner.set('Un changement d’onglet ou de fenêtre a été détecté. Veuillez rester sur cette page.');
+  }
+
+  private enterFullscreen(): Promise<void> {
+    const rootElement = document.documentElement;
+    if (rootElement.requestFullscreen) {
+      return rootElement.requestFullscreen();
+    }
+    return Promise.resolve();
+  }
+
+  private formatServerDateTime(date: Date): string {
+    const pad = (value: number) => value.toString().padStart(2, '0');
+    return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
   }
 
   private isQuizSessionBlocked(message: string | undefined): boolean {
@@ -681,4 +912,7 @@ export class QuizComponent implements OnInit, OnDestroy {
   private countdownId: number | null = null;
   private lastActivityPingAt = 0;
   private activityListenersRegistered = false;
+  private antiCheatListenersRegistered = false;
+  private lastAntiCheatFlushAt = 0;
+  private pendingAntiCheatEvents: QuizAntiCheatEvent[] = [];
 }

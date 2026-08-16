@@ -67,6 +67,10 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 	@Autowired
 	private ApplicationQuizAttemptRepository applicationQuizAttemptRepository;
 	@Autowired
+	private QuizAntiCheatEventRepository quizAntiCheatEventRepository;
+	@Autowired
+	private AppConfigRepository appConfigRepository;
+	@Autowired
 	private CandidateAnswerRepository candidateAnswerRepository;
 	@Autowired
 	private CandidateAskRepository candidateAskRepository;
@@ -134,6 +138,39 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 	private static final int TRACKING_CODE_LENGTH = 6;
 	private static final String TRACKING_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 	private static final java.security.SecureRandom TRACKING_CODE_RANDOM = new java.security.SecureRandom();
+
+	// ─── Anti-triche (chantier B, évolution 450 Vague 2) ───────────────────────
+	private static final String ANTI_CHEAT_POLICY_WARN = "WARN";
+	private static final String ANTI_CHEAT_POLICY_FLAG = "FLAG";
+	private static final String ANTI_CHEAT_POLICY_FAIL = "FAIL";
+	private static final int DEFAULT_ANTI_CHEAT_TAB_SWITCH_MAX_WARNINGS = 3;
+	private static final int DEFAULT_ANTI_CHEAT_TAB_SWITCH_MAX_ACTIONS = 5;
+	private static final String ANTI_CHEAT_EVENT_TAB_SWITCH = "TAB_SWITCH";
+	private static final String ANTI_CHEAT_EVENT_FULLSCREEN_EXIT = "FULLSCREEN_EXIT";
+	private static final String ANTI_CHEAT_EVENT_COPY_PASTE = "COPY_PASTE";
+	private static final String ANTI_CHEAT_EVENT_MULTI_SESSION = "MULTI_SESSION";
+	private static final String ANTI_CHEAT_SUBMITTED_MESSAGE = "Tentative de triche détectée. Le quiz a été soumis automatiquement.";
+
+	private static final class AntiCheatPolicy {
+		private final boolean enabled;
+		private final String policy;
+		private final int tabSwitchMaxWarnings;
+		private final int tabSwitchMaxActions;
+		private final boolean fullscreenRequired;
+		private final boolean blockShortcuts;
+		private final boolean blockCopyPaste;
+
+		private AntiCheatPolicy(boolean enabled, String policy, int tabSwitchMaxWarnings, int tabSwitchMaxActions,
+				boolean fullscreenRequired, boolean blockShortcuts, boolean blockCopyPaste) {
+			this.enabled = enabled;
+			this.policy = policy;
+			this.tabSwitchMaxWarnings = tabSwitchMaxWarnings;
+			this.tabSwitchMaxActions = tabSwitchMaxActions;
+			this.fullscreenRequired = fullscreenRequired;
+			this.blockShortcuts = blockShortcuts;
+			this.blockCopyPaste = blockCopyPaste;
+		}
+	}
 
 	private static final class QuizScoringSummary {
 		private final Integer quizScore;
@@ -799,6 +836,12 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			item.setTimeElapsed(quizAttempt.getTimeElapsed());
 			item.setTimedSnapshot(quizAttempt.getTimedSnapshot());
 			item.setTotalTimeAllowedSnapshot(quizAttempt.getTotalTimeAllowedSnapshot());
+			item.setTabSwitchCount(quizAttempt.getTabSwitchCount());
+			item.setFullscreenExitCount(quizAttempt.getFullscreenExitCount());
+			item.setCheatFlagCount(quizAttempt.getCheatFlagCount());
+			item.setScreeningMode(quizAttempt.getScreeningMode());
+			item.setScreeningResult(quizAttempt.getScreeningResult());
+			item.setAntiCheatEvents(buildAntiCheatEventDtos(quizAttempt.getId()));
 			item.setLastActivityAt(formatDateTime(quizAttempt.getLastActivityAt()));
 			item.setStartedAt(formatDateTime(quizAttempt.getStartedAt()));
 			item.setCompletedAt(formatDateTime(quizAttempt.getCompletedAt()));
@@ -1284,6 +1327,11 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			if (inactivityError != null) {
 				return inactivityError;
 			}
+
+			Response<ApplicationsDto> antiCheatError = applyAntiCheatPolicyOnAccess(application, quizAttempt, dto.getAntiCheatEvents(), request.getUser(), locale);
+			if (antiCheatError != null) {
+				return antiCheatError;
+			}
 			
 		log.info("=== QUIZ START DEBUG ===");
 		log.info("Application ID: " + applicationId);
@@ -1488,6 +1536,7 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			quizData.put("remainingTime", timingState.remainingTime);
 			quizData.put("quizStatus", resolveQuizStatus(application, quizAttempt));
 			quizData.put("questions", questionsWithAnswers);
+			quizData.put("antiCheat", buildAntiCheatQuizData(application, quizAttempt));
 			resultDto.setQuizData(Utilities.convertObjectToJson(quizData));
 			
 			Status status = new Status();
@@ -1952,6 +2001,11 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 				return inactivityError;
 			}
 
+			Response<ApplicationsDto> antiCheatError = applyAntiCheatPolicyOnAccess(application, quizAttempt, dto.getAntiCheatEvents(), request.getUser(), locale);
+			if (antiCheatError != null) {
+				return antiCheatError;
+			}
+
 			ensureQuizStageReady(application, request.getUser(), locale);
 			QuizTimingState timingState = resolveQuizTimingState(application, quizAttempt, request.getUser());
 			if (timingState.expired) {
@@ -2248,6 +2302,11 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 			return inactivityError;
 		}
 
+		Response<ApplicationsDto> antiCheatError = applyAntiCheatPolicyOnAccess(application, quizAttempt, dto.getAntiCheatEvents(), actorUserId, locale);
+		if (antiCheatError != null) {
+			return antiCheatError;
+		}
+
 		ensureQuizStageReady(application, actorUserId, locale);
 		QuizTimingState timingState = resolveQuizTimingState(application, quizAttempt, actorUserId);
 		if (timingState.expired) {
@@ -2259,6 +2318,12 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 
 		ApplicationsDto resultDto = new ApplicationsDto();
 		resultDto.setId(application.getId());
+
+		// Renvoyer les compteurs anti-triche mis à jour au client
+		List<ApplicationQuizAttemptSummaryDto> refreshedSummaries = buildApplicationQuizAttemptSummaries(application.getId());
+		if (refreshedSummaries != null) {
+			resultDto.setQuizAttempts(refreshedSummaries);
+		}
 
 		Response<ApplicationsDto> response = new Response<ApplicationsDto>();
 		Status status = new Status();
@@ -2662,6 +2727,200 @@ public class ApplicationsBusiness implements IBasicBusiness<Request<Applications
 		}
 
 		return null;
+	}
+
+	/**
+	 * Anti-triche (chantier B) : journalise les événements reçus (touch-quiz),
+	 * incrémente les compteurs de la tentative et applique la politique résolue
+	 * (global app_config, override par campagne). Retourne une erreur bloquante
+	 * (avec soumission automatique) si la politique FAIL est atteinte.
+	 */
+	private Response<ApplicationsDto> applyAntiCheatPolicyOnAccess(
+			Applications application,
+			ApplicationQuizAttempt quizAttempt,
+			List<QuizAntiCheatEventDto> incomingEvents,
+			Integer actorUserId,
+			Locale locale) {
+		if (quizAttempt == null || quizAttempt.getId() == null) {
+			return null;
+		}
+
+		AntiCheatPolicy policy = resolveAntiCheatPolicy(application, quizAttempt);
+		if (!policy.enabled) {
+			return null;
+		}
+
+		if (incomingEvents != null && !incomingEvents.isEmpty()) {
+			persistAntiCheatEvents(quizAttempt, incomingEvents, actorUserId);
+		}
+
+		int totalEvents = nz(quizAttempt.getTabSwitchCount()) + nz(quizAttempt.getFullscreenExitCount());
+
+		quizAttempt.setScreeningMode(policy.policy);
+		quizAttempt.setScreeningThreshold((double) policy.tabSwitchMaxActions);
+
+		boolean forced = false;
+		if (ANTI_CHEAT_POLICY_FAIL.equals(policy.policy) && totalEvents >= policy.tabSwitchMaxActions) {
+			quizAttempt.setScreeningResult("FAILED");
+			forced = true;
+		} else if (ANTI_CHEAT_POLICY_FLAG.equals(policy.policy) && totalEvents >= policy.tabSwitchMaxActions) {
+			quizAttempt.setScreeningResult("FLAGGED");
+			quizAttempt.setCheatFlagCount(nz(quizAttempt.getCheatFlagCount()) + 1);
+		} else if (totalEvents > 0 && quizAttempt.getScreeningResult() == null) {
+			quizAttempt.setScreeningResult("WATCHED");
+		}
+
+		quizAttempt.setUpdatedAt(Utilities.getCurrentDate());
+		quizAttempt.setUpdatedBy(actorUserId);
+		ApplicationQuizAttempt savedAttempt = applicationQuizAttemptRepository.save(quizAttempt);
+		syncApplicationQuizSummaryFromAttempt(application, savedAttempt, actorUserId);
+
+		if (forced) {
+			completeQuizInternal(application, savedAttempt, actorUserId, locale);
+			return buildErrorResponse(HttpStatus.FORBIDDEN, StatusCode.FUNC_REQUEST_FAIL, ANTI_CHEAT_SUBMITTED_MESSAGE);
+		}
+		return null;
+	}
+
+	private AntiCheatPolicy resolveAntiCheatPolicy(Applications application, ApplicationQuizAttempt quizAttempt) {
+		AppConfig activeConfig = appConfigRepository.findActiveConfig(true, false);
+		boolean enabled = activeConfig != null && Boolean.TRUE.equals(activeConfig.getAntiCheatEnabled());
+		String policy = activeConfig != null && StringUtils.isNotBlank(activeConfig.getScreeningPolicy())
+				? activeConfig.getScreeningPolicy().trim().toUpperCase(Locale.ROOT)
+				: ANTI_CHEAT_POLICY_WARN;
+		if (!ANTI_CHEAT_POLICY_WARN.equals(policy) && !ANTI_CHEAT_POLICY_FLAG.equals(policy) && !ANTI_CHEAT_POLICY_FAIL.equals(policy)) {
+			policy = ANTI_CHEAT_POLICY_WARN;
+		}
+		int maxWarnings = activeConfig != null && activeConfig.getTabSwitchMaxWarnings() != null
+				? activeConfig.getTabSwitchMaxWarnings()
+				: DEFAULT_ANTI_CHEAT_TAB_SWITCH_MAX_WARNINGS;
+		int maxActions = activeConfig != null && activeConfig.getTabSwitchMaxActions() != null
+				? activeConfig.getTabSwitchMaxActions()
+				: DEFAULT_ANTI_CHEAT_TAB_SWITCH_MAX_ACTIONS;
+		boolean fullscreenRequired = activeConfig != null && Boolean.TRUE.equals(activeConfig.getFullscreenRequired());
+		boolean blockShortcuts = activeConfig != null && Boolean.TRUE.equals(activeConfig.getBlockShortcuts());
+		boolean blockCopyPaste = activeConfig != null && Boolean.TRUE.equals(activeConfig.getBlockCopyPaste());
+
+		Campaigns campaign = application != null && application.getSourceToken() != null
+				? application.getSourceToken().getCampaigns()
+				: null;
+		if (campaign != null && campaign.getAntiCheatEnabled() != null) {
+			enabled = campaign.getAntiCheatEnabled();
+		}
+
+		return new AntiCheatPolicy(enabled, policy, maxWarnings, maxActions, fullscreenRequired, blockShortcuts, blockCopyPaste);
+	}
+
+	private void persistAntiCheatEvents(ApplicationQuizAttempt quizAttempt, List<QuizAntiCheatEventDto> incomingEvents, Integer actorUserId) {
+		if (quizAttempt == null || quizAttempt.getId() == null || incomingEvents == null || incomingEvents.isEmpty()) {
+			return;
+		}
+
+		Date now = Utilities.getCurrentDate();
+		List<QuizAntiCheatEvent> eventsToSave = new ArrayList<>();
+		for (QuizAntiCheatEventDto eventDto : incomingEvents) {
+			if (eventDto == null || StringUtils.isBlank(eventDto.getEventType())) {
+				continue;
+			}
+			String eventType = eventDto.getEventType().trim().toUpperCase(Locale.ROOT);
+			QuizAntiCheatEvent event = new QuizAntiCheatEvent();
+			event.setApplicationQuizAttempt(quizAttempt);
+			event.setEventType(eventType);
+			event.setOccurredAt(StringUtils.isNotBlank(eventDto.getOccurredAt()) ? parseEventTimestamp(eventDto.getOccurredAt(), now) : now);
+			event.setMetadata(truncateEventMetadata(eventDto.getMetadata()));
+			event.setCreatedAt(now);
+			event.setCreatedBy(actorUserId);
+			event.setUpdatedAt(now);
+			event.setUpdatedBy(actorUserId);
+			event.setIsDeleted(false);
+			eventsToSave.add(event);
+		}
+		if (eventsToSave.isEmpty()) {
+			return;
+		}
+		quizAntiCheatEventRepository.saveAll(eventsToSave);
+
+		int tabSwitchDelta = countEventType(incomingEvents, ANTI_CHEAT_EVENT_TAB_SWITCH);
+		int fullscreenExitDelta = countEventType(incomingEvents, ANTI_CHEAT_EVENT_FULLSCREEN_EXIT);
+		if (tabSwitchDelta > 0) {
+			quizAttempt.setTabSwitchCount(nz(quizAttempt.getTabSwitchCount()) + tabSwitchDelta);
+		}
+		if (fullscreenExitDelta > 0) {
+			quizAttempt.setFullscreenExitCount(nz(quizAttempt.getFullscreenExitCount()) + fullscreenExitDelta);
+		}
+	}
+
+	private Map<String, Object> buildAntiCheatQuizData(Applications application, ApplicationQuizAttempt quizAttempt) {
+		Map<String, Object> antiCheat = new HashMap<>();
+		AntiCheatPolicy policy = resolveAntiCheatPolicy(application, quizAttempt);
+		antiCheat.put("enabled", policy.enabled);
+		antiCheat.put("policy", policy.policy);
+		antiCheat.put("tabSwitchMaxWarnings", policy.tabSwitchMaxWarnings);
+		antiCheat.put("tabSwitchMaxActions", policy.tabSwitchMaxActions);
+		antiCheat.put("fullscreenRequired", policy.fullscreenRequired);
+		antiCheat.put("blockShortcuts", policy.blockShortcuts);
+		antiCheat.put("blockCopyPaste", policy.blockCopyPaste);
+		antiCheat.put("tabSwitchCount", quizAttempt != null ? nz(quizAttempt.getTabSwitchCount()) : 0);
+		antiCheat.put("fullscreenExitCount", quizAttempt != null ? nz(quizAttempt.getFullscreenExitCount()) : 0);
+		antiCheat.put("cheatFlagCount", quizAttempt != null ? nz(quizAttempt.getCheatFlagCount()) : 0);
+		antiCheat.put("screeningMode", quizAttempt != null ? quizAttempt.getScreeningMode() : null);
+		antiCheat.put("screeningResult", quizAttempt != null ? quizAttempt.getScreeningResult() : null);
+		return antiCheat;
+	}
+
+	private List<QuizAntiCheatEventDto> buildAntiCheatEventDtos(Integer quizAttemptId) {
+		if (quizAttemptId == null) {
+			return Collections.emptyList();
+		}
+		List<QuizAntiCheatEvent> events = quizAntiCheatEventRepository.findByApplicationQuizAttemptIdOrderByIdDesc(quizAttemptId, false);
+		if (events == null || events.isEmpty()) {
+			return Collections.emptyList();
+		}
+		List<QuizAntiCheatEventDto> items = new ArrayList<>();
+		for (QuizAntiCheatEvent event : events) {
+			if (event == null) {
+				continue;
+			}
+			QuizAntiCheatEventDto item = new QuizAntiCheatEventDto();
+			item.setId(event.getId());
+			item.setEventType(event.getEventType());
+			item.setOccurredAt(formatDateTime(event.getOccurredAt()));
+			item.setMetadata(event.getMetadata());
+			items.add(item);
+		}
+		return items;
+	}
+
+	private int countEventType(List<QuizAntiCheatEventDto> events, String eventType) {
+		if (events == null) {
+			return 0;
+		}
+		int count = 0;
+		for (QuizAntiCheatEventDto event : events) {
+			if (event != null && eventType.equalsIgnoreCase(event.getEventType())) {
+				count++;
+			}
+		}
+		return count;
+	}
+
+	private Date parseEventTimestamp(String value, Date fallback) {
+		try {
+			return dateTimeFormat.parse(value);
+		} catch (ParseException e) {
+			return fallback;
+		}
+	}
+
+	private String truncateEventMetadata(String value) {
+		if (value == null) {
+			return null;
+		}
+		return value.length() > 500 ? value.substring(0, 500) : value;
+	}
+
+	private int nz(Integer value) {
+		return value != null ? value : 0;
 	}
 
 	private Response<ApplicationsDto> enforceQuizInactivityPolicy(Applications application, Integer actorUserId, Locale locale) {

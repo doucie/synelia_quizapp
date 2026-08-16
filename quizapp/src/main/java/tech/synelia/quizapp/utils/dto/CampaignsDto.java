@@ -47,6 +47,7 @@ public class CampaignsDto extends _CampaignsDto implements Cloneable{
     private Boolean    isTimed              ;
 	private Boolean    isArchived           ;
 	private Boolean    timeAllForms         ;
+	private Boolean    antiCheatEnabled     ;
 	private String     formAssignmentStrategy ;
 	private String     formAssignmentExhaustionPolicy ;
 	private String     createdAt            ;

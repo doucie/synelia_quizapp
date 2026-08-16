@@ -45,6 +45,11 @@ interface AnswerAttemptGroup {
   quizToken: string | null;
   quizStatus: string | null;
   manualCorrectionStatus: string | null;
+  tabSwitchCount?: number;
+  fullscreenExitCount?: number;
+  cheatFlagCount?: number;
+  screeningMode?: string;
+  screeningResult?: string;
   score: number | null;
   scorePercent: number | null;
   createdAt: string | null;
@@ -525,6 +530,40 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
       default:
         return '';
     }
+  }
+
+  getScreeningResultLabel(result?: string | null): string {
+    switch ((result || '').trim().toUpperCase()) {
+      case 'CLEAN':
+        return 'Anti-triche : conforme';
+      case 'FLAGGED':
+        return 'Anti-triche : signalé';
+      case 'FAILED':
+        return 'Anti-triche : échec';
+      default:
+        return '';
+    }
+  }
+
+  getScreeningResultClass(result?: string | null): string {
+    switch ((result || '').trim().toUpperCase()) {
+      case 'CLEAN':
+        return 'screening-result-clean';
+      case 'FLAGGED':
+        return 'screening-result-flagged';
+      case 'FAILED':
+        return 'screening-result-failed';
+      default:
+        return '';
+    }
+  }
+
+  hasAntiCheatCounters(attempt: { tabSwitchCount?: number; fullscreenExitCount?: number; cheatFlagCount?: number } | null): boolean {
+    if (!attempt) {
+      return false;
+    }
+    const total = (attempt.tabSwitchCount || 0) + (attempt.fullscreenExitCount || 0) + (attempt.cheatFlagCount || 0);
+    return total > 0;
   }
 
   getCurrentInterview(id: number): CandidateInterviewEntity | null {
@@ -1764,6 +1803,11 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
       existingGroup.startedAt = existingGroup.startedAt ?? attempt.startedAt ?? null;
       existingGroup.completedAt = existingGroup.completedAt ?? attempt.completedAt ?? null;
       existingGroup.lastActivityAt = existingGroup.lastActivityAt ?? attempt.lastActivityAt ?? null;
+      existingGroup.tabSwitchCount = existingGroup.tabSwitchCount ?? attempt.tabSwitchCount ?? undefined;
+      existingGroup.fullscreenExitCount = existingGroup.fullscreenExitCount ?? attempt.fullscreenExitCount ?? undefined;
+      existingGroup.cheatFlagCount = existingGroup.cheatFlagCount ?? attempt.cheatFlagCount ?? undefined;
+      existingGroup.screeningMode = existingGroup.screeningMode ?? attempt.screeningMode ?? undefined;
+      existingGroup.screeningResult = existingGroup.screeningResult ?? attempt.screeningResult ?? undefined;
       continue;
       }
 
@@ -1775,6 +1819,11 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
       quizToken: attempt.quizToken ?? null,
       quizStatus: attempt.quizStatus ?? null,
       manualCorrectionStatus: (attempt.manualCorrectionStatus as string | null) ?? null,
+      tabSwitchCount: attempt.tabSwitchCount ?? undefined,
+      fullscreenExitCount: attempt.fullscreenExitCount ?? undefined,
+      cheatFlagCount: attempt.cheatFlagCount ?? undefined,
+      screeningMode: attempt.screeningMode ?? undefined,
+      screeningResult: attempt.screeningResult ?? undefined,
       score: attempt.score ?? null,
       scorePercent: attempt.scorePercent ?? null,
       createdAt: attempt.createdAt ?? null,

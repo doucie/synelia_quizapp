@@ -382,6 +382,47 @@
   align-items: center;
   gap: var(--spacing-sm);
   flex-wrap: wrap;
+
+  &--anti-cheat {
+    padding-top: var(--spacing-xs);
+    border-top: 1px dashed var(--border);
+  }
+}
+
+.screening-result-clean {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-semibold);
+  background: rgba(var(--success-rgb), 0.12);
+  color: var(--success);
+  border: 1px solid rgba(var(--success-rgb), 0.24);
+}
+
+.screening-result-flagged {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-semibold);
+  background: rgba(var(--warning-rgb), 0.12);
+  color: var(--warning);
+  border: 1px solid rgba(var(--warning-rgb), 0.24);
+}
+
+.screening-result-failed {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-semibold);
+  background: rgba(var(--error-rgb), 0.12);
+  color: var(--error);
+  border: 1px solid rgba(var(--error-rgb), 0.24);
 }
 
 .quiz-attempt-summary__meta {

@@ -21,6 +21,13 @@ public class AppConfigDto extends _AppConfigDto implements Cloneable {
     private String  primaryColor;
     private String  colorScheme;
     private Boolean candidateAccountsEnabled;
+    private Boolean antiCheatEnabled;
+    private String  screeningPolicy;
+    private Integer tabSwitchMaxWarnings;
+    private Integer tabSwitchMaxActions;
+    private Boolean fullscreenRequired;
+    private Boolean blockShortcuts;
+    private Boolean blockCopyPaste;
     private Boolean isActive;
     private String  createdAt;
     private Integer createdBy;

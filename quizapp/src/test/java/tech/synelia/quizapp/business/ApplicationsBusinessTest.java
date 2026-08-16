@@ -26,6 +26,7 @@ import org.thymeleaf.context.Context;
 import tech.synelia.quizapp.business.MailLogService.MailLogContext;
 import tech.synelia.quizapp.dao.entity.ApplicationProgress;
 import tech.synelia.quizapp.dao.entity.ApplicationQuizAttempt;
+import tech.synelia.quizapp.dao.entity.AppConfig;
 import tech.synelia.quizapp.dao.entity.Applications;
 import tech.synelia.quizapp.dao.entity.Campaigns;
 import tech.synelia.quizapp.dao.entity.CandidateInterview;
@@ -45,12 +46,15 @@ import tech.synelia.quizapp.dao.repository.ApplicationQuizAttemptRepository;
 import tech.synelia.quizapp.dao.repository.ApplicationProgressRepository;
 import tech.synelia.quizapp.dao.repository.ApplicationsRepository;
 import tech.synelia.quizapp.dao.repository.CampaignFormRepository;
+import tech.synelia.quizapp.dao.repository.CandidateAnswerRepository;
 import tech.synelia.quizapp.dao.repository.CandidateTokenRepository;
 import tech.synelia.quizapp.dao.repository.EntityPermissionRepository;
 import tech.synelia.quizapp.dao.repository.EmailVerificationTokenRepository;
 import tech.synelia.quizapp.dao.repository.FormVersionRepository;
 import tech.synelia.quizapp.dao.repository.InterviewsRepository;
 import tech.synelia.quizapp.dao.repository.NotificationsRepository;
+import tech.synelia.quizapp.dao.repository.QuizAntiCheatEventRepository;
+import tech.synelia.quizapp.dao.repository.AppConfigRepository;
 import tech.synelia.quizapp.dao.repository.UserRepository;
 import tech.synelia.quizapp.utils.HostingUtils;
 import tech.synelia.quizapp.utils.ParamsUtils;
@@ -59,6 +63,7 @@ import tech.synelia.quizapp.utils.StatusCode;
 import tech.synelia.quizapp.utils.contract.Response;
 import tech.synelia.quizapp.utils.contract.Request;
 import tech.synelia.quizapp.utils.dto.ApplicationsDto;
+import tech.synelia.quizapp.utils.dto.QuizAntiCheatEventDto;
 import tech.synelia.quizapp.utils.enums.EmailActionType;
 import tech.synelia.quizapp.utils.enums.StageType;
 import tech.synelia.quizapp.utils.exception.InvalidEntityException;
@@ -88,6 +93,12 @@ class ApplicationsBusinessTest {
 	private CandidateInterviewRepository candidateInterviewRepository;
 	@Mock
 	private ApplicationQuizAttemptRepository applicationQuizAttemptRepository;
+	@Mock
+	private CandidateAnswerRepository candidateAnswerRepository;
+	@Mock
+	private QuizAntiCheatEventRepository quizAntiCheatEventRepository;
+	@Mock
+	private AppConfigRepository appConfigRepository;
 	@Mock
 	private InterviewsRepository interviewsRepository;
 	@Mock
@@ -963,6 +974,121 @@ class ApplicationsBusinessTest {
 
 		assertThat(dto.getAttemptsUsed()).isEqualTo(0);
 		assertThat(dto.getMaxAttempts()).isEqualTo(1);
+	}
+
+	@Test
+	void applyAntiCheatPolicy_disabled_doesNothing() throws Exception {
+		Applications application = new Applications();
+		application.setId(15);
+
+		ApplicationQuizAttempt quizAttempt = new ApplicationQuizAttempt();
+		quizAttempt.setId(902);
+
+		when(appConfigRepository.findActiveConfig(true, false)).thenReturn(null);
+
+		Method method = ApplicationsBusiness.class.getDeclaredMethod(
+				"applyAntiCheatPolicyOnAccess",
+				Applications.class,
+				ApplicationQuizAttempt.class,
+				List.class,
+				Integer.class,
+				Locale.class);
+		method.setAccessible(true);
+
+		Response<ApplicationsDto> result = (Response<ApplicationsDto>) method.invoke(
+				applicationsBusiness, application, quizAttempt, null, 77, Locale.FRENCH);
+
+		assertThat(result).isNull();
+		assertThat(quizAttempt.getTabSwitchCount()).isNull();
+		assertThat(quizAttempt.getScreeningMode()).isNull();
+		verify(quizAntiCheatEventRepository, org.mockito.Mockito.never()).saveAll(any());
+	}
+
+	@Test
+	void applyAntiCheatPolicy_warn_persistsEventsAndUpdatesCounters() throws Exception {
+		Applications application = new Applications();
+		application.setId(15);
+
+		ApplicationQuizAttempt quizAttempt = new ApplicationQuizAttempt();
+		quizAttempt.setId(902);
+
+		AppConfig activeConfig = new AppConfig();
+		activeConfig.setAntiCheatEnabled(true);
+		activeConfig.setScreeningPolicy("WARN");
+		activeConfig.setTabSwitchMaxWarnings(3);
+		activeConfig.setTabSwitchMaxActions(5);
+		when(appConfigRepository.findActiveConfig(true, false)).thenReturn(activeConfig);
+		when(applicationQuizAttemptRepository.save(any(ApplicationQuizAttempt.class)))
+				.thenAnswer(invocation -> invocation.getArgument(0));
+		when(applicationsRepository.save(any(Applications.class)))
+				.thenAnswer(invocation -> invocation.getArgument(0));
+
+		QuizAntiCheatEventDto tabSwitch = new QuizAntiCheatEventDto();
+		tabSwitch.setEventType("TAB_SWITCH");
+		QuizAntiCheatEventDto fullscreenExit = new QuizAntiCheatEventDto();
+		fullscreenExit.setEventType("FULLSCREEN_EXIT");
+
+		Method method = ApplicationsBusiness.class.getDeclaredMethod(
+				"applyAntiCheatPolicyOnAccess",
+				Applications.class,
+				ApplicationQuizAttempt.class,
+				List.class,
+				Integer.class,
+				Locale.class);
+		method.setAccessible(true);
+
+		Response<ApplicationsDto> result = (Response<ApplicationsDto>) method.invoke(
+				applicationsBusiness, application, quizAttempt, List.of(tabSwitch, tabSwitch, fullscreenExit), 77, Locale.FRENCH);
+
+		assertThat(result).isNull();
+		assertThat(quizAttempt.getTabSwitchCount()).isEqualTo(2);
+		assertThat(quizAttempt.getFullscreenExitCount()).isEqualTo(1);
+		assertThat(quizAttempt.getScreeningMode()).isEqualTo("WARN");
+		assertThat(quizAttempt.getScreeningResult()).isEqualTo("WATCHED");
+		verify(quizAntiCheatEventRepository).saveAll(any());
+	}
+
+	@Test
+	void applyAntiCheatPolicy_fail_forcesSubmissionWhenThresholdReached() throws Exception {
+		Applications application = new Applications();
+		application.setId(15);
+
+		ApplicationQuizAttempt quizAttempt = new ApplicationQuizAttempt();
+		quizAttempt.setId(902);
+		quizAttempt.setQuizStatus(tech.synelia.quizapp.utils.enums.QuizStatus.STARTED.getValue());
+		quizAttempt.setTabSwitchCount(5);
+
+		AppConfig activeConfig = new AppConfig();
+		activeConfig.setAntiCheatEnabled(true);
+		activeConfig.setScreeningPolicy("FAIL");
+		activeConfig.setTabSwitchMaxWarnings(3);
+		activeConfig.setTabSwitchMaxActions(5);
+		when(appConfigRepository.findActiveConfig(true, false)).thenReturn(activeConfig);
+		when(applicationQuizAttemptRepository.save(any(ApplicationQuizAttempt.class)))
+				.thenAnswer(invocation -> invocation.getArgument(0));
+		when(applicationsRepository.save(any(Applications.class)))
+				.thenAnswer(invocation -> invocation.getArgument(0));
+		when(applicationsRepository.findOne(15, false)).thenReturn(application);
+
+		Method method = ApplicationsBusiness.class.getDeclaredMethod(
+				"applyAntiCheatPolicyOnAccess",
+				Applications.class,
+				ApplicationQuizAttempt.class,
+				List.class,
+				Integer.class,
+				Locale.class);
+		method.setAccessible(true);
+
+		Response<ApplicationsDto> result = (Response<ApplicationsDto>) method.invoke(
+				applicationsBusiness, application, quizAttempt, null, 77, Locale.FRENCH);
+
+		assertThat(result).isNotNull();
+		assertThat(result.isHasError()).isTrue();
+		assertThat(result.getStatus().getMessage()).isEqualTo("Tentative de triche détectée. Le quiz a été soumis automatiquement.");
+		assertThat(quizAttempt.getScreeningResult()).isEqualTo("FAILED");
+		assertThat(quizAttempt.getScreeningMode()).isEqualTo("FAIL");
+		assertThat(quizAttempt.getQuizStatus()).isEqualTo(tech.synelia.quizapp.utils.enums.QuizStatus.COMPLETED.getValue());
+		assertThat(quizAttempt.getCompletedAt()).isNotNull();
 	}
 
 	private Form buildForm(Integer id, String formName) {

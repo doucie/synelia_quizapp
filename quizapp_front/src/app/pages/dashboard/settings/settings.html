@@ -482,6 +482,7 @@
             <div class="settings__card-field"><span class="label">Thème :</span> {{ cfg.colorScheme }} <span class="settings__color-dot settings__color-dot--sm" [style.background]="getSchemeColor(cfg.colorScheme || 'violet')"></span></div>
             <div class="settings__card-field"><span class="label">Couleur :</span> <code>{{ cfg.primaryColor }}</code> <span class="settings__color-dot settings__color-dot--sm" [style.background]="cfg.primaryColor"></span></div>
             <div class="settings__card-field"><span class="label">Comptes candidats :</span> {{ cfg.candidateAccountsEnabled ? 'Activés' : 'Désactivés' }}</div>
+            <div class="settings__card-field"><span class="label">Anti-triche :</span> {{ cfg.antiCheatEnabled ? 'Activé' : 'Désactivé' }}{{ cfg.antiCheatEnabled ? ' — ' + getScreeningPolicyLabel(cfg.screeningPolicy) + ' (avert. ' + (cfg.tabSwitchMaxWarnings ?? '—') + ', actions ' + (cfg.tabSwitchMaxActions ?? '—') + ')' : '' }}</div>
           </div>
         </div>
       }
@@ -560,6 +561,34 @@
           <div class="form-group checkbox">
             <app-filter-checkbox class="settings-checkbox-item" inputId="settings-config-active" label="Active" variant="inline" [checked]="configForm().isActive === true" ariaLabel="Configuration active" (checkedChange)="updateConfigForm('isActive', $event)"></app-filter-checkbox>
             <app-filter-checkbox class="settings-checkbox-item" inputId="settings-config-candidate-accounts" label="Comptes candidats activés" variant="inline" [checked]="configForm().candidateAccountsEnabled === true" ariaLabel="Comptes candidats activés" (checkedChange)="updateConfigForm('candidateAccountsEnabled', $event)"></app-filter-checkbox>
+          </div>
+          <div class="form-group anti-cheat-section">
+            <h4 class="anti-cheat-title">Anti-triche (parcours candidat)</h4>
+            <app-filter-checkbox class="settings-checkbox-item" inputId="settings-config-anti-cheat" label="Activer l'anti-triche" variant="inline" [checked]="configForm().antiCheatEnabled === true" ariaLabel="Activer l'anti-triche" (checkedChange)="updateConfigForm('antiCheatEnabled', $event)"></app-filter-checkbox>
+            <div class="form-group">
+              <label>Politique de screening</label>
+              <select [ngModel]="configForm().screeningPolicy" (ngModelChange)="updateConfigForm('screeningPolicy', $event)" aria-label="Politique de screening">
+                @for (policy of screeningPolicies; track policy.key) {
+                  <option [value]="policy.key">{{ policy.label }}</option>
+                }
+              </select>
+              <p class="field-help">Avertir : simple alerte. Marquer : tentative signalée au recruteur. Échouer : soumission automatique au-delà des seuils.</p>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Sorties d'onglet tolérées (avertissements)</label>
+                <input type="number" [ngModel]="configForm().tabSwitchMaxWarnings" (ngModelChange)="updateConfigForm('tabSwitchMaxWarnings', $event)" min="0" max="50">
+              </div>
+              <div class="form-group">
+                <label>Actions tolérées avant soumission</label>
+                <input type="number" [ngModel]="configForm().tabSwitchMaxActions" (ngModelChange)="updateConfigForm('tabSwitchMaxActions', $event)" min="0" max="50">
+              </div>
+            </div>
+            <div class="form-group checkbox">
+              <app-filter-checkbox class="settings-checkbox-item" inputId="settings-config-fullscreen-required" label="Plein écran requis" variant="inline" [checked]="configForm().fullscreenRequired === true" ariaLabel="Plein écran requis" (checkedChange)="updateConfigForm('fullscreenRequired', $event)"></app-filter-checkbox>
+              <app-filter-checkbox class="settings-checkbox-item" inputId="settings-config-block-shortcuts" label="Bloquer raccourcis & actions navigateur" variant="inline" [checked]="configForm().blockShortcuts === true" ariaLabel="Bloquer raccourcis et actions navigateur" (checkedChange)="updateConfigForm('blockShortcuts', $event)"></app-filter-checkbox>
+              <app-filter-checkbox class="settings-checkbox-item" inputId="settings-config-block-copy-paste" label="Bloquer copier / coller" variant="inline" [checked]="configForm().blockCopyPaste === true" ariaLabel="Bloquer copier coller" (checkedChange)="updateConfigForm('blockCopyPaste', $event)"></app-filter-checkbox>
+            </div>
           </div>
         </div>
         <div class="settings__modal-footer">

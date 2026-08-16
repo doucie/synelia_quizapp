@@ -405,6 +405,9 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 				}
 				entityToSave.setMaxAttempts(dto.getMaxAttempts());
 			}
+			if (dto.getAntiCheatEnabled() != null) {
+				entityToSave.setAntiCheatEnabled(dto.getAntiCheatEnabled());
+			}
 			if (dto.getAllCanEvaluate() != null) {
 				entityToSave.setAllCanEvaluate(dto.getAllCanEvaluate());
 			}
@@ -1050,6 +1053,9 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 				}
 				entityToSave.setMaxAttempts(dto.getMaxAttempts());
 			}
+			if (dto.getAntiCheatEnabled() != null) {
+				entityToSave.setAntiCheatEnabled(dto.getAntiCheatEnabled());
+			}
 			if (dto.getAllCanEvaluate() != null) {
 				entityToSave.setAllCanEvaluate(dto.getAllCanEvaluate());
 			}
@@ -1205,6 +1211,9 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 							"La valeur maximale de tentatives quiz doit être supérieure ou égale à 1", locale));
 				}
 				entityToSave.setMaxAttempts(dto.getMaxAttempts());
+			}
+			if (dto.getAntiCheatEnabled() != null) {
+				entityToSave.setAntiCheatEnabled(dto.getAntiCheatEnabled());
 			}
 			if (dto.getAllCanEvaluate() != null) {
 				entityToSave.setAllCanEvaluate(dto.getAllCanEvaluate());

@@ -3,6 +3,7 @@ package tech.synelia.quizapp.utils.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import java.util.List;
 import lombok.Data;
 import lombok.ToString;
 
@@ -22,6 +23,12 @@ public class ApplicationQuizAttemptSummaryDto {
 	private Integer timeElapsed;
 	private Boolean timedSnapshot;
 	private Integer totalTimeAllowedSnapshot;
+	private Integer tabSwitchCount;
+	private Integer fullscreenExitCount;
+	private Integer cheatFlagCount;
+	private String screeningMode;
+	private String screeningResult;
+	private List<QuizAntiCheatEventDto> antiCheatEvents;
 	private String lastActivityAt;
 	private String startedAt;
 	private String completedAt;

@@ -38,6 +38,12 @@ export interface PagedApplicationResponse {
   number: number;
 }
 
+export interface QuizAntiCheatEvent {
+  eventType: string;
+  occurredAt?: string;
+  metadata?: string | null;
+}
+
 export interface ApplicationQuizAttemptSummary {
   id?: number;
   quizToken?: string;
@@ -49,6 +55,12 @@ export interface ApplicationQuizAttemptSummary {
   timeElapsed?: number;
   timedSnapshot?: boolean;
   totalTimeAllowedSnapshot?: number;
+  tabSwitchCount?: number;
+  fullscreenExitCount?: number;
+  cheatFlagCount?: number;
+  screeningMode?: string;
+  screeningResult?: string;
+  antiCheatEvents?: QuizAntiCheatEvent[];
   lastActivityAt?: string;
   startedAt?: string;
   completedAt?: string;
@@ -285,7 +297,12 @@ export class ApplicationService {
   /**
    * Sauvegarde l'état complet d'une question de quiz.
    */
-  saveQuizAnswer(applicationId: number, quizToken: string, payload: SaveQuizAnswerPayload): Observable<ApplicationResponse> {
+  saveQuizAnswer(
+    applicationId: number,
+    quizToken: string,
+    payload: SaveQuizAnswerPayload,
+    antiCheatEvents: QuizAntiCheatEvent[] = []
+  ): Observable<ApplicationResponse> {
     const selectedAnswerIds = (payload.selectedAnswerIds || []).filter((id): id is number => Number.isFinite(id));
     const request = {
       user: 1,
@@ -297,6 +314,7 @@ export class ApplicationService {
         selectedAnswerIds,
         selectedAnswerComments: payload.selectedAnswerComments || {},
         freeTextResponse: payload.freeTextResponse ?? null,
+        antiCheatEvents,
         candidateFirstName: null,
         candidateLastName: null,
         candidateEmail: null,
@@ -342,12 +360,13 @@ export class ApplicationService {
     return this.http.post<ApplicationResponse>(`${this.applicationsUrl}/complete-quiz`, request, { headers });
   }
 
-  touchQuiz(applicationId: number, quizToken: string): Observable<ApplicationResponse> {
+  touchQuiz(applicationId: number, quizToken: string, antiCheatEvents: QuizAntiCheatEvent[] = []): Observable<ApplicationResponse> {
     const request = {
       user: 1,
       data: {
         id: applicationId,
         quizToken: quizToken,
+        antiCheatEvents,
         candidateFirstName: null,
         candidateLastName: null,
         candidateEmail: null,
