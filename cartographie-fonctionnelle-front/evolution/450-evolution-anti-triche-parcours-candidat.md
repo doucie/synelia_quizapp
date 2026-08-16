@@ -1,7 +1,7 @@
 # Note — Règles anti-triche du quiz & fluidité du parcours candidat
 
 **Date :** 2026-08-12
-**Statut :** Vague 1 implémentée et testée (chantiers A.1, A.2, A.3 + reliquats 420) — Vague 2 (anti-triche paliers 1+2, chantiers B/C) implémentée et testée (§ 8bis), reste recette manuelle + doc BD/cahier des charges (§ 8).
+**Statut :** Vague 1 implémentée et testée (chantiers A.1, A.2, A.3 + reliquats 420) — Vague 2 (anti-triche paliers 1+2, chantiers B/C) implémentée et testée (§ 8bis), doc BD + cahier des charges + spec `QuizComponent` faits, reste recette manuelle (§ 8).
 **Périmètre :** `SecurityConfig`, `ApplicationsController` / `ApplicationsBusiness`, `ApplicationQuizAttempt`, `app_config`, `campaigns`, `QuizComponent`, page `/campagnes` et `/postuler/campagne/:campaignId`, cartographie `public/*`, migrations Flyway, mini-BD
 
 > Cette note complète la 440 (pipeline personnalisable) : elle couvre le **parcours candidat côté public** — corrections de sécurité/fluidité, règles anti-triche du quiz activables depuis la configuration générale, et mise à jour des écarts cartographie.
@@ -151,11 +151,11 @@ Script SQL de référence : `quizapp/src/main/resources/db/migration/V1_084__add
 
 - [x] Builds Vague 1 : `mvnw compile` + tests spring-boot ciblés OK ; `ng build` OK (warnings budgets pré-existants).
 - [x] Tests Vague 1 : `ApplicationsBusinessTest` (17/17 : verify-email sans quiz, verify-email avec quiz, `createAdditionalQuizAttempt` rejet/succès, `applyAttemptLimits`), `SecurityConfigTest` (3/3 : endpoints candidats publics, pas d'exposition recruiter/interne, aucun pattern legacy), `verify-email.spec.ts` (6/6 : succès sans quiz, quiz, fallback legacy, erreurs).
-- [x] Tests Vague 2 : `ApplicationsBusinessTest` 20/20 — 3 tests `applyAntiCheatPolicy_*` (désactivé, WARN persist/incrémente, FAIL soumission forcée) ; `QuizappApplicationTests` (contexte Spring+Flyway) 1/1 ; `ng build` OK. Spec `QuizComponent` (compteurs onglet, avertissement, soumission) non couverte pour l'instant.
+- [x] Tests Vague 2 : `ApplicationsBusinessTest` 20/20 — 3 tests `applyAntiCheatPolicy_*` (désactivé, WARN persist/incrémente, FAIL soumission forcée) ; `QuizappApplicationTests` (contexte Spring+Flyway) 1/1 ; `ng build` OK. Spec `QuizComponent` : `quiz.spec.ts` 9/9 — anti-triche désactivé, TAB_SWITCH enregistré + envoyé (`touchQuiz`), décompte avertissements WARN → 0, bandeaux WARN/FLAG/FAIL, session bloquée sur erreur `touchQuiz`, copier-coller et raccourcis bloqués (COPY_PASTE).
 - [ ] Recette manuelle : parcours candidat complet sans JWT (A.1) ; quiz chronométré à expiration (A.4) ; sorties d'onglet en WARN puis en FAIL (B).
-- [ ] Documentation : mettre à jour `quizapp_db_documentation_20260810.md` (table `quiz_anti_cheat_event`, colonnes attempt/app_config/campaigns) ; mini-BD `exemples/data.js` (table + colonnes, bloc `cles`) ; cocher les points cahier des charges (`z_mémoire/template_cahier_des_charges/index.html:1293,1311` — détection onglet journalisée + avertissement après N).
+- [x] Documentation : mettre à jour `quizapp_db_documentation_20260810.md` (table `quiz_anti_cheat_event`, colonnes attempt/app_config/campaigns) ; mini-BD `exemples/data.js` (table + colonnes, bloc `cles`) ; cocher les points cahier des charges (`z_mémoire/template_cahier_des_charges/index.html:1293,1311` — détection onglet journalisée + avertissement après N).
 - [x] Postman : collections v1/v2 alignées sur les contrats DTO actuels — `interviewStart`→`interviewDate` (9× chaqu'un), `candidateMark`→`globalScore`, `recruiterComment`→`globalComment`, `interviewEnd` supprimé ; JSON valides.
-- [ ] Note 420 : repointage des reliquats absorbés (lignes 764/784/791/796 → 450) ; le scénario d'acceptation multi-occurrences (795) reste un gate de la 420.
+- [x] Note 420 : repointage des reliquats absorbés (lignes 764/784/791/796 → 450, cochées « FAIT dans l'évolution 450 ») ; le scénario d'acceptation multi-occurrences (795) reste un gate de la 420.
 
 ## 8bis. Plan d'implémentation détaillé (2 vagues)
 

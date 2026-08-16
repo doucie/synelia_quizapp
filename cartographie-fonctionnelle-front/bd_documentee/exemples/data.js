@@ -60,9 +60,9 @@ window.BD_EXEMPLES = {
           nom: "campaigns",
           description: "Une campagne de recrutement : un poste à pourvoir avec son pipeline, ses dates et ses paramètres.",
           notes: ["total_questions, is_timed, time_all_forms et all_can_evaluate sont des champs adjacents conservés hors périmètre strict 420."],
-          colonnes: ["id", "campaign_title", "campaign_desc", "campaign_status", "campaign_start", "campaign_end", "max_apply", "all_can_evaluate", "total_questions", "is_timed", "is_archived", "time_all_forms", "pipeline_template_id", "form_assignment_strategy", "form_assignment_exhaustion_policy", "creator_id", "speciality_id", "created_at", "created_by", "updated_at", "updated_by", "is_deleted", "search_string"],
+          colonnes: ["id", "campaign_title", "campaign_desc", "campaign_status", "campaign_start", "campaign_end", "max_apply", "max_attempts", "all_can_evaluate", "total_questions", "is_timed", "is_archived", "time_all_forms", "anti_cheat_enabled", "pipeline_template_id", "form_assignment_strategy", "form_assignment_exhaustion_policy", "creator_id", "speciality_id", "created_at", "created_by", "updated_at", "updated_by", "is_deleted", "search_string"],
           lignes: [
-            [1, "Développeur Backend Java", "Recrutement d'un développeur backend sénior (Java / Spring)", "OPEN", "2026-08-01 00:00", "2026-09-30 23:59", 20, 0, 4, 1, 0, 1, 1, "BALANCED", "ROUND_ROBIN", 2, 1, "2026-07-10 10:00", 2, "2026-08-01 08:00", 2, 0, "backend java senior"]
+            [1, "Développeur Backend Java", "Recrutement d'un développeur backend sénior (Java / Spring)", "OPEN", "2026-08-01 00:00", "2026-09-30 23:59", 20, 1, 0, 4, 1, 0, 1, 1, 1, "BALANCED", "ROUND_ROBIN", 2, 1, "2026-07-10 10:00", 2, "2026-08-01 08:00", 2, 0, "backend java senior"]
           ]
         },
         {
@@ -231,9 +231,9 @@ window.BD_EXEMPLES = {
           nom: "application_quiz_attempt",
           description: "Une tentative de quiz passée par un candidat pour une étape de quiz : statut, score, chronomètre et correction manuelle.",
           notes: [],
-          colonnes: ["id", "application_id", "application_progress_id", "form_version_id", "quiz_token", "quiz_status", "screening_mode", "screening_threshold", "screening_result", "score", "score_percent", "manual_correction_status", "total_questions", "time_elapsed", "timed_snapshot", "total_time_allowed_snapshot", "last_activity_at", "started_at", "completed_at", "created_at", "created_by", "updated_at", "updated_by", "is_deleted", "search_string"],
+          colonnes: ["id", "application_id", "application_progress_id", "form_version_id", "quiz_token", "quiz_status", "screening_mode", "screening_threshold", "screening_result", "tab_switch_count", "fullscreen_exit_count", "cheat_flag_count", "score", "score_percent", "manual_correction_status", "total_questions", "time_elapsed", "timed_snapshot", "total_time_allowed_snapshot", "last_activity_at", "started_at", "completed_at", "created_at", "created_by", "updated_at", "updated_by", "is_deleted", "search_string"],
           lignes: [
-            [1, 1, 2, 1, "tk-8f7a2c9d-4e3b-11ec-9d64-0242ac130002", "COMPLETED", "NONE", null, null, 4.0, 80.0, "NOT_REQUIRED", 4, 540, 0, 600, "2026-08-03 09:09", "2026-08-03 09:00", "2026-08-03 09:09", "2026-08-03 09:00", 4, null, null, 0, "quiz alice"]
+            [1, 1, 2, 1, "tk-8f7a2c9d-4e3b-11ec-9d64-0242ac130002", "COMPLETED", "NONE", null, null, 0, 0, 0, 4.0, 80.0, "NOT_REQUIRED", 4, 540, 0, 600, "2026-08-03 09:09", "2026-08-03 09:00", "2026-08-03 09:09", "2026-08-03 09:00", 4, null, null, 0, "quiz alice"]
           ]
         },
         {
@@ -249,6 +249,14 @@ window.BD_EXEMPLES = {
             [4, 1, null, null, null, null, null, 1, 3, 5, null, "2026-08-03 09:01", 4, null, null, 0, null],
             [5, 0, 1, "Explication claire et structurée", 1, "2026-08-03 10:00", 2, 1, 4, null, "Le Builder sépare la construction d'un objet de sa représentation...", "2026-08-03 09:02", 4, "2026-08-03 10:00", 2, 0, null]
           ]
+        },
+        {
+          num: 19bis,
+          nom: "quiz_anti_cheat_event",
+          description: "Le journal de chaque infraction anti-triche détectée pendant une tentative de quiz (sortie d'onglet, sortie du plein écran, copier-coller…).",
+          notes: ["Alice n'a pas déclenché d'infraction : les compteurs de sa tentative restent à 0.", "Les événements sont envoyés par le front candidat et journalisés par le backend sur les endpoints get-quiz / save-quiz-answer / touch-quiz."],
+          colonnes: ["id", "application_quiz_attempt_id", "event_type", "occurred_at", "metadata", "created_by", "created_at", "updated_by", "updated_at", "is_deleted", "search_string"],
+          lignes: []
         }
       ]
     },
@@ -539,9 +547,9 @@ window.BD_EXEMPLES = {
           nom: "app_config",
           description: "La configuration générale de la plateforme : nom de l'entreprise, logo, couleurs et activation des comptes candidats.",
           notes: [],
-          colonnes: ["id", "config_name", "company_name", "app_link", "logo_html", "primary_color", "color_scheme", "candidate_accounts_enabled", "is_active", "created_at", "updated_at", "created_by", "updated_by", "is_deleted"],
+          colonnes: ["id", "config_name", "company_name", "app_link", "logo_html", "primary_color", "color_scheme", "candidate_accounts_enabled", "anti_cheat_enabled", "screening_policy", "tab_switch_max_warnings", "tab_switch_max_actions", "fullscreen_required", "block_shortcuts", "block_copy_paste", "is_active", "created_at", "updated_at", "created_by", "updated_by", "is_deleted"],
           lignes: [
-            [1, "Configuration principale", "Synelia", "https://recrutement.synelia.com", "<span class=\"logo\">Synelia</span>", "#7C3AED", "violet", 1, 1, "2026-06-01 09:00", "2026-06-01 09:00", 1, 1, 0]
+            [1, "Configuration principale", "Synelia", "https://recrutement.synelia.com", "<span class=\"logo\">Synelia</span>", "#7C3AED", "violet", 1, 1, "WARN", 3, 5, 0, 1, 1, 1, "2026-06-01 09:00", "2026-06-01 09:00", 1, 1, 0]
           ]
         },
         {
@@ -646,6 +654,7 @@ window.BD_EXEMPLES.cles = {
     "application_quiz_attempt:application_id": "applications",
     "application_quiz_attempt:application_progress_id": "application_progress",
     "application_quiz_attempt:form_version_id": "form_version",
+    "quiz_anti_cheat_event:application_quiz_attempt_id": "application_quiz_attempt",
     "candidate_answer:application_quiz_attempt_id": "application_quiz_attempt",
     "candidate_answer:question_id": "question",
     "candidate_answer:answer_id": "answer",

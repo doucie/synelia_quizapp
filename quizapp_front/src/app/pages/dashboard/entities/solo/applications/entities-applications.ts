@@ -534,8 +534,8 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
 
   getScreeningResultLabel(result?: string | null): string {
     switch ((result || '').trim().toUpperCase()) {
-      case 'CLEAN':
-        return 'Anti-triche : conforme';
+      case 'WATCHED':
+        return 'Anti-triche : surveillé';
       case 'FLAGGED':
         return 'Anti-triche : signalé';
       case 'FAILED':
@@ -547,8 +547,8 @@ export class EntitiesApplicationsComponent extends EntityCrudBase<Application, A
 
   getScreeningResultClass(result?: string | null): string {
     switch ((result || '').trim().toUpperCase()) {
-      case 'CLEAN':
-        return 'screening-result-clean';
+      case 'WATCHED':
+        return 'screening-result-flagged';
       case 'FLAGGED':
         return 'screening-result-flagged';
       case 'FAILED':

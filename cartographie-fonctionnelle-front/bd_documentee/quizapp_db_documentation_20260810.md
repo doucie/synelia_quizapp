@@ -5,6 +5,8 @@ Base : `quizapp_db`
 Source : `bd_actuelle/quizapp_db_described_20260810.md` (snapshot vérifié conforme)
 But : expliquer, en langage métier, chaque table et chaque champ de la base, en regroupant les tables qui travaillent ensemble.
 
+> Mise à jour (évolution 450) : ajouts strictement additifs appliqués depuis le snapshot — `campaigns.max_attempts` + `campaigns.anti_cheat_enabled` (V1_083/V1_084), compteurs anti-triche sur `application_quiz_attempt`, configuration anti-triche sur `app_config`, table `quiz_anti_cheat_event` (V1_084).
+
 ## Convention de lecture
 
 - Chaque table est présentée dans la famille métier dont elle dépend le plus (les tables qui communiquent le plus sont côte à côte).
@@ -23,7 +25,7 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 1. **Pipeline (gabarits)** : `pipeline_template`, `pipeline_stage`, `pipeline_stage_notification_rule`
 2. **Campagnes & référentiels** : `campaigns`, `campaign_form`, `source_token`, `departments`, `specialities`
 3. **Candidature** : `applications`, `application_progress`, `candidate_token`, `candidate_ask`
-4. **Quiz** : `form`, `form_version`, `form_questions`, `question`, `answer`, `application_quiz_attempt`, `candidate_answer`
+4. **Quiz** : `form`, `form_version`, `form_questions`, `question`, `answer`, `application_quiz_attempt`, `candidate_answer`, `quiz_anti_cheat_event`
 5. **Entretien & évaluation** : `interviews`, `candidate_interview`, `interview_participant`, `evaluations`, `evaluation_item`, `evaluation_grid_template`, `evaluation_grid_template_version`, `evaluation_grid_template_item`
 6. **Décisions** : `decisions`
 7. **Emailing** : `email_template`, `email_template_preset`, `mail_log`, `smtp_config`, `email_verification_tokens`
@@ -123,11 +125,13 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 | campaign_start | datetime | YES |  | \N | Date de début de la campagne. |
 | campaign_end | datetime | YES |  | \N | Date de fin de la campagne. |
 | max_apply | int | YES |  | \N | Nombre maximal de candidatures acceptées. |
+| max_attempts | int | YES |  | \N | Nombre maximal de tentatives quiz réellement lancées par candidat (défaut 1). |
 | all_can_evaluate | tinyint(1) | NO |  | \N | Indique si tous les utilisateurs peuvent évaluer les entretiens de la campagne. |
 | total_questions | int | YES |  | \N | Nombre total de questions du quiz (résumé). |
 | is_timed | tinyint(1) | NO |  | 0 | Indique si le quiz de la campagne est chronométré. |
 | is_archived | tinyint(1) | NO |  | 0 | Indique si la campagne est archivée. |
 | time_all_forms | tinyint(1) | NO |  | 0 | Indique si le temps est commun à tous les formulaires du quiz. |
+| anti_cheat_enabled | tinyint(1) | YES |  | \N | Override de l'anti-triche par campagne : NULL = suit la configuration globale (app_config), 1 = activé, 0 = désactivé. |
 | pipeline_template_id | int unsigned | YES | MUL | \N | Gabarit de pipeline utilisé par la campagne. |
 | form_assignment_strategy | varchar(30) | YES |  | \N | Stratégie d'attribution des formulaires aux candidats. |
 | form_assignment_exhaustion_policy | varchar(20) | YES |  | \N | Politique appliquée quand tous les formulaires sont épuisés. |
@@ -461,7 +465,10 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 | quiz_status | varchar(20) | NO | MUL | PENDING | Statut de la tentative (PENDING, STARTED, COMPLETED, EXPIRED, CANCELLED). |
 | screening_mode | varchar(30) | NO |  | NONE | Mode de screening appliqué (NONE ou mode configuré). |
 | screening_threshold | double | YES |  | \N | Seuil de screening appliqué à la tentative. |
-| screening_result | varchar(30) | YES |  | \N | Résultat du screening (passé / échoué). |
+| screening_result | varchar(30) | YES |  | \N | Résultat du screening anti-triche (WATCHED / FLAGGED / FAILED). |
+| tab_switch_count | int unsigned | NO |  | 0 | Nombre de sorties d'onglet/fenêtre détectées pendant la tentative. |
+| fullscreen_exit_count | int unsigned | NO |  | 0 | Nombre de sorties du plein écran détectées pendant la tentative. |
+| cheat_flag_count | int unsigned | NO |  | 0 | Nombre de signalements anti-triche (incrémenté à chaque FLAG). |
 | score | double | YES |  | \N | Score brut obtenu au quiz. |
 | score_percent | double | YES |  | \N | Pourcentage obtenu au quiz. |
 | manual_correction_status | varchar(20) | NO |  | NOT_REQUIRED | État de la correction manuelle (NOT_REQUIRED, PENDING, COMPLETED). |
@@ -501,6 +508,24 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 | updated_at | datetime | YES |  | \N | Date de la dernière modification (audit). |
 | updated_by | int | YES |  | \N | Auteur de la dernière modification (audit). |
 | is_deleted | tinyint(1) | YES |  | \N | Suppression logique de la ligne. |
+| search_string | text | YES |  | \N | Zone libre de recherche / index plein texte. |
+
+## Table 19bis — `quiz_anti_cheat_event`
+
+> Le journal de chaque infraction anti-triche détectée pendant une tentative de quiz (sortie d'onglet, sortie du plein écran, copier-coller…). Les compteurs de la tentative (`application_quiz_attempt.tab_switch_count`…) restent la source rapide de lecture recruteur.
+
+| Attribut | Type | Null | Clé | Défaut | Explication |
+| --- | --- | --- | --- | --- | --- |
+| id | int unsigned | NO | PRI | \N | Identifiant technique de l'événement. |
+| application_quiz_attempt_id | int unsigned | NO | MUL | \N | Tentative de quiz concernée. |
+| event_type | varchar(30) | NO |  | \N | Type d'événement (TAB_SWITCH, FULLSCREEN_EXIT, COPY_PASTE, MULTI_SESSION, …). |
+| occurred_at | datetime | NO |  | \N | Date et heure de l'infraction détectée côté candidat. |
+| metadata | varchar(500) | YES |  | \N | Contexte de l'infraction (page/question, durée d'absence…) — tronqué à 500 caractères. |
+| created_by | int unsigned | YES |  | \N | Auteur de la création (audit). |
+| created_at | datetime | YES |  | \N | Date de création de la ligne (audit). |
+| updated_by | int unsigned | YES |  | \N | Auteur de la dernière modification (audit). |
+| updated_at | datetime | YES |  | \N | Date de la dernière modification (audit). |
+| is_deleted | tinyint(1) | NO |  | 0 | Suppression logique de la ligne. |
 | search_string | text | YES |  | \N | Zone libre de recherche / index plein texte. |
 
 ---
@@ -1038,6 +1063,13 @@ But : expliquer, en langage métier, chaque table et chaque champ de la base, en
 | primary_color | varchar(7) | NO |  | #7C3AED | Couleur principale de l'interface. |
 | color_scheme | varchar(30) | NO |  | violet | Thème de couleurs de l'interface. |
 | candidate_accounts_enabled | tinyint(1) | NO |  | 0 | Indique si la création de comptes candidats est activée. |
+| anti_cheat_enabled | tinyint(1) | NO |  | 0 | Interrupteur global de l'anti-triche du quiz (parcours candidat). |
+| screening_policy | varchar(10) | NO |  | WARN | Politique de screening appliquée (WARN, FLAG, FAIL). |
+| tab_switch_max_warnings | int unsigned | NO |  | 3 | Nombre de sorties d'onglet tolérées avant avertissement. |
+| tab_switch_max_actions | int unsigned | NO |  | 5 | Nombre d'actions totales tolérées avant soumission automatique (politique FAIL). |
+| fullscreen_required | tinyint(1) | NO |  | 0 | Indique si le plein écran est exigé pendant le quiz. |
+| block_shortcuts | tinyint(1) | NO |  | 0 | Indique si les raccourcis et actions navigateur sont bloqués pendant le quiz. |
+| block_copy_paste | tinyint(1) | NO |  | 0 | Indique si le copier / coller est bloqué pendant le quiz. |
 | is_active | bit(1) | NO |  | b'0' | Indique si cette configuration est active. |
 | created_at | datetime | YES |  | \N | Date de création de la ligne (audit). |
 | updated_at | datetime | YES |  | \N | Date de la dernière modification (audit). |
@@ -1132,8 +1164,10 @@ Valeurs confirmées dans les enums backend (`quizapp/src/main/java/tech/synelia/
 | application_progress | progress_status | PENDING, IN_PROGRESS, AWAITING_VALIDATION, COMPLETED, FAILED, SKIPPED |
 | application_quiz_attempt | quiz_status | PENDING, STARTED, COMPLETED, EXPIRED, CANCELLED |
 | application_quiz_attempt | manual_correction_status | NOT_REQUIRED, PENDING, COMPLETED |
-| application_quiz_attempt | screening_mode | NONE (valeur de base) ; autres valeurs selon la configuration — à confirmer |
-| application_quiz_attempt | screening_result | Résultat du screening (PASSED / FAILED) — à confirmer |
+| application_quiz_attempt | screening_mode | NONE (tentative sans screening actif) ; sinon la politique appliquée : WARN / FLAG / FAIL |
+| application_quiz_attempt | screening_result | WATCHED (infractions > 0) / FLAGGED (politique FLAG au seuil) / FAILED (politique FAIL au seuil, soumission automatique) |
+| quiz_anti_cheat_event | event_type | TAB_SWITCH, FULLSCREEN_EXIT, COPY_PASTE, MULTI_SESSION |
+| app_config | screening_policy | WARN, FLAG, FAIL (défaut WARN) |
 | candidate_interview | candidate_response_status | PENDING, ACCEPTED, DECLINED, RESCHEDULE_REQUESTED |
 | interviews | interview_status | SCHEDULED, IN_PROGRESS, AWAITING_EVALUATION, AWAITING_VALIDATION, CLOSED, CANCELLED |
 | interviews | interview_type | IN_PERSON, ONLINE |
