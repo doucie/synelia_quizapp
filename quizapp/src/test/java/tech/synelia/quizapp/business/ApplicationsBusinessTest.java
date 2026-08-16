@@ -999,7 +999,7 @@ class ApplicationsBusinessTest {
 				applicationsBusiness, application, quizAttempt, null, 77, Locale.FRENCH);
 
 		assertThat(result).isNull();
-		assertThat(quizAttempt.getTabSwitchCount()).isNull();
+		assertThat(quizAttempt.getTabSwitchCount()).isEqualTo(0);
 		assertThat(quizAttempt.getScreeningMode()).isNull();
 		verify(quizAntiCheatEventRepository, org.mockito.Mockito.never()).saveAll(any());
 	}

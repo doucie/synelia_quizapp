@@ -44,14 +44,14 @@ public class ApplicationQuizAttempt implements Serializable, Cloneable {
 	@Column(name = "screening_result", length = 30)
 	private String screeningResult;
 
-	@Column(name = "tab_switch_count")
-	private Integer tabSwitchCount;
+	@Column(name = "tab_switch_count", nullable = false)
+	private Integer tabSwitchCount = 0;
 
-	@Column(name = "fullscreen_exit_count")
-	private Integer fullscreenExitCount;
+	@Column(name = "fullscreen_exit_count", nullable = false)
+	private Integer fullscreenExitCount = 0;
 
-	@Column(name = "cheat_flag_count")
-	private Integer cheatFlagCount;
+	@Column(name = "cheat_flag_count", nullable = false)
+	private Integer cheatFlagCount = 0;
 
 	@Column(name = "score")
 	private Double score;
