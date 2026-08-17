@@ -20,10 +20,11 @@ import java.util.logging.Logger;
 
 /**
  * Scheduler that automatically transitions campaign statuses based on date rules:
- * - DRAFT  → PENDING : campaign_start is in the future
  * - PENDING → OPEN   : campaign_start <= today
  * - OPEN    → CLOSED : campaign_end < today OR max_apply reached
  * - PAUSED  → CLOSED : campaign_end < today
+ *
+ * DRAFT is a "safe" status — never auto-transitioned by this scheduler.
  */
 @Log
 @Component
@@ -79,25 +80,22 @@ public class CampaignLifecycleScheduler {
 		LocalDate endDate = toLocalDate(campaign.getCampaignEnd());
 
 		return switch (currentStatus) {
-			case DRAFT -> {
-				if (startDate != null && startDate.isAfter(today)) {
-					yield CampaignStatus.PENDING;
-				}
-				yield null;
-			}
 			case PENDING -> {
 				if (startDate != null && !startDate.isAfter(today)) {
+					campaign.setIsPublished(true);
 					yield CampaignStatus.OPEN;
 				}
 				yield null;
 			}
 			case OPEN -> {
 				if (endDate != null && endDate.isBefore(today)) {
+					campaign.setIsPublished(false);
 					yield CampaignStatus.CLOSED;
 				}
 				if (campaign.getMaxApply() != null && campaign.getMaxApply() > 0) {
 					Long appCount = applicationsRepository.countByCampaignId(campaign.getId(), false);
 					if (appCount != null && appCount >= campaign.getMaxApply()) {
+						campaign.setIsPublished(false);
 						yield CampaignStatus.CLOSED;
 					}
 				}
@@ -105,6 +103,7 @@ public class CampaignLifecycleScheduler {
 			}
 			case PAUSED -> {
 				if (endDate != null && endDate.isBefore(today)) {
+					campaign.setIsPublished(false);
 					yield CampaignStatus.CLOSED;
 				}
 				yield null;

@@ -144,6 +144,15 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   campaignPermKeys = CAMPAIGN_PERMISSION_KEYS;
   private apiUrl = environment.apiUrl;
 
+  // Tabs
+  activeDetailTab = signal<'general' | 'pipeline' | 'forms' | 'applications' | 'recruiters'>('general');
+
+  // Action modals
+  showActionModal = signal(false);
+  actionModalType = signal<string>('');
+  actionLoading = signal(false);
+  pauseResumeDate = signal('');
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -837,5 +846,141 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
       || error?.error?.message
       || error?.message
       || fallbackMessage;
+  }
+
+  // ========== TABS ==========
+
+  setTab(tab: 'general' | 'pipeline' | 'forms' | 'applications' | 'recruiters'): void {
+    this.activeDetailTab.set(tab);
+  }
+
+  // ========== ACTIONS DE CYCLE DE VIE ==========
+
+  openActionModal(type: string): void {
+    this.actionModalType.set(type);
+    this.pauseResumeDate.set('');
+    this.showActionModal.set(true);
+  }
+
+  closeActionModal(): void {
+    this.showActionModal.set(false);
+    this.actionModalType.set('');
+    this.actionLoading.set(false);
+    this.pauseResumeDate.set('');
+  }
+
+  confirmAction(): void {
+    const id = this.campaignId();
+    if (!id || this.actionLoading()) return;
+
+    this.actionLoading.set(true);
+    const type = this.actionModalType();
+    let action$;
+
+    switch (type) {
+      case 'publish':
+        action$ = this.campaignService.publishCampaign(id);
+        break;
+      case 'publish-with-dates':
+        action$ = this.campaignService.publishCampaign(id, {
+          campaignStart: this.campaign()?.campaignStart,
+          campaignEnd: this.campaign()?.campaignEnd
+        });
+        break;
+      case 'open':
+        action$ = this.campaignService.openCampaign(id);
+        break;
+      case 'close':
+        action$ = this.campaignService.closeCampaign(id);
+        break;
+      case 'pause':
+        action$ = this.campaignService.pauseCampaign(id, this.pauseResumeDate() || undefined);
+        break;
+      case 'resume':
+        action$ = this.campaignService.resumeCampaign(id);
+        break;
+      case 'unpublish':
+        action$ = this.campaignService.unpublishCampaign(id);
+        break;
+      case 'archive':
+        action$ = this.campaignService.archiveCampaign(id);
+        break;
+      case 'unarchive':
+        action$ = this.campaignService.unarchiveCampaign(id);
+        break;
+      default:
+        this.actionLoading.set(false);
+        return;
+    }
+
+    action$.pipe(takeUntil(this.destroy$)).subscribe({
+      next: (updatedCampaign) => {
+        this.campaign.set(updatedCampaign);
+        this.actionLoading.set(false);
+        this.closeActionModal();
+        this.notificationService.success('Succès', 'La campagne a été mise à jour.');
+        if (updatedCampaign.pipelineTemplateId) {
+          this.loadPipelineStages(updatedCampaign.pipelineTemplateId);
+        }
+      },
+      error: (error) => {
+        this.actionLoading.set(false);
+        this.notificationService.error('Erreur', this.extractErrorMessage(error, 'Impossible d\'effectuer cette action.'));
+      }
+    });
+  }
+
+  getActionModalTitle(): string {
+    switch (this.actionModalType()) {
+      case 'publish': return 'Publier la campagne';
+      case 'publish-with-dates': return 'Publier la campagne';
+      case 'open': return 'Ouvrir la campagne';
+      case 'close': return 'Fermer la campagne';
+      case 'pause': return 'Mettre en pause';
+      case 'resume': return 'Reprendre la campagne';
+      case 'unpublish': return 'Remettre en brouillon';
+      case 'archive': return 'Archiver la campagne';
+      case 'unarchive': return 'Désarchiver la campagne';
+      default: return 'Confirmation';
+    }
+  }
+
+  getActionModalMessage(): string {
+    switch (this.actionModalType()) {
+      case 'publish': return 'Mettre la campagne en ligne ? Les candidats pourront y accéder.';
+      case 'publish-with-dates': return 'Mettre la campagne en ligne ? Vérifiez les dates de début et de fin.';
+      case 'open': return 'Ouvrir la campagne maintenant ? La date de début sera définie à aujourd\'hui.';
+      case 'close': return 'Fermer la campagne maintenant ? La date de fin sera définie à aujourd\'hui.';
+      case 'pause': return 'Mettre la campagne en pause ? Les candidats ne pourront plus y accéder temporairement.';
+      case 'resume': return 'Reprendre la campagne ? Elle redeviendra active.';
+      case 'unpublish': return 'Remettre en brouillon ? La campagne ne sera plus visible publiquement.';
+      case 'archive': return 'Archiver cette campagne ? Elle sera déplacée dans l\'onglet Archivées et ne sera plus modifiable.';
+      case 'unarchive': return 'Désarchiver cette campagne ? Elle redeviendra accessible depuis l\'onglet principal.';
+      default: return 'Êtes-vous sûr de vouloir continuer ?';
+    }
+  }
+
+  getActionModalConfirmLabel(): string {
+    switch (this.actionModalType()) {
+      case 'publish': case 'publish-with-dates': return 'Publier';
+      case 'open': return 'Ouvrir';
+      case 'close': return 'Fermer';
+      case 'pause': return 'Mettre en pause';
+      case 'resume': return 'Reprendre';
+      case 'unpublish': return 'Remettre en brouillon';
+      case 'archive': return 'Archiver';
+      case 'unarchive': return 'Désarchiver';
+      default: return 'Confirmer';
+    }
+  }
+
+  getActionModalIconClass(): string {
+    switch (this.actionModalType()) {
+      case 'publish': case 'open': case 'resume': case 'unarchive': return 'success';
+      case 'close': case 'unpublish': return 'warning';
+      case 'pause': return 'info';
+      case 'archive': return 'danger';
+      default: return 'warning';
+    }
   }
 }

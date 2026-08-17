@@ -179,4 +179,86 @@ public class CampaignsController {
 		log.info("end method /campaigns/checkEditPermission");
 		return response;
 	}
+
+	// ========== ACTIONS DE CYCLE DE VIE ==========
+
+	@RequestMapping(value="/publish", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
+	public Response<CampaignsDto> publish(@RequestBody Request<CampaignsDto> request) throws Exception {
+		log.info("start method /campaigns/publish");
+		String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
+		Locale locale = Locale.of(languageID, "");
+		Response<CampaignsDto> response = campaignsBusiness.publishCampaign(request, locale);
+		log.info("end method /campaigns/publish");
+		return response;
+	}
+
+	@RequestMapping(value="/open", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
+	public Response<CampaignsDto> open(@RequestBody Request<CampaignsDto> request) throws Exception {
+		log.info("start method /campaigns/open");
+		String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
+		Locale locale = Locale.of(languageID, "");
+		Response<CampaignsDto> response = campaignsBusiness.openCampaign(request, locale);
+		log.info("end method /campaigns/open");
+		return response;
+	}
+
+	@RequestMapping(value="/close", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
+	public Response<CampaignsDto> close(@RequestBody Request<CampaignsDto> request) throws Exception {
+		log.info("start method /campaigns/close");
+		String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
+		Locale locale = Locale.of(languageID, "");
+		Response<CampaignsDto> response = campaignsBusiness.closeCampaign(request, locale);
+		log.info("end method /campaigns/close");
+		return response;
+	}
+
+	@RequestMapping(value="/pause", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
+	public Response<CampaignsDto> pause(@RequestBody Request<CampaignsDto> request) throws Exception {
+		log.info("start method /campaigns/pause");
+		String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
+		Locale locale = Locale.of(languageID, "");
+		Response<CampaignsDto> response = campaignsBusiness.pauseCampaign(request, locale);
+		log.info("end method /campaigns/pause");
+		return response;
+	}
+
+	@RequestMapping(value="/resume", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
+	public Response<CampaignsDto> resume(@RequestBody Request<CampaignsDto> request) throws Exception {
+		log.info("start method /campaigns/resume");
+		String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
+		Locale locale = Locale.of(languageID, "");
+		Response<CampaignsDto> response = campaignsBusiness.resumeCampaign(request, locale);
+		log.info("end method /campaigns/resume");
+		return response;
+	}
+
+	@RequestMapping(value="/unpublish", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
+	public Response<CampaignsDto> unpublish(@RequestBody Request<CampaignsDto> request) throws Exception {
+		log.info("start method /campaigns/unpublish");
+		String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
+		Locale locale = Locale.of(languageID, "");
+		Response<CampaignsDto> response = campaignsBusiness.unpublishCampaign(request, locale);
+		log.info("end method /campaigns/unpublish");
+		return response;
+	}
+
+	@RequestMapping(value="/archive", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
+	public Response<CampaignsDto> archive(@RequestBody Request<CampaignsDto> request) throws Exception {
+		log.info("start method /campaigns/archive");
+		String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
+		Locale locale = Locale.of(languageID, "");
+		Response<CampaignsDto> response = campaignsBusiness.archiveCampaign(request, locale);
+		log.info("end method /campaigns/archive");
+		return response;
+	}
+
+	@RequestMapping(value="/unarchive", method=RequestMethod.POST, consumes={"application/json"}, produces={"application/json"})
+	public Response<CampaignsDto> unarchive(@RequestBody Request<CampaignsDto> request) throws Exception {
+		log.info("start method /campaigns/unarchive");
+		String languageID = (String) requestBasic.getAttribute("CURRENT_LANGUAGE_IDENTIFIER");
+		Locale locale = Locale.of(languageID, "");
+		Response<CampaignsDto> response = campaignsBusiness.unarchiveCampaign(request, locale);
+		log.info("end method /campaigns/unarchive");
+		return response;
+	}
 }

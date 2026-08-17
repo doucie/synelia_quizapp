@@ -27,6 +27,7 @@ export interface Campaign {
   totalQuestions?: number;
   isTimed?: boolean;
   isArchived?: boolean;
+  isPublished?: boolean;
   timeAllForms?: boolean;
   isActive?: boolean;
   departmentsId?: number;
@@ -944,6 +945,60 @@ export class CampaignService {
         return of([]);
       })
     );
+  }
+
+  // ========== ACTIONS DE CYCLE DE VIE ==========
+
+  private campaignAction(action: string, campaignId: number, extra?: Partial<Campaign>): Observable<Campaign> {
+    const requestBody = {
+      user: this.getCurrentUserId(),
+      datas: [{ id: campaignId, ...extra }]
+    };
+
+    return this.http.post<any>(`${this.apiUrl}/${action}`, requestBody).pipe(
+      map(response => {
+        if (response.items && response.items.length > 0) {
+          return this.transformCampaign(response.items[0]);
+        }
+        throw new Error('Action failed');
+      }),
+      catchError(error => {
+        console.error(`❌ Erreur action ${action}:`, error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  publishCampaign(campaignId: number, dates?: { campaignStart?: string; campaignEnd?: string }): Observable<Campaign> {
+    return this.campaignAction('publish', campaignId, dates);
+  }
+
+  openCampaign(campaignId: number): Observable<Campaign> {
+    return this.campaignAction('open', campaignId);
+  }
+
+  closeCampaign(campaignId: number): Observable<Campaign> {
+    return this.campaignAction('close', campaignId);
+  }
+
+  pauseCampaign(campaignId: number, resumeDate?: string): Observable<Campaign> {
+    return this.campaignAction('pause', campaignId, resumeDate ? { campaignStart: resumeDate } : undefined);
+  }
+
+  resumeCampaign(campaignId: number): Observable<Campaign> {
+    return this.campaignAction('resume', campaignId);
+  }
+
+  unpublishCampaign(campaignId: number): Observable<Campaign> {
+    return this.campaignAction('unpublish', campaignId);
+  }
+
+  archiveCampaign(campaignId: number): Observable<Campaign> {
+    return this.campaignAction('archive', campaignId);
+  }
+
+  unarchiveCampaign(campaignId: number): Observable<Campaign> {
+    return this.campaignAction('unarchive', campaignId);
   }
 
   /**

@@ -8,7 +8,7 @@ import { CampaignStatusFilter, getCampaignStatusClass, getCampaignStatusLabel, m
 import { PermissionService } from '../../../core/services/permission.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
 
-type CampaignTab = 'all' | 'my-campaigns' | 'shared';
+type CampaignTab = 'all' | 'my-campaigns' | 'shared' | 'archived';
 type ViewMode = 'grid' | 'list';
 
 @Component({
@@ -27,6 +27,7 @@ export class CampaignsComponent implements OnInit, OnDestroy {
   allCampaigns = signal<Campaign[]>([]);
   myCampaigns = signal<Campaign[]>([]);
   sharedCampaigns = signal<Campaign[]>([]);
+  archivedCampaigns = signal<Campaign[]>([]);
   campaignAccessMap = signal<Record<number, CampaignAccessRecord>>({});
   loading = signal(false);
   searchQuery = signal('');
@@ -59,13 +60,16 @@ export class CampaignsComponent implements OnInit, OnDestroy {
     let campaigns: Campaign[] = [];
     switch (tab) {
       case 'all':
-        campaigns = this.allCampaigns();
+        campaigns = this.allCampaigns().filter(c => !c.isArchived);
         break;
       case 'my-campaigns':
-        campaigns = this.myCampaigns();
+        campaigns = this.myCampaigns().filter(c => !c.isArchived);
         break;
       case 'shared':
-        campaigns = this.sharedCampaigns();
+        campaigns = this.sharedCampaigns().filter(c => !c.isArchived);
+        break;
+      case 'archived':
+        campaigns = this.archivedCampaigns();
         break;
     }
 
@@ -101,9 +105,10 @@ export class CampaignsComponent implements OnInit, OnDestroy {
   }
 
   currentTabCount = computed(() => this.visibleCampaigns().length);
-  allCount = computed(() => this.allCampaigns().length);
-  myCount = computed(() => this.myCampaigns().length);
-  sharedCount = computed(() => this.sharedCampaigns().length);
+  allCount = computed(() => this.allCampaigns().filter(c => !c.isArchived).length);
+  myCount = computed(() => this.myCampaigns().filter(c => !c.isArchived).length);
+  sharedCount = computed(() => this.sharedCampaigns().filter(c => !c.isArchived).length);
+  archivedCount = computed(() => this.archivedCampaigns().length);
 
   activeCount = computed(() => this.filteredStatusCount('active'));
   pendingCount = computed(() => this.filteredStatusCount('pending'));
@@ -141,6 +146,7 @@ export class CampaignsComponent implements OnInit, OnDestroy {
         this.allCampaigns.set(results.all.content || []);
         this.myCampaigns.set(results.my.content || []);
         this.sharedCampaigns.set(results.shared || []);
+        this.archivedCampaigns.set((results.all.content || []).filter(c => c.isArchived));
         this.campaignAccessMap.set(this.campaignService.buildCampaignAccessMap(results.accesses as CampaignAccessRecord[]));
         this.loading.set(false);
       },

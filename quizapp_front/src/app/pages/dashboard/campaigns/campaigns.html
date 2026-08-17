@@ -42,6 +42,10 @@
       <span class="tab-label">Campagnes partagées</span>
       <span class="tab-badge">{{ sharedCount() }}</span>
     </button>
+    <button class="tab-item" [class.active]="activeTab() === 'archived'" (click)="setActiveTab('archived')">
+      <span class="tab-label">Archivées</span>
+      <span class="tab-badge">{{ archivedCount() }}</span>
+    </button>
   </nav>
 
   <div class="filters-bar">

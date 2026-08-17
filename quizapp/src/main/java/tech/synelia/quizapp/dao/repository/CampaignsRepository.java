@@ -440,8 +440,9 @@ public interface CampaignsRepository extends JpaRepository<Campaigns, Integer>, 
 
 	/**
 	 * Finds all non-deleted campaigns whose status can be automatically evaluated
-	 * for lifecycle transitions (DRAFT, PENDING, OPEN, PAUSED).
+	 * for lifecycle transitions (PENDING, OPEN, PAUSED).
+	 * DRAFT is excluded — it is a "safe" status, never auto-transitioned.
 	 */
-	@Query("select e from Campaigns e where e.isDeleted = false and e.campaignStatus in ('DRAFT', 'PENDING', 'OPEN', 'PAUSED')")
+	@Query("select e from Campaigns e where e.isDeleted = false and e.campaignStatus in ('PENDING', 'OPEN', 'PAUSED')")
 	List<Campaigns> findTransitionableCampaigns();
 }

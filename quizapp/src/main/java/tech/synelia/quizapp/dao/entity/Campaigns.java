@@ -81,6 +81,9 @@ public class Campaigns implements Serializable, Cloneable {
     @Column(name="is_timed", nullable=false, columnDefinition="BOOLEAN DEFAULT FALSE")
     private Boolean    isTimed      ;
 
+    @Column(name="is_published", nullable=false, columnDefinition="BOOLEAN DEFAULT FALSE")
+    private Boolean    isPublished  ;
+
     @Column(name="is_archived", nullable=false, columnDefinition="BOOLEAN DEFAULT FALSE")
     private Boolean    isArchived   ;
 

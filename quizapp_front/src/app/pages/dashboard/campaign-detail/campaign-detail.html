@@ -41,16 +41,14 @@
               <span class="status-dot"></span>
               {{ getStatusLabel(campaign()?.campaignStatus) }}
             </span>
+            @if (campaign()?.isArchived) {
+              <span class="status-badge status-archived">
+                <span class="status-dot"></span>
+                Archivée
+              </span>
+            }
           </div>
           <div class="header-actions">
-            <button class="btn btn-primary" (click)="viewApplications()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                <circle cx="8.5" cy="7" r="4"></circle>
-                <path d="M20 8v6M23 11h-6"></path>
-              </svg>
-              Voir les candidatures
-            </button>
             <button class="btn btn-secondary" (click)="editCampaign()">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -61,724 +59,649 @@
           </div>
         </div>
 
-        @if (campaign()?.campaignDesc) {
-          <p class="campaign-description">{{ campaign()?.campaignDesc }}</p>
-        }
-
-        <div class="campaign-meta-grid">
-          @if (campaign()?.creatorName) {
-            <div class="meta-card">
-              <div class="meta-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="12" cy="7" r="4"></circle>
-                </svg>
-              </div>
-              <div class="meta-content">
-                <span class="meta-label">Créée par</span>
-                <span class="meta-value">{{ campaign()?.creatorName }}</span>
-              </div>
-            </div>
+        <!-- Barre d'actions contextuelles par statut -->
+        <div class="action-bar">
+          @switch (campaign()?.campaignStatus) {
+            @case ('DRAFT') {
+              @if (!campaign()?.isArchived) {
+                <button class="btn btn-primary btn-action" (click)="openActionModal('publish')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                  Publier
+                </button>
+                <button class="btn btn-secondary btn-action btn-danger-outline" (click)="openActionModal('archive')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
+                  Archiver
+                </button>
+              }
+            }
+            @case ('PENDING') {
+              <button class="btn btn-primary btn-action" (click)="openActionModal('open')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                Ouvrir
+              </button>
+              <button class="btn btn-secondary btn-action" (click)="openActionModal('unpublish')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                Dépublier
+              </button>
+              <button class="btn btn-secondary btn-action btn-danger-outline" (click)="openActionModal('close')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                Fermer
+              </button>
+            }
+            @case ('OPEN') {
+              <button class="btn btn-secondary btn-action" (click)="openActionModal('pause')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                Pauser
+              </button>
+              <button class="btn btn-secondary btn-action btn-danger-outline" (click)="openActionModal('close')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                Fermer
+              </button>
+            }
+            @case ('PAUSED') {
+              <button class="btn btn-primary btn-action" (click)="openActionModal('resume')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                Reprendre
+              </button>
+              <button class="btn btn-secondary btn-action btn-danger-outline" (click)="openActionModal('close')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                Fermer
+              </button>
+            }
+            @case ('CLOSED') {
+              <button class="btn btn-primary btn-action" (click)="openActionModal('publish')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                Publier
+              </button>
+              @if (!campaign()?.isArchived) {
+                <button class="btn btn-secondary btn-action btn-danger-outline" (click)="openActionModal('archive')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
+                  Archiver
+                </button>
+              }
+            }
           }
-
-          @if (campaign()?.specialityLibelle) {
-            <div class="meta-card">
-              <div class="meta-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                </svg>
-              </div>
-              <div class="meta-content">
-                <span class="meta-label">Spécialité</span>
-                <span class="meta-value">{{ campaign()?.specialityLibelle }}</span>
-              </div>
-            </div>
+          @if (campaign()?.isArchived) {
+            <button class="btn btn-secondary btn-action" (click)="openActionModal('unarchive')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+              Désarchiver
+            </button>
           }
+        </div>
 
-          @if (campaign()?.departmentName) {
-            <div class="meta-card">
-              <div class="meta-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                  <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                </svg>
-              </div>
-              <div class="meta-content">
-                <span class="meta-label">Département</span>
-                <span class="meta-value">{{ campaign()?.departmentName }}</span>
-              </div>
-            </div>
-          }
-
-          @if (campaign()?.campaignStart) {
-            <div class="meta-card">
-              <div class="meta-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                  <line x1="16" y1="2" x2="16" y2="6"></line>
-                  <line x1="8" y1="2" x2="8" y2="6"></line>
-                  <line x1="3" y1="10" x2="21" y2="10"></line>
-                </svg>
-              </div>
-              <div class="meta-content">
-                <span class="meta-label">Date de début</span>
-                <span class="meta-value">{{ formatDate(campaign()?.campaignStart) }}</span>
-              </div>
-            </div>
-          }
-
-          @if (campaign()?.campaignEnd) {
-            <div class="meta-card">
-              <div class="meta-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                  <line x1="16" y1="2" x2="16" y2="6"></line>
-                  <line x1="8" y1="2" x2="8" y2="6"></line>
-                  <line x1="3" y1="10" x2="21" y2="10"></line>
-                </svg>
-              </div>
-              <div class="meta-content">
-                <span class="meta-label">Date de fin</span>
-                <span class="meta-value">{{ formatDate(campaign()?.campaignEnd) }}</span>
-              </div>
-            </div>
-          }
-
-          @if (campaign()?.campaignDuration) {
-            <div class="meta-card">
-              <div class="meta-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <polyline points="12 6 12 12 16 14"></polyline>
-                </svg>
-              </div>
-              <div class="meta-content">
-                <span class="meta-label">Durée du quiz</span>
-                <span class="meta-value">{{ campaign()?.campaignDuration }} minutes</span>
-              </div>
-            </div>
-          }
-
-          @if (campaign()?.maxApply !== undefined) {
-            <div class="meta-card">
-              <div class="meta-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="8.5" cy="7" r="4"></circle>
-                  <line x1="20" y1="8" x2="20" y2="14"></line>
-                  <line x1="23" y1="11" x2="17" y2="11"></line>
-                </svg>
-              </div>
-              <div class="meta-content">
-                <span class="meta-label">Candidatures max</span>
-                <span class="meta-value">{{ campaign()?.maxApply === 0 ? 'Illimité' : campaign()?.maxApply }}</span>
-              </div>
-            </div>
-          }
-
-          @if (campaign()?.maxAttempts !== undefined) {
-            <div class="meta-card">
-              <div class="meta-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M1 4v6h6"></path>
-                  <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
-                </svg>
-              </div>
-              <div class="meta-content">
-                <span class="meta-label">Tentatives quiz max</span>
-                <span class="meta-value">{{ campaign()?.maxAttempts ?? 1 }}</span>
-              </div>
-            </div>
-          }
-
-          @if (campaign()?.timeAllForms !== undefined) {
-            <div class="meta-card">
-              <div class="meta-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <polyline points="12 6 12 12 16 14"></polyline>
-                </svg>
-              </div>
-              <div class="meta-content">
-                <span class="meta-label">Gestion du temps</span>
-                <span class="meta-value">{{ campaign()?.timeAllForms ? 'Temps global sur tous les formulaires' : 'Temps géré par formulaire' }}</span>
-              </div>
-            </div>
-          }
-
-          @if (campaign()?.antiCheatEnabled !== undefined) {
-            <div class="meta-card">
-              <div class="meta-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                </svg>
-              </div>
-              <div class="meta-content">
-                <span class="meta-label">Anti-triche quiz</span>
-                <span class="meta-value">{{ campaign()?.antiCheatEnabled === null || campaign()?.antiCheatEnabled === undefined ? 'Suit le global (Settings)' : (campaign()?.antiCheatEnabled ? 'Activé' : 'Désactivé') }}</span>
-              </div>
-            </div>
-          }
-
-          @if (campaign()?.isArchived !== undefined) {
-            <div class="meta-card">
-              <div class="meta-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 8v13H3V8"></path>
-                  <path d="M1 3h22v5H1z"></path>
-                  <path d="M10 12h4"></path>
-                </svg>
-              </div>
-              <div class="meta-content">
-                <span class="meta-label">Archivage</span>
-                <span class="meta-value">{{ campaign()?.isArchived ? 'Archivée' : 'Non archivée' }}</span>
-              </div>
-            </div>
-          }
-
-          @if (campaign()?.questionsCount !== undefined) {
-            <div class="meta-card">
-              <div class="meta-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                </svg>
-              </div>
-              <div class="meta-content">
-                <span class="meta-label">Questions</span>
-                <span class="meta-value">{{ campaign()?.questionsCount }}</span>
-              </div>
-            </div>
-          }
-
-          @if (campaign()?.applicationsCount !== undefined) {
-            <div class="meta-card">
-              <div class="meta-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                </svg>
-              </div>
-              <div class="meta-content">
-                <span class="meta-label">Candidatures</span>
-                <span class="meta-value">{{ campaign()?.applicationsCount }}</span>
-              </div>
-            </div>
-          }
-
-          @if (campaign()?.createdAt) {
-            <div class="meta-card">
-              <div class="meta-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <polyline points="12 6 12 12 16 14"></polyline>
-                </svg>
-              </div>
-              <div class="meta-content">
-                <span class="meta-label">Créée le</span>
-                <span class="meta-value">{{ formatDate(campaign()?.createdAt) }}</span>
-              </div>
-            </div>
-          }
+        <!-- Navigation par onglets -->
+        <div class="detail-tabs">
+          <button class="tab-btn" [class.active]="activeDetailTab() === 'general'" (click)="setTab('general')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            Général
+          </button>
+          <button class="tab-btn" [class.active]="activeDetailTab() === 'pipeline'" (click)="setTab('pipeline')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Pipeline
+          </button>
+          <button class="tab-btn" [class.active]="activeDetailTab() === 'forms'" (click)="setTab('forms')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Formulaires &amp; Attribution
+          </button>
+          <button class="tab-btn" [class.active]="activeDetailTab() === 'applications'" (click)="setTab('applications')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            Candidatures &amp; Tokens
+            <span class="tab-count">{{ sourceTokens().length }}</span>
+          </button>
+          <button class="tab-btn" [class.active]="activeDetailTab() === 'recruiters'" (click)="setTab('recruiters')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Recruteurs &amp; Permissions
+            <span class="tab-count">{{ recruiters().length }}</span>
+          </button>
         </div>
       </div>
 
-      <!-- Pipeline du recrutement -->
-      @if (pipelineStages().length > 0) {
-        <div class="pipeline-section">
-          <h2 class="section-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-            </svg>
-            Pipeline de recrutement
-            <span class="count-badge">{{ pipelineStages().length }} étapes</span>
-          </h2>
+      <!-- ===== ONGLET GENERAL ===== -->
+      @if (activeDetailTab() === 'general') {
+        <div class="tab-panel">
+          @if (campaign()?.campaignDesc) {
+            <div class="section-card">
+              <h2 class="section-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                Description
+              </h2>
+              <p class="campaign-description">{{ campaign()?.campaignDesc }}</p>
+            </div>
+          }
 
-          <div class="pipeline-visual">
-            @for (stage of pipelineStages(); track stage.id; let i = $index; let last = $last) {
-              <div class="pipeline-stage-card" (click)="filterByStage(stage)">
-                <div class="stage-number">{{ i + 1 }}</div>
-                <div class="stage-details">
-                  <span class="stage-label">{{ stage.stageLabel }}</span>
-                  <span class="stage-type">{{ stage.stageType }}</span>
-                </div>
-                <div class="stage-count">
-                  <span class="count-value">{{ stageCandidateCounts()[stage.id!] || 0 }}</span>
-                  <span class="count-label">candidat(s)</span>
-                </div>
-                @if (stage.isEliminatory) {
-                  <span class="stage-tag eliminatory">Éliminatoire</span>
-                }
-              </div>
-              @if (!last) {
-                <div class="pipeline-connector">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="9 18 15 12 9 6"/>
-                  </svg>
+          <div class="section-card">
+            <h2 class="section-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              Détails
+            </h2>
+            <div class="campaign-meta-grid">
+              @if (campaign()?.creatorName) {
+                <div class="meta-card">
+                  <div class="meta-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  </div>
+                  <div class="meta-content">
+                    <span class="meta-label">Créée par</span>
+                    <span class="meta-value">{{ campaign()?.creatorName }}</span>
+                  </div>
                 </div>
               }
+              @if (campaign()?.specialityLibelle) {
+                <div class="meta-card">
+                  <div class="meta-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                  </div>
+                  <div class="meta-content">
+                    <span class="meta-label">Spécialité</span>
+                    <span class="meta-value">{{ campaign()?.specialityLibelle }}</span>
+                  </div>
+                </div>
+              }
+              @if (campaign()?.departmentName) {
+                <div class="meta-card">
+                  <div class="meta-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                  </div>
+                  <div class="meta-content">
+                    <span class="meta-label">Département</span>
+                    <span class="meta-value">{{ campaign()?.departmentName }}</span>
+                  </div>
+                </div>
+              }
+              @if (campaign()?.campaignStart) {
+                <div class="meta-card">
+                  <div class="meta-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  </div>
+                  <div class="meta-content">
+                    <span class="meta-label">Date de début</span>
+                    <span class="meta-value">{{ formatDate(campaign()?.campaignStart) }}</span>
+                  </div>
+                </div>
+              }
+              @if (campaign()?.campaignEnd) {
+                <div class="meta-card">
+                  <div class="meta-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  </div>
+                  <div class="meta-content">
+                    <span class="meta-label">Date de fin</span>
+                    <span class="meta-value">{{ formatDate(campaign()?.campaignEnd) }}</span>
+                  </div>
+                </div>
+              }
+              @if (campaign()?.campaignDuration) {
+                <div class="meta-card">
+                  <div class="meta-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  </div>
+                  <div class="meta-content">
+                    <span class="meta-label">Durée du quiz</span>
+                    <span class="meta-value">{{ campaign()?.campaignDuration }} minutes</span>
+                  </div>
+                </div>
+              }
+              @if (campaign()?.maxApply !== undefined) {
+                <div class="meta-card">
+                  <div class="meta-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                  </div>
+                  <div class="meta-content">
+                    <span class="meta-label">Candidatures max</span>
+                    <span class="meta-value">{{ campaign()?.maxApply === 0 ? 'Illimité' : campaign()?.maxApply }}</span>
+                  </div>
+                </div>
+              }
+              @if (campaign()?.maxAttempts !== undefined) {
+                <div class="meta-card">
+                  <div class="meta-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                  </div>
+                  <div class="meta-content">
+                    <span class="meta-label">Tentatives quiz max</span>
+                    <span class="meta-value">{{ campaign()?.maxAttempts ?? 1 }}</span>
+                  </div>
+                </div>
+              }
+              @if (campaign()?.timeAllForms !== undefined) {
+                <div class="meta-card">
+                  <div class="meta-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  </div>
+                  <div class="meta-content">
+                    <span class="meta-label">Gestion du temps</span>
+                    <span class="meta-value">{{ campaign()?.timeAllForms ? 'Temps global sur tous les formulaires' : 'Temps géré par formulaire' }}</span>
+                  </div>
+                </div>
+              }
+              @if (campaign()?.antiCheatEnabled !== undefined) {
+                <div class="meta-card">
+                  <div class="meta-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  </div>
+                  <div class="meta-content">
+                    <span class="meta-label">Anti-triche quiz</span>
+                    <span class="meta-value">{{ campaign()?.antiCheatEnabled === null || campaign()?.antiCheatEnabled === undefined ? 'Suit le global (Settings)' : (campaign()?.antiCheatEnabled ? 'Activé' : 'Désactivé') }}</span>
+                  </div>
+                </div>
+              }
+              @if (campaign()?.questionsCount !== undefined) {
+                <div class="meta-card">
+                  <div class="meta-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                  </div>
+                  <div class="meta-content">
+                    <span class="meta-label">Questions</span>
+                    <span class="meta-value">{{ campaign()?.questionsCount }}</span>
+                  </div>
+                </div>
+              }
+              @if (campaign()?.applicationsCount !== undefined) {
+                <div class="meta-card">
+                  <div class="meta-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                  </div>
+                  <div class="meta-content">
+                    <span class="meta-label">Candidatures</span>
+                    <span class="meta-value">{{ campaign()?.applicationsCount }}</span>
+                  </div>
+                </div>
+              }
+              @if (campaign()?.createdAt) {
+                <div class="meta-card">
+                  <div class="meta-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  </div>
+                  <div class="meta-content">
+                    <span class="meta-label">Créée le</span>
+                    <span class="meta-value">{{ formatDate(campaign()?.createdAt) }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- ===== ONGLET PIPELINE ===== -->
+      @if (activeDetailTab() === 'pipeline') {
+        <div class="tab-panel">
+          @if (pipelineStages().length > 0) {
+            <div class="section-card">
+              <h2 class="section-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                Pipeline de recrutement
+                <span class="count-badge">{{ pipelineStages().length }} étapes</span>
+              </h2>
+              <div class="pipeline-visual">
+                @for (stage of pipelineStages(); track stage.id; let i = $index; let last = $last) {
+                  <div class="pipeline-stage-card" (click)="filterByStage(stage)">
+                    <div class="stage-number">{{ i + 1 }}</div>
+                    <div class="stage-details">
+                      <span class="stage-label">{{ stage.stageLabel }}</span>
+                      <span class="stage-type">{{ stage.stageType }}</span>
+                    </div>
+                    <div class="stage-count">
+                      <span class="count-value">{{ stageCandidateCounts()[stage.id!] || 0 }}</span>
+                      <span class="count-label">candidat(s)</span>
+                    </div>
+                    @if (stage.isEliminatory) {
+                      <span class="stage-tag eliminatory">Éliminatoire</span>
+                    }
+                  </div>
+                  @if (!last) {
+                    <div class="pipeline-connector">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                    </div>
+                  }
+                }
+              </div>
+            </div>
+          } @else {
+            <div class="empty-tab-state">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              <p>Aucun pipeline configuré pour cette campagne.</p>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- ===== ONGLET FORMULAIRES & ATTRIBUTION ===== -->
+      @if (activeDetailTab() === 'forms') {
+        <div class="tab-panel">
+          <div class="section-card">
+            <div class="section-header">
+              <h2 class="section-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                Formulaires de la campagne
+                <span class="count-badge">{{ campaignForms().length }}</span>
+              </h2>
+            </div>
+            @if (campaignForms().length > 0) {
+              <div class="questions-list">
+                @for (form of campaignForms(); track form.id) {
+                  <div class="question-card">
+                    <div class="question-header">
+                      <div class="question-info">
+                        <h3 class="question-text">{{ form.formName || 'Sans nom' }}</h3>
+                        <div class="question-meta">
+                          @if (form.isActive) {
+                            <span class="badge badge-type">Actif</span>
+                          } @else {
+                            <span class="badge badge-difficulty">Inactif</span>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                    @if (form.formDesc) {
+                      <p style="margin: 0.5rem 0 0; color: var(--text-secondary, #6b7280); font-size: 0.875rem;">{{ form.formDesc }}</p>
+                    }
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="empty-tab-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <p>Aucun formulaire n'a encore été associé à cette campagne.</p>
+                <p class="empty-hint">Créez un formulaire depuis la page Entités &gt; Formulaires.</p>
+              </div>
+            }
+          </div>
+
+          <div class="section-card">
+            <div class="section-header">
+              <h2 class="section-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5h18"/><path d="M3 12h18"/><path d="M3 19h18"/><path d="M8 5v14"/></svg>
+                Attribution des formulaires
+              </h2>
+              <button
+                class="btn btn-primary"
+                (click)="saveCampaignFormConfiguration()"
+                [disabled]="campaignConfigSaving() || !isCampaignFormConfigDirty()"
+              >
+                @if (campaignConfigSaving()) {
+                  <div class="spinner-small"></div>
+                } @else {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                }
+                {{ campaignConfigSaving() ? 'Enregistrement...' : 'Enregistrer la stratégie' }}
+              </button>
+            </div>
+            <div class="assignment-grid">
+              <div class="question-form">
+                <div class="form-group">
+                  <label for="formAssignmentStrategy">Stratégie d'attribution</label>
+                  <app-filter-select
+                    id="formAssignmentStrategy"
+                    ariaLabel="Stratégie d'attribution"
+                    [ngModel]="selectedFormAssignmentStrategy()"
+                    (ngModelChange)="selectedFormAssignmentStrategy.set($event)"
+                  >
+                    @for (strategy of formAssignmentStrategies; track strategy.value) {
+                      <option [ngValue]="strategy.value">{{ strategy.label }}</option>
+                    }
+                  </app-filter-select>
+                  <p class="form-helper">{{ getFormAssignmentStrategyDescription(selectedFormAssignmentStrategy()) }}</p>
+                </div>
+                <div class="form-group">
+                  <label for="formExhaustionPolicy">Politique d'épuisement</label>
+                  <app-filter-select
+                    id="formExhaustionPolicy"
+                    ariaLabel="Politique d'épuisement"
+                    [ngModel]="selectedFormExhaustionPolicy()"
+                    (ngModelChange)="selectedFormExhaustionPolicy.set($event)"
+                  >
+                    @for (policy of formExhaustionPolicies; track policy.value) {
+                      <option [ngValue]="policy.value">{{ policy.label }}</option>
+                    }
+                  </app-filter-select>
+                  <p class="form-helper">{{ getExhaustionPolicyDescription(selectedFormExhaustionPolicy()) }}</p>
+                </div>
+              </div>
+              <div class="assignment-summary-card">
+                <span class="assignment-pill">{{ getFormAssignmentStrategyLabel(selectedFormAssignmentStrategy()) }}</span>
+                <span class="assignment-pill assignment-pill-secondary">{{ getExhaustionPolicyLabel(selectedFormExhaustionPolicy()) }}</span>
+                <p class="assignment-summary-text">{{ getFormAssignmentStrategyDescription(selectedFormAssignmentStrategy()) }}</p>
+                <p class="assignment-summary-note">
+                  @if (isSourceTokenStrategySelected()) {
+                    Chaque token doit pointer vers un formulaire dédié pour servir le bon quiz.
+                  } @else {
+                    Les affectations par token restent configurables à l'avance, même si cette stratégie n'est pas encore active.
+                  }
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- ===== ONGLET CANDIDATURES & TOKENS ===== -->
+      @if (activeDetailTab() === 'applications') {
+        <div class="tab-panel">
+          <div class="section-card">
+            <div class="section-header">
+              <h2 class="section-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                Liens de candidature (Tokens)
+                <span class="count-badge">{{ sourceTokens().length }}</span>
+              </h2>
+              <button class="btn btn-primary" (click)="toggleTokenForm()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Créer un token
+              </button>
+            </div>
+
+            @if (showTokenForm()) {
+              <div class="token-form">
+                <div class="form-group">
+                  <label for="tokenName">Nom du token</label>
+                  <input type="text" id="tokenName" class="form-input" [(ngModel)]="newTokenName" placeholder="Ex: LinkedIn, Site carrière, JobBoard..." [disabled]="tokenLoading()"/>
+                </div>
+                <div class="form-group">
+                  <label for="tokenForm">Formulaire dédié</label>
+                  <app-filter-select id="tokenForm" ariaLabel="Formulaire dédié" [ngModel]="newTokenFormId()" (ngModelChange)="newTokenFormId.set($event)" [disabled]="tokenLoading() || campaignForms().length === 0">
+                    <option [ngValue]="null">Aucun formulaire dédié</option>
+                    @for (form of campaignForms(); track form.id) {
+                      <option [ngValue]="form.id">{{ form.formName || 'Sans nom' }}</option>
+                    }
+                  </app-filter-select>
+                  <p class="form-helper">Optionnel. Utilisé surtout avec la stratégie « Selon le source token ».</p>
+                </div>
+                <div class="form-actions">
+                  <button class="btn btn-primary" (click)="createToken()" [disabled]="tokenLoading() || !newTokenName().trim()">
+                    @if (tokenLoading()) {
+                      <div class="spinner-small"></div>
+                    } @else {
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                    }
+                    {{ tokenLoading() ? 'Création...' : 'Créer' }}
+                  </button>
+                  <button class="btn btn-secondary" (click)="toggleTokenForm()" [disabled]="tokenLoading()">Annuler</button>
+                </div>
+              </div>
+            }
+
+            @if (sourceTokens().length > 0) {
+              <div class="tokens-grid">
+                @for (token of sourceTokens(); track token.id) {
+                  <div class="token-card">
+                    <div class="token-header">
+                      <div class="token-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                      </div>
+                      <div class="token-info">
+                        <h3 class="token-name">{{ token.sourceTokenName || 'Sans nom' }}</h3>
+                        <div class="token-code">{{ token.tokenString }}</div>
+                        <div class="token-assigned-form">{{ token.formName || 'Aucun formulaire dédié' }}</div>
+                      </div>
+                    </div>
+                    <div class="token-url">
+                      <label>Lien de candidature :</label>
+                      <div class="url-display">
+                        <input type="text" readonly [value]="'https://' + window.location.host + '/postuler/' + token.tokenString" class="url-input"/>
+                      </div>
+                    </div>
+                    <div class="token-form-mapping">
+                      <label>Formulaire lié à ce token</label>
+                      <div class="token-form-actions">
+                        <app-filter-select ariaLabel="Formulaire lié à ce token" [ngModel]="getTokenFormSelection(token)" (ngModelChange)="updateTokenFormSelection(token.id, $event)" [disabled]="campaignForms().length === 0 || isTokenFormSaving(token.id)">
+                          <option [ngValue]="null">Aucun formulaire dédié</option>
+                          @for (form of campaignForms(); track form.id) {
+                            <option [ngValue]="form.id">{{ form.formName || 'Sans nom' }}</option>
+                          }
+                        </app-filter-select>
+                        <button class="btn btn-secondary btn-inline-save" (click)="saveTokenFormAssignment(token)" [disabled]="isTokenFormSaving(token.id) || !isTokenFormDirty(token)">
+                          @if (isTokenFormSaving(token.id)) {
+                            <div class="spinner-small"></div>
+                          } @else {
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                          }
+                          {{ isTokenFormSaving(token.id) ? 'En cours...' : 'Enregistrer' }}
+                        </button>
+                      </div>
+                      <p class="form-helper">Pratique pour servir un formulaire précis quand le candidat arrive via ce lien.</p>
+                    </div>
+                    <div class="token-actions">
+                      <button class="btn-icon" (click)="copyTokenToClipboard(token)" title="Copier le lien" aria-label="Copier le lien">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        Copier
+                      </button>
+                      <button class="btn-icon btn-danger" (click)="deleteToken(token)" title="Supprimer" aria-label="Supprimer">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        Supprimer
+                      </button>
+                    </div>
+                    @if (token.createdAt) {
+                      <div class="token-meta">
+                        <span class="meta-label">Créé le</span>
+                        <span class="meta-value">{{ formatDate(token.createdAt) }}</span>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="empty-tab-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                <p>Aucun token n'a encore été créé pour cette campagne.</p>
+                <p class="empty-hint">Créez un token pour générer un lien de candidature unique.</p>
+              </div>
             }
           </div>
         </div>
       }
 
-      <!-- Section des recruteurs -->
-      <div class="recruiters-section">
-        <h2 class="section-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-            <circle cx="9" cy="7" r="4"></circle>
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-          </svg>
-          Recruteurs participants
-          <span class="count-badge">{{ recruiters().length }}</span>
-        </h2>
+      <!-- ===== ONGLET RECRUTEURS & PERMISSIONS ===== -->
+      @if (activeDetailTab() === 'recruiters') {
+        <div class="tab-panel">
+          <div class="section-card">
+            <h2 class="section-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              Recruteurs participants
+              <span class="count-badge">{{ recruiters().length }}</span>
+            </h2>
+            @if (recruiters().length > 0) {
+              <div class="recruiters-grid">
+                @for (recruiter of recruiters(); track recruiter.userId) {
+                  <div class="recruiter-card">
+                    <div class="recruiter-header">
+                      <div class="recruiter-avatar"><span>{{ getInitials(recruiter.userName) }}</span></div>
+                      <div class="recruiter-info">
+                        <h3 class="recruiter-name">{{ recruiter.userName || 'Utilisateur inconnu' }}</h3>
+                        <p class="recruiter-email">{{ recruiter.userEmail || 'N/A' }}</p>
+                      </div>
+                      <span class="role-badge" [class]="getRoleClass(recruiter.userRole)">{{ getRoleLabel(recruiter.userRole) }}</span>
+                    </div>
+                    <div class="recruiter-permissions">
+                      <h4 class="permissions-title">Permissions</h4>
+                      <div class="permissions-list">
+                        <div class="permission-item" [class.active]="recruiter.canEvaluate">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            @if (recruiter.canEvaluate) { <polyline points="20 6 9 17 4 12"/> } @else { <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/> }
+                          </svg>
+                          <span>Peut évaluer</span>
+                        </div>
+                        <div class="permission-item" [class.active]="hasEntityPerm(recruiter.userId, 'CORRECT_TEST')">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            @if (hasEntityPerm(recruiter.userId, 'CORRECT_TEST')) { <polyline points="20 6 9 17 4 12"/> } @else { <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/> }
+                          </svg>
+                          <span>Peut corriger les tests</span>
+                        </div>
+                        <div class="permission-item" [class.active]="recruiter.canUpdate">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            @if (recruiter.canUpdate) { <polyline points="20 6 9 17 4 12"/> } @else { <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/> }
+                          </svg>
+                          <span>Peut modifier</span>
+                        </div>
+                        <div class="permission-item" [class.active]="recruiter.canDelete">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            @if (recruiter.canDelete) { <polyline points="20 6 9 17 4 12"/> } @else { <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/> }
+                          </svg>
+                          <span>Peut supprimer</span>
+                        </div>
+                        @if (recruiter.isAdmin) {
+                          <div class="permission-item admin-badge">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                            <span>Administrateur</span>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="empty-tab-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                <p>Aucun recruteur n'a encore été ajouté à cette campagne.</p>
+              </div>
+            }
+          </div>
 
-        @if (recruiters().length > 0) {
-          <div class="recruiters-grid">
-            @for (recruiter of recruiters(); track recruiter.userId) {
-              <div class="recruiter-card">
-                <div class="recruiter-header">
-                  <div class="recruiter-avatar">
-                    <span>{{ getInitials(recruiter.userName) }}</span>
-                  </div>
-                  <div class="recruiter-info">
-                    <h3 class="recruiter-name">{{ recruiter.userName || 'Utilisateur inconnu' }}</h3>
-                    <p class="recruiter-email">{{ recruiter.userEmail || 'N/A' }}</p>
-                  </div>
-                  <span class="role-badge" [class]="getRoleClass(recruiter.userRole)">
-                    {{ getRoleLabel(recruiter.userRole) }}
-                  </span>
+          <div class="section-card">
+            <div class="section-header">
+              <h2 class="section-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                Permissions sur cette campagne
+              </h2>
+            </div>
+            @if (entityPermLoading()) {
+              <div class="loading-inline">
+                <div class="spinner-sm"></div>
+                Chargement...
+              </div>
+            } @else if (getUniquePermUsers().length === 0) {
+              <div class="empty-tab-state">
+                <p>Aucun utilisateur avec des permissions spécifiques sur cette campagne.</p>
+              </div>
+            } @else {
+              <div class="entity-perm-table">
+                <div class="perm-table-header">
+                  <div class="perm-user-col">Utilisateur</div>
+                  @for (pk of campaignPermKeys; track pk.key) {
+                    <div class="perm-key-col">{{ pk.label }}</div>
+                  }
                 </div>
-
-                <div class="recruiter-permissions">
-                  <h4 class="permissions-title">Permissions</h4>
-                  <div class="permissions-list">
-                    <div class="permission-item" [class.active]="recruiter.canEvaluate">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        @if (recruiter.canEvaluate) {
-                          <polyline points="20 6 9 17 4 12"></polyline>
-                        } @else {
-                          <line x1="18" y1="6" x2="6" y2="18"></line>
-                          <line x1="6" y1="6" x2="18" y2="18"></line>
-                        }
-                      </svg>
-                      <span>Peut évaluer</span>
+                @for (user of getUniquePermUsers(); track user.userId) {
+                  <div class="perm-table-row">
+                    <div class="perm-user-col">
+                      <span class="perm-user-name">{{ user.userName }}</span>
+                      <span class="perm-user-email">{{ user.userEmail }}</span>
                     </div>
-                    <div class="permission-item" [class.active]="hasEntityPerm(recruiter.userId, 'CORRECT_TEST')">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        @if (hasEntityPerm(recruiter.userId, 'CORRECT_TEST')) {
-                          <polyline points="20 6 9 17 4 12"></polyline>
-                        } @else {
-                          <line x1="18" y1="6" x2="6" y2="18"></line>
-                          <line x1="6" y1="6" x2="18" y2="18"></line>
-                        }
-                      </svg>
-                      <span>Peut corriger les tests</span>
-                    </div>
-                    <div class="permission-item" [class.active]="recruiter.canUpdate">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        @if (recruiter.canUpdate) {
-                          <polyline points="20 6 9 17 4 12"></polyline>
-                        } @else {
-                          <line x1="18" y1="6" x2="6" y2="18"></line>
-                          <line x1="6" y1="6" x2="18" y2="18"></line>
-                        }
-                      </svg>
-                      <span>Peut modifier</span>
-                    </div>
-                    <div class="permission-item" [class.active]="recruiter.canDelete">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        @if (recruiter.canDelete) {
-                          <polyline points="20 6 9 17 4 12"></polyline>
-                        } @else {
-                          <line x1="18" y1="6" x2="6" y2="18"></line>
-                          <line x1="6" y1="6" x2="18" y2="18"></line>
-                        }
-                      </svg>
-                      <span>Peut supprimer</span>
-                    </div>
-                    @if (recruiter.isAdmin) {
-                      <div class="permission-item admin-badge">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                        </svg>
-                        <span>Administrateur</span>
+                    @for (pk of campaignPermKeys; track pk.key) {
+                      <div class="perm-key-col">
+                        <app-filter-checkbox class="perm-toggle" [class.saving]="isEntityPermSaving(user.userId, pk.key)" [inputId]="'campaign-detail-perm-' + user.userId + '-' + pk.key" variant="inline" [checked]="hasEntityPerm(user.userId, pk.key)" [disabled]="isEntityPermSaving(user.userId, pk.key)" [ariaLabel]="pk.label + ' pour ' + user.userName" (checkedChange)="toggleEntityPerm(user.userId, pk.key)">
+                          <span class="perm-check-label">{{ pk.label }}</span>
+                        </app-filter-checkbox>
                       </div>
                     }
                   </div>
-                </div>
-              </div>
-            }
-          </div>
-        } @else {
-          <div class="empty-recruiters">
-            <div class="empty-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                <circle cx="9" cy="7" r="4"></circle>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-              </svg>
-            </div>
-            <p>Aucun recruteur n'a encore été ajouté à cette campagne.</p>
-          </div>
-        }
-      </div>
-
-      <!-- Section des tokens source -->
-      <!-- Section des formulaires -->
-      <div class="questions-section">
-        <div class="section-header">
-          <h2 class="section-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <polyline points="14 2 14 8 20 8"></polyline>
-              <line x1="16" y1="13" x2="8" y2="13"></line>
-              <line x1="16" y1="17" x2="8" y2="17"></line>
-              <polyline points="10 9 9 9 8 9"></polyline>
-            </svg>
-            Formulaires de la campagne
-            <span class="count-badge">{{ campaignForms().length }}</span>
-          </h2>
-        </div>
-
-        @if (campaignForms().length > 0) {
-          <div class="questions-list">
-            @for (form of campaignForms(); track form.id) {
-              <div class="question-card">
-                <div class="question-header">
-                  <div class="question-info">
-                    <h3 class="question-text">{{ form.formName || 'Sans nom' }}</h3>
-                    <div class="question-meta">
-                      @if (form.isActive) {
-                        <span class="badge badge-type">Actif</span>
-                      } @else {
-                        <span class="badge badge-difficulty">Inactif</span>
-                      }
-                    </div>
-                  </div>
-                </div>
-                @if (form.formDesc) {
-                  <p style="margin: 0.5rem 0 0; color: var(--text-secondary, #6b7280); font-size: 0.875rem;">{{ form.formDesc }}</p>
                 }
               </div>
             }
           </div>
-        } @else {
-          <div class="empty-questions">
-            <div class="empty-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-              </svg>
-            </div>
-            <p>Aucun formulaire n'a encore été associé à cette campagne.</p>
-            <p class="empty-hint">Créez un formulaire depuis la page Entités > Formulaires.</p>
-          </div>
-        }
-      </div>
-
-      <div class="form-assignment-section">
-        <div class="section-header">
-          <h2 class="section-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M3 5h18"></path>
-              <path d="M3 12h18"></path>
-              <path d="M3 19h18"></path>
-              <path d="M8 5v14"></path>
-            </svg>
-            Attribution des formulaires
-          </h2>
-          <button
-            class="btn btn-primary"
-            (click)="saveCampaignFormConfiguration()"
-            [disabled]="campaignConfigSaving() || !isCampaignFormConfigDirty()"
-          >
-            @if (campaignConfigSaving()) {
-              <div class="spinner-small"></div>
-            } @else {
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="20 6 9 17 4 12"></polyline>
-              </svg>
-            }
-            {{ campaignConfigSaving() ? 'Enregistrement...' : 'Enregistrer la stratégie' }}
-          </button>
         </div>
-
-        <div class="assignment-grid">
-          <div class="question-form">
-            <div class="form-group">
-              <label for="formAssignmentStrategy">Stratégie d’attribution</label>
-              <app-filter-select
-                id="formAssignmentStrategy"
-                ariaLabel="Stratégie d'attribution"
-                [ngModel]="selectedFormAssignmentStrategy()"
-                (ngModelChange)="selectedFormAssignmentStrategy.set($event)"
-              >
-                @for (strategy of formAssignmentStrategies; track strategy.value) {
-                  <option [ngValue]="strategy.value">{{ strategy.label }}</option>
-                }
-              </app-filter-select>
-              <p class="form-helper">{{ getFormAssignmentStrategyDescription(selectedFormAssignmentStrategy()) }}</p>
-            </div>
-
-            <div class="form-group">
-              <label for="formExhaustionPolicy">Politique d’épuisement</label>
-              <app-filter-select
-                id="formExhaustionPolicy"
-                ariaLabel="Politique d'épuisement"
-                [ngModel]="selectedFormExhaustionPolicy()"
-                (ngModelChange)="selectedFormExhaustionPolicy.set($event)"
-              >
-                @for (policy of formExhaustionPolicies; track policy.value) {
-                  <option [ngValue]="policy.value">{{ policy.label }}</option>
-                }
-              </app-filter-select>
-              <p class="form-helper">{{ getExhaustionPolicyDescription(selectedFormExhaustionPolicy()) }}</p>
-            </div>
-          </div>
-
-          <div class="assignment-summary-card">
-            <span class="assignment-pill">{{ getFormAssignmentStrategyLabel(selectedFormAssignmentStrategy()) }}</span>
-            <span class="assignment-pill assignment-pill-secondary">{{ getExhaustionPolicyLabel(selectedFormExhaustionPolicy()) }}</span>
-            <p class="assignment-summary-text">{{ getFormAssignmentStrategyDescription(selectedFormAssignmentStrategy()) }}</p>
-            <p class="assignment-summary-note">
-              @if (isSourceTokenStrategySelected()) {
-                Chaque token doit pointer vers un formulaire dédié pour servir le bon quiz.
-              } @else {
-                Les affectations par token restent configurables à l’avance, même si cette stratégie n’est pas encore active.
-              }
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Section des tokens -->
-      <div class="tokens-section">
-        <div class="section-header">
-          <h2 class="section-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-              <line x1="1" y1="10" x2="23" y2="10"></line>
-            </svg>
-            Liens de candidature (Tokens)
-            <span class="count-badge">{{ sourceTokens().length }}</span>
-          </h2>
-          <button class="btn btn-primary" (click)="toggleTokenForm()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-            Créer un token
-          </button>
-        </div>
-
-        @if (showTokenForm()) {
-          <div class="token-form">
-            <div class="form-group">
-              <label for="tokenName">Nom du token</label>
-              <input 
-                type="text" 
-                id="tokenName"
-                class="form-input"
-                [(ngModel)]="newTokenName"
-                placeholder="Ex: LinkedIn, Site carrière, JobBoard..."
-                [disabled]="tokenLoading()"
-              />
-            </div>
-            <div class="form-group">
-              <label for="tokenForm">Formulaire dédié</label>
-              <app-filter-select
-                id="tokenForm"
-                ariaLabel="Formulaire dédié"
-                [ngModel]="newTokenFormId()"
-                (ngModelChange)="newTokenFormId.set($event)"
-                [disabled]="tokenLoading() || campaignForms().length === 0"
-              >
-                <option [ngValue]="null">Aucun formulaire dédié</option>
-                @for (form of campaignForms(); track form.id) {
-                  <option [ngValue]="form.id">{{ form.formName || 'Sans nom' }}</option>
-                }
-              </app-filter-select>
-              <p class="form-helper">Optionnel. Utilisé surtout avec la stratégie « Selon le source token ».</p>
-            </div>
-            <div class="form-actions">
-              <button 
-                class="btn btn-primary" 
-                (click)="createToken()"
-                [disabled]="tokenLoading() || !newTokenName().trim()"
-              >
-                @if (tokenLoading()) {
-                  <div class="spinner-small"></div>
-                } @else {
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
-                }
-                {{ tokenLoading() ? 'Création...' : 'Créer' }}
-              </button>
-              <button 
-                class="btn btn-secondary" 
-                (click)="toggleTokenForm()"
-                [disabled]="tokenLoading()"
-              >
-                Annuler
-              </button>
-            </div>
-          </div>
-        }
-
-        @if (sourceTokens().length > 0) {
-          <div class="tokens-grid">
-            @for (token of sourceTokens(); track token.id) {
-              <div class="token-card">
-                <div class="token-header">
-                  <div class="token-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-                      <line x1="1" y1="10" x2="23" y2="10"></line>
-                    </svg>
-                  </div>
-                  <div class="token-info">
-                    <h3 class="token-name">{{ token.sourceTokenName || 'Sans nom' }}</h3>
-                    <div class="token-code">{{ token.tokenString }}</div>
-                    <div class="token-assigned-form">{{ token.formName || 'Aucun formulaire dédié' }}</div>
-                  </div>
-                </div>
-
-                <div class="token-url">
-                  <label>Lien de candidature :</label>
-                  <div class="url-display">
-                    <input 
-                      type="text" 
-                      readonly 
-                      [value]="'https://' + window.location.host + '/postuler/' + token.tokenString"
-                      class="url-input"
-                    />
-                  </div>
-                </div>
-
-                <div class="token-form-mapping">
-                  <label>Formulaire lié à ce token</label>
-                  <div class="token-form-actions">
-                    <app-filter-select
-                      ariaLabel="Formulaire lié à ce token"
-                      [ngModel]="getTokenFormSelection(token)"
-                      (ngModelChange)="updateTokenFormSelection(token.id, $event)"
-                      [disabled]="campaignForms().length === 0 || isTokenFormSaving(token.id)"
-                    >
-                      <option [ngValue]="null">Aucun formulaire dédié</option>
-                      @for (form of campaignForms(); track form.id) {
-                        <option [ngValue]="form.id">{{ form.formName || 'Sans nom' }}</option>
-                      }
-                    </app-filter-select>
-                    <button
-                      class="btn btn-secondary btn-inline-save"
-                      (click)="saveTokenFormAssignment(token)"
-                      [disabled]="isTokenFormSaving(token.id) || !isTokenFormDirty(token)"
-                    >
-                      @if (isTokenFormSaving(token.id)) {
-                        <div class="spinner-small"></div>
-                      } @else {
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                      }
-                      {{ isTokenFormSaving(token.id) ? 'En cours...' : 'Enregistrer' }}
-                    </button>
-                  </div>
-                  <p class="form-helper">Pratique pour servir un formulaire précis quand le candidat arrive via ce lien.</p>
-                </div>
-
-                <div class="token-actions">
-                  <button class="btn-icon" (click)="copyTokenToClipboard(token)" title="Copier le lien" aria-label="Copier le lien">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                    </svg>
-                    Copier
-                  </button>
-                  <button class="btn-icon btn-danger" (click)="deleteToken(token)" title="Supprimer" aria-label="Supprimer">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <polyline points="3 6 5 6 21 6"></polyline>
-                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                    </svg>
-                    Supprimer
-                  </button>
-                </div>
-
-                @if (token.createdAt) {
-                  <div class="token-meta">
-                    <span class="meta-label">Créé le</span>
-                    <span class="meta-value">{{ formatDate(token.createdAt) }}</span>
-                  </div>
-                }
-              </div>
-            }
-          </div>
-        } @else {
-          <div class="empty-tokens">
-            <div class="empty-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-                <line x1="1" y1="10" x2="23" y2="10"></line>
-              </svg>
-            </div>
-            <p>Aucun token n'a encore été créé pour cette campagne.</p>
-            <p class="empty-hint">Créez un token pour générer un lien de candidature unique.</p>
-          </div>
-        }
-      </div>
-
-      <!-- Section des permissions par entité -->
-      <div class="entity-permissions-section">
-        <div class="section-header">
-          <h2 class="section-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-            </svg>
-            Permissions sur cette campagne
-          </h2>
-        </div>
-
-        @if (entityPermLoading()) {
-          <div class="loading-inline">
-            <div class="spinner-sm"></div>
-            Chargement...
-          </div>
-        } @else if (getUniquePermUsers().length === 0) {
-          <div class="empty-section">
-            <p>Aucun utilisateur avec des permissions spécifiques sur cette campagne.</p>
-          </div>
-        } @else {
-          <div class="entity-perm-table">
-            <div class="perm-table-header">
-              <div class="perm-user-col">Utilisateur</div>
-              @for (pk of campaignPermKeys; track pk.key) {
-                <div class="perm-key-col">{{ pk.label }}</div>
-              }
-            </div>
-            @for (user of getUniquePermUsers(); track user.userId) {
-              <div class="perm-table-row">
-                <div class="perm-user-col">
-                  <span class="perm-user-name">{{ user.userName }}</span>
-                  <span class="perm-user-email">{{ user.userEmail }}</span>
-                </div>
-                @for (pk of campaignPermKeys; track pk.key) {
-                  <div class="perm-key-col">
-                    <app-filter-checkbox class="perm-toggle" [class.saving]="isEntityPermSaving(user.userId, pk.key)" [inputId]="'campaign-detail-perm-' + user.userId + '-' + pk.key" variant="inline" [checked]="hasEntityPerm(user.userId, pk.key)" [disabled]="isEntityPermSaving(user.userId, pk.key)" [ariaLabel]="pk.label + ' pour ' + user.userName" (checkedChange)="toggleEntityPerm(user.userId, pk.key)">
-                      <span class="perm-check-label">{{ pk.label }}</span>
-                    </app-filter-checkbox>
-                  </div>
-                }
-              </div>
-            }
-          </div>
-        }
-      </div>
+      }
     </div>
   }
 </div>
@@ -825,6 +748,54 @@
             <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
           </svg>
           Activer et modifier
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal de confirmation pour les actions de cycle de vie -->
+@if (showActionModal()) {
+  <div class="modal-overlay" role="dialog" aria-modal="true" (click)="closeActionModal()">
+    <div class="modal-content action-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-icon" [class]="getActionModalIconClass()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+        </div>
+        <h3>{{ getActionModalTitle() }}</h3>
+      </div>
+
+      <div class="modal-body">
+        <p class="modal-message">{{ getActionModalMessage() }}</p>
+
+        @if (actionModalType() === 'pause') {
+          <div class="form-group" style="margin-top: 1rem;">
+            <label for="pauseResumeDate">Date de reprise (optionnel)</label>
+            <input
+              type="datetime-local"
+              id="pauseResumeDate"
+              class="form-input"
+              [ngModel]="pauseResumeDate()"
+              (ngModelChange)="pauseResumeDate.set($event)"
+            />
+            <p class="form-helper">Si renseignée, la campagne reprendra automatiquement à cette date.</p>
+          </div>
+        }
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-secondary" (click)="closeActionModal()" [disabled]="actionLoading()">
+          Annuler
+        </button>
+        <button class="btn" [class.btn-primary]="getActionModalIconClass() !== 'danger'" [class.btn-danger]="getActionModalIconClass() === 'danger'" (click)="confirmAction()" [disabled]="actionLoading()">
+          @if (actionLoading()) {
+            <div class="spinner-small"></div>
+          }
+          {{ actionLoading() ? 'En cours...' : getActionModalConfirmLabel() }}
         </button>
       </div>
     </div>

@@ -16,7 +16,7 @@ import { FormService, Form } from '../../../core/services/form.service';
 import { CampaignFormService, CampaignFormLink } from '../../../core/services/campaign-form.service';
 import { FormVersionService, FormVersion } from '../../../core/services/form-version.service';
 import { PipelineTemplate, PipelineStage } from '../../../core/models/pipeline.interfaces';
-import { CAMPAIGN_STATUS_OPTIONS, DEFAULT_CAMPAIGN_STATUS } from '../../../core/constants/campaign-status.constants';
+// CAMPAIGN_STATUS_OPTIONS and DEFAULT_CAMPAIGN_STATUS removed — statut derive de isPublished + campaignStart
 import { normalizeSystemRole } from '../../../core/constants/permissions.constants';
 import { FilterCheckboxComponent } from '../../../shared/filter-checkbox/filter-checkbox';
 import { FilterSelectComponent, FilterSelectOptionDirective } from '../../../shared/filter-select/filter-select';
@@ -57,6 +57,7 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
   isEditMode = false;
   loading = signal(false);
   saving = signal(false);
+  activeEditTab = signal<'general' | 'pipeline' | 'forms' | 'applications' | 'recruiters'>('general');
   
   // Recruteurs - Recherche instantanée
   recruiterSearchControl = new FormControl('');
@@ -136,7 +137,7 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
   migrating = signal(false);
   
   // Options
-  statusOptions = CAMPAIGN_STATUS_OPTIONS;
+  // statusOptions removed — statut derive de isPublished + campaignStart
 
   constructor(
     private fb: FormBuilder,
@@ -184,7 +185,7 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
     this.campaignForm = this.fb.group({
       campaignTitle: ['', [Validators.required, Validators.minLength(3)]],
       campaignDesc: [''], // Optionnel
-      campaignStatus: [DEFAULT_CAMPAIGN_STATUS, Validators.required],
+      isPublished: [false],
       campaignStart: [''], // Optionnel
       campaignEnd: [''], // Optionnel
       maxApply: [null, [Validators.min(1)]],
@@ -855,7 +856,7 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
     this.campaignForm.patchValue({
       campaignTitle: campaign.campaignTitle,
       campaignDesc: campaign.campaignDesc,
-      campaignStatus: campaign.campaignStatus,
+      isPublished: campaign.isPublished ?? false,
       campaignStart: this.formatDateForInput(campaign.campaignStart),
       campaignEnd: this.formatDateForInput(campaign.campaignEnd),
       maxApply: campaign.maxApply,
@@ -932,7 +933,7 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
     const campaignData: Partial<Campaign> = {
       campaignTitle: formValue.campaignTitle,
       campaignDesc: formValue.campaignDesc,
-      campaignStatus: formValue.campaignStatus,
+      isPublished: formValue.isPublished,
       campaignStart: formValue.campaignStart,
       campaignEnd: formValue.campaignEnd,
       maxApply: formValue.maxApply,
@@ -1121,6 +1122,10 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
     this.router.navigate(['/dashboard/campaigns']);
   }
 
+  setTab(tab: 'general' | 'pipeline' | 'forms' | 'applications' | 'recruiters'): void {
+    this.activeEditTab.set(tab);
+  }
+
   showRecruiterSuggestions(): void {
     if (this.isRecruiterSearchLocked()) {
       return;
@@ -1253,7 +1258,8 @@ export class CampaignFormComponent implements OnInit, OnDestroy {
   // Getters pour faciliter l'accès aux contrôles du formulaire
   get campaignTitle() { return this.campaignForm.get('campaignTitle'); }
   get campaignDesc() { return this.campaignForm.get('campaignDesc'); }
-  get campaignStatus() { return this.campaignForm.get('campaignStatus'); }
+  get isPublished() { return this.campaignForm.get('isPublished')?.value ?? false; }
+  get isPublishedControl() { return this.campaignForm.get('isPublished'); }
   get campaignStart() { return this.campaignForm.get('campaignStart'); }
   get campaignEnd() { return this.campaignForm.get('campaignEnd'); }
   get maxApply() { return this.campaignForm.get('maxApply'); }

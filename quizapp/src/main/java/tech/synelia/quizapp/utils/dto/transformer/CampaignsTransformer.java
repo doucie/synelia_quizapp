@@ -43,6 +43,7 @@ public interface CampaignsTransformer {
 		dto.setAllCanEvaluate(entity.getAllCanEvaluate());
 		dto.setTotalQuestions(entity.getTotalQuestions());
 		dto.setIsTimed(entity.getIsTimed());
+		dto.setIsPublished(entity.getIsPublished());
 		dto.setIsArchived(entity.getIsArchived());
 		dto.setTimeAllForms(entity.getTimeAllForms());
 		dto.setAntiCheatEnabled(entity.getAntiCheatEnabled());
@@ -126,6 +127,7 @@ public interface CampaignsTransformer {
 		entity.setAllCanEvaluate(dto.getAllCanEvaluate());
 		entity.setTotalQuestions(dto.getTotalQuestions());
 		entity.setIsTimed(dto.getIsTimed());
+		entity.setIsPublished(dto.getIsPublished());
 		entity.setIsArchived(dto.getIsArchived());
 		entity.setTimeAllForms(dto.getTimeAllForms());
 		entity.setAntiCheatEnabled(dto.getAntiCheatEnabled());

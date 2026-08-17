@@ -26,11 +26,11 @@ public enum CampaignStatus {
         }
 
         return switch (this) {
-            case DRAFT -> target == PENDING || target == OPEN;
-            case PENDING -> target == OPEN;
-            case OPEN -> target == PAUSED || target == CLOSED;
-            case PAUSED -> target == OPEN || target == CLOSED;
-            case CLOSED -> false;
+            case DRAFT -> target == PENDING || target == OPEN || target == CLOSED;
+            case PENDING -> target == OPEN || target == DRAFT || target == CLOSED;
+            case OPEN -> target == PAUSED || target == DRAFT || target == CLOSED;
+            case PAUSED -> target == OPEN || target == DRAFT || target == CLOSED;
+            case CLOSED -> target == DRAFT || target == PENDING || target == OPEN;
         };
     }
 

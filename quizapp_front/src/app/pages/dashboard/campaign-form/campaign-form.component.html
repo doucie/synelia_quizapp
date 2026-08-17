@@ -19,712 +19,806 @@
     </div>
   } @else {
     <form [formGroup]="campaignForm" (ngSubmit)="onSubmit()" class="campaign-form">
-      <!-- Informations générales -->
-      <div class="form-section">
-        <h2 class="section-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-            <polyline points="14 2 14 8 20 8"/>
-          </svg>
-          Informations générales
-        </h2>
-
-        <div class="form-row">
-          <div class="form-group full-width">
-            <label for="campaignTitle">
-              Titre de la campagne <span class="required">*</span>
-            </label>
-            <input
-              type="text"
-              id="campaignTitle"
-              formControlName="campaignTitle"
-              placeholder="Ex: Campagne de recrutement développeurs 2024"
-              [class.error]="campaignTitle?.invalid && campaignTitle?.touched"
-            />
-            @if (campaignTitle?.invalid && campaignTitle?.touched) {
-              <span class="error-message">
-                @if (campaignTitle?.errors?.['required']) {
-                  Le titre est requis
-                }
-                @if (campaignTitle?.errors?.['minlength']) {
-                  Le titre doit contenir au moins 3 caractères
-                }
-              </span>
-            }
-          </div>
+      <!-- Onglets (mode édition uniquement) -->
+      @if (isEditMode) {
+        <div class="edit-tabs">
+          <button type="button" class="tab-btn" [class.active]="activeEditTab() === 'general'" (click)="setTab('general')">
+            Général
+          </button>
+          <button type="button" class="tab-btn" [class.active]="activeEditTab() === 'pipeline'" (click)="setTab('pipeline')">
+            Pipeline
+          </button>
+          <button type="button" class="tab-btn" [class.active]="activeEditTab() === 'forms'" (click)="setTab('forms')">
+            Formulaires & Attribution
+          </button>
+          <button type="button" class="tab-btn" [class.active]="activeEditTab() === 'applications'" (click)="setTab('applications')">
+            Candidatures & Tokens
+          </button>
+          <button type="button" class="tab-btn" [class.active]="activeEditTab() === 'recruiters'" (click)="setTab('recruiters')">
+            Recruteurs & Permissions
+          </button>
         </div>
+      }
 
-        <div class="form-row">
-          <div class="form-group full-width">
-            <label for="campaignDesc">
-              Description
-            </label>
-            <textarea
-              id="campaignDesc"
-              formControlName="campaignDesc"
-              rows="4"
-              placeholder="Décrivez les objectifs et le contexte de cette campagne..."
-              [class.error]="campaignDesc?.invalid && campaignDesc?.touched"
-            ></textarea>
-            @if (campaignDesc?.invalid && campaignDesc?.touched) {
-              <span class="error-message">
-                @if (campaignDesc?.errors?.['minlength']) {
-                  La description doit contenir au moins 10 caractères
-                }
-              </span>
-            }
-          </div>
-        </div>
+      <!-- ════════════════════════════════════════════════════ -->
+      <!-- TAB : Général                                       -->
+      <!-- ════════════════════════════════════════════════════ -->
+      @if (!isEditMode || activeEditTab() === 'general') {
+        <div class="form-section">
+          <h2 class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+            Informations générales
+          </h2>
 
-        <!-- Recherche de spécialité -->
-        <div class="form-row">
-          <div class="form-group full-width">
-            <label for="specialitySearch">
-              Spécialité <span class="required">*</span>
-            </label>
-            
-            @if (selectedSpeciality(); as speciality) {
-              <div class="selected-item">
-                <div class="item-info">
-                  <span class="item-name">{{ speciality.nom || speciality.name }}</span>
-                  <span class="item-detail">Département: {{ speciality.departmentName || 'N/A' }}</span>
-                </div>
-                <button
-                  type="button"
-                  class="remove-btn"
-                  (click)="removeSpeciality()"
-                  title="Retirer cette spécialité"
-                  aria-label="Retirer cette spécialité"
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M18 6L6 18M6 6l12 12"/>
-                  </svg>
-                </button>
-              </div>
-            } @else if (!checkingSpecialityAvailability() && !hasAvailableSpecialities()) {
-              <div class="speciality-empty-state">
-                <div class="speciality-empty-state__content">
-                  <span class="speciality-empty-state__title">Aucune spécialité active n'est disponible.</span>
-                  <span class="speciality-empty-state__text">Créez d'abord une spécialité avant de pouvoir enregistrer une campagne, ou demandez à un administrateur de la créer.</span>
-                </div>
-                <button
-                  type="button"
-                  class="speciality-empty-state__action"
-                  (click)="openSpecialities()"
-                >
-                  Ouvrir les spécialités
-                </button>
-              </div>
-            } @else {
-              <div class="search-container">
-                <div class="search-input-wrapper">
-                  <input
-                    type="text"
-                    id="specialitySearch"
-                    [formControl]="specialitySearchControl"
-                    placeholder="Rechercher une spécialité..."
-                    [class.error]="campaignForm.get('specialityId')?.invalid && campaignForm.get('specialityId')?.touched"
-                  />
-                  @if (searchingSpeciality()) {
-                    <div class="search-spinner"></div>
+          <div class="form-row">
+            <div class="form-group full-width">
+              <label for="campaignTitle">
+                Titre de la campagne <span class="required">*</span>
+              </label>
+              <input
+                type="text"
+                id="campaignTitle"
+                formControlName="campaignTitle"
+                placeholder="Ex: Campagne de recrutement développeurs 2024"
+                [class.error]="campaignTitle?.invalid && campaignTitle?.touched"
+              />
+              @if (campaignTitle?.invalid && campaignTitle?.touched) {
+                <span class="error-message">
+                  @if (campaignTitle?.errors?.['required']) {
+                    Le titre est requis
                   }
-                </div>
+                  @if (campaignTitle?.errors?.['minlength']) {
+                    Le titre doit contenir au moins 3 caractères
+                  }
+                </span>
+              }
+            </div>
+          </div>
 
-                @if (showSpecialityDropdown() && specialitySearchResults().length > 0) {
-                  <div class="search-results">
-                    @for (speciality of specialitySearchResults(); track speciality.id) {
-                      <div
-                        class="search-result-item"
-                        (click)="selectSpeciality(speciality)"
-                      >
-                        <div class="item-main">
-                          <span class="item-name">{{ speciality.nom || speciality.name }}</span>
-                        </div>
-                        <div class="item-department">
-                          Département: {{ speciality.departmentName || 'N/A' }}
-                        </div>
-                      </div>
+          <div class="form-row">
+            <div class="form-group full-width">
+              <label for="campaignDesc">
+                Description
+              </label>
+              <textarea
+                id="campaignDesc"
+                formControlName="campaignDesc"
+                rows="4"
+                placeholder="Décrivez les objectifs et le contexte de cette campagne..."
+                [class.error]="campaignDesc?.invalid && campaignDesc?.touched"
+              ></textarea>
+              @if (campaignDesc?.invalid && campaignDesc?.touched) {
+                <span class="error-message">
+                  @if (campaignDesc?.errors?.['minlength']) {
+                    La description doit contenir au moins 10 caractères
+                  }
+                </span>
+              }
+            </div>
+          </div>
+
+          <!-- Recherche de spécialité -->
+          <div class="form-row">
+            <div class="form-group full-width">
+              <label for="specialitySearch">
+                Spécialité <span class="required">*</span>
+              </label>
+              
+              @if (selectedSpeciality(); as speciality) {
+                <div class="selected-item">
+                  <div class="item-info">
+                    <span class="item-name">{{ speciality.nom || speciality.name }}</span>
+                    <span class="item-detail">Département: {{ speciality.departmentName || 'N/A' }}</span>
+                  </div>
+                  <button
+                    type="button"
+                    class="remove-btn"
+                    (click)="removeSpeciality()"
+                    title="Retirer cette spécialité"
+                    aria-label="Retirer cette spécialité"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M18 6L6 18M6 6l12 12"/>
+                    </svg>
+                  </button>
+                </div>
+              } @else if (!checkingSpecialityAvailability() && !hasAvailableSpecialities()) {
+                <div class="speciality-empty-state">
+                  <div class="speciality-empty-state__content">
+                    <span class="speciality-empty-state__title">Aucune spécialité active n'est disponible.</span>
+                    <span class="speciality-empty-state__text">Créez d'abord une spécialité avant de pouvoir enregistrer une campagne, ou demandez à un administrateur de la créer.</span>
+                  </div>
+                  <button
+                    type="button"
+                    class="speciality-empty-state__action"
+                    (click)="openSpecialities()"
+                  >
+                    Ouvrir les spécialités
+                  </button>
+                </div>
+              } @else {
+                <div class="search-container">
+                  <div class="search-input-wrapper">
+                    <input
+                      type="text"
+                      id="specialitySearch"
+                      [formControl]="specialitySearchControl"
+                      placeholder="Rechercher une spécialité..."
+                      [class.error]="campaignForm.get('specialityId')?.invalid && campaignForm.get('specialityId')?.touched"
+                    />
+                    @if (searchingSpeciality()) {
+                      <div class="search-spinner"></div>
                     }
                   </div>
-                }
-                
-                @if (showSpecialityDropdown() && specialitySearchResults().length === 0 && specialitySearchControl.value && !searchingSpeciality()) {
-                  <div class="no-results">
-                    Aucune spécialité trouvée
-                  </div>
-                }
-              </div>
-            }
-            
-            @if (campaignForm.get('specialityId')?.invalid && campaignForm.get('specialityId')?.touched) {
-              <span class="error-message">
-                La spécialité est requise
-              </span>
-            }
-          </div>
-        </div>
 
-        <div class="form-row three-cols">
-          <div class="form-group">
-            <label for="campaignStatus">
-              Statut <span class="required">*</span>
-            </label>
-            <app-filter-select
-              id="campaignStatus"
-              formControlName="campaignStatus"
-              ariaLabel="Sélectionner un statut"
-              [class.error]="campaignStatus?.invalid && campaignStatus?.touched"
-            >
-              @for (option of statusOptions; track option.value) {
-                <option [value]="option.value">{{ option.label }}</option>
-              }
-            </app-filter-select>
-          </div>
-
-          <div class="form-group">
-            <label for="campaignStart">
-              Date de début
-            </label>
-            <input
-              type="date"
-              id="campaignStart"
-              formControlName="campaignStart"
-              [class.error]="campaignStart?.invalid && campaignStart?.touched"
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="campaignEnd">
-              Date de fin
-            </label>
-            <input
-              type="date"
-              id="campaignEnd"
-              formControlName="campaignEnd"
-              [class.error]="campaignEnd?.invalid && campaignEnd?.touched"
-            />
-          </div>
-        </div>
-        @if (campaignForm.errors?.['dateRange'] && (campaignEnd?.touched || campaignStart?.touched)) {
-          <span class="error-message">La date de fin doit être postérieure à la date de début</span>
-        }
-      </div>
-
-      <!-- Modèle de pipeline -->
-      <div class="form-section">
-        <h2 class="section-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-          </svg>
-          Modèle de pipeline <span class="required">*</span>
-        </h2>
-
-        <div class="form-row">
-          <div class="form-group full-width">
-            <label for="pipelineTemplateId">
-              Sélectionner un modèle de pipeline
-            </label>
-            @if (loadingTemplates()) {
-              <div class="template-loading">
-                <div class="search-spinner"></div>
-                <span>Chargement des modèles...</span>
-              </div>
-            } @else {
-              <app-filter-select
-                id="pipelineTemplateId"
-                ariaLabel="Sélectionner un modèle de pipeline"
-                [value]="selectedTemplate()?.id ?? null"
-                (valueChange)="onTemplateSelectChange($event)"
-                (blur)="campaignForm.get('pipelineTemplateId')?.markAsTouched()"
-                [class.error]="campaignForm.get('pipelineTemplateId')?.invalid && campaignForm.get('pipelineTemplateId')?.touched"
-              >
-                <option [ngValue]="null" disabled>-- Choisir un modèle --</option>
-                @for (template of pipelineTemplates(); track template.id) {
-                  <option [ngValue]="template.id">
-                    {{ template.templateName }}{{ template.isDefault ? ' (par défaut)' : '' }}
-                  </option>
-                }
-              </app-filter-select>
-              @if (campaignForm.get('pipelineTemplateId')?.invalid && campaignForm.get('pipelineTemplateId')?.touched) {
-                <span class="error-message">Le modèle de pipeline est requis</span>
-              }
-            }
-          </div>
-        </div>
-
-        @if (templateStages().length > 0) {
-          <div class="pipeline-preview">
-            <div class="preview-label">Aperçu des étapes</div>
-            <div class="pipeline-stages-bar">
-              @for (stage of templateStages(); track stage.id; let i = $index; let last = $last) {
-                <div class="preview-stage">
-                  <div class="stage-circle">{{ i + 1 }}</div>
-                  <span class="stage-name">{{ stage.stageLabel }}</span>
-                  @if (stage.isRequired) {
-                    <span class="stage-badge required-badge">Requis</span>
+                  @if (showSpecialityDropdown() && specialitySearchResults().length > 0) {
+                    <div class="search-results">
+                      @for (speciality of specialitySearchResults(); track speciality.id) {
+                        <div
+                          class="search-result-item"
+                          (click)="selectSpeciality(speciality)"
+                        >
+                          <div class="item-main">
+                            <span class="item-name">{{ speciality.nom || speciality.name }}</span>
+                          </div>
+                          <div class="item-department">
+                            Département: {{ speciality.departmentName || 'N/A' }}
+                          </div>
+                        </div>
+                      }
+                    </div>
                   }
-                  @if (stage.isEliminatory) {
-                    <span class="stage-badge eliminatory-badge">Éliminatoire</span>
+                  
+                  @if (showSpecialityDropdown() && specialitySearchResults().length === 0 && specialitySearchControl.value && !searchingSpeciality()) {
+                    <div class="no-results">
+                      Aucune spécialité trouvée
+                    </div>
                   }
                 </div>
-                @if (!last) {
-                  <div class="stage-connector"></div>
-                }
+              }
+              
+              @if (campaignForm.get('specialityId')?.invalid && campaignForm.get('specialityId')?.touched) {
+                <span class="error-message">
+                  La spécialité est requise
+                </span>
               }
             </div>
           </div>
 
-          <div class="pipeline-actions">
-            <button type="button" class="btn-customize" (click)="customizeTemplate()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-              </svg>
-              Personnaliser ce pipeline
-            </button>
+          <div class="form-row three-cols">
+            <div class="form-group">
+              <label for="isPublished">
+                Statut
+              </label>
+              <div class="toggle-wrapper">
+                <label class="toggle-switch">
+                  <input
+                    type="checkbox"
+                    id="isPublished"
+                    formControlName="isPublished"
+                  />
+                  <span class="toggle-slider"></span>
+                </label>
+                <span class="toggle-label">{{ isPublished ? 'Publi\u00e9' : 'Brouillon' }}</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="campaignStart">
+                Date de d\u00e9but
+              </label>
+              <input
+                type="date"
+                id="campaignStart"
+                formControlName="campaignStart"
+                [class.error]="campaignStart?.invalid && campaignStart?.touched"
+              />
+              @if (isPublished && !campaignStart?.value) {
+                <span class="warning-message">
+                  Aucune date de d\u00e9but. La campagne ouvrira aujourd\u2019hui.
+                </span>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="campaignEnd">
+                Date de fin
+              </label>
+              <input
+                type="date"
+                id="campaignEnd"
+                formControlName="campaignEnd"
+                [class.error]="campaignEnd?.invalid && campaignEnd?.touched"
+              />
+              @if (isPublished && !campaignEnd?.value) {
+                <span class="warning-message">
+                  Aucune date de fin. Pas de cl\u00f4ture automatique.
+                </span>
+              }
+            </div>
           </div>
-        }
-      </div>
+          @if (campaignForm.errors?.['dateRange'] && (campaignEnd?.touched || campaignStart?.touched)) {
+            <span class="error-message">La date de fin doit \u00eatre post\u00e9rieure \u00e0 la date de d\u00e9but</span>
+          }
+        </div>
 
-      <!-- Configuration -->
+        <!-- Configuration générale -->
+        <div class="form-section">
+          <h2 class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24"/>
+            </svg>
+            Configuration
+          </h2>
 
-      <!-- Migration modal -->
-      @if (showMigrationModal()) {
-        <div class="modal-overlay" role="dialog" aria-modal="true" (click)="skipMigration()">
-          <div class="modal-content migration-modal" (click)="$event.stopPropagation()">
-            <div class="modal-header">
-              <h3>Migration de pipeline</h3>
-              <button type="button" class="modal-close" (click)="skipMigration()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M18 6L6 18M6 6l12 12"/>
-                </svg>
-              </button>
+          <div class="form-row two-cols">
+            <div class="form-group">
+              <label for="maxApply">
+                Nombre maximum de candidatures
+              </label>
+              <input
+                type="number"
+                id="maxApply"
+                formControlName="maxApply"
+                placeholder="Illimité"
+                min="1"
+                [class.error]="maxApply?.invalid && maxApply?.touched"
+              />
+              @if (maxApply?.invalid && maxApply?.touched) {
+                <span class="error-message">Le nombre doit être supérieur à 0</span>
+              }
             </div>
-            <div class="modal-body">
-              <p class="migration-info">
-                <strong>{{ migratableIds().length }}</strong> candidat(s) peuvent être migrés vers le nouveau pipeline.
-                La migration conserve les statuts des étapes correspondantes (matching par type d'étape).
+
+            <div class="form-group">
+              <label for="maxAttempts">
+                Nombre maximum de tentatives quiz
+              </label>
+              <input
+                type="number"
+                id="maxAttempts"
+                formControlName="maxAttempts"
+                placeholder="1"
+                min="1"
+                [class.error]="maxAttempts?.invalid && maxAttempts?.touched"
+              />
+              <p class="help-text">
+                Nombre maximal de tentatives quiz réellement lancées par candidat (défaut : 1)
               </p>
-              <p class="migration-warning">
-                Les candidats non migrés garderont l'ancien pipeline.
+              @if (maxAttempts?.invalid && maxAttempts?.touched) {
+                <span class="error-message">Le nombre doit être supérieur à 0</span>
+              }
+            </div>
+          </div>
+
+          <div class="form-row two-cols">
+            <div class="form-group">
+              <label for="antiCheatEnabled">
+                Anti-triche quiz
+              </label>
+              <select
+                id="antiCheatEnabled"
+                formControlName="antiCheatEnabled"
+                aria-label="Anti-triche quiz"
+              >
+                <option [ngValue]="null">Suit le global (Settings)</option>
+                <option [ngValue]="true">Activé</option>
+                <option [ngValue]="false">Désactivé</option>
+              </select>
+              <p class="help-text">
+                Null : la campagne suit la politique définie dans la configuration de l'application (Settings). Activé : force l'anti-triche pour cette campagne. Désactivé : le désactive.
               </p>
             </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" (click)="skipMigration()" [disabled]="migrating()">
-                Ne migrer personne
-              </button>
-              <button type="button" class="btn btn-primary" (click)="migrateAllCandidates()" [disabled]="migrating()">
-                @if (migrating()) {
-                  <span class="btn-spinner"></span>
-                  Migration...
-                } @else {
-                  Migrer les {{ migratableIds().length }} candidat(s)
-                }
-              </button>
+
+            <div class="form-group checkbox-group">
+              <app-filter-checkbox class="campaign-checkbox checkbox-field" inputId="campaign-is-archived" label="Archiver cette campagne" formControlName="isArchived" ariaLabel="Archiver cette campagne"></app-filter-checkbox>
+              <p class="help-text">
+                L'archivage est indépendant du statut de vie de la campagne et retire la campagne des vues actives
+              </p>
             </div>
           </div>
         </div>
       }
 
-      <!-- Configuration -->
-      <div class="form-section">
-        <h2 class="section-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24"/>
-          </svg>
-          Configuration
-        </h2>
-
-        <div class="form-row two-cols">
-          <div class="form-group">
-            <label for="maxApply">
-              Nombre maximum de candidatures
-            </label>
-            <input
-              type="number"
-              id="maxApply"
-              formControlName="maxApply"
-              placeholder="Illimité"
-              min="1"
-              [class.error]="maxApply?.invalid && maxApply?.touched"
-            />
-            @if (maxApply?.invalid && maxApply?.touched) {
-              <span class="error-message">Le nombre doit être supérieur à 0</span>
-            }
-          </div>
-
-          <div class="form-group">
-            <label for="maxAttempts">
-              Nombre maximum de tentatives quiz
-            </label>
-            <input
-              type="number"
-              id="maxAttempts"
-              formControlName="maxAttempts"
-              placeholder="1"
-              min="1"
-              [class.error]="maxAttempts?.invalid && maxAttempts?.touched"
-            />
-            <p class="help-text">
-              Nombre maximal de tentatives quiz réellement lancées par candidat (défaut : 1)
-            </p>
-            @if (maxAttempts?.invalid && maxAttempts?.touched) {
-              <span class="error-message">Le nombre doit être supérieur à 0</span>
-            }
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="antiCheatEnabled">
-            Anti-triche quiz
-          </label>
-          <select
-            id="antiCheatEnabled"
-            formControlName="antiCheatEnabled"
-            aria-label="Anti-triche quiz"
-          >
-            <option [ngValue]="null">Suit le global (Settings)</option>
-            <option [ngValue]="true">Activé</option>
-            <option [ngValue]="false">Désactivé</option>
-          </select>
-          <p class="help-text">
-            Null : la campagne suit la politique définie dans la configuration de l'application (Settings). Activé : force l'anti-triche pour cette campagne. Désactivé : le désactive.
-          </p>
-        </div>
-
-        <div class="form-row two-cols">
-          <div class="form-group">
-            <label for="formAssignmentStrategy">
-              Stratégie d'assignation des formulaires
-            </label>
-            <app-filter-select id="formAssignmentStrategy" formControlName="formAssignmentStrategy" ariaLabel="Stratégie d'assignation des formulaires">
-              <option value="RANDOM">Aléatoire</option>
-              <option value="RANDOM_NO_REPEAT">Aléatoire sans répétition</option>
-              <option value="SEQUENTIAL">Séquentiel</option>
-              <option value="SOURCE_TOKEN">Par token source</option>
-            </app-filter-select>
-          </div>
-
-          <div class="form-group">
-            <label for="formAssignmentExhaustionPolicy">
-              Politique d'épuisement
-            </label>
-            <app-filter-select id="formAssignmentExhaustionPolicy" formControlName="formAssignmentExhaustionPolicy" ariaLabel="Politique d'épuisement">
-              <option value="BLOCK">Bloquer</option>
-              <option value="RESET">Réinitialiser</option>
-              <option value="LOOP">Répéter en boucle</option>
-            </app-filter-select>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group checkbox-group">
-            <app-filter-checkbox class="campaign-checkbox checkbox-field" inputId="campaign-all-can-evaluate" label="Autoriser tous les recruteurs à évaluer les candidatures" formControlName="allCanEvaluate" ariaLabel="Autoriser tous les recruteurs à évaluer les candidatures"></app-filter-checkbox>
-            <p class="help-text">
-              Si coché, tous les recruteurs pourront évaluer les candidatures sans avoir besoin d'être ajoutés explicitement
-            </p>
-          </div>
-        </div>
-
-        <div class="form-row two-cols">
-          <div class="form-group checkbox-group">
-            <app-filter-checkbox class="campaign-checkbox checkbox-field" inputId="campaign-time-all-forms" label="Utiliser un temps global pour l'ensemble des formulaires" formControlName="timeAllForms" ariaLabel="Utiliser un temps global pour l'ensemble des formulaires"></app-filter-checkbox>
-            <p class="help-text">
-              Si coché, la campagne applique un temps partagé sur tout le parcours au lieu d'un temps distinct par formulaire
-            </p>
-          </div>
-
-          <div class="form-group checkbox-group">
-            <app-filter-checkbox class="campaign-checkbox checkbox-field" inputId="campaign-is-archived" label="Archiver cette campagne" formControlName="isArchived" ariaLabel="Archiver cette campagne"></app-filter-checkbox>
-            <p class="help-text">
-              L'archivage est indépendant du statut de vie de la campagne et retire la campagne des vues actives
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div class="form-section">
-        <h2 class="section-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-            <polyline points="14 2 14 8 20 8"/>
-            <line x1="8" y1="13" x2="16" y2="13"/>
-            <line x1="8" y1="17" x2="16" y2="17"/>
-          </svg>
-          Formulaires de la campagne
-        </h2>
-
-        <p class="section-subtitle">
-          Associez un ou plusieurs formulaires existants à cette campagne. Ils seront ensuite disponibles dans le détail de campagne et pour les stratégies d'attribution.
-        </p>
-
-
-
-        <div class="recruiter-search recruiter-search-forms">
-          <div class="search-input-wrapper">
-            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8"/>
-              <path d="m21 21-4.35-4.35"/>
+      <!-- ════════════════════════════════════════════════════ -->
+      <!-- TAB : Pipeline                                      -->
+      <!-- ════════════════════════════════════════════════════ -->
+      @if (!isEditMode || activeEditTab() === 'pipeline') {
+        <div class="form-section">
+          <h2 class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
             </svg>
-            <input
-              type="text"
-              id="campaignFormSearch"
-              class="search-input"
-              [formControl]="formSearchControl"
-              placeholder="Rechercher un formulaire existant..."
-            />
-            @if (searchingForms()) {
-              <div class="search-spinner"></div>
-            }
-          </div>
+            Modèle de pipeline <span class="required">*</span>
+          </h2>
 
-          @if (showFormDropdown() && formSearchResults().length > 0) {
-            <div class="search-dropdown">
-              @for (form of formSearchResults(); track form.id) {
-                <button
-                  type="button"
-                  class="search-result-item search-result-item-form"
-                  (click)="selectCampaignForm(form)"
+          <div class="form-row">
+            <div class="form-group full-width">
+              <label for="pipelineTemplateId">
+                Sélectionner un modèle de pipeline
+              </label>
+              @if (loadingTemplates()) {
+                <div class="template-loading">
+                  <div class="search-spinner"></div>
+                  <span>Chargement des modèles...</span>
+                </div>
+              } @else {
+                <app-filter-select
+                  id="pipelineTemplateId"
+                  ariaLabel="Sélectionner un modèle de pipeline"
+                  [value]="selectedTemplate()?.id ?? null"
+                  (valueChange)="onTemplateSelectChange($event)"
+                  (blur)="campaignForm.get('pipelineTemplateId')?.markAsTouched()"
+                  [class.error]="campaignForm.get('pipelineTemplateId')?.invalid && campaignForm.get('pipelineTemplateId')?.touched"
                 >
-                  <div class="form-info">
-                    <div class="form-name">{{ form.formName || 'Sans nom' }}</div>
-                    <div class="form-meta">{{ form.formDesc || 'Aucune description disponible' }}</div>
-                    <div class="form-context-badges">
-                      @if (getLinkedCampaignCount(form) > 0) {
-                        <span class="form-status form-status-shared">
-                          {{ getLinkedCampaignCount(form) }} campagne{{ getLinkedCampaignCount(form) > 1 ? 's' : '' }} liée{{ getLinkedCampaignCount(form) > 1 ? 's' : '' }}
-                        </span>
-                      }
-
-                    </div>
-                    @if (getLinkedCampaignNames(form).length > 0) {
-                      <div class="form-shared-campaigns">
-                        {{ getLinkedCampaignNames(form).join(' • ') }}
-                      </div>
-                    }
-                  </div>
-                  <span class="form-status" [class.form-status-inactive]="!form.isActive">
-                    {{ form.isActive ? 'Actif' : 'Inactif' }}
-                  </span>
-                </button>
+                  <option [ngValue]="null" disabled>-- Choisir un modèle --</option>
+                  @for (template of pipelineTemplates(); track template.id) {
+                    <option [ngValue]="template.id">
+                      {{ template.templateName }}{{ template.isDefault ? ' (par défaut)' : '' }}
+                    </option>
+                  }
+                </app-filter-select>
+                @if (campaignForm.get('pipelineTemplateId')?.invalid && campaignForm.get('pipelineTemplateId')?.touched) {
+                  <span class="error-message">Le modèle de pipeline est requis</span>
+                }
               }
             </div>
-          }
+          </div>
 
-          @if (formSearchControl.value && formSearchControl.value.length >= 2 && !searchingForms() && formSearchResults().length === 0) {
-            <div class="no-results">
-              <svg class="no-results-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="8" x2="12" y2="12"/>
-                <line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>
-              <p>Aucun formulaire correspondant a la recherche</p>
+          @if (templateStages().length > 0) {
+            <div class="pipeline-preview">
+              <div class="preview-label">Aperçu des étapes</div>
+              <div class="pipeline-stages-bar">
+                @for (stage of templateStages(); track stage.id; let i = $index; let last = $last) {
+                  <div class="preview-stage">
+                    <div class="stage-circle">{{ i + 1 }}</div>
+                    <span class="stage-name">{{ stage.stageLabel }}</span>
+                    @if (stage.isRequired) {
+                      <span class="stage-badge required-badge">Requis</span>
+                    }
+                    @if (stage.isEliminatory) {
+                      <span class="stage-badge eliminatory-badge">Éliminatoire</span>
+                    }
+                  </div>
+                  @if (!last) {
+                    <div class="stage-connector"></div>
+                  }
+                }
+              </div>
+            </div>
+
+            <div class="pipeline-actions">
+              <button type="button" class="btn-customize" (click)="customizeTemplate()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+                Personnaliser ce pipeline
+              </button>
             </div>
           }
         </div>
 
-        @if (selectedForms().length > 0) {
-          <div class="selected-forms">
-            @for (form of selectedForms(); track form.id || form.duplicateSourceFormId || $index; let i = $index) {
-              <div class="selected-item selected-form-item">
-                <div class="item-info">
-                  <span class="item-name">{{ form.formName || 'Sans nom' }}</span>
-                  <span class="item-detail">{{ form.formDesc || 'Aucune description disponible' }}</span>
-                  <div class="selected-form-badges">
-                    <span class="selected-form-badge" [class.selected-form-badge-inactive]="!form.isActive">
-                      {{ form.isActive ? 'Actif' : 'Inactif' }}
-                    </span>
-                    @if (isPersistedCampaignForm(form)) {
-                      <span class="selected-form-badge selected-form-badge-linked">Déjà associé</span>
-                    }
-                    @if (getLinkedCampaignCount(form) > 1 && !isPendingFormDuplication(form)) {
-                      <span class="selected-form-badge selected-form-badge-shared">Partagé avec {{ getLinkedCampaignCount(form) }} campagnes</span>
-                    }
-                    @if (isPendingFormDuplication(form)) {
-                      <span class="selected-form-badge selected-form-badge-queued">Copie en attente</span>
-                    }
-                  </div>
-                  @if (getLinkedCampaignNames(form).length > 0) {
-                    <div class="selected-form-context">Lié à : {{ getLinkedCampaignNames(form).join(' • ') }}</div>
-                  }
-
-                </div>
-
-                <div class="item-actions">
-
-
-                  @if (canRemoveCampaignForm(form)) {
-                    <button
-                      type="button"
-                      class="remove-btn"
-                      (click)="removeCampaignForm(i)"
-                      title="Retirer ce formulaire"
-                      aria-label="Retirer ce formulaire"
-                    >
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M18 6L6 18M6 6l12 12"/>
-                      </svg>
-                    </button>
-                  }
-                </div>
+        <!-- Migration modal -->
+        @if (showMigrationModal()) {
+          <div class="modal-overlay" role="dialog" aria-modal="true" (click)="skipMigration()">
+            <div class="modal-content migration-modal" (click)="$event.stopPropagation()">
+              <div class="modal-header">
+                <h3>Migration de pipeline</h3>
+                <button type="button" class="modal-close" (click)="skipMigration()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 6L6 18M6 6l12 12"/>
+                  </svg>
+                </button>
               </div>
-            }
+              <div class="modal-body">
+                <p class="migration-info">
+                  <strong>{{ migratableIds().length }}</strong> candidat(s) peuvent être migrés vers le nouveau pipeline.
+                  La migration conserve les statuts des étapes correspondantes (matching par type d'étape).
+                </p>
+                <p class="migration-warning">
+                  Les candidats non migrés garderont l'ancien pipeline.
+                </p>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" (click)="skipMigration()" [disabled]="migrating()">
+                  Ne migrer personne
+                </button>
+                <button type="button" class="btn btn-primary" (click)="migrateAllCandidates()" [disabled]="migrating()">
+                  @if (migrating()) {
+                    <span class="btn-spinner"></span>
+                    Migration...
+                  } @else {
+                    Migrer les {{ migratableIds().length }} candidat(s)
+                  }
+                </button>
+              </div>
+            </div>
           </div>
-        } @else {
-          <div class="empty-forms">
+        }
+      }
+
+      <!-- ════════════════════════════════════════════════════ -->
+      <!-- TAB : Formulaires & Attribution                     -->
+      <!-- ════════════════════════════════════════════════════ -->
+      @if (!isEditMode || activeEditTab() === 'forms') {
+        <!-- Stratégie d'attribution -->
+        <div class="form-section">
+          <h2 class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24"/>
+            </svg>
+            Stratégie d'attribution
+          </h2>
+
+          <div class="form-row two-cols">
+            <div class="form-group">
+              <label for="formAssignmentStrategy">
+                Stratégie d'assignation des formulaires
+              </label>
+              <app-filter-select id="formAssignmentStrategy" formControlName="formAssignmentStrategy" ariaLabel="Stratégie d'assignation des formulaires">
+                <option value="RANDOM">Aléatoire</option>
+                <option value="RANDOM_NO_REPEAT">Aléatoire sans répétition</option>
+                <option value="SEQUENTIAL">Séquentiel</option>
+                <option value="SOURCE_TOKEN">Par token source</option>
+              </app-filter-select>
+            </div>
+
+            <div class="form-group">
+              <label for="formAssignmentExhaustionPolicy">
+                Politique d'épuisement
+              </label>
+              <app-filter-select id="formAssignmentExhaustionPolicy" formControlName="formAssignmentExhaustionPolicy" ariaLabel="Politique d'épuisement">
+                <option value="BLOCK">Bloquer</option>
+                <option value="RESET">Réinitialiser</option>
+                <option value="LOOP">Répéter en boucle</option>
+              </app-filter-select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group checkbox-group">
+              <app-filter-checkbox class="campaign-checkbox checkbox-field" inputId="campaign-time-all-forms" label="Utiliser un temps global pour l'ensemble des formulaires" formControlName="timeAllForms" ariaLabel="Utiliser un temps global pour l'ensemble des formulaires"></app-filter-checkbox>
+              <p class="help-text">
+                Si coché, la campagne applique un temps partagé sur tout le parcours au lieu d'un temps distinct par formulaire
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Formulaires de la campagne -->
+        <div class="form-section">
+          <h2 class="section-title">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
               <polyline points="14 2 14 8 20 8"/>
+              <line x1="8" y1="13" x2="16" y2="13"/>
+              <line x1="8" y1="17" x2="16" y2="17"/>
             </svg>
-            <p>Aucun formulaire associé</p>
-            <span>Ajoutez au moins un formulaire si la campagne doit diffuser un quiz.</span>
-          </div>
-        }
-      </div>
+            Formulaires de la campagne
+          </h2>
 
-      <!-- Recruteurs autorisés -->
-      <div class="form-section">
-        <h2 class="section-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-            <circle cx="9" cy="7" r="4"/>
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
-          </svg>
-          Recruteurs autorisés
-        </h2>
+          <p class="section-subtitle">
+            Associez un ou plusieurs formulaires existants à cette campagne. Ils seront ensuite disponibles dans le détail de campagne et pour les stratégies d'attribution.
+          </p>
 
-        @if (isRecruiterSearchLocked()) {
-          <div class="search-disabled-state">
-            <span class="search-disabled-state__title">Recherche verrouillée</span>
-            <span class="search-disabled-state__text">
-              Tous les recruteurs sont déjà autorisés à évaluer les candidatures. Décochez cette option si vous voulez rechercher et ajouter des recruteurs explicitement.
-            </span>
-          </div>
-        }
+          <div class="recruiter-search recruiter-search-forms">
+            <div class="search-input-wrapper">
+              <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="m21 21-4.35-4.35"/>
+              </svg>
+              <input
+                type="text"
+                id="campaignFormSearch"
+                class="search-input"
+                [formControl]="formSearchControl"
+                placeholder="Rechercher un formulaire existant..."
+              />
+              @if (searchingForms()) {
+                <div class="search-spinner"></div>
+              }
+            </div>
 
-        <div class="recruiter-search">
-          <div class="search-input-wrapper">
-            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8"/>
-              <path d="m21 21-4.35-4.35"/>
-            </svg>
-            <input
-              type="text"
-              class="search-input"
-              [placeholder]="isRecruiterSearchLocked() ? 'Recherche désactivée tant que tous les recruteurs peuvent évaluer' : 'Rechercher un recruteur, admin ou super admin...'"
-              [formControl]="recruiterSearchControl"
-              (focus)="showRecruiterSuggestions()"
-            />
-            @if (searching()) {
-              <div class="search-spinner"></div>
+            @if (showFormDropdown() && formSearchResults().length > 0) {
+              <div class="search-dropdown">
+                @for (form of formSearchResults(); track form.id) {
+                  <button
+                    type="button"
+                    class="search-result-item search-result-item-form"
+                    (click)="selectCampaignForm(form)"
+                  >
+                    <div class="form-info">
+                      <div class="form-name">{{ form.formName || 'Sans nom' }}</div>
+                      <div class="form-meta">{{ form.formDesc || 'Aucune description disponible' }}</div>
+                      <div class="form-context-badges">
+                        @if (getLinkedCampaignCount(form) > 0) {
+                          <span class="form-status form-status-shared">
+                            {{ getLinkedCampaignCount(form) }} campagne{{ getLinkedCampaignCount(form) > 1 ? 's' : '' }} liée{{ getLinkedCampaignCount(form) > 1 ? 's' : '' }}
+                          </span>
+                        }
+
+                      </div>
+                      @if (getLinkedCampaignNames(form).length > 0) {
+                        <div class="form-shared-campaigns">
+                          {{ getLinkedCampaignNames(form).join(' • ') }}
+                        </div>
+                      }
+                    </div>
+                    <span class="form-status" [class.form-status-inactive]="!form.isActive">
+                      {{ form.isActive ? 'Actif' : 'Inactif' }}
+                    </span>
+                  </button>
+                }
+              </div>
+            }
+
+            @if (formSearchControl.value && formSearchControl.value.length >= 2 && !searchingForms() && formSearchResults().length === 0) {
+              <div class="no-results">
+                <svg class="no-results-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <p>Aucun formulaire correspondant a la recherche</p>
+              </div>
             }
           </div>
 
-          @if (showSearchDropdown() && searchResults().length > 0) {
-            <div class="search-dropdown">
-              @for (user of searchResults(); track user.id) {
-                <button
-                  type="button"
-                  class="search-result-item"
-                  (click)="selectRecruiter(user)"
-                >
-                  <div class="user-avatar" [class]="'avatar-' + (user.role || 'recruiter').toLowerCase()">
-                    {{ (user.firstName || '?').charAt(0).toUpperCase() }}{{ (user.lastName || '?').charAt(0).toUpperCase() }}
-                  </div>
-                  <div class="user-info">
-                    <div class="user-name">{{ user.firstName || 'Prénom' }} {{ user.lastName || 'Nom' }}</div>
-                    <div class="user-email">{{ user.email || 'email@example.com' }}</div>
-                  </div>
-                  <span class="user-role" [class]="'role-' + (user.role || 'recruiter').toLowerCase()">
-                    {{ user.role || 'recruiter' }}
-                  </span>
-                </button>
-              }
-            </div>
-          }
-          
-          @if (!isRecruiterSearchLocked() && recruiterSearchInteracted() && !searching() && searchResults().length === 0) {
-            <div class="no-results">
-              <svg class="no-results-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="8" x2="12" y2="12"/>
-                <line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>
-              <p>Aucun recruteur trouvé</p>
-            </div>
-          }
-        </div>
+          @if (selectedForms().length > 0) {
+            <div class="selected-forms">
+              @for (form of selectedForms(); track form.id || form.duplicateSourceFormId || $index; let i = $index) {
+                <div class="selected-item selected-form-item">
+                  <div class="item-info">
+                    <span class="item-name">{{ form.formName || 'Sans nom' }}</span>
+                    <span class="item-detail">{{ form.formDesc || 'Aucune description disponible' }}</span>
+                    <div class="selected-form-badges">
+                      <span class="selected-form-badge" [class.selected-form-badge-inactive]="!form.isActive">
+                        {{ form.isActive ? 'Actif' : 'Inactif' }}
+                      </span>
+                      @if (isPersistedCampaignForm(form)) {
+                        <span class="selected-form-badge selected-form-badge-linked">Déjà associé</span>
+                      }
+                      @if (getLinkedCampaignCount(form) > 1 && !isPendingFormDuplication(form)) {
+                        <span class="selected-form-badge selected-form-badge-shared">Partagé avec {{ getLinkedCampaignCount(form) }} campagnes</span>
+                      }
+                      @if (isPendingFormDuplication(form)) {
+                        <span class="selected-form-badge selected-form-badge-queued">Copie en attente</span>
+                      }
+                    </div>
+                    @if (getLinkedCampaignNames(form).length > 0) {
+                      <div class="selected-form-context">Lié à : {{ getLinkedCampaignNames(form).join(' • ') }}</div>
+                    }
 
-        @if (selectedRecruiters().length > 0) {
-          <div class="selected-recruiters">
-            @for (recruiter of selectedRecruiters(); track recruiter.user.id; let i = $index) {
-              <div class="recruiter-card" 
-                   [class.creator-card]="recruiter.isCreator"
-                   [class.admin-card]="recruiter.isAdmin && !recruiter.isCreator">
-                <div class="recruiter-header">
-                  <div class="recruiter-info">
-                    <div class="user-avatar" [class]="'avatar-' + (recruiter.user.role || 'recruiter').toLowerCase()">
-                      {{ (recruiter.user.firstName || '?').charAt(0).toUpperCase() }}{{ (recruiter.user.lastName || '?').charAt(0).toUpperCase() }}
-                    </div>
-                    <div>
-                      <div class="recruiter-name">
-                        {{ recruiter.user.firstName || 'Prénom' }} {{ recruiter.user.lastName || 'Nom' }}
-                      </div>
-                      <div class="recruiter-email">{{ recruiter.user.email }}</div>
-                    </div>
                   </div>
-                  
-                  <div class="header-actions">
-                    @if (recruiter.isCreator) {
-                      <span class="creator-badge">Créateur</span>
-                    } @else {
-                      <app-filter-checkbox class="admin-checkbox" [inputId]="'campaign-recruiter-admin-' + recruiter.user.id" label="Administrateur" variant="inline" [checked]="recruiter.isAdmin === true" ariaLabel="Administrateur" (checkedChange)="toggleAdmin(i, $event)"></app-filter-checkbox>
-                      
+
+                  <div class="item-actions">
+
+
+                    @if (canRemoveCampaignForm(form)) {
                       <button
                         type="button"
-                        class="btn-remove"
-                        (click)="removeRecruiter(i)"
-                        [title]="recruiter.isAdmin ? 'Seul le créateur peut retirer un admin' : 'Retirer'"
-                        [disabled]="recruiter.isAdmin"
+                        class="remove-btn"
+                        (click)="removeCampaignForm(i)"
+                        title="Retirer ce formulaire"
+                        aria-label="Retirer ce formulaire"
                       >
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <line x1="18" y1="6" x2="6" y2="18"/>
-                          <line x1="6" y1="6" x2="18" y2="18"/>
+                          <path d="M18 6L6 18M6 6l12 12"/>
                         </svg>
                       </button>
                     }
                   </div>
                 </div>
+              }
+            </div>
+          } @else {
+            <div class="empty-forms">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+              <p>Aucun formulaire associé</p>
+              <span>Ajoutez au moins un formulaire si la campagne doit diffuser un quiz.</span>
+            </div>
+          }
+        </div>
+      }
 
-                <div class="recruiter-permissions">
-                  <app-filter-checkbox class="permission-checkbox" [inputId]="'campaign-recruiter-can-evaluate-' + recruiter.user.id" label="Peut évaluer" variant="inline" [checked]="recruiter.canEvaluate === true" ariaLabel="Peut évaluer" (checkedChange)="toggleRecruiterAccess(i, 'canEvaluate', $event)"></app-filter-checkbox>
-
-                  <app-filter-checkbox class="permission-checkbox" [inputId]="'campaign-recruiter-can-update-' + recruiter.user.id" label="Peut modifier" variant="inline" [checked]="recruiter.canUpdate === true" ariaLabel="Peut modifier" (checkedChange)="toggleRecruiterAccess(i, 'canUpdate', $event)"></app-filter-checkbox>
-
-                  <app-filter-checkbox class="permission-checkbox" [inputId]="'campaign-recruiter-can-delete-' + recruiter.user.id" label="Peut supprimer" variant="inline" [checked]="recruiter.canDelete === true" ariaLabel="Peut supprimer" (checkedChange)="toggleRecruiterAccess(i, 'canDelete', $event)"></app-filter-checkbox>
-
-                  <app-filter-checkbox class="permission-checkbox" [inputId]="'campaign-recruiter-can-planify-' + recruiter.user.id" label="Peut planifier" variant="inline" [checked]="recruiter.canPlanify === true" ariaLabel="Peut planifier" (checkedChange)="toggleRecruiterAccess(i, 'canPlanify', $event)"></app-filter-checkbox>
-
-                  <app-filter-checkbox class="permission-checkbox" [inputId]="'campaign-recruiter-can-accept-pre-screen-' + recruiter.user.id" label="Peut accepter (pré-sélection)" variant="inline" [checked]="recruiter.canAcceptPreScreen === true" ariaLabel="Peut accepter en pré-sélection" (checkedChange)="toggleRecruiterAccess(i, 'canAcceptPreScreen', $event)"></app-filter-checkbox>
-
-                  <app-filter-checkbox class="permission-checkbox" [inputId]="'campaign-recruiter-can-accept-final-' + recruiter.user.id" label="Peut accepter (final)" variant="inline" [checked]="recruiter.canAcceptFinal === true" ariaLabel="Peut accepter en final" (checkedChange)="toggleRecruiterAccess(i, 'canAcceptFinal', $event)"></app-filter-checkbox>
-                </div>
-              </div>
-            }
+      <!-- ════════════════════════════════════════════════════ -->
+      <!-- TAB : Candidatures & Tokens                         -->
+      <!-- ════════════════════════════════════════════════════ -->
+      @if (!isEditMode || activeEditTab() === 'applications') {
+        <div class="form-section">
+          <h2 class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            Candidatures & Tokens
+          </h2>
+          <div class="empty-tab-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <p>Liens de candidature & tokens source</p>
+            <span>Les liens de candidature et tokens source sont gérés dans le détail de la campagne une fois celle-ci créée.</span>
           </div>
-        } @else {
-          <div class="empty-recruiters">
+        </div>
+      }
+
+      <!-- ════════════════════════════════════════════════════ -->
+      <!-- TAB : Recruteurs & Permissions                      -->
+      <!-- ════════════════════════════════════════════════════ -->
+      @if (!isEditMode || activeEditTab() === 'recruiters') {
+        <!-- Option globale -->
+        <div class="form-section">
+          <h2 class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24"/>
+            </svg>
+            Permissions
+          </h2>
+
+          <div class="form-row">
+            <div class="form-group checkbox-group">
+              <app-filter-checkbox class="campaign-checkbox checkbox-field" inputId="campaign-all-can-evaluate" label="Autoriser tous les recruteurs à évaluer les candidatures" formControlName="allCanEvaluate" ariaLabel="Autoriser tous les recruteurs à évaluer les candidatures"></app-filter-checkbox>
+              <p class="help-text">
+                Si coché, tous les recruteurs pourront évaluer les candidatures sans avoir besoin d'être ajoutés explicitement
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recruteurs autorisés -->
+        <div class="form-section">
+          <h2 class="section-title">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
               <circle cx="9" cy="7" r="4"/>
               <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
             </svg>
-            <p>Aucun recruteur ajouté</p>
-            <span>Recherchez et ajoutez des recruteurs pour leur donner accès à cette campagne</span>
+            Recruteurs autorisés
+          </h2>
+
+          @if (isRecruiterSearchLocked()) {
+            <div class="search-disabled-state">
+              <span class="search-disabled-state__title">Recherche verrouillée</span>
+              <span class="search-disabled-state__text">
+                Tous les recruteurs sont déjà autorisés à évaluer les candidatures. Décochez cette option si vous voulez rechercher et ajouter des recruteurs explicitement.
+              </span>
+            </div>
+          }
+
+          <div class="recruiter-search">
+            <div class="search-input-wrapper">
+              <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="m21 21-4.35-4.35"/>
+              </svg>
+              <input
+                type="text"
+                class="search-input"
+                [placeholder]="isRecruiterSearchLocked() ? 'Recherche désactivée tant que tous les recruteurs peuvent évaluer' : 'Rechercher un recruteur, admin ou super admin...'"
+                [formControl]="recruiterSearchControl"
+                (focus)="showRecruiterSuggestions()"
+              />
+              @if (searching()) {
+                <div class="search-spinner"></div>
+              }
+            </div>
+
+            @if (showSearchDropdown() && searchResults().length > 0) {
+              <div class="search-dropdown">
+                @for (user of searchResults(); track user.id) {
+                  <button
+                    type="button"
+                    class="search-result-item"
+                    (click)="selectRecruiter(user)"
+                  >
+                    <div class="user-avatar" [class]="'avatar-' + (user.role || 'recruiter').toLowerCase()">
+                      {{ (user.firstName || '?').charAt(0).toUpperCase() }}{{ (user.lastName || '?').charAt(0).toUpperCase() }}
+                    </div>
+                    <div class="user-info">
+                      <div class="user-name">{{ user.firstName || 'Prénom' }} {{ user.lastName || 'Nom' }}</div>
+                      <div class="user-email">{{ user.email || 'email@example.com' }}</div>
+                    </div>
+                    <span class="user-role" [class]="'role-' + (user.role || 'recruiter').toLowerCase()">
+                      {{ user.role || 'recruiter' }}
+                    </span>
+                  </button>
+                }
+              </div>
+            }
+            
+            @if (!isRecruiterSearchLocked() && recruiterSearchInteracted() && !searching() && searchResults().length === 0) {
+              <div class="no-results">
+                <svg class="no-results-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <p>Aucun recruteur trouvé</p>
+              </div>
+            }
           </div>
-        }
-      </div>
+
+          @if (selectedRecruiters().length > 0) {
+            <div class="selected-recruiters">
+              @for (recruiter of selectedRecruiters(); track recruiter.user.id; let i = $index) {
+                <div class="recruiter-card" 
+                     [class.creator-card]="recruiter.isCreator"
+                     [class.admin-card]="recruiter.isAdmin && !recruiter.isCreator">
+                  <div class="recruiter-header">
+                    <div class="recruiter-info">
+                      <div class="user-avatar" [class]="'avatar-' + (recruiter.user.role || 'recruiter').toLowerCase()">
+                        {{ (recruiter.user.firstName || '?').charAt(0).toUpperCase() }}{{ (recruiter.user.lastName || '?').charAt(0).toUpperCase() }}
+                      </div>
+                      <div>
+                        <div class="recruiter-name">
+                          {{ recruiter.user.firstName || 'Prénom' }} {{ recruiter.user.lastName || 'Nom' }}
+                        </div>
+                        <div class="recruiter-email">{{ recruiter.user.email }}</div>
+                      </div>
+                    </div>
+                    
+                    <div class="header-actions">
+                      @if (recruiter.isCreator) {
+                        <span class="creator-badge">Créateur</span>
+                      } @else {
+                        <app-filter-checkbox class="admin-checkbox" [inputId]="'campaign-recruiter-admin-' + recruiter.user.id" label="Administrateur" variant="inline" [checked]="recruiter.isAdmin === true" ariaLabel="Administrateur" (checkedChange)="toggleAdmin(i, $event)"></app-filter-checkbox>
+                        
+                        <button
+                          type="button"
+                          class="btn-remove"
+                          (click)="removeRecruiter(i)"
+                          [title]="recruiter.isAdmin ? 'Seul le créateur peut retirer un admin' : 'Retirer'"
+                          [disabled]="recruiter.isAdmin"
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"/>
+                            <line x1="6" y1="6" x2="18" y2="18"/>
+                          </svg>
+                        </button>
+                      }
+                    </div>
+                  </div>
+
+                  <div class="recruiter-permissions">
+                    <app-filter-checkbox class="permission-checkbox" [inputId]="'campaign-recruiter-can-evaluate-' + recruiter.user.id" label="Peut évaluer" variant="inline" [checked]="recruiter.canEvaluate === true" ariaLabel="Peut évaluer" (checkedChange)="toggleRecruiterAccess(i, 'canEvaluate', $event)"></app-filter-checkbox>
+
+                    <app-filter-checkbox class="permission-checkbox" [inputId]="'campaign-recruiter-can-update-' + recruiter.user.id" label="Peut modifier" variant="inline" [checked]="recruiter.canUpdate === true" ariaLabel="Peut modifier" (checkedChange)="toggleRecruiterAccess(i, 'canUpdate', $event)"></app-filter-checkbox>
+
+                    <app-filter-checkbox class="permission-checkbox" [inputId]="'campaign-recruiter-can-delete-' + recruiter.user.id" label="Peut supprimer" variant="inline" [checked]="recruiter.canDelete === true" ariaLabel="Peut supprimer" (checkedChange)="toggleRecruiterAccess(i, 'canDelete', $event)"></app-filter-checkbox>
+
+                    <app-filter-checkbox class="permission-checkbox" [inputId]="'campaign-recruiter-can-planify-' + recruiter.user.id" label="Peut planifier" variant="inline" [checked]="recruiter.canPlanify === true" ariaLabel="Peut planifier" (checkedChange)="toggleRecruiterAccess(i, 'canPlanify', $event)"></app-filter-checkbox>
+
+                    <app-filter-checkbox class="permission-checkbox" [inputId]="'campaign-recruiter-can-accept-pre-screen-' + recruiter.user.id" label="Peut accepter (pré-sélection)" variant="inline" [checked]="recruiter.canAcceptPreScreen === true" ariaLabel="Peut accepter en pré-sélection" (checkedChange)="toggleRecruiterAccess(i, 'canAcceptPreScreen', $event)"></app-filter-checkbox>
+
+                    <app-filter-checkbox class="permission-checkbox" [inputId]="'campaign-recruiter-can-accept-final-' + recruiter.user.id" label="Peut accepter (final)" variant="inline" [checked]="recruiter.canAcceptFinal === true" ariaLabel="Peut accepter en final" (checkedChange)="toggleRecruiterAccess(i, 'canAcceptFinal', $event)"></app-filter-checkbox>
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="empty-recruiters">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+              <p>Aucun recruteur ajouté</p>
+              <span>Recherchez et ajoutez des recruteurs pour leur donner accès à cette campagne</span>
+            </div>
+          }
+        </div>
+      }
 
       <!-- Actions -->
       <div class="form-actions">

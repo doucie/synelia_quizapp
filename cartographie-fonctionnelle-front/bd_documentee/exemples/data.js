@@ -251,7 +251,7 @@ window.BD_EXEMPLES = {
           ]
         },
         {
-          num: 19bis,
+          num: "19bis",
           nom: "quiz_anti_cheat_event",
           description: "Le journal de chaque infraction anti-triche détectée pendant une tentative de quiz (sortie d'onglet, sortie du plein écran, copier-coller…).",
           notes: ["Alice n'a pas déclenché d'infraction : les compteurs de sa tentative restent à 0.", "Les événements sont envoyés par le front candidat et journalisés par le backend sur les endpoints get-quiz / save-quiz-answer / touch-quiz."],

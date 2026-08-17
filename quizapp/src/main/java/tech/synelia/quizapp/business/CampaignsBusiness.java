@@ -156,7 +156,7 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			Map<String, java.lang.Object> fieldsToVerify = new HashMap<String, java.lang.Object>();
 			fieldsToVerify.put("campaignTitle", dto.getCampaignTitle());
 		// fieldsToVerify.put("campaignDesc", dto.getCampaignDesc());
-		fieldsToVerify.put("campaignStatus", dto.getCampaignStatus());
+		// fieldsToVerify.put("campaignStatus", dto.getCampaignStatus());
 		// fieldsToVerify.put("campaignStart", dto.getCampaignStart());
 		// fieldsToVerify.put("campaignEnd", dto.getCampaignEnd());
 		// fieldsToVerify.put("maxApply", dto.getMaxApply());
@@ -168,15 +168,21 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 				throw new InvalidEntityException(functionalError.FIELD_EMPTY(Validate.getValidate().getField(), locale));
 			}
 
-			// Validation enum stricte campaignStatus
-			dto.setCampaignStatus(normalizeCampaignStatus(dto.getCampaignStatus(), locale));
+			// Deriver le statut depuis isPublished + campaignStart
+			Date startParsed = null;
+			if (dto.getCampaignStart() != null && !dto.getCampaignStart().isEmpty()) {
+				startParsed = dateFormat.parse(dto.getCampaignStart());
+			}
+			CampaignStatus derivedStatus = deriveStatusFromPublished(dto.getIsPublished(), startParsed);
+			dto.setCampaignStatus(derivedStatus.getValue());
 
-			// Validation: date de fin >= date de début
-			if (dto.getCampaignStart() != null && !dto.getCampaignStart().isEmpty()
-					&& dto.getCampaignEnd() != null && !dto.getCampaignEnd().isEmpty()) {
-				Date start = dateFormat.parse(dto.getCampaignStart());
-				Date end = dateFormat.parse(dto.getCampaignEnd());
-				if (end.before(start)) {
+			// Validation date de fin >= date de debut (seulement si les deux dates sont renseignees)
+			Date endParsed = null;
+			if (dto.getCampaignEnd() != null && !dto.getCampaignEnd().isEmpty()) {
+				endParsed = dateFormat.parse(dto.getCampaignEnd());
+			}
+			if (startParsed != null && endParsed != null) {
+				if (endParsed.before(startParsed)) {
 					throw new InvalidEntityException(functionalError.REQUEST_FAIL(
 							"La date de fin ne peut pas être antérieure à la date de début", locale));
 				}
@@ -243,7 +249,10 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			if (entityToSave.getIsArchived() == null) {
 				entityToSave.setIsArchived(false);
 			}
-			validateCampaignStatusOnCreate(entityToSave, locale);
+			if (entityToSave.getIsPublished() == null) {
+				entityToSave.setIsPublished(false);
+			}
+			applyDerivedStatus(entityToSave);
 			entityToSave.setCreatedAt(Utilities.getCurrentDate());
 			entityToSave.setCreatedBy(request.getUser());
 			entityToSave.setIsDeleted(false);
@@ -381,8 +390,9 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			if (Utilities.shouldUpdate(dto.getCampaignDesc())) {
 				entityToSave.setCampaignDesc(dto.getCampaignDesc());
 			}
-			if (Utilities.shouldUpdate(dto.getCampaignStatus())) {
-				entityToSave.setCampaignStatus(normalizeCampaignStatus(dto.getCampaignStatus(), locale));
+			// Deriver le statut depuis isPublished + campaignStart
+			if (dto.getIsPublished() != null) {
+				entityToSave.setIsPublished(dto.getIsPublished());
 			}
 			if (Utilities.shouldUpdate(dto.getCampaignStart())) {
 				entityToSave.setCampaignStart(dateFormat.parse(dto.getCampaignStart()));
@@ -418,6 +428,8 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			normalizeCampaignTimingConfiguration(entityToSave, dto);
 			applyFormAssignmentConfiguration(entityToSave, dto, false, locale);
 			ensureOperationalPipelineTemplate(entityToSave, locale);
+			// Deriver le statut depuis isPublished + campaignStart
+			applyDerivedStatus(entityToSave);
 			validateCampaignLifecycleUpdate(previousCampaignStatus, wasArchived, entityToSave, locale);
 			
 			// ⚠️ NE JAMAIS modifier createdBy lors d'une mise à jour !
@@ -603,6 +615,22 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 		}
 	}
 
+	private CampaignStatus deriveStatusFromPublished(Boolean isPublished, Date campaignStart) {
+		if (isPublished == null || !isPublished) {
+			return CampaignStatus.DRAFT;
+		}
+		LocalDate startDate = toLocalDate(campaignStart);
+		if (startDate != null && startDate.isAfter(LocalDate.now())) {
+			return CampaignStatus.PENDING;
+		}
+		return CampaignStatus.OPEN;
+	}
+
+	private void applyDerivedStatus(Campaigns entity) {
+		CampaignStatus derived = deriveStatusFromPublished(entity.getIsPublished(), entity.getCampaignStart());
+		entity.setCampaignStatus(derived.getValue());
+	}
+
 	private void validateCampaignStatusOnCreate(Campaigns campaign, Locale locale) {
 		CampaignStatus targetStatus = resolveCampaignStatus(campaign.getCampaignStatus(), locale);
 		if (targetStatus != CampaignStatus.DRAFT) {
@@ -679,10 +707,9 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 	}
 
 	private void validateCampaignArchivalChange(Boolean wasArchived, CampaignStatus targetStatus, Boolean isArchived, Locale locale) {
-		if (Boolean.TRUE.equals(isArchived) && !Boolean.TRUE.equals(wasArchived) && targetStatus != CampaignStatus.CLOSED) {
-			throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION(
-					"L'archivage est autorise uniquement pour une campagne CLOSED.",
-					locale));
+		if (Boolean.TRUE.equals(isArchived) && !Boolean.TRUE.equals(wasArchived)) {
+			// Archivage possible uniquement si isPublished = false (statut DRAFT ou CLOSED)
+			// La verification isPublished est faite dans le caller (archiveCampaign)
 		}
 	}
 
@@ -701,6 +728,239 @@ public class CampaignsBusiness implements IBasicBusiness<Request<CampaignsDto>, 
 			return null;
 		}
 		return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+	}
+
+	// ========== ACTIONS DE TRANSITION DE STATUT ==========
+
+	public Response<CampaignsDto> publishCampaign(Request<CampaignsDto> request, Locale locale) throws Exception {
+		log.info("----begin publishCampaign-----");
+		CampaignsDto dto = extractSingleDto(request);
+		Campaigns campaign = loadAndValidateCampaign(dto.getId(), locale);
+		Integer actorUserId = request.getUser();
+
+		// Verifier prerequis
+		List<String> violations = new ArrayList<String>();
+		if (campaign.getSpecialities() == null || campaign.getSpecialities().getId() == null) {
+			violations.add("specialite requise");
+		}
+		if (campaign.getPipelineTemplate() == null || campaign.getPipelineTemplate().getId() == null) {
+			violations.add("template de pipeline requis");
+		}
+		List<Form> forms = campaignFormRepository.findActiveFormsByCampaignId(campaign.getId());
+		if (forms == null || forms.isEmpty()) {
+			violations.add("au moins un formulaire rattache");
+		}
+		if (!violations.isEmpty()) {
+			throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION(
+					"Publication impossible: " + String.join("; ", violations), locale));
+		}
+
+		// Appliquer les dates optionnelles
+		if (dto.getCampaignStart() != null && !dto.getCampaignStart().isEmpty()) {
+			campaign.setCampaignStart(dateFormat.parse(dto.getCampaignStart()));
+		}
+		if (dto.getCampaignEnd() != null && !dto.getCampaignEnd().isEmpty()) {
+			campaign.setCampaignEnd(dateFormat.parse(dto.getCampaignEnd()));
+		}
+		if (campaign.getCampaignStart() != null && campaign.getCampaignEnd() != null
+				&& campaign.getCampaignEnd().before(campaign.getCampaignStart())) {
+			throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+					"La date de fin ne peut pas etre anterieure a la date de debut", locale));
+		}
+
+		campaign.setIsPublished(true);
+		applyDerivedStatus(campaign);
+		campaign.setUpdatedAt(Utilities.getCurrentDate());
+		campaign.setUpdatedBy(actorUserId);
+		campaign.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(campaign)));
+		campaignsRepository.save(campaign);
+
+		log.info("----end publishCampaign-----");
+		return buildSuccessResponse(campaign, locale);
+	}
+
+	public Response<CampaignsDto> openCampaign(Request<CampaignsDto> request, Locale locale) throws Exception {
+		log.info("----begin openCampaign-----");
+		CampaignsDto dto = extractSingleDto(request);
+		Campaigns campaign = loadAndValidateCampaign(dto.getId(), locale);
+		Integer actorUserId = request.getUser();
+
+		campaign.setIsPublished(true);
+		campaign.setCampaignStart(Utilities.getCurrentDate());
+		campaign.setCampaignStatus(CampaignStatus.OPEN.getValue());
+		campaign.setUpdatedAt(Utilities.getCurrentDate());
+		campaign.setUpdatedBy(actorUserId);
+		campaign.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(campaign)));
+		campaignsRepository.save(campaign);
+
+		log.info("----end openCampaign-----");
+		return buildSuccessResponse(campaign, locale);
+	}
+
+	public Response<CampaignsDto> closeCampaign(Request<CampaignsDto> request, Locale locale) throws Exception {
+		log.info("----begin closeCampaign-----");
+		CampaignsDto dto = extractSingleDto(request);
+		Campaigns campaign = loadAndValidateCampaign(dto.getId(), locale);
+		Integer actorUserId = request.getUser();
+
+		campaign.setCampaignEnd(Utilities.getCurrentDate());
+		campaign.setIsPublished(false);
+		campaign.setCampaignStatus(CampaignStatus.CLOSED.getValue());
+		campaign.setUpdatedAt(Utilities.getCurrentDate());
+		campaign.setUpdatedBy(actorUserId);
+		campaign.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(campaign)));
+		campaignsRepository.save(campaign);
+
+		log.info("----end closeCampaign-----");
+		return buildSuccessResponse(campaign, locale);
+	}
+
+	public Response<CampaignsDto> pauseCampaign(Request<CampaignsDto> request, Locale locale) throws Exception {
+		log.info("----begin pauseCampaign-----");
+		CampaignsDto dto = extractSingleDto(request);
+		Campaigns campaign = loadAndValidateCampaign(dto.getId(), locale);
+		Integer actorUserId = request.getUser();
+
+		// Valider la date de reprise si fournie
+		if (dto.getCampaignStart() != null && !dto.getCampaignStart().isEmpty()) {
+			Date resumeDate = dateFormat.parse(dto.getCampaignStart());
+			LocalDate resumeLocal = toLocalDate(resumeDate);
+			LocalDate now = LocalDate.now();
+
+			if (campaign.getCampaignStart() != null) {
+				LocalDate startLocal = toLocalDate(campaign.getCampaignStart());
+				if (startLocal != null && startLocal.isAfter(now)) {
+					throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+							"La campagne n'a pas encore demarre, impossible de la mettre en pause", locale));
+				}
+			}
+			if (!resumeLocal.isAfter(now)) {
+				throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+						"La date de reprise doit etre dans le futur", locale));
+			}
+			if (campaign.getCampaignEnd() != null) {
+				LocalDate endLocal = toLocalDate(campaign.getCampaignEnd());
+				if (endLocal != null && !resumeLocal.isBefore(endLocal)) {
+					throw new InvalidEntityException(functionalError.REQUEST_FAIL(
+							"La date de reprise doit etre anterieure a la date de fin", locale));
+				}
+			}
+			campaign.setCampaignStart(resumeDate);
+		}
+
+		campaign.setCampaignStatus(CampaignStatus.PAUSED.getValue());
+		campaign.setUpdatedAt(Utilities.getCurrentDate());
+		campaign.setUpdatedBy(actorUserId);
+		campaign.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(campaign)));
+		campaignsRepository.save(campaign);
+
+		log.info("----end pauseCampaign-----");
+		return buildSuccessResponse(campaign, locale);
+	}
+
+	public Response<CampaignsDto> resumeCampaign(Request<CampaignsDto> request, Locale locale) throws Exception {
+		log.info("----begin resumeCampaign-----");
+		CampaignsDto dto = extractSingleDto(request);
+		Campaigns campaign = loadAndValidateCampaign(dto.getId(), locale);
+		Integer actorUserId = request.getUser();
+
+		campaign.setIsPublished(true);
+		campaign.setCampaignStatus(CampaignStatus.OPEN.getValue());
+		campaign.setUpdatedAt(Utilities.getCurrentDate());
+		campaign.setUpdatedBy(actorUserId);
+		campaign.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(campaign)));
+		campaignsRepository.save(campaign);
+
+		log.info("----end resumeCampaign-----");
+		return buildSuccessResponse(campaign, locale);
+	}
+
+	public Response<CampaignsDto> unpublishCampaign(Request<CampaignsDto> request, Locale locale) throws Exception {
+		log.info("----begin unpublishCampaign-----");
+		CampaignsDto dto = extractSingleDto(request);
+		Campaigns campaign = loadAndValidateCampaign(dto.getId(), locale);
+		Integer actorUserId = request.getUser();
+
+		campaign.setIsPublished(false);
+		applyDerivedStatus(campaign);
+		campaign.setUpdatedAt(Utilities.getCurrentDate());
+		campaign.setUpdatedBy(actorUserId);
+		campaign.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(campaign)));
+		campaignsRepository.save(campaign);
+
+		log.info("----end unpublishCampaign-----");
+		return buildSuccessResponse(campaign, locale);
+	}
+
+	public Response<CampaignsDto> archiveCampaign(Request<CampaignsDto> request, Locale locale) throws Exception {
+		log.info("----begin archiveCampaign-----");
+		CampaignsDto dto = extractSingleDto(request);
+		Campaigns campaign = loadAndValidateCampaign(dto.getId(), locale);
+		Integer actorUserId = request.getUser();
+
+		if (Boolean.TRUE.equals(campaign.getIsPublished())) {
+			throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION(
+					"Impossible d'archiver une campagne publiee. Depubliez-la d'abord.", locale));
+		}
+
+		campaign.setIsArchived(true);
+		campaign.setUpdatedAt(Utilities.getCurrentDate());
+		campaign.setUpdatedBy(actorUserId);
+		campaign.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(campaign)));
+		campaignsRepository.save(campaign);
+
+		log.info("----end archiveCampaign-----");
+		return buildSuccessResponse(campaign, locale);
+	}
+
+	public Response<CampaignsDto> unarchiveCampaign(Request<CampaignsDto> request, Locale locale) throws Exception {
+		log.info("----begin unarchiveCampaign-----");
+		CampaignsDto dto = extractSingleDto(request);
+		Campaigns campaign = loadAndValidateCampaign(dto.getId(), locale);
+		Integer actorUserId = request.getUser();
+
+		campaign.setIsArchived(false);
+		campaign.setUpdatedAt(Utilities.getCurrentDate());
+		campaign.setUpdatedBy(actorUserId);
+		campaign.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(campaign)));
+		campaignsRepository.save(campaign);
+
+		log.info("----end unarchiveCampaign-----");
+		return buildSuccessResponse(campaign, locale);
+	}
+
+	// ========== HELPERS POUR LES ACTIONS ==========
+
+	private CampaignsDto extractSingleDto(Request<CampaignsDto> request) {
+		if (request.getDatas() != null && !request.getDatas().isEmpty()) {
+			return request.getDatas().get(0);
+		}
+		return request.getData();
+	}
+
+	private Campaigns loadAndValidateCampaign(Integer campaignId, Locale locale) {
+		if (campaignId == null) {
+			throw new InvalidEntityException(functionalError.FIELD_EMPTY("campaignId", locale));
+		}
+		Campaigns campaign = campaignsRepository.findOne(campaignId, false);
+		if (campaign == null) {
+			throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("campaigns id -> " + campaignId, locale));
+		}
+		return campaign;
+	}
+
+	private Response<CampaignsDto> buildSuccessResponse(Campaigns campaign, Locale locale) throws Exception {
+		Response<CampaignsDto> response = new Response<CampaignsDto>();
+		CampaignsDto dto = CampaignsTransformer.INSTANCE.toDto(campaign);
+		dto = getFullInfos(dto, 1, null, locale);
+		Status status = new Status();
+		status.setCode(StatusCode.SUCCESS);
+		status.setMessage(StatusMessage.SUCCESS);
+		response.setItems(Arrays.asList(dto));
+		response.setHttpCode(HttpStatus.OK.value());
+		response.setStatus(status);
+		response.setHasError(false);
+		return response;
 	}
 
 	private void ensureCampaignCreatorPermissions(List<Campaigns> campaigns, Integer actorUserId) {
