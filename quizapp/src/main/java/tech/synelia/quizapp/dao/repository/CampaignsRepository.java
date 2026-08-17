@@ -437,4 +437,11 @@ public interface CampaignsRepository extends JpaRepository<Campaigns, Integer>, 
 
 	@Query("select e.user.id from Campaigns e where e.user.id in :userIds and e.isDeleted = false")
 	List<Integer> findCreatorIdsWithCampaigns(@Param("userIds") List<Integer> userIds);
+
+	/**
+	 * Finds all non-deleted campaigns whose status can be automatically evaluated
+	 * for lifecycle transitions (DRAFT, PENDING, OPEN, PAUSED).
+	 */
+	@Query("select e from Campaigns e where e.isDeleted = false and e.campaignStatus in ('DRAFT', 'PENDING', 'OPEN', 'PAUSED')")
+	List<Campaigns> findTransitionableCampaigns();
 }
