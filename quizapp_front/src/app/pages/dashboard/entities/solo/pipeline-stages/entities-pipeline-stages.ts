@@ -66,22 +66,6 @@ export class EntitiesPipelineStagesComponent extends EntityCrudBase<PipelineStag
     return this.allTemplates().find(t => t.id === id)?.templateName || `#${id}`;
   }
 
-  isTemplateLocked(templateId?: number): boolean {
-    if (!templateId) {
-      return false;
-    }
-
-    return !!this.allTemplates().find(template => template.id === templateId)?.isLocked;
-  }
-
-  isCreateTargetLocked(): boolean {
-    return this.isTemplateLocked(this.createFormData.pipelineTemplateId);
-  }
-
-  isEditStageLocked(): boolean {
-    return !!this.editFormData.isLocked;
-  }
-
   getEditableStageTypes(currentType?: StageType, templateStages: PipelineStage[] = [], currentStageId?: number): StageType[] {
     const availableTypes = this.stageTypes;
     if (!currentType || availableTypes.includes(currentType)) {
@@ -345,18 +329,10 @@ export class EntitiesPipelineStagesComponent extends EntityCrudBase<PipelineStag
   }
 
   override confirmDelete(item: PipelineStage): void {
-    if (item.isLocked) {
-      this.notificationService.warning('Étape déjà atteinte', 'Cette étape est utilisée par des candidatures: elle sera archivée (désactivée) plutôt que supprimée.');
-    }
-
     super.confirmDelete(item);
   }
 
   override deleteFromEdit(): void {
-    if (this.editFormData.isLocked) {
-      this.notificationService.warning('Étape déjà atteinte', 'Cette étape est utilisée par des candidatures: elle sera archivée (désactivée) plutôt que supprimée.');
-    }
-
     super.deleteFromEdit();
   }
 

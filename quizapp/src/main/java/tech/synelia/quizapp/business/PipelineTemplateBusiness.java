@@ -140,7 +140,35 @@ public class PipelineTemplateBusiness implements IBasicBusiness<Request<Pipeline
 
             entityToSave.setUpdatedAt(Utilities.getCurrentDate());
             entityToSave.setUpdatedBy(request.getUser());
-            items.add(entityToSave);
+
+            if (entityToSave.getIsLocked() != null && entityToSave.getIsLocked()) {
+                String autoName = entityToSave.getTemplateName() + " (copie)";
+                int counter = 1;
+                String candidateName = autoName;
+                while (pipelineTemplateRepository.findByTemplateName(candidateName, false) != null
+                       && !pipelineTemplateRepository.findByTemplateName(candidateName, false).isEmpty()) {
+                    candidateName = autoName + " " + counter++;
+                }
+                Response<PipelineTemplateDto> dupResponse = duplicateTemplate(entityToSave.getId(), candidateName, request.getUser(), locale);
+                if (dupResponse.getItems() != null && !dupResponse.getItems().isEmpty()) {
+                    PipelineTemplateDto newDto = dupResponse.getItems().get(0);
+                    PipelineTemplate newEntity = pipelineTemplateRepository.findOne(newDto.getId(), false);
+                    if (newEntity != null) {
+                        if (Utilities.shouldUpdate(dto.getTemplateName())) newEntity.setTemplateName(dto.getTemplateName());
+                        if (Utilities.shouldUpdate(dto.getTemplateDesc())) newEntity.setTemplateDesc(dto.getTemplateDesc());
+                        if (dto.getIsDefault() != null) newEntity.setIsDefault(dto.getIsDefault());
+                        if (dto.getIsActive() != null) newEntity.setIsActive(dto.getIsActive());
+                        if (dto.getIsDeleted() != null) newEntity.setIsDeleted(dto.getIsDeleted());
+                        newEntity.setUpdatedAt(Utilities.getCurrentDate());
+                        newEntity.setUpdatedBy(request.getUser());
+                        dto.setAutoDuplicated(true);
+                        dto.setNewTemplateId(newDto.getId());
+                        items.add(newEntity);
+                    }
+                }
+            } else {
+                items.add(entityToSave);
+            }
         }
 
         if (!items.isEmpty()) {
@@ -179,9 +207,16 @@ public class PipelineTemplateBusiness implements IBasicBusiness<Request<Pipeline
                 throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("pipeline_template -> " + dto.getId(), locale));
             }
 
-            // Bloquer si verrouillé
+            // Auto-duplicate avant suppression si verrouillé
             if (existingEntity.getIsLocked() != null && existingEntity.getIsLocked()) {
-                throw new InvalidEntityException(functionalError.DISALLOWED_OPERATION("Ce pipeline est verrouillé car utilisé par des candidats", locale));
+                String autoName = existingEntity.getTemplateName() + " (copie)";
+                int counter = 1;
+                String candidateName = autoName;
+                while (pipelineTemplateRepository.findByTemplateName(candidateName, false) != null 
+                       && !pipelineTemplateRepository.findByTemplateName(candidateName, false).isEmpty()) {
+                    candidateName = autoName + " " + counter++;
+                }
+                duplicateTemplate(existingEntity.getId(), candidateName, request.getUser(), locale);
             }
 
             // Garde campagne ouverte

@@ -302,16 +302,7 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/dashboard/entities/solo/campaign-form/entities-campaign-form').then(m => m.EntitiesCampaignFormComponent),
         canActivate: [permissionGuard(['VIEW_FORM'])]
       },
-      { 
-        path: 'entities/form-versions/:page', 
-        loadComponent: () => import('./pages/dashboard/entities/solo/form-versions/entities-form-versions').then(m => m.EntitiesFormVersionsComponent),
-        canActivate: [permissionGuard(['VIEW_FORM_VERSION'])]
-      },
-      { 
-        path: 'entities/form-versions', 
-        loadComponent: () => import('./pages/dashboard/entities/solo/form-versions/entities-form-versions').then(m => m.EntitiesFormVersionsComponent),
-        canActivate: [permissionGuard(['VIEW_FORM_VERSION'])]
-      },
+
       { 
         path: 'entities/form-questions/:page', 
         loadComponent: () => import('./pages/dashboard/entities/solo/form-questions/entities-form-questions').then(m => m.EntitiesFormQuestionsComponent),

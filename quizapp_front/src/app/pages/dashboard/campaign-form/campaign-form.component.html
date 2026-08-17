@@ -459,27 +459,7 @@
           Associez un ou plusieurs formulaires existants à cette campagne. Ils seront ensuite disponibles dans le détail de campagne et pour les stratégies d'attribution.
         </p>
 
-        @if (hasPendingFormDuplications()) {
-          <div class="form-sharing-banner form-sharing-banner--pending">
-            <strong>Duplication en attente</strong>
-            <span>Les formulaires marqués comme copie seront créés et reliés à cette campagne au prochain enregistrement.</span>
-          </div>
-        }
 
-        @if (sharedPublicationImpacts().length > 0) {
-          <div class="form-sharing-banner form-sharing-banner--warning">
-            <strong>Publication partagée: impact multi-campagnes</strong>
-            <span>Les formulaires ci-dessous sont partagés et ont déjà une version publiée. Une publication future impactera toutes les campagnes liées.</span>
-            <ul class="form-sharing-impact-list">
-              @for (impact of sharedPublicationImpacts(); track impact.formLabel) {
-                <li>
-                  <span class="impact-form-name">{{ impact.formLabel }}</span>
-                  <span class="impact-campaigns">{{ impact.impactedCampaignNames.join(' • ') || 'Campagnes liées indisponibles' }}</span>
-                </li>
-              }
-            </ul>
-          </div>
-        }
 
         <div class="recruiter-search recruiter-search-forms">
           <div class="search-input-wrapper">
@@ -516,9 +496,7 @@
                           {{ getLinkedCampaignCount(form) }} campagne{{ getLinkedCampaignCount(form) > 1 ? 's' : '' }} liée{{ getLinkedCampaignCount(form) > 1 ? 's' : '' }}
                         </span>
                       }
-                      @if (hasSharedPublicationWarning(form)) {
-                        <span class="form-status form-status-warning">Publication partagée</span>
-                      }
+
                     </div>
                     @if (getLinkedCampaignNames(form).length > 0) {
                       <div class="form-shared-campaigns">
@@ -570,31 +548,11 @@
                   @if (getLinkedCampaignNames(form).length > 0) {
                     <div class="selected-form-context">Lié à : {{ getLinkedCampaignNames(form).join(' • ') }}</div>
                   }
-                  @if (hasSharedPublicationWarning(form)) {
-                    <div class="selected-form-warning">
-                      Ce formulaire est partagé et déjà publié. Une future publication impactera :
-                      <strong>{{ getSharedImpactCampaignNames(form).join(' • ') || (getLinkedCampaignCount(form) + ' campagne(s) liée(s)') }}</strong>.
-                      Dupliquez le formulaire pour isoler cette campagne.
-                    </div>
-                  }
-                  @if (isPendingFormDuplication(form)) {
-                    <div class="selected-form-warning selected-form-warning--pending">
-                      Cette copie remplacera le formulaire partagé pour cette campagne lors du prochain enregistrement.
-                    </div>
-                  }
+
                 </div>
 
                 <div class="item-actions">
-                  @if (canDuplicateCampaignForm(form)) {
-                    <button
-                      type="button"
-                      class="secondary-action-btn"
-                      (click)="duplicateCampaignForm(i, form)"
-                      title="Créer une copie indépendante pour cette campagne"
-                    >
-                      Dupliquer pour cette campagne
-                    </button>
-                  }
+
 
                   @if (canRemoveCampaignForm(form)) {
                     <button

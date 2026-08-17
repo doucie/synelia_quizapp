@@ -47,6 +47,8 @@ public class FormQuestionsBusiness implements IBasicBusiness<Request<FormQuestio
 	private TechnicalError technicalError;
 	@Autowired
 	private ExceptionUtils exceptionUtils;
+	@Autowired
+	private FormVersionForkService formVersionForkService;
 	@PersistenceContext
 	private EntityManager em;
 
@@ -80,7 +82,11 @@ public class FormQuestionsBusiness implements IBasicBusiness<Request<FormQuestio
 				if (existingFormVersion == null) {
 					throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("formVersion formVersionId -> " + dto.getFormVersionId(), locale));
 				}
-				ensureFormVersionIsEditable(existingFormVersion, locale);
+				FormVersion resolved = ensureFormVersionIsEditable(existingFormVersion, request.getUser(), locale);
+				if (!Objects.equals(resolved.getId(), existingFormVersion.getId())) {
+					dto.setFormVersionId(resolved.getId());
+					existingFormVersion = resolved;
+				}
 			}
 
 			// Verify if question exists
@@ -161,15 +167,28 @@ public class FormQuestionsBusiness implements IBasicBusiness<Request<FormQuestio
 			}
 			FormVersion originalFormVersion = entityToSave.getFormVersion();
 			Integer originalQuestionOrder = entityToSave.getQuestionOrder();
-			ensureFormVersionIsEditable(entityToSave.getFormVersion(), locale);
+			FormVersion resolved = ensureFormVersionIsEditable(entityToSave.getFormVersion(), request.getUser(), locale);
+			if (!Objects.equals(resolved.getId(), entityToSave.getFormVersion().getId())) {
+				// Version forkée — retrouver le link dans la nouvelle version
+				List<FormQuestions> newVersionLinks = formQuestionsRepository.findByFormVersionIdOrderByQuestionOrder(resolved.getId(), false);
+				if (newVersionLinks != null) {
+					for (FormQuestions fq : newVersionLinks) {
+						if (fq.getQuestion() != null && Objects.equals(fq.getQuestion().getId(), entityToSave.getQuestion().getId())) {
+							entityToSave = fq;
+							break;
+						}
+					}
+				}
+				entityToSave.setFormVersion(resolved);
+			}
 
 			if (dto.getFormVersionId() != null && dto.getFormVersionId() > 0) {
 				FormVersion existingFormVersion = formVersionRepository.findOne(dto.getFormVersionId(), false);
 				if (existingFormVersion == null) {
 					throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("formVersion formVersionId -> " + dto.getFormVersionId(), locale));
 				}
-				ensureFormVersionIsEditable(existingFormVersion, locale);
-				entityToSave.setFormVersion(existingFormVersion);
+				FormVersion resolvedTarget = ensureFormVersionIsEditable(existingFormVersion, request.getUser(), locale);
+				entityToSave.setFormVersion(resolvedTarget);
 			}
 			if (dto.getQuestionId() != null && dto.getQuestionId() > 0) {
 				Question existingQuestion = questionRepository.findOne(dto.getQuestionId(), false);
@@ -254,7 +273,32 @@ public class FormQuestionsBusiness implements IBasicBusiness<Request<FormQuestio
 			if (existingEntity == null) {
 				throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("formQuestions -> " + dto.getId(), locale));
 			}
-			ensureFormVersionIsEditable(existingEntity.getFormVersion(), locale);
+			FormVersion resolved = ensureFormVersionIsEditable(existingEntity.getFormVersion(), request.getUser(), locale);
+			if (!Objects.equals(resolved.getId(), existingEntity.getFormVersion().getId())) {
+				// Version forkée — supprimer le link dans la nouvelle version
+				List<FormQuestions> newVersionLinks = formQuestionsRepository.findByFormVersionIdOrderByQuestionOrder(resolved.getId(), false);
+				if (newVersionLinks != null) {
+					for (FormQuestions fq : newVersionLinks) {
+						if (fq.getQuestion() != null && Objects.equals(fq.getQuestion().getId(), existingEntity.getQuestion().getId())) {
+							fq.setIsDeleted(true);
+							fq.setUpdatedAt(Utilities.getCurrentDate());
+							fq.setUpdatedBy(request.getUser());
+							fq.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(fq)));
+							formQuestionsRepository.save(fq);
+							em.flush();
+							normalizeActiveQuestionOrders(resolved, request.getUser());
+							break;
+						}
+					}
+				}
+				Status forkStatus = new Status();
+				forkStatus.setCode(StatusCode.SUCCESS);
+				forkStatus.setMessage(StatusMessage.SUCCESS);
+				response.setHasError(false);
+				response.setHttpCode(HttpStatus.OK.value());
+				response.setStatus(forkStatus);
+				return response;
+			}
 
 			existingEntity.setIsDeleted(true);
 			existingEntity.setUpdatedAt(Utilities.getCurrentDate());
@@ -319,13 +363,16 @@ public class FormQuestionsBusiness implements IBasicBusiness<Request<FormQuestio
 		return response;
 	}
 
-	private void ensureFormVersionIsEditable(FormVersion formVersion, Locale locale) {
+	private FormVersion ensureFormVersionIsEditable(FormVersion formVersion, Integer userId, Locale locale) throws JsonProcessingException {
 		if (formVersion != null && Boolean.TRUE.equals(formVersion.getIsLocked())) {
-			throw new InvalidEntityException(functionalError.REQUEST_FAIL(
-					"La version de formulaire " + formVersion.getVersionNumber()
-							+ " est verrouillee. Creez d'abord une nouvelle version pour la modifier.",
-					locale));
+			FormVersion newVersion = formVersionForkService.createForkedVersion(formVersion, userId, locale);
+			formVersionForkService.autoPublish(newVersion, userId, locale);
+			newVersion.setUpdatedAt(Utilities.getCurrentDate());
+			newVersion.setUpdatedBy(userId);
+			newVersion.setSearchString(Utilities.extractValuesFromJson(Utilities.convertObjectToJson(newVersion)));
+			return formVersionRepository.save(newVersion);
 		}
+		return formVersion;
 	}
 
 	public Response<FormQuestionsDto> getAllByCriteria(Request<FormQuestionsDto> request, Locale locale) throws Exception {
@@ -404,15 +451,27 @@ public class FormQuestionsBusiness implements IBasicBusiness<Request<FormQuestio
 			FormVersion originalFormVersion = entityToSave.getFormVersion();
 			Integer originalQuestionOrder = entityToSave.getQuestionOrder();
 			boolean wasDeleted = Boolean.TRUE.equals(entityToSave.getIsDeleted());
-			ensureFormVersionIsEditable(entityToSave.getFormVersion(), locale);
+			FormVersion resolved = ensureFormVersionIsEditable(entityToSave.getFormVersion(), request.getUser(), locale);
+			if (!Objects.equals(resolved.getId(), entityToSave.getFormVersion().getId())) {
+				List<FormQuestions> newVersionLinks = formQuestionsRepository.findByFormVersionIdOrderByQuestionOrder(resolved.getId(), false);
+				if (newVersionLinks != null) {
+					for (FormQuestions fq : newVersionLinks) {
+						if (fq.getQuestion() != null && Objects.equals(fq.getQuestion().getId(), entityToSave.getQuestion().getId())) {
+							entityToSave = fq;
+							break;
+						}
+					}
+				}
+				entityToSave.setFormVersion(resolved);
+			}
 
 			if (dto.getFormVersionId() != null && dto.getFormVersionId() > 0) {
 				FormVersion existingFormVersion = formVersionRepository.findOne(dto.getFormVersionId(), false);
 				if (existingFormVersion == null) {
 					throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("formVersion formVersionId -> " + dto.getFormVersionId(), locale));
 				}
-				ensureFormVersionIsEditable(existingFormVersion, locale);
-				entityToSave.setFormVersion(existingFormVersion);
+				FormVersion resolvedTarget = ensureFormVersionIsEditable(existingFormVersion, request.getUser(), locale);
+				entityToSave.setFormVersion(resolvedTarget);
 			}
 			if (dto.getQuestionId() != null && dto.getQuestionId() > 0) {
 				Question existingQuestion = questionRepository.findOne(dto.getQuestionId(), false);
@@ -495,15 +554,27 @@ public class FormQuestionsBusiness implements IBasicBusiness<Request<FormQuestio
 			FormVersion originalFormVersion = entityToSave.getFormVersion();
 			Integer originalQuestionOrder = entityToSave.getQuestionOrder();
 			boolean wasDeleted = Boolean.TRUE.equals(entityToSave.getIsDeleted());
-			ensureFormVersionIsEditable(entityToSave.getFormVersion(), locale);
+			FormVersion resolved = ensureFormVersionIsEditable(entityToSave.getFormVersion(), request.getUser(), locale);
+			if (!Objects.equals(resolved.getId(), entityToSave.getFormVersion().getId())) {
+				List<FormQuestions> newVersionLinks = formQuestionsRepository.findByFormVersionIdOrderByQuestionOrder(resolved.getId(), false);
+				if (newVersionLinks != null) {
+					for (FormQuestions fq : newVersionLinks) {
+						if (fq.getQuestion() != null && Objects.equals(fq.getQuestion().getId(), entityToSave.getQuestion().getId())) {
+							entityToSave = fq;
+							break;
+						}
+					}
+				}
+				entityToSave.setFormVersion(resolved);
+			}
 
 			if (dto.getFormVersionId() != null && dto.getFormVersionId() > 0) {
 				FormVersion existingFormVersion = formVersionRepository.findOne(dto.getFormVersionId(), false);
 				if (existingFormVersion == null) {
 					throw new EntityNotFoundException(functionalError.DATA_NOT_EXIST("formVersion formVersionId -> " + dto.getFormVersionId(), locale));
 				}
-				ensureFormVersionIsEditable(existingFormVersion, locale);
-				entityToSave.setFormVersion(existingFormVersion);
+				FormVersion resolvedTarget = ensureFormVersionIsEditable(existingFormVersion, request.getUser(), locale);
+				entityToSave.setFormVersion(resolvedTarget);
 			}
 			if (dto.getQuestionId() != null && dto.getQuestionId() > 0) {
 				Question existingQuestion = questionRepository.findOne(dto.getQuestionId(), false);

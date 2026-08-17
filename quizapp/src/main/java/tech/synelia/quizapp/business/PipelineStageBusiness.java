@@ -695,19 +695,7 @@ public class PipelineStageBusiness implements IBasicBusiness<Request<PipelineSta
     }
 
     private List<PipelineStageDto> enrichIsLocked(List<PipelineStage> stages) throws ParseException {
-        List<PipelineStageDto> dtos = PipelineStageTransformer.INSTANCE.toDtos(stages);
-        Set<Integer> used = new HashSet<>();
-        if (stages != null && !stages.isEmpty()) {
-            List<Integer> ids = new ArrayList<>();
-            for (PipelineStage s : stages) {
-                ids.add(s.getId());
-            }
-            used.addAll(applicationProgressRepository.findUsedStageIds(ids));
-        }
-        for (PipelineStageDto dto : dtos) {
-            dto.setIsLocked(dto.getId() != null && used.contains(dto.getId()));
-        }
-        return dtos;
+        return PipelineStageTransformer.INSTANCE.toDtos(stages);
     }
 
     private Response<PipelineStageDto> buildResponse(List<PipelineStage> stages, Locale locale) throws ParseException {

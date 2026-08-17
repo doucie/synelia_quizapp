@@ -26,6 +26,8 @@ public class PipelineTemplateDto extends _PipelineTemplateDto implements Cloneab
     private String  updatedAt;
     private Integer updatedBy;
     private Boolean isDeleted;
+    private Boolean autoDuplicated;
+    private Integer newTemplateId;
     private String  searchString;
 
     // Liste des étapes (pour retourner le template complet)

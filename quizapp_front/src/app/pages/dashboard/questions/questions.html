@@ -397,9 +397,7 @@
               <p class="form-help form-help--compact" [class.form-help--success]="questionForm().manualCorrectionRequired === true">Désactive l’attribution automatique des points pour cette question et impose une note recruteur dans l’intervalle fermé [0 ; score].</p>
             </div>
 
-            @if (formVersionQuestionContext()) {
-              <p class="question-form__context-note">Brouillon de version #{{ formVersionQuestionContext()?.formVersionId }} : les changements structurels isoleront automatiquement la question.</p>
-            }
+
           </section>
 
           @if (questionModalSupportsAnswerJustification() || questionModalRequiresFreeTextPlaceholder()) {

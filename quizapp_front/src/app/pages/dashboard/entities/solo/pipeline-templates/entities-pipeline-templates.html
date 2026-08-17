@@ -73,14 +73,6 @@
           </app-filter-select>
         </div>
         <div class="form-group">
-          <label>Verrouillé</label>
-          <app-filter-select [(ngModel)]="advancedCriteria.isLocked">
-            <option [ngValue]="undefined">Tous</option>
-            <option [ngValue]="true">Oui</option>
-            <option [ngValue]="false">Non</option>
-          </app-filter-select>
-        </div>
-        <div class="form-group">
           <label>Supprimé</label>
           <app-filter-select [(ngModel)]="advancedCriteria.isDeleted">
             <option [ngValue]="undefined">Tous</option>
@@ -152,7 +144,6 @@
             <th class="col-medium" [class.col-hidden]="!isColumnVisible('templateDesc')">Description</th>
             <th class="col-boolean" [class.col-hidden]="!isColumnVisible('isDefault')">Par défaut</th>
             <th class="col-boolean" [class.col-hidden]="!isColumnVisible('isActive')">Actif</th>
-            <th class="col-boolean" [class.col-hidden]="!isColumnVisible('isLocked')">Verrouillé</th>
             <th class="col-date" [class.col-hidden]="!isColumnVisible('createdAt')">Créé le</th>
             <th class="col-actions" [class.col-hidden]="!isColumnVisible('actions')">Actions</th>
           </tr>
@@ -164,14 +155,10 @@
             <td [class.col-hidden]="!isColumnVisible('templateDesc')">{{ item.templateDesc || '-' }}</td>
             <td [class.col-hidden]="!isColumnVisible('isDefault')"><span class="bool-badge" [class.is-true]="item.isDefault" [class.is-false]="!item.isDefault">{{ item.isDefault ? 'Oui' : 'Non' }}</span></td>
             <td [class.col-hidden]="!isColumnVisible('isActive')"><span class="bool-badge" [class.is-true]="item.isActive" [class.is-false]="!item.isActive">{{ item.isActive ? 'Oui' : 'Non' }}</span></td>
-            <td [class.col-hidden]="!isColumnVisible('isLocked')"><span class="bool-badge" [class.is-true]="item.isLocked" [class.is-false]="!item.isLocked">{{ item.isLocked ? 'Oui' : 'Non' }}</span></td>
             <td [class.col-hidden]="!isColumnVisible('createdAt')"><span class="cell-date">{{ formatDate(item.createdAt) }}</span></td>
             <td class="actions-cell" [class.col-hidden]="!isColumnVisible('actions')" (click)="$event.stopPropagation()">
               <div class="actions-menu">
                 <ng-container *ngIf="!item.isDeleted">
-                  <button class="action-btn primary" *ngIf="canDuplicateTemplate(item)" (click)="openDuplicateModal(item)" title="Dupliquer" aria-label="Dupliquer">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 15H4C2.89543 15 2 14.1046 2 13V4C2 2.89543 2.89543 2 4 2H13C14.1046 2 15 2.89543 15 4V5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                  </button>
                   <button class="action-btn success" *ngIf="canSetDefaultTemplate(item)" (click)="openSetDefaultConfirm(item)" title="Définir par défaut" aria-label="Définir par défaut">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M22 11.08V12A10 10 0 1 1 16.07 2.86" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 4L12 14.01L9 11.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   </button>

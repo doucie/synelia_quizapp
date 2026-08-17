@@ -32,6 +32,8 @@ public class FormVersionDto extends _FormVersionDto implements Cloneable {
     private String     dateModificationDe   ;
     private String     dateModificationA    ;
     private Integer    formId               ;
+    private Boolean    autoVersionCreated   ;
+    private Integer    newVersionNumber     ;
 
     // Search param
     private SearchParam<Integer>  idParam               ;

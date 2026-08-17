@@ -266,28 +266,25 @@
     </div>
     <div class="modal-content">
       <form class="edit-form">
-        <div class="form-group"><label class="form-label">Libellé</label><input type="text" class="form-input" [(ngModel)]="editFormData.stageLabel" name="stageLabel" [disabled]="isEditStageLocked()" /></div>
+        <div class="form-group"><label class="form-label">Libellé</label><input type="text" class="form-input" [(ngModel)]="editFormData.stageLabel" name="stageLabel" /></div>
         <div class="form-group">
           <label class="form-label">Type</label>
-          <select class="form-input" [(ngModel)]="editFormData.stageType" name="stageType" [disabled]="isEditStageLocked()">
+          <select class="form-input" [(ngModel)]="editFormData.stageType" name="stageType">
             <option [ngValue]="undefined">-- Sélectionner --</option>
             @for (type of getEditableStageTypes(editFormData.stageType, editTemplateStages(), editFormData.id); track type) {
               <option [ngValue]="type">{{ getStageTypeLabel(type) }}</option>
             }
           </select>
         </div>
-        <div class="form-group"><label class="form-label">Ordre</label><input type="number" class="form-input" [(ngModel)]="editFormData.stageOrder" name="stageOrder" [disabled]="isEditStageLocked()" /></div>
+        <div class="form-group"><label class="form-label">Ordre</label><input type="number" class="form-input" [(ngModel)]="editFormData.stageOrder" name="stageOrder" /></div>
         <div class="form-group">
           <label class="form-label">Template</label>
-          <select class="form-input" [(ngModel)]="editFormData.pipelineTemplateId" name="pipelineTemplateId" [disabled]="isEditStageLocked()" (ngModelChange)="onEditTemplateChange($event)">
+          <select class="form-input" [(ngModel)]="editFormData.pipelineTemplateId" name="pipelineTemplateId" (ngModelChange)="onEditTemplateChange($event)">
             <option [ngValue]="undefined">-- Sélectionner --</option>
             @for (tpl of allTemplates(); track tpl.id) {
               <option [ngValue]="tpl.id">{{ tpl.templateName }}</option>
             }
           </select>
-          @if (editFormData.isLocked) {
-            <small class="form-helper">Étape déjà atteinte par des candidatures: l’enregistrement créera une nouvelle révision active.</small>
-          }
         </div>
         <div class="form-group">
           <label class="form-label">config_json</label>
@@ -296,12 +293,11 @@
             rows="5"
             [(ngModel)]="editFormData.configJson"
             name="configJsonEdit"
-            [disabled]="isEditStageLocked()"
             [placeholder]="getConfigPlaceholder(editFormData.stageType)"></textarea>
           <small class="form-helper">{{ getConfigHelp(editFormData.stageType) }}</small>
         </div>
-        <div class="form-group"><app-filter-checkbox class="form-label" inputId="entities-pipeline-stages-edit-required" label="Obligatoire" variant="inline" [(ngModel)]="editFormData.isRequired" [disabled]="isEditStageLocked()" name="editPipelineStageIsRequired" ariaLabel="Étape obligatoire"></app-filter-checkbox></div>
-        <div class="form-group"><app-filter-checkbox class="form-label" inputId="entities-pipeline-stages-edit-eliminatory" label="Éliminatoire" variant="inline" [(ngModel)]="editFormData.isEliminatory" [disabled]="isEditStageLocked()" name="editPipelineStageIsEliminatory" ariaLabel="Étape éliminatoire"></app-filter-checkbox></div>
+        <div class="form-group"><app-filter-checkbox class="form-label" inputId="entities-pipeline-stages-edit-required" label="Obligatoire" variant="inline" [(ngModel)]="editFormData.isRequired" name="editPipelineStageIsRequired" ariaLabel="Étape obligatoire"></app-filter-checkbox></div>
+        <div class="form-group"><app-filter-checkbox class="form-label" inputId="entities-pipeline-stages-edit-eliminatory" label="Éliminatoire" variant="inline" [(ngModel)]="editFormData.isEliminatory" name="editPipelineStageIsEliminatory" ariaLabel="Étape éliminatoire"></app-filter-checkbox></div>
       </form>
     </div>
     <div class="modal-actions">
@@ -342,9 +338,6 @@
               <option [ngValue]="tpl.id">{{ tpl.templateName }}</option>
             }
           </select>
-          @if (isCreateTargetLocked()) {
-            <small class="form-helper">Template déjà utilisé: la nouvelle étape sera créée comme nouvelle révision active au rang indiqué.</small>
-          }
         </div>
         <div class="form-group">
           <label class="form-label">config_json</label>

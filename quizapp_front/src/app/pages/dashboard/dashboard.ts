@@ -290,7 +290,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     // === FORMULAIRES ===
     { id: 'forms', label: 'Formulaires', icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zm-3 4h6v2H9v-2zm0 4h4v2H9v-2z"/></svg>', group: 'formulaires' },
     { id: 'campaign-form', label: 'Campagne-Formulaire', icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 7h5v2H7zm10 10h-5v-2h5z"/><path d="M12 5l4 4-4 4V10H5V8h7V5zm0 14l-4-4 4-4v3h7v2h-7v3z"/></svg>', group: 'formulaires' },
-    { id: 'form-versions', label: 'Versions Formulaire', icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>', group: 'formulaires' },
+
     { id: 'form-questions', label: 'Questions Formulaire', icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9h-4v4h-2v-4H9V9h4V5h2v4h4v2z"/></svg>', group: 'formulaires' },
     // === COMMUNICATION ===
     { id: 'notifications', label: 'Notifications', icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>', group: 'communication' },
