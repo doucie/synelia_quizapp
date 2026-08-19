@@ -133,11 +133,11 @@ export const utilisateursDroits: DiagramDefinition = {
       data: { label: 'detenir', cardFrom: '1,1', cardTo: '0,n' },
     },
     {
-      id: 'e-beneficier-groupe-perm',
+      id: 'e-detenir-groupe-perm',
       source: 'groupe_metier',
       target: 'groupe_permission',
       type: 'relationship',
-      data: { label: 'beneficier', cardFrom: '1,1', cardTo: '0,n' },
+      data: { label: 'detenir', cardFrom: '1,1', cardTo: '0,n' },
     },
   ],
 }

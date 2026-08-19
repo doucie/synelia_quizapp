@@ -50,7 +50,7 @@
 
 **Où :** `src/diagrams/nouveau/mcd/candidatures_suivi.ts` — `CANDIDATURE` et `DEMANDE_CANDIDAT`
 
-- [x] Documenter dans le mémoire (§méthodologie ou §modélisation) que `DEMANDE_CANDIDAT` porte un snapshot des valeurs demandées (pattern autorisé, pas une redondance structurelle) — à rédiger lors de la rédaction du chapitre 4 (Conception)
+- [ ] Documenter dans le mémoire (§méthodologie ou §modélisation) que `DEMANDE_CANDIDAT` porte un snapshot des valeurs demandées (pattern autorisé, pas une redondance structurelle)
 - [ ] Si le snapshot n'est pas nécessaire : supprimer `prenom`, `nom`, `email` de `DEMANDE_CANDIDAT` et ne garder que `nouvel_email`, `nouveau_telephone`
 
 ---
