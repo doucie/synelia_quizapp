@@ -190,14 +190,14 @@ export const campagnesPipeline: DiagramDefinition = {
       source: 'version_formulaire',
       target: 'question',
       type: 'relationship',
-      data: { label: 'contenir', cardFrom: '1,n', cardTo: '1,n' },
+      data: { label: 'regrouper', cardFrom: '1,n', cardTo: '1,n' },
     },
     {
       id: 'e-proposer-rep',
       source: 'question',
       target: 'reponse',
       type: 'relationship',
-      data: { label: 'proposer', cardFrom: '1,1', cardTo: '0,n', isStrong: true },
+      data: { label: 'prescrire', cardFrom: '1,1', cardTo: '0,n', isStrong: true },
     },
   ],
 }

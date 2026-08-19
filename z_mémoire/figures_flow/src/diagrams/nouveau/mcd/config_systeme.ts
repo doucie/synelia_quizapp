@@ -69,5 +69,20 @@ export const configSysteme: DiagramDefinition = {
       },
     },
   ],
-  edges: [],
+  edges: [
+    {
+      id: 'e-utiliser-smtp',
+      source: 'configuration',
+      target: 'config_smtp',
+      type: 'relationship',
+      data: { label: 'configurer', cardFrom: '1,1', cardTo: '0,1' },
+    },
+    {
+      id: 'e-auditer',
+      source: 'evenement_audit',
+      target: 'configuration',
+      type: 'relationship',
+      data: { label: 'auditer', cardFrom: '0,n', cardTo: '1,1' },
+    },
+  ],
 }
