@@ -1,0 +1,174 @@
+// @ts-nocheck
+import type { DiagramDefinition } from '../../types'
+
+export const entretienEvaluation: DiagramDefinition = {
+  id: 'mld-entretien-evaluation',
+  title: 'Entretien & Évaluation',
+  category: 'archive',
+  domain: 'Entretien & Évaluation',
+  nodes: [
+    {
+      id: 'interviews',
+      type: 'entity',
+      position: { x: 0, y: 0 },
+      data: {
+        label: 'entretien',
+        variant: 'mld',
+        attributes: [
+          { name: 'id', isPK: true },
+          { name: 'application_progress_id', isFK: true },
+          { name: 'campaign_id', isFK: true },
+          { name: 'interview_date' },
+          { name: 'interview_type' },
+          { name: 'interview_location' },
+          { name: 'meet_link' },
+          { name: 'interview_status' },
+        ],
+      },
+    },
+    {
+      id: 'candidate_interview',
+      type: 'entity',
+      position: { x: 350, y: -150 },
+      data: {
+        label: 'entretien_candidat',
+        variant: 'mld',
+        attributes: [
+          { name: 'id', isPK: true },
+          { name: 'interview_id', isFK: true },
+          { name: 'decline_reason' },
+          { name: 'candidate_response_status' },
+        ],
+      },
+    },
+    {
+      id: 'interview_participant',
+      type: 'entity',
+      position: { x: 350, y: 150 },
+      data: {
+        label: 'participant_entretien',
+        variant: 'mld',
+        attributes: [
+          { name: 'id', isPK: true },
+          { name: 'interview_id', isFK: true },
+          { name: 'user_id', isFK: true },
+          { name: 'can_update' },
+          { name: 'can_evaluate' },
+          { name: 'evaluation_status' },
+        ],
+      },
+    },
+    {
+      id: 'evaluations',
+      type: 'entity',
+      position: { x: 700, y: 150 },
+      data: {
+        label: 'evaluation',
+        variant: 'mld',
+        attributes: [
+          { name: 'id', isPK: true },
+          { name: 'candidate_interview_id', isFK: true },
+          { name: 'interview_participant_id', isFK: true },
+          { name: 'evaluation_status' },
+          { name: 'submitted_at' },
+          { name: 'global_score' },
+        ],
+      },
+    },
+    {
+      id: 'evaluation_item',
+      type: 'entity',
+      position: { x: 1050, y: 150 },
+      data: {
+        label: 'item_evaluation',
+        variant: 'mld',
+        attributes: [
+          { name: 'id', isPK: true },
+          { name: 'evaluation_id', isFK: true },
+          { name: 'criterion_id', isFK: true },
+          { name: 'score_value' },
+          { name: 'text_value' },
+          { name: 'weight_snapshot' },
+        ],
+      },
+    },
+    {
+      id: 'pipeline_stage_criterion',
+      type: 'entity',
+      position: { x: 1050, y: -100 },
+      data: {
+        label: 'critere_etape',
+        variant: 'mld',
+        attributes: [
+          { name: 'id', isPK: true },
+          { name: 'pipeline_stage_id', isFK: true },
+          { name: 'criterion_order' },
+          { name: 'label' },
+          { name: 'criterion_type' },
+          { name: 'max_score' },
+          { name: 'weight' },
+        ],
+      },
+    },
+    {
+      id: 'evaluation_grid',
+      type: 'entity',
+      position: { x: 1400, y: -100 },
+      data: {
+        label: 'grille_evaluation',
+        variant: 'mld',
+        attributes: [
+          { name: 'id', isPK: true },
+          { name: 'name' },
+          { name: 'description' },
+          { name: 'is_active' },
+        ],
+      },
+    },
+  ],
+  edges: [
+    {
+      id: 'e-interview-candint',
+      source: 'interviews',
+      target: 'candidate_interview',
+      type: 'relationship',
+      data: { isStrong: true },
+    },
+    {
+      id: 'e-interview-participant',
+      source: 'interviews',
+      target: 'interview_participant',
+      type: 'relationship',
+      data: { isStrong: true },
+    },
+    {
+      id: 'e-interview-eval',
+      source: 'interviews',
+      target: 'evaluations',
+      type: 'relationship',
+      data: { isStrong: true },
+    },
+    {
+      id: 'e-eval-items',
+      source: 'evaluations',
+      target: 'evaluation_item',
+      type: 'relationship',
+      data: { isStrong: true },
+    },
+    {
+      id: 'e-item-criterion',
+      source: 'evaluation_item',
+      target: 'pipeline_stage_criterion',
+      type: 'relationship',
+      data: {},
+    },
+    {
+      id: 'e-criterion-grid',
+      source: 'pipeline_stage_criterion',
+      target: 'evaluation_grid',
+      type: 'relationship',
+      data: { isDashed: true },
+    },
+  ],
+}
+

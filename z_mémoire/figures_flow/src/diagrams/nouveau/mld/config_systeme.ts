@@ -1,0 +1,78 @@
+import type { DiagramDefinition } from '../../../types'
+
+export const configSysteme: DiagramDefinition = {
+  id: 'mld-config-systeme',
+  title: 'Config système',
+  category: 'mld',
+  domain: 'Config système',
+  nodes: [
+    {
+      id: 'app_config',
+      type: 'entity',
+      position: { x: 0, y: 0 },
+      data: {
+        label: 'APP_CONFIG',
+        variant: 'mld',
+        attributes: [
+          { name: 'id', isPK: true },
+          { name: 'config_name' },
+          { name: 'company_name' },
+          { name: 'app_link' },
+          { name: 'logo_html' },
+          { name: 'primary_color' },
+          { name: 'color_scheme' },
+          { name: 'candidate_accounts_enabled' },
+          { name: 'anti_cheat_enabled' },
+          { name: 'screening_policy' },
+          { name: 'max_tab_warnings' },
+          { name: 'max_tab_actions' },
+          { name: 'fullscreen_required' },
+          { name: 'shortcuts_blocked' },
+          { name: 'copy_paste_blocked' },
+        ],
+      },
+    },
+    {
+      id: 'smtp_config',
+      type: 'entity',
+      position: { x: 700, y: 0 },
+      data: {
+        label: 'SMTP_CONFIG',
+        variant: 'mld',
+        attributes: [
+          { name: 'id', isPK: true },
+          { name: 'host' },
+          { name: 'port' },
+          { name: 'username' },
+          { name: 'password_encrypted' },
+          { name: 'auth_required' },
+          { name: 'from_name' },
+          { name: 'from_email' },
+          { name: 'is_active' },
+        ],
+      },
+    },
+    {
+      id: 'audit_event',
+      type: 'entity',
+      position: { x: 0, y: 400 },
+      data: {
+        label: 'AUDIT_EVENT',
+        variant: 'mld',
+        attributes: [
+          { name: 'id', isPK: true },
+          { name: 'application_id', isFK: true },
+          { name: 'application_progress_id', isFK: true },
+          { name: 'entity_type' },
+          { name: 'entity_id' },
+          { name: 'action_type' },
+          { name: 'actor_user_id', isFK: true },
+          { name: 'justification' },
+          { name: 'before_state_json' },
+          { name: 'after_state_json' },
+        ],
+      },
+    },
+  ],
+  edges: [],
+}

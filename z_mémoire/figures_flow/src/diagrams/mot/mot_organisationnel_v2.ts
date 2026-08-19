@@ -1,12 +1,12 @@
 import type { DiagramDefinition, MotTableConfig } from '../../types'
 import { DEFAULT_MOT_TABLE_CONFIG } from '../../types'
-import { mct0bCreationCampagne } from '../traitements/mct_0b_creation_campagne'
-import { mct1aCandidature } from '../traitements/mct_1a_candidature'
-import { mct1bQuiz } from '../traitements/mct_1b_quiz'
-import { mct2EntretienEvaluation } from '../traitements/mct_2_entretien_evaluation'
-import { mct3aDecision } from '../traitements/mct_3a_decision'
-import { mct3bRollback } from '../traitements/mct_3b_rollback'
-import { mct3cAudit } from '../traitements/mct_3c_audit'
+import { mct0bCreationCampagne } from '../archive/mct_0b_creation_campagne'
+import { mct1aCandidature } from '../archive/mct_1a_candidature'
+import { mct1bQuiz } from '../archive/mct_1b_quiz'
+import { mct2EntretienEvaluation } from '../archive/mct_2_entretien_evaluation'
+import { mct3aDecision } from '../archive/mct_3a_decision'
+import { mct3bRollback } from '../archive/mct_3b_rollback'
+import { mct3cAudit } from '../archive/mct_3c_audit'
 
 export interface MotPositions {
   colCandidat: number

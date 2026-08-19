@@ -1,0 +1,132 @@
+import type { DiagramDefinition } from '../../../types'
+
+export const candidaturesSuivi: DiagramDefinition = {
+  id: 'mcd-candidatures-suivi',
+  title: 'Candidatures & suivi',
+  category: 'mcd',
+  domain: 'Candidatures & suivi',
+  nodes: [
+    {
+      id: 'candidature',
+      type: 'entity',
+      position: { x: 0, y: 0 },
+      data: {
+        label: 'CANDIDATURE',
+        variant: 'mcd',
+        attributes: [
+          { name: 'id_candidature', isPK: true },
+          { name: 'prenom_candidat' },
+          { name: 'nom_candidat' },
+          { name: 'email' },
+          { name: 'telephone' },
+          { name: 'cv' },
+          { name: 'lettre_motivation' },
+          { name: 'date_naissance' },
+          { name: 'email_verifie' },
+          { name: 'est_abandonnee' },
+        ],
+      },
+    },
+    {
+      id: 'avancement',
+      type: 'entity',
+      position: { x: 600, y: 0 },
+      data: {
+        label: 'AVANCEMENT',
+        variant: 'mcd',
+        attributes: [
+          { name: 'id_avancement', isPK: true },
+          { name: 'statut_progression' },
+          { name: 'date_debut' },
+          { name: 'date_fin' },
+          { name: 'score' },
+          { name: 'notes' },
+          { name: 'date_validation' },
+          { name: 'commentaire_validation' },
+          { name: 'date_saut' },
+          { name: 'raison_saut' },
+          { name: 'date_reouverture' },
+          { name: 'raison_reouverture' },
+        ],
+      },
+    },
+    {
+      id: 'token_candidat',
+      type: 'entity',
+      position: { x: 0, y: 400 },
+      data: {
+        label: 'TOKEN_CANDIDAT',
+        variant: 'mcd',
+        attributes: [
+          { name: 'id_token', isPK: true },
+          { name: 'chaine_token' },
+        ],
+      },
+    },
+    {
+      id: 'demande_candidat',
+      type: 'entity',
+      position: { x: 400, y: 400 },
+      data: {
+        label: 'DEMANDE_CANDIDAT',
+        variant: 'mcd',
+        attributes: [
+          { name: 'id_demande', isPK: true },
+          { name: 'type_demande' },
+          { name: 'statut_demande' },
+          { name: 'est_verifie' },
+          { name: 'prenom' },
+          { name: 'nom' },
+          { name: 'nouvel_email' },
+          { name: 'nouveau_telephone' },
+          { name: 'raison_decision' },
+        ],
+      },
+    },
+    {
+      id: 'decision',
+      type: 'entity',
+      position: { x: 900, y: 0 },
+      data: {
+        label: 'DECISION',
+        variant: 'mcd',
+        attributes: [
+          { name: 'id_decision', isPK: true },
+          { name: 'type_decision' },
+          { name: 'justification' },
+          { name: 'mode_decision' },
+        ],
+      },
+    },
+  ],
+  edges: [
+    {
+      id: 'e-progresser',
+      source: 'candidature',
+      target: 'avancement',
+      type: 'relationship',
+      data: { label: 'progresser', cardFrom: '1,1', cardTo: '1,n', isStrong: true },
+    },
+    {
+      id: 'e-emettre',
+      source: 'candidature',
+      target: 'demande_candidat',
+      type: 'relationship',
+      data: { label: 'emettre', cardFrom: '1,1', cardTo: '0,n' },
+    },
+    {
+      id: 'e-conclure',
+      source: 'avancement',
+      target: 'decision',
+      type: 'relationship',
+      data: { label: 'conclure', cardFrom: '1,1', cardTo: '0,n', isStrong: true },
+    },
+    {
+      id: 'e-generer-token',
+      source: 'candidature',
+      target: 'token_candidat',
+      type: 'relationship',
+      data: { label: 'generer', cardFrom: '1,1', cardTo: '0,n' },
+    },
+  ],
+}

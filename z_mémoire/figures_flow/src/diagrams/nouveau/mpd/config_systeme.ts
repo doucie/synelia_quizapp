@@ -1,0 +1,78 @@
+import type { DiagramDefinition } from '../../../types'
+
+export const configSysteme: DiagramDefinition = {
+  id: 'mpd-config-systeme',
+  title: 'Config système',
+  category: 'mpd',
+  domain: 'Config système',
+  nodes: [
+    {
+      id: 'app_config',
+      type: 'entity',
+      position: { x: 0, y: 0 },
+      data: {
+        label: 'app_config',
+        variant: 'mpd',
+        attributes: [
+          { name: 'id', type: 'bigint PK auto_increment', isPK: true },
+          { name: 'config_name', type: 'varchar(100)' },
+          { name: 'company_name', type: 'varchar(255)' },
+          { name: 'app_link', type: 'varchar(500)' },
+          { name: 'logo_html', type: 'text' },
+          { name: 'primary_color', type: 'varchar(7)' },
+          { name: 'color_scheme', type: "enum('LIGHT','DARK','SYSTEM')" },
+          { name: 'candidate_accounts_enabled', type: 'bit(1)' },
+          { name: 'anti_cheat_enabled', type: 'bit(1)' },
+          { name: 'screening_policy', type: "enum('NONE','WARN','BLOCK','AUTO_REJECT')" },
+          { name: 'max_tab_warnings', type: 'int' },
+          { name: 'max_tab_actions', type: 'int' },
+          { name: 'fullscreen_required', type: 'bit(1)' },
+          { name: 'shortcuts_blocked', type: 'bit(1)' },
+          { name: 'copy_paste_blocked', type: 'bit(1)' },
+        ],
+      },
+    },
+    {
+      id: 'smtp_config',
+      type: 'entity',
+      position: { x: 700, y: 0 },
+      data: {
+        label: 'smtp_config',
+        variant: 'mpd',
+        attributes: [
+          { name: 'id', type: 'int unsigned PK auto_increment', isPK: true },
+          { name: 'host', type: 'varchar(255)' },
+          { name: 'port', type: 'int' },
+          { name: 'username', type: 'varchar(255)' },
+          { name: 'password_encrypted', type: 'varchar(500)' },
+          { name: 'auth_required', type: 'bit(1)' },
+          { name: 'from_name', type: 'varchar(255)' },
+          { name: 'from_email', type: 'varchar(255)' },
+          { name: 'is_active', type: 'bit(1)' },
+        ],
+      },
+    },
+    {
+      id: 'audit_event',
+      type: 'entity',
+      position: { x: 0, y: 400 },
+      data: {
+        label: 'audit_event',
+        variant: 'mpd',
+        attributes: [
+          { name: 'id', type: 'int unsigned PK auto_increment', isPK: true },
+          { name: 'application_id', type: 'int unsigned FK → applications.id', isFK: true },
+          { name: 'application_progress_id', type: 'int FK → application_progress.id', isFK: true },
+          { name: 'entity_type', type: 'varchar(100)' },
+          { name: 'entity_id', type: 'varchar(100)' },
+          { name: 'action_type', type: 'varchar(100)' },
+          { name: 'actor_user_id', type: 'int unsigned FK → user.id', isFK: true },
+          { name: 'justification', type: 'text' },
+          { name: 'before_state_json', type: 'longtext' },
+          { name: 'after_state_json', type: 'longtext' },
+        ],
+      },
+    },
+  ],
+  edges: [],
+}

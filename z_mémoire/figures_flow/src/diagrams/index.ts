@@ -1,89 +1,146 @@
 import type { DiagramDefinition } from '../types'
 
-import { identitePermissions as mcdIdentitePermissions } from './mcd/identite_permissions'
-import { campagnesPipeline as mcdCampagnesPipeline } from './mcd/campagnes_pipeline'
-import { candidatureQuiz as mcdCandidatureQuiz } from './mcd/candidature_quiz'
-import { entretienEvaluation as mcdEntretienEvaluation } from './mcd/entretien_evaluation'
-import { auditNotifications as mcdAuditNotifications } from './mcd/audit_notifications'
+// === Nouveaux MCD ===
+import { utilisateursDroits as mcdUtilDroits } from './nouveau/mcd/utilisateurs_droits'
+import { campagnesPipeline as mcdCampPipeline } from './nouveau/mcd/campagnes_pipeline'
+import { candidaturesSuivi as mcdCandSuivi } from './nouveau/mcd/candidatures_suivi'
+import { entretiensEvaluation as mcdEntretEval } from './nouveau/mcd/entretiens_evaluation'
+import { communication as mcdComm } from './nouveau/mcd/communication'
+import { configSysteme as mcdConfSys } from './nouveau/mcd/config_systeme'
 
-import { identitePermissions as mldIdentitePermissions } from './mld/identite_permissions'
-import { campagnesPipeline as mldCampagnesPipeline } from './mld/campagnes_pipeline'
-import { candidatureQuiz as mldCandidatureQuiz } from './mld/candidature_quiz'
-import { entretienEvaluation as mldEntretienEvaluation } from './mld/entretien_evaluation'
-import { auditNotifications as mldAuditNotifications } from './mld/audit_notifications'
+// === Nouveaux MLD ===
+import { utilisateursDroits as mldUtilDroits } from './nouveau/mld/utilisateurs_droits'
+import { campagnesPipeline as mldCampPipeline } from './nouveau/mld/campagnes_pipeline'
+import { candidaturesSuivi as mldCandSuivi } from './nouveau/mld/candidatures_suivi'
+import { entretiensEvaluation as mldEntretEval } from './nouveau/mld/entretiens_evaluation'
+import { communication as mldComm } from './nouveau/mld/communication'
+import { configSysteme as mldConfSys } from './nouveau/mld/config_systeme'
 
-import { identitePermissions as mpdIdentitePermissions } from './mpd/identite_permissions'
-import { campagnesPipeline as mpdCampagnesPipeline } from './mpd/campagnes_pipeline'
-import { candidatureQuiz as mpdCandidatureQuiz } from './mpd/candidature_quiz'
-import { entretienEvaluation as mpdEntretienEvaluation } from './mpd/entretien_evaluation'
-import { auditNotifications as mpdAuditNotifications } from './mpd/audit_notifications'
+// === Nouveaux MPD ===
+import { utilisateursDroits as mpdUtilDroits } from './nouveau/mpd/utilisateurs_droits'
+import { campagnesPipeline as mpdCampPipeline } from './nouveau/mpd/campagnes_pipeline'
+import { candidaturesSuivi as mpdCandSuivi } from './nouveau/mpd/candidatures_suivi'
+import { entretiensEvaluation as mpdEntretEval } from './nouveau/mpd/entretiens_evaluation'
+import { communication as mpdComm } from './nouveau/mpd/communication'
+import { configSysteme as mpdConfSys } from './nouveau/mpd/config_systeme'
 
-import { mct0bCreationCampagne } from './traitements/mct_0b_creation_campagne'
-import { mct1CandidatureQuiz } from './traitements/mct_1_candidature_quiz'
-import { mct1aCandidature } from './traitements/mct_1a_candidature'
-import { mct1bQuiz } from './traitements/mct_1b_quiz'
-import { mct2EntretienEvaluation } from './traitements/mct_2_entretien_evaluation'
-import { mct3DecisionAudit } from './traitements/mct_3_decision_audit'
-import { mct3aDecision } from './traitements/mct_3a_decision'
-import { mct3bRollback } from './traitements/mct_3b_rollback'
-import { mct3cAudit } from './traitements/mct_3c_audit'
-import { sat1SetupPreselection } from './traitements/sat_1_setup_preselection'
-import { sat2EntretienAudit } from './traitements/sat_2_entretien_audit'
-import { mpt1CandidatureQuiz } from './traitements/mpt_1_candidature_quiz'
-import { mpt2EntretienDecision } from './traitements/mpt_2_entretien_decision'
+// === Traitements v2 ===
+import { mct0CreationCampagne } from './traitements/v2/mct_0_creation_campagne'
+import { mct1Candidature } from './traitements/v2/mct_1_candidature'
+import { mct2Quiz } from './traitements/v2/mct_2_quiz'
+import { mct3Entretien } from './traitements/v2/mct_3_entretien'
+import { mct4Decision } from './traitements/v2/mct_4_decision'
+import { mct5Annulation } from './traitements/v2/mct_5_annulation'
+import { mct6Audit } from './traitements/v2/mct_6_audit'
 
-import { mct0CreationCampagne as mct0CreationCampagneV2 } from './traitements/v2/mct_0_creation_campagne'
-import { mct1Candidature as mct1CandidatureV2 } from './traitements/v2/mct_1_candidature'
-import { mct2Quiz as mct2QuizV2 } from './traitements/v2/mct_2_quiz'
-import { mct3Entretien as mct3EntretienV2 } from './traitements/v2/mct_3_entretien'
-import { mct4Decision as mct4DecisionV2 } from './traitements/v2/mct_4_decision'
-import { mct5Annulation as mct5AnnulationV2 } from './traitements/v2/mct_5_annulation'
-import { mct6Audit as mct6AuditV2 } from './traitements/v2/mct_6_audit'
-
-import { motOrganisationnel } from './mot/mot_organisationnel'
+// === MOT ===
 import { motOrganisationnelV2 } from './mot/mot_organisationnel_v2'
 
+// === Palette ===
 import { colorPalette } from './palette/color_palette'
 
+// === Archive (anciens diagrammes) ===
+import { identitePermissions as archMcdIdentite } from './archive/mcd_identite_permissions'
+import { campagnesPipeline as archMcdCamp } from './archive/mcd_campagnes_pipeline'
+import { candidatureQuiz as archMcdCand } from './archive/mcd_candidature_quiz'
+import { entretienEvaluation as archMcdEntret } from './archive/mcd_entretien_evaluation'
+import { auditNotifications as archMcdAudit } from './archive/mcd_audit_notifications'
+
+import { identitePermissions as archMldIdentite } from './archive/mld_identite_permissions'
+import { campagnesPipeline as archMldCamp } from './archive/mld_campagnes_pipeline'
+import { candidatureQuiz as archMldCand } from './archive/mld_candidature_quiz'
+import { entretienEvaluation as archMldEntret } from './archive/mld_entretien_evaluation'
+import { auditNotifications as archMldAudit } from './archive/mld_audit_notifications'
+
+import { identitePermissions as archMpdIdentite } from './archive/mpd_identite_permissions'
+import { campagnesPipeline as archMpdCamp } from './archive/mpd_campagnes_pipeline'
+import { candidatureQuiz as archMpdCand } from './archive/mpd_candidature_quiz'
+import { entretienEvaluation as archMpdEntret } from './archive/mpd_entretien_evaluation'
+import { auditNotifications as archMpdAudit } from './archive/mpd_audit_notifications'
+
+import { mct0bCreationCampagne as archMct0b } from './archive/mct_0b_creation_campagne'
+import { mct1CandidatureQuiz as archMct1 } from './archive/mct_1_candidature_quiz'
+import { mct1aCandidature as archMct1a } from './archive/mct_1a_candidature'
+import { mct1bQuiz as archMct1b } from './archive/mct_1b_quiz'
+import { mct2EntretienEvaluation as archMct2 } from './archive/mct_2_entretien_evaluation'
+import { mct3DecisionAudit as archMct3 } from './archive/mct_3_decision_audit'
+import { mct3aDecision as archMct3a } from './archive/mct_3a_decision'
+import { mct3bRollback as archMct3b } from './archive/mct_3b_rollback'
+import { mct3cAudit as archMct3c } from './archive/mct_3c_audit'
+import { sat1SetupPreselection as archSat1 } from './archive/sat_1_setup_preselection'
+import { sat2EntretienAudit as archSat2 } from './archive/sat_2_entretien_audit'
+import { mpt1CandidatureQuiz as archMpt1 } from './archive/mpt_1_candidature_quiz'
+import { mpt2EntretienDecision as archMpt2 } from './archive/mpt_2_entretien_decision'
+
 export const diagrams: DiagramDefinition[] = [
-  mcdIdentitePermissions,
-  mcdCampagnesPipeline,
-  mcdCandidatureQuiz,
-  mcdEntretienEvaluation,
-  mcdAuditNotifications,
-  mldIdentitePermissions,
-  mldCampagnesPipeline,
-  mldCandidatureQuiz,
-  mldEntretienEvaluation,
-  mldAuditNotifications,
-  mpdIdentitePermissions,
-  mpdCampagnesPipeline,
-  mpdCandidatureQuiz,
-  mpdEntretienEvaluation,
-  mpdAuditNotifications,
-  mct0bCreationCampagne,
-  mct1CandidatureQuiz,
-  mct1aCandidature,
-  mct1bQuiz,
-  mct2EntretienEvaluation,
-  mct3DecisionAudit,
-  mct3aDecision,
-  mct3bRollback,
-  mct3cAudit,
-  sat1SetupPreselection,
-  sat2EntretienAudit,
-  mpt1CandidatureQuiz,
-  mpt2EntretienDecision,
-  mct0CreationCampagneV2,
-  mct1CandidatureV2,
-  mct2QuizV2,
-  mct3EntretienV2,
-  mct4DecisionV2,
-  mct5AnnulationV2,
-  mct6AuditV2,
-  motOrganisationnel,
+  // --- Nouveaux MCD (8) ---
+  mcdUtilDroits,
+  mcdCampPipeline,
+  mcdCandSuivi,
+  mcdEntretEval,
+  mcdComm,
+  mcdConfSys,
+
+  // --- Nouveaux MLD (8) ---
+  mldUtilDroits,
+  mldCampPipeline,
+  mldCandSuivi,
+  mldEntretEval,
+  mldComm,
+  mldConfSys,
+
+  // --- Nouveaux MPD (8) ---
+  mpdUtilDroits,
+  mpdCampPipeline,
+  mpdCandSuivi,
+  mpdEntretEval,
+  mpdComm,
+  mpdConfSys,
+
+  // --- Traitements v2 (7) ---
+  mct0CreationCampagne,
+  mct1Candidature,
+  mct2Quiz,
+  mct3Entretien,
+  mct4Decision,
+  mct5Annulation,
+  mct6Audit,
+
+  // --- MOT (1) ---
   motOrganisationnelV2,
+
+  // --- Palette (1) ---
   colorPalette,
+
+  // --- Archive (30) ---
+  archMcdIdentite,
+  archMcdCamp,
+  archMcdCand,
+  archMcdEntret,
+  archMcdAudit,
+  archMldIdentite,
+  archMldCamp,
+  archMldCand,
+  archMldEntret,
+  archMldAudit,
+  archMpdIdentite,
+  archMpdCamp,
+  archMpdCand,
+  archMpdEntret,
+  archMpdAudit,
+  archMct0b,
+  archMct1,
+  archMct1a,
+  archMct1b,
+  archMct2,
+  archMct3,
+  archMct3a,
+  archMct3b,
+  archMct3c,
+  archSat1,
+  archSat2,
+  archMpt1,
+  archMpt2,
 ]
 
 export type DiagramId = (typeof diagrams)[number]['id']
