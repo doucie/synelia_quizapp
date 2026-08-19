@@ -64,6 +64,22 @@ export const candidaturesSuivi: DiagramDefinition = {
       },
     },
     {
+      id: 'token_verification_email',
+      type: 'entity',
+      position: { x: 0, y: 600 },
+      data: {
+        label: 'TOKEN_VERIFICATION_EMAIL',
+        variant: 'mcd',
+        attributes: [
+          { name: 'id_token', isPK: true },
+          { name: 'token' },
+          { name: 'type_token' },
+          { name: 'date_expiration' },
+          { name: 'est_utilise' },
+        ],
+      },
+    },
+    {
       id: 'demande_candidat',
       type: 'entity',
       position: { x: 400, y: 400 },
@@ -127,6 +143,13 @@ export const candidaturesSuivi: DiagramDefinition = {
       target: 'token_candidat',
       type: 'relationship',
       data: { label: 'generer', cardFrom: '1,1', cardTo: '0,n' },
+    },
+    {
+      id: 'e-creer-token-verification',
+      source: 'candidature',
+      target: 'token_verification_email',
+      type: 'relationship',
+      data: { label: 'creer', cardFrom: '1,1', cardTo: '0,n' },
     },
   ],
 }

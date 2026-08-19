@@ -36,7 +36,7 @@ export const configSysteme: DiagramDefinition = {
       type: 'entity',
       position: { x: 700, y: 0 },
       data: {
-        label: 'CONFIG_SMTP',
+        label: 'CONFIGURATION_SMTP',
         variant: 'mcd',
         attributes: [
           { name: 'id_smtp', isPK: true },
@@ -51,23 +51,37 @@ export const configSysteme: DiagramDefinition = {
       },
     },
     {
-      id: 'evenement_audit',
+      id: 'texte_juridique',
       type: 'entity',
       position: { x: 0, y: 400 },
       data: {
-        label: 'EVENEMENT_AUDIT',
+        label: 'TEXTE_JURIDIQUE',
         variant: 'mcd',
         attributes: [
-          { name: 'id_evenement', isPK: true },
-          { name: 'type_entite' },
-          { name: 'id_entite' },
-          { name: 'type_action' },
-          { name: 'justification' },
-          { name: 'etat_avant' },
-          { name: 'etat_apres' },
+          { name: 'id_texte', isPK: true },
+          { name: 'cle_texte' },
+          { name: 'titre' },
+          { name: 'contenu' },
+          { name: 'description' },
+          { name: 'est_actif' },
         ],
       },
     },
   ],
-  edges: [],
+  edges: [
+    {
+      id: 'e-utiliser-smtp',
+      source: 'configuration',
+      target: 'config_smtp',
+      type: 'relationship',
+      data: { label: 'utiliser', cardFrom: '1,1', cardTo: '0,1' },
+    },
+    {
+      id: 'e-proposer-texte',
+      source: 'configuration',
+      target: 'texte_juridique',
+      type: 'relationship',
+      data: { label: 'inclure', cardFrom: '1,1', cardTo: '0,n' },
+    },
+  ],
 }

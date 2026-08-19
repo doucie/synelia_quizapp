@@ -129,7 +129,7 @@ export const entretiensEvaluation: DiagramDefinition = {
       source: 'entretien',
       target: 'participant_entretien',
       type: 'relationship',
-      data: { label: 'inclure', cardFrom: '1,1', cardTo: '1,n' },
+      data: { label: 'integrer', cardFrom: '1,1', cardTo: '1,n' },
     },
     {
       id: 'e-recevoir',
@@ -150,7 +150,7 @@ export const entretiensEvaluation: DiagramDefinition = {
       source: 'item_evaluation',
       target: 'grille_modele',
       type: 'relationship',
-      data: { label: 'evaluer', cardFrom: 'n,1', cardTo: '1,1' },
+      data: { label: 'evaluer', cardFrom: '1,1', cardTo: '1,n' },
     },
   ],
 }

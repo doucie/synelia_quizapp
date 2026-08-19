@@ -57,7 +57,7 @@ export const utilisateursDroits: DiagramDefinition = {
       type: 'entity',
       position: { x: 400, y: 250 },
       data: {
-        label: 'GROUPE_PERMISSION',
+        label: 'PERMISSION_GROUPE',
         variant: 'mcd',
         attributes: [
           { name: 'id_permission', isPK: true },
@@ -71,7 +71,7 @@ export const utilisateursDroits: DiagramDefinition = {
       type: 'entity',
       position: { x: -200, y: 250 },
       data: {
-        label: 'UTILISATEUR_PERMISSION',
+        label: 'PERMISSION_UTILISATEUR',
         variant: 'mcd',
         attributes: [
           { name: 'id_permission', isPK: true },
@@ -92,6 +92,42 @@ export const utilisateursDroits: DiagramDefinition = {
           { name: 'id_demande', isPK: true },
           { name: 'raison' },
           { name: 'statut' },
+        ],
+      },
+    },
+    {
+      id: 'notification',
+      type: 'entity',
+      position: { x: 0, y: 600 },
+      data: {
+        label: 'NOTIFICATION',
+        variant: 'mcd',
+        attributes: [
+          { name: 'id_notification', isPK: true },
+          { name: 'type' },
+          { name: 'acteur' },
+          { name: 'lien' },
+          { name: 'est_lue' },
+          { name: 'type_entite' },
+          { name: 'id_entite' },
+        ],
+      },
+    },
+    {
+      id: 'evenement_audit',
+      type: 'entity',
+      position: { x: 400, y: 600 },
+      data: {
+        label: 'EVENEMENT_AUDIT',
+        variant: 'mcd',
+        attributes: [
+          { name: 'id_evenement', isPK: true },
+          { name: 'type_entite' },
+          { name: 'id_entite' },
+          { name: 'type_action' },
+          { name: 'justification' },
+          { name: 'etat_avant' },
+          { name: 'etat_apres' },
         ],
       },
     },
@@ -133,11 +169,25 @@ export const utilisateursDroits: DiagramDefinition = {
       data: { label: 'detenir', cardFrom: '1,1', cardTo: '0,n' },
     },
     {
-      id: 'e-detenir-groupe-perm',
+      id: 'e-beneficier-groupe-perm',
       source: 'groupe_metier',
       target: 'groupe_permission',
       type: 'relationship',
-      data: { label: 'detenir', cardFrom: '1,1', cardTo: '0,n' },
+      data: { label: 'beneficier', cardFrom: '1,1', cardTo: '0,n' },
+    },
+    {
+      id: 'e-recevoir-notification',
+      source: 'utilisateur',
+      target: 'notification',
+      type: 'relationship',
+      data: { label: 'obtenir', cardFrom: '1,1', cardTo: '0,n' },
+    },
+    {
+      id: 'e-realiser-audit',
+      source: 'utilisateur',
+      target: 'evenement_audit',
+      type: 'relationship',
+      data: { label: 'realiser', cardFrom: '1,1', cardTo: '0,n' },
     },
   ],
 }
