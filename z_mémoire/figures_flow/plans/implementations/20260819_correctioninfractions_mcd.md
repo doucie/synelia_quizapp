@@ -22,36 +22,72 @@
 
 **Où :** `src/diagrams/nouveau/mcd/entretiens_evaluation.ts` — edge `e-evaluer`
 
-- [ ] Inverser les cardinalités : `cardFrom: '1,1'` (ITEM_EVALUATION) → `cardTo: '0,n'` (GRILLE_MODELE)
-- [ ] Vérifier que l'edge est bien orienté ITEM_EVALUATION → GRILLE_MODELE
+- [ ] Corriger les cardinalités : `cardFrom: '1,1'` (ITEM_EVALUATION) → `cardTo: '1,n'` (GRILLE_MODELE)
 
 ---
 
 ## Règle 8 — Cohérence globale
 
-### Entités isolées — Communication (3 entités)
+### Déplacements d'entités
 
-**Où :** `src/diagrams/nouveau/mcd/communication.ts`
+#### NOTIFICATION → `utilisateurs_droits`
 
-- [ ] Ajouter edge `NOTIFICATION` → `UTILISATEUR` : label `recevoir`, cardFrom `0,n`, cardTo `1,1`
-- [ ] Ajouter edge `TOKEN_VERIFICATION_EMAIL` → `CANDIDATURE` : label `generer`, cardFrom `0,n`, cardTo `1,1`
-- [ ] Ajouter edge `TEXTE_JURIDIQUE` → `CONFIGURATION` : label `proposer`, cardFrom `0,n`, cardTo `1,1`
+**Source :** `src/diagrams/nouveau/mcd/communication.ts`
+**Destination :** `src/diagrams/nouveau/mcd/utilisateurs_droits.ts`
 
-> Note : ces edges pointent vers des entités d'autres domaines (UTILISATEUR, CANDIDATURE, CONFIGURATION). Au MCD c'est acceptable — les liaisons cross-domaines seront résolues au MLD/MPD par les FK.
+- [ ] Supprimer le nœud `notification` de `communication.ts`
+- [ ] Ajouter le nœud `notification` dans `utilisateurs_droits.ts`
+- [ ] **Supprimer l'attribut `utilisateur`** (clé étrangère interdite en MCD)
+- [ ] Ajouter edge `UTILISATEUR` → `NOTIFICATION` : label `recevoir`, cardFrom `1,1`, cardTo `0,n`
 
-### Entités isolées — Config système (3 entités)
+#### TOKEN_VERIFICATION_EMAIL → `candidatures_suivi`
+
+**Source :** `src/diagrams/nouveau/mcd/communication.ts`
+**Destination :** `src/diagrams/nouveau/mcd/candidatures_suivi.ts`
+
+- [ ] Supprimer le nœud `token_verification_email` de `communication.ts`
+- [ ] Ajouter le nœud `token_verification_email` dans `candidatures_suivi.ts`
+- [ ] **Supprimer l'attribut `email`** (déjà présent dans CANDIDATURE)
+- [ ] Ajouter edge `CANDIDATURE` → `TOKEN_VERIFICATION_EMAIL` : label `generer`, cardFrom `1,1`, cardTo `0,n`
+
+#### TEXTE_JURIDIQUE → `config_systeme`
+
+**Source :** `src/diagrams/nouveau/mcd/communication.ts`
+**Destination :** `src/diagrams/nouveau/mcd/config_systeme.ts`
+
+- [ ] Supprimer le nœud `texte_juridique` de `communication.ts`
+- [ ] Ajouter le nœud `texte_juridique` dans `config_systeme.ts`
+- [ ] Ajouter edge `CONFIGURATION` → `TEXTE_JURIDIQUE` : label `proposer`, cardFrom `1,1`, cardTo `0,n`
+
+#### EVENEMENT_AUDIT → `utilisateurs_droits`
+
+**Source :** `src/diagrams/nouveau/mcd/config_systeme.ts`
+**Destination :** `src/diagrams/nouveau/mcd/utilisateurs_droits.ts`
+
+- [ ] Supprimer le nœud `evenement_audit` de `config_systeme.ts`
+- [ ] Ajouter le nœud `evenement_audit` dans `utilisateurs_droits.ts`
+- [ ] Ajouter edge `UTILISATEUR` → `EVENEMENT_AUDIT` : label `realiser`, cardFrom `1,1`, cardTo `0,n`
+
+### Edge existant — CONFIGURATION → CONFIGURATION_SMTP
 
 **Où :** `src/diagrams/nouveau/mcd/config_systeme.ts`
 
-- [ ] Ajouter edge `CONFIGURATION` → `CONFIG_SMTP` : label `utiliser`, cardFrom `1,1`, cardTo `0,1`
-- [ ] Ajouter edge `EVENEMENT_AUDIT` → `UTILISATEUR` : label `realiser`, cardFrom `0,n`, cardTo `1,1`
+- [ ] Renommer l'entité `CONFIG_SMTP` en `CONFIGURATION_SMTP`
+- [ ] Mettre à jour l'edge `e-utiliser-smtp` : label `utiliser`, cardFrom `1,1`, cardTo `0,1`
+
+### Renommages d'entités (ordre français, pas d'abbréviations)
+
+**Où :** `src/diagrams/nouveau/mcd/utilisateurs_droits.ts`
+
+- [ ] Renommer `GROUPE_PERMISSION` → `PERMISSION_GROUPE`
+- [ ] Renommer `UTILISATEUR_PERMISSION` → `PERMISSION_UTILISATEUR`
+- [ ] Mettre à jour les edges correspondants (`e-detenir-perm`, `e-detenir-groupe-perm`)
 
 ### Redondance d'attributs
 
 **Où :** `src/diagrams/nouveau/mcd/candidatures_suivi.ts` — `CANDIDATURE` et `DEMANDE_CANDIDAT`
 
-- [ ] Documenter dans le mémoire (§méthodologie ou §modélisation) que `DEMANDE_CANDIDAT` porte un snapshot des valeurs demandées (pattern autorisé, pas une redondance structurelle)
-- [ ] Si le snapshot n'est pas nécessaire : supprimer `prenom`, `nom`, `email` de `DEMANDE_CANDIDAT` et ne garder que `nouvel_email`, `nouveau_telephone`
+- [x] Documenter dans le mémoire (§méthodologie ou §modélisation) que `DEMANDE_CANDIDAT` porte un snapshot des valeurs demandées (pattern autorisé, pas une redondance structurelle) — à rédiger lors de la rédaction du chapitre 4
 
 ---
 
@@ -61,3 +97,4 @@
 - [ ] Toutes les entités des 6 MCD ont au moins 1 edge
 - [ ] Aucune cardinalité ne contient `n,1` ou autre notation invalide
 - [ ] Aucun nom d'association n'est dupliqué entre domaines
+- [ ] Les MLD correspondants sont mis à jour (ajout/suppression de colonnes FK)
