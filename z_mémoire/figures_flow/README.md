@@ -66,7 +66,6 @@ Les entités du MCD mappent vers les tables MySQL du MPD. Les noms sont **anglic
 |------------|----------|---------|
 | `UTILISATEUR` | `users` | Utilisateurs & droits |
 | `GROUPE_METIER` | `business_groups` | Utilisateurs & droits |
-| `PERMISSION_UTILISATEUR` | `user_permissions` | Utilisateurs & droits |
 | `PERMISSION_GROUPE` | `group_permissions` | Utilisateurs & droits |
 | `DEMANDE_CHANGEMENT_GROUPE` | `group_change_requests` | Utilisateurs & droits |
 | `NOTIFICATION` | `notifications` | Utilisateurs & droits |
@@ -104,7 +103,7 @@ Les entités du MCD mappent vers les tables MySQL du MPD. Les noms sont **anglic
 
 | # | Type | Domaine | Nb entités |
 |---|------|---------|-----------|
-| 1 | MCD | Utilisateurs & droits | 6 |
+| 1 | MCD | Utilisateurs & droits | 5 |
 | 2 | MCD | Campagnes & pipeline | 8 |
 | 3 | MCD | Candidatures & suivi | 6 |
 | 4 | MCD | Entretiens & évaluation | 6 |
@@ -156,6 +155,7 @@ Certaines tables présentes en BD ne figurent pas dans le MCD. Voir `plans/audit
 |-----------------|--------|
 | `EVENEMENT_AUDIT` | Audit = détail d'implémentation, `id_entite` polymorphique |
 | `PERMISSION_ENTITE` | `id_entite` polymorphique, doublon avec PERMISSION_UTILISATEUR |
+| `PERMISSION_UTILISATEUR` | Permissions individuelles = détail d'implémentation |
 | `NOTIFICATION.utilisateur` | FK interdite en MCD (portée par l'association) |
 | `TOKEN_VERIFICATION_EMAIL.email` | Redondant avec CANDIDATURE.email |
 

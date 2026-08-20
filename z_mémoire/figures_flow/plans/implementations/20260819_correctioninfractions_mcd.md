@@ -80,7 +80,7 @@
 **Où :** `src/diagrams/nouveau/mcd/utilisateurs_droits.ts`
 
 - [ ] Renommer `GROUPE_PERMISSION` → `PERMISSION_GROUPE`
-- [ ] Renommer `UTILISATEUR_PERMISSION` → `PERMISSION_UTILISATEUR`
+- [ ] Renommer `UTILISATEUR_PERMISSION` → `PERMISSION_UTILISATEUR` (supprimé du MCD — voir hors-scope)
 - [ ] Mettre à jour les edges correspondants (`e-detenir-perm`, `e-detenir-groupe-perm`)
 
 ### Redondance d'attributs

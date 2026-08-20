@@ -51,20 +51,6 @@ export const utilisateursDroits: DiagramDefinition = {
       },
     },
     {
-      id: 'utilisateur_permission',
-      type: 'entity',
-      position: { x: -200, y: 250 },
-      data: {
-        label: 'PERMISSION_UTILISATEUR',
-        variant: 'mcd',
-        attributes: [
-          { name: 'id_permission', isPK: true },
-          { name: 'fonctionnalite' },
-          { name: 'est_autorise' },
-        ],
-      },
-    },
-    {
       id: 'demande_changement_groupe',
       type: 'entity',
       position: { x: 600, y: 400 },
@@ -109,13 +95,6 @@ export const utilisateursDroits: DiagramDefinition = {
       target: 'demande_changement_groupe',
       type: 'relationship',
       data: { label: 'soumettre', cardFrom: '0,n', cardTo: '1,1' },
-    },
-    {
-      id: 'e-detenir-perm',
-      source: 'utilisateur',
-      target: 'utilisateur_permission',
-      type: 'relationship',
-      data: { label: 'detenir', cardFrom: '0,n', cardTo: '0,n' },
     },
     {
       id: 'e-beneficier-groupe-perm',

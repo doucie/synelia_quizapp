@@ -99,21 +99,6 @@ export const utilisateursDroits: DiagramDefinition = {
       },
     },
     {
-      id: 'utilisateur_permission',
-      type: 'entity',
-      position: { x: -300, y: 200 },
-      data: {
-        label: 'UTILISATEUR_PERMISSION',
-        variant: 'mld',
-        attributes: [
-          { name: 'id', isPK: true },
-          { name: 'utilisateur_id', isFK: true },
-          { name: 'fonctionnalite' },
-          { name: 'est_autorise' },
-        ],
-      },
-    },
-    {
       id: 'demande_changement_groupe',
       type: 'entity',
       position: { x: 600, y: 600 },

@@ -56,6 +56,22 @@ Cette table fait doublon avec `PERMISSION_UTILISATEUR` (permissions utilisateur)
 
 ---
 
+### 3. PERMISSION_UTILISATEUR
+
+| Attribut | Valeur |
+|----------|--------|
+| **Table BD** | `user_permissions` |
+| **Domaine MCD** | Utilisateurs & droits |
+| **Raison d'exclusion** | Permissions individuelles = détail d'implémentation |
+| **Problème technique** | `est_autorise` est un attribut d'association, pas d'entité |
+| **Règle Merise** | Le MCD modélise les permissions au niveau groupe (`PERMISSION_GROUPE`) |
+
+**Justification détaillée :**
+
+La table `user_permissions` stocke les permissions individuelles par utilisateur. En Merise, les permissions sont portées au niveau conceptuel par `PERMISSION_GROUPE` (lié à GROUPE_METIER via l'association `beneficier`). Les permissions individuelles sont un détail d'implémentation qui sera géré au niveau applicatif (override des permissions groupe, ou permissions spécifiques stockées en BDD).
+
+**Traitement retenu :** Supprimée du MCD. Les permissions individuelles sont documentées dans le mémoire au §implémentation. La table `user_permissions` existe en BDD mais n'apparaît pas dans le modèle conceptuel.
+
 ## Attributs supprimés d'entités conservées
 
 ### 1. NOTIFICATION.utilisateur
@@ -101,6 +117,7 @@ Cette table fait doublon avec `PERMISSION_UTILISATEUR` (permissions utilisateur)
 |-----------------|------------------|--------|----------------|
 | EVENEMENT_AUDIT | Entité exclue | Audit = implémentation, polymorphique | Présente en BD, pas en MCD |
 | PERMISSION_ENTITE | Entité exclue | `id_entite` polymorphique | Supprimée (doublon) |
+| PERMISSION_UTILISATEUR | Entité exclue | Permissions individuelles = implémentation | Présente en BD, pas en MCD |
 | NOTIFICATION.utilisateur | Attribut supprimé | FK interdite en MCD | Ajouté comme FK au MLD/MPD |
 | TOKEN_VERIFICATION_EMAIL.email | Attribut supprimé | Redondant avec CANDIDATURE.email | Non ajouté au MLD/MPD |
 | TEXTE_JURIDIQUE | Entité déplacée | Cohérence métier | Même table, même schéma |
