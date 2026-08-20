@@ -76,6 +76,13 @@ export const utilisateursDroits: DiagramDefinition = {
       data: { label: 'appartenir', cardFrom: '0,n', cardTo: '0,n' },
     },
     {
+      id: 'e-beneficier-groupe-perm',
+      source: 'groupe_metier',
+      target: 'groupe_permission',
+      type: 'relationship',
+      data: { label: 'beneficier', cardFrom: '0,n', cardTo: '0,n' },
+    },
+    {
       id: 'e-recevoir-notification',
       source: 'utilisateur',
       target: 'notification',
