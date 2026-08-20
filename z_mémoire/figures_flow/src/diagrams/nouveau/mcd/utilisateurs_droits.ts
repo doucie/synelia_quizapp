@@ -60,7 +60,6 @@ export const utilisateursDroits: DiagramDefinition = {
         attributes: [
           { name: 'id_notification', isPK: true },
           { name: 'type' },
-          { name: 'acteur' },
           { name: 'lien' },
           { name: 'est_lue' },
         ],
@@ -83,11 +82,18 @@ export const utilisateursDroits: DiagramDefinition = {
       data: { label: 'beneficier', cardFrom: '0,n', cardTo: '0,n' },
     },
     {
-      id: 'e-recevoir-notification',
+      id: 'e-obtenir',
       source: 'utilisateur',
       target: 'notification',
       type: 'relationship',
-      data: { label: 'obtenir', cardFrom: '0,n', cardTo: '1,1' },
+      data: { label: 'obtenir', cardFrom: '0,n', cardTo: '1,1', cardFromSide: 'right', cardToSide: 'left' },
+    },
+    {
+      id: 'e-declencher',
+      source: 'utilisateur',
+      target: 'notification',
+      type: 'relationship',
+      data: { label: 'déclencher', cardFrom: '0,n', cardTo: '0,1', cardFromSide: 'bottom', cardToSide: 'top' },
     },
   ],
 }

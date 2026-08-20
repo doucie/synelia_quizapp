@@ -116,6 +116,23 @@ export const utilisateursDroits: DiagramDefinition = {
         ],
       },
     },
+    {
+      id: 'notification',
+      type: 'entity',
+      position: { x: 0, y: 600 },
+      data: {
+        label: 'NOTIFICATION',
+        variant: 'mld',
+        attributes: [
+          { name: 'id', isPK: true },
+          { name: 'type' },
+          { name: 'lien' },
+          { name: 'est_lue' },
+          { name: 'destinataire_id', isFK: true },
+          { name: 'acteur_id', isFK: true },
+        ],
+      },
+    },
   ],
   edges: [],
 }
