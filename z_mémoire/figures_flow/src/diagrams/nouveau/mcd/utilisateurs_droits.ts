@@ -98,24 +98,6 @@ export const utilisateursDroits: DiagramDefinition = {
         ],
       },
     },
-    {
-      id: 'evenement_audit',
-      type: 'entity',
-      position: { x: 400, y: 600 },
-      data: {
-        label: 'EVENEMENT_AUDIT',
-        variant: 'mcd',
-        attributes: [
-          { name: 'id_evenement', isPK: true },
-          { name: 'type_entite' },
-          { name: 'id_entite' },
-          { name: 'type_action' },
-          { name: 'justification' },
-          { name: 'etat_avant' },
-          { name: 'etat_apres' },
-        ],
-      },
-    },
   ],
   edges: [
     {
@@ -152,13 +134,6 @@ export const utilisateursDroits: DiagramDefinition = {
       target: 'notification',
       type: 'relationship',
       data: { label: 'obtenir', cardFrom: '0,n', cardTo: '1,1' },
-    },
-    {
-      id: 'e-realiser-audit',
-      source: 'utilisateur',
-      target: 'evenement_audit',
-      type: 'relationship',
-      data: { label: 'realiser', cardFrom: '0,n', cardTo: '1,1' },
     },
   ],
 }
