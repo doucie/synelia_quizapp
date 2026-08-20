@@ -46,7 +46,6 @@ export const utilisateursDroits: DiagramDefinition = {
         variant: 'mcd',
         attributes: [
           { name: 'id_permission', isPK: true },
-          { name: 'groupe_id' },
           { name: 'fonctionnalite' },
         ],
       },
@@ -60,7 +59,6 @@ export const utilisateursDroits: DiagramDefinition = {
         variant: 'mcd',
         attributes: [
           { name: 'id_permission', isPK: true },
-          { name: 'utilisateur_id' },
           { name: 'fonctionnalite' },
           { name: 'est_autorise' },
         ],
@@ -93,8 +91,6 @@ export const utilisateursDroits: DiagramDefinition = {
           { name: 'acteur' },
           { name: 'lien' },
           { name: 'est_lue' },
-          { name: 'type_entite' },
-          { name: 'id_entite' },
         ],
       },
     },
