@@ -38,21 +38,6 @@ export const utilisateursDroits: DiagramDefinition = {
       },
     },
     {
-      id: 'permission_entite',
-      type: 'entity',
-      position: { x: 0, y: 400 },
-      data: {
-        label: 'PERMISSION_ENTITE',
-        variant: 'mcd',
-        attributes: [
-          { name: 'id_permission', isPK: true },
-          { name: 'type_entite' },
-          { name: 'id_entite' },
-          { name: 'cle_permission' },
-        ],
-      },
-    },
-    {
       id: 'groupe_permission',
       type: 'entity',
       position: { x: 400, y: 250 },
@@ -139,13 +124,6 @@ export const utilisateursDroits: DiagramDefinition = {
       target: 'groupe_metier',
       type: 'relationship',
       data: { label: 'appartenir', cardFrom: '0,n', cardTo: '0,n' },
-    },
-    {
-      id: 'e-disposer',
-      source: 'utilisateur',
-      target: 'permission_entite',
-      type: 'relationship',
-      data: { label: 'disposer', cardFrom: '0,n', cardTo: '0,n' },
     },
     {
       id: 'e-soumettre',
