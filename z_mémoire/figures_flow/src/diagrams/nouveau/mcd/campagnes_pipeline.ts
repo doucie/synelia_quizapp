@@ -162,14 +162,14 @@ export const campagnesPipeline: DiagramDefinition = {
       source: 'modele_pipeline',
       target: 'etape_pipeline',
       type: 'relationship',
-      data: { label: 'etablir', cardFrom: '1,1', cardTo: '1,n', isStrong: true },
+      data: { label: 'etablir', cardFrom: '1,n', cardTo: '1,n', isStrong: true },
     },
     {
       id: 'e-declencher',
       source: 'etape_pipeline',
       target: 'regle_notification',
       type: 'relationship',
-      data: { label: 'declencher', cardFrom: '1,1', cardTo: '0,n' },
+      data: { label: 'declencher', cardFrom: '0,n', cardTo: '0,n' },
     },
     {
       id: 'e-proposer',
@@ -197,7 +197,7 @@ export const campagnesPipeline: DiagramDefinition = {
       source: 'question',
       target: 'reponse',
       type: 'relationship',
-      data: { label: 'definir', cardFrom: '1,1', cardTo: '0,n', isStrong: true },
+      data: { label: 'definir', cardFrom: '1,1', cardTo: '1,1', isStrong: true },
     },
   ],
 }

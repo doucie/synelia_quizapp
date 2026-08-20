@@ -81,7 +81,7 @@ export const configSysteme: DiagramDefinition = {
       source: 'configuration',
       target: 'texte_juridique',
       type: 'relationship',
-      data: { label: 'inclure', cardFrom: '1,1', cardTo: '0,n' },
+      data: { label: 'inclure', cardFrom: '0,n', cardTo: '0,n' },
     },
   ],
 }

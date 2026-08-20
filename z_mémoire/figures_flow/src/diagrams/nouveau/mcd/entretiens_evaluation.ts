@@ -136,14 +136,14 @@ export const entretiensEvaluation: DiagramDefinition = {
       source: 'entretien',
       target: 'evaluation',
       type: 'relationship',
-      data: { label: 'recevoir', cardFrom: '1,1', cardTo: '0,n', isStrong: true },
+      data: { label: 'recevoir', cardFrom: '1,1', cardTo: '1,1', isStrong: true },
     },
     {
       id: 'e-contenir-item',
       source: 'evaluation',
       target: 'item_evaluation',
       type: 'relationship',
-      data: { label: 'contenir', cardFrom: '1,1', cardTo: '1,n', isStrong: true },
+      data: { label: 'contenir', cardFrom: '1,1', cardTo: '1,1', isStrong: true },
     },
     {
       id: 'e-evaluer',
