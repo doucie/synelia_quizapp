@@ -56,103 +56,123 @@ La BD modélisée dans les diagrammes correspond au **schéma cible post-migrati
 - **Principe clé** : `applications` devient une table de **synthèse et pointeurs courants** ; le runtime de chaque round vit dans `application_progress`
 - **Suppression des colonnes legacy** : `quiz_score`, `application_status`, `interview_status`, etc. supprimés de `applications` — tout est déplacé dans les tables spécialisées (`application_progress`, `application_quiz_attempt`, `interviews`, `evaluations`, `decisions`)
 - **Renommage** : `interview_evaluations_link` → `evaluation_room_code`
+- **Entités hors-scope** : `EVENEMENT_AUDIT`, `PERMISSION_ENTITE` exclus du MCD (voir `plans/audit/20260819_hors_scope_mcd.md`)
 
 ### Correspondance MCD ↔ code
 
-Les entités du MCD mappent directement vers les tables MySQL du MPD :
+Les entités du MCD mappent vers les tables MySQL du MPD. Les noms sont **anglicisés** dans le passage MCD → MPD.
 
-| Entité MCD | Table MPD | Domaine |
-|------------|-----------|---------|
-| `candidature` | `applications` | Candidature & Quiz |
-| `avancement` | `application_progress` | Candidature & Quiz |
-| `tentative_quiz` | `application_quiz_attempt` | Candidature & Quiz |
-| `reponse_candidat` | `candidate_answer` | Candidature & Quiz |
-| `utilisateur` | `user` | Identité & Permissions |
-| `campagne` | `campaigns` | Campagnes & Pipeline |
-| `etape_pipeline` | `pipeline_stage` | Campagnes & Pipeline |
-| `entretien` | `interviews` | Entretien & Évaluation |
-| `evaluation` | `evaluations` | Entretien & Évaluation |
-| `decision` | `decisions` | Candidature & Quiz |
-
-Les noms sont **anglicisés** dans le passage MCD → MPD (ex: `candidature` → `applications`, `etape_pipeline` → `pipeline_stage`).
+| Entité MCD | Table BD | Domaine |
+|------------|----------|---------|
+| `UTILISATEUR` | `users` | Utilisateurs & droits |
+| `GROUPE_METIER` | `business_groups` | Utilisateurs & droits |
+| `PERMISSION_UTILISATEUR` | `user_permissions` | Utilisateurs & droits |
+| `PERMISSION_GROUPE` | `group_permissions` | Utilisateurs & droits |
+| `DEMANDE_CHANGEMENT_GROUPE` | `group_change_requests` | Utilisateurs & droits |
+| `NOTIFICATION` | `notifications` | Utilisateurs & droits |
+| `CAMPAGNE` | `campaigns` | Campagnes & pipeline |
+| `MODELE_PIPELINE` | `pipeline_templates` | Campagnes & pipeline |
+| `ETAPE_PIPELINE` | `pipeline_stages` | Campagnes & pipeline |
+| `FORMULAIRE` | `forms` | Campagnes & pipeline |
+| `VERSION_FORMULAIRE` | `form_versions` | Campagnes & pipeline |
+| `QUESTION` | `questions` | Campagnes & pipeline |
+| `REPONSE` | `answers` | Campagnes & pipeline |
+| `CANDIDATURE` | `applications` | Candidatures & suivi |
+| `AVANCEMENT` | `application_progress` | Candidatures & suivi |
+| `TOKEN_CANDIDAT` | `candidate_tokens` | Candidatures & suivi |
+| `TOKEN_VERIFICATION_EMAIL` | `email_verification_tokens` | Candidatures & suivi |
+| `DEMANDE_CANDIDAT` | `candidate_requests` | Candidatures & suivi |
+| `DECISION` | `decisions` | Candidatures & suivi |
+| `ENTRETIEN` | `interviews` | Entretiens & évaluation |
+| `CANDIDAT_ENTRETIEN` | `interview_candidates` | Entretiens & évaluation |
+| `PARTICIPANT_ENTRETIEN` | `interview_participants` | Entretiens & évaluation |
+| `EVALUATION` | `evaluations` | Entretiens & évaluation |
+| `ITEM_EVALUATION` | `evaluation_items` | Entretiens & évaluation |
+| `GRILLE_MODELE` | `evaluation_grids` | Entretiens & évaluation |
+| `MODELE_EMAIL` | `email_templates` | Communication |
+| `PRESET_MODELE_EMAIL` | `email_template_presets` | Communication |
+| `JOURNAL_EMAIL` | `email_logs` | Communication |
+| `CONFIGURATION` | `configurations` | Config système |
+| `CONFIGURATION_SMTP` | `smtp_configurations` | Config système |
+| `TEXTE_JURIDIQUE` | `legal_texts` | Config système |
 
 ## Contenu
 
-28 diagrammes au total — 16 Merise (MCD/MLD/MPD) + 12 diagrammes de traitements (MCT/SAT/MPT) :
+### Diagrammes Merise — Nouveau (18)
 
-### Diagrammes Merise (16)
+6 domaines × 3 niveaux (MCD/MLD/MPD) = 18 diagrammes dans `src/diagrams/nouveau/` :
 
 | # | Type | Domaine | Nb entités |
 |---|------|---------|-----------|
-| 1 | MCD | Identité & Permissions | 3 |
-| 2 | MCD | Identité & Permissions (moderne) | 3 |
-| 3 | MCD | Campagnes & Pipeline | 9 |
-| 4 | MCD | Candidature & Quiz | 6 |
-| 5 | MCD | Entretien & Évaluation | 7 |
-| 6 | MCD | Audit & Notifications | 3 |
-| 7 | MLD | Identité & Permissions | 6 |
-| 8 | MLD | Campagnes & Pipeline | 11 |
-| 9 | MLD | Candidature & Quiz | 6 |
-| 10 | MLD | Entretien & Évaluation | 7 |
-| 11 | MLD | Audit & Notifications | 3 |
-| 12 | MPD | Identité & Permissions | 6 |
-| 13 | MPD | Campagnes & Pipeline | 11 |
-| 14 | MPD | Candidature & Quiz | 6 |
-| 15 | MPD | Entretien & Évaluation | 7 |
-| 16 | MPD | Audit & Notifications | 3 |
+| 1 | MCD | Utilisateurs & droits | 6 |
+| 2 | MCD | Campagnes & pipeline | 8 |
+| 3 | MCD | Candidatures & suivi | 6 |
+| 4 | MCD | Entretiens & évaluation | 6 |
+| 5 | MCD | Communication | 3 |
+| 6 | MCD | Config système | 3 |
+| 7–12 | MLD | (mêmes domaines) | — |
+| 13–18 | MPD | (mêmes domaines) | — |
 
-### Diagrammes de traitements (12)
+### Diagrammes archivés (30)
 
-| # | Type | Domaine | Description |
-|---|------|---------|-------------|
-| 17 | MCT | Candidature & Quiz (T1+T2) | Soumission candidature + passage quiz |
-| 18 | MCT | Candidature (détail T1) | Focus soumission candidature |
-| 19 | MCT | Quiz (détail T2) | Focus passage du quiz |
-| 20 | MCT | Entretien & Évaluation (T3) | Planification entretien + évaluation |
-| 21 | MCT | Décision & Audit (T4) | Prise de décision + audit |
-| 22 | MCT | Décision (détail T4a) | Focus logique de décision |
-| 23 | MCT | Rollback (détail T4b) | Focus annulation/rollback |
-| 24 | MCT | Audit (détail T4c) | Focus traçabilité audit |
-| 25 | SAT | Setup & Préselection (S1) | Configuration pipeline + screening |
-| 26 | SAT | Entretien & Audit (S2) | Sous-traitance entretien/évaluation |
-| 27 | MPT | Candidature & Quiz (couche) | Vue en couches candidature/quiz |
-| 28 | MPT | Entretien & Décision (couche) | Vue en couches entretien/décision |
+Les anciens diagrammes (MCD/MLD/MPD v1, traitements v1, MOT v1) sont conservés dans `src/diagrams/archive/` avec `// @ts-nocheck` et `category: 'archive'`.
 
-> **Note** : `plans/nouveaux_mct.md` est la **source de vérité** pour les MCT :
-> conventions Merise corrigées + parcours en 9 traitements (T0–T8). Les MCT v1
-> (n° 17–24) sont conservés tels quels à titre de référence.
->
-> **MCT v2** : disponibles dans `src/diagrams/traitements/v2/`. Actuellement
-> **7 fichiers (T0–T6)** — version condensée (entretien regroupé en un seul
-> traitement). La version cible du plan (`nouveaux_mct.md`) détaille T0–T8
-> (planification / conduite / évaluation séparés). **Le code n'est pas encore
-> aligné sur le plan** — c'est un travail à faire.
+### Diagrammes de traitements v2 (7)
+
+Disponibles dans `src/diagrams/traitements/v2/` :
+
+| # | Type | Traitement | Description |
+|---|------|-----------|-------------|
+| 1 | MCT | T0 | Création de campagne |
+| 2 | MCT | T1 | Soumission candidature |
+| 3 | MCT | T2 | Passage du quiz |
+| 4 | MCT | T3 | Entretien & évaluation |
+| 5 | MCT | T4 | Décision |
+| 6 | MCT | T5 | Rollback |
+| 7 | MCT | T6 | Audit |
+
+> **Note** : `plans/mct/nouveaux_mct.md` est la **source de vérité** pour les MCT :
+> conventions Merise corrigées + parcours en 9 traitements (T0–T8). Les MCT v2
+> actuels couvrent T0–T6. La version cible détaille T0–T8 (planification /
+> conduite / évaluation séparés). **Le code n'est pas encore aligné sur le plan.**
+
+### Diagrammes supplémentaires
+
+| Type | Fichier | Description |
+|------|---------|-------------|
+| Palette | `src/diagrams/palette/` | Couleurs et styles des entités |
+| MOT v2 | `src/diagrams/mot/` | Matrice acteurs × traitements |
 
 **Légende** :
-- **MCT** (Modèle Conceptuel de Traitement) : diagrammes événement/opération/ résultat décrivant les flux métier
-- **SAT** (Sous-traitance) : diagrammes de décomposition des sous-traites
+- **MCT** (Modèle Conceptuel de Traitement) : diagrammes événement/opération/résultat décrivant les flux métier
 - **MPT** (Modèle Physique de Traitement) : diagrammes en couches montrant l'empilement technique
+- **MOT** (Modèle Organisationnel de Traitement) : matrice acteurs × traitements
+
+### Entités hors-scope du MCD
+
+Certaines tables présentes en BD ne figurent pas dans le MCD. Voir `plans/audit/20260819_hors_scope_mcd.md` pour la justification détaillée.
+
+| Entité/Attribut | Raison |
+|-----------------|--------|
+| `EVENEMENT_AUDIT` | Audit = détail d'implémentation, `id_entite` polymorphique |
+| `PERMISSION_ENTITE` | `id_entite` polymorphique, doublon avec PERMISSION_UTILISATEUR |
+| `NOTIFICATION.utilisateur` | FK interdite en MCD (portée par l'association) |
+| `TOKEN_VERIFICATION_EMAIL.email` | Redondant avec CANDIDATURE.email |
 
 ## MOT : versions
 
-Il existe plusieurs versions du MOT (Modèle Organisationnel de Traitement) — seule la plus récente compte :
-
 | Version | Fichier | Statut |
 |---------|---------|--------|
-| **MOT v1** | `src/diagrams/mot/mot_organisationnel.ts` | **Ne sert à rien → à supprimer** |
-| **MOT v2** | `src/diagrams/mot/mot_organisationnel_v2.ts` | **À garder** — c'est en quelque sorte le « v1 » réel (matrice acteurs × traitements basée sur les MCT v1) |
-| **MOT v3** | — | **À créer** — nouveau MOT basé sur les **MCT v2** (pas le MOT v2) |
+| MOT v1 | `src/diagrams/archive/` | Supprimé (archivé) |
+| **MOT v2** | `src/diagrams/mot/mot_organisationnel_v2.ts` | **Version courante** — matrice acteurs × traitements basée sur les MCT v1 |
+| MOT v3 | — | **À créer** — nouveau MOT basé sur les MCT v2 |
 
-> **Action à faire** : supprimer `mot_organisationnel.ts` (MOT v1).
->
-> **Action à faire** : créer le MOT v3 à partir des MCT v2. Les MCT v2
-> (`src/diagrams/traitements/v2/`) doivent être intégrés dans ce **nouveau MOT v3**,
-> pas dans le MOT v2 existant.
+> **Action à faire** : créer le MOT v3 à partir des MCT v2 (`src/diagrams/traitements/v2/`).
 
 ## Types
 
 ```typescript
-Category = 'mcd' | 'mld' | 'mpd' | 'traitements' | 'reference'
+Category = 'mcd' | 'mld' | 'mpd' | 'traitements' | 'archive' | 'palette' | 'mot'
 
 ProcessVariant = 'mct-event' | 'mct-sync' | 'mct-operation' | 'mct-result'
                | 'sat-task' | 'sat-phase' | 'sat-head' | 'sat-lane'
@@ -160,7 +180,7 @@ ProcessVariant = 'mct-event' | 'mct-sync' | 'mct-operation' | 'mct-result'
 
 Variant = 'mcd' | 'mld' | 'mpd' | ProcessVariant
 
-Attribute = { name, type?, isPK?, isFK?, isNew?, isDeleted?, description? }
+Attribute = { name, isPK?, description? }
 
 EntityNodeData = { label, variant, attributes?, color?, badge?, items?, meta?,
                    detail?, expression?, fail?, layer?, dimensions? }
@@ -192,41 +212,52 @@ Pas de Docker, pas de backend. `npm run dev` suffit.
 ```
 figures_flow/
 ├── src/
-│   ├── main.tsx              # Point d'entrée
-│   ├── App.tsx               # Layout principal (sidebar + canvas)
+│   ├── main.tsx
+│   ├── App.tsx
 │   ├── types/
-│   │   └── index.ts          # Types EntityNode, Attribute, RelationshipEdge, DiagramDefinition
+│   │   └── index.ts          # Category, DiagramDefinition, EntityNodeData, etc.
 │   ├── diagrams/
 │   │   ├── index.ts          # Registre de tous les diagrammes
-│   │   ├── mcd/              # 5 fichiers MCD (identite, campagnes, candidature, entretien, audit)
-│   │   ├── mld/              # 5 fichiers MLD
-│   │   ├── mpd/              # 5 fichiers MPD
-│   │   └── traitements/      # 12 fichiers MCT/SAT/MPT
+│   │   ├── nouveau/          # Nouveaux diagrammes MCD/MLD/MPD (6 domaines)
+│   │   │   ├── mcd/          # 6 fichiers MCD
+│   │   │   ├── mld/          # 6 fichiers MLD
+│   │   │   └── mpd/          # 6 fichiers MPD
+│   │   ├── archive/          # Anciens diagrammes (30 fichiers, @ts-nocheck)
+│   │   ├── traitements/      # MCT/SAT/MPT v1 (archivés) et v2 (actifs)
+│   │   │   └── v2/           # 7 fichiers MCT (T0–T6)
+│   │   ├── mot/              # MOT v2 (matrice acteurs × traitements)
+│   │   └── palette/          # Diagramme de couleurs
 │   ├── components/
 │   │   ├── Nodes/
-│   │   │   ├── EntityNode.tsx       # Nœud entité/table (variantes mcd|mld|mpd)
-│   │   │   └── ProcessNode.tsx      # Nœud de traitement (mct-event, mct-operation, etc.)
+│   │   │   ├── EntityNode.tsx
+│   │   │   └── ProcessNode.tsx
 │   │   ├── Edges/
-│   │   │   ├── RelationshipEdge.tsx  # Arête avec cardinalités et label
-│   │   │   └── TraitementEdge.tsx    # Arête pour diagrammes de traitements
-│   │   ├── Sidebar.tsx              # Navigation par catégorie
-│   │   ├── Toolbar.tsx              # Zoom, grille, export, thème
-│   │   ├── ThemeToggle.tsx          # Bascule light/dark
-│   │   ├── FontSelector.tsx         # Choix de la police
-│   │   ├── FullscreenOverlay.tsx    # Mode plein écran
-│   │   └── DiagramCanvas.tsx        # Wrapper React Flow
+│   │   │   ├── RelationshipEdge.tsx
+│   │   │   └── TraitementEdge.tsx
+│   │   ├── Sidebar.tsx
+│   │   ├── Toolbar.tsx
+│   │   ├── ThemeToggle.tsx
+│   │   ├── FontSelector.tsx
+│   │   ├── FullscreenOverlay.tsx
+│   │   └── DiagramCanvas.tsx
 │   ├── hooks/
-│   │   ├── useDiagramPersistence.ts # localStorage save/restore
-│   │   ├── useDiagramState.ts       # État courant du diagramme
-│   │   ├── useFontPreference.ts     # Police persistée
-│   │   └── useSidebarState.ts       # État sidebar (ouvert/fermé)
+│   │   ├── useDiagramPersistence.ts
+│   │   ├── useDiagramState.ts
+│   │   ├── useFontPreference.ts
+│   │   └── useSidebarState.ts
 │   └── utils/
-│       ├── autoLayout.ts            # Placement initial des nœuds
-│       ├── entityColors.ts          # Palette de couleurs par entité
-│       └── exportSvg.ts             # Export SVG standalone
+│       ├── autoLayout.ts
+│       ├── entityColors.ts
+│       └── exportSvg.ts
+├── plans/
+│   ├── PLAN.md
+│   ├── audit/               # Audits et documentations
+│   ├── implementations/     # Plans d'implémentation
+│   ├── mct/                 # Plans MCT
+│   ├── mot/                 # Plans MOT
+│   └── rules/               # Règles Merise
 ├── index.html
-├── PLAN.md                 # Plan de travail détaillé
-└── README.md               # Ce fichier
+└── README.md
 ```
 
 ## Démarrer
@@ -239,9 +270,9 @@ npm run dev
 
 Ouvrir l'URL affichée (généralement `http://localhost:5173`).
 
-## Fonctionnalités prévues
+## Fonctionnalités
 
-- Navigation entre les 28 diagrammes via une sidebar (Merise + Traitements)
+- Navigation entre les diagrammes via une sidebar (Merise + Traitements + Archive)
 - Drag & drop des entités (positions persistées dans localStorage)
 - Zoom avant/arrière, fit to view
 - Grille d'aimantation (10px)
