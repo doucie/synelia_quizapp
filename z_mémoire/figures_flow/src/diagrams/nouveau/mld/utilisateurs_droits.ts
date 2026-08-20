@@ -99,25 +99,6 @@ export const utilisateursDroits: DiagramDefinition = {
       },
     },
     {
-      id: 'demande_changement_groupe',
-      type: 'entity',
-      position: { x: 600, y: 600 },
-      data: {
-        label: 'DEMANDE_CHANGEMENT_GROUPE',
-        variant: 'mld',
-        attributes: [
-          { name: 'id', isPK: true },
-          { name: 'utilisateur_id', isFK: true },
-          { name: 'groupe_cible_id', isFK: true },
-          { name: 'raison' },
-          { name: 'statut' },
-          { name: 'date_demande' },
-          { name: 'date_traitement' },
-          { name: 'traite_par', isFK: true },
-        ],
-      },
-    },
-    {
       id: 'code_invitation',
       type: 'entity',
       position: { x: 1000, y: 0 },

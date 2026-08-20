@@ -72,6 +72,22 @@ La table `user_permissions` stocke les permissions individuelles par utilisateur
 
 **Traitement retenu :** Supprimée du MCD. Les permissions individuelles sont documentées dans le mémoire au §implémentation. La table `user_permissions` existe en BDD mais n'apparaît pas dans le modèle conceptuel.
 
+---
+
+### 4. DEMANDE_CHANGEMENT_GROUPE
+
+| Attribut | Valeur |
+|----------|--------|
+| **Table BD** | `group_change_requests` |
+| **Domaine MCD** | Utilisateurs & droits |
+| **Raison d'exclusion** | Workflow d'approbation = détail d'implémentation |
+
+**Justification détaillée :**
+
+La table `group_change_requests` enregistre les demandes de changement de groupe métier (workflow d'approbation admin). C'est un processus opérationnel (requête + validation) qui n'a pas de contrepartie conceptuelle forte en Merise. L'entité GROUPE_METIER et l'association `appartenir` modélisent la relation conceptuelle utilisateur ↔ groupe. Le workflow de demande/approbation est un détail d'implémentation géré au niveau applicatif.
+
+**Traitement retenu :** Supprimée du MCD. Le workflow de changement de groupe est documenté dans le mémoire au §implémentation. La table `group_change_requests` existe en BDD mais n'apparaît pas dans le modèle conceptuel.
+
 ## Attributs supprimés d'entités conservées
 
 ### 1. NOTIFICATION.utilisateur
@@ -118,6 +134,7 @@ La table `user_permissions` stocke les permissions individuelles par utilisateur
 | EVENEMENT_AUDIT | Entité exclue | Audit = implémentation, polymorphique | Présente en BD, pas en MCD |
 | PERMISSION_ENTITE | Entité exclue | `id_entite` polymorphique | Supprimée (doublon) |
 | PERMISSION_UTILISATEUR | Entité exclue | Permissions individuelles = implémentation | Présente en BD, pas en MCD |
+| DEMANDE_CHANGEMENT_GROUPE | Entité exclue | Workflow d'approbation = implémentation | Présente en BD, pas en MCD |
 | NOTIFICATION.utilisateur | Attribut supprimé | FK interdite en MCD | Ajouté comme FK au MLD/MPD |
 | TOKEN_VERIFICATION_EMAIL.email | Attribut supprimé | Redondant avec CANDIDATURE.email | Non ajouté au MLD/MPD |
 | TEXTE_JURIDIQUE | Entité déplacée | Cohérence métier | Même table, même schéma |

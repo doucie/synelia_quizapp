@@ -51,20 +51,6 @@ export const utilisateursDroits: DiagramDefinition = {
       },
     },
     {
-      id: 'demande_changement_groupe',
-      type: 'entity',
-      position: { x: 600, y: 400 },
-      data: {
-        label: 'DEMANDE_CHANGEMENT_GROUPE',
-        variant: 'mcd',
-        attributes: [
-          { name: 'id_demande', isPK: true },
-          { name: 'raison' },
-          { name: 'statut' },
-        ],
-      },
-    },
-    {
       id: 'notification',
       type: 'entity',
       position: { x: 0, y: 600 },
@@ -88,20 +74,6 @@ export const utilisateursDroits: DiagramDefinition = {
       target: 'groupe_metier',
       type: 'relationship',
       data: { label: 'appartenir', cardFrom: '0,n', cardTo: '0,n' },
-    },
-    {
-      id: 'e-soumettre',
-      source: 'utilisateur',
-      target: 'demande_changement_groupe',
-      type: 'relationship',
-      data: { label: 'soumettre', cardFrom: '0,n', cardTo: '1,1' },
-    },
-    {
-      id: 'e-beneficier-groupe-perm',
-      source: 'groupe_metier',
-      target: 'groupe_permission',
-      type: 'relationship',
-      data: { label: 'beneficier', cardFrom: '0,n', cardTo: '0,n' },
     },
     {
       id: 'e-recevoir-notification',
