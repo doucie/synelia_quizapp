@@ -141,13 +141,6 @@ export const utilisateursDroits: DiagramDefinition = {
       data: { label: 'appartenir', cardFrom: '0,n', cardTo: '0,n' },
     },
     {
-      id: 'e-posseder',
-      source: 'groupe_metier',
-      target: 'permission_entite',
-      type: 'relationship',
-      data: { label: 'posseder', cardFrom: '0,n', cardTo: '0,n' },
-    },
-    {
       id: 'e-disposer',
       source: 'utilisateur',
       target: 'permission_entite',
