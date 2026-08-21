@@ -258,7 +258,7 @@ export default function RelationshipEdge({
               flexDirection: 'column',
               alignItems: 'center',
               border: '1px solid var(--xy-edge-stroke-default)',
-              borderRadius: 8,
+              borderRadius: 9999,
               padding: 0,
             }}
           >
