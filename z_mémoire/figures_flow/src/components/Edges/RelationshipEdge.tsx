@@ -230,42 +230,53 @@ export default function RelationshipEdge({
             <span className={badgeClass}>{data.cardTo}</span>
           </div>
         )}
-        {(data?.label || (data?.attributes && data.attributes.length > 0)) && (() => {
-          const hasAttributes = data?.attributes && data.attributes.length > 0
-          return (
-            <div
-              style={{
-                position: 'absolute',
-                left: labelX - 50,
-                top: labelY - 14,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                border: hasAttributes ? '1px solid var(--xy-edge-stroke-default)' : 'none',
-                borderRadius: 8,
-                padding: hasAttributes ? '2px 4px' : 0,
-              }}
-            >
-              {data?.label && (
-                <span className="inline-flex items-center justify-center rounded-full border border-border bg-background px-3 py-1 text-[10px] leading-none text-foreground shadow-sm">
-                  {data.label}
+        {data?.label && !(data?.attributes && data.attributes.length > 0) && (
+          <div
+            style={{
+              position: 'absolute',
+              left: labelX - 50,
+              top: labelY - 14,
+              width: 100,
+              height: 28,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <span className="inline-flex items-center justify-center rounded-full border border-border bg-background px-3 py-1 text-[10px] leading-none text-foreground shadow-sm">
+              {data.label}
+            </span>
+          </div>
+        )}
+        {data?.label && (data?.attributes && data.attributes.length > 0) && (
+          <div
+            style={{
+              position: 'absolute',
+              left: labelX - 50,
+              top: labelY - 14,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              border: '1px solid var(--xy-edge-stroke-default)',
+              borderRadius: 8,
+              padding: '2px 4px',
+            }}
+          >
+            <span className="inline-flex items-center justify-center rounded-full border border-border bg-background px-3 py-1 text-[10px] leading-none text-foreground shadow-sm">
+              {data.label}
+            </span>
+            <div style={{ padding: '2px 0' }}>
+              {data.attributes!.map((attr) => (
+                <span
+                  key={attr}
+                  className="text-[9px] text-foreground"
+                >
+                  {attr}
                 </span>
-              )}
-              {hasAttributes && (
-                <div style={{ padding: '2px 0' }}>
-                  {data.attributes!.map((attr) => (
-                    <span
-                      key={attr}
-                      className="text-[9px] text-foreground"
-                    >
-                      {attr}
-                    </span>
-                  ))}
-                </div>
-              )}
+              ))}
             </div>
-          )
-        })()}
+          </div>
+        )}
         {popover && (
           <div
             ref={popoverRef}
