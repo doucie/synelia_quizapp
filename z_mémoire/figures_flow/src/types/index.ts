@@ -58,6 +58,7 @@ export interface RelationshipEdgeData {
   isStrong?: boolean
   isDashed?: boolean
   diagramId?: string
+  attributes?: string[]
 }
 
 export type RelationshipEdge = Edge<RelationshipEdgeData>
