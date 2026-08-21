@@ -230,41 +230,27 @@ export default function RelationshipEdge({
             <span className={badgeClass}>{data.cardTo}</span>
           </div>
         )}
-        {data?.label && (
+        {(data?.label || (data?.attributes && data.attributes.length > 0)) && (
           <div
             style={{
               position: 'absolute',
               left: labelX - 50,
               top: labelY - 14,
-              width: 100,
-              height: 28,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <span className="inline-flex items-center justify-center rounded-full border border-border bg-background px-3 py-1 text-[10px] leading-none text-foreground shadow-sm">
-              {data.label}
-            </span>
-          </div>
-        )}
-        {data?.attributes && data.attributes.length > 0 && (
-          <div
-            style={{
-              position: 'absolute',
-              left: labelX - 40,
-              top: labelY + 16,
-              width: 80,
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               gap: 2,
             }}
           >
-            {data.attributes.map((attr) => (
+            {data?.label && (
+              <span className="inline-flex items-center justify-center rounded-full border border-border bg-background px-3 py-1 text-[10px] leading-none text-foreground shadow-sm">
+                {data.label}
+              </span>
+            )}
+            {data?.attributes?.map((attr) => (
               <span
                 key={attr}
-                className="rounded border border-dashed border-muted-foreground/40 bg-background px-1.5 py-0.5 text-[9px] text-muted-foreground"
+                className="rounded border border-dashed border-border bg-background px-2 py-0.5 text-[9px] text-foreground"
               >
                 {attr}
               </span>
