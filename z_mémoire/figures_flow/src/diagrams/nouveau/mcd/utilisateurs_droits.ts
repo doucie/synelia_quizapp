@@ -72,7 +72,7 @@ export const utilisateursDroits: DiagramDefinition = {
       source: 'utilisateur',
       target: 'groupe_metier',
       type: 'relationship',
-      data: { label: 'appartenir', cardFrom: '0,n', cardTo: '0,n' },
+      data: { label: 'appartenir', cardFrom: '0,n', cardTo: '0,n', attributes: ['est_moderateur'] },
     },
     {
       id: 'e-beneficier-groupe-perm',
