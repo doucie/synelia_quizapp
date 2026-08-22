@@ -254,23 +254,27 @@ export default function RelationshipEdge({
               position: 'absolute',
               left: labelX - 50,
               top: labelY - 14,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              border: '1px solid var(--xy-edge-stroke-default)',
-              borderRadius: 11,
-              padding: 0,
-              background: 'var(--color-background)',
             }}
           >
-            <span className="inline-flex items-center justify-center rounded-full border border-border bg-background px-3 py-1 text-[10px] leading-none text-foreground shadow-sm" style={{ width: '100%' }}>
-              {data.label}
-            </span>
-            <div style={{ padding: '2px' }}>
+            <div
+              style={{
+                display: 'inline-flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                border: '1px solid var(--xy-edge-stroke-default)',
+                borderRadius: 11,
+                background: 'var(--color-background)',
+                overflow: 'hidden',
+              }}
+            >
+              <span className="inline-flex items-center justify-center px-3 py-1 text-[10px] font-semibold text-foreground">
+                {data.label}
+              </span>
+              <div style={{ width: '100%', borderTop: '1px solid var(--xy-edge-stroke-default)' }} />
               {data.attributes!.map((attr) => (
                 <span
                   key={attr}
-                  className="text-[9px] text-foreground"
+                  className="px-3 py-0.5 text-[9px] text-muted-foreground"
                 >
                   {attr}
                 </span>
