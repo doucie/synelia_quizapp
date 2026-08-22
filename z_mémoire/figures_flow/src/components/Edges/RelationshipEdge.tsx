@@ -267,7 +267,7 @@ export default function RelationshipEdge({
                 overflow: 'hidden',
               }}
             >
-              <span className="inline-flex items-center justify-center px-3 py-1 text-[10px] font-semibold text-foreground">
+              <span className="inline-flex items-center justify-center px-3 py-0.5 text-[10px] text-foreground">
                 {data.label}
               </span>
               <div style={{ width: '100%', borderTop: '1px solid var(--xy-edge-stroke-default)' }} />
