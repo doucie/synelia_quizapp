@@ -252,8 +252,9 @@ export default function RelationshipEdge({
           <div
             style={{
               position: 'absolute',
-              left: labelX - 50,
+              left: labelX,
               top: labelY - 14,
+              transform: 'translateX(-50%)',
             }}
           >
             <div
@@ -274,7 +275,8 @@ export default function RelationshipEdge({
               {data.attributes!.map((attr) => (
                 <span
                   key={attr}
-                  className="px-3 py-0.5 text-[9px] text-muted-foreground"
+                  className="px-3 py-0.5 text-[9px] text-muted-foreground self-stretch text-left"
+                  style={{ lineHeight: 0.9 }}
                 >
                   {attr}
                 </span>
