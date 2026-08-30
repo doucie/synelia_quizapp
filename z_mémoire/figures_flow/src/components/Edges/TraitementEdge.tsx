@@ -4,12 +4,19 @@ import {
   getSmoothStepPath,
   EdgeLabelRenderer,
   useReactFlow,
-  Position,
+  useEdges,
+  useNodes,
   type EdgeProps,
   type Node,
 } from '@xyflow/react'
 import type { RelationshipEdgeData, EntityNodeData } from '../../types'
 import { setCardinalitySide } from '../../hooks/useDiagramState'
+import {
+  resolveHandleId,
+  edgeAnchorGroup,
+  edgePathOffset,
+} from './edgeAnchors'
+import { useEdgeDebugEnabled } from '../../utils/edgeDebug'
 
 const CARD_SIDES = ['source', 'left', 'right', 'top', 'bottom'] as const
 
@@ -31,7 +38,7 @@ const SIDE_LABELS: Record<string, string> = {
 
 function getValidHandles(node: Node | undefined, handleType: 'source' | 'target'): Set<string> {
   if (!node) return new Set(['left', 'right', 'top', 'bottom'])
-  const data = node.data as EntityNodeData
+  const data = node.data as unknown as EntityNodeData
   if ((data.variant === 'mct-operation' || data.variant === 'mct-syncop') && data.emissionRules?.length) {
     if (handleType === 'source') return new Set(data.emissionRules)
     return new Set(['top'])
@@ -52,19 +59,43 @@ export default function TraitementEdge({
   targetY,
   sourcePosition,
   targetPosition,
-  data,
+  sourceHandleId: sourceHandle,
+  targetHandleId: targetHandle,
+  data: edgePropsData,
   selected,
-}: EdgeProps<RelationshipEdgeData>) {
+}: EdgeProps) {
+  const data = (edgePropsData ?? {}) as RelationshipEdgeData
   const { getEdges, setEdges, getNode } = useReactFlow()
+  const allEdges = useEdges()
+  const allNodes = useNodes()
   const [popover, setPopover] = useState(false)
   const popoverRef = useRef<HTMLDivElement>(null)
 
   const diagramId = data?.diagramId
+  const debug = useEdgeDebugEnabled()
+
+  const nodeById = useMemo(() => {
+    const map = new Map<string, Node>()
+    for (const n of allNodes) map.set(n.id, n)
+    return map
+  }, [allNodes])
+
+  const sourceNode = getNode(source)
+  const targetNode = getNode(target)
+
+  const resolvedSource = useMemo(
+    () => resolveHandleId(sourceNode, 'source', sourceHandle),
+    [sourceNode, sourceHandle],
+  )
+  const resolvedTarget = useMemo(
+    () => resolveHandleId(targetNode, 'target', targetHandle),
+    [targetNode, targetHandle],
+  )
 
   useEffect(() => {
     if (!popover) return
     const handleClick = (e: MouseEvent) => {
-      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
+      if (popoverRef.current && !popoverRef.current.contains(e.target as unknown as HTMLElement)) {
         setPopover(false)
       }
     }
@@ -72,12 +103,37 @@ export default function TraitementEdge({
     return () => document.removeEventListener('mousedown', handleClick, true)
   }, [popover])
 
+  const fromEdgeOff = useMemo(
+    () => edgePathOffset(allEdges, nodeById, 'from', source, resolvedSource, id),
+    [allEdges, nodeById, source, resolvedSource, id, data?.cardFromSide],
+  )
+  const toEdgeOff = useMemo(
+    () => edgePathOffset(allEdges, nodeById, 'to', target, resolvedTarget, id),
+    [allEdges, nodeById, target, resolvedTarget, id, data?.cardToSide],
+  )
+
+  const srcGroup = useMemo(
+    () => edgeAnchorGroup(allEdges, nodeById, 'from', source, resolvedSource),
+    [allEdges, nodeById, source, resolvedSource],
+  )
+  const tgtGroup = useMemo(
+    () => edgeAnchorGroup(allEdges, nodeById, 'to', target, resolvedTarget),
+    [allEdges, nodeById, target, resolvedTarget],
+  )
+
+  const srcOnHorizontalSide = resolvedSource === 'left' || resolvedSource === 'right'
+  const tgtOnHorizontalSide = resolvedTarget === 'left' || resolvedTarget === 'right'
+  const sx = srcOnHorizontalSide ? sourceX : sourceX + fromEdgeOff
+  const sy = srcOnHorizontalSide ? sourceY + fromEdgeOff : sourceY
+  const tx = tgtOnHorizontalSide ? targetX : targetX + toEdgeOff
+  const ty = tgtOnHorizontalSide ? targetY + toEdgeOff : targetY
+
   const [edgePath, labelX, labelY] = getSmoothStepPath({
-    sourceX,
-    sourceY,
+    sourceX: sx,
+    sourceY: sy,
     sourcePosition,
-    targetX,
-    targetY,
+    targetX: tx,
+    targetY: ty,
     targetPosition,
     borderRadius: 8,
   })
@@ -117,8 +173,6 @@ export default function TraitementEdge({
   const activeFrom = data?.cardFromSide ?? 'source'
   const activeTo = data?.cardToSide ?? 'source'
 
-  const sourceNode = getNode(source)
-  const targetNode = getNode(target)
   const validFrom = useMemo(() => getValidHandles(sourceNode, 'source'), [sourceNode])
   const validTo = useMemo(() => getValidHandles(targetNode, 'target'), [targetNode])
 
@@ -154,6 +208,56 @@ export default function TraitementEdge({
             </span>
           </div>
         )}
+        {debug && (
+          <>
+            <div
+              style={{
+                position: 'absolute',
+                left: sourceX - 3,
+                top: sourceY - 3,
+                width: 6,
+                height: 6,
+                borderRadius: 9999,
+                background: '#e11d48',
+                zIndex: 900,
+                pointerEvents: 'none',
+              }}
+            />
+            <div
+              style={{
+                position: 'absolute',
+                left: targetX - 3,
+                top: targetY - 3,
+                width: 6,
+                height: 6,
+                borderRadius: 9999,
+                background: '#e11d48',
+                zIndex: 900,
+                pointerEvents: 'none',
+              }}
+            />
+            <div
+              style={{
+                position: 'absolute',
+                left: labelX - 320,
+                top: labelY - 52,
+                zIndex: 900,
+                pointerEvents: 'none',
+                fontSize: 9,
+                lineHeight: 1.4,
+                fontFamily: 'monospace',
+                color: '#e11d48',
+                background: 'rgba(255, 255, 255, 0.88)',
+                border: '1px solid #e11d48',
+                borderRadius: 4,
+                padding: '1px 4px',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {id} | Cf:{data?.cardFrom ?? '–'}→{data?.cardTo ?? '–'} | S:{sourceHandle ?? '∅'}→{resolvedSource} | T:{targetHandle ?? '∅'}→{resolvedTarget} | gF:{srcGroup.length} gT:{tgtGroup.length} | off:{Math.round(fromEdgeOff)}/{Math.round(toEdgeOff)}
+            </div>
+          </>
+        )}
         {popover && (
           <div
             ref={popoverRef}
@@ -170,7 +274,7 @@ export default function TraitementEdge({
               <span className="mr-1 text-[10px] font-semibold text-muted-foreground uppercase">Source</span>
               {CARD_SIDES.map((side) => {
                 const handle = HANDLE_ID[side]
-                const disabled = handle && !validFrom.has(handle)
+                const disabled = handle !== '' && !validFrom.has(handle)
                 return (
                   <button
                     key={side}
@@ -194,7 +298,7 @@ export default function TraitementEdge({
               <span className="mr-1 text-[10px] font-semibold text-muted-foreground uppercase">Target</span>
               {CARD_SIDES.map((side) => {
                 const handle = HANDLE_ID[side]
-                const disabled = handle && !validTo.has(handle)
+                const disabled = handle !== '' && !validTo.has(handle)
                 return (
                   <button
                     key={side}

@@ -22,6 +22,7 @@ import TraitementEdge from './Edges/TraitementEdge'
 import { loadDiagramState, useDiagramState, loadPositions, loadCardinalitySides, loadMotPositions, loadMotCardinalitySides, loadMotTableConfig, saveMotTableConfig } from '../hooks/useDiagramState'
 import { applyEntityColors } from '../utils/entityColors'
 import { getMotMctMap, getMotOriginalPositions } from '../diagrams/mot/mot_organisationnel_v2'
+import { useEdgeDebugEnabled, setEdgeDebugEnabled } from '../utils/edgeDebug'
 import type { DiagramDefinition, RelationshipEdgeData, EntityNodeData, MotTableConfig } from '../types'
 
 const nodeTypes: NodeTypes = { entity: EntityNode, process: ProcessNode }
@@ -51,6 +52,7 @@ export default function DiagramCanvas({ diagram, showBackground, fullscreen: _fu
   const reactFlowInstance = useReactFlow()
   const dragStartPositions = useRef<Record<string, { x: number; y: number }> | null>(null)
   const [motTableConfig, setMotTableConfig] = useState<MotTableConfig>(() => loadMotTableConfig())
+  const edgeDebug = useEdgeDebugEnabled()
 
   const motMap = useMemo(() => getMotMctMap(motTableConfig), [motTableConfig])
 
@@ -333,6 +335,24 @@ export default function DiagramCanvas({ diagram, showBackground, fullscreen: _fu
         {showBackground && <Background gap={10} size={1} />}
         <Controls />
       </ReactFlow>
+      <div
+        style={{
+          position: 'absolute',
+          top: 12,
+          right: 12,
+          zIndex: 1000,
+          pointerEvents: 'auto',
+        }}
+      >
+        <button
+          onClick={() => setEdgeDebugEnabled(!edgeDebug)}
+          className={edgeDebug
+            ? 'rounded border border-primary bg-primary/15 px-2 py-1 text-[10px] font-semibold text-primary'
+            : 'rounded border border-border bg-background px-2 py-1 text-[10px] font-medium text-muted-foreground'}
+        >
+          {edgeDebug ? 'DEBUG ON' : 'DEBUG'}
+        </button>
+      </div>
       {selectedMctPrefix && diagram.id === 'mot-organisationnel-v2' && (
         <MotEditToolbar
           mctLabel={motMap.find((e) => e.prefix === selectedMctPrefix)?.label ?? selectedMctPrefix}
