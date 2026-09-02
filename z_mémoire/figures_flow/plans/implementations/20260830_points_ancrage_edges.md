@@ -1,5 +1,13 @@
 # PLAN — Points d'ancrage des arêtes (offset / spacing)
 
+## Statut (hand-off session)
+- Implémentation faite, `vite build` OK, commit `a4ec9ca`.
+- Vérification visuelle overlay confirmée par l'utilisateur (campagnes_pipeline + MCT v2 type mct_3_entretien).
+- Overlay debug **gardé** (décision utilisateur « Garder ») — bouton `DEBUG` en haut-droite du canvas.
+- Reliquat : Options A et B (section « En attente » ci-dessous) — non lancées.
+
+---
+
 Constat : le fix précédent « offset pour arêtes partageant le même handle » ne marche pas. Cette analyse approfondie (lecture des fichiers + code source de `@xyflow/react` v12) identifie les causes réelles et fixe un plan en 4 étapes.
 
 ## Faits établis (avec preuve dans le code)

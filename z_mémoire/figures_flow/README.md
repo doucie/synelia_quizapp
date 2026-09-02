@@ -233,7 +233,8 @@ figures_flow/
 │   │   │   └── ProcessNode.tsx
 │   │   ├── Edges/
 │   │   │   ├── RelationshipEdge.tsx
-│   │   │   └── TraitementEdge.tsx
+│   │   │   ├── TraitementEdge.tsx
+│   │   │   └── edgeAnchors.ts    # Helpers : ancrage résolu des arêtes
 │   │   ├── Sidebar.tsx
 │   │   ├── Toolbar.tsx
 │   │   ├── ThemeToggle.tsx
@@ -247,12 +248,12 @@ figures_flow/
 │   │   └── useSidebarState.ts
 │   └── utils/
 │       ├── autoLayout.ts
+│       ├── edgeDebug.ts         # Store overlay debug edges (figures_flow:debug_edges)
 │       ├── entityColors.ts
 │       └── exportSvg.ts
 ├── plans/
-│   ├── PLAN.md
 │   ├── audit/               # Audits et documentations
-│   ├── implementations/     # Plans d'implémentation
+│   ├── implementations/     # Plans d'implémentation (YYYYMMDD_<sujet>.md)
 │   ├── mct/                 # Plans MCT
 │   ├── mot/                 # Plans MOT
 │   └── rules/               # Règles Merise
@@ -278,6 +279,10 @@ Ouvrir l'URL affichée (généralement `http://localhost:5173`).
 - Grille d'aimantation (10px)
 - Export SVG du diagramme courant
 - Mode clair / sombre
+- **Debug edges** : bouton flottant haut-droite → overlay de debug des arêtes
+  (ancrage déclaré→résolu, taille de groupe, offset en px), persisté dans
+  `localStorage['figures_flow:debug_edges']` (défaut off). Utile pour diagnostiquer
+  le spacing/offset des arêtes partageant un même point d'ancrage.
 - Layout initial automatique (évite les chevauchements)
 - Sélection de police (NT Dapper, system-ui)
 - Mode plein écran pour chaque diagramme
