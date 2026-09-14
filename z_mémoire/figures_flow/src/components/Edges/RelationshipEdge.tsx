@@ -16,8 +16,6 @@ import {
   resolveHandleId,
   edgeAnchorGroup,
   edgePathOffset,
-  type NodeById,
-  type EdgeAnchorItem,
 } from './edgeAnchors'
 import { useEdgeDebugEnabled } from '../../utils/edgeDebug'
 
@@ -60,39 +58,6 @@ function badgeOffset(pos: Position, extra = 0): { x: number; y: number } {
     case Position.Bottom:
       return { x: -18 + extra, y: 2 }
   }
-}
-
-function cardinalityOffset(
-  edges: (EdgeAnchorItem & { data?: Record<string, unknown> })[],
-  nodeById: NodeById,
-  side: 'from' | 'to',
-  nodeId: string,
-  handleId: string | undefined,
-  currentValue: string | undefined,
-): number {
-  const key = side === 'from' ? 'cardFrom' : 'cardTo'
-  const nodeKey = side === 'from' ? 'source' : 'target'
-  const handleKey = side === 'from' ? 'sourceHandle' : 'targetHandle'
-  const kind: 'source' | 'target' = side === 'from' ? 'source' : 'target'
-
-  const values: string[] = []
-  for (const e of edges) {
-    if (e[nodeKey] !== nodeId) continue
-    const node = nodeById instanceof Map ? nodeById.get(e[nodeKey]) : nodeById(e[nodeKey])
-    const resolved = resolveHandleId(node, kind, e[handleKey])
-    if (resolved !== handleId) continue
-    const raw = e.data?.[key]
-    if (typeof raw === 'string' && raw) values.push(raw)
-  }
-
-  const unique = [...new Set(values)].sort()
-  if (unique.length <= 1) return 0
-
-  const idx = unique.indexOf(currentValue || '')
-  if (idx === -1) return 0
-
-  const spacing = 28
-  return idx * spacing - (unique.length - 1) * spacing / 2
 }
 
 export default function RelationshipEdge({
@@ -149,15 +114,8 @@ export default function RelationshipEdge({
     return () => document.removeEventListener('mousedown', handleClick, true)
   }, [popover])
 
-  const fromCardOffset = useMemo(
-    () => cardinalityOffset(allEdges, nodeById, 'from', source, resolvedSource, data?.cardFrom),
-    [allEdges, nodeById, source, resolvedSource, data?.cardFrom],
-  )
-  const toCardOffset = useMemo(
-    () => cardinalityOffset(allEdges, nodeById, 'to', target, resolvedTarget, data?.cardTo),
-    [allEdges, nodeById, target, resolvedTarget, data?.cardTo],
-  )
-
+  const fromOff = badgeOffset(sourcePosition)
+  const toOff = badgeOffset(targetPosition)
   const fromEdgeOff = useMemo(
     () => edgePathOffset(allEdges, nodeById, 'from', source, resolvedSource, id),
     [allEdges, nodeById, source, resolvedSource, id, data?.cardFromSide],
@@ -233,9 +191,6 @@ export default function RelationshipEdge({
 
   const validFrom = useMemo(() => getValidHandles(sourceNode, 'source'), [sourceNode])
   const validTo = useMemo(() => getValidHandles(targetNode, 'target'), [targetNode])
-
-  const fromOff = badgeOffset(sourcePosition, fromCardOffset)
-  const toOff = badgeOffset(targetPosition, toCardOffset)
 
   return (
     <>
