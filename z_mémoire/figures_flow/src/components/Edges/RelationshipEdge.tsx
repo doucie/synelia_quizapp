@@ -579,7 +579,6 @@ export default function RelationshipEdge({
         {popover && (
           <div
             ref={popoverRef}
-            onPointerDown={(e) => e.stopPropagation()}
             style={{
               position: 'absolute',
               left: labelX - 80,
@@ -587,7 +586,7 @@ export default function RelationshipEdge({
               zIndex: 1000,
               pointerEvents: 'auto',
             }}
-            className="flex flex-col gap-1 rounded-lg border border-border bg-background p-1.5 shadow-lg"
+            className="nopan flex flex-col gap-1 rounded-lg border border-border bg-background p-1.5 shadow-lg"
           >
             <div className="flex items-center gap-1">
               <span className="mr-1 text-[10px] font-semibold text-muted-foreground uppercase">Source</span>
