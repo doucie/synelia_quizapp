@@ -114,8 +114,23 @@ export default function RelationshipEdge({
     return () => document.removeEventListener('mousedown', handleClick, true)
   }, [popover])
 
-  const fromOff = badgeOffset(sourcePosition)
-  const toOff = badgeOffset(targetPosition)
+  const isSelfLoop = source === target
+  const loopSide = isSelfLoop
+    ? (([sourceHandle, targetHandle].filter(
+        (h): h is string => !!h && h !== 'source' && ['left', 'right', 'top', 'bottom'].includes(h),
+      )[0] as 'left' | 'right' | 'top' | 'bottom' | undefined) ?? 'top')
+    : undefined
+  const loopPos =
+    loopSide === 'left'
+      ? Position.Left
+      : loopSide === 'right'
+        ? Position.Right
+        : loopSide === 'bottom'
+          ? Position.Bottom
+          : Position.Top
+
+  const fromOff = badgeOffset(isSelfLoop ? loopPos : sourcePosition)
+  const toOff = badgeOffset(isSelfLoop ? loopPos : targetPosition)
   const fromEdgeOff = useMemo(
     () => edgePathOffset(allEdges, nodeById, 'from', source, resolvedSource, id),
     [allEdges, nodeById, source, resolvedSource, id, data?.cardFromSide],
@@ -136,20 +151,101 @@ export default function RelationshipEdge({
 
   const srcOnHorizontalSide = resolvedSource === 'left' || resolvedSource === 'right'
   const tgtOnHorizontalSide = resolvedTarget === 'left' || resolvedTarget === 'right'
-  const sx = srcOnHorizontalSide ? sourceX : sourceX + fromEdgeOff
-  const sy = srcOnHorizontalSide ? sourceY + fromEdgeOff : sourceY
-  const tx = tgtOnHorizontalSide ? targetX : targetX + toEdgeOff
-  const ty = tgtOnHorizontalSide ? targetY + toEdgeOff : targetY
+  let sx = srcOnHorizontalSide ? sourceX : sourceX + fromEdgeOff
+  let sy = srcOnHorizontalSide ? sourceY + fromEdgeOff : sourceY
+  let tx = tgtOnHorizontalSide ? targetX : targetX + toEdgeOff
+  let ty = tgtOnHorizontalSide ? targetY + toEdgeOff : targetY
 
-  const [edgePath, labelX, labelY] = getSmoothStepPath({
-    sourceX: sx,
-    sourceY: sy,
-    sourcePosition,
-    targetX: tx,
-    targetY: ty,
-    targetPosition,
-    borderRadius: 8,
-  })
+  let edgePath: string
+  let labelX: number
+  let labelY: number
+
+  if (isSelfLoop) {
+    const n = sourceNode
+    const w = n?.measured?.width ?? 220
+    const h = n?.measured?.height ?? 130
+    const x0 = n?.position.x ?? sourceX
+    const y0 = n?.position.y ?? sourceY
+    const cx = x0 + w / 2
+    const cy = y0 + h / 2
+    const spread = 34
+    const height = 90
+    const r = 8
+    if (loopSide === 'bottom') {
+      const outer = y0 + h + height
+      sx = cx - spread
+      sy = y0 + h
+      tx = cx + spread
+      ty = y0 + h
+      edgePath =
+        `M ${sx} ${sy}` +
+        ` L ${sx} ${outer - r}` +
+        ` Q ${sx} ${outer} ${sx + r} ${outer}` +
+        ` L ${tx - r} ${outer}` +
+        ` Q ${tx} ${outer} ${tx} ${outer - r}` +
+        ` L ${tx} ${ty}`
+      labelX = cx
+      labelY = outer
+    } else if (loopSide === 'left') {
+      const outer = x0 - height
+      sx = x0
+      sy = cy - spread
+      tx = x0
+      ty = cy + spread
+      edgePath =
+        `M ${sx} ${sy}` +
+        ` L ${outer + r} ${sy}` +
+        ` Q ${outer} ${sy} ${outer} ${sy + r}` +
+        ` L ${outer} ${ty - r}` +
+        ` Q ${outer} ${ty} ${outer + r} ${ty}` +
+        ` L ${tx} ${ty}`
+      labelX = outer
+      labelY = cy
+    } else if (loopSide === 'right') {
+      const outer = x0 + w + height
+      sx = x0 + w
+      sy = cy - spread
+      tx = x0 + w
+      ty = cy + spread
+      edgePath =
+        `M ${sx} ${sy}` +
+        ` L ${outer - r} ${sy}` +
+        ` Q ${outer} ${sy} ${outer} ${sy + r}` +
+        ` L ${outer} ${ty - r}` +
+        ` Q ${outer} ${ty} ${outer - r} ${ty}` +
+        ` L ${tx} ${ty}`
+      labelX = outer
+      labelY = cy
+    } else {
+      const outer = y0 - height
+      sx = cx - spread
+      sy = y0
+      tx = cx + spread
+      ty = y0
+      edgePath =
+        `M ${sx} ${sy}` +
+        ` L ${sx} ${outer + r}` +
+        ` Q ${sx} ${outer} ${sx + r} ${outer}` +
+        ` L ${tx - r} ${outer}` +
+        ` Q ${tx} ${outer} ${tx} ${outer + r}` +
+        ` L ${tx} ${ty}`
+      labelX = cx
+      labelY = outer
+    }
+  } else {
+    const [ep, lx, ly] = getSmoothStepPath({
+      sourceX: sx,
+      sourceY: sy,
+      sourcePosition,
+      targetX: tx,
+      targetY: ty,
+      targetPosition,
+      borderRadius: 8,
+    })
+    edgePath = ep
+    labelX = lx
+    labelY = ly
+  }
 
   const isDashed = data?.isDashed ?? false
   const isStrong = data?.isStrong ?? true

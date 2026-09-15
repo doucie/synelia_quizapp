@@ -151,5 +151,12 @@ export const candidaturesSuivi: DiagramDefinition = {
       type: 'relationship',
       data: { label: 'creer', cardFrom: '0,n', cardTo: '0,1' },
     },
+    {
+      id: 'e-annuler',
+      source: 'decision',
+      target: 'decision',
+      type: 'relationship',
+      data: { label: 'annuler', cardFrom: '0,1', cardTo: '0,n' },
+    },
   ],
 }
