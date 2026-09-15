@@ -251,7 +251,12 @@ export default function RelationshipEdge({
   const allEdges = useEdges()
   const allNodes = useNodes()
   const [popover, setPopover] = useState(false)
+  const [popoverPos, setPopoverPos] = useState<{ x: number; y: number } | null>(null)
   const popoverRef = useRef<HTMLDivElement>(null)
+  const openPopover = () => {
+    setPopoverPos({ x: labelX - 80, y: labelY - 72 })
+    setPopover(true)
+  }
 
   const diagramId = data?.diagramId
   const debug = useEdgeDebugEnabled()
@@ -424,7 +429,7 @@ export default function RelationshipEdge({
 
   return (
     <>
-      <g onClick={() => setPopover(true)} style={{ cursor: 'pointer' }}>
+      <g onClick={openPopover} style={{ cursor: 'pointer' }}>
         <BaseEdge
           id={id}
           path={edgePath}
@@ -449,7 +454,7 @@ export default function RelationshipEdge({
               justifyContent: 'center',
               pointerEvents: 'auto',
             }}
-            onClick={() => setPopover(true)}
+            onClick={openPopover}
           >
             <span className={badgeClass}>{data.cardFrom}</span>
           </div>
@@ -467,7 +472,7 @@ export default function RelationshipEdge({
               justifyContent: 'center',
               pointerEvents: 'auto',
             }}
-            onClick={() => setPopover(true)}
+            onClick={openPopover}
           >
             <span className={badgeClass}>{data.cardTo}</span>
           </div>
@@ -581,8 +586,8 @@ export default function RelationshipEdge({
             ref={popoverRef}
             style={{
               position: 'absolute',
-              left: labelX - 80,
-              top: labelY - 72,
+              left: popoverPos?.x ?? labelX - 80,
+              top: popoverPos?.y ?? labelY - 72,
               zIndex: 1000,
               pointerEvents: 'auto',
             }}

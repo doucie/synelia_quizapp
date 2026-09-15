@@ -69,7 +69,12 @@ export default function TraitementEdge({
   const allEdges = useEdges()
   const allNodes = useNodes()
   const [popover, setPopover] = useState(false)
+  const [popoverPos, setPopoverPos] = useState<{ x: number; y: number } | null>(null)
   const popoverRef = useRef<HTMLDivElement>(null)
+  const openPopover = () => {
+    setPopoverPos({ x: labelX - 80, y: labelY - 72 })
+    setPopover(true)
+  }
 
   const diagramId = data?.diagramId
   const debug = useEdgeDebugEnabled()
@@ -178,7 +183,7 @@ export default function TraitementEdge({
 
   return (
     <>
-      <g onClick={() => setPopover(true)} style={{ cursor: 'pointer' }}>
+      <g onClick={openPopover} style={{ cursor: 'pointer' }}>
         <BaseEdge
           id={id}
           path={edgePath}
@@ -263,12 +268,12 @@ export default function TraitementEdge({
             ref={popoverRef}
             style={{
               position: 'absolute',
-              left: labelX - 80,
-              top: labelY - 72,
+              left: popoverPos?.x ?? labelX - 80,
+              top: popoverPos?.y ?? labelY - 72,
               zIndex: 1000,
               pointerEvents: 'auto',
             }}
-            className="flex flex-col gap-1 rounded-lg border border-border bg-background p-1.5 shadow-lg"
+            className="nopan flex flex-col gap-1 rounded-lg border border-border bg-background p-1.5 shadow-lg"
           >
             <div className="flex items-center gap-1">
               <span className="mr-1 text-[10px] font-semibold text-muted-foreground uppercase">Source</span>
