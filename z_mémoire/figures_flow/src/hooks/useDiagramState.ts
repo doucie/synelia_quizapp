@@ -54,7 +54,7 @@ function extractPositions(nodes: EntityNode[]): Record<string, { x: number; y: n
 }
 
 export interface CardinalitySides {
-  [edgeId: string]: { from?: string; to?: string }
+  [edgeId: string]: { from?: string; to?: string; reflexOffset?: number; reflexSpread?: number }
 }
 
 export function loadCardinalitySides(diagramId: string): CardinalitySides {
@@ -78,6 +78,22 @@ export function setCardinalitySide(
     const all = loadCardinalitySides(diagramId)
     all[edgeId] = { ...all[edgeId], [which]: side }
     localStorage.setItem(key, JSON.stringify(all))
+  } catch {
+    // ignore
+  }
+}
+
+export function setReflexiveConfig(
+  diagramId: string,
+  edgeId: string,
+  key: 'reflexOffset' | 'reflexSpread',
+  value: number,
+) {
+  try {
+    const storageKey = `${EDGE_SIDES_KEY}:${diagramId}`
+    const all = loadCardinalitySides(diagramId)
+    all[edgeId] = { ...all[edgeId], [key]: value }
+    localStorage.setItem(storageKey, JSON.stringify(all))
   } catch {
     // ignore
   }

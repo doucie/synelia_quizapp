@@ -59,6 +59,8 @@ export interface RelationshipEdgeData {
   isDashed?: boolean
   diagramId?: string
   attributes?: string[]
+  reflexOffset?: number
+  reflexSpread?: number
 }
 
 export type RelationshipEdge = Edge<RelationshipEdgeData>

@@ -91,6 +91,8 @@ export default function DiagramCanvas({ diagram, showBackground, fullscreen: _fu
           diagramId: diagram.id,
           ...(cardFromSide && validSourceHandles.has(cardFromSide) ? { cardFromSide } : {}),
           ...(cardToSide && validTargetHandles.has(cardToSide) ? { cardToSide } : {}),
+          ...(saved?.reflexOffset != null ? { reflexOffset: saved.reflexOffset } : {}),
+          ...(saved?.reflexSpread != null ? { reflexSpread: saved.reflexSpread } : {}),
         },
       }
     })

@@ -11,7 +11,7 @@ import {
   type Node,
 } from '@xyflow/react'
 import type { RelationshipEdgeData, EntityNodeData } from '../../types'
-import { setCardinalitySide } from '../../hooks/useDiagramState'
+import { setCardinalitySide, setReflexiveConfig } from '../../hooks/useDiagramState'
 import {
   resolveHandleId,
   edgeAnchorGroup,
@@ -125,11 +125,13 @@ function buildReflexiveEdge(
   target: ReflexiveAnchor,
   fromEdgeOff: number,
   toEdgeOff: number,
+  offset = REFLEX_OFFSET,
+  spread = REFLEX_SPREAD,
 ): { sx: number; sy: number; tx: number; ty: number; path: string; labelX: number; labelY: number } {
   const { x: x0, y: y0, w, h } = rect
   const R = REFLEX_RADIUS
-  const M = REFLEX_OFFSET
-  const S = REFLEX_SPREAD
+  const M = offset
+  const S = spread
 
   if (source.pos === target.pos) {
     let sx: number, sy: number, tx: number, ty: number, path: string
@@ -308,6 +310,8 @@ export default function RelationshipEdge({
 
   if (isSelfLoop) {
     const n = sourceNode
+    const loopOffset = data?.reflexOffset ?? REFLEX_OFFSET
+    const loopSpread = data?.reflexSpread ?? REFLEX_SPREAD
     const w = n?.measured?.width ?? 220
     const h = n?.measured?.height ?? 130
     const x0 = n?.position.x ?? sourceX
@@ -318,6 +322,8 @@ export default function RelationshipEdge({
       { x: targetX, y: targetY, pos: targetPosition },
       fromEdgeOff,
       toEdgeOff,
+      loopOffset,
+      loopSpread,
     )
     sx = loop.sx
     sy = loop.sy
@@ -374,6 +380,17 @@ export default function RelationshipEdge({
     )
 
     if (diagramId) setCardinalitySide(diagramId, id, which, side)
+  }
+
+  const updateReflexiveConfig = (key: 'reflexOffset' | 'reflexSpread', value: number) => {
+    const currentEdges = getEdges()
+    setEdges(
+      currentEdges.map((e) => {
+        if (e.id !== id) return e
+        return { ...e, data: { ...e.data, [key]: value } }
+      }),
+    )
+    if (diagramId) setReflexiveConfig(diagramId, id, key, value)
   }
 
   const activeFrom = data?.cardFromSide ?? 'source'
@@ -596,6 +613,40 @@ export default function RelationshipEdge({
                 )
               })}
             </div>
+            {isSelfLoop && (
+              <div className="flex flex-col gap-1 border-t border-border pt-1 mt-1">
+                <div className="flex items-center gap-1">
+                  <span className="mr-1 text-[10px] font-semibold text-muted-foreground uppercase w-14 shrink-0">Dist</span>
+                  <input
+                    type="range"
+                    min={40}
+                    max={200}
+                    step={5}
+                    value={data?.reflexOffset ?? REFLEX_OFFSET}
+                    onChange={(e) => updateReflexiveConfig('reflexOffset', Number(e.target.value))}
+                    style={{ flex: 1, height: 3, accentColor: 'hsl(var(--primary))' }}
+                  />
+                  <span className="text-[10px] text-muted-foreground tabular-nums w-7 text-right">
+                    {data?.reflexOffset ?? REFLEX_OFFSET}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="mr-1 text-[10px] font-semibold text-muted-foreground uppercase w-14 shrink-0">Écart</span>
+                  <input
+                    type="range"
+                    min={10}
+                    max={80}
+                    step={2}
+                    value={data?.reflexSpread ?? REFLEX_SPREAD}
+                    onChange={(e) => updateReflexiveConfig('reflexSpread', Number(e.target.value))}
+                    style={{ flex: 1, height: 3, accentColor: 'hsl(var(--primary))' }}
+                  />
+                  <span className="text-[10px] text-muted-foreground tabular-nums w-7 text-right">
+                    {data?.reflexSpread ?? REFLEX_SPREAD}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </EdgeLabelRenderer>
