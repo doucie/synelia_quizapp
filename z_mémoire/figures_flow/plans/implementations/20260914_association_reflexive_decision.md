@@ -47,21 +47,24 @@ Pas de rôles nominatifs (« annule / est annulée par ») : l'utilisateur a con
 
 ### 2. Rendu de la boucle — `src/components/Edges/RelationshipEdge.tsx`
 - [x] Détection `isSelfLoop = source === target`.
-- [x] Branche self-loop : boucle **orthogonale style smoothstep** (2 segments + segment horizontal
-  au sommet), coins arrondis `Q` rayon `r = 8` — cohérent avec le `borderRadius: 8` de
-  `getSmoothStepPath` utilisé par les autres arêtes.
-- [x] **Orientation paramétrique** : la boucle suit le côté choisi dans le popover
-  (`loopSide` = `sourceHandle` explicite → sinon `targetHandle` → sinon `top`).
-  Géométrie par côté sur la boîte du nœud `(x0,y0,w,h)`, `spread = 34`, `hauteur = 90` :
-  - `top` : ancres `(cx−34, y0)` & `(cx+34, y0)`, boucle vers `outer = y0−90` ;
-  - `bottom` : ancres `(cx−34, y0+h)` & `(cx+34, y0+h)`, boucle vers `outer = y0+h+90` ;
-  - `left` : ancres `(x0, cy−34)` & `(x0, cy+34)`, boucle vers `outer = x0−90` ;
-  - `right` : ancres `(x0+w, cy−34)` & `(x0+w, cy+34)`, boucle vers `outer = x0+w+90`.
-  Persistance inchangée (`setCardinalitySide` → `edge_sides`, rechargé par `DiagramCanvas`).
-- [x] Badges `cardFrom`/`cardTo` repositionnés avec `badgeOffset(loopPos)` — `fromOff`/`toOff`
-  basculés selon `isSelfLoop` ; chaque badge reste près de son ancrage (ex. `top` : de part et
-  d'autre au-dessus du bord haut).
-- [x] Label « annuler » centré au sommet de la boucle (`labelX/labelY`).
+- [x] **Patte source et patte cible indépendantes** (même principe qu'une arête normale) :
+  le rendu part des ancrages React Flow réels (`sourceX/sourceY` + `sourcePosition`,
+  `targetX/targetY` + `targetPosition`), chacun sur SON côté choisi dans le popover.
+  Helper `buildReflexiveEdge` (`REFLEX_SPREAD=34`, `REFLEX_OFFSET=90`, `REFLEX_RADIUS=8`) :
+  - **même côté** : boucle en U sur ce côté, deux ancres écartées de `±34` le long de l'arête
+    (les points RF coïncident au centre de l'arête), boucle dépliée de `90` vers l'extérieur ;
+  - **côtés différents** : projection de chaque ancre de `90` à l'extérieur du nœud
+    (`R' = [x0−90, y0−90, w+180, h+180]`) et contournement **périmétrique par le chemin court**
+    (tour sur le bord du rectangle extérieur, coins arrondis `Q` r=8) ; égalité → sens
+    anti-horaire (défaut sans côté : right→left passe par le haut).
+  - Les offsets de chemin partagés (`edgePathOffset`) sont réappliqués **en décalage tangentiel**
+    le long de l'arête pour séparer plusieurs boucles sur le même côté.
+  - Persistance inchangée (`setCardinalitySide` → `edge_sides`, rechargé par `DiagramCanvas`).
+- [x] Badges `cardFrom`/`cardTo` : `fromOff = badgeOffset(sourcePosition)` et
+  `toOff = badgeOffset(targetPosition)` — **aucun override self-loop** : chaque badge suit sa
+  propre patte (ex. source top + target right → un badge au-dessus, un badge à droite).
+- [x] Label « annuler » : sommet de la boucle dans le cas même côté, **milieu de la polyligne**
+  du contournement dans le cas côtés différents.
 - [x] Fallback dimensions `220`/`130` si `measured` indisponible au premier frame.
 - `exportSvg` suit automatiquement (clone du `d` + capture des labels) — aucune modif.
 
@@ -80,8 +83,5 @@ Pas de rôles nominatifs (« annule / est annulée par ») : l'utilisateur a con
 ## Notes / évolutions possibles (hors scope)
 - Rôles nominatifs par patte (« annule » / « est annulée par ») sur les associations réflexives :
   nécessiterait un champ `roleFrom`/`roleTo` dans `RelationshipEdgeData` + rendu — non demandé.
-- From et To réglés sur des côtés **différents** : la boucle suit `From` (Source prioritaire) — le
-  To reste stocké mais ignoré pour la géométrie. Simplifier éventuellement le popover (une seule
-  rangée) pour une arête réflexive.
 - L'overlay DEBUG affiche les ancrages résolus React Flow (premier handle), pas les extrémités
   de la boucle — cosmétique, debug uniquement.

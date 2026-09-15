@@ -60,6 +60,165 @@ function badgeOffset(pos: Position, extra = 0): { x: number; y: number } {
   }
 }
 
+const REFLEX_SPREAD = 34
+const REFLEX_OFFSET = 90
+const REFLEX_RADIUS = 8
+
+type ReflexiveRect = { x: number; y: number; w: number; h: number }
+type ReflexiveAnchor = { x: number; y: number; pos: Position }
+
+const REFLEX_SIDE_INDEX: Record<Position, number> = {
+  [Position.Top]: 0,
+  [Position.Right]: 1,
+  [Position.Bottom]: 2,
+  [Position.Left]: 3,
+}
+
+function reflexProject(rect: ReflexiveRect, pos: Position, p: [number, number], m: number): [number, number] {
+  switch (pos) {
+    case Position.Top:
+      return [p[0], rect.y - m]
+    case Position.Bottom:
+      return [p[0], rect.y + rect.h + m]
+    case Position.Left:
+      return [rect.x - m, p[1]]
+    default:
+      return [rect.x + rect.w + m, p[1]]
+  }
+}
+
+function reflexUnit(a: [number, number], b: [number, number]): [number, number] {
+  const dx = b[0] - a[0]
+  const dy = b[1] - a[1]
+  if (dy === 0) return [Math.sign(dx) || 1, 0]
+  if (dx === 0) return [0, Math.sign(dy) || 1]
+  const len = Math.hypot(dx, dy)
+  return [dx / len, dy / len]
+}
+
+function reflexMidpoint(points: [number, number][]): [number, number] {
+  const segs: number[] = []
+  let total = 0
+  for (let i = 1; i < points.length; i++) {
+    const len = Math.hypot(points[i][0] - points[i - 1][0], points[i][1] - points[i - 1][1])
+    segs.push(len)
+    total += len
+  }
+  let target = total / 2
+  for (let i = 0; i < segs.length; i++) {
+    const len = segs[i]
+    if (target <= len) {
+      const t = len === 0 ? 0 : target / len
+      return [
+        points[i][0] + (points[i + 1][0] - points[i][0]) * t,
+        points[i][1] + (points[i + 1][1] - points[i][1]) * t,
+      ]
+    }
+    target -= len
+  }
+  return points[points.length - 1]
+}
+
+function buildReflexiveEdge(
+  rect: ReflexiveRect,
+  source: ReflexiveAnchor,
+  target: ReflexiveAnchor,
+  fromEdgeOff: number,
+  toEdgeOff: number,
+): { sx: number; sy: number; tx: number; ty: number; path: string; labelX: number; labelY: number } {
+  const { x: x0, y: y0, w, h } = rect
+  const R = REFLEX_RADIUS
+  const M = REFLEX_OFFSET
+  const S = REFLEX_SPREAD
+
+  if (source.pos === target.pos) {
+    let sx: number, sy: number, tx: number, ty: number, path: string
+    let labelX: number, labelY: number
+    if (source.pos === Position.Top || source.pos === Position.Bottom) {
+      sy = source.y
+      ty = source.y
+      sx = source.x - S + fromEdgeOff
+      tx = source.x + S + toEdgeOff
+      const outer = source.pos === Position.Top ? y0 - M : y0 + h + M
+      labelX = (sx + tx) / 2
+      labelY = outer
+      path =
+        source.pos === Position.Top
+          ? `M ${sx} ${sy} L ${sx} ${outer + R} Q ${sx} ${outer} ${sx + R} ${outer} L ${tx - R} ${outer} Q ${tx} ${outer} ${tx} ${outer + R} L ${tx} ${ty}`
+          : `M ${sx} ${sy} L ${sx} ${outer - R} Q ${sx} ${outer} ${sx + R} ${outer} L ${tx - R} ${outer} Q ${tx} ${outer} ${tx} ${outer - R} L ${tx} ${ty}`
+    } else {
+      sx = source.x
+      tx = source.x
+      sy = source.y - S + fromEdgeOff
+      ty = source.y + S + toEdgeOff
+      const outer = source.pos === Position.Left ? x0 - M : x0 + w + M
+      labelX = outer
+      labelY = (sy + ty) / 2
+      path =
+        source.pos === Position.Left
+          ? `M ${sx} ${sy} L ${outer + R} ${sy} Q ${outer} ${sy} ${outer} ${sy + R} L ${outer} ${ty - R} Q ${outer} ${ty} ${outer + R} ${ty} L ${tx} ${ty}`
+          : `M ${sx} ${sy} L ${outer - R} ${sy} Q ${outer} ${sy} ${outer} ${sy + R} L ${outer} ${ty - R} Q ${outer} ${ty} ${outer - R} ${ty} L ${tx} ${ty}`
+    }
+    return { sx, sy, tx, ty, path, labelX, labelY }
+  }
+
+  const pA: [number, number] = [source.x, source.y]
+  const pB: [number, number] = [target.x, target.y]
+  if (source.pos === Position.Top || source.pos === Position.Bottom) pA[0] += fromEdgeOff
+  else pA[1] += fromEdgeOff
+  if (target.pos === Position.Top || target.pos === Position.Bottom) pB[0] += toEdgeOff
+  else pB[1] += toEdgeOff
+  const oA = reflexProject(rect, source.pos, pA, M)
+  const oB = reflexProject(rect, target.pos, pB, M)
+
+  const idxA = REFLEX_SIDE_INDEX[source.pos]
+  const idxB = REFLEX_SIDE_INDEX[target.pos]
+  const cwSteps = (idxB - idxA + 4) % 4
+  const ccwSteps = (idxA - idxB + 4) % 4
+  const clockwise = cwSteps < ccwSteps
+
+  const cornerCW: [number, number][] = [
+    [x0 - M, y0 - M],
+    [x0 + w + M, y0 - M],
+    [x0 + w + M, y0 + h + M],
+    [x0 - M, y0 + h + M],
+  ]
+  const cornerCCW: [number, number][] = [
+    [x0 + w + M, y0 - M],
+    [x0 + w + M, y0 + h + M],
+    [x0 - M, y0 + h + M],
+    [x0 - M, y0 - M],
+  ]
+
+  const route: [number, number][] = [oA]
+  let cur = idxA
+  const steps = clockwise ? cwSteps : ccwSteps
+  for (let i = 0; i < steps; i++) {
+    cur = (cur + (clockwise ? 1 : -1) + 4) % 4
+    route.push(clockwise ? cornerCW[cur] : cornerCCW[cur])
+  }
+  route.push(oB)
+
+  const points: [number, number][] = [pA, ...route, pB]
+  let path = `M ${pA[0]} ${pA[1]}`
+  for (let i = 1; i < points.length - 1; i++) {
+    const prev = points[i - 1]
+    const cur = points[i]
+    const next = points[i + 1]
+    const dIn = reflexUnit(prev, cur)
+    const dOut = reflexUnit(cur, next)
+    if (dIn[0] === dOut[0] && dIn[1] === dOut[1]) {
+      path += ` L ${cur[0]} ${cur[1]}`
+    } else {
+      path += ` L ${cur[0] - dIn[0] * R} ${cur[1] - dIn[1] * R} Q ${cur[0]} ${cur[1]} ${cur[0] + dOut[0] * R} ${cur[1] + dOut[1] * R}`
+    }
+  }
+  path += ` L ${pB[0]} ${pB[1]}`
+
+  const [labelX, labelY] = reflexMidpoint(points)
+  return { sx: pA[0], sy: pA[1], tx: pB[0], ty: pB[1], path, labelX, labelY }
+}
+
 export default function RelationshipEdge({
   id,
   source,
@@ -115,22 +274,9 @@ export default function RelationshipEdge({
   }, [popover])
 
   const isSelfLoop = source === target
-  const loopSide = isSelfLoop
-    ? (([sourceHandle, targetHandle].filter(
-        (h): h is string => !!h && h !== 'source' && ['left', 'right', 'top', 'bottom'].includes(h),
-      )[0] as 'left' | 'right' | 'top' | 'bottom' | undefined) ?? 'top')
-    : undefined
-  const loopPos =
-    loopSide === 'left'
-      ? Position.Left
-      : loopSide === 'right'
-        ? Position.Right
-        : loopSide === 'bottom'
-          ? Position.Bottom
-          : Position.Top
 
-  const fromOff = badgeOffset(isSelfLoop ? loopPos : sourcePosition)
-  const toOff = badgeOffset(isSelfLoop ? loopPos : targetPosition)
+  const fromOff = badgeOffset(sourcePosition)
+  const toOff = badgeOffset(targetPosition)
   const fromEdgeOff = useMemo(
     () => edgePathOffset(allEdges, nodeById, 'from', source, resolvedSource, id),
     [allEdges, nodeById, source, resolvedSource, id, data?.cardFromSide],
@@ -166,72 +312,20 @@ export default function RelationshipEdge({
     const h = n?.measured?.height ?? 130
     const x0 = n?.position.x ?? sourceX
     const y0 = n?.position.y ?? sourceY
-    const cx = x0 + w / 2
-    const cy = y0 + h / 2
-    const spread = 34
-    const height = 90
-    const r = 8
-    if (loopSide === 'bottom') {
-      const outer = y0 + h + height
-      sx = cx - spread
-      sy = y0 + h
-      tx = cx + spread
-      ty = y0 + h
-      edgePath =
-        `M ${sx} ${sy}` +
-        ` L ${sx} ${outer - r}` +
-        ` Q ${sx} ${outer} ${sx + r} ${outer}` +
-        ` L ${tx - r} ${outer}` +
-        ` Q ${tx} ${outer} ${tx} ${outer - r}` +
-        ` L ${tx} ${ty}`
-      labelX = cx
-      labelY = outer
-    } else if (loopSide === 'left') {
-      const outer = x0 - height
-      sx = x0
-      sy = cy - spread
-      tx = x0
-      ty = cy + spread
-      edgePath =
-        `M ${sx} ${sy}` +
-        ` L ${outer + r} ${sy}` +
-        ` Q ${outer} ${sy} ${outer} ${sy + r}` +
-        ` L ${outer} ${ty - r}` +
-        ` Q ${outer} ${ty} ${outer + r} ${ty}` +
-        ` L ${tx} ${ty}`
-      labelX = outer
-      labelY = cy
-    } else if (loopSide === 'right') {
-      const outer = x0 + w + height
-      sx = x0 + w
-      sy = cy - spread
-      tx = x0 + w
-      ty = cy + spread
-      edgePath =
-        `M ${sx} ${sy}` +
-        ` L ${outer - r} ${sy}` +
-        ` Q ${outer} ${sy} ${outer} ${sy + r}` +
-        ` L ${outer} ${ty - r}` +
-        ` Q ${outer} ${ty} ${outer - r} ${ty}` +
-        ` L ${tx} ${ty}`
-      labelX = outer
-      labelY = cy
-    } else {
-      const outer = y0 - height
-      sx = cx - spread
-      sy = y0
-      tx = cx + spread
-      ty = y0
-      edgePath =
-        `M ${sx} ${sy}` +
-        ` L ${sx} ${outer + r}` +
-        ` Q ${sx} ${outer} ${sx + r} ${outer}` +
-        ` L ${tx - r} ${outer}` +
-        ` Q ${tx} ${outer} ${tx} ${outer + r}` +
-        ` L ${tx} ${ty}`
-      labelX = cx
-      labelY = outer
-    }
+    const loop = buildReflexiveEdge(
+      { x: x0, y: y0, w, h },
+      { x: sourceX, y: sourceY, pos: sourcePosition },
+      { x: targetX, y: targetY, pos: targetPosition },
+      fromEdgeOff,
+      toEdgeOff,
+    )
+    sx = loop.sx
+    sy = loop.sy
+    tx = loop.tx
+    ty = loop.ty
+    edgePath = loop.path
+    labelX = loop.labelX
+    labelY = loop.labelY
   } else {
     const [ep, lx, ly] = getSmoothStepPath({
       sourceX: sx,
