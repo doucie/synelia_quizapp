@@ -87,12 +87,20 @@ export function setReflexiveConfig(
   diagramId: string,
   edgeId: string,
   key: 'reflexOffset' | 'reflexSpread',
-  value: number,
+  value: number | undefined,
 ) {
   try {
     const storageKey = `${EDGE_SIDES_KEY}:${diagramId}`
     const all = loadCardinalitySides(diagramId)
-    all[edgeId] = { ...all[edgeId], [key]: value }
+    if (value === undefined) {
+      const current = all[edgeId]
+      if (current) {
+        const { [key]: _removed, ...rest } = current
+        all[edgeId] = rest
+      }
+    } else {
+      all[edgeId] = { ...all[edgeId], [key]: value }
+    }
     localStorage.setItem(storageKey, JSON.stringify(all))
   } catch {
     // ignore

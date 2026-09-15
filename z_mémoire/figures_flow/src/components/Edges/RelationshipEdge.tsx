@@ -166,10 +166,20 @@ function buildReflexiveEdge(
 
   const pA: [number, number] = [source.x, source.y]
   const pB: [number, number] = [target.x, target.y]
-  if (source.pos === Position.Top || source.pos === Position.Bottom) pA[0] += fromEdgeOff
-  else pA[1] += fromEdgeOff
-  if (target.pos === Position.Top || target.pos === Position.Bottom) pB[0] += toEdgeOff
-  else pB[1] += toEdgeOff
+  if (source.pos === Position.Top || source.pos === Position.Bottom) {
+    pA[0] += fromEdgeOff
+    pA[0] -= S
+  } else {
+    pA[1] += fromEdgeOff
+    pA[1] -= S
+  }
+  if (target.pos === Position.Top || target.pos === Position.Bottom) {
+    pB[0] += toEdgeOff
+    pB[0] += S
+  } else {
+    pB[1] += toEdgeOff
+    pB[1] += S
+  }
   const oA = reflexProject(rect, source.pos, pA, M)
   const oB = reflexProject(rect, target.pos, pB, M)
 
@@ -393,6 +403,19 @@ export default function RelationshipEdge({
     if (diagramId) setReflexiveConfig(diagramId, id, key, value)
   }
 
+  const resetReflexiveConfig = (key: 'reflexOffset' | 'reflexSpread') => {
+    const currentEdges = getEdges()
+    setEdges(
+      currentEdges.map((e) => {
+        if (e.id !== id) return e
+        const nextData = { ...(e.data ?? {}) }
+        delete nextData[key]
+        return { ...e, data: nextData }
+      }),
+    )
+    if (diagramId) setReflexiveConfig(diagramId, id, key, undefined)
+  }
+
   const activeFrom = data?.cardFromSide ?? 'source'
   const activeTo = data?.cardToSide ?? 'source'
 
@@ -556,6 +579,7 @@ export default function RelationshipEdge({
         {popover && (
           <div
             ref={popoverRef}
+            onPointerDown={(e) => e.stopPropagation()}
             style={{
               position: 'absolute',
               left: labelX - 80,
@@ -629,6 +653,15 @@ export default function RelationshipEdge({
                   <span className="text-[10px] text-muted-foreground tabular-nums w-7 text-right">
                     {data?.reflexOffset ?? REFLEX_OFFSET}
                   </span>
+                  {data?.reflexOffset != null && data.reflexOffset !== REFLEX_OFFSET && (
+                    <button
+                      onClick={() => resetReflexiveConfig('reflexOffset')}
+                      className="rounded px-1 text-[10px] text-muted-foreground hover:bg-muted hover:text-foreground"
+                      title="Réinitialiser (90)"
+                    >
+                      ↺
+                    </button>
+                  )}
                 </div>
                 <div className="flex items-center gap-1">
                   <span className="mr-1 text-[10px] font-semibold text-muted-foreground uppercase w-14 shrink-0">Écart</span>
@@ -644,6 +677,15 @@ export default function RelationshipEdge({
                   <span className="text-[10px] text-muted-foreground tabular-nums w-7 text-right">
                     {data?.reflexSpread ?? REFLEX_SPREAD}
                   </span>
+                  {data?.reflexSpread != null && data.reflexSpread !== REFLEX_SPREAD && (
+                    <button
+                      onClick={() => resetReflexiveConfig('reflexSpread')}
+                      className="rounded px-1 text-[10px] text-muted-foreground hover:bg-muted hover:text-foreground"
+                      title="Réinitialiser (34)"
+                    >
+                      ↺
+                    </button>
+                  )}
                 </div>
               </div>
             )}
