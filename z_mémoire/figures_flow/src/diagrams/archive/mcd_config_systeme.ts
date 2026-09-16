@@ -1,9 +1,9 @@
-import type { DiagramDefinition } from '../../../types'
+import type { DiagramDefinition } from '../../types'
 
 export const configSysteme: DiagramDefinition = {
   id: 'mcd-config-systeme',
   title: 'Config système',
-  category: 'mcd',
+  category: 'archive',
   domain: 'Config système',
   nodes: [
     {

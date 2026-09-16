@@ -5,24 +5,18 @@ import { utilisateursDroits as mcdUtilDroits } from './nouveau/mcd/utilisateurs_
 import { campagnesPipeline as mcdCampPipeline } from './nouveau/mcd/campagnes_pipeline'
 import { candidaturesSuivi as mcdCandSuivi } from './nouveau/mcd/candidatures_suivi'
 import { entretiensEvaluation as mcdEntretEval } from './nouveau/mcd/entretiens_evaluation'
-import { communication as mcdComm } from './nouveau/mcd/communication'
-import { configSysteme as mcdConfSys } from './nouveau/mcd/config_systeme'
 
 // === Nouveaux MLD ===
 import { utilisateursDroits as mldUtilDroits } from './nouveau/mld/utilisateurs_droits'
 import { campagnesPipeline as mldCampPipeline } from './nouveau/mld/campagnes_pipeline'
 import { candidaturesSuivi as mldCandSuivi } from './nouveau/mld/candidatures_suivi'
 import { entretiensEvaluation as mldEntretEval } from './nouveau/mld/entretiens_evaluation'
-import { communication as mldComm } from './nouveau/mld/communication'
-import { configSysteme as mldConfSys } from './nouveau/mld/config_systeme'
 
 // === Nouveaux MPD ===
 import { utilisateursDroits as mpdUtilDroits } from './nouveau/mpd/utilisateurs_droits'
 import { campagnesPipeline as mpdCampPipeline } from './nouveau/mpd/campagnes_pipeline'
 import { candidaturesSuivi as mpdCandSuivi } from './nouveau/mpd/candidatures_suivi'
 import { entretiensEvaluation as mpdEntretEval } from './nouveau/mpd/entretiens_evaluation'
-import { communication as mpdComm } from './nouveau/mpd/communication'
-import { configSysteme as mpdConfSys } from './nouveau/mpd/config_systeme'
 
 // === Traitements v2 ===
 import { mct0CreationCampagne } from './traitements/v2/mct_0_creation_campagne'
@@ -45,18 +39,24 @@ import { campagnesPipeline as archMcdCamp } from './archive/mcd_campagnes_pipeli
 import { candidatureQuiz as archMcdCand } from './archive/mcd_candidature_quiz'
 import { entretienEvaluation as archMcdEntret } from './archive/mcd_entretien_evaluation'
 import { auditNotifications as archMcdAudit } from './archive/mcd_audit_notifications'
+import { communication as archMcdComm } from './archive/mcd_communication'
+import { configSysteme as archMcdConfSys } from './archive/mcd_config_systeme'
 
 import { identitePermissions as archMldIdentite } from './archive/mld_identite_permissions'
 import { campagnesPipeline as archMldCamp } from './archive/mld_campagnes_pipeline'
 import { candidatureQuiz as archMldCand } from './archive/mld_candidature_quiz'
 import { entretienEvaluation as archMldEntret } from './archive/mld_entretien_evaluation'
 import { auditNotifications as archMldAudit } from './archive/mld_audit_notifications'
+import { communication as archMldComm } from './archive/mld_communication'
+import { configSysteme as archMldConfSys } from './archive/mld_config_systeme'
 
 import { identitePermissions as archMpdIdentite } from './archive/mpd_identite_permissions'
 import { campagnesPipeline as archMpdCamp } from './archive/mpd_campagnes_pipeline'
 import { candidatureQuiz as archMpdCand } from './archive/mpd_candidature_quiz'
 import { entretienEvaluation as archMpdEntret } from './archive/mpd_entretien_evaluation'
 import { auditNotifications as archMpdAudit } from './archive/mpd_audit_notifications'
+import { communication as archMpdComm } from './archive/mpd_communication'
+import { configSysteme as archMpdConfSys } from './archive/mpd_config_systeme'
 
 import { mct0bCreationCampagne as archMct0b } from './archive/mct_0b_creation_campagne'
 import { mct1CandidatureQuiz as archMct1 } from './archive/mct_1_candidature_quiz'
@@ -73,29 +73,23 @@ import { mpt1CandidatureQuiz as archMpt1 } from './archive/mpt_1_candidature_qui
 import { mpt2EntretienDecision as archMpt2 } from './archive/mpt_2_entretien_decision'
 
 export const diagrams: DiagramDefinition[] = [
-  // --- Nouveaux MCD (8) ---
+  // --- Nouveaux MCD (4) ---
   mcdUtilDroits,
   mcdCampPipeline,
   mcdCandSuivi,
   mcdEntretEval,
-  mcdComm,
-  mcdConfSys,
 
-  // --- Nouveaux MLD (8) ---
+  // --- Nouveaux MLD (4) ---
   mldUtilDroits,
   mldCampPipeline,
   mldCandSuivi,
   mldEntretEval,
-  mldComm,
-  mldConfSys,
 
-  // --- Nouveaux MPD (8) ---
+  // --- Nouveaux MPD (4) ---
   mpdUtilDroits,
   mpdCampPipeline,
   mpdCandSuivi,
   mpdEntretEval,
-  mpdComm,
-  mpdConfSys,
 
   // --- Traitements v2 (7) ---
   mct0CreationCampagne,
@@ -112,22 +106,28 @@ export const diagrams: DiagramDefinition[] = [
   // --- Palette (1) ---
   colorPalette,
 
-  // --- Archive (30) ---
+  // --- Archive (34) ---
   archMcdIdentite,
   archMcdCamp,
   archMcdCand,
   archMcdEntret,
   archMcdAudit,
+  archMcdComm,
+  archMcdConfSys,
   archMldIdentite,
   archMldCamp,
   archMldCand,
   archMldEntret,
   archMldAudit,
+  archMldComm,
+  archMldConfSys,
   archMpdIdentite,
   archMpdCamp,
   archMpdCand,
   archMpdEntret,
   archMpdAudit,
+  archMpdComm,
+  archMpdConfSys,
   archMct0b,
   archMct1,
   archMct1a,

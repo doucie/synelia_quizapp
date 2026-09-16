@@ -1,9 +1,9 @@
-import type { DiagramDefinition } from '../../../types'
+import type { DiagramDefinition } from '../../types'
 
 export const communication: DiagramDefinition = {
   id: 'mld-communication',
   title: 'Communication',
-  category: 'mld',
+  category: 'archive',
   domain: 'Communication',
   nodes: [
     {
