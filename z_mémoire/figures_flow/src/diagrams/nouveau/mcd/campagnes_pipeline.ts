@@ -75,7 +75,6 @@ export const campagnesPipeline: DiagramDefinition = {
           { name: 'code_resultat' },
           { name: 'est_requise' },
           { name: 'est_automatique' },
-          { name: 'confirmation_manuelle' },
         ],
       },
     },
@@ -195,7 +194,7 @@ export const campagnesPipeline: DiagramDefinition = {
       source: 'question',
       target: 'reponse',
       type: 'relationship',
-      data: { label: 'comporter', cardFrom: '0,n', cardTo: '0,1', isStrong: true },
+      data: { label: 'compter', cardFrom: '0,n', cardTo: '1,1', isStrong: true },
     },
   ],
 }
