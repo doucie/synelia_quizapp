@@ -522,7 +522,7 @@ export default function RelationshipEdge({
               {data.attributes!.map((attr) => (
                 <span
                   key={attr}
-                  className="px-3 py-0.5 text-[9px] text-muted-foreground self-stretch text-left"
+                  className="px-3 py-0.5 text-[10.5px] self-stretch text-left"
                   style={{ lineHeight: 0.9 }}
                 >
                   {attr}
