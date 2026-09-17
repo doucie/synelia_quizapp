@@ -1,8 +1,10 @@
 # PLAN — Placement des rôles sur la boucle réflexive (fit par segments)
 
 ## Statut
-- Plan validé. Implémenté (`3dbba61` orientations + commits `feat(edge)` / `build(diagrams)`
-  de cet implémentation). Seuils réglables à tuner visuellement si besoin.
+- v1 implémentée (`2dbc7cc` + `d2c7dca`) ; **v2 (auto-fit)** planifiée puis implémentée
+  (`fix(edge)` + `build(diagrams)`) suite au retour « les rôles entrent dans l'entité à
+  dist minimale ». Seuils réglables à tuner visuellement si besoin.
+  Fichier : `z_mémoire/figures_flow/plans/implementations/20260917_roles_reflexifs_fit_segments.md`
 
 ## Contexte
 
@@ -98,11 +100,51 @@ Entrées : segment A (axe + longueur `LA`), segment B (arc, longueur `LB`, `labe
 ### Rendu final (implémentation)
 - Rôles de la boucle rendus en **conteneurs dédiés** (`EdgeLabelRenderer`, coordonnées
   slide absolues) ; badges inchangés.
-- Boucle même côté : segments A (patte) + B (arc), migration arc si `foot > 0.6·A` et
-  `B > A` et place libre (zone `LABEL_RESERVE` autour du libellé) suffisante ; sinon rôle
-  ancré à l'extrémité libre (coin) coulant vers la patte.
-- Boucle côtés différents : pas d'arc (géométrie périmètre hors scope v1) → patte ou coin.
+- Boucle même côté : migration arc si `foot > 0.6·A` ; sinon rôle sur la patte (P1)
+  ancré près du chip; boucles côtés différents : pas d'arc → patte ou coin.
 - Arêtes simples : rôles inchangés (alignement axial), décalage hors-ligne conservé.
+
+---
+
+## v2 — Auto-fit de la boucle (rôles sur l'arc de part et d'autre du libellé)
+
+### Retour utilisateur (constat)
+À `dist` minimale (M = 40), les rôles restaient sur leur patte **et entraient dans
+l'entité** au lieu de migrer sur l'arc, alors que l'arc était plus long.
+
+### Cause racine retrouvée
+`LABEL_RESERVE = 80` centré sur un arc de ~104 px ne laissait que **12 px libres de chaque
+côté** → `chooseArcSide` retournait `null` (migration impossible) → repli **coin** →
+colonne de 132 px (« est annulée ») sur une patte de 40 px = **déborde dans l'entité**.
+Et même mesuré juste, l'arc statique (104 px) ne pouvait pas contenir
+« annuler » (~70 px) + « annule » (39) + « est annulée » (71) = ~180 px.
+
+### Décision validée
+**Élargir l'arc** : quand des rôles migrent, la boucle grandit en largeur pour leur faire
+de la place de part et d'autre du libellé (conforme au schéma cible : `annuler` au centre,
+`annule` à gauche, `est annulée` à droite).
+
+### Changements v2 — `src/components/Edges/RelationshipEdge.tsx`
+- [x] `LABEL_RESERVE` retiré ; ajout `LABEL_PAD = 24` (padding pilulier).
+- [x] `computeLoopFit(...)` (appelé **avant** `buildReflexiveEdge`) :
+  - empreinte rôles dans les deux axes ; rôle sur patte si `foot ≤ 0.6 · M` sinon **migre** ;
+  - `labelFoot = len×6.5 + LABEL_PAD` ; budget **par côté** utile :
+    `req_côté = labelFoot/2 + (migré? foot_arc + GAP : 0)` ;
+  - `spread_eff = max(spread, ceil(R + max(req_gauche, req_droite)))` → l'arc est
+    dimensionné pour le slot le plus exigeant, sans chevauchement du pilulier ;
+  - `offset_eff = offset` (jamais d'allongement des pattes en v2).
+- [x] Rebuild `buildReflexiveEdge` avec `spread_eff`/`offset_eff` → le tracé dessiné est la
+      boucle agrandie.
+- [x] `placeLoopRole(ctx, text, migrateArc)` : migrate → `arcRole` ancré coin
+      (`roleFrom` côté gauche = `arcA`, `roleTo` côté droit = `arcB`) ; sinon P1 si
+      `foot ≤ 0.6·LA`; sinon tapis coin (côtés différents uniquement).
+- [x] P3 (repli coin débordant) éliminé pour les boucles **même côté** → plus jamais de
+      colonne qui entre dans l'entité.
+- [x] Overlay debug : affiche `eff:{offset_eff}/{spread_eff} mig:{0|1}/{0|1}`.
+
+### Effet attendu
+`e-annuler` à dist 40 / spread 60 → `spread_eff` monte à ~121 ; « annuler » centré sur
+l'arc, « annule » au coin gauche, « est annulée » au coin droit, lisible, hors entité.
 
 ## Vérifs
 

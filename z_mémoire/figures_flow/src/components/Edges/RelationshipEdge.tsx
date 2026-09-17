@@ -83,7 +83,7 @@ const ROLE_COL_W = 14
 const ROLE_ROW_H = 14
 const ROLE_CHAR_W = 6.5
 const ROLE_CHAR_H = 12
-const LABEL_RESERVE = 80
+const LABEL_PAD = 24
 
 type ReflexiveRect = { x: number; y: number; w: number; h: number }
 type ReflexiveAnchor = { x: number; y: number; pos: Position }
@@ -317,22 +317,6 @@ function wallRole(ctx: LoopRoleCtx, foot: number, anchoredAtTip: boolean): RoleP
   return { left, top, vertical: false }
 }
 
-function chooseArcSide(ctx: LoopRoleCtx, foot: number): 1 | -1 | null {
-  const reserve = LABEL_RESERVE / 2
-  if (ctx.arcAxis === 'h') {
-    const lo = ctx.labelPos.x - reserve - ctx.arcA!.x
-    const hi = ctx.arcB!.x - (ctx.labelPos.x + reserve)
-    const side = hi > lo ? 1 : -1
-    const len = side > 0 ? hi : lo
-    return len - ROLE_LINE_GAP >= foot ? side : null
-  }
-  const lo = ctx.labelPos.y - reserve - ctx.arcA!.y
-  const hi = ctx.arcB!.y - (ctx.labelPos.y + reserve)
-  const side = hi > lo ? 1 : -1
-  const len = side > 0 ? hi : lo
-  return len - ROLE_LINE_GAP >= foot ? side : null
-}
-
 function arcRole(ctx: LoopRoleCtx, foot: number, side: 1 | -1): RolePlacement {
   const vertical = ctx.arcAxis === 'v'
   const atA = side < 0
@@ -348,20 +332,46 @@ function arcRole(ctx: LoopRoleCtx, foot: number, side: 1 | -1): RolePlacement {
   return { left, top, vertical: true }
 }
 
-function placeLoopRole(ctx: LoopRoleCtx, text: string): RolePlacement {
+type LoopFit = { offset: number; spread: number; migrateFrom: boolean; migrateTo: boolean }
+
+function computeLoopFit(
+  userOffset: number,
+  userSpread: number,
+  sameSide: boolean,
+  pos: Position,
+  roleFrom: string | undefined,
+  roleTo: string | undefined,
+  label: string | undefined,
+): LoopFit {
+  if (!sameSide) return { offset: userOffset, spread: userSpread, migrateFrom: false, migrateTo: false }
+  const vertical = pos === Position.Top || pos === Position.Bottom
+  const wallFoot = (t: string) => t.length * (vertical ? ROLE_CHAR_H : ROLE_CHAR_W)
+  const arcFoot = (t: string) => t.length * (vertical ? ROLE_CHAR_W : ROLE_CHAR_H)
+  const fromFits = roleFrom ? wallFoot(roleFrom) <= ROLE_FIT_RATIO * userOffset : true
+  const toFits = roleTo ? wallFoot(roleTo) <= ROLE_FIT_RATIO * userOffset : true
+  const migrateFrom = !!roleFrom && !fromFits
+  const migrateTo = !!roleTo && !toFits
+  let spread = userSpread
+  if (migrateFrom || migrateTo) {
+    const labelFoot = (label ?? '').length * ROLE_CHAR_W + LABEL_PAD
+    const halfLabel = labelFoot / 2
+    const reqFrom = halfLabel + (migrateFrom ? arcFoot(roleFrom) + ROLE_LINE_GAP : 0)
+    const reqTo = halfLabel + (migrateTo ? arcFoot(roleTo) + ROLE_LINE_GAP : 0)
+    spread = Math.max(spread, Math.ceil(REFLEX_RADIUS + Math.max(reqFrom, reqTo)))
+  }
+  return { offset: userOffset, spread, migrateFrom, migrateTo }
+}
+
+function placeLoopRole(ctx: LoopRoleCtx, text: string, migrateArc: boolean): RolePlacement {
   const verticalWall = ctx.pos === Position.Top || ctx.pos === Position.Bottom
   const wallFoot = verticalWall ? text.length * ROLE_CHAR_H : text.length * ROLE_CHAR_W
   const LA = Math.abs(ctx.outer - (verticalWall ? ctx.wallBase.y : ctx.wallBase.x))
+  if (migrateArc && ctx.arcA && ctx.arcB) {
+    const arcFoot = verticalWall ? text.length * ROLE_CHAR_W : text.length * ROLE_CHAR_H
+    return arcRole(ctx, arcFoot, ctx.wallSign < 0 ? -1 : 1)
+  }
   if (wallFoot <= ROLE_FIT_RATIO * LA) {
     return wallRole(ctx, wallFoot, false)
-  }
-  if (ctx.arcA && ctx.arcB) {
-    const arcLB = ctx.arcAxis === 'h' ? ctx.arcB.x - ctx.arcA.x : ctx.arcB.y - ctx.arcA.y
-    if (arcLB > LA) {
-      const arcFoot = verticalWall ? text.length * ROLE_CHAR_W : text.length * ROLE_CHAR_H
-      const side = chooseArcSide(ctx, arcFoot)
-      if (side) return arcRole(ctx, arcFoot, side)
-    }
   }
   return wallRole(ctx, wallFoot, true)
 }
@@ -463,6 +473,16 @@ export default function RelationshipEdge({
   const loopH = sourceNode?.measured?.height ?? 130
   const loopX = sourceNode?.position.x ?? sourceX
   const loopY = sourceNode?.position.y ?? sourceY
+  const sameSideLoop = isSelfLoop && sourcePosition === targetPosition
+  const loopFit = computeLoopFit(
+    loopOffset,
+    loopSpread,
+    sameSideLoop,
+    sourcePosition,
+    data?.roleFrom,
+    data?.roleTo,
+    data?.label,
+  )
 
   if (isSelfLoop) {
     const w = loopW
@@ -475,8 +495,8 @@ export default function RelationshipEdge({
       { x: targetX, y: targetY, pos: targetPosition },
       fromEdgeOff,
       toEdgeOff,
-      loopOffset,
-      loopSpread,
+      loopFit.offset,
+      loopFit.spread,
     )
     sx = loop.sx
     sy = loop.sy
@@ -565,14 +585,13 @@ export default function RelationshipEdge({
   const validFrom = useMemo(() => getValidHandles(sourceNode, 'source'), [sourceNode])
   const validTo = useMemo(() => getValidHandles(targetNode, 'target'), [targetNode])
 
-  const sameSideLoop = isSelfLoop && sourcePosition === targetPosition
   const loopRect = { x: loopX, y: loopY, w: loopW, h: loopH }
   const labelPos = { x: labelX, y: labelY }
   const fromRole = isSelfLoop && data?.roleFrom
-    ? placeLoopRole(loopRoleCtx(sourcePosition, { x: sx, y: sy }, { x: tx, y: ty }, loopRect, loopOffset, sameSideLoop, labelPos), data.roleFrom)
+    ? placeLoopRole(loopRoleCtx(sourcePosition, { x: sx, y: sy }, { x: tx, y: ty }, loopRect, loopFit.offset, sameSideLoop, labelPos), data.roleFrom, loopFit.migrateFrom)
     : null
   const toRole = isSelfLoop && data?.roleTo
-    ? placeLoopRole(loopRoleCtx(targetPosition, { x: tx, y: ty }, { x: sx, y: sy }, loopRect, loopOffset, sameSideLoop, labelPos), data.roleTo)
+    ? placeLoopRole(loopRoleCtx(targetPosition, { x: tx, y: ty }, { x: sx, y: sy }, loopRect, loopFit.offset, sameSideLoop, labelPos), data.roleTo, loopFit.migrateTo)
     : null
 
   return (
@@ -777,7 +796,7 @@ export default function RelationshipEdge({
                 whiteSpace: 'nowrap',
               }}
             >
-              {id} | Cf:{data?.cardFrom ?? '–'}→{data?.cardTo ?? '–'} | S:{sourceHandle ?? '∅'}→{resolvedSource} | T:{targetHandle ?? '∅'}→{resolvedTarget} | gF:{srcGroup.length} gT:{tgtGroup.length} | off:{Math.round(fromEdgeOff)}/{Math.round(toEdgeOff)}
+              {id} | Cf:{data?.cardFrom ?? '–'}→{data?.cardTo ?? '–'} | S:{sourceHandle ?? '∅'}→{resolvedSource} | T:{targetHandle ?? '∅'}→{resolvedTarget} | gF:{srcGroup.length} gT:{tgtGroup.length} | off:{Math.round(fromEdgeOff)}/{Math.round(toEdgeOff)} | eff:{loopFit.offset}/{loopFit.spread} mig:{loopFit.migrateFrom ? 1 : 0}/{loopFit.migrateTo ? 1 : 0}
             </div>
           </>
         )}
