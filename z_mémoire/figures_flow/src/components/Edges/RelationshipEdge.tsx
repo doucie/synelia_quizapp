@@ -77,6 +77,14 @@ const REFLEX_SPREAD = 34
 const REFLEX_OFFSET = 90
 const REFLEX_RADIUS = 8
 
+const ROLE_FIT_RATIO = 0.6
+const ROLE_LINE_GAP = 6
+const ROLE_COL_W = 14
+const ROLE_ROW_H = 14
+const ROLE_CHAR_W = 6.5
+const ROLE_CHAR_H = 12
+const LABEL_RESERVE = 80
+
 type ReflexiveRect = { x: number; y: number; w: number; h: number }
 type ReflexiveAnchor = { x: number; y: number; pos: Position }
 
@@ -244,6 +252,120 @@ function buildReflexiveEdge(
   return { sx: pA[0], sy: pA[1], tx: pB[0], ty: pB[1], path, labelX, labelY }
 }
 
+type LoopRoleCtx = {
+  pos: Position
+  wallBase: { x: number; y: number }
+  outer: number
+  wallSign: 1 | -1
+  arcA: { x: number; y: number } | null
+  arcB: { x: number; y: number } | null
+  arcAxis: 'h' | 'v'
+  labelPos: { x: number; y: number }
+}
+
+type RolePlacement = { left: number; top: number; vertical: boolean }
+
+function loopRoleCtx(
+  pos: Position,
+  wallBase: { x: number; y: number },
+  otherBase: { x: number; y: number },
+  rect: ReflexiveRect,
+  M: number,
+  sameSide: boolean,
+  labelPos: { x: number; y: number },
+): LoopRoleCtx {
+  const { x: x0, y: y0, w, h } = rect
+  const outer =
+    pos === Position.Top
+      ? y0 - M
+      : pos === Position.Bottom
+        ? y0 + h + M
+        : pos === Position.Left
+          ? x0 - M
+          : x0 + w + M
+  const hAxis = pos === Position.Top || pos === Position.Bottom
+  const wallSign: 1 | -1 = hAxis ? (wallBase.x < otherBase.x ? -1 : 1) : wallBase.y < otherBase.y ? -1 : 1
+  let arcA: { x: number; y: number } | null = null
+  let arcB: { x: number; y: number } | null = null
+  if (sameSide) {
+    if (hAxis) {
+      const xa = Math.min(wallBase.x, otherBase.x)
+      const xb = Math.max(wallBase.x, otherBase.x)
+      arcA = { x: xa + REFLEX_RADIUS, y: outer }
+      arcB = { x: xb - REFLEX_RADIUS, y: outer }
+    } else {
+      const ya = Math.min(wallBase.y, otherBase.y)
+      const yb = Math.max(wallBase.y, otherBase.y)
+      arcA = { x: outer, y: ya + REFLEX_RADIUS }
+      arcB = { x: outer, y: yb - REFLEX_RADIUS }
+    }
+  }
+  return { pos, wallBase, outer, wallSign, arcA, arcB, arcAxis: hAxis ? 'h' : 'v', labelPos }
+}
+
+function wallRole(ctx: LoopRoleCtx, foot: number, anchoredAtTip: boolean): RolePlacement {
+  const vertical = ctx.pos === Position.Top || ctx.pos === Position.Bottom
+  if (vertical) {
+    const isTop = ctx.pos === Position.Top
+    const left = ctx.wallSign < 0 ? ctx.wallBase.x - ROLE_COL_W - ROLE_LINE_GAP : ctx.wallBase.x + ROLE_LINE_GAP
+    const top = anchoredAtTip ? (isTop ? ctx.outer : ctx.outer - foot) : isTop ? ctx.wallBase.y - foot : ctx.wallBase.y
+    return { left, top, vertical: true }
+  }
+  const isLeft = ctx.pos === Position.Left
+  const top = ctx.wallSign < 0 ? ctx.wallBase.y - ROLE_ROW_H - ROLE_LINE_GAP : ctx.wallBase.y + ROLE_LINE_GAP
+  const left = anchoredAtTip ? (isLeft ? ctx.outer : ctx.outer - foot) : isLeft ? ctx.wallBase.x - foot : ctx.wallBase.x
+  return { left, top, vertical: false }
+}
+
+function chooseArcSide(ctx: LoopRoleCtx, foot: number): 1 | -1 | null {
+  const reserve = LABEL_RESERVE / 2
+  if (ctx.arcAxis === 'h') {
+    const lo = ctx.labelPos.x - reserve - ctx.arcA!.x
+    const hi = ctx.arcB!.x - (ctx.labelPos.x + reserve)
+    const side = hi > lo ? 1 : -1
+    const len = side > 0 ? hi : lo
+    return len - ROLE_LINE_GAP >= foot ? side : null
+  }
+  const lo = ctx.labelPos.y - reserve - ctx.arcA!.y
+  const hi = ctx.arcB!.y - (ctx.labelPos.y + reserve)
+  const side = hi > lo ? 1 : -1
+  const len = side > 0 ? hi : lo
+  return len - ROLE_LINE_GAP >= foot ? side : null
+}
+
+function arcRole(ctx: LoopRoleCtx, foot: number, side: 1 | -1): RolePlacement {
+  const vertical = ctx.arcAxis === 'v'
+  const atA = side < 0
+  if (!vertical) {
+    const isTop = ctx.pos === Position.Top
+    const top = isTop ? ctx.arcA!.y + ROLE_LINE_GAP : ctx.arcA!.y - ROLE_ROW_H - ROLE_LINE_GAP
+    const left = atA ? ctx.arcA!.x + ROLE_LINE_GAP : ctx.arcB!.x - ROLE_LINE_GAP - foot
+    return { left, top, vertical: false }
+  }
+  const isLeft = ctx.pos === Position.Left
+  const left = isLeft ? ctx.arcA!.x + ROLE_LINE_GAP : ctx.arcA!.x - ROLE_COL_W - ROLE_LINE_GAP
+  const top = atA ? ctx.arcA!.y + ROLE_LINE_GAP : ctx.arcB!.y - ROLE_LINE_GAP - foot
+  return { left, top, vertical: true }
+}
+
+function placeLoopRole(ctx: LoopRoleCtx, text: string): RolePlacement {
+  const verticalWall = ctx.pos === Position.Top || ctx.pos === Position.Bottom
+  const wallFoot = verticalWall ? text.length * ROLE_CHAR_H : text.length * ROLE_CHAR_W
+  const LA = Math.abs(ctx.outer - (verticalWall ? ctx.wallBase.y : ctx.wallBase.x))
+  if (wallFoot <= ROLE_FIT_RATIO * LA) {
+    return wallRole(ctx, wallFoot, false)
+  }
+  if (ctx.arcA && ctx.arcB) {
+    const arcLB = ctx.arcAxis === 'h' ? ctx.arcB.x - ctx.arcA.x : ctx.arcB.y - ctx.arcA.y
+    if (arcLB > LA) {
+      const arcFoot = verticalWall ? text.length * ROLE_CHAR_W : text.length * ROLE_CHAR_H
+      const side = chooseArcSide(ctx, arcFoot)
+      if (side) return arcRole(ctx, arcFoot, side)
+    }
+  }
+  return wallRole(ctx, wallFoot, true)
+}
+
 export default function RelationshipEdge({
   id,
   source,
@@ -335,15 +457,18 @@ export default function RelationshipEdge({
   let edgePath: string
   let labelX: number
   let labelY: number
+  const loopOffset = data?.reflexOffset ?? REFLEX_OFFSET
+  const loopSpread = data?.reflexSpread ?? REFLEX_SPREAD
+  const loopW = sourceNode?.measured?.width ?? 220
+  const loopH = sourceNode?.measured?.height ?? 130
+  const loopX = sourceNode?.position.x ?? sourceX
+  const loopY = sourceNode?.position.y ?? sourceY
 
   if (isSelfLoop) {
-    const n = sourceNode
-    const loopOffset = data?.reflexOffset ?? REFLEX_OFFSET
-    const loopSpread = data?.reflexSpread ?? REFLEX_SPREAD
-    const w = n?.measured?.width ?? 220
-    const h = n?.measured?.height ?? 130
-    const x0 = n?.position.x ?? sourceX
-    const y0 = n?.position.y ?? sourceY
+    const w = loopW
+    const h = loopH
+    const x0 = loopX
+    const y0 = loopY
     const loop = buildReflexiveEdge(
       { x: x0, y: y0, w, h },
       { x: sourceX, y: sourceY, pos: sourcePosition },
@@ -440,6 +565,16 @@ export default function RelationshipEdge({
   const validFrom = useMemo(() => getValidHandles(sourceNode, 'source'), [sourceNode])
   const validTo = useMemo(() => getValidHandles(targetNode, 'target'), [targetNode])
 
+  const sameSideLoop = isSelfLoop && sourcePosition === targetPosition
+  const loopRect = { x: loopX, y: loopY, w: loopW, h: loopH }
+  const labelPos = { x: labelX, y: labelY }
+  const fromRole = isSelfLoop && data?.roleFrom
+    ? placeLoopRole(loopRoleCtx(sourcePosition, { x: sx, y: sy }, { x: tx, y: ty }, loopRect, loopOffset, sameSideLoop, labelPos), data.roleFrom)
+    : null
+  const toRole = isSelfLoop && data?.roleTo
+    ? placeLoopRole(loopRoleCtx(targetPosition, { x: tx, y: ty }, { x: sx, y: sy }, loopRect, loopOffset, sameSideLoop, labelPos), data.roleTo)
+    : null
+
   return (
     <>
       <g onClick={openPopover} style={{ cursor: 'pointer' }}>
@@ -469,7 +604,7 @@ export default function RelationshipEdge({
             }}
             onClick={openPopover}
           >
-            {data.roleFrom && (
+            {!isSelfLoop && data.roleFrom && (
               <span
                 className="text-[10px] italic text-muted-foreground whitespace-nowrap bg-background/80 rounded-sm px-0.5"
                 style={{
@@ -499,7 +634,7 @@ export default function RelationshipEdge({
             }}
             onClick={openPopover}
           >
-            {data.roleTo && (
+            {!isSelfLoop && data.roleTo && (
               <span
                 className="text-[10px] italic text-muted-foreground whitespace-nowrap bg-background/80 rounded-sm px-0.5"
                 style={{
@@ -512,6 +647,34 @@ export default function RelationshipEdge({
               </span>
             )}
             <span className={badgeClass}>{data.cardTo}</span>
+          </div>
+        )}
+        {isSelfLoop && fromRole && (
+          <div
+            style={{
+              position: 'absolute',
+              left: fromRole.left,
+              top: fromRole.top,
+              writingMode: fromRole.vertical ? 'vertical-rl' : undefined,
+              pointerEvents: 'none',
+            }}
+            className="text-[10px] italic text-muted-foreground whitespace-nowrap bg-background/80 rounded-sm px-0.5"
+          >
+            {data.roleFrom}
+          </div>
+        )}
+        {isSelfLoop && toRole && (
+          <div
+            style={{
+              position: 'absolute',
+              left: toRole.left,
+              top: toRole.top,
+              writingMode: toRole.vertical ? 'vertical-rl' : undefined,
+              pointerEvents: 'none',
+            }}
+            className="text-[10px] italic text-muted-foreground whitespace-nowrap bg-background/80 rounded-sm px-0.5"
+          >
+            {data.roleTo}
           </div>
         )}
         {data?.label && !(data?.attributes && data.attributes.length > 0) && (

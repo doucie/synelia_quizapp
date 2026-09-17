@@ -1,8 +1,8 @@
 # PLAN — Placement des rôles sur la boucle réflexive (fit par segments)
 
 ## Statut
-- Plan validé (orientations OK). Implémentation à faire après OK global.
-- Fichier : `z_mémoire/figures_flow/plans/implementations/20260917_roles_reflexifs_fit_segments.md`
+- Plan validé. Implémenté (`3dbba61` orientations + commits `feat(edge)` / `build(diagrams)`
+  de cet implémentation). Seuils réglables à tuner visuellement si besoin.
 
 ## Contexte
 
@@ -85,15 +85,24 @@ Entrées : segment A (axe + longueur `LA`), segment B (arc, longueur `LB`, `labe
 
 ## Changements — `src/components/Edges/RelationshipEdge.tsx`
 
-- [ ] Déclarer les constantes (`ROLE_FIT_RATIO`, `ROLE_LINE_GAP`, `ROLE_CHAR_W`,
+- [x] Déclarer les constantes (`ROLE_FIT_RATIO`, `ROLE_LINE_GAP`, `ROLE_CHAR_W`,
       `ROLE_CHAR_H`, `LABEL_RESERVE`).
-- [ ] `placeRole(...)` : pure fonction géométrique (segment A/B, labelPos, texte, côté)
+- [x] `placeRole(...)` : pure fonction géométrique (segment A/B, labelPos, texte, côté)
       retournant `{ anchor: {x,y}, orientation: 'vertical' | 'horizontal', placement }`.
-- [ ] Branchage dans la section rôle des deux badges : si `isSelfLoop` → `placeRole`
+- [x] Branchage dans la section rôle des deux badges : si `isSelfLoop` → `placeRole`
       (boucle), sinon → placement axial simple + `ROLE_LINE_GAP`.
-- [ ] Ajuster `roleOuterStyle` / le mode de rendu pour intégrer l'offset `ROLE_LINE_GAP`
+- [x] Ajuster `roleOuterStyle` / le mode de rendu pour intégrer l'offset `ROLE_LINE_GAP`
       et l'ancrage coin (repli).
-- [ ] `e-annuler` : aucun changement de données (rôles + `reflexSpread: 60` déjà en place).
+- [x] `e-annuler` : aucun changement de données (rôles + `reflexSpread: 60` déjà en place).
+
+### Rendu final (implémentation)
+- Rôles de la boucle rendus en **conteneurs dédiés** (`EdgeLabelRenderer`, coordonnées
+  slide absolues) ; badges inchangés.
+- Boucle même côté : segments A (patte) + B (arc), migration arc si `foot > 0.6·A` et
+  `B > A` et place libre (zone `LABEL_RESERVE` autour du libellé) suffisante ; sinon rôle
+  ancré à l'extrémité libre (coin) coulant vers la patte.
+- Boucle côtés différents : pas d'arc (géométrie périmètre hors scope v1) → patte ou coin.
+- Arêtes simples : rôles inchangés (alignement axial), décalage hors-ligne conservé.
 
 ## Vérifs
 
