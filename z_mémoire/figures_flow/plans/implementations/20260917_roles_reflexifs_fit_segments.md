@@ -5,6 +5,7 @@
   mais **inopérante sur `e-annuler`** (voir cause racine v3 ci-dessous).
 - **v3 (pilotage manuel par sliders)** : implémentée puis **remplacée par v4**.
 - **v4 (le texte suit la polyligne patte + arc, SVG `textPath`)** : retenue et implémentée.
+- **v5 (choix Pivoté / Droit par rôle)** : retenue et implémentée (v4 conservé par défaut).
   Fichier : `z_mémoire/figures_flow/plans/implementations/20260917_roles_reflexifs_fit_segments.md`
 
 ## Contexte
@@ -223,12 +224,44 @@ le texte **sur les deux lignes**.
 - Limites : rôles en SVG (sous l'overlay HTML) → peuvent être occultés par le libellé s'ils
       glissent pile dessous ; halo au lieu de la pilule.
 
+## v5 — Choix « Pivoté / Droit » par rôle
+
+### Retour utilisateur
+« Quand le texte arrive sur une ligne verticale, il doit être à l'endroit. » Le mode
+`textPath` pivote forcément les glyphes avec la tangente → ajout d'un **choix utilisateur**
+par rôle, défaut **Pivoté** (rendu v4 conservé).
+
+### Décisions validées
+- Choix **par rôle** : `roleFromOrientation` / `roleToOrientation` (`'rotate' | 'upright'`).
+- Défaut `'rotate'` si absent (aucun changement visuel).
+- `rotate` = `<textPath>` (existant) ; `upright` = glyphes jamais tournés.
+
+### Changements v5
+- `src/types/index.ts` : `RelationshipEdgeData` + `roleFromOrientation?` / `roleToOrientation?`.
+- `src/hooks/useDiagramState.ts` : `CardinalitySides` + ces 2 champs ;
+  `setReflexiveConfig` accepte `number | string | undefined` et les 2 nouvelles clés.
+- `src/components/DiagramCanvas.tsx` : merge des 2 champs sauvegardés.
+- `src/components/Edges/RelationshipEdge.tsx` :
+  - [x] `layoutUpright(poly, rect, text, startDist, fromEnd)` : parcourt la polyligne depuis
+        le bout intérieur (polyligne inversée pour `roleTo`), avance `ROLE_CHAR_W` (horizontal)
+        / `ROLE_CHAR_H` (vertical), décalage `ROLE_LINE_GAP` **hors boucle** par segment.
+  - [x] Rendu `upright` : `<text x="…" y="…">` (une coordonnée par caractère),
+        `textAnchor="middle"` + `dominantBaseline="central"` → glyphes à l'endroit, y compris
+        empilés sur les verticales.
+  - [x] `toDist = t·maxTo` (distance depuis le chip cible) pour le parcours inversé.
+  - [x] Constantes `ROLE_CHAR_W = 6.5`, `ROLE_CHAR_H = 12` réintroduites.
+  - [x] Popover : sous chaque rôle, `Texte  [Pivoté] [Droit]` ; « Pivoté » supprime la clé
+        (défaut), « Droit » persiste `'upright'`.
+- Cavalier connu : sur un segment parcouru à rebours de la lecture naturelle, les lettres
+  restent à l'endroit mais la lecture suit le flux **vers l'extérieur** (une colonne peut se
+  lire de bas en haut). Inhérent à « premier caractère au chip » ; le mode Pivoté reste dispo.
+
 ## Vérifs
 
 - `npx tsc --noEmit` (aucune nouvelle erreur) puis `npx vite build`.
 - Essais visuels : boucle Top/Top **rapprochée** (dist faible) et **agrandie**, côtés
   mixtes, pattes Left/Right — rôles toujours lisibles, ne dépassant plus le coin.
-- Tuner `ROLE_LINE_GAP` selon le rendu.
+- Tuner `ROLE_LINE_GAP` / `ROLE_CHAR_W` / `ROLE_CHAR_H` selon le rendu.
 
 ## Commits
 
@@ -238,3 +271,5 @@ le texte **sur les deux lignes**.
 4. `build(diagrams): artefacts dist`
 5. `feat(edge): roles suivant la polyligne de la boucle (textPath)`
 6. `build(diagrams): artefacts dist`
+7. `feat(edge): orientation par role pivotee ou droite (toggle)`
+8. `build(diagrams): artefacts dist`

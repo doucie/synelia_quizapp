@@ -65,6 +65,8 @@ export interface RelationshipEdgeData {
   reflexSpread?: number
   roleFromPos?: number
   roleToPos?: number
+  roleFromOrientation?: 'rotate' | 'upright'
+  roleToOrientation?: 'rotate' | 'upright'
 }
 
 export type RelationshipEdge = Edge<RelationshipEdgeData>

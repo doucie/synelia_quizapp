@@ -78,6 +78,8 @@ const REFLEX_OFFSET = 90
 const REFLEX_RADIUS = 8
 
 const ROLE_LINE_GAP = 6
+const ROLE_CHAR_W = 6.5
+const ROLE_CHAR_H = 12
 
 type ReflexiveRect = { x: number; y: number; w: number; h: number }
 type ReflexiveAnchor = { x: number; y: number; pos: Position }
@@ -294,6 +296,97 @@ function rolePathFit(poly: [number, number][], rect: ReflexiveRect): RolePathFit
   return { total, maxFrom: total - lastSeg, maxTo: total - firstSeg, dy }
 }
 
+type UprightChar = { char: string; x: number; y: number }
+
+type UprightSeg = {
+  start: number
+  len: number
+  ax: number
+  ay: number
+  ux: number
+  uy: number
+  nx: number
+  ny: number
+  axis: 'h' | 'v'
+}
+
+function layoutUpright(
+  poly: [number, number][],
+  rect: ReflexiveRect,
+  text: string,
+  startDist: number,
+  fromEnd: boolean,
+): UprightChar[] {
+  const chars = Array.from(text)
+  if (chars.length === 0 || poly.length < 2) return []
+  const pts = fromEnd ? [...poly].reverse() : poly
+  const cx = rect.x + rect.w / 2
+  const cy = rect.y + rect.h / 2
+  const segs: UprightSeg[] = []
+  let cumul = 0
+  for (let i = 1; i < pts.length; i++) {
+    const ax = pts[i - 1][0]
+    const ay = pts[i - 1][1]
+    const dx = pts[i][0] - ax
+    const dyv = pts[i][1] - ay
+    const len = Math.hypot(dx, dyv)
+    if (len === 0) continue
+    const ux = dx / len
+    const uy = dyv / len
+    const mx = (ax + pts[i][0]) / 2 - cx
+    const my = (ay + pts[i][1]) / 2 - cy
+    const dot = mx * ux + my * uy
+    const px = mx - dot * ux
+    const py = my - dot * uy
+    const plen = Math.hypot(px, py) || 1
+    segs.push({
+      start: cumul,
+      len,
+      ax,
+      ay,
+      ux,
+      uy,
+      nx: px / plen,
+      ny: py / plen,
+      axis: Math.abs(ux) >= Math.abs(uy) ? 'h' : 'v',
+    })
+    cumul += len
+  }
+  const pointAt = (d: number) => {
+    if (d < 0) return null
+    for (const s of segs) {
+      if (d <= s.start + s.len) {
+        const local = d - s.start
+        return {
+          x: s.ax + s.ux * local,
+          y: s.ay + s.uy * local,
+          nx: s.nx,
+          ny: s.ny,
+          axis: s.axis,
+        }
+      }
+    }
+    return null
+  }
+  const n = chars.length
+  const out: UprightChar[] = []
+  let dist = Math.max(0, startDist)
+  for (let k = 0; k < n; k++) {
+    const atStart = pointAt(dist)
+    if (!atStart) break
+    const advance = atStart.axis === 'h' ? ROLE_CHAR_W : ROLE_CHAR_H
+    const atCenter = pointAt(dist + advance / 2) ?? atStart
+    const idx = fromEnd ? n - 1 - k : k
+    out.push({
+      char: chars[idx],
+      x: atCenter.x + atCenter.nx * ROLE_LINE_GAP,
+      y: atCenter.y + atCenter.ny * ROLE_LINE_GAP,
+    })
+    dist += advance
+  }
+  return out
+}
+
 export default function RelationshipEdge({
   id,
   source,
@@ -393,6 +486,7 @@ export default function RelationshipEdge({
   const loopY = sourceNode?.position.y ?? sourceY
   const rolePathId = `edge-rolepath-${id}`
   let roleFit: RolePathFit | null = null
+  let rolePoly: [number, number][] | null = null
 
   if (isSelfLoop) {
     const w = loopW
@@ -416,6 +510,7 @@ export default function RelationshipEdge({
     labelX = loop.labelX
     labelY = loop.labelY
     roleFit = rolePathFit(loop.poly, { x: x0, y: y0, w, h })
+    rolePoly = loop.poly
   } else {
     const [ep, lx, ly] = getSmoothStepPath({
       sourceX: sx,
@@ -466,7 +561,15 @@ export default function RelationshipEdge({
     if (diagramId) setCardinalitySide(diagramId, id, which, side)
   }
 
-  const updateReflexiveConfig = (key: 'reflexOffset' | 'reflexSpread' | 'roleFromPos' | 'roleToPos', value: number) => {
+  type ReflexiveKey =
+    | 'reflexOffset'
+    | 'reflexSpread'
+    | 'roleFromPos'
+    | 'roleToPos'
+    | 'roleFromOrientation'
+    | 'roleToOrientation'
+
+  const updateReflexiveConfig = (key: ReflexiveKey, value: number | string) => {
     const currentEdges = getEdges()
     setEdges(
       currentEdges.map((e) => {
@@ -477,7 +580,7 @@ export default function RelationshipEdge({
     if (diagramId) setReflexiveConfig(diagramId, id, key, value)
   }
 
-  const resetReflexiveConfig = (key: 'reflexOffset' | 'reflexSpread' | 'roleFromPos' | 'roleToPos') => {
+  const resetReflexiveConfig = (key: ReflexiveKey) => {
     const currentEdges = getEdges()
     setEdges(
       currentEdges.map((e) => {
@@ -498,6 +601,18 @@ export default function RelationshipEdge({
 
   const fromStart = roleFit ? Math.max(0, Math.min(1, data?.roleFromPos ?? 0)) * roleFit.maxFrom : 0
   const toStart = roleFit ? roleFit.total - Math.max(0, Math.min(1, data?.roleToPos ?? 0)) * roleFit.maxTo : 0
+  const toDist = roleFit ? Math.max(0, Math.min(1, data?.roleToPos ?? 0)) * roleFit.maxTo : 0
+  const roleRect = { x: loopX, y: loopY, w: loopW, h: loopH }
+  const fromUpright = data?.roleFromOrientation === 'upright'
+  const toUpright = data?.roleToOrientation === 'upright'
+  const fromChars =
+    isSelfLoop && rolePoly && data?.roleFrom && fromUpright
+      ? layoutUpright(rolePoly, roleRect, data.roleFrom, fromStart, false)
+      : []
+  const toChars =
+    isSelfLoop && rolePoly && data?.roleTo && toUpright
+      ? layoutUpright(rolePoly, roleRect, data.roleTo, toDist, true)
+      : []
   const roleTextStyle = {
     fontSize: 10,
     fontStyle: 'italic',
@@ -525,20 +640,42 @@ export default function RelationshipEdge({
             <defs>
               <path id={rolePathId} d={edgePath} fill="none" stroke="none" />
             </defs>
-            {data?.roleFrom && (
-              <text style={roleTextStyle} textAnchor="start">
-                <textPath href={`#${rolePathId}`} startOffset={fromStart} dy={roleFit.dy}>
-                  {data.roleFrom}
-                </textPath>
-              </text>
-            )}
-            {data?.roleTo && (
-              <text style={roleTextStyle} textAnchor="end">
-                <textPath href={`#${rolePathId}`} startOffset={toStart} dy={roleFit.dy}>
-                  {data.roleTo}
-                </textPath>
-              </text>
-            )}
+            {data?.roleFrom &&
+              (fromUpright ? (
+                <text
+                  style={roleTextStyle}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  x={fromChars.map((c) => c.x.toFixed(1)).join(' ')}
+                  y={fromChars.map((c) => c.y.toFixed(1)).join(' ')}
+                >
+                  {fromChars.map((c) => c.char).join('')}
+                </text>
+              ) : (
+                <text style={roleTextStyle} textAnchor="start">
+                  <textPath href={`#${rolePathId}`} startOffset={fromStart} dy={roleFit.dy}>
+                    {data.roleFrom}
+                  </textPath>
+                </text>
+              ))}
+            {data?.roleTo &&
+              (toUpright ? (
+                <text
+                  style={roleTextStyle}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  x={toChars.map((c) => c.x.toFixed(1)).join(' ')}
+                  y={toChars.map((c) => c.y.toFixed(1)).join(' ')}
+                >
+                  {toChars.map((c) => c.char).join('')}
+                </text>
+              ) : (
+                <text style={roleTextStyle} textAnchor="end">
+                  <textPath href={`#${rolePathId}`} startOffset={toStart} dy={roleFit.dy}>
+                    {data.roleTo}
+                  </textPath>
+                </text>
+              ))}
           </>
         )}
       </g>
@@ -818,56 +955,102 @@ export default function RelationshipEdge({
                   )}
                 </div>
                 {data?.roleFrom && (
-                  <div className="flex items-center gap-1">
-                    <span className="mr-1 text-[10px] font-semibold text-muted-foreground uppercase w-14 shrink-0">Rôle ⇤</span>
-                    <input
-                      type="range"
-                      min={0}
-                      max={100}
-                      step={5}
-                      value={Math.round((data?.roleFromPos ?? 0) * 100)}
-                      onChange={(e) => updateReflexiveConfig('roleFromPos', Number(e.target.value) / 100)}
-                      style={{ flex: 1, height: 3, accentColor: 'hsl(var(--primary))' }}
-                    />
-                    <span className="text-[10px] text-muted-foreground tabular-nums w-7 text-right">
-                      {Math.round((data?.roleFromPos ?? 0) * 100)}
-                    </span>
-                    {data?.roleFromPos != null && data.roleFromPos !== 0 && (
+                  <>
+                    <div className="flex items-center gap-1">
+                      <span className="mr-1 text-[10px] font-semibold text-muted-foreground uppercase w-14 shrink-0">Rôle ⇤</span>
+                      <input
+                        type="range"
+                        min={0}
+                        max={100}
+                        step={5}
+                        value={Math.round((data?.roleFromPos ?? 0) * 100)}
+                        onChange={(e) => updateReflexiveConfig('roleFromPos', Number(e.target.value) / 100)}
+                        style={{ flex: 1, height: 3, accentColor: 'hsl(var(--primary))' }}
+                      />
+                      <span className="text-[10px] text-muted-foreground tabular-nums w-7 text-right">
+                        {Math.round((data?.roleFromPos ?? 0) * 100)}
+                      </span>
+                      {data?.roleFromPos != null && data.roleFromPos !== 0 && (
+                        <button
+                          onClick={() => resetReflexiveConfig('roleFromPos')}
+                          className="rounded px-1 text-[10px] text-muted-foreground hover:bg-muted hover:text-foreground"
+                          title="Réinitialiser (0)"
+                        >
+                          ↺
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1 pl-[3.75rem]">
+                      <span className="mr-1 text-[10px] text-muted-foreground">Texte</span>
                       <button
-                        onClick={() => resetReflexiveConfig('roleFromPos')}
-                        className="rounded px-1 text-[10px] text-muted-foreground hover:bg-muted hover:text-foreground"
-                        title="Réinitialiser (0)"
+                        onClick={() => resetReflexiveConfig('roleFromOrientation')}
+                        className={`rounded px-1.5 py-0.5 text-[10px] transition-colors ${
+                          fromUpright ? 'text-muted-foreground hover:bg-muted' : 'bg-primary/20 text-primary'
+                        }`}
+                        title="Lettres pivotées (suivent le tracé)"
                       >
-                        ↺
+                        Pivoté
                       </button>
-                    )}
-                  </div>
+                      <button
+                        onClick={() => updateReflexiveConfig('roleFromOrientation', 'upright')}
+                        className={`rounded px-1.5 py-0.5 text-[10px] transition-colors ${
+                          fromUpright ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:bg-muted'
+                        }`}
+                        title="Lettres à l'endroit"
+                      >
+                        Droit
+                      </button>
+                    </div>
+                  </>
                 )}
                 {data?.roleTo && (
-                  <div className="flex items-center gap-1">
-                    <span className="mr-1 text-[10px] font-semibold text-muted-foreground uppercase w-14 shrink-0">Rôle ⇥</span>
-                    <input
-                      type="range"
-                      min={0}
-                      max={100}
-                      step={5}
-                      value={Math.round((data?.roleToPos ?? 0) * 100)}
-                      onChange={(e) => updateReflexiveConfig('roleToPos', Number(e.target.value) / 100)}
-                      style={{ flex: 1, height: 3, accentColor: 'hsl(var(--primary))' }}
-                    />
-                    <span className="text-[10px] text-muted-foreground tabular-nums w-7 text-right">
-                      {Math.round((data?.roleToPos ?? 0) * 100)}
-                    </span>
-                    {data?.roleToPos != null && data.roleToPos !== 0 && (
+                  <>
+                    <div className="flex items-center gap-1">
+                      <span className="mr-1 text-[10px] font-semibold text-muted-foreground uppercase w-14 shrink-0">Rôle ⇥</span>
+                      <input
+                        type="range"
+                        min={0}
+                        max={100}
+                        step={5}
+                        value={Math.round((data?.roleToPos ?? 0) * 100)}
+                        onChange={(e) => updateReflexiveConfig('roleToPos', Number(e.target.value) / 100)}
+                        style={{ flex: 1, height: 3, accentColor: 'hsl(var(--primary))' }}
+                      />
+                      <span className="text-[10px] text-muted-foreground tabular-nums w-7 text-right">
+                        {Math.round((data?.roleToPos ?? 0) * 100)}
+                      </span>
+                      {data?.roleToPos != null && data.roleToPos !== 0 && (
+                        <button
+                          onClick={() => resetReflexiveConfig('roleToPos')}
+                          className="rounded px-1 text-[10px] text-muted-foreground hover:bg-muted hover:text-foreground"
+                          title="Réinitialiser (0)"
+                        >
+                          ↺
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1 pl-[3.75rem]">
+                      <span className="mr-1 text-[10px] text-muted-foreground">Texte</span>
                       <button
-                        onClick={() => resetReflexiveConfig('roleToPos')}
-                        className="rounded px-1 text-[10px] text-muted-foreground hover:bg-muted hover:text-foreground"
-                        title="Réinitialiser (0)"
+                        onClick={() => resetReflexiveConfig('roleToOrientation')}
+                        className={`rounded px-1.5 py-0.5 text-[10px] transition-colors ${
+                          toUpright ? 'text-muted-foreground hover:bg-muted' : 'bg-primary/20 text-primary'
+                        }`}
+                        title="Lettres pivotées (suivent le tracé)"
                       >
-                        ↺
+                        Pivoté
                       </button>
-                    )}
-                  </div>
+                      <button
+                        onClick={() => updateReflexiveConfig('roleToOrientation', 'upright')}
+                        className={`rounded px-1.5 py-0.5 text-[10px] transition-colors ${
+                          toUpright ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:bg-muted'
+                        }`}
+                        title="Lettres à l'endroit"
+                      >
+                        Droit
+                      </button>
+                    </div>
+                  </>
                 )}
               </div>
             )}

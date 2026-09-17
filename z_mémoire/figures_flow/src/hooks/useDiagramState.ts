@@ -61,6 +61,8 @@ export interface CardinalitySides {
     reflexSpread?: number
     roleFromPos?: number
     roleToPos?: number
+    roleFromOrientation?: 'rotate' | 'upright'
+    roleToOrientation?: 'rotate' | 'upright'
   }
 }
 
@@ -93,8 +95,14 @@ export function setCardinalitySide(
 export function setReflexiveConfig(
   diagramId: string,
   edgeId: string,
-  key: 'reflexOffset' | 'reflexSpread' | 'roleFromPos' | 'roleToPos',
-  value: number | undefined,
+  key:
+    | 'reflexOffset'
+    | 'reflexSpread'
+    | 'roleFromPos'
+    | 'roleToPos'
+    | 'roleFromOrientation'
+    | 'roleToOrientation',
+  value: number | string | undefined,
 ) {
   try {
     const storageKey = `${EDGE_SIDES_KEY}:${diagramId}`
