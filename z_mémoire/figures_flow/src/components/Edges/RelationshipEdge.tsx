@@ -78,10 +78,6 @@ const REFLEX_OFFSET = 90
 const REFLEX_RADIUS = 8
 
 const ROLE_LINE_GAP = 6
-const ROLE_COL_W = 14
-const ROLE_ROW_H = 14
-const ROLE_CHAR_W = 6.5
-const ROLE_CHAR_H = 12
 
 type ReflexiveRect = { x: number; y: number; w: number; h: number }
 type ReflexiveAnchor = { x: number; y: number; pos: Position }
@@ -146,7 +142,7 @@ function buildReflexiveEdge(
   toEdgeOff: number,
   offset = REFLEX_OFFSET,
   spread = REFLEX_SPREAD,
-): { sx: number; sy: number; tx: number; ty: number; path: string; labelX: number; labelY: number } {
+): { sx: number; sy: number; tx: number; ty: number; path: string; labelX: number; labelY: number; poly: [number, number][] } {
   const { x: x0, y: y0, w, h } = rect
   const R = REFLEX_RADIUS
   const M = offset
@@ -180,7 +176,19 @@ function buildReflexiveEdge(
           ? `M ${sx} ${sy} L ${outer + R} ${sy} Q ${outer} ${sy} ${outer} ${sy + R} L ${outer} ${ty - R} Q ${outer} ${ty} ${outer + R} ${ty} L ${tx} ${ty}`
           : `M ${sx} ${sy} L ${outer - R} ${sy} Q ${outer} ${sy} ${outer} ${sy + R} L ${outer} ${ty - R} Q ${outer} ${ty} ${outer - R} ${ty} L ${tx} ${ty}`
     }
-    return { sx, sy, tx, ty, path, labelX, labelY }
+    const outerLine =
+      source.pos === Position.Top
+        ? y0 - M
+        : source.pos === Position.Bottom
+          ? y0 + h + M
+          : source.pos === Position.Left
+            ? x0 - M
+            : x0 + w + M
+    const poly: [number, number][] =
+      source.pos === Position.Top || source.pos === Position.Bottom
+        ? [[sx, sy], [sx, outerLine], [tx, outerLine], [tx, ty]]
+        : [[sx, sy], [outerLine, sy], [outerLine, ty], [tx, ty]]
+    return { sx, sy, tx, ty, path, labelX, labelY, poly }
   }
 
   const pA: [number, number] = [source.x, source.y]
@@ -247,34 +255,43 @@ function buildReflexiveEdge(
   path += ` L ${pB[0]} ${pB[1]}`
 
   const [labelX, labelY] = reflexMidpoint(points)
-  return { sx: pA[0], sy: pA[1], tx: pB[0], ty: pB[1], path, labelX, labelY }
+  return { sx: pA[0], sy: pA[1], tx: pB[0], ty: pB[1], path, labelX, labelY, poly: points }
 }
 
-type RolePlacement = { left: number; top: number; vertical: boolean }
+type RolePathFit = { total: number; maxFrom: number; maxTo: number; dy: number }
 
-function patteRole(
-  pos: Position,
-  base: { x: number; y: number },
-  M: number,
-  t: number,
-  side: 1 | -1,
-  text: string,
-): RolePlacement {
-  const vertical = pos === Position.Top || pos === Position.Bottom
-  const foot = vertical ? text.length * ROLE_CHAR_H : text.length * ROLE_CHAR_W
-  const dist = Math.max(0, Math.min(1, t)) * M
-  if (vertical) {
-    const outward = pos === Position.Top ? -1 : 1
-    const anchorY = base.y + outward * dist
-    const top = outward < 0 ? anchorY - foot : anchorY
-    const left = side < 0 ? base.x - ROLE_COL_W - ROLE_LINE_GAP : base.x + ROLE_LINE_GAP
-    return { left, top, vertical: true }
+function rolePathFit(poly: [number, number][], rect: ReflexiveRect): RolePathFit {
+  const segs: number[] = []
+  let total = 0
+  for (let i = 1; i < poly.length; i++) {
+    const len = Math.hypot(poly[i][0] - poly[i - 1][0], poly[i][1] - poly[i - 1][1])
+    segs.push(len)
+    total += len
   }
-  const outward = pos === Position.Left ? -1 : 1
-  const anchorX = base.x + outward * dist
-  const left = outward < 0 ? anchorX - foot : anchorX
-  const top = side < 0 ? base.y - ROLE_ROW_H - ROLE_LINE_GAP : base.y + ROLE_LINE_GAP
-  return { left, top, vertical: false }
+  const lastSeg = segs.length > 0 ? segs[segs.length - 1] : 0
+  const firstSeg = segs.length > 0 ? segs[0] : 0
+  const cx = rect.x + rect.w / 2
+  const cy = rect.y + rect.h / 2
+  let dy = ROLE_LINE_GAP
+  if (poly.length >= 2) {
+    const [ax, ay] = poly[0]
+    const [bx, by] = poly[1]
+    const dx = bx - ax
+    const dyv = by - ay
+    const len = Math.hypot(dx, dyv) || 1
+    const tx = dx / len
+    const ty = dyv / len
+    const mx = (ax + bx) / 2 - cx
+    const my = (ay + by) / 2 - cy
+    const dot = mx * tx + my * ty
+    const px = mx - dot * tx
+    const py = my - dot * ty
+    const gyx = -ty
+    const gyy = tx
+    const side = Math.sign(px * gyx + py * gyy) || 1
+    dy = ROLE_LINE_GAP * side
+  }
+  return { total, maxFrom: total - lastSeg, maxTo: total - firstSeg, dy }
 }
 
 export default function RelationshipEdge({
@@ -374,6 +391,8 @@ export default function RelationshipEdge({
   const loopH = sourceNode?.measured?.height ?? 130
   const loopX = sourceNode?.position.x ?? sourceX
   const loopY = sourceNode?.position.y ?? sourceY
+  const rolePathId = `edge-rolepath-${id}`
+  let roleFit: RolePathFit | null = null
 
   if (isSelfLoop) {
     const w = loopW
@@ -396,6 +415,7 @@ export default function RelationshipEdge({
     edgePath = loop.path
     labelX = loop.labelX
     labelY = loop.labelY
+    roleFit = rolePathFit(loop.poly, { x: x0, y: y0, w, h })
   } else {
     const [ep, lx, ly] = getSmoothStepPath({
       sourceX: sx,
@@ -476,12 +496,17 @@ export default function RelationshipEdge({
   const validFrom = useMemo(() => getValidHandles(sourceNode, 'source'), [sourceNode])
   const validTo = useMemo(() => getValidHandles(targetNode, 'target'), [targetNode])
 
-  const fromRole = isSelfLoop && data?.roleFrom
-    ? patteRole(sourcePosition, { x: sx, y: sy }, loopOffset, data.roleFromPos ?? 0, -1, data.roleFrom)
-    : null
-  const toRole = isSelfLoop && data?.roleTo
-    ? patteRole(targetPosition, { x: tx, y: ty }, loopOffset, data.roleToPos ?? 0, 1, data.roleTo)
-    : null
+  const fromStart = roleFit ? Math.max(0, Math.min(1, data?.roleFromPos ?? 0)) * roleFit.maxFrom : 0
+  const toStart = roleFit ? roleFit.total - Math.max(0, Math.min(1, data?.roleToPos ?? 0)) * roleFit.maxTo : 0
+  const roleTextStyle = {
+    fontSize: 10,
+    fontStyle: 'italic',
+    fill: 'var(--color-muted-foreground)',
+    paintOrder: 'stroke' as const,
+    stroke: 'var(--color-background)',
+    strokeWidth: 3,
+    pointerEvents: 'none' as const,
+  }
 
   return (
     <>
@@ -495,6 +520,27 @@ export default function RelationshipEdge({
             strokeDasharray: isDashed ? '6 4' : undefined,
           }}
         />
+        {isSelfLoop && roleFit && (data?.roleFrom || data?.roleTo) && (
+          <>
+            <defs>
+              <path id={rolePathId} d={edgePath} fill="none" stroke="none" />
+            </defs>
+            {data?.roleFrom && (
+              <text style={roleTextStyle} textAnchor="start">
+                <textPath href={`#${rolePathId}`} startOffset={fromStart} dy={roleFit.dy}>
+                  {data.roleFrom}
+                </textPath>
+              </text>
+            )}
+            {data?.roleTo && (
+              <text style={roleTextStyle} textAnchor="end">
+                <textPath href={`#${rolePathId}`} startOffset={toStart} dy={roleFit.dy}>
+                  {data.roleTo}
+                </textPath>
+              </text>
+            )}
+          </>
+        )}
       </g>
       <EdgeLabelRenderer>
         {data?.cardFrom && (
@@ -555,34 +601,6 @@ export default function RelationshipEdge({
               </span>
             )}
             <span className={badgeClass}>{data.cardTo}</span>
-          </div>
-        )}
-        {isSelfLoop && fromRole && (
-          <div
-            style={{
-              position: 'absolute',
-              left: fromRole.left,
-              top: fromRole.top,
-              writingMode: fromRole.vertical ? 'vertical-rl' : undefined,
-              pointerEvents: 'none',
-            }}
-            className="text-[10px] italic text-muted-foreground whitespace-nowrap bg-background/80 rounded-sm px-0.5"
-          >
-            {data.roleFrom}
-          </div>
-        )}
-        {isSelfLoop && toRole && (
-          <div
-            style={{
-              position: 'absolute',
-              left: toRole.left,
-              top: toRole.top,
-              writingMode: toRole.vertical ? 'vertical-rl' : undefined,
-              pointerEvents: 'none',
-            }}
-            className="text-[10px] italic text-muted-foreground whitespace-nowrap bg-background/80 rounded-sm px-0.5"
-          >
-            {data.roleTo}
           </div>
         )}
         {data?.label && !(data?.attributes && data.attributes.length > 0) && (
@@ -685,7 +703,7 @@ export default function RelationshipEdge({
                 whiteSpace: 'nowrap',
               }}
             >
-              {id} | Cf:{data?.cardFrom ?? '–'}→{data?.cardTo ?? '–'} | S:{sourceHandle ?? '∅'}→{resolvedSource} | T:{targetHandle ?? '∅'}→{resolvedTarget} | gF:{srcGroup.length} gT:{tgtGroup.length} | off:{Math.round(fromEdgeOff)}/{Math.round(toEdgeOff)} | pos:{sourcePosition}/{targetPosition} | rF:{data?.roleFromPos ?? 0} rT:{data?.roleToPos ?? 0}
+              {id} | Cf:{data?.cardFrom ?? '–'}→{data?.cardTo ?? '–'} | S:{sourceHandle ?? '∅'}→{resolvedSource} | T:{targetHandle ?? '∅'}→{resolvedTarget} | gF:{srcGroup.length} gT:{tgtGroup.length} | off:{Math.round(fromEdgeOff)}/{Math.round(toEdgeOff)} | pos:{sourcePosition}/{targetPosition} | rF:{data?.roleFromPos ?? 0} rT:{data?.roleToPos ?? 0} | mF:{Math.round(roleFit?.maxFrom ?? 0)} mT:{Math.round(roleFit?.maxTo ?? 0)}
             </div>
           </>
         )}

@@ -3,7 +3,8 @@
 ## Statut
 - v1 implémentée (`2dbc7cc` + `d2c7dca`) ; v2 (auto-fit) implémentée (`234fa6f` + `8393c4a`)
   mais **inopérante sur `e-annuler`** (voir cause racine v3 ci-dessous).
-- **v3 (pilotage manuel par sliders)** : retenue et implémentée — remplace v1/v2.
+- **v3 (pilotage manuel par sliders)** : implémentée puis **remplacée par v4**.
+- **v4 (le texte suit la polyligne patte + arc, SVG `textPath`)** : retenue et implémentée.
   Fichier : `z_mémoire/figures_flow/plans/implementations/20260917_roles_reflexifs_fit_segments.md`
 
 ## Contexte
@@ -190,12 +191,44 @@ donc le mauvais point d'appui : un self-loop a toujours **deux pattes distinctes
 À dist/spread donnés, l'utilisateur place « annule » et « est annulée » où il veut sur
 chaque patte, sans qu'ils débordent dans l'entité (texte toujours vers l'extérieur).
 
+## v4 — Le texte suit la polyligne (patte + arc) — **remplace v3**
+
+### Retour utilisateur
+Le rôle doit **suivre les lignes de lien** : quand le texte atteint le coin, il continue sur
+l'arc (ex. `annu` sur l'arc puis `le` sur la patte, ou l'inverse), et le slider fait glisser
+le texte **sur les deux lignes**.
+
+### Décisions validées
+- Lettres **pivotées** : elles suivent la tangente du tracé (comme l'existant `vertical-rl`).
+- Amplitude du slider = **patte + arc**, jusqu'au coin opposé (0 = base du chip, 1 = coin).
+- Rôle `from` ancré par son **début**, rôle `to` ancré par sa **fin** (bout intérieur, texte
+  vers l'extérieur — inchangé depuis v3).
+
+### Changements v4 — `src/components/Edges/RelationshipEdge.tsx` uniquement
+- [x] `buildReflexiveEdge` retourne en plus `poly: [number, number][]` (polyligne à angles
+      droits, même côté et côtés différents).
+- [x] `rolePathFit(poly, rect)` : longueurs de segments → `total`, `maxFrom = total − patte
+      cible`, `maxTo = total − patte source` ; décalage perpendiculaire `dy` **hors boucle**
+      calculé depuis la 1re patte (`dy = ROLE_LINE_GAP · sign(dot(extérieur, normaleGlyphe))`).
+- [x] Rendu SVG `textPath` (dans le `<g>` de l'arête, au-dessus du `BaseEdge`) :
+      `<defs><path id="edge-rolepath-<id>">`, puis deux `<text>` :
+      - from : `textAnchor="start"`, `startOffset = roleFromPos · maxFrom` ;
+      - to : `textAnchor="end"`, `startOffset = total − roleToPos · maxTo` ;
+      - style `fontSize 10`, italique, `fill: var(--color-muted-foreground)`, halo
+        `paintOrder:'stroke'` + `stroke: var(--color-background)` (remplace la pilule HTML).
+- [x] **Supprimés** : `patteRole`, `RolePlacement`, divs HTML des rôles self-loop, constantes
+      `ROLE_COL_W`/`ROLE_ROW_H`/`ROLE_CHAR_W`/`ROLE_CHAR_H`.
+- [x] Popover : sliders « Rôle ⇤ / ⇥ » inchangés (persistence `roleFromPos`/`roleToPos` 0..1).
+- [x] Debug : `mF/mT` (longueurs max des sliders) ajoutés.
+- Limites : rôles en SVG (sous l'overlay HTML) → peuvent être occultés par le libellé s'ils
+      glissent pile dessous ; halo au lieu de la pilule.
+
 ## Vérifs
 
 - `npx tsc --noEmit` (aucune nouvelle erreur) puis `npx vite build`.
 - Essais visuels : boucle Top/Top **rapprochée** (dist faible) et **agrandie**, côtés
   mixtes, pattes Left/Right — rôles toujours lisibles, ne dépassant plus le coin.
-- Tuner `ROLE_FIT_RATIO` / `ROLE_LINE_GAP` / `LABEL_RESERVE` selon le rendu.
+- Tuner `ROLE_LINE_GAP` selon le rendu.
 
 ## Commits
 
@@ -203,3 +236,5 @@ chaque patte, sans qu'ils débordent dans l'entité (texte toujours vers l'exté
 2. `build(diagrams): artefacts dist`
 3. `feat(edge): position manuelle des roles sur les pattes (sliders)`
 4. `build(diagrams): artefacts dist`
+5. `feat(edge): roles suivant la polyligne de la boucle (textPath)`
+6. `build(diagrams): artefacts dist`
