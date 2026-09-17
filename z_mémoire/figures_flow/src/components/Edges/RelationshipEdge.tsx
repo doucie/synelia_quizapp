@@ -60,16 +60,16 @@ function badgeOffset(pos: Position, extra = 0): { x: number; y: number } {
   }
 }
 
-function roleOuterStyle(pos: Position): { transform: string } {
+function roleOuterStyle(pos: Position): { writingMode?: 'vertical-rl'; left?: string; right?: string; top?: string; bottom?: string; transform?: string } {
   switch (pos) {
     case Position.Top:
-      return { transform: 'translate(-50%, calc(-100% - 4px))' }
+      return { writingMode: 'vertical-rl', left: '50%', bottom: 'calc(100% + 4px)', transform: 'translateX(-50%)' }
     case Position.Bottom:
-      return { transform: 'translate(-50%, calc(100% + 4px))' }
+      return { writingMode: 'vertical-rl', left: '50%', top: 'calc(100% + 4px)', transform: 'translateX(-50%)' }
     case Position.Left:
-      return { transform: 'translate(calc(-100% - 4px), -50%)' }
+      return { right: 'calc(100% + 4px)', top: '50%', transform: 'translateY(-50%)' }
     case Position.Right:
-      return { transform: 'translate(calc(100% + 4px), -50%)' }
+      return { left: 'calc(100% + 4px)', top: '50%', transform: 'translateY(-50%)' }
   }
 }
 
@@ -471,11 +471,9 @@ export default function RelationshipEdge({
           >
             {data.roleFrom && (
               <span
-                className="text-[10px] italic text-muted-foreground whitespace-nowrap"
+                className="text-[10px] italic text-muted-foreground whitespace-nowrap bg-background/80 rounded-sm px-0.5"
                 style={{
                   position: 'absolute',
-                  left: '50%',
-                  top: '50%',
                   pointerEvents: 'none',
                   ...roleOuterStyle(sourcePosition),
                 }}
@@ -503,11 +501,9 @@ export default function RelationshipEdge({
           >
             {data.roleTo && (
               <span
-                className="text-[10px] italic text-muted-foreground whitespace-nowrap"
+                className="text-[10px] italic text-muted-foreground whitespace-nowrap bg-background/80 rounded-sm px-0.5"
                 style={{
                   position: 'absolute',
-                  left: '50%',
-                  top: '50%',
                   pointerEvents: 'none',
                   ...roleOuterStyle(targetPosition),
                 }}
