@@ -54,7 +54,14 @@ function extractPositions(nodes: EntityNode[]): Record<string, { x: number; y: n
 }
 
 export interface CardinalitySides {
-  [edgeId: string]: { from?: string; to?: string; reflexOffset?: number; reflexSpread?: number }
+  [edgeId: string]: {
+    from?: string
+    to?: string
+    reflexOffset?: number
+    reflexSpread?: number
+    roleFromPos?: number
+    roleToPos?: number
+  }
 }
 
 export function loadCardinalitySides(diagramId: string): CardinalitySides {
@@ -86,7 +93,7 @@ export function setCardinalitySide(
 export function setReflexiveConfig(
   diagramId: string,
   edgeId: string,
-  key: 'reflexOffset' | 'reflexSpread',
+  key: 'reflexOffset' | 'reflexSpread' | 'roleFromPos' | 'roleToPos',
   value: number | undefined,
 ) {
   try {

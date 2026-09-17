@@ -63,6 +63,8 @@ export interface RelationshipEdgeData {
   attributes?: string[]
   reflexOffset?: number
   reflexSpread?: number
+  roleFromPos?: number
+  roleToPos?: number
 }
 
 export type RelationshipEdge = Edge<RelationshipEdgeData>

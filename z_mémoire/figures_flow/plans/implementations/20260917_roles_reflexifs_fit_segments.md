@@ -1,9 +1,9 @@
 # PLAN — Placement des rôles sur la boucle réflexive (fit par segments)
 
 ## Statut
-- v1 implémentée (`2dbc7cc` + `d2c7dca`) ; **v2 (auto-fit)** planifiée puis implémentée
-  (`fix(edge)` + `build(diagrams)`) suite au retour « les rôles entrent dans l'entité à
-  dist minimale ». Seuils réglables à tuner visuellement si besoin.
+- v1 implémentée (`2dbc7cc` + `d2c7dca`) ; v2 (auto-fit) implémentée (`234fa6f` + `8393c4a`)
+  mais **inopérante sur `e-annuler`** (voir cause racine v3 ci-dessous).
+- **v3 (pilotage manuel par sliders)** : retenue et implémentée — remplace v1/v2.
   Fichier : `z_mémoire/figures_flow/plans/implementations/20260917_roles_reflexifs_fit_segments.md`
 
 ## Contexte
@@ -146,6 +146,50 @@ de la place de part et d'autre du libellé (conforme au schéma cible : `annuler
 `e-annuler` à dist 40 / spread 60 → `spread_eff` monte à ~121 ; « annuler » centré sur
 l'arc, « annule » au coin gauche, « est annulée » au coin droit, lisible, hors entité.
 
+## v3 — Pilotage manuel par sliders (retenu)
+
+### Retour utilisateur
+« Je vois aucun changement » sur `e-annuler` malgré v2. Demande : pouvoir **déplacer
+soi-même chaque rôle** le long de sa patte via un slider.
+
+### Cause racine (pourquoi v2 ne s'appliquait jamais)
+`EntityNode.tsx` déclare les handles dans l'ordre DOM source `right, left, top, bottom` et
+cible `left, right, top, bottom`. Pour un self-loop, React Flow attribue donc par défaut
+`sourcePosition = right` et `targetPosition = left` → `sourcePosition !== targetPosition`
+→ `sameSideLoop === false` → `computeLoopFit` retournait tel quel (`migrate=false`).
+**Toute la v2 était sautée.** La logique de détection de côté via `sourcePosition` était
+donc le mauvais point d'appui : un self-loop a toujours **deux pattes distinctes** à
+`fromEdgeOff`/`toEdgeOff` près.
+
+### Décision validée
+**Positionnement manuel** : un slider par rôle, de `0` (base du chip) à `100 %` de l'offset
+`M` (extrémité libre de la patte). Sémantique : l'**ancre est le bout intérieur** et le
+**texte s'étend vers l'extérieur** (jamais dans l'entité). Pas de slider pour le libellé
+(le verbe reste centré par la boucle).
+
+### Changements v3
+- `src/types/index.ts` : `RelationshipEdgeData` + `roleFromPos?`, `roleToPos?` (0..1).
+- `src/hooks/useDiagramState.ts` : `CardinalitySides` + `roleFromPos`/`roleToPos` ;
+  `setReflexiveConfig` accepte ces clés.
+- `src/components/DiagramCanvas.tsx` : merge des positions sauvegardées dans `initialEdges`.
+- `src/components/Edges/RelationshipEdge.tsx` :
+  - [x] **Supprimé** : `LoopRoleCtx`, `loopRoleCtx`, `wallRole`, `arcRole`, `LoopFit`,
+        `computeLoopFit`, `placeLoopRole`, `sameSideLoop`, `loopFit`, `ROLE_FIT_RATIO`,
+        `LABEL_PAD`.
+  - [x] Ajout `patteRole(pos, base, M, t, side, text)` : ancre =
+        `base + direction_extérieure · t·M`, texte étendu extérieur, décalé de
+        `ROLE_LINE_GAP` perpendiculairement (`side = -1` roleFrom, `+1` roleTo).
+  - [x] `buildReflexiveEdge` reçoit directement `loopOffset`/`loopSpread`.
+  - [x] Popover : lignes « Rôle ⇤ » / « Rôle ⇥ » (range 0–100 step 5, valeur en %, reset),
+        visibles si `isSelfLoop && data.role*`.
+  - [x] Overlay debug : `pos:{sourcePosition}/{targetPosition} rF:{roleFromPos} rT:{roleToPos}`
+        (remplace `eff/mig`).
+- Données : `e-annuler` inchangé (`reflexSpread: 60`), positions rôles par défaut `0`.
+
+### Effet attendu
+À dist/spread donnés, l'utilisateur place « annule » et « est annulée » où il veut sur
+chaque patte, sans qu'ils débordent dans l'entité (texte toujours vers l'extérieur).
+
 ## Vérifs
 
 - `npx tsc --noEmit` (aucune nouvelle erreur) puis `npx vite build`.
@@ -157,3 +201,5 @@ l'arc, « annule » au coin gauche, « est annulée » au coin droit, lisible, h
 
 1. `feat(edge): role fit par segments sur boucle reflexive (migration arc si >60%)`
 2. `build(diagrams): artefacts dist`
+3. `feat(edge): position manuelle des roles sur les pattes (sliders)`
+4. `build(diagrams): artefacts dist`

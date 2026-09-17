@@ -77,13 +77,11 @@ const REFLEX_SPREAD = 34
 const REFLEX_OFFSET = 90
 const REFLEX_RADIUS = 8
 
-const ROLE_FIT_RATIO = 0.6
 const ROLE_LINE_GAP = 6
 const ROLE_COL_W = 14
 const ROLE_ROW_H = 14
 const ROLE_CHAR_W = 6.5
 const ROLE_CHAR_H = 12
-const LABEL_PAD = 24
 
 type ReflexiveRect = { x: number; y: number; w: number; h: number }
 type ReflexiveAnchor = { x: number; y: number; pos: Position }
@@ -252,128 +250,31 @@ function buildReflexiveEdge(
   return { sx: pA[0], sy: pA[1], tx: pB[0], ty: pB[1], path, labelX, labelY }
 }
 
-type LoopRoleCtx = {
-  pos: Position
-  wallBase: { x: number; y: number }
-  outer: number
-  wallSign: 1 | -1
-  arcA: { x: number; y: number } | null
-  arcB: { x: number; y: number } | null
-  arcAxis: 'h' | 'v'
-  labelPos: { x: number; y: number }
-}
-
 type RolePlacement = { left: number; top: number; vertical: boolean }
 
-function loopRoleCtx(
+function patteRole(
   pos: Position,
-  wallBase: { x: number; y: number },
-  otherBase: { x: number; y: number },
-  rect: ReflexiveRect,
+  base: { x: number; y: number },
   M: number,
-  sameSide: boolean,
-  labelPos: { x: number; y: number },
-): LoopRoleCtx {
-  const { x: x0, y: y0, w, h } = rect
-  const outer =
-    pos === Position.Top
-      ? y0 - M
-      : pos === Position.Bottom
-        ? y0 + h + M
-        : pos === Position.Left
-          ? x0 - M
-          : x0 + w + M
-  const hAxis = pos === Position.Top || pos === Position.Bottom
-  const wallSign: 1 | -1 = hAxis ? (wallBase.x < otherBase.x ? -1 : 1) : wallBase.y < otherBase.y ? -1 : 1
-  let arcA: { x: number; y: number } | null = null
-  let arcB: { x: number; y: number } | null = null
-  if (sameSide) {
-    if (hAxis) {
-      const xa = Math.min(wallBase.x, otherBase.x)
-      const xb = Math.max(wallBase.x, otherBase.x)
-      arcA = { x: xa + REFLEX_RADIUS, y: outer }
-      arcB = { x: xb - REFLEX_RADIUS, y: outer }
-    } else {
-      const ya = Math.min(wallBase.y, otherBase.y)
-      const yb = Math.max(wallBase.y, otherBase.y)
-      arcA = { x: outer, y: ya + REFLEX_RADIUS }
-      arcB = { x: outer, y: yb - REFLEX_RADIUS }
-    }
-  }
-  return { pos, wallBase, outer, wallSign, arcA, arcB, arcAxis: hAxis ? 'h' : 'v', labelPos }
-}
-
-function wallRole(ctx: LoopRoleCtx, foot: number, anchoredAtTip: boolean): RolePlacement {
-  const vertical = ctx.pos === Position.Top || ctx.pos === Position.Bottom
+  t: number,
+  side: 1 | -1,
+  text: string,
+): RolePlacement {
+  const vertical = pos === Position.Top || pos === Position.Bottom
+  const foot = vertical ? text.length * ROLE_CHAR_H : text.length * ROLE_CHAR_W
+  const dist = Math.max(0, Math.min(1, t)) * M
   if (vertical) {
-    const isTop = ctx.pos === Position.Top
-    const left = ctx.wallSign < 0 ? ctx.wallBase.x - ROLE_COL_W - ROLE_LINE_GAP : ctx.wallBase.x + ROLE_LINE_GAP
-    const top = anchoredAtTip ? (isTop ? ctx.outer : ctx.outer - foot) : isTop ? ctx.wallBase.y - foot : ctx.wallBase.y
+    const outward = pos === Position.Top ? -1 : 1
+    const anchorY = base.y + outward * dist
+    const top = outward < 0 ? anchorY - foot : anchorY
+    const left = side < 0 ? base.x - ROLE_COL_W - ROLE_LINE_GAP : base.x + ROLE_LINE_GAP
     return { left, top, vertical: true }
   }
-  const isLeft = ctx.pos === Position.Left
-  const top = ctx.wallSign < 0 ? ctx.wallBase.y - ROLE_ROW_H - ROLE_LINE_GAP : ctx.wallBase.y + ROLE_LINE_GAP
-  const left = anchoredAtTip ? (isLeft ? ctx.outer : ctx.outer - foot) : isLeft ? ctx.wallBase.x - foot : ctx.wallBase.x
+  const outward = pos === Position.Left ? -1 : 1
+  const anchorX = base.x + outward * dist
+  const left = outward < 0 ? anchorX - foot : anchorX
+  const top = side < 0 ? base.y - ROLE_ROW_H - ROLE_LINE_GAP : base.y + ROLE_LINE_GAP
   return { left, top, vertical: false }
-}
-
-function arcRole(ctx: LoopRoleCtx, foot: number, side: 1 | -1): RolePlacement {
-  const vertical = ctx.arcAxis === 'v'
-  const atA = side < 0
-  if (!vertical) {
-    const isTop = ctx.pos === Position.Top
-    const top = isTop ? ctx.arcA!.y + ROLE_LINE_GAP : ctx.arcA!.y - ROLE_ROW_H - ROLE_LINE_GAP
-    const left = atA ? ctx.arcA!.x + ROLE_LINE_GAP : ctx.arcB!.x - ROLE_LINE_GAP - foot
-    return { left, top, vertical: false }
-  }
-  const isLeft = ctx.pos === Position.Left
-  const left = isLeft ? ctx.arcA!.x + ROLE_LINE_GAP : ctx.arcA!.x - ROLE_COL_W - ROLE_LINE_GAP
-  const top = atA ? ctx.arcA!.y + ROLE_LINE_GAP : ctx.arcB!.y - ROLE_LINE_GAP - foot
-  return { left, top, vertical: true }
-}
-
-type LoopFit = { offset: number; spread: number; migrateFrom: boolean; migrateTo: boolean }
-
-function computeLoopFit(
-  userOffset: number,
-  userSpread: number,
-  sameSide: boolean,
-  pos: Position,
-  roleFrom: string | undefined,
-  roleTo: string | undefined,
-  label: string | undefined,
-): LoopFit {
-  if (!sameSide) return { offset: userOffset, spread: userSpread, migrateFrom: false, migrateTo: false }
-  const vertical = pos === Position.Top || pos === Position.Bottom
-  const wallFoot = (t: string) => t.length * (vertical ? ROLE_CHAR_H : ROLE_CHAR_W)
-  const arcFoot = (t: string) => t.length * (vertical ? ROLE_CHAR_W : ROLE_CHAR_H)
-  const fromFits = roleFrom ? wallFoot(roleFrom) <= ROLE_FIT_RATIO * userOffset : true
-  const toFits = roleTo ? wallFoot(roleTo) <= ROLE_FIT_RATIO * userOffset : true
-  const migrateFrom = !!roleFrom && !fromFits
-  const migrateTo = !!roleTo && !toFits
-  let spread = userSpread
-  if (migrateFrom || migrateTo) {
-    const labelFoot = (label ?? '').length * ROLE_CHAR_W + LABEL_PAD
-    const halfLabel = labelFoot / 2
-    const reqFrom = halfLabel + (migrateFrom ? arcFoot(roleFrom) + ROLE_LINE_GAP : 0)
-    const reqTo = halfLabel + (migrateTo ? arcFoot(roleTo) + ROLE_LINE_GAP : 0)
-    spread = Math.max(spread, Math.ceil(REFLEX_RADIUS + Math.max(reqFrom, reqTo)))
-  }
-  return { offset: userOffset, spread, migrateFrom, migrateTo }
-}
-
-function placeLoopRole(ctx: LoopRoleCtx, text: string, migrateArc: boolean): RolePlacement {
-  const verticalWall = ctx.pos === Position.Top || ctx.pos === Position.Bottom
-  const wallFoot = verticalWall ? text.length * ROLE_CHAR_H : text.length * ROLE_CHAR_W
-  const LA = Math.abs(ctx.outer - (verticalWall ? ctx.wallBase.y : ctx.wallBase.x))
-  if (migrateArc && ctx.arcA && ctx.arcB) {
-    const arcFoot = verticalWall ? text.length * ROLE_CHAR_W : text.length * ROLE_CHAR_H
-    return arcRole(ctx, arcFoot, ctx.wallSign < 0 ? -1 : 1)
-  }
-  if (wallFoot <= ROLE_FIT_RATIO * LA) {
-    return wallRole(ctx, wallFoot, false)
-  }
-  return wallRole(ctx, wallFoot, true)
 }
 
 export default function RelationshipEdge({
@@ -473,16 +374,6 @@ export default function RelationshipEdge({
   const loopH = sourceNode?.measured?.height ?? 130
   const loopX = sourceNode?.position.x ?? sourceX
   const loopY = sourceNode?.position.y ?? sourceY
-  const sameSideLoop = isSelfLoop && sourcePosition === targetPosition
-  const loopFit = computeLoopFit(
-    loopOffset,
-    loopSpread,
-    sameSideLoop,
-    sourcePosition,
-    data?.roleFrom,
-    data?.roleTo,
-    data?.label,
-  )
 
   if (isSelfLoop) {
     const w = loopW
@@ -495,8 +386,8 @@ export default function RelationshipEdge({
       { x: targetX, y: targetY, pos: targetPosition },
       fromEdgeOff,
       toEdgeOff,
-      loopFit.offset,
-      loopFit.spread,
+      loopOffset,
+      loopSpread,
     )
     sx = loop.sx
     sy = loop.sy
@@ -555,7 +446,7 @@ export default function RelationshipEdge({
     if (diagramId) setCardinalitySide(diagramId, id, which, side)
   }
 
-  const updateReflexiveConfig = (key: 'reflexOffset' | 'reflexSpread', value: number) => {
+  const updateReflexiveConfig = (key: 'reflexOffset' | 'reflexSpread' | 'roleFromPos' | 'roleToPos', value: number) => {
     const currentEdges = getEdges()
     setEdges(
       currentEdges.map((e) => {
@@ -566,7 +457,7 @@ export default function RelationshipEdge({
     if (diagramId) setReflexiveConfig(diagramId, id, key, value)
   }
 
-  const resetReflexiveConfig = (key: 'reflexOffset' | 'reflexSpread') => {
+  const resetReflexiveConfig = (key: 'reflexOffset' | 'reflexSpread' | 'roleFromPos' | 'roleToPos') => {
     const currentEdges = getEdges()
     setEdges(
       currentEdges.map((e) => {
@@ -585,13 +476,11 @@ export default function RelationshipEdge({
   const validFrom = useMemo(() => getValidHandles(sourceNode, 'source'), [sourceNode])
   const validTo = useMemo(() => getValidHandles(targetNode, 'target'), [targetNode])
 
-  const loopRect = { x: loopX, y: loopY, w: loopW, h: loopH }
-  const labelPos = { x: labelX, y: labelY }
   const fromRole = isSelfLoop && data?.roleFrom
-    ? placeLoopRole(loopRoleCtx(sourcePosition, { x: sx, y: sy }, { x: tx, y: ty }, loopRect, loopFit.offset, sameSideLoop, labelPos), data.roleFrom, loopFit.migrateFrom)
+    ? patteRole(sourcePosition, { x: sx, y: sy }, loopOffset, data.roleFromPos ?? 0, -1, data.roleFrom)
     : null
   const toRole = isSelfLoop && data?.roleTo
-    ? placeLoopRole(loopRoleCtx(targetPosition, { x: tx, y: ty }, { x: sx, y: sy }, loopRect, loopFit.offset, sameSideLoop, labelPos), data.roleTo, loopFit.migrateTo)
+    ? patteRole(targetPosition, { x: tx, y: ty }, loopOffset, data.roleToPos ?? 0, 1, data.roleTo)
     : null
 
   return (
@@ -796,7 +685,7 @@ export default function RelationshipEdge({
                 whiteSpace: 'nowrap',
               }}
             >
-              {id} | Cf:{data?.cardFrom ?? '–'}→{data?.cardTo ?? '–'} | S:{sourceHandle ?? '∅'}→{resolvedSource} | T:{targetHandle ?? '∅'}→{resolvedTarget} | gF:{srcGroup.length} gT:{tgtGroup.length} | off:{Math.round(fromEdgeOff)}/{Math.round(toEdgeOff)} | eff:{loopFit.offset}/{loopFit.spread} mig:{loopFit.migrateFrom ? 1 : 0}/{loopFit.migrateTo ? 1 : 0}
+              {id} | Cf:{data?.cardFrom ?? '–'}→{data?.cardTo ?? '–'} | S:{sourceHandle ?? '∅'}→{resolvedSource} | T:{targetHandle ?? '∅'}→{resolvedTarget} | gF:{srcGroup.length} gT:{tgtGroup.length} | off:{Math.round(fromEdgeOff)}/{Math.round(toEdgeOff)} | pos:{sourcePosition}/{targetPosition} | rF:{data?.roleFromPos ?? 0} rT:{data?.roleToPos ?? 0}
             </div>
           </>
         )}
@@ -910,6 +799,58 @@ export default function RelationshipEdge({
                     </button>
                   )}
                 </div>
+                {data?.roleFrom && (
+                  <div className="flex items-center gap-1">
+                    <span className="mr-1 text-[10px] font-semibold text-muted-foreground uppercase w-14 shrink-0">Rôle ⇤</span>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      step={5}
+                      value={Math.round((data?.roleFromPos ?? 0) * 100)}
+                      onChange={(e) => updateReflexiveConfig('roleFromPos', Number(e.target.value) / 100)}
+                      style={{ flex: 1, height: 3, accentColor: 'hsl(var(--primary))' }}
+                    />
+                    <span className="text-[10px] text-muted-foreground tabular-nums w-7 text-right">
+                      {Math.round((data?.roleFromPos ?? 0) * 100)}
+                    </span>
+                    {data?.roleFromPos != null && data.roleFromPos !== 0 && (
+                      <button
+                        onClick={() => resetReflexiveConfig('roleFromPos')}
+                        className="rounded px-1 text-[10px] text-muted-foreground hover:bg-muted hover:text-foreground"
+                        title="Réinitialiser (0)"
+                      >
+                        ↺
+                      </button>
+                    )}
+                  </div>
+                )}
+                {data?.roleTo && (
+                  <div className="flex items-center gap-1">
+                    <span className="mr-1 text-[10px] font-semibold text-muted-foreground uppercase w-14 shrink-0">Rôle ⇥</span>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      step={5}
+                      value={Math.round((data?.roleToPos ?? 0) * 100)}
+                      onChange={(e) => updateReflexiveConfig('roleToPos', Number(e.target.value) / 100)}
+                      style={{ flex: 1, height: 3, accentColor: 'hsl(var(--primary))' }}
+                    />
+                    <span className="text-[10px] text-muted-foreground tabular-nums w-7 text-right">
+                      {Math.round((data?.roleToPos ?? 0) * 100)}
+                    </span>
+                    {data?.roleToPos != null && data.roleToPos !== 0 && (
+                      <button
+                        onClick={() => resetReflexiveConfig('roleToPos')}
+                        className="rounded px-1 text-[10px] text-muted-foreground hover:bg-muted hover:text-foreground"
+                        title="Réinitialiser (0)"
+                      >
+                        ↺
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
