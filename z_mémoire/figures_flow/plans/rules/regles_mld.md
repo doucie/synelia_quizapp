@@ -102,4 +102,4 @@
 | PROPOSER (CAMPAGNE–FORMULAIRE) | `(0,n)` / `(0,n)` | Nouvelle relation sans attribut : `PROPOSER(#id_campagne, #id_formulaire)` |
 | COMPTER (QUESTION–REPONSE) | `(0,n)` / `(1,1)` | Migration : `#id_question` NOT NULL dans `REPONSE` |
 | EMETTRE/GENERER (CANDIDATURE–TOKEN_CANDIDAT) | `(0,n)` / `(1,1)` | Migration : `#id_candidature` NOT NULL dans `TOKEN_CANDIDAT` |
-| ANNULE (DECISION–DECISION, réflexive) | `(1,1)` / `(0,1)` | Migration réflexive : `#id_decision_annulee` NOT NULL dans `DECISION` |
+| ANNULE (DECISION–DECISION, réflexive) | `(0,1)` / `(0,1)` | Migration réflexive : `#id_decision_annulee` dans `DECISION` |
