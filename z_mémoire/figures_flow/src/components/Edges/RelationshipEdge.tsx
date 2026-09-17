@@ -452,10 +452,15 @@ export default function RelationshipEdge({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              gap: 4,
               pointerEvents: 'auto',
+              ...(data.roleFrom ? { width: 'auto', transform: 'translate(-50%, -50%)' } : {}),
             }}
             onClick={openPopover}
           >
+            {data.roleFrom && (
+              <span className="text-[10px] italic text-muted-foreground whitespace-nowrap">{data.roleFrom}</span>
+            )}
             <span className={badgeClass}>{data.cardFrom}</span>
           </div>
         )}
@@ -470,10 +475,15 @@ export default function RelationshipEdge({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              gap: 4,
               pointerEvents: 'auto',
+              ...(data.roleTo ? { width: 'auto', transform: 'translate(-50%, -50%)' } : {}),
             }}
             onClick={openPopover}
           >
+            {data.roleTo && (
+              <span className="text-[10px] italic text-muted-foreground whitespace-nowrap">{data.roleTo}</span>
+            )}
             <span className={badgeClass}>{data.cardTo}</span>
           </div>
         )}

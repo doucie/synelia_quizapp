@@ -53,6 +53,8 @@ export interface RelationshipEdgeData {
   label?: string
   cardFrom?: string
   cardTo?: string
+  roleFrom?: string
+  roleTo?: string
   cardFromSide?: 'source' | 'left' | 'right' | 'top' | 'bottom'
   cardToSide?: 'source' | 'left' | 'right' | 'top' | 'bottom'
   isStrong?: boolean

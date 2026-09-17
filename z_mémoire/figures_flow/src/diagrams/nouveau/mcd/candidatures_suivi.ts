@@ -129,7 +129,7 @@ export const candidaturesSuivi: DiagramDefinition = {
       source: 'decision',
       target: 'decision',
       type: 'relationship',
-      data: { label: 'annuler', cardFrom: '1,1', cardTo: '0,1' },
+      data: { label: 'annuler', cardFrom: '0,1', cardTo: '0,1', roleFrom: 'annule', roleTo: 'est annulée' },
     },
   ],
 }
