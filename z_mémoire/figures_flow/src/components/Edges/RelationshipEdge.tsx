@@ -60,6 +60,19 @@ function badgeOffset(pos: Position, extra = 0): { x: number; y: number } {
   }
 }
 
+function roleOuterStyle(pos: Position): { transform: string } {
+  switch (pos) {
+    case Position.Top:
+      return { transform: 'translate(-50%, calc(-100% - 4px))' }
+    case Position.Bottom:
+      return { transform: 'translate(-50%, calc(100% + 4px))' }
+    case Position.Left:
+      return { transform: 'translate(calc(-100% - 4px), -50%)' }
+    case Position.Right:
+      return { transform: 'translate(calc(100% + 4px), -50%)' }
+  }
+}
+
 const REFLEX_SPREAD = 34
 const REFLEX_OFFSET = 90
 const REFLEX_RADIUS = 8
@@ -452,14 +465,23 @@ export default function RelationshipEdge({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 4,
               pointerEvents: 'auto',
-              ...(data.roleFrom ? { width: 'auto', transform: 'translate(-50%, -50%)' } : {}),
             }}
             onClick={openPopover}
           >
             {data.roleFrom && (
-              <span className="text-[10px] italic text-muted-foreground whitespace-nowrap">{data.roleFrom}</span>
+              <span
+                className="text-[10px] italic text-muted-foreground whitespace-nowrap"
+                style={{
+                  position: 'absolute',
+                  left: '50%',
+                  top: '50%',
+                  pointerEvents: 'none',
+                  ...roleOuterStyle(sourcePosition),
+                }}
+              >
+                {data.roleFrom}
+              </span>
             )}
             <span className={badgeClass}>{data.cardFrom}</span>
           </div>
@@ -475,14 +497,23 @@ export default function RelationshipEdge({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 4,
               pointerEvents: 'auto',
-              ...(data.roleTo ? { width: 'auto', transform: 'translate(-50%, -50%)' } : {}),
             }}
             onClick={openPopover}
           >
             {data.roleTo && (
-              <span className="text-[10px] italic text-muted-foreground whitespace-nowrap">{data.roleTo}</span>
+              <span
+                className="text-[10px] italic text-muted-foreground whitespace-nowrap"
+                style={{
+                  position: 'absolute',
+                  left: '50%',
+                  top: '50%',
+                  pointerEvents: 'none',
+                  ...roleOuterStyle(targetPosition),
+                }}
+              >
+                {data.roleTo}
+              </span>
             )}
             <span className={badgeClass}>{data.cardTo}</span>
           </div>
