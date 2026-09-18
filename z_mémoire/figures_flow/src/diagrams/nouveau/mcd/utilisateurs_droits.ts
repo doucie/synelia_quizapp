@@ -31,7 +31,7 @@ export const utilisateursDroits: DiagramDefinition = {
         label: 'GROUPE_METIER',
         variant: 'mcd',
         attributes: [
-          { name: 'id_groupe', isPK: true },
+          { name: 'id_groupe_metier', isPK: true },
           { name: 'libelle_groupe' },
           { name: 'description' },
         ],
@@ -45,7 +45,7 @@ export const utilisateursDroits: DiagramDefinition = {
         label: 'PERMISSION_GROUPE',
         variant: 'mcd',
         attributes: [
-          { name: 'id_permission', isPK: true },
+          { name: 'id_permission_groupe', isPK: true },
           { name: 'fonctionnalite' },
         ],
       },

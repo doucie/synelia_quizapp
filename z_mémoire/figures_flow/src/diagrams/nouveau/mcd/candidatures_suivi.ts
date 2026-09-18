@@ -71,7 +71,7 @@ export const candidaturesSuivi: DiagramDefinition = {
         label: 'TOKEN_VERIFICATION_EMAIL',
         variant: 'mcd',
         attributes: [
-          { name: 'id_token_verification', isPK: true },
+          { name: 'id_token_verification_email', isPK: true },
           { name: 'chaine_token' },
           { name: 'type_token' },
           { name: 'date_expiration' },

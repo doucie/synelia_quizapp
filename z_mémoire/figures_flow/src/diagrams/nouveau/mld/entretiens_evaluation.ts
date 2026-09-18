@@ -20,7 +20,7 @@ export const entretiensEvaluation: DiagramDefinition = {
           { name: 'interview_location' },
           { name: 'video_link' },
           { name: 'status' },
-          { name: 'room_code' },
+          { name: 'evaluation_room_code' },
           { name: 'notes' },
           { name: 'start_time' },
           { name: 'end_time' },

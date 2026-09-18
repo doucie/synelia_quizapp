@@ -36,7 +36,7 @@ export const campagnesPipeline: DiagramDefinition = {
         label: 'MODELE_PIPELINE',
         variant: 'mcd',
         attributes: [
-          { name: 'id_modele', isPK: true },
+          { name: 'id_modele_pipeline', isPK: true },
           { name: 'libelle_modele' },
           { name: 'est_defaut' },
           { name: 'est_actif' },
@@ -52,7 +52,7 @@ export const campagnesPipeline: DiagramDefinition = {
         label: 'ETAPE_PIPELINE',
         variant: 'mcd',
         attributes: [
-          { name: 'id_etape', isPK: true },
+          { name: 'id_etape_pipeline', isPK: true },
           { name: 'type_etape' },
           { name: 'libelle_etape' },
           { name: 'ordre_etape' },
@@ -70,7 +70,7 @@ export const campagnesPipeline: DiagramDefinition = {
         label: 'REGLE_NOTIFICATION',
         variant: 'mcd',
         attributes: [
-          { name: 'id_regle', isPK: true },
+          { name: 'id_regle_notification', isPK: true },
           { name: 'code_declencheur' },
           { name: 'code_resultat' },
           { name: 'est_requise' },
@@ -102,7 +102,7 @@ export const campagnesPipeline: DiagramDefinition = {
         label: 'VERSION_FORMULAIRE',
         variant: 'mcd',
         attributes: [
-          { name: 'id_version', isPK: true },
+          { name: 'id_version_formulaire', isPK: true },
           { name: 'numero_version' },
           { name: 'est_publiee' },
           { name: 'est_verrouillee' },

@@ -20,7 +20,7 @@ export const entretiensEvaluation: DiagramDefinition = {
           { name: 'interview_location', type: 'varchar(255)' },
           { name: 'video_link', type: 'varchar(500)' },
           { name: 'status', type: "enum('SCHEDULED','CONFIRMED','IN_PROGRESS','COMPLETED','CANCELLED','NO_SHOW')" },
-          { name: 'room_code', type: 'varchar(50)' },
+          { name: 'evaluation_room_code', type: 'varchar(8)' },
           { name: 'notes', type: 'text' },
           { name: 'start_time', type: 'datetime' },
           { name: 'end_time', type: 'datetime' },

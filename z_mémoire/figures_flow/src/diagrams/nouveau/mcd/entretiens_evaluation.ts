@@ -20,7 +20,7 @@ export const entretiensEvaluation: DiagramDefinition = {
           { name: 'lieu' },
           { name: 'lien_visio' },
           { name: 'statut' },
-          { name: 'code_salle' },
+          { name: 'code_salle_evaluation' },
           { name: 'notes' },
           { name: 'date_debut' },
           { name: 'date_fin' },
@@ -55,7 +55,7 @@ export const entretiensEvaluation: DiagramDefinition = {
         label: 'EVALUATEUR_ENTRETIEN',
         variant: 'mcd',
         attributes: [
-          { name: 'id_participant', isPK: true },
+          { name: 'id_evaluateur_entretien', isPK: true },
           { name: 'peut_modifier' },
           { name: 'peut_supprimer' },
           { name: 'peut_evaluer' },
@@ -92,11 +92,11 @@ export const entretiensEvaluation: DiagramDefinition = {
         label: 'NOTE_CRITERE',
         variant: 'mcd',
         attributes: [
-          { name: 'id_item', isPK: true },
+          { name: 'id_note_critere', isPK: true },
           { name: 'valeur_score' },
           { name: 'valeur_texte' },
           { name: 'coefficient_fige' },
-          { name: 'note_max_figee' },
+          { name: 'score_max_fige' },
         ],
       },
     },
@@ -108,7 +108,7 @@ export const entretiensEvaluation: DiagramDefinition = {
         label: 'GRILLE_MODELE',
         variant: 'mcd',
         attributes: [
-          { name: 'id_grille', isPK: true },
+          { name: 'id_grille_modele', isPK: true },
           { name: 'libelle' },
           { name: 'description' },
           { name: 'est_active' },
@@ -123,10 +123,10 @@ export const entretiensEvaluation: DiagramDefinition = {
         label: 'VERSION_GRILLE',
         variant: 'mcd',
         attributes: [
-          { name: 'id_version', isPK: true },
+          { name: 'id_version_grille', isPK: true },
           { name: 'numero_version' },
           { name: 'est_publiee' },
-          { name: 'empreinte_contenu' },
+          { name: 'contenu_hashé' },
           { name: 'verrouillee_le' },
         ],
       },
@@ -136,7 +136,7 @@ export const entretiensEvaluation: DiagramDefinition = {
       type: 'entity',
       position: { x: 1250, y: 350 },
       data: {
-        label: 'CRITERE_GRILLE',
+        label: 'CRITERE',
         variant: 'mcd',
         attributes: [
           { name: 'id_critere', isPK: true },
