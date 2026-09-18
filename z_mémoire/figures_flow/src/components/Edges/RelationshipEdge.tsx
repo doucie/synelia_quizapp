@@ -78,7 +78,8 @@ const REFLEX_OFFSET = 90
 const REFLEX_RADIUS = 8
 
 const ROLE_LINE_GAP = 6
-const ROLE_CHAR_ADVANCE = 6.5
+const ROLE_CHAR_W = 6.5
+const ROLE_CHAR_H = 12
 
 type ReflexiveRect = { x: number; y: number; w: number; h: number }
 type ReflexiveAnchor = { x: number; y: number; pos: Position }
@@ -163,7 +164,7 @@ function buildReflexiveEdge(
   toEdgeOff: number,
   offset = REFLEX_OFFSET,
   spread = REFLEX_SPREAD,
-): { sx: number; sy: number; tx: number; ty: number; path: string; pathReverse: string; labelX: number; labelY: number; poly: [number, number][] } {
+): { sx: number; sy: number; tx: number; ty: number; path: string; labelX: number; labelY: number; poly: [number, number][] } {
   const { x: x0, y: y0, w, h } = rect
   const M = offset
   const S = spread
@@ -203,7 +204,6 @@ function buildReflexiveEdge(
     return {
       sx, sy, tx, ty,
       path: roundedPath(poly),
-      pathReverse: roundedPath([...poly].reverse()),
       labelX, labelY, poly,
     }
   }
@@ -262,7 +262,6 @@ function buildReflexiveEdge(
   return {
     sx: pA[0], sy: pA[1], tx: pB[0], ty: pB[1],
     path,
-    pathReverse: roundedPath([...points].reverse()),
     labelX, labelY, poly: points,
   }
 }
@@ -335,6 +334,67 @@ function resolveRoleSense(
   if (len <= 0) return 'forward'
   const forward = upsideDownMeasure(poly, start, len)
   return forward > len / 2 ? 'backward' : 'forward'
+}
+
+type RoleGlyph = { char: string; x: number; y: number; angle: number }
+
+function polyAt(poly: [number, number][], d: number): { x: number; y: number; tx: number; ty: number } | null {
+  if (poly.length < 2 || d < 0) return null
+  let cumul = 0
+  for (let i = 1; i < poly.length; i++) {
+    const ax = poly[i - 1][0]
+    const ay = poly[i - 1][1]
+    const dx = poly[i][0] - ax
+    const dy = poly[i][1] - ay
+    const len = Math.hypot(dx, dy)
+    if (len === 0) continue
+    if (d <= cumul + len) {
+      const local = d - cumul
+      return { x: ax + dx * (local / len), y: ay + dy * (local / len), tx: dx / len, ty: dy / len }
+    }
+    cumul += len
+  }
+  const a = poly[poly.length - 2]
+  const b = poly[poly.length - 1]
+  const dx = b[0] - a[0]
+  const dy = b[1] - a[1]
+  const len = Math.hypot(dx, dy) || 1
+  return { x: b[0], y: b[1], tx: dx / len, ty: dy / len }
+}
+
+function layoutRoleGlyphs(
+  poly: [number, number][],
+  rect: ReflexiveRect,
+  text: string,
+  startDist: number,
+): RoleGlyph[] {
+  const chars = Array.from(text)
+  if (chars.length === 0 || poly.length < 2) return []
+  const cx = rect.x + rect.w / 2
+  const cy = rect.y + rect.h / 2
+  const out: RoleGlyph[] = []
+  let dist = Math.max(0, startDist)
+  for (let k = 0; k < chars.length; k++) {
+    const atStart = polyAt(poly, dist)
+    if (!atStart) break
+    const advance = Math.abs(atStart.tx) >= Math.abs(atStart.ty) ? ROLE_CHAR_W : ROLE_CHAR_H
+    const atCenter = polyAt(poly, dist + advance / 2) ?? atStart
+    let nx = -atCenter.ty
+    let ny = atCenter.tx
+    const dot = nx * (atCenter.x - cx) + ny * (atCenter.y - cy)
+    if (dot < 0) {
+      nx = -nx
+      ny = -ny
+    }
+    out.push({
+      char: chars[k],
+      x: atCenter.x + nx * ROLE_LINE_GAP,
+      y: atCenter.y + ny * ROLE_LINE_GAP,
+      angle: (Math.atan2(atCenter.ty, atCenter.tx) * 180) / Math.PI,
+    })
+    dist += advance
+  }
+  return out
 }
 
 export default function RelationshipEdge({
@@ -434,9 +494,6 @@ export default function RelationshipEdge({
   const loopH = sourceNode?.measured?.height ?? 130
   const loopX = sourceNode?.position.x ?? sourceX
   const loopY = sourceNode?.position.y ?? sourceY
-  const rolePathId = `edge-rolepath-${id}`
-  const rolePathRevId = `edge-rolepath-${id}-rev`
-  let edgePathReverse = ''
   let roleFit: RolePathFit | null = null
   let rolePoly: [number, number][] | null = null
 
@@ -459,7 +516,6 @@ export default function RelationshipEdge({
     tx = loop.tx
     ty = loop.ty
     edgePath = loop.path
-    edgePathReverse = loop.pathReverse
     labelX = loop.labelX
     labelY = loop.labelY
     roleFit = rolePathFit(loop.poly, { x: x0, y: y0, w, h })
@@ -554,11 +610,9 @@ export default function RelationshipEdge({
 
   const fromStart = roleFit ? Math.max(0, Math.min(1, data?.roleFromPos ?? 0)) * roleFit.maxFrom : 0
   const toStart = roleFit ? roleFit.total - Math.max(0, Math.min(1, data?.roleToPos ?? 0)) * roleFit.maxTo : 0
-  const toDist = roleFit ? Math.max(0, Math.min(1, data?.roleToPos ?? 0)) * roleFit.maxTo : 0
   const roleTotal = roleFit?.total ?? 0
-  const roleDy = roleFit?.dy ?? ROLE_LINE_GAP
-  const fromLen = data?.roleFrom ? Array.from(data.roleFrom).length * ROLE_CHAR_ADVANCE : 0
-  const toLen = data?.roleTo ? Array.from(data.roleTo).length * ROLE_CHAR_ADVANCE : 0
+  const fromLen = data?.roleFrom ? Array.from(data.roleFrom).length * ROLE_CHAR_W : 0
+  const toLen = data?.roleTo ? Array.from(data.roleTo).length * ROLE_CHAR_W : 0
   const fromSense: 'forward' | 'backward' =
     rolePoly && roleFit && data?.roleFrom
       ? resolveRoleSense(rolePoly, fromStart, fromLen, data.roleFromSense)
@@ -567,6 +621,26 @@ export default function RelationshipEdge({
     rolePoly && roleFit && data?.roleTo
       ? resolveRoleSense(rolePoly, Math.max(0, toStart - toLen), toLen, data.roleToSense)
       : 'forward'
+  const roleRect = { x: loopX, y: loopY, w: loopW, h: loopH }
+  const rolePolyBack = rolePoly ? [...rolePoly].reverse() : null
+  const fromGlyphs =
+    isSelfLoop && rolePoly && data?.roleFrom
+      ? layoutRoleGlyphs(
+          fromSense === 'backward' ? rolePolyBack! : rolePoly,
+          roleRect,
+          data.roleFrom,
+          fromSense === 'backward' ? roleTotal - fromStart - fromLen : fromStart,
+        )
+      : []
+  const toGlyphs =
+    isSelfLoop && rolePoly && roleFit && data?.roleTo
+      ? layoutRoleGlyphs(
+          toSense === 'backward' ? rolePolyBack! : rolePoly,
+          roleRect,
+          data.roleTo,
+          toSense === 'backward' ? roleTotal - toStart : Math.max(0, toStart - toLen),
+        )
+      : []
   const roleTextStyle = {
     fontSize: 10,
     fontStyle: 'italic',
@@ -591,31 +665,33 @@ export default function RelationshipEdge({
         />
         {isSelfLoop && roleFit && (data?.roleFrom || data?.roleTo) && (
           <>
-            <defs>
-              <path id={rolePathId} d={edgePath} fill="none" stroke="none" />
-              <path id={rolePathRevId} d={edgePathReverse} fill="none" stroke="none" />
-            </defs>
-            {data?.roleFrom && (
-              <text style={roleTextStyle} textAnchor={fromSense === 'backward' ? 'end' : 'start'}>
-                <textPath
-                  href={`#${fromSense === 'backward' ? rolePathRevId : rolePathId}`}
-                  startOffset={fromSense === 'backward' ? roleTotal - fromStart : fromStart}
-                  dy={fromSense === 'backward' ? -roleDy : roleDy}
-                >
-                  {data.roleFrom}
-                </textPath>
-              </text>
+            {data?.roleFrom && fromGlyphs.length > 0 && (
+              <g style={roleTextStyle}>
+                {fromGlyphs.map((g, i) => (
+                  <text
+                    key={i}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    transform={`translate(${g.x.toFixed(1)} ${g.y.toFixed(1)}) rotate(${g.angle.toFixed(1)})`}
+                  >
+                    {g.char}
+                  </text>
+                ))}
+              </g>
             )}
-            {data?.roleTo && (
-              <text style={roleTextStyle} textAnchor={toSense === 'backward' ? 'start' : 'end'}>
-                <textPath
-                  href={`#${toSense === 'backward' ? rolePathRevId : rolePathId}`}
-                  startOffset={toSense === 'backward' ? toDist : toStart}
-                  dy={toSense === 'backward' ? -roleDy : roleDy}
-                >
-                  {data.roleTo}
-                </textPath>
-              </text>
+            {data?.roleTo && toGlyphs.length > 0 && (
+              <g style={roleTextStyle}>
+                {toGlyphs.map((g, i) => (
+                  <text
+                    key={i}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    transform={`translate(${g.x.toFixed(1)} ${g.y.toFixed(1)}) rotate(${g.angle.toFixed(1)})`}
+                  >
+                    {g.char}
+                  </text>
+                ))}
+              </g>
             )}
           </>
         )}
