@@ -83,9 +83,9 @@ Les entités du MCD mappent vers les tables MySQL du MPD. Les noms sont **anglic
 | `DECISION` | `decisions` | Candidatures & suivi |
 | `ENTRETIEN` | `interviews` | Entretiens & évaluation |
 | `CANDIDAT_ENTRETIEN` | `interview_candidates` | Entretiens & évaluation |
-| `PARTICIPANT_ENTRETIEN` | `interview_participants` | Entretiens & évaluation |
+| `EVALUATEUR_ENTRETIEN` | `interview_participants` | Entretiens & évaluation |
 | `EVALUATION` | `evaluations` | Entretiens & évaluation |
-| `ITEM_EVALUATION` | `evaluation_items` | Entretiens & évaluation |
+| `NOTE_CRITERE` | `evaluation_items` | Entretiens & évaluation |
 | `GRILLE_MODELE` | `evaluation_grids` | Entretiens & évaluation |
 | `MODELE_EMAIL` | `email_templates` | Communication |
 | `PRESET_MODELE_EMAIL` | `email_template_presets` | Communication |

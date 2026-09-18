@@ -52,7 +52,7 @@ export const entretiensEvaluation: DiagramDefinition = {
       type: 'entity',
       position: { x: 600, y: 350 },
       data: {
-        label: 'PARTICIPANT_ENTRETIEN',
+        label: 'EVALUATEUR_ENTRETIEN',
         variant: 'mcd',
         attributes: [
           { name: 'id_participant', isPK: true },
@@ -89,14 +89,14 @@ export const entretiensEvaluation: DiagramDefinition = {
       type: 'entity',
       position: { x: 1100, y: 350 },
       data: {
-        label: 'ITEM_EVALUATION',
+        label: 'NOTE_CRITERE',
         variant: 'mcd',
         attributes: [
           { name: 'id_item', isPK: true },
           { name: 'valeur_score' },
           { name: 'valeur_texte' },
-          { name: 'poids_instantane' },
-          { name: 'score_max_instantane' },
+          { name: 'coefficient_fige' },
+          { name: 'note_max_figee' },
         ],
       },
     },
@@ -144,7 +144,7 @@ export const entretiensEvaluation: DiagramDefinition = {
           { name: 'libelle' },
           { name: 'type_critere' },
           { name: 'score_max' },
-          { name: 'poids' },
+          { name: 'coefficient' },
           { name: 'est_requis' },
         ],
       },
