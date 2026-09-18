@@ -72,7 +72,7 @@ export const candidaturesSuivi: DiagramDefinition = {
         variant: 'mcd',
         attributes: [
           { name: 'id_token_verification', isPK: true },
-          { name: 'token' },
+          { name: 'chaine_token' },
           { name: 'type_token' },
           { name: 'date_expiration' },
           { name: 'est_utilise' },
