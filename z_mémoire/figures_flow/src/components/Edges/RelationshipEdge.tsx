@@ -79,7 +79,6 @@ const REFLEX_RADIUS = 8
 
 const ROLE_LINE_GAP = 6
 const ROLE_CHAR_W = 6.5
-const ROLE_CHAR_H = 12
 
 type ReflexiveRect = { x: number; y: number; w: number; h: number }
 type ReflexiveAnchor = { x: number; y: number; pos: Position }
@@ -338,6 +337,19 @@ function resolveRoleSense(
 
 type RoleGlyph = { char: string; x: number; y: number; angle: number }
 
+function measureRoleAdvances(text: string, font: string): number[] {
+  const chars = Array.from(text)
+  if (chars.length === 0) return []
+  try {
+    const ctx = document.createElement('canvas').getContext('2d')
+    if (!ctx) return chars.map(() => ROLE_CHAR_W)
+    ctx.font = font
+    return chars.map((ch) => ctx.measureText(ch).width || ROLE_CHAR_W)
+  } catch {
+    return chars.map(() => ROLE_CHAR_W)
+  }
+}
+
 function polyAt(poly: [number, number][], d: number): { x: number; y: number; tx: number; ty: number } | null {
   if (poly.length < 2 || d < 0) return null
   let cumul = 0
@@ -367,6 +379,7 @@ function layoutRoleGlyphs(
   rect: ReflexiveRect,
   text: string,
   startDist: number,
+  advances: number[],
 ): RoleGlyph[] {
   const chars = Array.from(text)
   if (chars.length === 0 || poly.length < 2) return []
@@ -377,7 +390,7 @@ function layoutRoleGlyphs(
   for (let k = 0; k < chars.length; k++) {
     const atStart = polyAt(poly, dist)
     if (!atStart) break
-    const advance = Math.abs(atStart.tx) >= Math.abs(atStart.ty) ? ROLE_CHAR_W : ROLE_CHAR_H
+    const advance = k < advances.length && advances[k] > 0 ? advances[k] : ROLE_CHAR_W
     const atCenter = polyAt(poly, dist + advance / 2) ?? atStart
     let nx = -atCenter.ty
     let ny = atCenter.tx
@@ -611,8 +624,24 @@ export default function RelationshipEdge({
   const fromStart = roleFit ? Math.max(0, Math.min(1, data?.roleFromPos ?? 0)) * roleFit.maxFrom : 0
   const toStart = roleFit ? roleFit.total - Math.max(0, Math.min(1, data?.roleToPos ?? 0)) * roleFit.maxTo : 0
   const roleTotal = roleFit?.total ?? 0
-  const fromLen = data?.roleFrom ? Array.from(data.roleFrom).length * ROLE_CHAR_W : 0
-  const toLen = data?.roleTo ? Array.from(data.roleTo).length * ROLE_CHAR_W : 0
+  const rolesFont = useMemo(() => {
+    try {
+      const family = document.body ? getComputedStyle(document.body).fontFamily : ''
+      return `italic 10px ${family || 'sans-serif'}`
+    } catch {
+      return 'italic 10px sans-serif'
+    }
+  }, [])
+  const fromAdvances = useMemo(
+    () => (data?.roleFrom ? measureRoleAdvances(data.roleFrom, rolesFont) : []),
+    [data?.roleFrom, rolesFont],
+  )
+  const toAdvances = useMemo(
+    () => (data?.roleTo ? measureRoleAdvances(data.roleTo, rolesFont) : []),
+    [data?.roleTo, rolesFont],
+  )
+  const fromLen = fromAdvances.reduce((a, b) => a + b, 0)
+  const toLen = toAdvances.reduce((a, b) => a + b, 0)
   const fromSense: 'forward' | 'backward' =
     rolePoly && roleFit && data?.roleFrom
       ? resolveRoleSense(rolePoly, fromStart, fromLen, data.roleFromSense)
@@ -630,6 +659,7 @@ export default function RelationshipEdge({
           roleRect,
           data.roleFrom,
           fromSense === 'backward' ? roleTotal - fromStart - fromLen : fromStart,
+          fromAdvances,
         )
       : []
   const toGlyphs =
@@ -639,6 +669,7 @@ export default function RelationshipEdge({
           roleRect,
           data.roleTo,
           toSense === 'backward' ? roleTotal - toStart : Math.max(0, toStart - toLen),
+          toAdvances,
         )
       : []
   const roleTextStyle = {
