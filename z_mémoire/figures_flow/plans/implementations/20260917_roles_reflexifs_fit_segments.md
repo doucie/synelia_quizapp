@@ -5,7 +5,8 @@
   mais **inopérante sur `e-annuler`** (voir cause racine v3 ci-dessous).
 - **v3 (pilotage manuel par sliders)** : implémentée puis **remplacée par v4**.
 - **v4 (le texte suit la polyligne patte + arc, SVG `textPath`)** : retenue et implémentée.
-- **v5 (choix Pivoté / Droit par rôle)** : retenue et implémentée (v4 conservé par défaut).
+- **v5 (choix Pivoté / Droit par rôle)** : implémentée puis **remplacée par v6**.
+- **v6 (sens de lecture auto + override, suppression du « Droit »)** : retenue et implémentée.
   Fichier : `z_mémoire/figures_flow/plans/implementations/20260917_roles_reflexifs_fit_segments.md`
 
 ## Contexte
@@ -256,6 +257,50 @@ par rôle, défaut **Pivoté** (rendu v4 conservé).
   restent à l'endroit mais la lecture suit le flux **vers l'extérieur** (une colonne peut se
   lire de bas en haut). Inhérent à « premier caractère au chip » ; le mode Pivoté reste dispo.
 
+## v6 — Sens de lecture auto + override (suppression du « Droit ») — **remplace v5**
+
+### Retour utilisateur
+Le mode Pivoté laissait le texte **tête en bas** (rotation 180°) lorsqu'un rôle débordait sur
+un tronçon parcouru à rebours (ex. l'arc du haut de `e-annuler`, droite→gauche). Le mode
+« Droit » (v5) évitait le 180° mais inversait l'ordre des lettres (effet miroir). Demande :
+garder les lettres **droites** (pivotées par le tracé, v4) mais **jamais à l'envers**.
+
+### Diagnostic
+Une boucle comporte **toujours** au moins un tronçon « à rebours » : un seul sens de parcours
+ne peut pas tout rendre lisible. `<textPath>` oriente chaque glyphe selon la tangente → un
+tronçon parcouru à rebours donne 180°. Il faut donc choisir le **sens de lecture par rôle**
+selon la **portion réellement occupée** (recalculé à chaque déplacement du slider).
+
+### Décisions validées
+- **Retirer le mode « Droit »** (rendu `layoutUpright`).
+- **Auto** par rôle : compter la longueur où `cos(tangente) < 0` (glyphes à l'envers) sur
+  l'intervalle occupé et choisir le sens qui la minimise (égalité → sens normal).
+- **Override manuel** par rôle : `Auto` (défaut) / `Normal` / `Inversé`.
+- Un rôle chevauchant un coin peut garder un tronçon minoritaire à l'envers → l'override
+  permet de choisir le tronçon à privilégier (stratégie par tronçon écartée).
+
+### Changements v6
+- `src/types/index.ts` : `roleFromOrientation`/`roleToOrientation` remplacés par
+  `roleFromSense?` / `roleToSense?` (`'auto' | 'forward' | 'backward'`).
+- `src/hooks/useDiagramState.ts` : `CardinalitySides` + clés `setReflexiveConfig` → sense.
+- `src/components/DiagramCanvas.tsx` : merge des champs sense sauvegardés.
+- `src/components/Edges/RelationshipEdge.tsx` :
+  - [x] `roundedPath(points, R)` extrait de `buildReflexiveEdge` (coins arrondis) et réutilisé
+        pour le cas « même côté » (sortie inchangée, vérifiée sur les 4 côtés).
+  - [x] `buildReflexiveEdge` retourne en plus `pathReverse` (polyligne inversée).
+  - [x] `upsideDownMeasure(poly, start, len)` + `resolveRoleSense(poly, start, len, sense)`.
+  - [x] Rendu sur 2 `<path>` (`edge-rolepath-<id>` et `…-rev`) ; par rôle selon le sens :
+        - from forward : `anchor="start"`, `offset=fromStart`, `dy=roleDy` ;
+        - from backward : `anchor="end"`, `offset=total−fromStart`, `dy=−roleDy` ;
+        - to forward : `anchor="end"`, `offset=toStart`, `dy=roleDy` ;
+        - to backward : `anchor="start"`, `offset=toDist`, `dy=−roleDy`.
+  - [x] **Supprimés** : `layoutUpright`, `UprightChar`, `UprightSeg`, `ROLE_CHAR_H`, `fromUpright`/
+        `toUpright`, `fromChars`/`toChars`, branches `<text x=… y=…>` (`ROLE_CHAR_ADVANCE` conservé
+        pour estimer la longueur d'un rôle).
+  - [x] Popover : `Sens [Auto][Normal][Inversé]` par rôle (Auto = reset de clé).
+  - [x] Debug : `sF`/`sT` (sens effectif).
+- Les anciennes clés `roleFromOrientation:'upright'` en localStorage sont ignorées (pas de migration).
+
 ## Vérifs
 
 - `npx tsc --noEmit` (aucune nouvelle erreur) puis `npx vite build`.
@@ -273,3 +318,5 @@ par rôle, défaut **Pivoté** (rendu v4 conservé).
 6. `build(diagrams): artefacts dist`
 7. `feat(edge): orientation par role pivotee ou droite (toggle)`
 8. `build(diagrams): artefacts dist`
+9. `feat(edge): sens de lecture auto des roles + override, retrait du mode droit`
+10. `build(diagrams): artefacts dist`

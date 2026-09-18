@@ -78,8 +78,7 @@ const REFLEX_OFFSET = 90
 const REFLEX_RADIUS = 8
 
 const ROLE_LINE_GAP = 6
-const ROLE_CHAR_W = 6.5
-const ROLE_CHAR_H = 12
+const ROLE_CHAR_ADVANCE = 6.5
 
 type ReflexiveRect = { x: number; y: number; w: number; h: number }
 type ReflexiveAnchor = { x: number; y: number; pos: Position }
@@ -113,6 +112,26 @@ function reflexUnit(a: [number, number], b: [number, number]): [number, number] 
   return [dx / len, dy / len]
 }
 
+function roundedPath(points: [number, number][], radius = REFLEX_RADIUS): string {
+  if (points.length < 2) return ''
+  let path = `M ${points[0][0]} ${points[0][1]}`
+  for (let i = 1; i < points.length - 1; i++) {
+    const prev = points[i - 1]
+    const cur = points[i]
+    const next = points[i + 1]
+    const dIn = reflexUnit(prev, cur)
+    const dOut = reflexUnit(cur, next)
+    if (dIn[0] === dOut[0] && dIn[1] === dOut[1]) {
+      path += ` L ${cur[0]} ${cur[1]}`
+    } else {
+      path += ` L ${cur[0] - dIn[0] * radius} ${cur[1] - dIn[1] * radius} Q ${cur[0]} ${cur[1]} ${cur[0] + dOut[0] * radius} ${cur[1] + dOut[1] * radius}`
+    }
+  }
+  const last = points[points.length - 1]
+  path += ` L ${last[0]} ${last[1]}`
+  return path
+}
+
 function reflexMidpoint(points: [number, number][]): [number, number] {
   const segs: number[] = []
   let total = 0
@@ -144,14 +163,13 @@ function buildReflexiveEdge(
   toEdgeOff: number,
   offset = REFLEX_OFFSET,
   spread = REFLEX_SPREAD,
-): { sx: number; sy: number; tx: number; ty: number; path: string; labelX: number; labelY: number; poly: [number, number][] } {
+): { sx: number; sy: number; tx: number; ty: number; path: string; pathReverse: string; labelX: number; labelY: number; poly: [number, number][] } {
   const { x: x0, y: y0, w, h } = rect
-  const R = REFLEX_RADIUS
   const M = offset
   const S = spread
 
   if (source.pos === target.pos) {
-    let sx: number, sy: number, tx: number, ty: number, path: string
+    let sx: number, sy: number, tx: number, ty: number
     let labelX: number, labelY: number
     if (source.pos === Position.Top || source.pos === Position.Bottom) {
       sy = source.y
@@ -161,10 +179,6 @@ function buildReflexiveEdge(
       const outer = source.pos === Position.Top ? y0 - M : y0 + h + M
       labelX = (sx + tx) / 2
       labelY = outer
-      path =
-        source.pos === Position.Top
-          ? `M ${sx} ${sy} L ${sx} ${outer + R} Q ${sx} ${outer} ${sx + R} ${outer} L ${tx - R} ${outer} Q ${tx} ${outer} ${tx} ${outer + R} L ${tx} ${ty}`
-          : `M ${sx} ${sy} L ${sx} ${outer - R} Q ${sx} ${outer} ${sx + R} ${outer} L ${tx - R} ${outer} Q ${tx} ${outer} ${tx} ${outer - R} L ${tx} ${ty}`
     } else {
       sx = source.x
       tx = source.x
@@ -173,10 +187,6 @@ function buildReflexiveEdge(
       const outer = source.pos === Position.Left ? x0 - M : x0 + w + M
       labelX = outer
       labelY = (sy + ty) / 2
-      path =
-        source.pos === Position.Left
-          ? `M ${sx} ${sy} L ${outer + R} ${sy} Q ${outer} ${sy} ${outer} ${sy + R} L ${outer} ${ty - R} Q ${outer} ${ty} ${outer + R} ${ty} L ${tx} ${ty}`
-          : `M ${sx} ${sy} L ${outer - R} ${sy} Q ${outer} ${sy} ${outer} ${sy + R} L ${outer} ${ty - R} Q ${outer} ${ty} ${outer - R} ${ty} L ${tx} ${ty}`
     }
     const outerLine =
       source.pos === Position.Top
@@ -190,7 +200,12 @@ function buildReflexiveEdge(
       source.pos === Position.Top || source.pos === Position.Bottom
         ? [[sx, sy], [sx, outerLine], [tx, outerLine], [tx, ty]]
         : [[sx, sy], [outerLine, sy], [outerLine, ty], [tx, ty]]
-    return { sx, sy, tx, ty, path, labelX, labelY, poly }
+    return {
+      sx, sy, tx, ty,
+      path: roundedPath(poly),
+      pathReverse: roundedPath([...poly].reverse()),
+      labelX, labelY, poly,
+    }
   }
 
   const pA: [number, number] = [source.x, source.y]
@@ -241,23 +256,15 @@ function buildReflexiveEdge(
   route.push(oB)
 
   const points: [number, number][] = [pA, ...route, pB]
-  let path = `M ${pA[0]} ${pA[1]}`
-  for (let i = 1; i < points.length - 1; i++) {
-    const prev = points[i - 1]
-    const cur = points[i]
-    const next = points[i + 1]
-    const dIn = reflexUnit(prev, cur)
-    const dOut = reflexUnit(cur, next)
-    if (dIn[0] === dOut[0] && dIn[1] === dOut[1]) {
-      path += ` L ${cur[0]} ${cur[1]}`
-    } else {
-      path += ` L ${cur[0] - dIn[0] * R} ${cur[1] - dIn[1] * R} Q ${cur[0]} ${cur[1]} ${cur[0] + dOut[0] * R} ${cur[1] + dOut[1] * R}`
-    }
-  }
-  path += ` L ${pB[0]} ${pB[1]}`
+  const path = roundedPath(points)
 
   const [labelX, labelY] = reflexMidpoint(points)
-  return { sx: pA[0], sy: pA[1], tx: pB[0], ty: pB[1], path, labelX, labelY, poly: points }
+  return {
+    sx: pA[0], sy: pA[1], tx: pB[0], ty: pB[1],
+    path,
+    pathReverse: roundedPath([...points].reverse()),
+    labelX, labelY, poly: points,
+  }
 }
 
 type RolePathFit = { total: number; maxFrom: number; maxTo: number; dy: number }
@@ -296,95 +303,38 @@ function rolePathFit(poly: [number, number][], rect: ReflexiveRect): RolePathFit
   return { total, maxFrom: total - lastSeg, maxTo: total - firstSeg, dy }
 }
 
-type UprightChar = { char: string; x: number; y: number }
+type RoleSense = 'auto' | 'forward' | 'backward'
 
-type UprightSeg = {
-  start: number
-  len: number
-  ax: number
-  ay: number
-  ux: number
-  uy: number
-  nx: number
-  ny: number
-  axis: 'h' | 'v'
+function upsideDownMeasure(poly: [number, number][], start: number, len: number): number {
+  if (len <= 0) return 0
+  let cumul = 0
+  let measure = 0
+  for (let i = 1; i < poly.length; i++) {
+    const dx = poly[i][0] - poly[i - 1][0]
+    const dy = poly[i][1] - poly[i - 1][1]
+    const segLen = Math.hypot(dx, dy)
+    if (segLen === 0) continue
+    const segEnd = cumul + segLen
+    const from = Math.max(start, cumul)
+    const to = Math.min(start + len, segEnd)
+    cumul = segEnd
+    if (to <= from) continue
+    if (dx < 0) measure += to - from
+  }
+  return measure
 }
 
-function layoutUpright(
+function resolveRoleSense(
   poly: [number, number][],
-  rect: ReflexiveRect,
-  text: string,
-  startDist: number,
-  fromEnd: boolean,
-): UprightChar[] {
-  const chars = Array.from(text)
-  if (chars.length === 0 || poly.length < 2) return []
-  const pts = fromEnd ? [...poly].reverse() : poly
-  const cx = rect.x + rect.w / 2
-  const cy = rect.y + rect.h / 2
-  const segs: UprightSeg[] = []
-  let cumul = 0
-  for (let i = 1; i < pts.length; i++) {
-    const ax = pts[i - 1][0]
-    const ay = pts[i - 1][1]
-    const dx = pts[i][0] - ax
-    const dyv = pts[i][1] - ay
-    const len = Math.hypot(dx, dyv)
-    if (len === 0) continue
-    const ux = dx / len
-    const uy = dyv / len
-    const mx = (ax + pts[i][0]) / 2 - cx
-    const my = (ay + pts[i][1]) / 2 - cy
-    const dot = mx * ux + my * uy
-    const px = mx - dot * ux
-    const py = my - dot * uy
-    const plen = Math.hypot(px, py) || 1
-    segs.push({
-      start: cumul,
-      len,
-      ax,
-      ay,
-      ux,
-      uy,
-      nx: px / plen,
-      ny: py / plen,
-      axis: Math.abs(ux) >= Math.abs(uy) ? 'h' : 'v',
-    })
-    cumul += len
-  }
-  const pointAt = (d: number) => {
-    if (d < 0) return null
-    for (const s of segs) {
-      if (d <= s.start + s.len) {
-        const local = d - s.start
-        return {
-          x: s.ax + s.ux * local,
-          y: s.ay + s.uy * local,
-          nx: s.nx,
-          ny: s.ny,
-          axis: s.axis,
-        }
-      }
-    }
-    return null
-  }
-  const n = chars.length
-  const out: UprightChar[] = []
-  let dist = Math.max(0, startDist)
-  for (let k = 0; k < n; k++) {
-    const atStart = pointAt(dist)
-    if (!atStart) break
-    const advance = atStart.axis === 'h' ? ROLE_CHAR_W : ROLE_CHAR_H
-    const atCenter = pointAt(dist + advance / 2) ?? atStart
-    const idx = fromEnd ? n - 1 - k : k
-    out.push({
-      char: chars[idx],
-      x: atCenter.x + atCenter.nx * ROLE_LINE_GAP,
-      y: atCenter.y + atCenter.ny * ROLE_LINE_GAP,
-    })
-    dist += advance
-  }
-  return out
+  start: number,
+  len: number,
+  sense?: RoleSense,
+): 'forward' | 'backward' {
+  if (sense === 'forward') return 'forward'
+  if (sense === 'backward') return 'backward'
+  if (len <= 0) return 'forward'
+  const forward = upsideDownMeasure(poly, start, len)
+  return forward > len / 2 ? 'backward' : 'forward'
 }
 
 export default function RelationshipEdge({
@@ -485,6 +435,8 @@ export default function RelationshipEdge({
   const loopX = sourceNode?.position.x ?? sourceX
   const loopY = sourceNode?.position.y ?? sourceY
   const rolePathId = `edge-rolepath-${id}`
+  const rolePathRevId = `edge-rolepath-${id}-rev`
+  let edgePathReverse = ''
   let roleFit: RolePathFit | null = null
   let rolePoly: [number, number][] | null = null
 
@@ -507,6 +459,7 @@ export default function RelationshipEdge({
     tx = loop.tx
     ty = loop.ty
     edgePath = loop.path
+    edgePathReverse = loop.pathReverse
     labelX = loop.labelX
     labelY = loop.labelY
     roleFit = rolePathFit(loop.poly, { x: x0, y: y0, w, h })
@@ -566,8 +519,8 @@ export default function RelationshipEdge({
     | 'reflexSpread'
     | 'roleFromPos'
     | 'roleToPos'
-    | 'roleFromOrientation'
-    | 'roleToOrientation'
+    | 'roleFromSense'
+    | 'roleToSense'
 
   const updateReflexiveConfig = (key: ReflexiveKey, value: number | string) => {
     const currentEdges = getEdges()
@@ -602,17 +555,18 @@ export default function RelationshipEdge({
   const fromStart = roleFit ? Math.max(0, Math.min(1, data?.roleFromPos ?? 0)) * roleFit.maxFrom : 0
   const toStart = roleFit ? roleFit.total - Math.max(0, Math.min(1, data?.roleToPos ?? 0)) * roleFit.maxTo : 0
   const toDist = roleFit ? Math.max(0, Math.min(1, data?.roleToPos ?? 0)) * roleFit.maxTo : 0
-  const roleRect = { x: loopX, y: loopY, w: loopW, h: loopH }
-  const fromUpright = data?.roleFromOrientation === 'upright'
-  const toUpright = data?.roleToOrientation === 'upright'
-  const fromChars =
-    isSelfLoop && rolePoly && data?.roleFrom && fromUpright
-      ? layoutUpright(rolePoly, roleRect, data.roleFrom, fromStart, false)
-      : []
-  const toChars =
-    isSelfLoop && rolePoly && data?.roleTo && toUpright
-      ? layoutUpright(rolePoly, roleRect, data.roleTo, toDist, true)
-      : []
+  const roleTotal = roleFit?.total ?? 0
+  const roleDy = roleFit?.dy ?? ROLE_LINE_GAP
+  const fromLen = data?.roleFrom ? Array.from(data.roleFrom).length * ROLE_CHAR_ADVANCE : 0
+  const toLen = data?.roleTo ? Array.from(data.roleTo).length * ROLE_CHAR_ADVANCE : 0
+  const fromSense: 'forward' | 'backward' =
+    rolePoly && roleFit && data?.roleFrom
+      ? resolveRoleSense(rolePoly, fromStart, fromLen, data.roleFromSense)
+      : 'forward'
+  const toSense: 'forward' | 'backward' =
+    rolePoly && roleFit && data?.roleTo
+      ? resolveRoleSense(rolePoly, Math.max(0, toStart - toLen), toLen, data.roleToSense)
+      : 'forward'
   const roleTextStyle = {
     fontSize: 10,
     fontStyle: 'italic',
@@ -639,43 +593,30 @@ export default function RelationshipEdge({
           <>
             <defs>
               <path id={rolePathId} d={edgePath} fill="none" stroke="none" />
+              <path id={rolePathRevId} d={edgePathReverse} fill="none" stroke="none" />
             </defs>
-            {data?.roleFrom &&
-              (fromUpright ? (
-                <text
-                  style={roleTextStyle}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  x={fromChars.map((c) => c.x.toFixed(1)).join(' ')}
-                  y={fromChars.map((c) => c.y.toFixed(1)).join(' ')}
+            {data?.roleFrom && (
+              <text style={roleTextStyle} textAnchor={fromSense === 'backward' ? 'end' : 'start'}>
+                <textPath
+                  href={`#${fromSense === 'backward' ? rolePathRevId : rolePathId}`}
+                  startOffset={fromSense === 'backward' ? roleTotal - fromStart : fromStart}
+                  dy={fromSense === 'backward' ? -roleDy : roleDy}
                 >
-                  {fromChars.map((c) => c.char).join('')}
-                </text>
-              ) : (
-                <text style={roleTextStyle} textAnchor="start">
-                  <textPath href={`#${rolePathId}`} startOffset={fromStart} dy={roleFit.dy}>
-                    {data.roleFrom}
-                  </textPath>
-                </text>
-              ))}
-            {data?.roleTo &&
-              (toUpright ? (
-                <text
-                  style={roleTextStyle}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  x={toChars.map((c) => c.x.toFixed(1)).join(' ')}
-                  y={toChars.map((c) => c.y.toFixed(1)).join(' ')}
+                  {data.roleFrom}
+                </textPath>
+              </text>
+            )}
+            {data?.roleTo && (
+              <text style={roleTextStyle} textAnchor={toSense === 'backward' ? 'start' : 'end'}>
+                <textPath
+                  href={`#${toSense === 'backward' ? rolePathRevId : rolePathId}`}
+                  startOffset={toSense === 'backward' ? toDist : toStart}
+                  dy={toSense === 'backward' ? -roleDy : roleDy}
                 >
-                  {toChars.map((c) => c.char).join('')}
-                </text>
-              ) : (
-                <text style={roleTextStyle} textAnchor="end">
-                  <textPath href={`#${rolePathId}`} startOffset={toStart} dy={roleFit.dy}>
-                    {data.roleTo}
-                  </textPath>
-                </text>
-              ))}
+                  {data.roleTo}
+                </textPath>
+              </text>
+            )}
           </>
         )}
       </g>
@@ -840,7 +781,7 @@ export default function RelationshipEdge({
                 whiteSpace: 'nowrap',
               }}
             >
-              {id} | Cf:{data?.cardFrom ?? '–'}→{data?.cardTo ?? '–'} | S:{sourceHandle ?? '∅'}→{resolvedSource} | T:{targetHandle ?? '∅'}→{resolvedTarget} | gF:{srcGroup.length} gT:{tgtGroup.length} | off:{Math.round(fromEdgeOff)}/{Math.round(toEdgeOff)} | pos:{sourcePosition}/{targetPosition} | rF:{data?.roleFromPos ?? 0} rT:{data?.roleToPos ?? 0} | mF:{Math.round(roleFit?.maxFrom ?? 0)} mT:{Math.round(roleFit?.maxTo ?? 0)}
+              {id} | Cf:{data?.cardFrom ?? '–'}→{data?.cardTo ?? '–'} | S:{sourceHandle ?? '∅'}→{resolvedSource} | T:{targetHandle ?? '∅'}→{resolvedTarget} | gF:{srcGroup.length} gT:{tgtGroup.length} | off:{Math.round(fromEdgeOff)}/{Math.round(toEdgeOff)} | pos:{sourcePosition}/{targetPosition} | rF:{data?.roleFromPos ?? 0} rT:{data?.roleToPos ?? 0} | mF:{Math.round(roleFit?.maxFrom ?? 0)} mT:{Math.round(roleFit?.maxTo ?? 0)} | sF:{fromSense} sT:{toSense}
             </div>
           </>
         )}
@@ -981,25 +922,32 @@ export default function RelationshipEdge({
                       )}
                     </div>
                     <div className="flex items-center gap-1 pl-[3.75rem]">
-                      <span className="mr-1 text-[10px] text-muted-foreground">Texte</span>
-                      <button
-                        onClick={() => resetReflexiveConfig('roleFromOrientation')}
-                        className={`rounded px-1.5 py-0.5 text-[10px] transition-colors ${
-                          fromUpright ? 'text-muted-foreground hover:bg-muted' : 'bg-primary/20 text-primary'
-                        }`}
-                        title="Lettres pivotées (suivent le tracé)"
-                      >
-                        Pivoté
-                      </button>
-                      <button
-                        onClick={() => updateReflexiveConfig('roleFromOrientation', 'upright')}
-                        className={`rounded px-1.5 py-0.5 text-[10px] transition-colors ${
-                          fromUpright ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:bg-muted'
-                        }`}
-                        title="Lettres à l'endroit"
-                      >
-                        Droit
-                      </button>
+                      <span className="mr-1 text-[10px] text-muted-foreground">Sens</span>
+                      {(['auto', 'forward', 'backward'] as const).map((s) => {
+                        const active = (data?.roleFromSense ?? 'auto') === s
+                        return (
+                          <button
+                            key={s}
+                            onClick={() =>
+                              s === 'auto'
+                                ? resetReflexiveConfig('roleFromSense')
+                                : updateReflexiveConfig('roleFromSense', s)
+                            }
+                            className={`rounded px-1.5 py-0.5 text-[10px] transition-colors ${
+                              active ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:bg-muted'
+                            }`}
+                            title={
+                              s === 'auto'
+                                ? `Automatique (actuel : ${fromSense === 'backward' ? 'inversé' : 'normal'})`
+                                : s === 'forward'
+                                  ? 'Sens normal'
+                                  : 'Sens inversé'
+                            }
+                          >
+                            {s === 'auto' ? 'Auto' : s === 'forward' ? 'Normal' : 'Inversé'}
+                          </button>
+                        )
+                      })}
                     </div>
                   </>
                 )}
@@ -1030,25 +978,32 @@ export default function RelationshipEdge({
                       )}
                     </div>
                     <div className="flex items-center gap-1 pl-[3.75rem]">
-                      <span className="mr-1 text-[10px] text-muted-foreground">Texte</span>
-                      <button
-                        onClick={() => resetReflexiveConfig('roleToOrientation')}
-                        className={`rounded px-1.5 py-0.5 text-[10px] transition-colors ${
-                          toUpright ? 'text-muted-foreground hover:bg-muted' : 'bg-primary/20 text-primary'
-                        }`}
-                        title="Lettres pivotées (suivent le tracé)"
-                      >
-                        Pivoté
-                      </button>
-                      <button
-                        onClick={() => updateReflexiveConfig('roleToOrientation', 'upright')}
-                        className={`rounded px-1.5 py-0.5 text-[10px] transition-colors ${
-                          toUpright ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:bg-muted'
-                        }`}
-                        title="Lettres à l'endroit"
-                      >
-                        Droit
-                      </button>
+                      <span className="mr-1 text-[10px] text-muted-foreground">Sens</span>
+                      {(['auto', 'forward', 'backward'] as const).map((s) => {
+                        const active = (data?.roleToSense ?? 'auto') === s
+                        return (
+                          <button
+                            key={s}
+                            onClick={() =>
+                              s === 'auto'
+                                ? resetReflexiveConfig('roleToSense')
+                                : updateReflexiveConfig('roleToSense', s)
+                            }
+                            className={`rounded px-1.5 py-0.5 text-[10px] transition-colors ${
+                              active ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:bg-muted'
+                            }`}
+                            title={
+                              s === 'auto'
+                                ? `Automatique (actuel : ${toSense === 'backward' ? 'inversé' : 'normal'})`
+                                : s === 'forward'
+                                  ? 'Sens normal'
+                                  : 'Sens inversé'
+                            }
+                          >
+                            {s === 'auto' ? 'Auto' : s === 'forward' ? 'Normal' : 'Inversé'}
+                          </button>
+                        )
+                      })}
                     </div>
                   </>
                 )}

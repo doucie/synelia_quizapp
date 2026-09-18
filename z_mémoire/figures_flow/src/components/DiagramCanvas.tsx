@@ -95,8 +95,8 @@ export default function DiagramCanvas({ diagram, showBackground, fullscreen: _fu
           ...(saved?.reflexSpread != null ? { reflexSpread: saved.reflexSpread } : {}),
           ...(saved?.roleFromPos != null ? { roleFromPos: saved.roleFromPos } : {}),
           ...(saved?.roleToPos != null ? { roleToPos: saved.roleToPos } : {}),
-          ...(saved?.roleFromOrientation != null ? { roleFromOrientation: saved.roleFromOrientation } : {}),
-          ...(saved?.roleToOrientation != null ? { roleToOrientation: saved.roleToOrientation } : {}),
+          ...(saved?.roleFromSense != null ? { roleFromSense: saved.roleFromSense } : {}),
+          ...(saved?.roleToSense != null ? { roleToSense: saved.roleToSense } : {}),
         },
       }
     })

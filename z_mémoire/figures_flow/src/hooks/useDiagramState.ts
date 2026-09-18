@@ -61,8 +61,8 @@ export interface CardinalitySides {
     reflexSpread?: number
     roleFromPos?: number
     roleToPos?: number
-    roleFromOrientation?: 'rotate' | 'upright'
-    roleToOrientation?: 'rotate' | 'upright'
+    roleFromSense?: 'auto' | 'forward' | 'backward'
+    roleToSense?: 'auto' | 'forward' | 'backward'
   }
 }
 
@@ -100,8 +100,8 @@ export function setReflexiveConfig(
     | 'reflexSpread'
     | 'roleFromPos'
     | 'roleToPos'
-    | 'roleFromOrientation'
-    | 'roleToOrientation',
+    | 'roleFromSense'
+    | 'roleToSense',
   value: number | string | undefined,
 ) {
   try {
