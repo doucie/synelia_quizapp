@@ -36,7 +36,7 @@ export const candidaturesSuivi: DiagramDefinition = {
         variant: 'mld',
         attributes: [
           { name: 'id_avancement', isPK: true },
-          { name: 'id_candidature', isFK: true },
+          { name: '#id_candidature', isFK: true },
           { name: 'statut_progression' },
           { name: 'date_debut' },
           { name: 'date_fin' },
@@ -60,7 +60,7 @@ export const candidaturesSuivi: DiagramDefinition = {
         variant: 'mld',
         attributes: [
           { name: 'id_token_candidat', isPK: true },
-          { name: 'id_candidature', isFK: true },
+          { name: '#id_candidature', isFK: true },
           { name: 'chaine_token' },
         ],
       },
@@ -74,7 +74,7 @@ export const candidaturesSuivi: DiagramDefinition = {
         variant: 'mld',
         attributes: [
           { name: 'id_token_verification_email', isPK: true },
-          { name: 'id_candidature', isFK: true, description: 'nullable' },
+          { name: '#id_candidature', isFK: true, description: 'nullable' },
           { name: 'chaine_token' },
           { name: 'type_token' },
           { name: 'date_expiration' },
@@ -91,8 +91,8 @@ export const candidaturesSuivi: DiagramDefinition = {
         variant: 'mld',
         attributes: [
           { name: 'id_decision', isPK: true },
-          { name: 'id_avancement', isFK: true },
-          { name: 'id_decision_annulee', isFK: true, description: 'nullable' },
+          { name: '#id_avancement', isFK: true },
+          { name: '#id_decision_annulee', isFK: true, description: 'nullable' },
           { name: 'type_decision' },
           { name: 'justification' },
           { name: 'mode_decision' },
@@ -100,5 +100,48 @@ export const candidaturesSuivi: DiagramDefinition = {
       },
     },
   ],
-  edges: [],
+  edges: [
+    {
+      id: 'e-progresser',
+      source: 'candidature',
+      target: 'avancement',
+      type: 'relationship',
+      data: { label: 'progresser', cardFrom: '1,n', cardTo: '1,1', isStrong: true },
+    },
+    {
+      id: 'e-conclure',
+      source: 'avancement',
+      target: 'decision',
+      type: 'relationship',
+      data: { label: 'conclure', cardFrom: '0,n', cardTo: '1,1', isStrong: true },
+    },
+    {
+      id: 'e-generer-token',
+      source: 'candidature',
+      target: 'token_candidat',
+      type: 'relationship',
+      data: { label: 'generer', cardFrom: '0,n', cardTo: '1,1' },
+    },
+    {
+      id: 'e-creer-token-verification',
+      source: 'candidature',
+      target: 'token_verification_email',
+      type: 'relationship',
+      data: { label: 'creer', cardFrom: '0,n', cardTo: '0,1' },
+    },
+    {
+      id: 'e-annuler',
+      source: 'decision',
+      target: 'decision',
+      type: 'relationship',
+      data: {
+        label: 'annuler',
+        cardFrom: '0,1',
+        cardTo: '0,1',
+        roleFrom: 'annule',
+        roleTo: 'est annulée',
+        reflexSpread: 60,
+      },
+    },
+  ],
 }
