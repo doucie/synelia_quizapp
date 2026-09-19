@@ -7,6 +7,11 @@
   traitée ; pas d'association n-aire).
 - **Règles 7, 8, 9 complètes** (rien à traiter en amont ; notation et comptage arrêtés).
 - **MLD implémenté & commité** : `87aa75a` (plan), `71f78d0` (feat mld), `a3aff9c` (dist).
+- **Pattes & notation ajoutées (20260919)** : préfixe `#` sur les 28 FKs (règle 8), arêtes
+  `relationship` avec verbes d'association + cardinalités sur les 4 diagrammes (28 pattes),
+  liaisons des jonctions PROPOSER/REGROUPER/APPARTENIR/BENEFICIER en double patte
+  (`0,n` → `1,1`), réflexive `e-annuler` (`0,1` × `0,1`, rôles `annule`/`est annulée`,
+  `reflexSpread: 60`).
 - Hors périmètre (plan ultérieur) : passage MLD → MPD + correspondance MCD↔MPD du README.
 - Méthode : on modifie ce plan règle par règle, puis on implémente la conversion du MCD.
 
@@ -311,6 +316,20 @@ séparés par une virgule.
       NOT NULL (aucun marqueur). Attributs métier reconduits tels quels (règle 1).
 - [x] Aucune FK soulignée : même une FK qui est aussi PK (relations N,N) reste marquée
       `isFK: true` (sa composante PK reste `isPK: true`).
+- [x] **Préfixe `#` appliqué aux 28 noms de FK** (règle 8) : `#id_modele_pipeline`,
+      `#id_candidature`, `#id_decision_annulee`, `#id_evaluateur_entretien`,
+      `#id_utilisateur_declencheur`, composite PK+FK des jonctions, etc. (aucune FK sans `#`).
+- [x] **Arêtes = pattes du MLD** (4 fichiers) : verbes d'association (label), cardinalités
+      (cardFrom/cardTo calquées sur les MCD), `isStrong`/`isDashed` conservés.
+- [x] **Jonctions** : PROPOSER (`e-proposer-campagne`, `e-proposer-formulaire`),
+      REGROUPER (`e-contenir-version`, `e-contenir-question`), APPARTENIR
+      (`e-appartenir-utilisateur`, `e-appartenir-groupe`), BENEFICIER
+      (`e-beneficier-groupe`, `e-beneficier-permission`) — double patte `0,n` → `1,1`
+      (verbe répété sur les 2 pattes, convention validée).
+- [x] **Réflexive** `e-annuler` sur DECISION : `cardFrom: '0,1'`, `cardTo: '0,1'`,
+      `roleFrom: 'annule'`, `roleTo: 'est annulée'`, `reflexSpread: 60` (recopié du MCD).
+- [x] NOTIFICATION : 2 pattes vers UTILISATEUR (`e-obtenir` `0,n`→`1,1`,
+      `e-declencher` `0,n`→`0,1`) — offset d'ancrage géré par `edgePathOffset`.
 
 ### Règle 9 — Vérifications finales de cohérence
 
