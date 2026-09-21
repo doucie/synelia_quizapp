@@ -39,11 +39,14 @@
   et typage complet des 29 relations (184 attributs ; conventions : PK/FK → `INT`, `est_*` →
   `BOOLEAN`, `date_*` → `DATETIME`, textes → `TEXT`/`VARCHAR(n)`, scores → `DECIMAL(5,2)`).
   Détail : `plans/implementations/20260921_typage_nullabilite_attributs_mld.md`. **Implémenté**.
-- **Décision cross-domaine (20260921)** : la BD étant fragmentée en schémas par
-  sous-domaine, une **clé étrangère cross-domaine est TOUJOURS ajoutée au MLD** (colonne
-  réelle et nécessaire, jamais omise — l'omettre rendrait la table fausse), avec un
-  **renvoi en bas de figure** vers le sous-domaine où l'entité référencée est définie
-  (Règle 10). Recensement final des cross-domaines à mener (annexe « à compléter »).
+- **Règle 10 & recensement cross-domaines (20260921)** : la BD (volontairement bornée en
+  tailles par figure) est découpée en **sous-domaines** (6 domaines, 4 figurés). Une clé
+  étrangère qui relie la figure A à une entité de la figure B est une **FK cross-domaine** :
+  elle reste **modélisable au MLD** (colonne `#id_*` réelle et nécessaire, jamais omise) mais
+  **sans jamais insérer l'entité cible** dans la figure (ni stub, ni table de liaison
+  inter-figures) — un **renvoi en bas de figure** référence l'entité définie dans son domaine
+  (Règle 10). **Recensement final acté le 20260921, source : `quizapp_db_described_20260818.md`**
+  (6 FKs cross à ajouter — annexe « Inventaire cross-domaines » ; réalisation en plan séparé).
 - Hors périmètre (plan ultérieur) : passage MLD → MPD + correspondance MCD↔MPD du README.
 - Méthode : on modifie ce plan règle par règle, puis on implémente la conversion du MCD.
 
@@ -56,12 +59,12 @@
   anglais/snake_case n'intervient qu'au passage MLD → MPD (plan ultérieur).
 - Notation dans les fichiers `nouveau/mld/*.ts` : clé primaire = `isPK: true` (soulignée),
   clé étrangère = `isFK: true` (préfixée `#`), jamais soulignée.
-- **BD fragmentée en sous-domaines** (schémas) : au **MCD**, une entité cross-domaine
-  apparaît en *stub* (juste sa clé primaire + badge `ref [Domaine]`), définition complète
-  dans son sous-domaine d'origine ; au **MLD**, la **clé étrangère cross-domaine est
-  ajoutée** dans la table (jamais omise) + **note de traçabilité** en renvoi bas de figure
-  vers le sous-domaine de définition. Le MPD reste hors périmètre (aucune fragmentation :
-  100 % des colonnes réelles).
+- **Sous-domaines (6 domaine, 4 figurés)** : les MCD/MLD sont volontairement découpés car la
+  BD ne tient pas entièrement en une figure. **MCD** : une entité hors périmètre d'une figure
+  **reste hors périmètre** (aucun stub `ref [Domaine]`, aucune table de liaison inter-figures
+  dessinée). **MLD** : la **clé étrangère relative à la liaison est ajoutable** (colonne
+  `#id_*` + **renvoi en bas de figure** vers l'entité externe), mais **jamais l'entité cible
+  elle-même**. Le MPD reste hors périmètre (aucune fragmentation : 100 % des colonnes réelles).
 - **Périmètre** : réécriture des **4 fichiers `nouveau/mld/{campagnes_pipeline,candidatures_suivi,entretiens_evaluation,utilisateurs_droits}.ts`**.
 - **Hors périmètre** (plan ultérieur) : le passage MLD → MPD et la correspondance
   MCD↔MPD du README.
@@ -166,17 +169,53 @@ l'identifiant devient la clé primaire, soulignée. Aucun attribut perdu ni ajou
 > Note : NOTIFICATION reçoit **deux** clés étrangères vers UTILISATEUR (obtenir + déclencher) —
 > levée d'ambiguïté par nom de rôle exigée (cf. règle 5, étendu).
 
-### Inventaire cross-domaines (Règle 10 — à compléter, recensement final en cours)
+### Inventaire cross-domaines (Règle 10 — recensement final, acté 20260921)
 
-| Relation (domaine) | FK candidate | Entité cible | Domaine cible | Confirmé |
+Recensement établi depuis le snapshot physique **`quizapp_db_described_20260818.md`** (état
+courant, `pipeline_stage_evaluation_criterion` supprimée en V1_080). Chaque lien = une **FK
+à ajouter au MLD** (colonne `#id_*` + renvoi bas de figure, **jamais l'entité cible**) —
+réalisation en plan séparé.
+
+| Relation (domaine) | FK MLD à ajouter | Entité cible (figure) | Colonne physique (snap 20260818) | Nullabilité |
 |---|---|---|---|---|
-| DECISION (Candidatures & suivi) | `#id_utilisateur` | UTILISATEUR | Utilisateurs & droits | à valider |
-| ETAPE_PIPELINE (Campagnes & pipeline) | `#id_version_grille` | VERSION_GRILLE | Entretiens & évaluation | à valider |
-| REGLE_NOTIFICATION (Campagnes & pipeline) | `#id_modele_email` | MODELE_EMAIL | (à intégrer au MCD si retenue) | à valider |
+| DECISION (Candidatures & suivi) | `#id_utilisateur` | UTILISATEUR (Utilisateurs & droits) | `decisions.user_id` | OUI (nullable) |
+| AVANCEMENT (Candidatures & suivi) | `#id_etape_pipeline` | ETAPE_PIPELINE (Campagnes & pipeline) | `application_progress.pipeline_stage_id` | non (NOT NULL) |
+| ENTRETIEN (Entretiens & évaluation) | `#id_avancement` | AVANCEMENT (Candidatures & suivi) | `interviews.application_progress_id` | OUI (snap) — NOT NULL dans la cible 420 (à trancher à l'implémentation) |
+| CANDIDATURE (Candidatures & suivi) | `#id_version_formulaire` | VERSION_FORMULAIRE (Campagnes & pipeline) | `applications.form_version_id` | OUI (nullable) |
+| ETAPE_PIPELINE (Campagnes & pipeline) | `#id_version_grille` | VERSION_GRILLE (Entretiens & évaluation) | `pipeline_stage.evaluation_grid_template_version_id` | OUI (nullable) |
+| REGLE_NOTIFICATION (Campagnes & pipeline) | `#id_modele_email` | MODELE_EMAIL (Communication, non figurée) | `pipeline_stage_notification_rule.email_template_id` | OUI (nullable) |
 
-> Chaque ligne doit produire une **FK ajoutée au MLD** + un **renvoi bas de figure** (Règle 10).
-> Le tableau sera complété lors du recensement final des cross-domaines (lien inter-sous-domaines
-> référencés par la BD physique fragmentée).
+> **NOTIFICATION → UTILISATEUR** (`notifications.user_id`) : **intra-figure** (Utilisateurs &
+> droits) — aucun renvoi nécessaire.
+> `pipeline_stage_evaluation_criterion` (ancienne table de liaison ETAPE_PIPELINE ×
+> VERSION_GRILLE) : **supprimée en V1_080** — le lien est porté par la FK directe
+> `pipeline_stage.evaluation_grid_template_version_id`.
+
+#### Références hors périmètre (note de traçabilité)
+
+Liens physiques réels **non modélisés au MLD** (entité cible volontairement écartée ou
+détail d'implémentation) :
+
+- `applications.source_token_id` → `SOURCE_TOKEN` (table non modélisée, porte d'entrée candidature).
+- `candidate_answer` / `application_quiz_attempt` → entité **TENTATIVE_QUIZ** non modélisée au
+  MCD (renvoie vers `applications`, `application_progress`, `form_version`, `question`, `answer`).
+- `campaigns.speciality_id` → `SPECIALITES` (référentiel « Config système », non figuré).
+- `email_verification_tokens.user_id` → `user` (second parent optionnel, comptes candidats).
+- FK **acteurs/audit** vers `user` (`validated_by`, `skipped_by`, `reopened_by`, `closed_by`,
+  `evaluation_completed_by`, `campaigns.creator_id`, `*_by` d'audit) : acteurs de ligne de vie,
+  non portés par une association MCD → **hors périmètre MLD**.
+
+#### Tables écartées / non représentables
+
+- **Volontairement écartées (hors scope MCD)** : détail dans `plans/audit/20260819_hors_scope_mcd.md`
+  (`EVENEMENT_AUDIT`, `PERMISSION_ENTITE`, `PERMISSION_UTILISATEUR`, `DEMANDE_CHANGEMENT_GROUPE`,
+  NOTIFICATION polymorphique, `email_verification_tokens.email`) + tables de config/communication
+  non figurées (`app_config`, `smtp_config`, `email_template_preset`, `legal_text`, `departments`,
+  `invitation_code`, `mail_log`, `source_token`, `application_quiz_attempt`, `candidate_answer`…).
+- **Aucune table de liaison inter-figures restante** : le seul cas (`pipeline_stage_evaluation_criterion`,
+  jonction ETAPE_PIPELINE × VERSION_GRILLE) a été **supprimé en V1_080** ; les jonctions actuelles
+  (`campaign_form`, `form_questions`, `user_business_group`, `business_group_permission`) ont leurs
+  deux parents dans la même figure.
 
 ---
 
@@ -398,28 +437,39 @@ séparés par une virgule.
 - [x] `DECISION` et `NOTIFICATION` : aucun doublon de nom PK/FK (noms de rôle).
 - [x] `EVALUATION`, `NOTE_CRITERE`, `NOTIFICATION` : leurs FKs multiples pointent chacune
       vers la bonne relation.
-- [ ] Aucune **FK cross-domaine omise** : chaque lien inter-sous-domaines produit sa FK
-      (Règle 10) + renvoi bas de figure, ou figure explicitement au recensement des
-      cross-domaines (annexe).
+- [x] Aucune **FK cross-domaine omise** : recensement final acté (annexe « Inventaire
+      cross-domaines », source `quizapp_db_described_20260818.md`) — 6 FKs cross à ajouter
+      au MLD (+ renvoi bas de figure), références hors périmètre et tables écartées listées ;
+      réalisation des colonnes en plan séparé.
 
-### Règle 10 — Clés étrangères cross-domaine (sous-domaines)
+### Règle 10 — Clés étrangères cross-domaines (sous-domaines)
 
-- Une association entre deux sous-domaines produit une FK **réelle et nécessaire** de la
-  table : on **l'ajoute**, on ne l'omet pas — une table MLD incomplète est fausse (à la
-  différence du MCD qui peut *résumer* une entité en stub `ref [Domaine]`).
-- Rendu : FK ajoutée dans la table comme n'importe quelle autre (`#id_*`, nullabilité
-  selon la règle 4 — min de la cardinalité conceptuelle), **complétée d'un renvoi en bas
-  de figure** vers le sous-domaine où l'entité référencée est pleinement définie.
+Contexte : les figures sont découpées en sous-domaines parce que la BD ne tient pas
+entièrement en une figure.
+
+- **MCD** : une entité hors périmètre d'une figure **reste hors périmètre** (aucun stub
+  `ref [Domaine]`, aucune table de liaison inter-figures dessinée).
+- **MLD** : une liaison inter-figures produit une FK **réelle et nécessaire** dans la table
+  source — on **l'ajoute**, on ne l'omet pas (une table MLD incomplète est fausse). On
+  ajoute **la clé étrangère, jamais l'entité cible** (ni stub, ni table de liaison entre
+  figures).
+- Rendu : FK ajoutée comme n'importe quelle autre (`#id_*`, nullabilité = min de la
+  cardinalité conceptuelle, recoupée sur le physique), **complétée d'un renvoi en bas de
+  figure** vers le sous-domaine où l'entité référencée est définie.
   > *Ex : `DECISION(id_decision, type_decision, justification, mode_decision,
   > #id_utilisateur¹, #id_avancement, #id_decision_annulee)` — note sous la figure :
   > « ¹ `#id_utilisateur` référence `UTILISATEUR`, entité définie dans le sous-domaine
   > “Utilisateurs & droits” (§X.X) ».*
-- Le renvoi est une **note de traçabilité**, pas une duplication de la définition : seule
-  la clé (colonne FK) est répétée, jamais les attributs de l'entité référencée.
-- **Cas connus à valider au recensement final** : `DECISION.#id_utilisateur` →
-  UTILISATEUR (décideur) ; `ETAPE_PIPELINE.#id_version_grille` → VERSION_GRILLE (grille
-  d'évaluation par étape) ; `REGLE_NOTIFICATION.#id_modele_email` → MODELE_EMAIL (entité
-  absente du MCD actuel — à intégrer au MCD si retenue).
+- Le renvoi est une **note de traçabilité**, pas une duplication : seule la colonne FK est
+  répétée, jamais les attributs de l'entité référencée (qui reste hors figure).
+- **Liste fermée au recensement final (20260921)** : 6 FKs cross à ajouter (annexe) —
+  `DECISION.#id_utilisateur`, `AVANCEMENT.#id_etape_pipeline`, `ENTRETIEN.#id_avancement`,
+  `CANDIDATURE.#id_version_formulaire`, `ETAPE_PIPELINE.#id_version_grille`,
+  `REGLE_NOTIFICATION.#id_modele_email`. Toute nouvelle FK cross hors liste = à recenser
+  avant d'être ajoutée.
+- **Aucune table de liaison inter-figures** : un quadratin entre une entité d'un MLD-A et
+  d'un MLD-B est interdit ; s'il apparaît (ex. historique `pipeline_stage_evaluation_criterion`,
+  supprimée en V1_080), il se résout en FK directe nullable sur la table dominante.
 
 ---
 
