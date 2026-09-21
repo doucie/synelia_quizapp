@@ -18,6 +18,14 @@
 - **Ajustement post-implémentation (20260921)** : retrait de `code_salle_evaluation` de
   `ENTRETIEN` (MCD/MLD) — code retiré des modèles conceptuel et logique (le physique
   `interviews.evaluation_room_code` reste inchangé).
+- **Ajustement post-implémentation (20260921)** : alignement MLD sur les règles Merise — les
+  règles `plans/rules/regles_mld.md` actent que **le MLD ne porte ni verbes d'association ni
+  cardinalités** (verbes traduits en FK ou en noms de tables de liaison ; cardinalités →
+  nullabilité). En conséquence, les arêtes des 4 fichiers `mld/*.ts` ont perdu
+  `label`/`cardFrom`/`cardTo` (et `roleFrom`/`roleTo` pour la réflexive) et sont devenues des
+  liens de FK nus. **Badge PK/FK réintroduit** dans `EntityNode.tsx` (variantes `mld`/`mpd`,
+  fond `hsla(couleur, 0.2)`) en plus du soulignement PK conservé (récupéré de l'historique
+  `ffea789`). **Implémenté**.
 - Hors périmètre (plan ultérieur) : passage MLD → MPD + correspondance MCD↔MPD du README.
 - Méthode : on modifie ce plan règle par règle, puis on implémente la conversion du MCD.
 
@@ -325,17 +333,21 @@ séparés par une virgule.
 - [x] **Préfixe `#` appliqué aux 28 noms de FK** (règle 8) : `#id_modele_pipeline`,
       `#id_candidature`, `#id_decision_annulee`, `#id_evaluateur_entretien`,
       `#id_utilisateur_declencheur`, composite PK+FK des jonctions, etc. (aucune FK sans `#`).
-- [x] **Arêtes = pattes du MLD** (4 fichiers) : verbes d'association (label), cardinalités
-      (cardFrom/cardTo calquées sur les MCD), `isStrong`/`isDashed` conservés.
+- [x] **Arêtes = liens de FK nus** (4 fichiers) : retrait des verbes (`label`), cardinalités
+      (`cardFrom`/`cardTo`) et rôles (`roleFrom`/`roleTo`) des arêtes MLD — conformes aux
+      règles `regles_mld.md` (ni verbes ni cardinalités au MLD) ; `isStrong`/`isDashed`
+      conservés comme simple réglage visuel.
 - [x] **Jonctions** : PROPOSER (`e-proposer-campagne`, `e-proposer-formulaire`),
       REGROUPER (`e-contenir-version`, `e-contenir-question`), APPARTENIR
       (`e-appartenir-utilisateur`, `e-appartenir-groupe`), BENEFICIER
-      (`e-beneficier-groupe`, `e-beneficier-permission`) — double patte `0,n` → `1,1`
-      (verbe répété sur les 2 pattes, convention validée).
-- [x] **Réflexive** `e-annuler` sur DECISION : `cardFrom: '0,1'`, `cardTo: '0,1'`,
-      `roleFrom: 'annule'`, `roleTo: 'est annulée'`, `reflexSpread: 60` (recopié du MCD).
+      (`e-beneficier-groupe`, `e-beneficier-permission`) — les 2 pattes sont devenues
+      des liens nus (sans `label`, sans `0,n` → `1,1`).
+- [x] **Réflexive** `e-annuler` sur DECISION : `cardFrom`/`cardTo`/`roleFrom`/`roleTo` retirés ;
+      `reflexSpread: 60` conservé (géométrie de boucle). Le rôle de la FK reste lisible dans le
+      nom de colonne `#id_decision_annulee`.
 - [x] NOTIFICATION : 2 pattes vers UTILISATEUR (`e-obtenir` `0,n`→`1,1`,
-      `e-declencher` `0,n`→`0,1`) — offset d'ancrage géré par `edgePathOffset`.
+      `e-declencher` `0,n`→`0,1`) — offset d'ancrage géré par `edgePathOffset`
+      (devenues : 2 liens FK nus).
 
 ### Règle 9 — Vérifications finales de cohérence
 
