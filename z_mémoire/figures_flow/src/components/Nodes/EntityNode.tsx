@@ -37,41 +37,52 @@ export default function EntityNode({ data }: NodeProps<EntityNodeData>) {
 
       <div className="bg-background relative flex flex-col gap-1 rounded-b-2xl p-3">
         {attributes.map((attr, i) => (
-          <div key={i} className="flex items-center gap-2 text-xs">
-            {attr.isPK && (variant === 'mld' || variant === 'mpd') && (
-              <span
-                className="rounded px-1 text-[10px] font-bold"
-                style={color ? { backgroundColor: hsla(color, 0.2), color } : undefined}
-              >
-                PK
-              </span>
+          <div
+            key={i}
+            className={clsx(
+              'text-xs',
+              variant === 'mld'
+                ? 'grid grid-cols-[minmax(0,1fr)_auto_auto] gap-x-2'
+                : 'flex items-center gap-2',
             )}
-            {attr.isFK && (variant === 'mld' || variant === 'mpd') && (
+          >
+            <span className="flex min-w-0 items-center gap-2">
+              {attr.isPK && (variant === 'mld' || variant === 'mpd') && (
+                <span
+                  className="rounded px-1 text-[10px] font-bold"
+                  style={color ? { backgroundColor: hsla(color, 0.2), color } : undefined}
+                >
+                  PK
+                </span>
+              )}
+              {attr.isFK && (variant === 'mld' || variant === 'mpd') && (
+                <span
+                  className="rounded px-1 text-[10px] font-bold"
+                  style={color ? { backgroundColor: hsla(color, 0.2), color } : undefined}
+                >
+                  FK
+                </span>
+              )}
               <span
-                className="rounded px-1 text-[10px] font-bold"
-                style={color ? { backgroundColor: hsla(color, 0.2), color } : undefined}
+                className={clsx((attr.isPK || attr.isFK) && 'font-bold', 'text-foreground')}
+                style={
+                  color && attr.isPK
+                    ? { color, boxShadow: `inset 0px -3px 0px ${hsla(color, 0.2)}` }
+                    : color && attr.isFK
+                      ? { color }
+                      : undefined
+                }
               >
-                FK
+                {attr.name}
               </span>
-            )}
-            <span
-              className={clsx((attr.isPK || attr.isFK) && 'font-bold', 'text-foreground')}
-              style={
-                color && attr.isPK
-                  ? { color, boxShadow: `inset 0px -3px 0px ${hsla(color, 0.2)}` }
-                  : color && attr.isFK
-                    ? { color }
-                    : undefined
-              }
-            >
-              {attr.name}
             </span>
             {attr.type && variant === 'mpd' && (
               <span className="text-muted-foreground">{attr.type}</span>
             )}
+            {variant === 'mld' && <span className="text-muted-foreground">{attr.type}</span>}
             {variant === 'mld' && (
-              <span className="text-muted-foreground">
-                {attr.description === 'nullable' ? 'NULL' : 'NOT NULL'}
+              <span className="text-muted-foreground whitespace-nowrap">
+                {attr.nullable ? 'NULL' : 'NOT NULL'}
               </span>
             )}
           </div>

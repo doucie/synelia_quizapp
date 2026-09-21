@@ -13,6 +13,7 @@ export interface Attribute {
   isFK?: boolean
   isNew?: boolean
   isDeleted?: boolean
+  nullable?: boolean
   description?: string
 }
 
