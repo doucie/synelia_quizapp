@@ -38,6 +38,22 @@ export default function EntityNode({ data }: NodeProps<EntityNodeData>) {
       <div className="bg-background relative flex flex-col gap-1 rounded-b-2xl p-3">
         {attributes.map((attr, i) => (
           <div key={i} className="flex items-center gap-2 text-xs">
+            {attr.isPK && (variant === 'mld' || variant === 'mpd') && (
+              <span
+                className="rounded px-1 text-[10px] font-bold"
+                style={color ? { backgroundColor: hsla(color, 0.2), color } : undefined}
+              >
+                PK
+              </span>
+            )}
+            {attr.isFK && (variant === 'mld' || variant === 'mpd') && (
+              <span
+                className="rounded px-1 text-[10px] font-bold"
+                style={color ? { backgroundColor: hsla(color, 0.2), color } : undefined}
+              >
+                FK
+              </span>
+            )}
             <span
               className={clsx((attr.isPK || attr.isFK) && 'font-bold', 'text-foreground')}
               style={
