@@ -22,7 +22,6 @@ export const campagnesPipeline: DiagramDefinition = {
           { name: 'date_fin' },
           { name: 'max_candidatures' },
           { name: 'max_tentatives' },
-          { name: 'chronometree' },
           { name: 'est_publiee' },
           { name: 'est_archivee' },
         ],

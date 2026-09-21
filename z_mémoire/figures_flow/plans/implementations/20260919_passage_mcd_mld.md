@@ -12,6 +12,9 @@
   liaisons des jonctions PROPOSER/REGROUPER/APPARTENIR/BENEFICIER en double patte
   (`0,n` → `1,1`), réflexive `e-annuler` (`0,1` × `0,1`, rôles `annule`/`est annulée`,
   `reflexSpread: 60`).
+- **Ajustement post-implémentation (20260921)** : retrait de `chronometree` de `CAMPAGNE`
+  (MCD/MLD) — l'attribut ne vit plus qu'au niveau de `FORMULAIRE` (`chronometre`),
+  cohérence avec le physique `forms.is_timed`.
 - Hors périmètre (plan ultérieur) : passage MLD → MPD + correspondance MCD↔MPD du README.
 - Méthode : on modifie ce plan règle par règle, puis on implémente la conversion du MCD.
 
@@ -38,7 +41,7 @@ l'identifiant devient la clé primaire, soulignée. Aucun attribut perdu ni ajou
 ### Campagnes & pipeline (`campagnes_pipeline.ts`)
 
 - [x] `CAMPAGNE(id_campagne)` : titre, description, statut, date_debut, date_fin,
-      max_candidatures, max_tentatives, chronometree, est_publiee, est_archivee
+      max_candidatures, max_tentatives, est_publiee, est_archivee
 - [x] `MODELE_PIPELINE(id_modele_pipeline)` : libelle_modele, est_defaut, est_actif, est_verrouillé
 - [x] `ETAPE_PIPELINE(id_etape_pipeline)` : type_etape, libelle_etape, ordre_etape,
       est_requise, est_eliminatoire, est_active
