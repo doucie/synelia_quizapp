@@ -39,6 +39,11 @@
   et typage complet des 29 relations (184 attributs ; conventions : PK/FK → `INT`, `est_*` →
   `BOOLEAN`, `date_*` → `DATETIME`, textes → `TEXT`/`VARCHAR(n)`, scores → `DECIMAL(5,2)`).
   Détail : `plans/implementations/20260921_typage_nullabilite_attributs_mld.md`. **Implémenté**.
+- **Décision cross-domaine (20260921)** : la BD étant fragmentée en schémas par
+  sous-domaine, une **clé étrangère cross-domaine est TOUJOURS ajoutée au MLD** (colonne
+  réelle et nécessaire, jamais omise — l'omettre rendrait la table fausse), avec un
+  **renvoi en bas de figure** vers le sous-domaine où l'entité référencée est définie
+  (Règle 10). Recensement final des cross-domaines à mener (annexe « à compléter »).
 - Hors périmètre (plan ultérieur) : passage MLD → MPD + correspondance MCD↔MPD du README.
 - Méthode : on modifie ce plan règle par règle, puis on implémente la conversion du MCD.
 
@@ -51,6 +56,12 @@
   anglais/snake_case n'intervient qu'au passage MLD → MPD (plan ultérieur).
 - Notation dans les fichiers `nouveau/mld/*.ts` : clé primaire = `isPK: true` (soulignée),
   clé étrangère = `isFK: true` (préfixée `#`), jamais soulignée.
+- **BD fragmentée en sous-domaines** (schémas) : au **MCD**, une entité cross-domaine
+  apparaît en *stub* (juste sa clé primaire + badge `ref [Domaine]`), définition complète
+  dans son sous-domaine d'origine ; au **MLD**, la **clé étrangère cross-domaine est
+  ajoutée** dans la table (jamais omise) + **note de traçabilité** en renvoi bas de figure
+  vers le sous-domaine de définition. Le MPD reste hors périmètre (aucune fragmentation :
+  100 % des colonnes réelles).
 - **Périmètre** : réécriture des **4 fichiers `nouveau/mld/{campagnes_pipeline,candidatures_suivi,entretiens_evaluation,utilisateurs_droits}.ts`**.
 - **Hors périmètre** (plan ultérieur) : le passage MLD → MPD et la correspondance
   MCD↔MPD du README.
@@ -154,6 +165,18 @@ l'identifiant devient la clé primaire, soulignée. Aucun attribut perdu ni ajou
 
 > Note : NOTIFICATION reçoit **deux** clés étrangères vers UTILISATEUR (obtenir + déclencher) —
 > levée d'ambiguïté par nom de rôle exigée (cf. règle 5, étendu).
+
+### Inventaire cross-domaines (Règle 10 — à compléter, recensement final en cours)
+
+| Relation (domaine) | FK candidate | Entité cible | Domaine cible | Confirmé |
+|---|---|---|---|---|
+| DECISION (Candidatures & suivi) | `#id_utilisateur` | UTILISATEUR | Utilisateurs & droits | à valider |
+| ETAPE_PIPELINE (Campagnes & pipeline) | `#id_version_grille` | VERSION_GRILLE | Entretiens & évaluation | à valider |
+| REGLE_NOTIFICATION (Campagnes & pipeline) | `#id_modele_email` | MODELE_EMAIL | (à intégrer au MCD si retenue) | à valider |
+
+> Chaque ligne doit produire une **FK ajoutée au MLD** + un **renvoi bas de figure** (Règle 10).
+> Le tableau sera complété lors du recensement final des cross-domaines (lien inter-sous-domaines
+> référencés par la BD physique fragmentée).
 
 ---
 
@@ -375,6 +398,28 @@ séparés par une virgule.
 - [x] `DECISION` et `NOTIFICATION` : aucun doublon de nom PK/FK (noms de rôle).
 - [x] `EVALUATION`, `NOTE_CRITERE`, `NOTIFICATION` : leurs FKs multiples pointent chacune
       vers la bonne relation.
+- [ ] Aucune **FK cross-domaine omise** : chaque lien inter-sous-domaines produit sa FK
+      (Règle 10) + renvoi bas de figure, ou figure explicitement au recensement des
+      cross-domaines (annexe).
+
+### Règle 10 — Clés étrangères cross-domaine (sous-domaines)
+
+- Une association entre deux sous-domaines produit une FK **réelle et nécessaire** de la
+  table : on **l'ajoute**, on ne l'omet pas — une table MLD incomplète est fausse (à la
+  différence du MCD qui peut *résumer* une entité en stub `ref [Domaine]`).
+- Rendu : FK ajoutée dans la table comme n'importe quelle autre (`#id_*`, nullabilité
+  selon la règle 4 — min de la cardinalité conceptuelle), **complétée d'un renvoi en bas
+  de figure** vers le sous-domaine où l'entité référencée est pleinement définie.
+  > *Ex : `DECISION(id_decision, type_decision, justification, mode_decision,
+  > #id_utilisateur¹, #id_avancement, #id_decision_annulee)` — note sous la figure :
+  > « ¹ `#id_utilisateur` référence `UTILISATEUR`, entité définie dans le sous-domaine
+  > “Utilisateurs & droits” (§X.X) ».*
+- Le renvoi est une **note de traçabilité**, pas une duplication de la définition : seule
+  la clé (colonne FK) est répétée, jamais les attributs de l'entité référencée.
+- **Cas connus à valider au recensement final** : `DECISION.#id_utilisateur` →
+  UTILISATEUR (décideur) ; `ETAPE_PIPELINE.#id_version_grille` → VERSION_GRILLE (grille
+  d'évaluation par étape) ; `REGLE_NOTIFICATION.#id_modele_email` → MODELE_EMAIL (entité
+  absente du MCD actuel — à intégrer au MCD si retenue).
 
 ---
 
