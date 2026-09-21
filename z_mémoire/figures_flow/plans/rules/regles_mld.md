@@ -5,6 +5,20 @@
 
 ---
 
+## Principe directeur — pas de verbes ni de cardinalités au MLD
+
+- Au niveau du MLD, **ni les verbes d'association ni les cardinalités ne sont conservés**.
+  Ils sont *traduits* en structure relationnelle :
+- La **cardinalité** devient une propriété de **nullabilité** de la clé étrangère
+  (**NULL** / **NOT NULL**) ; elle conditionne aussi la **forme** de la transformation
+  (règle 2 vs règle 3).
+- Le **verbe d'association disparaît** : soit absorbé par la migration de clé (CIF, règle 2),
+  soit en devenant le **nom de la relation de liaison** (N,N, règle 3).
+- Le MLD s'exprime donc **uniquement** par des relations, des clés primaires, des clés
+  étrangères et des valeurs nulles.
+
+---
+
 ## 1. Passage des entités vers les relations
 
 - Chaque entité devient une **relation (table)** portant les mêmes attributs ; l'identifiant devient la **clé primaire**, soulignée.
@@ -18,6 +32,8 @@
 
 - Quand une patte porte une cardinalité **max = 1** (CIF), la clé primaire de l'entité côté « 1 » **migre comme clé étrangère** dans la relation côté « n ». L'association elle-même disparaît en tant que relation autonome.
   > *Ex : `APPLICATION_PROGRESS (0,n) — CONCERNE — (1,1) APPLICATION` : la CIF est côté `APPLICATION`. Au MLD, `id_application` migre comme clé étrangère : `APPLICATION_PROGRESS(id_progress, ..., #id_application)`.*
+- Le **verbe d'association disparaît intégralement** dans ce cas : aucun nom d'association ne subsiste au MLD — le lien s'exprime uniquement par la présence de la clé étrangère `#id_...`.
+  > *Ex : `CONCERNE (CANDIDAT_ENTRETIEN × EVALUATION)` → `EVALUATION(id_evaluation, ..., #id_candidat_entretien NOT NULL)` : nulle part il n'est fait référence à « concerner ».*
 - S'il existe des attributs propres à l'association, ils **migrent avec la clé étrangère**, dans la même relation — pas de relation séparée créée pour si peu.
   > *Ex : si `CONCERNE` portait un attribut `date_maj`, il rejoindrait `APPLICATION_PROGRESS` aux côtés de `#id_application`.*
 - Une CIF « 1,1 » stricte (obligatoire et unique) donne une **clé étrangère non nulle (NOT NULL)**.
@@ -27,6 +43,7 @@
 
 ## 3. Sans CIF (N,N des deux côtés) → l'association devient une relation à part entière
 
+- Le **verbe d'association devient le nom de la relation de liaison** — soit tel quel (`POSTULE`, `PROPOSER`, `APPARTENIR`), soit sous forme de nom composé (`ENTRETIEN_TAG`). C'est la **seule trace du verbe** conservée au MLD.
 - Si **aucune** des deux pattes n'a de cardinalité max = 1 (donc N,N des deux côtés), l'association devient une **relation indépendante**, dont la clé primaire est la **concaténation des identifiants** des entités reliées.
   > *Ex : `CANDIDAT (0,n) — POSTULE — (0,n) CAMPAGNE` : aucune CIF. Au MLD : `POSTULE(#id_candidat, #id_campagne, date_candidature)`, avec une clé primaire composée.*
 - Si l'association N,N n'a **aucun attribut propre**, la relation ne contient que les deux clés étrangères — rien d'autre.
@@ -38,6 +55,7 @@
 
 ## 4. Cardinalités « molles » et valeurs nulles
 
+- La cardinalité **n'est pas recopiée telle quelle au MLD** : seul son **min** se traduit en nullabilité, son **max** conditionnant déjà la forme de la transformation (règles 2 et 3).
 - Une cardinalité **min = 0** sur la patte qui reste après migration se traduit par une clé étrangère **nullable** ; **min = 1** la rend **obligatoire (NOT NULL)**.
   > *Ex : `compter` entre QUESTION et REPONSE, fixée à `(0,n)` côté QUESTION / `(1,1)` côté REPONSE : la clé étrangère `#id_question` dans REPONSE est donc **obligatoire (NOT NULL)** — chaque réponse appartient obligatoirement à une question.*
 - La nullabilité doit découler de la **cardinalité conceptuelle validée**, jamais de la structure physique existante prise comme point de départ.
@@ -80,6 +98,20 @@
 - On garde le **français** à ce niveau, comme au MCD — la bascule anglais/snake_case n'intervient qu'au passage MLD → MPD, où une table de correspondance MCD↔MPD est tenue en annexe.
   > *Ex : `CANDIDAT` et `id_candidat` restent en français au MLD ; ils ne deviennent `applications` / `id` qu'au MPD.*
 
+### Notation graphique (figure)
+
+Sur une figure de MLD, **PK, FK et nullabilité sont portées à l'intérieur des blocs** des relations
+(pratique standard des diagrammes relationnels — MySQL Workbench, dbdiagram.io, etc.) :
+
+- **PK / FK** : badge `PK` / `FK` à côté de chaque attribut. Le projet marque la PK **soulignée**
+  (`isPK`) et la FK par le préfixe **`#`** (`isFK`).
+- **NOT NULL / NULL** : colonne d'options (ex. `VARCHAR(50) | NOT NULL`), syntaxe SQL explicite
+  (`NOT NULL`), ou encore puce pleine/vide (⚫ / ⚪). Le projet documente la nullabilité en
+  `description` (`'nullable'` ↔ min 0).
+- Un **lien entre deux relations** est un *lien de référencement* (FK) : il **ne porte ni verbe
+  d'association, ni cardinalité** — la sémantique est portée par les badges `#` / `PK` / nullabilité
+  internes aux blocs.
+
 ---
 
 ## 9. Vérifications finales de cohérence
@@ -90,6 +122,8 @@
   > *Ex : après la migration dans `APPLICATION_PROGRESS`, on vérifie qu'elle garde bien son propre identifiant `id_progress` comme clé primaire — la clé étrangère `#id_application` ne le remplace pas.*
 - Le **nombre de relations** doit rester cohérent avec le nombre d'entités + le nombre d'associations N,N ou n-aires du MCD — aucune relation oubliée, aucune ajoutée sans raison.
   > *Ex : sur les tables prévues pour le schéma, chaque relation doit se justifier soit par une entité MCD, soit par une association N,N/n-aire — pas de table ajoutée « au cas où ».*
+- Aucune association du MCD ne doit laisser subsister de **verbe** ou de **cardinalité** au MLD : chaque association produit soit une **clé étrangère** (règle 2), soit une **relation de liaison** (règle 3) — jamais un lien « flottant » sans traduction.
+  > *Ex : `e-soumettre (EVALUATEUR_ENTRETIEN × EVALUATION)` ne laisse aucune trace de « soumettre » au MLD ; elle produit `EVALUATION.#id_evaluateur_entretien` (nullable).*
 
 ---
 
@@ -103,3 +137,7 @@
 | COMPTER (QUESTION–REPONSE) | `(0,n)` / `(1,1)` | Migration : `#id_question` NOT NULL dans `REPONSE` |
 | EMETTRE/GENERER (CANDIDATURE–TOKEN_CANDIDAT) | `(0,n)` / `(1,1)` | Migration : `#id_candidature` NOT NULL dans `TOKEN_CANDIDAT` |
 | ANNULE (DECISION–DECISION, réflexive) | `(0,1)` / `(0,1)` | Migration réflexive : `#id_decision_annulee` dans `DECISION` |
+
+> Ces résultats sont les **seuls** éléments du MLD : les verbes et les cardinalités du MCD
+> (colonnes de gauche) y ont été *consommés* par la transformation et n'apparaissent pas
+> dans les relations produites.
