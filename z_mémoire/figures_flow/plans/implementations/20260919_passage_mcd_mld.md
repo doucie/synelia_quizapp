@@ -26,6 +26,12 @@
   liens de FK nus. **Badge PK/FK réintroduit** dans `EntityNode.tsx` (variantes `mld`/`mpd`,
   fond `hsla(couleur, 0.2)`) en plus du soulignement PK conservé (récupéré de l'historique
   `ffea789`). **Implémenté**.
+- **Ajustement post-implémentation (20260921)** : la **nullabilité est désormais affichée**
+  dans les blocs MLD — `NOT NULL` ou `NULL` en gris à droite du nom de chaque attribut
+  (`EntityNode.tsx`, variante `mld`) ; pilotée par `description: 'nullable'` (→ `NULL`),
+  tout attribut non marqué étant `NOT NULL` par défaut (règle 8, notation graphique).
+  Seul fichier de code touché : `EntityNode.tsx` (aucune donnée `mld/*.ts` modifiée).
+  Les types SQL (VARCHAR…) restent **MPD uniquement** (plan ultérieur). **Implémenté**.
 - Hors périmètre (plan ultérieur) : passage MLD → MPD + correspondance MCD↔MPD du README.
 - Méthode : on modifie ce plan règle par règle, puis on implémente la conversion du MCD.
 
@@ -328,6 +334,10 @@ séparés par une virgule.
       `description: 'nullable'` (le type `Attribute` ne supporte pas de champ `nullable` —
       la nullabilité est documentée ici et portée en `description`) ; les autres FKs sont
       NOT NULL (aucun marqueur). Attributs métier reconduits tels quels (règle 1).
+- [x] **Nullabilité affichée dans les blocs (notation graphique)** : `EntityNode.tsx`
+      affiche `NOT NULL` / `NULL` en gris (`text-muted-foreground`) à droite du nom pour la
+      variante `mld` — `description: 'nullable'` → `NULL`, sinon `NOT NULL`. Aucune donnée
+      `mld/*.ts` modifiée (les 5 FK marquées suffisent).
 - [x] Aucune FK soulignée : même une FK qui est aussi PK (relations N,N) reste marquée
       `isFK: true` (sa composante PK reste `isPK: true`).
 - [x] **Préfixe `#` appliqué aux 28 noms de FK** (règle 8) : `#id_modele_pipeline`,

@@ -105,9 +105,10 @@ Sur une figure de MLD, **PK, FK et nullabilité sont portées à l'intérieur de
 
 - **PK / FK** : badge `PK` / `FK` à côté de chaque attribut. Le projet marque la PK **soulignée**
   (`isPK`) et la FK par le préfixe **`#`** (`isFK`).
-- **NOT NULL / NULL** : colonne d'options (ex. `VARCHAR(50) | NOT NULL`), syntaxe SQL explicite
-  (`NOT NULL`), ou encore puce pleine/vide (⚫ / ⚪). Le projet documente la nullabilité en
-  `description` (`'nullable'` ↔ min 0).
+- **NOT NULL / NULL** : en reprenant la syntaxe SQL explicite, le projet affiche `NOT NULL` ou
+  `NULL` en gris à droite du nom de chaque attribut. La nullabilité est pilotée par
+  `description` (`'nullable'` ↔ min 0) : un attribut portant `description: 'nullable'` affiche
+  `NULL`, tout attribut non marqué est **`NOT NULL` par défaut**.
 - Un **lien entre deux relations** est un *lien de référencement* (FK) : il **ne porte ni verbe
   d'association, ni cardinalité** — la sémantique est portée par les badges `#` / `PK` / nullabilité
   internes aux blocs.
