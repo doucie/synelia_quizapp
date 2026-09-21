@@ -69,6 +69,11 @@ export default function EntityNode({ data }: NodeProps<EntityNodeData>) {
             {attr.type && variant === 'mpd' && (
               <span className="text-muted-foreground">{attr.type}</span>
             )}
+            {variant === 'mld' && (
+              <span className="text-muted-foreground">
+                {attr.description === 'nullable' ? 'NULL' : 'NOT NULL'}
+              </span>
+            )}
           </div>
         ))}
       </div>
