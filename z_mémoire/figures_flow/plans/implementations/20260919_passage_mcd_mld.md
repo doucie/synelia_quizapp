@@ -32,6 +32,13 @@
   tout attribut non marqué étant `NOT NULL` par défaut (règle 8, notation graphique).
   Seul fichier de code touché : `EntityNode.tsx` (aucune donnée `mld/*.ts` modifiée).
   Les types SQL (VARCHAR…) restent **MPD uniquement** (plan ultérieur). **Implémenté**.
+- **Ajustement post-implémentation (20260921)** : format **tableau 3 colonnes** sur les figures
+  MLD — `[PK|FK] nom | type SQL | NOT NULL/NULL` — avec **type** et **nullabilité par attribut**
+  (FK et attributs métier). Ajout de `nullable?: boolean` sur `Attribute`, migration des
+  5 `description: 'nullable'` en `nullable: true`, grille dans `EntityNode.tsx` (variante `mld`),
+  et typage complet des 29 relations (184 attributs ; conventions : PK/FK → `INT`, `est_*` →
+  `BOOLEAN`, `date_*` → `DATETIME`, textes → `TEXT`/`VARCHAR(n)`, scores → `DECIMAL(5,2)`).
+  Détail : `plans/implementations/20260921_typage_nullabilite_attributs_mld.md`. **Implémenté**.
 - Hors périmètre (plan ultérieur) : passage MLD → MPD + correspondance MCD↔MPD du README.
 - Méthode : on modifie ce plan règle par règle, puis on implémente la conversion du MCD.
 

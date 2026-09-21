@@ -58,7 +58,12 @@
 - La cardinalité **n'est pas recopiée telle quelle au MLD** : seul son **min** se traduit en nullabilité, son **max** conditionnant déjà la forme de la transformation (règles 2 et 3).
 - Une cardinalité **min = 0** sur la patte qui reste après migration se traduit par une clé étrangère **nullable** ; **min = 1** la rend **obligatoire (NOT NULL)**.
   > *Ex : `compter` entre QUESTION et REPONSE, fixée à `(0,n)` côté QUESTION / `(1,1)` côté REPONSE : la clé étrangère `#id_question` dans REPONSE est donc **obligatoire (NOT NULL)** — chaque réponse appartient obligatoirement à une question.*
-- La nullabilité doit découler de la **cardinalité conceptuelle validée**, jamais de la structure physique existante prise comme point de départ.
+- La nullabilité est appliquée **par attribut** : chaque attribut — clé étrangère **et** attribut métier
+  — porte sa propre nullabilité dans la figure (ex. `score_global NULL`, `statut NOT NULL`).
+- La nullabilité d'une FK découle de la **cardinalité conceptuelle validée** (jamais de la
+  structure physique prise comme point de départ) ; pour les **attributs métier**, elle suit la
+  **logique métier** (champ rempli à certains stades du cycle de vie) et s'aligne sur la BD
+  cible quand une correspondance existe.
   > *Ex : une colonne nullable dans la vraie base ne justifie pas à elle seule une cardinalité `(0,1)` si la logique métier dit `(1,1)` — c'est la logique qui commande, la base physique s'ajuste ensuite.*
 
 ---
@@ -103,15 +108,20 @@
 Sur une figure de MLD, **PK, FK et nullabilité sont portées à l'intérieur des blocs** des relations
 (pratique standard des diagrammes relationnels — MySQL Workbench, dbdiagram.io, etc.) :
 
-- **PK / FK** : badge `PK` / `FK` à côté de chaque attribut. Le projet marque la PK **soulignée**
-  (`isPK`) et la FK par le préfixe **`#`** (`isFK`).
-- **NOT NULL / NULL** : en reprenant la syntaxe SQL explicite, le projet affiche `NOT NULL` ou
-  `NULL` en gris à droite du nom de chaque attribut. La nullabilité est pilotée par
-  `description` (`'nullable'` ↔ min 0) : un attribut portant `description: 'nullable'` affiche
-  `NULL`, tout attribut non marqué est **`NOT NULL` par défaut**.
+- **Format d'un bloc** : chaque attribut est rendu sur une ligne de **3 colonnes alignées** —
+  `[PK|FK] nom | type SQL | NOT NULL/NULL` (sans en-têtes).
+- **PK / FK** : badge `PK` / `FK` en tête de la première colonne, avant le nom. Le projet marque
+  la PK **soulignée** (`isPK`) et la FK par le préfixe **`#`** (`isFK`).
+- **Type** (2e colonne) : type SQL de l'attribut, rendu en gris (`INT`, `VARCHAR(255)`,
+  `DECIMAL(5,2)`, `DATETIME`, `TEXT`, `BOOLEAN`…) — aligné sur le domaine physique (BD cible)
+  quand une correspondance existe ; seule la bascule **anglais/snake_case** des noms reste du
+  ressort du MPD.
+- **Nullabilité** (3e colonne) : `NOT NULL` ou `NULL` en gris, pilotée par `nullable`
+  (`nullable: true` ↔ min 0) et appliquée **par attribut** — FK **et** attributs métier ; tout
+  attribut non marqué est **`NOT NULL` par défaut**.
 - Un **lien entre deux relations** est un *lien de référencement* (FK) : il **ne porte ni verbe
-  d'association, ni cardinalité** — la sémantique est portée par les badges `#` / `PK` / nullabilité
-  internes aux blocs.
+  d'association, ni cardinalité** — la sémantique est portée par les badges `#` / `PK` et la
+  nullabilité internes aux blocs.
 
 ---
 
