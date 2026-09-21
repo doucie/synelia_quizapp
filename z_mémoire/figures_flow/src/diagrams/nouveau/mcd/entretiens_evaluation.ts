@@ -20,7 +20,6 @@ export const entretiensEvaluation: DiagramDefinition = {
           { name: 'lieu' },
           { name: 'lien_visio' },
           { name: 'statut' },
-          { name: 'code_salle_evaluation' },
           { name: 'notes' },
           { name: 'date_debut' },
           { name: 'date_fin' },

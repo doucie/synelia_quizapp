@@ -15,6 +15,9 @@
 - **Ajustement post-implémentation (20260921)** : retrait de `chronometree` de `CAMPAGNE`
   (MCD/MLD) — l'attribut ne vit plus qu'au niveau de `FORMULAIRE` (`chronometre`),
   cohérence avec le physique `forms.is_timed`.
+- **Ajustement post-implémentation (20260921)** : retrait de `code_salle_evaluation` de
+  `ENTRETIEN` (MCD/MLD) — code retiré des modèles conceptuel et logique (le physique
+  `interviews.evaluation_room_code` reste inchangé).
 - Hors périmètre (plan ultérieur) : passage MLD → MPD + correspondance MCD↔MPD du README.
 - Méthode : on modifie ce plan règle par règle, puis on implémente la conversion du MCD.
 
@@ -67,7 +70,7 @@ l'identifiant devient la clé primaire, soulignée. Aucun attribut perdu ni ajou
 
 ### Entretiens & évaluation (`entretiens_evaluation.ts`)
 
-- [x] `ENTRETIEN(id_entretien)` : date, type, lieu, lien_visio, code_salle_evaluation,
+- [x] `ENTRETIEN(id_entretien)` : date, type, lieu, lien_visio,
       statut, notes, date_debut, date_fin, date_evaluation, date_fermeture,
       commentaire_fermeture
 - [x] `CANDIDAT_ENTRETIEN(id_candidat_entretien)` : statut_reponse, motif_refus, duree,
