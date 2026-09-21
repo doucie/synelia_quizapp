@@ -363,12 +363,14 @@ window.BD_EXEMPLES = {
           num: 28,
           nom: "decisions",
           description: "La décision prise sur une étape (présélection ou décision finale) : le verdict métier, le mode technique et l'acteur.",
-          notes: ["application_progress_id est NOT NULL (décision mono-ancrée). Décision 3 = OVERRIDE qui annule la décision 2 (cancels_decision_id)."],
+          notes: ["application_progress_id est NOT NULL (décision mono-ancrée). Lignes 3 (OVERRIDE), 4 (CANCEL) et 5 (ROLLBACK) illustrent les 4 modes possibles de decision_mode via cancels_decision_id."],
           colonnes: ["id", "decision_type", "user_id", "created_at", "created_by", "updated_at", "updated_by", "is_deleted", "search_string", "application_progress_id", "justification", "decision_mode", "cancels_decision_id"],
           lignes: [
             [1, "ACCEPTED", 2, "2026-08-04 11:00", 2, null, null, 0, "présélection ok", 3, "Score quiz 80 %, passage en entretien", "STANDARD", null],
             [2, "ACCEPTED", 2, "2026-08-06 09:30", 2, "2026-08-08 09:00", 2, 0, "décision finale", 5, "Entretien concluant (73/100)", "STANDARD", null],
-            [3, "REJECTED", 2, "2026-08-08 09:00", 2, null, null, 0, "override", 5, "Référence manquante détectée — annulation de l'acceptation", "OVERRIDE", 2]
+            [3, "REJECTED", 2, "2026-08-08 09:00", 2, null, null, 0, "override", 5, "Référence manquante détectée — annulation de l'acceptation", "OVERRIDE", 2],
+            [4, "REJECTED", 2, "2026-08-10 09:00", 2, null, null, 0, "annulation présélection", 3, "Fraude détectée au quiz — annulation de la présélection", "CANCEL", 1],
+            [5, "ACCEPTED", 2, "2026-08-12 14:00", 2, null, null, 0, "rollback présélection", 3, "Réexamen — fraude non confirmée, présélection rétablie", "ROLLBACK", 4]
           ]
         }
       ]
