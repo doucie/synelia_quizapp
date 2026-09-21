@@ -64,6 +64,64 @@ export function edgeAnchorGroup(
   return group
 }
 
+const NODE_W_FALLBACK = 220
+const NODE_H_FALLBACK = 130
+
+export function farAnchorPoint(
+  nodeById: NodeById,
+  side: 'from' | 'to',
+  edge: EdgeAnchorItem,
+): { x: number; y: number } {
+  const nodeKey = side === 'from' ? 'target' : 'source'
+  const handleKey = side === 'from' ? 'targetHandle' : 'sourceHandle'
+  const kind: HandleKind = side === 'from' ? 'target' : 'source'
+
+  const node = lookupNode(nodeById, edge[nodeKey])
+  if (!node) return { x: 0, y: 0 }
+  const pos = node.position ?? { x: 0, y: 0 }
+  const w = node.measured?.width ?? NODE_W_FALLBACK
+  const h = node.measured?.height ?? NODE_H_FALLBACK
+  const cx = pos.x + w / 2
+  const cy = pos.y + h / 2
+  const anchor = resolveHandleId(node, kind, edge[handleKey])
+  switch (anchor) {
+    case 'top':
+      return { x: cx, y: pos.y }
+    case 'bottom':
+      return { x: cx, y: pos.y + h }
+    case 'left':
+      return { x: pos.x, y: cy }
+    case 'right':
+      return { x: pos.x + w, y: cy }
+    default:
+      return { x: cx, y: cy }
+  }
+}
+
+export function edgeGroupSorted(
+  edges: EdgeAnchorItem[],
+  nodeById: NodeById,
+  side: 'from' | 'to',
+  nodeId: string,
+  handleId: string | undefined,
+): string[] {
+  const group = edgeAnchorGroup(edges, nodeById, side, nodeId, handleId)
+  const sortByY = handleId === 'left' || handleId === 'right'
+  const coord = (edgeId: string) => {
+    const edge = edges.find((e) => e.id === edgeId)
+    const point = edge ? farAnchorPoint(nodeById, side, edge) : { x: 0, y: 0 }
+    return sortByY ? point.y : point.x
+  }
+  const reflexive = new Set(edges.filter((e) => e.source === e.target).map((e) => e.id))
+  const sorted = [...group].sort((a, b) => {
+    const aRefl = reflexive.has(a) ? 1 : 0
+    const bRefl = reflexive.has(b) ? 1 : 0
+    if (aRefl !== bRefl) return aRefl - bRefl
+    return coord(a) - coord(b)
+  })
+  return sorted
+}
+
 export function edgePathOffset(
   edges: EdgeAnchorItem[],
   nodeById: NodeById,
@@ -72,7 +130,7 @@ export function edgePathOffset(
   handleId: string | undefined,
   edgeId: string,
 ): number {
-  const group = edgeAnchorGroup(edges, nodeById, side, nodeId, handleId)
+  const group = edgeGroupSorted(edges, nodeById, side, nodeId, handleId)
   if (group.length <= 1) return 0
 
   const idx = group.indexOf(edgeId)
