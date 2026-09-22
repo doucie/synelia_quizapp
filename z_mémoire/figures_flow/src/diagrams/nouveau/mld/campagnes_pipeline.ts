@@ -54,7 +54,7 @@ export const campagnesPipeline: DiagramDefinition = {
         attributes: [
           { name: 'id_etape_pipeline', type: 'INT', isPK: true },
           { name: '#id_modele_pipeline', type: 'INT', isFK: true },
-          { name: '#id_version_grille', type: 'INT', isFK: true, nullable: true, refMarker: '1' },
+          { name: '#id_version_grille', type: 'INT', isFK: true, nullable: true },
           { name: 'type_etape', type: 'VARCHAR(50)' },
           { name: 'libelle_etape', type: 'VARCHAR(255)' },
           { name: 'ordre_etape', type: 'INT' },
@@ -74,7 +74,7 @@ export const campagnesPipeline: DiagramDefinition = {
         attributes: [
           { name: 'id_regle_notification', type: 'INT', isPK: true },
           { name: '#id_etape_pipeline', type: 'INT', isFK: true },
-          { name: '#id_modele_email', type: 'INT', isFK: true, nullable: true, refMarker: '2' },
+          { name: '#id_modele_email', type: 'INT', isFK: true, nullable: true },
           { name: 'code_declencheur', type: 'VARCHAR(60)' },
           { name: 'code_resultat', type: 'VARCHAR(60)' },
           { name: 'est_requise', type: 'BOOLEAN' },
@@ -241,9 +241,5 @@ export const campagnesPipeline: DiagramDefinition = {
       type: 'relationship',
       data: { isStrong: true },
     },
-  ],
-  notes: [
-    { marker: '1', text: 'VERSION_GRILLE — figure « Entretiens & évaluation »' },
-    { marker: '2', text: 'MODELE_EMAIL — entité hors figure, domaine « Communication »' },
   ],
 }

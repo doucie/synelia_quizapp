@@ -15,7 +15,7 @@ export const entretiensEvaluation: DiagramDefinition = {
         variant: 'mld',
         attributes: [
           { name: 'id_entretien', type: 'INT', isPK: true },
-          { name: '#id_avancement', type: 'INT', isFK: true, nullable: true, refMarker: '1' },
+          { name: '#id_avancement', type: 'INT', isFK: true, nullable: true },
           { name: 'date_planifiee', type: 'DATETIME' },
           { name: 'type', type: 'VARCHAR(20)' },
           { name: 'lieu', type: 'VARCHAR(255)', nullable: true },
@@ -207,8 +207,5 @@ export const entretiensEvaluation: DiagramDefinition = {
       target: 'critere',
       type: 'relationship',
     },
-  ],
-  notes: [
-    { marker: '1', text: 'AVANCEMENT — figure « Candidatures & suivi »' },
   ],
 }

@@ -1,6 +1,7 @@
 import { useReactFlow } from '@xyflow/react'
 import ThemeToggle from './ThemeToggle'
 import FontSelector from './FontSelector'
+import { useEdgeDebugEnabled, setEdgeDebugEnabled } from '../utils/edgeDebug'
 
 interface ToolbarProps {
   diagramTitle: string | null
@@ -23,6 +24,7 @@ export default function Toolbar({
   onResetPositions,
 }: ToolbarProps) {
   const { zoomIn, zoomOut, fitView } = useReactFlow()
+  const edgeDebug = useEdgeDebugEnabled()
 
   return (
     <div className="relative z-20 flex items-center gap-1.5 border-b border-border bg-background/80 px-4 py-2 backdrop-blur">
@@ -88,6 +90,16 @@ export default function Toolbar({
         title="Mode plein écran"
       >
         ⛶
+      </button>
+      <div className="mx-1 h-4 w-px bg-border" />
+      <button
+        onClick={() => setEdgeDebugEnabled(!edgeDebug)}
+        className={`rounded px-2 py-1 text-xs transition-colors ${
+          edgeDebug ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted'
+        }`}
+        title="Afficher/masquer l'overlay de debug des arêtes"
+      >
+        {edgeDebug ? 'DEBUG ON' : 'DEBUG'}
       </button>
       <FontSelector />
       <ThemeToggle />

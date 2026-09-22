@@ -74,9 +74,6 @@ export default function EntityNode({ data }: NodeProps<EntityNodeData>) {
                 }
               >
                 {attr.name}
-                {attr.refMarker && (
-                  <sup className="text-[9px] font-semibold text-muted-foreground">&#8202;{attr.refMarker}</sup>
-                )}
               </span>
             </span>
             {attr.type && variant === 'mpd' && (
