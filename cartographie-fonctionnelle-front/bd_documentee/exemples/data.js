@@ -267,20 +267,24 @@ window.BD_EXEMPLES = {
           num: 20,
           nom: "interviews",
           description: "Un entretien planifié pour une étape « entretien » : sa date, son type, son statut et sa salle d'évaluation partagée.",
-          notes: ["application_progress_id est nullable dans la base (0 NULL actuellement, durcissement NOT NULL reporté). evaluation_room_code remplace l'ancienne interview_evaluations_link."],
+          notes: ["application_progress_id est nullable dans la base (0 NULL actuellement, durcissement NOT NULL reporté). evaluation_room_code remplace l'ancienne interview_evaluations_link.", "Cible théorique : interview_date devient date_planifiee. Toute nouvelle date = un nouvel entretien + une nouvelle convocation (ex. entretiens 2 et 3), jamais un reset en place. Écart cible théorique vs BD physique documenté (figures MCD/MLD + plan 20260922)."],
           colonnes: ["id", "interview_location", "interview_date", "interview_status", "meet_link", "evaluation_room_code", "interview_note", "interview_type", "started_at", "ended_at", "evaluation_completed_at", "evaluation_completed_by", "closed_at", "closed_by", "closure_comment", "application_progress_id", "created_at", "created_by", "updated_at", "updated_by", "is_deleted", "search_string"],
           lignes: [
-            [1, "Bâtiment B, salle 12", "2026-08-05 14:00", "CLOSED", null, "RM-8F3K2", "Entretien technique", "IN_PERSON", "2026-08-05 14:02", "2026-08-05 14:50", "2026-08-05 16:10", 3, "2026-08-06 09:00", 2, "Aptitude confirmée", 4, "2026-08-04 09:00", 2, "2026-08-06 09:00", 2, 0, "entretien alice"]
+            [1, "Bâtiment B, salle 12", "2026-08-05 14:00", "CLOSED", null, "RM-8F3K2", "Entretien technique", "IN_PERSON", "2026-08-05 14:02", "2026-08-05 14:50", "2026-08-05 16:10", 3, "2026-08-06 09:00", 2, "Aptitude confirmée", 4, "2026-08-04 09:00", 2, "2026-08-06 09:00", 2, 0, "entretien alice"],
+            [2, "Visioconférence", "2026-08-11 10:00", "PLANNED", "https://meet.synelia.tn/alice-commercial", "RM-4B9Q7", "Entretien commercial (replanification demandée)", "REMOTE", null, null, null, null, null, null, null, 4, "2026-08-08 10:00", 2, "2026-08-08 18:00", 2, 0, "entretien alice replanification"],
+            [3, "Bâtiment B, salle 12", "2026-08-13 09:00", "PLANNED", null, "RM-8F3K2", "Entretien commercial (nouvelle date proposée)", "IN_PERSON", null, null, null, null, null, null, null, 4, "2026-08-09 09:00", 2, "2026-08-09 09:30", 2, 0, "entretien alice nouvelle date"]
           ]
         },
         {
           num: 21,
           nom: "candidate_interview",
           description: "La réponse d'un candidat à une convocation d'entretien : acceptation, refus ou demande de replanification.",
-          notes: ["interview_duration est conservée par décision BA 2026-08-04 (écart cible documenté)."],
+          notes: ["interview_duration est conservée par décision BA 2026-08-04 (écart cible documenté).", "Cible théorique : renommée CONVOCATION (PK id_convocation) avec date_proposee NOT NULL. Les convocations 2 et 3 illustrent la vie de l'occurrence : le candidat refuse la date proposée (decline_reason) et demande une alternative (RESCHEDULE_REQUESTED + alternative_date_requested), le recruteur propose alors une nouvelle date via un nouvel entretien + une nouvelle convocation. Écart cible vs BD physique documenté (figures MCD/MLD + plan 20260922)."],
           colonnes: ["id", "interview_duration", "candidate_response_status", "responded_at", "interview_id", "created_at", "created_by", "updated_at", "updated_by", "is_deleted", "search_string", "decline_reason", "alternative_date_requested"],
           lignes: [
-            [1, 60, "ACCEPTED", "2026-08-04 10:00", 1, "2026-08-04 09:00", 4, "2026-08-04 10:00", 4, 0, "convocation alice", null, null]
+            [1, 60, "ACCEPTED", "2026-08-04 10:00", 1, "2026-08-04 09:00", 4, "2026-08-04 10:00", 4, 0, "convocation alice", null, null],
+            [2, 60, "RESCHEDULE_REQUESTED", "2026-08-08 12:00", 2, "2026-08-08 10:00", 4, "2026-08-08 12:00", 4, 0, "convocation alice replanification", "Indisponible ce jour-là (déplacement professionnel)", "2026-08-12 09:00"],
+            [3, 60, "ACCEPTED", "2026-08-10 09:00", 3, "2026-08-09 09:30", 4, "2026-08-10 09:00", 4, 0, "convocation alice nouvelle date", null, null]
           ]
         },
         {
