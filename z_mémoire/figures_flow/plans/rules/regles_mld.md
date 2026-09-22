@@ -123,28 +123,6 @@ Sur une figure de MLD, **PK, FK et nullabilité sont portées à l'intérieur de
   d'association, ni cardinalité** — la sémantique est portée par les badges `#` / `PK` et la
   nullabilité internes aux blocs.
 
-### Renvois cross-domaines (FK liant deux figures)
-
-La BD est découpée en figures par sous-domaine (BD trop grande pour une figure unique). Une FK
-réelle peut relier une table d'une figure à une entité d'une **autre figure** : on l'ajoute alors
-dans la relation source, et on signale la provenance de la cible par un **renvoi bas de figure**.
-
-- La **FK cross est portée dans la relation qui la possède** physiquement (colonne `#id_*`, badge
-  `FK`, nullabilité normale), avec un **exposant `refMarker`** (¹, ², ³…) après le nom.
-- L'**entité cible n'est jamais insérée** dans la figure (pas de « stub ») et **aucun lien** n'est
-  dessiné pour cette FK — le lien est *hors figure*.
-- Le **bloc « Renvois — entités définies hors figure »**, ancré en bas de figure (espace flow,
-  suit le pan/zoom), associe chaque exposant à sa cible :
-  `¹ #id_version_formulaire → VERSION_FORMULAIRE (Campagnes & pipeline)`.
-- Le bloc ne liste que les FK **actées** (recensement) ; les FK audit/acteur
-  (`validated_by`, `creator_id`…) et les tables non modélisées hors figure
-  (`SOURCE_TOKEN`, `TENTATIVE_QUIZ`, `SPECIALITE`…) sont documentées dans le recensement, pas en
-  renvoi.
-
-  > *Ex : `CANDIDATURE(..., #id_version_formulaire¹, ...)` dans « Candidatures & suivi », avec
-  > renvoi `¹ → VERSION_FORMULAIRE (Campagnes & pipeline)` — `VERSION_FORMULAIRE` n'apparaît pas
-  > dans la figure « Candidatures & suivi ».*
-
 ---
 
 ## 9. Vérifications finales de cohérence

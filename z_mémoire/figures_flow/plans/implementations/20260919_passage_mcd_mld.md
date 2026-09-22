@@ -44,8 +44,8 @@
   étrangère qui relie la figure A à une entité de la figure B est une **FK cross-domaine** :
   elle reste **modélisable au MLD** (colonne `#id_*` réelle et nécessaire, jamais omise) mais
   **sans jamais insérer l'entité cible** dans la figure (ni stub, ni table de liaison
-  inter-figures) — un **renvoi en bas de figure** référence l'entité définie dans son domaine
-  (Règle 10). **Recensement final acté le 20260921, source : `quizapp_db_described_20260818.md`**
+  inter-figures) — l'entité cible est définie dans son domaine (Règle 10). **Recensement final
+  acté le 20260921, source : `quizapp_db_described_20260818.md`**
   (6 FKs cross à ajouter — annexe « Inventaire cross-domaines » ; réalisation en plan séparé).
 - Hors périmètre (plan ultérieur) : passage MLD → MPD + correspondance MCD↔MPD du README.
 - Méthode : on modifie ce plan règle par règle, puis on implémente la conversion du MCD.
@@ -63,8 +63,8 @@
   BD ne tient pas entièrement en une figure. **MCD** : une entité hors périmètre d'une figure
   **reste hors périmètre** (aucun stub `ref [Domaine]`, aucune table de liaison inter-figures
   dessinée). **MLD** : la **clé étrangère relative à la liaison est ajoutable** (colonne
-  `#id_*` + **renvoi en bas de figure** vers l'entité externe), mais **jamais l'entité cible
-  elle-même**. Le MPD reste hors périmètre (aucune fragmentation : 100 % des colonnes réelles).
+  `#id_*` réelle), mais **jamais l'entité cible elle-même** — elle reste définie dans son
+  domaine. Le MPD reste hors périmètre (aucune fragmentation : 100 % des colonnes réelles).
 - **Périmètre** : réécriture des **4 fichiers `nouveau/mld/{campagnes_pipeline,candidatures_suivi,entretiens_evaluation,utilisateurs_droits}.ts`**.
 - **Hors périmètre** (plan ultérieur) : le passage MLD → MPD et la correspondance
   MCD↔MPD du README.
@@ -460,8 +460,8 @@ séparés par une virgule.
       vers la bonne relation.
 - [x] Aucune **FK cross-domaine omise** : recensement final acté (annexe « Inventaire
       cross-domaines », source `quizapp_db_described_20260818.md`) — 6 FKs cross à ajouter
-      au MLD (+ renvoi bas de figure), références hors périmètre et tables écartées listées ;
-      réalisation des colonnes en plan séparé.
+      au MLD (colonne `#id_*` réelle, entité cible non insérée), références hors périmètre et
+      tables écartées listées ; réalisation des colonnes en plan séparé.
 
 ### Règle 10 — Clés étrangères cross-domaines (sous-domaines)
 
@@ -475,8 +475,8 @@ entièrement en une figure.
   ajoute **la clé étrangère, jamais l'entité cible** (ni stub, ni table de liaison entre
   figures).
 - Rendu : FK ajoutée comme n'importe quelle autre (`#id_*`, nullabilité = min de la
-  cardinalité conceptuelle, recoupée sur le physique), **complétée d'un renvoi en bas de
-  figure** vers le sous-domaine où l'entité référencée est définie.
+  cardinalité conceptuelle, recoupée sur le physique). L'entité cible n'est **jamais
+  insérée** dans la figure (ni stub, ni table de liaison inter-figures).
   > *Ex : `DECISION(id_decision, type_decision, justification, mode_decision,
   > #id_utilisateur¹, #id_avancement, #id_decision_annulee)` — note sous la figure :
   > « ¹ `#id_utilisateur` référence `UTILISATEUR`, entité définie dans le sous-domaine

@@ -12,6 +12,11 @@ Référence : règle 10 + recensement final acté dans
   `refMarker`, bloc « Renvois » sous le diagramme, **+ cible théorique « Convocation »** dans
   `entretiens_evaluation.ts` (MCD + MLD), **+ exemples `bd_documentee`** (multi-convocations) et
   **+ notes « cible pas encore atteinte en BD physique »** (3 emplacements). Checkpoints ci-dessous.
+- **Révision le 20260922 (après validation)** : le mécanisme « Renvois » est **retiré** —
+  bloc bas de figure, données `diagram.notes`, champ `refMarker` et superscrits supprimés
+  (`DiagramCanvas`, `EntityNode`, types, 3 `mld/*.ts`). Les 6 **colonnes FK** et la cible
+  « Convocation » sont **conservées**. Le bouton `DEBUG` est déplacé dans la barre d'outils
+  (`Toolbar.tsx`). Docs mises à jour : `regles_mld.md` §8, README, ce plan.
 
 ## Contexte & décisions
 
@@ -135,9 +140,10 @@ Règles de vie (rappel — à faire vivre côté application, hors figures) : la
 
 ## Pièges / rappels
 
-- Le bloc « Renvois » est un enfant de `<ReactFlow>` (espace flow) et non un `<Panel>` (espace
-  écran) — sinon il ne se déplacerait pas avec la figure.
-- Ne pas dessiner d'arête pour une FK cross (Règle 10) : la FK porte `#` + `refMarker`, l'entité
-  cible n'est pas insérée dans la figure.
+- Ne pas dessiner d'arête pour une FK cross : la FK est portée simplement par la colonne
+  `#id_*` + badge `FK`, l'entité cible n'est pas insérée dans la figure (le mécanisme « renvois »
+  et ses superscrits ont été **retirés** le 20260922).
+- Le bouton `DEBUG` vit dans `Toolbar.tsx` (store `utils/edgeDebug.ts` partagé) — ne pas le
+  remettre en absolu dans `DiagramCanvas`.
 - Aucune table de liaison inter-figures (ex. `pipeline_stage_evaluation_criterion`, supprimée) :
   résolution en FK directe nullable sur la table dominante.
