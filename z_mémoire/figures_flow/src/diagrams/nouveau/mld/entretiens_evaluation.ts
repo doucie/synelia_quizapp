@@ -15,7 +15,8 @@ export const entretiensEvaluation: DiagramDefinition = {
         variant: 'mld',
         attributes: [
           { name: 'id_entretien', type: 'INT', isPK: true },
-          { name: 'date', type: 'DATETIME' },
+          { name: '#id_avancement', type: 'INT', isFK: true, nullable: true, refMarker: '1' },
+          { name: 'date_planifiee', type: 'DATETIME' },
           { name: 'type', type: 'VARCHAR(20)' },
           { name: 'lieu', type: 'VARCHAR(255)', nullable: true },
           { name: 'lien_visio', type: 'VARCHAR(500)', nullable: true },
@@ -23,9 +24,6 @@ export const entretiensEvaluation: DiagramDefinition = {
           { name: 'notes', type: 'TEXT', nullable: true },
           { name: 'date_debut', type: 'DATETIME', nullable: true },
           { name: 'date_fin', type: 'DATETIME', nullable: true },
-          { name: 'date_evaluation', type: 'DATETIME', nullable: true },
-          { name: 'date_fermeture', type: 'DATETIME', nullable: true },
-          { name: 'commentaire_fermeture', type: 'TEXT', nullable: true },
         ],
       },
     },
@@ -34,11 +32,12 @@ export const entretiensEvaluation: DiagramDefinition = {
       type: 'entity',
       position: { x: 600, y: 0 },
       data: {
-        label: 'CANDIDAT_ENTRETIEN',
+        label: 'CONVOCATION',
         variant: 'mld',
         attributes: [
-          { name: 'id_candidat_entretien', type: 'INT', isPK: true },
+          { name: 'id_convocation', type: 'INT', isPK: true },
           { name: '#id_entretien', type: 'INT', isFK: true },
+          { name: 'date_proposee', type: 'DATETIME' },
           { name: 'statut_reponse', type: 'VARCHAR(20)' },
           { name: 'motif_refus', type: 'VARCHAR(500)', nullable: true },
           { name: 'duree', type: 'INT', nullable: true },
@@ -77,7 +76,7 @@ export const entretiensEvaluation: DiagramDefinition = {
         variant: 'mld',
         attributes: [
           { name: 'id_evaluation', type: 'INT', isPK: true },
-          { name: '#id_candidat_entretien', type: 'INT', isFK: true },
+          { name: '#id_convocation', type: 'INT', isFK: true },
           { name: '#id_evaluateur_entretien', type: 'INT', isFK: true, nullable: true },
           { name: 'statut', type: 'VARCHAR(20)' },
           { name: 'date_soumission', type: 'DATETIME', nullable: true },
@@ -208,5 +207,8 @@ export const entretiensEvaluation: DiagramDefinition = {
       target: 'critere',
       type: 'relationship',
     },
+  ],
+  notes: [
+    { marker: '1', text: 'AVANCEMENT — figure « Candidatures & suivi »' },
   ],
 }

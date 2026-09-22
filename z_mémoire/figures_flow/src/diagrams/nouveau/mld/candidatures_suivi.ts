@@ -15,6 +15,7 @@ export const candidaturesSuivi: DiagramDefinition = {
         variant: 'mld',
         attributes: [
           { name: 'id_candidature', type: 'INT', isPK: true },
+          { name: '#id_version_formulaire', type: 'INT', isFK: true, nullable: true, refMarker: '1' },
           { name: 'prenom_candidat', type: 'VARCHAR(100)' },
           { name: 'nom_candidat', type: 'VARCHAR(100)' },
           { name: 'email', type: 'VARCHAR(255)' },
@@ -37,6 +38,7 @@ export const candidaturesSuivi: DiagramDefinition = {
         attributes: [
           { name: 'id_avancement', type: 'INT', isPK: true },
           { name: '#id_candidature', type: 'INT', isFK: true },
+          { name: '#id_etape_pipeline', type: 'INT', isFK: true, refMarker: '2' },
           { name: 'statut_progression', type: 'VARCHAR(20)' },
           { name: 'date_debut', type: 'DATETIME', nullable: true },
           { name: 'date_fin', type: 'DATETIME', nullable: true },
@@ -92,6 +94,7 @@ export const candidaturesSuivi: DiagramDefinition = {
         attributes: [
           { name: 'id_decision', type: 'INT', isPK: true },
           { name: '#id_avancement', type: 'INT', isFK: true },
+          { name: '#id_utilisateur', type: 'INT', isFK: true, nullable: true, refMarker: '3' },
           { name: '#id_decision_annulee', type: 'INT', isFK: true, nullable: true },
           { name: 'type_decision', type: 'VARCHAR(50)' },
           { name: 'justification', type: 'TEXT', nullable: true },
@@ -134,5 +137,10 @@ export const candidaturesSuivi: DiagramDefinition = {
       type: 'relationship',
       data: { reflexSpread: 60 },
     },
+  ],
+  notes: [
+    { marker: '1', text: 'VERSION_FORMULAIRE — figure « Campagnes & pipeline »' },
+    { marker: '2', text: 'ETAPE_PIPELINE — figure « Campagnes & pipeline »' },
+    { marker: '3', text: 'UTILISATEUR — figure « Utilisateurs & droits »' },
   ],
 }

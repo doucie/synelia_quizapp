@@ -15,7 +15,7 @@ export const entretiensEvaluation: DiagramDefinition = {
         variant: 'mcd',
         attributes: [
           { name: 'id_entretien', isPK: true },
-          { name: 'date' },
+          { name: 'date_planifiee' },
           { name: 'type' },
           { name: 'lieu' },
           { name: 'lien_visio' },
@@ -23,9 +23,6 @@ export const entretiensEvaluation: DiagramDefinition = {
           { name: 'notes' },
           { name: 'date_debut' },
           { name: 'date_fin' },
-          { name: 'date_evaluation' },
-          { name: 'date_fermeture' },
-          { name: 'commentaire_fermeture' },
         ],
       },
     },
@@ -34,10 +31,11 @@ export const entretiensEvaluation: DiagramDefinition = {
       type: 'entity',
       position: { x: 600, y: 0 },
       data: {
-        label: 'CANDIDAT_ENTRETIEN',
+        label: 'CONVOCATION',
         variant: 'mcd',
         attributes: [
-          { name: 'id_candidat_entretien', isPK: true },
+          { name: 'id_convocation', isPK: true },
+          { name: 'date_proposee' },
           { name: 'statut_reponse' },
           { name: 'motif_refus' },
           { name: 'duree' },
@@ -155,7 +153,7 @@ export const entretiensEvaluation: DiagramDefinition = {
       source: 'entretien',
       target: 'candidat_entretien',
       type: 'relationship',
-      data: { label: 'convoquer', cardFrom: '0,n', cardTo: '1,1', isStrong: true },
+      data: { label: 'proposer', cardFrom: '0,n', cardTo: '1,1', isStrong: true },
     },
     {
       id: 'e-inclure',

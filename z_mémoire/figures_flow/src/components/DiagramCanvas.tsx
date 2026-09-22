@@ -124,6 +124,12 @@ export default function DiagramCanvas({ diagram, showBackground, fullscreen: _fu
     })
   }, [nodes, selectedMctPrefix])
 
+  const notesTop = useMemo(() => {
+    if (!diagram?.notes?.length || !displayNodes.length) return 0
+    const maxY = Math.max(...displayNodes.map((n) => n.position.y))
+    return maxY + 90
+  }, [diagram, displayNodes])
+
   useEffect(() => {
     setNodes(initialNodes)
     setEdges(initialEdges)
@@ -340,6 +346,21 @@ export default function DiagramCanvas({ diagram, showBackground, fullscreen: _fu
       >
         {showBackground && <Background gap={10} size={1} />}
         <Controls />
+        {diagram.notes?.length ? (
+          <div
+            className="nodrag nopan absolute left-3 flex flex-col gap-1 rounded-lg border border-solid border-border bg-background/80 px-3 py-2 shadow-[0_7px_9px_0_rgba(0,0,0,0.02)] pointer-events-none"
+            style={{ top: notesTop, zIndex: 10 }}
+          >
+            <span className="text-[10px] font-bold uppercase tracking-wide text-foreground">
+              Renvois — entités définies hors figure
+            </span>
+            {diagram.notes.map((n) => (
+              <span key={n.marker} className="text-[10px] leading-snug text-muted-foreground">
+                <sup>{n.marker}</sup>&ensp;{n.text}
+              </span>
+            ))}
+          </div>
+        ) : null}
       </ReactFlow>
       <div
         style={{

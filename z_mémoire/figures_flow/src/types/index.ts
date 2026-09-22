@@ -14,6 +14,7 @@ export interface Attribute {
   isNew?: boolean
   isDeleted?: boolean
   nullable?: boolean
+  refMarker?: string
   description?: string
 }
 
@@ -97,4 +98,5 @@ export interface DiagramDefinition {
   domain: string
   nodes: EntityNode[]
   edges: RelationshipEdge[]
+  notes?: Array<{ marker: string; text: string }>
 }
