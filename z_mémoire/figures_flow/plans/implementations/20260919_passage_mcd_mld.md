@@ -217,6 +217,27 @@ détail d'implémentation) :
   (`campaign_form`, `form_questions`, `user_business_group`, `business_group_permission`) ont leurs
   deux parents dans la même figure.
 
+#### Écarts cible théorique vs BD physique (Convocation, acté 20260922)
+
+Le **MCD/MLD constitue la vraie `bd_cible`** — la BD physique n'emporte pas sur la BD théorique
+(principe validé le 20260922). Dans ce cadre, `ENTRETIEN` concerne `(0,n)` convocations : chaque
+convocation est une **occurrence propre** (cf. `InterviewsBusiness.ensureCandidateInterviewLink`,
+qui crée une nouvelle `CandidateInterview` sur le même `interview_id` quand aucune n'est active).
+La cible théorique s'écarte donc de la BD physique sur :
+
+- **Nommage** : l'entité physique `candidate_interview` est modélisée **`CONVOCATION`** (PK
+  `id_convocation`), associée par le verbe **`proposer`**.
+- **Dates** : la cible porte **deux dates** — `ENTRETIEN.date_planifiee` (date courante, agenda)
+  et **`CONVOCATION.date_proposee`** (snapshot de la date à la convocation, NOT NULL). En physique,
+  `interviews.date` seule existe (cf. `bd_documentee/exemples/data.js`).
+- **Discipline** : tout changement de date = **nouvelle convocation** (jamais de reset en place de
+  la précédente — comportement physique actuel à corriger côté application, hors figures).
+- Attributs retirés de la cible `ENTRETIEN` : `date_evaluation`, `date_fermeture`,
+  `commentaire_fermeture`.
+
+Réalisation : plan `20260922_fk_cross_domaines_mld.md` (« cible théorique Convocation ») ;
+exemples : `bd_documentee/exemples/data.js` (sections `interviews` et `candidate_interview`).
+
 ---
 
 ## Règles 2 → 9 (squelettes — à compléter règle par règle)

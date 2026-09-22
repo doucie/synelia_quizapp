@@ -82,7 +82,7 @@ Les entités du MCD mappent vers les tables MySQL du MPD. Les noms sont **anglic
 | `DEMANDE_CANDIDAT` | `candidate_requests` | Candidatures & suivi |
 | `DECISION` | `decisions` | Candidatures & suivi |
 | `ENTRETIEN` | `interviews` | Entretiens & évaluation |
-| `CANDIDAT_ENTRETIEN` | `interview_candidates` | Entretiens & évaluation |
+| `CONVOCATION` | `candidate_interview` | Entretiens & évaluation |
 | `EVALUATEUR_ENTRETIEN` | `interview_participants` | Entretiens & évaluation |
 | `EVALUATION` | `evaluations` | Entretiens & évaluation |
 | `NOTE_CRITERE` | `evaluation_items` | Entretiens & évaluation |
@@ -180,7 +180,7 @@ ProcessVariant = 'mct-event' | 'mct-sync' | 'mct-operation' | 'mct-result'
 
 Variant = 'mcd' | 'mld' | 'mpd' | ProcessVariant
 
-Attribute = { name, isPK?, description? }
+Attribute = { name, refMarker?, isPK?, description? }
 
 EntityNodeData = { label, variant, attributes?, color?, badge?, items?, meta?,
                    detail?, expression?, fail?, layer?, dimensions? }
@@ -188,7 +188,7 @@ EntityNodeData = { label, variant, attributes?, color?, badge?, items?, meta?,
 RelationshipEdgeData = { label?, cardFrom?, cardTo?, isStrong?, isDashed?,
                          diagramId? }
 
-DiagramDefinition = { id, title, category, domain, nodes[], edges[] }
+DiagramDefinition = { id, title, category, domain, notes?, nodes[], edges[] }
 ```
 
 ## Stack
@@ -283,6 +283,9 @@ Ouvrir l'URL affichée (généralement `http://localhost:5173`).
   (ancrage déclaré→résolu, taille de groupe, offset en px), persisté dans
   `localStorage['figures_flow:debug_edges']` (défaut off). Utile pour diagnostiquer
   le spacing/offset des arêtes partageant un même point d'ancrage.
+- **Renvois cross-domaines (MLD)** : FK réelles liant deux figures portées dans la table source
+  avec un exposant (`refMarker` ¹), et bloc « Renvois — entités définies hors figure » ancré bas
+  de figure (données `diagram.notes`).
 - Layout initial automatique (évite les chevauchements)
 - Sélection de police (NT Dapper, system-ui)
 - Mode plein écran pour chaque diagramme

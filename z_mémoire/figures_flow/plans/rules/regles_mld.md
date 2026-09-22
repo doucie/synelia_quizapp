@@ -33,7 +33,7 @@
 - Quand une patte porte une cardinalité **max = 1** (CIF), la clé primaire de l'entité côté « 1 » **migre comme clé étrangère** dans la relation côté « n ». L'association elle-même disparaît en tant que relation autonome.
   > *Ex : `APPLICATION_PROGRESS (0,n) — CONCERNE — (1,1) APPLICATION` : la CIF est côté `APPLICATION`. Au MLD, `id_application` migre comme clé étrangère : `APPLICATION_PROGRESS(id_progress, ..., #id_application)`.*
 - Le **verbe d'association disparaît intégralement** dans ce cas : aucun nom d'association ne subsiste au MLD — le lien s'exprime uniquement par la présence de la clé étrangère `#id_...`.
-  > *Ex : `CONCERNE (CANDIDAT_ENTRETIEN × EVALUATION)` → `EVALUATION(id_evaluation, ..., #id_candidat_entretien NOT NULL)` : nulle part il n'est fait référence à « concerner ».*
+  > *Ex : `CONCERNE (CONVOCATION × EVALUATION)` → `EVALUATION(id_evaluation, ..., #id_convocation NOT NULL)` : nulle part il n'est fait référence à « concerner ».*
 - S'il existe des attributs propres à l'association, ils **migrent avec la clé étrangère**, dans la même relation — pas de relation séparée créée pour si peu.
   > *Ex : si `CONCERNE` portait un attribut `date_maj`, il rejoindrait `APPLICATION_PROGRESS` aux côtés de `#id_application`.*
 - Une CIF « 1,1 » stricte (obligatoire et unique) donne une **clé étrangère non nulle (NOT NULL)**.
@@ -122,6 +122,28 @@ Sur une figure de MLD, **PK, FK et nullabilité sont portées à l'intérieur de
 - Un **lien entre deux relations** est un *lien de référencement* (FK) : il **ne porte ni verbe
   d'association, ni cardinalité** — la sémantique est portée par les badges `#` / `PK` et la
   nullabilité internes aux blocs.
+
+### Renvois cross-domaines (FK liant deux figures)
+
+La BD est découpée en figures par sous-domaine (BD trop grande pour une figure unique). Une FK
+réelle peut relier une table d'une figure à une entité d'une **autre figure** : on l'ajoute alors
+dans la relation source, et on signale la provenance de la cible par un **renvoi bas de figure**.
+
+- La **FK cross est portée dans la relation qui la possède** physiquement (colonne `#id_*`, badge
+  `FK`, nullabilité normale), avec un **exposant `refMarker`** (¹, ², ³…) après le nom.
+- L'**entité cible n'est jamais insérée** dans la figure (pas de « stub ») et **aucun lien** n'est
+  dessiné pour cette FK — le lien est *hors figure*.
+- Le **bloc « Renvois — entités définies hors figure »**, ancré en bas de figure (espace flow,
+  suit le pan/zoom), associe chaque exposant à sa cible :
+  `¹ #id_version_formulaire → VERSION_FORMULAIRE (Campagnes & pipeline)`.
+- Le bloc ne liste que les FK **actées** (recensement) ; les FK audit/acteur
+  (`validated_by`, `creator_id`…) et les tables non modélisées hors figure
+  (`SOURCE_TOKEN`, `TENTATIVE_QUIZ`, `SPECIALITE`…) sont documentées dans le recensement, pas en
+  renvoi.
+
+  > *Ex : `CANDIDATURE(..., #id_version_formulaire¹, ...)` dans « Candidatures & suivi », avec
+  > renvoi `¹ → VERSION_FORMULAIRE (Campagnes & pipeline)` — `VERSION_FORMULAIRE` n'apparaît pas
+  > dans la figure « Candidatures & suivi ».*
 
 ---
 
