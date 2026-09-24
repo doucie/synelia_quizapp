@@ -1,0 +1,131 @@
+import type { DiagramDefinition } from '../../../types'
+
+export const structureConfiguration: DiagramDefinition = {
+  id: 'mld-structure-configuration',
+  title: 'Structure & configuration',
+  category: 'mld',
+  domain: 'Structure & configuration',
+  nodes: [
+    {
+      id: 'entreprise',
+      type: 'entity',
+      position: { x: 0, y: 0 },
+      data: {
+        label: 'ENTREPRISE',
+        variant: 'mld',
+        attributes: [
+          { name: 'id_entreprise', type: 'INT', isPK: true },
+          { name: 'nom', type: 'VARCHAR(255)' },
+          { name: 'description', type: 'TEXT', nullable: true },
+          { name: 'secteur_activite', type: 'VARCHAR(255)', nullable: true },
+          { name: 'adresse', type: 'TEXT', nullable: true },
+          { name: 'ville', type: 'VARCHAR(100)', nullable: true },
+          { name: 'pays', type: 'VARCHAR(100)', nullable: true },
+          { name: 'email_contact', type: 'VARCHAR(255)', nullable: true },
+          { name: 'telephone', type: 'VARCHAR(30)', nullable: true },
+          { name: 'site_web', type: 'VARCHAR(500)', nullable: true },
+          { name: 'logo', type: 'TEXT', nullable: true },
+          { name: 'est_actif', type: 'BOOLEAN' },
+        ],
+      },
+    },
+    {
+      id: 'departement',
+      type: 'entity',
+      position: { x: 0, y: 380 },
+      data: {
+        label: 'DEPARTEMENT',
+        variant: 'mld',
+        attributes: [
+          { name: 'id_departement', type: 'INT', isPK: true },
+          { name: '#id_entreprise', type: 'INT', isFK: true },
+          { name: 'nom', type: 'VARCHAR(255)' },
+          { name: 'description', type: 'TEXT', nullable: true },
+        ],
+      },
+    },
+    {
+      id: 'specialite',
+      type: 'entity',
+      position: { x: 0, y: 700 },
+      data: {
+        label: 'SPECIALITE',
+        variant: 'mld',
+        attributes: [
+          { name: 'id_specialite', type: 'INT', isPK: true },
+          { name: '#id_departement', type: 'INT', isFK: true },
+          { name: 'nom', type: 'VARCHAR(255)' },
+          { name: 'description', type: 'TEXT', nullable: true },
+        ],
+      },
+    },
+    {
+      id: 'configuration',
+      type: 'entity',
+      position: { x: 700, y: 0 },
+      data: {
+        label: 'CONFIGURATION',
+        variant: 'mld',
+        attributes: [
+          { name: 'id_configuration', type: 'INT', isPK: true },
+          { name: '#id_entreprise', type: 'INT', isFK: true },
+          { name: 'nom_configuration', type: 'VARCHAR(100)' },
+          { name: 'compte_candidat_actives', type: 'BOOLEAN' },
+          { name: 'anti_triche_actif', type: 'BOOLEAN' },
+          { name: 'politique_filtrage', type: 'VARCHAR(20)' },
+          { name: 'plein_ecran_requis', type: 'BOOLEAN' },
+          { name: 'bloquer_raccourcis', type: 'BOOLEAN' },
+          { name: 'bloquer_copier_coller', type: 'BOOLEAN' },
+          { name: 'est_active', type: 'BOOLEAN' },
+        ],
+      },
+    },
+    {
+      id: 'modele_email',
+      type: 'entity',
+      position: { x: 700, y: 380 },
+      data: {
+        label: 'MODELE_EMAIL',
+        variant: 'mld',
+        attributes: [
+          { name: 'id_modele_email', type: 'INT', isPK: true },
+          { name: '#id_configuration', type: 'INT', isFK: true },
+          { name: 'cle_modele', type: 'VARCHAR(50)' },
+          { name: 'objet', type: 'VARCHAR(500)' },
+          { name: 'corps', type: 'TEXT' },
+          { name: 'description', type: 'VARCHAR(500)', nullable: true },
+          { name: 'variables_disponibles', type: 'TEXT', nullable: true },
+          { name: 'variables_editables', type: 'TEXT', nullable: true },
+          { name: 'type_action', type: 'VARCHAR(50)' },
+          { name: 'est_actif', type: 'BOOLEAN' },
+        ],
+      },
+    },
+  ],
+  edges: [
+    {
+      id: 'e-regrouper-departement',
+      source: 'entreprise',
+      target: 'departement',
+      type: 'relationship',
+    },
+    {
+      id: 'e-classer-specialite',
+      source: 'departement',
+      target: 'specialite',
+      type: 'relationship',
+    },
+    {
+      id: 'e-configurer-configuration',
+      source: 'entreprise',
+      target: 'configuration',
+      type: 'relationship',
+    },
+    {
+      id: 'e-definir-modele-email',
+      source: 'configuration',
+      target: 'modele_email',
+      type: 'relationship',
+    },
+  ],
+}

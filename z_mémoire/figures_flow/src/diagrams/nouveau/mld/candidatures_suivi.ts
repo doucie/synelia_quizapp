@@ -16,6 +16,7 @@ export const candidaturesSuivi: DiagramDefinition = {
         attributes: [
           { name: 'id_candidature', type: 'INT', isPK: true },
           { name: '#id_version_formulaire', type: 'INT', isFK: true, nullable: true },
+          { name: '#id_token_source', type: 'INT', isFK: true },
           { name: 'prenom_candidat', type: 'VARCHAR(100)' },
           { name: 'nom_candidat', type: 'VARCHAR(100)' },
           { name: 'email', type: 'VARCHAR(255)' },
@@ -54,16 +55,15 @@ export const candidaturesSuivi: DiagramDefinition = {
       },
     },
     {
-      id: 'token_candidat',
+      id: 'token_source',
       type: 'entity',
       position: { x: 0, y: 400 },
       data: {
-        label: 'TOKEN_CANDIDAT',
+        label: 'TOKEN_SOURCE',
         variant: 'mld',
         attributes: [
-          { name: 'id_token_candidat', type: 'INT', isPK: true },
-          { name: '#id_candidature', type: 'INT', isFK: true },
-          { name: 'chaine_token', type: 'VARCHAR(64)' },
+          { name: 'id_token_source', type: 'INT', isPK: true },
+          { name: 'chaine_token_source', type: 'VARCHAR(64)' },
         ],
       },
     },
@@ -119,9 +119,9 @@ export const candidaturesSuivi: DiagramDefinition = {
       data: { isStrong: true },
     },
     {
-      id: 'e-generer-token',
+      id: 'e-provenir-token-source',
       source: 'candidature',
-      target: 'token_candidat',
+      target: 'token_source',
       type: 'relationship',
     },
     {

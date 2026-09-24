@@ -16,6 +16,7 @@ export const campagnesPipeline: DiagramDefinition = {
         attributes: [
           { name: 'id_campagne', type: 'INT', isPK: true },
           { name: '#id_modele_pipeline', type: 'INT', isFK: true, nullable: true },
+          { name: '#id_specialite', type: 'INT', isFK: true, nullable: true },
           { name: 'titre', type: 'VARCHAR(255)' },
           { name: 'description', type: 'TEXT', nullable: true },
           { name: 'statut', type: 'VARCHAR(20)' },
@@ -124,6 +125,7 @@ export const campagnesPipeline: DiagramDefinition = {
         variant: 'mld',
         attributes: [
           { name: 'id_question', type: 'INT', isPK: true },
+          { name: '#id_specialite', type: 'INT', isFK: true, nullable: true },
           { name: 'enonce', type: 'TEXT' },
           { name: 'type', type: 'VARCHAR(20)' },
           { name: 'score', type: 'INT' },

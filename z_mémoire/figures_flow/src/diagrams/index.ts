@@ -5,12 +5,14 @@ import { utilisateursDroits as mcdUtilDroits } from './nouveau/mcd/utilisateurs_
 import { campagnesPipeline as mcdCampPipeline } from './nouveau/mcd/campagnes_pipeline'
 import { candidaturesSuivi as mcdCandSuivi } from './nouveau/mcd/candidatures_suivi'
 import { entretiensEvaluation as mcdEntretEval } from './nouveau/mcd/entretiens_evaluation'
+import { structureConfiguration as mcdStructConfig } from './nouveau/mcd/structure_configuration'
 
 // === Nouveaux MLD ===
 import { utilisateursDroits as mldUtilDroits } from './nouveau/mld/utilisateurs_droits'
 import { campagnesPipeline as mldCampPipeline } from './nouveau/mld/campagnes_pipeline'
 import { candidaturesSuivi as mldCandSuivi } from './nouveau/mld/candidatures_suivi'
 import { entretiensEvaluation as mldEntretEval } from './nouveau/mld/entretiens_evaluation'
+import { structureConfiguration as mldStructConfig } from './nouveau/mld/structure_configuration'
 
 // === Nouveaux MPD ===
 import { utilisateursDroits as mpdUtilDroits } from './nouveau/mpd/utilisateurs_droits'
@@ -73,17 +75,19 @@ import { mpt1CandidatureQuiz as archMpt1 } from './archive/mpt_1_candidature_qui
 import { mpt2EntretienDecision as archMpt2 } from './archive/mpt_2_entretien_decision'
 
 export const diagrams: DiagramDefinition[] = [
-  // --- Nouveaux MCD (4) ---
+  // --- Nouveaux MCD (5) ---
   mcdUtilDroits,
   mcdCampPipeline,
   mcdCandSuivi,
   mcdEntretEval,
+  mcdStructConfig,
 
-  // --- Nouveaux MLD (4) ---
+  // --- Nouveaux MLD (5) ---
   mldUtilDroits,
   mldCampPipeline,
   mldCandSuivi,
   mldEntretEval,
+  mldStructConfig,
 
   // --- Nouveaux MPD (4) ---
   mpdUtilDroits,

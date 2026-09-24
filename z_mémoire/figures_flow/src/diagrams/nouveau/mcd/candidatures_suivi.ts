@@ -51,15 +51,15 @@ export const candidaturesSuivi: DiagramDefinition = {
       },
     },
     {
-      id: 'token_candidat',
+      id: 'token_source',
       type: 'entity',
       position: { x: 0, y: 400 },
       data: {
-        label: 'TOKEN_CANDIDAT',
+        label: 'TOKEN_SOURCE',
         variant: 'mcd',
         attributes: [
-          { name: 'id_token_candidat', isPK: true },
-          { name: 'chaine_token' },
+          { name: 'id_token_source', isPK: true },
+          { name: 'chaine_token_source' },
         ],
       },
     },
@@ -111,11 +111,11 @@ export const candidaturesSuivi: DiagramDefinition = {
       data: { label: 'conclure', cardFrom: '0,n', cardTo: '1,1', isStrong: true },
     },
     {
-      id: 'e-generer-token',
+      id: 'e-provenir-token-source',
       source: 'candidature',
-      target: 'token_candidat',
+      target: 'token_source',
       type: 'relationship',
-      data: { label: 'generer', cardFrom: '0,n', cardTo: '1,1' },
+      data: { label: 'provenir de', cardFrom: '1,1', cardTo: '0,n' },
     },
     {
       id: 'e-creer-token-verification',

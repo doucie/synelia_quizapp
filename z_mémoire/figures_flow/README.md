@@ -75,9 +75,14 @@ Les entités du MCD mappent vers les tables MySQL du MPD. Les noms sont **anglic
 | `VERSION_FORMULAIRE` | `form_versions` | Campagnes & pipeline |
 | `QUESTION` | `questions` | Campagnes & pipeline |
 | `REPONSE` | `answers` | Campagnes & pipeline |
+| `ENTREPRISE` | `companies` | Structure & configuration |
+| `DEPARTEMENT` | `departments` | Structure & configuration |
+| `SPECIALITE` | `specialities` | Structure & configuration |
+| `CONFIGURATION` | `app_configs` | Structure & configuration |
+| `MODELE_EMAIL` | `email_templates` | Structure & configuration |
 | `CANDIDATURE` | `applications` | Candidatures & suivi |
 | `AVANCEMENT` | `application_progress` | Candidatures & suivi |
-| `TOKEN_CANDIDAT` | `candidate_tokens` | Candidatures & suivi |
+| `TOKEN_SOURCE` | `source_token` | Candidatures & suivi |
 | `TOKEN_VERIFICATION_EMAIL` | `email_verification_tokens` | Candidatures & suivi |
 | `DEMANDE_CANDIDAT` | `candidate_requests` | Candidatures & suivi |
 | `DECISION` | `decisions` | Candidatures & suivi |
@@ -87,7 +92,6 @@ Les entités du MCD mappent vers les tables MySQL du MPD. Les noms sont **anglic
 | `EVALUATION` | `evaluations` | Entretiens & évaluation |
 | `NOTE_CRITERE` | `evaluation_items` | Entretiens & évaluation |
 | `GRILLE_MODELE` | `evaluation_grids` | Entretiens & évaluation |
-| `MODELE_EMAIL` | `email_templates` | Communication |
 | `PRESET_MODELE_EMAIL` | `email_template_presets` | Communication |
 | `JOURNAL_EMAIL` | `email_logs` | Communication |
 | `CONFIGURATION` | `configurations` | Config système |
@@ -96,9 +100,10 @@ Les entités du MCD mappent vers les tables MySQL du MPD. Les noms sont **anglic
 
 ## Contenu
 
-### Diagrammes Merise — Nouveau (18)
+### Diagrammes Merise — Nouveau (20)
 
-6 domaines × 3 niveaux (MCD/MLD/MPD) = 18 diagrammes dans `src/diagrams/nouveau/` :
+6 domaines × 3 niveaux (MCD/MLD/MPD) = 18 diagrammes + 1 domaine supplémentaire
+(Structure & configuration, MCD + MLD seulement) = 20 diagrammes dans `src/diagrams/nouveau/` :
 
 | # | Type | Domaine | Nb entités |
 |---|------|---------|-----------|
@@ -108,8 +113,10 @@ Les entités du MCD mappent vers les tables MySQL du MPD. Les noms sont **anglic
 | 4 | MCD | Entretiens & évaluation | 6 |
 | 5 | MCD | Communication | 3 |
 | 6 | MCD | Config système | 3 |
-| 7–12 | MLD | (mêmes domaines) | — |
-| 13–18 | MPD | (mêmes domaines) | — |
+| 7 | MCD | Structure & configuration | 5 |
+| 8–13 | MLD | (mêmes domaines) | — |
+| 14 | MLD | Structure & configuration | 5 |
+| 15–20 | MPD | (6 domaines, sans Structure & configuration) | — |
 
 ### Diagrammes archivés (30)
 
@@ -218,9 +225,9 @@ figures_flow/
 │   │   └── index.ts          # Category, DiagramDefinition, EntityNodeData, etc.
 │   ├── diagrams/
 │   │   ├── index.ts          # Registre de tous les diagrammes
-│   │   ├── nouveau/          # Nouveaux diagrammes MCD/MLD/MPD (6 domaines)
-│   │   │   ├── mcd/          # 6 fichiers MCD
-│   │   │   ├── mld/          # 6 fichiers MLD
+│   │   ├── nouveau/          # Nouveaux diagrammes MCD/MLD/MPD (6 domaines + Structure & configuration)
+│   │   │   ├── mcd/          # 7 fichiers MCD
+│   │   │   ├── mld/          # 7 fichiers MLD
 │   │   │   └── mpd/          # 6 fichiers MPD
 │   │   ├── archive/          # Anciens diagrammes (30 fichiers, @ts-nocheck)
 │   │   ├── traitements/      # MCT/SAT/MPT v1 (archivés) et v2 (actifs)

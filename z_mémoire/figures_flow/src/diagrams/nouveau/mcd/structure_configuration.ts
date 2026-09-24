@@ -1,0 +1,131 @@
+import type { DiagramDefinition } from '../../../types'
+
+export const structureConfiguration: DiagramDefinition = {
+  id: 'mcd-structure-configuration',
+  title: 'Structure & configuration',
+  category: 'mcd',
+  domain: 'Structure & configuration',
+  nodes: [
+    {
+      id: 'entreprise',
+      type: 'entity',
+      position: { x: 0, y: 0 },
+      data: {
+        label: 'ENTREPRISE',
+        variant: 'mcd',
+        attributes: [
+          { name: 'id_entreprise', isPK: true },
+          { name: 'nom' },
+          { name: 'description' },
+          { name: 'secteur_activite' },
+          { name: 'adresse' },
+          { name: 'ville' },
+          { name: 'pays' },
+          { name: 'email_contact' },
+          { name: 'telephone' },
+          { name: 'site_web' },
+          { name: 'logo' },
+          { name: 'est_actif' },
+        ],
+      },
+    },
+    {
+      id: 'departement',
+      type: 'entity',
+      position: { x: 0, y: 380 },
+      data: {
+        label: 'DEPARTEMENT',
+        variant: 'mcd',
+        attributes: [
+          { name: 'id_departement', isPK: true },
+          { name: 'nom' },
+          { name: 'description' },
+        ],
+      },
+    },
+    {
+      id: 'specialite',
+      type: 'entity',
+      position: { x: 0, y: 700 },
+      data: {
+        label: 'SPECIALITE',
+        variant: 'mcd',
+        attributes: [
+          { name: 'id_specialite', isPK: true },
+          { name: 'nom' },
+          { name: 'description' },
+        ],
+      },
+    },
+    {
+      id: 'configuration',
+      type: 'entity',
+      position: { x: 700, y: 0 },
+      data: {
+        label: 'CONFIGURATION',
+        variant: 'mcd',
+        attributes: [
+          { name: 'id_configuration', isPK: true },
+          { name: 'nom_configuration' },
+          { name: 'compte_candidat_actives' },
+          { name: 'anti_triche_actif' },
+          { name: 'politique_filtrage' },
+          { name: 'plein_ecran_requis' },
+          { name: 'bloquer_raccourcis' },
+          { name: 'bloquer_copier_coller' },
+          { name: 'est_active' },
+        ],
+      },
+    },
+    {
+      id: 'modele_email',
+      type: 'entity',
+      position: { x: 700, y: 380 },
+      data: {
+        label: 'MODELE_EMAIL',
+        variant: 'mcd',
+        attributes: [
+          { name: 'id_modele_email', isPK: true },
+          { name: 'cle_modele' },
+          { name: 'objet' },
+          { name: 'corps' },
+          { name: 'description' },
+          { name: 'variables_disponibles' },
+          { name: 'variables_editables' },
+          { name: 'type_action' },
+          { name: 'est_actif' },
+        ],
+      },
+    },
+  ],
+  edges: [
+    {
+      id: 'e-regrouper-departement',
+      source: 'entreprise',
+      target: 'departement',
+      type: 'relationship',
+      data: { label: 'regrouper', cardFrom: '0,n', cardTo: '1,1' },
+    },
+    {
+      id: 'e-classer-specialite',
+      source: 'departement',
+      target: 'specialite',
+      type: 'relationship',
+      data: { label: 'classer', cardFrom: '0,n', cardTo: '1,1' },
+    },
+    {
+      id: 'e-configurer-configuration',
+      source: 'entreprise',
+      target: 'configuration',
+      type: 'relationship',
+      data: { label: 'configurer', cardFrom: '1,n', cardTo: '1,1' },
+    },
+    {
+      id: 'e-definir-modele-email',
+      source: 'configuration',
+      target: 'modele_email',
+      type: 'relationship',
+      data: { label: 'définir', cardFrom: '0,n', cardTo: '1,1' },
+    },
+  ],
+}
