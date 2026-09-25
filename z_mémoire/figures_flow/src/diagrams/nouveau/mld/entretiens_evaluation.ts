@@ -56,6 +56,7 @@ export const entretiensEvaluation: DiagramDefinition = {
         attributes: [
           { name: 'id_evaluateur_entretien', type: 'INT', isPK: true },
           { name: '#id_entretien', type: 'INT', isFK: true },
+          { name: '#id_utilisateur', type: 'INT', isFK: true },
           { name: 'peut_modifier', type: 'BOOLEAN' },
           { name: 'peut_supprimer', type: 'BOOLEAN' },
           { name: 'peut_evaluer', type: 'BOOLEAN' },

@@ -63,6 +63,8 @@ export const candidaturesSuivi: DiagramDefinition = {
         variant: 'mld',
         attributes: [
           { name: 'id_token_source', type: 'INT', isPK: true },
+          { name: '#id_campagne', type: 'INT', isFK: true, nullable: true },
+          { name: '#id_formulaire', type: 'INT', isFK: true, nullable: true },
           { name: 'chaine_token_source', type: 'VARCHAR(64)' },
         ],
       },
@@ -77,6 +79,7 @@ export const candidaturesSuivi: DiagramDefinition = {
         attributes: [
           { name: 'id_token_verification_email', type: 'INT', isPK: true },
           { name: '#id_candidature', type: 'INT', isFK: true, nullable: true },
+          { name: '#id_utilisateur', type: 'INT', isFK: true, nullable: true },
           { name: 'chaine_token', type: 'VARCHAR(100)' },
           { name: 'type_token', type: 'VARCHAR(20)' },
           { name: 'date_expiration', type: 'DATETIME' },

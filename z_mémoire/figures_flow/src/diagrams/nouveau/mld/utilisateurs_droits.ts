@@ -15,6 +15,7 @@ export const utilisateursDroits: DiagramDefinition = {
         variant: 'mld',
         attributes: [
           { name: 'id_utilisateur', type: 'INT', isPK: true },
+          { name: '#id_entreprise', type: 'INT', isFK: true },
           { name: 'nom', type: 'VARCHAR(100)' },
           { name: 'prenom', type: 'VARCHAR(100)' },
           { name: 'email', type: 'VARCHAR(255)' },

@@ -17,6 +17,7 @@ export const campagnesPipeline: DiagramDefinition = {
           { name: 'id_campagne', type: 'INT', isPK: true },
           { name: '#id_modele_pipeline', type: 'INT', isFK: true, nullable: true },
           { name: '#id_specialite', type: 'INT', isFK: true, nullable: true },
+          { name: '#id_utilisateur_createur', type: 'INT', isFK: true },
           { name: 'titre', type: 'VARCHAR(255)' },
           { name: 'description', type: 'TEXT', nullable: true },
           { name: 'statut', type: 'VARCHAR(20)' },
