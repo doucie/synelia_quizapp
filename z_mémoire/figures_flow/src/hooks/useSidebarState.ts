@@ -14,7 +14,7 @@ function load(): SidebarState {
   } catch {
     // ignore
   }
-  return { expanded: { mcd: true, mld: false, mpd: false, traitements: true, palette: true, mot: false }, activeDiagramId: null }
+  return { expanded: { mcd: true, mld: false, mpd: false, 'mpd-sql': false, traitements: true, palette: true, mot: false }, activeDiagramId: null }
 }
 
 function save(state: SidebarState) {

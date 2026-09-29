@@ -1,10 +1,11 @@
 import type { Node, Edge } from '@xyflow/react'
+import type { SqlTokenKind } from '../utils/sqlTokens'
 
-export type Category = 'mcd' | 'mld' | 'mpd' | 'traitements' | 'archive' | 'palette' | 'mot'
+export type Category = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'traitements' | 'archive' | 'palette' | 'mot'
 
 export type ProcessVariant = 'mct-event' | 'mct-sync' | 'mct-syncop' | 'mct-operation' | 'mct-result' | 'sat-task' | 'sat-phase' | 'sat-head' | 'sat-lane' | 'mpt-layer' | 'mot-matrix'
 
-export type Variant = 'mcd' | 'mld' | 'mpd' | ProcessVariant
+export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | ProcessVariant
 
 export interface Attribute {
   name: string
@@ -46,6 +47,26 @@ export interface EntityNodeData {
   layer?: string
   dimensions?: { width: number; height: number }
   motMatrix?: { columns: string[], treatments: MotTreatmentData[] }
+  /**
+   * Vue « script » du MPD : le contenu d'un `CREATE TABLE` prêt à être lu
+   * (coloration syntaxique) puis exporté en SVG pour le mémoire.
+   * Déclenche la variante `mpd-sql` d'`EntityNode`.
+   */
+  sql?: string
+  /** Entité MCD d'origine, affichée en sous-titre du bloc de script (règle 12). */
+  mcd?: string
+  /** Nombre de lignes du bloc, affiché dans l'en-tête. */
+  lineCount?: number
+  /** Aperçu du texte des colonnes systématiques (règle 7), hors figure « tables ». */
+  auditNote?: string
+  /** Légende de lecture de la vue « script » (couleur → signification). */
+  sqlLegend?: SqlLegendItem[]
+}
+
+export interface SqlLegendItem {
+  kind: SqlTokenKind
+  label: string
+  sample: string
 }
 
 export type EntityNode = Node<EntityNodeData, 'entity'>

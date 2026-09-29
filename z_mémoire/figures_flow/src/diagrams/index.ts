@@ -15,10 +15,12 @@ import { entretiensEvaluation as mldEntretEval } from './nouveau/mld/entretiens_
 import { structureConfiguration as mldStructConfig } from './nouveau/mld/structure_configuration'
 
 // === Nouveaux MPD ===
-import { utilisateursDroits as mpdUtilDroits } from './nouveau/mpd/utilisateurs_droits'
-import { campagnesPipeline as mpdCampPipeline } from './nouveau/mpd/campagnes_pipeline'
-import { candidaturesSuivi as mpdCandSuivi } from './nouveau/mpd/candidatures_suivi'
-import { entretiensEvaluation as mpdEntretEval } from './nouveau/mpd/entretiens_evaluation'
+import { campagnesCandidatures as mpdCampCand } from './nouveau/mpd/campagnes_candidatures'
+import { entretiensUtilisateurs as mpdEntretUtil } from './nouveau/mpd/entretiens_utilisateurs'
+
+// === Nouveaux MPD — vue script SQL ===
+import { scriptCampagnes as mpdSqlCamp } from './nouveau/mpd_sql/script_campagnes'
+import { scriptEntretiens as mpdSqlEntret } from './nouveau/mpd_sql/script_entretiens'
 
 // === Traitements v2 ===
 import { mct0CreationCampagne } from './traitements/v2/mct_0_creation_campagne'
@@ -89,11 +91,13 @@ export const diagrams: DiagramDefinition[] = [
   mldEntretEval,
   mldStructConfig,
 
-  // --- Nouveaux MPD (4) ---
-  mpdUtilDroits,
-  mpdCampPipeline,
-  mpdCandSuivi,
-  mpdEntretEval,
+  // --- Nouveaux MPD (2) ---
+  mpdCampCand,
+  mpdEntretUtil,
+
+  // --- Nouveaux MPD — script SQL (2) ---
+  mpdSqlCamp,
+  mpdSqlEntret,
 
   // --- Traitements v2 (7) ---
   mct0CreationCampagne,

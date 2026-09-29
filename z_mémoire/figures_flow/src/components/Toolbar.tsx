@@ -66,16 +66,16 @@ export default function Toolbar({
       <button
         onClick={onExportSvg}
         className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
-        title="Exporter en SVG"
+        title="Exporter la figure en SVG"
       >
-        Export
+        SVG
       </button>
       <button
         onClick={onExportPositions}
         className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
         title="Exporter les positions"
       >
-        ⬇
+        Export
       </button>
       <button
         onClick={onResetPositions}

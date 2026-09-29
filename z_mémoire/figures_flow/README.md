@@ -58,67 +58,98 @@ La BD modélisée dans les diagrammes correspond au **schéma cible post-migrati
 - **Renommage** : `interview_evaluations_link` → `evaluation_room_code`
 - **Entités hors-scope** : `EVENEMENT_AUDIT`, `PERMISSION_ENTITE` exclus du MCD (voir `plans/audit/20260819_hors_scope_mcd.md`)
 
-### Correspondance MCD ↔ code
+### Correspondance MCD ↔ MPD
 
-Les entités du MCD mappent vers les tables MySQL du MPD. Les noms sont **anglicisés** dans le passage MCD → MPD.
+Les entités du MCD mappent vers les tables MySQL du MPD. Les noms sont **anglicisés** dans le passage MCD → MPD. Les 21 tables **figurées** sont marquées ✅ ; les 13 autres restent modélisées au MCD/MLD mais ne sont pas dessinées au MPD (périmètre de lecture, voir `plans/implementations/20260928_passage_mld_mpd.md`).
 
-| Entité MCD | Table BD | Domaine |
-|------------|----------|---------|
-| `UTILISATEUR` | `users` | Utilisateurs & droits |
-| `GROUPE_METIER` | `business_groups` | Utilisateurs & droits |
-| `PERMISSION_GROUPE` | `group_permissions` | Utilisateurs & droits |
-| `NOTIFICATION` | `notifications` | Utilisateurs & droits |
-| `CAMPAGNE` | `campaigns` | Campagnes & pipeline |
-| `MODELE_PIPELINE` | `pipeline_templates` | Campagnes & pipeline |
-| `ETAPE_PIPELINE` | `pipeline_stages` | Campagnes & pipeline |
-| `FORMULAIRE` | `forms` | Campagnes & pipeline |
-| `VERSION_FORMULAIRE` | `form_versions` | Campagnes & pipeline |
-| `QUESTION` | `questions` | Campagnes & pipeline |
-| `REPONSE` | `answers` | Campagnes & pipeline |
-| `ENTREPRISE` | `companies` | Structure & configuration |
-| `DEPARTEMENT` | `departments` | Structure & configuration |
-| `SPECIALITE` | `specialities` | Structure & configuration |
-| `CONFIGURATION` | `app_configs` | Structure & configuration |
-| `MODELE_EMAIL` | `email_templates` | Structure & configuration |
-| `CANDIDATURE` | `applications` | Candidatures & suivi |
-| `AVANCEMENT` | `application_progress` | Candidatures & suivi |
-| `TOKEN_SOURCE` | `source_token` | Candidatures & suivi |
-| `TOKEN_VERIFICATION_EMAIL` | `email_verification_tokens` | Candidatures & suivi |
-| `DEMANDE_CANDIDAT` | `candidate_requests` | Candidatures & suivi |
-| `DECISION` | `decisions` | Candidatures & suivi |
-| `ENTRETIEN` | `interviews` | Entretiens & évaluation |
-| `CONVOCATION` | `candidate_interview` | Entretiens & évaluation |
-| `EVALUATEUR_ENTRETIEN` | `interview_participants` | Entretiens & évaluation |
-| `EVALUATION` | `evaluations` | Entretiens & évaluation |
-| `NOTE_CRITERE` | `evaluation_items` | Entretiens & évaluation |
-| `GRILLE_MODELE` | `evaluation_grids` | Entretiens & évaluation |
-| `PRESET_MODELE_EMAIL` | `email_template_presets` | Communication |
-| `JOURNAL_EMAIL` | `email_logs` | Communication |
-| `CONFIGURATION` | `configurations` | Config système |
-| `CONFIGURATION_SMTP` | `smtp_configurations` | Config système |
-| `TEXTE_JURIDIQUE` | `legal_texts` | Config système |
+| Entité MCD | Table MPD | Statut | Domaine |
+|------------|------------|--------|---------|
+| `CAMPAGNE` | `campaigns` | ✅ | Campagnes & pipeline |
+| `MODELE_PIPELINE` | `pipeline_template` | ✅ | Campagnes & pipeline |
+| `ETAPE_PIPELINE` | `pipeline_stage` | ✅ | Campagnes & pipeline |
+| — (association `proposer`) | `campaign_form` | ✅ | Campagnes & pipeline |
+| `FORMULAIRE` | `form` | ✅ | Campagnes & pipeline |
+| `VERSION_FORMULAIRE` | `form_version` | ✅ | Campagnes & pipeline |
+| — (association `contenir`) | `form_questions` | ✅ | Campagnes & pipeline |
+| `QUESTION` | `question` | ✅ | Campagnes & pipeline |
+| `REPONSE` | `answer` | ✅ | Campagnes & pipeline |
+| `CANDIDATURE` | `applications` | ✅ | Candidatures & suivi |
+| `AVANCEMENT` | `application_progress` | ✅ | Candidatures & suivi |
+| `DECISION` | `decisions` | ✅ | Candidatures & suivi |
+| `ENTRETIEN` | `interviews` | ✅ | Entretiens & évaluation |
+| `CONVOCATION` | `convocation` | ✅ ⚠ | Entretiens & évaluation |
+| `EVALUATEUR_ENTRETIEN` | `interview_evaluator` | ✅ ⚠ | Entretiens & évaluation |
+| `EVALUATION` | `evaluations` | ✅ | Entretiens & évaluation |
+| `NOTE_CRITERE` | `evaluation_item` | ✅ | Entretiens & évaluation |
+| `GRILLE_MODELE` | `evaluation_grid_template` | ✅ | Entretiens & évaluation |
+| `VERSION_GRILLE` | `evaluation_grid_template_version` | ✅ | Entretiens & évaluation |
+| `CRITERE` | `evaluation_grid_criterion` | ✅ ⚠ | Entretiens & évaluation |
+| `UTILISATEUR` | `user` | ✅ | Utilisateurs & droits |
+| `GROUPE_METIER` | `business_groups` | — | Utilisateurs & droits |
+| `PERMISSION_GROUPE` | `group_permissions` | — | Utilisateurs & droits |
+| `NOTIFICATION` | `notifications` | — | Utilisateurs & droits |
+| `ENTREPRISE` | `companies` | — | Structure & configuration |
+| `DEPARTEMENT` | `departments` | — | Structure & configuration |
+| `SPECIALITE` | `specialities` | — | Structure & configuration |
+| `CONFIGURATION` | `app_configs` | — | Structure & configuration |
+| `MODELE_EMAIL` | `email_templates` | — | Structure & configuration |
+| `TOKEN_SOURCE` | `source_token` | — | Candidatures & suivi |
+| `TOKEN_VERIFICATION_EMAIL` | `email_verification_tokens` | — | Candidatures & suivi |
+| `DEMANDE_CANDIDAT` | `candidate_requests` | — | Candidatures & suivi |
+| `PRESET_MODELE_EMAIL` | `email_template_presets` | — | Communication |
+| `JOURNAL_EMAIL` | `email_logs` | — | Communication |
+| `CONFIGURATION` | `configurations` | — | Config système |
+| `CONFIGURATION_SMTP` | `smtp_configurations` | — | Config système |
+| `TEXTE_JURIDIQUE` | `legal_texts` | — | Config système |
+
+> **3 arbitrages** (⚠) : le nom physique retenu s'écarte de la table existante en base, parce que
+> le nom physique **décrivait mal l'entité**. La base cible reste la `bd_cible` post-420 :
+> `CONVOCATION` n'est pas une candidature, `EVALUATEUR_ENTRETIEN` n'est pas un simple participant,
+> `CRITERE` est un critère de grille (pas un élément de modèle de grille).
+> Voir `plans/rules/regles_mpd.md` § Table de correspondance.
+>
+> **Attention** : `CONFIGURATION` apparaît 2 fois (`app_configs` et `configurations`) — doublon
+> de la cartographie fonctionnelle, à arbitrer.
 
 ## Contenu
 
-### Diagrammes Merise — Nouveau (20)
+### Diagrammes Merise — Nouveau (14)
 
-6 domaines × 3 niveaux (MCD/MLD/MPD) = 18 diagrammes + 1 domaine supplémentaire
-(Structure & configuration, MCD + MLD seulement) = 20 diagrammes dans `src/diagrams/nouveau/` :
+14 diagrammes dans `src/diagrams/nouveau/`, répartis sur 6 familles :
 
-| # | Type | Domaine | Nb entités |
-|---|------|---------|-----------|
-| 1 | MCD | Utilisateurs & droits | 5 |
-| 2 | MCD | Campagnes & pipeline | 8 |
-| 3 | MCD | Candidatures & suivi | 6 |
-| 4 | MCD | Entretiens & évaluation | 6 |
-| 5 | MCD | Communication | 3 |
-| 6 | MCD | Config système | 3 |
-| 7 | MCD | Structure & configuration | 5 |
-| 8–13 | MLD | (mêmes domaines) | — |
-| 14 | MLD | Structure & configuration | 5 |
-| 15–20 | MPD | (6 domaines, sans Structure & configuration) | — |
+| # | Type | Domaine | Fichier | Nb tables |
+|---|------|---------|---------|-----------|
+| 1 | MCD | Utilisateurs & droits | `utilisateurs_droits.ts` | 5 |
+| 2 | MCD | Campagnes & pipeline | `campagnes_pipeline.ts` | 8 |
+| 3 | MCD | Candidatures & suivi | `candidatures_suivi.ts` | 6 |
+| 4 | MCD | Entretiens & évaluation | `entretiens_evaluation.ts` | 6 |
+| 5 | MCD | Structure & configuration | `structure_configuration.ts` | 5 |
+| 6 | MLD | Utilisateurs & droits | `utilisateurs_droits.ts` | — |
+| 7 | MLD | Campagnes & pipeline | `campagnes_pipeline.ts` | — |
+| 8 | MLD | Candidatures & suivi | `candidatures_suivi.ts` | — |
+| 9 | MLD | Entretiens & évaluation | `entretiens_evaluation.ts` | — |
+| 10 | MLD | Structure & configuration | `structure_configuration.ts` | — |
+| 11 | MPD (tables) | Campagnes & candidatures | `campagnes_candidatures.ts` | 12 |
+| 12 | MPD (tables) | Entretiens & utilisateurs | `entretiens_utilisateurs.ts` | 9 |
+| 13 | MPD (script SQL) | Campagnes & candidatures | `mpd_sql/script_campagnes.ts` | 12 |
+| 14 | MPD (script SQL) | Entretiens & utilisateurs | `mpd_sql/script_entretiens.ts` | 9 |
 
-### Diagrammes archivés (30)
+> Les domaines **Communication** et **Config système** sont modélisés au MCD dans
+> `cartographie-fonctionnelle-front/` mais n'ont pas encore de fichier dans `nouveau/`.
+
+> **Le MPD est un extrait de lecture, pas un inventaire** : les 2 figures de tables couvrent
+> **21 tables sur les 34 relations du MLD** (162 colonnes, 22 arêtes), choisies pour couvrir la
+> chaîne de recrutement de bout en bout. Les 13 relations non figurées restent modélisées au MCD
+> et au MLD — voir `plans/rules/regles_mpd.md` et
+> `plans/implementations/20260928_passage_mld_mpd.md`.
+>
+> **Chaque figure MPD existe en deux vues générées depuis une source unique**
+> (`src/diagrams/nouveau/mpd/schema.ts`) : la vue « tables » ci-dessus et la vue « script SQL »
+> (`mpd_sql/`) qui rend un `CREATE TABLE` complet par bloc — types, PK/FK, politiques `ON
+> DELETE`, unicités, index, colonnes techniques et moteur/charset (règles 2, 3, 4, 5, 6, 7, 8 et
+> 10 de `plans/rules/regles_mpd.md`). Les deux vues ne peuvent pas diverger.
+
+### Diagrammes archivés (34)
 
 Les anciens diagrammes (MCD/MLD/MPD v1, traitements v1, MOT v1) sont conservés dans `src/diagrams/archive/` avec `// @ts-nocheck` et `category: 'archive'`.
 
@@ -179,24 +210,34 @@ Certaines tables présentes en BD ne figurent pas dans le MCD. Voir `plans/audit
 ## Types
 
 ```typescript
-Category = 'mcd' | 'mld' | 'mpd' | 'traitements' | 'archive' | 'palette' | 'mot'
+Category = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'traitements' | 'archive' | 'palette' | 'mot'
 
 ProcessVariant = 'mct-event' | 'mct-sync' | 'mct-operation' | 'mct-result'
                | 'sat-task' | 'sat-phase' | 'sat-head' | 'sat-lane'
                | 'mpt-layer'
 
-Variant = 'mcd' | 'mld' | 'mpd' | ProcessVariant
+Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | ProcessVariant
 
-Attribute = { name, isPK?, description? }
+Attribute = { name, type?, isPK?, isFK?, nullable?, description? }
 
 EntityNodeData = { label, variant, attributes?, color?, badge?, items?, meta?,
-                   detail?, expression?, fail?, layer?, dimensions? }
+                   detail?, expression?, fail?, layer?, dimensions?
+                   /* vue script MPD */ sql?, lineCount?, mcd?, auditNote?,
+                   sqlLegend? }
 
 RelationshipEdgeData = { label?, cardFrom?, cardTo?, isStrong?, isDashed?,
                          diagramId? }
 
 DiagramDefinition = { id, title, category, domain, nodes[], edges[] }
 ```
+
+> `Attribute.nullable` existe déjà pour le MLD. Il est aussi utilisé au MPD, où il pilote la
+> 3ᵉ colonne du bloc (`NOT NULL` / `NULL`) : les deux niveaux partagent le même rendu en grille
+> 3 colonnes, seule la 2ᵉ colonne change (types Merise → types SQL).
+>
+> La variante `mpd-sql` est **déléguée** par `EntityNode` à `SqlScriptBlock` (aucun nouveau type
+> de nœud React Flow) : `EntityNodeData` reste le type de données commun, et `loadPositions` /
+> `applyEntityColors` / `autoLayout` n'ont pas à connaître la vue script.
 
 ## Stack
 
@@ -225,10 +266,11 @@ figures_flow/
 │   │   └── index.ts          # Category, DiagramDefinition, EntityNodeData, etc.
 │   ├── diagrams/
 │   │   ├── index.ts          # Registre de tous les diagrammes
-│   │   ├── nouveau/          # Nouveaux diagrammes MCD/MLD/MPD (6 domaines + Structure & configuration)
-│   │   │   ├── mcd/          # 7 fichiers MCD
-│   │   │   ├── mld/          # 7 fichiers MLD
-│   │   │   └── mpd/          # 6 fichiers MPD
+│   │   ├── nouveau/          # Nouveaux diagrammes MCD/MLD/MPD
+│   │   │   ├── mcd/          # 5 fichiers MCD
+│   │   │   ├── mld/          # 5 fichiers MLD
+│   │   │   ├── mpd/          # Source unique (schema.ts) + 2 figures en tables
+│   │   │   └── mpd_sql/      # Vue « script » — 2 figures CREATE TABLE (layout + figures)
 │   │   ├── archive/          # Anciens diagrammes (30 fichiers, @ts-nocheck)
 │   │   ├── traitements/      # MCT/SAT/MPT v1 (archivés) et v2 (actifs)
 │   │   │   └── v2/           # 7 fichiers MCT (T0–T6)
@@ -237,6 +279,7 @@ figures_flow/
 │   ├── components/
 │   │   ├── Nodes/
 │   │   │   ├── EntityNode.tsx
+│   │   │   ├── SqlScriptBlock.tsx  # Bloc CREATE TABLE (variante mpd-sql)
 │   │   │   └── ProcessNode.tsx
 │   │   ├── Edges/
 │   │   │   ├── RelationshipEdge.tsx
@@ -257,13 +300,15 @@ figures_flow/
 │       ├── autoLayout.ts
 │       ├── edgeDebug.ts         # Store overlay debug edges (figures_flow:debug_edges)
 │       ├── entityColors.ts
-│       └── exportSvg.ts
+│       ├── exportSvg.ts         # exportSvg (figure) + exportNodeSvg (bloc isolé)
+│       └── sqlTokens.ts         # Tokeniseur SQL maison (8 classes de jetons)
 ├── plans/
 │   ├── audit/               # Audits et documentations
 │   ├── implementations/     # Plans d'implémentation (YYYYMMDD_<sujet>.md)
 │   ├── mct/                 # Plans MCT
+│   ├── mpd/                 # Choix physiques hors figures (colonnes_techniques.sql)
 │   ├── mot/                 # Plans MOT
-│   └── rules/               # Règles Merise
+│   └── rules/               # Règles Merise (MCD / MLD / MPD)
 ├── index.html
 └── README.md
 ```
@@ -285,6 +330,7 @@ Ouvrir l'URL affichée (généralement `http://localhost:5173`).
 - Zoom avant/arrière, fit to view
 - Grille d'aimantation (10px)
 - Export SVG du diagramme courant
+- Export SVG **par bloc** (figures script MPD : bouton `⤓` en tête de chaque `CREATE TABLE`)
 - Mode clair / sombre
 - **Debug edges** : bouton `DEBUG` dans la barre d'outils → overlay de debug des arêtes
   (ancrage déclaré→résolu, taille de groupe, offset en px), persisté dans
@@ -293,12 +339,24 @@ Ouvrir l'URL affichée (généralement `http://localhost:5173`).
 - Layout initial automatique (évite les chevauchements)
 - Sélection de police (NT Dapper, system-ui)
 - Mode plein écran pour chaque diagramme
+- **Polices auto-hébergées** (`src/assets/fonts/` + `@font-face` dans `index.css`) : indispensable
+  aux exports SVG — `html-to-image` ne peut pas lire les feuilles remotes (Google Fonts/Fontshare :
+  `SecurityError cssRules`) donc sans fichiers locaux les cartes exportées seraient rendues en police
+  de fallback et la bordure-bas ne tombe pas (métriques ≠ live).
 
 ## Design
 
 - Chaque nœud est une carte arrondie (rounded-xl) avec header coloré
 - Styles adaptés à chaque variante (MCD / MLD / MPD / traitements)
-- Liens lissés avec cardinalités dans des capsules aux extrémités
+- Liens lissés avec cardinalités dans des capsules aux extrémités (MCD)
+- **MPD** : même rendu en grille 3 colonnes que le MLD (`[PK|FK] nom | type SQL | NOT NULL/NULL`),
+  badges `PK`/`FK`, `TABLE`/`JONCTION`, et des liens **sans cardinalité ni verbe** — un lien entre
+  deux tables est un simple lien de référencement, la sémantique est portée par le badge `FK` et
+  la colonne `type` (cf. `plans/rules/regles_mpd.md` § Notation graphique)
+- **MPD — vue script** : chaque bloc est un `CREATE TABLE` complet, disposé en grille 2 colonnes
+  (ordre d'exécution du script), coloré par un tokeniseur SQL maison sans dépendance, avec une
+  légende et un export SVG individuel. Sa surface (`sql-block`) est indépendante du thème
+  clair/sombre pour un export mémoire reproductible
 - Labels de relation (verb) au centre des liens en MCD
 - Palette sobre : pas de classifications "nouvelle entité" ou "pivot" — uniquement des couleurs par entité pour la lisibilité
 - **Nœuds de traitements** : variantes `mct-event` (losange), `mct-sync` (parallelogramme), `mct-operation` (rectangle), `mct-result` (rectangle vert/rouge), `sat-*`, `mpt-layer` — chaque variante a un style distinct
@@ -310,6 +368,16 @@ Les trois niveaux de modélisation respectés :
 - **MCD** (Modèle Conceptuel) : entités, associations, cardinalités, PK soulignée
 - **MLD** (Modèle Logique) : tables, PK, FK (#), tables de jonction
 - **MPD** (Modèle Physique) : tables avec types SQL, contraintes PK/FK/NN
+
+> **Principe du passage MLD → MPD** : le MPD est une **traduction + un ajout de décisions
+> physiques**, jamais une réécriture. Ce qui est reconduit à l'identique : le nombre de tables,
+> les colonnes, les PK (y compris composites), les FK et leur nullabilité. Ce qui est ajouté : les
+> types SQL, les `NOT NULL` / `UNIQUE` / `FOREIGN KEY`, les politiques `ON DELETE`, le moteur, le
+> charset, les index, les colonnes techniques. Ce qui change : la **convention de nommage**
+> (français conceptuel → anglais aligné code), seule transformation de forme autorisée.
+> Le MPD **n'invente jamais** de colonne métier absente du MLD.
+>
+> Règles détaillées : `plans/rules/regles_mpd.md` (12 règles).
 
 Diagrammes de traitements :
 

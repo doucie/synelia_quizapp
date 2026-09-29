@@ -1,6 +1,7 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import type { EntityNodeData } from '../../types'
 import { clsx } from 'clsx'
+import SqlScriptBlock from './SqlScriptBlock'
 
 function hsla(color: string | undefined, alpha: number): string | undefined {
   if (!color) return
@@ -9,8 +10,17 @@ function hsla(color: string | undefined, alpha: number): string | undefined {
   return `hsla(${m[1]}, 100%, 40%, ${alpha})`
 }
 
-export default function EntityNode({ data }: NodeProps<EntityNodeData>) {
+export default function EntityNode({ data, id }: NodeProps<EntityNodeData>) {
   const { label, variant, attributes, color } = data
+  const isTable = variant === 'mld' || variant === 'mpd'
+
+  // Vue « script » du MPD : le MPD est aussi un script SQL. Le rendu n'a rien à
+  // voir avec un tableau de colonnes, il est délégué à SqlScriptBlock.
+  // (`data`/`id` sont `unknown` ici à cause de l'erreur typage React Flow v12
+  // préexistante ; on caste à la frontière pour ne pas l'empirer.)
+  if (variant === 'mpd-sql') {
+    return <SqlScriptBlock data={data as EntityNodeData} id={id as string} />
+  }
 
   return (
     <div
@@ -25,7 +35,7 @@ export default function EntityNode({ data }: NodeProps<EntityNodeData>) {
         style={color ? { backgroundColor: hsla(color, 0.094), color } : undefined}
       >
         <span>{label}</span>
-        {(variant === 'mld' || variant === 'mpd') && (
+        {isTable && (
           <span
             className="rounded px-1.5 text-[10px] font-bold"
             style={color ? { backgroundColor: hsla(color, 0.2), color } : undefined}
@@ -41,13 +51,13 @@ export default function EntityNode({ data }: NodeProps<EntityNodeData>) {
             key={i}
             className={clsx(
               'text-xs',
-              variant === 'mld'
+              isTable
                 ? 'grid grid-cols-[minmax(0,1fr)_auto_auto] gap-x-2'
                 : 'flex items-center gap-2',
             )}
           >
             <span className="flex min-w-0 items-center gap-2">
-              {attr.isPK && (variant === 'mld' || variant === 'mpd') && (
+              {attr.isPK && isTable && (
                 <span
                   className="rounded px-1 text-[10px] font-bold"
                   style={color ? { backgroundColor: hsla(color, 0.2), color } : undefined}
@@ -55,7 +65,7 @@ export default function EntityNode({ data }: NodeProps<EntityNodeData>) {
                   PK
                 </span>
               )}
-              {attr.isFK && (variant === 'mld' || variant === 'mpd') && (
+              {attr.isFK && isTable && (
                 <span
                   className="rounded px-1 text-[10px] font-bold"
                   style={color ? { backgroundColor: hsla(color, 0.2), color } : undefined}
@@ -76,11 +86,10 @@ export default function EntityNode({ data }: NodeProps<EntityNodeData>) {
                 {attr.name}
               </span>
             </span>
-            {attr.type && variant === 'mpd' && (
+            {attr.type && isTable && (
               <span className="text-muted-foreground">{attr.type}</span>
             )}
-            {variant === 'mld' && <span className="text-muted-foreground">{attr.type}</span>}
-            {variant === 'mld' && (
+            {isTable && (
               <span className="text-muted-foreground whitespace-nowrap">
                 {attr.nullable ? 'NULL' : 'NOT NULL'}
               </span>

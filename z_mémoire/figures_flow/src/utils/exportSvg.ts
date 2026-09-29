@@ -1,125 +1,590 @@
 import { toCanvas } from 'html-to-image'
+import { isEdgeDebugEnabled } from './edgeDebug'
 
-export async function exportSvg(filename = 'diagram.svg') {
-  const renderer = document.querySelector('.react-flow__renderer') as HTMLElement
-  const edgesEl = renderer?.querySelector('.react-flow__edges') as HTMLElement
-  if (!renderer) return
+/**
+ * Exporte un nœud isolé en SVG.
+ *
+ * Rasterisation bornée au nœud via `captureNodePadded` (clone paddé) : c'est
+ * ce qui permet de droper un seul `CREATE TABLE` dans le mémoire sans avoir à
+ * recadrer la figure, bordure-bas comprise.
+ */
+export async function exportNodeSvg(nodeId: string, filename: string): Promise<void> {
+  const el = document.querySelector(`.react-flow__node[data-id="${nodeId}"]`) as HTMLElement | null
+  if (!el) return
 
-  const viewport = renderer.querySelector('.react-flow__viewport') as HTMLElement
-  const tRe = /translate\(([\d.-]+)px,\s*([\d.-]+)px\)/
-  const vm = viewport?.style.transform.match(/translate\(([-\d.]+)px?,\s*([-\d.]+)px?\)\s*scale\(([-\d.]+)\)/)
-  const vx = vm ? Number(vm[1]) || 0 : 0
-  const vy = vm ? Number(vm[2]) || 0 : 0
-  const zoom = vm ? Number(vm[3]) || 1 : 1
+  const pr = 2
+  const canvas = await captureNodePadded(el)
 
-  const nodeEls = [...renderer.querySelectorAll('.react-flow__node')] as HTMLElement[]
-  const rb = renderer.getBoundingClientRect()
+  const w = canvas.width / pr
+  const h = canvas.height / pr
+  const PAD = 16
+  const svg =
+    `<?xml version="1.0" encoding="UTF-8"?>\n` +
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${w + PAD * 2}" height="${h + PAD * 2}" ` +
+    `viewBox="${-PAD} ${-PAD} ${w + PAD * 2} ${h + PAD * 2}">\n` +
+    `  <rect x="${-PAD}" y="${-PAD}" width="${w + PAD * 2}" height="${h + PAD * 2}" fill="white"/>\n` +
+    `  <image href="${canvas.toDataURL('image/png')}" x="0" y="0" width="${w}" height="${h}"/>\n` +
+    `</svg>`
 
-  // ---- STEP 1: capture nodes and compute bounds ----
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
-  const images: { href: string; x: number; y: number; w: number; h: number }[] = []
+  download(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }), filename)
+}
 
-  for (const el of nodeEls) {
-    const m = el.style.transform.match(tRe)
-    const fx = m ? parseFloat(m[1]) : 0
-    const fy = m ? parseFloat(m[2]) : 0
-    const r = el.getBoundingClientRect()
-    const nw = r.width / zoom
-    const nh = r.height / zoom
-
-    minX = Math.min(minX, fx)
-    minY = Math.min(minY, fy)
-    maxX = Math.max(maxX, fx + nw)
-    maxY = Math.max(maxY, fy + nh)
-
-    const pr = 2
-    const canvas = await toCanvas(el, { pixelRatio: pr, skipAutoScale: true, style: { transform: 'none' } })
-    images.push({
-      href: canvas.toDataURL('image/png'),
-      x: fx,
-      y: fy,
-      w: canvas.width / pr,
-      h: canvas.height / pr,
-    })
-  }
-
-  // ---- STEP 2: edge label images + bounds ----
-  for (const div of [...document.querySelectorAll('.react-flow__edgelabel-renderer > div')] as HTMLElement[]) {
-    if (div.querySelector('button')) continue
-
-    const r = div.getBoundingClientRect()
-    const fx = (r.left - rb.left - vx) / zoom
-    const fy = (r.top - rb.top - vy) / zoom
-    const fw = r.width / zoom
-    const fh = r.height / zoom
-
-    minX = Math.min(minX, fx)
-    minY = Math.min(minY, fy)
-    maxX = Math.max(maxX, fx + fw)
-    maxY = Math.max(maxY, fy + fh)
-
-    const pr = 2
-    // Override position so the captured content starts at (0,0) rather than at some
-    // absolute left/top offset within the offscreen foreignObject.
-    const canvas = await toCanvas(div, { pixelRatio: pr, skipAutoScale: true, style: { position: 'relative', left: '0', top: '0' } })
-    images.push({
-      href: canvas.toDataURL('image/png'),
-      x: fx,
-      y: fy,
-      w: canvas.width / pr,
-      h: canvas.height / pr,
-    })
-  }
-
-  if (!isFinite(minX)) { minX = 0; minY = 0; maxX = 800; maxY = 600 }
-
-  const PAD = 40
-  const cx = minX - PAD
-  const cy = minY - PAD
-  const cw = maxX - minX + PAD * 2
-  const ch = maxY - minY + PAD * 2
-
-  // ---- STEP 3: collect edge path data as strings ----
-  const edgeParts: string[] = []
-  for (const edgeSvg of edgesEl?.querySelectorAll(':scope > svg') ?? []) {
-    const g = edgeSvg.querySelector('g')
-    if (!g) continue
-    const gClone = g.cloneNode(true) as SVGGElement
-    for (const p of [...gClone.querySelectorAll('path')]) {
-      if (p.classList.contains('react-flow__edge-interaction')) { p.remove(); continue }
-      const d = p.getAttribute('d')
-      if (!d) continue
-      const stroke = p.getAttribute('stroke') || '#666'
-      const sw = p.getAttribute('stroke-width') || '2'
-      const fill = p.getAttribute('fill') || 'none'
-      let dash = p.getAttribute('stroke-dasharray') || ''
-      edgeParts.push(`<path d="${d}" stroke="${stroke}" stroke-width="${sw}" fill="${fill}"${dash ? ` stroke-dasharray="${dash}"` : ''}/>`)
-    }
-  }
-
-  // ---- STEP 4: build SVG as a string ----
-  const xmlns = 'http://www.w3.org/2000/svg'
-  let svg = `<?xml version="1.0" encoding="UTF-8"?>\n`
-  svg += `<svg xmlns="${xmlns}" width="${cw}" height="${ch}" viewBox="${cx} ${cy} ${cw} ${ch}">\n`
-  svg += `  <rect x="${cx}" y="${cy}" width="${cw}" height="${ch}" fill="white"/>\n`
-
-  // Edges (below everything)
-  for (const e of edgeParts) {
-    svg += `  ${e}\n`
-  }
-
-  // All images (nodes + labels) on top
-  for (const nd of images) {
-    svg += `  <image href="${nd.href}" x="${nd.x}" y="${nd.y}" width="${nd.w}" height="${nd.h}"/>\n`
-  }
-
-  svg += `</svg>`
-
-  const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
+function download(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
   a.download = filename
   a.click()
   URL.revokeObjectURL(url)
+}
+
+const TRANSLATE_RE = /translate\(([-\d.]+)px?,\s*([-\d.]+)px?\)/
+
+interface NodePlacement {
+  href: string
+  x: number
+  y: number
+  w: number
+  h: number
+}
+
+/**
+ * Marge de sécurité (px) ajoutée autour du nœud lors de sa rasterisation.
+ *
+ * `html-to-image` dimensionne le canvas depuis `clientWidth/clientHeight`
+ * (entiers, `util.js:getNodeSize`) puis tronque `canvas.height` à l'entier
+ * (`index.js`) : la bordure-bas d'une carte à hauteur fractionnaire peut
+ * tomber hors du canvas et être perdue définitivement. En capturant un clone
+ * de la carte dans un wrapper garni de cette marge (voir `resolveCaptureTarget`),
+ * la bordure est toujours incluse ; la marge (transparente) est ensuite
+ * recompensée à l'assemblage (`-NODE_CAPTURE_PAD`, placement ancré en haut →
+ * aucune dérive visuelle).
+ */
+const NODE_CAPTURE_PAD = 16
+
+/**
+ * Cible de capture : la carte bordée d'un nœud si elle existe, sinon l'enveloppe.
+ *
+ * L'objet capturé important c'est la CARTE, pas l'enveloppe `.react-flow__node` :
+ * les blocs qui exportent parfaitement (ex. `SqlScriptBlock`, racine
+ * `w-full overflow-hidden` à hauteur de contenu) SONT leur carte, tandis que la
+ * carte des entités (`h-full`, hauteur 100% de l'enveloppe RF + Handles absolus)
+ * perdait sa bordure-bas une fois clonée dans l'enveloppe. En clonant la carte
+ * seule dans le wrapper paddé, on reproduit pour toutes les cartes le cas qui
+ * marche déjà. Fallback sur l'enveloppe pour les nœuds sans carte bordée
+ * (formes polygonales MCT/SAT, …).
+ */
+function resolveCaptureTarget(el: HTMLElement): HTMLElement {
+  const walk = (node: HTMLElement, depth: number): HTMLElement | null => {
+    if (depth > 0) {
+      const cs = getComputedStyle(node)
+      const bw = [
+        cs.borderTopWidth,
+        cs.borderRightWidth,
+        cs.borderBottomWidth,
+        cs.borderLeftWidth,
+      ]
+      const isBordered =
+        bw.every((w) => parseFloat(w) > 0) &&
+        bw[0] === bw[1] &&
+        bw[1] === bw[2] &&
+        bw[2] === bw[3] &&
+        cs.borderTopStyle !== 'none'
+      if (isBordered) return node
+    }
+    for (const child of node.children as HTMLCollection) {
+      const found = walk(child as HTMLElement, depth + 1)
+      if (found) return found
+    }
+    return null
+  }
+  return walk(el, 0) ?? el
+}
+
+/**
+ * Plan C — bordure ENTIÈRE redessinée, sans tenir compte de celle du raster.
+ *
+ * `html-to-image` peint de façon non fiable la bordure des cartes (rangée basse
+ * clippée, coins rendus avec un rayon légèrement différent du CSS). Plutôt que
+ * de rafistoler le bas (= plan B) — erase/arcs/sondes inward|outward qui se
+ * mordent le coin gauche à chaque itération — on **redessine le ring complet**
+ * (top + droite + bas + gauche + les 4 coins) de façon déterministe.
+ *
+ * On ne réutilise du raster que sa GÉOMÉTRIE (boîte de la carte détectée par
+ * pixels : top/bottom = 1re/dernière rangée opaque au centre, left/right =
+ * 1re/dernière colonne opaque à mi-hauteur, loin des coins arrondis) ;
+ * couleur, épaisseurs et rayons de coin viennent de `getComputedStyle`.
+ *
+ * Passes sur le ring (chemin `Path2D` evenodd = outer arrondi − inner arrondi,
+ * sans dépendre de `ctx.roundRect`) :
+ * - **Effacement** `destination-out`, ring élargi de `outPad` au-delà du bord
+ *   externe (absorbe anti-alias + coins) → la bordure du raster disparaît.
+ * - **Peinture** `source-over`, ring exact en `borderColor`.
+ *
+ * Boutons de calage (px phys) si un pixel subsiste en test : `radiusDelta`
+ * (corrige le rayon de coin) et `innerPad` (avale l'anti-alias intérieur).
+ * Fond de carte jamais touché → plus de refill `bgColor`, plus de `bgAlpha`.
+ */
+function ensureBottomBorder(canvas: HTMLCanvasElement, target: HTMLElement) {
+  const cs = getComputedStyle(target)
+  const rgb = (css: string) => {
+    const m = css.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/)
+    return m ? ([Number(m[1]), Number(m[2]), Number(m[3])] as const) : null
+  }
+  const color = cs.borderTopColor || '#000000'
+  const borderColor = rgb(color)
+  const toPhys = (css: string) => Math.max(0, Math.round((parseFloat(css) || 0) * 2))
+  const bw = {
+    top: toPhys(cs.borderTopWidth),
+    right: toPhys(cs.borderRightWidth),
+    bottom: toPhys(cs.borderBottomWidth),
+    left: toPhys(cs.borderLeftWidth),
+  }
+  const info = {
+    bordered: bw.top > 0 || bw.bottom > 0 || bw.left > 0 || bw.right > 0,
+    edgeRow: null as number | null,
+    painted: false,
+    color,
+  }
+  if (!borderColor || !info.bordered) return info
+
+  // Boutons de calage (px phys), valables pendant les tests :
+  const radiusDelta = 0 // +N => coins grossis (si le bg arrondit plus que nous)
+  const outPad = 2 // marge d'effacement au-delà du bord EXTERNE du ring
+  const innerPad = 0 // marge d'effacement AVANT le rebord intérieur (anti-alias)
+
+  const ctx = canvas.getContext('2d', { willReadFrequently: true })
+  if (!ctx) return info
+  const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data
+  const alpha = (x: number, y: number) => data[(y * canvas.width + x) * 4 + 3]
+
+  // Boîte de la carte détectée par pixels (géométrie du raster seulement).
+  const cx = Math.floor(canvas.width / 2)
+  let top = -1
+  for (let y = 0; y < canvas.height; y++) {
+    if (alpha(cx, y) >= 60) { top = y; break }
+  }
+  let bottom = -1
+  for (let y = canvas.height - 1; y >= 0; y--) {
+    if (alpha(cx, y) >= 60) { bottom = y; break }
+  }
+  if (top < 0 || bottom <= top) return info
+  info.edgeRow = bottom
+
+  const rowY = top + ((bottom - top) >> 1)
+  let left = -1
+  let right = -1
+  for (let x = 0; x < canvas.width; x++) {
+    if (alpha(x, rowY) >= 60) { left = x; break }
+  }
+  for (let x = canvas.width - 1; x >= 0; x--) {
+    if (alpha(x, rowY) >= 60) { right = x; break }
+  }
+  if (left < 0 || right <= left) return info
+
+  const x = left
+  const y = top
+  const w = right - left + 1
+  const h = bottom - top + 1
+
+  // Rayons de coin (px phys) : [tl, tr, br, bl]. Le rebord INTÉRIEUR du ring
+  // reprend ces rayons moins l'épaisseur de bordure des côtés adjacents (CSS).
+  const corner = (css: string) => Math.max(0, (parseFloat(css) || 0) * 2) + radiusDelta
+  const radii = [
+    corner(cs.borderTopLeftRadius),
+    corner(cs.borderTopRightRadius),
+    corner(cs.borderBottomRightRadius),
+    corner(cs.borderBottomLeftRadius),
+  ]
+  const innerRadii = [
+    Math.max(0, radii[0] - (bw.top + bw.left) / 2),
+    Math.max(0, radii[1] - (bw.top + bw.right) / 2),
+    Math.max(0, radii[2] - (bw.bottom + bw.right) / 2),
+    Math.max(0, radii[3] - (bw.bottom + bw.left) / 2),
+  ]
+
+  const roundRect = (px: number, py: number, pw: number, ph: number, rr: number[]) => {
+    const p = new Path2D()
+    if (pw <= 0 || ph <= 0) return p
+    const r = rr.map((v) => Math.max(0, Math.min(v, pw / 2, ph / 2)))
+    p.moveTo(px + r[0], py)
+    p.lineTo(px + pw - r[1], py)
+    p.arcTo(px + pw, py, px + pw, py + r[1], r[1])
+    p.lineTo(px + pw, py + ph - r[2])
+    p.arcTo(px + pw, py + ph, px + pw - r[2], py + ph, r[2])
+    p.lineTo(px + r[3], py + ph)
+    p.arcTo(px, py + ph, px, py + ph - r[3], r[3])
+    p.lineTo(px, py + r[0])
+    p.arcTo(px, py, px + r[0], py, r[0])
+    p.closePath()
+    return p
+  }
+
+  // Ring = outer arrondi − inner arrondi, rempli en une fois (evenodd).
+  const paintRing = (
+    ox: number, oy: number, ow: number, oh: number, orr: number[],
+    ix: number, iy: number, iw: number, ih: number, irr: number[],
+    fill: string, gco: GlobalCompositeOperation,
+  ) => {
+    const p = roundRect(ox, oy, ow, oh, orr)
+    p.addPath(roundRect(ix, iy, iw, ih, irr))
+    ctx.globalCompositeOperation = gco
+    ctx.fillStyle = fill
+    ctx.fill(p, 'evenodd')
+  }
+
+  // 1. Effacement : ring élargi de `outPad` hors du bord externe (anti-alias,
+  //    coins) ; intérieur élargi de `innerPad` si un rebord de bordure subsiste.
+  paintRing(
+    x - outPad, y - outPad, w + outPad * 2, h + outPad * 2,
+    radii.map((r) => r + outPad),
+    x + bw.left - innerPad, y + bw.top - innerPad,
+    w - bw.left - bw.right + innerPad * 2, h - bw.top - bw.bottom + innerPad * 2,
+    innerRadii, '#000000', 'destination-out',
+  )
+
+  // 2. Peinture : ring exact, en couleur de bordure.
+  paintRing(
+    x, y, w, h, radii,
+    x + bw.left, y + bw.top,
+    w - bw.left - bw.right, h - bw.top - bw.bottom,
+    innerRadii, color, 'source-over',
+  )
+
+  info.painted = true
+  return info
+}
+
+/** Aperçu visuel du raster (toggle DEBUG) : image + bande du bas zoomée ×2. */
+function showCapturePreview(canvas: HTMLCanvasElement, caption: string) {
+  if (!isEdgeDebugEnabled()) return
+  let panel = document.getElementById('capture-preview-panel') as HTMLDivElement | null
+  if (!panel) {
+    panel = document.createElement('div')
+    panel.id = 'capture-preview-panel'
+    panel.style.cssText =
+      'position:fixed;right:8px;bottom:8px;z-index:99999;max-height:45vh;overflow:auto;' +
+      'background:#fff;border:1px solid #888;font:11px/1.4 ui-monospace,monospace;padding:6px;display:flex;flex-wrap:wrap;gap:8px'
+    panel.dataset.count = '0'
+    document.body.appendChild(panel)
+  }
+  let count = Number(panel.dataset.count || '0')
+  if (count >= 24) {
+    panel.removeChild(panel.firstChild as Node)
+    count--
+  }
+  panel.dataset.count = String(count + 1)
+
+  const entry = document.createElement('div')
+  entry.style.cssText = 'max-width:170px;border-bottom:1px dashed #aaa;padding:4px 0'
+  const img = document.createElement('img')
+  img.style.cssText = 'width:160px;display:block'
+  img.src = canvas.toDataURL('image/png')
+  entry.appendChild(img)
+
+  const strip = document.createElement('canvas')
+  const rows = 12
+  strip.width = canvas.width
+  strip.height = rows
+  const sctx = strip.getContext('2d')
+  if (sctx) {
+    sctx.drawImage(canvas, 0, canvas.height - rows, canvas.width, rows, 0, 0, canvas.width, rows)
+    const big = document.createElement('img')
+    big.style.cssText = 'width:160px;display:block;margin-top:2px;image-rendering:pixelated'
+    big.src = strip.toDataURL('image/png')
+    entry.appendChild(big)
+  }
+
+  const cap = document.createElement('div')
+  cap.textContent = caption
+  entry.appendChild(cap)
+  panel.appendChild(entry)
+}
+
+/**
+ * Rasterise le nœud via un clone détaché dans un wrapper paddé.
+ *
+ * - Clone inséré dans un wrapper `fixed` invisible (aucun flicker, styles
+ *   calculés résolus car attaché au DOM) ; transform/position neutralisés →
+ *   contenu ancré en haut-gauche du wrapper.
+ * - Cible = carte interne bordée quand elle existe (voir `resolveCaptureTarget`) ;
+ *   `position:relative` sur le clone ré-ancre les Handles absolus sur la carte
+ *   (= sa boîte live), le padding du wrapper ne les décale plus.
+ * - `width`/`height` optionnels : passés quand on connaît la taille exacte
+ *   (figure) pour forcer un canvas précis ; omis pour l'export solo (mesure
+ *   naturelle du wrapper, padding inclus).
+ * - Sortie : canvas éventuellement corrigé par `ensureBottomBorder` (plan B).
+ */
+async function captureNodePadded(
+  el: HTMLElement,
+  opts: { width?: number; height?: number } = {},
+): Promise<HTMLCanvasElement> {
+  const target = resolveCaptureTarget(el)
+  const clone = target.cloneNode(true) as HTMLElement
+  clone.style.transform = 'none'
+  clone.style.left = '0'
+  clone.style.top = '0'
+  clone.style.position = 'relative'
+  // `h-full` (= 100%) sur la carte à dimensionner au contenu : le wrapper du
+  // clone force sa hauteur via `options.height` (`apply-style.js`), la carte
+  // `height:100%` absorbe alors la marge de sécurité et sa bordure-bas sort du
+  // foreignObject (coupée). `auto` reproduit le layout live (l'enveloppe RF n'a
+  // aucune hauteur fixe) → la carte se hauteur de contenu, comme les blocs
+  // MPD-SQL qui exportent parfaitement.
+  clone.style.height = 'auto'
+
+  // Le masquage (position hors écran) est porté par un HÔTE non capturé :
+  // `html-to-image` recopie intégralement le style calculé du root cloné dans le
+  // `foreignObject` (`clone-node.js:cloneCSSStyle`) — tout style de masquage posé
+  // sur le root capturé (opacity, left:-…px…) rendrait la capture invisible.
+  const host = document.createElement('div')
+  host.style.cssText = 'position:fixed;left:-100000px;top:0;z-index:-1'
+  const wrapper = document.createElement('div')
+  wrapper.style.cssText =
+    `position:relative;display:inline-block;padding:${NODE_CAPTURE_PAD}px;pointer-events:none`
+  wrapper.appendChild(clone)
+  host.appendChild(wrapper)
+  document.body.appendChild(host)
+  try {
+    const canvas = await toCanvas(wrapper, {
+      pixelRatio: 2,
+      skipAutoScale: true,
+      width: opts.width,
+      height: opts.height,
+      style: { boxShadow: 'none' },
+    })
+
+    // Plan C : bordure entière redessinée (ring evenodd, déterministe).
+    const fix = ensureBottomBorder(canvas, target)
+    if (fix.painted) {
+      console.info('[captureNodePadded]', {
+        nodeId: el.getAttribute('data-id'),
+        canvasW: canvas.width / 2,
+        canvasH: canvas.height / 2,
+        edgeRow: fix.edgeRow,
+        painted: fix.painted,
+        color: fix.color,
+      })
+    }
+    showCapturePreview(
+      canvas,
+      `#${el.getAttribute('data-id')} · ${fix.bordered ? 'bordure' : 'sans bordure'} · ` +
+        `${fix.painted ? 'redessinée ✓' : '—'}`,
+    )
+    return canvas
+  } finally {
+    host.remove()
+  }
+}
+
+/**
+ * Exporte la figure entière en SVG (format plat, Word/Typst compatible).
+ *
+ * Hybridation manuelle, chacune des trois couches avec sa technique fiable :
+ * - **Arêtes** : ré-émises en `<path>` vectoriels, couleurs lues via
+ *   `getComputedStyle` (résout `var(--xy-edge-stroke-*)` → vraie couleur, plus
+ *   de `#666`), pointillés/épaisseurs/opacité préservés ; l'étendue de chaque
+ *   chemin est incluse dans la bbox de la figure (plus d'arêtes recoupées en
+ *   bord de figure).
+ * - **Nœuds** : rasterisés via un clone détaché paddé (`captureNodePadded`) —
+ *   la cible est la **carte interne bordée** (`resolveCaptureTarget`), pas
+ *   l'enveloppe `.react-flow__node` ; c'est ce qui conserve la bordure-bas des
+ *   entités (cartes `h-full` à hauteur fractionnaire) comme pour les blocs
+ *   MPD-SQL dont la racine est déjà leur carte. La marge transparente est
+ *   recompensée à l'assemblage (placement `-NODE_CAPTURE_PAD`).
+ * - **Labels (verbes, cardinalités, rôles)** : capturés en UNE seule surcouche
+ *   raster du `.react-flow__edgelabel-renderer` entier, recadrée sur l'union de
+ *   leurs boîtes — rien n'est clippé (les rôles débordent de leur boîte 36×36),
+ *   positions flow exactes.
+ *
+ * Toute la figure est prise, indépendamment du viewport/zoom du moment
+ * (`onlyRenderVisibleElements` est désactivé : nœuds et arêtes sont tous dans
+ * le DOM). Conteneurs de `react-flow__background` et panneaux exclus comme avant.
+ */
+export async function exportSvg(filename = 'diagram.svg') {
+  const renderer = document.querySelector('.react-flow__renderer') as HTMLElement | null
+  const viewport = renderer?.querySelector('.react-flow__viewport') as HTMLElement | null
+  if (!renderer || !viewport) return
+
+  const vm = viewport.style.transform.match(/translate\(([-\d.]+)px?,\s*([-\d.]+)px?\)\s*scale\(([-\d.]+)\)/)
+  const vx = vm ? Number(vm[1]) || 0 : 0
+  const vy = vm ? Number(vm[2]) || 0 : 0
+  const zoom = vm ? Number(vm[3]) || 1 : 1
+  const rb = renderer.getBoundingClientRect()
+
+  // Convertisseur écran (viewport transformé) → coordonnées monde.
+  const toFlow = (r: DOMRect) => ({
+    x: (r.left - rb.left - vx) / zoom,
+    y: (r.top - rb.top - vy) / zoom,
+    w: r.width / zoom,
+    h: r.height / zoom,
+  })
+
+  // Bbox de la figure en coordonnées flow : nœuds + étendue des arêtes + labels.
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+
+  // ---- Arêtes : chemins vectoriels (couleurs via style calculé) ----
+  const edgeParts: string[] = []
+  const markerIds = new Set<string>()
+  for (const edgeSvg of [...renderer.querySelectorAll('.react-flow__edges > svg')] as SVGElement[]) {
+    const g = edgeSvg.querySelector('g.react-flow__edge') as SVGGElement | null
+    if (!g) continue
+    for (const p of g.querySelectorAll('path')) {
+      if (p.classList.contains('react-flow__edge-interaction')) continue
+      const d = p.getAttribute('d')
+      if (!d) continue
+      const cs = getComputedStyle(p)
+      if (cs.visibility === 'hidden' || cs.display === 'none') continue
+
+      // Étendue du chemin (coord. locales = coord. flow) : incluse dans la bbox
+      // pour que boucles réflexives et arcs ne soient pas recoupés en bord de figure.
+      const bb = p.getBBox()
+      minX = Math.min(minX, bb.x)
+      minY = Math.min(minY, bb.y)
+      maxX = Math.max(maxX, bb.x + bb.width)
+      maxY = Math.max(maxY, bb.y + bb.height)
+
+      let markerHref = ''
+      const markerUrl = p.getAttribute('marker-end')
+      if (markerUrl) {
+        const id = markerUrl.match(/url\(#([^)]+)\)/)?.[1]
+        if (id) {
+          const marker = renderer.querySelector(`.react-flow__marker marker#${id}`) as Element | null
+          if (marker && !markerIds.has(id)) {
+            markerIds.add(id)
+            edgeParts.unshift(marker.outerHTML)
+          }
+          markerHref = ` marker-end="url(#${id})"`
+        }
+      }
+
+      const dash = cs.strokeDasharray && cs.strokeDasharray !== 'none' ? ` stroke-dasharray="${cs.strokeDasharray}"` : ''
+      const opacity = cs.opacity !== '1' ? ` opacity="${cs.opacity}"` : ''
+      edgeParts.push(
+        `<path d="${d}" stroke="${cs.stroke || '#666'}" stroke-width="${cs.strokeWidth}" fill="${cs.fill || 'none'}"${dash}${opacity}${markerHref}/>`,
+      )
+    }
+  }
+
+  // ---- Nœuds : raster (clone paddé) + bbox monde ----
+  const nodeImages: NodePlacement[] = []
+  for (const el of [...renderer.querySelectorAll('.react-flow__node')] as HTMLElement[]) {
+    const m = el.style.transform.match(TRANSLATE_RE)
+    const fx = m ? parseFloat(m[1]) : 0
+    const fy = m ? parseFloat(m[2]) : 0
+    const nw = el.getBoundingClientRect().width / zoom
+    const nh = el.getBoundingClientRect().height / zoom
+
+    minX = Math.min(minX, fx)
+    minY = Math.min(minY, fy)
+    maxX = Math.max(maxX, fx + nw)
+    maxY = Math.max(maxY, fy + nh)
+
+    const canvas = await captureNodePadded(el, {
+      width: Math.ceil(nw) + NODE_CAPTURE_PAD * 2,
+      height: Math.ceil(nh) + NODE_CAPTURE_PAD * 2,
+    })
+    nodeImages.push({
+      href: canvas.toDataURL('image/png'),
+      x: fx - NODE_CAPTURE_PAD,
+      y: fy - NODE_CAPTURE_PAD,
+      w: canvas.width / 2,
+      h: canvas.height / 2,
+    })
+  }
+
+  // ---- Labels : une seule surcouche raster du conteneur EdgeLabelRenderer ----
+  let labelImage: { href: string; x: number; y: number; w: number; h: number } | null = null
+  const labelRenderer = document.querySelector('.react-flow__edgelabel-renderer') as HTMLElement | null
+  const debugEnabled = isEdgeDebugEnabled()
+  if (labelRenderer) {
+    const children = [...labelRenderer.children] as HTMLElement[]
+    const visible = children.filter((div) => {
+      if (div.querySelector('button')) return false
+      if (div.getBoundingClientRect().width === 0 || div.getBoundingClientRect().height === 0) return false
+      if (debugEnabled) return false
+      return true
+    })
+
+    if (visible.length > 0) {
+      let lbx = Infinity, lby = Infinity, lrx = -Infinity, lrb = -Infinity
+      for (const div of visible) {
+        const els = [div, ...div.querySelectorAll('*')]
+        for (const e of els) {
+          const f = toFlow((e as HTMLElement).getBoundingClientRect())
+          lbx = Math.min(lbx, f.x)
+          lby = Math.min(lby, f.y)
+          lrx = Math.max(lrx, f.x + f.w)
+          lrb = Math.max(lrb, f.y + f.h)
+        }
+      }
+
+      if (isFinite(lbx) && lrx - lbx > 0 && lrb - lby > 0) {
+        const lw = lrx - lbx
+        const lh = lrb - lby
+        minX = Math.min(minX, lbx)
+        minY = Math.min(minY, lby)
+        maxX = Math.max(maxX, lrx)
+        maxY = Math.max(maxY, lrb)
+
+        const canvas = await toCanvas(labelRenderer, {
+          pixelRatio: 2,
+          skipAutoScale: true,
+          width: lw,
+          height: lh,
+          style: {
+            position: 'relative',
+            left: '0',
+            top: '0',
+            width: `${lw}px`,
+            height: `${lh}px`,
+            transform: `translate(${-lbx}px, ${-lby}px)`,
+            transformOrigin: '0 0',
+          },
+        })
+        labelImage = {
+          href: canvas.toDataURL('image/png'),
+          x: lbx,
+          y: lby,
+          w: lw,
+          h: lh,
+        }
+      }
+    }
+  }
+
+  if (!isFinite(minX)) { minX = 0; minY = 0; maxX = 800; maxY = 600 }
+
+  const PAD = 40
+  const ox = minX - PAD
+  const oy = minY - PAD
+  const cw = Math.ceil(maxX - minX + PAD * 2)
+  const ch = Math.ceil(maxY - minY + PAD * 2)
+
+  // Fond reprenant la couleur de fond de l'appli (clair ou sombre).
+  const bodyBg = getComputedStyle(document.body).backgroundColor
+  const bg = bodyBg && bodyBg !== 'rgba(0, 0, 0, 0)' ? bodyBg : '#ffffff'
+
+  let svg = `<?xml version="1.0" encoding="UTF-8"?>\n`
+  svg += `<svg xmlns="http://www.w3.org/2000/svg" width="${cw}" height="${ch}" viewBox="${ox} ${oy} ${cw} ${ch}">\n`
+  svg += `  <rect x="${ox}" y="${oy}" width="${cw}" height="${ch}" fill="${bg}"/>\n`
+
+  // Arêtes sous tout le reste.
+  for (const e of edgeParts) {
+    svg += `  ${e}\n`
+  }
+
+  // Nœuds (image raster du clone paddé, marge transparente recompensée).
+  for (const nd of nodeImages) {
+    svg += `  <image href="${nd.href}" x="${nd.x}" y="${nd.y}" width="${nd.w}" height="${nd.h}"/>\n`
+  }
+
+  // Étiquettes d'arêtes par-dessus (verbes, cardinalités, rôles).
+  if (labelImage) {
+    svg += `  <image href="${labelImage.href}" x="${labelImage.x}" y="${labelImage.y}" width="${labelImage.w}" height="${labelImage.h}"/>\n`
+  }
+
+  svg += `</svg>`
+
+  download(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }), filename)
 }

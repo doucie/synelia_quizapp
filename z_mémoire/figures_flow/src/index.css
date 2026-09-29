@@ -24,6 +24,123 @@
   --color-ring: hsl(var(--ring));
 }
 
+/* Fontes auto-hébergées (PS : les feuilles Google Fonts / Fontshare étaient
+   remotes → `html-to-image` ne pouvait pas les embarquer (SecurityError
+   cssRules) → les cartes exportées étaient rendues en police de fallback et la
+   bordure-bas partait au mauvais endroit. Locales maintenant : raster == live. */
+@font-face {
+  font-family: 'Cabinet Grotesk';
+  src: url('./assets/fonts/CabinetGrotesk-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Cabinet Grotesk';
+  src: url('./assets/fonts/CabinetGrotesk-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Cabinet Grotesk';
+  src: url('./assets/fonts/CabinetGrotesk-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Cabinet Grotesk';
+  src: url('./assets/fonts/CabinetGrotesk-800.woff2') format('woff2');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Inter';
+  src: url('./assets/fonts/Inter-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Inter';
+  src: url('./assets/fonts/Inter-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Inter';
+  src: url('./assets/fonts/Inter-600.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Inter';
+  src: url('./assets/fonts/Inter-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  src: url('./assets/fonts/PlusJakartaSans-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  src: url('./assets/fonts/PlusJakartaSans-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  src: url('./assets/fonts/PlusJakartaSans-600.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  src: url('./assets/fonts/PlusJakartaSans-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Poppins';
+  src: url('./assets/fonts/Poppins-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Poppins';
+  src: url('./assets/fonts/Poppins-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Poppins';
+  src: url('./assets/fonts/Poppins-600.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Poppins';
+  src: url('./assets/fonts/Poppins-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Light theme */
 :root {
   --font-sans: 'Cabinet Grotesk', system-ui, sans-serif;
@@ -161,3 +278,65 @@ body {
   outline-offset: 4px;
   border-radius: 8px;
 }
+
+/* ==========================================================================
+   MPD — vue « script SQL »
+   --------------------------------------------------------------------------
+   Le bloc de script a sa propre surface, comme un éditeur de code : le
+   contexte (fond, gouttière, numéros de ligne) ne doit pas dépendre du thème
+   de l'application, sinon la même figure n'a pas le même rendu clair et
+   sombre — et l'export pour le mémoire doit être reproductible.
+
+   Les 5 teintes de coloration (bleu 210, vert 145, orange 30, rose 330,
+   violet 275) sont déjà présentes dans SAFE_HUES : le script n'introduit
+   aucune couleur nouvelle dans le projet.
+
+   `print-color-adjust` force l'impression des fonds, sans quoi un export PDF
+   de la figure perdrait la surface du bloc.
+   ========================================================================== */
+
+.sql-block {
+  --sql-bg: 220 30% 97%;
+  --sql-gutter: 220 20% 88%;
+  --sql-line-no: 220 12% 62%;
+  --sql-text: 222 40% 18%;
+  --sql-plain: 222 18% 42%;
+  --sql-keyword: 210 78% 38%;
+  --sql-type: 145 62% 26%;
+  --sql-ident: 225 48% 36%;
+  --sql-constraint: 30 78% 36%;
+  --sql-policy: 330 62% 42%;
+  --sql-literal: 275 48% 44%;
+  --sql-audit: 15 74% 40%;
+  --sql-comment: 220 12% 52%;
+
+  background-color: hsl(var(--sql-bg));
+  color: hsl(var(--sql-text));
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+
+.sql-block pre {
+  margin: 0;
+  font-family: ui-monospace, 'JetBrains Mono', 'Cascadia Mono', 'Consolas', monospace;
+  font-size: 11px;
+  line-height: 1.55;
+  tab-size: 2;
+}
+
+.sql-block .sql-gutter {
+  color: hsl(var(--sql-line-no));
+  user-select: none;
+  text-align: right;
+}
+
+.sql-token-keyword    { color: hsl(var(--sql-keyword)); font-weight: 600; }
+.sql-token-type       { color: hsl(var(--sql-type)); }
+.sql-token-ident      { color: hsl(var(--sql-ident)); }
+.sql-token-constraint { color: hsl(var(--sql-constraint)); font-weight: 600; }
+.sql-token-policy     { color: hsl(var(--sql-policy)); font-weight: 600; }
+.sql-token-literal    { color: hsl(var(--sql-literal)); }
+.sql-token-audit      { color: hsl(var(--sql-audit)); font-style: italic; }
+.sql-token-comment    { color: hsl(var(--sql-comment)); font-style: italic; }
+.sql-token-plain      { color: hsl(var(--sql-plain)); }
+.sql-token-punct      { color: hsl(var(--sql-plain)); }
