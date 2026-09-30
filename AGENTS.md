@@ -26,6 +26,7 @@ Vue d'ensemble rapide : `README.md` racine.
 - Projet **indépendant** du front Angular. Docs : `README.md` dédié + méthode Merise dans `plans/rules/regles_mcd.md`.
 - Persistance **localStorage** : positions `figures_flow:diagram:<id>`, côtés de cardinalité `figures_flow:edge_sides:<id>`, et **overlay debug** `figures_flow:debug_edges` (bouton `DEBUG` en haut-droite → ancrage déclaré→résolu, taille de groupe, offset px).
 - Plans par convention : `plans/implementations/YYYYMMDD_<sujet>.md`, avec checkboxes `[ ]`/`[x]`.
+- Export SVG (figure + bloc ⤓) : bordure des cartes repeinte au raster — `plans/rules/regles_export_svg.md` (prérequis : polices auto-hébergées dans `src/assets/fonts/`).
 
 ### État actuel (fix ancrages des arêtes)
 - Les arêtes partagent un offset quand elles touchent le **même ancrage résolu** (React Flow v12 ancre sans handle sur le premier handle du nœud). Helpers dans `src/components/Edges/edgeAnchors.ts` (`resolveHandleId`, `edgePathOffset`, `edgeAnchorGroup`), overlay dans `src/utils/edgeDebug.ts`. Bouton de debug dans `DiagramCanvas.tsx`.

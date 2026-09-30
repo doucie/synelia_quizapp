@@ -330,7 +330,7 @@ Ouvrir l'URL affichée (généralement `http://localhost:5173`).
 - Zoom avant/arrière, fit to view
 - Grille d'aimantation (10px)
 - Export SVG du diagramme courant
-- Export SVG **par bloc** (figures script MPD : bouton `⤓` en tête de chaque `CREATE TABLE`)
+- Export SVG **par bloc** (figures script MPD : bouton `⤓` en tête de chaque `CREATE TABLE` ; le bouton lui-même est exclu du SVG exporté via `data-no-export`)
 - Mode clair / sombre
 - **Debug edges** : bouton `DEBUG` dans la barre d'outils → overlay de debug des arêtes
   (ancrage déclaré→résolu, taille de groupe, offset en px), persisté dans
@@ -343,6 +343,8 @@ Ouvrir l'URL affichée (généralement `http://localhost:5173`).
   aux exports SVG — `html-to-image` ne peut pas lire les feuilles remotes (Google Fonts/Fontshare :
   `SecurityError cssRules`) donc sans fichiers locaux les cartes exportées seraient rendues en police
   de fallback et la bordure-bas ne tombe pas (métriques ≠ live).
+- **Export complet (figure ou bloc)** : bordure des cartes repeinte au raster (Plan C) —
+  règles et approches écartées dans `plans/rules/regles_export_svg.md`.
 
 ## Design
 
