@@ -107,6 +107,7 @@ export default function SqlScriptBlock({ data, id }: { data: EntityNodeData; id?
         </div>
         {sql && id && (
           <button
+            data-no-export
             onClick={() => exportNodeSvg(id, `${label}.sql.svg`)}
             className="nodrag nopan shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-muted"
             title={`Exporter le script de ${label} en SVG`}

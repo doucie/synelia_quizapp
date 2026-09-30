@@ -333,6 +333,13 @@ async function captureNodePadded(
   // MPD-SQL qui exportent parfaitement.
   clone.style.height = 'auto'
 
+  // Contrôles UI exclus de l'export (bouton ⤓ des blocs SQL, etc.) : pur
+  // d'interaction, pas du contenu à figer dans le SVG. `display:none` rétracte
+  // aussi les enfants (icône), l'en-tête garde son padding → géométrie inchangée.
+  clone.querySelectorAll('[data-no-export]').forEach((el) => {
+    ;(el as HTMLElement).style.display = 'none'
+  })
+
   // Le masquage (position hors écran) est porté par un HÔTE non capturé :
   // `html-to-image` recopie intégralement le style calculé du root cloné dans le
   // `foreignObject` (`clone-node.js:cloneCSSStyle`) — tout style de masquage posé
