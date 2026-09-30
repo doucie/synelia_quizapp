@@ -333,6 +333,7 @@ export default function DiagramCanvas({ diagram, showBackground, fullscreen: _fu
         snapToGrid
         snapGrid={[10, 10]}
         defaultEdgeOptions={{ type: isTraitement ? 'traitement' : 'relationship' }}
+        minZoom={0.1}
         panOnDrag={1}
         selectionOnDrag={false}
       >
